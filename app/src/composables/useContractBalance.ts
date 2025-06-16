@@ -7,6 +7,19 @@ import { SUPPORTED_TOKENS } from '@/constant'
 import type { TokenId } from '@/constant'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
 
+/**
+ * @description Represents the value of a token balance in a specific currency
+ * @param value - The numeric value of the token balance in the given currency
+ * @param formated - The formatted value for display, e.g. "$1,234.56"
+ * @param id - Unique identifier for the currency
+ * @param code - The currency code, e.g. "USD", "EUR"
+ * @param symbol - The currency symbol, e.g. "$", "€"
+ * @param price - The price of the token in the given currency
+ * @param formatedPrice - The formatted price for display, e.g. "$1,234.56"
+ * @description This type is used to represent the value of a token balance in different currencies
+ * and is returned by the useContractBalance composable.
+ * It includes the raw value, formatted value, currency ID, code, symbol, and price information.
+ */
 export type TokenBalanceValue = {
   value: number
   formated: string
@@ -17,6 +30,12 @@ export type TokenBalanceValue = {
   formatedPrice: string
 }
 
+/**
+ * @description Represents a token balance for a specific address
+ * @param amount - The numeric amount of the token balance
+ * @param token - The token configuration object, including ID, name, symbol, etc.
+ * @param values - An object mapping currency codes to TokenBalanceValue objects,
+ */
 interface TokenBalance {
   amount: number
   token: (typeof SUPPORTED_TOKENS)[number]
@@ -44,8 +63,6 @@ type TokenBalanceEntry = NativeTokenBalanceEntry | ERC20TokenBalanceEntry
  * @description Composable to fetch and compute balances for an address
  *
  * Supports both native and ERC20 tokens
- *
- * Returns: { balances, total, isLoading, error }
  */
 export function useContractBalance(address: Address | Ref<Address | undefined>) {
   const chainId = useChainId()
