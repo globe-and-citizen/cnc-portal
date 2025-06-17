@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { prisma } from "../utils";
-import { errorResponse } from "../utils/utils";
+import { prisma, errorResponse, getMondayStart } from "../utils";
+// import { errorResponse } from "../utils/utils";
 import { Prisma } from "@prisma/client";
 import { isHex } from "viem";
 
@@ -16,6 +16,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   console.log('signature: ', req.body.signature)
 
   const data: Prisma.WeeklyClaimUpdateInput = {}
+  const mondayStart = getMondayStart(new Date())
 
   if (!claimId || isNaN(claimId))
     return errorResponse(400, "Missing or invalid claimId", res)
@@ -38,10 +39,19 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         // Validate signer
         if(weeklyClaim?.wage.team.ownerAddress !== callerAddress) 
           return errorResponse(403, "Caller is not owner of the team", res)
+        // Validate week is completed
+        if(!weeklyClaim?.weekStart)
+          return errorResponse(400, 'Missing week start', res)
+        const weeklyClaimMondayStart = getMondayStart(weeklyClaim?.weekStart)
+        if(weeklyClaimMondayStart.getTime() === mondayStart.getTime())
+          return errorResponse(400, "Week not yet completed", res)
         // Update signature and status
         data.signature = signature
         data.status = "signed"
         break;
+      case 'withdraw':
+        data.status = "withdrawn"
+        console.log(`execute withdraw action...`)
     }
 
     const updatedWeeklyClaim = await prisma.weeklyClaim.update({
