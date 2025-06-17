@@ -15,7 +15,6 @@
         />
       </div>
     </div>
-
     <GenericTokenHoldingsSection
       v-if="
         teamStore.currentTeam?.teamContracts.find(
@@ -25,22 +24,22 @@
       :address="
         teamStore.currentTeam?.teamContracts.find(
           (contract) => contract.type === 'CashRemunerationEIP712'
-        )?.address ?? ''
+        )?.address ?? ('' as Address)
       "
     />
 
     <CashRemunerationWeeklyClaim />
 
     <CashRemunerationTable :owner-address="teamStore.currentTeam?.ownerAddress" />
-
-    <CashRemunerationTransactions />
+    <!-- <CashRemunerationTransactions /> -->
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Address } from 'viem'
 import { useTeamStore } from '@/stores'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
+// import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
 import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'

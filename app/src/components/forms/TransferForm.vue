@@ -85,20 +85,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { isAddress } from 'viem'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
-import { onClickOutside } from '@vueuse/core'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { formatCurrencyShort } from '@/utils'
 import SelectComponent from '../SelectComponent.vue'
+import type { TokenId } from '@/constant'
 
 export interface Token {
   symbol: string
   balance: number
+  tokenId: TokenId
 }
 
 export interface TransferModel {
@@ -121,13 +122,10 @@ const model = defineModel<TransferModel>({
   required: true,
   default: () => ({
     address: { name: '', address: '' },
-    token: { symbol: '', balance: 0 },
+    token: { symbol: '', balance: 0, tokenId: '' },
     amount: '0'
   })
 })
-
-const isDropdownOpen = ref(false)
-const target = ref<HTMLElement | null>(null)
 
 const emit = defineEmits(['transfer', 'closeModal'])
 const currencyStore = useCurrencyStore()
@@ -135,15 +133,14 @@ const currencyStore = useCurrencyStore()
 const usePercentageOfBalance = (percentage: number) => {
   model.value.amount = ((model.value.token.balance * percentage) / 100).toFixed(4)
 }
-// const getSelectedTokenBalance = computed(() => {
-//   return model.value.token.balance
-// })
 
 // New computed property for transfer amount in default currency
 const formattedTransferAmount = computed(() => {
-  // Price in local currency
-  const value = (Number(model.value.amount) || 0) * (currencyStore.nativeToken.priceInLocal || 0)
-  return formatCurrencyShort(value, currencyStore.localCurrency.code)
+  const tokenInfo = currencyStore.getTokenInfo(model.value.token?.tokenId as TokenId)
+  const priceObj = tokenInfo?.prices.find((p) => p.id === 'local')
+  const price = priceObj?.price ?? 0
+  const value = (Number(model.value.amount) || 0) * price
+  return formatCurrencyShort(value, priceObj?.code ?? 'USD')
 })
 
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
@@ -198,11 +195,6 @@ const submitForm = () => {
 const setMaxAmount = () => {
   model.value.amount = model.value.token.balance.toString()
 }
-
-// Handle clicking outside of dropdown
-onClickOutside(target, () => {
-  isDropdownOpen.value = false
-})
 
 const handleSelectItem = (item: { name: string; address: string; type: 'member' | 'contract' }) => {
   model.value.address = item

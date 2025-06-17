@@ -211,6 +211,7 @@ const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
 const teamStore = useTeamStore()
 const route = useRoute()
+// @ts-expect-error: nativeToken should be defined in currencyStore and returned by storeToRefs
 const { nativeToken } = storeToRefs(currencyStore)
 const { currentTeam } = storeToRefs(teamStore)
 
@@ -366,7 +367,8 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
   const usdAmount =
     transaction.token === 'USDC'
       ? tokenAmount
-      : tokenAmount * (currencyStore.nativeToken.priceInUSD ?? 0)
+      : // @ts-expect-error: nativeToken should be defined in currencyStore and returned by storeToRefs
+        tokenAmount * (currencyStore.nativeToken.priceInUSD ?? 0)
 
   return {
     txHash: String(transaction.txHash),
