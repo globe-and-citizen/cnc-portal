@@ -128,32 +128,33 @@ const withdrawClaim = async () => {
       // functionName: 'withdraw',
       // args: [claimData, props.claim.signature as Address]
     })
+    isLoading.value = false
+
+    if (withdrawSuccess.value) {
+      toastStore.addSuccessToast('Claim withdrawn')
+    }
+    if (withdrawError.value) {
+      toastStore.addErrorToast('Failed to withdraw claim')
+    }
+    if (withdrawTrxError.value) {
+      toastStore.addErrorToast('Trx failed: Failed to withdraw claim')
+    }
+    await updateClaimStatus()
+
+    if (updateClaimError.value) {
+      toastStore.addErrorToast('Failed to update Claim status')
+    }
+
+    // chek if claim is updated
+    if (withdrawSuccess.value) {
+      emit('claim-withdrawn')
+    }
+    isLoading.value = false
   } catch (error) {
+    isLoading.value = false
     toastStore.addErrorToast('Failed to withdraw claim')
     log.info('Withdraw error', parseError(error))
   }
-  isLoading.value = false
-
-  if (withdrawSuccess.value) {
-    toastStore.addSuccessToast('Claim withdrawn')
-  }
-  if (withdrawError.value) {
-    toastStore.addErrorToast('Failed to withdraw claim')
-  }
-  if (withdrawTrxError.value) {
-    toastStore.addErrorToast('Trx failed: Failed to withdraw claim')
-  }
-  await updateClaimStatus()
-
-  if (updateClaimError.value) {
-    toastStore.addErrorToast('Failed to update Claim status')
-  }
-
-  // chek if claim is updated
-  if (withdrawSuccess.value) {
-    emit('claim-withdrawn')
-  }
-  isLoading.value = false
 }
 </script>
 
