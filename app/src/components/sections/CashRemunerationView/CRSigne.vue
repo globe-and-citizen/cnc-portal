@@ -3,7 +3,7 @@
     v-if="claim.status == 'pending' && teamOwner == userDataStore.address"
     variant="success"
     data-test="approve-button"
-    :disabled="loading"
+    :disabled="loading || disabled"
     size="sm"
     @click="async () => await approveClaim(claim as ClaimResponse)"
   >
@@ -31,6 +31,7 @@ const props = defineProps<{
     }
   }
   isWeeklyClaim?: boolean
+  disabled?: boolean
 }>()
 const emit = defineEmits(['claim-signed'])
 
