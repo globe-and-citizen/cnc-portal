@@ -128,8 +128,10 @@ import type { Address } from 'viem'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { getMondayStart } from '@/utils/dayUtils'
 
-function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
-  return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
+function getTotalHoursWorked(claims: { hoursWorked: number, status: string }[]) {
+  return claims
+    .filter(claim => claim.status === 'pending')
+    .reduce((sum, claim) => sum + claim.hoursWorked, 0)
 }
 
 const userStore = useUserDataStore()
