@@ -80,6 +80,7 @@
           <CRSigne
             v-if="row.claims.length > 0 && row.wage.ratePerHour"
             :is-weekly-claim="true"
+            :disabled="isSameWeek(row.weekStart)"
             :claim="{
               id: row.id, //which id do we use, individual or weekly claim?
               status: !row.status ? 'pending' : row.status,
@@ -118,13 +119,14 @@ import TableComponent, { type TableColumn } from '@/components/TableComponent.vu
 import UserComponent from '@/components/UserComponent.vue'
 import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import { useUserDataStore, useTeamStore } from '@/stores'
-import type { RatePerHour, SupportedTokens } from '@/types'
+import { type WeeklyClaimResponse, type RatePerHour, type SupportedTokens } from '@/types'
 import CRSigne from './CRSigne.vue'
 import type { Address } from 'viem'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
+import { getMondayStart } from '@/utils/dayUtils'
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -141,9 +143,15 @@ const weeklyClaimUrl = computed(
     }`
 )
 
-const { data, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
+const { data, error } = useCustomFetch(weeklyClaimUrl.value).get().json<WeeklyClaimResponse>()
 
 const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
+
+const isSameWeek = (weeklyClaimStartWeek: string) => {
+  console.log(`weeklyClaimStartWeek: ${weeklyClaimStartWeek}`)
+  const currentMonday = getMondayStart(new Date())
+  return currentMonday.toISOString() === weeklyClaimStartWeek
+}
 
 const currencyStore = useCurrencyStore()
 const getHoulyRateInUserCurrency = (rate: number) => {
@@ -180,6 +188,12 @@ const getHourlyRate = (ratePerHour: RatePerHour, type: SupportedTokens) => {
       return 'N/A'
   }
 }
+
+watch(data, (newVal) => {
+  if (newVal) {
+    console.log('New weekly claims: ', newVal)
+  }
+})
 
 const columns = [
   {
