@@ -48,7 +48,11 @@
           {{
             (
               getTotalHoursWorked(row.claims) *
-              Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
+              Number(
+                getHoulyRateInUserCurrency(
+                  row.wage.cashRatePerHour ?? row.wage.tokenRatePerHour ?? row.wage.usdcRatePerHour
+                )
+              )
             ).toFixed(2)
           }}
           {{ NETWORK.nativeTokenSymbol }} / USD
