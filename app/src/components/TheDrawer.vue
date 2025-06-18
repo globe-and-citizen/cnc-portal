@@ -153,7 +153,7 @@
           </RouterLink>
           <div v-for="child in item.children" :key="child.label">
             <RouterLink
-              :to="item.route"
+              :to="child.route"
               class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
               :class="{
                 'bg-emerald-500/10 shadow-sm': item.active,
