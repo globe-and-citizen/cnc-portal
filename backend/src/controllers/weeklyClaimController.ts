@@ -31,6 +31,8 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
       }
     })
 
+    let singleClaimStatus = 'pending'
+
     switch(action) {
       case 'sign':
         // Validate signature
@@ -48,16 +50,34 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         // Update signature and status
         data.signature = signature
         data.status = "signed"
+        singleClaimStatus = 'locked'
         break;
       case 'withdraw':
         data.status = "withdrawn"
+        singleClaimStatus = "withdrawn"
         console.log(`execute withdraw action...`)
     }
 
-    const updatedWeeklyClaim = await prisma.weeklyClaim.update({
-      where: { id: claimId },
-      data
-    })
+    // const updatedWeeklyClaim = await prisma.weeklyClaim.update({
+    //   where: { id: claimId },
+    //   data
+    // })
+
+    // await prisma.claim.updateMany({
+    //   where: { weeklyClaimId: claimId },
+    //   data: { status: singleClaimStatus }
+    // })
+
+    const [updatedWeeklyClaim] = await prisma.$transaction([
+      prisma.weeklyClaim.update({
+        where: { id: claimId },
+        data
+      }),
+      prisma.claim.updateMany({
+        where: { weeklyClaimId: claimId },
+        data: { status: singleClaimStatus }
+      })
+    ]);
 
     res.status(200).json(updatedWeeklyClaim)
   } catch(error) {
