@@ -83,6 +83,8 @@ import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed } from 'vue'
 import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
+import { formatCurrencyShort } from '@/utils/currencyUtil'
+import type { TokenId } from '@/constant'
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -103,10 +105,11 @@ const { data, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
 const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
 
 const currencyStore = useCurrencyStore()
-const getHoulyRateInUserCurrency = (rate: number) => {
-  return (
-    currencyStore.nativeToken.priceInLocal ? rate * currencyStore.nativeToken.priceInLocal : 0
-  ).toFixed(2)
+function getHoulyRateInUserCurrency(hourlyRate: number, tokenId: TokenId = 'native') {
+  const tokenInfo = currencyStore.getTokenInfo(tokenId)
+  const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
+  const code = currencyStore.localCurrency.code
+  return formatCurrencyShort(hourlyRate * localPrice, code)
 }
 
 function formatDate(date: string | Date) {

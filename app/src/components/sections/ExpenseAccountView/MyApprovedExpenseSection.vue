@@ -76,6 +76,7 @@ import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { useContractBalance } from '@/composables'
+import type { TokenId } from '@/constant'
 //#endregion
 
 const columns = [
@@ -113,7 +114,7 @@ const tokenRecipient = ref('')
 const signatureToTransfer = ref('')
 const transferData = ref({
   address: { name: '', address: '' },
-  token: { symbol: '', balance: 0 },
+  token: { symbol: '', balance: 0, tokenId: '' as TokenId },
   amount: '0'
 })
 //#endregion
@@ -138,6 +139,9 @@ const myApprovedExpenseRows = computed(() =>
     (approval) => approval.approvedAddress === currentUserAddress
   )
 )
+
+// const getTokens = () =>
+//   balances.value.map((b) => ({ symbol: b.token.symbol, balance: b.amount, tokenId: b.token.id }))
 const tokens = computed<Token[]>(() => {
   const tokenAddress = expenseDataStore.allExpenseDataParsed.find(
     (item) => item.signature === signatureToTransfer.value
@@ -146,7 +150,15 @@ const tokens = computed<Token[]>(() => {
   const symbol = tokenSymbol(tokenAddress ?? '')
   const balance = tokenAddress === zeroAddress ? balances.value[0].amount : balances.value[1].amount
 
-  return symbol && !isNaN(Number(balance)) ? [{ symbol, balance: Number(balance) }] : []
+  return symbol && !isNaN(Number(balance))
+    ? [
+        {
+          symbol,
+          balance: Number(balance),
+          tokenId: (tokenAddress ?? '') as TokenId // Ensure tokenId is of type TokenId
+        }
+      ]
+    : []
 })
 //#endregion
 
