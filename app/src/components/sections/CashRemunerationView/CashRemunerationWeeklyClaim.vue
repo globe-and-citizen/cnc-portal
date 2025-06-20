@@ -24,91 +24,95 @@
               <span>of {{ row.wage.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span>
             </template>
 
-        <template #hourlyRate-data="{ row }">
-          <div>
-            <span class="font-bold">
-              {{ getHourlyRate(row.wage.ratePerHour, 'native') }} {{ NETWORK.currencySymbol }}
-            </span>
-            <br />
-            <span class="font-bold"> {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} TOKEN </span>
-            <br />
-            <span class="font-bold"> {{ getHourlyRate(row.wage.ratePerHour, 'usdc') }} USDC </span>
-            <br />
-          </div>
-        </template>
+            <template #hourlyRate-data="{ row }">
+              <div>
+                <span class="font-bold">
+                  {{ getHourlyRate(row.wage.ratePerHour, 'native') }} {{ NETWORK.currencySymbol }}
+                </span>
+                <br />
+                <span class="font-bold">
+                  {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} TOKEN
+                </span>
+                <br />
+                <span class="font-bold">
+                  {{ getHourlyRate(row.wage.ratePerHour, 'usdc') }} USDC
+                </span>
+                <br />
+              </div>
+            </template>
 
-        <template #totalAmount-data="{ row }">
-          <span class="font-bold">
-            {{
-              getHourlyRate(row.wage.ratePerHour, 'native') === 'N/A'
-                ? 'N/A'
-                : Number(getHourlyRate(row.wage.ratePerHour, 'native')) *
-                  getTotalHoursWorked(row.claims)
-            }}
-            {{ NETWORK.currencySymbol }}
-          </span>
-          <br />
-          <span class="font-bold">
-            {{
-              getHourlyRate(row.wage.ratePerHour, 'sher') === 'N/A'
-                ? 'N/A'
-                : Number(getHourlyRate(row.wage.ratePerHour, 'sher')) *
-                  getTotalHoursWorked(row.claims)
-            }}
-            TOKEN
-          </span>
-          <br />
-          <span class="font-bold">
-            {{
-              getHourlyRate(row.wage.ratePerHour, 'usdc') === 'N/A'
-                ? 'N/A'
-                : Number(getHourlyRate(row.wage.ratePerHour, 'usdc')) *
-                  getTotalHoursWorked(row.claims)
-            }}
-            USDC
-          </span>
-          <br />
-          <span class="text-gray-500">
-            {{
-              (
-                getTotalHoursWorked(row.claims) *
-                Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
-              ).toFixed(2)
-            }}
-            {{ NETWORK.nativeTokenSymbol }} / USD
-          </span>
-        </template>
+            <template #totalAmount-data="{ row }">
+              <span class="font-bold">
+                {{
+                  getHourlyRate(row.wage.ratePerHour, 'native') === 'N/A'
+                    ? 'N/A'
+                    : Number(getHourlyRate(row.wage.ratePerHour, 'native')) *
+                      getTotalHoursWorked(row.claims)
+                }}
+                {{ NETWORK.currencySymbol }}
+              </span>
+              <br />
+              <span class="font-bold">
+                {{
+                  getHourlyRate(row.wage.ratePerHour, 'sher') === 'N/A'
+                    ? 'N/A'
+                    : Number(getHourlyRate(row.wage.ratePerHour, 'sher')) *
+                      getTotalHoursWorked(row.claims)
+                }}
+                TOKEN
+              </span>
+              <br />
+              <span class="font-bold">
+                {{
+                  getHourlyRate(row.wage.ratePerHour, 'usdc') === 'N/A'
+                    ? 'N/A'
+                    : Number(getHourlyRate(row.wage.ratePerHour, 'usdc')) *
+                      getTotalHoursWorked(row.claims)
+                }}
+                USDC
+              </span>
+              <br />
+              <span class="text-gray-500">
+                {{
+                  (
+                    getTotalHoursWorked(row.claims) *
+                    Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
+                  ).toFixed(2)
+                }}
+                {{ NETWORK.nativeTokenSymbol }} / USD
+              </span>
+            </template>
 
             <template #action-data="{ row }">
               <CRSigne
-            v-if="row.claims.length > 0 && row.wage.ratePerHour"
-            :is-weekly-claim="true"
-            :disabled="isSameWeek(row.weekStart)"
-            :claim="{
-              id: row.id, //which id do we use, individual or weekly claim?
-              status: !row.status ? 'pending' : row.status,
-              hoursWorked: getTotalHoursWorked(row.claims),
-              createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
-              wage: {
-                ratePerHour: row.wage.ratePerHour as RatePerHour,
-                userAddress: row.wage.userAddress as Address
-              }
-            }"
-          />
-          <CRWithdrawClaim
-            :is-weekly-claim="true"
-            :claim="{
-              id: row.id, //which id do we use, individual or weekly claim?
-              status: !row.status ? 'pending' : row.status,
-              hoursWorked: getTotalHoursWorked(row.claims),
-              createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
-              signature: row.signature,
-              wage: {
-                ratePerHour: row.wage.ratePerHour as RatePerHour,
-                userAddress: row.wage.userAddress as Address
-              }
-            }"
-          />
+                v-if="row.claims.length > 0 && row.wage.ratePerHour"
+                :is-weekly-claim="true"
+                :disabled="isSameWeek(row.weekStart)"
+                :claim="{
+                  id: row.id, //which id do we use, individual or weekly claim?
+                  status: !row.status ? 'pending' : row.status,
+                  hoursWorked: getTotalHoursWorked(row.claims),
+                  createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
+                  wage: {
+                    ratePerHour: row.wage.ratePerHour as RatePerHour,
+                    userAddress: row.wage.userAddress as Address
+                  }
+                }"
+              />
+              <CRWithdrawClaim
+                :is-weekly-claim="true"
+                :claim="{
+                  id: row.id, //which id do we use, individual or weekly claim?
+                  status: !row.status ? 'pending' : row.status,
+                  hoursWorked: getTotalHoursWorked(row.claims),
+                  createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
+                  signature: row.signature,
+                  wage: {
+                    ratePerHour: row.wage.ratePerHour as RatePerHour,
+                    userAddress: row.wage.userAddress as Address
+                  }
+                }"
+              />
             </template>
           </TableComponent>
         </div>
@@ -120,7 +124,6 @@
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -135,9 +138,9 @@ import { getMondayStart } from '@/utils/dayUtils'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
 import type { TokenId } from '@/constant'
 
-function getTotalHoursWorked(claims: { hoursWorked: number, status: string }[]) {
+function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
   return claims
-    .filter(claim => claim.status === 'pending')
+    .filter((claim) => claim.status === 'pending')
     .reduce((sum, claim) => sum + claim.hoursWorked, 0)
 }
 
