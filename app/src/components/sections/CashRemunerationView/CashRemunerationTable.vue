@@ -133,9 +133,9 @@ const statusUrl = computed(() =>
 )
 const claimURL = computed(() => `/claim/?teamId=${teamId.value}${statusUrl.value}`)
 const getHourlyRateInUserCurrency = (rate: number) => {
-  return (
-    currencyStore.nativeToken.priceInLocal ? rate * currencyStore.nativeToken.priceInLocal : 0
-  ).toFixed(2)
+  const nativeTokenInfo = currencyStore.getTokenInfo('native')
+  const price = nativeTokenInfo?.prices.find((p) => p.id == 'local')?.price || 0
+  return (rate * price).toFixed(2)
 }
 const {
   data: teamClaimData,

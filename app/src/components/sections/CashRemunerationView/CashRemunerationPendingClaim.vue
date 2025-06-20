@@ -21,28 +21,36 @@ import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
 import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
-import { storeToRefs } from 'pinia'
-import { watch } from 'vue'
-import { computed } from 'vue'
+import { watch, computed } from 'vue'
 import { useCustomFetch } from '@/composables'
 import type { ClaimResponse } from '@/types'
+import { useStorage } from '@vueuse/core'
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const { localCurrency, nativeToken } = storeToRefs(currencyStore)
+
+const currency = useStorage('currency', {
+  code: 'USD',
+  name: 'US Dollar',
+  symbol: '$'
+})
+
 const { data, isFetching, error } = useCustomFetch(
   `/claim?teamId=${teamStore.currentTeamId}&status=signed`
 )
   .get()
   .json<ClaimResponse[]>()
+
 const totalPendingAmount = computed(() => {
   const totalAmount = data.value?.reduce((acc, claim) => {
     return acc + (claim.hoursWorked || 0) * (claim.wage.cashRatePerHour || 0)
   }, 0)
+
+  const nativeTokenInfo = currencyStore.getTokenInfo('native')
   return formatCurrencyShort(
-    (totalAmount || 0) * (nativeToken.value.priceInLocal || 0),
-    localCurrency.value.code
+    (totalAmount || 0) * (nativeTokenInfo?.prices.find((p) => p.id == 'local')?.price || 0),
+    currency.value.code
   )
 })
 

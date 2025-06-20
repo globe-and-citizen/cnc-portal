@@ -3,7 +3,8 @@ import { useContractBalance } from '../useContractBalance'
 
 import type { Address } from 'viem'
 import { ref } from 'vue'
-import { LIST_CURRENCIES } from '@/constant/index'
+
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 const mockUseBalance = {
   data: ref<{ value: bigint } | null>(null),
@@ -28,52 +29,9 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useChainId: vi.fn(() => mockUseChainId)
   }
 })
-type CurrencyStore = {
-  localCurrency: {
-    code: string
-    name: string
-    symbol: string
-  }
-  nativeToken: {
-    id: string
-    name: string
-    symbol: string
-    priceInLocal: number
-    priceInUSD: number
-    isLoading: boolean
-  }
-  usdc: {
-    id: string
-    name: string
-    symbol: string
-    priceInLocal: number
-    priceInUSD: number
-    isLoading: boolean
-  }
-}
-
-const mockCurrencyStore: CurrencyStore = {
-  localCurrency: LIST_CURRENCIES[1],
-  nativeToken: {
-    id: 'eth',
-    name: 'Ethereum',
-    symbol: 'ETH',
-    priceInLocal: 3000,
-    priceInUSD: 2000,
-    isLoading: false
-  },
-  usdc: {
-    id: 'usdc',
-    name: 'USD Coin',
-    symbol: 'USDC',
-    priceInLocal: 1,
-    priceInUSD: 1,
-    isLoading: false
-  }
-}
 
 vi.mock('@/stores/currencyStore', () => ({
-  useCurrencyStore: vi.fn(() => mockCurrencyStore)
+  useCurrencyStore: vi.fn(() => mockUseCurrencyStore)
 }))
 
 describe('useContractBalance', () => {
@@ -97,46 +55,69 @@ describe('useContractBalance', () => {
     const { balances, total, isLoading, error } = useContractBalance(mockAddress)
     expect(total.value).toMatchInlineSnapshot(`
       {
-        "localCurrencyBalance": {
-          "formated": "€1.55K",
-          "value": 1550,
-        },
-        "usdBalance": {
-          "formated": "$1.05K",
-          "value": 1050,
+        "USD": {
+          "code": "USD",
+          "formated": "$50.5K",
+          "formatedPrice": "$1K",
+          "id": "usd",
+          "price": 1000,
+          "symbol": "$",
+          "value": 50500,
         },
       }
     `)
     expect(isLoading.value).toBe(false)
     expect(error.value).toBe(null)
     expect(balances.value).toMatchInlineSnapshot(`
-       [
-         {
-           "amount": 0.5,
-           "code": "ETH",
-           "valueInLocalCurrency": {
-             "formated": "€1.5K",
-             "value": 1500,
-           },
-           "valueInUSD": {
-             "formated": "$1K",
-             "value": 1000,
-           },
-         },
-         {
-           "amount": 50,
-           "code": "USDC",
-           "valueInLocalCurrency": {
-             "formated": "€50",
-             "value": 50,
-           },
-           "valueInUSD": {
-             "formated": "$50",
-             "value": 50,
-           },
-         },
-       ]
-     `)
+      [
+        {
+          "amount": 0.5,
+          "token": {
+            "address": "0x0000000000000000000000000000000000000000",
+            "code": "SepoliaETH",
+            "coingeckoId": "ethereum",
+            "decimals": 18,
+            "id": "native",
+            "name": "SepoliaETH",
+            "symbol": "SepoliaETH",
+          },
+          "values": {
+            "USD": {
+              "code": "USD",
+              "formated": "$500",
+              "formatedPrice": "$1K",
+              "id": "usd",
+              "price": 1000,
+              "symbol": "$",
+              "value": 500,
+            },
+          },
+        },
+        {
+          "amount": 50,
+          "token": {
+            "address": "0xA3492D046095AFFE351cFac15de9b86425E235dB",
+            "code": "USDC",
+            "coingeckoId": "usd-coin",
+            "decimals": 6,
+            "id": "usdc",
+            "name": "USD Coin",
+            "symbol": "USDC",
+          },
+          "values": {
+            "USD": {
+              "code": "USD",
+              "formated": "$50K",
+              "formatedPrice": "$1K",
+              "id": "usd",
+              "price": 1000,
+              "symbol": "$",
+              "value": 50000,
+            },
+          },
+        },
+      ]
+    `)
   })
 
   it('should return correct value even if useBalance or useReadContract is null', () => {
@@ -148,26 +129,48 @@ describe('useContractBalance', () => {
       [
         {
           "amount": 0,
-          "code": "ETH",
-          "valueInLocalCurrency": {
-            "formated": "€0",
-            "value": 0,
+          "token": {
+            "address": "0x0000000000000000000000000000000000000000",
+            "code": "SepoliaETH",
+            "coingeckoId": "ethereum",
+            "decimals": 18,
+            "id": "native",
+            "name": "SepoliaETH",
+            "symbol": "SepoliaETH",
           },
-          "valueInUSD": {
-            "formated": "$0",
-            "value": 0,
+          "values": {
+            "USD": {
+              "code": "USD",
+              "formated": "$0",
+              "formatedPrice": "$1K",
+              "id": "usd",
+              "price": 1000,
+              "symbol": "$",
+              "value": 0,
+            },
           },
         },
         {
           "amount": 0,
-          "code": "USDC",
-          "valueInLocalCurrency": {
-            "formated": "€0",
-            "value": 0,
+          "token": {
+            "address": "0xA3492D046095AFFE351cFac15de9b86425E235dB",
+            "code": "USDC",
+            "coingeckoId": "usd-coin",
+            "decimals": 6,
+            "id": "usdc",
+            "name": "USD Coin",
+            "symbol": "USDC",
           },
-          "valueInUSD": {
-            "formated": "$0",
-            "value": 0,
+          "values": {
+            "USD": {
+              "code": "USD",
+              "formated": "$0",
+              "formatedPrice": "$1K",
+              "id": "usd",
+              "price": 1000,
+              "symbol": "$",
+              "value": 0,
+            },
           },
         },
       ]

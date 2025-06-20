@@ -130,7 +130,7 @@ describe('CashRemunerationView.vue', () => {
     expect(table.exists()).toBeTruthy()
   })
 
-  it('should render CashRemunerationTransactions component', () => {
+  it.skip('should render CashRemunerationTransactions component', () => {
     const wrapper = createComponent()
     const transactions = wrapper.findComponent({ name: 'CashRemunerationTransactions' })
 

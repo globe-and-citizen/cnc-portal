@@ -1,0 +1,70 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Currency Store > fetchTokenPrice queryFn throws on fetch error 1`] = `
+{
+  "code": "SepoliaETH",
+  "id": "native",
+  "name": "SepoliaETH",
+  "prices": [
+    {
+      "code": "USD",
+      "id": "local",
+      "price": null,
+      "symbol": "$",
+    },
+    {
+      "code": "USD",
+      "id": "usd",
+      "price": null,
+      "symbol": "$",
+    },
+  ],
+  "symbol": "SepoliaETH",
+}
+`;
+
+exports[`Currency Store > fetches and returns token prices and info 1`] = `
+{
+  "code": "SepoliaETH",
+  "id": "native",
+  "name": "SepoliaETH",
+  "prices": [
+    {
+      "code": "EUR",
+      "id": "local",
+      "price": 900,
+      "symbol": "€",
+    },
+    {
+      "code": "USD",
+      "id": "usd",
+      "price": 1000,
+      "symbol": "$",
+    },
+  ],
+  "symbol": "SepoliaETH",
+}
+`;
+
+exports[`Currency Store > fetches and returns token prices and info 2`] = `
+{
+  "code": "USDC",
+  "id": "usdc",
+  "name": "USD Coin",
+  "prices": [
+    {
+      "code": "EUR",
+      "id": "local",
+      "price": 900,
+      "symbol": "€",
+    },
+    {
+      "code": "USD",
+      "id": "usd",
+      "price": 1000,
+      "symbol": "$",
+    },
+  ],
+  "symbol": "USDC",
+}
+`;

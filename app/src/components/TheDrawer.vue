@@ -130,28 +130,50 @@
       </div>
 
       <nav class="space-y-4">
-        <RouterLink
-          v-for="item in menuItems"
-          :key="item.label"
-          :to="item.route"
-          class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
-          :class="{
-            'bg-emerald-500/10 shadow-sm': item.active,
-            'hover:bg-gray-100': !item.active,
-            hidden: !item.show
-          }"
-        >
-          <div class="relative">
-            <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
-          </div>
-          <span
-            v-if="!isCollapsed"
-            class="text-sm font-medium transition-colors duration-200"
-            :class="{ 'text-emerald-600': item.active }"
+        <div v-for="item in menuItems" :key="item.label" class="space-y-2">
+          <RouterLink
+            :to="item.route"
+            class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
+            :class="{
+              'bg-emerald-500/10 shadow-sm': item.active,
+              'hover:bg-gray-100': !item.active,
+              hidden: !item.show
+            }"
           >
-            {{ item.label }}
-          </span>
-        </RouterLink>
+            <div class="relative">
+              <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
+            </div>
+            <span
+              v-if="!isCollapsed"
+              class="text-sm font-medium transition-colors duration-200"
+              :class="{ 'text-emerald-600': item.active }"
+            >
+              {{ item.label }}
+            </span>
+          </RouterLink>
+          <div v-for="child in item.children" :key="child.label">
+            <RouterLink
+              :to="child.route"
+              class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
+              :class="{
+                'bg-emerald-500/10 shadow-sm': item.active,
+                'hover:bg-gray-100': !item.active,
+                hidden: !item.show
+              }"
+            >
+              <div class="relative">
+                <!-- <IconifyIcon :icon="child.icon" :class="getIconClass(child.active)" /> -->
+              </div>
+              <span
+                v-if="!isCollapsed"
+                class="text-sm font-medium transition-colors duration-200"
+                :class="{ 'text-emerald-600': child.active }"
+              >
+                {{ child.label }}
+              </span>
+            </RouterLink>
+          </div>
+        </div>
       </nav>
     </div>
 
@@ -192,11 +214,12 @@ import { onClickOutside } from '@vueuse/core'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
-import { useTeamStore, useAppStore } from '@/stores'
+import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
 import { useRoute } from 'vue-router'
 
 const appStore = useAppStore()
 const route = useRoute()
+const userStore = useUserDataStore()
 
 interface User {
   name: string
@@ -271,8 +294,30 @@ const menuItems = computed(() => [
       name: 'cash-remunerations',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    active: route.name === 'cash-remunerations',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+    active:
+      route.name === 'cash-remunerations' &&
+      teamStore.currentTeam?.ownerAddress !== userStore.address,
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
+    children: [
+      {
+        label: 'CR Dashboard',
+        route: {
+          name: 'cash-remunerations',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'cash-remunerations',
+        show: teamStore.currentTeam?.ownerAddress === userStore.address
+      },
+      {
+        label: 'Weekly Claim',
+        route: {
+          name: 'weekly-claim',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'weekly-claim',
+        show: teamStore.currentTeam?.ownerAddress === userStore.address
+      }
+    ].filter((child) => child.show)
   },
   {
     label: 'Expense Account ',

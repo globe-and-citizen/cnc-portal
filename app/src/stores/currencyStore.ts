@@ -1,22 +1,15 @@
 // import { useCustomFetch } from '@/composables'
-import { NETWORK } from '@/constant'
 import { useStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
-import { computed, reactive } from 'vue'
-import { LIST_CURRENCIES } from '@/constant'
+import { LIST_CURRENCIES, SUPPORTED_TOKENS } from '@/constant'
+import type { TokenId } from '@/constant'
 import { useQuery } from '@tanstack/vue-query'
-
-const NETWORK_TO_COIN_ID: Record<string, string> = {
-  POL: 'matic-network',
-  ETH: 'ethereum',
-  AMOYPOL: 'matic-network',
-  SepoliaETH: 'ethereum',
-  GO: 'ethereum'
-}
+import type { Ref } from 'vue'
 
 export interface PriceResponse {
   market_data: {
     current_price: {
+      [key: string]: number // Add index signature for dynamic currency codes
       usd: number
       cad: number
       eur: number
@@ -26,7 +19,6 @@ export interface PriceResponse {
   }
 }
 
-type currencyType = keyof PriceResponse['market_data']['current_price']
 export const useCurrencyStore = defineStore('currency', () => {
   const currency = useStorage('currency', {
     code: 'USD',
@@ -34,42 +26,34 @@ export const useCurrencyStore = defineStore('currency', () => {
     symbol: '$'
   })
 
-  const fetchPrice = async () => {
-    const res = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${NETWORK_TO_COIN_ID[NETWORK.currencySymbol]}`
-    )
+  // Fetch prices for all tokens
+  async function fetchTokenPrice(coingeckoId: string) {
+    const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coingeckoId}`)
     if (!res.ok) throw new Error('Failed to fetch price')
     return res.json() as Promise<PriceResponse>
   }
+  /**
+   * @dev For a dynamic supported token, Map is better than Array
+   */
+  // Combine price and loading into a single array
+  const tokenStates: Array<{
+    id: string
+    data: Ref<PriceResponse | undefined>
+    loading: Ref<boolean>
+  }> = []
 
-  const fetchUSDPrice = async () => {
-    const res = await fetch(`https://api.coingecko.com/api/v3/coins/usd-coin`)
-    if (!res.ok) throw new Error('Failed to fetch USD price')
-    return res.json() as Promise<PriceResponse>
-  }
-
-  const {
-    data: priceResponse,
-    refetch: refetchPrice,
-    isFetching: isLoading
-  } = useQuery({
-    queryKey: ['price', NETWORK.currencySymbol],
-    queryFn: fetchPrice,
-    retryDelay: 30000,
-    gcTime: 1000 * 60 * 10 // 10 Minutes hour
-    // gcTime: 1000 * 60 * 60 * 24 // 24 hour
-  })
-
-  const {
-    data: usdPriceResponse,
-    // refetch: refetchUSDPrice,
-    isFetching: isLoadingUSDPrice
-  } = useQuery({
-    queryKey: ['usdPrice'],
-    queryFn: fetchUSDPrice,
-    retryDelay: 30000,
-    gcTime: 1000 * 60 * 10 // 10 Minutes hour
-    // gcTime: 1000 * 60 * 60 * 24 // 24 hour
+  /**
+   * @dev If in the future, supported tokens are dynamic,
+   * we can use a Map to store token prices and loading states
+   */
+  SUPPORTED_TOKENS.forEach((token) => {
+    const { data, isFetching } = useQuery({
+      queryKey: ['price', token.coingeckoId],
+      queryFn: () => fetchTokenPrice(token.coingeckoId),
+      retryDelay: 30000,
+      gcTime: 1000 * 60 * 10
+    })
+    tokenStates.push({ id: token.id, data, loading: isFetching })
   })
 
   async function setCurrency(value: string) {
@@ -77,48 +61,76 @@ export const useCurrencyStore = defineStore('currency', () => {
     if (found) {
       currency.value = found
     }
-    refetchPrice()
+    // refetchPrice()
   }
 
-  const currencyCode = computed<currencyType>(
-    () => currency.value.code.toLowerCase() as currencyType
-  )
+  /**
+   * @description Get the price of a token in a specific currency
+   * @param tokenId
+   * @param currencyCode
+   * @returns
+   */
+  // function getTokenPrice(tokenId: TokenId, currencyCode: string): number | null {
+  //   const token = tokenStates.find((t) => t.id === tokenId)
+  //   const priceData = token?.data.value
+  //   if (!priceData) return null
+  //   if (!(currencyCode in priceData.market_data.current_price)) return null
+  //   return priceData.market_data.current_price[currencyCode] ?? null
+  // }
 
-  const prices = reactive({
-    nativeToken: {
-      id: NETWORK_TO_COIN_ID[NETWORK.currencySymbol],
-      name: NETWORK.currencySymbol,
-      symbol: NETWORK.currencySymbol,
-      priceInLocal: computed(() =>
-        priceResponse.value
-          ? priceResponse.value.market_data.current_price[currencyCode.value]
-          : null
-      ),
-      priceInUSD: computed(() =>
-        priceResponse.value ? priceResponse.value.market_data.current_price.usd : null
-      ),
-      isLoading
-    },
-    usdc: {
-      id: 'usd-coin',
-      name: 'USD Coin',
-      symbol: 'USDC',
-      priceInLocal: computed(() =>
-        usdPriceResponse.value
-          ? usdPriceResponse.value.market_data.current_price[currencyCode.value]
-          : null
-      ),
-      priceInUSD: computed(() =>
-        usdPriceResponse.value ? usdPriceResponse.value.market_data.current_price['usd'] : 1
-      ),
-      isLoading: computed(() => isLoadingUSDPrice.value)
+  // function getTokenPriceUSD(tokenId: TokenId): number | null {
+  //   const token = tokenStates.find((t) => t.id === tokenId)
+  //   const priceData = token?.data.value
+  //   if (!priceData) return null
+  //   return priceData.market_data.current_price.usd ?? null
+  // }
+
+  function isTokenLoading(tokenId: TokenId): boolean {
+    const token = tokenStates.find((t) => t.id === tokenId)
+    return token?.loading.value ?? false
+  }
+
+  /**
+   * @description Get token info and prices for a given tokenId
+   * Returns: { id, name, symbol, prices: [{ price, code, symbol }] }
+   */
+  function getTokenInfo(tokenId: TokenId) {
+    const token = SUPPORTED_TOKENS.find((t) => t.id === tokenId)
+    if (!token) return null
+    const priceData = tokenStates.find((t) => t.id === tokenId)?.data.value
+    const prices: Array<{ id: string; price: number | null; code: string; symbol: string }> = []
+    // Current currency
+    const currentCode = currency.value.code
+    prices.push({
+      id: 'local',
+      price: priceData?.market_data.current_price[currentCode.toLocaleLowerCase()] ?? null,
+      code: currentCode,
+      symbol: currency.value.symbol
+    })
+    // USD
+    prices.push({
+      id: 'usd',
+      price: priceData?.market_data.current_price.usd ?? null,
+      code: 'USD',
+      symbol: '$'
+    })
+    return {
+      id: token.id,
+      name: token.name,
+      symbol: token.symbol,
+      code: token.code,
+      prices
     }
-  })
+  }
 
   return {
     localCurrency: currency,
-    nativeToken: prices.nativeToken,
-    usdc: prices.usdc,
-    setCurrency
+    supportedTokens: SUPPORTED_TOKENS,
+    tokenStates,
+    // getTokenPrice,
+    // getTokenPriceUSD,
+    isTokenLoading,
+    setCurrency,
+    getTokenInfo
   }
 })
