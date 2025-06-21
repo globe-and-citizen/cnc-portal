@@ -108,7 +108,7 @@ describe.skip('CRSigne', () => {
   it('renders approve button when claim is pending and user is team owner', () => {
     const wrapper = mount(CRSigne, {
       props: {
-        claim: mockClaim
+        weeklyClaim: mockClaim
       }
     })
 
@@ -119,7 +119,7 @@ describe.skip('CRSigne', () => {
   it('does not render approve button when claim is not pending', () => {
     const wrapper = mount(CRSigne, {
       props: {
-        claim: { ...mockClaim, status: 'signed' }
+        weeklyClaim: { ...mockClaim, status: 'signed' }
       }
     })
 
@@ -133,7 +133,7 @@ describe.skip('CRSigne', () => {
 
     const wrapper = mount(CRSigne, {
       props: {
-        claim: mockClaim
+        weeklyClaim: mockClaim
       }
     })
 
@@ -143,7 +143,7 @@ describe.skip('CRSigne', () => {
   it('calls signTypedDataAsync and executeUpdateClaim when approve button is clicked', async () => {
     const wrapper = mount(CRSigne, {
       props: {
-        claim: mockClaim
+        weeklyClaim: mockClaim
       }
     })
 
@@ -158,7 +158,7 @@ describe.skip('CRSigne', () => {
 
     const wrapper = mount(CRSigne, {
       props: {
-        claim: mockClaim
+        weeklyClaim: mockClaim
       }
     })
 
@@ -180,7 +180,7 @@ describe.skip('CRSigne', () => {
 
     const wrapper = mount(CRSigne, {
       props: {
-        claim: mockClaim
+        weeklyClaim: mockClaim
       }
     })
 
