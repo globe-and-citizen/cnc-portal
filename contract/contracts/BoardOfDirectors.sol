@@ -240,6 +240,15 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
     emit OwnersChanged(owners.values());
   }
 
+  /**
+   * @dev Checks if an address is a board member.
+   * @param account The address to check.
+   * @return A boolean indicating if the address is a board member.
+   */
+  function isBoardMember(address account) external view returns (bool) {
+    return boardOfDirectors.contains(account);
+  }
+
   modifier onlyOwner() {
     require(owners.contains(msg.sender), 'Only owner can call this function');
     _;

@@ -14,6 +14,7 @@ import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 /// @dev Implements upgradeable patterns with OpenZeppelin contracts
 contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable  {
     mapping(uint256=>Types.Proposal) public proposalsById; 
+    mapping(uint256=>uint256) public totalVotesByProposalId;
 
 
     uint256 public proposalCount;
@@ -44,6 +45,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     /// @param _winnerCount Number of winners to be selected (for elections)
     /// @param _voters Array of addresses eligible to vote
     /// @param _candidates Array of candidate addresses (for elections)
+    /// @param _startDate Start date of the proposal
+    /// @param _endDate End date of the proposal
     /// @dev For elections, _candidates must not be empty
     function addProposal(
             string memory _title,
@@ -51,9 +54,17 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
             bool _isElection,
             uint256 _winnerCount,
             address[] memory _voters,
-            address[] memory _candidates
+            address[] memory _candidates,
+            uint256 _startDate,
+            uint256 _endDate
         ) public {
             require(bytes(_title).length > 0, "Title cannot be empty");
+            address[] memory boardOfDirectors = IBoardOfDirectors(boardOfDirectorsContractAddress).getBoardOfDirectors();
+            if (_isElection) {
+                require(owner() == msg.sender, "Only owner can create BoD elections");
+            } else {
+                require(boardOfDirectors.length > 0, "Board of Directors must be set before creating proposals");
+            }
 
             Types.Proposal storage newProposal = proposalsById[proposalCount];
             newProposal.id = proposalCount;
@@ -63,13 +74,34 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
             newProposal.isElection = _isElection;
             newProposal.isActive = true;
             newProposal.winnerCount = _winnerCount;
+            newProposal.startDate = _startDate;
+            newProposal.endDate = _endDate;
 
-            for (uint256 i = 0; i < _voters.length; i++) {
-                Types.Member memory voter = Types.Member({isEligible:true, isVoted: false, memberAddress:_voters[i]});
-                newProposal.voters.push(voter);
+            // For board-only proposals, automatically set voters from the Board of Directors
+            if (!_isElection && boardOfDirectorsContractAddress != address(0)) {
+                for (uint256 i = 0; i < boardOfDirectors.length; i++) {
+                    Types.Member memory voter = Types.Member({
+                        isEligible: true, 
+                        isVoted: false, 
+                        memberAddress: boardOfDirectors[i]
+                    });
+                    newProposal.voters.push(voter);
+                }
+            } else {
+                // Use provided voters for elections
+                for (uint256 i = 0; i < _voters.length; i++) {
+                    Types.Member memory voter = Types.Member({
+                        isEligible: true, 
+                        isVoted: false, 
+                        memberAddress: _voters[i]
+                    });
+                    newProposal.voters.push(voter);
+                }
             }
+
             if(_isElection){
                 require(_candidates.length > 0, "Candidates cannot be empty");
+                require(_candidates.length % 2 == 1, "Number of candidates must be odd");
                 for (uint256 i = 0; i < _candidates.length; i++) {
                         Types.Candidate memory candidate = Types.Candidate({candidateAddress:_candidates[i], votes:0});
                         newProposal.candidates.push(candidate);
@@ -93,6 +125,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         require(proposalId < proposalCount, "Proposal does not exist");
 
         Types.Proposal storage proposal = proposalsById[proposalId];
+        require(proposal.endDate > block.timestamp, "Voting period has ended");
+        require(proposal.startDate <= block.timestamp, "Voting period has not started yet");
         require(proposal.isActive, "Proposal is not active");
 
         Types.Member storage voter = findVoter(proposal, msg.sender);
@@ -103,7 +137,15 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         recordDirectiveVote(proposal, vote);
 
         voter.isVoted = true;
+        totalVotesByProposalId[proposalId] += 1;
+
         emit DirectiveVoted(msg.sender, proposalId, vote);
+
+        // Check if all voters have voted
+        if (totalVotesByProposalId[proposalId] == proposal.voters.length) {
+            proposal.isActive = false; // Close the proposal if all voters have voted
+            concludeProposal(proposalId);
+        }
     }
 
     /// @notice Allows a voter to vote in an election
@@ -114,6 +156,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         require(proposalId < proposalCount, "Proposal does not exist");
 
         Types.Proposal storage proposal = proposalsById[proposalId];
+        require(proposal.endDate > block.timestamp, "Voting period has ended");
+        require(proposal.startDate <= block.timestamp, "Voting period has not started yet");
         require(proposal.isActive, "Proposal is not active");
 
         Types.Member storage voter = findVoter(proposal, msg.sender);
@@ -248,21 +292,22 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
             // The founder will need to call selectWinner to choose the winner
             return;
         }
-        else if (option == Types.TieBreakOption.RUNOFF_ELECTION) {
-            // Create a new election with only the tied candidates
-            string memory newTitle = string(abi.encodePacked("Runoff: ", proposal.title));
-            addProposal(
-                newTitle,
-                proposal.description,
-                true,
-                proposal.winnerCount,
-                _getVoterAddresses(proposal),
-                proposal.tiedCandidates
-            );
-            emit RunoffElectionStarted(proposalCount - 1, proposal.tiedCandidates);
-            proposal.hasTie = false;
-            proposal.isActive = !proposal.isActive;
-        }
+        // else if (option == Types.TieBreakOption.RUNOFF_ELECTION) {
+        //     // Create a new election with only the tied candidates
+        //     string memory newTitle = string(abi.encodePacked("Runoff: ", proposal.title));
+        //     addProposal(
+        //         newTitle,
+        //         proposal.description,
+        //         true,
+        //         proposal.winnerCount,
+        //         _getVoterAddresses(proposal),
+        //         proposal.tiedCandidates,
+        //         false,
+        //     );
+        //     emit RunoffElectionStarted(proposalCount - 1, proposal.tiedCandidates);
+        //     proposal.hasTie = false;
+        //     proposal.isActive = !proposal.isActive;
+        // }
     }
 
     /// @notice Allows the founder to select a winner in case of a tie

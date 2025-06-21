@@ -40,5 +40,7 @@ library Types {
         bool hasTie;
         address[] tiedCandidates;
         TieBreakOption selectedTieBreakOption;
+        uint256 startDate;
+        uint256 endDate;
     }
 }
