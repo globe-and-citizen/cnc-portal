@@ -1,12 +1,6 @@
 <template>
   <div>
-    <div class="px-8 pb-4 flex justify-between items-center">
-      <span class="card-title">Pending Weekly Claim</span>
-      <div class="card-actions justify-end">
-        <CRAddERC20Support />
-        <SubmitClaims v-if="hasWage" />
-      </div>
-    </div>
+    <CRWeeklyClaimHeader />
     <transition-group name="stack" tag="div" class="stack w-full">
       <div
         v-for="(item, index) in data?.filter((weeklyClaim) => weeklyClaim.status === null)"
@@ -132,22 +126,15 @@ import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed, watch } from 'vue'
 import { useCurrencyStore } from '@/stores'
-import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
-import {
-  type WeeklyClaimResponse,
-  type RatePerHour,
-  type SupportedTokens,
-  type WageResponse
-} from '@/types'
+import { useUserDataStore, useTeamStore } from '@/stores'
+import { type WeeklyClaimResponse, type RatePerHour, type SupportedTokens } from '@/types'
 import CRSigne from './CRSigne.vue'
 import type { Address } from 'viem'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { getMondayStart } from '@/utils/dayUtils'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
 import type { TokenId } from '@/constant'
-import SubmitClaims from './SubmitClaims.vue'
-
-import CRAddERC20Support from './CRAddERC20Support.vue'
+import CRWeeklyClaimHeader from './CRWeeklyClaimHeader.vue'
 
 function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -155,7 +142,6 @@ function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) 
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
-const toastStore = useToastStore()
 
 const weeklyClaimUrl = computed(() => {
   return `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${
@@ -163,25 +149,6 @@ const weeklyClaimUrl = computed(() => {
       ? `&memberAddress=${userStore.address}`
       : ''
   }`
-})
-
-const { data: teamWageData, error: teamWageDataError } = useCustomFetch(
-  computed(() => `/wage/?teamId=${teamStore.currentTeam?.id}`)
-)
-  .get()
-  .json<Array<WageResponse>>()
-
-const hasWage = computed(() => {
-  const userWage = teamWageData.value?.find((wage) => wage.userAddress === userStore.address)
-  if (!userWage) return false
-
-  return true
-})
-
-watch(teamWageDataError, (newVal) => {
-  if (newVal) {
-    toastStore.addErrorToast('Failed to fetch user wage data')
-  }
 })
 
 const { data, error } = useCustomFetch(weeklyClaimUrl.value).get().json<WeeklyClaimResponse>()
