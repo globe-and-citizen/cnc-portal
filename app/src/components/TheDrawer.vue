@@ -294,7 +294,7 @@ const menuItems = computed(() => [
       name: 'cash-remunerations',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    active: route.name === 'cash-remunerations' || 'weekly-claim',
+    active: route.name === 'cash-remunerations' || route.name === 'weekly-claim',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
       {

@@ -36,7 +36,7 @@
           <span>{{ new Date(row.createdAt).toLocaleString() }}</span>
         </template>
         <template #action-data="{ row }">
-          <CRSigne :claim="formatRow(row) as CRSignClaim" @claim-signed="fetchTeamClaimData()" />
+          <CRSigne :weeklyClaim="formatRow(row) as CRSignClaim" @claim-signed="fetchTeamClaimData()" />
           <CRWithdrawClaim
             :claim="formatRow(row) as CRSignClaim"
             @claim-withdrawn="fetchTeamClaimData()"
