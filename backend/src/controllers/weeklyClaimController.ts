@@ -23,7 +23,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   if (!action || !isValidWeeklyClaimAction(action))
     errors.push("Invalid action. Allowed actions are: sign, withdraw");
 
-  if (!signature || !isHex(signature))
+  if (action == "sign" && (!signature || !isHex(signature)))
     errors.push("Missing or invalid signature");
 
   if (!id || isNaN(id)) errors.push("Missing or invalid id");
@@ -76,7 +76,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           return errorResponse(400, signErrors.join("; "), res);
 
         data = { signature, status: "signed" };
-        singleClaimStatus = "locked";
+        singleClaimStatus = "sign";
         break;
       case "withdraw":
         // Check if the weekly claim is already signed
@@ -148,7 +148,7 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "asc" },
     });
 
     return res.status(200).json(weeklyClaims);
