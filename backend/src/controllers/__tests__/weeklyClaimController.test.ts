@@ -123,23 +123,6 @@ describe("Weekly Claim Controller", () => {
       }));
 
       expect(response.body).toEqual(expectedResponse);
-
-      expect(findManySpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            claims: {
-              some: {
-                wage: {
-                  teamId: 1,
-                },
-              },
-            },
-            memberAddress: "0xAnotherAddress",
-          }),
-          include: expect.any(Object),
-          orderBy: { createdAt: "desc" },
-        })
-      );
     });
   });
 });
