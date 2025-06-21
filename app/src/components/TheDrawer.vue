@@ -214,12 +214,12 @@ import { onClickOutside } from '@vueuse/core'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
-import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useAppStore } from '@/stores'
 import { useRoute } from 'vue-router'
 
 const appStore = useAppStore()
 const route = useRoute()
-const userStore = useUserDataStore()
+// const userStore = useUserDataStore()
 
 interface User {
   name: string
