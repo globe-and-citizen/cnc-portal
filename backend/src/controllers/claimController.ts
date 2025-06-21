@@ -110,7 +110,7 @@ export const addClaim = async (req: Request, res: Response) => {
 
     return res.status(201).json(claim);
   } catch (error) {
-    return errorResponse(500, "Internal Server Error", res);
+    return errorResponse(500, error, res);
   } finally {
     await prisma.$disconnect();
   }
