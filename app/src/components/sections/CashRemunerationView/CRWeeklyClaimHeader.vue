@@ -1,7 +1,7 @@
 <template>
   <div>
-    <div class="px-8 pb-4 flex items-end" :class="{'justify-between': isTeamOwner}">
-      <span class="card-title"  v-if="isTeamOwner">Pending Weekly Claim</span>
+    <div class="px-8 pb-4 flex items-end" :class="{ 'justify-between': isTeamOwner }">
+      <span class="card-title" v-if="isTeamOwner">Pending Weekly Claim</span>
       <div class="card-actions justify-end">
         <CRAddERC20Support v-if="isTeamOwner" />
         <SubmitClaims v-if="hasWage" />
