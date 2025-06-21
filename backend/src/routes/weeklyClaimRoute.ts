@@ -4,6 +4,6 @@ import { getTeamWeeklyClaims, updateWeeklyClaims } from "../controllers/weeklyCl
 const weeklyClaimRoutes = express.Router();
 
 weeklyClaimRoutes.get("/", getTeamWeeklyClaims);
-weeklyClaimRoutes.put("/:claimId", updateWeeklyClaims)
+weeklyClaimRoutes.put("/:id", updateWeeklyClaims)
 
 export default weeklyClaimRoutes;

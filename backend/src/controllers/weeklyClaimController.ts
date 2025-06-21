@@ -4,89 +4,113 @@ import { prisma, errorResponse, getMondayStart } from "../utils";
 import { Prisma } from "@prisma/client";
 import { isHex } from "viem";
 
+// Type pour les actions autorisées sur un weekly claim
+export type WeeklyClaimAction = "sign" | "withdraw";
+
+// Fonction utilitaire pour valider l'action
+function isValidWeeklyClaimAction(action: any): action is WeeklyClaimAction {
+  return ["sign", "withdraw"].includes(action);
+}
+
 export const updateWeeklyClaims = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
-  const claimId = Number(req.params.claimId);
-  const { action } = req.query
-  const { signature } = req.body
+  const id = Number(req.params.id);
+  const action = req.query.action as WeeklyClaimAction;
+  const { signature } = req.body;
 
-  console.log('callerAddress: ', callerAddress)
-  console.log('claimId: ', claimId)
-  console.log('action: ', action)
-  console.log('signature: ', req.body.signature)
+  // Validation stricte des actions autorisées
+  const errors: string[] = [];
+  if (!action || !isValidWeeklyClaimAction(action))
+    errors.push("Invalid action. Allowed actions are: sign, withdraw");
 
-  const data: Prisma.WeeklyClaimUpdateInput = {}
-  const mondayStart = getMondayStart(new Date())
+  if (!signature || !isHex(signature))
+    errors.push("Missing or invalid signature");
 
-  if (!claimId || isNaN(claimId))
-    return errorResponse(400, "Missing or invalid claimId", res)
+  if (!id || isNaN(id)) errors.push("Missing or invalid id");
+
+  if (errors.length > 0) {
+    return errorResponse(400, errors.join("; "), res);
+  }
+
+  let data: Prisma.WeeklyClaimUpdateInput = {};
+  let singleClaimStatus = "pending";
 
   try {
-    const weeklyClaim = await prisma.weeklyClaim.findFirst({ 
-      where: { id: claimId },
+    // Utilisation de findUnique car id est unique
+    const weeklyClaim = await prisma.weeklyClaim.findUnique({
+      where: { id },
       include: {
         wage: {
-          include: { team: true }
-        }
-      }
-    })
+          include: { team: true },
+        },
+      },
+    });
 
-    let singleClaimStatus = 'pending'
-
-    switch(action) {
-      case 'sign':
-        // Validate signature
-        if (!signature || !isHex(signature))
-          return errorResponse(400, "Missing or invalid signature", res)
-        // Validate signer
-        if(weeklyClaim?.wage.team.ownerAddress !== callerAddress) 
-          return errorResponse(403, "Caller is not owner of the team", res)
-        // Validate week is completed
-        if(!weeklyClaim?.weekStart)
-          return errorResponse(400, 'Missing week start', res)
-        const weeklyClaimMondayStart = getMondayStart(weeklyClaim?.weekStart)
-        if(weeklyClaimMondayStart.getTime() === mondayStart.getTime())
-          return errorResponse(400, "Week not yet completed", res)
-        // Update signature and status
-        data.signature = signature
-        data.status = "signed"
-        singleClaimStatus = 'locked'
-        break;
-      case 'withdraw':
-        data.status = "withdrawn"
-        singleClaimStatus = "withdrawn"
-        console.log(`execute withdraw action...`)
+    if (!weeklyClaim) {
+      return errorResponse(404, "WeeklyClaim not found", res);
     }
 
-    // const updatedWeeklyClaim = await prisma.weeklyClaim.update({
-    //   where: { id: claimId },
-    //   data
-    // })
+    switch (action) {
+      case "sign":
+        const signErrors: string[] = [];
+        if (weeklyClaim.wage.team.ownerAddress !== callerAddress)
+          signErrors.push("Caller is not owner of the team");
 
-    // await prisma.claim.updateMany({
-    //   where: { weeklyClaimId: claimId },
-    //   data: { status: singleClaimStatus }
-    // })
+        // Check if the week is completed
+        if (
+          weeklyClaim.weekStart.getTime() >=
+          getMondayStart(new Date()).getTime()
+        ) {
+          signErrors.push("Week not yet completed");
+        }
+        // check if the weekly claim is already signed or withdrawn
+        if (weeklyClaim.status !== "pending") {
+          if (weeklyClaim.status === "signed") {
+            signErrors.push("Weekly claim already signed");
+          } else if (weeklyClaim.status === "withdrawn") {
+            signErrors.push("Weekly claim already withdrawn");
+          }
+        }
 
+        if (signErrors.length > 0)
+          return errorResponse(400, signErrors.join("; "), res);
+
+        data = { signature, status: "signed" };
+        singleClaimStatus = "locked";
+        break;
+      case "withdraw":
+        // Check if the weekly claim is already signed
+        if (weeklyClaim.status !== "signed") {
+          let withdrawErrorMsg =
+            "Weekly claim must be signed before it can be withdrawn";
+          if (weeklyClaim.status === "withdrawn") {
+            withdrawErrorMsg = "Weekly claim already withdrawn";
+          }
+          return errorResponse(400, withdrawErrorMsg, res);
+        }
+        data = { status: "withdrawn" };
+        singleClaimStatus = "withdrawn";
+        break;
+    }
+
+    // Transaction pour mettre à jour le weeklyClaim et les claims associés
     const [updatedWeeklyClaim] = await prisma.$transaction([
       prisma.weeklyClaim.update({
-        where: { id: claimId },
-        data
+        where: { id },
+        data,
       }),
       prisma.claim.updateMany({
-        where: { weeklyClaimId: claimId },
-        data: { status: singleClaimStatus }
-      })
+        where: { weeklyClaimId: id },
+        data: { status: singleClaimStatus },
+      }),
     ]);
 
-    res.status(200).json(updatedWeeklyClaim)
-  } catch(error) {
+    res.status(200).json(updatedWeeklyClaim);
+  } catch (error) {
     console.error(error);
-    return errorResponse(500, error, res)
-  } finally {
-    await prisma.$disconnect()
+    return errorResponse(500, error, res);
   }
-}
+};
 
 export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   const teamId = Number(req.query.teamId);
