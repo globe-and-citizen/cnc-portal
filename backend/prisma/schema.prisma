@@ -115,6 +115,7 @@ model Claim {
 
 model WeeklyClaim {
   id            Int      @id @default(autoincrement())
+  status        String?
   weekStart     DateTime
   data          Json
   memberAddress String
