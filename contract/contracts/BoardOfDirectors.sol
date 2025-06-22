@@ -2,13 +2,16 @@
 pragma solidity ^0.8.24;
 
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
+import {
+  IBoardOfDirectors
+} from './interfaces/IBoardOfDirectors.sol';
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 
 /**
  * @title BoardOfDirectors
  * @dev A contract that manages a board of directors and their actions.
  */
-contract BoardOfDirectors is ReentrancyGuardUpgradeable {
+contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
   using EnumerableSet for EnumerableSet.AddressSet;
 
   EnumerableSet.AddressSet private owners;
