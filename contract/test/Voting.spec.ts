@@ -153,20 +153,42 @@ describe('Voting Contract', () => {
     })
 
     it('should revert when creating a proposal with an empty title', async () => {
-      const { voting, proposalInfo } = await loadFixture(boardOfDirectorsSetFixture)
+      const { voting, proposalInfo, member1 } = await loadFixture(boardOfDirectorsSetFixture)
       const { startTime, endTime } = getProposalTimes()
       await expect(
-        voting.addProposal(
-          '',
-          proposalInfo.description,
-          proposalInfo.isElection,
-          0,
-          proposalInfo.voters,
-          proposalInfo.candidates,
-          startTime,
-          endTime
-        )
+        voting
+          .connect(member1)
+          .addProposal(
+            '',
+            proposalInfo.description,
+            proposalInfo.isElection,
+            0,
+            proposalInfo.voters,
+            proposalInfo.candidates,
+            startTime,
+            endTime
+          )
       ).to.be.revertedWith('Title cannot be empty')
+    })
+
+    it('should only allow board members to create directive proposals', async () => {
+      const { voting, member4, proposalInfo } = await loadFixture(boardOfDirectorsSetFixture)
+      const { startTime, endTime } = getProposalTimes()
+
+      await expect(
+        voting
+          .connect(member4)
+          .addProposal(
+            proposalInfo.title,
+            proposalInfo.description,
+            false,
+            0,
+            [],
+            [],
+            startTime,
+            endTime
+          )
+      ).to.be.revertedWith('Only board members can create proposals')
     })
 
     it('should revert when creating an election with no candidates', async () => {
@@ -188,43 +210,40 @@ describe('Voting Contract', () => {
       ).to.be.revertedWith('Candidates cannot be empty')
     })
 
-    it('should revert when creating an election with an even number of candidates', async () => {
-      const { voting, owner, electionProposalInfo, member4 } = await loadFixture(
-        boardOfDirectorsSetFixture
-      )
+    it('should revert when creating an election with an invalid number of winners', async () => {
+      const { voting, owner, electionProposalInfo } = await loadFixture(boardOfDirectorsSetFixture)
       const { startTime, endTime } = getProposalTimes()
-      const evenCandidates = [...electionProposalInfo.candidates, member4.address]
       await expect(
-        voting
-          .connect(owner)
-          .addProposal(
-            electionProposalInfo.title,
-            electionProposalInfo.description,
-            true,
-            2,
-            electionProposalInfo.voters,
-            evenCandidates,
-            startTime,
-            endTime
-          )
-      ).to.be.revertedWith('Number of candidates must be odd')
-    })
-
-    it('should allow creating a directive proposal after BoD is set', async () => {
-      const { voting, proposalInfo } = await loadFixture(boardOfDirectorsSetFixture)
-      const { startTime, endTime } = getProposalTimes()
-
-      await expect(
-        voting.addProposal(
-          proposalInfo.title,
-          proposalInfo.description,
-          proposalInfo.isElection,
-          0,
-          proposalInfo.voters,
-          proposalInfo.candidates,
+        voting.connect(owner).addProposal(
+          electionProposalInfo.title,
+          electionProposalInfo.description,
+          true,
+          2, // Invalid number of winners
+          electionProposalInfo.voters,
+          electionProposalInfo.candidates,
           startTime,
           endTime
         )
+      ).to.be.revertedWith('Number of winners must be odd')
+    })
+
+    it('should allow creating a directive proposal after BoD is set by a board member', async () => {
+      const { voting, proposalInfo, member1 } = await loadFixture(boardOfDirectorsSetFixture)
+      const { startTime, endTime } = getProposalTimes()
+
+      await expect(
+        voting
+          .connect(member1)
+          .addProposal(
+            proposalInfo.title,
+            proposalInfo.description,
+            proposalInfo.isElection,
+            0,
+            proposalInfo.voters,
+            proposalInfo.candidates,
+            startTime,
+            endTime
+          )
       )
         .to.emit(voting, 'ProposalAdded')
         .withArgs(0, proposalInfo.title, proposalInfo.description)
@@ -257,18 +276,16 @@ describe('Voting Contract', () => {
       const { startTime, endTime } = getProposalTimes()
 
       await expect(
-        voting
-          .connect(owner)
-          .addProposal(
-            electionProposalInfo.title,
-            electionProposalInfo.description,
-            electionProposalInfo.isElection,
-            2,
-            electionProposalInfo.voters,
-            electionProposalInfo.candidates,
-            startTime,
-            endTime
-          )
+        voting.connect(owner).addProposal(
+          electionProposalInfo.title,
+          electionProposalInfo.description,
+          electionProposalInfo.isElection,
+          3, // Valid winner count
+          electionProposalInfo.voters,
+          electionProposalInfo.candidates,
+          startTime,
+          endTime
+        )
       )
         .to.emit(voting, 'ProposalAdded')
         .withArgs(0, electionProposalInfo.title, electionProposalInfo.description)
@@ -277,18 +294,16 @@ describe('Voting Contract', () => {
     it('should return correct proposal details', async () => {
       const { voting, owner, electionProposalInfo } = await loadFixture(boardOfDirectorsSetFixture)
       const { startTime, endTime } = getProposalTimes()
-      await voting
-        .connect(owner)
-        .addProposal(
-          electionProposalInfo.title,
-          electionProposalInfo.description,
-          electionProposalInfo.isElection,
-          2,
-          electionProposalInfo.voters,
-          electionProposalInfo.candidates,
-          startTime,
-          endTime
-        )
+      await voting.connect(owner).addProposal(
+        electionProposalInfo.title,
+        electionProposalInfo.description,
+        electionProposalInfo.isElection,
+        3, // Valid winner count
+        electionProposalInfo.voters,
+        electionProposalInfo.candidates,
+        startTime,
+        endTime
+      )
 
       const proposal = await voting.proposalsById(0)
       expect(proposal.title).to.equal(electionProposalInfo.title)
@@ -316,23 +331,25 @@ describe('Voting Contract', () => {
       const { startTime, endTime } = getProposalTimes()
 
       // Add a directive proposal (ID 0)
-      await voting.addProposal(
-        proposalInfo.title,
-        proposalInfo.description,
-        false,
-        0,
-        [],
-        [],
-        startTime,
-        endTime
-      )
+      await voting
+        .connect(member1)
+        .addProposal(
+          proposalInfo.title,
+          proposalInfo.description,
+          false,
+          0,
+          [],
+          [],
+          startTime,
+          endTime
+        )
 
       // Add an election proposal (ID 1)
       await voting.connect(owner).addProposal(
         electionProposalInfo.title,
         electionProposalInfo.description,
         true,
-        2, // 2 winners
+        3, // 3 winners
         electionProposalInfo.voters,
         electionProposalInfo.candidates,
         startTime,
@@ -415,16 +432,18 @@ describe('Voting Contract', () => {
       const { voting, member1, proposalInfo } = await loadFixture(boardOfDirectorsSetFixture)
       const startTime = (await time.latest()) + 3600
       const endTime = startTime + 3600
-      await voting.addProposal(
-        proposalInfo.title,
-        proposalInfo.description,
-        false,
-        0,
-        [],
-        [],
-        startTime,
-        endTime
-      )
+      await voting
+        .connect(member1)
+        .addProposal(
+          proposalInfo.title,
+          proposalInfo.description,
+          false,
+          0,
+          [],
+          [],
+          startTime,
+          endTime
+        )
       await expect(voting.connect(member1).voteDirective(0, 1)).to.be.revertedWith(
         'Voting period has not started yet'
       )
@@ -433,16 +452,18 @@ describe('Voting Contract', () => {
     it('should revert when voting after the proposal end time', async () => {
       const { voting, member1, proposalInfo } = await loadFixture(boardOfDirectorsSetFixture)
       const { startTime, endTime } = getProposalTimes()
-      await voting.addProposal(
-        proposalInfo.title,
-        proposalInfo.description,
-        false,
-        0,
-        [],
-        [],
-        startTime,
-        endTime
-      )
+      await voting
+        .connect(member1)
+        .addProposal(
+          proposalInfo.title,
+          proposalInfo.description,
+          false,
+          0,
+          [],
+          [],
+          startTime,
+          endTime
+        )
       await time.increaseTo(endTime + 1)
       await expect(voting.connect(member1).voteDirective(0, 1)).to.be.revertedWith(
         'Voting period has ended'
@@ -503,16 +524,18 @@ describe('Voting Contract', () => {
         .connect(owner)
         .setBoardOfDirectors([member1.address, member2.address, member3.address])
       const { startTime, endTime } = getProposalTimes()
-      await voting.addProposal(
-        proposalInfo.title,
-        proposalInfo.description,
-        false,
-        0,
-        [],
-        [],
-        startTime,
-        endTime
-      )
+      await voting
+        .connect(member1)
+        .addProposal(
+          proposalInfo.title,
+          proposalInfo.description,
+          false,
+          0,
+          [],
+          [],
+          startTime,
+          endTime
+        )
 
       await voting.connect(member1).voteDirective(0, 1) // Yes
       await voting.connect(member2).voteDirective(0, 0) // No
@@ -532,18 +555,16 @@ describe('Voting Contract', () => {
       const { voting, owner, member1, electionProposalInfo, candidates } =
         await loadFixture(deployFixture)
       const { startTime, endTime } = getProposalTimes()
-      await voting
-        .connect(owner)
-        .addProposal(
-          electionProposalInfo.title,
-          electionProposalInfo.description,
-          true,
-          2,
-          electionProposalInfo.voters,
-          candidates,
-          startTime,
-          endTime
-        )
+      await voting.connect(owner).addProposal(
+        electionProposalInfo.title,
+        electionProposalInfo.description,
+        true,
+        3, // 3 winners
+        electionProposalInfo.voters,
+        candidates,
+        startTime,
+        endTime
+      )
       await time.increaseTo(endTime + 1)
       await expect(voting.connect(member1).concludeProposal(0)).to.be.revertedWith(
         'Only owner can conclude elections'
@@ -600,18 +621,16 @@ describe('Voting Contract', () => {
       const { voting, owner, member1, member2, member3, electionProposalInfo, candidates } =
         await loadFixture(deployFixture)
       const { startTime, endTime } = getProposalTimes()
-      await voting
-        .connect(owner)
-        .addProposal(
-          electionProposalInfo.title,
-          electionProposalInfo.description,
-          true,
-          2,
-          electionProposalInfo.voters,
-          candidates,
-          startTime,
-          endTime
-        )
+      await voting.connect(owner).addProposal(
+        electionProposalInfo.title,
+        electionProposalInfo.description,
+        true,
+        3, // 3 winners
+        electionProposalInfo.voters,
+        candidates,
+        startTime,
+        endTime
+      )
 
       await voting.connect(member1).voteElection(0, candidates[0])
       await voting.connect(member2).voteElection(0, candidates[0])
@@ -622,29 +641,35 @@ describe('Voting Contract', () => {
         .to.emit(voting, 'ProposalConcluded')
         .withArgs(0, false)
         .to.emit(voting, 'BoardOfDirectorsSet')
-        .withArgs([candidates[0], candidates[1]])
+        .withArgs([candidates[0], candidates[1], candidates[2]])
 
       const concludedProposal = await voting.getProposalById(0)
       expect(concludedProposal.isActive).to.be.false
     })
 
     it('should detect a tie in an election', async () => {
-      const { voting, owner, member1, member2, member3, electionProposalInfo, candidates } =
-        await loadFixture(deployFixture)
+      const {
+        voting,
+        owner,
+        member1,
+        member2,
+        member3,
+        member4,
+        electionProposalInfo,
+        candidates
+      } = await loadFixture(deployFixture)
       const { startTime, endTime } = getProposalTimes()
-      // 2 winners, but 3 candidates get 1 vote each
-      await voting
-        .connect(owner)
-        .addProposal(
-          electionProposalInfo.title,
-          electionProposalInfo.description,
-          true,
-          2,
-          electionProposalInfo.voters,
-          candidates,
-          startTime,
-          endTime
-        )
+      // 3 winners, but 3 candidates get 1 vote each
+      await voting.connect(owner).addProposal(
+        electionProposalInfo.title,
+        electionProposalInfo.description,
+        true,
+        3,
+        electionProposalInfo.voters,
+        [...candidates, member4.address], // Add a fourth candidate
+        startTime,
+        endTime
+      )
 
       await voting.connect(member1).voteElection(0, candidates[0])
       await voting.connect(member2).voteElection(0, candidates[1])
@@ -660,16 +685,24 @@ describe('Voting Contract', () => {
     })
 
     it('should resolve a tie by increasing winner count', async () => {
-      const { voting, owner, member1, member2, member3, electionProposalInfo, candidates } =
-        await loadFixture(deployFixture)
+      const {
+        voting,
+        owner,
+        member1,
+        member2,
+        member3,
+        member4,
+        electionProposalInfo,
+        candidates
+      } = await loadFixture(deployFixture)
       const { startTime, endTime } = getProposalTimes()
       await voting.connect(owner).addProposal(
         electionProposalInfo.title,
         electionProposalInfo.description,
         true,
-        2, // 2 winners
+        3, // 3 winner
         electionProposalInfo.voters,
-        candidates,
+        [...candidates, member4.address], // Add a fourth candidate
         startTime,
         endTime
       )
@@ -677,7 +710,8 @@ describe('Voting Contract', () => {
       await voting.connect(member1).voteElection(0, candidates[0])
       await voting.connect(member2).voteElection(0, candidates[1])
       await voting.connect(member3).voteElection(0, candidates[2])
-      // Now votes are 1, 1, 1. Tie for 3 candidates for 2 spots.
+      await voting.connect(member4).voteElection(0, member4.address)
+      // Now votes are 1, 1, 1, 1. Tie for 4 candidates for 3 spots.
 
       await time.increaseTo(endTime + 1)
       await voting.concludeProposal(0) // Tie detected
@@ -688,7 +722,7 @@ describe('Voting Contract', () => {
       const proposal = await voting.getProposalById(0)
       expect(proposal.hasTie).to.be.false
       expect(proposal.isActive).to.be.false
-      expect(proposal.winnerCount).to.equal(3)
+      expect(proposal.winnerCount).to.equal(4)
     })
 
     it('should resolve a tie by random selection', async () => {
