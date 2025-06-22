@@ -143,7 +143,6 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
 
         // Check if all voters have voted
         if (totalVotesByProposalId[proposalId] == proposal.voters.length) {
-            proposal.isActive = false; // Close the proposal if all voters have voted
             concludeProposal(proposalId);
         }
     }
@@ -184,11 +183,13 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     /// @dev Only the proposal creator can conclude it. Handles tie detection for elections
     function concludeProposal(uint256 proposalId) public {
         require(proposalId < proposalCount, "Proposal does not exist");
-        require(msg.sender == proposalsById[proposalId].draftedBy, "Only the founder can conclude the proposal");
 
         Types.Proposal storage proposal = proposalsById[proposalId];
 
         if(proposal.isElection){
+            require(owner() == msg.sender, "Only owner can conclude elections");
+            require(proposal.endDate <= block.timestamp, "Voting period has not ended yet");
+
             uint256 winnerCount = proposal.winnerCount;
             Types.Candidate[] memory candidates = proposal.candidates;
 
@@ -240,6 +241,11 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
             }
             IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
             emit BoardOfDirectorsSet(winnerList);
+        } else {
+            require(
+                owner() == msg.sender || isBoardOfDirector(msg.sender),
+                'Only the founder or board member can conclude this proposal'
+            );
         }
         proposal.isActive = !proposal.isActive;
 
@@ -342,17 +348,6 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         proposal.isActive = !proposal.isActive;
     }
 
-    /// @notice Internal function to get all voter addresses from a proposal
-    /// @param proposal The proposal to extract voters from
-    /// @return Array of voter addresses
-    function _getVoterAddresses(Types.Proposal storage proposal) internal view returns (address[] memory) {
-        address[] memory voterAddresses = new address[](proposal.voters.length);
-        for (uint256 i = 0; i < proposal.voters.length; i++) {
-            voterAddresses[i] = proposal.voters[i].memberAddress;
-        }
-        return voterAddresses;
-    }
-
     /// @notice Finds a voter in a proposal's voter list
     /// @param proposal The proposal to search in
     /// @param voterAddress The address of the voter to find
@@ -389,6 +384,13 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         } else {
             revert("Invalid vote");
         }
+    }
+
+    /// @notice Check if msg.address is a member of the Board of Directors
+    /// @param _address The address to check
+    /// @return bool True if the address is a member, false otherwise
+    function isBoardOfDirector(address _address) public view returns (bool) {
+        return IBoardOfDirectors(boardOfDirectorsContractAddress).isBoardMember(_address);
     }
 
     /// @notice Sets the address of the Board of Directors contract
