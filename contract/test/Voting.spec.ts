@@ -174,16 +174,18 @@ describe('Voting Contract', () => {
       const { voting, owner, electionProposalInfo } = await loadFixture(boardOfDirectorsSetFixture)
       const { startTime, endTime } = getProposalTimes()
       await expect(
-        voting.connect(owner).addProposal(
-          electionProposalInfo.title,
-          electionProposalInfo.description,
-          true,
-          2,
-          electionProposalInfo.voters,
-          [],
-          startTime,
-          endTime
-        )
+        voting
+          .connect(owner)
+          .addProposal(
+            electionProposalInfo.title,
+            electionProposalInfo.description,
+            true,
+            2,
+            electionProposalInfo.voters,
+            [],
+            startTime,
+            endTime
+          )
       ).to.be.revertedWith('Candidates cannot be empty')
     })
 
@@ -194,16 +196,18 @@ describe('Voting Contract', () => {
       const { startTime, endTime } = getProposalTimes()
       const evenCandidates = [...electionProposalInfo.candidates, member4.address]
       await expect(
-        voting.connect(owner).addProposal(
-          electionProposalInfo.title,
-          electionProposalInfo.description,
-          true,
-          2,
-          electionProposalInfo.voters,
-          evenCandidates,
-          startTime,
-          endTime
-        )
+        voting
+          .connect(owner)
+          .addProposal(
+            electionProposalInfo.title,
+            electionProposalInfo.description,
+            true,
+            2,
+            electionProposalInfo.voters,
+            evenCandidates,
+            startTime,
+            endTime
+          )
       ).to.be.revertedWith('Number of candidates must be odd')
     })
 
@@ -524,9 +528,8 @@ describe('Voting Contract', () => {
     })
 
     it('should revert when a non-owner tries to conclude an election', async () => {
-      const { voting, owner, member1, electionProposalInfo, candidates } = await loadFixture(
-        deployFixture
-      )
+      const { voting, owner, member1, electionProposalInfo, candidates } =
+        await loadFixture(deployFixture)
       const { startTime, endTime } = getProposalTimes()
       await voting
         .connect(owner)
@@ -659,18 +662,16 @@ describe('Voting Contract', () => {
       const { voting, owner, member1, member2, member3, electionProposalInfo, candidates } =
         await loadFixture(deployFixture)
       const { startTime, endTime } = getProposalTimes()
-      await voting
-        .connect(owner)
-        .addProposal(
-          electionProposalInfo.title,
-          electionProposalInfo.description,
-          true,
-          2, // 2 winners
-          electionProposalInfo.voters,
-          candidates,
-          startTime,
-          endTime
-        )
+      await voting.connect(owner).addProposal(
+        electionProposalInfo.title,
+        electionProposalInfo.description,
+        true,
+        2, // 2 winners
+        electionProposalInfo.voters,
+        candidates,
+        startTime,
+        endTime
+      )
 
       await voting.connect(member1).voteElection(0, candidates[0])
       await voting.connect(member2).voteElection(0, candidates[1])
