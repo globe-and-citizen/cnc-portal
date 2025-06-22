@@ -36,8 +36,14 @@
           <span>{{ new Date(row.createdAt).toLocaleString() }}</span>
         </template>
         <template #action-data="{ row }">
-          <CRSigne :claim="formatRow(row)" @claim-signed="fetchTeamClaimData()" />
-          <CRWithdrawClaim :claim="formatRow(row)" @claim-withdrawn="fetchTeamClaimData()" />
+          <CRSigne
+            :weeklyClaim="formatRow(row) as CRSignClaim"
+            @claim-signed="fetchTeamClaimData()"
+          />
+          <CRWithdrawClaim
+            :claim="formatRow(row) as CRSignClaim"
+            @claim-withdrawn="fetchTeamClaimData()"
+          />
           <!-- <ButtonUI
             v-if="row.status == 'pending' && ownerAddress == userDataStore.address"
             variant="success"
@@ -108,7 +114,7 @@
 import TableComponent, { type TableColumn, type TableRow } from '@/components/TableComponent.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useCurrencyStore, useTeamStore, useToastStore, useUserDataStore } from '@/stores'
-import type { ClaimResponse, WageResponse } from '@/types'
+import type { ClaimResponse, CRSignClaim, WageResponse } from '@/types'
 import { computed, ref, watch } from 'vue'
 import SubmitClaims from './SubmitClaims.vue'
 import UserComponent from '@/components/UserComponent.vue'
@@ -130,9 +136,9 @@ const statusUrl = computed(() =>
 )
 const claimURL = computed(() => `/claim/?teamId=${teamId.value}${statusUrl.value}`)
 const getHourlyRateInUserCurrency = (rate: number) => {
-  return (
-    currencyStore.nativeToken.priceInLocal ? rate * currencyStore.nativeToken.priceInLocal : 0
-  ).toFixed(2)
+  const nativeTokenInfo = currencyStore.getTokenInfo('native')
+  const price = nativeTokenInfo?.prices.find((p) => p.id == 'local')?.price || 0
+  return (rate * price).toFixed(2)
 }
 const {
   data: teamClaimData,

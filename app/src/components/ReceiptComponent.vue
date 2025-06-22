@@ -52,6 +52,8 @@ import { NETWORK } from '@/constant'
 
 const { receiptData } = defineProps<{ receiptData: Partial<ReceiptData> }>()
 const currencyStore = useCurrencyStore()
+
+// @ts-expect-error: nativeToken is not typed in currencyStore but is available at runtime
 const { nativeToken } = storeToRefs(currencyStore)
 
 const emit = defineEmits<{

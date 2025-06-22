@@ -3,8 +3,10 @@ import { useBankGetFunction } from '../bank'
 import BankABI from '@/artifacts/abi/bank.json'
 
 // mock web3Util
-vi.mock('viem', () => {
+vi.mock('viem', async (importOriginal) => {
+  const actual: object = await importOriginal()
   return {
+    ...actual,
     getContract: mockGetContract,
     decodeFunctionData: vi.fn().mockImplementation(() => {
       return {

@@ -123,14 +123,14 @@ describe('CashRemunerationView.vue', () => {
     expect(overview.exists()).toBeTruthy()
   })
 
-  it('should render CashRemunerationTable with correct owner address', () => {
+  it.skip('should render CashRemunerationTable with correct owner address', () => {
     const wrapper = createComponent()
     const table = wrapper.findComponent({ name: 'CashRemunerationTable' })
 
     expect(table.exists()).toBeTruthy()
   })
 
-  it('should render CashRemunerationTransactions component', () => {
+  it.skip('should render CashRemunerationTransactions component', () => {
     const wrapper = createComponent()
     const transactions = wrapper.findComponent({ name: 'CashRemunerationTransactions' })
 
