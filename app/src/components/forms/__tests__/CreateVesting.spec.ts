@@ -3,7 +3,11 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import CreateVesting from '@/components/forms/CreateVesting.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
+import { parseUnits } from 'viem'
 import { type VestingRow } from '@/types/vesting'
+import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import { VESTING_ADDRESS } from '@/constant'
+import VestingABI from '@/artifacts/abi/Vesting.json'
 const mockWriteContract = {
   writeContract: vi.fn(),
   error: ref(null),
@@ -33,7 +37,7 @@ const mockWaitForReceipt = {
 const mockReadContract = {
   data: ref(BigInt('10000000000000000000')), // 10 tokens
   refetch: vi.fn(() => Promise.resolve()),
-  error: ref(null)
+  error: ref<null | Error>(null)
 }
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -46,12 +50,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-vi.mock('@/stores/useToastStore', () => ({
-  useToastStore: () => ({
-    addSuccessToast: vi.fn(),
-    addErrorToast: vi.fn()
-  })
-}))
+vi.mock('@/stores/useToastStore')
 
 vi.mock('@/stores', () => ({
   useUserDataStore: () => ({
@@ -80,6 +79,7 @@ describe('CreateVesting.vue', () => {
     })
 
   beforeEach(() => {
+    vi.clearAllMocks()
     wrapper = mountComponent()
   })
 
@@ -113,7 +113,6 @@ describe('CreateVesting.vue', () => {
       await wrapper.vm.$nextTick()
 
       const approveBtn = wrapper.find('[data-test="approve-btn"]')
-      console.log('===========the approveBtn', approveBtn.attributes('loading'))
       expect(approveBtn.attributes('disabled')).toBeDefined()
     })
   })
@@ -131,11 +130,72 @@ describe('CreateVesting.vue', () => {
       await wrapper.vm.$nextTick()
     })
 
+    it('shows error toast when allowance check fails', async () => {
+      // Clear existing vestings to prevent duplicate check
+      //mockVestingInfos.value = []
+      // Mock the error scenario
+      const { addErrorToast } = useToastStore()
+
+      mockReadContract.error.value = new Error('Allowance check failed')
+      mockReadContract.data.value = BigInt(0)
+      wrapper = mountComponent()
+      await wrapper.vm.$nextTick()
+
+      // Set form values with a new address (not in vestings)
+      await wrapper
+        .find('[data-test="member"]')
+        .setValue('0x1500000000000000000000000000000000000123')
+      await wrapper.find('[data-test="total-amount"]').setValue(5)
+      await wrapper.vm.$nextTick()
+
+      // Trigger allowance check
+      const approveBtn = wrapper.find('[data-test="approve-btn"]')
+      await approveBtn.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Verify error toast was called with correct message
+      expect(addErrorToast).toHaveBeenCalledWith('error on get Allowance')
+    })
+
     it('calls writeContract on valid form and tokenApproved=true', async () => {
+      mockReadContract.data.value = parseUnits('1000', 6)
+
+      wrapper = mountComponent()
+      await wrapper.vm.$nextTick()
+      await wrapper
+        .find('[data-test="member"]')
+        .setValue('0x120000000000000000000000000000000000dead')
+      await wrapper.find('[data-test="start-date"]').setValue('2025-06-13')
+      await wrapper.find('[data-test="duration"]').setValue(30)
+      await wrapper.find('[data-test="cliff"]').setValue(5)
+      await wrapper.find('[data-test="total-amount"]').setValue(5)
+      await wrapper.setData({ tokenApproved: true })
+      await wrapper.vm.$nextTick()
+
+      // Submit
       const submitBtn = wrapper.find('[data-test="submit-btn"]')
       expect(submitBtn.attributes('disabled')).toBeUndefined()
       await submitBtn.trigger('click')
-      expect(mockWriteContract.writeContract).toHaveBeenCalled()
+      await wrapper.vm.$nextTick()
+
+      const start = Math.floor(new Date('2025-06-13').getTime() / 1000)
+      const durationInSeconds = 30 * 24 * 60 * 60
+      const cliffInSeconds = 5 * 24 * 60 * 60
+      const amountInUnits = parseUnits('5', 6)
+      expect(mockWriteContract.writeContract).toHaveBeenCalledWith({
+        address: VESTING_ADDRESS,
+        abi: VestingABI,
+        functionName: 'addVesting',
+        args: [
+          1, // teamId
+          '0x120000000000000000000000000000000000dead',
+          start,
+          durationInSeconds,
+          cliffInSeconds,
+          amountInUnits,
+          '0x000000000000000000000000000000000000beef' // tokenAddress
+        ]
+      })
     })
 
     it.skip('disables submit button if tokenApproved is false', async () => {

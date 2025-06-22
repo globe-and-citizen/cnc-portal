@@ -82,7 +82,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
 import VestingABI from '@/artifacts/abi/Vesting.json'
 import { VESTING_ADDRESS } from '@/constant'
-import { parseEther, formatEther, type Address, formatUnits, parseUnits } from 'viem'
+import { parseEther, type Address, formatUnits, parseUnits } from 'viem'
 import { useToastStore } from '@/stores/useToastStore'
 import { type VestingRow } from '@/types/vesting'
 const { addSuccessToast, addErrorToast } = useToastStore()
@@ -254,21 +254,20 @@ async function submit() {
   const durationInSeconds = duration.value * 24 * 60 * 60
   const cliffInSeconds = cliff.value * 24 * 60 * 60
   await refetchTokenBalance()
-  console.log('the token balance ===== ', tokenBalance.value)
+
   if (tokenBalance.value !== undefined) {
-    const tokenBalanceFormatted = formatUnits(tokenBalance.value, 6)
     const totalAmountInUnits = parseUnits(totalAmount.value.toString(), 6)
-
-    console.log('Token Balance:', tokenBalanceFormatted)
-    console.log('Total Amount:', totalAmount.value)
-
     if (tokenBalance.value < totalAmountInUnits) {
       addErrorToast('Insufficient token balance')
       return
     }
   }
   await getAllowance()
-  if (allowance.value !== undefined && Number(formatEther(allowance.value)) < totalAmount.value) {
+
+  if (
+    allowance.value !== undefined &&
+    Number(formatUnits(allowance.value, 6)) < totalAmount.value
+  ) {
     addErrorToast('Allowance is less than the total amount')
 
     return

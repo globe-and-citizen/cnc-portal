@@ -227,4 +227,39 @@ describe('Vesting', () => {
     expect(members[0]).to.equal(member.address)
     expect(archivedInfos[0].totalAmount).to.equal(vAmount)
   })
+
+  it('should revert in createTeam if token address is zero', async () => {
+    await expect(
+      vesting.createTeam(teamId, teamOwner.address, ethers.ZeroAddress)
+    ).to.be.revertedWith('Invalid token')
+  })
+
+  it('should return active vestings with members for a team', async () => {
+    // Add first vesting
+    const vestingAmount = vestAmount * BigInt(3)
+
+    await token.connect(teamOwner).approve(vesting.target, vestingAmount)
+
+    await vesting
+      .connect(teamOwner)
+      .addVesting(teamId, member.address, start, duration, cliff, vestAmount, token.target)
+
+    // Add second vesting
+    await vesting
+      .connect(teamOwner)
+      .addVesting(teamId, member_2.address, start, duration, cliff, vestAmount, token.target)
+
+    // Stop one vesting to make it inactive
+    await vesting.connect(teamOwner).stopVesting(member.address, teamId)
+
+    // Get active vestings
+    const [members, vestingInfos] = await vesting.getTeamVestingsWithMembers(teamId)
+
+    // Should only include active vesting (member_2)
+    expect(members.length).to.equal(1)
+    expect(vestingInfos.length).to.equal(1)
+    expect(members[0]).to.equal(member_2.address)
+    expect(vestingInfos[0].active).to.be.true
+    expect(vestingInfos[0].totalAmount).to.equal(vestAmount)
+  })
 })

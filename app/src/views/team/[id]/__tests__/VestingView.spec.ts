@@ -37,32 +37,6 @@ const mockCurrentTeam = ref({
   ]
 })
 
-// User & Team stores
-// Define mock stores function
-// const mockStores = {
-//   userDataStore: {
-//     address: memberAddress
-//   },
-//   teamStore: {
-//     currentTeam: ref({
-//       id: 1,
-//       ownerAddress: memberAddress,
-//       teamContracts: [
-//         {
-//           type: 'InvestorsV1',
-//           address: '0x000000000000000000000000000000000000beef'
-//         }
-//       ]
-//     })
-//   }
-// }
-
-// // Mock the stores using the function
-// vi.mock('@/stores', () => ({
-//   useUserDataStore: () => mockStores.userDataStore,
-//   useTeamStore: () => mockStores.teamStore
-// }))
-
 vi.mock('@/stores', () => ({
   useUserDataStore: () => ({
     address: memberAddress
@@ -191,7 +165,7 @@ describe('VestingView.vue', () => {
     const toggleBtn = wrapper.find('[data-test="toggle-vesting-view"]')
 
     expect(toggleBtn.exists()).toBe(true)
-    console.log('Toggle button =======:', toggleBtn.html())
+
     expect(toggleBtn.text().toLowerCase()).toContain('actives')
     expect(toggleBtn.classes()).toContain('btn-secondary')
 
@@ -211,31 +185,4 @@ describe('VestingView.vue', () => {
     expect(component.props('teamId')).toBe(1)
     expect(component.props('tokenAddress')).toBe('0x000000000000000000000000000000000000beef')
   })
-
-  // it('shows success toast and refetches data after successful stop', async () => {
-  //   const { addSuccessToast } = useToastStore()
-  //   await wrapper.vm.$nextTick()
-  //   const stopBtn = wrapper.find('[data-test="stop-btn"]')
-  //   await stopBtn.trigger('click')
-
-  //   // Simulate successful transaction
-  //   mockWaitReceipt.isSuccess.value = true
-  //   await wrapper.vm.$nextTick()
-
-  //   expect(addSuccessToast).toHaveBeenCalledWith('vesting stoped successfully')
-  //   expect(refetchVestingInfos).toHaveBeenCalled()
-  // })
-
-  // it('shows error toast when stop vesting fails', async () => {
-  //   await wrapper.vm.$nextTick()
-  //   const { addErrorToast } = useToastStore()
-  //   const stopBtn = wrapper.find('[data-test="stop-btn"]')
-  //   await stopBtn.trigger('click')
-
-  //   // Simulate error
-  //   mockWriteContract.error.value = new Error('Transaction failed')
-  //   await wrapper.vm.$nextTick()
-
-  //   expect(addErrorToast).toHaveBeenCalledWith('add vesting error Error: Transaction failed')
-  // })
 })
