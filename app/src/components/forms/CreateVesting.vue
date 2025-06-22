@@ -80,11 +80,11 @@
 import { computed, ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
-
 import VestingABI from '@/artifacts/abi/Vesting.json'
 import { VESTING_ADDRESS } from '@/constant'
 import { parseEther, formatEther, type Address } from 'viem'
 import { useToastStore } from '@/stores/useToastStore'
+import { type VestingRow } from '@/types/vesting'
 const { addSuccessToast, addErrorToast } = useToastStore()
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useUserDataStore } from '@/stores'
@@ -93,6 +93,7 @@ import { isAddress } from 'viem'
 const props = defineProps<{
   teamId: number
   tokenAddress: string
+  vestings: VestingRow[]
 }>()
 
 const member = ref('')
@@ -124,6 +125,7 @@ const {
   functionName: 'allowance',
   args: [useUserDataStore().address as Address, VESTING_ADDRESS as Address]
 })
+
 watch(allowanceError, () => {
   if (allowanceError.value) {
     addErrorToast('error on get Allowance')
@@ -219,20 +221,34 @@ const formValid = computed(() => {
   )
 })
 
+function checkDuplicateVesting() {
+  if (
+    member.value &&
+    props.vestings.some((v) => v.member.toLowerCase() === member.value.toLowerCase())
+  ) {
+    addErrorToast('The member address already has an active vesting.')
+    return true
+  }
+  return false
+}
+
 async function approveAllowance() {
-  if (totalAmount.value > 0) {
-    approveToken({
-      address: props.tokenAddress as Address,
-      abi: INVESTOR_ABI,
-      functionName: 'approve',
-      args: [VESTING_ADDRESS as Address, parseEther(totalAmount.value.toString())]
-    })
-  } else {
-    addErrorToast('total amount value should be greater than zero')
+  if (!checkDuplicateVesting()) {
+    if (totalAmount.value > 0) {
+      approveToken({
+        address: props.tokenAddress as Address,
+        abi: INVESTOR_ABI,
+        functionName: 'approve',
+        args: [VESTING_ADDRESS as Address, parseEther(totalAmount.value.toString())]
+      })
+    } else {
+      addErrorToast('total amount value should be greater than zero')
+    }
   }
 }
 async function submit() {
   if (!formValid.value) return
+  if (checkDuplicateVesting()) return
 
   const start = Math.floor(new Date(startDate.value).getTime() / 1000)
   const durationInSeconds = duration.value * 24 * 60 * 60

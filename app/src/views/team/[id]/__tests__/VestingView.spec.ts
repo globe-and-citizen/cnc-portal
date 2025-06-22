@@ -1,34 +1,81 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import VestingView from '../VestingView.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue' // ⚠️ corriger ici (pas 'process')
-import type { VestingRow } from '@/types/vesting'
+import VestingView from '../VestingView.vue'
+//import { useToastStore } from '@/stores/__mocks__/useToastStore'
+import { ref } from 'vue'
 
-const mockVestingInfos = ref<VestingRow[]>([
-  {
-    member: '0x000000000000000000000000000000000000dead',
-    teamId: 1,
-    startDate: `${Math.floor(Date.now() / 1000) - 3600}`, // already started
-    durationDays: 30,
-    cliffDays: 0,
-    totalAmount: Number(10e18),
-    released: Number(2e18),
-    status: 'Active',
-    tokenSymbol: 'TST'
-  }
+// Constants
+const memberAddress = '0x000000000000000000000000000000000000dead'
+
+// Mocks
+const mockVestingInfos = ref([
+  [memberAddress],
+  [
+    {
+      start: `${Math.floor(Date.now() / 1000) - 3600}`,
+      duration: `${30 * 86400}`,
+      cliff: '0',
+      totalAmount: BigInt(10e18),
+      released: BigInt(2e18),
+      active: true
+    }
+  ]
 ])
+const refetchVestingInfos = vi.fn()
 
-vi.mock('@/stores/useToastStore', () => ({
-  useToastStore: () => ({
-    addErrorToast: vi.fn(),
-    addSuccessToast: vi.fn()
+const mockArchivedInfos = ref([[], []])
+
+const mockCurrentTeam = ref({
+  id: 1,
+  ownerAddress: memberAddress,
+  teamContracts: [
+    {
+      type: 'InvestorsV1',
+      address: '0x000000000000000000000000000000000000beef'
+    }
+  ]
+})
+
+// User & Team stores
+// Define mock stores function
+// const mockStores = {
+//   userDataStore: {
+//     address: memberAddress
+//   },
+//   teamStore: {
+//     currentTeam: ref({
+//       id: 1,
+//       ownerAddress: memberAddress,
+//       teamContracts: [
+//         {
+//           type: 'InvestorsV1',
+//           address: '0x000000000000000000000000000000000000beef'
+//         }
+//       ]
+//     })
+//   }
+// }
+
+// // Mock the stores using the function
+// vi.mock('@/stores', () => ({
+//   useUserDataStore: () => mockStores.userDataStore,
+//   useTeamStore: () => mockStores.teamStore
+// }))
+
+vi.mock('@/stores', () => ({
+  useUserDataStore: () => ({
+    address: memberAddress
+  }),
+  useTeamStore: () => ({
+    currentTeam: mockCurrentTeam.value
   })
 }))
 
+// Wagmi mocks
 const mockWriteContract = {
   writeContract: vi.fn(),
-  error: ref(null),
+  error: ref<Error | null>(null),
   isPending: ref(false),
   data: ref(null)
 }
@@ -36,62 +83,38 @@ const mockWaitReceipt = {
   isLoading: ref(false),
   isSuccess: ref(false)
 }
-const mockReadContract = {
-  data: ref([]),
-  error: ref(null),
-  refetch: vi.fn(() => Promise.resolve())
-}
-const mockArchivedInfos = ref([[], []])
-
 vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = (await importOriginal()) as typeof import('@wagmi/vue')
+  const actual: object = await importOriginal()
   return {
     ...actual,
     useWriteContract: vi.fn(() => mockWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockWaitReceipt),
-    useReadContract: vi.fn(({ functionName }) => {
+    useReadContract: vi.fn(({ functionName }: { functionName: string }) => {
       if (functionName === 'getTeamVestingsWithMembers') {
         return {
           data: mockVestingInfos,
           error: ref(null),
-          refetch: vi.fn(() => Promise.resolve())
+          refetch: refetchVestingInfos
         }
       }
       if (functionName === 'getTeamAllArchivedVestingsFlat') {
         return {
           data: mockArchivedInfos,
           error: ref(null),
-          refetch: vi.fn(() => Promise.resolve())
+          refetch: vi.fn()
         }
       }
       return {
         data: ref('TST'),
         error: ref(null),
-        refetch: vi.fn(() => Promise.resolve())
+        refetch: vi.fn()
       }
     })
   }
 })
 
-vi.mock('@/stores', () => ({
-  useTeamStore: () => ({
-    currentTeam: {
-      id: 1,
-      ownerAddress: '0x000000000000000000000000000000000000dead',
-      teamContracts: [
-        {
-          type: 'InvestorsV1',
-          address: '0x000000000000000000000000000000000000beef'
-        }
-      ]
-    }
-  }),
-  useUserDataStore: () => ({
-    address: '0x000000000000000000000000000000000000dead'
-  })
-}))
-
-describe('VestingOverview.vue', () => {
+// Test suite
+describe('VestingView.vue', () => {
   let wrapper: VueWrapper
 
   const mountComponent = () => {
@@ -103,104 +126,116 @@ describe('VestingOverview.vue', () => {
   }
 
   beforeEach(() => {
+    vi.clearAllMocks()
     wrapper = mountComponent()
-    // reset mocks
     mockWriteContract.writeContract.mockReset()
     mockWaitReceipt.isLoading.value = false
     mockWaitReceipt.isSuccess.value = false
-    mockReadContract.data.value = []
   })
 
-  describe('Initial Render', () => {
-    it('renders "Vesting Stats" and "Vesting Overview" cards', () => {
-      expect(wrapper.text()).toContain('Vesting Stats')
-      expect(wrapper.text()).toContain('Vesting Overview')
-    })
+  it('renders main cards and tables', () => {
+    expect(wrapper.text()).toContain('Vesting Stats')
+    expect(wrapper.text()).toContain('Vesting Overview')
+    expect(wrapper.find('[data-test="vesting-stats"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="vesting-overview"]').exists()).toBe(true)
+  })
 
-    it('renders the vesting table container', () => {
-      expect(wrapper.findAll('[data-test="investors-actions"]').length).toBeGreaterThan(0)
+  it('shows and opens add vesting modal', async () => {
+    const btn = wrapper.find('[data-test="createAddVesting"]')
+    expect(btn.exists()).toBe(true)
+    await btn.trigger('click')
+    expect(wrapper.findComponent({ name: 'ModalComponent' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'CreateVesting' }).exists()).toBe(true)
+  })
+
+  it('opens modal with correct props when add vesting button is clicked', async () => {
+    // Click the add vesting button
+    const addButton = wrapper.find('[data-test="createAddVesting"]')
+    await addButton.trigger('click')
+
+    // Check if modal is opened
+    expect(wrapper.findComponent({ name: 'ModalComponent' }).exists()).toBe(true)
+
+    // Find the CreateVesting component
+    const createVesting = wrapper.findComponent({ name: 'CreateVesting' })
+    expect(createVesting.exists()).toBe(true)
+
+    // Verify props
+    expect(createVesting.props()).toMatchObject({
+      teamId: 1,
+      tokenAddress: '0x000000000000000000000000000000000000beef' // This comes from the mocked sherToken
     })
   })
 
-  describe('Create Vesting Modal Trigger', () => {
-    it('shows the "add vesting" button when user is team owner', () => {
-      const addButton = wrapper.find('[data-test="createAddVesting"]')
-      expect(addButton.exists()).toBe(true)
-    })
+  it('handles CreateVesting component events correctly', async () => {
+    // Open modal
+    await wrapper.find('[data-test="createAddVesting"]').trigger('click')
 
-    it('opens the modal when "add vesting" is clicked', async () => {
-      const addButton = wrapper.find('[data-test="createAddVesting"]')
-      await addButton.trigger('click')
-      await wrapper.vm.$nextTick()
-      expect(wrapper.findComponent({ name: 'ModalComponent' }).exists()).toBe(true)
-    })
+    const createVesting = wrapper.findComponent({ name: 'CreateVesting' })
+
+    await createVesting.vm.$emit('reloadVestingInfos')
+    await wrapper.vm.$nextTick()
+    // Test closeAddVestingModal event
+    await createVesting.vm.$emit('closeAddVestingModal')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="createAddVestingModal"]').exists()).toBe(false)
+
+    // Test reloadVestingInfos event
+    expect(refetchVestingInfos).toHaveBeenCalled()
   })
 
-  describe.skip('Table Actions Visibility', () => {
-    it('renders "Stop" button for active vesting when user is owner', async () => {
-      mockVestingInfos.value = [
-        {
-          member: '0x000000000000000000000000000000000000dead',
-          teamId: 1,
-          startDate: `${Math.floor(Date.now() / 1000) - 3600}`, // started
-          durationDays: 30,
-          cliffDays: 0,
-          totalAmount: Number(10e18),
-          released: Number(2e18),
-          status: 'Active',
-          tokenSymbol: 'TST'
-        }
-      ]
+  it('handles toggle vesting view button correctly', async () => {
+    wrapper = mountComponent()
+    await wrapper.vm.$nextTick()
+    const toggleBtn = wrapper.find('[data-test="toggle-vesting-view"]')
 
-      wrapper = mountComponent()
-      await wrapper.vm.$nextTick()
+    expect(toggleBtn.exists()).toBe(true)
+    console.log('Toggle button =======:', toggleBtn.html())
+    expect(toggleBtn.text().toLowerCase()).toContain('actives')
+    expect(toggleBtn.classes()).toContain('btn-secondary')
 
-      const stopButtons = wrapper.findAll('[data-test="stop-btn"]')
-      expect(stopButtons.length).toBeGreaterThan(0)
-    })
+    await toggleBtn.trigger('click')
+    await wrapper.vm.$nextTick()
 
-    it('renders "Release" button if vesting is started and member matches user', async () => {
-      mockVestingInfos.value = [
-        {
-          member: '0x000000000000000000000000000000000000dead',
-          teamId: 1,
-          startDate: `${Math.floor(Date.now() / 1000) - 3600}`, // started
-          durationDays: 30,
-          cliffDays: 0,
-          totalAmount: Number(10e18),
-          released: Number(5e18),
-          status: 'Active',
-          tokenSymbol: 'TST'
-        }
-      ]
+    expect(toggleBtn.text().toLowerCase()).toContain('archived')
 
-      wrapper = mountComponent()
-      await wrapper.vm.$nextTick()
-
-      const releaseBtn = wrapper.findAll('button').find((btn) => btn.text().includes('Release'))
-      expect(releaseBtn).toBeDefined()
-    })
-
-    it('disables "Release" button if vesting is not started', async () => {
-      mockVestingInfos.value = [
-        {
-          member: '0x000000000000000000000000000000000000dead',
-          teamId: 1,
-          startDate: `${Math.floor(Date.now() / 1000) + 3600}`, // not started
-          durationDays: 30,
-          cliffDays: 0,
-          totalAmount: Number(10e18),
-          released: Number(0),
-          status: 'Active',
-          tokenSymbol: 'TST'
-        }
-      ]
-
-      wrapper = mountComponent()
-      await wrapper.vm.$nextTick()
-
-      const releaseBtn = wrapper.findAll('button').find((btn) => btn.text().includes('Release'))
-      expect(releaseBtn?.attributes('disabled')).toBeDefined()
-    })
+    expect(toggleBtn.classes()).toContain('btn-ghost')
   })
+
+  it('passes correct props to CreateVesting', async () => {
+    const btn = wrapper.find('[data-test="createAddVesting"]')
+    await btn.trigger('click')
+
+    const component = wrapper.findComponent({ name: 'CreateVesting' })
+    expect(component.props('teamId')).toBe(1)
+    expect(component.props('tokenAddress')).toBe('0x000000000000000000000000000000000000beef')
+  })
+
+  // it('shows success toast and refetches data after successful stop', async () => {
+  //   const { addSuccessToast } = useToastStore()
+  //   await wrapper.vm.$nextTick()
+  //   const stopBtn = wrapper.find('[data-test="stop-btn"]')
+  //   await stopBtn.trigger('click')
+
+  //   // Simulate successful transaction
+  //   mockWaitReceipt.isSuccess.value = true
+  //   await wrapper.vm.$nextTick()
+
+  //   expect(addSuccessToast).toHaveBeenCalledWith('vesting stoped successfully')
+  //   expect(refetchVestingInfos).toHaveBeenCalled()
+  // })
+
+  // it('shows error toast when stop vesting fails', async () => {
+  //   await wrapper.vm.$nextTick()
+  //   const { addErrorToast } = useToastStore()
+  //   const stopBtn = wrapper.find('[data-test="stop-btn"]')
+  //   await stopBtn.trigger('click')
+
+  //   // Simulate error
+  //   mockWriteContract.error.value = new Error('Transaction failed')
+  //   await wrapper.vm.$nextTick()
+
+  //   expect(addErrorToast).toHaveBeenCalledWith('add vesting error Error: Transaction failed')
+  // })
 })

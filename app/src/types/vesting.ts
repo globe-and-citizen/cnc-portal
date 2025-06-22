@@ -8,6 +8,7 @@ export interface VestingRow {
   tokenSymbol: string
   released: number
   status: 'Active' | 'Inactive'
+  isStarted?: boolean
 }
 
 export interface TokenSummary {

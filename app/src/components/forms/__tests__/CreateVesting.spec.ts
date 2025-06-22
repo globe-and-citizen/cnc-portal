@@ -3,13 +3,29 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import CreateVesting from '@/components/forms/CreateVesting.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-
+import { type VestingRow } from '@/types/vesting'
 const mockWriteContract = {
   writeContract: vi.fn(),
   error: ref(null),
   isPending: ref(false),
   data: ref(null)
 }
+const mockSymbol = ref<string>('shr')
+const memberAddress = '0x000000000000000000000000000000000000dead'
+const mockVestingInfos = ref<VestingRow[]>([
+  {
+    teamId: 1,
+    member: memberAddress,
+    startDate: new Date(Date.now() * 3600 * 1000).toLocaleDateString('en-GB'),
+    durationDays: 30,
+    cliffDays: 0,
+    totalAmount: Number(BigInt(10e18)),
+    released: Number(BigInt(2e18)),
+    status: 'Active',
+    tokenSymbol: mockSymbol.value,
+    isStarted: true
+  }
+])
 const mockWaitForReceipt = {
   isLoading: ref(false),
   isSuccess: ref(false)
@@ -50,7 +66,8 @@ describe('CreateVesting.vue', () => {
     mount(CreateVesting, {
       props: {
         teamId: 1,
-        tokenAddress: '0x000000000000000000000000000000000000beef'
+        tokenAddress: '0x000000000000000000000000000000000000beef',
+        vestings: mockVestingInfos.value
       },
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
