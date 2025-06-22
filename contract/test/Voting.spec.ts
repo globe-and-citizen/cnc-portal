@@ -681,7 +681,6 @@ describe('Voting Contract', () => {
 
       await time.increaseTo(endTime + 1)
       await voting.concludeProposal(0) // Tie detected
-      console.log(await voting.getProposalById(0))
 
       await expect(voting.connect(owner).resolveTie(0, 3)) // INCREASE_WINNER_COUNT
         .to.emit(voting, 'BoardOfDirectorsSet') // This will set 3 winners
@@ -764,8 +763,8 @@ describe('Voting Contract', () => {
 
     it('should correctly check if an address is a board member', async () => {
       const { voting, member1, unknownAddress } = await loadFixture(boardOfDirectorsSetFixture)
-      expect(await voting.isBoardOfDirector(member1.address)).to.be.true
-      expect(await voting.isBoardOfDirector(unknownAddress.address)).to.be.false
+      expect(await voting.isBoardMember(member1.address)).to.be.true
+      expect(await voting.isBoardMember(unknownAddress.address)).to.be.false
     })
   })
 
