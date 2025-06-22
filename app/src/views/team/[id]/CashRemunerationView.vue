@@ -30,7 +30,7 @@
 
     <CashRemunerationWeeklyClaim />
 
-    <CashRemunerationTable :owner-address="teamStore.currentTeam?.ownerAddress" />
+    <!-- <CashRemunerationTable :owner-address="teamStore.currentTeam?.ownerAddress" /> -->
     <!-- <CashRemunerationTransactions /> -->
   </div>
 </template>
@@ -40,7 +40,7 @@ import type { Address } from 'viem'
 import { useTeamStore } from '@/stores'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 // import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
-import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
+// import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
 import CashRemunerationWeeklyClaim from '@/components/sections/CashRemunerationView/CashRemunerationWeeklyClaim.vue'

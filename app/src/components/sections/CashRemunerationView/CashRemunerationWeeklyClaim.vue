@@ -1,92 +1,142 @@
 <template>
-  <CardComponent title="Weekly Claim: Pending" class="w-full pb-7">
-    <div class="">
-      <transition-group name="stack" tag="div" class="stack w-full">
-        <div
-          v-for="(item, index) in data"
-          :key="item.weekStart"
-          class="card shadow-md bg-white p-4"
-          :class="{
-            'transition -translate-y-full opacity-0  duration-1000': index === 0
-          }"
-        >
-          <TableComponent :rows="[item]" :columns="columns" :loading="isTeamClaimDataFetching">
-            <template #member-data="{ row }">
-              <UserComponent :user="row.member" />
-            </template>
-            <template #weekStart-data="{ row }">
-              <span>{{ formatDate(row.weekStart) }}</span>
-            </template>
+  <div>
+    <CRWeeklyClaimHeader />
+    <transition-group name="stack" tag="div" class="stack w-full">
+      <div
+        v-for="(item, index) in data?.filter((weeklyClaim) => weeklyClaim.status === null)"
+        :key="item.weekStart"
+        class="card shadow-md bg-white p-4"
+        :class="{
+          'transition -translate-y-full opacity-0  duration-1000': index === 0
+        }"
+      >
+        <TableComponent :rows="[item]" :columns="columns" :loading="isTeamClaimDataFetching">
+          <template #member-data="{ row }">
+            <UserComponent :user="row.member" />
+          </template>
+          <template #weekStart-data="{ row }">
+            <span>{{ formatDate(row.weekStart) }}</span>
+          </template>
 
-            <template #hoursWorked-data="{ row }">
-              <span class="font-bold"> {{ getTotalHoursWorked(row.claims) }}:00 hrs </span>
-              <br />
-              <span>of {{ row.wage.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span>
-            </template>
+          <template #hoursWorked-data="{ row }">
+            <span class="font-bold"> {{ getTotalHoursWorked(row.claims) }}:00 hrs </span>
+            <br />
+            <span>of {{ row.wage.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span>
+          </template>
 
-            <template #hourlyRate-data="{ row }">
-              <div>
-                <span class="font-bold">
-                  {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }}
-                </span>
-                <br />
-                <span class="font-bold"> {{ row.wage.tokenRatePerHour }} TOKEN </span>
-                <br />
-                <span class="font-bold"> {{ row.wage.usdcRatePerHour }} USDC </span>
-                <br />
-              </div>
-            </template>
-
-            <template #totalAmount-data="{ row }">
+          <template #hourlyRate-data="{ row }">
+            <div>
               <span class="font-bold">
-                {{ getTotalHoursWorked(row.claims) * row.wage.cashRatePerHour }}
-                {{ NETWORK.currencySymbol }}
+                {{ getHourlyRate(row.wage.ratePerHour, 'native') }} {{ NETWORK.currencySymbol }}
               </span>
               <br />
               <span class="font-bold">
-                {{ getTotalHoursWorked(row.claims) * row.wage.tokenRatePerHour }}
-                TOKEN
+                {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} TOKEN
               </span>
               <br />
               <span class="font-bold">
-                {{ getTotalHoursWorked(row.claims) * row.wage.usdcRatePerHour }}
-                USDC
+                {{ getHourlyRate(row.wage.ratePerHour, 'usdc') }} USDC
               </span>
               <br />
-              <span class="text-gray-500">
-                {{
-                  (
-                    getTotalHoursWorked(row.claims) *
-                    Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
-                  ).toFixed(2)
-                }}
-                {{ NETWORK.nativeTokenSymbol }} / USD
-              </span>
-            </template>
+            </div>
+          </template>
 
-            <template #action-data="{}">
-              <ButtonUI class="btn btn-success btn-sm" type="button"> Approve </ButtonUI>
-            </template>
-          </TableComponent>
-        </div>
-      </transition-group>
-    </div>
-  </CardComponent>
+          <template #totalAmount-data="{ row }">
+            <span class="font-bold">
+              {{
+                getHourlyRate(row.wage.ratePerHour, 'native') === 'N/A'
+                  ? 'N/A'
+                  : Number(getHourlyRate(row.wage.ratePerHour, 'native')) *
+                    getTotalHoursWorked(row.claims)
+              }}
+              {{ NETWORK.currencySymbol }}
+            </span>
+            <br />
+            <span class="font-bold">
+              {{
+                getHourlyRate(row.wage.ratePerHour, 'sher') === 'N/A'
+                  ? 'N/A'
+                  : Number(getHourlyRate(row.wage.ratePerHour, 'sher')) *
+                    getTotalHoursWorked(row.claims)
+              }}
+              TOKEN
+            </span>
+            <br />
+            <span class="font-bold">
+              {{
+                getHourlyRate(row.wage.ratePerHour, 'usdc') === 'N/A'
+                  ? 'N/A'
+                  : Number(getHourlyRate(row.wage.ratePerHour, 'usdc')) *
+                    getTotalHoursWorked(row.claims)
+              }}
+              USDC
+            </span>
+            <br />
+            <span class="text-gray-500">
+              {{
+                (
+                  getTotalHoursWorked(row.claims) *
+                  Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
+                ).toFixed(2)
+              }}
+              {{ NETWORK.nativeTokenSymbol }} / USD
+            </span>
+          </template>
+
+          <template #action-data="{ row }">
+            <CRSigne
+              v-if="row.claims.length > 0 && row.wage.ratePerHour"
+              :disabled="isSameWeek(row.weekStart)"
+              :weekly-claim="{
+                id: row.id, //which id do we use, individual or weekly claim?
+                status: !row.status ? 'pending' : row.status,
+                hoursWorked: getTotalHoursWorked(row.claims),
+                createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
+                wage: {
+                  ratePerHour: row.wage.ratePerHour as RatePerHour,
+                  userAddress: row.wage.userAddress as Address
+                }
+              }"
+            />
+            <CRWithdrawClaim
+              :is-weekly-claim="true"
+              :claim="{
+                id: row.id, //which id do we use, individual or weekly claim?
+                status: !row.status ? 'pending' : row.status,
+                hoursWorked: getTotalHoursWorked(row.claims),
+                createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
+                signature: row.signature,
+                wage: {
+                  ratePerHour: row.wage.ratePerHour as RatePerHour,
+                  userAddress: row.wage.userAddress as Address
+                }
+              }"
+            />
+          </template>
+        </TableComponent>
+      </div>
+    </transition-group>
+  </div>
 </template>
 
 <script setup lang="ts">
-import CardComponent from '@/components/CardComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { computed } from 'vue'
-import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
+import { computed, watch } from 'vue'
+import { useCurrencyStore } from '@/stores'
+import { useUserDataStore, useTeamStore } from '@/stores'
+import { type WeeklyClaimResponse, type RatePerHour, type SupportedTokens } from '@/types'
+import CRSigne from './CRSigne.vue'
+import type { Address } from 'viem'
+import CRWithdrawClaim from './CRWithdrawClaim.vue'
+import { getMondayStart } from '@/utils/dayUtils'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
 import type { TokenId } from '@/constant'
+import CRWeeklyClaimHeader from './CRWeeklyClaimHeader.vue'
 
-function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
+function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
 }
 
@@ -101,8 +151,15 @@ const weeklyClaimUrl = computed(() => {
   }`
 })
 
-const { data, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
+const { data, error } = useCustomFetch(weeklyClaimUrl.value).get().json<WeeklyClaimResponse>()
+
 const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
+
+const isSameWeek = (weeklyClaimStartWeek: string) => {
+  console.log(`weeklyClaimStartWeek: ${weeklyClaimStartWeek}`)
+  const currentMonday = getMondayStart(new Date())
+  return currentMonday.toISOString() === weeklyClaimStartWeek
+}
 
 const currencyStore = useCurrencyStore()
 function getHoulyRateInUserCurrency(hourlyRate: number, tokenId: TokenId = 'native') {
@@ -123,10 +180,35 @@ function formatDate(date: string | Date) {
   })
 }
 
+const getHourlyRate = (ratePerHour: RatePerHour, type: SupportedTokens) => {
+  switch (type) {
+    case 'native':
+      return ratePerHour.find((rate) => rate.type === 'native')
+        ? ratePerHour.find((rate) => rate.type === 'native')!.amount
+        : 'N/A'
+    case 'sher':
+      return ratePerHour.find((rate) => rate.type === 'sher')
+        ? ratePerHour.find((rate) => rate.type === 'sher')!.amount
+        : 'N/A'
+    case 'usdc':
+      return ratePerHour.find((rate) => rate.type === 'usdc')
+        ? ratePerHour.find((rate) => rate.type === 'usdc')!.amount
+        : 'N/A'
+    default:
+      return 'N/A'
+  }
+}
+
+watch(data, (newVal) => {
+  if (newVal) {
+    console.log('New weekly claims: ', newVal)
+  }
+})
+
 const columns = [
   {
     key: 'weekStart',
-    label: 'Date',
+    label: 'Week Start On',
     sortable: true,
     class: 'text-black text-base'
   },
