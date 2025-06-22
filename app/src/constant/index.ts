@@ -34,6 +34,7 @@ interface AddressMapping {
   'CashRemunerationEIP712Module#CashRemunerationEIP712': string
   'InvestorsV1BeaconModule#Beacon'?: string
   'InvestorsV1BeaconModule#InvestorV1'?: string
+  'VestingModule#Vesting'?: string
   'MockTokens#USDT'?: string
   'MockTokens#USDC'?: string
 }
@@ -94,6 +95,7 @@ export const TOKEN_ADDRESSES: ChainTokenAddresses = {
 export function validateAddresses() {
   const requiredKeys: (keyof AddressMapping)[] = [
     'TipsModule#Tips',
+    'VestingModule#Vesting',
     'BankBeaconModule#Beacon',
     'BankBeaconModule#Bank',
     'VotingBeaconModule#Beacon',
@@ -129,6 +131,7 @@ try {
   console.error(error)
 }
 export const TIPS_ADDRESS = resolveAddress('TipsModule#Tips')
+export const VESTING_ADDRESS = resolveAddress('VestingModule#Vesting')
 export const BANK_BEACON_ADDRESS = resolveAddress('BankBeaconModule#Beacon')
 export const BANK_IMPL_ADDRESS = resolveAddress('BankBeaconModule#Bank')
 export const VOTING_BEACON_ADDRESS = resolveAddress('VotingBeaconModule#Beacon')
