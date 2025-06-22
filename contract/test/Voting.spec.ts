@@ -1,8 +1,7 @@
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
-import { Voting } from '../typechain-types'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers'
+import { Types } from '../typechain-types/contracts/Voting/Voting'
 
 describe('Voting Contract', () => {
   // Main fixture for deploying the contract and setting up accounts
@@ -389,7 +388,9 @@ describe('Voting Contract', () => {
         .withArgs(member1.address, 1, candidates[0])
 
       const proposal = await voting.getProposalById(1)
-      const candidate = proposal.candidates.find((c: any) => c.candidateAddress === candidates[0])
+      const candidate = proposal.candidates.find(
+        (c: Types.CandidateStruct) => c.candidateAddress === candidates[0]
+      )
       expect(candidate).to.exist
       expect(candidate!.votes).to.equal(1)
     })

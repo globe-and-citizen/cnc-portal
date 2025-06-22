@@ -243,7 +243,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
             emit BoardOfDirectorsSet(winnerList);
         } else {
             require(
-                owner() == msg.sender || isBoardOfDirector(msg.sender),
+                owner() == msg.sender || isBoardMember(msg.sender),
                 'Only the founder or board member can conclude this proposal'
             );
         }
@@ -389,7 +389,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     /// @notice Check if msg.address is a member of the Board of Directors
     /// @param _address The address to check
     /// @return bool True if the address is a member, false otherwise
-    function isBoardOfDirector(address _address) public view returns (bool) {
+    function isBoardMember(address _address) public view returns (bool) {
         return IBoardOfDirectors(boardOfDirectorsContractAddress).isBoardMember(_address);
     }
 
