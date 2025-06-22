@@ -45,7 +45,7 @@
 import CardComponent from '@/components/CardComponent.vue'
 import { ref, computed, watch } from 'vue'
 import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
-import VestingStats from '@/components/VestingStats.vue'
+import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
 import { type VestingRow } from '@/types/vesting'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
