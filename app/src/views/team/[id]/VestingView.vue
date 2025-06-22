@@ -51,7 +51,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CreateVesting from '@/components/forms/CreateVesting.vue'
-import { type Address, formatEther } from 'viem'
+import { type Address, formatUnits } from 'viem'
 import { useUserDataStore } from '@/stores'
 import { useToastStore } from '@/stores/useToastStore'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -103,8 +103,8 @@ const vestings = computed<VestingRow[]>(() => {
           isStarted: currentDateInSeconds > Number(v.start),
           durationDays: Math.floor(Number(v.duration) / 86400),
           cliffDays: Math.floor(Number(v.cliff) / 86400),
-          totalAmount: Number(formatEther(v.totalAmount)),
-          released: Number(formatEther(v.released)),
+          totalAmount: Number(formatUnits(v.totalAmount, 6)),
+          released: Number(formatUnits(v.released, 6)),
           status: !v.active ? 'Inactive' : 'Active',
           tokenSymbol: tokenSymbol.value || 'default'
         }
