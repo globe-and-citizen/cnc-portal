@@ -1,5 +1,5 @@
 <template>
-  <VestingStatsView :vestings="vestings" :symbol="tokenSymbol ? tokenSymbol : ''" />
+  <VestingStats :vestings="vestings" :symbol="tokenSymbol ? tokenSymbol : ''" />
   <div>
     <CardComponent title="Vesting Overview">
       <template #card-action>
@@ -36,7 +36,7 @@
           />
         </ModalComponent>
       </template>
-      <VestingFlowView :vestings="vestings" @reloadVestingInfos="getVestingInfos" />
+      <VestingFlow :vestings="vestings" @reloadVestingInfos="getVestingInfos" />
     </CardComponent>
   </div>
 </template>
@@ -44,13 +44,13 @@
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
 import { ref, computed, watch } from 'vue'
-import VestingFlowView from './VestingFlowView.vue'
-import VestingStatsView from './VestingStatsView.vue'
+import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
+import VestingStats from '@/components/VestingStats.vue'
 import { type VestingRow } from '@/types/vesting'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
-import CreateVesting from '@/components/forms/CreateVesting.vue'
+import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import { type Address, formatUnits } from 'viem'
 import { useUserDataStore } from '@/stores'
 import { useToastStore } from '@/stores/useToastStore'

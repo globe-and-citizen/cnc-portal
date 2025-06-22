@@ -1,6 +1,6 @@
 import { describe, it, vi, expect, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import CreateVesting from '@/components/forms/CreateVesting.vue'
+import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { parseUnits } from 'viem'

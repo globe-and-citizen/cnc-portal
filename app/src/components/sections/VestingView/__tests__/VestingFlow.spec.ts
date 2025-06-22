@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import VestingFlowView from '../VestingFlowView.vue'
+import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
 import VestingABI from '@/artifacts/abi/Vesting.json'
 //import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { type VestingRow } from '@/types/vesting'
@@ -68,11 +68,11 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 })
 
 // Test suite
-describe('VestingView.vue', () => {
+describe('VestingFlow.vue', () => {
   let wrapper: VueWrapper
 
   const mountComponent = () => {
-    return mount(VestingFlowView, {
+    return mount(VestingFlow, {
       props: {
         vestings: mockVestingInfos.value
       },

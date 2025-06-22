@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import VestingStatsView from '../VestingStatsView.vue'
+import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
 //import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { type VestingRow } from '@/types/vesting'
 import { ref } from 'vue'
@@ -64,11 +64,11 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 })
 
 // Test suite
-describe('VestingView.vue', () => {
+describe('VestingStats.vue', () => {
   let wrapper: VueWrapper
 
   const mountComponent = () => {
-    return mount(VestingStatsView, {
+    return mount(VestingStats, {
       props: {
         vestings: mockVestingInfos.value,
         symbol: mockSymbol.value
@@ -123,7 +123,7 @@ describe('VestingView.vue', () => {
     wrapper = mountComponent()
     await wrapper.vm.$nextTick()
 
-    const summaryRows = (wrapper.vm as (typeof VestingStatsView)['prototype']).tokenSummaryRows
+    const summaryRows = (wrapper.vm as (typeof VestingStats)['prototype']).tokenSummaryRows
     expect(summaryRows).toHaveLength(1) // Should have one row per token symbol
     expect(summaryRows[0]).toMatchObject({
       symbol: mockSymbol.value,
@@ -136,7 +136,7 @@ describe('VestingView.vue', () => {
     mockVestingInfos.value = []
     wrapper = mountComponent()
 
-    const summaryRows = (wrapper.vm as (typeof VestingStatsView)['prototype']).tokenSummaryRows
+    const summaryRows = (wrapper.vm as (typeof VestingStats)['prototype']).tokenSummaryRows
     expect(summaryRows).toHaveLength(0)
   })
 
