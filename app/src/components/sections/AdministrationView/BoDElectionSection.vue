@@ -1,107 +1,105 @@
 <template>
-  <div v-if="votingAddress">
-    <div>
-      <div class="flex flex-col" v-if="!loadingGetProposals" data-test="parent-div">
-        <div class="flex justify-between">
-          <div>
-            <h2>Proposals</h2>
-            <!-- <span
-          class="badge badge-sm"
-          :class="`${team.ownerAddress == useUserDataStore().address ? 'badge-primary' : 'badge-secondary'}`"
-          >{{ team.bankAddress }}</span
-        > -->
-          </div>
-          <div class="flex justify-between gap-4">
-            <ButtonUI
-              variant="primary"
-              size="md"
-              @click="showModal = !showModal"
-              data-test="create-proposal"
-            >
-              Create Proposal
-            </ButtonUI>
-            <ButtonUI
-              variant="secondary"
-              size="md"
-              v-if="boardOfDirectorsAddress"
-              @click="
-                () => {
-                  executeGetBoardOfDirectors()
-                  showBoDModal = true
-                }
-              "
-              data-test="view-bod"
-            >
-              View BoD
-            </ButtonUI>
-            <ButtonUI
-              variant="secondary"
-              size="md"
-              @click="showVotingControlModal = true"
-              data-test="manage-voting"
-            >
-              Manage
-            </ButtonUI>
-          </div>
-          <ModalComponent v-model="showVotingControlModal">
-            <VotingManagement :team="team" />
-          </ModalComponent>
+  <CardComponent title="Elections">
+    <template #card-action>
+      <div class="flex justify-between">
+        <div class="flex justify-between gap-2">
+          <ButtonUI
+            variant="primary"
+            size="md"
+            @click="showModal = !showModal"
+            data-test="create-proposal"
+          >
+            Create Proposal
+          </ButtonUI>
+          <ButtonUI
+            variant="secondary"
+            size="md"
+            v-if="boardOfDirectorsAddress"
+            @click="
+              () => {
+                executeGetBoardOfDirectors()
+                showBoDModal = true
+              }
+            "
+            data-test="view-bod"
+          >
+            View BoD
+          </ButtonUI>
+          <ButtonUI
+            variant="secondary"
+            size="md"
+            @click="showVotingControlModal = true"
+            data-test="manage-voting"
+          >
+            Manage
+          </ButtonUI>
         </div>
-        <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
-          <template #tab-0>
-            <ProposalCard
-              v-for="proposal in activeProposals"
-              :proposal="proposal"
-              class="mt-10"
-              :team="team"
-              :key="proposal.title"
-              @getTeam="emits('getTeam')"
-            />
-          </template>
-          <template #tab-1>
-            <ProposalCard
-              v-for="proposal in oldProposals"
-              :proposal="proposal"
-              :team="team"
-              :isDone="true"
-              class="mt-10"
-              :key="proposal.title"
-            />
-          </template>
-        </TabNavigation>
-        <ModalComponent v-model="showBoDModal">
-          <h3>Board Of Directors</h3>
-          <hr />
-          <div class="mt-4">
-            <ul v-if="(boardOfDirectors as Array<string>)?.length">
-              <li
-                v-for="(address, index) in boardOfDirectors"
-                :key="index"
-                class="text-sm flex justify-between"
-              >
-                <span v-if="team.members">
-                  {{ team.members.find((member) => member.address === address)?.name || 'Unknown' }}
-                </span>
-                {{ address }}
-              </li>
-            </ul>
-            <p v-else>No Board of Directors found.</p>
-          </div>
-        </ModalComponent>
-        <ModalComponent v-model="showModal">
-          <CreateProposalForm
-            :team="team"
-            v-model="newProposalInput"
-            @createProposal="createProposal"
-            :isLoading="loadingAddProposal || isConfirmingAddProposal"
-          />
+        <ModalComponent v-model="showVotingControlModal">
+          <VotingManagement :team="team" />
         </ModalComponent>
       </div>
+    </template>
+    <div v-if="votingAddress">
+      <div>
+        <div class="flex flex-col" v-if="!loadingGetProposals" data-test="parent-div">
+          <TabNavigation :initial-active-tab="0" :tabs="tabs" class="w-full">
+            <template #tab-0>
+              <ProposalCard
+                v-for="proposal in activeProposals"
+                :proposal="proposal"
+                class="mt-10"
+                :team="team"
+                :key="proposal.title"
+                @getTeam="emits('getTeam')"
+              />
+            </template>
+            <template #tab-1>
+              <ProposalCard
+                v-for="proposal in oldProposals"
+                :proposal="proposal"
+                :team="team"
+                :isDone="true"
+                class="mt-10"
+                :key="proposal.title"
+              />
+            </template>
+          </TabNavigation>
+          <ModalComponent v-model="showBoDModal">
+            <h3>Board Of Directors</h3>
+            <hr />
+            <div class="mt-4">
+              <ul v-if="(boardOfDirectors as Array<string>)?.length">
+                <li
+                  v-for="(address, index) in boardOfDirectors"
+                  :key="index"
+                  class="text-sm flex justify-between"
+                >
+                  <span v-if="team.members">
+                    {{
+                      team.members.find((member) => member.address === address)?.name || 'Unknown'
+                    }}
+                  </span>
+                  {{ address }}
+                </li>
+              </ul>
+              <p v-else>No Board of Directors found.</p>
+            </div>
+          </ModalComponent>
+          <ModalComponent v-model="showModal">
+            <CreateProposalForm
+              :team="team"
+              v-model="newProposalInput"
+              @createProposal="createProposal"
+              :isLoading="loadingAddProposal || isConfirmingAddProposal"
+            />
+          </ModalComponent>
+        </div>
+      </div>
+      <div class="flex justify-center items-center" v-if="loadingGetProposals">
+        <span class="loading loading-spinner loading-lg"></span>
+      </div>
     </div>
-    <div class="flex justify-center items-center" v-if="loadingGetProposals">
-      <span class="loading loading-spinner loading-lg"></span>
-    </div>
-  </div>
+  </CardComponent>
 </template>
 <script setup lang="ts">
 import ProposalCard from '@/components/sections/AdministrationView/ProposalCard.vue'
@@ -123,6 +121,7 @@ import VotingABI from '@/artifacts/abi/voting.json'
 import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
 import ButtonUI from '@/components/ButtonUI.vue'
+import CardComponent from '@/components/CardComponent.vue'
 
 const props = defineProps<{ team: Partial<Team> }>()
 const showVotingControlModal = ref(false)
