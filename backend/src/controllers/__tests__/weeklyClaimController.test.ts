@@ -38,6 +38,7 @@ describe("Weekly Claim Controller", () => {
     });
 
     it("should return 200 if status is valid", async () => {
+      vi.spyOn(prisma.weeklyClaim, "findMany").mockResolvedValue([]);
       const response = await request(app).get("/?teamId=1&status=pending");
       expect(response.status).toBe(200);
       expect(response.body).toEqual([]);
