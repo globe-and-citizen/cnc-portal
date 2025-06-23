@@ -6,29 +6,18 @@
       <div class="flex flex-wrap gap-2 sm:gap-4">
         <span class="text-sm">Contract Address </span>
         <AddressToolTip
-          :address="
-            teamStore.currentTeam?.teamContracts.find(
-              (contract) => contract.type === 'CashRemunerationEIP712'
-            )?.address ?? ''
-          "
+          :address="teamStore.getContractAddressByType('CashRemunerationEIP712') ?? ''"
           class="text-sm font-bold"
         />
       </div>
     </div>
     <GenericTokenHoldingsSection
-      v-if="
-        teamStore.currentTeam?.teamContracts.find(
-          (contract) => contract.type === 'CashRemunerationEIP712'
-        )
-      "
-      :address="
-        teamStore.currentTeam?.teamContracts.find(
-          (contract) => contract.type === 'CashRemunerationEIP712'
-        )?.address ?? ('' as Address)
-      "
+      v-if="teamStore.getContractAddressByType('CashRemunerationEIP712') ?? ''"
+      :address="teamStore.getContractAddressByType('CashRemunerationEIP712') ?? ''"
     />
 
-    <CashRemunerationWeeklyClaim />
+    <PendingWeeklyClaim v-if="isTeamOwner" />
+    <SignedWeeklyClaim />
 
     <!-- <CashRemunerationTable :owner-address="teamStore.currentTeam?.ownerAddress" /> -->
     <!-- <CashRemunerationTransactions /> -->
@@ -36,13 +25,21 @@
 </template>
 
 <script setup lang="ts">
-import type { Address } from 'viem'
-import { useTeamStore } from '@/stores'
+import { computed } from 'vue'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+
 // import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
 // import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
-import CashRemunerationWeeklyClaim from '@/components/sections/CashRemunerationView/CashRemunerationWeeklyClaim.vue'
+import PendingWeeklyClaim from '@/components/sections/CashRemunerationView/PendingWeeklyClaim.vue'
+import SignedWeeklyClaim from '@/components/sections/CashRemunerationView/SignedWeeklyClaim.vue'
+
+const userStore = useUserDataStore()
 const teamStore = useTeamStore()
+
+const isTeamOwner = computed(() => {
+  return teamStore.currentTeam?.ownerAddress === userStore.address
+})
 </script>
