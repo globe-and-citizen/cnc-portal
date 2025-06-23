@@ -348,6 +348,16 @@ const menuItems = computed(() => [
     },
     active: route.name === 'sher-token',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  },
+  {
+    label: 'Administration',
+    icon: 'heroicons:chart-bar',
+    route: {
+      name: 'administration',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    active: route.name === 'administration',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   }
 ])
 
