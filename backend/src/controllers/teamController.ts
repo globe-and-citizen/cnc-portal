@@ -220,8 +220,6 @@ const deleteTeam = async (req: Request, res: Response) => {
 
     await prisma.teamContract.deleteMany({ where: { teamId: Number(id) } });
 
-    await prisma.weeklyClaim.deleteMany({ where: { teamId: Number(id) } })
-
     await prisma.claim.deleteMany({ where: { wage: { teamId: Number(id) } } });
 
     await prisma.wage.deleteMany({ where: { teamId: Number(id) } });
