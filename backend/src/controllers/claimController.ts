@@ -90,6 +90,7 @@ export const addClaim = async (req: Request, res: Response) => {
           memberAddress: callerAddress,
           teamId: teamId,
           data: {},
+          status: "pending",
         },
         include: {
           claims: true,

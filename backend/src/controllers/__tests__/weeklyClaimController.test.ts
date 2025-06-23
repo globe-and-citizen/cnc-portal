@@ -29,6 +29,21 @@ describe("Weekly Claim Controller", () => {
       expect(response.body).toEqual({ message: "Missing or invalid teamId" });
     });
 
+    it("should return 400 if status is invalid", async () => {
+      const response = await request(app).get("/?teamId=1&status=invalid");
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Invalid status. Allowed status are: sign, withdraw, pending",
+      });
+    });
+
+    it("should return 200 if status is valid", async () => {
+      vi.spyOn(prisma.weeklyClaim, "findMany").mockResolvedValue([]);
+      const response = await request(app).get("/?teamId=1&status=pending");
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+    });
+
     it("should get weekly claims for a valid teamId", async () => {
       const testDate = new Date();
       const mockWeeklyClaims: WeeklyClaim[] = [
