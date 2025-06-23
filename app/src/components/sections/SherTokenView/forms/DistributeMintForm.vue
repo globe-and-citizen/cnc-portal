@@ -124,7 +124,7 @@ import { log } from '@/utils'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
-import { parseEther, isAddress } from 'viem'
+import { parseUnits, isAddress } from 'viem'
 import { ref, watch } from 'vue'
 import { reactive } from 'vue'
 
@@ -162,7 +162,7 @@ const onSubmit = () => {
     shareholderWithAmounts.map((shareholder) => {
       return {
         shareholder: shareholder.shareholder,
-        amount: parseEther(shareholder.amount?.toString() ?? '0')
+        amount: parseUnits(shareholder.amount?.toString() ?? '0', 6)
       }
     })
   )

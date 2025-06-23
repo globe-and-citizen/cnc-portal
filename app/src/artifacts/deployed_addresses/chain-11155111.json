@@ -1,4 +1,8 @@
 {
+  "VestingProxyModule#Vesting": "0x0097af32877C1c53Dedf1AFfFCaEdf81092c3866",
+  "VestingProxyModule#TransparentUpgradeableProxy": "0xD597E12322f655bff4Da222D82327B65Dd682B41",
+  "VestingProxyModule#ProxyAdmin": "0x886439dE0ED270543e10f7A551C49658D818D9D8",
+  "VestingModule#Vesting": "0xD597E12322f655bff4Da222D82327B65Dd682B41",
   "ProxyModule#Tips": "0xD4cC827089A58090F2fF3e63aeb71Be81D6DC4b8",
   "ProxyModule#TransparentUpgradeableProxy": "0xba4319c60Fe127001892232973b184181874291F",
   "ProxyModule#ProxyAdmin": "0x5F8da3915e2Dd7FC603d4842541215929efC0Af4",
