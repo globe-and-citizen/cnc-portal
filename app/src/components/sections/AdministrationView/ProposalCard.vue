@@ -83,7 +83,7 @@
               console.log(`props.team.votingAddress: `, props.team.votingAddress)
               console.log(`poposal.id: `, Number(proposal.id))
               concludeProposal({
-                address: votingAddress as Address,//props.team.votingAddress as Address,
+                address: votingAddress as Address, //props.team.votingAddress as Address,
                 abi: VotingABI,
                 functionName: 'concludeProposal',
                 args: [Number(proposal.id)]
@@ -111,7 +111,7 @@
             console.log('[@voteElection] value.proposalId: ', value.proposalId)
             console.log('[@voteElection] value.candidateAddress: ', value.candidateAddress)
             voteElection({
-              address: votingAddress as Address,//props.team.votingAddress as Address,
+              address: votingAddress as Address, //props.team.votingAddress as Address,
               abi: VotingABI,
               functionName: 'voteElection',
               args: [value.proposalId, value.candidateAddress]
@@ -152,8 +152,8 @@ import { valueFromAST } from 'graphql'
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const teamStore = useTeamStore()
-const votingAddress = computed(() => 
-  teamStore.currentTeam?.teamContracts.find(contract => contract.type === 'Voting')?.address
+const votingAddress = computed(
+  () => teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'Voting')?.address
 )
 const chartData = computed(() => {
   const votes = props.proposal.votes || {}

@@ -366,7 +366,7 @@ const menuItems = computed(() => [
         },
         active: route.name === 'bod-elections',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
-      },
+      }
       // {
       //   label: 'Weekly Claim',
       //   route: {
