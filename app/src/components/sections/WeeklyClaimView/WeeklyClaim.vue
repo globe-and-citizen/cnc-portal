@@ -6,7 +6,11 @@
       </template>
 
       <template #weekStart-data="{ row }">
-        <span>{{ formatDate(row.weekStart) }}</span>
+        <div class="flex flex-col">
+          <span class="font-bold">{{ getCurrentMonthYear(row.weekStart) }}</span>
+          <br />
+          <span>{{ formatDate(row.weekStart) }}</span>
+        </div>
       </template>
 
       <template #hoursWorked-data="{ row }">
@@ -59,9 +63,9 @@
         </span>
       </template>
 
-      <template #action-data="{}">
+      <!-- <template #action-data="{}">
         <ButtonUI class="btn btn-success btn-sm" type="button"> Approve </ButtonUI>
-      </template>
+      </template> -->
     </TableComponent>
   </CardComponent>
 </template>
@@ -74,7 +78,6 @@ import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
@@ -114,11 +117,20 @@ function formatDate(date: string | Date) {
   })
 }
 
+function getCurrentMonthYear() {
+  const now = new Date()
+  const locale = navigator.language || 'en-US'
+  return now.toLocaleDateString(locale, {
+    month: 'long',
+    year: 'numeric'
+  })
+}
+
 const columns = [
   {
     key: 'weekStart',
-    label: 'Date',
-    sortable: true,
+    label: 'Productivity Diary',
+    // sortable: true,
     class: 'text-black text-base'
   },
   {
@@ -142,12 +154,6 @@ const columns = [
   {
     key: 'totalAmount',
     label: 'Total Amount',
-    sortable: false,
-    class: 'text-black text-base'
-  },
-  {
-    key: 'action',
-    label: 'Action',
     sortable: false,
     class: 'text-black text-base'
   }
