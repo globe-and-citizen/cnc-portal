@@ -3,7 +3,7 @@
     <CRWeeklyClaimOwnerHeader />
     <transition-group name="stack" tag="div" class="stack w-full">
       <div
-        v-for="(item, index) in data?.filter((weeklyClaim) => weeklyClaim.status === null)"
+        v-for="(item, index) in data"
         :key="item.weekStart"
         class="card shadow-md bg-white p-4"
         :class="{
@@ -26,7 +26,7 @@
 
           <template #hourlyRate-data="{ row }">
             <div>
-              <span class="font-bold text-lg">
+              <span class="font-bold">
                 ≃
                 {{
                   (
@@ -42,7 +42,7 @@
                   {{ getHourlyRate(row.wage.ratePerHour, 'native') }} {{ NETWORK.currencySymbol }}
                 </span>
 
-                <span> {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} TOKEN </span>
+                <span> {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} ,TOKEN, </span>
 
                 <span> {{ getHourlyRate(row.wage.ratePerHour, 'usdc') }} USDC </span>
               </div>
@@ -51,7 +51,7 @@
 
           <template #totalAmount-data="{ row }">
             <div>
-              <span class="font-bold text-lg">
+              <span class="font-bold">
                 ≃
                 {{
                   (
@@ -79,7 +79,7 @@
                       : Number(getHourlyRate(row.wage.ratePerHour, 'sher')) *
                         getTotalHoursWorked(row.claims)
                   }}
-                  TOKEN
+                  ,TOKEN,
                 </span>
 
                 <span>
