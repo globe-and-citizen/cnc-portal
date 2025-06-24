@@ -16,10 +16,14 @@
       :address="teamStore.getContractAddressByType('CashRemunerationEIP712') ?? ''"
     />
 
-    <PendingWeeklyClaim v-if="isTeamOwner" />
-    <SignedWeeklyClaim />
+    <!-- Affiche le tableau CashRemunerationTable pour un membre individuel -->
+    <CashRemunerationTable v-if="memberAddress" />
 
-    <!-- <CashRemunerationTable :owner-address="teamStore.currentTeam?.ownerAddress" /> -->
+    <!-- Sinon, vue classique -->
+    <template v-else>
+      <PendingWeeklyClaim v-if="isTeamOwner" />
+      <SignedWeeklyClaim />
+    </template>
     <!-- <CashRemunerationTransactions /> -->
   </div>
 </template>
@@ -30,14 +34,18 @@ import { useTeamStore, useUserDataStore } from '@/stores'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 
 // import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
-// import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
+import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
 import PendingWeeklyClaim from '@/components/sections/CashRemunerationView/PendingWeeklyClaim.vue'
 import SignedWeeklyClaim from '@/components/sections/CashRemunerationView/SignedWeeklyClaim.vue'
+import { useRoute } from 'vue-router'
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
+
+const route = useRoute()
+const memberAddress = route.params.memberAddress as string | undefined
 
 const isTeamOwner = computed(() => {
   return teamStore.currentTeam?.ownerAddress === userStore.address
