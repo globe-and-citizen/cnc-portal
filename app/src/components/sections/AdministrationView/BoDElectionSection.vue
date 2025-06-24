@@ -225,7 +225,7 @@ const route = useRoute()
 const newProposalInput = ref<Partial<Proposal>>({
   title: '',
   description: '',
-  isElection: false,
+  isElection: true,
   voters: [],
   candidates: [],
   winnerCount: 0,
