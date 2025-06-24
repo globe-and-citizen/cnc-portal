@@ -41,6 +41,28 @@
           />
         </div>
 
+        <div class="mt-3">
+          <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+            <span class="w-24">Expiry</span>
+            <div class="grow" data-test="date-picker">
+              <VueDatePicker
+                v-model="newProposalInput.startDate"
+                :min-date="new Date()"
+                auto-apply
+              />
+            </div>
+          </label>
+        </div>
+
+        <div class="mt-3">
+          <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+            <span class="w-24">Expiry</span>
+            <div class="grow" data-test="date-picker">
+              <VueDatePicker v-model="newProposalInput.endDate" :min-date="new Date()" auto-apply />
+            </div>
+          </label>
+        </div>
+
         <MultiSelectMemberInput v-model="formData" />
 
         <div
@@ -90,13 +112,14 @@
 </template>
 
 <script setup lang="ts">
-import type { Proposal, Team } from '@/types/index'
+import type { Proposal, Team } from '@/types'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { required, minLength, requiredIf } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
+import VueDatePicker from '@vuepic/vue-datepicker'
 
 const emits = defineEmits(['createProposal'])
 const props = defineProps<{
@@ -121,20 +144,21 @@ const uniqueCandidates = () => {
   }
 }
 
-const newProposalInput = defineModel<Partial<Proposal>>({
-  default: {
-    title: '',
-    description: '',
-    candidates: [
-      {
-        name: '',
-        candidateAddress: ''
-      }
-    ],
-    isElection: true,
-    winnerCount: 0
-  }
+const newProposalInput = ref<Partial<Proposal>>({
+  title: '',
+  description: '',
+  startDate: '',
+  endDate: '',
+  candidates: [
+    {
+      name: '',
+      candidateAddress: ''
+    }
+  ],
+  isElection: true,
+  winnerCount: 0
 })
+
 const rules = {
   proposal: {
     title: {
@@ -159,16 +183,17 @@ interface User {
 }
 
 const submitForm = () => {
+  newProposalInput.value.candidates = []
   for (const user of formData.value) {
     newProposalInput.value.candidates?.push({
       name: user.name,
       candidateAddress: user.address
     })
   }
-
+  console.log('newProposalInput: ', newProposalInput.value)
   $v.value.$touch()
   if ($v.value.$invalid) return
-  emits('createProposal')
+  emits('createProposal', newProposalInput)
 }
 const formRef = ref<HTMLElement | null>(null)
 const showDropdown = ref<boolean>(false)

@@ -86,15 +86,8 @@
             </div>
           </ModalComponent>
           <ModalComponent v-model="showModal">
-            <!-- <CreateProposalForm
-              :team="team"
-              v-model="newProposalInput"
-              @createProposal="createProposal"
-              :isLoading="loadingAddProposal || isConfirmingAddProposal"
-            /> -->
             <CreateElectionForm
               :team="team"
-              v-model="newProposalInput"
               @createProposal="createProposal"
               :isLoading="loadingAddProposal || isConfirmingAddProposal"
             />
@@ -110,9 +103,8 @@
 <script setup lang="ts">
 import ProposalCard from '@/components/sections/AdministrationView/ProposalCard.vue'
 import type { Proposal } from '@/types/index'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch, type Ref } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import CreateProposalForm from '@/components/sections/AdministrationView/forms/CreateProposalForm.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
@@ -222,17 +214,7 @@ const tabs = ref([ProposalTabs.Ongoing, ProposalTabs.Done])
 
 const route = useRoute()
 
-const newProposalInput = ref<Partial<Proposal>>({
-  title: '',
-  description: '',
-  isElection: true,
-  voters: [],
-  candidates: [],
-  winnerCount: 0,
-  teamId: Number(route.params.id)
-})
-
-const createProposal = () => {
+const createProposal = (newProposalInput: Ref<Partial<Proposal>>) => {
   newProposalInput.value.voters = props.team.members?.map((member) => {
     return {
       name: member.name,
