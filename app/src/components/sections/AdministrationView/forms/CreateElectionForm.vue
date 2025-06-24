@@ -1,16 +1,7 @@
 <template>
   <div>
-    <h2>Create Proposal</h2>
+    <h2>Create Election</h2>
     <div class="flex flex-col gap-4 mt-2">
-      <select
-        class="select select-primary w-full"
-        v-model="newProposalInput.isElection"
-        data-test="electionDiv"
-      >
-        <option disabled selected>Type of Proposal</option>
-        <option :value="true">Election</option>
-        <option :value="false">Directive</option>
-      </select>
       <input
         type="text"
         placeholder="Title"
@@ -50,71 +41,8 @@
           />
         </div>
 
-        <!-- <SelectMemberInput @select-member="(member) => console.log('member selected: ', member)"/> -->
-        <MultiSelectMemberInput v-model="formData"/>
+        <MultiSelectMemberInput v-model="formData" />
 
-        <!-- <div class="input-group" ref="formRef">
-          <label class="input input-primary flex items-center gap-2 input-md">
-            <input
-              type="text"
-              class="w-28"
-              v-model="searchUserName"
-              @keyup.stop="
-                () => {
-                  searchUsers('name')
-                  showDropdown = true
-                }
-              "
-              placeholder="Candidate Name"
-              data-test="candidateNameInput"
-            />
-            |
-            <input
-              type="text"
-              class="grow"
-              v-model="searchUserAddress"
-              @keyup.stop="
-                () => {
-                  searchUsers('address')
-                  showDropdown = true
-                }
-              "
-              placeholder="Address"
-              data-test="candidateAddressInput"
-            />
-          </label>
-        </div>
-
-        <div
-          class="dropdown"
-          v-if="showDropdown"
-          :class="{ 'dropdown-open': users && users.users && users.users.length > 0 }"
-        >
-          <ul
-            v-if="users && users.users && users.users.length > 0"
-            class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96"
-            data-test="candidateDropdown"
-          >
-            <li v-for="user in users.users" :key="user.address">
-              <a
-                data-test="dropdown-item"
-                @click="
-                  () => {
-                    newProposalInput.candidates?.push({
-                      name: user.name,
-                      candidateAddress: user.address
-                    })
-                    searchUserName = ''
-                    searchUserAddress = ''
-                    showDropdown = false
-                  }
-                "
-              >
-                {{ user.name }} | {{ user.address }}
-              </a>
-            </li>
-          </ul>
-        </div> -->
         <div
           class="flex m-4 text-xs gap-4 justify-between"
           v-for="(candidate, index) in newProposalInput.candidates"
@@ -149,8 +77,8 @@
           class="btn btn-primary btn-md justify-center"
           data-test="submitButton"
           @click="
-            () => {              
-              ;submitForm()
+            () => {
+              submitForm()
             }
           "
         >
@@ -168,7 +96,6 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { required, minLength, requiredIf } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '@/components/ButtonUI.vue'
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 
 const emits = defineEmits(['createProposal'])
@@ -177,8 +104,6 @@ const props = defineProps<{
   team: Partial<Team>
 }>()
 
-const searchUserName = ref('')
-const searchUserAddress = ref('')
 const formData = ref<Array<Pick<User, 'address' | 'name'>>>([])
 interface Candidate {
   name: string
@@ -206,7 +131,7 @@ const newProposalInput = defineModel<Partial<Proposal>>({
         candidateAddress: ''
       }
     ],
-    isElection: false,
+    isElection: true,
     winnerCount: 0
   }
 })
@@ -233,38 +158,14 @@ interface User {
   address: string
 }
 
-const users = ref<{ users: User[] }>({ users: [] })
-
-const lastUpdatedInput = ref<'name' | 'address'>('name')
-
-const searchUsers = async (field: 'name' | 'address') => {
-  lastUpdatedInput.value = field
-  const members = props.team.members
-  if (!members) return
-
-  users.value = {
-    users: members.filter((member) => {
-      if (lastUpdatedInput.value === 'name' && searchUserName.value) {
-        return member.name.toLowerCase().includes(searchUserName.value.toLowerCase())
-      } else if (lastUpdatedInput.value === 'address' && searchUserAddress.value) {
-        return member.address.toLowerCase().includes(searchUserAddress.value.toLowerCase())
-      }
-      return false
+const submitForm = () => {
+  for (const user of formData.value) {
+    newProposalInput.value.candidates?.push({
+      name: user.name,
+      candidateAddress: user.address
     })
   }
-}
-const submitForm = () => {
-  console.log('formData: ', formData.value.length)
-  for (const user of formData.value) {
-    console.log('user: ', user)
-    newProposalInput.value
-      .candidates
-      ?.push({
-        name: user.name,
-        candidateAddress: user.address 
-      })                
-  }
-              
+
   $v.value.$touch()
   if ($v.value.$invalid) return
   emits('createProposal')

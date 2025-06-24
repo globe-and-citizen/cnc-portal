@@ -6,7 +6,7 @@
           <ButtonUI
             variant="primary"
             size="md"
-            @click="showModal=!showModal"
+            @click="showModal = !showModal"
             data-test="create-proposal"
           >
             Create Election
