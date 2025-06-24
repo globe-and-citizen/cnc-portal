@@ -10,7 +10,7 @@
           'transition -translate-y-full opacity-0  duration-1000': index === 0
         }"
       >
-        <TableComponent :rows="[item]" :columns="columns" :loading="loading">
+        <TableComponent :rows="[item]" :columns="columns" :isFetching="isFetching">
           <template #member-data="{ row }">
             <UserComponent :user="row.member" />
           </template>
@@ -128,11 +128,14 @@
         </TableComponent>
       </div>
     </transition-group>
-    <div v-if="loading" class="flex justify-center items-center p-4">
-      <span class="text-gray-500">Loading pending weekly claims...</span>
+    <div v-if="isFetching" class="flex justify-center items-center p-4">
+      <span class="text-gray-500">isFetching pending weekly claims...</span>
     </div>
     <!-- If empty -->
-    <div v-if="data && data.length === 0 && !loading" class="flex justify-center items-center p-4">
+    <div
+      v-if="data && data.length === 0 && !isFetching"
+      class="flex justify-center items-center p-4"
+    >
       <span class="text-gray-500">Congratulations You have approved all Weekly Claims</span>
     </div>
   </div>
@@ -170,7 +173,7 @@ const weeklyClaimUrl = computed(() => {
   }`
 })
 
-const { data, loading } = useCustomFetch(weeklyClaimUrl.value).get().json<WeeklyClaimResponse>()
+const { data, isFetching } = useCustomFetch(weeklyClaimUrl.value).get().json<WeeklyClaimResponse>()
 
 const isSameWeek = (weeklyClaimStartWeek: string) => {
   console.log(`weeklyClaimStartWeek: ${weeklyClaimStartWeek}`)
