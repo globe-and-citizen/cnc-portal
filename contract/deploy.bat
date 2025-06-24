@@ -7,9 +7,10 @@ IF "%1"=="" (
   exit /b 1
 )
 
-npx hardhat ignition deploy ignition/modules/ProxyModule.ts --network %1
-npx hardhat ignition deploy ignition/modules/OfficerModule.ts --network %1
+call npx hardhat ignition deploy ignition/modules/ProxyModule.ts --network %1
+call npx hardhat ignition deploy ignition/modules/OfficerModule.ts --network %1
+call npx hardhat ignition deploy ignition/modules/VestingProxyModule.ts --network %1
 
 IF /I "%2"=="mock" (
-  npx hardhat ignition deploy ignition/modules/MockTokensModule.ts --network %1
+  call npx hardhat ignition deploy ignition/modules/MockTokensModule.ts --network %1
 )
