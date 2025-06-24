@@ -5,15 +5,17 @@
     <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
       <div class="flex flex-wrap gap-2 sm:gap-4">
         <span class="text-sm">Contract Address </span>
+
         <AddressToolTip
-          :address="teamStore.getContractAddressByType('CashRemunerationEIP712') ?? ''"
+          v-if="cashRemunerationAddress"
+          :address="cashRemunerationAddress"
           class="text-sm font-bold"
         />
       </div>
     </div>
     <GenericTokenHoldingsSection
-      v-if="teamStore.getContractAddressByType('CashRemunerationEIP712') ?? ''"
-      :address="teamStore.getContractAddressByType('CashRemunerationEIP712') ?? ''"
+      v-if="cashRemunerationAddress"
+      :address="cashRemunerationAddress"
     />
 
     <!-- Affiche le tableau CashRemunerationTable pour un membre individuel -->
@@ -50,4 +52,8 @@ const memberAddress = route.params.memberAddress as string | undefined
 const isTeamOwner = computed(() => {
   return teamStore.currentTeam?.ownerAddress === userStore.address
 })
+
+const cashRemunerationAddress = computed(() =>
+  teamStore.getContractAddressByType('CashRemunerationEIP712')
+)
 </script>
