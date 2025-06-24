@@ -21,46 +21,68 @@
 
       <template #hourlyRate-data="{ row }">
         <div>
-          <span class="font-bold">
-            {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }}
+          <span class="font-bold text-lg">
+            ≃
+            {{
+              (
+                getTotalHoursWorked(row.claims) *
+                Number(
+                  getHoulyRateInUserCurrency(
+                    row.wage.cashRatePerHour ??
+                      row.wage.tokenRatePerHour ??
+                      row.wage.usdcRatePerHour
+                  )
+                )
+              ).toFixed(2)
+            }}
+            {{ NETWORK.nativeTokenSymbol }} / USD
           </span>
-          <br />
-          <span class="font-bold"> {{ row.wage.tokenRatePerHour }} TOKEN </span>
-          <br />
-          <span class="font-bold"> {{ row.wage.usdcRatePerHour }} USDC </span>
-          <br />
+          <div class="flex">
+            <span class=""> {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }} </span>
+
+            <span class=""> {{ row.wage.tokenRatePerHour }} ,TOKEN, </span>
+
+            <span class=""> {{ row.wage.usdcRatePerHour }} USDC </span>
+          </div>
         </div>
       </template>
 
       <template #totalAmount-data="{ row }">
-        <span class="font-bold">
-          {{ getTotalHoursWorked(row.claims) * row.wage.cashRatePerHour }}
-          {{ NETWORK.currencySymbol }}
-        </span>
-        <br />
-        <span class="font-bold">
-          {{ getTotalHoursWorked(row.claims) * row.wage.tokenRatePerHour }}
-          TOKEN
-        </span>
-        <br />
-        <span class="font-bold">
-          {{ getTotalHoursWorked(row.claims) * row.wage.usdcRatePerHour }}
-          USDC
-        </span>
-        <br />
-        <span class="text-gray-500">
-          {{
-            (
-              getTotalHoursWorked(row.claims) *
-              Number(
-                getHoulyRateInUserCurrency(
-                  row.wage.cashRatePerHour ?? row.wage.tokenRatePerHour ?? row.wage.usdcRatePerHour
+        <div>
+          <span class="font-bold text-lg">
+            ≃
+            {{
+              (
+                getTotalHoursWorked(row.claims) *
+                Number(
+                  getHoulyRateInUserCurrency(
+                    row.wage.cashRatePerHour ??
+                      row.wage.tokenRatePerHour ??
+                      row.wage.usdcRatePerHour
+                  )
                 )
-              )
-            ).toFixed(2)
-          }}
-          {{ NETWORK.nativeTokenSymbol }} / USD
-        </span>
+              ).toFixed(2)
+            }}
+            {{ NETWORK.nativeTokenSymbol }} / USD
+          </span>
+
+          <div class="flex">
+            <span>
+              {{ getTotalHoursWorked(row.claims) * row.wage.cashRatePerHour }}
+              {{ NETWORK.currencySymbol }}
+            </span>
+
+            <span>
+              {{ getTotalHoursWorked(row.claims) * row.wage.tokenRatePerHour }}
+              ,TOKEN,
+            </span>
+
+            <span>
+              {{ getTotalHoursWorked(row.claims) * row.wage.usdcRatePerHour }}
+              USDC
+            </span>
+          </div>
+        </div>
       </template>
 
       <!-- <template #action-data="{}">
