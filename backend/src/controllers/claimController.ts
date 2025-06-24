@@ -121,6 +121,7 @@ export const getClaims = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const teamId = Number(req.query.teamId);
   const status = req.query.status as string;
+  const memberAddress = req.query.memberAddress as string | undefined;
 
   try {
     // Validate teamId
@@ -137,11 +138,24 @@ export const getClaims = async (req: Request, res: Response) => {
     if (status) {
       statusFilter = { status };
     }
+
+    // add filter for memberAddress if provided
+    let memberFilter: Prisma.ClaimWhereInput = {};
+    if (memberAddress) {
+      memberFilter = {
+        wage: {
+          userAddress: memberAddress,
+          teamId: teamId,
+        },
+      };
+    }
+
     // Request all claims based on status, that have a wage where the teamId is the provided teamId
     const claims = await prisma.claim.findMany({
       where: {
         wage: {
           teamId: teamId,
+          ...(memberAddress ? { userAddress: memberAddress } : {}),
         },
         ...statusFilter,
       },
