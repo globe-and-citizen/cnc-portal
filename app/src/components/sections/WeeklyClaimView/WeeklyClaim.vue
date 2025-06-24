@@ -1,16 +1,22 @@
 <template>
-  <CardComponent title="Weekly Claim" class="w-full pb-7">
+  <CardComponent :title="singleUser ? 'Weekly Claim (User)' : 'Weekly Claim'" class="w-full pb-7">
     <TableComponent v-if="data" :rows="data" :columns="columns" :loading="isTeamClaimDataFetching">
       <template #member-data="{ row }">
-        <UserComponent :user="row.member" />
+        <RouterLink
+          :to="{
+            name: 'cash-remunerations-member',
+            params: { id: teamStore.currentTeam?.id, memberAddress: row.member.address }
+          }"
+          class="flex items-center gap-2 hover:underline text-emerald-700"
+        >
+          <UserComponent :user="row.member" />
+        </RouterLink>
       </template>
 
       <template #weekStart-data="{ row }">
-        <div class="flex flex-col">
-          <span class="font-bold">{{ getCurrentMonthYear(row.weekStart) }}</span>
-          <br />
-          <span>{{ formatDate(row.weekStart) }}</span>
-        </div>
+        <span class="font-bold">{{ getCurrentMonthYear(row.weekStart) }}</span>
+        <br />
+        <span>{{ formatDate(row.weekStart) }}</span>
       </template>
 
       <template #hoursWorked-data="{ row }">
@@ -21,7 +27,7 @@
 
       <template #hourlyRate-data="{ row }">
         <div>
-          <span class="font-bold text-lg">
+          <span class="font-bold">
             ≃
             {{
               (
@@ -49,7 +55,7 @@
 
       <template #totalAmount-data="{ row }">
         <div>
-          <span class="font-bold text-lg">
+          <span class="font-bold">
             ≃
             {{
               (
@@ -101,6 +107,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import { useUserDataStore, useTeamStore } from '@/stores'
+import { RouterLink } from 'vue-router'
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -108,12 +115,19 @@ function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
+const props = defineProps<{
+  memberAddress?: string
+  singleUser?: boolean
+}>()
+
 const weeklyClaimUrl = computed(
   () =>
     `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${
-      userStore.address !== teamStore.currentTeam?.ownerAddress
-        ? `&memberAddress=${userStore.address}`
-        : ''
+      props.memberAddress
+        ? `&memberAddress=${props.memberAddress}`
+        : userStore.address !== teamStore.currentTeam?.ownerAddress
+          ? `&memberAddress=${userStore.address}`
+          : ''
     }`
 )
 
@@ -129,20 +143,23 @@ const getHoulyRateInUserCurrency = (rate: number) => {
 }
 function formatDate(date: string | Date) {
   const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
+  // Get Monday (start of week)
+  const day = d.getDay()
+  const diffToMonday = (day === 0 ? -6 : 1) - day
+  const monday = new Date(d)
+  monday.setDate(d.getDate() + diffToMonday)
+  // Get Sunday (end of week)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  // Format as "Dec 23-Dec 29"
+  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
+  const locale = navigator.language || 'en-US'
+  return `${monday.toLocaleDateString(locale, options)}-${sunday.toLocaleDateString(locale, options)}`
+}
+function getCurrentMonthYear(date: string | Date) {
+  const d = new Date(date)
   const locale = navigator.language || 'en-US'
   return d.toLocaleDateString(locale, {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
-
-function getCurrentMonthYear() {
-  const now = new Date()
-  const locale = navigator.language || 'en-US'
-  return now.toLocaleDateString(locale, {
     month: 'long',
     year: 'numeric'
   })
