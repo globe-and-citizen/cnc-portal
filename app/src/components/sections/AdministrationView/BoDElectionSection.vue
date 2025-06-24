@@ -87,7 +87,6 @@
           </ModalComponent>
           <ModalComponent v-model="showModal">
             <CreateElectionForm
-              :team="team"
               @createProposal="createProposal"
               :isLoading="loadingAddProposal || isConfirmingAddProposal"
             />
@@ -111,7 +110,6 @@ import { ProposalTabs } from '@/types/index'
 import { readContract } from '@wagmi/core'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import type { Team } from '@/types/index'
-import { useRoute } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 import VotingManagement from '@/components/sections/AdministrationView/VotingManagement.vue'
 import { useReadContract } from '@wagmi/vue'
@@ -211,8 +209,6 @@ watch(errorAddProposal, () => {
 const showModal = ref(false)
 const showBoDModal = ref(false)
 const tabs = ref([ProposalTabs.Ongoing, ProposalTabs.Done])
-
-const route = useRoute()
 
 const createProposal = (newProposalInput: Ref<Partial<Proposal>>) => {
   newProposalInput.value.voters = props.team.members?.map((member) => {
