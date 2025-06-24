@@ -6,10 +6,10 @@
           <ButtonUI
             variant="primary"
             size="md"
-            @click="showModal = !showModal"
+            @click="showModal=!showModal"
             data-test="create-proposal"
           >
-            Create Proposal
+            Create Election
           </ButtonUI>
           <ButtonUI
             variant="secondary"
@@ -86,7 +86,13 @@
             </div>
           </ModalComponent>
           <ModalComponent v-model="showModal">
-            <CreateProposalForm
+            <!-- <CreateProposalForm
+              :team="team"
+              v-model="newProposalInput"
+              @createProposal="createProposal"
+              :isLoading="loadingAddProposal || isConfirmingAddProposal"
+            /> -->
+            <CreateElectionForm
               :team="team"
               v-model="newProposalInput"
               @createProposal="createProposal"
@@ -107,6 +113,7 @@ import type { Proposal } from '@/types/index'
 import { computed, onMounted, ref, watch } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateProposalForm from '@/components/sections/AdministrationView/forms/CreateProposalForm.vue'
+import CreateElectionForm from './forms/CreateElectionForm.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
 import { readContract } from '@wagmi/core'
