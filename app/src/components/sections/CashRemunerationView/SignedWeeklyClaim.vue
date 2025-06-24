@@ -26,61 +26,73 @@
 
           <template #hourlyRate-data="{ row }">
             <div>
-              <span class="font-bold">
-                {{ getHourlyRate(row.wage.ratePerHour, 'native') }} {{ NETWORK.currencySymbol }}
+              <span class="font-bold text-lg">
+                ≃
+                {{
+                  (
+                    getTotalHoursWorked(row.claims) *
+                    Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
+                  ).toFixed(2)
+                }}
+                {{ NETWORK.nativeTokenSymbol }} / USD
               </span>
-              <br />
-              <span class="font-bold">
-                {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} TOKEN
-              </span>
-              <br />
-              <span class="font-bold">
-                {{ getHourlyRate(row.wage.ratePerHour, 'usdc') }} USDC
-              </span>
-              <br />
+
+              <div class="flex">
+                <span>
+                  {{ getHourlyRate(row.wage.ratePerHour, 'native') }} {{ NETWORK.currencySymbol }}
+                </span>
+
+                <span> {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} TOKEN </span>
+
+                <span> {{ getHourlyRate(row.wage.ratePerHour, 'usdc') }} USDC </span>
+              </div>
             </div>
           </template>
 
           <template #totalAmount-data="{ row }">
-            <span class="font-bold">
-              {{
-                getHourlyRate(row.wage.ratePerHour, 'native') === 'N/A'
-                  ? 'N/A'
-                  : Number(getHourlyRate(row.wage.ratePerHour, 'native')) *
-                    getTotalHoursWorked(row.claims)
-              }}
-              {{ NETWORK.currencySymbol }}
-            </span>
-            <br />
-            <span class="font-bold">
-              {{
-                getHourlyRate(row.wage.ratePerHour, 'sher') === 'N/A'
-                  ? 'N/A'
-                  : Number(getHourlyRate(row.wage.ratePerHour, 'sher')) *
-                    getTotalHoursWorked(row.claims)
-              }}
-              TOKEN
-            </span>
-            <br />
-            <span class="font-bold">
-              {{
-                getHourlyRate(row.wage.ratePerHour, 'usdc') === 'N/A'
-                  ? 'N/A'
-                  : Number(getHourlyRate(row.wage.ratePerHour, 'usdc')) *
-                    getTotalHoursWorked(row.claims)
-              }}
-              USDC
-            </span>
-            <br />
-            <span class="text-gray-500">
-              {{
-                (
-                  getTotalHoursWorked(row.claims) *
-                  Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
-                ).toFixed(2)
-              }}
-              {{ NETWORK.nativeTokenSymbol }} / USD
-            </span>
+            <div>
+              <span class="font-bold text-lg">
+                ≃
+                {{
+                  (
+                    getTotalHoursWorked(row.claims) *
+                    Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
+                  ).toFixed(2)
+                }}
+                {{ NETWORK.nativeTokenSymbol }} / USD
+              </span>
+              <div>
+                <span>
+                  {{
+                    getHourlyRate(row.wage.ratePerHour, 'native') === 'N/A'
+                      ? 'N/A'
+                      : Number(getHourlyRate(row.wage.ratePerHour, 'native')) *
+                        getTotalHoursWorked(row.claims)
+                  }}
+                  {{ NETWORK.currencySymbol }}
+                </span>
+
+                <span>
+                  {{
+                    getHourlyRate(row.wage.ratePerHour, 'sher') === 'N/A'
+                      ? 'N/A'
+                      : Number(getHourlyRate(row.wage.ratePerHour, 'sher')) *
+                        getTotalHoursWorked(row.claims)
+                  }}
+                  TOKEN
+                </span>
+
+                <span>
+                  {{
+                    getHourlyRate(row.wage.ratePerHour, 'usdc') === 'N/A'
+                      ? 'N/A'
+                      : Number(getHourlyRate(row.wage.ratePerHour, 'usdc')) *
+                        getTotalHoursWorked(row.claims)
+                  }}
+                  USDC
+                </span>
+              </div>
+            </div>
           </template>
 
           <template #action-data="{ row }">
