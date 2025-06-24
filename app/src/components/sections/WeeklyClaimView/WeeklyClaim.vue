@@ -44,9 +44,9 @@
             {{ NETWORK.nativeTokenSymbol }} / USD
           </span>
           <div class="flex">
-            <span class=""> {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }} </span>
+            <span class=""> {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }},</span>
 
-            <span class=""> {{ row.wage.tokenRatePerHour }} ,TOKEN, </span>
+            <span class=""> {{ row.wage.tokenRatePerHour }} TOKEN, </span>
 
             <span class=""> {{ row.wage.usdcRatePerHour }} USDC </span>
           </div>
@@ -75,12 +75,12 @@
           <div class="flex">
             <span>
               {{ getTotalHoursWorked(row.claims) * row.wage.cashRatePerHour }}
-              {{ NETWORK.currencySymbol }}
+              {{ NETWORK.currencySymbol }},
             </span>
 
             <span>
               {{ getTotalHoursWorked(row.claims) * row.wage.tokenRatePerHour }}
-              ,TOKEN,
+              TOKEN,
             </span>
 
             <span>
