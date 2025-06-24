@@ -41,9 +41,9 @@
           />
         </div>
 
-        <div class="mt-3">
+        <div class="mb-4">
           <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-            <span class="w-24">Expiry</span>
+            <span class="w-24">Start Date</span>
             <div class="grow" data-test="date-picker">
               <VueDatePicker
                 v-model="newProposalInput.startDate"
@@ -54,13 +54,29 @@
           </label>
         </div>
 
-        <div class="mt-3">
+        <div
+          class="pl-4 text-red-500 text-sm w-full text-left"
+          v-for="error of $v.proposal.startDate.$errors"
+          :key="error.$uid"
+        >
+          {{ error.$message }}
+        </div>
+
+        <div class="mb-4">
           <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-            <span class="w-24">Expiry</span>
+            <span class="w-24">End Date</span>
             <div class="grow" data-test="date-picker">
               <VueDatePicker v-model="newProposalInput.endDate" :min-date="new Date()" auto-apply />
             </div>
           </label>
+        </div>
+
+        <div
+          class="pl-4 text-red-500 text-sm w-full text-left"
+          v-for="error of $v.proposal.endDate.$errors"
+          :key="error.$uid"
+        >
+          {{ error.$message }}
         </div>
 
         <MultiSelectMemberInput v-model="formData" />
@@ -115,17 +131,14 @@
 import type { Proposal, Team } from '@/types'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { required, minLength, requiredIf } from '@vuelidate/validators'
+import { required, minLength, requiredIf, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 
 const emits = defineEmits(['createProposal'])
-const props = defineProps<{
-  isLoading: boolean
-  team: Partial<Team>
-}>()
+defineProps<{ isLoading: boolean }>()
 
 const formData = ref<Array<Pick<User, 'address' | 'name'>>>([])
 interface Candidate {
@@ -172,6 +185,18 @@ const rules = {
     candidates: {
       requiredIf: requiredIf(() => newProposalInput.value?.isElection ?? false),
       uniqueCandidates: uniqueCandidates()
+    },
+    startDate: {
+      required,
+      beforeEnd: helpers.withMessage('Start date must be before end date: ', (value) => {
+        return (value as Date) < (newProposalInput.value?.endDate as Date)
+      })
+    },
+    endDate: {
+      required,
+      afterStart: helpers.withMessage('End date must be later than start date: ', (value) => {
+        return (value as Date) > (newProposalInput.value?.startDate as Date)
+      })
     }
   }
 }
