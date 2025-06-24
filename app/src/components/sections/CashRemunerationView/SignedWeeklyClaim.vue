@@ -41,10 +41,10 @@
 
               <div class="flex">
                 <span>
-                  {{ getHourlyRate(row.wage.ratePerHour, 'native') }} {{ NETWORK.currencySymbol }}
+                  {{ getHourlyRate(row.wage.ratePerHour, 'native') }} {{ NETWORK.currencySymbol }},
                 </span>
 
-                <span> {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} ,TOKEN, </span>
+                <span> {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} TOKEN , </span>
 
                 <span> {{ getHourlyRate(row.wage.ratePerHour, 'usdc') }} USDC </span>
               </div>
@@ -71,7 +71,7 @@
                       : Number(getHourlyRate(row.wage.ratePerHour, 'native')) *
                         getTotalHoursWorked(row.claims)
                   }}
-                  {{ NETWORK.currencySymbol }}
+                  {{ NETWORK.currencySymbol }},
                 </span>
 
                 <span>
@@ -81,7 +81,7 @@
                       : Number(getHourlyRate(row.wage.ratePerHour, 'sher')) *
                         getTotalHoursWorked(row.claims)
                   }}
-                  ,TOKEN,
+                  TOKEN ,
                 </span>
 
                 <span>
