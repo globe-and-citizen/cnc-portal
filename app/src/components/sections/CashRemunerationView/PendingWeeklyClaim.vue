@@ -15,6 +15,8 @@
             <UserComponent :user="row.member" />
           </template>
           <template #weekStart-data="{ row }">
+            <span class="font-bold">{{ getCurrentMonthYear(row.weekStart) }}</span>
+            <br />
             <span>{{ formatDate(row.weekStart) }}</span>
           </template>
 
@@ -191,12 +193,25 @@ function getHoulyRateInUserCurrency(hourlyRate: number, tokenId: TokenId = 'nati
 
 function formatDate(date: string | Date) {
   const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
-  return d.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
+  // Get Monday (start of week)
+  const day = d.getDay()
+  const diffToMonday = (day === 0 ? -6 : 1) - day
+  const monday = new Date(d)
+  monday.setDate(d.getDate() + diffToMonday)
+  // Get Sunday (end of week)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  // Format as "Dec 23-Dec 29"
+  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
+  const locale = navigator.language || 'en-US'
+  return `${monday.toLocaleDateString(locale, options)}-${sunday.toLocaleDateString(locale, options)}`
+}
+function getCurrentMonthYear(date: string | Date) {
+  const d = new Date(date)
+  const locale = navigator.language || 'en-US'
+  return d.toLocaleDateString(locale, {
     month: 'long',
-    day: 'numeric'
+    year: 'numeric'
   })
 }
 
