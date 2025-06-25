@@ -1,11 +1,21 @@
 <template>
-  <CardComponent title="Weekly Claim" class="w-full pb-7">
+  <CardComponent :title="singleUser ? 'Weekly Claim (User)' : 'Weekly Claim'" class="w-full pb-7">
     <TableComponent v-if="data" :rows="data" :columns="columns" :loading="isTeamClaimDataFetching">
       <template #member-data="{ row }">
-        <UserComponent :user="row.member" />
+        <RouterLink
+          :to="{
+            name: 'cash-remunerations-member',
+            params: { id: teamStore.currentTeam?.id, memberAddress: row.member.address }
+          }"
+          class="flex items-center gap-2 hover:underline text-emerald-700"
+        >
+          <UserComponent :user="row.member" />
+        </RouterLink>
       </template>
 
       <template #weekStart-data="{ row }">
+        <span class="font-bold">{{ getCurrentMonthYear(row.weekStart) }}</span>
+        <br />
         <span>{{ formatDate(row.weekStart) }}</span>
       </template>
 
@@ -18,50 +28,72 @@
       <template #hourlyRate-data="{ row }">
         <div>
           <span class="font-bold">
-            {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }}
+            ≃
+            {{
+              (
+                getTotalHoursWorked(row.claims) *
+                Number(
+                  getHoulyRateInUserCurrency(
+                    row.wage.cashRatePerHour ??
+                      row.wage.tokenRatePerHour ??
+                      row.wage.usdcRatePerHour
+                  )
+                )
+              ).toFixed(2)
+            }}
+            {{ NETWORK.nativeTokenSymbol }} / USD
           </span>
-          <br />
-          <span class="font-bold"> {{ row.wage.tokenRatePerHour }} TOKEN </span>
-          <br />
-          <span class="font-bold"> {{ row.wage.usdcRatePerHour }} USDC </span>
-          <br />
+          <div class="flex">
+            <span class=""> {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }},</span>
+
+            <span class=""> {{ row.wage.tokenRatePerHour }} TOKEN, </span>
+
+            <span class=""> {{ row.wage.usdcRatePerHour }} USDC </span>
+          </div>
         </div>
       </template>
 
       <template #totalAmount-data="{ row }">
-        <span class="font-bold">
-          {{ getTotalHoursWorked(row.claims) * row.wage.cashRatePerHour }}
-          {{ NETWORK.currencySymbol }}
-        </span>
-        <br />
-        <span class="font-bold">
-          {{ getTotalHoursWorked(row.claims) * row.wage.tokenRatePerHour }}
-          TOKEN
-        </span>
-        <br />
-        <span class="font-bold">
-          {{ getTotalHoursWorked(row.claims) * row.wage.usdcRatePerHour }}
-          USDC
-        </span>
-        <br />
-        <span class="text-gray-500">
-          {{
-            (
-              getTotalHoursWorked(row.claims) *
-              Number(
-                getHoulyRateInUserCurrency(
-                  row.wage.cashRatePerHour ?? row.wage.tokenRatePerHour ?? row.wage.usdcRatePerHour
+        <div>
+          <span class="font-bold">
+            ≃
+            {{
+              (
+                getTotalHoursWorked(row.claims) *
+                Number(
+                  getHoulyRateInUserCurrency(
+                    row.wage.cashRatePerHour ??
+                      row.wage.tokenRatePerHour ??
+                      row.wage.usdcRatePerHour
+                  )
                 )
-              )
-            ).toFixed(2)
-          }}
-          {{ NETWORK.nativeTokenSymbol }} / USD
-        </span>
+              ).toFixed(2)
+            }}
+            {{ NETWORK.nativeTokenSymbol }} / USD
+          </span>
+
+          <div class="flex">
+            <span>
+              {{ getTotalHoursWorked(row.claims) * row.wage.cashRatePerHour }}
+              {{ NETWORK.currencySymbol }},
+            </span>
+
+            <span>
+              {{ getTotalHoursWorked(row.claims) * row.wage.tokenRatePerHour }}
+              TOKEN,
+            </span>
+
+            <span>
+              {{ getTotalHoursWorked(row.claims) * row.wage.usdcRatePerHour }}
+              USDC
+            </span>
+          </div>
+        </div>
       </template>
 
-      <template #action-data="{}">
+      <!-- <template #action-data="{}">
         <ButtonUI class="btn btn-success btn-sm" type="button"> Approve </ButtonUI>
-      </template>
+      </template> -->
     </TableComponent>
   </CardComponent>
 </template>
@@ -74,8 +106,8 @@ import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
+import { RouterLink } from 'vue-router'
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -83,12 +115,19 @@ function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
+const props = defineProps<{
+  memberAddress?: string
+  singleUser?: boolean
+}>()
+
 const weeklyClaimUrl = computed(
   () =>
     `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${
-      userStore.address !== teamStore.currentTeam?.ownerAddress
-        ? `&memberAddress=${userStore.address}`
-        : ''
+      props.memberAddress
+        ? `&memberAddress=${props.memberAddress}`
+        : userStore.address !== teamStore.currentTeam?.ownerAddress
+          ? `&memberAddress=${userStore.address}`
+          : ''
     }`
 )
 
@@ -104,21 +143,33 @@ const getHoulyRateInUserCurrency = (rate: number) => {
 }
 function formatDate(date: string | Date) {
   const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
+  // Get Monday (start of week)
+  const day = d.getDay()
+  const diffToMonday = (day === 0 ? -6 : 1) - day
+  const monday = new Date(d)
+  monday.setDate(d.getDate() + diffToMonday)
+  // Get Sunday (end of week)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  // Format as "Dec 23-Dec 29"
+  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
+  const locale = navigator.language || 'en-US'
+  return `${monday.toLocaleDateString(locale, options)}-${sunday.toLocaleDateString(locale, options)}`
+}
+function getCurrentMonthYear(date: string | Date) {
+  const d = new Date(date)
   const locale = navigator.language || 'en-US'
   return d.toLocaleDateString(locale, {
-    weekday: 'long',
-    year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    year: 'numeric'
   })
 }
 
 const columns = [
   {
     key: 'weekStart',
-    label: 'Date',
-    sortable: true,
+    label: 'Productivity Diary',
+    // sortable: true,
     class: 'text-black text-base'
   },
   {
@@ -142,12 +193,6 @@ const columns = [
   {
     key: 'totalAmount',
     label: 'Total Amount',
-    sortable: false,
-    class: 'text-black text-base'
-  },
-  {
-    key: 'action',
-    label: 'Action',
     sortable: false,
     class: 'text-black text-base'
   }
