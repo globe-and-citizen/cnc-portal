@@ -179,15 +179,6 @@ export type TokenId = 'native' | 'usdc' | 'usdt' | 'sher' // Add more token IDs 
 
 export const SUPPORTED_TOKENS: TokenConfig[] = [
   {
-    id: 'native',
-    name: NETWORK.currencySymbol,
-    symbol: NETWORK.currencySymbol,
-    code: NETWORK.currencySymbol,
-    coingeckoId: NETWORK_TO_COIN_ID[NETWORK.currencySymbol],
-    decimals: 18,
-    address: zeroAddress
-  },
-  {
     id: 'usdc',
     name: 'USD Coin',
     symbol: 'USDC',
@@ -195,6 +186,15 @@ export const SUPPORTED_TOKENS: TokenConfig[] = [
     coingeckoId: 'usd-coin',
     decimals: 6,
     address: USDC_ADDRESS as Address
+  },
+  {
+    id: 'native',
+    name: NETWORK.currencySymbol,
+    symbol: NETWORK.currencySymbol,
+    code: NETWORK.currencySymbol,
+    coingeckoId: NETWORK_TO_COIN_ID[NETWORK.currencySymbol],
+    decimals: 18,
+    address: zeroAddress
   }
   // Add more tokens here
 ]
