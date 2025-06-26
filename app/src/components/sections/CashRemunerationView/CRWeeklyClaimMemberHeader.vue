@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="px-8 pb-4 flex items-end" :class="{ 'justify-between': hasWage }">
+    <div class="px-8 pb-4 pt-8 flex items-end" :class="{ 'justify-between': hasWage }">
       <span class="card-title"> Pending Weekly Claim Withdrawal </span>
       <div class="card-actions justify-end">
         <SubmitClaims v-if="hasWage" />
