@@ -82,25 +82,6 @@
         <MultiSelectMemberInput v-model="formData" />
 
         <div
-          class="flex m-4 text-xs gap-4 justify-between"
-          v-for="(candidate, index) in newProposalInput.candidates"
-          :key="index"
-          data-test="candidate-item"
-        >
-          <span>
-            {{ candidate.name }}
-          </span>
-          <span>
-            {{ candidate.candidateAddress }}
-          </span>
-          <IconifyIcon
-            icon="heroicons:user-plus"
-            class="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200 cursor-pointer"
-            data-test="remove-candidate"
-            @click="() => newProposalInput.candidates?.splice(index, 1)"
-          />
-        </div>
-        <div
           class="pl-4 text-red-500 text-sm w-full text-left"
           v-if="newProposalInput.isElection && $v.proposal.candidates.$error"
         >
@@ -114,11 +95,7 @@
           :disabled="isLoading"
           class="btn btn-primary btn-md justify-center"
           data-test="submitButton"
-          @click="
-            () => {
-              submitForm()
-            }
-          "
+          @click="submitForm"
         >
           Create Proposal
         </ButtonUI>
@@ -128,9 +105,8 @@
 </template>
 
 <script setup lang="ts">
-import type { Proposal, Team } from '@/types'
+import type { Proposal, User } from '@/types'
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import { required, minLength, requiredIf, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -202,17 +178,12 @@ const rules = {
 }
 const $v = useVuelidate(rules, { proposal: newProposalInput })
 
-interface User {
-  name: string
-  address: string
-}
-
 const submitForm = () => {
   newProposalInput.value.candidates = []
   for (const user of formData.value) {
     newProposalInput.value.candidates?.push({
-      name: user.name,
-      candidateAddress: user.address
+      name: user.name || '',
+      candidateAddress: user.address || ''
     })
   }
   console.log('newProposalInput: ', newProposalInput.value)
