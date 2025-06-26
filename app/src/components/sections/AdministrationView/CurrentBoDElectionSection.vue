@@ -103,8 +103,8 @@ const electionData = {
     { name: 'Bob Smith', address: '0xabcdef1234567890abcdef1234567890abcdef12' },
     { name: 'Charlie Brown', address: '0x7890abcdef1234567890abcdef12345678901234' }
   ],
-  startDate: new Date('2023-12-01T00:00:00Z'),
-  endDate: new Date('2023-12-15T23:59:59Z')
+  startDate: new Date('2025-06-01T00:00:00Z'),
+  endDate: new Date('2025-06-30T23:59:59Z')
 }
 
 onMounted(() => {

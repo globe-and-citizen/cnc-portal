@@ -7,34 +7,38 @@
         v-for="member in boardOfDirectors"
         :key="member.address"
         :user="member"
-        :isCollapsed="true"
+        :isDetailedView="true"
       />
     </div>
   </CardComponent>
 </template>
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
-import UserComponentCol from '@/components/UserComponentCol.vue'
+import UserComponentCol from '@/components/UserComponent.vue'
 
 const boardOfDirectors = [
   {
     address: '0x1234567890abcdef1234567890abcdef12345678',
-    name: 'Alice Johnson' /*,
+    name: 'Alice Johnson',
+    role: 'Chairperson' /*,
 		imageUrl: 'https://example.com/images/alice.jpg'*/
   },
   {
     address: '0xabcdef1234567890abcdef1234567890abcdef12',
-    name: 'Bob Smith' /*,
+    name: 'Bob Smith',
+    role: 'Vice Chairperson' /*,
 		imageUrl: 'https://example.com/images/bob.jpg'*/
   },
   {
     address: '0x7890abcdef1234567890abcdef12345678901234',
-    name: 'Charlie Brown' /*,
+    name: 'Charlie Brown',
+    role: 'Treasurer' /*,
 		imageUrl: 'https://example.com/images/charlie.jpg'*/
   },
   {
     address: '0x4567890abcdef1234567890abcdef1234567890',
-    name: 'Diana Prince' /*,
+    name: 'Diana Prince',
+    role: 'Secretary' /*,
 		imageUrl: 'https://example.com/images/diana.jpg'*/
   },
   {
