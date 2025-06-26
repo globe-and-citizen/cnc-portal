@@ -158,7 +158,7 @@ import { type WeeklyClaimResponse, type RatePerHour, type SupportedTokens } from
 import CRSigne from './CRSigne.vue'
 import type { Address } from 'viem'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
-import { getMondayStart } from '@/utils/dayUtils'
+import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
 import type { TokenId } from '@/constant'
 import CRWeeklyClaimMemberHeader from './CRWeeklyClaimMemberHeader.vue'
@@ -193,16 +193,8 @@ function getHoulyRateInUserCurrency(hourlyRate: number, tokenId: TokenId = 'nati
 }
 
 function formatDate(date: string | Date) {
-  const d = new Date(date)
-  // Get Monday (start of week)
-  const day = d.getDay()
-  const diffToMonday = (day === 0 ? -6 : 1) - day
-  const monday = new Date(d)
-  monday.setDate(d.getDate() + diffToMonday)
-  // Get Sunday (end of week)
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  // Format as "Dec 23-Dec 29"
+  const monday = getMondayStart(new Date(date))
+  const sunday = getSundayEnd(new Date(date))
   const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
   const locale = navigator.language || 'en-US'
   return `${monday.toLocaleDateString(locale, options)}-${sunday.toLocaleDateString(locale, options)}`

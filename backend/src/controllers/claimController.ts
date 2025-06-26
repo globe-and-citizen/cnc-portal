@@ -98,6 +98,23 @@ export const addClaim = async (req: Request, res: Response) => {
       });
     }
 
+    if (
+      (weeklyClaim?.claims
+        .filter(
+          (claim) =>
+            claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime()
+        )
+        .reduce((sum, claim) => sum + Number(claim.hoursWorked), 0) ?? 0) +
+        Number(hoursWorked) >
+      24
+    ) {
+      return errorResponse(
+        400,
+        "Impossible to submit: the total of hours for this day would exceed 24 hours.",
+        res
+      );
+    }
+
     const claim = await prisma.claim.create({
       data: {
         hoursWorked,
