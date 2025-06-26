@@ -11,6 +11,7 @@ import type {
 import VueDatePicker from '@vuepic/vue-datepicker'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { zeroAddress } from 'viem'
+import { SUPPORTED_TOKENS } from '@/constant/index'
 
 interface ComponentData {
   selectedOptions: { [key in 0 | 1 | 2]: boolean }
@@ -196,7 +197,7 @@ describe('ApproveUsersForm', () => {
       expect(wrapper.vm.input).toEqual({
         name: 'Test Name',
         address: '0xAddressToApprove',
-        token: zeroAddress
+        token: SUPPORTED_TOKENS[0].address
       })
     })
     it('should update date when expiry date is selected', async () => {
