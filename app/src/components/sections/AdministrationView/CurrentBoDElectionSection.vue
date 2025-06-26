@@ -11,26 +11,21 @@
           >
             Create Election
           </ButtonUI>
-          <ButtonUI>
-            View Election
-          </ButtonUI>
+          <ButtonUI> View Election </ButtonUI>
         </div>
         <ModalComponent v-model="showCreateElectionModal">
           <!-- <VotingManagement :team="team" /> -->
-          <CreateElectionForm :is-loading="false"/>
+          <CreateElectionForm :is-loading="false" />
         </ModalComponent>
       </div>
     </template>
-		<!-- Status and Countdown -->
-		<div class="flex items-center justify-start gap-2 mb-6">
-			<span class="px-2 py-1 text-xs font-medium rounded-full" 
-						:class="electionStatus.class">
-				{{ electionStatus.text }}
-			</span>
-			<span class="text-sm text-gray-600">
-				Ends in {{ timeRemaining }}
-			</span>
-		</div>
+    <!-- Status and Countdown -->
+    <div class="flex items-center justify-start gap-2 mb-6">
+      <span class="px-2 py-1 text-xs font-medium rounded-full" :class="electionStatus.class">
+        {{ electionStatus.text }}
+      </span>
+      <span class="text-sm text-gray-600"> Ends in {{ timeRemaining }} </span>
+    </div>
     <div>
       <!-- Election Title -->
       <h2 class="text-2xl text-center font-semibold mb-4">{{ electionData.title }}</h2>
@@ -51,7 +46,9 @@
         </div>
 
         <!-- End Date Stat -->
-        <div class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+        <div
+          class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100"
+        >
           <div class="p-3 bg-green-50 rounded-full">
             <IconifyIcon icon="heroicons:calendar" class="h-6 w-6 text-green-600" />
           </div>
@@ -64,7 +61,9 @@
         </div>
 
         <!-- Votes Stat -->
-        <div class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+        <div
+          class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100"
+        >
           <div class="p-3 bg-purple-50 rounded-full">
             <IconifyIcon icon="heroicons:chart-bar" class="h-6 w-6 text-purple-600" />
           </div>
@@ -81,12 +80,12 @@
 </template>
 
 <script setup lang="ts">
-import CardComponent from '@/components/CardComponent.vue';
+import CardComponent from '@/components/CardComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import CreateElectionForm from './forms/CreateElectionForm.vue';
+import CreateElectionForm from './forms/CreateElectionForm.vue'
 
 // Mock votes data - replace with real data
 const votesCast = ref(1428)
@@ -120,15 +119,15 @@ onBeforeUnmount(() => {
 
 const timeRemaining = computed(() => {
   const diff = electionData.endDate.getTime() - now.value.getTime()
-  
+
   if (diff <= 0) return 'election ended'
-  
+
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
   if (days > 0) return `${days} ${days === 1 ? 'day' : 'days'}`
-  
+
   const hours = Math.floor(diff / (1000 * 60 * 60))
   if (hours > 0) return `${hours} ${hours === 1 ? 'hour' : 'hours'}`
-  
+
   const minutes = Math.floor(diff / (1000 * 60))
   return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
 })
@@ -146,10 +145,10 @@ const electionStatus = computed(() => {
 
 // Format date as "Dec 15, 2023"
 const formatDate = (date: Date) => {
-  return date.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric', 
-    year: 'numeric' 
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
   })
 }
 </script>

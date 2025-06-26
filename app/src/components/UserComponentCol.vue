@@ -3,13 +3,10 @@
     class="flex flex-row justify-start gap-4 transition-all duration-300"
     :class="{ 'justify-center flex-col items-center': isCollapsed }"
   >
-    <div 
-      role="button" 
-      class="relative group"
-    >
-      <div 
+    <div role="button" class="relative group">
+      <div
         class="relative rounded-full overflow-hidden ring-2 ring-white/50"
-        :class="{'ring-gray-200 w-24 h-24 ring-4': isCollapsed, 'w-11 h-11': !isCollapsed}"
+        :class="{ 'ring-gray-200 w-24 h-24 ring-4': isCollapsed, 'w-11 h-11': !isCollapsed }"
       >
         <img
           alt="User Avatar"
@@ -21,13 +18,10 @@
         />
       </div>
     </div>
-    <div 
-      class="flex flex-col text-gray-600"
-      :class="{'items-center text-center': isCollapsed}"
-    >
-      <p 
+    <div class="flex flex-col text-gray-600" :class="{ 'items-center text-center': isCollapsed }">
+      <p
         class="font-bold line-clamp-1"
-        :class="{'text-lg': isCollapsed, 'text-sm': !isCollapsed}" 
+        :class="{ 'text-lg': isCollapsed, 'text-sm': !isCollapsed }"
         data-test="user-name"
       >
         {{ user.name || 'User' }}
@@ -44,7 +38,7 @@ import type { User } from '@/types'
 import { computed } from 'vue'
 
 const props = defineProps<{
-  user: Pick<User, 'address' | 'name' | 'imageUrl'>
+  user: Pick<User, 'address' | 'name' | 'imageUrl'> & { role?: string}
   isCollapsed?: boolean
 }>()
 
