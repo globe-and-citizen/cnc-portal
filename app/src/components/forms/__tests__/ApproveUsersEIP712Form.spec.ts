@@ -10,7 +10,6 @@ import type {
 } from '@vuelidate/core'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { zeroAddress } from 'viem'
 import { SUPPORTED_TOKENS } from '@/constant/index'
 
 interface ComponentData {
