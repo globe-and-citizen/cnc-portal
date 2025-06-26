@@ -3,9 +3,9 @@
     <CRWeeklyClaimOwnerHeader />
     <transition-group name="stack" tag="div" class="stack w-full">
       <div
-        v-for="(item, index) in data?.filter((weeklyClaim) => {
-          weeklyClaim.weekStart < new Date().toISOString()
-        })"
+        v-for="(item, index) in data?.filter(
+          (weeklyClaim) => weeklyClaim.weekStart < new Date().toISOString()
+        )"
         :key="item.weekStart"
         class="card shadow-md bg-white p-4"
         :class="{

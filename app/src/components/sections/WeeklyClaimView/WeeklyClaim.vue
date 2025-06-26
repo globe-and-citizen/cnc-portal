@@ -104,6 +104,7 @@ import TableComponent, { type TableColumn } from '@/components/TableComponent.vu
 import UserComponent from '@/components/UserComponent.vue'
 import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import { useUserDataStore, useTeamStore } from '@/stores'
@@ -142,20 +143,13 @@ const getHoulyRateInUserCurrency = (rate: number) => {
   return (rate * price).toFixed(2)
 }
 function formatDate(date: string | Date) {
-  const d = new Date(date)
-  // Get Monday (start of week)
-  const day = d.getDay()
-  const diffToMonday = (day === 0 ? -6 : 1) - day
-  const monday = new Date(d)
-  monday.setDate(d.getDate() + diffToMonday)
-  // Get Sunday (end of week)
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  // Format as "Dec 23-Dec 29"
+  const monday = getMondayStart(new Date(date))
+  const sunday = getSundayEnd(new Date(date))
   const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
   const locale = navigator.language || 'en-US'
   return `${monday.toLocaleDateString(locale, options)}-${sunday.toLocaleDateString(locale, options)}`
 }
+
 function getCurrentMonthYear(date: string | Date) {
   const d = new Date(date)
   const locale = navigator.language || 'en-US'
