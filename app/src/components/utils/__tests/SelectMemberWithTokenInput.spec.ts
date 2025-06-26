@@ -3,7 +3,6 @@ import { it, describe, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { ref } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
-import { zeroAddress } from 'viem'
 import { SUPPORTED_TOKENS } from '@/constant/index'
 
 describe('SelectMemberWithTokenInput.vue', () => {
