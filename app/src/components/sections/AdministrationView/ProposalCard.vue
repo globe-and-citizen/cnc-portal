@@ -32,7 +32,7 @@
         <PieChart :data="chartData" title="Election" />
       </div>
     </div>
-    <div class="flex justify-center gap-4 mb-2" v-if="!isDone" data-test="active-proposal-actions">
+    <div class="flex justify-center gap-2 mb-2" v-if="!isDone" data-test="active-proposal-actions">
       <ButtonUI variant="primary" size="sm" @click="showVoteModal = true" data-test="vote-button"
         >Vote</ButtonUI
       >
@@ -148,7 +148,6 @@ import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import type { Address } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useTeamStore } from '@/stores'
-import { valueFromAST } from 'graphql'
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 const teamStore = useTeamStore()
