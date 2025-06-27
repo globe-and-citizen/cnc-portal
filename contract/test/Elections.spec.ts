@@ -1,11 +1,12 @@
 import { expect } from 'chai'
 import { ethers, upgrades } from 'hardhat'
 import { time } from '@nomicfoundation/hardhat-network-helpers'
-import { Elections } from '../typechain-types'
+import { BoardOfDirectors, Elections, MockBoardOfDirectors } from '../typechain-types'
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
 
-describe('Elections', function () {
+describe.only('Elections', function () {
   let elections: Elections
+  let boardOfDirectors: MockBoardOfDirectors
   let owner: HardhatEthersSigner
   let voter1: HardhatEthersSigner
   let voter2: HardhatEthersSigner
@@ -30,6 +31,24 @@ describe('Elections', function () {
       owner.address
     ])
     elections = ElectionsFactory.attach(beaconProxy.target) as unknown as Elections
+
+    const BoardOfDirectorsFactory = await ethers.getContractFactory('MockBoardOfDirectors')
+    boardOfDirectors = (await upgrades.deployBeacon(
+      BoardOfDirectorsFactory
+    )) as unknown as MockBoardOfDirectors
+
+    // Deploy beacon proxy
+    const bodBeaconProxy = await upgrades.deployBeaconProxy(
+      boardOfDirectors,
+      BoardOfDirectorsFactory
+    )
+    boardOfDirectors = BoardOfDirectorsFactory.attach(
+      bodBeaconProxy.target
+    ) as unknown as MockBoardOfDirectors
+
+    await elections
+      .connect(owner)
+      .setBoardOfDirectorsContractAddress(await boardOfDirectors.getAddress())
   })
 
   describe('Deployment', function () {
@@ -395,7 +414,7 @@ describe('Elections', function () {
       expect(election.resultsPublished).to.be.true
     })
 
-    it('Should calculate correct results with votes', async function () {
+    it('Should automatically to publish correct results with votes', async function () {
       // Create active election for voting
       const currentTime = await time.latest()
       const activeStartDate = currentTime + 100
@@ -449,12 +468,15 @@ describe('Elections', function () {
       await elections.publishResults(activeElectionId)
 
       const results = await elections.getElectionResults(activeElectionId)
+      const winners = await elections.getElectionWinners(activeElectionId)
       expect(results.length).to.equal(3)
 
       // candidate1 should win with most points: 3+2+3 = 8 points
       expect(results[0].candidateAddress).to.equal(candidate1.address)
       expect(results[0].isWinner).to.be.true
       expect(results[0].rank).to.equal(1)
+      expect(winners.length).to.equal(1)
+      expect(winners).to.include(candidate1.address)
     })
 
     it('Should revert when trying to publish results for active election', async function () {
@@ -497,6 +519,21 @@ describe('Elections', function () {
       await expect(
         elections.connect(voter1).publishResults(electionId)
       ).to.be.revertedWithCustomError(elections, 'OwnableUnauthorizedAccount')
+    })
+  })
+
+  describe('Admin Functions', function () {
+    it('Should pause the contract', async function () {
+      await elections.pause()
+
+      expect(await elections.paused()).to.be.true
+    })
+
+    it('Should unpause the contract', async function () {
+      await elections.pause()
+      await elections.unpause()
+
+      expect(await elections.paused()).to.be.false
     })
   })
 
