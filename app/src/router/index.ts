@@ -44,6 +44,12 @@ const router = createRouter({
       meta: { name: 'Team View' },
       children: [
         {
+          path: '/teams/:id/cash-remunerations/weekly-claim',
+          name: 'weekly-claim',
+          meta: { name: 'Cash Remuneration-weekly claim' },
+          component: WeeklyClaimView
+        },
+        {
           path: '/teams/:id/cash-remunerations/claim-history',
           name: 'claim-history',
           meta: { name: 'Cash Remuneration-claim history' },
