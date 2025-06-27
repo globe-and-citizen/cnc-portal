@@ -101,12 +101,8 @@ library ElectionUtils {
     }
 
     // Check for duplicate candidate addresses
-    for (uint256 i = 0; i < candidates.length; i++) {
-      for (uint256 j = i + 1; j < candidates.length; j++) {
-        if (candidates[i] == candidates[j]) {
-          revert DuplicateCandidates();
-        }
-      }
+    if (isDuplicate(candidates)) {
+      revert DuplicateCandidates();
     }
   }
 
@@ -120,12 +116,8 @@ library ElectionUtils {
     }
 
     // Check for duplicate voter addresses
-    for (uint256 i = 0; i < eligibleVoters.length; i++) {
-      for (uint256 j = i + 1; j < eligibleVoters.length; j++) {
-        if (eligibleVoters[i] == eligibleVoters[j]) {
-          revert DuplicateVoters();
-        }
-      }
+    if (isDuplicate(eligibleVoters)) {
+      revert DuplicateVoters();
     }
   }
 
@@ -240,5 +232,16 @@ library ElectionUtils {
    */
   function hasElectionEnded(uint256 endDate) internal view returns (bool) {
     return block.timestamp > endDate;
+  }
+
+  function isDuplicate(address[] memory candidateOrVoters) internal pure returns (bool) {
+    for (uint256 i = 0; i < candidateOrVoters.length; i++) {
+      for (uint256 j = i + 1; j < candidateOrVoters.length; j++) {
+        if (candidateOrVoters[i] == candidateOrVoters[j]) {
+          return true; // Duplicate found
+        }
+      }
+    }
+    return false; // No duplicates
   }
 }

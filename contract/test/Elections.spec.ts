@@ -4,7 +4,7 @@ import { time } from '@nomicfoundation/hardhat-network-helpers'
 import { Elections, MockBoardOfDirectors } from '../typechain-types'
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
 
-describe.only('Elections', function () {
+describe('Elections', function () {
   let elections: Elections
   let boardOfDirectors: MockBoardOfDirectors
   let owner: HardhatEthersSigner
