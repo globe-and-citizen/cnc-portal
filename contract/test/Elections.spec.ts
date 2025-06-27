@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { ethers, upgrades } from 'hardhat'
 import { time } from '@nomicfoundation/hardhat-network-helpers'
-import { BoardOfDirectors, Elections, MockBoardOfDirectors } from '../typechain-types'
+import { Elections, MockBoardOfDirectors } from '../typechain-types'
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
 
 describe.only('Elections', function () {
