@@ -7,6 +7,7 @@ import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ElectionTypes} from './ElectionTypes.sol';
 import {ElectionUtils} from './ElectionUtils.sol';
 import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
+import 'hardhat/console.sol';
 
 /**
  * @title Elections
@@ -21,7 +22,8 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   bool private initBodAddress;
   mapping(uint256 => ElectionTypes.Election) private _elections;
   uint256[] private _electionIds;
-  mapping(uint256 => mapping(address => address[])) private _votes;
+  mapping(uint256 => mapping(address => address)) private _votes;
+  mapping(uint256 => mapping(address => uint256)) private _voteCounts;
 
   event ElectionCreated(
     uint256 indexed electionId,
@@ -32,13 +34,14 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     uint256 seatCount
   );
 
-  event VoteSubmitted(uint256 indexed electionId, address indexed voter);
+  event VoteSubmitted(uint256 indexed electionId, address indexed voter, address indexed candidate);
 
   event ResultsPublished(uint256 indexed electionId, address[] winners);
 
   // Custom errors
   error ElectionNotFound();
   error ElectionNotActive();
+  error ElectionIsOngoing();
   error ElectionEnded();
   error AlreadyVoted();
   error NotEligibleVoter();
@@ -82,8 +85,10 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   ) external onlyOwner whenNotPaused returns (uint256 electionId) {
     ElectionUtils.validateSeatCount(seatCount);
 
-    ElectionTypes.Election storage currentElection = _elections[_nextElectionId];
-    ElectionUtils.validateDates(startDate, endDate, currentElection);
+    if (_nextElectionId > 1 && !_elections[_nextElectionId - 1].resultsPublished) {
+      revert ElectionIsOngoing();
+    }
+    ElectionUtils.validateDates(startDate, endDate);
     ElectionUtils.validateCandidates(candidates, seatCount);
     ElectionUtils.validateVoters(eligibleVoters);
 
@@ -120,12 +125,9 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   /**
    * @dev Submits a rank-order vote for an election
    * @param electionId The election ID
-   * @param rankedCandidates Array of candidate addresses in order of preference
+   * @param candidate The address of the candidate
    */
-  function submitRankOrderVote(
-    uint256 electionId,
-    address[] memory rankedCandidates
-  ) external whenNotPaused {
+  function castVote(uint256 electionId, address candidate) external whenNotPaused {
     ElectionTypes.Election storage election = _elections[electionId];
 
     if (election.id == 0) revert ElectionNotFound();
@@ -135,15 +137,14 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     }
     if (!election.isEligibleVoter[msg.sender]) revert NotEligibleVoter();
     if (election.hasVoted[msg.sender]) revert AlreadyVoted();
+    ElectionUtils.validateVote(election, candidate);
 
-    address[] memory candidates = election.candidateList;
-    ElectionUtils.validateRankOrderVote(rankedCandidates, candidates);
-
-    _votes[electionId][msg.sender] = rankedCandidates;
+    _votes[electionId][msg.sender] = candidate;
+    _voteCounts[electionId][candidate]++;
     election.voteCount++;
     election.hasVoted[msg.sender] = true;
 
-    emit VoteSubmitted(electionId, msg.sender);
+    emit VoteSubmitted(electionId, msg.sender, candidate);
   }
 
   /**
@@ -159,41 +160,22 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     }
     if (election.resultsPublished) revert ResultsAlreadyPublished();
 
-    // Reconstruct votes from storage for Borda Count calculation
-    ElectionUtils.RankOrderVote[] memory votes = new ElectionUtils.RankOrderVote[](
-      election.voteCount
-    );
-    uint256 voteIndex = 0;
-
-    for (uint256 i = 0; i < election.voterList.length; i++) {
-      address voter = election.voterList[i];
-      if (election.hasVoted[voter]) {
-        votes[voteIndex] = ElectionUtils.RankOrderVote({
-          voter: voter,
-          rankedCandidates: _votes[electionId][voter]
-        });
-        voteIndex++;
-      }
-    }
-
-    address[] memory candidates = election.candidateList;
-
-    ElectionUtils.CandidateResult[] memory results = ElectionUtils.calculateResults(
-      votes,
-      candidates,
-      election.seatCount
-    );
-
-    for (uint256 i = 0; i < results.length; i++) {
-      if (results[i].isWinner) {
-        election.winners.push(results[i].candidateAddress);
-      }
-    }
-
+    election.winners = getElectionResults(electionId);
     election.resultsPublished = true;
     IBoardOfDirectors(bodAddress).setBoardOfDirectors(election.winners);
 
     emit ResultsPublished(electionId, election.winners);
+  }
+
+  /**
+   * @dev Gets the candidate that a specific voter voted for.
+   * @param electionId The ID of the election.
+   * @param voter The address of the voter.
+   * @return The address of the candidate voted for, or the zero address if they haven't voted.
+   */
+  function getVoterChoice(uint256 electionId, address voter) external view returns (address) {
+    if (_elections[electionId].id == 0) revert ElectionNotFound();
+    return _votes[electionId][voter];
   }
 
   /**
@@ -256,36 +238,52 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     return election.winners;
   }
 
-  /**
-   * @dev Gets detailed election results with Borda Count points and rankings
-   */
-  function getElectionResults(
-    uint256 electionId
-  ) external view returns (ElectionUtils.CandidateResult[] memory results) {
+  function getElectionResults(uint256 electionId) public view returns (address[] memory) {
     ElectionTypes.Election storage election = _elections[electionId];
-    if (election.id == 0) revert ElectionNotFound();
-    if (!election.resultsPublished) revert ResultsNotReady();
+    address[] memory candidateList = election.candidateList;
+    uint256 seatCount = election.seatCount;
 
-    // Reconstruct votes for result calculation
-    ElectionUtils.RankOrderVote[] memory votes = new ElectionUtils.RankOrderVote[](
-      election.voteCount
+    // Create a fixed-size array to hold the top candidates found so far.
+    ElectionUtils.CandidateResult[] memory topCandidates = new ElectionUtils.CandidateResult[](
+      seatCount
     );
-    uint256 voteIndex = 0;
 
-    for (uint256 i = 0; i < election.voterList.length; i++) {
-      address voter = election.voterList[i];
-      if (election.hasVoted[voter]) {
-        votes[voteIndex] = ElectionUtils.RankOrderVote({
-          voter: voter,
-          rankedCandidates: _votes[electionId][voter]
+    // Iterate through every candidate once.
+    for (uint256 i = 0; i < candidateList.length; i++) {
+      address currentCandidateAddress = candidateList[i];
+      uint256 currentVoteCount = _voteCounts[electionId][currentCandidateAddress];
+
+      // Check if the current candidate has more votes than the person with the
+      // least votes currently in our `topCandidates` list.
+      if (currentVoteCount > topCandidates[seatCount - 1].voteCount) {
+        // Replace the last element with the new, higher-scoring candidate.
+        topCandidates[seatCount - 1] = ElectionUtils.CandidateResult({
+          candidateAddress: currentCandidateAddress,
+          voteCount: currentVoteCount
         });
-        voteIndex++;
+
+        // "Bubble" the new candidate up to their correct sorted position.
+        for (uint256 j = seatCount - 1; j > 0; j--) {
+          if (topCandidates[j].voteCount > topCandidates[j - 1].voteCount) {
+            // Swap with the element above if the score is higher.
+            ElectionUtils.CandidateResult memory temp = topCandidates[j];
+            topCandidates[j] = topCandidates[j - 1];
+            topCandidates[j - 1] = temp;
+          } else {
+            // Stop once the candidate is in the correct sorted position.
+            break;
+          }
+        }
       }
     }
 
-    address[] memory candidates = election.candidateList;
+    // Extract just the addresses of the winners.
+    address[] memory winners = new address[](seatCount);
+    for (uint256 i = 0; i < seatCount; i++) {
+      winners[i] = topCandidates[i].candidateAddress;
+    }
 
-    return ElectionUtils.calculateResults(votes, candidates, election.seatCount);
+    return winners;
   }
 
   function hasVoted(uint256 electionId, address voter) external view returns (bool) {
@@ -314,7 +312,10 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   }
 
   function setBoardOfDirectorsContractAddress(address _bodAddress) external {
-    require(msg.sender == owner() || !initBodAddress, "Not allowed to set board of directors contract");
+    require(
+      msg.sender == owner() || !initBodAddress,
+      'Not allowed to set board of directors contract'
+    );
     bodAddress = _bodAddress;
     initBodAddress = true;
   }

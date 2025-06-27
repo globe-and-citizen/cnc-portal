@@ -6,6 +6,8 @@ import '../interfaces/IBoardOfDirectors.sol';
 contract MockBoardOfDirectors is IBoardOfDirectors {
   address[] public boardMembers;
 
+  function initialize() external {}
+
   function setBoardOfDirectors(address[] memory _members) external {
     boardMembers = _members;
   }

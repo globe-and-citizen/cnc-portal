@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {ElectionTypes} from './ElectionTypes.sol';
+import 'hardhat/console.sol';
 
 /**
  * @title ElectionUtils
@@ -9,22 +10,13 @@ import {ElectionTypes} from './ElectionTypes.sol';
  */
 library ElectionUtils {
   /**
-   * @dev Represents a rank-order vote submitted by a voter
-   */
-  struct RankOrderVote {
-    address voter;
-    address[] rankedCandidates; // Ordered from most preferred to least
-  }
-
-  /**
    * @dev Candidate result with calculated points for sorting
    */
   struct CandidateResult {
     address candidateAddress;
-    uint256 totalPoints;
-    uint256 rank;
-    bool isWinner;
+    uint256 voteCount;
   }
+
   /**
    * @dev Error thrown when seat count is not odd
    */
@@ -36,9 +28,14 @@ library ElectionUtils {
   error InvalidDates();
 
   /**
+   * @dev Error thrown when candidate validation fails
+   */
+  error InvalidCandidate();
+
+  /**
    * @dev Error thrown when there is ongoing election
    */
-  error ElectionIsOnGoing();
+  error ElectionIsOngoing();
 
   /**
    * @dev Error thrown when there are insufficient candidates
@@ -77,16 +74,9 @@ library ElectionUtils {
    * @param startDate Election start timestamp
    * @param endDate Election end timestamp
    */
-  function validateDates(
-    uint256 startDate,
-    uint256 endDate,
-    ElectionTypes.Election storage currentElection
-  ) internal view {
+  function validateDates(uint256 startDate, uint256 endDate) internal view {
     if (startDate <= block.timestamp || endDate <= startDate) {
       revert InvalidDates();
-    }
-    if (!currentElection.resultsPublished && currentElection.id > 0) {
-      revert ElectionIsOnGoing();
     }
   }
 
@@ -121,98 +111,21 @@ library ElectionUtils {
     }
   }
 
-  /**
-   * @dev Validates a rank-order vote
-   * @param rankedCandidates Array of candidates in order of preference
-   * @param candidates Election candidates for verification
-   */
-  function validateRankOrderVote(
-    address[] memory rankedCandidates,
-    address[] memory candidates
-  ) internal pure {
-    require(rankedCandidates.length > 0, 'Empty vote');
-    require(rankedCandidates.length <= candidates.length, 'Too many candidates in vote');
-
-    // Check for duplicates in vote
-    for (uint256 i = 0; i < rankedCandidates.length; i++) {
-      for (uint256 j = i + 1; j < rankedCandidates.length; j++) {
-        require(rankedCandidates[i] != rankedCandidates[j], 'Duplicate candidate in vote');
+  function validateVote(ElectionTypes.Election storage election, address candidate) internal view {
+    // Check if candidate is valid
+    if (candidate == address(0)) {
+      revert InvalidCandidate();
+    }
+    bool isValidCandidate = false;
+    for (uint256 i = 0; i < election.candidateList.length; i++) {
+      if (election.candidateList[i] == candidate) {
+        isValidCandidate = true;
+        break;
       }
     }
-
-    // Verify all candidates exist in election
-    for (uint256 i = 0; i < rankedCandidates.length; i++) {
-      bool found = false;
-      for (uint256 j = 0; j < candidates.length; j++) {
-        if (rankedCandidates[i] == candidates[j]) {
-          found = true;
-          break;
-        }
-      }
-      require(found, 'Invalid candidate in vote');
+    if (!isValidCandidate) {
+      revert InvalidCandidate();
     }
-  }
-
-  /**
-   * @dev Calculates election results using modified Borda Count
-   * @param votes Array of all votes
-   * @param candidates Array of candidates
-   * @param seatCount Number of seats to fill
-   * @return results Array of candidate results sorted by points
-   */
-  function calculateResults(
-    RankOrderVote[] memory votes,
-    address[] memory candidates,
-    uint256 seatCount
-  ) internal pure returns (CandidateResult[] memory results) {
-    results = new CandidateResult[](candidates.length);
-
-    // Initialize results
-    for (uint256 i = 0; i < candidates.length; i++) {
-      results[i] = CandidateResult({
-        candidateAddress: candidates[i],
-        totalPoints: 0,
-        rank: 0,
-        isWinner: false
-      });
-    }
-
-    // Calculate points for each candidate from all votes
-    for (uint256 v = 0; v < votes.length; v++) {
-      address[] memory rankedCandidates = votes[v].rankedCandidates;
-
-      for (uint256 r = 0; r < rankedCandidates.length; r++) {
-        address candidate = rankedCandidates[r];
-        uint256 points = candidates.length - r; // Higher points for higher rank
-
-        // Find the candidate in results and add points
-        for (uint256 c = 0; c < results.length; c++) {
-          if (results[c].candidateAddress == candidate) {
-            results[c].totalPoints += points;
-            break;
-          }
-        }
-      }
-    }
-
-    // Sort results by points (bubble sort for simplicity)
-    for (uint256 i = 0; i < results.length - 1; i++) {
-      for (uint256 j = 0; j < results.length - i - 1; j++) {
-        if (results[j].totalPoints < results[j + 1].totalPoints) {
-          CandidateResult memory temp = results[j];
-          results[j] = results[j + 1];
-          results[j + 1] = temp;
-        }
-      }
-    }
-
-    // Assign ranks and mark winners
-    for (uint256 i = 0; i < results.length; i++) {
-      results[i].rank = i + 1;
-      results[i].isWinner = i < seatCount;
-    }
-
-    return results;
   }
 
   /**

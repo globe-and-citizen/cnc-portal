@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { ethers, upgrades } from 'hardhat'
-import { time } from '@nomicfoundation/hardhat-network-helpers'
+import { reset, time } from '@nomicfoundation/hardhat-network-helpers'
 import { Elections, MockBoardOfDirectors } from '../typechain-types'
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
 
@@ -11,44 +11,53 @@ describe('Elections', function () {
   let voter1: HardhatEthersSigner
   let voter2: HardhatEthersSigner
   let voter3: HardhatEthersSigner
+  let voter4: HardhatEthersSigner
+  let voter5: HardhatEthersSigner
+  let voter6: HardhatEthersSigner
   let candidate1: HardhatEthersSigner
   let candidate2: HardhatEthersSigner
   let candidate3: HardhatEthersSigner
+  let candidate4: HardhatEthersSigner
   let nonVoter: HardhatEthersSigner
 
   const ONE_DAY = 24 * 60 * 60
   const ONE_WEEK = 7 * ONE_DAY
 
   beforeEach(async function () {
-    ;[owner, voter1, voter2, voter3, candidate1, candidate2, candidate3, nonVoter] =
-      await ethers.getSigners()
+    ;[
+      owner,
+      voter1,
+      voter2,
+      voter3,
+      voter4,
+      voter5,
+      voter6,
+      candidate1,
+      candidate2,
+      candidate3,
+      candidate4,
+      nonVoter
+    ] = await ethers.getSigners()
 
     const ElectionsFactory = await ethers.getContractFactory('Elections')
-    elections = (await upgrades.deployBeacon(ElectionsFactory)) as unknown as Elections
-
-    // Deploy beacon proxy
-    const beaconProxy = await upgrades.deployBeaconProxy(elections, ElectionsFactory, [
-      owner.address
-    ])
-    elections = ElectionsFactory.attach(beaconProxy.target) as unknown as Elections
+    elections = (await upgrades.deployProxy(ElectionsFactory, [owner.address], {
+      initializer: 'initialize'
+    })) as unknown as Elections
+    await elections.waitForDeployment()
 
     const BoardOfDirectorsFactory = await ethers.getContractFactory('MockBoardOfDirectors')
-    boardOfDirectors = (await upgrades.deployBeacon(
-      BoardOfDirectorsFactory
-    )) as unknown as MockBoardOfDirectors
-
-    // Deploy beacon proxy
-    const bodBeaconProxy = await upgrades.deployBeaconProxy(
-      boardOfDirectors,
-      BoardOfDirectorsFactory
-    )
-    boardOfDirectors = BoardOfDirectorsFactory.attach(
-      bodBeaconProxy.target
-    ) as unknown as MockBoardOfDirectors
+    boardOfDirectors = (await upgrades.deployProxy(BoardOfDirectorsFactory, [], {
+      initializer: 'initialize'
+    })) as unknown as MockBoardOfDirectors
+    await boardOfDirectors.waitForDeployment()
 
     await elections
       .connect(owner)
       .setBoardOfDirectorsContractAddress(await boardOfDirectors.getAddress())
+  })
+
+  afterEach(async function () {
+    await reset()
   })
 
   describe('Deployment', function () {
@@ -123,6 +132,32 @@ describe('Elections', function () {
           eligibleVoters
         )
       ).to.be.revertedWithCustomError(elections, 'InvalidSeatCount')
+    })
+
+    it('Should revert if election already exists', async function () {
+      await elections.createElection(
+        'BOD Election 2025',
+        'Annual Board of Directors Election',
+        startDate,
+        endDate,
+        3,
+        candidates,
+        eligibleVoters
+      )
+      console.log((await elections.getElection(1)).resultsPublished, 'resultsPublished')
+      console.log((await elections.getElection(1)).id, 'electionId')
+
+      await expect(
+        elections.createElection(
+          'BOD Election 2025',
+          'Annual Board of Directors Election',
+          startDate,
+          endDate,
+          3,
+          candidates,
+          eligibleVoters
+        )
+      ).to.be.revertedWithCustomError(elections, 'ElectionIsOngoing')
     })
 
     it('Should revert with past start date', async function () {
@@ -238,12 +273,10 @@ describe('Elections', function () {
 
     beforeEach(async function () {
       candidates = [candidate1.address, candidate2.address, candidate3.address]
-
       const eligibleVoters = [voter1.address, voter2.address, voter3.address]
 
-      // Create election that starts in the future but we'll fast forward to make it active
       const currentTime = await time.latest()
-      const startDate = currentTime + 100 // starts in 100 seconds
+      const startDate = currentTime + 100
       const endDate = startDate + ONE_WEEK
 
       await elections.createElection(
@@ -255,121 +288,90 @@ describe('Elections', function () {
         candidates,
         eligibleVoters
       )
-
       electionId = 1
-
-      // Fast forward time to make the election active
       await time.increaseTo(startDate + 50)
     })
 
-    it('Should allow eligible voter to submit valid vote', async function () {
-      const rankedCandidates = [candidate1.address, candidate2.address, candidate3.address]
+    it('Should allow eligible voter to cast a valid vote', async function () {
+      const tx = await elections.connect(voter1).castVote(electionId, candidate1.address)
 
-      const tx = await elections.connect(voter1).submitRankOrderVote(electionId, rankedCandidates)
-
-      await expect(tx).to.emit(elections, 'VoteSubmitted').withArgs(electionId, voter1.address)
+      await expect(tx)
+        .to.emit(elections, 'VoteSubmitted')
+        .withArgs(electionId, voter1.address, candidate1.address)
 
       expect(await elections.hasVoted(electionId, voter1.address)).to.be.true
       expect(await elections.getVoteCount(electionId)).to.equal(1)
     })
 
-    it('Should allow partial ranking', async function () {
-      const rankedCandidates = [candidate2.address] // only rank one candidate
-
-      await elections.connect(voter1).submitRankOrderVote(electionId, rankedCandidates)
-
-      expect(await elections.hasVoted(electionId, voter1.address)).to.be.true
-    })
-
     it('Should revert when non-eligible voter tries to vote', async function () {
-      const rankedCandidates = [candidate1.address, candidate2.address]
-
       await expect(
-        elections.connect(nonVoter).submitRankOrderVote(electionId, rankedCandidates)
+        elections.connect(nonVoter).castVote(electionId, candidate1.address)
       ).to.be.revertedWithCustomError(elections, 'NotEligibleVoter')
     })
 
     it('Should revert when voter tries to vote twice', async function () {
-      const rankedCandidates = [candidate1.address, candidate2.address]
-
-      await elections.connect(voter1).submitRankOrderVote(electionId, rankedCandidates)
-
+      await elections.connect(voter1).castVote(electionId, candidate1.address)
       await expect(
-        elections.connect(voter1).submitRankOrderVote(electionId, rankedCandidates)
+        elections.connect(voter1).castVote(electionId, candidate2.address)
       ).to.be.revertedWithCustomError(elections, 'AlreadyVoted')
     })
 
-    it('Should revert with empty vote', async function () {
-      await expect(
-        elections.connect(voter1).submitRankOrderVote(electionId, [])
-      ).to.be.revertedWith('Empty vote')
-    })
-
-    it('Should revert with duplicate candidates in vote', async function () {
-      const rankedCandidates = [candidate1.address, candidate1.address] // duplicate
-
-      await expect(
-        elections.connect(voter1).submitRankOrderVote(electionId, rankedCandidates)
-      ).to.be.revertedWith('Duplicate candidate in vote')
-    })
-
     it('Should revert with invalid candidate in vote', async function () {
-      const rankedCandidates = [nonVoter.address] // not a candidate
-
       await expect(
-        elections.connect(voter1).submitRankOrderVote(electionId, rankedCandidates)
-      ).to.be.revertedWith('Invalid candidate in vote')
+        elections.connect(voter1).castVote(electionId, nonVoter.address)
+      ).to.be.revertedWithCustomError(elections, 'InvalidCandidate')
     })
 
     it('Should revert when election has not started', async function () {
-      // Create future election
+      // Conclude the first election
+      await time.increaseTo((await time.latest()) + ONE_WEEK + 100)
+      await elections.publishResults(electionId)
+
       const currentTime = await time.latest()
       const futureStartDate = currentTime + ONE_DAY
       const futureEndDate = futureStartDate + ONE_WEEK
 
       await elections.createElection(
         'Future Election',
-        'Future Election Description',
+        'Future Desc',
         futureStartDate,
         futureEndDate,
         3,
         candidates,
         [voter1.address]
       )
-
       const futureElectionId = 2
-      const rankedCandidates = [candidate1.address]
 
       await expect(
-        elections.connect(voter1).submitRankOrderVote(futureElectionId, rankedCandidates)
+        elections.connect(voter1).castVote(futureElectionId, candidate1.address)
       ).to.be.revertedWithCustomError(elections, 'ElectionNotActive')
     })
 
     it('Should revert when election has ended', async function () {
-      // Create past election - but we need to create it with future dates first, then advance time
+      // Conclude the first election
+      await time.increaseTo((await time.latest()) + ONE_WEEK + 100)
+      await elections.publishResults(electionId)
+
       const currentTime = await time.latest()
       const pastStartDate = currentTime + 100
       const pastEndDate = pastStartDate + 200
 
       await elections.createElection(
         'Past Election',
-        'Past Election Description',
+        'Past Desc',
         pastStartDate,
         pastEndDate,
         3,
         candidates,
         [voter1.address]
       )
-
       const pastElectionId = 2
 
-      // Advance time past the election end
       await time.increaseTo(pastEndDate + 100)
-
-      const rankedCandidates = [candidate1.address]
+      await elections.publishResults(pastElectionId)
 
       await expect(
-        elections.connect(voter1).submitRankOrderVote(pastElectionId, rankedCandidates)
+        elections.connect(voter1).castVote(pastElectionId, candidate1.address)
       ).to.be.revertedWithCustomError(elections, 'ElectionNotActive')
     })
   })
@@ -380,111 +382,157 @@ describe('Elections', function () {
 
     beforeEach(async function () {
       candidates = [candidate1.address, candidate2.address, candidate3.address]
-
       const eligibleVoters = [voter1.address, voter2.address, voter3.address]
-
-      // Create election that starts in future but ends in past (we'll fast forward)
       const currentTime = await time.latest()
       const startDate = currentTime + 100
-      const endDate = startDate + 200 // 200 seconds duration
-
+      const endDate = startDate + 200
       await elections.createElection(
         'BOD Election 2025',
         'Annual Board of Directors Election',
         startDate,
         endDate,
-        1, // only 1 seat for simple testing
+        1, // 1 seat for simple testing
         candidates,
         eligibleVoters
       )
-
       electionId = 1
-
-      // Fast forward time to end the election
       await time.increaseTo(endDate + 100)
     })
 
     it('Should publish results after election ends', async function () {
       const tx = await elections.publishResults(electionId)
-
-      // Since there are no votes, winners array should be empty
       await expect(tx).to.emit(elections, 'ResultsPublished')
-
       const election = await elections.getElection(electionId)
       expect(election.resultsPublished).to.be.true
     })
 
-    it('Should automatically to publish correct results with votes', async function () {
-      // Create active election for voting
+    it('Should publish correct results with votes', async function () {
+      // Conclude the first election
+      await elections.publishResults(electionId)
+
       const currentTime = await time.latest()
       const activeStartDate = currentTime + 100
       const activeEndDate = activeStartDate + 200
+      const seatCount = 1 // We want 1 winners
 
       await elections.createElection(
         'Active Election',
         'Active Election Description',
         activeStartDate,
         activeEndDate,
-        1,
+        seatCount,
         candidates,
         [voter1.address, voter2.address, voter3.address]
       )
-
       const activeElectionId = 2
-
-      // Make election active
       await time.increaseTo(activeStartDate + 50)
 
-      // Submit votes with different rankings
-      // voter1: candidate1 > candidate2 > candidate3
-      // voter2: candidate2 > candidate1 > candidate3
-      // voter3: candidate1 > candidate3 > candidate2
+      // Vote tally:
+      // Candidate 1: 2 votes (from voter1, voter2)
+      // Candidate 2: 1 vote (from voter3)
+      // Candidate 3: 0 votes
+      await elections.connect(voter1).castVote(activeElectionId, candidate1.address)
+      await elections.connect(voter2).castVote(activeElectionId, candidate1.address)
+      await elections.connect(voter3).castVote(activeElectionId, candidate2.address)
 
-      await elections
-        .connect(voter1)
-        .submitRankOrderVote(activeElectionId, [
-          candidate1.address,
-          candidate2.address,
-          candidate3.address
-        ])
-      await elections
-        .connect(voter2)
-        .submitRankOrderVote(activeElectionId, [
-          candidate2.address,
-          candidate1.address,
-          candidate3.address
-        ])
-      await elections
-        .connect(voter3)
-        .submitRankOrderVote(activeElectionId, [
-          candidate1.address,
-          candidate3.address,
-          candidate2.address
-        ])
-
-      // Fast forward time to end the election
       await time.increaseTo(activeEndDate + 100)
-
       await elections.publishResults(activeElectionId)
 
-      const results = await elections.getElectionResults(activeElectionId)
       const winners = await elections.getElectionWinners(activeElectionId)
-      expect(results.length).to.equal(3)
+      const results = await elections.getElectionResults(activeElectionId)
 
-      // candidate1 should win with most points: 3+2+3 = 8 points
-      expect(results[0].candidateAddress).to.equal(candidate1.address)
-      expect(results[0].isWinner).to.be.true
-      expect(results[0].rank).to.equal(1)
-      expect(winners.length).to.equal(1)
-      expect(winners).to.include(candidate1.address)
+      expect(winners.length).to.equal(seatCount)
+      expect(results.length).to.equal(seatCount)
+
+      // C1 should be the first winner
+      expect(winners).to.deep.equal([candidate1.address])
+      expect(results).to.deep.equal([candidate1.address])
+
+      // Check if the board of directors contract was updated
+      const boardMembers = await boardOfDirectors.getBoardOfDirectors()
+      expect(boardMembers).to.deep.equal([candidate1.address])
+    })
+
+    it('Should correctly sort winners when a new candidate displaces another (tests bubble-up)', async function () {
+      // Conclude the first election
+      await elections.publishResults(electionId)
+
+      const fourCandidates = [
+        candidate1.address,
+        candidate2.address,
+        candidate3.address,
+        candidate4.address
+      ]
+      const moreVoters = await ethers.getSigners()
+      const allVoters = [
+        voter1.address,
+        voter2.address,
+        voter3.address,
+        voter4.address,
+        voter5.address,
+        voter6.address,
+        moreVoters[15].address,
+        moreVoters[16].address,
+        moreVoters[17].address,
+        moreVoters[18].address
+      ]
+
+      const currentTime = await time.latest()
+      const activeStartDate = currentTime + 100
+      const activeEndDate = activeStartDate + 200
+      const seatCount = 3 // 3 seats
+
+      await elections.createElection(
+        'Bubble Sort Test Election',
+        'Test sorting logic',
+        activeStartDate,
+        activeEndDate,
+        seatCount,
+        fourCandidates,
+        allVoters
+      )
+      const activeElectionId = 2
+      await time.increaseTo(activeStartDate + 50)
+
+      // --- Vote Tally ---
+      // C4 gets 1 vote (from voter1)
+      // C3 gets 2 votes (from voter2, voter3)
+      // C2 gets 4 votes (from voter4, voter5, voter6)
+      // C1 gets 3 votes (will displace C4 and bubble up past C3)
+
+      // Setup initial state of top candidates [C2, C3, C4]
+      await elections.connect(voter4).castVote(activeElectionId, candidate2.address)
+      await elections.connect(voter5).castVote(activeElectionId, candidate2.address)
+      await elections.connect(voter6).castVote(activeElectionId, candidate2.address)
+      await elections.connect(voter2).castVote(activeElectionId, candidate3.address)
+      await elections.connect(voter3).castVote(activeElectionId, candidate3.address)
+      await elections.connect(voter1).castVote(activeElectionId, candidate4.address)
+
+      // At this point, the vote counts are: C2=3, C3=2, C4=1. C1=0.
+      // Now, have more voters vote to trigger the bubble-up logic.
+      // We need more signers for this. Let's re-use.
+      await elections.connect(moreVoters[15]).castVote(activeElectionId, candidate1.address)
+      await elections.connect(moreVoters[16]).castVote(activeElectionId, candidate1.address)
+      await elections.connect(moreVoters[17]).castVote(activeElectionId, candidate1.address) // C1 has 3 votes now
+      await elections.connect(moreVoters[18]).castVote(activeElectionId, candidate2.address) // C2 has 4 votes now
+
+      // Final Tally: C2(4), C1(3), C3(2), C4(1)
+
+      await time.increaseTo(activeEndDate + 100)
+      await elections.publishResults(activeElectionId)
+
+      const winners = await elections.getElectionWinners(activeElectionId)
+
+      // Expected order: C2 (4 votes), C1 (3 votes), C3 (2 votes)
+      expect(winners).to.deep.equal([candidate2.address, candidate1.address, candidate3.address])
     })
 
     it('Should revert when trying to publish results for active election', async function () {
-      // Create active election
+      await elections.publishResults(electionId)
+
       const currentTime = await time.latest()
       const activeStartDate = currentTime + 100
       const activeEndDate = activeStartDate + ONE_WEEK
-
       await elections.createElection(
         'Active Election',
         'Active Election Description',
@@ -494,12 +542,8 @@ describe('Elections', function () {
         candidates,
         [voter1.address]
       )
-
       const activeElectionId = 2
-
-      // Make it active but not ended
       await time.increaseTo(activeStartDate + 100)
-
       await expect(elections.publishResults(activeElectionId)).to.be.revertedWithCustomError(
         elections,
         'ResultsNotReady'
@@ -508,7 +552,6 @@ describe('Elections', function () {
 
     it('Should revert when trying to publish results twice', async function () {
       await elections.publishResults(electionId)
-
       await expect(elections.publishResults(electionId)).to.be.revertedWithCustomError(
         elections,
         'ResultsAlreadyPublished'
@@ -525,14 +568,12 @@ describe('Elections', function () {
   describe('Admin Functions', function () {
     it('Should pause the contract', async function () {
       await elections.pause()
-
       expect(await elections.paused()).to.be.true
     })
 
     it('Should unpause the contract', async function () {
       await elections.pause()
       await elections.unpause()
-
       expect(await elections.paused()).to.be.false
     })
   })
@@ -540,18 +581,14 @@ describe('Elections', function () {
   describe('View Functions', function () {
     let electionId: number
     let startDate: number
-    let endDate: number
     let candidates: string[]
 
     beforeEach(async function () {
       candidates = [candidate1.address, candidate2.address, candidate3.address]
-
       const eligibleVoters = [voter1.address, voter2.address, voter3.address]
-
       const currentTime = await time.latest()
       startDate = currentTime + ONE_DAY
-      endDate = startDate + ONE_WEEK
-
+      const endDate = startDate + ONE_WEEK
       await elections.createElection(
         'BOD Election 2025',
         'Annual Board of Directors Election',
@@ -561,24 +598,17 @@ describe('Elections', function () {
         candidates,
         eligibleVoters
       )
-
       electionId = 1
     })
 
     it('Should return election candidates', async function () {
       const returnedCandidates = await elections.getElectionCandidates(electionId)
-
-      expect(returnedCandidates.length).to.equal(3)
-      expect(returnedCandidates[0]).to.equal(candidate1.address)
-      expect(returnedCandidates[1]).to.equal(candidate2.address)
-      expect(returnedCandidates[2]).to.equal(candidate3.address)
+      expect(returnedCandidates).to.deep.equal(candidates)
     })
 
     it('Should return eligible voters', async function () {
       const returnedVoters = await elections.getElectionEligibleVoters(electionId)
-
-      expect(returnedVoters.length).to.equal(3)
-      expect(returnedVoters[0]).to.equal(voter1.address)
+      expect(returnedVoters).to.deep.equal([voter1.address, voter2.address, voter3.address])
     })
 
     it('Should check voter eligibility', async function () {
@@ -586,15 +616,14 @@ describe('Elections', function () {
       expect(await elections.isEligibleVoter(electionId, nonVoter.address)).to.be.false
     })
 
-    it('Should track voting status', async function () {
+    it('Should track voting status and voter choice', async function () {
       expect(await elections.hasVoted(electionId, voter1.address)).to.be.false
-
-      // Make election active and vote
       await time.increaseTo(startDate + 50)
-
-      await elections.connect(voter1).submitRankOrderVote(electionId, [candidate1.address])
-
+      await elections.connect(voter1).castVote(electionId, candidate2.address)
       expect(await elections.hasVoted(electionId, voter1.address)).to.be.true
+      expect(await elections.getVoterChoice(electionId, voter1.address)).to.equal(
+        candidate2.address
+      )
     })
 
     it('Should revert for non-existent election', async function () {
