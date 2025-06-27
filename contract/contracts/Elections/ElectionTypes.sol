@@ -22,14 +22,8 @@ library ElectionTypes {
     uint256 startDate; // Block timestamp
     uint256 endDate; // Block timestamp
     uint256 seatCount; // Number of BOD seats (must be odd)
-    
-    // Gas-optimized voter eligibility: O(1) lookup (~200 gas vs ~800 gas with EnumerableSet)
     mapping(address => bool) isEligibleVoter;
-    
-    // Gas-optimized candidate checking: O(1) lookup
     mapping(address => bool) isCandidate;
-    
-    // Arrays for iteration when needed (setup cost, but gas-efficient reads)
     address[] candidateList;
     address[] voterList;
     

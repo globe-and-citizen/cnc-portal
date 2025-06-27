@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {ElectionTypes} from './ElectionTypes.sol';
+
 /**
  * @title ElectionUtils
  * @dev Utility functions for election validation and calculations
@@ -32,6 +34,11 @@ library ElectionUtils {
    * @dev Error thrown when date validation fails
    */
   error InvalidDates();
+
+  /**
+   * @dev Error thrown when there is ongoing election
+   */
+  error ElectionIsOnGoing();
 
   /**
    * @dev Error thrown when there are insufficient candidates
@@ -70,9 +77,16 @@ library ElectionUtils {
    * @param startDate Election start timestamp
    * @param endDate Election end timestamp
    */
-  function validateDates(uint256 startDate, uint256 endDate) internal view {
+  function validateDates(
+    uint256 startDate,
+    uint256 endDate,
+    ElectionTypes.Election storage currentElection
+  ) internal view {
     if (startDate <= block.timestamp || endDate <= startDate) {
       revert InvalidDates();
+    }
+    if (!currentElection.resultsPublished && currentElection.id > 0) {
+      revert ElectionIsOnGoing();
     }
   }
 

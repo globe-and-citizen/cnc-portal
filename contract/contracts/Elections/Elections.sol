@@ -6,6 +6,7 @@ import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/Pau
 import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import {ElectionTypes} from './ElectionTypes.sol';
 import {ElectionUtils} from './ElectionUtils.sol';
+import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
 
 /**
  * @title Elections
@@ -16,6 +17,8 @@ import {ElectionUtils} from './ElectionUtils.sol';
 contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   // State variables
   uint256 private _nextElectionId;
+  address public bodAddress;
+  bool private initBodAddress;
   mapping(uint256 => ElectionTypes.Election) private _elections;
   uint256[] private _electionIds;
   mapping(uint256 => mapping(address => address[])) private _votes;
@@ -78,7 +81,9 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     address[] memory eligibleVoters
   ) external onlyOwner whenNotPaused returns (uint256 electionId) {
     ElectionUtils.validateSeatCount(seatCount);
-    ElectionUtils.validateDates(startDate, endDate);
+
+    ElectionTypes.Election storage currentElection = _elections[_nextElectionId];
+    ElectionUtils.validateDates(startDate, endDate, currentElection);
     ElectionUtils.validateCandidates(candidates, seatCount);
     ElectionUtils.validateVoters(eligibleVoters);
 
@@ -145,7 +150,7 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
    * @dev Publishes election results (only callable by contract owner after election ends)
    * @param electionId The election ID
    */
-  function publishResults(uint256 electionId) external onlyOwner whenNotPaused {
+  function publishResults(uint256 electionId) public onlyOwner whenNotPaused {
     ElectionTypes.Election storage election = _elections[electionId];
 
     if (election.id == 0) revert ElectionNotFound();
@@ -186,6 +191,7 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     }
 
     election.resultsPublished = true;
+    IBoardOfDirectors(bodAddress).setBoardOfDirectors(election.winners);
 
     emit ResultsPublished(electionId, election.winners);
   }
@@ -305,5 +311,11 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
 
   function getNextElectionId() external view returns (uint256) {
     return _nextElectionId;
+  }
+
+  function setBoardOfDirectorsContractAddress(address _bodAddress) external {
+    require(msg.sender == owner() || !initBodAddress, "Not allowed to set board of directors contract");
+    bodAddress = _bodAddress;
+    initBodAddress = true;
   }
 }
