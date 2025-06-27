@@ -307,12 +307,12 @@ const menuItems = computed(() => [
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       },
       {
-        label: 'Weekly Claim',
+        label: ' Claim History',
         route: {
-          name: 'weekly-claim',
+          name: 'claim-history',
           params: { id: teamStore.currentTeam?.id || '1' }
         },
-        active: route.name === 'weekly-claim',
+        active: route.name === 'claim-history',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       }
     ].filter((child) => child.show)
