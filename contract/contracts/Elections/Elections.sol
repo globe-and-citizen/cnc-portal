@@ -11,9 +11,7 @@ import 'hardhat/console.sol';
 
 /**
  * @title Elections
- * @dev Contract for managing Board of Directors elections with rank-order voting
- * @notice This contract allows team owners to create elections, eligible voters to submit
- *         rank-order votes, and automatically calculates results using modified Borda Count
+ * @dev A contract that manages elections for the Board of Directors (BOD).
  */
 contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   // State variables
@@ -123,7 +121,7 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   }
 
   /**
-   * @dev Submits a rank-order vote for an election
+   * @dev Submits a vote for a candidate in an election
    * @param electionId The election ID
    * @param candidate The address of the candidate
    */
