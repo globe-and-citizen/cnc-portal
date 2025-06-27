@@ -46,13 +46,25 @@ const router = createRouter({
         {
           path: '/teams/:id/cash-remunerations/weekly-claim',
           name: 'weekly-claim',
-          meta: { name: 'Cash Remuneration-Weekly Claim' },
+          meta: { name: 'Cash Remuneration-weekly claim' },
+          component: WeeklyClaimView
+        },
+        {
+          path: '/teams/:id/cash-remunerations/claim-history',
+          name: 'claim-history',
+          meta: { name: 'Cash Remuneration-claim history' },
           component: WeeklyClaimView
         },
         {
           path: '/teams/:id/cash-remunerations',
           name: 'cash-remunerations',
           meta: { name: 'Cash Remuneration' },
+          component: CashRemunerationView
+        },
+        {
+          path: '/teams/:id/cash-remunerations/member/:memberAddress',
+          name: 'cash-remunerations-member',
+          meta: { name: 'Cash Remuneration Member' },
           component: CashRemunerationView
         },
         {
