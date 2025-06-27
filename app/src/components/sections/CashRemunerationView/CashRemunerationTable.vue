@@ -2,12 +2,12 @@
   <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
     <div class="w-full flex justify-between">
       <span class="font-bold text-lg">Claims Table</span>
-      <div class="flex flex-row gap-4">
+      <!-- <div class="flex flex-row gap-4">
         <CRAddERC20Support />
         <SubmitClaims v-if="hasWage" @refetch-claims="async () => await fetchTeamClaimData()" />
-      </div>
+      </div> -->
     </div>
-    <div class="form-control flex flex-row gap-4">
+    <!-- <div class="form-control flex flex-row gap-4">
       <label class="label cursor-pointer flex gap-2" :key="status" v-for="status in statusses">
         <span class="label-text">{{
           status == 'signed' ? 'Approved' : status.charAt(0).toUpperCase() + status.slice(1)
@@ -21,7 +21,7 @@
           @change="() => (selectedRadio = status)"
         />
       </label>
-    </div>
+    </div> -->
     <div class="bg-bae-100 w-full">
       <TableComponent
         :rows="teamClaimData ?? undefined"
@@ -87,7 +87,7 @@
             {{ currencyStore.localCurrency.code }} / h
           </span>
         </template>
-        <template #status-data="{ row }">
+        <!-- <template #status-data="{ row }">
           <span
             class="badge"
             :class="{
@@ -104,7 +104,7 @@
                   : row.status.charAt(0).toUpperCase() + row.status.slice(1)
             }}</span
           >
-        </template>
+        </template> -->
       </TableComponent>
     </div>
   </div>
@@ -113,28 +113,43 @@
 <script setup lang="ts">
 import TableComponent, { type TableColumn, type TableRow } from '@/components/TableComponent.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useCurrencyStore, useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
 import type { ClaimResponse, CRSignClaim, WageResponse } from '@/types'
 import { computed, ref, watch } from 'vue'
-import SubmitClaims from './SubmitClaims.vue'
+// import SubmitClaims from './SubmitClaims.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import CRSigne from './CRSigne.vue'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { NETWORK } from '@/constant'
-import CRAddERC20Support from './CRAddERC20Support.vue'
+// import CRAddERC20Support from './CRAddERC20Support.vue'
+import { useRoute } from 'vue-router'
+
+const props = defineProps<{
+  memberAddress?: string
+}>()
 
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
-const statusses = ['all', 'pending', 'signed', 'withdrawn']
+const route = useRoute()
+// const statusses = ['all', 'pending', 'signed', 'withdrawn']
 const selectedRadio = ref('all')
-const { address: currentAddress } = useUserDataStore()
+// const { address: currentAddress } = useUserDataStore() useUserDataStore
 const teamId = computed(() => teamStore.currentTeam?.id)
 const teamIsLoading = computed(() => teamStore.currentTeamMeta?.teamIsFetching)
+// Prend la prop si présente, sinon le paramètre d'URL
+const memberAddress = computed(
+  () => props.memberAddress || (route.params.memberAddress as string | undefined)
+)
 const statusUrl = computed(() =>
   selectedRadio.value === 'all' ? '' : `&status=${selectedRadio.value}`
 )
-const claimURL = computed(() => `/claim/?teamId=${teamId.value}${statusUrl.value}`)
+const memberUrl = computed(() =>
+  memberAddress.value ? `&memberAddress=${memberAddress.value}` : ''
+)
+const claimURL = computed(
+  () => `/claim/?teamId=${teamId.value}${statusUrl.value}${memberUrl.value}`
+)
 const getHourlyRateInUserCurrency = (rate: number) => {
   const nativeTokenInfo = currencyStore.getTokenInfo('native')
   const price = nativeTokenInfo?.prices.find((p) => p.id == 'local')?.price || 0
@@ -147,18 +162,17 @@ const {
   execute: fetchTeamClaimData
 } = useCustomFetch(claimURL, { immediate: false, refetch: true }).json<Array<ClaimResponse>>()
 
-const { data: teamWageData, error: teamWageDataError } = useCustomFetch(
-  computed(() => `/wage/?teamId=${teamId.value}`)
-)
+// data: teamWageData,
+const { error: teamWageDataError } = useCustomFetch(computed(() => `/wage/?teamId=${teamId.value}`))
   .get()
   .json<Array<WageResponse>>()
 
-const hasWage = computed(() => {
-  const userWage = teamWageData.value?.find((wage) => wage.userAddress === currentAddress)
-  if (!userWage) return false
+// const hasWage = computed(() => {
+//   const userWage = teamWageData.value?.find((wage) => wage.userAddress === currentAddress)
+//   if (!userWage) return false
 
-  return true
-})
+//   return true
+// })
 
 const formatRow = (row: TableRow) => {
   return row as ClaimResponse
@@ -212,17 +226,17 @@ const columns = [
     label: 'Hourly Rate',
     sortable: false,
     class: 'text-black text-base'
-  },
-  {
-    key: 'status',
-    label: 'Status',
-    class: 'text-black text-base'
-  },
-  {
-    key: 'action',
-    label: 'Action',
-    sortable: false,
-    class: 'text-black text-base'
   }
+  // {
+  //   key: 'status',
+  //   label: 'Status',
+  //   class: 'text-black text-base'
+  // },
+  // {
+  //   key: 'action',
+  //   label: 'Action',
+  //   sortable: false,
+  //   class: 'text-black text-base'
+  // }
 ] as TableColumn[]
 </script>

@@ -214,12 +214,12 @@ import { onClickOutside } from '@vueuse/core'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
-import { useTeamStore, useAppStore } from '@/stores'
+import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
 import { useRoute } from 'vue-router'
 
 const appStore = useAppStore()
 const route = useRoute()
-// const userStore = useUserDataStore()
+const userStore = useUserDataStore()
 
 interface User {
   name: string
@@ -307,13 +307,26 @@ const menuItems = computed(() => [
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       },
       {
-        label: 'Weekly Claim',
+        label: ' Claim History',
+        route: {
+          name: 'claim-history',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'claim-history',
+        show:
+          (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
+          userStore.address !== teamStore.currentTeam?.ownerAddress
+      },
+      {
+        label: ' Weekly Claim',
         route: {
           name: 'weekly-claim',
           params: { id: teamStore.currentTeam?.id || '1' }
         },
         active: route.name === 'weekly-claim',
-        show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+        show:
+          (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
+          userStore.address === teamStore.currentTeam?.ownerAddress
       }
     ].filter((child) => child.show)
   },
