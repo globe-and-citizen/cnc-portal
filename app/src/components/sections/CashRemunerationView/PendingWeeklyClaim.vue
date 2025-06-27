@@ -1,20 +1,24 @@
 <template>
   <div>
-    <CRWeeklyClaimHeader />
+    <CRWeeklyClaimOwnerHeader />
     <transition-group name="stack" tag="div" class="stack w-full">
       <div
-        v-for="(item, index) in data?.filter((weeklyClaim) => weeklyClaim.status === null)"
+        v-for="(item, index) in data?.filter(
+          (weeklyClaim) => weeklyClaim.weekStart < new Date().toISOString()
+        )"
         :key="item.weekStart"
         class="card shadow-md bg-white p-4"
         :class="{
           'transition -translate-y-full opacity-0  duration-1000': index === 0
         }"
       >
-        <TableComponent :rows="[item]" :columns="columns" :loading="isTeamClaimDataFetching">
+        <TableComponent :rows="[item]" :columns="columns" :isFetching="isFetching">
           <template #member-data="{ row }">
             <UserComponent :user="row.member" />
           </template>
           <template #weekStart-data="{ row }">
+            <span class="font-bold">{{ getCurrentMonthYear(row.weekStart) }}</span>
+            <br />
             <span>{{ formatDate(row.weekStart) }}</span>
           </template>
 
@@ -27,60 +31,72 @@
           <template #hourlyRate-data="{ row }">
             <div>
               <span class="font-bold">
-                {{ getHourlyRate(row.wage.ratePerHour, 'native') }} {{ NETWORK.currencySymbol }}
+                ≃
+                {{
+                  (
+                    getTotalHoursWorked(row.claims) *
+                    Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
+                  ).toFixed(2)
+                }}
+                {{ NETWORK.nativeTokenSymbol }} / USD
               </span>
-              <br />
-              <span class="font-bold">
-                {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} TOKEN
-              </span>
-              <br />
-              <span class="font-bold">
-                {{ getHourlyRate(row.wage.ratePerHour, 'usdc') }} USDC
-              </span>
-              <br />
+
+              <div class="flex">
+                <span>
+                  {{ getHourlyRate(row.wage.ratePerHour, 'native') }} {{ NETWORK.currencySymbol }},
+                </span>
+
+                <span> {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} TOKEN ,</span>
+
+                <span> {{ getHourlyRate(row.wage.ratePerHour, 'usdc') }} USDC </span>
+              </div>
             </div>
           </template>
 
           <template #totalAmount-data="{ row }">
-            <span class="font-bold">
-              {{
-                getHourlyRate(row.wage.ratePerHour, 'native') === 'N/A'
-                  ? 'N/A'
-                  : Number(getHourlyRate(row.wage.ratePerHour, 'native')) *
-                    getTotalHoursWorked(row.claims)
-              }}
-              {{ NETWORK.currencySymbol }}
-            </span>
-            <br />
-            <span class="font-bold">
-              {{
-                getHourlyRate(row.wage.ratePerHour, 'sher') === 'N/A'
-                  ? 'N/A'
-                  : Number(getHourlyRate(row.wage.ratePerHour, 'sher')) *
-                    getTotalHoursWorked(row.claims)
-              }}
-              TOKEN
-            </span>
-            <br />
-            <span class="font-bold">
-              {{
-                getHourlyRate(row.wage.ratePerHour, 'usdc') === 'N/A'
-                  ? 'N/A'
-                  : Number(getHourlyRate(row.wage.ratePerHour, 'usdc')) *
-                    getTotalHoursWorked(row.claims)
-              }}
-              USDC
-            </span>
-            <br />
-            <span class="text-gray-500">
-              {{
-                (
-                  getTotalHoursWorked(row.claims) *
-                  Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
-                ).toFixed(2)
-              }}
-              {{ NETWORK.nativeTokenSymbol }} / USD
-            </span>
+            <div>
+              <span class="font-bold">
+                ≃
+                {{
+                  (
+                    getTotalHoursWorked(row.claims) *
+                    Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
+                  ).toFixed(2)
+                }}
+                {{ NETWORK.nativeTokenSymbol }} / USD
+              </span>
+              <div>
+                <span>
+                  {{
+                    getHourlyRate(row.wage.ratePerHour, 'native') === 'N/A'
+                      ? 'N/A'
+                      : Number(getHourlyRate(row.wage.ratePerHour, 'native')) *
+                        getTotalHoursWorked(row.claims)
+                  }}
+                  {{ NETWORK.currencySymbol }},
+                </span>
+
+                <span>
+                  {{
+                    getHourlyRate(row.wage.ratePerHour, 'sher') === 'N/A'
+                      ? 'N/A'
+                      : Number(getHourlyRate(row.wage.ratePerHour, 'sher')) *
+                        getTotalHoursWorked(row.claims)
+                  }}
+                  TOKEN,
+                </span>
+
+                <span>
+                  {{
+                    getHourlyRate(row.wage.ratePerHour, 'usdc') === 'N/A'
+                      ? 'N/A'
+                      : Number(getHourlyRate(row.wage.ratePerHour, 'usdc')) *
+                        getTotalHoursWorked(row.claims)
+                  }}
+                  USDC
+                </span>
+              </div>
+            </div>
           </template>
 
           <template #action-data="{ row }">
@@ -116,6 +132,16 @@
         </TableComponent>
       </div>
     </transition-group>
+    <div v-if="isFetching" class="flex justify-center items-center p-4">
+      <span class="text-gray-500">isFetching pending weekly claims...</span>
+    </div>
+    <!-- If empty -->
+    <div
+      v-if="data && data.length === 0 && !isFetching"
+      class="flex justify-center items-center p-4"
+    >
+      <span class="text-gray-500">Congratulations You have approved all Weekly Claims</span>
+    </div>
   </div>
 </template>
 
@@ -131,10 +157,10 @@ import { type WeeklyClaimResponse, type RatePerHour, type SupportedTokens } from
 import CRSigne from './CRSigne.vue'
 import type { Address } from 'viem'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
-import { getMondayStart } from '@/utils/dayUtils'
+import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
 import type { TokenId } from '@/constant'
-import CRWeeklyClaimHeader from './CRWeeklyClaimHeader.vue'
+import CRWeeklyClaimOwnerHeader from './CRWeeklyClaimOwnerHeader.vue'
 
 function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -144,16 +170,14 @@ const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 
 const weeklyClaimUrl = computed(() => {
-  return `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${
+  return `/weeklyClaim/?status=pending&teamId=${teamStore.currentTeam?.id}${
     userStore.address !== teamStore.currentTeam?.ownerAddress
       ? `&memberAddress=${userStore.address}`
       : ''
   }`
 })
 
-const { data, error } = useCustomFetch(weeklyClaimUrl.value).get().json<WeeklyClaimResponse>()
-
-const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
+const { data, isFetching } = useCustomFetch(weeklyClaimUrl.value).get().json<WeeklyClaimResponse>()
 
 const isSameWeek = (weeklyClaimStartWeek: string) => {
   console.log(`weeklyClaimStartWeek: ${weeklyClaimStartWeek}`)
@@ -170,13 +194,18 @@ function getHoulyRateInUserCurrency(hourlyRate: number, tokenId: TokenId = 'nati
 }
 
 function formatDate(date: string | Date) {
+  const monday = getMondayStart(new Date(date))
+  const sunday = getSundayEnd(new Date(date))
+  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
+  const locale = navigator.language || 'en-US'
+  return `${monday.toLocaleDateString(locale, options)}-${sunday.toLocaleDateString(locale, options)}`
+}
+function getCurrentMonthYear(date: string | Date) {
   const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
-  return d.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
+  const locale = navigator.language || 'en-US'
+  return d.toLocaleDateString(locale, {
     month: 'long',
-    day: 'numeric'
+    year: 'numeric'
   })
 }
 
@@ -208,8 +237,8 @@ watch(data, (newVal) => {
 const columns = [
   {
     key: 'weekStart',
-    label: 'Week Start On',
-    sortable: true,
+    label: 'Productivity Diary',
+    // sortable: true,
     class: 'text-black text-base'
   },
   {
