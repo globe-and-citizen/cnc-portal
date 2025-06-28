@@ -2,16 +2,13 @@
   <div class="flex flex-col gap-5">
     <h4 class="font-bold text-lg">Create Vesting Schedule</h4>
     <h3 class="pt-6">You’re about to create a vesting for a team member</h3>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
+    <label class="flex items-center gap-2">
       <span class="w-32">Member</span>
       <div class="flex flex-col grow">
-        <input
+        <SelectMemberInput
+          v-model="memberInput"
           data-test="member"
-          type="text"
-          class="grow"
-          v-model="member"
-          placeholder="Member address"
-          required
+          @selectMember="handleMemberSelect"
         />
         <span v-if="member && !isAddress(member)" class="text-xs text-red-500 mt-1">
           Please enter a valid Ethereum address.
@@ -42,18 +39,6 @@
         <span class="w-full text-xs">Amount</span>
         <input data-test="total-amount" type="number" class="grow" v-model="totalAmount" required />
       </label>
-      <span class="flex items-center gap-2 input-md mt-4 min-w-0 p-1">
-        <ButtonUI
-          variant="primary"
-          size="sm"
-          @click="approveAllowance"
-          :disabled="totalAmount <= 0 || tokenApproved || loadingAllowance"
-          :loading="loadingAllowance"
-          data-test="approve-btn"
-        >
-          approve Allowance
-        </ButtonUI>
-      </span>
     </div>
 
     <h3 class="pt-6 text-sm text-gray-600">
@@ -65,8 +50,8 @@
       <ButtonUI
         variant="primary"
         size="sm"
-        @click="submit"
-        :disabled="loading || !formValid || !tokenApproved"
+        @click="approveAllowance"
+        :disabled="loading || !formValid"
         :loading="loading"
         data-test="submit-btn"
       >
@@ -78,11 +63,13 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { differenceInCalendarDays, differenceInMonths, differenceInYears, addDays, format } from 'date-fns'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
 import VestingABI from '@/artifacts/abi/Vesting.json'
 import { VESTING_ADDRESS } from '@/constant'
 import { parseEther, type Address, formatUnits, parseUnits } from 'viem'
+import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
 const { addSuccessToast, addErrorToast } = useToastStore()
@@ -102,17 +89,31 @@ const activeMembers = computed<string[]>(() => {
   }
   return []
 })
+const memberInput = ref({
+  name: '',
+  address: ''
+})
 const member = ref('')
 const startDate = ref('')
-const duration = ref(30)
+//const duration = ref(30)
 const cliff = ref(0)
 const totalAmount = ref(0)
-const tokenApproved = ref(false)
+
+
+const endDate = ref('')
+const duration = ref({ years: 0, months: 0, days: 0 })
+const durationInput = ref(0) // total days input if manually changed
+
 
 const teamStore = useTeamStore()
 const team = computed(() => teamStore.currentTeam)
 const emit = defineEmits(['reload', 'closeAddVestingModal'])
 
+
+const handleMemberSelect = (selected: { name: string; address: string }) => {
+  memberInput.value = selected
+  member.value = selected.address
+}
 const {
   data: vestingInfos,
   //isLoading: isLoadingVestingInfos,
@@ -138,12 +139,10 @@ watch(
 )
 
 const loading = computed(
-  () => loadingAddVesting.value || (isConfirmingAddVesting.value && !isConfirmedAddVesting.value)
-)
-
-const loadingAllowance = computed(
   () =>
-    loadingApproveToken.value || (isConfirmingApproveToken.value && !isConfirmedApproveToken.value)
+    loadingApproveToken.value ||
+    loadingAddVesting.value ||
+    (isConfirmingAddVesting.value && !isConfirmedAddVesting.value)
 )
 
 const {
@@ -185,7 +184,7 @@ watch(isConfirmingAddVesting, async (isConfirming, wasConfirming) => {
     duration.value = 30
     cliff.value = 0
     totalAmount.value = 0
-    tokenApproved.value = false
+
     emit('closeAddVestingModal')
     emit('reload')
   }
@@ -196,10 +195,6 @@ watch(errorAddVesting, () => {
     addErrorToast('Add vesting failed')
     console.error('add vesting error', errorAddVesting.value)
   }
-})
-
-defineExpose({
-  tokenApproved
 })
 
 const {
@@ -215,10 +210,9 @@ const { isLoading: isConfirmingApproveToken, isSuccess: isConfirmedApproveToken 
   })
 
 watch(isConfirmingApproveToken, async (isConfirming, wasConfirming) => {
-  tokenApproved.value = false
   if (wasConfirming && !isConfirming && isConfirmedApproveToken.value) {
     addSuccessToast('Approval added successfully')
-    tokenApproved.value = true
+    submit()
   }
 })
 
@@ -278,6 +272,27 @@ async function approveAllowance() {
     }
   }
 }
+
+
+function calculateDuration() {
+  if (!startDate.value || !endDate.value) return
+
+  const start = new Date(startDate.value)
+  const end = new Date(endDate.value)
+
+  if (end <= start) {
+    addErrorToast('End date must be after start date')
+    return
+  }
+
+  const totalDays = differenceInCalendarDays(end, start)
+  const years = differenceInYears(end, start)
+  const months = differenceInMonths(end, start) % 12
+  const days = totalDays - years * 365 - months * 30
+
+  duration.value = { years, months, days }
+  durationInput.value = totalDays
+}
 async function submit() {
   if (!formValid.value) return
   if (checkDuplicateVesting()) return
@@ -285,8 +300,8 @@ async function submit() {
   const start = Math.floor(new Date(startDate.value).getTime() / 1000)
   const durationInSeconds = duration.value * 24 * 60 * 60
   const cliffInSeconds = cliff.value * 24 * 60 * 60
-  await refetchTokenBalance()
 
+  await refetchTokenBalance()
   if (tokenBalance.value !== undefined) {
     const totalAmountInUnits = parseUnits(totalAmount.value.toString(), 6)
     if (tokenBalance.value < totalAmountInUnits) {
