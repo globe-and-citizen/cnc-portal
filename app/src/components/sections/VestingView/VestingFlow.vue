@@ -1,5 +1,17 @@
 <template>
   <div>
+    <ButtonUI
+      size="sm"
+      data-test="toggle-vesting-view"
+      :variant="displayActive ? 'secondary' : 'ghost'"
+      class="w-max"
+      @click="displayActive = !displayActive"
+    >
+      <IconifyIcon
+        :icon="displayActive ? 'heroicons-outline:inbox' : 'heroicons-outline:archive-box'"
+        class="size-6"
+      />{{ displayActive ? 'actives' : 'archived' }}
+    </ButtonUI>
     <span class="loading loading-spinner" v-if="loading"></span>
     <div class="flex flex-col justify-around gap-2 w-full" data-test="vesting-overview">
       <TableComponent
@@ -35,9 +47,6 @@
         </template>
 
         <template #member-data="{ row }">
-          <!-- <span v-if="useUserDataStore().address === row.member">
-              {{ row.member?.slice(0, 10) }}
-            </span> -->
           <span>{{ row.member }}</span>
         </template>
         <template #actions-data="{ row }">
@@ -45,7 +54,7 @@
             <!-- Stop Button -->
 
             <button
-              v-if="row.status === 'Active' && team?.ownerAddress == useUserDataStore().address"
+              v-if="row.status === 'Active' && team?.ownerAddress == userAddress"
               data-test="stop-btn"
               class="btn btn-xs btn-error flex items-center justify-center"
               @click.stop="
@@ -67,7 +76,7 @@
 
             <button
               data-test="release-btn"
-              v-if="row.status === 'Active' && row.member === useUserDataStore().address"
+              v-if="row.status === 'Active' && row.member === userAddress"
               class="btn btn-xs btn-success flex items-center justify-center"
               :disabled="!row.isStarted"
               :title="!row.isStarted ? 'Vesting has not started yet' : ''"
@@ -92,26 +101,138 @@
 
 <script setup lang="ts">
 import TableComponent from '@/components/TableComponent.vue'
-import { computed, watch } from 'vue'
+import { computed, watch, ref } from 'vue'
 import { type VestingRow } from '@/types/vesting'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
-import { type Address } from 'viem'
+import { type Address, formatUnits } from 'viem'
 import { useUserDataStore } from '@/stores'
+import ButtonUI from '@/components/ButtonUI.vue'
 import { useToastStore } from '@/stores/useToastStore'
-import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
+import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import VestingABI from '@/artifacts/abi/Vesting.json'
 const { addErrorToast, addSuccessToast } = useToastStore()
+
 import { VESTING_ADDRESS } from '@/constant'
 const teamStore = useTeamStore()
 const team = computed(() => teamStore.currentTeam)
 
-const emit = defineEmits(['reloadVestingInfos'])
+const emit = defineEmits(['reload'])
 
-defineProps<{
-  vestings: VestingRow[]
+const props = defineProps<{
+  reloadKey: number
 }>()
+
+const userStore = useUserDataStore()
+const userAddress = computed(() => userStore.address)
+
+const investorsAddress = computed(() => {
+  return teamStore?.currentTeam?.teamContracts?.find((contract) => contract.type === 'InvestorsV1')
+    ?.address as Address
+})
+
+const displayActive = ref(true)
+
+watch(displayActive, async () => {
+  await getArchivedVestingInfos()
+})
+
+const {
+  data: tokenSymbol
+  //isLoading: isLoadingTokenSymbol
+  //error: tokenSymbolError
+} = useReadContract({
+  abi: INVESTOR_ABI,
+  address: investorsAddress,
+  functionName: 'symbol'
+})
+
+const {
+  data: archivedVestingInfos,
+  //isLoading: isLoadingArchivedVestingInfos,
+  error: errorGetArchivedVestingInfo,
+  refetch: getArchivedVestingInfos
+} = useReadContract({
+  functionName: 'getTeamAllArchivedVestingsFlat',
+  address: VESTING_ADDRESS as Address,
+  abi: VestingABI,
+  args: [team?.value?.id ?? 0]
+})
+
+watch(errorGetArchivedVestingInfo, () => {
+  if (errorGetArchivedVestingInfo.value) {
+    addErrorToast('get archived  failed')
+    console.error('get archived  failed ====', errorGetArchivedVestingInfo)
+  }
+})
+
+const {
+  data: vestingInfos,
+  //isLoading: isLoadingVestingInfos,
+  error: errorGetVestingInfo,
+  refetch: getVestingInfos
+} = useReadContract({
+  functionName: 'getTeamVestingsWithMembers',
+  address: VESTING_ADDRESS as Address,
+  abi: VestingABI,
+  args: [team?.value?.id ?? 0]
+})
+watch(errorGetVestingInfo, () => {
+  if (errorGetVestingInfo.value) {
+    addErrorToast('Add admin failed')
+  }
+})
+
+watch(
+  () => props.reloadKey,
+  async () => {
+    await getVestingInfos()
+    await getArchivedVestingInfos()
+  }
+)
+
+const vestings = computed<VestingRow[]>(() => {
+  const currentDateInSeconds = Math.floor(Date.now() / 1000)
+
+  let currentVestings = vestingInfos.value
+
+  if (!displayActive.value) {
+    currentVestings = archivedVestingInfos.value
+  }
+  if (currentVestings && Array.isArray(currentVestings) && currentVestings.length === 2) {
+    const [members, vestingsRaw] = currentVestings
+    if (
+      Array.isArray(members) &&
+      Array.isArray(vestingsRaw) &&
+      members.length === vestingsRaw.length
+    ) {
+      return members.map((member: string, idx: number) => {
+        const v = vestingsRaw[idx]
+        return {
+          member,
+          teamId: Number(team.value?.id),
+          startDate: (() => {
+            const date = new Date(Number(v.start) * 1000)
+            const day = String(date.getDate()).padStart(2, '0')
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const year = date.getFullYear()
+            return `${day}/${month}/${year}`
+          })(),
+          isStarted: currentDateInSeconds > Number(v.start),
+          durationDays: Math.floor(Number(v.duration) / 86400),
+          cliffDays: Math.floor(Number(v.cliff) / 86400),
+          totalAmount: Number(formatUnits(v.totalAmount, 6)),
+          released: Number(formatUnits(v.released, 6)),
+          status: !v.active ? 'Inactive' : 'Active',
+          tokenSymbol: tokenSymbol?.value || 'default'
+        }
+      })
+    }
+  }
+  return [] as VestingRow[]
+})
+
 const {
   writeContract: stopVesting,
   error: errorStopVesting,
@@ -127,7 +248,7 @@ const { isLoading: isConfirmingStopVesting, isSuccess: isConfirmedStopVesting } 
 watch(isConfirmingStopVesting, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedStopVesting.value) {
     addSuccessToast('vesting stoped successfully')
-    emit('reloadVestingInfos')
+    emit('reload')
   }
 })
 watch(errorStopVesting, () => {
@@ -152,7 +273,7 @@ const { isLoading: isConfirmingReleaseVesting, isSuccess: isConfirmedReleaseVest
 watch(isConfirmingReleaseVesting, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedReleaseVesting.value) {
     addSuccessToast('vesting Releaseed successfully')
-    emit('reloadVestingInfos')
+    emit('reload')
   }
 })
 

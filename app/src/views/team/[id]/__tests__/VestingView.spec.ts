@@ -7,7 +7,7 @@ import { ref } from 'vue'
 
 // Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
-
+const mockReloadKey = ref<number>(0)
 // Mocks
 const mockVestingInfos = ref([
   [memberAddress],
@@ -136,7 +136,7 @@ describe('VestingView.vue', () => {
 
     // Verify props
     expect(createVesting.props()).toMatchObject({
-      teamId: 1,
+      reloadKey: mockReloadKey.value,
       tokenAddress: '0x000000000000000000000000000000000000beef' // This comes from the mocked sherToken
     })
   })
@@ -147,7 +147,7 @@ describe('VestingView.vue', () => {
 
     const createVesting = wrapper.findComponent({ name: 'CreateVesting' })
 
-    await createVesting.vm.$emit('reloadVestingInfos')
+    await createVesting.vm.$emit('reload')
     await wrapper.vm.$nextTick()
     // Test closeAddVestingModal event
     await createVesting.vm.$emit('closeAddVestingModal')
@@ -182,7 +182,6 @@ describe('VestingView.vue', () => {
     await btn.trigger('click')
 
     const component = wrapper.findComponent({ name: 'CreateVesting' })
-    expect(component.props('teamId')).toBe(1)
     expect(component.props('tokenAddress')).toBe('0x000000000000000000000000000000000000beef')
   })
 })
