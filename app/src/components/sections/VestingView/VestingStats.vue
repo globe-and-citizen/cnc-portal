@@ -1,35 +1,31 @@
 <template>
-  <div>
-    <CardComponent title="Vesting Stats">
-      <div class="flex flex-col justify-around gap-2 w-full" data-test="vesting-stats">
-        <TableComponent
-          :rows="tokenSummaryRows"
-          :columns="tokenSummaryColumns"
-          :sticky="true"
-          :showPagination="true"
-        >
-          <template #totalReleased-data="{ row }">
-            <span class="flex items-center gap-1 text-sm text-gray-700">
-              {{ row.totalReleased }}
-              <span class="text-xs">{{ tokenSymbol }}</span>
-            </span>
-          </template>
-          <template #totalVested-data="{ row }">
-            <span class="flex items-center gap-1 text-sm text-gray-700">
-              {{ row.totalVested }}
-              <span class="text-xs">{{ tokenSymbol }}</span>
-            </span>
-          </template>
-          <template #totalWithdrawn-data="{ row }">
-            <span class="flex items-center gap-1 text-sm text-gray-700">
-              {{ row.totalWithdrawn }}
-              <span class="text-xs">{{ tokenSymbol }}</span>
-            </span>
-          </template>
-        </TableComponent>
-      </div>
-    </CardComponent>
-  </div>
+  <CardComponent title="Vesting Stats">
+    <TableComponent
+      :rows="tokenSummaryRows"
+      :columns="tokenSummaryColumns"
+      :sticky="true"
+      :showPagination="true"
+    >
+      <template #totalReleased-data="{ row }">
+        <span class="flex items-center gap-1 text-sm text-gray-700">
+          {{ row.totalReleased }}
+          <span class="text-xs">{{ tokenSymbol }}</span>
+        </span>
+      </template>
+      <template #totalVested-data="{ row }">
+        <span class="flex items-center gap-1 text-sm text-gray-700">
+          {{ row.totalVested }}
+          <span class="text-xs">{{ tokenSymbol }}</span>
+        </span>
+      </template>
+      <template #totalWithdrawn-data="{ row }">
+        <span class="flex items-center gap-1 text-sm text-gray-700">
+          {{ row.totalWithdrawn }}
+          <span class="text-xs">{{ tokenSymbol }}</span>
+        </span>
+      </template>
+    </TableComponent>
+  </CardComponent>
 </template>
 
 <script setup lang="ts">

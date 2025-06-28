@@ -1,113 +1,118 @@
 <template>
-  <div>
-    <ButtonUI
-      size="sm"
-      data-test="toggle-vesting-view"
-      :variant="displayActive ? 'secondary' : 'ghost'"
-      class="w-max"
-      @click="displayActive = !displayActive"
-    >
-      <IconifyIcon
-        :icon="displayActive ? 'heroicons-outline:inbox' : 'heroicons-outline:archive-box'"
-        class="size-6"
-      />{{ displayActive ? 'actives' : 'archived' }}
-    </ButtonUI>
-    <span class="loading loading-spinner" v-if="loading"></span>
-    <div class="flex flex-col justify-around gap-2 w-full" data-test="vesting-overview">
-      <TableComponent
-        :rows="vestings"
-        :columns="columns"
-        :sticky="true"
-        :showPagination="true"
-        data-test="vesting-overview"
+  <CardComponent title="Vesting OverView">
+    <template #card-action>
+      <ButtonUI
+        size="sm"
+        data-test="toggle-vesting-view"
+        :variant="displayActive ? 'secondary' : 'ghost'"
+        class="w-max"
+        @click="displayActive = !displayActive"
       >
-        <template #vestablePerDay-data="{ row }">
-          <span class="flex items-center gap-1 text-sm text-gray-700">
-            {{ Number((row.totalAmount / row.durationDays).toFixed(2)) }}
-            <span class="text-xs">{{ row.tokenSymbol }}</span>
-          </span>
-        </template>
-        <template #totalAmount-data="{ row }">
-          <span class="flex items-center gap-1 text-sm text-gray-700">
-            {{ (row as VestingRow).totalAmount }}
-            <span class="text-xs">{{ row.tokenSymbol }}</span>
-          </span>
-        </template>
-        <template #released-data="{ row }">
-          <span class="flex items-center gap-1 badge badge-info">
-            {{ row.released.toFixed(2) }}
-            <span class="text-xs">{{ row.tokenSymbol }}</span>
-          </span>
-        </template>
-        <template #withdrawn-data="{ row }">
-          <span class="flex items-center gap-1 badge badge-info">
-            {{ row.status === 'Inactive' ? (row.totalAmount - row.released).toFixed(2) : 0 }}
-            <span class="text-xs">{{ row.tokenSymbol }}</span>
-          </span>
-        </template>
+        <IconifyIcon
+          :icon="displayActive ? 'heroicons-outline:inbox' : 'heroicons-outline:archive-box'"
+          class="size-6"
+        />{{ displayActive ? 'actives' : 'archived' }}
+      </ButtonUI>
+      <VestingActions :reloadKey="reloadKey" />
+    </template>
 
-        <template #member-data="{ row }">
-          <span>{{ row.member }}</span>
-        </template>
-        <template #actions-data="{ row }">
-          <div class="flex flex-wrap gap-2">
-            <!-- Stop Button -->
+    <span class="loading loading-spinner" v-if="loading"></span>
 
-            <button
-              v-if="row.status === 'Active' && team?.ownerAddress == userAddress"
-              data-test="stop-btn"
-              class="btn btn-xs btn-error flex items-center justify-center"
-              @click.stop="
-                stopVesting({
-                  address: VESTING_ADDRESS as Address,
-                  abi: VestingABI,
-                  functionName: 'stopVesting',
-                  args: [row.member, team?.id]
-                })
-              "
-            >
-              <IconifyIcon icon="mdi:stop-circle-outline" class="mr-1" />
-              <span class="text-xs">Stop</span>
-            </button>
+    <TableComponent
+      :rows="vestings"
+      :columns="columns"
+      :sticky="true"
+      :showPagination="true"
+      data-test="vesting-overview"
+    >
+      <template #vestablePerDay-data="{ row }">
+        <span class="flex items-center gap-1 text-sm text-gray-700">
+          {{ Number((row.totalAmount / row.durationDays).toFixed(2)) }}
+          <span class="text-xs">{{ row.tokenSymbol }}</span>
+        </span>
+      </template>
+      <template #totalAmount-data="{ row }">
+        <span class="flex items-center gap-1 text-sm text-gray-700">
+          {{ (row as VestingRow).totalAmount }}
+          <span class="text-xs">{{ row.tokenSymbol }}</span>
+        </span>
+      </template>
+      <template #released-data="{ row }">
+        <span class="flex items-center gap-1 badge badge-info">
+          {{ row.released.toFixed(2) }}
+          <span class="text-xs">{{ row.tokenSymbol }}</span>
+        </span>
+      </template>
+      <template #withdrawn-data="{ row }">
+        <span class="flex items-center gap-1 badge badge-info">
+          {{ row.status === 'Inactive' ? (row.totalAmount - row.released).toFixed(2) : 0 }}
+          <span class="text-xs">{{ row.tokenSymbol }}</span>
+        </span>
+      </template>
 
-            <!-- Withdraw Button -->
+      <template #member-data="{ row }">
+        <span>{{ row.member }}</span>
+      </template>
+      <template #actions-data="{ row }">
+        <div class="flex flex-wrap gap-2">
+          <!-- Stop Button -->
 
-            <!-- Release Button -->
+          <button
+            v-if="row.status === 'Active' && team?.ownerAddress == userAddress"
+            data-test="stop-btn"
+            class="btn btn-xs btn-error flex items-center justify-center"
+            @click.stop="
+              stopVesting({
+                address: VESTING_ADDRESS as Address,
+                abi: VestingABI,
+                functionName: 'stopVesting',
+                args: [row.member, team?.id]
+              })
+            "
+          >
+            <IconifyIcon icon="mdi:stop-circle-outline" class="mr-1" />
+            <span class="text-xs">Stop</span>
+          </button>
 
-            <button
-              data-test="release-btn"
-              v-if="row.status === 'Active' && row.member === userAddress"
-              class="btn btn-xs btn-success flex items-center justify-center"
-              :disabled="!row.isStarted"
-              :title="!row.isStarted ? 'Vesting has not started yet' : ''"
-              @click.stop="
-                releaseVesting({
-                  address: VESTING_ADDRESS as Address,
-                  abi: VestingABI,
-                  functionName: 'release',
-                  args: [team?.id]
-                })
-              "
-            >
-              <IconifyIcon icon="mdi:lock-open" class="mr-1" />
-              <span class="text-xs">Release</span>
-            </button>
-          </div>
-        </template>
-      </TableComponent>
-    </div>
-  </div>
+          <!-- Withdraw Button -->
+
+          <!-- Release Button -->
+
+          <button
+            data-test="release-btn"
+            v-if="row.status === 'Active' && row.member === userAddress"
+            class="btn btn-xs btn-success flex items-center justify-center"
+            :disabled="!row.isStarted"
+            :title="!row.isStarted ? 'Vesting has not started yet' : ''"
+            @click.stop="
+              releaseVesting({
+                address: VESTING_ADDRESS as Address,
+                abi: VestingABI,
+                functionName: 'release',
+                args: [team?.id]
+              })
+            "
+          >
+            <IconifyIcon icon="mdi:lock-open" class="mr-1" />
+            <span class="text-xs">Release</span>
+          </button>
+        </div>
+      </template>
+    </TableComponent>
+  </CardComponent>
 </template>
 
 <script setup lang="ts">
 import TableComponent from '@/components/TableComponent.vue'
 import { computed, watch, ref } from 'vue'
+import CardComponent from '@/components/CardComponent.vue'
 import { type VestingRow } from '@/types/vesting'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
 import { type Address, formatUnits } from 'viem'
 import { useUserDataStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
+import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
