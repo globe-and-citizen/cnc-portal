@@ -76,7 +76,7 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { useStorage } from '@vueuse/core'
-import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import { useWriteContract, useWaitForTransactionReceipt, useChainId } from '@wagmi/vue'
 import { ref, watch } from 'vue'
 import { type Address, parseEther } from 'viem'
 import { useToastStore } from '@/stores'
@@ -87,6 +87,7 @@ import BankABI from '@/artifacts/abi/bank.json'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import type { TokenId } from '@/constant'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const props = defineProps<{
   bankAddress: Address
@@ -98,6 +99,8 @@ const currency = useStorage('currency', {
   name: 'US Dollar',
   symbol: '$'
 })
+const queryClient = useQueryClient()
+const chainId = useChainId()
 
 // Use the contract balance composable
 const { total, balances, isLoading } = useContractBalance(props.bankAddress)
@@ -137,6 +140,15 @@ const handleTransfer = async (data: {
         functionName: 'transfer',
         args: [data.address.address, parseEther(data.amount)]
       })
+      queryClient.invalidateQueries({
+        queryKey: [
+          'balance',
+          {
+            address: props.bankAddress,
+            chainId: chainId
+          }
+        ]
+      })
     } else if (data.token.symbol === 'USDC') {
       const tokenAmount = BigInt(Number(data.amount) * 1e6)
       transfer({
@@ -144,6 +156,17 @@ const handleTransfer = async (data: {
         abi: BankABI,
         functionName: 'transferToken',
         args: [USDC_ADDRESS as Address, data.address.address, tokenAmount]
+      })
+      console.log("data.token", data)
+      queryClient.invalidateQueries({
+        queryKey: [
+          'readContract',
+          {
+            address: USDC_ADDRESS as Address,
+            args: [props.bankAddress],
+            chainId: chainId
+          }
+        ]
       })
     }
   } catch (error) {
