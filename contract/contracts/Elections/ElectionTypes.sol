@@ -8,11 +8,7 @@ pragma solidity ^0.8.24;
  */
 library ElectionTypes {
   /**
-   * @dev Gas-optimized election structure
-   * Optimizes for:
-   * 1. Voter eligibility checks (most frequent) - O(1) with mapping
-   * 2. Voting operations (frequent) - minimal gas
-   * 3. Setup costs (infrequent) - acceptable higher cost
+   * @notice Struct for an election
    */
   struct Election {
     uint256 id;
@@ -26,10 +22,8 @@ library ElectionTypes {
     mapping(address => bool) isCandidate;
     address[] candidateList;
     address[] voterList;
-    
     // Vote tracking
     mapping(address => bool) hasVoted;
-    
     // Results
     address[] winners;
     bool resultsPublished;

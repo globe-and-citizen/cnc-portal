@@ -17,7 +17,6 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   // State variables
   uint256 private _nextElectionId;
   address public bodAddress;
-  bool private initBodAddress;
   mapping(uint256 => ElectionTypes.Election) private _elections;
   uint256[] private _electionIds;
   mapping(uint256 => mapping(address => address)) private _votes;
@@ -311,10 +310,9 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
 
   function setBoardOfDirectorsContractAddress(address _bodAddress) external {
     require(
-      msg.sender == owner() || !initBodAddress,
+      msg.sender == owner() || bodAddress == address(0),
       'Not allowed to set board of directors contract'
     );
     bodAddress = _bodAddress;
-    initBodAddress = true;
   }
 }
