@@ -16,21 +16,46 @@
       </div>
     </label>
 
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
-      <span class="w-32">Start Date</span>
-      <input data-test="start-date" type="date" class="grow" v-model="startDate" required />
+    <label class="flex items-center gap-2 mt-4">
+      <span class="w-32">Period</span>
+      <Datepicker
+        v-model="dateRange"
+        range
+        multi-calendars
+        auto-apply
+        format="dd/MM/yyyy"
+        placeholder="Select range"
+        class="w-full"
+      />
     </label>
 
     <div class="flex gap-3 mt-4 grow">
-      <label
-        class="input input-xs input-bordered flex items-center gap-4 input-md min-w-0 mt-4 p-1"
-      >
-        <span class="w-full text-xs">Duration(days)</span>
-        <input data-test="duration" type="number" v-model.number="duration" required min="1" />
+      <label class="inline-flex items-center gap-2 input-md mt-4 p-2">
+        <span class="w-full text-xs">Years</span>
+        <input
+          type="number"
+          min="0"
+          v-model.number="duration.years"
+          class="input input-bordered w-20"
+        />
       </label>
-      <label class="input input-bordered flex items-center gap-2 input-md mt-4 min-w-0 p-1">
-        <span class="w-full text-xs">Cliff(days)</span>
-        <input data-test="cliff" type="number" v-model.number="cliff" required />
+      <label class="inline-flex items-center gap-2 input-md mt-4 p-2">
+        <span class="w-full text-xs">Months</span>
+        <input
+          type="number"
+          min="0"
+          v-model.number="duration.months"
+          class="input input-bordered w-20"
+        />
+      </label>
+      <label class="inline-flex items-center gap-2 input-md mt-4 p-2">
+        <span class="w-full text-xs">Days</span>
+        <input
+          type="number"
+          min="0"
+          v-model.number="duration.days"
+          class="input input-bordered w-20"
+        />
       </label>
     </div>
 
@@ -38,6 +63,10 @@
       <label class="input input-bordered flex items-center gap-2 input-md mt-4">
         <span class="w-full text-xs">Amount</span>
         <input data-test="total-amount" type="number" class="grow" v-model="totalAmount" required />
+      </label>
+      <label class="input input-bordered flex items-center gap-2 input-md mt-4 min-w-0 p-1">
+        <span class="w-full text-xs">Cliff(days)</span>
+        <input data-test="cliff" type="number" v-model.number="cliff" required />
       </label>
     </div>
 
@@ -62,8 +91,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { differenceInCalendarDays, differenceInMonths, differenceInYears, addDays, format } from 'date-fns'
+import { computed, nextTick, ref, watch } from 'vue'
+import {
+  differenceInCalendarDays,
+  differenceInMonths,
+  differenceInYears,
+  addYears,
+  addMonths,
+  addDays
+} from 'date-fns'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
 import VestingABI from '@/artifacts/abi/Vesting.json'
@@ -72,7 +108,10 @@ import { parseEther, type Address, formatUnits, parseUnits } from 'viem'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
+import Datepicker from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
 const { addSuccessToast, addErrorToast } = useToastStore()
+
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useUserDataStore } from '@/stores'
 import { isAddress } from 'viem'
@@ -98,17 +137,57 @@ const startDate = ref('')
 //const duration = ref(30)
 const cliff = ref(0)
 const totalAmount = ref(0)
+const dateRange = ref<[Date, Date] | null>(null)
 
-
-const endDate = ref('')
 const duration = ref({ years: 0, months: 0, days: 0 })
-const durationInput = ref(0) // total days input if manually changed
+const durationInDays = ref(0)
+const updateCount = ref(0)
+async function resetUpdateCount() {
+  await nextTick()
+  updateCount.value = 0
+}
 
+watch(dateRange, async (val) => {
+  if (!val || val.length !== 2) return
+
+  if (updateCount.value > 2) return
+
+  const [start, end] = val
+  const days = differenceInCalendarDays(end, start)
+  const years = differenceInYears(end, start)
+  const months = differenceInMonths(end, start) % 12
+  const leftoverDays = days - years * 365 - months * 30
+  durationInDays.value = days
+  duration.value = { years, months, days: leftoverDays }
+
+  updateCount.value++
+  if (updateCount.value === 2) await resetUpdateCount()
+})
+
+watch(
+  duration,
+  async (val) => {
+    const today = new Date()
+    if (!dateRange.value || !dateRange.value[0]) {
+      dateRange.value = [today, today]
+    }
+    if (updateCount.value > 2) return
+
+    const start = dateRange.value[0]
+    const { years, months, days } = val
+    let newEnd = addYears(start, years)
+    newEnd = addMonths(newEnd, months)
+    newEnd = addDays(newEnd, days)
+    dateRange.value = [start, newEnd]
+    updateCount.value++
+    if (updateCount.value === 2) await resetUpdateCount()
+  },
+  { deep: true }
+)
 
 const teamStore = useTeamStore()
 const team = computed(() => teamStore.currentTeam)
 const emit = defineEmits(['reload', 'closeAddVestingModal'])
-
 
 const handleMemberSelect = (selected: { name: string; address: string }) => {
   memberInput.value = selected
@@ -138,12 +217,14 @@ watch(
   }
 )
 
-const loading = computed(
-  () =>
-    loadingApproveToken.value ||
-    loadingAddVesting.value ||
-    (isConfirmingAddVesting.value && !isConfirmedAddVesting.value)
-)
+const loading = computed(() => {
+  const tokenApprovalPending =
+    loadingApproveToken.value || (isConfirmingApproveToken.value && !isConfirmedApproveToken.value)
+  const vestingCreationPending =
+    loadingAddVesting.value || (isConfirmingAddVesting.value && !isConfirmedAddVesting.value)
+
+  return tokenApprovalPending || vestingCreationPending
+})
 
 const {
   data: allowance,
@@ -181,10 +262,9 @@ watch(isConfirmingAddVesting, async (isConfirming, wasConfirming) => {
     addSuccessToast('vesting added successfully')
     member.value = ''
     startDate.value = ''
-    duration.value = 30
     cliff.value = 0
     totalAmount.value = 0
-
+    dateRange.value = null
     emit('closeAddVestingModal')
     emit('reload')
   }
@@ -239,11 +319,10 @@ const formValid = computed(() => {
   return (
     team.value?.id.valueOf !== null &&
     isAddress(member.value) &&
-    startDate.value &&
-    duration.value > 0 &&
+    durationInDays.value > 0 &&
     cliff.value >= 0 &&
     totalAmount.value > 0 &&
-    cliff.value <= duration.value
+    cliff.value <= durationInDays.value
   )
 })
 
@@ -272,33 +351,12 @@ async function approveAllowance() {
     }
   }
 }
-
-
-function calculateDuration() {
-  if (!startDate.value || !endDate.value) return
-
-  const start = new Date(startDate.value)
-  const end = new Date(endDate.value)
-
-  if (end <= start) {
-    addErrorToast('End date must be after start date')
-    return
-  }
-
-  const totalDays = differenceInCalendarDays(end, start)
-  const years = differenceInYears(end, start)
-  const months = differenceInMonths(end, start) % 12
-  const days = totalDays - years * 365 - months * 30
-
-  duration.value = { years, months, days }
-  durationInput.value = totalDays
-}
 async function submit() {
   if (!formValid.value) return
   if (checkDuplicateVesting()) return
-
-  const start = Math.floor(new Date(startDate.value).getTime() / 1000)
-  const durationInSeconds = duration.value * 24 * 60 * 60
+  const startDate = dateRange.value?.[0] || new Date()
+  const start = Math.floor(startDate.getTime() / 1000)
+  const durationInSeconds = durationInDays.value * 24 * 60 * 60
   const cliffInSeconds = cliff.value * 24 * 60 * 60
 
   await refetchTokenBalance()
@@ -310,16 +368,13 @@ async function submit() {
     }
   }
   await getAllowance()
-
   if (
     allowance.value !== undefined &&
     Number(formatUnits(allowance.value, 6)) < totalAmount.value
   ) {
     addErrorToast('Allowance is less than the total amount')
-
     return
   }
-
   addVesting({
     address: VESTING_ADDRESS as Address,
     abi: VestingABI,

@@ -15,7 +15,7 @@
   <CardComponent title="Vesting Overview">
     <VestingFlow @reload="triggerReload" :reloadKey="reloadKey" />
   </CardComponent>
-  <ModalComponent v-model="addVestingModal">
+  <ModalComponent v-model="addVestingModal" size="lg">
     <CreateVesting
       v-if="team?.id"
       :tokenAddress="sherToken?.address ?? ''"
