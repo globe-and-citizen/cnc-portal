@@ -15,10 +15,7 @@ library ProposalUtils {
       revert InvalidProposalDates();
     }
     // Additional check to ensure dates are in the future
-    if (startDate <= block.timestamp) {
-      revert InvalidProposalDates();
-    }
-    if (endDate <= startDate) {
+    if (startDate < block.timestamp) {
       revert InvalidProposalDates();
     }
   }

@@ -6,6 +6,7 @@ import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/Pau
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
 import {ProposalUtils} from './ProposalUtils.sol';
+import "hardhat/console.sol";
 
 /*
  * @title Proposals
@@ -143,8 +144,6 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
       proposal.noCount++;
     } else if (vote == VoteOption.Abstain) {
       proposal.abstainCount++;
-    } else {
-      revert InvalidVote();
     }
 
     emit ProposalVoted(proposalId, msg.sender);
