@@ -1,19 +1,11 @@
 <template>
   <CardComponent title="Vesting OverView">
     <template #card-action>
-      <ButtonUI
-        size="sm"
-        data-test="toggle-vesting-view"
-        :variant="displayActive ? 'secondary' : 'ghost'"
-        class="w-max"
-        @click="displayActive = !displayActive"
-      >
-        <IconifyIcon
-          :icon="displayActive ? 'heroicons-outline:inbox' : 'heroicons-outline:archive-box'"
-          class="size-6"
-        />{{ displayActive ? 'actives' : 'archived' }}
-      </ButtonUI>
-      <VestingActions :reloadKey="reloadKey" />
+      <div class="flex items-center gap-4">
+        <VestingStatusFilter @statusChange="handleStatusChange" />
+
+        <VestingActions :reloadKey="reloadKey" />
+      </div>
     </template>
 
     <span class="loading loading-spinner" v-if="loading"></span>
@@ -106,13 +98,14 @@
 import TableComponent from '@/components/TableComponent.vue'
 import { computed, watch, ref } from 'vue'
 import CardComponent from '@/components/CardComponent.vue'
-import { type VestingRow } from '@/types/vesting'
+import { type VestingRow, type VestingTuple } from '@/types/vesting'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
 import { type Address, formatUnits } from 'viem'
 import { useUserDataStore } from '@/stores'
-import ButtonUI from '@/components/ButtonUI.vue'
+
 import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
+import VestingStatusFilter from './VestingStatusFilter.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
@@ -136,6 +129,13 @@ const investorsAddress = computed(() => {
   return teamStore?.currentTeam?.teamContracts?.find((contract) => contract.type === 'InvestorsV1')
     ?.address as Address
 })
+
+const selectedStatus = ref('all')
+
+// Add handler
+const handleStatusChange = (status: string) => {
+  selectedStatus.value = status
+}
 
 const displayActive = ref(true)
 
@@ -200,42 +200,51 @@ watch(
 const vestings = computed<VestingRow[]>(() => {
   const currentDateInSeconds = Math.floor(Date.now() / 1000)
 
-  let currentVestings = vestingInfos.value
+  const allVestingsRaw: VestingTuple[] = [vestingInfos.value, archivedVestingInfos.value].filter(
+    (v): v is VestingTuple =>
+      Array.isArray(v) && v.length === 2 && Array.isArray(v[0]) && Array.isArray(v[1])
+  )
 
-  if (!displayActive.value) {
-    currentVestings = archivedVestingInfos.value
+  const allRows = allVestingsRaw.flatMap(([members, vestingsRaw]) =>
+    members.map((member, idx): VestingRow => {
+      const v = vestingsRaw[idx]
+      const totalAmount = Number(formatUnits(v.totalAmount, 6))
+      const released = Number(formatUnits(v.released, 6))
+      const isStarted = currentDateInSeconds > Number(v.start)
+      const isCompleted = v.active && released >= totalAmount
+      const status = !v.active ? 'Inactive' : isCompleted ? 'Completed' : 'Active'
+
+      return {
+        member,
+        teamId: Number(team.value?.id),
+        startDate: (() => {
+          const date = new Date(Number(v.start) * 1000)
+          const day = String(date.getDate()).padStart(2, '0')
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const year = date.getFullYear()
+          return `${day}/${month}/${year}`
+        })(),
+        isStarted,
+        durationDays: Math.floor(Number(v.duration) / 86400),
+        cliffDays: Math.floor(Number(v.cliff) / 86400),
+        totalAmount,
+        released,
+        status,
+        tokenSymbol: tokenSymbol?.value || 'default'
+      }
+    })
+  )
+
+  switch (selectedStatus.value) {
+    case 'active':
+      return allRows.filter((row) => row.status === 'Active')
+    case 'completed':
+      return allRows.filter((row) => row.status === 'Completed')
+    case 'cancelled':
+      return allRows.filter((row) => row.status === 'Inactive')
+    default:
+      return allRows
   }
-  if (currentVestings && Array.isArray(currentVestings) && currentVestings.length === 2) {
-    const [members, vestingsRaw] = currentVestings
-    if (
-      Array.isArray(members) &&
-      Array.isArray(vestingsRaw) &&
-      members.length === vestingsRaw.length
-    ) {
-      return members.map((member: string, idx: number) => {
-        const v = vestingsRaw[idx]
-        return {
-          member,
-          teamId: Number(team.value?.id),
-          startDate: (() => {
-            const date = new Date(Number(v.start) * 1000)
-            const day = String(date.getDate()).padStart(2, '0')
-            const month = String(date.getMonth() + 1).padStart(2, '0')
-            const year = date.getFullYear()
-            return `${day}/${month}/${year}`
-          })(),
-          isStarted: currentDateInSeconds > Number(v.start),
-          durationDays: Math.floor(Number(v.duration) / 86400),
-          cliffDays: Math.floor(Number(v.cliff) / 86400),
-          totalAmount: Number(formatUnits(v.totalAmount, 6)),
-          released: Number(formatUnits(v.released, 6)),
-          status: !v.active ? 'Inactive' : 'Active',
-          tokenSymbol: tokenSymbol?.value || 'default'
-        }
-      })
-    }
-  }
-  return [] as VestingRow[]
 })
 
 const {
