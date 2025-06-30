@@ -189,7 +189,7 @@ const submitForm = () => {
   console.log('newProposalInput: ', newProposalInput.value)
   $v.value.$touch()
   if ($v.value.$invalid) return
-  emits('createProposal', newProposalInput)
+  emits('createProposal', newProposalInput.value)
 }
 const formRef = ref<HTMLElement | null>(null)
 const showDropdown = ref<boolean>(false)
