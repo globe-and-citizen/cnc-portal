@@ -4,15 +4,28 @@
     <div class="w-1/3 bg-white border border-gray-300 rounded-xl p-6 space-y-6 shadow-sm">
       <!-- Month Selector -->
       <div class="flex items-center justify-between mb-4">
-        <ButtonUI>
+        <ButtonUI @click="goToPrevMonth">
           <IconifyIcon icon="heroicons:chevron-left" class="w-4 h-4" />
           Prev
         </ButtonUI>
-        <ButtonUI>
-          actual
-          <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
-        </ButtonUI>
-        <ButtonUI>
+        <div class="relative">
+          <ButtonUI @click="toggleMonthPicker">
+            {{ currentMonthLabel }}
+            <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
+          </ButtonUI>
+
+          <div v-if="isMonthPickerOpen" class="absolute z-50 mt-2 left-1/2 -translate-x-1/2">
+            <Datepicker
+              v-model="selectedMonth"
+              :month-picker="true"
+              auto-apply
+              @closed="isMonthPickerOpen = false"
+              @update:model-value="isMonthPickerOpen = false"
+              class="bg-white rounded shadow"
+            />
+          </div>
+        </div>
+        <ButtonUI @click="goToNextMonth">
           Next
           <IconifyIcon icon="heroicons:chevron-right" class="w-4 h-4" />
         </ButtonUI>
@@ -94,12 +107,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 // import Datepicker from '@vuepic/vue-datepicker'
 import dayjs from 'dayjs'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
+import Datepicker from '@vuepic/vue-datepicker'
 
 const selectedMonth = ref(new Date())
 const selectedWeek = ref(null)
@@ -152,6 +166,26 @@ watch(selectedMonth, generateWeeks, { immediate: true })
 
 const selectWeek = (week) => {
   selectedWeek.value = week
+}
+
+const currentMonthLabel = computed(() => {
+  const options: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' }
+  const locale = navigator.language || 'en-US'
+  return new Date(selectedMonth.value).toLocaleDateString(locale, options)
+})
+
+function goToPrevMonth() {
+  selectedMonth.value = dayjs(selectedMonth.value).subtract(1, 'month').toDate()
+}
+
+function goToNextMonth() {
+  selectedMonth.value = dayjs(selectedMonth.value).add(1, 'month').toDate()
+}
+
+const isMonthPickerOpen = ref(false)
+
+function toggleMonthPicker() {
+  isMonthPickerOpen.value = !isMonthPickerOpen.value
 }
 
 function formatDate(date: string | Date) {
