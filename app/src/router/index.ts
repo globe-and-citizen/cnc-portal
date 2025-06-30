@@ -13,7 +13,11 @@ import AdministrationView from '@/views/team/[id]/AdministrationView.vue'
 import SherTokenView from '@/views/team/[id]/SherTokenView.vue'
 import VestingView from '@/views/team/[id]/VestingView.vue'
 import WeeklyClaimView from '@/views/team/[id]/WeeklyClaimView.vue'
+
 import ClaimHistoryView from '@/views/team/[id]/ClaimHistoryView.vue'
+
+import BodElectionView from '@/views/team/[id]/BodElectionView.vue'
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -97,6 +101,12 @@ const router = createRouter({
           name: 'administration',
           meta: { name: 'Contract Administration' },
           component: AdministrationView
+        },
+        {
+          path: '/teams/:id/administration/bod-elections',
+          name: 'bod-elections',
+          meta: { name: 'BoD Election' },
+          component: BodElectionView
         },
         {
           path: '/teams/:id/sher-token',

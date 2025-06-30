@@ -84,18 +84,24 @@ import VestingABI from '@/artifacts/abi/Vesting.json'
 import { VESTING_ADDRESS } from '@/constant'
 import { parseEther, type Address, formatUnits, parseUnits } from 'viem'
 import { useToastStore } from '@/stores/useToastStore'
-import { type VestingRow } from '@/types/vesting'
+import { useTeamStore } from '@/stores'
 const { addSuccessToast, addErrorToast } = useToastStore()
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useUserDataStore } from '@/stores'
 import { isAddress } from 'viem'
 
 const props = defineProps<{
-  teamId: number
   tokenAddress: string
-  vestings: VestingRow[]
+  reloadKey: number
 }>()
 
+const activeMembers = computed<string[]>(() => {
+  if (vestingInfos.value && Array.isArray(vestingInfos.value) && vestingInfos.value.length === 2) {
+    const [members] = vestingInfos.value
+    return members
+  }
+  return []
+})
 const member = ref('')
 const startDate = ref('')
 const duration = ref(30)
@@ -103,7 +109,33 @@ const cliff = ref(0)
 const totalAmount = ref(0)
 const tokenApproved = ref(false)
 
-const emit = defineEmits(['reloadVestingInfos', 'closeAddVestingModal'])
+const teamStore = useTeamStore()
+const team = computed(() => teamStore.currentTeam)
+const emit = defineEmits(['reload', 'closeAddVestingModal'])
+
+const {
+  data: vestingInfos,
+  //isLoading: isLoadingVestingInfos,
+  error: errorGetVestingInfo,
+  refetch: getVestingInfos
+} = useReadContract({
+  functionName: 'getTeamVestingsWithMembers',
+  address: VESTING_ADDRESS as Address,
+  abi: VestingABI,
+  args: [team?.value?.id ?? 0]
+})
+watch(errorGetVestingInfo, () => {
+  if (errorGetVestingInfo.value) {
+    addErrorToast('Add admin failed')
+  }
+})
+
+watch(
+  () => props.reloadKey,
+  async () => {
+    await getVestingInfos()
+  }
+)
 
 const loading = computed(
   () => loadingAddVesting.value || (isConfirmingAddVesting.value && !isConfirmedAddVesting.value)
@@ -155,7 +187,7 @@ watch(isConfirmingAddVesting, async (isConfirming, wasConfirming) => {
     totalAmount.value = 0
     tokenApproved.value = false
     emit('closeAddVestingModal')
-    emit('reloadVestingInfos')
+    emit('reload')
   }
 })
 
@@ -211,7 +243,7 @@ const {
 
 const formValid = computed(() => {
   return (
-    props.teamId.valueOf !== null &&
+    team.value?.id.valueOf !== null &&
     isAddress(member.value) &&
     startDate.value &&
     duration.value > 0 &&
@@ -224,7 +256,7 @@ const formValid = computed(() => {
 function checkDuplicateVesting() {
   if (
     member.value &&
-    props.vestings.some((v) => v.member.toLowerCase() === member.value.toLowerCase())
+    activeMembers.value.some((m) => m.toLowerCase() === member.value.toLowerCase())
   ) {
     addErrorToast('The member address already has an active vesting.')
     return true
@@ -278,7 +310,7 @@ async function submit() {
     abi: VestingABI,
     functionName: 'addVesting',
     args: [
-      props.teamId,
+      team.value?.id,
       member.value as Address,
       start,
       durationInSeconds,

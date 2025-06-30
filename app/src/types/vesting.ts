@@ -15,4 +15,5 @@ export interface TokenSummary {
   symbol: string
   totalVested: number
   totalReleased: number
+  totalWithdrawn: number
 }
