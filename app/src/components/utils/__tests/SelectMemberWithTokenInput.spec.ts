@@ -3,7 +3,7 @@ import { it, describe, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { ref } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
-import { zeroAddress } from 'viem'
+import { SUPPORTED_TOKENS } from '@/constant/index'
 
 describe('SelectMemberWithTokenInput.vue', () => {
   let wrapper: VueWrapper<ComponentPublicInstance>
@@ -101,7 +101,7 @@ describe('SelectMemberWithTokenInput.vue', () => {
   it('should update modelValue when input changes', async () => {
     const selectInput = wrapper.findComponent({ name: 'SelectComponent' })
     expect(selectInput.exists()).toBe(true)
-    expect(selectInput.props('modelValue')).toBe(zeroAddress)
+    expect(selectInput.props('modelValue')).toBe(SUPPORTED_TOKENS[0].address)
     selectInput.vm.$emit('update:modelValue', '0x123')
     await wrapper.vm.$nextTick()
     //@ts-expect-error: accessing private property for testing

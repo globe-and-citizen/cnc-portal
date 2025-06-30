@@ -65,7 +65,7 @@
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed, ref, useTemplateRef } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
-import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
+import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import SelectComponent from '@/components/SelectComponent.vue'
 
@@ -85,9 +85,8 @@ const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
 const { focused: nameInputFocus } = useFocus(nameInput)
 const { focused: addressInputFocus } = useFocus(addressInput)
 const tokens = ref({
-  [NETWORK.currencySymbol]: zeroAddress,
   USDC: USDC_ADDRESS,
-  USDT: USDT_ADDRESS
+  [NETWORK.currencySymbol]: zeroAddress
 })
 const options = computed(() => {
   return Object.entries(tokens.value).map(([symbol, address]) => ({

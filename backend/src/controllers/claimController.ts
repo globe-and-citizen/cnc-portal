@@ -90,11 +90,29 @@ export const addClaim = async (req: Request, res: Response) => {
           memberAddress: callerAddress,
           teamId: teamId,
           data: {},
+          status: "pending",
         },
         include: {
           claims: true,
         },
       });
+    }
+
+    if (
+      (weeklyClaim?.claims
+        .filter(
+          (claim) =>
+            claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime()
+        )
+        .reduce((sum, claim) => sum + Number(claim.hoursWorked), 0) ?? 0) +
+        Number(hoursWorked) >
+      24
+    ) {
+      return errorResponse(
+        400,
+        "Impossible to submit: the total of hours for this day would exceed 24 hours.",
+        res
+      );
     }
 
     const claim = await prisma.claim.create({
@@ -120,6 +138,7 @@ export const getClaims = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const teamId = Number(req.query.teamId);
   const status = req.query.status as string;
+  const memberAddress = req.query.memberAddress as string | undefined;
 
   try {
     // Validate teamId
@@ -136,11 +155,24 @@ export const getClaims = async (req: Request, res: Response) => {
     if (status) {
       statusFilter = { status };
     }
+
+    // add filter for memberAddress if provided
+    let memberFilter: Prisma.ClaimWhereInput = {};
+    if (memberAddress) {
+      memberFilter = {
+        wage: {
+          userAddress: memberAddress,
+          teamId: teamId,
+        },
+      };
+    }
+
     // Request all claims based on status, that have a wage where the teamId is the provided teamId
     const claims = await prisma.claim.findMany({
       where: {
         wage: {
           teamId: teamId,
+          ...(memberAddress ? { userAddress: memberAddress } : {}),
         },
         ...statusFilter,
       },

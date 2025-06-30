@@ -6,10 +6,11 @@ import { isHex } from "viem";
 
 // Type pour les actions autorisées sur un weekly claim
 export type WeeklyClaimAction = "sign" | "withdraw";
+type statusType = "pending" | "signed" | "withdrawn";
 
 // Fonction utilitaire pour valider l'action
 function isValidWeeklyClaimAction(action: any): action is WeeklyClaimAction {
-  return ["sign", "withdraw"].includes(action);
+  return ["sign", "withdraw", "pending"].includes(action);
 }
 
 export const updateWeeklyClaims = async (req: Request, res: Response) => {
@@ -33,7 +34,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   }
 
   let data: Prisma.WeeklyClaimUpdateInput = {};
-  let singleClaimStatus = "pending";
+  // let singleClaimStatus: statusType = "pending";
 
   try {
     // Utilisation de findUnique car id est unique
@@ -76,7 +77,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           return errorResponse(400, signErrors.join("; "), res);
 
         data = { signature, status: "signed" };
-        singleClaimStatus = "sign";
+        // singleClaimStatus = "signed";
         break;
       case "withdraw":
         // Check if the weekly claim is already signed
@@ -89,7 +90,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           return errorResponse(400, withdrawErrorMsg, res);
         }
         data = { status: "withdrawn" };
-        singleClaimStatus = "withdrawn";
+        // singleClaimStatus = "withdrawn";
         break;
     }
 
@@ -99,10 +100,10 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         where: { id },
         data,
       }),
-      prisma.claim.updateMany({
-        where: { weeklyClaimId: id },
-        data: { status: singleClaimStatus },
-      }),
+      // prisma.claim.updateMany({
+      //   where: { weeklyClaimId: id },
+      //   data: { status: singleClaimStatus },
+      // }),
     ]);
 
     res.status(200).json(updatedWeeklyClaim);
@@ -114,6 +115,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 
 export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   const teamId = Number(req.query.teamId);
+  const status = req.query.status as string;
 
   if (!teamId || isNaN(teamId)) {
     return errorResponse(400, "Missing or invalid teamId", res);
@@ -122,6 +124,25 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   let memberAddressFilter: Prisma.WeeklyClaimWhereInput = {};
   if (req.query.memberAddress) {
     memberAddressFilter = { memberAddress: req.query.memberAddress as string };
+  }
+
+  //create filter for the statut pending, signed or withdrawn
+
+  let statusFilter: Prisma.WeeklyClaimWhereInput = {};
+  if (status) {
+    if (
+      (["pending", "signed", "withdrawn"] as statusType[]).includes(
+        status as statusType
+      )
+    ) {
+      statusFilter = { status };
+    } else {
+      return errorResponse(
+        400,
+        "Invalid status. Allowed status are: sign, withdraw, pending",
+        res
+      );
+    }
   }
 
   try {
@@ -136,6 +157,7 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
           },
         },
         ...memberAddressFilter,
+        ...statusFilter,
       },
       include: {
         wage: true,
