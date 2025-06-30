@@ -44,7 +44,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 defineProps({
