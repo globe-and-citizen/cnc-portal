@@ -34,14 +34,14 @@ contract MockBoardOfDirectors is IBoardOfDirectors {
     boardMembers.push(_member);
   }
 
-    function removeMember(address _member) external {
-        for (uint256 i = 0; i < boardMembers.length; i++) {
-        if (boardMembers[i] == _member) {
-            boardMembers[i] = boardMembers[boardMembers.length - 1];
-            boardMembers.pop();
-            return;
-        }
-        }
-        revert('Member not found');
-    }
+  function removeMember(address _member) external {
+      for (uint256 i = 0; i < boardMembers.length; i++) {
+      if (boardMembers[i] == _member) {
+          boardMembers[i] = boardMembers[boardMembers.length - 1];
+          boardMembers.pop();
+          return;
+      }
+      }
+      revert('Member not found');
+  }
 }
