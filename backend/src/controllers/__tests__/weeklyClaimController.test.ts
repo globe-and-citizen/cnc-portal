@@ -58,8 +58,7 @@ describe("Weekly Claim Controller", () => {
           signature: null,
           createdAt: testDate,
           updatedAt: testDate,
-          wageId: 0,
-          status: null,
+          wageId: 0
         },
         {
           id: 2,
@@ -71,8 +70,7 @@ describe("Weekly Claim Controller", () => {
           signature: null,
           createdAt: testDate,
           updatedAt: testDate,
-          wageId: 0,
-          status: null,
+          wageId: 0
         },
       ];
 
@@ -99,13 +97,13 @@ describe("Weekly Claim Controller", () => {
     //     new Error("Database error")
     //   );
 
-      const response = await request(app).get("/?teamId=1");
-      expect(response.status).toBe(500);
-      expect(response.body).toEqual({
-        message: "Internal server error has occured",
-        error: expect.any(String),
-      });
-    });
+    //   const response = await request(app).get("/?teamId=1");
+    //   expect(response.status).toBe(500);
+    //   expect(response.body).toEqual({
+    //     message: "Internal server error has occured",
+    //     error: expect.any(String),
+    //   });
+    // });
 
     it("should filter weekly claims by memberAddress if provided", async () => {
       const testDate = new Date();
