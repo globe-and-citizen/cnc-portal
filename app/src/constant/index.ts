@@ -37,6 +37,8 @@ interface AddressMapping {
   'VestingModule#Vesting'?: string
   'MockTokens#USDT'?: string
   'MockTokens#USDC'?: string
+  'ElectionsModule#Elections'?: string
+  'ElectionsModule#FactoryBeacon'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -130,6 +132,7 @@ try {
 } catch (error) {
   console.error(error)
 }
+export const ELECTIONS_BEACON_ADDRESS = resolveAddress('ElectionsModule#FactoryBeacon')
 export const TIPS_ADDRESS = resolveAddress('TipsModule#Tips')
 export const VESTING_ADDRESS = resolveAddress('VestingModule#Vesting')
 export const BANK_BEACON_ADDRESS = resolveAddress('BankBeaconModule#Beacon')
