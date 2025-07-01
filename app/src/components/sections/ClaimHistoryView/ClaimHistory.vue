@@ -1,125 +1,139 @@
 <template>
-  <div class="flex bg-transparent p-6 gap-x-4">
+  <div class="flex bg-transparent gap-x-4">
     <!-- Left Sidebar -->
-    <div class="w-1/3 bg-white border border-gray-300 rounded-xl p-6 space-y-6 shadow-sm">
-      <!-- Month Selector -->
-      <div class="flex items-center justify-between mb-4">
-        <ButtonUI @click="goToPrevMonth">
-          <IconifyIcon icon="heroicons:chevron-left" class="w-4 h-4" />
-          Prev
-        </ButtonUI>
-        <div class="relative">
-          <ButtonUI @click="toggleMonthPicker">
-            {{ currentMonthLabel }}
-            <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
+    <CardComponent class="w-1/3">
+      <div class="space-y-8">
+        <!-- Month Selector -->
+        <div class="flex items-center justify-between mb-4">
+          <ButtonUI @click="goToPrevMonth">
+            <IconifyIcon icon="heroicons:chevron-left" class="w-4 h-4" />
+            Prev
           </ButtonUI>
+          <div class="relative">
+            <ButtonUI @click="toggleMonthPicker">
+              {{ currentMonthLabel }}
+              <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
+            </ButtonUI>
 
-          <div v-if="isMonthPickerOpen" class="absolute z-50 mt-2 left-1/2 -translate-x-1/2">
-            <Datepicker
-              v-model="selectedMonth"
-              :month-picker="true"
-              auto-apply
-              @closed="isMonthPickerOpen = false"
-              @update:model-value="isMonthPickerOpen = false"
-              class="bg-white rounded shadow"
-            />
+            <!-- Afficher le date picker seulement si ouvert -->
+            <div v-if="isMonthPickerOpen" class="absolute z-50 mt-2 left-1/2 -translate-x-1/2">
+              <VueDatePicker
+                v-model="monthPickerDate"
+                :month-picker="true"
+                auto-apply
+                class="bg-white rounded shadow"
+              />
+            </div>
           </div>
+          <ButtonUI @click="goToNextMonth">
+            Next
+            <IconifyIcon icon="heroicons:chevron-right" class="w-4 h-4" />
+          </ButtonUI>
         </div>
-        <ButtonUI @click="goToNextMonth">
-          Next
-          <IconifyIcon icon="heroicons:chevron-right" class="w-4 h-4" />
-        </ButtonUI>
-      </div>
 
-      <!-- Week List -->
-      <div class="space-y-2">
-        <div
-          v-for="week in weeks"
-          :key="week.id"
-          @click="selectWeek(week)"
-          :class="[
-            'border rounded-lg p-3 cursor-pointer',
-            selectedWeek?.id === week.id
-              ? 'bg-blue-100 border-blue-500 text-gray-800'
-              : 'hover:bg-gray-50'
-          ]"
-        >
-          <div class="text-sm font-medium">Week</div>
+        <!-- Week List -->
+        <div class="space-y-4">
           <div
-            class="text-xs"
-            :class="selectedWeek?.id === week.id ? 'text-blue-600  ' : 'text-gray-800'"
+            v-for="week in weeks"
+            :key="week.id"
+            @click="selectWeek(week)"
+            :class="[
+              'border rounded-lg p-3 cursor-pointer',
+              selectedWeek?.id === week.id
+                ? 'bg-emerald-100 border-emerald-500 text-gray-800'
+                : 'hover:bg-gray-50'
+            ]"
           >
-            {{ formatDate(week.start) }}
+            <div class="text-sm font-medium">Week</div>
+            <div
+              class="text-xs"
+              :class="selectedWeek?.id === week.id ? 'text-emerald-900' : 'text-gray-800'"
+            >
+              {{ formatDate(week.start) }}
+            </div>
           </div>
         </div>
       </div>
-      <!-- Graph (Placeholder) -->
-    </div>
+    </CardComponent>
 
     <!-- Right Content -->
-    <div class="flex-1 bg-white border border-gray-300 rounded-xl p-8 shadow-sm">
-      <!-- Summary Top Bar -->
-      <div class="flex items-center justify-between border-b pb-4 mb-6">
-        <div class="text-center">
-          <div class="text-sm text-gray-500">Total Hours</div>
-          <div class="text-2xl font-bold">{{ totalHours }}h</div>
+    <div class="flex-1 space-y-6">
+      <div class="stats shadow w-full">
+        <div class="stat place-items-center">
+          <div class="stat-title">Total Hours</div>
+          <div class="stat-value">{{ totalHours }}h</div>
         </div>
-        <div class="text-center">
-          <div class="text-sm text-gray-500">Hourly Rate</div>
-          <div class="text-2xl font-bold">${{ hourlyRate }}</div>
-          <div class="text-xs text-gray-400">10 USDC, 10 POL, 10 SHER</div>
+
+        <div class="stat place-items-center">
+          <div class="stat-title">Hourly Rate</div>
+          <div class="stat-value text-secondary">{{ hourlyRate }}$</div>
+          <div class="stat-desc">10 USDC, 10 POL, 10 SHER</div>
         </div>
-        <div class="text-center">
-          <div class="text-sm text-gray-500">Total Amount</div>
-          <div class="text-2xl font-bold text-green-600">${{ totalAmount }}</div>
+
+        <div class="stat place-items-center">
+          <div class="stat-title">Total Amount</div>
+          <div class="stat-value">{{ totalAmount }}$</div>
         </div>
       </div>
 
-      <!-- Daily Claims -->
-      <div v-if="selectedWeek">
-        <h2 class="text-lg font-semibold mb-4">
-          Weekly Claims: {{ formatDate(selectedWeek.start) }}
-        </h2>
+      <CardComponent title="" class="w-full">
+        <div v-if="selectedWeek">
+          <h2 class="pb-4">Weekly Claims: {{ formatDate(selectedWeek.start) }}</h2>
 
-        <div
-          v-for="(entry, index) in selectedWeek.claims"
-          :key="index"
-          :class="[
-            'flex items-center justify-between border px-4 py-3 mb-2 rounded-lg',
-            entry.hours > 0 ? 'bg-green-50 text-green-900' : 'bg-gray-100 text-gray-400'
-          ]"
-        >
-          <div class="flex items-center gap-2">
-            <span
-              class="h-3 w-3 rounded-full"
-              :class="entry.hours > 0 ? 'bg-green-500' : 'bg-gray-300'"
-            />
-            <span class="font-medium">{{ formatDayLabel(entry.date) }}</span>
-          </div>
-          <div class="text-sm flex items-center gap-2">
-            <IconifyIcon icon="heroicons:clock" class="w-4 h-4 text-gray-500" />
-            {{ entry.hours }} hours
+          <div
+            v-for="(entry, index) in selectedWeek.claims"
+            :key="index"
+            :class="[
+              'flex items-center justify-between border px-4 py-3 mb-2 rounded-lg',
+              entry.hours > 0 ? 'bg-green-50 text-green-900' : 'bg-gray-100 text-gray-400'
+            ]"
+          >
+            <div class="flex items-center gap-2">
+              <span
+                class="h-3 w-3 rounded-full"
+                :class="entry.hours > 0 ? 'bg-green-500' : 'bg-gray-300'"
+              />
+              <span class="font-medium">{{ formatDayLabel(entry.date) }} </span>
+              <span class="text-sm text-gray-500">({{ weeklyClaim }})</span>
+            </div>
+            <div class="text-sm flex items-center gap-2">
+              <IconifyIcon icon="heroicons:clock" class="w-4 h-4 text-gray-500" />
+              {{ entry.hours }} hours
+            </div>
           </div>
         </div>
-      </div>
+      </CardComponent>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-// import Datepicker from '@vuepic/vue-datepicker'
 import dayjs from 'dayjs'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
-import Datepicker from '@vuepic/vue-datepicker'
+import VueDatePicker from '@vuepic/vue-datepicker'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import type { ClaimResponse } from '@/types'
+import { useTeamStore } from '@/stores'
+import CardComponent from '@/components/CardComponent.vue'
 
+const teamStore = useTeamStore()
+const teamId = computed(() => teamStore.currentTeam?.id)
+const claimURL = computed(() => `/claim/?teamId=${teamId.value}`)
+
+const { data: teamClaimData } = useCustomFetch(claimURL, { immediate: true, refetch: true }).json<
+  Array<ClaimResponse>
+>()
 const selectedMonth = ref(new Date())
 const selectedWeek = ref(null)
 const hourlyRate = 20
 
-// Génère dynamiquement les semaines du mois sélectionné
+// Ajout des variables pour le month picker
+const isMonthPickerOpen = ref(false)
+const monthPickerDate = ref(selectedMonth.value)
+
 const weeks = ref([])
 
 const generateWeeks = () => {
@@ -127,8 +141,16 @@ const generateWeeks = () => {
   const end = dayjs(selectedMonth.value).endOf('month')
   const result = []
 
-  // Commence la semaine par lundi
-  let cursor = start.startOf('week').add(1, 'day') // Commence par lundi
+  // Indexer les claims par date (format YYYY-MM-DD)
+  const claimsByDate: Record<string, ClaimResponse> = {}
+  if (teamClaimData.value) {
+    for (const claim of teamClaimData.value) {
+      const dateKey = dayjs(claim.createdAt).format('YYYY-MM-DD')
+      claimsByDate[dateKey] = claim
+    }
+  }
+
+  let cursor = start.startOf('week').add(1, 'day')
   if (cursor.isAfter(start)) {
     cursor = cursor.subtract(7, 'day')
   }
@@ -147,10 +169,12 @@ const generateWeeks = () => {
         .fill(null)
         .map((_, i) => {
           const date = startWeek.add(i, 'day')
+          const dateKey = date.format('YYYY-MM-DD')
+          const claim = claimsByDate[dateKey]
           return {
             date: date.toDate(),
             day: date.format('dddd'),
-            hours: Math.floor(Math.random() * 9) // simulate data
+            hours: claim ? claim.hoursWorked : 0
           }
         })
     })
@@ -159,10 +183,18 @@ const generateWeeks = () => {
   }
 
   weeks.value = result
-  selectedWeek.value = result[1] || result[0] // Sélection par défaut : 2ème semaine ou 1ère si pas de 2ème
+  selectedWeek.value = result[0] || null
 }
 
 watch(selectedMonth, generateWeeks, { immediate: true })
+
+// Synchroniser le picker avec le mois sélectionné
+watch(monthPickerDate, (val) => {
+  if (val) {
+    selectedMonth.value = val
+    isMonthPickerOpen.value = false
+  }
+})
 
 const selectWeek = (week) => {
   selectedWeek.value = week
@@ -181,8 +213,6 @@ function goToPrevMonth() {
 function goToNextMonth() {
   selectedMonth.value = dayjs(selectedMonth.value).add(1, 'month').toDate()
 }
-
-const isMonthPickerOpen = ref(false)
 
 function toggleMonthPicker() {
   isMonthPickerOpen.value = !isMonthPickerOpen.value
@@ -204,8 +234,17 @@ function formatDayLabel(date: string | Date) {
   const month = d.toLocaleDateString(locale, { month: 'long' })
   return `${day} ${dayNum} ${month}`
 }
-</script>
 
-<style scoped>
-/* Light border and animation enhancement */
-</style>
+// Fonction pour calculer le total d'heures travaillées dans la semaine sélectionnée
+function getTotalHoursWorked() {
+  if (!selectedWeek.value) return 0
+  // On additionne les heures de chaque jour, en limitant à 24h/jour
+  return selectedWeek.value.claims.reduce((sum, entry) => {
+    const hours = Math.min(entry.hours, 24)
+    return sum + hours
+  }, 0)
+}
+
+const totalHours = computed(() => getTotalHoursWorked())
+const totalAmount = computed(() => totalHours.value * hourlyRate)
+</script>
