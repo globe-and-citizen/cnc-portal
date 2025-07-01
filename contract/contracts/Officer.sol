@@ -123,6 +123,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         bytes calldata initializerData
     ) public whenNotPaused onlyInitializingOrOwners returns (address) {
         require(contractBeacons[contractType] != address(0), "Beacon not configured for this contract type");
+        require(keccak256(bytes(contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Elections");
 
         BeaconProxy proxy = new BeaconProxy(
             contractBeacons[contractType],
@@ -196,12 +197,12 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         DeploymentData[] calldata deployments
     ) public whenNotPaused onlyInitializingOrOwners returns (address[] memory) {
         address[] memory deployedAddresses = new address[](deployments.length);
-        
-        emit ContractDeployed("BoardOfDirectors", bodContract);
+
         for (uint256 i = 0; i < deployments.length; i++) {
             require(bytes(deployments[i].contractType).length > 0, "Contract type cannot be empty");
             require(deployments[i].initializerData.length > 0, string.concat("Missing initializer data for ", deployments[i].contractType));
             require(contractBeacons[deployments[i].contractType] != address(0), string.concat("Beacon not configured for ", deployments[i].contractType));
+            require(keccak256(bytes(deployments[i].contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Elections");
             deployedAddresses[i] = deployBeaconProxy(deployments[i].contractType, deployments[i].initializerData);
         }
         emit BeaconProxiesDeployed(deployedAddresses);
