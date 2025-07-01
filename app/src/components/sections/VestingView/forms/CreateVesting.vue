@@ -1,14 +1,14 @@
 <template>
-  <div class="flex flex-col gap-5">
+  <div v-if="!showSummary" class="flex flex-col gap-5 max-w-5xl w-full">
     <h4 class="font-bold text-lg">Create Vesting Schedule</h4>
-    <h3 class="pt-6">You’re about to create a vesting for a team member</h3>
-    <label class="flex items-center gap-2">
-      <span class="w-32">Member</span>
-      <div class="flex flex-col grow">
+
+    <label class="flex-col items-center gap-2">
+      <div class="flex w-32 mb-3">Choose Member</div>
+      <div class="flex grow w-full">
         <SelectMemberInput
           v-model="memberInput"
-          data-test="member"
           @selectMember="handleMemberSelect"
+          class="text-xs w-full"
         />
         <span v-if="member && !isAddress(member)" class="text-xs text-red-500 mt-1">
           Please enter a valid Ethereum address.
@@ -17,55 +17,56 @@
     </label>
 
     <label class="flex items-center gap-2 mt-4">
-      <span class="w-32">Period</span>
-      <Datepicker
-        v-model="dateRange"
-        range
-        multi-calendars
-        auto-apply
-        format="dd/MM/yyyy"
-        placeholder="Select range"
-        class="w-full"
-      />
+      <span class="w-32 flex-shrink-0">Period</span>
+      <div class="flex-grow">
+        <Datepicker
+          v-model="dateRange"
+          range
+          auto-apply
+          format="dd/MM/yyyy"
+          placeholder="Select range"
+          class="w-full"
+        />
+      </div>
     </label>
 
-    <div class="flex gap-3 mt-4 grow">
-      <label class="inline-flex items-center gap-2 input-md mt-4 p-2">
-        <span class="w-full text-xs">Years</span>
+    <div class="flex flex-wrap gap-3 mt-4">
+      <label class="inline-flex items-center gap-2 input-md p-2 flex-1 min-w-[120px]">
+        <span class="text-xs flex-shrink-0">Years</span>
         <input
           type="number"
           min="0"
           v-model.number="duration.years"
-          class="input input-bordered w-20"
+          class="input input-bordered w-full"
         />
       </label>
-      <label class="inline-flex items-center gap-2 input-md mt-4 p-2">
-        <span class="w-full text-xs">Months</span>
+      <label class="inline-flex items-center gap-2 input-md p-2 flex-1 min-w-[120px]">
+        <span class="text-xs flex-shrink-0">Months</span>
         <input
           type="number"
           min="0"
           v-model.number="duration.months"
-          class="input input-bordered w-20"
+          class="input input-bordered w-full"
         />
       </label>
-      <label class="inline-flex items-center gap-2 input-md mt-4 p-2">
-        <span class="w-full text-xs">Days</span>
+      <label class="inline-flex items-center gap-2 input-md p-2 flex-1 min-w-[120px]">
+        <span class="text-xs flex-shrink-0">Days</span>
         <input
           type="number"
           min="0"
           v-model.number="duration.days"
-          class="input input-bordered w-20"
+          class="input input-bordered w-full"
         />
       </label>
     </div>
 
-    <div class="flex gap-3 mt-4 grow">
-      <label class="input input-bordered flex items-center gap-2 input-md mt-4">
-        <span class="w-full text-xs">Amount</span>
+    <div class="flex flex-wrap gap-3 mt-4">
+      <label class="input input-bordered flex items-center gap-2 input-md flex-1 min-w-[200px]">
+        <span class="text-xs flex-shrink-0">Amount</span>
         <input data-test="total-amount" type="number" class="grow" v-model="totalAmount" required />
       </label>
-      <label class="input input-bordered flex items-center gap-2 input-md mt-4 min-w-0 p-1">
-        <span class="w-full text-xs">Cliff(days)</span>
+      <label class="input input-bordered flex items-center gap-2 input-md min-w-[200px] flex-1">
+        <span class="text-xs flex-shrink-0">Cliff(days)</span>
         <input data-test="cliff" type="number" v-model.number="cliff" required />
       </label>
     </div>
@@ -74,12 +75,11 @@
       By clicking "Create Vesting", you agree to lock this token amount under a vesting schedule.
       Ensure your contract is approved to transfer these tokens.
     </h3>
-
     <div class="modal-action justify-end">
       <ButtonUI
         variant="primary"
         size="sm"
-        @click="approveAllowance"
+        @click="showSummary = true"
         :disabled="loading || !formValid"
         :loading="loading"
         data-test="submit-btn"
@@ -87,6 +87,19 @@
         Create Vesting
       </ButtonUI>
     </div>
+  </div>
+  <div v-if="showSummary">
+    <VestingSummary
+      :memberInput="memberInput"
+      :totalAmount="totalAmount"
+      :startDate="dateRange?.[0] || new Date()"
+      :duration="duration"
+      :durationInDays="durationInDays"
+      :cliff="cliff"
+      :loading="loading"
+      @back="showSummary = false"
+      @confirm="approveAllowance"
+    />
   </div>
 </template>
 
@@ -106,6 +119,7 @@ import VestingABI from '@/artifacts/abi/Vesting.json'
 import { VESTING_ADDRESS } from '@/constant'
 import { parseEther, type Address, formatUnits, parseUnits } from 'viem'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
+import VestingSummary from '../VestingSummary.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
 import Datepicker from '@vuepic/vue-datepicker'
@@ -142,6 +156,8 @@ const dateRange = ref<[Date, Date] | null>(null)
 const duration = ref({ years: 0, months: 0, days: 0 })
 const durationInDays = ref(0)
 const updateCount = ref(0)
+const showSummary = ref(false)
+
 async function resetUpdateCount() {
   await nextTick()
   updateCount.value = 0
@@ -265,6 +281,7 @@ watch(isConfirmingAddVesting, async (isConfirming, wasConfirming) => {
     cliff.value = 0
     totalAmount.value = 0
     dateRange.value = null
+    showSummary.value = false
     emit('closeAddVestingModal')
     emit('reload')
   }

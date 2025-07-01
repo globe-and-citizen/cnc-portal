@@ -11,7 +11,7 @@
       <IconifyIcon icon="heroicons-outline:plus-circle" class="size-6" /> add vesting
     </ButtonUI>
 
-    <ModalComponent v-model="addVestingModal" size="lg">
+    <ModalComponent v-model="addVestingModal">
       <CreateVesting
         v-if="team?.id"
         :tokenAddress="sherToken?.address ?? ''"
