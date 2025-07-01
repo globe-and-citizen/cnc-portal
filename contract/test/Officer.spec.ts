@@ -76,10 +76,9 @@ describe('Officer Contract', function () {
         owner.address
       ])
 
-      await expect(officer.connect(owner).deployBeaconProxy('Elections', electionsInitData)).to.emit(
-        officer,
-        'ContractDeployed'
-      )
+      await expect(
+        officer.connect(owner).deployBeaconProxy('Elections', electionsInitData)
+      ).to.emit(officer, 'ContractDeployed')
 
       const deployedContracts = await officer.getTeam()
       expect(deployedContracts.length).to.equal(2)
