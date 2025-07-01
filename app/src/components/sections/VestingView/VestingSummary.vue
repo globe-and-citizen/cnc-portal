@@ -4,14 +4,11 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-base-200 rounded-lg">
       <div class="flex flex-col gap-2">
-        
-          <span class="text-xs text-gray-500">Member</span>
-          <span class="font-medium">{{ memberInput.name || memberInput.address }}</span>
-        
-        
-          <span class="text-xs text-gray-500">Total Amount</span>
-          <span class="font-medium">{{ totalAmount }} Tokens</span>
-        
+        <span class="text-xs text-gray-500">Member</span>
+        <span class="font-medium">{{ memberInput.name || memberInput.address }}</span>
+
+        <span class="text-xs text-gray-500">Total Amount</span>
+        <span class="font-medium">{{ totalAmount }} Tokens</span>
       </div>
 
       <div class="flex flex-col gap-1"></div>

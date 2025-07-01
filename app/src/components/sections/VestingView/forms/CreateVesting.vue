@@ -281,6 +281,8 @@ watch(isConfirmingAddVesting, async (isConfirming, wasConfirming) => {
     cliff.value = 0
     totalAmount.value = 0
     dateRange.value = null
+    memberInput.value = { name: '', address: '' }
+    duration.value = { years: 0, months: 0, days: 0 }
     showSummary.value = false
     emit('closeAddVestingModal')
     emit('reload')
