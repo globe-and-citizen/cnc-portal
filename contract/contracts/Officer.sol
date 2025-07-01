@@ -13,6 +13,9 @@ interface IBodContract {
 interface IElections {
     function setBoardOfDirectorsContractAddress(address _bodAddress) external;
 }
+interface IProposal {
+    function setBoardOfDirectorsContractAddress(address _bodAddress) external;
+}
 /**
  * @notice Struct for contract deployment data
  * @param contractType Type of contract to deploy
@@ -117,10 +120,10 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      */
     function deployBeaconProxy(
         string calldata contractType,
-        bytes calldata initializerData
+        bytes calldata initializerData,
+        address bodContractAddress
     ) public whenNotPaused onlyInitializingOrOwners returns (address) {
         require(contractBeacons[contractType] != address(0), "Beacon not configured for this contract type");
-        require(keccak256(bytes(contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Voting");
 
         BeaconProxy proxy = new BeaconProxy(
             contractBeacons[contractType],
@@ -130,16 +133,12 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         address proxyAddress = address(proxy);
         deployedContracts.push(DeployedContract(contractType, proxyAddress));
         emit ContractDeployed(contractType, proxyAddress);
-        if(keccak256(bytes(contractType)) == keccak256(bytes("Voting"))){
-            address bodContractBeacon = contractBeacons["BoardOfDirectors"];
-            address[] memory args = new address[](1);
-            args[0] = proxyAddress;
-            address bodContract = address(new BeaconProxy(bodContractBeacon, abi.encodeWithSelector(IBodContract.initialize.selector, args)));
-            deployedContracts.push(DeployedContract("BoardOfDirectors", bodContract));
-            IElections(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
-            emit ContractDeployed("BoardOfDirectors", bodContract);
+        if(keccak256(bytes(contractType)) == keccak256(bytes("Elections"))) {
+            IElections(proxyAddress).setBoardOfDirectorsContractAddress(bodContractAddress);
+        } else if (keccak256(bytes(contractType)) == keccak256(bytes("BoardOfDirectors"))) {
+            IProposal(proxyAddress).setBoardOfDirectorsContractAddress(bodContractAddress);
         }
-        
+
         return proxyAddress;
     }
 
@@ -195,12 +194,16 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     ) public whenNotPaused onlyInitializingOrOwners returns (address[] memory) {
         address[] memory deployedAddresses = new address[](deployments.length);
         
+        address bodContractBeacon = contractBeacons["BoardOfDirectors"];
+        address[] memory args = new address[](1);
+        address bodContract = address(new BeaconProxy(bodContractBeacon, abi.encodeWithSelector(IBodContract.initialize.selector, args)));
+        deployedContracts.push(DeployedContract("BoardOfDirectors", bodContract));
+        emit ContractDeployed("BoardOfDirectors", bodContract);
         for (uint256 i = 0; i < deployments.length; i++) {
             require(bytes(deployments[i].contractType).length > 0, "Contract type cannot be empty");
             require(deployments[i].initializerData.length > 0, string.concat("Missing initializer data for ", deployments[i].contractType));
-            require(contractBeacons[deployments[i].contractType] != address(0), string.concat("Beacon not configured for ", deployments[i].contractType));
-            require(keccak256(bytes(deployments[i].contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Voting");      
-            deployedAddresses[i] = deployBeaconProxy(deployments[i].contractType, deployments[i].initializerData);
+            require(contractBeacons[deployments[i].contractType] != address(0), string.concat("Beacon not configured for ", deployments[i].contractType));   
+            deployedAddresses[i] = deployBeaconProxy(deployments[i].contractType, deployments[i].initializerData, bodContract);
         }
         emit BeaconProxiesDeployed(deployedAddresses);
         return deployedAddresses;
