@@ -10,8 +10,8 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 interface IBodContract {    
     function initialize(address[] memory votingAddress) external;
 }
-interface IVoting {
-    function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) external;
+interface IElections {
+    function setBoardOfDirectorsContractAddress(address _bodAddress) external;
 }
 /**
  * @notice Struct for contract deployment data
@@ -136,7 +136,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             args[0] = proxyAddress;
             address bodContract = address(new BeaconProxy(bodContractBeacon, abi.encodeWithSelector(IBodContract.initialize.selector, args)));
             deployedContracts.push(DeployedContract("BoardOfDirectors", bodContract));
-            IVoting(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
+            IElections(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
             emit ContractDeployed("BoardOfDirectors", bodContract);
         }
         
