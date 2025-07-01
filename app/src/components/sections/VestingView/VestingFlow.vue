@@ -4,7 +4,7 @@
       <div class="flex items-center gap-4">
         <VestingStatusFilter @statusChange="handleStatusChange" />
 
-        <VestingActions :reloadKey="reloadKey" />
+        <VestingActions :reloadKey="reloadKey" @reload="handleReload" />
       </div>
     </template>
 
@@ -98,7 +98,7 @@
 import TableComponent from '@/components/TableComponent.vue'
 import { computed, watch, ref } from 'vue'
 import CardComponent from '@/components/CardComponent.vue'
-import { type VestingRow, type VestingTuple } from '@/types/vesting'
+import { type VestingRow, type VestingTuple, type VestingStatus } from '@/types/vesting'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
 import { type Address, formatUnits } from 'viem'
@@ -130,18 +130,18 @@ const investorsAddress = computed(() => {
     ?.address as Address
 })
 
-const selectedStatus = ref('all')
+// const selectedStatus = ref('all')
 
-// Add handler
-const handleStatusChange = (status: string) => {
+// // Add handler
+// const handleStatusChange = (status: string) => {
+//   selectedStatus.value = status
+// }
+
+const selectedStatus = ref<VestingStatus>('all')
+
+const handleStatusChange = (status: VestingStatus) => {
   selectedStatus.value = status
 }
-
-const displayActive = ref(true)
-
-watch(displayActive, async () => {
-  await getArchivedVestingInfos()
-})
 
 const {
   data: tokenSymbol
@@ -246,6 +246,11 @@ const vestings = computed<VestingRow[]>(() => {
       return allRows
   }
 })
+
+const handleReload = () => {
+  console.log('vesting Flow reload called ====')
+  emit('reload')
+}
 
 const {
   writeContract: stopVesting,

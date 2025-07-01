@@ -1,7 +1,8 @@
 <template>
   <div class="flex items-center gap-2">
-    <label class="text-sm font-medium">Status:</label>
+    <label class="text-sm font-medium" for="vesting-status-select">Status:</label>
     <select
+      id="vesting-status-select"
       v-model="selectedStatus"
       class="select select-bordered select-sm"
       data-test="vesting-status-filter"
@@ -16,12 +17,12 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-
+import { type VestingStatus } from '@/types/vesting'
 const emit = defineEmits<{
-  (e: 'statusChange', value: string): void
+  (e: 'statusChange', value: VestingStatus): void
 }>()
 
-const selectedStatus = ref('all')
+const selectedStatus = ref<VestingStatus>('all')
 
 watch(selectedStatus, (newValue) => {
   emit('statusChange', newValue)

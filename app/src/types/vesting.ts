@@ -28,3 +28,5 @@ export interface VestingInfo {
 }
 
 export type VestingTuple = [string[], VestingInfo[]]
+
+export type VestingStatus = 'all' | 'active' | 'completed' | 'cancelled'
