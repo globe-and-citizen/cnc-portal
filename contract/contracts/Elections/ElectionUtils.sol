@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import {ElectionTypes} from './ElectionTypes.sol';
-import 'hardhat/console.sol';
 
 /**
  * @title ElectionUtils

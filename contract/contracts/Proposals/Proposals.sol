@@ -6,7 +6,6 @@ import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/Pau
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
 import {ProposalUtils} from './ProposalUtils.sol';
-import "hardhat/console.sol";
 
 /*
  * @title Proposals
@@ -19,7 +18,6 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   mapping(uint256 => Proposal) private proposals;
   uint256 private _nextProposalId;
   address private boardOfDirectorsContractAddress;
-  uint256 private initBodAddress;
 
   // --- Enums and Structs ---
   enum VoteOption {
@@ -60,7 +58,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   error OnlyBoardMember();
   error NoBoardMembers();
   error BoardOfDirectorAddressNotSet();
-  error NoBoardOfDirectors();
+  error NotAllowed();
 
   // --- Events ---
   event ProposalCreated(
@@ -71,7 +69,13 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     uint256 endDate
   );
   event ProposalVoted(uint256 indexed proposalId, address indexed voter);
-  event ProposalTallyResults(uint256 indexed proposalId, ProposalState state);
+  event ProposalTallyResults(
+    uint256 indexed proposalId,
+    ProposalState state,
+    uint256 yesCount,
+    uint256 noCount,
+    uint256 abstainCount
+  );
 
   function initialize(address _owner) public initializer {
     __Ownable_init(_owner);
@@ -215,14 +219,21 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     if (proposal.id == 0) revert ProposalNotFound();
     if (block.timestamp < proposal.startDate) revert ProposalVotingNotStarted();
 
-    Proposal storage proposa = proposals[proposalId];
-    if (proposa.yesCount > proposa.noCount) {
-      proposa.state = ProposalState.Succeeded;
-    } else if (proposa.noCount > proposa.yesCount) {
-      proposa.state = ProposalState.Defeated;
+    if (proposal.yesCount > proposal.noCount) {
+      proposal.state = ProposalState.Succeeded;
+    } else if (proposal.noCount > proposal.yesCount) {
+      proposal.state = ProposalState.Defeated;
     } else {
-      proposa.state = ProposalState.Expired; // Tie or no conclusive result
+      proposal.state = ProposalState.Expired; // Tie or no conclusive result
     }
+
+    emit ProposalTallyResults(
+      proposalId,
+      proposal.state,
+      proposal.yesCount,
+      proposal.noCount,
+      proposal.abstainCount
+    );
   }
 
   /**
@@ -231,10 +242,9 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
    * @notice Only the owner or if the address has not been set can call this function.
    */
   function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) external {
-    require(
-      msg.sender == owner() || boardOfDirectorsContractAddress == address(0),
-      'Not allowed to set board of directors contract'
-    );
+    if (msg.sender != owner() && boardOfDirectorsContractAddress != address(0)) {
+      revert NotAllowed();
+    }
     boardOfDirectorsContractAddress = _boardOfDirectorsContractAddress;
   }
 
