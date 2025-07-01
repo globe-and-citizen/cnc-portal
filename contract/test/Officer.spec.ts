@@ -7,7 +7,8 @@ import {
   ExpenseAccount__factory,
   Officer,
   UpgradeableBeacon,
-  Elections__factory
+  Elections__factory,
+  Proposals__factory
 } from '../typechain-types'
 
 describe('Officer Contract', function () {
@@ -15,9 +16,11 @@ describe('Officer Contract', function () {
   let bankAccount: Bank__factory
   let electionsContract: Elections__factory
   let expenseAccount: ExpenseAccount__factory
+  let proposalsContract: Proposals__factory
   let bankAccountBeacon: UpgradeableBeacon
   let electionsBeacon: UpgradeableBeacon
   let expenseAccountBeacon: UpgradeableBeacon
+  let proposalsBeacon: UpgradeableBeacon
   let boardOfDirectors: BoardOfDirectors__factory
   let bodBeacon: UpgradeableBeacon
   let owner: SignerWithAddress
@@ -43,6 +46,11 @@ describe('Officer Contract', function () {
     expenseAccount = await ethers.getContractFactory('ExpenseAccount')
     expenseAccountBeacon = (await upgrades.deployBeacon(
       expenseAccount
+    )) as unknown as UpgradeableBeacon
+
+    proposalsContract = await ethers.getContractFactory('Proposals')
+    proposalsBeacon = (await upgrades.deployBeacon(
+      proposalsContract
     )) as unknown as UpgradeableBeacon
 
     // Deploy Officer contract
@@ -247,6 +255,7 @@ describe('Officer Contract', function () {
       const bankBeaconAddr = await bankAccountBeacon.getAddress()
       const electionsBeaconAddr = await electionsBeacon.getAddress()
       const bodBeaconAddr = await bodBeacon.getAddress()
+      const proposalsBeaconAddr = await proposalsBeacon.getAddress()
 
       const validConfigs = [
         {
@@ -260,10 +269,17 @@ describe('Officer Contract', function () {
         {
           beaconType: 'BoardOfDirectors',
           beaconAddress: bodBeaconAddr
+        },
+        {
+          beaconType: 'Proposals',
+          beaconAddress: proposalsBeaconAddr
         }
       ]
 
       const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
+        owner.address
+      ])
+      const proposalsInitData = proposalsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
 
@@ -282,6 +298,10 @@ describe('Officer Contract', function () {
         {
           contractType: 'Elections',
           initializerData: electionsInitData
+        },
+        {
+          contractType: 'Proposals',
+          initializerData: proposalsInitData
         }
       ]
 
@@ -294,7 +314,7 @@ describe('Officer Contract', function () {
       )) as unknown as Officer
 
       const deployedContracts = await officerContract.getDeployedContracts()
-      expect(deployedContracts.length).to.equal(3) // Bank, Elections, and auto-deployed BoardOfDirectors
+      expect(deployedContracts.length).to.equal(4) // Bank, Elections, Proposals, and auto-deployed BoardOfDirectors
       expect(deployedContracts[0].contractType).to.equal('Bank')
       expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
 
@@ -303,6 +323,9 @@ describe('Officer Contract', function () {
 
       expect(deployedContracts[2].contractType).to.equal('BoardOfDirectors')
       expect(deployedContracts[2].contractAddress).to.not.equal(ethers.ZeroAddress)
+
+      expect(deployedContracts[3].contractType).to.equal('Proposals')
+      expect(deployedContracts[3].contractAddress).to.not.equal(ethers.ZeroAddress)
 
       // Verify the Elections contract has the correct BoardOfDirectors address
       const electionsInstance = await ethers.getContractAt(

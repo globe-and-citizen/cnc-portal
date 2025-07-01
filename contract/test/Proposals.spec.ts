@@ -21,7 +21,7 @@ enum ProposalState {
   Expired
 }
 
-describe.only('Proposals Contract', function () {
+describe('Proposals Contract', function () {
   // --- Test Fixture ---
   async function deployContracts() {
     // --- Get Signers ---
