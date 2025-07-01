@@ -7,6 +7,8 @@ export interface Proposal {
   isElection: boolean
   teamId: number
   winnerCount: number
+  startDate?: Date | string
+  endDate?: Date | string
   voters?: {
     memberAddress: string
     name: string
