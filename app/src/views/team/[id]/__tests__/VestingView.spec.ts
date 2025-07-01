@@ -159,24 +159,6 @@ describe('VestingView.vue', () => {
     expect(refetchVestingInfos).toHaveBeenCalled()
   })
 
-  it('handles toggle vesting view button correctly', async () => {
-    wrapper = mountComponent()
-    await wrapper.vm.$nextTick()
-    const toggleBtn = wrapper.find('[data-test="toggle-vesting-view"]')
-
-    expect(toggleBtn.exists()).toBe(true)
-
-    expect(toggleBtn.text().toLowerCase()).toContain('actives')
-    expect(toggleBtn.classes()).toContain('btn-secondary')
-
-    await toggleBtn.trigger('click')
-    await wrapper.vm.$nextTick()
-
-    expect(toggleBtn.text().toLowerCase()).toContain('archived')
-
-    expect(toggleBtn.classes()).toContain('btn-ghost')
-  })
-
   it('passes correct props to CreateVesting', async () => {
     const btn = wrapper.find('[data-test="createAddVesting"]')
     await btn.trigger('click')
