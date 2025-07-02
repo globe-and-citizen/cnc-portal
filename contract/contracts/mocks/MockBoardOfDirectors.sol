@@ -15,4 +15,33 @@ contract MockBoardOfDirectors is IBoardOfDirectors {
   function getBoardOfDirectors() external view returns (address[] memory) {
     return boardMembers;
   }
+
+  function isMember(address _address) external view returns (bool) {
+    for (uint256 i = 0; i < boardMembers.length; i++) {
+      if (boardMembers[i] == _address) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function addMember(address _member) external {
+    for (uint256 i = 0; i < boardMembers.length; i++) {
+      if (boardMembers[i] == _member) {
+        revert('Member already exists');
+      }
+    }
+    boardMembers.push(_member);
+  }
+
+  function removeMember(address _member) external {
+      for (uint256 i = 0; i < boardMembers.length; i++) {
+      if (boardMembers[i] == _member) {
+          boardMembers[i] = boardMembers[boardMembers.length - 1];
+          boardMembers.pop();
+          return;
+      }
+      }
+      revert('Member not found');
+  }
 }

@@ -13,6 +13,9 @@ interface IBodContract {
 interface IElections {
     function setBoardOfDirectorsContractAddress(address _bodAddress) external;
 }
+interface IProposal {
+    function setBoardOfDirectorsContractAddress(address _bodAddress) external;
+}
 /**
  * @notice Struct for contract deployment data
  * @param contractType Type of contract to deploy
@@ -141,8 +144,10 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             deployedContracts.push(DeployedContract("BoardOfDirectors", bodContract));
             emit ContractDeployed("BoardOfDirectors", bodContract);
             IElections(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
+        } else if(keccak256(bytes(contractType)) == keccak256(bytes("Proposals"))) {
+            IProposal(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
         }
-        
+
         return proxyAddress;
     }
 
