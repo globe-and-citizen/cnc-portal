@@ -15,7 +15,10 @@
         </div>
         <ModalComponent v-model="showCreateElectionModal">
           <!-- <VotingManagement :team="team" /> -->
-          <CreateElectionForm :is-loading="false" />
+          <CreateElectionForm
+            :is-loading="isLoadingCreateElection || isConfirmingCreateElection"
+            @create-proposal="createElection"
+          />
         </ModalComponent>
       </div>
     </template>
@@ -82,10 +85,88 @@
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
+import ElectionABI from '@/artifacts/abi/elections.json'
+import BoDABI from '@/artifacts/abi/bod.json'
+import { useTeamStore, useToastStore } from '@/stores'
+import { encodeFunctionData, type Abi, type Address, decodeErrorResult } from 'viem'
+import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import { estimateGas } from '@wagmi/core'
+import type { Proposal } from '@/types'
+import { log, parseError } from '@/utils'
+import { config } from '@/wagmi.config'
+
+const teamStore = useTeamStore()
+const { addSuccessToast, addErrorToast } = useToastStore()
+
+// Contract addresses
+const electionsAddress = computed(() => {
+  const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
+  return address as Address
+})
+const bodAddress = computed(() => {
+  const address = teamStore.currentTeam?.teamContracts?.find(
+    (c) => c.type === 'BoardOfDirectors'
+  )?.address
+  return address as Address
+})
+
+const {
+  data: hashCreateElection,
+  writeContract: executeCreateElection,
+  isPending: isLoadingCreateElection,
+  isError: errorCreateElection
+} = useWriteContract()
+
+const { isLoading: isConfirmingCreateElection, isSuccess: isConfirmedCreateElection } =
+  useWaitForTransactionReceipt({
+    hash: hashCreateElection
+  })
+
+const createElection = async (electionData: Proposal) => {
+  try {
+    const args = [
+      electionData.title,
+      electionData.description,
+      Math.floor((electionData.startDate as Date).getTime() / 1000),
+      Math.floor((electionData.endDate as Date).getTime() / 1000),
+      electionData.winnerCount,
+      electionData.candidates?.map((c) => c.candidateAddress) || [],
+      teamStore.currentTeam?.members.map((m) => m.address) || []
+    ]
+    console.log('Creating election with args:', args)
+    const data = encodeFunctionData({
+      abi: ElectionABI,
+      functionName: 'createElection',
+      args
+    })
+
+    await estimateGas(config, {
+      to: electionsAddress.value,
+      data
+    })
+
+    executeCreateElection({
+      address: electionsAddress.value,
+      args,
+      abi: ElectionABI,
+      functionName: 'createElection'
+    })
+  } catch (error) {
+    addErrorToast(parseError(error, ElectionABI as Abi))
+    log.error('Error creating election:', parseError(error, ElectionABI as Abi))
+  }
+}
+
+watch(isConfirmingCreateElection, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedCreateElection.value) {
+    addSuccessToast('Election created successfully!')
+    showCreateElectionModal.value = false
+  }
+})
 
 // Mock votes data - replace with real data
 const votesCast = ref(1428)
