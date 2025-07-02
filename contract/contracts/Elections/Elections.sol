@@ -7,7 +7,6 @@ import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ElectionTypes} from './ElectionTypes.sol';
 import {ElectionUtils} from './ElectionUtils.sol';
 import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
-import 'hardhat/console.sol';
 
 /**
  * @title Elections

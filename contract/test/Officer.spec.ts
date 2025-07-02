@@ -6,18 +6,21 @@ import {
   BoardOfDirectors__factory,
   ExpenseAccount__factory,
   Officer,
-  Voting__factory,
-  UpgradeableBeacon
+  UpgradeableBeacon,
+  Elections__factory,
+  Proposals__factory
 } from '../typechain-types'
 
 describe('Officer Contract', function () {
   let officer: Officer
   let bankAccount: Bank__factory
-  let votingContract: Voting__factory
+  let electionsContract: Elections__factory
   let expenseAccount: ExpenseAccount__factory
+  let proposalsContract: Proposals__factory
   let bankAccountBeacon: UpgradeableBeacon
-  let votingContractBeacon: UpgradeableBeacon
+  let electionsBeacon: UpgradeableBeacon
   let expenseAccountBeacon: UpgradeableBeacon
+  let proposalsBeacon: UpgradeableBeacon
   let boardOfDirectors: BoardOfDirectors__factory
   let bodBeacon: UpgradeableBeacon
   let owner: SignerWithAddress
@@ -32,9 +35,9 @@ describe('Officer Contract', function () {
     bankAccount = await ethers.getContractFactory('Bank')
     bankAccountBeacon = (await upgrades.deployBeacon(bankAccount)) as unknown as UpgradeableBeacon
 
-    votingContract = await ethers.getContractFactory('Voting')
-    votingContractBeacon = (await upgrades.deployBeacon(
-      votingContract
+    electionsContract = await ethers.getContractFactory('Elections')
+    electionsBeacon = (await upgrades.deployBeacon(
+      electionsContract
     )) as unknown as UpgradeableBeacon
 
     boardOfDirectors = await ethers.getContractFactory('BoardOfDirectors')
@@ -45,6 +48,11 @@ describe('Officer Contract', function () {
       expenseAccount
     )) as unknown as UpgradeableBeacon
 
+    proposalsContract = await ethers.getContractFactory('Proposals')
+    proposalsBeacon = (await upgrades.deployBeacon(
+      proposalsContract
+    )) as unknown as UpgradeableBeacon
+
     // Deploy Officer contract
     const Officer = await ethers.getContractFactory('Officer')
     officer = (await upgrades.deployProxy(Officer, [owner.address, [], [], false], {
@@ -53,7 +61,7 @@ describe('Officer Contract', function () {
 
     // Configure beacons
     await officer.connect(owner).configureBeacon('Bank', await bankAccountBeacon.getAddress())
-    await officer.connect(owner).configureBeacon('Voting', await votingContractBeacon.getAddress())
+    await officer.connect(owner).configureBeacon('Elections', await electionsBeacon.getAddress())
     await officer.connect(owner).configureBeacon('BoardOfDirectors', await bodBeacon.getAddress())
     await officer
       .connect(owner)
@@ -62,7 +70,7 @@ describe('Officer Contract', function () {
 
   describe('Contract Deployment', () => {
     it('Should deploy contracts via BeaconProxy', async function () {
-      const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+      const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
 
@@ -76,14 +84,13 @@ describe('Officer Contract', function () {
         owner.address
       ])
 
-      await expect(officer.connect(owner).deployBeaconProxy('Voting', votingInitData)).to.emit(
-        officer,
-        'ContractDeployed'
-      )
+      await expect(
+        officer.connect(owner).deployBeaconProxy('Elections', electionsInitData)
+      ).to.emit(officer, 'ContractDeployed')
 
       const deployedContracts = await officer.getTeam()
       expect(deployedContracts.length).to.equal(2)
-      expect(deployedContracts[0].contractType).to.equal('Voting')
+      expect(deployedContracts[0].contractType).to.equal('Elections')
       expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
 
       await expect(officer.connect(owner).deployBeaconProxy('Bank', bankInitData)).to.emit(
@@ -246,8 +253,9 @@ describe('Officer Contract', function () {
     it('Should initialize and deploy contracts in one transaction when isDeployAllContracts is true', async function () {
       const Officer = await ethers.getContractFactory('Officer')
       const bankBeaconAddr = await bankAccountBeacon.getAddress()
-      const votingBeaconAddr = await votingContractBeacon.getAddress()
+      const electionsBeaconAddr = await electionsBeacon.getAddress()
       const bodBeaconAddr = await bodBeacon.getAddress()
+      const proposalsBeaconAddr = await proposalsBeacon.getAddress()
 
       const validConfigs = [
         {
@@ -255,16 +263,23 @@ describe('Officer Contract', function () {
           beaconAddress: bankBeaconAddr
         },
         {
-          beaconType: 'Voting',
-          beaconAddress: votingBeaconAddr
+          beaconType: 'Elections',
+          beaconAddress: electionsBeaconAddr
         },
         {
           beaconType: 'BoardOfDirectors',
           beaconAddress: bodBeaconAddr
+        },
+        {
+          beaconType: 'Proposals',
+          beaconAddress: proposalsBeaconAddr
         }
       ]
 
-      const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+      const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
+        owner.address
+      ])
+      const proposalsInitData = proposalsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
 
@@ -281,8 +296,12 @@ describe('Officer Contract', function () {
           initializerData: bankInitData
         },
         {
-          contractType: 'Voting',
-          initializerData: votingInitData
+          contractType: 'Elections',
+          initializerData: electionsInitData
+        },
+        {
+          contractType: 'Proposals',
+          initializerData: proposalsInitData
         }
       ]
 
@@ -295,22 +314,25 @@ describe('Officer Contract', function () {
       )) as unknown as Officer
 
       const deployedContracts = await officerContract.getDeployedContracts()
-      expect(deployedContracts.length).to.equal(3) // Bank, Voting, and auto-deployed BoardOfDirectors
+      expect(deployedContracts.length).to.equal(4) // Bank, Elections, Proposals, and auto-deployed BoardOfDirectors
       expect(deployedContracts[0].contractType).to.equal('Bank')
       expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
 
-      expect(deployedContracts[1].contractType).to.equal('Voting')
+      expect(deployedContracts[1].contractType).to.equal('Elections')
       expect(deployedContracts[1].contractAddress).to.not.equal(ethers.ZeroAddress)
 
       expect(deployedContracts[2].contractType).to.equal('BoardOfDirectors')
       expect(deployedContracts[2].contractAddress).to.not.equal(ethers.ZeroAddress)
 
-      // Verify the Voting contract has the correct BoardOfDirectors address
-      const votingInstance = await ethers.getContractAt(
-        'Voting',
+      expect(deployedContracts[3].contractType).to.equal('Proposals')
+      expect(deployedContracts[3].contractAddress).to.not.equal(ethers.ZeroAddress)
+
+      // Verify the Elections contract has the correct BoardOfDirectors address
+      const electionsInstance = await ethers.getContractAt(
+        'Elections',
         deployedContracts[1].contractAddress
       )
-      const bodAddress = await votingInstance.boardOfDirectorsContractAddress()
+      const bodAddress = await electionsInstance.bodAddress()
       expect(bodAddress).to.equal(deployedContracts[2].contractAddress)
     })
 
@@ -322,12 +344,12 @@ describe('Officer Contract', function () {
           beaconAddress: await bankAccountBeacon.getAddress()
         },
         {
-          beaconType: 'Voting',
-          beaconAddress: await votingContractBeacon.getAddress()
+          beaconType: 'Elections',
+          beaconAddress: await electionsBeacon.getAddress()
         }
       ]
 
-      const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+      const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
 
@@ -344,8 +366,8 @@ describe('Officer Contract', function () {
           initializerData: bankInitData
         },
         {
-          contractType: 'Voting',
-          initializerData: votingInitData
+          contractType: 'Elections',
+          initializerData: electionsInitData
         }
       ]
 
@@ -366,7 +388,7 @@ describe('Officer Contract', function () {
     it('Should deploy multiple contracts in a single transaction', async function () {
       // Create team first to ensure proper setup
 
-      const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+      const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
 
@@ -383,8 +405,8 @@ describe('Officer Contract', function () {
           initializerData: bankInitData
         },
         {
-          contractType: 'Voting',
-          initializerData: votingInitData
+          contractType: 'Elections',
+          initializerData: electionsInitData
         }
       ]
 
@@ -395,25 +417,25 @@ describe('Officer Contract', function () {
       // Verify deployments
       const deployedContracts = await officer.getTeam()
 
-      // Should have 3 contracts (Bank, Voting, and auto-deployed BoardOfDirectors)
+      // Should have 3 contracts (Bank, Elections, and auto-deployed BoardOfDirectors)
       expect(deployedContracts.length).to.equal(3)
 
       // Instead of checking specific addresses, verify contract types and that addresses are valid
       expect(deployedContracts[0].contractType).to.equal('Bank')
       expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
 
-      expect(deployedContracts[1].contractType).to.equal('Voting')
+      expect(deployedContracts[1].contractType).to.equal('Elections')
       expect(deployedContracts[1].contractAddress).to.not.equal(ethers.ZeroAddress)
 
       expect(deployedContracts[2].contractType).to.equal('BoardOfDirectors')
       expect(deployedContracts[2].contractAddress).to.not.equal(ethers.ZeroAddress)
 
-      // Verify the Voting contract has the correct BoardOfDirectors address
-      const votingInstance = await ethers.getContractAt(
-        'Voting',
+      // Verify the Elections contract has the correct BoardOfDirectors address
+      const electionsInstance = await ethers.getContractAt(
+        'Elections',
         deployedContracts[1].contractAddress
       )
-      const bodAddress = await votingInstance.boardOfDirectorsContractAddress()
+      const bodAddress = await electionsInstance.bodAddress()
 
       expect(bodAddress).to.equal(deployedContracts[2].contractAddress)
     })
@@ -458,13 +480,13 @@ describe('Officer Contract', function () {
     })
 
     it('Should restrict batch deployment to owners and founders', async function () {
-      const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+      const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
       const deployments = [
         {
-          contractType: 'Voting',
-          initializerData: votingInitData
+          contractType: 'Elections',
+          initializerData: electionsInitData
         }
       ]
 
@@ -479,7 +501,7 @@ describe('Officer Contract', function () {
       const types = await officer.getConfiguredContractTypes()
       expect(types).to.have.lengthOf(4)
       expect(types).to.include('Bank')
-      expect(types).to.include('Voting')
+      expect(types).to.include('Elections')
       expect(types).to.include('BoardOfDirectors')
       expect(types).to.include('ExpenseAccount')
     })
@@ -509,7 +531,7 @@ describe('Officer Contract', function () {
 
     it('Should return all deployed contracts with their types', async function () {
       // Deploy multiple contracts
-      const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+      const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
@@ -519,8 +541,8 @@ describe('Officer Contract', function () {
         owner.address
       ])
 
-      // Deploy Voting contract (this will also auto-deploy BoardOfDirectors)
-      await officer.connect(owner).deployBeaconProxy('Voting', votingInitData)
+      // Deploy Elections contract (this will also auto-deploy BoardOfDirectors)
+      await officer.connect(owner).deployBeaconProxy('Elections', electionsInitData)
 
       // Deploy Bank contract
       await officer.connect(owner).deployBeaconProxy('Bank', bankInitData)
@@ -529,10 +551,10 @@ describe('Officer Contract', function () {
       const deployedContracts = await officer.getDeployedContracts()
 
       // Verify the results (updated order)
-      expect(deployedContracts.length).to.equal(3) // Voting + BoardOfDirectors + Bank
+      expect(deployedContracts.length).to.equal(3) // Elections + BoardOfDirectors + Bank
 
-      // Check first contract (Voting)
-      expect(deployedContracts[0].contractType).to.equal('Voting')
+      // Check first contract (Elections)
+      expect(deployedContracts[0].contractType).to.equal('Elections')
       expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
 
       // Check second contract (BoardOfDirectors - auto-deployed)
@@ -581,10 +603,10 @@ describe('Officer Contract', function () {
 
     it('Should return same data as getTeam for deployed contracts', async function () {
       // Deploy a contract
-      const votingInitData = votingContract.interface.encodeFunctionData('initialize', [
+      const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
-      await officer.connect(owner).deployBeaconProxy('Voting', votingInitData)
+      await officer.connect(owner).deployBeaconProxy('Elections', electionsInitData)
 
       // Get data from both functions
       const deployedContracts = await officer.getDeployedContracts()
