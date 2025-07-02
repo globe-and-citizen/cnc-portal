@@ -90,9 +90,9 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
-import BoDABI from '@/artifacts/abi/bod.json'
+// import BoDABI from '@/artifacts/abi/bod.json'
 import { useTeamStore, useToastStore } from '@/stores'
-import { encodeFunctionData, type Abi, type Address, decodeErrorResult } from 'viem'
+import { encodeFunctionData, type Abi, type Address } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { estimateGas } from '@wagmi/core'
 import type { Proposal } from '@/types'
@@ -107,18 +107,18 @@ const electionsAddress = computed(() => {
   const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
   return address as Address
 })
-const bodAddress = computed(() => {
-  const address = teamStore.currentTeam?.teamContracts?.find(
-    (c) => c.type === 'BoardOfDirectors'
-  )?.address
-  return address as Address
-})
+// const bodAddress = computed(() => {
+//   const address = teamStore.currentTeam?.teamContracts?.find(
+//     (c) => c.type === 'BoardOfDirectors'
+//   )?.address
+//   return address as Address
+// })
 
 const {
   data: hashCreateElection,
   writeContract: executeCreateElection,
-  isPending: isLoadingCreateElection,
-  isError: errorCreateElection
+  isPending: isLoadingCreateElection
+  // isError: errorCreateElection
 } = useWriteContract()
 
 const { isLoading: isConfirmingCreateElection, isSuccess: isConfirmedCreateElection } =
@@ -137,7 +137,7 @@ const createElection = async (electionData: Proposal) => {
       electionData.candidates?.map((c) => c.candidateAddress) || [],
       teamStore.currentTeam?.members.map((m) => m.address) || []
     ]
-    console.log('Creating election with args:', args)
+
     const data = encodeFunctionData({
       abi: ElectionABI,
       functionName: 'createElection',
