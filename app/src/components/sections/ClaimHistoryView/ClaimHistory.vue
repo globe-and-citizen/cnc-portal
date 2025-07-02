@@ -1,7 +1,7 @@
 <template>
   <div class="flex bg-transparent gap-x-4">
     <!-- Left Sidebar -->
-    <CardComponent class="w-1/2">
+    <CardComponent class="w-1/3">
       <div class="space-y-8">
         <!-- Month Selector -->
 
@@ -34,24 +34,7 @@
 
     <!-- Right Content -->
     <div class="flex-1 space-y-6">
-      <div class="stats shadow w-full">
-        <div class="stat place-items-center">
-          <div class="stat-title">Total Hours</div>
-          <div class="stat-value">{{ totalHours }}h</div>
-        </div>
-
-        <div class="stat place-items-center">
-          <div class="stat-title">Hourly Rate</div>
-          <div class="stat-value text-secondary">{{ hourlyRate }}$</div>
-          <div class="stat-desc">10 USDC, 10 POL, 10 SHER</div>
-        </div>
-
-        <div class="stat place-items-center">
-          <div class="stat-title">Total Amount</div>
-          <div class="stat-value">{{ totalAmount }}$</div>
-        </div>
-      </div>
-
+      <TotalValue />
       <CardComponent title="" class="w-full">
         <div v-if="memberWeeklyClaims">
           <h2 class="pb-4">Weekly Claims: {{ formatDate(claims.start) }}</h2>
@@ -92,6 +75,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useTeamStore } from '@/stores'
 import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
+import TotalValue from '@/components/TotalValue.vue'
 
 const teamStore = useTeamStore()
 const teamId = computed(() => teamStore.currentTeam?.id)
@@ -104,7 +88,6 @@ const { data: memberWeeklyClaims } = useCustomFetch(weeklyClaimUrl, {
 const selectedMonth = ref<Date>(dayjs().startOf('month').toDate())
 const selectedWeek = ref<Date>(dayjs().startOf('week').toDate())
 const selectedWeekISO = computed(() => (selectedWeek.value ? selectedWeek.value.toISOString() : ''))
-const hourlyRate = 20
 
 // function getTotalHoursWorked(claimsArr: { hours: number }[]) {
 //   return claimsArr.reduce((sum, claim) => sum + (claim.hours || 0), 0)
