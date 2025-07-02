@@ -90,12 +90,7 @@
   </div>
   <div v-if="showSummary">
     <VestingSummary
-      :memberInput="memberInput"
-      :totalAmount="totalAmount"
-      :startDate="dateRange?.[0] || new Date()"
-      :duration="duration"
-      :durationInDays="durationInDays"
-      :cliff="cliff"
+      :vesting="vestingData"
       :loading="loading"
       @back="showSummary = false"
       @confirm="approveAllowance"
@@ -112,7 +107,7 @@ import {
   addYears,
   addMonths,
   addDays
-} from 'date-fns'
+} from '@/utils/dayUtils'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
 import VestingABI from '@/artifacts/abi/Vesting.json'
@@ -124,6 +119,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
 import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
+import { type VestingCreation } from '@/types/vesting'
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
@@ -134,6 +130,15 @@ const props = defineProps<{
   tokenAddress: string
   reloadKey: number
 }>()
+
+const vestingData = computed<VestingCreation>(() => ({
+  member: memberInput.value,
+  startDate: dateRange.value?.[0] || new Date(),
+  duration: duration.value,
+  durationInDays: durationInDays.value,
+  cliff: cliff.value,
+  totalAmount: totalAmount.value
+}))
 
 const activeMembers = computed<string[]>(() => {
   if (vestingInfos.value && Array.isArray(vestingInfos.value) && vestingInfos.value.length === 2) {

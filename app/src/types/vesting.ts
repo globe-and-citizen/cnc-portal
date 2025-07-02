@@ -27,6 +27,22 @@ export interface VestingInfo {
   active: boolean
 }
 
+export interface VestingCreation {
+  member: {
+    name: string
+    address: string
+  }
+  totalAmount: number
+  startDate: Date
+  duration: {
+    years: number
+    months: number
+    days: number
+  }
+  durationInDays: number
+  cliff: number
+}
+
 export type VestingTuple = [string[], VestingInfo[]]
 
 export type VestingStatus = 'all' | 'active' | 'completed' | 'cancelled'

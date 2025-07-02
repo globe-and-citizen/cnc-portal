@@ -5,17 +5,19 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-base-200 rounded-lg">
       <div class="flex flex-col gap-2">
         <span class="text-xs text-gray-500">Member</span>
-        <span class="font-medium">{{ memberInput.name || memberInput.address }}</span>
+        <span class="font-medium">{{
+          props.vesting.member.name || props.vesting.member.address
+        }}</span>
 
         <span class="text-xs text-gray-500">Total Amount</span>
-        <span class="font-medium">{{ totalAmount }} Tokens</span>
+        <span class="font-medium">{{ props.vesting.totalAmount }} Tokens</span>
       </div>
 
       <div class="flex flex-col gap-1"></div>
 
       <div class="flex flex-col gap-1">
         <span class="text-xs text-gray-500">Start Date</span>
-        <span class="font-medium">{{ formatDate(startDate) }}</span>
+        <span class="font-medium">{{ formatDate(props.vesting.startDate) }}</span>
       </div>
 
       <div class="flex flex-col gap-1">
@@ -25,12 +27,17 @@
 
       <div class="flex flex-col gap-1">
         <span class="text-xs text-gray-500">Cliff Period</span>
-        <span class="font-medium">{{ cliff }} days</span>
+        <span class="font-medium">{{ props.vesting.cliff }} days</span>
       </div>
 
       <div class="flex flex-col gap-1">
         <span class="text-xs text-gray-500">Vesting Rate</span>
-        <span class="font-medium">{{ (totalAmount / durationInDays).toFixed(2) }} tokens/day</span>
+        <span class="font-medium"
+          >{{
+            (props.vesting.totalAmount / props.vesting.durationInDays).toFixed(2)
+          }}
+          tokens/day</span
+        >
       </div>
     </div>
 
@@ -50,30 +57,25 @@
 </template>
 
 <script setup lang="ts">
-import { format } from 'date-fns'
+import { format } from '@/utils/dayUtils'
 import ButtonUI from '@/components/ButtonUI.vue'
-
+import { type VestingCreation } from '@/types/vesting'
 const props = defineProps<{
-  memberInput: { name: string; address: string }
-  totalAmount: number
-  startDate: Date
-  duration: { years: number; months: number; days: number }
-  durationInDays: number
-  cliff: number
+  vesting: VestingCreation
   loading: boolean
 }>()
 
 defineEmits(['back', 'confirm'])
 
 function formatDate(date: Date) {
-  return format(date, 'MMM dd, yyyy')
+  return format(date, 'dd/MM/yyyy')
 }
 
 function formatDuration() {
   const parts = []
-  if (props.duration.years) parts.push(`${props.duration.years} years`)
-  if (props.duration.months) parts.push(`${props.duration.months} months`)
-  if (props.duration.days) parts.push(`${props.duration.days} days`)
+  if (props.vesting.duration.years) parts.push(`${props.vesting.duration.years} years`)
+  if (props.vesting.duration.months) parts.push(`${props.vesting.duration.months} months`)
+  if (props.vesting.duration.days) parts.push(`${props.vesting.duration.days} days`)
   return parts.join(', ') || '0 days'
 }
 </script>
