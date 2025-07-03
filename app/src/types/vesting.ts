@@ -7,7 +7,7 @@ export interface VestingRow {
   totalAmount: number
   tokenSymbol: string
   released: number
-  status: 'Active' | 'Inactive'
+  status: 'Active' | 'Inactive' | 'Completed'
   isStarted?: boolean
 }
 
@@ -17,3 +17,32 @@ export interface TokenSummary {
   totalReleased: number
   totalWithdrawn: number
 }
+
+export interface VestingInfo {
+  start: number
+  duration: number
+  cliff: number
+  totalAmount: bigint
+  released: bigint
+  active: boolean
+}
+
+export interface VestingCreation {
+  member: {
+    name: string
+    address: string
+  }
+  totalAmount: number
+  startDate: Date
+  duration: {
+    years: number
+    months: number
+    days: number
+  }
+  durationInDays: number
+  cliff: number
+}
+
+export type VestingTuple = [string[], VestingInfo[]]
+
+export type VestingStatus = 'all' | 'active' | 'completed' | 'cancelled'

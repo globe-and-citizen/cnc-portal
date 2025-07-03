@@ -3,12 +3,13 @@ pragma solidity ^0.8.24;
 
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
+import {IBoardOfDirectors} from './interfaces/IBoardOfDirectors.sol';
 
 /**
  * @title BoardOfDirectors
  * @dev A contract that manages a board of directors and their actions.
  */
-contract BoardOfDirectors is ReentrancyGuardUpgradeable {
+contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
   using EnumerableSet for EnumerableSet.AddressSet;
 
   EnumerableSet.AddressSet private owners;
@@ -142,7 +143,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
   /**
    * @dev Checks if an action has been approved by an address.
    * @param _actionId The id of the action.
-    * @param _address The address to check approval for.
+   * @param _address The address to check approval for.
    * @return A boolean indicating if the action has been approved.
    */
   function isApproved(uint256 _actionId, address _address) external view returns (bool) {
@@ -172,6 +173,15 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
    */
   function getBoardOfDirectors() external view returns (address[] memory) {
     return boardOfDirectors.values();
+  }
+
+  /**
+   * @dev Checks if an address is a member of the board of directors.
+   * @param _address The address to check.
+   * @return A boolean indicating if the address is a member.
+   */
+  function isMember(address _address) external view returns (bool) {
+    return boardOfDirectors.contains(_address);
   }
 
   // Private functions
@@ -246,7 +256,10 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable {
   }
 
   modifier onlyBoardOfDirectors() {
-    require(boardOfDirectors.contains(msg.sender), 'Only board of directors can call this function');
+    require(
+      boardOfDirectors.contains(msg.sender),
+      'Only board of directors can call this function'
+    );
     _;
   }
 

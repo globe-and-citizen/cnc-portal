@@ -15,8 +15,8 @@
       <CreateVesting
         v-if="team?.id"
         :tokenAddress="sherToken?.address ?? ''"
-        @closeAddVestingModal="addVestingModal = false"
-        @reload="$emit('reload')"
+        @closeAddVestingModal="handleClose"
+        @reload="handleReload"
         :reloadKey="reloadKey"
       />
     </ModalComponent>
@@ -35,11 +35,20 @@ defineProps<{
   reloadKey: number
 }>()
 
-defineEmits(['reload'])
+const emit = defineEmits(['reload'])
 
 const addVestingModal = ref(false)
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
+
+const handleReload = () => {
+  console.log('vesting actions reload calledd === ')
+  emit('reload') // Propagate reload up
+}
+
+const handleClose = () => {
+  addVestingModal.value = false
+}
 
 const userAddress = computed(() => userStore.address)
 const team = computed(() => teamStore.currentTeam)
