@@ -37,16 +37,33 @@
       <TotalValue />
       <CardComponent title="" class="w-full">
         <div v-if="memberWeeklyClaims">
-          <h2 class="pb-4">Weekly Claims: {{ formatDate(claims.start) }}</h2>
-
+          <h2 class="pb-4">Weekly Claims: {{ formatDate(selectedWeek) }}</h2>
+          <pre>{{
+            memberWeeklyClaims.find((weeklyClaim) => weeklyClaim.weekStart === selectedWeekISO)
+              ? true
+              : false
+          }}</pre>
           <div
-            v-for="(entry, index) in memberWeeklyClaims.claims"
+            v-for="(entry, index) in [0, 1, 2, 3, 4, 5, 6].map((i) => ({
+              date: dayjs(selectedWeek).add(i, 'day').toDate(),
+              hours:
+                memberWeeklyClaims
+                  .find((weeklyClaim) => weeklyClaim.weekStart === selectedWeekISO)
+                  ?.claims.map((claim) => {
+                    return {
+                      dayWorked: claim.dayWorked,
+                      day: dayjs(selectedWeek).add(i, 'day').toDate(),
+                      compaire: claim.dayWorked === dayjs(selectedWeek).add(i, 'day').toDate()
+                    }
+                  }) || 0
+            }))"
             :key="index"
             :class="[
               'flex items-center justify-between border px-4 py-3 mb-2 rounded-lg',
               entry.hours > 0 ? 'bg-green-50 text-green-900' : 'bg-gray-100 text-gray-400'
             ]"
           >
+            <pre>{{ entry }}</pre>
             <div class="flex items-center gap-2">
               <span
                 class="h-3 w-3 rounded-full"
@@ -72,19 +89,23 @@ import dayjs from 'dayjs'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { getMondayStart, getSundayEnd, getMonthWeeks } from '@/utils/dayUtils'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useTeamStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
 import TotalValue from '@/components/TotalValue.vue'
 
+const userStore = useUserDataStore()
+
 const teamStore = useTeamStore()
 const teamId = computed(() => teamStore.currentTeam?.id)
-const weeklyClaimUrl = computed(() => `/claim/?teamId=${teamId.value}`)
+const weeklyClaimUrl = computed(
+  () => `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${userStore.address}`
+)
 
 const { data: memberWeeklyClaims } = useCustomFetch(weeklyClaimUrl, {
   immediate: true,
   refetch: true
-}).json<Array<weeklyClaimResponse>>()
+}).json<Array<WeeklyClaimResponse>>()
 const selectedMonth = ref<Date>(dayjs().startOf('month').toDate())
 const selectedWeek = ref<Date>(dayjs().startOf('week').toDate())
 const selectedWeekISO = computed(() => (selectedWeek.value ? selectedWeek.value.toISOString() : ''))
