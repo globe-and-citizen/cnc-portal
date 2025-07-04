@@ -18,7 +18,7 @@
 const props = defineProps({
   title: {
     type: String,
-    default: 'Card Title'
+    default: ''
   }
 })
 </script>

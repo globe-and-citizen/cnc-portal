@@ -13,6 +13,7 @@ import AdministrationView from '@/views/team/[id]/AdministrationView.vue'
 import SherTokenView from '@/views/team/[id]/SherTokenView.vue'
 import VestingView from '@/views/team/[id]/VestingView.vue'
 import WeeklyClaimView from '@/views/team/[id]/WeeklyClaimView.vue'
+import ClaimHistoryView from '@/views/team/[id]/ClaimHistoryView.vue'
 import BodElectionView from '@/views/team/[id]/BodElectionView.vue'
 
 const router = createRouter({
@@ -51,10 +52,10 @@ const router = createRouter({
           component: WeeklyClaimView
         },
         {
-          path: '/teams/:id/cash-remunerations/claim-history',
+          path: '/teams/:id/cash-remunerations/members/:memberAddress/claim-history',
           name: 'claim-history',
           meta: { name: 'Cash Remuneration-claim history' },
-          component: WeeklyClaimView
+          component: ClaimHistoryView
         },
         {
           path: '/teams/:id/cash-remunerations',
