@@ -5,8 +5,7 @@ import { Prisma, Claim } from "@prisma/client";
 import { isUserMemberOfTeam } from "./wageController";
 import { getMondayStart, todayMidnight } from "../utils/dayUtils";
 
-type claimBodyRequest = Pick<Claim, "hoursWorked"> & {
-  memo: string;
+type claimBodyRequest = Pick<Claim, "hoursWorked" | "dayWorked" | "memo"> & {
   teamId: string;
 };
 
@@ -16,10 +15,12 @@ export const addClaim = async (req: Request, res: Response) => {
   const body = req.body as claimBodyRequest;
   const hoursWorked = Number(body.hoursWorked);
   const memo = body.memo as string;
+  const dayWorked = body.dayWorked
+    ? new Date(body.dayWorked)
+    : todayMidnight(new Date());
   const teamId = Number(body.teamId);
 
   const weekStart = getMondayStart(new Date());
-  const dayWorked = todayMidnight(new Date());
 
   // Validating the claim data
   // Checking required data
