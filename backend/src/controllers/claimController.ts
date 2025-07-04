@@ -9,6 +9,7 @@ type claimBodyRequest = Pick<Claim, "hoursWorked" | "dayWorked" | "memo"> & {
   teamId: string;
 };
 
+// TODO limit weeday only for the current week. Betwen Monday and the current day
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
 
@@ -20,7 +21,7 @@ export const addClaim = async (req: Request, res: Response) => {
     : todayMidnight(new Date());
   const teamId = Number(body.teamId);
 
-  const weekStart = getMondayStart(new Date());
+  const weekStart = getMondayStart(dayWorked);
 
   // Validating the claim data
   // Checking required data
