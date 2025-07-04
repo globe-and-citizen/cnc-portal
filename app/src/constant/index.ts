@@ -20,8 +20,8 @@ interface AddressMapping {
   'TipsModule#Tips': string
   'BankBeaconModule#Beacon': string
   'BankBeaconModule#Bank': string
-  'VotingBeaconModule#Beacon': string
-  'VotingBeaconModule#Voting': string
+  // 'VotingBeaconModule#Beacon'?: string
+  // 'VotingBeaconModule#Voting'?: string
   'BoardOfDirectorsModule#Beacon': string
   'BoardOfDirectorsModule#BoardOfDirectors': string
   'ExpenseAccountModule#ExpenseAccount'?: string
@@ -37,8 +37,8 @@ interface AddressMapping {
   'VestingModule#Vesting'?: string
   'MockTokens#USDT'?: string
   'MockTokens#USDC'?: string
-  'ElectionsModule#Elections'?: string
-  'ElectionsModule#FactoryBeacon'?: string
+  'ElectionsBeaconModule#Elections'?: string
+  'ElectionsBeaconModule#Beacon'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -100,8 +100,10 @@ export function validateAddresses() {
     'VestingModule#Vesting',
     'BankBeaconModule#Beacon',
     'BankBeaconModule#Bank',
-    'VotingBeaconModule#Beacon',
-    'VotingBeaconModule#Voting',
+    // 'VotingBeaconModule#Beacon',
+    // 'VotingBeaconModule#Voting',
+    'ElectionsBeaconModule#Beacon',
+    'ElectionsBeaconModule#Elections',
     'BoardOfDirectorsModule#Beacon',
     'BoardOfDirectorsModule#BoardOfDirectors',
     'Officer#Officer',
@@ -132,13 +134,14 @@ try {
 } catch (error) {
   console.error(error)
 }
-export const ELECTIONS_BEACON_ADDRESS = resolveAddress('ElectionsModule#FactoryBeacon')
 export const TIPS_ADDRESS = resolveAddress('TipsModule#Tips')
 export const VESTING_ADDRESS = resolveAddress('VestingModule#Vesting')
 export const BANK_BEACON_ADDRESS = resolveAddress('BankBeaconModule#Beacon')
 export const BANK_IMPL_ADDRESS = resolveAddress('BankBeaconModule#Bank')
-export const VOTING_BEACON_ADDRESS = resolveAddress('VotingBeaconModule#Beacon')
-export const VOTING_IMPL_ADDRESS = resolveAddress('VotingBeaconModule#Voting')
+// export const VOTING_BEACON_ADDRESS = resolveAddress('VotingBeaconModule#Beacon')
+// export const VOTING_IMPL_ADDRESS = resolveAddress('VotingBeaconModule#Voting')
+export const ELECTIONS_BEACON_ADDRESS = resolveAddress('ElectionsBeaconModule#Beacon')
+export const ELECTIONS_IMPL_ADDRESS = resolveAddress('ElectionsBeaconModule#Elections')
 export const BOD_BEACON_ADDRESS = resolveAddress('BoardOfDirectorsModule#Beacon')
 export const BOD_IMPL_ADDRESS = resolveAddress('BoardOfDirectorsModule#BoardOfDirectors')
 export const EXPENSE_ACCOUNT_BEACON_ADDRESS = resolveAddress('ExpenseAccountModule#FactoryBeacon')

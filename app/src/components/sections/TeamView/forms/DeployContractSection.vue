@@ -22,7 +22,7 @@ import { ref, watch, computed } from 'vue'
 // Contract ABIs
 import OfficerABI from '@/artifacts/abi/officer.json'
 import BankABI from '@/artifacts/abi/bank.json'
-import VotingABI from '@/artifacts/abi/voting.json'
+// import VotingABI from '@/artifacts/abi/voting.json'
 import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
 import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
@@ -41,7 +41,7 @@ import {
   USDC_ADDRESS,
   USDT_ADDRESS,
   validateAddresses,
-  VOTING_BEACON_ADDRESS,
+  // VOTING_BEACON_ADDRESS,
   ELECTIONS_BEACON_ADDRESS
 } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
@@ -104,10 +104,10 @@ const deployOfficerContract = async () => {
         beaconType: 'Bank',
         beaconAddress: BANK_BEACON_ADDRESS
       },
-      {
-        beaconType: 'Voting',
-        beaconAddress: VOTING_BEACON_ADDRESS
-      },
+      // {
+      //   beaconType: 'Voting',
+      //   beaconAddress: VOTING_BEACON_ADDRESS
+      // },
       {
         beaconType: 'BoardOfDirectors',
         beaconAddress: BOD_BEACON_ADDRESS
@@ -158,14 +158,14 @@ const deployOfficerContract = async () => {
     })
 
     // Voting contract
-    deployments.push({
-      contractType: 'Voting',
-      initializerData: encodeFunctionData({
-        abi: VotingABI,
-        functionName: 'initialize',
-        args: [currentUserAddress]
-      })
-    })
+    // deployments.push({
+    //   contractType: 'Voting',
+    //   initializerData: encodeFunctionData({
+    //     abi: VotingABI,
+    //     functionName: 'initialize',
+    //     args: [currentUserAddress]
+    //   })
+    // })
 
     // Expense account
     deployments.push({
