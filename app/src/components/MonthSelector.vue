@@ -33,16 +33,15 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import dayjs from 'dayjs'
 import { Icon as IconifyIcon } from '@iconify/vue'
+import { watch } from 'vue'
 
-const model = defineModel({
+const model = defineModel<Date>({
   default: () => {
     return dayjs().startOf('month').toDate()
   }
 })
 
 const monthPicked = ref<{ month: number; year: number } | null>(null)
-
-import { watch } from 'vue'
 
 watch(monthPicked, (newVal) => {
   if (newVal && typeof newVal.month === 'number' && typeof newVal.year === 'number') {

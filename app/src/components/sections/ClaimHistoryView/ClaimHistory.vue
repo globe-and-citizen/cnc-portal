@@ -11,7 +11,7 @@
         <div class="space-y-4">
           <div
             v-for="week in getMonthWeeks(selectedMonth)"
-            :key="week"
+            :key="week.toISOString()"
             @click="selectWeek(week)"
             :class="[
               'border rounded-lg p-3 cursor-pointer',
@@ -102,6 +102,15 @@ const weeklyClaimUrl = computed(
   () => `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${userStore.address}`
 )
 
+type WeeklyClaimResponse = {
+  weekStart: string
+  claims: {
+    dayWorked: string | Date
+    hoursWorked: number
+    memo?: string
+  }[]
+  hourlyRate: number
+}
 const { data: memberWeeklyClaims } = useCustomFetch(weeklyClaimUrl, {
   immediate: true,
   refetch: true
@@ -114,7 +123,7 @@ const selectedWeekISO = computed(() => (selectedWeek.value ? selectedWeek.value.
 //   return claimsArr.reduce((sum, claim) => sum + (claim.hours || 0), 0)
 // }
 
-const selectWeek = (week) => {
+const selectWeek = (week: Date) => {
   selectedWeek.value = week
 }
 const selectWeekWeelyClaim = computed(() => {

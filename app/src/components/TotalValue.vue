@@ -23,7 +23,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps(['weeklyClaim'])
+const props = defineProps<{
+  weeklyClaim?: { claims: { hoursWorked: number }[]; hourlyRate: number }
+}>()
 
 const totalHour = computed(() => {
   return props.weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) || 0
