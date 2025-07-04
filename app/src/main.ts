@@ -9,6 +9,7 @@ import router from './router'
 import apolloClient from './apollo-client'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import VueDatePicker from '@vuepic/vue-datepicker'
 
 export function setupApp() {
   const app = createApp(App)
@@ -22,6 +23,8 @@ export function setupApp() {
   app.use(WagmiPlugin, { config })
   app.use(VueQueryPlugin, { queryClient })
   app.provide(DefaultApolloClient, apolloClient)
+
+  app.component('VueDatePicker', VueDatePicker)
 
   return app
 }
