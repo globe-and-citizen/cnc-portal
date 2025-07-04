@@ -89,17 +89,19 @@ import dayjs from 'dayjs'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { getMondayStart, getSundayEnd, getMonthWeeks } from '@/utils/dayUtils'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useTeamStore, useUserDataStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
 import TotalValue from '@/components/TotalValue.vue'
+import { useRoute } from 'vue-router'
 
-const userStore = useUserDataStore()
-
+const route = useRoute()
 const teamStore = useTeamStore()
 const teamId = computed(() => teamStore.currentTeam?.id)
+const memberAddress = route.params.memberAddress as string | undefined
+
 const weeklyClaimUrl = computed(
-  () => `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${userStore.address}`
+  () => `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress}`
 )
 
 type WeeklyClaimResponse = {
