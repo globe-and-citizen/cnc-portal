@@ -52,7 +52,7 @@ const router = createRouter({
           component: WeeklyClaimView
         },
         {
-          path: '/teams/:id/cash-remunerations/claim-history',
+          path: '/teams/:id/cash-remunerations/members/:memberAddress/claim-history',
           name: 'claim-history',
           meta: { name: 'Cash Remuneration-claim history' },
           component: ClaimHistoryView
