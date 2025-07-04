@@ -19,8 +19,8 @@
     />
 
     <!-- Affiche le tableau CashRemunerationTable pour un membre individuel -->
-    <CashRemunerationTable v-if="memberAddress" />
-
+    <!-- <CashRemunerationTable v-if="memberAddress" /> -->
+    <ClaimHistory v-if="memberAddress" />
     <!-- Sinon, vue classique -->
     <template v-else>
       <PendingWeeklyClaim v-if="isTeamOwner" />
@@ -36,12 +36,13 @@ import { useTeamStore, useUserDataStore } from '@/stores'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 
 // import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
-import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
+// import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
 import PendingWeeklyClaim from '@/components/sections/CashRemunerationView/PendingWeeklyClaim.vue'
 import SignedWeeklyClaim from '@/components/sections/CashRemunerationView/SignedWeeklyClaim.vue'
 import { useRoute } from 'vue-router'
+import ClaimHistory from '@/components/sections/ClaimHistoryView/ClaimHistory.vue'
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
