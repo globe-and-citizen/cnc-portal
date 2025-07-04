@@ -348,7 +348,11 @@ onBeforeUnmount(() => {
 })
 
 const timeRemaining = computed(() => {
-  const diff = electionData.endDate.getTime() - now.value.getTime()
+  //const diff = electionData.endDate.getTime() - now.value.getTime()
+  if (!formattedElection.value) return 'No election data available'
+
+  const diff =
+    formattedElection.value?.endDate.getTime() - formattedElection.value?.startDate.getTime()
 
   if (diff <= 0) return 'election ended'
 
@@ -364,10 +368,12 @@ const timeRemaining = computed(() => {
 
 // Election status
 const electionStatus = computed(() => {
-  if (now.value < electionData.startDate) {
+  if (!formattedElection.value) return { text: 'No Election', class: 'bg-gray-100 text-gray-800' }
+
+  if (now.value < formattedElection.value?.startDate) {
     return { text: 'Upcoming', class: 'bg-yellow-100 text-yellow-800' }
   }
-  if (now.value > electionData.endDate) {
+  if (now.value > formattedElection.value?.endDate) {
     return { text: 'Completed', class: 'bg-gray-100 text-gray-800' }
   }
   return { text: 'Active', class: 'bg-green-100 text-green-800' }
