@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 export function getMondayStart(date: Date): Date {
   const d = new Date(date)
   const day = d.getDay() // 0 = dimanche, 1 = lundi, ..., 6 = samedi
@@ -23,7 +25,26 @@ export function todayMidnight(date: Date): Date {
 }
 
 /**
- * Calculates the number of calendar days between two dates.
+ * For a given date, get all the weeks
+ *
+ * @param monthDate
+ * @returns
+ */
+export function getMonthWeeks(monthDate: Date): Date[] {
+  const start = dayjs(monthDate).startOf('month').startOf('week').add(1, 'day')
+  const end = dayjs(monthDate).endOf('month').startOf('week')
+  const weeks: Date[] = []
+  let cursor = start.clone()
+
+  while (cursor.isBefore(end) || cursor.isSame(end, 'day')) {
+    const week: Date = cursor.toDate()
+    cursor = cursor.add(1, 'week')
+    weeks.push(week)
+  }
+  return weeks
+}
+
+/* Calculates the number of calendar days between two dates.
  * The calculation is done in UTC to avoid daylight saving time issues.
  *
  * @param endDate - The later date to compare

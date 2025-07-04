@@ -310,7 +310,7 @@ const menuItems = computed(() => [
         label: ' Claim History',
         route: {
           name: 'claim-history',
-          params: { id: teamStore.currentTeam?.id || '1' }
+          params: { id: teamStore.currentTeam?.id || '1', memberAddress: userStore.address }
         },
         active: route.name === 'claim-history',
         show:
