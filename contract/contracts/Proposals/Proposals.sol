@@ -37,6 +37,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     uint256 id;
     string title;
     string description;
+    string proposalType; // e.g., "Budget", "Policy Change", etc.
     uint256 startDate;
     uint256 endDate;
     address creator;
@@ -68,7 +69,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     uint256 startDate,
     uint256 endDate
   );
-  event ProposalVoted(uint256 indexed proposalId, address indexed voter);
+  event ProposalVoted(uint256 indexed proposalId, address indexed voter, VoteOption vote);
   event ProposalTallyResults(
     uint256 indexed proposalId,
     ProposalState state,
@@ -95,6 +96,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   function createProposal(
     string memory title,
     string memory description,
+    string memory proposalType,
     uint256 startDate,
     uint256 endDate
   ) external boardOfDirectorsContractExists onlyMember {
@@ -110,6 +112,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     newProposal.id = _nextProposalId;
     newProposal.title = title;
     newProposal.description = description;
+    newProposal.proposalType = proposalType;
     newProposal.startDate = startDate;
     newProposal.endDate = endDate;
     newProposal.creator = msg.sender;
@@ -150,7 +153,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
       proposal.abstainCount++;
     }
 
-    emit ProposalVoted(proposalId, msg.sender);
+    emit ProposalVoted(proposalId, msg.sender, vote);
 
     if (proposal.voteCount == proposal.totalVoters) tallyResults(proposalId);
   }
@@ -161,6 +164,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
    * @return id The ID of the proposal.
    * @return title The title of the proposal.
    * @return description The description of the proposal.
+   * @return proposalType The type of the proposal (e.g., "Budget", "Policy Change", etc.).
    * @return startDate The start date of the proposal (in Unix timestamp).
    * @return endDate The end date of the proposal (in Unix timestamp).
    * @return creator The address of the proposal creator.
@@ -179,6 +183,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
       uint256 id,
       string memory title,
       string memory description,
+      string memory proposalType,
       uint256 startDate,
       uint256 endDate,
       address creator,
@@ -198,6 +203,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
       proposal.id,
       proposal.title,
       proposal.description,
+      proposal.proposalType,
       proposal.startDate,
       proposal.endDate,
       proposal.creator,
