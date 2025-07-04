@@ -22,9 +22,9 @@
           :allowed-dates="allowedDates"
           class="input input-bordered input-md"
           data-test="date-input"
-         disable-month-year-select
-         :month-change-on-scroll="false"
-         :enable-time-picker="false"
+          disable-month-year-select
+          :month-change-on-scroll="false"
+          :enable-time-picker="false"
         />
       </div>
       <div class="flex flex-col gap-2">
@@ -154,7 +154,7 @@ const {
 } = useCustomFetch('/claim', { immediate: false })
   .post(() => ({
     teamId: teamId.value,
-    ...hoursWorked.value,
+    ...hoursWorked.value
   }))
   .json()
 
