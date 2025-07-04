@@ -21,9 +21,6 @@
           v-model="hoursWorked.dayWorked"
           class="input input-bordered input-md"
           data-test="date-input"
-          disable-month-year-select
-          :month-change-on-scroll="false"
-          :enable-time-picker="false"
         />
         <!-- <VueDatePicker
           v-model="hoursWorked.dayWorked"

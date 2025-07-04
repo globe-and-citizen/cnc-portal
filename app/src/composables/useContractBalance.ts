@@ -2,7 +2,7 @@ import { computed, unref, type Ref } from 'vue'
 import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
 import { formatEther, formatUnits, type Address } from 'viem'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
-import { useCurrencyStore } from '@/stores/currencyStore'
+import { useCurrencyStore, useTeamStore } from '@/stores'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { TokenId } from '@/constant'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
@@ -67,9 +67,26 @@ type TokenBalanceEntry = NativeTokenBalanceEntry | ERC20TokenBalanceEntry
 export function useContractBalance(address: Address | Ref<Address | undefined>) {
   const chainId = useChainId()
   const currencyStore = useCurrencyStore()
+  const teamStore = useTeamStore()
+
+  const supportedToken = computed(() => {
+    const tokens = [...SUPPORTED_TOKENS]
+    if (teamStore.getContractAddressByType('InvestorsV1') && !tokens.some((t) => t.id === 'sher')) {
+      tokens.push({
+        id: 'sher',
+        name: 'Sher Token',
+        symbol: 'SHER',
+        code: 'SHER',
+        coingeckoId: 'sher-token',
+        decimals: 18,
+        address: teamStore.getContractAddressByType('SHER') as Address
+      })
+    }
+    return tokens
+  })
 
   // Store for all token balances
-  const tokenBalances: TokenBalanceEntry[] = SUPPORTED_TOKENS.map((token) => {
+  const tokenBalances: TokenBalanceEntry[] = supportedToken.value.map((token) => {
     if (token.id === 'native') {
       const native = useBalance({
         address: unref(address),
