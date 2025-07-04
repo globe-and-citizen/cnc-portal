@@ -22,7 +22,7 @@
         </ModalComponent>
       </div>
     </template>
-    <div v-if="currentElection">
+    <div v-if="formattedElection">
       <!-- Status and Countdown -->
       <div class="flex items-center justify-start gap-2 mb-6">
         <span class="px-2 py-1 text-xs font-medium rounded-full" :class="electionStatus.class">
@@ -32,7 +32,9 @@
       </div>
       <div>
         <!-- Election Title -->
-        <h2 class="text-2xl text-center font-semibold mb-4">{{ electionData.title }}</h2>
+        <h2 class="text-2xl text-center font-semibold mb-4">
+          {{ /*electionData.title*/ formattedElection?.title }}
+        </h2>
 
         <!-- Stats Row -->
         <div class="flex justify-between items-stretch gap-4">
@@ -44,7 +46,7 @@
             <div>
               <p class="text-sm font-medium text-gray-500">Candidates</p>
               <p class="text-xl font-semibold text-gray-900">
-                {{ electionData.candidates.length }}
+                {{ formattedElection?.candidates }}
               </p>
             </div>
           </div>
@@ -59,7 +61,7 @@
             <div>
               <p class="text-sm font-medium text-gray-500">Ends</p>
               <p class="text-xl font-semibold text-gray-900">
-                {{ formatDate(electionData.endDate) }}
+                {{ formatDate(formattedElection?.endDate) }}
               </p>
             </div>
           </div>
@@ -74,7 +76,7 @@
             <div>
               <p class="text-sm font-medium text-gray-500">Votes Cast</p>
               <p class="text-xl font-semibold text-gray-900">
-                {{ votesCast }}
+                {{ formattedElection?.votesCast }}
               </p>
             </div>
           </div>
@@ -195,6 +197,25 @@ const { isLoading: isConfirmingCreateElection, isSuccess: isConfirmedCreateElect
   useWaitForTransactionReceipt({
     hash: hashCreateElection
   })
+
+const formattedElection = computed(() => {
+  if (!currentElection.value) return null
+
+  const raw = currentElection.value as Array<string | bigint | boolean>
+
+  return {
+    id: Number(raw[0]),
+    title: raw[1],
+    description: raw[2],
+    createdBy: raw[3],
+    startDate: new Date(Number(raw[4]) * 1000),
+    endDate: new Date(Number(raw[5]) * 1000),
+    seatCount: Number(raw[6]),
+    resultsPublished: raw[7],
+    votesCast: Number(voteCount.value || 0),
+    candidates: (candidateList.value as string[])?.length
+  }
+})
 
 const createElection = async (electionData: Proposal) => {
   try {
