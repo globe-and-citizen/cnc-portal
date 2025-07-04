@@ -34,7 +34,7 @@
 
     <!-- Right Content -->
     <div class="flex-1 space-y-6">
-      <TotalValue />
+      <TotalValue :weeklyClaim="selectWeekWeelyClaim" />
       <CardComponent title="" class="w-full">
         <div v-if="memberWeeklyClaims">
           <h2 class="pb-4">Weekly Claims: {{ formatDate(selectedWeek) }}</h2>
@@ -42,9 +42,8 @@
             v-for="(entry, index) in [0, 1, 2, 3, 4, 5, 6].map((i) => ({
               date: dayjs(selectedWeek).add(i, 'day').toDate(),
               hours:
-                memberWeeklyClaims
-                  .find((weeklyClaim) => weeklyClaim.weekStart === selectedWeekISO)
-                  ?.claims.filter(
+                selectWeekWeelyClaim?.claims
+                  .filter(
                     (claim) =>
                       formatDayLabel(dayjs(selectedWeek).add(i, 'day').toDate()) ===
                       formatDayLabel(claim.dayWorked)
@@ -66,13 +65,11 @@
             </div>
             <span v-if="entry.hours > 0" class="text-sm text-gray-500">
               ({{
-                memberWeeklyClaims
-                  .find((weeklyClaim) => weeklyClaim.weekStart === selectedWeekISO)
-                  ?.claims.find(
-                    (claim) =>
-                      formatDayLabel(dayjs(selectedWeek).add(index, 'day').toDate()) ===
-                      formatDayLabel(claim.dayWorked)
-                  )?.memo || ''
+                selectWeekWeelyClaim?.claims.find(
+                  (claim) =>
+                    formatDayLabel(dayjs(selectedWeek).add(index, 'day').toDate()) ===
+                    formatDayLabel(claim.dayWorked)
+                )?.memo || ''
               }})
             </span>
             <div class="text-sm flex items-center gap-2">
@@ -120,6 +117,11 @@ const selectedWeekISO = computed(() => (selectedWeek.value ? selectedWeek.value.
 const selectWeek = (week) => {
   selectedWeek.value = week
 }
+const selectWeekWeelyClaim = computed(() => {
+  return memberWeeklyClaims.value?.find(
+    (weeklyClaim) => weeklyClaim.weekStart === selectedWeekISO.value
+  )
+})
 
 watch(
   selectedMonth,
