@@ -10,6 +10,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
 import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 import { ref } from 'vue'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 vi.mock('vue-router', () => ({
   useRoute: vi.fn(() => ({
@@ -55,18 +56,14 @@ vi.mock('@/stores/useToastStore', () => ({
   })
 }))
 
-vi.mock('@/stores/currencyStore', () => ({
-  useCurrencyStore: () => ({
-    localCurrency: { code: 'USD', name: 'US Dollar', symbol: '$' },
-    nativeToken: {
-      priceInLocal: 1800,
-      priceInUSD: 1800,
-      isLoading: false
-    },
-    setCurrency: vi.fn()
-    // fetchNativeTokenPrice: vi.fn()
-  })
-}))
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
+  }
+})
+
 
 const mockTeamData = {
   currentTeam: {
@@ -203,7 +200,7 @@ describe('GenericTransactionHistory', () => {
 
   it('shows export button by default', () => {
     const wrapper = createWrapper({ showExport: true })
-    console.log(wrapper.html())
+    // console.log(wrapper.html())
 
     const exportButton = wrapper.find('[data-test="transaction-history-export-button"]')
     expect(exportButton.exists()).toBe(true)
