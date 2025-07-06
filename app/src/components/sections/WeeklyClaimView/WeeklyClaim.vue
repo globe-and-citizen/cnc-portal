@@ -1,10 +1,11 @@
 <template>
+  {{}}
   <CardComponent :title="singleUser ? 'Weekly Claim (User)' : 'Weekly Claim'" class="w-full pb-7">
     <TableComponent v-if="data" :rows="data" :columns="columns" :loading="isTeamClaimDataFetching">
       <template #member-data="{ row }">
         <RouterLink
           :to="{
-            name: 'cash-remunerations-member',
+            name: 'claim-history',
             params: { id: teamStore.currentTeam?.id, memberAddress: row.member.address }
           }"
           class="flex items-center gap-2 hover:underline text-emerald-700"

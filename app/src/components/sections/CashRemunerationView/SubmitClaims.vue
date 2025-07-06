@@ -13,23 +13,48 @@
     <div class="flex flex-col gap-4">
       <h3 class="text-xl font-bold">Submit Claim</h3>
       <hr />
-      <label class="input input-bordered flex items-center gap-2 input-md">
-        <span class="w-full" data-test="hours-worked-label">Input hours work</span>
+      <div class="flex flex-col gap-2">
+        <label class="flex items-center">
+          <span class="w-full" data-test="hours-worked-label">Date</span>
+        </label>
+        <VueDatePicker
+          v-model="hoursWorked.dayWorked"
+          class="input input-bordered input-md"
+          data-test="date-input"
+        />
+        <!-- <VueDatePicker
+          v-model="hoursWorked.dayWorked"
+          :allowed-dates="allowedDates"
+          class="input input-bordered input-md"
+          data-test="date-input"
+          disable-month-year-select
+          :month-change-on-scroll="false"
+          :enable-time-picker="false"
+        /> -->
+      </div>
+      <div class="flex flex-col gap-2">
+        <label class="flex items-center">
+          <span class="w-full" data-test="hours-worked-label">Hours worked</span>
+        </label>
         <input
           type="text"
-          class="grow"
+          class="input input-bordered input-md grow"
           data-test="hours-worked-input"
           placeholder="10"
           v-model="hoursWorked.hoursWorked"
         />
-      </label>
-
-      <textarea
-        class="textarea input-bordered"
-        placeholder="I worked on the ...."
-        data-test="what-did-you-do-textarea-input"
-        v-model="hoursWorked.memo"
-      ></textarea>
+      </div>
+      <div class="flex flex-col gap-2">
+        <label class="flex items-center">
+          <span class="w-full" data-test="hours-worked-label">Memo</span>
+        </label>
+        <textarea
+          class="textarea input-bordered"
+          placeholder="I worked on the ...."
+          data-test="memo-input"
+          v-model="hoursWorked.memo"
+        ></textarea>
+      </div>
 
       <div
         class="pl-4 text-red-500 text-sm"
@@ -80,10 +105,28 @@ const teamStore = useTeamStore()
 const emits = defineEmits(['refetchClaims'])
 
 const modal = ref(false)
-const hoursWorked = ref<{ hoursWorked: string | undefined; memo: string | undefined }>({
+const hoursWorked = ref<{
+  hoursWorked: string | undefined
+  memo: string | undefined
+  dayWorked: string | undefined
+}>({
   hoursWorked: undefined,
-  memo: undefined
+  memo: undefined,
+  dayWorked: new Date().toISOString().split('T')[0] // Default to today's date
 })
+
+// TODO: enable this to restrict date selection to the current week
+// const allowedDates = computed(() => {
+//   const today = new Date()
+//   const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay() // Make Sunday = 7
+//   const monday = new Date(today)
+//   monday.setDate(today.getDate() - (dayOfWeek - 1))
+//   const days = []
+//   for (let d = new Date(monday); d <= today; d.setDate(d.getDate() + 1)) {
+//     days.push(new Date(d))
+//   }
+//   return days
+// })
 
 const openModal = () => {
   modal.value = true
@@ -99,6 +142,9 @@ const rules = {
     memo: {
       required,
       maxLength: maxLength(200)
+    },
+    dayWorked: {
+      required
     }
   }
 }
@@ -114,8 +160,7 @@ const {
 } = useCustomFetch('/claim', { immediate: false })
   .post(() => ({
     teamId: teamId.value,
-    hoursWorked: hoursWorked.value.hoursWorked,
-    memo: hoursWorked.value.memo
+    ...hoursWorked.value
   }))
   .json()
 

@@ -170,7 +170,7 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
           },
         },
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: { weekStart: "asc" },
     });
 
     return res.status(200).json(weeklyClaims);

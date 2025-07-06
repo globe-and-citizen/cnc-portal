@@ -5,21 +5,23 @@ import { Prisma, Claim } from "@prisma/client";
 import { isUserMemberOfTeam } from "./wageController";
 import { getMondayStart, todayMidnight } from "../utils/dayUtils";
 
-type claimBodyRequest = Pick<Claim, "hoursWorked"> & {
-  memo: string;
+type claimBodyRequest = Pick<Claim, "hoursWorked" | "dayWorked" | "memo"> & {
   teamId: string;
 };
 
+// TODO limit weeday only for the current week. Betwen Monday and the current day
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
 
   const body = req.body as claimBodyRequest;
   const hoursWorked = Number(body.hoursWorked);
   const memo = body.memo as string;
+  const dayWorked = body.dayWorked
+    ? new Date(body.dayWorked)
+    : todayMidnight(new Date());
   const teamId = Number(body.teamId);
 
-  const weekStart = getMondayStart(new Date());
-  const dayWorked = todayMidnight(new Date());
+  const weekStart = getMondayStart(dayWorked);
 
   // Validating the claim data
   // Checking required data

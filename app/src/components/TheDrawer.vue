@@ -310,7 +310,7 @@ const menuItems = computed(() => [
         label: ' Claim History',
         route: {
           name: 'claim-history',
-          params: { id: teamStore.currentTeam?.id || '1' }
+          params: { id: teamStore.currentTeam?.id || '1', memberAddress: userStore.address }
         },
         active: route.name === 'claim-history',
         show:
@@ -360,6 +360,36 @@ const menuItems = computed(() => [
     },
     active: route.name === 'sher-token',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  },
+  {
+    label: 'Administration',
+    icon: 'heroicons:chart-bar',
+    route: {
+      name: 'administration',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    active: route.name === 'bod-elections',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
+    children: [
+      {
+        label: 'BoD Election',
+        route: {
+          name: 'bod-elections',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'bod-elections',
+        show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      }
+      // {
+      //   label: 'Weekly Claim',
+      //   route: {
+      //     name: 'weekly-claim',
+      //     params: { id: teamStore.currentTeam?.id || '1' }
+      //   },
+      //   active: route.name === 'weekly-claim',
+      //   show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      // }
+    ].filter((child) => child.show)
   },
   {
     label: 'vesting',

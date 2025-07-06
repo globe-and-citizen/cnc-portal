@@ -3,30 +3,30 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
 import VestingABI from '@/artifacts/abi/Vesting.json'
-//import { useToastStore } from '@/stores/__mocks__/useToastStore'
-import { type VestingRow } from '@/types/vesting'
 import { ref } from 'vue'
 import { VESTING_ADDRESS } from '@/constant'
 
 // Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
-
+const mockSymbol = ref<string>('shr')
+const mockReloadKey = ref<number>(0)
 // Mocks
-const mockVestingInfos = ref<VestingRow[]>([
-  {
-    teamId: 1,
-    member: memberAddress,
-    startDate: new Date(Date.now() * 3600 * 1000).toLocaleDateString('en-GB'),
-    durationDays: 30,
-    cliffDays: 0,
-    totalAmount: Number(BigInt(10e18)),
-    released: Number(BigInt(2e18)),
-    status: 'Active',
-    tokenSymbol: 'shr',
-    isStarted: true
-  }
+const mockVestingInfos = ref([
+  [memberAddress],
+  [
+    {
+      start: `${Math.floor(Date.now() / 1000) - 3600}`,
+      duration: `${30 * 86400}`,
+      cliff: '0',
+      totalAmount: BigInt(10e18),
+      released: BigInt(2e18),
+      active: true
+    }
+  ]
 ])
 
+const refetchVestingInfos = vi.fn()
+const mockArchivedInfos = ref([[], []])
 const mockCurrentTeam = ref({
   id: 1,
   ownerAddress: memberAddress,
@@ -63,7 +63,28 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   return {
     ...actual,
     useWriteContract: vi.fn(() => mockWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockWaitReceipt)
+    useWaitForTransactionReceipt: vi.fn(() => mockWaitReceipt),
+    useReadContract: vi.fn(({ functionName }: { functionName: string }) => {
+      if (functionName === 'getTeamVestingsWithMembers') {
+        return {
+          data: mockVestingInfos,
+          error: ref(null),
+          refetch: refetchVestingInfos
+        }
+      }
+      if (functionName === 'getTeamAllArchivedVestingsFlat') {
+        return {
+          data: mockArchivedInfos,
+          error: ref(null),
+          refetch: vi.fn()
+        }
+      }
+      return {
+        data: mockSymbol,
+        error: ref(null),
+        refetch: vi.fn()
+      }
+    })
   }
 })
 
@@ -74,7 +95,7 @@ describe('VestingFlow.vue', () => {
   const mountComponent = () => {
     return mount(VestingFlow, {
       props: {
-        vestings: mockVestingInfos.value
+        reloadKey: mockReloadKey.value
       },
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
@@ -100,18 +121,17 @@ describe('VestingFlow.vue', () => {
   it('calls releaseVesting with correct parameters when clicked', async () => {
     // Setup mock data with isStarted set to true
     mockVestingInfos.value = [
-      {
-        teamId: 1,
-        member: memberAddress,
-        startDate: new Date(Date.now() - 24 * 3600 * 1000).toLocaleDateString('en-GB'),
-        durationDays: 30,
-        cliffDays: 0,
-        totalAmount: Number(BigInt(100e18)),
-        released: Number(BigInt(0e18)),
-        status: 'Active',
-        tokenSymbol: 'shr',
-        isStarted: true
-      }
+      [memberAddress],
+      [
+        {
+          start: `${Math.floor(Date.now() / 1000) - 24 * 3600}`,
+          duration: `${30 * 86400}`,
+          cliff: '0',
+          totalAmount: BigInt(100e18),
+          released: BigInt(0),
+          active: true
+        }
+      ]
     ]
 
     wrapper = mountComponent()
@@ -137,17 +157,17 @@ describe('VestingFlow.vue', () => {
 
   it('disables Release button when vesting not started', async () => {
     mockVestingInfos.value = [
-      {
-        teamId: 1,
-        member: memberAddress,
-        startDate: new Date(Date.now() - 24 * 3600 * 1000).toLocaleDateString('en-GB'),
-        durationDays: 30,
-        cliffDays: 0,
-        totalAmount: Number(BigInt(100e18)),
-        released: Number(BigInt(0e18)),
-        status: 'Active',
-        tokenSymbol: 'shr'
-      }
+      [memberAddress],
+      [
+        {
+          start: `${Math.floor(Date.now() / 1000) + 3600}`, // future timestamp
+          duration: `${30 * 86400}`,
+          cliff: '0',
+          totalAmount: BigInt(100e18),
+          released: BigInt(0),
+          active: true
+        }
+      ]
     ]
     wrapper = mountComponent()
     await wrapper.vm.$nextTick()
@@ -158,17 +178,17 @@ describe('VestingFlow.vue', () => {
 
   it('calls stopVesting with correct parameters when clicked', async () => {
     mockVestingInfos.value = [
-      {
-        teamId: 1,
-        member: memberAddress,
-        startDate: new Date(Date.now() + 3600 * 1000).toLocaleDateString('en-GB'),
-        durationDays: 30,
-        cliffDays: 0,
-        totalAmount: Number(BigInt(10e18)),
-        released: Number(BigInt(2e18)),
-        status: 'Active',
-        tokenSymbol: 'shr'
-      }
+      [memberAddress],
+      [
+        {
+          start: `${Math.floor(Date.now() / 1000)}`,
+          duration: `${30 * 86400}`,
+          cliff: '0',
+          totalAmount: BigInt(10e18),
+          released: BigInt(2e18),
+          active: true
+        }
+      ]
     ]
     wrapper = mountComponent()
     await wrapper.vm.$nextTick()

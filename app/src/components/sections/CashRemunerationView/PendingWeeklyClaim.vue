@@ -17,7 +17,7 @@
             <UserComponent :user="row.member" />
           </template>
           <template #weekStart-data="{ row }">
-            <span class="font-bold">{{ getCurrentMonthYear(row.weekStart) }}</span>
+            <span class="font-bold line-clamp-1">{{ getCurrentMonthYear(row.weekStart) }}</span>
             <br />
             <span>{{ formatDate(row.weekStart) }}</span>
           </template>
@@ -38,17 +38,15 @@
                     Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
                   ).toFixed(2)
                 }}
-                {{ NETWORK.nativeTokenSymbol }} / USD
+                {{ NETWORK.nativeTokenSymbol }} / Hour
               </span>
 
               <div class="flex">
-                <span>
-                  {{ getHourlyRate(row.wage.ratePerHour, 'native') }} {{ NETWORK.currencySymbol }},
+                <span v-for="(rate, index) in row.wage.ratePerHour" :key="rate.type">
+                  {{ rate.amount }}
+                  {{ rate.type == 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
+                  {{ index < row.wage.ratePerHour.length - 1 ? ',' : '' }}
                 </span>
-
-                <span> {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} TOKEN ,</span>
-
-                <span> {{ getHourlyRate(row.wage.ratePerHour, 'usdc') }} USDC </span>
               </div>
             </div>
           </template>
@@ -63,37 +61,13 @@
                     Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
                   ).toFixed(2)
                 }}
-                {{ NETWORK.nativeTokenSymbol }} / USD
+                {{ NETWORK.nativeTokenSymbol }} / Hour
               </span>
               <div>
-                <span>
-                  {{
-                    getHourlyRate(row.wage.ratePerHour, 'native') === 'N/A'
-                      ? 'N/A'
-                      : Number(getHourlyRate(row.wage.ratePerHour, 'native')) *
-                        getTotalHoursWorked(row.claims)
-                  }}
-                  {{ NETWORK.currencySymbol }},
-                </span>
-
-                <span>
-                  {{
-                    getHourlyRate(row.wage.ratePerHour, 'sher') === 'N/A'
-                      ? 'N/A'
-                      : Number(getHourlyRate(row.wage.ratePerHour, 'sher')) *
-                        getTotalHoursWorked(row.claims)
-                  }}
-                  TOKEN,
-                </span>
-
-                <span>
-                  {{
-                    getHourlyRate(row.wage.ratePerHour, 'usdc') === 'N/A'
-                      ? 'N/A'
-                      : Number(getHourlyRate(row.wage.ratePerHour, 'usdc')) *
-                        getTotalHoursWorked(row.claims)
-                  }}
-                  USDC
+                <span v-for="(rate, index) in row.wage.ratePerHour" :key="rate.type" class="mr-1">
+                  {{ rate.amount * getTotalHoursWorked(row.claims) }}
+                  {{ rate.type == 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
+                  {{ index < row.wage.ratePerHour.length - 1 ? ',' : '' }}
                 </span>
               </div>
             </div>
