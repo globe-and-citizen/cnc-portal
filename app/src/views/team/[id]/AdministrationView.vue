@@ -1,7 +1,7 @@
 <template>
   <TabNavigation v-if="team" v-model="activeTab" :tabs="tabs" class="w-full">
     <template #tab-0>
-      <ProposalSection v-if="activeTab == 0" :team="team" />
+      <BoardOfDirectorsSection v-if="activeTab == 0" :team="team" />
     </template>
   </TabNavigation>
 </template>

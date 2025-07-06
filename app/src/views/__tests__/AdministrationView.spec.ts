@@ -61,16 +61,12 @@ describe('AdministrationView', () => {
       SingleTeamTabs.BoardOfDirectors
     ])
   })
-  it('displays the proposal tab by default', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.findComponent({ name: 'ProposalSection' }).exists()).toBe(true)
-  })
   it('displays the board of directors tab', async () => {
     interface IWrapper {
       activeTab: number
     }
     const wrapper = createWrapper()
-    ;(wrapper.vm as unknown as IWrapper).activeTab = 1
+    ;(wrapper.vm as unknown as IWrapper).activeTab = 0
     await wrapper.vm.$nextTick()
     expect(wrapper.findComponent({ name: 'BoardOfDirectorsSection' }).exists()).toBe(true)
   })
