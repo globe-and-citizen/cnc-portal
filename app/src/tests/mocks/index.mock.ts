@@ -2,7 +2,7 @@
 import { vi } from 'vitest'
 import { ref } from 'vue'
 
-export const mockUseCurrencyStore = () => ({
+export const mockUseCurrencyStore = {
   localCurrency: ref({
     code: 'USD',
     name: 'US Dollar',
@@ -31,12 +31,18 @@ export const mockUseCurrencyStore = () => ({
   tokenStates: [
     {
       id: 'native',
-      data: ref({ market_data: { current_price: { usd: 2000, cad: 2500, eur: 1800, idr: 30000000, inr: 150000 } } }),
+      data: ref({
+        market_data: {
+          current_price: { usd: 2000, cad: 2500, eur: 1800, idr: 30000000, inr: 150000 }
+        }
+      }),
       loading: ref(false)
     },
     {
       id: 'usdc',
-      data: ref({ market_data: { current_price: { usd: 1, cad: 1.3, eur: 0.9, idr: 15000, inr: 80 } } }),
+      data: ref({
+        market_data: { current_price: { usd: 1, cad: 1.3, eur: 0.9, idr: 15000, inr: 80 } }
+      }),
       loading: ref(false)
     }
   ],
@@ -50,22 +56,20 @@ export const mockUseCurrencyStore = () => ({
       { id: 'usd', price: tokenId === 'native' ? 2000 : 1, code: 'USD', symbol: '$' }
     ]
   })),
-  getTokenPrice: vi.fn((
-    tokenId: 'native' | 'usdc',
-    local: boolean = true,
-    currencyCode: string = 'usd'
-  ) => {
-    // Simulate price lookup logic for mock
-    const prices: Record<'native' | 'usdc', { usd: number; eur: number; cad: number }> = {
-      native: { usd: 2000, eur: 1800, cad: 2500 },
-      usdc: { usd: 1, eur: 0.9, cad: 1.3 }
+  getTokenPrice: vi.fn(
+    (tokenId: 'native' | 'usdc', local: boolean = true, currencyCode: string = 'usd') => {
+      // Simulate price lookup logic for mock
+      const prices: Record<'native' | 'usdc', { usd: number; eur: number; cad: number }> = {
+        native: { usd: 2000, eur: 1800, cad: 2500 },
+        usdc: { usd: 1, eur: 0.9, cad: 1.3 }
+      }
+      const token = prices[tokenId] || { usd: 0, eur: 0, cad: 0 }
+      // If local, always return USD price, else use currencyCode
+      if (local) return token.usd
+      const key = currencyCode?.toLowerCase?.() as 'usd' | 'eur' | 'cad'
+      return token[key] ?? 0
     }
-    const token = prices[tokenId] || { usd: 0, eur: 0, cad: 0 }
-    // If local, always return USD price, else use currencyCode
-    if (local) return token.usd
-    const key = currencyCode?.toLowerCase?.() as 'usd' | 'eur' | 'cad'
-    return token[key] ?? 0
-  }),
+  ),
   isTokenLoading: vi.fn(() => false),
   setCurrency: vi.fn()
-})
+}

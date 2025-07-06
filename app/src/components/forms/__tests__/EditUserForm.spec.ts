@@ -6,6 +6,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { ref } from 'vue'
 import { NETWORK } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 const mockCopy = vi.fn()
 const mockClipboard = {
@@ -20,17 +21,13 @@ vi.mock('@vueuse/core', async (importOriginal) => {
     useClipboard: vi.fn(() => mockClipboard)
   }
 })
-vi.mock('@/stores', async (importOriginal) => {
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
     ...original,
-    useCurrencyStore: () => ({
-      localCurrency: ref('USD'),
-      setCurrency: vi.fn()
-    })
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
   }
 })
-
 interface ComponentData {
   selectedCurrency: string
 }
