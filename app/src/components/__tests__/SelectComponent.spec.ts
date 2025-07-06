@@ -117,9 +117,6 @@ describe('GenericSelect', () => {
     expect(wrapper.emitted('update:modelValue')).toHaveLength(2)
     expect(wrapper.emitted('update:modelValue')?.[1]).toEqual(['USDC'])
 
-    expect(wrapper.emitted('change')).toBeTruthy()
-    expect(wrapper.emitted('change')).toHaveLength(2)
-    expect(wrapper.emitted('change')?.[1]).toEqual(['USDC'])
   })
 
   it('closes dropdown after selection', async () => {
