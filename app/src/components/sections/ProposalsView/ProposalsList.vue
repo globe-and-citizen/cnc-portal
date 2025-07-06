@@ -53,12 +53,12 @@ const fetchProposals = async () => {
 
     while (consecutiveErrors < maxConsecutiveErrors && proposalId <= maxProposals) {
       try {
-        const proposal = (await readContract(config as any, {
+        const proposal = (await readContract(config, {
           address: proposalsAddress.value,
           abi: PROPOSALS_ABI,
           functionName: 'getProposal',
           args: [BigInt(proposalId)]
-        })) as any
+        })) as Proposal
 
         // If we get a proposal with id 0, it means it doesn't exist
         if (proposal.id === 0n) {
@@ -90,6 +90,7 @@ const fetchProposals = async () => {
         proposalId++
       } catch (err) {
         // Error fetching this proposal ID, likely doesn't exist
+        console.warn(`Error fetching proposal ID ${proposalId}:`, err)
         consecutiveErrors++
         proposalId++
       }

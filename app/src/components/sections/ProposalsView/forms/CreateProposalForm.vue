@@ -102,8 +102,8 @@
     <ButtonUI
       variant="primary"
       @click="handleSubmit"
-      :loading="loading || isCreatingProposal || isConfirmingProposal"
-      :disabled="loading || isCreatingProposal || isConfirmingProposal"
+      :loading="isCreatingProposal || isConfirmingProposal"
+      :disabled="isCreatingProposal || isConfirmingProposal"
       data-test="create-proposal-button"
     >
       Create Proposal
@@ -115,7 +115,7 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import { ref, computed, watch } from 'vue'
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
+import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
 import { useToastStore } from '@/stores/useToastStore'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
@@ -125,9 +125,6 @@ import { useVuelidate } from '@vuelidate/core'
 
 // Props and emits
 const emit = defineEmits(['closeModal', 'proposal-created'])
-const props = defineProps<{
-  loading: boolean
-}>()
 
 // Stores
 const teamStore = useTeamStore()

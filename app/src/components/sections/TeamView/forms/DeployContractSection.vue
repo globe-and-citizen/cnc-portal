@@ -22,7 +22,6 @@ import { ref, watch, computed } from 'vue'
 // Contract ABIs
 import OfficerABI from '@/artifacts/abi/officer.json'
 import BankABI from '@/artifacts/abi/bank.json'
-import VotingABI from '@/artifacts/abi/voting.json'
 import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
 import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'

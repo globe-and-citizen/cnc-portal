@@ -183,7 +183,7 @@ describe('Proposals Contract', function () {
           proposalId,
           boardMember1.address,
           VoteOption.Yes,
-          (value: BigInt) => typeof value === 'bigint'
+          (value: bigint) => typeof value === 'bigint'
         )
 
       const proposal = await proposalsContract.getProposal(proposalId)
