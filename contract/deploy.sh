@@ -10,6 +10,7 @@ fi
 
 npx hardhat ignition deploy ignition/modules/ProxyModule.ts --network "$1"
 npx hardhat ignition deploy ignition/modules/OfficerModule.ts --network "$1"
+npx hardhat ignition deploy ignition/modules/MockBoardOfDirectorsModule.ts --network "$1"
 npx hardhat ignition deploy ignition/modules/VestingProxyModule.ts --network "$1" 
 
 if [ "$2" == "mock" ]; then

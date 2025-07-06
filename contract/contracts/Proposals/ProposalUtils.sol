@@ -10,12 +10,8 @@ library ProposalUtils {
    * @param startDate The start date of the proposal.
    * @param endDate The end date of the proposal.
    */
-  function validateProposalDates(uint256 startDate, uint256 endDate) internal view {
+  function validateProposalDates(uint256 startDate, uint256 endDate) internal pure {
     if (startDate == 0 || endDate == 0 || startDate >= endDate) {
-      revert InvalidProposalDates();
-    }
-    // Additional check to ensure dates are in the future
-    if (startDate < block.timestamp) {
       revert InvalidProposalDates();
     }
   }

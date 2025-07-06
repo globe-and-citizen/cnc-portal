@@ -27,24 +27,27 @@ import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
 import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import FACTORY_BEACON_ABI from '@/artifacts/abi/factory-beacon.json'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 
 import {
   BANK_BEACON_ADDRESS,
   BOD_BEACON_ADDRESS,
   CASH_REMUNERATION_EIP712_BEACON_ADDRESS,
+  ELECTIONS_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS,
   INVESTOR_V1_BEACON_ADDRESS,
   OFFICER_BEACON,
+  PROPOSALS_BEACON_ADDRESS,
   TIPS_ADDRESS,
   USDC_ADDRESS,
   USDT_ADDRESS,
-  validateAddresses,
-  VOTING_BEACON_ADDRESS
+  validateAddresses
 } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { log } from '@/utils'
+import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 
 const props = withDefaults(
   defineProps<{
@@ -103,8 +106,12 @@ const deployOfficerContract = async () => {
         beaconAddress: BANK_BEACON_ADDRESS
       },
       {
-        beaconType: 'Voting',
-        beaconAddress: VOTING_BEACON_ADDRESS
+        beaconType: 'Elections',
+        beaconAddress: ELECTIONS_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'Proposals',
+        beaconAddress: PROPOSALS_BEACON_ADDRESS
       },
       {
         beaconType: 'BoardOfDirectors',
@@ -151,11 +158,21 @@ const deployOfficerContract = async () => {
       })
     })
 
-    // Voting contract
+    // Elections contract
     deployments.push({
-      contractType: 'Voting',
+      contractType: 'Elections',
       initializerData: encodeFunctionData({
-        abi: VotingABI,
+        abi: ELECTIONS_ABI,
+        functionName: 'initialize',
+        args: [currentUserAddress]
+      })
+    })
+
+    // Proposal contract
+    deployments.push({
+      contractType: 'Proposals',
+      initializerData: encodeFunctionData({
+        abi: PROPOSALS_ABI,
         functionName: 'initialize',
         args: [currentUserAddress]
       })
