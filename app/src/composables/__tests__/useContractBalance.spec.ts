@@ -38,7 +38,6 @@ vi.mock('@/stores/currencyStore', async (importOriginal) => {
   }
 })
 
-
 describe.skip('useContractBalance', () => {
   const mockAddress = '0x1234567890123456789012345678901234567890' as Address
 
