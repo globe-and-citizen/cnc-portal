@@ -1,6 +1,5 @@
 <template>
-  {{ selectedToken }}
-  <label class="form-control w-full" :class="{ 'mt-4': selectedToken?.id !== 'native' }">
+  <label class="form-control w-full" :class="{ 'mt-4': selectedToken?.tokenId !== 'native' }">
     <div class="label">
       <span class="label-text">Deposit</span>
       <span class="label-text-alt">Balance: {{ selectedToken?.balance }}</span>
@@ -13,6 +12,7 @@
         v-model="amount"
         data-test="amountInput"
         @input="handleAmountInput"
+        aria-label="Deposit amount"
       />
       <div class="flex gap-1">
         <button
@@ -21,6 +21,8 @@
           class="btn btn-xs btn-ghost cursor-pointer"
           @click="usePercentageOfBalance(percent)"
           :data-test="`percentButton-${percent}`"
+          :disabled="isLoading || !selectedToken || selectedToken.balance === 0"
+          :aria-label="`Set ${percent}% of balance`"
         >
           {{ percent }}%
         </button>
@@ -28,35 +30,23 @@
       <button
         class="btn btn-xs btn-ghost mr-2"
         @click="useMaxBalance"
-        :disabled="isLoading"
+        :disabled="isLoading || !selectedToken || selectedToken.balance === 0"
         data-test="maxButton"
+        aria-label="Set max balance"
       >
         Max
       </button>
       <div>
         <SelectComponent
-          :options="
-            tokenList.map((token) => ({
-              label: token.symbol,
-              value: token.tokenId
-            }))
-          "
+          v-model="selectedTokenId"
+          :options="tokenList.map((token) => ({ label: token.symbol, value: token.tokenId }))"
           :disabled="isLoading"
-          @change="
-            (value) => {
-              handleTokenChange(value)
-            }
-          "
-          :format-value="
-            (value: string) => {
-              return value === 'SepoliaETH' ? 'SepETH' : value
-            }
-          "
+          :format-value="(value: string) => (value === 'SepoliaETH' ? 'SepETH' : value)"
+          aria-label="Select token"
         />
       </div>
     </div>
     <div class="label">
-      <!-- Estimated Price in selected currency -->
       <span class="label-text" v-if="amount && parseFloat(amount) > 0">
         ≈ {{ estimatedPrice }}
       </span>
@@ -81,7 +71,6 @@ interface TokenOption {
   balance: number
   price?: number
   code?: string
-  [key: string]: unknown
 }
 
 const props = defineProps<{
@@ -105,9 +94,7 @@ const selectedTokenId = computed({
 })
 
 const tokenList = computed(() => props.tokens)
-const selectedToken = computed(() =>
-  props.tokens.find((b) => b.tokenId === selectedTokenId.value)
-)
+const selectedToken = computed(() => props.tokens.find((b) => b.tokenId === selectedTokenId.value))
 
 const estimatedPrice = computed(() => {
   const price = selectedToken.value?.price ?? 0
@@ -136,9 +123,12 @@ const $v = useVuelidate(rules, { amount })
 
 const useMaxBalance = () => {
   amount.value = selectedToken.value?.balance?.toString() ?? '0.00'
+  $v.value.$touch()
 }
 const usePercentageOfBalance = (percentage: number) => {
+  // If you want to support decimals per token, add a decimals prop and use it here
   amount.value = (((selectedToken.value?.balance ?? 0) * percentage) / 100).toFixed(4)
+  $v.value.$touch()
 }
 const handleAmountInput = (event: Event) => {
   const input = event.target as HTMLInputElement
@@ -149,9 +139,7 @@ const handleAmountInput = (event: Event) => {
   } else {
     amount.value = value
   }
-}
-const handleTokenChange = (value: string) => {
-  selectedTokenId.value = value
+  $v.value.$touch()
 }
 watch(amount, () => {
   $v.value.$touch()
