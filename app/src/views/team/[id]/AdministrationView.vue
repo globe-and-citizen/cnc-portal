@@ -3,9 +3,6 @@
     <template #tab-0>
       <ProposalSection v-if="activeTab == 0" :team="team" />
     </template>
-    <template #tab-1>
-      <BoardOfDirectorsSection v-if="activeTab == 1" :team="team" />
-    </template>
   </TabNavigation>
 </template>
 
@@ -13,7 +10,6 @@
 import { ref, computed } from 'vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import { SingleTeamTabs } from '@/types'
-import ProposalSection from '@/components/sections/AdministrationView/ProposalSection.vue'
 import BoardOfDirectorsSection from '@/components/sections/AdministrationView/BoardOfDirectorsSection.vue'
 import { useTeamStore } from '@/stores'
 
