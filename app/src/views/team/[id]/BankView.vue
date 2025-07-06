@@ -1,11 +1,6 @@
 <template>
   <div class="flex flex-col gap-6">
-    <BankBalanceSection
-      v-if="bankAddress"
-      ref="bankBalanceSection"
-      :bank-address="bankAddress!"
-      @balance-updated="$forceUpdate()"
-    />
+    <BankBalanceSection v-if="bankAddress" ref="bankBalanceSection" :bank-address="bankAddress!" />
     <GenericTokenHoldingsSection v-if="bankAddress" :address="bankAddress!" />
     <!-- <TransactionsHistorySection /> -->
   </div>

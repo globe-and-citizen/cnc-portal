@@ -106,9 +106,7 @@ export const useCurrencyStore = defineStore('currency', () => {
     const priceData = token?.data.value
     if (!priceData) return 0
     // Use local currency by default, otherwise use provided currencyCode
-    const code = local
-      ? currency.value.code.toLowerCase()
-      : (currencyCode ?? 'usd').toLowerCase()
+    const code = local ? currency.value.code.toLowerCase() : (currencyCode ?? 'usd').toLowerCase()
     if (!(code in priceData.market_data.current_price)) return 0
     return priceData.market_data.current_price[code] ?? 0
   }
