@@ -48,7 +48,7 @@ const props = defineProps({
   }
 })
 
-const emits = defineEmits(['update:modelValue', 'change'])
+const emits = defineEmits(['update:modelValue'])
 
 const isDropdown = ref(false)
 const selectedValue = ref(
@@ -64,7 +64,6 @@ const toggleDropdown = () => {
 const selectOption = (option: Option) => {
   selectedValue.value = option.value
   emits('update:modelValue', option.value)
-  emits('change', option.value)
   isDropdown.value = false
 }
 
@@ -90,7 +89,6 @@ onMounted(() => {
     const initialValue = props.options[0].value
     selectedValue.value = initialValue
     emits('update:modelValue', initialValue)
-    emits('change', initialValue)
   }
 })
 </script>
