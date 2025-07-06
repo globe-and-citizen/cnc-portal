@@ -4,6 +4,7 @@
     class="flex items-center cursor-pointer badge badge-md badge-info text-xs"
     @click="toggleDropdown"
     data-test="generic-selector"
+    :aria-label="ariaLabel"
   >
     <span>{{ formattedSelectedValue }}</span>
     <IconifyIcon v-if="!disabled" icon="heroicons-outline:chevron-down" class="w-4 h-4" />
@@ -45,6 +46,10 @@ const props = defineProps({
   formatValue: {
     type: Function,
     default: (value: string) => value
+  },
+  ariaLabel: {
+    type: String,
+    default: ''
   }
 })
 

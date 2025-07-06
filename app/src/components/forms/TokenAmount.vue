@@ -13,6 +13,7 @@
         data-test="amountInput"
         @input="handleAmountInput"
         aria-label="Deposit amount"
+        :disabled="isLoading"
       />
       <div class="flex gap-1">
         <button
@@ -111,10 +112,11 @@ const notExceedingBalance = helpers.withMessage('Amount exceeds your balance', (
   const amountValue = selectedToken.value?.balance ?? 0
   return parseFloat(value) <= amountValue
 })
+const numericWithMessage = helpers.withMessage('Value is not a valid number', numeric)
 const rules = {
   amount: {
     required,
-    numeric,
+    numeric: numericWithMessage,
     notZero,
     notExceedingBalance
   }
