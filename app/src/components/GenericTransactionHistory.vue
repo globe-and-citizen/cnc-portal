@@ -292,11 +292,13 @@ const formatDate = (date: string | number) => {
 
 const formatAmount = (transaction: BaseTransaction, currency: string) => {
   const tokenAmount = Number(transaction.amount)
-  if (tokenAmount <= 0) return currency === 'USD' ? '$0.00' : '0.00'
+  // Defensive: fallback to 'USD' if currency is falsy
+  const safeCurrency = currency || 'USD'
+  if (tokenAmount <= 0) return safeCurrency === 'USD' ? '$0.00' : '0.00'
   const usdAmount =
     transaction.token === 'USDC' ? tokenAmount : tokenAmount * nativeToken.value.priceInUSD!
-  const formatter = Intl.NumberFormat('en-US', { style: 'currency', currency })
-  return currency === 'USD'
+  const formatter = Intl.NumberFormat('en-US', { style: 'currency', currency: safeCurrency })
+  return safeCurrency === 'USD'
     ? formatter.format(usdAmount)
     : formatter.format(
         usdAmount * (nativeToken.value.priceInLocal! / nativeToken.value.priceInUSD!)
