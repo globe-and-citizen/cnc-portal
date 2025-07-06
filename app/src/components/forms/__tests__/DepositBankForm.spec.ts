@@ -106,7 +106,7 @@ describe('DepositBankModal.vue', () => {
       const wrapper = createWrapper()
       const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
       expect(selectComponent.exists()).toBe(true)
-      await selectComponent.vm.$emit('change', '1')
+      await selectComponent.vm.$emit('update:modelValue', '1')
       expect(wrapper.find('.label-text-alt').text()).toMatchInlineSnapshot(`"Balance:"`)
     })
 
@@ -219,7 +219,7 @@ describe('DepositBankModal.vue', () => {
       const wrapper = createWrapper()
       const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
       expect(selectComponent.exists()).toBe(true)
-      await selectComponent.vm.$emit('change', '1')
+      await selectComponent.vm.$emit('update:modelValue', '1')
       await wrapper.find('[data-test="maxButton"]').trigger('click')
       expect((wrapper.find('[data-test="amountInput"]').element as HTMLInputElement).value).toBe(
         '20000.0000'
@@ -254,7 +254,7 @@ describe('DepositBankModal.vue', () => {
     it.skip('fills input with correct percentage of USDC balance when buttons are clicked', async () => {
       const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
       expect(selectComponent.exists()).toBe(true)
-      await selectComponent.vm.$emit('change', '1')
+      await selectComponent.vm.$emit('update:modelValue', '1')
 
       await wrapper.find('[data-test="percentButton-25"]').trigger('click')
       expect((amountInput.element as HTMLInputElement).value).toBe('5000.0000')
@@ -275,7 +275,7 @@ describe('DepositBankModal.vue', () => {
       // Select USDC token
       const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
       expect(selectComponent.exists()).toBe(true)
-      await selectComponent.vm.$emit('change', '1')
+      await selectComponent.vm.$emit('update:modelValue', '1')
     })
 
     it.skip('starts at step 1', () => {
@@ -309,7 +309,7 @@ describe('DepositBankModal.vue', () => {
       await wrapper.vm.$nextTick()
       const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
       expect(selectComponent.exists()).toBe(true)
-      await selectComponent.vm.$emit('change', '0')
+      await selectComponent.vm.$emit('update:modelValue', '0')
       await wrapper.vm.$nextTick()
 
       const steps = wrapper.findAll('.step')
@@ -337,7 +337,7 @@ describe('DepositBankModal.vue', () => {
     it('shows success toast and closes modal on USDC deposit confirmation', async () => {
       const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
       expect(selectComponent.exists()).toBe(true)
-      await selectComponent.vm.$emit('change', '1')
+      await selectComponent.vm.$emit('update:modelValue', '1')
 
       mockUseWaitForTransactionReceipt.isLoading.value = true
       await wrapper.vm.$nextTick()
@@ -368,7 +368,7 @@ describe('DepositBankModal.vue', () => {
       // Select USDC
       const selectComponent = wrapper.findComponent({ name: 'SelectComponent' })
       expect(selectComponent.exists()).toBe(true)
-      await selectComponent.vm.$emit('change', '1')
+      await selectComponent.vm.$emit('update:modelValue', '1')
 
       // Set amount
       await wrapper.find('[data-test="amountInput"]').setValue('100')
