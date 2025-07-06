@@ -149,7 +149,9 @@
                           : 'text-gray-600'
                     "
                     class="font-medium"
-                    >{{ vote.vote === 'yes' ? 'For' : vote.vote === 'no' ? 'Against' : 'Abstain' }}</span
+                    >{{
+                      vote.vote === 'yes' ? 'For' : vote.vote === 'no' ? 'Against' : 'Abstain'
+                    }}</span
                   >
                   <span class="text-gray-500 text-sm">{{ vote.timestamp }}</span>
                 </div>
