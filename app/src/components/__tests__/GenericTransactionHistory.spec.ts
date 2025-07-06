@@ -64,7 +64,6 @@ vi.mock('@/stores/currencyStore', async (importOriginal) => {
   }
 })
 
-
 const mockTeamData = {
   currentTeam: {
     members: [

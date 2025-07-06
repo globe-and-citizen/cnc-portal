@@ -123,7 +123,9 @@ describe('DepositBankForm.vue', () => {
       const input = wrapper.find('input[data-test="amountInput"]')
       await input.setValue('1.12345')
       await wrapper.find('.btn-primary').trigger('click')
-      expect(wrapper.find('.text-red-500').text()).toContain('Amount must have at most 4 decimal places')
+      expect(wrapper.find('.text-red-500').text()).toContain(
+        'Amount must have at most 4 decimal places'
+      )
     })
   })
 

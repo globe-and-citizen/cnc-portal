@@ -29,7 +29,6 @@ vi.mock('@/stores/currencyStore', async (importOriginal) => {
   }
 })
 
-
 const mockUseReadContract = {
   data: ref<string | null>(null),
   isLoading: ref(false),
