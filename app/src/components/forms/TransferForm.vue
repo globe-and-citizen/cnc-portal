@@ -5,12 +5,69 @@
   <div class="flex flex-col gap-4 mt-4">
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
-    <TokenAmount
-      :tokens="props.tokens"
-      v-model:modelValue="model.amount"
-      v-model:modelToken="model.token.tokenId"
-      :isLoading="props.loading"
-    />
+    <div class="input-group relative">
+      <label class="input input-bordered flex items-center gap-2 input-md">
+        <input
+          type="text"
+          class="grow min-w-0 h-full"
+          data-test="amount-input"
+          v-model="model.amount"
+        />
+        <div class="flex flex-nowrap min-w-0 items-center h-full">
+          <!-- Added flex-nowrap and min-w-0 -->
+          <div class="flex gap-1 shrink-0 items-center" data-test="percentage-buttons">
+            <!-- Added shrink-0 -->
+            <button
+              v-for="percent in [25, 50, 75]"
+              :key="percent"
+              class="btn btn-xs btn-ghost cursor-pointer"
+              @click="usePercentageOfBalance(percent)"
+              :data-test="`percentButton-${percent}`"
+            >
+              {{ percent }}%
+            </button>
+          </div>
+          <button
+            class="btn btn-xs btn-ghost mr-2 shrink-0"
+            @click="setMaxAmount"
+            type="button"
+            data-test="max-button"
+          >
+            Max
+          </button>
+
+          <div class="min-w-[100px] items-center">
+            <!-- Wrapped Select in container with min-width -->
+            <SelectComponent
+              :options="props.tokens.map((token) => ({ value: token.symbol, label: token.symbol }))"
+              :disabled="props.loading"
+              :format-value="
+                (value: string) => {
+                  return value === 'SepoliaETH' ? 'SepETH' : value
+                }
+              "
+              @change="
+                (value: string) => {
+                  model.token = props.tokens.find((token) => token.symbol === value) || model.token
+                }
+              "
+            />
+          </div>
+        </div>
+      </label>
+    </div>
+
+    <div v-if="model.amount && parseFloat(model.amount) > 0" class="text-sm text-gray-500">
+      ≈ {{ formattedTransferAmount }}
+    </div>
+
+    <div
+      class="pl-4 text-red-500 text-sm w-full text-left"
+      v-for="error of $v.model.$errors"
+      :key="error.$uid"
+    >
+      {{ error.$message }}
+    </div>
   </div>
 
   <div class="modal-action justify-center mt-4">
@@ -28,13 +85,15 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { isAddress } from 'viem'
 import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
-import TokenAmount from './TokenAmount.vue'
+import { useCurrencyStore } from '@/stores/currencyStore'
+import { formatCurrencyShort } from '@/utils'
+import SelectComponent from '../SelectComponent.vue'
 import type { TokenId } from '@/constant'
 
 export interface Token {
@@ -69,6 +128,20 @@ const model = defineModel<TransferModel>({
 })
 
 const emit = defineEmits(['transfer', 'closeModal'])
+const currencyStore = useCurrencyStore()
+
+const usePercentageOfBalance = (percentage: number) => {
+  model.value.amount = ((model.value.token.balance * percentage) / 100).toFixed(4)
+}
+
+// New computed property for transfer amount in default currency
+const formattedTransferAmount = computed(() => {
+  const tokenInfo = currencyStore.getTokenInfo(model.value.token?.tokenId as TokenId)
+  const priceObj = tokenInfo?.prices.find((p) => p.id === 'local')
+  const price = priceObj?.price ?? 0
+  const value = (Number(model.value.amount) || 0) * price
+  return formatCurrencyShort(value, priceObj?.code ?? 'USD')
+})
 
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
@@ -117,6 +190,10 @@ const submitForm = () => {
     return
   }
   emit('transfer', model.value)
+}
+
+const setMaxAmount = () => {
+  model.value.amount = model.value.token.balance.toString()
 }
 
 const handleSelectItem = (item: { name: string; address: string; type: 'member' | 'contract' }) => {

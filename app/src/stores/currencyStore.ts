@@ -7,7 +7,6 @@ import { useQuery } from '@tanstack/vue-query'
 import type { Ref } from 'vue'
 import { useTeamStore } from '@/stores/teamStore'
 import { computed, ref } from 'vue'
-import type { Address } from 'viem'
 
 export interface PriceResponse {
   market_data: {
