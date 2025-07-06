@@ -23,8 +23,8 @@
 
     <ProposalsList ref="proposalsListRef" />
     <ModalComponent v-model="createProposalModal" v-if="createProposalModal">
-      <CreateProposalForm 
-        :loading="false" 
+      <CreateProposalForm
+        :loading="false"
         @close-modal="createProposalModal = false"
         @proposal-created="handleProposalCreated"
       />

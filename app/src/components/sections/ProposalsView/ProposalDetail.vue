@@ -280,7 +280,7 @@ const vote = async (voteType: 'yes' | 'no' | 'abstain') => {
   }
 }
 
-onMounted(async () => {
+const fetchRecentVotes = async () => {
   const filter = await createEventFilter(client, {
     address: proposalsAddress.value,
     event: parseAbiItem(
@@ -302,6 +302,10 @@ onMounted(async () => {
         timestamp: formatDate(event.args.timestamp)
       }) as ProposalVoteEvent
   )
+}
+
+onMounted(async () => {
+  await fetchRecentVotes()
 })
 
 watch(voteError, (error) => {
@@ -323,6 +327,7 @@ watch(isVoteConfirmed, async (success) => {
     emits('proposal-voted')
     await queryClient.invalidateQueries({ queryKey: [proposalQueryKey, hasVotedQueryKey] })
     toastStore.addSuccessToast('Vote cast successfully!')
+    await fetchRecentVotes()
   }
 })
 </script>

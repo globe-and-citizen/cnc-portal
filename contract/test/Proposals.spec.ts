@@ -179,7 +179,12 @@ describe('Proposals Contract', function () {
     it("Should allow a board member to cast a 'Yes' vote", async function () {
       await expect(proposalsContract.connect(boardMember1).castVote(proposalId, VoteOption.Yes))
         .to.emit(proposalsContract, 'ProposalVoted')
-        .withArgs(proposalId, boardMember1.address, VoteOption.Yes)
+        .withArgs(
+          proposalId,
+          boardMember1.address,
+          VoteOption.Yes,
+          (value: BigInt) => typeof value === 'bigint'
+        )
 
       const proposal = await proposalsContract.getProposal(proposalId)
       expect(proposal.yesCount).to.equal(1)
@@ -326,6 +331,18 @@ describe('Proposals Contract', function () {
       expect(proposal.title).to.equal('Title A')
       expect(proposal.description).to.equal('Desc B')
       expect(proposal.creator).to.equal(boardMember1.address)
+    })
+
+    it('hasVoted should return true for a member who has voted', async function () {
+      const { proposalsContract, boardMember1 } = await deployContracts()
+      const now = await time.latest()
+      await proposalsContract
+        .connect(boardMember1)
+        .createProposal('Vote Test', 'Desc', 'Technical', now + 1, now + 2)
+
+      await proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
+      const hasVoted = await proposalsContract.hasVoted(1, boardMember1.address)
+      expect(hasVoted).to.be.true
     })
 
     it('getProposal should revert for a non-existent proposal', async function () {
