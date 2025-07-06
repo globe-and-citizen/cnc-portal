@@ -11,7 +11,7 @@ vi.mock('@/stores/currencyStore', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
     ...original,
-    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore() }))
   }
 })
 const defaultTokens: Token[] = [

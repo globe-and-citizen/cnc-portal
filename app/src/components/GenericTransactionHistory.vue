@@ -147,7 +147,7 @@
         formatAmount(row as BaseTransaction, 'USD')
       }}</template>
       <template #valueLocal-data="{ row }">{{
-        formatAmount(row as BaseTransaction, currencyStore.localCurrency.code)
+        formatAmount(row as BaseTransaction, currencyStore.localCurrency?.code)
       }}</template>
     </TableComponent>
 
@@ -243,10 +243,10 @@ const columns = computed(() => {
     { key: 'valueUSD', label: 'Value (USD)', sortable: false }
   ] as TableColumn[]
 
-  if (currencyStore.localCurrency.code !== 'USD') {
+  if (currencyStore.localCurrency?.code !== 'USD') {
     baseColumns.push({
       key: 'valueLocal',
-      label: `Value (${currencyStore.localCurrency.code})`,
+      label: `Value (${currencyStore.localCurrency?.code})`,
       sortable: false
     })
   }
@@ -328,7 +328,7 @@ const handleExport = async () => {
           case 'valueUSD':
             return formatAmount(tx, 'USD')
           case 'valueLocal':
-            return formatAmount(tx, currencyStore.localCurrency.code)
+            return formatAmount(tx, currencyStore.localCurrency?.code)
           default:
             return ''
         }
@@ -382,7 +382,7 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
     token: String(transaction.token),
     amountUSD: usdAmount,
     valueUSD: formatAmount(transaction, 'USD'),
-    valueLocal: formatAmount(transaction, currencyStore.localCurrency.code)
+    valueLocal: formatAmount(transaction, currencyStore.localCurrency?.code)
   }
 }
 
