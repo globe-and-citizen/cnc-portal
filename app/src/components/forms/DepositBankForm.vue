@@ -100,6 +100,7 @@ const tokenList = computed(() =>
     symbol: token.symbol,
     tokenId: token.id,
     name: token.name,
+    code: token.code, // Add the missing 'code' property
     balance: balances.value.find((b) => b.token.id === token.id)?.amount ?? 0,
     price: currencyStore.getTokenPrice(token.id)
   }))

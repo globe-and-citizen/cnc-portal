@@ -69,8 +69,8 @@ interface TokenOption {
   tokenId: string
   name?: string
   balance: number
-  price?: number
-  code?: string
+  price: number
+  code: string
 }
 
 const props = defineProps<{
