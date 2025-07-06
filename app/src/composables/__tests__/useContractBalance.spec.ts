@@ -30,9 +30,14 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-vi.mock('@/stores/currencyStore', () => ({
-  useCurrencyStore: vi.fn(() => mockUseCurrencyStore)
-}))
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
+  }
+})
+
 
 describe('useContractBalance', () => {
   const mockAddress = '0x1234567890123456789012345678901234567890' as Address

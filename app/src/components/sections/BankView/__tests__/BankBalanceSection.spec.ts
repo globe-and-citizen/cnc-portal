@@ -10,6 +10,7 @@ import type * as wagmiVue from '@wagmi/vue'
 import { useToastStore } from '@/stores/useToastStore'
 import type { ComponentPublicInstance } from 'vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 // Create a test wagmi config
 const config = createConfig({
@@ -26,23 +27,10 @@ vi.mock('@/stores/useToastStore', () => ({
 }))
 
 vi.mock('@/stores/currencyStore', async (importOriginal) => {
-  const actual = (await importOriginal()) as typeof import('@/stores/currencyStore')
+  const original: object = await importOriginal()
   return {
-    ...actual,
-    useCurrencyStore: vi.fn(() => ({
-      localCurrency: {
-        code: 'USD',
-        symbol: '$'
-      },
-      nativeToken: {
-        priceInLocal: 2000,
-        priceInUSD: 2000
-      },
-      usdc: {
-        priceInLocal: 1,
-        priceInUSD: 1
-      }
-    }))
+    ...original,
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
   }
 })
 

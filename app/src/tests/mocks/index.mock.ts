@@ -71,5 +71,7 @@ export const mockUseCurrencyStore = {
     }
   ),
   isTokenLoading: vi.fn(() => false),
-  setCurrency: vi.fn()
+  setCurrency: vi.fn(() => {
+    console.warn('setCurrency called in mock, but not implemented')
+  })
 }
