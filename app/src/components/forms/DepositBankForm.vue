@@ -26,7 +26,9 @@
     >
       Deposit
     </ButtonUI>
-    <ButtonUI variant="error" outline @click="$emit('closeModal')" data-test="cancel-button">Cancel</ButtonUI>
+    <ButtonUI variant="error" outline @click="$emit('closeModal')" data-test="cancel-button"
+      >Cancel</ButtonUI
+    >
   </div>
 </template>
 
