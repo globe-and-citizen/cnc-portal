@@ -63,7 +63,7 @@
               />
               <span class="font-medium">{{ formatDayLabel(entry.date) }} </span>
             </div>
-            <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5">
+            <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10">
               ({{
                 selectWeekWeelyClaim?.claims.find(
                   (claim) =>
