@@ -127,7 +127,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed, watch } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import { useUserDataStore, useTeamStore } from '@/stores'
-import { type WeeklyClaimResponse, type RatePerHour, type SupportedTokens } from '@/types'
+import { type WeeklyClaimResponse, type RatePerHour } from '@/types'
 import CRSigne from './CRSigne.vue'
 import type { Address } from 'viem'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
@@ -181,25 +181,6 @@ function getCurrentMonthYear(date: string | Date) {
     month: 'long',
     year: 'numeric'
   })
-}
-
-const getHourlyRate = (ratePerHour: RatePerHour, type: SupportedTokens) => {
-  switch (type) {
-    case 'native':
-      return ratePerHour.find((rate) => rate.type === 'native')
-        ? ratePerHour.find((rate) => rate.type === 'native')!.amount
-        : 'N/A'
-    case 'sher':
-      return ratePerHour.find((rate) => rate.type === 'sher')
-        ? ratePerHour.find((rate) => rate.type === 'sher')!.amount
-        : 'N/A'
-    case 'usdc':
-      return ratePerHour.find((rate) => rate.type === 'usdc')
-        ? ratePerHour.find((rate) => rate.type === 'usdc')!.amount
-        : 'N/A'
-    default:
-      return 'N/A'
-  }
 }
 
 watch(data, (newVal) => {

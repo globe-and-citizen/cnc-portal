@@ -31,7 +31,8 @@ export const useCurrencyStore = defineStore('currency', () => {
 
   const supportedToken = computed(() => {
     const tokens = [...SUPPORTED_TOKENS]
-    if (teamStore.getContractAddressByType('InvestorsV1') && !tokens.some((t) => t.id === 'sher')) {
+    const investorsV1Address = teamStore.getContractAddressByType('InvestorsV1')
+    if (investorsV1Address && !tokens.some((t) => t.id === 'sher')) {
       tokens.push({
         id: 'sher',
         name: 'Sher Token',
@@ -39,8 +40,10 @@ export const useCurrencyStore = defineStore('currency', () => {
         code: 'SHER',
         coingeckoId: 'sher-token',
         decimals: 18,
-        address: teamStore.getContractAddressByType('SHER') as Address
+        address: investorsV1Address
       })
+    } else {
+      console.warn('InvestorsV1 contract address not found, Sher Token will not be included')
     }
     return tokens
   })
@@ -94,16 +97,19 @@ export const useCurrencyStore = defineStore('currency', () => {
   /**
    * @description Get the price of a token in a specific currency
    * @param tokenId
-   * @param currencyCode
+   * @param local - If true, use local currency, otherwise use provided currencyCode
+   * @param currencyCode - If local is false, use this currency code
    * @returns
    */
-  // function getTokenPrice(tokenId: TokenId, currencyCode: string): number | null {
-  //   const token = tokenStates.find((t) => t.id === tokenId)
-  //   const priceData = token?.data.value
-  //   if (!priceData) return null
-  //   if (!(currencyCode in priceData.market_data.current_price)) return null
-  //   return priceData.market_data.current_price[currencyCode] ?? null
-  // }
+  function getTokenPrice(tokenId: TokenId, local: boolean = true, currencyCode?: string): number {
+    const token = tokenStates.find((t) => t.id === tokenId)
+    const priceData = token?.data.value
+    if (!priceData) return 0
+    // Use local currency by default, otherwise use provided currencyCode
+    const code = local ? currency.value.code.toLowerCase() : (currencyCode ?? 'usd').toLowerCase()
+    if (!(code in priceData.market_data.current_price)) return 0
+    return priceData.market_data.current_price[code] ?? 0
+  }
 
   // function getTokenPriceUSD(tokenId: TokenId): number | null {
   //   const token = tokenStates.find((t) => t.id === tokenId)
@@ -154,7 +160,7 @@ export const useCurrencyStore = defineStore('currency', () => {
     localCurrency: currency,
     supportedTokens: supportedToken.value,
     tokenStates,
-    // getTokenPrice,
+    getTokenPrice,
     // getTokenPriceUSD,
     isTokenLoading,
     setCurrency,
