@@ -81,7 +81,7 @@ describe('DepositBankForm.vue', () => {
     })
   })
 
-  describe.skip('TokenAmount integration', () => {
+  describe('TokenAmount integration', () => {
     it('updates amount when TokenAmount emits update:modelValue', async () => {
       const wrapper = createWrapper()
       const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
