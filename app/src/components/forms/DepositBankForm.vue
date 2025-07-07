@@ -13,6 +13,7 @@
     v-model:modelValue="amount"
     v-model:modelToken="selectedTokenId"
     :isLoading="isLoading"
+    @validation="isAmountValid = $event"
   />
 
   <div class="modal-action justify-center">
@@ -20,31 +21,33 @@
       variant="primary"
       @click="submitForm"
       :loading="submitting"
-      :disabled="isLoading || $v.amount.$invalid"
+      :disabled="isLoading || !isAmountValid"
+      data-test="deposit-button"
     >
       Deposit
     </ButtonUI>
-    <ButtonUI variant="error" outline @click="$emit('closeModal')">Cancel</ButtonUI>
+    <ButtonUI variant="error" outline @click="$emit('closeModal')" data-test="cancel-button"
+      >Cancel</ButtonUI
+    >
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { required, numeric, helpers } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
-import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
-import ERC20ABI from '@/artifacts/abi/erc20.json'
-import BankABI from '@/artifacts/abi/bank.json'
-import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
-import ButtonUI from '../ButtonUI.vue'
 import { useSendTransaction, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { parseEther, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
 import TokenAmount from './TokenAmount.vue'
+import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
+import ERC20ABI from '@/artifacts/abi/erc20.json'
+import BankABI from '@/artifacts/abi/bank.json'
+import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
+import ButtonUI from '../ButtonUI.vue'
 
 const emits = defineEmits(['closeModal'])
+// Add validation event
 const props = defineProps<{
   loading?: boolean
   loadingText?: string
@@ -56,6 +59,7 @@ const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native') // Default to native token (ETH)
 const currentStep = ref(1)
 const submitting = ref(false)
+const isAmountValid = ref(false)
 
 // Stores
 const currencyStore = useCurrencyStore()
@@ -89,7 +93,7 @@ const {
 } = useWriteContract()
 
 // Wait for transaction receipt for ERC20 token spend cap approval
-const { status: erc20ApprovaleSatus } = useWaitForTransactionReceipt({
+const { status: erc20ApprovalStatus } = useWaitForTransactionReceipt({
   hash: approveHash
 })
 
@@ -135,32 +139,10 @@ const waitForCondition = (condition: () => boolean, timeout = 5000) => {
   })
 }
 
-// Validation rules
-const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
-  return parseFloat(value) > 0
-})
-
-const notExceedingBalance = helpers.withMessage('Amount exceeds your balance', (value: string) => {
-  if (!value || parseFloat(value) <= 0) return true
-  const amountValue = selectedToken.value?.amount ?? 0
-  return parseFloat(value) <= amountValue
-})
-
-const rules = {
-  amount: {
-    required,
-    numeric,
-    notZero,
-    notExceedingBalance
-    // validDecimals
-  }
-}
-
-const $v = useVuelidate(rules, { amount })
+// Remove unused notZero and notExceedingBalance
 
 const submitForm = async () => {
-  await $v.value.$touch()
-  if ($v.value.$invalid) return
+  if (!isAmountValid.value) return
   submitting.value = true
   try {
     if (selectedTokenId.value === 'native') {
@@ -190,7 +172,7 @@ const submitForm = async () => {
             args: [props.bankAddress, tokenAmount]
           })
           await new Promise((resolve) => setTimeout(resolve, 3000))
-          await waitForCondition(() => erc20ApprovaleSatus.value === 'success', 15000)
+          await waitForCondition(() => erc20ApprovalStatus.value === 'success', 15000)
           addSuccessToast('Token approved successfully')
         }
         currentStep.value = 3

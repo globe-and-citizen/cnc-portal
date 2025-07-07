@@ -1,20 +1,19 @@
 import { shallowMount, mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
-import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { ref, nextTick } from 'vue'
-import { type Address } from 'viem'
+import { zeroAddress, type Address } from 'viem'
 import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
 
 const mockUseSendTransaction = {
-  sendTransaction: vi.fn(),
+  sendTransactionAsync: vi.fn(),
   isPending: ref(false),
   data: ref<string | undefined>('0xtx'),
   isLoading: ref(false)
 }
 const mockUseWriteContract = {
-  writeContract: vi.fn(),
+  writeContractAsync: vi.fn(),
   isPending: ref(false),
   data: ref<string | undefined>('0xtx'),
   isLoading: ref(false)
@@ -22,7 +21,8 @@ const mockUseWriteContract = {
 const mockUseWaitForTransactionReceipt = {
   isLoading: ref(false),
   isSuccess: ref(false),
-  data: ref({ status: 'success' })
+  data: ref({ status: 'success' }),
+  status: ref('success')
 }
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -34,21 +34,45 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWaitForTransactionReceipt: vi.fn(() => ({ ...mockUseWaitForTransactionReceipt }))
   }
 })
-vi.mock('@/stores/currencyStore', async (importOriginal) => {
+vi.mock('@wagmi/core', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
     ...original,
-    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore() }))
+    readContract: vi.fn(() => Promise.resolve(1000000n)) // Mock readContract to return a large allowance
   }
 })
+
+const mocks = vi.hoisted(() => ({
+  mockUseTeamStore: vi.fn(() => ({
+    fetchTeam: vi.fn()
+  })),
+  mockUseCurrencyStore: vi.fn(() => mockUseCurrencyStore())
+}))
+
+// Move this mock to the top, before importing DepositBankForm
+const addSuccessToast = vi.fn()
+const addErrorToast = vi.fn()
+
+vi.mock('@/stores', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useCurrencyStore: mocks.mockUseCurrencyStore,
+    useToastStore: () => ({ addSuccessToast, addErrorToast }),
+    useUserDataStore: () => ({ address: zeroAddress })
+  }
+})
+
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)
 }))
 
+import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+
 describe('DepositBankForm.vue', () => {
   const defaultProps = {
     loading: false,
-    bankAddress: '0x123' as Address
+    bankAddress: zeroAddress as Address
   }
   const createWrapper = (overrides = {}, mountFn = shallowMount) =>
     mountFn(DepositBankForm, {
@@ -58,7 +82,7 @@ describe('DepositBankForm.vue', () => {
       }
     })
 
-  describe.skip('rendering', () => {
+  describe('rendering', () => {
     it('renders the form and TokenAmount', () => {
       const wrapper = createWrapper()
       expect(wrapper.text()).toContain('Deposit to Team Bank Contract')
@@ -72,7 +96,7 @@ describe('DepositBankForm.vue', () => {
     })
   })
 
-  describe.skip('TokenAmount integration', () => {
+  describe('TokenAmount integration', () => {
     it('updates amount when TokenAmount emits update:modelValue', async () => {
       const wrapper = createWrapper()
       const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
@@ -89,67 +113,115 @@ describe('DepositBankForm.vue', () => {
     })
   })
 
-  describe.skip('form validation', () => {
-    it('shows error when amount is 0', async () => {
-      const wrapper = createWrapper({}, mount)
-      const input = wrapper.find('input[data-test="amountInput"]')
-      await input.setValue('0')
-      await wrapper.find('.btn-primary').trigger('click')
-      expect(wrapper.find('.text-red-500').text()).toContain('Amount must be greater than 0')
-    })
-    it('shows error when amount is empty', async () => {
-      const wrapper = createWrapper({}, mount)
-      const input = wrapper.find('input[data-test="amountInput"]')
-      await input.setValue('')
-      await wrapper.find('.btn-primary').trigger('click')
-      expect(wrapper.find('.text-red-500').exists()).toBe(true)
-    })
-    it('shows error when amount is not numeric', async () => {
-      const wrapper = createWrapper({}, mount)
-      const input = wrapper.find('input[data-test="amountInput"]')
-      await input.setValue('abc')
-      await wrapper.find('.btn-primary').trigger('click')
-      expect(wrapper.find('.text-red-500').text()).toContain('Value is not a valid number')
-    })
-    it('shows error when amount exceeds balance', async () => {
-      const wrapper = createWrapper({}, mount)
-      const input = wrapper.find('input[data-test="amountInput"]')
-      await input.setValue('100000')
-      await wrapper.find('.btn-primary').trigger('click')
-      expect(wrapper.find('.text-red-500').text()).toContain('Amount exceeds your balance')
-    })
-    it('shows error when amount has more than 4 decimal places', async () => {
-      const wrapper = createWrapper({}, mount)
-      const input = wrapper.find('input[data-test="amountInput"]')
-      await input.setValue('1.12345')
-      await wrapper.find('.btn-primary').trigger('click')
-      expect(wrapper.find('.text-red-500').text()).toContain(
-        'Amount must have at most 4 decimal places'
-      )
-    })
-  })
-
-  describe.skip('actions', () => {
+  describe('actions', () => {
     it('emits closeModal when cancel button is clicked', async () => {
       const wrapper = createWrapper()
-      await wrapper.find('.btn-error').trigger('click')
+      await wrapper.find('[data-test="cancel-button"]').trigger('click')
       expect(wrapper.emitted('closeModal')).toBeTruthy()
-    })
-    it('submits ETH deposit when valid', async () => {
-      const wrapper = createWrapper({}, mount)
-      const input = wrapper.find('input[data-test="amountInput"]')
-      await input.setValue('1')
-      await wrapper.find('.btn-primary').trigger('click')
-      expect(mockUseSendTransaction.sendTransaction).toHaveBeenCalled()
     })
     it('shows error toast if deposit fails', async () => {
       const wrapper = createWrapper({}, mount)
       const input = wrapper.find('input[data-test="amountInput"]')
       await input.setValue('1')
-      mockUseSendTransaction.sendTransaction.mockRejectedValueOnce(new Error('fail'))
+      mockUseSendTransaction.sendTransactionAsync.mockRejectedValueOnce('fail')
       await wrapper.find('.btn-primary').trigger('click')
-      // Error toast should be called (simulate addErrorToast)
-      // You may need to spy on addErrorToast if not already
+    })
+  })
+
+  // Helper for emitting TokenAmount events
+  async function setTokenAmount(
+    wrapper: ReturnType<typeof createWrapper>,
+    value: string,
+    tokenId: string,
+    isValid: boolean = true
+  ): Promise<void> {
+    const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+    await tokenAmount.vm.$emit('update:modelValue', value)
+    await tokenAmount.vm.$emit('update:modelToken', tokenId)
+    await tokenAmount.vm.$emit('validation', isValid)
+    await nextTick()
+  }
+
+  describe('form submission', () => {
+    let wrapper: ReturnType<typeof createWrapper>
+    // let emits: (event: string) => unknown[] | undefined
+
+    beforeEach(() => {
+      vi.useFakeTimers()
+      addSuccessToast.mockReset()
+      addErrorToast.mockReset()
+      wrapper = createWrapper({}, mount)
+      mockUseSendTransaction.sendTransactionAsync.mockReset()
+      mockUseWriteContract.writeContractAsync.mockReset()
+    })
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('submits native token deposit successfully', async () => {
+      mockUseSendTransaction.sendTransactionAsync.mockResolvedValueOnce({})
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await setTokenAmount(wrapper, '1', 'native')
+      await wrapper.find('[data-test="deposit-button"]').trigger('click')
+      expect(mockUseSendTransaction.sendTransactionAsync).toHaveBeenCalled()
+      // Simulate timer for waitForCondition
+      await vi.runAllTimersAsync()
+      await nextTick()
+      expect(addSuccessToast).toHaveBeenCalled()
+      expect(wrapper.emitted('closeModal')).toBeTruthy()
+    })
+
+    it('shows error toast if native token deposit fails', async () => {
+      mockUseSendTransaction.sendTransactionAsync.mockRejectedValueOnce('fail')
+      await setTokenAmount(wrapper, '1', 'native')
+      await wrapper.find('.btn-primary').trigger('click')
+      await vi.runAllTimersAsync()
+      await nextTick()
+      expect(addErrorToast).toHaveBeenCalled()
+    })
+
+    it('submits ERC20 deposit with approval needed', async () => {
+      // Simulate insufficient allowance
+      const readContract = vi.fn().mockResolvedValue(0)
+      vi.doMock('@wagmi/core', () => ({ readContract }))
+      mockUseWriteContract.writeContractAsync.mockResolvedValueOnce({}) // approve
+      mockUseWriteContract.writeContractAsync.mockResolvedValueOnce({}) // deposit
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await setTokenAmount(wrapper, '1', 'usdc')
+      await wrapper.find('.btn-primary').trigger('click')
+      await vi.runAllTimersAsync()
+      await nextTick()
+      expect(mockUseWriteContract.writeContractAsync).toHaveBeenCalled()
+      expect(addSuccessToast).toHaveBeenCalled()
+      expect(wrapper.emitted('closeModal')).toBeTruthy()
+    })
+
+    it('submits ERC20 deposit with sufficient allowance', async () => {
+      mockUseWriteContract.writeContractAsync.mockResolvedValueOnce({}) // deposit
+      mockUseWaitForTransactionReceipt.isSuccess.value = true
+      await setTokenAmount(wrapper, '1', 'usdc')
+      await wrapper.find('.btn-primary').trigger('click')
+      await vi.runAllTimersAsync()
+      await nextTick()
+      expect(mockUseWriteContract.writeContractAsync).toHaveBeenCalled()
+      expect(addSuccessToast).toHaveBeenCalled()
+      expect(wrapper.emitted('closeModal')).toBeTruthy()
+    })
+
+    it('shows error toast if ERC20 deposit fails', async () => {
+      mockUseWriteContract.writeContractAsync.mockRejectedValueOnce('fail')
+      await setTokenAmount(wrapper, '1', 'usdc')
+      await wrapper.find('.btn-primary').trigger('click')
+      await vi.runAllTimersAsync()
+      await nextTick()
+      expect(addErrorToast).toHaveBeenCalled()
+    })
+
+    it('does not submit if form is invalid', async () => {
+      await setTokenAmount(wrapper, '1', 'native', false)
+      await wrapper.find('.btn-primary').trigger('click')
+      expect(mockUseSendTransaction.sendTransactionAsync).not.toHaveBeenCalled()
+      expect(mockUseWriteContract.writeContractAsync).not.toHaveBeenCalled()
     })
   })
 })
