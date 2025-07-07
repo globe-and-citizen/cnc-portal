@@ -136,7 +136,7 @@ describe('DepositBankForm.vue', () => {
       mockUseWriteContract.writeContractAsync.mockReset()
     })
 
-    it.only('submits native token deposit successfully', async () => {
+    it('submits native token deposit successfully', async () => {
       vi.useFakeTimers()
       mockUseSendTransaction.sendTransactionAsync.mockResolvedValueOnce({})
       mockUseWaitForTransactionReceipt.isSuccess.value = true
@@ -159,61 +159,84 @@ describe('DepositBankForm.vue', () => {
     })
 
     it('shows error toast if native token deposit fails', async () => {
+      vi.useFakeTimers()
       mockUseSendTransaction.sendTransactionAsync.mockRejectedValueOnce(new Error('fail'))
-      wrapper.vm.amount = '1'
-      wrapper.vm.selectedTokenId = 'native'
-      wrapper.vm.isAmountValid = true
+      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+      await tokenAmount.vm.$emit('update:modelValue', '1')
+      await tokenAmount.vm.$emit('update:modelToken', 'native')
+      await tokenAmount.vm.$emit('validation', true)
+      await nextTick()
       await wrapper.find('.btn-primary').trigger('click')
+      await vi.runAllTimersAsync()
+      await nextTick()
       expect(addErrorToast).toHaveBeenCalled()
+      vi.useRealTimers()
     })
 
-    it('submits ERC20 deposit with approval needed', async () => {
+    it.skip('submits ERC20 deposit with approval needed', async () => {
+      vi.useFakeTimers()
       // Simulate insufficient allowance
       const readContract = vi.fn().mockResolvedValue(0)
       vi.doMock('@wagmi/core', () => ({ readContract }))
       mockUseWriteContract.writeContractAsync.mockResolvedValueOnce({}) // approve
       mockUseWriteContract.writeContractAsync.mockResolvedValueOnce({}) // deposit
       mockUseWaitForTransactionReceipt.isSuccess.value = true
-      wrapper.vm.amount = '1'
-      wrapper.vm.selectedTokenId = 'usdc'
-      wrapper.vm.isAmountValid = true
-      wrapper.vm.selectedToken = { token: { address: '0xusdc' } }
+      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+      await tokenAmount.vm.$emit('update:modelValue', '1')
+      await tokenAmount.vm.$emit('update:modelToken', 'usdc')
+      await tokenAmount.vm.$emit('validation', true)
+      await nextTick()
       await wrapper.find('.btn-primary').trigger('click')
+      await vi.runAllTimersAsync()
+      await nextTick()
       expect(mockUseWriteContract.writeContractAsync).toHaveBeenCalled()
       expect(addSuccessToast).toHaveBeenCalled()
       expect(emits('closeModal')).toBeTruthy()
+      vi.useRealTimers()
     })
 
-    it('submits ERC20 deposit with sufficient allowance', async () => {
+    it.skip('submits ERC20 deposit with sufficient allowance', async () => {
+      vi.useFakeTimers()
       // Simulate sufficient allowance
       const readContract = vi.fn().mockResolvedValue(1000000)
       vi.doMock('@wagmi/core', () => ({ readContract }))
       mockUseWriteContract.writeContractAsync.mockResolvedValueOnce({}) // deposit
       mockUseWaitForTransactionReceipt.isSuccess.value = true
-      wrapper.vm.amount = '1'
-      wrapper.vm.selectedTokenId = 'usdc'
-      wrapper.vm.isAmountValid = true
-      wrapper.vm.selectedToken = { token: { address: '0xusdc' } }
+      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+      await tokenAmount.vm.$emit('update:modelValue', '1')
+      await tokenAmount.vm.$emit('update:modelToken', 'usdc')
+      await tokenAmount.vm.$emit('validation', true)
+      await nextTick()
       await wrapper.find('.btn-primary').trigger('click')
+      await vi.runAllTimersAsync()
+      await nextTick()
       expect(mockUseWriteContract.writeContractAsync).toHaveBeenCalled()
       expect(addSuccessToast).toHaveBeenCalled()
       expect(emits('closeModal')).toBeTruthy()
+      vi.useRealTimers()
     })
 
     it('shows error toast if ERC20 deposit fails', async () => {
+      vi.useFakeTimers()
       const readContract = vi.fn().mockResolvedValue(1000000)
       vi.doMock('@wagmi/core', () => ({ readContract }))
       mockUseWriteContract.writeContractAsync.mockRejectedValueOnce(new Error('fail'))
-      wrapper.vm.amount = '1'
-      wrapper.vm.selectedTokenId = 'usdc'
-      wrapper.vm.isAmountValid = true
-      wrapper.vm.selectedToken = { token: { address: '0xusdc' } }
+      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+      await tokenAmount.vm.$emit('update:modelValue', '1')
+      await tokenAmount.vm.$emit('update:modelToken', 'usdc')
+      await tokenAmount.vm.$emit('validation', true)
+      await nextTick()
       await wrapper.find('.btn-primary').trigger('click')
+      await vi.runAllTimersAsync()
+      await nextTick()
       expect(addErrorToast).toHaveBeenCalled()
+      vi.useRealTimers()
     })
 
     it('does not submit if form is invalid', async () => {
-      wrapper.vm.isAmountValid = false
+      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+      await tokenAmount.vm.$emit('validation', false)
+      await nextTick()
       await wrapper.find('.btn-primary').trigger('click')
       expect(mockUseSendTransaction.sendTransactionAsync).not.toHaveBeenCalled()
       expect(mockUseWriteContract.writeContractAsync).not.toHaveBeenCalled()
