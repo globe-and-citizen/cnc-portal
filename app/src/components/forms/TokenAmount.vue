@@ -64,6 +64,7 @@ import { required, numeric, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
 import SelectComponent from '@/components/SelectComponent.vue'
+import { useStorage } from '@vueuse/core'
 
 interface TokenOption {
   symbol: string
@@ -84,7 +85,11 @@ const emits = defineEmits<{
   (e: 'update:modelValue', value: string): void
   (e: 'update:modelToken', value: string): void
 }>()
-
+const currency = useStorage('currency', {
+  code: 'USD',
+  name: 'US Dollar',
+  symbol: '$'
+})
 const amount = computed({
   get: () => props.modelValue,
   set: (val: string) => emits('update:modelValue', val)
@@ -99,7 +104,7 @@ const selectedToken = computed(() => props.tokens.find((b) => b.tokenId === sele
 
 const estimatedPrice = computed(() => {
   const price = selectedToken.value?.price ?? 0
-  const code = selectedToken.value?.code ?? 'USD'
+  const code = currency.value?.code ?? 'USD'
   const value = (Number(amount.value) || 0) * price
   return formatCurrencyShort(value, code)
 })
