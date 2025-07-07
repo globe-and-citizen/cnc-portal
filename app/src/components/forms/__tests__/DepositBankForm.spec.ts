@@ -1,8 +1,8 @@
 import { shallowMount, mount } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { ref, nextTick } from 'vue'
-import { type Address } from 'viem'
+import { zeroAddress, type Address } from 'viem'
 import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
 
@@ -34,6 +34,13 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWaitForTransactionReceipt: vi.fn(() => ({ ...mockUseWaitForTransactionReceipt }))
   }
 })
+vi.mock('@wagmi/core', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    readContract: vi.fn(() => Promise.resolve(1000000n)) // Mock readContract to return a large allowance
+  }
+})
 
 const mocks = vi.hoisted(() => ({
   mockUseTeamStore: vi.fn(() => ({
@@ -52,7 +59,7 @@ vi.mock('@/stores', async (importOriginal) => {
     ...actual,
     useCurrencyStore: mocks.mockUseCurrencyStore,
     useToastStore: () => ({ addSuccessToast, addErrorToast }),
-    useUserDataStore: () => ({ address: '0xabc' })
+    useUserDataStore: () => ({ address: zeroAddress })
   }
 })
 
@@ -65,7 +72,7 @@ import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 describe('DepositBankForm.vue', () => {
   const defaultProps = {
     loading: false,
-    bankAddress: '0x123' as Address
+    bankAddress: zeroAddress as Address
   }
   const createWrapper = (overrides = {}, mountFn = shallowMount) =>
     mountFn(DepositBankForm, {
@@ -116,37 +123,42 @@ describe('DepositBankForm.vue', () => {
       const wrapper = createWrapper({}, mount)
       const input = wrapper.find('input[data-test="amountInput"]')
       await input.setValue('1')
-      mockUseSendTransaction.sendTransactionAsync.mockRejectedValueOnce(new Error('fail'))
+      mockUseSendTransaction.sendTransactionAsync.mockRejectedValueOnce('fail')
       await wrapper.find('.btn-primary').trigger('click')
-      // Error toast should be called (simulate addErrorToast)
-      // You may need to spy on addErrorToast if not already
     })
   })
 
+  // Helper for emitting TokenAmount events
+  async function setTokenAmount(
+    wrapper: ReturnType<typeof createWrapper>,
+    value: string,
+    tokenId: string,
+    isValid: boolean = true
+  ): Promise<void> {
+    const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+    await tokenAmount.vm.$emit('update:modelValue', value)
+    await tokenAmount.vm.$emit('update:modelToken', tokenId)
+    await tokenAmount.vm.$emit('validation', isValid)
+    await nextTick()
+  }
+
   describe('form submission', () => {
     let wrapper: ReturnType<typeof createWrapper>
-    let emits: (event: string) => unknown[] | undefined
+    // let emits: (event: string) => unknown[] | undefined
 
     beforeEach(() => {
+      vi.useFakeTimers()
       addSuccessToast.mockReset()
       addErrorToast.mockReset()
       wrapper = createWrapper({}, mount)
-      emits = wrapper.emitted
       mockUseSendTransaction.sendTransactionAsync.mockReset()
       mockUseWriteContract.writeContractAsync.mockReset()
     })
-
-    // Helper for emitting TokenAmount events
-    async function setTokenAmount(wrapper, value, tokenId, isValid = true) {
-      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
-      await tokenAmount.vm.$emit('update:modelValue', value)
-      await tokenAmount.vm.$emit('update:modelToken', tokenId)
-      await tokenAmount.vm.$emit('validation', isValid)
-      await nextTick()
-    }
+    afterEach(() => {
+      vi.useRealTimers()
+    })
 
     it('submits native token deposit successfully', async () => {
-      vi.useFakeTimers()
       mockUseSendTransaction.sendTransactionAsync.mockResolvedValueOnce({})
       mockUseWaitForTransactionReceipt.isSuccess.value = true
       await setTokenAmount(wrapper, '1', 'native')
@@ -157,22 +169,18 @@ describe('DepositBankForm.vue', () => {
       await nextTick()
       expect(addSuccessToast).toHaveBeenCalled()
       expect(wrapper.emitted('closeModal')).toBeTruthy()
-      vi.useRealTimers()
     })
 
     it('shows error toast if native token deposit fails', async () => {
-      vi.useFakeTimers()
-      mockUseSendTransaction.sendTransactionAsync.mockRejectedValueOnce(new Error('fail'))
+      mockUseSendTransaction.sendTransactionAsync.mockRejectedValueOnce('fail')
       await setTokenAmount(wrapper, '1', 'native')
       await wrapper.find('.btn-primary').trigger('click')
       await vi.runAllTimersAsync()
       await nextTick()
       expect(addErrorToast).toHaveBeenCalled()
-      vi.useRealTimers()
     })
 
     it('submits ERC20 deposit with approval needed', async () => {
-      vi.useFakeTimers()
       // Simulate insufficient allowance
       const readContract = vi.fn().mockResolvedValue(0)
       vi.doMock('@wagmi/core', () => ({ readContract }))
@@ -185,15 +193,10 @@ describe('DepositBankForm.vue', () => {
       await nextTick()
       expect(mockUseWriteContract.writeContractAsync).toHaveBeenCalled()
       expect(addSuccessToast).toHaveBeenCalled()
-      expect(emits('closeModal')).toBeTruthy()
-      vi.useRealTimers()
+      expect(wrapper.emitted('closeModal')).toBeTruthy()
     })
 
     it('submits ERC20 deposit with sufficient allowance', async () => {
-      vi.useFakeTimers()
-      // Simulate sufficient allowance
-      const readContract = vi.fn().mockResolvedValue(1000000)
-      vi.doMock('@wagmi/core', () => ({ readContract }))
       mockUseWriteContract.writeContractAsync.mockResolvedValueOnce({}) // deposit
       mockUseWaitForTransactionReceipt.isSuccess.value = true
       await setTokenAmount(wrapper, '1', 'usdc')
@@ -202,21 +205,16 @@ describe('DepositBankForm.vue', () => {
       await nextTick()
       expect(mockUseWriteContract.writeContractAsync).toHaveBeenCalled()
       expect(addSuccessToast).toHaveBeenCalled()
-      expect(emits('closeModal')).toBeTruthy()
-      vi.useRealTimers()
+      expect(wrapper.emitted('closeModal')).toBeTruthy()
     })
 
     it('shows error toast if ERC20 deposit fails', async () => {
-      vi.useFakeTimers()
-      const readContract = vi.fn().mockResolvedValue(1000000)
-      vi.doMock('@wagmi/core', () => ({ readContract }))
-      mockUseWriteContract.writeContractAsync.mockRejectedValueOnce(new Error('fail'))
+      mockUseWriteContract.writeContractAsync.mockRejectedValueOnce('fail')
       await setTokenAmount(wrapper, '1', 'usdc')
       await wrapper.find('.btn-primary').trigger('click')
       await vi.runAllTimersAsync()
       await nextTick()
       expect(addErrorToast).toHaveBeenCalled()
-      vi.useRealTimers()
     })
 
     it('does not submit if form is invalid', async () => {
