@@ -84,6 +84,7 @@ const props = defineProps<{
 const emits = defineEmits<{
   (e: 'update:modelValue', value: string): void
   (e: 'update:modelToken', value: string): void
+  (e: 'validation', isValid: boolean): void
 }>()
 const currency = useStorage('currency', {
   code: 'USD',
@@ -127,6 +128,15 @@ const rules = {
   }
 }
 const $v = useVuelidate(rules, { amount })
+
+// Emit validation state to parent
+watch(
+  () => $v.value.amount.$invalid,
+  (invalid) => {
+    emits('validation', !invalid)
+  },
+  { immediate: true }
+)
 
 const useMaxBalance = () => {
   amount.value = selectedToken.value?.balance?.toString() ?? '0.00'
