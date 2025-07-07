@@ -10,7 +10,7 @@
         :month-picker="true"
         :year-picker="true"
         auto-apply
-        class="bg-white rounded shadow"
+        class="bg-white rounded"
       >
         <template #trigger>
           <ButtonUI @click="toggleMonthPicker">
