@@ -34,13 +34,80 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWaitForTransactionReceipt: vi.fn(() => ({ ...mockUseWaitForTransactionReceipt }))
   }
 })
-vi.mock('@/stores/currencyStore', async (importOriginal) => {
-  const original: object = await importOriginal()
+
+// const mocks = vi.hoisted(() => ({
+//   mockUseTeamStore: vi.fn(() => ({
+//     fetchTeam: vi.fn()
+//   })),
+//   mockUseCurrencyStore: vi.fn(() => ({
+//     localCurrency: ref({
+//       code: 'USD',
+//       name: 'US Dollar',
+//       symbol: '$',
+//       decimals: 2
+//     }),
+//     getCurrencyById: vi.fn((id) => ({
+//       id,
+//       code: 'USD',
+//       name: 'US Dollar',
+//       symbol: '$',
+//       decimals: 2
+//     })),
+//     getTokenPrice: vi.fn(
+//       (tokenId: 'native' | 'usdc', local: boolean = true, currencyCode: string = 'usd') => {
+//         const prices: Record<'native' | 'usdc', { usd: number; eur: number; cad: number }> = {
+//           native: { usd: 2000, eur: 1800, cad: 2500 },
+//           usdc: { usd: 1, eur: 0.9, cad: 1.3 }
+//         }
+//         const token = prices[tokenId] || { usd: 0, eur: 0, cad: 0 }
+//         if (local) return token.usd
+//         const key = currencyCode?.toLowerCase?.() as 'usd' | 'eur' | 'cad'
+//         return token[key] ?? 0
+//       }
+//     )
+//   }))
+// }))
+const mocks = vi.hoisted(() => ({
+  mockUseTeamStore: vi.fn(() => ({
+    fetchTeam: vi.fn()
+  })),
+  mockUseCurrencyStore: vi.fn(() => ({
+    localCurrency: ref({
+      code: 'USD',
+      name: 'US Dollar',
+      symbol: '$',
+      decimals: 2
+    }),
+    getCurrencyById: vi.fn((id) => ({
+      id,
+      code: 'USD',
+      name: 'US Dollar',
+      symbol: '$',
+      decimals: 2
+    })),
+    getTokenPrice: vi.fn(
+      (tokenId: 'native' | 'usdc', local: boolean = true, currencyCode: string = 'usd') => {
+        const prices: Record<'native' | 'usdc', { usd: number; eur: number; cad: number }> = {
+          native: { usd: 2000, eur: 1800, cad: 2500 },
+          usdc: { usd: 1, eur: 0.9, cad: 1.3 }
+        }
+        const token = prices[tokenId] || { usd: 0, eur: 0, cad: 0 }
+        if (local) return token.usd
+        const key = currencyCode?.toLowerCase?.() as 'usd' | 'eur' | 'cad'
+        return token[key] ?? 0
+      }
+    )
+  }))
+}))
+
+vi.mock('@/stores', async (importOriginal) => {
+  const actual: object = await importOriginal()
   return {
-    ...original,
-    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore() }))
+    ...actual,
+    useCurrencyStore: mocks.mockUseCurrencyStore
   }
 })
+
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)
 }))
@@ -58,7 +125,7 @@ describe('DepositBankForm.vue', () => {
       }
     })
 
-  describe.skip('rendering', () => {
+  describe('rendering', () => {
     it('renders the form and TokenAmount', () => {
       const wrapper = createWrapper()
       expect(wrapper.text()).toContain('Deposit to Team Bank Contract')
