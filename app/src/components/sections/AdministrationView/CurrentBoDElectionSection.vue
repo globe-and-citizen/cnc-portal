@@ -115,7 +115,7 @@ import ElectionABI from '@/artifacts/abi/elections.json'
 import { useTeamStore, useToastStore } from '@/stores'
 import { encodeFunctionData, type Abi, type Address } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
-import { estimateGas, readContract } from '@wagmi/core'
+import { estimateGas } from '@wagmi/core'
 import type { Proposal } from '@/types'
 import { log, parseError } from '@/utils'
 import { config } from '@/wagmi.config'
@@ -132,7 +132,7 @@ const electionsAddress = computed(() => {
 // Fetch next election ID
 const {
   data: nextElectionId,
-  isLoading: isLoadingNextElectionId,
+  // isLoading: isLoadingNextElectionId,
   error: errorNextElectionId
 } = useReadContract({
   functionName: 'getNextElectionId',
@@ -155,7 +155,7 @@ const currentElectionId = computed(() => {
 // Fetch current election details
 const {
   data: currentElection,
-  isLoading: isLoadingCurrentElection,
+  // isLoading: isLoadingCurrentElection,
   error: errorGetCurrentElection
 } = useReadContract({
   functionName: 'getElection',
@@ -166,7 +166,7 @@ const {
 
 const {
   data: voteCount,
-  isLoading: isLoadingVoteCount,
+  // isLoading: isLoadingVoteCount,
   error: errorGetVoteCount
 } = useReadContract({
   functionName: 'getVoteCount',
@@ -177,7 +177,7 @@ const {
 
 const {
   data: candidateList,
-  isLoading: isLoadingCandidates,
+  // isLoading: isLoadingCandidates,
   error: errorGetCandidates
 } = useReadContract({
   functionName: 'getElectionCandidates',
@@ -261,33 +261,6 @@ watch(isConfirmingCreateElection, (isConfirming, wasConfirming) => {
   }
 })
 
-watch(currentElectionId, (newElectionId) => {
-  if (newElectionId) {
-    addSuccessToast(`Current election ID: ${newElectionId}`)
-  }
-})
-
-watch(currentElection, (election) => {
-  if (election) {
-    addSuccessToast(`Election successfully fetched!`)
-    log.info('Current election data:', election)
-  } else {
-    log.warn('No current election data available')
-  }
-})
-
-watch(voteCount, (count) => {
-  if (count) {
-    addSuccessToast(`Vote count fetched: ${count}`)
-  }
-})
-
-watch(candidateList, (candidates) => {
-  if (candidates) {
-    addSuccessToast(`Candidates fetched: ${candidates}`)
-  }
-})
-
 // Watch for errors or loading states
 watch(errorNextElectionId, (error) => {
   if (error) {
@@ -317,25 +290,11 @@ watch(errorGetCandidates, (error) => {
   }
 })
 
-// Mock votes data - replace with real data
-const votesCast = ref(1428)
 const showCreateElectionModal = ref(false)
 
 // Calculate time remaining
 const now = ref(new Date())
 let timer: ReturnType<typeof setInterval>
-
-const electionData = {
-  title: 'Q1 2025 Board of Directors Election',
-  description: 'Election for the next Board of Directors will be held on December 1, 2023.',
-  candidates: [
-    { name: 'Alice Johnson', address: '0x1234567890abcdef1234567890abcdef12345678' },
-    { name: 'Bob Smith', address: '0xabcdef1234567890abcdef1234567890abcdef12' },
-    { name: 'Charlie Brown', address: '0x7890abcdef1234567890abcdef12345678901234' }
-  ],
-  startDate: new Date('2025-06-01T00:00:00Z'),
-  endDate: new Date('2025-06-30T23:59:59Z')
-}
 
 onMounted(() => {
   timer = setInterval(() => {
