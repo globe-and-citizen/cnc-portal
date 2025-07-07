@@ -22,6 +22,7 @@
       @click="submitForm"
       :loading="submitting"
       :disabled="isLoading || !isAmountValid"
+      data-test="deposit-button"
     >
       Deposit
     </ButtonUI>
