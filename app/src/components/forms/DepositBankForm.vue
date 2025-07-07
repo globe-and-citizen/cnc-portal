@@ -93,7 +93,7 @@ const {
 } = useWriteContract()
 
 // Wait for transaction receipt for ERC20 token spend cap approval
-const { status: erc20ApprovaleSatus } = useWaitForTransactionReceipt({
+const { status: erc20ApprovalStatus } = useWaitForTransactionReceipt({
   hash: approveHash
 })
 
@@ -142,7 +142,6 @@ const waitForCondition = (condition: () => boolean, timeout = 5000) => {
 // Remove unused notZero and notExceedingBalance
 
 const submitForm = async () => {
-  // Remove $v.value.$touch() and $v.value.$invalid
   if (!isAmountValid.value) return
   submitting.value = true
   try {
@@ -173,7 +172,7 @@ const submitForm = async () => {
             args: [props.bankAddress, tokenAmount]
           })
           await new Promise((resolve) => setTimeout(resolve, 3000))
-          await waitForCondition(() => erc20ApprovaleSatus.value === 'success', 15000)
+          await waitForCondition(() => erc20ApprovalStatus.value === 'success', 15000)
           addSuccessToast('Token approved successfully')
         }
         currentStep.value = 3
