@@ -136,18 +136,20 @@ describe('DepositBankForm.vue', () => {
       mockUseWriteContract.writeContractAsync.mockReset()
     })
 
+    // Helper for emitting TokenAmount events
+    async function setTokenAmount(wrapper, value, tokenId, isValid = true) {
+      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+      await tokenAmount.vm.$emit('update:modelValue', value)
+      await tokenAmount.vm.$emit('update:modelToken', tokenId)
+      await tokenAmount.vm.$emit('validation', isValid)
+      await nextTick()
+    }
+
     it('submits native token deposit successfully', async () => {
       vi.useFakeTimers()
       mockUseSendTransaction.sendTransactionAsync.mockResolvedValueOnce({})
       mockUseWaitForTransactionReceipt.isSuccess.value = true
-      // Set amount and token via TokenAmount events instead of direct assignment
-      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
-      // Check if the component exists
-      expect(tokenAmount.exists()).toBe(true)
-      await tokenAmount.vm.$emit('update:modelValue', '1')
-      await tokenAmount.vm.$emit('update:modelToken', 'native')
-      await tokenAmount.vm.$emit('validation', true)
-      await nextTick()
+      await setTokenAmount(wrapper, '1', 'native')
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       expect(mockUseSendTransaction.sendTransactionAsync).toHaveBeenCalled()
       // Simulate timer for waitForCondition
@@ -161,11 +163,7 @@ describe('DepositBankForm.vue', () => {
     it('shows error toast if native token deposit fails', async () => {
       vi.useFakeTimers()
       mockUseSendTransaction.sendTransactionAsync.mockRejectedValueOnce(new Error('fail'))
-      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
-      await tokenAmount.vm.$emit('update:modelValue', '1')
-      await tokenAmount.vm.$emit('update:modelToken', 'native')
-      await tokenAmount.vm.$emit('validation', true)
-      await nextTick()
+      await setTokenAmount(wrapper, '1', 'native')
       await wrapper.find('.btn-primary').trigger('click')
       await vi.runAllTimersAsync()
       await nextTick()
@@ -173,7 +171,7 @@ describe('DepositBankForm.vue', () => {
       vi.useRealTimers()
     })
 
-    it.skip('submits ERC20 deposit with approval needed', async () => {
+    it('submits ERC20 deposit with approval needed', async () => {
       vi.useFakeTimers()
       // Simulate insufficient allowance
       const readContract = vi.fn().mockResolvedValue(0)
@@ -181,11 +179,7 @@ describe('DepositBankForm.vue', () => {
       mockUseWriteContract.writeContractAsync.mockResolvedValueOnce({}) // approve
       mockUseWriteContract.writeContractAsync.mockResolvedValueOnce({}) // deposit
       mockUseWaitForTransactionReceipt.isSuccess.value = true
-      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
-      await tokenAmount.vm.$emit('update:modelValue', '1')
-      await tokenAmount.vm.$emit('update:modelToken', 'usdc')
-      await tokenAmount.vm.$emit('validation', true)
-      await nextTick()
+      await setTokenAmount(wrapper, '1', 'usdc')
       await wrapper.find('.btn-primary').trigger('click')
       await vi.runAllTimersAsync()
       await nextTick()
@@ -195,18 +189,14 @@ describe('DepositBankForm.vue', () => {
       vi.useRealTimers()
     })
 
-    it.skip('submits ERC20 deposit with sufficient allowance', async () => {
+    it('submits ERC20 deposit with sufficient allowance', async () => {
       vi.useFakeTimers()
       // Simulate sufficient allowance
       const readContract = vi.fn().mockResolvedValue(1000000)
       vi.doMock('@wagmi/core', () => ({ readContract }))
       mockUseWriteContract.writeContractAsync.mockResolvedValueOnce({}) // deposit
       mockUseWaitForTransactionReceipt.isSuccess.value = true
-      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
-      await tokenAmount.vm.$emit('update:modelValue', '1')
-      await tokenAmount.vm.$emit('update:modelToken', 'usdc')
-      await tokenAmount.vm.$emit('validation', true)
-      await nextTick()
+      await setTokenAmount(wrapper, '1', 'usdc')
       await wrapper.find('.btn-primary').trigger('click')
       await vi.runAllTimersAsync()
       await nextTick()
@@ -221,11 +211,7 @@ describe('DepositBankForm.vue', () => {
       const readContract = vi.fn().mockResolvedValue(1000000)
       vi.doMock('@wagmi/core', () => ({ readContract }))
       mockUseWriteContract.writeContractAsync.mockRejectedValueOnce(new Error('fail'))
-      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
-      await tokenAmount.vm.$emit('update:modelValue', '1')
-      await tokenAmount.vm.$emit('update:modelToken', 'usdc')
-      await tokenAmount.vm.$emit('validation', true)
-      await nextTick()
+      await setTokenAmount(wrapper, '1', 'usdc')
       await wrapper.find('.btn-primary').trigger('click')
       await vi.runAllTimersAsync()
       await nextTick()
@@ -234,9 +220,7 @@ describe('DepositBankForm.vue', () => {
     })
 
     it('does not submit if form is invalid', async () => {
-      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
-      await tokenAmount.vm.$emit('validation', false)
-      await nextTick()
+      await setTokenAmount(wrapper, '1', 'native', false)
       await wrapper.find('.btn-primary').trigger('click')
       expect(mockUseSendTransaction.sendTransactionAsync).not.toHaveBeenCalled()
       expect(mockUseWriteContract.writeContractAsync).not.toHaveBeenCalled()
