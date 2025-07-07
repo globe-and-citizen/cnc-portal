@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineModel } from 'vue'
+import { ref } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import dayjs from 'dayjs'
