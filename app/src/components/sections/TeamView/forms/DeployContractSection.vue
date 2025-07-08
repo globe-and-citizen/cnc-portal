@@ -37,6 +37,7 @@ import {
   EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS,
   INVESTOR_V1_BEACON_ADDRESS,
   OFFICER_BEACON,
+  PROPOSALS_BEACON_ADDRESS,
   TIPS_ADDRESS,
   USDC_ADDRESS,
   USDT_ADDRESS,
@@ -47,6 +48,7 @@ import {
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { log } from '@/utils'
+import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 
 const props = withDefaults(
   defineProps<{
@@ -113,6 +115,10 @@ const deployOfficerContract = async () => {
         beaconAddress: BOD_BEACON_ADDRESS
       },
       {
+        beaconType: 'Proposals',
+        beaconAddress: PROPOSALS_BEACON_ADDRESS
+      },
+      {
         beaconType: 'ExpenseAccount',
         beaconAddress: EXPENSE_ACCOUNT_BEACON_ADDRESS
       },
@@ -166,6 +172,16 @@ const deployOfficerContract = async () => {
     //     args: [currentUserAddress]
     //   })
     // })
+
+    // Proposal contract
+    deployments.push({
+      contractType: 'Proposals',
+      initializerData: encodeFunctionData({
+        abi: PROPOSALS_ABI,
+        functionName: 'initialize',
+        args: [currentUserAddress]
+      })
+    })
 
     // Expense account
     deployments.push({

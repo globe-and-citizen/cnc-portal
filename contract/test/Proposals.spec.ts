@@ -71,6 +71,7 @@ describe('Proposals Contract', function () {
         .createProposal(
           'Test Title',
           'Test Description',
+          'Budget',
           now + ONE_DAY_IN_SECS,
           now + 2 * ONE_DAY_IN_SECS
         )
@@ -89,7 +90,7 @@ describe('Proposals Contract', function () {
       await expect(
         proposalsContract
           .connect(boardMember1)
-          .createProposal('Test Proposal', 'A description', startDate, endDate)
+          .createProposal('Test Proposal', 'A description', 'Budget', startDate, endDate)
       )
         .to.emit(proposalsContract, 'ProposalCreated')
         .withArgs(1, 'Test Proposal', boardMember1.address, startDate, endDate)
@@ -101,7 +102,7 @@ describe('Proposals Contract', function () {
       await expect(
         proposalsContract
           .connect(nonMember)
-          .createProposal('Invalid Proposal', '...', now + 1, now + 2)
+          .createProposal('Invalid Proposal', '...', 'Financial', now + 1, now + 2)
       ).to.be.revertedWithCustomError(proposalsContract, 'OnlyBoardMember')
     })
 
@@ -112,7 +113,7 @@ describe('Proposals Contract', function () {
       await expect(
         proposalsContract
           .connect(boardMember1)
-          .createProposal(longTitle, 'Description', now + 1, now + 2)
+          .createProposal(longTitle, 'Description', 'Technical', now + 1, now + 2)
       ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalContent')
     })
 
@@ -120,7 +121,9 @@ describe('Proposals Contract', function () {
       const { proposalsContract, boardMember1 } = await deployContracts()
       const now = await time.latest()
       await expect(
-        proposalsContract.connect(boardMember1).createProposal('Title', 'Desc', now + 2, now + 1)
+        proposalsContract
+          .connect(boardMember1)
+          .createProposal('Title', 'Desc', 'Technical', now + 2, now + 1)
       ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalDates')
     })
 
@@ -128,7 +131,9 @@ describe('Proposals Contract', function () {
       const { proposalsContract, boardMember1 } = await deployContracts()
       const now = await time.latest()
       await expect(
-        proposalsContract.connect(boardMember1).createProposal('Title', 'Desc', now - 1, now + 1)
+        proposalsContract
+          .connect(boardMember1)
+          .createProposal('Title', 'Desc', 'Technical', now - 1, now + 1)
       ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalDates')
     })
 
@@ -136,7 +141,9 @@ describe('Proposals Contract', function () {
       const { proposalsContract, boardMember1 } = await deployContracts()
       const now = await time.latest()
       await expect(
-        proposalsContract.connect(boardMember1).createProposal('', 'Description', now + 1, now + 2)
+        proposalsContract
+          .connect(boardMember1)
+          .createProposal('', 'Description', 'Technical', now + 1, now + 2)
       ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalContent')
     })
   })
@@ -158,7 +165,13 @@ describe('Proposals Contract', function () {
       const now = await time.latest()
       await proposalsContract
         .connect(boardMember1)
-        .createProposal('Voting Test', 'Desc', now + ONE_DAY_IN_SECS, now + 3 * ONE_DAY_IN_SECS)
+        .createProposal(
+          'Voting Test',
+          'Desc',
+          'Technical',
+          now + ONE_DAY_IN_SECS,
+          now + 3 * ONE_DAY_IN_SECS
+        )
       proposalId = 1
       await time.increase(ONE_DAY_IN_SECS + 1) // Move time forward to voting period
     })
@@ -166,7 +179,12 @@ describe('Proposals Contract', function () {
     it("Should allow a board member to cast a 'Yes' vote", async function () {
       await expect(proposalsContract.connect(boardMember1).castVote(proposalId, VoteOption.Yes))
         .to.emit(proposalsContract, 'ProposalVoted')
-        .withArgs(proposalId, boardMember1.address)
+        .withArgs(
+          proposalId,
+          boardMember1.address,
+          VoteOption.Yes,
+          (value: bigint) => typeof value === 'bigint'
+        )
 
       const proposal = await proposalsContract.getProposal(proposalId)
       expect(proposal.yesCount).to.equal(1)
@@ -196,7 +214,13 @@ describe('Proposals Contract', function () {
       const now = await time.latest()
       await proposalsContract
         .connect(boardMember1)
-        .createProposal('Future Vote', 'Desc', now + 5 * ONE_DAY_IN_SECS, now + 6 * ONE_DAY_IN_SECS)
+        .createProposal(
+          'Future Vote',
+          'Desc',
+          'Technical',
+          now + 5 * ONE_DAY_IN_SECS,
+          now + 6 * ONE_DAY_IN_SECS
+        )
       await expect(
         proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
       ).to.be.revertedWithCustomError(proposalsContract, 'ProposalVotingNotStarted')
@@ -234,7 +258,7 @@ describe('Proposals Contract', function () {
       const now = await time.latest()
       await proposalsContract
         .connect(boardMember1)
-        .createProposal('Tally Test', 'Desc', now + 1, now + ONE_DAY_IN_SECS)
+        .createProposal('Tally Test', 'Desc', 'Technical', now + 1, now + ONE_DAY_IN_SECS)
       proposalId = 1
       await time.increase(2) // Move time to active voting period
     })
@@ -267,6 +291,7 @@ describe('Proposals Contract', function () {
         .createProposal(
           'Tie Test',
           'Desc',
+          'Technical',
           (await time.latest()) + 1,
           (await time.latest()) + ONE_DAY_IN_SECS
         )
@@ -299,13 +324,25 @@ describe('Proposals Contract', function () {
       const endDate = now + ONE_DAY_IN_SECS
       await proposalsContract
         .connect(boardMember1)
-        .createProposal('Title A', 'Desc B', startDate, endDate)
+        .createProposal('Title A', 'Desc B', 'Technical', startDate, endDate)
 
       const proposal = await proposalsContract.getProposal(1)
       expect(proposal.id).to.equal(1)
       expect(proposal.title).to.equal('Title A')
       expect(proposal.description).to.equal('Desc B')
       expect(proposal.creator).to.equal(boardMember1.address)
+    })
+
+    it('hasVoted should return true for a member who has voted', async function () {
+      const { proposalsContract, boardMember1 } = await deployContracts()
+      const now = await time.latest()
+      await proposalsContract
+        .connect(boardMember1)
+        .createProposal('Vote Test', 'Desc', 'Technical', now + 1, now + 2)
+
+      await proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
+      const hasVoted = await proposalsContract.hasVoted(1, boardMember1.address)
+      expect(hasVoted).to.be.true
     })
 
     it('getProposal should revert for a non-existent proposal', async function () {
@@ -333,7 +370,7 @@ describe('Proposals Contract', function () {
       const now = await time.latest()
 
       await expect(
-        proposalsContract.createProposal('T', 'D', now + 1, now + 2)
+        proposalsContract.createProposal('T', 'D', 't', now + 1, now + 2)
       ).to.be.revertedWithCustomError(proposalsContract, 'BoardOfDirectorAddressNotSet')
     })
   })
