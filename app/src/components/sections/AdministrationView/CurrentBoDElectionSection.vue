@@ -116,7 +116,7 @@ import { useTeamStore, useToastStore } from '@/stores'
 import { encodeFunctionData, type Abi, type Address } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
 import { estimateGas } from '@wagmi/core'
-import type { OldProposal, Proposal } from '@/types'
+import type { OldProposal } from '@/types'
 import { log, parseError } from '@/utils'
 import { config } from '@/wagmi.config'
 
