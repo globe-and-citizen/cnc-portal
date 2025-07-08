@@ -20,8 +20,8 @@ interface AddressMapping {
   'TipsModule#Tips': string
   'BankBeaconModule#Beacon': string
   'BankBeaconModule#Bank': string
-  'ProposalBeaconModule#Beacon': string
-  'ProposalBeaconModule#Proposals': string
+  'ProposalBeaconModule#Beacon'?: string
+  'ProposalBeaconModule#Proposals'?: string
   // 'VotingBeaconModule#Beacon'?: string
   // 'VotingBeaconModule#Voting'?: string
   'BoardOfDirectorsModule#Beacon': string
