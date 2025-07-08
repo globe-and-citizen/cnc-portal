@@ -5,6 +5,16 @@ import { ref, nextTick } from 'vue'
 import { zeroAddress, type Address } from 'viem'
 import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
+import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
+import { mainnet } from 'viem/chains'
+
+// Minimal wagmi config for test environment
+const wagmiConfig = createConfig({
+  chains: [mainnet],
+  transports: {
+    [mainnet.id]: http()
+  }
+})
 
 const mockUseSendTransaction = {
   sendTransactionAsync: vi.fn(),
@@ -67,6 +77,16 @@ vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)
 }))
 
+vi.mock('@tanstack/vue-query', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useQueryClient: () => ({
+      invalidateQueries: vi.fn()
+    })
+  }
+})
+
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 
 describe('DepositBankForm.vue', () => {
@@ -78,7 +98,10 @@ describe('DepositBankForm.vue', () => {
     mountFn(DepositBankForm, {
       props: { ...defaultProps, ...overrides },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [
+          createTestingPinia({ createSpy: vi.fn }),
+          [WagmiPlugin, { config: wagmiConfig }]
+        ]
       }
     })
 
