@@ -157,7 +157,7 @@ const handleTransfer = async (data: {
         functionName: 'transferToken',
         args: [USDC_ADDRESS as Address, data.address.address, tokenAmount]
       })
-      console.log("data.token", data)
+      console.log('data.token', data)
       queryClient.invalidateQueries({
         queryKey: [
           'readContract',
