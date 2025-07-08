@@ -160,6 +160,8 @@ const submitForm = async () => {
         to: props.bankAddress,
         value: parseEther(amount.value)
       })
+      await waitForCondition(() => nativeTokenDespositStatus.value === 'success', 15000)
+      addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
 
       // Invalidate the balance queries to update the balances
       queryClient.invalidateQueries({
@@ -171,9 +173,8 @@ const submitForm = async () => {
           }
         ]
       })
-      await waitForCondition(() => nativeTokenDespositStatus.value === 'success', 15000)
 
-      addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
+      amount.value = ''
       emits('closeModal')
     } else {
       const tokenAmount = BigInt(Number(amount.value) * 1e6)
@@ -222,7 +223,7 @@ const submitForm = async () => {
             }
           ]
         })
-        depositAmount.value = ''
+        amount.value = ''
         addSuccessToast('USDC deposited successfully')
         emits('closeModal')
       } else {
