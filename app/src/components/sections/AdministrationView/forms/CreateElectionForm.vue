@@ -105,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Proposal, User } from '@/types'
+import type { OldProposal, User } from '@/types'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { required, minLength, requiredIf, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
@@ -133,7 +133,7 @@ const uniqueCandidates = () => {
   }
 }
 
-const newProposalInput = ref<Partial<Proposal>>({
+const newProposalInput = ref<Partial<OldProposal>>({
   title: '',
   description: '',
   startDate: '',

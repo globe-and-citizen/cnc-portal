@@ -7,117 +7,54 @@
     <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>
   </div>
 
-  <label class="form-control w-full" :class="{ 'mt-4': selectedToken?.token.id !== 'native' }">
-    <div class="label">
-      <span class="label-text">Deposit</span>
-      <span class="label-text-alt">Balance: {{ selectedToken?.amount }}</span>
-    </div>
-    <div class="input input-bordered flex items-center">
-      <input
-        type="text"
-        class="grow"
-        placeholder="0"
-        v-model="amount"
-        data-test="amountInput"
-        @input="handleAmountInput"
-      />
-
-      <div class="flex gap-1">
-        <button
-          v-for="percent in [25, 50, 75]"
-          :key="percent"
-          class="btn btn-xs btn-ghost cursor-pointer"
-          @click="usePercentageOfBalance(percent)"
-          :data-test="`percentButton-${percent}`"
-        >
-          {{ percent }}%
-        </button>
-      </div>
-      <button
-        class="btn btn-xs btn-ghost mr-2"
-        @click="useMaxBalance"
-        :disabled="isLoading"
-        data-test="maxButton"
-      >
-        Max
-      </button>
-      <div>
-        <SelectComponent
-          :options="
-            tokenList.map((token) => ({
-              label: token.symbol,
-              value: token.tokenId
-            }))
-          "
-          :disabled="isLoading"
-          @change="
-            (value) => {
-              selectedTokenId = value
-            }
-          "
-          :format-value="
-            (value: string) => {
-              return value === 'SepoliaETH' ? 'SepETH' : value
-            }
-          "
-        />
-      </div>
-    </div>
-    <div class="label">
-      <!-- Estimated Price in selected currency -->
-      <span class="label-text" v-if="amount && parseFloat(amount) > 0">
-        ≈ {{ estimatedPrice }}
-      </span>
-      <div class="pl-4 text-red-500 text-sm" v-for="error in $v.amount.$errors" :key="error.$uid">
-        {{ error.$message }}
-      </div>
-    </div>
-  </label>
+  <!-- New Token Amount Component -->
+  <TokenAmount
+    :tokens="tokenList"
+    v-model:modelValue="amount"
+    v-model:modelToken="selectedTokenId"
+    :isLoading="isLoading"
+    @validation="isAmountValid = $event"
+  />
 
   <div class="modal-action justify-center">
     <ButtonUI
       variant="primary"
       @click="submitForm"
       :loading="submitting"
-      :disabled="isLoading || $v.amount.$invalid"
+      :disabled="isLoading || !isAmountValid"
+      data-test="deposit-button"
     >
       Deposit
     </ButtonUI>
-    <ButtonUI variant="error" outline @click="$emit('closeModal')">Cancel</ButtonUI>
+    <ButtonUI variant="error" outline @click="$emit('closeModal')" data-test="cancel-button"
+      >Cancel</ButtonUI
+    >
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-
-import { useQueryClient } from '@tanstack/vue-query'
-
-import { required, numeric, helpers } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
-
-import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
-import ERC20ABI from '@/artifacts/abi/erc20.json'
-import BankABI from '@/artifacts/abi/bank.json'
-
-import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
-
-import SelectComponent from '@/components/SelectComponent.vue'
-import ButtonUI from '../ButtonUI.vue'
-
+import { ref, computed } from 'vue'
 import {
   useSendTransaction,
   useWriteContract,
   useWaitForTransactionReceipt,
   useChainId
 } from '@wagmi/vue'
+
+import { useQueryClient } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { parseEther, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
-
-import { formatCurrencyShort } from '@/utils/currencyUtil'
+import TokenAmount from './TokenAmount.vue'
+import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
+import ERC20ABI from '@/artifacts/abi/erc20.json'
+import BankABI from '@/artifacts/abi/bank.json'
+import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
+import ButtonUI from '../ButtonUI.vue'
 
 const emits = defineEmits(['closeModal'])
+// Add validation event
 const props = defineProps<{
   loading?: boolean
   loadingText?: string
@@ -127,9 +64,9 @@ const props = defineProps<{
 // Component state
 const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native') // Default to native token (ETH)
-const depositAmount = ref<string>('')
 const currentStep = ref(1)
 const submitting = ref(false)
+const isAmountValid = ref(false)
 
 // Stores
 const currencyStore = useCurrencyStore()
@@ -176,22 +113,17 @@ const tokenList = computed(() =>
   SUPPORTED_TOKENS.map((token) => ({
     symbol: token.symbol,
     tokenId: token.id,
-    name: token.name
+    name: token.name,
+    code: token.code, // Add the missing 'code' property
+    balance: balances.value.find((b) => b.token.id === token.id)?.amount ?? 0,
+    price: currencyStore.getTokenPrice(token.id)
   }))
 )
 
-// computed propertie for selected token
+// computed property for selected token
 const selectedToken = computed(() =>
   balances.value.find((b) => b.token.id === selectedTokenId.value)
 )
-// TODO, toFixed(4) is giving sometimes a value > to the actual balance, need to fix this
-const estimatedPrice = computed(() => {
-  const tokenInfo = currencyStore.getTokenInfo(selectedTokenId.value)
-  const priceObj = tokenInfo?.prices.find((p) => p.id === 'local')
-  const price = priceObj?.price ?? 0
-  const value = (Number(amount.value) || 0) * price
-  return formatCurrencyShort(value, priceObj?.code ?? 'USD')
-})
 
 // Methods
 
@@ -216,48 +148,11 @@ const waitForCondition = (condition: () => boolean, timeout = 5000) => {
     }, 1000)
   })
 }
-const useMaxBalance = () => {
-  amount.value = selectedToken.value?.amount.toString() ?? '0.00'
-}
-const usePercentageOfBalance = (percentage: number) => {
-  amount.value = (((selectedToken.value?.amount ?? 0) * percentage) / 100).toFixed(4)
-}
 
-// Validation rules
-const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
-  return parseFloat(value) > 0
-})
-
-const notExceedingBalance = helpers.withMessage('Amount exceeds your balance', (value: string) => {
-  if (!value || parseFloat(value) <= 0) return true
-  const amountValue = selectedToken.value?.amount ?? 0
-  return parseFloat(value) <= amountValue
-})
-
-// const validDecimals = helpers.withMessage(
-//   'Amount must have at most 4 decimal places',
-//   (value: string) => {
-//     if (!value) return true
-//     const parts = value.split('.')
-//     return parts.length === 1 || parts[1].length <= 4
-//   }
-// )
-
-const rules = {
-  amount: {
-    required,
-    numeric,
-    notZero,
-    notExceedingBalance
-    // validDecimals
-  }
-}
-
-const $v = useVuelidate(rules, { amount })
+// Remove unused notZero and notExceedingBalance
 
 const submitForm = async () => {
-  await $v.value.$touch()
-  if ($v.value.$invalid) return
+  if (!isAmountValid.value) return
   submitting.value = true
   try {
     if (selectedTokenId.value === 'native') {
@@ -280,11 +175,8 @@ const submitForm = async () => {
 
       addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
       emits('closeModal')
-      depositAmount.value = '' // Clear stored amount
     } else {
       const tokenAmount = BigInt(Number(amount.value) * 1e6)
-      depositAmount.value = amount.value // Store amount for after approval
-
       if (selectedToken.value) {
         const allowance = await readContract(config, {
           address: selectedToken.value.token.address as Address,
@@ -292,10 +184,8 @@ const submitForm = async () => {
           functionName: 'allowance',
           args: [userDataStore.address as Address, props.bankAddress]
         })
-
         const currentAllowance = allowance ? allowance.toString() : 0n
         if (Number(currentAllowance) < Number(tokenAmount)) {
-          // If allowance is less than token amount, approve the token
           currentStep.value = 2
           await approve({
             address: selectedToken.value.token.address as Address,
@@ -312,8 +202,6 @@ const submitForm = async () => {
           // wait for transaction receipt
           addSuccessToast('Token approved successfully')
         }
-
-        // Directly deposit the token
         currentStep.value = 3
         await writeTokenDeposit({
           address: props.bankAddress,
@@ -321,8 +209,6 @@ const submitForm = async () => {
           functionName: 'depositToken',
           args: [selectedToken.value.token.address as Address, tokenAmount]
         })
-        // TODO wait for transaction receipt
-
         await waitForCondition(() => erc20TokenDespositStatus.value === 'success', 15000)
 
         // Invalidate the balance queries to update the balances
@@ -347,23 +233,7 @@ const submitForm = async () => {
     console.error(error)
     addErrorToast(`Failed to deposit ${selectedTokenId.value}`)
   }
-
   submitting.value = false
   currentStep.value = 1
 }
-
-const handleAmountInput = (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const value = input.value.replace(/[^\d.]/g, '')
-  const parts = value.split('.')
-  if (parts.length > 2) {
-    amount.value = parts[0] + '.' + parts.slice(1).join('')
-  } else {
-    amount.value = value
-  }
-}
-
-watch(amount, () => {
-  $v.value.$touch()
-})
 </script>

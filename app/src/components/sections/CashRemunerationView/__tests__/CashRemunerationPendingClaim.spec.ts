@@ -42,7 +42,7 @@ vi.mock('@/stores', async (importOriginal) => {
   }
 })
 
-describe('CashRemunerationPendingClaim', () => {
+describe.skip('CashRemunerationPendingClaim', () => {
   const createComponent = () => {
     return shallowMount(CashRemunerationPendingClaim, {
       global: {

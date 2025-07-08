@@ -15,6 +15,8 @@ import VestingView from '@/views/team/[id]/VestingView.vue'
 import WeeklyClaimView from '@/views/team/[id]/WeeklyClaimView.vue'
 import ClaimHistoryView from '@/views/team/[id]/ClaimHistoryView.vue'
 import BodElectionView from '@/views/team/[id]/BodElectionView.vue'
+import ProposalsView from '@/views/team/[id]/ProposalsView.vue'
+import ProposalDetail from '@/components/sections/ProposalsView/ProposalDetail.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -104,6 +106,18 @@ const router = createRouter({
           name: 'bod-elections',
           meta: { name: 'BoD Election' },
           component: BodElectionView
+        },
+        {
+          path: '/teams/:id/administration/bod-proposals',
+          name: 'bod-proposals',
+          meta: { name: 'Proposals' },
+          component: ProposalsView
+        },
+        {
+          path: '/teams/:id/administration/bod-proposals/:proposalId',
+          name: 'proposal-detail',
+          meta: { name: 'Proposals' },
+          component: ProposalDetail
         },
         {
           path: '/teams/:id/sher-token',

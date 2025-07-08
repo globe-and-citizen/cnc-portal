@@ -147,7 +147,7 @@
         formatAmount(row as BaseTransaction, 'USD')
       }}</template>
       <template #valueLocal-data="{ row }">{{
-        formatAmount(row as BaseTransaction, currencyStore.localCurrency.code)
+        formatAmount(row as BaseTransaction, currencyStore.localCurrency?.code)
       }}</template>
     </TableComponent>
 
@@ -243,10 +243,10 @@ const columns = computed(() => {
     { key: 'valueUSD', label: 'Value (USD)', sortable: false }
   ] as TableColumn[]
 
-  if (currencyStore.localCurrency.code !== 'USD') {
+  if (currencyStore.localCurrency?.code !== 'USD') {
     baseColumns.push({
       key: 'valueLocal',
-      label: `Value (${currencyStore.localCurrency.code})`,
+      label: `Value (${currencyStore.localCurrency?.code})`,
       sortable: false
     })
   }
@@ -292,11 +292,13 @@ const formatDate = (date: string | number) => {
 
 const formatAmount = (transaction: BaseTransaction, currency: string) => {
   const tokenAmount = Number(transaction.amount)
-  if (tokenAmount <= 0) return currency === 'USD' ? '$0.00' : '0.00'
+  // Defensive: fallback to 'USD' if currency is falsy
+  const safeCurrency = currency || 'USD'
+  if (tokenAmount <= 0) return safeCurrency === 'USD' ? '$0.00' : '0.00'
   const usdAmount =
     transaction.token === 'USDC' ? tokenAmount : tokenAmount * nativeToken.value.priceInUSD!
-  const formatter = Intl.NumberFormat('en-US', { style: 'currency', currency })
-  return currency === 'USD'
+  const formatter = Intl.NumberFormat('en-US', { style: 'currency', currency: safeCurrency })
+  return safeCurrency === 'USD'
     ? formatter.format(usdAmount)
     : formatter.format(
         usdAmount * (nativeToken.value.priceInLocal! / nativeToken.value.priceInUSD!)
@@ -326,7 +328,7 @@ const handleExport = async () => {
           case 'valueUSD':
             return formatAmount(tx, 'USD')
           case 'valueLocal':
-            return formatAmount(tx, currencyStore.localCurrency.code)
+            return formatAmount(tx, currencyStore.localCurrency?.code)
           default:
             return ''
         }
@@ -380,7 +382,7 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
     token: String(transaction.token),
     amountUSD: usdAmount,
     valueUSD: formatAmount(transaction, 'USD'),
-    valueLocal: formatAmount(transaction, currencyStore.localCurrency.code)
+    valueLocal: formatAmount(transaction, currencyStore.localCurrency?.code)
   }
 }
 

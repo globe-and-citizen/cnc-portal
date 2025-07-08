@@ -22,11 +22,12 @@ import { ref, watch, computed } from 'vue'
 // Contract ABIs
 import OfficerABI from '@/artifacts/abi/officer.json'
 import BankABI from '@/artifacts/abi/bank.json'
-import VotingABI from '@/artifacts/abi/voting.json'
+// import VotingABI from '@/artifacts/abi/voting.json'
 import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
 import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
 import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import FACTORY_BEACON_ABI from '@/artifacts/abi/factory-beacon.json'
+import ElectionsABI from '@/artifacts/abi/elections.json'
 
 import {
   BANK_BEACON_ADDRESS,
@@ -36,15 +37,18 @@ import {
   EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS,
   INVESTOR_V1_BEACON_ADDRESS,
   OFFICER_BEACON,
+  PROPOSALS_BEACON_ADDRESS,
   TIPS_ADDRESS,
   USDC_ADDRESS,
   USDT_ADDRESS,
   validateAddresses,
-  VOTING_BEACON_ADDRESS
+  // VOTING_BEACON_ADDRESS,
+  ELECTIONS_BEACON_ADDRESS
 } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { log } from '@/utils'
+import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 
 const props = withDefaults(
   defineProps<{
@@ -102,13 +106,17 @@ const deployOfficerContract = async () => {
         beaconType: 'Bank',
         beaconAddress: BANK_BEACON_ADDRESS
       },
-      {
-        beaconType: 'Voting',
-        beaconAddress: VOTING_BEACON_ADDRESS
-      },
+      // {
+      //   beaconType: 'Voting',
+      //   beaconAddress: VOTING_BEACON_ADDRESS
+      // },
       {
         beaconType: 'BoardOfDirectors',
         beaconAddress: BOD_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'Proposals',
+        beaconAddress: PROPOSALS_BEACON_ADDRESS
       },
       {
         beaconType: 'ExpenseAccount',
@@ -125,6 +133,10 @@ const deployOfficerContract = async () => {
       {
         beaconType: 'InvestorsV1',
         beaconAddress: INVESTOR_V1_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'Elections',
+        beaconAddress: ELECTIONS_BEACON_ADDRESS
       }
     ]
     const deployments = []
@@ -152,10 +164,20 @@ const deployOfficerContract = async () => {
     })
 
     // Voting contract
+    // deployments.push({
+    //   contractType: 'Voting',
+    //   initializerData: encodeFunctionData({
+    //     abi: VotingABI,
+    //     functionName: 'initialize',
+    //     args: [currentUserAddress]
+    //   })
+    // })
+
+    // Proposal contract
     deployments.push({
-      contractType: 'Voting',
+      contractType: 'Proposals',
       initializerData: encodeFunctionData({
-        abi: VotingABI,
+        abi: PROPOSALS_ABI,
         functionName: 'initialize',
         args: [currentUserAddress]
       })
@@ -188,6 +210,16 @@ const deployOfficerContract = async () => {
         abi: CashRemunerationEIP712ABI,
         functionName: 'initialize',
         args: [currentUserAddress, [USDC_ADDRESS]]
+      })
+    })
+
+    // Elections contract
+    deployments.push({
+      contractType: 'Elections',
+      initializerData: encodeFunctionData({
+        abi: ElectionsABI,
+        functionName: 'initialize',
+        args: [currentUserAddress]
       })
     })
 
