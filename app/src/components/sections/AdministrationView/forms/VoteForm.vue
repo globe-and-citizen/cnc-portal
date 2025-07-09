@@ -2,68 +2,24 @@
   <div>
     <h2>Vote</h2>
     <hr />
-    <div v-if="true">
-      <div v-for="candidate in electionCandidates" :key="candidate" class="form-control">
-        <label class="m-2 label cursor-pointer border rounded-lg">
-          <span class="label-text"
-            >{{
-              /*props.team*/ teamStore.currentTeam?.members.find(
-                (member: Member) => member.address === candidate
-              )?.name
-            }}
-            | {{ candidate }}</span
-          >
-          <input
-            type="radio"
-            name="candidate"
-            class="radio"
-            :value="candidate"
-            v-model="selectedCandidate"
-          />
-        </label>
-      </div>
+    <div v-for="candidate in electionCandidates" :key="candidate" class="form-control">
+      <label class="m-2 label cursor-pointer border rounded-lg">
+        <span class="label-text"
+          >{{
+            teamStore.currentTeam?.members.find((member: Member) => member.address === candidate)
+              ?.name
+          }}
+          | {{ candidate }}</span
+        >
+        <input
+          type="radio"
+          name="candidate"
+          class="radio"
+          :value="candidate"
+          v-model="selectedCandidate"
+        />
+      </label>
     </div>
-    <!-- <div v-else>
-      <div class="form-control">
-        <label class="label">
-          <span class="label-text">Yes</span>
-          <input
-            type="radio"
-            name="option"
-            class="radio"
-            value="1"
-            v-model="selectedOption"
-            data-test="yesButton"
-          />
-        </label>
-      </div>
-      <div class="form-control">
-        <label class="label">
-          <span class="label-text">No</span>
-          <input
-            type="radio"
-            name="option"
-            class="radio"
-            value="0"
-            v-model="selectedOption"
-            data-test="noButton"
-          />
-        </label>
-      </div>
-      <div class="form-control">
-        <label class="label">
-          <span class="label-text">Abstain</span>
-          <input
-            type="radio"
-            name="option"
-            class="radio"
-            value="2"
-            v-model="selectedOption"
-            data-test="abstainButton"
-          />
-        </label>
-      </div>
-    </div> -->
     <div class="flex justify-center mt-4">
       <ButtonUI :loading="isLoading" :disabled="isLoading" variant="primary" @click="castVote"
         >Cast Vote</ButtonUI
@@ -93,7 +49,6 @@ const props = defineProps<{
 }>()
 
 const selectedCandidate = ref<string>()
-const selectedOption = ref<string | null>(null)
 
 const electionsAddress = computed(() => {
   const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
@@ -131,18 +86,10 @@ const { data: electionCandidates, error: errorElectionCandidates } = useReadCont
 })
 
 const castVote = () => {
-  // if (props.proposal.isElection) {
   emits('voteElection', {
     teamId: Number(route.params.id),
     proposalId: Number(currentElectionId.value),
     candidateAddress: selectedCandidate.value ? selectedCandidate.value : ''
   })
-  // } else {
-  //   emits('voteDirective', {
-  //     teamId: Number(route.params.id),
-  //     proposalId: Number(props.proposal.id),
-  //     option: Number(selectedOption.value)
-  //   })
-  // }
 }
 </script>
