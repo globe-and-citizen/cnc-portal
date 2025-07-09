@@ -37,6 +37,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     uint256 id;
     string title;
     string description;
+    string proposalType; // e.g., "Budget", "Policy Change", etc.
     uint256 startDate;
     uint256 endDate;
     address creator;
@@ -47,6 +48,22 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     uint256 abstainCount;
     ProposalState state;
     mapping(address => bool) hasVoted;
+  }
+
+  struct ProposalView {
+    uint256 id;
+    string title;
+    string description;
+    string proposalType; // e.g., "Budget", "Policy Change", etc.
+    uint256 startDate;
+    uint256 endDate;
+    address creator;
+    uint256 voteCount;
+    uint256 totalVoters;
+    uint256 yesCount;
+    uint256 noCount;
+    uint256 abstainCount;
+    ProposalState state;
   }
 
   // Custom errors
@@ -68,7 +85,12 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     uint256 startDate,
     uint256 endDate
   );
-  event ProposalVoted(uint256 indexed proposalId, address indexed voter);
+  event ProposalVoted(
+    uint256 indexed proposalId,
+    address indexed voter,
+    VoteOption vote,
+    uint256 timestamp
+  );
   event ProposalTallyResults(
     uint256 indexed proposalId,
     ProposalState state,
@@ -95,9 +117,10 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   function createProposal(
     string memory title,
     string memory description,
+    string memory proposalType,
     uint256 startDate,
     uint256 endDate
-  ) external boardOfDirectorsContractExists onlyMember {
+  ) external boardOfDirectorsContractExists {
     ProposalUtils.validateProposalDates(startDate, endDate);
     ProposalUtils.validateProposalContent(title, description);
 
@@ -105,11 +128,15 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
       .getBoardOfDirectors()
       .length;
     if (boardCount == 0) revert NoBoardMembers();
+    if (!IBoardOfDirectors(boardOfDirectorsContractAddress).isMember(msg.sender)) {
+      revert OnlyBoardMember();
+    }
 
     Proposal storage newProposal = proposals[_nextProposalId];
     newProposal.id = _nextProposalId;
     newProposal.title = title;
     newProposal.description = description;
+    newProposal.proposalType = proposalType;
     newProposal.startDate = startDate;
     newProposal.endDate = endDate;
     newProposal.creator = msg.sender;
@@ -150,7 +177,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
       proposal.abstainCount++;
     }
 
-    emit ProposalVoted(proposalId, msg.sender);
+    emit ProposalVoted(proposalId, msg.sender, vote, block.timestamp);
 
     if (proposal.voteCount == proposal.totalVoters) tallyResults(proposalId);
   }
@@ -158,55 +185,30 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   /**
    * @dev Retrieves information about a specific proposal.
    * @param proposalId The ID of the proposal to retrieve.
-   * @return id The ID of the proposal.
-   * @return title The title of the proposal.
-   * @return description The description of the proposal.
-   * @return startDate The start date of the proposal (in Unix timestamp).
-   * @return endDate The end date of the proposal (in Unix timestamp).
-   * @return creator The address of the proposal creator.
-   * @return voteCount The total number of votes cast for the proposal.
-   * @return yesCount The number of "Yes" votes.
-   * @return noCount The number of "No" votes.
-   * @return abstainCount The number of abstentions.
-   * @return state The current state of the proposal.
+   * @return ProposalView containing the proposal details.
    */
-  function getProposal(
-    uint256 proposalId
-  )
-    external
-    view
-    returns (
-      uint256 id,
-      string memory title,
-      string memory description,
-      uint256 startDate,
-      uint256 endDate,
-      address creator,
-      uint256 voteCount,
-      uint256 yesCount,
-      uint256 noCount,
-      uint256 abstainCount,
-      ProposalState state
-    )
-  {
+  function getProposal(uint256 proposalId) external view returns (ProposalView memory) {
     Proposal storage proposal = proposals[proposalId];
     if (proposal.id == 0) {
       revert ProposalNotFound();
     }
 
-    return (
-      proposal.id,
-      proposal.title,
-      proposal.description,
-      proposal.startDate,
-      proposal.endDate,
-      proposal.creator,
-      proposal.voteCount,
-      proposal.yesCount,
-      proposal.noCount,
-      proposal.abstainCount,
-      proposal.state
-    );
+    return
+      ProposalView({
+        id: proposal.id,
+        title: proposal.title,
+        description: proposal.description,
+        proposalType: proposal.proposalType,
+        startDate: proposal.startDate,
+        endDate: proposal.endDate,
+        creator: proposal.creator,
+        voteCount: proposal.voteCount,
+        totalVoters: proposal.totalVoters,
+        yesCount: proposal.yesCount,
+        noCount: proposal.noCount,
+        abstainCount: proposal.abstainCount,
+        state: proposal.state
+      });
   }
 
   /**
@@ -256,6 +258,12 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   {
     IBoardOfDirectors boardOfDirectors = IBoardOfDirectors(boardOfDirectorsContractAddress);
     return boardOfDirectors.getBoardOfDirectors();
+  }
+
+  function hasVoted(uint256 proposalId, address voter) external view returns (bool) {
+    Proposal storage proposal = proposals[proposalId];
+    if (proposal.id == 0) revert ProposalNotFound();
+    return proposal.hasVoted[voter];
   }
 
   modifier onlyMember() {

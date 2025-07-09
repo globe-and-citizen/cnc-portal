@@ -100,8 +100,7 @@
   </CardComponent>
 </template>
 <script setup lang="ts">
-import ProposalCard from '@/components/sections/AdministrationView/ProposalCard.vue'
-import type { Proposal } from '@/types/index'
+import type { OldProposal } from '@/types/index'
 import { computed, onMounted, ref, watch, type Ref } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
@@ -181,12 +180,12 @@ const fetchProposals = async () => {
         functionName: 'getProposalById',
         args: [i]
       })
-      proposalsList.push(proposal as Partial<Proposal>)
+      proposalsList.push(proposal as Partial<OldProposal>)
     }
 
     activeProposals.value = proposalsList.filter(
       (proposal) => proposal.isActive
-    ) as Partial<Proposal>[]
+    ) as Partial<OldProposal>[]
     oldProposals.value = proposalsList.filter((proposal) => !proposal.isActive)
   } catch (error) {
     if (error instanceof Error) {
@@ -210,7 +209,7 @@ const showModal = ref(false)
 const showBoDModal = ref(false)
 const tabs = ref([ProposalTabs.Ongoing, ProposalTabs.Done])
 
-const createProposal = (newProposalInput: Ref<Partial<Proposal>>) => {
+const createProposal = (newProposalInput: Ref<Partial<OldProposal>>) => {
   newProposalInput.value.voters = props.team.members?.map((member) => {
     return {
       name: member.name,
@@ -237,8 +236,8 @@ const createProposal = (newProposalInput: Ref<Partial<Proposal>>) => {
     })
   }
 }
-const oldProposals = ref<Partial<Proposal>[]>([])
-const activeProposals = ref<Partial<Proposal>[]>([])
+const oldProposals = ref<Partial<OldProposal>[]>([])
+const activeProposals = ref<Partial<OldProposal>[]>([])
 
 watch(isConfirmingAddProposal, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedAddProposal.value) {

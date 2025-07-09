@@ -58,14 +58,15 @@
     <label class="input input-bordered flex items-center gap-2 input-md">
       <span class="w-40" data-test="currency-label">Default Currency</span>
       <select
+        v-if="LIST_CURRENCIES && LIST_CURRENCIES.length"
         v-model="selectedCurrency"
         data-test="currency-select"
         class="select select-sm w-full focus:border-none focus:outline-none"
       >
         <option
-          :key="currency.code"
           v-for="currency in LIST_CURRENCIES"
-          :selected="currencyStore.localCurrency.code == currency.code"
+          :key="currency.code"
+          :selected="currencyStore.localCurrency?.code == currency.code"
           :value="currency.code"
         >
           {{ currency.code }}
@@ -111,7 +112,7 @@ const emits = defineEmits(['submitEditUser'])
 
 // Currency store
 const currencyStore = useCurrencyStore()
-const selectedCurrency = ref<string>(currencyStore.localCurrency.code)
+const selectedCurrency = ref<string>(currencyStore.localCurrency?.code)
 
 // User form
 const user = defineModel({
