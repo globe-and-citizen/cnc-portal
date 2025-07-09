@@ -39,17 +39,18 @@
         <div v-if="memberWeeklyClaims">
           <h2 class="pb-4">Weekly Claims: {{ formatDate(selectedWeek) }}</h2>
           <div
-            v-for="(entry, index) in [0, 1, 2, 3, 4, 5, 6].map((i) => ({
-              date: dayjs(selectedWeek).add(i, 'day').toDate(),
-              hours:
-                selectWeekWeelyClaim?.claims
-                  .filter(
-                    (claim) =>
-                      formatDayLabel(dayjs(selectedWeek).add(i, 'day').toDate()) ===
-                      formatDayLabel(claim.dayWorked)
-                  )
-                  .reduce((sum, claim) => sum + claim.hoursWorked, 0) || 0
-            }))"
+            v-for="(entry, index) in [0, 1, 2, 3, 4, 5, 6].map((i) => {
+              const date = dayjs(selectedWeek).add(i, 'day').toDate()
+              const dailyClaims =
+                selectWeekWeelyClaim?.claims.filter(
+                  (claim) => formatDayLabel(date) === formatDayLabel(claim.dayWorked)
+                ) || []
+              return {
+                date,
+                claims: dailyClaims,
+                hours: dailyClaims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
+              }
+            })"
             :key="index"
             :class="[
               'flex items-center justify-between border px-4 py-3 mb-2 rounded-lg ',
@@ -63,15 +64,11 @@
               />
               <span class="font-medium">{{ formatDayLabel(entry.date) }} </span>
             </div>
-            <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10">
-              ({{
-                selectWeekWeelyClaim?.claims.find(
-                  (claim) =>
-                    formatDayLabel(dayjs(selectedWeek).add(index, 'day').toDate()) ===
-                    formatDayLabel(claim.dayWorked)
-                )?.memo || ''
-              }})
+
+            <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-1">
+              <div v-for="(claim, idx) in entry.claims" :key="idx">{{ claim.memo }} ...</div>
             </div>
+
             <div class="text-base flex items-center gap-2 w-1/5 justify-end">
               <IconifyIcon icon="heroicons:clock" class="w-4 h-4 text-gray-500" />
               {{ entry.hours }} hours
