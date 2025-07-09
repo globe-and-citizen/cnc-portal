@@ -34,7 +34,7 @@
 
     <!-- Right Content -->
     <div class="flex-1 space-y-6">
-      <TotalValue :weeklyClaim="selectWeekWeelyClaim" />
+      <WeeklyRecap :weeklyClaim="selectWeekWeelyClaim" />
       <CardComponent title="" class="w-full">
         <div v-if="memberWeeklyClaims">
           <h2 class="pb-4">Weekly Claims: {{ formatDate(selectedWeek) }}</h2>
@@ -92,7 +92,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useTeamStore } from '@/stores'
 import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
-import TotalValue from '@/components/TotalValue.vue'
+import WeeklyRecap from '@/components/WeeklyRecap.vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
