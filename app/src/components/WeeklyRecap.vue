@@ -4,6 +4,9 @@
       <div class="stat place-items-center">
         <div class="stat-title">Total Hours</div>
         <div class="stat-value">{{ totalHour }}h</div>
+        <span class="text-sm text-gray-500"
+          >of {{ props.weeklyClaim?.wage?.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span
+        >
       </div>
 
       <div class="stat place-items-center">
