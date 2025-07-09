@@ -11,8 +11,19 @@
           >
             Create Election
           </ButtonUI>
-          <ButtonUI> View Election </ButtonUI>
+          <ButtonUI
+            variant="primary"
+            size="md"
+            @click="showVoteModal = !showVoteModal"
+            :disabled="!formattedElection"
+            data-test="vote-button"
+            >Vote</ButtonUI
+          >
+          <ButtonUI variant="primary" size="md" @click=""> View Election </ButtonUI>
         </div>
+        <ModalComponent v-model="showVoteModal">
+          <VoteForm />
+        </ModalComponent>
         <ModalComponent v-model="showCreateElectionModal">
           <!-- <VotingManagement :team="team" /> -->
           <CreateElectionForm
@@ -110,6 +121,7 @@ import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
+import VoteForm from './forms/VoteForm.vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
 // import BoDABI from '@/artifacts/abi/bod.json'
 import { useTeamStore, useToastStore } from '@/stores'
@@ -291,6 +303,7 @@ watch(errorGetCandidates, (error) => {
 })
 
 const showCreateElectionModal = ref(false)
+const showVoteModal = ref(false)
 
 // Calculate time remaining
 const now = ref(new Date())
