@@ -3,8 +3,8 @@ import { getWalletClient, getPublicClient } from '@wagmi/core'
 import { getLogs } from 'viem/actions'
 import { parseAbiItem, type PublicClient, type Address } from 'viem'
 
-import { writeContract, readContract, waitForTransactionReceipt } from '@wagmi/core'
-import { parseUnits, formatUnits } from 'viem/utils'
+import { writeContract, waitForTransactionReceipt } from '@wagmi/core'
+import { parseUnits } from 'viem/utils'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import ADD_CAMPAIGN_ARTIFACT from '../artifacts/abi/AdCampaignManager.json'
 
@@ -168,39 +168,6 @@ export class AddCampaignService {
     return Array.from(set)
   }
 
-  async getContractData(address: string): Promise<{ key: string; value: string }[]> {
-    const result: { key: string; value: string }[] = []
-
-    for (const fn of ADD_CAMPAIGN_ARTIFACT.abi) {
-      if (
-        fn.type === 'function' &&
-        typeof fn.name === 'string' &&
-        ['view', 'pure'].includes(fn.stateMutability || '') &&
-        fn.inputs?.length === 0
-      ) {
-        try {
-          const rawValue = (await readContract(config, {
-            address: address as `0x${string}`,
-            abi: ADD_CAMPAIGN_ARTIFACT.abi,
-            functionName: fn.name
-          })) as bigint | string
-
-          result.push({
-            key: fn.name,
-            value:
-              fn.name.startsWith('cost') && rawValue !== undefined
-                ? formatUnits(rawValue as bigint, 18)
-                : (rawValue?.toString() ?? '')
-          })
-        } catch (err) {
-          console.error(`Error calling ${fn.name}:`, err)
-        }
-      }
-    }
-
-    return result
-  }
-
   async getEventsGroupedByCampaignCode(
     contractAddress: string
   ): Promise<GetEventsGroupedByCampaignCodeResult> {
@@ -295,27 +262,5 @@ export class AddCampaignService {
     } catch (error) {
       return { status: 'error', error: { message: (error as Error).message } }
     }
-  }
-
-  async setCostPerClick(address: string, value: string) {
-    const amount = parseUnits(value, 18)
-    const hash = await writeContract(config, {
-      address: address as `0x${string}`,
-      abi: ADD_CAMPAIGN_ARTIFACT.abi,
-      functionName: 'setCostPerClick',
-      args: [amount]
-    })
-    return await waitForTransactionReceipt(config, { hash })
-  }
-
-  async setCostPerImpression(address: string, value: string) {
-    const amount = parseUnits(value, 18)
-    const hash = await writeContract(config, {
-      address: address as `0x${string}`,
-      abi: ADD_CAMPAIGN_ARTIFACT.abi,
-      functionName: 'setCostPerImpression',
-      args: [amount]
-    })
-    return await waitForTransactionReceipt(config, { hash })
   }
 }
