@@ -52,6 +52,7 @@ const pastElections = ref([
     title: 'Q4 2023 Board Election',
     endDate: new Date('2023-12-15'),
     candidates: 5,
+    currentVotes: 142,
     totalVotes: 1842,
     electedMembers: ['Alice Johnson', 'Bob Smith', 'Charlie Brown'],
     user: boardOfDirectors[0]
@@ -60,6 +61,7 @@ const pastElections = ref([
     title: 'Q3 2023 Committee Election',
     endDate: new Date('2023-09-20'),
     candidates: 3,
+    currentVotes: 78,
     totalVotes: 956,
     electedMembers: ['Diana Prince', 'Ethan Hunt'],
     user: boardOfDirectors[1]
@@ -68,6 +70,7 @@ const pastElections = ref([
     title: 'Q2 2023 Audit Election',
     endDate: new Date('2023-06-10'),
     candidates: 4,
+    currentVotes: 95,
     totalVotes: 1203,
     electedMembers: ['Frank Ocean', 'Grace Hopper', 'Henry Ford'],
     user: boardOfDirectors[2]
@@ -76,6 +79,7 @@ const pastElections = ref([
     title: 'Q1 2023 Audit Election',
     endDate: new Date('2023-06-10'),
     candidates: 4,
+    currentVotes: 87,
     totalVotes: 1203,
     electedMembers: ['Frank Ocean', 'Grace Hopper', 'Henry Ford'],
     user: boardOfDirectors[3]
