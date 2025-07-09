@@ -8,7 +8,7 @@
 
       <div class="stat place-items-center">
         <div class="stat-title">Hourly Rate</div>
-        <div class="stat-value text-secondary">
+        <div class="stat-value">
           {{ hourlyRateInUserCurrency.toFixed(2) }} {{ currencyStore.localCurrency.code }}
         </div>
         <div class="text-sm text-gray-500 flex gap-2 mt-1">
