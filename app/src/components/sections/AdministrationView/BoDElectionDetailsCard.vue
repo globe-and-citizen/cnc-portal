@@ -18,7 +18,12 @@
       </div>
 
       <!-- View Results Button -->
-      <ButtonUI variant="success" :outline="true">Cast a Vote</ButtonUI>
+      <ButtonUI
+        variant="success"
+        :outline="true"
+        @click="() => emits('castVote', election.user.address)"
+        >Cast a Vote</ButtonUI
+      >
     </div>
   </div>
 </template>
@@ -38,4 +43,6 @@ defineProps({
     required: true
   }
 })
+
+const emits = defineEmits(['castVote'])
 </script>
