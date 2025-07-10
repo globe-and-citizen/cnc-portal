@@ -60,7 +60,7 @@ function parseRevertReason(errorString: string): `0x${string}` | string {
   if (parts.some((part) => part.includes('custom error'))) {
     const errorData = errorString.split('custom error')[1].trim()
     const [selector, args] = errorData.split(' ').map((part) => part.replace(/[:.]/g, ''))
-    const combined = `${selector}${args}` as `0x${string}`
+    const combined = `${selector}${args || ''}` as `0x${string}`
     if (!isHex(combined)) {
       throw new Error('Invalid custom error format')
     }

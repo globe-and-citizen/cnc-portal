@@ -377,6 +377,15 @@ const menuItems = computed(() => [
         },
         active: route.name === 'bod-elections',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      },
+      {
+        label: 'Proposals',
+        route: {
+          name: 'bod-proposals',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'proposals',
+        show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       }
       // {
       //   label: 'Weekly Claim',
