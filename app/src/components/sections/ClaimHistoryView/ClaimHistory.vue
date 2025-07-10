@@ -5,7 +5,6 @@
       <div class="space-y-8">
         <!-- Month Selector -->
 
-        <!-- <pre>{{ currentMonthWeeks }}</pre> -->
         <MonthSelector v-model="selectedMonth" />
         <!-- Week List -->
         <div class="space-y-4">
