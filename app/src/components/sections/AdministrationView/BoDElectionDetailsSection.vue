@@ -70,6 +70,13 @@ const { data: electionresults, error: errorElectionResults } = useReadContract({
   args: [currentElectionId]
 })
 
+const { data: voteCount, error: errorVoteCount } = useReadContract({
+  functionName: 'getVoteCount',
+  address: electionsAddress.value,
+  abi: ElectionABI,
+  args: [currentElectionId]
+})
+
 const {
   data: hashCastVote,
   writeContract: executeCastVote,
@@ -94,7 +101,7 @@ const candidates = computed(() => {
           role: user?.role || 'Candidate',
           imageUrl: user?.imageUrl
         },
-        totalVotes: 15,
+        totalVotes: Number(voteCount.value) || 0,
         currentVotes: 5
       }
     })
