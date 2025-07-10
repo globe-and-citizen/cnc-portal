@@ -269,13 +269,23 @@ const formatedUserAddress = computed(() => {
 const menuItems = computed(() => [
   {
     label: 'Dashboard',
-    icon: 'heroicons:home',
+    icon: 'heroicons:squares-2x2',
     route: {
       name: 'show-team',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'show-team',
     show: true
+  },
+  {
+    label: 'Teams List',
+    icon: 'heroicons:user-group',
+    route: {
+      name: 'teams',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    active: route.name === 'teams',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
     label: 'Bank',
