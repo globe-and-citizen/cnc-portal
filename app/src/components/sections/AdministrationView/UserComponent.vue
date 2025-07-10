@@ -4,81 +4,86 @@
     :class="{
       'flex-row justify-start gap-4': layout === 'default',
       'justify-center flex-col items-center': isCollapsed || isDetailedView,
-      'flex-row items-start items-center gap-3': layout === 'alternate'
+      'flex-col': layout === 'alternate'
     }"
   >
-    <div role="button" class="relative group">
-      <div
-        class="relative rounded-full overflow-hidden"
-        :class="{
-          'ring-gray-200 w-24 h-24 ring-4': isDetailedView,
-          'w-11 h-11 ring-2 ring-white/50': !isDetailedView && layout === 'default',
-          'w-16 h-16': layout === 'alternate' && !isDetailedView
-        }"
-      >
-        <img
-          alt="User Avatar"
-          :src="user.imageUrl || defaultAvatar"
-          class="w-full h-full object-cover"
-        />
+    <!-- Image and Name Row -->
+    <div class="flex flex-row items-center gap-3">
+      <div role="button" class="relative group">
+        <div
+          class="relative rounded-full overflow-hidden"
+          :class="{
+            'ring-gray-200 w-24 h-24 ring-4': isDetailedView,
+            'w-11 h-11 ring-2 ring-white/50': !isDetailedView && layout === 'default',
+            'w-16 h-16': layout === 'alternate' && !isDetailedView
+          }"
+        >
+          <img
+            alt="User Avatar"
+            :src="user.imageUrl || defaultAvatar"
+            class="w-full h-full object-cover"
+          />
+        </div>
       </div>
+      <p
+        v-if="!isCollapsed && layout === 'alternate'"
+        class="font-bold text-xl"
+        data-test="user-name"
+      >
+        {{ user.name || 'User' }}
+      </p>
     </div>
+
+    <!-- Role and Address Section (only for alternate layout) -->
     <div
-      v-if="!isCollapsed"
+      v-if="!isCollapsed && layout === 'alternate'"
+      class="mt-6 ml-19"
+    >
+      <p
+        v-if="user.role"
+        class="text-gray-600 text-lg"
+        data-test="user-role"
+      >
+        {{ user.role }}
+      </p>
+      <p
+        class="text-gray-400 text-sm mt-1"
+        data-test="formatted-address"
+      >
+        {{ formatedUserAddress }}
+      </p>
+    </div>
+
+    <!-- Default Layout Content -->
+    <div
+      v-if="!isCollapsed && layout !== 'alternate'"
       class="flex text-gray-600"
       :class="{
         'flex-col items-center text-center': isDetailedView,
-        'flex-col': layout === 'default' && !isDetailedView,
-        'flex-row items-center gap-2': layout === 'alternate'
+        'flex-col': layout === 'default' && !isDetailedView
       }"
     >
-      <div v-if="layout === 'alternate'" class="flex flex-col">
-        <p
-          class="font-bold"
-          :class="{
-            'text-lg': isDetailedView,
-            'text-sm': !isDetailedView && layout === ('default' as 'default' | 'alternate'),
-            'text-xl leading-tight': layout === 'alternate'
-          }"
-          data-test="user-name"
-        >
-          {{ user.name || 'User' }}
-        </p>
-        <p
-          class="text-gray-400"
-          :class="{
-            'text-sm': isDetailedView,
-            'text-xs': !isDetailedView,
-            'text-xs leading-tight': layout === 'alternate'
-          }"
-          data-test="formatted-address"
-        >
-          {{ formatedUserAddress }}
-        </p>
-      </div>
-      <template v-else>
-        <p
-          class="font-bold line-clamp-1"
-          :class="{
-            'text-lg': isDetailedView,
-            'text-sm': !isDetailedView
-          }"
-          data-test="user-name"
-        >
-          {{ user.name || 'User' }}
-        </p>
-        <p
-          v-if="isDetailedView"
-          class="text-gray-400 font-bold mt-2"
-          :class="{ 'text-sm': isDetailedView, 'text-xs': !isDetailedView }"
-          data-test="user-role"
-        >
-          {{ user.role || 'Member' }}
-        </p>
-        <p class="text-sm" data-test="formatted-address">
-          {{ formatedUserAddress }}
-        </p>
-      </template>
+      <p
+        class="font-bold line-clamp-1"
+        :class="{
+          'text-lg': isDetailedView,
+          'text-sm': !isDetailedView
+        }"
+        data-test="user-name"
+      >
+        {{ user.name || 'User' }}
+      </p>
+      <p
+        v-if="isDetailedView"
+        class="text-gray-400 font-bold mt-2"
+        :class="{ 'text-sm': isDetailedView, 'text-xs': !isDetailedView }"
+        data-test="user-role"
+      >
+        {{ user.role || 'Member' }}
+      </p>
+      <p class="text-sm" data-test="formatted-address">
+        {{ formatedUserAddress }}
+      </p>
     </div>
   </div>
 </template>
