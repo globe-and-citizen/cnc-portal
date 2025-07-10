@@ -35,21 +35,11 @@
     </div>
 
     <!-- Role and Address Section (only for alternate layout) -->
-    <div
-      v-if="!isCollapsed && layout === 'alternate'"
-      class="mt-6 ml-19"
-    >
-      <p
-        v-if="user.role"
-        class="text-gray-600 text-lg"
-        data-test="user-role"
-      >
+    <div v-if="!isCollapsed && layout === 'alternate'" class="mt-6 ml-19">
+      <p v-if="user.role" class="text-gray-600 text-lg" data-test="user-role">
         {{ user.role }}
       </p>
-      <p
-        class="text-gray-400 text-sm mt-1"
-        data-test="formatted-address"
-      >
+      <p class="text-gray-400 text-sm mt-1" data-test="formatted-address">
         {{ formatedUserAddress }}
       </p>
     </div>
