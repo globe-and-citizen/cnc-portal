@@ -317,18 +317,16 @@ const menuItems = computed(() => [
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       },
       {
-        label: ' Claim History',
+        label: 'My Claim History',
         route: {
           name: 'claim-history',
           params: { id: teamStore.currentTeam?.id || '1', memberAddress: userStore.address }
         },
         active: route.name === 'claim-history',
-        show:
-          (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
-          userStore.address !== teamStore.currentTeam?.ownerAddress
+        show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       },
       {
-        label: ' Weekly Claim',
+        label: 'Team Weekly Claims',
         route: {
           name: 'weekly-claim',
           params: { id: teamStore.currentTeam?.id || '1' }
