@@ -3,18 +3,16 @@
     <template #card-action>
       <div class="flex justify-between">
         <div class="flex justify-between gap-2">
-          <ButtonUI
-            variant="primary"
-            size="md"
-            @click="showCreateElectionModal = !showCreateElectionModal"
-            data-test="create-proposal"
+          <a
+            v-if="formattedElection"
+            :href="`/teams/${teamStore.currentTeamId}/administration/bod-elections-details`"
+            class="btn btn-md"
+            :class="{ 'btn-primary': electionStatus.text === 'Active' }"
           >
-            Create Election
-          </ButtonUI>
-          <ButtonUI> View Election </ButtonUI>
+            {{ electionStatus.text === 'Active' ? 'Vote Now' : 'View Details' }}
+          </a>
         </div>
         <ModalComponent v-model="showCreateElectionModal">
-          <!-- <VotingManagement :team="team" /> -->
           <CreateElectionForm
             :is-loading="isLoadingCreateElection || isConfirmingCreateElection"
             @create-proposal="createElection"
@@ -32,9 +30,13 @@
       </div>
       <div>
         <!-- Election Title -->
-        <h2 class="text-2xl text-center font-semibold mb-4">
-          {{ /*electionData.title*/ formattedElection?.title }}
+        <h2 class="font-semibold">
+          {{ formattedElection?.title }}
         </h2>
+
+        <h4 class="mb-6">
+          {{ formattedElection?.description }}
+        </h4>
 
         <!-- Stats Row -->
         <div class="flex justify-between items-stretch gap-4">

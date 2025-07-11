@@ -19,7 +19,7 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   mapping(uint256 => ElectionTypes.Election) private _elections;
   uint256[] private _electionIds;
   mapping(uint256 => mapping(address => address)) private _votes;
-  mapping(uint256 => mapping(address => uint256)) private _voteCounts;
+  mapping(uint256 => mapping(address => uint256)) public _voteCounts;
 
   event ElectionCreated(
     uint256 indexed electionId,
