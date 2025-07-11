@@ -98,10 +98,7 @@ describe('DepositBankForm.vue', () => {
     mountFn(DepositBankForm, {
       props: { ...defaultProps, ...overrides },
       global: {
-        plugins: [
-          createTestingPinia({ createSpy: vi.fn }),
-          [WagmiPlugin, { config: wagmiConfig }]
-        ]
+        plugins: [createTestingPinia({ createSpy: vi.fn }), [WagmiPlugin, { config: wagmiConfig }]]
       }
     })
 
