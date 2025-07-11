@@ -268,16 +268,6 @@ const formatedUserAddress = computed(() => {
 
 const menuItems = computed(() => [
   {
-    label: 'Dashboard',
-    icon: 'heroicons:squares-2x2',
-    route: {
-      name: 'show-team',
-      params: { id: teamStore.currentTeam?.id || '1' }
-    },
-    active: route.name === 'show-team',
-    show: true
-  },
-  {
     label: 'Teams List',
     icon: 'heroicons:user-group',
     route: {
@@ -286,6 +276,16 @@ const menuItems = computed(() => [
     },
     active: route.name === 'teams',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  },
+  {
+    label: 'Dashboard',
+    icon: 'heroicons:squares-2x2',
+    route: {
+      name: 'show-team',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    active: route.name === 'show-team',
+    show: true
   },
   {
     label: 'Bank',
