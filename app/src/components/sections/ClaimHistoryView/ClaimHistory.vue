@@ -5,7 +5,6 @@
       <div class="space-y-8">
         <!-- Month Selector -->
 
-        <!-- <pre>{{ currentMonthWeeks }}</pre> -->
         <MonthSelector v-model="selectedMonth" />
         <!-- Week List -->
         <div class="space-y-4">
@@ -16,13 +15,13 @@
             :class="[
               'border rounded-lg p-3 cursor-pointer',
               week.toISOString() === selectedWeekISO
-                ? 'bg-emerald-100 border-emerald-500 text-gray-800'
+                ? 'bg-emerald-50 border-emerald-500 text-gray-800'
                 : 'hover:bg-gray-50'
             ]"
           >
-            <div class="text-sm font-medium">Week</div>
+            <div class="text-base font-medium">Week</div>
             <div
-              class="text-xs"
+              class="text-sm"
               :class="week.toISOString() === selectedWeekISO ? 'text-emerald-900' : 'text-gray-800'"
             >
               {{ formatDate(week) }}
@@ -34,45 +33,42 @@
 
     <!-- Right Content -->
     <div class="flex-1 space-y-6">
-      <TotalValue :weeklyClaim="selectWeekWeelyClaim" />
+      <WeeklyRecap :weeklyClaim="selectWeekWeelyClaim" />
       <CardComponent title="" class="w-full">
         <div v-if="memberWeeklyClaims">
           <h2 class="pb-4">Weekly Claims: {{ formatDate(selectedWeek) }}</h2>
           <div
-            v-for="(entry, index) in [0, 1, 2, 3, 4, 5, 6].map((i) => ({
-              date: dayjs(selectedWeek).add(i, 'day').toDate(),
-              hours:
-                selectWeekWeelyClaim?.claims
-                  .filter(
-                    (claim) =>
-                      formatDayLabel(dayjs(selectedWeek).add(i, 'day').toDate()) ===
-                      formatDayLabel(claim.dayWorked)
-                  )
-                  .reduce((sum, claim) => sum + claim.hoursWorked, 0) || 0
-            }))"
+            v-for="(entry, index) in [0, 1, 2, 3, 4, 5, 6].map((i) => {
+              const date = dayjs(selectedWeek).add(i, 'day').toDate()
+              const dailyClaims =
+                selectWeekWeelyClaim?.claims.filter(
+                  (claim) => formatDayLabel(date) === formatDayLabel(claim.dayWorked)
+                ) || []
+              return {
+                date,
+                claims: dailyClaims,
+                hours: dailyClaims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
+              }
+            })"
             :key="index"
             :class="[
-              'flex items-center justify-between border px-4 py-3 mb-2 rounded-lg',
-              entry.hours > 0 ? 'bg-green-50 text-green-900' : 'bg-gray-100 text-gray-400'
+              'flex items-center justify-between border px-4 py-3 mb-2 rounded-lg ',
+              entry.hours > 0 ? 'bg-green-50 text-emerald-700' : 'bg-gray-100 text-gray-400'
             ]"
           >
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 w-1/5">
               <span
                 class="h-3 w-3 rounded-full"
-                :class="entry.hours > 0 ? 'bg-green-500' : 'bg-gray-300'"
+                :class="entry.hours > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
               />
               <span class="font-medium">{{ formatDayLabel(entry.date) }} </span>
             </div>
-            <span v-if="entry.hours > 0" class="text-sm text-gray-500">
-              ({{
-                selectWeekWeelyClaim?.claims.find(
-                  (claim) =>
-                    formatDayLabel(dayjs(selectedWeek).add(index, 'day').toDate()) ===
-                    formatDayLabel(claim.dayWorked)
-                )?.memo || ''
-              }})
-            </span>
-            <div class="text-sm flex items-center gap-2">
+
+            <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-1">
+              <div v-for="(claim, idx) in entry.claims" :key="idx">{{ claim.memo }} ...</div>
+            </div>
+
+            <div class="text-base flex items-center gap-2 w-1/5 justify-end">
               <IconifyIcon icon="heroicons:clock" class="w-4 h-4 text-gray-500" />
               {{ entry.hours }} hours
             </div>
@@ -92,7 +88,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useTeamStore } from '@/stores'
 import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
-import TotalValue from '@/components/TotalValue.vue'
+import WeeklyRecap from '@/components/WeeklyRecap.vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -121,10 +117,6 @@ const selectedMonth = ref<Date>(dayjs().startOf('month').toDate())
 const selectedWeek = ref<Date>(dayjs().startOf('week').toDate())
 const selectedWeekISO = computed(() => (selectedWeek.value ? selectedWeek.value.toISOString() : ''))
 
-// function getTotalHoursWorked(claimsArr: { hours: number }[]) {
-//   return claimsArr.reduce((sum, claim) => sum + (claim.hours || 0), 0)
-// }
-
 const selectWeek = (week: Date) => {
   selectedWeek.value = week
 }
@@ -138,7 +130,7 @@ watch(
   selectedMonth,
   (newMonth) => {
     const weeks = getMonthWeeks(newMonth)
-    const currentWeekStart = dayjs().startOf('week').toDate()
+    const currentWeekStart = getMondayStart(new Date())
     const found = weeks.find((week) => week.toISOString() === currentWeekStart.toISOString())
     if (found) {
       selectedWeek.value = found
