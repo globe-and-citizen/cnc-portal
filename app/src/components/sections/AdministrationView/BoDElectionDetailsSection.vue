@@ -20,7 +20,7 @@ import ElectionABI from '@/artifacts/abi/elections.json'
 import { useTeamStore, useToastStore } from '@/stores'
 import { encodeFunctionData, type Abi, type Address } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
-import { estimateGas } from '@wagmi/core'
+import { estimateGas, readContract } from '@wagmi/core'
 import type { User } from '@/types'
 import { config } from '@/wagmi.config'
 import { log, parseError } from '@/utils'
@@ -102,7 +102,7 @@ const candidates = computed(() => {
           imageUrl: user?.imageUrl
         },
         totalVotes: Number(voteCount.value) || 0,
-        currentVotes: 5
+        currentVotes: votesPerCandidate.value[candidate] //5
       }
     })
   }
@@ -135,15 +135,41 @@ const castVote = async (candidateAddress: string) => {
   }
 }
 
+const votesPerCandidate = ref<Record<Address, number>>({})
+
+const fetchVotes = async () => {
+  try {
+    const candidatesList = electionCandidates.value as Address[]
+    if (candidatesList && candidatesList.length > 0) {
+      await Promise.all(
+        candidatesList.map(async (candidate) => {
+          const count = await readContract(config, {
+            address: electionsAddress.value,
+            abi: ElectionABI,
+            functionName: '_voteCounts',
+            args: [currentElectionId.value, candidate]
+          })
+          votesPerCandidate.value[candidate] = Number(count) || 0
+        })
+      )
+    }
+  } catch (error) {
+    addErrorToast(parseError(error, ElectionABI as Abi))
+    log.error('Error fetching votes:', parseError(error, ElectionABI as Abi))
+  }
+}
+
 watch(isConfirmingCastVote, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedCastVote.value) {
     addSuccessToast('Election created successfully!')
   }
 })
 
-watch(electionCandidates, (newCandidates) => {
+watch(electionCandidates, async (newCandidates) => {
   if (newCandidates && (newCandidates as string[]).length > 0) {
+    await fetchVotes()
     console.log('Election candidates:', newCandidates)
+    console.log('Votes per candidate:', votesPerCandidate.value)
   }
 })
 
