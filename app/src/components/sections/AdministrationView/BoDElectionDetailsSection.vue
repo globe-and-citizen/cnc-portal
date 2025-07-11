@@ -28,6 +28,8 @@ import { log, parseError } from '@/utils'
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
+const votesPerCandidate = ref<Record<Address, number>>({})
+
 const electionsAddress = computed(() => {
   const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
   return address as Address
@@ -35,9 +37,9 @@ const electionsAddress = computed(() => {
 
 // Fetch next election ID
 const {
-  data: nextElectionId,
+  data: nextElectionId
   // isLoading: isLoadingNextElectionId,
-  error: errorNextElectionId
+  // error: errorNextElectionId
 } = useReadContract({
   functionName: 'getNextElectionId',
   address: electionsAddress.value,
@@ -56,21 +58,14 @@ const currentElectionId = computed(() => {
   return null // Handle cases where nextElectionId is not available
 })
 
-const { data: electionCandidates, error: errorElectionCandidates } = useReadContract({
+const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useReadContract({
   functionName: 'getElectionCandidates',
   address: electionsAddress.value,
   abi: ElectionABI,
   args: [currentElectionId]
 })
 
-const { data: electionresults, error: errorElectionResults } = useReadContract({
-  functionName: 'getElectionResults',
-  address: electionsAddress.value,
-  abi: ElectionABI,
-  args: [currentElectionId]
-})
-
-const { data: voteCount, error: errorVoteCount } = useReadContract({
+const { data: voteCount /*, error: errorVoteCount*/ } = useReadContract({
   functionName: 'getVoteCount',
   address: electionsAddress.value,
   abi: ElectionABI,
@@ -79,8 +74,8 @@ const { data: voteCount, error: errorVoteCount } = useReadContract({
 
 const {
   data: hashCastVote,
-  writeContract: executeCastVote,
-  isPending: isLoadingCastVote
+  writeContract: executeCastVote
+  // isPending: isLoadingCastVote
 } = useWriteContract()
 
 const { isLoading: isConfirmingCastVote, isSuccess: isConfirmedCastVote } =
@@ -105,7 +100,7 @@ const candidates = computed(() => {
         currentVotes: votesPerCandidate.value[candidate] //5
       }
     })
-  }
+  } else return []
 })
 
 const castVote = async (candidateAddress: string) => {
@@ -134,8 +129,6 @@ const castVote = async (candidateAddress: string) => {
     log.error('Error creating election:', parseError(error, ElectionABI as Abi))
   }
 }
-
-const votesPerCandidate = ref<Record<Address, number>>({})
 
 const fetchVotes = async () => {
   try {
@@ -168,85 +161,6 @@ watch(isConfirmingCastVote, (isConfirming, wasConfirming) => {
 watch(electionCandidates, async (newCandidates) => {
   if (newCandidates && (newCandidates as string[]).length > 0) {
     await fetchVotes()
-    console.log('Election candidates:', newCandidates)
-    console.log('Votes per candidate:', votesPerCandidate.value)
   }
 })
-
-watch(electionresults, (newResults) => {
-  if (newResults && Array.isArray(newResults)) {
-    console.log('Election results:', newResults)
-  }
-})
-
-const boardOfDirectors = [
-  {
-    address: '0x1234567890abcdef1234567890abcdef12345678',
-    name: 'Alice Johnson',
-    role: 'Chairperson' /*,
-		imageUrl: 'https://example.com/images/alice.jpg'*/
-  },
-  {
-    address: '0xabcdef1234567890abcdef1234567890abcdef12',
-    name: 'Bob Smith',
-    role: 'Vice Chairperson' /*,
-		imageUrl: 'https://example.com/images/bob.jpg'*/
-  },
-  {
-    address: '0x7890abcdef1234567890abcdef12345678901234',
-    name: 'Charlie Brown',
-    role: 'Treasurer' /*,
-		imageUrl: 'https://example.com/images/charlie.jpg'*/
-  },
-  {
-    address: '0x4567890abcdef1234567890abcdef1234567890',
-    name: 'Diana Prince',
-    role: 'Secretary' /*,
-		imageUrl: 'https://example.com/images/diana.jpg'*/
-  },
-  {
-    address: '0xabcdef1234567890abcdef1234567890abcdef56',
-    name: 'Ethan Hunt' /*,
-		imageUrl: 'https://example.com/images/ethan.jpg'*/
-  }
-]
-
-const pastElections = ref([
-  {
-    title: 'Q4 2023 Board Election',
-    endDate: new Date('2023-12-15'),
-    candidates: 5,
-    currentVotes: 142,
-    totalVotes: 1842,
-    electedMembers: ['Alice Johnson', 'Bob Smith', 'Charlie Brown'],
-    user: boardOfDirectors[0]
-  },
-  {
-    title: 'Q3 2023 Committee Election',
-    endDate: new Date('2023-09-20'),
-    candidates: 3,
-    currentVotes: 78,
-    totalVotes: 956,
-    electedMembers: ['Diana Prince', 'Ethan Hunt'],
-    user: boardOfDirectors[1]
-  },
-  {
-    title: 'Q2 2023 Audit Election',
-    endDate: new Date('2023-06-10'),
-    candidates: 4,
-    currentVotes: 95,
-    totalVotes: 1203,
-    electedMembers: ['Frank Ocean', 'Grace Hopper', 'Henry Ford'],
-    user: boardOfDirectors[2]
-  },
-  {
-    title: 'Q1 2023 Audit Election',
-    endDate: new Date('2023-06-10'),
-    candidates: 4,
-    currentVotes: 87,
-    totalVotes: 1203,
-    electedMembers: ['Frank Ocean', 'Grace Hopper', 'Henry Ford'],
-    user: boardOfDirectors[3]
-  }
-])
 </script>
