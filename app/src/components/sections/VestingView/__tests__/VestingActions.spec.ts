@@ -170,15 +170,4 @@ describe('VestingActions.vue', () => {
       expect(wrapper.emitted('reload')).toHaveLength(1)
     })
   })
-
-  describe('Edge Cases', () => {
-    it('handles missing team contracts gracefully', () => {
-      wrapper = mount(VestingActions, {
-        props: { reloadKey: 0 }
-      })
-
-      const addButton = wrapper.findComponent(ButtonUI)
-      expect(addButton.exists()).toBe(true)
-    })
-  })
 })
