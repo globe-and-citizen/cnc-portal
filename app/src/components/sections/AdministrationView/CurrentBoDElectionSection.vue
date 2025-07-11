@@ -13,7 +13,6 @@
           </a>
         </div>
         <ModalComponent v-model="showCreateElectionModal">
-          <!-- <VotingManagement :team="team" /> -->
           <CreateElectionForm
             :is-loading="isLoadingCreateElection || isConfirmingCreateElection"
             @create-proposal="createElection"
@@ -31,9 +30,13 @@
       </div>
       <div>
         <!-- Election Title -->
-        <h2 class="text-2xl text-center font-semibold mb-4">
-          {{ /*electionData.title*/ formattedElection?.title }}
+        <h2 class="font-semibold">
+          {{ formattedElection?.title }}
         </h2>
+
+        <h4 class="mb-6">
+          {{ formattedElection?.description }}
+        </h4>
 
         <!-- Stats Row -->
         <div class="flex justify-between items-stretch gap-4">
