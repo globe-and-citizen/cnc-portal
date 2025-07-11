@@ -20,6 +20,8 @@ interface AddressMapping {
   'TipsModule#Tips': string
   'BankBeaconModule#Beacon': string
   'BankBeaconModule#Bank': string
+  'ProposalBeaconModule#Beacon'?: string
+  'ProposalBeaconModule#Proposals'?: string
   // 'VotingBeaconModule#Beacon'?: string
   // 'VotingBeaconModule#Voting'?: string
   'BoardOfDirectorsModule#Beacon': string
@@ -104,6 +106,8 @@ export function validateAddresses() {
     // 'VotingBeaconModule#Voting',
     'ElectionsBeaconModule#Beacon',
     'ElectionsBeaconModule#Elections',
+    'ProposalBeaconModule#Beacon',
+    'ProposalBeaconModule#Proposals',
     'BoardOfDirectorsModule#Beacon',
     'BoardOfDirectorsModule#BoardOfDirectors',
     'Officer#Officer',
@@ -142,6 +146,8 @@ export const BANK_IMPL_ADDRESS = resolveAddress('BankBeaconModule#Bank')
 // export const VOTING_IMPL_ADDRESS = resolveAddress('VotingBeaconModule#Voting')
 export const ELECTIONS_BEACON_ADDRESS = resolveAddress('ElectionsBeaconModule#Beacon')
 export const ELECTIONS_IMPL_ADDRESS = resolveAddress('ElectionsBeaconModule#Elections')
+export const PROPOSALS_BEACON_ADDRESS = resolveAddress('ProposalBeaconModule#Beacon')
+export const PROPOSALS_IMPL_ADDRESS = resolveAddress('ProposalBeaconModule#Proposals')
 export const BOD_BEACON_ADDRESS = resolveAddress('BoardOfDirectorsModule#Beacon')
 export const BOD_IMPL_ADDRESS = resolveAddress('BoardOfDirectorsModule#BoardOfDirectors')
 export const EXPENSE_ACCOUNT_BEACON_ADDRESS = resolveAddress('ExpenseAccountModule#FactoryBeacon')
