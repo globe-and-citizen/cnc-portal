@@ -30,13 +30,8 @@
             <div>
               <span class="font-bold">
                 ≃
-                {{
-                  (
-                    getTotalHoursWorked(row.claims) *
-                    Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
-                  ).toFixed(2)
-                }}
-                {{ NETWORK.nativeTokenSymbol }} / USD
+                {{ getHoulyRateInUserCurrency(row.wage.ratePerHour).toFixed(2) }}
+                {{ currencyStore.localCurrency.code }} / Hour
               </span>
 
               <div class="flex">
@@ -58,10 +53,10 @@
                 {{
                   (
                     getTotalHoursWorked(row.claims) *
-                    Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
+                    getHoulyRateInUserCurrency(row.wage.ratePerHour)
                   ).toFixed(2)
                 }}
-                {{ NETWORK.nativeTokenSymbol }} / USD
+                {{ currencyStore.localCurrency.code }}
               </span>
               <div>
                 <span>
@@ -159,7 +154,6 @@ import CRSigne from './CRSigne.vue'
 import type { Address } from 'viem'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
-import { formatCurrencyShort } from '@/utils/currencyUtil'
 import type { TokenId } from '@/constant'
 import CRWeeklyClaimMemberHeader from './CRWeeklyClaimMemberHeader.vue'
 
@@ -185,13 +179,16 @@ const isSameWeek = (weeklyClaimStartWeek: string) => {
 }
 
 const currencyStore = useCurrencyStore()
-function getHoulyRateInUserCurrency(hourlyRate: number, tokenId: TokenId = 'native') {
-  const tokenInfo = currencyStore.getTokenInfo(tokenId)
-  const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
-  const code = currencyStore.localCurrency.code
-  return formatCurrencyShort(hourlyRate * localPrice, code)
+function getHoulyRateInUserCurrency(
+  ratePerHour: RatePerHour[],
+  tokenStore = currencyStore
+): number {
+  return ratePerHour.reduce((total, rate) => {
+    const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
+    const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
+    return total + rate.amount * localPrice
+  }, 0)
 }
-
 function formatDate(date: string | Date) {
   const monday = getMondayStart(new Date(date))
   const sunday = getSundayEnd(new Date(date))
