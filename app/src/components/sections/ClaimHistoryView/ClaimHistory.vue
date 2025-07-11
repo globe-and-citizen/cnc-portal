@@ -1,11 +1,11 @@
 <template>
   <div class="flex bg-transparent gap-x-4">
     <!-- Left Sidebar -->
-    <CardComponent class="w-1/3">
+    <CardComponent class="w-1/3 flex flex-col justify-between">
       <div class="space-y-8">
         <!-- Month Selector -->
-
         <MonthSelector v-model="selectedMonth" />
+
         <!-- Week List -->
         <div class="space-y-4">
           <div
@@ -29,11 +29,17 @@
           </div>
         </div>
       </div>
+
+      <!-- Graphique à barres (Heures/Jour) -->
+      <div class="mt-6">
+        <v-chart :option="barChartOption" autoresize style="height: 250px" />
+      </div>
     </CardComponent>
 
     <!-- Right Content -->
     <div class="flex-1 space-y-6">
       <WeeklyRecap :weeklyClaim="selectWeekWeelyClaim" />
+
       <CardComponent title="" class="w-full">
         <div v-if="memberWeeklyClaims">
           <h2 class="pb-4">Weekly Claims: {{ formatDate(selectedWeek) }}</h2>
@@ -61,7 +67,7 @@
                 class="h-3 w-3 rounded-full"
                 :class="entry.hours > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
               />
-              <span class="font-medium">{{ formatDayLabel(entry.date) }} </span>
+              <span class="font-medium">{{ formatDayLabel(entry.date) }}</span>
             </div>
 
             <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-1">
@@ -91,6 +97,20 @@ import MonthSelector from '@/components/MonthSelector.vue'
 import WeeklyRecap from '@/components/WeeklyRecap.vue'
 import { useRoute } from 'vue-router'
 
+// ECharts imports
+import { use } from 'echarts/core'
+import { BarChart } from 'echarts/charts'
+import {
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+} from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+import VChart from 'vue-echarts'
+
+use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
+
 const route = useRoute()
 const teamStore = useTeamStore()
 const teamId = computed(() => teamStore.currentTeam?.id)
@@ -109,21 +129,94 @@ type WeeklyClaimResponse = {
   }[]
   hourlyRate: number
 }
+
 const { data: memberWeeklyClaims } = useCustomFetch(weeklyClaimUrl, {
   immediate: true,
   refetch: true
 }).json<Array<WeeklyClaimResponse>>()
+
 const selectedMonth = ref<Date>(dayjs().startOf('month').toDate())
 const selectedWeek = ref<Date>(dayjs().startOf('week').toDate())
-const selectedWeekISO = computed(() => (selectedWeek.value ? selectedWeek.value.toISOString() : ''))
+const selectedWeekISO = computed(() => selectedWeek.value?.toISOString() ?? '')
 
 const selectWeek = (week: Date) => {
   selectedWeek.value = week
 }
+
 const selectWeekWeelyClaim = computed(() => {
   return memberWeeklyClaims.value?.find(
     (weeklyClaim) => weeklyClaim.weekStart === selectedWeekISO.value
   )
+})
+
+// Bar chart dynamique (max = jour le plus haut)
+const barChartOption = computed(() => {
+  const days = [0, 1, 2, 3, 4, 5, 6]
+  const data: number[] = []
+  const labels: string[] = []
+
+  days.forEach((i) => {
+    const date = dayjs(selectedWeek.value).add(i, 'day').toDate()
+    const label = dayjs(date).format('dd') // Mo, Tu, ...
+    labels.push(label)
+
+    const totalHours =
+      selectWeekWeelyClaim.value?.claims
+        .filter((claim) => formatDayLabel(date) === formatDayLabel(claim.dayWorked))
+        .reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0
+
+    data.push(totalHours)
+  })
+
+  const dynamicMax = Math.max(...data)
+  const yMax = dynamicMax > 0 ? dynamicMax : 24
+
+  return {
+    title: {
+      text: 'Heures/Jour',
+      left: 'center',
+      textStyle: { fontSize: 14 }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '8%',
+      containLabel: true
+    },
+    tooltip: {
+      trigger: 'axis',
+      formatter: '{b} : {c} heures'
+    },
+    xAxis: {
+      type: 'category',
+      data: labels,
+      axisTick: { alignWithLabel: true }
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: yMax,
+      axisLabel: { formatter: '{value} h' }
+    },
+    series: [
+      {
+        name: 'Heures',
+        type: 'bar',
+        barWidth: '50%',
+        data,
+        itemStyle: {
+          color: '#10B981',
+          borderRadius: [6, 6, 0, 0]
+        },
+        label: {
+          show: true,
+          position: 'top',
+          formatter: '{c}h',
+          color: '#374151'
+        }
+      }
+    ]
+  }
 })
 
 watch(
