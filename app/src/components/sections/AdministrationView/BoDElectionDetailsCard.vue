@@ -32,11 +32,12 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import UserComponent from './UserComponent.vue'
 import type { PropType } from 'vue'
+import type { User } from '@/types'
 
 defineProps({
   election: {
     type: Object as PropType<{
-      user: any
+      user: User
       currentVotes: number
       totalVotes: number
     }>,
