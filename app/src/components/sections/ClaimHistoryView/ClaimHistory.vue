@@ -173,7 +173,7 @@ const barChartOption = computed(() => {
 
   return {
     title: {
-      text: 'Heures/Jour',
+      text: 'Hours/Day',
       left: 'center',
       textStyle: { fontSize: 14 }
     },
