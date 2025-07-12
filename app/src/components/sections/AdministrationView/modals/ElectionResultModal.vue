@@ -27,8 +27,7 @@ const { id } = defineProps<{
 const {
   data: electionResults,
   isFetching,
-  error,
-  refetch
+  error
 } = useReadContract({
   address: electionsAddress.value,
   abi: ELECTIONS_ABI,

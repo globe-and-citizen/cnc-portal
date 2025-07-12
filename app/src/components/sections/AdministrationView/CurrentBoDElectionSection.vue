@@ -29,7 +29,8 @@
           </div>
           <PublishResult
             v-if="
-              (formattedElection && !Boolean(formattedElection?.resultsPublished)) &&
+              formattedElection &&
+              !Boolean(formattedElection?.resultsPublished) &&
               electionStatus.text === 'Completed'
             "
             :election-id="formattedElection?.id ?? 1"
