@@ -3,14 +3,38 @@
     <template #card-action>
       <div class="flex justify-between">
         <div class="flex justify-between gap-2">
-          <a
-            v-if="formattedElection"
-            :href="`/teams/${teamStore.currentTeamId}/administration/bod-elections-details`"
+          <div
+            v-if="formattedElection && !formattedElection?.resultsPublished"
+            @click="
+              () => {
+                if (electionStatus.text == 'Completed') {
+                  showResultsModal = true
+                } else {
+                  router.push(
+                    `/teams/${teamStore.currentTeamId}/administration/bod-elections-details`
+                  )
+                }
+              }
+            "
             class="btn btn-md"
             :class="{ 'btn-primary': electionStatus.text === 'Active' }"
           >
-            {{ electionStatus.text === 'Active' ? 'Vote Now' : 'View Details' }}
-          </a>
+            {{
+              electionStatus.text === 'Active'
+                ? 'Vote Now'
+                : electionStatus.text == 'Completed'
+                  ? 'View Results'
+                  : 'View Details'
+            }}
+          </div>
+          <PublishResult
+            v-if="
+              formattedElection &&
+              !Boolean(formattedElection?.resultsPublished) &&
+              electionStatus.text === 'Completed'
+            "
+            :election-id="formattedElection?.id ?? 1"
+          />
         </div>
         <ModalComponent v-model="showCreateElectionModal">
           <CreateElectionForm
@@ -18,9 +42,18 @@
             @create-proposal="createElection"
           />
         </ModalComponent>
+        <ModalComponent
+          v-if="
+            electionStatus.text === 'Completed' ||
+            (formattedElection?.endDate ?? new Date()) > new Date()
+          "
+          v-model="showResultsModal"
+        >
+          <ElectionResultModal :id="formattedElection?.id ?? 1" />
+        </ModalComponent>
       </div>
     </template>
-    <div v-if="formattedElection">
+    <div v-if="formattedElection && !formattedElection?.resultsPublished">
       <!-- Status and Countdown -->
       <div class="flex items-center justify-start gap-2 mb-6">
         <span class="px-2 py-1 text-xs font-medium rounded-full" :class="electionStatus.class">
@@ -63,7 +96,7 @@
             <div>
               <p class="text-sm font-medium text-gray-500">Ends</p>
               <p class="text-xl font-semibold text-gray-900">
-                {{ formatDate(formattedElection?.endDate) }}
+                {{ formatDate(formattedElection?.endDate ?? new Date()) }}
               </p>
             </div>
           </div>
@@ -107,6 +140,8 @@
 
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
+import ElectionResultModal from '@/components/sections/AdministrationView/modals/ElectionResultModal.vue'
+import PublishResult from '@/components/sections/AdministrationView/PublishResult.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -121,9 +156,14 @@ import { estimateGas } from '@wagmi/core'
 import type { OldProposal } from '@/types'
 import { log, parseError } from '@/utils'
 import { config } from '@/wagmi.config'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useRouter } from 'vue-router'
 
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
+const queryClient = useQueryClient()
+const router = useRouter()
+const showResultsModal = ref(false)
 
 // Contract addresses
 const electionsAddress = computed(() => {
@@ -135,7 +175,8 @@ const electionsAddress = computed(() => {
 const {
   data: nextElectionId,
   // isLoading: isLoadingNextElectionId,
-  error: errorNextElectionId
+  error: errorNextElectionId,
+  queryKey: nextElectionIdQueryKey
 } = useReadContract({
   functionName: 'getNextElectionId',
   address: electionsAddress.value,
@@ -158,12 +199,16 @@ const currentElectionId = computed(() => {
 const {
   data: currentElection,
   // isLoading: isLoadingCurrentElection,
-  error: errorGetCurrentElection
+  error: errorGetCurrentElection,
+  queryKey: currentElectionQueryKey
 } = useReadContract({
   functionName: 'getElection',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [currentElectionId] // Supply currentElectionId as an argument
+  args: [currentElectionId], // Supply currentElectionId as an argument
+  query: {
+    enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
+  }
 })
 
 const {
@@ -174,7 +219,10 @@ const {
   functionName: 'getVoteCount',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [currentElectionId] // Supply currentElectionId as an argument
+  args: [currentElectionId], // Supply currentElectionId as an argument
+  query: {
+    enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
+  }
 })
 
 const {
@@ -185,7 +233,10 @@ const {
   functionName: 'getElectionCandidates',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [currentElectionId]
+  args: [currentElectionId],
+  query: {
+    enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
+  }
 })
 
 const {
@@ -251,15 +302,16 @@ const createElection = async (electionData: OldProposal) => {
   } catch (error) {
     addErrorToast(parseError(error, ElectionABI as Abi))
     log.error('Error creating election:', parseError(error, ElectionABI as Abi))
-  } finally {
-    showCreateElectionModal.value = false
   }
 }
 
-watch(isConfirmingCreateElection, (isConfirming, wasConfirming) => {
+watch(isConfirmingCreateElection, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedCreateElection.value) {
     addSuccessToast('Election created successfully!')
     showCreateElectionModal.value = false
+    await queryClient.invalidateQueries({
+      queryKey: [currentElectionQueryKey, nextElectionIdQueryKey]
+    })
   }
 })
 
