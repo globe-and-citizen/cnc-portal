@@ -54,7 +54,12 @@ vi.mock('@/stores', () => ({
     address: '0x000000000000000000000000000000000000dead'
   }),
   useTeamStore: () => ({
-    currentTeam: mockCurrentTeam.value
+    currentTeam: mockCurrentTeam.value,
+    getContractAddressByType: vi.fn((type) => {
+      // console.log('getContractAddressByType called with type:', type)
+      return type ? '0x000000000000000000000000000000000000beef' : undefined
+      // return mockTeamStore.currentTeam.teamContracts.find((contract) => contract.type === type)?.address
+    })
   })
 }))
 
