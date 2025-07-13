@@ -34,7 +34,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useSendTransaction, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import {
+  useSendTransaction,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useChainId
+} from '@wagmi/vue'
+
+import { useQueryClient } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { parseEther, type Address } from 'viem'
@@ -65,6 +72,9 @@ const isAmountValid = ref(false)
 const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
+
+const queryClient = useQueryClient()
+const chainId = useChainId()
 
 // Reactive state for balances: composable that fetches address balances
 const { balances, isLoading } = useContractBalance(userDataStore.address as Address)
@@ -152,6 +162,19 @@ const submitForm = async () => {
       })
       await waitForCondition(() => nativeTokenDespositStatus.value === 'success', 15000)
       addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
+
+      // Invalidate the balance queries to update the balances
+      queryClient.invalidateQueries({
+        queryKey: [
+          'balance',
+          {
+            address: props.bankAddress,
+            chainId: chainId
+          }
+        ]
+      })
+
+      amount.value = ''
       emits('closeModal')
     } else {
       const tokenAmount = BigInt(Number(amount.value) * 1e6)
@@ -171,8 +194,13 @@ const submitForm = async () => {
             functionName: 'approve',
             args: [props.bankAddress, tokenAmount]
           })
-          await new Promise((resolve) => setTimeout(resolve, 3000))
+
+          // wait for 3s, timeout for approval transaction
+          // await new Promise((resolve) => setTimeout(resolve, 3000))
+
           await waitForCondition(() => erc20ApprovalStatus.value === 'success', 15000)
+
+          // wait for transaction receipt
           addSuccessToast('Token approved successfully')
         }
         currentStep.value = 3
@@ -183,6 +211,19 @@ const submitForm = async () => {
           args: [selectedToken.value.token.address as Address, tokenAmount]
         })
         await waitForCondition(() => erc20TokenDespositStatus.value === 'success', 15000)
+
+        // Invalidate the balance queries to update the balances
+        queryClient.invalidateQueries({
+          queryKey: [
+            'readContract',
+            {
+              address: selectedToken.value.token.address as Address,
+              args: [props.bankAddress],
+              chainId: chainId
+            }
+          ]
+        })
+        amount.value = ''
         addSuccessToast('USDC deposited successfully')
         emits('closeModal')
       } else {

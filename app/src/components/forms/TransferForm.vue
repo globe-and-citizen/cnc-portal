@@ -41,14 +41,10 @@
             <SelectComponent
               :options="props.tokens.map((token) => ({ value: token.symbol, label: token.symbol }))"
               :disabled="props.loading"
+              v-model="selectedTokenId"
               :format-value="
                 (value: string) => {
                   return value === 'SepoliaETH' ? 'SepETH' : value
-                }
-              "
-              @change="
-                (value: string) => {
-                  model.token = props.tokens.find((token) => token.symbol === value) || model.token
                 }
               "
             />
@@ -95,6 +91,7 @@ import { useCurrencyStore } from '@/stores/currencyStore'
 import { formatCurrencyShort } from '@/utils'
 import SelectComponent from '../SelectComponent.vue'
 import type { TokenId } from '@/constant'
+import { ref } from 'vue'
 
 export interface Token {
   symbol: string
@@ -129,6 +126,16 @@ const model = defineModel<TransferModel>({
 
 const emit = defineEmits(['transfer', 'closeModal'])
 const currencyStore = useCurrencyStore()
+
+const selectedTokenId = ref<string>('USDC')
+
+// watch selectedTokenId to update model.token
+watch(selectedTokenId, (newTokenId) => {
+  const token = props.tokens.find((b) => b.symbol === newTokenId)
+  if (token) {
+    model.value.token = token
+  }
+})
 
 const usePercentageOfBalance = (percentage: number) => {
   model.value.amount = ((model.value.token.balance * percentage) / 100).toFixed(4)

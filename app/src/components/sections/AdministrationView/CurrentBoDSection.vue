@@ -3,48 +3,43 @@
     <div
       class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4"
     >
-      <UserComponentCol
-        v-for="member in boardOfDirectors"
-        :key="member.address"
-        :user="member"
-        :isDetailedView="true"
-      />
+      <div v-if="boardOfDirectors && boardOfDirectors.length > 0">
+        <UserComponentCol
+          v-for="(memberAddress, index) in boardOfDirectors"
+          :key="index"
+          :user="teamStore.currentTeam?.members.find((m) => m.address === memberAddress) as User"
+          :isDetailedView="true"
+        />
+      </div>
+      <div v-else-if="isFetching" class="col-span-full text-center">Loading...</div>
+      <div v-else class="col-span-full text-center text-gray-500">
+        No Board of Directors members found.
+      </div>
     </div>
   </CardComponent>
 </template>
 <script setup lang="ts">
+import { BOD_ABI } from '@/artifacts/abi/bod'
 import CardComponent from '@/components/CardComponent.vue'
 import UserComponentCol from '@/components/UserComponent.vue'
+import { useTeamStore } from '@/stores'
+import type { User } from '@/types'
+import { useReadContract } from '@wagmi/vue'
+import type { Address } from 'viem'
+import { computed } from 'vue'
 
-const boardOfDirectors = [
-  {
-    address: '0x1234567890abcdef1234567890abcdef12345678',
-    name: 'Alice Johnson',
-    role: 'Chairperson' /*,
-		imageUrl: 'https://example.com/images/alice.jpg'*/
-  },
-  {
-    address: '0xabcdef1234567890abcdef1234567890abcdef12',
-    name: 'Bob Smith',
-    role: 'Vice Chairperson' /*,
-		imageUrl: 'https://example.com/images/bob.jpg'*/
-  },
-  {
-    address: '0x7890abcdef1234567890abcdef12345678901234',
-    name: 'Charlie Brown',
-    role: 'Treasurer' /*,
-		imageUrl: 'https://example.com/images/charlie.jpg'*/
-  },
-  {
-    address: '0x4567890abcdef1234567890abcdef1234567890',
-    name: 'Diana Prince',
-    role: 'Secretary' /*,
-		imageUrl: 'https://example.com/images/diana.jpg'*/
-  },
-  {
-    address: '0xabcdef1234567890abcdef1234567890abcdef56',
-    name: 'Ethan Hunt' /*,
-		imageUrl: 'https://example.com/images/ethan.jpg'*/
-  }
-]
+const teamStore = useTeamStore()
+const electionsAddress = computed(() => {
+  const address = teamStore.currentTeam?.teamContracts?.find(
+    (c) => c.type === 'BoardOfDirectors'
+  )?.address
+  return address as Address
+})
+const { data: boardOfDirectors, isFetching } = useReadContract({
+  address: electionsAddress.value,
+  abi: BOD_ABI,
+  functionName: 'getBoardOfDirectors',
+  args: [],
+  scopeKey: 'boardOfDirectors'
+})
 </script>
