@@ -14,7 +14,7 @@
 <script lang="ts" setup>
 import CardComponent from '@/components/CardComponent.vue'
 import ElectionDetailsCard from './BoDElectionDetailsCard.vue'
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
 // import BoDABI from '@/artifacts/abi/bod.json'
 import { useTeamStore, useToastStore } from '@/stores'
@@ -28,7 +28,7 @@ import { log, parseError } from '@/utils'
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
-const votesPerCandidate = ref<Record<Address, number>>({})
+const votesPerCandidate = reactive<Record<Address, number>>({})
 
 const electionsAddress = computed(() => {
   const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
@@ -97,7 +97,7 @@ const candidates = computed(() => {
           imageUrl: user?.imageUrl
         },
         totalVotes: Number(voteCount.value) || 0,
-        currentVotes: votesPerCandidate.value[candidate] //5
+        currentVotes: votesPerCandidate[candidate] //5
       }
     })
   } else return []
@@ -142,7 +142,7 @@ const fetchVotes = async () => {
             functionName: '_voteCounts',
             args: [currentElectionId.value, candidate]
           })
-          votesPerCandidate.value[candidate] = Number(count) || 0
+          votesPerCandidate[candidate] = Number(count) || 0
         })
       )
     }
@@ -158,9 +158,14 @@ watch(isConfirmingCastVote, (isConfirming, wasConfirming) => {
   }
 })
 
-watch(electionCandidates, async (newCandidates) => {
-  if (newCandidates && (newCandidates as string[]).length > 0) {
-    await fetchVotes()
-  }
-})
+watch(
+  electionCandidates,
+  async (newCandidates) => {
+    if (newCandidates) {
+      await fetchVotes()
+      addSuccessToast('Election candidates fetched successfully!')
+    }
+  },
+  { immediate: true, deep: true }
+)
 </script>
