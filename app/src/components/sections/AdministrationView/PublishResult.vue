@@ -13,11 +13,13 @@
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useTeamStore, useToastStore } from '@/stores'
-import { parseError } from '@/utils'
+import { log, parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import type { Address } from 'viem'
+import { estimateGas } from '@wagmi/core'
+import { type Abi, type Address, encodeFunctionData } from 'viem'
 import { computed, watch } from 'vue'
+import { config } from '@/wagmi.config'
 
 const toastStore = useToastStore()
 const queryClient = useQueryClient()
@@ -45,6 +47,15 @@ const { electionId } = defineProps<{
 
 const handlePublishResults = async (electionId: number) => {
   try {
+    const data = encodeFunctionData({
+      abi: ELECTIONS_ABI,
+      functionName: 'publishResults',
+      args: [BigInt(electionId)]
+    })
+    await estimateGas(config, {
+      to: electionsAddress.value,
+      data
+    })
     publishResults({
       address: electionsAddress.value,
       abi: ELECTIONS_ABI,
@@ -55,8 +66,8 @@ const handlePublishResults = async (electionId: number) => {
       queryKey: ['readContract', {}]
     })
   } catch (err) {
-    console.error('Error publishing results:', parseError(err))
-    toastStore.addErrorToast('Failed to publish election results')
+    toastStore.addErrorToast(parseError(err, ELECTIONS_ABI as Abi))
+    log.error('Error creating election:', parseError(err, ELECTIONS_ABI as Abi))
   }
 }
 
