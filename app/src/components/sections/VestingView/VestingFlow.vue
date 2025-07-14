@@ -248,7 +248,6 @@ const vestings = computed<VestingRow[]>(() => {
 })
 
 const handleReload = () => {
-  console.log('vesting Flow reload called ====')
   emit('reload')
 }
 
