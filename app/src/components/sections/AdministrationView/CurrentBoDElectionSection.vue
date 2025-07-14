@@ -74,7 +74,7 @@
         <!-- Stats Row -->
         <div class="flex justify-between items-stretch gap-4">
           <!-- Candidates Stat -->
-          <div class="flex-1 flex gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+          <div class="flex-1 flex gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300">
             <div class="p-3 bg-blue-50 rounded-full">
               <IconifyIcon icon="heroicons:user-group" class="h-6 w-6 text-blue-600" />
             </div>
@@ -88,7 +88,7 @@
 
           <!-- End Date Stat -->
           <div
-            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100"
+            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300"
           >
             <div class="p-3 bg-green-50 rounded-full">
               <IconifyIcon icon="heroicons:calendar" class="h-6 w-6 text-green-600" />
@@ -103,7 +103,7 @@
 
           <!-- Votes Stat -->
           <div
-            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100"
+            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300"
           >
             <div class="p-3 bg-purple-50 rounded-full">
               <IconifyIcon icon="heroicons:chart-bar" class="h-6 w-6 text-purple-600" />

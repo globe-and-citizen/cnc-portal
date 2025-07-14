@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-base-100 card border border-gray-200 flex flex-col">
+  <div class="bg-base-100 card border border-gray-300 flex flex-col">
     <div class="card-body">
       <!-- Status and Date -->
       <div class="flex justify-between items-start mb-3">
@@ -15,18 +15,18 @@
       <!-- Candidates Count -->
       <div class="flex justify-between items-center mb-2">
         <span class="text-gray-600">Candidates:</span>
-        <span class="font-semibold">{{ election.seatCount }}</span>
+        <span class="font-semibold text-2xl text-gray-600">{{ election.seatCount }}</span>
       </div>
 
       <!-- Votes Count -->
       <div class="flex justify-between items-center mb-4">
         <span class="text-gray-600">Total Votes:</span>
-        <span class="font-semibold">{{ voteCount }}</span>
+        <span class="font-semibold text-2xl text-gray-600">{{ voteCount }}</span>
       </div>
 
       <div class="flex-grow"></div>
       <!-- Spacer -->
-
+      <div class="border-t border-gray-300 my-4"></div>
       <!-- Elected Members -->
       <div class="mb-5">
         <p class="text-gray-600 mb-2">Elected Members:</p>

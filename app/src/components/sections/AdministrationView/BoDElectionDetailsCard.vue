@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-base-100 card border border-gray-200 flex flex-col">
+  <div class="bg-base-100 card border border-gray-300 flex flex-col">
     <div class="card-body">
       <!-- User Component -->
       <UserComponent layout="alternate" :user="election.user" />
