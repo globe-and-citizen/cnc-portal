@@ -386,7 +386,10 @@ const electionStatus = computed(() => {
   if (now.value < formattedElection.value?.startDate) {
     return { text: 'Upcoming', class: 'bg-yellow-100 text-yellow-800' }
   }
-  if (now.value > formattedElection.value?.endDate) {
+  if (
+    now.value > formattedElection.value?.endDate ||
+    formattedElection.value?.votesCast === formattedElection.value?.seatCount
+  ) {
     return { text: 'Completed', class: 'bg-gray-100 text-gray-800' }
   }
   return { text: 'Active', class: 'bg-green-100 text-green-800' }
