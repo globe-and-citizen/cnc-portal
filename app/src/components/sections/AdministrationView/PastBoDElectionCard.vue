@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-base-100 shadow-lg card border border-gray-200 flex flex-col">
+  <div class="bg-base-100 card border border-gray-200 flex flex-col">
     <div class="card-body">
       <!-- Status and Date -->
       <div class="flex justify-between items-start mb-3">
