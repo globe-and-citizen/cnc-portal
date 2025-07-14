@@ -14,7 +14,7 @@
 <script lang="ts" setup>
 import CardComponent from '@/components/CardComponent.vue'
 import ElectionDetailsCard from './BoDElectionDetailsCard.vue'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
 // import BoDABI from '@/artifacts/abi/bod.json'
 import { useTeamStore, useToastStore } from '@/stores'
