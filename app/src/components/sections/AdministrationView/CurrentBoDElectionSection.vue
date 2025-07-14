@@ -53,7 +53,7 @@
         </ModalComponent>
       </div>
     </template>
-    <div v-if="formattedElection && !formattedElection?.resultsPublished">
+    <div v-if="formattedElection && !formattedElection?.resultsPublished" class="mt-4">
       <!-- Status and Countdown -->
       <div class="flex items-center justify-start gap-2 mb-6">
         <span class="px-2 py-1 text-xs font-medium rounded-full" :class="electionStatus.class">
@@ -120,7 +120,7 @@
     </div>
     <div
       v-else
-      class="flex flex-col items-center justify-center gap-4 p-6 bg-gray-50 rounded-lg shadow-sm border border-gray-100"
+      class="flex flex-col items-center justify-center gap-4 p-6 bg-gray-50 rounded-lg shadow-sm border border-gray-100 mt-4"
     >
       <h2 class="text-xl font-semibold text-gray-700">No Current Election</h2>
       <p class="text-sm text-gray-500 text-center">
