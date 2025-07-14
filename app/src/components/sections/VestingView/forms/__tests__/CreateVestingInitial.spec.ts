@@ -31,7 +31,7 @@ const mockWriteContract = {
   data: ref(null)
 }
 
-// Mocks
+// Mockeds
 const mockVestingInfos = ref([
   [memberAddress],
   [
