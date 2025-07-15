@@ -65,8 +65,8 @@ const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useRea
   args: [currentElectionId]
 })
 
-const { data: voteCount /*, error: errorVoteCount*/ } = useReadContract({
-  functionName: 'getVoteCount',
+const { data: election /*, error: errorVoteCount*/ } = useReadContract({
+  functionName: 'getElection',
   address: electionsAddress.value,
   abi: ElectionABI,
   args: [currentElectionId]
@@ -84,7 +84,11 @@ const { isLoading: isConfirmingCastVote, isSuccess: isConfirmedCastVote } =
   })
 
 const candidates = computed(() => {
-  if (electionCandidates.value && Array.isArray(electionCandidates.value)) {
+  if (
+    electionCandidates.value &&
+    Array.isArray(electionCandidates.value) &&
+    Array.isArray(election.value)
+  ) {
     return electionCandidates.value.map((candidate: Address) => {
       const user = teamStore.currentTeam?.members?.find(
         (member) => member.address === candidate
@@ -96,7 +100,7 @@ const candidates = computed(() => {
           role: user?.role || 'Candidate',
           imageUrl: user?.imageUrl
         },
-        totalVotes: Number(voteCount.value) || 0,
+        totalVotes: Number((election.value as string | bigint[])[6]) || 0,
         currentVotes: votesPerCandidate[candidate] //5
       }
     })

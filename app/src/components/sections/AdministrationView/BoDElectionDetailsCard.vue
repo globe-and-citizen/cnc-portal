@@ -12,10 +12,16 @@
       </div>
 
       <!-- Custom Divider -->
-      <div class="flex items-center my-2">
+      <!-- <div class="flex items-center my-2">
         <div class="w-6 h-6 rounded-full border-4 border-gray-600"></div>
         <div class="flex-1 border-t-4 border-gray-200"></div>
-      </div>
+      </div> -->
+
+      <progress
+        class="progress progress-success my-4"
+        :value="election.currentVotes"
+        :max="election.totalVotes"
+      ></progress>
 
       <!-- View Results Button -->
       <ButtonUI
