@@ -4,9 +4,8 @@
       class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4"
       v-if="boardOfDirectors && boardOfDirectors.length > 0"
     >
-      <div v-for="(memberAddress, index) in boardOfDirectors">
+      <div v-for="(memberAddress, index) in boardOfDirectors" :key="index">
         <UserComponentCol
-          :key="index"
           :user="teamStore.currentTeam?.members.find((m) => m.address === memberAddress) as User"
           :isDetailedView="true"
         />
