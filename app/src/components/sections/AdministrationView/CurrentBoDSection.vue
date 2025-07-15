@@ -4,10 +4,15 @@
       class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4"
       v-if="boardOfDirectors && boardOfDirectors.length > 0"
     >
-      <div v-for="(memberAddress, index) in boardOfDirectors" :key="index">
+      <div
+        v-for="(memberAddress, index) in boardOfDirectors"
+        :key="index"
+        class="rounded-xl overflow-hidden bg-gradient-to-t from-emerald-100 to-emarald-50 shadow-sm hover:shadow-md transition-all mt-4"
+      >
         <UserComponentCol
           :user="teamStore.currentTeam?.members.find((m) => m.address === memberAddress) as User"
           :isDetailedView="true"
+          class="p-6"
         />
       </div>
     </div>
