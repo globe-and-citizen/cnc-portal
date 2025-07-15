@@ -40,9 +40,14 @@
       </div>
 
       <!-- View Results Button -->
-      <ButtonUI variant="success" :outline="true" @click="electionResultModal = true">
+      <!-- <ButtonUI variant="success" :outline="true" @click="electionResultModal = true">
         View Results
-      </ButtonUI>
+      </ButtonUI> -->
+      <a
+        :href="`/teams/${teamStore.currentTeam?.id}/administration/bod-elections-details?electionId=${election.id}`"
+        class="btn btn-md btn-success btn-outline"
+        >View Results</a
+      >
       <ModalComponent
         v-if="electionResultModal"
         v-model="electionResultModal"
@@ -66,11 +71,13 @@ import { watch } from 'vue'
 import { computed, ref } from 'vue'
 import ElectionResultModal from './modals/ElectionResultModal.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
+import { useRouter } from 'vue-router'
 
 const electionResultModal = ref(false)
 const { election } = defineProps<{
   election: Election
 }>()
+const router = useRouter()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const electionsAddress = computed(() => {
