@@ -268,8 +268,18 @@ const formatedUserAddress = computed(() => {
 
 const menuItems = computed(() => [
   {
+    label: 'Teams List',
+    icon: 'heroicons:user-group',
+    route: {
+      name: 'teams',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    active: route.name === 'teams',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  },
+  {
     label: 'Dashboard',
-    icon: 'heroicons:home',
+    icon: 'heroicons:squares-2x2',
     route: {
       name: 'show-team',
       params: { id: teamStore.currentTeam?.id || '1' }
@@ -294,7 +304,11 @@ const menuItems = computed(() => [
       name: 'cash-remunerations',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    active: route.name === 'cash-remunerations' || route.name === 'weekly-claim',
+    // Active if any child is active or the parent route is active
+    active:
+      route.name === 'cash-remunerations' ||
+      route.name === 'weekly-claim' ||
+      (route.name === 'claim-history' && route.params.memberAddress === userStore.address),
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
       {
@@ -312,8 +326,24 @@ const menuItems = computed(() => [
           name: 'claim-history',
           params: { id: teamStore.currentTeam?.id || '1', memberAddress: userStore.address }
         },
-        active: route.name === 'claim-history',
+        active: route.name === 'claim-history' && route.params.memberAddress === userStore.address,
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      },
+      {
+        label: ' Member Claim History',
+        route: {
+          name: 'claim-history',
+          params: {
+            id: teamStore.currentTeam?.id || '1',
+            memberAddress: route.params.memberAddress
+          }
+        },
+        // Active if on claim-history and not the current user
+        active: route.name === 'claim-history' && route.params.memberAddress !== userStore.address,
+        show:
+          (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
+          !!route.params.memberAddress &&
+          route.params.memberAddress !== userStore.address
       },
       {
         label: 'Team Weekly Claims',
