@@ -173,7 +173,6 @@ const { data, error } = useCustomFetch(weeklyClaimUrl.value).get().json<WeeklyCl
 const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
 
 const isSameWeek = (weeklyClaimStartWeek: string) => {
-  console.log(`weeklyClaimStartWeek: ${weeklyClaimStartWeek}`)
   const currentMonday = getMondayStart(new Date())
   return currentMonday.toISOString() === weeklyClaimStartWeek
 }
