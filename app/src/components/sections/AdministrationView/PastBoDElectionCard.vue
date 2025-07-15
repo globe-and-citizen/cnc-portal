@@ -61,7 +61,6 @@
 
 <script setup lang="ts">
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import type { Election } from '@/types'
 import { parseError } from '@/utils'
@@ -71,13 +70,11 @@ import { watch } from 'vue'
 import { computed, ref } from 'vue'
 import ElectionResultModal from './modals/ElectionResultModal.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { useRouter } from 'vue-router'
 
 const electionResultModal = ref(false)
 const { election } = defineProps<{
   election: Election
 }>()
-const router = useRouter()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const electionsAddress = computed(() => {

@@ -22,9 +22,8 @@ const electionsAddress = computed(() => {
 
 // Fetch next election ID
 const {
-  data: nextElectionId,
+  data: nextElectionId
   // isLoading: isLoadingNextElectionId,
-  error: errorNextElectionId
 } = useReadContract({
   functionName: 'getNextElectionId',
   address: electionsAddress.value,
