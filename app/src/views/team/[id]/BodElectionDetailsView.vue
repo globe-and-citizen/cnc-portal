@@ -1,9 +1,69 @@
 <template>
   <CurrentBoDElectionSection />
+  <CurrentBoDSection v-if="formattedElection?.resultsPublished" />
   <ElectionDetailsSection />
 </template>
 
 <script setup lang="ts">
 import CurrentBoDElectionSection from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
 import ElectionDetailsSection from '@/components/sections/AdministrationView/BoDElectionDetailsSection.vue'
+import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentBoDSection.vue'
+import { useTeamStore } from '@/stores'
+import { computed } from 'vue'
+import { useReadContract } from '@wagmi/vue'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import type { Address } from 'viem'
+
+const teamStore = useTeamStore()
+const electionsAddress = computed(() => {
+  const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
+  return address as Address
+})
+
+// Fetch next election ID
+const {
+  data: nextElectionId,
+  // isLoading: isLoadingNextElectionId,
+  error: errorNextElectionId
+} = useReadContract({
+  functionName: 'getNextElectionId',
+  address: electionsAddress.value,
+  abi: ELECTIONS_ABI
+})
+
+// Compute current election ID
+const currentElectionId = computed(() => {
+  if (
+    nextElectionId.value &&
+    (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
+  ) {
+    return BigInt(Number(nextElectionId.value) - 1)
+  }
+  return 0n // Handle cases where nextElectionId is not available
+})
+
+// Fetch current election details
+const { data: currentElection } = useReadContract({
+  functionName: 'getElection',
+  address: electionsAddress.value,
+  abi: ELECTIONS_ABI,
+  args: [currentElectionId]
+})
+
+const formattedElection = computed(() => {
+  if (!currentElection.value) return null
+
+  const raw = currentElection.value
+
+  return {
+    id: Number(raw[0]),
+    title: raw[1],
+    description: raw[2],
+    createdBy: raw[3],
+    startDate: new Date(Number(raw[4]) * 1000),
+    endDate: new Date(Number(raw[5]) * 1000),
+    seatCount: Number(raw[6]),
+    resultsPublished: raw[7]
+  }
+})
 </script>
