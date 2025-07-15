@@ -2,19 +2,18 @@
   <CardComponent title="Current Board of Directors">
     <div
       class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4"
+      v-if="boardOfDirectors && boardOfDirectors.length > 0"
     >
-      <div v-if="boardOfDirectors && boardOfDirectors.length > 0">
+      <div v-for="(memberAddress, index) in boardOfDirectors" :key="index">
         <UserComponentCol
-          v-for="(memberAddress, index) in boardOfDirectors"
-          :key="index"
           :user="teamStore.currentTeam?.members.find((m) => m.address === memberAddress) as User"
           :isDetailedView="true"
         />
       </div>
-      <div v-else-if="isFetching" class="col-span-full text-center">Loading...</div>
-      <div v-else class="col-span-full text-center text-gray-500">
-        No Board of Directors members found.
-      </div>
+    </div>
+    <div v-else-if="isFetching" class="col-span-full text-center">Loading...</div>
+    <div v-else class="col-span-full text-center text-gray-500">
+      No Board of Directors members found.
     </div>
   </CardComponent>
 </template>

@@ -1,18 +1,25 @@
 <template>
-  <h2 class="text-xl">Past Elections</h2>
-  <div v-if="isLoading" class="flex w-full h-96 justify-center items-center">
-    <div class="text-gray-500">Loading past elections...</div>
-  </div>
-  <div v-else-if="elections.length === 0" class="flex w-full h-96 justify-center items-center">
-    <div class="text-gray-500">No past elections available</div>
-  </div>
-  <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <PastBoDElectionCard v-for="(election, index) in elections" :key="index" :election="election" />
-  </div>
+  <!-- <h2 class="text-xl">Past Elections</h2> -->
+  <CardComponent title="Past Election">
+    <div v-if="isLoading" class="flex w-full h-96 justify-center items-center">
+      <div class="text-gray-500">Loading past elections...</div>
+    </div>
+    <div v-else-if="elections.length === 0" class="flex w-full h-96 justify-center items-center">
+      <div class="text-gray-500">No past elections available</div>
+    </div>
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+      <PastBoDElectionCard
+        v-for="(election, index) in elections"
+        :key="index"
+        :election="election"
+      />
+    </div>
+  </CardComponent>
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import PastBoDElectionCard from './PastBoDElectionCard.vue'
+import CardComponent from '@/components/CardComponent.vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { config } from '@/wagmi.config'

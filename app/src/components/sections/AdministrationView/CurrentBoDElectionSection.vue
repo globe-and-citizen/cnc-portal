@@ -53,7 +53,7 @@
         </ModalComponent>
       </div>
     </template>
-    <div v-if="formattedElection && !formattedElection?.resultsPublished">
+    <div v-if="formattedElection && !formattedElection?.resultsPublished" class="mt-4">
       <!-- Status and Countdown -->
       <div class="flex items-center justify-start gap-2 mb-6">
         <span class="px-2 py-1 text-xs font-medium rounded-full" :class="electionStatus.class">
@@ -74,7 +74,7 @@
         <!-- Stats Row -->
         <div class="flex justify-between items-stretch gap-4">
           <!-- Candidates Stat -->
-          <div class="flex-1 flex gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+          <div class="flex-1 flex gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300">
             <div class="p-3 bg-blue-50 rounded-full">
               <IconifyIcon icon="heroicons:user-group" class="h-6 w-6 text-blue-600" />
             </div>
@@ -86,12 +86,27 @@
             </div>
           </div>
 
-          <!-- End Date Stat -->
+          <!-- Start Date Stat -->
           <div
-            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100"
+            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300"
           >
             <div class="p-3 bg-green-50 rounded-full">
               <IconifyIcon icon="heroicons:calendar" class="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-500">Starts</p>
+              <p class="text-xl font-semibold text-gray-900">
+                {{ formatDate(formattedElection?.startDate ?? new Date()) }}
+              </p>
+            </div>
+          </div>
+
+          <!-- End Date Stat -->
+          <div
+            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300"
+          >
+            <div class="p-3 bg-red-50 rounded-full">
+              <IconifyIcon icon="heroicons:calendar-days" class="h-6 w-6 text-red-600" />
             </div>
             <div>
               <p class="text-sm font-medium text-gray-500">Ends</p>
@@ -103,7 +118,7 @@
 
           <!-- Votes Stat -->
           <div
-            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100"
+            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300"
           >
             <div class="p-3 bg-purple-50 rounded-full">
               <IconifyIcon icon="heroicons:chart-bar" class="h-6 w-6 text-purple-600" />
@@ -120,7 +135,7 @@
     </div>
     <div
       v-else
-      class="flex flex-col items-center justify-center gap-4 p-6 bg-gray-50 rounded-lg shadow-sm border border-gray-100"
+      class="flex flex-col items-center justify-center gap-4 p-6 bg-gray-50 rounded-lg shadow-sm border border-gray-100 mt-4"
     >
       <h2 class="text-xl font-semibold text-gray-700">No Current Election</h2>
       <p class="text-sm text-gray-500 text-center">
@@ -386,7 +401,10 @@ const electionStatus = computed(() => {
   if (now.value < formattedElection.value?.startDate) {
     return { text: 'Upcoming', class: 'bg-yellow-100 text-yellow-800' }
   }
-  if (now.value > formattedElection.value?.endDate) {
+  if (
+    now.value > formattedElection.value?.endDate ||
+    formattedElection.value?.votesCast === formattedElection.value?.seatCount
+  ) {
     return { text: 'Completed', class: 'bg-gray-100 text-gray-800' }
   }
   return { text: 'Active', class: 'bg-green-100 text-green-800' }

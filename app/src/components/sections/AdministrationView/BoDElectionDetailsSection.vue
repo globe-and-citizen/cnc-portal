@@ -14,7 +14,7 @@
 <script lang="ts" setup>
 import CardComponent from '@/components/CardComponent.vue'
 import ElectionDetailsCard from './BoDElectionDetailsCard.vue'
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
 // import BoDABI from '@/artifacts/abi/bod.json'
 import { useTeamStore, useToastStore } from '@/stores'
@@ -28,7 +28,7 @@ import { log, parseError } from '@/utils'
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
-const votesPerCandidate = ref<Record<Address, number>>({})
+const votesPerCandidate = reactive<Record<Address, number>>({})
 
 const electionsAddress = computed(() => {
   const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
@@ -65,8 +65,8 @@ const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useRea
   args: [currentElectionId]
 })
 
-const { data: voteCount /*, error: errorVoteCount*/ } = useReadContract({
-  functionName: 'getVoteCount',
+const { data: election /*, error: errorVoteCount*/ } = useReadContract({
+  functionName: 'getElection',
   address: electionsAddress.value,
   abi: ElectionABI,
   args: [currentElectionId]
@@ -84,7 +84,11 @@ const { isLoading: isConfirmingCastVote, isSuccess: isConfirmedCastVote } =
   })
 
 const candidates = computed(() => {
-  if (electionCandidates.value && Array.isArray(electionCandidates.value)) {
+  if (
+    electionCandidates.value &&
+    Array.isArray(electionCandidates.value) &&
+    Array.isArray(election.value)
+  ) {
     return electionCandidates.value.map((candidate: Address) => {
       const user = teamStore.currentTeam?.members?.find(
         (member) => member.address === candidate
@@ -96,8 +100,8 @@ const candidates = computed(() => {
           role: user?.role || 'Candidate',
           imageUrl: user?.imageUrl
         },
-        totalVotes: Number(voteCount.value) || 0,
-        currentVotes: votesPerCandidate.value[candidate] //5
+        totalVotes: Number((election.value as string | bigint[])[6]) || 0,
+        currentVotes: votesPerCandidate[candidate] //5
       }
     })
   } else return []
@@ -142,7 +146,7 @@ const fetchVotes = async () => {
             functionName: '_voteCounts',
             args: [currentElectionId.value, candidate]
           })
-          votesPerCandidate.value[candidate] = Number(count) || 0
+          votesPerCandidate[candidate] = Number(count) || 0
         })
       )
     }
@@ -158,9 +162,14 @@ watch(isConfirmingCastVote, (isConfirming, wasConfirming) => {
   }
 })
 
-watch(electionCandidates, async (newCandidates) => {
-  if (newCandidates && (newCandidates as string[]).length > 0) {
-    await fetchVotes()
-  }
-})
+watch(
+  electionCandidates,
+  async (newCandidates) => {
+    if (newCandidates) {
+      await fetchVotes()
+      addSuccessToast('Election candidates fetched successfully!')
+    }
+  },
+  { immediate: true, deep: true }
+)
 </script>
