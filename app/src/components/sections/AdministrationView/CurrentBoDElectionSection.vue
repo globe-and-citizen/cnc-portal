@@ -86,12 +86,27 @@
             </div>
           </div>
 
-          <!-- End Date Stat -->
+          <!-- Start Date Stat -->
           <div
             class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300"
           >
             <div class="p-3 bg-green-50 rounded-full">
               <IconifyIcon icon="heroicons:calendar" class="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-500">Starts</p>
+              <p class="text-xl font-semibold text-gray-900">
+                {{ formatDate(formattedElection?.startDate ?? new Date()) }}
+              </p>
+            </div>
+          </div>
+
+          <!-- End Date Stat -->
+          <div
+            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300"
+          >
+            <div class="p-3 bg-red-50 rounded-full">
+              <IconifyIcon icon="heroicons:calendar-days" class="h-6 w-6 text-red-600" />
             </div>
             <div>
               <p class="text-sm font-medium text-gray-500">Ends</p>
