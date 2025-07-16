@@ -17,12 +17,12 @@
         <label class="flex items-center">
           <span class="w-full" data-test="hours-worked-label">Date</span>
         </label>
-        <VueDatePicker
+        <!-- <VueDatePicker
           v-model="hoursWorked.dayWorked"
           class="input input-bordered input-md"
           data-test="date-input"
-        />
-        <!-- <VueDatePicker
+        /> -->
+        <VueDatePicker
           v-model="hoursWorked.dayWorked"
           :allowed-dates="allowedDates"
           class="input input-bordered input-md"
@@ -30,7 +30,7 @@
           disable-month-year-select
           :month-change-on-scroll="false"
           :enable-time-picker="false"
-        /> -->
+        />
       </div>
       <div class="flex flex-col gap-2">
         <label class="flex items-center">
@@ -118,17 +118,17 @@ const hoursWorked = ref<{
 })
 
 // TODO: enable this to restrict date selection to the current week
-// const allowedDates = computed(() => {
-//   const today = new Date()
-//   const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay() // Make Sunday = 7
-//   const monday = new Date(today)
-//   monday.setDate(today.getDate() - (dayOfWeek - 1))
-//   const days = []
-//   for (let d = new Date(monday); d <= today; d.setDate(d.getDate() + 1)) {
-//     days.push(new Date(d))
-//   }
-//   return days
-// })
+const allowedDates = computed(() => {
+  const today = new Date()
+  const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay() // Make Sunday = 7
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - (dayOfWeek - 1))
+  const days = []
+  for (let d = new Date(monday); d <= today; d.setDate(d.getDate() + 1)) {
+    days.push(new Date(d))
+  }
+  return days
+})
 
 const openModal = () => {
   modal.value = true
