@@ -1,5 +1,5 @@
 <template>
-  <CardComponent title="Current Election">
+  <CardComponent :title="`${isDetails? `Past`: `Current`} Election`">
     <template #card-action>
       <div class="flex justify-between">
         <div class="flex justify-between gap-2">
