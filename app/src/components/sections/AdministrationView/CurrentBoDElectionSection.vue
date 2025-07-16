@@ -174,6 +174,8 @@ import { config } from '@/wagmi.config'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRouter } from 'vue-router'
 
+const props = defineProps<{ electionId: bigint }>()
+
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 const queryClient = useQueryClient()
@@ -220,10 +222,10 @@ const {
   functionName: 'getElection',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [currentElectionId], // Supply currentElectionId as an argument
-  query: {
-    enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
-  }
+  args: [props.electionId] // Supply currentElectionId as an argument
+  // query: {
+  //   enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
+  // }
 })
 
 const {
