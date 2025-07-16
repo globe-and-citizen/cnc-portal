@@ -1,10 +1,14 @@
 <template>
-  <CardComponent :title="`${isDetails? `Past`: `Current`} Election`">
+  <CardComponent :title="`${isDetails ? `Past` : `Current`} Election`">
     <template #card-action>
       <div class="flex justify-between">
         <div class="flex justify-between gap-2">
           <div
-            v-if="formattedElection && !formattedElection?.resultsPublished"
+            v-if="
+              formattedElection &&
+              !formattedElection?.resultsPublished &&
+              !router.currentRoute.value.fullPath.includes('bod-elections-details')
+            "
             @click="
               () => {
                 if (electionStatus.text == 'Completed') {
