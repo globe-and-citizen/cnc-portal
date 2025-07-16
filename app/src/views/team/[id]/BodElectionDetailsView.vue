@@ -1,10 +1,14 @@
 <template>
   <CurrentBoDElectionSection
+    v-if="currentElectionId"
     :election-id="currentElectionId"
     :is-details="formattedElection?.resultsPublished"
   />
-  <CurrentBoDSection v-if="formattedElection?.resultsPublished" :election-id="currentElectionId" />
-  <ElectionDetailsSection :election-id="currentElectionId" />
+  <CurrentBoDSection
+    v-if="formattedElection?.resultsPublished && currentElectionId"
+    :election-id="currentElectionId"
+  />
+  <ElectionDetailsSection v-if="currentElectionId" :election-id="currentElectionId" />
 </template>
 
 <script setup lang="ts">
@@ -12,7 +16,7 @@ import CurrentBoDElectionSection from '@/components/sections/AdministrationView/
 import ElectionDetailsSection from '@/components/sections/AdministrationView/BoDElectionDetailsSection.vue'
 import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentBoDSection.vue'
 import { useTeamStore } from '@/stores'
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import type { Address } from 'viem'
@@ -20,11 +24,6 @@ import { useRouter } from 'vue-router'
 
 const teamStore = useTeamStore()
 const router = useRouter()
-const electionId = BigInt(
-  typeof router.currentRoute.value.query.electionId === 'string'
-    ? router.currentRoute.value.query.electionId
-    : 0
-)
 const electionsAddress = computed(() => {
   const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
   return address as Address
@@ -76,8 +75,5 @@ const formattedElection = computed(() => {
     seatCount: Number(raw[6]),
     resultsPublished: raw[7]
   }
-})
-onMounted(() => {
-  console.log('Election ID: ', electionId)
 })
 </script>
