@@ -166,7 +166,6 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
-// import BoDABI from '@/artifacts/abi/bod.json'
 import { useTeamStore, useToastStore } from '@/stores'
 import { encodeFunctionData, type Abi, type Address } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
@@ -191,31 +190,8 @@ const electionsAddress = computed(() => {
   return address as Address
 })
 
-// Fetch next election ID
-// const {
-//   data: nextElectionId,
-//   // isLoading: isLoadingNextElectionId,
-//   error: errorNextElectionId,
-//   queryKey: nextElectionIdQueryKey
-// } = useReadContract({
-//   functionName: 'getNextElectionId',
-//   address: electionsAddress.value,
-//   abi: ElectionABI
-// })
-
 // Compute current election ID
 const currentElectionId = ref(props.electionId)
-
-// computed(() => {
-//   console.log('nextElectionId.value:', nextElectionId.value)
-//   if (
-//     nextElectionId.value &&
-//     (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
-//   ) {
-//     return Number(nextElectionId.value) - 1
-//   }
-//   return null // Handle cases where nextElectionId is not available
-// })
 
 // Fetch current election details
 const {
@@ -337,14 +313,6 @@ watch(isConfirmingCreateElection, async (isConfirming, wasConfirming) => {
   }
 })
 
-// Watch for errors or loading states
-// watch(errorNextElectionId, (error) => {
-//   if (error) {
-//     addErrorToast('Error fetching next election ID')
-//     console.error('errorNextElectionId.value:', error)
-//   }
-// })
-
 watch(errorGetCurrentElection, (error) => {
   if (error) {
     addErrorToast('Error fetching current election')
@@ -383,7 +351,6 @@ onBeforeUnmount(() => {
 })
 
 const timeRemaining = computed(() => {
-  //const diff = electionData.endDate.getTime() - now.value.getTime()
   if (!formattedElection.value) return 'No election data available'
 
   const diff =
