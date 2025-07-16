@@ -25,6 +25,8 @@ import type { User } from '@/types'
 import { config } from '@/wagmi.config'
 import { log, parseError } from '@/utils'
 
+const props = defineProps<{ electionId: bigint }>()
+
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
@@ -36,40 +38,40 @@ const electionsAddress = computed(() => {
 })
 
 // Fetch next election ID
-const {
-  data: nextElectionId
-  // isLoading: isLoadingNextElectionId,
-  // error: errorNextElectionId
-} = useReadContract({
-  functionName: 'getNextElectionId',
-  address: electionsAddress.value,
-  abi: ElectionABI
-})
+// const {
+//   data: nextElectionId
+//   // isLoading: isLoadingNextElectionId,
+//   // error: errorNextElectionId
+// } = useReadContract({
+//   functionName: 'getNextElectionId',
+//   address: electionsAddress.value,
+//   abi: ElectionABI
+// })
 
 // Compute current election ID
-const currentElectionId = computed(() => {
-  console.log('nextElectionId.value:', nextElectionId.value)
-  if (
-    nextElectionId.value &&
-    (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
-  ) {
-    return Number(nextElectionId.value) - 1
-  }
-  return null // Handle cases where nextElectionId is not available
-})
+// const currentElectionId = computed(() => {
+//   console.log('nextElectionId.value:', nextElectionId.value)
+//   if (
+//     nextElectionId.value &&
+//     (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
+//   ) {
+//     return Number(nextElectionId.value) - 1
+//   }
+//   return null // Handle cases where nextElectionId is not available
+// })
 
 const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useReadContract({
   functionName: 'getElectionCandidates',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [currentElectionId]
+  args: [/*currentElectionId*/ props.electionId]
 })
 
 const { data: election /*, error: errorVoteCount*/ } = useReadContract({
   functionName: 'getElection',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [currentElectionId]
+  args: [/*currentElectionId*/ props.electionId]
 })
 
 const {
@@ -109,7 +111,7 @@ const candidates = computed(() => {
 
 const castVote = async (candidateAddress: string) => {
   try {
-    const args = [currentElectionId.value, candidateAddress]
+    const args = [/*currentElectionId.value*/ props.electionId, candidateAddress]
 
     const data = encodeFunctionData({
       abi: ElectionABI as Abi,
@@ -144,7 +146,7 @@ const fetchVotes = async () => {
             address: electionsAddress.value,
             abi: ElectionABI,
             functionName: '_voteCounts',
-            args: [currentElectionId.value, candidate]
+            args: [/*currentElectionId.value*/ props.electionId, candidate]
           })
           votesPerCandidate[candidate] = Number(count) || 0
         })
