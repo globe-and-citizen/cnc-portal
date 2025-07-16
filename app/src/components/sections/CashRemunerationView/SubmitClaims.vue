@@ -17,12 +17,12 @@
         <label class="flex items-center">
           <span class="w-full" data-test="hours-worked-label">Date</span>
         </label>
-        <!-- <VueDatePicker
+        <VueDatePicker
           v-model="hoursWorked.dayWorked"
           class="input input-bordered input-md"
           data-test="date-input"
-        /> -->
-        <VueDatePicker
+        />
+        <!-- <VueDatePicker
           v-model="hoursWorked.dayWorked"
           :allowed-dates="allowedDates"
           class="input input-bordered input-md"
@@ -30,7 +30,7 @@
           disable-month-year-select
           :month-change-on-scroll="false"
           :enable-time-picker="false"
-        />
+        /> -->
       </div>
       <div class="flex flex-col gap-2">
         <label class="flex items-center">
@@ -97,12 +97,14 @@ import { ref, computed } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import { required, numeric, minValue } from '@vuelidate/validators'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore, useTeamStore } from '@/stores'
+import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
 import { maxLength } from '@vuelidate/validators'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
-const emits = defineEmits(['refetchClaims'])
+const queryClient = useQueryClient()
+const userStore = useUserDataStore()
 
 const modal = ref(false)
 const hoursWorked = ref<{
@@ -116,17 +118,17 @@ const hoursWorked = ref<{
 })
 
 // TODO: enable this to restrict date selection to the current week
-const allowedDates = computed(() => {
-  const today = new Date()
-  const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay() // Make Sunday = 7
-  const monday = new Date(today)
-  monday.setDate(today.getDate() - (dayOfWeek - 1))
-  const days = []
-  for (let d = new Date(monday); d <= today; d.setDate(d.getDate() + 1)) {
-    days.push(new Date(d))
-  }
-  return days
-})
+// const allowedDates = computed(() => {
+//   const today = new Date()
+//   const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay() // Make Sunday = 7
+//   const monday = new Date(today)
+//   monday.setDate(today.getDate() - (dayOfWeek - 1))
+//   const days = []
+//   for (let d = new Date(monday); d <= today; d.setDate(d.getDate() + 1)) {
+//     days.push(new Date(d))
+//   }
+//   return days
+// })
 
 const openModal = () => {
   modal.value = true
@@ -155,7 +157,7 @@ const teamId = computed(() => teamStore.currentTeam?.id)
 const {
   error: addWageClaimError,
   isFetching: isWageClaimAdding,
-  execute: addWageClaimAPI,
+  execute: addClaim,
   statusCode: addWageClaimStatusCode
 } = useCustomFetch('/claim', { immediate: false })
   .post(() => ({
@@ -164,16 +166,21 @@ const {
   }))
   .json()
 
+const queryKey = computed(
+  () => `pending-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
+)
+
 const addWageClaim = async () => {
   v$.value.$touch()
   if (v$.value.$invalid) return
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const res = await addWageClaimAPI()
+  await addClaim()
 
   if (addWageClaimStatusCode.value === 201) {
     toastStore.addSuccessToast('Wage claim added successfully')
-    emits('refetchClaims')
+    queryClient.invalidateQueries({
+      queryKey: [queryKey.value]
+    })
     modal.value = false
 
     // 🔁 Reset champs et validation après succès
