@@ -37,41 +37,18 @@ const electionsAddress = computed(() => {
   return address as Address
 })
 
-// Fetch next election ID
-// const {
-//   data: nextElectionId
-//   // isLoading: isLoadingNextElectionId,
-//   // error: errorNextElectionId
-// } = useReadContract({
-//   functionName: 'getNextElectionId',
-//   address: electionsAddress.value,
-//   abi: ElectionABI
-// })
-
-// Compute current election ID
-// const currentElectionId = computed(() => {
-//   console.log('nextElectionId.value:', nextElectionId.value)
-//   if (
-//     nextElectionId.value &&
-//     (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
-//   ) {
-//     return Number(nextElectionId.value) - 1
-//   }
-//   return null // Handle cases where nextElectionId is not available
-// })
-
 const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useReadContract({
   functionName: 'getElectionCandidates',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [/*currentElectionId*/ props.electionId]
+  args: [props.electionId]
 })
 
 const { data: election /*, error: errorVoteCount*/ } = useReadContract({
   functionName: 'getElection',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [/*currentElectionId*/ props.electionId]
+  args: [props.electionId]
 })
 
 const {
@@ -112,7 +89,7 @@ const candidates = computed(() => {
 
 const castVote = async (candidateAddress: string) => {
   try {
-    const args = [/*currentElectionId.value*/ props.electionId, candidateAddress]
+    const args = [props.electionId, candidateAddress]
 
     const data = encodeFunctionData({
       abi: ElectionABI as Abi,
@@ -147,7 +124,7 @@ const fetchVotes = async () => {
             address: electionsAddress.value,
             abi: ElectionABI,
             functionName: '_voteCounts',
-            args: [/*currentElectionId.value*/ props.electionId, candidate]
+            args: [props.electionId, candidate]
           })
           votesPerCandidate[candidate] = Number(count) || 0
         })
