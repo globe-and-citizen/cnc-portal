@@ -53,7 +53,10 @@
         </ModalComponent>
       </div>
     </template>
-    <div v-if="formattedElection && !formattedElection?.resultsPublished" class="mt-4">
+    <div
+      v-if="formattedElection && (!formattedElection?.resultsPublished || isDetails)"
+      class="mt-4"
+    >
       <!-- Status and Countdown -->
       <div class="flex items-center justify-start gap-2 mb-6">
         <span class="px-2 py-1 text-xs font-medium rounded-full" :class="electionStatus.class">
@@ -174,7 +177,7 @@ import { config } from '@/wagmi.config'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRouter } from 'vue-router'
 
-const props = defineProps<{ electionId: bigint }>()
+const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
