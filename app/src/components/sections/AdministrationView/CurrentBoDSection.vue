@@ -5,7 +5,7 @@
       v-if="boardOfDirectors && boardOfDirectors.length > 0"
     >
       <div
-        v-for="(memberAddress, index) in boardOfDirectors"
+        v-for="(memberAddress, index) in _boardOfDirectors"
         :key="index"
         class="rounded-xl overflow-hidden bg-gradient-to-t from-emerald-100 to-emarald-50 shadow-sm hover:shadow-md transition-all mt-4"
       >
@@ -31,6 +31,11 @@ import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { computed } from 'vue'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+
+const props = defineProps<{
+  electionId?: bigint
+}>()
 
 const teamStore = useTeamStore()
 const electionsAddress = computed(() => {
@@ -39,11 +44,25 @@ const electionsAddress = computed(() => {
   )?.address
   return address as Address
 })
+const _electionsAddress = computed(() => {
+  const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
+  return address as Address
+})
+const _boardOfDirectors = computed(() => {
+  return props.electionId ? electionWinners.value : boardOfDirectors.value || []
+})
 const { data: boardOfDirectors, isFetching } = useReadContract({
   address: electionsAddress.value,
   abi: BOD_ABI,
   functionName: 'getBoardOfDirectors',
   args: [],
   scopeKey: 'boardOfDirectors'
+})
+const { data: electionWinners } = useReadContract({
+  address: _electionsAddress.value,
+  abi: ELECTIONS_ABI,
+  functionName: 'getElectionWinners',
+  args: [props.electionId as bigint] // Assuming 0 is the current election ID, adjust as necessary
+  //scopeKey: 'electionWinners'
 })
 </script>
