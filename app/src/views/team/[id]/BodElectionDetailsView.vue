@@ -1,7 +1,10 @@
 <template>
-  <CurrentBoDElectionSection :election-id="currentElectionId" />
+  <CurrentBoDElectionSection
+    :election-id="currentElectionId"
+    :is-details="formattedElection?.resultsPublished"
+  />
   <CurrentBoDSection v-if="formattedElection?.resultsPublished" :election-id="currentElectionId" />
-  <ElectionDetailsSection />
+  <ElectionDetailsSection :election-id="currentElectionId" />
 </template>
 
 <script setup lang="ts">
