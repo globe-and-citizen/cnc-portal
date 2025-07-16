@@ -38,13 +38,13 @@ const props = defineProps<{
 }>()
 
 const teamStore = useTeamStore()
-const electionsAddress = computed(() => {
+const bodAddress = computed(() => {
   const address = teamStore.currentTeam?.teamContracts?.find(
     (c) => c.type === 'BoardOfDirectors'
   )?.address
   return address as Address
 })
-const _electionsAddress = computed(() => {
+const electionsAddress = computed(() => {
   const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
   return address as Address
 })
@@ -52,14 +52,14 @@ const _boardOfDirectors = computed(() => {
   return props.electionId ? electionWinners.value : boardOfDirectors.value || []
 })
 const { data: boardOfDirectors, isFetching } = useReadContract({
-  address: electionsAddress.value,
+  address: bodAddress.value,
   abi: BOD_ABI,
   functionName: 'getBoardOfDirectors',
   args: [],
   scopeKey: 'boardOfDirectors'
 })
 const { data: electionWinners } = useReadContract({
-  address: _electionsAddress.value,
+  address: electionsAddress.value,
   abi: ELECTIONS_ABI,
   functionName: 'getElectionWinners',
   args: [props.electionId as bigint] // Assuming 0 is the current election ID, adjust as necessary
