@@ -192,28 +192,30 @@ const electionsAddress = computed(() => {
 })
 
 // Fetch next election ID
-const {
-  data: nextElectionId,
-  // isLoading: isLoadingNextElectionId,
-  error: errorNextElectionId,
-  queryKey: nextElectionIdQueryKey
-} = useReadContract({
-  functionName: 'getNextElectionId',
-  address: electionsAddress.value,
-  abi: ElectionABI
-})
+// const {
+//   data: nextElectionId,
+//   // isLoading: isLoadingNextElectionId,
+//   error: errorNextElectionId,
+//   queryKey: nextElectionIdQueryKey
+// } = useReadContract({
+//   functionName: 'getNextElectionId',
+//   address: electionsAddress.value,
+//   abi: ElectionABI
+// })
 
 // Compute current election ID
-const currentElectionId = computed(() => {
-  console.log('nextElectionId.value:', nextElectionId.value)
-  if (
-    nextElectionId.value &&
-    (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
-  ) {
-    return Number(nextElectionId.value) - 1
-  }
-  return null // Handle cases where nextElectionId is not available
-})
+const currentElectionId = ref(props.electionId)
+
+// computed(() => {
+//   console.log('nextElectionId.value:', nextElectionId.value)
+//   if (
+//     nextElectionId.value &&
+//     (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
+//   ) {
+//     return Number(nextElectionId.value) - 1
+//   }
+//   return null // Handle cases where nextElectionId is not available
+// })
 
 // Fetch current election details
 const {
@@ -330,18 +332,18 @@ watch(isConfirmingCreateElection, async (isConfirming, wasConfirming) => {
     addSuccessToast('Election created successfully!')
     showCreateElectionModal.value = false
     await queryClient.invalidateQueries({
-      queryKey: [currentElectionQueryKey, nextElectionIdQueryKey]
+      queryKey: [currentElectionQueryKey]
     })
   }
 })
 
 // Watch for errors or loading states
-watch(errorNextElectionId, (error) => {
-  if (error) {
-    addErrorToast('Error fetching next election ID')
-    console.error('errorNextElectionId.value:', error)
-  }
-})
+// watch(errorNextElectionId, (error) => {
+//   if (error) {
+//     addErrorToast('Error fetching next election ID')
+//     console.error('errorNextElectionId.value:', error)
+//   }
+// })
 
 watch(errorGetCurrentElection, (error) => {
   if (error) {
