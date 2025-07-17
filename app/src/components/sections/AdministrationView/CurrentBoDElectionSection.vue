@@ -1,10 +1,14 @@
 <template>
-  <CardComponent title="Current Election">
+  <CardComponent :title="`${isDetails ? `Past` : `Current`} Election`">
     <template #card-action>
       <div class="flex justify-between">
         <div class="flex justify-between gap-2">
           <div
-            v-if="formattedElection && !formattedElection?.resultsPublished"
+            v-if="
+              formattedElection &&
+              !formattedElection?.resultsPublished &&
+              !router.currentRoute.value.fullPath.includes('bod-elections-details')
+            "
             @click="
               () => {
                 if (electionStatus.text == 'Completed') {
@@ -53,7 +57,10 @@
         </ModalComponent>
       </div>
     </template>
-    <div v-if="formattedElection && !formattedElection?.resultsPublished" class="mt-4">
+    <div
+      v-if="formattedElection && (!formattedElection?.resultsPublished || isDetails)"
+      class="mt-4"
+    >
       <!-- Status and Countdown -->
       <div class="flex items-center justify-start gap-2 mb-6">
         <span class="px-2 py-1 text-xs font-medium rounded-full" :class="electionStatus.class">
@@ -163,7 +170,6 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
-// import BoDABI from '@/artifacts/abi/bod.json'
 import { useTeamStore, useToastStore } from '@/stores'
 import { encodeFunctionData, type Abi, type Address } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
@@ -174,6 +180,8 @@ import { config } from '@/wagmi.config'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRouter } from 'vue-router'
 
+const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
+
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 const queryClient = useQueryClient()
@@ -181,34 +189,10 @@ const router = useRouter()
 const showResultsModal = ref(false)
 
 // Contract addresses
-const electionsAddress = computed(() => {
-  const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
-  return address as Address
-})
-
-// Fetch next election ID
-const {
-  data: nextElectionId,
-  // isLoading: isLoadingNextElectionId,
-  error: errorNextElectionId,
-  queryKey: nextElectionIdQueryKey
-} = useReadContract({
-  functionName: 'getNextElectionId',
-  address: electionsAddress.value,
-  abi: ElectionABI
-})
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
 
 // Compute current election ID
-const currentElectionId = computed(() => {
-  console.log('nextElectionId.value:', nextElectionId.value)
-  if (
-    nextElectionId.value &&
-    (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
-  ) {
-    return Number(nextElectionId.value) - 1
-  }
-  return null // Handle cases where nextElectionId is not available
-})
+const currentElectionId = ref(props.electionId)
 
 // Fetch current election details
 const {
@@ -220,10 +204,10 @@ const {
   functionName: 'getElection',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [currentElectionId], // Supply currentElectionId as an argument
-  query: {
-    enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
-  }
+  args: [props.electionId] // Supply currentElectionId as an argument
+  // query: {
+  //   enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
+  // }
 })
 
 const {
@@ -325,16 +309,8 @@ watch(isConfirmingCreateElection, async (isConfirming, wasConfirming) => {
     addSuccessToast('Election created successfully!')
     showCreateElectionModal.value = false
     await queryClient.invalidateQueries({
-      queryKey: [currentElectionQueryKey, nextElectionIdQueryKey]
+      queryKey: [currentElectionQueryKey]
     })
-  }
-})
-
-// Watch for errors or loading states
-watch(errorNextElectionId, (error) => {
-  if (error) {
-    addErrorToast('Error fetching next election ID')
-    console.error('errorNextElectionId.value:', error)
   }
 })
 
@@ -376,7 +352,6 @@ onBeforeUnmount(() => {
 })
 
 const timeRemaining = computed(() => {
-  //const diff = electionData.endDate.getTime() - now.value.getTime()
   if (!formattedElection.value) return 'No election data available'
 
   const diff =

@@ -1,6 +1,6 @@
 <template>
   <CardComponent title="Candidates">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
       <ElectionDetailsCard
         v-for="(election, index) in candidates"
         :key="index"
@@ -25,51 +25,27 @@ import type { User } from '@/types'
 import { config } from '@/wagmi.config'
 import { log, parseError } from '@/utils'
 
+const props = defineProps<{ electionId: bigint }>()
+
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 const votesPerCandidate = reactive<Record<Address, number>>({})
 
-const electionsAddress = computed(() => {
-  const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
-  return address as Address
-})
-
-// Fetch next election ID
-const {
-  data: nextElectionId
-  // isLoading: isLoadingNextElectionId,
-  // error: errorNextElectionId
-} = useReadContract({
-  functionName: 'getNextElectionId',
-  address: electionsAddress.value,
-  abi: ElectionABI
-})
-
-// Compute current election ID
-const currentElectionId = computed(() => {
-  console.log('nextElectionId.value:', nextElectionId.value)
-  if (
-    nextElectionId.value &&
-    (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
-  ) {
-    return Number(nextElectionId.value) - 1
-  }
-  return null // Handle cases where nextElectionId is not available
-})
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
 
 const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useReadContract({
   functionName: 'getElectionCandidates',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [currentElectionId]
+  args: [props.electionId]
 })
 
 const { data: election /*, error: errorVoteCount*/ } = useReadContract({
   functionName: 'getElection',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [currentElectionId]
+  args: [props.electionId]
 })
 
 const {
@@ -94,6 +70,7 @@ const candidates = computed(() => {
         (member) => member.address === candidate
       ) as User & { role?: string }
       return {
+        id: BigInt((election.value as string | bigint[])[0]),
         user: {
           address: candidate,
           name: user?.name || 'Unknown',
@@ -109,7 +86,7 @@ const candidates = computed(() => {
 
 const castVote = async (candidateAddress: string) => {
   try {
-    const args = [currentElectionId.value, candidateAddress]
+    const args = [props.electionId, candidateAddress]
 
     const data = encodeFunctionData({
       abi: ElectionABI as Abi,
@@ -144,7 +121,7 @@ const fetchVotes = async () => {
             address: electionsAddress.value,
             abi: ElectionABI,
             functionName: '_voteCounts',
-            args: [currentElectionId.value, candidate]
+            args: [props.electionId, candidate]
           })
           votesPerCandidate[candidate] = Number(count) || 0
         })

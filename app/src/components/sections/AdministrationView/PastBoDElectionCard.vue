@@ -40,9 +40,14 @@
       </div>
 
       <!-- View Results Button -->
-      <ButtonUI variant="success" :outline="true" @click="electionResultModal = true">
+      <!-- <ButtonUI variant="success" :outline="true" @click="electionResultModal = true">
         View Results
-      </ButtonUI>
+      </ButtonUI> -->
+      <a
+        :href="`/teams/${teamStore.currentTeam?.id}/administration/bod-elections-details?electionId=${election.id}`"
+        class="btn btn-md btn-success btn-outline"
+        >View Results</a
+      >
       <ModalComponent
         v-if="electionResultModal"
         v-model="electionResultModal"
@@ -56,7 +61,6 @@
 
 <script setup lang="ts">
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import type { Election } from '@/types'
 import { parseError } from '@/utils'
@@ -73,10 +77,7 @@ const { election } = defineProps<{
 }>()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
-const electionsAddress = computed(() => {
-  const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
-  return address as Address
-})
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
 
 const {
   data: voteCount,

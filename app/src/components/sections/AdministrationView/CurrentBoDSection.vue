@@ -1,13 +1,18 @@
 <template>
-  <CardComponent title="Current Board of Directors">
+  <CardComponent :title="`${electionId ? `Elected` : `Current`} Board of Directors`">
     <div
       class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4"
       v-if="boardOfDirectors && boardOfDirectors.length > 0"
     >
-      <div v-for="(memberAddress, index) in boardOfDirectors" :key="index">
+      <div
+        v-for="(memberAddress, index) in _boardOfDirectors"
+        :key="index"
+        class="rounded-xl overflow-hidden bg-gradient-to-t from-emerald-100 to-emarald-50 shadow-sm hover:shadow-md transition-all mt-4"
+      >
         <UserComponentCol
           :user="teamStore.currentTeam?.members.find((m) => m.address === memberAddress) as User"
           :isDetailedView="true"
+          class="p-6"
         />
       </div>
     </div>
@@ -26,19 +31,32 @@ import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { computed } from 'vue'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+
+const props = defineProps<{
+  electionId?: bigint
+}>()
 
 const teamStore = useTeamStore()
-const electionsAddress = computed(() => {
-  const address = teamStore.currentTeam?.teamContracts?.find(
-    (c) => c.type === 'BoardOfDirectors'
-  )?.address
-  return address as Address
-})
+const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors') as Address)
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
+
 const { data: boardOfDirectors, isFetching } = useReadContract({
-  address: electionsAddress.value,
+  address: bodAddress.value,
   abi: BOD_ABI,
   functionName: 'getBoardOfDirectors',
   args: [],
   scopeKey: 'boardOfDirectors'
+})
+const { data: electionWinners } = useReadContract({
+  address: electionsAddress.value,
+  abi: ELECTIONS_ABI,
+  functionName: 'getElectionWinners',
+  args: [props.electionId as bigint] // Assuming 0 is the current election ID, adjust as necessary
+  //scopeKey: 'electionWinners'
+})
+
+const _boardOfDirectors = computed(() => {
+  return props.electionId ? electionWinners.value : boardOfDirectors.value || []
 })
 </script>

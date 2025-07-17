@@ -27,6 +27,7 @@
       <ButtonUI
         variant="success"
         :outline="true"
+        :disabled="hasVoted"
         @click="() => emits('castVote', election.user.address)"
         >Cast a Vote</ButtonUI
       >
@@ -37,19 +38,36 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import UserComponent from './UserComponent.vue'
-import type { PropType } from 'vue'
+import { computed, type PropType } from 'vue'
 import type { User } from '@/types'
+import { useReadContract } from '@wagmi/vue'
+import { useUserDataStore, useTeamStore } from '@/stores'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import type { Address } from 'viem'
 
-defineProps({
+const props = defineProps({
   election: {
     type: Object as PropType<{
       user: User
       currentVotes: number
       totalVotes: number
+      id: bigint
     }>,
     required: true
   }
 })
 
 const emits = defineEmits(['castVote'])
+
+const userDataStore = useUserDataStore()
+const teamStore = useTeamStore()
+
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
+
+const { data: hasVoted } = useReadContract({
+  functionName: 'hasVoted',
+  address: electionsAddress.value,
+  abi: ELECTIONS_ABI,
+  args: [props.election.id, userDataStore.address as Address]
+})
 </script>
