@@ -74,65 +74,7 @@
         </h4>
 
         <!-- Stats Row -->
-        <div class="flex justify-between items-stretch gap-4">
-          <!-- Candidates Stat -->
-          <div class="flex-1 flex gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300">
-            <div class="p-3 bg-blue-50 rounded-full">
-              <IconifyIcon icon="heroicons:user-group" class="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-500">Candidates</p>
-              <p class="text-xl font-semibold text-gray-900">
-                {{ formattedElection?.candidates }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Start Date Stat -->
-          <div
-            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300"
-          >
-            <div class="p-3 bg-green-50 rounded-full">
-              <IconifyIcon icon="heroicons:calendar" class="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-500">Starts</p>
-              <p class="text-xl font-semibold text-gray-900">
-                {{ formatDate(formattedElection?.startDate ?? new Date()) }}
-              </p>
-            </div>
-          </div>
-
-          <!-- End Date Stat -->
-          <div
-            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300"
-          >
-            <div class="p-3 bg-red-50 rounded-full">
-              <IconifyIcon icon="heroicons:calendar-days" class="h-6 w-6 text-red-600" />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-500">Ends</p>
-              <p class="text-xl font-semibold text-gray-900">
-                {{ formatDate(formattedElection?.endDate ?? new Date()) }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Votes Stat -->
-          <div
-            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300"
-          >
-            <div class="p-3 bg-purple-50 rounded-full">
-              <IconifyIcon icon="heroicons:chart-bar" class="h-6 w-6 text-purple-600" />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-500">Votes Cast</p>
-              <p class="text-xl font-semibold text-gray-900">
-                {{ formattedElection?.votesCast }}
-              </p>
-            </div>
-          </div>
-        </div>
+        <ElectionStats :formatted-election="formattedElection" />
       </div>
     </div>
     <div
@@ -159,8 +101,7 @@
 import CardComponent from '@/components/CardComponent.vue'
 import ElectionResultModal from '@/components/sections/AdministrationView/modals/ElectionResultModal.vue'
 import PublishResult from '@/components/sections/AdministrationView/PublishResult.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
@@ -175,6 +116,7 @@ import { config } from '@/wagmi.config'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRouter } from 'vue-router'
 import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
+import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
 
 const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
@@ -183,12 +125,12 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 const queryClient = useQueryClient()
 const router = useRouter()
 const showResultsModal = ref(false)
+const currentElectionId = ref(props.electionId)
+const showCreateElectionModal = ref(false)
+const now = ref(new Date())
 
 // Contract addresses
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
-
-// Compute current election ID
-const currentElectionId = ref(props.electionId)
 
 // Fetch current election details
 const {
@@ -265,6 +207,22 @@ const formattedElection = computed(() => {
   }
 })
 
+// Election status
+const electionStatus = computed(() => {
+  if (!formattedElection.value) return { text: 'No Election' }
+
+  if (now.value < formattedElection.value?.startDate) {
+    return { text: 'Upcoming' }
+  }
+  if (
+    now.value > formattedElection.value?.endDate ||
+    formattedElection.value?.votesCast === formattedElection.value?.seatCount
+  ) {
+    return { text: 'Completed' }
+  }
+  return { text: 'Active' }
+})
+
 const createElection = async (electionData: OldProposal) => {
   try {
     const args = [
@@ -330,44 +288,4 @@ watch(errorGetCandidates, (error) => {
     log.error('errorGetCandidates.value:', error)
   }
 })
-
-const showCreateElectionModal = ref(false)
-
-// // Calculate time remaining
-const now = ref(new Date())
-
-// Election status
-const electionStatus = computed(() => {
-  if (!formattedElection.value) return { text: 'No Election' }
-
-  if (now.value < formattedElection.value?.startDate) {
-    return { text: 'Upcoming' }
-  }
-  if (
-    now.value > formattedElection.value?.endDate ||
-    formattedElection.value?.votesCast === formattedElection.value?.seatCount
-  ) {
-    return { text: 'Completed' }
-  }
-  return { text: 'Active' }
-})
-
-// Format date as "Dec 15, 2023"
-const formatDate = (date: Date) => {
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  })
-}
 </script>
-
-<style scoped>
-/* Add slight spacing between stats on smaller screens */
-@media (max-width: 768px) {
-  .flex.justify-between {
-    flex-direction: column;
-    gap: 1rem;
-  }
-}
-</style>
