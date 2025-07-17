@@ -32,10 +32,7 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 
 const votesPerCandidate = reactive<Record<Address, number>>({})
 
-const electionsAddress = computed(() => {
-  const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
-  return address as Address
-})
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
 
 const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useReadContract({
   functionName: 'getElectionCandidates',
