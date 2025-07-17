@@ -62,9 +62,6 @@ const handlePublishResults = async (electionId: number) => {
       functionName: 'publishResults',
       args: [BigInt(electionId)]
     })
-    await queryClient.invalidateQueries({
-      queryKey: ['readContract', {}]
-    })
   } catch (err) {
     toastStore.addErrorToast(parseError(err, ELECTIONS_ABI as Abi))
     log.error('Error creating election:', parseError(err, ELECTIONS_ABI as Abi))
@@ -87,7 +84,7 @@ watch(isPublished, async (success) => {
   if (success) {
     toastStore.addSuccessToast('Election results published successfully!')
     await queryClient.invalidateQueries({
-      queryKey: ['boardOfDirectors']
+      queryKey: ['readContract']
     })
   }
 })
