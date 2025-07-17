@@ -134,11 +134,9 @@ const { data, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
 const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
 
 const currencyStore = useCurrencyStore()
-function getHoulyRateInUserCurrency(
-  ratePerHour: RatePerHour[],
-  tokenStore = currencyStore
-): number {
-  return ratePerHour.reduce((total, rate) => {
+
+function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = currencyStore): number {
+  return ratePerHour.reduce((total: number, rate: { type: TokenId; amount: number }) => {
     const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
     const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
     return total + rate.amount * localPrice
