@@ -62,12 +62,13 @@
       class="mt-4"
     >
       <!-- Status and Countdown -->
-      <div class="flex items-center justify-start gap-2 mb-6">
+      <!-- <div class="flex items-center justify-start gap-2 mb-6">
         <span class="px-2 py-1 text-xs font-medium rounded-full" :class="electionStatus.class">
           {{ electionStatus.text }}
         </span>
         <span class="text-sm text-gray-600"> Ends in {{ timeRemaining }} </span>
-      </div>
+      </div> -->
+      <ElectionStatus :formatted-election="formattedElection" />
       <div>
         <!-- Election Title -->
         <h2 class="font-semibold">
@@ -179,6 +180,7 @@ import { log, parseError } from '@/utils'
 import { config } from '@/wagmi.config'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRouter } from 'vue-router'
+import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
 
 const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
@@ -257,13 +259,13 @@ const formattedElection = computed(() => {
 
   return {
     id: Number(raw[0]),
-    title: raw[1],
-    description: raw[2],
-    createdBy: raw[3],
+    title: String(raw[1]),
+    description: String(raw[2]),
+    createdBy: String(raw[3]),
     startDate: new Date(Number(raw[4]) * 1000),
     endDate: new Date(Number(raw[5]) * 1000),
     seatCount: Number(raw[6]),
-    resultsPublished: raw[7],
+    resultsPublished: Boolean(raw[7]),
     votesCast: Number(voteCount.value || 0),
     candidates: (candidateList.value as string[])?.length
   }
@@ -337,52 +339,52 @@ watch(errorGetCandidates, (error) => {
 
 const showCreateElectionModal = ref(false)
 
-// Calculate time remaining
+// // Calculate time remaining
 const now = ref(new Date())
-let timer: ReturnType<typeof setInterval>
+// let timer: ReturnType<typeof setInterval>
 
-onMounted(() => {
-  timer = setInterval(() => {
-    now.value = new Date()
-  }, 1000 * 60) // Update every minute
-})
+// onMounted(() => {
+//   timer = setInterval(() => {
+//     now.value = new Date()
+//   }, 1000 * 60) // Update every minute
+// })
 
-onBeforeUnmount(() => {
-  clearInterval(timer)
-})
+// onBeforeUnmount(() => {
+//   clearInterval(timer)
+// })
 
-const timeRemaining = computed(() => {
-  if (!formattedElection.value) return 'No election data available'
+// const timeRemaining = computed(() => {
+//   if (!formattedElection.value) return 'No election data available'
 
-  const diff =
-    formattedElection.value?.endDate.getTime() - formattedElection.value?.startDate.getTime()
+//   const diff =
+//     formattedElection.value?.endDate.getTime() - formattedElection.value?.startDate.getTime()
 
-  if (diff <= 0) return 'election ended'
+//   if (diff <= 0) return 'election ended'
 
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  if (days > 0) return `${days} ${days === 1 ? 'day' : 'days'}`
+//   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+//   if (days > 0) return `${days} ${days === 1 ? 'day' : 'days'}`
 
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  if (hours > 0) return `${hours} ${hours === 1 ? 'hour' : 'hours'}`
+//   const hours = Math.floor(diff / (1000 * 60 * 60))
+//   if (hours > 0) return `${hours} ${hours === 1 ? 'hour' : 'hours'}`
 
-  const minutes = Math.floor(diff / (1000 * 60))
-  return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
-})
+//   const minutes = Math.floor(diff / (1000 * 60))
+//   return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
+// })
 
 // Election status
 const electionStatus = computed(() => {
-  if (!formattedElection.value) return { text: 'No Election', class: 'bg-gray-100 text-gray-800' }
+  if (!formattedElection.value) return { text: 'No Election' }
 
   if (now.value < formattedElection.value?.startDate) {
-    return { text: 'Upcoming', class: 'bg-yellow-100 text-yellow-800' }
+    return { text: 'Upcoming' }
   }
   if (
     now.value > formattedElection.value?.endDate ||
     formattedElection.value?.votesCast === formattedElection.value?.seatCount
   ) {
-    return { text: 'Completed', class: 'bg-gray-100 text-gray-800' }
+    return { text: 'Completed' }
   }
-  return { text: 'Active', class: 'bg-green-100 text-green-800' }
+  return { text: 'Active' }
 })
 
 // Format date as "Dec 15, 2023"
