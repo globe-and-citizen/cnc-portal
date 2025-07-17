@@ -56,7 +56,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
 import { useTeamStore, useToastStore } from '@/stores'
-import { encodeFunctionData, type Abi, type Address } from 'viem'
+import { encodeFunctionData, type Abi } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
 import { estimateGas } from '@wagmi/core'
 import type { OldProposal } from '@/types'
@@ -78,7 +78,7 @@ const currentElectionId = ref(props.electionId)
 const showCreateElectionModal = ref(false)
 
 // Contract addresses
-const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
 // Fetch current election details
 const {
@@ -157,6 +157,10 @@ const formattedElection = computed(() => {
 
 const createElection = async (electionData: OldProposal) => {
   try {
+    if (!electionsAddress.value) {
+      addErrorToast('Elections contract address not found')
+      return
+    }
     const args = [
       electionData.title,
       electionData.description,

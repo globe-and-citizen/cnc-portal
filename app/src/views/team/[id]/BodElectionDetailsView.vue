@@ -16,15 +16,15 @@ import CurrentBoDElectionSection from '@/components/sections/AdministrationView/
 import ElectionDetailsSection from '@/components/sections/AdministrationView/BoDElectionDetailsSection.vue'
 import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentBoDSection.vue'
 import { useTeamStore } from '@/stores'
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import type { Address } from 'viem'
 import { useRouter } from 'vue-router'
+import { log, parseError } from '@/utils'
 
 const teamStore = useTeamStore()
 const router = useRouter()
-const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
 // Fetch next election ID
 const {
@@ -50,7 +50,7 @@ const currentElectionId = computed(() => {
 })
 
 // Fetch current election details
-const { data: currentElection } = useReadContract({
+const { data: currentElection, error: errorGetElection } = useReadContract({
   functionName: 'getElection',
   address: electionsAddress.value,
   abi: ELECTIONS_ABI,
@@ -71,6 +71,12 @@ const formattedElection = computed(() => {
     endDate: new Date(Number(raw[5]) * 1000),
     seatCount: Number(raw[6]),
     resultsPublished: raw[7]
+  }
+})
+
+watch(errorGetElection, (error) => {
+  if (error) {
+    log.error('Error fetching current election: ', parseError(error))
   }
 })
 </script>
