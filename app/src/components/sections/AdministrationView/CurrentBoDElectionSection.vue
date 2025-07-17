@@ -2,44 +2,11 @@
   <CardComponent :title="`${isDetails ? `Past` : `Current`} Election`">
     <template #card-action>
       <div class="flex justify-between">
-        <div class="flex justify-between gap-2">
-          <div
-            v-if="
-              formattedElection &&
-              !formattedElection?.resultsPublished &&
-              !router.currentRoute.value.fullPath.includes('bod-elections-details')
-            "
-            @click="
-              () => {
-                if (electionStatus.text == 'Completed') {
-                  showResultsModal = true
-                } else {
-                  router.push(
-                    `/teams/${teamStore.currentTeamId}/administration/bod-elections-details`
-                  )
-                }
-              }
-            "
-            class="btn btn-md"
-            :class="{ 'btn-primary': electionStatus.text === 'Active' }"
-          >
-            {{
-              electionStatus.text === 'Active'
-                ? 'Vote Now'
-                : electionStatus.text == 'Completed'
-                  ? 'View Results'
-                  : 'View Details'
-            }}
-          </div>
-          <PublishResult
-            v-if="
-              formattedElection &&
-              !Boolean(formattedElection?.resultsPublished) &&
-              electionStatus.text === 'Completed'
-            "
-            :election-id="formattedElection?.id ?? 1"
-          />
-        </div>
+        <ElectionActions
+          v-if="formattedElection && !isDetails"
+          :formatted-election="formattedElection"
+          @showResultsModal="showResultsModal = true"
+        />
         <ModalComponent v-model="showCreateElectionModal">
           <CreateElectionForm
             :is-loading="isLoadingCreateElection || isConfirmingCreateElection"
@@ -48,8 +15,8 @@
         </ModalComponent>
         <ModalComponent
           v-if="
-            electionStatus.text === 'Completed' ||
-            (formattedElection?.endDate ?? new Date()) > new Date()
+            (formattedElection?.endDate ?? new Date()) > new Date() ||
+            formattedElection?.votesCast === formattedElection?.seatCount
           "
           v-model="showResultsModal"
         >
@@ -100,7 +67,6 @@
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
 import ElectionResultModal from '@/components/sections/AdministrationView/modals/ElectionResultModal.vue'
-import PublishResult from '@/components/sections/AdministrationView/PublishResult.vue'
 import { computed, ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -114,20 +80,18 @@ import type { OldProposal } from '@/types'
 import { log, parseError } from '@/utils'
 import { config } from '@/wagmi.config'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useRouter } from 'vue-router'
 import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
 import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
+import ElectionActions from './ElectionActions.vue'
 
 const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 const queryClient = useQueryClient()
-const router = useRouter()
 const showResultsModal = ref(false)
 const currentElectionId = ref(props.electionId)
 const showCreateElectionModal = ref(false)
-const now = ref(new Date())
 
 // Contract addresses
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
@@ -205,22 +169,6 @@ const formattedElection = computed(() => {
     votesCast: Number(voteCount.value || 0),
     candidates: (candidateList.value as string[])?.length
   }
-})
-
-// Election status
-const electionStatus = computed(() => {
-  if (!formattedElection.value) return { text: 'No Election' }
-
-  if (now.value < formattedElection.value?.startDate) {
-    return { text: 'Upcoming' }
-  }
-  if (
-    now.value > formattedElection.value?.endDate ||
-    formattedElection.value?.votesCast === formattedElection.value?.seatCount
-  ) {
-    return { text: 'Completed' }
-  }
-  return { text: 'Active' }
 })
 
 const createElection = async (electionData: OldProposal) => {
