@@ -181,10 +181,10 @@ const isSameWeek = (weeklyClaimStartWeek: string) => {
 
 const currencyStore = useCurrencyStore()
 function getHoulyRateInUserCurrency(
-  ratePerHour: RatePerHour[],
+  ratePerHour: { type: string; amount: number }[],
   tokenStore = currencyStore
 ): number {
-  return ratePerHour.reduce((total, rate) => {
+  return ratePerHour.reduce((total: number, rate) => {
     const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
     const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
     return total + rate.amount * localPrice
