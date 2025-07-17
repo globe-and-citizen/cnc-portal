@@ -2,7 +2,13 @@
   <!-- Stats Row -->
   <div class="flex justify-between items-stretch gap-4">
     <!-- Candidates Stat -->
-    <div class="flex-1 flex gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300">
+    <ElectionStatsCard
+      :data="formattedElection?.candidates"
+      icon="user-group"
+      color="blue"
+      title="Candidates"
+    />
+    <!-- <div class="flex-1 flex gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300">
       <div class="p-3 bg-blue-50 rounded-full">
         <IconifyIcon icon="heroicons:user-group" class="h-6 w-6 text-blue-600" />
       </div>
@@ -12,10 +18,16 @@
           {{ formattedElection?.candidates }}
         </p>
       </div>
-    </div>
+    </div> -->
 
     <!-- Start Date Stat -->
-    <div
+    <ElectionStatsCard
+      :data="formatDate(formattedElection?.startDate ?? new Date())"
+      icon="calendar"
+      color="green"
+      title="Starts"
+    />
+    <!-- <div
       class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300"
     >
       <div class="p-3 bg-green-50 rounded-full">
@@ -27,10 +39,16 @@
           {{ formatDate(formattedElection?.startDate ?? new Date()) }}
         </p>
       </div>
-    </div>
+    </div> -->
 
     <!-- End Date Stat -->
-    <div
+    <ElectionStatsCard
+      :data="formatDate(formattedElection?.endDate ?? new Date())"
+      icon="calendar-days"
+      color="red"
+      title="Ends"
+    />
+    <!-- <div
       class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300"
     >
       <div class="p-3 bg-red-50 rounded-full">
@@ -42,10 +60,16 @@
           {{ formatDate(formattedElection?.endDate ?? new Date()) }}
         </p>
       </div>
-    </div>
+    </div> -->
 
     <!-- Votes Stat -->
-    <div
+    <ElectionStatsCard
+      :data="formattedElection?.votesCast"
+      icon="chart-bar"
+      color="purple"
+      title="Votes Cast"
+    />
+    <!-- <div
       class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300"
     >
       <div class="p-3 bg-purple-50 rounded-full">
@@ -57,11 +81,11 @@
           {{ formattedElection?.votesCast }}
         </p>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 <script setup lang="ts">
-import { Icon as IconifyIcon } from '@iconify/vue'
+import ElectionStatsCard from '@/components/sections/AdministrationView/ElectionStatsCard.vue'
 
 const { formattedElection } = defineProps<{
   formattedElection: {
