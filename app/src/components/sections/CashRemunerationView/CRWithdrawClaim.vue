@@ -25,7 +25,6 @@ import {
   type Address
 } from 'viem'
 import { computed, ref } from 'vue'
-import { signedWeeklyClaimsKey } from '@/utils/queryKeys'
 import EIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import { getBalance } from 'viem/actions'
 import { config } from '@/wagmi.config'
@@ -44,8 +43,8 @@ const toastStore = useToastStore()
 const queryClient = useQueryClient()
 const userStore = useUserDataStore()
 
-const signedQueryKey = computed(() =>
-  signedWeeklyClaimsKey(teamStore.currentTeam?.id, userStore.address)
+const signedQueryKey = computed(
+  () => `signed-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
 )
 
 const cashRemunerationEip712Address = computed(
@@ -141,7 +140,7 @@ const withdrawClaim = async () => {
     if (withdrawSuccess.value) {
       toastStore.addSuccessToast('Claim withdrawn')
       queryClient.invalidateQueries({
-        queryKey: signedQueryKey.value
+        queryKey: [signedQueryKey.value]
       })
     }
     if (withdrawError.value) {
