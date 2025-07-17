@@ -62,12 +62,6 @@
       class="mt-4"
     >
       <!-- Status and Countdown -->
-      <!-- <div class="flex items-center justify-start gap-2 mb-6">
-        <span class="px-2 py-1 text-xs font-medium rounded-full" :class="electionStatus.class">
-          {{ electionStatus.text }}
-        </span>
-        <span class="text-sm text-gray-600"> Ends in {{ timeRemaining }} </span>
-      </div> -->
       <ElectionStatus :formatted-election="formattedElection" />
       <div>
         <!-- Election Title -->
@@ -341,35 +335,6 @@ const showCreateElectionModal = ref(false)
 
 // // Calculate time remaining
 const now = ref(new Date())
-// let timer: ReturnType<typeof setInterval>
-
-// onMounted(() => {
-//   timer = setInterval(() => {
-//     now.value = new Date()
-//   }, 1000 * 60) // Update every minute
-// })
-
-// onBeforeUnmount(() => {
-//   clearInterval(timer)
-// })
-
-// const timeRemaining = computed(() => {
-//   if (!formattedElection.value) return 'No election data available'
-
-//   const diff =
-//     formattedElection.value?.endDate.getTime() - formattedElection.value?.startDate.getTime()
-
-//   if (diff <= 0) return 'election ended'
-
-//   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-//   if (days > 0) return `${days} ${days === 1 ? 'day' : 'days'}`
-
-//   const hours = Math.floor(diff / (1000 * 60 * 60))
-//   if (hours > 0) return `${hours} ${hours === 1 ? 'hour' : 'hours'}`
-
-//   const minutes = Math.floor(diff / (1000 * 60))
-//   return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
-// })
 
 // Election status
 const electionStatus = computed(() => {
