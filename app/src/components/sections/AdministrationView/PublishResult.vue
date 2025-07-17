@@ -86,6 +86,7 @@ watch(isPublished, async (success) => {
     await queryClient.invalidateQueries({
       queryKey: ['readContract']
     })
+    await queryClient.invalidateQueries({ queryKey: ['pastElections'] })
   }
 })
 </script>
