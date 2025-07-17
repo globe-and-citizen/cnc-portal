@@ -5,7 +5,7 @@
         <ElectionActions
           v-if="formattedElection && !isDetails"
           :formatted-election="formattedElection"
-          @showResultsModal="showResultsModal = true"
+          @show-results-modal="showResultsModal = true"
         />
         <ModalComponent v-model="showCreateElectionModal">
           <CreateElectionForm
@@ -44,23 +44,7 @@
         <ElectionStats :formatted-election="formattedElection" />
       </div>
     </div>
-    <div
-      v-else
-      class="flex flex-col items-center justify-center gap-4 p-6 bg-gray-50 rounded-lg shadow-sm border border-gray-100 mt-4"
-    >
-      <h2 class="text-xl font-semibold text-gray-700">No Current Election</h2>
-      <p class="text-sm text-gray-500 text-center">
-        There is no active election at the moment. Please check back later or create a new election.
-      </p>
-      <ButtonUI
-        variant="primary"
-        size="md"
-        @click="showCreateElectionModal = true"
-        data-test="create-election"
-      >
-        Create Election
-      </ButtonUI>
-    </div>
+    <CurrentBoDElection404 v-else @show-create-election-modal="showCreateElectionModal = true" />
   </CardComponent>
 </template>
 
@@ -68,7 +52,6 @@
 import CardComponent from '@/components/CardComponent.vue'
 import ElectionResultModal from '@/components/sections/AdministrationView/modals/ElectionResultModal.vue'
 import { computed, ref, watch } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
@@ -83,6 +66,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
 import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
 import ElectionActions from './ElectionActions.vue'
+import CurrentBoDElection404 from './CurrentBoDElection404.vue'
 
 const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
