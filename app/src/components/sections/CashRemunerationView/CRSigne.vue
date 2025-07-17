@@ -20,6 +20,7 @@ import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { ClaimResponse, RatePerHour } from '@/types'
 import { log } from '@/utils'
 import { computed, ref } from 'vue'
+import { signedWeeklyClaimsKey, pendingWeeklyClaimsKey } from '@/utils/queryKeys'
 import { USDC_ADDRESS } from '@/constant'
 import { useQueryClient } from '@tanstack/vue-query'
 
@@ -42,11 +43,11 @@ const toastStore = useToastStore()
 const userStore = useUserDataStore()
 const queryClient = useQueryClient()
 
-const pendingQueryKey = computed(
-  () => `pending-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
+const pendingQueryKey = computed(() =>
+  pendingWeeklyClaimsKey(teamStore.currentTeam?.id, userStore.address)
 )
-const signedQueryKey = computed(
-  () => `signed-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
+const signedQueryKey = computed(() =>
+  signedWeeklyClaimsKey(teamStore.currentTeam?.id, userStore.address)
 )
 
 // Composables
@@ -128,10 +129,10 @@ const approveClaim = async (weeklyClaim: ClaimResponse) => {
     } else {
       toastStore.addSuccessToast('Claim approved')
       queryClient.invalidateQueries({
-        queryKey: [pendingQueryKey.value]
+        queryKey: pendingQueryKey.value
       })
       queryClient.invalidateQueries({
-        queryKey: [signedQueryKey.value]
+        queryKey: signedQueryKey.value
       })
     }
   }
