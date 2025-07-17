@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SubmitClaims from '../SubmitClaims.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
+import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 
 // Mock refs for reactive states
 const mockPostStatus = ref<number | null>(null)
@@ -76,9 +77,10 @@ describe('SubmitClaims', () => {
   })
 
   const createComponent = () => {
+    const queryClient = new QueryClient()
     return mount(SubmitClaims, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
       }
     })
   }
