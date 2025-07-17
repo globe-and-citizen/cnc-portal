@@ -104,6 +104,8 @@ import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { RouterLink } from 'vue-router'
+import type { RatePerHour, SupportedTokens } from '@/types/cash-remuneration'
+import type { TokenId } from '@/constant'
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
