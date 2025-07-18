@@ -84,16 +84,16 @@ const electionsAddress = computed(() => teamStore.getContractAddressByType('Elec
 const {
   data: currentElection,
   // isLoading: isLoadingCurrentElection,
-  error: errorGetCurrentElection,
-  queryKey: currentElectionQueryKey
+  error: errorGetCurrentElection
+  //queryKey: currentElectionQueryKey
 } = useReadContract({
   functionName: 'getElection',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [props.electionId] // Supply currentElectionId as an argument
-  // query: {
-  //   enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
-  // }
+  args: [currentElectionId], // Supply currentElectionId as an argument
+  query: {
+    enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
+  }
 })
 
 const {
@@ -199,7 +199,7 @@ watch(isConfirmingCreateElection, async (isConfirming, wasConfirming) => {
     addSuccessToast('Election created successfully!')
     showCreateElectionModal.value = false
     await queryClient.invalidateQueries({
-      queryKey: [currentElectionQueryKey]
+      queryKey: ['readContract']
     })
   }
 })

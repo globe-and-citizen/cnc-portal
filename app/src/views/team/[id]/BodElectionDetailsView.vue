@@ -33,7 +33,10 @@ const {
 } = useReadContract({
   functionName: 'getNextElectionId',
   address: electionsAddress.value,
-  abi: ELECTIONS_ABI
+  abi: ELECTIONS_ABI,
+  query: {
+    enabled: true
+  }
 })
 
 // Compute current election ID
@@ -54,7 +57,10 @@ const { data: currentElection, error: errorGetElection } = useReadContract({
   functionName: 'getElection',
   address: electionsAddress.value,
   abi: ELECTIONS_ABI,
-  args: [currentElectionId]
+  args: [currentElectionId],
+  query: {
+    enabled: true
+  }
 })
 
 const formattedElection = computed(() => {

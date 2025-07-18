@@ -32,6 +32,7 @@ import { useCustomFetch } from '@/composables'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { USDC_ADDRESS } from '@/constant'
 import { estimateGas } from '@wagmi/core'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const props = defineProps<{ claim: CRSignClaim; isWeeklyClaim?: boolean }>()
 const emit = defineEmits(['claim-withdrawn'])
@@ -39,6 +40,12 @@ const emit = defineEmits(['claim-withdrawn'])
 const userDataStore = useUserDataStore()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
+const queryClient = useQueryClient()
+const userStore = useUserDataStore()
+
+const signedQueryKey = computed(
+  () => `signed-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
+)
 
 const cashRemunerationEip712Address = computed(
   () =>
@@ -132,6 +139,9 @@ const withdrawClaim = async () => {
 
     if (withdrawSuccess.value) {
       toastStore.addSuccessToast('Claim withdrawn')
+      queryClient.invalidateQueries({
+        queryKey: [signedQueryKey.value]
+      })
     }
     if (withdrawError.value) {
       toastStore.addErrorToast('Failed to withdraw claim')

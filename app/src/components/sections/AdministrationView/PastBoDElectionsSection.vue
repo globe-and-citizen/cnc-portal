@@ -26,19 +26,21 @@ import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import type { Election } from '@/types'
 import { parseError } from '@/utils'
+import { useQuery } from '@tanstack/vue-query'
 
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 
 // Get the Elections contract address from the team store
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
-const elections = ref<Election[]>([])
+
 const isLoading = ref(false)
 
-const fetchElections = async () => {
+const fetchElections = async (): Promise<Election[]> => {
+  console.log('fecth election called========')
   if (!electionsAddress.value) {
     console.log('No Elections contract found for this team')
-    return
+    return []
   }
 
   try {
@@ -103,14 +105,28 @@ const fetchElections = async () => {
     // Sort elections by ID in descending order (latest first)
     electionsList.sort((a, b) => b.id - a.id)
 
-    elections.value = electionsList
+    return electionsList
   } catch (err) {
     console.error('Error fetching elections:', parseError(err))
     toastStore.addErrorToast('Failed to fetch past elections')
+    return []
   } finally {
     isLoading.value = false
   }
 }
+
+const {
+  data: pastElections
+  //isLoading,
+  //refetch,
+  //error
+} = useQuery({
+  queryKey: ['pastElections', electionsAddress],
+  queryFn: fetchElections,
+  enabled: computed(() => !!electionsAddress.value)
+})
+
+const elections = computed(() => pastElections.value ?? [])
 
 // Fetch elections when component mounts
 onMounted(() => {
