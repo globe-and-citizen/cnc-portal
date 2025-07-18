@@ -97,7 +97,9 @@ class Server {
 
   private middleware() {
     this.app.use(express.json());
-    this.app.use(cors({ origin: process.env.FRONTEND_URL as string }));
+    this.app.use(
+      cors({ origin: process.env.FRONTEND_URL as string, credentials: true })
+    );
   }
 
   private routes() {

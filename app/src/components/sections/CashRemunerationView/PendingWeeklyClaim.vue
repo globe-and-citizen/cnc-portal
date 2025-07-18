@@ -119,7 +119,7 @@
 import UserComponent from '@/components/UserComponent.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { NETWORK } from '@/constant'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { computed, watch } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import { useUserDataStore, useTeamStore } from '@/stores'
@@ -139,18 +139,17 @@ function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 
-const weeklyClaimUrl = computed(() => {
-  return `/weeklyClaim/?status=pending&teamId=${teamStore.currentTeam?.id}${
-    userStore.address !== teamStore.currentTeam?.ownerAddress
-      ? `&memberAddress=${userStore.address}`
-      : ''
-  }`
-})
-
-const { data, isFetching } = useCustomFetch(weeklyClaimUrl.value).get().json<WeeklyClaimResponse>()
+const weeklyClaimUrl = computed(
+  () =>
+    `/weeklyClaim/?status=pending&teamId=${teamStore.currentTeam?.id}${userStore.address !== teamStore.currentTeam?.ownerAddress ? `&memberAddress=${userStore.address}` : ''}`
+)
+const queryKey = computed(
+  () => `pending-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
+)
+const { data, isLoading } = useTanstackQuery<WeeklyClaimResponse>(queryKey, weeklyClaimUrl)
+const isFetching = computed(() => isLoading.value)
 
 const isSameWeek = (weeklyClaimStartWeek: string) => {
-  console.log(`weeklyClaimStartWeek: ${weeklyClaimStartWeek}`)
   const currentMonday = getMondayStart(new Date())
   return currentMonday.toISOString() === weeklyClaimStartWeek
 }
@@ -158,10 +157,10 @@ const isSameWeek = (weeklyClaimStartWeek: string) => {
 const currencyStore = useCurrencyStore()
 
 function getHoulyRateInUserCurrency(
-  ratePerHour: RatePerHour[],
+  ratePerHour: { type: string; amount: number }[],
   tokenStore = currencyStore
 ): number {
-  return ratePerHour.reduce((total, rate) => {
+  return ratePerHour.reduce((total: number, rate) => {
     const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
     const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
     return total + rate.amount * localPrice

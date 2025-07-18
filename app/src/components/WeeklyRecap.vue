@@ -51,26 +51,37 @@ const props = defineProps({
 
 const currencyStore = useCurrencyStore()
 
+type TokenId = Parameters<typeof currencyStore.getTokenInfo>[0]
+
+interface Rate {
+  type: TokenId
+  amount: number
+}
+
+interface Claim {
+  hoursWorked: number
+}
+
 // function to format the hourly rate in user's local currency
-function getHoulyRateInUserCurrency(ratePerHour, tokenStore = currencyStore) {
-  return ratePerHour.reduce((total, rate) => {
+function getHoulyRateInUserCurrency(ratePerHour: Rate[], tokenStore = currencyStore): number {
+  return ratePerHour.reduce((total: number, rate: Rate) => {
     const tokenInfo = tokenStore.getTokenInfo(rate.type)
     const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
     return total + rate.amount * localPrice
   }, 0)
 }
 
-function getHourlyRate(ratePerHour, type: string) {
+function getHourlyRate(ratePerHour: Rate[], type: string): number {
   if (!Array.isArray(ratePerHour)) return 0
-  return ratePerHour.reduce((total, rate) => {
+  return ratePerHour.reduce((total: number, rate: Rate) => {
     if (rate.type !== type) return total
     return total + rate.amount
   }, 0)
 }
 
 // Function to calculate total hours worked from claims
-function getTotalHoursWorked(claims) {
-  return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
+function getTotalHoursWorked(claims: Claim[]): number {
+  return claims.reduce((sum: number, claim: Claim) => sum + claim.hoursWorked, 0)
 }
 
 // Computed properties

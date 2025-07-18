@@ -308,6 +308,7 @@ const menuItems = computed(() => [
     active:
       route.name === 'cash-remunerations' ||
       route.name === 'weekly-claim' ||
+      route.name === 'claim-history' ||
       (route.name === 'claim-history' && route.params.memberAddress === userStore.address),
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [

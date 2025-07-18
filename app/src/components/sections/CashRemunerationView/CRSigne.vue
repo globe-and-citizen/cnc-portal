@@ -19,8 +19,9 @@ import { parseEther, parseUnits, zeroAddress, type Address } from 'viem'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { ClaimResponse, RatePerHour } from '@/types'
 import { log } from '@/utils'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
+import { useQueryClient } from '@tanstack/vue-query'
 
 // Props weeklyClaim : ClaimResponse
 const props = defineProps<{
@@ -33,12 +34,20 @@ const props = defineProps<{
   // isWeeklyClaim?: boolean
   disabled?: boolean
 }>()
-const emit = defineEmits(['weeklyClaim-signed'])
 
 // Stores
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
+const userStore = useUserDataStore()
+const queryClient = useQueryClient()
+
+const pendingQueryKey = computed(
+  () => `pending-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
+)
+const signedQueryKey = computed(
+  () => `signed-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
+)
 
 // Composables
 const { signTypedDataAsync, data: signature } = useSignTypedData()
@@ -118,17 +127,15 @@ const approveClaim = async (weeklyClaim: ClaimResponse) => {
       toastStore.addErrorToast('Failed to approve weeklyClaim')
     } else {
       toastStore.addSuccessToast('Claim approved')
-      // Emit event to refresh table
-      emit('weeklyClaim-signed')
+      queryClient.invalidateQueries({
+        queryKey: [pendingQueryKey.value]
+      })
+      queryClient.invalidateQueries({
+        queryKey: [signedQueryKey.value]
+      })
     }
   }
 
   loading.value = false
 }
-
-onMounted(() => {
-  console.log('CRSigne mounted with weeklyClaim:', props.weeklyClaim)
-})
 </script>
-
-<style scoped></style>
