@@ -179,8 +179,8 @@ import { log, parseError } from '@/utils'
 import { config } from '@/wagmi.config'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRouter } from 'vue-router'
-
-const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+defineProps<{ isDetails?: boolean }>()
 
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
@@ -191,23 +191,41 @@ const showResultsModal = ref(false)
 // Contract addresses
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
 
+const {
+  data: nextElectionId
+  // isLoading: isLoadingNextElectionId,
+} = useReadContract({
+  functionName: 'getNextElectionId',
+  address: electionsAddress.value,
+  abi: ELECTIONS_ABI
+})
 // Compute current election ID
-const currentElectionId = ref(props.electionId)
+const currentElectionId = computed(() => {
+  if (
+    nextElectionId.value &&
+    (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
+  ) {
+    return BigInt(Number(nextElectionId.value) - 1)
+  }
+  return 0n // Handle cases where nextElectionId is not available
+})
+
+// Compute current election ID
 
 // Fetch current election details
 const {
   data: currentElection,
   // isLoading: isLoadingCurrentElection,
-  error: errorGetCurrentElection,
-  queryKey: currentElectionQueryKey
+  error: errorGetCurrentElection
+  //queryKey: currentElectionQueryKey
 } = useReadContract({
   functionName: 'getElection',
-  address: electionsAddress.value,
+  address: electionsAddress.value as Address,
   abi: ElectionABI,
-  args: [props.electionId] // Supply currentElectionId as an argument
-  // query: {
-  //   enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
-  // }
+  args: [currentElectionId], // Supply currentElectionId as an argument
+  query: {
+    enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
+  }
 })
 
 const {
@@ -309,7 +327,7 @@ watch(isConfirmingCreateElection, async (isConfirming, wasConfirming) => {
     addSuccessToast('Election created successfully!')
     showCreateElectionModal.value = false
     await queryClient.invalidateQueries({
-      queryKey: [currentElectionQueryKey]
+      queryKey: ['readContract']
     })
   }
 })

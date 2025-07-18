@@ -24,9 +24,10 @@ import { estimateGas, readContract } from '@wagmi/core'
 import type { User } from '@/types'
 import { config } from '@/wagmi.config'
 import { log, parseError } from '@/utils'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const props = defineProps<{ electionId: bigint }>()
-
+const queryClient = useQueryClient()
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
@@ -38,14 +39,16 @@ const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useRea
   functionName: 'getElectionCandidates',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [props.electionId]
+  args: [props.electionId],
+  query: { enabled: true }
 })
 
 const { data: election /*, error: errorVoteCount*/ } = useReadContract({
   functionName: 'getElection',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [props.electionId]
+  args: [props.electionId],
+  query: { enabled: true }
 })
 
 const {
@@ -133,9 +136,13 @@ const fetchVotes = async () => {
   }
 }
 
-watch(isConfirmingCastVote, (isConfirming, wasConfirming) => {
+watch(isConfirmingCastVote, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedCastVote.value) {
-    addSuccessToast('Election created successfully!')
+    addSuccessToast('Vote Casted successfully!')
+
+    await queryClient.invalidateQueries({
+      queryKey: ['readContract']
+    })
   }
 })
 
