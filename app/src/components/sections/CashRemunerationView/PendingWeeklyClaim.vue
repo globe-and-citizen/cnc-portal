@@ -36,13 +36,10 @@
                 {{ currencyStore.localCurrency.code }} / Hour
               </span>
 
-              <div class="flex">
-                <span v-for="(rate, index) in row.wage.ratePerHour" :key="rate.type">
-                  {{ rate.amount }}
-                  {{ rate.type == 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
-                  {{ index < row.wage.ratePerHour.length - 1 ? ',' : '' }}
-                </span>
-              </div>
+              <RatePerHourList
+                :rate-per-hour="row.wage.ratePerHour"
+                :currency-symbol="NETWORK.currencySymbol"
+              />
             </div>
           </template>
 
@@ -59,13 +56,10 @@
                 {{ currencyStore.localCurrency.code }}
               </span>
 
-              <div>
-                <span v-for="(rate, index) in row.wage.ratePerHour" :key="rate.type" class="mr-1">
-                  {{ rate.amount * getTotalHoursWorked(row.claims) }}
-                  {{ rate.type == 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
-                  {{ index < row.wage.ratePerHour.length - 1 ? ',' : '' }}
-                </span>
-              </div>
+              <RatePerHourList
+                :rate-per-hour="row.wage.ratePerHour"
+                :currency-symbol="NETWORK.currencySymbol"
+              />
             </div>
           </template>
 
@@ -131,6 +125,7 @@ import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
 // import { formatCurrencyShort } from '@/utils/currencyUtil'
 import type { TokenId } from '@/constant'
 import CRWeeklyClaimOwnerHeader from './CRWeeklyClaimOwnerHeader.vue'
+import RatePerHourList from '@/components/RatePerHourList.vue'
 
 function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)

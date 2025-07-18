@@ -15,18 +15,10 @@
           {{ hourlyRateInUserCurrency.toFixed(2) }} {{ currencyStore.localCurrency.code }}
         </div>
         <div class="text-sm text-gray-500 flex gap-2 mt-1">
-          <span>
-            {{ getHourlyRate(props.weeklyClaim?.wage?.ratePerHour, 'native') }}
-            {{ currencyStore.getTokenInfo('native')?.symbol || 'NATIVE' }}
-          </span>
-          <span>
-            {{ getHourlyRate(props.weeklyClaim?.wage?.ratePerHour, 'sher') }}
-            {{ currencyStore.getTokenInfo('sher')?.symbol || 'SHER' }}
-          </span>
-          <span>
-            {{ getHourlyRate(props.weeklyClaim?.wage?.ratePerHour, 'usdc') }}
-            {{ currencyStore.getTokenInfo('usdc')?.symbol || 'USDC' }}
-          </span>
+          <RatePerHourList
+            :rate-per-hour="props.weeklyClaim?.wage?.ratePerHour || []"
+            :currency-symbol="currencyStore.getTokenInfo('native')?.symbol || 'NATIVE'"
+          />
         </div>
       </div>
 
@@ -41,6 +33,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
+import RatePerHourList from '@/components/RatePerHourList.vue'
 
 const props = defineProps({
   weeklyClaim: {
@@ -71,13 +64,13 @@ function getHoulyRateInUserCurrency(ratePerHour: Rate[], tokenStore = currencySt
   }, 0)
 }
 
-function getHourlyRate(ratePerHour: Rate[], type: string): number {
-  if (!Array.isArray(ratePerHour)) return 0
-  return ratePerHour.reduce((total: number, rate: Rate) => {
-    if (rate.type !== type) return total
-    return total + rate.amount
-  }, 0)
-}
+// function getHourlyRate(ratePerHour: Rate[], type: string): number {
+//   if (!Array.isArray(ratePerHour)) return 0
+//   return ratePerHour.reduce((total: number, rate: Rate) => {
+//     if (rate.type !== type) return total
+//     return total + rate.amount
+//   }, 0)
+// }
 
 // Function to calculate total hours worked from claims
 function getTotalHoursWorked(claims: Claim[]): number {
