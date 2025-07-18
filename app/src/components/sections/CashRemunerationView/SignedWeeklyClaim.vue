@@ -89,6 +89,7 @@
                   userAddress: row.wage.userAddress as Address
                 }
               }"
+              @claim-withdrawn="onClaimWithdrawn"
             />
           </template>
         </TableComponent>
@@ -127,6 +128,7 @@ import type { TokenId } from '@/constant'
 import CRWeeklyClaimMemberHeader from './CRWeeklyClaimMemberHeader.vue'
 import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
+// import { useQueryClient } from '@tanstack/vue-query'
 
 function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -134,6 +136,11 @@ function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) 
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
+// const queryClient = useQueryClient()
+
+// function onClaimWithdrawn() {
+//   queryClient.invalidateQueries({ queryKey: [queryKey.value] })
+// }
 
 const weeklyClaimUrl = computed(
   () =>
