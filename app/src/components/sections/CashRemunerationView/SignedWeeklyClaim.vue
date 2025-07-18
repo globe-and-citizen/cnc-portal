@@ -53,9 +53,10 @@
                 }}
                 {{ currencyStore.localCurrency.code }}
               </span>
-              <RatePerHourList
+              <RatePerHourTotalList
                 :rate-per-hour="row.wage.ratePerHour"
                 :currency-symbol="NETWORK.currencySymbol"
+                :total-hours="getTotalHoursWorked(row.claims)"
               />
             </div>
           </template>
@@ -125,6 +126,7 @@ import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
 import type { TokenId } from '@/constant'
 import CRWeeklyClaimMemberHeader from './CRWeeklyClaimMemberHeader.vue'
 import RatePerHourList from '@/components/RatePerHourList.vue'
+import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 
 function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
