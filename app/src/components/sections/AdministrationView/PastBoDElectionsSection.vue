@@ -27,6 +27,7 @@ import { readContract } from '@wagmi/core'
 import type { Election } from '@/types'
 import { parseError } from '@/utils'
 import { useQuery } from '@tanstack/vue-query'
+import { useQuery } from '@tanstack/vue-query'
 
 const toastStore = useToastStore()
 const teamStore = useTeamStore()

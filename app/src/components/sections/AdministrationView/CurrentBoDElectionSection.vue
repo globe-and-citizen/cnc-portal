@@ -88,7 +88,7 @@ const {
   //queryKey: currentElectionQueryKey
 } = useReadContract({
   functionName: 'getElection',
-  address: electionsAddress.value,
+  address: electionsAddress.value as Address,
   abi: ElectionABI,
   args: [currentElectionId], // Supply currentElectionId as an argument
   query: {

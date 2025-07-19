@@ -1,6 +1,6 @@
 <template>
   <CurrentBoDSection />
-  <CurrentBoDElectionSection v-if="nextElectionId" :election-id="currentElectionId" />
+  <CurrentBoDElectionSection />
   <PastBoDElectionsSection />
 </template>
 
