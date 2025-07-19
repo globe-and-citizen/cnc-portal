@@ -27,7 +27,6 @@ import { readContract } from '@wagmi/core'
 import type { Election } from '@/types'
 import { parseError } from '@/utils'
 import { useQuery } from '@tanstack/vue-query'
-import { useQuery } from '@tanstack/vue-query'
 
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
@@ -38,7 +37,6 @@ const electionsAddress = computed(() => teamStore.getContractAddressByType('Elec
 const isLoading = ref(false)
 
 const fetchElections = async (): Promise<Election[]> => {
-  console.log('fecth election called========')
   if (!electionsAddress.value) {
     console.log('No Elections contract found for this team')
     return []
