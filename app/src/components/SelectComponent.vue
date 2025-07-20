@@ -26,6 +26,7 @@
 <script lang="ts" setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
+import { onClickOutside } from '@vueuse/core'
 
 interface Option {
   value: string
@@ -58,9 +59,15 @@ const props = defineProps({
 const emits = defineEmits(['update:modelValue'])
 
 const isDropdown = ref(false)
+const target = ref()
 const selectedValue = ref(
   props.modelValue || (props.options.length > 0 ? props.options[0].value : '')
 )
+
+// Close dropdown when clicking outside
+onClickOutside(target, () => {
+  isDropdown.value = false
+})
 
 const toggleDropdown = () => {
   if (!props.disabled) {
