@@ -47,7 +47,7 @@ import { config } from '@/wagmi.config'
 import { parseEther, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
 import TokenAmount from './TokenAmount.vue'
-import { type TokenId } from '@/constant'
+import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import BankABI from '@/artifacts/abi/bank.json'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
@@ -110,7 +110,7 @@ const { status: erc20ApprovalStatus } = useWaitForTransactionReceipt({
 // Computed properties
 // Token list derived from SUPPORTED_TOKENS
 const tokenList = computed(() =>
-  currencyStore.supportedTokens.map((token) => ({
+  SUPPORTED_TOKENS.map((token) => ({
     symbol: token.symbol,
     tokenId: token.id,
     name: token.name,
