@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import GenericSelect from '@/components/SelectComponent.vue'
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { nextTick } from 'vue'
 
 describe('SelectComponent', () => {
