@@ -1,24 +1,26 @@
 <template>
-  <div
-    role="button"
-    class="flex items-center cursor-pointer badge badge-md badge-info text-xs"
-    @click="toggleDropdown"
-    data-test="generic-selector"
-    :aria-label="ariaLabel"
-  >
-    <span>{{ formattedSelectedValue }}</span>
-    <IconifyIcon v-if="!disabled" icon="heroicons-outline:chevron-down" class="w-4 h-4" />
+  <div class="relative">
+    <div
+      role="button"
+      class="flex items-center cursor-pointer badge badge-md badge-info text-xs"
+      @click="toggleDropdown"
+      data-test="generic-selector"
+      :aria-label="ariaLabel"
+    >
+      <span>{{ formattedSelectedValue }}</span>
+      <IconifyIcon v-if="!disabled" icon="heroicons-outline:chevron-down" class="w-4 h-4" />
+    </div>
+    <ul
+      class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] p-2 shadow"
+      ref="target"
+      data-test="options-dropdown"
+      v-if="isDropdown"
+    >
+      <li v-for="option in options" :key="option.value" @click="selectOption(option)">
+        <a>{{ option.label || option.value }}</a>
+      </li>
+    </ul>
   </div>
-  <ul
-    class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] p-2 shadow"
-    ref="target"
-    data-test="options-dropdown"
-    v-if="isDropdown"
-  >
-    <li v-for="option in options" :key="option.value" @click="selectOption(option)">
-      <a>{{ option.label || option.value }}</a>
-    </li>
-  </ul>
 </template>
 
 <script lang="ts" setup>
