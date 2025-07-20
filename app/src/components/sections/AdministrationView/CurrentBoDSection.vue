@@ -29,17 +29,17 @@ import UserComponentCol from '@/components/UserComponent.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
-import type { Address } from 'viem'
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import { log, parseError } from '@/utils'
 
 const props = defineProps<{
   electionId?: bigint
 }>()
 
 const teamStore = useTeamStore()
-const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors') as Address)
-const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
+const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
 const { data: boardOfDirectors, isFetching } = useReadContract({
   address: bodAddress.value,
@@ -48,7 +48,7 @@ const { data: boardOfDirectors, isFetching } = useReadContract({
   args: [],
   scopeKey: 'boardOfDirectors'
 })
-const { data: electionWinners } = useReadContract({
+const { data: electionWinners, error: errorGetElectionWinners } = useReadContract({
   address: electionsAddress.value,
   abi: ELECTIONS_ABI,
   functionName: 'getElectionWinners',
@@ -58,5 +58,11 @@ const { data: electionWinners } = useReadContract({
 
 const _boardOfDirectors = computed(() => {
   return props.electionId ? electionWinners.value : boardOfDirectors.value || []
+})
+
+watch(errorGetElectionWinners, (error) => {
+  if (error) {
+    log.error('Error fetching election winners: ', parseError(error))
+  }
 })
 </script>
