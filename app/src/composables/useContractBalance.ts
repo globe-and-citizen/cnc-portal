@@ -71,15 +71,16 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
 
   const supportedToken = computed(() => {
     const tokens = [...SUPPORTED_TOKENS]
-    if (teamStore.getContractAddressByType('InvestorsV1') && !tokens.some((t) => t.id === 'sher')) {
+    const investorsV1Address = teamStore.getContractAddressByType('InvestorsV1')
+    if (investorsV1Address && !tokens.some((t) => t.id === 'sher')) {
       tokens.push({
         id: 'sher',
         name: 'Sher Token',
         symbol: 'SHER',
         code: 'SHER',
         coingeckoId: 'sher-token',
-        decimals: 18,
-        address: teamStore.getContractAddressByType('SHER') as Address
+        decimals: 6,
+        address: investorsV1Address
       })
     }
     return tokens
@@ -141,7 +142,7 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
             code: price.code,
             symbol: price.symbol,
             price: price.price ?? 0,
-            formatedPrice: price.price ? formatCurrencyShort(price.price, price.code) : 'N/A'
+            formatedPrice: formatCurrencyShort(price.price ?? 0, price.code)
           }
         }
       }
