@@ -73,7 +73,6 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
     const tokens = [...SUPPORTED_TOKENS]
     const investorsV1Address = teamStore.getContractAddressByType('InvestorsV1')
     if (investorsV1Address && !tokens.some((t) => t.id === 'sher')) {
-      console.log('in here')
       tokens.push({
         id: 'sher',
         name: 'Sher Token',
