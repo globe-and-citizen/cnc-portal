@@ -10,7 +10,7 @@
       />
     </div>
     <ButtonUI
-      :disabled="isLoading || !isValidAddress"
+      :disabled="isLoading || !isValidAddress || isCheckingSupport"
       :loading="isLoading"
       :variant="tokenAddress.isSupported ? 'error' : 'primary'"
       data-test="add-token-button"
@@ -40,6 +40,7 @@ const tokenAddress = ref<{ token: string; isSupported: boolean }>({
 })
 
 const isLoading = ref(false)
+const isCheckingSupport = ref(false)
 
 const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
@@ -50,12 +51,17 @@ const isValidAddress = computed(() => {
 
 const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
 
-const cashRemunerationEip712Address = computed(() =>
-  teamStore.getContractAddressByType('CashRemunerationEIP712')
-)
+const cashRemunerationEip712Address = computed(() => {
+  const address = teamStore.getContractAddressByType('CashRemunerationEIP712')
+  if (!address) {
+    console.warn('CashRemunerationEIP712 contract address not found')
+  }
+  return address
+})
 
 const checkTokenSupport = useDebounceFn(async (newAddress: string) => {
   if (newAddress && isAddress(newAddress)) {
+    isCheckingSupport.value = true
     try {
       const isSupported = await readContract(config, {
         address: cashRemunerationEip712Address.value as Address,
@@ -68,6 +74,8 @@ const checkTokenSupport = useDebounceFn(async (newAddress: string) => {
       console.error('Error checking token support:', error)
       addErrorToast('Failed to check token support status')
       tokenAddress.value.isSupported = false
+    } finally {
+      isCheckingSupport.value = false
     }
   } else {
     tokenAddress.value.isSupported = false
@@ -77,7 +85,12 @@ const checkTokenSupport = useDebounceFn(async (newAddress: string) => {
 watch(() => tokenAddress.value.token, checkTokenSupport, { immediate: true })
 
 const updateTokenSupport = async () => {
-  if (!tokenAddress.value.token || isLoading.value) return
+  if (!tokenAddress.value.token || isLoading.value || !cashRemunerationEip712Address.value) {
+    if (!cashRemunerationEip712Address.value) {
+      addErrorToast('Contract address not configured')
+    }
+    return
+  }
 
   isLoading.value = true
   try {
@@ -113,7 +126,12 @@ const updateTokenSupport = async () => {
   }
 }
 
-const options = computed(() => {
+interface TokenOption {
+  label: string
+  value: Address
+}
+
+const options = computed((): TokenOption[] => {
   return [
     { label: 'Investors', value: investorsAddress.value as Address },
     { label: 'USDC', value: USDC_ADDRESS as Address }
