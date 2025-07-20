@@ -10,7 +10,7 @@
   </ButtonUI>
 
   <ModalComponent v-model="modal">
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 mb-20">
       <h3 class="text-xl font-bold">Submit Claim</h3>
       <hr />
       <div class="flex flex-col gap-2">
