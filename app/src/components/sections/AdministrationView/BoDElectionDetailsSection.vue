@@ -18,7 +18,7 @@ import { computed, reactive, watch } from 'vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
 // import BoDABI from '@/artifacts/abi/bod.json'
 import { useTeamStore, useToastStore } from '@/stores'
-import { encodeFunctionData, type Abi, type Address } from 'viem'
+import { encodeFunctionData, zeroAddress, type Abi, type Address } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
 import { estimateGas, readContract } from '@wagmi/core'
 import type { User } from '@/types'
@@ -33,7 +33,7 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 
 const votesPerCandidate = reactive<Record<Address, number>>({})
 
-const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
 const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useReadContract({
   functionName: 'getElectionCandidates',
@@ -89,6 +89,10 @@ const candidates = computed(() => {
 
 const castVote = async (candidateAddress: string) => {
   try {
+    if (!electionsAddress.value) {
+      addErrorToast('Elections contract address not found')
+      return
+    }
     const args = [props.electionId, candidateAddress]
 
     const data = encodeFunctionData({
@@ -116,12 +120,16 @@ const castVote = async (candidateAddress: string) => {
 
 const fetchVotes = async () => {
   try {
+    if (!electionsAddress.value) {
+      addErrorToast('Elections contract address not found')
+      return
+    }
     const candidatesList = electionCandidates.value as Address[]
     if (candidatesList && candidatesList.length > 0) {
       await Promise.all(
         candidatesList.map(async (candidate) => {
           const count = await readContract(config, {
-            address: electionsAddress.value,
+            address: electionsAddress.value || zeroAddress,
             abi: ElectionABI,
             functionName: '_voteCounts',
             args: [props.electionId, candidate]

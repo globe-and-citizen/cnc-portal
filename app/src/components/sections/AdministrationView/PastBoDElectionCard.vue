@@ -65,7 +65,6 @@ import { useTeamStore, useToastStore } from '@/stores'
 import type { Election } from '@/types'
 import { parseError } from '@/utils'
 import { useReadContract } from '@wagmi/vue'
-import type { Address } from 'viem'
 import { watch } from 'vue'
 import { computed, ref } from 'vue'
 import ElectionResultModal from './modals/ElectionResultModal.vue'
@@ -77,7 +76,7 @@ const { election } = defineProps<{
 }>()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
-const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
 const {
   data: voteCount,
