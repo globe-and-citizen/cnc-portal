@@ -74,7 +74,7 @@ const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 const queryClient = useQueryClient()
 const showResultsModal = ref(false)
-const currentElectionId = ref(props.electionId)
+const currentElectionId = computed(() => props.electionId)
 const showCreateElectionModal = ref(false)
 
 // Contract addresses
