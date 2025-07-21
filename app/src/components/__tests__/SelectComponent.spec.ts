@@ -11,10 +11,7 @@ describe('SelectComponent', () => {
     { value: 'BTC', label: 'Bitcoin' }
   ]
 
-  const mockOptionsWithoutLabels = [
-    { value: 'XRP' },
-    { value: 'SOL', label: 'Solana' }
-  ]
+  const mockOptionsWithoutLabels = [{ value: 'XRP' }, { value: 'SOL', label: 'Solana' }]
 
   // Test selectors
   const SELECTORS = {
@@ -124,7 +121,7 @@ describe('SelectComponent', () => {
 
       await wrapper.find(SELECTORS.trigger).trigger('click')
       await nextTick()
-      
+
       expect(wrapper.find(SELECTORS.dropdown).exists()).toBe(true)
     })
 
@@ -138,7 +135,7 @@ describe('SelectComponent', () => {
 
       await wrapper.find(SELECTORS.trigger).trigger('click')
       await nextTick()
-      
+
       expect(wrapper.find(SELECTORS.dropdown).exists()).toBe(false)
     })
 
@@ -285,12 +282,12 @@ describe('SelectComponent', () => {
       await nextTick()
 
       expect(wrapper.vm).toBeDefined()
-      
+
       // Test dropdown opening with keyboard
       await wrapper.find(SELECTORS.trigger).trigger('keydown.enter')
       await nextTick()
       expect(wrapper.find(SELECTORS.dropdown).exists()).toBe(true)
-      
+
       // Test dropdown closing with escape
       await wrapper.find(SELECTORS.trigger).trigger('keydown.escape')
       await nextTick()
@@ -312,7 +309,7 @@ describe('SelectComponent', () => {
 
     it('should handle formatValue function errors gracefully', () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-      
+
       const wrapper = mount(GenericSelect, {
         props: {
           options: mockOptions,
@@ -325,7 +322,7 @@ describe('SelectComponent', () => {
 
       expect(wrapper.text()).toContain('Ethereum')
       expect(consoleSpy).toHaveBeenCalledWith('Error formatting select value:', expect.any(Error))
-      
+
       consoleSpy.mockRestore()
     })
 

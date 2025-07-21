@@ -11,10 +11,7 @@ describe('SelectComponent - Advanced Features & Edge Cases', () => {
     { value: 'BTC', label: 'Bitcoin' }
   ]
 
-  const mockOptionsWithoutLabels = [
-    { value: 'ETH' },
-    { value: 'BTC' }
-  ]
+  const mockOptionsWithoutLabels = [{ value: 'ETH' }, { value: 'BTC' }]
 
   // Test selectors
   const SELECTORS = {
@@ -56,7 +53,7 @@ describe('SelectComponent - Advanced Features & Edge Cases', () => {
       })
 
       const trigger = wrapper.find(SELECTORS.trigger)
-      
+
       expect(trigger.attributes('aria-expanded')).toBe('false')
 
       await trigger.trigger('click')
@@ -80,7 +77,7 @@ describe('SelectComponent - Advanced Features & Edge Cases', () => {
       expect(dropdown.attributes('role')).toBe('listbox')
 
       const optionElements = wrapper.findAll(SELECTORS.options)
-      optionElements.forEach(option => {
+      optionElements.forEach((option) => {
         expect(option.attributes('role')).toBe('option')
         expect(option.attributes('aria-selected')).toBeDefined()
       })
@@ -110,7 +107,7 @@ describe('SelectComponent - Advanced Features & Edge Cases', () => {
       })
 
       const trigger = wrapper.find(SELECTORS.trigger)
-      
+
       // Open and navigate to different option
       await trigger.trigger('click')
       await trigger.trigger('keydown', { key: 'ArrowDown' })
@@ -162,7 +159,7 @@ describe('SelectComponent - Advanced Features & Edge Cases', () => {
       await nextTick()
 
       const trigger = wrapper.find(SELECTORS.trigger)
-      
+
       // Perform rapid navigation sequence
       await trigger.trigger('keydown', { key: 'ArrowDown' })
       await trigger.trigger('keydown', { key: 'ArrowDown' })
