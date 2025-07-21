@@ -96,7 +96,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { ref, computed } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
-import { required, numeric, minValue } from '@vuelidate/validators'
+import { required, numeric, minValue, maxValue } from '@vuelidate/validators'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
 import { maxLength } from '@vuelidate/validators'
@@ -140,7 +140,8 @@ const rules = {
     hoursWorked: {
       required,
       numeric,
-      minValue: minValue(1)
+      minValue: minValue(1),
+      maxValue: maxValue(24)
     },
     memo: {
       required,
@@ -184,7 +185,7 @@ const addWageClaim = async () => {
     })
     modal.value = false
 
-    // 🔁 Reset champs et validation après succès
+    // 🔁 Reset fields and validation after success
     hoursWorked.value.hoursWorked = undefined
     hoursWorked.value.memo = undefined
     v$.value.$reset()
@@ -193,4 +194,3 @@ const addWageClaim = async () => {
   }
 }
 </script>
-``
