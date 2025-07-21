@@ -18,7 +18,7 @@
           </template>
           <template #weekStart-data="{ row }">
             <span class="font-bold line-clamp-1">{{ getCurrentMonthYear(row.weekStart) }}</span>
-            <br />
+
             <span>{{ formatDate(row.weekStart) }}</span>
           </template>
 
@@ -167,13 +167,12 @@ function formatDate(date: string | Date) {
   const monday = getMondayStart(new Date(date))
   const sunday = getSundayEnd(new Date(date))
   const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-  const locale = navigator.language || 'en-US'
-  return `${monday.toLocaleDateString(locale, options)}-${sunday.toLocaleDateString(locale, options)}`
+  return `${monday.toLocaleDateString('en-US', options)}-${sunday.toLocaleDateString('en-US', options)}`
 }
+
 function getCurrentMonthYear(date: string | Date) {
   const d = new Date(date)
-  const locale = navigator.language || 'en-US'
-  return d.toLocaleDateString(locale, {
+  return d.toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric'
   })
