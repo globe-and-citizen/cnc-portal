@@ -49,7 +49,20 @@ const { data: election /*, error: errorVoteCount*/ } = useReadContract({
   address: electionsAddress.value,
   abi: ElectionABI,
   args: [electionId],
-  query: { enabled: true }
+  query: { enabled: computed(() => !!electionId.value) }
+})
+
+const {
+  data: voteCount
+  // isLoading: isLoadingVoteCount,
+} = useReadContract({
+  functionName: 'getVoteCount',
+  address: electionsAddress.value,
+  abi: ElectionABI,
+  args: [electionId], // Supply currentElectionId as an argument
+  query: {
+    enabled: computed(() => !!electionId.value) // Only fetch if currentElectionId is available
+  }
 })
 
 const {
@@ -81,7 +94,7 @@ const candidates = computed(() => {
           role: user?.role || 'Candidate',
           imageUrl: user?.imageUrl
         },
-        totalVotes: Number((election.value as string | bigint[])[6]) || 0,
+        totalVotes: Number(voteCount.value) || 0,
         currentVotes: votesPerCandidate[candidate] //5
       }
     })
