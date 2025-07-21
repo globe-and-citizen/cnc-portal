@@ -18,7 +18,7 @@
       <IconifyIcon v-if="!disabled" icon="heroicons-outline:chevron-down" class="w-4 h-4" />
     </div>
     <ul
-      class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] p-2 shadow"
+      class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-10 p-2 shadow"
       ref="target"
       data-test="options-dropdown"
       v-if="isDropdown"

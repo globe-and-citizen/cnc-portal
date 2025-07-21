@@ -7,7 +7,7 @@
           (weeklyClaim) => weeklyClaim.weekStart < new Date().toISOString()
         )"
         :key="item.weekStart"
-        class="card shadow-md bg-white p-4"
+        class="card shadow-lg bg-white p-4"
         :class="{
           'transition -translate-y-full opacity-0  duration-1000': index === 0
         }"
