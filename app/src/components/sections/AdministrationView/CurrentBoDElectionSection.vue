@@ -16,7 +16,7 @@
         <ModalComponent
           v-if="
             (formattedElection?.endDate ?? new Date()) > new Date() ||
-            formattedElection?.votesCast === formattedElection?.seatCount
+            formattedElection?.votesCast === formattedElection?.voters
           "
           v-model="showResultsModal"
         >
@@ -124,6 +124,16 @@ const {
   }
 })
 
+const { data: voterList } = useReadContract({
+  functionName: 'getElectionEligibleVoters',
+  address: electionsAddress.value,
+  abi: ElectionABI,
+  args: [currentElectionId],
+  query: {
+    enabled: computed(() => !!currentElectionId.value)
+  }
+})
+
 const {
   data: hashCreateElection,
   writeContract: executeCreateElection,
@@ -151,7 +161,8 @@ const formattedElection = computed(() => {
     seatCount: Number(raw[6]),
     resultsPublished: Boolean(raw[7]),
     votesCast: Number(voteCount.value || 0),
-    candidates: (candidateList.value as string[])?.length
+    candidates: (candidateList.value as string[])?.length,
+    voters: (voterList.value as string[])?.length || 0
   }
 })
 

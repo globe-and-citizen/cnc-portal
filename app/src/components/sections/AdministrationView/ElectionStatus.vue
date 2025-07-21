@@ -22,6 +22,7 @@ const { formattedElection } = defineProps<{
     resultsPublished: boolean
     votesCast: number
     candidates: number
+    voters: number
   }
 }>()
 
@@ -65,7 +66,7 @@ const electionStatus = computed(() => {
   }
   if (
     now.value > formattedElection.endDate ||
-    formattedElection.votesCast === formattedElection.seatCount
+    formattedElection.votesCast === formattedElection.voters
   ) {
     return { text: 'Completed', class: 'bg-gray-100 text-gray-800' }
   }
