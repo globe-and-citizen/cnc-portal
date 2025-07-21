@@ -13,6 +13,8 @@
       :disabled="isLoading || !isValidAddress || isCheckingSupport"
       :loading="isLoading"
       :variant="tokenAddress.isSupported ? 'error' : 'primary'"
+      outline
+      size="sm"
       data-test="add-token-button"
       @click="updateTokenSupport"
       >{{ tokenAddress.isSupported ? 'Remove Token Support' : 'Add Token Support' }}</ButtonUI

@@ -4,6 +4,7 @@
     :loading="isWageClaimAdding"
     variant="success"
     data-test="modal-submit-hours-button"
+    size="sm"
     @click="openModal"
   >
     Submit Claim
