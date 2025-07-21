@@ -13,22 +13,23 @@ vi.mock('@/constant', () => ({
 const USDC_ADDRESS = '0xA0b86a33E6441bB7bE6d0B9EB5Bbf26b2d60C1cd'
 
 // Hoisted variables for mocks
-const { mockReadContract, mockWriteContract, mockUseDebounceFn, mockTeamStore, mockToastStore } = vi.hoisted(() => ({
-  mockReadContract: vi.fn(),
-  mockWriteContract: vi.fn(),
-  mockUseDebounceFn: vi.fn((fn) => fn),
-  mockTeamStore: {
-    getContractAddressByType: vi.fn((type) => {
-      if (type === 'InvestorsV1') return '0x1234567890123456789012345678901234567890'
-      if (type === 'CashRemunerationEIP712') return '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd'
-      return undefined
-    })
-  },
-  mockToastStore: {
-    addErrorToast: vi.fn(),
-    addSuccessToast: vi.fn()
-  }
-}))
+const { mockReadContract, mockWriteContract, mockUseDebounceFn, mockTeamStore, mockToastStore } =
+  vi.hoisted(() => ({
+    mockReadContract: vi.fn(),
+    mockWriteContract: vi.fn(),
+    mockUseDebounceFn: vi.fn((fn) => fn),
+    mockTeamStore: {
+      getContractAddressByType: vi.fn((type) => {
+        if (type === 'InvestorsV1') return '0x1234567890123456789012345678901234567890'
+        if (type === 'CashRemunerationEIP712') return '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd'
+        return undefined
+      })
+    },
+    mockToastStore: {
+      addErrorToast: vi.fn(),
+      addSuccessToast: vi.fn()
+    }
+  }))
 
 // Mock wagmi functions
 vi.mock('@wagmi/core', () => ({
@@ -109,7 +110,7 @@ describe('CRAddERC20Support.vue', () => {
     it('should render SelectComponent with correct options', () => {
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
-      
+
       expect(selectComponent.exists()).toBe(true)
       expect(selectComponent.props('options')).toEqual([
         { label: 'Investors', value: '0x1234567890123456789012345678901234567890' },
@@ -125,13 +126,15 @@ describe('CRAddERC20Support.vue', () => {
     it('should render AddressToolTip when token is selected', async () => {
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
-      
+
       // Simulate selecting a token
       await selectComponent.setValue('0x1234567890123456789012345678901234567890')
       await nextTick()
 
       expect(wrapper.findComponent(AddressToolTip).exists()).toBe(true)
-      expect(wrapper.findComponent(AddressToolTip).props('address')).toBe('0x1234567890123456789012345678901234567890')
+      expect(wrapper.findComponent(AddressToolTip).props('address')).toBe(
+        '0x1234567890123456789012345678901234567890'
+      )
     })
   })
 
@@ -139,21 +142,21 @@ describe('CRAddERC20Support.vue', () => {
     it('should disable button when no token is selected', () => {
       wrapper = mountComponent()
       const button = wrapper.findComponent(ButtonUI)
-      
+
       expect(button.props('disabled')).toBe(true)
     })
 
     it('should show Add Token Support text initially', () => {
       wrapper = mountComponent()
       const button = wrapper.find('[data-test="add-token-button"]')
-      
+
       expect(button.text()).toBe('Add Token Support')
     })
 
     it('should have primary variant initially', () => {
       wrapper = mountComponent()
       const button = wrapper.findComponent(ButtonUI)
-      
+
       expect(button.props('variant')).toBe('primary')
     })
 
@@ -161,11 +164,11 @@ describe('CRAddERC20Support.vue', () => {
       mockReadContract.mockResolvedValue(false)
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
-      
+
       await selectComponent.setValue('0x1234567890123456789012345678901234567890')
       await nextTick()
       await flushPromises()
-      
+
       const button = wrapper.findComponent(ButtonUI)
       expect(button.props('disabled')).toBe(false)
     })
@@ -174,14 +177,14 @@ describe('CRAddERC20Support.vue', () => {
       mockReadContract.mockResolvedValue(true)
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
-      
+
       await selectComponent.setValue('0x1234567890123456789012345678901234567890')
       await nextTick()
       await flushPromises()
-      
+
       const button = wrapper.find('[data-test="add-token-button"]')
       expect(button.text()).toBe('Remove Token Support')
-      
+
       const buttonComponent = wrapper.findComponent(ButtonUI)
       expect(buttonComponent.props('variant')).toBe('error')
     })
@@ -192,27 +195,30 @@ describe('CRAddERC20Support.vue', () => {
       mockReadContract.mockResolvedValue(false)
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
-      
+
       await selectComponent.setValue('0x1234567890123456789012345678901234567890')
       await nextTick()
       await flushPromises()
-      
-      expect(mockReadContract).toHaveBeenCalledWith({}, {
-        address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-        abi: [],
-        functionName: 'supportedTokens',
-        args: ['0x1234567890123456789012345678901234567890']
-      })
+
+      expect(mockReadContract).toHaveBeenCalledWith(
+        {},
+        {
+          address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+          abi: [],
+          functionName: 'supportedTokens',
+          args: ['0x1234567890123456789012345678901234567890']
+        }
+      )
     })
 
     it('should not check support for invalid addresses', async () => {
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
-      
+
       await selectComponent.setValue('invalid-address')
       await nextTick()
       await flushPromises()
-      
+
       expect(mockReadContract).not.toHaveBeenCalled()
     })
 
@@ -221,14 +227,19 @@ describe('CRAddERC20Support.vue', () => {
       mockReadContract.mockRejectedValue(new Error('Network error'))
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
-      
+
       await selectComponent.setValue('0x1234567890123456789012345678901234567890')
       await nextTick()
       await flushPromises()
-      
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error checking token support:', expect.any(Error))
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to check token support status')
-      
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Error checking token support:',
+        expect.any(Error)
+      )
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+        'Failed to check token support status'
+      )
+
       consoleErrorSpy.mockRestore()
     })
   })
@@ -239,23 +250,28 @@ describe('CRAddERC20Support.vue', () => {
       mockWriteContract.mockResolvedValue({})
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
-      
+
       await selectComponent.setValue('0x1234567890123456789012345678901234567890')
       await nextTick()
       await flushPromises()
-      
+
       const button = wrapper.find('[data-test="add-token-button"]')
       await button.trigger('click')
       await flushPromises()
-      
-      expect(mockWriteContract).toHaveBeenCalledWith({}, {
-        address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-        abi: [],
-        functionName: 'addTokenSupport',
-        args: ['0x1234567890123456789012345678901234567890']
-      })
-      
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Token support added successfully')
+
+      expect(mockWriteContract).toHaveBeenCalledWith(
+        {},
+        {
+          address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+          abi: [],
+          functionName: 'addTokenSupport',
+          args: ['0x1234567890123456789012345678901234567890']
+        }
+      )
+
+      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
+        'Token support added successfully'
+      )
     })
 
     it('should remove token support for supported token', async () => {
@@ -263,23 +279,28 @@ describe('CRAddERC20Support.vue', () => {
       mockWriteContract.mockResolvedValue({})
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
-      
+
       await selectComponent.setValue('0x1234567890123456789012345678901234567890')
       await nextTick()
       await flushPromises()
-      
+
       const button = wrapper.find('[data-test="add-token-button"]')
       await button.trigger('click')
       await flushPromises()
-      
-      expect(mockWriteContract).toHaveBeenCalledWith({}, {
-        address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-        abi: [],
-        functionName: 'removeTokenSupport',
-        args: ['0x1234567890123456789012345678901234567890']
-      })
-      
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Token support removed successfully')
+
+      expect(mockWriteContract).toHaveBeenCalledWith(
+        {},
+        {
+          address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+          abi: [],
+          functionName: 'removeTokenSupport',
+          args: ['0x1234567890123456789012345678901234567890']
+        }
+      )
+
+      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
+        'Token support removed successfully'
+      )
     })
 
     it('should handle errors when adding token support', async () => {
@@ -288,18 +309,23 @@ describe('CRAddERC20Support.vue', () => {
       mockWriteContract.mockRejectedValue(new Error('Transaction failed'))
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
-      
+
       await selectComponent.setValue('0x1234567890123456789012345678901234567890')
       await nextTick()
       await flushPromises()
-      
+
       const button = wrapper.find('[data-test="add-token-button"]')
       await button.trigger('click')
       await flushPromises()
-      
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error Updating token support:', expect.any(Error))
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to add token support: Transaction failed')
-      
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Error Updating token support:',
+        expect.any(Error)
+      )
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+        'Failed to add token support: Transaction failed'
+      )
+
       consoleErrorSpy.mockRestore()
     })
 
@@ -309,18 +335,23 @@ describe('CRAddERC20Support.vue', () => {
       mockWriteContract.mockRejectedValue(new Error('Transaction failed'))
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
-      
+
       await selectComponent.setValue('0x1234567890123456789012345678901234567890')
       await nextTick()
       await flushPromises()
-      
+
       const button = wrapper.find('[data-test="add-token-button"]')
       await button.trigger('click')
       await flushPromises()
-      
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error Updating token support:', expect.any(Error))
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to remove token support: Transaction failed')
-      
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Error Updating token support:',
+        expect.any(Error)
+      )
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+        'Failed to remove token support: Transaction failed'
+      )
+
       consoleErrorSpy.mockRestore()
     })
   })
@@ -333,25 +364,25 @@ describe('CRAddERC20Support.vue', () => {
       })
       mockReadContract.mockResolvedValue(false)
       mockWriteContract.mockReturnValue(writeContractPromise)
-      
+
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
-      
+
       await selectComponent.setValue('0x1234567890123456789012345678901234567890')
       await nextTick()
       await flushPromises()
-      
+
       const button = wrapper.find('[data-test="add-token-button"]')
       await button.trigger('click')
-      
+
       // Check loading state
       const buttonComponent = wrapper.findComponent(ButtonUI)
       expect(buttonComponent.props('loading')).toBe(true)
       expect(buttonComponent.props('disabled')).toBe(true)
-      
+
       resolveWriteContract!({})
       await flushPromises()
-      
+
       // Check loading state is cleared
       expect(buttonComponent.props('loading')).toBe(false)
     })
@@ -360,7 +391,7 @@ describe('CRAddERC20Support.vue', () => {
   describe('Edge Cases and Validation', () => {
     it('should use debounced function for checking token support', () => {
       wrapper = mountComponent()
-      
+
       expect(mockUseDebounceFn).toHaveBeenCalledWith(expect.any(Function), 300)
     })
   })
