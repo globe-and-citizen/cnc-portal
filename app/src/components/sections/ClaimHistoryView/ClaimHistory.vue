@@ -59,7 +59,9 @@
             :key="index"
             :class="[
               'flex items-center justify-between border px-4 py-3 mb-2 rounded-lg ',
-              entry.hours > 0 ? 'bg-green-50 text-emerald-700' : 'bg-gray-100 text-gray-400'
+              entry.hours > 0
+                ? 'bg-green-50 text-emerald-700 border border-emerald-500'
+                : 'bg-gray-100 text-gray-400'
             ]"
           >
             <div class="flex items-center gap-2 w-1/5">
