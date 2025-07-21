@@ -89,7 +89,6 @@
                   userAddress: row.wage.userAddress as Address
                 }
               }"
-              @claim-withdrawn="onClaimWithdrawn"
             />
           </template>
         </TableComponent>
@@ -136,11 +135,6 @@ function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) 
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
-// const queryClient = useQueryClient()
-
-// function onClaimWithdrawn() {
-//   queryClient.invalidateQueries({ queryKey: [queryKey.value] })
-// }
 
 const weeklyClaimUrl = computed(
   () =>
