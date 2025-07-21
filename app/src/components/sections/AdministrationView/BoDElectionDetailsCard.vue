@@ -38,12 +38,13 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import UserComponent from './UserComponent.vue'
-import { computed, type PropType } from 'vue'
+import { computed, watch, type PropType } from 'vue'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
-import { useUserDataStore, useTeamStore } from '@/stores'
+import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import type { Address } from 'viem'
+import { log, parseError } from '@/utils'
 
 const props = defineProps({
   election: {
@@ -61,13 +62,21 @@ const emits = defineEmits(['castVote'])
 
 const userDataStore = useUserDataStore()
 const teamStore = useTeamStore()
+const { addErrorToast } = useToastStore()
 
-const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections') as Address)
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
-const { data: hasVoted } = useReadContract({
+const { data: hasVoted, error: errorHasVoted } = useReadContract({
   functionName: 'hasVoted',
   address: electionsAddress.value,
   abi: ELECTIONS_ABI,
   args: [props.election.id, userDataStore.address as Address]
+})
+
+watch(errorHasVoted, (error) => {
+  if (error) {
+    addErrorToast(`Error checking vote status`)
+    log.error('Error checking vote status:', parseError(error))
+  }
 })
 </script>
