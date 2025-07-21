@@ -43,11 +43,17 @@
       <!-- <ButtonUI variant="success" :outline="true" @click="electionResultModal = true">
         View Results
       </ButtonUI> -->
-      <a
-        :href="`/teams/${teamStore.currentTeam?.id}/administration/bod-elections-details?electionId=${election.id}`"
+      <div
         class="btn btn-md btn-success btn-outline"
-        >View Results</a
+        @click="
+          () =>
+            router.push(
+              `/teams/${teamStore.currentTeam?.id}/administration/bod-elections-details?electionId=${election.id}`
+            )
+        "
       >
+        View Results
+      </div>
       <ModalComponent
         v-if="electionResultModal"
         v-model="electionResultModal"
@@ -65,6 +71,7 @@ import { useTeamStore, useToastStore } from '@/stores'
 import type { Election } from '@/types'
 import { parseError } from '@/utils'
 import { useReadContract } from '@wagmi/vue'
+import { useRouter } from 'vue-router'
 import { watch } from 'vue'
 import { computed, ref } from 'vue'
 import ElectionResultModal from './modals/ElectionResultModal.vue'
@@ -76,6 +83,7 @@ const { election } = defineProps<{
 }>()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
+const router = useRouter()
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
 const {
