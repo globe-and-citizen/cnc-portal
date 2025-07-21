@@ -151,7 +151,7 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     ElectionTypes.Election storage election = _elections[electionId];
 
     if (election.id == 0) revert ElectionNotFound();
-    if ( election.voteCount < election.seatCount && !ElectionUtils.hasElectionEnded(election.endDate)) {
+    if ( election.voteCount < election.voterList.length && !ElectionUtils.hasElectionEnded(election.endDate)) {
       revert ResultsNotReady();
     }
     if (election.resultsPublished) revert ResultsAlreadyPublished();
