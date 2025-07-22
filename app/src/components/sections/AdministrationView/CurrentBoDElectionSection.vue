@@ -3,9 +3,10 @@
     <template #card-action>
       <div class="flex justify-between">
         <ElectionActions
-          v-if="formattedElection && !isDetails"
-          :formatted-election="formattedElection"
+          v-if="!isDetails"
+          :formatted-election="formattedElection || null"
           @show-results-modal="showResultsModal = true"
+          @show-create-election-modal="showCreateElectionModal = true"
         />
         <ModalComponent v-model="showCreateElectionModal">
           <CreateElectionForm

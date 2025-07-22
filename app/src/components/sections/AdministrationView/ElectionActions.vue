@@ -35,11 +35,19 @@
       "
       :election-id="formattedElection?.id ?? 1"
     />
+    <ButtonUI
+      v-if="electionStatus.text === 'No Election'"
+      variant="success"
+      @click="emits('showCreateElectionModal')"
+    >
+      Create Election
+    </ButtonUI>
   </div>
 </template>
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import PublishResult from '@/components/sections/AdministrationView/PublishResult.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 import { useRouter } from 'vue-router'
 import { useTeamStore } from '@/stores'
 
@@ -56,10 +64,10 @@ const { formattedElection } = defineProps<{
     votesCast: number
     candidates: number
     voters: number
-  }
+  } | null
 }>()
 
-const emits = defineEmits(['showResultsModal'])
+const emits = defineEmits(['showResultsModal', 'showCreateElectionModal'])
 
 const teamStore = useTeamStore()
 const router = useRouter()
@@ -67,7 +75,7 @@ const now = ref(new Date())
 
 // Election status
 const electionStatus = computed(() => {
-  if (!formattedElection) return { text: 'No Election' }
+  if (!formattedElection || formattedElection?.resultsPublished) return { text: 'No Election' }
 
   if (now.value < formattedElection?.startDate) {
     return { text: 'Upcoming' }
