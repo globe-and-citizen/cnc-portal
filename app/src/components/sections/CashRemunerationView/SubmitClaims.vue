@@ -1,4 +1,3 @@
-```
 <template>
   <ButtonUI
     :loading="isWageClaimAdding"
@@ -85,7 +84,7 @@
           Submit
         </ButtonUI>
       </div>
-      <div v-if="addWageClaimError" class="mt-4">
+      <div v-if="addWageClaimError && errorMessage" class="mt-4">
         <div role="alert" class="alert alert-error">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -187,9 +186,12 @@ const {
   }))
   .json()
 
-const errorMessage = ref(null)
+const errorMessage = ref<{ message: string } | null>(null)
+
 watch(addWageClaimError, async () => {
-  errorMessage.value = await addWageClaimResponse.value?.json()
+  if (addWageClaimError.value) {
+    errorMessage.value = await addWageClaimResponse.value?.json()
+  }
 })
 
 const queryKey = computed(
