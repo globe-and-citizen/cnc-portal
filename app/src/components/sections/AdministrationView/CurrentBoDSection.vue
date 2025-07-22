@@ -20,14 +20,14 @@
     <!-- <div v-else class="col-span-full text-center text-gray-500">
       No Board of Directors members found.
     </div> -->
-    <CurrentBoDPlaceholder v-else />
+    <CurrentBoDSection404 v-else />
   </CardComponent>
 </template>
 <script setup lang="ts">
 import { BOD_ABI } from '@/artifacts/abi/bod'
 import CardComponent from '@/components/CardComponent.vue'
 import UserComponentCol from '@/components/UserComponent.vue'
-import CurrentBoDPlaceholder from './CurrentBoDPlaceholder.vue'
+import CurrentBoDSection404 from './CurrentBoDSection404.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'

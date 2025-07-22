@@ -16,4 +16,5 @@
       </div>
     </div>
   </div>
+  <p>There is no Current Board of Directors. <br />Create an Election to set Board of Directors</p>
 </template>
