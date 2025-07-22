@@ -17,15 +17,17 @@
       </div>
     </div>
     <div v-else-if="isFetching" class="col-span-full text-center">Loading...</div>
-    <div v-else class="col-span-full text-center text-gray-500">
+    <!-- <div v-else class="col-span-full text-center text-gray-500">
       No Board of Directors members found.
-    </div>
+    </div> -->
+    <CurrentBoDPlaceholder v-else />
   </CardComponent>
 </template>
 <script setup lang="ts">
 import { BOD_ABI } from '@/artifacts/abi/bod'
 import CardComponent from '@/components/CardComponent.vue'
 import UserComponentCol from '@/components/UserComponent.vue'
+import CurrentBoDPlaceholder from './CurrentBoDPlaceholder.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
