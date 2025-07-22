@@ -7,7 +7,7 @@
     <!-- <div v-else-if="elections.length === 0" class="flex w-full h-96 justify-center items-center">
       <div class="text-gray-500">No past elections available</div>
     </div> -->
-    <PastBoDElection404 v-if="elections.length === 0 && !isLoading" />
+    <PastBoDElection404 v-else-if="elections.length === 0" :is-loading="isLoading" />
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
       <PastBoDElectionCard
         v-for="(election, index) in elections"

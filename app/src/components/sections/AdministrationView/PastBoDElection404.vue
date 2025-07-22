@@ -7,23 +7,26 @@
     >
       <!-- Row 1: 1/2 | 1/4 -->
       <div class="flex justify-between mb-6">
-        <div class="w-1/2 h-6 rounded-lg bg-gray-200 animate-pulse"></div>
-        <div class="w-1/4 h-6 rounded-lg bg-gray-200 animate-pulse"></div>
+        <div class="w-1/2 h-6 rounded-lg bg-gray-200" :class="{ isLoading: 'animate-pulse' }"></div>
+        <div class="w-1/4 h-6 rounded-lg bg-gray-200" :class="{ isLoading: 'animate-pulse' }"></div>
       </div>
 
       <!-- Row 2: 2/3 -->
-      <div class="w-2/3 h-6 rounded-lg bg-gray-200 animate-pulse mb-6"></div>
+      <div
+        class="w-2/3 h-6 rounded-lg bg-gray-200 mb-6"
+        :class="{ isLoading: 'animate-pulse' }"
+      ></div>
 
       <!-- Row 3: 2/5 | 1/5 -->
       <div class="flex justify-between mb-6">
-        <div class="w-2/5 h-6 rounded-lg bg-gray-200 animate-pulse"></div>
-        <div class="w-1/5 h-6 rounded-lg bg-gray-200 animate-pulse"></div>
+        <div class="w-2/5 h-6 rounded-lg bg-gray-200" :class="{ isLoading: 'animate-pulse' }"></div>
+        <div class="w-1/5 h-6 rounded-lg bg-gray-200" :class="{ isLoading: 'animate-pulse' }"></div>
       </div>
 
       <!-- Row 4: 2/5 | 1/5 -->
       <div class="flex justify-between mb-6">
-        <div class="w-2/5 h-6 rounded-lg bg-gray-200 animate-pulse"></div>
-        <div class="w-1/5 h-6 rounded-lg bg-gray-200 animate-pulse"></div>
+        <div class="w-2/5 h-6 rounded-lg bg-gray-200" :class="{ isLoading: 'animate-pulse' }"></div>
+        <div class="w-1/5 h-6 rounded-lg bg-gray-200" :class="{ isLoading: 'animate-pulse' }"></div>
       </div>
 
       <!-- Horizontal Line -->
@@ -34,14 +37,17 @@
 
       <!-- Row 6: 1/5 | 1/5 | 1/5 -->
       <div class="flex justify-between mb-8">
-        <div class="w-1/5 h-6 rounded-lg bg-gray-200 animate-pulse"></div>
-        <div class="w-1/5 h-6 rounded-lg bg-gray-200 animate-pulse"></div>
-        <div class="w-1/5 h-6 rounded-lg bg-gray-200 animate-pulse"></div>
+        <div class="w-1/5 h-6 rounded-lg bg-gray-200" :class="{ isLoading: 'animate-pulse' }"></div>
+        <div class="w-1/5 h-6 rounded-lg bg-gray-200" :class="{ isLoading: 'animate-pulse' }"></div>
+        <div class="w-1/5 h-6 rounded-lg bg-gray-200" :class="{ isLoading: 'animate-pulse' }"></div>
       </div>
 
       <!-- Full-width button placeholder -->
-      <div class="w-full h-10 rounded-lg bg-gray-200 animate-pulse"></div>
+      <div class="w-full h-10 rounded-lg bg-gray-200" :class="{ isLoading: 'animate-pulse' }"></div>
     </div>
   </div>
   <p>There are no Past Elections. <br />Create and publish an Election to view Past Elections</p>
 </template>
+<script setup lang="ts">
+defineProps<{ isLoading: boolean }>()
+</script>
