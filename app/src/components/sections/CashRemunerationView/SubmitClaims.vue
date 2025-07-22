@@ -4,13 +4,14 @@
     :loading="isWageClaimAdding"
     variant="success"
     data-test="modal-submit-hours-button"
+    size="sm"
     @click="openModal"
   >
     Submit Claim
   </ButtonUI>
 
   <ModalComponent v-model="modal">
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 mb-20">
       <h3 class="text-xl font-bold">Submit Claim</h3>
       <hr />
       <div class="flex flex-col gap-2">
@@ -95,7 +96,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { ref, computed } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
-import { required, numeric, minValue } from '@vuelidate/validators'
+import { required, numeric, minValue, maxValue } from '@vuelidate/validators'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
 import { maxLength } from '@vuelidate/validators'
@@ -139,7 +140,8 @@ const rules = {
     hoursWorked: {
       required,
       numeric,
-      minValue: minValue(1)
+      minValue: minValue(1),
+      maxValue: maxValue(24)
     },
     memo: {
       required,
@@ -183,7 +185,7 @@ const addWageClaim = async () => {
     })
     modal.value = false
 
-    // 🔁 Reset champs et validation après succès
+    // 🔁 Reset fields and validation after success
     hoursWorked.value.hoursWorked = undefined
     hoursWorked.value.memo = undefined
     v$.value.$reset()
@@ -192,4 +194,3 @@ const addWageClaim = async () => {
   }
 }
 </script>
-``

@@ -7,7 +7,7 @@
           (weeklyClaim) => weeklyClaim.weekStart < new Date().toISOString()
         )"
         :key="item.weekStart"
-        class="card shadow-md bg-white p-4"
+        class="card shadow-lg bg-white p-4"
         :class="{
           'transition -translate-y-full opacity-0  duration-1000': index === 0
         }"
@@ -18,7 +18,7 @@
           </template>
           <template #weekStart-data="{ row }">
             <span class="font-bold line-clamp-1">{{ getCurrentMonthYear(row.weekStart) }}</span>
-            <br />
+
             <span>{{ formatDate(row.weekStart) }}</span>
           </template>
 
@@ -36,13 +36,10 @@
                 {{ currencyStore.localCurrency.code }} / Hour
               </span>
 
-              <div class="flex">
-                <span v-for="(rate, index) in row.wage.ratePerHour" :key="rate.type">
-                  {{ rate.amount }}
-                  {{ rate.type == 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
-                  {{ index < row.wage.ratePerHour.length - 1 ? ',' : '' }}
-                </span>
-              </div>
+              <RatePerHourList
+                :rate-per-hour="row.wage.ratePerHour"
+                :currency-symbol="NETWORK.currencySymbol"
+              />
             </div>
           </template>
 
@@ -58,14 +55,11 @@
                 }}
                 {{ currencyStore.localCurrency.code }}
               </span>
-
-              <div>
-                <span v-for="(rate, index) in row.wage.ratePerHour" :key="rate.type" class="mr-1">
-                  {{ rate.amount * getTotalHoursWorked(row.claims) }}
-                  {{ rate.type == 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
-                  {{ index < row.wage.ratePerHour.length - 1 ? ',' : '' }}
-                </span>
-              </div>
+              <RatePerHourTotalList
+                :rate-per-hour="row.wage.ratePerHour"
+                :currency-symbol="NETWORK.currencySymbol"
+                :total-hours="getTotalHoursWorked(row.claims)"
+              />
             </div>
           </template>
 
@@ -131,6 +125,8 @@ import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
 // import { formatCurrencyShort } from '@/utils/currencyUtil'
 import type { TokenId } from '@/constant'
 import CRWeeklyClaimOwnerHeader from './CRWeeklyClaimOwnerHeader.vue'
+import RatePerHourList from '@/components/RatePerHourList.vue'
+import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 
 function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -171,13 +167,12 @@ function formatDate(date: string | Date) {
   const monday = getMondayStart(new Date(date))
   const sunday = getSundayEnd(new Date(date))
   const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-  const locale = navigator.language || 'en-US'
-  return `${monday.toLocaleDateString(locale, options)}-${sunday.toLocaleDateString(locale, options)}`
+  return `${monday.toLocaleDateString('en-US', options)}-${sunday.toLocaleDateString('en-US', options)}`
 }
+
 function getCurrentMonthYear(date: string | Date) {
   const d = new Date(date)
-  const locale = navigator.language || 'en-US'
-  return d.toLocaleDateString(locale, {
+  return d.toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric'
   })
