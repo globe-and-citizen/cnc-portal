@@ -54,8 +54,9 @@ const { data: electionWinners, error: errorGetElectionWinners } = useReadContrac
   address: electionsAddress.value,
   abi: ELECTIONS_ABI,
   functionName: 'getElectionWinners',
-  args: [props.electionId as bigint] // Assuming 0 is the current election ID, adjust as necessary
+  args: [BigInt(props.electionId || 0)], // Assuming 0 is the current election ID, adjust as necessary
   //scopeKey: 'electionWinners'
+  query: { enabled: computed(() => !!props.electionId) }
 })
 
 const _boardOfDirectors = computed(() => {
