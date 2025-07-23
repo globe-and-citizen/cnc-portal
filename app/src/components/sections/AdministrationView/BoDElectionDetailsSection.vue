@@ -6,6 +6,7 @@
         :key="index"
         :election="election"
         @cast-vote="castVote"
+        :is-loading="isLoadingCastVote"
       />
     </div>
   </CardComponent>
@@ -67,8 +68,8 @@ const {
 
 const {
   data: hashCastVote,
-  writeContract: executeCastVote
-  // isPending: isLoadingCastVote
+  writeContract: executeCastVote,
+  isPending: isLoadingCastVote
 } = useWriteContract()
 
 const { isLoading: isConfirmingCastVote, isSuccess: isConfirmedCastVote } =

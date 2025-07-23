@@ -28,7 +28,13 @@
         variant="success"
         :outline="true"
         :disabled="hasVoted"
-        @click="() => emits('castVote', election.user.address)"
+        :loading="isLoadingCastVoteLocal && isLoading"
+        @click="
+          () => {
+            isLoadingCastVoteLocal = true
+            emits('castVote', election.user.address)
+          }
+        "
         >Cast a Vote</ButtonUI
       >
     </div>
@@ -38,7 +44,7 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import UserComponent from './UserComponent.vue'
-import { computed, watch, type PropType } from 'vue'
+import { computed, watch, type PropType, ref } from 'vue'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
 import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
@@ -55,6 +61,10 @@ const props = defineProps({
       id: bigint
     }>,
     required: true
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -64,6 +74,7 @@ const userDataStore = useUserDataStore()
 const teamStore = useTeamStore()
 const { addErrorToast } = useToastStore()
 
+const isLoadingCastVoteLocal = ref(false)
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
 const { data: hasVoted, error: errorHasVoted } = useReadContract({
@@ -79,4 +90,11 @@ watch(errorHasVoted, (error) => {
     log.error('Error checking vote status:', parseError(error))
   }
 })
+
+watch(
+  () => props.isLoading,
+  (newState) => {
+    if (!newState) isLoadingCastVoteLocal.value = false
+  }
+)
 </script>
