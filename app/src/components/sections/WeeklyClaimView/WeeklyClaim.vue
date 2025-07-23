@@ -60,24 +60,30 @@
 
       <template #status-data="{ row }">
         <template v-if="row.status === 'signed'">
-          <span class="text-base px-3 rounded-2xl bg-secondary text-white">
+          <span
+            class="text-base px-3 py-1 rounded-2xl border-2 border-secondary text-secondary bg-transparent"
+          >
             {{ row.status.charAt(0).toUpperCase() + row.status.slice(1) }}
           </span>
         </template>
-        <template v-else-if="row.status === 'withdraw'">
-          <span class="text-base px-3 rounded-2xl bg-yellow-500 text-white">
-            {{ row.status.charAt(0).toUpperCase() + row.status.slice(1) }}
-          </span>
-        </template>
-        <template v-else>
-          <span class="text-base px-3 rounded-2xl bg-white border border-gray-400 text-black">
+        <template v-else-if="!row.status || row.status === 'pending'">
+          <span
+            class="text-base px-3 py-1 rounded-2xl border-2 border-gray-400 text-gray-700 bg-transparent"
+          >
             {{ row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending' }}
           </span>
         </template>
-        <br />
+        <template v-else>
+          <span
+            class="text-base px-3 py-1 rounded-2xl border-2 border-yellow-500 text-black bg-transparent"
+          >
+            {{ row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending' }}
+          </span>
+        </template>
+        <!-- <br />
         <span class="text-sm">
           {{ row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '-' }}
-        </span>
+        </span> -->
       </template>
     </TableComponent>
   </CardComponent>
