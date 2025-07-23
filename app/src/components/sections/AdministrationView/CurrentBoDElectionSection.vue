@@ -3,9 +3,10 @@
     <template #card-action>
       <div class="flex justify-between">
         <ElectionActions
-          v-if="formattedElection && !isDetails"
-          :formatted-election="formattedElection"
+          v-if="!isDetails"
+          :formatted-election="formattedElection || null"
           @show-results-modal="showResultsModal = true"
+          @show-create-election-modal="showCreateElectionModal = true"
         />
         <ModalComponent v-model="showCreateElectionModal">
           <CreateElectionForm
@@ -16,7 +17,7 @@
         <ModalComponent
           v-if="
             (formattedElection?.endDate ?? new Date()) > new Date() ||
-            formattedElection?.votesCast === formattedElection?.seatCount
+            formattedElection?.votesCast === formattedElection?.voters
           "
           v-model="showResultsModal"
         >
@@ -74,7 +75,7 @@ const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 const queryClient = useQueryClient()
 const showResultsModal = ref(false)
-const currentElectionId = ref(props.electionId)
+const currentElectionId = computed(() => props.electionId)
 const showCreateElectionModal = ref(false)
 
 // Contract addresses
@@ -124,6 +125,16 @@ const {
   }
 })
 
+const { data: voterList } = useReadContract({
+  functionName: 'getElectionEligibleVoters',
+  address: electionsAddress.value,
+  abi: ElectionABI,
+  args: [currentElectionId],
+  query: {
+    enabled: computed(() => !!currentElectionId.value)
+  }
+})
+
 const {
   data: hashCreateElection,
   writeContract: executeCreateElection,
@@ -151,7 +162,8 @@ const formattedElection = computed(() => {
     seatCount: Number(raw[6]),
     resultsPublished: Boolean(raw[7]),
     votesCast: Number(voteCount.value || 0),
-    candidates: (candidateList.value as string[])?.length
+    candidates: (candidateList.value as string[])?.length,
+    voters: (voterList.value as string[])?.length || 0
   }
 })
 

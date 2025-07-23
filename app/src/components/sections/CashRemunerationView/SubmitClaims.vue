@@ -1,4 +1,3 @@
-```
 <template>
   <ButtonUI
     :loading="isWageClaimAdding"
@@ -44,6 +43,14 @@
           placeholder="10"
           v-model="hoursWorked.hoursWorked"
         />
+        <div
+          class="pl-4 text-red-500 text-sm"
+          v-for="error of v$.hoursWorked.hoursWorked.$errors"
+          :key="error.$uid"
+          data-test="hours-worked-error"
+        >
+          {{ error.$message }}
+        </div>
       </div>
       <div class="flex flex-col gap-2">
         <label class="flex items-center">
@@ -56,16 +63,6 @@
           v-model="hoursWorked.memo"
         ></textarea>
       </div>
-
-      <div
-        class="pl-4 text-red-500 text-sm"
-        v-for="error of v$.hoursWorked.hoursWorked.$errors"
-        :key="error.$uid"
-        data-test="hours-worked-error"
-      >
-        {{ error.$message }}
-      </div>
-
       <div
         class="pl-4 text-red-500 text-sm"
         v-for="error of v$.hoursWorked.memo.$errors"
@@ -87,6 +84,24 @@
           Submit
         </ButtonUI>
       </div>
+      <div v-if="addWageClaimError && errorMessage" class="mt-4">
+        <div role="alert" class="alert alert-error">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6 shrink-0 stroke-current"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span>{{ errorMessage.message }}</span>
+        </div>
+      </div>
     </div>
   </ModalComponent>
 </template>
@@ -94,7 +109,7 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import { required, numeric, minValue, maxValue } from '@vuelidate/validators'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -160,13 +175,24 @@ const {
   error: addWageClaimError,
   isFetching: isWageClaimAdding,
   execute: addClaim,
+  response: addWageClaimResponse,
   statusCode: addWageClaimStatusCode
-} = useCustomFetch('/claim', { immediate: false })
+} = useCustomFetch('/claim', {
+  immediate: false
+})
   .post(() => ({
     teamId: teamId.value,
     ...hoursWorked.value
   }))
   .json()
+
+const errorMessage = ref<{ message: string } | null>(null)
+
+watch(addWageClaimError, async () => {
+  if (addWageClaimError.value) {
+    errorMessage.value = await addWageClaimResponse.value?.json()
+  }
+})
 
 const queryKey = computed(
   () => `pending-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
@@ -189,8 +215,9 @@ const addWageClaim = async () => {
     hoursWorked.value.hoursWorked = undefined
     hoursWorked.value.memo = undefined
     v$.value.$reset()
-  } else if (addWageClaimError.value) {
-    toastStore.addErrorToast(addWageClaimError.value)
   }
+  // else if (addWageClaimError.value) {
+  //   toastStore.addErrorToast(addWageClaimError.value)
+  // }
 }
 </script>

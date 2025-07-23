@@ -17,15 +17,17 @@
       </div>
     </div>
     <div v-else-if="isFetching" class="col-span-full text-center">Loading...</div>
-    <div v-else class="col-span-full text-center text-gray-500">
+    <!-- <div v-else class="col-span-full text-center text-gray-500">
       No Board of Directors members found.
-    </div>
+    </div> -->
+    <CurrentBoDSection404 v-else />
   </CardComponent>
 </template>
 <script setup lang="ts">
 import { BOD_ABI } from '@/artifacts/abi/bod'
 import CardComponent from '@/components/CardComponent.vue'
 import UserComponentCol from '@/components/UserComponent.vue'
+import CurrentBoDSection404 from './CurrentBoDSection404.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
@@ -52,8 +54,9 @@ const { data: electionWinners, error: errorGetElectionWinners } = useReadContrac
   address: electionsAddress.value,
   abi: ELECTIONS_ABI,
   functionName: 'getElectionWinners',
-  args: [props.electionId as bigint] // Assuming 0 is the current election ID, adjust as necessary
+  args: [BigInt(props.electionId || 0)], // Assuming 0 is the current election ID, adjust as necessary
   //scopeKey: 'electionWinners'
+  query: { enabled: computed(() => !!props.electionId) }
 })
 
 const _boardOfDirectors = computed(() => {

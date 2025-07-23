@@ -6,6 +6,7 @@
         :key="index"
         :election="election"
         @cast-vote="castVote"
+        :is-loading="isLoadingCastVote"
       />
     </div>
   </CardComponent>
@@ -30,6 +31,7 @@ const props = defineProps<{ electionId: bigint }>()
 const queryClient = useQueryClient()
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
+const electionId = computed(() => props.electionId)
 
 const votesPerCandidate = reactive<Record<Address, number>>({})
 
@@ -39,7 +41,7 @@ const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useRea
   functionName: 'getElectionCandidates',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [props.electionId],
+  args: [electionId],
   query: { enabled: true }
 })
 
@@ -47,14 +49,27 @@ const { data: election /*, error: errorVoteCount*/ } = useReadContract({
   functionName: 'getElection',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [props.electionId],
-  query: { enabled: true }
+  args: [electionId],
+  query: { enabled: computed(() => !!electionId.value) }
+})
+
+const {
+  data: voteCount
+  // isLoading: isLoadingVoteCount,
+} = useReadContract({
+  functionName: 'getVoteCount',
+  address: electionsAddress.value,
+  abi: ElectionABI,
+  args: [electionId], // Supply currentElectionId as an argument
+  query: {
+    enabled: computed(() => !!electionId.value) // Only fetch if currentElectionId is available
+  }
 })
 
 const {
   data: hashCastVote,
-  writeContract: executeCastVote
-  // isPending: isLoadingCastVote
+  writeContract: executeCastVote,
+  isPending: isLoadingCastVote
 } = useWriteContract()
 
 const { isLoading: isConfirmingCastVote, isSuccess: isConfirmedCastVote } =
@@ -80,7 +95,7 @@ const candidates = computed(() => {
           role: user?.role || 'Candidate',
           imageUrl: user?.imageUrl
         },
-        totalVotes: Number((election.value as string | bigint[])[6]) || 0,
+        totalVotes: Number(voteCount.value) || 0,
         currentVotes: votesPerCandidate[candidate] //5
       }
     })
@@ -93,7 +108,7 @@ const castVote = async (candidateAddress: string) => {
       addErrorToast('Elections contract address not found')
       return
     }
-    const args = [props.electionId, candidateAddress]
+    const args = [electionId.value, candidateAddress]
 
     const data = encodeFunctionData({
       abi: ElectionABI as Abi,
@@ -147,7 +162,7 @@ const fetchVotes = async () => {
 watch(isConfirmingCastVote, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedCastVote.value) {
     addSuccessToast('Vote Casted successfully!')
-
+    await fetchVotes()
     await queryClient.invalidateQueries({
       queryKey: ['readContract']
     })
