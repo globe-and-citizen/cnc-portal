@@ -25,11 +25,11 @@
     <PublishResult
       v-if="
         showPublishResult &&
-        userStore.address === teamStore.currentTeam?.ownerAddress &&
         formattedElection &&
         !Boolean(formattedElection?.resultsPublished) &&
         electionStatus.text === 'Completed'
       "
+      :disabled="userStore.address !== teamStore.currentTeam?.ownerAddress"
       :election-id="formattedElection?.id ?? 1"
     />
     <ButtonUI
