@@ -1,23 +1,16 @@
 <template>
-  <div
-    class="flex flex-col items-center justify-center gap-4 p-6 bg-gray-50 rounded-lg shadow-sm border border-gray-100 mt-4"
-  >
-    <h2 class="text-xl font-semibold text-gray-700">No Current Election</h2>
-    <p class="text-sm text-gray-500 text-center">
-      There is no active election at the moment. Please check back later or create a new election.
-    </p>
-    <ButtonUI
-      variant="primary"
-      size="md"
-      @click="() => emits('showCreateElectionModal')"
-      data-test="create-election"
-    >
-      Create Election
-    </ButtonUI>
+  <div class="flex flex-col gap-6 w-full mt-4">
+    <!-- Main rectangular placeholder (half width) -->
+    <div class="w-full md:w-1/2 h-24 rounded-xl bg-gray-200 animate-pulse"></div>
+
+    <!-- Four horizontal tiles -->
+    <div class="flex flex-wrap gap-6 w-full">
+      <div
+        v-for="(_, index) in 4"
+        :key="index"
+        class="h-24 flex-1 min-w-[150px] rounded-xl bg-gray-200 animate-pulse"
+      ></div>
+    </div>
+    <p>There is no Current Election. <br />Create an Election to view the Current Election</p>
   </div>
 </template>
-<script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
-
-const emits = defineEmits(['showCreateElectionModal'])
-</script>

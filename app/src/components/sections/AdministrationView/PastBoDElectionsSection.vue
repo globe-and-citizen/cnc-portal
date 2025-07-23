@@ -4,9 +4,10 @@
     <div v-if="isLoading" class="flex w-full h-96 justify-center items-center">
       <div class="text-gray-500">Loading past elections...</div>
     </div>
-    <div v-else-if="elections.length === 0" class="flex w-full h-96 justify-center items-center">
+    <!-- <div v-else-if="elections.length === 0" class="flex w-full h-96 justify-center items-center">
       <div class="text-gray-500">No past elections available</div>
-    </div>
+    </div> -->
+    <PastBoDElection404 v-else-if="elections.length === 0" :is-loading="isLoading" />
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
       <PastBoDElectionCard
         v-for="(election, index) in elections"
@@ -19,6 +20,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import PastBoDElectionCard from './PastBoDElectionCard.vue'
+import PastBoDElection404 from './PastBoDElection404.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
