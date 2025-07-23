@@ -3,7 +3,7 @@
     <div class="stats shadow w-full">
       <div class="stat place-items-center">
         <div class="stat-title">Total Hours</div>
-        <div class="stat-value">{{ totalHour }}h</div>
+        <div class="font-bold text-xl">{{ totalHour }}h</div>
         <span class="text-sm text-gray-500"
           >of {{ props.weeklyClaim?.wage?.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span
         >
@@ -11,20 +11,29 @@
 
       <div class="stat place-items-center">
         <div class="stat-title">Hourly Rate</div>
-        <div class="stat-value">
-          {{ hourlyRateInUserCurrency.toFixed(2) }} {{ currencyStore.localCurrency.code }}
-        </div>
-        <div class="text-sm text-gray-500 flex gap-2 mt-1">
+        <div class="font-bold text-xl">
           <RatePerHourList
             :rate-per-hour="props.weeklyClaim?.wage?.ratePerHour || []"
             :currency-symbol="currencyStore.getTokenInfo('native')?.symbol || 'NATIVE'"
           />
         </div>
+        <div class="text-sm text-gray-500 flex gap-2 mt-1">
+          ≃ ${{ hourlyRateInUserCurrency.toFixed(2) }} {{ currencyStore.localCurrency.code }}
+        </div>
       </div>
 
       <div class="stat place-items-center">
         <div class="stat-title">Total Amount</div>
-        <div class="stat-value">{{ totalAmount }} {{ currencyStore.localCurrency.code }}</div>
+        <div class="font-bold text-xl">
+          <RatePerHourTotalList
+            :rate-per-hour="props.weeklyClaim?.wage?.ratePerHour || []"
+            :currency-symbol="currencyStore.getTokenInfo('native')?.symbol || 'NATIVE'"
+            :total-hours="totalHour"
+          />
+        </div>
+        <div class="text-sm text-gray-500 flex gap-2 mt-1">
+          ≃ ${{ totalAmount }} {{ currencyStore.localCurrency.code }}
+        </div>
       </div>
     </div>
   </div>
@@ -34,6 +43,7 @@
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import RatePerHourList from '@/components/RatePerHourList.vue'
+import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 
 const props = defineProps({
   weeklyClaim: {
