@@ -30,24 +30,28 @@
 
           <template #hourlyRate-data="{ row }">
             <div>
-              <span class="font-bold">
-                ≃
-                {{ getHoulyRateInUserCurrency(row.wage.ratePerHour).toFixed(2) }}
-                {{ currencyStore.localCurrency.code }} / Hour
-              </span>
-
               <RatePerHourList
                 :rate-per-hour="row.wage.ratePerHour"
                 :currency-symbol="NETWORK.currencySymbol"
+                :class="'font-bold'"
               />
+              <span class="">
+                ≃ ${{ getHoulyRateInUserCurrency(row.wage.ratePerHour).toFixed(2) }}
+                {{ currencyStore.localCurrency.code }} / Hour
+              </span>
             </div>
           </template>
 
           <template #totalAmount-data="{ row }">
             <div>
-              <span class="font-bold">
-                ≃
-                {{
+              <RatePerHourTotalList
+                :rate-per-hour="row.wage.ratePerHour"
+                :currency-symbol="NETWORK.currencySymbol"
+                :total-hours="getTotalHoursWorked(row.claims)"
+                :class="'font-bold'"
+              />
+              <span class="">
+                ≃ ${{
                   (
                     getTotalHoursWorked(row.claims) *
                     getHoulyRateInUserCurrency(row.wage.ratePerHour)
@@ -55,11 +59,6 @@
                 }}
                 {{ currencyStore.localCurrency.code }}
               </span>
-              <RatePerHourTotalList
-                :rate-per-hour="row.wage.ratePerHour"
-                :currency-symbol="NETWORK.currencySymbol"
-                :total-hours="getTotalHoursWorked(row.claims)"
-              />
             </div>
           </template>
 
