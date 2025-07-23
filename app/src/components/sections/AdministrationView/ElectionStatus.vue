@@ -1,10 +1,12 @@
 <template>
   <!-- Status and Countdown -->
-  <div class="flex items-center justify-start gap-2 mb-6">
-    <span class="px-2 py-1 text-xs font-medium rounded-full" :class="electionStatus.class">
-      {{ electionStatus.text }}
+  <div class="flex items-center justify-start gap-2">
+    <span class="badge badge-lg flex items-center gap-1 px-2 py-1 text-sm h-10" :class="badgeClass">
+      <span class="w-3 h-3 rounded-full inline-block" :class="dotClass"></span>
+      <span class="font-medium">{{ electionStatus.text }}</span>
+      <span class="mx-1">•</span>
+      {{ timeRemaining }} left
     </span>
-    <span class="text-sm text-gray-600"> Ends in {{ timeRemaining }} </span>
   </div>
 </template>
 <script setup lang="ts">
@@ -62,14 +64,39 @@ const electionStatus = computed(() => {
   if (!formattedElection) return { text: 'No Election', class: 'bg-gray-100 text-gray-800' }
 
   if (now.value < formattedElection.startDate) {
-    return { text: 'Upcoming', class: 'bg-yellow-100 text-yellow-800' }
+    return {
+      text: 'Upcoming',
+      color: 'warning'
+    }
   }
   if (
     now.value > formattedElection.endDate ||
     formattedElection.votesCast === formattedElection.voters
   ) {
-    return { text: 'Completed', class: 'bg-gray-100 text-gray-800' }
+    return {
+      text: 'Completed',
+      color: 'neutral'
+    }
   }
-  return { text: 'Active', class: 'bg-green-100 text-green-800' }
+  return {
+    text: 'Active',
+    color: 'success'
+  }
+})
+
+const badgeClass = computed(() => `badge-${electionStatus.value.color} badge-outline`)
+const dotClass = computed(() => {
+  switch (electionStatus.value.color) {
+    case 'warning':
+      return 'bg-yellow-500'
+    case 'error':
+      return 'bg-red-500'
+    case 'neutral':
+      return 'bg-gray-500'
+    case 'success':
+      return 'bg-green-500'
+    default:
+      return 'bg-gray-500'
+  }
 })
 </script>
