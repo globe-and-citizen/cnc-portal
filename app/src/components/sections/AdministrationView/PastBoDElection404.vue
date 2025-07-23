@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col md:flex-row gap-8 w-full my-5">
     <div
-      v-for="(, index) in 3"
+      v-for="(_, index) in 3"
       :key="index"
       class="flex-1 min-w-[300px] p-6 border border-gray-200 rounded-2xl"
     >

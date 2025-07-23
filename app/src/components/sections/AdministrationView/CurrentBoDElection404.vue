@@ -6,7 +6,7 @@
     <!-- Four horizontal tiles -->
     <div class="flex flex-wrap gap-6 w-full">
       <div
-        v-for="(, index) in 4"
+        v-for="(_, index) in 4"
         :key="index"
         class="h-24 flex-1 min-w-[150px] rounded-xl bg-gray-200 animate-pulse"
       ></div>
@@ -14,6 +14,3 @@
     <p>There is no Current Election. <br />Create an Election to view the Current Election</p>
   </div>
 </template>
-<script setup lang="ts">
-const emits = defineEmits(['showCreateElectionModal'])
-</script>

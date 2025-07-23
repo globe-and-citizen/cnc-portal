@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-wrap justify-between gap-5 p-5">
     <div
-      v-for="(, index) in 5"
+      v-for="(_, index) in 5"
       :key="index"
       class="flex flex-col items-center gap-4 p-4 bg-white rounded-lg shadow-sm min-w-[180px] max-w-[200px] flex-1"
     >
