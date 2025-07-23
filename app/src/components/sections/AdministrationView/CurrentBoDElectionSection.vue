@@ -8,7 +8,7 @@
           @show-results-modal="showResultsModal = true"
           @show-create-election-modal="showCreateElectionModal = true"
         />
-        <ModalComponent v-model="showCreateElectionModal">
+        <ModalComponent v-if="showCreateElectionModal" v-model="showCreateElectionModal">
           <CreateElectionForm
             :is-loading="isLoadingCreateElection || isConfirmingCreateElection"
             @create-proposal="createElection"
