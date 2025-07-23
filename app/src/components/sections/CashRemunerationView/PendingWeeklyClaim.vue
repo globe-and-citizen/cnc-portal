@@ -188,37 +188,37 @@ const columns = [
     key: 'weekStart',
     label: 'Productivity Diary',
     // sortable: true,
-    class: 'text-black text-base'
+    class: 'stat-title text-base'
   },
   {
     key: 'member',
     label: 'Member',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'stat-title text-base'
   },
   {
     key: 'hoursWorked',
     label: 'Hour Worked',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'stat-title text-base'
   },
   {
     key: 'hourlyRate',
     label: 'Hourly Rate',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'stat-title text-base'
   },
   {
     key: 'totalAmount',
     label: 'Total Amount',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'stat-title text-base'
   },
   {
     key: 'action',
     label: 'Action',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'stat-title text-base'
   }
 ] as TableColumn[]
 </script>
