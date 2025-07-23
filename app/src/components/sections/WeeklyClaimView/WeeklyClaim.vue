@@ -1,5 +1,4 @@
 <template>
-  {{}}
   <CardComponent :title="singleUser ? 'Weekly Claim (User)' : 'Weekly Claim'" class="w-full pb-7">
     <TableComponent v-if="data" :rows="data" :columns="columns" :loading="isTeamClaimDataFetching">
       <template #member-data="{ row }">
@@ -30,27 +29,14 @@
         <div>
           <span class="font-bold">
             ≃
-            {{
-              (
-                getTotalHoursWorked(row.claims) *
-                Number(
-                  getHoulyRateInUserCurrency(
-                    row.wage.cashRatePerHour ??
-                      row.wage.tokenRatePerHour ??
-                      row.wage.usdcRatePerHour
-                  )
-                )
-              ).toFixed(2)
-            }}
-            {{ NETWORK.nativeTokenSymbol }} / USD
+            {{ getHoulyRateInUserCurrency(row.wage.ratePerHour).toFixed(2) }}
+            {{ currencyStore.localCurrency.code }} / Hour
           </span>
-          <div class="flex">
-            <span class=""> {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }},</span>
 
-            <span class=""> {{ row.wage.tokenRatePerHour }} TOKEN, </span>
-
-            <span class=""> {{ row.wage.usdcRatePerHour }} USDC </span>
-          </div>
+          <RatePerHourList
+            :rate-per-hour="row.wage.ratePerHour"
+            :currency-symbol="NETWORK.currencySymbol"
+          />
         </div>
       </template>
 
@@ -60,41 +46,18 @@
             ≃
             {{
               (
-                getTotalHoursWorked(row.claims) *
-                Number(
-                  getHoulyRateInUserCurrency(
-                    row.wage.cashRatePerHour ??
-                      row.wage.tokenRatePerHour ??
-                      row.wage.usdcRatePerHour
-                  )
-                )
+                getTotalHoursWorked(row.claims) * getHoulyRateInUserCurrency(row.wage.ratePerHour)
               ).toFixed(2)
             }}
-            {{ NETWORK.nativeTokenSymbol }} / USD
+            {{ currencyStore.localCurrency.code }}
           </span>
-
-          <div class="flex">
-            <span>
-              {{ getTotalHoursWorked(row.claims) * row.wage.cashRatePerHour }}
-              {{ NETWORK.currencySymbol }},
-            </span>
-
-            <span>
-              {{ getTotalHoursWorked(row.claims) * row.wage.tokenRatePerHour }}
-              TOKEN,
-            </span>
-
-            <span>
-              {{ getTotalHoursWorked(row.claims) * row.wage.usdcRatePerHour }}
-              USDC
-            </span>
-          </div>
+          <RatePerHourTotalList
+            :rate-per-hour="row.wage.ratePerHour"
+            :currency-symbol="NETWORK.currencySymbol"
+            :total-hours="getTotalHoursWorked(row.claims)"
+          />
         </div>
       </template>
-
-      <!-- <template #action-data="{}">
-        <ButtonUI class="btn btn-success btn-sm" type="button"> Approve </ButtonUI>
-      </template> -->
     </TableComponent>
   </CardComponent>
 </template>
@@ -110,6 +73,10 @@ import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { RouterLink } from 'vue-router'
+import type { RatePerHour } from '@/types/cash-remuneration'
+import type { TokenId } from '@/constant'
+import RatePerHourList from '@/components/RatePerHourList.vue'
+import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -138,23 +105,43 @@ const { data, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
 const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
 
 const currencyStore = useCurrencyStore()
-const getHoulyRateInUserCurrency = (rate: number) => {
-  const nativeTokenInfo = currencyStore.getTokenInfo('native')
-  const price = nativeTokenInfo?.prices.find((p) => p.id == 'local')?.price || 0
-  return (rate * price).toFixed(2)
+
+function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = currencyStore): number {
+  return ratePerHour.reduce((total: number, rate: { type: TokenId; amount: number }) => {
+    const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
+    const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
+    return total + rate.amount * localPrice
+  }, 0)
 }
+
+// const getHourlyRate = (ratePerHour: RatePerHour, type: SupportedTokens) => {
+//   switch (type) {
+//     case 'native':
+//       return ratePerHour.find((rate) => rate.type === 'native')
+//         ? ratePerHour.find((rate) => rate.type === 'native')!.amount
+//         : 'N/A'
+//     case 'sher':
+//       return ratePerHour.find((rate) => rate.type === 'sher')
+//         ? ratePerHour.find((rate) => rate.type === 'sher')!.amount
+//         : 'N/A'
+//     case 'usdc':
+//       return ratePerHour.find((rate) => rate.type === 'usdc')
+//         ? ratePerHour.find((rate) => rate.type === 'usdc')!.amount
+//         : 'N/A'
+//     default:
+//       return 'N/A'
+//   }
+// }
 function formatDate(date: string | Date) {
   const monday = getMondayStart(new Date(date))
   const sunday = getSundayEnd(new Date(date))
   const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-  const locale = navigator.language || 'en-US'
-  return `${monday.toLocaleDateString(locale, options)}-${sunday.toLocaleDateString(locale, options)}`
+  return `${monday.toLocaleDateString('en-US', options)}-${sunday.toLocaleDateString('en-US', options)}`
 }
 
 function getCurrentMonthYear(date: string | Date) {
   const d = new Date(date)
-  const locale = navigator.language || 'en-US'
-  return d.toLocaleDateString(locale, {
+  return d.toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric'
   })

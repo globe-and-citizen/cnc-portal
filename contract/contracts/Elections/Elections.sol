@@ -19,7 +19,7 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   mapping(uint256 => ElectionTypes.Election) private _elections;
   uint256[] private _electionIds;
   mapping(uint256 => mapping(address => address)) private _votes;
-  mapping(uint256 => mapping(address => uint256)) private _voteCounts;
+  mapping(uint256 => mapping(address => uint256)) public _voteCounts;
 
   event ElectionCreated(
     uint256 indexed electionId,
@@ -151,14 +151,16 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     ElectionTypes.Election storage election = _elections[electionId];
 
     if (election.id == 0) revert ElectionNotFound();
-    if (!ElectionUtils.hasElectionEnded(election.endDate)) {
+    if ( election.voteCount < election.voterList.length && !ElectionUtils.hasElectionEnded(election.endDate)) {
       revert ResultsNotReady();
     }
     if (election.resultsPublished) revert ResultsAlreadyPublished();
 
     election.winners = getElectionResults(electionId);
     election.resultsPublished = true;
-    IBoardOfDirectors(bodAddress).setBoardOfDirectors(election.winners);
+    if (election.winners.length > 0) {
+      IBoardOfDirectors(bodAddress).setBoardOfDirectors(election.winners);
+    }
 
     emit ResultsPublished(electionId, election.winners);
   }
@@ -275,6 +277,10 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
 
     // Extract just the addresses of the winners.
     address[] memory winners = new address[](seatCount);
+
+    // If there are no winners, return an empty array.
+    if (topCandidates.length == 0) return new address[](0);
+
     for (uint256 i = 0; i < seatCount; i++) {
       winners[i] = topCandidates[i].candidateAddress;
     }

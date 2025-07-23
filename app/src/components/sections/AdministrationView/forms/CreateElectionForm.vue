@@ -97,7 +97,7 @@
           data-test="submitButton"
           @click="submitForm"
         >
-          Create Proposal
+          Create Election
         </ButtonUI>
       </div>
     </div>

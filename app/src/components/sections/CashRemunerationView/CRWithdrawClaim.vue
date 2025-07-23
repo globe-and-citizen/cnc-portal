@@ -15,7 +15,7 @@
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { CRSignClaim } from '@/types'
 import { log, parseError } from '@/utils'
-import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import { useWriteContract } from '@wagmi/vue'
 import {
   encodeFunctionData,
   formatEther,
@@ -32,6 +32,8 @@ import { useCustomFetch } from '@/composables'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { USDC_ADDRESS } from '@/constant'
 import { estimateGas } from '@wagmi/core'
+import { useQueryClient } from '@tanstack/vue-query'
+import { waitForTransactionReceipt } from '@wagmi/core'
 
 const props = defineProps<{ claim: CRSignClaim; isWeeklyClaim?: boolean }>()
 const emit = defineEmits(['claim-withdrawn'])
@@ -39,6 +41,12 @@ const emit = defineEmits(['claim-withdrawn'])
 const userDataStore = useUserDataStore()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
+const queryClient = useQueryClient()
+const userStore = useUserDataStore()
+
+const signedQueryKey = computed(
+  () => `signed-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
+)
 
 const cashRemunerationEip712Address = computed(
   () =>
@@ -46,15 +54,7 @@ const cashRemunerationEip712Address = computed(
       (contract) => contract.type === 'CashRemunerationEIP712'
     )?.address as Address
 )
-const {
-  writeContractAsync: withdraw,
-  data: withdrawHash,
-  error: withdrawError
-} = useWriteContract()
-
-const { isSuccess: withdrawSuccess, error: withdrawTrxError } = useWaitForTransactionReceipt({
-  hash: withdrawHash
-})
+const { writeContractAsync: withdraw } = useWriteContract()
 
 const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(
   computed(
@@ -120,7 +120,7 @@ const withdrawClaim = async () => {
       to: cashRemunerationEip712Address.value,
       data
     })
-    await withdraw({
+    const hash = await withdraw({
       ...args,
       address: cashRemunerationEip712Address.value
       // abi: EIP712ABI,
@@ -128,27 +128,28 @@ const withdrawClaim = async () => {
       // functionName: 'withdraw',
       // args: [claimData, props.claim.signature as Address]
     })
-    isLoading.value = false
 
-    if (withdrawSuccess.value) {
+    // Wait for transaction receipt
+    const receipt = await waitForTransactionReceipt(config, {
+      hash
+    })
+
+    if (receipt.status === 'success') {
       toastStore.addSuccessToast('Claim withdrawn')
-    }
-    if (withdrawError.value) {
-      toastStore.addErrorToast('Failed to withdraw claim')
-    }
-    if (withdrawTrxError.value) {
-      toastStore.addErrorToast('Trx failed: Failed to withdraw claim')
-    }
-    await updateClaimStatus()
+      await updateClaimStatus()
 
-    if (updateClaimError.value) {
-      toastStore.addErrorToast('Failed to update Claim status')
-    }
+      if (updateClaimError.value) {
+        toastStore.addErrorToast('Failed to update Claim status')
+      }
+      queryClient.invalidateQueries({
+        queryKey: [signedQueryKey.value]
+      })
 
-    // chek if claim is updated
-    if (withdrawSuccess.value) {
       emit('claim-withdrawn')
+    } else {
+      toastStore.addErrorToast('Transaction failed: Failed to withdraw claim')
     }
+
     isLoading.value = false
   } catch (error) {
     isLoading.value = false

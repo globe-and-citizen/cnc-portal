@@ -7,7 +7,7 @@
           (weeklyClaim) => weeklyClaim.weekStart < new Date().toISOString()
         )"
         :key="item.weekStart"
-        class="card shadow-md bg-white p-4"
+        class="card shadow-lg bg-white p-4"
         :class="{
           'transition -translate-y-full opacity-0  duration-1000': index === 0
         }"
@@ -18,7 +18,7 @@
           </template>
           <template #weekStart-data="{ row }">
             <span class="font-bold line-clamp-1">{{ getCurrentMonthYear(row.weekStart) }}</span>
-            <br />
+
             <span>{{ formatDate(row.weekStart) }}</span>
           </template>
 
@@ -32,22 +32,14 @@
             <div>
               <span class="font-bold">
                 ≃
-                {{
-                  (
-                    getTotalHoursWorked(row.claims) *
-                    Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
-                  ).toFixed(2)
-                }}
-                {{ NETWORK.nativeTokenSymbol }} / Hour
+                {{ getHoulyRateInUserCurrency(row.wage.ratePerHour).toFixed(2) }}
+                {{ currencyStore.localCurrency.code }} / Hour
               </span>
 
-              <div class="flex">
-                <span v-for="(rate, index) in row.wage.ratePerHour" :key="rate.type">
-                  {{ rate.amount }}
-                  {{ rate.type == 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
-                  {{ index < row.wage.ratePerHour.length - 1 ? ',' : '' }}
-                </span>
-              </div>
+              <RatePerHourList
+                :rate-per-hour="row.wage.ratePerHour"
+                :currency-symbol="NETWORK.currencySymbol"
+              />
             </div>
           </template>
 
@@ -58,18 +50,16 @@
                 {{
                   (
                     getTotalHoursWorked(row.claims) *
-                    Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
+                    getHoulyRateInUserCurrency(row.wage.ratePerHour)
                   ).toFixed(2)
                 }}
-                {{ NETWORK.nativeTokenSymbol }} / Hour
+                {{ currencyStore.localCurrency.code }}
               </span>
-              <div>
-                <span v-for="(rate, index) in row.wage.ratePerHour" :key="rate.type" class="mr-1">
-                  {{ rate.amount * getTotalHoursWorked(row.claims) }}
-                  {{ rate.type == 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
-                  {{ index < row.wage.ratePerHour.length - 1 ? ',' : '' }}
-                </span>
-              </div>
+              <RatePerHourTotalList
+                :rate-per-hour="row.wage.ratePerHour"
+                :currency-symbol="NETWORK.currencySymbol"
+                :total-hours="getTotalHoursWorked(row.claims)"
+              />
             </div>
           </template>
 
@@ -123,7 +113,7 @@
 import UserComponent from '@/components/UserComponent.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { NETWORK } from '@/constant'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { computed, watch } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import { useUserDataStore, useTeamStore } from '@/stores'
@@ -132,9 +122,11 @@ import CRSigne from './CRSigne.vue'
 import type { Address } from 'viem'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
-import { formatCurrencyShort } from '@/utils/currencyUtil'
+// import { formatCurrencyShort } from '@/utils/currencyUtil'
 import type { TokenId } from '@/constant'
 import CRWeeklyClaimOwnerHeader from './CRWeeklyClaimOwnerHeader.vue'
+import RatePerHourList from '@/components/RatePerHourList.vue'
+import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 
 function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -143,41 +135,44 @@ function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 
-const weeklyClaimUrl = computed(() => {
-  return `/weeklyClaim/?status=pending&teamId=${teamStore.currentTeam?.id}${
-    userStore.address !== teamStore.currentTeam?.ownerAddress
-      ? `&memberAddress=${userStore.address}`
-      : ''
-  }`
-})
-
-const { data, isFetching } = useCustomFetch(weeklyClaimUrl.value).get().json<WeeklyClaimResponse>()
+const weeklyClaimUrl = computed(
+  () =>
+    `/weeklyClaim/?status=pending&teamId=${teamStore.currentTeam?.id}${userStore.address !== teamStore.currentTeam?.ownerAddress ? `&memberAddress=${userStore.address}` : ''}`
+)
+const queryKey = computed(
+  () => `pending-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
+)
+const { data, isLoading } = useTanstackQuery<WeeklyClaimResponse>(queryKey, weeklyClaimUrl)
+const isFetching = computed(() => isLoading.value)
 
 const isSameWeek = (weeklyClaimStartWeek: string) => {
-  console.log(`weeklyClaimStartWeek: ${weeklyClaimStartWeek}`)
   const currentMonday = getMondayStart(new Date())
   return currentMonday.toISOString() === weeklyClaimStartWeek
 }
 
 const currencyStore = useCurrencyStore()
-function getHoulyRateInUserCurrency(hourlyRate: number, tokenId: TokenId = 'native') {
-  const tokenInfo = currencyStore.getTokenInfo(tokenId)
-  const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
-  const code = currencyStore.localCurrency.code
-  return formatCurrencyShort(hourlyRate * localPrice, code)
+
+function getHoulyRateInUserCurrency(
+  ratePerHour: { type: string; amount: number }[],
+  tokenStore = currencyStore
+): number {
+  return ratePerHour.reduce((total: number, rate) => {
+    const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
+    const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
+    return total + rate.amount * localPrice
+  }, 0)
 }
 
 function formatDate(date: string | Date) {
   const monday = getMondayStart(new Date(date))
   const sunday = getSundayEnd(new Date(date))
   const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-  const locale = navigator.language || 'en-US'
-  return `${monday.toLocaleDateString(locale, options)}-${sunday.toLocaleDateString(locale, options)}`
+  return `${monday.toLocaleDateString('en-US', options)}-${sunday.toLocaleDateString('en-US', options)}`
 }
+
 function getCurrentMonthYear(date: string | Date) {
   const d = new Date(date)
-  const locale = navigator.language || 'en-US'
-  return d.toLocaleDateString(locale, {
+  return d.toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric'
   })

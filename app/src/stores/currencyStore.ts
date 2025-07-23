@@ -39,7 +39,7 @@ export const useCurrencyStore = defineStore('currency', () => {
         symbol: 'SHER',
         code: 'SHER',
         coingeckoId: 'sher-token',
-        decimals: 18,
+        decimals: 6,
         address: investorsV1Address
       })
     } else {

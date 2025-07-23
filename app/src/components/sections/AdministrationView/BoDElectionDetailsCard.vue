@@ -1,0 +1,100 @@
+<template>
+  <div class="bg-base-100 card border border-gray-300 flex flex-col">
+    <div class="card-body">
+      <!-- User Component -->
+      <UserComponent layout="alternate" :user="election.user" />
+
+      <!-- Votes Stat - Right-aligned below UserComponent -->
+      <div class="flex justify-end mt-2">
+        <span class="text-lg font-bold text-gray-700">
+          {{ election.currentVotes }}/{{ election.totalVotes }}
+        </span>
+      </div>
+
+      <!-- Custom Divider -->
+      <!-- <div class="flex items-center my-2">
+        <div class="w-6 h-6 rounded-full border-4 border-gray-600"></div>
+        <div class="flex-1 border-t-4 border-gray-200"></div>
+      </div> -->
+
+      <progress
+        class="progress progress-success my-4"
+        :value="election.currentVotes"
+        :max="election.totalVotes"
+      ></progress>
+
+      <!-- View Results Button -->
+      <ButtonUI
+        variant="success"
+        :outline="true"
+        :disabled="hasVoted"
+        :loading="isLoadingCastVoteLocal && isLoading"
+        @click="
+          () => {
+            isLoadingCastVoteLocal = true
+            emits('castVote', election.user.address)
+          }
+        "
+        >Cast a Vote</ButtonUI
+      >
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import ButtonUI from '@/components/ButtonUI.vue'
+import UserComponent from './UserComponent.vue'
+import { computed, watch, type PropType, ref } from 'vue'
+import type { User } from '@/types'
+import { useReadContract } from '@wagmi/vue'
+import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import type { Address } from 'viem'
+import { log, parseError } from '@/utils'
+
+const props = defineProps({
+  election: {
+    type: Object as PropType<{
+      user: User
+      currentVotes: number
+      totalVotes: number
+      id: bigint
+    }>,
+    required: true
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emits = defineEmits(['castVote'])
+
+const userDataStore = useUserDataStore()
+const teamStore = useTeamStore()
+const { addErrorToast } = useToastStore()
+
+const isLoadingCastVoteLocal = ref(false)
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
+
+const { data: hasVoted, error: errorHasVoted } = useReadContract({
+  functionName: 'hasVoted',
+  address: electionsAddress.value,
+  abi: ELECTIONS_ABI,
+  args: [props.election.id, userDataStore.address as Address]
+})
+
+watch(errorHasVoted, (error) => {
+  if (error) {
+    addErrorToast(`Error checking vote status`)
+    log.error('Error checking vote status:', parseError(error))
+  }
+})
+
+watch(
+  () => props.isLoading,
+  (newState) => {
+    if (!newState) isLoadingCastVoteLocal.value = false
+  }
+)
+</script>

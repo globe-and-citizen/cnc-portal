@@ -1,167 +1,100 @@
 <template>
-  <CardComponent title="Current Election">
+  <CardComponent :title="`${isDetails ? `Past` : `Current`} Election`">
     <template #card-action>
       <div class="flex justify-between">
-        <div class="flex justify-between gap-2">
-          <ButtonUI
-            variant="primary"
-            size="md"
-            @click="showCreateElectionModal = !showCreateElectionModal"
-            data-test="create-proposal"
-          >
-            Create Election
-          </ButtonUI>
-          <ButtonUI> View Election </ButtonUI>
-        </div>
+        <ElectionActions
+          v-if="!isDetails"
+          :formatted-election="formattedElection || null"
+          @show-results-modal="showResultsModal = true"
+          @show-create-election-modal="showCreateElectionModal = true"
+        />
         <ModalComponent v-model="showCreateElectionModal">
-          <!-- <VotingManagement :team="team" /> -->
           <CreateElectionForm
             :is-loading="isLoadingCreateElection || isConfirmingCreateElection"
             @create-proposal="createElection"
           />
         </ModalComponent>
+        <ModalComponent
+          v-if="
+            (formattedElection?.endDate ?? new Date()) > new Date() ||
+            formattedElection?.votesCast === formattedElection?.voters
+          "
+          v-model="showResultsModal"
+        >
+          <ElectionResultModal :id="formattedElection?.id ?? 1" />
+        </ModalComponent>
       </div>
     </template>
-    <div v-if="formattedElection">
+    <div
+      v-if="formattedElection && (!formattedElection?.resultsPublished || isDetails)"
+      class="mt-4"
+    >
       <!-- Status and Countdown -->
-      <div class="flex items-center justify-start gap-2 mb-6">
-        <span class="px-2 py-1 text-xs font-medium rounded-full" :class="electionStatus.class">
-          {{ electionStatus.text }}
-        </span>
-        <span class="text-sm text-gray-600"> Ends in {{ timeRemaining }} </span>
-      </div>
+      <ElectionStatus :formatted-election="formattedElection" />
       <div>
         <!-- Election Title -->
-        <h2 class="text-2xl text-center font-semibold mb-4">
-          {{ /*electionData.title*/ formattedElection?.title }}
+        <h2 class="font-semibold">
+          {{ formattedElection?.title }}
         </h2>
 
+        <h4 class="mb-6">
+          {{ formattedElection?.description }}
+        </h4>
+
         <!-- Stats Row -->
-        <div class="flex justify-between items-stretch gap-4">
-          <!-- Candidates Stat -->
-          <div class="flex-1 flex gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
-            <div class="p-3 bg-blue-50 rounded-full">
-              <IconifyIcon icon="heroicons:user-group" class="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-500">Candidates</p>
-              <p class="text-xl font-semibold text-gray-900">
-                {{ formattedElection?.candidates }}
-              </p>
-            </div>
-          </div>
-
-          <!-- End Date Stat -->
-          <div
-            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100"
-          >
-            <div class="p-3 bg-green-50 rounded-full">
-              <IconifyIcon icon="heroicons:calendar" class="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-500">Ends</p>
-              <p class="text-xl font-semibold text-gray-900">
-                {{ formatDate(formattedElection?.endDate) }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Votes Stat -->
-          <div
-            class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100"
-          >
-            <div class="p-3 bg-purple-50 rounded-full">
-              <IconifyIcon icon="heroicons:chart-bar" class="h-6 w-6 text-purple-600" />
-            </div>
-            <div>
-              <p class="text-sm font-medium text-gray-500">Votes Cast</p>
-              <p class="text-xl font-semibold text-gray-900">
-                {{ formattedElection?.votesCast }}
-              </p>
-            </div>
-          </div>
-        </div>
+        <ElectionStats :formatted-election="formattedElection" />
       </div>
     </div>
-    <div
-      v-else
-      class="flex flex-col items-center justify-center gap-4 p-6 bg-gray-50 rounded-lg shadow-sm border border-gray-100"
-    >
-      <h2 class="text-xl font-semibold text-gray-700">No Current Election</h2>
-      <p class="text-sm text-gray-500 text-center">
-        There is no active election at the moment. Please check back later or create a new election.
-      </p>
-      <ButtonUI
-        variant="primary"
-        size="md"
-        @click="showCreateElectionModal = true"
-        data-test="create-election"
-      >
-        Create Election
-      </ButtonUI>
-    </div>
+    <CurrentBoDElection404 v-else @show-create-election-modal="showCreateElectionModal = true" />
   </CardComponent>
 </template>
 
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
+import ElectionResultModal from '@/components/sections/AdministrationView/modals/ElectionResultModal.vue'
+import { computed, ref, watch } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
-// import BoDABI from '@/artifacts/abi/bod.json'
 import { useTeamStore, useToastStore } from '@/stores'
-import { encodeFunctionData, type Abi, type Address } from 'viem'
+import { encodeFunctionData, type Abi } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
 import { estimateGas } from '@wagmi/core'
 import type { OldProposal } from '@/types'
 import { log, parseError } from '@/utils'
 import { config } from '@/wagmi.config'
+import { useQueryClient } from '@tanstack/vue-query'
+import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
+import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
+import ElectionActions from './ElectionActions.vue'
+import CurrentBoDElection404 from './CurrentBoDElection404.vue'
+
+const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
+const queryClient = useQueryClient()
+const showResultsModal = ref(false)
+const currentElectionId = computed(() => props.electionId)
+const showCreateElectionModal = ref(false)
 
 // Contract addresses
-const electionsAddress = computed(() => {
-  const address = teamStore.currentTeam?.teamContracts?.find((c) => c.type === 'Elections')?.address
-  return address as Address
-})
-
-// Fetch next election ID
-const {
-  data: nextElectionId,
-  // isLoading: isLoadingNextElectionId,
-  error: errorNextElectionId
-} = useReadContract({
-  functionName: 'getNextElectionId',
-  address: electionsAddress.value,
-  abi: ElectionABI
-})
-
-// Compute current election ID
-const currentElectionId = computed(() => {
-  console.log('nextElectionId.value:', nextElectionId.value)
-  if (
-    nextElectionId.value &&
-    (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
-  ) {
-    return Number(nextElectionId.value) - 1
-  }
-  return null // Handle cases where nextElectionId is not available
-})
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
 // Fetch current election details
 const {
   data: currentElection,
   // isLoading: isLoadingCurrentElection,
   error: errorGetCurrentElection
+  //queryKey: currentElectionQueryKey
 } = useReadContract({
   functionName: 'getElection',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [currentElectionId] // Supply currentElectionId as an argument
+  args: [currentElectionId], // Supply currentElectionId as an argument
+  query: {
+    enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
+  }
 })
 
 const {
@@ -172,7 +105,10 @@ const {
   functionName: 'getVoteCount',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [currentElectionId] // Supply currentElectionId as an argument
+  args: [currentElectionId], // Supply currentElectionId as an argument
+  query: {
+    enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
+  }
 })
 
 const {
@@ -183,7 +119,20 @@ const {
   functionName: 'getElectionCandidates',
   address: electionsAddress.value,
   abi: ElectionABI,
-  args: [currentElectionId]
+  args: [currentElectionId],
+  query: {
+    enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
+  }
+})
+
+const { data: voterList } = useReadContract({
+  functionName: 'getElectionEligibleVoters',
+  address: electionsAddress.value,
+  abi: ElectionABI,
+  args: [currentElectionId],
+  query: {
+    enabled: computed(() => !!currentElectionId.value)
+  }
 })
 
 const {
@@ -205,20 +154,25 @@ const formattedElection = computed(() => {
 
   return {
     id: Number(raw[0]),
-    title: raw[1],
-    description: raw[2],
-    createdBy: raw[3],
+    title: String(raw[1]),
+    description: String(raw[2]),
+    createdBy: String(raw[3]),
     startDate: new Date(Number(raw[4]) * 1000),
     endDate: new Date(Number(raw[5]) * 1000),
     seatCount: Number(raw[6]),
-    resultsPublished: raw[7],
+    resultsPublished: Boolean(raw[7]),
     votesCast: Number(voteCount.value || 0),
-    candidates: (candidateList.value as string[])?.length
+    candidates: (candidateList.value as string[])?.length,
+    voters: (voterList.value as string[])?.length || 0
   }
 })
 
 const createElection = async (electionData: OldProposal) => {
   try {
+    if (!electionsAddress.value) {
+      addErrorToast('Elections contract address not found')
+      return
+    }
     const args = [
       electionData.title,
       electionData.description,
@@ -249,23 +203,16 @@ const createElection = async (electionData: OldProposal) => {
   } catch (error) {
     addErrorToast(parseError(error, ElectionABI as Abi))
     log.error('Error creating election:', parseError(error, ElectionABI as Abi))
-  } finally {
-    showCreateElectionModal.value = false
   }
 }
 
-watch(isConfirmingCreateElection, (isConfirming, wasConfirming) => {
+watch(isConfirmingCreateElection, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedCreateElection.value) {
     addSuccessToast('Election created successfully!')
     showCreateElectionModal.value = false
-  }
-})
-
-// Watch for errors or loading states
-watch(errorNextElectionId, (error) => {
-  if (error) {
-    addErrorToast('Error fetching next election ID')
-    console.error('errorNextElectionId.value:', error)
+    await queryClient.invalidateQueries({
+      queryKey: ['readContract']
+    })
   }
 })
 
@@ -289,71 +236,4 @@ watch(errorGetCandidates, (error) => {
     log.error('errorGetCandidates.value:', error)
   }
 })
-
-const showCreateElectionModal = ref(false)
-
-// Calculate time remaining
-const now = ref(new Date())
-let timer: ReturnType<typeof setInterval>
-
-onMounted(() => {
-  timer = setInterval(() => {
-    now.value = new Date()
-  }, 1000 * 60) // Update every minute
-})
-
-onBeforeUnmount(() => {
-  clearInterval(timer)
-})
-
-const timeRemaining = computed(() => {
-  //const diff = electionData.endDate.getTime() - now.value.getTime()
-  if (!formattedElection.value) return 'No election data available'
-
-  const diff =
-    formattedElection.value?.endDate.getTime() - formattedElection.value?.startDate.getTime()
-
-  if (diff <= 0) return 'election ended'
-
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  if (days > 0) return `${days} ${days === 1 ? 'day' : 'days'}`
-
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  if (hours > 0) return `${hours} ${hours === 1 ? 'hour' : 'hours'}`
-
-  const minutes = Math.floor(diff / (1000 * 60))
-  return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
-})
-
-// Election status
-const electionStatus = computed(() => {
-  if (!formattedElection.value) return { text: 'No Election', class: 'bg-gray-100 text-gray-800' }
-
-  if (now.value < formattedElection.value?.startDate) {
-    return { text: 'Upcoming', class: 'bg-yellow-100 text-yellow-800' }
-  }
-  if (now.value > formattedElection.value?.endDate) {
-    return { text: 'Completed', class: 'bg-gray-100 text-gray-800' }
-  }
-  return { text: 'Active', class: 'bg-green-100 text-green-800' }
-})
-
-// Format date as "Dec 15, 2023"
-const formatDate = (date: Date) => {
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  })
-}
 </script>
-
-<style scoped>
-/* Add slight spacing between stats on smaller screens */
-@media (max-width: 768px) {
-  .flex.justify-between {
-    flex-direction: column;
-    gap: 1rem;
-  }
-}
-</style>

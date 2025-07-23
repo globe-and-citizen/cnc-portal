@@ -1,18 +1,47 @@
 <template>
   <CurrentBoDSection />
-  <CurrentBoDElectionSection />
+  <CurrentBoDElectionSection v-if="nextElectionId" :election-id="currentElectionId" />
   <PastBoDElectionsSection />
-  <BoDElectionSection v-if="team" :team="team" />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import BoDElectionSection from '@/components/sections/AdministrationView/BoDElectionSection.vue'
 import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentBoDSection.vue'
 import CurrentBoDElectionSection from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
 import PastBoDElectionsSection from '@/components/sections/AdministrationView/PastBoDElectionsSection.vue'
+import { useReadContract } from '@wagmi/vue'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { useTeamStore } from '@/stores'
+import { computed, watch } from 'vue'
+import { log, parseError } from '@/utils'
 
 const teamStore = useTeamStore()
-const team = computed(() => teamStore.currentTeam)
+const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
+
+// Fetch next election ID
+const {
+  data: nextElectionId,
+  error: errorGetNextElectionId
+  // isLoading: isLoadingNextElectionId,
+} = useReadContract({
+  functionName: 'getNextElectionId',
+  address: electionsAddress.value,
+  abi: ELECTIONS_ABI
+})
+
+// Compute current election ID
+const currentElectionId = computed(() => {
+  if (
+    nextElectionId.value &&
+    (typeof nextElectionId.value === 'number' || typeof nextElectionId.value === 'bigint')
+  ) {
+    return BigInt(Number(nextElectionId.value) - 1)
+  }
+  return 0n // Handle cases where nextElectionId is not available
+})
+
+watch(errorGetNextElectionId, (error) => {
+  if (error) {
+    log.error('Error fetching next election ID: ', parseError(error))
+  }
+})
 </script>

@@ -49,6 +49,7 @@
         :loading="loading"
         :disabled="loading"
         @click="$emit('confirm')"
+        data-test="confirm-btn"
       >
         Confirm & Create
       </ButtonUI>

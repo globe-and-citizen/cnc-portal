@@ -1,7 +1,7 @@
 <template>
   <div>
     <ButtonUI
-      v-if="team?.ownerAddress === userAddress"
+      v-if="teamStore.currentTeam?.ownerAddress === userStore.address"
       size="sm"
       variant="primary"
       class="w-max"
@@ -13,8 +13,8 @@
 
     <ModalComponent v-model="addVestingModal">
       <CreateVesting
-        v-if="team?.id"
-        :tokenAddress="sherToken?.address ?? ''"
+        v-if="teamStore.currentTeam?.id"
+        :tokenAddress="(teamStore.getContractAddressByType('InvestorsV1') as Address) ?? ''"
         @closeAddVestingModal="handleClose"
         @reload="handleReload"
         :reloadKey="reloadKey"
@@ -24,12 +24,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
+import type { Address } from 'viem'
 
 defineProps<{
   reloadKey: number
@@ -42,17 +43,10 @@ const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 
 const handleReload = () => {
-  console.log('vesting actions reload calledd === ')
   emit('reload') // Propagate reload up
 }
 
 const handleClose = () => {
   addVestingModal.value = false
 }
-
-const userAddress = computed(() => userStore.address)
-const team = computed(() => teamStore.currentTeam)
-const sherToken = computed(() =>
-  team.value?.teamContracts?.find((contract) => contract.type === 'InvestorsV1')
-)
 </script>

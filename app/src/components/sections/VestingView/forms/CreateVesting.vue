@@ -7,6 +7,7 @@
       <div class="flex grow w-full">
         <SelectMemberInput
           v-model="memberInput"
+          data-test="member"
           @selectMember="handleMemberSelect"
           class="text-xs w-full"
         />
@@ -21,6 +22,7 @@
       <div class="flex-grow">
         <Datepicker
           v-model="dateRange"
+          data-test="date-range"
           range
           auto-apply
           format="dd/MM/yyyy"
@@ -35,6 +37,7 @@
         <span class="text-xs flex-shrink-0">Years</span>
         <input
           type="number"
+          data-test="duration-years"
           min="0"
           v-model.number="duration.years"
           class="input input-bordered w-full"
@@ -44,6 +47,7 @@
         <span class="text-xs flex-shrink-0">Months</span>
         <input
           type="number"
+          data-test="duration-month"
           min="0"
           v-model.number="duration.months"
           class="input input-bordered w-full"
@@ -53,6 +57,7 @@
         <span class="text-xs flex-shrink-0">Days</span>
         <input
           type="number"
+          data-test="duration-days"
           min="0"
           v-model.number="duration.days"
           class="input input-bordered w-full"
@@ -114,7 +119,7 @@ import VestingABI from '@/artifacts/abi/Vesting.json'
 import { VESTING_ADDRESS } from '@/constant'
 import { parseEther, type Address, formatUnits, parseUnits } from 'viem'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
-import VestingSummary from '../VestingSummary.vue'
+import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
 import Datepicker from '@vuepic/vue-datepicker'
