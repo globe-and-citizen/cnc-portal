@@ -8,12 +8,7 @@
       "
       @click="
         () => {
-          if (electionStatus.text == 'Completed') {
-            // showResultsModal = true
-            emits('showResultsModal')
-          } else {
-            router.push(`/teams/${teamStore.currentTeamId}/administration/bod-elections-details`)
-          }
+          router.push(`/teams/${teamStore.currentTeamId}/administration/bod-elections-details`)
         }
       "
       class="btn btn-md"
@@ -29,10 +24,12 @@
     </div>
     <PublishResult
       v-if="
+        showPublishResult &&
         formattedElection &&
         !Boolean(formattedElection?.resultsPublished) &&
         electionStatus.text === 'Completed'
       "
+      :disabled="userStore.address !== teamStore.currentTeam?.ownerAddress"
       :election-id="formattedElection?.id ?? 1"
     />
     <ButtonUI
@@ -45,11 +42,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, inject } from 'vue'
 import PublishResult from '@/components/sections/AdministrationView/PublishResult.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useRouter } from 'vue-router'
-import { useTeamStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 
 const { formattedElection } = defineProps<{
   formattedElection: {
@@ -67,9 +64,11 @@ const { formattedElection } = defineProps<{
   } | null
 }>()
 
-const emits = defineEmits(['showResultsModal', 'showCreateElectionModal'])
+const emits = defineEmits(['showCreateElectionModal'])
+const showPublishResult = inject('showPublishResultBtn')
 
 const teamStore = useTeamStore()
+const userStore = useUserDataStore()
 const router = useRouter()
 const now = ref(new Date())
 

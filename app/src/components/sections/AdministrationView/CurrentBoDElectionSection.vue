@@ -25,12 +25,18 @@
         </ModalComponent>
       </div>
     </template>
+    <template #card-badge>
+      <ElectionStatus
+        v-if="formattedElection && (!formattedElection?.resultsPublished || isDetails)"
+        :formatted-election="formattedElection"
+      />
+    </template>
     <div
       v-if="formattedElection && (!formattedElection?.resultsPublished || isDetails)"
       class="mt-4"
     >
       <!-- Status and Countdown -->
-      <ElectionStatus :formatted-election="formattedElection" />
+
       <div>
         <!-- Election Title -->
         <h2 class="font-semibold">
