@@ -96,7 +96,8 @@ const candidates = computed(() => {
           imageUrl: user?.imageUrl
         },
         totalVotes: Number(voteCount.value) || 0,
-        currentVotes: votesPerCandidate[candidate] //5
+        currentVotes: votesPerCandidate[candidate], //5
+        endDate: new Date(Number((election.value as bigint[])[5]) * 1000)
       }
     })
   } else return []
