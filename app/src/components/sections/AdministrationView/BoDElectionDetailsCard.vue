@@ -35,12 +35,6 @@
         </span>
       </div>
 
-      <!-- Custom Divider -->
-      <!-- <div class="flex items-center my-2">
-        <div class="w-6 h-6 rounded-full border-4 border-gray-600"></div>
-        <div class="flex-1 border-t-4 border-gray-200"></div>
-      </div> -->
-
       <progress
         class="progress progress-success my-4"
         :value="election.currentVotes"
@@ -112,18 +106,6 @@ const { addErrorToast } = useToastStore()
 
 const isLoadingCastVoteLocal = ref(false)
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
-const isElectionEnded = computed(
-  () =>
-    props.election.endDate < new Date() ||
-    (Array.isArray(voterList.value) && voterList.value.length === props.election.totalVotes)
-)
-
-const isElectionWinner = computed(
-  () =>
-    isElectionEnded.value &&
-    Array.isArray(electionResults.value) &&
-    electionResults.value[0] === props.election.user.address
-)
 
 const { data: voterList } = useReadContract({
   functionName: 'getElectionEligibleVoters',
@@ -156,11 +138,18 @@ const { data: electionResults } = useReadContract({
   args: [props.election.id]
 })
 
-watch(electionResults, (newResults) => {
-  if (newResults) {
-    console.log('newElectionResults: ', newResults)
-  }
-})
+const isElectionEnded = computed(
+  () =>
+    props.election.endDate < new Date() ||
+    (Array.isArray(voterList.value) && voterList.value.length === props.election.totalVotes)
+)
+
+const isElectionWinner = computed(
+  () =>
+    isElectionEnded.value &&
+    Array.isArray(electionResults.value) &&
+    electionResults.value[0] === props.election.user.address
+)
 
 watch(errorHasVoted, (error) => {
   if (error) {
