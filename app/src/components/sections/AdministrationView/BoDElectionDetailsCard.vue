@@ -50,7 +50,7 @@
       <!-- Conditional Button/Indicator -->
       <div
         v-if="hasVoted && voterChoice === election.user.address"
-        class="badge badge-outline badge-warning badge-xl"
+        class="inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full border-2 border-warning text-warning font-bold text-base h-12"
       >
         <IconifyIcon icon="heroicons-solid:check" class="h-5 w-5" />
         <span>Your Vote</span>
