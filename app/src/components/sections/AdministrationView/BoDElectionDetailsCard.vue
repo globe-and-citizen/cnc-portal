@@ -41,7 +41,7 @@
         v-else
         variant="success"
         :outline="true"
-        :disabled="hasVoted"
+        :disabled="hasVoted || electionStatus === 'upcoming'"
         :loading="isLoadingCastVoteLocal && isLoading"
         @click="
           () => {
@@ -59,7 +59,7 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import UserComponent from './UserComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { computed, watch, type PropType, ref } from 'vue'
+import { computed, watch, type PropType, ref, onMounted, onBeforeUnmount } from 'vue'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
 import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
@@ -75,6 +75,7 @@ const props = defineProps({
       totalVotes: number
       id: bigint
       endDate: Date
+      startDate: Date
     }>,
     required: true
   },
@@ -124,15 +125,34 @@ const { data: electionResults } = useReadContract({
   args: [props.election.id]
 })
 
-const isElectionEnded = computed(
-  () =>
-    props.election.endDate < new Date() ||
+const now = ref(new Date())
+let timer: ReturnType<typeof setInterval>
+
+onMounted(() => {
+  timer = setInterval(() => {
+    now.value = new Date()
+  }, 1000 * 30) // Update every minute
+})
+
+onBeforeUnmount(() => {
+  clearInterval(timer)
+})
+
+const electionStatus = computed(() => {
+  if (
+    props.election.endDate < now.value ||
     (Array.isArray(voterList.value) && voterList.value.length === props.election.totalVotes)
-)
+  )
+    return 'ended'
+
+  if (props.election.startDate > now.value) return 'upcoming'
+
+  return 'active'
+})
 
 const isElectionWinner = computed(
   () =>
-    isElectionEnded.value &&
+    electionStatus.value === 'ended' &&
     Array.isArray(electionResults.value) &&
     electionResults.value[0] === props.election.user.address
 )

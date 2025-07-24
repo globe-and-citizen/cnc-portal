@@ -97,6 +97,7 @@ const candidates = computed(() => {
         },
         totalVotes: Number(voteCount.value) || 0,
         currentVotes: votesPerCandidate[candidate], //5
+        startDate: new Date(Number((election.value as bigint[])[4]) * 1000),
         endDate: new Date(Number((election.value as bigint[])[5]) * 1000)
       }
     })
