@@ -116,28 +116,11 @@ const withdrawClaim = async () => {
     }
     const data = encodeFunctionData(args)
     // First run estimate gas to get errors
-    try {
-      await estimateGas(config, {
-        to: cashRemunerationEip712Address.value,
-        data
-      })
-    } catch (error) {
-      isLoading.value = false
-      const parsed = parseError(error)
-      if (parsed.includes('Insufficient token balance')) {
-        toastStore.addErrorToast('Insufficient token balance')
-      } else if (
-        parsed.includes('Token not supported') ||
-        parsed.includes('Token not support') ||
-        parsed.includes('unsupported token')
-      ) {
-        toastStore.addErrorToast('Token not supported')
-      } else {
-        toastStore.addErrorToast('Failed to estimate gas')
-      }
-      log.info('EstimateGas error', parsed)
-      return
-    }
+    await estimateGas(config, {
+      to: cashRemunerationEip712Address.value,
+      data
+    })
+
     const hash = await withdraw({
       ...args,
       address: cashRemunerationEip712Address.value
@@ -171,8 +154,21 @@ const withdrawClaim = async () => {
     isLoading.value = false
   } catch (error) {
     isLoading.value = false
-    toastStore.addErrorToast('Failed to withdraw claim')
     log.info('Withdraw error', parseError(error))
+    const parsed = parseError(error)
+    if (parsed.includes('Insufficient token balance')) {
+      toastStore.addErrorToast('Insufficient token balance')
+    } else if (
+      parsed.includes('Token not supported') ||
+      parsed.includes('Token not support') ||
+      parsed.includes('unsupported token')
+    ) {
+      toastStore.addErrorToast('Add Token support: Token not supported')
+    } else {
+      toastStore.addErrorToast('Failed to withdraw')
+    }
+    log.info('EstimateGas error', parsed)
+    return
   }
 }
 </script>
