@@ -394,7 +394,7 @@ const menuItems = computed(() => [
     label: 'Administration',
     icon: 'heroicons:chart-bar',
     route: {
-      name: 'administration',
+      name: 'bod-elections',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'bod-elections',
