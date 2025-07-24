@@ -277,27 +277,11 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
       }
     }
 
-    // Determine actual number of winners (don't include zero addresses)
-    uint256 actualSeatCount = seatCount > candidateList.length ? candidateList.length : seatCount;
+    // Extract winners, ensuring we always return the required number of seats
+    address[] memory winners = new address[](seatCount);
 
-    // Extract winners, but only those with votes > 0
-    address[] memory winners = new address[](actualSeatCount);
-    uint256 winnerCount = 0;
-
-    for (
-      uint256 i = 0;
-      i < actualSeatCount && i < allCandidates.length && winnerCount < actualSeatCount;
-      i++
-    ) {
-      if (allCandidates[i].voteCount > 0) {
-        winners[winnerCount] = allCandidates[i].candidateAddress;
-        winnerCount++;
-      }
-    }
-
-    // Resize array to actual winner count
-    assembly {
-      mstore(winners, winnerCount)
+    for (uint256 i = 0; i < seatCount; i++) {
+      winners[i] = allCandidates[i].candidateAddress;
     }
 
     return winners;
