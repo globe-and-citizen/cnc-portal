@@ -79,7 +79,7 @@ export const addClaim = async (req: Request, res: Response) => {
     if (totalHours + hoursWorked > wage.maximumHoursPerWeek) {
       return errorResponse(
         400,
-        "Maximum weekly hours reached, cannot submit more claims for this week.",
+        "The maximum weekly hours have been reached; no additional claims can be submitted this week.",
         res
       );
     }
@@ -112,7 +112,7 @@ export const addClaim = async (req: Request, res: Response) => {
     ) {
       return errorResponse(
         400,
-        "Impossible to submit: the total of hours for this day would exceed 24 hours.",
+        "Submission failed: the total number of hours for this day would exceed 24 hours.",
         res
       );
     }
