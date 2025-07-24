@@ -30,24 +30,28 @@
 
           <template #hourlyRate-data="{ row }">
             <div>
-              <span class="font-bold">
-                ≃
-                {{ getHoulyRateInUserCurrency(row.wage.ratePerHour).toFixed(2) }}
-                {{ currencyStore.localCurrency.code }} / Hour
-              </span>
-
               <RatePerHourList
                 :rate-per-hour="row.wage.ratePerHour"
                 :currency-symbol="NETWORK.currencySymbol"
+                :class="'font-bold'"
               />
+              <span class="">
+                ≃ ${{ getHoulyRateInUserCurrency(row.wage.ratePerHour).toFixed(2) }}
+                {{ currencyStore.localCurrency.code }} / Hour
+              </span>
             </div>
           </template>
 
           <template #totalAmount-data="{ row }">
             <div>
-              <span class="font-bold">
-                ≃
-                {{
+              <RatePerHourTotalList
+                :rate-per-hour="row.wage.ratePerHour"
+                :currency-symbol="NETWORK.currencySymbol"
+                :total-hours="getTotalHoursWorked(row.claims)"
+                :class="'font-bold'"
+              />
+              <span class="">
+                ≃ ${{
                   (
                     getTotalHoursWorked(row.claims) *
                     getHoulyRateInUserCurrency(row.wage.ratePerHour)
@@ -55,11 +59,6 @@
                 }}
                 {{ currencyStore.localCurrency.code }}
               </span>
-              <RatePerHourTotalList
-                :rate-per-hour="row.wage.ratePerHour"
-                :currency-symbol="NETWORK.currencySymbol"
-                :total-hours="getTotalHoursWorked(row.claims)"
-              />
             </div>
           </template>
 
@@ -189,37 +188,37 @@ const columns = [
     key: 'weekStart',
     label: 'Productivity Diary',
     // sortable: true,
-    class: 'text-black text-base'
+    class: 'text-base'
   },
   {
     key: 'member',
     label: 'Member',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base'
   },
   {
     key: 'hoursWorked',
     label: 'Hour Worked',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base'
   },
   {
     key: 'hourlyRate',
     label: 'Hourly Rate',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base'
   },
   {
     key: 'totalAmount',
     label: 'Total Amount',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base'
   },
   {
     key: 'action',
     label: 'Action',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base'
   }
 ] as TableColumn[]
 </script>

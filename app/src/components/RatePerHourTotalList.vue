@@ -1,9 +1,9 @@
 <template>
   <div class="flex">
-    <span v-for="(rate, index) in ratePerHour" :key="rate.type" class="mr-1">
-      {{ Number(rate.amount) * Number(totalHours) || 0 }}
-      {{ rate.type == 'native' ? currencySymbol : rate.type.toUpperCase() }}
-      {{ index < ratePerHour.length - 1 ? ',' : '' }}
+    <span v-for="(rate, index) in ratePerHour" :key="rate.type">
+      {{ Number(rate.amount) * Number(totalHours) || 0
+      }}{{ rate.type == 'native' ? currencySymbol : rate.type.toUpperCase()
+      }}<span v-if="index < ratePerHour.length - 1">, </span>
     </span>
   </div>
 </template>
