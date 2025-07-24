@@ -163,7 +163,7 @@ const uniqueCandidates = () => {
 const newProposalInput = ref<Partial<OldProposal>>({
   title: '',
   description: '',
-  startDate: '',
+  startDate,
   endDate: '',
   candidates: [
     {
