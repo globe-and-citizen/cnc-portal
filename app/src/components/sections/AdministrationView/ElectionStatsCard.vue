@@ -4,13 +4,7 @@
       class="p-1 rounded-full aspect-square flex items-center justify-center w-12 h-12"
       :class="`${bgColor}`"
     >
-      <div style="width: 100%; height: 100%">
-        <IconifyIcon
-          :icon="`heroicons:${icon}-solid`"
-          :class="`h-7 w-7 ${textColor}`"
-          style="width: 100%; height: 100%"
-        />
-      </div>
+      <IconifyIcon :icon="`heroicons:${icon}-solid`" :class="`h-7 w-7 ${textColor}`" />
     </div>
     <div>
       <p class="text-sm font-bold text-gray-400">{{ title }}</p>
@@ -32,13 +26,3 @@ defineProps<{
   textColor: string
 }>()
 </script>
-
-<style scoped>
-/* Add slight spacing between stats on smaller screens */
-@media (max-width: 768px) {
-  .flex.justify-between {
-    flex-direction: column;
-    gap: 1rem;
-  }
-}
-</style>
