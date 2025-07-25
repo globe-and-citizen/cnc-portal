@@ -110,8 +110,8 @@ describe("Claim Controller", () => {
         .post("/claim")
         .send({ teamId: 1, hoursWorked: 45, memo: "memo" });
 
-      expect(response.body.message).toBe(
-        "Maximum weekly hours reached, cannot submit more claims for this week."
+      expect(response.body.message).toMatch(
+        /^Maximum weekly hours reached, cannot submit more claims for this week\. You have \d+ hours remaining\.$/
       );
       expect(response.status).toBe(400);
     });
