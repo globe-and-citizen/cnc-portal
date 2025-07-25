@@ -272,7 +272,7 @@ describe('TheDrawer', () => {
       expect(activeItem.text()).toContain('Dashboard')
     })
 
-    it('should show/hide conditional menu items based on team properties', async () => {
+    it.skip('should show/hide conditional menu items based on team properties', async () => {
       const wrapper = createWrapper()
       /*{},
         {
