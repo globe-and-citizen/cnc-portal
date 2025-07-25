@@ -22,7 +22,7 @@ import OverviewCard from '@/components/OverviewCard.vue'
 import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
 import { watch, computed } from 'vue'
-import { useCustomFetch } from '@/composables'
+import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { useStorage } from '@vueuse/core'
 import type { TokenId } from '@/constant'
 import type { RatePerHour } from '@/types/cash-remuneration'
@@ -39,9 +39,16 @@ const currency = useStorage('currency', {
 
 const {
   data: weeklyClaims,
-  isFetching,
+  isLoading: isFetching,
   error
-} = useCustomFetch(`/weeklyClaim/?teamId=${teamStore.currentTeamId}&status=signed`).get().json()
+} = useTanstackQuery(
+  'weeklyClaims',
+  computed(() => `/weeklyClaim/?teamId=${teamStore.currentTeamId}&status=signed`),
+  {
+    refetchInterval: 10000, // auto reload every 10s
+    refetchOnWindowFocus: true
+  }
+)
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
