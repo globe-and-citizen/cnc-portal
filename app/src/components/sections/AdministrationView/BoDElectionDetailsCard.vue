@@ -159,7 +159,6 @@ const isElectionWinner = computed(
 
 watch(errorHasVoted, (error) => {
   if (error) {
-    addErrorToast(`Error checking vote status`)
     log.error('Error checking vote status:', parseError(error))
   }
 })

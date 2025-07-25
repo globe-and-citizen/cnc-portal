@@ -176,7 +176,6 @@ watch(
   async (newCandidates) => {
     if (newCandidates) {
       await fetchVotes()
-      addSuccessToast('Election candidates fetched successfully!')
     }
   },
   { immediate: true, deep: true }
