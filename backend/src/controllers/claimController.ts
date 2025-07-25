@@ -80,7 +80,7 @@ export const addClaim = async (req: Request, res: Response) => {
       const remainingHours = Math.max(0, wage.maximumHoursPerWeek - totalHours);
       return errorResponse(
         400,
-        `The maximum weekly hours have been reached: no additional claims can be submitted this week. You have ${remainingHours} hours remaining.`,
+        `Maximum weekly hours reached, cannot submit more claims for this week. You have ${remainingHours} hours remaining.`,
         res
       );
     }
