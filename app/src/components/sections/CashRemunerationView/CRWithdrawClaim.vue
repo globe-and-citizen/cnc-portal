@@ -167,8 +167,6 @@ const withdrawClaim = async () => {
     } else {
       toastStore.addErrorToast('Failed to withdraw')
     }
-    log.info('EstimateGas error', parsed)
-    return
   }
 }
 </script>
