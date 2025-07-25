@@ -269,17 +269,17 @@ const formatedUserAddress = computed(() => {
 const menuItems = computed(() => [
   {
     label: 'Teams List',
-    icon: 'heroicons:user-group',
+    icon: 'heroicons:squares-2x2',
     route: {
       name: 'teams',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'teams',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+    show: true
   },
   {
-    label: 'Dashboard',
-    icon: 'heroicons:squares-2x2',
+    label: 'Team Dashboard',
+    icon: 'heroicons:home',
     route: {
       name: 'show-team',
       params: { id: teamStore.currentTeam?.id || '1' }
