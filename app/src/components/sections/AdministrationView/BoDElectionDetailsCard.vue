@@ -59,7 +59,7 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import UserComponent from './UserComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { computed, watch, type PropType, ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, watch, type PropType, ref } from 'vue'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
