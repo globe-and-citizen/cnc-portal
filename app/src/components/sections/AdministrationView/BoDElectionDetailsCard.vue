@@ -160,7 +160,7 @@ const isElectionWinner = computed(
   () =>
     electionStatus.value === 'ended' &&
     Array.isArray(electionResults.value) &&
-    electionResults.value[0] === props.election.user.address
+    electionResults.value.find((address) => address === props.election.user.address)
 )
 
 watch(errorHasVoted, (error) => {
