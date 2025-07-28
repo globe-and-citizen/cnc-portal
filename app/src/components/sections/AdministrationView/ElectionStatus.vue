@@ -4,8 +4,10 @@
     <span class="badge badge-lg flex items-center gap-1 px-2 py-1 text-sm h-10" :class="badgeClass">
       <span class="w-3 h-3 rounded-full inline-block" :class="dotClass"></span>
       <span class="font-medium">{{ electionStatus.text }}</span>
-      <span class="mx-1">•</span>
-      {{ timeRemaining }} left
+      <span v-if="electionStatus.text !== 'Completed'" class="flex items-center gap-1">
+        <span class="mx-1">•</span>
+        {{ timeRemaining }} left
+      </span>
     </span>
   </div>
 </template>
