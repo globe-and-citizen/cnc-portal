@@ -3,21 +3,37 @@ import { errorResponse } from "../utils/utils";
 import { prisma } from "../utils";
 import { Prisma, Claim } from "@prisma/client";
 import { isUserMemberOfTeam } from "./wageController";
+import { getMondayStart, todayMidnight } from "../utils/dayUtils";
 
-type claimBodyRequest = Pick<Claim, "hoursWorked"> & { teamId: string };
+type claimBodyRequest = Pick<Claim, "hoursWorked"> & {
+  memo: string;
+  teamId: string;
+};
+
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
 
   const body = req.body as claimBodyRequest;
   const hoursWorked = Number(body.hoursWorked);
+  const memo = body.memo as string;
   const teamId = Number(body.teamId);
+
+  const weekStart = getMondayStart(new Date());
+  const dayWorked = todayMidnight(new Date());
 
   // Validating the claim data
   // Checking required data
   let parametersError: string[] = [];
   if (!body.teamId) parametersError.push("Missing teamId");
   if (!body.hoursWorked) parametersError.push("Missing hoursWorked");
+  if (!body.memo) parametersError.push("Missing memo");
   if (isNaN(hoursWorked)) parametersError.push("Invalid hoursWorked");
+  if (memo && memo.trim().length === 0) {
+    parametersError.push("Invalid memo");
+  }
+  if (memo && memo.trim().split(/\s+/).length > 200) {
+    parametersError.push("memo is too long, max 200 words");
+  }
   if (isNaN(teamId)) parametersError.push("Invalid teamId");
   if (hoursWorked <= 0)
     parametersError.push(
@@ -36,17 +52,83 @@ export const addClaim = async (req: Request, res: Response) => {
     if (!wage) {
       return errorResponse(400, "No wage found for the user", res);
     }
+
+    // get the member current wage
+
+    let weeklyClaim = await prisma.weeklyClaim.findFirst({
+      where: {
+        wage: {
+          teamId: teamId,
+          nextWageId: null,
+        },
+        weekStart: weekStart,
+        memberAddress: callerAddress,
+        teamId: teamId,
+      },
+      include: { claims: true },
+    });
+
+    // Check tu max hours.
+
+    const totalHours =
+      weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ??
+      0;
+
+    if (totalHours + hoursWorked > wage.maximumHoursPerWeek) {
+      return errorResponse(
+        400,
+        "Maximum weekly hours reached, cannot submit more claims for this week.",
+        res
+      );
+    }
+
+    if (!weeklyClaim) {
+      weeklyClaim = await prisma.weeklyClaim.create({
+        data: {
+          wageId: wage.id,
+          weekStart: weekStart,
+          memberAddress: callerAddress,
+          teamId: teamId,
+          data: {},
+          status: "pending",
+        },
+        include: {
+          claims: true,
+        },
+      });
+    }
+
+    if (
+      (weeklyClaim?.claims
+        .filter(
+          (claim) =>
+            claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime()
+        )
+        .reduce((sum, claim) => sum + Number(claim.hoursWorked), 0) ?? 0) +
+        Number(hoursWorked) >
+      24
+    ) {
+      return errorResponse(
+        400,
+        "Impossible to submit: the total of hours for this day would exceed 24 hours.",
+        res
+      );
+    }
+
     const claim = await prisma.claim.create({
       data: {
         hoursWorked,
+        memo,
         wageId: wage.id,
         status: "pending",
+        weeklyClaimId: weeklyClaim.id,
+        dayWorked: dayWorked,
       },
     });
 
     return res.status(201).json(claim);
   } catch (error) {
-    return errorResponse(500, "Internal Server Error", res);
+    return errorResponse(500, error, res);
   } finally {
     await prisma.$disconnect();
   }
@@ -56,6 +138,7 @@ export const getClaims = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const teamId = Number(req.query.teamId);
   const status = req.query.status as string;
+  const memberAddress = req.query.memberAddress as string | undefined;
 
   try {
     // Validate teamId
@@ -72,11 +155,24 @@ export const getClaims = async (req: Request, res: Response) => {
     if (status) {
       statusFilter = { status };
     }
+
+    // add filter for memberAddress if provided
+    let memberFilter: Prisma.ClaimWhereInput = {};
+    if (memberAddress) {
+      memberFilter = {
+        wage: {
+          userAddress: memberAddress,
+          teamId: teamId,
+        },
+      };
+    }
+
     // Request all claims based on status, that have a wage where the teamId is the provided teamId
     const claims = await prisma.claim.findMany({
       where: {
         wage: {
           teamId: teamId,
+          ...(memberAddress ? { userAddress: memberAddress } : {}),
         },
         ...statusFilter,
       },
@@ -87,6 +183,7 @@ export const getClaims = async (req: Request, res: Response) => {
               select: {
                 address: true,
                 name: true,
+                imageUrl: true,
               },
             },
           },
@@ -95,7 +192,6 @@ export const getClaims = async (req: Request, res: Response) => {
     });
     return res.status(200).json(claims);
   } catch (error) {
-    console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
   } finally {
     await prisma.$disconnect();

@@ -1,13 +1,14 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import ShareholderList from '../../SherTokenView/ShareholderList.vue'
-import { parseEther, formatEther, type Address } from 'viem'
+import { parseEther, formatUnits, parseUnits, type Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-// import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 import TableComponent from '@/components/TableComponent.vue'
+import { useTeamStore } from '@/stores'
+import { mockTeamStore } from '@/tests/mocks/store.mock'
 
 const mockWriteContract = vi.fn()
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -67,7 +68,7 @@ describe('ShareholderList', () => {
         },
         tokenSymbol: 'TEST',
         tokenSymbolLoading: false,
-        totalSupply: parseEther('300'),
+        totalSupply: parseUnits('300', 6),
         totalSupplyLoading: false,
         shareholders: [
           { shareholder: '0x123', amount: parseEther('100') },
@@ -85,6 +86,17 @@ describe('ShareholderList', () => {
   }
 
   it('should render the shareholder name if exists in member list', () => {
+    vi.mocked(useTeamStore).mockImplementation(() => ({
+      ...mockTeamStore,
+      //@ts-expect-error: TypeScript does not recognize the mock structure
+      currentTeam: {
+        ...mockTeamStore.currentTeam,
+        members: [
+          { id: '1', address: '0x123', name: 'John Doe', teamId: 1 },
+          { id: '2', address: '0x456', name: 'Jane Doe', teamId: 1 }
+        ]
+      }
+    }))
     const wrapper = createComponent()
     const tableComponent = wrapper.findComponent(TableComponent)
     expect(tableComponent.exists()).toBeTruthy()
@@ -95,8 +107,8 @@ describe('ShareholderList', () => {
         (member) => member.address == shareholder.shareholder
       )[0].name,
       address: shareholder.shareholder,
-      balance: `${formatEther(shareholder.amount)} TEST`,
-      percentage: `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(parseEther('300'))).toString()}%`,
+      balance: `${formatUnits(shareholder.amount, 6)} TEST`,
+      percentage: `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(parseUnits('300', 6))).toString()}%`,
       shareholder: shareholder.shareholder,
       amount: shareholder.amount
     }))
@@ -143,7 +155,6 @@ describe('ShareholderList', () => {
   })
 
   it('should add error toast when mint failed', async () => {
-    // const { addErrorToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).mintError = 'Mint failed'
@@ -153,7 +164,6 @@ describe('ShareholderList', () => {
   })
 
   it('should emit refetchShareholders, add success toast and set modal to false when mint success', async () => {
-    // const { addSuccessToast } = useToastStore()
     const wrapper = createComponent()
 
     ;(wrapper.vm as unknown as ComponentData).isSuccessMinting = true

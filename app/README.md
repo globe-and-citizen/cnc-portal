@@ -23,7 +23,7 @@ If the standalone TypeScript plugin doesn't feel fast enough for you, Volar has 
 
 See [Vite Configuration Reference](https://vitejs.dev/config/).
 
-## Project Setup
+## Project setup
 
 ```sh
 npm install

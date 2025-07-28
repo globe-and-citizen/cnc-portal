@@ -55,80 +55,157 @@
 
     <ModalComponent v-model="showSetMemberWageModal" v-if="showSetMemberWageModal">
       <p class="font-bold text-lg">Set Member Wage</p>
-      <hr class="" />
-      <div class="input-group mt-3">
-        <label class="input input-bordered flex items-center gap-2 input-md">
-          <span class="w-32">Max Weekly Hours</span>
-          |
-          <input
-            type="text"
-            class="grow"
-            v-model="wageData.maxWeeklyHours"
-            placeholder="Enter max hours per week..."
-            data-test="max-hours-input"
-          />
-        </label>
+      <hr class="my-2" />
+
+      <div class="space-y-4 mt-3">
+        <!-- Max Weekly Hours -->
+        <div>
+          <label class="input input-bordered flex items-center gap-2 input-md w-full">
+            <span class="w-40">Max Weekly Hours</span>
+            |
+            <input
+              type="text"
+              class="grow"
+              v-model="wageData.maxWeeklyHours"
+              placeholder="Enter max hours per week..."
+              data-test="max-hours-input"
+            />
+          </label>
+          <div
+            data-test="max-weekly-hours-error"
+            class="text-red-500 text-sm w-full text-left"
+            v-for="error of v$.wageData.maxWeeklyHours?.$errors"
+            :key="error.$uid"
+          >
+            {{ error.$message }}
+          </div>
+        </div>
+
+        <!-- Hourly Rates - Horizontal Layout -->
+        <div>
+          <h3 class="font-medium mb-2">Hourly Rates</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Native Token -->
+            <div>
+              <div class="join w-full">
+                <input
+                  type="text"
+                  class="input input-bordered join-item w-full"
+                  v-model="wageData.hourlyRate"
+                  placeholder="Native token rate..."
+                  data-test="hourly-rate-input"
+                />
+                <span class="join-item px-4 bg-primary text-primary-content flex items-center">
+                  {{ NETWORK.currencySymbol }}
+                </span>
+              </div>
+              <div
+                data-test="hourly-rate-error"
+                class="text-red-500 text-sm w-full text-left"
+                v-for="error of v$.wageData.hourlyRate?.$errors"
+                :key="error.$uid"
+              >
+                {{ error.$message }}
+              </div>
+            </div>
+
+            <!-- USDC -->
+            <div>
+              <div class="join w-full">
+                <input
+                  type="text"
+                  class="input input-bordered join-item w-full"
+                  v-model="wageData.hourlyRateUsdc"
+                  placeholder="USDC rate..."
+                  data-test="hourly-rate-usdc-input"
+                />
+                <span class="join-item px-4 bg-primary text-primary-content flex items-center">
+                  USDC
+                </span>
+              </div>
+              <div
+                data-test="hourly-rate-usdc-error"
+                class="text-red-500 text-sm w-full text-left"
+                v-for="error of v$.wageData.hourlyRateUsdc?.$errors"
+                :key="error.$uid"
+              >
+                {{ error.$message }}
+              </div>
+            </div>
+
+            <!-- SHER -->
+            <div>
+              <div class="join w-full">
+                <input
+                  type="text"
+                  class="input input-bordered join-item w-full"
+                  v-model="wageData.hourlyRateToken"
+                  placeholder="SHER rate..."
+                  data-test="hourly-rate-sher-input"
+                />
+                <span class="join-item px-4 bg-primary text-primary-content flex items-center">
+                  SHER
+                </span>
+              </div>
+              <div
+                data-test="hourly-rate-sher-error"
+                class="text-red-500 text-sm w-full text-left"
+                v-for="error of v$.wageData.hourlyRateSher?.$errors"
+                :key="error.$uid"
+              >
+                {{ error.$message }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error Messages -->
         <div
-          data-test="max-weekly-hours-error"
-          class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of v$.wageData.maxWeeklyHours?.$errors"
+          data-test="rate-per-hour-error"
+          class="text-red-500 text-sm w-full text-left"
+          v-for="error of v$.ratePerHour?.$errors"
           :key="error.$uid"
         >
           {{ error.$message }}
         </div>
-        <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-          <span class="w-32">Hourly Rate</span>
-          |
-          <input
-            type="text"
-            class="grow"
-            v-model="wageData.hourlyRate"
-            placeholder="Enter hourly rate..."
-            data-test="hourly-rate-input"
-          />
-          | {{ `${NETWORK.currencySymbol} ` }}
-        </label>
-        <div
-          data-test="hourly-rate-error"
-          class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of v$.wageData.hourlyRate?.$errors"
-          :key="error.$uid"
-        >
-          {{ error.$message }}
+
+        <div v-if="addMemberWageDataError" data-test="error-state">
+          <div
+            class="alert alert-warning"
+            v-if="addMemberWageDataStatusCode === 403 || addMemberWageDataStatusCode === 404"
+          >
+            {{ addMemberWageDataError.message }}
+          </div>
+          <div class="alert" v-else>Error! Something went wrong</div>
         </div>
-      </div>
-      <div v-if="addMemberWageDataError" data-test="error-state">
-        <div
-          class="alert alert-warning"
-          v-if="addMemberWageDataStatusCode === 403 || addMemberWageDataStatusCode === 404"
-        >
-          {{ addMemberWageDataError.message }}
+
+        <!-- Action Buttons -->
+        <div class="modal-action justify-center">
+          <ButtonUI
+            :loading="isMemberWageSaving"
+            :disabled="isMemberWageSaving"
+            variant="success"
+            @click="addMemberWageData"
+            data-test="add-wage-button"
+          >
+            Save
+          </ButtonUI>
+          <ButtonUI
+            variant="error"
+            outline
+            @click="
+              () => {
+                showSetMemberWageModal = false
+                v$.$reset()
+                wageData.maxWeeklyHours = 0
+                wageData.hourlyRate = 0
+              }
+            "
+            data-test="add-wage-cancel-button"
+          >
+            Cancel
+          </ButtonUI>
         </div>
-        <div class="alert" v-else>Error! Something went wrong</div>
-      </div>
-      <div class="modal-action justify-center">
-        <ButtonUI
-          :loading="isMemberWageSaving"
-          :disabled="isMemberWageSaving"
-          variant="success"
-          @click="addMemberWageData"
-          data-test="add-wage-button"
-          >Save</ButtonUI
-        >
-        <ButtonUI
-          variant="error"
-          outline
-          @click="
-            () => {
-              showSetMemberWageModal = false
-              v$.$reset()
-              wageData.maxWeeklyHours = 0
-              wageData.hourlyRate = 0
-            }
-          "
-          data-test="add-wage-cancel-button"
-          >Cancel</ButtonUI
-        >
       </div>
     </ModalComponent>
   </div>
@@ -141,10 +218,10 @@ import { useCustomFetch } from '@/composables'
 import { useTeamStore, useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { NETWORK } from '@/constant'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
 import { computed, ref } from 'vue'
+import { NETWORK } from '@/constant'
 const teamStore = useTeamStore()
 const { addSuccessToast } = useToastStore()
 
@@ -159,11 +236,32 @@ const showDeleteMemberConfirmModal = ref(false)
 const showSetMemberWageModal = ref(false)
 const wageData = ref({
   maxWeeklyHours: 0,
-  hourlyRate: 0
+  hourlyRate: 0,
+  hourlyRateUsdc: 0,
+  hourlyRateToken: 0
 })
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
 })
+const ratePerHour = computed(() => {
+  return [
+    ...(wageData.value.hourlyRate > 0
+      ? [{ type: 'native', amount: wageData.value.hourlyRate }]
+      : []),
+    ...(wageData.value.hourlyRateUsdc > 0
+      ? [{ type: 'usdc', amount: wageData.value.hourlyRateUsdc }]
+      : []),
+    ...(wageData.value.hourlyRateToken > 0
+      ? [{ type: 'sher', amount: wageData.value.hourlyRateToken }]
+      : [])
+  ]
+})
+const atLeastOneRate = helpers.withMessage(
+  'At least one hourly rate must be set',
+  (value: { type: string; amount: number }[]) => {
+    return value.some((rate) => rate.amount > 0)
+  }
+)
 
 const rules = {
   wageData: {
@@ -171,15 +269,23 @@ const rules = {
       required,
       numeric,
       notZero
-    },
-    hourlyRate: {
-      required: true,
-      numeric: true,
-      notZero
     }
+  },
+  ratePerHour: {
+    $each: {
+      type: {
+        required
+      },
+      amount: {
+        required,
+        numeric,
+        notZero
+      }
+    },
+    atLeastOneRate
   }
 }
-const v$ = useVuelidate(rules, { wageData })
+const v$ = useVuelidate(rules, { wageData, ratePerHour })
 
 // useFetch instance for deleting member
 const {
@@ -214,8 +320,7 @@ const {
   .put(() => ({
     teamId: props.teamId,
     userAddress: props.member.address,
-    cashRatePerHour: wageData.value.hourlyRate,
-    tokenRatePerHour: wageData.value.hourlyRate,
+    ratePerHour: ratePerHour.value,
     maximumHoursPerWeek: wageData.value.maxWeeklyHours
   }))
   .json()

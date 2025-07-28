@@ -27,10 +27,13 @@
           <span> {{ row.budgetData[2]?.value }} {{ tokenSymbol(row.tokenAddress) }} </span>
         </template>
         <template #transactions-data="{ row }">
-          <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }}</span>
+          <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }} TXs</span>
         </template>
         <template #amountTransferred-data="{ row }">
-          <span>{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}</span>
+          <span
+            >{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}
+            {{ tokenSymbol(row.tokenAddress) }}</span
+          >
         </template>
       </TableComponent>
 
@@ -59,7 +62,7 @@ import { computed, ref, watch } from 'vue'
 import type { BudgetLimit, BudgetData } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
-import TransferForm from '@/components/forms/TransferForm.vue'
+import TransferForm, { type Token } from '@/components/forms/TransferForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { parseError, log, tokenSymbol } from '@/utils'
@@ -73,6 +76,7 @@ import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { useContractBalance } from '@/composables'
+import type { TokenId } from '@/constant'
 //#endregion
 
 const columns = [
@@ -88,12 +92,12 @@ const columns = [
   },
   {
     key: 'transactions',
-    label: 'Total Transactions',
+    label: 'Max Transactions',
     sortable: false
   },
   {
     key: 'amountTransferred',
-    label: 'Amount Transferred',
+    label: 'Max Amount',
     sortable: false
   },
   {
@@ -110,7 +114,7 @@ const tokenRecipient = ref('')
 const signatureToTransfer = ref('')
 const transferData = ref({
   address: { name: '', address: '' },
-  token: { symbol: '', balance: '0' },
+  token: { symbol: '', balance: 0, tokenId: '' as TokenId },
   amount: '0'
 })
 //#endregion
@@ -118,20 +122,12 @@ const transferData = ref({
 const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
 const expenseDataStore = useExpenseDataStore()
-const { balances, refetch: refetchBalances } = useContractBalance(
+const { balances } = useContractBalance(
   teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
     ?.address as Address
 )
 
 //#region Computed Values
-// const isDisapprovedAddress = computed(
-//   () =>
-//     expenseDataStore.allExpenseDataParsed.findIndex(
-//       (item) =>
-//         item.approvedAddress === currentUserAddress &&
-//         (item.status === 'disabled' || item.status === 'expired')
-//     ) !== -1
-// )
 const expenseAccountEip712Address = computed(
   () =>
     teamStore.currentTeam?.teamContracts.find(
@@ -143,16 +139,26 @@ const myApprovedExpenseRows = computed(() =>
     (approval) => approval.approvedAddress === currentUserAddress
   )
 )
-const tokens = computed(() => {
+
+// const getTokens = () =>
+//   balances.value.map((b) => ({ symbol: b.token.symbol, balance: b.amount, tokenId: b.token.id }))
+const tokens = computed<Token[]>(() => {
   const tokenAddress = expenseDataStore.allExpenseDataParsed.find(
     (item) => item.signature === signatureToTransfer.value
   )?.tokenAddress
 
   const symbol = tokenSymbol(tokenAddress ?? '')
-  const balance =
-    tokenAddress === zeroAddress ? balances.nativeToken.formatted : balances.usdc.formatted
+  const balance = tokenAddress === zeroAddress ? balances.value[0].amount : balances.value[1].amount
 
-  return symbol && !isNaN(Number(balance)) ? [{ symbol, balance }] : []
+  return symbol && !isNaN(Number(balance))
+    ? [
+        {
+          symbol,
+          balance: Number(balance),
+          tokenId: (tokenAddress ?? '') as TokenId // Ensure tokenId is of type TokenId
+        }
+      ]
+    : []
 })
 //#endregion
 
@@ -224,12 +230,6 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
       to: expenseAccountEip712Address.value,
       data
     })
-    // await writeContract(config, {
-    //   address: expenseAccountEip712Address.value,
-    //   abi: expenseAccountABI,
-    //   functionName: 'transfer',
-    //   args
-    // })
     executeExpenseAccountTransfer({
       address: expenseAccountEip712Address.value,
       args,
@@ -243,28 +243,6 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
     transferERC20loading.value = false
     isLoadingTransfer.value = false
   }
-  // executeExpenseAccountTransfer({
-  //   address: expenseAccountEip712Address.value,
-  //   args: [
-  //     to,
-  //     parseEther(amount),
-  //     {
-  //       ...budgetLimit,
-  //       budgetData: budgetLimit.budgetData.map((item) => ({
-  //         ...item,
-  //         value:
-  //           item.budgetType === 0
-  //             ? item.value
-  //             : budgetLimit.tokenAddress === zeroAddress
-  //               ? parseEther(`${item.value}`)
-  //               : BigInt(Number(item.value) * 1e6)
-  //       }))
-  //     },
-  //     signatureToTransfer.value
-  //   ],
-  //   abi: expenseAccountABI,
-  //   functionName: 'transfer'
-  // })
 }
 const transferERC20loading = ref(false)
 // Token transfer function
@@ -344,7 +322,7 @@ const transferErc20Token = async () => {
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')
-    await refetchBalances()
+    // await refetchBalances()
     transferModal.value = false
     transferERC20loading.value = false
     await expenseDataStore.fetchAllExpenseData()

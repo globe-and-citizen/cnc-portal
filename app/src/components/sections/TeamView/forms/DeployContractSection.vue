@@ -187,7 +187,7 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: CashRemunerationEIP712ABI,
         functionName: 'initialize',
-        args: [currentUserAddress]
+        args: [currentUserAddress, [USDC_ADDRESS]]
       })
     })
 
@@ -204,10 +204,15 @@ const deployOfficerContract = async () => {
       args: [encodedFunction]
     })
   } catch (error) {
-    console.log('Error deploying contract V2', error)
+    // console.log('Error deploying contract V2', error)
     loading.value = false
-    log.error('Error deploying contract')
-    log.error(String(error))
+    if (typeof error === 'object' && error !== null && 'message' in error) {
+      console.log('Error deploying contract V2', error.message)
+    } else {
+      console.log('Error deploying contract V2')
+    }
+    // log.error('Error deploying contract')
+    // log.error(String( || error))
     addErrorToast('Error deploying contract')
     loading.value = false
   } finally {

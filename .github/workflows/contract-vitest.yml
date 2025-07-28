@@ -5,10 +5,12 @@ on:
     branches: "**"
     paths:
       - "contract/**"
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
 
 jobs:
   contract-unit-test:
+    if: github.event.action != 'labeled' || github.event.label.name == 'run'
     runs-on: ubuntu-latest
     steps:
       - name: 🛫 Checkout

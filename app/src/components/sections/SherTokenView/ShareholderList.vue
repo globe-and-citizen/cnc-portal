@@ -6,11 +6,9 @@
           :rows="
             shareholders?.map((shareholder, index) => ({
               index: index + 1,
-              name:
-                team.members!.filter((member) => member.address == shareholder.shareholder)?.[0]
-                  .name ?? 'Unknown',
+              name: getShareholderName(shareholder.shareholder) || 'Unknown',
               address: shareholder.shareholder,
-              balance: `${formatEther(shareholder.amount)} ${tokenSymbol}`,
+              balance: `${formatUnits(shareholder.amount, 6)} ${tokenSymbol}`,
               percentage: !totalSupplyLoading
                 ? `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(totalSupply!)).toString()}%`
                 : '...%',
@@ -65,14 +63,14 @@
 </template>
 <script setup lang="ts">
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { formatEther, parseEther, type Address } from 'viem'
+import { formatUnits, parseUnits, type Address } from 'viem'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import { ref } from 'vue'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { watch } from 'vue'
 import { log } from '@/utils'
-import { useToastStore, useUserDataStore } from '@/stores'
+import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
 import type { Team } from '@/types'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -84,6 +82,7 @@ const selectedShareholder = ref<Address | null>(null)
 const emits = defineEmits(['refetchShareholders'])
 const { addErrorToast, addSuccessToast } = useToastStore()
 const { address: currentAddress } = useUserDataStore()
+const teamStore = useTeamStore()
 
 const props = defineProps<{
   team: Partial<Team>
@@ -116,8 +115,16 @@ const mintToken = (address: Address, amount: string) => {
     address: props.team.teamContracts?.find((contract) => contract.type === 'InvestorsV1')
       ?.address as Address,
     functionName: 'individualMint',
-    args: [address, parseEther(amount)]
+    args: [address, parseUnits(amount, 6)]
   })
+}
+
+const getShareholderName = (address: Address) => {
+  const member = teamStore.currentTeam?.members?.find((member) => member.address === address)
+  const contract = teamStore.currentTeam?.teamContracts?.find(
+    (contract) => contract.address === address
+  )
+  return member ? member.name : contract ? contract.type : 'Unknown'
 }
 
 watch(mintError, (value) => {

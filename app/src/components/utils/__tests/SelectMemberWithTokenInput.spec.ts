@@ -3,6 +3,7 @@ import { it, describe, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { ref } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
+import { SUPPORTED_TOKENS } from '@/constant/index'
 
 describe('SelectMemberWithTokenInput.vue', () => {
   let wrapper: VueWrapper<ComponentPublicInstance>
@@ -12,7 +13,7 @@ describe('SelectMemberWithTokenInput.vue', () => {
     const input = ref({
       name: '',
       address: '',
-      token: null
+      token: ''
     })
     wrapper = mount(SelectMemberWithTokenInput, {
       props: {
@@ -95,5 +96,15 @@ describe('SelectMemberWithTokenInput.vue', () => {
       Array<{ address: string; name: string }>
     >
     expect(emittedEvents[0][0]).toEqual({ address: '0x123', name: 'John Doe' })
+  })
+
+  it('should update modelValue when input changes', async () => {
+    const selectInput = wrapper.findComponent({ name: 'SelectComponent' })
+    expect(selectInput.exists()).toBe(true)
+    expect(selectInput.props('modelValue')).toBe(SUPPORTED_TOKENS[0].address)
+    selectInput.vm.$emit('update:modelValue', '0x123')
+    await wrapper.vm.$nextTick()
+    //@ts-expect-error: accessing private property for testing
+    expect(wrapper.vm.input.token).toBe('0x123')
   })
 })

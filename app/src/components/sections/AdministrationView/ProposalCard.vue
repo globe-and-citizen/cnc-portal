@@ -32,7 +32,7 @@
         <PieChart :data="chartData" title="Election" />
       </div>
     </div>
-    <div class="flex justify-center gap-4 mb-2" v-if="!isDone" data-test="active-proposal-actions">
+    <div class="flex justify-center gap-2 mb-2" v-if="!isDone" data-test="active-proposal-actions">
       <ButtonUI variant="primary" size="sm" @click="showVoteModal = true" data-test="vote-button"
         >Vote</ButtonUI
       >
@@ -79,12 +79,16 @@
           size="sm"
           class="mt-4"
           @click="
-            concludeProposal({
-              address: props.team.votingAddress as Address,
-              abi: VotingABI,
-              functionName: 'concludeProposal',
-              args: [Number(proposal.id)]
-            })
+            () => {
+              console.log(`props.team.votingAddress: `, props.team.votingAddress)
+              console.log(`poposal.id: `, Number(proposal.id))
+              concludeProposal({
+                address: votingAddress as Address, //props.team.votingAddress as Address,
+                abi: VotingABI,
+                functionName: 'concludeProposal',
+                args: [Number(proposal.id)]
+              })
+            }
           "
         >
           Yes
@@ -102,13 +106,17 @@
         "
         v-model="voteInput"
         @voteElection="
-          (value) =>
+          (value) => {
+            console.log('[@voteElection] votingAddress: ', votingAddress)
+            console.log('[@voteElection] value.proposalId: ', value.proposalId)
+            console.log('[@voteElection] value.candidateAddress: ', value.candidateAddress)
             voteElection({
-              address: props.team.votingAddress as Address,
+              address: votingAddress as Address, //props.team.votingAddress as Address,
               abi: VotingABI,
               functionName: 'voteElection',
               args: [value.proposalId, value.candidateAddress]
             })
+          }
         "
         :proposal="proposal"
         @voteDirective="
@@ -139,8 +147,13 @@ import type { Member, Proposal } from '@/types'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import type { Address } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { useTeamStore } from '@/stores'
 
 const { addSuccessToast, addErrorToast } = useToastStore()
+const teamStore = useTeamStore()
+const votingAddress = computed(
+  () => teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'Voting')?.address
+)
 const chartData = computed(() => {
   const votes = props.proposal.votes || {}
   if (props.proposal.isElection) {

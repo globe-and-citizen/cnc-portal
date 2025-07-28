@@ -130,28 +130,50 @@
       </div>
 
       <nav class="space-y-4">
-        <RouterLink
-          v-for="item in menuItems"
-          :key="item.label"
-          :to="item.route"
-          class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
-          :class="{
-            'bg-emerald-500/10 shadow-sm': item.active,
-            'hover:bg-gray-100': !item.active,
-            hidden: !item.show
-          }"
-        >
-          <div class="relative">
-            <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
-          </div>
-          <span
-            v-if="!isCollapsed"
-            class="text-sm font-medium transition-colors duration-200"
-            :class="{ 'text-emerald-600': item.active }"
+        <div v-for="item in menuItems" :key="item.label" class="space-y-2">
+          <RouterLink
+            :to="item.route"
+            class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
+            :class="{
+              'bg-emerald-500/10 shadow-sm': item.active,
+              'hover:bg-gray-100': !item.active,
+              hidden: !item.show
+            }"
           >
-            {{ item.label }}
-          </span>
-        </RouterLink>
+            <div class="relative">
+              <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
+            </div>
+            <span
+              v-if="!isCollapsed"
+              class="text-sm font-medium transition-colors duration-200"
+              :class="{ 'text-emerald-600': item.active }"
+            >
+              {{ item.label }}
+            </span>
+          </RouterLink>
+          <div v-for="child in item.children" :key="child.label">
+            <RouterLink
+              :to="child.route"
+              class="min-w-10 min-h-11 flex items-center gap-3 px-4 py-3 ml-8 rounded-xl text-gray-600 group transition-all duration-200 z-10"
+              :class="{
+                'bg-emerald-500/10 shadow-sm': child.active,
+                'hover:bg-gray-100': !child.active,
+                hidden: !item.show
+              }"
+            >
+              <div class="relative">
+                <!-- <IconifyIcon :icon="child.icon" :class="getIconClass(child.active)" /> -->
+              </div>
+              <span
+                v-if="!isCollapsed"
+                class="text-sm font-medium transition-colors duration-200"
+                :class="{ 'text-emerald-600': child.active }"
+              >
+                {{ child.label }}
+              </span>
+            </RouterLink>
+          </div>
+        </div>
       </nav>
     </div>
 
@@ -192,11 +214,12 @@ import { onClickOutside } from '@vueuse/core'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
-import { useTeamStore, useAppStore } from '@/stores'
+import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
 import { useRoute } from 'vue-router'
 
 const appStore = useAppStore()
 const route = useRoute()
+const userStore = useUserDataStore()
 
 interface User {
   name: string
@@ -271,8 +294,41 @@ const menuItems = computed(() => [
       name: 'cash-remunerations',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    active: route.name === 'cash-remunerations',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+    active: route.name === 'cash-remunerations' || route.name === 'weekly-claim',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
+    children: [
+      {
+        label: 'CR Dashboard',
+        route: {
+          name: 'cash-remunerations',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'cash-remunerations',
+        show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      },
+      {
+        label: ' Claim History',
+        route: {
+          name: 'claim-history',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'claim-history',
+        show:
+          (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
+          userStore.address !== teamStore.currentTeam?.ownerAddress
+      },
+      {
+        label: ' Weekly Claim',
+        route: {
+          name: 'weekly-claim',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'weekly-claim',
+        show:
+          (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
+          userStore.address === teamStore.currentTeam?.ownerAddress
+      }
+    ].filter((child) => child.show)
   },
   {
     label: 'Expense Account ',
@@ -284,6 +340,7 @@ const menuItems = computed(() => [
     active: route.name === 'expense-account',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
+
   {
     label: 'Contract Management',
     icon: 'heroicons:wrench',
@@ -292,6 +349,56 @@ const menuItems = computed(() => [
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     active: route.name === 'contract-management',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  },
+  {
+    label: 'SHER Token',
+    icon: 'heroicons:chart-pie',
+    route: {
+      name: 'sher-token',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    active: route.name === 'sher-token',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  },
+  {
+    label: 'Administration',
+    icon: 'heroicons:chart-bar',
+    route: {
+      name: 'administration',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    active: route.name === 'bod-elections',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
+    children: [
+      {
+        label: 'BoD Election',
+        route: {
+          name: 'bod-elections',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'bod-elections',
+        show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      }
+      // {
+      //   label: 'Weekly Claim',
+      //   route: {
+      //     name: 'weekly-claim',
+      //     params: { id: teamStore.currentTeam?.id || '1' }
+      //   },
+      //   active: route.name === 'weekly-claim',
+      //   show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      // }
+    ].filter((child) => child.show)
+  },
+  {
+    label: 'vesting',
+    icon: 'heroicons:lock-closed',
+    route: {
+      name: 'vesting',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    active: route.name === 'vesting',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   }
 ])
@@ -303,9 +410,6 @@ const toggleDropdown = () => {
 </script>
 
 <style scoped>
-* {
-  /* border: 1px solid; */
-}
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(156, 163, 175, 0.5) transparent;

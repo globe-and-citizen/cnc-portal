@@ -1,13 +1,67 @@
-import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
 import CreateAddCampaign from '@/components/forms/CreateAddCampaign.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
-describe.skip('CreateAddCampaign.vue', () => {
+import { ref } from 'vue'
+//import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+//import type { Abi } from 'viem'
+import { mockToastStore } from '@/tests/mocks/store.mock'
+//vi.mock('@/stores/useToastStore')
+const deployState = {
+  isDeploying: ref(false),
+  contractAddress: ref<string | null>(null),
+  error: ref<Error | null>(null)
+}
+
+const mocks = vi.hoisted(() => {
+  return {
+    mockUseDeployContract: vi.fn().mockImplementation(() => ({
+      ...deployState,
+      deploy: vi.fn()
+    }))
+  }
+})
+vi.mock('@wagmi/core', async (importOriginal) => {
+  const actual: object = await importOriginal()
+
+  return {
+    ...actual,
+    writeContract: vi.fn().mockResolvedValue('0xMOCK_TX'),
+    readContract: vi.fn().mockResolvedValue(BigInt('1000000000000000000')),
+    waitForTransactionReceipt: vi.fn().mockResolvedValue({ status: 'success' }),
+    getWalletClient: vi.fn().mockResolvedValue({
+      deployContract: vi.fn().mockResolvedValue('0xMOCK_DEPLOYED'),
+      account: { address: '0xMOCK_ACCOUNT' }
+    }),
+    getPublicClient: vi.fn().mockReturnValue({
+      getBlockNumber: vi.fn().mockResolvedValue(100n)
+    })
+  }
+})
+
+//const campaignAbi = AdCampaignArtifact.abi as Abi
+vi.mock('@/composables/useContractFunctions', async (importOriginal) => {
+  const actual: object = await importOriginal()
+
+  return {
+    ...actual,
+    useDeployContract: mocks.mockUseDeployContract
+  }
+})
+
+describe('CreateAddCampaign.vue', () => {
+  beforeEach(() => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    vi.clearAllMocks()
+  })
+
   describe('render', () => {
     it('renders correctly', () => {
       const wrapper = mount(CreateAddCampaign, {
-        props: { loading: false, bankAddress: '0x123456' }
+        props: { bankAddress: '0x123456' }
       })
 
       expect(wrapper.find('h4').text()).toBe('Deploy Advertisement Campaign contract')
@@ -16,7 +70,7 @@ describe.skip('CreateAddCampaign.vue', () => {
 
     it('shows the bank address input and is disabled', () => {
       const wrapper = mount(CreateAddCampaign, {
-        props: { loading: false, bankAddress: '0x123456' }
+        props: { bankAddress: '0x123456' }
       })
 
       const bankAddressInput = wrapper.find('input[data-testid="bank-address-input"]')
@@ -24,10 +78,18 @@ describe.skip('CreateAddCampaign.vue', () => {
       expect(bankAddressInput.attributes('disabled')).toBeDefined()
     })
 
-    it('shows loading button when loading is true', () => {
+    it('shows loading button when contract is deploying', async () => {
+      deployState.isDeploying.value = true
       const wrapper = mount(CreateAddCampaign, {
-        props: { loading: true, bankAddress: '0x123456' }
+        props: { bankAddress: '0x123456' }
       })
+      await flushPromises()
+      // Directly set the ref values
+      await wrapper.find('input[placeholder="cost per click in matic"]').setValue(0.4)
+      await wrapper.find('input[placeholder="cost per in matic"]').setValue(0.6)
+
+      await flushPromises()
+      await wrapper.find('.btn-primary').trigger('click')
 
       const allButtonComponentsWrapper = wrapper.findAllComponents(ButtonUI)
       expect(allButtonComponentsWrapper[1].props().loading).toBe(true)
@@ -35,21 +97,6 @@ describe.skip('CreateAddCampaign.vue', () => {
   })
 
   describe('emits', () => {
-    it('emits createAddCampaign with correct values when the confirm button is clicked', async () => {
-      const wrapper = mount(CreateAddCampaign, {
-        props: { loading: false, bankAddress: '0x123456' }
-      })
-
-      // Directly set the ref values
-      await wrapper.find('input[placeholder="cost per click in matic"]').setValue(0.1)
-      await wrapper.find('input[placeholder="cost per in matic"]').setValue(0.2)
-
-      await wrapper.find('.btn-primary').trigger('click')
-
-      expect(wrapper.emitted()).toHaveProperty('createAddCampaign')
-      expect(wrapper.emitted('createAddCampaign')?.[0]).toEqual([0.1, 0.2])
-    })
-
     it('does not emit createAddCampaign if costPerClick or costPerImpression is null', async () => {
       const wrapper = mount(CreateAddCampaign, {
         props: { loading: false, bankAddress: '0x123456' }
@@ -70,15 +117,39 @@ describe.skip('CreateAddCampaign.vue', () => {
       await wrapper.find('input[placeholder="cost per in matic"]').setValue(0.2)
 
       // Mock the alert function
-      const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {})
+      //const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {})
 
       await wrapper.find('.btn-primary').trigger('click')
 
       // Check that the alert was called and the event was not emitted
-      expect(alertMock).toHaveBeenCalledWith('Please enter valid numeric values for both rates.')
-      expect(wrapper.emitted('createAddCampaign')).toBeUndefined()
+      //expect(alertMock).toHaveBeenCalledWith('Please enter valid numeric values for both rates.')
+      //expect(wrapper.emitted('createAddCampaign')).toBeUndefined()
 
-      alertMock.mockRestore()
+      //alertMock.mockRestore()
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+        'Please enter valid numeric values for both rates.'
+      )
+    })
+
+    it('shows an error toast with the correct message when there is an error', async () => {
+      deployState.error.value = new Error('User rejected the request')
+      const wrapper = mount(CreateAddCampaign, {
+        props: { bankAddress: '0x123456' }
+      })
+
+      await wrapper.find('input[placeholder="cost per click in matic"]').setValue(0.1)
+      await wrapper.find('input[placeholder="cost per in matic"]').setValue(0.2)
+      //wrapper.vm.deployError = new Error('User rejected the request')
+
+      await flushPromises()
+      await wrapper.find('.btn-primary').trigger('click')
+
+      await flushPromises()
+
+      // Trigger the logic again
+      await wrapper.vm.$nextTick()
+      // Check that the toast was called with the updated message
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('User rejected the request')
     })
   })
 
@@ -100,6 +171,21 @@ describe.skip('CreateAddCampaign.vue', () => {
       )
 
       openMock.mockRestore()
+    })
+  })
+
+  describe('watchers', () => {
+    it('handles contractAddress watcher correctly when newAddress and team are defined', async () => {
+      const wrapper = mount(CreateAddCampaign, {
+        props: { bankAddress: '0x123456' }
+      })
+      await flushPromises()
+      deployState.contractAddress.value = '0x_contract_address'
+      await flushPromises()
+      // Simulate the watexpect(wrapper.emitted()).toHaveProperty('openAddTeamModal')cher logic
+
+      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Contract deployed successfully')
+      expect(wrapper.emitted()).toHaveProperty('closeAddCampaignModal')
     })
   })
 })

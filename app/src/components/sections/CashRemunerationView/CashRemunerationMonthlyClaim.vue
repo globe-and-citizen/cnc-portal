@@ -15,6 +15,7 @@
     </div>
   </OverviewCard>
 </template>
+
 <script setup lang="ts">
 import cartIcon from '@/assets/cart.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
@@ -23,25 +24,30 @@ import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
-import { storeToRefs } from 'pinia'
 import { formatEther } from 'viem'
-import { watch } from 'vue'
-import { computed } from 'vue'
+import { watch, computed } from 'vue'
+import { useStorage } from '@vueuse/core'
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const { currency, nativeTokenPrice } = storeToRefs(currencyStore)
 const contractAddress = teamStore.currentTeam?.teamContracts.find(
   (contract) => contract.type === 'CashRemunerationEIP712'
 )?.address
 
+const currency = useStorage('currency', {
+  code: 'USD',
+  name: 'US Dollar',
+  symbol: '$'
+})
+
+// const contractAddress = '0xFF9544a21EAA0C9B54D3d9134A62057076137fF4'
 const now = new Date()
-const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000
+const startOfMonth = new Date(now.getFullYear(), now.getMonth() - 2, 1).getTime() / 1000
 const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getTime() / 1000
 const { result, loading, error } = useQuery(
   gql`
-    query GetCashRemunerationTransactions(
+    query GetCashRemunerationMonthlyTransactions(
       $contractAddress: Bytes!
       $startDate: BigInt!
       $endDate: BigInt!
@@ -51,7 +57,7 @@ const { result, loading, error } = useQuery(
           contractAddress: $contractAddress
           blockTimestamp_gte: $startDate
           blockTimestamp_lte: $endDate
-          transactionType: "withdraw"
+          transactionType: withdraw
         }
       ) {
         amount
@@ -67,7 +73,11 @@ const totalMonthlyWithdrawnAmount = computed(() => {
     return acc + parseFloat(formatEther(BigInt(transaction.amount)))
   }, 0)
 
-  return formatCurrencyShort(totalAmount * (nativeTokenPrice.value || 0), currency.value.code)
+  const nativeTokenInfo = currencyStore.getTokenInfo('native')
+  return formatCurrencyShort(
+    totalAmount * (nativeTokenInfo?.prices.find((p) => p.id == 'local')?.price || 0),
+    currency.value?.code
+  )
 })
 
 watch(error, (err) => {

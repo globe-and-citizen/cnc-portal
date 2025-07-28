@@ -4,11 +4,17 @@ import MemberSection from '@/components/sections/DashboardView/MemberSection.vue
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import type { Address } from 'viem'
+import { useTeamStore } from '@/stores'
+import { mockTeamStore } from '@/tests/mocks/store.mock'
+import { NETWORK } from '@/constant'
 
 interface WageData {
   userAddress: Address
   maximumHoursPerWeek: number
   cashRatePerHour: number
+  usdcRatePerHour?: number
+  tokenRatePerHour?: number
+  ratePerHour?: { type: string; amount: number }[]
 }
 
 interface MemberSectionInstance {
@@ -44,12 +50,26 @@ describe('MemberSection.vue', () => {
     {
       userAddress: '0x1234' as Address,
       maximumHoursPerWeek: 40,
-      cashRatePerHour: 20
+      ratePerHour: [
+        { type: 'native', amount: 20 },
+        { type: 'usdc', amount: 50 },
+        { type: 'sher', amount: 10 }
+      ],
+      cashRatePerHour: 20,
+      usdcRatePerHour: 50,
+      tokenRatePerHour: 10
     },
     {
       userAddress: '0x5678' as Address,
       maximumHoursPerWeek: 30,
-      cashRatePerHour: 25
+      ratePerHour: [
+        { type: 'native', amount: 25 },
+        { type: 'usdc', amount: 45 },
+        { type: 'sher', amount: 15 }
+      ],
+      cashRatePerHour: 25,
+      usdcRatePerHour: 45,
+      tokenRatePerHour: 15
     }
   ]
 
@@ -65,26 +85,73 @@ describe('MemberSection.vue', () => {
       }
     })
     component = wrapper.vm as unknown as MemberSectionInstance
+    vi.mocked(useTeamStore).mockReturnValue({
+      //@ts-expect-error: TypeScript expects exact return type as original
+      currentTeam: {
+        ...mockTeamStore,
+        members: [
+          {
+            address: '0x1234' as Address,
+            name: 'Member 1',
+            id: '1',
+            teamId: 1
+          },
+          {
+            address: '0x5678' as Address,
+            name: 'Member 2',
+            id: '2',
+            teamId: 1
+          }
+        ]
+      }
+    })
   })
 
   describe('getMemberWage', () => {
     it('returns N/A when teamWageData is null', () => {
       mockWageData.value = []
-      expect(component.getMemberWage('0x1234' as Address)).toBe('N/A')
+      expect(component.getMemberWage('0x1234' as Address)).toEqual({
+        cashRatePerHour: 'N/A',
+        maximumHoursPerWeek: 'N/A',
+        tokenRatePerHour: 'N/A',
+        usdcRatePerHour: 'N/A'
+      })
     })
 
     it('returns N/A when member wage data is not found', () => {
-      expect(component.getMemberWage('0x9999' as Address)).toBe('N/A')
+      expect(component.getMemberWage('0x9999' as Address)).toEqual({
+        cashRatePerHour: 'N/A',
+        maximumHoursPerWeek: 'N/A',
+        tokenRatePerHour: 'N/A',
+        usdcRatePerHour: 'N/A'
+      })
     })
 
     it('returns formatted wage string when member wage data is found', () => {
       const result = component.getMemberWage('0x1234' as Address)
-      expect(result).toBe('40 h/week & 20 SepoliaETH/h')
+      expect(result).toEqual({
+        maximumHoursPerWeek: `${40} hrs/wk`,
+        cashRatePerHour: `${20} ${NETWORK.currencySymbol}/hr`,
+        usdcRatePerHour: `${50} USDC/hr`,
+        tokenRatePerHour: `${10} SHER/hr`
+      })
+      const memberListTable = wrapper.findComponent({ name: 'TableComponent' })
+      expect(memberListTable.exists()).toBe(true)
+      expect(memberListTable.find('[data-test="table"]').exists()).toBe(true)
+      const firstRow = memberListTable.find('[data-test="0-row"]')
+      expect(firstRow.exists()).toBe(true)
+      expect(firstRow.html()).toContain('Member 1')
+      expect(firstRow.html()).toContain('40')
     })
 
     it('returns formatted wage string for different member', () => {
       const result = component.getMemberWage('0x5678' as Address)
-      expect(result).toBe('30 h/week & 25 SepoliaETH/h')
+      expect(result).toEqual({
+        maximumHoursPerWeek: `${30} hrs/wk`,
+        cashRatePerHour: `${25} ${NETWORK.currencySymbol}/hr`,
+        usdcRatePerHour: `${45} USDC/hr`,
+        tokenRatePerHour: `${15} SHER/hr`
+      })
     })
   })
 })

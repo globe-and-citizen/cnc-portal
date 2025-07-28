@@ -82,6 +82,22 @@
         />
       </label>
     </div>
+
+    <!-- Budget Limit Validation Errors -->
+    <div class="pl-4 text-red-500 text-sm w-full text-left">
+      <div v-for="error of v$.resultArray.$errors" :key="error.$uid" data-test="budget-limit-error">
+        <div v-if="error.$validator === 'required'">
+          {{ error.$message }}
+        </div>
+        <div v-else-if="error.$validator === '$each'">
+          <div v-for="(subError, index) in error.$message" :key="index">
+            <div v-for="(msg, key) in subError" :key="key">
+              Budget limit {{ resultArray[index].budgetType }}: {{ msg }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <!-- #endregion Multi Limit Inputs -->
 
@@ -91,9 +107,18 @@
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Expiry</span>
       <div class="grow" data-test="date-picker">
-        <VueDatePicker v-model="date" />
+        <VueDatePicker v-model="date" :min-date="new Date()" auto-apply />
       </div>
     </label>
+  </div>
+
+  <div
+    class="pl-4 text-red-500 text-sm w-full text-left"
+    v-for="error of v$.date.$errors"
+    :key="error.$uid"
+    data-test="date-error"
+  >
+    {{ error.$message }}
   </div>
 
   <div class="modal-action justify-center">
@@ -127,7 +152,7 @@ const props = defineProps<{
   users: User[]
 }>()
 
-const input = ref({ name: '', address: '', token: null })
+const input = ref({ name: '', address: '', token: '' })
 const limitValue = ref('')
 const date = ref<Date | string>('')
 const description = ref<string>('')
@@ -187,12 +212,40 @@ const rules = {
     required: helpers.withMessage('Description is required', (value: string) => {
       return props.isBodAction ? value.length > 0 : true
     })
+  },
+  // Add validation for budget limits
+  resultArray: {
+    required: helpers.withMessage('At least one budget limit must be set', (value: unknown[]) => {
+      return value.length > 0
+    }),
+    $each: helpers.forEach({
+      value: {
+        required: helpers.withMessage('Value is required', required),
+        numeric: helpers.withMessage(
+          'Value must be a positive number',
+          (value: string | number) => {
+            return !isNaN(Number(value)) && Number(value) > 0
+          }
+        )
+      }
+    })
+  },
+  // Add date validation
+  date: {
+    required: helpers.withMessage('Expiry date is required', required),
+    futureDate: helpers.withMessage('Expiry date must be in the future', (value: Date | string) => {
+      if (!value) return false
+      const date = typeof value === 'string' ? new Date(value) : value
+      return date > new Date()
+    })
   }
 }
 
 const v$ = useVuelidate(rules, {
   description,
-  input
+  input,
+  resultArray,
+  date
 })
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])

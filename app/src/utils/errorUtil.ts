@@ -61,7 +61,7 @@ function parseRevertReason(errorString: string): `0x${string}` | string {
     const errorData = errorString.split('custom error')[1].trim()
     const [selector, args] = errorData.split(' ').map((part) => part.replace(/[:.]/g, ''))
     const combined = `${selector}${args}` as `0x${string}`
-    if (!isHex(/*PrefixedString*/ combined)) {
+    if (!isHex(combined)) {
       throw new Error('Invalid custom error format')
     }
     return combined
@@ -84,18 +84,12 @@ function safeParse(errorString: string, abi: Abi | undefined) {
 
   switch (validated.type) {
     case 'hex':
-      // console.log('Custom error:', validated.data)
       return parseCustomError(validated.data, abi)
-    // break
     case 'string':
-      // console.log('Revert message:', validated.data)
       return validated.data
-    // break
     default:
       return 'Contract reverted'
   }
-
-  // return validated
 }
 
 // Type guard for regular strings (excluding 0x-prefixed)
@@ -107,7 +101,7 @@ function isRegularString(value: unknown): value is string {
 function validateReturnType(
   value: unknown
 ): { type: 'hex'; data: `0x${string}` } | { type: 'string'; data: string } | { type: 'invalid' } {
-  if (isHex(/*PrefixedString*/ value)) {
+  if (isHex(value)) {
     return { type: 'hex', data: value }
   } else if (isRegularString(value)) {
     return { type: 'string', data: value }

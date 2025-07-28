@@ -30,6 +30,10 @@ contract InvestorV1 is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable
     distributeDividends();
   }
 
+  function decimals() public view virtual override returns (uint8) {
+    return 6; // Standard for many tokens, can be adjusted as needed
+  }
+
   function distributeMint(Shareholder[] memory _shareholders) external onlyOwner whenNotPaused nonReentrant {
     for (uint256 i = 0; i < _shareholders.length; i++) {
       Shareholder memory shareholder = _shareholders[i];
