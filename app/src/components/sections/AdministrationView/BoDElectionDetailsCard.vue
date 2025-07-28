@@ -62,10 +62,11 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { computed, watch, type PropType, ref, onMounted, onBeforeUnmount } from 'vue'
 import type { User } from '@/types'
 import { useReadContract } from '@wagmi/vue'
-import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
+import { useUserDataStore, useTeamStore } from '@/stores'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import type { Address } from 'viem'
 import { log, parseError } from '@/utils'
+import { useCountdown } from '@vueuse/core'
 
 const props = defineProps({
   election: {
@@ -89,7 +90,6 @@ const emits = defineEmits(['castVote'])
 
 const userDataStore = useUserDataStore()
 const teamStore = useTeamStore()
-const { addErrorToast } = useToastStore()
 
 const isLoadingCastVoteLocal = ref(false)
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
@@ -126,28 +126,45 @@ const { data: electionResults } = useReadContract({
 })
 
 const now = ref(new Date())
-let timer: ReturnType<typeof setInterval>
+// let timer: ReturnType<typeof setInterval>
 
-onMounted(() => {
-  timer = setInterval(() => {
-    now.value = new Date()
-  }, 1000 * 30) // Update every minute
+const timeLeft = computed(() => {
+  const startDate = props.election.startDate
+  const endDate = props.election.endDate
+  return {
+    toStart: Math.max(0, Math.floor((startDate.getTime() - now.value.getTime()) / 1000)),
+    toEnd: Math.max(0, Math.floor((endDate.getTime() - now.value.getTime()) / 1000))
+  }
 })
 
-onBeforeUnmount(() => {
-  clearInterval(timer)
+const { remaining: leftToStart } = useCountdown(timeLeft.value.toStart, {
+  immediate: true
 })
+
+const { remaining: leftToEnd } = useCountdown(timeLeft.value.toEnd, {
+  immediate: true
+})
+
+// onMounted(() => {
+//   timer = setInterval(() => {
+//     now.value = new Date()
+//   }, 1000 * 30) // Update every minute
+// })
+
+// onBeforeUnmount(() => {
+//   clearInterval(timer)
+// })
 
 const electionStatus = computed(() => {
+  if (leftToStart.value > 0) return 'upcoming'
+
   if (
-    props.election.endDate < now.value ||
-    (Array.isArray(voterList.value) && voterList.value.length === props.election.totalVotes)
+    !(Array.isArray(voterList.value) && voterList.value.length === props.election.totalVotes) &&
+    leftToEnd.value > 0
   )
-    return 'ended'
+    return 'active'
 
-  if (props.election.startDate > now.value) return 'upcoming'
-
-  return 'active'
+  return 'ended'
 })
 
 const isElectionWinner = computed(
