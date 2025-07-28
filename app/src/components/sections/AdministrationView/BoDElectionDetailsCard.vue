@@ -41,7 +41,7 @@
         v-else
         variant="success"
         :outline="true"
-        :disabled="hasVoted || electionStatus === 'upcoming'"
+        :disabled="hasVoted || electionStatus === 'upcoming' || electionStatus === 'ended'"
         :loading="isLoadingCastVoteLocal && isLoading"
         @click="
           () => {
