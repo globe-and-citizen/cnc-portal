@@ -126,7 +126,6 @@ const { data: electionResults } = useReadContract({
 })
 
 const now = ref(new Date())
-// let timer: ReturnType<typeof setInterval>
 
 const timeLeft = computed(() => {
   const startDate = props.election.startDate
@@ -144,16 +143,6 @@ const { remaining: leftToStart } = useCountdown(timeLeft.value.toStart, {
 const { remaining: leftToEnd } = useCountdown(timeLeft.value.toEnd, {
   immediate: true
 })
-
-// onMounted(() => {
-//   timer = setInterval(() => {
-//     now.value = new Date()
-//   }, 1000 * 30) // Update every minute
-// })
-
-// onBeforeUnmount(() => {
-//   clearInterval(timer)
-// })
 
 const electionStatus = computed(() => {
   if (leftToStart.value > 0) return 'upcoming'
