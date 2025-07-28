@@ -1,5 +1,5 @@
 <template>
-  <div :class="['toast', positionClass]" data-test="toast-container">
+  <div :class="['toast', positionClass]" data-test="toast-container" class="z-50">
     <Toast
       v-for="toast in toastStore.toasts"
       :key="toast.id"
