@@ -1,6 +1,6 @@
 <template>
   <div class="flex justify-between gap-2">
-    <div
+    <ButtonUI
       v-if="
         formattedElection &&
         !formattedElection?.resultsPublished &&
@@ -11,8 +11,7 @@
           router.push(`/teams/${teamStore.currentTeamId}/administration/bod-elections-details`)
         }
       "
-      class="btn btn-md"
-      :class="{ 'btn-primary': electionStatus.text === 'Active' }"
+      :variant="electionStatus.text === 'Active' ? 'primary' : undefined"
     >
       {{
         electionStatus.text === 'Active'
@@ -21,7 +20,7 @@
             ? 'View Results'
             : 'View Details'
       }}
-    </div>
+    </ButtonUI>
     <PublishResult
       v-if="
         showPublishResult &&
