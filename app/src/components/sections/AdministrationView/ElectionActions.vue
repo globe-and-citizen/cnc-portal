@@ -47,8 +47,9 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { useRouter } from 'vue-router'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { Election } from '@/types'
+import { useBoDElections } from '@/composables'
 
-const { formattedElection } = defineProps<{ formattedElection: Election | null }>()
+const { electionId } = defineProps<{ electionId: bigint }>()
 
 const emits = defineEmits(['showCreateElectionModal'])
 const showPublishResult = inject('showPublishResultBtn')
@@ -56,21 +57,23 @@ const showPublishResult = inject('showPublishResultBtn')
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const router = useRouter()
-const now = ref(new Date())
+const currentElectionId = computed(() => electionId)
+const { formattedElection, electionStatus } = useBoDElections(currentElectionId)
+// const now = ref(new Date())
 
 // Election status
-const electionStatus = computed(() => {
-  if (!formattedElection || formattedElection?.resultsPublished) return { text: 'No Election' }
+// const electionStatus = computed(() => {
+//   if (!formattedElection || formattedElection?.resultsPublished) return { text: 'No Election' }
 
-  if (now.value < formattedElection?.startDate) {
-    return { text: 'Upcoming' }
-  }
-  if (
-    now.value > formattedElection?.endDate ||
-    formattedElection?.votesCast === formattedElection?.voters
-  ) {
-    return { text: 'Completed' }
-  }
-  return { text: 'Active' }
-})
+//   if (now.value < formattedElection?.startDate) {
+//     return { text: 'Upcoming' }
+//   }
+//   if (
+//     now.value > formattedElection?.endDate ||
+//     formattedElection?.votesCast === formattedElection?.voters
+//   ) {
+//     return { text: 'Completed' }
+//   }
+//   return { text: 'Active' }
+// })
 </script>

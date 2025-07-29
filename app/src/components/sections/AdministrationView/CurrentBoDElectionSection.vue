@@ -4,7 +4,7 @@
       <div class="flex justify-between">
         <ElectionActions
           v-if="!isDetails"
-          :formatted-election="formattedElection || null"
+          :election-id="currentElectionId"
           @show-results-modal="showResultsModal = true"
           @show-create-election-modal="showCreateElectionModal = true"
         />
