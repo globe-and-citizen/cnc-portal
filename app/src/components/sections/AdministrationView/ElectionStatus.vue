@@ -1,6 +1,6 @@
 <template>
   <!-- Status and Countdown -->
-  <div class="flex items-center justify-start gap-2">
+  <div v-if="electionStatus" class="flex items-center justify-start gap-2">
     <span class="badge badge-lg flex items-center gap-1 px-2 py-1 text-sm h-10" :class="badgeClass">
       <span class="w-3 h-3 rounded-full inline-block" :class="dotClass"></span>
       <span class="font-medium">{{ electionStatus.text }}</span>
@@ -15,39 +15,44 @@
 import type { Election } from '@/types'
 import { useCountdown } from '@vueuse/core'
 import { computed, ref } from 'vue'
+import { useBoDElections } from '@/composables'
 
-const { formattedElection } = defineProps<{ formattedElection: Election }>()
+const { electionId } = defineProps<{ electionId: bigint }>()
+const currentElectionId = computed(() => electionId)
 
-const now = ref(new Date())
+const { formattedElection, leftToStart, leftToEnd, electionStatus } =
+  useBoDElections(currentElectionId)
 
-const timeLeft = computed(() => {
-  const startDate = formattedElection.startDate
-  const endDate = formattedElection.endDate
-  return {
-    toStart: Math.max(0, Math.floor((startDate.getTime() - now.value.getTime()) / 1000)),
-    toEnd: Math.max(0, Math.floor((endDate.getTime() - now.value.getTime()) / 1000))
-  }
-})
+// const now = ref(new Date())
 
-const { remaining: leftToStart } = useCountdown(timeLeft.value.toStart, {
-  immediate: true
-})
+// const timeLeft = computed(() => {
+//   const startDate = formattedElection.startDate
+//   const endDate = formattedElection.endDate
+//   return {
+//     toStart: Math.max(0, Math.floor((startDate.getTime() - now.value.getTime()) / 1000)),
+//     toEnd: Math.max(0, Math.floor((endDate.getTime() - now.value.getTime()) / 1000))
+//   }
+// })
 
-const { remaining: leftToEnd } = useCountdown(timeLeft.value.toEnd, {
-  immediate: true
-})
+// const { remaining: leftToStart } = useCountdown(timeLeft.value.toStart, {
+//   immediate: true
+// })
 
-const electionStatus = computed(() => {
-  if (leftToStart.value > 0) return { text: 'Upcoming', color: 'warning' }
+// const { remaining: leftToEnd } = useCountdown(timeLeft.value.toEnd, {
+//   immediate: true
+// })
 
-  if (formattedElection.voters !== formattedElection.votesCast && leftToEnd.value > 0)
-    return { text: 'Active', color: 'success' }
+// const electionStatus = computed(() => {
+//   if (leftToStart.value > 0) return { text: 'Upcoming', color: 'warning' }
 
-  return { text: 'Completed', color: 'neutral' }
-})
+//   if (formattedElection.voters !== formattedElection.votesCast && leftToEnd.value > 0)
+//     return { text: 'Active', color: 'success' }
+
+//   return { text: 'Completed', color: 'neutral' }
+// })
 
 const timeRemaining = computed(() => {
-  if (!formattedElection) return 'No election data available'
+  if (!formattedElection.value || !electionStatus.value) return 'No election data available'
 
   let days
   let hours
@@ -82,9 +87,13 @@ const timeRemaining = computed(() => {
   return 'Election ended'
 })
 
-const badgeClass = computed(() => `badge-${electionStatus.value.color} badge-outline`)
+const badgeClass = computed(() => {
+  return electionStatus.value
+    ? `badge-${electionStatus.value.color} badge-outline`
+    : 'badge-neutral badge-outline'
+})
 const dotClass = computed(() => {
-  switch (electionStatus.value.color) {
+  switch (electionStatus.value?.color) {
     case 'warning':
       return 'bg-yellow-500'
     case 'error':
