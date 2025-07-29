@@ -46,22 +46,9 @@ import PublishResult from '@/components/sections/AdministrationView/PublishResul
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useRouter } from 'vue-router'
 import { useTeamStore, useUserDataStore } from '@/stores'
+import type { Election } from '@/types'
 
-const { formattedElection } = defineProps<{
-  formattedElection: {
-    id: number
-    title: string
-    description: string
-    createdBy: string
-    startDate: Date
-    endDate: Date
-    seatCount: number
-    resultsPublished: boolean
-    votesCast: number
-    candidates: number
-    voters: number
-  } | null
-}>()
+const { formattedElection } = defineProps<{ formattedElection: Election | null }>()
 
 const emits = defineEmits(['showCreateElectionModal'])
 const showPublishResult = inject('showPublishResultBtn')

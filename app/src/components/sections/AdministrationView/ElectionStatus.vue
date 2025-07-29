@@ -12,24 +12,11 @@
   </div>
 </template>
 <script setup lang="ts">
+import type { Election } from '@/types'
 import { useCountdown } from '@vueuse/core'
 import { computed, ref } from 'vue'
 
-const { formattedElection } = defineProps<{
-  formattedElection: {
-    id: number
-    title: string
-    description: string
-    createdBy: string
-    startDate: Date
-    endDate: Date
-    seatCount: number
-    resultsPublished: boolean
-    votesCast: number
-    candidates: number
-    voters: number
-  }
-}>()
+const { formattedElection } = defineProps<{ formattedElection: Election }>()
 
 const now = ref(new Date())
 
