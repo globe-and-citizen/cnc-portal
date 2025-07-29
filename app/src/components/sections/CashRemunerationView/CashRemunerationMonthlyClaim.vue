@@ -63,7 +63,30 @@ function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = curre
   }, 0)
 }
 
+// fonction for getting the current month key (ex: '2025-07')
+function getCurrentMonthKey() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+}
+
+// Stores the current month to detect month change
+
+const lastMonthKey = useStorage('lastMonthKey', getCurrentMonthKey())
+
+function resetMonthlyCounterIfNeeded() {
+  const currentMonthKey = getCurrentMonthKey()
+  if (lastMonthKey.value !== currentMonthKey) {
+    lastMonthKey.value = currentMonthKey
+    return true // show the reset state
+  }
+  return false
+}
+
 const totalMonthlyWithdrawnAmount = computed(() => {
+  // Reset the counter to 0 if the month changed
+  if (resetMonthlyCounterIfNeeded()) {
+    return formatCurrencyShort(0, currency.value.code)
+  }
   if (!withdrawnClaims.value) return ''
 
   let total = 0
