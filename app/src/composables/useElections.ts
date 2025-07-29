@@ -90,7 +90,8 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
   })
 
   const electionStatus = computed(() => {
-    if (!formattedElection.value) return null
+    if (!formattedElection.value || formattedElection.value.resultsPublished)
+      return { text: 'No Election' }
     if (leftToStart.value > 0) return { text: 'Upcoming', color: 'warning' }
     if (formattedElection.value.voters !== formattedElection.value.votesCast && leftToEnd.value > 0)
       return { text: 'Active', color: 'success' }
