@@ -64,7 +64,7 @@ import CreateElectionForm from './forms/CreateElectionForm.vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
 import { useTeamStore, useToastStore } from '@/stores'
 import { encodeFunctionData, type Abi } from 'viem'
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
+import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { estimateGas } from '@wagmi/core'
 import type { OldProposal } from '@/types'
 import { log, parseError } from '@/utils'
@@ -83,66 +83,8 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 const queryClient = useQueryClient()
 const showResultsModal = ref(false)
 const currentElectionId = computed(() => props.electionId)
-const { electionsAddress, /*currentElectionId,*/ formattedElection } =
-  useBoDElections(currentElectionId)
+const { electionsAddress, formattedElection } = useBoDElections(currentElectionId)
 const showCreateElectionModal = ref(false)
-
-// Contract addresses
-// const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
-
-// Fetch current election details
-// const {
-//   data: currentElection,
-//   // isLoading: isLoadingCurrentElection,
-//   error: errorGetCurrentElection
-//   //queryKey: currentElectionQueryKey
-// } = useReadContract({
-//   functionName: 'getElection',
-//   address: electionsAddress.value,
-//   abi: ElectionABI,
-//   args: [currentElectionId], // Supply currentElectionId as an argument
-//   query: {
-//     enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
-//   }
-// })
-
-// const {
-//   data: voteCount,
-//   // isLoading: isLoadingVoteCount,
-//   error: errorGetVoteCount
-// } = useReadContract({
-//   functionName: 'getVoteCount',
-//   address: electionsAddress.value,
-//   abi: ElectionABI,
-//   args: [currentElectionId], // Supply currentElectionId as an argument
-//   query: {
-//     enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
-//   }
-// })
-
-// const {
-//   data: candidateList,
-//   // isLoading: isLoadingCandidates,
-//   error: errorGetCandidates
-// } = useReadContract({
-//   functionName: 'getElectionCandidates',
-//   address: electionsAddress.value,
-//   abi: ElectionABI,
-//   args: [currentElectionId],
-//   query: {
-//     enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
-//   }
-// })
-
-// const { data: voterList } = useReadContract({
-//   functionName: 'getElectionEligibleVoters',
-//   address: electionsAddress.value,
-//   abi: ElectionABI,
-//   args: [currentElectionId],
-//   query: {
-//     enabled: computed(() => !!currentElectionId.value)
-//   }
-// })
 
 const {
   data: hashCreateElection,
@@ -155,26 +97,6 @@ const { isLoading: isConfirmingCreateElection, isSuccess: isConfirmedCreateElect
   useWaitForTransactionReceipt({
     hash: hashCreateElection
   })
-
-// const formattedElection = computed(() => {
-//   if (!currentElection.value) return null
-
-//   const raw = currentElection.value as Array<string | bigint | boolean>
-
-//   return {
-//     id: Number(raw[0]),
-//     title: String(raw[1]),
-//     description: String(raw[2]),
-//     createdBy: String(raw[3]),
-//     startDate: new Date(Number(raw[4]) * 1000),
-//     endDate: new Date(Number(raw[5]) * 1000),
-//     seatCount: Number(raw[6]),
-//     resultsPublished: Boolean(raw[7]),
-//     votesCast: Number(voteCount.value || 0),
-//     candidates: (candidateList.value as string[])?.length,
-//     voters: (voterList.value as string[])?.length || 0
-//   }
-// })
 
 const createElection = async (electionData: OldProposal) => {
   try {
@@ -224,25 +146,4 @@ watch(isConfirmingCreateElection, async (isConfirming, wasConfirming) => {
     })
   }
 })
-
-// watch(errorGetCurrentElection, (error) => {
-//   if (error) {
-//     addErrorToast('Error fetching current election')
-//     log.error('errorGetCurrentElection.value:', error)
-//   }
-// })
-
-// watch(errorGetVoteCount, (error) => {
-//   if (error) {
-//     addErrorToast('Error fetching vote count')
-//     log.error('errorGetVoteCount.value:', error)
-//   }
-// })
-
-// watch(errorGetCandidates, (error) => {
-//   if (error) {
-//     addErrorToast('Error fetching candidates')
-//     log.error('errorGetCandidates.value:', error)
-//   }
-// })
 </script>

@@ -12,9 +12,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import type { Election } from '@/types'
-import { useCountdown } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useBoDElections } from '@/composables'
 
 const { electionId } = defineProps<{ electionId: bigint }>()
@@ -22,34 +20,6 @@ const currentElectionId = computed(() => electionId)
 
 const { formattedElection, leftToStart, leftToEnd, electionStatus } =
   useBoDElections(currentElectionId)
-
-// const now = ref(new Date())
-
-// const timeLeft = computed(() => {
-//   const startDate = formattedElection.startDate
-//   const endDate = formattedElection.endDate
-//   return {
-//     toStart: Math.max(0, Math.floor((startDate.getTime() - now.value.getTime()) / 1000)),
-//     toEnd: Math.max(0, Math.floor((endDate.getTime() - now.value.getTime()) / 1000))
-//   }
-// })
-
-// const { remaining: leftToStart } = useCountdown(timeLeft.value.toStart, {
-//   immediate: true
-// })
-
-// const { remaining: leftToEnd } = useCountdown(timeLeft.value.toEnd, {
-//   immediate: true
-// })
-
-// const electionStatus = computed(() => {
-//   if (leftToStart.value > 0) return { text: 'Upcoming', color: 'warning' }
-
-//   if (formattedElection.voters !== formattedElection.votesCast && leftToEnd.value > 0)
-//     return { text: 'Active', color: 'success' }
-
-//   return { text: 'Completed', color: 'neutral' }
-// })
 
 const timeRemaining = computed(() => {
   if (!formattedElection.value || !electionStatus.value) return 'No election data available'
