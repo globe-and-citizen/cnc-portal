@@ -4,13 +4,16 @@
     <span class="badge badge-lg flex items-center gap-1 px-2 py-1 text-sm h-10" :class="badgeClass">
       <span class="w-3 h-3 rounded-full inline-block" :class="dotClass"></span>
       <span class="font-medium">{{ electionStatus.text }}</span>
-      <span class="mx-1">•</span>
-      {{ timeRemaining }} left
+      <span v-if="electionStatus.text !== 'Completed'" class="flex items-center gap-1">
+        <span class="mx-1">•</span>
+        {{ timeRemaining }} left
+      </span>
     </span>
   </div>
 </template>
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useCountdown } from '@vueuse/core'
+import { computed, ref } from 'vue'
 
 const { formattedElection } = defineProps<{
   formattedElection: {
@@ -28,60 +31,68 @@ const { formattedElection } = defineProps<{
   }
 }>()
 
-// Calculate time remaining
 const now = ref(new Date())
-let timer: ReturnType<typeof setInterval>
 
-onMounted(() => {
-  timer = setInterval(() => {
-    now.value = new Date()
-  }, 1000 * 60) // Update every minute
+const timeLeft = computed(() => {
+  const startDate = formattedElection.startDate
+  const endDate = formattedElection.endDate
+  return {
+    toStart: Math.max(0, Math.floor((startDate.getTime() - now.value.getTime()) / 1000)),
+    toEnd: Math.max(0, Math.floor((endDate.getTime() - now.value.getTime()) / 1000))
+  }
 })
 
-onBeforeUnmount(() => {
-  clearInterval(timer)
+const { remaining: leftToStart } = useCountdown(timeLeft.value.toStart, {
+  immediate: true
+})
+
+const { remaining: leftToEnd } = useCountdown(timeLeft.value.toEnd, {
+  immediate: true
+})
+
+const electionStatus = computed(() => {
+  if (leftToStart.value > 0) return { text: 'Upcoming', color: 'warning' }
+
+  if (formattedElection.voters !== formattedElection.votesCast && leftToEnd.value > 0)
+    return { text: 'Active', color: 'success' }
+
+  return { text: 'Completed', color: 'neutral' }
 })
 
 const timeRemaining = computed(() => {
   if (!formattedElection) return 'No election data available'
 
-  const diff = formattedElection.endDate.getTime() - formattedElection.startDate.getTime()
+  let days
+  let hours
+  let minutes
 
-  if (diff <= 0) return 'election ended'
+  if (electionStatus.value.text === 'Upcoming') {
+    days = Math.floor(leftToStart.value / (60 * 60 * 24))
+    if (days > 0) return `${days} ${days === 1 ? 'day' : 'days'}`
 
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  if (days > 0) return `${days} ${days === 1 ? 'day' : 'days'}`
+    const hours = Math.floor(leftToStart.value / (60 * 60))
+    if (hours > 0) return `${hours} ${hours === 1 ? 'hour' : 'hours'}`
 
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  if (hours > 0) return `${hours} ${hours === 1 ? 'hour' : 'hours'}`
+    const minutes = Math.floor(leftToStart.value / 60)
+    if (minutes > 0) return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
 
-  const minutes = Math.floor(diff / (1000 * 60))
-  return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
-})
-
-// Election status
-const electionStatus = computed(() => {
-  if (!formattedElection) return { text: 'No Election', class: 'bg-gray-100 text-gray-800' }
-
-  if (now.value < formattedElection.startDate) {
-    return {
-      text: 'Upcoming',
-      color: 'warning'
-    }
+    return `${leftToStart.value} seconds`
   }
-  if (
-    now.value > formattedElection.endDate ||
-    formattedElection.votesCast === formattedElection.voters
-  ) {
-    return {
-      text: 'Completed',
-      color: 'neutral'
-    }
+
+  if (electionStatus.value.text === 'Active') {
+    days = Math.floor(leftToEnd.value / (60 * 60 * 24))
+    if (days > 0) return `${days} ${days === 1 ? 'day' : 'days'}`
+
+    hours = Math.floor(leftToEnd.value / (60 * 60))
+    if (hours > 0) return `${hours} ${hours === 1 ? 'hour' : 'hours'}`
+
+    minutes = Math.floor(leftToEnd.value / 60)
+    if (minutes > 0) return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
+
+    return `${leftToEnd.value} seconds`
   }
-  return {
-    text: 'Active',
-    color: 'success'
-  }
+
+  return 'Election ended'
 })
 
 const badgeClass = computed(() => `badge-${electionStatus.value.color} badge-outline`)
