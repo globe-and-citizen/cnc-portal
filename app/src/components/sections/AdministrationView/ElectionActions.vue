@@ -11,12 +11,12 @@
           router.push(`/teams/${teamStore.currentTeamId}/administration/bod-elections-details`)
         }
       "
-      :variant="electionStatus.text === 'Active' ? 'primary' : undefined"
+      :variant="electionStatus?.text === 'Active' ? 'primary' : undefined"
     >
       {{
-        electionStatus.text === 'Active'
+        electionStatus?.text === 'Active'
           ? 'Vote Now'
-          : electionStatus.text == 'Completed'
+          : electionStatus?.text == 'Completed'
             ? 'View Results'
             : 'View Details'
       }}
@@ -26,13 +26,13 @@
         showPublishResult &&
         formattedElection &&
         !Boolean(formattedElection?.resultsPublished) &&
-        electionStatus.text === 'Completed'
+        electionStatus?.text === 'Completed'
       "
       :disabled="userStore.address !== teamStore.currentTeam?.ownerAddress"
       :election-id="formattedElection?.id ?? 1"
     />
     <ButtonUI
-      v-if="electionStatus.text === 'No Election'"
+      v-if="!electionStatus || formattedElection?.resultsPublished"
       variant="success"
       @click="emits('showCreateElectionModal')"
     >
