@@ -15,6 +15,7 @@
     </div>
   </OverviewCard>
 </template>
+
 <script setup lang="ts">
 import personIcon from '@/assets/person.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
@@ -26,6 +27,14 @@ import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { useStorage } from '@vueuse/core'
 import type { TokenId } from '@/constant'
 import type { RatePerHour } from '@/types/cash-remuneration'
+
+// Interface pour typer les claims
+interface WeeklyClaim {
+  claims: { hoursWorked: number }[]
+  wage: {
+    ratePerHour: RatePerHour
+  }
+}
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
@@ -41,10 +50,11 @@ const {
   data: weeklyClaims,
   isLoading: isFetching,
   error
-} = useTanstackQuery(
+} = useTanstackQuery<WeeklyClaim[]>(
   'weeklyClaims',
   computed(() => `/weeklyClaim/?teamId=${teamStore.currentTeamId}&status=signed`),
   {
+    queryKey: ['weeklyClaims'],
     refetchInterval: 10000, // auto reload every 10s
     refetchOnWindowFocus: true
   }
@@ -75,9 +85,9 @@ function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = curre
 // })
 
 const totalPendingAmount = computed(() => {
-  if (!weeklyClaims.value) return ''
+  if (!weeklyClaims.value || !Array.isArray(weeklyClaims.value)) return ''
   let total = 0
-  weeklyClaims.value.forEach((weeklyClaim) => {
+  weeklyClaims.value.forEach((weeklyClaim: WeeklyClaim) => {
     const hours = getTotalHoursWorked(weeklyClaim.claims)
     const rate = getHoulyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
     total += hours * rate

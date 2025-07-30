@@ -28,6 +28,14 @@ import { useStorage } from '@vueuse/core'
 import type { TokenId } from '@/constant'
 import type { RatePerHour } from '@/types/cash-remuneration'
 
+// Interface pour typer les claims retirés
+interface WithdrawnClaim {
+  claims: { hoursWorked: number }[]
+  wage: {
+    ratePerHour: RatePerHour
+  }
+}
+
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
@@ -42,10 +50,11 @@ const {
   data: withdrawnClaims,
   isLoading: isFetching,
   error
-} = useTanstackQuery(
+} = useTanstackQuery<WithdrawnClaim[]>(
   'withdrawnClaims',
   computed(() => `/weeklyClaim/?teamId=${teamStore.currentTeamId}&status=withdrawn`),
   {
+    queryKey: ['withdrawnClaims'],
     refetchInterval: 10000, // auto reload every 10s
     refetchOnWindowFocus: true
   }
@@ -87,10 +96,10 @@ const totalMonthlyWithdrawnAmount = computed(() => {
   if (resetMonthlyCounterIfNeeded()) {
     return formatCurrencyShort(0, currency.value.code)
   }
-  if (!withdrawnClaims.value) return ''
+  if (!withdrawnClaims.value || !Array.isArray(withdrawnClaims.value)) return ''
 
   let total = 0
-  withdrawnClaims.value.forEach((weeklyClaim) => {
+  withdrawnClaims.value.forEach((weeklyClaim: WithdrawnClaim) => {
     const hours = getTotalHoursWorked(weeklyClaim.claims)
     const rate = getHoulyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
     total += hours * rate
