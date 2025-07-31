@@ -68,7 +68,6 @@ import { useUserDataStore, useTeamStore } from '@/stores'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import type { Address } from 'viem'
 import { log, parseError } from '@/utils'
-import { useCountdown } from '@vueuse/core'
 import { useBoDElections } from '@/composables'
 
 const props = defineProps({
@@ -98,16 +97,6 @@ const { electionStatus } = useBoDElections(computed(() => props.election.id))
 const isLoadingCastVoteLocal = ref(false)
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
-// const { data: voterList } = useReadContract({
-//   functionName: 'getElectionEligibleVoters',
-//   address: electionsAddress.value,
-//   abi: ELECTIONS_ABI,
-//   args: [props.election.id],
-//   query: {
-//     enabled: computed(() => !!props.election.id)
-//   }
-// })
-
 const { data: hasVoted, error: errorHasVoted } = useReadContract({
   functionName: 'hasVoted',
   address: electionsAddress.value,
@@ -128,37 +117,6 @@ const { data: electionResults } = useReadContract({
   abi: ELECTIONS_ABI,
   args: [props.election.id]
 })
-
-// const now = ref(new Date())
-
-// const timeLeft = computed(() => {
-//   const startDate = props.election.startDate
-//   const endDate = props.election.endDate
-//   return {
-//     toStart: Math.max(0, Math.floor((startDate.getTime() - now.value.getTime()) / 1000)),
-//     toEnd: Math.max(0, Math.floor((endDate.getTime() - now.value.getTime()) / 1000))
-//   }
-// })
-
-// const { remaining: leftToStart } = useCountdown(timeLeft.value.toStart, {
-//   immediate: true
-// })
-
-// const { remaining: leftToEnd } = useCountdown(timeLeft.value.toEnd, {
-//   immediate: true
-// })
-
-// const electionStatus = computed(() => {
-//   if (leftToStart.value > 0) return 'upcoming'
-
-//   if (
-//     !(Array.isArray(voterList.value) && voterList.value.length === props.election.totalVotes) &&
-//     leftToEnd.value > 0
-//   )
-//     return 'active'
-
-//   return 'ended'
-// })
 
 const isElectionWinner = computed(
   () =>
