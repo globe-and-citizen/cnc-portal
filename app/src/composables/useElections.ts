@@ -2,7 +2,7 @@ import { computed, ref, watch, type ComputedRef } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
 import { useTeamStore } from '@/stores'
-import { useCountdown } from '@vueuse/core'
+import { useCountdown, useIntervalFn, useNow } from '@vueuse/core'
 import { log } from '@/utils'
 
 export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
@@ -69,7 +69,7 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
     }
   })
 
-  const now = ref(new Date())
+  const now = useNow({ interval: 1000 }) //ref(new Date())
 
   const timeLeft = computed(() => {
     if (!formattedElection.value) return { toStart: 0, toEnd: 0 }
@@ -81,13 +81,27 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
     }
   })
 
-  const { remaining: leftToStart } = useCountdown(timeLeft.value.toStart, {
-    immediate: true
-  })
+  const leftToStart = ref(0)
+  const leftToEnd = ref(0)
 
-  const { remaining: leftToEnd } = useCountdown(timeLeft.value.toEnd, {
-    immediate: true
-  })
+  const updateCountdowns = () => {
+    leftToStart.value = timeLeft.value.toStart
+    leftToEnd.value = timeLeft.value.toEnd
+  }
+
+  // Update every second
+  useIntervalFn(updateCountdowns, 1000)
+
+  // Initial update
+  updateCountdowns()
+
+  // const { remaining: leftToStart } = useCountdown(timeLeft.value.toStart, {
+  //   immediate: true
+  // })
+
+  // const { remaining: leftToEnd } = useCountdown(timeLeft.value.toEnd, {
+  //   immediate: true
+  // })
 
   const electionStatus = computed(() => {
     if (!formattedElection.value) return null
@@ -96,6 +110,14 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
       return { text: 'Active', color: 'success' }
     return { text: 'Completed', color: 'neutral' }
   })
+
+  // watch(timeLeft, ({ toStart, toEnd }) => {
+  //   const { remaining: startRemaining } = useCountdown(toStart, { immediate: true })
+  //   const { remaining: endRemaining } = useCountdown(toEnd, { immediate: true })
+
+  //   watch(startRemaining, val => leftToStart.value = val)
+  //   watch(endRemaining, val => leftToEnd.value = val)
+  // }, { immediate: true })
 
   // Watchers
   watch(errorGetCurrentElection, (error) => {
