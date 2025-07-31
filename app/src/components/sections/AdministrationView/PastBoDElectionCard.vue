@@ -40,11 +40,9 @@
       </div>
 
       <!-- View Results Button -->
-      <!-- <ButtonUI variant="success" :outline="true" @click="electionResultModal = true">
-        View Results
-      </ButtonUI> -->
-      <div
-        class="btn btn-md btn-success btn-outline"
+      <ButtonUI
+        variant="success"
+        :outline="true"
         @click="
           () =>
             router.push(
@@ -53,7 +51,7 @@
         "
       >
         View Results
-      </div>
+      </ButtonUI>
     </div>
   </div>
 </template>
@@ -65,8 +63,8 @@ import type { Election } from '@/types'
 import { log, parseError } from '@/utils'
 import { useReadContract } from '@wagmi/vue'
 import { useRouter } from 'vue-router'
-import { watch } from 'vue'
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const { election } = defineProps<{
   election: Election
