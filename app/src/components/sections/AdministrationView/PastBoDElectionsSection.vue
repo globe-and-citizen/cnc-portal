@@ -95,7 +95,7 @@ const fetchElections = async (): Promise<Election[]> => {
         }
 
         electionId++
-      } catch (err) {
+      } catch {
         // Error fetching this election ID, likely doesn't exist
         // console.warn(`Error fetching election ID ${electionId}:`, err)
         consecutiveErrors++
