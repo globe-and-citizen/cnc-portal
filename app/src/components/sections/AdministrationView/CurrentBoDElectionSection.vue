@@ -14,15 +14,6 @@
             @create-proposal="createElection"
           />
         </ModalComponent>
-        <ModalComponent
-          v-if="
-            (formattedElection?.endDate ?? new Date()) > new Date() ||
-            formattedElection?.votesCast === formattedElection?.voters
-          "
-          v-model="showResultsModal"
-        >
-          <ElectionResultModal :id="formattedElection?.id ?? 1" />
-        </ModalComponent>
       </div>
     </template>
     <template #card-badge>
@@ -57,7 +48,6 @@
 
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
-import ElectionResultModal from '@/components/sections/AdministrationView/modals/ElectionResultModal.vue'
 import { computed, ref, watch } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'

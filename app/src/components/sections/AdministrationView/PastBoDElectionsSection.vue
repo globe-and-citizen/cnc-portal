@@ -22,15 +22,14 @@ import { ref, computed, onMounted } from 'vue'
 import PastBoDElectionCard from './PastBoDElectionCard.vue'
 import PastBoDElection404 from './PastBoDElection404.vue'
 import CardComponent from '@/components/CardComponent.vue'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import type { Election } from '@/types'
-import { parseError } from '@/utils'
+import { log, parseError } from '@/utils'
 import { useQuery } from '@tanstack/vue-query'
 
-const toastStore = useToastStore()
 const teamStore = useTeamStore()
 
 // Get the Elections contract address from the team store
@@ -108,8 +107,7 @@ const fetchElections = async (): Promise<Election[]> => {
 
     return electionsList
   } catch (err) {
-    console.error('Error fetching elections:', parseError(err))
-    toastStore.addErrorToast('Failed to fetch past elections')
+    log.error('Error fetching elections: ', parseError(err))
     return []
   } finally {
     isLoading.value = false
