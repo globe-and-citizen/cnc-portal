@@ -7,7 +7,7 @@ export type Election = {
   endDate: Date
   seatCount: number
   resultsPublished: boolean
-  votesCast: number
-  candidates: number
-  voters: number
+  votesCast?: number
+  candidates?: number
+  voters?: number
 }
