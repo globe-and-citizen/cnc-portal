@@ -41,7 +41,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref, inject } from 'vue'
+import { computed, inject } from 'vue'
 import PublishResult from '@/components/sections/AdministrationView/PublishResult.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useRouter } from 'vue-router'
@@ -49,7 +49,7 @@ import { useTeamStore, useUserDataStore } from '@/stores'
 import type { Election } from '@/types'
 import { useBoDElections } from '@/composables'
 
-const { electionId } = defineProps<{ electionId: bigint }>()
+const props = defineProps<{ electionId: bigint }>()
 
 const emits = defineEmits(['showCreateElectionModal'])
 const showPublishResult = inject('showPublishResultBtn')
@@ -57,7 +57,7 @@ const showPublishResult = inject('showPublishResultBtn')
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const router = useRouter()
-const currentElectionId = computed(() => electionId)
+const currentElectionId = computed(() => props.electionId)
 const { formattedElection, electionStatus } = useBoDElections(currentElectionId)
 // const now = ref(new Date())
 
