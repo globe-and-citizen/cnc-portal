@@ -22,7 +22,7 @@ app.get("/", getTeamWeeklyClaims);
 app.get("/:id", updateWeeklyClaims);
 
 describe("Weekly Claim Controller", () => {
-  describe("GET: /:id", () => {
+  describe("PUT: /:id", () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
@@ -73,6 +73,35 @@ describe("Weekly Claim Controller", () => {
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
         message: "Missing or invalid signature; Missing or invalid id",
+      });
+    });
+
+    it("should return 404 if weekly claim is not found", async () => {
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue(null);
+      const response = await request(app)
+        .get("/1?action=sign")
+        .set("address", "0x123")
+        .send({ signature: "0xabc" });
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: "WeeklyClaim not found" });
+    });
+
+    it("it should return 400 if caller is not owner of the team", async () => {
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
+        id: 1,
+        status: "pending",
+        weekStart: new Date("2024-07-22"),
+        wage: { team: { ownerAddress: "0x123" } },
+      });
+
+      const response = await request(app)
+        .get("/1?action=sign")
+        .set("address", "0x456")
+        .send({ signature: "0xabc" });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Caller is not owner of the team",
       });
     });
   });
