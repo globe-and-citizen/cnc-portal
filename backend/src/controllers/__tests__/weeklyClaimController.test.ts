@@ -188,6 +188,24 @@ describe("Weekly Claim Controller", () => {
         message: "Weekly claim must be signed before it can be withdrawn",
       });
     });
+
+    it("should return 400 if weekly claim already withdrawn", async () => {
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
+        id: 1,
+        status: "withdrawn",
+        weekStart: new Date("2024-07-22"),
+        wage: { team: { ownerAddress: "0x123" } },
+      });
+
+      const response = await request(app)
+        .get("/1?action=withdraw")
+        .set("address", "0x123");
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Weekly claim already withdrawn",
+      });
+    });
   });
 
   describe("GET: /", () => {
@@ -195,11 +213,13 @@ describe("Weekly Claim Controller", () => {
       vi.clearAllMocks();
     });
 
-    // it("should return 400 if teamId is missing", async () => {
-    //   const response = await request(app).get("/?teamId=xxx");
-    //   expect(response.status).toBe(400);
-    //   expect(response.body).toEqual({ message: "Missing or invalid teamId" });
-    // });
+    it("should return 400 if teamId is missing", async () => {
+      const response = await request(app).get("/");
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Missing or invalid teamId",
+      });
+    });
 
     it("should return 400 if status is invalid", async () => {
       const response = await request(app).get("/?teamId=1&status=invalid");
@@ -310,6 +330,19 @@ describe("Weekly Claim Controller", () => {
       }));
 
       expect(response.body).toEqual(expectedResponse);
+    });
+  });
+
+  it("should handle errors gracefully", async () => {
+    vi.spyOn(prisma.weeklyClaim, "findMany").mockRejectedValue(
+      new Error("Database error")
+    );
+
+    const response = await request(app).get("/?teamId=1");
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({
+      message: "Internal server error has occured",
+      error: expect.any(String),
     });
   });
 });
