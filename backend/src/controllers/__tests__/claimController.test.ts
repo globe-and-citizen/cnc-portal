@@ -33,6 +33,7 @@ const mockWeeklyClaims: WeeklyClaim = {
   signature: null,
   claims: [{ hoursWorked: 30 }],
   wageId: 1,
+  status: "pending",
 } as WeeklyClaim;
 
 const mockClaim = {
@@ -129,6 +130,36 @@ describe("Claim Controller", () => {
       expect(response.status).toBe(400);
       expect(response.body.message).toContain(
         "Invalid hoursWorked, hoursWorked must be greater than 0"
+      );
+    });
+
+    it("should return 400 if total hours exceed 24 hours for a single day", async () => {
+      const testDate = new Date();
+      const modifiedMockWeeklyClaims = {
+        ...mockWeeklyClaims,
+        claims: [
+          {
+            ...mockClaim,
+            dayWorked: testDate,
+            hoursWorked: 20,
+          },
+        ],
+      };
+
+      vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(mockWage);
+      vi.spyOn(prisma.weeklyClaim, "findFirst").mockResolvedValue(
+        modifiedMockWeeklyClaims
+      );
+      const response = await request(app).post("/claim").send({
+        teamId: 1,
+        hoursWorked: 5, // 5 + 20 = 25 heures > 24 heures
+        memo: "memo",
+        dayWorked: testDate.toISOString(),
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe(
+        "Submission failed: the total number of hours for this day would exceed 24 hours."
       );
     });
 
