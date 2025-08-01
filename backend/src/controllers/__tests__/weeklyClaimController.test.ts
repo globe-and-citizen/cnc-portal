@@ -8,6 +8,39 @@ import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { WeeklyClaim } from "@prisma/client";
 
+// Helpers pour les mocks
+function mockWage(ownerAddress = "0x123") {
+  return { team: { ownerAddress } };
+}
+
+function mockWeeklyClaim({
+  id = 1,
+  status = "pending",
+  weekStart = new Date("2024-07-22"),
+  memberAddress = "0xMemberAddress",
+  teamId = 1,
+  data = {},
+  signature = null,
+  wageId = 1,
+  createdAt = new Date("2024-07-22"),
+  updatedAt = new Date("2024-07-22"),
+  wage = mockWage(),
+} = {}) {
+  return {
+    id,
+    status,
+    weekStart,
+    memberAddress,
+    teamId,
+    data,
+    signature,
+    wageId,
+    createdAt,
+    updatedAt,
+    wage,
+  };
+}
+
 function setAddressMiddleware(address: string) {
   return (req: Request, res: Response, next: NextFunction) => {
     (req as any).address = address;
@@ -28,17 +61,22 @@ describe("Weekly Claim Controller", () => {
     });
 
     it("should return 400 if weekly claim is updated successfully", async () => {
-      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
-        id: 1,
-        status: "pending",
-        weekStart: new Date("2024-07-22"),
-        wage: { team: { ownerAddress: "0x123" } },
-      });
-      vi.spyOn(prisma.weeklyClaim, "update").mockResolvedValue({
-        id: 1,
-        status: "signed",
-        signature: "0xabc",
-      });
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: "pending",
+          weekStart: new Date("2024-07-22"),
+          wage: mockWage("0x123"),
+        })
+      );
+      vi.spyOn(prisma.weeklyClaim, "update").mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: "signed",
+          signature: "0xabc",
+          wage: mockWage("0x123"),
+        })
+      );
 
       const response = await request(app)
         .get("/1?action=sign")
@@ -87,12 +125,14 @@ describe("Weekly Claim Controller", () => {
     });
 
     it("it should return 400 if caller is not owner of the team", async () => {
-      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
-        id: 1,
-        status: "pending",
-        weekStart: new Date("2024-07-22"),
-        wage: { team: { ownerAddress: "0x123" } },
-      });
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: "pending",
+          weekStart: new Date("2024-07-22"),
+          wage: mockWage("0x123"),
+        })
+      );
 
       const response = await request(app)
         .get("/1?action=sign")
@@ -107,19 +147,21 @@ describe("Weekly Claim Controller", () => {
 
     it("should return 400 if week is not yet completed", async () => {
       const now = new Date();
-      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
-        id: 1,
-        status: "pending",
-        weekStart: now,
-        data: {},
-        memberAddress: "0xMemberAddress",
-        teamId: 1,
-        signature: null,
-        wageId: 1,
-        createdAt: now,
-        updatedAt: now,
-        wage: { team: { ownerAddress: "0x123" } },
-      });
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: "pending",
+          weekStart: now,
+          data: {},
+          memberAddress: "0xMemberAddress",
+          teamId: 1,
+          signature: null,
+          wageId: 1,
+          createdAt: now,
+          updatedAt: now,
+          wage: mockWage("0x123"),
+        })
+      );
 
       const response = await request(app)
         .get("/1?action=sign")
@@ -133,12 +175,14 @@ describe("Weekly Claim Controller", () => {
     });
 
     it("should return 400 if weekly claim is already signed", async () => {
-      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
-        id: 1,
-        status: "signed",
-        weekStart: new Date("2024-07-22"),
-        wage: { team: { ownerAddress: "0x123" } },
-      });
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: "signed",
+          weekStart: new Date("2024-07-22"),
+          wage: mockWage("0x123"),
+        })
+      );
 
       const response = await request(app)
         .get("/1?action=sign")
@@ -152,12 +196,14 @@ describe("Weekly Claim Controller", () => {
     });
 
     it("should return 400 if weekly claim is already withdrawn", async () => {
-      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
-        id: 1,
-        status: "withdrawn",
-        weekStart: new Date("2024-07-22"),
-        wage: { team: { ownerAddress: "0x123" } },
-      });
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: "withdrawn",
+          weekStart: new Date("2024-07-22"),
+          wage: mockWage("0x123"),
+        })
+      );
 
       const response = await request(app)
         .get("/1?action=sign")
@@ -172,12 +218,14 @@ describe("Weekly Claim Controller", () => {
     });
 
     it("should return 400 if weekly claim is not signed before withdrawal", async () => {
-      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
-        id: 1,
-        status: "pending",
-        weekStart: new Date("2024-07-22"),
-        wage: { team: { ownerAddress: "0x123" } },
-      });
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: "pending",
+          weekStart: new Date("2024-07-22"),
+          wage: mockWage("0x123"),
+        })
+      );
 
       const response = await request(app)
         .get("/1?action=withdraw")
@@ -190,12 +238,14 @@ describe("Weekly Claim Controller", () => {
     });
 
     it("should return 400 if weekly claim already withdrawn", async () => {
-      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
-        id: 1,
-        status: "withdrawn",
-        weekStart: new Date("2024-07-22"),
-        wage: { team: { ownerAddress: "0x123" } },
-      });
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: "withdrawn",
+          weekStart: new Date("2024-07-22"),
+          wage: mockWage("0x123"),
+        })
+      );
 
       const response = await request(app)
         .get("/1?action=withdraw")
