@@ -131,6 +131,45 @@ describe("Weekly Claim Controller", () => {
         message: "Caller is not owner of the team; Week not yet completed",
       });
     });
+
+    it("should return 400 if weekly claim is already signed", async () => {
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
+        id: 1,
+        status: "signed",
+        weekStart: new Date("2024-07-22"),
+        wage: { team: { ownerAddress: "0x123" } },
+      });
+
+      const response = await request(app)
+        .get("/1?action=sign")
+        .set("address", "0x123")
+        .send({ signature: "0xabc" });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Caller is not owner of the team; Weekly claim already signed",
+      });
+    });
+
+    it("should return 400 if weekly claim is already withdrawn", async () => {
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
+        id: 1,
+        status: "withdrawn",
+        weekStart: new Date("2024-07-22"),
+        wage: { team: { ownerAddress: "0x123" } },
+      });
+
+      const response = await request(app)
+        .get("/1?action=sign")
+        .set("address", "0x123")
+        .send({ signature: "0xabc" });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message:
+          "Caller is not owner of the team; Weekly claim already withdrawn",
+      });
+    });
   });
 
   describe("GET: /", () => {
