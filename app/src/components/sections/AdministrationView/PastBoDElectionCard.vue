@@ -40,11 +40,9 @@
       </div>
 
       <!-- View Results Button -->
-      <!-- <ButtonUI variant="success" :outline="true" @click="electionResultModal = true">
-        View Results
-      </ButtonUI> -->
-      <div
-        class="btn btn-md btn-success btn-outline"
+      <ButtonUI
+        variant="success"
+        :outline="true"
         @click="
           () =>
             router.push(
@@ -53,36 +51,25 @@
         "
       >
         View Results
-      </div>
-      <ModalComponent
-        v-if="electionResultModal"
-        v-model="electionResultModal"
-        data-test="election-result-modal"
-      >
-        <ElectionResultModal :id="election.id" @closeModal="electionResultModal = false" />
-      </ModalComponent>
+      </ButtonUI>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import type { Election } from '@/types'
-import { parseError } from '@/utils'
+import { log, parseError } from '@/utils'
 import { useReadContract } from '@wagmi/vue'
 import { useRouter } from 'vue-router'
-import { watch } from 'vue'
-import { computed, ref } from 'vue'
-import ElectionResultModal from './modals/ElectionResultModal.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
+import { computed, watch } from 'vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
-const electionResultModal = ref(false)
 const { election } = defineProps<{
   election: Election
 }>()
 const teamStore = useTeamStore()
-const toastStore = useToastStore()
 const router = useRouter()
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
 
@@ -114,14 +101,12 @@ const formatDate = (date: Date) => {
 
 watch(errorGetVoteCount, (newError) => {
   if (newError) {
-    console.error('Error fetching vote count:', parseError(newError))
-    toastStore.addErrorToast('Failed to fetch vote count')
+    log.error('Error fetching vote count:', parseError(newError))
   }
 })
 watch(errorGetElectionResults, (newError) => {
   if (newError) {
-    console.error('Error fetching election results:', parseError(newError))
-    toastStore.addErrorToast('Failed to fetch election results')
+    log.error('Error fetching election results:', parseError(newError))
   }
 })
 </script>
