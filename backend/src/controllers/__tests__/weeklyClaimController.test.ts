@@ -283,19 +283,6 @@ describe("Weekly Claim Controller", () => {
       expect(response.body).toEqual(expectedResponse);
     });
 
-    // it("should return 500 on database error", async () => {
-    //   vi.spyOn(prisma.weeklyClaim, "findMany").mockRejectedValue(
-    //     new Error("Database error")
-    //   );
-
-    //   const response = await request(app).get("/?teamId=1");
-    //   expect(response.status).toBe(500);
-    //   expect(response.body).toEqual({
-    //     message: "Internal server error has occured",
-    //     error: expect.any(String),
-    //   });
-    // });
-
     it("should filter weekly claims by memberAddress if provided", async () => {
       const testDate = new Date();
       const mockWeeklyClaims: WeeklyClaim[] = [
