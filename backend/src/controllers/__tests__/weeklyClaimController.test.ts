@@ -104,6 +104,33 @@ describe("Weekly Claim Controller", () => {
         message: "Caller is not owner of the team",
       });
     });
+
+    it("should return 400 if week is not yet completed", async () => {
+      const now = new Date();
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
+        id: 1,
+        status: "pending",
+        weekStart: now,
+        data: {},
+        memberAddress: "0xMemberAddress",
+        teamId: 1,
+        signature: null,
+        wageId: 1,
+        createdAt: now,
+        updatedAt: now,
+        wage: { team: { ownerAddress: "0x123" } },
+      });
+
+      const response = await request(app)
+        .get("/1?action=sign")
+        .set("address", "0x123")
+        .send({ signature: "0xabc" });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Caller is not owner of the team; Week not yet completed",
+      });
+    });
   });
 
   describe("GET: /", () => {
