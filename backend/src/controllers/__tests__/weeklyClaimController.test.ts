@@ -170,6 +170,24 @@ describe("Weekly Claim Controller", () => {
           "Caller is not owner of the team; Weekly claim already withdrawn",
       });
     });
+
+    it("should return 400 if weekly claim is not signed before withdrawal", async () => {
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
+        id: 1,
+        status: "pending",
+        weekStart: new Date("2024-07-22"),
+        wage: { team: { ownerAddress: "0x123" } },
+      });
+
+      const response = await request(app)
+        .get("/1?action=withdraw")
+        .set("address", "0x123");
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Weekly claim must be signed before it can be withdrawn",
+      });
+    });
   });
 
   describe("GET: /", () => {
