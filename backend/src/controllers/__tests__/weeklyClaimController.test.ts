@@ -1,6 +1,9 @@
 import request from "supertest";
 import express, { Request, Response, NextFunction } from "express";
-import { getTeamWeeklyClaims } from "../weeklyClaimController";
+import {
+  getTeamWeeklyClaims,
+  updateWeeklyClaims,
+} from "../weeklyClaimController";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { WeeklyClaim } from "@prisma/client";
@@ -16,9 +19,64 @@ const app = express();
 app.use(express.json());
 app.use(setAddressMiddleware("0xMemberAddress"));
 app.get("/", getTeamWeeklyClaims);
-app.get("/:id")
+app.get("/:id", updateWeeklyClaims);
 
 describe("Weekly Claim Controller", () => {
+  describe("GET: /:id", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should return 400 if weekly claim is updated successfully", async () => {
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue({
+        id: 1,
+        status: "pending",
+        weekStart: new Date("2024-07-22"),
+        wage: { team: { ownerAddress: "0x123" } },
+      });
+      vi.spyOn(prisma.weeklyClaim, "update").mockResolvedValue({
+        id: 1,
+        status: "signed",
+        signature: "0xabc",
+      });
+
+      const response = await request(app)
+        .get("/1?action=sign")
+        .set("address", "0x123")
+        .send({ signature: "0xabc" });
+
+      expect(response.status).toBe(400);
+      expect(response.body.status).toBe(undefined);
+      expect(response.body.signature).toBe(undefined);
+    });
+
+    it("should return 400 if action is invalid", async () => {
+      const response = await request(app).get("/1?action=invalid");
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Invalid action. Allowed actions are: sign, withdraw",
+      });
+    });
+
+    it("should return 404 if weekly claim is not found", async () => {
+      vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue(null);
+      const response = await request(app)
+        .get("/1?action=sign")
+        .set("address", "0x123")
+        .send({ signature: "0xabc" });
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: "WeeklyClaim not found" });
+    });
+
+    it("should return 400 if id is invalid", async () => {
+      const response = await request(app).get("/invalidId?action=sign");
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Missing or invalid signature; Missing or invalid id",
+      });
+    });
+  });
+
   describe("GET: /", () => {
     beforeEach(() => {
       vi.clearAllMocks();
@@ -58,7 +116,7 @@ describe("Weekly Claim Controller", () => {
           signature: null,
           createdAt: testDate,
           updatedAt: testDate,
-          wageId: 0
+          wageId: 0,
         },
         {
           id: 2,
@@ -70,7 +128,7 @@ describe("Weekly Claim Controller", () => {
           signature: null,
           createdAt: testDate,
           updatedAt: testDate,
-          wageId: 0
+          wageId: 0,
         },
       ];
 
