@@ -25,7 +25,10 @@ const {
 } = useReadContract({
   functionName: 'getNextElectionId',
   address: electionsAddress.value,
-  abi: ELECTIONS_ABI
+  abi: ELECTIONS_ABI,
+  query: {
+    enabled: computed(() => !!electionsAddress.value)
+  }
 })
 
 // Compute current election ID
