@@ -130,48 +130,81 @@
       </div>
 
       <nav class="space-y-4">
-        <div v-for="item in menuItems" :key="item.label" class="space-y-2">
-          <RouterLink
-            :to="item.route"
-            class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
-            :class="{
-              'bg-emerald-500/10 shadow-sm': item.active,
-              'hover:bg-gray-100': !item.active,
-              hidden: !item.show
-            }"
-          >
-            <div class="relative">
-              <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
-            </div>
-            <span
-              v-if="!isCollapsed"
-              class="text-sm font-medium transition-colors duration-200"
-              :class="{ 'text-emerald-600': item.active }"
-            >
-              {{ item.label }}
-            </span>
-          </RouterLink>
-          <div v-for="child in item.children" :key="child.label">
+        <div v-for="(item, idx) in menuItems" :key="item.label" class="space-y-4">
+          <div>
+            <!-- Si pas d'enfants, lien direct -->
             <RouterLink
-              :to="child.route"
-              class="min-w-10 min-h-11 flex items-center gap-3 px-4 py-3 ml-8 rounded-xl text-gray-600 group transition-all duration-200 z-10"
+              v-if="!item.children || item.children.length === 0"
+              :to="item.route"
+              class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
               :class="{
-                'bg-emerald-500/10 shadow-sm': child.active,
-                'hover:bg-gray-100': !child.active,
+                'bg-emerald-500/10 shadow-sm': item.active,
+                'hover:bg-gray-100': !item.active,
                 hidden: !item.show
               }"
             >
               <div class="relative">
-                <!-- <IconifyIcon :icon="child.icon" :class="getIconClass(child.active)" /> -->
+                <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
               </div>
               <span
                 v-if="!isCollapsed"
                 class="text-sm font-medium transition-colors duration-200"
-                :class="{ 'text-emerald-600': child.active }"
+                :class="{ 'text-emerald-600': item.active }"
               >
-                {{ child.label }}
+                {{ item.label }}
               </span>
             </RouterLink>
+            <!-- Si enfants, bouton dropdown -->
+            <div v-else>
+              <button
+                class="w-full min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10 focus:outline-none"
+                :class="{
+                  'bg-emerald-500/10 shadow-sm': item.active,
+                  'hover:bg-gray-100 ': !item.active,
+                  hidden: !item.show
+                }"
+                @click="toggleSubmenu(idx)"
+                type="button"
+              >
+                <div class="relative">
+                  <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
+                </div>
+                <span
+                  v-if="!isCollapsed"
+                  class="text-sm font-medium transition-colors duration-200 flex-1 text-left"
+                  :class="{ 'text-emerald-600': item.active }"
+                >
+                  {{ item.label }}
+                </span>
+                <IconifyIcon
+                  v-if="!isCollapsed"
+                  :icon="openSubmenus[idx] ? 'heroicons:chevron-up' : 'heroicons:chevron-down'"
+                  class="w-4 h-4 ml-auto text-gray-400 transition-transform duration-200"
+                />
+              </button>
+
+              <div v-show="openSubmenus[idx]" class="pl-4 mt-2 space-y-2">
+                <div v-for="child in item.children" :key="child.label">
+                  <RouterLink
+                    :to="child.route"
+                    class="min-w-10 min-h-11 flex items-center gap-3 px-4 py-3 ml-4 rounded-xl text-gray-600 group transition-all duration-200 z-10"
+                    :class="{
+                      'bg-emerald-500/10 shadow-sm': child.active,
+                      'hover:bg-gray-100': !child.active,
+                      hidden: !item.show
+                    }"
+                  >
+                    <span
+                      v-if="!isCollapsed"
+                      class="text-sm font-medium transition-colors duration-200"
+                      :class="{ 'text-emerald-600': child.active }"
+                    >
+                      {{ child.label }}
+                    </span>
+                  </RouterLink>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </nav>
@@ -238,6 +271,9 @@ const target = ref(null)
 const isDropdownOpen = ref(false)
 const teamStore = useTeamStore()
 
+// Dropdown submenu state
+const openSubmenus = ref<boolean[]>([])
+
 const getIconClass = (active: boolean | undefined) => {
   return [
     'w-6 h-6 transition-all duration-300 ease-in-out',
@@ -250,12 +286,19 @@ onMounted(() => {
     console.log('clicked outside')
     isDropdownOpen.value = false
   })
+  if (openSubmenus.value.length !== menuItems.value.length) {
+    openSubmenus.value = Array(menuItems.value.length).fill(false)
+  }
 })
 
 const emits = defineEmits(['openEditUserModal'])
 
 const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value
+}
+
+const toggleSubmenu = (idx: number) => {
+  openSubmenus.value[idx] = !openSubmenus.value[idx]
 }
 
 const formatedUserAddress = computed(() => {
@@ -397,7 +440,7 @@ const menuItems = computed(() => [
       name: 'bod-elections',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    active: route.name === 'bod-elections',
+    active: route.name === 'bod-elections' || route.name === 'bod-proposals',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
       {
@@ -415,7 +458,7 @@ const menuItems = computed(() => [
           name: 'bod-proposals',
           params: { id: teamStore.currentTeam?.id || '1' }
         },
-        active: route.name === 'proposals',
+        active: route.name === 'bod-proposals',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       }
       // {
