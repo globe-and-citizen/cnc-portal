@@ -59,17 +59,19 @@ describe("Wage Controller", () => {
     });
 
     it("should return 400 if parameters are invalid", async () => {
-      const response = await request(app).put("/wage").send({
-        teamId: 1,
-        userAddress: "0xMemberAddress",
-        // cashRatePerHour: -50,
-        // tokenRatePerHour: 100,
-        ratePerHour: [
-          { type: "cash", amount: -50 },
-          { type: "token", amount: 100 }
-        ],
-        maximumHoursPerWeek: "0.5",
-      });
+      const response = await request(app)
+        .put("/wage")
+        .send({
+          teamId: 1,
+          userAddress: "0xMemberAddress",
+          // cashRatePerHour: -50,
+          // tokenRatePerHour: 100,
+          ratePerHour: [
+            { type: "cash", amount: -50 },
+            { type: "token", amount: 100 },
+          ],
+          maximumHoursPerWeek: "0.5",
+        });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain(
@@ -80,17 +82,19 @@ describe("Wage Controller", () => {
     it("should return 403 if caller is not the owner of the team", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValueOnce(null);
       vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
-      const response = await request(app).put("/wage").send({
-        teamId: 1,
-        userAddress: "0xMemberAddress",
-        // cashRatePerHour: 50,
-        // tokenRatePerHour: 100,
-        ratePerHour: [
-          { type: "cash", amount: 50 },
-          { type: "token", amount: 100 }
-        ],
-        maximumHoursPerWeek: 40,
-      });
+      const response = await request(app)
+        .put("/wage")
+        .send({
+          teamId: 1,
+          userAddress: "0xMemberAddress",
+          // cashRatePerHour: 50,
+          // tokenRatePerHour: 100,
+          ratePerHour: [
+            { type: "cash", amount: 50 },
+            { type: "token", amount: 100 },
+          ],
+          maximumHoursPerWeek: 40,
+        });
 
       expect(response.status).toBe(403);
       expect(response.body.message).toBe("Caller is not the owner of the team");
@@ -112,7 +116,7 @@ describe("Wage Controller", () => {
           // tokenRatePerHour: 100,
           ratePerHour: [
             { type: "cash", amount: 50 },
-            { type: "token", amount: 100 }
+            { type: "token", amount: 100 },
           ],
           maximumHoursPerWeek: 40,
         });
@@ -137,7 +141,7 @@ describe("Wage Controller", () => {
           // tokenRatePerHour: 100,
           ratePerHour: [
             { type: "cash", amount: 50 },
-            { type: "token", amount: 100 }
+            { type: "token", amount: 100 },
           ],
           maximumHoursPerWeek: 40,
         });
@@ -163,7 +167,7 @@ describe("Wage Controller", () => {
           // tokenRatePerHour: 100,
           ratePerHour: [
             { type: "cash", amount: 50 },
-            { type: "token", amount: 100 }
+            { type: "token", amount: 100 },
           ],
           maximumHoursPerWeek: 40,
         });
@@ -176,17 +180,19 @@ describe("Wage Controller", () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, "findFirst").mockRejectedValue("Server error");
 
-      const response = await request(app).put("/wage").send({
-        teamId: 1,
-        userAddress: "0xMemberAddress",
-        // cashRatePerHour: 50,
-        // tokenRatePerHour: 100,
-        ratePerHour: [
-          { type: "cash", amount: 50 },
-          { type: "token", amount: 100 }
-        ],
-        maximumHoursPerWeek: 40,
-      });
+      const response = await request(app)
+        .put("/wage")
+        .send({
+          teamId: 1,
+          userAddress: "0xMemberAddress",
+          // cashRatePerHour: 50,
+          // tokenRatePerHour: 100,
+          ratePerHour: [
+            { type: "cash", amount: 50 },
+            { type: "token", amount: 100 },
+          ],
+          maximumHoursPerWeek: 40,
+        });
 
       // console.log({ body: response.body, status: response.status });
       expect(response.status).toBe(500);
@@ -194,29 +200,26 @@ describe("Wage Controller", () => {
     });
   });
 
-
   describe("GET: /", () => {
     // Reset all mock functions before each test
     beforeEach(() => {
       vi.clearAllMocks();
     });
-  
+
     it("should return 403 if user is not a team member", async () => {
       // Simulate the case where the user is not a member of the team
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(null); //  return false
-  
-      const response = await request(app)
-        .get("/")
-        .query({ teamId: 1 });
-  
+
+      const response = await request(app).get("/").query({ teamId: 1 });
+
       expect(response.status).toBe(403);
       expect(response.body.message).toBe("Member is not a team member");
     });
-  
+
     it("should return 200 and wages if user is a team member", async () => {
       // Simulate that the user is indeed a member of the team
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-  
+
       // Simulate returning wages data
       vi.spyOn(prisma.wage, "findMany").mockResolvedValue([
         {
@@ -225,31 +228,24 @@ describe("Wage Controller", () => {
           previousWage: { id: 0 },
         },
       ]);
-  
-      const response = await request(app)
-        .get("/")
-        .query({ teamId: 1 });
-  
+
+      const response = await request(app).get("/").query({ teamId: 1 });
+
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body[0]).toHaveProperty("userAddress", "0xMemberAddress");
     });
-  
+
     it("should return 500 on internal server error", async () => {
       // Simulate a database error when checking team membership
       vi.spyOn(prisma.team, "findFirst").mockRejectedValue(
         new Error("Database error")
       );
-  
-      const response = await request(app)
-        .get("/")
-        .query({ teamId: 1 });
-  
+
+      const response = await request(app).get("/").query({ teamId: 1 });
+
       expect(response.status).toBe(500);
       expect(response.body.message).toContain("Internal server error");
     });
   });
-  
 });
-
-  

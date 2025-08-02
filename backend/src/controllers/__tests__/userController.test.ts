@@ -255,12 +255,10 @@ describe("User Controller", () => {
     it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.user, "findUnique").mockRejectedValue(new Error("Error"));
 
-      const response = await request(app)
-        .put("/user/0xOwnerAddress")
-        .send({
-          name: "NewName",
-          imageUrl: "https://example.com/newimage.jpg",
-        });
+      const response = await request(app).put("/user/0xOwnerAddress").send({
+        name: "NewName",
+        imageUrl: "https://example.com/newimage.jpg",
+      });
 
       expect(response.status).toBe(500);
       expect(response.body.message).toEqual(

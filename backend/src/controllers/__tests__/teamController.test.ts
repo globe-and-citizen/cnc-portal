@@ -402,8 +402,6 @@ describe("Team Controller", () => {
     });
 
     it("should return 200 and delete the team successfully", async () => {
-      
-
       vi.spyOn(prisma.team, "findUnique").mockResolvedValue(teamMockResolve);
       vi.spyOn(prisma.team, "delete").mockResolvedValue(teamMockResolve);
       vi.spyOn(prisma.boardOfDirectorActions, "deleteMany").mockResolvedValue({

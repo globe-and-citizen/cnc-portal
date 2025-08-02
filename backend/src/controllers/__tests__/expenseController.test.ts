@@ -26,14 +26,14 @@ const mockExpense = {
   userAddress: "0xCallerAddress",
   signature: "mockSignature",
   data: JSON.stringify({
-    approvedAddress: '0x1234567890123456789012345678901234567890',
-    tokenAddress: '0xTiokenAddress',
+    approvedAddress: "0x1234567890123456789012345678901234567890",
+    tokenAddress: "0xTiokenAddress",
     budgetData: [
       { budgetType: 0, value: 10 },
       { budgetType: 1, value: 100 },
-      { budgetType: 2, value: 10 }
+      { budgetType: 2, value: 10 },
     ],
-    expiry: new Date().getTime() / 1000 + 60 * 60
+    expiry: new Date().getTime() / 1000 + 60 * 60,
   }),
   status: "signed",
 } as Expense;
@@ -75,14 +75,16 @@ describe("Expense Controller", () => {
     it("should create a new expense", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValueOnce(mockTeam);
       vi.spyOn(prisma.expense, "create").mockResolvedValueOnce(mockExpense);
- 
-      const response = await request(app).post("/expense").send({
-        teamId: 1,
-        signature: "0xmockSignature",
-        data: JSON.stringify({
-          approvedAddress: "0xApprovedAddress",
-        }),
-      });
+
+      const response = await request(app)
+        .post("/expense")
+        .send({
+          teamId: 1,
+          signature: "0xmockSignature",
+          data: JSON.stringify({
+            approvedAddress: "0xApprovedAddress",
+          }),
+        });
 
       expect(response.status).toBe(201);
       expect(response.body).toEqual(mockExpense);
@@ -123,23 +125,27 @@ describe("Expense Controller", () => {
 
     it("should return expenses for a valid team", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-      vi.spyOn(prisma.expense, "findMany").mockResolvedValue([{...mockExpense, data: JSON.parse(mockExpense.data as string)}]);
+      vi.spyOn(prisma.expense, "findMany").mockResolvedValue([
+        { ...mockExpense, data: JSON.parse(mockExpense.data as string) },
+      ]);
       vi.spyOn(prisma.teamContract, "findFirst").mockResolvedValue(null);
-      vi.spyOn(prisma.expense, "update").mockResolvedValue({})
-      vi.spyOn(publicClient, "readContract").mockResolvedValue([0n, 0n, 1])
+      vi.spyOn(prisma.expense, "update").mockResolvedValue({});
+      vi.spyOn(publicClient, "readContract").mockResolvedValue([0n, 0n, 1]);
 
       const response = await request(app).get("/expenses").query({ teamId: 1 });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual([{
-        ...mockExpense,
-        data: JSON.parse(mockExpense.data as string),
-        status: "enabled",
-        balances: {
-          0: "0",
-          1: "0"
-        }
-      }]);
+      expect(response.body).toEqual([
+        {
+          ...mockExpense,
+          data: JSON.parse(mockExpense.data as string),
+          status: "enabled",
+          balances: {
+            0: "0",
+            1: "0",
+          },
+        },
+      ]);
     });
 
     it("should return 500 if there is a server error", async () => {
@@ -179,7 +185,6 @@ describe("Expense Controller", () => {
     });
 
     it("should return 403 if caller is not the owner of the team and the status is disable", async () => {
-
       vi.spyOn(prisma.expense, "findUnique").mockResolvedValue(null);
 
       const response = await request(app)
@@ -188,7 +193,7 @@ describe("Expense Controller", () => {
 
       expect(response.status).toBe(403);
       expect(response.body.message).toBe("Caller is not the owner of the team");
-    })
+    });
 
     it("should update the expense status", async () => {
       vi.spyOn(prisma.expense, "update").mockResolvedValue({
