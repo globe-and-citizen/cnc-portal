@@ -1,7 +1,7 @@
 import request from "supertest";
 import express, { Request, Response, NextFunction, response } from "express";
 import rateLimit from "express-rate-limit";
-import  { authenticateSiwe, authenticateToken } from "../authController";
+import { authenticateSiwe, authenticateToken } from "../authController";
 import { authorizeUser } from "../../middleware/authMiddleware";
 import { prisma } from "../../utils";
 import jwt from "jsonwebtoken";
@@ -197,7 +197,5 @@ describe("authController", () => {
 
       expect(response.status).toBe(200);
     });
-
-   
   });
 });

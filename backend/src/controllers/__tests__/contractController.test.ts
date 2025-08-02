@@ -259,13 +259,11 @@ describe("contractController", () => {
 
     it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.team, "findUnique").mockRejectedValue("Test");
-      const response = await request(app)
-        .post("/team/contract")
-        .send({
-          teamId: 1,
-          contractAddress: faker.finance.ethereumAddress(),
-          contractType: "Voting",
-        });
+      const response = await request(app).post("/team/contract").send({
+        teamId: 1,
+        contractAddress: faker.finance.ethereumAddress(),
+        contractType: "Voting",
+      });
       expect(response.status).toBe(500);
       expect(response.body.message).toBe("Internal server error has occured");
     });
