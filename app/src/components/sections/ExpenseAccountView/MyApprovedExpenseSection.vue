@@ -154,34 +154,6 @@ const expenseAccountEip712Address = computed(
       (contract) => contract.type === 'ExpenseAccountEIP712'
     )?.address as Address
 )
-// const myApprovedExpenseRows = computed(() =>
-//   /*expenseDataStore.allExpenseDataParsed*/
-//     newExpenseData.value
-//       ? newExpenseData.value.filter(
-//          (approval) => approval.approvedAddress === currentUserAddress
-//         )
-// )
-
-// const getTokens = () =>
-//   balances.value.map((b) => ({ symbol: b.token.symbol, balance: b.amount, tokenId: b.token.id }))
-// const tokens = computed<Token[]>(() => {
-//   const tokenAddress = expenseDataStore.allExpenseDataParsed.find(
-//     (item) => item.signature === signatureToTransfer.value
-//   )?.tokenAddress
-
-//   const symbol = tokenSymbol(tokenAddress ?? '')
-//   const balance = tokenAddress === zeroAddress ? balances.value[0].amount : balances.value[1].amount
-
-//   return symbol && !isNaN(Number(balance))
-//     ? [
-//         {
-//           symbol,
-//           balance: Number(balance),
-//           tokenId: (tokenAddress ?? '') as TokenId // Ensure tokenId is of type TokenId
-//         }
-//       ]
-//     : []
-// })
 //#endregion
 
 //#region Composables
