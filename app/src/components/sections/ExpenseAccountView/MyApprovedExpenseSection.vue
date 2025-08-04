@@ -1,10 +1,13 @@
 <template>
   <CardComponent title="My Approved Expense">
-    <div v-if="expenseAccountEip712Address">
+    <div v-if="expenseAccountEip712Address && newExpenseData">
       <!-- TODO display this only if the use have an approved expense -->
       <!-- Expense A/c Info Section -->
       <!-- New Header -->
-      <TableComponent :rows="myApprovedExpenseRows" :columns="columns">
+      <TableComponent
+        :rows="getCurrentUserExpenses(newExpenseData, currentUserAddress)"
+        :columns="columns"
+      >
         <template #action-data="{ row }">
           <ButtonUI
             variant="success"
@@ -21,18 +24,20 @@
           >
         </template>
         <template #expiryDate-data="{ row }">
-          <span>{{ new Date(Number(row.expiry) * 1000).toLocaleString('en-US') }}</span>
+          <span>{{ new Date(Number(row.data.expiry) * 1000).toLocaleString('en-US') }}</span>
         </template>
         <template #maxAmountPerTx-data="{ row }">
-          <span> {{ row.budgetData[2]?.value }} {{ tokenSymbol(row.tokenAddress) }} </span>
+          <span>
+            {{ row.data.budgetData[2]?.value }} {{ tokenSymbol(row.data.tokenAddress) }}
+          </span>
         </template>
         <template #transactions-data="{ row }">
-          <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }} TXs</span>
+          <span>{{ row.balances[0] }}/{{ row.data.budgetData[0]?.value }} TXs</span>
         </template>
         <template #amountTransferred-data="{ row }">
           <span
-            >{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}
-            {{ tokenSymbol(row.tokenAddress) }}</span
+            >{{ row.balances[1] }}/{{ row.data.budgetData[1]?.value }}
+            {{ tokenSymbol(row.data.tokenAddress) }}</span
           >
         </template>
       </TableComponent>
@@ -59,13 +64,13 @@
 <script setup lang="ts">
 //#region Imports
 import { computed, ref, watch } from 'vue'
-import type { BudgetLimit, BudgetData } from '@/types'
+import type { BudgetLimit, BudgetData, ExpenseResponse } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
 import TransferForm, { type Token } from '@/components/forms/TransferForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
-import { parseError, log, tokenSymbol } from '@/utils'
+import { parseError, log, tokenSymbol, getCurrentUserExpenses } from '@/utils'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { estimateGas } from '@wagmi/core'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
@@ -75,7 +80,7 @@ import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { useContractBalance } from '@/composables'
+import { useContractBalance, useTanstackQuery } from '@/composables'
 import type { TokenId } from '@/constant'
 //#endregion
 
@@ -127,6 +132,20 @@ const { balances } = useContractBalance(
     ?.address as Address
 )
 
+const {
+  data: newExpenseData,
+  isLoading: isFetchingExpenseData,
+  error: errorFetchingExpenseData
+} = useTanstackQuery<ExpenseResponse[]>(
+  'expenseData',
+  computed(() => `/expense?teamId=${teamStore.currentTeamId}`),
+  {
+    queryKey: ['expenseData'],
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true
+  }
+)
+
 //#region Computed Values
 const expenseAccountEip712Address = computed(
   () =>
@@ -134,11 +153,13 @@ const expenseAccountEip712Address = computed(
       (contract) => contract.type === 'ExpenseAccountEIP712'
     )?.address as Address
 )
-const myApprovedExpenseRows = computed(() =>
-  expenseDataStore.allExpenseDataParsed.filter(
-    (approval) => approval.approvedAddress === currentUserAddress
-  )
-)
+// const myApprovedExpenseRows = computed(() =>
+//   /*expenseDataStore.allExpenseDataParsed*/
+//     newExpenseData.value
+//       ? newExpenseData.value.filter(
+//          (approval) => approval.approvedAddress === currentUserAddress
+//         )
+// )
 
 // const getTokens = () =>
 //   balances.value.map((b) => ({ symbol: b.token.symbol, balance: b.amount, tokenId: b.token.id }))
@@ -319,6 +340,11 @@ const transferErc20Token = async () => {
 //#endregion
 
 //#region Watchers
+watch(newExpenseData, (newData) => {
+  if (newData) {
+    console.log(`newexpenseData: `, newData)
+  }
+})
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')
