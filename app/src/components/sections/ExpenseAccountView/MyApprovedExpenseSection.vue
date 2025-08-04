@@ -44,9 +44,11 @@
 
       <ModalComponent v-model="transferModal">
         <TransferForm
-          v-if="transferModal && tokens.length > 0"
+          v-if="
+            transferModal && getTokens(newExpenseData, signatureToTransfer, balances).length > 0
+          "
           v-model="transferData"
-          :tokens="tokens"
+          :tokens="getTokens(newExpenseData, signatureToTransfer, balances)"
           :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
           service="Expense Account"
           @transfer="
@@ -70,7 +72,7 @@ import CardComponent from '@/components/CardComponent.vue'
 import TransferForm, { type Token } from '@/components/forms/TransferForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
-import { parseError, log, tokenSymbol, getCurrentUserExpenses } from '@/utils'
+import { parseError, log, tokenSymbol, getCurrentUserExpenses, getTokens } from '@/utils'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { estimateGas } from '@wagmi/core'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
@@ -128,8 +130,7 @@ const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
 const expenseDataStore = useExpenseDataStore()
 const { balances } = useContractBalance(
-  teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'ExpenseAccountEIP712')
-    ?.address as Address
+  ref(teamStore.getContractAddressByType('ExpenseAccountEIP712'))
 )
 
 const {
@@ -163,24 +164,24 @@ const expenseAccountEip712Address = computed(
 
 // const getTokens = () =>
 //   balances.value.map((b) => ({ symbol: b.token.symbol, balance: b.amount, tokenId: b.token.id }))
-const tokens = computed<Token[]>(() => {
-  const tokenAddress = expenseDataStore.allExpenseDataParsed.find(
-    (item) => item.signature === signatureToTransfer.value
-  )?.tokenAddress
+// const tokens = computed<Token[]>(() => {
+//   const tokenAddress = expenseDataStore.allExpenseDataParsed.find(
+//     (item) => item.signature === signatureToTransfer.value
+//   )?.tokenAddress
 
-  const symbol = tokenSymbol(tokenAddress ?? '')
-  const balance = tokenAddress === zeroAddress ? balances.value[0].amount : balances.value[1].amount
+//   const symbol = tokenSymbol(tokenAddress ?? '')
+//   const balance = tokenAddress === zeroAddress ? balances.value[0].amount : balances.value[1].amount
 
-  return symbol && !isNaN(Number(balance))
-    ? [
-        {
-          symbol,
-          balance: Number(balance),
-          tokenId: (tokenAddress ?? '') as TokenId // Ensure tokenId is of type TokenId
-        }
-      ]
-    : []
-})
+//   return symbol && !isNaN(Number(balance))
+//     ? [
+//         {
+//           symbol,
+//           balance: Number(balance),
+//           tokenId: (tokenAddress ?? '') as TokenId // Ensure tokenId is of type TokenId
+//         }
+//       ]
+//     : []
+// })
 //#endregion
 
 //#region Composables
@@ -342,7 +343,7 @@ const transferErc20Token = async () => {
 //#region Watchers
 watch(newExpenseData, (newData) => {
   if (newData) {
-    console.log(`newexpenseData: `, newData)
+    // console.log(`newexpenseData: `, newData)
   }
 })
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
