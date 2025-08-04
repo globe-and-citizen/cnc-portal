@@ -69,7 +69,7 @@ import { computed, ref, watch } from 'vue'
 import type { BudgetLimit, BudgetData, ExpenseResponse } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import CardComponent from '@/components/CardComponent.vue'
-import TransferForm, { type Token } from '@/components/forms/TransferForm.vue'
+import TransferForm from '@/components/forms/TransferForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore, useToastStore, useTeamStore, useExpenseDataStore } from '@/stores'
 import { parseError, log, tokenSymbol, getCurrentUserExpenses, getTokens } from '@/utils'
@@ -134,9 +134,9 @@ const { balances } = useContractBalance(
 )
 
 const {
-  data: newExpenseData,
-  isLoading: isFetchingExpenseData,
-  error: errorFetchingExpenseData
+  data: newExpenseData
+  // isLoading: isFetchingExpenseData,
+  // error: errorFetchingExpenseData
 } = useTanstackQuery<ExpenseResponse[]>(
   'expenseData',
   computed(() => `/expense?teamId=${teamStore.currentTeamId}`),
