@@ -10,7 +10,7 @@
       :loading-token-balance="loadingTokenBalance"
       :investors-count="shareholders?.length ?? 0"
     />
-    <InvestorsHeader
+    <!-- <InvestorsHeader
       :token-symbol="tokenSymbol"
       :total-supply="totalSupply"
       :team="team"
@@ -18,7 +18,7 @@
       :total-supply-loading="totalSupplyLoading"
       :token-balance="tokenBalance"
       :loading-token-balance="loadingTokenBalance"
-    />
+    /> -->
     <div class="divider m-0"></div>
     <InvestorsActions
       :token-symbol-loading="tokenSymbolLoading"
@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import InvestorsHeader from '@/components/sections/SherTokenView/InvestorsHeader.vue'
+// import InvestorsHeader from '@/components/sections/SherTokenView/InvestorsHeader.vue'
 import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import { useReadContract } from '@wagmi/vue'
 import { type Address } from 'viem'
