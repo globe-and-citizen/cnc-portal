@@ -1,16 +1,16 @@
 <template>
   <OverviewCard
-    :title="`${investorsCount} `"
+    :title="`${investorsCount} Investors`"
     subtitle="Investors"
-    variant="warning"
-    :card-icon="bagIcon"
+    variant="info"
+    :card-icon="personIcon"
     :loading="!team.name"
   >
   </OverviewCard>
 </template>
 <script setup lang="ts">
 import OverviewCard from '@/components/OverviewCard.vue'
-import bagIcon from '@/assets/bag.svg'
+import personIcon from '@/assets/person.svg'
 
 const props = defineProps<{
   team: Partial<Team>
