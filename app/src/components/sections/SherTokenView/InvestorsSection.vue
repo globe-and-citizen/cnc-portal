@@ -1,5 +1,15 @@
 <template>
   <div class="flex flex-col gap-y-8">
+    <InvestorsOverviewRow
+      :team="team"
+      :token-symbol="tokenSymbol"
+      :total-supply="totalSupply"
+      :token-symbol-loading="tokenSymbolLoading"
+      :total-supply-loading="totalSupplyLoading"
+      :token-balance="tokenBalance"
+      :loading-token-balance="loadingTokenBalance"
+      :investors-count="shareholders?.length ?? 0"
+    />
     <InvestorsHeader
       :token-symbol="tokenSymbol"
       :total-supply="totalSupply"
@@ -54,6 +64,7 @@ import { watch, computed } from 'vue'
 import { log } from '@/utils'
 import { useToastStore, useUserDataStore } from '@/stores'
 import type { Team } from '@/types'
+import InvestorsOverviewRow from '@/components/sections/SherTokenView/InvestorsOverviewRow.vue'
 
 const { addErrorToast } = useToastStore()
 const { address: currentAddress } = useUserDataStore()
