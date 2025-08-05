@@ -39,7 +39,7 @@
         </ButtonUI>
       </div>
 
-      <div class="flex gap-x-1 mt-10">
+      <div class="flex gap-x-1 transform -translate-y-8">
         <h4>Contract Address :</h4>
         <AddressToolTip
           :address="
