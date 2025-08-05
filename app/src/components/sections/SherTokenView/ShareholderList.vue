@@ -1,6 +1,6 @@
 <template>
   <CardComponent title="Shareholders List">
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 justify-between">
       <div class="overflow-x-auto">
         <TableComponent
           :rows="
@@ -16,19 +16,23 @@
               amount: shareholder.amount
             })) ?? []
           "
-          :columns="[
-            { key: 'index', label: 'No' },
-            { key: 'name', label: 'Name' },
-            { key: 'address', label: 'Address' },
-            { key: 'balance', label: 'Balance' },
-            { key: 'percentage', label: 'Percentage' },
-            { key: 'actions', label: 'Actions' }
-          ]"
+          :columns="columns"
           :loading="loading"
         >
           <template #address-data="{ row }">
-            <div class="flex justify-center">
-              <AddressToolTip :address="row.address" />
+            <div class="">
+              <UserComponent
+                :user="
+                  teamStore.currentTeam?.members?.find(
+                    (member) => member.address === row.address
+                  ) || {
+                    address: row.address,
+                    name: getShareholderName(row.address) || 'Unknown'
+                  }
+                "
+                class="w-24"
+              />
+              <!-- <AddressToolTip :address="row.address" /> -->
             </div>
           </template>
 
@@ -62,7 +66,7 @@
   </CardComponent>
 </template>
 <script setup lang="ts">
-import AddressToolTip from '@/components/AddressToolTip.vue'
+// import AddressToolTip from '@/components/AddressToolTip.vue'
 import { formatUnits, parseUnits, type Address } from 'viem'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import { ref } from 'vue'
@@ -76,6 +80,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
+import UserComponent from '@/components/UserComponent.vue'
 
 const mintIndividualModal = ref(false)
 const selectedShareholder = ref<Address | null>(null)
@@ -141,4 +146,13 @@ watch(isConfirmingMint, (isConfirming, wasConfirming) => {
     mintIndividualModal.value = false
   }
 })
+
+const columns = [
+  { key: 'index', label: 'No' },
+  // { key: 'name', label: 'Member' },
+  { key: 'address', label: 'Member' },
+  { key: 'percentage', label: 'Percentage' },
+  { key: 'balance', label: 'Balance' },
+  { key: 'actions', label: 'Actions' }
+]
 </script>
