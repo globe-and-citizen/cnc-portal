@@ -36,13 +36,13 @@
           {{ NETWORK.currencySymbol }}
         </span>
       </div>
-    </div>
-    <div
-      class="pl-4 text-red-500 text-sm w-full text-left"
-      v-for="error of $v.amount.$errors"
-      :key="error.$uid"
-    >
-      {{ error.$message }}
+      <div
+        class="pl-4 text-red-500 text-sm w-full text-left"
+        v-for="error of $v.amount.$errors"
+        :key="error.$uid"
+      >
+        {{ error.$message }}
+      </div>
     </div>
 
     <div class="text-center">
