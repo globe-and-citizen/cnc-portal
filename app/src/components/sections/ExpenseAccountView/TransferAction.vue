@@ -46,17 +46,14 @@ import { estimateGas, readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 
-const props = defineProps<{
-  row: ExpenseResponse
-  // approved: Boolean,
-  // getTokens: Function,
-  // balances: Array,
-  // loading: Boolean,
-  // transferFromExpenseAccount: Function,
-}>()
+const props = defineProps<{ row: ExpenseResponse }>()
 
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
+const { addErrorToast, addSuccessToast } = useToastStore()
+const { balances } = useContractBalance(
+  ref(teamStore.getContractAddressByType('ExpenseAccountEIP712'))
+)
 
 const showModal = ref(false)
 const tokenAmount = ref('')
@@ -67,10 +64,6 @@ const transferData = ref({
   amount: '0'
 })
 
-const { balances } = useContractBalance(
-  ref(teamStore.getContractAddressByType('ExpenseAccountEIP712'))
-)
-
 //#region Computed Values
 const expenseAccountEip712Address = computed(() =>
   teamStore.getContractAddressByType('ExpenseAccountEIP712')
@@ -78,8 +71,6 @@ const expenseAccountEip712Address = computed(() =>
 //#endregion
 
 //#region Composables
-const { addErrorToast, addSuccessToast } = useToastStore()
-
 //expense account transfer
 const {
   writeContract: executeExpenseAccountTransfer,
@@ -262,9 +253,4 @@ watch(approveError, () => {
   }
 })
 //#endregion
-
-async function handleTransfer() {
-  console.log('Transferring data...')
-  showModal.value = false
-}
 </script>
