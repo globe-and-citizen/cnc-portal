@@ -24,14 +24,6 @@
           class="loading loading-dots loading-sm self-end"
           data-test="total-supply-loading"
         ></span>
-        <div class="flex gap-x-1">
-          <h4>Contract Address :</h4>
-          <AddressToolTip
-            :address="
-              team.teamContracts?.find((contract) => contract.type === 'InvestorsV1')?.address!
-            "
-          />
-        </div>
       </div>
     </div>
   </CardComponent>
@@ -40,7 +32,6 @@
 <script setup lang="ts">
 import type { Team } from '@/types'
 import { formatUnits } from 'viem'
-import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
 
 defineProps<{
