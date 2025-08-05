@@ -16,7 +16,10 @@ export const getTokens = (
   const tokenAddress = expenses.find((item) => item.signature === signature)?.data.tokenAddress
 
   const symbol = tokenSymbol(tokenAddress ?? '')
-  const balance = tokenAddress === zeroAddress ? balances[1].amount : balances[0].amount
+  const balance =
+    tokenAddress === zeroAddress
+      ? findToken('native', balances)?.amount
+      : findToken('usdc', balances)?.amount
 
   return symbol && !isNaN(Number(balance))
     ? [
@@ -27,4 +30,8 @@ export const getTokens = (
         }
       ]
     : []
+}
+
+const findToken = (tokenId: TokenId, balances: TokenBalance[]) => {
+  return balances.find((balance) => balance.token.id === tokenId)
 }
