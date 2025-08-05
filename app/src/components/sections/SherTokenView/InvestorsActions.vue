@@ -2,14 +2,22 @@
   <CardComponent title="Investor Actions">
     <div class="flex flex-col justify-around gap-2 w-full" data-test="investors-actions">
       <div class="flex justify-end gap-2 w-full">
-        <ButtonUI
-          variant="primary"
-          data-test="distribute-mint-button"
-          :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
-          @click="distributeMintModal = true"
-        >
-          Distribute Mint {{ tokenSymbol }}
-        </ButtonUI>
+        <div class="relative group">
+          <ButtonUI
+            variant="disabled"
+            data-test="distribute-mint-button"
+            :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
+            @click="distributeMintModal = true"
+          >
+            Distribute Mint {{ tokenSymbol }}
+          </ButtonUI>
+          <span
+            class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-sm bg-green-900 text-white rounded opacity-0 group-hover:opacity-100 transition"
+            style="white-space: nowrap"
+          >
+            Coming soon
+          </span>
+        </div>
         <ButtonUI
           variant="primary"
           data-test="pay-dividends-button"
@@ -28,6 +36,15 @@
         >
           Mint {{ tokenSymbol }}
         </ButtonUI>
+      </div>
+
+      <div class="flex gap-x-1 mt-10">
+        <h4>Contract Address :</h4>
+        <AddressToolTip
+          :address="
+            team.teamContracts?.find((contract) => contract.type === 'InvestorsV1')?.address!
+          "
+        />
       </div>
       <ModalComponent v-model="mintModal">
         <MintForm
@@ -75,6 +92,7 @@ import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDivid
 import BANK_ABI from '@/artifacts/abi/bank.json'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
+import AddressToolTip from '@/components/AddressToolTip.vue'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const mintModal = ref(false)
