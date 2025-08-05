@@ -19,6 +19,15 @@
           </span>
         </div>
         <ButtonUI
+          variant="outline"
+          class="border border-primary text-primary hover:bg-primary hover:text-black hover:border-primary"
+          data-test="mint-button"
+          :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
+          @click="mintModal = true"
+        >
+          Mint {{ tokenSymbol }}
+        </ButtonUI>
+        <ButtonUI
           variant="primary"
           data-test="pay-dividends-button"
           @click="payDividendsModal = true"
@@ -27,14 +36,6 @@
           "
         >
           Pay Dividends
-        </ButtonUI>
-        <ButtonUI
-          variant="primary"
-          data-test="mint-button"
-          :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
-          @click="mintModal = true"
-        >
-          Mint {{ tokenSymbol }}
         </ButtonUI>
       </div>
 
