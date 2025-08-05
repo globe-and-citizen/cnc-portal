@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: OfficerFactoryBeacon
-    network: sepolia
+    network: matic
     source:
       abi: OfficerFactoryBeacon
-      address: "0xC6a2DbeEA9b53fe29a75ac681489606a048276f7"
-      startBlock: 7970003
+      address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
+      startBlock: 69852632
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -26,11 +26,11 @@ dataSources:
       file: ./src/officerFactoryBeacon.ts
   - kind: ethereum
     name: USDC
-    network: sepolia
+    network: matic
     source:
       abi: ERC20
-      address: "0xCC1e8fa5EE52492a48eE0111dC143f7Da9B39EAa"
-      startBlock: 7970003
+      address: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+      startBlock: 69852632
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -46,11 +46,11 @@ dataSources:
       file: ./src/erc20.ts
   - kind: ethereum
     name: USDT
-    network: sepolia
+    network: matic
     source:
       abi: ERC20
-      address: "0x46DD8e03Fa6A3DB15093da23715E824d791f43D3"
-      startBlock: 7970003
+      address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
+      startBlock: 69852632
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -67,7 +67,7 @@ dataSources:
 templates:
   - name: ExpenseAccountEIP712
     kind: ethereum/contract
-    network: sepolia
+    network: matic
     source:
       abi: ExpenseAccountEIP712
     mapping:
@@ -93,7 +93,7 @@ templates:
           handler: habdleTokenDeposited
   - name: Bank
     kind: ethereum
-    network: sepolia
+    network: matic
     source:
       abi: Bank
     mapping:
@@ -113,7 +113,7 @@ templates:
           handler: handleDeposited
   - name: CashRemunerationEIP712
     kind: ethereum/contract
-    network: sepolia
+    network: matic
     source:
       abi: CashRemunerationEIP712
     mapping:
@@ -169,10 +169,10 @@ templates:
         - event: Unpaused(address)
           handler: handleUnpaused
       file: ./src/officer.ts
-    network: sepolia
+    network: matic
   - name: InvestorV1
     kind: ethereum/contract
-    network: sepolia
+    network: matic
     source:
       abi: InvestorV1
     mapping:
