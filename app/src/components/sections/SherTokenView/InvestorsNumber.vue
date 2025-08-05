@@ -11,6 +11,7 @@
 <script setup lang="ts">
 import OverviewCard from '@/components/OverviewCard.vue'
 import personIcon from '@/assets/person.svg'
+import type { Team } from '@/types'
 
 const props = defineProps<{
   team: Partial<Team>

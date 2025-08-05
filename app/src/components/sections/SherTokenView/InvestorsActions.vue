@@ -3,10 +3,11 @@
     <div class="flex flex-col justify-around gap-2 w-full" data-test="investors-actions">
       <div class="flex justify-end gap-2 w-full">
         <div class="relative group">
+          <!-- :disabled="!tokenSymbol || currentAddress != team.ownerAddress" -->
           <ButtonUI
-            variant="disabled"
+            variant="primary"
+            :disabled="true"
             data-test="distribute-mint-button"
-            :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
             @click="distributeMintModal = true"
           >
             Distribute Mint {{ tokenSymbol }}
@@ -19,8 +20,8 @@
           </span>
         </div>
         <ButtonUI
-          variant="outline"
-          class="border border-primary text-primary hover:bg-primary hover:text-black hover:border-primary"
+          variant="primary"
+          outline
           data-test="mint-button"
           :disabled="!tokenSymbol || currentAddress != team.ownerAddress"
           @click="mintModal = true"
