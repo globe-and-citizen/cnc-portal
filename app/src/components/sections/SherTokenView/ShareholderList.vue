@@ -1,7 +1,7 @@
 <template>
-  <CardComponent title="Shareholders List">
-    <div class="flex flex-col gap-4 justify-between">
-      <div class="overflow-x-auto">
+  <CardComponent title="Shareholders List" class="w-full justify-between">
+    <div class="">
+      <div class="">
         <TableComponent
           :rows="
             shareholders?.map((shareholder, index) => ({
