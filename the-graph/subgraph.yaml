@@ -9,7 +9,7 @@ dataSources:
     network: matic
     source:
       abi: OfficerFactoryBeacon
-      address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
+      address: "0x3016e02B59954E6B6564a5F3Ff67bdc5a69F78E0"
       startBlock: 69852632
     mapping:
       kind: ethereum/events
