@@ -1,68 +1,64 @@
 <template>
   <CardComponent title="Shareholders List" class="w-full justify-between">
-    <div class="">
-      <div class="">
-        <TableComponent
-          :rows="
-            shareholders?.map((shareholder, index) => ({
-              index: index + 1,
-              name: getShareholderName(shareholder.shareholder) || 'Unknown',
-              address: shareholder.shareholder,
-              balance: `${formatUnits(shareholder.amount, 6)} ${tokenSymbol}`,
-              percentage: !totalSupplyLoading
-                ? `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(totalSupply!)).toString()}%`
-                : '...%',
-              shareholder: shareholder.shareholder,
-              amount: shareholder.amount
-            })) ?? []
-          "
-          :columns="columns"
-          :loading="loading"
-        >
-          <template #address-data="{ row }">
-            <div class="">
-              <UserComponent
-                :user="
-                  teamStore.currentTeam?.members?.find(
-                    (member) => member.address === row.address
-                  ) || {
-                    address: row.address,
-                    name: getShareholderName(row.address) || 'Unknown'
-                  }
-                "
-                class="w-24"
-              />
-              <!-- <AddressToolTip :address="row.address" /> -->
-            </div>
-          </template>
+    <TableComponent
+      :rows="
+        shareholders?.map((shareholder, index) => ({
+          index: index + 1,
+          name: getShareholderName(shareholder.shareholder) || 'Unknown',
+          address: shareholder.shareholder,
+          balance: `${formatUnits(shareholder.amount, 6)} ${tokenSymbol}`,
+          percentage: !totalSupplyLoading
+            ? `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(totalSupply!)).toString()}%`
+            : '...%',
+          shareholder: shareholder.shareholder,
+          amount: shareholder.amount
+        })) ?? []
+      "
+      :columns="columns"
+      :loading="loading"
+    >
+      <template #address-data="{ row }">
+        <div class="flex w-full">
+          <UserComponent
+            :user="
+              teamStore.currentTeam?.members?.find((member) => member.address === row.address) || {
+                address: row.address,
+                name: getShareholderName(row.address) || 'Unknown'
+              }
+            "
+          />
 
-          <template #actions-data="{ row }">
-            <ButtonUI
-              variant="primary"
-              :disabled="currentAddress != team.ownerAddress"
-              data-test="mint-individual"
-              @click="
-                () => {
-                  selectedShareholder = row.shareholder
-                  mintIndividualModal = true
-                }
-              "
-            >
-              Mint Individual
-            </ButtonUI>
-          </template>
-        </TableComponent>
-      </div>
-      <ModalComponent v-model="mintIndividualModal">
-        <MintForm
-          v-if="mintIndividualModal"
-          :token-symbol="tokenSymbol"
-          :loading="mintLoading || isConfirmingMint"
-          :address="selectedShareholder!"
-          @submit="(address: Address, amount: string) => mintToken(address, amount)"
-        />
-      </ModalComponent>
-    </div>
+          <!-- <AddressToolTip :address="row.address" /> -->
+        </div>
+      </template>
+
+      <template #actions-data="{ row }">
+        <div class="flex w-full">
+          <ButtonUI
+            variant="primary"
+            :disabled="currentAddress != team.ownerAddress"
+            data-test="mint-individual"
+            @click="
+              () => {
+                selectedShareholder = row.shareholder
+                mintIndividualModal = true
+              }
+            "
+          >
+            Mint Individual
+          </ButtonUI>
+        </div>
+      </template>
+    </TableComponent>
+    <ModalComponent v-model="mintIndividualModal">
+      <MintForm
+        v-if="mintIndividualModal"
+        :token-symbol="tokenSymbol"
+        :loading="mintLoading || isConfirmingMint"
+        :address="selectedShareholder!"
+        @submit="(address: Address, amount: string) => mintToken(address, amount)"
+      />
+    </ModalComponent>
   </CardComponent>
 </template>
 <script setup lang="ts">
@@ -148,11 +144,11 @@ watch(isConfirmingMint, (isConfirming, wasConfirming) => {
 })
 
 const columns = [
-  { key: 'index', label: 'No' },
+  { key: 'index', label: 'No', class: 'w-1/6 text-center' },
   // { key: 'name', label: 'Member' },
   { key: 'address', label: 'Member' },
   { key: 'percentage', label: 'Percentage' },
   { key: 'balance', label: 'Balance' },
-  { key: 'actions', label: 'Actions' }
+  { key: 'actions', label: 'Actions', class: 'w-1/6 text-center' }
 ]
 </script>
