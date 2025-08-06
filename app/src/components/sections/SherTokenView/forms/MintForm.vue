@@ -119,7 +119,7 @@ import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
 import { isAddress, type Address } from 'viem'
 // import { watch } from 'vue'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 
 // const { addErrorToast } = useToastStore()
@@ -133,6 +133,13 @@ const props = defineProps<{
 }>()
 const emits = defineEmits(['submit'])
 
+const memberInput = ref({
+  name: '',
+  address: ''
+})
+
+const addressInput = computed(() => memberInput.value.address)
+
 const rules = {
   address: {
     required,
@@ -145,10 +152,7 @@ const rules = {
   }
 }
 
-const memberInput = ref({
-  name: '',
-  address: ''
-})
+const $v = useVuelidate(rules, { address: addressInput, amount })
 
 const onSubmit = () => {
   $v.value.$touch()
@@ -156,8 +160,6 @@ const onSubmit = () => {
 
   emits('submit', memberInput.value.address, amount.value!.toString())
 }
-
-const $v = useVuelidate(rules, { address: memberInput.value.address, amount })
 
 // const search = ref('')
 // const showDropdown = ref(false)
