@@ -4,15 +4,7 @@
 
     <h3>Please input the {{ address ? '' : 'address and' }}amount to mint</h3>
 
-    <SelectMemberInput
-      data-test="address-input"
-      @keyup.stop="
-        () => {
-          searchUsers(to ?? '')
-          showDropdown = true
-        }
-      "
-    />
+    <SelectMemberInput v-model="memberInput" data-test="address-input" />
 
     <!-- <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
       <p>Address</p>
@@ -30,7 +22,7 @@
           }
         "
       />
-    </label> -->
+    </label>
     <div
       class="dropdown"
       :class="{
@@ -61,7 +53,7 @@
       :key="error.$uid"
     >
       {{ error.$message }}
-    </div>
+    </div> -->
     <!-- <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
         <p>Amount</p>
         |
@@ -120,18 +112,18 @@
 
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore } from '@/stores'
-import { log } from '@/utils'
+// import { useCustomFetch } from '@/composables/useCustomFetch'
+// import { useToastStore } from '@/stores'
+// import { log } from '@/utils'
 import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
 import { isAddress, type Address } from 'viem'
-import { watch } from 'vue'
+// import { watch } from 'vue'
 import { onMounted, ref } from 'vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 
-const { addErrorToast } = useToastStore()
-const to = ref<string | null>(null)
+// const { addErrorToast } = useToastStore()
+// const to = ref<string | null>(null)
 const amount = ref<number | null>(null)
 
 const props = defineProps<{
@@ -153,52 +145,58 @@ const rules = {
   }
 }
 
+const memberInput = ref({
+  name: '',
+  address: ''
+})
+
 const onSubmit = () => {
   $v.value.$touch()
   if ($v.value?.$invalid) return
 
-  emits('submit', to.value, amount.value!.toString())
+  emits('submit', memberInput.value.address, amount.value!.toString())
 }
 
-const $v = useVuelidate(rules, { address: to, amount })
+const $v = useVuelidate(rules, { address: memberInput.value.address, amount })
 
-const search = ref('')
-const showDropdown = ref(false)
-const url = ref('user/search')
+// const search = ref('')
+// const showDropdown = ref(false)
+// const url = ref('user/search')
 
-const {
-  execute: executeSearchUser,
-  data: usersData,
-  error: searchError
-} = useCustomFetch('user/search', {
-  immediate: false,
-  refetch: true
-})
-  .get()
-  .json()
+// const {
+//   execute: executeSearchUser,
+//   data: usersData,
+//   error: searchError
+// } = useCustomFetch('user/search', {
+//   immediate: false,
+//   refetch: true
+// })
+//   .get()
+//   .json()
 
-const searchUsers = async (input: string) => {
-  if (input !== search.value && input.length > 0) {
-    search.value = input
-  }
+// const searchUsers = async (input: string) => {
+//   if (input !== search.value && input.length > 0) {
+//     search.value = input
+//   }
 
-  const params = new URLSearchParams()
-  params.append('name', search.value)
-  params.append('address', search.value)
-  url.value += '?' + params.toString()
+//   const params = new URLSearchParams()
+//   params.append('name', search.value)
+//   params.append('address', search.value)
+//   url.value += '?' + params.toString()
 
-  await executeSearchUser()
-}
+//   await executeSearchUser()
+// }
 
-watch(searchError, (value) => {
-  if (value) {
-    log.error('Failed to search users', value)
-    addErrorToast('Failed to search users')
-  }
-})
+// watch(searchError, (value) => {
+//   if (value) {
+//     log.error('Failed to search users', value)
+//     addErrorToast('Failed to search users')
+//   }
+// })
+
 onMounted(() => {
   if (props.address) {
-    to.value = props.address
+    memberInput.value.address = props.address
   }
 })
 </script>
