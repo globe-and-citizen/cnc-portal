@@ -5,7 +5,7 @@
     "
     subtitle="Total Supply"
     variant="warning"
-    :card-icon="bagIcon"
+    :card-icon="cartIcon"
     :loading="!team.name"
   >
   </OverviewCard>
@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { formatUnits } from 'viem'
 import OverviewCard from '@/components/OverviewCard.vue'
-import bagIcon from '@/assets/bag.svg'
+import cartIcon from '@/assets/cart.svg'
 import type { Team } from '@/types'
 
 defineProps<{
