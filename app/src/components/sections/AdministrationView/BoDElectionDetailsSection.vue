@@ -96,7 +96,9 @@ const candidates = computed(() => {
           imageUrl: user?.imageUrl
         },
         totalVotes: Number(voteCount.value) || 0,
-        currentVotes: votesPerCandidate[candidate] //5
+        currentVotes: votesPerCandidate[candidate], //5
+        startDate: new Date(Number((election.value as bigint[])[4]) * 1000),
+        endDate: new Date(Number((election.value as bigint[])[5]) * 1000)
       }
     })
   } else return []
@@ -174,7 +176,6 @@ watch(
   async (newCandidates) => {
     if (newCandidates) {
       await fetchVotes()
-      addSuccessToast('Election candidates fetched successfully!')
     }
   },
   { immediate: true, deep: true }

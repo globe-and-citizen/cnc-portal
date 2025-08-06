@@ -77,7 +77,11 @@ const showModal = ref(false)
 const route = useRoute()
 
 onMounted(() => {
-  teamStore.setCurrentTeamId(route.params.id as string)
+  if (route.params.id) {
+    teamStore.setCurrentTeamId(route.params.id as string)
+  } else {
+    // e.g. this.$router.push('/teams')
+  }
 })
 
 const hasContract = computed(() => {
@@ -88,7 +92,7 @@ const hasContract = computed(() => {
 watch(
   () => route.params.id,
   (newId) => {
-    if (newId !== teamStore.currentTeamId) {
+    if (newId && newId !== teamStore.currentTeamId) {
       teamStore.setCurrentTeamId(newId as string)
     }
   }

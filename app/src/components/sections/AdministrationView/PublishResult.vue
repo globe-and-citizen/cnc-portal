@@ -10,7 +10,7 @@
   </ButtonUI>
 </template>
 <script lang="ts" setup>
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+import ELECTIONS_ABI from '@/artifacts/abi/elections.json'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import { log, parseError } from '@/utils'

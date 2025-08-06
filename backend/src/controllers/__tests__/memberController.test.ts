@@ -262,5 +262,4 @@ describe("Member Controller", () => {
       });
     });
   });
-
 });
