@@ -20,7 +20,7 @@
         <AddressToolTip :address="row.address" class="text-xs" />
       </template>
 
-      <template #owner-data="{ row }">
+      <template #owner-data>
         <UserComponent
           :user="
             teamStore.currentTeam?.members.find(
@@ -30,7 +30,7 @@
         />
       </template>
 
-      <template #actions-data="{ row }">
+      <template #actions-data>
         <div class="flex items-center gap-2">
           <ButtonUI variant="info" size="sm">
             <IconifyIcon :icon="`heroicons:play-solid`" />

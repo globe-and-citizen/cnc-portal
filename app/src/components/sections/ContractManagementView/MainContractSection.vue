@@ -5,7 +5,6 @@
       <CardComponent class="w-full" title="Main contract">
         <template #card-action>
           <div>
-            <ButtonUI> </ButtonUI>
             <ButtonUI
               variant="primary"
               @click="addCampaignModal = true"
@@ -31,23 +30,12 @@
 import { ref, computed } from 'vue'
 
 import CardComponent from '@/components/CardComponent.vue'
-// Store imports
-//import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
-// Composables
-//Components
 import ModalComponent from '@/components/ModalComponent.vue'
-
-import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
-
 import ButtonUI from '@/components/ButtonUI.vue'
-
-//imports for add campaign creation.
 import CreateAddCampaign from '@/components/forms/CreateAddCampaign.vue'
-
 import TeamContracts from './MainContractTable.vue'
-// Modal control states
 
 const teamStore = useTeamStore()
 const team = computed(() => teamStore.currentTeam)
