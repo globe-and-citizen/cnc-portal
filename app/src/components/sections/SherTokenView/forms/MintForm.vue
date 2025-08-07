@@ -4,7 +4,7 @@
 
     <h3>Please input the {{ address ? '' : 'address and' }}amount to mint</h3>
 
-    <SelectMemberInput v-model="memberInput" data-test="address-input" />
+    <SelectMemberInput v-model="MemberInput" data-test="address-input" />
 
     <div class="flex flex-col gap-2">
       <label class="flex items-center">
@@ -58,18 +58,18 @@ import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 const amount = ref<number | null>(null)
 
 const props = defineProps<{
-  address?: Address
+  memberInput: { name: string | null; address: Address | null }
   tokenSymbol: string | undefined
   loading: boolean
 }>()
 const emits = defineEmits(['submit'])
 
-const memberInput = ref({
-  name: '',
-  address: ''
+const MemberInput = ref<{ name: string | null; address: Address | null }>({
+  name: null,
+  address: null
 })
 
-const addressInput = computed(() => memberInput.value.address)
+const addressInput = computed(() => MemberInput.value.address)
 
 const rules = {
   address: {
@@ -89,12 +89,12 @@ const onSubmit = () => {
   $v.value.$touch()
   if ($v.value?.$invalid) return
 
-  emits('submit', memberInput.value.address, amount.value!.toString())
+  emits('submit', MemberInput.value.address, amount.value!.toString())
 }
 
 onMounted(() => {
-  if (props.address) {
-    memberInput.value.address = props.address
+  if (props.memberInput) {
+    MemberInput.value = props.memberInput
   }
 })
 </script>
