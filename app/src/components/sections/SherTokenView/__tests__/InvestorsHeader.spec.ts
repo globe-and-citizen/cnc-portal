@@ -13,6 +13,7 @@ describe('InvestorsHeader', () => {
     totalSupplyLoading?: boolean
     tokenBalance?: bigint
     loadingTokenBalance?: boolean
+    investorsCount?: number
   }) => {
     return shallowMount(InvestorsHeader, {
       props: {
@@ -34,6 +35,7 @@ describe('InvestorsHeader', () => {
         totalSupplyLoading: false,
         tokenBalance: parseUnits('100', 6),
         loadingTokenBalance: false,
+        investorsCount: 0,
         ...props
       },
       global: {
