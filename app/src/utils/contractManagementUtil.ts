@@ -22,7 +22,6 @@ export const getTeamContracts = async (contracts: TeamContract[]) => {
             log.info('Skipping contract with undefined or null ABI: ', contract)
             throw new Error('Contract is undefined or null')
           }
-          console.log(`Fetching owner for contract: ${contract.address} of type ${contract.type}`)
           const owner = await readContract(config, {
             address: contract.address,
             abi: contract.abi as Abi,
@@ -52,8 +51,6 @@ const contractsWithAbis = (contracts: TeamContract[]) => {
     switch (contract.type) {
       case 'Bank':
         return { ...contract, abi: BankAbi }
-      // case 'BoardOfDirectors':
-      // 	return { ...contract, abi: BodAbi }
       case 'Campaign':
         return { ...contract, abi: CampaignAbi }
       case 'CashRemunerationEIP712':
