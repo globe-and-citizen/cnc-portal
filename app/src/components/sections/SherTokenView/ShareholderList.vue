@@ -59,6 +59,7 @@
           name: getShareholderName(selectedShareholder!),
           address: selectedShareholder!
         }"
+        :disabled="true"
         @submit="(address: Address, amount: string) => mintToken(address, amount)"
       />
     </ModalComponent>
