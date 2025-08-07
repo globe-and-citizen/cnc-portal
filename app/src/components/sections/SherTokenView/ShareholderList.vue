@@ -55,7 +55,10 @@
         v-if="mintIndividualModal"
         :token-symbol="tokenSymbol"
         :loading="mintLoading || isConfirmingMint"
-        :address="selectedShareholder!"
+        :memberInput="{
+          name: getShareholderName(selectedShareholder!),
+          address: selectedShareholder!
+        }"
         @submit="(address: Address, amount: string) => mintToken(address, amount)"
       />
     </ModalComponent>
