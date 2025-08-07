@@ -3,8 +3,21 @@
     <h2>Mint {{ tokenSymbol }}</h2>
 
     <h3>Please input the {{ address ? '' : 'address and' }}amount to mint</h3>
-
-    <SelectMemberInput v-model="MemberInput" data-test="address-input" />
+    <div>
+      <SelectMemberInput
+        v-model="MemberInput"
+        data-test="address-input"
+        :disabled="props.disabled"
+      />
+      <div
+        class="pl-4 text-red-500 text-sm w-full text-left"
+        data-test="error-address-input"
+        v-for="error of $v.address.$errors"
+        :key="error.$uid"
+      >
+        {{ error.$message }}
+      </div>
+    </div>
 
     <div class="flex flex-col gap-2">
       <label class="flex items-center">
@@ -61,6 +74,7 @@ const props = defineProps<{
   memberInput: { name: string | null; address: Address | null }
   tokenSymbol: string | undefined
   loading: boolean
+  disabled?: boolean
 }>()
 const emits = defineEmits(['submit'])
 
