@@ -145,7 +145,6 @@ watch(isConfirmingMint, (isConfirming, wasConfirming) => {
 
 const columns = [
   { key: 'index', label: 'No', class: 'w-1/6 text-center' },
-  // { key: 'name', label: 'Member' },
   { key: 'address', label: 'Member' },
   { key: 'percentage', label: 'Percentage' },
   { key: 'balance', label: 'Balance' },
