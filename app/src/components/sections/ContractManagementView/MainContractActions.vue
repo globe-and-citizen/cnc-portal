@@ -11,13 +11,15 @@
         :icon="`heroicons:${row.paused ? 'play' : 'pause-circle'}-solid`"
       />
     </ButtonUI>
-    <ButtonUI
-      variant="success"
-      :outline="true"
-      size="sm"
-      @click="() => console.log('Transferring ownership...')"
+    <ButtonUI variant="success" :outline="true" size="sm" @click="showModal = true"
       >Transfer Ownership</ButtonUI
     >
+
+    <teleport to="body">
+      <ModalComponent v-model="showModal">
+        <TransferOwnershipForm v-if="showModal" />
+      </ModalComponent>
+    </teleport>
   </div>
 </template>
 <script setup lang="ts">
@@ -26,8 +28,10 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import type { Abi, Address } from 'viem'
 import type { TableRow } from '@/components/TableComponent.vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { watch } from 'vue'
+import { watch, ref } from 'vue'
 import { useToastStore } from '@/stores'
+import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
 
 const props = defineProps<{
   row: TableRow
@@ -36,6 +40,8 @@ const props = defineProps<{
 const emits = defineEmits(['contract-status-changed'])
 
 const { addSuccessToast } = useToastStore()
+
+const showModal = ref(false)
 
 const {
   data: hashPauseContract,
