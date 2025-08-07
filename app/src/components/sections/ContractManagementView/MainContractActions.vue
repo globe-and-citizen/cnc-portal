@@ -23,7 +23,6 @@
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import type { TeamContract } from '@/types'
 import type { Abi, Address } from 'viem'
 import type { TableRow } from '@/components/TableComponent.vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'

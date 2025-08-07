@@ -40,46 +40,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
+import { ref, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import { useTeamStore, useUserDataStore } from '@/stores/'
+import { useTeamStore } from '@/stores/'
 import { type TeamContract, type User } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import MainContractActions from './MainContractActions.vue'
-import { readContract } from '@wagmi/core'
-import { config } from '@/wagmi.config'
-import ExpenseAccountAbi from '@/artifacts/abi/expense-account-eip712.json'
-import { log, parseError, getTeamContracts } from '@/utils'
-import type { Abi } from 'viem'
+import { getTeamContracts } from '@/utils'
 
 // Define props
 const props = defineProps<{ contracts: TeamContract[]; teamId: string }>()
 const teamStore = useTeamStore()
-const userStore = useUserDataStore()
-const teamContracts = ref<Object[]>([])
-// const getTeamContracts = async () => {
-//   try {
-//     return Promise.all(
-//       props.contracts.filter(contract => contract.type === "ExpenseAccountEIP712").map(async (contract) => {
-//         const owner = await readContract(config, {
-//           address: contract.address,
-//           abi: ExpenseAccountAbi,
-//           functionName: 'owner'
-//         })
-
-//         return {
-//           ...contract,
-//           owner
-//         }
-//       })
-//     )
-//   } catch (error) {
-//     log.error('Error fetching contract owners: ', parseError(error, ExpenseAccountAbi as Abi))
-//   }
-// }
+const teamContracts = ref<object[]>([])
 
 watch(
   () => props.contracts,
