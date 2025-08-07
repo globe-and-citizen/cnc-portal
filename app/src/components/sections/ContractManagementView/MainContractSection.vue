@@ -7,7 +7,6 @@
           <div>
             <ButtonUI
               variant="primary"
-              @click=""
               :enabled="team.ownerAddress == useUserDataStore().address"
               data-test="createAddCampaign"
             >
