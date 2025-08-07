@@ -16,6 +16,7 @@
         ref="nameInput"
         :placeholder="'Member Name '"
         :data-test="`member-name-input`"
+        :disabled="disabled"
       />
       |
       <input
@@ -25,6 +26,7 @@
         v-model="input.address"
         :data-test="`member-address-input`"
         :placeholder="`Member Address`"
+        :disabled="disabled"
       />
     </label>
     <!-- Dropdown positioned relative to the input -->
@@ -49,6 +51,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { ref, useTemplateRef } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
 
+defineProps<{ disabled?: boolean }>()
 const emit = defineEmits(['selectMember'])
 const input = defineModel({
   default: {
