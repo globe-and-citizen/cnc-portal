@@ -30,7 +30,10 @@
       <template #actions-data="{ row }">
         <MainContractActions
           @contract-status-changed="
-            async () => (teamContracts = (await getTeamContracts(contracts)) || [])
+            async () =>
+              (teamContracts = teamStore.currentTeam?.teamContracts
+                ? (await getTeamContracts(teamStore.currentTeam?.teamContracts)) || []
+                : [])
           "
           :row="row"
         />
@@ -44,22 +47,19 @@ import { ref, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { useTeamStore } from '@/stores/'
-import { type TeamContract, type User } from '@/types'
+import { type User } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import MainContractActions from './MainContractActions.vue'
 import { getTeamContracts } from '@/utils'
 
-// Define props
-const props = defineProps<{ contracts: TeamContract[]; teamId: string }>()
 const teamStore = useTeamStore()
 const teamContracts = ref<object[]>([])
 
 watch(
-  () => props.contracts,
+  () => teamStore.currentTeam?.teamContracts,
   async (newContracts) => {
-    if (newContracts.length > 0) {
-      teamContracts.value = (await getTeamContracts(props.contracts)) || []
-      console.log('teamContracts.value: ', teamContracts.value)
+    if (newContracts && newContracts?.length > 0) {
+      teamContracts.value = (await getTeamContracts(newContracts)) || []
     }
   },
   { immediate: true }
