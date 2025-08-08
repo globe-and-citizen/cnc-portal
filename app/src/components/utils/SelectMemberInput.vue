@@ -52,7 +52,9 @@ import { ref, useTemplateRef } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
 
 defineProps<{ disabled?: boolean }>()
+
 const emit = defineEmits(['selectMember'])
+
 const input = defineModel({
   default: {
     name: '',
