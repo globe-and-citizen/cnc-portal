@@ -49,12 +49,7 @@
         />
       </div>
       <ModalComponent v-model="mintModal">
-        <MintForm
-          v-if="mintModal"
-          :loading="mintLoading || isConfirmingMint"
-          :token-symbol="tokenSymbol!"
-          @submit="(address: Address, amount: string) => mintToken(address, amount)"
-        ></MintForm>
+        <MintForm v-if="mintModal" v-model="mintModal"></MintForm>
       </ModalComponent>
       <ModalComponent v-model="distributeMintModal">
         <DistributeMintForm

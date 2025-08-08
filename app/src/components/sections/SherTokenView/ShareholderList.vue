@@ -53,14 +53,12 @@
     <ModalComponent v-model="mintIndividualModal">
       <MintForm
         v-if="mintIndividualModal"
-        :token-symbol="tokenSymbol"
-        :loading="mintLoading || isConfirmingMint"
+        v-model="mintIndividualModal"
         :memberInput="{
           name: getShareholderName(selectedShareholder!),
           address: selectedShareholder!
         }"
         :disabled="true"
-        @submit="(address: Address, amount: string) => mintToken(address, amount)"
       />
     </ModalComponent>
   </CardComponent>

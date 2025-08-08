@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-4">
     <h2>Mint {{ tokenSymbol }}</h2>
 
-    <h3>Please input the {{ input.address ? '' : 'address and' }}amount to mint</h3>
+    <h3>Please input the {{ input.address ? '' : 'address and ' }}amount to mint</h3>
     <div>
       <SelectMemberInput v-model="input" data-test="address-input" :disabled="props.disabled" />
       <div
@@ -44,8 +44,8 @@
 
     <div class="text-center">
       <ButtonUI
-        :loading="loading || $v.value?.$invalid"
-        :disabled="loading"
+        :loading="isConfirmingMint || $v.value?.$invalid"
+        :disabled="isConfirmingMint"
         variant="primary"
         class="w-44 text-center"
         @click="onSubmit()"
@@ -60,23 +60,50 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
-import { isAddress } from 'viem'
+import { isAddress, parseUnits, type Address } from 'viem'
 import { onMounted, ref } from 'vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
+import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { computed, watch } from 'vue'
+import { useTeamStore, useToastStore } from '@/stores'
 
 const amount = ref<number | null>(null)
 
 const props = defineProps<{
   memberInput?: { name: string; address: string }
-  tokenSymbol: string | undefined
-  loading: boolean
+
   disabled?: boolean
 }>()
+
+const mintModal = defineModel({ default: false })
+
+const teamStore = useTeamStore()
+const { addSuccessToast } = useToastStore()
+
+const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
+
+const {
+  data: mintHash,
+  writeContract: mint,
+  isPending: mintLoading,
+  error: mintError
+} = useWriteContract()
+const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForTransactionReceipt({
+  hash: mintHash
+})
+
 const emits = defineEmits(['submit'])
 
 const input = ref<{ name: string; address: string }>({
   name: '',
   address: ''
+})
+
+const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
+  abi: INVESTOR_ABI,
+  address: investorsAddress,
+  functionName: 'symbol'
 })
 
 const rules = {
@@ -98,13 +125,24 @@ const $v = useVuelidate(rules, { input, amount })
 const onSubmit = () => {
   $v.value.$touch()
   if ($v.value?.$invalid) return
-
-  emits('submit', input.value.address, amount.value!.toString())
+  mint({
+    abi: INVESTOR_ABI,
+    address: investorsAddress.value as Address,
+    functionName: 'individualMint',
+    args: [input.value.address as Address, parseUnits(amount.value!.toString(), 6)]
+  })
 }
 
 onMounted(() => {
   if (props.memberInput) {
     input.value = props.memberInput
+  }
+})
+
+watch(isConfirmingMint, (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isSuccessMinting.value) {
+    addSuccessToast('Minted successfully')
+    mintModal.value = false
   }
 })
 </script>
