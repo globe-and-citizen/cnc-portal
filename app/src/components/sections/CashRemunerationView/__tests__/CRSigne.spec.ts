@@ -16,7 +16,8 @@ vi.mock('@/stores', () => ({
   useToastStore: vi.fn()
 }))
 
-vi.mock('@wagmi/vue', () => ({
+vi.mock('@wagmi/vue', async (importOriginal) => ({
+  ...await importOriginal(),
   useSignTypedData: vi.fn(),
   useChainId: vi.fn(() => ({ value: 1 }))
 }))
