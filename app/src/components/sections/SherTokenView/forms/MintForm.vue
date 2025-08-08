@@ -4,15 +4,11 @@
 
     <h3>Please input the {{ input.address ? '' : 'address and' }}amount to mint</h3>
     <div>
-      <SelectMemberInput
-        v-model="input"
-        data-test="address-input"
-        :disabled="props.disabled"
-      />
+      <SelectMemberInput v-model="input" data-test="address-input" :disabled="props.disabled" />
       <div
         class="pl-4 text-red-500 text-sm w-full text-left"
         data-test="error-address-input"
-        v-for="error of $v.address.$errors"
+        v-for="error of $v.input.address.$errors"
         :key="error.$uid"
       >
         {{ error.$message }}
@@ -64,8 +60,8 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
-import { isAddress} from 'viem'
-import { onMounted, ref} from 'vue'
+import { isAddress } from 'viem'
+import { onMounted, ref } from 'vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 
 const amount = ref<number | null>(null)
@@ -80,14 +76,15 @@ const emits = defineEmits(['submit'])
 
 const input = ref<{ name: string; address: string }>({
   name: '',
-  address:''
+  address: ''
 })
 
-
 const rules = {
-  address: {
-    required,
-    isAddress: helpers.withMessage('Invalid address', isAddress)
+  input: {
+    address: {
+      required,
+      isAddress: helpers.withMessage('Invalid address', (value: string) => isAddress(value))
+    }
   },
   amount: {
     required,
@@ -96,7 +93,7 @@ const rules = {
   }
 }
 
-const $v = useVuelidate(rules, { address: input.value.address, amount })
+const $v = useVuelidate(rules, { input, amount })
 
 const onSubmit = () => {
   $v.value.$touch()
