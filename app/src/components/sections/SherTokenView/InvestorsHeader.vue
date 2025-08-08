@@ -5,7 +5,8 @@
       subtitle="Investors"
       variant="info"
       :card-icon="personIcon"
-      :loading="!team.name"
+      :loading="!teamStore.currentTeam"
+
     >
     </OverviewCard>
     <OverviewCard
@@ -17,7 +18,7 @@
       subtitle="Balance"
       variant="success"
       :card-icon="bagIcon"
-      :loading="!team.name"
+      :loading="!teamStore.currentTeam"
     >
     </OverviewCard>
     <OverviewCard
@@ -27,22 +28,24 @@
       subtitle="Total Supply"
       variant="warning"
       :card-icon="cartIcon"
-      :loading="!team.name"
+      :loading="!teamStore.currentTeam"
     >
     </OverviewCard>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Team } from '@/types'
 import { formatUnits } from 'viem'
 import OverviewCard from '@/components/OverviewCard.vue'
 import cartIcon from '@/assets/cart.svg'
 import bagIcon from '@/assets/bag.svg'
 import personIcon from '@/assets/person.svg'
+import { useTeamStore } from '@/stores'
+
+
+const teamStore = useTeamStore()
 
 defineProps<{
-  team: Partial<Team>
   tokenSymbol: string | undefined
   totalSupply: bigint | undefined
   tokenSymbolLoading: boolean
