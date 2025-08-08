@@ -170,3 +170,25 @@ templates:
           handler: handleUnpaused
       file: ./src/officer.ts
     network: matic
+  - name: InvestorV1
+    kind: ethereum/contract
+    network: matic
+    source:
+      abi: InvestorV1
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      file: ./src/investorV1.ts
+      entities:
+        - Transaction
+      abis:
+        - name: InvestorV1
+          file: ./abis/InvestorV1.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: Minted(indexed address,uint256)
+          handler: handleMint
+        - event: DividendDistributed(indexed address,uint256)
+          handler: handleDividendDistributed

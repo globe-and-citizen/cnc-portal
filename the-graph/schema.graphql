@@ -2,6 +2,8 @@ enum TransactionType {
   transfer
   deposit
   withdraw
+  mint
+  dividend
 }
 
 type BeaconProxyCreated @entity(immutable: true) {

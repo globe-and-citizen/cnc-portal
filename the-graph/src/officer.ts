@@ -20,6 +20,7 @@ import {
   ExpenseAccountEIP712,
   Bank,
   CashRemunerationEIP712,
+  InvestorV1,
 } from "../generated/templates";
 import { Bytes, log } from "@graphprotocol/graph-ts";
 
@@ -68,9 +69,15 @@ export function handleContractDeployed(event: ContractDeployedEvent): void {
       event.params.deployedAddress.toHexString(),
     ]);
     CashRemunerationEIP712.create(event.params.deployedAddress);
+  } else if (event.params.contractType == "InvestorsV1") {
+    // Add this condition
+    log.info("Creating InvestorsV1 template for address: {}", [
+      event.params.deployedAddress.toHexString(),
+    ]);
+    InvestorV1.create(event.params.deployedAddress);
   } else {
     log.info(
-      "Contract deployed is not 'ExpenseAccountEIP712' or 'Bank' but, '{}'",
+      "Contract deployed is not 'ExpenseAccountEIP712' or 'Bank' or 'CashRemunerationEIP712' or 'InvestorsV1' but, '{}'",
       [event.params.contractType]
     );
   }
