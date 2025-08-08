@@ -56,10 +56,17 @@
       </ButtonUI>
     </div>
     <div v-if="currentStep == 2" class="flex justify-between mt-6">
-      <ButtonUI variant="error" @click="currentStep--" data-test="previous-button">
+      <ButtonUI variant="error" @click="currentStep--" data-test="back-button">
         <span><IconifyIcon icon="heroicons:arrow-left" /></span> Back
       </ButtonUI>
-      <ButtonUI variant="primary" data-test="create-team-button"> Transfer Ownership </ButtonUI>
+      <ButtonUI
+        :loading="loading"
+        variant="primary"
+        data-test="transfer-ownership-button"
+        @click="handleTransferOwnership"
+      >
+        Transfer Ownership
+      </ButtonUI>
     </div>
   </div>
 </template>
@@ -71,22 +78,33 @@ import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { onClickOutside } from '@vueuse/core'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import TransferOptionCard from '../TransferOptionCard.vue'
+import { useTeamStore } from '@/stores'
+import type { Address } from 'viem'
 
-defineEmits(['done'])
+defineProps<{ loading: boolean }>()
+const emits = defineEmits(['transfer-ownership'])
+const teamStore = useTeamStore()
 
 // Refs
 const selectedOption = ref<'bod' | 'member' | null>(null)
-
 const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const input = ref({ name: '', address: '' })
 const currentStep = ref(1)
 // Validation Rules
 
-// Navigation Functions
+// Functions
 const handleContinue = () => {
   if (currentStep.value < 3) {
     currentStep.value++
+  }
+}
+
+const handleTransferOwnership = () => {
+  if (selectedOption.value === 'member') {
+    emits('transfer-ownership', input.value.address as Address)
+  } else if (selectedOption.value === 'bod') {
+    emits('transfer-ownership', teamStore.getContractAddressByType('BoardOfDirectors'))
   }
 }
 

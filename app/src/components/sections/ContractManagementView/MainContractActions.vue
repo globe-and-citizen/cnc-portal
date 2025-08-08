@@ -17,7 +17,11 @@
 
     <teleport to="body">
       <ModalComponent v-model="showModal">
-        <TransferOwnershipForm v-if="showModal" />
+        <TransferOwnershipForm
+          v-if="showModal"
+          @transfer-ownership="transferOwnership"
+          :loading="isLoadingTransferOwnership || isConfirmingTransferOwnership"
+        />
       </ModalComponent>
     </teleport>
   </div>
@@ -32,6 +36,8 @@ import { watch, ref } from 'vue'
 import { useToastStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
+import { parse } from 'path'
+import { log, parseError } from '@/utils'
 
 const props = defineProps<{
   row: TableRow
@@ -39,9 +45,21 @@ const props = defineProps<{
 
 const emits = defineEmits(['contract-status-changed'])
 
-const { addSuccessToast } = useToastStore()
+const { addSuccessToast, addErrorToast } = useToastStore()
 
 const showModal = ref(false)
+
+const {
+  data: hashTransferOwnership,
+  writeContract: executeTransferOwnership,
+  isPending: isLoadingTransferOwnership,
+  error: errorTransferOwnership
+} = useWriteContract()
+
+const { isLoading: isConfirmingTransferOwnership, isSuccess: isConfirmedTransferOwnership } =
+  useWaitForTransactionReceipt({
+    hash: hashTransferOwnership
+  })
 
 const {
   data: hashPauseContract,
@@ -67,6 +85,15 @@ const { isLoading: isConfirmingUnpauseContract, isSuccess: isConfirmedUnpauseCon
     hash: hashUnpauseContract
   })
 
+const transferOwnership = (address: Address) => {
+  executeTransferOwnership({
+    address: props.row.address as Address,
+    abi: props.row.abi as Abi,
+    functionName: 'transferOwnership',
+    args: [address]
+  })
+}
+
 const changeContractStatus = async (paused: boolean) => {
   if (paused) {
     executeUnpauseContract({
@@ -83,6 +110,13 @@ const changeContractStatus = async (paused: boolean) => {
   }
 }
 
+watch(isConfirmingTransferOwnership, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedTransferOwnership.value) {
+    addSuccessToast('Ownership transferred successfully!')
+    emits('contract-status-changed')
+  }
+})
+
 watch(isConfirmingPauseContract, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedPauseContract.value) {
     addSuccessToast('Contract paused successfully!')
@@ -94,6 +128,13 @@ watch(isConfirmingUnpauseContract, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedUnpauseContract.value) {
     addSuccessToast('Contract paused successfully!')
     emits('contract-status-changed')
+  }
+})
+
+watch(errorTransferOwnership, (error) => {
+  if (error) {
+    addErrorToast(parseError(error, props.row.abi as Abi))
+    log.error('errorTransferOwnership.value: ', error)
   }
 })
 </script>
