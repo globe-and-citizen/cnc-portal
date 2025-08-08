@@ -137,7 +137,7 @@ import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vu
 import VueDatePicker from '@vuepic/vue-datepicker'
 
 // Dev = 2 minutes, Prod = 1 hour
-const delay = import.meta.env.DEV ? 2 * 60 * 1000 : 1 * 60 * 60 * 1000
+const delay = 2 * 60 * 1000
 const startDate = new Date(new Date().getTime() + delay)
 
 const emits = defineEmits(['createProposal'])
