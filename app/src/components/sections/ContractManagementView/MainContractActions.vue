@@ -36,7 +36,6 @@ import { watch, ref } from 'vue'
 import { useToastStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { parse } from 'path'
 import { log, parseError } from '@/utils'
 
 const props = defineProps<{
