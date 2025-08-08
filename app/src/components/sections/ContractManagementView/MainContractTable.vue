@@ -22,7 +22,7 @@
       <template #owner-data="{ row }">
         <UserComponent
           :user="
-            teamStore.currentTeam?.members.find((member) => member.address == row.owner) as User
+            getUser(row.owner) //teamStore.currentTeam?.members.find((member) => member.address == row.owner) as User
           "
         />
       </template>
@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { useTeamStore } from '@/stores/'
@@ -54,6 +54,18 @@ import { getTeamContracts } from '@/utils'
 
 const teamStore = useTeamStore()
 const teamContracts = ref<object[]>([])
+
+const getUser = (address: string): User => {
+  if (address === teamStore.getContractAddressByType('BoardOfDirectors'))
+    return { name: 'Board of Directors', address }
+  else
+    return (
+      teamStore.currentTeam?.members.find((member) => member.address === address) || {
+        name: 'Unknown',
+        address
+      }
+    )
+}
 
 watch(
   () => teamStore.currentTeam?.teamContracts,
