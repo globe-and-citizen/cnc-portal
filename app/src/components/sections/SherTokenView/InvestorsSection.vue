@@ -5,7 +5,7 @@
     <InvestorsActions
       :token-symbol-loading="tokenSymbolLoading"
       :token-symbol="tokenSymbol"
-      :team="team"
+      :team="teamStore.currentTeam!"
       @refetchShareholders="
         () => {
           refetchTokenBalance()
@@ -28,22 +28,13 @@ import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import ShareholderList from '@/components/sections/SherTokenView/ShareholderList.vue'
 import { watch, computed } from 'vue'
 import { log } from '@/utils'
-import { useToastStore, useUserDataStore } from '@/stores'
-import type { Team } from '@/types'
+import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 
 const { addErrorToast } = useToastStore()
 const { address: currentAddress } = useUserDataStore()
+const teamStore = useTeamStore()
 
-const props = defineProps<{
-  team: Team
-}>()
-
-const investorsAddress = computed(() => {
-  const address = props.team.teamContracts?.find(
-    (contract) => contract.type === 'InvestorsV1'
-  )?.address
-  return address as Address
-})
+const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
 
 const {
   data: tokenSymbol,
