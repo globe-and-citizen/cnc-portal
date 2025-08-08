@@ -6,7 +6,6 @@
       variant="info"
       :card-icon="personIcon"
       :loading="!teamStore.currentTeam"
-
     >
     </OverviewCard>
     <OverviewCard
@@ -40,13 +39,30 @@ import OverviewCard from '@/components/OverviewCard.vue'
 import cartIcon from '@/assets/cart.svg'
 import bagIcon from '@/assets/bag.svg'
 import personIcon from '@/assets/person.svg'
-import { useTeamStore } from '@/stores'
-
+import { useTeamStore, useToastStore } from '@/stores'
+import { useReadContract } from '@wagmi/vue'
+import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { computed, watch } from 'vue'
+import { log } from '@/utils'
 
 const teamStore = useTeamStore()
+const { addErrorToast } = useToastStore()
+const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
+
+const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
+  abi: INVESTOR_ABI,
+  address: investorsAddress,
+  functionName: 'symbol'
+})
+
+watch(tokenSymbolError, (value) => {
+  if (value) {
+    log.error('Error fetching token symbol', value)
+    addErrorToast('Error fetching token symbol')
+  }
+})
 
 defineProps<{
-  tokenSymbol: string | undefined
   totalSupply: bigint | undefined
   tokenSymbolLoading: boolean
   totalSupplyLoading: boolean
