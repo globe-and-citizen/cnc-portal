@@ -6,23 +6,24 @@ import InvestorsHeader from '../InvestorsHeader.vue'
 import { parseUnits } from 'viem'
 
 // Hoisted variables for mocks
-const { mockUseReadContract, mockTeamStore, mockUserStore, mockToastStore, mockLog } = vi.hoisted(() => ({
-  mockUseReadContract: vi.fn(),
-  mockTeamStore: {
-    currentTeam: null as ReturnType<typeof ref> | null,
-    getContractAddressByType: vi.fn(() => '0xContract123')
-  },
-  mockUserStore: {
-    address: null as ReturnType<typeof ref> | null
-  },
-  mockToastStore: {
-    addErrorToast: vi.fn()
-  },
-  mockLog: {
-    error: vi.fn()
-  }
-}))
-
+const { mockUseReadContract, mockTeamStore, mockUserStore, mockToastStore, mockLog } = vi.hoisted(
+  () => ({
+    mockUseReadContract: vi.fn(),
+    mockTeamStore: {
+      currentTeam: null as ReturnType<typeof ref> | null,
+      getContractAddressByType: vi.fn(() => '0xContract123')
+    },
+    mockUserStore: {
+      address: null as ReturnType<typeof ref> | null
+    },
+    mockToastStore: {
+      addErrorToast: vi.fn()
+    },
+    mockLog: {
+      error: vi.fn()
+    }
+  })
+)
 
 // Mock wagmi composables
 vi.mock('@wagmi/vue', () => ({
@@ -229,7 +230,10 @@ describe('InvestorsHeader', () => {
       errorRef.value = 'Token symbol error'
       await nextTick()
 
-      expect(mockLog.error).toHaveBeenCalledWith('Error fetching token symbol', 'Token symbol error')
+      expect(mockLog.error).toHaveBeenCalledWith(
+        'Error fetching token symbol',
+        'Token symbol error'
+      )
       expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching token symbol')
     })
 
@@ -256,7 +260,10 @@ describe('InvestorsHeader', () => {
       errorRef.value = 'Shareholders error'
       await nextTick()
 
-      expect(mockLog.error).toHaveBeenCalledWith('Error fetching shareholders', 'Shareholders error')
+      expect(mockLog.error).toHaveBeenCalledWith(
+        'Error fetching shareholders',
+        'Shareholders error'
+      )
       expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching shareholders')
     })
   })
@@ -346,7 +353,7 @@ describe('InvestorsHeader', () => {
     it.skip('should get contract address from team store', () => {
       // Reset the mock to track calls from component creation
       mockTeamStore.getContractAddressByType.mockClear()
-      
+
       wrapper = createComponent()
 
       // The computed property should be evaluated during component creation

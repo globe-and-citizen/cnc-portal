@@ -199,7 +199,6 @@ describe('InvestorsActions.vue', () => {
     expect((wrapper.vm as unknown as ComponentData).payDividendsModal).toBeFalsy()
   })
 
-
   it('should call distributeMint when DistributeMintForm emit submit event', async () => {
     const wrapper = createComponent()
 
@@ -224,12 +223,11 @@ describe('InvestorsActions.vue', () => {
     expect(mockUseWriteContract.writeContract).toHaveBeenCalled()
   })
 
-
   it('should add error toast when distributeMint failed', async () => {
     // const { addErrorToast } = useToastStore()
     const wrapper = createComponent()
 
-      ; (wrapper.vm as unknown as ComponentData).distributeMintError = 'Distribute mint failed'
+    ;(wrapper.vm as unknown as ComponentData).distributeMintError = 'Distribute mint failed'
     await wrapper.vm.$nextTick()
 
     expect(addErrorToast).toHaveBeenCalled()
@@ -239,22 +237,20 @@ describe('InvestorsActions.vue', () => {
     // const { addErrorToast } = useToastStore()
     const wrapper = createComponent()
 
-      ; (wrapper.vm as unknown as ComponentData).payDividendsError = 'Pay dividends failed'
+    ;(wrapper.vm as unknown as ComponentData).payDividendsError = 'Pay dividends failed'
     await wrapper.vm.$nextTick()
 
     expect(addErrorToast).toHaveBeenCalled()
   })
 
-
-
   it('should add success toast when payDividends success', async () => {
     // const { addSuccessToast } = useToastStore()
     const wrapper = createComponent()
 
-      ; (wrapper.vm as unknown as ComponentData).isConfirmingPayDividends = true
-      ; (wrapper.vm as unknown as ComponentData).isSuccessPayDividends = true
+    ;(wrapper.vm as unknown as ComponentData).isConfirmingPayDividends = true
+    ;(wrapper.vm as unknown as ComponentData).isSuccessPayDividends = true
     await wrapper.vm.$nextTick()
-      ; (wrapper.vm as unknown as ComponentData).isConfirmingPayDividends = false
+    ;(wrapper.vm as unknown as ComponentData).isConfirmingPayDividends = false
     await wrapper.vm.$nextTick()
 
     expect(addSuccessToast).toHaveBeenCalled()
