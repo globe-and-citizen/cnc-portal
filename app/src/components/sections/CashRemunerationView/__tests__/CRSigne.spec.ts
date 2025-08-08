@@ -17,7 +17,7 @@ vi.mock('@/stores', () => ({
 }))
 
 vi.mock('@wagmi/vue', async (importOriginal) => ({
-  ...await importOriginal(),
+  ...(await importOriginal()),
   useSignTypedData: vi.fn(),
   useChainId: vi.fn(() => ({ value: 1 }))
 }))
