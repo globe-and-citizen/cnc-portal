@@ -1,15 +1,6 @@
 <template>
   <div class="flex flex-col gap-y-8">
-    <InvestorsHeader
-      :token-symbol="tokenSymbol"
-      :total-supply="totalSupply"
-      :team="team"
-      :token-symbol-loading="tokenSymbolLoading"
-      :total-supply-loading="totalSupplyLoading"
-      :token-balance="tokenBalance"
-      :loading-token-balance="loadingTokenBalance"
-      :investors-count="shareholders?.length ?? 0"
-    />
+    <InvestorsHeader />
     <div class="divider m-0"></div>
     <InvestorsActions
       :token-symbol-loading="tokenSymbolLoading"
