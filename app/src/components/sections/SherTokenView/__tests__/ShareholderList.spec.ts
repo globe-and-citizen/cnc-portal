@@ -1,14 +1,14 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import ShareholderList from '../../SherTokenView/ShareholderList.vue'
-import { parseEther, formatUnits, parseUnits, type Address } from 'viem'
+import { parseEther, parseUnits, type Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { mockToastStore } from '@/tests/mocks/store.mock'
-import TableComponent from '@/components/TableComponent.vue'
-import { useTeamStore } from '@/stores'
-import { mockTeamStore } from '@/tests/mocks/store.mock'
+// import TableComponent from '@/components/TableComponent.vue'
+// import { useTeamStore } from '@/stores'
+// import { mockTeamStore } from '@/tests/mocks/store.mock'
 
 const mockWriteContract = vi.fn()
 vi.mock('@wagmi/vue', async (importOriginal) => {

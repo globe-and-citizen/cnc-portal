@@ -10,7 +10,6 @@
         () => {
           refetchTokenBalance()
           refetchShareholders()
-          refetchTotalSupply()
         }
       "
       :shareholders="shareholders"
@@ -47,17 +46,6 @@ const investorsAddress = computed(() => {
 })
 
 const {
-  data: totalSupply,
-  isLoading: totalSupplyLoading,
-  error: totalSupplyError,
-  refetch: refetchTotalSupply
-} = useReadContract({
-  abi: INVESTOR_ABI,
-  address: investorsAddress,
-  functionName: 'totalSupply'
-})
-
-const {
   data: tokenSymbol,
   isLoading: tokenSymbolLoading,
   error: tokenSymbolError
@@ -69,7 +57,6 @@ const {
 
 const {
   data: shareholders,
-  isLoading: shareholderLoading,
   error: shareholderError,
   refetch: refetchShareholders
 } = useReadContract({
@@ -92,12 +79,6 @@ watch(tokenBalanceError, () => {
   }
 })
 
-watch(totalSupplyError, (value) => {
-  if (value) {
-    log.error('Error fetching total supply', value)
-    addErrorToast('Error fetching total supply')
-  }
-})
 watch(tokenSymbolError, (value) => {
   if (value) {
     log.error('Error fetching token symbol', value)

@@ -76,8 +76,6 @@ import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { useReadContract } from '@wagmi/vue'
 
-const emits = defineEmits(['refetchShareholders'])
-
 const mintIndividualModal = ref(false)
 const selectedShareholder = ref<Address | null>(null)
 
