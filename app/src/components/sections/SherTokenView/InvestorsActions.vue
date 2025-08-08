@@ -81,7 +81,7 @@ import { useToastStore, useUserDataStore } from '@/stores'
 import type { Team } from '@/types'
 import { log } from '@/utils'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import { parseUnits, type Address } from 'viem'
+import { type Address } from 'viem'
 import { computed, ref, watch } from 'vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
@@ -109,15 +109,6 @@ const investorsAddress = computed(
   () =>
     props.team.teamContracts.find((contract) => contract.type === 'InvestorsV1')?.address as Address
 )
-const {
-  data: mintHash,
-  writeContract: mint,
-  isPending: mintLoading,
-  error: mintError
-} = useWriteContract()
-const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForTransactionReceipt({
-  hash: mintHash
-})
 
 const {
   data: distributeMintHash,
@@ -166,15 +157,6 @@ const executeDistributeMint = (
   })
 }
 
-const mintToken = (address: Address, amount: string) => {
-  mint({
-    abi: INVESTOR_ABI,
-    address: investorsAddress.value as Address,
-    functionName: 'individualMint',
-    args: [address, parseUnits(amount, 6)]
-  })
-}
-
 watch(distributeMintError, () => {
   if (distributeMintError.value) {
     log.error('Failed to distribute mint', distributeMintError.value)
@@ -182,25 +164,10 @@ watch(distributeMintError, () => {
   }
 })
 
-watch(mintError, (value) => {
-  if (value) {
-    log.error('Failed to mint', value)
-    addErrorToast('Failed to mint')
-  }
-})
-
 watch(payDividendsError, () => {
   if (payDividendsError.value) {
     log.error('Failed to pay dividends', payDividendsError.value)
     addErrorToast('Failed to pay dividends')
-  }
-})
-
-watch(isConfirmingMint, (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isSuccessMinting.value) {
-    emits('refetchShareholders')
-    addSuccessToast('Minted successfully')
-    mintModal.value = false
   }
 })
 

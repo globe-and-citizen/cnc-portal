@@ -27,8 +27,6 @@
               }
             "
           />
-
-          <!-- <AddressToolTip :address="row.address" /> -->
         </div>
       </template>
 
@@ -64,11 +62,9 @@
   </CardComponent>
 </template>
 <script setup lang="ts">
-// import AddressToolTip from '@/components/AddressToolTip.vue'
-import { formatUnits, parseUnits, type Address } from 'viem'
+import { formatUnits, type Address } from 'viem'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import { ref } from 'vue'
-import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { watch, computed } from 'vue'
 import { log } from '@/utils'
@@ -85,7 +81,7 @@ const emits = defineEmits(['refetchShareholders'])
 const mintIndividualModal = ref(false)
 const selectedShareholder = ref<Address | null>(null)
 
-const { addErrorToast, addSuccessToast } = useToastStore()
+const { addErrorToast } = useToastStore()
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 
@@ -117,30 +113,6 @@ const {
   functionName: 'getShareholders'
 })
 
-const {
-  data: mintHash,
-  writeContract: mint,
-  isPending: mintLoading,
-  error: mintError
-} = useWriteContract()
-const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForTransactionReceipt({
-  hash: mintHash
-})
-
-const mintToken = (address: Address, amount: string) => {
-  if (investorsAddress.value) {
-    mint({
-      abi: INVESTOR_ABI,
-      address: investorsAddress.value,
-      functionName: 'individualMint',
-      args: [address, parseUnits(amount, 6)]
-    })
-  } else {
-    addErrorToast('Investors contract address not found')
-    log.error('Investors contract address not found')
-  }
-}
-
 const getShareholderName = (address: Address) => {
   const member = teamStore.currentTeam?.members?.find((member) => member.address === address)
   const contract = teamStore.currentTeam?.teamContracts?.find(
@@ -167,21 +139,6 @@ watch(shareholderError, (value) => {
   if (value) {
     log.error('Error fetching shareholders', value)
     addErrorToast('Error fetching shareholders')
-  }
-})
-
-watch(mintError, (value) => {
-  if (value) {
-    log.error('Failed to mint', value)
-    addErrorToast('Failed to mint')
-  }
-})
-
-watch(isConfirmingMint, (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isSuccessMinting.value) {
-    emits('refetchShareholders')
-    addSuccessToast('Minted successfully')
-    mintIndividualModal.value = false
   }
 })
 

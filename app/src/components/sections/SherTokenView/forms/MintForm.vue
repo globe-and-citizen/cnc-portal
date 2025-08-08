@@ -70,14 +70,16 @@ import { useTeamStore, useToastStore } from '@/stores'
 import { log } from '@/utils'
 
 const amount = ref<number | null>(null)
-
-const props = defineProps<{
-  memberInput?: { name: string; address: string }
-
-  disabled?: boolean
-}>()
+const input = ref<{ name: string; address: string }>({
+  name: '',
+  address: ''
+})
 
 const mintModal = defineModel({ default: false })
+const props = defineProps<{
+  memberInput?: { name: string; address: string }
+  disabled?: boolean
+}>()
 
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
@@ -87,11 +89,6 @@ const investorsAddress = computed(() => teamStore.getContractAddressByType('Inve
 const { data: mintHash, writeContract: mint, error: mintError } = useWriteContract()
 const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForTransactionReceipt({
   hash: mintHash
-})
-
-const input = ref<{ name: string; address: string }>({
-  name: '',
-  address: ''
 })
 
 const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
