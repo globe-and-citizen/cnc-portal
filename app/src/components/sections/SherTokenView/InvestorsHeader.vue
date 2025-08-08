@@ -45,14 +45,29 @@ import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { computed, watch } from 'vue'
 import { log } from '@/utils'
 
+defineProps<{
+  tokenSymbolLoading: boolean
+  totalSupplyLoading: boolean
+  tokenBalance: bigint | undefined
+  loadingTokenBalance: boolean
+  investorsCount: number
+}>()
+
 const teamStore = useTeamStore()
 const { addErrorToast } = useToastStore()
+
 const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
 
 const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
   abi: INVESTOR_ABI,
   address: investorsAddress,
   functionName: 'symbol'
+})
+
+const { data: totalSupply, error: totalSupplyError } = useReadContract({
+  abi: INVESTOR_ABI,
+  address: investorsAddress,
+  functionName: 'totalSupply'
 })
 
 watch(tokenSymbolError, (value) => {
@@ -62,12 +77,10 @@ watch(tokenSymbolError, (value) => {
   }
 })
 
-defineProps<{
-  totalSupply: bigint | undefined
-  tokenSymbolLoading: boolean
-  totalSupplyLoading: boolean
-  tokenBalance: bigint | undefined
-  loadingTokenBalance: boolean
-  investorsCount: number
-}>()
+watch(totalSupplyError, (value) => {
+  if (value) {
+    log.error('Error fetching total supply', value)
+    addErrorToast('Error fetching total supply')
+  }
+})
 </script>
