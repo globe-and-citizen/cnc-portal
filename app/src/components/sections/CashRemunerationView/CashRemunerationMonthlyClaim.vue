@@ -1,6 +1,6 @@
 <template>
   <OverviewCard
-    :title="totalMonthlyWithdrawnAmount"
+    :title="totalMonthlyClaim"
     subtitle="Month Claimed"
     variant="warning"
     :card-icon="cartIcon"
@@ -47,7 +47,7 @@ const currency = useStorage('currency', {
 })
 
 const {
-  data: withdrawnClaims,
+  data: weeklyClaims,
   isLoading: isFetching,
   error
 } = useTanstackQuery<WithdrawnClaim[]>(
@@ -64,7 +64,7 @@ function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
 }
 
-function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = currencyStore): number {
+function getHourlyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = currencyStore): number {
   return ratePerHour.reduce((total: number, rate: { type: TokenId; amount: number }) => {
     const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
     const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
@@ -72,39 +72,13 @@ function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = curre
   }, 0)
 }
 
-// fonction for getting the current month key (ex: '2025-07')
-function getCurrentMonthKey() {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-}
-
-// Stores the current month to detect month change
-
-const lastMonthKey = useStorage('lastMonthKey', getCurrentMonthKey())
-
-function resetMonthlyCounterIfNeeded() {
-  const currentMonthKey = getCurrentMonthKey()
-  if (lastMonthKey.value !== currentMonthKey) {
-    lastMonthKey.value = currentMonthKey
-    return true // show the reset state
-  }
-  return false
-}
-
-const totalMonthlyWithdrawnAmount = computed(() => {
-  // Reset the counter to 0 if the month changed
-  if (resetMonthlyCounterIfNeeded()) {
-    return formatCurrencyShort(0, currency.value.code)
-  }
-  if (!withdrawnClaims.value || !Array.isArray(withdrawnClaims.value)) return ''
-
-  let total = 0
-  withdrawnClaims.value.forEach((weeklyClaim: WithdrawnClaim) => {
+const totalMonthlyClaim = computed(() => {
+  if (!weeklyClaims.value || !Array.isArray(weeklyClaims.value)) return ''
+  const total = weeklyClaims.value.reduce((sum: number, weeklyClaim: WithdrawnClaim) => {
     const hours = getTotalHoursWorked(weeklyClaim.claims)
-    const rate = getHoulyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
-    total += hours * rate
-  })
-
+    const rate = getHourlyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
+    return sum + hours * rate
+  }, 0)
   return formatCurrencyShort(total, currency.value.code)
 })
 

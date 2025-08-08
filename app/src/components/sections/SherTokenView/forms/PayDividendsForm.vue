@@ -12,18 +12,37 @@
       <span v-else> {{ formatEther(bankBalance?.value ?? 0n) }}</span>
       {{ NETWORK.currencySymbol }}
     </h6>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
+    <!-- <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
       <p>Amount</p>
       |
       <input type="number" class="grow" data-test="amount-input" v-model="amount" />
       {{ NETWORK.currencySymbol }}
-    </label>
-    <div
-      class="pl-4 text-red-500 text-sm w-full text-left"
-      v-for="error of $v.amount.$errors"
-      :key="error.$uid"
-    >
-      {{ error.$message }}
+    </label> -->
+
+    <div class="flex flex-col gap-2">
+      <label class="flex items-center">
+        <span class="w-full font-bold" data-test="amount-input">Amount</span>
+      </label>
+      <div class="relative">
+        <input
+          type="number"
+          class="input input-bordered input-md grow w-full pr-16"
+          data-test="amount-input"
+          v-model="amount"
+        />
+        <span
+          class="absolute right-4 top-1/2 transform -translate-y-1/2 text-black font-bold text-sm"
+        >
+          {{ NETWORK.currencySymbol }}
+        </span>
+      </div>
+      <div
+        class="pl-4 text-red-500 text-sm w-full text-left"
+        v-for="error of $v.amount.$errors"
+        :key="error.$uid"
+      >
+        {{ error.$message }}
+      </div>
     </div>
 
     <div class="text-center">

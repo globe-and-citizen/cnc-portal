@@ -72,26 +72,13 @@ function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = curre
   }, 0)
 }
 
-// const totalPendingAmount = computed(() => {
-//   const totalAmount = data.value?.reduce((acc, claim) => {
-//     return acc + (claim.hoursWorked || 0) * (claim.wage.cashRatePerHour || 0)
-//   }, 0)
-//
-//   const nativeTokenInfo = currencyStore.getTokenInfo('native')
-//   return formatCurrencyShort(
-//     (totalAmount || 0) * (nativeTokenInfo?.prices.find((p) => p.id == 'local')?.price || 0),
-//     currency.value.code
-//   )
-// })
-
 const totalPendingAmount = computed(() => {
   if (!weeklyClaims.value || !Array.isArray(weeklyClaims.value)) return ''
-  let total = 0
-  weeklyClaims.value.forEach((weeklyClaim: WeeklyClaim) => {
+  const total = weeklyClaims.value.reduce((sum: number, weeklyClaim: WeeklyClaim) => {
     const hours = getTotalHoursWorked(weeklyClaim.claims)
     const rate = getHoulyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
-    total += hours * rate
-  })
+    return sum + hours * rate
+  }, 0)
   return formatCurrencyShort(total, currency.value.code)
 })
 
