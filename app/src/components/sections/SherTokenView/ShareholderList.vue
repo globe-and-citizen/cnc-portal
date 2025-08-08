@@ -15,7 +15,7 @@
         })) ?? []
       "
       :columns="columns"
-      :loading="loading"
+      :loading="shareholdersLoading"
     >
       <template #address-data="{ row }">
         <div class="flex w-full">
@@ -36,7 +36,7 @@
         <div class="flex w-full">
           <ButtonUI
             variant="primary"
-            :disabled="currentAddress != team.ownerAddress"
+            :disabled="userStore.address != teamStore.currentTeam?.ownerAddress"
             data-test="mint-individual"
             @click="
               () => {
@@ -72,37 +72,52 @@ import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import { ref } from 'vue'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
-import { watch } from 'vue'
+import { watch, computed } from 'vue'
 import { log } from '@/utils'
 import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
-import type { Team } from '@/types'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
+import { useReadContract } from '@wagmi/vue'
+
+const emits = defineEmits(['refetchShareholders'])
 
 const mintIndividualModal = ref(false)
 const selectedShareholder = ref<Address | null>(null)
-const emits = defineEmits(['refetchShareholders'])
-const { addErrorToast, addSuccessToast } = useToastStore()
-const { address: currentAddress } = useUserDataStore()
-const teamStore = useTeamStore()
 
-const props = defineProps<{
-  team: Partial<Team>
-  tokenSymbol: string | undefined
-  tokenSymbolLoading: boolean
-  totalSupply: bigint | undefined
-  totalSupplyLoading: boolean
-  shareholders:
-    | readonly {
-        shareholder: Address
-        amount: bigint
-      }[]
-    | undefined
-  loading: boolean
-}>()
+const { addErrorToast, addSuccessToast } = useToastStore()
+const teamStore = useTeamStore()
+const userStore = useUserDataStore()
+
+const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
+
+const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
+  abi: INVESTOR_ABI,
+  address: investorsAddress,
+  functionName: 'symbol'
+})
+
+const {
+  data: totalSupply,
+  isLoading: totalSupplyLoading,
+  error: totalSupplyError
+} = useReadContract({
+  abi: INVESTOR_ABI,
+  address: investorsAddress,
+  functionName: 'totalSupply'
+})
+
+const {
+  data: shareholders,
+  isLoading: shareholdersLoading,
+  error: shareholderError
+} = useReadContract({
+  abi: INVESTOR_ABI,
+  address: investorsAddress,
+  functionName: 'getShareholders'
+})
 
 const {
   data: mintHash,
@@ -115,13 +130,17 @@ const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForT
 })
 
 const mintToken = (address: Address, amount: string) => {
-  mint({
-    abi: INVESTOR_ABI,
-    address: props.team.teamContracts?.find((contract) => contract.type === 'InvestorsV1')
-      ?.address as Address,
-    functionName: 'individualMint',
-    args: [address, parseUnits(amount, 6)]
-  })
+  if (investorsAddress.value) {
+    mint({
+      abi: INVESTOR_ABI,
+      address: investorsAddress.value,
+      functionName: 'individualMint',
+      args: [address, parseUnits(amount, 6)]
+    })
+  } else {
+    addErrorToast('Investors contract address not found')
+    log.error('Investors contract address not found')
+  }
 }
 
 const getShareholderName = (address: Address) => {
@@ -131,6 +150,27 @@ const getShareholderName = (address: Address) => {
   )
   return member ? member.name : contract ? contract.type : 'Unknown'
 }
+
+watch(tokenSymbolError, (value) => {
+  if (value) {
+    log.error('Error fetching token symbol', value)
+    addErrorToast('Error fetching token symbol')
+  }
+})
+
+watch(totalSupplyError, (value) => {
+  if (value) {
+    log.error('Error fetching total supply', value)
+    addErrorToast('Error fetching total supply')
+  }
+})
+
+watch(shareholderError, (value) => {
+  if (value) {
+    log.error('Error fetching shareholders', value)
+    addErrorToast('Error fetching shareholders')
+  }
+})
 
 watch(mintError, (value) => {
   if (value) {

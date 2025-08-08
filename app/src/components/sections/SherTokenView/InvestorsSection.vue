@@ -16,22 +16,7 @@
       :shareholders="shareholders"
     />
     <div class="divider m-0"></div>
-    <ShareholderList
-      :team="team"
-      :token-symbol="tokenSymbol"
-      :token-symbol-loading="tokenSymbolLoading"
-      :shareholders="shareholders"
-      :loading="shareholderLoading"
-      :total-supply="totalSupply"
-      :total-supply-loading="totalSupplyLoading"
-      @refetchShareholders="
-        () => {
-          refetchTokenBalance()
-          refetchShareholders()
-          refetchTotalSupply()
-        }
-      "
-    />
+    <ShareholderList />
   </div>
 </template>
 
