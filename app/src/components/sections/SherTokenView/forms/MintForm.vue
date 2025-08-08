@@ -67,6 +67,7 @@ import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from 
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { computed, watch } from 'vue'
 import { useTeamStore, useToastStore } from '@/stores'
+import { log } from '@/utils'
 
 const amount = ref<number | null>(null)
 
@@ -79,21 +80,14 @@ const props = defineProps<{
 const mintModal = defineModel({ default: false })
 
 const teamStore = useTeamStore()
-const { addSuccessToast } = useToastStore()
+const { addSuccessToast, addErrorToast } = useToastStore()
 
 const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
 
-const {
-  data: mintHash,
-  writeContract: mint,
-  isPending: mintLoading,
-  error: mintError
-} = useWriteContract()
+const { data: mintHash, writeContract: mint, error: mintError } = useWriteContract()
 const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForTransactionReceipt({
   hash: mintHash
 })
-
-const emits = defineEmits(['submit'])
 
 const input = ref<{ name: string; address: string }>({
   name: '',
@@ -143,6 +137,20 @@ watch(isConfirmingMint, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isSuccessMinting.value) {
     addSuccessToast('Minted successfully')
     mintModal.value = false
+  }
+})
+
+watch(mintError, (value) => {
+  if (value) {
+    log.error('Failed to mint', value)
+    addErrorToast('Failed to mint')
+  }
+})
+
+watch(tokenSymbolError, (value) => {
+  if (value) {
+    log.error('Error fetching token symbol', value)
+    addErrorToast('Error fetching token symbol')
   }
 })
 </script>

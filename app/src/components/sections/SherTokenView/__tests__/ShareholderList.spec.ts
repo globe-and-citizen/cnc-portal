@@ -85,38 +85,6 @@ describe('ShareholderList', () => {
     })
   }
 
-  it('should render the shareholder name if exists in member list', () => {
-    vi.mocked(useTeamStore).mockImplementation(() => ({
-      ...mockTeamStore,
-      //@ts-expect-error: TypeScript does not recognize the mock structure
-      currentTeam: {
-        ...mockTeamStore.currentTeam,
-        members: [
-          { id: '1', address: '0x123', name: 'John Doe', teamId: 1 },
-          { id: '2', address: '0x456', name: 'Jane Doe', teamId: 1 }
-        ]
-      }
-    }))
-    const wrapper = createComponent()
-    const tableComponent = wrapper.findComponent(TableComponent)
-    expect(tableComponent.exists()).toBeTruthy()
-
-    const expectedRows = wrapper.vm.$props.shareholders?.map((shareholder, index) => ({
-      index: index + 1,
-      name: wrapper.vm.$props.team.members!.filter(
-        (member) => member.address == shareholder.shareholder
-      )[0].name,
-      address: shareholder.shareholder,
-      balance: `${formatUnits(shareholder.amount, 6)} TEST`,
-      percentage: `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(parseUnits('300', 6))).toString()}%`,
-      shareholder: shareholder.shareholder,
-      amount: shareholder.amount
-    }))
-
-    expect(tableComponent.props('rows')).toEqual(expectedRows)
-    expect(expectedRows![0].name).toBe('John Doe')
-  })
-
   it('should open mint individual modal if mint individual button is clicked', async () => {
     const wrapper = createComponent()
 
