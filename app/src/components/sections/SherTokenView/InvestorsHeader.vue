@@ -1,7 +1,7 @@
 <template>
   <div class="flex gap-10">
     <OverviewCard
-      :title="`${investorsCount} Investors`"
+      :title="`${shareholders?.length || 0} Investors`"
       subtitle="Investors"
       variant="info"
       :card-icon="personIcon"
@@ -34,27 +34,20 @@
 </template>
 
 <script setup lang="ts">
-import { formatUnits } from 'viem'
+import { formatUnits, type Address } from 'viem'
 import OverviewCard from '@/components/OverviewCard.vue'
 import cartIcon from '@/assets/cart.svg'
 import bagIcon from '@/assets/bag.svg'
 import personIcon from '@/assets/person.svg'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { computed, watch } from 'vue'
 import { log } from '@/utils'
 
-defineProps<{
-  tokenSymbolLoading: boolean
-  totalSupplyLoading: boolean
-  tokenBalance: bigint | undefined
-  loadingTokenBalance: boolean
-  investorsCount: number
-}>()
-
 const teamStore = useTeamStore()
 const { addErrorToast } = useToastStore()
+const userStore = useUserDataStore()
 
 const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
 
@@ -70,6 +63,19 @@ const { data: totalSupply, error: totalSupplyError } = useReadContract({
   functionName: 'totalSupply'
 })
 
+const { data: tokenBalance, error: tokenBalanceError } = useReadContract({
+  abi: INVESTOR_ABI,
+  address: investorsAddress,
+  functionName: 'balanceOf',
+  args: [userStore.address as Address]
+})
+
+const { data: shareholders, error: shareholderError } = useReadContract({
+  abi: INVESTOR_ABI,
+  address: investorsAddress,
+  functionName: 'getShareholders'
+})
+
 watch(tokenSymbolError, (value) => {
   if (value) {
     log.error('Error fetching token symbol', value)
@@ -81,6 +87,20 @@ watch(totalSupplyError, (value) => {
   if (value) {
     log.error('Error fetching total supply', value)
     addErrorToast('Error fetching total supply')
+  }
+})
+
+watch(tokenBalanceError, () => {
+  if (tokenBalanceError.value) {
+    log.error('Failed to fetch token balance')
+    addErrorToast('Failed to fetch token balance')
+  }
+})
+
+watch(shareholderError, (value) => {
+  if (value) {
+    log.error('Error fetching shareholders', value)
+    addErrorToast('Error fetching shareholders')
   }
 })
 </script>
