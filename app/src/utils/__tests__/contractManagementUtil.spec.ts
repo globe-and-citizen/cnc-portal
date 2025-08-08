@@ -114,7 +114,7 @@ describe('contractManagementUtil', () => {
       const contractsWithUnknownType: TeamContract[] = [
         {
           address: '0x1234567890123456789012345678901234567890',
-          type: 'UnknownType' as any,
+          type: 'UnknownType' as unknown as ContractType,
           admins: [],
           deployer: '0xDeployer'
         }
@@ -153,7 +153,7 @@ describe('contractManagementUtil', () => {
     })
 
     it('should log info for contracts with undefined ABI', async () => {
-      const contractsWithNull = [null as any, undefined as any]
+      const contractsWithNull = [null, undefined] as unknown as Contract[]
 
       const result = await getTeamContracts(contractsWithNull)
 
@@ -162,14 +162,13 @@ describe('contractManagementUtil', () => {
     })
 
     it('should call readContract with correct parameters', async () => {
-      mockReadContract
-        .mockResolvedValueOnce('0xOwner1')
-        .mockResolvedValueOnce(false)
+      mockReadContract.mockResolvedValueOnce('0xOwner1').mockResolvedValueOnce(false)
 
       const singleContract = [mockContracts[0]]
       await getTeamContracts(singleContract)
 
-      expect(mockReadContract).toHaveBeenNthCalledWith(1, 
+      expect(mockReadContract).toHaveBeenNthCalledWith(
+        1,
         { mockConfig: true },
         {
           address: '0x1234567890123456789012345678901234567890',
@@ -178,7 +177,8 @@ describe('contractManagementUtil', () => {
         }
       )
 
-      expect(mockReadContract).toHaveBeenNthCalledWith(2,
+      expect(mockReadContract).toHaveBeenNthCalledWith(
+        2,
         { mockConfig: true },
         {
           address: '0x1234567890123456789012345678901234567890',

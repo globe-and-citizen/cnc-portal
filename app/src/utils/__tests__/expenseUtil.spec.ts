@@ -41,7 +41,7 @@ describe('expenseUtil', () => {
 
     it('should return expenses for the specified user', () => {
       const userExpenses = getCurrentUserExpenses(mockExpenses, '0xUser1')
-      
+
       expect(userExpenses).toHaveLength(2)
       expect(userExpenses[0].data.approvedAddress).toBe('0xUser1')
       expect(userExpenses[1].data.approvedAddress).toBe('0xUser1')
@@ -51,41 +51,41 @@ describe('expenseUtil', () => {
 
     it('should return empty array when no expenses match user', () => {
       const userExpenses = getCurrentUserExpenses(mockExpenses, '0xUser3')
-      
+
       expect(userExpenses).toEqual([])
     })
 
     it('should return empty array when expenses is empty', () => {
       const userExpenses = getCurrentUserExpenses([], '0xUser1')
-      
+
       expect(userExpenses).toEqual([])
     })
 
     it('should return empty array when expenses is null or undefined', () => {
-      expect(getCurrentUserExpenses(null as any, '0xUser1')).toEqual([])
-      expect(getCurrentUserExpenses(undefined as any, '0xUser1')).toEqual([])
+      expect(getCurrentUserExpenses(null as unknown as Expense[], '0xUser1')).toEqual([])
+      expect(getCurrentUserExpenses(undefined as unknown as Expense[], '0xUser1')).toEqual([])
     })
 
     it('should return empty array when userAddress is empty', () => {
       const userExpenses = getCurrentUserExpenses(mockExpenses, '')
-      
+
       expect(userExpenses).toEqual([])
     })
 
     it('should return empty array when userAddress is null or undefined', () => {
-      expect(getCurrentUserExpenses(mockExpenses, null as any)).toEqual([])
-      expect(getCurrentUserExpenses(mockExpenses, undefined as any)).toEqual([])
+      expect(getCurrentUserExpenses(mockExpenses, null as unknown as string)).toEqual([])
+      expect(getCurrentUserExpenses(mockExpenses, undefined as unknown as string)).toEqual([])
     })
 
     it('should handle case-sensitive address matching', () => {
       const userExpenses = getCurrentUserExpenses(mockExpenses, '0xuser1')
-      
+
       expect(userExpenses).toEqual([])
     })
 
     it('should return empty array when expenses is not an array', () => {
-      expect(getCurrentUserExpenses({} as any, '0xUser1')).toEqual([])
-      expect(getCurrentUserExpenses('not-array' as any, '0xUser1')).toEqual([])
+      expect(getCurrentUserExpenses({} as unknown as Expense[], '0xUser1')).toEqual([])
+      expect(getCurrentUserExpenses('not-array' as unknown as Expense[], '0xUser1')).toEqual([])
     })
   })
 
@@ -132,7 +132,7 @@ describe('expenseUtil', () => {
 
     it('should return native token info for zero address', () => {
       const tokens = getTokens(mockExpenses, 'sig1', mockBalances)
-      
+
       expect(tokens).toHaveLength(1)
       expect(tokens[0]).toEqual({
         symbol: 'ETH',
@@ -143,7 +143,7 @@ describe('expenseUtil', () => {
 
     it('should return USDC token info for USDC address', () => {
       const tokens = getTokens(mockExpenses, 'sig2', mockBalances)
-      
+
       expect(tokens).toHaveLength(1)
       expect(tokens[0]).toEqual({
         symbol: 'USDC',
@@ -154,7 +154,7 @@ describe('expenseUtil', () => {
 
     it('should return empty array when signature not found', () => {
       const tokens = getTokens(mockExpenses, 'unknown-sig', mockBalances)
-      
+
       expect(tokens).toEqual([])
     })
 
@@ -170,7 +170,7 @@ describe('expenseUtil', () => {
       ]
 
       const tokens = getTokens(expensesWithUnknownToken, 'sig-unknown', mockBalances)
-      
+
       expect(tokens).toEqual([])
     })
 
@@ -183,7 +183,7 @@ describe('expenseUtil', () => {
       ]
 
       const tokens = getTokens(mockExpenses, 'sig1', balancesWithNaN)
-      
+
       expect(tokens).toEqual([])
     })
 
@@ -191,13 +191,13 @@ describe('expenseUtil', () => {
       const emptyBalances: TokenBalance[] = []
 
       const tokens = getTokens(mockExpenses, 'sig1', emptyBalances)
-      
+
       expect(tokens).toEqual([])
     })
 
     it('should handle empty expenses array', () => {
       const tokens = getTokens([], 'sig1', mockBalances)
-      
+
       expect(tokens).toEqual([])
     })
 
@@ -212,7 +212,7 @@ describe('expenseUtil', () => {
       ]
 
       const tokens = getTokens(expensesWithoutToken, 'sig-no-token', mockBalances)
-      
+
       expect(tokens).toEqual([])
     })
   })

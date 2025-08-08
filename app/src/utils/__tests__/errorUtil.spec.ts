@@ -18,7 +18,7 @@ describe('errorUtil', () => {
     it('should handle Error instances with message', () => {
       const error = new Error('Test error message')
       const result = parseError(error)
-      
+
       expect(result).toBe('Test error message')
     })
 
@@ -29,14 +29,14 @@ describe('errorUtil', () => {
           payload: { method: string; params: string[]; jsonrpc: string }
         }
       }
-      
+
       metaMaskError.info = {
         error: { code: 4001, message: 'User rejected: the request' },
         payload: { method: 'eth_sendTransaction', params: [], jsonrpc: '2.0' }
       }
-      
+
       const result = parseError(metaMaskError)
-      
+
       expect(result).toBe('Metamask Error: the request')
     })
 
@@ -48,21 +48,21 @@ describe('errorUtil', () => {
           inputs: []
         }
       ]
-      
+
       const error = new Error('Contract error') as Error & {
         shortMessage: string
       }
       error.shortMessage = 'revert: Custom error occurred'
-      
+
       const result = parseError(error, mockAbi)
-      
+
       expect(result).toBe('Custom error occurred')
     })
 
     it('should handle non-Error objects', () => {
       const unknownError = { someProperty: 'some value' }
       const result = parseError(unknownError)
-      
+
       expect(result).toBe('App Error: Looks like something went wrong.')
     })
 
@@ -74,14 +74,14 @@ describe('errorUtil', () => {
     it('should handle string errors', () => {
       const stringError = 'Simple string error'
       const result = parseError(stringError)
-      
+
       expect(result).toBe('App Error: Looks like something went wrong.')
     })
 
     it('should handle Error instances without info property', () => {
       const simpleError = new Error('Simple error message')
       const result = parseError(simpleError)
-      
+
       expect(result).toBe('Simple error message')
     })
 
@@ -90,9 +90,9 @@ describe('errorUtil', () => {
         info: unknown
       }
       errorWithBadInfo.info = { badStructure: true }
-      
+
       const result = parseError(errorWithBadInfo)
-      
+
       expect(result).toBe('Error with bad info')
     })
 
@@ -105,14 +105,14 @@ describe('errorUtil', () => {
             inputs: []
           }
         ]
-        
+
         const error = new Error('Contract error') as Error & {
           shortMessage: string
         }
         error.shortMessage = 'custom error 0x356d5c62'
-        
+
         const result = parseError(error, mockAbi)
-        
+
         // Should attempt to parse custom error
         expect(typeof result).toBe('string')
         expect(result).toContain('Contract reverted')
@@ -123,9 +123,9 @@ describe('errorUtil', () => {
           shortMessage: string
         }
         error.shortMessage = 'revert: Insufficient funds.'
-        
+
         const result = parseError(error)
-        
+
         expect(result).toBe('Insufficient funds')
       })
 
@@ -134,9 +134,9 @@ describe('errorUtil', () => {
           shortMessage: string
         }
         error.shortMessage = 'invalid error format'
-        
+
         const result = parseError(error)
-        
+
         expect(result).toBe('Contract reverted')
       })
     })

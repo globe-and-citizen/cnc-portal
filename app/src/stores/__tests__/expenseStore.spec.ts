@@ -62,7 +62,7 @@ describe('useExpenseDataStore', () => {
   describe('initialization', () => {
     it('should initialize with correct URI based on team ID', () => {
       const store = useExpenseDataStore()
-      
+
       // The store should be initialized
       expect(store).toBeDefined()
       expect(mockExecute).toBeDefined()
@@ -97,12 +97,12 @@ describe('useExpenseDataStore', () => {
           }
         }
       ]
-      
+
       mockAllExpenseData.value = mockExpenses
-      
+
       const store = useExpenseDataStore()
       const userExpenses = store.myApprovedExpenses
-      
+
       expect(userExpenses).toHaveLength(2)
       expect(userExpenses[0]).toEqual({
         approvedAddress: '0xUser123',
@@ -120,9 +120,9 @@ describe('useExpenseDataStore', () => {
 
     it('should return empty array when no expenses exist', () => {
       mockAllExpenseData.value = null
-      
+
       const store = useExpenseDataStore()
-      
+
       expect(store.myApprovedExpenses).toEqual([])
     })
 
@@ -137,19 +137,19 @@ describe('useExpenseDataStore', () => {
           }
         }
       ]
-      
+
       mockAllExpenseData.value = mockExpenses
-      
+
       const store = useExpenseDataStore()
-      
+
       expect(store.myApprovedExpenses).toEqual([])
     })
 
     it('should handle empty expenses array', () => {
       mockAllExpenseData.value = []
-      
+
       const store = useExpenseDataStore()
-      
+
       expect(store.myApprovedExpenses).toEqual([])
     })
   })
@@ -176,12 +176,12 @@ describe('useExpenseDataStore', () => {
           }
         }
       ]
-      
+
       mockAllExpenseData.value = mockExpenses
-      
+
       const store = useExpenseDataStore()
       const parsedExpenses = store.allExpenseDataParsed
-      
+
       expect(parsedExpenses).toHaveLength(2)
       expect(parsedExpenses[0]).toEqual({
         id: '1',
@@ -201,17 +201,17 @@ describe('useExpenseDataStore', () => {
 
     it('should return empty array when no expenses exist', () => {
       mockAllExpenseData.value = null
-      
+
       const store = useExpenseDataStore()
-      
+
       expect(store.allExpenseDataParsed).toEqual([])
     })
 
     it('should handle empty expenses array', () => {
       mockAllExpenseData.value = []
-      
+
       const store = useExpenseDataStore()
-      
+
       expect(store.allExpenseDataParsed).toEqual([])
     })
   })
@@ -219,11 +219,11 @@ describe('useExpenseDataStore', () => {
   describe('reactive updates', () => {
     it('should update computed values when allExpenseData changes', () => {
       const store = useExpenseDataStore()
-      
+
       // Initially empty
       expect(store.myApprovedExpenses).toEqual([])
       expect(store.allExpenseDataParsed).toEqual([])
-      
+
       // Add data
       mockAllExpenseData.value = [
         {
@@ -235,7 +235,7 @@ describe('useExpenseDataStore', () => {
           }
         }
       ]
-      
+
       expect(store.myApprovedExpenses).toHaveLength(1)
       expect(store.allExpenseDataParsed).toHaveLength(1)
     })
@@ -259,18 +259,18 @@ describe('useExpenseDataStore', () => {
           }
         }
       ]
-      
+
       mockAllExpenseData.value = mockExpenses
-      
+
       const store = useExpenseDataStore()
-      
+
       // Initially user has 1 expense
       expect(store.myApprovedExpenses).toHaveLength(1)
       expect(store.myApprovedExpenses[0].approvedAddress).toBe('0xUser123')
-      
+
       // Change user address
       mockAddress.value = '0xNewUser'
-      
+
       // Should now show different user's expenses
       expect(store.myApprovedExpenses).toHaveLength(1)
       expect(store.myApprovedExpenses[0].approvedAddress).toBe('0xNewUser')
@@ -286,9 +286,9 @@ describe('useExpenseDataStore', () => {
           // Missing data property
         }
       ]
-      
+
       const store = useExpenseDataStore()
-      
+
       // Should not throw and return empty results
       expect(() => store.myApprovedExpenses).not.toThrow()
       expect(() => store.allExpenseDataParsed).not.toThrow()
