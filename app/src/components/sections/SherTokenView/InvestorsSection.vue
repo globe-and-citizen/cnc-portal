@@ -93,12 +93,7 @@ const {
   functionName: 'getShareholders'
 })
 
-const {
-  data: tokenBalance,
-  error: tokenBalanceError,
-  isLoading: loadingTokenBalance,
-  refetch: refetchTokenBalance
-} = useReadContract({
+const { error: tokenBalanceError, refetch: refetchTokenBalance } = useReadContract({
   abi: INVESTOR_ABI,
   address: investorsAddress,
   functionName: 'balanceOf',
