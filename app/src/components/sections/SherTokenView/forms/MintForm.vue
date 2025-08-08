@@ -64,8 +64,8 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
-import { isAddress, type Address } from 'viem'
-import { onMounted, ref, computed } from 'vue'
+import { isAddress} from 'viem'
+import { onMounted, ref} from 'vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 
 const amount = ref<number | null>(null)
