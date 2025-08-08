@@ -2,10 +2,10 @@
   <div class="flex flex-col gap-4">
     <h2>Mint {{ tokenSymbol }}</h2>
 
-    <h3>Please input the {{ address ? '' : 'address and' }}amount to mint</h3>
+    <h3>Please input the {{ input.address ? '' : 'address and' }}amount to mint</h3>
     <div>
       <SelectMemberInput
-        v-model="MemberInput"
+        v-model="input"
         data-test="address-input"
         :disabled="props.disabled"
       />
@@ -71,19 +71,18 @@ import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 const amount = ref<number | null>(null)
 
 const props = defineProps<{
-  memberInput: { name: string | null; address: Address | null }
+  memberInput?: { name: string; address: string }
   tokenSymbol: string | undefined
   loading: boolean
   disabled?: boolean
 }>()
 const emits = defineEmits(['submit'])
 
-const MemberInput = ref<{ name: string | null; address: Address | null }>({
-  name: null,
-  address: null
+const input = ref<{ name: string; address: string }>({
+  name: '',
+  address:''
 })
 
-const addressInput = computed(() => MemberInput.value.address)
 
 const rules = {
   address: {
@@ -97,18 +96,18 @@ const rules = {
   }
 }
 
-const $v = useVuelidate(rules, { address: addressInput, amount })
+const $v = useVuelidate(rules, { address: input.value.address, amount })
 
 const onSubmit = () => {
   $v.value.$touch()
   if ($v.value?.$invalid) return
 
-  emits('submit', MemberInput.value.address, amount.value!.toString())
+  emits('submit', input.value.address, amount.value!.toString())
 }
 
 onMounted(() => {
   if (props.memberInput) {
-    MemberInput.value = props.memberInput
+    input.value = props.memberInput
   }
 })
 </script>
