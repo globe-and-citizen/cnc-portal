@@ -22,3 +22,14 @@ export interface BankTransaction extends BaseTransaction {
   amount?: string | number
   token?: string
 }
+
+export interface InvestorsTransaction {
+  txHash: string
+  date: string
+  from: string
+  to: string
+  amount: string
+  token: string
+  amountUSD: string
+  type: 'mint' | 'dividend' | 'transfer'
+}

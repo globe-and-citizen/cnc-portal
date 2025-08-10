@@ -98,7 +98,7 @@ const { address: currentAddress } = useUserDataStore()
 const teamStore = useTeamStore()
 
 const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
-
+const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
 const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
   abi: INVESTOR_ABI,
   address: investorsAddress,
@@ -138,7 +138,7 @@ const { isLoading: isConfirmingPayDividends, isSuccess: isSuccessPayDividends } 
 const executePayDividends = (value: bigint) => {
   payDividends({
     abi: BANK_ABI,
-    address: investorsAddress.value as Address,
+    address: bankAddress.value as Address,
     functionName: 'transfer',
     args: [investorsAddress.value, value]
   })

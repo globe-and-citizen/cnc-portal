@@ -36,3 +36,14 @@ coverage
 # Synpress
 .cache-synpress
 test-results
+contract/ignition/deployments/
+contract/contracts/OfficerV2.txt
+# Old and temporary contract files
+contract/contracts/**/*.txt
+contract/contracts/**/*.md
+contract/contracts/bank/#*
+contract/contracts/oldBank.txt
+
+# Test and personal files
+contract/test/*Subgraph.spec.ts
+personal/*.txt
