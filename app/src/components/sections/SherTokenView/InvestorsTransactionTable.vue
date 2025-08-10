@@ -26,23 +26,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import type { InvestorsTransaction, RawInvestorsTransaction } from '@/types/transactions'
+import type { InvestorsTransaction } from '@/types/transactions'
 import TableComponent from '@/components/TableComponent.vue'
 import { formatCurrencyShort } from '@/utils'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 
-const props = defineProps<{
+defineProps<{
   transactions: InvestorsTransaction[]
 }>()
-
-watch(
-  () => props.transactions,
-  (newTransactions) => {
-    console.log('Transactions:', newTransactions)
-  },
-  { immediate: true }
-)
 
 const columns = [
   { key: 'txHash', label: 'Transaction' },
