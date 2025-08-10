@@ -1,9 +1,5 @@
 <template>
-  <InvestorsTransactionHistory
-    :transactions="transactionData"
-    data-test="investor-v1-transactions"
-    title="Transactions History"
-  />
+  <InvestorsTransactionHistory :transactions="transactionData" title="Transactions History" />
 </template>
 
 <script setup lang="ts">

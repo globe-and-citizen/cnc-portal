@@ -77,17 +77,18 @@ import type { InvestorsTransaction } from '@/types/transactions'
 import { onClickOutside } from '@vueuse/core'
 import { formatCurrencyShort } from '@/utils'
 
-interface Props {
-  transactions: InvestorsTransaction[]
-  title: string
-  showDateFilter?: boolean
-  dataTestPrefix?: string
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  showDateFilter: true,
-  dataTestPrefix: 'investor-transaction-history'
-})
+const props = withDefaults(
+  defineProps<{
+    transactions: InvestorsTransaction[]
+    title: string
+    showDateFilter?: boolean
+    dataTestPrefix?: string
+  }>(),
+  {
+    showDateFilter: true,
+    dataTestPrefix: 'investor-transaction-history'
+  }
+)
 
 const dateRange = ref<[Date, Date] | null>(null)
 const selectedType = ref('')
