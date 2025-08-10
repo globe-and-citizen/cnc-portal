@@ -59,7 +59,7 @@
 
       <template #amount-data="{ row }">{{ row.amount }} {{ row.token }}</template>
       <template #amountUSD-data="{ row }">
-        {{ row.amountUSD }}
+        {{ formatUSDAmount(row.amountUSD) }}
       </template>
     </TableComponent>
   </CardComponent>
@@ -75,6 +75,7 @@ import CardComponent from '@/components/CardComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import type { InvestorsTransaction } from '@/types/transactions'
 import { onClickOutside } from '@vueuse/core'
+import { formatCurrencyShort } from '@/utils'
 
 interface Props {
   transactions: InvestorsTransaction[]
@@ -143,6 +144,15 @@ const getTypeClass = (type: string) => ({
   'badge-info': type === 'transfer',
   'badge-warning': type === 'dividend'
 })
+
+const formatUSDAmount = (amount: number): string => {
+  try {
+    return formatCurrencyShort(amount, 'USD')
+  } catch (error) {
+    console.error('Error formatting USD amount:', error)
+    return '$0.00'
+  }
+}
 
 const selectedTypeLabel = computed(() => (selectedType.value ? selectedType.value : 'All Types'))
 

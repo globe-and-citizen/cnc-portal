@@ -7,6 +7,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
 
 /src/artifacts/deployed_addresses/chain-31337.json
 
@@ -36,14 +45,4 @@ coverage
 # Synpress
 .cache-synpress
 test-results
-contract/ignition/deployments/
-contract/contracts/OfficerV2.txt
-# Old and temporary contract files
-contract/contracts/**/*.txt
-contract/contracts/**/*.md
-contract/contracts/bank/#*
-contract/contracts/oldBank.txt
-
-# Test and personal files
-contract/test/*Subgraph.spec.ts
-personal/*.txt
+playwright-report

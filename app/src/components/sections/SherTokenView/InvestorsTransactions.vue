@@ -8,8 +8,8 @@
 
 <script setup lang="ts">
 import { useTeamStore, useToastStore } from '@/stores'
-import type { InvestorsTransaction } from '@/types/transactions'
-import { formatEtherUtil, log, tokenSymbol, formatCurrencyShort } from '@/utils'
+import type { InvestorsTransaction, RawInvestorsTransaction } from '@/types/transactions'
+import { formatEtherUtil, log, tokenSymbol } from '@/utils'
 import { useQuery } from '@vue/apollo-composable'
 
 import gql from 'graphql-tag'
@@ -19,7 +19,7 @@ import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 import InvestorsTransactionHistory from '@/components/sections/SherTokenView/InvestorsTransactionHistory.vue'
 import { useCurrencyStore } from '@/stores'
 import type { TokenId } from '@/constant'
-const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+
 const investorAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
 
 const currencyStore = useCurrencyStore()
@@ -59,37 +59,36 @@ const { result, error } = useQuery(
     enabled: computed(() => Boolean(investorAddress.value))
   }
 )
+const tokenPrices = computed(() => ({
+  USDC: 1,
+  default: currencyStore.getTokenPrice(selectedTokenId.value, false, 'USD')
+}))
+
+const formatTransactions: (tx: RawInvestorsTransaction) => InvestorsTransaction = (tx) => {
+  const amount = formatEtherUtil(BigInt(tx.amount), tx.tokenAddress)
+  const token = tokenSymbol(tx.tokenAddress)
+
+  const numericAmount = Number(amount)
+  const usdAmount =
+    token === 'USDC'
+      ? numericAmount * tokenPrices.value.USDC
+      : numericAmount * tokenPrices.value.default
+
+  return {
+    txHash: tx.transactionHash,
+    date: new Date(Number(tx.blockTimestamp) * 1000).toLocaleString('en-US'),
+    from: tx.from,
+    to: tx.to,
+    amount: amount,
+    amountUSD: usdAmount || 0,
+    token,
+    type: tx.transactionType
+  }
+}
 
 const transactionData = computed<InvestorsTransaction[]>(() => {
   const distributions = result.value?.dividendDistributions || []
-
-  return [...distributions].map((tx) => {
-    const amount = formatEtherUtil(BigInt(tx.amount), tx.tokenAddress)
-    const token = tokenSymbol(tx.tokenAddress)
-
-    // Get token price from currencyStore based on token symbol
-    const numericAmount = parseFloat(amount)
-    const usdAmount =
-      token === 'USDC'
-        ? numericAmount // USDC is already in USD
-        : (() => {
-            return (
-              numericAmount *
-              (currencyStore.getTokenPrice(selectedTokenId.value, false, 'USD') || 0)
-            )
-          })()
-
-    return {
-      txHash: tx.transactionHash,
-      date: new Date(Number(tx.blockTimestamp) * 1000).toLocaleString('en-US'),
-      from: tx.from,
-      to: tx.to,
-      amount: `${amount}`,
-      amountUSD: formatCurrencyShort(usdAmount, 'USD'),
-      token,
-      type: tx.transactionType
-    }
-  })
+  return distributions.map(formatTransactions)
 })
 watch(error, (newError) => {
   if (newError) {
