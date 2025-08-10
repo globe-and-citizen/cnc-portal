@@ -71,4 +71,11 @@ const getTypeClass = (type: string) => {
     'bg-info': type === 'transfer'
   }
 }
+
+defineExpose({
+  columns,
+  formatUSDAmount,
+  formatDate,
+  getTypeClass
+})
 </script>
