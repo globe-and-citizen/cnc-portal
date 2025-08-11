@@ -22,3 +22,20 @@ export interface BankTransaction extends BaseTransaction {
   amount?: string | number
   token?: string
 }
+
+export interface InvestorsTransaction extends BaseTransaction {
+  from: string
+  to: string
+  amount: string
+  token: string
+}
+
+export interface RawInvestorsTransaction {
+  amount: number
+  blockTimestamp: string
+  from: string
+  to: string
+  tokenAddress: string
+  transactionHash: string
+  transactionType: string
+}
