@@ -47,7 +47,6 @@
           @select-member="(user) => console.log('Selected Member: ', user)"
         />
         <div
-          v-if="selectedOption === 'member'"
           class="text-red-500 text-sm w-full text-left"
           v-for="error of $v.input.address.$errors"
           :key="error.$uid"
