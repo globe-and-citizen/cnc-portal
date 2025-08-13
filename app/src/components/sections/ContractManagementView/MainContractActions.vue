@@ -5,13 +5,19 @@
       size="sm"
       @click="changeContractStatus(row.paused)"
       :loading="isLoadingPauseContract || isLoadingUnpauseContract"
+      :disabled="row.owner !== userDataStore.address"
     >
       <IconifyIcon
         v-if="!isLoadingPauseContract && !isLoadingUnpauseContract"
         :icon="`heroicons:${row.paused ? 'play' : 'pause-circle'}-solid`"
       />
     </ButtonUI>
-    <ButtonUI variant="success" :outline="true" size="sm" @click="showModal = true"
+    <ButtonUI
+      variant="success"
+      :outline="true"
+      size="sm"
+      @click="showModal = true"
+      :disabled="row.owner !== userDataStore.address"
       >Transfer Ownership</ButtonUI
     >
 
@@ -32,8 +38,8 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import type { Abi, Address } from 'viem'
 import type { TableRow } from '@/components/TableComponent.vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { watch, ref } from 'vue'
-import { useToastStore } from '@/stores'
+import { watch, ref, computed } from 'vue'
+import { useToastStore, useUserDataStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { log, parseError } from '@/utils'
@@ -47,6 +53,8 @@ const emits = defineEmits(['contract-status-changed'])
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 const showModal = ref(false)
+
+const userDataStore = useUserDataStore()
 
 const {
   data: hashTransferOwnership,
@@ -63,8 +71,8 @@ const { isLoading: isConfirmingTransferOwnership, isSuccess: isConfirmedTransfer
 const {
   data: hashPauseContract,
   writeContract: executePauseContract,
-  isPending: isLoadingPauseContract
-  // isError: errorCreateElection
+  isPending: isLoadingPauseContract,
+  error: errorPauseContract
 } = useWriteContract()
 
 const { isLoading: isConfirmingPauseContract, isSuccess: isConfirmedPauseContract } =
@@ -75,8 +83,8 @@ const { isLoading: isConfirmingPauseContract, isSuccess: isConfirmedPauseContrac
 const {
   data: hashUnpauseContract,
   writeContract: executeUnpauseContract,
-  isPending: isLoadingUnpauseContract
-  // isError: errorCreateElection
+  isPending: isLoadingUnpauseContract,
+  error: errorUnpauseContract
 } = useWriteContract()
 
 const { isLoading: isConfirmingUnpauseContract, isSuccess: isConfirmedUnpauseContract } =
@@ -134,6 +142,20 @@ watch(errorTransferOwnership, (error) => {
   if (error) {
     addErrorToast(parseError(error, props.row.abi as Abi))
     log.error('errorTransferOwnership.value: ', error)
+  }
+})
+
+watch(errorPauseContract, (error) => {
+  if (error) {
+    addErrorToast(parseError(error, props.row.abi as Abi))
+    log.error('errorPauseContract.value: ', error)
+  }
+})
+
+watch(errorUnpauseContract, (error) => {
+  if (error) {
+    addErrorToast(parseError(error, props.row.abi as Abi))
+    log.error('errorUnpauseContract.value: ', error)
   }
 })
 </script>

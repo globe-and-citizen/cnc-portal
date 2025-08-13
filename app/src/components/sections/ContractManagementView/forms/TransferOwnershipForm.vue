@@ -64,6 +64,7 @@
         variant="primary"
         data-test="transfer-ownership-button"
         @click="handleTransferOwnership"
+        :disabled="!formValid || loading"
       >
         Transfer Ownership
       </ButtonUI>
@@ -72,14 +73,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { onClickOutside } from '@vueuse/core'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import TransferOptionCard from '../TransferOptionCard.vue'
 import { useTeamStore } from '@/stores'
-import type { Address } from 'viem'
+import { isAddress, type Address } from 'viem'
 
 defineProps<{ loading: boolean }>()
 const emits = defineEmits(['transfer-ownership'])
@@ -99,6 +100,8 @@ const handleContinue = () => {
     currentStep.value++
   }
 }
+
+const formValid = computed(() => isAddress(input.value.address) || selectedOption.value === 'bod')
 
 const handleTransferOwnership = () => {
   if (selectedOption.value === 'member') {
