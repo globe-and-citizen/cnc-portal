@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-5">
     <!-- Step 1: Select Owner -->
-    <div v-if="currentStep === 1" data-test="step-1">
+    <div v-if="currentStep === 1 && !isBodAction" data-test="step-1">
       <span class="font-bold text-xl mb-4">Transfer ownership</span>
       <p class="mt-4">Do you want to transfer ownership to the BOD or to a member?</p>
       <hr class="mt-6" />
@@ -39,7 +39,10 @@
 
       <!-- Transfer to Member -->
       <div v-else-if="selectedOption === 'member'" data-test="step-3">
-        <span class="font-bold text-xl mb-4">Select member</span>
+        <h2>Select member</h2>
+        
+        <BodAlert v-if="isBodAction" />
+
         <p class="mt-4">Select the member address to transfer ownership.</p>
         <hr class="mt-6" />
         <SelectMemberInput
@@ -55,8 +58,8 @@
         Continue
       </ButtonUI>
     </div>
-    <div v-if="currentStep == 2" class="flex justify-between mt-6">
-      <ButtonUI variant="error" @click="currentStep--" data-test="back-button">
+    <div v-if="currentStep == 2" class="flex mt-6" :class="{ 'justify-end': isBodAction, 'justifyBetween': !isBodAction}">
+      <ButtonUI v-if="!isBodAction" variant="error" @click="currentStep--" data-test="back-button">
         <span><IconifyIcon icon="heroicons:arrow-left" /></span> Back
       </ButtonUI>
       <ButtonUI
@@ -80,8 +83,9 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import TransferOptionCard from '../TransferOptionCard.vue'
 import { useTeamStore } from '@/stores'
 import type { Address } from 'viem'
+import BodAlert from '@/components/BodAlert.vue'
 
-defineProps<{ loading: boolean }>()
+const props = defineProps<{ loading: boolean, isBodAction: boolean }>()
 const emits = defineEmits(['transfer-ownership'])
 const teamStore = useTeamStore()
 
@@ -110,6 +114,10 @@ const handleTransferOwnership = () => {
 
 // Lifecycle Hooks
 onMounted(() => {
+  if (props.isBodAction) {
+    currentStep.value = 2
+    selectedOption.value = 'member'
+  }
   onClickOutside(formRef, () => {
     showDropdown.value = false
   })
