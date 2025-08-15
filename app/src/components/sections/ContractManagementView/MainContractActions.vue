@@ -14,14 +14,21 @@
     <ButtonUI variant="success" :outline="true" size="sm" @click="showModal = true"
       >Transfer Ownership</ButtonUI
     >
+    <ButtonUI variant="success" :outline="true" size="sm" @click="showApprovalModal = true">
+      Pending Events (3)
+    </ButtonUI>
 
     <teleport to="body">
       <ModalComponent v-model="showModal">
         <TransferOwnershipForm
           v-if="showModal"
+          :is-bod-action="true"
           @transfer-ownership="transferOwnership"
           :loading="isLoadingTransferOwnership || isConfirmingTransferOwnership"
         />
+      </ModalComponent>
+      <ModalComponent v-model="showApprovalModal" modal-width="w-1/2 max-w-4xl">
+        <PendingEventsList v-if="showApprovalModal"/>
       </ModalComponent>
     </teleport>
   </div>
@@ -32,11 +39,12 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import type { Abi, Address } from 'viem'
 import type { TableRow } from '@/components/TableComponent.vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { watch, ref } from 'vue'
-import { useToastStore } from '@/stores'
+import { watch, ref, computed } from 'vue'
+import { useToastStore, useTeamStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { log, parseError } from '@/utils'
+import PendingEventsList from './PendingEventsList.vue'
 
 const props = defineProps<{
   row: TableRow
@@ -44,9 +52,16 @@ const props = defineProps<{
 
 const emits = defineEmits(['contract-status-changed'])
 
+const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 const showModal = ref(false)
+const showApprovalModal = ref(false)
+
+// const 
+// const isBodAction = computed(() => {
+//   return teamStore.
+// })
 
 const {
   data: hashTransferOwnership,
