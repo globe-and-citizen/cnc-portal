@@ -356,6 +356,17 @@ const menuItems = computed(() => [
         show:
           (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
           userStore.address === teamStore.currentTeam?.ownerAddress
+      },
+      {
+        label: 'Payment Status',
+        route: {
+          name: 'weekly-claim',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'weekly-claim',
+        show:
+          (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
+          userStore.address !== teamStore.currentTeam?.ownerAddress
       }
     ].filter((child) => child.show)
   },
