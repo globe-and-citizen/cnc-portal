@@ -1,10 +1,10 @@
 <template>
   <dialog
     id="custom-modal"
-    class="modal modal-bottom sm:modal-middle"
+    class="modal"
     :class="{ 'modal-open': toggleOpen }"
   >
-    <div class="modal-box h-auto overflow-y-auto">
+    <div class="modal-box h-auto overflow-y-auto" :class="width">
       <ButtonUI
         class="absolute right-4 top-4"
         size="sm"
@@ -23,17 +23,24 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 const toggleOpen = defineModel({ default: false })
+const props = defineProps<{ modalWidth?: string }>()
+
+const width = computed(() => {
+  return props.modalWidth || ''
+})
 
 const handleEscapePress = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     toggleOpen.value = false
   }
 }
+
 onMounted(() => {
+  console.log('Modal mounted with width: ', props.modalWidth)
   document.addEventListener('keydown', handleEscapePress)
 })
 onUnmounted(() => {
