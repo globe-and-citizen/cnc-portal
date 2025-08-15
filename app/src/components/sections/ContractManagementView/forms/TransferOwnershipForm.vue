@@ -49,6 +49,13 @@
           v-model="input"
           @select-member="(user) => console.log('Selected Member: ', user)"
         />
+        <div
+          class="text-red-500 text-sm w-full text-left"
+          v-for="error of $v.input.address.$errors"
+          :key="error.$uid"
+        >
+          {{ error.$message }}
+        </div>
       </div>
     </div>
 
@@ -67,6 +74,7 @@
         variant="primary"
         data-test="transfer-ownership-button"
         @click="handleTransferOwnership"
+        :disabled="loading"
       >
         Transfer Ownership
       </ButtonUI>
@@ -82,8 +90,10 @@ import { onClickOutside } from '@vueuse/core'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import TransferOptionCard from '../TransferOptionCard.vue'
 import { useTeamStore } from '@/stores'
-import type { Address } from 'viem'
+import { isAddress, type Address } from 'viem'
 import BodAlert from '@/components/BodAlert.vue'
+import { helpers } from '@vuelidate/validators'
+import { useVuelidate } from '@vuelidate/core'
 
 const props = defineProps<{ loading: boolean, isBodAction: boolean }>()
 const emits = defineEmits(['transfer-ownership'])
@@ -104,7 +114,23 @@ const handleContinue = () => {
   }
 }
 
+const addressValidIfMember = helpers.withMessage(
+  'Invalid address',
+  (value: string) => selectedOption.value !== 'member' || isAddress(value)
+)
+const rules = {
+  input: {
+    address: {
+      addressValidIfMember
+    }
+  }
+}
+
+const $v = useVuelidate(rules, { input })
+
 const handleTransferOwnership = () => {
+  $v.value.$touch()
+  if ($v.value.$invalid) return
   if (selectedOption.value === 'member') {
     emits('transfer-ownership', input.value.address as Address)
   } else if (selectedOption.value === 'bod') {
