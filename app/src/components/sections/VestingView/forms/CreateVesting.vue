@@ -32,45 +32,6 @@
         {{ error.$message }}
       </span>
     </div>
-    <div class="flex flex-wrap gap-3 mt-4">
-      <label class="inline-flex items-center gap-2 input-md p-2 flex-1 min-w-[120px]">
-        <span class="text-xs flex-shrink-0">Years</span>
-        <input
-          type="number"
-          data-test="duration-years"
-          min="0"
-          v-model.number="duration.years"
-          class="input input-bordered w-full"
-        />
-      </label>
-      <label class="inline-flex items-center gap-2 input-md p-2 flex-1 min-w-[120px]">
-        <span class="text-xs flex-shrink-0">Months</span>
-        <input
-          type="number"
-          data-test="duration-month"
-          min="0"
-          v-model.number="duration.months"
-          class="input input-bordered w-full"
-        />
-      </label>
-      <label class="inline-flex items-center gap-2 input-md p-2 flex-1 min-w-[120px]">
-        <span class="text-xs flex-shrink-0">Days</span>
-        <input
-          type="number"
-          data-test="duration-days"
-          min="0"
-          v-model.number="duration.days"
-          class="input input-bordered w-full"
-        />
-      </label>
-      <span
-        v-for="error in $v.durationInDays.$errors"
-        :key="error.$uid"
-        class="text-xs text-red-500 mt-1"
-      >
-        {{ error.$message }}
-      </span>
-    </div>
 
     <div class="flex flex-wrap gap-3 mt-4 w-100">
       <div class="flex-1 min-w-[200px]">
@@ -233,27 +194,6 @@ watch(dateRange, async (val) => {
   if (updateCount.value === 2) await resetUpdateCount()
 })
 
-watch(
-  duration,
-  async (val) => {
-    const today = new Date()
-    if (!dateRange.value || !dateRange.value[0]) {
-      dateRange.value = [today, today]
-    }
-    if (updateCount.value > 2) return
-
-    const start = dateRange.value[0]
-    const { years, months, days } = val
-    let newEnd = addYears(start, years)
-    newEnd = addMonths(newEnd, months)
-    newEnd = addDays(newEnd, days)
-    dateRange.value = [start, newEnd]
-    updateCount.value++
-    if (updateCount.value === 2) await resetUpdateCount()
-  },
-  { deep: true }
-)
-
 const emit = defineEmits(['reload', 'closeAddVestingModal'])
 
 const {
@@ -382,10 +322,6 @@ const rules = {
   dateRange: {
     required: helpers.withMessage('Date range is required.', required)
   },
-  durationInDays: {
-    required: helpers.withMessage('Duration is required.', required),
-    minValue: helpers.withMessage('Duration must be at least 1 day.', minValue(1))
-  },
   cliff: {
     required: helpers.withMessage('Cliff is required.', required),
     minValue: minValue(0),
@@ -403,7 +339,6 @@ const rules = {
 const $v = useVuelidate(rules, {
   member,
   dateRange,
-  durationInDays,
   cliff,
   totalAmount
 })
