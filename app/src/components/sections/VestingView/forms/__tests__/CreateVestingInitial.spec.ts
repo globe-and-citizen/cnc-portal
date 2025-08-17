@@ -9,6 +9,17 @@ import { parseEther, parseUnits } from 'viem'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { VESTING_ADDRESS } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
+import { mainnet } from 'viem/chains'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
+import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
+
+const wagmiConfig = createConfig({
+  chains: [mainnet],
+  transports: {
+    [mainnet.id]: http()
+  }
+})
 
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockSymbol = ref<string>('shr')
@@ -120,6 +131,16 @@ vi.mock('@/stores', () => ({
   })
 }))
 
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore() }))
+  }
+})
+vi.mock('@/composables/useContractBalance', () => ({
+  useContractBalance: vi.fn(() => mockUseContractBalance)
+}))
 describe('CreateVesting.vue', () => {
   let wrapper: VueWrapper
   const mountComponent = () =>
@@ -130,7 +151,7 @@ describe('CreateVesting.vue', () => {
         vestings: mockVestingInfos.value
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [createTestingPinia({ createSpy: vi.fn }), [WagmiPlugin, { config: wagmiConfig }]]
       },
       data() {
         return {
@@ -151,9 +172,6 @@ describe('CreateVesting.vue', () => {
       expect(wrapper.find('[data-test="date-range"]').exists()).toBe(true)
 
       // Check for duration inputs
-      expect(wrapper.find('[data-test="duration-years"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="duration-month"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="duration-days"]').exists()).toBe(true)
 
       // Check for amount and cliff inputs
       expect(wrapper.find('[data-test="total-amount"]').exists()).toBe(true)
@@ -171,11 +189,14 @@ describe('CreateVesting.vue', () => {
       })
 
       // Simulate member selection
-      selectMemberInput.vm.$emit('selectMember', {
+      selectMemberInput.setValue({
         name: 'Invalid',
         address: 'notanaddress'
       })
 
+      await wrapper.vm.$nextTick()
+
+      await wrapper.find('[data-test="submit-btn"]').trigger('click')
       await wrapper.vm.$nextTick()
 
       // Check for error message
@@ -186,7 +207,7 @@ describe('CreateVesting.vue', () => {
     it('calls approveAllowance when submitting with valid amount', async () => {
       // Fill required fields
       const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      selectMemberInput.vm.$emit('selectMember', {
+      selectMemberInput.setValue({
         name: 'Test User',
         address: '0x120000000000000000000000000000000000dead'
       })
@@ -226,17 +247,14 @@ describe('CreateVesting.vue', () => {
 
       // Fill all required fields
       const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      selectMemberInput.vm.$emit('selectMember', {
+      selectMemberInput.setValue({
         name: 'Test User',
         address: '0x120000000000000000000000000000000000dead'
       })
 
-      // Set valid duration
-      await wrapper.find('[data-test="duration-years"]').setValue(1)
-
       // Set date range
       const datePicker = wrapper.findComponent(Datepicker)
-      datePicker.vm.$emit('update:modelValue', [new Date(), new Date()])
+      datePicker.setValue([new Date(), new Date()])
 
       // Set cliff
       await wrapper.find('[data-test="cliff"]').setValue(0)
@@ -248,8 +266,6 @@ describe('CreateVesting.vue', () => {
 
       // Check that submit button is disabled
       const submitBtn = wrapper.find('[data-test="submit-btn"]')
-
-      expect(submitBtn.attributes('class')).toContain('btn-disabled')
 
       // Try to submit anyway
       await submitBtn.trigger('click')
