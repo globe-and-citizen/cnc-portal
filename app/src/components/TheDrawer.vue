@@ -129,84 +129,109 @@
         <span class="text-xs font-bold text-gray-400 tracking-tight"> General </span>
       </div>
 
-      <nav class="space-y-4">
-        <div v-for="(item, idx) in menuItems" :key="item.label" class="space-y-4">
-          <div>
-            <!-- Si pas d'enfants, lien direct -->
-            <RouterLink
-              v-if="!item.children || item.children.length === 0"
-              :to="item.route"
-              class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
-              :class="{
-                'bg-emerald-500/10 shadow-sm': item.active,
-                'hover:bg-gray-100': !item.active,
-                hidden: !item.show
-              }"
-            >
-              <div class="relative">
-                <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
-              </div>
-              <span
-                v-if="!isCollapsed"
-                class="text-sm font-medium transition-colors duration-200"
-                :class="{ 'text-emerald-600': item.active }"
-              >
-                {{ item.label }}
-              </span>
-            </RouterLink>
-            <!-- Si enfants, bouton dropdown -->
-            <div v-else>
-              <button
-                class="w-full min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10 focus:outline-none"
+      <nav class="menu rounded-box w-full">
+        <ul class="space-y-4">
+          <div v-for="(item, idx) in menuItems" :key="item.label">
+            <div>
+              <!-- if no children, direct link -->
+              <RouterLink
+                v-if="!item.children || item.children.length === 0"
+                :to="item.route"
+                class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
                 :class="{
                   'bg-emerald-500/10 shadow-sm': item.active,
-                  'hover:bg-gray-100 ': !item.active,
+                  'hover:bg-gray-100': !item.active,
                   hidden: !item.show
                 }"
-                @click="toggleSubmenu(idx)"
-                type="button"
               >
                 <div class="relative">
                   <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
                 </div>
                 <span
                   v-if="!isCollapsed"
-                  class="text-sm font-medium transition-colors duration-200 flex-1 text-left"
+                  class="text-sm font-medium transition-colors duration-200"
                   :class="{ 'text-emerald-600': item.active }"
                 >
                   {{ item.label }}
                 </span>
-                <IconifyIcon
-                  v-if="!isCollapsed"
-                  :icon="openSubmenus[idx] ? 'heroicons:chevron-up' : 'heroicons:chevron-down'"
-                  class="w-4 h-4 ml-auto text-gray-400 transition-transform duration-200"
-                />
-              </button>
+              </RouterLink>
 
-              <div v-show="openSubmenus[idx]" class="pl-4 mt-2 space-y-2">
-                <div v-for="child in item.children" :key="child.label">
-                  <RouterLink
-                    :to="child.route"
-                    class="min-w-10 min-h-11 flex items-center gap-3 px-4 py-3 ml-4 rounded-xl text-gray-600 group transition-all duration-200 z-10"
-                    :class="{
-                      'bg-emerald-500/10 shadow-sm': child.active,
-                      'hover:bg-gray-100': !child.active,
-                      hidden: !item.show
-                    }"
+              <!-- if has children -->
+              <div v-else>
+                <button
+                  class="w-full min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10 focus:outline-none"
+                  :class="{
+                    'bg-emerald-500/10 shadow-sm': item.active,
+                    'hover:bg-gray-100 ': !item.active,
+                    hidden: !item.show
+                  }"
+                  @click="toggleSubmenu(idx)"
+                  type="button"
+                >
+                  <div class="relative">
+                    <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
+                  </div>
+                  <span
+                    v-if="!isCollapsed"
+                    class="text-sm font-medium transition-colors duration-200 flex-1 text-left"
+                    :class="{ 'text-emerald-600': item.active }"
                   >
-                    <span
-                      v-if="!isCollapsed"
-                      class="text-sm font-medium transition-colors duration-200"
-                      :class="{ 'text-emerald-600': child.active }"
-                    >
-                      {{ child.label }}
-                    </span>
-                  </RouterLink>
+                    {{ item.label }}
+                  </span>
+                  <IconifyIcon
+                    v-if="!isCollapsed"
+                    :icon="openSubmenus[idx] ? 'heroicons:chevron-up' : 'heroicons:chevron-down'"
+                    class="w-4 h-4 ml-auto text-gray-400 transition-transform duration-200"
+                  />
+                </button>
+
+                <!-- Sub-items with vertical line -->
+                <div v-show="openSubmenus[idx]" class="relative mt-2">
+                  <!-- vertical line -->
+                  <div
+                    class="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"
+                    v-if="!isCollapsed"
+                  ></div>
+
+                  <div class="space-y-2">
+                    <div v-for="child in item.children" :key="child.label" class="relative">
+                      <!-- horizontal line -->
+                      <div
+                        class="absolute left-6 top-1/2 w-4 h-0.5 bg-gray-200 -translate-y-1/2"
+                        v-if="!isCollapsed"
+                      ></div>
+
+                      <RouterLink
+                        :to="child.route"
+                        class="min-w-10 min-h-11 flex items-center gap-3 px-4 py-3 ml-8 rounded-xl text-gray-600 group transition-all duration-200 z-10 relative"
+                        :class="{
+                          'bg-emerald-500/10 shadow-sm': child.active,
+                          'hover:bg-gray-100': !child.active,
+                          hidden: !child.show
+                        }"
+                      >
+                        <!-- connection point -->
+                        <div
+                          class="absolute -left-4 top-1/2 w-2 h-2 bg-gray-300 rounded-full -translate-y-1/2"
+                          :class="{ 'bg-emerald-500': child.active }"
+                          v-if="!isCollapsed"
+                        ></div>
+
+                        <span
+                          v-if="!isCollapsed"
+                          class="text-sm font-medium transition-colors duration-200"
+                          :class="{ 'text-emerald-600': child.active }"
+                        >
+                          {{ child.label }}
+                        </span>
+                      </RouterLink>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </ul>
       </nav>
     </div>
 
@@ -298,7 +323,7 @@ const toggleCollapse = () => {
 }
 
 const toggleSubmenu = (idx: number) => {
-  openSubmenus.value[idx] = !openSubmenus.value[idx]
+  openSubmenus.value = openSubmenus.value.map((isOpen, index) => (index === idx ? !isOpen : false))
 }
 
 const formatedUserAddress = computed(() => {
@@ -520,5 +545,22 @@ const toggleDropdown = () => {
   100% {
     background-position: 0% 50%;
   }
+}
+
+/* Style pour la transition des sous-menus */
+.space-y-2 > div {
+  position: relative;
+}
+
+/* Animation pour la barre verticale */
+.absolute.left-6 {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Point de connexion actif */
+.absolute.-left-4.bg-emerald-500 {
+  box-shadow:
+    0 0 0 2px white,
+    0 0 0 3px rgb(16 185 129);
 }
 </style>
