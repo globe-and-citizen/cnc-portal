@@ -97,14 +97,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import {
-  differenceInCalendarDays,
-  differenceInMonths,
-  differenceInYears,
-  addYears,
-  addMonths,
-  addDays
-} from '@/utils/dayUtils'
+import { differenceInCalendarDays, differenceInMonths, differenceInYears } from '@/utils/dayUtils'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
 import VestingABI from '@/artifacts/abi/Vesting.json'
