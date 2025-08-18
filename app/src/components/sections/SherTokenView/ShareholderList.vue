@@ -109,6 +109,7 @@ const {
   abi: INVESTOR_ABI,
   address: investorsAddress,
   functionName: 'getShareholders'
+  // query: { enabled: true }
 })
 
 const getShareholderName = (address: Address) => {

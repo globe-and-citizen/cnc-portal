@@ -132,13 +132,16 @@ onMounted(() => {
   }
 })
 
-watch(isConfirmingMint, (isConfirming, wasConfirming) => {
+watch(isConfirmingMint, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isSuccessMinting.value) {
     addSuccessToast('Minted successfully')
-    queryClient.invalidateQueries({ queryKey: ['shareholders', investorsAddress.value] })
-    queryClient.invalidateQueries({ queryKey: ['investors', investorsAddress.value] })
-    queryClient.invalidateQueries({ queryKey: ['balance', investorsAddress.value] })
-    queryClient.invalidateQueries({ queryKey: ['totalSupply', investorsAddress.value] })
+    await queryClient.invalidateQueries({
+      queryKey: ['readContract']
+    })
+    // queryClient.invalidateQueries({ queryKey: ['shareholders', investorsAddress.value] })
+    // queryClient.invalidateQueries({ queryKey: ['investors', investorsAddress.value] })
+    // queryClient.invalidateQueries({ queryKey: ['balance', investorsAddress.value] })
+    // queryClient.invalidateQueries({ queryKey: ['totalSupply', investorsAddress.value] })
 
     mintModal.value = false
   }
