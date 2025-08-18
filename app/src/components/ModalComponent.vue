@@ -1,9 +1,5 @@
 <template>
-  <dialog
-    id="custom-modal"
-    class="modal"
-    :class="{ 'modal-open': toggleOpen }"
-  >
+  <dialog id="custom-modal" class="modal" :class="{ 'modal-open': toggleOpen }">
     <div class="modal-box h-auto overflow-y-auto" :class="width">
       <ButtonUI
         class="absolute right-4 top-4"
