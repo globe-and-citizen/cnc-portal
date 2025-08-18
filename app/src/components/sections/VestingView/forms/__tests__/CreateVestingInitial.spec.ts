@@ -147,8 +147,7 @@ describe('CreateVesting.vue', () => {
     mount(CreateVesting, {
       props: {
         reloadKey: mockReloadKey.value,
-        tokenAddress: '0x000000000000000000000000000000000000beef',
-        vestings: mockVestingInfos.value
+        tokenAddress: '0x000000000000000000000000000000000000beef'
       },
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn }), [WagmiPlugin, { config: wagmiConfig }]]
@@ -183,7 +182,7 @@ describe('CreateVesting.vue', () => {
     it('shows error on invalid member address', async () => {
       // Find the SelectMemberInput component and trigger input event
       const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      selectMemberInput.vm.$emit('update:modelValue', {
+      selectMemberInput.setValue({
         name: 'Invalid',
         address: 'notanaddress'
       })
@@ -217,7 +216,7 @@ describe('CreateVesting.vue', () => {
 
       // Set date range (required for valid form)
       const datePicker = wrapper.findComponent(Datepicker)
-      datePicker.vm.$emit('update:modelValue', [new Date(), new Date()])
+      datePicker.setValue([new Date(), new Date()])
 
       // Click submit to show summary
       const submitBtn = wrapper.find('[data-test="submit-btn"]')
@@ -273,6 +272,114 @@ describe('CreateVesting.vue', () => {
       // Verify no actions were taken
       expect(addErrorToast).not.toHaveBeenCalled()
       expect(mockWriteContract.writeContract).not.toHaveBeenCalled()
+    })
+
+    it('shows error on invalid cliff value', async () => {
+      // Fill member with a valid address
+      const selectMemberInput = wrapper.findComponent(SelectMemberInput)
+      selectMemberInput.setValue({
+        name: 'Test User',
+        address: '0x120000000000000000000000000000000000dead'
+      })
+
+      // Set date range
+      const datePicker = wrapper.findComponent(Datepicker)
+      datePicker.setValue([new Date(), new Date()])
+
+      // Set cliff to an invalid value (e.g., negative)
+      const cliffInput = wrapper.find('[data-test="cliff"]')
+      await cliffInput.setValue(6)
+
+      // Set amount to a valid value
+      await wrapper.find('[data-test="total-amount"]').setValue(5)
+
+      await wrapper.vm.$nextTick()
+
+      // Trigger validation
+      await wrapper.find('[data-test="submit-btn"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Check for cliff error message
+      expect(wrapper.text()).toContain('Cliff cannot be greater than duration.') // or the exact error message, e.g. 'Cliff must be positive'
+    })
+
+    it('passes the correct totalAmountInUnits to writeContract', async () => {
+      // Fill required fields
+      const selectMemberInput = wrapper.findComponent(SelectMemberInput)
+      selectMemberInput.setValue({
+        name: 'Test User',
+        address: '0x120000000000000000000000000000000000dead'
+      })
+
+      // Set amount
+      await wrapper.find('[data-test="total-amount"]').setValue(7)
+
+      // Set date range (required for valid form)
+      const datePicker = wrapper.findComponent(Datepicker)
+      datePicker.setValue([new Date(), new Date()])
+
+      // Set cliff
+      await wrapper.find('[data-test="cliff"]').setValue(0)
+
+      await wrapper.vm.$nextTick()
+
+      // Click submit to show summary
+      await wrapper.find('[data-test="submit-btn"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Now in summary view, confirm vesting creation
+      const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
+      await confirmBtn.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // Assert: check the argument passed to writeContract
+      const callArgs = mockWriteContract.writeContract.mock.calls[0][0]
+      // The last argument should be the amount in units
+      const expectedAmount = parseUnits('7', 18)
+      expect(callArgs.args[1]).toEqual(expectedAmount)
+    })
+
+    it('returns the correct token balance for the given tokenAddress', () => {
+      interface IWrapper {
+        tokenBalance: (typeof mockUseContractBalance.balances.value)[0] | undefined
+      }
+
+      // Arrange: set mock balances before mounting
+      mockUseContractBalance.balances.value = [
+        {
+          token: {
+            id: '2',
+            name: 'BeefToken',
+            symbol: 'BEEF',
+            code: 'BEEF',
+            coingeckoId: 'beeftoken',
+            decimals: 18,
+            address: '0x000000000000000000000000000000000000beef'
+          },
+          amount: 42,
+          values: {
+            USD: {
+              value: 500,
+              formated: '$500',
+              id: 'usd',
+              code: 'USD',
+              symbol: '$',
+              price: 1000,
+              formatedPrice: '$1K'
+            }
+          }
+        }
+      ]
+      const tokenBalance = (wrapper.vm as unknown as IWrapper).tokenBalance
+
+      // Act: access the computed tokenBalance via the component's instance
+
+      // Assert: should find the correct balance object
+      expect(tokenBalance).toBeDefined()
+      if (tokenBalance) {
+        expect(tokenBalance.amount).toBe(42)
+        expect(tokenBalance.token.address).toBe('0x000000000000000000000000000000000000beef')
+      }
     })
   })
 })
