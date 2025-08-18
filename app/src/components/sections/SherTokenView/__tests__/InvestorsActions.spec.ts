@@ -8,6 +8,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 // import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 import type { Team } from '@/types/team'
+import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 
 // vi.mock('@/stores/useToastStore')
 vi.mock('@/stores/user')
@@ -117,9 +118,14 @@ describe('InvestorsActions.vue', () => {
     ] as ReadonlyArray<{ shareholder: Address; amount: bigint }> | undefined
   }
   const createComponent = () => {
+    const queryClient = new QueryClient() // Create a QueryClient instance
+
     return mount(InvestorsActions, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [
+          createTestingPinia({ createSpy: vi.fn }),
+          [VueQueryPlugin, { queryClient }] // Add VueQueryPlugin with QueryClient
+        ]
       },
       props
     })
