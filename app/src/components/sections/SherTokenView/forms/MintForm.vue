@@ -37,9 +37,7 @@
         data-test="error-message-amount"
         v-for="error of $v.amount.$errors"
         :key="error.$uid"
-      >
-        {{ error.$message }}
-      </div>
+      ></div>
     </div>
 
     <div class="text-center">
