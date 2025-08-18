@@ -20,7 +20,17 @@
       :disabled="row.owner !== userDataStore.address"
       >Transfer Ownership</ButtonUI
     >
-    <ButtonUI variant="success" :outline="true" size="sm" @click="showApprovalModal = true">
+    <ButtonUI
+      variant="success"
+      :outline="true"
+      size="sm"
+      @click="
+        () => {
+          showApprovalModal = true
+          currentStep = 1
+        }
+      "
+    >
       Pending Events (3)
     </ButtonUI>
 
@@ -33,8 +43,17 @@
           :loading="isLoadingTransferOwnership || isConfirmingTransferOwnership"
         />
       </ModalComponent>
-      <ModalComponent v-model="showApprovalModal" modal-width="w-1/2 max-w-4xl">
-        <PendingEventsList v-if="showApprovalModal"/>
+      <ModalComponent v-model="showApprovalModal" :modal-width="modalWidth">
+        <PendingEventsList
+          @view-details="
+            (row) => {
+              selectedRow = row
+              currentStep = 2
+            }
+          "
+          v-if="showApprovalModal && currentStep === 1"
+        />
+        <BodApprovalModal v-if="showApprovalModal && currentStep === 2" :row="selectedRow" />
       </ModalComponent>
     </teleport>
   </div>
@@ -51,6 +70,7 @@ import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { log, parseError } from '@/utils'
 import PendingEventsList from './PendingEventsList.vue'
+import BodApprovalModal from './BodApprovalModal.vue'
 
 const props = defineProps<{
   row: TableRow
@@ -62,9 +82,15 @@ const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 const showModal = ref(false)
+// const showPendingActionsModal = ref(false)
 const showApprovalModal = ref(false)
+const selectedRow = ref<TableRow>({})
+const currentStep = ref<0 | 1 | 2>(0)
+const modalWidth = computed(() => {
+  return currentStep.value === 1 ? 'w-1/2 max-w-4xl' : ''
+})
 
-// const 
+// const
 // const isBodAction = computed(() => {
 //   return teamStore.
 // })
