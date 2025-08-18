@@ -379,11 +379,6 @@ async function submit() {
     const totalAmountInUnits = parseUnits(totalAmount.value.toString(), 6)
     const balanceInUnits = parseUnits(tokenBalance.value.amount.toString(), 6)
     if (balanceInUnits < totalAmountInUnits) {
-      console.error('Insufficient token balance', {
-        balance: balanceInUnits,
-        required: totalAmountInUnits
-      })
-
       addErrorToast('Insufficient token balance')
       return
     }

@@ -41,9 +41,10 @@ const mockWriteContract = {
   isPending: ref(false),
   data: ref(null)
 }
+type VestingInfosType = [string[], object[]] | [string[]] | [] | null | undefined
 
 // Mockeds
-const mockVestingInfos = ref([
+const mockVestingInfos = ref<VestingInfosType>([
   [memberAddress],
   [
     {
@@ -337,6 +338,27 @@ describe('CreateVesting.vue', () => {
       // The last argument should be the amount in units
       const expectedAmount = parseUnits('7', 18)
       expect(callArgs.args[1]).toEqual(expectedAmount)
+    })
+
+    it('returns an empty array from activeMembers if vestingInfos is not an array of length 2', () => {
+      interface IWrapper {
+        activeMembers: string[]
+      }
+
+      // Case 1: vestingInfos is undefined
+      mockVestingInfos.value = undefined
+      let wrapper = mountComponent()
+      expect((wrapper.vm as unknown as IWrapper).activeMembers).toEqual([])
+
+      // Case 2: vestingInfos is length 1
+      mockVestingInfos.value = [[memberAddress]] as unknown as [string[]]
+      wrapper = mountComponent()
+      expect((wrapper.vm as unknown as IWrapper).activeMembers).toEqual([])
+
+      // Case 3: vestingInfos is null
+      mockVestingInfos.value = null
+      wrapper = mountComponent()
+      expect((wrapper.vm as unknown as IWrapper).activeMembers).toEqual([])
     })
 
     it('returns the correct token balance for the given tokenAddress', () => {
