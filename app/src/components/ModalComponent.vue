@@ -36,7 +36,6 @@ const handleEscapePress = (event: KeyboardEvent) => {
 }
 
 onMounted(() => {
-  console.log('Modal mounted with width: ', props.modalWidth)
   document.addEventListener('keydown', handleEscapePress)
 })
 onUnmounted(() => {
