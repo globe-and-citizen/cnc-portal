@@ -50,6 +50,7 @@
       </ModalComponent>
       <ModalComponent v-model="showApprovalModal" :modal-width="modalWidth">
         <PendingEventsList
+          :pending-actions="formatedActions"
           @view-details="
             (row) => {
               selectedRow = row
@@ -73,13 +74,15 @@ import { watch, ref, computed, onMounted } from 'vue'
 import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { log, parseError } from '@/utils'
+import { filterAndFormatActions, log, parseError, type FormattedAction } from '@/utils'
 import PendingEventsList from './PendingEventsList.vue'
 import BodApprovalModal from './BodApprovalModal.vue'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import BOD_ABI from '@/artifacts/abi/bod.json'
 import { useCustomFetch } from '@/composables'
+import type { Action, ActionResponse, User } from '@/types'
+import { useTanstackQuery } from '@/composables'
 
 const props = defineProps<{
   row: TableRow
@@ -99,8 +102,25 @@ const modalWidth = computed(() => {
 })
 const isBodAction = ref(false)
 const action = ref({})
+const formatedActions = computed(() => {
+  return filterAndFormatActions(
+    props.row.address,
+    newActionData.value,
+    teamStore.currentTeam?.members || []
+  )
+})
 
 const userDataStore = useUserDataStore()
+
+const { data: newActionData } = useTanstackQuery<ActionResponse>(
+  'actionData',
+  computed(() => `/actions?teamId=${teamStore.currentTeamId}&isExecuted=false`),
+  {
+    queryKey: ['actionData'],
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true
+  }
+)
 
 const { error: errorSaveAction, execute: executeSaveAction } = useCustomFetch('actions/', {
   immediate: false
@@ -209,6 +229,12 @@ const changeContractStatus = async (paused: boolean) => {
     })
   }
 }
+
+watch(newActionData, (data) => {
+  if (data) {
+    console.log('New action data: ', data.data)
+  }
+})
 
 watch(isConfirmingAddAction, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedAddAction.value) {
