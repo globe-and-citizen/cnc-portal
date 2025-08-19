@@ -7,6 +7,7 @@ export interface Action {
   isExecuted: boolean
   data: `0x${string}`
   teamId: number
+  createdAt: string
 }
 
 export interface ActionResponse {
