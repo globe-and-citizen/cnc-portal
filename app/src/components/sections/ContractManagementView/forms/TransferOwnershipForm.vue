@@ -45,10 +45,7 @@
 
         <p class="mt-4">Select the member address to transfer ownership.</p>
         <hr class="mt-6" />
-        <SelectMemberInput
-          v-model="input"
-          @select-member="(user) => console.log('Selected Member: ', user)"
-        />
+        <SelectMemberInput v-model="input" />
         <div
           class="text-red-500 text-sm w-full text-left"
           v-for="error of $v.input.address.$errors"
@@ -68,7 +65,7 @@
     <div
       v-if="currentStep == 2"
       class="flex mt-6"
-      :class="{ 'justify-end': isBodAction, justifyBetween: !isBodAction }"
+      :class="{ 'justify-end': isBodAction, 'justify-between': !isBodAction }"
     >
       <ButtonUI v-if="!isBodAction" variant="error" @click="currentStep--" data-test="back-button">
         <span><IconifyIcon icon="heroicons:arrow-left" /></span> Back
