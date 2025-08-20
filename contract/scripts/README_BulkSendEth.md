@@ -18,11 +18,7 @@ The recipients are now loaded from a JSON file that is not version controlled fo
 
    ```json
    {
-     "recipients": [
-       "0xYourAddress1Here",
-       "0xYourAddress2Here",
-       "0xYourAddress3Here"
-     ],
+     "recipients": ["0xYourAddress1Here", "0xYourAddress2Here", "0xYourAddress3Here"],
      "customAmounts": {
        "0xSpecialAddress": "2.0"
      }
