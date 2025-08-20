@@ -41,7 +41,7 @@ export const filterAndFormatActions = (
     .map((action) => ({
       ...action,
       requestedBy: getUser(action.userAddress, members),
-      dateCreated: new Date(action.createdAt).toLocaleDateString(),
+      dateCreated: action.createdAt ? new Date(action.createdAt).toLocaleDateString() : '',
       description: JSON.parse(action.description).text,
       title: JSON.parse(action.description).title
     }))
