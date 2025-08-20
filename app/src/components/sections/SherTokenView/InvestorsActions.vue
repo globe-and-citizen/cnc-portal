@@ -23,7 +23,7 @@
           variant="primary"
           outline
           data-test="mint-button"
-          :disabled="!tokenSymbol || currentAddress != teamStore.currentTeam?.ownerAddress"
+          :disabled="!tokenSymbol || currentAddress != investorsOwner"
           @click="mintModal = true"
         >
           Mint {{ tokenSymbol }}
@@ -33,9 +33,7 @@
           data-test="pay-dividends-button"
           @click="payDividendsModal = true"
           :disabled="
-            !tokenSymbol ||
-            currentAddress != teamStore.currentTeam?.ownerAddress ||
-            (shareholders?.length ?? 0) == 0
+            !tokenSymbol || currentAddress != bankOwner || (shareholders?.length ?? 0) == 0
           "
         >
           Pay Dividends
@@ -157,6 +155,28 @@ const executeDistributeMint = (
   })
 }
 
+const {
+  data: bankOwner,
+  //isLoading: isLoadingBankOwner,
+  error: errorBankOwner
+  //refetch: executeBankOwner
+} = useReadContract({
+  functionName: 'owner',
+  address: bankAddress.value,
+  abi: BANK_ABI
+})
+
+const {
+  data: investorsOwner,
+  //isLoading: isLoadingInvestorsOwner,
+  error: errorInvestorsOwner
+  //refetch: executeInvestorsOwner
+} = useReadContract({
+  functionName: 'owner',
+  address: investorsAddress.value,
+  abi: INVESTOR_ABI
+})
+
 watch(distributeMintError, () => {
   if (distributeMintError.value) {
     log.error('Failed to distribute mint', distributeMintError.value)
@@ -197,6 +217,20 @@ watch(shareholderError, (value) => {
   if (value) {
     log.error('Error fetching shareholders', value)
     addErrorToast('Error fetching shareholders')
+  }
+})
+
+watch(errorBankOwner, (value) => {
+  if (value) {
+    log.error('Error fetching bank owner', value)
+    addErrorToast('Error fetching bank owner')
+  }
+})
+
+watch(errorInvestorsOwner, (value) => {
+  if (value) {
+    log.error('Error fetching investors owner', value)
+    addErrorToast('Error fetching investors owner')
   }
 })
 </script>
