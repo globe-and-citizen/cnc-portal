@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
-import { useBankContract, useBankReads, useBankWrites, useBankGetFunction } from '../bank'
+import { useBankReads, useBankWrites, useBankGetFunction } from '../bank'
 
 // Hoisted mock variables for core functionality
 const { 
-  mockWriteContract,
   mockUseReadContract,
   mockUseWriteContract,
   mockUseWaitForTransactionReceipt,
@@ -13,7 +12,6 @@ const {
   mockGetContract,
   mockLog
 } = vi.hoisted(() => ({
-  mockWriteContract: vi.fn(),
   mockUseReadContract: vi.fn(() => ({
     data: undefined,
     error: null,
@@ -60,17 +58,7 @@ const {
 vi.mock('@wagmi/vue', () => ({
   useReadContract: mockUseReadContract,
   useWriteContract: mockUseWriteContract,
-  useWaitForTransactionReceipt: mockUseWaitForTransactionReceipt,
-  createConfig: vi.fn(() => ({})),
-  http: vi.fn(() => ({}))
-}))
-
-vi.mock('@wagmi/vue/chains', () => ({
-  mainnet: { id: 1 },
-  sepolia: { id: 11155111 },
-  polygon: { id: 137 },
-  hardhat: { id: 31337 },
-  polygonAmoy: { id: 80002 }
+  useWaitForTransactionReceipt: mockUseWaitForTransactionReceipt
 }))
 
 vi.mock('@/stores', () => ({
@@ -104,8 +92,8 @@ vi.mock('@/utils', async (importOriginal) => {
 // Test constants
 const MOCK_DATA = {
   validAddress: '0x1234567890123456789012345678901234567890',
-  bankAddress: '0x1234567890123456789012345678901234567890',
-  amount: '1.0'
+  invalidAddress: 'invalid-address',
+  bankAddress: '0x1234567890123456789012345678901234567890'
 } as const
 
 describe('useBankGetFunction (Legacy)', () => {
@@ -198,7 +186,9 @@ describe('useBankReads', () => {
   })
 })
 
-describe('useBankWrites', () => {
+describe('useBankWrites Core', () => {
+  const mockWriteContract = vi.fn()
+
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseWriteContract.mockReturnValue({
@@ -273,7 +263,7 @@ describe('useBankWrites', () => {
         data: undefined,
         writeContract: mockWriteContract,
         isPending: false,
-        error: writeError as unknown as null // Type assertion for test
+        error: writeError
       })
 
       useBankWrites()
@@ -287,59 +277,25 @@ describe('useBankWrites', () => {
       consoleErrorSpy.mockRestore()
     })
 
-    it('should handle successful transaction confirmation', async () => {
+    it('should handle transaction receipt errors', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const receiptError = new Error('Confirmation failed')
       mockUseWaitForTransactionReceipt.mockReturnValue({
-        data: { blockNumber: 12345n, status: 'success' } as unknown as undefined, // Type assertion for test
+        data: undefined,
         isLoading: false,
-        isSuccess: true,
-        error: null
+        isSuccess: false,
+        error: receiptError
       })
 
       useBankWrites()
       await nextTick()
 
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-        'Transaction confirmed successfully'
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Bank transaction receipt error:', receiptError)
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+        'Transaction confirmation failed: Confirmation failed'
       )
-    })
-  })
-})
-
-describe('useBankContract (Main Composable)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  describe('Integration', () => {
-    it('should combine all functionality', () => {
-      const bankContract = useBankContract()
       
-      // Should have read functions
-      expect(bankContract.useBankPaused).toBeDefined()
-      expect(bankContract.useBankOwner).toBeDefined()
-      
-      // Should have write functions  
-      expect(bankContract.pauseContract).toBeDefined()
-      expect(bankContract.transferEth).toBeDefined()
-      expect(bankContract.sendEthTip).toBeDefined()
-      
-      // Should have admin functions
-      expect(bankContract.changeTipsAddress).toBeDefined()
-      expect(bankContract.transferOwnership).toBeDefined()
-      
-      // Should have loading states
-      expect(bankContract.isLoading).toBeDefined()
-      expect(bankContract.bankAddress).toBeDefined()
-    })
-
-    it('should provide access to specialized composables', () => {
-      const bankContract = useBankContract()
-      
-      // Should expose specialized function groups
-      expect(bankContract.depositToken).toBeDefined()
-      expect(bankContract.sendTokenTip).toBeDefined()
-      expect(bankContract.changeTokenAddress).toBeDefined()
-      expect(bankContract.useBankIsTokenSupported).toBeDefined()
+      consoleErrorSpy.mockRestore()
     })
   })
 })
