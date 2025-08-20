@@ -22,7 +22,6 @@
   </TableComponent>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { FormattedAction } from '@/utils'

@@ -36,7 +36,7 @@
     </div>
   </div>
   <div class="flex mt-6 justify-end gap-2">
-    <ButtonUI variant="error" @click="" data-test="cancel-button">
+    <ButtonUI variant="error" @click="$emit('close')" data-test="cancel-button">
       <span><IconifyIcon icon="heroicons:arrow-left" /></span> Close
     </ButtonUI>
     <ButtonUI
@@ -58,7 +58,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 
 defineProps<{ row: TableRow; loading: boolean }>()
 
-defineEmits(['approve-action'])
+defineEmits(['approve-action', 'close'])
 
 const approvals = ref([
   {

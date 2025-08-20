@@ -76,7 +76,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { encodeFunctionData, type Abi, type Address } from 'viem'
 import type { TableRow } from '@/components/TableComponent.vue'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
-import { watch, ref, computed, onMounted } from 'vue'
+import { watch, ref, computed } from 'vue'
 import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -129,11 +129,11 @@ const { data: newActionData } = useTanstackQuery<ActionResponse>(
   }
 )
 
-const { error: errorSaveAction, execute: executeSaveAction } = useCustomFetch('actions/', {
+const { /*error: errorSaveAction,*/ execute: executeSaveAction } = useCustomFetch('actions/', {
   immediate: false
 }).post(action)
 
-const { error: errorUpdateAction, execute: executeUpdateAction } = useCustomFetch(actionUrl, {
+const { /*error: errorUpdateAction,*/ execute: executeUpdateAction } = useCustomFetch(actionUrl, {
   immediate: false
 }).patch()
 
@@ -147,8 +147,8 @@ const { data: isMember } = useReadContract({
 const {
   data: hashApproveAction,
   writeContract: executeApproveAction,
-  isPending: isLoadingApproveAction,
-  error: errorApproveAction
+  isPending: isLoadingApproveAction
+  // error: errorApproveAction
 } = useWriteContract()
 
 const { isLoading: isConfirmingApproveAction, isSuccess: isConfirmedApproveAction } =
@@ -159,8 +159,8 @@ const { isLoading: isConfirmingApproveAction, isSuccess: isConfirmedApproveActio
 const {
   data: hashAddAction,
   writeContract: executeAddAction,
-  isPending: isLoadingAddAction,
-  error: errorAddAction
+  isPending: isLoadingAddAction
+  // error: errorAddAction
 } = useWriteContract()
 
 const { isLoading: isConfirmingAddAction, isSuccess: isConfirmedAddAction } =
