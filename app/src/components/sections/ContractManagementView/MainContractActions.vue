@@ -21,6 +21,7 @@
       >Transfer Ownership</ButtonUI
     >
     <ButtonUI
+      :disabled="!isBodAction || formatedActions.length <= 0"
       variant="success"
       :outline="true"
       size="sm"
@@ -31,7 +32,7 @@
         }
       "
     >
-      Pending Events (3)
+      Pending Actions ({{ formatedActions.length }})
     </ButtonUI>
 
     <teleport to="body">
@@ -59,7 +60,12 @@
           "
           v-if="showApprovalModal && currentStep === 1"
         />
-        <BodApprovalModal v-if="showApprovalModal && currentStep === 2" :row="selectedRow" />
+        <BodApprovalModal
+          v-if="showApprovalModal && currentStep === 2"
+          :row="selectedRow"
+          @approve-action="approveAction"
+          :loading="isLoadingApproveAction || isConfirmingApproveAction"
+        />
       </ModalComponent>
     </teleport>
   </div>
@@ -69,19 +75,19 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { encodeFunctionData, type Abi, type Address } from 'viem'
 import type { TableRow } from '@/components/TableComponent.vue'
-import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
 import { watch, ref, computed, onMounted } from 'vue'
 import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { filterAndFormatActions, log, parseError, type FormattedAction } from '@/utils'
+import { filterAndFormatActions, log, parseError } from '@/utils'
 import PendingEventsList from './PendingEventsList.vue'
 import BodApprovalModal from './BodApprovalModal.vue'
-import { readContract } from '@wagmi/core'
+import { estimateGas, readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import BOD_ABI from '@/artifacts/abi/bod.json'
 import { useCustomFetch } from '@/composables'
-import type { Action, ActionResponse, User } from '@/types'
+import type { ActionResponse } from '@/types'
 import { useTanstackQuery } from '@/composables'
 
 const props = defineProps<{
@@ -92,16 +98,19 @@ const emits = defineEmits(['contract-status-changed'])
 
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
+const userDataStore = useUserDataStore()
 
 const showModal = ref(false)
 const showApprovalModal = ref(false)
 const selectedRow = ref<TableRow>({})
 const currentStep = ref<0 | 1 | 2>(0)
-const modalWidth = computed(() => {
-  return currentStep.value === 1 ? 'w-1/2 max-w-4xl' : ''
-})
-const isBodAction = ref(false)
 const action = ref({})
+const actionUrl = ref('')
+
+const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
+const modalWidth = computed(() => {
+  return currentStep.value === 1 ? 'w-1/2 max-w-4xl' : 'w-1/3 max-w-4xl'
+})
 const formatedActions = computed(() => {
   return filterAndFormatActions(
     props.row.address,
@@ -109,8 +118,6 @@ const formatedActions = computed(() => {
     teamStore.currentTeam?.members || []
   )
 })
-
-const userDataStore = useUserDataStore()
 
 const { data: newActionData } = useTanstackQuery<ActionResponse>(
   'actionData',
@@ -125,6 +132,29 @@ const { data: newActionData } = useTanstackQuery<ActionResponse>(
 const { error: errorSaveAction, execute: executeSaveAction } = useCustomFetch('actions/', {
   immediate: false
 }).post(action)
+
+const { error: errorUpdateAction, execute: executeUpdateAction } = useCustomFetch(actionUrl, {
+  immediate: false
+}).patch()
+
+const { data: isMember } = useReadContract({
+  address: bodAddress,
+  abi: BOD_ABI,
+  functionName: 'isMember',
+  args: [userDataStore.address]
+})
+
+const {
+  data: hashApproveAction,
+  writeContract: executeApproveAction,
+  isPending: isLoadingApproveAction,
+  error: errorApproveAction
+} = useWriteContract()
+
+const { isLoading: isConfirmingApproveAction, isSuccess: isConfirmedApproveAction } =
+  useWaitForTransactionReceipt({
+    hash: hashApproveAction
+  })
 
 const {
   data: hashAddAction,
@@ -173,6 +203,46 @@ const { isLoading: isConfirmingUnpauseContract, isSuccess: isConfirmedUnpauseCon
   useWaitForTransactionReceipt({
     hash: hashUnpauseContract
   })
+
+const isBodAction = computed(() => {
+  console.log(
+    `type: ${props.row.type}, owner: ${props.row.owner}, bodAddress: ${bodAddress.value}, isMember: ${isMember.value}`
+  )
+  return props.row.owner === bodAddress.value && (isMember.value as boolean)
+})
+
+const approveAction = async (actionId: number, dbId: number) => {
+  if (!isBodAction.value) {
+    console.log(`Not a BOD action, skipping approval ${isBodAction.value}, ${isMember.value}.`)
+    return
+  }
+  const bodAddress = teamStore.getContractAddressByType('BoardOfDirectors')
+  if (!bodAddress) {
+    console.log('BOD address not found, skipping approval.')
+    return
+  }
+  try {
+    const data = encodeFunctionData({
+      abi: BOD_ABI,
+      functionName: 'approve',
+      args: [actionId]
+    })
+    await estimateGas(config, {
+      to: bodAddress,
+      data
+    })
+    executeApproveAction({
+      address: bodAddress,
+      abi: BOD_ABI,
+      functionName: 'approve',
+      args: [actionId]
+    })
+    actionUrl.value = `actions/${dbId}`
+  } catch (error) {
+    log.error('Error approving action: ', parseError(error, BOD_ABI as Abi))
+    addErrorToast(parseError(error, BOD_ABI as Abi))
+  }
+}
 
 const transferOwnership = async (address: Address) => {
   if (isBodAction.value) {
@@ -236,6 +306,13 @@ watch(newActionData, (data) => {
   }
 })
 
+watch(isConfirmingApproveAction, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedApproveAction.value) {
+    await executeUpdateAction()
+    addSuccessToast('Action approved successfully!')
+  }
+})
+
 watch(isConfirmingAddAction, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedAddAction.value) {
     await executeSaveAction()
@@ -283,16 +360,5 @@ watch(errorUnpauseContract, (error) => {
     addErrorToast(parseError(error, props.row.abi as Abi))
     log.error('errorUnpauseContract.value: ', error)
   }
-})
-
-onMounted(async () => {
-  const bodAddress = teamStore.getContractAddressByType('BoardOfDirectors')
-  const isMember = await readContract(config, {
-    address: bodAddress as Address,
-    abi: BOD_ABI,
-    functionName: 'isMember',
-    args: [userDataStore.address]
-  })
-  isBodAction.value = props.row.owner === bodAddress && isMember ? true : false
 })
 </script>

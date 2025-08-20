@@ -7,7 +7,7 @@
       <IconifyIcon icon="heroicons:arrow-right" class="h-7 w-7 text-gray-600" />
     </div>
     <div>
-      <p class="text-xl font-semibold text-gray-900">Ownership Transfer Request</p>
+      <p class="text-xl font-semibold text-gray-900">{{ row.title }}</p>
       <p class="text-gray-400">{{ row.description }}....</p>
     </div>
   </div>
@@ -39,7 +39,14 @@
     <ButtonUI variant="error" @click="" data-test="cancel-button">
       <span><IconifyIcon icon="heroicons:arrow-left" /></span> Close
     </ButtonUI>
-    <ButtonUI variant="primary" data-test="transfer-ownership-button"> Approve Action </ButtonUI>
+    <ButtonUI
+      variant="primary"
+      data-test="transfer-ownership-button"
+      @click="$emit('approve-action', row.actionId, row.id)"
+      :loading="loading"
+    >
+      Approve Action
+    </ButtonUI>
   </div>
 </template>
 <script setup lang="ts">
@@ -49,7 +56,9 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import UserComponent from '@/components/UserComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
-defineProps<{ row: TableRow }>()
+defineProps<{ row: TableRow; loading: boolean }>()
+
+defineEmits(['approve-action'])
 
 const approvals = ref([
   {
