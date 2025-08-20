@@ -305,6 +305,7 @@ watch(isConfirmingApproveAction, async (isConfirming, wasConfirming) => {
     await queryClient.invalidateQueries({
       queryKey: ['readContract']
     })
+    showApprovalModal.value = false
     addSuccessToast('Action approved successfully!')
     emits('contract-status-changed')
   }
@@ -313,6 +314,7 @@ watch(isConfirmingApproveAction, async (isConfirming, wasConfirming) => {
 watch(isConfirmingAddAction, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedAddAction.value) {
     await executeSaveAction()
+    showModal.value = false
     addSuccessToast('Action added successfully!')
     emits('contract-status-changed')
   }
@@ -320,6 +322,7 @@ watch(isConfirmingAddAction, async (isConfirming, wasConfirming) => {
 
 watch(isConfirmingTransferOwnership, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedTransferOwnership.value) {
+    showModal.value = false
     addSuccessToast('Ownership transferred successfully!')
     emits('contract-status-changed')
   }
