@@ -74,6 +74,7 @@ const props = defineProps<{ row: TableRow; loading: boolean }>()
 defineEmits(['approve-action', 'close'])
 
 const teamStore = useTeamStore()
+const approvals = ref<{ id: string; name: string; address: string; status: string }[]>([])
 const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
 const actionId = computed(() => props.row.actionId)
 const approvalCount = computed(() => {
@@ -119,11 +120,13 @@ const membersApprovals = async () => {
   }
 }
 
-watch(members, async (newMembers) => {
-  if (newMembers) {
-    approvals.value = await membersApprovals()
-  }
-})
-
-const approvals = ref<{ id: string; name: string; address: string; status: string }[]>([])
+watch(
+  members,
+  async (newMembers) => {
+    if (newMembers) {
+      approvals.value = await membersApprovals()
+    }
+  },
+  { immediate: true }
+)
 </script>
