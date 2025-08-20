@@ -68,6 +68,7 @@ import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { computed, watch } from 'vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import { log } from '@/utils'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const amount = ref<number | null>(null)
 const input = ref<{ name: string; address: string }>({
@@ -81,6 +82,7 @@ const props = defineProps<{
   disabled?: boolean
 }>()
 
+const queryClient = useQueryClient()
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
@@ -130,9 +132,13 @@ onMounted(() => {
   }
 })
 
-watch(isConfirmingMint, (isConfirming, wasConfirming) => {
+watch(isConfirmingMint, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isSuccessMinting.value) {
     addSuccessToast('Minted successfully')
+    await queryClient.invalidateQueries({
+      queryKey: ['readContract']
+    })
+
     mintModal.value = false
   }
 })

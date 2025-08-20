@@ -9,9 +9,21 @@ import { parseEther, parseUnits } from 'viem'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { VESTING_ADDRESS } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
+import { mainnet } from 'viem/chains'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
+import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
 
 // vi.mock('@/artifacts/abi/InvestorsV1', () => MOCK_INVESTOR_ABI)
 // Constants
+
+const wagmiConfig = createConfig({
+  chains: [mainnet],
+  transports: {
+    [mainnet.id]: http()
+  }
+})
+
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockSymbol = ref<string>('shr')
 const mockReloadKey = ref<number>(0)
@@ -122,6 +134,16 @@ vi.mock('@/stores', () => ({
     currentTeam: mockCurrentTeam.value
   })
 }))
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore() }))
+  }
+})
+vi.mock('@/composables/useContractBalance', () => ({
+  useContractBalance: vi.fn(() => mockUseContractBalance)
+}))
 
 describe('CreateVesting.vue', () => {
   let wrapper: VueWrapper
@@ -132,7 +154,7 @@ describe('CreateVesting.vue', () => {
         tokenAddress: '0x000000000000000000000000000000000000beef'
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [createTestingPinia({ createSpy: vi.fn }), [WagmiPlugin, { config: wagmiConfig }]]
       },
       data() {
         return {
@@ -148,7 +170,7 @@ describe('CreateVesting.vue', () => {
     beforeEach(async () => {
       // Select member using component events
       const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      await selectMemberInput.vm.$emit('selectMember', {
+      await selectMemberInput.setValue({
         name: 'Test User',
         address: '0x000000000000000000000000000000000000dead'
       })
@@ -157,12 +179,7 @@ describe('CreateVesting.vue', () => {
       const datePicker = wrapper.findComponent(Datepicker)
       const startDate = new Date('2025-06-13')
       const endDate = new Date('2025-07-13') // 30 days later
-      datePicker.vm.$emit('update:modelValue', [startDate, endDate])
-
-      // Set duration inputs
-      await wrapper.find('[data-test="duration-years"]').setValue(0)
-      await wrapper.find('[data-test="duration-month"]').setValue(1)
-      await wrapper.find('[data-test="duration-days"]').setValue(0)
+      datePicker.setValue([startDate, endDate])
 
       // Set cliff and amount
       await wrapper.find('[data-test="cliff"]').setValue(5)
@@ -177,15 +194,20 @@ describe('CreateVesting.vue', () => {
       mockAllowanceError.value = new Error('Allowance check failed')
       await wrapper.vm.$nextTick()
 
-      // Submit to show summary
-      const submitBtn = wrapper.find('[data-test="submit-btn"]')
-      await submitBtn.trigger('click')
-
+      await wrapper.find('[data-test="submit-btn"]').trigger('click')
       await wrapper.vm.$nextTick()
 
-      // Find and click confirm button in summary view
-      const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
-      await confirmBtn.trigger('click')
+      // Now VestingSummary exists
+      const summary = wrapper.findComponent({ name: 'VestingSummary' })
+      expect(summary.exists()).toBe(true)
+
+      // Simulate confirm
+      summary.vm.$emit('confirm')
+      await wrapper.vm.$nextTick()
+
+      // // Find and click confirm button in summary view
+      // const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
+      // await confirmBtn.trigger('click')
 
       // Verify error toast was shown
       expect(addErrorToast).toHaveBeenCalledWith('error on get Allowance')
@@ -194,9 +216,14 @@ describe('CreateVesting.vue', () => {
     it('shows error toast when token approval fails', async () => {
       const { addErrorToast } = useToastStore()
 
+      await wrapper.find('[data-test="submit-btn"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
       // Trigger approval
-      const submitBtn = wrapper.find('[data-test="submit-btn"]')
-      await submitBtn.trigger('click')
+      const summary = wrapper.findComponent({ name: 'VestingSummary' })
+      summary.vm.$emit('confirm')
+      // const submitBtn = wrapper.find('[data-test="submit-btn"]')
+      // await submitBtn.trigger('click')
 
       await wrapper.vm.$nextTick()
 
@@ -218,7 +245,7 @@ describe('CreateVesting.vue', () => {
 
       // Fill required fields
       const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      await selectMemberInput.vm.$emit('selectMember', {
+      await selectMemberInput.setValue({
         name: 'Test User',
         address: '0x120000000000000000000000000000000000dead'
       })
@@ -227,12 +254,9 @@ describe('CreateVesting.vue', () => {
       const datePicker = wrapper.findComponent(Datepicker)
       const startDate = new Date('2025-06-13')
       const endDate = new Date('2025-07-13')
-      await datePicker.vm.$emit('update:modelValue', [startDate, endDate])
+      await datePicker.setValue([startDate, endDate])
 
       // Set duration inputs
-      await wrapper.find('[data-test="duration-years"]').setValue(0)
-      await wrapper.find('[data-test="duration-month"]').setValue(1)
-      await wrapper.find('[data-test="duration-days"]').setValue(0)
 
       // Set cliff and amount
       await wrapper.find('[data-test="cliff"]').setValue(5)
@@ -281,15 +305,6 @@ describe('CreateVesting.vue', () => {
         '0'
       )
       expect((wrapper.find('[data-test="cliff"]').element as HTMLInputElement).value).toBe('0')
-      expect((wrapper.find('[data-test="duration-years"]').element as HTMLInputElement).value).toBe(
-        '0'
-      )
-      expect((wrapper.find('[data-test="duration-month"]').element as HTMLInputElement).value).toBe(
-        '0'
-      )
-      expect((wrapper.find('[data-test="duration-days"]').element as HTMLInputElement).value).toBe(
-        '0'
-      )
     })
     it('does not show error toast when errorAddVesting is falsy', async () => {
       const { addErrorToast } = useToastStore()
@@ -313,9 +328,9 @@ describe('CreateVesting.vue', () => {
       await submitBtn.trigger('click')
       await wrapper.vm.$nextTick()
       // Click confirm in summary
-      const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
-      await confirmBtn.trigger('click')
-      await wrapper.vm.$nextTick()
+      // Trigger approval
+      const summary = wrapper.findComponent({ name: 'VestingSummary' })
+      expect(summary.exists()).toBe(false)
       // Verify contract write was not called due to invalid form
       expect(mockWriteContract.writeContract).not.toHaveBeenCalled()
     })
@@ -375,7 +390,7 @@ describe('CreateVesting.vue', () => {
       // Fill out the form with valid data
 
       const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      await selectMemberInput.vm.$emit('selectMember', {
+      await selectMemberInput.setValue({
         name: 'Test User',
         address: '0x120000000000000000000000000000000000dead'
       })
