@@ -228,17 +228,18 @@ export function useBankWrites() {
 }
 
 /**
- * Bank contract admin functions
+ * Bank contract write functions - combines admin, transfers, and tipping
  */
-export function useBankAdmin() {
+export function useBankWritesFunctions() {
   const writes = useBankWrites()
+  const { addErrorToast } = useToastStore()
 
+  // Admin functions
   const pauseContract = () => writes.executeWrite(BANK_FUNCTION_NAMES.PAUSE)
   const unpauseContract = () => writes.executeWrite(BANK_FUNCTION_NAMES.UNPAUSE)
 
   const changeTipsAddress = (newTipsAddress: Address) => {
     if (!isAddress(newTipsAddress)) {
-      const { addErrorToast } = useToastStore()
       addErrorToast('Invalid tips address')
       return
     }
@@ -246,7 +247,6 @@ export function useBankAdmin() {
   }
 
   const changeTokenAddress = (symbol: string, newTokenAddress: Address) => {
-    const { addErrorToast } = useToastStore()
     if (!isAddress(newTokenAddress)) {
       addErrorToast('Invalid token address')
       return
@@ -260,7 +260,6 @@ export function useBankAdmin() {
 
   const transferOwnership = (newOwner: Address) => {
     if (!isAddress(newOwner)) {
-      const { addErrorToast } = useToastStore()
       addErrorToast('Invalid new owner address')
       return
     }
@@ -269,24 +268,7 @@ export function useBankAdmin() {
 
   const renounceOwnership = () => writes.executeWrite(BANK_FUNCTION_NAMES.RENOUNCE_OWNERSHIP)
 
-  return {
-    bankAdminWrites: writes,
-    pauseContract,
-    unpauseContract,
-    changeTipsAddress,
-    changeTokenAddress,
-    transferOwnership,
-    renounceOwnership
-  }
-}
-
-/**
- * Bank contract transfer functions
- */
-export function useBankTransfers() {
-  const writes = useBankWrites()
-  const { addErrorToast } = useToastStore()
-
+  // Transfer functions
   const validateAmount = (amount: string) => {
     if (!amount || parseFloat(amount) <= 0) {
       addErrorToast('Invalid amount')
@@ -323,22 +305,7 @@ export function useBankTransfers() {
     return writes.executeWrite(BANK_FUNCTION_NAMES.TRANSFER_TOKEN, [tokenAddress, to, amountInWei])
   }
 
-  return {
-    bankTransfersWrites: writes,
-    depositToken,
-    transferEth,
-    transferToken
-  }
-}
-
-
-/**
- * Bank contract tipping functions
- */
-export function useBankTipping() {
-  const writes = useBankWrites()
-  const { addErrorToast } = useToastStore()
-
+  // Tipping functions
   const validateTipParams = (addresses: Address[], amount: string, tokenAddress?: Address) => {
     if (!addresses.length) {
       addErrorToast('No recipients specified')
@@ -384,7 +351,20 @@ export function useBankTipping() {
   }
 
   return {
-    bankTippingWrites: writes,
+    // Write state
+    ...writes,
+    // Admin functions
+    pauseContract,
+    unpauseContract,
+    changeTipsAddress,
+    changeTokenAddress,
+    transferOwnership,
+    renounceOwnership,
+    // Transfer functions
+    depositToken,
+    transferEth,
+    transferToken,
+    // Tipping functions
     sendEthTip,
     sendTokenTip,
     pushEthTip,
@@ -397,16 +377,10 @@ export function useBankTipping() {
  */
 export function useBankContract() {
   const reads = useBankReads()
-  const writes = useBankWrites()
-  const admin = useBankAdmin()
-  const transfers = useBankTransfers()
-  const tipping = useBankTipping()
+  const writeFunctions = useBankWritesFunctions()
 
   return {
     ...reads,
-    ...writes,
-    ...admin,
-    ...transfers,
-    ...tipping
+    ...writeFunctions
   }
 }
