@@ -8,6 +8,46 @@ import { useTeamStore } from '@/stores'
 import BankABI from '@/artifacts/abi/bank.json'
 
 /**
+ * Valid Bank contract function names extracted from ABI
+ */
+export const BANK_FUNCTION_NAMES = {
+  // Read functions
+  PAUSED: 'paused',
+  OWNER: 'owner',
+  TIPS_ADDRESS: 'tipsAddress',
+  IS_TOKEN_SUPPORTED: 'isTokenSupported',
+  SUPPORTED_TOKENS: 'supportedTokens',
+
+  // Write functions
+  PAUSE: 'pause',
+  UNPAUSE: 'unpause',
+  CHANGE_TIPS_ADDRESS: 'changeTipsAddress',
+  CHANGE_TOKEN_ADDRESS: 'changeTokenAddress',
+  TRANSFER_OWNERSHIP: 'transferOwnership',
+  RENOUNCE_OWNERSHIP: 'renounceOwnership',
+  DEPOSIT_TOKEN: 'depositToken',
+  TRANSFER: 'transfer',
+  TRANSFER_TOKEN: 'transferToken',
+  SEND_TIP: 'sendTip',
+  SEND_TOKEN_TIP: 'sendTokenTip',
+  PUSH_TIP: 'pushTip',
+  PUSH_TOKEN_TIP: 'pushTokenTip',
+  INITIALIZE: 'initialize'
+} as const
+
+/**
+ * Type for valid Bank contract function names
+ */
+export type BankFunctionName = typeof BANK_FUNCTION_NAMES[keyof typeof BANK_FUNCTION_NAMES]
+
+/**
+ * Validate if a function name exists in the Bank contract
+ */
+export function isValidBankFunction(functionName: string): functionName is BankFunctionName {
+  return Object.values(BANK_FUNCTION_NAMES).includes(functionName as BankFunctionName)
+}
+
+/**
  * Legacy function - kept for backward compatibility
  */
 export function useBankGetFunction(bankAddress: string) {
@@ -151,9 +191,14 @@ export function useBankWrites() {
     }
   })
 
-  const executeWrite = async (functionName: string, args: readonly unknown[] = [], value?: bigint) => {
+  const executeWrite = async (functionName: BankFunctionName, args: readonly unknown[] = [], value?: bigint) => {
     if (!bankAddress.value) {
       addErrorToast('Bank contract address not found')
+      return
+    }
+
+    if (!isValidBankFunction(functionName)) {
+      addErrorToast(`Invalid bank function: ${functionName}`)
       return
     }
 
@@ -189,16 +234,16 @@ export function useBankWrites() {
 export function useBankAdmin() {
   const { executeWrite } = useBankWrites()
 
-  const pauseContract = () => executeWrite('pause')
-  const unpauseContract = () => executeWrite('unpause')
-  
+  const pauseContract = () => executeWrite(BANK_FUNCTION_NAMES.PAUSE)
+  const unpauseContract = () => executeWrite(BANK_FUNCTION_NAMES.UNPAUSE)
+
   const changeTipsAddress = (newTipsAddress: Address) => {
     if (!isAddress(newTipsAddress)) {
       const { addErrorToast } = useToastStore()
       addErrorToast('Invalid tips address')
       return
     }
-    return executeWrite('changeTipsAddress', [newTipsAddress])
+    return executeWrite(BANK_FUNCTION_NAMES.CHANGE_TIPS_ADDRESS, [newTipsAddress])
   }
 
   const changeTokenAddress = (symbol: string, newTokenAddress: Address) => {
@@ -211,7 +256,7 @@ export function useBankAdmin() {
       addErrorToast('Token symbol is required')
       return
     }
-    return executeWrite('changeTokenAddress', [symbol, newTokenAddress])
+    return executeWrite(BANK_FUNCTION_NAMES.CHANGE_TOKEN_ADDRESS, [symbol, newTokenAddress])
   }
 
   const transferOwnership = (newOwner: Address) => {
@@ -220,10 +265,10 @@ export function useBankAdmin() {
       addErrorToast('Invalid new owner address')
       return
     }
-    return executeWrite('transferOwnership', [newOwner])
+    return executeWrite(BANK_FUNCTION_NAMES.TRANSFER_OWNERSHIP, [newOwner])
   }
 
-  const renounceOwnership = () => executeWrite('renounceOwnership')
+  const renounceOwnership = () => executeWrite(BANK_FUNCTION_NAMES.RENOUNCE_OWNERSHIP)
 
   return {
     pauseContract,
@@ -261,21 +306,21 @@ export function useBankTransfers() {
   const depositToken = (tokenAddress: Address, amount: string) => {
     if (!validateAddress(tokenAddress, 'token address') || !validateAmount(amount)) return
     const amountInWei = parseEther(amount)
-    return executeWrite('depositToken', [tokenAddress, amountInWei])
+    return executeWrite(BANK_FUNCTION_NAMES.DEPOSIT_TOKEN, [tokenAddress, amountInWei])
   }
 
   const transferEth = (to: Address, amount: string) => {
     if (!validateAddress(to, 'recipient address') || !validateAmount(amount)) return
     const amountInWei = parseEther(amount)
-    return executeWrite('transfer', [to, amountInWei], amountInWei)
+    return executeWrite(BANK_FUNCTION_NAMES.TRANSFER, [to, amountInWei], amountInWei)
   }
 
   const transferToken = (tokenAddress: Address, to: Address, amount: string) => {
-    if (!validateAddress(tokenAddress, 'token address') || 
-        !validateAddress(to, 'recipient address') || 
-        !validateAmount(amount)) return
+    if (!validateAddress(tokenAddress, 'token address') ||
+      !validateAddress(to, 'recipient address') ||
+      !validateAmount(amount)) return
     const amountInWei = parseEther(amount)
-    return executeWrite('transferToken', [tokenAddress, to, amountInWei])
+    return executeWrite(BANK_FUNCTION_NAMES.TRANSFER_TOKEN, [tokenAddress, to, amountInWei])
   }
 
   return { depositToken, transferEth, transferToken }
@@ -311,25 +356,25 @@ export function useBankTipping() {
   const sendEthTip = (addresses: Address[], totalAmount: string) => {
     if (!validateTipParams(addresses, totalAmount)) return
     const amountInWei = parseEther(totalAmount)
-    return executeWrite('sendTip', [addresses, amountInWei], amountInWei)
+    return executeWrite(BANK_FUNCTION_NAMES.SEND_TIP, [addresses, amountInWei], amountInWei)
   }
 
   const sendTokenTip = (addresses: Address[], tokenAddress: Address, totalAmount: string) => {
     if (!validateTipParams(addresses, totalAmount, tokenAddress)) return
     const amountInWei = parseEther(totalAmount)
-    return executeWrite('sendTokenTip', [addresses, tokenAddress, amountInWei])
+    return executeWrite(BANK_FUNCTION_NAMES.SEND_TOKEN_TIP, [addresses, tokenAddress, amountInWei])
   }
 
   const pushEthTip = (addresses: Address[], totalAmount: string) => {
     if (!validateTipParams(addresses, totalAmount)) return
     const amountInWei = parseEther(totalAmount)
-    return executeWrite('pushTip', [addresses, amountInWei], amountInWei)
+    return executeWrite(BANK_FUNCTION_NAMES.PUSH_TIP, [addresses, amountInWei], amountInWei)
   }
 
   const pushTokenTip = (addresses: Address[], tokenAddress: Address, totalAmount: string) => {
     if (!validateTipParams(addresses, totalAmount, tokenAddress)) return
     const amountInWei = parseEther(totalAmount)
-    return executeWrite('pushTokenTip', [addresses, tokenAddress, amountInWei])
+    return executeWrite(BANK_FUNCTION_NAMES.PUSH_TOKEN_TIP, [addresses, tokenAddress, amountInWei])
   }
 
   return { sendEthTip, sendTokenTip, pushEthTip, pushTokenTip }
