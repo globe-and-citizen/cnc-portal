@@ -46,13 +46,14 @@ export function useBankGetFunction(bankAddress: string) {
 export function useBankReads() {
   const teamStore = useTeamStore()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+  const isBankAddressValid = computed(() => !!bankAddress.value && isAddress(bankAddress.value))
 
   const useBankPaused = () => {
     return useReadContract({
       address: bankAddress.value,
       abi: BankABI,
       functionName: 'paused',
-      query: { enabled: computed(() => !!bankAddress.value) }
+      query: { enabled: isBankAddressValid } // This enable the query only if the bank address is available and valid
     })
   }
 
@@ -61,7 +62,7 @@ export function useBankReads() {
       address: bankAddress.value,
       abi: BankABI,
       functionName: 'owner',
-      query: { enabled: computed(() => !!bankAddress.value) }
+      query: { enabled: isBankAddressValid }
     })
   }
 
@@ -70,7 +71,7 @@ export function useBankReads() {
       address: bankAddress.value,
       abi: BankABI,
       functionName: 'tipsAddress',
-      query: { enabled: computed(() => !!bankAddress.value) }
+      query: { enabled: isBankAddressValid }
     })
   }
 
@@ -80,7 +81,7 @@ export function useBankReads() {
       abi: BankABI,
       functionName: 'isTokenSupported',
       args: [tokenAddress],
-      query: { enabled: computed(() => !!bankAddress.value && isAddress(tokenAddress)) }
+      query: { enabled: computed(() => !!bankAddress.value && isAddress(bankAddress.value) && isAddress(tokenAddress)) }
     })
   }
 
@@ -90,12 +91,13 @@ export function useBankReads() {
       abi: BankABI,
       functionName: 'supportedTokens',
       args: [symbol],
-      query: { enabled: computed(() => !!bankAddress.value && !!symbol) }
+      query: { enabled: computed(() => isBankAddressValid.value && !!symbol) }
     })
   }
 
   return {
     bankAddress,
+    isBankAddressValid,
     useBankPaused,
     useBankOwner,
     useBankTipsAddress,
