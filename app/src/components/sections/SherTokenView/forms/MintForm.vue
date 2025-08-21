@@ -44,8 +44,8 @@
 
     <div class="text-center">
       <ButtonUI
-        :loading="isConfirmingMint || $v.value?.$invalid"
-        :disabled="isConfirmingMint"
+        :loading="isConfirmingMint || isMintPending || $v.value?.$invalid"
+        :disabled="isConfirmingMint || isMintPending"
         variant="primary"
         class="w-44 text-center"
         @click="onSubmit()"
@@ -88,7 +88,12 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 
 const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
 
-const { data: mintHash, writeContract: mint, error: mintError } = useWriteContract()
+const {
+  data: mintHash,
+  writeContract: mint,
+  error: mintError,
+  isPending: isMintPending
+} = useWriteContract()
 const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForTransactionReceipt({
   hash: mintHash
 })

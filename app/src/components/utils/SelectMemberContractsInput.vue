@@ -107,9 +107,16 @@ const filteredContracts = computed(() => {
   })
 })
 
+const selecting = ref(false)
+
 watchDebounced(
   [() => input.value.name, () => input.value.address],
   ([name, address]) => {
+    if (selecting.value) {
+      selecting.value = false
+      return
+    }
+
     if (name || address) {
       showDropdown.value = true
     } else {
@@ -120,6 +127,7 @@ watchDebounced(
 )
 
 const selectItem = (item: { name: string; address: string }, type: 'member' | 'contract') => {
+  selecting.value = true
   input.value = item
   emit('selectItem', { ...item, type })
   showDropdown.value = false

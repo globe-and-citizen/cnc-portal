@@ -1,4 +1,4 @@
-import type { TeamContract } from '@/types'
+import type { Action, ActionResponse, TeamContract, User } from '@/types'
 import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import { type Abi } from 'viem'
@@ -11,6 +11,41 @@ import ElectionsAbi from '@/artifacts/abi/elections.json'
 import { INVESTOR_ABI as InvestorsAbi } from '@/artifacts/abi/investorsV1'
 import { PROPOSALS_ABI as ProposalsAbi } from '@/artifacts/abi/proposals'
 import VotingAbi from '@/artifacts/abi/voting.json'
+
+export type FormattedAction = (Action & {
+  requestedBy: User
+  dateCreated: string
+  title: string
+  description: string
+})[]
+
+export const getUser = (address: string, members: User[], bodAddress = ''): User => {
+  if (address === bodAddress) return { name: 'Board of Directors', address }
+  else
+    return (
+      members.find((member) => member.address === address) || {
+        name: 'User',
+        address
+      }
+    )
+}
+
+export const filterAndFormatActions = (
+  address: string,
+  actions: ActionResponse | undefined,
+  members: User[]
+) => {
+  if (!actions) return []
+  return actions.data
+    .filter((action) => action.targetAddress === address)
+    .map((action) => ({
+      ...action,
+      requestedBy: getUser(action.userAddress, members),
+      dateCreated: action.createdAt ? new Date(action.createdAt).toLocaleDateString() : '',
+      description: JSON.parse(action.description).text,
+      title: JSON.parse(action.description).title
+    }))
+}
 
 export const getTeamContracts = async (contracts: TeamContract[]) => {
   try {

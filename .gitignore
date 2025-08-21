@@ -10,6 +10,9 @@ lerna-debug.log*
 
 /src/artifacts/deployed_addresses/chain-31337.json
 
+# Bulk transfer recipients (not versioned)
+/contract/scripts/recipients.json
+
 node_modules
 .DS_Store
 dist
