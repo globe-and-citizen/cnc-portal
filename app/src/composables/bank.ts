@@ -92,7 +92,7 @@ export function useBankReads() {
     return useReadContract({
       address: bankAddress.value,
       abi: BankABI,
-      functionName: 'paused',
+      functionName: BANK_FUNCTION_NAMES.PAUSED,
       query: { enabled: isBankAddressValid } // This enable the query only if the bank address is available and valid
     })
   }
@@ -101,7 +101,7 @@ export function useBankReads() {
     return useReadContract({
       address: bankAddress.value,
       abi: BankABI,
-      functionName: 'owner',
+      functionName: BANK_FUNCTION_NAMES.OWNER,
       query: { enabled: isBankAddressValid }
     })
   }
@@ -110,7 +110,7 @@ export function useBankReads() {
     return useReadContract({
       address: bankAddress.value,
       abi: BankABI,
-      functionName: 'tipsAddress',
+      functionName: BANK_FUNCTION_NAMES.TIPS_ADDRESS,
       query: { enabled: isBankAddressValid }
     })
   }
@@ -119,7 +119,7 @@ export function useBankReads() {
     return useReadContract({
       address: bankAddress.value,
       abi: BankABI,
-      functionName: 'isTokenSupported',
+      functionName: BANK_FUNCTION_NAMES.IS_TOKEN_SUPPORTED,
       args: [tokenAddress],
       query: { enabled: computed(() => !!bankAddress.value && isAddress(bankAddress.value) && isAddress(tokenAddress)) }
     })
@@ -129,7 +129,7 @@ export function useBankReads() {
     return useReadContract({
       address: bankAddress.value,
       abi: BankABI,
-      functionName: 'supportedTokens',
+      functionName: BANK_FUNCTION_NAMES.SUPPORTED_TOKENS,
       args: [symbol],
       query: { enabled: computed(() => isBankAddressValid.value && !!symbol) }
     })
