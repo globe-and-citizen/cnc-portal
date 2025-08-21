@@ -108,6 +108,7 @@ const selectedRow = ref<TableRow>({})
 const currentStep = ref<0 | 1 | 2>(0)
 const action = ref({})
 const actionUrl = ref('')
+const actionId = ref(0)
 
 const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
 const modalWidth = computed(() => {
@@ -144,6 +145,13 @@ const { data: isMember } = useReadContract({
   abi: BOD_ABI,
   functionName: 'isMember',
   args: [userDataStore.address]
+})
+
+const { data: isActionExecuted } = useReadContract({
+  address: bodAddress,
+  abi: BOD_ABI,
+  functionName: 'isActionExecuted',
+  args: [actionId]
 })
 
 const {
@@ -210,7 +218,7 @@ const isBodAction = computed(() => {
   return props.row.owner === bodAddress.value && (isMember.value as boolean)
 })
 
-const approveAction = async (actionId: number, dbId: number) => {
+const approveAction = async (_actionId: number, dbId: number) => {
   if (!isBodAction.value) {
     console.log(`Not a BOD action, skipping approval ${isBodAction.value}, ${isMember.value}.`)
     return
@@ -224,7 +232,7 @@ const approveAction = async (actionId: number, dbId: number) => {
     const data = encodeFunctionData({
       abi: BOD_ABI,
       functionName: 'approve',
-      args: [actionId]
+      args: [_actionId]
     })
     await estimateGas(config, {
       to: bodAddress,
@@ -234,8 +242,9 @@ const approveAction = async (actionId: number, dbId: number) => {
       address: bodAddress,
       abi: BOD_ABI,
       functionName: 'approve',
-      args: [actionId]
+      args: [_actionId]
     })
+    actionId.value = _actionId
     actionUrl.value = `actions/${dbId}`
   } catch (error) {
     log.error('Error approving action: ', parseError(error, BOD_ABI as Abi))
@@ -299,9 +308,15 @@ const changeContractStatus = async (paused: boolean) => {
   }
 }
 
+watch(isActionExecuted, async (isExecuted) => {
+  if (isExecuted) {
+    await executeUpdateAction()
+  }
+})
+
 watch(isConfirmingApproveAction, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedApproveAction.value) {
-    await executeUpdateAction()
+    // await executeUpdateAction()
     await queryClient.invalidateQueries({
       queryKey: ['readContract']
     })
