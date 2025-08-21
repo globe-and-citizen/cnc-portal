@@ -7,9 +7,37 @@ import { ref } from 'vue'
 import { useToastStore } from '@/stores'
 
 vi.mock('vue-router', () => ({
+  createRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    resolve: vi.fn(),
+    currentRoute: { value: {} },
+    beforeEach: vi.fn(),
+    afterEach: vi.fn()
+  })),
+  createWebHistory: vi.fn(),
   useRoute: () => ({
     params: { id: '1' }
-  })
+  }),
+  createRouter: vi.fn(() => ({
+    beforeEach: vi.fn(),
+    afterEach: vi.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
+    go: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn()
+  })),
+  createWebHistory: vi.fn(),
+  useRouter: vi.fn(() => ({
+    beforeEach: vi.fn(),
+    afterEach: vi.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
+    go: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn()
+  }))
 }))
 
 vi.mock('@/stores/user', () => ({

@@ -89,6 +89,7 @@ import BOD_ABI from '@/artifacts/abi/bod.json'
 import { useCustomFetch } from '@/composables'
 import type { ActionResponse } from '@/types'
 import { useTanstackQuery } from '@/composables'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const props = defineProps<{
   row: TableRow
@@ -99,6 +100,7 @@ const emits = defineEmits(['contract-status-changed'])
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 const userDataStore = useUserDataStore()
+const queryClient = useQueryClient()
 
 const showModal = ref(false)
 const showApprovalModal = ref(false)
@@ -205,9 +207,6 @@ const { isLoading: isConfirmingUnpauseContract, isSuccess: isConfirmedUnpauseCon
   })
 
 const isBodAction = computed(() => {
-  console.log(
-    `type: ${props.row.type}, owner: ${props.row.owner}, bodAddress: ${bodAddress.value}, isMember: ${isMember.value}`
-  )
   return props.row.owner === bodAddress.value && (isMember.value as boolean)
 })
 
@@ -300,28 +299,30 @@ const changeContractStatus = async (paused: boolean) => {
   }
 }
 
-watch(newActionData, (data) => {
-  if (data) {
-    console.log('New action data: ', data.data)
-  }
-})
-
 watch(isConfirmingApproveAction, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedApproveAction.value) {
     await executeUpdateAction()
+    await queryClient.invalidateQueries({
+      queryKey: ['readContract']
+    })
+    showApprovalModal.value = false
     addSuccessToast('Action approved successfully!')
+    emits('contract-status-changed')
   }
 })
 
 watch(isConfirmingAddAction, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedAddAction.value) {
     await executeSaveAction()
+    showModal.value = false
     addSuccessToast('Action added successfully!')
+    emits('contract-status-changed')
   }
 })
 
 watch(isConfirmingTransferOwnership, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedTransferOwnership.value) {
+    showModal.value = false
     addSuccessToast('Ownership transferred successfully!')
     emits('contract-status-changed')
   }

@@ -13,9 +13,15 @@
   </div>
 
   <div class="flex justify-end mt-2">
-    <span class="text-lg font-bold text-gray-700"> 1/3 </span>
+    <span class="text-lg font-bold text-gray-700">
+      {{ approvalCount.approved }}/{{ approvalCount.total }}
+    </span>
   </div>
-  <progress class="progress progress-info mb-4" :value="25" :max="100"></progress>
+  <progress
+    class="progress progress-info mb-4"
+    :value="approvalCount.approved"
+    :max="approvalCount.total"
+  ></progress>
   <div class="flex flex-col gap-2">
     <div
       v-for="approval in approvals"
@@ -50,29 +56,77 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { TableRow } from '@/components/TableComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import UserComponent from '@/components/UserComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { useReadContract } from '@wagmi/vue'
+import { useTeamStore } from '@/stores'
+import BOD_ABI from '@/artifacts/abi/bod.json'
+import { log, parseError } from '@/utils'
+import { readContract } from '@wagmi/core'
+import { config } from '@/wagmi.config'
+import type { Abi, Address } from 'viem'
 
-defineProps<{ row: TableRow; loading: boolean }>()
+const props = defineProps<{ row: TableRow; loading: boolean }>()
 
 defineEmits(['approve-action', 'close'])
 
-const approvals = ref([
-  {
-    id: 1,
-    name: 'Alice',
-    address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-    status: 'pending'
-  },
-  { id: 2, name: 'Bob', address: '0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0', status: 'approved' },
-  {
-    id: 3,
-    name: 'Charlie',
-    address: '0x5c69bEe701ef814a2B6a3E2f8e4F9b6c4d8f5e1',
-    status: 'rejected'
+const teamStore = useTeamStore()
+const approvals = ref<{ id: string; name: string; address: string; status: string }[]>([])
+const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
+const actionId = computed(() => props.row.actionId)
+const approvalCount = computed(() => {
+  return {
+    approved: approvals.value.filter((a) => a.status === 'approved').length,
+    total: approvals.value.length
   }
-])
+})
+
+const { data: members } = useReadContract({
+  address: bodAddress,
+  abi: BOD_ABI,
+  functionName: 'getBoardOfDirectors'
+})
+
+const membersApprovals = async () => {
+  try {
+    return Promise.all(
+      members.value && Array.isArray(members.value) && bodAddress.value
+        ? members.value.map(async (member: string) => {
+            const isApproved = await readContract(config, {
+              address: bodAddress.value as Address,
+              abi: BOD_ABI as Abi,
+              functionName: 'isApproved',
+              args: [actionId.value, member]
+            })
+            const userData = teamStore.currentTeam?.members.find((m) => m.address === member) || {
+              name: 'Unknown',
+              address: member
+            }
+            return {
+              id: member,
+              name: userData.name,
+              address: userData.address,
+              status: isApproved ? 'approved' : 'pending'
+            }
+          })
+        : []
+    )
+  } catch (error) {
+    log.error('Error fetching members approvals: ', parseError(error))
+    return []
+  }
+}
+
+watch(
+  members,
+  async (newMembers) => {
+    if (newMembers) {
+      approvals.value = await membersApprovals()
+    }
+  },
+  { immediate: true }
+)
 </script>
