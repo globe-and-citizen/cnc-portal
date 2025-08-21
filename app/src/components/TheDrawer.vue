@@ -274,6 +274,8 @@ import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
 import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
 import { useRoute } from 'vue-router'
+import { useReadContract } from '@wagmi/vue'
+import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 
 const appStore = useAppStore()
 const route = useRoute()
@@ -295,6 +297,33 @@ const props = defineProps<{
 const target = ref(null)
 const isDropdownOpen = ref(false)
 const teamStore = useTeamStore()
+
+// Get Cash Remuneration contract address
+const cashRemunerationAddress = computed(() =>
+  teamStore.getContractAddressByType('CashRemunerationEIP712')
+)
+
+// Fetch Cash Remuneration owner
+const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
+  functionName: 'owner',
+  address: cashRemunerationAddress,
+  abi: CashRemuneration_ABI,
+  enabled: computed(() => !!cashRemunerationAddress.value)
+})
+
+// Check if user is Cash Remuneration owner with fallback to team owner
+const isCashRemunerationOwner = computed(() => {
+  // If contract exists and owner is retrieved, use that
+  if (
+    cashRemunerationAddress.value &&
+    cashRemunerationOwner.value &&
+    !cashRemunerationOwnerError.value
+  ) {
+    return cashRemunerationOwner.value === userStore.address
+  }
+  // Fallback to team owner if contract doesn't exist or error occurred
+  return userStore.address === teamStore.currentTeam?.ownerAddress
+})
 
 // Dropdown submenu state
 const openSubmenus = ref<boolean[]>([])
@@ -422,8 +451,7 @@ const menuItems = computed(() => [
         },
         active: route.name === 'weekly-claim',
         show:
-          (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
-          userStore.address === teamStore.currentTeam?.ownerAddress
+          (teamStore.currentTeam?.teamContracts ?? []).length > 0 && isCashRemunerationOwner.value
       },
       {
         label: 'Payment Status',
@@ -433,8 +461,7 @@ const menuItems = computed(() => [
         },
         active: route.name === 'weekly-claim',
         show:
-          (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
-          userStore.address !== teamStore.currentTeam?.ownerAddress
+          (teamStore.currentTeam?.teamContracts ?? []).length > 0 && !isCashRemunerationOwner.value
       }
     ].filter((child) => child.show)
   },
