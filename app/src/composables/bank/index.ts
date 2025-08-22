@@ -1,6 +1,6 @@
 /**
  * Bank contract composables - modular organization
- * 
+ *
  * This file serves as the main entry point for all Bank contract functionality.
  * It re-exports all composables and utilities for easy importing.
  */

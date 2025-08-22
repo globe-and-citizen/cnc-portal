@@ -1,5 +1,10 @@
 import { computed, readonly, ref, watch } from 'vue'
-import { useWriteContract, useWaitForTransactionReceipt, useAccount, useEstimateGas } from '@wagmi/vue'
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useAccount,
+  useEstimateGas
+} from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { encodeFunctionData, type Address, type Abi } from 'viem'
 import { useToastStore } from '@/stores'
@@ -64,10 +69,7 @@ export function useContractWrites(config: ContractWriteConfig) {
     data: computed(() => gasEstimateParams.value?.data),
     value: computed(() => gasEstimateParams.value?.value),
     query: {
-      enabled: computed(() =>
-        !!gasEstimateParams.value?.to &&
-        !!gasEstimateParams.value?.data
-      )
+      enabled: computed(() => !!gasEstimateParams.value?.to && !!gasEstimateParams.value?.data)
     }
   })
 
@@ -105,10 +107,7 @@ export function useContractWrites(config: ContractWriteConfig) {
   /**
    * Estimate gas for raw encoded function data
    */
-  const estimateGasForEncodedData = async (
-    encodedData: `0x${string}`,
-    value?: bigint
-  ) => {
+  const estimateGasForEncodedData = async (encodedData: `0x${string}`, value?: bigint) => {
     try {
       // Set parameters for gas estimation with raw encoded data
       gasEstimateParams.value = {

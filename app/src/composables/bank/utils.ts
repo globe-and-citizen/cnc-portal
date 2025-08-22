@@ -29,7 +29,7 @@ export function useValidation() {
       addErrorToast('No recipients specified')
       return false
     }
-    if (addresses.some(addr => !isAddress(addr))) {
+    if (addresses.some((addr) => !isAddress(addr))) {
       addErrorToast('One or more invalid addresses')
       return false
     }

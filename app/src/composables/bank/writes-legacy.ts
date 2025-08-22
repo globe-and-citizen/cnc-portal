@@ -1,5 +1,10 @@
 import { computed, ref, watch } from 'vue'
-import { useWriteContract, useWaitForTransactionReceipt, useAccount, useEstimateGas } from '@wagmi/vue'
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useAccount,
+  useEstimateGas
+} from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { encodeFunctionData } from 'viem'
 import { useToastStore } from '@/stores'
@@ -56,10 +61,7 @@ export function useBankWrites() {
     data: computed(() => gasEstimateParams.value?.data),
     value: computed(() => gasEstimateParams.value?.value),
     query: {
-      enabled: computed(() =>
-        !!gasEstimateParams.value?.to &&
-        !!gasEstimateParams.value?.data
-      )
+      enabled: computed(() => !!gasEstimateParams.value?.to && !!gasEstimateParams.value?.data)
     }
   })
 
@@ -125,10 +127,7 @@ export function useBankWrites() {
    * Estimate gas for raw encoded function data
    * Useful for pre-encoded transactions or advanced use cases
    */
-  const estimateGasForEncodedData = async (
-    encodedData: `0x${string}`,
-    value?: bigint
-  ) => {
+  const estimateGasForEncodedData = async (encodedData: `0x${string}`, value?: bigint) => {
     if (!bankAddress.value) {
       throw new Error('Bank contract address not found')
     }
@@ -175,7 +174,7 @@ export function useBankWrites() {
           ]
         }
         if (process.env.NODE_ENV === 'development') {
-          console.log("try to invalidate this key", key)
+          console.log('try to invalidate this key', key)
         }
         await queryClient.invalidateQueries(key)
         break
@@ -238,27 +237,18 @@ export function useBankWrites() {
       case BANK_FUNCTION_NAMES.DEPOSIT_TOKEN:
         // Invalidate balance queries
         await queryClient.invalidateQueries({
-          queryKey: [
-            'balance',
-            bankQueryKey
-          ]
+          queryKey: ['balance', bankQueryKey]
         })
         // Also invalidate all readContract queries for this bank address
         await queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            bankQueryKey
-          ]
+          queryKey: ['readContract', bankQueryKey]
         })
         break
 
       default:
         // For any other function, invalidate all bank-related queries
         await queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            bankQueryKey
-          ]
+          queryKey: ['readContract', bankQueryKey]
         })
         break
     }
@@ -361,7 +351,7 @@ export function useBankWrites() {
     isLoading, // Combined loading state of useWriteContract and useWaitForTransactionReceipt
     isWritePending, // Pending state from useWriteContract
     isConfirming, // Loading state of useWaitForTransactionReceipt
-    isConfirmed, // State of the transaction receipt 
+    isConfirmed, // State of the transaction receipt
     writeContractData, // Write contract hash
     receipt, // Receipt
     error, // Combined error from write contract and transaction receipt

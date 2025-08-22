@@ -14,7 +14,8 @@ export const VESTING_FUNCTION_NAMES = {
   RENOUNCE_OWNERSHIP: 'renounceOwnership'
 } as const
 
-export type VestingFunctionName = typeof VESTING_FUNCTION_NAMES[keyof typeof VESTING_FUNCTION_NAMES]
+export type VestingFunctionName =
+  (typeof VESTING_FUNCTION_NAMES)[keyof typeof VESTING_FUNCTION_NAMES]
 
 /**
  * Vesting contract specific write operations
@@ -51,17 +52,11 @@ export function useVestingWrites() {
       case VESTING_FUNCTION_NAMES.WITHDRAW:
         // Invalidate vesting-related queries
         await queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            vestingQueryKey
-          ]
+          queryKey: ['readContract', vestingQueryKey]
         })
         // Also invalidate balance queries since these affect balances
         await queryClient.invalidateQueries({
-          queryKey: [
-            'balance',
-            vestingQueryKey
-          ]
+          queryKey: ['balance', vestingQueryKey]
         })
         break
 
@@ -82,10 +77,7 @@ export function useVestingWrites() {
       default:
         // For any other function, invalidate all vesting-related queries
         await queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            vestingQueryKey
-          ]
+          queryKey: ['readContract', vestingQueryKey]
         })
         break
     }
@@ -129,13 +121,13 @@ export function useVestingWrites() {
   return {
     // Re-export all base functionality
     ...baseWrites,
-    
+
     // Override with Vesting-specific implementations
     executeWrite,
     estimateGas,
     canExecuteTransaction,
     invalidateVestingQueries,
-    
+
     // Keep the generic invalidateQueries as well for flexibility
     invalidateQueries: baseWrites.invalidateQueries
   }

@@ -32,7 +32,7 @@ import { useContractWrites } from '@/composables/contracts'
 import MyContractABI from '@/artifacts/abi/MyContract.json'
 
 const contractWrites = useContractWrites({
-  contractAddress: '0x1234...', 
+  contractAddress: '0x1234...',
   abi: MyContractABI,
   chainId: 1
 })
@@ -73,7 +73,8 @@ export const MY_CONTRACT_FUNCTION_NAMES = {
   ANOTHER_FUNCTION: 'anotherFunction'
 } as const
 
-export type MyContractFunctionName = typeof MY_CONTRACT_FUNCTION_NAMES[keyof typeof MY_CONTRACT_FUNCTION_NAMES]
+export type MyContractFunctionName =
+  (typeof MY_CONTRACT_FUNCTION_NAMES)[keyof typeof MY_CONTRACT_FUNCTION_NAMES]
 ```
 
 2. **Create the wrapper composable:**
@@ -153,7 +154,7 @@ export { useMyContractWrites } from './useMyContractWrites'
 ## Available Composables
 
 - `useContractWrites` - Generic base composable
-- `useBankWrites` - Bank contract wrapper  
+- `useBankWrites` - Bank contract wrapper
 - `useVestingWrites` - Vesting contract wrapper
 
 ## Migration

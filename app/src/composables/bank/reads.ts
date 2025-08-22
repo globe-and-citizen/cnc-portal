@@ -46,7 +46,11 @@ export function useBankReads() {
       abi: BankABI,
       functionName: BANK_FUNCTION_NAMES.IS_TOKEN_SUPPORTED,
       args: [tokenAddress],
-      query: { enabled: computed(() => !!bankAddress.value && isAddress(bankAddress.value) && isAddress(tokenAddress)) }
+      query: {
+        enabled: computed(
+          () => !!bankAddress.value && isAddress(bankAddress.value) && isAddress(tokenAddress)
+        )
+      }
     })
   }
 

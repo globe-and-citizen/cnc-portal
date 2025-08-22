@@ -33,7 +33,7 @@ export const BANK_FUNCTION_NAMES = {
 /**
  * Type for valid Bank contract function names
  */
-export type BankFunctionName = typeof BANK_FUNCTION_NAMES[keyof typeof BANK_FUNCTION_NAMES]
+export type BankFunctionName = (typeof BANK_FUNCTION_NAMES)[keyof typeof BANK_FUNCTION_NAMES]
 
 /**
  * Validate if a function name exists in the Bank contract

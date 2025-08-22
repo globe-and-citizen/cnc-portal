@@ -3,7 +3,11 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { useAccount } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
 import { BANK_FUNCTION_NAMES, type BankFunctionName, isValidBankFunction } from './types'
-import { useContractWrites, type ContractWriteConfig, type ContractWriteOptions } from '../contracts/useContractWrites'
+import {
+  useContractWrites,
+  type ContractWriteConfig,
+  type ContractWriteOptions
+} from '../contracts/useContractWrites'
 import BankABI from '@/artifacts/abi/bank.json'
 
 /**
@@ -49,7 +53,7 @@ export function useBankWrites() {
           ]
         }
         if (process.env.NODE_ENV === 'development') {
-          console.log("try to invalidate this key", key)
+          console.log('try to invalidate this key', key)
         }
         await queryClient.invalidateQueries(key)
         break
@@ -112,27 +116,18 @@ export function useBankWrites() {
       case BANK_FUNCTION_NAMES.DEPOSIT_TOKEN:
         // Invalidate balance queries
         await queryClient.invalidateQueries({
-          queryKey: [
-            'balance',
-            bankQueryKey
-          ]
+          queryKey: ['balance', bankQueryKey]
         })
         // Also invalidate all readContract queries for this bank address
         await queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            bankQueryKey
-          ]
+          queryKey: ['readContract', bankQueryKey]
         })
         break
 
       default:
         // For any other function, invalidate all bank-related queries
         await queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            bankQueryKey
-          ]
+          queryKey: ['readContract', bankQueryKey]
         })
         break
     }
@@ -187,13 +182,13 @@ export function useBankWrites() {
   return {
     // Re-export all base functionality
     ...baseWrites,
-    
+
     // Override with Bank-specific implementations
     executeWrite,
     estimateGas,
     canExecuteTransaction,
     invalidateBankQueries,
-    
+
     // Keep the generic invalidateQueries as well for flexibility
     invalidateQueries: baseWrites.invalidateQueries
   }

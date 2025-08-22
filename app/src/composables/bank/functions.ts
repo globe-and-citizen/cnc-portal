@@ -51,9 +51,12 @@ export function useBankWritesFunctions() {
   }
 
   const transferToken = (tokenAddress: Address, to: Address, amount: string) => {
-    if (!validateAddress(tokenAddress, 'token address') ||
+    if (
+      !validateAddress(tokenAddress, 'token address') ||
       !validateAddress(to, 'recipient address') ||
-      !validateAmount(amount)) return
+      !validateAmount(amount)
+    )
+      return
     const amountInWei = amountToWei(amount)
     return writes.executeWrite(BANK_FUNCTION_NAMES.TRANSFER_TOKEN, [tokenAddress, to, amountInWei])
   }
@@ -68,7 +71,11 @@ export function useBankWritesFunctions() {
   const sendTokenTip = (addresses: Address[], tokenAddress: Address, totalAmount: string) => {
     if (!validateTipParams(addresses, totalAmount, tokenAddress)) return
     const amountInWei = amountToWei(totalAmount)
-    return writes.executeWrite(BANK_FUNCTION_NAMES.SEND_TOKEN_TIP, [addresses, tokenAddress, amountInWei])
+    return writes.executeWrite(BANK_FUNCTION_NAMES.SEND_TOKEN_TIP, [
+      addresses,
+      tokenAddress,
+      amountInWei
+    ])
   }
 
   const pushEthTip = (addresses: Address[], totalAmount: string) => {
@@ -80,7 +87,11 @@ export function useBankWritesFunctions() {
   const pushTokenTip = (addresses: Address[], tokenAddress: Address, totalAmount: string) => {
     if (!validateTipParams(addresses, totalAmount, tokenAddress)) return
     const amountInWei = amountToWei(totalAmount)
-    return writes.executeWrite(BANK_FUNCTION_NAMES.PUSH_TOKEN_TIP, [addresses, tokenAddress, amountInWei])
+    return writes.executeWrite(BANK_FUNCTION_NAMES.PUSH_TOKEN_TIP, [
+      addresses,
+      tokenAddress,
+      amountInWei
+    ])
   }
 
   return {

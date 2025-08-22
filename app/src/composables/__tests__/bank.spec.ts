@@ -3,7 +3,7 @@ import { nextTick } from 'vue'
 import { useBankContract, useBankReads, useBankWrites, useBankGetFunction } from '../bank'
 
 // Hoisted mock variables for core functionality
-const { 
+const {
   mockWriteContract,
   mockUseReadContract,
   mockUseWriteContract,
@@ -125,9 +125,9 @@ describe('useBankGetFunction (Legacy)', () => {
 
     it('should return data correctly', async () => {
       const { execute: getFunction, data, args, inputs } = useBankGetFunction('0x1')
-      
+
       await getFunction('data')
-      
+
       expect(data.value).toStrictEqual('transfer')
       expect(args.value).toStrictEqual(['0x123', '1.0'])
       expect(inputs.value).toStrictEqual(['_to', '_amount'])
@@ -138,7 +138,7 @@ describe('useBankGetFunction (Legacy)', () => {
 
       mockGetContract.mockRejectedValue(new Error('error'))
       await getFunction('data')
-      
+
       expect(mockLog).toHaveBeenCalled()
     })
   })
@@ -152,7 +152,7 @@ describe('useBankReads', () => {
   describe('Contract Address Resolution', () => {
     it('should get bank address from team store', () => {
       const { bankAddress } = useBankReads()
-      
+
       expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Bank')
       expect(bankAddress.value).toBe(MOCK_DATA.bankAddress)
     })
@@ -162,7 +162,7 @@ describe('useBankReads', () => {
     it('should call useReadContract for paused state', () => {
       const { useBankPaused } = useBankReads()
       useBankPaused()
-      
+
       expect(mockUseReadContract).toHaveBeenCalledWith({
         address: MOCK_DATA.bankAddress,
         abi: expect.any(Array),
@@ -174,7 +174,7 @@ describe('useBankReads', () => {
     it('should call useReadContract for owner', () => {
       const { useBankOwner } = useBankReads()
       useBankOwner()
-      
+
       expect(mockUseReadContract).toHaveBeenCalledWith({
         address: MOCK_DATA.bankAddress,
         abi: expect.any(Array),
@@ -186,7 +186,7 @@ describe('useBankReads', () => {
     it('should call useReadContract for token support check', () => {
       const { useBankIsTokenSupported } = useBankReads()
       useBankIsTokenSupported(MOCK_DATA.validAddress)
-      
+
       expect(mockUseReadContract).toHaveBeenCalledWith({
         address: MOCK_DATA.bankAddress,
         abi: expect.any(Array),
@@ -212,14 +212,14 @@ describe('useBankWrites', () => {
   describe('Contract Write Setup', () => {
     it('should initialize write contract composable', () => {
       useBankWrites()
-      
+
       expect(mockUseWriteContract).toHaveBeenCalled()
       expect(mockUseWaitForTransactionReceipt).toHaveBeenCalled()
     })
 
     it('should provide loading states', () => {
       const { isLoading, isWritePending, isConfirming } = useBankWrites()
-      
+
       expect(isLoading.value).toBe(false)
       expect(isWritePending.value).toBe(false)
       expect(isConfirming.value).toBe(false)
@@ -229,9 +229,9 @@ describe('useBankWrites', () => {
   describe('Execute Write Function', () => {
     it('should execute write contract with correct parameters', async () => {
       const { executeWrite } = useBankWrites()
-      
+
       await executeWrite('pause')
-      
+
       expect(mockWriteContract).toHaveBeenCalledWith({
         address: MOCK_DATA.bankAddress,
         abi: expect.any(Array),
@@ -243,9 +243,9 @@ describe('useBankWrites', () => {
     it('should execute write contract with arguments', async () => {
       const { executeWrite } = useBankWrites()
       const args = [MOCK_DATA.validAddress]
-      
+
       await executeWrite('changeTipsAddress', args)
-      
+
       expect(mockWriteContract).toHaveBeenCalledWith({
         address: MOCK_DATA.bankAddress,
         abi: expect.any(Array),
@@ -257,9 +257,9 @@ describe('useBankWrites', () => {
     it('should show error toast when bank address not found', async () => {
       mockTeamStore.getContractAddressByType.mockReturnValue(undefined)
       const { executeWrite } = useBankWrites()
-      
+
       await executeWrite('pause')
-      
+
       expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Bank contract address not found')
       expect(mockWriteContract).not.toHaveBeenCalled()
     })
@@ -283,7 +283,7 @@ describe('useBankWrites', () => {
       expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
         'Transaction failed: Transaction failed'
       )
-      
+
       consoleErrorSpy.mockRestore()
     })
 
@@ -313,20 +313,20 @@ describe('useBankContract (Main Composable)', () => {
   describe('Integration', () => {
     it('should combine all functionality', () => {
       const bankContract = useBankContract()
-      
+
       // Should have read functions
       expect(bankContract.useBankPaused).toBeDefined()
       expect(bankContract.useBankOwner).toBeDefined()
-      
-      // Should have write functions  
+
+      // Should have write functions
       expect(bankContract.pauseContract).toBeDefined()
       expect(bankContract.transferEth).toBeDefined()
       expect(bankContract.sendEthTip).toBeDefined()
-      
+
       // Should have admin functions
       expect(bankContract.changeTipsAddress).toBeDefined()
       expect(bankContract.transferOwnership).toBeDefined()
-      
+
       // Should have loading states
       expect(bankContract.isLoading).toBeDefined()
       expect(bankContract.bankAddress).toBeDefined()
@@ -334,7 +334,7 @@ describe('useBankContract (Main Composable)', () => {
 
     it('should provide access to specialized composables', () => {
       const bankContract = useBankContract()
-      
+
       // Should expose specialized function groups
       expect(bankContract.depositToken).toBeDefined()
       expect(bankContract.sendTokenTip).toBeDefined()
