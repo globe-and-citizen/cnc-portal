@@ -53,53 +53,53 @@
 
     <!-- State Table -->
     <div class="overflow-x-auto">
-      <table class="min-w-full table-auto border border-gray-200">
+      <table class="table table-zebra w-full">
         <thead>
-          <tr class="bg-gray-50">
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Property</th>
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Value</th>
+          <tr>
+            <th>Property</th>
+            <th>Value</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-200">
+        <tbody>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Read Loading</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ isReadLoading }}</td>
+            <td class="font-medium">Read Loading</td>
+            <td>{{ isReadLoading }}</td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Current Pause Status</td>
-            <td class="px-4 py-2 text-sm text-gray-700">
-              <span :class="Boolean(isPaused) ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold'">
+            <td class="font-medium">Current Pause Status</td>
+            <td>
+              <span :class="Boolean(isPaused) ? 'text-error font-semibold' : 'text-success font-semibold'">
                 {{ Boolean(isPaused) ? 'PAUSED' : 'ACTIVE' }}
               </span>
             </td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Is Write Loading</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ isLoading }}</td>
+            <td class="font-medium">Is Write Loading</td>
+            <td>{{ isLoading }}</td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Is Write Pending</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ isWritePending }}</td>
+            <td class="font-medium">Is Write Pending</td>
+            <td>{{ isWritePending }}</td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Is Confirming</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ isConfirming }}</td>
+            <td class="font-medium">Is Confirming</td>
+            <td>{{ isConfirming }}</td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Write Data</td>
-            <td class="px-4 py-2 text-xs text-gray-700 font-mono">
+            <td class="font-medium">Write Data</td>
+            <td class="text-xs font-mono">
               {{ writeContractData ? JSON.stringify(writeContractData, null, 2) : 'None' }}
             </td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Receipt</td>
-            <td class="px-4 py-2 text-xs text-gray-700 font-mono">
+            <td class="font-medium">Receipt</td>
+            <td class="text-xs font-mono">
               {{ receipt ? `Block: ${receipt.blockNumber}` : 'None' }}
             </td>
           </tr>
           <tr v-if="error">
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Error</td>
-            <td class="px-4 py-2 text-sm text-red-600">{{ error.message }}</td>
+            <td class="font-medium">Error</td>
+            <td class="text-error">{{ error.message }}</td>
           </tr>
         </tbody>
       </table>

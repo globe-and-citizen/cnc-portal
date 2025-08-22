@@ -51,57 +51,57 @@
 
     <!-- State Table -->
     <div class="overflow-x-auto">
-      <table class="min-w-full table-auto border border-gray-200">
+      <table class="table table-zebra w-full">
         <thead>
-          <tr class="bg-gray-50">
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Property</th>
-            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Value</th>
+          <tr>
+            <th>Property</th>
+            <th>Value</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-200">
+        <tbody>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Token Address</td>
-            <td class="px-4 py-2 text-xs text-gray-700 font-mono">{{ tokenAddress || 'None' }}</td>
+            <td class="font-medium">Token Address</td>
+            <td class="text-xs font-mono">{{ tokenAddress || 'None' }}</td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Recipients Count</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ recipientList.length }}</td>
+            <td class="font-medium">Recipients Count</td>
+            <td>{{ recipientList.length }}</td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Tip Amount</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ tipAmount || '0' }}</td>
+            <td class="font-medium">Tip Amount</td>
+            <td>{{ tipAmount || '0' }}</td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Form Valid</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ isFormValid }}</td>
+            <td class="font-medium">Form Valid</td>
+            <td>{{ isFormValid }}</td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Is Loading</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ isLoading }}</td>
+            <td class="font-medium">Is Loading</td>
+            <td>{{ isLoading }}</td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Is Write Pending</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ isWritePending }}</td>
+            <td class="font-medium">Is Write Pending</td>
+            <td>{{ isWritePending }}</td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Is Confirming</td>
-            <td class="px-4 py-2 text-sm text-gray-700">{{ isConfirming }}</td>
+            <td class="font-medium">Is Confirming</td>
+            <td>{{ isConfirming }}</td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Write Data</td>
-            <td class="px-4 py-2 text-xs text-gray-700 font-mono">
+            <td class="font-medium">Write Data</td>
+            <td class="text-xs font-mono">
               {{ writeContractData ? JSON.stringify(writeContractData, null, 2) : 'None' }}
             </td>
           </tr>
           <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Receipt</td>
-            <td class="px-4 py-2 text-xs text-gray-700 font-mono">
+            <td class="font-medium">Receipt</td>
+            <td class="text-xs font-mono">
               {{ receipt ? `Block: ${receipt.blockNumber}` : 'None' }}
             </td>
           </tr>
           <tr style="display: none;">
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Error</td>
-            <td class="px-4 py-2 text-sm text-red-600">No errors (handled via toasts)</td>
+            <td class="font-medium">Error</td>
+            <td class="text-error">No errors (handled via toasts)</td>
           </tr>
         </tbody>
       </table>
