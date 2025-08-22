@@ -1,6 +1,7 @@
 import { computed, ref, watch } from 'vue'
-import { useWriteContract, useWaitForTransactionReceipt, useAccount } from '@wagmi/vue'
+import { useWriteContract, useWaitForTransactionReceipt, useAccount, useEstimateGas } from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
+import { encodeFunctionData } from 'viem'
 import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
 import { parseError } from '@/utils'
@@ -37,6 +38,116 @@ export function useBankWrites() {
   const isLoading = computed(() => isWritePending.value || isConfirming.value)
 
   const error = computed(() => writeError.value || receiptError.value)
+
+  // Gas estimation state
+  const gasEstimateParams = ref<{
+    to: `0x${string}`
+    data: `0x${string}`
+    value?: bigint
+  } | null>(null)
+
+  const {
+    data: gasEstimate,
+    isLoading: isEstimatingGas,
+    error: gasEstimateError,
+    refetch: refetchGasEstimate
+  } = useEstimateGas({
+    to: computed(() => gasEstimateParams.value?.to),
+    data: computed(() => gasEstimateParams.value?.data),
+    value: computed(() => gasEstimateParams.value?.value),
+    query: {
+      enabled: computed(() =>
+        !!gasEstimateParams.value?.to &&
+        !!gasEstimateParams.value?.data
+      )
+    }
+  })
+
+  /**
+   * Estimate gas for a specific function call
+   * This can be used to check if a transaction will likely succeed and get gas costs
+   */
+  const estimateGas = async (
+    functionName: BankFunctionName,
+    args: readonly unknown[] = [],
+    value?: bigint
+  ) => {
+    if (!bankAddress.value) {
+      throw new Error('Bank contract address not found')
+    }
+
+    if (!isValidBankFunction(functionName)) {
+      throw new Error(`Invalid bank function: ${functionName}`)
+    }
+
+    try {
+      // Encode the function data
+      const encodedData = encodeFunctionData({
+        abi: BankABI,
+        functionName,
+        args
+      })
+
+      // Set parameters for gas estimation with encoded data
+      gasEstimateParams.value = {
+        to: bankAddress.value,
+        data: encodedData,
+        value
+      }
+
+      const result = await refetchGasEstimate()
+      return result.data
+    } catch (error) {
+      console.error(`Gas estimation failed for ${functionName}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Check if a transaction will likely succeed by estimating gas
+   * Returns true if gas estimation succeeds, false otherwise
+   */
+  const canExecuteTransaction = async (
+    functionName: BankFunctionName,
+    args: readonly unknown[] = [],
+    value?: bigint
+  ): Promise<boolean> => {
+    try {
+      await estimateGas(functionName, args, value)
+      return true
+    } catch (error) {
+      console.warn(`Transaction ${functionName} will likely fail:`, error)
+      return false
+    }
+  }
+
+  /**
+   * Estimate gas for raw encoded function data
+   * Useful for pre-encoded transactions or advanced use cases
+   */
+  const estimateGasForEncodedData = async (
+    encodedData: `0x${string}`,
+    value?: bigint
+  ) => {
+    if (!bankAddress.value) {
+      throw new Error('Bank contract address not found')
+    }
+
+    try {
+      // Set parameters for gas estimation with raw encoded data
+      gasEstimateParams.value = {
+        to: bankAddress.value,
+        data: encodedData,
+        value
+      }
+
+      const result = await refetchGasEstimate()
+      return result.data
+    } catch (error) {
+      console.error(`Gas estimation failed for encoded data:`, error)
+      throw error
+    }
+  }
 
   /**
    * Invalidate specific Bank contract queries after successful transactions
@@ -200,7 +311,8 @@ export function useBankWrites() {
   const executeWrite = async (
     functionName: BankFunctionName,
     args: readonly unknown[] = [],
-    value?: bigint
+    value?: bigint,
+    options?: { skipGasEstimation?: boolean }
   ) => {
     if (!bankAddress.value) {
       addErrorToast('Bank contract address not found')
@@ -210,6 +322,20 @@ export function useBankWrites() {
     if (!isValidBankFunction(functionName)) {
       addErrorToast(`Invalid bank function: ${functionName}`)
       return
+    }
+
+    // Optional gas estimation before executing
+    if (!options?.skipGasEstimation) {
+      try {
+        const canExecute = await canExecuteTransaction(functionName, args, value)
+        if (!canExecute) {
+          addErrorToast(`Transaction will likely fail due to insufficient gas or other constraints`)
+          return
+        }
+      } catch (gasError) {
+        console.warn(`Gas estimation failed for ${functionName}, proceeding anyway:`, gasError)
+        // Continue with transaction even if gas estimation fails
+      }
     }
 
     // Store function name for query invalidation after transaction confirms
@@ -239,6 +365,15 @@ export function useBankWrites() {
     writeContractData, // Write contract hash
     receipt, // Receipt
     error, // Combined error from write contract and transaction receipt
+
+    // Gas estimation
+    gasEstimate, // Estimated gas for the current parameters
+    isEstimatingGas, // Loading state for gas estimation
+    gasEstimateError, // Gas estimation error
+    estimateGas, // Function to estimate gas for specific parameters
+    estimateGasForEncodedData, // Function to estimate gas for raw encoded data
+    canExecuteTransaction, // Function to check if transaction will likely succeed
+
     executeWrite,
     invalidateBankQueries // Expose for manual invalidation if needed
   }
