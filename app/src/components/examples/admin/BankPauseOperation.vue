@@ -117,7 +117,7 @@ const {
   isBankAddressValid,
   useBankPaused,
   
-  // Write state
+  // Write state (now directly from useBankWritesFunctions)
   isLoading,
   isWritePending,
   isConfirming,
