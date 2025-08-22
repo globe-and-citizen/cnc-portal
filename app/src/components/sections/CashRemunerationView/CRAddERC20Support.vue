@@ -58,7 +58,7 @@ const investorsAddress = computed(() => teamStore.getContractAddressByType('Inve
 const cashRemunerationEip712Address = computed(() => {
   const address = teamStore.getContractAddressByType('CashRemunerationEIP712')
   if (!address) {
-    console.warn('CashRemunerationEIP712 contract address not found')
+    console.warn('CashRemuneration contract address not found')
   }
   return address
 })

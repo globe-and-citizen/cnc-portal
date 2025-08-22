@@ -298,12 +298,10 @@ const target = ref(null)
 const isDropdownOpen = ref(false)
 const teamStore = useTeamStore()
 
-// Get Cash Remuneration contract address
 const cashRemunerationAddress = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
 )
 
-// Fetch Cash Remuneration owner
 const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
   functionName: 'owner',
   address: cashRemunerationAddress,
@@ -313,7 +311,6 @@ const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useRe
 
 // Check if user is Cash Remuneration owner with fallback to team owner
 const isCashRemunerationOwner = computed(() => {
-  // If contract exists and owner is retrieved, use that
   if (
     cashRemunerationAddress.value &&
     cashRemunerationOwner.value &&
