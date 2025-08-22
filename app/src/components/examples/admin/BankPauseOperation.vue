@@ -36,7 +36,7 @@
       <button
         @click="handlePauseContract"
         :disabled="!isBankAddressValid || isLoading || Boolean(isPaused)"
-        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        class="btn btn-error"
         data-test="pause-contract-btn"
       >
         Pause Contract
@@ -44,7 +44,7 @@
       <button
         @click="handleUnpauseContract"
         :disabled="!isBankAddressValid || isLoading || !Boolean(isPaused)"
-        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        class="btn btn-success"
         data-test="unpause-contract-btn"
       >
         Unpause Contract

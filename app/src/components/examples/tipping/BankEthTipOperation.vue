@@ -1,7 +1,7 @@
 <template>
   <div class="bank-eth-tip-operation mb-6">
     <h4 class="text-md font-semibold mb-3">ETH Tip</h4>
-    
+
     <!-- Form -->
     <div class="mb-4">
       <div class="grid grid-cols-2 gap-3 mb-3">
@@ -9,7 +9,7 @@
           v-model="recipientAddresses"
           placeholder="Recipient addresses (comma-separated)"
           rows="3"
-          class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="textarea textarea-bordered"
           data-test="eth-tip-recipients-input"
         />
         <input
@@ -17,23 +17,23 @@
           type="number"
           placeholder="Tip amount in ETH"
           step="0.01"
-          class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="input input-bordered"
           data-test="eth-tip-amount-input"
         />
       </div>
       <button
         @click="handleSendEthTip"
         :disabled="!isBankAddressValid || isLoading || !isFormValid"
-        class="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        class="btn btn-secondary w-full"
         data-test="send-eth-tip-btn"
       >
         Send ETH Tip
       </button>
       <div class="mt-2 space-y-1">
-        <p v-if="recipientAddresses && !areValidRecipients" class="text-red-600 text-sm">
+        <p v-if="recipientAddresses && !areValidRecipients" class="text-error text-sm">
           One or more recipient addresses are invalid
         </p>
-        <p v-if="tipAmount && !isValidAmount" class="text-red-600 text-sm">
+        <p v-if="tipAmount && !isValidAmount" class="text-error text-sm">
           Amount must be greater than 0
         </p>
       </div>
@@ -85,7 +85,7 @@
               {{ receipt ? `Block: ${receipt.blockNumber}` : 'None' }}
             </td>
           </tr>
-          <tr style="display: none;">
+          <tr style="display: none">
             <td class="font-medium">Error</td>
             <td class="text-error">No errors (handled via toasts)</td>
           </tr>
@@ -108,13 +108,13 @@ const tipAmount = ref('')
 const recipientList = computed(() => {
   return recipientAddresses.value
     .split(',')
-    .map(addr => addr.trim())
-    .filter(addr => addr.length > 0)
+    .map((addr) => addr.trim())
+    .filter((addr) => addr.length > 0)
 })
 
 const areValidRecipients = computed(() => {
   if (recipientList.value.length === 0) return true
-  return recipientList.value.every(addr => isAddress(addr))
+  return recipientList.value.every((addr) => isAddress(addr))
 })
 
 const isValidAmount = computed(() => {
@@ -123,11 +123,13 @@ const isValidAmount = computed(() => {
 })
 
 const isFormValid = computed(() => {
-  return recipientAddresses.value && 
-         tipAmount.value && 
-         areValidRecipients.value && 
-         isValidAmount.value &&
-         recipientList.value.length > 0
+  return (
+    recipientAddresses.value &&
+    tipAmount.value &&
+    areValidRecipients.value &&
+    isValidAmount.value &&
+    recipientList.value.length > 0
+  )
 })
 
 // Get bank functionality (now includes all writes directly)

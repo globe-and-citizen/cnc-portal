@@ -9,19 +9,19 @@
           v-model="newOwnerAddress"
           type="text"
           placeholder="New owner address (0x...)"
-          class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="input input-bordered flex-1"
           data-test="new-owner-address-input"
         />
         <button
           @click="handleTransferOwnership"
           :disabled="!isBankAddressValid || isLoading || !isValidAddress"
-          class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          class="btn btn-warning"
           data-test="transfer-ownership-btn"
         >
           Transfer Ownership
         </button>
       </div>
-      <p v-if="newOwnerAddress && !isValidAddress" class="text-red-600 text-sm mt-1">
+      <p v-if="newOwnerAddress && !isValidAddress" class="text-error text-sm mt-1">
         Invalid Ethereum address
       </p>
     </div>

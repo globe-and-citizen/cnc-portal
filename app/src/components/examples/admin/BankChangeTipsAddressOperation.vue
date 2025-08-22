@@ -9,19 +9,19 @@
           v-model="newTipsAddress"
           type="text"
           placeholder="New tips address (0x...)"
-          class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="input input-bordered flex-1"
           data-test="new-tips-address-input"
         />
         <button
           @click="handleChangeTipsAddress"
           :disabled="!isBankAddressValid || isLoading || !isValidAddress"
-          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          class="btn btn-primary"
           data-test="change-tips-address-btn"
         >
           Change Tips Address
         </button>
       </div>
-      <p v-if="newTipsAddress && !isValidAddress" class="text-red-600 text-sm mt-1">
+      <p v-if="newTipsAddress && !isValidAddress" class="text-error text-sm mt-1">
         Invalid Ethereum address
       </p>
     </div>

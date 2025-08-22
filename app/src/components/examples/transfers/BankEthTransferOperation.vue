@@ -9,7 +9,7 @@
           v-model="recipientAddress"
           type="text"
           placeholder="Recipient address (0x...)"
-          class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="input input-bordered"
           data-test="eth-recipient-input"
         />
         <input
@@ -17,23 +17,23 @@
           type="number"
           placeholder="Amount in ETH"
           step="0.01"
-          class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="input input-bordered"
           data-test="eth-amount-input"
         />
       </div>
       <button
         @click="handleTransferEth"
         :disabled="!isBankAddressValid || isLoading || !isFormValid"
-        class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        class="btn btn-primary w-full"
         data-test="transfer-eth-btn"
       >
         Transfer ETH
       </button>
       <div class="mt-2 space-y-1">
-        <p v-if="recipientAddress && !isValidRecipient" class="text-red-600 text-sm">
+        <p v-if="recipientAddress && !isValidRecipient" class="text-error text-sm">
           Invalid recipient address
         </p>
-        <p v-if="ethAmount && !isValidAmount" class="text-red-600 text-sm">
+        <p v-if="ethAmount && !isValidAmount" class="text-error text-sm">
           Amount must be greater than 0
         </p>
       </div>

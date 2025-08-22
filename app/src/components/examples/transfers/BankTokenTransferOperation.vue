@@ -9,14 +9,14 @@
           v-model="tokenAddress"
           type="text"
           placeholder="Token address (0x...)"
-          class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="input input-bordered"
           data-test="token-address-input"
         />
         <input
           v-model="recipientAddress"
           type="text"
           placeholder="Recipient address (0x...)"
-          class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="input input-bordered"
           data-test="token-recipient-input"
         />
         <input
@@ -24,26 +24,26 @@
           type="number"
           placeholder="Amount"
           step="0.01"
-          class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="input input-bordered"
           data-test="token-amount-input"
         />
       </div>
       <button
         @click="handleTransferToken"
         :disabled="!isBankAddressValid || isLoading || !isFormValid"
-        class="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        class="btn btn-success w-full"
         data-test="transfer-token-btn"
       >
         Transfer Token
       </button>
       <div class="mt-2 space-y-1">
-        <p v-if="tokenAddress && !isValidTokenAddress" class="text-red-600 text-sm">
+        <p v-if="tokenAddress && !isValidTokenAddress" class="text-error text-sm">
           Invalid token address
         </p>
-        <p v-if="recipientAddress && !isValidRecipient" class="text-red-600 text-sm">
+        <p v-if="recipientAddress && !isValidRecipient" class="text-error text-sm">
           Invalid recipient address
         </p>
-        <p v-if="tokenAmount && !isValidAmount" class="text-red-600 text-sm">
+        <p v-if="tokenAmount && !isValidAmount" class="text-error text-sm">
           Amount must be greater than 0
         </p>
       </div>
