@@ -1,7 +1,7 @@
 <template>
   <div class="bank-token-transfer-operation mb-6">
     <h4 class="text-md font-semibold mb-3">Token Transfer</h4>
-    
+
     <!-- Form -->
     <div class="mb-4">
       <div class="grid grid-cols-3 gap-3 mb-3">
@@ -51,7 +51,7 @@
 
     <!-- State Table -->
     <div class="overflow-x-auto">
-            <table class="table table-zebra w-full">
+      <table class="table table-zebra w-full">
         <thead>
           <tr>
             <th>Property</th>
@@ -99,7 +99,7 @@
               {{ receipt ? `Block: ${receipt.blockNumber}` : 'None' }}
             </td>
           </tr>
-          <tr style="display: none;">
+          <tr style="display: none">
             <td class="font-medium">Error</td>
             <td class="text-error">No errors (handled via toasts)</td>
           </tr>
@@ -134,12 +134,14 @@ const isValidAmount = computed(() => {
 })
 
 const isFormValid = computed(() => {
-  return tokenAddress.value && 
-         recipientAddress.value && 
-         tokenAmount.value && 
-         isValidTokenAddress.value && 
-         isValidRecipient.value && 
-         isValidAmount.value
+  return (
+    tokenAddress.value &&
+    recipientAddress.value &&
+    tokenAmount.value &&
+    isValidTokenAddress.value &&
+    isValidRecipient.value &&
+    isValidAmount.value
+  )
 })
 
 // Get bank functionality (now includes all writes directly)
@@ -156,7 +158,11 @@ const {
 // Handle token transfer
 const handleTransferToken = async () => {
   if (!isFormValid.value) return
-  await transferToken(tokenAddress.value as `0x${string}`, recipientAddress.value as `0x${string}`, tokenAmount.value)
+  await transferToken(
+    tokenAddress.value as `0x${string}`,
+    recipientAddress.value as `0x${string}`,
+    tokenAmount.value
+  )
   tokenAddress.value = ''
   recipientAddress.value = ''
   tokenAmount.value = ''

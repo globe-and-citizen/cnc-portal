@@ -1,7 +1,7 @@
 <template>
   <div class="bank-token-tip-operation mb-6">
     <h4 class="text-md font-semibold mb-3">Token Tip</h4>
-    
+
     <!-- Form -->
     <div class="mb-4">
       <div class="grid grid-cols-3 gap-3 mb-3">
@@ -99,7 +99,7 @@
               {{ receipt ? `Block: ${receipt.blockNumber}` : 'None' }}
             </td>
           </tr>
-          <tr style="display: none;">
+          <tr style="display: none">
             <td class="font-medium">Error</td>
             <td class="text-error">No errors (handled via toasts)</td>
           </tr>
@@ -127,13 +127,13 @@ const isValidTokenAddress = computed(() => {
 const recipientList = computed(() => {
   return recipientAddresses.value
     .split(',')
-    .map(addr => addr.trim())
-    .filter(addr => addr.length > 0)
+    .map((addr) => addr.trim())
+    .filter((addr) => addr.length > 0)
 })
 
 const areValidRecipients = computed(() => {
   if (recipientList.value.length === 0) return true
-  return recipientList.value.every(addr => isAddress(addr))
+  return recipientList.value.every((addr) => isAddress(addr))
 })
 
 const isValidAmount = computed(() => {
@@ -142,13 +142,15 @@ const isValidAmount = computed(() => {
 })
 
 const isFormValid = computed(() => {
-  return tokenAddress.value && 
-         recipientAddresses.value && 
-         tipAmount.value && 
-         isValidTokenAddress.value && 
-         areValidRecipients.value && 
-         isValidAmount.value &&
-         recipientList.value.length > 0
+  return (
+    tokenAddress.value &&
+    recipientAddresses.value &&
+    tipAmount.value &&
+    isValidTokenAddress.value &&
+    areValidRecipients.value &&
+    isValidAmount.value &&
+    recipientList.value.length > 0
+  )
 })
 
 // Get bank functionality (now includes all writes directly)
@@ -165,7 +167,11 @@ const {
 // Handle token tip
 const handleSendTokenTip = async () => {
   if (!isFormValid.value) return
-  await sendTokenTip(recipientList.value as `0x${string}`[], tokenAddress.value as `0x${string}`, tipAmount.value)
+  await sendTokenTip(
+    recipientList.value as `0x${string}`[],
+    tokenAddress.value as `0x${string}`,
+    tipAmount.value
+  )
   tokenAddress.value = ''
   recipientAddresses.value = ''
   tipAmount.value = ''

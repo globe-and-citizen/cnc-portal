@@ -1,7 +1,7 @@
 <template>
   <div class="bank-transfer-ownership-operation mb-6">
     <h4 class="text-md font-semibold mb-3">Transfer Ownership</h4>
-    
+
     <!-- Form -->
     <div class="mb-4">
       <div class="flex gap-3">
@@ -68,7 +68,7 @@
               {{ receipt ? `Block: ${receipt.blockNumber}` : 'None' }}
             </td>
           </tr>
-          <tr style="display: none;">
+          <tr style="display: none">
             <td class="font-medium">Error</td>
             <td class="text-error">No errors (handled via toasts)</td>
           </tr>

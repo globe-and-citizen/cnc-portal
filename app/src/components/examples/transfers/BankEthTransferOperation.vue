@@ -1,7 +1,7 @@
 <template>
   <div class="bank-eth-transfer-operation mb-6">
     <h4 class="text-md font-semibold mb-3">ETH Transfer</h4>
-    
+
     <!-- Form -->
     <div class="mb-4">
       <div class="grid grid-cols-2 gap-3 mb-3">
@@ -85,7 +85,7 @@
               {{ receipt ? `Block: ${receipt.blockNumber}` : 'None' }}
             </td>
           </tr>
-          <tr style="display: none;">
+          <tr style="display: none">
             <td class="font-medium">Error</td>
             <td class="text-error">No errors (handled via toasts)</td>
           </tr>
@@ -115,10 +115,7 @@ const isValidAmount = computed(() => {
 })
 
 const isFormValid = computed(() => {
-  return recipientAddress.value && 
-         ethAmount.value && 
-         isValidRecipient.value && 
-         isValidAmount.value
+  return recipientAddress.value && ethAmount.value && isValidRecipient.value && isValidAmount.value
 })
 
 // Get bank functionality (now includes all writes directly)

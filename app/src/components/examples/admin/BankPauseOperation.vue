@@ -1,28 +1,20 @@
 <template>
   <div class="bank-pause-operation mb-6">
     <h4 class="text-md font-semibold mb-3">Pause/Unpause Contract</h4>
-    
+
     <!-- Current Status -->
     <div class="mb-4 p-3 bg-gray-50 rounded-md">
       <h5 class="text-sm font-medium mb-2">Current Contract Status</h5>
       <div class="flex items-center gap-2">
         <span class="text-sm font-medium">Contract is:</span>
-        <span 
-          v-if="isReadLoading" 
-          class="text-sm text-gray-500"
-          data-test="pause-status-loading"
-        >
+        <span v-if="isReadLoading" class="text-sm text-gray-500" data-test="pause-status-loading">
           Loading...
         </span>
-        <span 
-          v-else-if="readError" 
-          class="text-sm text-red-600"
-          data-test="pause-status-error"
-        >
+        <span v-else-if="readError" class="text-sm text-red-600" data-test="pause-status-error">
           Error loading status
         </span>
-        <span 
-          v-else 
+        <span
+          v-else
           :class="isPaused ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold'"
           data-test="pause-status"
         >
@@ -30,7 +22,7 @@
         </span>
       </div>
     </div>
-    
+
     <!-- Action Buttons -->
     <div class="flex gap-3 mb-4">
       <button
@@ -68,7 +60,11 @@
           <tr>
             <td class="font-medium">Current Pause Status</td>
             <td>
-              <span :class="Boolean(isPaused) ? 'text-error font-semibold' : 'text-success font-semibold'">
+              <span
+                :class="
+                  Boolean(isPaused) ? 'text-error font-semibold' : 'text-success font-semibold'
+                "
+              >
                 {{ Boolean(isPaused) ? 'PAUSED' : 'ACTIVE' }}
               </span>
             </td>
@@ -116,29 +112,24 @@ const {
   // Read data
   isBankAddressValid,
   useBankPaused,
-  
+
   // Write state (now directly from useBankWritesFunctions)
   isLoading,
   isWritePending,
   isConfirming,
   writeContractData,
   receipt,
-  
+
   // Admin functions
   pauseContract,
   unpauseContract
 } = useBankContract()
 
 // Get current pause status
-const { 
-  data: isPaused, 
-  isLoading: isReadLoading, 
-  error: readError 
-} = useBankPaused()
+const { data: isPaused, isLoading: isReadLoading, error: readError } = useBankPaused()
 
 // For now, we'll use readError as the main error since write errors are handled via toasts
 const error = computed(() => readError.value)
-
 
 // Handle pause contract
 const handlePauseContract = async () => {
