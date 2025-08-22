@@ -2,8 +2,8 @@ import { computed } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useAccount } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
-import { BANK_FUNCTION_NAMES, type BankFunctionName, isValidBankFunction } from '../bank/types'
-import { useContractWrites, type ContractWriteConfig, type ContractWriteOptions } from './useContractWrites'
+import { BANK_FUNCTION_NAMES, type BankFunctionName, isValidBankFunction } from './types'
+import { useContractWrites, type ContractWriteConfig, type ContractWriteOptions } from '../contracts/useContractWrites'
 import BankABI from '@/artifacts/abi/bank.json'
 
 /**
