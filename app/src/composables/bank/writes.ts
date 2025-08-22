@@ -22,7 +22,7 @@ export function useBankWrites() {
 
   const {
     data: writeContractData,
-    writeContract,
+    writeContractAsync,
     isPending: isWritePending,
     error: writeError
   } = useWriteContract()
@@ -214,7 +214,7 @@ export function useBankWrites() {
     currentFunctionName.value = functionName
 
     try {
-      await writeContract({
+      await writeContractAsync({
         address: bankAddress.value,
         abi: BankABI,
         functionName,
@@ -223,7 +223,7 @@ export function useBankWrites() {
       })
     } catch (error) {
       console.error(`Failed to execute ${functionName}:`, error)
-      addErrorToast(`Failed to execute ${functionName}`)
+      addErrorToast(`Failed to execute ${functionName}: ${parseError(error)}`)
       // Clear function name on error
       currentFunctionName.value = null
     }
