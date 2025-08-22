@@ -3,6 +3,7 @@ import { prisma, errorResponse, getMondayStart } from "../utils";
 // import { errorResponse } from "../utils/utils";
 import { Prisma } from "@prisma/client";
 import { isHex } from "viem";
+import { isCashRemunerationOwner } from "../utils/cashRemunerationUtil";
 
 // Type pour les actions autorisées sur un weekly claim
 export type WeeklyClaimAction = "sign" | "withdraw";
@@ -54,8 +55,21 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
     switch (action) {
       case "sign":
         const signErrors: string[] = [];
-        if (weeklyClaim.wage.team.ownerAddress !== callerAddress)
-          signErrors.push("Caller is not owner of the team");
+
+        // Check if the caller is the Cash Remuneration owner
+        const isCallerCashRemunOwner = await isCashRemunerationOwner(
+          callerAddress,
+          weeklyClaim.wage.team.id
+        );
+
+        // If not Cash Remuneration owner, check if they're the team owner
+        if (
+          !isCallerCashRemunOwner &&
+          weeklyClaim.wage.team.ownerAddress !== callerAddress
+        )
+          signErrors.push(
+            "Caller is not the Cash Remuneration owner or the team owner"
+          );
 
         // Check if the week is completed
         if (
