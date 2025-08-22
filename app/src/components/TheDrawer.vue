@@ -304,7 +304,7 @@ const cashRemunerationAddress = computed(() =>
 
 const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
   functionName: 'owner',
-  address: cashRemunerationAddress,
+  address: cashRemunerationAddress.value,
   abi: CashRemuneration_ABI,
   enabled: computed(() => !!cashRemunerationAddress.value)
 })
