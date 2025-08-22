@@ -16,7 +16,7 @@ export function useBankWrites() {
   const queryClient = useQueryClient()
   const { chainId } = useAccount()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  
+
   // Store the current function name for query invalidation
   const currentFunctionName = ref<BankFunctionName | null>(null)
 
@@ -61,7 +61,9 @@ export function useBankWrites() {
             }
           ]
         }
-        console.log("try to invalidate this key", key)
+        if (process.env.NODE_ENV === 'development') {
+          console.log("try to invalidate this key", key)
+        }
         await queryClient.invalidateQueries(key)
         break
 
@@ -168,7 +170,7 @@ export function useBankWrites() {
   watch(isConfirmed, async (confirmed) => {
     if (confirmed && receipt.value && currentFunctionName.value) {
       addSuccessToast('Transaction confirmed successfully')
-      
+
       // Invalidate queries based on the function that was executed
       try {
         await invalidateBankQueries(currentFunctionName.value)
@@ -194,8 +196,8 @@ export function useBankWrites() {
   })
 
   const executeWrite = async (
-    functionName: BankFunctionName, 
-    args: readonly unknown[] = [], 
+    functionName: BankFunctionName,
+    args: readonly unknown[] = [],
     value?: bigint
   ) => {
     if (!bankAddress.value) {
@@ -217,7 +219,7 @@ export function useBankWrites() {
         abi: BankABI,
         functionName,
         args,
-        ...(value && { value })
+        ...(value !== undefined ? { value } : {})
       })
     } catch (error) {
       console.error(`Failed to execute ${functionName}:`, error)
@@ -228,8 +230,8 @@ export function useBankWrites() {
   }
 
   return {
-    isLoading, // Loading state of useWriteContract
-    isWritePending, // Loading state of useWriteContract & useWaitForTransactionReceipt
+    isLoading, // Combined loading state of useWriteContract and useWaitForTransactionReceipt
+    isWritePending, // Pending state from useWriteContract
     isConfirming, // Loading state of useWaitForTransactionReceipt
     isConfirmed, // State of the transaction receipt 
     writeContractData, // Write contract hash
