@@ -36,6 +36,8 @@ export function useBankWrites() {
 
   const isLoading = computed(() => isWritePending.value || isConfirming.value)
 
+  const error = computed(() => writeError.value || receiptError.value)
+
   /**
    * Invalidate specific Bank contract queries after successful transactions
    */
@@ -236,6 +238,7 @@ export function useBankWrites() {
     isConfirmed, // State of the transaction receipt 
     writeContractData, // Write contract hash
     receipt, // Receipt
+    error, // Combined error from write contract and transaction receipt
     executeWrite,
     invalidateBankQueries // Expose for manual invalidation if needed
   }
