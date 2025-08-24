@@ -1,18 +1,17 @@
 <template>
   <div v-if="show" class="mb-6" data-test="transaction-timeline">
     <h5 class="text-sm font-medium mb-3">{{ title || 'Transaction Progress' }}</h5>
-    <ul class="timeline timeline-vertical">
+    <ul class="timeline timeline-vertical timeline-compact">
       <!-- Step 1: Initiate Transaction -->
       <li>
         <div class="timeline-end timeline-box">
           <div class="flex items-center gap-2">
-            <TimelineIcon :status="steps.initiate.status" />
             <span class="font-medium">{{ steps.initiate.title || 'Initiate' }}</span>
           </div>
           <p class="text-sm text-gray-600 mt-1">{{ steps.initiate.description }}</p>
         </div>
         <div class="timeline-middle">
-          <div class="w-2 h-2 bg-primary rounded-full"></div>
+          <TimelineIcon :status="steps.initiate.status" />
         </div>
         <hr class="bg-primary" />
       </li>
@@ -21,11 +20,10 @@
       <li>
         <hr class="bg-primary" />
         <div class="timeline-middle">
-          <div class="w-2 h-2 bg-primary rounded-full"></div>
+          <TimelineIcon :status="steps.pending.status" />
         </div>
         <div class="timeline-end timeline-box">
           <div class="flex items-center gap-2">
-            <TimelineIcon :status="steps.pending.status" />
             <span class="font-medium">{{ steps.pending.title || 'Transaction Sent' }}</span>
           </div>
           <p class="text-sm text-gray-600 mt-1">{{ steps.pending.description }}</p>
@@ -39,15 +37,14 @@
       <!-- Step 3: Transaction Confirming -->
       <li>
         <hr />
+        <div class="timeline-middle">
+          <TimelineIcon :status="steps.confirming.status" />
+        </div>
         <div class="timeline-end timeline-box">
           <div class="flex items-center gap-2">
-            <TimelineIcon :status="steps.confirming.status" />
             <span class="font-medium">{{ steps.confirming.title || 'Confirming' }}</span>
           </div>
           <p class="text-sm text-gray-600 mt-1">{{ steps.confirming.description }}</p>
-        </div>
-        <div class="timeline-middle">
-          <div class="w-2 h-2 bg-primary rounded-full"></div>
         </div>
         <hr />
       </li>
@@ -56,11 +53,10 @@
       <li>
         <hr />
         <div class="timeline-middle">
-          <div class="w-2 h-2 bg-primary rounded-full"></div>
+          <TimelineIcon :status="steps.complete.status" />
         </div>
         <div class="timeline-end timeline-box">
           <div class="flex items-center gap-2">
-            <TimelineIcon :status="steps.complete.status" />
             <span class="font-medium">{{ steps.complete.title || 'Complete' }}</span>
           </div>
           <p class="text-sm text-gray-600 mt-1">{{ steps.complete.description }}</p>
