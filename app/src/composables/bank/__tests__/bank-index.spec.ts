@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useBankContract } from '../bank/index'
+import { useBankContract } from '../index'
 
 // Hoisted mock variables
 const { 
@@ -11,11 +11,11 @@ const {
 }))
 
 // Mock external dependencies
-vi.mock('../bank/reads', () => ({
+vi.mock('../reads', () => ({
   useBankReads: mockUseBankReads
 }))
 
-vi.mock('../bank/functions', () => ({
+vi.mock('../functions', () => ({
   useBankWritesFunctions: mockUseBankWritesFunctions
 }))
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { BANK_FUNCTION_NAMES, isValidBankFunction, type BankFunctionName } from '../bank/types'
+import { BANK_FUNCTION_NAMES, isValidBankFunction, type BankFunctionName } from '../types'
 
 describe('BANK_FUNCTION_NAMES', () => {
   it('should contain all expected read function names', () => {

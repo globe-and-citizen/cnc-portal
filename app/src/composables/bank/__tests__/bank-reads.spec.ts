@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
-import { useBankReads } from '../bank/reads'
+import { useBankReads } from '../reads'
 
 // Hoisted mock variables
 const { 

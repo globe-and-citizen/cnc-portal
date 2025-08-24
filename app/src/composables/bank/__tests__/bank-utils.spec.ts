@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useValidation, amountToWei } from '../bank/utils'
+import { useValidation, amountToWei } from '../utils'
 import type { Address } from 'viem'
 
 // Hoisted mock variables

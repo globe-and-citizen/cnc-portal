@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useBankWritesFunctions } from '../bank/functions'
-import { BANK_FUNCTION_NAMES } from '../bank/types'
+import { useBankWritesFunctions } from '../functions'
+import { BANK_FUNCTION_NAMES } from '../types'
 import type { Address } from 'viem'
 
 // Hoisted mock variables

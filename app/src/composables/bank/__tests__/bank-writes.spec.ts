@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
-import { useBankWrites } from '../bank/writes'
-import { BANK_FUNCTION_NAMES } from '../bank/types'
+import { useBankWrites } from '../writes'
+import { BANK_FUNCTION_NAMES } from '../types'
 
 // Hoisted mock variables
 const { 
