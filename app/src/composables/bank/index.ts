@@ -16,9 +16,6 @@ export { useBankReads } from './reads'
 export { useBankWrites } from './writes'
 export { useBankWritesFunctions } from './functions'
 
-// Legacy functions
-export { useBankGetFunction } from './legacy'
-
 // Main combined composable
 import { useBankReads } from './reads'
 import { useBankWritesFunctions } from './functions'
