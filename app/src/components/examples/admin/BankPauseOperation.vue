@@ -53,7 +53,7 @@
 
     <!-- Transaction Timeline -->
     <TransactionTimeline
-      :show="showTimeline"
+      :show="true"
       title="Transaction Progress"
       :steps="timelineSteps"
       :transaction-hash="writeContractData"
@@ -122,7 +122,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useBankContract } from '@/composables/bank'
+import { useBankContract } from '@/composables/bank/index'
 import TransactionTimeline from '@/components/ui/TransactionTimeline.vue'
 
 const {
@@ -141,7 +141,6 @@ const {
 
 const { data: isPaused, isLoading: isReadLoading, error: readError } = useBankPaused()
 
-const showTimeline = ref(false)
 const currentOperation = ref<'pause' | 'unpause' | null>(null)
 
 const timelineSteps = computed(() => {
@@ -151,7 +150,7 @@ const timelineSteps = computed(() => {
 
   return {
     initiate: {
-      status: (showTimeline.value ? 'completed' : 'pending') as 'pending' | 'active' | 'completed' | 'error',
+      status: (currentOperation.value ? 'completed' : 'pending') as 'pending' | 'active' | 'completed' | 'error',
       description: `Initiating ${operationText} transaction...`
     },
     pending: {
@@ -184,9 +183,9 @@ const timelineSteps = computed(() => {
 
 watch([isConfirmed, writeError], ([confirmed, error]) => {
   if (confirmed && receipt.value) {
-    setTimeout(() => { showTimeline.value = false; currentOperation.value = null }, 3000)
+    setTimeout(() => { currentOperation.value = null }, 3000)
   } else if (error) {
-    setTimeout(() => { showTimeline.value = false; currentOperation.value = null }, 5000)
+    setTimeout(() => { currentOperation.value = null }, 5000)
   }
 })
 
@@ -194,13 +193,11 @@ const error = computed(() => readError.value)
 
 const handlePauseContract = async () => {
   currentOperation.value = 'pause'
-  showTimeline.value = true
   await pauseContract()
 }
 
 const handleUnpauseContract = async () => {
   currentOperation.value = 'unpause'
-  showTimeline.value = true
   await unpauseContract()
 }
 </script>
