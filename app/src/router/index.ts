@@ -9,7 +9,6 @@ import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { useStorage } from '@vueuse/core'
 import BankView from '@/views/team/[id]/BankView.vue'
 import ContractManagementView from '@/views/team/[id]/ContractManagementView.vue'
-import AdministrationView from '@/views/team/[id]/AdministrationView.vue'
 import SherTokenView from '@/views/team/[id]/SherTokenView.vue'
 import VestingView from '@/views/team/[id]/VestingView.vue'
 import WeeklyClaimView from '@/views/team/[id]/WeeklyClaimView.vue'
@@ -96,12 +95,6 @@ const router = createRouter({
           name: 'contract-management',
           meta: { name: 'Contract Management' },
           component: ContractManagementView
-        },
-        {
-          path: '/teams/:id/administration',
-          name: 'administration',
-          meta: { name: 'Contract Administration' },
-          component: AdministrationView
         },
         {
           path: '/teams/:id/administration/bod-elections',

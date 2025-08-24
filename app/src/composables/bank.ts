@@ -7,4 +7,4 @@
  */
 
 export * from './bank'
-export { default as useBankContract } from './bank'
+export { default as useBankContract } from './bank/index'
