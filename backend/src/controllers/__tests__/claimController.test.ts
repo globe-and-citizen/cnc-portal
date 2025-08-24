@@ -114,7 +114,7 @@ describe("Claim Controller", () => {
       );
     });
 
-    it.skip("should return 400 if user don't have wage", async () => {
+    it("should return 400 if user don't have wage", async () => {
       vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(null);
 
       const response = await request(app)

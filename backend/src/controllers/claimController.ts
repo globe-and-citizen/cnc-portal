@@ -166,7 +166,6 @@ export const getClaims = async (req: Request, res: Response) => {
       memberFilter = {
         wage: {
           userAddress: memberAddress,
-          teamId: teamId,
         },
       };
     }
@@ -176,9 +175,9 @@ export const getClaims = async (req: Request, res: Response) => {
       where: {
         wage: {
           teamId: teamId,
-          ...(memberAddress ? { userAddress: memberAddress } : {}),
         },
         ...statusFilter,
+        ...memberFilter,
       },
       include: {
         wage: {
