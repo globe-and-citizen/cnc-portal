@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
+import TransactionTimelineDemoView from '@/views/TransactionTimelineDemoView.vue'
 import CashRemunerationView from '@/views/team/[id]/CashRemunerationView.vue'
 import ExpenseAccountView from '@/views/team/[id]/ExpenseAccountView.vue'
 import ListIndex from '@/views/team/ListIndex.vue'
@@ -138,6 +139,12 @@ const router = createRouter({
       path: '/transactions',
       name: 'transactions',
       component: TransactionsView
+    },
+    {
+      path: '/timeline-demo',
+      name: 'timeline-demo',
+      meta: { name: 'Transaction Timeline Demo' },
+      component: TransactionTimelineDemoView
     }
   ]
 })
