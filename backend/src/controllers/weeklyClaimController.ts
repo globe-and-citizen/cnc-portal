@@ -5,11 +5,9 @@ import { Prisma } from "@prisma/client";
 import { isHex } from "viem";
 import { isCashRemunerationOwner } from "../utils/cashRemunerationUtil";
 
-// Type pour les actions autorisées sur un weekly claim
 export type WeeklyClaimAction = "sign" | "withdraw";
 type statusType = "pending" | "signed" | "withdrawn";
 
-// Fonction utilitaire pour valider l'action
 function isValidWeeklyClaimAction(action: any): action is WeeklyClaimAction {
   return ["sign", "withdraw", "pending"].includes(action);
 }
