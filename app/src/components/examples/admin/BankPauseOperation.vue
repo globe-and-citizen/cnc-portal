@@ -63,13 +63,7 @@
                 v-if="timelineSteps.initiate.status === 'completed'"
                 class="w-4 h-4 bg-success rounded-full flex items-center justify-center"
               >
-                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
+                <Icon icon="heroicons:check-20-solid" class="w-3 h-3 text-white" />
               </div>
               <div
                 v-else-if="timelineSteps.initiate.status === 'active'"
@@ -100,13 +94,7 @@
                 v-if="timelineSteps.pending.status === 'completed'"
                 class="w-4 h-4 bg-success rounded-full flex items-center justify-center"
               >
-                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
+                <Icon icon="heroicons:check-20-solid" class="w-3 h-3 text-white" />
               </div>
               <div
                 v-else-if="timelineSteps.pending.status === 'active'"
@@ -116,13 +104,7 @@
                 v-else-if="timelineSteps.pending.status === 'error'"
                 class="w-4 h-4 bg-error rounded-full flex items-center justify-center"
               >
-                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
+                <Icon icon="heroicons:x-mark-20-solid" class="w-3 h-3 text-white" />
               </div>
               <div v-else class="w-4 h-4 bg-gray-300 rounded-full"></div>
               <span class="font-medium">Transaction Sent</span>
@@ -144,13 +126,7 @@
                 v-if="timelineSteps.confirming.status === 'completed'"
                 class="w-4 h-4 bg-success rounded-full flex items-center justify-center"
               >
-                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
+                <Icon icon="heroicons:check-20-solid" class="w-3 h-3 text-white" />
               </div>
               <div
                 v-else-if="timelineSteps.confirming.status === 'active'"
@@ -160,13 +136,7 @@
                 v-else-if="timelineSteps.confirming.status === 'error'"
                 class="w-4 h-4 bg-error rounded-full flex items-center justify-center"
               >
-                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
+                <Icon icon="heroicons:x-mark-20-solid" class="w-3 h-3 text-white" />
               </div>
               <div v-else class="w-4 h-4 bg-gray-300 rounded-full"></div>
               <span class="font-medium">Confirming on Blockchain</span>
@@ -191,25 +161,13 @@
                 v-if="timelineSteps.complete.status === 'completed'"
                 class="w-4 h-4 bg-success rounded-full flex items-center justify-center"
               >
-                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
+                <Icon icon="heroicons:check-20-solid" class="w-3 h-3 text-white" />
               </div>
               <div
                 v-else-if="timelineSteps.complete.status === 'error'"
                 class="w-4 h-4 bg-error rounded-full flex items-center justify-center"
               >
-                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
+                <Icon icon="heroicons:x-mark-20-solid" class="w-3 h-3 text-white" />
               </div>
               <div v-else class="w-4 h-4 bg-gray-300 rounded-full"></div>
               <span class="font-medium">Transaction Complete</span>
@@ -285,6 +243,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { Icon } from '@iconify/vue'
 import { useBankContract } from '@/composables/bank'
 
 const {
@@ -317,65 +276,28 @@ const timelineSteps = computed(() => {
       description: `Initiating ${operationText} transaction...`
     },
     pending: {
-      status: isWritePending.value
-        ? 'active'
-        : writeContractData.value
-          ? 'completed'
-          : writeError.value
-            ? 'error'
-            : 'pending',
-      description: writeError.value
-        ? `Transaction failed: ${writeError.value.message}`
-        : writeContractData.value
-          ? 'Transaction sent to blockchain'
-          : 'Waiting for transaction to be sent...'
+      status: isWritePending.value ? 'active' : writeContractData.value ? 'completed' : writeError.value ? 'error' : 'pending',
+      description: writeError.value ? `Transaction failed: ${writeError.value.message}` :
+                  writeContractData.value ? 'Transaction sent to blockchain' : 'Waiting for transaction to be sent...'
     },
     confirming: {
-      status: isConfirming.value
-        ? 'active'
-        : isConfirmed.value
-          ? 'completed'
-          : writeError.value
-            ? 'error'
-            : writeContractData.value
-              ? 'pending'
-              : 'pending',
-      description: isConfirmed.value
-        ? 'Transaction confirmed on blockchain'
-        : isConfirming.value
-          ? 'Waiting for blockchain confirmation...'
-          : writeError.value
-            ? 'Transaction confirmation failed'
-            : 'Waiting for confirmation to start...'
+      status: isConfirming.value ? 'active' : isConfirmed.value ? 'completed' : writeError.value ? 'error' : writeContractData.value ? 'pending' : 'pending',
+      description: isConfirmed.value ? 'Transaction confirmed on blockchain' : isConfirming.value ? 'Waiting for blockchain confirmation...' :
+                  writeError.value ? 'Transaction confirmation failed' : 'Waiting for confirmation to start...'
     },
     complete: {
-      status:
-        isConfirmed.value && receipt.value ? 'completed' : writeError.value ? 'error' : 'pending',
-      description:
-        isConfirmed.value && receipt.value
-          ? `Contract successfully ${operationPastText}!`
-          : writeError.value
-            ? `Failed to ${operationText} contract`
-            : `Waiting for ${operationText} operation to complete...`
+      status: isConfirmed.value && receipt.value ? 'completed' : writeError.value ? 'error' : 'pending',
+      description: isConfirmed.value && receipt.value ? `Contract successfully ${operationPastText}!` :
+                  writeError.value ? `Failed to ${operationText} contract` : `Waiting for ${operationText} operation to complete...`
     }
   }
 })
 
-watch(isConfirmed, (confirmed) => {
+watch([isConfirmed, writeError], ([confirmed, error]) => {
   if (confirmed && receipt.value) {
-    setTimeout(() => {
-      showTimeline.value = false
-      currentOperation.value = null
-    }, 3000)
-  }
-})
-
-watch(writeError, (error) => {
-  if (error) {
-    setTimeout(() => {
-      showTimeline.value = false
-      currentOperation.value = null
-    }, 5000)
+    setTimeout(() => { showTimeline.value = false; currentOperation.value = null }, 3000)
+  } else if (error) {
+    setTimeout(() => { showTimeline.value = false; currentOperation.value = null }, 5000)
   }
 })
 
