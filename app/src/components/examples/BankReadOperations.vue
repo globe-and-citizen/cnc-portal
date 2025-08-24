@@ -124,7 +124,7 @@
 </template>
 
 <script setup lang="ts">
-import { useBankReads } from '@/composables/bank'
+import { useBankReads } from '@/composables/bank/index'
 
 // Get read operations functionality
 const { bankAddress, isBankAddressValid, useBankPaused, useBankOwner, useBankTipsAddress } =
