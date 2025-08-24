@@ -6,5 +6,4 @@ export {
 } from './useContractWrites'
 
 // Contract-specific writes composables
-export { useBankWrites } from '../bank/useBankWrites'
 export { useVestingWrites } from './useVestingWrites'
