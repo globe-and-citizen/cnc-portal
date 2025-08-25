@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useBankReads } from '../reads'
 
 // Hoisted mock variables
-const { 
+const {
   mockUseReadContract,
   mockTeamStore,
   mockIsAddress
@@ -31,21 +31,6 @@ vi.mock('viem', async (importOriginal) => {
     isAddress: mockIsAddress
   }
 })
-
-vi.mock('@/artifacts/abi/bank.json', () => ({
-  default: [
-    {
-      type: 'function',
-      name: 'paused',
-      outputs: [{ name: '', type: 'bool' }]
-    },
-    {
-      type: 'function',
-      name: 'owner',
-      outputs: [{ name: '', type: 'address' }]
-    }
-  ]
-}))
 
 // Test constants
 const MOCK_DATA = {
@@ -75,28 +60,28 @@ describe('useBankReads', () => {
     it('should get bank address from team store', () => {
       mockTeamStore.getContractAddressByType.mockClear()
       const { bankAddress } = useBankReads()
-      
+
       expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Bank')
       expect(bankAddress.value).toBe(MOCK_DATA.validBankAddress)
     })
 
     it('should validate bank address correctly', () => {
       const { isBankAddressValid } = useBankReads()
-      
+
       expect(isBankAddressValid.value).toBe(true)
     })
 
     it('should handle invalid bank address', () => {
       mockTeamStore.getContractAddressByType.mockReturnValue(undefined)
       const { isBankAddressValid } = useBankReads()
-      
+
       expect(isBankAddressValid.value).toBe(false)
     })
 
     it('should handle undefined bank address', () => {
       mockTeamStore.getContractAddressByType.mockReturnValue(undefined)
       const { isBankAddressValid } = useBankReads()
-      
+
       expect(isBankAddressValid.value).toBe(false)
     })
   })
