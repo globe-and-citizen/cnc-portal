@@ -61,7 +61,25 @@ cp recipients.json.example recipients.json
 # Edit recipients.json with your addresses
 ```
 
-### 4. Run the script
+### 4. Quick Start (Recommended)
+
+To run the bulk transfer smoothly, use the provided helper script:
+
+```bash
+./scripts/run-bulk-transfer.sh
+```
+
+This script will handle the setup and execution for you. It is the preferred way to run bulk transfers.
+
+### 5. Run the script
+
+Run the script using Hardhat:
+
+```bash
+npx hardhat run scripts/bulkSendEth.ts --network <network>
+```
+
+Replace `<network>` with your desired network (e.g., `localhost`, `goerli`, `mainnet`).
 
 #### On localhost/hardhat network
 
@@ -128,4 +146,3 @@ npx hardhat run scripts/bulkSendEth.ts --network amoy
 💰 Total ETH sent: 3.0 ETH
 
 🎉 Bulk transfer completed!
-```
