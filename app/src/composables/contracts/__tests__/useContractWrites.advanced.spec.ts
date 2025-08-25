@@ -98,6 +98,29 @@ describe('useContractWrites Gas & Advanced Features', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+
+    // Reset mock implementations with complete return values
+    mockUseWriteContract.mockReturnValue({
+      writeContractAsync: vi.fn(),
+      data: ref(undefined),
+      isPending: ref(false),
+      error: ref(null)
+    })
+
+    mockUseWaitForTransactionReceipt.mockReturnValue({
+      data: ref(undefined),
+      isLoading: ref(false),
+      isSuccess: ref(false),
+      error: ref(null)
+    })
+
+    // Setup useEstimateGas mock
+    mockUseEstimateGas.mockReturnValue({
+      data: ref(MOCK_DATA.gasEstimate),
+      isLoading: ref(false),
+      error: ref(null),
+      refetch: vi.fn().mockResolvedValue({ data: MOCK_DATA.gasEstimate })
+    })
   })
 
   describe('Gas Estimation', () => {
