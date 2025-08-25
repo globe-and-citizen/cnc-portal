@@ -60,9 +60,12 @@ describe('useBankReads', () => {
     it('should get bank address from team store', () => {
       mockTeamStore.getContractAddressByType.mockClear()
       const { bankAddress } = useBankReads()
-
+      
+      // Access the computed value to trigger evaluation
+      const result = bankAddress.value
+      
       expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Bank')
-      expect(bankAddress.value).toBe(MOCK_DATA.validBankAddress)
+      expect(result).toBe(MOCK_DATA.validBankAddress)
     })
 
     it('should validate bank address correctly', () => {
