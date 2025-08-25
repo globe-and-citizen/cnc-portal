@@ -179,17 +179,30 @@ describe('useContractWrites', () => {
   })
   })
 
-  describe.skip('Query Invalidation', () => {
+  describe('Query Invalidation', () => {
     it('should invalidate queries after successful transaction', async () => {
+      const txHash = '0xhash'
+      mockUseWriteContract.mockReturnValue({
+        writeContractAsync: vi.fn().mockResolvedValue(txHash),
+        data: ref(txHash),
+        isPending: ref(false),
+        error: ref(null)
+      })
+
+      const isConfirmed = ref(false)
       mockUseWaitForTransactionReceipt.mockReturnValue({
         data: ref({ status: 'success' }),
         isLoading: ref(false),
-        isSuccess: ref(true),
+        isSuccess: isConfirmed,
         error: ref(null)
       })
 
       const { executeWrite } = useContractWrites(config)
       await executeWrite(MOCK_DATA.functionName, MOCK_DATA.args)
+      
+      // Simulate transaction confirmation
+      isConfirmed.value = true
+      await Promise.resolve() // Wait for watcher to trigger
 
       expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
         queryKey: [
@@ -203,15 +216,28 @@ describe('useContractWrites', () => {
     })
 
     it('should show success toast after transaction confirmation', async () => {
+      const txHash = '0xhash'
+      mockUseWriteContract.mockReturnValue({
+        writeContractAsync: vi.fn().mockResolvedValue(txHash),
+        data: ref(txHash),
+        isPending: ref(false),
+        error: ref(null)
+      })
+
+      const isConfirmed = ref(false)
       mockUseWaitForTransactionReceipt.mockReturnValue({
         data: ref({ status: 'success' }),
         isLoading: ref(false),
-        isSuccess: ref(true),
+        isSuccess: isConfirmed,
         error: ref(null)
       })
 
       const { executeWrite } = useContractWrites(config)
       await executeWrite(MOCK_DATA.functionName, MOCK_DATA.args)
+      
+      // Simulate transaction confirmation
+      isConfirmed.value = true
+      await Promise.resolve() // Wait for watcher to trigger
 
       expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
         'Transaction confirmed successfully'
