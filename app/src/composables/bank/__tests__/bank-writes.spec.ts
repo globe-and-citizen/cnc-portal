@@ -4,7 +4,7 @@ import { useBankWrites } from '../writes'
 import { BANK_FUNCTION_NAMES } from '../types'
 
 // Hoisted mock variables
-const { 
+const {
   mockUseContractWrites,
   mockUseQueryClient,
   mockUseAccount,
@@ -14,7 +14,7 @@ const {
   const mockQueryClient = {
     invalidateQueries: vi.fn()
   }
-  
+
   return {
     mockUseContractWrites: vi.fn(),
     mockUseQueryClient: vi.fn(() => mockQueryClient),
@@ -40,12 +40,25 @@ vi.mock('@tanstack/vue-query', () => ({
   useQueryClient: mockUseQueryClient
 }))
 
-vi.mock('@wagmi/vue', () => ({
-  useAccount: mockUseAccount
-}))
+vi.mock('@wagmi/vue', async () => {
+  return {
+    useAccount: mockUseAccount,
+    createConfig: vi.fn(),
+    mainnet: {},
+    sepolia: {},
+    polygon: {},
+    hardhat: {},
+    useWriteContract: vi.fn(() => ({
+      writeContract: vi.fn(),
+      isPending: ref(false),
+      error: ref(null)
+    })),
+    polygonAmoy: {}
+  }
+})
 
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore)
+vi.mock('@/utils', () => ({
+  parseError: (error: unknown) => String(error)
 }))
 
 vi.mock('@/artifacts/abi/bank.json', () => ({
@@ -53,15 +66,26 @@ vi.mock('@/artifacts/abi/bank.json', () => ({
     {
       type: 'function',
       name: 'pause',
-      inputs: []
+      inputs: [],
+      outputs: []
     },
     {
-      type: 'function', 
+      type: 'function',
       name: 'unpause',
-      inputs: []
+      inputs: [],
+      outputs: []
     }
   ]
 }))
+
+vi.mock('@/stores', () => ({
+  useTeamStore: vi.fn(() => mockTeamStore),
+  useToastStore: vi.fn(() => ({
+    addSuccessToast: vi.fn(),
+    addErrorToast: vi.fn()
+  }))
+}))
+
 
 // Test constants
 const MOCK_DATA = {
@@ -116,7 +140,7 @@ describe('useBankWrites', () => {
   describe('executeWrite', () => {
     it('should execute write with valid bank function', async () => {
       const { executeWrite } = useBankWrites()
-      
+
       await executeWrite(MOCK_DATA.functionName, MOCK_DATA.args, MOCK_DATA.value, MOCK_DATA.options)
 
       expect(mockBaseWrites.executeWrite).toHaveBeenCalledWith(
@@ -129,7 +153,7 @@ describe('useBankWrites', () => {
 
     it('should throw error for invalid bank function', async () => {
       const { executeWrite } = useBankWrites()
-      
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await expect(executeWrite('invalidFunction' as any)).rejects.toThrow(
         'Invalid bank function: invalidFunction'
@@ -140,7 +164,7 @@ describe('useBankWrites', () => {
       const { executeWrite } = useBankWrites()
 
       const validFunctions = Object.values(BANK_FUNCTION_NAMES)
-      
+
       for (const functionName of validFunctions) {
         await executeWrite(functionName)
         expect(mockBaseWrites.executeWrite).toHaveBeenCalledWith(
@@ -158,7 +182,7 @@ describe('useBankWrites', () => {
   describe('estimateGas', () => {
     it('should estimate gas with valid bank function', async () => {
       const { estimateGas } = useBankWrites()
-      
+
       await estimateGas(MOCK_DATA.functionName, MOCK_DATA.args, MOCK_DATA.value)
 
       expect(mockBaseWrites.estimateGas).toHaveBeenCalledWith(
@@ -170,7 +194,7 @@ describe('useBankWrites', () => {
 
     it('should throw error for invalid bank function', async () => {
       const { estimateGas } = useBankWrites()
-      
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await expect(estimateGas('invalidFunction' as any)).rejects.toThrow(
         'Invalid bank function: invalidFunction'
@@ -182,7 +206,7 @@ describe('useBankWrites', () => {
     it('should check if transaction can execute with valid function', async () => {
       mockBaseWrites.canExecuteTransaction.mockResolvedValue(true)
       const { canExecuteTransaction } = useBankWrites()
-      
+
       const result = await canExecuteTransaction(MOCK_DATA.functionName, MOCK_DATA.args, MOCK_DATA.value)
 
       expect(mockBaseWrites.canExecuteTransaction).toHaveBeenCalledWith(
@@ -195,7 +219,7 @@ describe('useBankWrites', () => {
 
     it('should return false for invalid bank function', async () => {
       const { canExecuteTransaction } = useBankWrites()
-      
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await canExecuteTransaction('invalidFunction' as any)
 
@@ -345,19 +369,19 @@ describe('useBankWrites', () => {
   describe('Edge Cases', () => {
     it('should handle undefined chain ID', () => {
       mockUseAccount.mockReturnValue({ chainId: ref(null as unknown as number) })
-      
+
       expect(() => useBankWrites()).not.toThrow()
     })
 
     it('should handle missing bank address', () => {
       mockTeamStore.getContractAddressByType.mockReturnValue(undefined)
-      
+
       expect(() => useBankWrites()).not.toThrow()
     })
 
     it('should work with default parameters', async () => {
       const { executeWrite } = useBankWrites()
-      
+
       await executeWrite(BANK_FUNCTION_NAMES.PAUSE)
 
       expect(mockBaseWrites.executeWrite).toHaveBeenCalledWith(
