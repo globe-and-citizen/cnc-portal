@@ -1,5 +1,5 @@
 import type { Address } from 'viem'
-type ContractType =
+export type ContractType =
   | 'Bank'
   | 'InvestorsV1'
   | 'Voting'
