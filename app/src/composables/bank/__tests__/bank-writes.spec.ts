@@ -9,7 +9,10 @@ const {
   mockUseQueryClient,
   mockUseAccount,
   mockTeamStore,
-  mockQueryClient
+  mockQueryClient,
+  mockUseWriteContract,
+  mockUseWaitForTransactionReceipt,
+  mockUseEstimateGas
 } = vi.hoisted(() => {
   const mockQueryClient = {
     invalidateQueries: vi.fn()
@@ -27,7 +30,25 @@ const {
         return undefined
       })
     },
-    mockQueryClient
+    mockQueryClient,
+    mockUseWriteContract: vi.fn(() => ({
+      writeContractAsync: vi.fn(),
+      data: ref(undefined),
+      isPending: ref(false),
+      error: ref(null)
+    })),
+    mockUseWaitForTransactionReceipt: vi.fn(() => ({
+      data: ref(undefined),
+      isLoading: ref(false),
+      isSuccess: ref(false),
+      error: ref(null)
+    })),
+    mockUseEstimateGas: vi.fn(() => ({
+      data: ref(undefined),
+      isLoading: ref(false),
+      error: ref(null),
+      refetch: vi.fn()
+    }))
   }
 })
 
@@ -48,11 +69,9 @@ vi.mock('@wagmi/vue', async () => {
     sepolia: {},
     polygon: {},
     hardhat: {},
-    useWriteContract: vi.fn(() => ({
-      writeContract: vi.fn(),
-      isPending: ref(false),
-      error: ref(null)
-    })),
+    useWriteContract: mockUseWriteContract,
+    useWaitForTransactionReceipt: mockUseWaitForTransactionReceipt,
+    useEstimateGas: mockUseEstimateGas,
     polygonAmoy: {}
   }
 })
