@@ -9,6 +9,16 @@
               variant="primary"
               :enabled="team.ownerAddress == useUserDataStore().address"
               data-test="createAddCampaign"
+              @click="showAdCampaignModal = true"
+            >
+              Create Advertisement
+            </ButtonUI>
+          </div>
+          <div>
+            <ButtonUI
+              variant="primary"
+              :enabled="team.ownerAddress == useUserDataStore().address"
+              data-test="createAddCampaign"
             >
               Redeploy Contracts
             </ButtonUI>
@@ -16,20 +26,26 @@
         </template>
         <MainContractTable />
       </CardComponent>
+      <ModalComponent v-model="showAdCampaignModal">
+        <CreateAddCampaign />
+      </ModalComponent>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MainContractTable from './MainContractTable.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
+import CreateAddCampaign from '@/components/forms/CreateAddCampaign.vue'
 
 const teamStore = useTeamStore()
 const team = computed(() => teamStore.currentTeam)
+const showAdCampaignModal = ref(false)
 
 const teamIsFetching = computed(() => teamStore.currentTeamMeta.teamIsFetching)
 </script>

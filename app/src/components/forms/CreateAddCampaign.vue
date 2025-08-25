@@ -7,7 +7,7 @@
       <input
         type="string"
         class="grow"
-        v-model="_bankAddress"
+        v-model="bankAddress"
         disabled="true"
         required
         data-testid="bank-address-input"
@@ -68,30 +68,21 @@ import { useDeployContract } from '@/composables/useContractFunctions'
 import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
-import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+import AdCampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
+import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
 import type { Abi, Hex, Address } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
-const props = defineProps<{
-  bankAddress: Address
-}>()
+const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+
 import { useCustomFetch } from '@/composables/useCustomFetch'
-const campaignAbi = AdCampaignArtifact.abi as Abi
-const campaignBytecode = AdCampaignArtifact.bytecode as Hex
+const campaignAbi = AdCampaignAbi as Abi
+const campaignBytecode = CAMPAIGN_BYTECODE as Hex
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const user = computed(() => userDataStore)
 const team = computed(() => teamStore.currentTeam)
 const costPerClick = ref()
 const costPerImpression = ref()
-const _bankAddress = ref<Address | null>(null)
-
-watch(
-  () => props.bankAddress, // Watching the prop
-  (newBankAddress) => {
-    _bankAddress.value = newBankAddress // Update _bankAddress when bankAddress prop changes
-  },
-  { immediate: true } // Ensure it runs the first time when the component is initialized
-)
 
 //import composable..
 // Import composable
@@ -133,11 +124,11 @@ const deployAdCampaign = async () => {
     addErrorToast('Please enter valid numeric values for both rates.')
     return
   }
-  if (!_bankAddress.value) {
+  if (!bankAddress.value) {
     addErrorToast('Bank address is missing.')
     return
   }
-  await deploy(_bankAddress.value, costPerClick.value, costPerImpression.value)
+  await deploy(bankAddress.value, costPerClick.value, costPerImpression.value)
 
   if (deployError.value) {
     let errorMessage = deployError.value?.message || 'deployment failed, please retry'
