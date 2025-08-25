@@ -146,3 +146,4 @@ npx hardhat run scripts/bulkSendEth.ts --network amoy
 💰 Total ETH sent: 3.0 ETH
 
 🎉 Bulk transfer completed!
+```
