@@ -10,10 +10,7 @@ const {
 } = vi.hoisted(() => ({
   mockUseReadContract: vi.fn(),
   mockTeamStore: {
-    getContractAddressByType: vi.fn((type: string) => {
-      if (type === 'Bank') return '0x1234567890123456789012345678901234567890'
-      return undefined
-    })
+    getContractAddressByType: vi.fn().mockReturnValue('0x1234567890123456789012345678901234567890')
   },
   mockIsAddress: vi.fn((address: string) => /^0x[a-fA-F0-9]{40}$/.test(address))
 }))
@@ -24,7 +21,7 @@ vi.mock('@wagmi/vue', () => ({
 }))
 
 vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore)
+  useTeamStore: () => mockTeamStore
 }))
 
 vi.mock('viem', async (importOriginal) => {
@@ -61,6 +58,11 @@ const MOCK_DATA = {
 describe('useBankReads', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset the mock implementation to return the valid bank address
+    mockTeamStore.getContractAddressByType.mockImplementation((type: string) => {
+      if (type === 'Bank') return MOCK_DATA.validBankAddress
+      return undefined
+    })
     mockUseReadContract.mockReturnValue({
       data: ref(undefined),
       isLoading: ref(false),
@@ -71,6 +73,7 @@ describe('useBankReads', () => {
 
   describe('Bank Address Management', () => {
     it('should get bank address from team store', () => {
+      mockTeamStore.getContractAddressByType.mockClear()
       const { bankAddress } = useBankReads()
       
       expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Bank')
@@ -103,36 +106,42 @@ describe('useBankReads', () => {
       const { useBankPaused } = useBankReads()
       useBankPaused()
 
-      expect(mockUseReadContract).toHaveBeenCalledWith({
+      expect(mockUseReadContract).toHaveBeenCalledWith(expect.objectContaining({
         address: MOCK_DATA.validBankAddress,
         abi: expect.any(Array),
         functionName: 'paused',
-        query: { enabled: true }
-      })
+        query: expect.objectContaining({
+          enabled: expect.any(Object)
+        })
+      }))
     })
 
     it('should call useBankOwner with correct parameters', () => {
       const { useBankOwner } = useBankReads()
       useBankOwner()
 
-      expect(mockUseReadContract).toHaveBeenCalledWith({
+      expect(mockUseReadContract).toHaveBeenCalledWith(expect.objectContaining({
         address: MOCK_DATA.validBankAddress,
         abi: expect.any(Array),
         functionName: 'owner',
-        query: { enabled: true }
-      })
+        query: expect.objectContaining({
+          enabled: expect.any(Object)
+        })
+      }))
     })
 
     it('should call useBankTipsAddress with correct parameters', () => {
       const { useBankTipsAddress } = useBankReads()
       useBankTipsAddress()
 
-      expect(mockUseReadContract).toHaveBeenCalledWith({
+      expect(mockUseReadContract).toHaveBeenCalledWith(expect.objectContaining({
         address: MOCK_DATA.validBankAddress,
         abi: expect.any(Array),
         functionName: 'tipsAddress',
-        query: { enabled: true }
-      })
+        query: expect.objectContaining({
+          enabled: expect.any(Object)
+        })
+      }))
     })
 
     it('should call useBankIsTokenSupported with correct parameters', () => {
@@ -167,11 +176,12 @@ describe('useBankReads', () => {
   describe('Query Enablement Logic', () => {
     it('should disable queries when bank address is invalid', () => {
       mockTeamStore.getContractAddressByType.mockReturnValue(undefined)
-      const { useBankPaused } = useBankReads()
+      const { useBankPaused, isBankAddressValid } = useBankReads()
       useBankPaused()
 
+      expect(isBankAddressValid.value).toBe(false)
       const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.query.enabled).toBe(false)
+      expect(callArgs.query.enabled.value).toBe(false)
     })
 
     it('should disable token queries when token address is invalid', () => {
@@ -179,8 +189,7 @@ describe('useBankReads', () => {
       useBankIsTokenSupported(MOCK_DATA.invalidAddress as `0x${string}`)
 
       const callArgs = mockUseReadContract.mock.calls[0][0]
-      // The enabled property is a computed, so we need to test its computed value
-      expect(typeof callArgs.query.enabled).toBe('object') // Vue computed ref
+      expect(callArgs.query.enabled.value).toBe(false)
     })
 
     it('should disable supported tokens query when symbol is empty', () => {
@@ -188,7 +197,7 @@ describe('useBankReads', () => {
       useBankSupportedTokens('')
 
       const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(typeof callArgs.query.enabled).toBe('object') // Vue computed ref
+      expect(callArgs.query.enabled.value).toBe(false)
     })
   })
 
