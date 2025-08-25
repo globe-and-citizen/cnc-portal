@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import TransactionsView from '@/views/TransactionsView.vue'
+import TransactionTimelineDemoView from '@/views/TransactionTimelineDemoView.vue'
 import CashRemunerationView from '@/views/team/[id]/CashRemunerationView.vue'
 import ExpenseAccountView from '@/views/team/[id]/ExpenseAccountView.vue'
 import ListIndex from '@/views/team/ListIndex.vue'
@@ -9,7 +10,6 @@ import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { useStorage } from '@vueuse/core'
 import BankView from '@/views/team/[id]/BankView.vue'
 import ContractManagementView from '@/views/team/[id]/ContractManagementView.vue'
-import AdministrationView from '@/views/team/[id]/AdministrationView.vue'
 import SherTokenView from '@/views/team/[id]/SherTokenView.vue'
 import VestingView from '@/views/team/[id]/VestingView.vue'
 import WeeklyClaimView from '@/views/team/[id]/WeeklyClaimView.vue'
@@ -18,6 +18,7 @@ import BodElectionView from '@/views/team/[id]/BodElectionView.vue'
 import ProposalsView from '@/views/team/[id]/ProposalsView.vue'
 import ProposalDetail from '@/components/sections/ProposalsView/ProposalDetail.vue'
 import BodElectionDetailsView from '@/views/team/[id]/BodElectionDetailsView.vue'
+import BankTestView from '@/views/BankTestView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -97,12 +98,6 @@ const router = createRouter({
           component: ContractManagementView
         },
         {
-          path: '/teams/:id/administration',
-          name: 'administration',
-          meta: { name: 'Contract Administration' },
-          component: AdministrationView
-        },
-        {
           path: '/teams/:id/administration/bod-elections',
           name: 'bod-elections',
           meta: { name: 'BoD Election' },
@@ -131,6 +126,12 @@ const router = createRouter({
           name: 'sher-token',
           meta: { name: 'SHER Token' },
           component: SherTokenView
+        },
+        {
+          path: '/teams/:id/bank-test',
+          name: 'bank-test',
+          meta: { name: 'Bank Testing' },
+          component: BankTestView
         }
       ]
     },
@@ -138,6 +139,12 @@ const router = createRouter({
       path: '/transactions',
       name: 'transactions',
       component: TransactionsView
+    },
+    {
+      path: '/timeline-demo',
+      name: 'timeline-demo',
+      meta: { name: 'Transaction Timeline Demo' },
+      component: TransactionTimelineDemoView
     }
   ]
 })
