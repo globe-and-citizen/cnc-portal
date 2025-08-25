@@ -5,7 +5,7 @@ import type { ContractWriteConfig } from '../useContractWrites'
 import { type Address } from 'viem'
 
 // Hoisted mock variables
-const { 
+const {
   mockUseWriteContract,
   mockUseWaitForTransactionReceipt,
   mockUseAccount,
@@ -157,26 +157,48 @@ describe('useContractWrites', () => {
     })
 
     it('should expose error from useWriteContract when it fails', async () => {
-    const writeError = ref(new Error('Write failed'))
-    mockUseWriteContract.mockReturnValue({
-      writeContractAsync: vi.fn().mockRejectedValue(writeError.value),
-      error: writeError,
-      isPending: ref(false)
-    })
+      // Setup console spy to verify error logging
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      
+      const error = new Error('Write failed')
+      const writeError = ref<Error | null>(null)
+      const writeContractMock = vi.fn().mockRejectedValue(error)
+      
+      mockUseWriteContract.mockReturnValue({
+        writeContractAsync: writeContractMock,
+        data: ref(undefined),
+        error: writeError,
+        isPending: ref(false)
+      })
 
-    const { canExecuteTransaction, estimateGas, estimateGasForEncodedData } = useContractWrites({
-      contractAddress: MOCK_DATA.contractAddress,
-      abi: MOCK_ABI
-    })
+      const { executeWrite } = useContractWrites(config)
 
-    try {
-      await estimateGas(MOCK_DATA.functionName, MOCK_DATA.args)
-    } catch (error) {
-      if (error instanceof Error) {
-        expect(error.message).toBe('Write failed')
-      }
-    }
-  })
+      // Attempt the write operation which will fail
+      const writePromise = executeWrite(MOCK_DATA.functionName, MOCK_DATA.args)
+      
+      // Update the error ref to trigger the watcher
+      writeError.value = error
+      
+      // Verify the write operation fails
+      await expect(writePromise).rejects.toThrow('Write failed')
+
+      // Wait for watcher to trigger
+      await Promise.resolve()
+
+      // Verify error was logged
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Contract write error:',
+        expect.any(Error)
+      )
+
+      // Verify error toast was shown
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+        expect.stringContaining('Transaction failed')
+      )
+
+      // Cleanup
+      consoleErrorSpy.mockRestore()
+    })
   })
 
   describe('Query Invalidation', () => {
@@ -199,7 +221,7 @@ describe('useContractWrites', () => {
 
       const { executeWrite } = useContractWrites(config)
       await executeWrite(MOCK_DATA.functionName, MOCK_DATA.args)
-      
+
       // Simulate transaction confirmation
       isConfirmed.value = true
       await Promise.resolve() // Wait for watcher to trigger
@@ -234,7 +256,7 @@ describe('useContractWrites', () => {
 
       const { executeWrite } = useContractWrites(config)
       await executeWrite(MOCK_DATA.functionName, MOCK_DATA.args)
-      
+
       // Simulate transaction confirmation
       isConfirmed.value = true
       await Promise.resolve() // Wait for watcher to trigger
@@ -250,14 +272,14 @@ describe('useContractWrites', () => {
       const error = new Error('Receipt error')
       const txError = ref<Error | null>(error)
       const writeData = ref('0xhash')
-      
+
       mockUseWriteContract.mockReturnValue({
         writeContractAsync: vi.fn().mockResolvedValue('0xhash'),
         data: writeData,
         isPending: ref(false),
         error: ref(null)
       })
-      
+
       mockUseWaitForTransactionReceipt.mockReturnValue({
         data: ref(undefined),
         isLoading: ref(false),
@@ -266,7 +288,7 @@ describe('useContractWrites', () => {
       })
 
       const { executeWrite } = useContractWrites(config)
-      
+
       try {
         await executeWrite(MOCK_DATA.functionName, MOCK_DATA.args)
       } catch (e) {
@@ -280,7 +302,7 @@ describe('useContractWrites', () => {
     it('should handle write contract errors', async () => {
       const error = new Error('Write error')
       const writeError = ref<Error | null>(error)
-      
+
       mockUseWriteContract.mockReturnValue({
         writeContractAsync: vi.fn().mockRejectedValue(error),
         data: ref(undefined),
