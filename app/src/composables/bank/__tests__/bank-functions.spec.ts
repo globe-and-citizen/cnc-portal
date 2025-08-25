@@ -1,172 +1,186 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useBankWritesFunctions } from '../functions'
-import { BANK_FUNCTION_NAMES } from '../types'
-import type { Address } from 'viem'
+import { ref } from 'vue'
+import { useBankFunctions } from '../functions'
 
 // Hoisted mock variables
-const { 
-  mockUseBankWrites,
-  mockUseValidation,
-  mockAmountToWei,
-  mockAddErrorToast
+const {
+  mockUseWriteContract,
+  mockUseWaitForTransactionReceipt,
+  mockTeamStore,
+  mockToastStore,
+  mockIsAddress
 } = vi.hoisted(() => ({
-  mockUseBankWrites: vi.fn(),
-  mockUseValidation: vi.fn(),
-  mockAmountToWei: vi.fn(),
-  mockAddErrorToast: vi.fn()
+  mockUseWriteContract: vi.fn(),
+  mockUseWaitForTransactionReceipt: vi.fn(),
+  mockTeamStore: {
+    getContractAddressByType: vi.fn().mockReturnValue('0x1234567890123456789012345678901234567890')
+  },
+  mockToastStore: {
+    addSuccessToast: vi.fn(),
+    addErrorToast: vi.fn()
+  },
+  mockIsAddress: vi.fn((address: string) => /^0x[a-fA-F0-9]{40}$/.test(address))
 }))
 
 // Mock external dependencies
-vi.mock('./writes', () => ({
-  useBankWrites: mockUseBankWrites
-}))
-
-vi.mock('./utils', () => ({
-  useValidation: mockUseValidation,
-  amountToWei: mockAmountToWei
+vi.mock('@wagmi/vue', () => ({
+  useWriteContract: mockUseWriteContract,
+  useWaitForTransactionReceipt: mockUseWaitForTransactionReceipt
 }))
 
 vi.mock('@/stores', () => ({
-  useToastStore: vi.fn(() => ({
-    addErrorToast: mockAddErrorToast
-  }))
+  useTeamStore: () => mockTeamStore,
+  useToastStore: () => mockToastStore
 }))
+
+vi.mock('viem', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    isAddress: mockIsAddress
+  }
+})
 
 // Test constants
 const MOCK_DATA = {
-  validAddress: '0x1234567890123456789012345678901234567890' as Address,
-  invalidAddress: 'invalid-address' as Address,
-  validAmount: '1.5',
-  invalidAmount: '0',
-  tokenSymbol: 'USDC',
-  emptySymbol: '',
-  addresses: [
-    '0x1234567890123456789012345678901234567890',
-    '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef'
-  ] as Address[],
-  amountInWei: BigInt('1500000000000000000')
+  validBankAddress: '0x1234567890123456789012345678901234567890',
+  validTokenAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef',
+  validUserAddress: '0x9876543210987654321098765432109876543210',
+  invalidAddress: 'invalid-address',
+  amount: BigInt(1000000),
+  transactionHash: '0x123456789abcdef',
+  tokenSymbol: 'USDC'
 } as const
 
-const mockWrites = {
-  executeWrite: vi.fn()
-}
-
-const mockValidation = {
-  validateAmount: vi.fn(),
-  validateAddress: vi.fn(),
-  validateTipParams: vi.fn()
-}
-
-describe('useBankWritesFunctions', () => {
+describe('useBankFunctions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseBankWrites.mockReturnValue(mockWrites)
-    mockUseValidation.mockReturnValue(mockValidation)
-    mockAmountToWei.mockReturnValue(MOCK_DATA.amountInWei)
+    // Reset mock implementations
+    mockTeamStore.getContractAddressByType.mockImplementation((type: string) => {
+      if (type === 'Bank') return MOCK_DATA.validBankAddress
+      return undefined
+    })
+    mockUseWriteContract.mockReturnValue({
+      writeContract: vi.fn(),
+      data: ref(undefined),
+      isLoading: ref(false),
+      error: ref(null),
+      isSuccess: ref(false)
+    })
+    mockUseWaitForTransactionReceipt.mockReturnValue({
+      data: ref(undefined),
+      isLoading: ref(false),
+      error: ref(null),
+      isSuccess: ref(false)
+    })
+  })
+
+  describe('Bank Address Management', () => {
+    it('should get bank address from team store', () => {
+      mockTeamStore.getContractAddressByType.mockClear()
+      const { bankAddress } = useBankFunctions()
+      
+      expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Bank')
+      expect(bankAddress.value).toBe(MOCK_DATA.validBankAddress)
+    })
+
+    it('should validate bank address correctly', () => {
+      const { isBankAddressValid } = useBankFunctions()
+      expect(isBankAddressValid.value).toBe(true)
+    })
   })
 
   describe('Admin Functions', () => {
-    describe('pauseContract', () => {
-      it('should call executeWrite with PAUSE function', () => {
-        const { pauseContract } = useBankWritesFunctions()
-        
-        pauseContract()
+    it('should call addTokenSupport with correct parameters', async () => {
+      const { addTokenSupport } = useBankFunctions()
+      const writeContractMock = vi.fn().mockResolvedValue({ hash: MOCK_DATA.transactionHash })
+      mockUseWriteContract.mockReturnValue({
+        writeContract: writeContractMock,
+        data: ref(undefined),
+        isLoading: ref(false),
+        error: ref(null),
+        isSuccess: ref(false)
+      })
 
-        expect(mockWrites.executeWrite).toHaveBeenCalledWith(BANK_FUNCTION_NAMES.PAUSE)
+      await addTokenSupport(MOCK_DATA.validTokenAddress)
+
+      expect(writeContractMock).toHaveBeenCalledWith({
+        address: MOCK_DATA.validBankAddress,
+        abi: expect.any(Array),
+        functionName: 'addTokenSupport',
+        args: [MOCK_DATA.validTokenAddress]
       })
     })
 
-    describe('unpauseContract', () => {
-      it('should call executeWrite with UNPAUSE function', () => {
-        const { unpauseContract } = useBankWritesFunctions()
-        
-        unpauseContract()
-
-        expect(mockWrites.executeWrite).toHaveBeenCalledWith(BANK_FUNCTION_NAMES.UNPAUSE)
+    it('should show success toast on successful token support addition', async () => {
+      const { addTokenSupport } = useBankFunctions()
+      const writeContractMock = vi.fn().mockResolvedValue({ hash: MOCK_DATA.transactionHash })
+      mockUseWriteContract.mockReturnValue({
+        writeContract: writeContractMock,
+        data: ref({ hash: MOCK_DATA.transactionHash }),
+        isLoading: ref(false),
+        error: ref(null),
+        isSuccess: ref(true)
       })
+
+      await addTokenSupport(MOCK_DATA.validTokenAddress)
+
+      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
+        expect.stringContaining('Token support added')
+      )
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('should handle invalid addresses', async () => {
+      const { addTokenSupport } = useBankFunctions()
+      await addTokenSupport(MOCK_DATA.invalidAddress as `0x${string}`)
+
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+        expect.stringContaining('Invalid address')
+      )
+      expect(mockUseWriteContract).not.toHaveBeenCalled()
     })
 
-    describe('changeTipsAddress', () => {
-      it('should execute with valid address', () => {
-        mockValidation.validateAddress.mockReturnValue(true)
-        const { changeTipsAddress } = useBankWritesFunctions()
-        
-        const result = changeTipsAddress(MOCK_DATA.validAddress)
-
-        expect(mockValidation.validateAddress).toHaveBeenCalledWith(MOCK_DATA.validAddress, 'tips address')
-        expect(mockWrites.executeWrite).toHaveBeenCalledWith(
-          BANK_FUNCTION_NAMES.CHANGE_TIPS_ADDRESS,
-          [MOCK_DATA.validAddress]
-        )
-        expect(result).toBeDefined()
+    it('should handle transaction failures', async () => {
+      const { addTokenSupport } = useBankFunctions()
+      const writeContractMock = vi.fn().mockRejectedValue(new Error('Transaction failed'))
+      mockUseWriteContract.mockReturnValue({
+        writeContract: writeContractMock,
+        data: ref(undefined),
+        isLoading: ref(false),
+        error: ref(new Error('Transaction failed')),
+        isSuccess: ref(false)
       })
 
-      it('should not execute with invalid address', () => {
-        mockValidation.validateAddress.mockReturnValue(false)
-        const { changeTipsAddress } = useBankWritesFunctions()
-        
-        const result = changeTipsAddress(MOCK_DATA.invalidAddress)
+      await addTokenSupport(MOCK_DATA.validTokenAddress)
 
-        expect(mockValidation.validateAddress).toHaveBeenCalledWith(MOCK_DATA.invalidAddress, 'tips address')
-        expect(mockWrites.executeWrite).not.toHaveBeenCalled()
-        expect(result).toBeUndefined()
-      })
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+        expect.stringContaining('failed')
+      )
     })
   })
 
   describe('Transfer Functions', () => {
-    describe('transferEth', () => {
-      it('should execute with valid parameters', () => {
-        mockValidation.validateAddress.mockReturnValue(true)
-        mockValidation.validateAmount.mockReturnValue(true)
-        const { transferEth } = useBankWritesFunctions()
-        
-        const result = transferEth(MOCK_DATA.validAddress, MOCK_DATA.validAmount)
-
-        expect(mockValidation.validateAddress).toHaveBeenCalledWith(MOCK_DATA.validAddress, 'recipient address')
-        expect(mockValidation.validateAmount).toHaveBeenCalledWith(MOCK_DATA.validAmount)
-        expect(mockAmountToWei).toHaveBeenCalledWith(MOCK_DATA.validAmount)
-        expect(mockWrites.executeWrite).toHaveBeenCalledWith(
-          BANK_FUNCTION_NAMES.TRANSFER,
-          [MOCK_DATA.validAddress, MOCK_DATA.amountInWei],
-          MOCK_DATA.amountInWei
-        )
-        expect(result).toBeDefined()
+    it('should call transferERC20 with correct parameters', async () => {
+      const { transferERC20 } = useBankFunctions()
+      const writeContractMock = vi.fn().mockResolvedValue({ hash: MOCK_DATA.transactionHash })
+      mockUseWriteContract.mockReturnValue({
+        writeContract: writeContractMock,
+        data: ref(undefined),
+        isLoading: ref(false),
+        error: ref(null),
+        isSuccess: ref(false)
       })
-    })
-  })
 
-  describe('Tipping Functions', () => {
-    describe('sendEthTip', () => {
-      it('should execute with valid parameters', () => {
-        mockValidation.validateTipParams.mockReturnValue(true)
-        const { sendEthTip } = useBankWritesFunctions()
-        
-        const result = sendEthTip(MOCK_DATA.addresses, MOCK_DATA.validAmount)
+      await transferERC20(MOCK_DATA.validTokenAddress, MOCK_DATA.validUserAddress, MOCK_DATA.amount)
 
-        expect(mockValidation.validateTipParams).toHaveBeenCalledWith(MOCK_DATA.addresses, MOCK_DATA.validAmount)
-        expect(mockAmountToWei).toHaveBeenCalledWith(MOCK_DATA.validAmount)
-        expect(mockWrites.executeWrite).toHaveBeenCalledWith(
-          BANK_FUNCTION_NAMES.SEND_TIP,
-          [MOCK_DATA.addresses, MOCK_DATA.amountInWei],
-          MOCK_DATA.amountInWei
-        )
-        expect(result).toBeDefined()
+      expect(writeContractMock).toHaveBeenCalledWith({
+        address: MOCK_DATA.validBankAddress,
+        abi: expect.any(Array),
+        functionName: 'transferERC20',
+        args: [MOCK_DATA.validTokenAddress, MOCK_DATA.validUserAddress, MOCK_DATA.amount]
       })
-    })
-  })
-
-  describe('Return Interface', () => {
-    it('should return all admin functions', () => {
-      const bankFunctions = useBankWritesFunctions()
-
-      expect(bankFunctions).toHaveProperty('pauseContract')
-      expect(bankFunctions).toHaveProperty('unpauseContract')
-      expect(bankFunctions).toHaveProperty('changeTipsAddress')
-
-      expect(typeof bankFunctions.pauseContract).toBe('function')
-      expect(typeof bankFunctions.unpauseContract).toBe('function')
-      expect(typeof bankFunctions.changeTipsAddress).toBe('function')
     })
   })
 })
