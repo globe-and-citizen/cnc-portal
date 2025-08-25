@@ -11,7 +11,6 @@ const {
   mockUseWaitForTransactionReceipt,
   mockUseAccount,
   mockUseQueryClient,
-  mockQueryClient,
   mockToastStore
 } = vi.hoisted(() => {
   const mockQueryClient = {
