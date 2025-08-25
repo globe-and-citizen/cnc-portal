@@ -79,7 +79,7 @@ describe('useBankFunctions', () => {
     it('should get bank address from team store', () => {
       mockTeamStore.getContractAddressByType.mockClear()
       const { bankAddress } = useBankFunctions()
-      
+
       expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Bank')
       expect(bankAddress.value).toBe(MOCK_DATA.validBankAddress)
     })
@@ -155,9 +155,7 @@ describe('useBankFunctions', () => {
 
       await addTokenSupport(MOCK_DATA.validTokenAddress)
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-        expect.stringContaining('failed')
-      )
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(expect.stringContaining('failed'))
     })
   })
 

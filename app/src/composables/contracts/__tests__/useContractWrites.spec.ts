@@ -159,11 +159,11 @@ describe('useContractWrites', () => {
     it('should expose error from useWriteContract when it fails', async () => {
       // Setup console spy to verify error logging
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      
+
       const error = new Error('Write failed')
       const writeError = ref<Error | null>(null)
       const writeContractMock = vi.fn().mockRejectedValue(error)
-      
+
       mockUseWriteContract.mockReturnValue({
         writeContractAsync: writeContractMock,
         data: ref(undefined),
@@ -175,10 +175,10 @@ describe('useContractWrites', () => {
 
       // Attempt the write operation which will fail
       const writePromise = executeWrite(MOCK_DATA.functionName, MOCK_DATA.args)
-      
+
       // Update the error ref to trigger the watcher
       writeError.value = error
-      
+
       // Verify the write operation fails
       await expect(writePromise).rejects.toThrow('Write failed')
 
@@ -186,10 +186,7 @@ describe('useContractWrites', () => {
       await Promise.resolve()
 
       // Verify error was logged
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Contract write error:',
-        expect.any(Error)
-      )
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Contract write error:', expect.any(Error))
 
       // Verify error toast was shown
       expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(

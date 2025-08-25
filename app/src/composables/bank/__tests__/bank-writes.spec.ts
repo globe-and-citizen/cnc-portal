@@ -86,7 +86,6 @@ vi.mock('@/stores', () => ({
   }))
 }))
 
-
 // Test constants
 const MOCK_DATA = {
   bankAddress: '0x1234567890123456789012345678901234567890',
@@ -207,7 +206,11 @@ describe('useBankWrites', () => {
       mockBaseWrites.canExecuteTransaction.mockResolvedValue(true)
       const { canExecuteTransaction } = useBankWrites()
 
-      const result = await canExecuteTransaction(MOCK_DATA.functionName, MOCK_DATA.args, MOCK_DATA.value)
+      const result = await canExecuteTransaction(
+        MOCK_DATA.functionName,
+        MOCK_DATA.args,
+        MOCK_DATA.value
+      )
 
       expect(mockBaseWrites.canExecuteTransaction).toHaveBeenCalledWith(
         MOCK_DATA.functionName,
@@ -304,10 +307,13 @@ describe('useBankWrites', () => {
       await invalidateBankQueries(BANK_FUNCTION_NAMES.TRANSFER)
 
       expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: ['balance', {
-          address: MOCK_DATA.bankAddress,
-          chainId: MOCK_DATA.chainId
-        }]
+        queryKey: [
+          'balance',
+          {
+            address: MOCK_DATA.bankAddress,
+            chainId: MOCK_DATA.chainId
+          }
+        ]
       })
     })
 
@@ -317,10 +323,13 @@ describe('useBankWrites', () => {
       await invalidateBankQueries(BANK_FUNCTION_NAMES.INITIALIZE)
 
       expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: ['readContract', {
-          address: MOCK_DATA.bankAddress,
-          chainId: MOCK_DATA.chainId
-        }]
+        queryKey: [
+          'readContract',
+          {
+            address: MOCK_DATA.bankAddress,
+            chainId: MOCK_DATA.chainId
+          }
+        ]
       })
     })
 

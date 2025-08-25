@@ -3,11 +3,7 @@ import { ref } from 'vue'
 import { useBankReads } from '../reads'
 
 // Hoisted mock variables
-const {
-  mockUseReadContract,
-  mockTeamStore,
-  mockIsAddress
-} = vi.hoisted(() => ({
+const { mockUseReadContract, mockTeamStore, mockIsAddress } = vi.hoisted(() => ({
   mockUseReadContract: vi.fn(),
   mockTeamStore: {
     getContractAddressByType: vi.fn().mockReturnValue('0x1234567890123456789012345678901234567890')
@@ -60,10 +56,10 @@ describe('useBankReads', () => {
     it('should get bank address from team store', () => {
       mockTeamStore.getContractAddressByType.mockClear()
       const { bankAddress } = useBankReads()
-      
+
       // Access the computed value to trigger evaluation
       const result = bankAddress.value
-      
+
       expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Bank')
       expect(result).toBe(MOCK_DATA.validBankAddress)
     })
@@ -94,42 +90,48 @@ describe('useBankReads', () => {
       const { useBankPaused } = useBankReads()
       useBankPaused()
 
-      expect(mockUseReadContract).toHaveBeenCalledWith(expect.objectContaining({
-        address: MOCK_DATA.validBankAddress,
-        abi: expect.any(Array),
-        functionName: 'paused',
-        query: expect.objectContaining({
-          enabled: expect.any(Object)
+      expect(mockUseReadContract).toHaveBeenCalledWith(
+        expect.objectContaining({
+          address: MOCK_DATA.validBankAddress,
+          abi: expect.any(Array),
+          functionName: 'paused',
+          query: expect.objectContaining({
+            enabled: expect.any(Object)
+          })
         })
-      }))
+      )
     })
 
     it('should call useBankOwner with correct parameters', () => {
       const { useBankOwner } = useBankReads()
       useBankOwner()
 
-      expect(mockUseReadContract).toHaveBeenCalledWith(expect.objectContaining({
-        address: MOCK_DATA.validBankAddress,
-        abi: expect.any(Array),
-        functionName: 'owner',
-        query: expect.objectContaining({
-          enabled: expect.any(Object)
+      expect(mockUseReadContract).toHaveBeenCalledWith(
+        expect.objectContaining({
+          address: MOCK_DATA.validBankAddress,
+          abi: expect.any(Array),
+          functionName: 'owner',
+          query: expect.objectContaining({
+            enabled: expect.any(Object)
+          })
         })
-      }))
+      )
     })
 
     it('should call useBankTipsAddress with correct parameters', () => {
       const { useBankTipsAddress } = useBankReads()
       useBankTipsAddress()
 
-      expect(mockUseReadContract).toHaveBeenCalledWith(expect.objectContaining({
-        address: MOCK_DATA.validBankAddress,
-        abi: expect.any(Array),
-        functionName: 'tipsAddress',
-        query: expect.objectContaining({
-          enabled: expect.any(Object)
+      expect(mockUseReadContract).toHaveBeenCalledWith(
+        expect.objectContaining({
+          address: MOCK_DATA.validBankAddress,
+          abi: expect.any(Array),
+          functionName: 'tipsAddress',
+          query: expect.objectContaining({
+            enabled: expect.any(Object)
+          })
         })
-      }))
+      )
     })
 
     it('should call useBankIsTokenSupported with correct parameters', () => {

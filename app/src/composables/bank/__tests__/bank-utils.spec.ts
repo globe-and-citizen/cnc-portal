@@ -3,11 +3,7 @@ import { useValidation, amountToWei } from '../utils'
 import type { Address } from 'viem'
 
 // Hoisted mock variables
-const { 
-  mockAddErrorToast,
-  mockIsAddress,
-  mockParseEther
-} = vi.hoisted(() => ({
+const { mockAddErrorToast, mockIsAddress, mockParseEther } = vi.hoisted(() => ({
   mockAddErrorToast: vi.fn(),
   mockIsAddress: vi.fn(),
   mockParseEther: vi.fn()
@@ -52,36 +48,36 @@ describe('useValidation', () => {
   describe('validateAmount', () => {
     it('should validate positive amounts', () => {
       const { validateAmount } = useValidation()
-      
+
       const result = validateAmount(MOCK_DATA.validAmount)
-      
+
       expect(result).toBe(true)
       expect(mockAddErrorToast).not.toHaveBeenCalled()
     })
 
     it('should reject zero amount', () => {
       const { validateAmount } = useValidation()
-      
+
       const result = validateAmount(MOCK_DATA.invalidAmount)
-      
+
       expect(result).toBe(false)
       expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid amount')
     })
 
     it('should reject empty amount', () => {
       const { validateAmount } = useValidation()
-      
+
       const result = validateAmount(MOCK_DATA.emptyAmount)
-      
+
       expect(result).toBe(false)
       expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid amount')
     })
 
     it('should reject negative amounts', () => {
       const { validateAmount } = useValidation()
-      
+
       const result = validateAmount(MOCK_DATA.negativeAmount)
-      
+
       expect(result).toBe(false)
       expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid amount')
     })
@@ -91,9 +87,9 @@ describe('useValidation', () => {
     it('should validate correct addresses', () => {
       const { validateAddress } = useValidation()
       mockIsAddress.mockReturnValueOnce(true)
-      
+
       const result = validateAddress(MOCK_DATA.validAddress)
-      
+
       expect(result).toBe(true)
       expect(mockIsAddress).toHaveBeenCalledWith(MOCK_DATA.validAddress)
       expect(mockAddErrorToast).not.toHaveBeenCalled()
@@ -102,9 +98,9 @@ describe('useValidation', () => {
     it('should reject invalid addresses', () => {
       const { validateAddress } = useValidation()
       mockIsAddress.mockReturnValueOnce(false)
-      
+
       const result = validateAddress(MOCK_DATA.invalidAddress)
-      
+
       expect(result).toBe(false)
       expect(mockIsAddress).toHaveBeenCalledWith(MOCK_DATA.invalidAddress)
       expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid address')
@@ -113,9 +109,9 @@ describe('useValidation', () => {
     it('should use custom label in error message', () => {
       const { validateAddress } = useValidation()
       mockIsAddress.mockReturnValueOnce(false)
-      
+
       const result = validateAddress(MOCK_DATA.invalidAddress, 'token')
-      
+
       expect(result).toBe(false)
       expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid token')
     })
@@ -129,18 +125,22 @@ describe('useValidation', () => {
 
     it('should validate correct tip parameters', () => {
       const { validateTipParams } = useValidation()
-      
-      const result = validateTipParams(MOCK_DATA.addresses, MOCK_DATA.validAmount, MOCK_DATA.validAddress)
-      
+
+      const result = validateTipParams(
+        MOCK_DATA.addresses,
+        MOCK_DATA.validAmount,
+        MOCK_DATA.validAddress
+      )
+
       expect(result).toBe(true)
       expect(mockAddErrorToast).not.toHaveBeenCalled()
     })
 
     it('should reject empty recipients array', () => {
       const { validateTipParams } = useValidation()
-      
+
       const result = validateTipParams([], MOCK_DATA.validAmount)
-      
+
       expect(result).toBe(false)
       expect(mockAddErrorToast).toHaveBeenCalledWith('No recipients specified')
     })
@@ -149,18 +149,18 @@ describe('useValidation', () => {
       const { validateTipParams } = useValidation()
       mockIsAddress.mockReset()
       mockIsAddress.mockReturnValueOnce(true).mockReturnValueOnce(false)
-      
+
       const result = validateTipParams(MOCK_DATA.addresses, MOCK_DATA.validAmount)
-      
+
       expect(result).toBe(false)
       expect(mockAddErrorToast).toHaveBeenCalledWith('One or more invalid addresses')
     })
 
     it('should reject invalid amounts', () => {
       const { validateTipParams } = useValidation()
-      
+
       const result = validateTipParams(MOCK_DATA.addresses, MOCK_DATA.invalidAmount)
-      
+
       expect(result).toBe(false)
       expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid amount')
     })
@@ -172,9 +172,13 @@ describe('useValidation', () => {
         .mockReturnValueOnce(true) // First recipient
         .mockReturnValueOnce(true) // Second recipient
         .mockReturnValueOnce(false) // Token address
-      
-      const result = validateTipParams(MOCK_DATA.addresses, MOCK_DATA.validAmount, MOCK_DATA.invalidAddress)
-      
+
+      const result = validateTipParams(
+        MOCK_DATA.addresses,
+        MOCK_DATA.validAmount,
+        MOCK_DATA.invalidAddress
+      )
+
       expect(result).toBe(false)
       expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid token address')
     })
@@ -189,18 +193,18 @@ describe('amountToWei', () => {
 
   it('should convert amount to wei', () => {
     mockParseEther.mockReturnValueOnce(BigInt('1500000000000000000'))
-    
+
     const result = amountToWei('1.5')
-    
+
     expect(result).toBe(BigInt('1500000000000000000'))
     expect(mockParseEther).toHaveBeenCalledWith('1.5')
   })
 
   it('should handle zero amount', () => {
     mockParseEther.mockReturnValueOnce(BigInt(0))
-    
+
     const result = amountToWei('0')
-    
+
     expect(result).toBe(BigInt(0))
     expect(mockParseEther).toHaveBeenCalledWith('0')
   })

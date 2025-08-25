@@ -150,42 +150,70 @@ const timelineSteps = computed(() => {
 
   return {
     initiate: {
-      status: (currentOperation.value ? 'completed' : 'pending') as 'pending' | 'active' | 'completed' | 'error',
+      status: (currentOperation.value ? 'completed' : 'pending') as
+        | 'pending'
+        | 'active'
+        | 'completed'
+        | 'error',
       description: `Initiating ${operationText} transaction...`
     },
     pending: {
-      status: (isWritePending.value ? 'active' : 
-               writeContractData.value ? 'completed' : 
-               writeError.value ? 'error' : 'pending') as 'pending' | 'active' | 'completed' | 'error',
-      description: writeError.value ? `Transaction failed: ${writeError.value.message}` :
-                  writeContractData.value ? 'Transaction sent to blockchain' : 
-                  'Waiting for transaction to be sent...'
+      status: (isWritePending.value
+        ? 'active'
+        : writeContractData.value
+          ? 'completed'
+          : writeError.value
+            ? 'error'
+            : 'pending') as 'pending' | 'active' | 'completed' | 'error',
+      description: writeError.value
+        ? `Transaction failed: ${writeError.value.message}`
+        : writeContractData.value
+          ? 'Transaction sent to blockchain'
+          : 'Waiting for transaction to be sent...'
     },
     confirming: {
-      status: (isConfirming.value ? 'active' :
-               isConfirmed.value ? 'completed' :
-               writeError.value ? 'error' :
-               writeContractData.value ? 'pending' : 'pending') as 'pending' | 'active' | 'completed' | 'error',
-      description: isConfirmed.value ? 'Transaction confirmed on blockchain' :
-                  isConfirming.value ? 'Waiting for blockchain confirmation...' :
-                  writeError.value ? 'Transaction confirmation failed' :
-                  'Waiting for confirmation to start...'
+      status: (isConfirming.value
+        ? 'active'
+        : isConfirmed.value
+          ? 'completed'
+          : writeError.value
+            ? 'error'
+            : writeContractData.value
+              ? 'pending'
+              : 'pending') as 'pending' | 'active' | 'completed' | 'error',
+      description: isConfirmed.value
+        ? 'Transaction confirmed on blockchain'
+        : isConfirming.value
+          ? 'Waiting for blockchain confirmation...'
+          : writeError.value
+            ? 'Transaction confirmation failed'
+            : 'Waiting for confirmation to start...'
     },
     complete: {
-      status: (isConfirmed.value && receipt.value ? 'completed' :
-               writeError.value ? 'error' : 'pending') as 'pending' | 'active' | 'completed' | 'error',
-      description: isConfirmed.value && receipt.value ? `Contract successfully ${operationPastText}!` :
-                  writeError.value ? `Failed to ${operationText} contract` :
-                  `Waiting for ${operationText} operation to complete...`
+      status: (isConfirmed.value && receipt.value
+        ? 'completed'
+        : writeError.value
+          ? 'error'
+          : 'pending') as 'pending' | 'active' | 'completed' | 'error',
+      description:
+        isConfirmed.value && receipt.value
+          ? `Contract successfully ${operationPastText}!`
+          : writeError.value
+            ? `Failed to ${operationText} contract`
+            : `Waiting for ${operationText} operation to complete...`
     }
   }
 })
 
 watch([isConfirmed, writeError], ([confirmed, error]) => {
   if (confirmed && receipt.value) {
-    setTimeout(() => { currentOperation.value = null }, 3000)
+    setTimeout(() => {
+      currentOperation.value = null
+    }, 3000)
   } else if (error) {
-    setTimeout(() => { currentOperation.value = null }, 5000)
+    setTimeout(() => {
+      currentOperation.value = null
+    }, 5000)
   }
 })
 

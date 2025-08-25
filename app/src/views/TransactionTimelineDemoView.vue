@@ -3,9 +3,7 @@
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-base-content mb-4">
-          Transaction Timeline Demo
-        </h1>
+        <h1 class="text-3xl font-bold text-base-content mb-4">Transaction Timeline Demo</h1>
         <p class="text-base-content/70 text-lg">
           Interactive demonstration of the TransactionTimeline component.
         </p>
@@ -15,7 +13,7 @@
       <div class="card bg-base-100 shadow-xl mb-8">
         <div class="card-body">
           <h2 class="card-title mb-4">Timeline Controls</h2>
-          
+
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="form-control">
               <label class="label">
@@ -44,28 +42,20 @@
               <label class="label">
                 <span class="label-text">Include Error</span>
               </label>
-              <input 
-                v-model="includeError" 
-                type="checkbox" 
-                class="toggle toggle-primary"
-              />
+              <input v-model="includeError" type="checkbox" class="toggle toggle-primary" />
             </div>
           </div>
 
           <div class="flex flex-wrap gap-2">
-            <button 
-              @click="simulateProgress" 
-              class="btn btn-primary"
-              :disabled="isSimulating"
-            >
-              <Icon 
-                v-if="isSimulating" 
-                icon="heroicons:arrow-path" 
+            <button @click="simulateProgress" class="btn btn-primary" :disabled="isSimulating">
+              <Icon
+                v-if="isSimulating"
+                icon="heroicons:arrow-path"
                 class="w-4 h-4 animate-spin mr-2"
               />
               {{ isSimulating ? 'Simulating...' : 'Simulate Progress' }}
             </button>
-            
+
             <button @click="resetTimeline" class="btn btn-outline">
               <Icon icon="heroicons:arrow-path" class="w-4 h-4 mr-2" />
               Reset
@@ -80,7 +70,7 @@
           <h2 class="card-title mb-6">
             {{ timelineExamples[selectedExample].title }}
           </h2>
-          
+
           <TransactionTimeline
             :show="true"
             :steps="currentTimelineSteps"
@@ -175,7 +165,7 @@ const timelineExamples = {
 const currentTimelineSteps = computed((): TimelineSteps => {
   const stepKeys = ['initiate', 'pending', 'confirming', 'complete'] as const
   const selectedSteps = timelineExamples[selectedExample.value].steps
-  
+
   const result: TimelineSteps = {
     initiate: {
       title: selectedSteps.initiate.title,
@@ -198,7 +188,7 @@ const currentTimelineSteps = computed((): TimelineSteps => {
       status: 'pending'
     }
   }
-  
+
   // Update steps based on current step
   stepKeys.forEach((key, index) => {
     if (index < currentStep.value) {
@@ -221,12 +211,12 @@ const currentTimelineSteps = computed((): TimelineSteps => {
 const simulateProgress = async () => {
   isSimulating.value = true
   currentStep.value = 0
-  
+
   for (let i = 0; i <= 3; i++) {
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000))
     currentStep.value = i
   }
-  
+
   isSimulating.value = false
 }
 

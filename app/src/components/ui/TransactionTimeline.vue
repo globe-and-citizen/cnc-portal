@@ -6,7 +6,9 @@
       <li>
         <div class="timeline-end timeline-box">
           <div class="flex items-center gap-2">
-            <span class="font-medium" :class="initiateTextColor">{{ steps.initiate.title || 'Initiate' }}</span>
+            <span class="font-medium" :class="initiateTextColor">{{
+              steps.initiate.title || 'Initiate'
+            }}</span>
           </div>
           <p class="text-sm text-gray-600 mt-1">{{ steps.initiate.description }}</p>
         </div>
@@ -17,14 +19,16 @@
       </li>
 
       <!-- Step 2: Transaction Pending -->
-      <li>  
+      <li>
         <hr :class="pendingHrColor" />
         <div class="timeline-middle">
           <TimelineIcon :status="steps.pending.status" />
         </div>
         <div class="timeline-end timeline-box">
           <div class="flex items-center gap-2">
-            <span class="font-medium" :class="pendingTextColor">{{ steps.pending.title || 'Transaction Sent' }}</span>
+            <span class="font-medium" :class="pendingTextColor">{{
+              steps.pending.title || 'Transaction Sent'
+            }}</span>
           </div>
           <p class="text-sm text-gray-600 mt-1">{{ steps.pending.description }}</p>
           <div v-if="transactionHash" class="text-xs font-mono text-gray-500 mt-1">
@@ -42,7 +46,9 @@
         </div>
         <div class="timeline-end timeline-box">
           <div class="flex items-center gap-2">
-            <span class="font-medium" :class="confirmingTextColor">{{ steps.confirming.title || 'Confirming' }}</span>
+            <span class="font-medium" :class="confirmingTextColor">{{
+              steps.confirming.title || 'Confirming'
+            }}</span>
           </div>
           <p class="text-sm text-gray-600 mt-1">{{ steps.confirming.description }}</p>
         </div>
@@ -57,7 +63,9 @@
         </div>
         <div class="timeline-end timeline-box">
           <div class="flex items-center gap-2">
-            <span class="font-medium" :class="completeTextColor">{{ steps.complete.title || 'Complete' }}</span>
+            <span class="font-medium" :class="completeTextColor">{{
+              steps.complete.title || 'Complete'
+            }}</span>
           </div>
           <p class="text-sm text-gray-600 mt-1">{{ steps.complete.description }}</p>
           <div v-if="blockNumber" class="text-xs font-mono text-gray-500 mt-1">

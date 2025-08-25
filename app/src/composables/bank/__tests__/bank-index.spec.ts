@@ -2,10 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useBankContract } from '../index'
 
 // Hoisted mock variables
-const { 
-  mockUseBankReads,
-  mockUseBankWritesFunctions
-} = vi.hoisted(() => ({
+const { mockUseBankReads, mockUseBankWritesFunctions } = vi.hoisted(() => ({
   mockUseBankReads: vi.fn(),
   mockUseBankWritesFunctions: vi.fn()
 }))
@@ -82,7 +79,7 @@ describe('useBankContract (Main Composable)', () => {
       expect(bankContract.executeWrite).toBe(mockWriteFunctions.executeWrite)
       expect(bankContract.estimateGas).toBe(mockWriteFunctions.estimateGas)
       expect(bankContract.canExecuteTransaction).toBe(mockWriteFunctions.canExecuteTransaction)
-      
+
       // Admin functions
       expect(bankContract.pauseContract).toBe(mockWriteFunctions.pauseContract)
       expect(bankContract.unpauseContract).toBe(mockWriteFunctions.unpauseContract)
@@ -90,12 +87,12 @@ describe('useBankContract (Main Composable)', () => {
       expect(bankContract.changeTokenAddress).toBe(mockWriteFunctions.changeTokenAddress)
       expect(bankContract.transferOwnership).toBe(mockWriteFunctions.transferOwnership)
       expect(bankContract.renounceOwnership).toBe(mockWriteFunctions.renounceOwnership)
-      
+
       // Transfer functions
       expect(bankContract.depositToken).toBe(mockWriteFunctions.depositToken)
       expect(bankContract.transferEth).toBe(mockWriteFunctions.transferEth)
       expect(bankContract.transferToken).toBe(mockWriteFunctions.transferToken)
-      
+
       // Tipping functions
       expect(bankContract.sendEthTip).toBe(mockWriteFunctions.sendEthTip)
       expect(bankContract.sendTokenTip).toBe(mockWriteFunctions.sendTokenTip)
@@ -107,24 +104,24 @@ describe('useBankContract (Main Composable)', () => {
   describe('Spread Operator Functionality', () => {
     it('should properly spread all properties from both composables', () => {
       const bankContract = useBankContract()
-      
+
       // Count properties to ensure all are included
       const readKeys = Object.keys(mockReads)
       const writeFunctionKeys = Object.keys(mockWriteFunctions)
       const totalExpectedKeys = readKeys.length + writeFunctionKeys.length
-      
+
       const bankContractKeys = Object.keys(bankContract)
-      
+
       // Should have at least all the keys from both composables
       expect(bankContractKeys.length).toBeGreaterThanOrEqual(totalExpectedKeys)
-      
+
       // Check that all read keys are present
-      readKeys.forEach(key => {
+      readKeys.forEach((key) => {
         expect(bankContract).toHaveProperty(key)
       })
-      
+
       // Check that all write function keys are present
-      writeFunctionKeys.forEach(key => {
+      writeFunctionKeys.forEach((key) => {
         expect(bankContract).toHaveProperty(key)
       })
     })
@@ -145,7 +142,7 @@ describe('useBankContract (Main Composable)', () => {
       expect(typeof bankContract.executeWrite).toBe('function')
       expect(typeof bankContract.estimateGas).toBe('function')
       expect(typeof bankContract.canExecuteTransaction).toBe('function')
-      
+
       // Admin functions should be functions
       expect(typeof bankContract.pauseContract).toBe('function')
       expect(typeof bankContract.unpauseContract).toBe('function')
@@ -153,12 +150,12 @@ describe('useBankContract (Main Composable)', () => {
       expect(typeof bankContract.changeTokenAddress).toBe('function')
       expect(typeof bankContract.transferOwnership).toBe('function')
       expect(typeof bankContract.renounceOwnership).toBe('function')
-      
+
       // Transfer functions should be functions
       expect(typeof bankContract.depositToken).toBe('function')
       expect(typeof bankContract.transferEth).toBe('function')
       expect(typeof bankContract.transferToken).toBe('function')
-      
+
       // Tipping functions should be functions
       expect(typeof bankContract.sendEthTip).toBe('function')
       expect(typeof bankContract.sendTokenTip).toBe('function')
@@ -174,17 +171,17 @@ describe('useBankContract (Main Composable)', () => {
         ...mockReads,
         executeWrite: 'from-reads'
       }
-      
+
       const conflictingMockWriteFunctions = {
         ...mockWriteFunctions,
         executeWrite: 'from-write-functions'
       }
-      
+
       mockUseBankReads.mockReturnValue(conflictingMockReads)
       mockUseBankWritesFunctions.mockReturnValue(conflictingMockWriteFunctions)
-      
+
       const bankContract = useBankContract()
-      
+
       // Write functions should override reads (because of spread order)
       expect(bankContract.executeWrite).toBe('from-write-functions')
     })
@@ -210,12 +207,8 @@ describe('useBankContract (Main Composable)', () => {
     })
 
     it('should support selective destructuring of admin functions', () => {
-      const {
-        pauseContract,
-        unpauseContract,
-        changeTipsAddress,
-        transferOwnership
-      } = useBankContract()
+      const { pauseContract, unpauseContract, changeTipsAddress, transferOwnership } =
+        useBankContract()
 
       expect(pauseContract).toBe(mockWriteFunctions.pauseContract)
       expect(unpauseContract).toBe(mockWriteFunctions.unpauseContract)
@@ -224,11 +217,7 @@ describe('useBankContract (Main Composable)', () => {
     })
 
     it('should support selective destructuring of transfer functions', () => {
-      const {
-        transferEth,
-        transferToken,
-        depositToken
-      } = useBankContract()
+      const { transferEth, transferToken, depositToken } = useBankContract()
 
       expect(transferEth).toBe(mockWriteFunctions.transferEth)
       expect(transferToken).toBe(mockWriteFunctions.transferToken)
@@ -236,12 +225,7 @@ describe('useBankContract (Main Composable)', () => {
     })
 
     it('should support selective destructuring of tipping functions', () => {
-      const {
-        sendEthTip,
-        sendTokenTip,
-        pushEthTip,
-        pushTokenTip
-      } = useBankContract()
+      const { sendEthTip, sendTokenTip, pushEthTip, pushTokenTip } = useBankContract()
 
       expect(sendEthTip).toBe(mockWriteFunctions.sendEthTip)
       expect(sendTokenTip).toBe(mockWriteFunctions.sendTokenTip)

@@ -5,7 +5,7 @@ import type { ContractWriteConfig } from '../useContractWrites'
 import { type Address } from 'viem'
 
 // Hoisted mock variables
-const { 
+const {
   mockUseEstimateGas,
   mockUseWriteContract,
   mockUseWaitForTransactionReceipt,
@@ -128,13 +128,13 @@ describe('useContractWrites Gas & Advanced Features', () => {
       const isEstimateLoading = ref(false)
       const refetch = vi.fn().mockImplementation(async () => {
         isEstimateLoading.value = true
-        await new Promise(resolve => setTimeout(resolve, 0))
+        await new Promise((resolve) => setTimeout(resolve, 0))
         gasEstimate.value = MOCK_DATA.gasEstimate
-        await new Promise(resolve => setTimeout(resolve, 0))
+        await new Promise((resolve) => setTimeout(resolve, 0))
         isEstimateLoading.value = false
         return { data: MOCK_DATA.gasEstimate }
       })
-      
+
       mockUseEstimateGas.mockReturnValue({
         data: gasEstimate,
         isLoading: isEstimateLoading,
@@ -146,7 +146,7 @@ describe('useContractWrites Gas & Advanced Features', () => {
       expect(isEstimatingGas.value).toBe(false)
 
       const estimatePromise = estimateGas(MOCK_DATA.functionName, MOCK_DATA.args, MOCK_DATA.value)
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
       expect(isEstimatingGas.value).toBe(true)
 
       const result = await estimatePromise
@@ -194,13 +194,13 @@ describe('useContractWrites Gas & Advanced Features', () => {
       const isEstimateLoading = ref(false)
       const refetch = vi.fn().mockImplementation(async () => {
         isEstimateLoading.value = true
-        await new Promise(resolve => setTimeout(resolve, 0))
+        await new Promise((resolve) => setTimeout(resolve, 0))
         gasEstimate.value = MOCK_DATA.gasEstimate
-        await new Promise(resolve => setTimeout(resolve, 0))
+        await new Promise((resolve) => setTimeout(resolve, 0))
         isEstimateLoading.value = false
         return { data: MOCK_DATA.gasEstimate }
       })
-      
+
       mockUseEstimateGas.mockReturnValue({
         data: gasEstimate,
         isLoading: isEstimateLoading,
@@ -213,7 +213,7 @@ describe('useContractWrites Gas & Advanced Features', () => {
 
       const checkPromise = canExecuteTransaction(MOCK_DATA.functionName, MOCK_DATA.args)
       // Add small delay to ensure loading state is detected
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
       expect(isEstimatingGas.value).toBe(true)
 
       const result = await checkPromise
@@ -255,7 +255,7 @@ describe('useContractWrites Gas & Advanced Features', () => {
       mockUseWriteContract.mockReturnValue({
         writeContractAsync: vi.fn().mockImplementation(async () => {
           writePending.value = true
-          await new Promise(resolve => setTimeout(resolve, 0))
+          await new Promise((resolve) => setTimeout(resolve, 0))
           const result = '0xhash'
           writePending.value = false
           return result
@@ -278,18 +278,18 @@ describe('useContractWrites Gas & Advanced Features', () => {
       // Start write
       const writePromise = executeWrite(MOCK_DATA.functionName, MOCK_DATA.args)
       // Add small delay to ensure loading state is detected
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
       expect(isLoading.value).toBe(true)
 
       // Simulate confirmation start
       confirmationLoading.value = true
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
       expect(isLoading.value).toBe(true)
 
       // Complete transaction
       confirmationLoading.value = false
       await writePromise
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
       expect(isLoading.value).toBe(false)
     })
 
@@ -326,7 +326,7 @@ describe('useContractWrites Gas & Advanced Features', () => {
       expect(contractWrites.writeContractData).toBeDefined()
       expect(contractWrites.receipt).toBeDefined()
       expect(contractWrites.error).toBeDefined()
-      
+
       // Core methods
       expect(contractWrites.executeWrite).toBeDefined()
       expect(contractWrites.invalidateQueries).toBeDefined()
