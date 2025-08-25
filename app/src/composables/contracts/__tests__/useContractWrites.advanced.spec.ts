@@ -9,15 +9,30 @@ const {
   mockUseEstimateGas,
   mockUseWriteContract,
   mockUseWaitForTransactionReceipt,
-  mockUseAccount
-} = vi.hoisted(() => ({
-  mockUseEstimateGas: vi.fn(),
-  mockUseWriteContract: vi.fn(),
-  mockUseWaitForTransactionReceipt: vi.fn(),
-  mockUseAccount: vi.fn(() => ({
-    chainId: ref(1)
-  }))
-}))
+  mockUseAccount,
+  mockUseQueryClient,
+  mockQueryClient,
+  mockToastStore
+} = vi.hoisted(() => {
+  const mockQueryClient = {
+    invalidateQueries: vi.fn()
+  }
+
+  return {
+    mockUseEstimateGas: vi.fn(),
+    mockUseWriteContract: vi.fn(),
+    mockUseWaitForTransactionReceipt: vi.fn(),
+    mockUseAccount: vi.fn(() => ({
+      chainId: ref(1)
+    })),
+    mockUseQueryClient: vi.fn(() => mockQueryClient),
+    mockQueryClient,
+    mockToastStore: {
+      addSuccessToast: vi.fn(),
+      addErrorToast: vi.fn()
+    }
+  }
+})
 
 // Mock external dependencies
 vi.mock('@wagmi/vue', () => ({
@@ -27,11 +42,12 @@ vi.mock('@wagmi/vue', () => ({
   useEstimateGas: mockUseEstimateGas
 }))
 
+vi.mock('@tanstack/vue-query', () => ({
+  useQueryClient: mockUseQueryClient
+}))
+
 vi.mock('@/stores', () => ({
-  useToastStore: vi.fn(() => ({
-    addSuccessToast: vi.fn(),
-    addErrorToast: vi.fn()
-  }))
+  useToastStore: vi.fn(() => mockToastStore)
 }))
 
 vi.mock('vue', async () => {
@@ -82,44 +98,39 @@ describe('useContractWrites Gas & Advanced Features', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-
-    mockUseEstimateGas.mockReturnValue({
-      data: ref(undefined),
-      isLoading: ref(false),
-      error: ref(null),
-      refetch: vi.fn()
-    })
-
-    mockUseWriteContract.mockReturnValue({
-      writeContractAsync: vi.fn(),
-      data: ref(undefined),
-      isPending: ref(false),
-      error: ref(null)
-    })
-
-    mockUseWaitForTransactionReceipt.mockReturnValue({
-      data: ref(undefined),
-      isLoading: ref(false),
-      isSuccess: ref(false),
-      error: ref(null)
-    })
   })
 
   describe('Gas Estimation', () => {
-    it('should estimate gas correctly', async () => {
-      const refetchMock = vi.fn().mockResolvedValue({ data: MOCK_DATA.gasEstimate })
+    it('should estimate gas correctly with loading states', async () => {
+      const gasEstimate = ref<bigint | undefined>(undefined)
+      const isEstimateLoading = ref(false)
+      const refetch = vi.fn().mockImplementation(async () => {
+        isEstimateLoading.value = true
+        await new Promise(resolve => setTimeout(resolve, 0))
+        gasEstimate.value = MOCK_DATA.gasEstimate
+        await new Promise(resolve => setTimeout(resolve, 0))
+        isEstimateLoading.value = false
+        return { data: MOCK_DATA.gasEstimate }
+      })
+      
       mockUseEstimateGas.mockReturnValue({
-        data: ref(MOCK_DATA.gasEstimate),
-        isLoading: ref(false),
+        data: gasEstimate,
+        isLoading: isEstimateLoading,
         error: ref(null),
-        refetch: refetchMock
+        refetch
       })
 
-      const { estimateGas } = useContractWrites(config)
-      const result = await estimateGas(MOCK_DATA.functionName, MOCK_DATA.args, MOCK_DATA.value)
+      const { estimateGas, isEstimatingGas } = useContractWrites(config)
+      expect(isEstimatingGas.value).toBe(false)
 
+      const estimatePromise = estimateGas(MOCK_DATA.functionName, MOCK_DATA.args, MOCK_DATA.value)
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(isEstimatingGas.value).toBe(true)
+
+      const result = await estimatePromise
       expect(result).toBe(MOCK_DATA.gasEstimate)
-      expect(refetchMock).toHaveBeenCalled()
+      expect(isEstimatingGas.value).toBe(false)
+      expect(refetch).toHaveBeenCalled()
     })
 
     it('should handle gas estimation errors', async () => {
@@ -156,27 +167,47 @@ describe('useContractWrites Gas & Advanced Features', () => {
   })
 
   describe('Transaction Execution Check', () => {
-    it('should verify transaction can be executed', async () => {
-      const refetchMock = vi.fn().mockResolvedValue({ data: MOCK_DATA.gasEstimate })
+    it('should verify transaction can be executed and handle loading states', async () => {
+      const gasEstimate = ref<bigint | undefined>(undefined)
+      const isEstimateLoading = ref(false)
+      const refetch = vi.fn().mockImplementation(async () => {
+        isEstimateLoading.value = true
+        await new Promise(resolve => setTimeout(resolve, 0))
+        gasEstimate.value = MOCK_DATA.gasEstimate
+        await new Promise(resolve => setTimeout(resolve, 0))
+        isEstimateLoading.value = false
+        return { data: MOCK_DATA.gasEstimate }
+      })
+      
       mockUseEstimateGas.mockReturnValue({
-        data: ref(MOCK_DATA.gasEstimate),
-        isLoading: ref(false),
+        data: gasEstimate,
+        isLoading: isEstimateLoading,
         error: ref(null),
-        refetch: refetchMock
+        refetch
       })
 
-      const { canExecuteTransaction } = useContractWrites(config)
-      const result = await canExecuteTransaction(MOCK_DATA.functionName, MOCK_DATA.args)
+      const { canExecuteTransaction, isEstimatingGas } = useContractWrites(config)
+      expect(isEstimatingGas.value).toBe(false)
 
+      const checkPromise = canExecuteTransaction(MOCK_DATA.functionName, MOCK_DATA.args)
+      // Add small delay to ensure loading state is detected
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(isEstimatingGas.value).toBe(true)
+
+      const result = await checkPromise
       expect(result).toBe(true)
+      expect(isEstimatingGas.value).toBe(false)
     })
 
-    it('should return false when transaction would fail', async () => {
-      const refetchMock = vi.fn().mockRejectedValue(new Error('Execution would fail'))
+    it('should handle transaction simulation failures with proper error logging', async () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const error = new Error('Execution would fail: insufficient funds')
+      const refetchMock = vi.fn().mockRejectedValue(error)
+
       mockUseEstimateGas.mockReturnValue({
         data: ref(undefined),
         isLoading: ref(false),
-        error: ref(new Error('Execution would fail')),
+        error: ref(error),
         refetch: refetchMock
       })
 
@@ -184,27 +215,60 @@ describe('useContractWrites Gas & Advanced Features', () => {
       const result = await canExecuteTransaction(MOCK_DATA.functionName, MOCK_DATA.args)
 
       expect(result).toBe(false)
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Transaction testFunction will likely fail:',
+        expect.any(Error)
+      )
+
+      consoleWarnSpy.mockRestore()
     })
   })
 
   describe('Loading States', () => {
-    it('should track loading state correctly', () => {
+    it('should track loading state through transaction lifecycle', async () => {
+      const writePending = ref(false)
+      const confirmationLoading = ref(false)
+
+      // Setup write contract mock with proper loading state handling
       mockUseWriteContract.mockReturnValue({
-        writeContractAsync: vi.fn(),
+        writeContractAsync: vi.fn().mockImplementation(async () => {
+          writePending.value = true
+          await new Promise(resolve => setTimeout(resolve, 0))
+          const result = '0xhash'
+          writePending.value = false
+          return result
+        }),
         data: ref(undefined),
-        isPending: ref(true),
+        isPending: writePending,
         error: ref(null)
       })
 
       mockUseWaitForTransactionReceipt.mockReturnValue({
         data: ref(undefined),
-        isLoading: ref(true),
+        isLoading: confirmationLoading,
         isSuccess: ref(false),
         error: ref(null)
       })
 
-      const { isLoading } = useContractWrites(config)
+      const { isLoading, executeWrite } = useContractWrites(config)
+      expect(isLoading.value).toBe(false)
+
+      // Start write
+      const writePromise = executeWrite(MOCK_DATA.functionName, MOCK_DATA.args)
+      // Add small delay to ensure loading state is detected
+      await new Promise(resolve => setTimeout(resolve, 0))
       expect(isLoading.value).toBe(true)
+
+      // Simulate confirmation start
+      confirmationLoading.value = true
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(isLoading.value).toBe(true)
+
+      // Complete transaction
+      confirmationLoading.value = false
+      await writePromise
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(isLoading.value).toBe(false)
     })
 
     it('should track estimating gas state', () => {
