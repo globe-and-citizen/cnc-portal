@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, unref, type Ref } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
 import { ERC20_FUNCTION_NAMES } from './types'
@@ -6,10 +6,10 @@ import ERC20ABI from '@/artifacts/abi/erc20.json'
 
 /**
  * ERC20 contract read operations
- * @param contractAddress The address of the ERC20 contract
+ * @param contractAddress The address of the ERC20 contract as a ref or direct value
  */
-export function useERC20Reads(contractAddress: Address) {
-  const erc20Address = computed(() => contractAddress)
+export function useERC20Reads(contractAddress: Address | Ref<Address>) {
+  const erc20Address = computed(() => unref(contractAddress))
   const isErc20AddressValid = computed(() => !!erc20Address.value && isAddress(erc20Address.value))
 
   const useErc20Name = () => {
