@@ -1,42 +1,42 @@
-import { computed } from 'vue'
 import { type Address } from 'viem'
-import { useAccount } from '@wagmi/vue'
-import { useToastStore } from '@/stores'
 import { ERC20_FUNCTION_NAMES } from './types'
-import { useContractWrites, type ContractWriteConfig } from '../contracts/useContractWrites'
-import ERC20ABI from '@/artifacts/abi/erc20.json'
+import { useERC20Writes } from './writes'
 import { useValidation } from './utils'
 
 /**
- * ERC20 contract write functions
- * @param contractAddress The address of the ERC20 contract
+ * ERC20 contract write functions - handles token transfers and approvals
+ * 
+ * @returns {object} All ERC20 write state and functions:
+ *   - ...writes: underlying write state and helpers
+ *   - writeApprove: approve token spending
+ *   - writeTransfer: transfer tokens
+ *   - writeTransferFrom: transfer tokens on behalf of another address
  */
 export function useERC20WriteFunctions(contractAddress: Address) {
-  const { chainId } = useAccount()
+  const writes = useERC20Writes(contractAddress)
   const { validateAmount, validateAddress } = useValidation()
-  const { addErrorToast } = useToastStore()
-  const erc20Address = computed(() => contractAddress)
-
-  // Use the generic contract writes composable
-  const writes = useContractWrites({
-    contractAddress: erc20Address.value!,
-    abi: ERC20ABI,
-    chainId: chainId.value
-  } as ContractWriteConfig)
-
-  const writeApprove = async (spender: Address, amount: bigint) => {
+  /**
+   * @description Approve token spending for a specific address
+   */
+  const writeApprove = (spender: Address, amount: bigint) => {
     if (!validateAddress(spender, 'spender address')) return
     if (!validateAmount(amount)) return
     return writes.executeWrite(ERC20_FUNCTION_NAMES.APPROVE, [spender, amount])
   }
 
-  const writeTransfer = async (recipient: Address, amount: bigint) => {
+  /**
+   * @description Transfer tokens to a specific address
+   */
+  const writeTransfer = (recipient: Address, amount: bigint) => {
     if (!validateAddress(recipient, 'recipient address')) return
     if (!validateAmount(amount)) return
     return writes.executeWrite(ERC20_FUNCTION_NAMES.TRANSFER, [recipient, amount])
   }
 
-  const writeTransferFrom = async (sender: Address, recipient: Address, amount: bigint) => {
+  /**
+   * @description Transfer tokens from one address to another (requires approval)
+   */
+  const writeTransferFrom = (sender: Address, recipient: Address, amount: bigint) => {
     if (!validateAddress(sender, 'sender address')) return
     if (!validateAddress(recipient, 'recipient address')) return
     if (!validateAmount(amount)) return
@@ -44,6 +44,9 @@ export function useERC20WriteFunctions(contractAddress: Address) {
   }
 
   return {
+    // Write state
+    ...writes,
+    // Transfer and approval functions
     writeApprove,
     writeTransfer,
     writeTransferFrom
