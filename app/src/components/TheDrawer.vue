@@ -517,6 +517,15 @@ const menuItems = computed(() => [
     },
     active: route.name === 'vesting',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  },
+  {
+    label: 'Timeline Demo',
+    icon: 'heroicons:queue-list',
+    route: {
+      name: 'timeline-demo'
+    },
+    active: route.name === 'timeline-demo',
+    show: true
   }
 ])
 
