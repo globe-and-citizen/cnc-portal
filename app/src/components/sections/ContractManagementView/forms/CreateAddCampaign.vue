@@ -70,7 +70,7 @@ import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
 import AdCampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
-import type { Abi, Hex, Address } from 'viem'
+import type { Abi, Hex } from 'viem'
 const emit = defineEmits(['closeAddCampaignModal'])
 const { addErrorToast, addSuccessToast } = useToastStore()
 const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
@@ -80,8 +80,7 @@ const campaignAbi = AdCampaignAbi as Abi
 const campaignBytecode = CAMPAIGN_BYTECODE as Hex
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
-const user = computed(() => userDataStore)
-const team = computed(() => teamStore.currentTeam)
+
 const costPerClick = ref()
 const costPerImpression = ref()
 
@@ -95,11 +94,11 @@ const {
 } = useDeployContract(campaignAbi, campaignBytecode)
 
 watch(contractAddress, async (newAddress) => {
-  if (newAddress && team.value) {
+  if (newAddress && teamStore.currentTeam) {
     addSuccessToast(`Contract deployed successfully`)
     emit('closeAddCampaignModal')
-    await addContractToTeam(team.value.id, newAddress, user.value.address)
-    await teamStore.fetchTeam(team.value.id)
+    await addContractToTeam(teamStore.currentTeam.id, newAddress, userDataStore.address)
+    await teamStore.fetchTeam(teamStore.currentTeam.id)
   }
 })
 
