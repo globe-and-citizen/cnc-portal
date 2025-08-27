@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import CreateAddCampaign from '@/components/forms/CreateAddCampaign.vue'
+import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 import { ref } from 'vue'

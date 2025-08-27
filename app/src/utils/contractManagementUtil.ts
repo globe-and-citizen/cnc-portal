@@ -5,7 +5,7 @@ import { type Abi } from 'viem'
 import { log, parseError } from '@/utils'
 import ExpenseAccountAbi from '@/artifacts/abi/expense-account-eip712.json'
 import BankAbi from '@/artifacts/abi/bank.json'
-import CampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
+
 import CashRemunerationAbi from '@/artifacts/abi/CashRemunerationEIP712.json'
 import ElectionsAbi from '@/artifacts/abi/elections.json'
 import { INVESTOR_ABI as InvestorsAbi } from '@/artifacts/abi/investorsV1'
@@ -86,8 +86,6 @@ const contractsWithAbis = (contracts: TeamContract[]) => {
     switch (contract.type) {
       case 'Bank':
         return { ...contract, abi: BankAbi }
-      case 'Campaign':
-        return { ...contract, abi: CampaignAbi }
       case 'CashRemunerationEIP712':
         return { ...contract, abi: CashRemunerationAbi }
       case 'Elections':

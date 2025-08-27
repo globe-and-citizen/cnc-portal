@@ -62,8 +62,8 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import ButtonUI from '../ButtonUI.vue'
-const emit = defineEmits(['closeAddCampaignModal'])
+import ButtonUI from '@/components/ButtonUI.vue'
+
 import { useDeployContract } from '@/composables/useContractFunctions'
 import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores'
@@ -71,6 +71,7 @@ import { useTeamStore } from '@/stores'
 import AdCampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
 import type { Abi, Hex, Address } from 'viem'
+const emit = defineEmits(['closeAddCampaignModal'])
 const { addErrorToast, addSuccessToast } = useToastStore()
 const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
 

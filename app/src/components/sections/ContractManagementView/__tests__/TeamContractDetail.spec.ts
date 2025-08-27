@@ -2,11 +2,12 @@ import { mount, flushPromises } from '@vue/test-utils'
 //import type { ComponentPublicInstance } from 'vue'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import TeamContractsDetail from '@/components/TeamContractsDetail.vue'
-import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
-const campaignAbi = AdCampaignArtifact.abi
+import TeamContractsDetail from '@/components/sections/ContractManagementView/TeamContractsDetail.vue'
+import CampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
+
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { ref } from 'vue'
+import { type Abi } from 'viem'
 
 const setCostPerClickMock = vi.fn().mockResolvedValue({ status: 1 })
 const setCostPerImpressionMock = vi.fn().mockResolvedValue({ status: 1 })
@@ -215,13 +216,13 @@ describe('TeamContractsDetail.vue', () => {
     // Check that the correct functions were called
     expect(setCostPerClickMock).toHaveBeenCalledWith({
       address: contractAddress,
-      abi: campaignAbi,
+      abi: CampaignAbi as Abi,
       functionName: 'setCostPerClick',
       args: [200000000000000000n]
     })
     expect(setCostPerImpressionMock).toHaveBeenCalledWith({
       address: contractAddress,
-      abi: campaignAbi,
+      abi: CampaignAbi as Abi,
       functionName: 'setCostPerImpression',
       args: [400000000000000000n]
     })
