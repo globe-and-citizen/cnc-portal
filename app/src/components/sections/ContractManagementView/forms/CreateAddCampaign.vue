@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 import { useDeployContract } from '@/composables/useContractFunctions'
