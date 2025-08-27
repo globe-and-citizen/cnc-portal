@@ -1,4 +1,4 @@
-import { unref, type MaybeRef } from 'vue'
+import { type MaybeRef } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useAccount } from '@wagmi/vue'
 import { type Address } from 'viem'
@@ -16,9 +16,9 @@ export function useERC20Writes(contractAddress: MaybeRef<Address>) {
 
   // Use the generic contract writes composable
   const baseWrites = useContractWrites({
-    contractAddress: unref(contractAddress),
+    contractAddress: contractAddress,
     abi: ERC20ABI,
-    chainId: chainId.value
+    chainId: chainId
   } as ContractWriteConfig)
 
   /**
@@ -74,6 +74,8 @@ export function useERC20Writes(contractAddress: MaybeRef<Address>) {
   }
 
   return {
+    // Re-export all base functionality
+    ...baseWrites,
     executeWrite
   }
 }
