@@ -2,7 +2,6 @@ import { computed, ref, watch } from 'vue'
 import { useSendTransaction, useWaitForTransactionReceipt, useEstimateGas } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { useToastStore } from '@/stores'
-import { parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 
 export interface SafeTransactionConfig {
