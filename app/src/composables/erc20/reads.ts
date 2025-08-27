@@ -14,7 +14,7 @@ export function useERC20Reads(contractAddress: Address | Ref<Address>) {
 
   const useErc20Name = () => {
     return useReadContract({
-      address: erc20Address.value,
+      address: erc20Address,
       abi: ERC20ABI,
       functionName: ERC20_FUNCTION_NAMES.NAME,
       query: { enabled: isErc20AddressValid }
@@ -23,7 +23,7 @@ export function useERC20Reads(contractAddress: Address | Ref<Address>) {
 
   const useErc20Symbol = () => {
     return useReadContract({
-      address: erc20Address.value,
+      address: erc20Address,
       abi: ERC20ABI,
       functionName: ERC20_FUNCTION_NAMES.SYMBOL,
       query: { enabled: isErc20AddressValid }
@@ -32,7 +32,7 @@ export function useERC20Reads(contractAddress: Address | Ref<Address>) {
 
   const useErc20Decimals = () => {
     return useReadContract({
-      address: erc20Address.value,
+      address: erc20Address,
       abi: ERC20ABI,
       functionName: ERC20_FUNCTION_NAMES.DECIMALS,
       query: { enabled: isErc20AddressValid }
@@ -41,30 +41,33 @@ export function useERC20Reads(contractAddress: Address | Ref<Address>) {
 
   const useErc20TotalSupply = () => {
     return useReadContract({
-      address: erc20Address.value,
+      address: erc20Address,
       abi: ERC20ABI,
       functionName: ERC20_FUNCTION_NAMES.TOTAL_SUPPLY,
       query: { enabled: isErc20AddressValid }
     })
   }
 
-  const useErc20BalanceOf = (account: Address) => {
+  const useErc20BalanceOf = (account: Address | Ref<Address>) => {
+    const accountValue = computed(() => unref(account))
     return useReadContract({
-      address: erc20Address.value,
+      address: erc20Address,
       abi: ERC20ABI,
       functionName: ERC20_FUNCTION_NAMES.BALANCE_OF,
-      args: [account],
-      query: { enabled: isErc20AddressValid }
+      args: [accountValue],
+      query: { enabled: computed(() => isErc20AddressValid.value && !!accountValue.value) }
     })
   }
 
-  const useErc20Allowance = (owner: Address, spender: Address) => {
+  const useErc20Allowance = (owner: Address | Ref<Address>, spender: Address | Ref<Address>) => {
+    const ownerValue = computed(() => unref(owner))
+    const spenderValue = computed(() => unref(spender))
     return useReadContract({
-      address: erc20Address.value,
+      address: erc20Address,
       abi: ERC20ABI,
       functionName: ERC20_FUNCTION_NAMES.ALLOWANCE,
-      args: [owner, spender],
-      query: { enabled: isErc20AddressValid }
+      args: [ownerValue, spenderValue],
+      query: { enabled: computed(() => isErc20AddressValid.value && !!ownerValue.value && !!spenderValue.value) }
     })
   }
 
