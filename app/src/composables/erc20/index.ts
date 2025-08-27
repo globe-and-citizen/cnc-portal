@@ -16,8 +16,8 @@ export { useERC20WriteFunctions } from './functions'
 // Main composable that combines all functionality
 import { type Address } from 'viem'
 import { useERC20Reads } from './reads'
-import { useERC20Writes } from './writes'
-import type { MaybeRef } from 'vue'
+import { useERC20WriteFunctions } from './functions'
+import { type MaybeRef } from 'vue'
 
 /**
  * Main ERC20 contract composable - combines all functionality
@@ -26,11 +26,11 @@ import type { MaybeRef } from 'vue'
  */
 export function useERC20Contract(contractAddress: MaybeRef<Address>) {
   const reads = useERC20Reads(contractAddress)
-  const writes = useERC20Writes(contractAddress)
+  const writeFunctions = useERC20WriteFunctions(contractAddress)
 
   return {
     ...reads,
-    ...writes
+    ...writeFunctions
   }
 }
 
