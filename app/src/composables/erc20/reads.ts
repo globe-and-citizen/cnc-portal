@@ -1,4 +1,4 @@
-import { computed, unref, type Ref } from 'vue'
+import { computed, unref, type MaybeRef } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
 import { ERC20_FUNCTION_NAMES } from './types'
@@ -8,7 +8,7 @@ import ERC20ABI from '@/artifacts/abi/erc20.json'
  * ERC20 contract read operations
  * @param contractAddress The address of the ERC20 contract as a ref or direct value
  */
-export function useERC20Reads(contractAddress: Address | Ref<Address>) {
+export function useERC20Reads(contractAddress: MaybeRef<Address>) {
   const erc20Address = computed(() => unref(contractAddress))
   const isErc20AddressValid = computed(() => !!erc20Address.value && isAddress(erc20Address.value))
 
@@ -48,7 +48,7 @@ export function useERC20Reads(contractAddress: Address | Ref<Address>) {
     })
   }
 
-  const useErc20BalanceOf = (account: Address | Ref<Address>) => {
+  const useErc20BalanceOf = (account: MaybeRef<Address>) => {
     const accountValue = computed(() => unref(account))
     return useReadContract({
       address: erc20Address,
@@ -59,7 +59,7 @@ export function useERC20Reads(contractAddress: Address | Ref<Address>) {
     })
   }
 
-  const useErc20Allowance = (owner: Address | Ref<Address>, spender: Address | Ref<Address>) => {
+  const useErc20Allowance = (owner: MaybeRef<Address>, spender: MaybeRef<Address>) => {
     const ownerValue = computed(() => unref(owner))
     const spenderValue = computed(() => unref(spender))
     return useReadContract({

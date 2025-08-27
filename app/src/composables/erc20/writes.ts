@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { unref, type MaybeRef } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useAccount } from '@wagmi/vue'
 import { type Address } from 'viem'
@@ -10,14 +10,13 @@ import ERC20ABI from '@/artifacts/abi/erc20.json'
  * ERC20 contract specific write operations
  * This is a wrapper around the generic useContractWrites composable
  */
-export function useERC20Writes(contractAddress: Address) {
+export function useERC20Writes(contractAddress: MaybeRef<Address>) {
   const queryClient = useQueryClient()
   const { chainId } = useAccount()
-  const erc20Address = computed(() => contractAddress)
 
   // Use the generic contract writes composable
   const baseWrites = useContractWrites({
-    contractAddress: erc20Address.value!,
+    contractAddress: unref(contractAddress),
     abi: ERC20ABI,
     chainId: chainId.value
   } as ContractWriteConfig)
