@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, unref, type MaybeRef } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
 import { useTeamStore } from '@/stores'
@@ -40,27 +40,28 @@ export function useBankReads() {
     })
   }
 
-  const useBankIsTokenSupported = (tokenAddress: Address) => {
+  const useBankIsTokenSupported = (tokenAddress: MaybeRef<Address>) => {
+    const tokenAddressValue = computed(() => unref(tokenAddress))
     return useReadContract({
       address: bankAddress.value,
       abi: BankABI,
       functionName: BANK_FUNCTION_NAMES.IS_TOKEN_SUPPORTED,
-      args: [tokenAddress],
+      args: [tokenAddressValue],
       query: {
         enabled: computed(
-          () => !!bankAddress.value && isAddress(bankAddress.value) && isAddress(tokenAddress)
+          () => !!bankAddress.value && isAddress(bankAddress.value) && isAddress(tokenAddressValue.value)
         )
       }
     })
   }
 
-  const useBankSupportedTokens = (symbol: string) => {
+  const useBankSupportedTokens = (symbol: MaybeRef<string>) => {
     return useReadContract({
       address: bankAddress.value,
       abi: BankABI,
       functionName: BANK_FUNCTION_NAMES.SUPPORTED_TOKENS,
-      args: [symbol],
-      query: { enabled: computed(() => isBankAddressValid.value && !!symbol) }
+      args: [unref(symbol)],
+      query: { enabled: computed(() => isBankAddressValid.value && !!unref(symbol)) }
     })
   }
 
