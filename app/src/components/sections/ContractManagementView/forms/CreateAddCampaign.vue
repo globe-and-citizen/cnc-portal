@@ -73,13 +73,13 @@ import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
 import type { Abi, Hex } from 'viem'
 const emit = defineEmits(['closeAddCampaignModal'])
 const { addErrorToast, addSuccessToast } = useToastStore()
-const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
 
 import { useCustomFetch } from '@/composables/useCustomFetch'
 const campaignAbi = AdCampaignAbi as Abi
 const campaignBytecode = CAMPAIGN_BYTECODE as Hex
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
+const bankAddress = teamStore.getContractAddressByType('Bank')
 
 const costPerClick = ref()
 const costPerImpression = ref()
@@ -124,11 +124,11 @@ const deployAdCampaign = async () => {
     addErrorToast('Please enter valid numeric values for both rates.')
     return
   }
-  if (!bankAddress.value) {
+  if (!bankAddress) {
     addErrorToast('Bank address is missing.')
     return
   }
-  await deploy(bankAddress.value, costPerClick.value, costPerImpression.value)
+  await deploy(bankAddress, costPerClick.value, costPerImpression.value)
 
   if (deployError.value) {
     let errorMessage = deployError.value?.message || 'deployment failed, please retry'
