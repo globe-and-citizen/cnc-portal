@@ -118,8 +118,7 @@ import TeamContractEventList from './TeamContractEventList.vue'
 import { type TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 const teamStore = useTeamStore()
-// Define props
-// defineProps<{ contracts: TeamContract[]; teamId: string }>()
+
 // Initialize AddCampaignService instance
 const addCamapaignService = new AddCampaignService()
 

@@ -18,7 +18,27 @@ createConfig({
     [mainnet.id]: http()
   }
 })
+const memberAddress = '0x000000000000000000000000000000000000dead'
 
+const contracts: TeamContract[] = [
+  {
+    type: 'Campaign',
+    address: '0x1234567890abcdef1234567890abcdef12345678',
+    admins: ['0xadmin1Address', '0xadmin2Address'],
+    deployer: '0xdeployer1Address'
+  },
+  {
+    type: 'Campaign',
+    address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+    admins: ['0xadmin3Address'],
+    deployer: '0xdeployer1Address'
+  }
+]
+const mockCurrentTeam = ref({
+  id: 1,
+  ownerAddress: memberAddress,
+  teamContracts: contracts
+})
 const getEventsGroupedByCampaignCodeMock = vi.fn().mockResolvedValue({
   status: 'success',
   events: {}
@@ -99,23 +119,16 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     }))
   }
 })
+vi.mock('@/stores', () => ({
+  useUserDataStore: () => ({
+    address: '0x000000000000000000000000000000000000dead'
+  }),
+  useTeamStore: () => ({
+    currentTeam: mockCurrentTeam.value
+  })
+}))
 
 describe('TeamContracts.vue', () => {
-  const contracts: TeamContract[] = [
-    {
-      type: 'Campaign',
-      address: '0x1234567890abcdef1234567890abcdef12345678',
-      admins: ['0xadmin1Address', '0xadmin2Address'],
-      deployer: '0xdeployer1Address'
-    },
-    {
-      type: 'Campaign',
-      address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-      admins: ['0xadmin3Address'],
-      deployer: '0xdeployer1Address'
-    }
-  ]
-
   beforeEach(() => {
     const pinia = createPinia()
     setActivePinia(pinia)
@@ -124,11 +137,11 @@ describe('TeamContracts.vue', () => {
 
   it('renders and opens modals correctly', async () => {
     const wrapper = mount(TeamContracts, {
-      props: { contracts, teamId: 'team1' },
       global: { plugins: [createPinia()] }
     })
 
-    const contractRows = wrapper.findAll('[data-test$="-row"]')
+    const contractRows = wrapper.findAll('[data-test$="row"]')
+    console.log('the contract rows======', contractRows)
     expect(contractRows.length).toBe(contracts.length)
 
     const adminButton = wrapper.find('[data-test="open-admin-modal-btn"]')

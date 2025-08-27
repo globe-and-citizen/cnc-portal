@@ -6,7 +6,8 @@ import { parseAbiItem, type PublicClient, type Address } from 'viem'
 import { writeContract, readContract, waitForTransactionReceipt } from '@wagmi/core'
 import { parseUnits, formatUnits } from 'viem/utils'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import ADD_CAMPAIGN_ARTIFACT from '../artifacts/abi/AdCampaignManager.json'
+import CampaignAbi from '../artifacts/abi/AdCampaignManager.json'
+import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
 
 export interface PaymentReleasedEvent extends Record<string, unknown> {
   campaignCode: string
@@ -73,8 +74,8 @@ export class AddCampaignService {
     const walletClient = await getWalletClient(config)
 
     const hash = await walletClient.deployContract({
-      abi: ADD_CAMPAIGN_ARTIFACT.abi,
-      bytecode: ADD_CAMPAIGN_ARTIFACT.bytecode as `0x${string}`,
+      abi: CampaignAbi,
+      bytecode: CAMPAIGN_BYTECODE as `0x${string}`,
       args: [click, impression, bankAddress],
       account: walletClient.account.address
     })
@@ -108,7 +109,7 @@ export class AddCampaignService {
   async addAdmin(address: string, admin: string) {
     const hash = await writeContract(config, {
       address: address as `0x${string}`,
-      abi: ADD_CAMPAIGN_ARTIFACT.abi,
+      abi: CampaignAbi,
       functionName: 'addAdmin',
       args: [admin]
     })
@@ -119,7 +120,7 @@ export class AddCampaignService {
   async removeAdmin(address: string, admin: string) {
     const hash = await writeContract(config, {
       address: address as `0x${string}`,
-      abi: ADD_CAMPAIGN_ARTIFACT.abi,
+      abi: CampaignAbi,
       functionName: 'removeAdmin',
       args: [admin]
     })
@@ -171,7 +172,7 @@ export class AddCampaignService {
   async getContractData(address: string): Promise<{ key: string; value: string }[]> {
     const result: { key: string; value: string }[] = []
 
-    for (const fn of ADD_CAMPAIGN_ARTIFACT.abi) {
+    for (const fn of CampaignAbi) {
       if (
         fn.type === 'function' &&
         typeof fn.name === 'string' &&
@@ -181,7 +182,7 @@ export class AddCampaignService {
         try {
           const rawValue = (await readContract(config, {
             address: address as `0x${string}`,
-            abi: ADD_CAMPAIGN_ARTIFACT.abi,
+            abi: CampaignAbi,
             functionName: fn.name
           })) as bigint | string
 
@@ -301,7 +302,7 @@ export class AddCampaignService {
     const amount = parseUnits(value, 18)
     const hash = await writeContract(config, {
       address: address as `0x${string}`,
-      abi: ADD_CAMPAIGN_ARTIFACT.abi,
+      abi: CampaignAbi,
       functionName: 'setCostPerClick',
       args: [amount]
     })
@@ -312,7 +313,7 @@ export class AddCampaignService {
     const amount = parseUnits(value, 18)
     const hash = await writeContract(config, {
       address: address as `0x${string}`,
-      abi: ADD_CAMPAIGN_ARTIFACT.abi,
+      abi: CampaignAbi,
       functionName: 'setCostPerImpression',
       args: [amount]
     })
