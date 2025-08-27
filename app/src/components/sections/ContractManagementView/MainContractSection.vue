@@ -20,7 +20,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
