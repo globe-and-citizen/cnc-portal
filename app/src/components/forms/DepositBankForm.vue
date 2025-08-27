@@ -33,19 +33,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import {
-  useSendTransaction,
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useChainId
-} from '@wagmi/vue'
-
+import { ref, computed, watch } from 'vue'
+import { useWriteContract, useWaitForTransactionReceipt, useChainId } from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { parseEther, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
+import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
 import TokenAmount from './TokenAmount.vue'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
@@ -79,12 +74,22 @@ const chainId = useChainId()
 // Reactive state for balances: composable that fetches address balances
 const { balances, isLoading } = useContractBalance(userDataStore.address as Address)
 
-// Native token desposit
-const { sendTransactionAsync: sendTransaction, data: depositHash } = useSendTransaction()
+// Native token deposit using safe transaction handler
+const {
+  sendTransaction,
+  isLoading: isNativeDepositLoading,
+  isConfirmed: isNativeDepositConfirmed,
+  receipt: nativeReceipt,
+  error: nativeDepositError
+} = useSafeSendTransaction()
 
-// Wait for transaction receipt for Native token deposit
-const { status: nativeTokenDespositStatus } = useWaitForTransactionReceipt({
-  hash: depositHash
+// Success handling
+watch(isNativeDepositConfirmed, (confirmed) => {
+  if (confirmed && nativeReceipt.value) {
+    amount.value = ''
+    addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
+    emits('closeModal')
+  }
 })
 
 // Write contract for ERC20 token deposit
@@ -153,29 +158,12 @@ const waitForCondition = (condition: () => boolean, timeout = 5000) => {
 
 const submitForm = async () => {
   if (!isAmountValid.value) return
+  if (isNativeDepositLoading.value) return
   submitting.value = true
   try {
+    // Deposit of native token (ETH/POL...)
     if (selectedTokenId.value === 'native') {
-      await sendTransaction({
-        to: props.bankAddress,
-        value: parseEther(amount.value)
-      })
-      await waitForCondition(() => nativeTokenDespositStatus.value === 'success', 15000)
-      addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
-
-      // Invalidate the balance queries to update the balances
-      queryClient.invalidateQueries({
-        queryKey: [
-          'balance',
-          {
-            address: props.bankAddress,
-            chainId: chainId
-          }
-        ]
-      })
-
-      amount.value = ''
-      emits('closeModal')
+      await sendTransaction(props.bankAddress, parseEther(amount.value))
     } else {
       const tokenAmount = BigInt(Number(amount.value) * 1e6)
       if (selectedToken.value) {
@@ -233,6 +221,9 @@ const submitForm = async () => {
   } catch (error) {
     console.error(error)
     addErrorToast(`Failed to deposit ${selectedTokenId.value}`)
+  } finally {
+    submitting.value = false
+    currentStep.value = 1
   }
   submitting.value = false
   currentStep.value = 1
