@@ -10,6 +10,7 @@ export type ContractType =
   | 'Campaign'
   | 'Elections'
   | 'Proposals'
+  | 'VestingV1'
 export interface TeamContract {
   address: Address
   type: ContractType
