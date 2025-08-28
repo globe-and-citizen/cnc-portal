@@ -7,7 +7,7 @@
       <input
         type="string"
         class="grow"
-        v-model="_bankAddress"
+        v-model="bankAddress"
         disabled="true"
         required
         data-testid="bank-address-input"
@@ -61,37 +61,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import ButtonUI from '../ButtonUI.vue'
-const emit = defineEmits(['closeAddCampaignModal'])
+import { ref, watch } from 'vue'
+import ButtonUI from '@/components/ButtonUI.vue'
+
 import { useDeployContract } from '@/composables/useContractFunctions'
 import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
-import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
-import type { Abi, Hex, Address } from 'viem'
+import AdCampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
+import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
+import type { Abi, Hex } from 'viem'
+const emit = defineEmits(['closeAddCampaignModal'])
 const { addErrorToast, addSuccessToast } = useToastStore()
-const props = defineProps<{
-  bankAddress: Address
-}>()
+
 import { useCustomFetch } from '@/composables/useCustomFetch'
-const campaignAbi = AdCampaignArtifact.abi as Abi
-const campaignBytecode = AdCampaignArtifact.bytecode as Hex
+const campaignAbi = AdCampaignAbi as Abi
+const campaignBytecode = CAMPAIGN_BYTECODE as Hex
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
-const user = computed(() => userDataStore)
-const team = computed(() => teamStore.currentTeam)
+const bankAddress = teamStore.getContractAddressByType('Bank')
+
 const costPerClick = ref()
 const costPerImpression = ref()
-const _bankAddress = ref<Address | null>(null)
-
-watch(
-  () => props.bankAddress, // Watching the prop
-  (newBankAddress) => {
-    _bankAddress.value = newBankAddress // Update _bankAddress when bankAddress prop changes
-  },
-  { immediate: true } // Ensure it runs the first time when the component is initialized
-)
 
 //import composable..
 // Import composable
@@ -103,11 +94,11 @@ const {
 } = useDeployContract(campaignAbi, campaignBytecode)
 
 watch(contractAddress, async (newAddress) => {
-  if (newAddress && team.value) {
+  if (newAddress && teamStore.currentTeam) {
     addSuccessToast(`Contract deployed successfully`)
     emit('closeAddCampaignModal')
-    await addContractToTeam(team.value.id, newAddress, user.value.address)
-    await teamStore.fetchTeam(team.value.id)
+    await addContractToTeam(teamStore.currentTeam.id, newAddress, userDataStore.address)
+    await teamStore.fetchTeam(teamStore.currentTeam.id)
   }
 })
 
@@ -133,11 +124,11 @@ const deployAdCampaign = async () => {
     addErrorToast('Please enter valid numeric values for both rates.')
     return
   }
-  if (!_bankAddress.value) {
+  if (!bankAddress) {
     addErrorToast('Bank address is missing.')
     return
   }
-  await deploy(_bankAddress.value, costPerClick.value, costPerImpression.value)
+  await deploy(bankAddress, costPerClick.value, costPerImpression.value)
 
   if (deployError.value) {
     let errorMessage = deployError.value?.message || 'deployment failed, please retry'

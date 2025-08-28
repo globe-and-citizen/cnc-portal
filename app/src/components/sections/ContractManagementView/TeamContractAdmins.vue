@@ -1,5 +1,8 @@
 <template>
-  <h3 class="text-lg font-bold mb-4">Contract Admin List {{ range }}</h3>
+  <h3 class="text-lg font-bold mb-4">
+    Contract Admin List {{ range }}
+    <span class="loading loading-spinner" v-if="isLoading || isUpdating"></span>
+  </h3>
 
   <!-- Inline form to add new admin -->
   <form
@@ -55,14 +58,15 @@
 import { ref, watch, computed } from 'vue'
 
 import { useToastStore } from '@/stores/useToastStore'
-import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
 import { AddCampaignService } from '@/services/AddCampaignService'
 import type { TeamContract } from '@/types'
-import AddressToolTip from './AddressToolTip.vue'
-import ButtonUI from './ButtonUI.vue'
+import AddressToolTip from '@/components/AddressToolTip.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent from '@/components/TableComponent.vue'
-
+import CampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
+import { type Abi } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
 const addCampaignService = new AddCampaignService()
 
@@ -72,7 +76,7 @@ const props = defineProps<{
 }>()
 
 const isUpdating = ref(false)
-const campaignAbi = AdCampaignArtifact.abi
+
 const isLoading = computed(
   () =>
     loadingRemoveAdmin.value ||
@@ -128,7 +132,7 @@ const {
 } = useReadContract({
   functionName: 'getAdminList',
   address: computed(() => props.contract?.address || ''),
-  abi: campaignAbi
+  abi: CampaignAbi as Abi
 })
 
 watch(
@@ -163,14 +167,14 @@ function handleAdminAction(adminAddress: string, action: string) {
   if (action === 'removeAdmin') {
     removeAdmin({
       address: props.contract.address,
-      abi: campaignAbi,
+      abi: CampaignAbi as Abi,
       functionName: 'removeAdmin',
       args: [adminAddress]
     })
   } else {
     addAdmin({
       address: props.contract.address,
-      abi: campaignAbi,
+      abi: CampaignAbi as Abi,
       functionName: 'addAdmin',
       args: [adminAddress]
     })

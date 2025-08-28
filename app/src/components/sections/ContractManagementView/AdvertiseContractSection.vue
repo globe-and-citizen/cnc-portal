@@ -8,30 +8,40 @@
       v-if="!teamStore.currentTeamMeta.teamIsFetching && teamStore"
       class="flex flex-col gap-5 w-full items-center"
     >
-      <CardComponent class="w-full" title="Main contract">
+      <CardComponent class="w-full" title="Advertise Contract">
         <template #card-action>
           <div>
             <ButtonUI
               variant="primary"
               :enabled="teamStore.currentTeam?.ownerAddress == userStore.address"
               data-test="createAddCampaign"
+              @click="showAdCampaignModal = true"
             >
-              Redeploy Contracts
+              Deploy Advertise Contract
             </ButtonUI>
           </div>
         </template>
-        <MainContractTable />
+        <TeamContracts />
       </CardComponent>
+      <ModalComponent v-model="showAdCampaignModal">
+        <CreateAddCampaign />
+      </ModalComponent>
     </div>
   </div>
 </template>
 <script setup lang="ts">
+import { ref } from 'vue'
+import TeamContracts from '@/components/sections/ContractManagementView/TeamContracts.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 import ButtonUI from '@/components/ButtonUI.vue'
-import MainContractTable from './MainContractTable.vue'
+
+import ModalComponent from '@/components/ModalComponent.vue'
+import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
+
+const showAdCampaignModal = ref(false)
 </script>

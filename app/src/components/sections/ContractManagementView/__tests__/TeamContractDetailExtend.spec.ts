@@ -2,7 +2,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 //import type { ComponentPublicInstance } from 'vue'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import TeamContractsDetail from '@/components/TeamContractsDetail.vue'
+import TeamContractsDetail from '@/components/sections/ContractManagementView/TeamContractsDetail.vue'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { ref } from 'vue'
 

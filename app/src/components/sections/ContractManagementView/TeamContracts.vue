@@ -2,10 +2,12 @@
   <div id="team-contracts" class="overflow-x-auto">
     <TableComponent
       :rows="
-        contracts.map((contract, index) => ({
-          ...contract,
-          index: index + 1
-        }))
+        teamStore.currentTeam?.teamContracts
+          .filter((contract) => contract.type === 'Campaign')
+          .map((contract, index) => ({
+            ...contract,
+            index: index + 1
+          }))
       "
       :columns="[
         { key: 'index', label: '#' },
@@ -34,10 +36,10 @@
               row.index
             )
           "
-          class="btn btn-ghost btn-xs"
+          class="btn btn-xs btn-secondary"
           data-test="open-admin-modal-btn"
         >
-          <IconifyIcon icon="heroicons-outline:users" class="size-6" />
+          <IconifyIcon icon="material-symbols:person" class="size-4 text-white" />
         </button>
       </template>
 
@@ -100,7 +102,8 @@ import TeamContractAdmins from './TeamContractAdmins.vue'
 import TeamContractsDetail from './TeamContractsDetail.vue'
 import { AddCampaignService } from '@/services/AddCampaignService'
 import { getContractData } from '@/composables/useContractFunctions'
-import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+
+import CampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
 import TableComponent from '@/components/TableComponent.vue'
 
 import type {
@@ -109,17 +112,16 @@ import type {
 } from '@/services/AddCampaignService'
 import { useToastStore } from '@/stores/useToastStore'
 const { addErrorToast } = useToastStore()
+import { useTeamStore } from '@/stores/'
 import type { Abi, Address } from 'viem'
 import TeamContractEventList from './TeamContractEventList.vue'
 import { type TeamContract } from '@/types'
-import AddressToolTip from './AddressToolTip.vue'
+import AddressToolTip from '@/components/AddressToolTip.vue'
+const teamStore = useTeamStore()
 
-// Define props
-defineProps<{ contracts: TeamContract[]; teamId: string }>()
 // Initialize AddCampaignService instance
 const addCamapaignService = new AddCampaignService()
 
-const campaignAbi = AdCampaignArtifact.abi as Abi
 // Modal for showing contract admins
 const contractAdminDialog = ref({
   show: false,
@@ -192,7 +194,7 @@ const openEventsModal = async (contractAddress: Address) => {
 
 // Open Contract Data Modal
 const openContractDataModal = async (contractAddress: Address) => {
-  contractDataDialog.value.datas = await getContractData(contractAddress, campaignAbi)
+  contractDataDialog.value.datas = await getContractData(contractAddress, CampaignAbi as Abi)
   contractDataDialog.value.address = contractAddress
   contractDataDialog.value.show = true
   contractDataDialog.value.key++
