@@ -128,10 +128,10 @@ const formatedActions = computed(() => {
 })
 
 const { data: newActionData } = useTanstackQuery<ActionResponse>(
-  'actionData',
+  'getBodActions',
   computed(() => `/actions?teamId=${teamStore.currentTeamId}&isExecuted=false`),
   {
-    queryKey: ['actionData'],
+    queryKey: ['getBodActions'],
     refetchInterval: 10000,
     refetchOnWindowFocus: true
   }

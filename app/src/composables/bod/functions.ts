@@ -43,6 +43,7 @@ export function useBodWritesFunctions() {
     if (oldStatus && !newStatus && isConfirmed.value) {
       await executeSaveAction()
       isActionAdded.value = true
+      queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
       addSuccessToast('Transaction in composable is confirmed!')
     }
   })
@@ -128,9 +129,15 @@ export function useBodWritesFunctions() {
         actionUrl.value = `actions/${dbId}`
         await executeUpdateAction()
       }
-      await queryClient.invalidateQueries({
-        queryKey: ['readContract']
+      queryClient.invalidateQueries({
+        queryKey: ['readContract', { functionName: 'isMember' }],
+        exact: false
       })
+      queryClient.invalidateQueries({
+        queryKey: ['readContract', { functionName: 'owner' }],
+        exact: false
+      })
+      queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
       addSuccessToast('Action approved successfully!')
       // isLoadingApproveAction.value = false
       isActionApproved.value = true
@@ -141,11 +148,6 @@ export function useBodWritesFunctions() {
       isLoadingApproveAction.value = false
     }
   }
-
-  // const transferOwnership = (newOwner: Address) => {
-  // 	if (!validateAddress(newOwner, 'new owner address')) return
-  // 	return writes.executeWrite(BANK_FUNCTION_NAMES.TRANSFER_OWNERSHIP, [newOwner])
-  // }
 
   return {
     // Write state
