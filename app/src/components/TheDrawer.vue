@@ -304,6 +304,7 @@ const cashRemunerationAddress = computed(() =>
 
 const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
   functionName: 'owner',
+  // @ts-expect-error cashRemunerationAddress may not match expected type, but is correct for contract call
   address: cashRemunerationAddress,
   abi: CashRemuneration_ABI,
   enabled: computed(() => !!cashRemunerationAddress.value)
