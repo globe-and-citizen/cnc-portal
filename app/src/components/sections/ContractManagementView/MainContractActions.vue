@@ -64,7 +64,7 @@
           v-if="showApprovalModal && currentStep === 2"
           :row="selectedRow"
           @approve-action="approveAction"
-          :loading="isLoadingApproveAction /*|| isConfirmingApproveAction*/"
+          :loading="isLoadingApproveAction"
         />
       </ModalComponent>
     </teleport>
@@ -116,18 +116,7 @@ const showApprovalModal = ref(false)
 const selectedRow = ref<TableRow>({})
 const currentStep = ref<0 | 1 | 2>(0)
 
-const modalWidth = computed(() => {
-  return currentStep.value === 1 ? 'w-1/2 max-w-4xl' : 'w-1/3 max-w-4xl'
-})
-const formatedActions = computed(() => {
-  return filterAndFormatActions(
-    props.row.address,
-    newActionData.value,
-    teamStore.currentTeam?.members || []
-  )
-})
-
-const { data: newActionData } = useTanstackQuery<ActionResponse>(
+const { data: bodActions } = useTanstackQuery<ActionResponse>(
   'getBodActions',
   computed(() => `/actions?teamId=${teamStore.currentTeamId}&isExecuted=false`),
   {
@@ -136,6 +125,17 @@ const { data: newActionData } = useTanstackQuery<ActionResponse>(
     refetchOnWindowFocus: true
   }
 )
+
+const modalWidth = computed(() => {
+  return currentStep.value === 1 ? 'w-1/2 max-w-4xl' : 'w-1/3 max-w-4xl'
+})
+const formatedActions = computed(() => {
+  return filterAndFormatActions(
+    props.row.address,
+    bodActions.value,
+    teamStore.currentTeam?.members || []
+  )
+})
 
 const {
   data: hashTransferOwnership,
@@ -175,9 +175,6 @@ const { isLoading: isConfirmingUnpauseContract, isSuccess: isConfirmedUnpauseCon
 
 const transferOwnership = async (address: Address) => {
   if (isBodAction.value) {
-    const bodAddress = teamStore.getContractAddressByType('BoardOfDirectors')
-    if (!bodAddress) return
-
     const data = encodeFunctionData({
       abi: props.row.abi as Abi,
       functionName: 'transferOwnership',
