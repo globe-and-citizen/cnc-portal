@@ -75,22 +75,17 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { encodeFunctionData, type Abi, type Address } from 'viem'
 import type { TableRow } from '@/components/TableComponent.vue'
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
-import { watch, ref, computed } from 'vue'
+import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import { watch, ref, computed, onMounted } from 'vue'
 import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { filterAndFormatActions, log, parseError } from '@/utils'
 import PendingEventsList from './PendingEventsList.vue'
 import BodApprovalModal from './BodApprovalModal.vue'
-// import { estimateGas, readContract } from '@wagmi/core'
-// import { config } from '@/wagmi.config'
-// import BOD_ABI from '@/artifacts/abi/bod.json'
-// import { useCustomFetch } from '@/composables'
 import type { ActionResponse } from '@/types'
-import { useTanstackQuery } from '@/composables'
-// import { useQueryClient } from '@tanstack/vue-query'
-import { useBod } from '@/composables'
+import { useTanstackQuery, useBod } from '@/composables'
+import { useBodContract } from '@/composables/bod/'
 
 const props = defineProps<{
   row: TableRow
@@ -101,27 +96,36 @@ const emits = defineEmits(['contract-status-changed'])
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 const userDataStore = useUserDataStore()
-// const queryClient = useQueryClient()
+// const {
+//   addAction,
+//   approveAction,
+//   isActionAdded,
+//   isActionApproved,
+//   isLoadingAddAction,
+//   isLoadingApproveAction,
+//   isBodAction,
+//   isConfirmingAddAction
+// } = useBod(props.row.type, props.row.abi)
+
 const {
   addAction,
   approveAction,
+  useBodIsBodAction,
+  isLoading: isLoadingAddAction,
+  isConfirming: isConfirmingAddAction,
   isActionAdded,
   isActionApproved,
-  isLoadingAddAction,
-  isLoadingApproveAction,
-  isBodAction,
-  isConfirmingAddAction
-} = useBod(props.row.type, props.row.abi)
+  boardOfDirectors,
+  isLoadingApproveAction
+  // isConfirmingAddAction
+} = useBodContract()
+const { isBodAction } = useBodIsBodAction(props.row.address as Address, props.row.abi as Abi)
 
 const showModal = ref(false)
 const showApprovalModal = ref(false)
 const selectedRow = ref<TableRow>({})
 const currentStep = ref<0 | 1 | 2>(0)
-// const action = ref({})
-// const actionUrl = ref('')
-// const actionId = ref(0)
 
-// const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
 const modalWidth = computed(() => {
   return currentStep.value === 1 ? 'w-1/2 max-w-4xl' : 'w-1/3 max-w-4xl'
 })
@@ -142,52 +146,6 @@ const { data: newActionData } = useTanstackQuery<ActionResponse>(
     refetchOnWindowFocus: true
   }
 )
-
-// const { /*error: errorSaveAction,*/ execute: executeSaveAction } = useCustomFetch('actions/', {
-//   immediate: false
-// }).post(action)
-
-// const { /*error: errorUpdateAction,*/ execute: executeUpdateAction } = useCustomFetch(actionUrl, {
-//   immediate: false
-// }).patch()
-
-// const { data: isMember } = useReadContract({
-//   address: bodAddress,
-//   abi: BOD_ABI,
-//   functionName: 'isMember',
-//   args: [userDataStore.address]
-// })
-
-// const { data: isActionExecuted } = useReadContract({
-//   address: bodAddress,
-//   abi: BOD_ABI,
-//   functionName: 'isActionExecuted',
-//   args: [actionId]
-// })
-
-// const {
-//   data: hashApproveAction,
-//   writeContract: executeApproveAction,
-//   isPending: isLoadingApproveAction
-//   // error: errorApproveAction
-// } = useWriteContract()
-
-// const { isLoading: isConfirmingApproveAction, isSuccess: isConfirmedApproveAction } =
-//   useWaitForTransactionReceipt({
-//     hash: hashApproveAction
-//   })
-
-// const {
-//   data: hashAddAction,
-//   writeContract: executeAddAction,
-//   isPending: isLoadingAddAction
-//   // error: errorAddAction
-// } = useWriteContract()
-
-// const { isLoading: isConfirmingAddAction, isSuccess: isConfirmedAddAction } =
-//   useWaitForTransactionReceipt({
-//     hash: hashAddAction
-//   })
 
 const {
   data: hashTransferOwnership,
@@ -225,53 +183,11 @@ const { isLoading: isConfirmingUnpauseContract, isSuccess: isConfirmedUnpauseCon
     hash: hashUnpauseContract
   })
 
-// const isBodAction = computed(() => {
-//   return props.row.owner === bodAddress.value && (isMember.value as boolean)
-// })
-
-// const approveAction = async (_actionId: number, dbId: number) => {
-//   if (!isBodAction.value) {
-//     console.log(`Not a BOD action, skipping approval ${isBodAction.value}, ${isMember.value}.`)
-//     return
-//   }
-//   const bodAddress = teamStore.getContractAddressByType('BoardOfDirectors')
-//   if (!bodAddress) {
-//     console.log('BOD address not found, skipping approval.')
-//     return
-//   }
-//   try {
-//     const data = encodeFunctionData({
-//       abi: BOD_ABI,
-//       functionName: 'approve',
-//       args: [_actionId]
-//     })
-//     await estimateGas(config, {
-//       to: bodAddress,
-//       data
-//     })
-//     executeApproveAction({
-//       address: bodAddress,
-//       abi: BOD_ABI,
-//       functionName: 'approve',
-//       args: [_actionId]
-//     })
-//     actionId.value = _actionId
-//     actionUrl.value = `actions/${dbId}`
-//   } catch (error) {
-//     log.error('Error approving action: ', parseError(error, BOD_ABI as Abi))
-//     addErrorToast(parseError(error, BOD_ABI as Abi))
-//   }
-// }
-
 const transferOwnership = async (address: Address) => {
   if (isBodAction.value) {
     const bodAddress = teamStore.getContractAddressByType('BoardOfDirectors')
     if (!bodAddress) return
-    // const actionId = await readContract(config, {
-    //   address: bodAddress,
-    //   abi: BOD_ABI,
-    //   functionName: 'actionCount'
-    // })
+   
     const data = encodeFunctionData({
       abi: props.row.abi as Abi,
       functionName: 'transferOwnership',
@@ -287,19 +203,6 @@ const transferOwnership = async (address: Address) => {
       description,
       data
     })
-    // executeAddAction({
-    //   address: teamStore.getContractAddressByType('BoardOfDirectors') as Address,
-    //   abi: BOD_ABI,
-    //   functionName: 'addAction',
-    //   args: [props.row.address, description, data]
-    // })
-    // action.value = {
-    //   teamId: teamStore.currentTeamId,
-    //   actionId: Number(actionId),
-    //   targetAddress: props.row.address,
-    //   description,
-    //   data
-    // }
   } else
     executeTransferOwnership({
       address: props.row.address as Address,
@@ -325,41 +228,18 @@ const changeContractStatus = async (paused: boolean) => {
   }
 }
 
-// watch(isActionExecuted, async (isExecuted) => {
-//   if (isExecuted) {
-//     await executeUpdateAction()
-//   }
-// })
-
-// watch(isConfirmingApproveAction, async (isConfirming, wasConfirming) => {
-//   if (wasConfirming && !isConfirming && isConfirmedApproveAction.value) {
-//     // await executeUpdateAction()
-//     await queryClient.invalidateQueries({
-//       queryKey: ['readContract']
-//     })
-//     showApprovalModal.value = false
-//     addSuccessToast('Action approved successfully!')
-//     emits('contract-status-changed')
-//   }
-// })
-
-// watch(isConfirmingAddAction, async (isConfirming, wasConfirming) => {
-//   if (wasConfirming && !isConfirming && isConfirmedAddAction.value) {
-//     await executeSaveAction()
-//     showModal.value = false
-//     addSuccessToast('Action added successfully!')
-//     emits('contract-status-changed')
-//   }
-// })
-
 watch(isActionAdded, (isAdded) => {
-  if (isAdded) showModal.value = false
-  emits('contract-status-changed')
+  if (isAdded) {
+    showModal.value = false
+    emits('contract-status-changed')
+  }
 })
 
 watch(isActionApproved, (isApproved) => {
-  if (isApproved) showApprovalModal.value = false
-  emits('contract-status-changed')
+  if (isApproved) {
+    showApprovalModal.value = false
+    emits('contract-status-changed')
+  }
 })
 
 watch(isConfirmingTransferOwnership, async (isConfirming, wasConfirming) => {
