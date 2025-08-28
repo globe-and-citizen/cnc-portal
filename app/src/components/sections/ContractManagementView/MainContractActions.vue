@@ -187,7 +187,7 @@ const transferOwnership = async (address: Address) => {
   if (isBodAction.value) {
     const bodAddress = teamStore.getContractAddressByType('BoardOfDirectors')
     if (!bodAddress) return
-   
+
     const data = encodeFunctionData({
       abi: props.row.abi as Abi,
       functionName: 'transferOwnership',

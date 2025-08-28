@@ -1,9 +1,9 @@
 import { computed, ref, watch } from 'vue'
-import type { Action, ContractType, Team } from '@/types'
+import type { Action, ContractType } from '@/types'
 import { useCustomFetch } from './useCustomFetch'
 import { estimateGas, readContract, writeContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import { encodeFunctionData, type Abi, type Address } from 'viem'
+import { encodeFunctionData, type Abi } from 'viem'
 import BOD_ABI from '@/artifacts/abi/bod.json'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -17,7 +17,7 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
   const { addSuccessToast, addErrorToast } = useToastStore()
 
   const loadingContract = ref(false)
-  const actionId = ref<bigint | null>(null)
+  // const actionId = ref<bigint | null>(null)
   // const team = ref<Partial<Team> | null>(null)
   const action = ref<Partial<Action> | null>(null)
   const isActionAdded = ref(false)

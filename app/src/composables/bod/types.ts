@@ -9,21 +9,21 @@ export const BOD_FUNCTION_NAMES = {
   // Read functions
   PAUSED: 'paused',
   OWNER: 'owner',
-	IS_ACTION_EXECUTED: 'isActionExecuted',
-	IS_APPROVED: 'isApproved',
-	GET_OWNERS: 'getOwners',
-	GET_BOARD_OF_DIRECTORS: 'getBoardOfDirectors',
-	IS_MEMBER: 'isMember',
-	APPROVAL_COUNT:'approvalCount',
+  IS_ACTION_EXECUTED: 'isActionExecuted',
+  IS_APPROVED: 'isApproved',
+  GET_OWNERS: 'getOwners',
+  GET_BOARD_OF_DIRECTORS: 'getBoardOfDirectors',
+  IS_MEMBER: 'isMember',
+  APPROVAL_COUNT: 'approvalCount',
 
   // Write functions
   PAUSE: 'pause',
   UNPAUSE: 'unpause',
-	TRANSFER_OWNERSHIP: 'transferOwnership',
+  TRANSFER_OWNERSHIP: 'transferOwnership',
   ADD_ACTION: 'addAction',
-	APPROVE: 'approve',
-	REVOKE: 'revoke',
-	SET_BOARD_OF_DIRECTORS: 'setBoardOfDirectors',
+  APPROVE: 'approve',
+  REVOKE: 'revoke',
+  SET_BOARD_OF_DIRECTORS: 'setBoardOfDirectors',
   INITIALIZE: 'initialize'
 } as const
 

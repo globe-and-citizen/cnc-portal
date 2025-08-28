@@ -25,13 +25,13 @@ import type { Abi, Address } from 'viem'
  * Main BOD contract composable - combines all functionality
  */
 export function useBodContract() {
-	const reads = useBodReads()
-	const writeFunctions = useBodWritesFunctions()
+  const reads = useBodReads()
+  const writeFunctions = useBodWritesFunctions()
 
-	return {
-		...reads,
-		...writeFunctions
-	}
+  return {
+    ...reads,
+    ...writeFunctions
+  }
 }
 
 // Re-export for backward compatibility
