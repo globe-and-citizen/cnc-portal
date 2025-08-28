@@ -1,6 +1,6 @@
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores/useToastStore'
-import type { ContractType, TeamContract } from '@/types'
+import type { ContractType } from '@/types'
 import type { Team } from '@/types/team'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'

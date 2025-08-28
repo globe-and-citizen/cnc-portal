@@ -19,7 +19,6 @@ export { useBodWritesFunctions } from './functions'
 // Main combined composable
 import { useBodReads } from './reads'
 import { useBodWritesFunctions } from './functions'
-import type { Abi, Address } from 'viem'
 
 /**
  * Main BOD contract composable - combines all functionality
