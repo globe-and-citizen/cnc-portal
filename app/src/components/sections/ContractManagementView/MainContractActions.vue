@@ -76,7 +76,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { encodeFunctionData, type Abi, type Address } from 'viem'
 import type { TableRow } from '@/components/TableComponent.vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { watch, ref, computed, onMounted } from 'vue'
+import { watch, ref, computed } from 'vue'
 import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -84,8 +84,9 @@ import { filterAndFormatActions, log, parseError } from '@/utils'
 import PendingEventsList from './PendingEventsList.vue'
 import BodApprovalModal from './BodApprovalModal.vue'
 import type { ActionResponse } from '@/types'
-import { useTanstackQuery, useBod } from '@/composables'
+import { useTanstackQuery } from '@/composables'
 import { useBodContract } from '@/composables/bod/'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const props = defineProps<{
   row: TableRow
@@ -96,16 +97,7 @@ const emits = defineEmits(['contract-status-changed'])
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 const userDataStore = useUserDataStore()
-// const {
-//   addAction,
-//   approveAction,
-//   isActionAdded,
-//   isActionApproved,
-//   isLoadingAddAction,
-//   isLoadingApproveAction,
-//   isBodAction,
-//   isConfirmingAddAction
-// } = useBod(props.row.type, props.row.abi)
+const queryClient = useQueryClient()
 
 const {
   addAction,
@@ -115,9 +107,7 @@ const {
   isConfirming: isConfirmingAddAction,
   isActionAdded,
   isActionApproved,
-  boardOfDirectors,
   isLoadingApproveAction
-  // isConfirmingAddAction
 } = useBodContract()
 const { isBodAction } = useBodIsBodAction(props.row.address as Address, props.row.abi as Abi)
 
@@ -244,6 +234,14 @@ watch(isActionApproved, (isApproved) => {
 
 watch(isConfirmingTransferOwnership, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedTransferOwnership.value) {
+    queryClient.invalidateQueries({
+      queryKey: ['readContract', { functionName: 'isMember' }],
+      exact: false
+    })
+    queryClient.invalidateQueries({
+      queryKey: ['readContract', { functionName: 'owner' }],
+      exact: false
+    })
     showModal.value = false
     addSuccessToast('Ownership transferred successfully!')
     emits('contract-status-changed')
