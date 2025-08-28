@@ -1,6 +1,6 @@
 <template>
   <ButtonUI
-    v-if="weeklyClaim.status == 'pending' && isCashRemunerationOwner"
+    v-if="isCashRemunerationOwner"
     variant="success"
     data-test="approve-button"
     :disabled="loading || disabled"
@@ -85,7 +85,8 @@ const {
   execute: executeUpdateClaim
 } = useCustomFetch(claimUrl, { immediate: false })
   .put(() => ({
-    signature: signature.value
+    signature: signature.value,
+    data: { ownerAddress: userStore.address }
   }))
   .json<Array<ClaimResponse>>()
 
@@ -142,6 +143,7 @@ const approveClaim = async (weeklyClaim: ClaimResponse) => {
   }
   if (signature.value) {
     await executeUpdateClaim()
+
     if (claimError.value) {
       toastStore.addErrorToast('Failed to approve weeklyClaim')
     } else {

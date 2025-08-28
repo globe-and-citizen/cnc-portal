@@ -77,7 +77,7 @@
                 }
               }"
             />
-            <CRWithdrawClaim
+            <!-- <CRWithdrawClaim
               :is-weekly-claim="true"
               :claim="{
                 id: row.id, //which id do we use, individual or weekly claim?
@@ -90,7 +90,7 @@
                   userAddress: row.wage.userAddress as Address
                 }
               }"
-            />
+            /> -->
           </template>
         </TableComponent>
       </div>
@@ -119,7 +119,7 @@ import { useUserDataStore, useTeamStore } from '@/stores'
 import { type WeeklyClaimResponse, type RatePerHour } from '@/types'
 import CRSigne from './CRSigne.vue'
 import type { Address } from 'viem'
-import CRWithdrawClaim from './CRWithdrawClaim.vue'
+// import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
 import type { TokenId } from '@/constant'
 import CRWeeklyClaimOwnerHeader from './CRWeeklyClaimOwnerHeader.vue'
@@ -141,13 +141,25 @@ const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === u
 
 const weeklyClaimUrl = computed(
   () =>
-    `/weeklyClaim/?status=pending&teamId=${teamStore.currentTeam?.id}${!isCashRemunerationOwner.value ? `&memberAddress=${userStore.address}` : ''}`
+    `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${!isCashRemunerationOwner.value ? `&memberAddress=${userStore.address}` : ''}`
 )
 const queryKey = computed(
   () => `pending-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
 )
-const { data, isLoading } = useTanstackQuery<WeeklyClaimResponse>(queryKey, weeklyClaimUrl)
+const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaimResponse>(
+  queryKey,
+  weeklyClaimUrl
+)
 const isFetching = computed(() => isLoading.value)
+
+const data = computed(() =>
+  loadedData.value?.filter(
+    (weeklyClaim) =>
+      weeklyClaim.status === 'pending' ||
+      (weeklyClaim.status === 'signed' &&
+        weeklyClaim.data.ownerAddress !== cashRemunerationOwner.value)
+  )
+)
 
 const isSameWeek = (weeklyClaimStartWeek: string) => {
   const currentMonday = getMondayStart(new Date())
