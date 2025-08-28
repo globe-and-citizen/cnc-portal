@@ -16,7 +16,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const id = Number(req.params.id);
   const action = req.query.action as WeeklyClaimAction;
-  const { signature } = req.body;
+  const { signature, data: message } = req.body;
 
   // Validation stricte des actions autorisées
   const errors: string[] = [];
@@ -78,7 +78,13 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         }
         // check if the weekly claim is already signed or withdrawn
         if (weeklyClaim.status !== "pending") {
-          if (weeklyClaim.status === "signed") {
+          if (
+            weeklyClaim.status === "signed" &&
+            callerAddress ===
+              (typeof weeklyClaim.data === "object" && weeklyClaim.data !== null
+                ? (weeklyClaim.data as { [key: string]: any })["ownerAddress"]
+                : undefined)
+          ) {
             signErrors.push("Weekly claim already signed");
           } else if (weeklyClaim.status === "withdrawn") {
             signErrors.push("Weekly claim already withdrawn");
@@ -88,7 +94,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         if (signErrors.length > 0)
           return errorResponse(400, signErrors.join("; "), res);
 
-        data = { signature, status: "signed" };
+        data = { signature, status: "signed", data: message };
         // singleClaimStatus = "signed";
         break;
       case "withdraw":
