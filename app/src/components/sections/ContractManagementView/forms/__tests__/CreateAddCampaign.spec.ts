@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import CreateAddCampaign from '@/components/forms/CreateAddCampaign.vue'
+import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 import { ref } from 'vue'
@@ -61,7 +61,7 @@ describe('CreateAddCampaign.vue', () => {
   describe('render', () => {
     it('renders correctly', () => {
       const wrapper = mount(CreateAddCampaign, {
-        props: { bankAddress: '0x123456' }
+        props: { bankAddress: '0xTeamContractAddress' }
       })
 
       expect(wrapper.find('h4').text()).toBe('Deploy Advertisement Campaign contract')
@@ -70,18 +70,18 @@ describe('CreateAddCampaign.vue', () => {
 
     it('shows the bank address input and is disabled', () => {
       const wrapper = mount(CreateAddCampaign, {
-        props: { bankAddress: '0x123456' }
+        props: { bankAddress: '0xTeamContractAddress' }
       })
 
       const bankAddressInput = wrapper.find('input[data-testid="bank-address-input"]')
-      expect((bankAddressInput.element as HTMLInputElement)?.value).toBe('0x123456')
+      expect((bankAddressInput.element as HTMLInputElement)?.value).toBe('0xTeamContractAddress')
       expect(bankAddressInput.attributes('disabled')).toBeDefined()
     })
 
     it('shows loading button when contract is deploying', async () => {
       deployState.isDeploying.value = true
       const wrapper = mount(CreateAddCampaign, {
-        props: { bankAddress: '0x123456' }
+        props: { bankAddress: '0xTeamContractAddress' }
       })
       await flushPromises()
       // Directly set the ref values
@@ -99,7 +99,7 @@ describe('CreateAddCampaign.vue', () => {
   describe('emits', () => {
     it('does not emit createAddCampaign if costPerClick or costPerImpression is null', async () => {
       const wrapper = mount(CreateAddCampaign, {
-        props: { loading: false, bankAddress: '0x123456' }
+        props: { loading: false, bankAddress: '0xTeamContractAddress' }
       })
 
       // Leave the values as null (default state)
@@ -110,7 +110,7 @@ describe('CreateAddCampaign.vue', () => {
 
     it('shows an alert if costPerClick or costPerImpression is invalid', async () => {
       const wrapper = mount(CreateAddCampaign, {
-        props: { loading: false, bankAddress: '0x123456' }
+        props: { loading: false, bankAddress: '0xTeamContractAddress' }
       })
 
       // Set costPerClick to null and costPerImpression to 0.2
@@ -134,7 +134,7 @@ describe('CreateAddCampaign.vue', () => {
     it('shows an error toast with the correct message when there is an error', async () => {
       deployState.error.value = new Error('User rejected the request')
       const wrapper = mount(CreateAddCampaign, {
-        props: { bankAddress: '0x123456' }
+        props: { bankAddress: '0xTeamContractAddress' }
       })
 
       await wrapper.find('input[placeholder="cost per click in matic"]').setValue(0.1)
@@ -156,7 +156,7 @@ describe('CreateAddCampaign.vue', () => {
   describe('other actions', () => {
     it('opens the correct URL when viewContractCode button is clicked', async () => {
       const wrapper = mount(CreateAddCampaign, {
-        props: { loading: false, bankAddress: '0x123456' }
+        props: { loading: false, bankAddress: '0xTeamContractAddress' }
       })
 
       const openMock = vi.spyOn(window, 'open').mockImplementation(() => null)
@@ -177,7 +177,7 @@ describe('CreateAddCampaign.vue', () => {
   describe('watchers', () => {
     it('handles contractAddress watcher correctly when newAddress and team are defined', async () => {
       const wrapper = mount(CreateAddCampaign, {
-        props: { bankAddress: '0x123456' }
+        props: { bankAddress: '0xTeamContractAddress' }
       })
       await flushPromises()
       deployState.contractAddress.value = '0x_contract_address'

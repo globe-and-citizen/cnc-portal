@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach } from 'vitest'
-import TeamContractEventList from '@/components/TeamContractEventList.vue'
+import TeamContractEventList from '@/components/sections/ContractManagementView/TeamContractEventList.vue'
 import type { EventsByCampaignCode } from '@/services/AddCampaignService'
 
 // Mocked ExtendedEvent to align with the test data
