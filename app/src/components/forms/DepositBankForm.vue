@@ -201,7 +201,5 @@ const submitForm = async () => {
     submitting.value = false
     currentStep.value = 1
   }
-  submitting.value = false
-  currentStep.value = 1
 }
 </script>
