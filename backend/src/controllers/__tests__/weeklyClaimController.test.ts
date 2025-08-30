@@ -130,7 +130,6 @@ describe("Weekly Claim Controller", () => {
     });
 
     it("it should return 400 if caller is not the Cash Remuneration owner or owner of the team", async () => {
-      // Mocking le comportement pour ce test spécifique
       (isCashRemunerationOwner as any).mockResolvedValueOnce(false);
 
       vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue(
@@ -138,7 +137,7 @@ describe("Weekly Claim Controller", () => {
           id: 1,
           status: "pending",
           weekStart: new Date("2024-07-22"),
-          wage: mockWage("0x456"), // Propriétaire différent de l'adresse de l'appelant (0x123)
+          wage: mockWage("0x456"),
         })
       );
 
