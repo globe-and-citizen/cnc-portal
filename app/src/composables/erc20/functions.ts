@@ -6,7 +6,7 @@ import { useValidation } from './utils'
 
 /**
  * ERC20 contract write functions - handles token transfers and approvals
- * 
+ *
  * @returns {object} All ERC20 write state and functions:
  *   - ...writes: underlying write state and helpers
  *   - writeApprove: approve token spending
@@ -27,10 +27,10 @@ export function useERC20WriteFunctions(contractAddress: MaybeRef<Address>) {
     if (!validateAddress(spenderValue.value, 'spender address')) return
     if (!validateAmount(amountValue.value)) return
 
-    return writes.executeWrite(
-      ERC20_FUNCTION_NAMES.APPROVE,
-      [spenderValue.value, amountValue.value]
-    )
+    return writes.executeWrite(ERC20_FUNCTION_NAMES.APPROVE, [
+      spenderValue.value,
+      amountValue.value
+    ])
   }
 
   /**
@@ -43,10 +43,10 @@ export function useERC20WriteFunctions(contractAddress: MaybeRef<Address>) {
     if (!validateAddress(recipientValue.value, 'recipient address')) return
     if (!validateAmount(amountValue.value)) return
 
-    return writes.executeWrite(
-      ERC20_FUNCTION_NAMES.TRANSFER,
-      [recipientValue.value, amountValue.value]
-    )
+    return writes.executeWrite(ERC20_FUNCTION_NAMES.TRANSFER, [
+      recipientValue.value,
+      amountValue.value
+    ])
   }
 
   /**
@@ -65,10 +65,11 @@ export function useERC20WriteFunctions(contractAddress: MaybeRef<Address>) {
     if (!validateAddress(recipientValue.value, 'recipient address')) return
     if (!validateAmount(amountValue.value)) return
 
-    return writes.executeWrite(
-      ERC20_FUNCTION_NAMES.TRANSFER_FROM,
-      [senderValue.value, recipientValue.value, amountValue.value]
-    )
+    return writes.executeWrite(ERC20_FUNCTION_NAMES.TRANSFER_FROM, [
+      senderValue.value,
+      recipientValue.value,
+      amountValue.value
+    ])
   }
 
   return {
