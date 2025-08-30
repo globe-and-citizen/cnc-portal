@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { useSendTransaction, useWaitForTransactionReceipt, useEstimateGas } from '@wagmi/vue'
-import type { Address } from 'viem'
+import { getAddress, type Address } from 'viem'
 import { useToastStore } from '@/stores'
 import { useQueryClient } from '@tanstack/vue-query'
 
@@ -105,13 +105,13 @@ export function useSafeSendTransaction() {
   // Success handling
   watch(isConfirmed, async (confirmed) => {
     if (confirmed && receipt.value) {
-      console.log('Info: useSafeSendTransaction: Transaction confirmed')
-      console.log('Info: useSafeSendTransaction: Start Invalidating queries')
+      console.log("Info: useSafeSendTransaction: Transaction confirmed")
+      console.log("Info: useSafeSendTransaction: Start Invalidating queries")
       await queryClient.invalidateQueries({
         queryKey: [
           'balance',
           {
-            address: receipt.value.to,
+            address: receipt.value.to ? getAddress(receipt.value.to) : undefined,
             chainId: receipt.value.chainId
           }
         ]
@@ -120,12 +120,12 @@ export function useSafeSendTransaction() {
         queryKey: [
           'balance',
           {
-            address: receipt.value.from,
+            address: receipt.value.from ? getAddress(receipt.value.from) : undefined,
             chainId: receipt.value.chainId
           }
         ]
       })
-      console.log('Info: useSafeSendTransaction: Queries invalidation done, wait for updates')
+      console.log("Info: useSafeSendTransaction: Queries invalidation done, wait for updates")
     }
   })
 
@@ -165,7 +165,7 @@ export function useSafeSendTransaction() {
   }
 
   /**
-   * @returns {isSending} sending state
+   * @returns {isSending} sending state 
    */
   return {
     // Loading states
