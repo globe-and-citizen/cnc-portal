@@ -413,6 +413,12 @@ describe("Team Controller", () => {
       vi.spyOn(prisma.teamContract, "deleteMany").mockResolvedValue({
         count: 0,
       });
+      vi.spyOn(prisma.boardOfDirectorActions, "deleteMany").mockResolvedValue({
+        count: 0,
+      });
+      vi.spyOn(prisma.weeklyClaim, "deleteMany").mockResolvedValue({
+        count: 0,
+      });
       vi.spyOn(prisma.claim, "deleteMany").mockResolvedValue({
         count: 0,
       });

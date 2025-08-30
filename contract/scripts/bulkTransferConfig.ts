@@ -57,7 +57,7 @@ const recipientsData = loadRecipients()
 
 export const BULK_TRANSFER_CONFIG = {
   // Amount to send to each address (in ETH)
-  amountPerRecipient: '1.0',
+  amountPerRecipient: '10.0',
 
   // Recipients loaded from recipients.json
   recipients: recipientsData.recipients,
