@@ -51,16 +51,16 @@
 
 <script setup lang="ts">
 import { defineProps, ref, computed, watch } from 'vue'
-import AddressToolTip from './AddressToolTip.vue'
+import AddressToolTip from '@/components/AddressToolTip.vue'
 import TableComponent from '@/components/TableComponent.vue'
 
 import { parseUnits } from 'viem/utils'
 
 import { useToastStore } from '@/stores/useToastStore'
-import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+import CampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
 
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-const campaignAbi = AdCampaignArtifact.abi
+import { type Abi } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps<{
   datas: Array<{ key: string; value: string }>
@@ -191,7 +191,7 @@ async function submit() {
         pendingTransactions.value++
         setCostPerClick({
           address: props.contractAddress as `0x${string}`,
-          abi: campaignAbi,
+          abi: CampaignAbi as Abi,
           functionName: 'setCostPerClick',
           args: [parseUnits(String(costPerClick), 18)]
         })
@@ -204,7 +204,7 @@ async function submit() {
         pendingTransactions.value++
         setCostPerImpression({
           address: props.contractAddress as `0x${string}`,
-          abi: campaignAbi,
+          abi: CampaignAbi as Abi,
           functionName: 'setCostPerImpression',
           args: [parseUnits(String(costPerImpression), 18)]
         })

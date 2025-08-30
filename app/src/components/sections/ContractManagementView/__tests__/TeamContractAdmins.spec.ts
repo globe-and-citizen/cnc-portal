@@ -1,14 +1,15 @@
 import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import TeamContractAdmins from '@/components/TeamContractAdmins.vue'
+import TeamContractAdmins from '@/components/sections/ContractManagementView/TeamContractAdmins.vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { type TeamContract } from '@/types/teamContract'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { createConfig, http } from '@wagmi/core'
 import { mainnet } from '@wagmi/core/chains'
-import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
-const campaignAbi = AdCampaignArtifact.abi
+import CampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
+import { type Abi } from 'viem'
+
 createConfig({
   chains: [mainnet],
   transports: {
@@ -214,7 +215,7 @@ describe('TeamContractAdmins', () => {
 
     expect(mocks.mockWrite).toHaveBeenCalledWith({
       address: contract.address,
-      abi: campaignAbi,
+      abi: CampaignAbi as Abi,
       functionName: 'addAdmin',
       args: [newAdminAddress]
     })
@@ -260,7 +261,7 @@ describe('TeamContractAdmins', () => {
 
     expect(mocks.mockWrite).toHaveBeenCalledWith({
       address: newContract.address,
-      abi: campaignAbi,
+      abi: CampaignAbi as Abi,
       functionName: 'removeAdmin',
       args: [firstRowTds[1].text()]
     })
