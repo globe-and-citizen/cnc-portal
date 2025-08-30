@@ -1,10 +1,11 @@
-import { type MaybeRef } from 'vue'
+import { computed, type MaybeRef } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useAccount } from '@wagmi/vue'
 import { type Address } from 'viem'
 import { ERC20_FUNCTION_NAMES, type ERC20FunctionName, isValidERC20Function } from './types'
 import { useContractWrites, type ContractWriteConfig } from '../contracts/useContractWrites'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
+import { unref } from 'vue'
 
 /**
  * ERC20 contract specific write operations
@@ -13,6 +14,7 @@ import ERC20ABI from '@/artifacts/abi/erc20.json'
 export function useERC20Writes(contractAddress: MaybeRef<Address>) {
   const queryClient = useQueryClient()
   const { chainId } = useAccount()
+  const erc20Address = computed(() => unref(contractAddress))
 
   // Use the generic contract writes composable
   const baseWrites = useContractWrites({
@@ -44,17 +46,13 @@ export function useERC20Writes(contractAddress: MaybeRef<Address>) {
       functionName === ERC20_FUNCTION_NAMES.APPROVE
     ) {
       await queryClient.invalidateQueries({
-        queryKey: [
-          { ...erc20QueryKey, functionName: ERC20_FUNCTION_NAMES.BALANCE_OF }
-        ]
+        queryKey: [{ ...erc20QueryKey, functionName: ERC20_FUNCTION_NAMES.BALANCE_OF }]
       })
 
       // Also invalidate allowance queries for approvals
       if (functionName === ERC20_FUNCTION_NAMES.APPROVE) {
         await queryClient.invalidateQueries({
-          queryKey: [
-            { ...erc20QueryKey, functionName: ERC20_FUNCTION_NAMES.ALLOWANCE }
-          ]
+          queryKey: [{ ...erc20QueryKey, functionName: ERC20_FUNCTION_NAMES.ALLOWANCE }]
         })
       }
     }
