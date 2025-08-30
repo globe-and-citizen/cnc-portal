@@ -1,5 +1,6 @@
 <template>
   <span class="font-bold text-2xl">Deposit to Team Bank Contract</span>
+  allowance{{ allowance }}
 
   <div v-if="selectedToken?.token.id !== 'native'" class="steps w-full my-4">
     <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
@@ -34,19 +35,15 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useWriteContract, useWaitForTransactionReceipt, useChainId } from '@wagmi/vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import { readContract } from '@wagmi/core'
-import { config } from '@/wagmi.config'
 import { parseEther, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
+import { useERC20Reads, useERC20WriteFunctions } from '@/composables/erc20/index'
 import TokenAmount from './TokenAmount.vue'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
-import ERC20ABI from '@/artifacts/abi/erc20.json'
-import BankABI from '@/artifacts/abi/bank.json'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import ButtonUI from '../ButtonUI.vue'
+import { useBankWritesFunctions } from '@/composables/bank'
 
 const emits = defineEmits(['closeModal'])
 // Add validation event
@@ -68,9 +65,6 @@ const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
 
-const queryClient = useQueryClient()
-const chainId = useChainId()
-
 // Reactive state for balances: composable that fetches address balances
 const { balances, isLoading } = useContractBalance(userDataStore.address as Address)
 
@@ -80,37 +74,8 @@ const {
   isLoading: isNativeDepositLoading,
   isConfirmed: isNativeDepositConfirmed,
   receipt: nativeReceipt,
-  error: nativeDepositError
+  // error: nativeDepositError
 } = useSafeSendTransaction()
-
-// Success handling
-watch(isNativeDepositConfirmed, (confirmed) => {
-  if (confirmed && nativeReceipt.value) {
-    amount.value = ''
-    addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
-    emits('closeModal')
-  }
-})
-
-// Write contract for ERC20 token deposit
-const { writeContractAsync: writeTokenDeposit, data: tokenDepositHash } = useWriteContract()
-
-// Wait for transaction receipt for ERC20 token deposit
-const { status: erc20TokenDespositStatus } = useWaitForTransactionReceipt({
-  hash: tokenDepositHash
-})
-
-// Write contract for ERC20 token spend cap approval
-const {
-  writeContractAsync: approve,
-  // isPending: isPendingApprove,
-  data: approveHash
-} = useWriteContract()
-
-// Wait for transaction receipt for ERC20 token spend cap approval
-const { status: erc20ApprovalStatus } = useWaitForTransactionReceipt({
-  hash: approveHash
-})
 
 // Computed properties
 // Token list derived from SUPPORTED_TOKENS
@@ -129,6 +94,32 @@ const tokenList = computed(() =>
 const selectedToken = computed(() =>
   balances.value.find((b) => b.token.id === selectedTokenId.value)
 )
+const selectedTokenAddress = computed(
+  () => selectedToken.value?.token.address ?? '0x0000000000000000000000000000000000000000'
+)
+const { useErc20Allowance } = useERC20Reads(selectedTokenAddress)
+
+const { data: allowance } = useErc20Allowance(userDataStore.address as Address, props.bankAddress)
+
+const {
+  // isConfirmed: approvedIsConfirmed,
+  writeApprove,
+  receipt: tokenApprovalReceipt
+} = useERC20WriteFunctions(selectedTokenAddress)
+
+const {
+  // isBankAddressValid,
+  // isLoading: depositTokenIsLoading,
+  // isWritePending,
+  // isConfirming,
+  // isConfirmed,
+  // writeContractData,
+  receipt: depositReceipt,
+  // error: writeError,
+  depositToken
+} = useBankWritesFunctions()
+
+// const { execute: approve } = writeApprove()
 
 // Methods
 
@@ -154,6 +145,14 @@ const waitForCondition = (condition: () => boolean, timeout = 5000) => {
   })
 }
 
+// Success handling
+watch(isNativeDepositConfirmed, (confirmed) => {
+  if (confirmed && nativeReceipt.value) {
+    amount.value = ''
+    addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
+    emits('closeModal')
+  }
+})
 // Remove unused notZero and notExceedingBalance
 
 const submitForm = async () => {
@@ -167,50 +166,27 @@ const submitForm = async () => {
     } else {
       const tokenAmount = BigInt(Number(amount.value) * 1e6)
       if (selectedToken.value) {
-        const allowance = await readContract(config, {
-          address: selectedToken.value.token.address as Address,
-          abi: ERC20ABI,
-          functionName: 'allowance',
-          args: [userDataStore.address as Address, props.bankAddress]
-        })
-        const currentAllowance = allowance ? allowance.toString() : 0n
+        const currentAllowance = allowance.value ? allowance.value.toString() : 0n
         if (Number(currentAllowance) < Number(tokenAmount)) {
           currentStep.value = 2
-          await approve({
-            address: selectedToken.value.token.address as Address,
-            abi: ERC20ABI,
-            functionName: 'approve',
-            args: [props.bankAddress, tokenAmount]
-          })
-
-          // wait for 3s, timeout for approval transaction
-          // await new Promise((resolve) => setTimeout(resolve, 3000))
-
-          await waitForCondition(() => erc20ApprovalStatus.value === 'success', 15000)
+          console.log('Will write the approval')
+          await writeApprove(props.bankAddress, tokenAmount)
+          console.log('Approval donne: waiting for the approval receipt')
+          await waitForCondition(() => tokenApprovalReceipt.value?.status === 'success', 15000)
 
           // wait for transaction receipt
           addSuccessToast('Token approved successfully')
         }
         currentStep.value = 3
-        await writeTokenDeposit({
-          address: props.bankAddress,
-          abi: BankABI,
-          functionName: 'depositToken',
-          args: [selectedToken.value.token.address as Address, tokenAmount]
-        })
-        await waitForCondition(() => erc20TokenDespositStatus.value === 'success', 15000)
+        await depositToken(selectedToken.value.token.address as Address, amount.value)
+        // await writeTokenDeposit({
+        //   address: props.bankAddress,
+        //   abi: BankABI,
+        //   functionName: 'depositToken',
+        //   args: [selectedToken.value.token.address as Address, tokenAmount]
+        // })
+        await waitForCondition(() => depositReceipt.value?.status === 'success', 15000)
 
-        // Invalidate the balance queries to update the balances
-        queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            {
-              address: selectedToken.value.token.address as Address,
-              args: [props.bankAddress],
-              chainId: chainId
-            }
-          ]
-        })
         amount.value = ''
         addSuccessToast('USDC deposited successfully')
         emits('closeModal')
