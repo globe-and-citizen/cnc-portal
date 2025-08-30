@@ -23,7 +23,7 @@ export const ERC20_FUNCTION_NAMES = {
 /**
  * Type for valid ERC20 contract function names
  */
-export type ERC20FunctionName = typeof ERC20_FUNCTION_NAMES[keyof typeof ERC20_FUNCTION_NAMES]
+export type ERC20FunctionName = (typeof ERC20_FUNCTION_NAMES)[keyof typeof ERC20_FUNCTION_NAMES]
 
 /**
  * Validate if a function name exists in the ERC20 contract

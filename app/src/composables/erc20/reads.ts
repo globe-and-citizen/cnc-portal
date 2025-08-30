@@ -67,7 +67,11 @@ export function useERC20Reads(contractAddress: MaybeRef<Address>) {
       abi: ERC20ABI,
       functionName: ERC20_FUNCTION_NAMES.ALLOWANCE,
       args: [ownerValue, spenderValue],
-      query: { enabled: computed(() => isErc20AddressValid.value && !!ownerValue.value && !!spenderValue.value) }
+      query: {
+        enabled: computed(
+          () => isErc20AddressValid.value && !!ownerValue.value && !!spenderValue.value
+        )
+      }
     })
   }
 

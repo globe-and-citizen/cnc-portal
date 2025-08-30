@@ -49,7 +49,10 @@ export function useBankReads() {
       args: [tokenAddressValue],
       query: {
         enabled: computed(
-          () => !!bankAddress.value && isAddress(bankAddress.value) && isAddress(tokenAddressValue.value)
+          () =>
+            !!bankAddress.value &&
+            isAddress(bankAddress.value) &&
+            isAddress(tokenAddressValue.value)
         )
       }
     })
