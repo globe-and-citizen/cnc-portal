@@ -226,7 +226,6 @@ export function useContractWrites(config: ContractWriteConfig) {
 
     // Store function name for query invalidation after transaction confirms
     currentFunctionName.value = functionName
-    console.log("contract address ", config.contractAddress)
     try {
       return await writeContractAsync({
         address: unref(config.contractAddress),
