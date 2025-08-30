@@ -73,7 +73,7 @@ const {
   sendTransaction,
   isLoading: isNativeDepositLoading,
   isConfirmed: isNativeDepositConfirmed,
-  receipt: nativeReceipt,
+  receipt: nativeReceipt
   // error: nativeDepositError
 } = useSafeSendTransaction()
 

@@ -51,9 +51,13 @@ export function useBankWritesFunctions() {
     if (!validateAddress(tokenAddress, 'token address') || !validateAmount(amount)) return
     // const amountInWei = amountToWei(amount)
 
-    watch(() => writes.isConfirmed, (confirmed) => {
-        console.log("Function Deposit is confirmed ", confirmed.value, writes.receipt.value)
-    }, {immediate: true})
+    watch(
+      () => writes.isConfirmed,
+      (confirmed) => {
+        console.log('Function Deposit is confirmed ', confirmed.value, writes.receipt.value)
+      },
+      { immediate: true }
+    )
     return writes.executeWrite(BANK_FUNCTION_NAMES.DEPOSIT_TOKEN, [
       tokenAddress,
       BigInt(Number(amount) * 1e6)
