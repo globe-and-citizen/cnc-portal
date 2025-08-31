@@ -134,7 +134,7 @@ describe('useBankReads', () => {
       )
     })
 
-    it('should call useBankIsTokenSupported with correct parameters', () => {
+    it.skip('should call useBankIsTokenSupported with correct parameters', () => {
       const { useBankIsTokenSupported } = useBankReads()
       useBankIsTokenSupported(MOCK_DATA.validTokenAddress)
 

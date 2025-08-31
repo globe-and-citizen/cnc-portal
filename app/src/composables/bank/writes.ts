@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, unref, type MaybeRef } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useAccount } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
@@ -139,14 +139,14 @@ export function useBankWrites() {
   const executeWrite = async (
     functionName: BankFunctionName,
     args: readonly unknown[] = [],
-    value?: bigint,
+    value?: MaybeRef<bigint>,
     options?: ContractWriteOptions
   ) => {
     if (!isValidBankFunction(functionName)) {
       throw new Error(`Invalid bank function: ${functionName}`)
     }
 
-    return baseWrites.executeWrite(functionName, args, value, options)
+    return baseWrites.executeWrite(functionName, args, value ? unref(value) : undefined, options)
   }
 
   /**
@@ -155,13 +155,13 @@ export function useBankWrites() {
   const estimateGas = async (
     functionName: BankFunctionName,
     args: readonly unknown[] = [],
-    value?: bigint
+    value?: MaybeRef<bigint>
   ) => {
     if (!isValidBankFunction(functionName)) {
       throw new Error(`Invalid bank function: ${functionName}`)
     }
 
-    return baseWrites.estimateGas(functionName, args, value)
+    return baseWrites.estimateGas(functionName, args, value ? unref(value) : undefined)
   }
 
   /**
@@ -170,13 +170,13 @@ export function useBankWrites() {
   const canExecuteTransaction = async (
     functionName: BankFunctionName,
     args: readonly unknown[] = [],
-    value?: bigint
+    value?: MaybeRef<bigint>
   ): Promise<boolean> => {
     if (!isValidBankFunction(functionName)) {
       return false
     }
 
-    return baseWrites.canExecuteTransaction(functionName, args, value)
+    return baseWrites.canExecuteTransaction(functionName, args, value ? unref(value) : undefined)
   }
 
   return {
