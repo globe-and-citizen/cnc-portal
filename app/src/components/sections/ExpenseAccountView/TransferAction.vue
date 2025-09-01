@@ -45,6 +45,7 @@ import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import { estimateGas, readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const props = defineProps<{ row: ExpenseResponse }>()
 
@@ -54,6 +55,7 @@ const { addErrorToast, addSuccessToast } = useToastStore()
 const { balances } = useContractBalance(
   ref(teamStore.getContractAddressByType('ExpenseAccountEIP712'))
 )
+const queryClient = useQueryClient()
 
 const showModal = ref(false)
 const tokenAmount = ref('')
@@ -104,6 +106,8 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
     if (budgetLimit.tokenAddress === zeroAddress) await transferNativeToken(to, amount, budgetLimit)
     else await transferErc20Token()
   }
+
+  queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
 }
 
 const transferNativeToken = async (to: string, amount: string, budgetLimit: BudgetLimit) => {
