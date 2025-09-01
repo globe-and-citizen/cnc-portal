@@ -9,7 +9,7 @@
         :columns="columns"
       >
         <template #action-data="{ row }">
-          <TransferAction :row="row as ExpenseResponse" />
+          <TransferAction :row="row" />
         </template>
         <template #expiryDate-data="{ row }">
           <span>{{ new Date(Number(row.data.expiry) * 1000).toLocaleString('en-US') }}</span>
