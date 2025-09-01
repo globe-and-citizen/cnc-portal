@@ -1,4 +1,4 @@
-import { computed, readonly, ref, watch } from 'vue'
+import { computed, readonly, ref, watch, unref, type MaybeRef } from 'vue'
 import {
   useWriteContract,
   useWaitForTransactionReceipt,
@@ -15,9 +15,9 @@ export interface ContractWriteOptions {
 }
 
 export interface ContractWriteConfig {
-  contractAddress: Address
-  abi: Abi
-  chainId?: number // Optional chain ID, if not provided will use current account chain ID
+  contractAddress: MaybeRef<Address>
+  abi: MaybeRef<Abi>
+  chainId?: MaybeRef<number> // Optional chain ID, if not provided will use current account chain ID
 }
 
 /**
@@ -30,7 +30,7 @@ export function useContractWrites(config: ContractWriteConfig) {
   const { chainId: currentChainId } = useAccount()
 
   // Use provided chainId or current account chainId
-  const chainId = computed(() => config.chainId || currentChainId.value)
+  const chainId = computed(() => unref(config.chainId) || currentChainId.value)
 
   // Store the current function name for query invalidation
   const currentFunctionName = ref<string | null>(null)
@@ -84,14 +84,14 @@ export function useContractWrites(config: ContractWriteConfig) {
     try {
       // Encode the function data
       const encodedData = encodeFunctionData({
-        abi: config.abi,
+        abi: unref(config.abi),
         functionName,
         args
       })
 
       // Set parameters for gas estimation with encoded data
       gasEstimateParams.value = {
-        to: config.contractAddress,
+        to: unref(config.contractAddress),
         data: encodedData,
         value
       }
@@ -111,7 +111,7 @@ export function useContractWrites(config: ContractWriteConfig) {
     try {
       // Set parameters for gas estimation with raw encoded data
       gasEstimateParams.value = {
-        to: config.contractAddress,
+        to: unref(config.contractAddress),
         data: encodedData,
         value
       }
@@ -151,7 +151,7 @@ export function useContractWrites(config: ContractWriteConfig) {
       queryKey: [
         'readContract',
         {
-          address: config.contractAddress,
+          address: unref(config.contractAddress),
           chainId: chainId.value
         }
       ]
@@ -226,11 +226,10 @@ export function useContractWrites(config: ContractWriteConfig) {
 
     // Store function name for query invalidation after transaction confirms
     currentFunctionName.value = functionName
-
     try {
       return await writeContractAsync({
-        address: config.contractAddress,
-        abi: config.abi,
+        address: unref(config.contractAddress),
+        abi: unref(config.abi),
         functionName,
         args,
         ...(value !== undefined ? { value } : {})
