@@ -24,6 +24,19 @@ export const addExpense = async (req: Request, res: Response) => {
   const data: BudgetLimit = (typeof body.data === "string")
     ? JSON.parse(body.data)
     : body.data;
+
+  const expenseAccountEip712Address = await prisma.teamContract.findFirst({
+    where: {
+      teamId: teamId,
+      type: "ExpenseAccountEIP712"
+    }
+  });
+
+  const owner = await publicClient.readContract({
+    address: expenseAccountEip712Address?.address as Address,
+    abi: ABI,
+    functionName: "owner"
+  }) as unknown as string;     
   
   // Validating the expense data
   let parametersError: string[] = [];
@@ -37,7 +50,7 @@ export const addExpense = async (req: Request, res: Response) => {
   }
   try {
     // Check if the caller is the owner of the team
-    if (!(await isOwnerOfTeam(callerAddress, teamId))) {
+    if (/*!(await isOwnerOfTeam(callerAddress, teamId))*/callerAddress != owner) {
       return errorResponse(403, "Caller is not the owner of the team", res);
     }
     // TODO: should be only one expense active for the user
