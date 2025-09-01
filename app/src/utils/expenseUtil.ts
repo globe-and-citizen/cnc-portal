@@ -2,17 +2,14 @@ import type { ExpenseResponse, TokenBalance } from '@/types'
 import { tokenSymbol } from './constantUtil'
 import { zeroAddress } from 'viem'
 import type { TokenId } from '@/constant'
+import type { TableRow } from '@/components/TableComponent.vue'
 
 export const getCurrentUserExpenses = (expenses: ExpenseResponse[], userAddress: string) => {
   if (!expenses || !userAddress || !Array.isArray(expenses)) return []
   return expenses.filter((expense) => expense.data.approvedAddress === userAddress)
 }
 
-export const getTokens = (
-  expenses: ExpenseResponse[],
-  signature: string,
-  balances: TokenBalance[]
-) => {
+export const getTokens = (expenses: TableRow[], signature: string, balances: TokenBalance[]) => {
   const tokenAddress = expenses.find((item) => item.signature === signature)?.data.tokenAddress
 
   const symbol = tokenSymbol(tokenAddress ?? '')

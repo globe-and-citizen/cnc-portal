@@ -35,7 +35,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import { USDC_ADDRESS, type TokenId } from '@/constant'
-import type { BudgetData, BudgetLimit, ExpenseResponse } from '@/types'
+import type { BudgetData, BudgetLimit } from '@/types'
 import { useContractBalance } from '@/composables'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { getTokens, log, parseError } from '@/utils'
@@ -46,8 +46,9 @@ import { estimateGas, readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import ERC20ABI from '@/artifacts/abi/erc20.json'
 import { useQueryClient } from '@tanstack/vue-query'
+import type { TableRow } from '@/components/TableComponent.vue'
 
-const props = defineProps<{ row: ExpenseResponse }>()
+const props = defineProps<{ row: TableRow }>()
 
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
@@ -106,8 +107,6 @@ const transferFromExpenseAccount = async (to: string, amount: string) => {
     if (budgetLimit.tokenAddress === zeroAddress) await transferNativeToken(to, amount, budgetLimit)
     else await transferErc20Token()
   }
-
-  queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
 }
 
 const transferNativeToken = async (to: string, amount: string, budgetLimit: BudgetLimit) => {
@@ -231,7 +230,7 @@ watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
     addSuccessToast('Transfer Successful')
     showModal.value = false
     transferERC20loading.value = false
-    // await expenseDataStore.fetchAllExpenseData()
+    queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
   }
 })
 watch(errorTransfer, (newVal) => {
