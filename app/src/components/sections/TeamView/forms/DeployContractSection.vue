@@ -23,7 +23,7 @@ import { ref, watch, computed } from 'vue'
 import OfficerABI from '@/artifacts/abi/officer.json'
 import BankABI from '@/artifacts/abi/bank.json'
 // import VotingABI from '@/artifacts/abi/voting.json'
-import ExpenseAccountABI from '@/artifacts/abi/expense-account.json'
+
 import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
 import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import FACTORY_BEACON_ABI from '@/artifacts/abi/factory-beacon.json'
@@ -33,7 +33,6 @@ import {
   BANK_BEACON_ADDRESS,
   BOD_BEACON_ADDRESS,
   CASH_REMUNERATION_EIP712_BEACON_ADDRESS,
-  EXPENSE_ACCOUNT_BEACON_ADDRESS,
   EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS,
   INVESTOR_V1_BEACON_ADDRESS,
   OFFICER_BEACON,
@@ -119,10 +118,6 @@ const deployOfficerContract = async () => {
         beaconAddress: PROPOSALS_BEACON_ADDRESS
       },
       {
-        beaconType: 'ExpenseAccount',
-        beaconAddress: EXPENSE_ACCOUNT_BEACON_ADDRESS
-      },
-      {
         beaconType: 'ExpenseAccountEIP712',
         beaconAddress: EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
       },
@@ -178,16 +173,6 @@ const deployOfficerContract = async () => {
       contractType: 'Proposals',
       initializerData: encodeFunctionData({
         abi: PROPOSALS_ABI,
-        functionName: 'initialize',
-        args: [currentUserAddress]
-      })
-    })
-
-    // Expense account
-    deployments.push({
-      contractType: 'ExpenseAccount',
-      initializerData: encodeFunctionData({
-        abi: ExpenseAccountABI,
         functionName: 'initialize',
         args: [currentUserAddress]
       })
