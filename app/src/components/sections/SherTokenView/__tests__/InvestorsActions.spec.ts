@@ -9,8 +9,16 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 import type { Team } from '@/types/team'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
-
+import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
+import { mainnet } from 'viem/chains'
 // vi.mock('@/stores/useToastStore')
+const wagmiConfig = createConfig({
+  chains: [mainnet],
+  transports: {
+    [mainnet.id]: http()
+  }
+})
+
 vi.mock('@/stores/user')
 
 const { addErrorToast, addSuccessToast } = mockToastStore
@@ -124,6 +132,7 @@ describe('InvestorsActions.vue', () => {
       global: {
         plugins: [
           createTestingPinia({ createSpy: vi.fn }),
+          [WagmiPlugin, { config: wagmiConfig }],
           [VueQueryPlugin, { queryClient }] // Add VueQueryPlugin with QueryClient
         ]
       },
