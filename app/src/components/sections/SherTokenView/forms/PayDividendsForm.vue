@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-4">
     <h2>Pay Dividends to the shareholders</h2>
-
+    <BodAlert v-if="_isBodAction" />
     <h3>
       Please input amount of {{ NETWORK.currencySymbol }} to divide to the shareholders. This will
       move funds from bank contract to the shareholders
@@ -69,6 +69,7 @@ import { useBalance } from '@wagmi/vue'
 import { formatEther, parseEther, type Address } from 'viem'
 import { computed, onMounted, watch } from 'vue'
 import { ref } from 'vue'
+import BodAlert from '@/components/BodAlert.vue'
 
 const amount = ref<number | null>(null)
 const { addErrorToast } = useToastStore()
@@ -77,11 +78,13 @@ const props = defineProps<{
   tokenSymbol: string | undefined
   loading: boolean
   team: Team
+  isBodAction: boolean
 }>()
 
 const bankAddress = computed(
   () => props.team.teamContracts.find((contract) => contract.type === 'Bank')?.address as Address
 )
+const _isBodAction = computed(() => props.isBodAction)
 const {
   data: bankBalance,
   isLoading: balanceLoading,

@@ -33,11 +33,14 @@
           data-test="pay-dividends-button"
           @click="payDividendsModal = true"
           :disabled="
-            !tokenSymbol || currentAddress != bankOwner || (shareholders?.length ?? 0) == 0
+            !tokenSymbol ||
+            (!isBodAction && currentAddress != bankOwner) ||
+            (shareholders?.length ?? 0) === 0
           "
         >
           Pay Dividends
         </ButtonUI>
+        <InvestorPendingActions v-if="isBodAction" />
       </div>
 
       <div class="flex gap-x-1 transform -translate-y-8">
@@ -65,6 +68,7 @@
           :token-symbol="tokenSymbol!"
           :team="teamStore.currentTeam"
           @submit="executePayDividends"
+          :is-bod-action="isBodAction"
         ></PayDividendsForm>
       </ModalComponent>
     </div>
@@ -76,17 +80,20 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { log } from '@/utils'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import { type Address } from 'viem'
+import { type Address, encodeFunctionData } from 'viem'
 import { computed, ref, watch } from 'vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
 import BANK_ABI from '@/artifacts/abi/bank.json'
+import BOD_ABI from '@/artifacts/abi/bod.json'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-
+import { useCustomFetch } from '@/composables'
+import InvestorPendingActions from './InvestorPendingActions.vue'
 const { addErrorToast, addSuccessToast } = useToastStore()
+
 const mintModal = ref(false)
 const distributeMintModal = ref(false)
 const payDividendsModal = ref(false)
@@ -94,9 +101,14 @@ const emits = defineEmits(['refetchShareholders'])
 const { address: currentAddress } = useUserDataStore()
 
 const teamStore = useTeamStore()
-
+const action = ref({})
 const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
 const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+
+const { /*error: errorSaveAction,*/ execute: executeSaveAction } = useCustomFetch('actions/', {
+  immediate: false
+}).post(action)
+
 const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
   abi: INVESTOR_ABI,
   address: investorsAddress,
@@ -133,13 +145,60 @@ const { isLoading: isConfirmingPayDividends, isSuccess: isSuccessPayDividends } 
     hash: payDividendsHash
   })
 
-const executePayDividends = (value: bigint) => {
-  payDividends({
-    abi: BANK_ABI,
-    address: bankAddress.value as Address,
-    functionName: 'transfer',
-    args: [investorsAddress.value, value]
+const {
+  data: hashAddAction,
+  writeContract: executeAddAction
+  //isPending: isLoadingAddAction
+  // error: errorAddAction
+} = useWriteContract()
+const { isLoading: isConfirmingAddAction, isSuccess: isConfirmedAddAction } =
+  useWaitForTransactionReceipt({
+    hash: hashAddAction
   })
+
+watch(isConfirmingAddAction, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedAddAction.value) {
+    await executeSaveAction()
+    addSuccessToast('Action added successfully!')
+    //emits('contract-status-changed')
+    payDividendsModal.value = false
+  }
+})
+
+const executePayDividends = async (value: bigint) => {
+  if (isBodAction.value) {
+    await getActionCount()
+
+    const data = encodeFunctionData({
+      abi: BANK_ABI,
+      functionName: 'transfer',
+      args: [investorsAddress.value, value]
+    })
+    const description = JSON.stringify({
+      text: `Pay dividends of ${value} to ${investorsAddress.value}`,
+      title: `Pay Dividends Request`
+    })
+    executeAddAction({
+      address: bodAddress as Address,
+      abi: BOD_ABI,
+      functionName: 'addAction',
+      args: [bankAddress.value, description, data]
+    })
+    action.value = {
+      teamId: teamStore.currentTeamId,
+      actionId: Number(actionId.value),
+      targetAddress: bankAddress.value,
+      description,
+      data
+    }
+  } else {
+    payDividends({
+      abi: BANK_ABI,
+      address: bankAddress.value as Address,
+      functionName: 'transfer',
+      args: [investorsAddress.value, value]
+    })
+  }
 }
 const executeDistributeMint = (
   shareholders: ReadonlyArray<{
@@ -154,6 +213,20 @@ const executeDistributeMint = (
     args: [shareholders]
   })
 }
+const bodAddress = teamStore.getContractAddressByType('BoardOfDirectors')
+
+const { data: actionId, refetch: getActionCount } = useReadContract({
+  address: bodAddress,
+  abi: BOD_ABI,
+  functionName: 'actionCount'
+})
+
+const { data: isBodMember } = useReadContract({
+  address: bodAddress,
+  abi: BOD_ABI,
+  functionName: 'isMember',
+  args: [currentAddress]
+})
 
 const {
   data: bankOwner,
@@ -166,6 +239,16 @@ const {
   abi: BANK_ABI
 })
 
+const isBodAction = ref(false)
+
+watch(
+  [bankOwner, isBodMember],
+  ([newBankOwner, newIsBodMember]) => {
+    const result = newBankOwner === bodAddress && (newIsBodMember as boolean)
+    isBodAction.value = result
+  },
+  { immediate: true }
+)
 const {
   data: investorsOwner,
   //isLoading: isLoadingInvestorsOwner,
