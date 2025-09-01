@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-4">
     <h2>Pay Dividends to the shareholders</h2>
-    <BodAlert v-if="_isBodAction" />
+    <BodAlert v-if="isBodAction" />
     <h3>
       Please input amount of {{ NETWORK.currencySymbol }} to divide to the shareholders. This will
       move funds from bank contract to the shareholders
@@ -84,7 +84,7 @@ const props = defineProps<{
 const bankAddress = computed(
   () => props.team.teamContracts.find((contract) => contract.type === 'Bank')?.address as Address
 )
-const _isBodAction = computed(() => props.isBodAction)
+
 const {
   data: bankBalance,
   isLoading: balanceLoading,
