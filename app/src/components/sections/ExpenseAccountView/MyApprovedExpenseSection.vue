@@ -56,7 +56,7 @@ const {
   'expenseData',
   computed(() => `/expense?teamId=${teamStore.currentTeamId}`),
   {
-    queryKey: ['expenseData'],
+    queryKey: ['getExpenseData'],
     refetchInterval: 10000,
     refetchOnWindowFocus: true
   }
