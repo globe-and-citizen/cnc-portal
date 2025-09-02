@@ -28,7 +28,7 @@
         !Boolean(formattedElection?.resultsPublished) &&
         electionStatus?.text === 'Completed'
       "
-      :disabled="userStore.address !== teamStore.currentTeam?.ownerAddress"
+      :disabled="userStore.address !== owner"
       :election-id="formattedElection?.id ?? 1"
     />
     <ButtonUI
@@ -57,5 +57,5 @@ const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const router = useRouter()
 const currentElectionId = computed(() => props.electionId)
-const { formattedElection, electionStatus } = useBoDElections(currentElectionId)
+const { formattedElection, electionStatus, owner } = useBoDElections(currentElectionId)
 </script>
