@@ -35,6 +35,7 @@
       v-if="!electionStatus || formattedElection?.resultsPublished"
       variant="success"
       @click="emits('showCreateElectionModal')"
+      :disabled="userStore.address != owner"
     >
       Create Election
     </ButtonUI>
