@@ -50,7 +50,7 @@ export const addExpense = async (req: Request, res: Response) => {
   }
   try {
     // Check if the caller is the owner of the team
-    if (/*!(await isOwnerOfTeam(callerAddress, teamId))*/callerAddress != owner) {
+    if (callerAddress != owner) {
       return errorResponse(403, "Caller is not the owner of the team", res);
     }
     // TODO: should be only one expense active for the user
