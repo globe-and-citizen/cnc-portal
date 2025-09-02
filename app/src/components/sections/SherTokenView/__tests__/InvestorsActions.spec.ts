@@ -39,7 +39,9 @@ const mockUseWriteContract = {
 
 const mockUseWaitForTransactionReceipt = {
   isLoading: ref(false),
-  isSuccess: ref(false)
+  isSuccess: ref(false),
+  data: ref(undefined),
+  error: ref(null)
 }
 const mockUseSendTransaction = {
   isPending: ref(false),
