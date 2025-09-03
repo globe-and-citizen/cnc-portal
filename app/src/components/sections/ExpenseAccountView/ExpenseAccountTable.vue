@@ -92,9 +92,9 @@ import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import UserComponent from '@/components/UserComponent.vue'
+import { useQueryClient } from '@tanstack/vue-query'
 import { useTanstackQuery } from '@/composables'
 import type { ExpenseResponse } from '@/types'
-import { useQueryClient } from '@tanstack/vue-query'
 
 const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
