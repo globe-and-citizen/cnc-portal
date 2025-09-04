@@ -160,12 +160,6 @@ const syncExpenseStatus = async (expense: Expense) => {
     ? `${formatEther(balances[1])}`
     : `${Number(balances[1]) / 1e6}`
 
-  console.table([
-    { Metric: `MaxTransactions`, Limit: (data.budgetData.find(item => item.budgetType === 0)?.value ?? 0), Actual: balances[0] },
-    { Metric: `MaxAmount`, Limit: (data.budgetData.find(item => item.budgetType === 1)?.value ?? 0), Actual: balances[1] },
-    { Metric: `MaxPerTransaction`, Limit: (data.budgetData.find(item => item.budgetType === 2)?.value ?? 0), Actual: balances[2] }
-  ]);
-
   const isLimitReached = 
     ((data.budgetData.find(item => item.budgetType === 1)?.value ?? Number.MAX_VALUE) <= Number(amountTransferred)) ||
     ((data.budgetData.find(item => item.budgetType === 0)?.value ?? Number.MAX_VALUE) <= Number(balances[0]))
