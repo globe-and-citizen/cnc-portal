@@ -22,6 +22,15 @@
               await transferFromExpenseAccount(data.address.address, data.amount)
             }
           "
+          @vue:unmounted="
+            () => {
+              transferData = {
+                address: { name: '', address: '' },
+                token: { symbol: '', balance: 0, tokenId: '' as TokenId },
+                amount: '0'
+              }
+            }
+          "
           @closeModal="showModal = false"
         />
       </ModalComponent>
