@@ -67,14 +67,24 @@
         >
       </template>
       <template #maxAmountPerTx-data="{ row }">
-        <span>{{ row.budgetData[2]?.value }} {{ tokenSymbol(row.tokenAddress) }}</span>
+        <span
+          >{{ row.budgetData.find((item: BudgetData) => item.budgetType === 2)?.value }}
+          {{ tokenSymbol(row.tokenAddress) }}</span
+        >
       </template>
       <template #transactions-data="{ row }">
-        <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }} TXs</span>
+        <span
+          >{{ row.balances[0] }}/{{
+            row.budgetData.find((item: BudgetData) => item.budgetType === 0)?.value
+          }}
+          TXs</span
+        >
       </template>
       <template #amountTransferred-data="{ row }">
         <span
-          >{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}
+          >{{ row.balances[1] }}/{{
+            row.budgetData.find((item: BudgetData) => item.budgetType === 1)?.value
+          }}
           {{ tokenSymbol(row.tokenAddress) }}</span
         >
       </template>
@@ -94,7 +104,7 @@ import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTanstackQuery } from '@/composables'
-import type { ExpenseResponse } from '@/types'
+import type { BudgetData, ExpenseResponse } from '@/types'
 
 const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
