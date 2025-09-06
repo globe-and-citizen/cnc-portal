@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import type { InvestorsTransaction, RawInvestorsTransaction } from '@/types/transactions'
 import { formatEtherUtil, log, tokenSymbol } from '@/utils'
 import { useQuery } from '@vue/apollo-composable'
