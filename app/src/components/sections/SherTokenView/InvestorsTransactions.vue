@@ -20,7 +20,6 @@ const investorAddress = computed(() => teamStore.getContractAddressByType('Inves
 
 const currencyStore = useCurrencyStore()
 const teamStore = useTeamStore()
-const { addErrorToast } = useToastStore()
 
 const selectedTokenId = ref<TokenId>('native')
 
