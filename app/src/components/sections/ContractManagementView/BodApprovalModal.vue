@@ -8,7 +8,7 @@
     </div>
     <div>
       <p class="text-xl font-semibold text-gray-900">{{ row.title }}</p>
-      <p class="text-gray-400">{{ row.description }}....</p>
+      <p class="text-gray-400">{{ row.description }}</p>
     </div>
   </div>
 

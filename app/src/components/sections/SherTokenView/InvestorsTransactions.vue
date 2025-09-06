@@ -86,10 +86,14 @@ const transactionData = computed<InvestorsTransaction[]>(() => {
   const distributions = result.value?.dividendDistributions || []
   return distributions.map(formatTransactions)
 })
-watch(error, (newError) => {
-  if (newError) {
-    addErrorToast('Failed to fetch payment transactions')
-    log.error('useQueryError: ', newError)
+const lastError = ref<string | null>(null)
+watch(
+  () => error.value?.message,
+  (newMessage) => {
+    if (newMessage && newMessage !== lastError.value) {
+      log.error('GraphQL Error:', error.value)
+      lastError.value = newMessage
+    }
   }
-})
+)
 </script>

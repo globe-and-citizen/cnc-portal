@@ -12,6 +12,13 @@
       <span v-else> {{ formatEther(bankBalance?.value ?? 0n) }}</span>
       {{ NETWORK.currencySymbol }}
     </h6>
+    <div
+      v-if="!balanceLoading && (bankBalance?.value ?? 0n) === 0n"
+      class="alert alert-warning"
+      data-test="bank-empty-warning"
+    >
+      Please fund the bank contract before paying dividends.
+    </div>
     <!-- <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
       <p>Amount</p>
       |
@@ -52,7 +59,7 @@
         class="btn btn-primary w-44 text-center"
         @click="onSubmit()"
       >
-        Mint
+        submit
       </ButtonUI>
     </div>
   </div>
@@ -99,7 +106,16 @@ const emits = defineEmits(['submit'])
 const rules = {
   amount: {
     required,
-    numeric
+    numeric,
+    minValue: {
+      $validator: (value: number) => value > 0,
+      $message: 'Value should be greater than 0'
+    },
+    maxValue: {
+      $validator: (value: number) =>
+        parseFloat(formatEther(bankBalance.value?.value ?? 0n)) >= value,
+      $message: 'Amount exceeds the current bank balance'
+    }
   }
 }
 
