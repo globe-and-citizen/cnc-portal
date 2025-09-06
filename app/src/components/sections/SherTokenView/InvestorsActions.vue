@@ -248,7 +248,6 @@ watch(isConfirmingPayDividends, (isConfirming, wasConfirming) => {
 watch(isActionAdded, (isAdded) => {
   if (isAdded) {
     payDividendsModal.value = false
-    addSuccessToast('new action added successfully')
   }
 })
 
