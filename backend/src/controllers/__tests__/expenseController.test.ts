@@ -53,6 +53,7 @@ describe("Expense Controller", () => {
 
   describe("POST: /expense", () => {
     it("should return 400 if required parameters are missing", async () => {
+      vi.spyOn(publicClient, "readContract").mockResolvedValue('0x123');
       const response = await request(app).post("/expense").send({ teamId: 1 });
 
       expect(response.status).toBe(400);
@@ -72,9 +73,10 @@ describe("Expense Controller", () => {
       expect(response.status).toBe(403);
       expect(response.body.message).toBe("Caller is not the owner of the team");
     });
-    it("should create a new expense", async () => {
+    it("should create a new expense", async () => {      
       vi.spyOn(prisma.team, "findFirst").mockResolvedValueOnce(mockTeam);
       vi.spyOn(prisma.expense, "create").mockResolvedValueOnce(mockExpense);
+      vi.spyOn(publicClient, "readContract").mockResolvedValue('0xCallerAddress');
 
       const response = await request(app)
         .post("/expense")
@@ -91,7 +93,7 @@ describe("Expense Controller", () => {
     });
 
     it("should return 500 if there is a server error", async () => {
-      vi.spyOn(prisma.team, "findFirst").mockRejectedValue("Server error");
+      vi.spyOn(prisma.expense, "create").mockRejectedValue("Server error");
 
       const response = await request(app).post("/expense").send({
         teamId: 1,
