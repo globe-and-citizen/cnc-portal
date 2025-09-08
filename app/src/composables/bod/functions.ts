@@ -11,7 +11,7 @@ import BOD_ABI from '@/artifacts/abi/bod.json'
 import { useCustomFetch } from '@/composables'
 import { useQueryClient } from '@tanstack/vue-query'
 import { log, parseError } from '@/utils'
-
+import { useNotifications } from '../useNotification'
 /**
  * BOD contract write functions - combines admin, transfers, and tipping
  */
@@ -21,7 +21,7 @@ export function useBodWritesFunctions() {
   const teamStore = useTeamStore()
   const { addErrorToast, addSuccessToast } = useToastStore()
   const queryClient = useQueryClient()
-
+  const { addBodActionNotification } = useNotifications()
   const action = ref<Partial<Action> | null>(null)
   const actionUrl = ref('')
   const isLoadingApproveAction = ref(false)
@@ -45,6 +45,34 @@ export function useBodWritesFunctions() {
       isActionAdded.value = true
       queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
       addSuccessToast('Transaction in composable is confirmed!')
+
+      try {
+        console.log('Starting notification process...')
+        const members = bodAddress.value
+          ? ((await readContract(config, {
+              address: bodAddress.value,
+              abi: BOD_ABI,
+              functionName: 'getBoardOfDirectors'
+            })) as Address[])
+          : []
+
+        if (members.length > 0 && action.value) {
+          const recipients = members.filter(
+            (m) => m?.toLowerCase() !== (action.value?.userAddress || '').toLowerCase()
+          )
+
+          await addBodActionNotification({
+            userIds: recipients,
+            message: 'New board action requires your approval',
+            subject: 'New Board Action Created',
+            author: action.value.userAddress ?? ('' as `0x${string}`),
+            resource: 'teams/' + teamStore.currentTeamId + '/contract-management'
+          })
+        }
+      } catch (err) {
+        console.error('Error in notification process:', err)
+        log.error('Error creating notifications:', err)
+      }
     }
   })
 
@@ -82,7 +110,7 @@ export function useBodWritesFunctions() {
         actionId: Number(actionId),
         ...actionData
       }
-
+      console.log('the action data =======', actionData)
       return writes.executeWrite(BOD_FUNCTION_NAMES.ADD_ACTION, [
         actionData.targetAddress,
         actionData.description,
