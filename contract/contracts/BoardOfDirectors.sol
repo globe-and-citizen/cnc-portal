@@ -89,7 +89,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
     actions[_actionId].approvalCount++;
     emit Approval(_actionId, msg.sender);
 
-    if (actions[_actionId].approvalCount >= boardOfDirectors.length() / 2) {
+    if (actions[_actionId].approvalCount >= (boardOfDirectors.length() / 2) + 1) {
       call(_actionId);
     }
   }

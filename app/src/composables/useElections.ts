@@ -10,6 +10,12 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
   const electionsAddress = computed(() => teamSTore.getContractAddressByType('Elections'))
 
   // Composables
+  const { data: owner } = useReadContract({
+    functionName: 'owner',
+    address: electionsAddress.value,
+    abi: ElectionABI
+  })
+
   const { data: currentElection, error: errorGetCurrentElection } = useReadContract({
     functionName: 'getElection',
     address: electionsAddress.value,
@@ -128,6 +134,7 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
     leftToStart,
     leftToEnd,
     currentElectionId,
-    electionsAddress
+    electionsAddress,
+    owner
   }
 }
