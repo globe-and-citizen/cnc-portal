@@ -3,12 +3,11 @@ import { prisma, errorResponse, getMondayStart } from "../utils";
 // import { errorResponse } from "../utils/utils";
 import { Prisma } from "@prisma/client";
 import { isHex } from "viem";
+import { isCashRemunerationOwner } from "../utils/cashRemunerationUtil";
 
-// Type pour les actions autorisées sur un weekly claim
 export type WeeklyClaimAction = "sign" | "withdraw";
 type statusType = "pending" | "signed" | "withdrawn";
 
-// Fonction utilitaire pour valider l'action
 function isValidWeeklyClaimAction(action: any): action is WeeklyClaimAction {
   return ["sign", "withdraw", "pending"].includes(action);
 }
@@ -17,7 +16,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const id = Number(req.params.id);
   const action = req.query.action as WeeklyClaimAction;
-  const { signature } = req.body;
+  const { signature, data: message } = req.body;
 
   // Validation stricte des actions autorisées
   const errors: string[] = [];
@@ -54,8 +53,21 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
     switch (action) {
       case "sign":
         const signErrors: string[] = [];
-        if (weeklyClaim.wage.team.ownerAddress !== callerAddress)
-          signErrors.push("Caller is not owner of the team");
+
+        // Check if the caller is the Cash Remuneration owner
+        const isCallerCashRemunOwner = await isCashRemunerationOwner(
+          callerAddress,
+          weeklyClaim.wage.team.id
+        );
+
+        // If not Cash Remuneration owner, check if they're the team owner
+        if (
+          !isCallerCashRemunOwner &&
+          weeklyClaim.wage.team.ownerAddress !== callerAddress
+        )
+          signErrors.push(
+            "Caller is not the Cash Remuneration owner or the team owner"
+          );
 
         // Check if the week is completed
         if (
@@ -66,7 +78,13 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         }
         // check if the weekly claim is already signed or withdrawn
         if (weeklyClaim.status !== "pending") {
-          if (weeklyClaim.status === "signed") {
+          if (
+            weeklyClaim.status === "signed" &&
+            callerAddress ===
+              (typeof weeklyClaim.data === "object" && weeklyClaim.data !== null
+                ? (weeklyClaim.data as { [key: string]: any })["ownerAddress"]
+                : undefined)
+          ) {
             signErrors.push("Weekly claim already signed");
           } else if (weeklyClaim.status === "withdrawn") {
             signErrors.push("Weekly claim already withdrawn");
@@ -76,7 +94,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         if (signErrors.length > 0)
           return errorResponse(400, signErrors.join("; "), res);
 
-        data = { signature, status: "signed" };
+        data = { signature, status: "signed", data: message };
         // singleClaimStatus = "signed";
         break;
       case "withdraw":

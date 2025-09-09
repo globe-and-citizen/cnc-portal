@@ -46,6 +46,30 @@ const mockClaim = {
   dayWorked: new Date(),
 } as Claim;
 
+const mockClaimWithWage = [
+  {
+    id: 1,
+    hoursWorked: 5,
+    status: "pending",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    signature: null,
+    wageId: 1,
+    dayWorked: new Date(),
+    memo: "Test memo",
+    tokenTx: null,
+    weeklyClaimId: 1,
+    wage: {
+      teamId: 1,
+      userAddress: "0xMemberAddress",
+      user: {
+        address: "0xMemberAddress",
+        name: "User1",
+      },
+    },
+  },
+];
+
 const app = express();
 app.use(express.json());
 app.post("/claim", setAddressMiddleware("0x123"), addClaim);
@@ -245,6 +269,20 @@ describe("Claim Controller", () => {
       expect(response.body.message).toBe("Caller is not a member of the team");
     });
 
+    it("should return 200 and list claims filtered by memberAddress", async () => {
+      vi.spyOn(prisma.team, "findFirst").mockResolvedValue({});
+
+      vi.spyOn(prisma.claim, "findMany").mockResolvedValue(mockClaimWithWage);
+
+      const response = await request(app)
+        .get("/claim")
+        .query({ teamId: 1, memberAddress: "0xMemberAddress" });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toBeInstanceOf(Array);
+      expect(response.body).toHaveLength(1);
+    });
+
     it("should return 200 and list claims for a team", async () => {
       // mock on isUserMemberOfTeam
 
@@ -334,7 +372,7 @@ describe("Claim Controller", () => {
       expect(response.body.message).toBe("Claim not found");
     });
 
-    it("should return 403 if caller is not the owner of the team for sign action", async () => {
+    it("should return 403 if is not cash Remuneration owner or team owner", async () => {
       vi.spyOn(prisma.claim, "findFirst").mockResolvedValue({
         id: 1,
         status: "pending",
@@ -348,7 +386,9 @@ describe("Claim Controller", () => {
         .send({ signature: "0xabc" });
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe("Caller is not the owner of the team");
+      expect(response.body.message).toBe(
+        "Caller is not the Cash Remuneration owner or the team owner"
+      );
     });
 
     it("should return 403 if caller is not the owner of the claim for withdraw action", async () => {
