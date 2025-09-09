@@ -225,7 +225,7 @@ describe.skip('CRAddERC20Support.vue', () => {
     })
 
     it('should handle errors when checking token support', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockReadContract.mockRejectedValue(new Error('Network error'))
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
@@ -306,7 +306,7 @@ describe.skip('CRAddERC20Support.vue', () => {
     })
 
     it('should handle errors when adding token support', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockReadContract.mockResolvedValue(false)
       mockWriteContract.mockRejectedValue(new Error('Transaction failed'))
       wrapper = mountComponent()
@@ -332,7 +332,7 @@ describe.skip('CRAddERC20Support.vue', () => {
     })
 
     it('should handle errors when removing token support', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockReadContract.mockResolvedValue(true)
       mockWriteContract.mockRejectedValue(new Error('Transaction failed'))
       wrapper = mountComponent()
