@@ -92,7 +92,7 @@
         <div v-else-if="error.$validator === '$each'">
           <div v-for="(subError, index) in error.$message" :key="index">
             <div v-for="(msg, key) in subError" :key="key">
-              Budget limit {{ resultArray[index].budgetType }}: {{ msg }}
+              {{ budgetTypes[resultArray[index].budgetType as unknown as 0 | 1 | 2] }}: {{ msg }}
             </div>
           </div>
         </div>
@@ -226,7 +226,16 @@ const rules = {
           (value: string | number) => {
             return !isNaN(Number(value)) && Number(value) > 0
           }
-        )
+        ),
+        custom: helpers.withMessage('Value must be an integer', (value) => {
+          const index = resultArray.value.findIndex((item) => item.value === value)
+          const budgetType = resultArray.value[index]?.budgetType
+
+          if (budgetType === 0) {
+            return Number.isInteger(value)
+          }
+          return true
+        })
       }
     })
   },
