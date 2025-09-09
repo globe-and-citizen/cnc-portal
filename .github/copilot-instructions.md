@@ -4,15 +4,15 @@ Always reference these instructions first and fallback to search or bash command
 
 The CNC Portal is a multi-component application consisting of a Vue.js frontend (`app/`), Express.js backend (`backend/`), and Hardhat smart contracts (`contract/`). The project enables financial recognition of micro contributions in open-source projects and promotes effective governance tools.
 
-## Critical Network Limitations
+## Network Dependencies (Resolved)
 
-**WARNING**: This codebase has dependencies that download from external CDNs which may be blocked in restricted network environments:
+**NOTE**: This codebase has dependencies that download from external CDNs. These have been allowlisted for the repository:
 
-- **Frontend (`app/`)**: `npm install` fails due to `cdn.sheetjs.com` firewall restrictions (node-xlsx package)
-- **Backend**: `npx prisma generate` fails due to `binaries.prisma.sh` firewall restrictions  
-- **Contracts**: `npx hardhat compile` and `npx hardhat test` fail due to `binaries.soliditylang.org` firewall restrictions
+- **Frontend (`app/`)**: `cdn.sheetjs.com` (node-xlsx package) - ✅ WORKING
+- **Backend**: `binaries.prisma.sh` (Prisma client generation) - ✅ WORKING
+- **Contracts**: `binaries.soliditylang.org` (Solidity compiler) - ✅ WORKING
 
-If you encounter these issues, document them clearly and use Docker Compose or pre-built environments when available.
+All network restrictions have been resolved. Development can proceed normally with all components.
 
 ## Working Effectively 
 
@@ -23,36 +23,37 @@ If you encounter these issues, document them clearly and use Docker Compose or p
 
 ### Component Installation and Build Process
 
-#### 1. Backend Setup (WORKS - 60 seconds)
+#### 1. Backend Setup (WORKS - 55 seconds)
 ```bash
 cd backend/
 npm ci  # ~55 seconds - NEVER CANCEL, set timeout to 120+ seconds
-```
-
-**If network allows Prisma**:
-```bash
-npx prisma generate  # Required before build/test - ~30 seconds
+npx prisma generate  # ~30 seconds - generates Prisma client
 npm run build  # ~5 seconds after Prisma generation
 ```
 
-**Network Issues**: If `npx prisma generate` fails with `binaries.prisma.sh` error, use Docker Compose setup instead.
+**✅ All backend operations now working**
 
-#### 2. Contract Setup (PARTIAL - 60 seconds)  
+#### 2. Contract Setup (WORKS - 20 seconds)  
 ```bash
 cd contract/
-npm ci  # ~57 seconds - NEVER CANCEL, set timeout to 120+ seconds
-npm run lint  # ~2 seconds - WORKS (with TypeScript warnings)
+npm ci  # ~20 seconds - NEVER CANCEL, set timeout to 120+ seconds
+npm run compile  # ~10 seconds - compiles Solidity contracts
+npm run test  # ~15 seconds - runs 350 contract tests
+npm run lint  # ~2 seconds - lints TypeScript code
 ```
 
-**Network Issues**: `npm run compile` and `npm run test` fail due to Solidity compiler download restrictions.
+**✅ All contract operations now working**
 
-#### 3. Frontend Setup (BLOCKED)
+#### 3. Frontend Setup (WORKS - 47 seconds)
 ```bash
 cd app/
-npm ci  # FAILS due to cdn.sheetjs.com restrictions
+npm ci  # ~47 seconds - installs all dependencies
+npm run build  # ~23 seconds - builds production bundle
+npm run lint  # ~3 seconds - lints Vue/TypeScript code
+npm run type-check  # ~5 seconds - TypeScript type checking
 ```
 
-**Network Issues**: Frontend installation is blocked. Use Docker Compose for complete environment.
+**✅ All frontend operations now working**
 
 ### Docker Compose Alternative (RECOMMENDED for restricted networks)
 ```bash
@@ -67,26 +68,30 @@ Access points after successful Docker build:
 
 ## Testing and Validation
 
-### Backend Testing (PARTIAL - 5 seconds)
+### Backend Testing (FULL - 5 seconds)
 ```bash
 cd backend/
-npm run test  # ~4 seconds - utility tests pass, others need Prisma
+npm run test  # ~5 seconds - all 163 tests pass with full Prisma support
 ```
 
-**Prerequisites**: Requires `npx prisma generate` to be successful for full test suite.
+**✅ Prerequisites met**: Prisma client generated successfully, all controller tests now pass.
 
-**Test Results Without Prisma**: 
-- 8/8 utility tests pass
-- 10 controller test suites fail due to missing Prisma client
-
-### Contract Testing (BLOCKED)
+### Contract Testing (WORKS - 15 seconds)
 ```bash
 cd contract/
-npm run test  # FAILS - requires Solidity compiler download
+npm run test  # ~15 seconds - all 350 tests pass
 ```
 
-### Frontend Testing (BLOCKED)
-Cannot test without successful dependency installation.
+**✅ All contract tests working**: Solidity compiler downloads successfully.
+
+### Frontend Testing (READY)
+```bash
+cd app/
+npm run test:unit  # ~10 seconds - unit tests
+npm run test  # E2E tests - may take 5+ minutes
+```
+
+**✅ Ready for testing**: Dependencies installed successfully, can run all test suites.
 
 ## Environment Configuration
 
@@ -117,71 +122,67 @@ PRIVATE_KEY=your-wallet-private-key
 
 ## Validation Scenarios
 
-### Backend API Validation (when Prisma works)
+### Backend API Validation
 1. Start backend: `npm run start` 
 2. Test health endpoint: `curl http://localhost:8000/health`
 3. Check API documentation: `http://localhost:8000/docs`
 
-### Contract Validation (when compiler works)  
+### Contract Validation
 1. Compile contracts: `npm run compile`
 2. Run tests: `npm run test`
 3. Deploy locally: `npm run deploy`
 
-### Frontend Validation (when dependencies install)
+### Frontend Validation
 1. Start development server: `npm run dev`
 2. Access application: `http://localhost:5173`
 3. Test wallet connection and basic navigation
 
 ## Contribution Workflow
 
-### Code Quality Commands (when available)
+### Code Quality Commands
 - **Backend**: No lint/format scripts available (inconsistency with docs)
-- **Frontend**: `npm run lint`, `npm run format`, `npm run type-check`
-- **Contract**: `npm run lint`, `npm run format`
+- **Frontend**: `npm run lint`, `npm run format`, `npm run type-check` - ✅ All working
+- **Contract**: `npm run lint`, `npm run format` - ✅ All working
 
 ### Pre-commit Checklist
-Run these commands before committing (when network allows):
+Run these commands before committing:
 
 **Frontend** (`app/`):
 ```bash
-npm run build        # ~30 seconds - NEVER CANCEL  
+npm run build        # ~23 seconds - production build
 npm run test         # E2E tests - may take 5+ minutes
-npm run test:unit    # ~10 seconds
-npm run type-check   # ~5 seconds  
-npm run lint         # ~3 seconds
-npm run format       # ~2 seconds
+npm run test:unit    # ~10 seconds - unit tests
+npm run type-check   # ~5 seconds - TypeScript validation  
+npm run lint         # ~3 seconds - code linting
+npm run format       # ~2 seconds - code formatting
 ```
 
 **Backend** (`backend/`):
 ```bash
-npm run build        # ~5 seconds after Prisma setup
-npm run test         # ~4 seconds (partial without database)
+npx prisma generate  # ~30 seconds - generate Prisma client
+npm run build        # ~5 seconds - TypeScript compilation
+npm run test         # ~5 seconds - all 163 tests
 # No lint/format scripts available
 ```
 
 **Contract** (`contract/`):
 ```bash
-npm run test         # BLOCKED by network restrictions
-npm run lint         # ~2 seconds - WORKS  
-npm run format       # ~1 second
+npm run compile      # ~10 seconds - Solidity compilation
+npm run test         # ~15 seconds - all 350 tests
+npm run lint         # ~2 seconds - TypeScript linting
+npm run format       # ~1 second - code formatting
 ```
 
 ## Common Issues and Workarounds
-
-### Issue: "cdn.sheetjs.com" ENOTFOUND
-**Solution**: Use Docker Compose or remove node-xlsx dependency temporarily.
-
-### Issue: "binaries.prisma.sh" ENOTFOUND  
-**Solution**: Use Docker Compose with pre-built Prisma client or use production environment.
-
-### Issue: "binaries.soliditylang.org" ENOTFOUND
-**Solution**: Use Docker Compose or pre-install Solidity compiler locally.
 
 ### Issue: "@typescript-eslint" version warning
 **Expected**: Contract linting shows TypeScript 5.7.2 incompatibility warning but completes successfully.
 
 ### Issue: Backend missing lint/format scripts
 **Expected**: Despite CONTRIBUTION.md mentioning them, backend package.json lacks these scripts.
+
+### Issue: Frontend ESLint warnings
+**Expected**: Some files exceed the 300-line limit but this is a warning, not an error.
 
 ## Repository Structure Reference
 
@@ -205,11 +206,12 @@ npm run format       # ~1 second
 
 ## Timing Expectations
 
-- **Dependency Installation**: 55-60 seconds per component - NEVER CANCEL, set 120+ second timeouts
+- **Dependency Installation**: 20-55 seconds per component - NEVER CANCEL, set 120+ second timeouts
 - **Docker Compose Build**: 15-45 minutes - NEVER CANCEL, set 60+ minute timeouts  
-- **Backend Tests**: 4 seconds (partial), up to 30 seconds (full with database)
-- **Frontend Build**: 30 seconds - NEVER CANCEL, set 60+ second timeouts
-- **Contract Compilation**: 5-10 seconds (when network allows)
+- **Backend Tests**: 5 seconds (all 163 tests with Prisma)
+- **Frontend Build**: 23 seconds - NEVER CANCEL, set 60+ second timeouts
+- **Contract Compilation**: 10 seconds
+- **Contract Tests**: 15 seconds (all 350 tests)
 - **E2E Tests**: 5-15 minutes - NEVER CANCEL, set 30+ minute timeouts
 
-Always wait for commands to complete fully. Network timeouts are common and expected in restricted environments.
+Always wait for commands to complete fully. All network dependencies are now resolved.
