@@ -202,6 +202,29 @@ watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Transferred successfully')
     transferModal.value = false
+
+    //refresh bank owner data after a successful transfer
+    queryClient.invalidateQueries({
+      queryKey: [
+        'readContract',
+        {
+          address: props.bankAddress,
+          functionName: 'owner'
+        }
+      ]
+    })
+  }
+})
+
+// Watch for changes in the bank owner
+watch(bankOwner, (newOwner, oldOwner) => {
+  if (newOwner && oldOwner && newOwner !== oldOwner) {
+    console.log('Bank owner changed from', oldOwner, 'to', newOwner)
+    // If the current user has lost ownership rights, close the transfer modal
+    if (oldOwner === userStore.address && newOwner !== userStore.address && transferModal.value) {
+      transferModal.value = false
+      addErrorToast('You are no longer the bank owner and cannot make transfers')
+    }
   }
 })
 
