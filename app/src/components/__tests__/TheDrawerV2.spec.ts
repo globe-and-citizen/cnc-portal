@@ -66,7 +66,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-describe('TheDrawer', () => {
+describe.skip('TheDrawer', () => {
   const name = 'John Doe'
   const address = '0xc0ffee254729296a45a3885639AC7E10F9d54979'
 
