@@ -9,12 +9,10 @@ import { describe, it, beforeEach, expect, vi } from "vitest";
 import { WeeklyClaim } from "@prisma/client";
 import { isCashRemunerationOwner } from "../../utils/cashRemunerationUtil";
 
-// Mock de la fonction isCashRemunerationOwner
 vi.mock("../../utils/cashRemunerationUtil", () => ({
   isCashRemunerationOwner: vi.fn().mockResolvedValue(true),
 }));
 
-// Helpers pour les mocks
 function mockWage(ownerAddress = "0x123") {
   return { team: { ownerAddress } };
 }
@@ -373,7 +371,6 @@ describe("Weekly Claim Controller", () => {
       const response = await request(app).get("/?teamId=1");
       expect(response.status).toBe(200);
 
-      // Correction: comparer avec les dates sérialisées en JSON
       const expectedResponse = mockWeeklyClaims.map((claim) => ({
         ...claim,
         weekStart: claim.weekStart.toISOString(),
