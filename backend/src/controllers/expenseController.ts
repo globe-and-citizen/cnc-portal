@@ -9,7 +9,7 @@ import publicClient from "../utils/viem.config";
 
 import { Expense, Prisma } from "@prisma/client";
 import ABI from "../artifacts/expense-account-eip712.json";
-import { BudgetLimit } from '../types'
+import { BudgetLimit } from "../types";
 
 // type expenseBodyRequest = Pick<Expens
 type expenseBodyRequest = Pick<Expense, "signature" | "data"> & {
@@ -21,23 +21,22 @@ export const addExpense = async (req: Request, res: Response) => {
   const body = req.body as expenseBodyRequest;
   const teamId = Number(body.teamId);
   const signature = body.signature as string;
-  const data: BudgetLimit = (typeof body.data === "string")
-    ? JSON.parse(body.data)
-    : body.data;
+  const data: BudgetLimit =
+    typeof body.data === "string" ? JSON.parse(body.data) : body.data;
 
   const expenseAccountEip712Address = await prisma.teamContract.findFirst({
     where: {
       teamId: teamId,
-      type: "ExpenseAccountEIP712"
-    }
+      type: "ExpenseAccountEIP712",
+    },
   });
 
-  const owner = await publicClient.readContract({
+  const owner = (await publicClient.readContract({
     address: expenseAccountEip712Address?.address as Address,
     abi: ABI,
-    functionName: "owner"
-  }) as unknown as string;     
-  
+    functionName: "owner",
+  })) as unknown as string;
+
   // Validating the expense data
   let parametersError: string[] = [];
   if (!body.teamId) parametersError.push("Missing teamId");
@@ -73,14 +72,21 @@ export const addExpense = async (req: Request, res: Response) => {
 export const getExpenses = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const teamId = Number(req.query.teamId);
-  const status = String(req.query.status || 'all');
+  const status = String(req.query.status || "all");
 
   // Validate status parameter
-  const validStatuses = ['all', 'expired', 'limit-reached', 'disabled', 'enabled', 'signed'];
+  const validStatuses = [
+    "all",
+    "expired",
+    "limit-reached",
+    "disabled",
+    "enabled",
+    "signed",
+  ];
   if (!validStatuses.includes(status)) {
     return errorResponse(400, "Invalid status parameter", res);
   }
-  
+
   if (isNaN(teamId)) {
     return errorResponse(400, "Invalid teamId", res);
   }
@@ -93,7 +99,7 @@ export const getExpenses = async (req: Request, res: Response) => {
 
     // Build where clause based on status
     const whereClause: { teamId: number; status?: string } = { teamId };
-    if (status !== 'all') {
+    if (status !== "all") {
       whereClause.status = status;
     }
 
@@ -105,21 +111,18 @@ export const getExpenses = async (req: Request, res: Response) => {
           select: {
             name: true,
             address: true,
-            imageUrl: true
-          }
-        }
-      }
+            imageUrl: true,
+          },
+        },
+      },
     });
 
     const _expenses = await Promise.all(
-      expenses
-        .map(async (expense) => await syncExpenseStatus(expense)
-    ))
-    // TODO: for each expense, check the status and update it
-    
-    return res.status(200).json(
-      _expenses
+      expenses.map(async (expense) => await syncExpenseStatus(expense))
     );
+    // TODO: for each expense, check the status and update it
+
+    return res.status(200).json(_expenses);
   } catch (error) {
     return errorResponse(500, "Failed to fetch expenses", res);
   }
@@ -133,58 +136,60 @@ const syncExpenseStatus = async (expense: Expense) => {
       status: expense.status,
       balances: {
         0: "N/A",
-        1: "N/A"
-      }
+        1: "N/A",
+      },
     };
   }
 
   const expenseAccountEip712Address = await prisma.teamContract.findFirst({
     where: {
       teamId: expense.teamId,
-      type: "ExpenseAccountEIP712"
-    }
+      type: "ExpenseAccountEIP712",
+    },
   });
 
-  const data = expense.data as BudgetLimit
-  
-  const balances = await publicClient.readContract({
+  const data = expense.data as BudgetLimit;
+
+  const balances = (await publicClient.readContract({
     address: expenseAccountEip712Address?.address as Address,
     abi: ABI,
     functionName: "balances",
-    args: [keccak256(expense.signature as Address)]
-  }) as unknown as [bigint, bigint, 0 | 1 | 2];     
-  
-  const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000)
-  
-  const amountTransferred = data.tokenAddress === zeroAddress
-    ? `${formatEther(balances[1])}`
-    : `${Number(balances[1]) / 1e6}`
+    args: [keccak256(expense.signature as Address)],
+  })) as unknown as [bigint, bigint, 0 | 1 | 2];
 
-  const isLimitReached = 
-    (data.budgetData[1].value <= Number(amountTransferred)) ||
-    (data.budgetData[0].value <= Number(balances[0]))
+  const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000);
+
+  const amountTransferred =
+    data.tokenAddress === zeroAddress
+      ? `${formatEther(balances[1])}`
+      : `${Number(balances[1]) / 1e6}`;
+
+  const isLimitReached =
+    data.budgetData[1].value <= Number(amountTransferred) ||
+    data.budgetData[0].value <= Number(balances[0]);
 
   const formattedExpense = {
     ...expense,
     balances: {
       0: `${balances[0]}`,
-      1: amountTransferred
+      1: amountTransferred,
     },
-    status: isExpired 
-     ? "expired" 
-     : isLimitReached 
+    status: isExpired
+      ? "expired"
+      : isLimitReached
       ? "limit-reached"
-      : balances[2] === 2 
-       ? "disabled" : "enabled"
-  }
+      : balances[2] === 2
+      ? "disabled"
+      : "enabled",
+  };
 
   await prisma.expense.update({
     where: { id: expense.id },
-    data: { status: formattedExpense.status }
+    data: { status: formattedExpense.status },
   });
-  
+
   return formattedExpense;
-}
+};
 
 export const updateExpense = async (req: Request, res: Response) => {
   const expenseId = Number(req.params.id);
@@ -213,7 +218,6 @@ export const updateExpense = async (req: Request, res: Response) => {
 
   // check if the user is the owner of the team
 
-
   try {
     if (status === "disable") {
       const expense = await prisma.expense.findUnique({
@@ -224,7 +228,7 @@ export const updateExpense = async (req: Request, res: Response) => {
           },
         },
       });
-  
+
       if (!expense) {
         return errorResponse(403, "Caller is not the owner of the team", res);
       }
