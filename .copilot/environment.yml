@@ -1,0 +1,64 @@
+# GitHub Copilot Agent Environment Configuration
+# This configuration customizes the development environment for GitHub Copilot coding agent
+# Reference: https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/use-copilot-agents/coding-agent/customize-the-agent-environment
+
+# Base image with Node.js 20.10.0 to match the project's CI/CD workflows
+image: node:20.10.0-bullseye
+
+# Environment setup commands
+setup:
+  # Install global development tools commonly used in this project
+  - npm install -g nodemon typescript ts-node prettier eslint
+  
+  # Install system tools that might be helpful
+  - apt-get update && apt-get install -y git curl vim jq python3 python3-pip && apt-get clean
+  
+  # Install dependencies for all components of the monorepo
+  - echo "📦 Installing CNC Portal dependencies..."
+  
+  # Frontend (app) dependencies
+  - cd /workspace/app && npm ci --silent --prefer-offline --no-audit
+  
+  # Backend dependencies  
+  - cd /workspace/backend && npm ci --silent --prefer-offline --no-audit
+  
+  # Contract dependencies
+  - cd /workspace/contract && npm ci --silent --prefer-offline --no-audit
+  
+  # Setup backend Prisma client (if database is available)
+  - cd /workspace/backend && (npm run prisma:generate 2>/dev/null || echo "⚠️ Prisma client generation skipped - database not available")
+  
+  # Compile smart contracts (if network access is available)
+  - cd /workspace/contract && (npm run compile 2>/dev/null || echo "⚠️ Contract compilation skipped - may need network access")
+  
+  # Display completion message with helpful information
+  - echo ""
+  - echo "🎉 CNC Portal Development Environment Ready!"
+  - echo ""
+  - echo "📁 Project Components:"
+  - echo "  app/      - Vue.js frontend (Vite + TypeScript)"
+  - echo "  backend/  - Express.js API server (TypeScript + Prisma)"
+  - echo "  contract/ - Hardhat smart contracts (Solidity)"
+  - echo ""
+  - echo "🚀 Quick Start Commands:"
+  - echo "  cd app && npm run dev        # Start frontend dev server (port 5173)"
+  - echo "  cd backend && npm run start  # Start backend server (port 3000)"
+  - echo "  cd contract && npm run node  # Start Hardhat node (port 8545)"
+  - echo ""
+  - echo "🛠️ Common Development Tasks:"
+  - echo "  npm run build     # Build the component"
+  - echo "  npm run test      # Run tests" 
+  - echo "  npm run lint      # Lint code"
+  - echo "  npm run format    # Format code with Prettier"
+  - echo "  npm run type-check # TypeScript type checking (app only)"
+  - echo ""
+  - echo "📚 See README.md and CONTRIBUTION.md for detailed instructions"
+
+# Environment variables for development
+env:
+  NODE_ENV: development
+  FRONTEND_URL: http://localhost:5173
+  HARDHAT_NETWORK: hardhat
+
+# Working directory
+workdir: /workspace

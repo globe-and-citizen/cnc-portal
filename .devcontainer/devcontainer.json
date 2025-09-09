@@ -1,0 +1,62 @@
+{
+  "name": "CNC Portal Development Environment",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20.10.0-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "onCreateCommand": [
+    "bash",
+    "-c",
+    "echo '🚀 Setting up CNC Portal Development Environment...' && npm install -g nodemon typescript ts-node prettier eslint"
+  ],
+  "postCreateCommand": [
+    "bash", 
+    "-c",
+    "echo '📦 Installing dependencies for all components...' && cd app && npm ci --silent --prefer-offline --no-audit && cd ../backend && npm ci --silent --prefer-offline --no-audit && cd ../contract && npm ci --silent --prefer-offline --no-audit && cd ../backend && (npm run prisma:generate 2>/dev/null || echo '⚠️ Prisma generation skipped') && cd ../contract && (npm run compile 2>/dev/null || echo '⚠️ Contract compilation skipped') && cd .. && echo '✅ CNC Portal environment ready!'"
+  ],
+  "containerEnv": {
+    "NODE_ENV": "development",
+    "FRONTEND_URL": "http://localhost:5173",
+    "HARDHAT_NETWORK": "hardhat"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "typescript.preferences.includePackageJsonAutoImports": "on",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": true
+        }
+      },
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "Vue.volar",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "NomicFoundation.hardhat-solidity",
+        "ms-vscode.vscode-json",
+        "bradlc.vscode-tailwindcss",
+        "Prisma.prisma"
+      ]
+    }
+  },
+  "forwardPorts": [5173, 3000, 8545],
+  "portsAttributes": {
+    "5173": {
+      "label": "Frontend (Vite)",
+      "onAutoForward": "notify"
+    },
+    "3000": {
+      "label": "Backend API", 
+      "onAutoForward": "notify"
+    },
+    "8545": {
+      "label": "Hardhat Node",
+      "onAutoForward": "silent"
+    }
+  },
+  "workspaceFolder": "/workspaces/cnc-portal"
+}
