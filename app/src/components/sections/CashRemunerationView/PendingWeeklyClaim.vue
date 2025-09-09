@@ -36,7 +36,7 @@
                 :class="'font-bold'"
               />
               <span class="">
-                ≃ ${{ getHoulyRateInUserCurrency(row.wage.ratePerHour).toFixed(2) }}
+                ≃ ${{ getHourlyRateInUserCurrency(row.wage.ratePerHour).toFixed(2) }}
                 {{ currencyStore.localCurrency.code }} / Hour
               </span>
             </div>
@@ -54,7 +54,7 @@
                 ≃ ${{
                   (
                     getTotalHoursWorked(row.claims) *
-                    getHoulyRateInUserCurrency(row.wage.ratePerHour)
+                    getHourlyRateInUserCurrency(row.wage.ratePerHour)
                   ).toFixed(2)
                 }}
                 {{ currencyStore.localCurrency.code }}
@@ -77,7 +77,7 @@
                 }
               }"
             />
-            <CRWithdrawClaim
+            <!-- <CRWithdrawClaim
               :is-weekly-claim="true"
               :claim="{
                 id: row.id, //which id do we use, individual or weekly claim?
@@ -90,7 +90,7 @@
                   userAddress: row.wage.userAddress as Address
                 }
               }"
-            />
+            /> -->
           </template>
         </TableComponent>
       </div>
@@ -114,34 +114,52 @@ import TableComponent, { type TableColumn } from '@/components/TableComponent.vu
 import { NETWORK } from '@/constant'
 import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { computed, watch } from 'vue'
-import { useCurrencyStore } from '@/stores'
+import { useCurrencyStore, useToastStore } from '@/stores'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { type WeeklyClaimResponse, type RatePerHour } from '@/types'
 import CRSigne from './CRSigne.vue'
 import type { Address } from 'viem'
-import CRWithdrawClaim from './CRWithdrawClaim.vue'
+// import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
 import type { TokenId } from '@/constant'
 import CRWeeklyClaimOwnerHeader from './CRWeeklyClaimOwnerHeader.vue'
 import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
-
+import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { useReadContract } from '@wagmi/vue'
 function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
 }
 
+const cashRemunerationAddress = computed(() =>
+  teamStore.getContractAddressByType('CashRemunerationEIP712')
+)
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 
+const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
+
 const weeklyClaimUrl = computed(
   () =>
-    `/weeklyClaim/?status=pending&teamId=${teamStore.currentTeam?.id}${userStore.address !== teamStore.currentTeam?.ownerAddress ? `&memberAddress=${userStore.address}` : ''}`
+    `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${!isCashRemunerationOwner.value ? `&memberAddress=${userStore.address}` : ''}`
 )
 const queryKey = computed(
   () => `pending-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
 )
-const { data, isLoading } = useTanstackQuery<WeeklyClaimResponse>(queryKey, weeklyClaimUrl)
+const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaimResponse>(
+  queryKey,
+  weeklyClaimUrl
+)
 const isFetching = computed(() => isLoading.value)
+
+const data = computed(() =>
+  loadedData.value?.filter(
+    (weeklyClaim) =>
+      weeklyClaim.status === 'pending' ||
+      (weeklyClaim.status === 'signed' &&
+        weeklyClaim.data.ownerAddress !== cashRemunerationOwner.value)
+  )
+)
 
 const isSameWeek = (weeklyClaimStartWeek: string) => {
   const currentMonday = getMondayStart(new Date())
@@ -150,7 +168,17 @@ const isSameWeek = (weeklyClaimStartWeek: string) => {
 
 const currencyStore = useCurrencyStore()
 
-function getHoulyRateInUserCurrency(
+const {
+  data: cashRemunerationOwner,
+  // isFetching: isCashRemunerationOwnerFetching,
+  error: cashRemunerationOwnerError
+} = useReadContract({
+  functionName: 'owner',
+  address: cashRemunerationAddress,
+  abi: CashRemuneration_ABI
+})
+
+function getHourlyRateInUserCurrency(
   ratePerHour: { type: string; amount: number }[],
   tokenStore = currencyStore
 ): number {
@@ -220,6 +248,13 @@ const columns = [
     class: 'text-base'
   }
 ] as TableColumn[]
+
+watch(cashRemunerationOwnerError, (value) => {
+  if (value) {
+    console.log('New cash remuneration owner: ', value)
+    useToastStore().addErrorToast('Failed to fetch cash remuneration owner')
+  }
+})
 </script>
 
 <style scoped>

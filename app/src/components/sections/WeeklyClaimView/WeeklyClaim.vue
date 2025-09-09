@@ -104,6 +104,8 @@ import type { RatePerHour } from '@/types/cash-remuneration'
 import type { TokenId } from '@/constant'
 import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
+import { useReadContract } from '@wagmi/vue'
+import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -116,12 +118,24 @@ const props = defineProps<{
   singleUser?: boolean
 }>()
 
+const cashRemunerationAddress = computed(() =>
+  teamStore.getContractAddressByType('CashRemunerationEIP712')
+)
+
+const { data: cashRemunerationOwner } = useReadContract({
+  functionName: 'owner',
+  address: cashRemunerationAddress,
+  abi: CashRemuneration_ABI
+})
+
+const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value == userStore.address)
+
 const weeklyClaimUrl = computed(
   () =>
     `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${
       props.memberAddress
         ? `&memberAddress=${props.memberAddress}`
-        : userStore.address !== teamStore.currentTeam?.ownerAddress
+        : !isCashRemunerationOwner.value
           ? `&memberAddress=${userStore.address}`
           : ''
     }`
@@ -141,24 +155,6 @@ function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = curre
   }, 0)
 }
 
-// const getHourlyRate = (ratePerHour: RatePerHour, type: SupportedTokens) => {
-//   switch (type) {
-//     case 'native':
-//       return ratePerHour.find((rate) => rate.type === 'native')
-//         ? ratePerHour.find((rate) => rate.type === 'native')!.amount
-//         : 'N/A'
-//     case 'sher':
-//       return ratePerHour.find((rate) => rate.type === 'sher')
-//         ? ratePerHour.find((rate) => rate.type === 'sher')!.amount
-//         : 'N/A'
-//     case 'usdc':
-//       return ratePerHour.find((rate) => rate.type === 'usdc')
-//         ? ratePerHour.find((rate) => rate.type === 'usdc')!.amount
-//         : 'N/A'
-//     default:
-//       return 'N/A'
-//   }
-// }
 function formatDate(date: string | Date) {
   const monday = getMondayStart(new Date(date))
   const sunday = getSundayEnd(new Date(date))
