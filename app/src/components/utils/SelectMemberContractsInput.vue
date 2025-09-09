@@ -61,6 +61,20 @@
 </template>
 
 <script lang="ts" setup>
+/**
+ * @component SelectMemberContractsInput
+ * @description
+ * Dual-input component for searching and selecting a team member or contract address.
+ * - Integrates with Pinia teamStore for live team data.
+ * - Shows a dropdown with filtered team members and contracts as the user types.
+ * - Emits a 'selectItem' event with the selected item and its type ('member' or 'contract').
+ * - Debounced dropdown for performance.
+ * - Used in forms for user-friendly member/contract selection.
+ *
+ * @emits selectItem - Fires when a user selects a member or contract from the dropdown.
+ * @model input - Two-way bound object: { name: string, address: string }
+ */
+
 import { ref, useTemplateRef, computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { watchDebounced } from '@vueuse/core'
