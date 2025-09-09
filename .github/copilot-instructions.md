@@ -5,7 +5,7 @@ The CNC Portal is a multi-component application enabling financial recognition o
 ## Architecture Overview
 
 **Tech Stack:**
-- **Frontend** (`app/`): Vue.js 3, TypeScript, Vite, Pinia (state management), Web3 integration
+- **Frontend** (`app/`): Vue.js 3, TypeScript, Vite, Pinia (state management), Web3 integration with wagmi, tailwind & daisyUI
 - **Backend** (`backend/`): Express.js, TypeScript, Prisma ORM, PostgreSQL, JWT authentication
 - **Contracts** (`contract/`): Hardhat, Solidity, TypeScript testing, Ethereum blockchain integration
 
