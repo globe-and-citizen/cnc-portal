@@ -17,7 +17,7 @@ All network restrictions have been resolved. Development can proceed normally wi
 ## Working Effectively 
 
 ### Initial Setup Requirements
-- Node.js v20.10.0 or higher (tested with v20.19.4)
+- Node.js v22.18.0 or higher (tested with v22.18.0)
 - Docker and Docker Compose (for alternative setup)
 - PostgreSQL database (local or containerized)
 
