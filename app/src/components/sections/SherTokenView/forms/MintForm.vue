@@ -4,7 +4,11 @@
 
     <h3>Please input the {{ input.address ? '' : 'address and ' }}amount to mint</h3>
     <div>
-      <SelectMemberInput v-model="input" data-test="address-input" :disabled="props.disabled" />
+      <SelectMemberContractsInput
+        v-model="input"
+        data-test="address-input"
+        :disabled="props.disabled"
+      />
       <div
         class="pl-4 text-red-500 text-sm w-full text-left"
         data-test="error-address-input"
@@ -44,8 +48,8 @@
 
     <div class="text-center">
       <ButtonUI
-        :loading="isConfirmingMint || $v.value?.$invalid"
-        :disabled="isConfirmingMint"
+        :loading="isConfirmingMint || isMintPending || $v.value?.$invalid"
+        :disabled="isConfirmingMint || isMintPending"
         variant="primary"
         class="w-44 text-center"
         @click="onSubmit()"
@@ -62,12 +66,13 @@ import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
 import { isAddress, parseUnits, type Address } from 'viem'
 import { onMounted, ref } from 'vue'
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { computed, watch } from 'vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import { log } from '@/utils'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const amount = ref<number | null>(null)
 const input = ref<{ name: string; address: string }>({
@@ -81,12 +86,19 @@ const props = defineProps<{
   disabled?: boolean
 }>()
 
+const queryClient = useQueryClient()
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
 
-const { data: mintHash, writeContract: mint, error: mintError } = useWriteContract()
+const {
+  data: mintHash,
+  writeContract: mint,
+  error: mintError,
+  isPending: isMintPending
+} = useWriteContract()
+
 const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForTransactionReceipt({
   hash: mintHash
 })
@@ -130,9 +142,13 @@ onMounted(() => {
   }
 })
 
-watch(isConfirmingMint, (isConfirming, wasConfirming) => {
+watch(isConfirmingMint, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isSuccessMinting.value) {
     addSuccessToast('Minted successfully')
+    await queryClient.invalidateQueries({
+      queryKey: ['readContract']
+    })
+
     mintModal.value = false
   }
 })

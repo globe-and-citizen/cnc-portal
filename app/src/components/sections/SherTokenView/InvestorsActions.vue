@@ -23,7 +23,7 @@
           variant="primary"
           outline
           data-test="mint-button"
-          :disabled="!tokenSymbol || currentAddress != teamStore.currentTeam?.ownerAddress"
+          :disabled="!tokenSymbol || currentAddress != investorsOwner"
           @click="mintModal = true"
         >
           Mint {{ tokenSymbol }}
@@ -34,8 +34,8 @@
           @click="payDividendsModal = true"
           :disabled="
             !tokenSymbol ||
-            currentAddress != teamStore.currentTeam?.ownerAddress ||
-            (shareholders?.length ?? 0) == 0
+            (!isBodAction && currentAddress != bankOwner) ||
+            (shareholders?.length ?? 0) === 0
           "
         >
           Pay Dividends
@@ -63,10 +63,16 @@
       <ModalComponent v-model="payDividendsModal">
         <PayDividendsForm
           v-if="payDividendsModal && teamStore.currentTeam"
-          :loading="payDividendsLoading || isConfirmingPayDividends"
+          :loading="
+            payDividendsLoading ||
+            isConfirmingPayDividends ||
+            isLoadingAddAction ||
+            isConfirmingAddAction
+          "
           :token-symbol="tokenSymbol!"
           :team="teamStore.currentTeam"
           @submit="executePayDividends"
+          :is-bod-action="isBodAction"
         ></PayDividendsForm>
       </ModalComponent>
     </div>
@@ -78,8 +84,8 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { log } from '@/utils'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import { type Address } from 'viem'
-import { computed, ref, watch } from 'vue'
+import { type Address, encodeFunctionData, formatUnits, type Abi } from 'viem'
+import { ref, watch } from 'vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
@@ -88,7 +94,18 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 
+import { useBodContract } from '@/composables/bod/'
+
 const { addErrorToast, addSuccessToast } = useToastStore()
+
+const {
+  addAction,
+  useBodIsBodAction,
+  isLoading: isLoadingAddAction,
+  isConfirming: isConfirmingAddAction,
+  isActionAdded
+} = useBodContract()
+
 const mintModal = ref(false)
 const distributeMintModal = ref(false)
 const payDividendsModal = ref(false)
@@ -96,8 +113,8 @@ const emits = defineEmits(['refetchShareholders'])
 const { address: currentAddress } = useUserDataStore()
 
 const teamStore = useTeamStore()
-
-const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
+const investorsAddress = teamStore.getContractAddressByType('InvestorsV1')
+const bankAddress = teamStore.getContractAddressByType('Bank')
 
 const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
   abi: INVESTOR_ABI,
@@ -135,13 +152,31 @@ const { isLoading: isConfirmingPayDividends, isSuccess: isSuccessPayDividends } 
     hash: payDividendsHash
   })
 
-const executePayDividends = (value: bigint) => {
-  payDividends({
-    abi: BANK_ABI,
-    address: investorsAddress.value as Address,
-    functionName: 'transfer',
-    args: [investorsAddress.value, value]
-  })
+const executePayDividends = async (value: bigint) => {
+  if (isBodAction.value) {
+    const data = encodeFunctionData({
+      abi: BANK_ABI,
+      functionName: 'transfer',
+      args: [investorsAddress, value]
+    })
+    const description = JSON.stringify({
+      text: `Pay dividends of ${formatUnits(value, 18)} to ${investorsAddress}`,
+      title: `Pay Dividends Request`
+    })
+
+    await addAction({
+      targetAddress: bankAddress,
+      description,
+      data
+    })
+  } else {
+    payDividends({
+      abi: BANK_ABI,
+      address: bankAddress as Address,
+      functionName: 'transfer',
+      args: [investorsAddress, value]
+    })
+  }
 }
 const executeDistributeMint = (
   shareholders: ReadonlyArray<{
@@ -151,11 +186,35 @@ const executeDistributeMint = (
 ) => {
   distributeMint({
     abi: INVESTOR_ABI,
-    address: investorsAddress.value as Address,
+    address: investorsAddress as Address,
     functionName: 'distributeMint',
     args: [shareholders]
   })
 }
+
+const {
+  data: bankOwner,
+  //isLoading: isLoadingBankOwner,
+  error: errorBankOwner
+  //refetch: executeBankOwner
+} = useReadContract({
+  functionName: 'owner',
+  address: bankAddress,
+  abi: BANK_ABI
+})
+
+const { isBodAction } = useBodIsBodAction(bankAddress as Address, BANK_ABI as Abi)
+
+const {
+  data: investorsOwner,
+  //isLoading: isLoadingInvestorsOwner,
+  error: errorInvestorsOwner
+  //refetch: executeInvestorsOwner
+} = useReadContract({
+  functionName: 'owner',
+  address: investorsAddress,
+  abi: INVESTOR_ABI
+})
 
 watch(distributeMintError, () => {
   if (distributeMintError.value) {
@@ -186,6 +245,12 @@ watch(isConfirmingPayDividends, (isConfirming, wasConfirming) => {
   }
 })
 
+watch(isActionAdded, (isAdded) => {
+  if (isAdded) {
+    payDividendsModal.value = false
+  }
+})
+
 watch(tokenSymbolError, (value) => {
   if (value) {
     log.error('Error fetching token symbol', value)
@@ -197,6 +262,20 @@ watch(shareholderError, (value) => {
   if (value) {
     log.error('Error fetching shareholders', value)
     addErrorToast('Error fetching shareholders')
+  }
+})
+
+watch(errorBankOwner, (value) => {
+  if (value) {
+    log.error('Error fetching bank owner', value)
+    addErrorToast('Error fetching bank owner')
+  }
+})
+
+watch(errorInvestorsOwner, (value) => {
+  if (value) {
+    log.error('Error fetching investors owner', value)
+    addErrorToast('Error fetching investors owner')
   }
 })
 </script>

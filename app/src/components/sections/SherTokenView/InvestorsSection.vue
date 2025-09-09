@@ -5,6 +5,8 @@
     <InvestorsActions />
     <div class="divider m-0"></div>
     <ShareholderList />
+    <div class="divider m-0"></div>
+    <InvestorsTransactions />
   </div>
 </template>
 
@@ -12,4 +14,5 @@
 import InvestorsHeader from '@/components/sections/SherTokenView/InvestorsHeader.vue'
 import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import ShareholderList from '@/components/sections/SherTokenView/ShareholderList.vue'
+import InvestorsTransactions from '@/components/sections/SherTokenView/InvestorsTransactions.vue'
 </script>

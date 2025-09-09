@@ -5,7 +5,18 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import { ref } from 'vue'
+import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
+import { mainnet } from 'viem/chains'
 import { createTestingPinia } from '@pinia/testing'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
+import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
+
+const wagmiConfig = createConfig({
+  chains: [mainnet],
+  transports: {
+    [mainnet.id]: http()
+  }
+})
 
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockReloadKey = ref<number>(0)
@@ -63,6 +74,17 @@ vi.mock('@/stores', () => ({
   })
 }))
 
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore() }))
+  }
+})
+vi.mock('@/composables/useContractBalance', () => ({
+  useContractBalance: vi.fn(() => mockUseContractBalance)
+}))
+
 describe('VestingActions.vue', () => {
   let wrapper: VueWrapper
   const mountComponent = (props = {}) => {
@@ -72,7 +94,7 @@ describe('VestingActions.vue', () => {
         ...props
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [createTestingPinia({ createSpy: vi.fn }), [WagmiPlugin, { config: wagmiConfig }]]
       }
     })
   }

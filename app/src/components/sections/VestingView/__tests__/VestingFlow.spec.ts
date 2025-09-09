@@ -7,7 +7,17 @@ import { parseUnits } from 'viem'
 import { VESTING_ADDRESS } from '@/constant'
 //import VestingStatusFilter from '@/components/sections/VestingView/VestingStatusFilter.vue'
 import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
+import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
+import { mainnet } from 'viem/chains'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
+import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
 
+const wagmiConfig = createConfig({
+  chains: [mainnet],
+  transports: {
+    [mainnet.id]: http()
+  }
+})
 // Mock Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockSymbol = ref('SHR')
@@ -122,6 +132,17 @@ vi.mock('@/stores', () => ({
 
 vi.mock('@/stores/useToastStore')
 
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore() }))
+  }
+})
+vi.mock('@/composables/useContractBalance', () => ({
+  useContractBalance: vi.fn(() => mockUseContractBalance)
+}))
+
 describe('VestingFlow.vue', () => {
   let wrapper: VueWrapper
 
@@ -131,7 +152,7 @@ describe('VestingFlow.vue', () => {
         reloadKey: mockReloadKey.value
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [createTestingPinia({ createSpy: vi.fn }), [WagmiPlugin, { config: wagmiConfig }]]
       }
     })
 

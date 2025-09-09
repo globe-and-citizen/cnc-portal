@@ -61,6 +61,20 @@
 </template>
 
 <script lang="ts" setup>
+/**
+ * @component SelectMemberContractsInput
+ * @description
+ * Dual-input component for searching and selecting a team member or contract address.
+ * - Integrates with Pinia teamStore for live team data.
+ * - Shows a dropdown with filtered team members and contracts as the user types.
+ * - Emits a 'selectItem' event with the selected item and its type ('member' or 'contract').
+ * - Debounced dropdown for performance.
+ * - Used in forms for user-friendly member/contract selection.
+ *
+ * @emits selectItem - Fires when a user selects a member or contract from the dropdown.
+ * @model input - Two-way bound object: { name: string, address: string }
+ */
+
 import { ref, useTemplateRef, computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { watchDebounced } from '@vueuse/core'
@@ -107,9 +121,16 @@ const filteredContracts = computed(() => {
   })
 })
 
+const selecting = ref(false)
+
 watchDebounced(
   [() => input.value.name, () => input.value.address],
   ([name, address]) => {
+    if (selecting.value) {
+      selecting.value = false
+      return
+    }
+
     if (name || address) {
       showDropdown.value = true
     } else {
@@ -120,6 +141,7 @@ watchDebounced(
 )
 
 const selectItem = (item: { name: string; address: string }, type: 'member' | 'contract') => {
+  selecting.value = true
   input.value = item
   emit('selectItem', { ...item, type })
   showDropdown.value = false
