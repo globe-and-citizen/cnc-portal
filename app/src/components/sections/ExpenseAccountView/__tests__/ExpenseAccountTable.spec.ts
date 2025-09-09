@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ExpenseAccountTable from '../ExpenseAccountTable.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import { setActivePinia, createPinia } from 'pinia'
@@ -9,6 +9,7 @@ import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import * as utils from '@/utils'
+import { useTanstackQuery } from '@/composables'
 
 const mocks = vi.hoisted(() => ({
   mockUseToastStore: {
@@ -245,6 +246,14 @@ describe('ExpenseAccountTable', () => {
       }
     })
   }
+
+  beforeEach(() => {
+    //@ts-expect-error: fewer return values than original
+    vi.mocked(useTanstackQuery).mockReturnValue({
+      data: ref(mockApprovals),
+      isLoading: ref(false)
+    })
+  })
 
   describe('Render', () => {
     it('should display filter radio buttons', async () => {

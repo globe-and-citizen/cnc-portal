@@ -64,8 +64,8 @@ export const addExpense = async (req: Request, res: Response) => {
     });
     return res.status(201).json(expense);
   } catch (error) {
-    console.log(error);
-    return errorResponse(500, "Failed to create expense", res);
+    console.error(error);
+    return errorResponse(500, error, res);
   }
 };
 
@@ -124,7 +124,7 @@ export const getExpenses = async (req: Request, res: Response) => {
 
     return res.status(200).json(_expenses);
   } catch (error) {
-    return errorResponse(500, "Failed to fetch expenses", res);
+    return errorResponse(500, error, res);
   }
 };
 
@@ -164,9 +164,9 @@ const syncExpenseStatus = async (expense: Expense) => {
       ? `${formatEther(balances[1])}`
       : `${Number(balances[1]) / 1e6}`;
 
-  const isLimitReached =
-    data.budgetData[1].value <= Number(amountTransferred) ||
-    data.budgetData[0].value <= Number(balances[0]);
+  const isLimitReached = 
+    ((data.budgetData.find(item => item.budgetType === 1)?.value ?? Number.MAX_VALUE) <= Number(amountTransferred)) ||
+    ((data.budgetData.find(item => item.budgetType === 0)?.value ?? Number.MAX_VALUE) <= Number(balances[0]))
 
   const formattedExpense = {
     ...expense,
