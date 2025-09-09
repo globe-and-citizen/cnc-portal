@@ -8,7 +8,6 @@
         v-model="input"
         data-test="address-input"
         :disabled="props.disabled"
-        @selectItem="handleSelectItem"
       />
       <div
         class="pl-4 text-red-500 text-sm w-full text-left"
@@ -81,10 +80,6 @@ const input = ref<{ name: string; address: string }>({
   address: ''
 })
 
-const handleSelectItem = (item: { name: string; address: string; type: 'member' | 'contract' }) => {
-  input.value = item
-}
-
 const mintModal = defineModel({ default: false })
 const props = defineProps<{
   memberInput?: { name: string; address: string }
@@ -103,6 +98,7 @@ const {
   error: mintError,
   isPending: isMintPending
 } = useWriteContract()
+
 const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForTransactionReceipt({
   hash: mintHash
 })
