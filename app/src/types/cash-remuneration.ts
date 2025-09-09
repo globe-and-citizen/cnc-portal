@@ -70,9 +70,11 @@ export type CRSignClaim = Pick<
 
 export type WeeklyClaimResponse = {
   id: number
-  status: 'signed' | 'withdrawn' | null
+  status: 'signed' | 'withdrawn' | 'pending'
   weekStart: string
-  data: {}
+  data: {
+    ownerAddress: Address
+  }
   memberAddress: Address
   teamId: 2
   signature: null

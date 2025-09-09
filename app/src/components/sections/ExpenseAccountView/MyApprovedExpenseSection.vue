@@ -16,15 +16,23 @@
         </template>
         <template #maxAmountPerTx-data="{ row }">
           <span>
-            {{ row.data.budgetData[2]?.value }} {{ tokenSymbol(row.data.tokenAddress) }}
+            {{ row.data.budgetData.find((item: BudgetData) => item.budgetType === 2)?.value }}
+            {{ tokenSymbol(row.data.tokenAddress) }}
           </span>
         </template>
         <template #transactions-data="{ row }">
-          <span>{{ row.balances[0] }}/{{ row.data.budgetData[0]?.value }} TXs</span>
+          <span
+            >{{ row.balances[0] }}/{{
+              row.data.budgetData.find((item: BudgetData) => item.budgetType === 0)?.value
+            }}
+            TXs</span
+          >
         </template>
         <template #amountTransferred-data="{ row }">
           <span
-            >{{ row.balances[1] }}/{{ row.data.budgetData[1]?.value }}
+            >{{ row.balances[1] }}/{{
+              row.data.budgetData.find((item: BudgetData) => item.budgetType === 1)?.value
+            }}
             {{ tokenSymbol(row.data.tokenAddress) }}</span
           >
         </template>
@@ -36,7 +44,7 @@
 <script setup lang="ts">
 //#region Imports
 import { computed } from 'vue'
-import type { ExpenseResponse } from '@/types'
+import type { BudgetData, ExpenseResponse } from '@/types'
 import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { tokenSymbol, getCurrentUserExpenses } from '@/utils'

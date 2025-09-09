@@ -14,11 +14,7 @@
     </label>
   </div>
   <div class="card bg-base-100 w-full">
-    <TableComponent
-      :rows="filteredApprovals"
-      :columns="columns"
-      :loading="expenseDataStore.allExpenseDataIsFetching"
-    >
+    <TableComponent :rows="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
       <template #action-data="{ row }">
         <ButtonUI
           v-if="row.status == 'enabled'"
@@ -71,14 +67,24 @@
         >
       </template>
       <template #maxAmountPerTx-data="{ row }">
-        <span>{{ row.budgetData[2]?.value }} {{ tokenSymbol(row.tokenAddress) }}</span>
+        <span
+          >{{ row.budgetData.find((item: BudgetData) => item.budgetType === 2)?.value }}
+          {{ tokenSymbol(row.tokenAddress) }}</span
+        >
       </template>
       <template #transactions-data="{ row }">
-        <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }} TXs</span>
+        <span
+          >{{ row.balances[0] }}/{{
+            row.budgetData.find((item: BudgetData) => item.budgetType === 0)?.value
+          }}
+          TXs</span
+        >
       </template>
       <template #amountTransferred-data="{ row }">
         <span
-          >{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}
+          >{{ row.balances[1] }}/{{
+            row.budgetData.find((item: BudgetData) => item.budgetType === 1)?.value
+          }}
           {{ tokenSymbol(row.tokenAddress) }}</span
         >
       </template>
@@ -91,22 +97,46 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { computed, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
-import { useToastStore, useUserDataStore, useTeamStore, useExpenseDataStore } from '@/stores'
+import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
 import { type Address, keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import { useRoute } from 'vue-router'
 import UserComponent from '@/components/UserComponent.vue'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useTanstackQuery } from '@/composables'
+import type { BudgetData, ExpenseResponse } from '@/types'
 
 const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
-const expenseDataStore = useExpenseDataStore()
-const route = useRoute()
+const queryClient = useQueryClient()
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
 const isLoadingSetStatus = ref(false)
+
+const {
+  data: expenseData,
+  isLoading: isFetchingExpenseData
+  // error: errorFetchingExpenseData
+} = useTanstackQuery<ExpenseResponse[]>(
+  'expenseData',
+  computed(() => `/expense?teamId=${teamStore.currentTeamId}`),
+  {
+    queryKey: ['getExpenseData'],
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true
+  }
+)
+
+const formattedExpenseData = computed(() => {
+  return expenseData.value?.map((expense) => {
+    return {
+      ...expense.data,
+      ...expense
+    }
+  })
+})
 
 const expenseAccountEip712Address = computed(
   () =>
@@ -184,9 +214,9 @@ const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {
-    return expenseDataStore.allExpenseDataParsed
+    return formattedExpenseData.value
   } else {
-    return expenseDataStore.allExpenseDataParsed.filter(
+    return (formattedExpenseData.value ?? []).filter(
       (approval) => approval.status === selectedRadio.value
     )
   }
@@ -222,7 +252,7 @@ watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
     signatureToUpdate.value = ''
     isLoadingSetStatus.value = false
-    expenseDataStore.fetchAllExpenseData(route.params.id as string)
+    queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
     addSuccessToast('Activate Successful')
   }
 })
@@ -230,7 +260,7 @@ watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
     signatureToUpdate.value = ''
     isLoadingSetStatus.value = false
-    expenseDataStore.fetchAllExpenseData(route.params.id as string)
+    queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
     addSuccessToast('Deactivate Successful')
   }
 })
