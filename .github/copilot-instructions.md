@@ -52,7 +52,7 @@ The CNC Portal is a multi-component application enabling financial recognition o
 ## Development Patterns
 
 **Frontend (Vue.js):**
-- Uses Composition API with `<script setup>` syntax
+- Uses Composition API with `<script setup lang="ts">` syntax
 - Pinia stores for global state management
 - TypeScript for type safety
 - Vite for build tooling and HMR
