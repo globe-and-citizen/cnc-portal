@@ -193,3 +193,21 @@ npm run test
 npm run lint
 npm run format
 ```
+
+## GitHub Copilot Environment
+
+This repository includes a customized GitHub Copilot coding agent environment configuration to streamline development. The setup automatically pre-installs dependencies and configures the development environment for all project components.
+
+**Configuration files:**
+- `.copilot/environment.yml` - Main Copilot agent environment setup
+- `.devcontainer/devcontainer.json` - Dev container configuration for VS Code/Codespaces
+- `.copilot/README.md` - Detailed setup documentation
+
+**Features:**
+- Pre-installed Node.js 20.10.0 environment
+- Automatic dependency installation for app, backend, and contract components
+- Pre-configured development tools (TypeScript, ESLint, Prettier, etc.)
+- Port forwarding for development servers (5173, 3000, 8545)
+- VS Code extensions and settings optimization
+
+For detailed information, see [`.copilot/README.md`](.copilot/README.md).
