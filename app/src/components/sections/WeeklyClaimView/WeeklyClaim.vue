@@ -141,9 +141,19 @@ const weeklyClaimUrl = computed(
     }`
 )
 
-const { data, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
+const { data: fetchedData, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
 
-const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
+const data = computed(() => {
+  if (!fetchedData.value) return null
+  //return the most recent first date
+  return [...fetchedData.value].sort((a, b) => {
+    const dateA = new Date(a.weekStart).getTime()
+    const dateB = new Date(b.weekStart).getTime()
+    return dateB - dateA
+  })
+})
+
+const isTeamClaimDataFetching = computed(() => !fetchedData.value && !error.value)
 
 const currencyStore = useCurrencyStore()
 
@@ -174,7 +184,7 @@ const columns = [
   {
     key: 'weekStart',
     label: 'Productivity Diary',
-    // sortable: true,
+    sortable: true,
     class: 'text-base '
   },
   {
