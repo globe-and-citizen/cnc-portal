@@ -16,7 +16,7 @@ export interface NotificationResponse {
   success: boolean
 }
 
-export interface NotificationPayload {
+export interface BulkNotificationPayload {
   userIds: Address[]
   message: string
   subject: string

@@ -74,7 +74,7 @@ const updateNotification = async (req: Request, res: Response) => {
   }
 };
 
-const addNotifications = async (req: Request, res: Response) => {
+const createBulkNotifications = async (req: Request, res: Response) => {
   const { userIds, message, subject, resource } = req.body as {
     userIds: string[];
     message: string;
@@ -104,4 +104,4 @@ const addNotifications = async (req: Request, res: Response) => {
   }
 };
 
-export { getNotification, updateNotification, addNotifications };
+export { getNotification, updateNotification, createBulkNotifications };

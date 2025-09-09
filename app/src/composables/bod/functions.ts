@@ -21,7 +21,7 @@ export function useBodWritesFunctions() {
   const teamStore = useTeamStore()
   const { addErrorToast, addSuccessToast } = useToastStore()
   const queryClient = useQueryClient()
-  const { addBodActionNotification } = useNotifications()
+  const { addUsersNotification } = useNotifications()
   const action = ref<Partial<Action> | null>(null)
   const actionUrl = ref('')
   const isLoadingApproveAction = ref(false)
@@ -47,7 +47,6 @@ export function useBodWritesFunctions() {
       addSuccessToast('Transaction in composable is confirmed!')
 
       try {
-        console.log('Starting notification process...')
         const members = bodAddress.value
           ? ((await readContract(config, {
               address: bodAddress.value,
@@ -61,7 +60,7 @@ export function useBodWritesFunctions() {
             (m) => m?.toLowerCase() !== (action.value?.userAddress || '').toLowerCase()
           )
 
-          await addBodActionNotification({
+          await addUsersNotification({
             userIds: recipients,
             message: 'New board action requires your approval',
             subject: 'New Board Action Created',
@@ -110,7 +109,7 @@ export function useBodWritesFunctions() {
         actionId: Number(actionId),
         ...actionData
       }
-      console.log('the action data =======', actionData)
+
       return writes.executeWrite(BOD_FUNCTION_NAMES.ADD_ACTION, [
         actionData.targetAddress,
         actionData.description,
@@ -128,7 +127,6 @@ export function useBodWritesFunctions() {
     isLoadingApproveAction.value = true
 
     if (!bodAddress.value) {
-      console.log('BOD address not found, skipping approval.')
       return
     }
     try {

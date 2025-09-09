@@ -1,17 +1,17 @@
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import type { NotificationPayload } from '@/types/notification'
+import type { BulkNotificationPayload } from '@/types/notification'
 import { log } from '@/utils'
 
 export function useNotifications() {
-  const addBodActionNotification = async ({
+  const addUsersNotification = async ({
     userIds,
     message,
     subject,
     author,
     resource
-  }: NotificationPayload) => {
+  }: BulkNotificationPayload) => {
     try {
-      const payload: NotificationPayload = {
+      const payload: BulkNotificationPayload = {
         userIds,
         message,
         subject,
@@ -19,18 +19,18 @@ export function useNotifications() {
         resource
       }
 
-      const { execute } = useCustomFetch('notification/', {
+      const { execute } = useCustomFetch('notification/bulk/', {
         immediate: false
       }).post(payload)
 
       await execute()
     } catch (err) {
-      log.error('Failed to send BOD action notification:', err)
+      log.error('Failed to send notification to users:', err)
       throw err
     }
   }
 
   return {
-    addBodActionNotification
+    addUsersNotification
   }
 }
