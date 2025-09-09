@@ -1,5 +1,6 @@
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores/useToastStore'
+import type { ContractType } from '@/types'
 import type { Team } from '@/types/team'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
@@ -71,7 +72,7 @@ export const useTeamStore = defineStore('team', () => {
     return currentTeamId.value ? teamsFetched.value.get(String(currentTeamId.value)) : undefined
   })
 
-  const getContractAddressByType = (type: string): Address | undefined => {
+  const getContractAddressByType = (type: ContractType): Address | undefined => {
     return currentTeam.value?.teamContracts.find((contract) => contract.type === type)?.address
   }
 

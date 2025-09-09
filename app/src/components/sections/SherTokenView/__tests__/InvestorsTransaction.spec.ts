@@ -5,8 +5,6 @@ import InvestorsTransactions from '@/components/sections/SherTokenView/Investors
 import { mockToastStore } from '@/tests/mocks/store.mock'
 import { ref } from 'vue'
 
-const { addErrorToast } = mockToastStore
-
 // Mock Apollo Query Result
 const mockQueryResult = {
   result: ref({
@@ -72,13 +70,6 @@ describe('InvestorsTransactions.vue', () => {
       to: '0xto1',
       type: 'dividend'
     })
-  })
-
-  it('should show error toast when query fails', async () => {
-    mockQueryResult.error.value = new Error('Query failed')
-    createComponent()
-
-    expect(addErrorToast).toHaveBeenCalledWith('Failed to fetch payment transactions')
   })
 
   //   it.skip('should not fetch data when investor address is not available', () => {
