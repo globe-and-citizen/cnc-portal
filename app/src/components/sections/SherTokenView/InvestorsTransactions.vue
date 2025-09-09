@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import type { InvestorsTransaction, RawInvestorsTransaction } from '@/types/transactions'
 import { formatEtherUtil, log, tokenSymbol } from '@/utils'
 import { useQuery } from '@vue/apollo-composable'
@@ -20,7 +20,6 @@ const investorAddress = computed(() => teamStore.getContractAddressByType('Inves
 
 const currencyStore = useCurrencyStore()
 const teamStore = useTeamStore()
-const { addErrorToast } = useToastStore()
 
 const selectedTokenId = ref<TokenId>('native')
 
@@ -86,10 +85,14 @@ const transactionData = computed<InvestorsTransaction[]>(() => {
   const distributions = result.value?.dividendDistributions || []
   return distributions.map(formatTransactions)
 })
-watch(error, (newError) => {
-  if (newError) {
-    addErrorToast('Failed to fetch payment transactions')
-    log.error('useQueryError: ', newError)
+const lastError = ref<string | null>(null)
+watch(
+  () => error.value?.message,
+  (newMessage) => {
+    if (newMessage && newMessage !== lastError.value) {
+      log.error('GraphQL Error:', error.value)
+      lastError.value = newMessage
+    }
   }
-})
+)
 </script>

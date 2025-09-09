@@ -33,7 +33,9 @@
           data-test="pay-dividends-button"
           @click="payDividendsModal = true"
           :disabled="
-            !tokenSymbol || currentAddress != bankOwner || (shareholders?.length ?? 0) == 0
+            !tokenSymbol ||
+            (!isBodAction && currentAddress != bankOwner) ||
+            (shareholders?.length ?? 0) === 0
           "
         >
           Pay Dividends
@@ -61,10 +63,16 @@
       <ModalComponent v-model="payDividendsModal">
         <PayDividendsForm
           v-if="payDividendsModal && teamStore.currentTeam"
-          :loading="payDividendsLoading || isConfirmingPayDividends"
+          :loading="
+            payDividendsLoading ||
+            isConfirmingPayDividends ||
+            isLoadingAddAction ||
+            isConfirmingAddAction
+          "
           :token-symbol="tokenSymbol!"
           :team="teamStore.currentTeam"
           @submit="executePayDividends"
+          :is-bod-action="isBodAction"
         ></PayDividendsForm>
       </ModalComponent>
     </div>
@@ -76,8 +84,8 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { log } from '@/utils'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import { type Address } from 'viem'
-import { computed, ref, watch } from 'vue'
+import { type Address, encodeFunctionData, formatUnits, type Abi } from 'viem'
+import { ref, watch } from 'vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
@@ -86,7 +94,18 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 
+import { useBodContract } from '@/composables/bod/'
+
 const { addErrorToast, addSuccessToast } = useToastStore()
+
+const {
+  addAction,
+  useBodIsBodAction,
+  isLoading: isLoadingAddAction,
+  isConfirming: isConfirmingAddAction,
+  isActionAdded
+} = useBodContract()
+
 const mintModal = ref(false)
 const distributeMintModal = ref(false)
 const payDividendsModal = ref(false)
@@ -94,9 +113,9 @@ const emits = defineEmits(['refetchShareholders'])
 const { address: currentAddress } = useUserDataStore()
 
 const teamStore = useTeamStore()
+const investorsAddress = teamStore.getContractAddressByType('InvestorsV1')
+const bankAddress = teamStore.getContractAddressByType('Bank')
 
-const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
-const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
 const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
   abi: INVESTOR_ABI,
   address: investorsAddress,
@@ -133,13 +152,31 @@ const { isLoading: isConfirmingPayDividends, isSuccess: isSuccessPayDividends } 
     hash: payDividendsHash
   })
 
-const executePayDividends = (value: bigint) => {
-  payDividends({
-    abi: BANK_ABI,
-    address: bankAddress.value as Address,
-    functionName: 'transfer',
-    args: [investorsAddress.value, value]
-  })
+const executePayDividends = async (value: bigint) => {
+  if (isBodAction.value) {
+    const data = encodeFunctionData({
+      abi: BANK_ABI,
+      functionName: 'transfer',
+      args: [investorsAddress, value]
+    })
+    const description = JSON.stringify({
+      text: `Pay dividends of ${formatUnits(value, 18)} to ${investorsAddress}`,
+      title: `Pay Dividends Request`
+    })
+
+    await addAction({
+      targetAddress: bankAddress,
+      description,
+      data
+    })
+  } else {
+    payDividends({
+      abi: BANK_ABI,
+      address: bankAddress as Address,
+      functionName: 'transfer',
+      args: [investorsAddress, value]
+    })
+  }
 }
 const executeDistributeMint = (
   shareholders: ReadonlyArray<{
@@ -149,7 +186,7 @@ const executeDistributeMint = (
 ) => {
   distributeMint({
     abi: INVESTOR_ABI,
-    address: investorsAddress.value as Address,
+    address: investorsAddress as Address,
     functionName: 'distributeMint',
     args: [shareholders]
   })
@@ -162,9 +199,11 @@ const {
   //refetch: executeBankOwner
 } = useReadContract({
   functionName: 'owner',
-  address: bankAddress.value,
+  address: bankAddress,
   abi: BANK_ABI
 })
+
+const { isBodAction } = useBodIsBodAction(bankAddress as Address, BANK_ABI as Abi)
 
 const {
   data: investorsOwner,
@@ -173,7 +212,7 @@ const {
   //refetch: executeInvestorsOwner
 } = useReadContract({
   functionName: 'owner',
-  address: investorsAddress.value,
+  address: investorsAddress,
   abi: INVESTOR_ABI
 })
 
@@ -202,6 +241,12 @@ watch(isConfirmingDistributeMint, (isConfirming, wasConfirming) => {
 watch(isConfirmingPayDividends, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isSuccessPayDividends.value) {
     addSuccessToast('Paid dividends successfully')
+    payDividendsModal.value = false
+  }
+})
+
+watch(isActionAdded, (isAdded) => {
+  if (isAdded) {
     payDividendsModal.value = false
   }
 })

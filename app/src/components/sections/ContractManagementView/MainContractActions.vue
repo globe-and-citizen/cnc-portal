@@ -65,6 +65,7 @@
           :row="selectedRow"
           @approve-action="approveAction"
           :loading="isLoadingApproveAction"
+          @close="showApprovalModal = false"
         />
       </ModalComponent>
     </teleport>
