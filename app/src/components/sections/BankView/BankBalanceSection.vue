@@ -61,10 +61,13 @@
         v-if="transferModal"
         v-model="transferData"
         :tokens="getTokens()"
-        :loading="transferLoading || isConfirmingTransfer"
+        :loading="
+          transferLoading || isConfirmingTransfer || isLoadingAddAction || isConfirmingAddAction
+        "
         service="Bank"
         @transfer="handleTransfer"
         @closeModal="() => (transferModal = false)"
+        :is-bod-action="isBodAction"
       />
     </ModalComponent>
   </CardComponent>
@@ -78,7 +81,14 @@ import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { useStorage } from '@vueuse/core'
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from '@wagmi/vue'
 import { ref, watch } from 'vue'
-import { type Address, parseEther } from 'viem'
+import {
+  type Address,
+  parseEther,
+  encodeFunctionData,
+  formatUnits,
+  parseUnits,
+  type Abi
+} from 'viem'
 import { useToastStore } from '@/stores'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
@@ -88,12 +98,24 @@ import { useContractBalance } from '@/composables/useContractBalance'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import type { TokenId } from '@/constant'
 import { useQueryClient } from '@tanstack/vue-query'
+import { useBodContract } from '@/composables/bod/'
 
 const props = defineProps<{
   bankAddress: Address
 }>()
 
 const { addErrorToast, addSuccessToast } = useToastStore()
+
+const {
+  addAction,
+  useBodIsBodAction,
+  isLoading: isLoadingAddAction,
+  isConfirming: isConfirmingAddAction,
+  isActionAdded
+} = useBodContract()
+
+const { isBodAction } = useBodIsBodAction(props.bankAddress as Address, BankABI as Abi)
+
 const currency = useStorage('currency', {
   code: 'USD',
   name: 'US Dollar',
@@ -131,35 +153,42 @@ const handleTransfer = async (data: {
   amount: string
 }) => {
   if (!props.bankAddress) return
-
   try {
-    if (data.token.symbol === NETWORK.currencySymbol) {
-      transfer({
-        address: props.bankAddress,
-        abi: BankABI,
-        functionName: 'transfer',
-        args: [data.address.address, parseEther(data.amount)]
+    const isNativeToken = data.token.symbol === NETWORK.currencySymbol
+    const transferAmount = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
+
+    const transferConfig = {
+      address: props.bankAddress,
+      abi: BankABI,
+      functionName: isNativeToken ? 'transfer' : 'transferToken',
+      args: isNativeToken
+        ? [data.address.address, transferAmount]
+        : [USDC_ADDRESS as Address, data.address.address, transferAmount]
+    }
+
+    if (isBodAction.value) {
+      const encodedData = encodeFunctionData(transferConfig)
+
+      const description = JSON.stringify({
+        text: `Transfer ${data.amount} ${data.token.symbol} to ${data.address.address}`,
+        title: 'Bank Transfer Request'
       })
-      queryClient.invalidateQueries({
-        queryKey: [
-          'balance',
-          {
-            address: props.bankAddress,
-            chainId: chainId
-          }
-        ]
+
+      await addAction({
+        targetAddress: props.bankAddress,
+        description,
+        data: encodedData
       })
-    } else if (data.token.symbol === 'USDC') {
-      const tokenAmount = BigInt(Number(data.amount) * 1e6)
-      transfer({
-        address: props.bankAddress,
-        abi: BankABI,
-        functionName: 'transferToken',
-        args: [USDC_ADDRESS as Address, data.address.address, tokenAmount]
-      })
-      console.log('data.token', data)
-      queryClient.invalidateQueries({
-        queryKey: [
+      return
+    }
+
+    // Direct transfer (non-BOD action)
+    transfer(transferConfig)
+
+    // Invalidate relevant queries
+    const queryKey = isNativeToken
+      ? ['balance', { address: props.bankAddress, chainId: chainId }]
+      : [
           'readContract',
           {
             address: USDC_ADDRESS as Address,
@@ -167,13 +196,20 @@ const handleTransfer = async (data: {
             chainId: chainId
           }
         ]
-      })
-    }
+
+    queryClient.invalidateQueries({ queryKey })
   } catch (error) {
-    console.error(error)
+    console.error('Transfer failed:', error)
     addErrorToast(`Failed to transfer ${data.token.symbol}`)
   }
 }
+
+watch(isActionAdded, (added) => {
+  if (added) {
+    addSuccessToast('Action added successfully, waiting for confirmation')
+    transferModal.value = false
+  }
+})
 
 watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
