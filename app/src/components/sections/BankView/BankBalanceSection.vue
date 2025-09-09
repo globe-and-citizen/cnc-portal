@@ -81,14 +81,7 @@ import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { useStorage } from '@vueuse/core'
 import { useWriteContract, useWaitForTransactionReceipt, useChainId } from '@wagmi/vue'
 import { ref, watch } from 'vue'
-import {
-  type Address,
-  parseEther,
-  encodeFunctionData,
-  formatUnits,
-  parseUnits,
-  type Abi
-} from 'viem'
+import { type Address, parseEther, encodeFunctionData, parseUnits, type Abi } from 'viem'
 import { useToastStore } from '@/stores'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
