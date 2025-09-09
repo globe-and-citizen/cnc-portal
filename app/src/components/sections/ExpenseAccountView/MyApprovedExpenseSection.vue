@@ -9,7 +9,7 @@
         :columns="columns"
       >
         <template #action-data="{ row }">
-          <TransferAction :row="row as ExpenseResponse" />
+          <TransferAction :row="row" />
         </template>
         <template #expiryDate-data="{ row }">
           <span>{{ new Date(Number(row.data.expiry) * 1000).toLocaleString('en-US') }}</span>
@@ -56,7 +56,7 @@ const {
   'expenseData',
   computed(() => `/expense?teamId=${teamStore.currentTeamId}`),
   {
-    queryKey: ['expenseData'],
+    queryKey: ['getExpenseData'],
     refetchInterval: 10000,
     refetchOnWindowFocus: true
   }

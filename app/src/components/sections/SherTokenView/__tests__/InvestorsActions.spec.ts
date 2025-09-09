@@ -8,8 +8,17 @@ import ModalComponent from '@/components/ModalComponent.vue'
 // import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 import type { Team } from '@/types/team'
-
+import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
+import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
+import { mainnet } from 'viem/chains'
 // vi.mock('@/stores/useToastStore')
+const wagmiConfig = createConfig({
+  chains: [mainnet],
+  transports: {
+    [mainnet.id]: http()
+  }
+})
+
 vi.mock('@/stores/user')
 
 const { addErrorToast, addSuccessToast } = mockToastStore
@@ -30,7 +39,9 @@ const mockUseWriteContract = {
 
 const mockUseWaitForTransactionReceipt = {
   isLoading: ref(false),
-  isSuccess: ref(false)
+  isSuccess: ref(false),
+  data: ref(undefined),
+  error: ref(null)
 }
 const mockUseSendTransaction = {
   isPending: ref(false),
@@ -117,9 +128,15 @@ describe('InvestorsActions.vue', () => {
     ] as ReadonlyArray<{ shareholder: Address; amount: bigint }> | undefined
   }
   const createComponent = () => {
+    const queryClient = new QueryClient() // Create a QueryClient instance
+
     return mount(InvestorsActions, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [
+          createTestingPinia({ createSpy: vi.fn }),
+          [WagmiPlugin, { config: wagmiConfig }],
+          [VueQueryPlugin, { queryClient }] // Add VueQueryPlugin with QueryClient
+        ]
       },
       props
     })
