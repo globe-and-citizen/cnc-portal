@@ -1,6 +1,9 @@
 <template>
   <h1 class="font-bold text-2xl">Transfer from {{ service }} Contract</h1>
   <h3 class="pt-4">Current contract balance: {{ model.token.balance }} {{ model.token.symbol }}</h3>
+  <h3 v-if="expenseBalance" class="pt-4">
+    Expense balance: {{ expenseBalance }} {{ model.token.symbol }}
+  </h3>
 
   <div class="flex flex-col gap-4 mt-4">
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
@@ -113,6 +116,7 @@ const props = defineProps<{
   loading: boolean
   tokens: Token[]
   service: string
+  expenseBalance?: number | null
 }>()
 
 const model = defineModel<TransferModel>({
