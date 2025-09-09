@@ -98,7 +98,7 @@ import TableComponent, { type TableColumn } from '@/components/TableComponent.vu
 import { computed, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
-import { type Address, keccak256 } from 'viem'
+import { keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import UserComponent from '@/components/UserComponent.vue'
