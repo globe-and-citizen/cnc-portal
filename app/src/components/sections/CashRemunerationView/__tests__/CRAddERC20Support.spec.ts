@@ -5,6 +5,7 @@ import CRAddERC20Support from '../CRAddERC20Support.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import SelectComponent from '@/components/SelectComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import { zeroAddress } from 'viem'
 // Mock constants
 vi.mock('@/constant', () => ({
   USDC_ADDRESS: '0xA0b86a33E6441bB7bE6d0B9EB5Bbf26b2d60C1cd'
@@ -71,7 +72,8 @@ vi.mock('@vueuse/core', async (importOriginal) => {
 // Mock stores
 vi.mock('@/stores', () => ({
   useTeamStore: vi.fn(() => mockTeamStore),
-  useToastStore: vi.fn(() => mockToastStore)
+  useToastStore: vi.fn(() => mockToastStore),
+  useUserDataStore: vi.fn(() => ({ address: zeroAddress }))
 }))
 
 describe('CRAddERC20Support.vue', () => {
@@ -223,7 +225,7 @@ describe('CRAddERC20Support.vue', () => {
     })
 
     it('should handle errors when checking token support', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
       mockReadContract.mockRejectedValue(new Error('Network error'))
       wrapper = mountComponent()
       const selectComponent = wrapper.findComponent(SelectComponent)
@@ -304,7 +306,7 @@ describe('CRAddERC20Support.vue', () => {
     })
 
     it('should handle errors when adding token support', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
       mockReadContract.mockResolvedValue(false)
       mockWriteContract.mockRejectedValue(new Error('Transaction failed'))
       wrapper = mountComponent()
@@ -330,7 +332,7 @@ describe('CRAddERC20Support.vue', () => {
     })
 
     it('should handle errors when removing token support', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
       mockReadContract.mockResolvedValue(true)
       mockWriteContract.mockRejectedValue(new Error('Transaction failed'))
       wrapper = mountComponent()
