@@ -19,27 +19,52 @@
             Coming soon
           </span>
         </div>
-        <ButtonUI
-          variant="primary"
-          outline
-          data-test="mint-button"
-          :disabled="!tokenSymbol || currentAddress != investorsOwner"
-          @click="mintModal = true"
-        >
-          Mint {{ tokenSymbol }}
-        </ButtonUI>
-        <ButtonUI
-          variant="primary"
-          data-test="pay-dividends-button"
-          @click="payDividendsModal = true"
-          :disabled="
-            !tokenSymbol ||
-            (!isBodAction && currentAddress != bankOwner) ||
-            (shareholders?.length ?? 0) === 0
-          "
-        >
-          Pay Dividends
-        </ButtonUI>
+        <div class="relative group">
+          <ButtonUI
+            variant="primary"
+            outline
+            data-test="mint-button"
+            :disabled="!tokenSymbol || currentAddress != investorsOwner"
+            @click="mintModal = true"
+          >
+            Mint {{ tokenSymbol }}
+          </ButtonUI>
+          <span
+            v-if="tokenSymbol && currentAddress != investorsOwner"
+            class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-sm bg-green-900 text-white rounded opacity-0 group-hover:opacity-100 transition"
+            style="white-space: nowrap"
+          >
+            Only the token owner can mint tokens
+          </span>
+        </div>
+        <div class="relative group">
+          <ButtonUI
+            variant="primary"
+            data-test="pay-dividends-button"
+            @click="payDividendsModal = true"
+            :disabled="
+              !tokenSymbol ||
+              (!isBodAction && currentAddress != bankOwner) ||
+              (shareholders?.length ?? 0) === 0
+            "
+          >
+            Pay Dividends
+          </ButtonUI>
+          <span
+            v-if="tokenSymbol && !isBodAction && currentAddress != bankOwner"
+            class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-sm bg-green-900 text-white rounded opacity-0 group-hover:opacity-100 transition"
+            style="white-space: nowrap"
+          >
+            Only the bank owner can pay dividends
+          </span>
+          <span
+            v-else-if="tokenSymbol && (shareholders?.length ?? 0) === 0"
+            class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-sm bg-green-900 text-white rounded opacity-0 group-hover:opacity-100 transition"
+            style="white-space: nowrap"
+          >
+            No shareholders available to pay dividends
+          </span>
+        </div>
       </div>
 
       <div class="flex gap-x-1 transform -translate-y-8">
