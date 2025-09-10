@@ -31,7 +31,9 @@
     </label>
     <!-- Dropdown positioned relative to the input -->
     <div
-      v-if="showDropdown && (filteredMembers.length > 0 || filteredContracts.length > 0)"
+      v-if="
+        showDropdown && !disabled && (filteredMembers.length > 0 || filteredContracts.length > 0)
+      "
       class="absolute left-0 top-full mt-1 w-full z-10"
       data-test="search-dropdown"
     >
@@ -81,7 +83,8 @@ import { ref, useTemplateRef, computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { watchDebounced } from '@vueuse/core'
 
-defineProps<{ disabled?: boolean }>()
+const props = defineProps<{ disabled?: boolean }>()
+
 const emit = defineEmits(['selectItem'])
 const input = defineModel({
   default: {
@@ -91,7 +94,11 @@ const input = defineModel({
 })
 
 const teamStore = useTeamStore()
-const showDropdown = ref(false)
+// computed for showDropdown
+const showDropdown = computed(() => {
+  return !props.disabled && _showDropdown.value
+})
+const _showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
 const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
@@ -134,10 +141,15 @@ watchDebounced(
       return
     }
 
+    if (props.disabled) {
+      _showDropdown.value = false
+      return
+    }
+
     if (name || address) {
-      showDropdown.value = true
+      _showDropdown.value = true
     } else {
-      showDropdown.value = false
+      _showDropdown.value = false
     }
   },
   { debounce: 300, maxWait: 1000 }
@@ -147,6 +159,6 @@ const selectItem = (item: { name: string; address: string }, type: 'member' | 'c
   selecting.value = true
   input.value = item
   emit('selectItem', { ...item, type })
-  showDropdown.value = false
+  _showDropdown.value = false
 }
 </script>
