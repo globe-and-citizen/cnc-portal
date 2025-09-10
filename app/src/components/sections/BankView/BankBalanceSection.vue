@@ -6,7 +6,11 @@
         <div class="flex items-baseline gap-2">
           <span class="text-4xl font-bold">
             <span class="inline-block min-w-16 h-10">
-              <span class="loading loading-spinner loading-lg" v-if="isLoading"></span>
+              <span
+                data-test="loading-spinner"
+                class="loading loading-spinner loading-lg"
+                v-if="isLoading"
+              ></span>
               <span v-else>{{ total['USD']?.formated ?? 0 }}</span>
             </span>
           </span>
