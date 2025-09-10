@@ -11,12 +11,9 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import * as utils from '@/utils'
 import { useTanstackQuery } from '@/composables'
 import { mockToastStore } from '@/tests/mocks/store.mock'
+import type { clear } from 'console'
 
 const mocks = vi.hoisted(() => ({
-  mockUseToastStore: {
-    addErrorToast: vi.fn(),
-    addSuccessToast: vi.fn()
-  },
   mockReadContract: vi.fn()
 }))
 
@@ -94,42 +91,6 @@ const mockApprovals = [
     }
   }
 ]
-
-const mockExpenseDataStore = {
-  allExpenseDataParsed: mockApprovals,
-  fetchAllExpenseData: vi.fn()
-}
-
-// vi.mock('@/stores', async (importOriginal) => {
-//   const actual: object = await importOriginal()
-//   return {
-//     ...actual,
-//     useToastStore: vi.fn(() => ({
-//       addErrorToast: mocks.mockUseToastStore.addErrorToast,
-//       addSuccessToast: mocks.mockUseToastStore.addSuccessToast
-//     })),
-//     useExpenseDataStore: vi.fn(() => ({
-//       ...mockExpenseDataStore
-//     })),
-//     useTeamStore: vi.fn(() => ({
-//       currentTeam: {
-//         id: '1',
-//         name: 'Team Name',
-//         description: 'Team Description',
-//         members: [],
-//         teamContracts: [
-//           {
-//             address: '0xcontractaddress',
-//             admins: [],
-//             type: 'ExpenseAccountEIP712',
-//             deployer: '0xdeployeraddress'
-//           }
-//         ],
-//         ownerAddress: '0xOwner'
-//       }
-//     }))
-//   }
-// })
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -228,9 +189,6 @@ describe('ExpenseAccountTable', () => {
   }: ComponentOptions = {}) => {
     return mount(ExpenseAccountTable, {
       props: {
-        // team: {
-        //   teamContracts: []
-        // },
         ...props
       },
       data,
@@ -267,7 +225,6 @@ describe('ExpenseAccountTable', () => {
 
     it('should filter all approvals', async () => {
       const wrapper = createComponent()
-      // wrapper.vm.manyExpenseAccountDataAll = mockApprovals
       await flushPromises()
       const expenseAccountTable = wrapper.findComponent(TableComponent)
       expect(expenseAccountTable.exists()).toBeTruthy()
@@ -413,8 +370,7 @@ describe('ExpenseAccountTable', () => {
       wrapper.vm.isConfirmingActivate = false
       wrapper.vm.isConfirmedActivate = { value: true }
       await flushPromises()
-      expect(/*mocks.*/mockToastStore.addSuccessToast).toBeCalledWith('Activate Successful')
-      // expect(mockUseExpenseAccountData.initializeBalances).toBeCalled()
+      expect(mockToastStore.addSuccessToast).toBeCalledWith('Activate Successful')
     })
     it('should notify success if activate successful', async () => {
       const wrapper = createComponent()
@@ -423,15 +379,14 @@ describe('ExpenseAccountTable', () => {
       wrapper.vm.isConfirmingDeactivate = false
       wrapper.vm.isConfirmedDeactivate = { value: true }
       await flushPromises()
-      expect(/*mocks.*/mockToastStore.addSuccessToast).toBeCalledWith('Deactivate Successful')
-      // expect(mockUseExpenseAccountData.initializeBalances).toBeCalled()
+      expect(mockToastStore.addSuccessToast).toBeCalledWith('Deactivate Successful')
     })
     it('should notify error if error deactivate approval', async () => {
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(utils.log, 'error')
       wrapper.vm.errorDeactivateApproval = new Error(`Error deactivating approval`)
       await flushPromises()
-      expect(/*mocks.*/mockToastStore.addErrorToast).toBeCalledWith('Failed to deactivate approval')
+      expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to deactivate approval')
       expect(logErrorSpy).toBeCalledWith('Error deactivating approval')
     })
     it('should notify error if error activate approval', async () => {
@@ -439,7 +394,7 @@ describe('ExpenseAccountTable', () => {
       const logErrorSpy = vi.spyOn(utils.log, 'error')
       wrapper.vm.errorActivateApproval = new Error(`Error activating approval`)
       await flushPromises()
-      expect(/*mocks.*/mockToastStore.addErrorToast).toBeCalledWith('Failed to activate approval')
+      expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to activate approval')
       expect(logErrorSpy).toBeCalledWith('Error activating approval')
     })
     it('should notify error if error getting owner', async () => {
@@ -447,7 +402,7 @@ describe('ExpenseAccountTable', () => {
       const logErrorSpy = vi.spyOn(utils.log, 'error')
       wrapper.vm.errorGetOwner = new Error(`Error getting owner`)
       await flushPromises()
-      expect(/*mocks.*/mockToastStore.addErrorToast).toBeCalledWith('Error Getting Contract Owner')
+      expect(mockToastStore.addErrorToast).toBeCalledWith('Error Getting Contract Owner')
       expect(logErrorSpy).toBeCalledWith('Error getting owner')
     })
   })
