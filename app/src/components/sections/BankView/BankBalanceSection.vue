@@ -28,16 +28,22 @@
             <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
             Deposit
           </ButtonUI>
-          <ButtonUI
+          <div
+            class="tooltip tooltip-top"
+            :data-tip="!isBankOwner ? 'Only the bank owner can transfer funds' : ''"
             v-if="bankAddress"
-            variant="secondary"
-            class="flex items-center gap-2"
-            @click="transferModal = true"
-            data-test="transfer-button"
           >
-            <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
-            Transfer
-          </ButtonUI>
+            <ButtonUI
+              variant="secondary"
+              class="flex items-center gap-2"
+              @click="transferModal = true"
+              :disabled="!isBankOwner"
+              data-test="transfer-button"
+            >
+              <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
+              Transfer
+            </ButtonUI>
+          </div>
         </div>
         <div class="flex items-center gap-2" v-if="bankAddress">
           <div class="text-sm text-gray-600">Contract Address:</div>
@@ -76,10 +82,16 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { useStorage } from '@vueuse/core'
-import { useWriteContract, useWaitForTransactionReceipt, useChainId } from '@wagmi/vue'
-import { ref, watch } from 'vue'
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useChainId,
+  useReadContract
+} from '@wagmi/vue'
+import { ref, watch, computed } from 'vue'
 import { type Address, parseEther } from 'viem'
 import { useToastStore } from '@/stores'
+import { useUserDataStore } from '@/stores'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
@@ -94,6 +106,7 @@ const props = defineProps<{
 }>()
 
 const { addErrorToast, addSuccessToast } = useToastStore()
+const userStore = useUserDataStore()
 const currency = useStorage('currency', {
   code: 'USD',
   name: 'US Dollar',
@@ -101,6 +114,16 @@ const currency = useStorage('currency', {
 })
 const queryClient = useQueryClient()
 const chainId = useChainId()
+
+// get the current owner of the bank
+const { data: bankOwner } = useReadContract({
+  address: props.bankAddress,
+  abi: BankABI,
+  functionName: 'owner'
+})
+
+// check if the current user is the bank owner
+const isBankOwner = computed(() => bankOwner.value === userStore.address)
 
 // Use the contract balance composable
 const { total, balances, isLoading } = useContractBalance(props.bankAddress)
@@ -179,6 +202,29 @@ watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Transferred successfully')
     transferModal.value = false
+
+    //refresh bank owner data after a successful transfer
+    queryClient.invalidateQueries({
+      queryKey: [
+        'readContract',
+        {
+          address: props.bankAddress,
+          functionName: 'owner'
+        }
+      ]
+    })
+  }
+})
+
+// Watch for changes in the bank owner
+watch(bankOwner, (newOwner, oldOwner) => {
+  if (newOwner && oldOwner && newOwner !== oldOwner) {
+    console.log('Bank owner changed from', oldOwner, 'to', newOwner)
+    // If the current user has lost ownership rights, close the transfer modal
+    if (oldOwner === userStore.address && newOwner !== userStore.address && transferModal.value) {
+      transferModal.value = false
+      addErrorToast('You are no longer the bank owner and cannot make transfers')
+    }
   }
 })
 
