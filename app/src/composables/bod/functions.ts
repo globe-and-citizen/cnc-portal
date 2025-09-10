@@ -44,7 +44,6 @@ export function useBodWritesFunctions() {
       await executeSaveAction()
       isActionAdded.value = true
       queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
-      addSuccessToast('Transaction in composable is confirmed!')
     }
   })
 

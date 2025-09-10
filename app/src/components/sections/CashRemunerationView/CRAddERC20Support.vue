@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-row items-center gap-2">
+  <div v-if="isCashRemunerationOwner" class="flex flex-row items-center gap-2">
     <div class="flex items-center gap-2">
       <SelectComponent :options="options" v-model="tokenAddress.token" data-test="token-select" />
 
@@ -27,7 +27,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import SelectComponent from '@/components/SelectComponent.vue'
 import { readContract, writeContract } from '@wagmi/core'
 import { computed, ref, watch } from 'vue'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { USDC_ADDRESS } from '@/constant'
 import type { Address } from 'viem'
 import { isAddress } from 'viem'
@@ -35,6 +35,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { config } from '@/wagmi.config'
 import cashRemunerationAbi from '@/artifacts/abi/CashRemunerationEIP712.json'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import { useReadContract } from '@wagmi/vue'
 
 const tokenAddress = ref<{ token: string; isSupported: boolean }>({
   token: '',
@@ -45,6 +46,7 @@ const isLoading = ref(false)
 const isCheckingSupport = ref(false)
 
 const teamStore = useTeamStore()
+const userStore = useUserDataStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 const isValidAddress = computed(() => {
@@ -56,9 +58,24 @@ const investorsAddress = computed(() => teamStore.getContractAddressByType('Inve
 const cashRemunerationEip712Address = computed(() => {
   const address = teamStore.getContractAddressByType('CashRemunerationEIP712')
   if (!address) {
-    console.warn('CashRemunerationEIP712 contract address not found')
+    console.warn('CashRemuneration contract address not found')
   }
   return address
+})
+
+const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
+  functionName: 'owner',
+  address: cashRemunerationEip712Address.value as Address,
+  abi: cashRemunerationAbi
+})
+
+const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value == userStore.address)
+
+watch(cashRemunerationOwnerError, (value) => {
+  if (value) {
+    console.error('Failed to fetch cash remuneration owner:', value)
+    addErrorToast('Failed to fetch cash remuneration owner')
+  }
 })
 
 const checkTokenSupport = useDebounceFn(async (newAddress: string) => {

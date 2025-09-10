@@ -4,6 +4,7 @@ import { prisma } from "../utils";
 import { Prisma, Claim } from "@prisma/client";
 import { isUserMemberOfTeam } from "./wageController";
 import { getMondayStart, todayMidnight } from "../utils/dayUtils";
+import { isCashRemunerationOwner } from "../utils/cashRemunerationUtil";
 
 type claimBodyRequest = Pick<Claim, "hoursWorked" | "dayWorked" | "memo"> & {
   teamId: string;
@@ -165,7 +166,6 @@ export const getClaims = async (req: Request, res: Response) => {
       memberFilter = {
         wage: {
           userAddress: memberAddress,
-          teamId: teamId,
         },
       };
     }
@@ -175,9 +175,9 @@ export const getClaims = async (req: Request, res: Response) => {
       where: {
         wage: {
           teamId: teamId,
-          ...(memberAddress ? { userAddress: memberAddress } : {}),
         },
         ...statusFilter,
+        ...memberFilter,
       },
       include: {
         wage: {
@@ -267,8 +267,22 @@ export const updateClaim = async (req: Request, res: Response) => {
 
     // sign, disable, enable, reject actions are only able to be done by the owner of the team
     if (["sign", "disable", "enable", "reject"].includes(action)) {
-      if (claim.wage.team.ownerAddress !== callerAddress) {
-        return errorResponse(403, "Caller is not the owner of the team", res);
+      // Check if the caller is the Cash Remuneration owner
+      const isCallerCashRemunOwner = await isCashRemunerationOwner(
+        callerAddress,
+        claim.wage.team.id
+      );
+
+      // If not Cash Remuneration owner, check if they're the team owner
+      if (
+        !isCallerCashRemunOwner &&
+        claim.wage.team.ownerAddress !== callerAddress
+      ) {
+        return errorResponse(
+          403,
+          "Caller is not the Cash Remuneration owner or the team owner",
+          res
+        );
       }
     }
 
