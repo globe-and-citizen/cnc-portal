@@ -16,6 +16,7 @@
         ref="nameInput"
         :placeholder="'Name'"
         :data-test="`member-contracts-name-input`"
+        :disabled="disabled"
       />
       |
       <input
@@ -25,6 +26,7 @@
         v-model="input.address"
         :data-test="`member-contracts-address-input`"
         :placeholder="`Address`"
+        :disabled="disabled"
       />
     </label>
     <!-- Dropdown positioned relative to the input -->
@@ -79,6 +81,7 @@ import { ref, useTemplateRef, computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { watchDebounced } from '@vueuse/core'
 
+defineProps<{ disabled?: boolean }>()
 const emit = defineEmits(['selectItem'])
 const input = defineModel({
   default: {
