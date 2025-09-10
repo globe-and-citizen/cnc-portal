@@ -11,7 +11,6 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import * as utils from '@/utils'
 import { useTanstackQuery } from '@/composables'
 import { mockToastStore } from '@/tests/mocks/store.mock'
-import type { clear } from 'console'
 
 const mocks = vi.hoisted(() => ({
   mockReadContract: vi.fn()
