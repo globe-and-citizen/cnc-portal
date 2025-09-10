@@ -110,12 +110,17 @@ export interface TransferModel {
   amount: string
 }
 
-const props = defineProps<{
-  loading: boolean
-  tokens: Token[]
-  service: string
-  isBodAction: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    loading: boolean
+    tokens: Token[]
+    service: string
+    isBodAction?: boolean
+  }>(),
+  {
+    isBodAction: false
+  }
+)
 
 const model = defineModel<TransferModel>({
   required: true,
