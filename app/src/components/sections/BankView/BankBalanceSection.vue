@@ -28,11 +28,7 @@
             <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
             Deposit
           </ButtonUI>
-          <div
-            class="tooltip tooltip-top"
-            :data-tip="!isBankOwner ? 'Only the bank owner can transfer funds' : ''"
-            v-if="bankAddress"
-          >
+          <div class="relative group" v-if="bankAddress">
             <ButtonUI
               variant="secondary"
               class="flex items-center gap-2"
@@ -43,6 +39,13 @@
               <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
               Transfer
             </ButtonUI>
+            <span
+              v-if="!isBankOwner"
+              class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-sm bg-green-900 text-white rounded opacity-0 group-hover:opacity-100 transition"
+              style="white-space: nowrap"
+            >
+              Only the bank owner can transfer funds
+            </span>
           </div>
         </div>
         <div class="flex items-center gap-2" v-if="bankAddress">

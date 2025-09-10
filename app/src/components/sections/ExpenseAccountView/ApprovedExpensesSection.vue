@@ -1,18 +1,27 @@
 <template>
   <CardComponent title="Approved Addresses" data-test="claims-table">
     <template #card-action>
-      <ButtonUI
-        variant="success"
-        :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
-        @click="
-          () => {
-            approveUsersModal = true
-          }
-        "
-        data-test="approve-users-button"
-      >
-        Approve User Expense
-      </ButtonUI>
+      <div class="relative group">
+        <ButtonUI
+          variant="success"
+          :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
+          @click="
+            () => {
+              approveUsersModal = true
+            }
+          "
+          data-test="approve-users-button"
+        >
+          Approve User Expense
+        </ButtonUI>
+        <span
+          v-if="!(userDataStore.address === contractOwnerAddress || isBodAction())"
+          class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-sm bg-green-900 text-white rounded opacity-0 group-hover:opacity-100 transition"
+          style="white-space: nowrap"
+        >
+          Only the contract owner can approve expenses
+        </span>
+      </div>
     </template>
 
     <ExpenseAccountTable />
