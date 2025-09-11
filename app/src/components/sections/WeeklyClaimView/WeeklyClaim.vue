@@ -135,7 +135,7 @@ const weeklyClaimUrl = computed(
     `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${
       props.memberAddress
         ? `&memberAddress=${props.memberAddress}`
-        : !isCashRemunerationOwner.value
+        : isCashRemunerationOwner.value
           ? `&memberAddress=${userStore.address}`
           : ''
     }`
