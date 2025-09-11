@@ -1,6 +1,7 @@
 <template>
   <h1 class="font-bold text-2xl">Transfer from {{ service }} Contract</h1>
   <h3 class="pt-4">Current contract balance: {{ model.token.balance }} {{ model.token.symbol }}</h3>
+  <BodAlert v-if="isBodAction" />
   <h3 v-if="expenseBalance" class="pt-4">
     Expense balance: {{ expenseBalance }} {{ model.token.symbol }}
   </h3>
@@ -95,6 +96,7 @@ import { formatCurrencyShort } from '@/utils'
 import SelectComponent from '../SelectComponent.vue'
 import type { TokenId } from '@/constant'
 import { ref } from 'vue'
+import BodAlert from '@/components/BodAlert.vue'
 
 export interface Token {
   symbol: string
@@ -112,12 +114,18 @@ export interface TransferModel {
   amount: string
 }
 
-const props = defineProps<{
-  loading: boolean
-  tokens: Token[]
-  service: string
-  expenseBalance?: number | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    loading: boolean
+    tokens: Token[]
+    service: string
+    isBodAction?: boolean
+    expenseBalance?: number | null
+  }>(),
+  {
+    isBodAction: false
+  }
+)
 
 const model = defineModel<TransferModel>({
   required: true,

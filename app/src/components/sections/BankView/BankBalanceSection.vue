@@ -6,7 +6,11 @@
         <div class="flex items-baseline gap-2">
           <span class="text-4xl font-bold">
             <span class="inline-block min-w-16 h-10">
-              <span class="loading loading-spinner loading-lg" v-if="isLoading"></span>
+              <span
+                data-test="loading-spinner"
+                class="loading loading-spinner loading-lg"
+                v-if="isLoading"
+              ></span>
               <span v-else>{{ total['USD']?.formated ?? 0 }}</span>
             </span>
           </span>
@@ -30,14 +34,16 @@
           </ButtonUI>
           <div
             class="tooltip tooltip-top"
-            :data-tip="!isBankOwner ? 'Only the bank owner can transfer funds' : ''"
+            :data-tip="
+              !isBankOwner && !isBodAction ? 'Only the bank owner can transfer funds' : undefined
+            "
             v-if="bankAddress"
           >
             <ButtonUI
               variant="secondary"
               class="flex items-center gap-2"
               @click="transferModal = true"
-              :disabled="!isBankOwner"
+              :disabled="!isBankOwner && !isBodAction"
               data-test="transfer-button"
             >
               <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
@@ -67,10 +73,13 @@
         v-if="transferModal"
         v-model="transferData"
         :tokens="getTokens()"
-        :loading="transferLoading || isConfirmingTransfer"
+        :loading="
+          transferLoading || isConfirmingTransfer || isLoadingAddAction || isConfirmingAddAction
+        "
         service="Bank"
         @transfer="handleTransfer"
         @closeModal="() => (transferModal = false)"
+        :is-bod-action="isBodAction"
       />
     </ModalComponent>
   </CardComponent>
@@ -89,7 +98,7 @@ import {
   useReadContract
 } from '@wagmi/vue'
 import { ref, watch, computed } from 'vue'
-import { type Address, parseEther } from 'viem'
+import { type Address, parseEther, encodeFunctionData, parseUnits, type Abi } from 'viem'
 import { useToastStore } from '@/stores'
 import { useUserDataStore } from '@/stores'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -100,12 +109,24 @@ import { useContractBalance } from '@/composables/useContractBalance'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import type { TokenId } from '@/constant'
 import { useQueryClient } from '@tanstack/vue-query'
+import { useBodContract } from '@/composables/bod/'
 
 const props = defineProps<{
   bankAddress: Address
 }>()
 
 const { addErrorToast, addSuccessToast } = useToastStore()
+
+const {
+  addAction,
+  useBodIsBodAction,
+  isLoading: isLoadingAddAction,
+  isConfirming: isConfirmingAddAction,
+  isActionAdded
+} = useBodContract()
+
+const { isBodAction } = useBodIsBodAction(props.bankAddress as Address, BankABI as Abi)
+
 const userStore = useUserDataStore()
 const currency = useStorage('currency', {
   code: 'USD',
@@ -154,35 +175,42 @@ const handleTransfer = async (data: {
   amount: string
 }) => {
   if (!props.bankAddress) return
-
   try {
-    if (data.token.symbol === NETWORK.currencySymbol) {
-      transfer({
-        address: props.bankAddress,
-        abi: BankABI,
-        functionName: 'transfer',
-        args: [data.address.address, parseEther(data.amount)]
+    const isNativeToken = data.token.symbol === NETWORK.currencySymbol
+    const transferAmount = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
+
+    const transferConfig = {
+      address: props.bankAddress,
+      abi: BankABI,
+      functionName: isNativeToken ? 'transfer' : 'transferToken',
+      args: isNativeToken
+        ? [data.address.address, transferAmount]
+        : [USDC_ADDRESS as Address, data.address.address, transferAmount]
+    }
+
+    if (isBodAction.value) {
+      const encodedData = encodeFunctionData(transferConfig)
+
+      const description = JSON.stringify({
+        text: `Transfer ${data.amount} ${data.token.symbol} to ${data.address.address}`,
+        title: 'Bank Transfer Request'
       })
-      queryClient.invalidateQueries({
-        queryKey: [
-          'balance',
-          {
-            address: props.bankAddress,
-            chainId: chainId
-          }
-        ]
+
+      await addAction({
+        targetAddress: props.bankAddress,
+        description,
+        data: encodedData
       })
-    } else if (data.token.symbol === 'USDC') {
-      const tokenAmount = BigInt(Number(data.amount) * 1e6)
-      transfer({
-        address: props.bankAddress,
-        abi: BankABI,
-        functionName: 'transferToken',
-        args: [USDC_ADDRESS as Address, data.address.address, tokenAmount]
-      })
-      console.log('data.token', data)
-      queryClient.invalidateQueries({
-        queryKey: [
+      return
+    }
+
+    // Direct transfer (non-BOD action)
+    transfer(transferConfig)
+
+    // Invalidate relevant queries
+    const queryKey = isNativeToken
+      ? ['balance', { address: props.bankAddress, chainId: chainId }]
+      : [
           'readContract',
           {
             address: USDC_ADDRESS as Address,
@@ -190,13 +218,20 @@ const handleTransfer = async (data: {
             chainId: chainId
           }
         ]
-      })
-    }
+
+    queryClient.invalidateQueries({ queryKey })
   } catch (error) {
-    console.error(error)
+    console.error('Transfer failed:', error)
     addErrorToast(`Failed to transfer ${data.token.symbol}`)
   }
 }
+
+watch(isActionAdded, (added) => {
+  if (added) {
+    addSuccessToast('Action added successfully, waiting for confirmation')
+    transferModal.value = false
+  }
+})
 
 watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
