@@ -130,14 +130,14 @@ export const getExpenses = async (req: Request, res: Response) => {
 
 const syncExpenseStatus = async (expense: Expense) => {
   // TODO: implement the logic to get the current status of the expense
-  if (expense.status === "expired" || expense.status === "limit-reached") {
+  if (
+    (expense.status === "expired" || expense.status === "limit-reached") &&
+    'balances' in (expense.data as BudgetLimit)
+  ) {
     return {
       ...expense,
       status: expense.status,
-      balances: {
-        0: "N/A",
-        1: "N/A",
-      },
+      balances: (expense.data as BudgetLimit)?.balances
     };
   }
 
@@ -178,14 +178,27 @@ const syncExpenseStatus = async (expense: Expense) => {
       ? "expired"
       : isLimitReached
       ? "limit-reached"
-      : balances[2] === 2
-      ? "disabled"
-      : "enabled",
-  };
+      : balances[2] === 2 
+       ? "disabled" : "enabled"
+  }
+
+  const updateData: { status: string; data?: BudgetLimit } = {
+    status: formattedExpense.status
+  }
+
+  if (isLimitReached || isExpired) {
+    updateData.data = {
+        ...( formattedExpense.data as BudgetLimit ),
+        balances: {
+          1: amountTransferred,
+          0: `${ balances[0]}`
+      }
+    }
+  }
 
   await prisma.expense.update({
     where: { id: expense.id },
-    data: { status: formattedExpense.status },
+    data: updateData
   });
 
   return formattedExpense;
