@@ -1,6 +1,6 @@
 <template>
   <ButtonUI
-    v-if="weeklyClaim.status == 'pending' && teamOwner == userDataStore.address"
+    v-if="isCashRemunerationOwner"
     variant="success"
     data-test="approve-button"
     :disabled="loading || disabled"
@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useCustomFetch } from '@/composables'
-import { useChainId, useSignTypedData } from '@wagmi/vue'
+import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
 import { parseEther, parseUnits, zeroAddress, type Address } from 'viem'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { ClaimResponse, RatePerHour } from '@/types'
@@ -22,6 +22,8 @@ import { log } from '@/utils'
 import { computed, ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 import { useQueryClient } from '@tanstack/vue-query'
+import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { watch } from 'vue'
 
 // Props weeklyClaim : ClaimResponse
 const props = defineProps<{
@@ -37,10 +39,14 @@ const props = defineProps<{
 
 // Stores
 const teamStore = useTeamStore()
-const userDataStore = useUserDataStore()
+// const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
 const userStore = useUserDataStore()
 const queryClient = useQueryClient()
+
+const cashRemunerationAddress = computed(() =>
+  teamStore.getContractAddressByType('CashRemunerationEIP712')
+)
 
 const pendingQueryKey = computed(
   () => `pending-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
@@ -54,10 +60,23 @@ const { signTypedDataAsync, data: signature } = useSignTypedData()
 const chainId = useChainId()
 
 // Computed properties
-const teamOwner = computed(() => teamStore.currentTeam?.ownerAddress)
+// const teamOwner = computed(() => teamStore.currentTeam?.ownerAddress)
 const claimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=sign`)
 
 const loading = ref(false)
+
+const {
+  data: cashRemunerationOwner,
+  // isFetching: isCashRemunerationOwnerFetching,
+  error: cashRemunerationOwnerError
+} = useReadContract({
+  functionName: 'owner',
+  address: cashRemunerationAddress,
+  abi: CashRemuneration_ABI
+})
+
+// Compute if user has approval access (is cash remuneration contract owner)
+const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
 
 const {
   // data: claimUpdateData,
@@ -66,7 +85,8 @@ const {
   execute: executeUpdateClaim
 } = useCustomFetch(claimUrl, { immediate: false })
   .put(() => ({
-    signature: signature.value
+    signature: signature.value,
+    data: { ownerAddress: userStore.address }
   }))
   .json<Array<ClaimResponse>>()
 
@@ -123,6 +143,7 @@ const approveClaim = async (weeklyClaim: ClaimResponse) => {
   }
   if (signature.value) {
     await executeUpdateClaim()
+
     if (claimError.value) {
       toastStore.addErrorToast('Failed to approve weeklyClaim')
     } else {
@@ -138,4 +159,11 @@ const approveClaim = async (weeklyClaim: ClaimResponse) => {
 
   loading.value = false
 }
+
+watch(cashRemunerationOwnerError, (value) => {
+  if (value) {
+    log.error('Failed to fetch cash remuneration owner', value)
+    toastStore.addErrorToast('Failed to fetch cash remuneration owner')
+  }
+})
 </script>

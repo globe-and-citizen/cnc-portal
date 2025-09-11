@@ -11,7 +11,7 @@ import BOD_ABI from '@/artifacts/abi/bod.json'
 import { useCustomFetch } from '@/composables'
 import { useQueryClient } from '@tanstack/vue-query'
 import { log, parseError } from '@/utils'
-import { useNotifications } from '../useNotification'
+import { useNotificationStore } from '@/stores/notificationStore'
 /**
  * BOD contract write functions - combines admin, transfers, and tipping
  */
@@ -21,7 +21,7 @@ export function useBodWritesFunctions() {
   const teamStore = useTeamStore()
   const { addErrorToast, addSuccessToast } = useToastStore()
   const queryClient = useQueryClient()
-  const { addUsersNotification } = useNotifications()
+  const notificationStore = useNotificationStore()
   const action = ref<Partial<Action> | null>(null)
   const actionUrl = ref('')
   const isLoadingApproveAction = ref(false)
@@ -44,7 +44,6 @@ export function useBodWritesFunctions() {
       await executeSaveAction()
       isActionAdded.value = true
       queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
-      addSuccessToast('Transaction in composable is confirmed!')
 
       try {
         const members = bodAddress.value
@@ -60,12 +59,12 @@ export function useBodWritesFunctions() {
             (m) => m?.toLowerCase() !== (action.value?.userAddress || '').toLowerCase()
           )
 
-          await addUsersNotification({
+          await notificationStore.addBulkNotifications({
             userIds: recipients,
             message: 'New board action requires your approval',
             subject: 'New Board Action Created',
             author: action.value.userAddress ?? ('' as `0x${string}`),
-            resource: 'teams/' + teamStore.currentTeamId + '/contract-management'
+            resource: `teams/${teamStore.currentTeamId}/contract-management`
           })
         }
       } catch (err) {

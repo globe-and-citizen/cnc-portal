@@ -105,7 +105,6 @@ const {
 //#region Funtions
 const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = true
-  expenseAccountData.value = data
   const verifyingContract = expenseAccountEip712Address.value
 
   const domain = {

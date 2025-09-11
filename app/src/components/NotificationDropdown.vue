@@ -56,10 +56,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { type NotificationResponse, type Notification } from '@/types'
+import { ref, computed, watch, onMounted } from 'vue'
+import { type Notification } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore, useUserDataStore } from '@/stores'
+import { useToastStore, useUserDataStore, useNotificationStore } from '@/stores'
 import { log, parseError } from '@/utils'
 import { type Address, parseEther } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
@@ -69,34 +69,27 @@ import ButtonUI from './ButtonUI.vue'
 
 const currentPage = ref(1)
 const itemsPerPage = ref(4)
-const totalPages = ref(0)
 
 const updateEndPoint = ref('')
 const { addErrorToast, addSuccessToast } = useToastStore()
 const useUserStore = useUserDataStore()
-const {
-  //isFetching: isNotificationsFetching,
-  //error: notificationError,
-  data: notifications,
-  execute: executeFetchNotifications
-} = useCustomFetch<NotificationResponse>('notification').json()
+const notificationStore = useNotificationStore()
 
-const {
-  //isFetching: isUpdateNotificationsFetching,
-  //error: isUpdateNotificationError,
-  execute: executeUpdateNotifications
-  //data: _notifications
-} = useCustomFetch<NotificationResponse>(updateEndPoint, {
-  immediate: false
+onMounted(async () => {
+  try {
+    await notificationStore.fetchNotifications()
+  } catch (err) {
+    addErrorToast('Failed to load notifications')
+  }
 })
-  .put()
-  .json()
 
-watch(notifications, () => {
-  totalPages.value = Math.ceil(notifications.value.data.length / itemsPerPage.value)
+const totalPages = computed(() => {
+  if (!notificationStore.notifications?.length) return 1
+  return Math.max(1, Math.ceil(notificationStore.notifications.length / itemsPerPage.value))
 })
+
 const isUnread = computed(() => {
-  const idx = notifications.value?.data.findIndex(
+  const idx = notificationStore.notifications.findIndex(
     (notification: Notification) => notification.isRead === false
   )
   return idx > -1
@@ -215,16 +208,13 @@ const handleWage = async (notification: Notification) => {
 }
 
 const updateNotification = async (notification: Notification) => {
-  updateEndPoint.value = `notification/${notification.id}`
-
-  await executeUpdateNotifications()
-  await executeFetchNotifications()
+  await notificationStore.updateNotification(notification.id)
 }
 
 const paginatedNotifications = computed(() => {
-  if (!notifications.value?.data) return []
+  if (!notificationStore.notifications) return []
   const start = (currentPage.value - 1) * itemsPerPage.value
   const end = start + itemsPerPage.value
-  return notifications.value.data.slice(start, end)
+  return notificationStore.notifications.slice(start, end)
 })
 </script>

@@ -4,7 +4,11 @@
 
     <h3>Please input the {{ input.address ? '' : 'address and ' }}amount to mint</h3>
     <div>
-      <SelectMemberInput v-model="input" data-test="address-input" :disabled="props.disabled" />
+      <SelectMemberContractsInput
+        v-model="input"
+        data-test="address-input"
+        :disabled="props.disabled"
+      />
       <div
         class="pl-4 text-red-500 text-sm w-full text-left"
         data-test="error-address-input"
@@ -62,8 +66,8 @@ import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
 import { isAddress, parseUnits, type Address } from 'viem'
 import { onMounted, ref } from 'vue'
-import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { computed, watch } from 'vue'
 import { useTeamStore, useToastStore } from '@/stores'
@@ -94,6 +98,7 @@ const {
   error: mintError,
   isPending: isMintPending
 } = useWriteContract()
+
 const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForTransactionReceipt({
   hash: mintHash
 })

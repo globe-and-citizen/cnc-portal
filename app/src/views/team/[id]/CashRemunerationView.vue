@@ -23,7 +23,7 @@
     <ClaimHistory v-if="memberAddress" />
     <!-- Sinon, vue classique -->
     <template v-else>
-      <PendingWeeklyClaim v-if="isTeamOwner" />
+      <PendingWeeklyClaim v-if="isCashRemunerationOwner" />
       <SignedWeeklyClaim />
     </template>
     <!-- <CashRemunerationTransactions /> -->
@@ -34,6 +34,8 @@
 import { computed } from 'vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import { useReadContract } from '@wagmi/vue'
+import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 
 // import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
 // import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
@@ -50,11 +52,21 @@ const teamStore = useTeamStore()
 const route = useRoute()
 const memberAddress = route.params.memberAddress as string | undefined
 
-const isTeamOwner = computed(() => {
-  return teamStore.currentTeam?.ownerAddress === userStore.address
-})
-
 const cashRemunerationAddress = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
 )
+
+const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
+  functionName: 'owner',
+  address: cashRemunerationAddress,
+  abi: CashRemuneration_ABI
+})
+
+// Compute if user has approval access (is cash remuneration contract owner)
+const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value == userStore.address)
+
+// Handle errors silently
+if (cashRemunerationOwnerError) {
+  console.error('Failed to fetch cash remuneration owner:', cashRemunerationOwnerError)
+}
 </script>

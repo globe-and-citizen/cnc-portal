@@ -8,7 +8,7 @@
     </div>
     <div>
       <p class="text-xl font-semibold text-gray-900">{{ row.title }}</p>
-      <p class="text-gray-400">{{ row.description }}....</p>
+      <p class="text-gray-400">{{ row.description }}</p>
     </div>
   </div>
 
@@ -45,14 +45,17 @@
     <ButtonUI variant="error" @click="$emit('close')" data-test="cancel-button">
       <span><IconifyIcon icon="heroicons:arrow-left" /></span> Close
     </ButtonUI>
-    <ButtonUI
-      variant="primary"
-      data-test="transfer-ownership-button"
-      @click="$emit('approve-action', row.actionId, row.id)"
-      :loading="loading"
-    >
-      Approve Action
-    </ButtonUI>
+    <ToolTip :content="hasApproved ? 'You have already approved' : 'Click to approve this action'">
+      <ButtonUI
+        variant="primary"
+        data-test="transfer-ownership-button"
+        @click="$emit('approve-action', row.actionId, row.id)"
+        :loading="loading"
+        :disabled="hasApproved || loading"
+      >
+        Approve Action
+      </ButtonUI>
+    </ToolTip>
   </div>
 </template>
 <script setup lang="ts">
@@ -62,19 +65,22 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import UserComponent from '@/components/UserComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useReadContract } from '@wagmi/vue'
-import { useTeamStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import BOD_ABI from '@/artifacts/abi/bod.json'
 import { log, parseError } from '@/utils'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import type { Abi, Address } from 'viem'
+import ToolTip from '@/components/ToolTip.vue'
 
 const props = defineProps<{ row: TableRow; loading: boolean }>()
 
 defineEmits(['approve-action', 'close'])
 
 const teamStore = useTeamStore()
+const { address: currentAddress } = useUserDataStore()
 const approvals = ref<{ id: string; name: string; address: string; status: string }[]>([])
+
 const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
 const actionId = computed(() => props.row.actionId)
 const approvalCount = computed(() => {
@@ -82,6 +88,9 @@ const approvalCount = computed(() => {
     approved: approvals.value.filter((a) => a.status === 'approved').length,
     total: approvals.value.length
   }
+})
+const hasApproved = computed(() => {
+  return approvals.value.some((a) => a.address === currentAddress && a.status === 'approved')
 })
 
 const { data: members } = useReadContract({
