@@ -32,12 +32,11 @@
             <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
             Deposit
           </ButtonUI>
+
           <div
-            class="tooltip tooltip-top"
-            :data-tip="
-              !isBankOwner && !isBodAction ? 'Only the bank owner can transfer funds' : undefined
-            "
             v-if="bankAddress"
+            :class="{ tooltip: !isBankOwner }"
+            :data-tip="!isBankOwner ? 'Only the bank owner can transfer funds' : null"
           >
             <ButtonUI
               variant="secondary"

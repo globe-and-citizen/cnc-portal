@@ -32,19 +32,28 @@
 
       <template #actions-data="{ row }">
         <div class="flex w-full">
-          <ButtonUI
-            variant="primary"
-            :disabled="userStore.address != teamStore.currentTeam?.ownerAddress"
-            data-test="mint-individual"
-            @click="
-              () => {
-                selectedShareholder = row.shareholder
-                mintIndividualModal = true
-              }
+          <div
+            :class="{ tooltip: userStore.address != teamStore.currentTeam?.ownerAddress }"
+            :data-tip="
+              userStore.address != teamStore.currentTeam?.ownerAddress
+                ? 'Only the team owner can mint tokens for shareholders'
+                : null
             "
           >
-            Mint Individual
-          </ButtonUI>
+            <ButtonUI
+              variant="primary"
+              :disabled="userStore.address != teamStore.currentTeam?.ownerAddress"
+              data-test="mint-individual"
+              @click="
+                () => {
+                  selectedShareholder = row.shareholder
+                  mintIndividualModal = true
+                }
+              "
+            >
+              Mint Individual
+            </ButtonUI>
+          </div>
         </div>
       </template>
     </TableComponent>
