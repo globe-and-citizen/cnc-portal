@@ -38,6 +38,7 @@ Before submitting code for review, ensure the following items are completed:
 - [ ] **Actions**: Complex state mutations use store actions
 - [ ] **Getters**: Computed store values use getters
 - [ ] **Store Integration**: Components properly integrate with stores
+- [ ] **Store Usage**: Always create a store instance inside `setup()` or a composable (e.g., `const teamStore = useTeamStore()`) and access state, getters, and actions via that instance (e.g., `teamStore.currentTeamId`). Do not access store state directly at the top-level of a module.
 
 ### Testing Requirements
 
