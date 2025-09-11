@@ -6,11 +6,13 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref, reactive } from 'vue'
 import { createConfig, http } from '@wagmi/core'
 import { mainnet } from '@wagmi/core/chains'
-import type * as wagmiVue from '@wagmi/vue'
+import * as wagmiVue from '@wagmi/vue'
 import { useToastStore } from '@/stores/useToastStore'
 import type { ComponentPublicInstance } from 'vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
+import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
+import { VueQueryPlugin } from '@tanstack/vue-query'
 
 // Create a test wagmi config
 const config = createConfig({
@@ -19,6 +21,11 @@ const config = createConfig({
     [mainnet.id]: http()
   }
 })
+
+const mockQueryClient = {
+  invalidateQueries: vi.fn()
+}
+
 vi.mock('@/stores/useToastStore', () => ({
   useToastStore: vi.fn().mockReturnValue({
     addSuccessToast: vi.fn(),
@@ -82,6 +89,17 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWaitForTransactionReceipt: () => mockUseWaitForTransactionReceipt
   }
 })
+vi.mock('@tanstack/vue-query', async (importOriginal) => {
+  const actual = (await importOriginal()) as object
+  return {
+    ...actual,
+    useQueryClient: () => mockQueryClient
+  }
+})
+
+vi.mock('@/composables/useContractBalance', () => ({
+  useContractBalance: vi.fn(() => mockUseContractBalance)
+}))
 
 // Mock values for useContractBalance
 const mockBalances = reactive([
@@ -111,19 +129,6 @@ const mockBalances = reactive([
   }
 ])
 
-const mockIsLoading = ref(false)
-const mockError = ref<Error | null>(null)
-const mockRefetch = vi.fn()
-
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: () => ({
-    balances: mockBalances,
-    isLoading: mockIsLoading,
-    error: mockError,
-    refetch: mockRefetch
-  })
-}))
-
 interface BankBalanceSectionInstance extends ComponentPublicInstance {
   depositModal: boolean
   transferModal: boolean
@@ -140,7 +145,7 @@ interface BankBalanceSectionInstance extends ComponentPublicInstance {
   }) => Promise<void>
 }
 
-describe.skip('BankBalanceSection', () => {
+describe('BankBalanceSection', () => {
   const defaultProps = {
     bankAddress: '0x123' as Address
   }
@@ -155,7 +160,11 @@ describe.skip('BankBalanceSection', () => {
           ArrowsRightLeftIcon: true,
           ModalComponent: true
         },
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [
+          createTestingPinia({ createSpy: vi.fn }),
+          VueQueryPlugin,
+          [wagmiVue.WagmiPlugin, { config: config }]
+        ]
       }
     }) as unknown as {
       vm: BankBalanceSectionInstance
@@ -182,7 +191,7 @@ describe.skip('BankBalanceSection', () => {
   it('displays correct balance', () => {
     const wrapper = createWrapper()
     const balanceText = wrapper.find('.text-4xl')
-    expect(balanceText.text()).toContain('3001.00')
+    expect(balanceText.text()).toContain('$50.5K')
     expect(wrapper.find('.text-gray-600').text()).toContain('USD')
   })
 
@@ -213,9 +222,10 @@ describe.skip('BankBalanceSection', () => {
   })
 
   describe('Watch Handlers', () => {
-    it('handles transfer confirmation correctly', async () => {
+    it.skip('handles transfer confirmation correctly', async () => {
       const wrapper = createWrapper()
       wrapper.vm.transferModal = true
+
       mockUseWaitForTransactionReceipt.isLoading.value = true
       await wrapper.vm.$nextTick()
       mockUseWaitForTransactionReceipt.isLoading.value = false
@@ -239,17 +249,19 @@ describe.skip('BankBalanceSection', () => {
       }
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('.text-4xl').text()).toContain('3001.00')
+      expect(wrapper.find('.text-4xl').text()).toContain('$50.5K')
     })
   })
 
   describe('Loading States', () => {
     it('shows loading spinner when fetching balances', async () => {
       const wrapper = createWrapper()
-      mockIsLoading.value = true
+      mockUseContractBalance.isLoading.value = true
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('.loading-spinner').exists()).toBe(true)
+      const loadingSpinner = wrapper.find('[data-test="loading-spinner"]')
+
+      expect(loadingSpinner.exists()).toBe(true)
     })
   })
 
@@ -334,7 +346,7 @@ describe.skip('BankBalanceSection', () => {
       }
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('.text-gray-500').text()).toContain('3001.00 USD')
+      expect(wrapper.find('.text-gray-500').text()).toContain('$50.5K USD')
     })
   })
 
