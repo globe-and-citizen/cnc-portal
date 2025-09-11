@@ -4,14 +4,25 @@
 
 - Provide proper ARIA labels for interactive elements
 - Use semantic HTML elements
-- Implement keyboard navigation
-- Ensure proper color contrast
-
-## Screen Reader Support
 
 - Use proper heading hierarchy
 - Provide alternative text for images
-- Implement focus management
+
+
+# Accessibility Guidelines
+
+Make all interfaces accessible for everyone, including users with disabilities.
+
+## Checklist
+
+- Use semantic HTML
+- Add alt text to images
+- Ensure color contrast
+- Support keyboard navigation
+- Use ARIA attributes as needed
 - Test with screen readers
 
-This file will be expanded with detailed accessibility requirements.
+## Resources
+
+- [WCAG](https://www.w3.org/WAI/standards-guidelines/wcag/)
+- [MDN Accessibility](https://developer.mozilla.org/en-US/docs/Web/Accessibility)
