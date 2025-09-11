@@ -4,52 +4,6 @@ import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import { ref } from 'vue'
 import type { Team, Notification } from '@/types'
 
-interface ComponentData {
-  getWageClaimAPI: (throwOnFailed?: boolean) => Promise<unknown>
-  updateEndPoint: string
-  team: Partial<Team>
-  wageClaim: unknown
-  getResource: (notification: Notification) => string[]
-}
-vi.mock('@/stores', () => ({
-  useUserDataStore: vi.fn(() => ({ address: '0xUserAddress' })),
-  useToastStore: vi.fn(() => ({
-    addErrorToast: vi.fn(),
-    addSuccessToast: vi.fn()
-  }))
-}))
-
-const mockUseWriteContract = {
-  writeContract: vi.fn(),
-  error: ref(null),
-  isPending: ref(false),
-  data: ref(null)
-}
-
-const mockUseWaitForTransactionReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false)
-}
-
-// Mocking wagmi functions
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useWriteContract: vi.fn(() => mockUseWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
-  }
-})
-
-vi.mock('vue-router', () => ({
-  useRoute: vi.fn(() => ({
-    params: {
-      id: 0
-    }
-  }))
-}))
-
-// Mock data
 const mockNotifications = [
   {
     id: 1,
@@ -81,8 +35,64 @@ const mockNotifications = [
     subject: null,
     userAddress: '0xUser'
   }
-  // Add more mock notifications as needed
 ]
+
+const mockNotificationStore = {
+  notifications: mockNotifications,
+  isLoading: ref(false),
+  error: ref(null),
+  fetchNotifications: vi.fn(async () => {
+    mockNotificationStore.notifications = mockNotifications
+  }),
+  addBulkNotifications: vi.fn(),
+  updateNotification: vi.fn()
+}
+
+interface ComponentData {
+  getWageClaimAPI: (throwOnFailed?: boolean) => Promise<unknown>
+  updateEndPoint: string
+  team: Partial<Team>
+  wageClaim: unknown
+  getResource: (notification: Notification) => string[]
+}
+vi.mock('@/stores', () => ({
+  useUserDataStore: vi.fn(() => ({ address: '0xUserAddress' })),
+  useToastStore: vi.fn(() => ({
+    addErrorToast: vi.fn(),
+    addSuccessToast: vi.fn()
+  })),
+  useNotificationStore: vi.fn(() => mockNotificationStore)
+}))
+
+const mockUseWriteContract = {
+  writeContract: vi.fn(),
+  error: ref(null),
+  isPending: ref(false),
+  data: ref(null)
+}
+
+const mockUseWaitForTransactionReceipt = {
+  isLoading: ref(false),
+  isSuccess: ref(false)
+}
+
+// Mocking wagmi functions
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useWriteContract: vi.fn(() => mockUseWriteContract),
+    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
+  }
+})
+
+vi.mock('vue-router', () => ({
+  useRoute: vi.fn(() => ({
+    params: {
+      id: 0
+    }
+  }))
+}))
 
 const executeMock = vi.fn()
 

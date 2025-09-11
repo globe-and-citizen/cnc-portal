@@ -80,6 +80,7 @@ onMounted(async () => {
     await notificationStore.fetchNotifications()
   } catch (err) {
     addErrorToast('Failed to load notifications')
+    console.error('error fetching notifications', err)
   }
 })
 
