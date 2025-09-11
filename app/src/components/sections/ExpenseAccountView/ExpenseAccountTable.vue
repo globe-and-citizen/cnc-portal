@@ -98,7 +98,7 @@ import TableComponent, { type TableColumn } from '@/components/TableComponent.vu
 import { computed, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
-import { type Address, keccak256 } from 'viem'
+import { keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
 import UserComponent from '@/components/UserComponent.vue'
@@ -138,11 +138,8 @@ const formattedExpenseData = computed(() => {
   })
 })
 
-const expenseAccountEip712Address = computed(
-  () =>
-    teamStore.currentTeam?.teamContracts?.find(
-      (contract) => contract.type === 'ExpenseAccountEIP712'
-    )?.address as Address
+const expenseAccountEip712Address = computed(() =>
+  teamStore.getContractAddressByType('ExpenseAccountEIP712')
 )
 const columns = [
   {
@@ -184,7 +181,7 @@ const columns = [
 //#endregion Composables
 const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
   functionName: 'owner',
-  address: expenseAccountEip712Address as unknown as Address,
+  address: expenseAccountEip712Address, //as unknown as Address,
   abi: expenseAccountABI
 })
 //deactivate approval
@@ -224,6 +221,12 @@ const filteredApprovals = computed(() => {
 
 //#region Functions
 const deactivateApproval = async (signature: `0x{string}`) => {
+  if (!expenseAccountEip712Address.value) {
+    addErrorToast('Failed to deactivate')
+    log.error('ExpenseAccountEip712Address is undefined')
+    return
+  }
+
   const signatureHash = keccak256(signature)
 
   executeDeactivateApproval({
@@ -235,6 +238,12 @@ const deactivateApproval = async (signature: `0x{string}`) => {
 }
 
 const activateApproval = async (signature: `0x{string}`) => {
+  if (!expenseAccountEip712Address.value) {
+    addErrorToast('Failed to activate')
+    log.error('ExpenseAccountEip712Address is undefined')
+    return
+  }
+
   const signatureHash = keccak256(signature)
 
   executeActivateApproval({
@@ -266,12 +275,14 @@ watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
 })
 watch(errorDeactivateApproval, (newVal) => {
   if (newVal) {
+    isLoadingSetStatus.value = false
     log.error(parseError(newVal))
     addErrorToast('Failed to deactivate approval')
   }
 })
 watch(errorActivateApproval, (newVal) => {
   if (newVal) {
+    isLoadingSetStatus.value = false
     log.error(parseError(newVal))
     addErrorToast('Failed to activate approval')
   }
