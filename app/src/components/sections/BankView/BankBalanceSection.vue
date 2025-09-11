@@ -34,13 +34,10 @@
           </ButtonUI>
 
           <div
-            class="tooltip tooltip-top"
-            :data-tip="
-              !isBankOwner && !isBodAction ? 'Only the bank owner can transfer funds' : undefined
-            "
             v-if="bankAddress"
+            :class="{ tooltip: !isBankOwner }"
+            :data-tip="!isBankOwner ? 'Only the bank owner can transfer funds' : null"
           >
-
             <ButtonUI
               variant="secondary"
               class="flex items-center gap-2"
@@ -51,13 +48,6 @@
               <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
               Transfer
             </ButtonUI>
-            <span
-              v-if="!isBankOwner"
-              class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-sm bg-green-900 text-white rounded opacity-0 group-hover:opacity-100 transition"
-              style="white-space: nowrap"
-            >
-              Only the bank owner can transfer funds
-            </span>
           </div>
         </div>
         <div class="flex items-center gap-2" v-if="bankAddress">

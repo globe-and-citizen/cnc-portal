@@ -31,7 +31,10 @@
       :disabled="userStore.address !== owner"
       :election-id="formattedElection?.id ?? 1"
     />
-    <div class="relative group">
+    <div
+      :class="{ tooltip: userStore.address != owner }"
+      :data-tip="userStore.address != owner ? 'Only the owner can create elections' : null"
+    >
       <ButtonUI
         v-if="!electionStatus || formattedElection?.resultsPublished"
         variant="success"
@@ -40,13 +43,6 @@
       >
         Create Election
       </ButtonUI>
-      <span
-        v-if="userStore.address != owner"
-        class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-sm bg-green-900 text-white rounded opacity-0 group-hover:opacity-100 transition"
-        style="white-space: nowrap"
-      >
-        Only the owner can create elections
-      </span>
     </div>
   </div>
 </template>

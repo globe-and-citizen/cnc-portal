@@ -32,7 +32,14 @@
 
       <template #actions-data="{ row }">
         <div class="flex w-full">
-          <div class="relative group">
+          <div
+            :class="{ tooltip: userStore.address != teamStore.currentTeam?.ownerAddress }"
+            :data-tip="
+              userStore.address != teamStore.currentTeam?.ownerAddress
+                ? 'Only the team owner can mint tokens for shareholders'
+                : null
+            "
+          >
             <ButtonUI
               variant="primary"
               :disabled="userStore.address != teamStore.currentTeam?.ownerAddress"
@@ -46,12 +53,6 @@
             >
               Mint Individual
             </ButtonUI>
-            <div
-              v-if="userStore.address != teamStore.currentTeam?.ownerAddress"
-              class="absolute bottom-full mb-2 left-1 transform -translate-x-1/2 px-3 py-2 bg-green-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap"
-            >
-              Only the team owner can mint tokens for shareholders
-            </div>
           </div>
         </div>
       </template>

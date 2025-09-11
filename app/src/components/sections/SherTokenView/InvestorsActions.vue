@@ -2,8 +2,7 @@
   <CardComponent title="Investor Actions">
     <div class="flex flex-col justify-around gap-2 w-full" data-test="investors-actions">
       <div class="flex justify-end gap-2 w-full">
-        <div class="relative group">
-          <!-- :disabled="!tokenSymbol || currentAddress != team.ownerAddress" -->
+        <div :class="{ tooltip: true }" data-tip="Coming soon">
           <ButtonUI
             variant="primary"
             :disabled="true"
@@ -12,14 +11,15 @@
           >
             Distribute Mint {{ tokenSymbol }}
           </ButtonUI>
-          <span
-            class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-sm bg-green-900 text-white rounded opacity-0 group-hover:opacity-100 transition"
-            style="white-space: nowrap"
-          >
-            Coming soon
-          </span>
         </div>
-        <div class="relative group">
+        <div
+          :class="{ tooltip: tokenSymbol && currentAddress != investorsOwner }"
+          :data-tip="
+            tokenSymbol && currentAddress != investorsOwner
+              ? 'Only the token owner can mint tokens'
+              : null
+          "
+        >
           <ButtonUI
             variant="primary"
             outline
@@ -29,15 +29,21 @@
           >
             Mint {{ tokenSymbol }}
           </ButtonUI>
-          <span
-            v-if="tokenSymbol && currentAddress != investorsOwner"
-            class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-sm bg-green-900 text-white rounded opacity-0 group-hover:opacity-100 transition"
-            style="white-space: nowrap"
-          >
-            Only the token owner can mint tokens
-          </span>
         </div>
-        <div class="relative group">
+        <div
+          :class="{
+            tooltip:
+              (tokenSymbol && !isBodAction && currentAddress != bankOwner) ||
+              (tokenSymbol && (shareholders?.length ?? 0) === 0)
+          }"
+          :data-tip="
+            tokenSymbol && !isBodAction && currentAddress != bankOwner
+              ? 'Only the bank owner can pay dividends'
+              : tokenSymbol && (shareholders?.length ?? 0) === 0
+                ? 'No shareholders available to pay dividends'
+                : null
+          "
+        >
           <ButtonUI
             variant="primary"
             data-test="pay-dividends-button"
@@ -50,20 +56,6 @@
           >
             Pay Dividends
           </ButtonUI>
-          <span
-            v-if="tokenSymbol && !isBodAction && currentAddress != bankOwner"
-            class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-sm bg-green-900 text-white rounded opacity-0 group-hover:opacity-100 transition"
-            style="white-space: nowrap"
-          >
-            Only the bank owner can pay dividends
-          </span>
-          <span
-            v-else-if="tokenSymbol && (shareholders?.length ?? 0) === 0"
-            class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-sm bg-green-900 text-white rounded opacity-0 group-hover:opacity-100 transition"
-            style="white-space: nowrap"
-          >
-            No shareholders available to pay dividends
-          </span>
         </div>
       </div>
 
