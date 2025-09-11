@@ -98,46 +98,44 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
-import { useUserDataStore, useTeamStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import { RouterLink } from 'vue-router'
 import type { RatePerHour } from '@/types/cash-remuneration'
 import type { TokenId } from '@/constant'
 import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
-import { useReadContract } from '@wagmi/vue'
-import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+// import { useReadContract } from '@wagmi/vue'
+// import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
 }
 
-const userStore = useUserDataStore()
+// const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 const props = defineProps<{
   memberAddress?: string
   singleUser?: boolean
 }>()
 
-const cashRemunerationAddress = computed(() =>
-  teamStore.getContractAddressByType('CashRemunerationEIP712')
-)
+// const cashRemunerationAddress = computed(() =>
+//   teamStore.getContractAddressByType('CashRemunerationEIP712')
+// )
 
-const { data: cashRemunerationOwner } = useReadContract({
-  functionName: 'owner',
-  address: cashRemunerationAddress,
-  abi: CashRemuneration_ABI
-})
+// const { data: cashRemunerationOwner } = useReadContract({
+//   functionName: 'owner',
+//   address: cashRemunerationAddress,
+//   abi: CashRemuneration_ABI
+// })
 
-const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value == userStore.address)
+// const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value == userStore.address)
+// : isCashRemunerationOwner.value
+//           ? `&memberAddress=${userStore.address}`
 
 const weeklyClaimUrl = computed(
   () =>
     `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${
-      props.memberAddress
-        ? `&memberAddress=${props.memberAddress}`
-        : isCashRemunerationOwner.value
-          ? `&memberAddress=${userStore.address}`
-          : ''
+      props.memberAddress ? `&memberAddress=${props.memberAddress}` : ''
     }`
 )
 
