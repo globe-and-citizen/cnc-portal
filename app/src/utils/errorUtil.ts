@@ -69,7 +69,9 @@ function parseRevertReason(errorString: string): `0x${string}` | string {
 
   // Revert message handling
   if (parts.some((part) => part.includes('revert'))) {
-    const message = errorString.split('revert:')[1].trim().replace(/\.$/, '')
+    const parts = errorString.split('revert:')
+    if (parts.length < 2) return errorString
+    const message = parts[1].trim().replace(/\.$/, '')
     return message
   }
 
