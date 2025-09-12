@@ -1,18 +1,27 @@
 <template>
   <CardComponent title="Approved Addresses" data-test="claims-table">
     <template #card-action>
-      <ButtonUI
-        variant="success"
-        :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
-        @click="
-          () => {
-            approveUsersModal = true
-          }
+      <div
+        :class="{ tooltip: !(userDataStore.address === contractOwnerAddress || isBodAction()) }"
+        :data-tip="
+          !(userDataStore.address === contractOwnerAddress || isBodAction())
+            ? 'Only the contract owner can approve expenses'
+            : null
         "
-        data-test="approve-users-button"
       >
-        Approve User Expense
-      </ButtonUI>
+        <ButtonUI
+          variant="success"
+          :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
+          @click="
+            () => {
+              approveUsersModal = true
+            }
+          "
+          data-test="approve-users-button"
+        >
+          Approve User Expense
+        </ButtonUI>
+      </div>
     </template>
 
     <ExpenseAccountTable />

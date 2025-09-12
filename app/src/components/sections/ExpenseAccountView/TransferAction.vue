@@ -17,6 +17,7 @@
           :tokens="getTokens([row], row.signature, balances)"
           :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
           service="Expense Account"
+          :expense-balance="expenseBalance"
           @transfer="
             async (data) => {
               await transferFromExpenseAccount(data.address.address, data.amount)
@@ -74,6 +75,14 @@ const transferData = ref({
   address: { name: '', address: '' },
   token: { symbol: '', balance: 0, tokenId: '' as TokenId },
   amount: '0'
+})
+const expenseBalance = computed(() => {
+  const budgetData = props.row.data.budgetData as BudgetData[]
+  const maxAmountData = budgetData.find((item) => item.budgetType === 1)?.value
+  const amountTransferred = props.row.balances[1]
+  return maxAmountData && amountTransferred
+    ? Number(maxAmountData) - Number(amountTransferred)
+    : null
 })
 
 //#region Computed Values
