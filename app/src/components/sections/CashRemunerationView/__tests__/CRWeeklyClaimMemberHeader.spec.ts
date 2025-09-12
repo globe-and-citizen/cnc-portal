@@ -3,10 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CRWeeklyClaimMemberHeader from '../CRWeeklyClaimMemberHeader.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
+import { type WageResponse } from '@/types'
 
 // Mock the custom fetch hook
-const mockFetchData = ref<any>(null)
-const mockFetchError = ref<any>(null)
+const mockFetchData = ref<Array<WageResponse> | null>(null)
+const mockFetchError = ref<Error | null>(null)
 
 const mocks = vi.hoisted(() => ({
   mockUseCustomFetch: vi.fn(() => ({
@@ -18,7 +19,7 @@ const mocks = vi.hoisted(() => ({
     })
   })),
   mockUseUserDataStore: vi.fn(() => ({
-    address: 'user-address-123'
+    address: '0x1234567890123456789012345678901234567890'
   })),
   mockUseTeamStore: vi.fn(() => ({
     currentTeam: {
@@ -50,7 +51,11 @@ describe('CRWeeklyClaimMemberHeader', () => {
   it('should show SubmitClaims component when user has wage', () => {
     // Mock user has wage
     mockFetchData.value = [
-      { userAddress: 'user-address-123', wage: 100 }
+      { 
+        userAddress: '0x1234567890123456789012345678901234567890',
+        maximumHoursPerWeek: 40,
+        cashRatePerHour: 100
+      }
     ]
 
     const wrapper = mount(CRWeeklyClaimMemberHeader, {
@@ -99,7 +104,11 @@ describe('CRWeeklyClaimMemberHeader', () => {
   it('should show disabled button with tooltip when user address is not in wage data', () => {
     // Mock user address not in wage data
     mockFetchData.value = [
-      { userAddress: 'different-address', wage: 100 }
+      { 
+        userAddress: '0x9876543210987654321098765432109876543210',
+        maximumHoursPerWeek: 40,
+        cashRatePerHour: 100
+      }
     ]
 
     const wrapper = mount(CRWeeklyClaimMemberHeader, {
