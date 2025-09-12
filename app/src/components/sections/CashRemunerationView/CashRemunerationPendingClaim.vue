@@ -55,7 +55,7 @@ const {
   'weeklyClaims',
   computed(() => `/weeklyClaim/?teamId=${teamStore.currentTeamId}&status=signed`),
   {
-    queryKey: signedQueryKey.value,
+    queryKey: signedQueryKey,
     refetchOnWindowFocus: true
   }
 )
