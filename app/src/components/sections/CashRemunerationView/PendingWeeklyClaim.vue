@@ -143,9 +143,13 @@ const weeklyClaimUrl = computed(
   () =>
     `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${!isCashRemunerationOwner.value ? `&memberAddress=${userStore.address}` : ''}`
 )
-const queryKey = computed(
-  () => `pending-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
-)
+const queryKey = computed(() => [
+  'weekly-claims',
+  teamStore.currentTeam?.id,
+  userStore.address,
+  'pending'
+])
+
 const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaimResponse>(
   queryKey,
   weeklyClaimUrl

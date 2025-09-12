@@ -48,13 +48,6 @@ const cashRemunerationAddress = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
 )
 
-const pendingQueryKey = computed(
-  () => `pending-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
-)
-const signedQueryKey = computed(
-  () => `signed-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
-)
-
 // Composables
 const { signTypedDataAsync, data: signature } = useSignTypedData()
 const chainId = useChainId()
@@ -149,10 +142,7 @@ const approveClaim = async (weeklyClaim: ClaimResponse) => {
     } else {
       toastStore.addSuccessToast('Claim approved')
       queryClient.invalidateQueries({
-        queryKey: [pendingQueryKey.value]
-      })
-      queryClient.invalidateQueries({
-        queryKey: [signedQueryKey.value]
+        queryKey: ['weekly-claims', teamStore.currentTeam?.id]
       })
     }
   }

@@ -45,6 +45,7 @@ const currency = useStorage('currency', {
   name: 'US Dollar',
   symbol: '$'
 })
+const withdrawnQueryKey = computed(() => ['weekly-claims', teamStore.currentTeam?.id, 'withdrawn'])
 
 const {
   data: weeklyClaims,
@@ -54,8 +55,7 @@ const {
   'withdrawnClaims',
   computed(() => `/weeklyClaim/?teamId=${teamStore.currentTeamId}&status=withdrawn`),
   {
-    queryKey: ['withdrawnClaims'],
-    refetchInterval: 10000, // auto reload every 10s
+    queryKey: withdrawnQueryKey.value,
     refetchOnWindowFocus: true
   }
 )
