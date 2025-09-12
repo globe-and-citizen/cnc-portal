@@ -55,7 +55,7 @@ const {
   'withdrawnClaims',
   computed(() => `/weeklyClaim/?teamId=${teamStore.currentTeamId}&status=withdrawn`),
   {
-    queryKey: withdrawnQueryKey.value,
+    queryKey: withdrawnQueryKey,
     refetchOnWindowFocus: true
   }
 )
