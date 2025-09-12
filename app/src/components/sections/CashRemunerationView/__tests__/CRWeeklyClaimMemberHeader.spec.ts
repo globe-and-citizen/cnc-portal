@@ -51,7 +51,7 @@ describe('CRWeeklyClaimMemberHeader', () => {
   it('should show SubmitClaims component when user has wage', () => {
     // Mock user has wage
     mockFetchData.value = [
-      { 
+      {
         userAddress: '0x1234567890123456789012345678901234567890',
         maximumHoursPerWeek: 40,
         cashRatePerHour: 100
@@ -69,10 +69,10 @@ describe('CRWeeklyClaimMemberHeader', () => {
 
     // Should show the SubmitClaims component
     expect(wrapper.findComponent({ name: 'SubmitClaims' }).exists()).toBe(true)
-    
+
     // Should not show the disabled button
     expect(wrapper.find('[data-test="submit-claim-disabled-button"]').exists()).toBe(false)
-    
+
     // Should not have tooltip class on the container
     expect(wrapper.find('[data-tip]').exists()).toBe(false)
   })
@@ -89,22 +89,24 @@ describe('CRWeeklyClaimMemberHeader', () => {
 
     // Should not show the SubmitClaims component
     expect(wrapper.findComponent({ name: 'SubmitClaims' }).exists()).toBe(false)
-    
+
     // Should show the disabled button
     const disabledButton = wrapper.find('[data-test="submit-claim-disabled-button"]')
     expect(disabledButton.exists()).toBe(true)
     expect(disabledButton.text()).toBe('Submit Claim')
-    
+
     // Should have tooltip with appropriate message
     const tooltipContainer = wrapper.find('.tooltip')
     expect(tooltipContainer.exists()).toBe(true)
-    expect(tooltipContainer.attributes('data-tip')).toBe('You need to have a wage set up to submit claims')
+    expect(tooltipContainer.attributes('data-tip')).toBe(
+      'You need to have a wage set up to submit claims'
+    )
   })
 
   it('should show disabled button with tooltip when user address is not in wage data', () => {
     // Mock user address not in wage data
     mockFetchData.value = [
-      { 
+      {
         userAddress: '0x9876543210987654321098765432109876543210',
         maximumHoursPerWeek: 40,
         cashRatePerHour: 100
@@ -119,13 +121,15 @@ describe('CRWeeklyClaimMemberHeader', () => {
 
     // Should not show the SubmitClaims component
     expect(wrapper.findComponent({ name: 'SubmitClaims' }).exists()).toBe(false)
-    
+
     // Should show the disabled button with tooltip
     const disabledButton = wrapper.find('[data-test="submit-claim-disabled-button"]')
     expect(disabledButton.exists()).toBe(true)
-    
+
     const tooltipContainer = wrapper.find('.tooltip')
     expect(tooltipContainer.exists()).toBe(true)
-    expect(tooltipContainer.attributes('data-tip')).toBe('You need to have a wage set up to submit claims')
+    expect(tooltipContainer.attributes('data-tip')).toBe(
+      'You need to have a wage set up to submit claims'
+    )
   })
 })
