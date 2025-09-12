@@ -10,7 +10,10 @@
     "format": "prettier --write .",
     "moveConstants": "nodemon scripts/moveConstants.ts",
     "mc": "nodemon scripts/moveConstants.ts",
-    "format-check": "npx prettier --check ."
+    "format-check": "npx prettier --check .",
+    "check-contracts": "npx hardhat run scripts/contractStatusChecker.ts",
+    "status-check": "npx hardhat run scripts/contractStatusChecker.ts",
+    "demo-status-checker": "npx hardhat run scripts/contractStatusCheckerDemo.ts"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
