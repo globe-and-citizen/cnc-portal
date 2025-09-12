@@ -16,11 +16,42 @@ A tool to verify that deployed smart contracts match their local artifacts by co
 # Run the interactive status checker
 npm run check-contracts
 
+# Run with verbose debugging output
+npm run check-contracts-verbose
+
+# Using environment variable for verbose mode
+CONTRACT_CHECKER_VERBOSE=true npm run check-contracts
+
 # Run the demo (offline mode)
 npm run demo-status-checker
 
 # Run tests
 npx hardhat test scripts/contractStatusChecker.test.ts
+```
+
+## Verbose Mode for Debugging
+
+Enable verbose mode to get detailed debugging information that shows:
+
+- **Network connectivity details** with latency measurements
+- **Step-by-step contract checking process**
+- **Address resolution details** for proxies and beacons
+- **Bytecode comparison information** with previews
+- **File path and artifact loading details**
+- **Normalization process information**
+- **Error stack traces** for debugging
+
+### Enable Verbose Mode
+
+```bash
+# Using npm script
+npm run check-contracts-verbose
+
+# Using environment variable
+CONTRACT_CHECKER_VERBOSE=true npm run check-contracts
+
+# Using command line flag
+npx hardhat run scripts/contractStatusChecker.ts -- --verbose
 ```
 
 ## How It Works
@@ -142,7 +173,10 @@ const NETWORKS = {
 
 ### Debug Tips
 
+- **Use verbose mode** for detailed debugging: `npm run check-contracts-verbose`
 - Run tests first: `npx hardhat test scripts/contractStatusChecker.test.ts`
 - Try the demo mode: `npm run demo-status-checker`
 - Check deployment files in `ignition/deployments/`
 - Verify artifacts exist in `artifacts/contracts/`
+- Check network connectivity with verbose mode to see RPC response times
+- Review bytecode previews in verbose mode to identify differences

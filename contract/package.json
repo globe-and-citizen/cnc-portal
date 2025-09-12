@@ -12,7 +12,9 @@
     "mc": "nodemon scripts/moveConstants.ts",
     "format-check": "npx prettier --check .",
     "check-contracts": "npx hardhat run scripts/contractStatusChecker.ts",
+    "check-contracts-verbose": "npx hardhat run scripts/contractStatusChecker.ts -- --verbose",
     "status-check": "npx hardhat run scripts/contractStatusChecker.ts",
+    "status-check-verbose": "npx hardhat run scripts/contractStatusChecker.ts -- --verbose",
     "demo-status-checker": "npx hardhat run scripts/contractStatusCheckerDemo.ts"
   },
   "devDependencies": {
