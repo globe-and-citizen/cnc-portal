@@ -15,7 +15,7 @@
         aria-label="Deposit amount"
         :disabled="isLoading"
       />
-      <div class="flex gap-1">
+      <div class="flex">
         <button
           v-for="percent in [25, 50, 75]"
           :key="percent"
