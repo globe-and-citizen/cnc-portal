@@ -7,7 +7,7 @@ export default buildModule('OfficerUpgradeModule', (m) => {
 	// If you want to deploy a new implementation
 	// Step 1: Deploy new implementation with a unique ID
 	const newImpl = m.contract('Officer', [], {
-		id: '<unique_implementation_id>' //e.g. 'Officer_v1
+		id: 'Officer_v2' // Use a unique ID for this upgrade
 	})
 
 	// Alternatively, if you need to revert to an existing implementation
@@ -29,7 +29,11 @@ export default buildModule('OfficerUpgradeModule', (m) => {
 	// m.call(newImpl, 'initialize', [beaconOwner, beaconConfigs, [], false])
 
 	// Step 3: Reference the already-deployed beacon - NB: Set the correct beacon address for the network and a unique ID
-	const factoryBeacon = m.contractAt('FactoryBeacon', '<network_beacon_address>', { id: '<unique_beacon_id>' }) //e.g. 'FactoryBeacon_v1'
+	const factoryBeacon = m.contractAt(
+		'FactoryBeacon',
+		'0xfb43E04F2CEAdC5ED45F58CF96795818FC32b874', // Polygon chain 137 Officer#FactoryBeacon
+		{ id: 'FactoryBeacon_v2' }
+	)
 
 	// Call upgradeTo on the beacon and pass new implementation address
 	m.call(factoryBeacon, 'upgradeTo', [newImpl], { from: beaconOwner })

@@ -42,11 +42,6 @@ const userDataStore = useUserDataStore()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const queryClient = useQueryClient()
-const userStore = useUserDataStore()
-
-const signedQueryKey = computed(
-  () => `signed-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
-)
 
 const cashRemunerationEip712Address = computed(
   () =>
@@ -143,7 +138,7 @@ const withdrawClaim = async () => {
         toastStore.addErrorToast('Failed to update Claim status')
       }
       queryClient.invalidateQueries({
-        queryKey: [signedQueryKey.value]
+        queryKey: ['weekly-claims', teamStore.currentTeam?.id]
       })
 
       emit('claim-withdrawn')

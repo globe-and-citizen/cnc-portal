@@ -91,8 +91,8 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
     if (token.id === 'native') {
       const native = useBalance({
         address: unref(address),
-        chainId,
-        query: { refetchInterval: 60000 }
+        chainId
+        // query: { refetchInterval: 60000 }
       })
       return {
         token,
@@ -106,8 +106,8 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
         address: token.address,
         abi: ERC20ABI,
         functionName: 'balanceOf',
-        args: [unref(address)],
-        query: { refetchInterval: 60000 }
+        args: [unref(address)]
+        // query: { refetchInterval: 60000 }
       })
       return {
         token,
