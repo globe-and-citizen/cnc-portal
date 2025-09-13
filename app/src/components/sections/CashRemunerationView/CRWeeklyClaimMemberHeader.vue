@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { computed, watch } from 'vue'
 import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
 import { type WageResponse } from '@/types'
@@ -35,11 +35,11 @@ const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 
-const { data: teamWageData, error: teamWageDataError } = useCustomFetch(
+const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeam?.id])
+const { data: teamWageData, error: teamWageDataError } = useTanstackQuery<Array<WageResponse>>(
+  teamWageQueryKey,
   computed(() => `/wage/?teamId=${teamStore.currentTeam?.id}`)
 )
-  .get()
-  .json<Array<WageResponse>>()
 
 const hasWage = computed(() => {
   const userWage = teamWageData.value?.find((wage) => wage.userAddress === userStore.address)
