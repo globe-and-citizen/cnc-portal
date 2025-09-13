@@ -1,13 +1,15 @@
 <template>
-  <label class="form-control w-full" :class="{ 'mt-4': selectedToken?.tokenId !== 'native' }">
+  <label class="form-control w-full mt-4">
     <div class="label">
-      <span class="label-text">Deposit</span>
-      <span class="label-text-alt">Balance: {{ selectedToken?.balance }}</span>
+      <slot name="label">
+        <span class="label-text">Action</span>
+        <span class="label-text-alt">Balance: {{ selectedToken?.balance }}</span>
+      </slot>
     </div>
     <div class="input input-bordered flex items-center">
       <input
         type="text"
-        class="grow"
+        class="grow w-24"
         placeholder="0"
         v-model="amount"
         data-test="amountInput"
