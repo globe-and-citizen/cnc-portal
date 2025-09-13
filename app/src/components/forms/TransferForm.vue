@@ -116,7 +116,6 @@ const tokenList = computed(() =>
 
 // watch selectedTokenId to update model.token
 watch(selectedTokenId, (newTokenId) => {
-  console.log('Selected token changed to:', newTokenId)
   const token = props.tokens.find((b) => b.tokenId === newTokenId)
   if (token) {
     model.value.token = token
