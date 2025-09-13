@@ -63,7 +63,7 @@ class Server {
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 1000, // max 1000 requests per windowMs
+      max: 100000, // max 100000 requests per windowMs
     });
 
     this.app.use(limiter);
