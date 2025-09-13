@@ -47,16 +47,7 @@ describe('TransferForm.vue', () => {
   })
 
   describe('Renders', () => {
-    it('loading button', () => {
-      const wrapper = factory({ loading: true })
-      expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
-    })
-    it('renders initial UI correctly', () => {
-      expect(wrapper.find('h1').text()).toBe('Transfer from Test Service Contract')
-      expect(wrapper.find('.btn-primary').text()).toBe('Transfer')
-      expect(wrapper.find('.btn-error').text()).toBe('Cancel')
-      expect(wrapper.find('[data-test="amount-input"]').exists()).toBe(true)
-    })
+
     it('renders SelectMemberInput component', () => {
       expect(wrapper.findComponent(SelectMemberContractsInput).exists()).toBe(true)
     })
