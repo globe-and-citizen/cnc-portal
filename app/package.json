@@ -30,6 +30,7 @@
     "@iconify-json/mdi-light": "^1.2.2",
     "@iconify/vue": "^5.0.0",
     "@rollup/plugin-inject": "^5.0.5",
+    "@sentry/vite-plugin": "^4.3.0",
     "@sentry/vue": "^10.11.0",
     "@tanstack/vue-query": "^5.54.1",
     "@tanstack/vue-query-devtools": "^5.76.0",
