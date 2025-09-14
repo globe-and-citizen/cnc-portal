@@ -10,6 +10,7 @@ import apolloClient from './apollo-client'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import VueDatePicker from '@vuepic/vue-datepicker'
+import * as Sentry from "@sentry/vue";
 
 export function setupApp() {
   const app = createApp(App)
@@ -25,6 +26,15 @@ export function setupApp() {
   app.provide(DefaultApolloClient, apolloClient)
 
   app.component('VueDatePicker', VueDatePicker)
+
+  // Initialize Sentry for error tracking
+  Sentry.init({
+    app,
+    dsn: "https://e806eb73a64a016b60b8b18fbe57572c@o4504664101552128.ingest.us.sentry.io/4510019171450880",
+    // Setting this option to true will send default PII data to Sentry.
+    // For example, automatic IP address collection on events
+    sendDefaultPii: true,
+  });
 
   return app
 }
