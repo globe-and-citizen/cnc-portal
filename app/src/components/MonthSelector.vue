@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col sm:flex-wrap md:flex-row md:items-center md:justify-between gap-2 mb-4 w-full max-w-full overflow-x-hidden"
+    class="flex flex-col sm:flex-wrap md:flex-row md:items-center md:justify-between gap-2 mb-4 w-full max-w-full "
   >
     <ButtonUI
       @click="goToPrevMonth"
@@ -23,7 +23,7 @@
             @click="toggleMonthPicker"
             class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
           >
-            <span>{{ dayjs(model).format('MMMM YYYY') }}</span>
+            <span>{{ dayjs().year(model.year).month(model.month).format('MMMM YYYY') }}</span>
             <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4 ml-1" />
           </ButtonUI>
         </template>
@@ -41,43 +41,67 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+
+import { ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { watch } from 'vue'
 
-const model = defineModel<Date>({
+dayjs.extend(utc)
+
+interface MonthYear {
+  month: number
+  year: number
+}
+
+const model = defineModel<MonthYear>({
   default: () => {
-    return dayjs().startOf('month').toDate()
+    const now = dayjs().utc()
+    return { month: now.month(), year: now.year() }
   }
 })
 
-const monthPicked = ref<{ month: number; year: number } | null>(null)
+// monthPicked is { month, year }
+const monthPicked = ref<MonthYear | null>(null)
 
+// When monthPicked changes, update model
 watch(monthPicked, (newVal) => {
   if (newVal && typeof newVal.month === 'number' && typeof newVal.year === 'number') {
-    model.value = dayjs().year(newVal.year).month(newVal.month).startOf('month').toDate()
+    model.value = { month: newVal.month, year: newVal.year }
   }
 })
 
+// When model changes, update monthPicked
 watch(model, (newVal) => {
-  const month = dayjs(newVal).month()
-  const year = dayjs(newVal).year()
-  if (!monthPicked.value || monthPicked.value.month !== month || monthPicked.value.year !== year) {
-    monthPicked.value = { month, year }
+  if (!monthPicked.value || monthPicked.value.month !== newVal.month || monthPicked.value.year !== newVal.year) {
+    monthPicked.value = { month: newVal.month, year: newVal.year }
   }
 })
 
 const isMonthPickerOpen = ref(false)
 
 function goToPrevMonth() {
-  model.value = dayjs(model.value).subtract(1, 'month').toDate()
+  let { month, year } = model.value
+  if (month === 0) {
+    month = 11
+    year -= 1
+  } else {
+    month -= 1
+  }
+  model.value = { month, year }
 }
 
 function goToNextMonth() {
-  model.value = dayjs(model.value).add(1, 'month').toDate()
+  let { month, year } = model.value
+  if (month === 11) {
+    month = 0
+    year += 1
+  } else {
+    month += 1
+  }
+  model.value = { month, year }
 }
 
 function toggleMonthPicker() {
