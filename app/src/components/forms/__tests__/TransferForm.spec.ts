@@ -47,7 +47,6 @@ describe('TransferForm.vue', () => {
   })
 
   describe('Renders', () => {
-
     it('renders SelectMemberInput component', () => {
       expect(wrapper.findComponent(SelectMemberContractsInput).exists()).toBe(true)
     })
