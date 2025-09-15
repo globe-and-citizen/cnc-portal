@@ -1,6 +1,5 @@
 <template>
   <span class="font-bold text-2xl">Deposit to Team Bank Contract</span>
-  allowance{{ allowance }}
 
   <div v-if="selectedToken?.token.id !== 'native'" class="steps w-full my-4">
     <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
@@ -15,9 +14,19 @@
     v-model:modelToken="selectedTokenId"
     :isLoading="isLoading"
     @validation="isAmountValid = $event"
-  />
+  >
+    <template #label>
+      <span class="label-text">Deposit</span>
+      <span class="label-text-alt"
+        >Balance: {{ selectedToken?.amount }} {{ selectedToken?.token.symbol }}</span
+      >
+    </template>
+  </TokenAmount>
 
-  <div class="modal-action justify-center">
+  <div class="modal-action justify-between">
+    <ButtonUI variant="error" outline @click="$emit('closeModal')" data-test="cancel-button"
+      >Cancel</ButtonUI
+    >
     <ButtonUI
       variant="primary"
       @click="submitForm"
@@ -27,9 +36,6 @@
     >
       Deposit
     </ButtonUI>
-    <ButtonUI variant="error" outline @click="$emit('closeModal')" data-test="cancel-button"
-      >Cancel</ButtonUI
-    >
   </div>
 </template>
 

@@ -70,7 +70,7 @@
     </ModalComponent>
 
     <!-- Toast Notifications -->
-    <ToastContainer position="bottom-right" />
+    <ToastContainer position="bottom-left" />
   </div>
 
   <VueQueryDevtools />

@@ -146,10 +146,29 @@ const selectWeek = (week: Date) => {
 }
 
 const selectWeekWeelyClaim = computed(() => {
-  return memberWeeklyClaims.value?.find(
-    (weeklyClaim) => weeklyClaim.weekStart === selectedWeekISO.value
+  // pick the bucket whose UTC week range contains the selectedWeek (UTC)
+  return memberWeeklyClaims.value?.find((weeklyClaim) =>
+    isWithinUTCWeek(selectedWeek.value, weeklyClaim.weekStart)
   )
 })
+
+function toUTCDateOnly(date: string | Date) {
+  const d = new Date(date)
+  d.setUTCHours(0, 0, 0, 0)
+  return d
+}
+
+function sameUTCDay(a: string | Date, b: string | Date) {
+  return toUTCDateOnly(a).getTime() === toUTCDateOnly(b).getTime()
+}
+
+function isWithinUTCWeek(target: string | Date, weekStart: string | Date) {
+  const start = toUTCDateOnly(weekStart)
+  const end = new Date(start)
+  end.setUTCDate(start.getUTCDate() + 7)
+  const t = toUTCDateOnly(target)
+  return t >= start && t < end
+}
 
 // Bar chart dynamique (max = jour le plus haut)
 const barChartOption = computed(() => {
@@ -159,12 +178,12 @@ const barChartOption = computed(() => {
 
   days.forEach((i) => {
     const date = dayjs(selectedWeek.value).add(i, 'day').toDate()
-    const label = dayjs(date).format('dd') // Mo, Tu, ...
+    const label = dayjs(date).format('dd')
     labels.push(label)
 
     const totalHours =
       selectWeekWeelyClaim.value?.claims
-        .filter((claim) => formatDayLabel(date) === formatDayLabel(claim.dayWorked))
+        .filter((claim) => sameUTCDay(date, claim.dayWorked))
         .reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0
 
     data.push(totalHours)

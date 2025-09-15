@@ -1,9 +1,9 @@
 # Use Node.js 18 AS the base image
 FROM node:22-slim AS development 
 
-# Install necessary dependencies
+# Install necessary dependencies (including CA certificates for SSL)
 RUN apt-get update -y \
-&& apt-get install -y openssl
+  && apt-get install -y openssl ca-certificates
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -31,11 +31,11 @@ CMD ["npm", "run", "start"]
 # Build stage
 FROM development AS production
 
-RUN npm run build
-
 # Expose the port defined in the environment variable
 ARG PORT
 ENV PORT=${PORT:-3000}
+
+RUN npm run build
 
 # Command to run the application in production mode
 CMD ["npm", "run", "prod"]

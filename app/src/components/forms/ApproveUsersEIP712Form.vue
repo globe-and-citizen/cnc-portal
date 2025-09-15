@@ -92,7 +92,7 @@
         <div v-else-if="error.$validator === '$each'">
           <div v-for="(subError, index) in error.$message" :key="index">
             <div v-for="(msg, key) in subError" :key="key">
-              Budget limit {{ resultArray[index].budgetType }}: {{ msg }}
+              {{ budgetTypes[resultArray[index].budgetType as unknown as 0 | 1 | 2] }}: {{ msg }}
             </div>
           </div>
         </div>
@@ -221,12 +221,31 @@ const rules = {
     $each: helpers.forEach({
       value: {
         required: helpers.withMessage('Value is required', required),
-        numeric: helpers.withMessage(
-          'Value must be a positive number',
-          (value: string | number) => {
-            return !isNaN(Number(value)) && Number(value) > 0
+        numeric: helpers.withMessage('Must be a positive number', (value: string | number) => {
+          return !isNaN(Number(value)) && Number(value) > 0
+        }),
+        integer: helpers.withMessage('Must be an integer', (value) => {
+          const index = resultArray.value.findIndex((item) => item.value === value)
+          const budgetType = resultArray.value[index]?.budgetType
+
+          if (budgetType === 0) {
+            return Number.isInteger(value)
           }
-        )
+          return true
+        }),
+        custom: helpers.withMessage('Must not exceed max amount', (value) => {
+          const index = resultArray.value.findIndex((item) => item.value === value)
+          const budgetType = resultArray.value[index]?.budgetType
+
+          if (budgetType === 2) {
+            const maxPerPeriod = resultArray.value.find((item) => item.budgetType === 1)?.value
+            if (maxPerPeriod && Number(value) > Number(maxPerPeriod)) {
+              return false
+            }
+          }
+
+          return true
+        })
       }
     })
   },
