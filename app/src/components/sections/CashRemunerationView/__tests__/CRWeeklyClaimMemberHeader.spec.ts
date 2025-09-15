@@ -26,7 +26,7 @@ const mocks = vi.hoisted(() => ({
       id: 1
     }
   })),
-  mockUseToastStore: vi.fn(() => ({ 
+  mockUseToastStore: vi.fn(() => ({
     addErrorToast: vi.fn()
   }))
 }))
