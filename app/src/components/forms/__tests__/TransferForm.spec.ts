@@ -1,7 +1,6 @@
 import { it, expect, describe, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import TransferForm, { type Token } from '../TransferForm.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK, type TokenId } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
