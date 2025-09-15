@@ -32,6 +32,7 @@ coverage
 
 *.tsbuildinfo
 .env
+.env.production
 
 # Synpress
 .cache-synpress
@@ -39,3 +40,5 @@ test-results
 playwright-report
 # Sentry Config File
 .env.sentry-build-plugin
+
+
