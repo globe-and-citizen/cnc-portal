@@ -22,7 +22,7 @@
     "lint": "eslint . --fix ",
     "format": "prettier --write .",
     "format-check": "prettier . --check",
-  "sentry:releases": "sentry-cli releases new \"$(git rev-parse --short HEAD)\" --project cnc-portal-app && sentry-cli releases set-commits \"$(git rev-parse --short HEAD)\" --auto --project cnc-portal-app",
+    "sentry:releases": "sentry-cli releases new \"$(git rev-parse --short HEAD)\" --project cnc-portal-app && sentry-cli releases set-commits \"$(git rev-parse --short HEAD)\" --auto --project cnc-portal-app",
     "git:ignore-locally": "git update-index --assume-unchanged src/artifacts/deployed_addresses/chain-31337.json"
   },
   "dependencies": {
