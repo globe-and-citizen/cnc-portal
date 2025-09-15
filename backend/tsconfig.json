@@ -2,6 +2,7 @@
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig to read more about this file */
     "types": ["vitest/globals"],
+
     /* Projects */
     // "incremental": true,                              /* Save .tsbuildinfo files to allow for incremental compilation of projects. */
     // "composite": true,                                /* Enable constraints that allow a TypeScript project to be used with project references. */
@@ -15,17 +16,27 @@
 
     /* Modules */
     "module": "commonjs",
+
     "rootDir": "./src",
     "outDir": "./dist",
+
     /* Emit */
     "sourceMap": true,
+
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
 
     /* Type Checking */
     "strict": true /* Enable all strict type-checking options. */,
-    "skipLibCheck": true /* Skip type checking all .d.ts files. */
+
+    "skipLibCheck": true /* Skip type checking all .d.ts files. */,
+    "inlineSources": true,
+
+    // Set `sourceRoot` to  "/" to strip the build path prefix
+    // from generated source code references.
+    // This improves issue grouping in Sentry.
+    "sourceRoot": "/"
   },
   "exclude": [
     "test",
