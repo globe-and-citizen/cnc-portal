@@ -42,3 +42,5 @@ test-results
 
 # Gas reporter output (generated during testing)
 gasReporterOutput.json
+backend/.env.production
+app/.env.production
