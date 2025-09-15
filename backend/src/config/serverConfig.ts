@@ -48,7 +48,12 @@ class Server {
   constructor() {
     this.app = express();
     // Trust proxy headers (needed for correct client IP detection behind load balancers/proxies)
-    // this.app.set('trust proxy', true);
+    if (
+      process.env.TRUST_PROXY === "true" ||
+      process.env.NODE_ENV === "production"
+    ) {
+      this.app.set("trust proxy", true);
+    }
     this.paths = {
       teams: "/api/teams/",
       member: "/api/member/",
@@ -64,12 +69,12 @@ class Server {
       constract: "/api/contract/",
       apidocs: "/api-docs",
     };
-    // const limiter = rateLimit({
-    //   windowMs: 15 * 60 * 1000, // 15 minutes
-    //   max: 100000, // max 100000 requests per windowMs
-    // });
+    const limiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100000, // max 100000 requests per windowMs
+    });
 
-    // this.app.use(limiter);
+    this.app.use(limiter);
     this.port = parseInt(process.env.PORT as string) || 3000;
 
     this.init();
