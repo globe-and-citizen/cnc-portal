@@ -1,4 +1,5 @@
 //#region networking modules
+import * as Sentry from "@sentry/node"
 import cors from "cors";
 import express, { Express } from "express";
 import rateLimit from "express-rate-limit";
@@ -46,6 +47,8 @@ class Server {
 
   constructor() {
     this.app = express();
+    // Trust proxy headers (needed for correct client IP detection behind load balancers/proxies)
+    // this.app.set('trust proxy', true);
     this.paths = {
       teams: "/api/teams/",
       member: "/api/member/",
@@ -61,12 +64,12 @@ class Server {
       constract: "/api/contract/",
       apidocs: "/api-docs",
     };
-    const limiter = rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 100000, // max 100000 requests per windowMs
-    });
+    // const limiter = rateLimit({
+    //   windowMs: 15 * 60 * 1000, // 15 minutes
+    //   max: 100000, // max 100000 requests per windowMs
+    // });
 
-    this.app.use(limiter);
+    // this.app.use(limiter);
     this.port = parseInt(process.env.PORT as string) || 3000;
 
     this.init();
@@ -117,6 +120,20 @@ class Server {
     this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     this.app.get(this.paths.apidocs, (req, res) => {
       res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));
+    });
+    // The error handler must be registered before any other error middleware and after all controllers
+    Sentry.setupExpressErrorHandler(this.app);
+
+    // Optional fallthrough error handler
+    this.app.use(function onError(err, req, res, next) {
+      // The error id is attached to `res.sentry` to be returned
+      // and optionally displayed to the user for support.
+      res.statusCode = 500;
+      res.end(res.sentry + "\n");
+    });
+
+    this.app.get("/debug-sentry", function mainHandler(req, res) {
+      throw new Error("My first Sentry error!");
     });
   }
 
