@@ -20,12 +20,13 @@
     "test:e2e:watch": "vitest -c vitest.e2e.config.ts",
     "test:unit": "vitest -c ./vitest.config.unit.ts",
     "test:unit:ui": "vitest -c ./vitest.config.unit.ts --ui",
-    "build": "tsc && npm run generate:docs && npm run copy:docs",
+    "build": "tsc && npm run generate:docs && npm run copy:docs && npm run sentry:sourcemaps",
     "prod": "node  dist/index.js",
     "copy:docs": "npx shx cp src/utils/backend_specs.html dist/utils/backend_specs.html",
     "prisma:migrate": "npx prisma migrate deploy",
     "prisma:generate": "npx prisma generate",
-    "generate:docs": "tsc src/utils/swagger.ts && node src/utils/swagger.js && npx shx rm src/utils/swagger.js"
+    "generate:docs": "tsc src/utils/swagger.ts && node src/utils/swagger.js && npx shx rm src/utils/swagger.js",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org global-citizen-g6 --project cnc-portal-api ./dist && sentry-cli sourcemaps upload --org global-citizen-g6 --project cnc-portal-api ./dist"
   },
   "keywords": [],
   "author": "",
@@ -53,6 +54,7 @@
     "@google-cloud/storage": "^7.16.0",
     "@prisma/client": "^6.15.0",
     "@redocly/cli": "^1.34.3",
+    "@sentry/cli": "^2.53.0",
     "@sentry/node": "^10.11.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
