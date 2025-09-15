@@ -36,6 +36,7 @@ export function setupApp() {
     sendDefaultPii: true,
     integrations: [
       Sentry.browserTracingIntegration(),
+
       Sentry.feedbackIntegration({
         // Additional SDK configuration goes in here, for example:
         colorScheme: 'system'
@@ -44,8 +45,13 @@ export function setupApp() {
       Sentry.replayIntegration({
         maskAllText: false,
         blockAllMedia: false
-      })
+      }),
+
+      Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] })
     ],
+
+    // Enable logs to be sent to Sentry
+    enableLogs: true,
     tracesSampleRate: 0.1,
     tracePropagationTargets: ['localhost', /^https:\/\/cncportal\.io/],
     // Session Replay
