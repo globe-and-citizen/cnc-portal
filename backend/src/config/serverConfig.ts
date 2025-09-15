@@ -1,4 +1,5 @@
 //#region networking modules
+import "../instrument"
 import * as Sentry from "@sentry/node"
 import cors from "cors";
 import express, { Express } from "express";
