@@ -125,6 +125,7 @@ class Server {
     Sentry.setupExpressErrorHandler(this.app);
 
     // Optional fallthrough error handler
+    // @ts-ignore
     this.app.use(function onError(err, req, res, next) {
       // The error id is attached to `res.sentry` to be returned
       // and optionally displayed to the user for support.
