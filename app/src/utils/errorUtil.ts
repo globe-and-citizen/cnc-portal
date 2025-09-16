@@ -1,5 +1,4 @@
-import { decodeErrorResult, type Abi, isHex } from 'viem'
-import { log } from './generalUtil'
+import { type Abi, BaseError, ContractFunctionRevertedError } from 'viem'
 
 type MetaMaskErrorInfo = {
   error: { code: number; message: string }
@@ -25,8 +24,14 @@ export const parseError = (error: unknown, abi: Abi | undefined = undefined) => 
   if (error instanceof Error) {
     if ('info' in error && isMetaMaskErrorInfo(error.info as MetaMaskErrorInfo)) {
       message = `Metamask Error: ${parseErrorInfo(error.info as MetaMaskErrorInfo)}`
-    } else if (abi && 'shortMessage' in error) {
-      return safeParse(error.shortMessage as string, abi)
+    } else if (abi && error instanceof BaseError) {
+      const revertError = error.walk((err) => err instanceof ContractFunctionRevertedError)
+
+      if (revertError instanceof ContractFunctionRevertedError) {
+        const errorName = revertError.data?.errorName ?? 'Contract reverted'
+        return `${errorName}`
+      }
+      return 'Contract reverted' // safeParse(error.shortMessage as string, abi)
     } else {
       message = error.message
     }
@@ -37,77 +42,77 @@ export const parseError = (error: unknown, abi: Abi | undefined = undefined) => 
   return message
 }
 
-const parseCustomError = (callData: `0x${string}` | null, abi: Abi | undefined) => {
-  if (!callData || !abi) {
-    return 'Contract reverted'
-  }
-  try {
-    const parsedError = decodeErrorResult({
-      abi,
-      data: callData
-    })
-    return `${parsedError.errorName}: Contract reverted`
-  } catch (e) {
-    log.error('decodeErrorResult error: ', e)
-    return 'Contract reverted'
-  }
-}
+// const parseCustomError = (callData: `0x${string}` | null, abi: Abi | undefined) => {
+//   if (!callData || !abi) {
+//     return 'Contract reverted'
+//   }
+//   try {
+//     const parsedError = decodeErrorResult({
+//       abi,
+//       data: callData
+//     })
+//     return `${parsedError.errorName}: Contract reverted`
+//   } catch (e) {
+//     log.error('decodeErrorResult error: ', e)
+//     return 'Contract reverted'
+//   }
+// }
 
-function parseRevertReason(errorString: string): `0x${string}` | string {
-  const parts = errorString.split(':').map((part) => part.trim())
+// function parseRevertReason(errorString: string): `0x${string}` | string {
+//   const parts = errorString.split(':').map((part) => part.trim())
 
-  // Custom error handling
-  if (parts.some((part) => part.includes('custom error'))) {
-    const errorData = errorString.split('custom error')[1].trim()
-    const [selector, args] = errorData.split(' ').map((part) => part.replace(/[:.]/g, ''))
-    const combined = `${selector}${args || ''}` as `0x${string}`
-    if (!isHex(combined)) {
-      return 'Contract reverted'
-    }
-    return combined
-  }
+//   // Custom error handling
+//   if (parts.some((part) => part.includes('custom error'))) {
+//     const errorData = errorString.split('custom error')[1].trim()
+//     const [selector, args] = errorData.split(' ').map((part) => part.replace(/[:.]/g, ''))
+//     const combined = `${selector}${args || ''}` as `0x${string}`
+//     if (!isHex(combined)) {
+//       return 'Contract reverted'
+//     }
+//     return combined
+//   }
 
-  // Revert message handling
-  if (parts.some((part) => part.includes('revert'))) {
-    const message = errorString.split('revert:')[1].trim().replace(/\.$/, '')
-    return message
-  }
+//   // Revert message handling
+//   if (parts.some((part) => part.includes('revert'))) {
+//     const message = errorString.split('revert:')[1].trim().replace(/\.$/, '')
+//     return message
+//   }
 
-  // Fallback
-  return errorString
-}
+//   // Fallback
+//   return errorString
+// }
 
 // Usage with type validation
-function safeParse(errorString: string, abi: Abi | undefined) {
-  const result = parseRevertReason(errorString)
-  const validated = validateReturnType(result)
+// function safeParse(errorString: string, abi: Abi | undefined) {
+//   const result = parseRevertReason(errorString)
+//   const validated = validateReturnType(result)
 
-  switch (validated.type) {
-    case 'hex':
-      return parseCustomError(validated.data, abi)
-    case 'string':
-      return validated.data
-    default:
-      return 'Contract reverted'
-  }
-}
+//   switch (validated.type) {
+//     case 'hex':
+//       return parseCustomError(validated.data, abi)
+//     case 'string':
+//       return validated.data
+//     default:
+//       return 'Contract reverted'
+//   }
+// }
 
 // Type guard for regular strings (excluding 0x-prefixed)
-function isRegularString(value: unknown): value is string {
-  return typeof value === 'string' && !value.startsWith('0x')
-}
+// function isRegularString(value: unknown): value is string {
+//   return typeof value === 'string' && !value.startsWith('0x')
+// }
 
 // Combined type checker
-function validateReturnType(
-  value: unknown
-): { type: 'hex'; data: `0x${string}` } | { type: 'string'; data: string } | { type: 'invalid' } {
-  if (isHex(value)) {
-    return { type: 'hex', data: value }
-  } else if (isRegularString(value)) {
-    return { type: 'string', data: value }
-  }
-  return { type: 'invalid' }
-}
+// function validateReturnType(
+//   value: unknown
+// ): { type: 'hex'; data: `0x${string}` } | { type: 'string'; data: string } | { type: 'invalid' } {
+//   if (isHex(value)) {
+//     return { type: 'hex', data: value }
+//   } else if (isRegularString(value)) {
+//     return { type: 'string', data: value }
+//   }
+//   return { type: 'invalid' }
+// }
 
 /**
  * A type-guard function for `MetaMaskErrorInfo`.
