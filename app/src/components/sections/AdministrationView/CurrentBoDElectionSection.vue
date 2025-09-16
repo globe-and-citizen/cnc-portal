@@ -53,9 +53,9 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
 import { useTeamStore, useToastStore } from '@/stores'
-import { encodeFunctionData, type Abi } from 'viem'
+import { type Abi } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { estimateGas } from '@wagmi/core'
+import { simulateContract } from '@wagmi/core'
 import type { OldProposal } from '@/types'
 import { log, parseError } from '@/utils'
 import { config } from '@/wagmi.config'
@@ -79,14 +79,17 @@ const showCreateElectionModal = ref(false)
 const {
   data: hashCreateElection,
   writeContract: executeCreateElection,
-  isPending: isLoadingCreateElection
-  // isError: errorCreateElection
+  isPending: isLoadingCreateElection,
+  error: errorCreateElection
 } = useWriteContract()
 
-const { isLoading: isConfirmingCreateElection, isSuccess: isConfirmedCreateElection } =
-  useWaitForTransactionReceipt({
-    hash: hashCreateElection
-  })
+const {
+  isLoading: isConfirmingCreateElection,
+  isSuccess: isConfirmedCreateElection,
+  error: errorConfirmingCreateElection
+} = useWaitForTransactionReceipt({
+  hash: hashCreateElection
+})
 
 const createElection = async (electionData: OldProposal) => {
   try {
@@ -104,15 +107,22 @@ const createElection = async (electionData: OldProposal) => {
       teamStore.currentTeam?.members.map((m) => m.address) || []
     ]
 
-    const data = encodeFunctionData({
+    // const data = encodeFunctionData({
+    //   abi: ElectionABI,
+    //   functionName: 'createElection',
+    //   args
+    // })
+
+    // await estimateGas(config, {
+    //   to: electionsAddress.value,
+    //   data
+    // })
+
+    await simulateContract(config, {
+      address: electionsAddress.value,
       abi: ElectionABI,
       functionName: 'createElection',
       args
-    })
-
-    await estimateGas(config, {
-      to: electionsAddress.value,
-      data
     })
 
     executeCreateElection({
@@ -123,9 +133,21 @@ const createElection = async (electionData: OldProposal) => {
     })
   } catch (error) {
     addErrorToast(parseError(error, ElectionABI as Abi))
-    log.error('Error creating election:', parseError(error, ElectionABI as Abi))
+    log.error('creatingElection error:', error)
   }
 }
+
+watch(errorConfirmingCreateElection, (isError) => {
+  if (isError) {
+    addErrorToast(parseError(isError, ElectionABI as Abi))
+    log.error('errorConfirmingCreateElection.value: ', isError)
+  }
+})
+
+watch(errorCreateElection, (isError) => {
+  if (isError) addErrorToast(parseError(isError, ElectionABI as Abi))
+  log.error('errorCreateElection.value: ', isError)
+})
 
 watch(isConfirmingCreateElection, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedCreateElection.value) {
