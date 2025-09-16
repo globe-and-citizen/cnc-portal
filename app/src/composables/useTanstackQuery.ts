@@ -4,7 +4,7 @@ import { BACKEND_URL } from '@/constant'
 import { useAuthToken } from '@/composables/useAuthToken'
 
 export function useTanstackQuery<T = unknown>(
-  key: string | Ref<string>,
+  key: string | unknown[] | Ref<string | unknown[]>,
   url: string | Ref<string>,
   options?: UseQueryOptions<T>
 ) {
@@ -22,7 +22,8 @@ export function useTanstackQuery<T = unknown>(
     if (!res.ok) throw new Error(await res.text())
     return res.json()
   }
-  const queryKey = [unref(key)]
+  const rawKey = unref(key)
+  const queryKey = Array.isArray(rawKey) ? rawKey : [rawKey]
   return useQuery<T>({
     queryKey,
     queryFn: fetcher,

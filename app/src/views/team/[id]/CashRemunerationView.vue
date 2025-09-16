@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useReadContract } from '@wagmi/vue'
@@ -65,8 +65,12 @@ const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useRe
 // Compute if user has approval access (is cash remuneration contract owner)
 const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value == userStore.address)
 
-// Handle errors silently
-if (cashRemunerationOwnerError) {
-  console.error('Failed to fetch cash remuneration owner:', cashRemunerationOwnerError)
-}
+watch(
+  () => cashRemunerationOwnerError.value,
+  (error) => {
+    if (error) {
+      console.error('Error fetching cash remuneration owner:', error)
+    }
+  }
+)
 </script>

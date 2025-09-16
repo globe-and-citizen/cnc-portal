@@ -1,30 +1,45 @@
 <template>
   <div>
-    <div class="px-8 pb-4 pt-8 flex items-end" :class="{ 'justify-between': hasWage }">
+    <div class="px-8 pb-4 pt-8 flex items-end justify-between">
       <span class="card-title"> Pending Weekly Claim Withdrawal </span>
       <div class="card-actions justify-end">
-        <SubmitClaims v-if="hasWage" />
+        <div
+          :class="{ tooltip: !hasWage }"
+          :data-tip="!hasWage ? 'You need to have a wage set up to submit claims' : null"
+        >
+          <SubmitClaims v-if="hasWage" />
+          <ButtonUI
+            v-else
+            variant="success"
+            size="sm"
+            :disabled="true"
+            data-test="submit-claim-disabled-button"
+          >
+            Submit Claim
+          </ButtonUI>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { computed, watch } from 'vue'
 import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
 import { type WageResponse } from '@/types'
 import SubmitClaims from './SubmitClaims.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 
-const { data: teamWageData, error: teamWageDataError } = useCustomFetch(
+const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeam?.id])
+const { data: teamWageData, error: teamWageDataError } = useTanstackQuery<Array<WageResponse>>(
+  teamWageQueryKey,
   computed(() => `/wage/?teamId=${teamStore.currentTeam?.id}`)
 )
-  .get()
-  .json<Array<WageResponse>>()
 
 const hasWage = computed(() => {
   const userWage = teamWageData.value?.find((wage) => wage.userAddress === userStore.address)

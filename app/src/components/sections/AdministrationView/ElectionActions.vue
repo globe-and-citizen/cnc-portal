@@ -31,14 +31,19 @@
       :disabled="userStore.address !== owner"
       :election-id="formattedElection?.id ?? 1"
     />
-    <ButtonUI
-      v-if="!electionStatus || formattedElection?.resultsPublished"
-      variant="success"
-      @click="emits('showCreateElectionModal')"
-      :disabled="userStore.address != owner"
+    <div
+      :class="{ tooltip: userStore.address != owner }"
+      :data-tip="userStore.address != owner ? 'Only the owner can create elections' : null"
     >
-      Create Election
-    </ButtonUI>
+      <ButtonUI
+        v-if="!electionStatus || formattedElection?.resultsPublished"
+        variant="success"
+        @click="emits('showCreateElectionModal')"
+        :disabled="userStore.address != owner"
+      >
+        Create Election
+      </ButtonUI>
+    </div>
   </div>
 </template>
 <script setup lang="ts">

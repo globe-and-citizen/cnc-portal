@@ -122,7 +122,6 @@ const { data: bodActions } = useTanstackQuery<ActionResponse>(
   computed(() => `/actions?teamId=${teamStore.currentTeamId}&isExecuted=false`),
   {
     queryKey: ['getBodActions'],
-    refetchInterval: 10000,
     refetchOnWindowFocus: true
   }
 )

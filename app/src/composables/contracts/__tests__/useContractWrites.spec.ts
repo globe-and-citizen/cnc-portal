@@ -12,7 +12,8 @@ const {
   mockUseEstimateGas,
   mockUseQueryClient,
   mockQueryClient,
-  mockToastStore
+  mockToastStore,
+  mockParseError
 } = vi.hoisted(() => {
   const mockQueryClient = {
     invalidateQueries: vi.fn()
@@ -30,7 +31,10 @@ const {
     mockToastStore: {
       addSuccessToast: vi.fn(),
       addErrorToast: vi.fn()
-    }
+    },
+    mockParseError: vi.fn((error: unknown) =>
+      String((error as { message?: string })?.message ?? error)
+    )
   }
 })
 
@@ -62,7 +66,7 @@ vi.mock('vue', async () => {
 })
 
 vi.mock('@/utils', () => ({
-  parseError: (error: unknown) => String(error)
+  parseError: mockParseError
 }))
 
 // Test constants
@@ -318,6 +322,89 @@ describe('useContractWrites', () => {
       expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
         expect.stringContaining('Failed to execute testFunction')
       )
+    })
+
+    it('logs and shows toast when transaction receipt error occurs (uses ABI in parseError)', async () => {
+      const { nextTick } = await import('vue')
+      const err = new Error('Receipt error')
+
+      // write resolves to a hash so that waitForTransactionReceipt is relevant
+      const writeData = ref('0xhash')
+      mockUseWriteContract.mockReturnValue({
+        writeContractAsync: vi.fn().mockResolvedValue('0xhash'),
+        data: writeData,
+        isPending: ref(false),
+        error: ref(null)
+      })
+
+      // start with no error, then set it to trigger the watcher
+      const txError = ref<Error | null>(null)
+      mockUseWaitForTransactionReceipt.mockReturnValue({
+        data: ref(undefined),
+        isLoading: ref(false),
+        isSuccess: ref(false),
+        error: txError
+      })
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      const { executeWrite } = useContractWrites(config)
+      await executeWrite(MOCK_DATA.functionName, MOCK_DATA.args)
+
+      // trigger the watcher
+      txError.value = err
+      await nextTick()
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Transaction receipt error:', expect.any(Error))
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+        expect.stringContaining('Transaction confirmation failed:')
+      )
+      // ensure parseError was called with the ABI as second argument
+      expect(mockParseError).toHaveBeenCalledWith(err, MOCK_ABI)
+
+      consoleErrorSpy.mockRestore()
+    })
+
+    it('logs and shows toast when transaction receipt error occurs (uses ABI in parseError)', async () => {
+      const { nextTick } = await import('vue')
+      const err = new Error('Receipt error')
+
+      // write resolves to a hash so that waitForTransactionReceipt is relevant
+      const writeData = ref('0xhash')
+      mockUseWriteContract.mockReturnValue({
+        writeContractAsync: vi.fn().mockResolvedValue('0xhash'),
+        data: writeData,
+        isPending: ref(false),
+        error: ref(null)
+      })
+
+      // start with no error, then set it to trigger the watcher
+      const txError = ref<Error | null>(null)
+      mockUseWaitForTransactionReceipt.mockReturnValue({
+        data: ref(undefined),
+        isLoading: ref(false),
+        isSuccess: ref(false),
+        error: txError
+      })
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      const { executeWrite } = useContractWrites(config)
+      await executeWrite(MOCK_DATA.functionName, MOCK_DATA.args)
+
+      // trigger the watcher
+      txError.value = err
+      await nextTick()
+
+      // Line 171
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Transaction receipt error:', expect.any(Error))
+      // Line 172 (with ABI)
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+        expect.stringContaining('Transaction confirmation failed:')
+      )
+      expect(mockParseError).toHaveBeenCalledWith(err, MOCK_ABI)
+
+      consoleErrorSpy.mockRestore()
     })
   })
 })
