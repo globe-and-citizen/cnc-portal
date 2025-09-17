@@ -19,7 +19,14 @@
                 : 'hover:bg-gray-50'
             ]"
           >
-            <div class="text-base font-medium">Week</div>
+            <div class="text-base font-medium flex items-center gap-2">
+              Week
+
+              <span
+                v-if="memberWeeklyClaims?.some((wc) => wc.weekStart === week.isoString)"
+                class="h-3 w-3 rounded-full bg-emerald-700"
+              />
+            </div>
             <div
               class="text-sm"
               :class="week === selectedMonthObject ? 'text-emerald-900' : 'text-gray-800'"
@@ -151,7 +158,7 @@ const selectWeekWeelyClaim = computed(() => {
 })
 
 const weekDayClaims = computed(() => {
-  const weekStart = dayjs(selectedMonthObject.value.isoString).utc()
+  const weekStart = dayjs(selectedMonthObject.value.isoString).utc().startOf('isoWeek')
   return [0, 1, 2, 3, 4, 5, 6].map((i) => {
     const date = weekStart.add(i, 'day')
     const dailyClaims =
@@ -166,30 +173,24 @@ const weekDayClaims = computed(() => {
   })
 })
 
-function toUTCDateOnly(date: string | Date) {
-  const d = new Date(date)
-  d.setUTCHours(0, 0, 0, 0)
-  return d
-}
-
-function sameUTCDay(a: string | Date, b: string | Date) {
-  return toUTCDateOnly(a).getTime() === toUTCDateOnly(b).getTime()
-}
-
 // Bar chart dynamique (max = jour le plus haut)
 const barChartOption = computed(() => {
   const days = [0, 1, 2, 3, 4, 5, 6]
   const data: number[] = []
   const labels: string[] = []
 
+  const weekStart = dayjs(selectedMonthObject.value.isoString).utc().startOf('isoWeek')
   days.forEach((i) => {
-    const date = dayjs().add(i, 'day').toDate()
+    const date = weekStart.add(i, 'day')
     const label = dayjs(date).format('dd')
     labels.push(label)
 
     const totalHours =
       selectWeekWeelyClaim.value?.claims
-        .filter((claim) => sameUTCDay(date, claim.dayWorked))
+        .filter((claim) => {
+          console.log('Comparaison', claim.dayWorked, ' - ', date.toISOString())
+          return dayjs(date).isSame(dayjs(claim.dayWorked).utc(), 'day')
+        })
         .reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0
 
     data.push(totalHours)
