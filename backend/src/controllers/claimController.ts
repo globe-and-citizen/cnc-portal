@@ -118,7 +118,7 @@ export const addClaim = async (req: Request, res: Response) => {
             claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime()
         )
         .reduce((sum, claim) => sum + Number(claim.hoursWorked), 0) ?? 0) +
-        Number(hoursWorked) >
+      Number(hoursWorked) >
       24
     ) {
       return errorResponse(

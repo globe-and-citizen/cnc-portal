@@ -145,13 +145,7 @@ const generatedMonthWeek = computed(() => {
 })
 
 const selectWeekWeelyClaim = computed(() => {
-  return memberWeeklyClaims.value?.find((weeklyClaim) => {
-    console.log('Comparaison', weeklyClaim.weekStart === selectedMonthObject.value.isoString, ' ', {
-      weekStart: weeklyClaim.weekStart,
-      selectedMonthObject: selectedMonthObject.value.isoString
-    })
-    return weeklyClaim.weekStart === selectedMonthObject.value.isoString
-  })
+  return memberWeeklyClaims.value?.find((weeklyClaim) => weeklyClaim.weekStart === selectedMonthObject.value.isoString)
 })
 
 const weekDayClaims = computed(() => {
