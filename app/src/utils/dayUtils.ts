@@ -47,11 +47,7 @@ export function todayMidnight(date: Date): Date {
  * @returns Array of Week for each ISO week in the month
  */
 export function getMonthWeeks(year: number, month: number): Week[] {
-  // log.info('Generating Month weeks')
-  // log.info('Generating weeks for ' + JSON.stringify({ year, month }))
   const start = dayjs.utc().year(year).month(month).startOf('month')
-
-  // log.info('Start of month', start.format())
 
   const end = start.endOf('month')
   const seen = new Set<string>()
