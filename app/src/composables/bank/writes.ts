@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { useAccount } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
 import { BANK_FUNCTION_NAMES, type BankFunctionName, isValidBankFunction } from './types'
+
 import {
   useContractWrites,
   type ContractWriteConfig,
@@ -142,6 +143,8 @@ export function useBankWrites() {
     value?: MaybeRef<bigint>,
     options?: ContractWriteOptions
   ) => {
+    console.log('the bank function =======: ', functionName, args, value, options)
+    console.log('is valid function: ', isValidBankFunction(functionName))
     if (!isValidBankFunction(functionName)) {
       throw new Error(`Invalid bank function: ${functionName}`)
     }
