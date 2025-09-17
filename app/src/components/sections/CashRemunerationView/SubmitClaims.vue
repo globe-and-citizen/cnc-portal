@@ -194,10 +194,6 @@ watch(addWageClaimError, async () => {
   }
 })
 
-const queryKey = computed(
-  () => `pending-weekly-claims-${teamStore.currentTeam?.id}-${userStore.address}`
-)
-
 const addWageClaim = async () => {
   v$.value.$touch()
   if (v$.value.$invalid) return
@@ -207,7 +203,7 @@ const addWageClaim = async () => {
   if (addWageClaimStatusCode.value === 201) {
     toastStore.addSuccessToast('Wage claim added successfully')
     queryClient.invalidateQueries({
-      queryKey: [queryKey.value]
+      queryKey: ['weekly-claims', teamStore.currentTeam?.id]
     })
     modal.value = false
 
