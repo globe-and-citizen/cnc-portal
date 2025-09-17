@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col sm:flex-wrap md:flex-row md:items-center md:justify-between gap-2 mb-4 w-full max-w-full overflow-x-hidden"
+    class="flex flex-col sm:flex-wrap md:flex-row md:items-center md:justify-between gap-2 mb-4 w-full max-w-full"
   >
     <ButtonUI
       @click="goToPrevMonth"
@@ -23,7 +23,7 @@
             @click="toggleMonthPicker"
             class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
           >
-            <span>{{ dayjs(model).format('MMMM YYYY') }}</span>
+            <span v-if="model">{{ formatMonthYear(model.year, model.month) }}</span>
             <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4 ml-1" />
           </ButtonUI>
         </template>
@@ -41,43 +41,73 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { watch } from 'vue'
+import type { Week } from '@/utils/dayUtils'
+import { formatIsoWeekRange, formatMonthYear } from '@/utils/dayUtils'
 
-const model = defineModel<Date>({
-  default: () => {
-    return dayjs().startOf('month').toDate()
-  }
-})
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
 
-const monthPicked = ref<{ month: number; year: number } | null>(null)
+const model = defineModel<Week>()
 
-watch(monthPicked, (newVal) => {
-  if (newVal && typeof newVal.month === 'number' && typeof newVal.year === 'number') {
-    model.value = dayjs().year(newVal.year).month(newVal.month).startOf('month').toDate()
-  }
-})
-
-watch(model, (newVal) => {
-  const month = dayjs(newVal).month()
-  const year = dayjs(newVal).year()
-  if (!monthPicked.value || monthPicked.value.month !== month || monthPicked.value.year !== year) {
-    monthPicked.value = { month, year }
-  }
-})
-
+// monthPicked is { month, year, isoWeek }
+const monthPicked = ref<Week | null>(null)
 const isMonthPickerOpen = ref(false)
 
+// When monthPicked changes, update model
+watch(monthPicked, (newVal) => {
+  if (newVal && typeof newVal.month === 'number' && typeof newVal.year === 'number') {
+    const day = dayjs.utc().year(newVal.year).month(newVal.month).startOf('month')
+    model.value = {
+      month: newVal.month,
+      year: newVal.year,
+      isoWeek: day.isoWeek(),
+      formatted: formatIsoWeekRange(day),
+      isoString: day.toISOString()
+    }
+  }
+})
+
+// Formatting helpers imported from utils
+
 function goToPrevMonth() {
-  model.value = dayjs(model.value).subtract(1, 'month').toDate()
+  if (!model.value) return
+  let { month, year } = model.value
+  if (month === 0) {
+    month = 11
+    year -= 1
+  } else {
+    month -= 1
+  }
+  const monthFirstDate = dayjs.utc(new Date(year, month, 1)).startOf('month')
+  const isoWeek = dayjs.utc(new Date(year, month, 1)).isoWeek()
+
+  const format = formatIsoWeekRange(monthFirstDate)
+
+  model.value = { month, year, isoWeek, formatted: format, isoString: monthFirstDate.toISOString() }
 }
 
 function goToNextMonth() {
-  model.value = dayjs(model.value).add(1, 'month').toDate()
+  if (!model.value) return
+  let { month, year } = model.value
+  if (month === 11) {
+    month = 0
+    year += 1
+  } else {
+    month += 1
+  }
+  const monthFirstDate = dayjs.utc(new Date(year, month, 1)).startOf('month')
+  const isoWeek = dayjs.utc(new Date(year, month, 1)).isoWeek()
+
+  const format = formatIsoWeekRange(monthFirstDate)
+
+  model.value = { month, year, isoWeek, formatted: format, isoString: monthFirstDate.toISOString() }
 }
 
 function toggleMonthPicker() {
