@@ -143,8 +143,6 @@ export function useBankWrites() {
     value?: MaybeRef<bigint>,
     options?: ContractWriteOptions
   ) => {
-    console.log('the bank function =======: ', functionName, args, value, options)
-    console.log('is valid function: ', isValidBankFunction(functionName))
     if (!isValidBankFunction(functionName)) {
       throw new Error(`Invalid bank function: ${functionName}`)
     }
