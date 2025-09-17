@@ -23,7 +23,7 @@
             @click="toggleMonthPicker"
             class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
           >
-            <span v-if="model">{{ dayjs().year(model.year).month(model.month).format('MMMM YYYY') }}</span>
+            <span v-if="model">{{ formatMonthYear(model.year, model.month) }}</span>
             <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4 ml-1" />
           </ButtonUI>
         </template>
@@ -76,6 +76,17 @@ watch(monthPicked, (newVal) => {
   }
 })
 
+// New: date formatting helper
+function formatMonthYear(year: number, month: number): string {
+  try {
+    // Use UTC for consistency with the rest of the component
+    return dayjs.utc().year(year).month(month).format('MMMM YYYY')
+  } catch (error) {
+    console.error('Error formatting month/year:', error)
+    // Fallback to a safe ISO-like label
+    return `${year}-${String(month + 1).padStart(2, '0')}`
+  }
+}
 
 function goToPrevMonth() {
   if (!model.value) return
@@ -96,7 +107,6 @@ function goToPrevMonth() {
 
   model.value = { month, year, isoWeek, formatted: format, isoString: monthFirstDate.toISOString() }
 }
-
 
 function goToNextMonth() {
   if (!model.value) return
