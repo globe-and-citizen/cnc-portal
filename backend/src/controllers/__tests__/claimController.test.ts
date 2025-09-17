@@ -4,6 +4,7 @@ import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { addClaim, getClaims, updateClaim } from "../claimController";
 import { Claim, Wage, WeeklyClaim } from "@prisma/client";
+import dayjs from "dayjs";
 
 vi.mock("../../utils");
 function setAddressMiddleware(address: string) {
@@ -158,7 +159,7 @@ describe("Claim Controller", () => {
     });
 
     it("should return 400 if total hours exceed 24 hours for a single day", async () => {
-      const testDate = new Date();
+      const testDate = dayjs.utc().startOf("day").toDate(); // Use start of day to avoid timezone issues
       const modifiedMockWeeklyClaims = {
         ...mockWeeklyClaims,
         claims: [
@@ -180,7 +181,7 @@ describe("Claim Controller", () => {
         memo: "memo",
         dayWorked: testDate.toISOString(),
       });
-
+      // console.log(response.error)
       expect(response.status).toBe(400);
       expect(response.body.message).toBe(
         "Submission failed: the total number of hours for this day would exceed 24 hours."
