@@ -61,7 +61,7 @@
                 class="h-3 w-3 rounded-full"
                 :class="entry.hours > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
               />
-              <span class="font-medium">{{entry.date.format('ddd DD MMM')}}</span>
+              <span class="font-medium">{{ entry.date.format('ddd DD MMM') }}</span>
             </div>
 
             <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-1">
@@ -149,17 +149,22 @@ const generatedMonthWeek = computed(() => {
 
 const selectWeekWeelyClaim = computed(() => {
   return memberWeeklyClaims.value?.find((weeklyClaim) => {
-    console.log("Comparaison",  weeklyClaim.weekStart === selectedMonthObject.value.isoString, " ",{weekStart: weeklyClaim.weekStart, selectedMonthObject: selectedMonthObject.value.isoString})
+    console.log('Comparaison', weeklyClaim.weekStart === selectedMonthObject.value.isoString, ' ', {
+      weekStart: weeklyClaim.weekStart,
+      selectedMonthObject: selectedMonthObject.value.isoString
+    })
     return weeklyClaim.weekStart === selectedMonthObject.value.isoString
   })
 })
 
 const weekDayClaims = computed(() => {
-  const weekStart= dayjs(selectedMonthObject.value.isoString).utc()
+  const weekStart = dayjs(selectedMonthObject.value.isoString).utc()
   return [0, 1, 2, 3, 4, 5, 6].map((i) => {
-    const date = weekStart
-      .add(i, 'day')
-    const dailyClaims = selectWeekWeelyClaim.value?.claims.filter((claim) => claim.dayWorked === date.toISOString()) || []
+    const date = weekStart.add(i, 'day')
+    const dailyClaims =
+      selectWeekWeelyClaim.value?.claims.filter(
+        (claim) => claim.dayWorked === date.toISOString()
+      ) || []
     return {
       date,
       claims: dailyClaims,
@@ -247,5 +252,4 @@ const barChartOption = computed(() => {
     ]
   }
 })
-
 </script>

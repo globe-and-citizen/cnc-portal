@@ -8,7 +8,6 @@ dayjs.extend(utc)
 dayjs.extend(isoWeek)
 dayjs.extend(weekday)
 
-
 export interface Week {
   month: number // The month (0-11)
   year: number // The year
@@ -40,7 +39,6 @@ export function todayMidnight(date: Date): Date {
   d.setHours(0, 0, 0, 0) // Met à 00:00:00.000
   return d
 }
-
 
 /**
  * Get all ISO weeks of a month as Week objects
