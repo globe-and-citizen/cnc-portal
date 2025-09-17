@@ -67,10 +67,7 @@ watch(monthPicked, (newVal) => {
       month: newVal.month,
       year: newVal.year,
       isoWeek: day.isoWeek(),
-      formatted: 
-        day.startOf('isoWeek').format('MMM DD') +
-        ' - ' +
-        day.endOf('isoWeek').format('MMM DD'),
+      formatted: formatIsoWeekRange(day),
       isoString: day.toISOString()
     }
   }
@@ -88,6 +85,18 @@ function formatMonthYear(year: number, month: number): string {
   }
 }
 
+// New: ISO week range formatter (e.g., "Jan 01 - Jan 07")
+function formatIsoWeekRange(base: dayjs.Dayjs): string {
+  try {
+    const start = base.startOf('isoWeek')
+    const end = base.endOf('isoWeek')
+    return `${start.format('MMM DD')} - ${end.format('MMM DD')}`
+  } catch (error) {
+    console.error('Error formatting ISO week range:', error)
+    return `${base.format('YYYY-MM-DD')} - ${base.add(6, 'day').format('YYYY-MM-DD')}`
+  }
+}
+
 function goToPrevMonth() {
   if (!model.value) return
   let { month, year } = model.value
@@ -101,9 +110,7 @@ function goToPrevMonth() {
   const isoWeek = dayjs.utc(new Date(year, month, 1)).isoWeek()
 
   const format =
-    monthFirstDate.startOf('isoWeek').format('MMM DD') +
-    ' - ' +
-    monthFirstDate.endOf('isoWeek').format('MMM DD')
+    formatIsoWeekRange(monthFirstDate)
 
   model.value = { month, year, isoWeek, formatted: format, isoString: monthFirstDate.toISOString() }
 }
@@ -121,9 +128,7 @@ function goToNextMonth() {
   const isoWeek = dayjs.utc(new Date(year, month, 1)).isoWeek()
 
   const format =
-    monthFirstDate.startOf('isoWeek').format('MMM DD') +
-    ' - ' +
-    monthFirstDate.endOf('isoWeek').format('MMM DD')
+    formatIsoWeekRange(monthFirstDate)
 
   model.value = { month, year, isoWeek, formatted: format, isoString: monthFirstDate.toISOString() }
 }
