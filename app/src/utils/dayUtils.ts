@@ -84,6 +84,11 @@ export function formatMonthYear(year: number, month: number): string {
   }
 }
 
+/**
+ * Format an ISO week range (Monday to Sunday) from a given dayjs date
+ * @param base - A dayjs date within the desired week
+ * @returns A string representing the week range, e.g. "Jan 01 - Jan 07"
+ */
 export function formatIsoWeekRange(base: dayjs.Dayjs): string {
   try {
     const start = base.startOf('isoWeek')
@@ -160,34 +165,6 @@ export function differenceInMonths(endDate: Date, startDate: Date): number {
   return months
 }
 
-/**
- * Adds the specified number of years to the given date
- * @param date - The starting date
- * @param years - The number of years to add (can be negative)
- * @returns A new Date object with the years added
- */
-export function addYears(date: Date, years: number): Date {
-  const newDate = new Date(date)
-  newDate.setFullYear(date.getFullYear() + years)
-  return newDate
-}
-
-export function addMonths(date: Date, months: number): Date {
-  const newDate = new Date(date)
-  const targetMonth = newDate.getMonth() + months
-  const year = newDate.getFullYear() + Math.floor(targetMonth / 12)
-  const month = targetMonth % 12
-
-  newDate.setFullYear(year)
-  newDate.setMonth(month)
-
-  // Handle month overflow (e.g., Jan 31 + 1 month)
-  if (newDate.getMonth() !== month) {
-    newDate.setDate(0)
-  }
-
-  return newDate
-}
 
 export function addDays(date: Date, days: number): Date {
   const newDate = new Date(date)
