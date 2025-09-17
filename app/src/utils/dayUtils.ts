@@ -1,5 +1,22 @@
 import dayjs from 'dayjs'
 
+import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import weekday from 'dayjs/plugin/weekday'
+
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
+dayjs.extend(weekday)
+
+
+export interface Week {
+  month: number // The month (0-11)
+  year: number // The year
+  isoWeek: number // The ISO week number (1-53)
+  isoString: string // ISO string of the Monday of that week (e.g. "2023-01-02T00:00:00.000Z")
+  formatted: string // Formatted string like "Jan 01 - Jan 07"
+}
+
 export function getMondayStart(date: Date): Date {
   const d = new Date(date)
   const day = d.getDay() // 0 = dimanche, 1 = lundi, ..., 6 = samedi
@@ -24,24 +41,64 @@ export function todayMidnight(date: Date): Date {
   return d
 }
 
-/**
- * For a given date, get all the weeks
- *
- * @param monthDate
- * @returns
- */
-export function getMonthWeeks(monthDate: Date): Date[] {
-  const start = dayjs(monthDate).startOf('month').startOf('week').add(1, 'day')
-  const end = dayjs(monthDate).endOf('month').startOf('week')
-  const weeks: Date[] = []
-  let cursor = start.clone()
 
-  while (cursor.isBefore(end) || cursor.isSame(end, 'day')) {
-    const week: Date = cursor.toDate()
-    cursor = cursor.add(1, 'week')
-    weeks.push(week)
+/**
+ * Get all ISO weeks of a month as Week objects
+ * @param year - e.g. 2025
+ * @param month - 0 = January, 11 = December
+ * @returns Array of Week for each ISO week in the month
+ */
+export function getMonthWeeks(year: number, month: number): Week[] {
+  // log.info('Generating Month weeks')
+  // log.info('Generating weeks for ' + JSON.stringify({ year, month }))
+  const start = dayjs.utc().year(year).month(month).startOf('month')
+
+  // log.info('Start of month', start.format())
+
+  const end = start.endOf('month')
+  const seen = new Set<string>()
+  const result: Week[] = []
+  let current = start.startOf('isoWeek') // Monday as start of week
+  while (current.isBefore(end) || current.isSame(end, 'day')) {
+    const week = current.isoWeek()
+    const weekYear = current.isoWeekYear()
+    const key = `${weekYear}-${week}`
+    if (!seen.has(key)) {
+      seen.add(key)
+      result.push({
+        year: weekYear,
+        month: current.month(),
+        isoWeek: week,
+        isoString: current.toISOString(),
+        formatted: formatIsoWeekRange(current)
+      })
+    }
+    current = current.add(1, 'week')
   }
-  return weeks
+  return result
+}
+
+/**
+ * Format helpers (UTC-safe)
+ */
+export function formatMonthYear(year: number, month: number): string {
+  try {
+    return dayjs.utc().year(year).month(month).format('MMMM YYYY')
+  } catch (error) {
+    console.error('Error formatting month/year:', error)
+    return `${year}-${String(month + 1).padStart(2, '0')}`
+  }
+}
+
+export function formatIsoWeekRange(base: dayjs.Dayjs): string {
+  try {
+    const start = base.startOf('isoWeek')
+    const end = base.endOf('isoWeek')
+    return `${start.format('MMM DD')} - ${end.format('MMM DD')}`
+  } catch (error) {
+    console.error('Error formatting ISO week range:', error)
+    return `${base.format('YYYY-MM-DD')} - ${base.add(6, 'day').format('YYYY-MM-DD')}`
+  }
 }
 
 /* Calculates the number of calendar days between two dates.

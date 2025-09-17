@@ -49,6 +49,7 @@ import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import type { Week } from '@/utils/dayUtils'
+import { formatIsoWeekRange, formatMonthYear } from '@/utils/dayUtils'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
@@ -62,7 +63,7 @@ const isMonthPickerOpen = ref(false)
 // When monthPicked changes, update model
 watch(monthPicked, (newVal) => {
   if (newVal && typeof newVal.month === 'number' && typeof newVal.year === 'number') {
-    const day=   dayjs.utc().year(newVal.year).month(newVal.month).startOf('month')
+    const day = dayjs.utc().year(newVal.year).month(newVal.month).startOf('month')
     model.value = {
       month: newVal.month,
       year: newVal.year,
@@ -73,29 +74,7 @@ watch(monthPicked, (newVal) => {
   }
 })
 
-// New: date formatting helper
-function formatMonthYear(year: number, month: number): string {
-  try {
-    // Use UTC for consistency with the rest of the component
-    return dayjs.utc().year(year).month(month).format('MMMM YYYY')
-  } catch (error) {
-    console.error('Error formatting month/year:', error)
-    // Fallback to a safe ISO-like label
-    return `${year}-${String(month + 1).padStart(2, '0')}`
-  }
-}
-
-// New: ISO week range formatter (e.g., "Jan 01 - Jan 07")
-function formatIsoWeekRange(base: dayjs.Dayjs): string {
-  try {
-    const start = base.startOf('isoWeek')
-    const end = base.endOf('isoWeek')
-    return `${start.format('MMM DD')} - ${end.format('MMM DD')}`
-  } catch (error) {
-    console.error('Error formatting ISO week range:', error)
-    return `${base.format('YYYY-MM-DD')} - ${base.add(6, 'day').format('YYYY-MM-DD')}`
-  }
-}
+// Formatting helpers imported from utils
 
 function goToPrevMonth() {
   if (!model.value) return
@@ -109,8 +88,7 @@ function goToPrevMonth() {
   const monthFirstDate = dayjs.utc(new Date(year, month, 1)).startOf('month')
   const isoWeek = dayjs.utc(new Date(year, month, 1)).isoWeek()
 
-  const format =
-    formatIsoWeekRange(monthFirstDate)
+  const format = formatIsoWeekRange(monthFirstDate)
 
   model.value = { month, year, isoWeek, formatted: format, isoString: monthFirstDate.toISOString() }
 }
@@ -127,8 +105,7 @@ function goToNextMonth() {
   const monthFirstDate = dayjs.utc(new Date(year, month, 1)).startOf('month')
   const isoWeek = dayjs.utc(new Date(year, month, 1)).isoWeek()
 
-  const format =
-    formatIsoWeekRange(monthFirstDate)
+  const format = formatIsoWeekRange(monthFirstDate)
 
   model.value = { month, year, isoWeek, formatted: format, isoString: monthFirstDate.toISOString() }
 }
