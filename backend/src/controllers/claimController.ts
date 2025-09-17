@@ -1,10 +1,19 @@
 import { Request, Response } from "express";
 import { errorResponse } from "../utils/utils";
 import { prisma } from "../utils";
+import dayjs from "dayjs";
+import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import weekday from 'dayjs/plugin/weekday'
+
 import { Prisma, Claim } from "@prisma/client";
 import { isUserMemberOfTeam } from "./wageController";
 import { getMondayStart, todayMidnight } from "../utils/dayUtils";
 import { isCashRemunerationOwner } from "../utils/cashRemunerationUtil";
+
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
+dayjs.extend(weekday)
 
 type claimBodyRequest = Pick<Claim, "hoursWorked" | "dayWorked" | "memo"> & {
   teamId: string;
@@ -18,11 +27,11 @@ export const addClaim = async (req: Request, res: Response) => {
   const hoursWorked = Number(body.hoursWorked);
   const memo = body.memo as string;
   const dayWorked = body.dayWorked
-    ? new Date(body.dayWorked)
-    : todayMidnight(new Date());
+    ? dayjs.utc(body.dayWorked).startOf('day').toDate()
+    : dayjs.utc().startOf('day').toDate();
   const teamId = Number(body.teamId);
 
-  const weekStart = getMondayStart(dayWorked);
+  const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
   // Validating the claim data
   // Checking required data
@@ -71,7 +80,7 @@ export const addClaim = async (req: Request, res: Response) => {
       include: { claims: true },
     });
 
-    // Check tu max hours.
+    // Check total max hours.
 
     const totalHours =
       weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ??
