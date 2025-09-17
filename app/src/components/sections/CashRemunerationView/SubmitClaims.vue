@@ -113,14 +113,13 @@ import { ref, computed, watch } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import { required, numeric, minValue, maxValue } from '@vuelidate/validators'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
+import { useToastStore, useTeamStore } from '@/stores'
 import { maxLength } from '@vuelidate/validators'
 import { useQueryClient } from '@tanstack/vue-query'
 
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const queryClient = useQueryClient()
-const userStore = useUserDataStore()
 
 const modal = ref(false)
 const hoursWorked = ref<{
@@ -132,19 +131,6 @@ const hoursWorked = ref<{
   memo: undefined,
   dayWorked: new Date().toISOString().split('T')[0] // Default to today's date
 })
-
-// TODO: enable this to restrict date selection to the current week
-// const allowedDates = computed(() => {
-//   const today = new Date()
-//   const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay() // Make Sunday = 7
-//   const monday = new Date(today)
-//   monday.setDate(today.getDate() - (dayOfWeek - 1))
-//   const days = []
-//   for (let d = new Date(monday); d <= today; d.setDate(d.getDate() + 1)) {
-//     days.push(new Date(d))
-//   }
-//   return days
-// })
 
 const openModal = () => {
   modal.value = true
