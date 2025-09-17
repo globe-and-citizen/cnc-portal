@@ -1,18 +1,18 @@
 import { describe, it, expect } from 'vitest'
 import { parseError } from '@/utils/errorUtil'
-import expenseAbi from '@/artifacts/abi/expense-account-eip712.json'
-import type { EstimateContractGasErrorType, Abi } from 'viem'
+// import expenseAbi from '@/artifacts/abi/expense-account-eip712.json'
+// import type { EstimateContractGasErrorType, Abi } from 'viem'
 
-const mockAbi: Abi = [
-  {
-    type: 'error',
-    name: 'InsufficientBalance',
-    inputs: [
-      { name: 'available', type: 'uint256' },
-      { name: 'required', type: 'uint256' }
-    ]
-  }
-]
+// const mockAbi: Abi = [
+//   {
+//     type: 'error',
+//     name: 'InsufficientBalance',
+//     inputs: [
+//       { name: 'available', type: 'uint256' },
+//       { name: 'required', type: 'uint256' }
+//     ]
+//   }
+// ]
 
 describe('parseError', () => {
   it('should handle standard Error objects', () => {
