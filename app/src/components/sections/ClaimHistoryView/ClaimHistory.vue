@@ -86,7 +86,7 @@ import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import weekday from 'dayjs/plugin/weekday'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { getMonthWeeks, type Week } from '@/utils/dayUtils'
+import { formatIsoWeekRange, getMonthWeeks, type Week } from '@/utils/dayUtils'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useTeamStore } from '@/stores'
 import CardComponent from '@/components/CardComponent.vue'
@@ -140,10 +140,7 @@ const selectedMonthObject = ref<Week>({
   month: dayjs().utc().month(),
   isoWeek: dayjs().utc().isoWeek(),
   isoString: dayjs().utc().startOf('isoWeek').toISOString(),
-  formatted:
-    dayjs().utc().startOf('isoWeek').format('MMM DD') +
-    ' - ' +
-    dayjs().utc().endOf('isoWeek').format('MMM DD')
+  formatted: formatIsoWeekRange(dayjs().utc().startOf('isoWeek'))
 })
 
 const generatedMonthWeek = computed(() => {
