@@ -4,17 +4,17 @@
     <CardComponent class="w-1/3 flex flex-col justify-between">
       <div class="space-y-8">
         <!-- Month Selector -->
-        <MonthSelector v-model="selectedMonth" />
+        <MonthSelector v-model="selectedMonthObject" />
 
         <!-- Week List -->
-        <div class="space-y-4">
+        <div class="space-y-4 z-0">
           <div
-            v-for="week in getMonthWeeks(selectedMonth)"
-            :key="week.toISOString()"
-            @click="selectWeek(week)"
+            v-for="week in generatedMonthWeek"
+            :key="week.isoWeek"
+            @click="selectedMonthObject = week"
             :class="[
               'border rounded-lg p-3 cursor-pointer',
-              week.toISOString() === selectedWeekISO
+              week.isoWeek === selectedMonthObject.isoWeek
                 ? 'bg-emerald-50 border-emerald-500 text-gray-800'
                 : 'hover:bg-gray-50'
             ]"
@@ -22,9 +22,9 @@
             <div class="text-base font-medium">Week</div>
             <div
               class="text-sm"
-              :class="week.toISOString() === selectedWeekISO ? 'text-emerald-900' : 'text-gray-800'"
+              :class="week === selectedMonthObject ? 'text-emerald-900' : 'text-gray-800'"
             >
-              {{ formatDate(week) }}
+              {{ week.formatted }}
             </div>
           </div>
         </div>
@@ -42,20 +42,9 @@
 
       <CardComponent title="" class="w-full">
         <div v-if="memberWeeklyClaims">
-          <h2 class="pb-4">Weekly Claims: {{ formatDate(selectedWeek) }}</h2>
+          <h2 class="pb-4">Weekly Claims: {{ selectedMonthObject.formatted }}</h2>
           <div
-            v-for="(entry, index) in [0, 1, 2, 3, 4, 5, 6].map((i) => {
-              const date = dayjs(selectedWeek).add(i, 'day').toDate()
-              const dailyClaims =
-                selectWeekWeelyClaim?.claims.filter(
-                  (claim) => formatDayLabel(date) === formatDayLabel(claim.dayWorked)
-                ) || []
-              return {
-                date,
-                claims: dailyClaims,
-                hours: dailyClaims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
-              }
-            })"
+            v-for="(entry, index) in weekDayClaims"
             :key="index"
             :class="[
               'flex items-center justify-between border px-4 py-3 mb-2 rounded-lg ',
@@ -69,7 +58,7 @@
                 class="h-3 w-3 rounded-full"
                 :class="entry.hours > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
               />
-              <span class="font-medium">{{ formatDayLabel(entry.date) }}</span>
+              <span class="font-medium">{{ entry.date.format('ddd DD MMM') }}</span>
             </div>
 
             <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-1">
@@ -88,10 +77,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import weekday from 'dayjs/plugin/weekday'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { getMondayStart, getSundayEnd, getMonthWeeks } from '@/utils/dayUtils'
+import { formatIsoWeekRange, getMonthWeeks, type Week } from '@/utils/dayUtils'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useTeamStore } from '@/stores'
 import CardComponent from '@/components/CardComponent.vue'
@@ -112,6 +104,9 @@ import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
 
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
+dayjs.extend(weekday)
 
 const route = useRoute()
 const teamStore = useTeamStore()
@@ -137,19 +132,38 @@ const { data: memberWeeklyClaims } = useCustomFetch(weeklyClaimUrl, {
   refetch: true
 }).json<Array<WeeklyClaimResponse>>()
 
-const selectedMonth = ref<Date>(dayjs().startOf('month').toDate())
-const selectedWeek = ref<Date>(dayjs().startOf('week').toDate())
-const selectedWeekISO = computed(() => selectedWeek.value?.toISOString() ?? '')
+const selectedMonthObject = ref<Week>({
+  year: dayjs().utc().year(),
+  month: dayjs().utc().month(),
+  isoWeek: dayjs().utc().isoWeek(),
+  isoString: dayjs().utc().startOf('isoWeek').toISOString(),
+  formatted: formatIsoWeekRange(dayjs().utc().startOf('isoWeek'))
+})
 
-const selectWeek = (week: Date) => {
-  selectedWeek.value = week
-}
+const generatedMonthWeek = computed(() => {
+  return getMonthWeeks(selectedMonthObject.value.year, selectedMonthObject.value.month)
+})
 
 const selectWeekWeelyClaim = computed(() => {
-  // pick the bucket whose UTC week range contains the selectedWeek (UTC)
-  return memberWeeklyClaims.value?.find((weeklyClaim) =>
-    isWithinUTCWeek(selectedWeek.value, weeklyClaim.weekStart)
+  return memberWeeklyClaims.value?.find(
+    (weeklyClaim) => weeklyClaim.weekStart === selectedMonthObject.value.isoString
   )
+})
+
+const weekDayClaims = computed(() => {
+  const weekStart = dayjs(selectedMonthObject.value.isoString).utc()
+  return [0, 1, 2, 3, 4, 5, 6].map((i) => {
+    const date = weekStart.add(i, 'day')
+    const dailyClaims =
+      selectWeekWeelyClaim.value?.claims.filter(
+        (claim) => claim.dayWorked === date.toISOString()
+      ) || []
+    return {
+      date,
+      claims: dailyClaims,
+      hours: dailyClaims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
+    }
+  })
 })
 
 function toUTCDateOnly(date: string | Date) {
@@ -162,14 +176,6 @@ function sameUTCDay(a: string | Date, b: string | Date) {
   return toUTCDateOnly(a).getTime() === toUTCDateOnly(b).getTime()
 }
 
-function isWithinUTCWeek(target: string | Date, weekStart: string | Date) {
-  const start = toUTCDateOnly(weekStart)
-  const end = new Date(start)
-  end.setUTCDate(start.getUTCDate() + 7)
-  const t = toUTCDateOnly(target)
-  return t >= start && t < end
-}
-
 // Bar chart dynamique (max = jour le plus haut)
 const barChartOption = computed(() => {
   const days = [0, 1, 2, 3, 4, 5, 6]
@@ -177,7 +183,7 @@ const barChartOption = computed(() => {
   const labels: string[] = []
 
   days.forEach((i) => {
-    const date = dayjs(selectedWeek.value).add(i, 'day').toDate()
+    const date = dayjs().add(i, 'day').toDate()
     const label = dayjs(date).format('dd')
     labels.push(label)
 
@@ -239,36 +245,4 @@ const barChartOption = computed(() => {
     ]
   }
 })
-
-watch(
-  selectedMonth,
-  (newMonth) => {
-    const weeks = getMonthWeeks(newMonth)
-    const currentWeekStart = getMondayStart(new Date())
-    const found = weeks.find((week) => week.toISOString() === currentWeekStart.toISOString())
-    if (found) {
-      selectedWeek.value = found
-    } else {
-      selectedWeek.value = weeks[0]
-    }
-  },
-  { immediate: true }
-)
-
-function formatDate(date: string | Date) {
-  const monday = getMondayStart(new Date(date))
-  const sunday = getSundayEnd(new Date(date))
-  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-  const locale = 'en-US'
-  return `${monday.toLocaleDateString(locale, options)}-${sunday.toLocaleDateString(locale, options)}`
-}
-
-function formatDayLabel(date: string | Date) {
-  const d = new Date(date)
-  const locale = 'en-US'
-  const day = d.toLocaleDateString(locale, { weekday: 'long' })
-  const dayNum = d.getDate()
-  const month = d.toLocaleDateString(locale, { month: 'long' })
-  return `${day} ${dayNum} ${month}`
-}
 </script>

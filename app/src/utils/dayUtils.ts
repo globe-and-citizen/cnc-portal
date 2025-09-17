@@ -1,5 +1,21 @@
 import dayjs from 'dayjs'
 
+import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import weekday from 'dayjs/plugin/weekday'
+
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
+dayjs.extend(weekday)
+
+export interface Week {
+  month: number // The month (0-11)
+  year: number // The year
+  isoWeek: number // The ISO week number (1-53)
+  isoString: string // ISO string of the Monday of that week (e.g. "2023-01-02T00:00:00.000Z")
+  formatted: string // Formatted string like "Jan 01 - Jan 07"
+}
+
 export function getMondayStart(date: Date): Date {
   const d = new Date(date)
   const day = d.getDay() // 0 = dimanche, 1 = lundi, ..., 6 = samedi
@@ -25,23 +41,63 @@ export function todayMidnight(date: Date): Date {
 }
 
 /**
- * For a given date, get all the weeks
- *
- * @param monthDate
- * @returns
+ * Get all ISO weeks of a month as Week objects
+ * @param year - e.g. 2025
+ * @param month - 0 = January, 11 = December
+ * @returns Array of Week for each ISO week in the month
  */
-export function getMonthWeeks(monthDate: Date): Date[] {
-  const start = dayjs(monthDate).startOf('month').startOf('week').add(1, 'day')
-  const end = dayjs(monthDate).endOf('month').startOf('week')
-  const weeks: Date[] = []
-  let cursor = start.clone()
+export function getMonthWeeks(year: number, month: number): Week[] {
+  const start = dayjs.utc().year(year).month(month).startOf('month')
 
-  while (cursor.isBefore(end) || cursor.isSame(end, 'day')) {
-    const week: Date = cursor.toDate()
-    cursor = cursor.add(1, 'week')
-    weeks.push(week)
+  const end = start.endOf('month')
+  const seen = new Set<string>()
+  const result: Week[] = []
+  let current = start.startOf('isoWeek') // Monday as start of week
+  while (current.isBefore(end) || current.isSame(end, 'day')) {
+    const week = current.isoWeek()
+    const weekYear = current.isoWeekYear()
+    const key = `${weekYear}-${week}`
+    if (!seen.has(key)) {
+      seen.add(key)
+      result.push({
+        year: weekYear,
+        month: current.month(),
+        isoWeek: week,
+        isoString: current.toISOString(),
+        formatted: formatIsoWeekRange(current)
+      })
+    }
+    current = current.add(1, 'week')
   }
-  return weeks
+  return result
+}
+
+/**
+ * Format helpers (UTC-safe)
+ */
+export function formatMonthYear(year: number, month: number): string {
+  try {
+    return dayjs.utc().year(year).month(month).format('MMMM YYYY')
+  } catch (error) {
+    console.error('Error formatting month/year:', error)
+    return `${year}-${String(month + 1).padStart(2, '0')}`
+  }
+}
+
+/**
+ * Format an ISO week range (Monday to Sunday) from a given dayjs date
+ * @param base - A dayjs date within the desired week
+ * @returns A string representing the week range, e.g. "Jan 01 - Jan 07"
+ */
+export function formatIsoWeekRange(base: dayjs.Dayjs): string {
+  try {
+    const start = base.startOf('isoWeek')
+    const end = base.endOf('isoWeek')
+    return `${start.format('MMM DD')} - ${end.format('MMM DD')}`
+  } catch (error) {
+    console.error('Error formatting ISO week range:', error)
+    return `${base.format('YYYY-MM-DD')} - ${base.add(6, 'day').format('YYYY-MM-DD')}`
+  }
 }
 
 /* Calculates the number of calendar days between two dates.
@@ -107,35 +163,6 @@ export function differenceInMonths(endDate: Date, startDate: Date): number {
     months--
   }
   return months
-}
-
-/**
- * Adds the specified number of years to the given date
- * @param date - The starting date
- * @param years - The number of years to add (can be negative)
- * @returns A new Date object with the years added
- */
-export function addYears(date: Date, years: number): Date {
-  const newDate = new Date(date)
-  newDate.setFullYear(date.getFullYear() + years)
-  return newDate
-}
-
-export function addMonths(date: Date, months: number): Date {
-  const newDate = new Date(date)
-  const targetMonth = newDate.getMonth() + months
-  const year = newDate.getFullYear() + Math.floor(targetMonth / 12)
-  const month = targetMonth % 12
-
-  newDate.setFullYear(year)
-  newDate.setMonth(month)
-
-  // Handle month overflow (e.g., Jan 31 + 1 month)
-  if (newDate.getMonth() !== month) {
-    newDate.setDate(0)
-  }
-
-  return newDate
 }
 
 export function addDays(date: Date, days: number): Date {
