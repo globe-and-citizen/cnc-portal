@@ -1,7 +1,4 @@
 <template>
-  <!-- <pre>
-    {{ { selectedMonthObject} }}
-  </pre> -->
   <div class="flex bg-transparent gap-x-4">
     <!-- Left Sidebar -->
     <CardComponent class="w-1/3 flex flex-col justify-between">
