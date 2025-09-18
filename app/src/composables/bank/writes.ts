@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { useAccount } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
 import { BANK_FUNCTION_NAMES, type BankFunctionName, isValidBankFunction } from './types'
+
 import {
   useContractWrites,
   type ContractWriteConfig,
