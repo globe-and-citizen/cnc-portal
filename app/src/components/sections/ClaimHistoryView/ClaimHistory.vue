@@ -188,7 +188,6 @@ const barChartOption = computed(() => {
     const totalHours =
       selectWeekWeelyClaim.value?.claims
         .filter((claim) => {
-          console.log('Comparaison', claim.dayWorked, ' - ', date.toISOString())
           return dayjs(date).isSame(dayjs(claim.dayWorked).utc(), 'day')
         })
         .reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0
