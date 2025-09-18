@@ -6,13 +6,14 @@
         size="sm"
         variant="primary"
         outline
-        @click="toggleOpen = false"
+        @click="closeWithReset"
+        data-test="modal-close-button"
         >✕</ButtonUI
       >
       <slot></slot>
     </div>
 
-    <form method="dialog" class="modal-backdrop" @click="toggleOpen = false">
+    <form method="dialog" class="modal-backdrop" @click="closeWithoutReset">
       <button>close</button>
     </form>
   </dialog>
@@ -24,14 +25,25 @@ import ButtonUI from '@/components/ButtonUI.vue'
 
 const toggleOpen = defineModel({ default: false })
 const props = defineProps<{ modalWidth?: string }>()
+const emits = defineEmits(['closeWithReset', 'closeWithoutReset'])
 
 const width = computed(() => {
   return props.modalWidth || ''
 })
 
+const closeWithReset = () => {
+  toggleOpen.value = false
+  emits('closeWithReset')
+}
+
+const closeWithoutReset = () => {
+  toggleOpen.value = false
+  emits('closeWithoutReset')
+}
+
 const handleEscapePress = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
-    toggleOpen.value = false
+    closeWithoutReset()
   }
 }
 
