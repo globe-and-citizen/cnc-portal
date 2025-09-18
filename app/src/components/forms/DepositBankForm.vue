@@ -24,7 +24,7 @@
   </TokenAmount>
 
   <div class="modal-action justify-between">
-    <ButtonUI variant="error" outline @click="$emit('closeModal')" data-test="cancel-button"
+    <ButtonUI variant="error" outline @click="handleCancel" data-test="cancel-button"
       >Cancel</ButtonUI
     >
     <ButtonUI
@@ -46,10 +46,12 @@ import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
 import { useERC20Reads, useERC20WriteFunctions } from '@/composables/erc20/index'
 import TokenAmount from './TokenAmount.vue'
-import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
+import { SUPPORTED_TOKENS } from '@/constant'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import ButtonUI from '../ButtonUI.vue'
 import { useBankWritesFunctions } from '@/composables/bank'
+import { useFormStore } from '@/stores/formStore'
+import { storeToRefs } from 'pinia'
 
 const emits = defineEmits(['closeModal'])
 // Add validation event
@@ -59,12 +61,16 @@ const props = defineProps<{
   bankAddress: Address
 }>()
 
-// Component state
-const amount = ref<string>('')
-const selectedTokenId = ref<TokenId>('native') // Default to native token (ETH)
-const currentStep = ref(1)
+// user form store
+const formStore = useFormStore()
+const {
+  depositAmount: amount,
+  depositSelectedTokenId: selectedTokenId,
+  depositCurrentStep: currentStep,
+  depositIsAmountValid: isAmountValid
+} = storeToRefs(formStore)
+
 const submitting = ref(false)
-const isAmountValid = ref(false)
 
 // Stores
 const currencyStore = useCurrencyStore()
@@ -154,7 +160,7 @@ const waitForCondition = (condition: () => boolean, timeout = 5000) => {
 // Success handling
 watch(isNativeDepositConfirmed, (confirmed) => {
   if (confirmed && nativeReceipt.value) {
-    amount.value = ''
+    formStore.resetForm('depositBank')
     addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
     emits('closeModal')
   }
@@ -193,7 +199,7 @@ const submitForm = async () => {
         // })
         await waitForCondition(() => depositReceipt.value?.status === 'success', 15000)
 
-        amount.value = ''
+        formStore.resetForm('depositBank')
         addSuccessToast('USDC deposited successfully')
         emits('closeModal')
       } else {
@@ -208,4 +214,18 @@ const submitForm = async () => {
     currentStep.value = 1
   }
 }
+
+const handleCancel = () => {
+  resetForm()
+  emits('closeModal')
+}
+
+// Expose la méthode de réinitialisation pour les parents
+const resetForm = () => {
+  formStore.resetForm('depositBank')
+}
+
+defineExpose({
+  resetForm
+})
 </script>

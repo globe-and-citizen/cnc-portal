@@ -34,7 +34,9 @@
   </div>
 
   <div class="modal-action justify-between mt-4">
-    <ButtonUI variant="error" outline @click="$emit('closeModal')">Cancel</ButtonUI>
+    <ButtonUI variant="error" outline @click="handleCancel" data-test="cancel-button">
+      Cancel
+    </ButtonUI>
     <ButtonUI
       variant="primary"
       @click="submitForm"
@@ -56,9 +58,11 @@ import ButtonUI from '../ButtonUI.vue'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
-import { ref } from 'vue'
+// import { ref } from 'vue'
 import BodAlert from '@/components/BodAlert.vue'
 import TokenAmount from './TokenAmount.vue'
+import { useFormStore } from '@/stores/formStore'
+import { storeToRefs } from 'pinia'
 
 export interface Token {
   symbol: string
@@ -89,19 +93,11 @@ const props = withDefaults(
   }
 )
 
-const model = defineModel<TransferModel>({
-  required: true,
-  default: () => ({
-    address: { name: '', address: '' },
-    token: { symbol: '', balance: 0, tokenId: '' },
-    amount: '0'
-  })
-})
+const formStore = useFormStore()
+const { transferModel: model, transferSelectedTokenId: selectedTokenId } = storeToRefs(formStore)
 
 const emit = defineEmits(['transfer', 'closeModal'])
 const currencyStore = useCurrencyStore()
-
-const selectedTokenId = ref<string>('USDC')
 // Token list derived from SUPPORTED_TOKENS
 const tokenList = computed(() =>
   SUPPORTED_TOKENS.map((token) => ({
@@ -149,6 +145,20 @@ const submitForm = () => {
 const handleSelectItem = (item: { name: string; address: string; type: 'member' | 'contract' }) => {
   model.value.address = item
 }
+
+const resetForm = () => {
+  formStore.resetForm('transfer')
+}
+
+const handleCancel = () => {
+  resetForm()
+  emit('closeModal')
+}
+
+// Expose the reset function
+defineExpose({
+  resetForm
+})
 
 onMounted(() => {
   if (props.tokens.length > 0) {
