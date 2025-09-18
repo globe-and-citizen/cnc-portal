@@ -288,7 +288,7 @@ const handleDepositModalResetClose = () => {
   }
   depositModal.value = false
 }
-
+// Normal close without resetting the form
 const handleDepositModalNormalClose = () => {
   depositModal.value = false
 }
