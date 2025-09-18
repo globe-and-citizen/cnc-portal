@@ -63,22 +63,34 @@
         <input
           type="checkbox"
           class="checkbox checkbox-primary"
-          v-model="selectedOptions[budgetType]"
+          :checked="getSelectedOption(budgetType as unknown as 0 | 1 | 2)"
+          @change="
+            (e) =>
+              setSelectedOption(
+                budgetType as unknown as 0 | 1 | 2,
+                (e.target as HTMLInputElement).checked
+              )
+          "
           :id="'checkbox-' + budgetType"
           :data-test="`limit-checkbox-${budgetType}`"
-          @change="toggleOption(budgetType)"
         />
         <!-- Numeric Input -->
         <span class="w-48">{{ label }}</span
         >|
         <input
-          :disabled="!selectedOptions[budgetType]"
+          :disabled="!getSelectedOption(budgetType as unknown as 0 | 1 | 2)"
           type="number"
           class="grow"
-          v-model.number="values[budgetType]"
+          :value="getBudgetValue(budgetType as unknown as 0 | 1 | 2)"
+          @input="
+            (e) =>
+              setBudgetValue(
+                budgetType as unknown as 0 | 1 | 2,
+                +(e.target as HTMLInputElement).value
+              )
+          "
           placeholder="Enter value"
           :data-test="`limit-input-${budgetType}`"
-          @input="updateValue(budgetType)"
         />
       </label>
     </div>
@@ -121,7 +133,10 @@
     {{ error.$message }}
   </div>
 
-  <div class="modal-action justify-center">
+  <div class="modal-action justify-center gap-4">
+    <ButtonUI outline data-test="cancel-button" variant="error" @click="handleCancel">
+      Cancel
+    </ButtonUI>
     <ButtonUI
       :loading="loadingApprove"
       :disabled="loadingApprove"
@@ -131,11 +146,10 @@
     >
       Approve
     </ButtonUI>
-    <ButtonUI outline data-test="cancel-button" variant="error" @click="clear"> Cancel </ButtonUI>
   </div>
 </template>
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { isAddress } from 'viem'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers, required } from '@vuelidate/validators'
@@ -144,6 +158,8 @@ import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import ButtonUI from '@/components/ButtonUI.vue'
 import SelectMemberWithTokenInput from '@/components/utils/SelectMemberWithTokenInput.vue'
+import { useFormStore } from '@/stores/formStore'
+import { storeToRefs } from 'pinia'
 
 const props = defineProps<{
   loadingApprove: boolean
@@ -152,13 +168,19 @@ const props = defineProps<{
   users: User[]
 }>()
 
-const input = ref({ name: '', address: '', token: '' })
+// using unified store with storeToRefs
+const formStore = useFormStore()
+const {
+  approveInput: input,
+  approveDate: date,
+  approveDescription: description,
+  approveSelectedOptions: selectedOptions,
+  approveValues: values
+} = storeToRefs(formStore)
+
 const limitValue = ref('')
-const date = ref<Date | string>('')
-const description = ref<string>('')
 const budgetLimitType = ref<0 | 1 | 2 | null>(null)
 
-//#region multi limit
 // Labels for budget types
 const budgetTypes = {
   0: 'Max Transactions',
@@ -166,36 +188,32 @@ const budgetTypes = {
   2: 'Max Amount per Transaction'
 }
 
-// Reactive states
-const selectedOptions = reactive<{ [key in 0 | 1 | 2]: boolean }>({ 0: false, 1: false, 2: false })
-const values = reactive<{ [key in 0 | 1 | 2]: null | string | number }>({
-  0: null,
-  1: null,
-  2: null
-})
+// To simplify access to values in the template
+const getSelectedOption = (budgetType: 0 | 1 | 2) => selectedOptions.value[budgetType]
+const setSelectedOption = (budgetType: 0 | 1 | 2, value: boolean) => {
+  selectedOptions.value[budgetType] = value
+  if (!value) {
+    values.value[budgetType] = null // Reset value if deselected
+  }
+}
+
+const getBudgetValue = (budgetType: 0 | 1 | 2) => values.value[budgetType]
+const setBudgetValue = (budgetType: 0 | 1 | 2, value: number | null) => {
+  values.value[budgetType] = value
+  if (value === null || isNaN(Number(value))) {
+    values.value[budgetType] = 0 // Default value if input is empty
+  }
+}
 
 // Result array
 const resultArray = computed(() =>
-  Object.entries(selectedOptions)
+  Object.entries(selectedOptions.value)
     .filter(([, isSelected]) => isSelected)
     .map(([budgetType]) => ({
       budgetType: Number(budgetType),
-      value: values[budgetType as unknown as 0 | 1 | 2] || 0
+      value: values.value[budgetType as unknown as 0 | 1 | 2] || 0
     }))
 )
-
-// Handlers
-const toggleOption = (budgetType: 0 | 1 | 2) => {
-  if (!selectedOptions[budgetType]) {
-    values[budgetType] = null // Reset value if deselected
-  }
-}
-
-const updateValue = (budgetType: 0 | 1 | 2) => {
-  if (values[budgetType] === null || isNaN(Number(values[budgetType]))) {
-    values[budgetType] = 0 // Default value if input is empty
-  }
-}
 //#endregion multi limit
 
 const rules = {
@@ -269,11 +287,22 @@ const v$ = useVuelidate(rules, {
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
-const clear = () => {
+// function to reset the form
+const resetForm = () => {
+  formStore.resetForm('approveUsers')
   limitValue.value = ''
   budgetLimitType.value = null
-  date.value = ''
+}
+
+// function to close without resetting
+const close = () => {
   emit('closeModal')
+}
+
+// Function to handle cancellation (reset and close)
+const handleCancel = () => {
+  resetForm()
+  close()
 }
 
 const submitApprove = () => {
@@ -289,6 +318,10 @@ const submitApprove = () => {
     expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
   })
 }
+
+defineExpose({
+  resetForm
+})
 </script>
 <style>
 .dp__input {

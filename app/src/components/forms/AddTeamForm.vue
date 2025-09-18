@@ -178,29 +178,22 @@ import DeployContractSection from '@/components/sections/TeamView/forms/DeployCo
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { onClickOutside } from '@vueuse/core'
-import type { TeamInput, Team } from '@/types'
+import type { Team } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '../../stores/teamStore'
+import { useFormStore } from '@/stores/formStore'
+import { storeToRefs } from 'pinia'
 
 defineEmits(['done'])
 const { addSuccessToast, addErrorToast } = useToastStore()
 const teamStore = useTeamStore()
+const formStore = useFormStore()
 
-// Refs
-const teamData = ref<TeamInput>({
-  name: '',
-  description: '',
-  members: []
-})
-
-const investorContractInput = ref({
-  name: '',
-  symbol: ''
-})
+// use the data from storeToRefs unified store to keep reactivity
+const { addTeamData: teamData, investorContractInput, currentStep } = storeToRefs(formStore)
 
 const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
-const currentStep = ref(1)
 
 // Team creation API call
 const {
@@ -284,10 +277,20 @@ const saveTeamToDatabase = async () => {
   nextStep()
 }
 
+// Reset form data to initial state - utilise la fonction du store unifié
+const resetForm = () => {
+  formStore.resetForm('addTeam')
+}
+
 // Lifecycle Hooks
 onMounted(() => {
   onClickOutside(formRef, () => {
     showDropdown.value = false
   })
+})
+
+// Expose the reset method to parent components
+defineExpose({
+  resetForm
 })
 </script>
