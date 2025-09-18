@@ -19,6 +19,11 @@
         </label>
         <VueDatePicker
           v-model="hoursWorked.dayWorked"
+          model-type="iso"
+          :format="formatUTC"
+          :preview-format="formatUTC"
+          :enable-time-picker="false"
+          auto-apply
           class="input input-bordered input-md"
           data-test="date-input"
         />
@@ -116,10 +121,14 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore, useTeamStore } from '@/stores'
 import { maxLength } from '@vuelidate/validators'
 import { useQueryClient } from '@tanstack/vue-query'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const queryClient = useQueryClient()
+
+dayjs.extend(utc)
 
 const modal = ref(false)
 const hoursWorked = ref<{
@@ -129,7 +138,7 @@ const hoursWorked = ref<{
 }>({
   hoursWorked: undefined,
   memo: undefined,
-  dayWorked: new Date().toISOString().split('T')[0] // Default to today's date
+  dayWorked: dayjs().utc().startOf('day').toISOString() // Default to today's date
 })
 
 const openModal = () => {
@@ -173,6 +182,14 @@ const {
   .json()
 
 const errorMessage = ref<{ message: string } | null>(null)
+
+// Ensure the date picker displays the date in UTC in the input and preview
+// Accepts Date or string as some pickers may pass a Date instance to the formatter
+const formatUTC = (value: Date | string | null | undefined) => {
+  if (!value) return ''
+  // dayjs handles both Date and ISO string inputs
+  return dayjs(value).utc().format('YYYY-MM-DD [UTC]')
+}
 
 watch(addWageClaimError, async () => {
   if (addWageClaimError.value) {
