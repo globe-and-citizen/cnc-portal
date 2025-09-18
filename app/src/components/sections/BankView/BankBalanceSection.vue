@@ -58,8 +58,14 @@
     </div>
 
     <!-- Deposit Modal -->
-    <ModalComponent v-model="depositModal" data-test="deposit-modal">
+    <ModalComponent
+      v-model="depositModal"
+      data-test="deposit-modal"
+      @closeWithReset="handleDepositModalResetClose"
+      @closeWithoutReset="handleDepositModalNormalClose"
+    >
       <DepositBankForm
+        ref="depositFormRef"
         v-if="depositModal"
         @close-modal="() => (depositModal = false)"
         :bank-address="bankAddress"
@@ -67,8 +73,14 @@
     </ModalComponent>
 
     <!-- Transfer Modal -->
-    <ModalComponent v-model="transferModal" data-test="transfer-modal">
+    <ModalComponent
+      v-model="transferModal"
+      data-test="transfer-modal"
+      @closeWithReset="handleTransferModalResetClose"
+      @closeWithoutReset="handleTransferModalNormalClose"
+    >
       <TransferForm
+        ref="transferFormRef"
         v-if="transferModal"
         v-model="transferData"
         :tokens="getTokens()"
@@ -151,6 +163,8 @@ const { total, balances, isLoading } = useContractBalance(props.bankAddress)
 // Add refs for modals and form data
 const depositModal = ref(false)
 const transferModal = ref(false)
+const depositFormRef = ref<InstanceType<typeof DepositBankForm> | null>(null)
+const transferFormRef = ref<InstanceType<typeof TransferForm> | null>(null)
 const transferData = ref({
   address: { name: '', address: '' },
   token: { symbol: NETWORK.currencySymbol, balance: 0, tokenId: 'native' as TokenId },
@@ -266,4 +280,27 @@ const getTokens = () =>
   balances.value
     .map((b) => ({ symbol: b.token.symbol, balance: b.amount, tokenId: b.token.id }))
     .filter((b) => b.tokenId !== 'sher')
+
+// Modal close handlers
+const handleDepositModalResetClose = () => {
+  if (depositFormRef.value) {
+    depositFormRef.value.resetForm()
+  }
+  depositModal.value = false
+}
+
+const handleDepositModalNormalClose = () => {
+  depositModal.value = false
+}
+
+const handleTransferModalResetClose = () => {
+  if (transferFormRef.value) {
+    transferFormRef.value.resetForm()
+  }
+  transferModal.value = false
+}
+
+const handleTransferModalNormalClose = () => {
+  transferModal.value = false
+}
 </script>

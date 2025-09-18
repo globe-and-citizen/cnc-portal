@@ -26,8 +26,13 @@
 
     <ExpenseAccountTable />
 
-    <ModalComponent v-model="approveUsersModal">
+    <ModalComponent
+      v-model="approveUsersModal"
+      @closeWithReset="handleCloseWithReset"
+      @closeWithoutReset="handleCloseWithoutReset"
+    >
       <ApproveUsersForm
+        ref="approveFormRef"
         v-if="approveUsersModal"
         :form-data="teamMembers"
         :users="foundUsers"
@@ -43,7 +48,11 @@
       />
     </ModalComponent>
 
-    <ModalComponent v-model="confirmationModal">
+    <ModalComponent
+      v-model="confirmationModal"
+      @closeWithReset="confirmationModal = false"
+      @closeWithoutReset="confirmationModal = false"
+    >
       <ApproveExpenseSummaryForm
         v-if="confirmationModal"
         :budget-limit="approveData!"
@@ -174,6 +183,20 @@ const errorMessage = (error: {}, message: string) =>
   'reason' in error ? (error.reason as string) : message
 
 const isBodAction = () => false
+
+// ref for component instance
+const approveFormRef = ref<InstanceType<typeof ApproveUsersForm> | null>(null)
+
+const handleCloseWithReset = () => {
+  if (approveFormRef.value) {
+    approveFormRef.value.resetForm()
+  }
+  approveUsersModal.value = false
+}
+
+const handleCloseWithoutReset = () => {
+  approveUsersModal.value = false
+}
 //#region
 
 //#region Watchers

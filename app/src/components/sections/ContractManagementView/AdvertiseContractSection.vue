@@ -23,8 +23,15 @@
         </template>
         <TeamContracts />
       </CardComponent>
-      <ModalComponent v-model="showAdCampaignModal">
-        <CreateAddCampaign />
+      <ModalComponent
+        v-model="showAdCampaignModal"
+        @closeWithReset="handleCloseWithReset"
+        @closeWithoutReset="handleCloseWithoutReset"
+      >
+        <CreateAddCampaign
+          ref="campaignFormRef"
+          @closeAddCampaignModal="showAdCampaignModal = false"
+        />
       </ModalComponent>
     </div>
   </div>
@@ -44,4 +51,17 @@ const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 
 const showAdCampaignModal = ref(false)
+
+const campaignFormRef = ref<InstanceType<typeof CreateAddCampaign> | null>(null)
+
+const handleCloseWithReset = () => {
+  if (campaignFormRef.value) {
+    campaignFormRef.value.resetForm()
+  }
+  showAdCampaignModal.value = false
+}
+
+const handleCloseWithoutReset = () => {
+  showAdCampaignModal.value = false
+}
 </script>

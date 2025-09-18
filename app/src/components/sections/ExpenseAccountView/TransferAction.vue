@@ -10,8 +10,13 @@
     </ButtonUI>
 
     <teleport to="body">
-      <ModalComponent v-model="showModal">
+      <ModalComponent
+        v-model="showModal"
+        @closeWithReset="handleTransferModalResetClose"
+        @closeWithoutReset="handleTransferModalNormalClose"
+      >
         <TransferForm
+          ref="transferFormRef"
           v-if="showModal && getTokens([row], row.signature, balances).length > 0"
           v-model="transferData"
           :tokens="getTokens([row], row.signature, balances)"
@@ -21,15 +26,6 @@
           @transfer="
             async (data) => {
               await transferFromExpenseAccount(data.address.address, data.amount)
-            }
-          "
-          @vue:unmounted="
-            () => {
-              transferData = {
-                address: { name: '', address: '' },
-                token: { symbol: '', balance: 0, tokenId: '' as TokenId },
-                amount: '0'
-              }
             }
           "
           @closeModal="showModal = false"
@@ -71,6 +67,7 @@ const queryClient = useQueryClient()
 const showModal = ref(false)
 const tokenAmount = ref('')
 const tokenRecipient = ref('')
+const transferFormRef = ref<InstanceType<typeof TransferForm> | null>(null)
 const transferData = ref({
   address: { name: '', address: '' },
   token: { symbol: '', balance: 0, tokenId: '' as TokenId },
@@ -274,4 +271,16 @@ watch(approveError, () => {
   }
 })
 //#endregion
+
+// Modal close handlers
+const handleTransferModalResetClose = () => {
+  if (transferFormRef.value) {
+    transferFormRef.value.resetForm()
+  }
+  showModal.value = false
+}
+
+const handleTransferModalNormalClose = () => {
+  showModal.value = false
+}
 </script>
