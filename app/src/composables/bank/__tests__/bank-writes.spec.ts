@@ -53,7 +53,7 @@ const {
 })
 
 // Mock external dependencies
-vi.mock('../contracts/useContractWrites', () => ({
+vi.mock('@/composables/contracts/useContractWrites', () => ({
   useContractWrites: mockUseContractWrites
 }))
 
@@ -111,7 +111,7 @@ const MOCK_DATA = {
   chainId: 1,
   functionName: BANK_FUNCTION_NAMES.PAUSE,
   args: [] as readonly unknown[],
-  value: BigInt(0),
+  value: BigInt(1),
   options: {}
 } as const
 
@@ -125,7 +125,7 @@ const mockBaseWrites = {
   isSuccess: ref(false)
 }
 
-describe.skip('useBankWrites', () => {
+describe('useBankWrites', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseContractWrites.mockReturnValue(mockBaseWrites)
