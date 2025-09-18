@@ -56,9 +56,15 @@
       />
     </ModalComponent>
     <!-- Add Team Modal -->
-    <ModalComponent v-model="appStore.showAddTeamModal" v-if="appStore.showAddTeamModal">
+    <ModalComponent
+      v-model="appStore.showAddTeamModal"
+      v-if="appStore.showAddTeamModal"
+      @closeWithReset="handleAddTeamModalResetClose"
+      @closeWithoutReset="handleAddTeamModalNormalClose"
+    >
       <!-- May be return an event that will trigger team reload -->
       <AddTeamForm
+        ref="addTeamFormRef"
         @done="
           () => {
             appStore.showAddTeamModal = false
@@ -94,9 +100,24 @@ import { useCustomFetch } from './composables/useCustomFetch'
 import { useAccount } from '@wagmi/vue'
 import { useAuth } from './composables/useAuth'
 import { useAppStore } from './stores'
+import { useFormStore } from './stores/formStore'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
+const formStore = useFormStore()
+
+// references of type AddTeamForm
+const addTeamFormRef = ref<InstanceType<typeof AddTeamForm> | null>(null)
+
+// reset the form when closed with the cross
+const handleAddTeamModalResetClose = () => {
+  formStore.resetForm('addTeam')
+  appStore.showAddTeamModal = false
+}
+
+const handleAddTeamModalNormalClose = () => {
+  appStore.showAddTeamModal = false
+}
 
 const appStore = useAppStore()
 const { isDisconnected } = useAccount()
@@ -157,9 +178,3 @@ watch(isDisconnected, (value) => {
   }
 })
 </script>
-
-<style scoped>
-* {
-  /* border: 1px solid red; */
-}
-</style>
