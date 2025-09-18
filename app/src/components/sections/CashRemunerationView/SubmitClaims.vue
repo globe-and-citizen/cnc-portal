@@ -15,9 +15,7 @@
       <hr />
       <div class="flex flex-col gap-2">
         <label class="flex items-center">
-          <span class="w-full" data-test="hours-worked-label"
-            >Date {{ hoursWorked.dayWorked }}</span
-          >
+          <span class="w-full" data-test="hours-worked-label">Date</span>
         </label>
         <VueDatePicker
           v-model="hoursWorked.dayWorked"
