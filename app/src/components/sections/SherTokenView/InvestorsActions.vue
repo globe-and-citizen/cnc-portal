@@ -63,8 +63,12 @@
         <h4>Contract Address :</h4>
         <AddressToolTip :address="investorsAddress" v-if="investorsAddress" />
       </div>
-      <ModalComponent v-model="mintModal">
-        <MintForm v-if="mintModal" v-model="mintModal"></MintForm>
+      <ModalComponent
+        v-model="mintModal"
+        @closeWithReset="handleMintModalResetClose"
+        @closeWithoutReset="handleMintModalNormalClose"
+      >
+        <MintForm v-if="mintModal" v-model="mintModal" ref="mintFormRef"></MintForm>
       </ModalComponent>
       <ModalComponent v-model="distributeMintModal">
         <DistributeMintForm
@@ -77,9 +81,14 @@
           "
         ></DistributeMintForm>
       </ModalComponent>
-      <ModalComponent v-model="payDividendsModal">
+      <ModalComponent
+        v-model="payDividendsModal"
+        @closeWithReset="handlePayDividendsModalResetClose"
+        @closeWithoutReset="handlePayDividendsModalNormalClose"
+      >
         <PayDividendsForm
           v-if="payDividendsModal && teamStore.currentTeam"
+          ref="payDividendsFormRef"
           :loading="
             payDividendsLoading ||
             isConfirmingPayDividends ||
@@ -126,6 +135,8 @@ const {
 const mintModal = ref(false)
 const distributeMintModal = ref(false)
 const payDividendsModal = ref(false)
+const mintFormRef = ref<{ resetForm: () => void } | null>(null)
+const payDividendsFormRef = ref<{ resetForm: () => void } | null>(null)
 const emits = defineEmits(['refetchShareholders'])
 const { address: currentAddress } = useUserDataStore()
 
@@ -295,4 +306,30 @@ watch(errorInvestorsOwner, (value) => {
     addErrorToast('Error fetching investors owner')
   }
 })
+
+// Handler for modal close with reset (X button click)
+const handleMintModalResetClose = () => {
+  if (mintFormRef.value) {
+    mintFormRef.value.resetForm()
+  }
+  mintModal.value = false
+}
+
+// Handler for modal close without reset (clicking outside)
+const handleMintModalNormalClose = () => {
+  mintModal.value = false
+}
+
+// Handler for modal close with reset (X button click)
+const handlePayDividendsModalResetClose = () => {
+  if (payDividendsFormRef.value) {
+    payDividendsFormRef.value.resetForm()
+  }
+  payDividendsModal.value = false
+}
+
+// Handler for modal close without reset (clicking outside)
+const handlePayDividendsModalNormalClose = () => {
+  payDividendsModal.value = false
+}
 </script>

@@ -65,7 +65,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
 import { isAddress, parseUnits, type Address } from 'viem'
-import { onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
@@ -73,11 +73,16 @@ import { computed, watch } from 'vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import { log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
+import { useFormStore } from '@/stores/formStore'
 
-const amount = ref<number | null>(null)
-const input = ref<{ name: string; address: string }>({
-  name: '',
-  address: ''
+const formStore = useFormStore()
+const amount = computed({
+  get: () => formStore.mintAmount,
+  set: (value) => (formStore.mintAmount = value)
+})
+const input = computed({
+  get: () => formStore.mintInput,
+  set: (value) => (formStore.mintInput = value)
 })
 
 const mintModal = defineModel({ default: false })
@@ -165,5 +170,16 @@ watch(tokenSymbolError, (value) => {
     log.error('Error fetching token symbol', value)
     addErrorToast('Error fetching token symbol')
   }
+})
+
+// Function to reset the form
+const resetForm = () => {
+  formStore.resetForm('mint')
+  $v.value.$reset()
+}
+
+// Expose the resetForm function for parent component
+defineExpose({
+  resetForm
 })
 </script>

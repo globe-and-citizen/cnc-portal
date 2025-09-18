@@ -57,10 +57,15 @@
         </div>
       </template>
     </TableComponent>
-    <ModalComponent v-model="mintIndividualModal">
+    <ModalComponent
+      v-model="mintIndividualModal"
+      @closeWithReset="handleMintModalResetClose"
+      @closeWithoutReset="handleMintModalNormalClose"
+    >
       <MintForm
         v-if="mintIndividualModal"
         v-model="mintIndividualModal"
+        ref="mintFormRef"
         :memberInput="{
           name: getShareholderName(selectedShareholder!),
           address: selectedShareholder!
@@ -86,6 +91,7 @@ import UserComponent from '@/components/UserComponent.vue'
 import { useReadContract } from '@wagmi/vue'
 
 const mintIndividualModal = ref(false)
+const mintFormRef = ref<{ resetForm: () => void } | null>(null)
 const selectedShareholder = ref<Address | null>(null)
 
 const { addErrorToast } = useToastStore()
@@ -156,4 +162,17 @@ const columns = [
   { key: 'balance', label: 'Balance' },
   { key: 'actions', label: 'Actions', class: 'w-1/6 text-center' }
 ]
+
+// Handler for modal close with reset (X button click)
+const handleMintModalResetClose = () => {
+  if (mintFormRef.value) {
+    mintFormRef.value.resetForm()
+  }
+  mintIndividualModal.value = false
+}
+
+// Handler for modal close without reset (clicking outside)
+const handleMintModalNormalClose = () => {
+  mintIndividualModal.value = false
+}
 </script>

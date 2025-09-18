@@ -69,16 +69,20 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
 import { useToastStore } from '@/stores'
+import { useFormStore } from '@/stores/formStore'
 import type { Team } from '@/types'
 import useVuelidate from '@vuelidate/core'
 import { numeric, required } from '@vuelidate/validators'
 import { useBalance } from '@wagmi/vue'
 import { formatEther, parseEther, type Address } from 'viem'
 import { computed, onMounted, watch } from 'vue'
-import { ref } from 'vue'
 import BodAlert from '@/components/BodAlert.vue'
 
-const amount = ref<number | null>(null)
+const formStore = useFormStore()
+const amount = computed({
+  get: () => formStore.payDividendsAmount,
+  set: (value) => (formStore.payDividendsAmount = value)
+})
 const { addErrorToast } = useToastStore()
 
 const props = defineProps<{
@@ -135,5 +139,17 @@ watch(balanceError, () => {
 })
 onMounted(() => {
   fetchBalance()
+})
+
+// Function to reset the form
+const resetForm = () => {
+  console.log('PayDividendsForm: resetForm called - resetting form values')
+  formStore.resetForm('payDividends')
+  $v.value.$reset()
+}
+
+// Expose the resetForm function for parent component
+defineExpose({
+  resetForm
 })
 </script>
