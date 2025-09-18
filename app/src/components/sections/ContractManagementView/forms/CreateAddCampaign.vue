@@ -143,4 +143,14 @@ const viewContractCode = () => {
   const url = 'https://polygonscan.com/address/0x30625FE0E430C3cCc27A60702B79dE7824BE7fD5#code' // Replace with your desired URL
   window.open(url, '_blank')
 }
+
+const resetForm = () => {
+  costPerClick.value = null
+  costPerImpression.value = null
+}
+
+// Expose the reset function for the parent
+defineExpose({
+  resetForm
+})
 </script>
