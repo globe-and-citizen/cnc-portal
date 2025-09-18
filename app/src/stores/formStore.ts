@@ -5,7 +5,13 @@ import type { TeamInput } from '@/types'
 import type { TransferModel } from '@/components/forms/TransferForm.vue'
 
 // Interface pour identifier les différents types de formulaires
-export type FormType = 'addTeam' | 'depositBank' | 'transfer' | 'approveUsers'
+export type FormType =
+  | 'addTeam'
+  | 'depositBank'
+  | 'transfer'
+  | 'approveUsers'
+  | 'mint'
+  | 'payDividends'
 
 // Type pour les budget limits d'approbation
 export interface BudgetLimit {
@@ -56,10 +62,20 @@ export const useFormStore = defineStore('formStore', () => {
     2: null
   })
 
-  // État général pour tous les formulaires
+  // --- Mint Form ---
+  const mintInput = ref<{ name: string; address: string }>({
+    name: '',
+    address: ''
+  })
+  const mintAmount = ref<number | null>(null)
+
+  // --- Pay Dividends Form ---
+  const payDividendsAmount = ref<number | null>(null)
+
+  // step for multi-step forms
   const currentStep = ref(1)
 
-  // Fonction pour réinitialiser un formulaire spécifique
+  // function for resetting specific form
   const resetForm = (formType: FormType) => {
     switch (formType) {
       case 'addTeam':
@@ -99,6 +115,18 @@ export const useFormStore = defineStore('formStore', () => {
         approveValues.value = { 0: null, 1: null, 2: null }
         break
 
+      case 'mint':
+        mintInput.value = {
+          name: '',
+          address: ''
+        }
+        mintAmount.value = null
+        break
+
+      case 'payDividends':
+        payDividendsAmount.value = null
+        break
+
       default:
         console.error(`Type de formulaire inconnu: ${formType}`)
     }
@@ -125,6 +153,13 @@ export const useFormStore = defineStore('formStore', () => {
     approveDescription,
     approveSelectedOptions,
     approveValues,
+
+    // Mint form state
+    mintInput,
+    mintAmount,
+
+    // Pay Dividends form state
+    payDividendsAmount,
 
     // Common state
     currentStep,
