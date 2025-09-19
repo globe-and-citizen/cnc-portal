@@ -105,10 +105,10 @@ const createElection = async (electionData: OldProposal) => {
       electionData.title,
       electionData.description,
       dateToUnixTimestamp(electionData.startDate as Date) < dateNow
-        ? dateNow + 1000 * 60 // Start in 1 minute if start date is in the past
+        ? dateNow + 60 // Start in 1 minute if start date is in the past
         : dateToUnixTimestamp(electionData.startDate as Date),
       dateToUnixTimestamp(electionData.startDate as Date) < dateNow
-        ? dateNow + 1000 * 120 // End in 2 minutes if start date is in the past
+        ? dateNow + 120 // End in 2 minutes if start date is in the past
         : dateToUnixTimestamp(electionData.endDate as Date),
       electionData.winnerCount,
       electionData.candidates?.map((c) => c.candidateAddress) || [],
