@@ -6,14 +6,18 @@
         size="sm"
         variant="primary"
         outline
-        data-test="modal-close-button"
-        @click="handleCloseButtonClick"
+        @click="
+          () => {
+            toggleOpen = false
+            emit('reset')
+          }
+        "
         >✕</ButtonUI
       >
       <slot></slot>
     </div>
 
-    <form method="dialog" class="modal-backdrop" @click="handleBackdropClick">
+    <form method="dialog" class="modal-backdrop" @click="toggleOpen = false">
       <button>close</button>
     </form>
   </dialog>
@@ -28,41 +32,24 @@ const props = defineProps<{ modalWidth?: string }>()
 
 const emit = defineEmits<{
   reset: []
-  close: [fromBackdrop: boolean]
 }>()
 
 const width = computed(() => {
   return props.modalWidth || ''
 })
 
-const handleCloseButtonClick = () => {
-  console.log('ModalComponent: Close button clicked - emitting reset and close(false)')
-  toggleOpen.value = false
-  // Toujours réinitialiser quand on clique sur le bouton X
-  emit('reset')
-  emit('close', false)
-}
-
-const handleBackdropClick = () => {
-  console.log('ModalComponent: Backdrop clicked - emitting close(true)')
-  toggleOpen.value = false
-  // Ne pas réinitialiser quand on clique sur l'arrière-plan
-  emit('close', true)
-}
-
 const handleEscapePress = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     toggleOpen.value = false
-    // Treat Escape as clicking the backdrop (no reset)
-    emit('close', true)
   }
 }
 
 onMounted(() => {
   document.addEventListener('keydown', handleEscapePress)
 })
-
 onUnmounted(() => {
   document.removeEventListener('keydown', handleEscapePress)
 })
 </script>
+
+<style scoped></style>

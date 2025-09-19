@@ -58,9 +58,9 @@
     </div>
 
     <!-- Deposit Modal -->
-    <ModalComponent v-model="depositModal" data-test="deposit-modal">
+    <ModalComponent v-model="depositModal" data-test="deposit-modal" @reset="onReset">
       <DepositBankForm
-        v-if="depositModal"
+        ref="DepositBankFormRef"
         @close-modal="() => (depositModal = false)"
         :bank-address="bankAddress"
       />
@@ -113,6 +113,10 @@ import { useBodContract } from '@/composables/bod/'
 const props = defineProps<{
   bankAddress: Address
 }>()
+const DepositBankFormRef = ref<InstanceType<typeof DepositBankForm> | null>(null)
+function onReset() {
+  DepositBankFormRef.value?.reset()
+}
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
@@ -259,6 +263,14 @@ watch(bankOwner, (newOwner, oldOwner) => {
       transferModal.value = false
       addErrorToast('You are no longer the bank owner and cannot make transfers')
     }
+  }
+})
+
+// Watch for deposit modal closing to ensure form is reset
+watch(depositModal, (isOpen) => {
+  if (!isOpen) {
+    // Ensure form is reset when modal is closed
+    onReset()
   }
 })
 
