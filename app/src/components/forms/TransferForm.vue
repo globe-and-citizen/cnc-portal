@@ -1,4 +1,6 @@
 <template>
+  <pre>Model {{ model }}</pre>
+  <pre>tokens {{ tokens }}</pre>
   <h1 class="font-bold text-2xl">Transfer from {{ service }} Contract</h1>
   <h3 class="pt-4">Current contract balance: {{ model.token.balance }} {{ model.token.symbol }}</h3>
   <BodAlert v-if="isBodAction" />
@@ -19,7 +21,7 @@
       </div>
     </div>
     <TokenAmount
-      :tokens="tokenList"
+      :tokens="tokens"
       v-model:modelValue="model.amount"
       v-model:modelToken="selectedTokenId"
       :isLoading="props.loading"
@@ -48,23 +50,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { onMounted, watch } from 'vue'
 import { isAddress } from 'viem'
 import { required, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
-import { useCurrencyStore } from '@/stores/currencyStore'
-import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { ref } from 'vue'
 import BodAlert from '@/components/BodAlert.vue'
 import TokenAmount from './TokenAmount.vue'
-
-export interface Token {
-  symbol: string
-  balance: number
-  tokenId: TokenId
-}
+import type { TokenOption } from '@/types'
 
 export interface TransferModel {
   address: {
@@ -72,14 +67,14 @@ export interface TransferModel {
     address: string
     type?: 'member' | 'contract'
   }
-  token: Token
+  token: TokenOption
   amount: string
 }
 
 const props = withDefaults(
   defineProps<{
     loading: boolean
-    tokens: Token[]
+    tokens: TokenOption[]
     service: string
     isBodAction?: boolean
     expenseBalance?: number | null
@@ -99,20 +94,8 @@ const model = defineModel<TransferModel>({
 })
 
 const emit = defineEmits(['transfer', 'closeModal'])
-const currencyStore = useCurrencyStore()
 
-const selectedTokenId = ref<string>('USDC')
-// Token list derived from SUPPORTED_TOKENS
-const tokenList = computed(() =>
-  SUPPORTED_TOKENS.map((token) => ({
-    symbol: token.symbol,
-    tokenId: token.id,
-    name: token.name,
-    code: token.code, // Add the missing 'code' property
-    balance: props.tokens.find((b) => b.symbol === token.symbol)?.balance ?? 0,
-    price: currencyStore.getTokenPrice(token.id)
-  }))
-)
+const selectedTokenId = ref<string>('usdc')
 
 // watch selectedTokenId to update model.token
 watch(selectedTokenId, (newTokenId) => {

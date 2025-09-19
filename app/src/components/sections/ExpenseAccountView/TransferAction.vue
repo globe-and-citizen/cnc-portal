@@ -11,10 +11,11 @@
 
     <teleport to="body">
       <ModalComponent v-model="showModal">
+        <pre>{{ tokens }}</pre>
         <TransferForm
-          v-if="showModal && getTokens([row], row.signature, balances).length > 0"
+          v-if="showModal && tokens.length > 0"
           v-model="transferData"
-          :tokens="getTokens([row], row.signature, balances)"
+          :tokens="tokens"
           :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
           service="Expense Account"
           :expense-balance="expenseBalance"
@@ -89,6 +90,8 @@ const expenseBalance = computed(() => {
 const expenseAccountEip712Address = computed(() =>
   teamStore.getContractAddressByType('ExpenseAccountEIP712')
 )
+
+const tokens = computed(() => getTokens([props.row], props.row.signature, balances.value))
 //#endregion
 
 //#region Composables
