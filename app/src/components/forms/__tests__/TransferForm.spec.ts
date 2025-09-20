@@ -15,12 +15,24 @@ vi.mock('@/stores/currencyStore', async (importOriginal) => {
   }
 })
 const defaultTokens: TokenOption[] = [
-  { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' as TokenId, price: 2000, code: 'USD' },
+  {
+    symbol: NETWORK.currencySymbol,
+    balance: 100,
+    tokenId: 'native' as TokenId,
+    price: 2000,
+    code: 'USD'
+  },
   { symbol: 'USDC', balance: 50, tokenId: 'usdc' as TokenId, price: 1, code: 'USD' }
 ]
 const defaultModelValue = {
   address: { name: '', address: '' },
-  token: { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' as TokenId, price: 2000, code: 'USD' },
+  token: {
+    symbol: NETWORK.currencySymbol,
+    balance: 100,
+    tokenId: 'native' as TokenId,
+    price: 2000,
+    code: 'USD'
+  },
   amount: '0'
 }
 
