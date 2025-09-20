@@ -182,7 +182,7 @@ const tokens = computed(() => getTokens())
 
 const transferData: Ref<TransferModel> = ref({
   address: { name: '', address: '' },
-  token: tokens.value[0],
+  token: tokens.value[0] ?? null,
   amount: '0'
 })
 
