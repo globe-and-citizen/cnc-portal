@@ -1,10 +1,11 @@
 import { it, expect, describe, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import TransferForm, { type Token } from '../TransferForm.vue'
+import TransferForm from '../TransferForm.vue'
 import { NETWORK, type TokenId } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
+import type { TokenOption } from '@/types'
 
 vi.mock('@/stores/currencyStore', async (importOriginal) => {
   const original: object = await importOriginal()
@@ -13,13 +14,13 @@ vi.mock('@/stores/currencyStore', async (importOriginal) => {
     useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore() }))
   }
 })
-const defaultTokens: Token[] = [
-  { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' as TokenId },
-  { symbol: 'USDC', balance: 50, tokenId: 'usdc' as TokenId }
+const defaultTokens: TokenOption[] = [
+  { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' as TokenId, price: 2000, code: 'USD' },
+  { symbol: 'USDC', balance: 50, tokenId: 'usdc' as TokenId, price: 1, code: 'USD' }
 ]
 const defaultModelValue = {
   address: { name: '', address: '' },
-  token: { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' as TokenId },
+  token: { symbol: NETWORK.currencySymbol, balance: 100, tokenId: 'native' as TokenId, price: 2000, code: 'USD' },
   amount: '0'
 }
 

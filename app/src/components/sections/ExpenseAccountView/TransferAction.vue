@@ -25,11 +25,7 @@
           "
           @vue:unmounted="
             () => {
-              transferData = {
-                address: { name: '', address: '' },
-                token: { symbol: '', balance: 0, tokenId: '' as TokenId },
-                amount: '0'
-              }
+              transferData = createDefaultTransferData()
             }
           "
           @closeModal="showModal = false"
@@ -89,11 +85,15 @@ const queryClient = useQueryClient()
 const showModal = ref(false)
 const tokenAmount = ref('')
 const tokenRecipient = ref('')
-const transferData = ref({
+
+// Helper function to create default transfer data
+const createDefaultTransferData = () => ({
   address: { name: '', address: '' },
-  token: { symbol: '', balance: 0, tokenId: '' as TokenId },
+  token: { symbol: '', balance: 0, tokenId: 'usdc' as TokenId, price: 0, code: 'USD' },
   amount: '0'
 })
+
+const transferData = ref(createDefaultTransferData())
 const expenseBalance = computed(() => {
   const budgetData = props.row.data.budgetData as BudgetData[]
   const maxAmountData = budgetData.find((item) => item.budgetType === 1)?.value

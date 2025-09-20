@@ -60,6 +60,7 @@ import { ref } from 'vue'
 import BodAlert from '@/components/BodAlert.vue'
 import TokenAmount from './TokenAmount.vue'
 import type { TokenOption } from '@/types'
+import type { TokenId } from '@/constant'
 
 export interface TransferModel {
   address: {
@@ -87,7 +88,7 @@ const model = defineModel<TransferModel>({
   required: true,
   default: () => ({
     address: { name: '', address: '' },
-    token: { symbol: '', balance: 0, tokenId: '' },
+    token: { symbol: '', balance: 0, tokenId: 'usdc' as TokenId, price: 0, code: 'USD' },
     amount: '0'
   })
 })
