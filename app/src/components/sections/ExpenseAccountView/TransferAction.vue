@@ -11,7 +11,6 @@
 
     <teleport to="body">
       <ModalComponent v-model="showModal">
-        <pre>{{ tokens }}</pre>
         <TransferForm
           v-if="showModal && tokens.length > 0"
           v-model="transferData"
@@ -34,7 +33,25 @@
             }
           "
           @closeModal="showModal = false"
-        />
+        >
+          <template #header>
+            <h1 class="font-bold text-2xl">Transfer from Expenses Contract</h1>
+            <h3 class="pt-4">
+              Current contract balance: {{ transferData.token.balance }}
+              {{ transferData.token.symbol }}
+            </h3>
+            <h3 v-if="expenseBalance" class="pt-4">
+              Expense balance: {{ expenseBalance }} {{ transferData.token.symbol }}
+            </h3>
+          </template>
+
+          <template #label>
+            <span class="label-text">Transfer From</span>
+            <span class="label-text-alt"
+              >Limit: {{ balanceLimit }} {{ transferData.token.symbol }}
+            </span>
+          </template>
+        </TransferForm>
       </ModalComponent>
     </teleport>
   </div>
@@ -91,6 +108,11 @@ const expenseAccountEip712Address = computed(() =>
   teamStore.getContractAddressByType('ExpenseAccountEIP712')
 )
 
+// Retrun the minimum between balance and expenseBalance
+const balanceLimit = computed(() => {
+  if (expenseBalance.value === null) return transferData.value.token.balance
+  return Math.min(transferData.value.token.balance, expenseBalance.value)
+})
 const tokens = computed(() => getTokens([props.row], props.row.signature, balances.value))
 //#endregion
 
