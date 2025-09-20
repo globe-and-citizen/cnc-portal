@@ -1,6 +1,5 @@
 <!-- BankBalanceSection.vue -->
 <template>
-  <!-- <pre>{{ balances }}</pre> -->
   <CardComponent title="Balance">
     <div class="flex justify-between items-start">
       <div>
@@ -69,7 +68,6 @@
 
     <!-- Transfer Modal -->
     <ModalComponent v-model="transferModal" data-test="transfer-modal">
-      <!-- <pre>transferData{{ transferData }}</pre> -->
       <TransferForm
         v-if="transferModal"
         v-model="transferData"
@@ -187,14 +185,6 @@ const transferData: Ref<TransferModel> = ref({
   token: tokens.value[0],
   amount: '0'
 })
-
-watch(
-  transferData,
-  (newData) => {
-    console.log('Transfer Data Updated:', newData)
-  },
-  { immediate: true }
-)
 
 const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
   hash: transferHash
