@@ -9,7 +9,11 @@ export const getCurrentUserExpenses = (expenses: ExpenseResponse[], userAddress:
   return expenses.filter((expense) => expense.data.approvedAddress === userAddress)
 }
 
-export const getTokens = (expenses: TableRow[], signature: string, balances: TokenBalance[]): TokenOption[] => {
+export const getTokens = (
+  expenses: TableRow[],
+  signature: string,
+  balances: TokenBalance[]
+): TokenOption[] => {
   const tokenAddress = expenses.find((item) => item.signature === signature)?.data.tokenAddress
 
   const symbol = tokenSymbol(tokenAddress ?? '')
@@ -22,14 +26,14 @@ export const getTokens = (expenses: TableRow[], signature: string, balances: Tok
 
   return symbol && !isNaN(Number(balance))
     ? [
-      {
-        symbol,
-        balance: Number(balance),
-        tokenId: tokenId as TokenId,
-        price: balances.find((b) => b.token.id === tokenId)?.values['USD']?.price || 0,
-        code: balances.find((b) => b.token.id === tokenId)?.token.code || ''
-      }
-    ]
+        {
+          symbol,
+          balance: Number(balance),
+          tokenId: tokenId as TokenId,
+          price: balances.find((b) => b.token.id === tokenId)?.values['USD']?.price || 0,
+          code: balances.find((b) => b.token.id === tokenId)?.token.code || ''
+        }
+      ]
     : []
 }
 

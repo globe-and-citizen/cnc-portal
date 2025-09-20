@@ -1,4 +1,4 @@
-import type { TokenId } from "@/constant/index"
+import type { TokenId } from '@/constant/index'
 
 export interface TokenOption {
   symbol: string
