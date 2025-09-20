@@ -26,7 +26,7 @@
             v-if="bankAddress"
             variant="secondary"
             class="flex items-center gap-2"
-            @click="depositModal = true"
+            @click="depositModal = { mount: true, show: true }"
             data-test="deposit-button"
           >
             <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
@@ -58,10 +58,14 @@
     </div>
 
     <!-- Deposit Modal -->
-    <ModalComponent v-model="depositModal" data-test="deposit-modal" @reset="onReset">
+    <ModalComponent
+      v-model="depositModal.show"
+      v-if="depositModal.mount"
+      data-test="deposit-modal"
+      @reset="() => (depositModal = { mount: false, show: false })"
+    >
       <DepositBankForm
-        ref="DepositBankFormRef"
-        @close-modal="() => (depositModal = false)"
+        @close-modal="() => (depositModal = { mount: false, show: false })"
         :bank-address="bankAddress"
       />
     </ModalComponent>
@@ -113,10 +117,6 @@ import { useBodContract } from '@/composables/bod/'
 const props = defineProps<{
   bankAddress: Address
 }>()
-const DepositBankFormRef = ref<InstanceType<typeof DepositBankForm> | null>(null)
-function onReset() {
-  DepositBankFormRef.value?.reset()
-}
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
@@ -153,7 +153,11 @@ const isBankOwner = computed(() => bankOwner.value === userStore.address)
 const { total, balances, isLoading } = useContractBalance(props.bankAddress)
 
 // Add refs for modals and form data
-const depositModal = ref(false)
+const depositModal = ref({
+  mount: false,
+  show: false
+})
+
 const transferModal = ref(false)
 const transferData = ref({
   address: { name: '', address: '' },
@@ -263,14 +267,6 @@ watch(bankOwner, (newOwner, oldOwner) => {
       transferModal.value = false
       addErrorToast('You are no longer the bank owner and cannot make transfers')
     }
-  }
-})
-
-// Watch for deposit modal closing to ensure form is reset
-watch(depositModal, (isOpen) => {
-  if (!isOpen) {
-    // Ensure form is reset when modal is closed
-    onReset()
   }
 })
 
