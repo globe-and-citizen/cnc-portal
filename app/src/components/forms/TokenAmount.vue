@@ -43,7 +43,7 @@
         <SelectComponent
           v-model="selectedTokenId"
           :options="tokenList.map((token) => ({ label: token.symbol, value: token.tokenId }))"
-          :disabled="isLoading"
+          :disabled="isLoading || tokenList.length === 1"
           :format-value="(value: string) => (value === 'SepoliaETH' ? 'SepETH' : value)"
           aria-label="Select token"
         />
@@ -67,15 +67,7 @@ import { useVuelidate } from '@vuelidate/core'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
 import SelectComponent from '@/components/SelectComponent.vue'
 import { useStorage } from '@vueuse/core'
-
-interface TokenOption {
-  symbol: string
-  tokenId: string
-  name?: string
-  balance: number
-  price: number
-  code: string
-}
+import type { TokenOption } from '@/types'
 
 const props = defineProps<{
   tokens: TokenOption[]

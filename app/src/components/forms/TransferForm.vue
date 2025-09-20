@@ -1,15 +1,15 @@
 <template>
-  <h1 class="font-bold text-2xl">Transfer from {{ service }} Contract</h1>
-  <h3 class="pt-4">Current contract balance: {{ model.token.balance }} {{ model.token.symbol }}</h3>
+  <slot name="header">
+    <h3 class="pt-4">
+      Current contract balance: {{ model.token.balance }} {{ model.token.symbol }}
+    </h3>
+  </slot>
   <BodAlert v-if="isBodAction" />
-  <h3 v-if="expenseBalance" class="pt-4">
-    Expense balance: {{ expenseBalance }} {{ model.token.symbol }}
-  </h3>
 
   <div class="flex flex-col mt-4">
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
-    <div class="flex justify-end">
+    <div class="flex justify-end" v-if="$v.model.$error">
       <div
         class="pl-4 text-red-500 text-sm text-left"
         v-for="error of $v.model.$errors"
@@ -19,16 +19,18 @@
       </div>
     </div>
     <TokenAmount
-      :tokens="tokenList"
+      :tokens="tokens"
       v-model:modelValue="model.amount"
       v-model:modelToken="selectedTokenId"
       :isLoading="props.loading"
     >
       <template #label>
-        <span class="label-text">Transfer From</span>
-        <span class="label-text-alt"
-          >Balance: {{ model.token.balance }} {{ model.token.symbol }}
-        </span>
+        <slot name="label">
+          <span class="label-text">Transfer From</span>
+          <span class="label-text-alt"
+            >Balance: {{ model.token.balance }} {{ model.token.symbol }}
+          </span>
+        </slot>
       </template>
     </TokenAmount>
   </div>
@@ -48,23 +50,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { onMounted, watch } from 'vue'
 import { isAddress } from 'viem'
 import { required, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
-import { useCurrencyStore } from '@/stores/currencyStore'
-import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { ref } from 'vue'
 import BodAlert from '@/components/BodAlert.vue'
 import TokenAmount from './TokenAmount.vue'
-
-export interface Token {
-  symbol: string
-  balance: number
-  tokenId: TokenId
-}
+import type { TokenOption } from '@/types'
+import type { TokenId } from '@/constant'
 
 export interface TransferModel {
   address: {
@@ -72,15 +68,14 @@ export interface TransferModel {
     address: string
     type?: 'member' | 'contract'
   }
-  token: Token
+  token: TokenOption
   amount: string
 }
 
 const props = withDefaults(
   defineProps<{
     loading: boolean
-    tokens: Token[]
-    service: string
+    tokens: TokenOption[]
     isBodAction?: boolean
     expenseBalance?: number | null
   }>(),
@@ -93,26 +88,14 @@ const model = defineModel<TransferModel>({
   required: true,
   default: () => ({
     address: { name: '', address: '' },
-    token: { symbol: '', balance: 0, tokenId: '' },
+    token: { symbol: '', balance: 0, tokenId: 'usdc' as TokenId, price: 0, code: 'USD' },
     amount: '0'
   })
 })
 
 const emit = defineEmits(['transfer', 'closeModal'])
-const currencyStore = useCurrencyStore()
 
-const selectedTokenId = ref<string>('USDC')
-// Token list derived from SUPPORTED_TOKENS
-const tokenList = computed(() =>
-  SUPPORTED_TOKENS.map((token) => ({
-    symbol: token.symbol,
-    tokenId: token.id,
-    name: token.name,
-    code: token.code, // Add the missing 'code' property
-    balance: props.tokens.find((b) => b.symbol === token.symbol)?.balance ?? 0,
-    price: currencyStore.getTokenPrice(token.id)
-  }))
-)
+const selectedTokenId = ref<string>('usdc')
 
 // watch selectedTokenId to update model.token
 watch(selectedTokenId, (newTokenId) => {
