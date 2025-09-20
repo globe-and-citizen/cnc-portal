@@ -27,8 +27,7 @@ export const getTokens = (expenses: TableRow[], signature: string, balances: Tok
         balance: Number(balance),
         tokenId: tokenId as TokenId,
         price: balances.find((b) => b.token.id === tokenId)?.values['USD']?.price || 0,
-        code: balances.find((b) => b.token.id === tokenId)?.token.code || '',
-        nom: "nom vsds"
+        code: balances.find((b) => b.token.id === tokenId)?.token.code || ''
       }
     ]
     : []
