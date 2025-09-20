@@ -1,17 +1,15 @@
 <template>
-  <pre>Model {{ model }}</pre>
-  <pre>tokens {{ tokens }}</pre>
-  <h1 class="font-bold text-2xl">Transfer from {{ service }} Contract</h1>
-  <h3 class="pt-4">Current contract balance: {{ model.token.balance }} {{ model.token.symbol }}</h3>
+  <slot name="header">
+    <h3 class="pt-4">
+      Current contract balance: {{ model.token.balance }} {{ model.token.symbol }}
+    </h3>
+  </slot>
   <BodAlert v-if="isBodAction" />
-  <h3 v-if="expenseBalance" class="pt-4">
-    Expense balance: {{ expenseBalance }} {{ model.token.symbol }}
-  </h3>
 
   <div class="flex flex-col mt-4">
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
-    <div class="flex justify-end">
+    <div class="flex justify-end" v-if="$v.model.$error">
       <div
         class="pl-4 text-red-500 text-sm text-left"
         v-for="error of $v.model.$errors"
@@ -27,10 +25,12 @@
       :isLoading="props.loading"
     >
       <template #label>
-        <span class="label-text">Transfer From</span>
-        <span class="label-text-alt"
-          >Balance: {{ model.token.balance }} {{ model.token.symbol }}
-        </span>
+        <slot name="label">
+          <span class="label-text">Transfer From</span>
+          <span class="label-text-alt"
+            >Balance: {{ model.token.balance }} {{ model.token.symbol }}
+          </span>
+        </slot>
       </template>
     </TokenAmount>
   </div>
@@ -75,7 +75,6 @@ const props = withDefaults(
   defineProps<{
     loading: boolean
     tokens: TokenOption[]
-    service: string
     isBodAction?: boolean
     expenseBalance?: number | null
   }>(),
