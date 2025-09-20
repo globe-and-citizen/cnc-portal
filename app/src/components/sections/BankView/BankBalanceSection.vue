@@ -81,7 +81,15 @@
         @transfer="handleTransfer"
         @closeModal="() => (transferModal = false)"
         :is-bod-action="isBodAction"
-      />
+      >
+        <template #header>
+          <h1 class="font-bold text-2xl">Transfer from Bank Contract</h1>
+          <h3 class="pt-4">
+            Current contract balance: {{ transferData.token.balance }}
+            {{ transferData.token.symbol }}
+          </h3>
+        </template>
+      </TransferForm>
     </ModalComponent>
   </CardComponent>
 </template>
