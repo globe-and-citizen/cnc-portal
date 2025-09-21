@@ -77,7 +77,6 @@ const props = withDefaults(
     loading: boolean
     tokens: TokenOption[]
     isBodAction?: boolean
-    expenseBalance?: number | null
   }>(),
   {
     isBodAction: false
