@@ -111,7 +111,7 @@ const filteredMembers = computed(() => {
   const addressSearch = input.value.address.toLowerCase().trim()
 
   return teamStore.currentTeam.members.filter((member) => {
-    const nameMatch = nameSearch ? member.name.toLowerCase().includes(nameSearch) : true
+    const nameMatch = nameSearch ? member.name?.toLowerCase().includes(nameSearch) : true
     const addressMatch = addressSearch ? member.address.toLowerCase().includes(addressSearch) : true
     return nameMatch && addressMatch
   })
