@@ -105,8 +105,8 @@ export function useSafeSendTransaction() {
   // Success handling
   watch(isConfirmed, async (confirmed) => {
     if (confirmed && receipt.value) {
-      console.log('Info: useSafeSendTransaction: Transaction confirmed')
-      console.log('Info: useSafeSendTransaction: Start Invalidating queries')
+      console.log('Info: Transaction confirmed')
+      console.log('Info: Start Invalidating queries')
       await queryClient.invalidateQueries({
         queryKey: [
           'balance',
@@ -125,7 +125,7 @@ export function useSafeSendTransaction() {
           }
         ]
       })
-      console.log('Info: useSafeSendTransaction: Queries invalidation done, wait for updates')
+      console.log('Info: Queries invalidation done, wait for updates')
     }
   })
 
