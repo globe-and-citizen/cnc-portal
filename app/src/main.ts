@@ -14,7 +14,18 @@ import * as Sentry from '@sentry/vue'
 
 export function setupApp() {
   const app = createApp(App)
-  const queryClient = new QueryClient()
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        // Refetch every 20 seconds (20,000 ms)
+        refetchInterval: 20000,
+        // Optional: only refetch when the window is focused
+        refetchOnWindowFocus: true,
+        // Optional: retry on failure
+        retry: 2,
+      },
+    },
+  })
   const pinia = createPinia()
 
   app.use(pinia)
