@@ -227,6 +227,15 @@ const handleTransfer = async (data: {
     // Direct transfer (non-BOD action)
     transfer(transferConfig)
 
+    // TODO find a better way to handle this, we should use bank composable to handle this
+    // Wait for 10 seconds to ensure the transaction hash is available
+    await new Promise((resolve) => setTimeout(resolve, 10000))
+
+    console.log('Transfer initiated:', {
+      ...transferConfig,
+      hash: transferHash.value
+    })
+
     // Invalidate relevant queries
     const queryKey = isNativeToken
       ? ['balance', { address: props.bankAddress, chainId: chainId }]
