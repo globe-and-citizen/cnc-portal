@@ -1,12 +1,12 @@
 import { mount, VueWrapper } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
 import TokenAmount from '../TokenAmount.vue'
+import type { TokenOption } from '@/types'
+import type { TokenId } from '@/constant'
 
-type TokenOption = { label: string; value: string }
-
-const tokens = [
-  { symbol: 'ETH', tokenId: 'native', balance: 100, price: 2000, code: 'USD' },
-  { symbol: 'USDC', tokenId: 'usdc', balance: 5000, price: 1, code: 'USD' }
+const tokens: TokenOption[] = [
+  { symbol: 'ETH', tokenId: 'native' as TokenId, balance: 100, price: 2000, code: 'USD' },
+  { symbol: 'USDC', tokenId: 'usdc' as TokenId, balance: 5000, price: 1, code: 'USD' }
 ]
 
 const defaultProps = {
@@ -38,7 +38,7 @@ describe('TokenAmount.vue', () => {
   it('renders token options and balance', () => {
     const wrapper = createWrapper({ modelValue: '0' })
     const select = wrapper.findComponent({ name: 'SelectComponent' })
-    const options = select.props('options') as TokenOption[]
+    const options = select.props('options') as { label: string; value: string }[]
     expect(options.some((o) => o.label === 'ETH')).toBe(true)
     expect(options.some((o) => o.label === 'USDC')).toBe(true)
     expect(wrapper.text()).toContain('Balance: 100')

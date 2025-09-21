@@ -71,15 +71,22 @@
       <TransferForm
         v-if="transferModal"
         v-model="transferData"
-        :tokens="getTokens()"
+        :tokens="tokens"
         :loading="
           transferLoading || isConfirmingTransfer || isLoadingAddAction || isConfirmingAddAction
         "
-        service="Bank"
         @transfer="handleTransfer"
         @closeModal="() => (transferModal = false)"
         :is-bod-action="isBodAction"
-      />
+      >
+        <template #header>
+          <h1 class="font-bold text-2xl">Transfer from Bank Contract</h1>
+          <h3 class="pt-4">
+            Current contract balance: {{ transferData.token.balance }}
+            {{ transferData.token.symbol }}
+          </h3>
+        </template>
+      </TransferForm>
     </ModalComponent>
   </CardComponent>
 </template>
@@ -96,23 +103,32 @@ import {
   useChainId,
   useReadContract
 } from '@wagmi/vue'
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, type Ref } from 'vue'
 import { type Address, parseEther, encodeFunctionData, parseUnits, type Abi } from 'viem'
 import { useToastStore } from '@/stores'
 import { useUserDataStore } from '@/stores'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
-import TransferForm from '@/components/forms/TransferForm.vue'
+import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import BankABI from '@/artifacts/abi/bank.json'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import type { TokenId } from '@/constant'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useBodContract } from '@/composables/bod/'
+import type { TokenOption } from '@/types'
+import { waitForTransactionReceipt } from '@wagmi/core'
+import { config } from '@/wagmi.config'
 
 const props = defineProps<{
   bankAddress: Address
 }>()
+
+// Add refs for modals and form data
+const depositModal = ref(false)
+const transferModal = ref(false)
+
+const chainId = useChainId()
+const queryClient = useQueryClient()
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
@@ -132,8 +148,6 @@ const currency = useStorage('currency', {
   name: 'US Dollar',
   symbol: '$'
 })
-const queryClient = useQueryClient()
-const chainId = useChainId()
 
 // get the current owner of the bank
 const { data: bankOwner } = useReadContract({
@@ -147,22 +161,32 @@ const isBankOwner = computed(() => bankOwner.value === userStore.address)
 
 // Use the contract balance composable
 const { total, balances, isLoading } = useContractBalance(props.bankAddress)
-
-// Add refs for modals and form data
-const depositModal = ref(false)
-const transferModal = ref(false)
-const transferData = ref({
-  address: { name: '', address: '' },
-  token: { symbol: NETWORK.currencySymbol, balance: 0, tokenId: 'native' as TokenId },
-  amount: '0'
-})
-
 // Contract interactions for transfer
 const {
   data: transferHash,
   isPending: transferLoading,
-  writeContract: transfer
+  writeContractAsync: transfer
 } = useWriteContract()
+
+const getTokens = (): TokenOption[] =>
+  balances.value
+    .map((b) => ({
+      symbol: b.token.symbol,
+      balance: b.amount,
+      tokenId: b.token.id,
+      price: b.values['USD'].price || 0,
+      name: b.token.name,
+      code: b.token.code
+    }))
+    .filter((b) => b.tokenId !== 'sher')
+
+const tokens = computed(() => getTokens())
+
+const transferData: Ref<TransferModel> = ref({
+  address: { name: '', address: '' },
+  token: tokens.value[0] ?? null,
+  amount: '0'
+})
 
 const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
   hash: transferHash
@@ -204,7 +228,12 @@ const handleTransfer = async (data: {
     }
 
     // Direct transfer (non-BOD action)
-    transfer(transferConfig)
+    await transfer(transferConfig)
+    if (!transferHash.value) {
+      throw new Error('There is no receipt for this transaction')
+    }
+
+    await waitForTransactionReceipt(config, { hash: transferHash.value })
 
     // Invalidate relevant queries
     const queryKey = isNativeToken
@@ -249,21 +278,4 @@ watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
     })
   }
 })
-
-// Watch for changes in the bank owner
-watch(bankOwner, (newOwner, oldOwner) => {
-  if (newOwner && oldOwner && newOwner !== oldOwner) {
-    console.log('Bank owner changed from', oldOwner, 'to', newOwner)
-    // If the current user has lost ownership rights, close the transfer modal
-    if (oldOwner === userStore.address && newOwner !== userStore.address && transferModal.value) {
-      transferModal.value = false
-      addErrorToast('You are no longer the bank owner and cannot make transfers')
-    }
-  }
-})
-
-const getTokens = () =>
-  balances.value
-    .map((b) => ({ symbol: b.token.symbol, balance: b.amount, tokenId: b.token.id }))
-    .filter((b) => b.tokenId !== 'sher')
 </script>

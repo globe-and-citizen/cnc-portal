@@ -31,7 +31,10 @@ export function useBankWrites() {
   /**
    * Bank-specific query invalidation based on function name
    */
-  const invalidateBankQueries = async (functionName: BankFunctionName) => {
+  const invalidateBankQueries = async (
+    functionName: BankFunctionName,
+    args?: readonly unknown[]
+  ) => {
     if (!bankAddress.value) return
 
     const bankQueryKey = {
@@ -121,7 +124,10 @@ export function useBankWrites() {
         })
         // Also invalidate all readContract queries for this bank address
         await queryClient.invalidateQueries({
-          queryKey: ['readContract', bankQueryKey]
+          queryKey: [
+            'readContract',
+            { ...bankQueryKey, address: args ? (args[0] as `0x${string}`) : undefined }
+          ]
         })
         break
 
@@ -147,7 +153,14 @@ export function useBankWrites() {
       throw new Error(`Invalid bank function: ${functionName}`)
     }
 
-    return baseWrites.executeWrite(functionName, args, value ? unref(value) : undefined, options)
+    const result = await baseWrites.executeWrite(
+      functionName,
+      args,
+      value ? unref(value) : undefined,
+      options
+    )
+    await invalidateBankQueries(functionName, args)
+    return result
   }
 
   /**
