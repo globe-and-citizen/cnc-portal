@@ -1,67 +1,68 @@
 <template>
   <CardComponent title="Investor Actions">
     <div class="flex flex-col justify-around gap-2 w-full" data-test="investors-actions">
-      <div class="flex justify-end gap-2 w-full">
-        <div :class="{ tooltip: true }" data-tip="Coming soon">
-          <ButtonUI
-            variant="primary"
-            :disabled="true"
-            data-test="distribute-mint-button"
-            @click="distributeMintModal = true"
-          >
-            Distribute Mint {{ tokenSymbol }}
-          </ButtonUI>
+      <div class="flex items-center w-full">
+        <div class="flex gap-x-1 mr-auto mt-8">
+          <h4>Contract Address :</h4>
+          <AddressToolTip :address="investorsAddress" v-if="investorsAddress" />
         </div>
-        <div
-          :class="{ tooltip: tokenSymbol && currentAddress != investorsOwner }"
-          :data-tip="
-            tokenSymbol && currentAddress != investorsOwner
-              ? 'Only the token owner can mint tokens'
-              : null
-          "
-        >
-          <ButtonUI
-            variant="primary"
-            outline
-            data-test="mint-button"
-            :disabled="!tokenSymbol || currentAddress != investorsOwner"
-            @click="mintModal = true"
-          >
-            Mint {{ tokenSymbol }}
-          </ButtonUI>
-        </div>
-        <div
-          :class="{
-            tooltip:
-              (tokenSymbol && !isBodAction && currentAddress != bankOwner) ||
-              (tokenSymbol && (shareholders?.length ?? 0) === 0)
-          }"
-          :data-tip="
-            tokenSymbol && !isBodAction && currentAddress != bankOwner
-              ? 'Only the bank owner can pay dividends'
-              : tokenSymbol && (shareholders?.length ?? 0) === 0
-                ? 'No shareholders available to pay dividends'
+        <div class="flex gap-2">
+          <div :class="{ tooltip: true }" data-tip="Coming soon">
+            <ButtonUI
+              variant="primary"
+              :disabled="true"
+              data-test="distribute-mint-button"
+              @click="distributeMintModal = true"
+            >
+              Distribute Mint {{ tokenSymbol }}
+            </ButtonUI>
+          </div>
+          <div
+            :class="{ tooltip: tokenSymbol && currentAddress != investorsOwner }"
+            :data-tip="
+              tokenSymbol && currentAddress != investorsOwner
+                ? 'Only the token owner can mint tokens'
                 : null
-          "
-        >
-          <ButtonUI
-            variant="primary"
-            data-test="pay-dividends-button"
-            @click="payDividendsModal = true"
-            :disabled="
-              !tokenSymbol ||
-              (!isBodAction && currentAddress != bankOwner) ||
-              (shareholders?.length ?? 0) === 0
             "
           >
-            Pay Dividends
-          </ButtonUI>
+            <ButtonUI
+              variant="primary"
+              outline
+              data-test="mint-button"
+              :disabled="!tokenSymbol || currentAddress != investorsOwner"
+              @click="mintModal = true"
+            >
+              Mint {{ tokenSymbol }}
+            </ButtonUI>
+          </div>
+          <div
+            :class="{
+              tooltip:
+                (tokenSymbol && !isBodAction && currentAddress != bankOwner) ||
+                (tokenSymbol && (shareholders?.length ?? 0) === 0)
+            }"
+            :data-tip="
+              tokenSymbol && !isBodAction && currentAddress != bankOwner
+                ? 'Only the bank owner can pay dividends'
+                : tokenSymbol && (shareholders?.length ?? 0) === 0
+                  ? 'No shareholders available to pay dividends'
+                  : null
+            "
+          >
+            <ButtonUI
+              variant="primary"
+              data-test="pay-dividends-button"
+              @click="payDividendsModal = true"
+              :disabled="
+                !tokenSymbol ||
+                (!isBodAction && currentAddress != bankOwner) ||
+                (shareholders?.length ?? 0) === 0
+              "
+            >
+              Pay Dividends
+            </ButtonUI>
+          </div>
         </div>
-      </div>
-
-      <div class="flex gap-x-1 transform -translate-y-8">
-        <h4>Contract Address :</h4>
-        <AddressToolTip :address="investorsAddress" v-if="investorsAddress" />
       </div>
       <ModalComponent v-model="mintModal">
         <MintForm v-if="mintModal" v-model="mintModal"></MintForm>
