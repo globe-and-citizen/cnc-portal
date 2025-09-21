@@ -41,7 +41,7 @@
             <ButtonUI
               variant="secondary"
               class="flex items-center gap-2"
-              @click="transferModal = true"
+              @click="transferModal = { mount: true, show: true }"
               :disabled="!isBankOwner && !isBodAction"
               data-test="transfer-button"
             >
@@ -71,9 +71,13 @@
     </ModalComponent>
 
     <!-- Transfer Modal -->
-    <ModalComponent v-model="transferModal" data-test="transfer-modal">
+    <ModalComponent
+      v-model="transferModal.show"
+      v-if="transferModal.mount"
+      data-test="transfer-modal"
+      @reset="() => (transferModal = { mount: false, show: false })"
+    >
       <TransferForm
-        v-if="transferModal"
         v-model="transferData"
         :tokens="tokens"
         :loading="
@@ -81,7 +85,7 @@
         "
         service="Bank"
         @transfer="handleTransfer"
-        @closeModal="() => (transferModal = false)"
+        @closeModal="() => (transferModal = { mount: false, show: false })"
         :is-bod-action="isBodAction"
       >
         <template #header>
@@ -168,7 +172,10 @@ const depositModal = ref({
   show: false
 })
 
-const transferModal = ref(false)
+const transferModal = ref({
+  mount: false,
+  show: false
+})
 
 // Contract interactions for transfer
 const {
@@ -261,14 +268,14 @@ const handleTransfer = async (data: {
 watch(isActionAdded, (added) => {
   if (added) {
     addSuccessToast('Action added successfully, waiting for confirmation')
-    transferModal.value = false
+    transferModal.value = { mount: false, show: false }
   }
 })
 
 watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Transferred successfully')
-    transferModal.value = false
+    transferModal.value = { mount: false, show: false }
 
     //refresh bank owner data after a successful transfer
     queryClient.invalidateQueries({

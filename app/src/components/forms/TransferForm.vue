@@ -36,7 +36,17 @@
   </div>
 
   <div class="modal-action justify-between mt-4">
-    <ButtonUI variant="error" outline @click="$emit('closeModal')">Cancel</ButtonUI>
+    <ButtonUI
+      variant="error"
+      outline
+      @click="
+        () => {
+          reset()
+          $emit('closeModal')
+        }
+      "
+      >Cancel</ButtonUI
+    >
     <ButtonUI
       variant="primary"
       @click="submitForm"
@@ -94,6 +104,22 @@ const model = defineModel<TransferModel>({
 })
 
 const emit = defineEmits(['transfer', 'closeModal'])
+
+// Reset function to clear form state
+function reset() {
+  model.value = {
+    address: { name: '', address: '' },
+    token:
+      props.tokens.length > 0
+        ? props.tokens[0]
+        : { symbol: '', balance: 0, tokenId: 'usdc' as TokenId, price: 0, code: 'USD' },
+    amount: '0'
+  }
+  selectedTokenId.value = 'usdc'
+  if ($v.value) $v.value.$reset()
+}
+
+defineExpose({ reset })
 
 const selectedTokenId = ref<string>('usdc')
 
