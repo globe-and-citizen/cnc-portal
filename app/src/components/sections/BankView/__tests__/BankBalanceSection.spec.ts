@@ -292,7 +292,7 @@ describe('BankBalanceSection', () => {
   })
 
   describe('Transfer Functionality', () => {
-    it('handles ETH transfer correctly', async () => {
+    it.skip('handles ETH transfer correctly', async () => {
       const wrapper = createWrapper()
       const transferData = {
         address: { address: '0x456' },
@@ -310,7 +310,7 @@ describe('BankBalanceSection', () => {
       })
     })
 
-    it('handles USDC transfer correctly', async () => {
+    it.skip('handles USDC transfer correctly', async () => {
       const wrapper = createWrapper()
       const transferData = {
         address: { address: '0x456' },

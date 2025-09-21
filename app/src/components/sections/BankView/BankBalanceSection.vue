@@ -75,7 +75,6 @@
         :loading="
           transferLoading || isConfirmingTransfer || isLoadingAddAction || isConfirmingAddAction
         "
-        service="Bank"
         @transfer="handleTransfer"
         @closeModal="() => (transferModal = false)"
         :is-bod-action="isBodAction"
@@ -117,6 +116,8 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useBodContract } from '@/composables/bod/'
 import type { TokenOption } from '@/types'
+import { waitForTransactionReceipt } from '@wagmi/core'
+import { config } from '@/wagmi.config'
 
 const props = defineProps<{
   bankAddress: Address
@@ -128,6 +129,7 @@ const transferModal = ref(false)
 
 const chainId = useChainId()
 const queryClient = useQueryClient()
+
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 const {
@@ -163,7 +165,7 @@ const { total, balances, isLoading } = useContractBalance(props.bankAddress)
 const {
   data: transferHash,
   isPending: transferLoading,
-  writeContract: transfer
+  writeContractAsync: transfer
 } = useWriteContract()
 
 const getTokens = (): TokenOption[] =>
@@ -226,7 +228,12 @@ const handleTransfer = async (data: {
     }
 
     // Direct transfer (non-BOD action)
-    transfer(transferConfig)
+    await transfer(transferConfig)
+    if (!transferHash.value) {
+      throw new Error('There is no receipt for this transaction')
+    }
+
+    await waitForTransactionReceipt(config, { hash: transferHash.value })
 
     // Invalidate relevant queries
     const queryKey = isNativeToken

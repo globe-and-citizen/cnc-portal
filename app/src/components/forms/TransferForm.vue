@@ -77,7 +77,6 @@ const props = withDefaults(
     loading: boolean
     tokens: TokenOption[]
     isBodAction?: boolean
-    expenseBalance?: number | null
   }>(),
   {
     isBodAction: false
@@ -95,7 +94,7 @@ const model = defineModel<TransferModel>({
 
 const emit = defineEmits(['transfer', 'closeModal'])
 
-const selectedTokenId = ref<string>('usdc')
+const selectedTokenId = ref<TokenId>('usdc')
 
 // watch selectedTokenId to update model.token
 watch(selectedTokenId, (newTokenId) => {

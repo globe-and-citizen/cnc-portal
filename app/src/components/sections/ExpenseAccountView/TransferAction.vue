@@ -16,8 +16,6 @@
           v-model="transferData"
           :tokens="tokens"
           :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
-          service="Expense Account"
-          :expense-balance="expenseBalance"
           @transfer="
             async (data) => {
               await transferFromExpenseAccount(data.address.address, data.amount)
