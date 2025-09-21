@@ -71,11 +71,12 @@
     </ModalComponent>
 
     <!-- Transfer Modal -->
+
     <ModalComponent
       v-model="transferModal.show"
       v-if="transferModal.mount"
       data-test="transfer-modal"
-      @reset="() => (transferModal = { mount: false, show: false })"
+      @reset="resetTransferValues"
     >
       <TransferForm
         v-model="transferData"
@@ -85,7 +86,7 @@
         "
         service="Bank"
         @transfer="handleTransfer"
-        @closeModal="() => (transferModal = { mount: false, show: false })"
+        @closeModal="resetTransferValues"
         :is-bod-action="isBodAction"
       >
         <template #header>
@@ -198,11 +199,19 @@ const getTokens = (): TokenOption[] =>
 
 const tokens = computed(() => getTokens())
 
-const transferData: Ref<TransferModel> = ref({
-  address: { name: '', address: '' },
-  token: tokens.value[0] ?? null,
-  amount: '0'
-})
+const initialTransferDataValue = (): TransferModel => {
+  return {
+    address: { name: '', address: '' },
+    token: tokens.value[0] ?? null,
+    amount: '0'
+  }
+}
+const transferData: Ref<TransferModel> = ref(initialTransferDataValue())
+
+const resetTransferValues = () => {
+  transferModal.value = { mount: false, show: false }
+  transferData.value = initialTransferDataValue()
+}
 
 const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
   hash: transferHash
