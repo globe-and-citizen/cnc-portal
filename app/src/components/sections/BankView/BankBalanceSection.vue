@@ -75,7 +75,6 @@
         :loading="
           transferLoading || isConfirmingTransfer || isLoadingAddAction || isConfirmingAddAction
         "
-        service="Bank"
         @transfer="handleTransfer"
         @closeModal="() => (transferModal = false)"
         :is-bod-action="isBodAction"
