@@ -22,9 +22,9 @@ export function setupApp() {
         // Optional: only refetch when the window is focused
         refetchOnWindowFocus: true,
         // Optional: retry on failure
-        retry: 2,
-      },
-    },
+        retry: 2
+      }
+    }
   })
   const pinia = createPinia()
 
