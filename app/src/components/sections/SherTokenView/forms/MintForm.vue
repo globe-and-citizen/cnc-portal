@@ -81,7 +81,6 @@ const input = ref<{ name: string; address: string }>({
 })
 const emit = defineEmits(['close-modal'])
 function reset() {
-  // remets les champs du formulaire
   amount.value = null
 
   if (!props.disabled && !props.memberInput) {
@@ -90,7 +89,6 @@ function reset() {
       address: ''
     }
   } else if (props.memberInput) {
-    // si le parent a passé memberInput, restaure-le
     input.value = props.memberInput
   }
 
