@@ -122,6 +122,8 @@
   </div>
 
   <div class="modal-action justify-center">
+    <ButtonUI outline data-test="cancel-button" variant="error" @click="clear"> Cancel </ButtonUI>
+
     <ButtonUI
       :loading="loadingApprove"
       :disabled="loadingApprove"
@@ -131,7 +133,6 @@
     >
       Approve
     </ButtonUI>
-    <ButtonUI outline data-test="cancel-button" variant="error" @click="clear"> Cancel </ButtonUI>
   </div>
 </template>
 <script setup lang="ts">
@@ -165,6 +166,22 @@ const budgetTypes = {
   1: 'Maximum Amount',
   2: 'Max Amount per Transaction'
 }
+
+function reset() {
+  limitValue.value = ''
+  budgetLimitType.value = null
+  date.value = ''
+  description.value = ''
+  // Reset multi limit selections and values
+  Object.keys(selectedOptions).forEach((key) => {
+    selectedOptions[key as unknown as 0 | 1 | 2] = false
+    values[key as unknown as 0 | 1 | 2] = null
+  })
+  if (v$.value) {
+    v$.value.$reset()
+  }
+}
+defineExpose({ reset })
 
 // Reactive states
 const selectedOptions = reactive<{ [key in 0 | 1 | 2]: boolean }>({ 0: false, 1: false, 2: false })
