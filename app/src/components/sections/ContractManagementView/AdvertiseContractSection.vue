@@ -15,7 +15,7 @@
               variant="primary"
               :enabled="teamStore.currentTeam?.ownerAddress == userStore.address"
               data-test="createAddCampaign"
-              @click="showAdCampaignModal = true"
+              @click="showAdCampaignModal = { mount: true, show: true }"
             >
               Deploy Advertise Contract
             </ButtonUI>
@@ -24,13 +24,12 @@
         <TeamContracts />
       </CardComponent>
       <ModalComponent
-        v-model="showAdCampaignModal"
-        @reset="resetFormValues"
-        @close="handleModalClose"
+        v-model="showAdCampaignModal.show"
+        v-if="showAdCampaignModal.mount"
+        @reset="() => (showAdCampaignModal = { mount: false, show: false })"
       >
         <CreateAddCampaign
-          :reset-key="resetKey"
-          @closeAddCampaignModal="showAdCampaignModal = false"
+          @closeAddCampaignModal="showAdCampaignModal = { mount: false, show: false }"
         />
       </ModalComponent>
     </div>
@@ -50,20 +49,5 @@ import CreateAddCampaign from '@/components/sections/ContractManagementView/form
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 
-const showAdCampaignModal = ref(false)
-const resetKey = ref(0)
-
-// function to reset form values
-const resetFormValues = () => {
-  resetKey.value++
-}
-
-// Function to handle modal close
-const handleModalClose = (fromBackdrop: boolean) => {
-  console.log('Modal closed from backdrop:', fromBackdrop)
-  // Only reset form when explicitly closed by the button, not from backdrop
-  if (!fromBackdrop) {
-    resetFormValues()
-  }
-}
+const showAdCampaignModal = ref({ mount: false, show: false })
 </script>

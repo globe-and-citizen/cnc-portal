@@ -85,6 +85,12 @@ const bankAddress = teamStore.getContractAddressByType('Bank')
 const costPerClick = ref<string | null>(null)
 const costPerImpression = ref<string | null>(null)
 
+function reset() {
+  costPerClick.value = null
+  costPerImpression.value = null
+}
+defineExpose({ reset })
+
 //import composable..
 // Import composable
 const {
@@ -102,8 +108,6 @@ watch(contractAddress, async (newAddress) => {
     await teamStore.fetchTeam(teamStore.currentTeam.id)
   }
 })
-
-const props = defineProps<{ resetKey: number }>()
 
 const addContractToTeam = async (teamId: string, address: string, deployer: string) => {
   try {
@@ -141,18 +145,6 @@ const deployAdCampaign = async () => {
     }
     addErrorToast(`${errorMessage}`)
   }
-}
-watch(
-  () => props.resetKey,
-  () => {
-    resetForm()
-  }
-)
-
-// function to reset form values
-const resetForm = () => {
-  costPerClick.value = null
-  costPerImpression.value = null
 }
 
 const viewContractCode = () => {
