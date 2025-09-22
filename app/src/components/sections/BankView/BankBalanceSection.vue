@@ -84,7 +84,6 @@
         :loading="
           transferLoading || isConfirmingTransfer || isLoadingAddAction || isConfirmingAddAction
         "
-        service="Bank"
         @transfer="handleTransfer"
         @closeModal="resetTransferValues"
         :is-bod-action="isBodAction"
@@ -120,12 +119,14 @@ import { useUserDataStore } from '@/stores'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
-import BankABI from '@/artifacts/abi/bank.json'
+import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useBodContract } from '@/composables/bod/'
 import type { TokenOption } from '@/types'
+import { waitForTransactionReceipt } from '@wagmi/core'
+import { config } from '@/wagmi.config'
 
 const props = defineProps<{
   bankAddress: Address
@@ -135,6 +136,7 @@ const props = defineProps<{
 
 const chainId = useChainId()
 const queryClient = useQueryClient()
+
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 const {
@@ -145,7 +147,7 @@ const {
   isActionAdded
 } = useBodContract()
 
-const { isBodAction } = useBodIsBodAction(props.bankAddress as Address, BankABI as Abi)
+const { isBodAction } = useBodIsBodAction(props.bankAddress as Address, BANK_ABI as Abi)
 
 const userStore = useUserDataStore()
 const currency = useStorage('currency', {
@@ -157,7 +159,7 @@ const currency = useStorage('currency', {
 // get the current owner of the bank
 const { data: bankOwner } = useReadContract({
   address: props.bankAddress,
-  abi: BankABI,
+  abi: BANK_ABI,
   functionName: 'owner'
 })
 
@@ -182,7 +184,7 @@ const transferModal = ref({
 const {
   data: transferHash,
   isPending: transferLoading,
-  writeContract: transfer
+  writeContractAsync: transfer
 } = useWriteContract()
 
 const getTokens = (): TokenOption[] =>
@@ -218,7 +220,7 @@ const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
 })
 
 const handleTransfer = async (data: {
-  address: { address: string }
+  address: { address: Address }
   token: { symbol: string }
   amount: string
 }) => {
@@ -227,17 +229,18 @@ const handleTransfer = async (data: {
     const isNativeToken = data.token.symbol === NETWORK.currencySymbol
     const transferAmount = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
 
-    const transferConfig = {
-      address: props.bankAddress,
-      abi: BankABI,
-      functionName: isNativeToken ? 'transfer' : 'transferToken',
-      args: isNativeToken
-        ? [data.address.address, transferAmount]
-        : [USDC_ADDRESS as Address, data.address.address, transferAmount]
-    }
-
     if (isBodAction.value) {
-      const encodedData = encodeFunctionData(transferConfig)
+      const encodedData = isNativeToken
+        ? encodeFunctionData({
+            abi: BANK_ABI,
+            functionName: 'transfer',
+            args: [data.address.address, transferAmount]
+          })
+        : encodeFunctionData({
+            abi: BANK_ABI,
+            functionName: 'transferToken',
+            args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
+          })
 
       const description = JSON.stringify({
         text: `Transfer ${data.amount} ${data.token.symbol} to ${data.address.address}`,
@@ -253,7 +256,26 @@ const handleTransfer = async (data: {
     }
 
     // Direct transfer (non-BOD action)
-    transfer(transferConfig)
+    if (isNativeToken) {
+      await transfer({
+        address: props.bankAddress,
+        abi: BANK_ABI,
+        functionName: 'transfer',
+        args: [data.address.address, transferAmount]
+      })
+    } else {
+      await transfer({
+        address: props.bankAddress,
+        abi: BANK_ABI,
+        functionName: 'transferToken',
+        args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
+      })
+    }
+    if (!transferHash.value) {
+      throw new Error('There is no receipt for this transaction')
+    }
+
+    await waitForTransactionReceipt(config, { hash: transferHash.value })
 
     // Invalidate relevant queries
     const queryKey = isNativeToken

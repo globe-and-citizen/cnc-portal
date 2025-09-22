@@ -3,8 +3,6 @@ import { useToastStore } from '@/stores'
 import { useBankWrites } from './writes'
 import { BANK_FUNCTION_NAMES } from './types'
 import { useValidation, amountToWei } from './utils'
-import { watch } from 'vue'
-
 /**
  * Bank contract write functions - combines admin, transfers, and tipping
  *
@@ -49,15 +47,7 @@ export function useBankWritesFunctions() {
   // Transfer functions
   const depositToken = (tokenAddress: Address, amount: string) => {
     if (!validateAddress(tokenAddress, 'token address') || !validateAmount(amount)) return
-    // const amountInWei = amountToWei(amount)
 
-    watch(
-      () => writes.isConfirmed,
-      (confirmed) => {
-        console.log('Function Deposit is confirmed ', confirmed.value, writes.receipt.value)
-      },
-      { immediate: true }
-    )
     return writes.executeWrite(BANK_FUNCTION_NAMES.DEPOSIT_TOKEN, [
       tokenAddress,
       BigInt(Number(amount) * 1e6)

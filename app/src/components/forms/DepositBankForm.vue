@@ -194,9 +194,7 @@ const submitForm = async () => {
         const currentAllowance = allowance.value ? allowance.value.toString() : 0n
         if (Number(currentAllowance) < Number(tokenAmount)) {
           currentStep.value = 2
-          console.log('Will write the approval')
           await writeApprove(props.bankAddress, tokenAmount)
-          console.log('Approval donne: waiting for the approval receipt')
           await waitForCondition(() => tokenApprovalReceipt.value?.status === 'success', 15000)
 
           // wait for transaction receipt
@@ -204,12 +202,6 @@ const submitForm = async () => {
         }
         currentStep.value = 3
         await depositToken(selectedToken.value.token.address as Address, amount.value)
-        // await writeTokenDeposit({
-        //   address: props.bankAddress,
-        //   abi: BankABI,
-        //   functionName: 'depositToken',
-        //   args: [selectedToken.value.token.address as Address, tokenAmount]
-        // })
         await waitForCondition(() => depositReceipt.value?.status === 'success', 15000)
 
         amount.value = ''

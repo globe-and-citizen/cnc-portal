@@ -5,15 +5,15 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "msedge",
+      "name": "Vue.js: Brave Browser",
+      "type": "chrome",
       "request": "launch",
-      "name": "Launch Edge against localhost",
       "url": "http://localhost:5173",
-      "webRoot": "${workspaceFolder}/app",
-      "userDataDir": false,
-      "runtimeArgs": [
-        "--profile-directory=Default" // ou "Profile 1" si MetaMask est installé là
-      ]
+      "webRoot": "${workspaceFolder}/app/src",
+      "runtimeExecutable": "/snap/bin/brave",
+      "userDataDir": "${workspaceFolder}/.vscode/brave-debug",
+
+      "runtimeArgs": ["--remote-debugging-port=9222"]
     }
   ]
 }

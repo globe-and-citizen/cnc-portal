@@ -1,3 +1,5 @@
+import type { Abi } from 'viem'
+
 export const PROPOSALS_ABI = [
   {
     inputs: [],
@@ -523,4 +525,4 @@ export const PROPOSALS_ABI = [
     stateMutability: 'nonpayable',
     type: 'function'
   }
-] as const
+] as const satisfies Abi

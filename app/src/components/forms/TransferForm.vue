@@ -87,7 +87,6 @@ const props = withDefaults(
     loading: boolean
     tokens: TokenOption[]
     isBodAction?: boolean
-    expenseBalance?: number | null
   }>(),
   {
     isBodAction: false
@@ -104,6 +103,7 @@ const model = defineModel<TransferModel>({
 })
 
 const emit = defineEmits(['transfer', 'closeModal'])
+
 
 // Reset function to clear form state
 function reset() {
@@ -122,6 +122,9 @@ function reset() {
 defineExpose({ reset })
 
 const selectedTokenId = ref<string>('usdc')
+
+
+
 
 // watch selectedTokenId to update model.token
 watch(selectedTokenId, (newTokenId) => {
