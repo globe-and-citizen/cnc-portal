@@ -2,7 +2,7 @@
 
 This template should help get you started developing with Vue 3 in Vite.
 
-TODO: employee documentation, and update V2
+TODO: employee documentation, and update V2 V3
 
 ## Recommended IDE Setup
 
