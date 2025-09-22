@@ -104,7 +104,6 @@ const model = defineModel<TransferModel>({
 
 const emit = defineEmits(['transfer', 'closeModal'])
 
-
 // Reset function to clear form state
 function reset() {
   model.value = {
@@ -122,9 +121,6 @@ function reset() {
 defineExpose({ reset })
 
 const selectedTokenId = ref<string>('usdc')
-
-
-
 
 // watch selectedTokenId to update model.token
 watch(selectedTokenId, (newTokenId) => {

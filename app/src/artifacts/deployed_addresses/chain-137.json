@@ -26,9 +26,7 @@
   "VestingProxyModule#ProxyAdmin": "0xCD759489bA4fc908812f1857324898443AEc154a",
   "VestingModule#Vesting": "0x28738Ef76CEB8F14d19392De1274BCD14A7B83Fe",
   "BodUpgradeModule#Beacon_v2": "0x6196a223EbFF5B65ABC640802fd614d5b3a2B2EC",
-
   "BodUpgradeModule#BoardOfDirectors_v2": "0x1B76FEcAFb00Ed5Cbd1409fA7DcAf8578f3a865F",
   "InvestorsV1UpgradeModule#Beacon_v2": "0x7edC7a6e851ba4938aC0AFBF6811B9Ed01222897",
   "InvestorsV1UpgradeModule#InvestorV1_v2": "0xf9Ec52EeA66F735E9376bCbBBdf536b983dba1C2"
 }
-
