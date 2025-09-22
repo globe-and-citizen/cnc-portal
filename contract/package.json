@@ -10,6 +10,7 @@
     "format": "prettier --write .",
     "moveConstants": "nodemon scripts/moveConstants.ts",
     "mc": "nodemon scripts/moveConstants.ts",
+    "update-abi": "ts-node scripts/copy-abi.ts",
     "format-check": "npx prettier --check ."
   },
   "devDependencies": {
