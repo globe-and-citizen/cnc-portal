@@ -32,9 +32,7 @@ if (!fs.existsSync(destinationDir)) {
 
 // Helper function to convert contract name to kebab-case filename
 function toKebabCase(str: string): string {
-  return str
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .toLowerCase()
+  return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
 }
 
 // Helper function to convert contract name to constant name
@@ -67,7 +65,7 @@ function findContractArtifact(contractName: string): string | null {
 // Function to copy and convert a single contract ABI
 function copyContractAbi(contractName: string): void {
   const artifactPath = findContractArtifact(contractName)
-  
+
   if (!artifactPath) {
     console.warn(`Warning: Could not find artifact for contract ${contractName}`)
     return
@@ -77,7 +75,7 @@ function copyContractAbi(contractName: string): void {
     // Read the compiled artifact
     const artifactContent = fs.readFileSync(artifactPath, 'utf8')
     const artifact = JSON.parse(artifactContent)
-    
+
     if (!artifact.abi) {
       console.warn(`Warning: No ABI found in artifact for contract ${contractName}`)
       return
@@ -87,7 +85,7 @@ function copyContractAbi(contractName: string): void {
     const constantName = toConstantName(contractName)
     const fileName = toKebabCase(contractName)
     const abiContent = JSON.stringify(artifact.abi, null, 2)
-    
+
     const tsContent = `import type { Abi } from "viem";
 
 export const ${constantName} = ${abiContent} as const satisfies Abi;
@@ -96,7 +94,7 @@ export const ${constantName} = ${abiContent} as const satisfies Abi;
     // Write to destination file
     const destFilePath = path.join(destinationDir, `${fileName}.ts`)
     fs.writeFileSync(destFilePath, tsContent, 'utf8')
-    
+
     console.log(`✓ Generated ${destFilePath}`)
   } catch (error) {
     console.error(`Error processing contract ${contractName}:`, error)
