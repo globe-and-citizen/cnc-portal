@@ -211,14 +211,20 @@ describe('BankBalanceSection', () => {
     const wrapper = createWrapper()
     const depositButton = wrapper.find('[data-test="deposit-button"]')
     await depositButton.trigger('click')
-    expect(wrapper.vm.depositModal).toBe(true)
+    expect(wrapper.vm.depositModal).toStrictEqual({
+      mount: true,
+      show: true
+    })
   })
 
   it('shows transfer modal on transfer button click', async () => {
     const wrapper = createWrapper()
     const transferButton = wrapper.find('[data-test="transfer-button"]')
     await transferButton.trigger('click')
-    expect(wrapper.vm.transferModal).toBe(true)
+    expect(wrapper.vm.transferModal).toStrictEqual({
+      mount: true,
+      show: true
+    })
   })
 
   describe('Watch Handlers', () => {
@@ -272,7 +278,10 @@ describe('BankBalanceSection', () => {
 
       await transferButton.trigger('click')
 
-      expect(wrapper.vm.transferModal).toBe(true)
+      expect(wrapper.vm.transferModal).toStrictEqual({
+        mount: true,
+        show: true
+      })
       const modal = wrapper.find('[data-test="transfer-modal"]')
       expect(modal.exists()).toBe(true)
     })
@@ -285,7 +294,10 @@ describe('BankBalanceSection', () => {
 
       await depositButton.trigger('click')
 
-      expect(wrapper.vm.depositModal).toBe(true)
+      expect(wrapper.vm.depositModal).toStrictEqual({
+        mount: true,
+        show: true
+      })
       const modal = wrapper.find('[data-test="deposit-modal"]')
       expect(modal.exists()).toBe(true)
     })
@@ -377,7 +389,10 @@ describe('BankBalanceSection', () => {
       mockUseWaitForTransactionReceipt.isLoading.value = false
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.vm.transferModal).toBe(false)
+      expect(wrapper.vm.transferModal).toStrictEqual({
+        mount: false,
+        show: false
+      })
     })
   })
 })
