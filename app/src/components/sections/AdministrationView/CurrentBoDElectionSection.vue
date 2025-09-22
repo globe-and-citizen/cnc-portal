@@ -108,26 +108,23 @@ const createElection = async (electionData: OldProposal) => {
       addErrorToast('Elections contract address not found')
       return
     }
+
+    const dateToUnixTimestamp = (date: Date) => Math.floor(date.getTime() / 1000)
+    const dateNow = dateToUnixTimestamp(new Date())
+
     const args = [
       electionData.title,
       electionData.description,
-      Math.floor((electionData.startDate as Date).getTime() / 1000),
-      Math.floor((electionData.endDate as Date).getTime() / 1000),
+      dateToUnixTimestamp(electionData.startDate as Date) < dateNow
+        ? dateNow + 60 // Start in 1 minute if start date is in the past
+        : dateToUnixTimestamp(electionData.startDate as Date),
+      dateToUnixTimestamp(electionData.startDate as Date) < dateNow
+        ? dateNow + 60 + 60 // End 1 minute after adjusted start time if start date is in the past
+        : dateToUnixTimestamp(electionData.endDate as Date),
       electionData.winnerCount,
       electionData.candidates?.map((c) => c.candidateAddress) || [],
       teamStore.currentTeam?.members.map((m) => m.address) || []
     ]
-
-    // const data = encodeFunctionData({
-    //   abi: ElectionABI,
-    //   functionName: 'createElection',
-    //   args
-    // })
-
-    // await estimateGas(config, {
-    //   to: electionsAddress.value,
-    //   data
-    // })
 
     await simulateContract(config, {
       address: electionsAddress.value,

@@ -58,6 +58,13 @@
               data-test="winnerCountInput"
             />
           </div>
+          <div
+            class="pl-4 text-red-500 text-sm w-full text-left"
+            v-for="error of $v.proposal.winnerCount.$errors"
+            :key="error.$uid"
+          >
+            {{ error.$message }}
+          </div>
 
           <div class="mb-4">
             <label class="input input-bordered flex items-center gap-2 input-md mt-2">
@@ -130,7 +137,7 @@
 <script setup lang="ts">
 import type { OldProposal, User } from '@/types'
 import { ref, onMounted, onUnmounted } from 'vue'
-import { required, minLength, requiredIf, helpers } from '@vuelidate/validators'
+import { required, minLength, requiredIf, helpers, minValue } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
@@ -200,6 +207,12 @@ const rules = {
       afterStart: helpers.withMessage('End date must be later than start date: ', (value) => {
         return (value as Date) > (newProposalInput.value?.startDate as Date)
       })
+    },
+    winnerCount: {
+      minValue: minValue(3),
+      onlyOdd: helpers.withMessage('Number of directors must be an odd number: ', (value) => {
+        return Number(value) % 2 === 1
+      })
     }
   }
 }
@@ -213,7 +226,6 @@ const submitForm = () => {
       candidateAddress: user.address || ''
     })
   }
-  console.log('newProposalInput: ', newProposalInput.value)
   $v.value.$touch()
   if ($v.value.$invalid) return
   emits('createProposal', newProposalInput.value)
