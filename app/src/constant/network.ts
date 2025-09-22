@@ -33,6 +33,10 @@ export const getNetwork = (): Network => {
     }
   }
 
-  if (checkNetwork(network)) return network
+  if (checkNetwork(network))
+    return {
+      ...network,
+      rpcUrl: import.meta.env.VITE_APP_RPC_URL ? import.meta.env.VITE_APP_RPC_URL : network.rpcUrl
+    }
   else return networks['sepolia']
 }
