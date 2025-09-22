@@ -165,7 +165,7 @@ npm run start
 
 ## Contribution guidelines
 
-Make sure you run the following commands before submitting your PR:
+Make sure you run the following theses commands before submitting your PR:
 
 - /app
 
