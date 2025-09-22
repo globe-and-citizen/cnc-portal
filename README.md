@@ -20,6 +20,7 @@ The Crypto Native Corporation Portal (CNC Portal) has the potential to be an ext
     - [Frontend](#frontend)
       - [Constants](#constants)
       - [Environment variables](#environment-variables-1)
+      - [App end-to-end testing](#app-end-to-end-testing)
   - [Running the application](#running-the-application)
     - [1- Run Docker containers](#1--run-docker-containers)
     - [2- Run locally](#2--run-locally)
