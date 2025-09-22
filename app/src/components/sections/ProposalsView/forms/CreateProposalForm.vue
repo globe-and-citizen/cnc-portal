@@ -98,7 +98,17 @@
   </div>
 
   <div class="modal-action">
-    <ButtonUI variant="error" outline @click="emit('closeModal')">Cancel</ButtonUI>
+    <ButtonUI
+      variant="error"
+      outline
+      @click="
+        () => {
+          reset()
+          emit('closeModal')
+        }
+      "
+      >Cancel</ButtonUI
+    >
     <ButtonUI
       variant="primary"
       @click="handleSubmit"
@@ -154,6 +164,20 @@ const afterStartDate = (value: Date | undefined) => {
   if (!value || !proposal.value.startDate) return false
   return value > proposal.value.startDate
 }
+
+function reset() {
+  proposal.value = {
+    title: undefined,
+    description: undefined,
+    type: 'Financial',
+    startDate: undefined,
+    endDate: undefined
+  }
+  if ($v.value) {
+    $v.value.$reset()
+  }
+}
+defineExpose({ reset })
 
 // Validation rules
 const rules = {
