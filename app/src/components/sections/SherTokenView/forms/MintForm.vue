@@ -79,7 +79,26 @@ const input = ref<{ name: string; address: string }>({
   name: '',
   address: ''
 })
+const emit = defineEmits(['close-modal'])
+function reset() {
+  // remets les champs du formulaire
+  amount.value = null
 
+  if (!props.disabled && !props.memberInput) {
+    input.value = {
+      name: '',
+      address: ''
+    }
+  } else if (props.memberInput) {
+    // si le parent a passé memberInput, restaure-le
+    input.value = props.memberInput
+  }
+
+  // reset des validations Vuelidate
+  if ($v.value) $v.value.$reset()
+}
+
+defineExpose({ reset })
 const mintModal = defineModel({ default: false })
 const props = defineProps<{
   memberInput?: { name: string; address: string }
@@ -150,6 +169,8 @@ watch(isConfirmingMint, async (isConfirming, wasConfirming) => {
     })
 
     mintModal.value = false
+    reset()
+    emit('close-modal')
   }
 })
 

@@ -25,7 +25,7 @@
             outline
             data-test="mint-button"
             :disabled="!tokenSymbol || currentAddress != investorsOwner"
-            @click="mintModal = true"
+            @click="mintModal = { mount: true, show: true }"
           >
             Mint {{ tokenSymbol }}
           </ButtonUI>
@@ -47,7 +47,7 @@
           <ButtonUI
             variant="primary"
             data-test="pay-dividends-button"
-            @click="payDividendsModal = true"
+            @click="payDividendsModal = { mount: true, show: true }"
             :disabled="
               !tokenSymbol ||
               (!isBodAction && currentAddress != bankOwner) ||
@@ -63,8 +63,15 @@
         <h4>Contract Address :</h4>
         <AddressToolTip :address="investorsAddress" v-if="investorsAddress" />
       </div>
-      <ModalComponent v-model="mintModal">
-        <MintForm v-if="mintModal" v-model="mintModal"></MintForm>
+      <ModalComponent
+        v-model="mintModal.show"
+        v-if="mintModal.mount"
+        @reset="() => (mintModal = { mount: false, show: false })"
+      >
+        <MintForm
+          v-model="mintModal.show"
+          @close-modal="() => (mintModal = { mount: false, show: false })"
+        ></MintForm>
       </ModalComponent>
       <ModalComponent v-model="distributeMintModal">
         <DistributeMintForm
@@ -77,7 +84,11 @@
           "
         ></DistributeMintForm>
       </ModalComponent>
-      <ModalComponent v-model="payDividendsModal">
+      <ModalComponent
+        v-model="payDividendsModal.show"
+        v-if="payDividendsModal.mount"
+        @reset="() => (payDividendsModal = { mount: false, show: false })"
+      >
         <PayDividendsForm
           v-if="payDividendsModal && teamStore.currentTeam"
           :loading="
@@ -90,6 +101,7 @@
           :team="teamStore.currentTeam"
           @submit="executePayDividends"
           :is-bod-action="isBodAction"
+          @close-modal="() => (payDividendsModal = { mount: false, show: false })"
         ></PayDividendsForm>
       </ModalComponent>
     </div>
@@ -123,9 +135,15 @@ const {
   isActionAdded
 } = useBodContract()
 
-const mintModal = ref(false)
+const mintModal = ref({
+  mount: false,
+  show: false
+})
 const distributeMintModal = ref(false)
-const payDividendsModal = ref(false)
+const payDividendsModal = ref({
+  mount: false,
+  show: false
+})
 const emits = defineEmits(['refetchShareholders'])
 const { address: currentAddress } = useUserDataStore()
 
@@ -258,13 +276,13 @@ watch(isConfirmingDistributeMint, (isConfirming, wasConfirming) => {
 watch(isConfirmingPayDividends, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isSuccessPayDividends.value) {
     addSuccessToast('Paid dividends successfully')
-    payDividendsModal.value = false
+    payDividendsModal.value = { mount: false, show: false }
   }
 })
 
 watch(isActionAdded, (isAdded) => {
   if (isAdded) {
-    payDividendsModal.value = false
+    payDividendsModal.value = { mount: false, show: false }
   }
 })
 
