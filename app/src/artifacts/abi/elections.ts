@@ -1,3 +1,5 @@
+import type { Abi } from 'viem'
+
 export const ELECTIONS_ABI = [
   {
     inputs: [],
@@ -265,6 +267,30 @@ export const ELECTIONS_ABI = [
     ],
     name: 'VoteSubmitted',
     type: 'event'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      },
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address'
+      }
+    ],
+    name: '_voteCounts',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
   },
   {
     inputs: [],
@@ -679,4 +705,4 @@ export const ELECTIONS_ABI = [
     stateMutability: 'nonpayable',
     type: 'function'
   }
-] as const
+] as const satisfies Abi

@@ -3,14 +3,14 @@ import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import { type Abi } from 'viem'
 import { log, parseError } from '@/utils'
-import ExpenseAccountAbi from '@/artifacts/abi/expense-account-eip712.json'
-import BankAbi from '@/artifacts/abi/bank.json'
+import { EXPENSE_ACCOUNT_EIP712_ABI as ExpenseAccountAbi } from '@/artifacts/abi/expense-account-eip712'
+import { BANK_ABI as BankAbi } from '@/artifacts/abi/bank'
 
-import CashRemunerationAbi from '@/artifacts/abi/CashRemunerationEIP712.json'
-import ElectionsAbi from '@/artifacts/abi/elections.json'
-import { INVESTOR_ABI as InvestorsAbi } from '@/artifacts/abi/investorsV1'
+import { CASH_REMUNERATION_EIP712_ABI as CashRemunerationAbi } from '@/artifacts/abi/cash-remuneration-eip712'
+import { ELECTIONS_ABI as ElectionsAbi } from '@/artifacts/abi/elections'
+import { INVESTOR_V1_ABI as InvestorsAbi } from '@/artifacts/abi/investor-v1'
 import { PROPOSALS_ABI as ProposalsAbi } from '@/artifacts/abi/proposals'
-import VotingAbi from '@/artifacts/abi/voting.json'
+import { VOTING_ABI as VotingAbi } from '@/artifacts/abi/voting'
 
 export type FormattedAction = (Action & {
   requestedBy: User
