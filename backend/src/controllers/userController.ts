@@ -117,7 +117,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
       take: pageSize,
     });
     const totalUsers = await prisma.user.count();
-    await prisma.$disconnect();
     return res.status(200).json({
       users,
       totalUsers,
@@ -154,11 +153,8 @@ export const searchUser = async (req: Request, res: Response) => {
       },
     });
 
-    await prisma.$disconnect();
-
     return res.status(200).json({ success: true, users });
   } catch (error) {
-    await prisma.$disconnect();
     return errorResponse(500, error, res);
   }
 };

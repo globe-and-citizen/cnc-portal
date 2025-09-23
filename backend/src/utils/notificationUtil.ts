@@ -25,8 +25,6 @@ export const addNotification = async (
           }
         })
       }))
-  
-      await prisma.$disconnect()
 
       return notifications
   };

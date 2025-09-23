@@ -17,9 +17,6 @@ const getNotification = async (req: Request, res: Response) => {
       },
     });
 
-    //clean up
-    await prisma.$disconnect();
-
     //check if user is authorized to get notification
     if (
       notifications.length < 1 ||
