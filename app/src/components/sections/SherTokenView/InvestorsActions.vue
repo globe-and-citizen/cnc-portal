@@ -314,4 +314,22 @@ watch(errorInvestorsOwner, (value) => {
     addErrorToast('Error fetching investors owner')
   }
 })
+
+watch(
+  () => payDividendsModal.value.show,
+  (newShow) => {
+    if (!newShow) {
+      payDividendsModal.value = { mount: false, show: false }
+    }
+  }
+)
+
+watch(
+  () => mintModal.value.show,
+  (newShow) => {
+    if (!newShow) {
+      mintModal.value = { mount: false, show: false }
+    }
+  }
+)
 </script>
