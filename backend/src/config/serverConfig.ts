@@ -123,9 +123,6 @@ class Server {
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
     this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-    this.app.get(this.paths.apidocs, (req, res) => {
-      res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));
-    });
     // The error handler must be registered before any other error middleware and after all controllers
     Sentry.setupExpressErrorHandler(this.app);
 
