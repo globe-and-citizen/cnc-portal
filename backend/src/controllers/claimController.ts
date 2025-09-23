@@ -33,28 +33,6 @@ export const addClaim = async (req: Request, res: Response) => {
 
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
-  // Validating the claim data
-  // Checking required data
-  let parametersError: string[] = [];
-  if (!body.teamId) parametersError.push("Missing teamId");
-  if (!body.hoursWorked) parametersError.push("Missing hoursWorked");
-  if (!body.memo) parametersError.push("Missing memo");
-  if (isNaN(hoursWorked)) parametersError.push("Invalid hoursWorked");
-  if (memo && memo.trim().length === 0) {
-    parametersError.push("Invalid memo");
-  }
-  if (memo && memo.trim().split(/\s+/).length > 200) {
-    parametersError.push("memo is too long, max 200 words");
-  }
-  if (isNaN(teamId)) parametersError.push("Invalid teamId");
-  if (hoursWorked <= 0)
-    parametersError.push(
-      "Invalid hoursWorked, hoursWorked must be greater than 0"
-    );
-  if (parametersError.length > 0) {
-    return errorResponse(400, parametersError.join(", "), res);
-  }
-
   try {
     // Get user current
     const wage = await prisma.wage.findFirst({
@@ -152,11 +130,6 @@ export const getClaims = async (req: Request, res: Response) => {
   const memberAddress = req.query.memberAddress as string | undefined;
 
   try {
-    // Validate teamId
-    if (isNaN(teamId)) {
-      return errorResponse(400, "Invalid or missing teamId", res);
-    }
-
     // Check if the user is a member of the provided team
     if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
       return errorResponse(403, "Caller is not a member of the team", res);
@@ -212,14 +185,6 @@ export const updateClaim = async (req: Request, res: Response) => {
 
   // Action is only able to have this values: sign, withdraw, disable, enable, reject
   const action = req.query.action as string;
-  const validActions = ["sign", "withdraw", "disable", "enable", "reject"];
-  if (!validActions.includes(action)) {
-    return errorResponse(
-      400,
-      `Invalid action. Allowed actions are: ${validActions.join(", ")}`,
-      res
-    );
-  }
 
   // Prepare the data according to the action
   let data: Prisma.ClaimUpdateInput = {};

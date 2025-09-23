@@ -11,14 +11,6 @@ export const ratePerHourSchema = z.object({
   amount: z.coerce.number().positive("Rate amount must be positive"),
 });
 
-// Wage creation request body
-export const setWageBodySchema = z.object({
-  teamId: teamIdSchema,
-  userAddress: addressSchema,
-  maximumHoursPerWeek: z.coerce.number().int().positive("Maximum hours per week must be a positive integer"),
-  ratePerHour: z.array(ratePerHourSchema).min(1, "At least one rate must be provided"),
-});
-
 // Claim creation request body
 export const addClaimBodySchema = z.object({
   teamId: teamIdSchema,

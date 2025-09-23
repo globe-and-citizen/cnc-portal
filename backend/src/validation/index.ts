@@ -11,6 +11,7 @@ export * from "./schemas/user";
 export * from "./schemas/claim";
 export * from "./schemas/contract";
 export * from "./schemas/expense";
+export * from "./schemas/wage";
 
 // Type inference helpers
 export type { z } from "zod";
