@@ -15,7 +15,7 @@
               variant="primary"
               :enabled="teamStore.currentTeam?.ownerAddress == userStore.address"
               data-test="createAddCampaign"
-              @click="showAdCampaignModal = true"
+              @click="showAdCampaignModal = { mount: true, show: true }"
             >
               Deploy Advertise Contract
             </ButtonUI>
@@ -23,8 +23,14 @@
         </template>
         <TeamContracts />
       </CardComponent>
-      <ModalComponent v-model="showAdCampaignModal">
-        <CreateAddCampaign />
+      <ModalComponent
+        v-model="showAdCampaignModal.show"
+        v-if="showAdCampaignModal.mount"
+        @reset="() => (showAdCampaignModal = { mount: false, show: false })"
+      >
+        <CreateAddCampaign
+          @closeAddCampaignModal="showAdCampaignModal = { mount: false, show: false }"
+        />
       </ModalComponent>
     </div>
   </div>
@@ -43,5 +49,5 @@ import CreateAddCampaign from '@/components/sections/ContractManagementView/form
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 
-const showAdCampaignModal = ref(false)
+const showAdCampaignModal = ref({ mount: false, show: false })
 </script>

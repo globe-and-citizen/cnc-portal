@@ -26,7 +26,7 @@
             v-if="bankAddress"
             variant="secondary"
             class="flex items-center gap-2"
-            @click="depositModal = true"
+            @click="depositModal = { mount: true, show: true }"
             data-test="deposit-button"
           >
             <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
@@ -41,7 +41,7 @@
             <ButtonUI
               variant="secondary"
               class="flex items-center gap-2"
-              @click="transferModal = true"
+              @click="transferModal = { mount: true, show: true }"
               :disabled="!isBankOwner && !isBodAction"
               data-test="transfer-button"
             >
@@ -58,25 +58,34 @@
     </div>
 
     <!-- Deposit Modal -->
-    <ModalComponent v-model="depositModal" data-test="deposit-modal">
+    <ModalComponent
+      v-model="depositModal.show"
+      v-if="depositModal.mount"
+      data-test="deposit-modal"
+      @reset="() => (depositModal = { mount: false, show: false })"
+    >
       <DepositBankForm
-        v-if="depositModal"
-        @close-modal="() => (depositModal = false)"
+        @close-modal="() => (depositModal = { mount: false, show: false })"
         :bank-address="bankAddress"
       />
     </ModalComponent>
 
     <!-- Transfer Modal -->
-    <ModalComponent v-model="transferModal" data-test="transfer-modal">
+
+    <ModalComponent
+      v-model="transferModal.show"
+      v-if="transferModal.mount"
+      data-test="transfer-modal"
+      @reset="resetTransferValues"
+    >
       <TransferForm
-        v-if="transferModal"
         v-model="transferData"
         :tokens="tokens"
         :loading="
           transferLoading || isConfirmingTransfer || isLoadingAddAction || isConfirmingAddAction
         "
         @transfer="handleTransfer"
-        @closeModal="() => (transferModal = false)"
+        @closeModal="resetTransferValues"
         :is-bod-action="isBodAction"
       >
         <template #header>
@@ -124,8 +133,6 @@ const props = defineProps<{
 }>()
 
 // Add refs for modals and form data
-const depositModal = ref(false)
-const transferModal = ref(false)
 
 const chainId = useChainId()
 const queryClient = useQueryClient()
@@ -161,6 +168,18 @@ const isBankOwner = computed(() => bankOwner.value === userStore.address)
 
 // Use the contract balance composable
 const { total, balances, isLoading } = useContractBalance(props.bankAddress)
+
+// Add refs for modals and form data
+const depositModal = ref({
+  mount: false,
+  show: false
+})
+
+const transferModal = ref({
+  mount: false,
+  show: false
+})
+
 // Contract interactions for transfer
 const {
   data: transferHash,
@@ -182,11 +201,19 @@ const getTokens = (): TokenOption[] =>
 
 const tokens = computed(() => getTokens())
 
-const transferData: Ref<TransferModel> = ref({
-  address: { name: '', address: '' },
-  token: tokens.value[0] ?? null,
-  amount: '0'
-})
+const initialTransferDataValue = (): TransferModel => {
+  return {
+    address: { name: '', address: '' },
+    token: tokens.value[0] ?? null,
+    amount: '0'
+  }
+}
+const transferData: Ref<TransferModel> = ref(initialTransferDataValue())
+
+const resetTransferValues = () => {
+  transferModal.value = { mount: false, show: false }
+  transferData.value = initialTransferDataValue()
+}
 
 const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
   hash: transferHash
@@ -272,14 +299,14 @@ const handleTransfer = async (data: {
 watch(isActionAdded, (added) => {
   if (added) {
     addSuccessToast('Action added successfully, waiting for confirmation')
-    transferModal.value = false
+    transferModal.value = { mount: false, show: false }
   }
 })
 
 watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Transferred successfully')
-    transferModal.value = false
+    transferModal.value = { mount: false, show: false }
 
     //refresh bank owner data after a successful transfer
     queryClient.invalidateQueries({

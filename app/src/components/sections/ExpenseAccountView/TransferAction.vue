@@ -3,16 +3,21 @@
     <ButtonUI
       variant="success"
       :disabled="row.status !== 'enabled'"
-      @click="showModal = true"
+      @click="showModal = { mount: true, show: true }"
       data-test="transfer-button"
     >
       Spend
     </ButtonUI>
 
     <teleport to="body">
-      <ModalComponent v-model="showModal">
+      <ModalComponent
+        v-model="showModal.show"
+        v-if="showModal.mount"
+        data-test="transfer-modal"
+        @reset="() => (showModal = { mount: false, show: false })"
+      >
         <TransferForm
-          v-if="showModal && tokens.length > 0"
+          v-if="showModal.mount && tokens.length > 0"
           v-model="transferData"
           :tokens="tokens"
           :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
@@ -26,7 +31,7 @@
               transferData = createDefaultTransferData()
             }
           "
-          @closeModal="showModal = false"
+          @closeModal="showModal = { mount: false, show: false }"
         >
           <template #header>
             <h1 class="font-bold text-2xl">Transfer from Expenses Contract</h1>
@@ -80,7 +85,7 @@ const { balances } = useContractBalance(
 )
 const queryClient = useQueryClient()
 
-const showModal = ref(false)
+const showModal = ref({ mount: false, show: false })
 const tokenAmount = ref('')
 const tokenRecipient = ref('')
 
@@ -269,7 +274,7 @@ const transferErc20Token = async () => {
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
     addSuccessToast('Transfer Successful')
-    showModal.value = false
+    showModal.value = { mount: false, show: false }
     transferERC20loading.value = false
     queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
   }

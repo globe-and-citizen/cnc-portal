@@ -71,18 +71,25 @@ import { useTeamStore } from '@/stores'
 import AdCampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
 import type { Abi, Hex } from 'viem'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+
 const emit = defineEmits(['closeAddCampaignModal'])
 const { addErrorToast, addSuccessToast } = useToastStore()
 
-import { useCustomFetch } from '@/composables/useCustomFetch'
 const campaignAbi = AdCampaignAbi as Abi
 const campaignBytecode = CAMPAIGN_BYTECODE as Hex
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const bankAddress = teamStore.getContractAddressByType('Bank')
 
-const costPerClick = ref()
-const costPerImpression = ref()
+const costPerClick = ref<string | null>(null)
+const costPerImpression = ref<string | null>(null)
+
+function reset() {
+  costPerClick.value = null
+  costPerImpression.value = null
+}
+defineExpose({ reset })
 
 //import composable..
 // Import composable
@@ -118,6 +125,7 @@ const addContractToTeam = async (teamId: string, address: string, deployer: stri
     addErrorToast('Failed to add contract to team')
   }
 }
+
 // Trigger deployment
 const deployAdCampaign = async () => {
   if (!costPerClick.value || !costPerImpression.value) {
@@ -140,7 +148,7 @@ const deployAdCampaign = async () => {
 }
 
 const viewContractCode = () => {
-  const url = 'https://polygonscan.com/address/0x30625FE0E430C3cCc27A60702B79dE7824BE7fD5#code' // Replace with your desired URL
+  const url = 'https://polygonscan.com/address/0x30625FE0E430C3cCc27A60702B79dE7824BE7fD5#code'
   window.open(url, '_blank')
 }
 </script>

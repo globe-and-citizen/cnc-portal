@@ -36,7 +36,16 @@
   </div>
 
   <div class="modal-action justify-between mt-4">
-    <ButtonUI variant="error" outline @click="$emit('closeModal')">Cancel</ButtonUI>
+    <ButtonUI
+      variant="error"
+      outline
+      @click="
+        () => {
+          $emit('closeModal')
+        }
+      "
+      >Cancel</ButtonUI
+    >
     <ButtonUI
       variant="primary"
       @click="submitForm"
@@ -94,7 +103,7 @@ const model = defineModel<TransferModel>({
 
 const emit = defineEmits(['transfer', 'closeModal'])
 
-const selectedTokenId = ref<TokenId>('usdc')
+const selectedTokenId = ref<string>('usdc')
 
 // watch selectedTokenId to update model.token
 watch(selectedTokenId, (newTokenId) => {
