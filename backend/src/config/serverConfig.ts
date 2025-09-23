@@ -68,7 +68,6 @@ class Server {
       claim: "/api/claim/",
       upload: "/api/upload/",
       constract: "/api/contract/",
-      apidocs: "/api-docs",
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -147,9 +146,6 @@ class Server {
   public listen() {
     this.app.listen(this.port, () => {
       console.log(`helloworld: listening on port ${this.port}`);
-      console.log(
-        `Swagger docs available at http://localhost:${this.port}/api-docs`
-      );
       console.log(
         `Swagger docs V2 available at http://localhost:${this.port}/docs`
       );
