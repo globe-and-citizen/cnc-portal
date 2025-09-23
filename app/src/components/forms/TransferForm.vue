@@ -41,7 +41,6 @@
       outline
       @click="
         () => {
-          reset()
           $emit('closeModal')
         }
       "
@@ -103,22 +102,6 @@ const model = defineModel<TransferModel>({
 })
 
 const emit = defineEmits(['transfer', 'closeModal'])
-
-// Reset function to clear form state
-function reset() {
-  model.value = {
-    address: { name: '', address: '' },
-    token:
-      props.tokens.length > 0
-        ? props.tokens[0]
-        : { symbol: '', balance: 0, tokenId: 'usdc' as TokenId, price: 0, code: 'USD' },
-    amount: '0'
-  }
-  selectedTokenId.value = 'usdc'
-  if ($v.value) $v.value.$reset()
-}
-
-defineExpose({ reset })
 
 const selectedTokenId = ref<string>('usdc')
 

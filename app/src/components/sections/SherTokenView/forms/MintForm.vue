@@ -80,23 +80,25 @@ const input = ref<{ name: string; address: string }>({
   address: ''
 })
 const emit = defineEmits(['close-modal'])
-function reset() {
-  amount.value = null
 
-  if (!props.disabled && !props.memberInput) {
-    input.value = {
-      name: '',
-      address: ''
-    }
-  } else if (props.memberInput) {
-    input.value = props.memberInput
-  }
+// function reset() {
+//   amount.value = null
 
-  // reset des validations Vuelidate
-  if ($v.value) $v.value.$reset()
-}
+//   if (!props.disabled && !props.memberInput) {
+//     input.value = {
+//       name: '',
+//       address: ''
+//     }
+//   } else if (props.memberInput) {
+//     input.value = props.memberInput
+//   }
 
-defineExpose({ reset })
+//   // reset des validations Vuelidate
+//   if ($v.value) $v.value.$reset()
+// }
+
+// defineExpose({ reset })
+
 const mintModal = defineModel({ default: false })
 const props = defineProps<{
   memberInput?: { name: string; address: string }
@@ -167,7 +169,7 @@ watch(isConfirmingMint, async (isConfirming, wasConfirming) => {
     })
 
     mintModal.value = false
-    reset()
+    // reset()
     emit('close-modal')
   }
 })

@@ -30,9 +30,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 const toggleOpen = defineModel({ default: false })
 const props = defineProps<{ modalWidth?: string }>()
 
-const emit = defineEmits<{
-  reset: []
-}>()
+const emit = defineEmits(['reset'])
 
 const width = computed(() => {
   return props.modalWidth || ''

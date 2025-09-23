@@ -167,22 +167,6 @@ const budgetTypes = {
   2: 'Max Amount per Transaction'
 }
 
-function reset() {
-  limitValue.value = ''
-  budgetLimitType.value = null
-  date.value = ''
-  description.value = ''
-  // Reset multi limit selections and values
-  Object.keys(selectedOptions).forEach((key) => {
-    selectedOptions[key as unknown as 0 | 1 | 2] = false
-    values[key as unknown as 0 | 1 | 2] = null
-  })
-  if (v$.value) {
-    v$.value.$reset()
-  }
-}
-defineExpose({ reset })
-
 // Reactive states
 const selectedOptions = reactive<{ [key in 0 | 1 | 2]: boolean }>({ 0: false, 1: false, 2: false })
 const values = reactive<{ [key in 0 | 1 | 2]: null | string | number }>({

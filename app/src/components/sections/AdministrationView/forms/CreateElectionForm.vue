@@ -231,26 +231,6 @@ const submitForm = () => {
   emits('createProposal', newProposalInput.value)
 }
 
-function reset() {
-  newProposalInput.value = {
-    title: '',
-    description: '',
-    startDate,
-    endDate: '',
-    candidates: [
-      {
-        name: '',
-        candidateAddress: ''
-      }
-    ],
-    isElection: true,
-    winnerCount: 0
-  }
-  formData.value = []
-  if ($v.value) $v.value.$reset()
-}
-
-defineExpose({ reset })
 const formRef = ref<HTMLElement | null>(null)
 const showDropdown = ref<boolean>(false)
 
