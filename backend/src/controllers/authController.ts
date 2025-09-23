@@ -50,8 +50,6 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
         },
       });
 
-    await prisma.$disconnect();
-
     //Create JWT for the user and send to the fron-end
     const secretKey = process.env.SECRET_KEY as string;
     const accessToken = jwt.sign({ address }, secretKey, { expiresIn: "24h" });
@@ -61,8 +59,6 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return errorResponse(500, error, res);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
