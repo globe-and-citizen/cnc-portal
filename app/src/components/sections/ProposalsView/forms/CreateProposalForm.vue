@@ -164,20 +164,6 @@ const afterStartDate = (value: Date | undefined) => {
   return value > proposal.value.startDate
 }
 
-// function reset() {
-//   proposal.value = {
-//     title: undefined,
-//     description: undefined,
-//     type: 'Financial',
-//     startDate: undefined,
-//     endDate: undefined
-//   }
-//   if ($v.value) {
-//     $v.value.$reset()
-//   }
-// }
-// defineExpose({ reset })
-
 // Validation rules
 const rules = {
   title: {

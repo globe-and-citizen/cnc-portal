@@ -123,17 +123,6 @@ const props = defineProps<{
   reloadKey: number
 }>()
 
-// function reset() {
-//   member.value = { name: '', address: '' }
-//   startDate.value = ''
-//   cliff.value = 0
-//   totalAmount.value = 0
-//   dateRange.value = null
-//   duration.value = { years: 0, months: 0, days: 0 }
-//   showSummary.value = false
-// }
-// defineExpose({ reset })
-
 const userDataStore = useUserDataStore()
 const { balances } = useContractBalance(userDataStore.address as Address)
 const teamStore = useTeamStore()
