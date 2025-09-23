@@ -52,35 +52,32 @@
     <div
       v-for="(label, budgetType) in budgetTypes"
       :key="budgetType"
-      class="shadow-md"
       data-test="budget-limit-input"
     >
-      <label
-        :for="'checkbox-' + budgetType"
-        class="input input-bordered flex items-center gap-2 input-md mt-2 text-xs"
-      >
+      <div class="flex items-center gap-4">
         <!-- Checkbox -->
         <input
           type="checkbox"
-          class="checkbox checkbox-primary"
+          class="toggle toggle-info"
           v-model="selectedOptions[budgetType]"
           :id="'checkbox-' + budgetType"
           :data-test="`limit-checkbox-${budgetType}`"
           @change="toggleOption(budgetType)"
         />
         <!-- Numeric Input -->
-        <span class="w-48">{{ label }}</span
-        >|
-        <input
-          :disabled="!selectedOptions[budgetType]"
-          type="number"
-          class="grow"
-          v-model.number="values[budgetType]"
-          placeholder="Enter value"
-          :data-test="`limit-input-${budgetType}`"
-          @input="updateValue(budgetType)"
-        />
-      </label>
+        <span class="grow">{{ label }}</span>
+        <label class="input input-bordered flex items-center gap-2 input-md mt-2 text-xs">
+          <input
+            :disabled="!selectedOptions[budgetType]"
+            class="w-32"
+            type="number"
+            v-model.number="values[budgetType]"
+            placeholder="Enter value"
+            :data-test="`limit-input-${budgetType}`"
+            @input="updateValue(budgetType)"
+          />
+        </label>
+      </div>
     </div>
 
     <!-- Budget Limit Validation Errors -->
