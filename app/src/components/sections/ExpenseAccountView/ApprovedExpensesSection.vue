@@ -26,7 +26,7 @@
 
     <ExpenseAccountTable />
 
-    <ModalComponent v-model="approveUsersModal">
+    <ModalComponent v-model="approveUsersModal" modal-width="w-1/3 max-w-4xl">
       <ApproveUsersForm
         v-if="approveUsersModal"
         :form-data="teamMembers"
