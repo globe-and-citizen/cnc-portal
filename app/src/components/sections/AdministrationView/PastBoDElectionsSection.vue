@@ -182,11 +182,4 @@ const {
 })
 
 const elections = computed(() => pastElections.value ?? [])
-
-// Fetch elections when component mounts
-onMounted(() => {
-  if (electionsAddress.value) {
-    fetchElections()
-  }
-})
 </script>
