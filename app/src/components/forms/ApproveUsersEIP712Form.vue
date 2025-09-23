@@ -101,10 +101,10 @@
   <hr />
 
   <div class="mt-3">
+    <span class="font-semibold">Expiry date:</span>
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-      <span class="w-24">Expiry</span>
       <div class="grow" data-test="date-picker">
-        <VueDatePicker v-model="date" :min-date="new Date()" auto-apply />
+        <VueDatePicker v-model="date" :min-date="new Date()" auto-apply placeholder="Pick a date" />
       </div>
     </label>
   </div>
