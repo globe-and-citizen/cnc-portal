@@ -6,7 +6,12 @@
         size="sm"
         variant="primary"
         outline
-        @click="toggleOpen = false"
+        @click="
+          () => {
+            toggleOpen = false
+            emit('reset')
+          }
+        "
         >✕</ButtonUI
       >
       <slot></slot>
@@ -24,6 +29,8 @@ import ButtonUI from '@/components/ButtonUI.vue'
 
 const toggleOpen = defineModel({ default: false })
 const props = defineProps<{ modalWidth?: string }>()
+
+const emit = defineEmits(['reset'])
 
 const width = computed(() => {
   return props.modalWidth || ''

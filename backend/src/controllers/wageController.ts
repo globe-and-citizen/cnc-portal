@@ -147,8 +147,6 @@ export const setWage = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 // /wage/?teamId=teamId
@@ -183,8 +181,6 @@ export const getWages = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 

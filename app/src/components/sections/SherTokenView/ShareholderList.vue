@@ -47,7 +47,7 @@
               @click="
                 () => {
                   selectedShareholder = row.shareholder
-                  mintIndividualModal = true
+                  mintIndividualModal = { mount: true, show: true }
                 }
               "
             >
@@ -57,15 +57,19 @@
         </div>
       </template>
     </TableComponent>
-    <ModalComponent v-model="mintIndividualModal">
+    <ModalComponent
+      v-model="mintIndividualModal.show"
+      @reset="() => (mintIndividualModal = { mount: false, show: false })"
+    >
       <MintForm
-        v-if="mintIndividualModal"
-        v-model="mintIndividualModal"
+        v-if="mintIndividualModal.mount"
+        v-model="mintIndividualModal.show"
         :memberInput="{
           name: getShareholderName(selectedShareholder!),
           address: selectedShareholder!
         }"
         :disabled="true"
+        @close-modal="() => (mintIndividualModal = { mount: false, show: false })"
       />
     </ModalComponent>
   </CardComponent>
@@ -85,7 +89,10 @@ import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { useReadContract } from '@wagmi/vue'
 
-const mintIndividualModal = ref(false)
+const mintIndividualModal = ref({
+  mount: false,
+  show: false
+})
 const selectedShareholder = ref<Address | null>(null)
 
 const { addErrorToast } = useToastStore()
