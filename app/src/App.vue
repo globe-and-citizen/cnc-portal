@@ -11,6 +11,12 @@
             v-model="toggleSide"
             @openEditUserModal="
               () => {
+                // Prepare modal inputs; if the current name was generated, leave name blank
+                updateUserInput = {
+                  name: userStore.isNameGenerated ? '' : name,
+                  address: address,
+                  imageUrl: imageUrl || ''
+                }
                 showModal = true
               }
             "
@@ -26,7 +32,11 @@
             :isCollapsed="toggleSide"
             @toggleEditUserModal="
               () => {
-                updateUserInput = { name, address, imageUrl: '' }
+                updateUserInput = {
+                  name: userStore.isNameGenerated ? '' : name,
+                  address: address,
+                  imageUrl: imageUrl || ''
+                }
                 showModal = true
               }
             "
@@ -70,7 +80,7 @@
     </ModalComponent>
 
     <!-- Toast Notifications -->
-    <ToastContainer position="bottom-left" />
+    <ToastContainer position="bottom-right" />
   </div>
 
   <VueQueryDevtools />
@@ -78,7 +88,7 @@
 
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
@@ -107,7 +117,24 @@ const showModal = ref(false)
 const userStore = useUserDataStore()
 const { name, address, imageUrl } = storeToRefs(userStore)
 
-const updateUserInput = ref({
+// generate a temporary fake name & avatar until the user updates their profile(default name= user ).
+onMounted(() => {
+  if (!name.value || name.value.trim() === '' || name.value.toLowerCase() === 'user') {
+    userStore.generateAndSetFakeUser()
+  }
+})
+
+// Also watch for address changes: when an address is set (new user) and name is still empty
+watch(address, (newAddr, oldAddr) => {
+  if (newAddr && newAddr !== oldAddr) {
+    if (!name.value || name.value.trim() === '' || name.value.toLowerCase() === 'user') {
+      userStore.generateAndSetFakeUser()
+    }
+  }
+})
+
+// eslint-disable-next-line prefer-const
+let updateUserInput = ref({
   name: name.value,
   address: address.value,
   imageUrl: ''
@@ -157,9 +184,3 @@ watch(isDisconnected, (value) => {
   }
 })
 </script>
-
-<style scoped>
-* {
-  /* border: 1px solid red; */
-}
-</style>
