@@ -28,7 +28,7 @@
 
     <ModalComponent
       v-model="approveUsersModal.show"
-      modal-width="w-1/3 max-w-4xl.show"
+      modal-width="w-1/3 max-w-4xl"
       v-if="approveUsersModal.mount"
       @reset="
         () => {
