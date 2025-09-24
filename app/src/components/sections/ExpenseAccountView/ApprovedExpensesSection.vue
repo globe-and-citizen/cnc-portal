@@ -27,7 +27,7 @@
     <ExpenseAccountTable />
 
     <ModalComponent
-      v-model="approveUsersModal" modal-width="w-1/3 max-w-4xl.show"
+      v-model="approveUsersModal.show" modal-width="w-1/3 max-w-4xl.show"
       v-if="approveUsersModal.mount"
       @reset="
         () => {
