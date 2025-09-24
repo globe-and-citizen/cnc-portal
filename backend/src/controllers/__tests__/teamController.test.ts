@@ -1,30 +1,58 @@
 import request from "supertest";
 import express, { Request, Response, NextFunction } from "express";
-import {
-  //addExpenseAccountData,
-  //getExpenseAccountData,
-  addTeam,
-  deleteTeam,
-  getAllTeams,
-  getTeam,
-  updateTeam,
-} from "../teamController";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import publicClient from "../../utils/viem.config";
 import OFFICER_ABI from "../../artifacts/officer_abi.json";
-import { de, faker, id_ID } from "@faker-js/faker";
+import { faker } from "@faker-js/faker";
 import { Team, User } from "@prisma/client";
+import teamRoutes from "../../routes/teamRoutes";
+import { authorizeUser } from "../../middleware/authMiddleware";
 
-vi.mock("../../utils");
-vi.mock("../../utils/viem.config");
-
-function setAddressMiddleware(address: string) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = address;
+// Mock the authorizeUser middleware
+vi.mock("../../middleware/authMiddleware", () => ({
+  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
+    (req as any).address = "0x1234567890123456789012345678901234567890";
     next();
+  }),
+}));
+
+// Mock prisma
+vi.mock("../../utils", async () => {
+  const actual = await vi.importActual("../../utils");
+  return {
+    ...actual,
+    prisma: {
+      team: {
+        findUnique: vi.fn(),
+        create: vi.fn(),
+        findMany: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
+      user: {
+        findUnique: vi.fn(),
+        create: vi.fn(),
+      },
+      teamMember: {
+        findUnique: vi.fn(),
+        create: vi.fn(),
+        createMany: vi.fn(),
+      },
+    },
   };
-}
+});
+
+// Mock viem config
+vi.mock("../../utils/viem.config", () => ({
+  default: {
+    readContract: vi.fn(),
+  },
+}));
+
+const app = express();
+app.use(express.json());
+app.use("/", teamRoutes);
 
 const mockOwner: User = {
   address: faker.finance.ethereumAddress(),

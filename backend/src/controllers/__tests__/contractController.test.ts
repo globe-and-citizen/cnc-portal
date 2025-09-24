@@ -3,51 +3,70 @@ import express, { Request, Response, NextFunction } from "express";
 import { describe, vi, beforeEach, it, expect } from "vitest";
 import { Address, getContract, isAddress } from "viem";
 import { prisma } from "../../utils";
-import {
-  addContract,
-  getContracts,
-  syncContracts,
-} from "../contractController";
 import { Team } from "@prisma/client";
 import { faker } from "@faker-js/faker";
 import publicClient from "../../utils/viem.config";
+import contractRoutes from "../../routes/contractRoutes";
+import { authorizeUser } from "../../middleware/authMiddleware";
 
-function setAddressMiddleware(address: string) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = address;
+// Mock the authorizeUser middleware
+vi.mock("../../middleware/authMiddleware", () => ({
+  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
+    (req as any).address = "0x1234567890123456789012345678901234567890";
     next();
+  }),
+}));
+
+// Mock prisma
+vi.mock("../../utils", async () => {
+  const actual = await vi.importActual("../../utils");
+  return {
+    ...actual,
+    prisma: {
+      team: {
+        findUnique: vi.fn(),
+        update: vi.fn(),
+      },
+      teamContract: {
+        createMany: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn(),
+      },
+    },
   };
-}
+});
+
+// Mock viem config
+vi.mock("../../utils/viem.config", () => ({
+  default: {
+    readContract: vi.fn(),
+  },
+}));
+
 const app = express();
 app.use(express.json());
-app.put(
-  "/team/contract/sync",
-  setAddressMiddleware("0xOwnerAddress"),
-  syncContracts
-);
-app.post("/team/contract", setAddressMiddleware("0xOwnerAddress"), addContract);
-app.get("/team/contract", getContracts);
+app.use("/", contractRoutes);
 
 const mockTeam = {
   id: 1,
   name: "TeamName",
-  ownerAddress: "0xOwnerAddress",
+  ownerAddress: "0x1234567890123456789012345678901234567890",
+  officerAddress: "0x1111111111111111111111111111111111111111",
   description: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 } as Team;
 
 describe("contractController", () => {
-  describe("PUT: /team/contract/sync", () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it("should return 400 if required field are  or invalid", async () => {
-      const response = await request(app).put("/team/contract/sync");
+  describe("PUT: /sync", () => {
+    it("should return 400 if required fields are missing or invalid", async () => {
+      const response = await request(app).put("/sync");
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain(
-        "Missing or invalid field: teamId"
+      expect(response.body.message).toContain("Invalid request body");
       );
 
       const responseV2 = await request(app)

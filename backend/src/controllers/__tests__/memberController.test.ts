@@ -2,23 +2,62 @@ import request from "supertest";
 import express, { Request, Response, NextFunction } from "express";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "../../utils";
-import { deleteMember, addMembers } from "../memberController";
 import { faker } from "@faker-js/faker";
 import { Team } from "@prisma/client";
+import teamRoutes from "../../routes/teamRoutes";
+import { authorizeUser } from "../../middleware/authMiddleware";
+
+// Mock the authorizeUser middleware
+vi.mock("../../middleware/authMiddleware", () => ({
+  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
+    (req as any).address = "0x1234567890123456789012345678901234567890";
+    next();
+  }),
+}));
+
+// Mock prisma
+vi.mock("../../utils", async () => {
+  const actual = await vi.importActual("../../utils");
+  return {
+    ...actual,
+    prisma: {
+      team: {
+        findUnique: vi.fn(),
+      },
+      teamMember: {
+        findUnique: vi.fn(),
+        create: vi.fn(),
+        delete: vi.fn(),
+        createMany: vi.fn(),
+      },
+      user: {
+        findUnique: vi.fn(),
+        create: vi.fn(),
+      },
+    },
+  };
+});
+
+const app = express();
+app.use(express.json());
+app.use("/", teamRoutes);
+
 const mockOwner = {
-  address: "0xOwnerAddress",
+  address: "0x1234567890123456789012345678901234567890",
   name: "Test Owner",
   nonce: "123456",
 };
+
 const mockTeamData = {
   name: "Test Team",
   description: "Test Description",
   members: [
-    { address: "0xMemberAddress1", name: "Member 1" },
-    { address: "0xMemberAddress2", name: "Member 2" },
+    { address: "0x1111111111111111111111111111111111111111", name: "Member 1" },
+    { address: "0x2222222222222222222222222222222222222222", name: "Member 2" },
   ],
-  officerAddress: "0xOfficerAddress",
+  officerAddress: "0x3333333333333333333333333333333333333333",
 };
+
 const fakeMembers = [
   { address: faker.finance.ethereumAddress(), name: "Member 3" },
   { address: faker.finance.ethereumAddress(), name: "Member 4" },
@@ -30,8 +69,8 @@ const mockCreatedTeam = {
   ownerAddress: mockOwner.address,
   officerAddress: mockTeamData.officerAddress,
   members: [
-    { address: "0xMemberAddress1", name: "Member 1" },
-    { address: "0xMemberAddress2", name: "Member 2" },
+    { address: "0x1111111111111111111111111111111111111111", name: "Member 1" },
+    { address: "0x2222222222222222222222222222222222222222", name: "Member 2" },
     { address: mockOwner.address, name: mockOwner.name },
   ],
 };

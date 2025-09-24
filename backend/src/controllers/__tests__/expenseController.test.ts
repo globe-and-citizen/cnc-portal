@@ -1,33 +1,67 @@
 import request from "supertest";
 import express, { Request, Response, NextFunction } from "express";
-import { addExpense, getExpenses, updateExpense } from "../expenseController";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { Expense, Team } from "@prisma/client";
 import publicClient from "../../utils/viem.config";
+import expenseRoutes from "../../routes/expenseRoute";
+import { authorizeUser } from "../../middleware/authMiddleware";
+
+// Mock the authorizeUser middleware
+vi.mock("../../middleware/authMiddleware", () => ({
+  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
+    (req as any).address = "0x1234567890123456789012345678901234567890";
+    next();
+  }),
+}));
+
+// Mock prisma
+vi.mock("../../utils", async () => {
+  const actual = await vi.importActual("../../utils");
+  return {
+    ...actual,
+    prisma: {
+      expense: {
+        create: vi.fn(),
+        findMany: vi.fn(),
+        update: vi.fn(),
+        findUnique: vi.fn(),
+      },
+      team: {
+        findUnique: vi.fn(),
+      },
+      teamContract: {
+        findFirst: vi.fn(),
+      },
+      user: {
+        findUnique: vi.fn(),
+      },
+      teamMember: {
+        findUnique: vi.fn(),
+      },
+    },
+  };
+});
+
+// Mock viem config
+vi.mock("../../utils/viem.config", () => ({
+  default: {
+    readContract: vi.fn(),
+  },
+}));
 
 const app = express();
 app.use(express.json());
-app.use(setAddressMiddleware("0xCallerAddress"));
-app.post("/expense", addExpense);
-app.get("/expenses", getExpenses);
-app.put("/expense/:id", updateExpense);
-
-function setAddressMiddleware(address: string) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = address;
-    next();
-  };
-}
+app.use("/", expenseRoutes);
 
 const mockExpense = {
   id: 1,
   teamId: 1,
-  userAddress: "0xCallerAddress",
+  userAddress: "0x1234567890123456789012345678901234567890",
   signature: "mockSignature",
   data: JSON.stringify({
     approvedAddress: "0x1234567890123456789012345678901234567890",
-    tokenAddress: "0xTiokenAddress",
+    tokenAddress: "0x1111111111111111111111111111111111111111",
     budgetData: [
       { budgetType: 0, value: 10 },
       { budgetType: 1, value: 100 },
@@ -37,10 +71,11 @@ const mockExpense = {
   }),
   status: "signed",
 } as Expense;
+
 const mockTeam = {
   id: 1,
   name: "TeamName",
-  ownerAddress: "0xOwnerAddress",
+  ownerAddress: "0x1234567890123456789012345678901234567890",
   description: null,
   createdAt: new Date(),
   updatedAt: new Date(),

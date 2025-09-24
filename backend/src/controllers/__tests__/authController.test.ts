@@ -1,19 +1,42 @@
 import request from "supertest";
-import express, { Request, Response, NextFunction, response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import rateLimit from "express-rate-limit";
-import { authenticateSiwe, authenticateToken } from "../authController";
 import { authorizeUser } from "../../middleware/authMiddleware";
 import { prisma } from "../../utils";
 import jwt from "jsonwebtoken";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { faker } from "@faker-js/faker";
+import authRoutes from "../../routes/authRoutes";
 
-function setAuthorizationMiddleware(token: string) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    req.headers.authorization = `Bearer ${token}`;
+// Mock the authorizeUser middleware
+vi.mock("../../middleware/authMiddleware", () => ({
+  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
+    (req as any).address = "0x1234567890123456789012345678901234567890";
     next();
+  }),
+}));
+
+// Mock prisma
+vi.mock("../../utils", async () => {
+  const actual = await vi.importActual("../../utils");
+  return {
+    ...actual,
+    prisma: {
+      user: {
+        findUnique: vi.fn(),
+        create: vi.fn(),
+      },
+    },
   };
-}
+});
+
+// Mock jwt
+vi.mock("jsonwebtoken", () => ({
+  default: {
+    sign: vi.fn(() => "mock-jwt-token"),
+    verify: vi.fn(() => ({ address: "0x1234567890123456789012345678901234567890" })),
+  },
+}));
 
 const app = express();
 app.use(express.json());
@@ -23,14 +46,11 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
-app.post("/siwe", authenticateSiwe);
-app.get("/token", authenticateToken);
-app.use(setAuthorizationMiddleware(faker.finance.ethereumAddress()));
-app.use(authorizeUser);
+app.use("/", authRoutes);
 
 const mockUser = {
-  name: `Mock User`,
-  address: `0x123`,
+  name: "Mock User",
+  address: "0x1234567890123456789012345678901234567890",
   nonce: null,
 };
 
@@ -41,8 +61,6 @@ describe("authController", () => {
     });
 
     it("should return 401 if message not set", async () => {
-      app.use(limiter);
-      app.post("/siwe", authenticateSiwe);
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
       const response = await request(app).post("/siwe");

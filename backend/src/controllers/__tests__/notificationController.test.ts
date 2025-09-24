@@ -10,21 +10,36 @@ import {
 } from "vitest";
 import { prisma, errorResponse } from "../../utils";
 import { Request, Response } from "express";
-import { getNotification, updateNotification } from "../notificationController";
 import express, { NextFunction } from "express";
 import { authorizeUser } from "../../middleware/authMiddleware";
+import notificationRoute from "../../routes/notificationRoute";
 
-function setAddressMiddleware(address: string) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = address;
+// Mock the authorizeUser middleware
+vi.mock("../../middleware/authMiddleware", () => ({
+  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
+    (req as any).address = "0x1234567890123456789012345678901234567890";
     next();
+  }),
+}));
+
+// Mock prisma
+vi.mock("../../utils", async () => {
+  const actual = await vi.importActual("../../utils");
+  return {
+    ...actual,
+    prisma: {
+      notification: {
+        findMany: vi.fn(),
+        update: vi.fn(),
+        createMany: vi.fn(),
+      },
+    },
   };
-}
+});
 
 const app = express();
 app.use(express.json());
-app.get("/", getNotification);
-app.put("/:id", updateNotification);
+app.use("/", notificationRoute);
 
 describe("Notification Controller", () => {
   describe("GET /", () => {
