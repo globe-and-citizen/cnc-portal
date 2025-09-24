@@ -195,7 +195,5 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     return errorResponse(500, "Internal Server Error", res);
-  } finally {
-    await prisma.$disconnect();
   }
 };

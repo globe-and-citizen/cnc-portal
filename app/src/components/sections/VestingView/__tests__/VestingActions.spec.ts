@@ -156,9 +156,11 @@ describe('VestingActions.vue', () => {
 
       const createVesting = wrapper.findComponent(CreateVesting)
       await createVesting.vm.$emit('closeAddVestingModal')
+      await wrapper.vm.$nextTick()
 
+      // Check that the modal is no longer mounted in the DOM
       const modal = wrapper.findComponent(ModalComponent)
-      expect(modal.props('modelValue')).toBe(false)
+      expect(modal.exists()).toBe(false)
     })
   })
 

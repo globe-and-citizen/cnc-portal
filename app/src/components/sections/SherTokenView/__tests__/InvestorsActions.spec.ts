@@ -70,8 +70,8 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 
 interface ComponentData {
   distributeMintModal: boolean
-  payDividendsModal: boolean
-  mintModal: boolean
+  payDividendsModal: { mount: boolean; show: boolean }
+  mintModal: { mount: boolean; show: boolean }
   mintError: unknown
   distributeMintError: unknown
   payDividendsError: unknown
@@ -184,8 +184,12 @@ describe('InvestorsActions.vue', () => {
 
     const modalComponent = wrapper.findComponent(ModalComponent)
     modalComponent.vm.$emit('update:modelValue', false)
+    await wrapper.vm.$nextTick()
 
-    expect((wrapper.vm as unknown as ComponentData).mintModal).toBeFalsy()
+    expect((wrapper.vm as unknown as ComponentData).mintModal).toEqual({
+      mount: false,
+      show: false
+    })
   })
 
   it('should emit distribute mint modal component v-model', async () => {
@@ -196,8 +200,17 @@ describe('InvestorsActions.vue', () => {
 
     expect((wrapper.vm as unknown as ComponentData).distributeMintModal).toBeTruthy()
 
-    const modalComponent = wrapper.findAllComponents(ModalComponent)[1]
-    modalComponent.vm.$emit('update:modelValue', false)
+    const modalComponents = wrapper.findAllComponents(ModalComponent)
+    // Find the distributeMintModal - it should be the one without mount/show object structure
+    const distributeMintModalComponent = modalComponents.find(
+      (component) =>
+        component.props('modelValue') === true && !component.vm.$props.hasOwnProperty('show')
+    )
+
+    if (distributeMintModalComponent) {
+      distributeMintModalComponent.vm.$emit('update:modelValue', false)
+      await wrapper.vm.$nextTick()
+    }
 
     expect((wrapper.vm as unknown as ComponentData).distributeMintModal).toBeFalsy()
   })
@@ -210,10 +223,21 @@ describe('InvestorsActions.vue', () => {
 
     expect((wrapper.vm as unknown as ComponentData).payDividendsModal).toBeTruthy()
 
-    const modalComponent = wrapper.findAllComponents(ModalComponent)[2]
-    modalComponent.vm.$emit('update:modelValue', false)
+    const modalComponents = wrapper.findAllComponents(ModalComponent)
+    // Find the payDividendsModal - look for the one with show property
+    const payDividendsModalComponent = modalComponents.find(
+      (component) => component.vm.$props.modelValue === true
+    )
 
-    expect((wrapper.vm as unknown as ComponentData).payDividendsModal).toBeFalsy()
+    if (payDividendsModalComponent) {
+      payDividendsModalComponent.vm.$emit('update:modelValue', false)
+      await wrapper.vm.$nextTick()
+    }
+
+    expect((wrapper.vm as unknown as ComponentData).payDividendsModal).toEqual({
+      mount: false,
+      show: false
+    })
   })
 
   it('should call distributeMint when DistributeMintForm emit submit event', async () => {
@@ -271,6 +295,9 @@ describe('InvestorsActions.vue', () => {
     await wrapper.vm.$nextTick()
 
     expect(addSuccessToast).toHaveBeenCalled()
-    expect((wrapper.vm as unknown as ComponentData).payDividendsModal).toBeFalsy()
+    expect((wrapper.vm as unknown as ComponentData).payDividendsModal).toEqual({
+      mount: false,
+      show: false
+    })
   })
 })

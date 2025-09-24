@@ -6,12 +6,17 @@
           v-if="!isDetails"
           :election-id="currentElectionId"
           @show-results-modal="showResultsModal = true"
-          @show-create-election-modal="showCreateElectionModal = true"
+          @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
         />
-        <ModalComponent v-if="showCreateElectionModal" v-model="showCreateElectionModal">
+        <ModalComponent
+          v-if="showCreateElectionModal.mount"
+          v-model="showCreateElectionModal.show"
+          @reset="() => (showCreateElectionModal = { mount: false, show: false })"
+        >
           <CreateElectionForm
             :is-loading="isLoadingCreateElection || isConfirmingCreateElection"
             @create-proposal="createElection"
+            @close-modal="() => (showCreateElectionModal = { mount: false, show: false })"
           />
         </ModalComponent>
       </div>
@@ -42,7 +47,10 @@
         <ElectionStats :formatted-election="formattedElection" />
       </div>
     </div>
-    <CurrentBoDElection404 v-else @show-create-election-modal="showCreateElectionModal = true" />
+    <CurrentBoDElection404
+      v-else
+      @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
+    />
   </CardComponent>
 </template>
 
@@ -74,7 +82,10 @@ const queryClient = useQueryClient()
 const showResultsModal = ref(false)
 const currentElectionId = computed(() => props.electionId)
 const { electionsAddress, formattedElection } = useBoDElections(currentElectionId)
-const showCreateElectionModal = ref(false)
+const showCreateElectionModal = ref({
+  mount: false,
+  show: false
+})
 
 const {
   data: hashCreateElection,
@@ -149,7 +160,7 @@ watch(errorCreateElection, (isError) => {
 watch(isConfirmingCreateElection, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedCreateElection.value) {
     addSuccessToast('Election created successfully!')
-    showCreateElectionModal.value = false
+    showCreateElectionModal.value = { mount: false, show: false }
     await queryClient.invalidateQueries({
       queryKey: ['readContract']
     })

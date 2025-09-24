@@ -230,6 +230,7 @@ const submitForm = () => {
   if ($v.value.$invalid) return
   emits('createProposal', newProposalInput.value)
 }
+
 const formRef = ref<HTMLElement | null>(null)
 const showDropdown = ref<boolean>(false)
 

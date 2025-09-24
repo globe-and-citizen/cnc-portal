@@ -68,7 +68,6 @@ class Server {
       claim: "/api/claim/",
       upload: "/api/upload/",
       constract: "/api/contract/",
-      apidocs: "/api-docs",
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -124,9 +123,6 @@ class Server {
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
     this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-    this.app.get(this.paths.apidocs, (req, res) => {
-      res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));
-    });
     // The error handler must be registered before any other error middleware and after all controllers
     Sentry.setupExpressErrorHandler(this.app);
 
@@ -147,9 +143,6 @@ class Server {
   public listen() {
     this.app.listen(this.port, () => {
       console.log(`helloworld: listening on port ${this.port}`);
-      console.log(
-        `Swagger docs available at http://localhost:${this.port}/api-docs`
-      );
       console.log(
         `Swagger docs V2 available at http://localhost:${this.port}/docs`
       );
