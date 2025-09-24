@@ -1,46 +1,31 @@
 import request from "supertest";
 import express, { Request, Response, NextFunction } from "express";
-import {
-  getNonce,
-  getUser,
-  updateUser,
-  getAllUsers,
-  searchUser,
-} from "../userController";
+import userRoutes from "../../routes/userRoutes";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { User } from "@prisma/client";
 import { de, faker } from "@faker-js/faker";
-import e from "express";
-import {
-  validateParams,
-  validateQuery,
-  validateBodyAndParams,
-  addressParamsSchema,
-  userSearchQuerySchema,
-  updateUserBodySchema,
-  userPaginationQuerySchema,
-} from "../../validation";
 
 vi.mock("../../utils");
 vi.mock("../../utils/viem.config");
 
-function setAddressMiddleware(address: string) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = address;
+// Mock the authorization middleware with proper hoisting
+vi.mock("../../middleware/authMiddleware", () => ({
+  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
+    // Default behavior - can be overridden in tests
+    (req as any).address = "0x1234567890123456789012345678901234567890";
     next();
-  };
-}
+  }),
+}));
+
+// Import the mocked function after mocking
+import { authorizeUser } from "../../middleware/authMiddleware";
+const mockAuthorizeUser = vi.mocked(authorizeUser);
+
 const app = express();
 app.use(express.json());
-app.use(setAddressMiddleware("0x1234567890123456789012345678901234567890"));
-
-// Routes with validation middleware (as they would be in the actual app)
-app.get("/nonce/:address", validateParams(addressParamsSchema), getNonce);
-app.get("/user/:address", validateParams(addressParamsSchema), getUser);
-app.put("/user/:address", validateBodyAndParams(updateUserBodySchema, addressParamsSchema), updateUser);
-app.get("/", validateQuery(userPaginationQuerySchema), getAllUsers);
-app.get("/search", validateQuery(userSearchQuerySchema), searchUser);
+// Use the actual userRoutes from the routes file
+app.use("/", userRoutes);
 
 const mockUser: User = {
   id: 1,
@@ -79,6 +64,11 @@ describe("User Controller", () => {
   describe("GET: /nonce/:address", () => {
     beforeEach(() => {
       vi.clearAllMocks();
+      // Reset to default behavior
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        (req as any).address = "0x1234567890123456789012345678901234567890";
+        next();
+      });
     });
 
     it("should return 400 if address is invalid", async () => {
@@ -130,12 +120,17 @@ describe("User Controller", () => {
   describe("getUser", () => {
     beforeEach(() => {
       vi.clearAllMocks();
+      // Reset to default behavior
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        (req as any).address = "0x1234567890123456789012345678901234567890";
+        next();
+      });
     });
 
     it("should return 400 if address is invalid", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
-      const response = await request(app).get("/user/invalid-address").send();
+      const response = await request(app).get("/invalid-address").send();
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain("Invalid path parameters");
@@ -145,7 +140,7 @@ describe("User Controller", () => {
     it("should return 404 if user is not found", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
-      const response = await request(app).get(`/user/${mockAddress}`).send();
+      const response = await request(app).get(`/${mockAddress}`).send();
 
       expect(response.status).toBe(404);
       expect(response.body.message).toEqual("User not found");
@@ -155,7 +150,7 @@ describe("User Controller", () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
 
       const response = await request(app)
-        .get(`/user/${mockUser.address}`)
+        .get(`/${mockUser.address}`)
         .send();
 
       expect(response.status).toBe(200);
@@ -173,7 +168,7 @@ describe("User Controller", () => {
     it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.user, "findUnique").mockRejectedValue(new Error("Error"));
 
-      const response = await request(app).get("/user/0x1234567890123456789012345678901234567890").send({
+      const response = await request(app).get("/0x1234567890123456789012345678901234567890").send({
         address: "0x1111111111111111111111111111111111111111",
       });
 
@@ -187,14 +182,21 @@ describe("User Controller", () => {
   describe("updateUser", () => {
     beforeEach(() => {
       vi.clearAllMocks();
+      // Reset to default behavior
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        (req as any).address = "0x1234567890123456789012345678901234567890";
+        next();
+      });
     });
 
     it("should return 400 if caller address is missing", async () => {
-      const app = express();
-      app.use(express.json());
-      app.put("/user/:address", setAddressMiddleware(""), validateBodyAndParams(updateUserBodySchema, addressParamsSchema), updateUser);
+      // Mock auth middleware to not set address
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        // Don't set address to simulate missing caller address
+        next();
+      });
 
-      const response = await request(app).put("/user/0x1234567890123456789012345678901234567890").send({
+      const response = await request(app).put("/0x1234567890123456789012345678901234567890").send({
         name: "NewName",
         imageUrl: "https://example.com/newimage.jpg",
       });
@@ -206,16 +208,16 @@ describe("User Controller", () => {
     });
 
     it("should return 403 if caller is not the user", async () => {
-      // Create a separate app with different caller address for this test
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(setAddressMiddleware("0x9999999999999999999999999999999999999999")); // Different caller
-      testApp.put("/user/:address", validateBodyAndParams(updateUserBodySchema, addressParamsSchema), updateUser);
+      // Mock auth middleware with different caller address
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        (req as any).address = "0x9999999999999999999999999999999999999999"; // Different caller
+        next();
+      });
 
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
 
-      const response = await request(testApp)
-        .put(`/user/${mockUser.address}`)
+      const response = await request(app)
+        .put(`/${mockUser.address}`)
         .send({
           name: "NewName",
           imageUrl: "https://example.com/newimage.jpg",
@@ -228,7 +230,7 @@ describe("User Controller", () => {
     it("should return 404 if user is not found", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
-      const response = await request(app).put("/user/0x1234567890123456789012345678901234567890").send({
+      const response = await request(app).put("/0x1234567890123456789012345678901234567890").send({
         name: "NewName",
         imageUrl: "https://example.com/newimage.jpg",
       });
@@ -249,7 +251,7 @@ describe("User Controller", () => {
 
       vi.spyOn(prisma.user, "update").mockResolvedValue(updatedUser);
 
-      const response = await request(app).put("/user/0x1234567890123456789012345678901234567890").send({
+      const response = await request(app).put("/0x1234567890123456789012345678901234567890").send({
         name: "NewName",
         imageUrl: "https://example.com/newimage.jpg",
       });
@@ -269,7 +271,7 @@ describe("User Controller", () => {
     it("should return 500 if an error occurs", async () => {
       vi.spyOn(prisma.user, "findUnique").mockRejectedValue(new Error("Error"));
 
-      const response = await request(app).put("/user/0x1234567890123456789012345678901234567890").send({
+      const response = await request(app).put("/0x1234567890123456789012345678901234567890").send({
         name: "NewName",
         imageUrl: "https://example.com/newimage.jpg",
       });
@@ -284,6 +286,11 @@ describe("User Controller", () => {
   describe("getAllUsers", () => {
     beforeEach(() => {
       vi.clearAllMocks();
+      // Reset to default behavior
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        (req as any).address = "0x1234567890123456789012345678901234567890";
+        next();
+      });
     });
 
     it("should return 200 and paginated users data", async () => {
@@ -326,6 +333,11 @@ describe("User Controller", () => {
   describe("searchUser", () => {
     beforeEach(() => {
       vi.clearAllMocks();
+      // Reset to default behavior
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        (req as any).address = "0x1234567890123456789012345678901234567890";
+        next();
+      });
     });
 
     it("should return 400 if neither name nor address is provided", async () => {
