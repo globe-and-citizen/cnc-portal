@@ -6,11 +6,6 @@
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
-  "nodemonConfig": {
-    "ignore": [
-      "src/utils/swagger-output.json"
-    ]
-  },
   "scripts": {
     "start": "npx nodemon src/index.ts",
     "test": "vitest run -c vitest.unit.config.ts",
@@ -20,12 +15,11 @@
     "test:e2e:watch": "vitest -c vitest.e2e.config.ts",
     "test:unit": "vitest -c ./vitest.config.unit.ts",
     "test:unit:ui": "vitest -c ./vitest.config.unit.ts --ui",
-    "build": "tsc && npm run generate:docs && npm run copy:docs && npm run sentry:sourcemaps",
+    "build": "tsc && npm run sentry:sourcemaps",
     "prod": "node  dist/index.js",
     "copy:docs": "npx shx cp src/utils/backend_specs.html dist/utils/backend_specs.html",
     "prisma:migrate": "npx prisma migrate deploy",
     "prisma:generate": "npx prisma generate",
-    "generate:docs": "tsc src/utils/swagger.ts && node src/utils/swagger.js && npx shx rm src/utils/swagger.js",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org global-citizen-g6 --project cnc-portal-api ./dist && sentry-cli sourcemaps upload --org global-citizen-g6 --project cnc-portal-api ./dist"
   },
   "keywords": [],
@@ -68,7 +62,6 @@
     "multer-storage-cloudinary": "^4.0.0",
     "openapi2html": "^1.1.22",
     "siwe": "^3.0.0",
-    "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "viem": "^2.29.4",
