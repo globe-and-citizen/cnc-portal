@@ -65,14 +65,14 @@
           @change="toggleOption(budgetType)"
         />
         <!-- Numeric Input -->
-        <span class="grow">{{ label }}</span>
-        <label class="input input-bordered flex items-center gap-2 input-md mt-2 text-xs">
+        <label class="input input-bordered flex items-center gap-2 input-md mt-2 text-xs w-full">
+          <span class="w-48">{{ label }}</span>
           <input
             :disabled="!selectedOptions[budgetType]"
-            class="w-32"
+            class="grow"
             type="number"
             v-model.number="values[budgetType]"
-            placeholder="Enter value"
+            placeholder="0.00"
             :data-test="`limit-input-${budgetType}`"
             @input="updateValue(budgetType)"
           />
