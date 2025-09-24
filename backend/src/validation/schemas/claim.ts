@@ -32,7 +32,7 @@ export const updateClaimBodySchema = z.object({
 // Claim update query parameters
 export const updateClaimQuerySchema = z.object({
   action: z.enum(["sign", "withdraw", "disable", "enable", "reject"], {
-    errorMap: () => ({ message: "Invalid action. Allowed actions are: sign, withdraw, disable, enable, reject" })
+    message: "Invalid action. Allowed actions are: sign, withdraw, disable, enable, reject"
   }),
 });
 

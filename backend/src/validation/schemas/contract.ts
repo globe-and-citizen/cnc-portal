@@ -22,7 +22,7 @@ export const addContractBodySchema = z.object({
   teamId: teamIdSchema,
   contractAddress: addressSchema,
   contractType: z.enum(contractTypes, {
-    errorMap: () => ({ message: "Invalid contract type" })
+    message: "Invalid contract type"
   }),
 });
 

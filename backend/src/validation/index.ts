@@ -1,5 +1,6 @@
 /**
  * Validation exports - central place to import validation schemas and middleware
+ * Updated for Zod v4 with best practices and advanced utilities
  */
 
 // Middleware exports
@@ -13,5 +14,14 @@ export * from "./schemas/contract";
 export * from "./schemas/expense";
 export * from "./schemas/wage";
 
-// Type inference helpers
-export type { z } from "zod";
+// Advanced validation utilities (Zod v4 best practices)
+export * from "./utils";
+
+// Type inference helpers and core Zod exports
+export { z } from "zod";
+export type { 
+  ZodError, 
+  ZodSchema, 
+  ZodIssue,
+  ZodErrorMap,
+} from "zod";

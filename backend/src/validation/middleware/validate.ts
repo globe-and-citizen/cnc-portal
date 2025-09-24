@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { z, ZodSchema } from "zod";
+import { z, ZodSchema, ZodError } from "zod";
 import { errorResponse } from "../../utils/utils";
 
 /**
  * Validation middleware factory for request validation using Zod schemas
+ * Updated for Zod v4 best practices
  */
 
 interface ValidationSchemas {
@@ -11,6 +12,17 @@ interface ValidationSchemas {
   query?: ZodSchema;
   params?: ZodSchema;
 }
+
+/**
+ * Format Zod error messages for better user experience
+ * @param error - ZodError instance
+ * @returns Formatted error message string
+ */
+const formatZodError = (error: ZodError): string => {
+  return error.issues
+    .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+    .join(', ');
+};
 
 /**
  * Creates a middleware function that validates request data using Zod schemas
@@ -24,9 +36,7 @@ export const validate = (schemas: ValidationSchemas) => {
       if (schemas.body) {
         const bodyResult = schemas.body.safeParse(req.body);
         if (!bodyResult.success) {
-          const errors = bodyResult.error.errors.map(
-            (err) => `${err.path.join('.')}: ${err.message}`
-          ).join(', ');
+          const errors = formatZodError(bodyResult.error);
           return errorResponse(400, `Invalid request body - ${errors}`, res);
         }
         req.body = bodyResult.data;
@@ -36,29 +46,25 @@ export const validate = (schemas: ValidationSchemas) => {
       if (schemas.query) {
         const queryResult = schemas.query.safeParse(req.query);
         if (!queryResult.success) {
-          const errors = queryResult.error.errors.map(
-            (err) => `${err.path.join('.')}: ${err.message}`
-          ).join(', ');
+          const errors = formatZodError(queryResult.error);
           return errorResponse(400, `Invalid query parameters - ${errors}`, res);
         }
-        req.query = queryResult.data;
+        req.query = queryResult.data as any;
       }
 
       // Validate params if schema provided
       if (schemas.params) {
         const paramsResult = schemas.params.safeParse(req.params);
         if (!paramsResult.success) {
-          const errors = paramsResult.error.errors.map(
-            (err) => `${err.path.join('.')}: ${err.message}`
-          ).join(', ');
+          const errors = formatZodError(paramsResult.error);
           return errorResponse(400, `Invalid path parameters - ${errors}`, res);
         }
-        req.params = paramsResult.data;
+        req.params = paramsResult.data as any;
       }
 
       next();
     } catch (error) {
-      return errorResponse(500, error, res);
+      return errorResponse(500, "Validation middleware error", res);
     }
   };
 };

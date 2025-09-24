@@ -32,14 +32,14 @@ export const addExpenseBodySchema = z.object({
 export const getExpensesQuerySchema = z.object({
   teamId: teamIdSchema,
   status: z.enum(["all", "pending", "approved", "rejected", "disabled", "enabled", "signed"], {
-    errorMap: () => ({ message: "Invalid status parameter" })
+    message: "Invalid status parameter"
   }).default("all"),
 });
 
 // Update expense request body
 export const updateExpenseBodySchema = z.object({
   status: z.enum(["disable", "expired", "limitReached"], {
-    errorMap: () => ({ message: "Invalid status. Allowed values: disable, expired, limitReached" })
+    message: "Invalid status. Allowed values: disable, expired, limitReached"
   }),
 });
 
