@@ -38,7 +38,7 @@ const readers = props.pendingActions.map((a) => ({
   action: a,
   executed: useBodIsActionExecuted(a.actionId).data
 }))
-
+//filter out executed actions
 const notExecutedActions = computed(() =>
   readers.reduce(
     (acc, r) => {
