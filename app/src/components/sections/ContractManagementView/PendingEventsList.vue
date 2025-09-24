@@ -1,6 +1,6 @@
 <template>
   <span class="text-lg font-semibold">Pending Actions</span>
-  <TableComponent :rows="pendingActions" :columns="columns">
+  <TableComponent :rows="notExecutedActions" :columns="columns">
     <template #index-data="{ row }">
       {{ row.actionId }}
     </template>
@@ -26,32 +26,30 @@ import TableComponent from '@/components/TableComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { FormattedAction } from '@/utils'
 import UserComponent from '@/components/UserComponent.vue'
+import { useBodReads } from '@/composables/bod/reads'
+const { useBodIsActionExecuted } = useBodReads()
+import { computed } from 'vue'
 
 const emits = defineEmits(['view-details'])
 
-defineProps<{ pendingActions: FormattedAction }>()
+const props = defineProps<{ pendingActions: FormattedAction }>()
 
-// const pendingEvents = ref([
-//   {
-//     index: 1,
-//     description: 'Transfer ownership to BOD',
-//     requestedBy: 'User1',
-//     dateCreated: '2023-01-01'
-//   },
-//   {
-//     index: 2,
-//     description: 'Transfer ownership to Member',
-//     requestedBy: 'User2',
-//     dateCreated: '2023-01-02'
-//   },
-//   {
-//     index: 3,
-//     description: 'Transfer ownership to BOD',
-//     requestedBy: 'User3',
-//     dateCreated: '2023-01-03'
-//   },
-//   { index: 3, description: 'Transfer from bank', requestedBy: 'User3', dateCreated: '2023-01-03' }
-// ])
+const readers = props.pendingActions.map((a) => ({
+  action: a,
+  executed: useBodIsActionExecuted(a.actionId).data
+}))
+
+const notExecutedActions = computed(() =>
+  readers.reduce(
+    (acc, r) => {
+      if (r.executed?.value === false) {
+        acc.push(r.action)
+      }
+      return acc
+    },
+    [] as (typeof readers)[0]['action'][]
+  )
+)
 
 const columns = [
   { key: 'index', label: '#' },
