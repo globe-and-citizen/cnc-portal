@@ -34,6 +34,7 @@ vi.mock("../../utils", async () => {
       wage: {
         findUnique: vi.fn(),
       },
+      $transaction: vi.fn(),
     },
   };
 });

@@ -216,18 +216,18 @@ describe("Expense Controller", () => {
 
     it("should return 400 if status is invalid", async () => {
       const response = await request(app)
-        .put("/expense/1")
+        .patch("/expense/1")
         .send({ status: "invalidStatus" });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe("Invalid status");
+      expect(response.body.message).toContain("Invalid request body");
     });
 
     it("should return 403 if caller is not the owner of the team and the status is disable", async () => {
       vi.spyOn(prisma.expense, "findUnique").mockResolvedValue(null);
 
       const response = await request(app)
-        .put("/expense/1")
+        .patch("/expense/1")
         .send({ status: "disable" });
 
       expect(response.status).toBe(403);
@@ -241,7 +241,7 @@ describe("Expense Controller", () => {
       });
 
       const response = await request(app)
-        .put("/expense/1")
+        .patch("/expense/1")
         .send({ status: "expired" });
 
       expect(response.status).toBe(200);
@@ -252,7 +252,7 @@ describe("Expense Controller", () => {
       vi.spyOn(prisma.expense, "update").mockRejectedValue("Server error");
 
       const response = await request(app)
-        .put("/expense/1")
+        .patch("/expense/1")
         .send({ status: "expired" });
 
       expect(response.status).toBe(500);

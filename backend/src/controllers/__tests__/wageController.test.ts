@@ -189,8 +189,8 @@ describe("Wage Controller", () => {
         });
 
       // console.log({ body: response.body, status: response.status });
-      expect(response.status).toBe(500);
-      expect(response.body.message).toBe("Internal server error has occured");
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain("Invalid request body");
     });
   });
 
@@ -208,7 +208,7 @@ describe("Wage Controller", () => {
     it("should return 400 if teamId is invalid", async () => {
       const response = await request(app).get("/").query({ teamId: "abc" });
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain("Invalid request query");
+      expect(response.body.message).toContain("Invalid query parameters");
     });
 
     it("should return 403 if user is not a team member", async () => {

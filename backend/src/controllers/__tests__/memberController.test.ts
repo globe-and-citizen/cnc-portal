@@ -23,6 +23,7 @@ vi.mock("../../utils", async () => {
     prisma: {
       team: {
         findUnique: vi.fn(),
+        update: vi.fn(),
       },
       teamMember: {
         findUnique: vi.fn(),
@@ -130,11 +131,14 @@ describe("Member Controller", () => {
     // Prepare context
     const app = express();
     app.use(express.json());
-    app.use(setAddressMiddleware(mockOwner.address));
-    app.post("/team/:id/member", addMembers);
+    app.use("/", teamRoutes);
 
     beforeEach(() => {
       vi.clearAllMocks();
+      vi.mocked(authorizeUser).mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        (req as any).address = mockOwner.address;
+        next();
+      });
     });
 
     // Start testing

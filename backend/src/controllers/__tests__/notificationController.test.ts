@@ -30,9 +30,11 @@ vi.mock("../../utils", async () => {
     prisma: {
       notification: {
         findMany: vi.fn(),
+        findUnique: vi.fn(),
         update: vi.fn(),
         createMany: vi.fn(),
       },
+      $disconnect: vi.fn(),
     },
   };
 });
@@ -174,9 +176,9 @@ describe("Notification Controller", () => {
         data: undefined,
       } as unknown as Response;
 
-      await getNotification(req, res);
+      const response = await request(app).get("/");
 
-      expect(res.data.message).toBe("Internal server error has occured");
+      expect(response.body.message).toBe("Internal server error has occured");
     });
   });
 
