@@ -1,26 +1,40 @@
 import request from "supertest";
 import express, { Request, Response, NextFunction } from "express";
+import claimRoutes from "../../routes/claimRoute";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
-import { addClaim, getClaims, updateClaim } from "../claimController";
 import { Claim, Wage, WeeklyClaim } from "@prisma/client";
 import dayjs from "dayjs";
 
 vi.mock("../../utils");
-function setAddressMiddleware(address: string) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = address;
+vi.mock("../../utils/viem.config");
+
+// Mock the authorization middleware with proper hoisting
+vi.mock("../../middleware/authMiddleware", () => ({
+  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
+    // Default behavior - can be overridden in tests
+    (req as any).address = "0x1234567890123456789012345678901234567890";
     next();
-  };
-}
+  }),
+}));
+
+// Import the mocked function after mocking
+import { authorizeUser } from "../../middleware/authMiddleware";
+const mockAuthorizeUser = vi.mocked(authorizeUser);
+
+const app = express();
+app.use(express.json());
+// Use the actual claimRoutes from the routes file
+app.use("/", claimRoutes);
 const mockWage = {
   id: 1,
   teamId: 1,
-  userAddress: "0xMemberAddress",
-  cashRatePerHour: 50,
-  tokenRatePerHour: 100,
+  userAddress: "0x1234567890123456789012345678901234567890",
+  ratePerHour: [{ type: "cash", amount: 50 }],
   maximumHoursPerWeek: 40,
   nextWageId: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 } as Wage;
 
 const mockWeeklyClaims: WeeklyClaim = {
@@ -30,7 +44,7 @@ const mockWeeklyClaims: WeeklyClaim = {
   updatedAt: new Date(),
   weekStart: new Date(),
   data: {},
-  memberAddress: "0xMemberAddress",
+  memberAddress: "0x1234567890123456789012345678901234567890",
   signature: null,
   claims: [{ hoursWorked: 30 }],
   wageId: 1,
@@ -45,6 +59,10 @@ const mockClaim = {
   status: "pending",
   weeklyClaimId: 1,
   dayWorked: new Date(),
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  signature: null,
+  tokenTx: null,
 } as Claim;
 
 const mockClaimWithWage = [
@@ -62,64 +80,58 @@ const mockClaimWithWage = [
     weeklyClaimId: 1,
     wage: {
       teamId: 1,
-      userAddress: "0xMemberAddress",
+      userAddress: "0x1234567890123456789012345678901234567890",
       user: {
-        address: "0xMemberAddress",
+        address: "0x1234567890123456789012345678901234567890",
         name: "User1",
       },
     },
   },
 ];
 
-const app = express();
-app.use(express.json());
-app.post("/claim", setAddressMiddleware("0x123"), addClaim);
-app.get("/claim", setAddressMiddleware("0x123"), getClaims);
-app.put("/claim/:claimId", setAddressMiddleware("0x123"), updateClaim);
-
 describe("Claim Controller", () => {
-  describe("POST: /claim", () => {
+  describe("POST: /", () => {
     beforeEach(() => {
       vi.clearAllMocks();
+      // Reset to default behavior
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        (req as any).address = "0x1234567890123456789012345678901234567890";
+        next();
+      });
     });
 
     it("should return 400 if memo is missing", async () => {
       const response = await request(app)
-        .post("/claim")
+        .post("/")
         .send({ teamId: 1, descpription: "" });
       expect(response.status).toBe(400);
-      expect(response.body.message).toEqual(
-        "Missing hoursWorked, Missing memo, Invalid hoursWorked"
-      );
+      expect(response.body.message).toContain("Invalid request body");
     });
 
     it("should return 400 if memo is only spaces", async () => {
       const response = await request(app)
-        .post("/claim")
+        .post("/")
         .send({ teamId: 1, hoursWorked: 5, memo: " " });
-
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain("Invalid memo");
+      expect(response.body.message).toContain("Invalid request body");
     });
 
     it("should return 400 if memo exceeds 200 words", async () => {
       const longmemo = Array(201).fill("word").join(" ");
 
       const response = await request(app)
-        .post("/claim")
+        .post("/")
         .send({ teamId: 1, hoursWorked: 5, memo: longmemo });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain(
-        "memo is too long, max 200 words"
-      );
+      expect(response.body.message).toContain("Invalid request body");
     });
 
     it("should return 400 if user don't have wage", async () => {
       vi.spyOn(prisma.wage, "findFirst").mockResolvedValue(null);
 
       const response = await request(app)
-        .post("/claim")
+        .post("/")
         .send({ teamId: 1, hoursWorked: 5, memo: "memo" });
 
       expect(response.status).toBe(400);
@@ -133,7 +145,7 @@ describe("Claim Controller", () => {
       );
 
       const response = await request(app)
-        .post("/claim")
+        .post("/")
         .send({ teamId: 1, hoursWorked: 45, memo: "memo" });
 
       expect(response.body.message).toMatch(
@@ -143,19 +155,17 @@ describe("Claim Controller", () => {
     });
 
     it("should return 400 if required fields are missing", async () => {
-      const response = await request(app).post("/claim").send({});
+      const response = await request(app).post("/").send({});
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain("Missing teamId");
+      expect(response.body.message).toContain("Invalid request body");
     });
 
     it("should return 400 if hoursWorked is invalid", async () => {
       const response = await request(app)
-        .post("/claim")
+        .post("/")
         .send({ teamId: 1, hoursWorked: -5, memo: "" });
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain(
-        "Invalid hoursWorked, hoursWorked must be greater than 0"
-      );
+      expect(response.body.message).toContain("Invalid request body");
     });
 
     it("should return 400 if total hours exceed 24 hours for a single day", async () => {
@@ -175,7 +185,7 @@ describe("Claim Controller", () => {
       vi.spyOn(prisma.weeklyClaim, "findFirst").mockResolvedValue(
         modifiedMockWeeklyClaims
       );
-      const response = await request(app).post("/claim").send({
+      const response = await request(app).post("/").send({
         teamId: 1,
         hoursWorked: 5, // 5 + 20 = 25 heures > 24 heures
         memo: "memo",
@@ -197,7 +207,7 @@ describe("Claim Controller", () => {
 
       vi.spyOn(prisma.claim, "create").mockResolvedValue(mockClaim);
       const response = await request(app)
-        .post("/claim")
+        .post("/")
         .send({ teamId: 1, hoursWorked: 5, memo: "test memo" });
 
       expect(response.status).toBe(201);
@@ -222,7 +232,7 @@ describe("Claim Controller", () => {
 
       vi.spyOn(prisma.claim, "create").mockResolvedValue(mockClaim);
       const response = await request(app)
-        .post("/claim")
+        .post("/")
         .send({ teamId: 1, hoursWorked: 5, memo: "test memo" });
 
       expect(response.status).toBe(201);
@@ -242,7 +252,7 @@ describe("Claim Controller", () => {
       );
 
       const response = await request(app)
-        .post("/claim")
+        .post("/")
         .send({ teamId: 1, hoursWorked: 5, memo: "memo" });
 
       expect(prisma.wage.findFirst).toHaveBeenCalled();
@@ -252,19 +262,28 @@ describe("Claim Controller", () => {
     });
   });
 
-  describe("GET: /claim", () => {
+  describe("GET: /", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      // Reset to default behavior
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        (req as any).address = "0x1234567890123456789012345678901234567890";
+        next();
+      });
+    });
+
     it("should return 400 if teamId is invalid", async () => {
       const response = await request(app)
-        .get("/claim")
+        .get("/")
         .query({ teamId: "abc" });
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe("Invalid or missing teamId");
+      expect(response.body.message).toContain("Invalid request query");
     });
 
     it("should return 403 if caller is not a member of the team", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(null);
 
-      const response = await request(app).get("/claim").query({ teamId: 1 });
+      const response = await request(app).get("/").query({ teamId: 1 });
 
       expect(response.status).toBe(403);
       expect(response.body.message).toBe("Caller is not a member of the team");
@@ -276,8 +295,8 @@ describe("Claim Controller", () => {
       vi.spyOn(prisma.claim, "findMany").mockResolvedValue(mockClaimWithWage);
 
       const response = await request(app)
-        .get("/claim")
-        .query({ teamId: 1, memberAddress: "0xMemberAddress" });
+        .get("/")
+        .query({ teamId: 1, memberAddress: "0x1234567890123456789012345678901234567890" });
 
       expect(response.status).toBe(200);
       expect(response.body).toBeInstanceOf(Array);
@@ -300,7 +319,7 @@ describe("Claim Controller", () => {
         },
       ]);
 
-      const response = await request(app).get("/claim").query({ teamId: 1 });
+      const response = await request(app).get("/").query({ teamId: 1 });
 
       expect(response.status).toBe(200);
       expect(response.body).toBeInstanceOf(Array);
@@ -324,7 +343,7 @@ describe("Claim Controller", () => {
       ]);
 
       const response = await request(app)
-        .get("/claim")
+        .get("/")
         .query({ teamId: 1, status: "pending" });
 
       expect(response.status).toBe(200);
@@ -335,37 +354,46 @@ describe("Claim Controller", () => {
     it("should return 500 if an error occurs", async () => {
       // @ts-ignore
       vi.spyOn(prisma.team, "findFirst").mockRejectedValue("Test");
-      const response = await request(app).get("/claim").query({ teamId: 1 });
+      const response = await request(app).get("/").query({ teamId: 1 });
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe("Internal server error has occured");
     });
   });
 
-  describe("PUT: /claim/:claimId", () => {
+  describe("PUT: /:claimId", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      // Reset to default behavior
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        (req as any).address = "0x1234567890123456789012345678901234567890";
+        next();
+      });
+    });
+
     it("should return 400 for invalid action", async () => {
       const response = await request(app)
-        .put("/claim/1")
+        .put("/1")
         .query({ action: "invalid" });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain("Invalid action");
+      expect(response.body.message).toContain("Invalid request query");
     });
 
     it("should return 400 for missing signature", async () => {
       const response = await request(app)
-        .put("/claim/1")
+        .put("/1")
         .query({ action: "sign" });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain("Missing signature");
+      expect(response.body.message).toContain("Invalid request body");
     });
 
     it("should return 404 if claim is not found", async () => {
       vi.spyOn(prisma.claim, "findFirst").mockResolvedValue(null);
 
       const response = await request(app)
-        .put("/claim/1")
+        .put("/1")
         .query({ action: "sign" })
         .send({ signature: "0xabc" });
 
@@ -382,7 +410,7 @@ describe("Claim Controller", () => {
       });
 
       const response = await request(app)
-        .put("/claim/1")
+        .put("/1")
         .query({ action: "sign" })
         .send({ signature: "0xabc" });
 
@@ -401,7 +429,7 @@ describe("Claim Controller", () => {
       });
 
       const response = await request(app)
-        .put("/claim/1")
+        .put("/1")
         .query({ action: "withdraw" });
 
       expect(response.status).toBe(403);
@@ -416,11 +444,11 @@ describe("Claim Controller", () => {
         id: 1,
         status: "signed",
         // @ts-ignore
-        wage: { team: { ownerAddress: "0x123" } },
+        wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
       });
 
       const response = await request(app)
-        .put("/claim/1")
+        .put("/1")
         .query({ action: "sign" })
         .send({ signature: "0xabc" });
       expect(response.status).toBe(403);
@@ -432,7 +460,7 @@ describe("Claim Controller", () => {
         id: 1,
         status: "pending",
         // @ts-ignore
-        wage: { team: { ownerAddress: "0x123" } },
+        wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
       });
       // @ts-ignore
       vi.spyOn(prisma.claim, "update").mockResolvedValue({
@@ -441,7 +469,7 @@ describe("Claim Controller", () => {
       });
 
       const response = await request(app)
-        .put("/claim/1")
+        .put("/1")
         .query({ action: "sign" })
         .send({ signature: "0xabc" });
 
@@ -455,11 +483,11 @@ describe("Claim Controller", () => {
           id: 1,
           status: "pending",
           // @ts-ignore
-          wage: { userAddress: "0x123" },
+          wage: { userAddress: "0x1234567890123456789012345678901234567890" },
         });
 
         const response = await request(app)
-          .put("/claim/1")
+          .put("/1")
           .query({ action: "withdraw" });
 
         expect(response.status).toBe(403);
@@ -471,7 +499,7 @@ describe("Claim Controller", () => {
           id: 1,
           status: "signed",
           // @ts-ignore
-          wage: { userAddress: "0x123" },
+          wage: { userAddress: "0x1234567890123456789012345678901234567890" },
         });
         // @ts-ignore
         vi.spyOn(prisma.claim, "update").mockResolvedValue({
@@ -480,7 +508,7 @@ describe("Claim Controller", () => {
         });
 
         const response = await request(app)
-          .put("/claim/1")
+          .put("/1")
           .query({ action: "withdraw" });
 
         expect(response.status).toBe(200);
@@ -494,11 +522,11 @@ describe("Claim Controller", () => {
           id: 1,
           status: "pending",
           // @ts-ignore
-          wage: { team: { ownerAddress: "0x123" } },
+          wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
         });
 
         const response = await request(app)
-          .put("/claim/1")
+          .put("/1")
           .query({ action: "disable" });
 
         expect(response.status).toBe(403);
@@ -510,7 +538,7 @@ describe("Claim Controller", () => {
           id: 1,
           status: "signed",
           // @ts-ignore
-          wage: { team: { ownerAddress: "0x123" } },
+          wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
         });
         // @ts-ignore
         vi.spyOn(prisma.claim, "update").mockResolvedValue({
@@ -519,7 +547,7 @@ describe("Claim Controller", () => {
         });
 
         const response = await request(app)
-          .put("/claim/1")
+          .put("/1")
           .query({ action: "disable" });
 
         expect(response.status).toBe(200);
@@ -533,11 +561,11 @@ describe("Claim Controller", () => {
           id: 1,
           status: "pending",
           // @ts-ignore
-          wage: { team: { ownerAddress: "0x123" } },
+          wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
         });
 
         const response = await request(app)
-          .put("/claim/1")
+          .put("/1")
           .query({ action: "enable" });
 
         expect(response.status).toBe(403);
@@ -549,7 +577,7 @@ describe("Claim Controller", () => {
           id: 1,
           status: "disabled",
           // @ts-ignore
-          wage: { team: { ownerAddress: "0x123" } },
+          wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
         });
         // @ts-ignore
         vi.spyOn(prisma.claim, "update").mockResolvedValue({
@@ -558,7 +586,7 @@ describe("Claim Controller", () => {
         });
 
         const response = await request(app)
-          .put("/claim/1")
+          .put("/1")
           .query({ action: "enable" });
 
         expect(response.status).toBe(200);
@@ -572,11 +600,11 @@ describe("Claim Controller", () => {
           id: 1,
           status: "signed",
           // @ts-ignore
-          wage: { team: { ownerAddress: "0x123" } },
+          wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
         });
 
         const response = await request(app)
-          .put("/claim/1")
+          .put("/1")
           .query({ action: "reject" });
 
         expect(response.status).toBe(403);
@@ -588,7 +616,7 @@ describe("Claim Controller", () => {
           id: 1,
           status: "pending",
           // @ts-ignore
-          wage: { team: { ownerAddress: "0x123" } },
+          wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
         });
         // @ts-ignore
         vi.spyOn(prisma.claim, "update").mockResolvedValue({
@@ -597,7 +625,7 @@ describe("Claim Controller", () => {
         });
 
         const response = await request(app)
-          .put("/claim/1")
+          .put("/1")
           .query({ action: "reject" });
 
         expect(response.status).toBe(200);
@@ -609,7 +637,7 @@ describe("Claim Controller", () => {
       vi.spyOn(prisma.claim, "findFirst").mockRejectedValue("Test");
 
       const response = await request(app)
-        .put("/claim/1")
+        .put("/1")
         .query({ action: "sign" })
         .send({ signature: "0xabc" });
 
