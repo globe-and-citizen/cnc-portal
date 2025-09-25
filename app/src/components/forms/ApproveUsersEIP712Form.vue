@@ -29,7 +29,7 @@
   <SelectMemberWithTokenInput v-model="input" />
 
   <div
-    class="pl-4 text-red-500 text-sm w-full text-left"
+    class="pl-4 text-red-500 text-sm w-full text-right"
     v-for="error of v$.input.$errors"
     :key="error.$uid"
     data-test="address-error"
@@ -72,7 +72,7 @@
             class="grow"
             type="number"
             v-model.number="values[budgetType]"
-            placeholder="0.00"
+            :placeholder="budgetType == 0 ? '0' : '0.00'"
             :data-test="`limit-input-${budgetType}`"
             @input="updateValue(budgetType)"
           />
@@ -90,7 +90,7 @@
         </div>
       </div> -->
 
-      <div class="pl-4 text-red-500 text-sm w-full text-left">
+      <div class="pl-16 text-red-500 text-sm w-full text-right">
         <div
           v-for="error of v$.resultArray.$errors"
           :key="error.$uid"
@@ -110,7 +110,7 @@
     </div>
 
     <!-- Budget Limit Validation Errors -->
-    <div class="pl-4 text-red-500 text-sm w-full text-left">
+    <div class="pl-4 text-red-500 text-sm w-full text-right">
       <div v-for="error of v$.resultArray.$errors" :key="error.$uid" data-test="budget-limit-error">
         <div v-if="error.$validator === 'required'">
           {{ error.$message }}
@@ -139,7 +139,7 @@
   </div>
 
   <div
-    class="pl-4 text-red-500 text-sm w-full text-left"
+    class="pl-4 text-red-500 text-sm w-full text-right"
     v-for="error of v$.date.$errors"
     :key="error.$uid"
     data-test="date-error"
