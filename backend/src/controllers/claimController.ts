@@ -8,7 +8,6 @@ import weekday from 'dayjs/plugin/weekday'
 
 import { Prisma, Claim } from "@prisma/client";
 import { isUserMemberOfTeam } from "./wageController";
-import { getMondayStart, todayMidnight } from "../utils/dayUtils";
 import { isCashRemunerationOwner } from "../utils/cashRemunerationUtil";
 
 dayjs.extend(utc)

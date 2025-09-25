@@ -9,6 +9,17 @@ import dayjs from "dayjs";
 vi.mock("../../utils");
 vi.mock("../../utils/viem.config");
 
+// Mock the cash remuneration utility
+vi.mock("../../utils/cashRemunerationUtil", () => ({
+  isCashRemunerationOwner: vi.fn(),
+  getCashRemunerationOwner: vi.fn(),
+}));
+
+// Mock the wage controller
+vi.mock("../wageController", () => ({
+  isUserMemberOfTeam: vi.fn(),
+}));
+
 // Mock the authorization middleware with proper hoisting
 vi.mock("../../middleware/authMiddleware", () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
@@ -18,9 +29,13 @@ vi.mock("../../middleware/authMiddleware", () => ({
   }),
 }));
 
-// Import the mocked function after mocking
-import { authorizeUser } from "../../middleware/authMiddleware";
-const mockAuthorizeUser = vi.mocked(authorizeUser);
+// Import the mocked functions after mocking
+import { isCashRemunerationOwner } from "../../utils/cashRemunerationUtil";
+import { isUserMemberOfTeam } from "../wageController";
+const mockIsCashRemunerationOwner = vi.mocked(isCashRemunerationOwner);
+const mockIsUserMemberOfTeam = vi.mocked(isUserMemberOfTeam);
+
+const TEST_ADDRESS = "0x1234567890123456789012345678901234567890";
 
 const app = express();
 app.use(express.json());
@@ -30,7 +45,10 @@ const mockWage = {
   id: 1,
   teamId: 1,
   userAddress: "0x1234567890123456789012345678901234567890",
-  ratePerHour: [{ type: "cash", amount: 50 }],
+  ratePerHour: JSON.stringify([{ type: "cash", amount: 50 }]),
+  cashRatePerHour: 50,
+  tokenRatePerHour: 0,
+  usdcRatePerHour: 0,
   maximumHoursPerWeek: 40,
   nextWageId: null,
   createdAt: new Date(),
@@ -93,11 +111,6 @@ describe("Claim Controller", () => {
   describe("POST: /", () => {
     beforeEach(() => {
       vi.clearAllMocks();
-      // Reset to default behavior
-      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        (req as any).address = "0x1234567890123456789012345678901234567890";
-        next();
-      });
     });
 
     it("should return 400 if memo is missing", async () => {
@@ -265,11 +278,8 @@ describe("Claim Controller", () => {
   describe("GET: /", () => {
     beforeEach(() => {
       vi.clearAllMocks();
-      // Reset to default behavior
-      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        (req as any).address = "0x1234567890123456789012345678901234567890";
-        next();
-      });
+      // Mock default behavior for utility functions
+      mockIsUserMemberOfTeam.mockResolvedValue(true);
     });
 
     it("should return 400 if teamId is invalid", async () => {
@@ -277,11 +287,12 @@ describe("Claim Controller", () => {
         .get("/")
         .query({ teamId: "abc" });
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain("Invalid request query");
+      expect(response.body.message).toContain("Invalid query parameters");
     });
 
     it("should return 403 if caller is not a member of the team", async () => {
-      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(null);
+      // Mock that user is NOT a member of the team
+      mockIsUserMemberOfTeam.mockResolvedValue(false);
 
       const response = await request(app).get("/").query({ teamId: 1 });
 
@@ -290,8 +301,8 @@ describe("Claim Controller", () => {
     });
 
     it("should return 200 and list claims filtered by memberAddress", async () => {
-      vi.spyOn(prisma.team, "findFirst").mockResolvedValue({});
-
+      // Mock that user is a member of the team
+      mockIsUserMemberOfTeam.mockResolvedValue(true);
       vi.spyOn(prisma.claim, "findMany").mockResolvedValue(mockClaimWithWage);
 
       const response = await request(app)
@@ -304,10 +315,8 @@ describe("Claim Controller", () => {
     });
 
     it("should return 200 and list claims for a team", async () => {
-      // mock on isUserMemberOfTeam
-
-      // @ts-ignore
-      vi.spyOn(prisma.team, "findFirst").mockResolvedValue({});
+      // Mock that user is a member of the team
+      mockIsUserMemberOfTeam.mockResolvedValue(true);
       // @ts-ignore
       vi.spyOn(prisma.claim, "findMany").mockResolvedValue([
         {
@@ -327,10 +336,8 @@ describe("Claim Controller", () => {
     });
 
     it("should return 200 and list claims based on status filter", async () => {
-      // mock on isUserMemberOfTeam
-
-      // @ts-ignore
-      vi.spyOn(prisma.team, "findFirst").mockResolvedValue({});
+      // Mock that user is a member of the team
+      mockIsUserMemberOfTeam.mockResolvedValue(true);
       // @ts-ignore
       vi.spyOn(prisma.claim, "findMany").mockResolvedValue([
         {
@@ -352,8 +359,8 @@ describe("Claim Controller", () => {
     });
 
     it("should return 500 if an error occurs", async () => {
-      // @ts-ignore
-      vi.spyOn(prisma.team, "findFirst").mockRejectedValue("Test");
+      // Make isUserMemberOfTeam throw an error
+      mockIsUserMemberOfTeam.mockRejectedValue(new Error("Test error"));
       const response = await request(app).get("/").query({ teamId: 1 });
 
       expect(response.status).toBe(500);
@@ -364,11 +371,8 @@ describe("Claim Controller", () => {
   describe("PUT: /:claimId", () => {
     beforeEach(() => {
       vi.clearAllMocks();
-      // Reset to default behavior
-      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        (req as any).address = "0x1234567890123456789012345678901234567890";
-        next();
-      });
+      // Mock default behavior for utility functions
+      mockIsCashRemunerationOwner.mockResolvedValue(false);
     });
 
     it("should return 400 for invalid action", async () => {
@@ -377,7 +381,7 @@ describe("Claim Controller", () => {
         .query({ action: "invalid" });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain("Invalid request query");
+      expect(response.body.message).toContain("Invalid query parameters");
     });
 
     it("should return 400 for missing signature", async () => {
@@ -386,7 +390,7 @@ describe("Claim Controller", () => {
         .query({ action: "sign" });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain("Invalid request body");
+      expect(response.body.message).toContain("Missing signature");
     });
 
     it("should return 404 if claim is not found", async () => {
@@ -408,6 +412,8 @@ describe("Claim Controller", () => {
         // @ts-ignore
         wage: { team: { ownerAddress: "0x456" } },
       });
+      // Mock that user is not the cash remuneration owner
+      mockIsCashRemunerationOwner.mockResolvedValue(false);
 
       const response = await request(app)
         .put("/1")
@@ -446,6 +452,8 @@ describe("Claim Controller", () => {
         // @ts-ignore
         wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
       });
+      // Mock that user is the cash remuneration owner
+      mockIsCashRemunerationOwner.mockResolvedValue(true);
 
       const response = await request(app)
         .put("/1")
@@ -462,6 +470,8 @@ describe("Claim Controller", () => {
         // @ts-ignore
         wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
       });
+      // Mock that user is the cash remuneration owner
+      mockIsCashRemunerationOwner.mockResolvedValue(true);
       // @ts-ignore
       vi.spyOn(prisma.claim, "update").mockResolvedValue({
         id: 1,
@@ -479,14 +489,26 @@ describe("Claim Controller", () => {
 
     describe("Withdraw action", () => {
       it("should return 403 if claim is not signed", async () => {
-        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue({
+        const mockClaim = {
           id: 1,
-          status: "pending",
-          // @ts-ignore
-          wage: { userAddress: "0x1234567890123456789012345678901234567890" },
-        });
+          status: "pending", // Not signed
+          wage: { 
+            userAddress: TEST_ADDRESS,
+            team: { ownerAddress: TEST_ADDRESS }
+          },
+        };
+        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue(mockClaim as any);
 
-        const response = await request(app)
+        // Create a custom app with middleware that sets the address correctly
+        const testApp = express();
+        testApp.use(express.json());
+        testApp.use((req, res, next) => {
+          (req as any).address = TEST_ADDRESS;
+          next();
+        });
+        testApp.use("/", claimRoutes);
+
+        const response = await request(testApp)
           .put("/1")
           .query({ action: "withdraw" });
 
@@ -494,20 +516,91 @@ describe("Claim Controller", () => {
         expect(response.body.message).toContain("Can't withdraw");
       });
 
-      it("should update claim status to withdrawn", async () => {
-        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue({
+      it("should successfully withdraw when user owns the signed claim", async () => {
+        const mockClaim = {
           id: 1,
           status: "signed",
-          // @ts-ignore
-          wage: { userAddress: "0x1234567890123456789012345678901234567890" },
-        });
-        // @ts-ignore
+          wage: { 
+            userAddress: TEST_ADDRESS,
+            team: { ownerAddress: TEST_ADDRESS }
+          },
+        };
+        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue(mockClaim as any);
         vi.spyOn(prisma.claim, "update").mockResolvedValue({
           id: 1,
           status: "withdrawn",
-        });
+        } as any);
 
-        const response = await request(app)
+        // Create a custom app with middleware that sets the address correctly
+        const testApp = express();
+        testApp.use(express.json());
+        testApp.use((req, res, next) => {
+          (req as any).address = TEST_ADDRESS;
+          next();
+        });
+        testApp.use("/", claimRoutes);
+
+        const response = await request(testApp)
+          .put("/1")
+          .query({ action: "withdraw" });
+
+        expect(response.status).toBe(200);
+        expect(response.body.status).toBe("withdrawn");
+      });
+
+      it("should return 403 if user doesn't own the claim", async () => {
+        const mockClaim = {
+          id: 1,
+          status: "signed",
+          wage: { 
+            userAddress: "0x456", // Different user owns the claim
+            team: { ownerAddress: TEST_ADDRESS }
+          },
+        };
+        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue(mockClaim as any);
+
+        // Create a custom app with middleware that sets the address correctly
+        const testApp = express();
+        testApp.use(express.json());
+        testApp.use((req, res, next) => {
+          (req as any).address = TEST_ADDRESS;
+          next();
+        });
+        testApp.use("/", claimRoutes);
+
+        const response = await request(testApp)
+          .put("/1")
+          .query({ action: "withdraw" });
+
+        expect(response.status).toBe(403);
+        expect(response.body.message).toBe("Caller is not the owner of the claim");
+      });
+
+      it("should update claim status to withdrawn", async () => {
+        const mockClaim = {
+          id: 1,
+          status: "signed",
+          wage: { 
+            userAddress: TEST_ADDRESS,
+            team: { ownerAddress: TEST_ADDRESS }
+          },
+        };
+        vi.spyOn(prisma.claim, "findFirst").mockResolvedValue(mockClaim as any);
+        vi.spyOn(prisma.claim, "update").mockResolvedValue({
+          id: 1,
+          status: "withdrawn",
+        } as any);
+
+        // Create a custom app with middleware that sets the address correctly
+        const testApp = express();
+        testApp.use(express.json());
+        testApp.use((req, res, next) => {
+          (req as any).address = TEST_ADDRESS;
+          next();
+        });
+        testApp.use("/", claimRoutes);
+
+        const response = await request(testApp)
           .put("/1")
           .query({ action: "withdraw" });
 
@@ -524,6 +617,8 @@ describe("Claim Controller", () => {
           // @ts-ignore
           wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
         });
+        // Mock that user is the cash remuneration owner
+        mockIsCashRemunerationOwner.mockResolvedValue(true);
 
         const response = await request(app)
           .put("/1")
@@ -540,6 +635,8 @@ describe("Claim Controller", () => {
           // @ts-ignore
           wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
         });
+        // Mock that user is the cash remuneration owner
+        mockIsCashRemunerationOwner.mockResolvedValue(true);
         // @ts-ignore
         vi.spyOn(prisma.claim, "update").mockResolvedValue({
           id: 1,
@@ -563,6 +660,8 @@ describe("Claim Controller", () => {
           // @ts-ignore
           wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
         });
+        // Mock that user is the cash remuneration owner
+        mockIsCashRemunerationOwner.mockResolvedValue(true);
 
         const response = await request(app)
           .put("/1")
@@ -579,6 +678,8 @@ describe("Claim Controller", () => {
           // @ts-ignore
           wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
         });
+        // Mock that user is the cash remuneration owner
+        mockIsCashRemunerationOwner.mockResolvedValue(true);
         // @ts-ignore
         vi.spyOn(prisma.claim, "update").mockResolvedValue({
           id: 1,
@@ -602,6 +703,8 @@ describe("Claim Controller", () => {
           // @ts-ignore
           wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
         });
+        // Mock that user is the cash remuneration owner
+        mockIsCashRemunerationOwner.mockResolvedValue(true);
 
         const response = await request(app)
           .put("/1")
@@ -618,6 +721,8 @@ describe("Claim Controller", () => {
           // @ts-ignore
           wage: { team: { ownerAddress: "0x1234567890123456789012345678901234567890" } },
         });
+        // Mock that user is the cash remuneration owner
+        mockIsCashRemunerationOwner.mockResolvedValue(true);
         // @ts-ignore
         vi.spyOn(prisma.claim, "update").mockResolvedValue({
           id: 1,
