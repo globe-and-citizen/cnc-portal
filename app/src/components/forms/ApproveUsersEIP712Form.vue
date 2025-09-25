@@ -78,6 +78,35 @@
           />
         </label>
       </div>
+
+      <!-- Display errors specific to this budgetType -->
+      <!-- <div v-if="maxTxErrors[0]" class="pl-12 text-red-500 text-sm mt-1">
+        <div 
+          v-for="(error, index) in maxTxErrors[0][budgetType]" 
+          :key="index" 
+          data-test="budget-limit-error"
+        >
+          {{ error }}
+        </div>
+      </div> -->
+
+      <div class="pl-4 text-red-500 text-sm w-full text-left">
+        <div
+          v-for="error of v$.resultArray.$errors"
+          :key="error.$uid"
+          data-test="budget-limit-error"
+        >
+          <div v-if="error.$validator === '$each'">
+            <div v-for="(subError, index) in error.$message" :key="index">
+              <div v-if="resultArray[index].budgetType == budgetType">
+                <div v-for="(msg, key) in subError" :key="key">
+                  {{ msg }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Budget Limit Validation Errors -->
@@ -86,13 +115,13 @@
         <div v-if="error.$validator === 'required'">
           {{ error.$message }}
         </div>
-        <div v-else-if="error.$validator === '$each'">
+        <!-- <div v-else-if="error.$validator === '$each'">
           <div v-for="(subError, index) in error.$message" :key="index">
             <div v-for="(msg, key) in subError" :key="key">
               {{ budgetTypes[resultArray[index].budgetType as unknown as 0 | 1 | 2] }}: {{ msg }}
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
   </div>
@@ -133,7 +162,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { isAddress } from 'viem'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers, required } from '@vuelidate/validators'
@@ -194,6 +223,11 @@ const updateValue = (budgetType: 0 | 1 | 2) => {
     values[budgetType] = 0 // Default value if input is empty
   }
 }
+
+// const getErrorsForBudgetType = (budgetType: string | number): BudgetError[] => {
+//   const key = budgetType.toString();
+//   return budgetTypeErrors.value[key] || [];
+// };
 //#endregion multi limit
 
 const rules = {
@@ -267,6 +301,25 @@ const v$ = useVuelidate(rules, {
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
+interface BudgetError {
+  uid: string
+  message: string
+  validator?: string
+}
+
+const maxTxErrors = computed(() => {
+  if (v$.value.resultArray.$errors.length) {
+    return v$.value.resultArray.$errors
+      .filter((error) => error.$validator === '$each')
+      .map((error) => {
+        console.log('error.$message: ', error.$message)
+        console.log('error.$params: ', error.$params)
+        console.log('error.$response: ', error.$response)
+        return error.$message
+      })
+  } else return [[], [], []]
+})
+
 const clear = () => {
   limitValue.value = ''
   budgetLimitType.value = null
@@ -287,6 +340,12 @@ const submitApprove = () => {
     expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
   })
 }
+
+watch(maxTxErrors, (newErrors) => {
+  if (newErrors) {
+    console.log('maxErrors: ', newErrors)
+  }
+})
 </script>
 <style>
 .dp__input {
