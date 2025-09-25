@@ -109,9 +109,6 @@ const mockClaimWithWage = [
 
 describe("Claim Controller", () => {
   describe("POST: /", () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
 
     it("should return 400 if memo is missing", async () => {
       const response = await request(app)
