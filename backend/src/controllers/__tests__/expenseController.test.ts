@@ -53,7 +53,7 @@ vi.mock("../../utils/viem.config", () => ({
 
 const app = express();
 app.use(express.json());
-app.use("/", expenseRoutes);
+app.use("/", authorizeUser, expenseRoutes);
 
 const mockExpense = {
   id: 1,
@@ -111,7 +111,18 @@ describe("Expense Controller", () => {
     });
     it("should create a new expense", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValueOnce(mockTeam);
+      vi.spyOn(prisma.teamContract, "findFirst").mockResolvedValueOnce({
+        id: 1,
+        teamId: 1,
+        address: "0x1234567890123456789012345678901234567890",
+        type: "ExpenseAccountEIP712",
+        deployer: "0x1234567890123456789012345678901234567890",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
       vi.spyOn(prisma.expense, "create").mockResolvedValueOnce(mockExpense);
+      
+      // Mock contract owner to match caller address
       vi.spyOn(publicClient, "readContract").mockResolvedValue(
         "0x1234567890123456789012345678901234567890"
       );
@@ -132,6 +143,15 @@ describe("Expense Controller", () => {
 
     it("should return 500 if there is a server error", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValueOnce(mockTeam);
+      vi.spyOn(prisma.teamContract, "findFirst").mockResolvedValueOnce({
+        id: 1,
+        teamId: 1,
+        address: "0x1234567890123456789012345678901234567890",
+        type: "ExpenseAccountEIP712",
+        deployer: "0x1234567890123456789012345678901234567890",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
       vi.spyOn(prisma.expense, "create").mockRejectedValue("Server error");
       vi.spyOn(publicClient, "readContract").mockResolvedValue(
         "0x1234567890123456789012345678901234567890"
