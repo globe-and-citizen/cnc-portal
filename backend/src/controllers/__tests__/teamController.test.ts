@@ -61,6 +61,7 @@ vi.mock("../../utils", async () => {
         deleteMany: vi.fn(),
       },
     },
+    addNotification: vi.fn(),
   };
 });
 
