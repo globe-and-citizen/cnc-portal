@@ -17,7 +17,6 @@ datasource db {
 model User {
   address                String                   @id @unique
   name                   String?
-  generatedName          String?
   nonce                  String
   imageUrl               String?
   teams                  Team[]                   @relation("MemberTeams")
