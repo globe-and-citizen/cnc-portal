@@ -11,12 +11,6 @@
             v-model="toggleSide"
             @openEditUserModal="
               () => {
-                // Prepare modal inputs; if the current name was generated, leave name blank
-                updateUserInput = {
-                  name: userStore.isNameGenerated ? '' : name,
-                  address: address,
-                  imageUrl: imageUrl || ''
-                }
                 showModal = true
               }
             "
@@ -32,11 +26,7 @@
             :isCollapsed="toggleSide"
             @toggleEditUserModal="
               () => {
-                updateUserInput = {
-                  name: userStore.isNameGenerated ? '' : name,
-                  address: address,
-                  imageUrl: imageUrl || ''
-                }
+                updateUserInput = { name, address, imageUrl: '' }
                 showModal = true
               }
             "
@@ -117,8 +107,7 @@ const showModal = ref(false)
 const userStore = useUserDataStore()
 const { name, address, imageUrl } = storeToRefs(userStore)
 
-// eslint-disable-next-line prefer-const
-let updateUserInput = ref({
+const updateUserInput = ref({
   name: name.value,
   address: address.value,
   imageUrl: ''
