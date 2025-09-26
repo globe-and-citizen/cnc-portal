@@ -29,7 +29,7 @@
   <SelectMemberWithTokenInput v-model="input" />
 
   <div
-    class="pl-4 text-red-500 text-sm w-full text-left"
+    class="pl-4 text-red-500 text-sm w-full text-right"
     v-for="error of v$.input.$errors"
     :key="error.$uid"
     data-test="address-error"
@@ -52,49 +52,62 @@
     <div
       v-for="(label, budgetType) in budgetTypes"
       :key="budgetType"
-      class="shadow-md"
       data-test="budget-limit-input"
     >
-      <label
-        :for="'checkbox-' + budgetType"
-        class="input input-bordered flex items-center gap-2 input-md mt-2 text-xs"
-      >
+      <div class="flex items-center gap-4">
         <!-- Checkbox -->
         <input
           type="checkbox"
-          class="checkbox checkbox-primary"
+          class="toggle toggle-info"
           v-model="selectedOptions[budgetType]"
           :id="'checkbox-' + budgetType"
           :data-test="`limit-checkbox-${budgetType}`"
           @change="toggleOption(budgetType)"
         />
         <!-- Numeric Input -->
-        <span class="w-48">{{ label }}</span
-        >|
-        <input
-          :disabled="!selectedOptions[budgetType]"
-          type="number"
-          class="grow"
-          v-model.number="values[budgetType]"
-          placeholder="Enter value"
-          :data-test="`limit-input-${budgetType}`"
-          @input="updateValue(budgetType)"
-        />
-      </label>
+        <label class="input input-bordered flex items-center gap-2 input-md mt-2 text-xs w-full">
+          <span class="w-48">{{ label }}</span>
+          <input
+            :disabled="!selectedOptions[budgetType]"
+            class="grow"
+            type="number"
+            v-model.number="values[budgetType]"
+            :placeholder="budgetType == 0 ? '0' : '0.00'"
+            :data-test="`limit-input-${budgetType}`"
+            @input="updateValue(budgetType)"
+          />
+        </label>
+      </div>
+
+      <!-- Display errors specific to this budgetType -->
+      <div class="pl-16 text-red-500 text-sm w-full text-right">
+        <div
+          v-for="error of v$.resultArray.$errors"
+          :key="error.$uid"
+          data-test="budget-limit-error"
+        >
+          <div v-if="error.$validator === '$each'">
+            <div v-for="(subError, index) in error.$message" :key="index">
+              <div v-if="resultArray[index].budgetType == budgetType">
+                <div v-for="(msg, key) in subError" :key="key">
+                  {{ msg }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Budget Limit Validation Errors -->
-    <div class="pl-4 text-red-500 text-sm w-full text-left">
-      <div v-for="error of v$.resultArray.$errors" :key="error.$uid" data-test="budget-limit-error">
+    <div class="pl-4 text-red-500 text-sm w-full text-right">
+      <div
+        v-for="error of v$.resultArray.$errors"
+        :key="error.$uid"
+        data-test="budget-limit-required-error"
+      >
         <div v-if="error.$validator === 'required'">
           {{ error.$message }}
-        </div>
-        <div v-else-if="error.$validator === '$each'">
-          <div v-for="(subError, index) in error.$message" :key="index">
-            <div v-for="(msg, key) in subError" :key="key">
-              {{ budgetTypes[resultArray[index].budgetType as unknown as 0 | 1 | 2] }}: {{ msg }}
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -104,16 +117,16 @@
   <hr />
 
   <div class="mt-3">
+    <span class="font-semibold">Expiry date:</span>
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-      <span class="w-24">Expiry</span>
       <div class="grow" data-test="date-picker">
-        <VueDatePicker v-model="date" :min-date="new Date()" auto-apply />
+        <VueDatePicker v-model="date" :min-date="new Date()" auto-apply placeholder="Pick a date" />
       </div>
     </label>
   </div>
 
   <div
-    class="pl-4 text-red-500 text-sm w-full text-left"
+    class="pl-4 text-red-500 text-sm w-full text-right"
     v-for="error of v$.date.$errors"
     :key="error.$uid"
     data-test="date-error"
@@ -197,6 +210,7 @@ const updateValue = (budgetType: 0 | 1 | 2) => {
     values[budgetType] = 0 // Default value if input is empty
   }
 }
+
 //#endregion multi limit
 
 const rules = {
