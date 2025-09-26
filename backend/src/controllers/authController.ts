@@ -3,6 +3,7 @@ import { generateNonce, SiweMessage } from "siwe";
 import jwt from "jsonwebtoken";
 import { errorResponse, extractAddressAndNonce } from "../utils/utils";
 import { prisma } from "../utils";
+import { faker } from "@faker-js/faker";
 
 export const authenticateSiwe = async (req: Request, res: Response) => {
   try {
@@ -37,18 +38,60 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     nonce = generateNonce();
 
     console.log("user: ", user);
-    if (user)
+    if (user) {
       await prisma.user.update({
         where: { address },
         data: { nonce },
       });
-    else
-      await prisma.user.create({
-        data: {
-          address,
-          nonce,
-        },
-      });
+    } else {
+      // Generate an initial generatedName
+      let generatedName = faker.person.fullName();
+      const avatar = faker.image.avatar();
+
+      // Try to create the user and retry on unique constraint error (P2002)
+      // This is safer than pre-checking because it avoids race conditions.
+      const maxRetries = 5;
+      let attempt = 0;
+      while (attempt < maxRetries) {
+        try {
+          await prisma.user.create({
+            data: {
+              address,
+              nonce,
+              name: generatedName,
+              imageUrl: avatar,
+              generatedName: generatedName,
+            },
+          });
+          break; // success
+        } catch (err: any) {
+          // Prisma unique constraint error code is P2002
+          const isUniqueConstraint = err?.code === "P2002";
+          if (!isUniqueConstraint) {
+            // rethrow unexpected errors
+            throw err;
+          }
+
+          // If unique constraint, generate a new candidate and retry
+          generatedName =
+            faker.person.fullName() +
+            (Math.floor(Math.random() * 9000) + 1000).toString();
+          attempt++;
+        }
+      }
+      // If we exhausted retries and still didn't create, attempt one last time and let error bubble
+      if (attempt >= maxRetries) {
+        await prisma.user.create({
+          data: {
+            address,
+            nonce,
+            name: generatedName,
+            imageUrl: avatar,
+            generatedName: generatedName,
+          },
+        });
+      }
+    }
 
     //Create JWT for the user and send to the fron-end
     const secretKey = process.env.SECRET_KEY as string;
