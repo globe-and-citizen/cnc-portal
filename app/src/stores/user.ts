@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
-import { generateFakeUser } from '@/utils/fakerUtil'
 
 export const useUserDataStore = defineStore('user', () => {
   const userName = useStorage('name', '')
@@ -30,13 +29,6 @@ export const useUserDataStore = defineStore('user', () => {
     isAuth.value = status
   }
 
-  function generateAndSetFakeUser() {
-    const u = generateFakeUser()
-    userName.value = u.name
-    userImageUrl.value = u.imageUrl
-    isNameGenerated.value = true
-  }
-
   return {
     name: userName,
     address: userAddress,
@@ -46,7 +38,6 @@ export const useUserDataStore = defineStore('user', () => {
     isAuth,
     setUserData,
     clearUserData,
-    setAuthStatus,
-    generateAndSetFakeUser
+    setAuthStatus
   }
 })
