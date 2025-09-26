@@ -268,7 +268,7 @@ describe('ApproveUsersForm', () => {
       await wrapper.vm.$nextTick()
       // @ts-expect-error: mocked
       expect(wrapper.vm.v$.$invalid).toBe(true)
-      const budgetLimitError = wrapper.find('[data-test="budget-limit-error"]')
+      const budgetLimitError = wrapper.find('[data-test="budget-limit-required-error"]')
       expect(budgetLimitError.exists()).toBeTruthy()
       expect(budgetLimitError.html()).toContain('At least one budget limit must be set')
     })

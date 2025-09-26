@@ -101,7 +101,11 @@
 
     <!-- Budget Limit Validation Errors -->
     <div class="pl-4 text-red-500 text-sm w-full text-right">
-      <div v-for="error of v$.resultArray.$errors" :key="error.$uid" data-test="budget-limit-error">
+      <div
+        v-for="error of v$.resultArray.$errors"
+        :key="error.$uid"
+        data-test="budget-limit-required-error"
+      >
         <div v-if="error.$validator === 'required'">
           {{ error.$message }}
         </div>
