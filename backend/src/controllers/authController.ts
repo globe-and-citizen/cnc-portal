@@ -3,6 +3,7 @@ import { generateNonce, SiweMessage } from "siwe";
 import jwt from "jsonwebtoken";
 import { errorResponse, extractAddressAndNonce } from "../utils/utils";
 import { prisma } from "../utils";
+import { faker } from "@faker-js/faker";
 
 export const authenticateSiwe = async (req: Request, res: Response) => {
   try {
@@ -47,6 +48,8 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
         data: {
           address,
           nonce,
+          name: faker.person.firstName(),
+          imageUrl: faker.image.avatar(),
         },
       });
 
