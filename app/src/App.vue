@@ -70,7 +70,7 @@
     </ModalComponent>
 
     <!-- Toast Notifications -->
-    <ToastContainer position="bottom-right" />
+    <ToastContainer position="bottom-left" />
   </div>
 
   <VueQueryDevtools />
@@ -108,7 +108,7 @@ const userStore = useUserDataStore()
 const { name, address, imageUrl } = storeToRefs(userStore)
 
 const updateUserInput = ref({
-  name: '',
+  name: name.value,
   address: address.value,
   imageUrl: ''
 })
