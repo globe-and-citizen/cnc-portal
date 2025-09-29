@@ -13,6 +13,10 @@
     <ApprovedExpensesSection />
 
     <!-- <TransactionHistorySection /> -->
+    <ContractOwnerCard
+      v-if="teamStore.getContractAddressByType('ExpenseAccountEIP712')"
+      :contractAddress="teamStore.getContractAddressByType('ExpenseAccountEIP712')"
+    />
   </div>
 </template>
 
@@ -24,6 +28,7 @@ import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/M
 import ApprovedExpensesSection from '@/components/sections/ExpenseAccountView/ApprovedExpensesSection.vue'
 import { useTeamStore } from '@/stores'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
+import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
 //#endregion
 const teamStore = useTeamStore()
 </script>
