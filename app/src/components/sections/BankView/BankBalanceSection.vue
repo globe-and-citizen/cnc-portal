@@ -299,14 +299,14 @@ const handleTransfer = async (data: {
 watch(isActionAdded, (added) => {
   if (added) {
     addSuccessToast('Action added successfully, waiting for confirmation')
-    transferModal.value = { mount: false, show: false }
+    resetTransferValues()
   }
 })
 
 watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Transferred successfully')
-    transferModal.value = { mount: false, show: false }
+    resetTransferValues()
 
     //refresh bank owner data after a successful transfer
     queryClient.invalidateQueries({
