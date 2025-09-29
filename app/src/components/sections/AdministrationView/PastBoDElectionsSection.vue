@@ -18,7 +18,7 @@
   </CardComponent>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import PastBoDElectionCard from './PastBoDElectionCard.vue'
 import PastBoDElection404 from './PastBoDElection404.vue'
 import CardComponent from '@/components/CardComponent.vue'
