@@ -13,6 +13,7 @@ const ContractType = {
   ExpenseAccountEIP712: "ExpenseAccountEIP712",
   CashRemunerationEIP712: "CashRemunerationEIP712",
   Campaign: "Campaign",
+  DividendSplitter: "DividendSplitter",
 } as const;
 
 type ContractType = keyof typeof ContractType;

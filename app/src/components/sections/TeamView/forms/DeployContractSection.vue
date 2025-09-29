@@ -28,6 +28,7 @@ import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json
 import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import FACTORY_BEACON_ABI from '@/artifacts/abi/factory-beacon.json'
 import ElectionsABI from '@/artifacts/abi/elections.json'
+import { DIVIDEND_SPLITTER_ABI } from '@/artifacts/abi/dividend-splitter'
 
 import {
   BANK_BEACON_ADDRESS,
@@ -42,7 +43,8 @@ import {
   USDT_ADDRESS,
   validateAddresses,
   // VOTING_BEACON_ADDRESS,
-  ELECTIONS_BEACON_ADDRESS
+  ELECTIONS_BEACON_ADDRESS,
+  DIVIDEND_SPLITTER_BEACON_ADDRESS
 } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -60,6 +62,7 @@ const props = withDefaults(
   }
 )
 const emits = defineEmits(['contractDeployed'])
+const splitterCreated = ref(false)
 // Store
 const userDataStore = useUserDataStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
@@ -71,6 +74,7 @@ const dynamicLoading = ref({
 })
 
 // Officer contract creation
+// Create officer contract hooks
 const {
   isPending: officerContractCreating,
   data: createOfficerHash,
@@ -83,6 +87,7 @@ const { isLoading: isConfirmingCreateOfficer, isSuccess: isConfirmedCreateOffice
     hash: createOfficerHash
   })
 
+// Combined loading state
 const createOfficerLoading = computed(
   () => officerContractCreating.value || isConfirmingCreateOfficer.value || loading.value
 )
@@ -130,6 +135,10 @@ const deployOfficerContract = async () => {
         beaconAddress: INVESTOR_V1_BEACON_ADDRESS
       },
       {
+        beaconType: 'DividendSplitter',
+        beaconAddress: DIVIDEND_SPLITTER_BEACON_ADDRESS
+      },
+      {
         beaconType: 'Elections',
         beaconAddress: ELECTIONS_BEACON_ADDRESS
       }
@@ -155,6 +164,14 @@ const deployOfficerContract = async () => {
           props.investorContractInput.symbol,
           currentUserAddress
         ]
+      })
+    })
+    deployments.push({
+      contractType: 'DividendSplitter',
+      initializerData: encodeFunctionData({
+        abi: DIVIDEND_SPLITTER_ABI,
+        functionName: 'initialize',
+        args: [currentUserAddress]
       })
     })
 

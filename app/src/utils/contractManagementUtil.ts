@@ -11,6 +11,7 @@ import { ELECTIONS_ABI as ElectionsAbi } from '@/artifacts/abi/elections'
 import { INVESTOR_V1_ABI as InvestorsAbi } from '@/artifacts/abi/investor-v1'
 import { PROPOSALS_ABI as ProposalsAbi } from '@/artifacts/abi/proposals'
 import { VOTING_ABI as VotingAbi } from '@/artifacts/abi/voting'
+import { DIVIDEND_SPLITTER_ABI as DividendSplitter } from '@/artifacts/abi/dividend-splitter'
 
 export type FormattedAction = (Action & {
   requestedBy: User
@@ -98,6 +99,8 @@ const contractsWithAbis = (contracts: TeamContract[]) => {
         return { ...contract, abi: ProposalsAbi }
       case 'Voting':
         return { ...contract, abi: VotingAbi }
+      case 'DividendSplitter':
+        return { ...contract, abi: DividendSplitter }
       default:
         return null // Default ABI if none matches
     }
