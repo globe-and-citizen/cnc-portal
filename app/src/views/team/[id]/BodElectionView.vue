@@ -2,6 +2,7 @@
   <CurrentBoDSection />
   <CurrentBoDElectionSection v-if="nextElectionId" :election-id="currentElectionId" />
   <PastBoDElectionsSection />
+  <ContractOwnerCard v-if="electionsAddress" :contractAddress="electionsAddress" />
 </template>
 
 <script setup lang="ts">
@@ -13,6 +14,7 @@ import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { useTeamStore } from '@/stores'
 import { computed, watch } from 'vue'
 import { log, parseError } from '@/utils'
+import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
 
 const teamStore = useTeamStore()
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
