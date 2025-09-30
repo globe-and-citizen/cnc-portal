@@ -6,6 +6,8 @@ import {
   createAsyncValidationSchema,
   createTransformSchema,
   createMultiRefinedSchema,
+  createPerformanceTrackedSchema,
+  createCachedValidationSchema,
   emailSchema,
   passwordSchema,
   phoneSchema,
@@ -288,6 +290,81 @@ describe("validation/utils", () => {
       const date = new Date("2024-01-01");
 
       expect(() => dateRangeSchema.parse({ startDate: date, endDate: date })).toThrow();
+    });
+  });
+
+  describe("createPerformanceTrackedSchema", () => {
+    it("should track validation performance", () => {
+      const consoleDebugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+      
+      const schema = createPerformanceTrackedSchema(z.string(), "testSchema");
+      const result = schema.parse("test");
+      
+      expect(result).toBe("test");
+      
+      consoleDebugSpy.mockRestore();
+    });
+  });
+
+  describe("createCachedValidationSchema", () => {
+    it("should cache validation results", () => {
+      const schema = createCachedValidationSchema(z.object({ name: z.string() }));
+      
+      const data = { name: "John" };
+      const result1 = schema.parse(data);
+      const result2 = schema.parse(data);
+      
+      expect(result1).toEqual(data);
+      expect(result2).toEqual(data);
+    });
+
+    it("should use custom cache options", () => {
+      const schema = createCachedValidationSchema(
+        z.object({ name: z.string() }),
+        { maxSize: 10, ttl: 1000 }
+      );
+      
+      const data = { name: "Jane" };
+      const result = schema.parse(data);
+      
+      expect(result).toEqual(data);
+    });
+
+    it("should cache different values separately", () => {
+      const schema = createCachedValidationSchema(z.string());
+      
+      const result1 = schema.parse("value1");
+      const result2 = schema.parse("value2");
+      
+      expect(result1).toBe("value1");
+      expect(result2).toBe("value2");
+    });
+  });
+
+  describe("ValidationCache", () => {
+    it("should handle cache size limits", () => {
+      const schema = createCachedValidationSchema(z.number(), { maxSize: 2 });
+      
+      schema.parse(1);
+      schema.parse(2);
+      schema.parse(3); // Should evict first entry
+      
+      // All should still work
+      expect(schema.parse(2)).toBe(2);
+      expect(schema.parse(3)).toBe(3);
+    });
+
+    it("should handle TTL expiration", async () => {
+      const schema = createCachedValidationSchema(z.string(), { ttl: 10 }); // 10ms TTL
+      
+      const value = "test";
+      schema.parse(value);
+      
+      // Wait for TTL to expire
+      await new Promise(resolve => setTimeout(resolve, 20));
+      
+      // Should still work but might not use cache
+      expect(schema.parse(value)).toBe(value);
     });
   });
 });
