@@ -4,7 +4,6 @@
       <div class="text-lg text-gray-500">
         <span class="flex items-center gap-4">
           <UserAvatarComponent :user="ownerUser" class="" />
-          <!-- <UserComponent :user="ownerUser" class="" /> -->
         </span>
       </div>
 
@@ -20,19 +19,18 @@
 
 <script setup lang="ts">
 import UserAvatarComponent from '@/components/UserAvatarComponent.vue'
-// import UserComponent from '@/components/UserComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useTeamStore } from '@/stores/'
 import { type User } from '@/types/user'
+import type { Member } from '@/types/member'
 import { ref, watch, computed } from 'vue'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import type { Abi } from 'viem'
+import type { Abi, Address } from 'viem'
 import CardComponent from '@/components/CardComponent.vue'
 
 const props = defineProps<{
-  row?: Record<string, unknown>
-  contractAddress?: string
+  contractAddress?: Address
 }>()
 
 const teamStore = useTeamStore()
@@ -50,10 +48,10 @@ const OWNER_ABI: Abi = [
 
 const ownerUser = ref<User>({ name: '', address: '' })
 
-// prefer explicit prop then row.address
-const contractAddress = computed<string | undefined>(() => {
-  return (props.contractAddress as string) || (props.row && (props.row['address'] as string))
-})
+// prefer explicit prop
+const contractAddress = computed<Address | undefined>(
+  () => props.contractAddress as Address | undefined
+)
 
 const resolveOwnerFromContract = async () => {
   const contractAddr = contractAddress.value!
@@ -67,8 +65,8 @@ const resolveOwnerFromContract = async () => {
 
     const ownerAddr = typeof chainOwner === 'string' ? chainOwner : String(chainOwner)
 
-    const member = teamStore.currentTeam?.members.find((m: Record<string, unknown>) => {
-      return ((m.address as string) || '').toLowerCase() === ownerAddr.toLowerCase()
+    const member = teamStore.currentTeam?.members.find((m: Member) => {
+      return (m.address || '').toLowerCase() === ownerAddr.toLowerCase()
     })
 
     const boardAddress = teamStore.getContractAddressByType('BoardOfDirectors')
@@ -78,15 +76,15 @@ const resolveOwnerFromContract = async () => {
       ownerUser.value = { name: 'Board of Directors', address: ownerAddr }
     } else if (member) {
       ownerUser.value = {
-        name: (member.name as string) || ownerAddr,
+        name: member.name || ownerAddr,
         address: ownerAddr,
-        imageUrl: (member.imageUrl as string) || undefined
+        imageUrl: member.imageUrl || undefined
       }
     } else {
       ownerUser.value = { name: ownerAddr, address: ownerAddr }
     }
-  } catch {
-    ownerUser.value = { name: 'Unknown', address: '' }
+  } catch (error) {
+    console.error('Failed to resolve contract owner:', error)
   }
 }
 
