@@ -1,10 +1,10 @@
 <template>
-  <CardComponent title="Contract Owner">
+  <CardComponent title="">
     <div class="flex justify-between items-center">
       <div class="text-lg text-gray-500">
         <span class="flex items-center gap-4">
-          Owner name:
-          <UserComponent :user="ownerUser" class="" />
+          <UserAvatarComponent :user="ownerUser" class="" />
+          <!-- <UserComponent :user="ownerUser" class="" /> -->
         </span>
       </div>
 
@@ -19,7 +19,8 @@
 </template>
 
 <script setup lang="ts">
-import UserComponent from '@/components/UserComponent.vue'
+import UserAvatarComponent from '@/components/UserAvatarComponent.vue'
+// import UserComponent from '@/components/UserComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useTeamStore } from '@/stores/'
 import { type User } from '@/types/user'
