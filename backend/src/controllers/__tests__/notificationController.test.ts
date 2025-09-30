@@ -150,4 +150,127 @@ describe("Notification Controller", () => {
       expect(response.body.message).toBe("Internal server error has occured");
     });
   });
+
+  describe("POST /bulk", () => {
+    it("should create bulk notifications successfully", async () => {
+      const mockUserIds = [
+        "0x1234567890123456789012345678901234567890",
+        "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+      ];
+      const mockMessage = "Test bulk notification";
+      const mockSubject = "Test subject";
+      const mockResource = "test-resource";
+
+      const { addNotification } = await import("../../utils");
+      vi.mocked(addNotification).mockResolvedValue([
+        { ...mockNotification, id: 1 },
+        { ...mockNotification, id: 2 },
+      ]);
+
+      const response = await request(app)
+        .post("/bulk")
+        .send({
+          userIds: mockUserIds,
+          message: mockMessage,
+          subject: mockSubject,
+          resource: mockResource,
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveLength(2);
+      expect(addNotification).toHaveBeenCalledWith(mockUserIds, {
+        message: mockMessage,
+        subject: mockSubject,
+        author: "0x1234567890123456789012345678901234567890",
+        resource: mockResource,
+      });
+    });
+
+    it("should create bulk notifications without optional fields", async () => {
+      const mockUserIds = ["0x1234567890123456789012345678901234567890"];
+      const mockMessage = "Test message";
+
+      const { addNotification } = await import("../../utils");
+      vi.mocked(addNotification).mockResolvedValue([mockNotification]);
+
+      const response = await request(app)
+        .post("/bulk")
+        .send({
+          userIds: mockUserIds,
+          message: mockMessage,
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(addNotification).toHaveBeenCalledWith(mockUserIds, {
+        message: mockMessage,
+        subject: undefined,
+        author: "0x1234567890123456789012345678901234567890",
+        resource: undefined,
+      });
+    });
+
+    it("should return 400 if userIds is not an array", async () => {
+      const response = await request(app)
+        .post("/bulk")
+        .send({
+          userIds: "not-an-array",
+          message: "Test message",
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("userIds must be a non-empty array");
+    });
+
+    it("should return 400 if userIds is empty array", async () => {
+      const response = await request(app)
+        .post("/bulk")
+        .send({
+          userIds: [],
+          message: "Test message",
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("userIds must be a non-empty array");
+    });
+
+    it("should return 400 if message is missing", async () => {
+      const response = await request(app)
+        .post("/bulk")
+        .send({
+          userIds: ["0x1234567890123456789012345678901234567890"],
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("message is required");
+    });
+
+    it("should return 400 if message is not a string", async () => {
+      const response = await request(app)
+        .post("/bulk")
+        .send({
+          userIds: ["0x1234567890123456789012345678901234567890"],
+          message: 123,
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("message is required");
+    });
+
+    it("should return 500 if addNotification throws error", async () => {
+      const { addNotification } = await import("../../utils");
+      vi.mocked(addNotification).mockRejectedValue(new Error("Database error"));
+
+      const response = await request(app)
+        .post("/bulk")
+        .send({
+          userIds: ["0x1234567890123456789012345678901234567890"],
+          message: "Test message",
+        });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe("Internal server error has occured");
+    });
+  });
 });
