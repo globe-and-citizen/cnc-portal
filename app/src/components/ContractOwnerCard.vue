@@ -1,6 +1,6 @@
 <template>
   <CardComponent title="">
-    <div class="flex justify-between items-center">
+    <div v-if="ownerUser.address" class="flex justify-between items-center">
       <div class="text-lg text-gray-500">
         <span class="flex items-center gap-4">
           <UserAvatarComponent :user="ownerUser" class="" />
@@ -10,9 +10,13 @@
       <div class="text-lg text-gray-500">
         <span class="flex items-center gap-4">
           Owner address:
-          <AddressToolTip v-if="ownerUser?.address" :address="ownerUser.address" />
+          <AddressToolTip :address="ownerUser.address" />
         </span>
       </div>
+    </div>
+
+    <div v-else class="flex justify-center items-center py-4">
+      <span class="text-gray-500">Loading owner information...</span>
     </div>
   </CardComponent>
 </template>
@@ -46,7 +50,10 @@ const OWNER_ABI: Abi = [
   }
 ]
 
-const ownerUser = ref<User>({ name: '', address: '' })
+const ownerUser = ref<User>({
+  name: '',
+  address: undefined
+})
 
 // prefer explicit prop
 const contractAddress = computed<Address | undefined>(
