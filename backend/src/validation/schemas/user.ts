@@ -32,19 +32,6 @@ export const updateUserBodySchema = z.object({
     .max(100, "Name cannot exceed 100 characters")
     .optional(),
   imageUrl: urlSchema
-    .refine(
-      (url) => {
-        try {
-          const parsed = new URL(url);
-          return ['http:', 'https:'].includes(parsed.protocol);
-        } catch {
-          return false;
-        }
-      },
-      {
-        message: "Image URL must use HTTP or HTTPS protocol",
-      }
-    )
     .optional(),
 }).refine(
   (data) => data.name !== undefined || data.imageUrl !== undefined,
