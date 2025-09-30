@@ -28,8 +28,6 @@ export const syncContracts = async (req: Request, res: Response) => {
   const body = req.body as unknown as Pick<ContractBodyRequest, "teamId">;
 
   const teamId = Number(body.teamId);
-  if (isNaN(teamId))
-    return errorResponse(400, "Missing or invalid field: teamId", res);
 
   try {
     const team = await prisma.team.findUnique({
@@ -76,9 +74,6 @@ export const syncContracts = async (req: Request, res: Response) => {
 export const getContracts = async (req: Request, res: Response) => {
   const teamId = Number(req.query.teamId);
 
-  if (isNaN(teamId))
-    return errorResponse(400, "Invalid or missing teamId", res);
-
   try {
     // TODO restrict access to the team members
     const contracts = await prisma.teamContract.findMany({
@@ -102,19 +97,6 @@ export const addContract = async (req: Request, res: Response) => {
   const teamId = Number(body.teamId);
   const contractAddress = body.contractAddress;
   const contractType = body.contractType;
-
-  // validating the contract data
-  if (!contractAddress || !contractType) {
-    return errorResponse(400, "Contract address and type are required", res);
-  }
-
-  if (!isAddress(contractAddress)) {
-    return errorResponse(400, "Invalid contract address", res);
-  }
-
-  if (!Object.values(ContractType).includes(contractType as ContractType)) {
-    return errorResponse(400, "Invalid contract type", res);
-  }
 
   try {
     const team = await prisma.team.findUnique({
