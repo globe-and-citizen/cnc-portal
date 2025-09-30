@@ -13,10 +13,7 @@
       >
         <img
           alt="User Avatar"
-          :src="
-            user.imageUrl ||
-            'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
-          "
+          :src="user.imageUrl || defaultUser"
           class="w-full h-full object-cover"
         />
       </div>
@@ -54,4 +51,6 @@ defineProps<{
   isCollapsed?: boolean
   isDetailedView?: boolean
 }>()
+
+const defaultUser = 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
 </script>
