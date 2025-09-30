@@ -78,34 +78,9 @@ export const claimIdParamsSchema = z.object({
 
 // URL validation schema for better error messages
 export const urlSchema = z
-  .string({ message: "URL is required" })
-  .url("Must be a valid URL");
-
-// Optional URL schema for cases where URL is optional
-export const optionalUrlSchema = urlSchema.optional();
-
-// Enhanced memo validation with word count
-export const memoSchema = z
-  .string({ message: "Memo is required" })
-  .trim()
-  .min(1, "Memo cannot be empty")
-  .refine(
-    (memo) => memo.split(/\s+/).length <= 200,
+  .url("Must be a valid URL").refine(
+    (val) => val.startsWith("http://") || val.startsWith("https://"),
     {
-      message: "Memo is too long, maximum 200 words allowed",
-    }
-  );
-
-// Boolean schema with proper coercion
-export const booleanSchema = z
-  .union([
-    z.boolean(),
-    z.string().transform((val) => val === 'true'),
-    z.number().transform((val) => Boolean(val)),
-  ])
-  .refine(
-    (val) => typeof val === 'boolean',
-    {
-      message: "Must be a valid boolean value",
+      message: "URL must start with http:// or https://",
     }
   );

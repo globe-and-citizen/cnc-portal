@@ -21,7 +21,7 @@ export const addClaimBodySchema = z.object({
       message: "Memo is too long, maximum 200 words allowed",
     }
   ),
-  dayWorked: z.string().datetime().optional(),
+  dayWorked: z.iso.datetime().optional(),
 });
 
 // Claim update request body (for signature)
