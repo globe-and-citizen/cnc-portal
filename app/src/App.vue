@@ -157,9 +157,3 @@ watch(isDisconnected, (value) => {
   }
 })
 </script>
-
-<style scoped>
-* {
-  /* border: 1px solid red; */
-}
-</style>
