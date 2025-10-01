@@ -83,21 +83,7 @@ const showCreateElectionModal = ref({
   mount: false,
   show: false
 })
-
-const {
-  data: hashCreateElection,
-  writeContract: executeCreateElection,
-  isPending: isLoadingCreateElection,
-  error: errorCreateElection
-} = useWriteContract()
-
-const {
-  isLoading: isConfirmingCreateElection,
-  isSuccess: isConfirmedCreateElection,
-  error: errorConfirmingCreateElection
-} = useWaitForTransactionReceipt({
-  hash: hashCreateElection
-})
+const isLoadingCreateElection = ref(false)
 
 const createElection = async (electionData: OldProposal) => {
   try {
@@ -144,7 +130,8 @@ const createElection = async (electionData: OldProposal) => {
       hash
     })
     addSuccessToast('Election created successfully!')
-    showCreateElectionModal.value = false
+    showCreateElectionModal.value.show = false
+    showCreateElectionModal.value.mount = false
   } catch (error) {
     addErrorToast(parseError(error, ElectionABI as Abi))
     log.error('creatingElection error:', error)
