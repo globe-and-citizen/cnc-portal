@@ -1,19 +1,29 @@
 import request from "supertest";
-import express, { Request, Response, NextFunction, response } from "express";
+import express from "express";
 import rateLimit from "express-rate-limit";
-import { authenticateSiwe, authenticateToken } from "../authController";
-import { authorizeUser } from "../../middleware/authMiddleware";
 import { prisma } from "../../utils";
 import jwt from "jsonwebtoken";
 import { describe, it, beforeEach, expect, vi } from "vitest";
-import { faker } from "@faker-js/faker";
+import authRoutes from "../../routes/authRoutes";
+import { User } from "@prisma/client";
 
-function setAuthorizationMiddleware(token: string) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    req.headers.authorization = `Bearer ${token}`;
-    next();
+// Mock prisma
+vi.mock("../../utils", async () => {
+  const actual = await vi.importActual("../../utils");
+  return {
+    ...actual,
+    prisma: {
+      user: {
+        findUnique: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
+    },
   };
-}
+});
+
+// Set up test environment variables
+process.env.SECRET_KEY = "test-secret-key-for-testing";
 
 const app = express();
 app.use(express.json());
@@ -23,15 +33,15 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
-app.post("/siwe", authenticateSiwe);
-app.get("/token", authenticateToken);
-app.use(setAuthorizationMiddleware(faker.finance.ethereumAddress()));
-app.use(authorizeUser);
+app.use("/", authRoutes);
 
-const mockUser = {
-  name: `Mock User`,
-  address: `0x123`,
-  nonce: null,
+const mockUser: User = {
+  name: "Mock User",
+  address: "0x1234567890123456789012345678901234567890",
+  nonce: "",
+  imageUrl: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 describe("authController", () => {
@@ -41,8 +51,6 @@ describe("authController", () => {
     });
 
     it("should return 401 if message not set", async () => {
-      app.use(limiter);
-      app.post("/siwe", authenticateSiwe);
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
       const response = await request(app).post("/siwe");
@@ -54,8 +62,6 @@ describe("authController", () => {
     });
 
     it("should return 401 if signature not set", async () => {
-      app.use(limiter);
-      app.post("/siwe", authenticateSiwe);
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
       const response = await request(app).post("/siwe").send({
@@ -69,8 +75,6 @@ describe("authController", () => {
     });
 
     it("should return 401 if SIWE verification fails", async () => {
-      app.use(limiter);
-      app.post("/siwe", authenticateSiwe);
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
       vi.spyOn(prisma.user, "update").mockResolvedValue({
         ...mockUser,
@@ -80,7 +84,6 @@ describe("authController", () => {
         updatedAt: new Date(),
       });
       vi.spyOn(prisma.user, "create");
-      vi.spyOn(jwt, "sign").mockImplementation(() => "jsonWebToken");
 
       const response = await request(app).post("/siwe").send({
         message: `localhost:5173 wants you to sign in with your Ethereum account:\n0x70997970C51812dc3A010C7d01b50e0d17dc79C8\n\nSign in with Ethereum to the app.\n\nURI: http://localhost:5173\nVersion: 1\nChain ID: 1\nNonce: BuEqovAcm4cRvRHlx\nIssued At: 2024-12-18T11:57:47.715Z`,
@@ -92,12 +95,9 @@ describe("authController", () => {
       expect(response.body).toEqual({
         message: "Signature does not match address of the message.",
       });
-      vi.restoreAllMocks();
     });
 
     it("should return 200 if authentication successful", async () => {
-      app.use(limiter);
-      app.post("/siwe", authenticateSiwe);
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
       vi.spyOn(prisma.user, "update").mockResolvedValue({
         ...mockUser,
@@ -107,7 +107,6 @@ describe("authController", () => {
         updatedAt: new Date(),
       });
       vi.spyOn(prisma.user, "create");
-      vi.spyOn(jwt, "sign").mockImplementation(() => "jsonWebToken");
 
       const response = await request(app).post("/siwe").send({
         message: `localhost:5173 wants you to sign in with your Ethereum account:\n0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\n\nSign in with Ethereum to the app.\n\nURI: http://localhost:5173\nVersion: 1\nChain ID: 1\nNonce: BuEqovAcm4cRvRHlx\nIssued At: 2024-12-18T11:57:47.715Z`,
@@ -116,15 +115,11 @@ describe("authController", () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        accessToken: "jsonWebToken",
-      });
-      vi.restoreAllMocks();
+      expect(response.body).toHaveProperty('accessToken');
+      expect(typeof response.body.accessToken).toBe('string');
     });
 
     it("should return 200 if authentication successful", async () => {
-      app.use(limiter);
-      app.post("/siwe", authenticateSiwe);
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
       vi.spyOn(prisma.user, "update").mockResolvedValue({
         ...mockUser,
@@ -134,7 +129,6 @@ describe("authController", () => {
         updatedAt: new Date(),
       });
       vi.spyOn(prisma.user, "create");
-      vi.spyOn(jwt, "sign").mockImplementation(() => "jsonWebToken");
 
       const response = await request(app).post("/siwe").send({
         message: `localhost:5173 wants you to sign in with your Ethereum account:\n0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\n\nSign in with Ethereum to the app.\n\nURI: http://localhost:5173\nVersion: 1\nChain ID: 1\nNonce: BuEqovAcm4cRvRHlx\nIssued At: 2024-12-18T11:57:47.715Z`,
@@ -143,16 +137,11 @@ describe("authController", () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        accessToken: "jsonWebToken",
-      });
-      vi.restoreAllMocks();
+      expect(response.body).toHaveProperty('accessToken');
+      expect(typeof response.body.accessToken).toBe('string');
     });
 
     it("It should return 500 if internal server error occurs", async () => {
-      app.use(limiter);
-      app.post("/siwe", authenticateSiwe);
-
       const response = await request(app).post("/siwe").send({
         message: `Test message`,
         signature: `0xSignature`,
@@ -170,30 +159,32 @@ describe("authController", () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
+    
     it("should return 401 if user not authorised", async () => {
-      app.use(limiter);
-      app.get("/token", authenticateToken);
-
       const response = await request(app).get("/token");
 
       expect(response.status).toBe(401);
       expect(response.body).toEqual({
-        message: "Unauthorized: Missing jwt payload",
+        message: "Unauthorized: Missing authorization header",
       });
     });
 
-    it("should return 200 if authorization successful", async () => {
-      const app = express();
-      app.use(limiter);
-      const token = faker.finance.ethereumAddress();
-      app.use(setAuthorizationMiddleware(token));
-      app.get("/token", authorizeUser, authenticateToken);
+    it("should return 401 if token is invalid", async () => {
+      const response = await request(app)
+        .get("/token")
+        .set("Authorization", "Bearer invalid-token");
 
-      vi.spyOn(jwt, "verify").mockImplementation(() => ({ address: "0x123" }));
+      expect(response.status).toBe(401);
+    });
+
+    it("should return 200 if authorization successful", async () => {
+      // Create a valid JWT token for testing
+      const testAddress = "0x1234567890123456789012345678901234567890";
+      const testToken = jwt.sign({ address: testAddress }, process.env.SECRET_KEY || "test-secret-key");
 
       const response = await request(app)
         .get("/token")
-        .set("Authorization", `Bearer ${token}`);
+        .set("Authorization", `Bearer ${testToken}`);
 
       expect(response.status).toBe(200);
     });
