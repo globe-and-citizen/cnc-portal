@@ -37,16 +37,6 @@ export const addExpense = async (req: Request, res: Response) => {
     functionName: "owner",
   })) as unknown as string;
 
-  // Validating the expense data
-  let parametersError: string[] = [];
-  if (!body.teamId) parametersError.push("Missing teamId");
-  if (!signature) parametersError.push("Missing signature");
-  if (!data) parametersError.push("Missing data");
-  if (isNaN(teamId)) parametersError.push("Invalid teamId");
-
-  if (parametersError.length > 0) {
-    return errorResponse(400, parametersError.join(", "), res);
-  }
   try {
     // Check if the caller is the owner of the team
     if (callerAddress != owner) {
@@ -73,23 +63,6 @@ export const getExpenses = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const teamId = Number(req.query.teamId);
   const status = String(req.query.status || "all");
-
-  // Validate status parameter
-  const validStatuses = [
-    "all",
-    "expired",
-    "limit-reached",
-    "disabled",
-    "enabled",
-    "signed",
-  ];
-  if (!validStatuses.includes(status)) {
-    return errorResponse(400, "Invalid status parameter", res);
-  }
-
-  if (isNaN(teamId)) {
-    return errorResponse(400, "Invalid teamId", res);
-  }
 
   try {
     // Check if the user is a member of the provided team
@@ -210,22 +183,6 @@ export const updateExpense = async (req: Request, res: Response) => {
   const { status } = req.body as {
     status: "disable" | "expired" | "limitReached";
   };
-
-  if (isNaN(expenseId)) {
-    return errorResponse(400, "Invalid expense ID", res);
-  }
-
-  if (!status) {
-    return errorResponse(400, "Missing status", res);
-  }
-
-  if (
-    status !== "disable" &&
-    status !== "expired" &&
-    status !== "limitReached"
-  ) {
-    return errorResponse(400, "Invalid status", res);
-  }
 
   // TODO: logic to check if the status is already expired or limit reached
 

@@ -48,7 +48,6 @@
     "buffer": "^6.0.3",
     "dayjs": "^1.11.13",
     "echarts": "^5.6.0",
-    "ethers": "^6.13.1",
     "graphql": "^16.10.0",
     "graphql-tag": "^2.12.6",
     "node-xlsx": "^0.24.0",

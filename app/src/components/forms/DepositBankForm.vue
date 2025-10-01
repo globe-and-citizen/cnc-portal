@@ -24,7 +24,16 @@
   </TokenAmount>
 
   <div class="modal-action justify-between">
-    <ButtonUI variant="error" outline @click="$emit('closeModal')" data-test="cancel-button"
+    <ButtonUI
+      variant="error"
+      outline
+      @click="
+        () => {
+          reset()
+          $emit('closeModal')
+        }
+      "
+      data-test="cancel-button"
       >Cancel</ButtonUI
     >
     <ButtonUI
@@ -58,6 +67,16 @@ const props = defineProps<{
   loadingText?: string
   bankAddress: Address
 }>()
+
+function reset() {
+  amount.value = ''
+  selectedTokenId.value = 'native'
+  currentStep.value = 1
+  submitting.value = false
+  isAmountValid.value = false
+}
+
+defineExpose({ reset })
 
 // Component state
 const amount = ref<string>('')

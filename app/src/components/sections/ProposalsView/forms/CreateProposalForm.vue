@@ -98,7 +98,16 @@
   </div>
 
   <div class="modal-action">
-    <ButtonUI variant="error" outline @click="emit('closeModal')">Cancel</ButtonUI>
+    <ButtonUI
+      variant="error"
+      outline
+      @click="
+        () => {
+          emit('closeModal')
+        }
+      "
+      >Cancel</ButtonUI
+    >
     <ButtonUI
       variant="primary"
       @click="handleSubmit"

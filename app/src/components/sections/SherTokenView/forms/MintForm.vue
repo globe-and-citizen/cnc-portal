@@ -79,6 +79,7 @@ const input = ref<{ name: string; address: string }>({
   name: '',
   address: ''
 })
+const emit = defineEmits(['close-modal'])
 
 const mintModal = defineModel({ default: false })
 const props = defineProps<{
@@ -150,6 +151,8 @@ watch(isConfirmingMint, async (isConfirming, wasConfirming) => {
     })
 
     mintModal.value = false
+    // reset()
+    emit('close-modal')
   }
 })
 

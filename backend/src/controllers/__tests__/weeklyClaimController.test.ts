@@ -1,19 +1,49 @@
 import request from "supertest";
 import express, { Request, Response, NextFunction } from "express";
-import {
-  getTeamWeeklyClaims,
-  updateWeeklyClaims,
-} from "../weeklyClaimController";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { WeeklyClaim } from "@prisma/client";
 import { isCashRemunerationOwner } from "../../utils/cashRemunerationUtil";
+import weeklyClaimRoutes from "../../routes/weeklyClaimRoute";
+import { authorizeUser } from "../../middleware/authMiddleware";
 
+// Mock the authorizeUser middleware
+vi.mock("../../middleware/authMiddleware", () => ({
+  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
+    (req as any).address = "0x1234567890123456789012345678901234567890";
+    next();
+  }),
+}));
+
+// Mock cashRemunerationUtil
 vi.mock("../../utils/cashRemunerationUtil", () => ({
   isCashRemunerationOwner: vi.fn().mockResolvedValue(true),
 }));
 
-function mockWage(ownerAddress = "0x123") {
+// Mock prisma
+vi.mock("../../utils", async () => {
+  const actual = await vi.importActual("../../utils");
+  return {
+    ...actual,
+    prisma: {
+      weeklyClaim: {
+        findMany: vi.fn(),
+        update: vi.fn(),
+        findUnique: vi.fn(),
+      },
+      wage: {
+        findUnique: vi.fn(),
+      },
+      $transaction: vi.fn(),
+    },
+  };
+});
+
+const app = express();
+app.use(express.json());
+app.use("/", weeklyClaimRoutes);
+
+function mockWage(ownerAddress = "0x1234567890123456789012345678901234567890") {
   return { team: { ownerAddress } };
 }
 
@@ -21,7 +51,7 @@ function mockWeeklyClaim({
   id = 1,
   status = "pending",
   weekStart = new Date("2024-07-22"),
-  memberAddress = "0xMemberAddress",
+  memberAddress = "0x1111111111111111111111111111111111111111",
   teamId = 1,
   data = {},
   signature = null,
@@ -45,18 +75,7 @@ function mockWeeklyClaim({
   };
 }
 
-function setAddressMiddleware(address: string) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = address;
-    next();
-  };
-}
 
-const app = express();
-app.use(express.json());
-app.use(setAddressMiddleware("0xMemberAddress"));
-app.get("/", getTeamWeeklyClaims);
-app.put("/:id", updateWeeklyClaims);
 
 describe("Weekly Claim Controller", () => {
   describe("PUT: /:id", () => {
@@ -178,7 +197,7 @@ describe("Weekly Claim Controller", () => {
       });
     });
 
-    it.skip("should return 400 if weekly claim is already signed", async () => {
+    it("should return 400 if weekly claim is already signed", async () => {
       vi.spyOn(prisma.weeklyClaim, "findUnique").mockResolvedValue(
         mockWeeklyClaim({
           id: 1,

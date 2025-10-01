@@ -6,12 +6,17 @@
           v-if="!isDetails"
           :election-id="currentElectionId"
           @show-results-modal="showResultsModal = true"
-          @show-create-election-modal="showCreateElectionModal = true"
+          @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
         />
-        <ModalComponent v-if="showCreateElectionModal" v-model="showCreateElectionModal">
+        <ModalComponent
+          v-if="showCreateElectionModal.mount"
+          v-model="showCreateElectionModal.show"
+          @reset="() => (showCreateElectionModal = { mount: false, show: false })"
+        >
           <CreateElectionForm
             :is-loading="isLoadingCreateElection /*|| isConfirmingCreateElection*/"
             @create-proposal="createElection"
+            @close-modal="() => (showCreateElectionModal = { mount: false, show: false })"
           />
         </ModalComponent>
       </div>
@@ -42,7 +47,10 @@
         <ElectionStats :formatted-election="formattedElection" />
       </div>
     </div>
-    <CurrentBoDElection404 v-else @show-create-election-modal="showCreateElectionModal = true" />
+    <CurrentBoDElection404
+      v-else
+      @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
+    />
   </CardComponent>
 </template>
 
@@ -71,8 +79,25 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 const showResultsModal = ref(false)
 const currentElectionId = computed(() => props.electionId)
 const { electionsAddress, formattedElection } = useBoDElections(currentElectionId)
-const showCreateElectionModal = ref(false)
-const isLoadingCreateElection = ref(false)
+const showCreateElectionModal = ref({
+  mount: false,
+  show: false
+})
+
+const {
+  data: hashCreateElection,
+  writeContract: executeCreateElection,
+  isPending: isLoadingCreateElection,
+  error: errorCreateElection
+} = useWriteContract()
+
+const {
+  isLoading: isConfirmingCreateElection,
+  isSuccess: isConfirmedCreateElection,
+  error: errorConfirmingCreateElection
+} = useWaitForTransactionReceipt({
+  hash: hashCreateElection
+})
 
 const createElection = async (electionData: OldProposal) => {
   try {

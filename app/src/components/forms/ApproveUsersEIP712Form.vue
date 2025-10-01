@@ -29,7 +29,7 @@
   <SelectMemberWithTokenInput v-model="input" />
 
   <div
-    class="pl-4 text-red-500 text-sm w-full text-left"
+    class="pl-4 text-red-500 text-sm w-full text-right"
     v-for="error of v$.input.$errors"
     :key="error.$uid"
     data-test="address-error"
@@ -65,33 +65,49 @@
           @change="toggleOption(budgetType)"
         />
         <!-- Numeric Input -->
-        <span class="grow">{{ label }}</span>
-        <label class="input input-bordered flex items-center gap-2 input-md mt-2 text-xs">
+        <label class="input input-bordered flex items-center gap-2 input-md mt-2 text-xs w-full">
+          <span class="w-48">{{ label }}</span>
           <input
             :disabled="!selectedOptions[budgetType]"
-            class="w-32"
+            class="grow"
             type="number"
             v-model.number="values[budgetType]"
-            placeholder="Enter value"
+            :placeholder="budgetType == 0 ? '0' : '0.00'"
             :data-test="`limit-input-${budgetType}`"
             @input="updateValue(budgetType)"
           />
         </label>
       </div>
+
+      <!-- Display errors specific to this budgetType -->
+      <div class="pl-16 text-red-500 text-sm w-full text-right">
+        <div
+          v-for="error of v$.resultArray.$errors"
+          :key="error.$uid"
+          data-test="budget-limit-error"
+        >
+          <div v-if="error.$validator === '$each'">
+            <div v-for="(subError, index) in error.$message" :key="index">
+              <div v-if="resultArray[index].budgetType == budgetType">
+                <div v-for="(msg, key) in subError" :key="key">
+                  {{ msg }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Budget Limit Validation Errors -->
-    <div class="pl-4 text-red-500 text-sm w-full text-left">
-      <div v-for="error of v$.resultArray.$errors" :key="error.$uid" data-test="budget-limit-error">
+    <div class="pl-4 text-red-500 text-sm w-full text-right">
+      <div
+        v-for="error of v$.resultArray.$errors"
+        :key="error.$uid"
+        data-test="budget-limit-required-error"
+      >
         <div v-if="error.$validator === 'required'">
           {{ error.$message }}
-        </div>
-        <div v-else-if="error.$validator === '$each'">
-          <div v-for="(subError, index) in error.$message" :key="index">
-            <div v-for="(msg, key) in subError" :key="key">
-              {{ budgetTypes[resultArray[index].budgetType as unknown as 0 | 1 | 2] }}: {{ msg }}
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -110,7 +126,7 @@
   </div>
 
   <div
-    class="pl-4 text-red-500 text-sm w-full text-left"
+    class="pl-4 text-red-500 text-sm w-full text-right"
     v-for="error of v$.date.$errors"
     :key="error.$uid"
     data-test="date-error"
@@ -119,6 +135,8 @@
   </div>
 
   <div class="modal-action justify-center">
+    <ButtonUI outline data-test="cancel-button" variant="error" @click="clear"> Cancel </ButtonUI>
+
     <ButtonUI
       :loading="loadingApprove"
       :disabled="loadingApprove"
@@ -128,7 +146,6 @@
     >
       Approve
     </ButtonUI>
-    <ButtonUI outline data-test="cancel-button" variant="error" @click="clear"> Cancel </ButtonUI>
   </div>
 </template>
 <script setup lang="ts">
@@ -193,6 +210,7 @@ const updateValue = (budgetType: 0 | 1 | 2) => {
     values[budgetType] = 0 // Default value if input is empty
   }
 }
+
 //#endregion multi limit
 
 const rules = {

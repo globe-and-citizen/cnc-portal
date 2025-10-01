@@ -18,14 +18,20 @@
           </option>
         </select>
       </div>
-      <ButtonUI variant="primary" @click="createProposalModal = true">Create Proposal</ButtonUI>
+      <ButtonUI variant="primary" @click="createProposalModal = { mount: true, show: true }"
+        >Create Proposal</ButtonUI
+      >
     </div>
 
     <ProposalsList ref="proposalsListRef" />
-    <ModalComponent v-model="createProposalModal" v-if="createProposalModal">
+    <ModalComponent
+      v-model="createProposalModal.show"
+      v-if="createProposalModal.mount"
+      @reset="() => (createProposalModal = { mount: false, show: false })"
+    >
       <CreateProposalForm
         :loading="false"
-        @close-modal="createProposalModal = false"
+        @close-modal="createProposalModal = { mount: false, show: false }"
         @proposal-created="handleProposalCreated"
       />
     </ModalComponent>
@@ -38,7 +44,7 @@ import CreateProposalForm from '@/components/sections/ProposalsView/forms/Create
 import ProposalsList from '@/components/sections/ProposalsView/ProposalsList.vue'
 import { ref } from 'vue'
 
-const createProposalModal = ref(false)
+const createProposalModal = ref({ mount: false, show: false })
 const proposalsListRef = ref<InstanceType<typeof ProposalsList> | null>(null)
 
 const types = [
@@ -60,7 +66,7 @@ const statuses = [
 
 const handleProposalCreated = () => {
   // Close the modal
-  createProposalModal.value = false
+  createProposalModal.value = { mount: false, show: false }
   // Refresh the proposals list
   if (proposalsListRef.value?.refreshProposals) {
     proposalsListRef.value.refreshProposals()

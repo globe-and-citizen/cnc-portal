@@ -8,7 +8,6 @@ import weekday from 'dayjs/plugin/weekday'
 
 import { Prisma, Claim } from "@prisma/client";
 import { isUserMemberOfTeam } from "./wageController";
-import { getMondayStart, todayMidnight } from "../utils/dayUtils";
 import { isCashRemunerationOwner } from "../utils/cashRemunerationUtil";
 
 dayjs.extend(utc)
@@ -32,28 +31,6 @@ export const addClaim = async (req: Request, res: Response) => {
   const teamId = Number(body.teamId);
 
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
-
-  // Validating the claim data
-  // Checking required data
-  let parametersError: string[] = [];
-  if (!body.teamId) parametersError.push("Missing teamId");
-  if (!body.hoursWorked) parametersError.push("Missing hoursWorked");
-  if (!body.memo) parametersError.push("Missing memo");
-  if (isNaN(hoursWorked)) parametersError.push("Invalid hoursWorked");
-  if (memo && memo.trim().length === 0) {
-    parametersError.push("Invalid memo");
-  }
-  if (memo && memo.trim().split(/\s+/).length > 200) {
-    parametersError.push("memo is too long, max 200 words");
-  }
-  if (isNaN(teamId)) parametersError.push("Invalid teamId");
-  if (hoursWorked <= 0)
-    parametersError.push(
-      "Invalid hoursWorked, hoursWorked must be greater than 0"
-    );
-  if (parametersError.length > 0) {
-    return errorResponse(400, parametersError.join(", "), res);
-  }
 
   try {
     // Get user current
@@ -142,8 +119,6 @@ export const addClaim = async (req: Request, res: Response) => {
     return res.status(201).json(claim);
   } catch (error) {
     return errorResponse(500, error, res);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -154,11 +129,6 @@ export const getClaims = async (req: Request, res: Response) => {
   const memberAddress = req.query.memberAddress as string | undefined;
 
   try {
-    // Validate teamId
-    if (isNaN(teamId)) {
-      return errorResponse(400, "Invalid or missing teamId", res);
-    }
-
     // Check if the user is a member of the provided team
     if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
       return errorResponse(403, "Caller is not a member of the team", res);
@@ -205,8 +175,6 @@ export const getClaims = async (req: Request, res: Response) => {
     return res.status(200).json(claims);
   } catch (error) {
     return errorResponse(500, "Internal server error", res);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -216,14 +184,6 @@ export const updateClaim = async (req: Request, res: Response) => {
 
   // Action is only able to have this values: sign, withdraw, disable, enable, reject
   const action = req.query.action as string;
-  const validActions = ["sign", "withdraw", "disable", "enable", "reject"];
-  if (!validActions.includes(action)) {
-    return errorResponse(
-      400,
-      `Invalid action. Allowed actions are: ${validActions.join(", ")}`,
-      res
-    );
-  }
 
   // Prepare the data according to the action
   let data: Prisma.ClaimUpdateInput = {};
@@ -352,7 +312,5 @@ export const updateClaim = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
-  } finally {
-    await prisma.$disconnect();
   }
 };

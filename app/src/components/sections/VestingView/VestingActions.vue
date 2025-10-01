@@ -5,13 +5,17 @@
       size="sm"
       variant="primary"
       class="w-max"
-      @click="addVestingModal = true"
+      @click="addVestingModal = { mount: true, show: true }"
       data-test="createAddVesting"
     >
       <IconifyIcon icon="heroicons-outline:plus-circle" class="size-6" /> add vesting
     </ButtonUI>
 
-    <ModalComponent v-model="addVestingModal">
+    <ModalComponent
+      v-model="addVestingModal.show"
+      v-if="addVestingModal.mount"
+      @reset="() => (addVestingModal = { mount: false, show: false })"
+    >
       <CreateVesting
         v-if="teamStore.currentTeam?.id"
         :tokenAddress="(teamStore.getContractAddressByType('InvestorsV1') as Address) ?? ''"
@@ -38,7 +42,7 @@ defineProps<{
 
 const emit = defineEmits(['reload'])
 
-const addVestingModal = ref(false)
+const addVestingModal = ref({ mount: false, show: false })
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 
@@ -47,6 +51,6 @@ const handleReload = () => {
 }
 
 const handleClose = () => {
-  addVestingModal.value = false
+  addVestingModal.value = { mount: false, show: false }
 }
 </script>

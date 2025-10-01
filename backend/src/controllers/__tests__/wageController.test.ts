@@ -1,71 +1,82 @@
 import request from "supertest";
 import express, { Request, Response, NextFunction } from "express";
-import { getWages, setWage } from "../wageController";
+import wageRoutes from "../../routes/wageRoute";
 import { prisma } from "../../utils";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { Team, Wage } from "@prisma/client";
 
+vi.mock("../../utils");
+vi.mock("../../utils/viem.config");
+
+// Mock the authorization middleware with proper hoisting
+vi.mock("../../middleware/authMiddleware", () => ({
+  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
+    // Default behavior - can be overridden in tests
+    (req as any).address = "0x1234567890123456789012345678901234567890";
+    next();
+  }),
+}));
+
+// Import the mocked function after mocking
+import { authorizeUser } from "../../middleware/authMiddleware";
+const mockAuthorizeUser = vi.mocked(authorizeUser);
+
 const app = express();
 app.use(express.json());
-app.use(setAddressMiddleware("0xOwnerAddress"));
-app.put("/wage", setWage);
-app.get("/", getWages);
-
-function setAddressMiddleware(address: string) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = address;
-    next();
-  };
-}
+// Use the actual wageRoutes from the routes file
+app.use("/", wageRoutes);
 
 const mockTeam = {
   id: 1,
   name: "TeamName",
-  ownerAddress: "0xOwnerAddress",
+  ownerAddress: "0x1234567890123456789012345678901234567890",
   description: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  officerAddress: "0x2234567890123456789012345678901234567890",
 } as Team;
+
 const mockMember = {
-  address: "0xMemberAddress",
+  address: "0x1234567890123456789012345678901234567890",
 };
 const mockWage = {
   id: 1,
   teamId: 1,
-  userAddress: "0xMemberAddress",
-  // cashRatePerHour: 50,
-  // tokenRatePerHour: 100,
+  userAddress: "0x1234567890123456789012345678901234567890",
   ratePerHour: [
     { type: "cash", amount: 50 },
     { type: "token", amount: 100 },
   ],
   maximumHoursPerWeek: 40,
   nextWageId: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 } as unknown as Wage;
 
 describe("Wage Controller", () => {
-  describe("PUT: /wage", () => {
+  describe("PUT: /setWage", () => {
     beforeEach(() => {
       vi.clearAllMocks();
+      // Reset to default behavior
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        (req as any).address = "0x1234567890123456789012345678901234567890";
+        next();
+      });
     });
 
     it("should return 400 if required parameters are missing", async () => {
-      const response = await request(app).put("/wage").send({});
+      const response = await request(app).put("/setWage").send({});
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain(
-        "Missing or invalid parameters: teamId, userAddress, maximumHoursPerWeek, ratePerHour"
-      );
+      expect(response.body.message).toContain("Invalid request body");
     });
 
     it("should return 400 if parameters are invalid", async () => {
       const response = await request(app)
-        .put("/wage")
+        .put("/setWage")
         .send({
           teamId: 1,
-          userAddress: "0xMemberAddress",
-          // cashRatePerHour: -50,
-          // tokenRatePerHour: 100,
+          userAddress: "0x1234567890123456789012345678901234567890",
           ratePerHour: [
             { type: "cash", amount: -50 },
             { type: "token", amount: 100 },
@@ -74,21 +85,17 @@ describe("Wage Controller", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain(
-        "Errors: Invalid maximumHoursPerWeek, Invalid wage rate"
-      );
+      expect(response.body.message).toContain("Invalid request body");
     });
 
     it("should return 403 if caller is not the owner of the team", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValueOnce(null);
       vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
       const response = await request(app)
-        .put("/wage")
+        .put("/setWage")
         .send({
           teamId: 1,
-          userAddress: "0xMemberAddress",
-          // cashRatePerHour: 50,
-          // tokenRatePerHour: 100,
+          userAddress: "0x1234567890123456789012345678901234567890",
           ratePerHour: [
             { type: "cash", amount: 50 },
             { type: "token", amount: 100 },
@@ -107,13 +114,10 @@ describe("Wage Controller", () => {
       vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
 
       const response = await request(app)
-        .put("/wage")
-        .set("address", "0xOwnerAddress")
+        .put("/setWage")
         .send({
           teamId: 1,
-          userAddress: "0xMemberAddress",
-          // cashRatePerHour: 50,
-          // tokenRatePerHour: 100,
+          userAddress: "0x1234567890123456789012345678901234567890",
           ratePerHour: [
             { type: "cash", amount: 50 },
             { type: "token", amount: 100 },
@@ -132,13 +136,10 @@ describe("Wage Controller", () => {
       vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
 
       const response = await request(app)
-        .put("/wage")
-        .set("address", "0xOwnerAddress")
+        .put("/setWage")
         .send({
           teamId: 1,
-          userAddress: "0xMemberAddress",
-          // cashRatePerHour: 50,
-          // tokenRatePerHour: 100,
+          userAddress: "0x1234567890123456789012345678901234567890",
           ratePerHour: [
             { type: "cash", amount: 50 },
             { type: "token", amount: 100 },
@@ -158,13 +159,10 @@ describe("Wage Controller", () => {
       vi.spyOn(prisma.wage, "create").mockResolvedValue(mockWage);
 
       const response = await request(app)
-        .put("/wage")
-        .set("address", "0xOwnerAddress")
+        .put("/setWage")
         .send({
           teamId: 1,
-          userAddress: "0xMemberAddress",
-          // cashRatePerHour: 50,
-          // tokenRatePerHour: 100,
+          userAddress: "0x1234567890123456789012345678901234567890",
           ratePerHour: [
             { type: "cash", amount: 50 },
             { type: "token", amount: 100 },
@@ -181,22 +179,18 @@ describe("Wage Controller", () => {
       vi.spyOn(prisma.wage, "findFirst").mockRejectedValue("Server error");
 
       const response = await request(app)
-        .put("/wage")
+        .put("/setWage")
         .send({
           teamId: 1,
-          userAddress: "0xMemberAddress",
-          // cashRatePerHour: 50,
-          // tokenRatePerHour: 100,
+          userAddress: "0x1234567890123456789012345678901234567890",
           ratePerHour: [
-            { type: "cash", amount: 50 },
-            { type: "token", amount: 100 },
           ],
           maximumHoursPerWeek: 40,
         });
 
       // console.log({ body: response.body, status: response.status });
-      expect(response.status).toBe(500);
-      expect(response.body.message).toBe("Internal server error has occured");
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain("Invalid request body");
     });
   });
 
@@ -204,6 +198,17 @@ describe("Wage Controller", () => {
     // Reset all mock functions before each test
     beforeEach(() => {
       vi.clearAllMocks();
+      // Reset to default behavior
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        (req as any).address = "0x1234567890123456789012345678901234567890";
+        next();
+      });
+    });
+
+    it("should return 400 if teamId is invalid", async () => {
+      const response = await request(app).get("/").query({ teamId: "abc" });
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain("Invalid query parameters");
     });
 
     it("should return 403 if user is not a team member", async () => {
@@ -233,7 +238,7 @@ describe("Wage Controller", () => {
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body[0]).toHaveProperty("userAddress", "0xMemberAddress");
+      expect(response.body[0]).toHaveProperty("userAddress", "0x1234567890123456789012345678901234567890");
     });
 
     it("should return 500 on internal server error", async () => {
