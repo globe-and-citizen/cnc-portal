@@ -32,7 +32,7 @@
         }
       "
     >
-      Pending Actions ({{ formatedActions.length }})
+      Pending Actions
     </ButtonUI>
 
     <teleport to="body">
