@@ -114,16 +114,6 @@ vi.mock('@/stores', () => ({
   }))
 }))
 
-vi.mock('@/composables/addCampaign', () => {
-  return {
-    useDeployAddCampaignContract: () => ({
-      contractAddress: ref('0xDeployedCampaignAddress'),
-      execute: executeMock,
-      isLoading: ref(false)
-    })
-  }
-})
-
 vi.mock('@/utils', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
