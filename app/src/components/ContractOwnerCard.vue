@@ -65,7 +65,7 @@ const resolveOwnerFromContract = async () => {
 
   try {
     const chainOwner = await readContract(config, {
-      address: contractAddr as `0x${string}`,
+      address: contractAddr,
       abi: OWNER_ABI,
       functionName: 'owner'
     })
