@@ -1,18 +1,21 @@
 <template>
   <span class="mb-4 text-xl font-semibold">Board Approval Required</span>
-  <div class="flex-1 flex gap-4 p-4 mt-4 bg-white rounded-lg shadow-sm border border-gray-300">
-    <div
-      class="p-1 rounded-full aspect-square flex items-center justify-center w-10 h-10 bg-gray-200"
-    >
-      <IconifyIcon icon="heroicons:arrow-right" class="h-5 w-5 text-gray-600" />
+  <!-- BOD Action Details -->
+  <div class="flex-col flex gap-4 p-4 mt-4 bg-white rounded-lg shadow-sm border border-gray-300">
+    <div class="flex items-center gap-3">
+      <div
+        class="p-1 rounded-full aspect-square flex items-center justify-center w-10 h-10 bg-gray-200"
+      >
+        <IconifyIcon icon="heroicons:arrow-right" class="h-5 w-5 text-gray-600" />
+      </div>
+      <div>
+        <p class="text-xl font-semibold text-gray-900">{{ row.title }}</p>
+      </div>
     </div>
-    <div>
-      <p class="text-xl font-semibold text-gray-900">{{ row.title }}</p>
-      <p class="text-gray-400">{{ row.description }}</p>
-    </div>
+    <p class="text-gray-400">{{ row.description }}</p>
   </div>
 
-  <!-- Approval Progress-->
+  <!-- Approval Progress -->
   <div class="flex justify-between mt-5 py-2">
     <span>Approval progress</span>
     <span class="badge badge-warning badge-outline">
@@ -28,7 +31,7 @@
 
   <!-- Approvals List-->
   <div class="flex flex-col gap-2">
-    <span class="mt-6">Member Approvals</span>
+    <span class="mt-6">Board member approvals</span>
     <div
       v-for="approval in approvals"
       :key="approval.id"
