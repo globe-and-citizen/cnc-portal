@@ -12,53 +12,21 @@
         <p class="text-xl font-semibold text-gray-900">{{ row.title }}</p>
       </div>
     </div>
-    <!-- Details cards grid -->
-    <!-- <div class="grid grid-cols-2 gap-3 auto-rows-fr">
-      -- Amount Card --
-      <div class="flex flex-col">
-        <p class="text-sm font-medium text-blue-gray-700 mb-1">Amount</p>
-        <div class="rounded-lg border border-blue-gray-200 bg-gray-50 p-3 flex-1">
-          <p class="text-lg font-semibold text-gray-900">
-            {{ row.description.split(' ')[3] }}.00 GO
-          </p>
-        </div>
-      </div>
 
-      -- Recipient Card --
-      <div class="flex flex-col">
-        <p class="text-sm font-medium text-blue-gray-700 mb-1">Recipient</p>
-        <div class="rounded-lg border border-blue-gray-200 bg-gray-50 p-3 flex-1">
-          <UserComponent
-            :user="
-              getUser(row.description.split(' ')[5].trim(), teamStore.currentTeam?.members || [])
-            "
-          />
-        </div>
-      </div>
-
-      -- Requestor Card --
-      <div class="flex flex-col">
-        <p class="text-sm font-medium text-blue-gray-700 mb-1">Requestor</p>
-        <div class="rounded-lg border border-blue-gray-200 bg-gray-50 p-3 flex-1">
-          <UserComponent :user="row.requestedBy" />
-        </div>
-      </div>
-
-      -- Request Date Card --
-      <div class="flex flex-col">
-        <p class="text-sm font-medium text-blue-gray-700 mb-1">Request Date</p>
-        <div class="rounded-lg border border-blue-gray-200 bg-gray-50 p-3 flex-1">
-          <p class="text-lg font-semibold text-gray-900">{{ row.dateCreated }}</p>
-        </div>
-      </div>
-    </div> -->
-    <BodApprovalDetails :row="row" :type="row.title" />
+    <BodApprovalDetails
+      v-if="
+        row.title.trim() === 'Pay Dividends Request' || row.title.trim() === 'Bank Transfer Request'
+      "
+      :row="row"
+      :type="row.title"
+    />
+    <p v-else class="text-gray-400 font-semibold">{{ row.description }}</p>
   </div>
 
   <!-- Approval Progress -->
   <div class="flex justify-between mt-5 py-2">
     <span>Approval progress</span>
-    <span class="badge badge-warning badge-outline">
+    <span class="badge badge-warning badge-outline font-semibold">
       {{ approvalCount.approved }}/{{ approvalCount.total }} Approvals
     </span>
   </div>
