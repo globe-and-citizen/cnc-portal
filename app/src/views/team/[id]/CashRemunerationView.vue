@@ -27,6 +27,7 @@
       <SignedWeeklyClaim />
     </template>
     <!-- <CashRemunerationTransactions /> -->
+    <ContractOwnerCard v-if="cashRemunerationAddress" :contractAddress="cashRemunerationAddress" />
   </div>
 </template>
 
@@ -36,6 +37,7 @@ import { useTeamStore, useUserDataStore } from '@/stores'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useReadContract } from '@wagmi/vue'
 import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
 
 // import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
 // import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
