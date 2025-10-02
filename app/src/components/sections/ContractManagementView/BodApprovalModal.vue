@@ -12,10 +12,9 @@
         <p class="text-xl font-semibold text-gray-900">{{ row.title }}</p>
       </div>
     </div>
-    <!-- <p class="text-gray-400">{{ row.description }}</p> -->
-    <!-- Replace description with cards grid -->
-    <div class="grid grid-cols-2 gap-3 auto-rows-fr">
-      <!-- Amount Card -->
+    <!-- Details cards grid -->
+    <!-- <div class="grid grid-cols-2 gap-3 auto-rows-fr">
+      -- Amount Card --
       <div class="flex flex-col">
         <p class="text-sm font-medium text-blue-gray-700 mb-1">Amount</p>
         <div class="rounded-lg border border-blue-gray-200 bg-gray-50 p-3 flex-1">
@@ -25,7 +24,7 @@
         </div>
       </div>
 
-      <!-- Recipient Card -->
+      -- Recipient Card --
       <div class="flex flex-col">
         <p class="text-sm font-medium text-blue-gray-700 mb-1">Recipient</p>
         <div class="rounded-lg border border-blue-gray-200 bg-gray-50 p-3 flex-1">
@@ -37,7 +36,7 @@
         </div>
       </div>
 
-      <!-- Requestor Card -->
+      -- Requestor Card --
       <div class="flex flex-col">
         <p class="text-sm font-medium text-blue-gray-700 mb-1">Requestor</p>
         <div class="rounded-lg border border-blue-gray-200 bg-gray-50 p-3 flex-1">
@@ -45,14 +44,15 @@
         </div>
       </div>
 
-      <!-- Request Date Card -->
+      -- Request Date Card --
       <div class="flex flex-col">
         <p class="text-sm font-medium text-blue-gray-700 mb-1">Request Date</p>
         <div class="rounded-lg border border-blue-gray-200 bg-gray-50 p-3 flex-1">
           <p class="text-lg font-semibold text-gray-900">{{ row.dateCreated }}</p>
         </div>
       </div>
-    </div>
+    </div> -->
+    <BodApprovalDetails :row="row" :type="row.title" />
   </div>
 
   <!-- Approval Progress -->
@@ -124,6 +124,7 @@ import { config } from '@/wagmi.config'
 import type { Abi, Address } from 'viem'
 import ToolTip from '@/components/ToolTip.vue'
 import { getUser } from '@/utils'
+import BodApprovalDetails from './BodApprovalDetails.vue'
 
 const props = defineProps<{ row: TableRow; loading: boolean }>()
 
