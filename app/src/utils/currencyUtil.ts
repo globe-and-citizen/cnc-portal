@@ -23,3 +23,12 @@ export function formatCurrencyShort(number: number, currency = 'USD') {
 
   return short ? formatted.replace(/[\d,.]+/, (match) => match + short) : formatted
 }
+
+export function formatCryptoAmount(amount: string | number) {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount
+
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 20
+  }).format(num)
+}
