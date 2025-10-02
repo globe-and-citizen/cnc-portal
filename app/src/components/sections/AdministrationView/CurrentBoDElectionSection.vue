@@ -14,7 +14,7 @@
           @reset="() => (showCreateElectionModal = { mount: false, show: false })"
         >
           <CreateElectionForm
-            :is-loading="isLoadingCreateElection || isConfirmingCreateElection"
+            :is-loading="isLoadingCreateElection /*|| isConfirmingCreateElection*/"
             @create-proposal="createElection"
             @close-modal="() => (showCreateElectionModal = { mount: false, show: false })"
           />
@@ -56,18 +56,16 @@
 
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
 import { useTeamStore, useToastStore } from '@/stores'
 import { type Abi } from 'viem'
-import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { simulateContract } from '@wagmi/core'
+import { simulateContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import type { OldProposal } from '@/types'
 import { log, parseError } from '@/utils'
 import { config } from '@/wagmi.config'
-import { useQueryClient } from '@tanstack/vue-query'
 import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
 import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
 import ElectionActions from './ElectionActions.vue'
@@ -78,7 +76,6 @@ const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
-const queryClient = useQueryClient()
 const showResultsModal = ref(false)
 const currentElectionId = computed(() => props.electionId)
 const { electionsAddress, formattedElection } = useBoDElections(currentElectionId)
@@ -86,24 +83,11 @@ const showCreateElectionModal = ref({
   mount: false,
   show: false
 })
-
-const {
-  data: hashCreateElection,
-  writeContract: executeCreateElection,
-  isPending: isLoadingCreateElection,
-  error: errorCreateElection
-} = useWriteContract()
-
-const {
-  isLoading: isConfirmingCreateElection,
-  isSuccess: isConfirmedCreateElection,
-  error: errorConfirmingCreateElection
-} = useWaitForTransactionReceipt({
-  hash: hashCreateElection
-})
+const isLoadingCreateElection = ref(false)
 
 const createElection = async (electionData: OldProposal) => {
   try {
+    isLoadingCreateElection.value = true
     if (!electionsAddress.value) {
       addErrorToast('Elections contract address not found')
       return
@@ -126,6 +110,8 @@ const createElection = async (electionData: OldProposal) => {
       teamStore.currentTeam?.members.map((m) => m.address) || []
     ]
 
+    console.log('Do nothing...')
+
     await simulateContract(config, {
       address: electionsAddress.value,
       abi: ElectionABI,
@@ -133,37 +119,24 @@ const createElection = async (electionData: OldProposal) => {
       args
     })
 
-    executeCreateElection({
+    const hash = await writeContract(config, {
       address: electionsAddress.value,
-      args,
       abi: ElectionABI,
-      functionName: 'createElection'
+      functionName: 'createElection',
+      args
     })
+
+    await waitForTransactionReceipt(config, {
+      hash
+    })
+    addSuccessToast('Election created successfully!')
+    showCreateElectionModal.value.show = false
+    showCreateElectionModal.value.mount = false
   } catch (error) {
     addErrorToast(parseError(error, ElectionABI as Abi))
     log.error('creatingElection error:', error)
+  } finally {
+    isLoadingCreateElection.value = false
   }
 }
-
-watch(errorConfirmingCreateElection, (isError) => {
-  if (isError) {
-    addErrorToast(parseError(isError, ElectionABI as Abi))
-    log.error('errorConfirmingCreateElection.value: ', isError)
-  }
-})
-
-watch(errorCreateElection, (isError) => {
-  if (isError) addErrorToast(parseError(isError, ElectionABI as Abi))
-  log.error('errorCreateElection.value: ', isError)
-})
-
-watch(isConfirmingCreateElection, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedCreateElection.value) {
-    addSuccessToast('Election created successfully!')
-    showCreateElectionModal.value = { mount: false, show: false }
-    await queryClient.invalidateQueries({
-      queryKey: ['readContract']
-    })
-  }
-})
 </script>
