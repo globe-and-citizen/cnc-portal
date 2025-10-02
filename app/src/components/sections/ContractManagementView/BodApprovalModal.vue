@@ -12,7 +12,49 @@
         <p class="text-xl font-semibold text-gray-900">{{ row.title }}</p>
       </div>
     </div>
-    <p class="text-gray-400">{{ row.description }}</p>
+    <!-- <p class="text-gray-400">{{ row.description }}</p> -->
+    <!-- Replace description with cards grid -->
+    <div class="grid grid-cols-2 gap-3">
+      <!-- Amount Card -->
+      <div>
+        <p class="text-sm font-medium text-blue-gray-700">Amount</p>
+        <div class="rounded-lg border border-blue-gray-200 bg-gray-50 p-3">
+          <p class="text-lg font-semibold text-gray-900">
+            {{ row.description.split(' ')[3] }}.00 GO
+          </p>
+        </div>
+      </div>
+
+      <!-- Recipient Card -->
+      <div>
+        <p class="text-sm font-medium text-blue-gray-700">Recipient</p>
+        <div class="rounded-lg border border-blue-gray-200 bg-gray-50 p-3">
+          <!-- <p class="text-lg font-semibold text-gray-900">{{ getUser(row.description.split(' ')[5].trim(), teamStore.currentTeam?.members || []) }}</p> -->
+          <UserComponent
+            :user="
+              getUser(row.description.split(' ')[5].trim(), teamStore.currentTeam?.members || [])
+            "
+          />
+        </div>
+      </div>
+
+      <!-- Requestor Card -->
+      <div>
+        <p class="text-sm font-medium text-blue-gray-700">Requestor</p>
+        <div class="rounded-lg border border-blue-gray-200 bg-gray-50 p-3">
+          <!-- <p class="text-lg font-semibold text-gray-900">{{ row.requestor }}</p> -->
+          <UserComponent :user="row.requestedBy" />
+        </div>
+      </div>
+
+      <!-- Request Date Card -->
+      <div>
+        <p class="text-sm font-medium text-blue-gray-700">Request Date</p>
+        <div class="rounded-lg border border-blue-gray-200 bg-gray-50 p-3">
+          <p class="text-lg font-semibold text-gray-900">{{ row.dateCreated }}</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Approval Progress -->
@@ -27,7 +69,9 @@
     :value="approvalCount.approved"
     :max="approvalCount.total"
   ></progress>
-  <span class="text-sm text-gray-500">{{ (Math.floor(approvalCount.total/2)+1) - approvalCount.approved }} Approval(s) left</span>
+  <span class="text-sm text-gray-500"
+    >{{ Math.floor(approvalCount.total / 2) + 1 - approvalCount.approved }} Approval(s) left</span
+  >
 
   <!-- Approvals List-->
   <div class="flex flex-col gap-2">
@@ -68,7 +112,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import type { TableRow } from '@/components/TableComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import UserComponent from '@/components/UserComponent.vue'
@@ -81,6 +125,7 @@ import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import type { Abi, Address } from 'viem'
 import ToolTip from '@/components/ToolTip.vue'
+import { getUser } from '@/utils'
 
 const props = defineProps<{ row: TableRow; loading: boolean }>()
 
@@ -147,4 +192,8 @@ watch(
   },
   { immediate: true }
 )
+
+onMounted(() => {
+  console.log('props.row: ', props.row)
+})
 </script>
