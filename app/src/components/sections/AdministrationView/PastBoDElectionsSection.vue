@@ -34,9 +34,7 @@ const teamStore = useTeamStore()
 
 // Get the Elections contract address from the team store
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
-let i=0
 const fetchElections = async (): Promise<Election[]> => {
-  console.log("fetchElections called", ++i)
   if (!electionsAddress.value) return []
 
   try {
@@ -101,7 +99,5 @@ const {
   queryKey: ['pastElections', electionsAddress],
   queryFn: fetchElections,
   enabled: computed(() => !!electionsAddress.value)
-  
 })
-
 </script>
