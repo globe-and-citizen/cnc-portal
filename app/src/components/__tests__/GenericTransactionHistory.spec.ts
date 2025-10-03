@@ -10,6 +10,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
 import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 import { ref } from 'vue'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 vi.mock('vue-router', () => ({
   useRoute: vi.fn(() => ({
@@ -55,16 +56,13 @@ vi.mock('@/stores/useToastStore', () => ({
   })
 }))
 
-vi.mock('@/stores/currencyStore', () => ({
-  useCurrencyStore: () => ({
-    currency: { code: 'USD', name: 'US Dollar', symbol: '$' },
-    nativeTokenPrice: { value: 1800 },
-    nativeTokenPriceInUSD: { value: 1800 },
-    isLoading: false,
-    setCurrency: vi.fn(),
-    fetchNativeTokenPrice: vi.fn()
-  })
-}))
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
+  }
+})
 
 const mockTeamData = {
   currentTeam: {
@@ -161,6 +159,10 @@ describe('GenericTransactionHistory', () => {
     getUserData: (address: string) => { name: string; imageUrl: string; address: string }
     getMemberImage: (address: string) => string
     getMemberName: (address: string) => string
+    itemsPerPage: number
+    currentPage: number
+    selectedType: string
+    typeDropdownOpen: boolean
   }
   let wrapper: VueWrapper
 
@@ -197,7 +199,7 @@ describe('GenericTransactionHistory', () => {
 
   it('shows export button by default', () => {
     const wrapper = createWrapper({ showExport: true })
-    console.log(wrapper.html())
+    // console.log(wrapper.html())
 
     const exportButton = wrapper.find('[data-test="transaction-history-export-button"]')
     expect(exportButton.exists()).toBe(true)
@@ -587,6 +589,39 @@ describe('GenericTransactionHistory', () => {
 
       const name = vm.getMemberName('0xunknown')
       expect(name).toBe('0xunknown')
+    })
+  })
+
+  describe('Type Filtering', () => {
+    it('closes type dropdown when clicking outside', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      // Open dropdown
+      vm.typeDropdownOpen = true
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('ul').exists()).toBe(true)
+
+      // Click outside
+      vm.typeDropdownOpen = false
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('ul').exists()).toBe(false)
+    })
+
+    it('displays correct type label in filter button', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as unknown as IGenericTransactionHistory
+
+      expect(wrapper.find('[data-test="transaction-history-type-filter"] span').text()).toBe(
+        'All Types'
+      )
+
+      vm.selectedType = 'deposit'
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="transaction-history-type-filter"] span').text()).toBe(
+        'deposit'
+      )
     })
   })
 })

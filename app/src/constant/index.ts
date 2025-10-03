@@ -3,6 +3,7 @@ import sepolia from '@/artifacts/deployed_addresses/chain-11155111.json'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
 import polygon from '@/artifacts/deployed_addresses/chain-137.json'
 import amoy from '@/artifacts/deployed_addresses/chain-80002.json'
+import { zeroAddress, type Address } from 'viem'
 
 export const NETWORK = getNetwork()
 
@@ -19,8 +20,10 @@ interface AddressMapping {
   'TipsModule#Tips': string
   'BankBeaconModule#Beacon': string
   'BankBeaconModule#Bank': string
-  'VotingBeaconModule#Beacon': string
-  'VotingBeaconModule#Voting': string
+  'ProposalBeaconModule#Beacon'?: string
+  'ProposalBeaconModule#Proposals'?: string
+  // 'VotingBeaconModule#Beacon'?: string
+  // 'VotingBeaconModule#Voting'?: string
   'BoardOfDirectorsModule#Beacon': string
   'BoardOfDirectorsModule#BoardOfDirectors': string
   'ExpenseAccountModule#ExpenseAccount'?: string
@@ -33,8 +36,11 @@ interface AddressMapping {
   'CashRemunerationEIP712Module#CashRemunerationEIP712': string
   'InvestorsV1BeaconModule#Beacon'?: string
   'InvestorsV1BeaconModule#InvestorV1'?: string
+  'VestingModule#Vesting'?: string
   'MockTokens#USDT'?: string
   'MockTokens#USDC'?: string
+  'ElectionsBeaconModule#Elections'?: string
+  'ElectionsBeaconModule#Beacon'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -93,10 +99,15 @@ export const TOKEN_ADDRESSES: ChainTokenAddresses = {
 export function validateAddresses() {
   const requiredKeys: (keyof AddressMapping)[] = [
     'TipsModule#Tips',
+    'VestingModule#Vesting',
     'BankBeaconModule#Beacon',
     'BankBeaconModule#Bank',
-    'VotingBeaconModule#Beacon',
-    'VotingBeaconModule#Voting',
+    // 'VotingBeaconModule#Beacon',
+    // 'VotingBeaconModule#Voting',
+    'ElectionsBeaconModule#Beacon',
+    'ElectionsBeaconModule#Elections',
+    'ProposalBeaconModule#Beacon',
+    'ProposalBeaconModule#Proposals',
     'BoardOfDirectorsModule#Beacon',
     'BoardOfDirectorsModule#BoardOfDirectors',
     'Officer#Officer',
@@ -128,10 +139,15 @@ try {
   console.error(error)
 }
 export const TIPS_ADDRESS = resolveAddress('TipsModule#Tips')
+export const VESTING_ADDRESS = resolveAddress('VestingModule#Vesting')
 export const BANK_BEACON_ADDRESS = resolveAddress('BankBeaconModule#Beacon')
 export const BANK_IMPL_ADDRESS = resolveAddress('BankBeaconModule#Bank')
-export const VOTING_BEACON_ADDRESS = resolveAddress('VotingBeaconModule#Beacon')
-export const VOTING_IMPL_ADDRESS = resolveAddress('VotingBeaconModule#Voting')
+// export const VOTING_BEACON_ADDRESS = resolveAddress('VotingBeaconModule#Beacon')
+// export const VOTING_IMPL_ADDRESS = resolveAddress('VotingBeaconModule#Voting')
+export const ELECTIONS_BEACON_ADDRESS = resolveAddress('ElectionsBeaconModule#Beacon')
+export const ELECTIONS_IMPL_ADDRESS = resolveAddress('ElectionsBeaconModule#Elections')
+export const PROPOSALS_BEACON_ADDRESS = resolveAddress('ProposalBeaconModule#Beacon')
+export const PROPOSALS_IMPL_ADDRESS = resolveAddress('ProposalBeaconModule#Proposals')
 export const BOD_BEACON_ADDRESS = resolveAddress('BoardOfDirectorsModule#Beacon')
 export const BOD_IMPL_ADDRESS = resolveAddress('BoardOfDirectorsModule#BoardOfDirectors')
 export const EXPENSE_ACCOUNT_BEACON_ADDRESS = resolveAddress('ExpenseAccountModule#FactoryBeacon')
@@ -155,7 +171,85 @@ export const INVESTOR_V1_IMPL_ADDRESS = resolveAddress('InvestorsV1BeaconModule#
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
 
+// GraphQL poll interval for transaction queries (in milliseconds)
+export const GRAPHQL_POLL_INTERVAL = 12000
+
 // Export token addresses for current network
 const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresses
 export const USDC_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDC || ''
 export const USDT_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDT || ''
+
+const NETWORK_TO_COIN_ID: Record<string, string> = {
+  POL: 'matic-network',
+  ETH: 'ethereum',
+  AMOYPOL: 'matic-network',
+  SepoliaETH: 'ethereum',
+  GO: 'ethereum'
+}
+
+export type TokenId = 'native' | 'usdc' | 'usdt' | 'sher' // Add more token IDs as needed
+
+export const SUPPORTED_TOKENS: TokenConfig[] = [
+  {
+    id: 'usdc',
+    name: 'USD Coin',
+    symbol: 'USDC',
+    code: 'USDC',
+    coingeckoId: 'usd-coin',
+    decimals: 6,
+    address: USDC_ADDRESS as Address
+  },
+  {
+    id: 'native',
+    name: NETWORK.currencySymbol,
+    symbol: NETWORK.currencySymbol,
+    code: NETWORK.currencySymbol,
+    coingeckoId: NETWORK_TO_COIN_ID[NETWORK.currencySymbol],
+    decimals: 18,
+    address: zeroAddress
+  }
+  // Add more tokens here
+]
+
+export interface Currency {
+  code: string
+  name: string
+  symbol: string
+}
+export const LIST_CURRENCIES: Currency[] = [
+  {
+    code: 'USD',
+    name: 'US Dollar',
+    symbol: '$'
+  },
+  {
+    code: 'EUR',
+    name: 'Euro',
+    symbol: '€'
+  },
+  {
+    code: 'CAD',
+    name: 'Canadian Dollar',
+    symbol: 'CA$'
+  },
+  {
+    code: 'IDR',
+    name: 'Indonesian Rupiah',
+    symbol: 'Rp'
+  },
+  {
+    code: 'INR',
+    name: 'Indian Rupee',
+    symbol: '₹'
+  }
+]
+
+export interface TokenConfig {
+  id: TokenId
+  name: string
+  symbol: string
+  coingeckoId: string
+  decimals: number
+  address: Address
+  code: string
+}

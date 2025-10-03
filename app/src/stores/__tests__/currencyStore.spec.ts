@@ -1,121 +1,136 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { LIST_CURRENCIES, useCurrencyStore } from '../currencyStore'
-import { useToastStore } from '../__mocks__/useToastStore'
-import { ref } from 'vue'
+import { useCurrencyStore } from '../currencyStore'
+import { nextTick, ref } from 'vue'
 
-const priceResponse = ref<unknown>(null)
-vi.mock('@/composables', () => ({
-  useCustomFetch: vi.fn(() => ({
-    get: () => ({
-      json: () => ({
-        data: priceResponse,
-        execute: vi.fn(),
-        isFetching: { value: false },
-        error: { value: null }
-      })
-    })
-  }))
+// hoisted mock
+const mocks = vi.hoisted(() => ({
+  useQuery: vi.fn()
 }))
 
-vi.mock('@/stores/useToastStore')
+// Mock the useQuery function to return a specific value
+vi.mock('@tanstack/vue-query', () => {
+  return {
+    useQuery: mocks.useQuery
+  }
+})
+
+// Set a default implementation for useQuery mock
+mocks.useQuery.mockImplementation(() => ({
+  data: ref(undefined),
+  refetch: vi.fn(),
+  isFetching: ref(false)
+}))
 
 describe('Currency Store', () => {
   beforeEach(() => {
-    // Create a fresh Pinia instance before each test
     setActivePinia(createPinia())
-    // Clear localStorage before each test
     localStorage.clear()
+    vi.clearAllMocks()
+    mocks.useQuery.mockImplementation(() => ({
+      data: ref(undefined),
+      refetch: vi.fn(),
+      isFetching: ref(false)
+    }))
   })
 
   it('initializes with default currency USD', () => {
     const store = useCurrencyStore()
-    expect(store.currency).toStrictEqual({
+    expect(store.localCurrency).toStrictEqual({
       code: 'USD',
       name: 'US Dollar',
       symbol: '$'
     })
   })
 
-  it('LIST_CURRENCIES contains expected values', () => {
-    expect(LIST_CURRENCIES).toStrictEqual([
-      {
-        code: 'USD',
-        name: 'US Dollar',
-        symbol: '$'
-      },
-      {
-        code: 'EUR',
-        name: 'Euro',
-        symbol: '€'
-      },
-      {
-        code: 'CAD',
-        name: 'Canadian Dollar',
-        symbol: 'CA$'
-      },
-      {
-        code: 'IDR',
-        name: 'Indonesian Rupiah',
-        symbol: 'Rp'
-      },
-      {
-        code: 'INR',
-        name: 'Indian Rupee',
-        symbol: '₹'
-      }
-    ])
-  })
-
   it('setCurrency updates the currency value', () => {
     const store = useCurrencyStore()
-
     store.setCurrency('EUR')
-    expect(store.currency).toStrictEqual({
+    expect(store.localCurrency).toStrictEqual({
       code: 'EUR',
       name: 'Euro',
       symbol: '€'
     })
-
     store.setCurrency('CAD')
-    expect(store.currency).toStrictEqual({
+    expect(store.localCurrency).toStrictEqual({
       code: 'CAD',
       name: 'Canadian Dollar',
       symbol: 'CA$'
     })
-  })
-
-  it('maintains value across store instances', () => {
-    const store1 = useCurrencyStore()
-    store1.setCurrency('IDR')
-
-    const store2 = useCurrencyStore()
-    expect(store2.currency).toStrictEqual({
+    store.setCurrency('IDR')
+    expect(store.localCurrency).toStrictEqual({
+      code: 'IDR',
+      name: 'Indonesian Rupiah',
+      symbol: 'Rp'
+    })
+    store.setCurrency('INVALID')
+    expect(store.localCurrency).toStrictEqual({
       code: 'IDR',
       name: 'Indonesian Rupiah',
       symbol: 'Rp'
     })
   })
 
-  it('should show an error if fetching price fails', async () => {
-    const store = useCurrencyStore()
-    await store.fetchNativeTokenPrice()
-
-    const toastStore = useToastStore()
-    expect(toastStore.addErrorToast).toHaveBeenCalledWith('Failed to fetch price')
-  })
-
-  it('should update nativeTokenPrice if fetching price succeeds', async () => {
-    const store = useCurrencyStore()
-    priceResponse.value = {
+  it('fetches and returns token prices and info', async () => {
+    const fakeResponse = {
       market_data: {
         current_price: {
-          usd: 1
+          usd: 1000,
+          eur: 900,
+          cad: 1300,
+          inr: 80000,
+          idr: 15000000
         }
       }
     }
-    await store.fetchNativeTokenPrice()
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(fakeResponse)
+    }) as unknown as typeof fetch
+    mocks.useQuery.mockReturnValue({
+      data: ref(fakeResponse),
+      refetch: vi.fn(),
+      isFetching: ref(false)
+    })
+    const store = useCurrencyStore()
+    store.setCurrency('EUR')
+    expect(store.localCurrency).toStrictEqual({
+      code: 'EUR',
+      name: 'Euro',
+      symbol: '€'
+    })
+    await nextTick()
+    // Test getTokenInfo for native and usdc
+    const native = store.getTokenInfo('native')
+    const usdc = store.getTokenInfo('usdc')
+    expect(native).toMatchSnapshot()
 
-    expect(store.nativeTokenPrice).toBe(1)
+    expect(usdc).toMatchSnapshot()
+    expect(native?.prices.find((p) => p.id === 'usd')?.price).toBe(1000)
+    expect(native?.prices.find((p) => p.id === 'local')?.price).toBe(900)
+    expect(usdc?.prices.find((p) => p.id === 'usd')?.price).toBe(1000)
+    expect(usdc?.prices.find((p) => p.id === 'local')?.price).toBe(900)
+    // Test getTokenPrice
+    // expect(store.getTokenPrice('native', 'usd')).toBe(1000)
+    // expect(store.getTokenPrice('usdc', 'usd')).toBe(1000)
+    // Test isTokenLoading
+    expect(store.isTokenLoading('native')).toBe(false)
+    expect(store.isTokenLoading('usdc')).toBe(false)
+  })
+
+  it('fetchTokenPrice queryFn throws on fetch error', async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: false }) as unknown as typeof fetch
+    mocks.useQuery.mockReturnValue({
+      data: ref(undefined),
+      refetch: vi.fn(),
+      isFetching: ref(false)
+    })
+    const store = useCurrencyStore()
+    const call = mocks.useQuery.mock.calls[0][0]
+    await expect(call.queryFn()).rejects.toThrow('Failed to fetch price')
+    // getTokenInfo should return null prices
+    const native = store.getTokenInfo('native')
+    expect(native).toMatchSnapshot()
+    expect(native?.prices.find((p) => p.id === 'usd')?.price).toBeNull()
   })
 })

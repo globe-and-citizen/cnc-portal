@@ -25,6 +25,7 @@ model User {
   BoardOfDirectorActions BoardOfDirectorActions[]
   memberTeamsData        MemberTeamsData[]
   Wage                   Wage[]
+  weeklyClaims           WeeklyClaim[]
   Expense                Expense[]
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
@@ -42,19 +43,20 @@ model Team {
   teamContracts          TeamContract[]
   memberTeamsData        MemberTeamsData[]
   Wage                   Wage[]
+  weeklyClaims           WeeklyClaim[]
   Expense                Expense[]
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
 }
 
 model MemberTeamsData {
-  id                      Int      @id @default(autoincrement()) // Add an ID for easy referencing
-  user                    User     @relation(fields: [userAddress], references: [address])
-  team                    Team     @relation(fields: [teamId], references: [id])
-  userAddress             String
-  teamId                  Int
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id          Int      @id @default(autoincrement()) // Add an ID for easy referencing
+  user        User     @relation(fields: [userAddress], references: [address])
+  team        Team     @relation(fields: [teamId], references: [id])
+  userAddress String
+  teamId      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@unique([userAddress, teamId])
 }
@@ -74,34 +76,58 @@ model Expense {
 }
 
 model Wage {
-  id                  Int      @id @default(autoincrement())
-  team                Team     @relation(fields: [teamId], references: [id])
-  user                User     @relation(fields: [userAddress], references: [address])
+  id                  Int           @id @default(autoincrement())
+  team                Team          @relation(fields: [teamId], references: [id])
+  user                User          @relation(fields: [userAddress], references: [address])
   teamId              Int
   userAddress         String
-  cashRatePerHour     Float
-  tokenRatePerHour    Float
+  ratePerHour         Json          @default("[{\"type\": \"cash\", \"amount\": 0},{\"type\": \"usdc\", \"amount\": 0},{\"type\": \"token\", \"amount\": 0}]")
+  cashRatePerHour     Float         @default(0.0)
+  tokenRatePerHour    Float         @default(0.0)
+  usdcRatePerHour     Float         @default(0.0)
   maximumHoursPerWeek Int
-  nextWageId          Int?     @unique
-  nextWage            Wage?    @relation("wageRelated", fields: [nextWageId], references: [id])
-  previousWage        Wage?    @relation("wageRelated")
+  nextWageId          Int?          @unique
+  nextWage            Wage?         @relation("wageRelated", fields: [nextWageId], references: [id])
+  previousWage        Wage?         @relation("wageRelated")
   claims              Claim[]
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  weeklyClaims        WeeklyClaim[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
   @@unique([teamId, userAddress, nextWageId]) // Need to be checked
 }
 
 model Claim {
-  id          Int      @id @default(autoincrement()) // Add an ID for easy referencing
-  status      String
-  hoursWorked Int?
-  signature   String?
-  tokenTx     String?
-  wageId      Int
-  wage        Wage     @relation(fields: [wageId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            Int          @id @default(autoincrement()) // Add an ID for easy referencing
+  status        String
+  hoursWorked   Int
+  dayWorked     DateTime?
+  memo          String?
+  signature     String?
+  tokenTx       String?
+  wageId        Int
+  wage          Wage         @relation(fields: [wageId], references: [id])
+  weeklyClaimId Int?
+  weeklyClaim   WeeklyClaim? @relation("WeeklyClaimToClaims", fields: [weeklyClaimId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model WeeklyClaim {
+  id            Int      @id @default(autoincrement())
+  status        String?
+  weekStart     DateTime
+  data          Json
+  memberAddress String
+  member        User     @relation(fields: [memberAddress], references: [address])
+  teamId        Int
+  team          Team     @relation(fields: [teamId], references: [id])
+  signature     String?
+  claims        Claim[]  @relation("WeeklyClaimToClaims")
+  wageId        Int
+  wage          Wage     @relation(fields: [wageId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Notification {

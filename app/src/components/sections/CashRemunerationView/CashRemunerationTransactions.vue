@@ -16,11 +16,12 @@ import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { computed, watch } from 'vue'
 import { type Address } from 'viem'
+import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 
 const currencyStore = useCurrencyStore()
 const teamStore = useTeamStore()
 const currencies = computed(() => {
-  const defaultCurrency = currencyStore.currency.code
+  const defaultCurrency = currencyStore.localCurrency?.code
   return defaultCurrency === 'USD' ? ['USD'] : ['USD', defaultCurrency]
 })
 const contractAddress = teamStore.currentTeam?.teamContracts.find(
@@ -51,7 +52,7 @@ const { result, error } = useQuery(
   `,
   { contractAddress },
   {
-    pollInterval: 10000, // Poll every 10 seconds
+    pollInterval: GRAPHQL_POLL_INTERVAL, // Poll using GRAPHQL_POLL_INTERVAL (e.g., 12000 ms)
     fetchPolicy: 'cache-and-network'
   }
 )

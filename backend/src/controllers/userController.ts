@@ -43,11 +43,8 @@ export const getNonce = async (req: Request, res: Response) => {
 
 export const getUser = async (req: Request, res: Response) => {
   const { address } = req.params;
+  
   try {
-    if (!address || address.trim() === "") {
-      return errorResponse(401, "Get user error: Missing user address", res);
-    }
-
     const user = await prisma.user.findUnique({
       where: {
         address: address,
@@ -117,7 +114,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
       take: pageSize,
     });
     const totalUsers = await prisma.user.count();
-    await prisma.$disconnect();
     return res.status(200).json({
       users,
       totalUsers,
@@ -133,9 +129,6 @@ export const searchUser = async (req: Request, res: Response) => {
   const { name, address } = req.query;
 
   try {
-    if (!name && !address)
-      return errorResponse(401, "Search error: Missing name and address", res);
-
     const users = await prisma.user.findMany({
       where: {
         OR: [
@@ -154,11 +147,8 @@ export const searchUser = async (req: Request, res: Response) => {
       },
     });
 
-    await prisma.$disconnect();
-
     return res.status(200).json({ success: true, users });
   } catch (error) {
-    await prisma.$disconnect();
     return errorResponse(500, error, res);
   }
 };

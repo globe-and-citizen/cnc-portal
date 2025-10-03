@@ -15,35 +15,71 @@
     </div>
   </OverviewCard>
 </template>
+
 <script setup lang="ts">
 import personIcon from '@/assets/person.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
 import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
-import { storeToRefs } from 'pinia'
-import { watch } from 'vue'
-import { computed } from 'vue'
-import { useCustomFetch } from '@/composables'
-import type { ClaimResponse } from '@/types'
+import { watch, computed } from 'vue'
+import { useTanstackQuery } from '@/composables/useTanstackQuery'
+import { useStorage } from '@vueuse/core'
+import type { TokenId } from '@/constant'
+import type { RatePerHour } from '@/types/cash-remuneration'
+
+// Interface pour typer les claims
+interface WeeklyClaim {
+  claims: { hoursWorked: number }[]
+  wage: {
+    ratePerHour: RatePerHour
+  }
+}
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const { currency, nativeTokenPrice } = storeToRefs(currencyStore)
-const { data, isFetching, error } = useCustomFetch(
-  `/claim?teamId=${teamStore.currentTeamId}&status=signed`
+
+const currency = useStorage('currency', {
+  code: 'USD',
+  name: 'US Dollar',
+  symbol: '$'
+})
+const signedQueryKey = computed(() => ['weekly-claims', teamStore.currentTeam?.id, 'signed'])
+
+const {
+  data: weeklyClaims,
+  isLoading: isFetching,
+  error
+} = useTanstackQuery<WeeklyClaim[]>(
+  'weeklyClaims',
+  computed(() => `/weeklyClaim/?teamId=${teamStore.currentTeamId}&status=signed`),
+  {
+    queryKey: signedQueryKey,
+    refetchOnWindowFocus: true
+  }
 )
-  .get()
-  .json<ClaimResponse[]>()
-const totalPendingAmount = computed(() => {
-  const totalAmount = data.value?.reduce((acc, claim) => {
-    return acc + (claim.hoursWorked || 0) * (claim.wage.cashRatePerHour || 0)
+
+function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
+  return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
+}
+
+function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = currencyStore): number {
+  return ratePerHour.reduce((total: number, rate: { type: TokenId; amount: number }) => {
+    const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
+    const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
+    return total + rate.amount * localPrice
   }, 0)
-  return formatCurrencyShort(
-    (totalAmount || 0) * (nativeTokenPrice.value || 0),
-    currency.value.code
-  )
+}
+
+const totalPendingAmount = computed(() => {
+  if (!weeklyClaims.value || !Array.isArray(weeklyClaims.value)) return ''
+  const total = weeklyClaims.value.reduce((sum: number, weeklyClaim: WeeklyClaim) => {
+    const hours = getTotalHoursWorked(weeklyClaim.claims)
+    const rate = getHoulyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
+    return sum + hours * rate
+  }, 0)
+  return formatCurrencyShort(total, currency.value.code)
 })
 
 watch(error, (err) => {

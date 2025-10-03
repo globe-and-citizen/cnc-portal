@@ -5,43 +5,74 @@
     <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
       <div class="flex flex-wrap gap-2 sm:gap-4">
         <span class="text-sm">Contract Address </span>
+
         <AddressToolTip
-          :address="
-            teamStore.currentTeam?.teamContracts.find(
-              (contract) => contract.type === 'CashRemunerationEIP712'
-            )?.address ?? ''
-          "
+          v-if="cashRemunerationAddress"
+          :address="cashRemunerationAddress"
           class="text-sm font-bold"
         />
       </div>
     </div>
-
     <GenericTokenHoldingsSection
-      v-if="
-        teamStore.currentTeam?.teamContracts.find(
-          (contract) => contract.type === 'CashRemunerationEIP712'
-        )
-      "
-      :address="
-        teamStore.currentTeam?.teamContracts.find(
-          (contract) => contract.type === 'CashRemunerationEIP712'
-        )?.address ?? ''
-      "
+      v-if="cashRemunerationAddress"
+      :address="cashRemunerationAddress"
     />
 
-    <CashRemunerationTable :owner-address="teamStore.currentTeam?.ownerAddress" />
-
-    <CashRemunerationTransactions />
+    <!-- Affiche le tableau CashRemunerationTable pour un membre individuel -->
+    <!-- <CashRemunerationTable v-if="memberAddress" /> -->
+    <ClaimHistory v-if="memberAddress" />
+    <!-- Sinon, vue classique -->
+    <template v-else>
+      <PendingWeeklyClaim v-if="isCashRemunerationOwner" />
+      <SignedWeeklyClaim />
+    </template>
+    <!-- <CashRemunerationTransactions /> -->
+    <ContractOwnerCard v-if="cashRemunerationAddress" :contractAddress="cashRemunerationAddress" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { useTeamStore } from '@/stores'
+import { computed, watch } from 'vue'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
-import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
+import { useReadContract } from '@wagmi/vue'
+import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+
+// import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
+// import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
+import PendingWeeklyClaim from '@/components/sections/CashRemunerationView/PendingWeeklyClaim.vue'
+import SignedWeeklyClaim from '@/components/sections/CashRemunerationView/SignedWeeklyClaim.vue'
+import { useRoute } from 'vue-router'
+import ClaimHistory from '@/components/sections/ClaimHistoryView/ClaimHistory.vue'
 
+const userStore = useUserDataStore()
 const teamStore = useTeamStore()
+
+const route = useRoute()
+const memberAddress = route.params.memberAddress as string | undefined
+
+const cashRemunerationAddress = computed(() =>
+  teamStore.getContractAddressByType('CashRemunerationEIP712')
+)
+
+const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
+  functionName: 'owner',
+  address: cashRemunerationAddress,
+  abi: CashRemuneration_ABI
+})
+
+// Compute if user has approval access (is cash remuneration contract owner)
+const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value == userStore.address)
+
+watch(
+  () => cashRemunerationOwnerError.value,
+  (error) => {
+    if (error) {
+      console.error('Error fetching cash remuneration owner:', error)
+    }
+  }
+)
 </script>

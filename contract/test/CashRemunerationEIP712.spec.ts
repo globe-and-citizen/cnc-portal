@@ -4,7 +4,7 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { CashRemunerationEIP712 } from '../typechain-types'
 import { MockERC20 } from '../typechain-types'
 
-describe('CashRemuneration (EIP712)', () => {
+describe('CashRemuneration*** (EIP712)', () => {
   let cashRemunerationProxy: CashRemunerationEIP712
   let mockUSDC: MockERC20
   let mockUSDT: MockERC20
@@ -18,10 +18,58 @@ describe('CashRemuneration (EIP712)', () => {
     const CashRemunerationImplementation = await ethers.getContractFactory('CashRemunerationEIP712')
     cashRemunerationProxy = (await upgrades.deployProxy(
       CashRemunerationImplementation,
-      [employer.address, await mockUSDC.getAddress()],
+      [employer.address, [await mockUSDC.getAddress()]],
       { initializer: 'initialize' }
     )) as unknown as CashRemunerationEIP712
   }
+
+  describe('Initialization', () => {
+    let employer: SignerWithAddress
+
+    before(async () => {
+      ;[employer] = await ethers.getSigners()
+      await deployContract(employer)
+    })
+
+    it('should initialize with correct owner', async () => {
+      expect(await cashRemunerationProxy.owner()).to.equal(employer.address)
+    })
+
+    it('should initialize with USDC as supported token', async () => {
+      const usdcAddress = await mockUSDC.getAddress()
+      expect(await cashRemunerationProxy.supportedTokens(usdcAddress)).to.be.true
+    })
+
+    it('should reject zero address for owner', async () => {
+      const CashRemunerationImplementation =
+        await ethers.getContractFactory('CashRemunerationEIP712')
+      await expect(
+        upgrades.deployProxy(
+          CashRemunerationImplementation,
+          [ethers.ZeroAddress, [await mockUSDC.getAddress()]],
+          { initializer: 'initialize' }
+        )
+      ).to.be.revertedWith('Owner address cannot be zero')
+    })
+
+    it('should reject zero address for USDC', async () => {
+      const CashRemunerationImplementation =
+        await ethers.getContractFactory('CashRemunerationEIP712')
+      await expect(
+        upgrades.deployProxy(
+          CashRemunerationImplementation,
+          [employer.address, [ethers.ZeroAddress]],
+          { initializer: 'initialize' }
+        )
+      ).to.be.revertedWith('Token address cannot be zero')
+    })
+
+    it('should prevent reinitialization', async () => {
+      await expect(
+        cashRemunerationProxy.initialize(employer.address, [await mockUSDC.getAddress()])
+      ).to.be.revertedWithCustomError(cashRemunerationProxy, 'InvalidInitialization')
+    })
+  })
 
   describe('As CNC Company Founder', () => {
     let employer: SignerWithAddress
@@ -63,7 +111,6 @@ describe('CashRemuneration (EIP712)', () => {
           WageClaim: [
             { name: 'employeeAddress', type: 'address' },
             { name: 'hoursWorked', type: 'uint8' },
-            // { name: 'hourlyRate', type: 'uint256' },
             { name: 'wages', type: 'Wage[]' },
             { name: 'date', type: 'uint256' }
           ]
@@ -127,17 +174,13 @@ describe('CashRemuneration (EIP712)', () => {
         }
 
         const signature = await employer.signTypedData(domain, types, wageClaim)
-
         const sigHash = ethers.keccak256(signature)
-
         const tx = await cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
-
         const receipt = await tx.wait()
 
         console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
 
         const amount = BigInt(wageClaim.hoursWorked) * wageClaim.wages[0].hourlyRate
-
         const amountUSDC = BigInt(wageClaim.hoursWorked) * wageClaim.wages[1].hourlyRate
 
         await expect(tx).to.changeEtherBalance(employee, amount)
@@ -153,12 +196,6 @@ describe('CashRemuneration (EIP712)', () => {
 
       describe("Then a user can't transfer if;", () => {
         it('the signer is not the contract employer', async () => {
-          // const wageClaim = {
-          //   employeeAddress: employee.address,
-          //   hoursWorked: 5,
-          //   hourlyRate: 10,
-          //   date: Math.floor(Date.now() / 1000)
-          // }
           const wageClaim = {
             employeeAddress: employee.address,
             hoursWorked: 5,
@@ -222,11 +259,8 @@ describe('CashRemuneration (EIP712)', () => {
           }
 
           const signature = await employer.signTypedData(domain, types, wageClaim)
-
           const sigHash = ethers.keccak256(signature)
-
           const tx = await cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
-
           const amount = BigInt(wageClaim.hoursWorked) * wageClaim.wages[0].hourlyRate
 
           await expect(tx).to.changeEtherBalance(employee, amount)

@@ -10,6 +10,9 @@ lerna-debug.log*
 
 /src/artifacts/deployed_addresses/chain-31337.json
 
+# Bulk transfer recipients (not versioned)
+/contract/scripts/recipients.json
+
 node_modules
 .DS_Store
 dist
@@ -36,3 +39,8 @@ coverage
 # Synpress
 .cache-synpress
 test-results
+
+# Gas reporter output (generated during testing)
+gasReporterOutput.json
+backend/.env.production
+app/.env.production

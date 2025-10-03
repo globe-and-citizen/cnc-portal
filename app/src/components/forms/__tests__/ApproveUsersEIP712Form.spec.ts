@@ -10,6 +10,7 @@ import type {
 } from '@vuelidate/core'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { SUPPORTED_TOKENS } from '@/constant/index'
 
 interface ComponentData {
   selectedOptions: { [key in 0 | 1 | 2]: boolean }
@@ -195,7 +196,7 @@ describe('ApproveUsersForm', () => {
       expect(wrapper.vm.input).toEqual({
         name: 'Test Name',
         address: '0xAddressToApprove',
-        token: null
+        token: SUPPORTED_TOKENS[0].address
       })
     })
     it('should update date when expiry date is selected', async () => {
@@ -267,7 +268,7 @@ describe('ApproveUsersForm', () => {
       await wrapper.vm.$nextTick()
       // @ts-expect-error: mocked
       expect(wrapper.vm.v$.$invalid).toBe(true)
-      const budgetLimitError = wrapper.find('[data-test="budget-limit-error"]')
+      const budgetLimitError = wrapper.find('[data-test="budget-limit-required-error"]')
       expect(budgetLimitError.exists()).toBeTruthy()
       expect(budgetLimitError.html()).toContain('At least one budget limit must be set')
     })

@@ -23,18 +23,20 @@ import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
-import { storeToRefs } from 'pinia'
-import { formatEther, formatUnits, zeroAddress } from 'viem'
+import { formatUnits } from 'viem'
 import { watch } from 'vue'
 import { computed } from 'vue'
+import { SUPPORTED_TOKENS } from '@/constant'
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const { currency, nativeTokenPrice, usdPriceInLocal } = storeToRefs(currencyStore)
-const contractAddress = teamStore.currentTeam?.teamContracts.find(
-  (contract) => contract.type === 'ExpenseAccountEIP712'
-)?.address
+const contractAddress = computed(
+  () =>
+    teamStore.currentTeam?.teamContracts.find(
+      (contract) => contract.type === 'ExpenseAccountEIP712'
+    )?.address
+)
 
 const now = new Date()
 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000
@@ -47,7 +49,7 @@ const { result, loading, error } = useQuery(
           contractAddress: $contractAddress
           blockTimestamp_gte: $startDate
           blockTimestamp_lte: $endDate
-          transactionType: "transfer"
+          transactionType: transfer
         }
       ) {
         amount
@@ -60,22 +62,28 @@ const { result, loading, error } = useQuery(
 
 const totalMonthlySpentAmount = computed(() => {
   const transactions = result.value?.transactions || []
-  let totalAmountInNetworkCurrency = 0
-  let totalAmountInUSDC = 0
+  // Map: tokenId -> total amount spent for that token
+  const spentByToken: Record<string, number> = {}
+  for (const token of SUPPORTED_TOKENS) {
+    spentByToken[token.id] = 0
+  }
   transactions.forEach((transaction: { amount: bigint; tokenAddress: string }) => {
-    if (transaction.tokenAddress === zeroAddress) {
-      totalAmountInNetworkCurrency += parseFloat(formatEther(transaction.amount))
-    } else {
-      totalAmountInUSDC += parseFloat(formatUnits(transaction.amount, 6))
+    const token = SUPPORTED_TOKENS.find(
+      (t) => t.address.toLowerCase() === transaction.tokenAddress.toLowerCase()
+    )
+    if (token) {
+      const decimals = token.decimals
+      spentByToken[token.id] += parseFloat(formatUnits(transaction.amount, decimals))
     }
   })
-  const totalNetworkInLocalCurrency = totalAmountInNetworkCurrency * (nativeTokenPrice.value || 0)
-  const totalUSDCInLocalCurrency = totalAmountInUSDC * (usdPriceInLocal.value || 0)
 
-  return formatCurrencyShort(
-    totalNetworkInLocalCurrency + totalUSDCInLocalCurrency,
-    currency.value.code
-  )
+  let totalInLocal = 0
+  for (const token of SUPPORTED_TOKENS) {
+    const price =
+      currencyStore.getTokenInfo(token.id)?.prices.find((p) => p.id === 'local')?.price || 0
+    totalInLocal += spentByToken[token.id] * price
+  }
+  return formatCurrencyShort(totalInLocal, currencyStore.localCurrency.code)
 })
 
 watch(error, (err) => {

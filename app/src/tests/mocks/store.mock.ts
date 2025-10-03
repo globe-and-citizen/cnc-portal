@@ -21,6 +21,11 @@ export const mockTeamStore = {
   teamsMeta: {
     reloadTeams: vi.fn()
   },
+  getContractAddressByType: vi.fn((type) => {
+    // console.log('getContractAddressByType called with type:', type)
+    return type ? '0xTeamContractAddress' : undefined
+    // return mockTeamStore.currentTeam.teamContracts.find((contract) => contract.type === type)?.address
+  }),
   fetchTeam: vi.fn()
 }
 

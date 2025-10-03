@@ -1,11 +1,11 @@
 <template>
   <ButtonUI
-    v-if="claim.status == 'pending' && teamOwner == userDataStore.address"
+    v-if="isCashRemunerationOwner"
     variant="success"
     data-test="approve-button"
-    :disabled="loading"
+    :disabled="loading || disabled"
     size="sm"
-    @click="async () => await approveClaim(claim as ClaimResponse)"
+    @click="async () => await approveClaim(weeklyClaim as ClaimResponse)"
   >
     Approve
   </ButtonUI>
@@ -14,84 +14,119 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useCustomFetch } from '@/composables'
-import { useChainId, useSignTypedData } from '@wagmi/vue'
-import { parseEther, type Address } from 'viem'
+import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
+import { parseEther, parseUnits, zeroAddress, type Address } from 'viem'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
-import type { ClaimResponse } from '@/types'
+import type { ClaimResponse, RatePerHour } from '@/types'
 import { log } from '@/utils'
 import { computed, ref } from 'vue'
+import { USDC_ADDRESS } from '@/constant'
+import { useQueryClient } from '@tanstack/vue-query'
+import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { watch } from 'vue'
 
-// Props claim : ClaimResponse
-const props = defineProps<{ claim: ClaimResponse }>()
-const emit = defineEmits(['claim-signed'])
+// Props weeklyClaim : ClaimResponse
+const props = defineProps<{
+  weeklyClaim: Pick<ClaimResponse, 'id' | 'status' | 'hoursWorked' | 'createdAt'> & {
+    wage: {
+      ratePerHour: RatePerHour
+      userAddress: Address
+    }
+  }
+  // isWeeklyClaim?: boolean
+  disabled?: boolean
+}>()
 
 // Stores
 const teamStore = useTeamStore()
-const userDataStore = useUserDataStore()
+// const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
+const userStore = useUserDataStore()
+const queryClient = useQueryClient()
+
+const cashRemunerationAddress = computed(() =>
+  teamStore.getContractAddressByType('CashRemunerationEIP712')
+)
 
 // Composables
 const { signTypedDataAsync, data: signature } = useSignTypedData()
 const chainId = useChainId()
 
 // Computed properties
-const teamOwner = computed(() => teamStore.currentTeam?.ownerAddress)
+// const teamOwner = computed(() => teamStore.currentTeam?.ownerAddress)
+const claimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=sign`)
 
-// const { signature, execute: signClaim } = useSignWageClaim()
 const loading = ref(false)
+
+const {
+  data: cashRemunerationOwner,
+  // isFetching: isCashRemunerationOwnerFetching,
+  error: cashRemunerationOwnerError
+} = useReadContract({
+  functionName: 'owner',
+  address: cashRemunerationAddress,
+  abi: CashRemuneration_ABI
+})
+
+// Compute if user has approval access (is cash remuneration contract owner)
+const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
 
 const {
   // data: claimUpdateData,
   // isFetching: isClaimUpdateing,
   error: claimError,
   execute: executeUpdateClaim
-} = useCustomFetch(
-  computed(() => `/claim/${props.claim.id}/?action=sign`),
-  { immediate: false }
-)
+} = useCustomFetch(claimUrl, { immediate: false })
   .put(() => ({
-    signature: signature.value
+    signature: signature.value,
+    data: { ownerAddress: userStore.address }
   }))
   .json<Array<ClaimResponse>>()
 
-const cashRemunerationEip712Address = computed(
-  () =>
-    teamStore.currentTeam?.teamContracts.find(
-      (contract) => contract.type === 'CashRemunerationEIP712'
-    )?.address as Address
-)
-const approveClaim = async (claim: ClaimResponse) => {
+const approveClaim = async (weeklyClaim: ClaimResponse) => {
   loading.value = true
 
   try {
-    // await signClaim(claim)
     await signTypedDataAsync({
       domain: {
         name: 'CashRemuneration',
         version: '1',
         chainId: chainId.value,
-        verifyingContract: cashRemunerationEip712Address.value
+        verifyingContract: teamStore.getContractAddressByType('CashRemunerationEIP712') as Address
       },
       types: {
+        Wage: [
+          { name: 'hourlyRate', type: 'uint256' },
+          { name: 'tokenAddress', type: 'address' }
+        ],
         WageClaim: [
           { name: 'employeeAddress', type: 'address' },
           { name: 'hoursWorked', type: 'uint8' },
-          { name: 'hourlyRate', type: 'uint256' },
+          { name: 'wages', type: 'Wage[]' },
           { name: 'date', type: 'uint256' }
         ]
       },
       message: {
-        hourlyRate: parseEther(String(claim.wage.cashRatePerHour)),
-        hoursWorked: claim.hoursWorked,
-        employeeAddress: claim.wage.userAddress as Address,
-        date: BigInt(Math.floor(new Date(claim.createdAt).getTime() / 1000))
+        hoursWorked: weeklyClaim.hoursWorked,
+        employeeAddress: weeklyClaim.wage.userAddress as Address,
+        date: BigInt(Math.floor(new Date(weeklyClaim.createdAt).getTime() / 1000)),
+        wages: weeklyClaim.wage.ratePerHour.map((rate) => ({
+          hourlyRate:
+            rate.type === 'native' ? parseEther(`${rate.amount}`) : parseUnits(`${rate.amount}`, 6), // Convert to wei (assuming 6 decimals for USDC)
+          tokenAddress:
+            rate.type === 'native'
+              ? (zeroAddress as Address)
+              : rate.type === 'usdc'
+                ? (USDC_ADDRESS as Address)
+                : (teamStore.getContractAddressByType('InvestorsV1') as Address)
+        }))
       },
       primaryType: 'WageClaim'
     })
   } catch (error) {
     const typedError = error as { message: string }
-    log.error('Failed to sign claim', typedError.message)
-    let errorMessage = 'Failed to sign claim'
+    log.error('Failed to sign weeklyClaim', typedError.message)
+    let errorMessage = 'Failed to sign weeklyClaim'
     if (typedError.message.includes('User rejected the request')) {
       if (typedError.message.includes('User rejected the request')) {
         errorMessage = 'User rejected the request'
@@ -101,17 +136,24 @@ const approveClaim = async (claim: ClaimResponse) => {
   }
   if (signature.value) {
     await executeUpdateClaim()
+
     if (claimError.value) {
-      toastStore.addErrorToast('Failed to approve claim')
+      toastStore.addErrorToast('Failed to approve weeklyClaim')
     } else {
       toastStore.addSuccessToast('Claim approved')
-      // Emit event to refresh table
-      emit('claim-signed')
+      queryClient.invalidateQueries({
+        queryKey: ['weekly-claims', teamStore.currentTeam?.id]
+      })
     }
   }
 
   loading.value = false
 }
-</script>
 
-<style scoped></style>
+watch(cashRemunerationOwnerError, (value) => {
+  if (value) {
+    log.error('Failed to fetch cash remuneration owner', value)
+    toastStore.addErrorToast('Failed to fetch cash remuneration owner')
+  }
+})
+</script>

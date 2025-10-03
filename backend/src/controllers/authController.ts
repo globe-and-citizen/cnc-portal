@@ -3,6 +3,7 @@ import { generateNonce, SiweMessage } from "siwe";
 import jwt from "jsonwebtoken";
 import { errorResponse, extractAddressAndNonce } from "../utils/utils";
 import { prisma } from "../utils";
+import { faker } from "@faker-js/faker";
 
 export const authenticateSiwe = async (req: Request, res: Response) => {
   try {
@@ -47,10 +48,10 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
         data: {
           address,
           nonce,
+          name: faker.person.firstName(),
+          imageUrl: faker.image.avatar(),
         },
       });
-
-    await prisma.$disconnect();
 
     //Create JWT for the user and send to the fron-end
     const secretKey = process.env.SECRET_KEY as string;
@@ -61,8 +62,6 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return errorResponse(500, error, res);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 

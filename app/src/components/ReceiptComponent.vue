@@ -52,7 +52,9 @@ import { NETWORK } from '@/constant'
 
 const { receiptData } = defineProps<{ receiptData: Partial<ReceiptData> }>()
 const currencyStore = useCurrencyStore()
-const { nativeTokenPriceInUSD } = storeToRefs(currencyStore)
+
+// @ts-expect-error: nativeToken is not typed in currencyStore but is available at runtime
+const { nativeToken } = storeToRefs(currencyStore)
 
 const emit = defineEmits<{
   (e: 'export-excel', data: ReceiptData): void
@@ -88,7 +90,7 @@ const formattedReceiptData = {
   price:
     receiptData['token'] === 'USDC'
       ? '1 USD / USDC'
-      : `${nativeTokenPriceInUSD.value} USD / ${receiptData['token']}`,
+      : `${nativeToken.value.priceInUSD} USD / ${receiptData['token']}`,
   value: `${receiptData['valueUSD']} USD`
 }
 

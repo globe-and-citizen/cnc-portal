@@ -1,4 +1,6 @@
 //#region networking modules
+import "../instrument"
+import * as Sentry from "@sentry/node"
 import cors from "cors";
 import express, { Express } from "express";
 import rateLimit from "express-rate-limit";
@@ -12,6 +14,7 @@ import notificationRoutes from "../routes/notificationRoute";
 import actionRoutes from "../routes/actionsRoute";
 import wageRoutes from "../routes/wageRoute";
 import claimRoutes from "../routes/claimRoute";
+import weeklyClaimRoutes from "../routes/weeklyClaimRoute";
 import expenseRoutes from "../routes/expenseRoute";
 import uploadRoute from "../routes/uploadRoute";
 import contractRoutes from "../routes/contractRoutes";
@@ -45,6 +48,13 @@ class Server {
 
   constructor() {
     this.app = express();
+    // Trust proxy headers (needed for correct client IP detection behind load balancers/proxies)
+    if (
+      process.env.TRUST_PROXY === "true" ||
+      process.env.NODE_ENV === "production"
+    ) {
+      this.app.set("trust proxy", true);
+    }
     this.paths = {
       teams: "/api/teams/",
       member: "/api/member/",
@@ -53,15 +63,15 @@ class Server {
       notification: "/api/notification/",
       actions: "/api/actions/",
       wage: "/api/wage/",
+      weeklyClaim: "/api/weeklyclaim/",
       expense: "/api/expense/",
       claim: "/api/claim/",
-      upload:"/api/upload/",
+      upload: "/api/upload/",
       constract: "/api/contract/",
-      apidocs: "/api-docs",
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 1000, // max 1000 requests per windowMs
+      max: 100000, // max 100000 requests per windowMs
     });
 
     this.app.use(limiter);
@@ -95,7 +105,9 @@ class Server {
 
   private middleware() {
     this.app.use(express.json());
-    this.app.use(cors({ origin: process.env.FRONTEND_URL as string }));
+    this.app.use(
+      cors({ origin: process.env.FRONTEND_URL as string, credentials: true })
+    );
   }
 
   private routes() {
@@ -107,20 +119,30 @@ class Server {
     this.app.use(this.paths.actions, authorizeUser, actionRoutes);
     this.app.use(this.paths.claim, authorizeUser, claimRoutes);
     this.app.use(this.paths.expense, authorizeUser, expenseRoutes);
-    this.app.use(this.paths.upload,authorizeUser, uploadRoute);
+    this.app.use(this.paths.upload, authorizeUser, uploadRoute);
+    this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
     this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-    this.app.get(this.paths.apidocs, (req, res) => {
-      res.sendFile(path.join(__dirname, "../utils/backend_specs.html"));
+    // The error handler must be registered before any other error middleware and after all controllers
+    Sentry.setupExpressErrorHandler(this.app);
+
+    // Optional fallthrough error handler
+    // @ts-ignore
+    this.app.use(function onError(err, req, res, next) {
+      // The error id is attached to `res.sentry` to be returned
+      // and optionally displayed to the user for support.
+      res.statusCode = 500;
+      res.end(res.sentry + "\n");
+    });
+
+    this.app.get("/debug-sentry", function mainHandler(req, res) {
+      throw new Error("My first Sentry error!");
     });
   }
 
   public listen() {
     this.app.listen(this.port, () => {
       console.log(`helloworld: listening on port ${this.port}`);
-      console.log(
-        `Swagger docs available at http://localhost:${this.port}/api-docs`
-      );
       console.log(
         `Swagger docs V2 available at http://localhost:${this.port}/docs`
       );

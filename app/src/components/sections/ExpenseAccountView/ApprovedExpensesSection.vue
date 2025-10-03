@@ -1,25 +1,42 @@
 <template>
   <CardComponent title="Approved Addresses" data-test="claims-table">
     <template #card-action>
-      <ButtonUI
-        variant="success"
-        :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
-        @click="
-          () => {
-            approveUsersModal = true
-          }
+      <div
+        :class="{ tooltip: !(userDataStore.address === contractOwnerAddress || isBodAction()) }"
+        :data-tip="
+          !(userDataStore.address === contractOwnerAddress || isBodAction())
+            ? 'Only the contract owner can approve expenses'
+            : null
         "
-        data-test="approve-users-button"
       >
-        Approve User Expense
-      </ButtonUI>
+        <ButtonUI
+          variant="success"
+          :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
+          @click="
+            () => {
+              approveUsersModal = { mount: true, show: true }
+            }
+          "
+          data-test="approve-users-button"
+        >
+          Approve User Expense
+        </ButtonUI>
+      </div>
     </template>
 
     <ExpenseAccountTable />
 
-    <ModalComponent v-model="approveUsersModal">
+    <ModalComponent
+      v-model="approveUsersModal.show"
+      v-if="approveUsersModal.mount"
+      @reset="
+        () => {
+          approveUsersModal = { mount: false, show: false }
+        }
+      "
+    >
       <ApproveUsersForm
-        v-if="approveUsersModal"
+        v-if="approveUsersModal.mount"
         :form-data="teamMembers"
         :users="foundUsers"
         :loading-approve="loadingApprove"
@@ -30,7 +47,7 @@
             confirmationModal = true
           }
         "
-        @close-modal="approveUsersModal = false"
+        @close-modal="approveUsersModal = { mount: false, show: false }"
       />
     </ModalComponent>
 
@@ -63,7 +80,7 @@ import { log, parseError } from '@/utils'
 import ApproveExpenseSummaryForm from '@/components/forms/ApproveExpenseSummaryForm.vue'
 
 const confirmationModal = ref(false)
-const approveUsersModal = ref(false)
+const approveUsersModal = ref({ mount: false, show: false })
 const foundUsers = ref<User[]>([])
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
@@ -105,7 +122,6 @@ const {
 //#region Funtions
 const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = true
-  expenseAccountData.value = data
   const verifyingContract = expenseAccountEip712Address.value
 
   const domain = {
@@ -155,7 +171,7 @@ const approveUser = async (data: BudgetLimit) => {
   await executeAddExpenseData()
   await refetchExpenseAccountGetOwner()
   loadingApprove.value = false
-  approveUsersModal.value = false
+  approveUsersModal.value = { mount: false, show: false }
   confirmationModal.value = false
   await expenseDataStore.fetchAllExpenseData(
     Array.isArray(route.params.id) ? route.params.id[0] : route.params.id

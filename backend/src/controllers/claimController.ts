@@ -1,31 +1,36 @@
 import { Request, Response } from "express";
 import { errorResponse } from "../utils/utils";
 import { prisma } from "../utils";
+import dayjs from "dayjs";
+import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import weekday from 'dayjs/plugin/weekday'
+
 import { Prisma, Claim } from "@prisma/client";
 import { isUserMemberOfTeam } from "./wageController";
+import { isCashRemunerationOwner } from "../utils/cashRemunerationUtil";
 
-type claimBodyRequest = Pick<Claim, "hoursWorked"> & { teamId: string };
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
+dayjs.extend(weekday)
+
+type claimBodyRequest = Pick<Claim, "hoursWorked" | "dayWorked" | "memo"> & {
+  teamId: string;
+};
+
+// TODO limit weeday only for the current week. Betwen Monday and the current day
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
 
   const body = req.body as claimBodyRequest;
   const hoursWorked = Number(body.hoursWorked);
+  const memo = body.memo as string;
+  const dayWorked = body.dayWorked
+    ? dayjs.utc(body.dayWorked).startOf('day').toDate()
+    : dayjs.utc().startOf('day').toDate();
   const teamId = Number(body.teamId);
 
-  // Validating the claim data
-  // Checking required data
-  let parametersError: string[] = [];
-  if (!body.teamId) parametersError.push("Missing teamId");
-  if (!body.hoursWorked) parametersError.push("Missing hoursWorked");
-  if (isNaN(hoursWorked)) parametersError.push("Invalid hoursWorked");
-  if (isNaN(teamId)) parametersError.push("Invalid teamId");
-  if (hoursWorked <= 0)
-    parametersError.push(
-      "Invalid hoursWorked, hoursWorked must be greater than 0"
-    );
-  if (parametersError.length > 0) {
-    return errorResponse(400, parametersError.join(", "), res);
-  }
+  const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
   try {
     // Get user current
@@ -36,19 +41,84 @@ export const addClaim = async (req: Request, res: Response) => {
     if (!wage) {
       return errorResponse(400, "No wage found for the user", res);
     }
+
+    // get the member current wage
+
+    let weeklyClaim = await prisma.weeklyClaim.findFirst({
+      where: {
+        wage: {
+          teamId: teamId,
+          nextWageId: null,
+        },
+        weekStart: weekStart,
+        memberAddress: callerAddress,
+        teamId: teamId,
+      },
+      include: { claims: true },
+    });
+
+    // Check total max hours.
+
+    const totalHours =
+      weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ??
+      0;
+
+    if (totalHours + hoursWorked > wage.maximumHoursPerWeek) {
+      const remainingHours = Math.max(0, wage.maximumHoursPerWeek - totalHours);
+      return errorResponse(
+        400,
+        `Maximum weekly hours reached, cannot submit more claims for this week. You have ${remainingHours} hours remaining.`,
+        res
+      );
+    }
+
+    if (!weeklyClaim) {
+      weeklyClaim = await prisma.weeklyClaim.create({
+        data: {
+          wageId: wage.id,
+          weekStart: weekStart,
+          memberAddress: callerAddress,
+          teamId: teamId,
+          data: {},
+          status: "pending",
+        },
+        include: {
+          claims: true,
+        },
+      });
+    }
+
+    if (
+      (weeklyClaim?.claims
+        .filter(
+          (claim) =>
+            claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime()
+        )
+        .reduce((sum, claim) => sum + Number(claim.hoursWorked), 0) ?? 0) +
+      Number(hoursWorked) >
+      24
+    ) {
+      return errorResponse(
+        400,
+        "Submission failed: the total number of hours for this day would exceed 24 hours.",
+        res
+      );
+    }
+
     const claim = await prisma.claim.create({
       data: {
         hoursWorked,
+        memo,
         wageId: wage.id,
         status: "pending",
+        weeklyClaimId: weeklyClaim.id,
+        dayWorked: dayWorked,
       },
     });
 
     return res.status(201).json(claim);
   } catch (error) {
-    return errorResponse(500, "Internal Server Error", res);
-  } finally {
-    await prisma.$disconnect();
+    return errorResponse(500, error, res);
   }
 };
 
@@ -56,13 +126,9 @@ export const getClaims = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const teamId = Number(req.query.teamId);
   const status = req.query.status as string;
+  const memberAddress = req.query.memberAddress as string | undefined;
 
   try {
-    // Validate teamId
-    if (isNaN(teamId)) {
-      return errorResponse(400, "Invalid or missing teamId", res);
-    }
-
     // Check if the user is a member of the provided team
     if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
       return errorResponse(403, "Caller is not a member of the team", res);
@@ -72,6 +138,17 @@ export const getClaims = async (req: Request, res: Response) => {
     if (status) {
       statusFilter = { status };
     }
+
+    // add filter for memberAddress if provided
+    let memberFilter: Prisma.ClaimWhereInput = {};
+    if (memberAddress) {
+      memberFilter = {
+        wage: {
+          userAddress: memberAddress,
+        },
+      };
+    }
+
     // Request all claims based on status, that have a wage where the teamId is the provided teamId
     const claims = await prisma.claim.findMany({
       where: {
@@ -79,6 +156,7 @@ export const getClaims = async (req: Request, res: Response) => {
           teamId: teamId,
         },
         ...statusFilter,
+        ...memberFilter,
       },
       include: {
         wage: {
@@ -96,10 +174,7 @@ export const getClaims = async (req: Request, res: Response) => {
     });
     return res.status(200).json(claims);
   } catch (error) {
-    console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 
@@ -109,14 +184,6 @@ export const updateClaim = async (req: Request, res: Response) => {
 
   // Action is only able to have this values: sign, withdraw, disable, enable, reject
   const action = req.query.action as string;
-  const validActions = ["sign", "withdraw", "disable", "enable", "reject"];
-  if (!validActions.includes(action)) {
-    return errorResponse(
-      400,
-      `Invalid action. Allowed actions are: ${validActions.join(", ")}`,
-      res
-    );
-  }
 
   // Prepare the data according to the action
   let data: Prisma.ClaimUpdateInput = {};
@@ -169,8 +236,22 @@ export const updateClaim = async (req: Request, res: Response) => {
 
     // sign, disable, enable, reject actions are only able to be done by the owner of the team
     if (["sign", "disable", "enable", "reject"].includes(action)) {
-      if (claim.wage.team.ownerAddress !== callerAddress) {
-        return errorResponse(403, "Caller is not the owner of the team", res);
+      // Check if the caller is the Cash Remuneration owner
+      const isCallerCashRemunOwner = await isCashRemunerationOwner(
+        callerAddress,
+        claim.wage.team.id
+      );
+
+      // If not Cash Remuneration owner, check if they're the team owner
+      if (
+        !isCallerCashRemunOwner &&
+        claim.wage.team.ownerAddress !== callerAddress
+      ) {
+        return errorResponse(
+          403,
+          "Caller is not the Cash Remuneration owner or the team owner",
+          res
+        );
       }
     }
 
@@ -231,7 +312,5 @@ export const updateClaim = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
-  } finally {
-    await prisma.$disconnect();
   }
 };

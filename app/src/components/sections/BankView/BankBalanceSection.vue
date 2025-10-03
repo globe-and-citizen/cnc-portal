@@ -6,14 +6,18 @@
         <div class="flex items-baseline gap-2">
           <span class="text-4xl font-bold">
             <span class="inline-block min-w-16 h-10">
-              <span class="loading loading-spinner loading-lg" v-if="isLoading"></span>
-              <span v-else>{{ balances.totalValueUSD }}</span>
+              <span
+                data-test="loading-spinner"
+                class="loading loading-spinner loading-lg"
+                v-if="isLoading"
+              ></span>
+              <span v-else>{{ total['USD']?.formated ?? 0 }}</span>
             </span>
           </span>
           <span class="text-gray-600">USD</span>
         </div>
         <div class="text-sm text-gray-500 mt-1">
-          ≈ {{ totalValueLocal }} {{ currencyStore.currency.code }}
+          ≈ {{ total[currency.code]?.formated ?? 0 }} {{ currency.code }}
         </div>
       </div>
       <div class="flex flex-col items-end gap-4">
@@ -22,22 +26,29 @@
             v-if="bankAddress"
             variant="secondary"
             class="flex items-center gap-2"
-            @click="depositModal = true"
+            @click="depositModal = { mount: true, show: true }"
             data-test="deposit-button"
           >
             <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
             Deposit
           </ButtonUI>
-          <ButtonUI
+
+          <div
             v-if="bankAddress"
-            variant="secondary"
-            class="flex items-center gap-2"
-            @click="transferModal = true"
-            data-test="transfer-button"
+            :class="{ tooltip: !isBankOwner }"
+            :data-tip="!isBankOwner ? 'Only the bank owner can transfer funds' : null"
           >
-            <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
-            Transfer
-          </ButtonUI>
+            <ButtonUI
+              variant="secondary"
+              class="flex items-center gap-2"
+              @click="transferModal = { mount: true, show: true }"
+              :disabled="!isBankOwner && !isBodAction"
+              data-test="transfer-button"
+            >
+              <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
+              Transfer
+            </ButtonUI>
+          </div>
         </div>
         <div class="flex items-center gap-2" v-if="bankAddress">
           <div class="text-sm text-gray-600">Contract Address:</div>
@@ -47,28 +58,44 @@
     </div>
 
     <!-- Deposit Modal -->
-    <ModalComponent v-model="depositModal" data-test="deposit-modal">
+    <ModalComponent
+      v-model="depositModal.show"
+      v-if="depositModal.mount"
+      data-test="deposit-modal"
+      @reset="() => (depositModal = { mount: false, show: false })"
+    >
       <DepositBankForm
-        v-if="depositModal"
-        @close-modal="() => (depositModal = false)"
+        @close-modal="() => (depositModal = { mount: false, show: false })"
         :bank-address="bankAddress"
       />
     </ModalComponent>
 
     <!-- Transfer Modal -->
-    <ModalComponent v-model="transferModal" data-test="transfer-modal">
+
+    <ModalComponent
+      v-model="transferModal.show"
+      v-if="transferModal.mount"
+      data-test="transfer-modal"
+      @reset="resetTransferValues"
+    >
       <TransferForm
-        v-if="transferModal"
         v-model="transferData"
-        :tokens="[
-          { symbol: NETWORK.currencySymbol, balance: balances.nativeToken.formatted || '0' },
-          { symbol: 'USDC', balance: balances.usdc.formatted || '0' }
-        ]"
-        :loading="transferLoading || isConfirmingTransfer"
-        service="Bank"
+        :tokens="tokens"
+        :loading="
+          transferLoading || isConfirmingTransfer || isLoadingAddAction || isConfirmingAddAction
+        "
         @transfer="handleTransfer"
-        @closeModal="() => (transferModal = false)"
-      />
+        @closeModal="resetTransferValues"
+        :is-bod-action="isBodAction"
+      >
+        <template #header>
+          <h1 class="font-bold text-2xl">Transfer from Bank Contract</h1>
+          <h3 class="pt-4">
+            Current contract balance: {{ transferData.token.balance }}
+            {{ transferData.token.symbol }}
+          </h3>
+        </template>
+      </TransferForm>
     </ModalComponent>
   </CardComponent>
 </template>
@@ -78,106 +105,219 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
-import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { computed, ref, watch } from 'vue'
-import { type Address, parseEther } from 'viem'
-import { useToastStore } from '@/stores/useToastStore'
+import { useStorage } from '@vueuse/core'
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useChainId,
+  useReadContract
+} from '@wagmi/vue'
+import { ref, watch, computed, type Ref } from 'vue'
+import { type Address, parseEther, encodeFunctionData, parseUnits, type Abi } from 'viem'
+import { useToastStore } from '@/stores'
+import { useUserDataStore } from '@/stores'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
-import TransferForm from '@/components/forms/TransferForm.vue'
-import { useCurrencyStore } from '@/stores/currencyStore'
-import BankABI from '@/artifacts/abi/bank.json'
+import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
+import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { Icon as IconifyIcon } from '@iconify/vue'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useBodContract } from '@/composables/bod/'
+import type { TokenOption } from '@/types'
+import { waitForTransactionReceipt } from '@wagmi/core'
+import { config } from '@/wagmi.config'
 
 const props = defineProps<{
   bankAddress: Address
 }>()
 
-const emit = defineEmits<{
-  (e: 'error'): void
-  (e: 'balance-updated'): void
-}>()
+// Add refs for modals and form data
+
+const chainId = useChainId()
+const queryClient = useQueryClient()
 
 const { addErrorToast, addSuccessToast } = useToastStore()
-const currencyStore = useCurrencyStore()
+
+const {
+  addAction,
+  useBodIsBodAction,
+  isLoading: isLoadingAddAction,
+  isConfirming: isConfirmingAddAction,
+  isActionAdded
+} = useBodContract()
+
+const { isBodAction } = useBodIsBodAction(props.bankAddress as Address, BANK_ABI as Abi)
+
+const userStore = useUserDataStore()
+const currency = useStorage('currency', {
+  code: 'USD',
+  name: 'US Dollar',
+  symbol: '$'
+})
+
+// get the current owner of the bank
+const { data: bankOwner } = useReadContract({
+  address: props.bankAddress,
+  abi: BANK_ABI,
+  functionName: 'owner'
+})
+
+// check if the current user is the bank owner
+const isBankOwner = computed(() => bankOwner.value === userStore.address)
 
 // Use the contract balance composable
-const { balances, isLoading, error, refetch } = useContractBalance(props.bankAddress)
+const { total, balances, isLoading } = useContractBalance(props.bankAddress)
 
 // Add refs for modals and form data
-const depositModal = ref(false)
-const transferModal = ref(false)
-const transferData = ref({
-  address: { name: '', address: '' },
-  token: { symbol: NETWORK.currencySymbol, balance: '0' },
-  amount: '0'
+const depositModal = ref({
+  mount: false,
+  show: false
+})
+
+const transferModal = ref({
+  mount: false,
+  show: false
 })
 
 // Contract interactions for transfer
 const {
   data: transferHash,
   isPending: transferLoading,
-  writeContract: transfer
+  writeContractAsync: transfer
 } = useWriteContract()
+
+const getTokens = (): TokenOption[] =>
+  balances.value
+    .map((b) => ({
+      symbol: b.token.symbol,
+      balance: b.amount,
+      tokenId: b.token.id,
+      price: b.values['USD'].price || 0,
+      name: b.token.name,
+      code: b.token.code
+    }))
+    .filter((b) => b.tokenId !== 'sher')
+
+const tokens = computed(() => getTokens())
+
+const initialTransferDataValue = (): TransferModel => {
+  return {
+    address: { name: '', address: '' },
+    token: tokens.value[0] ?? null,
+    amount: '0'
+  }
+}
+const transferData: Ref<TransferModel> = ref(initialTransferDataValue())
+
+const resetTransferValues = () => {
+  transferModal.value = { mount: false, show: false }
+  transferData.value = initialTransferDataValue()
+}
 
 const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
   hash: transferHash
 })
 
 const handleTransfer = async (data: {
-  address: { address: string }
+  address: { address: Address }
   token: { symbol: string }
   amount: string
 }) => {
   if (!props.bankAddress) return
-
   try {
-    if (data.token.symbol === NETWORK.currencySymbol) {
-      transfer({
-        address: props.bankAddress,
-        abi: BankABI,
-        functionName: 'transfer',
-        args: [data.address.address, parseEther(data.amount)]
+    const isNativeToken = data.token.symbol === NETWORK.currencySymbol
+    const transferAmount = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
+
+    if (isBodAction.value) {
+      const encodedData = isNativeToken
+        ? encodeFunctionData({
+            abi: BANK_ABI,
+            functionName: 'transfer',
+            args: [data.address.address, transferAmount]
+          })
+        : encodeFunctionData({
+            abi: BANK_ABI,
+            functionName: 'transferToken',
+            args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
+          })
+
+      const description = JSON.stringify({
+        text: `Transfer ${data.amount} ${data.token.symbol} to ${data.address.address}`,
+        title: 'Bank Transfer Request'
       })
-    } else if (data.token.symbol === 'USDC') {
-      const tokenAmount = BigInt(Number(data.amount) * 1e6)
-      transfer({
+
+      await addAction({
+        targetAddress: props.bankAddress,
+        description,
+        data: encodedData
+      })
+      return
+    }
+
+    // Direct transfer (non-BOD action)
+    if (isNativeToken) {
+      await transfer({
         address: props.bankAddress,
-        abi: BankABI,
+        abi: BANK_ABI,
+        functionName: 'transfer',
+        args: [data.address.address, transferAmount]
+      })
+    } else {
+      await transfer({
+        address: props.bankAddress,
+        abi: BANK_ABI,
         functionName: 'transferToken',
-        args: [USDC_ADDRESS as Address, data.address.address, tokenAmount]
+        args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
       })
     }
+    if (!transferHash.value) {
+      throw new Error('There is no receipt for this transaction')
+    }
+
+    await waitForTransactionReceipt(config, { hash: transferHash.value })
+
+    // Invalidate relevant queries
+    const queryKey = isNativeToken
+      ? ['balance', { address: props.bankAddress, chainId: chainId }]
+      : [
+          'readContract',
+          {
+            address: USDC_ADDRESS as Address,
+            args: [props.bankAddress],
+            chainId: chainId
+          }
+        ]
+
+    queryClient.invalidateQueries({ queryKey })
   } catch (error) {
-    console.error(error)
+    console.error('Transfer failed:', error)
     addErrorToast(`Failed to transfer ${data.token.symbol}`)
   }
 }
 
-// Computed properties
-const totalValueLocal = computed(() => {
-  const usdValue = Number(balances.totalValueUSD)
-  return (usdValue * (currencyStore.usdPriceInLocal || 0)).toFixed(2)
-})
-
-// Watch handlers
-watch([() => balances.nativeToken.formatted, () => balances.usdc.formatted], () => {
-  emit('balance-updated')
+watch(isActionAdded, (added) => {
+  if (added) {
+    addSuccessToast('Action added successfully, waiting for confirmation')
+    resetTransferValues()
+  }
 })
 
 watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
     addSuccessToast('Transferred successfully')
-    transferModal.value = false
-    refetch()
-  }
-})
+    resetTransferValues()
 
-// Expose methods and data for parent component
-defineExpose({
-  balances,
-  error,
-  refetch
+    //refresh bank owner data after a successful transfer
+    queryClient.invalidateQueries({
+      queryKey: [
+        'readContract',
+        {
+          address: props.bankAddress,
+          functionName: 'owner'
+        }
+      ]
+    })
+  }
 })
 </script>

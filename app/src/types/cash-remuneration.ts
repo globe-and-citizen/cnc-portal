@@ -1,5 +1,9 @@
 import type { Address } from 'viem'
 
+export type SupportedTokens = 'native' | 'usdc' | 'sher'
+
+export type RatePerHour = Array<{ type: SupportedTokens; amount: number }>
+
 export interface WageClaim {
   hoursWorked: number
   hourlyRate: number | bigint
@@ -20,8 +24,10 @@ export interface ClaimResponse {
     id: number
     teamId: number
     userAddress: string
+    ratePerHour: RatePerHour //Array<{ type: string; amount: number }>
     cashRatePerHour: number
     tokenRatePerHour: number
+    usdcRatePerHour: number
     maximumHoursPerWeek: number
     nextWageId: number | null
     createdAt: string // ISO date string
@@ -45,5 +51,65 @@ export interface ClaimResponse {
 export interface WageResponse {
   userAddress: Address
   maximumHoursPerWeek: number
+  ratePerHour?: Array<{ type: string; amount: number }>
   cashRatePerHour: number
+  tokenRatePerHour?: number
+  usdcRatePerHour?: number
+  sherRatePerHour?: number
 }
+
+export type CRSignClaim = Pick<
+  ClaimResponse,
+  'id' | 'status' | 'hoursWorked' | 'createdAt' | 'signature'
+> & {
+  wage: {
+    ratePerHour: RatePerHour
+    userAddress: Address
+  }
+}
+
+export type WeeklyClaimResponse = {
+  id: number
+  status: 'signed' | 'withdrawn' | 'pending'
+  weekStart: string
+  data: {
+    ownerAddress: Address
+  }
+  memberAddress: Address
+  teamId: 2
+  signature: null
+  wageId: 2
+  createdAt: string
+  updatedAt: string
+  wage: {
+    id: number
+    teamId: number
+    userAddress: Address
+    ratePerHour: RatePerHour
+    cashRatePerHour: number
+    tokenRatePerHour: number
+    usdcRatePerHour: number
+    maximumHoursPerWeek: number
+    nextWageId: number | null
+    createdAt: string
+    updatedAt: string
+  }
+  claims: {
+    id: number
+    status: 'pending' | 'signed' | 'withdrawn' | 'disabled'
+    hoursWorked: number
+    dayWorked: string
+    memo: string
+    signature: string | null
+    tokenTx: string | null
+    wageId: number
+    weeklyClaimId: number
+    createdAt: string
+    updatedAt: string
+  }[]
+  member: {
+    address: Address
+    name: string
+    imageUrl: string
+  }
+}[]

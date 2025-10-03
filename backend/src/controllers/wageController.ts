@@ -9,53 +9,35 @@ type wageBodyRequest = Pick<
   Wage,
   | "teamId"
   | "userAddress"
-  | "cashRatePerHour"
-  | "tokenRatePerHour"
+  // | "cashRatePerHour"
+  // | "tokenRatePerHour"
   | "maximumHoursPerWeek"
->;
+  | "ratePerHour"
+  // | "usdcRatePerHour"
+> & {
+  ratePerHour: Array<{
+    type: string;
+    amount: number;
+  }>
+};
 export const setWage = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
 
   const body = req.body as wageBodyRequest;
   const teamId = Number(body.teamId);
   const userAddress = body.userAddress as Address;
-  const cashRatePerHour = Number(body.cashRatePerHour);
-  const tokenRatePerHour = Number(body.tokenRatePerHour);
+  // const cashRatePerHour = Number(body.cashRatePerHour);
+  // const tokenRatePerHour = Number(body.tokenRatePerHour);
   const maximumHoursPerWeek = Number(body.maximumHoursPerWeek);
+  // const usdcRatePerHour = Number(body.usdcRatePerHour);
+  let ratePerHour = body.ratePerHour;
 
-  // Validating the wage data
-  // Checking required data
+  console.log("setWage called with body: ", body);
 
-  let missingParameters = [];
-  if (isNaN(teamId)) missingParameters.push("teamId");
-  if (!userAddress) missingParameters.push("userAddress");
-  if (isNaN(cashRatePerHour)) missingParameters.push("cashRatePerHour");
-  if (isNaN(tokenRatePerHour)) missingParameters.push("tokenRatePerHour");
-  if (isNaN(maximumHoursPerWeek)) missingParameters.push("maximumHoursPerWeek");
-
-  // Checking if the parameters are empty
-  if (missingParameters.length > 0) {
-    return errorResponse(
-      400,
-      `Missing or invalid parameters: ${missingParameters.join(", ")}`,
-      res
-    );
-  }
-
-  // Checking if maximumHoursPerWeek is a number, is an integer and is greater than 0
-  let errors = [];
-
-  if (!Number.isInteger(maximumHoursPerWeek) || maximumHoursPerWeek <= 0) {
-    errors.push("Invalid maximumHoursPerWeek");
-  }
-
-  if (cashRatePerHour <= 0) {
-    errors.push("Invalid cashRatePerHour");
-  }
-
-  if (errors.length > 0) {
-    return errorResponse(400, `Errors: ${errors.join(", ")}`, res);
-  }
+  ratePerHour = ratePerHour?.map((rate) => ({
+    type: rate.type,
+    amount: Number(rate.amount),
+  }));
 
   try {
     // Check if the caller is the owner of the team
@@ -78,9 +60,11 @@ export const setWage = async (req: Request, res: Response) => {
         data: {
           teamId: Number(teamId),
           userAddress,
-          cashRatePerHour,
-          tokenRatePerHour,
+          // cashRatePerHour,
+          // tokenRatePerHour,
           maximumHoursPerWeek,
+          // usdcRatePerHour,
+          ratePerHour,
           previousWage: {
             connect: {
               id: wage.id,
@@ -109,9 +93,11 @@ export const setWage = async (req: Request, res: Response) => {
         data: {
           teamId: Number(teamId),
           userAddress,
-          cashRatePerHour,
-          tokenRatePerHour,
+          // cashRatePerHour,
+          // tokenRatePerHour,
           maximumHoursPerWeek,
+          // usdcRatePerHour
+          ratePerHour
         },
       });
       res.status(201).json(createdWage);
@@ -119,8 +105,6 @@ export const setWage = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 // /wage/?teamId=teamId
@@ -155,8 +139,6 @@ export const getWages = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 

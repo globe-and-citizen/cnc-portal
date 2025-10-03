@@ -1,8 +1,10 @@
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores/useToastStore'
+import type { ContractType } from '@/types'
 import type { Team } from '@/types/team'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
+import type { Address } from 'viem'
 import { computed, onMounted, ref, watch } from 'vue'
 
 export const useTeamStore = defineStore('team', () => {
@@ -70,6 +72,10 @@ export const useTeamStore = defineStore('team', () => {
     return currentTeamId.value ? teamsFetched.value.get(String(currentTeamId.value)) : undefined
   })
 
+  const getContractAddressByType = (type: ContractType): Address | undefined => {
+    return currentTeam.value?.teamContracts.find((contract) => contract.type === type)?.address
+  }
+
   watch(teams, (newTeamsVal) => {
     // set the current team id to the first team id if not already set and teams is not empty
     if (!currentTeamId.value && newTeamsVal.length > 0) {
@@ -123,6 +129,7 @@ export const useTeamStore = defineStore('team', () => {
       team,
       statusCode,
       executeFetchTeam
-    }
+    },
+    getContractAddressByType
   }
 })

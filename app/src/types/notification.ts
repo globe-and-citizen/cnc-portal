@@ -1,3 +1,5 @@
+import type { Address } from 'viem'
+
 export interface Notification {
   id: number
   subject: string | null
@@ -12,4 +14,12 @@ export interface Notification {
 export interface NotificationResponse {
   data: Notification[]
   success: boolean
+}
+
+export interface BulkNotificationPayload {
+  userIds: Address[]
+  message: string
+  subject: string
+  author: string
+  resource: string
 }

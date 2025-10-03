@@ -17,10 +17,9 @@ services:
       context: ./app
       dockerfile: Dockerfile
       target: production
-      args:
-        VITE_APP_BACKEND_URL: "https://api.cncportal.io"
-        VITE_APP_NETWORK_ALIAS: polygon
-        VITE_APP_SUBGRAPH_ENDPOINT: https://api.studio.thegraph.com/query/110443/cnc-prod/version/latest
+    # Build args will be picked up from .env.production if present
+    env_file:
+      - ./app/.env.production
     ports:
       - "80:80" # Adjust port as needed
     volumes:
@@ -30,6 +29,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: production
+    env_file:
+      - ./backend/.env.production
     ports:
       - "3000:3000" # Adjust port as needed
     volumes:
@@ -37,12 +38,6 @@ services:
       - /app/node_modules
     depends_on:
       - db
-    environment:
-      DATABASE_URL: postgres://postgres:newpassword@db:5432/cnc-db
-      PORT: 3000
-      FRONTEND_URL: http://localhost
-      NODE_ENV: prod
-      SECRET_KEY: "secret-key"
   coverage:
     build:
       context: .
