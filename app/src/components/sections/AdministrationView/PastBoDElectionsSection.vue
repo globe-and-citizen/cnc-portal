@@ -7,10 +7,10 @@
     <!-- <div v-else-if="elections.length === 0" class="flex w-full h-96 justify-center items-center">
       <div class="text-gray-500">No past elections available</div>
     </div> -->
-    <PastBoDElection404 v-else-if="elections.length === 0" :is-loading="isLoading" />
+    <PastBoDElection404 v-else-if="pastElections?.length === 0" :is-loading="isLoading" />
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
       <PastBoDElectionCard
-        v-for="(election, index) in elections"
+        v-for="(election, index) in pastElections"
         :key="index"
         :election="election"
       />
@@ -34,7 +34,6 @@ const teamStore = useTeamStore()
 
 // Get the Elections contract address from the team store
 const electionsAddress = computed(() => teamStore.getContractAddressByType('Elections'))
-
 const fetchElections = async (): Promise<Election[]> => {
   if (!electionsAddress.value) return []
 
@@ -101,6 +100,4 @@ const {
   queryFn: fetchElections,
   enabled: computed(() => !!electionsAddress.value)
 })
-
-const elections = computed(() => pastElections.value ?? [])
 </script>
