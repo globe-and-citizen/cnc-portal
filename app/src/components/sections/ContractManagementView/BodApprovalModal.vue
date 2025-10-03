@@ -13,14 +13,8 @@
       </div>
     </div>
 
-    <BodApprovalDetails
-      v-if="
-        row.title.trim() === 'Pay Dividends Request' || row.title.trim() === 'Bank Transfer Request'
-      "
-      :row="row"
-      :type="row.title"
-    />
-    <p v-else class="text-gray-400 font-semibold">{{ row.description }}</p>
+    <BodApprovalDetails :row="row" :type="row.title" />
+    <!-- <p v-else class="text-gray-400 font-semibold">{{ row.description }}</p> -->
   </div>
 
   <!-- Approval Progress -->
