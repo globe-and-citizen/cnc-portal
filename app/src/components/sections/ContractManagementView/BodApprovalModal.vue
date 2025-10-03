@@ -91,7 +91,6 @@ import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import type { Abi, Address } from 'viem'
 import ToolTip from '@/components/ToolTip.vue'
-import { getUser } from '@/utils'
 import BodApprovalDetails from './BodApprovalDetails.vue'
 
 const props = defineProps<{ row: TableRow; loading: boolean }>()
