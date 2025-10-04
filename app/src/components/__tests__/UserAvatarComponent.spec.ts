@@ -89,4 +89,18 @@ describe('UserAvatarComponent.vue', () => {
       expect(userRole.exists()).toBe(false)
     })
   })
+
+  describe('Accessibility', () => {
+    it('should have proper aria attributes', () => {
+      const wrapper = mount(UserAvatarComponent, {
+        props: { user: mockUser }
+      })
+
+      const roleButton = wrapper.find('[role="button"]')
+      expect(roleButton.exists()).toBe(true)
+
+      const avatarImg = wrapper.find('img')
+      expect(avatarImg.attributes('alt')).toBe('User Avatar')
+    })
+  })
 })
