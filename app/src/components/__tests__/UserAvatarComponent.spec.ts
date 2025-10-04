@@ -40,4 +40,53 @@ describe('UserAvatarComponent.vue', () => {
       expect(userName.text()).toBe('User')
     })
   })
+
+  describe('isCollapsed prop', () => {
+    it('should hide user info when collapsed', () => {
+      const wrapper = mount(UserAvatarComponent, {
+        props: { user: mockUser, isCollapsed: true }
+      })
+
+      const userInfoContainer = wrapper.find('.flex-1.text-gray-800')
+      expect(userInfoContainer.exists()).toBe(false)
+    })
+
+    it('should show user info when not collapsed', () => {
+      const wrapper = mount(UserAvatarComponent, {
+        props: { user: mockUser, isCollapsed: false }
+      })
+
+      const userInfoContainer = wrapper.find('.flex-1.text-gray-800')
+      expect(userInfoContainer.exists()).toBe(true)
+    })
+  })
+
+  describe('isDetailedView prop', () => {
+    it('should show larger avatar and role in detailed view', () => {
+      const wrapper = mount(UserAvatarComponent, {
+        props: { user: mockUser, isDetailedView: true }
+      })
+
+      const avatarContainer = wrapper.find('.relative.rounded-full')
+      expect(avatarContainer.classes()).toContain('w-24')
+      expect(avatarContainer.classes()).toContain('h-24')
+
+      const userRole = wrapper.find('[data-test="user-role"]')
+      expect(userRole.exists()).toBe(true)
+      expect(userRole.text()).toBe('Developer')
+    })
+
+    it('should show smaller avatar and no role when not in detailed view', () => {
+      const wrapper = mount(UserAvatarComponent, {
+        props: { user: mockUser, isDetailedView: false }
+      })
+
+      const avatarContainer = wrapper.find('.relative.rounded-full')
+      expect(avatarContainer.classes()).toContain('w-11')
+      expect(avatarContainer.classes()).toContain('h-11')
+
+      const userRole = wrapper.find('[data-test="user-role"]')
+      expect(userRole.exists()).toBe(false)
+    })
+  })
 })
