@@ -28,7 +28,6 @@ import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json
 import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import FACTORY_BEACON_ABI from '@/artifacts/abi/factory-beacon.json'
 import ElectionsABI from '@/artifacts/abi/elections.json'
-import { DIVIDEND_SPLITTER_ABI } from '@/artifacts/abi/dividend-splitter'
 
 import {
   BANK_BEACON_ADDRESS,
@@ -43,8 +42,7 @@ import {
   USDT_ADDRESS,
   validateAddresses,
   // VOTING_BEACON_ADDRESS,
-  ELECTIONS_BEACON_ADDRESS,
-  DIVIDEND_SPLITTER_BEACON_ADDRESS
+  ELECTIONS_BEACON_ADDRESS
 } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -62,7 +60,7 @@ const props = withDefaults(
   }
 )
 const emits = defineEmits(['contractDeployed'])
-const splitterCreated = ref(false)
+
 // Store
 const userDataStore = useUserDataStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
@@ -107,6 +105,10 @@ const deployOfficerContract = async () => {
 
     const beaconConfigs = [
       {
+        beaconType: 'InvestorsV1',
+        beaconAddress: INVESTOR_V1_BEACON_ADDRESS
+      },
+      {
         beaconType: 'Bank',
         beaconAddress: BANK_BEACON_ADDRESS
       },
@@ -131,29 +133,12 @@ const deployOfficerContract = async () => {
         beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS
       },
       {
-        beaconType: 'InvestorsV1',
-        beaconAddress: INVESTOR_V1_BEACON_ADDRESS
-      },
-      {
-        beaconType: 'DividendSplitter',
-        beaconAddress: DIVIDEND_SPLITTER_BEACON_ADDRESS
-      },
-      {
         beaconType: 'Elections',
         beaconAddress: ELECTIONS_BEACON_ADDRESS
       }
     ]
     const deployments = []
 
-    // Bank contract
-    deployments.push({
-      contractType: 'Bank',
-      initializerData: encodeFunctionData({
-        abi: BankABI,
-        functionName: 'initialize',
-        args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentUserAddress]
-      })
-    })
     deployments.push({
       contractType: 'InvestorsV1',
       initializerData: encodeFunctionData({
@@ -166,12 +151,14 @@ const deployOfficerContract = async () => {
         ]
       })
     })
+
+    // Bank contract
     deployments.push({
-      contractType: 'DividendSplitter',
+      contractType: 'Bank',
       initializerData: encodeFunctionData({
-        abi: DIVIDEND_SPLITTER_ABI,
+        abi: BankABI,
         functionName: 'initialize',
-        args: [currentUserAddress]
+        args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentUserAddress, currentUserAddress]
       })
     })
 
@@ -252,7 +239,7 @@ const deployOfficerContract = async () => {
   } finally {
     dynamicLoading.value = {
       ...dynamicLoading.value,
-      message: 'Officer Contract Ready for deployement'
+      message: 'Officer Contract Ready for deployment'
     }
   }
 }

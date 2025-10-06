@@ -7,7 +7,6 @@ import investorsV1BeaconModule from './InvestorsV1BeaconModule'
 import CashRemunerationEIP712Module from './CashRemunerationEIP712Module'
 import proposalBeaconModule from './ProposalModule'
 import electionsBeaconModule from './ElectionsModule'
-import DividendSplitterBeaconModule from './DividendSplitterBeaconModule'
 
 export default buildModule('Officer', (m) => {
   const beaconAdmin = m.getAccount(0)
@@ -20,7 +19,6 @@ export default buildModule('Officer', (m) => {
   const { expenseAccountFactoryBeacon } = m.useModule(ExpenseAccountModule)
   const { expenseAccountEip712FactoryBeacon } = m.useModule(ExpenseAccountEIP712Module)
   const { cashRemunerationEip712FactoryBeacon } = m.useModule(CashRemunerationEIP712Module)
-  const { beacon: dividendSplitterBeacon } = m.useModule(DividendSplitterBeaconModule)
 
   const beaconConfigs = [
     { beaconType: 'Bank', beaconAddress: bankBeacon },
@@ -30,8 +28,7 @@ export default buildModule('Officer', (m) => {
     { beaconType: 'ExpenseAccount', beaconAddress: expenseAccountFactoryBeacon },
     { beaconType: 'ExpenseAccountEIP712', beaconAddress: expenseAccountEip712FactoryBeacon },
     { beaconType: 'InvestorsV1', beaconAddress: investorsV1Beacon },
-    { beaconType: 'CashRemunerationEIP712', beaconAddress: cashRemunerationEip712FactoryBeacon },
-    { beaconType: 'DividendSplitter', beaconAddress: dividendSplitterBeacon }
+    { beaconType: 'CashRemunerationEIP712', beaconAddress: cashRemunerationEip712FactoryBeacon }
   ]
 
   m.call(officer, 'initialize', [beaconAdmin, beaconConfigs, [], false])

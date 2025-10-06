@@ -41,8 +41,6 @@ interface AddressMapping {
   'MockTokens#USDC'?: string
   'ElectionsBeaconModule#Elections'?: string
   'ElectionsBeaconModule#Beacon'?: string
-  'DividendSplitterBeaconModule#DividendSplitter'?: string
-  'DividendSplitterBeaconModule#Beacon'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -121,9 +119,7 @@ export function validateAddresses() {
     'InvestorsV1BeaconModule#Beacon',
     'InvestorsV1BeaconModule#InvestorV1',
     'CashRemunerationEIP712Module#FactoryBeacon',
-    'CashRemunerationEIP712Module#CashRemunerationEIP712',
-    'DividendSplitterBeaconModule#Beacon',
-    'DividendSplitterBeaconModule#DividendSplitter'
+    'CashRemunerationEIP712Module#CashRemunerationEIP712'
   ]
 
   requiredKeys.forEach(resolveAddress)
@@ -148,12 +144,7 @@ export const BANK_BEACON_ADDRESS = resolveAddress('BankBeaconModule#Beacon')
 export const BANK_IMPL_ADDRESS = resolveAddress('BankBeaconModule#Bank')
 // export const VOTING_BEACON_ADDRESS = resolveAddress('VotingBeaconModule#Beacon')
 // export const VOTING_IMPL_ADDRESS = resolveAddress('VotingBeaconModule#Voting')
-export const DIVIDEND_SPLITTER_BEACON_ADDRESS = resolveAddress(
-  'DividendSplitterBeaconModule#Beacon'
-)
-export const DIVIDEND_SPLITTER_IMPL_ADDRESS = resolveAddress(
-  'DividendSplitterBeaconModule#DividendSplitter'
-)
+
 export const ELECTIONS_BEACON_ADDRESS = resolveAddress('ElectionsBeaconModule#Beacon')
 export const ELECTIONS_IMPL_ADDRESS = resolveAddress('ElectionsBeaconModule#Elections')
 export const PROPOSALS_BEACON_ADDRESS = resolveAddress('ProposalBeaconModule#Beacon')

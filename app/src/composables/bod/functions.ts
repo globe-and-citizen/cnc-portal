@@ -28,6 +28,7 @@ export function useBodWritesFunctions() {
   const isActionAdded = ref(false)
   const isActionApproved = ref(false)
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
+  const isLoadingBankAction = computed(() => writes.isLoading)
 
   const { execute: executeSaveAction } = useCustomFetch('actions/', {
     immediate: false
@@ -187,6 +188,7 @@ export function useBodWritesFunctions() {
     // Reactive properties
     isLoadingApproveAction,
     isActionApproved,
-    isActionAdded
+    isActionAdded,
+    isLoadingBankAction
   }
 }

@@ -11,7 +11,6 @@ export type ContractType =
   | 'Elections'
   | 'Proposals'
   | 'VestingV1'
-  | 'DividendSplitter'
 export interface TeamContract {
   address: Address
   type: ContractType

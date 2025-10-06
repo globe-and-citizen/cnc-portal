@@ -3,6 +3,8 @@ import { useToastStore } from '@/stores'
 import { useBankWrites } from './writes'
 import { BANK_FUNCTION_NAMES } from './types'
 import { useValidation, amountToWei } from './utils'
+import { computed, unref } from 'vue'
+
 /**
  * Bank contract write functions - combines admin, transfers, and tipping
  *
@@ -18,6 +20,17 @@ export function useBankWritesFunctions() {
   const writes = useBankWrites()
   const { validateAmount, validateAddress, validateTipParams } = useValidation()
   const { addErrorToast } = useToastStore()
+
+  const bankFunctionName =
+    'value' in writes.currentFunctionName
+      ? writes.currentFunctionName
+      : computed(() => unref(writes.currentFunctionName))
+
+  const isBankLoading =
+    'value' in writes.isLoading ? writes.isLoading : computed(() => unref(writes.isLoading))
+
+  const isBankConfirmed =
+    'value' in writes.isConfirmed ? writes.isConfirmed : computed(() => unref(writes.isConfirmed))
 
   // Admin functions
   const pauseContract = () => writes.executeWrite(BANK_FUNCTION_NAMES.PAUSE)
@@ -108,6 +121,21 @@ export function useBankWritesFunctions() {
     ])
   }
 
+  const depositDividends = (amount: string) => {
+    //if (!validateAmount(amount)) return
+    // const amountInWei = amountToWei(amount)
+    return writes.executeWrite(BANK_FUNCTION_NAMES.DEPOSIT_DIVIDENDS, [amount])
+  }
+
+  const claimDividend = () => {
+    return writes.executeWrite(BANK_FUNCTION_NAMES.CLAIM_DIVIDEND)
+  }
+
+  const setInvestorAddress = (investorAddress: Address) => {
+    if (!validateAddress(investorAddress, 'investor address')) return
+    return writes.executeWrite(BANK_FUNCTION_NAMES.SET_INVESTOR_ADDRESS, [investorAddress])
+  }
+
   return {
     // Write state
     ...writes,
@@ -126,6 +154,12 @@ export function useBankWritesFunctions() {
     sendEthTip,
     sendTokenTip,
     pushEthTip,
-    pushTokenTip
+    pushTokenTip,
+    depositDividends,
+    claimDividend,
+    setInvestorAddress,
+    bankFunctionName,
+    isBankLoading,
+    isBankConfirmed
   }
 }

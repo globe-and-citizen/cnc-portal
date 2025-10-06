@@ -27,7 +27,13 @@ export const BANK_FUNCTION_NAMES = {
   SEND_TOKEN_TIP: 'sendTokenTip',
   PUSH_TIP: 'pushTip',
   PUSH_TOKEN_TIP: 'pushTokenTip',
-  INITIALIZE: 'initialize'
+  INITIALIZE: 'initialize',
+  DEPOSIT_DIVIDENDS: 'depositDividends',
+  CLAIM_DIVIDEND: 'claimDividend',
+  SET_INVESTOR_ADDRESS: 'setInvestorAddress',
+  DIVIDEND_BALANCES: 'dividendBalances',
+  TOTAL_DIVIDEND: 'totalDividend',
+  UNLOCK_BALANCE: 'unlockBalance'
 } as const
 
 /**
