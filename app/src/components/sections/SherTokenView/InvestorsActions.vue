@@ -127,6 +127,8 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 
 import { useBodContract } from '@/composables/bod/'
 import { useBankContract } from '@/composables/bank'
+import { tokenSymbol as tokenSymbolUtils } from '@/utils'
+import { zeroAddress } from 'viem'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
@@ -189,7 +191,7 @@ const executePayDividends = async (value: bigint) => {
       args: [value]
     })
     const description = JSON.stringify({
-      text: `Pay dividends of ${formatUnits(value, 18)} `,
+      text: `Pay dividends of ${formatUnits(value, 18)} ${tokenSymbolUtils(zeroAddress)} `,
       title: `Pay Dividends Request`
     })
 
