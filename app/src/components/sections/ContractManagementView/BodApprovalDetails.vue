@@ -26,7 +26,9 @@
         :user="
           getUser(
             row.description.split(' ')[type === 'Bank Transfer Request' ? 4 : 5].trim(),
-            teamStore.currentTeam?.members || []
+            teamStore.currentTeam?.members || [],
+            '',
+            teamStore.currentTeam?.teamContracts || []
           )
         "
       />
