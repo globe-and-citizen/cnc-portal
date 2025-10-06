@@ -144,6 +144,7 @@ export const BANK_BEACON_ADDRESS = resolveAddress('BankBeaconModule#Beacon')
 export const BANK_IMPL_ADDRESS = resolveAddress('BankBeaconModule#Bank')
 // export const VOTING_BEACON_ADDRESS = resolveAddress('VotingBeaconModule#Beacon')
 // export const VOTING_IMPL_ADDRESS = resolveAddress('VotingBeaconModule#Voting')
+
 export const ELECTIONS_BEACON_ADDRESS = resolveAddress('ElectionsBeaconModule#Beacon')
 export const ELECTIONS_IMPL_ADDRESS = resolveAddress('ElectionsBeaconModule#Elections')
 export const PROPOSALS_BEACON_ADDRESS = resolveAddress('ProposalBeaconModule#Beacon')

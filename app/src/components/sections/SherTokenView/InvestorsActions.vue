@@ -64,6 +64,7 @@
           </div>
         </div>
       </div>
+
       <ModalComponent
         v-model="mintModal.show"
         v-if="mintModal.mount"
@@ -93,8 +94,7 @@
         <PayDividendsForm
           v-if="payDividendsModal && teamStore.currentTeam"
           :loading="
-            payDividendsLoading ||
-            isConfirmingPayDividends ||
+            (isBankLoading && bankFunctionName === 'depositDividends') ||
             isLoadingAddAction ||
             isConfirmingAddAction
           "
@@ -115,18 +115,22 @@ import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { log } from '@/utils'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { type Address, encodeFunctionData, formatUnits, type Abi } from 'viem'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
+
 import BANK_ABI from '@/artifacts/abi/bank.json'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 
 import { useBodContract } from '@/composables/bod/'
+import { useBankContract } from '@/composables/bank'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
+
+const { depositDividends, bankFunctionName, isBankLoading, isConfirmed } = useBankContract()
 
 const {
   addAction,
@@ -140,6 +144,7 @@ const mintModal = ref({
   mount: false,
   show: false
 })
+
 const distributeMintModal = ref(false)
 const payDividendsModal = ref({
   mount: false,
@@ -176,27 +181,15 @@ const { isLoading: isConfirmingDistributeMint, isSuccess: isSuccessDistributingM
     hash: distributeMintHash
   })
 
-const {
-  data: payDividendsHash,
-  writeContract: payDividends,
-  isPending: payDividendsLoading,
-  error: payDividendsError
-} = useWriteContract()
-
-const { isLoading: isConfirmingPayDividends, isSuccess: isSuccessPayDividends } =
-  useWaitForTransactionReceipt({
-    hash: payDividendsHash
-  })
-
 const executePayDividends = async (value: bigint) => {
   if (isBodAction.value) {
     const data = encodeFunctionData({
       abi: BANK_ABI,
-      functionName: 'transfer',
-      args: [investorsAddress, value]
+      functionName: 'depositDividends',
+      args: [value]
     })
     const description = JSON.stringify({
-      text: `Pay dividends of ${formatUnits(value, 18)} to ${investorsAddress}`,
+      text: `Pay dividends of ${formatUnits(value, 18)} `,
       title: `Pay Dividends Request`
     })
 
@@ -206,14 +199,28 @@ const executePayDividends = async (value: bigint) => {
       data
     })
   } else {
-    payDividends({
-      abi: BANK_ABI,
-      address: bankAddress as Address,
-      functionName: 'transfer',
-      args: [investorsAddress, value]
-    })
+    await depositDividends(value.toString())
   }
 }
+
+const useTotalDividend = () =>
+  useReadContract({
+    address: bankAddress,
+    abi: BANK_ABI,
+    functionName: 'totalDividend',
+    query: { enabled: computed(() => !!bankAddress) }
+  })
+
+const { data: totalDividend } = useTotalDividend()
+
+watch(
+  [totalDividend, bankAddress, shareholders],
+  ([newTotalDividend, newBankAddress, newShareholders]) => {
+    if (newTotalDividend && newBankAddress && newShareholders) {
+      console.log('Total dividend:', newTotalDividend)
+    }
+  }
+)
 const executeDistributeMint = (
   shareholders: ReadonlyArray<{
     readonly shareholder: Address
@@ -259,13 +266,6 @@ watch(distributeMintError, () => {
   }
 })
 
-watch(payDividendsError, () => {
-  if (payDividendsError.value) {
-    log.error('Failed to pay dividends', payDividendsError.value)
-    addErrorToast('Failed to pay dividends')
-  }
-})
-
 watch(isConfirmingDistributeMint, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isSuccessDistributingMint.value) {
     emits('refetchShareholders')
@@ -274,9 +274,8 @@ watch(isConfirmingDistributeMint, (isConfirming, wasConfirming) => {
   }
 })
 
-watch(isConfirmingPayDividends, (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isSuccessPayDividends.value) {
-    addSuccessToast('Paid dividends successfully')
+watch([isConfirmed, bankFunctionName], ([newIsConfirmed, newBankFunctionName]) => {
+  if (newIsConfirmed && newBankFunctionName === 'depositDividends') {
     payDividendsModal.value = { mount: false, show: false }
   }
 })

@@ -60,6 +60,7 @@ const props = withDefaults(
   }
 )
 const emits = defineEmits(['contractDeployed'])
+
 // Store
 const userDataStore = useUserDataStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
@@ -71,6 +72,7 @@ const dynamicLoading = ref({
 })
 
 // Officer contract creation
+// Create officer contract hooks
 const {
   isPending: officerContractCreating,
   data: createOfficerHash,
@@ -83,6 +85,7 @@ const { isLoading: isConfirmingCreateOfficer, isSuccess: isConfirmedCreateOffice
     hash: createOfficerHash
   })
 
+// Combined loading state
 const createOfficerLoading = computed(
   () => officerContractCreating.value || isConfirmingCreateOfficer.value || loading.value
 )
@@ -101,6 +104,10 @@ const deployOfficerContract = async () => {
     }
 
     const beaconConfigs = [
+      {
+        beaconType: 'InvestorsV1',
+        beaconAddress: INVESTOR_V1_BEACON_ADDRESS
+      },
       {
         beaconType: 'Bank',
         beaconAddress: BANK_BEACON_ADDRESS
@@ -126,25 +133,12 @@ const deployOfficerContract = async () => {
         beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS
       },
       {
-        beaconType: 'InvestorsV1',
-        beaconAddress: INVESTOR_V1_BEACON_ADDRESS
-      },
-      {
         beaconType: 'Elections',
         beaconAddress: ELECTIONS_BEACON_ADDRESS
       }
     ]
     const deployments = []
 
-    // Bank contract
-    deployments.push({
-      contractType: 'Bank',
-      initializerData: encodeFunctionData({
-        abi: BankABI,
-        functionName: 'initialize',
-        args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentUserAddress]
-      })
-    })
     deployments.push({
       contractType: 'InvestorsV1',
       initializerData: encodeFunctionData({
@@ -155,6 +149,16 @@ const deployOfficerContract = async () => {
           props.investorContractInput.symbol,
           currentUserAddress
         ]
+      })
+    })
+
+    // Bank contract
+    deployments.push({
+      contractType: 'Bank',
+      initializerData: encodeFunctionData({
+        abi: BankABI,
+        functionName: 'initialize',
+        args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentUserAddress, currentUserAddress]
       })
     })
 
@@ -235,7 +239,7 @@ const deployOfficerContract = async () => {
   } finally {
     dynamicLoading.value = {
       ...dynamicLoading.value,
-      message: 'Officer Contract Ready for deployement'
+      message: 'Officer Contract Ready for deployment'
     }
   }
 }
