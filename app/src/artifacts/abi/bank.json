@@ -117,6 +117,12 @@
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "investorAddress",
+        "type": "address"
       }
     ],
     "name": "DividendDeposited",
@@ -473,6 +479,11 @@
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_investorAddress",
+        "type": "address"
       }
     ],
     "name": "depositDividends",
@@ -538,29 +549,11 @@
         "internalType": "address",
         "name": "_sender",
         "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_investorAddress",
-        "type": "address"
       }
     ],
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "investorAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -700,19 +693,6 @@
       }
     ],
     "name": "sendTokenTip",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_investorAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setInvestorAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

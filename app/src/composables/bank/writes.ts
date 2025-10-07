@@ -1,7 +1,8 @@
 import { computed, unref, type MaybeRef } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useAccount } from '@wagmi/vue'
-import { useTeamStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
+
 import { BANK_FUNCTION_NAMES, type BankFunctionName, isValidBankFunction } from './types'
 
 import {
@@ -20,6 +21,7 @@ export function useBankWrites() {
   const queryClient = useQueryClient()
   const { chainId } = useAccount()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+  const userDataStore = useUserDataStore()
 
   // Use the generic contract writes composable
   const baseWrites = useContractWrites({
@@ -89,6 +91,22 @@ export function useBankWrites() {
         })
         break
 
+      case BANK_FUNCTION_NAMES.DEPOSIT_DIVIDENDS:
+        const userAddr = userDataStore.address as `0x${string}` | undefined
+        if (userAddr) {
+          // precise: only the current wallet’s dividend balance
+          await queryClient.invalidateQueries({
+            queryKey: [
+              'readContract',
+              {
+                ...bankQueryKey, // { address: bankAddress.value, chainId: chainId.value }
+                functionName: 'dividendBalances',
+                args: [userAddr] as const // mapping key
+              }
+            ]
+          })
+        }
+        break
       case BANK_FUNCTION_NAMES.CHANGE_TOKEN_ADDRESS:
         // Invalidate all token-related queries
         await queryClient.invalidateQueries({
@@ -130,7 +148,6 @@ export function useBankWrites() {
           ]
         })
         break
-
       default:
         // For any other function, invalidate all bank-related queries
         await queryClient.invalidateQueries({

@@ -21,7 +21,6 @@ interface IInvestorView {
 contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   
   address public tipsAddress;
-  address public investorAddress;
   mapping(string => address) public supportedTokens;
   mapping(address => uint256) public dividendBalances; // dividend balance per account
   uint256 public totalDividend; //locked balance only spendable by investors shareholders
@@ -45,7 +44,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   event PushTip(address indexed addressWhoPushes, address[] teamMembers, uint256 totalAmount);
   event SendTokenTip(address indexed addressWhoSends, address[] teamMembers, address indexed token, uint256 totalAmount);
   event PushTokenTip(address indexed addressWhoPushes, address[] teamMembers, address indexed token, uint256 totalAmount);
-  event DividendDeposited( address indexed account, uint256 amount);
+  event DividendDeposited( address indexed account, uint256 amount, address indexed investorAddress);
   event DividendCredited(address indexed account, uint256 amount);
   event DividendClaimed(address indexed account, uint256 amount);
 
@@ -54,8 +53,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     address _tipsAddress,
     address _usdtAddress,
     address _usdcAddress,
-    address _sender,
-    address _investorAddress
+    address _sender
   ) public initializer {
 
     __Ownable_init(_sender);
@@ -64,7 +62,6 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     tipsAddress = _tipsAddress;
     supportedTokens["USDT"] = _usdtAddress;
     supportedTokens["USDC"] = _usdcAddress;
-    investorAddress = _investorAddress;
   }
 
   function unlockBalance() public view returns (uint256) {
@@ -187,20 +184,17 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     emit SendTokenTip(msg.sender, _addresses, _token, _amount);
   }
   
-  function setInvestorAddress(address _investorAddress) external onlyOwner {
-      require(_investorAddress != address(0), "investor address invalid");
-      investorAddress = _investorAddress;
+
+  function depositDividends(uint256 amount, address _investorAddress) external payable onlyOwner whenNotPaused nonReentrant UsesUnlockedBalance(amount) {
+    require(amount <= (address(this).balance-totalDividend), "insufficient balance in the bank");
+    require(_investorAddress != address(0), "investor address invalid");
+    
+    allocateDividends(amount, _investorAddress);
+    emit DividendDeposited(msg.sender, amount, _investorAddress);
   }
 
-  function depositDividends(uint256 amount) external payable onlyOwner whenNotPaused nonReentrant UsesUnlockedBalance(amount) {
-    require(amount<=(address(this).balance-totalDividend), "insufficient balance in the bank ");
-    require(investorAddress != address(0), "investor not set");
-    allocateDividends(amount); // updates dividendBalances and totalDividend
-    emit DividendDeposited(msg.sender, amount);
-  }
-
-  function allocateDividends( uint256 amount) internal whenNotPaused {
-        IInvestorView inv = IInvestorView(investorAddress);
+  function allocateDividends( uint256 amount, address _investorAddress ) internal whenNotPaused {
+        IInvestorView inv = IInvestorView(_investorAddress);
         IInvestorView.Shareholder[] memory holders = inv.getShareholders();
         uint256 supply = inv.totalSupply();
 

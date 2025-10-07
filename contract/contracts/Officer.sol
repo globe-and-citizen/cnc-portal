@@ -16,18 +16,6 @@ interface IElections {
 interface IProposal {
     function setBoardOfDirectorsContractAddress(address _bodAddress) external;
 }
-
-interface IBank{
-  function initialize(
-    address _tipsAddress,
-    address _usdtAddress,
-    address _usdcAddress,
-    address _sender,
-    address _investorAddress
-  ) external;
-
-}
-
 /**
  * @notice Struct for contract deployment data
  * @param contractType Type of contract to deploy
@@ -76,8 +64,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
     /// @notice Address of the Board of Directors contract
     address private bodContract;
-
-    address private investorContractAddress;
 
     /**
      * @notice Initializes the contract with owner and optional beacon configurations
@@ -141,29 +127,10 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     ) public whenNotPaused onlyInitializingOrOwners returns (address) {
         require(contractBeacons[contractType] != address(0), "Beacon not configured for this contract type");
         require(keccak256(bytes(contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Elections");
-        
-        bytes memory dataToUse = initializerData;
-        if (keccak256(bytes(contractType)) == keccak256("Bank")) {
-            require(investorContractAddress != address(0), "Officer: deploy InvestorsV1 before Bank");
-
-            // Expect exactly 4 args from FE: tips, usdt, usdc, owner
-            // initializerData = 0x<4-byte selector><4 * 32 bytes args>
-            bytes memory argsData = initializerData[4:];
-            
-
-            (address tips, address usdt, address usdc, address ownerAddr) =
-                abi.decode(argsData, (address, address, address, address));
-
-            dataToUse = abi.encodeWithSelector(
-                IBank.initialize.selector,
-                tips, usdt, usdc, ownerAddr, investorContractAddress
-            );
-            
-        }
 
         BeaconProxy proxy = new BeaconProxy(
             contractBeacons[contractType],
-            dataToUse
+            initializerData
         );
         
         address proxyAddress = address(proxy);
@@ -180,13 +147,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         } else if(keccak256(bytes(contractType)) == keccak256(bytes("Proposals"))) {
             IProposal(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
         }
-        // Store Bank proxy address when Bank is deployed
-
-        if(keccak256(bytes(contractType)) == keccak256(bytes("InvestorsV1"))) {
-            investorContractAddress = proxyAddress;
-        }
-        // Set investor address in Bank when InvestorsV1 is deployed 
-        
 
         return proxyAddress;
     }

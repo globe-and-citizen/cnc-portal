@@ -121,10 +121,10 @@ export function useBankWritesFunctions() {
     ])
   }
 
-  const depositDividends = (amount: string) => {
+  const depositDividends = (amount: string, investorAddress: Address) => {
     //if (!validateAmount(amount)) return
     // const amountInWei = amountToWei(amount)
-    return writes.executeWrite(BANK_FUNCTION_NAMES.DEPOSIT_DIVIDENDS, [amount])
+    return writes.executeWrite(BANK_FUNCTION_NAMES.DEPOSIT_DIVIDENDS, [amount, investorAddress])
   }
 
   const claimDividend = () => {

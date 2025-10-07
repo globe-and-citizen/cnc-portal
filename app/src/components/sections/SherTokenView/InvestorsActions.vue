@@ -120,6 +120,7 @@ import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
 
+import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import BANK_ABI from '@/artifacts/abi/bank.json'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
@@ -159,6 +160,21 @@ const teamStore = useTeamStore()
 const investorsAddress = teamStore.getContractAddressByType('InvestorsV1')
 const bankAddress = teamStore.getContractAddressByType('Bank')
 
+const { data: deployedContracts } = useReadContract({
+  address: teamStore.currentTeam?.officerAddress as Address,
+  abi: OFFICER_ABI,
+  functionName: 'getDeployedContracts',
+  query: {
+    enabled: computed(() => !!teamStore.currentTeam?.officerAddress)
+  }
+})
+
+const investorAddress = computed(() => {
+  if (!deployedContracts.value) return null
+  const investor = deployedContracts.value.find((c) => c.contractType === 'InvestorsV1')
+  return investor?.contractAddress
+})
+
 const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
   abi: INVESTOR_ABI,
   address: investorsAddress,
@@ -188,7 +204,7 @@ const executePayDividends = async (value: bigint) => {
     const data = encodeFunctionData({
       abi: BANK_ABI,
       functionName: 'depositDividends',
-      args: [value]
+      args: [value, investorAddress.value as Address]
     })
     const description = JSON.stringify({
       text: `Pay dividends of ${formatUnits(value, 18)} ${tokenSymbolUtils(zeroAddress)} `,
@@ -201,7 +217,7 @@ const executePayDividends = async (value: bigint) => {
       data
     })
   } else {
-    await depositDividends(value.toString())
+    await depositDividends(value.toString(), investorAddress.value as Address)
   }
 }
 
