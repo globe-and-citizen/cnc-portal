@@ -9,56 +9,99 @@ import {
 
 describe("expense schemas", () => {
   describe("addExpenseBodySchema", () => {
-    it("should validate expense with JSON string data", () => {
+    it("should validate expense with valid data structure", () => {
       const validData = {
         teamId: "1",
         signature: "0xsignature",
-        data: JSON.stringify({ amount: 100, description: "Test expense" }),
+        data: {
+          approvedAddress: "0x1234567890123456789012345678901234567890",
+          budgetData: [
+            { budgetType: 0, value: 100 },
+            { budgetType: 1, value: 200 }
+          ],
+          tokenAddress: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+          expiry: 1640995200
+        },
       };
 
       const result = addExpenseBodySchema.parse(validData);
-      expect(result.data).toEqual({ amount: 100, description: "Test expense" });
+      expect(result.data.approvedAddress).toBe("0x1234567890123456789012345678901234567890");
+      expect(result.data.budgetData).toHaveLength(2);
+      expect(result.data.tokenAddress).toBe("0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef");
+      expect(result.data.expiry).toBe(1640995200);
     });
 
-    it("should validate expense with object data", () => {
-      const validData = {
-        teamId: "1",
-        signature: "0xsignature",
-        data: { amount: 100, description: "Test expense" },
-      };
-
-      const result = addExpenseBodySchema.parse(validData);
-      expect(result.data).toEqual({ amount: 100, description: "Test expense" });
-    });
-
-    it("should throw error for invalid JSON string", () => {
+    it("should throw error for missing required fields in data", () => {
       const invalidData = {
         teamId: "1",
         signature: "0xsignature",
-        data: "invalid-json",
+        data: {
+          approvedAddress: "0x1234567890123456789012345678901234567890",
+          // Missing budgetData, tokenAddress, and expiry
+        },
       };
 
-      expect(() => addExpenseBodySchema.parse(invalidData)).toThrow("Invalid JSON in data field");
+      expect(() => addExpenseBodySchema.parse(invalidData)).toThrow();
+    });
+
+    it("should throw error for empty budgetData array", () => {
+      const invalidData = {
+        teamId: "1",
+        signature: "0xsignature",
+        data: {
+          approvedAddress: "0x1234567890123456789012345678901234567890",
+          budgetData: [], // Empty array should fail
+          tokenAddress: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+          expiry: 1640995200
+        },
+      };
+
+      expect(() => addExpenseBodySchema.parse(invalidData)).toThrow("budgetData must have at least one entry");
     });
 
     it("should throw error for empty signature", () => {
       const invalidData = {
         teamId: "1",
         signature: "",
-        data: { amount: 100 },
+        data: {
+          approvedAddress: "0x1234567890123456789012345678901234567890",
+          budgetData: [{ budgetType: 0, value: 100 }],
+          tokenAddress: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+          expiry: 1640995200
+        },
       };
 
       expect(() => addExpenseBodySchema.parse(invalidData)).toThrow("Signature cannot be empty");
     });
 
-    it("should throw error for negative amount in data", () => {
+    it("should throw error for negative values in budgetData", () => {
       const invalidData = {
         teamId: "1",
         signature: "0xsignature",
-        data: { amount: -100 },
+        data: {
+          approvedAddress: "0x1234567890123456789012345678901234567890",
+          budgetData: [{ budgetType: 0, value: -100 }], // Negative value should fail
+          tokenAddress: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+          expiry: 1640995200
+        },
       };
 
       expect(() => addExpenseBodySchema.parse(invalidData)).toThrow();
+    });
+
+    it("should throw error for empty approvedAddress", () => {
+      const invalidData = {
+        teamId: "1",
+        signature: "0xsignature",
+        data: {
+          approvedAddress: "", // Empty string should fail
+          budgetData: [{ budgetType: 0, value: 100 }],
+          tokenAddress: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+          expiry: 1640995200
+        },
+      };
+
+      expect(() => addExpenseBodySchema.parse(invalidData)).toThrow("approvedAddress is required");
     });
   });
 
