@@ -75,8 +75,6 @@ function mockWeeklyClaim({
   };
 }
 
-
-
 describe("Weekly Claim Controller", () => {
   describe("PUT: /:id", () => {
     beforeEach(() => {
