@@ -55,21 +55,29 @@ const app = express();
 app.use(express.json());
 app.use("/", authorizeUser, expenseRoutes);
 
+const mockExpenseData = {
+  approvedAddress: "0x1234567890123456789012345678901234567890",
+  budgetData: [
+    { budgetType: 0, value: 10 },
+    { budgetType: 1, value: 100 },
+    { budgetType: 2, value: 10 },
+  ],
+  tokenAddress: "0x1111111111111111111111111111111111111111",
+  expiry: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+};
+
+// Helper function to create variations of expense data for testing
+const createExpenseData = (overrides: Partial<typeof mockExpenseData> = {}) => ({
+  ...mockExpenseData,
+  ...overrides,
+});
+
 const mockExpense = {
   id: 1,
   teamId: 1,
   userAddress: "0x1234567890123456789012345678901234567890",
   signature: "mockSignature",
-  data: JSON.stringify({
-    approvedAddress: "0x1234567890123456789012345678901234567890",
-    tokenAddress: "0x1111111111111111111111111111111111111111",
-    budgetData: [
-      { budgetType: 0, value: 10 },
-      { budgetType: 1, value: 100 },
-      { budgetType: 2, value: 10 },
-    ],
-    expiry: new Date().getTime() / 1000 + 60 * 60,
-  }),
+  data: JSON.stringify(mockExpenseData),
   status: "signed",
 } as Expense;
 
@@ -103,7 +111,7 @@ describe("Expense Controller", () => {
       const response = await request(app).post("/").send({
         teamId: 1,
         signature: "mockSignature",
-        data: mockExpense.data,
+        data: mockExpenseData,
       });
 
       expect(response.status).toBe(403);
@@ -132,9 +140,7 @@ describe("Expense Controller", () => {
         .send({
           teamId: 1,
           signature: "0xmockSignature",
-          data: JSON.stringify({
-            approvedAddress: "0xApprovedAddress",
-          }),
+          data: mockExpenseData,
         });
 
       expect(response.status).toBe(201);
@@ -160,7 +166,7 @@ describe("Expense Controller", () => {
       const response = await request(app).post("/").send({
         teamId: 1,
         signature: "mockSignature",
-        data: mockExpense.data,
+        data: mockExpenseData,
       });
 
       expect(response.status).toBe(500);
@@ -190,7 +196,7 @@ describe("Expense Controller", () => {
     it("should return expenses for a valid team", async () => {
       vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
       vi.spyOn(prisma.expense, "findMany").mockResolvedValue([
-        { ...mockExpense, data: JSON.parse(mockExpense.data as string) },
+        { ...mockExpense, data: mockExpenseData },
       ]);
       vi.spyOn(prisma.teamContract, "findFirst").mockResolvedValue(null);
       vi.spyOn(prisma.expense, "update").mockResolvedValue(mockExpense);
@@ -202,7 +208,7 @@ describe("Expense Controller", () => {
       expect(response.body).toEqual([
         {
           ...mockExpense,
-          data: JSON.parse(mockExpense.data as string),
+          data: mockExpenseData,
           status: "enabled",
           balances: {
             0: "0",

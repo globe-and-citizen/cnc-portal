@@ -10,7 +10,17 @@ import { teamIdSchema, positiveIntegerSchema } from "./common";
 export const addExpenseBodySchema = z.object({
   teamId: teamIdSchema,
   signature: z.string().min(1, "Signature cannot be empty"),
-  data: z.json(),
+  data: z.object({
+    approvedAddress: z.string().min(1, "approvedAddress is required"),
+    budgetData: z.array(
+      z.object({
+        budgetType: z.number().int().nonnegative(),
+        value: z.number().int().nonnegative(),
+      })
+    ).min(1, "budgetData must have at least one entry"),
+    tokenAddress: z.string().min(1, "tokenAddress is required"),
+    expiry: z.number().int().nonnegative(),
+  }),
 });
 
 // Get expenses query parameters
