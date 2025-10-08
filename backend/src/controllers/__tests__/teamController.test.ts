@@ -276,7 +276,7 @@ describe("Team Controller", () => {
           id: 1,
           name: "Team 1",
           description: "Description 1",
-          owenrAddress: mockOwner.address,
+          ownerAddress: mockOwner.address,
           _count: { member: 3 },
         },
         {
@@ -290,9 +290,7 @@ describe("Team Controller", () => {
 
       vi.spyOn(prisma.team, "findMany").mockResolvedValue(mockTeams);
 
-      const response = await request(app)
-        .get("/")
-        .set("address", "0xABC123");
+      const response = await request(app).get("/").set("address", "0xABC123");
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockTeams);
@@ -372,7 +370,7 @@ describe("Team Controller", () => {
 
       const response = await request(app).put("/1").send({
         id: 1,
-        owenrAddress: mockOwner.address,
+        ownerAddress: mockOwner.address,
         name: "Updated Team",
         description: "Updated Description",
         officerAddress: "0xNewOfficerAddress",
