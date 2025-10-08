@@ -17,7 +17,7 @@
             >
           </template>
 
-          <template #action-data="{ row }">
+          <template #action-data>
             <ButtonUI
               variant="primary"
               size="sm"

@@ -221,24 +221,6 @@ const executePayDividends = async (value: bigint) => {
   }
 }
 
-const useTotalDividend = () =>
-  useReadContract({
-    address: bankAddress,
-    abi: BANK_ABI,
-    functionName: 'totalDividend',
-    query: { enabled: computed(() => !!bankAddress) }
-  })
-
-const { data: totalDividend } = useTotalDividend()
-
-watch(
-  [totalDividend, bankAddress, shareholders],
-  ([newTotalDividend, newBankAddress, newShareholders]) => {
-    if (newTotalDividend && newBankAddress && newShareholders) {
-      console.log('Total dividend:', newTotalDividend)
-    }
-  }
-)
 const executeDistributeMint = (
   shareholders: ReadonlyArray<{
     readonly shareholder: Address
