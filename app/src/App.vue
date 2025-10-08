@@ -78,7 +78,7 @@
 
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
@@ -110,7 +110,7 @@ const { name, address, imageUrl } = storeToRefs(userStore)
 const updateUserInput = ref({
   name: name.value,
   address: address.value,
-  imageUrl: imageUrl.value
+  imageUrl: imageUrl?.value
 })
 const userUpdateEndpoint = ref('')
 const {
@@ -118,7 +118,17 @@ const {
   isFetching: userIsUpdating,
   error: userUpdateError,
   execute: executeUpdateUser
-} = useCustomFetch(userUpdateEndpoint, { immediate: false }).put(updateUserInput).json()
+} = useCustomFetch(userUpdateEndpoint, { immediate: false })
+  .put(
+    computed(() => {
+      const { name, address, imageUrl } = updateUserInput.value
+      if (!imageUrl) {
+        return { name, address }
+      }
+      return { name, address, imageUrl }
+    })
+  )
+  .json()
 
 watch(userUpdateError, () => {
   if (userUpdateError.value) {
