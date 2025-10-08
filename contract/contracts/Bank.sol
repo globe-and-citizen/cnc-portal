@@ -93,7 +93,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   function transfer(
     address _to,
     uint256 _amount
-  ) external payable onlyOwner nonReentrant whenNotPaused  UsesUnlockedBalance(_amount){
+  ) external onlyOwner nonReentrant whenNotPaused  UsesUnlockedBalance(_amount){
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
 
@@ -139,7 +139,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   function pushTip (
     address[] calldata _addresses,
     uint256 _amount
-  ) external payable onlyOwner whenNotPaused UsesUnlockedBalance(_amount) {
+  ) external payable onlyOwner whenNotPaused {
     ITips(tipsAddress).pushTip{value: _amount}(_addresses);
     emit PushTip(msg.sender, _addresses, _amount);
   }
@@ -148,7 +148,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     address[] calldata _addresses,
     address _token,
     uint256 _amount
-  ) external onlyOwner whenNotPaused UsesUnlockedBalance(_amount) {
+  ) external onlyOwner whenNotPaused  {
     require(isTokenSupported(_token), "Unsupported token");
     uint256 amountPerAddress = _amount / _addresses.length;
         

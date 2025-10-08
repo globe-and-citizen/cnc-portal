@@ -759,7 +759,7 @@ export const BANK_ABI = [
     ],
     name: 'transfer',
     outputs: [],
-    stateMutability: 'payable',
+    stateMutability: 'nonpayable',
     type: 'function'
   },
   {

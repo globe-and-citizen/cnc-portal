@@ -207,7 +207,7 @@ const executePayDividends = async (value: bigint) => {
       args: [value, investorAddress.value as Address]
     })
     const description = JSON.stringify({
-      text: `Pay dividends of ${formatUnits(value, 18)} ${tokenSymbolUtils(zeroAddress)} `,
+      text: `Pay dividends of ${formatUnits(value, 18)} ${tokenSymbolUtils(zeroAddress)} to ${investorsAddress}`,
       title: `Pay Dividends Request`
     })
 

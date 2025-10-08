@@ -70,7 +70,7 @@ export function useBankWritesFunctions() {
   const transferEth = (to: Address, amount: string) => {
     if (!validateAddress(to, 'recipient address') || !validateAmount(amount)) return
     const amountInWei = amountToWei(amount)
-    return writes.executeWrite(BANK_FUNCTION_NAMES.TRANSFER, [to, amountInWei], amountInWei)
+    return writes.executeWrite(BANK_FUNCTION_NAMES.TRANSFER, [to, amountInWei])
   }
 
   /**
