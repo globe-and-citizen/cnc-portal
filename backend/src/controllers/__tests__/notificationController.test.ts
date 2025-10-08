@@ -64,7 +64,9 @@ describe("Notification Controller", () => {
 
   describe("GET /", () => {
     it("should return notifications for authorized user", async () => {
-      vi.spyOn(prisma.notification, "findMany").mockResolvedValue([mockNotification]);
+      vi.spyOn(prisma.notification, "findMany").mockResolvedValue([
+        mockNotification,
+      ]);
 
       const response = await request(app).get("/");
 
@@ -93,8 +95,26 @@ describe("Notification Controller", () => {
       expect(response.body.data).toEqual([]);
     });
 
+    it("should return 403 if user is not authorized", async () => {
+      const unauthorizedNotification = {
+        ...mockNotification,
+        userAddress: "0x9999999999999999999999999999999999999999",
+      };
+      // Use findMany instead of findUnique since getNotification uses findMany
+      vi.spyOn(prisma.notification, "findMany").mockResolvedValue([
+        unauthorizedNotification,
+      ]);
+
+      const response = await request(app).get("/");
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe("Unauthorized access");
+    });
+
     it("should return 500 on server error", async () => {
-      vi.spyOn(prisma.notification, "findMany").mockRejectedValue(new Error("Database error"));
+      vi.spyOn(prisma.notification, "findMany").mockRejectedValue(
+        new Error("Database error")
+      );
 
       const response = await request(app).get("/");
 
@@ -105,7 +125,9 @@ describe("Notification Controller", () => {
 
   describe("PUT /:id", () => {
     it("should update notification successfully", async () => {
-      vi.spyOn(prisma.notification, "findUnique").mockResolvedValue(mockNotification);
+      vi.spyOn(prisma.notification, "findUnique").mockResolvedValue(
+        mockNotification
+      );
       vi.spyOn(prisma.notification, "update").mockResolvedValue({
         ...mockNotification,
         isRead: true,
@@ -133,7 +155,9 @@ describe("Notification Controller", () => {
         ...mockNotification,
         userAddress: "0x9999999999999999999999999999999999999999",
       };
-      vi.spyOn(prisma.notification, "findUnique").mockResolvedValue(unauthorizedNotification);
+      vi.spyOn(prisma.notification, "findUnique").mockResolvedValue(
+        unauthorizedNotification
+      );
 
       const response = await request(app).put("/1");
 
@@ -142,7 +166,9 @@ describe("Notification Controller", () => {
     });
 
     it("should return 500 on server error", async () => {
-      vi.spyOn(prisma.notification, "findUnique").mockRejectedValue(new Error("Database error"));
+      vi.spyOn(prisma.notification, "findUnique").mockRejectedValue(
+        new Error("Database error")
+      );
 
       const response = await request(app).put("/1");
 
@@ -167,14 +193,12 @@ describe("Notification Controller", () => {
         { ...mockNotification, id: 2 },
       ]);
 
-      const response = await request(app)
-        .post("/bulk")
-        .send({
-          userIds: mockUserIds,
-          message: mockMessage,
-          subject: mockSubject,
-          resource: mockResource,
-        });
+      const response = await request(app).post("/bulk").send({
+        userIds: mockUserIds,
+        message: mockMessage,
+        subject: mockSubject,
+        resource: mockResource,
+      });
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
@@ -194,12 +218,10 @@ describe("Notification Controller", () => {
       const { addNotification } = await import("../../utils");
       vi.mocked(addNotification).mockResolvedValue([mockNotification]);
 
-      const response = await request(app)
-        .post("/bulk")
-        .send({
-          userIds: mockUserIds,
-          message: mockMessage,
-        });
+      const response = await request(app).post("/bulk").send({
+        userIds: mockUserIds,
+        message: mockMessage,
+      });
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
@@ -212,24 +234,20 @@ describe("Notification Controller", () => {
     });
 
     it("should return 400 if userIds is not an array", async () => {
-      const response = await request(app)
-        .post("/bulk")
-        .send({
-          userIds: "not-an-array",
-          message: "Test message",
-        });
+      const response = await request(app).post("/bulk").send({
+        userIds: "not-an-array",
+        message: "Test message",
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe("userIds must be a non-empty array");
     });
 
     it("should return 400 if userIds is empty array", async () => {
-      const response = await request(app)
-        .post("/bulk")
-        .send({
-          userIds: [],
-          message: "Test message",
-        });
+      const response = await request(app).post("/bulk").send({
+        userIds: [],
+        message: "Test message",
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe("userIds must be a non-empty array");
