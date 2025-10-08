@@ -72,7 +72,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { TableRow } from '@/components/TableComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import UserComponent from '@/components/UserComponent.vue'
@@ -152,8 +152,4 @@ watch(
   },
   { immediate: true }
 )
-
-onMounted(() => {
-  console.log('props.row: ', props.row)
-})
 </script>
