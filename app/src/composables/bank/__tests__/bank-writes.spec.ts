@@ -102,7 +102,8 @@ vi.mock('@/stores', () => ({
   useToastStore: vi.fn(() => ({
     addSuccessToast: vi.fn(),
     addErrorToast: vi.fn()
-  }))
+  })),
+  useUserDataStore: vi.fn(() => ({ address: '0xUserAddress' }))
 }))
 
 // Test constants
