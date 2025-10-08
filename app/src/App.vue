@@ -109,7 +109,8 @@ const { name, address, imageUrl } = storeToRefs(userStore)
 
 const updateUserInput = ref({
   name: name.value,
-  address: address.value
+  address: address.value,
+  imageUrl: imageUrl.value
 })
 const userUpdateEndpoint = ref('')
 const {
