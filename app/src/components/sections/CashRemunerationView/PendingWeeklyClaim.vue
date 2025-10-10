@@ -17,9 +17,11 @@
             <UserComponent :user="row.member" />
           </template>
           <template #weekStart-data="{ row }">
-            <span class="font-bold line-clamp-1">{{ getCurrentMonthYear(row.weekStart) }}</span>
+            <span class="font-bold line-clamp-1">{{
+              dayjs(row.weekStart).utc().startOf('isoWeek').format('MMMM YYYY')
+            }}</span>
 
-            <span>{{ formatDate(row.weekStart) }}</span>
+            <span>{{ formatIsoWeekRange(dayjs(row.weekStart).utc().startOf('isoWeek')) }}</span>
           </template>
 
           <template #hoursWorked-data="{ row }">
@@ -61,11 +63,10 @@
               </span>
             </div>
           </template>
-
           <template #action-data="{ row }">
             <CRSigne
               v-if="row.claims.length > 0 && row.wage.ratePerHour"
-              :disabled="isSameWeek(row.weekStart)"
+              :disabled="row.weekStart === dayjs().utc().startOf('isoWeek').toISOString()"
               :weekly-claim="{
                 id: row.id, //which id do we use, individual or weekly claim?
                 status: !row.status ? 'pending' : row.status,
@@ -77,20 +78,6 @@
                 }
               }"
             />
-            <!-- <CRWithdrawClaim
-              :is-weekly-claim="true"
-              :claim="{
-                id: row.id, //which id do we use, individual or weekly claim?
-                status: !row.status ? 'pending' : row.status,
-                hoursWorked: getTotalHoursWorked(row.claims),
-                createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
-                signature: row.signature,
-                wage: {
-                  ratePerHour: row.wage.ratePerHour as RatePerHour,
-                  userAddress: row.wage.userAddress as Address
-                }
-              }"
-            /> -->
           </template>
         </TableComponent>
       </div>
@@ -109,24 +96,32 @@
 </template>
 
 <script setup lang="ts">
-import UserComponent from '@/components/UserComponent.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { NETWORK } from '@/constant'
+import UserComponent from '@/components/UserComponent.vue'
 import { useTanstackQuery } from '@/composables/useTanstackQuery'
-import { computed, watch } from 'vue'
-import { useCurrencyStore, useToastStore } from '@/stores'
-import { useUserDataStore, useTeamStore } from '@/stores'
-import { type WeeklyClaimResponse, type RatePerHour } from '@/types'
-import CRSigne from './CRSigne.vue'
+import { NETWORK } from '@/constant'
+import { useCurrencyStore, useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { type RatePerHour, type WeeklyClaimResponse } from '@/types'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import weekday from 'dayjs/plugin/weekday'
 import type { Address } from 'viem'
+import { computed, watch } from 'vue'
+import CRSigne from './CRSigne.vue'
 // import CRWithdrawClaim from './CRWithdrawClaim.vue'
-import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
-import type { TokenId } from '@/constant'
-import CRWeeklyClaimOwnerHeader from './CRWeeklyClaimOwnerHeader.vue'
+import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
-import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import type { TokenId } from '@/constant'
+import { formatIsoWeekRange } from '@/utils/dayUtils'
 import { useReadContract } from '@wagmi/vue'
+import CRWeeklyClaimOwnerHeader from './CRWeeklyClaimOwnerHeader.vue'
+
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
+dayjs.extend(weekday)
+
 function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
 }
@@ -165,11 +160,6 @@ const data = computed(() =>
   )
 )
 
-const isSameWeek = (weeklyClaimStartWeek: string) => {
-  const currentMonday = getMondayStart(new Date())
-  return currentMonday.toISOString() === weeklyClaimStartWeek
-}
-
 const currencyStore = useCurrencyStore()
 
 const {
@@ -192,27 +182,6 @@ function getHourlyRateInUserCurrency(
     return total + rate.amount * localPrice
   }, 0)
 }
-
-function formatDate(date: string | Date) {
-  const monday = getMondayStart(new Date(date))
-  const sunday = getSundayEnd(new Date(date))
-  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-  return `${monday.toLocaleDateString('en-US', options)}-${sunday.toLocaleDateString('en-US', options)}`
-}
-
-function getCurrentMonthYear(date: string | Date) {
-  const d = new Date(date)
-  return d.toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric'
-  })
-}
-
-watch(data, (newVal) => {
-  if (newVal) {
-    console.log('New weekly claims: ', newVal)
-  }
-})
 
 const columns = [
   {
