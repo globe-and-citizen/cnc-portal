@@ -71,6 +71,7 @@ import ElectionStats from '@/components/sections/AdministrationView/ElectionStat
 import ElectionActions from './ElectionActions.vue'
 import CurrentBoDElection404 from './CurrentBoDElection404.vue'
 import { useBoDElections } from '@/composables'
+import { useCustomFetch } from '@/composables'
 
 const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
@@ -84,6 +85,14 @@ const showCreateElectionModal = ref({
   show: false
 })
 const isLoadingCreateElection = ref(false)
+const electionNotificationUrl = computed(() => `/elections/${teamStore.currentTeam?.id}`)
+
+const {
+  // data: claimUpdateData,
+  // isFetching: isClaimUpdateing,
+  error: electionNotificationError,
+  execute: executeAddElectionNotifications
+} = useCustomFetch(electionNotificationUrl, { immediate: false }).post().json()
 
 const createElection = async (electionData: OldProposal) => {
   try {
@@ -129,6 +138,8 @@ const createElection = async (electionData: OldProposal) => {
     await waitForTransactionReceipt(config, {
       hash
     })
+
+    await executeAddElectionNotifications()
     addSuccessToast('Election created successfully!')
     showCreateElectionModal.value.show = false
     showCreateElectionModal.value.mount = false
