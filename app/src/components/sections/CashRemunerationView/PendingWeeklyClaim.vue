@@ -4,7 +4,7 @@
     <transition-group name="stack" tag="div" class="stack w-full">
       <div
         v-for="(item, index) in data?.filter(
-          (weeklyClaim) => weeklyClaim.weekStart < new Date().toISOString()
+          (weeklyClaim) => weeklyClaim.weekStart < currentWeekStart
         )"
         :key="item.weekStart"
         class="card shadow-lg bg-white p-4"
@@ -66,7 +66,7 @@
           <template #action-data="{ row }">
             <CRSigne
               v-if="row.claims.length > 0 && row.wage.ratePerHour"
-              :disabled="row.weekStart === dayjs().utc().startOf('isoWeek').toISOString()"
+              :disabled="row.weekStart === currentWeekStart"
               :weekly-claim="{
                 id: row.id, //which id do we use, individual or weekly claim?
                 status: !row.status ? 'pending' : row.status,
@@ -103,8 +103,8 @@ import { NETWORK } from '@/constant'
 import { useCurrencyStore, useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { type RatePerHour, type WeeklyClaimResponse } from '@/types'
 import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
+import utc from 'dayjs/plugin/utc'
 import weekday from 'dayjs/plugin/weekday'
 import type { Address } from 'viem'
 import { computed, watch } from 'vue'
@@ -122,16 +122,15 @@ dayjs.extend(utc)
 dayjs.extend(isoWeek)
 dayjs.extend(weekday)
 
-function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
-  return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
-}
+const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
+
+const userStore = useUserDataStore()
+const teamStore = useTeamStore()
+const currencyStore = useCurrencyStore()
 
 const cashRemunerationAddress = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
 )
-const userStore = useUserDataStore()
-const teamStore = useTeamStore()
-
 const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
 
 const weeklyClaimUrl = computed(
@@ -160,8 +159,6 @@ const data = computed(() =>
   )
 )
 
-const currencyStore = useCurrencyStore()
-
 const {
   data: cashRemunerationOwner,
   // isFetching: isCashRemunerationOwnerFetching,
@@ -181,6 +178,10 @@ function getHourlyRateInUserCurrency(
     const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
     return total + rate.amount * localPrice
   }, 0)
+}
+
+function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
+  return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
 }
 
 const columns = [
