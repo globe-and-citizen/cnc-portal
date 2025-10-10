@@ -19,6 +19,7 @@ export const useUserDataStore = defineStore('user', () => {
     userName.value = ''
     userAddress.value = ''
     userNonce.value = ''
+    userImageUrl.value = ''
     isAuth.value = false // Reset authentication status as well if clearing user data
   }
 

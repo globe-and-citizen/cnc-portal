@@ -4,6 +4,17 @@ import { createTestingPinia } from '@pinia/testing'
 import VestingView from '../VestingView.vue'
 //import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { ref } from 'vue'
+import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
+import { mainnet } from 'viem/chains'
+import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
+import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
+
+const wagmiConfig = createConfig({
+  chains: [mainnet],
+  transports: {
+    [mainnet.id]: http()
+  }
+})
 
 // Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
@@ -42,8 +53,23 @@ vi.mock('@/stores', () => ({
     address: memberAddress
   }),
   useTeamStore: () => ({
-    currentTeam: mockCurrentTeam.value
+    currentTeam: mockCurrentTeam.value,
+    getContractAddressByType: vi.fn((type) => {
+      // console.log('getContractAddressByType called with type:', type)
+      return type ? '0x000000000000000000000000000000000000beef' : undefined
+    })
   })
+}))
+
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore() }))
+  }
+})
+vi.mock('@/composables/useContractBalance', () => ({
+  useContractBalance: vi.fn(() => mockUseContractBalance)
 }))
 
 // Wagmi mocks
@@ -94,7 +120,7 @@ describe('VestingView.vue', () => {
   const mountComponent = () => {
     return mount(VestingView, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [createTestingPinia({ createSpy: vi.fn }), [WagmiPlugin, { config: wagmiConfig }]]
       }
     })
   }
@@ -157,24 +183,6 @@ describe('VestingView.vue', () => {
 
     // Test reloadVestingInfos event
     expect(refetchVestingInfos).toHaveBeenCalled()
-  })
-
-  it('handles toggle vesting view button correctly', async () => {
-    wrapper = mountComponent()
-    await wrapper.vm.$nextTick()
-    const toggleBtn = wrapper.find('[data-test="toggle-vesting-view"]')
-
-    expect(toggleBtn.exists()).toBe(true)
-
-    expect(toggleBtn.text().toLowerCase()).toContain('actives')
-    expect(toggleBtn.classes()).toContain('btn-secondary')
-
-    await toggleBtn.trigger('click')
-    await wrapper.vm.$nextTick()
-
-    expect(toggleBtn.text().toLowerCase()).toContain('archived')
-
-    expect(toggleBtn.classes()).toContain('btn-ghost')
   })
 
   it('passes correct props to CreateVesting', async () => {

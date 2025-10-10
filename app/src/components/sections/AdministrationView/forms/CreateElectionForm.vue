@@ -2,92 +2,122 @@
   <div>
     <h2>Create Election</h2>
     <div class="flex flex-col gap-4 mt-2">
-      <input
-        type="text"
-        placeholder="Title"
-        class="input input-primary w-full"
-        v-model="newProposalInput.title"
-        data-test="titleInput"
-      />
-      <div
-        class="pl-4 text-red-500 text-sm w-full text-left"
-        v-for="error of $v.proposal.title.$errors"
-        :key="error.$uid"
-      >
-        {{ error.$message }}
-      </div>
-
-      <textarea
-        class="textarea textarea-primary h-24"
-        placeholder="Description"
-        v-model="newProposalInput.description"
-        data-test="descriptionInput"
-      ></textarea>
-      <div
-        class="pl-4 text-red-500 text-sm w-full text-left"
-        v-for="error of $v.proposal.description.$errors"
-        :key="error.$uid"
-      >
-        {{ error.$message }}
-      </div>
-      <div v-if="newProposalInput.isElection">
-        <div class="mb-4">
-          <input
-            type="number"
-            class="input input-primary w-full"
-            placeholder="Number of Directors"
-            v-model="newProposalInput.winnerCount"
-            data-test="winnerCountInput"
-          />
+      <label class="form-control w-full">
+        <div class="label">
+          <span class="label-text">Title</span>
         </div>
 
-        <div class="mb-4">
-          <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-            <span class="w-24">Start Date</span>
-            <div class="grow" data-test="date-picker">
-              <VueDatePicker
-                v-model="newProposalInput.startDate"
-                :min-date="new Date()"
-                auto-apply
-              />
-            </div>
-          </label>
-        </div>
-
+        <input
+          type="text"
+          placeholder="Title"
+          class="input input-primary w-full"
+          v-model="newProposalInput.title"
+          data-test="titleInput"
+        />
         <div
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of $v.proposal.startDate.$errors"
+          v-for="error of $v.proposal.title.$errors"
           :key="error.$uid"
         >
           {{ error.$message }}
         </div>
+      </label>
 
-        <div class="mb-4">
-          <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-            <span class="w-24">End Date</span>
-            <div class="grow" data-test="date-picker">
-              <VueDatePicker v-model="newProposalInput.endDate" :min-date="new Date()" auto-apply />
-            </div>
-          </label>
+      <label class="form-control w-full">
+        <div class="label">
+          <span class="label-text">Description</span>
         </div>
 
+        <textarea
+          class="textarea textarea-primary h-24"
+          placeholder="Description"
+          v-model="newProposalInput.description"
+          data-test="descriptionInput"
+        ></textarea>
         <div
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of $v.proposal.endDate.$errors"
+          v-for="error of $v.proposal.description.$errors"
           :key="error.$uid"
         >
           {{ error.$message }}
         </div>
+      </label>
 
-        <MultiSelectMemberInput v-model="formData" />
-
-        <div
-          class="pl-4 text-red-500 text-sm w-full text-left"
-          v-if="newProposalInput.isElection && $v.proposal.candidates.$error"
-        >
-          {{ $v.proposal.candidates.$errors[0]?.$message }}
+      <label class="form-control w-full">
+        <div class="label">
+          <span class="label-text">Number of Board Of Directors</span>
         </div>
-      </div>
+
+        <div v-if="newProposalInput.isElection">
+          <div class="mb-4">
+            <input
+              type="number"
+              class="input input-primary w-full"
+              placeholder="Number of Directors"
+              v-model="newProposalInput.winnerCount"
+              data-test="winnerCountInput"
+            />
+          </div>
+          <div
+            class="pl-4 text-red-500 text-sm w-full text-left"
+            v-for="error of $v.proposal.winnerCount.$errors"
+            :key="error.$uid"
+          >
+            {{ error.$message }}
+          </div>
+
+          <div class="mb-4">
+            <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+              <span class="w-24">Start Date</span>
+              <div class="grow" data-test="date-picker">
+                <VueDatePicker
+                  v-model="newProposalInput.startDate"
+                  :min-date="startDate"
+                  auto-apply
+                />
+              </div>
+            </label>
+          </div>
+
+          <div
+            class="pl-4 text-red-500 text-sm w-full text-left"
+            v-for="error of $v.proposal.startDate.$errors"
+            :key="error.$uid"
+          >
+            {{ error.$message }}
+          </div>
+
+          <div class="mb-4">
+            <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+              <span class="w-24">End Date</span>
+              <div class="grow" data-test="date-picker">
+                <VueDatePicker
+                  v-model="newProposalInput.endDate"
+                  :min-date="new Date()"
+                  auto-apply
+                />
+              </div>
+            </label>
+          </div>
+
+          <div
+            class="pl-4 text-red-500 text-sm w-full text-left"
+            v-for="error of $v.proposal.endDate.$errors"
+            :key="error.$uid"
+          >
+            {{ error.$message }}
+          </div>
+
+          <MultiSelectMemberInput v-model="formData" />
+
+          <div
+            class="pl-4 text-red-500 text-sm w-full text-left"
+            v-if="newProposalInput.isElection && $v.proposal.candidates.$error"
+          >
+            {{ $v.proposal.candidates.$errors[0]?.$message }}
+          </div>
+        </div>
+      </label>
 
       <div class="flex justify-center">
         <ButtonUI
@@ -97,7 +127,7 @@
           data-test="submitButton"
           @click="submitForm"
         >
-          Create Proposal
+          Create Election
         </ButtonUI>
       </div>
     </div>
@@ -105,13 +135,17 @@
 </template>
 
 <script setup lang="ts">
-import type { Proposal, User } from '@/types'
+import type { OldProposal, User } from '@/types'
 import { ref, onMounted, onUnmounted } from 'vue'
-import { required, minLength, requiredIf, helpers } from '@vuelidate/validators'
+import { required, minLength, requiredIf, helpers, minValue } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
+
+// Dev = 2 minutes, Prod = 1 hour
+const delay = 2 * 60 * 1000
+const startDate = new Date(new Date().getTime() + delay)
 
 const emits = defineEmits(['createProposal'])
 defineProps<{ isLoading: boolean }>()
@@ -133,10 +167,10 @@ const uniqueCandidates = () => {
   }
 }
 
-const newProposalInput = ref<Partial<Proposal>>({
+const newProposalInput = ref<Partial<OldProposal>>({
   title: '',
   description: '',
-  startDate: '',
+  startDate,
   endDate: '',
   candidates: [
     {
@@ -173,6 +207,12 @@ const rules = {
       afterStart: helpers.withMessage('End date must be later than start date: ', (value) => {
         return (value as Date) > (newProposalInput.value?.startDate as Date)
       })
+    },
+    winnerCount: {
+      minValue: minValue(3),
+      onlyOdd: helpers.withMessage('Number of directors must be an odd number: ', (value) => {
+        return Number(value) % 2 === 1
+      })
     }
   }
 }
@@ -186,11 +226,11 @@ const submitForm = () => {
       candidateAddress: user.address || ''
     })
   }
-  console.log('newProposalInput: ', newProposalInput.value)
   $v.value.$touch()
   if ($v.value.$invalid) return
   emits('createProposal', newProposalInput.value)
 }
+
 const formRef = ref<HTMLElement | null>(null)
 const showDropdown = ref<boolean>(false)
 

@@ -2,7 +2,12 @@
   <div class="card bg-base-100 shadow-lg">
     <div class="card-body">
       <div class="flex justify-between items-center">
-        <span class="card-title">{{ props.title }}</span>
+        <div class="flex items-center gap-4">
+          <span class="card-title">
+            {{ props.title }}
+          </span>
+          <slot name="card-badge"></slot>
+        </div>
         <div class="card-actions justify-end">
           <slot name="card-action"> </slot>
         </div>
@@ -18,7 +23,7 @@
 const props = defineProps({
   title: {
     type: String,
-    default: 'Card Title'
+    default: ''
   }
 })
 </script>

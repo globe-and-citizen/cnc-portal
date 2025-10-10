@@ -4,6 +4,17 @@ import {
   getClaims,
   updateClaim,
 } from "../controllers/claimController";
+import {
+  validateBody,
+  validateQuery,
+  validateParamsAndQuery,
+  validateBodyAndParams,
+  addClaimBodySchema,
+  getClaimsQuerySchema,
+  updateClaimQuerySchema,
+  updateClaimBodySchema,
+  claimIdParamsSchema,
+} from "../validation";
 
 const claimRoutes = express.Router();
 /**
@@ -98,7 +109,7 @@ const claimRoutes = express.Router();
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.post("/", addClaim);
+claimRoutes.post("/", validateBody(addClaimBodySchema), addClaim);
 
 /**
  * @openapi
@@ -145,7 +156,7 @@ claimRoutes.post("/", addClaim);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.get("/", getClaims);
+claimRoutes.get("/", validateQuery(getClaimsQuerySchema), getClaims);
 
 /**
  * @openapi
@@ -209,6 +220,10 @@ claimRoutes.get("/", getClaims);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.put("/:claimId", updateClaim);
+claimRoutes.put("/:claimId", 
+  validateParamsAndQuery(claimIdParamsSchema, updateClaimQuerySchema),
+  validateBody(updateClaimBodySchema),
+  updateClaim
+);
 
 export default claimRoutes;

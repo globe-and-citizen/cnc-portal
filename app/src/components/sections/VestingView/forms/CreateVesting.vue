@@ -1,72 +1,83 @@
 <template>
-  <div class="flex flex-col gap-5">
+  <div v-if="!showSummary" class="flex flex-col gap-5 max-w-5xl w-full">
     <h4 class="font-bold text-lg">Create Vesting Schedule</h4>
-    <h3 class="pt-6">You’re about to create a vesting for a team member</h3>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
-      <span class="w-32">Member</span>
-      <div class="flex flex-col grow">
-        <input
-          data-test="member"
-          type="text"
-          class="grow"
-          v-model="member"
-          placeholder="Member address"
-          required
-        />
-        <span v-if="member && !isAddress(member)" class="text-xs text-red-500 mt-1">
-          Please enter a valid Ethereum address.
-        </span>
-      </div>
-    </label>
-
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
-      <span class="w-32">Start Date</span>
-      <input data-test="start-date" type="date" class="grow" v-model="startDate" required />
-    </label>
-
-    <div class="flex gap-3 mt-4 grow">
-      <label
-        class="input input-xs input-bordered flex items-center gap-4 input-md min-w-0 mt-4 p-1"
-      >
-        <span class="w-full text-xs">Duration(days)</span>
-        <input data-test="duration" type="number" v-model.number="duration" required min="1" />
+    <div class="gap-2 mt-4">
+      <label class="flex-col items-center gap-2">
+        <div class="flex w-32 mb-3">Choose Member</div>
+        <div class="flex grow w-full">
+          <SelectMemberInput v-model="member" data-test="member" class="text-xs w-full" />
+        </div>
       </label>
-      <label class="input input-bordered flex items-center gap-2 input-md mt-4 min-w-0 p-1">
-        <span class="w-full text-xs">Cliff(days)</span>
-        <input data-test="cliff" type="number" v-model.number="cliff" required />
-      </label>
+      <span v-for="error in $v.member.$errors" :key="error.$uid" class="text-xs text-red-500 mt-1">
+        {{ error.$message }}
+      </span>
     </div>
 
-    <div class="flex gap-3 mt-4 grow">
-      <label class="input input-bordered flex items-center gap-2 input-md mt-4">
-        <span class="w-full text-xs">Amount</span>
-        <input data-test="total-amount" type="number" class="grow" v-model="totalAmount" required />
+    <div class="gap-2 mt-4">
+      <label class="flex items-center">
+        <span class="w-32 flex-shrink-0">Period</span>
+        <div class="flex-grow">
+          <Datepicker
+            v-model="dateRange"
+            data-test="date-range"
+            range
+            auto-apply
+            format="dd/MM/yyyy"
+            placeholder="Select range"
+            class="w-full"
+          />
+        </div>
       </label>
-      <span class="flex items-center gap-2 input-md mt-4 min-w-0 p-1">
-        <ButtonUI
-          variant="primary"
-          size="sm"
-          @click="approveAllowance"
-          :disabled="totalAmount <= 0 || tokenApproved || loadingAllowance"
-          :loading="loadingAllowance"
-          data-test="approve-btn"
-        >
-          approve Allowance
-        </ButtonUI>
+      <span v-for="error in $v.dateRange.$errors" :key="error.$uid" class="text-xs text-red-500">
+        {{ error.$message }}
       </span>
+    </div>
+
+    <div class="flex flex-wrap gap-3 mt-4 w-100">
+      <div class="flex-1 min-w-[200px]">
+        <label class="flex input input-bordered input-md items-center gap-2 w-full">
+          <span class="text-xs flex-shrink-0">Amount</span>
+          <input
+            data-test="total-amount"
+            type="number"
+            class="grow"
+            v-model="totalAmount"
+            required
+          />
+        </label>
+        <span
+          v-for="error in $v.totalAmount.$errors"
+          :key="error.$uid"
+          class="text-xs text-red-500 mt-1 block"
+        >
+          {{ error.$message }}
+        </span>
+      </div>
+      <div class="flex-1 min-w-[200px]">
+        <label class="flex input input-bordered items-center gap-2 w-full">
+          <span class="text-xs flex-shrink-0">Cliff(days)</span>
+          <input data-test="cliff" type="number" class="grow text-sm" v-model="cliff" required />
+        </label>
+        <span
+          v-for="error in $v.cliff.$errors"
+          :key="error.$uid"
+          class="text-xs text-red-500 mt-1 block"
+        >
+          {{ error.$message }}
+        </span>
+      </div>
     </div>
 
     <h3 class="pt-6 text-sm text-gray-600">
       By clicking "Create Vesting", you agree to lock this token amount under a vesting schedule.
       Ensure your contract is approved to transfer these tokens.
     </h3>
-
     <div class="modal-action justify-end">
       <ButtonUI
         variant="primary"
         size="sm"
-        @click="submit"
-        :disabled="loading || !formValid || !tokenApproved"
+        @click="handleDisplaySummary"
+        :disabled="loading"
         :loading="loading"
         data-test="submit-btn"
       >
@@ -74,26 +85,62 @@
       </ButtonUI>
     </div>
   </div>
+  <div v-if="showSummary">
+    <VestingSummary
+      :vesting="vestingData"
+      :loading="loading"
+      @back="showSummary = false"
+      @confirm="approveAllowance"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import { differenceInCalendarDays, differenceInMonths, differenceInYears } from '@/utils/dayUtils'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
 import VestingABI from '@/artifacts/abi/Vesting.json'
 import { VESTING_ADDRESS } from '@/constant'
 import { parseEther, type Address, formatUnits, parseUnits } from 'viem'
+import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
+import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
+import Datepicker from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
+import { type VestingCreation } from '@/types/vesting'
 const { addSuccessToast, addErrorToast } = useToastStore()
+import { useContractBalance } from '@/composables/useContractBalance'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useUserDataStore } from '@/stores'
 import { isAddress } from 'viem'
+import { required, helpers, minValue } from '@vuelidate/validators'
+import { useVuelidate } from '@vuelidate/core'
 
 const props = defineProps<{
   tokenAddress: string
   reloadKey: number
 }>()
+
+const userDataStore = useUserDataStore()
+const { balances } = useContractBalance(userDataStore.address as Address)
+const teamStore = useTeamStore()
+const vestingData = computed<VestingCreation>(() => ({
+  member: member.value,
+  startDate: dateRange.value?.[0] || new Date(),
+  duration: duration.value,
+  durationInDays: durationInDays.value,
+  cliff: cliff.value,
+  totalAmount: totalAmount.value
+}))
+
+const tokenBalance = computed(() => {
+  // Find the balance entry for the current token address
+  return balances.value.find(
+    (b) => b.token.address?.toLowerCase() === props.tokenAddress.toLowerCase()
+  )
+})
 
 const activeMembers = computed<string[]>(() => {
   if (vestingInfos.value && Array.isArray(vestingInfos.value) && vestingInfos.value.length === 2) {
@@ -102,15 +149,44 @@ const activeMembers = computed<string[]>(() => {
   }
   return []
 })
-const member = ref('')
+const member = ref({
+  name: '',
+  address: ''
+})
+
 const startDate = ref('')
-const duration = ref(30)
+//const duration = ref(30)
 const cliff = ref(0)
 const totalAmount = ref(0)
-const tokenApproved = ref(false)
+const dateRange = ref<[Date, Date] | null>(null)
 
-const teamStore = useTeamStore()
-const team = computed(() => teamStore.currentTeam)
+const duration = ref({ years: 0, months: 0, days: 0 })
+const durationInDays = ref(0)
+const updateCount = ref(0)
+const showSummary = ref(false)
+
+async function resetUpdateCount() {
+  await nextTick()
+  updateCount.value = 0
+}
+
+watch(dateRange, async (val) => {
+  if (!val || val.length !== 2) return
+
+  if (updateCount.value > 2) return
+
+  const [start, end] = val
+  const days = differenceInCalendarDays(end, start)
+  const years = differenceInYears(end, start)
+  const months = differenceInMonths(end, start) % 12
+  const leftoverDays = days - years * 365 - months * 30
+  durationInDays.value = days
+  duration.value = { years, months, days: leftoverDays }
+
+  updateCount.value++
+  if (updateCount.value === 2) await resetUpdateCount()
+})
+
 const emit = defineEmits(['reload', 'closeAddVestingModal'])
 
 const {
@@ -122,7 +198,7 @@ const {
   functionName: 'getTeamVestingsWithMembers',
   address: VESTING_ADDRESS as Address,
   abi: VestingABI,
-  args: [team?.value?.id ?? 0]
+  args: [teamStore.currentTeam?.id ?? 0]
 })
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
@@ -137,14 +213,14 @@ watch(
   }
 )
 
-const loading = computed(
-  () => loadingAddVesting.value || (isConfirmingAddVesting.value && !isConfirmedAddVesting.value)
-)
-
-const loadingAllowance = computed(
-  () =>
+const loading = computed(() => {
+  const tokenApprovalPending =
     loadingApproveToken.value || (isConfirmingApproveToken.value && !isConfirmedApproveToken.value)
-)
+  const vestingCreationPending =
+    loadingAddVesting.value || (isConfirmingAddVesting.value && !isConfirmedAddVesting.value)
+
+  return tokenApprovalPending || vestingCreationPending
+})
 
 const {
   data: allowance,
@@ -155,7 +231,7 @@ const {
   abi: INVESTOR_ABI,
   address: props.tokenAddress as Address,
   functionName: 'allowance',
-  args: [useUserDataStore().address as Address, VESTING_ADDRESS as Address]
+  args: [userDataStore.address as Address, VESTING_ADDRESS as Address]
 })
 
 watch(allowanceError, () => {
@@ -180,12 +256,13 @@ const { isLoading: isConfirmingAddVesting, isSuccess: isConfirmedAddVesting } =
 watch(isConfirmingAddVesting, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedAddVesting.value) {
     addSuccessToast('vesting added successfully')
-    member.value = ''
     startDate.value = ''
-    duration.value = 30
     cliff.value = 0
     totalAmount.value = 0
-    tokenApproved.value = false
+    dateRange.value = null
+    member.value = { name: '', address: '' }
+    duration.value = { years: 0, months: 0, days: 0 }
+    showSummary.value = false
     emit('closeAddVestingModal')
     emit('reload')
   }
@@ -196,10 +273,6 @@ watch(errorAddVesting, () => {
     addErrorToast('Add vesting failed')
     console.error('add vesting error', errorAddVesting.value)
   }
-})
-
-defineExpose({
-  tokenApproved
 })
 
 const {
@@ -215,10 +288,9 @@ const { isLoading: isConfirmingApproveToken, isSuccess: isConfirmedApproveToken 
   })
 
 watch(isConfirmingApproveToken, async (isConfirming, wasConfirming) => {
-  tokenApproved.value = false
   if (wasConfirming && !isConfirming && isConfirmedApproveToken.value) {
     addSuccessToast('Approval added successfully')
-    tokenApproved.value = true
+    submit()
   }
 })
 
@@ -229,34 +301,45 @@ watch(errorApproveToken, () => {
   }
 })
 
-const {
-  data: tokenBalance,
-  // error: tokenBalanceError,
-  //isLoading: isLoadingTokenBalance
-  refetch: refetchTokenBalance
-} = useReadContract({
-  abi: INVESTOR_ABI,
-  address: props.tokenAddress as Address,
-  functionName: 'balanceOf',
-  args: [useUserDataStore().address as Address]
+const validAddress = helpers.withMessage('Please enter a valid Ethereum address.', () => {
+  return isAddress(member.value.address)
 })
 
-const formValid = computed(() => {
-  return (
-    team.value?.id.valueOf !== null &&
-    isAddress(member.value) &&
-    startDate.value &&
-    duration.value > 0 &&
-    cliff.value >= 0 &&
-    totalAmount.value > 0 &&
-    cliff.value <= duration.value
-  )
+const rules = {
+  member: {
+    address: {
+      required: helpers.withMessage('Member is required. ', required),
+      validAddress
+    }
+  },
+  dateRange: {
+    required: helpers.withMessage('Date range is required.', required)
+  },
+  cliff: {
+    required: helpers.withMessage('Cliff is required.', required),
+    minValue: minValue(0),
+    notGreaterThanDuration: helpers.withMessage(
+      'Cliff cannot be greater than duration.',
+      (value: number) => value <= durationInDays.value
+    )
+  },
+  totalAmount: {
+    required: helpers.withMessage('Amount is required.', required),
+    minValue: helpers.withMessage('Amount must be greater than 0.', minValue(1))
+  }
+}
+
+const $v = useVuelidate(rules, {
+  member,
+  dateRange,
+  cliff,
+  totalAmount
 })
 
 function checkDuplicateVesting() {
   if (
-    member.value &&
-    activeMembers.value.some((m) => m.toLowerCase() === member.value.toLowerCase())
+    member.value.address &&
+    activeMembers.value.some((m) => m.toLowerCase() === member.value.address.toLowerCase())
   ) {
     addErrorToast('The member address already has an active vesting.')
     return true
@@ -278,40 +361,44 @@ async function approveAllowance() {
     }
   }
 }
-async function submit() {
-  if (!formValid.value) return
-  if (checkDuplicateVesting()) return
 
-  const start = Math.floor(new Date(startDate.value).getTime() / 1000)
-  const durationInSeconds = duration.value * 24 * 60 * 60
+function handleDisplaySummary() {
+  $v.value.$touch()
+  if (!$v.value.$invalid) showSummary.value = true
+}
+async function submit() {
+  $v.value.$touch()
+  if ($v.value.$invalid) return
+  if (checkDuplicateVesting()) return
+  const startDate = dateRange.value?.[0] || new Date()
+  const start = Math.floor(startDate.getTime() / 1000)
+  const durationInSeconds = durationInDays.value * 24 * 60 * 60
   const cliffInSeconds = cliff.value * 24 * 60 * 60
-  await refetchTokenBalance()
 
   if (tokenBalance.value !== undefined) {
     const totalAmountInUnits = parseUnits(totalAmount.value.toString(), 6)
-    if (tokenBalance.value < totalAmountInUnits) {
+    const balanceInUnits = parseUnits(tokenBalance.value.amount.toString(), 6)
+    if (balanceInUnits < totalAmountInUnits) {
       addErrorToast('Insufficient token balance')
       return
     }
   }
-  await getAllowance()
 
+  await getAllowance()
   if (
     allowance.value !== undefined &&
     Number(formatUnits(allowance.value, 6)) < totalAmount.value
   ) {
     addErrorToast('Allowance is less than the total amount')
-
     return
   }
-
   addVesting({
     address: VESTING_ADDRESS as Address,
     abi: VestingABI,
     functionName: 'addVesting',
     args: [
-      team.value?.id,
-      member.value as Address,
+      teamStore.currentTeam?.id,
+      member.value.address as Address,
       start,
       durationInSeconds,
       cliffInSeconds,

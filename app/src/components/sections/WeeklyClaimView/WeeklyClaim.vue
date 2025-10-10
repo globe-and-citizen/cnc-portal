@@ -4,7 +4,7 @@
       <template #member-data="{ row }">
         <RouterLink
           :to="{
-            name: 'cash-remunerations-member',
+            name: 'claim-history',
             params: { id: teamStore.currentTeam?.id, memberAddress: row.member.address }
           }"
           class="flex items-center gap-2 hover:underline text-emerald-700"
@@ -14,9 +14,11 @@
       </template>
 
       <template #weekStart-data="{ row }">
-        <span class="font-bold">{{ getCurrentMonthYear(row.weekStart) }}</span>
+        <span class="font-bold">{{
+          dayjs(row.weekStart).utc().startOf('isoWeek').format('MMMM YYYY')
+        }}</span>
         <br />
-        <span>{{ formatDate(row.weekStart) }}</span>
+        <span>{{ formatIsoWeekRange(dayjs(row.weekStart).utc().startOf('isoWeek')) }}</span>
       </template>
 
       <template #hoursWorked-data="{ row }">
@@ -27,94 +29,96 @@
 
       <template #hourlyRate-data="{ row }">
         <div>
-          <span class="font-bold">
-            ≃
-            {{
-              (
-                getTotalHoursWorked(row.claims) *
-                Number(
-                  getHoulyRateInUserCurrency(
-                    row.wage.cashRatePerHour ??
-                      row.wage.tokenRatePerHour ??
-                      row.wage.usdcRatePerHour
-                  )
-                )
-              ).toFixed(2)
-            }}
-            {{ NETWORK.nativeTokenSymbol }} / USD
+          <RatePerHourList
+            :rate-per-hour="row.wage.ratePerHour"
+            :currency-symbol="NETWORK.currencySymbol"
+            :class="'font-bold'"
+          />
+          <span class="">
+            ≃ ${{ getHoulyRateInUserCurrency(row.wage.ratePerHour).toFixed(2) }}
+            {{ currencyStore.localCurrency.code }} / Hour
           </span>
-          <div class="flex">
-            <span class=""> {{ row.wage.cashRatePerHour }} {{ NETWORK.currencySymbol }},</span>
-
-            <span class=""> {{ row.wage.tokenRatePerHour }} TOKEN, </span>
-
-            <span class=""> {{ row.wage.usdcRatePerHour }} USDC </span>
-          </div>
         </div>
       </template>
 
       <template #totalAmount-data="{ row }">
         <div>
-          <span class="font-bold">
-            ≃
-            {{
+          <RatePerHourTotalList
+            :rate-per-hour="row.wage.ratePerHour"
+            :currency-symbol="NETWORK.currencySymbol"
+            :total-hours="getTotalHoursWorked(row.claims)"
+            :class="'font-bold'"
+          />
+          <span class="">
+            ≃ ${{
               (
-                getTotalHoursWorked(row.claims) *
-                Number(
-                  getHoulyRateInUserCurrency(
-                    row.wage.cashRatePerHour ??
-                      row.wage.tokenRatePerHour ??
-                      row.wage.usdcRatePerHour
-                  )
-                )
+                getTotalHoursWorked(row.claims) * getHoulyRateInUserCurrency(row.wage.ratePerHour)
               ).toFixed(2)
             }}
-            {{ NETWORK.nativeTokenSymbol }} / USD
+            {{ currencyStore.localCurrency.code }}
           </span>
-
-          <div class="flex">
-            <span>
-              {{ getTotalHoursWorked(row.claims) * row.wage.cashRatePerHour }}
-              {{ NETWORK.currencySymbol }},
-            </span>
-
-            <span>
-              {{ getTotalHoursWorked(row.claims) * row.wage.tokenRatePerHour }}
-              TOKEN,
-            </span>
-
-            <span>
-              {{ getTotalHoursWorked(row.claims) * row.wage.usdcRatePerHour }}
-              USDC
-            </span>
-          </div>
         </div>
       </template>
 
-      <!-- <template #action-data="{}">
-        <ButtonUI class="btn btn-success btn-sm" type="button"> Approve </ButtonUI>
-      </template> -->
+      <template #status-data="{ row }">
+        <template v-if="row.status === 'signed'">
+          <span
+            class="text-base px-3 py-1 rounded-2xl border-2 border-secondary text-secondary bg-transparent"
+          >
+            {{ row.status.charAt(0).toUpperCase() + row.status.slice(1) }}
+          </span>
+        </template>
+        <template v-else-if="!row.status || row.status === 'pending'">
+          <span
+            class="text-base px-3 py-1 rounded-2xl border-2 border-gray-400 text-gray-700 bg-transparent"
+          >
+            {{ row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending' }}
+          </span>
+        </template>
+        <template v-else>
+          <span
+            class="text-base px-3 py-1 rounded-2xl border-2 border-yellow-500 text-black bg-transparent"
+          >
+            {{ row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending' }}
+          </span>
+        </template>
+        <!-- <br />
+        <span class="text-sm">
+          {{ row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '-' }}
+        </span> -->
+      </template>
     </TableComponent>
   </CardComponent>
 </template>
 
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
+import RatePerHourList from '@/components/RatePerHourList.vue'
+import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import { NETWORK } from '@/constant'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
+import type { TokenId } from '@/constant'
+import { NETWORK } from '@/constant'
+import { useCurrencyStore, useTeamStore } from '@/stores'
+import type { RatePerHour } from '@/types/cash-remuneration'
+import { formatIsoWeekRange } from '@/utils/dayUtils'
+import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import utc from 'dayjs/plugin/utc'
+import weekday from 'dayjs/plugin/weekday'
 import { computed } from 'vue'
-import { useCurrencyStore } from '@/stores'
-import { useUserDataStore, useTeamStore } from '@/stores'
 import { RouterLink } from 'vue-router'
+
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
+dayjs.extend(weekday)
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
 }
 
-const userStore = useUserDataStore()
+// const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 const props = defineProps<{
   memberAddress?: string
@@ -124,71 +128,71 @@ const props = defineProps<{
 const weeklyClaimUrl = computed(
   () =>
     `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${
-      props.memberAddress
-        ? `&memberAddress=${props.memberAddress}`
-        : userStore.address !== teamStore.currentTeam?.ownerAddress
-          ? `&memberAddress=${userStore.address}`
-          : ''
+      props.memberAddress ? `&memberAddress=${props.memberAddress}` : ''
     }`
 )
 
-const { data, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
+const { data: fetchedData, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
 
-const isTeamClaimDataFetching = computed(() => !data.value && !error.value)
+// I think this sorting should be done in the backend
+const data = computed(() => {
+  if (!fetchedData.value) return null
+  //return the most recent first date
+  return [...fetchedData.value].sort((a, b) => {
+    const dateA = new Date(a.weekStart).getTime()
+    const dateB = new Date(b.weekStart).getTime()
+    return dateB - dateA
+  })
+})
+
+const isTeamClaimDataFetching = computed(() => !fetchedData.value && !error.value)
 
 const currencyStore = useCurrencyStore()
-const getHoulyRateInUserCurrency = (rate: number) => {
-  const nativeTokenInfo = currencyStore.getTokenInfo('native')
-  const price = nativeTokenInfo?.prices.find((p) => p.id == 'local')?.price || 0
-  return (rate * price).toFixed(2)
-}
-function formatDate(date: string | Date) {
-  const monday = getMondayStart(new Date(date))
-  const sunday = getSundayEnd(new Date(date))
-  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-  const locale = navigator.language || 'en-US'
-  return `${monday.toLocaleDateString(locale, options)}-${sunday.toLocaleDateString(locale, options)}`
-}
 
-function getCurrentMonthYear(date: string | Date) {
-  const d = new Date(date)
-  const locale = navigator.language || 'en-US'
-  return d.toLocaleDateString(locale, {
-    month: 'long',
-    year: 'numeric'
-  })
+function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = currencyStore): number {
+  return ratePerHour.reduce((total: number, rate: { type: TokenId; amount: number }) => {
+    const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
+    const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
+    return total + rate.amount * localPrice
+  }, 0)
 }
 
 const columns = [
   {
     key: 'weekStart',
     label: 'Productivity Diary',
-    // sortable: true,
-    class: 'text-black text-base'
+    sortable: true,
+    class: 'text-base '
   },
   {
     key: 'member',
     label: 'Member',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base '
   },
   {
     key: 'hoursWorked',
     label: 'Hour Worked',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base'
   },
   {
     key: 'hourlyRate',
     label: 'Hourly Rate',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base'
   },
   {
     key: 'totalAmount',
     label: 'Total Amount',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base'
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    sortable: false,
+    class: 'text-base'
   }
 ] as TableColumn[]
 </script>

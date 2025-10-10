@@ -7,7 +7,6 @@ import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ElectionTypes} from './ElectionTypes.sol';
 import {ElectionUtils} from './ElectionUtils.sol';
 import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
-import 'hardhat/console.sol';
 
 /**
  * @title Elections
@@ -20,7 +19,7 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   mapping(uint256 => ElectionTypes.Election) private _elections;
   uint256[] private _electionIds;
   mapping(uint256 => mapping(address => address)) private _votes;
-  mapping(uint256 => mapping(address => uint256)) private _voteCounts;
+  mapping(uint256 => mapping(address => uint256)) public _voteCounts;
 
   event ElectionCreated(
     uint256 indexed electionId,
@@ -152,14 +151,19 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     ElectionTypes.Election storage election = _elections[electionId];
 
     if (election.id == 0) revert ElectionNotFound();
-    if (!ElectionUtils.hasElectionEnded(election.endDate)) {
+    if (
+      election.voteCount < election.voterList.length &&
+      !ElectionUtils.hasElectionEnded(election.endDate)
+    ) {
       revert ResultsNotReady();
     }
     if (election.resultsPublished) revert ResultsAlreadyPublished();
 
     election.winners = getElectionResults(electionId);
     election.resultsPublished = true;
-    IBoardOfDirectors(bodAddress).setBoardOfDirectors(election.winners);
+    if (election.winners.length > 0) {
+      IBoardOfDirectors(bodAddress).setBoardOfDirectors(election.winners);
+    }
 
     emit ResultsPublished(electionId, election.winners);
   }
@@ -240,44 +244,44 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     address[] memory candidateList = election.candidateList;
     uint256 seatCount = election.seatCount;
 
-    // Create a fixed-size array to hold the top candidates found so far.
-    ElectionUtils.CandidateResult[] memory topCandidates = new ElectionUtils.CandidateResult[](
-      seatCount
+    // Create array to store all candidates with their vote counts
+    ElectionUtils.CandidateResult[] memory allCandidates = new ElectionUtils.CandidateResult[](
+      candidateList.length
     );
 
-    // Iterate through every candidate once.
+    // Populate the array with all candidates and their vote counts
     for (uint256 i = 0; i < candidateList.length; i++) {
-      address currentCandidateAddress = candidateList[i];
-      uint256 currentVoteCount = _voteCounts[electionId][currentCandidateAddress];
+      allCandidates[i] = ElectionUtils.CandidateResult({
+        candidateAddress: candidateList[i],
+        voteCount: _voteCounts[electionId][candidateList[i]]
+      });
+    }
 
-      // Check if the current candidate has more votes than the person with the
-      // least votes currently in our `topCandidates` list.
-      if (currentVoteCount > topCandidates[seatCount - 1].voteCount) {
-        // Replace the last element with the new, higher-scoring candidate.
-        topCandidates[seatCount - 1] = ElectionUtils.CandidateResult({
-          candidateAddress: currentCandidateAddress,
-          voteCount: currentVoteCount
-        });
-
-        // "Bubble" the new candidate up to their correct sorted position.
-        for (uint256 j = seatCount - 1; j > 0; j--) {
-          if (topCandidates[j].voteCount > topCandidates[j - 1].voteCount) {
-            // Swap with the element above if the score is higher.
-            ElectionUtils.CandidateResult memory temp = topCandidates[j];
-            topCandidates[j] = topCandidates[j - 1];
-            topCandidates[j - 1] = temp;
-          } else {
-            // Stop once the candidate is in the correct sorted position.
-            break;
-          }
+    // Sort candidates by vote count (descending) using bubble sort
+    for (uint256 i = 0; i < allCandidates.length - 1; i++) {
+      for (uint256 j = 0; j < allCandidates.length - i - 1; j++) {
+        if (allCandidates[j].voteCount < allCandidates[j + 1].voteCount) {
+          ElectionUtils.CandidateResult memory temp = allCandidates[j];
+          allCandidates[j] = allCandidates[j + 1];
+          allCandidates[j + 1] = temp;
+        }
+        // Tie-breaking: if vote counts are equal, use address comparison for deterministic result
+        else if (
+          allCandidates[j].voteCount == allCandidates[j + 1].voteCount &&
+          allCandidates[j].candidateAddress > allCandidates[j + 1].candidateAddress
+        ) {
+          ElectionUtils.CandidateResult memory temp = allCandidates[j];
+          allCandidates[j] = allCandidates[j + 1];
+          allCandidates[j + 1] = temp;
         }
       }
     }
 
-    // Extract just the addresses of the winners.
+    // Extract winners, ensuring we always return the required number of seats
     address[] memory winners = new address[](seatCount);
+
     for (uint256 i = 0; i < seatCount; i++) {
-      winners[i] = topCandidates[i].candidateAddress;
+      winners[i] = allCandidates[i].candidateAddress;
     }
 
     return winners;

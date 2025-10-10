@@ -4,6 +4,16 @@ import {
   getExpenses,
   updateExpense,
 } from "../controllers/expenseController";
+import {
+  validateBody,
+  validateQuery,
+  validateParams,
+  validateBodyAndParams,
+  addExpenseBodySchema,
+  getExpensesQuerySchema,
+  updateExpenseBodySchema,
+  updateExpenseParamsSchema,
+} from "../validation";
 
 const expenseRoutes = express.Router();
 
@@ -36,7 +46,7 @@ const expenseRoutes = express.Router();
  *     500:
  *       description: Internal server error
  */
-expenseRoutes.post("/", addExpense);
+expenseRoutes.post("/", validateBody(addExpenseBodySchema), addExpense);
 
 /**
  * @openapi
@@ -60,7 +70,7 @@ expenseRoutes.post("/", addExpense);
  *     500:
  *       description: Internal server error
  */
-expenseRoutes.get("/", getExpenses);
+expenseRoutes.get("/", validateQuery(getExpensesQuerySchema), getExpenses);
 
 /**
  * @openapi
@@ -95,6 +105,6 @@ expenseRoutes.get("/", getExpenses);
  *     500:
  *       description: Internal server error
  */
-expenseRoutes.patch("/:id", updateExpense);
+expenseRoutes.patch("/:id", validateBodyAndParams(updateExpenseBodySchema, updateExpenseParamsSchema), updateExpense);
 
 export default expenseRoutes;

@@ -129,51 +129,109 @@
         <span class="text-xs font-bold text-gray-400 tracking-tight"> General </span>
       </div>
 
-      <nav class="space-y-4">
-        <div v-for="item in menuItems" :key="item.label" class="space-y-2">
-          <RouterLink
-            :to="item.route"
-            class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
-            :class="{
-              'bg-emerald-500/10 shadow-sm': item.active,
-              'hover:bg-gray-100': !item.active,
-              hidden: !item.show
-            }"
-          >
-            <div class="relative">
-              <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
-            </div>
-            <span
-              v-if="!isCollapsed"
-              class="text-sm font-medium transition-colors duration-200"
-              :class="{ 'text-emerald-600': item.active }"
-            >
-              {{ item.label }}
-            </span>
-          </RouterLink>
-          <div v-for="child in item.children" :key="child.label">
-            <RouterLink
-              :to="child.route"
-              class="min-w-10 min-h-11 flex items-center gap-3 px-4 py-3 ml-8 rounded-xl text-gray-600 group transition-all duration-200 z-10"
-              :class="{
-                'bg-emerald-500/10 shadow-sm': child.active,
-                'hover:bg-gray-100': !child.active,
-                hidden: !item.show
-              }"
-            >
-              <div class="relative">
-                <!-- <IconifyIcon :icon="child.icon" :class="getIconClass(child.active)" /> -->
-              </div>
-              <span
-                v-if="!isCollapsed"
-                class="text-sm font-medium transition-colors duration-200"
-                :class="{ 'text-emerald-600': child.active }"
+      <nav class="menu rounded-box w-full">
+        <ul class="space-y-4">
+          <div v-for="(item, idx) in menuItems" :key="item.label">
+            <div>
+              <!-- if no children, direct link -->
+              <RouterLink
+                v-if="!item.children || item.children.length === 0"
+                :to="item.route"
+                class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
+                :class="{
+                  'bg-emerald-500/10 shadow-sm': item.active,
+                  'hover:bg-gray-100': !item.active,
+                  hidden: !item.show
+                }"
               >
-                {{ child.label }}
-              </span>
-            </RouterLink>
+                <div class="relative">
+                  <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
+                </div>
+                <span
+                  v-if="!isCollapsed"
+                  class="text-sm font-medium transition-colors duration-200"
+                  :class="{ 'text-emerald-600': item.active }"
+                >
+                  {{ item.label }}
+                </span>
+              </RouterLink>
+
+              <!-- if has children -->
+              <div v-else>
+                <button
+                  class="w-full min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10 focus:outline-none"
+                  :class="{
+                    'bg-emerald-500/10 shadow-sm': item.active,
+                    'hover:bg-gray-100 ': !item.active,
+                    hidden: !item.show
+                  }"
+                  @click="toggleSubmenu(idx)"
+                  type="button"
+                >
+                  <div class="relative">
+                    <IconifyIcon :icon="item.icon" :class="getIconClass(item.active)" />
+                  </div>
+                  <span
+                    v-if="!isCollapsed"
+                    class="text-sm font-medium transition-colors duration-200 flex-1 text-left"
+                    :class="{ 'text-emerald-600': item.active }"
+                  >
+                    {{ item.label }}
+                  </span>
+                  <IconifyIcon
+                    v-if="!isCollapsed"
+                    :icon="openSubmenus[idx] ? 'heroicons:chevron-up' : 'heroicons:chevron-down'"
+                    class="w-4 h-4 ml-auto text-gray-400 transition-transform duration-200"
+                  />
+                </button>
+
+                <!-- Sub-items with vertical line -->
+                <div v-show="openSubmenus[idx]" class="relative mt-2">
+                  <!-- vertical line -->
+                  <div
+                    class="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"
+                    v-if="!isCollapsed"
+                  ></div>
+
+                  <div class="space-y-2">
+                    <div v-for="child in item.children" :key="child.label" class="relative">
+                      <!-- horizontal line -->
+                      <div
+                        class="absolute left-6 top-1/2 w-4 h-0.5 bg-gray-200 -translate-y-1/2"
+                        v-if="!isCollapsed"
+                      ></div>
+
+                      <RouterLink
+                        :to="child.route"
+                        class="min-w-10 min-h-11 flex items-center gap-3 px-4 py-3 ml-8 rounded-xl text-gray-600 group transition-all duration-200 z-10 relative"
+                        :class="{
+                          'bg-emerald-500/10 shadow-sm': child.active,
+                          'hover:bg-gray-100': !child.active,
+                          hidden: !child.show
+                        }"
+                      >
+                        <!-- connection point -->
+                        <div
+                          class="absolute -left-4 top-1/2 w-2 h-2 bg-gray-300 rounded-full -translate-y-1/2"
+                          :class="{ 'bg-emerald-500': child.active }"
+                          v-if="!isCollapsed"
+                        ></div>
+
+                        <span
+                          v-if="!isCollapsed"
+                          class="text-sm font-medium transition-colors duration-200"
+                          :class="{ 'text-emerald-600': child.active }"
+                        >
+                          {{ child.label }}
+                        </span>
+                      </RouterLink>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </ul>
       </nav>
     </div>
 
@@ -216,6 +274,8 @@ import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
 import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
 import { useRoute } from 'vue-router'
+// import { useReadContract } from '@wagmi/vue'
+// import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 
 const appStore = useAppStore()
 const route = useRoute()
@@ -238,6 +298,34 @@ const target = ref(null)
 const isDropdownOpen = ref(false)
 const teamStore = useTeamStore()
 
+// const cashRemunerationAddress = computed(() =>
+//   teamStore.getContractAddressByType('CashRemunerationEIP712')
+// )
+
+// const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
+//   functionName: 'owner',
+//   // @ts-expect-error cashRemunerationAddress may not match expected type, but is correct for contract call
+//   address: cashRemunerationAddress,
+//   abi: CashRemuneration_ABI,
+//   enabled: computed(() => !!cashRemunerationAddress.value)
+// })
+
+// Check if user is Cash Remuneration owner with fallback to team owner
+// const isCashRemunerationOwner = computed(() => {
+//   if (
+//     cashRemunerationAddress.value &&
+//     cashRemunerationOwner.value &&
+//     !cashRemunerationOwnerError.value
+//   ) {
+//     return cashRemunerationOwner.value === userStore.address
+//   }
+//   // Fallback to team owner if contract doesn't exist or error occurred
+//   return userStore.address === teamStore.currentTeam?.ownerAddress
+// })
+
+// Dropdown submenu state
+const openSubmenus = ref<boolean[]>([])
+
 const getIconClass = (active: boolean | undefined) => {
   return [
     'w-6 h-6 transition-all duration-300 ease-in-out',
@@ -250,12 +338,19 @@ onMounted(() => {
     console.log('clicked outside')
     isDropdownOpen.value = false
   })
+  if (openSubmenus.value.length !== menuItems.value.length) {
+    openSubmenus.value = Array(menuItems.value.length).fill(false)
+  }
 })
 
 const emits = defineEmits(['openEditUserModal'])
 
 const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value
+}
+
+const toggleSubmenu = (idx: number) => {
+  openSubmenus.value = openSubmenus.value.map((isOpen, index) => (index === idx ? !isOpen : false))
 }
 
 const formatedUserAddress = computed(() => {
@@ -268,7 +363,17 @@ const formatedUserAddress = computed(() => {
 
 const menuItems = computed(() => [
   {
-    label: 'Dashboard',
+    label: 'Teams List',
+    icon: 'heroicons:squares-2x2',
+    route: {
+      name: 'teams',
+      params: { id: teamStore.currentTeam?.id || '1' }
+    },
+    active: route.name === 'teams',
+    show: true
+  },
+  {
+    label: 'Team Dashboard',
     icon: 'heroicons:home',
     route: {
       name: 'show-team',
@@ -294,7 +399,12 @@ const menuItems = computed(() => [
       name: 'cash-remunerations',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    active: route.name === 'cash-remunerations' || route.name === 'weekly-claim',
+    // Active if any child is active or the parent route is active
+    active:
+      route.name === 'cash-remunerations' ||
+      route.name === 'weekly-claim' ||
+      route.name === 'claim-history' ||
+      (route.name === 'claim-history' && route.params.memberAddress === userStore.address),
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
       {
@@ -307,27 +417,50 @@ const menuItems = computed(() => [
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       },
       {
-        label: ' Claim History',
+        label: 'My Claim History',
         route: {
           name: 'claim-history',
-          params: { id: teamStore.currentTeam?.id || '1' }
+          params: { id: teamStore.currentTeam?.id || '1', memberAddress: userStore.address }
         },
-        active: route.name === 'claim-history',
-        show:
-          (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
-          userStore.address !== teamStore.currentTeam?.ownerAddress
+        active: route.name === 'claim-history' && route.params.memberAddress === userStore.address,
+        show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       },
       {
-        label: ' Weekly Claim',
+        label: ' Member Claim History',
+        route: {
+          name: 'claim-history',
+          params: {
+            id: teamStore.currentTeam?.id || '1',
+            memberAddress: route.params.memberAddress
+          }
+        },
+        // Active if on claim-history and not the current user
+        active: route.name === 'claim-history' && route.params.memberAddress !== userStore.address,
+        show:
+          (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
+          !!route.params.memberAddress &&
+          route.params.memberAddress !== userStore.address
+      },
+      {
+        label: 'Team Weekly Claims',
         route: {
           name: 'weekly-claim',
           params: { id: teamStore.currentTeam?.id || '1' }
         },
         active: route.name === 'weekly-claim',
-        show:
-          (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
-          userStore.address === teamStore.currentTeam?.ownerAddress
+        show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       }
+      // {
+      // && isCashRemunerationOwner.value
+      //   label: 'Payment Status',
+      //   route: {
+      //     name: 'weekly-claim',
+      //     params: { id: teamStore.currentTeam?.id || '1' }
+      //   },
+      //   active: route.name === 'weekly-claim',
+      //   show:
+      //     (teamStore.currentTeam?.teamContracts ?? []).length > 0 && !isCashRemunerationOwner.value
+      // }
     ].filter((child) => child.show)
   },
   {
@@ -365,10 +498,10 @@ const menuItems = computed(() => [
     label: 'Administration',
     icon: 'heroicons:chart-bar',
     route: {
-      name: 'administration',
+      name: 'bod-elections',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
-    active: route.name === 'bod-elections',
+    active: route.name === 'bod-elections' || route.name === 'bod-proposals',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
       {
@@ -378,6 +511,15 @@ const menuItems = computed(() => [
           params: { id: teamStore.currentTeam?.id || '1' }
         },
         active: route.name === 'bod-elections',
+        show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      },
+      {
+        label: 'Proposals',
+        route: {
+          name: 'bod-proposals',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'bod-proposals',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       }
       // {
@@ -400,6 +542,15 @@ const menuItems = computed(() => [
     },
     active: route.name === 'vesting',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  },
+  {
+    label: 'Timeline Demo',
+    icon: 'heroicons:queue-list',
+    route: {
+      name: 'timeline-demo'
+    },
+    active: route.name === 'timeline-demo',
+    show: true
   }
 ])
 
@@ -439,5 +590,22 @@ const toggleDropdown = () => {
   100% {
     background-position: 0% 50%;
   }
+}
+
+/* Style pour la transition des sous-menus */
+.space-y-2 > div {
+  position: relative;
+}
+
+/* Animation pour la barre verticale */
+.absolute.left-6 {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Point de connexion actif */
+.absolute.-left-4.bg-emerald-500 {
+  box-shadow:
+    0 0 0 2px white,
+    0 0 0 3px rgb(16 185 129);
 }
 </style>

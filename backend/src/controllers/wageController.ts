@@ -34,52 +34,10 @@ export const setWage = async (req: Request, res: Response) => {
 
   console.log("setWage called with body: ", body);
 
-  // Validating the wage data
-  // Checking required data
-
-  let missingParameters = [];
-  if (isNaN(teamId)) missingParameters.push("teamId");
-  if (!userAddress) missingParameters.push("userAddress");
-  // if (isNaN(cashRatePerHour)) missingParameters.push("cashRatePerHour");
-  // if (isNaN(tokenRatePerHour)) missingParameters.push("tokenRatePerHour");
-  if (isNaN(maximumHoursPerWeek)) missingParameters.push("maximumHoursPerWeek");
-  if (!Array.isArray(ratePerHour) || ratePerHour.length === 0) missingParameters.push("ratePerHour");
   ratePerHour = ratePerHour?.map((rate) => ({
     type: rate.type,
     amount: Number(rate.amount),
   }));
-
-  // Checking if the parameters are empty
-  if (missingParameters.length > 0) {
-    return errorResponse(
-      400,
-      `Missing or invalid parameters: ${missingParameters.join(", ")}`,
-      res
-    );
-  }
-
-  // Checking if maximumHoursPerWeek is a number, is an integer and is greater than 0
-  let errors = [];
-
-  if (!Number.isInteger(maximumHoursPerWeek) || maximumHoursPerWeek <= 0) {
-    errors.push("Invalid maximumHoursPerWeek");
-  }
-
-  for (const rate of ratePerHour) {
-    if (
-      typeof rate.type !== "string" ||
-      !rate.type ||
-      rate.amount <= 0 || 
-      isNaN(rate.amount)
-    ) {
-    // errors.push("Invalid cashRatePerHour");
-      errors.push("Invalid wage rate");
-    }
-  }
-
-  if (errors.length > 0) {
-    return errorResponse(400, `Errors: ${errors.join(", ")}`, res);
-  }
 
   try {
     // Check if the caller is the owner of the team
@@ -147,8 +105,6 @@ export const setWage = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 // /wage/?teamId=teamId
@@ -183,8 +139,6 @@ export const getWages = async (req: Request, res: Response) => {
   } catch (error) {
     console.log("Error: ", error);
     return errorResponse(500, "Internal server error", res);
-  } finally {
-    await prisma.$disconnect();
   }
 };
 

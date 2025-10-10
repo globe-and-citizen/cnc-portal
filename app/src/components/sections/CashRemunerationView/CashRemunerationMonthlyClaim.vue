@@ -1,10 +1,10 @@
 <template>
   <OverviewCard
-    :title="totalMonthlyWithdrawnAmount"
+    :title="totalMonthlyClaim"
     subtitle="Month Claimed"
     variant="warning"
     :card-icon="cartIcon"
-    :loading="loading"
+    :loading="isFetching"
   >
     <div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
@@ -22,62 +22,64 @@ import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
 import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
-import { useQuery } from '@vue/apollo-composable'
-import gql from 'graphql-tag'
-import { formatEther } from 'viem'
 import { watch, computed } from 'vue'
+import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { useStorage } from '@vueuse/core'
+import type { TokenId } from '@/constant'
+import type { RatePerHour } from '@/types/cash-remuneration'
+
+// Interface pour typer les claims retirés
+interface WithdrawnClaim {
+  claims: { hoursWorked: number }[]
+  wage: {
+    ratePerHour: RatePerHour
+  }
+}
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const contractAddress = teamStore.currentTeam?.teamContracts.find(
-  (contract) => contract.type === 'CashRemunerationEIP712'
-)?.address
 
 const currency = useStorage('currency', {
   code: 'USD',
   name: 'US Dollar',
   symbol: '$'
 })
+const withdrawnQueryKey = computed(() => ['weekly-claims', teamStore.currentTeam?.id, 'withdrawn'])
 
-// const contractAddress = '0xFF9544a21EAA0C9B54D3d9134A62057076137fF4'
-const now = new Date()
-const startOfMonth = new Date(now.getFullYear(), now.getMonth() - 2, 1).getTime() / 1000
-const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getTime() / 1000
-const { result, loading, error } = useQuery(
-  gql`
-    query GetCashRemunerationMonthlyTransactions(
-      $contractAddress: Bytes!
-      $startDate: BigInt!
-      $endDate: BigInt!
-    ) {
-      transactions(
-        where: {
-          contractAddress: $contractAddress
-          blockTimestamp_gte: $startDate
-          blockTimestamp_lte: $endDate
-          transactionType: withdraw
-        }
-      ) {
-        amount
-      }
-    }
-  `,
-  { contractAddress, startDate: startOfMonth, endDate: endOfMonth }
+const {
+  data: weeklyClaims,
+  isLoading: isFetching,
+  error
+} = useTanstackQuery<WithdrawnClaim[]>(
+  'withdrawnClaims',
+  computed(() => `/weeklyClaim/?teamId=${teamStore.currentTeamId}&status=withdrawn`),
+  {
+    queryKey: withdrawnQueryKey,
+    refetchOnWindowFocus: true
+  }
 )
 
-const totalMonthlyWithdrawnAmount = computed(() => {
-  const transactions = result.value?.transactions || []
-  const totalAmount = transactions.reduce((acc: number, transaction: { amount: number }) => {
-    return acc + parseFloat(formatEther(BigInt(transaction.amount)))
-  }, 0)
+function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
+  return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
+}
 
-  const nativeTokenInfo = currencyStore.getTokenInfo('native')
-  return formatCurrencyShort(
-    totalAmount * (nativeTokenInfo?.prices.find((p) => p.id == 'local')?.price || 0),
-    currency.value?.code
-  )
+function getHourlyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = currencyStore): number {
+  return ratePerHour.reduce((total: number, rate: { type: TokenId; amount: number }) => {
+    const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
+    const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
+    return total + rate.amount * localPrice
+  }, 0)
+}
+
+const totalMonthlyClaim = computed(() => {
+  if (!weeklyClaims.value || !Array.isArray(weeklyClaims.value)) return ''
+  const total = weeklyClaims.value.reduce((sum: number, weeklyClaim: WithdrawnClaim) => {
+    const hours = getTotalHoursWorked(weeklyClaim.claims)
+    const rate = getHourlyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
+    return sum + hours * rate
+  }, 0)
+  return formatCurrencyShort(total, currency.value.code)
 })
 
 watch(error, (err) => {

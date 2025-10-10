@@ -1,0 +1,67 @@
+<template>
+  <div class="flex justify-between gap-2">
+    <ButtonUI
+      v-if="
+        formattedElection &&
+        !formattedElection?.resultsPublished &&
+        !router.currentRoute.value.fullPath.includes('bod-elections-details')
+      "
+      @click="
+        () => {
+          router.push(`/teams/${teamStore.currentTeamId}/administration/bod-elections-details`)
+        }
+      "
+      :variant="electionStatus?.text === 'Active' ? 'primary' : undefined"
+    >
+      {{
+        electionStatus?.text === 'Active'
+          ? 'Vote Now'
+          : electionStatus?.text == 'Completed'
+            ? 'View Results'
+            : 'View Details'
+      }}
+    </ButtonUI>
+    <PublishResult
+      v-if="
+        showPublishResult &&
+        formattedElection &&
+        !Boolean(formattedElection?.resultsPublished) &&
+        electionStatus?.text === 'Completed'
+      "
+      :disabled="userStore.address !== owner"
+      :election-id="formattedElection?.id ?? 1"
+    />
+    <div
+      :class="{ tooltip: userStore.address != owner }"
+      :data-tip="userStore.address != owner ? 'Only the owner can create elections' : null"
+    >
+      <ButtonUI
+        v-if="!electionStatus || formattedElection?.resultsPublished"
+        variant="success"
+        @click="emits('showCreateElectionModal')"
+        :disabled="userStore.address != owner"
+      >
+        Create Election
+      </ButtonUI>
+    </div>
+  </div>
+</template>
+<script setup lang="ts">
+import { computed, inject } from 'vue'
+import PublishResult from '@/components/sections/AdministrationView/PublishResult.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
+import { useRouter } from 'vue-router'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import { useBoDElections } from '@/composables'
+
+const props = defineProps<{ electionId: bigint }>()
+
+const emits = defineEmits(['showCreateElectionModal'])
+const showPublishResult = inject('showPublishResultBtn')
+
+const teamStore = useTeamStore()
+const userStore = useUserDataStore()
+const router = useRouter()
+const currentElectionId = computed(() => props.electionId)
+const { formattedElection, electionStatus, owner } = useBoDElections(currentElectionId)
+</script>

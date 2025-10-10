@@ -18,6 +18,7 @@ contract InvestorV1 is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable
 
   event Minted(address indexed shareholder, uint256 amount);
   event DividendDistributed(address indexed shareholder, uint256 amount);
+  event DividendFailed(address indexed shareholder, uint256 amount);
 
   function initialize(string calldata _name, string calldata _symbol, address _owner) external initializer {
     __ERC20_init(_name, _symbol);
@@ -85,9 +86,12 @@ contract InvestorV1 is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable
       uint256 balance = balanceOf(shareholder);
       if (balance > 0) {
         uint256 dividend = (msg.value * balance) / totalSupply();
-        payable(shareholder).transfer(dividend);
-
-        emit DividendDistributed(shareholder, dividend);
+        (bool success, ) = payable(shareholder).call{value: dividend}("");
+        if(success){
+          emit DividendDistributed(shareholder, dividend);
+        }else{
+          emit DividendFailed(shareholder, dividend);
+        }
       }
     }
   }

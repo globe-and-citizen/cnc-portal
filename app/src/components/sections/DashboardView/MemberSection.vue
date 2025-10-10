@@ -4,7 +4,7 @@
       <ButtonUI
         @click="
           () => {
-            showAddMemberForm = !showAddMemberForm
+            showAddMemberForm = { mount: true, show: true }
           }
         "
         data-test="add-member-button"
@@ -13,11 +13,15 @@
       >
         <IconifyIcon icon="heroicons-outline:plus-circle" class="size-6" /> Add a new Member
       </ButtonUI>
-      <ModalComponent v-model="showAddMemberForm">
+      <ModalComponent
+        v-model="showAddMemberForm.show"
+        @reset="() => (showAddMemberForm = { mount: false, show: false })"
+      >
         <AddMemberForm
-          v-if="teamStore.currentTeam?.id && showAddMemberForm"
+          v-if="teamStore.currentTeam?.id && showAddMemberForm.mount"
           :teamId="teamStore.currentTeam?.id"
-          @memberAdded="showAddMemberForm = false"
+          @memberAdded="showAddMemberForm = { mount: false, show: false }"
+          @close-modal="() => (showAddMemberForm = { mount: false, show: false })"
         />
       </ModalComponent>
     </template>
@@ -107,7 +111,10 @@ import type { WageResponse } from '@/types'
 const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
-const showAddMemberForm = ref(false)
+const showAddMemberForm = ref({
+  mount: false,
+  show: false
+})
 
 // Create a computed property for team ID
 const teamId = computed(() => teamStore.currentTeam?.id)

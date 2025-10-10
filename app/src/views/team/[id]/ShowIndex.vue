@@ -11,9 +11,9 @@
               data-test="loader"
               v-if="teamStore.currentTeamMeta?.teamIsFetching"
             ></div>
-            <a v-else-if="teamStore.currentTeamMeta?.team">{{
-              teamStore.currentTeamMeta.team?.name
-            }}</a>
+            <a v-else-if="teamStore.currentTeamMeta?.team"
+              >TEAM : {{ teamStore.currentTeamMeta.team?.name }}</a
+            >
           </li>
 
           <li>{{ route.meta.name }}</li>
@@ -77,7 +77,11 @@ const showModal = ref(false)
 const route = useRoute()
 
 onMounted(() => {
-  teamStore.setCurrentTeamId(route.params.id as string)
+  if (route.params.id) {
+    teamStore.setCurrentTeamId(route.params.id as string)
+  } else {
+    // e.g. this.$router.push('/teams')
+  }
 })
 
 const hasContract = computed(() => {
@@ -88,7 +92,7 @@ const hasContract = computed(() => {
 watch(
   () => route.params.id,
   (newId) => {
-    if (newId !== teamStore.currentTeamId) {
+    if (newId && newId !== teamStore.currentTeamId) {
       teamStore.setCurrentTeamId(newId as string)
     }
   }

@@ -14,11 +14,7 @@
     </label>
   </div>
   <div class="card bg-base-100 w-full">
-    <TableComponent
-      :rows="filteredApprovals"
-      :columns="columns"
-      :loading="expenseDataStore.allExpenseDataIsFetching"
-    >
+    <TableComponent :rows="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
       <template #action-data="{ row }">
         <ButtonUI
           v-if="row.status == 'enabled'"
@@ -71,14 +67,24 @@
         >
       </template>
       <template #maxAmountPerTx-data="{ row }">
-        <span>{{ row.budgetData[2]?.value }} {{ tokenSymbol(row.tokenAddress) }}</span>
+        <span
+          >{{ row.budgetData.find((item: BudgetData) => item.budgetType === 2)?.value }}
+          {{ tokenSymbol(row.tokenAddress) }}</span
+        >
       </template>
       <template #transactions-data="{ row }">
-        <span>{{ row.balances[0] }}/{{ row.budgetData[0]?.value }} TXs</span>
+        <span
+          >{{ row.balances[0] }}/{{
+            row.budgetData.find((item: BudgetData) => item.budgetType === 0)?.value
+          }}
+          TXs</span
+        >
       </template>
       <template #amountTransferred-data="{ row }">
         <span
-          >{{ row.balances[1] }}/{{ row.budgetData[1]?.value }}
+          >{{ row.balances[1] }}/{{
+            row.budgetData.find((item: BudgetData) => item.budgetType === 1)?.value
+          }}
           {{ tokenSymbol(row.tokenAddress) }}</span
         >
       </template>
@@ -91,28 +97,49 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { computed, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
-import { useToastStore, useUserDataStore, useTeamStore, useExpenseDataStore } from '@/stores'
-import { type Address, keccak256 } from 'viem'
+import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
+import { keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
-import { useRoute } from 'vue-router'
 import UserComponent from '@/components/UserComponent.vue'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useTanstackQuery } from '@/composables'
+import type { BudgetData, ExpenseResponse } from '@/types'
 
 const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
 const userDataStore = useUserDataStore()
-const expenseDataStore = useExpenseDataStore()
-const route = useRoute()
+const queryClient = useQueryClient()
 const statuses = ['all', 'disabled', 'enabled', 'expired']
 const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
 const isLoadingSetStatus = ref(false)
 
-const expenseAccountEip712Address = computed(
-  () =>
-    teamStore.currentTeam?.teamContracts?.find(
-      (contract) => contract.type === 'ExpenseAccountEIP712'
-    )?.address as Address
+const {
+  data: expenseData,
+  isLoading: isFetchingExpenseData
+  // error: errorFetchingExpenseData
+} = useTanstackQuery<ExpenseResponse[]>(
+  'expenseData',
+  computed(() => `/expense?teamId=${teamStore.currentTeamId}`),
+  {
+    queryKey: ['getExpenseData'],
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true
+  }
+)
+
+const formattedExpenseData = computed(() => {
+  return expenseData.value?.map((expense) => {
+    return {
+      ...expense.data,
+      ...expense
+    }
+  })
+})
+
+const expenseAccountEip712Address = computed(() =>
+  teamStore.getContractAddressByType('ExpenseAccountEIP712')
 )
 const columns = [
   {
@@ -154,7 +181,7 @@ const columns = [
 //#endregion Composables
 const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
   functionName: 'owner',
-  address: expenseAccountEip712Address as unknown as Address,
+  address: expenseAccountEip712Address, //as unknown as Address,
   abi: expenseAccountABI
 })
 //deactivate approval
@@ -184,9 +211,9 @@ const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
 
 const filteredApprovals = computed(() => {
   if (selectedRadio.value === 'all') {
-    return expenseDataStore.allExpenseDataParsed
+    return formattedExpenseData.value
   } else {
-    return expenseDataStore.allExpenseDataParsed.filter(
+    return (formattedExpenseData.value ?? []).filter(
       (approval) => approval.status === selectedRadio.value
     )
   }
@@ -194,6 +221,12 @@ const filteredApprovals = computed(() => {
 
 //#region Functions
 const deactivateApproval = async (signature: `0x{string}`) => {
+  if (!expenseAccountEip712Address.value) {
+    addErrorToast('Failed to deactivate')
+    log.error('ExpenseAccountEip712Address is undefined')
+    return
+  }
+
   const signatureHash = keccak256(signature)
 
   executeDeactivateApproval({
@@ -205,6 +238,12 @@ const deactivateApproval = async (signature: `0x{string}`) => {
 }
 
 const activateApproval = async (signature: `0x{string}`) => {
+  if (!expenseAccountEip712Address.value) {
+    addErrorToast('Failed to activate')
+    log.error('ExpenseAccountEip712Address is undefined')
+    return
+  }
+
   const signatureHash = keccak256(signature)
 
   executeActivateApproval({
@@ -222,7 +261,7 @@ watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
     signatureToUpdate.value = ''
     isLoadingSetStatus.value = false
-    expenseDataStore.fetchAllExpenseData(route.params.id as string)
+    queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
     addSuccessToast('Activate Successful')
   }
 })
@@ -230,18 +269,20 @@ watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
     signatureToUpdate.value = ''
     isLoadingSetStatus.value = false
-    expenseDataStore.fetchAllExpenseData(route.params.id as string)
+    queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
     addSuccessToast('Deactivate Successful')
   }
 })
 watch(errorDeactivateApproval, (newVal) => {
   if (newVal) {
+    isLoadingSetStatus.value = false
     log.error(parseError(newVal))
     addErrorToast('Failed to deactivate approval')
   }
 })
 watch(errorActivateApproval, (newVal) => {
   if (newVal) {
+    isLoadingSetStatus.value = false
     log.error(parseError(newVal))
     addErrorToast('Failed to activate approval')
   }

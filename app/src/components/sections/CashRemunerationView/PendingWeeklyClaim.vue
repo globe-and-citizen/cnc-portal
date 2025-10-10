@@ -4,10 +4,10 @@
     <transition-group name="stack" tag="div" class="stack w-full">
       <div
         v-for="(item, index) in data?.filter(
-          (weeklyClaim) => weeklyClaim.weekStart < new Date().toISOString()
+          (weeklyClaim) => weeklyClaim.weekStart < currentWeekStart
         )"
         :key="item.weekStart"
-        class="card shadow-md bg-white p-4"
+        class="card shadow-lg bg-white p-4"
         :class="{
           'transition -translate-y-full opacity-0  duration-1000': index === 0
         }"
@@ -17,9 +17,11 @@
             <UserComponent :user="row.member" />
           </template>
           <template #weekStart-data="{ row }">
-            <span class="font-bold">{{ getCurrentMonthYear(row.weekStart) }}</span>
-            <br />
-            <span>{{ formatDate(row.weekStart) }}</span>
+            <span class="font-bold line-clamp-1">{{
+              dayjs(row.weekStart).utc().startOf('isoWeek').format('MMMM YYYY')
+            }}</span>
+
+            <span>{{ formatIsoWeekRange(dayjs(row.weekStart).utc().startOf('isoWeek')) }}</span>
           </template>
 
           <template #hoursWorked-data="{ row }">
@@ -30,98 +32,46 @@
 
           <template #hourlyRate-data="{ row }">
             <div>
-              <span class="font-bold">
-                ≃
-                {{
-                  (
-                    getTotalHoursWorked(row.claims) *
-                    Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
-                  ).toFixed(2)
-                }}
-                {{ NETWORK.nativeTokenSymbol }} / USD
+              <RatePerHourList
+                :rate-per-hour="row.wage.ratePerHour"
+                :currency-symbol="NETWORK.currencySymbol"
+                :class="'font-bold'"
+              />
+              <span class="">
+                ≃ ${{ getHourlyRateInUserCurrency(row.wage.ratePerHour).toFixed(2) }}
+                {{ currencyStore.localCurrency.code }} / Hour
               </span>
-
-              <div class="flex">
-                <span>
-                  {{ getHourlyRate(row.wage.ratePerHour, 'native') }} {{ NETWORK.currencySymbol }},
-                </span>
-
-                <span> {{ getHourlyRate(row.wage.ratePerHour, 'sher') }} TOKEN ,</span>
-
-                <span> {{ getHourlyRate(row.wage.ratePerHour, 'usdc') }} USDC </span>
-              </div>
             </div>
           </template>
 
           <template #totalAmount-data="{ row }">
             <div>
-              <span class="font-bold">
-                ≃
-                {{
+              <RatePerHourTotalList
+                :rate-per-hour="row.wage.ratePerHour"
+                :currency-symbol="NETWORK.currencySymbol"
+                :total-hours="getTotalHoursWorked(row.claims)"
+                :class="'font-bold'"
+              />
+              <span class="">
+                ≃ ${{
                   (
                     getTotalHoursWorked(row.claims) *
-                    Number(getHoulyRateInUserCurrency(row.wage.cashRatePerHour))
+                    getHourlyRateInUserCurrency(row.wage.ratePerHour)
                   ).toFixed(2)
                 }}
-                {{ NETWORK.nativeTokenSymbol }} / USD
+                {{ currencyStore.localCurrency.code }}
               </span>
-              <div>
-                <span>
-                  {{
-                    getHourlyRate(row.wage.ratePerHour, 'native') === 'N/A'
-                      ? 'N/A'
-                      : Number(getHourlyRate(row.wage.ratePerHour, 'native')) *
-                        getTotalHoursWorked(row.claims)
-                  }}
-                  {{ NETWORK.currencySymbol }},
-                </span>
-
-                <span>
-                  {{
-                    getHourlyRate(row.wage.ratePerHour, 'sher') === 'N/A'
-                      ? 'N/A'
-                      : Number(getHourlyRate(row.wage.ratePerHour, 'sher')) *
-                        getTotalHoursWorked(row.claims)
-                  }}
-                  TOKEN,
-                </span>
-
-                <span>
-                  {{
-                    getHourlyRate(row.wage.ratePerHour, 'usdc') === 'N/A'
-                      ? 'N/A'
-                      : Number(getHourlyRate(row.wage.ratePerHour, 'usdc')) *
-                        getTotalHoursWorked(row.claims)
-                  }}
-                  USDC
-                </span>
-              </div>
             </div>
           </template>
-
           <template #action-data="{ row }">
             <CRSigne
               v-if="row.claims.length > 0 && row.wage.ratePerHour"
-              :disabled="isSameWeek(row.weekStart)"
+              :disabled="row.weekStart === currentWeekStart"
               :weekly-claim="{
                 id: row.id, //which id do we use, individual or weekly claim?
                 status: !row.status ? 'pending' : row.status,
                 hoursWorked: getTotalHoursWorked(row.claims),
                 createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
-                wage: {
-                  ratePerHour: row.wage.ratePerHour as RatePerHour,
-                  userAddress: row.wage.userAddress as Address
-                }
-              }"
-            />
-            <CRWithdrawClaim
-              :is-weekly-claim="true"
-              :claim="{
-                id: row.id, //which id do we use, individual or weekly claim?
-                status: !row.status ? 'pending' : row.status,
-                hoursWorked: getTotalHoursWorked(row.claims),
-                createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
-                signature: row.signature,
                 wage: {
                   ratePerHour: row.wage.ratePerHour as RatePerHour,
                   userAddress: row.wage.userAddress as Address
@@ -146,132 +96,139 @@
 </template>
 
 <script setup lang="ts">
-import UserComponent from '@/components/UserComponent.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
+import UserComponent from '@/components/UserComponent.vue'
+import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { NETWORK } from '@/constant'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import { computed, watch } from 'vue'
-import { useCurrencyStore } from '@/stores'
-import { useUserDataStore, useTeamStore } from '@/stores'
-import { type WeeklyClaimResponse, type RatePerHour, type SupportedTokens } from '@/types'
-import CRSigne from './CRSigne.vue'
+import { useCurrencyStore, useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { type RatePerHour, type WeeklyClaimResponse } from '@/types'
+import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import utc from 'dayjs/plugin/utc'
+import weekday from 'dayjs/plugin/weekday'
 import type { Address } from 'viem'
-import CRWithdrawClaim from './CRWithdrawClaim.vue'
-import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
-import { formatCurrencyShort } from '@/utils/currencyUtil'
+import { computed, watch } from 'vue'
+import CRSigne from './CRSigne.vue'
+// import CRWithdrawClaim from './CRWithdrawClaim.vue'
+import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import RatePerHourList from '@/components/RatePerHourList.vue'
+import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 import type { TokenId } from '@/constant'
+import { formatIsoWeekRange } from '@/utils/dayUtils'
+import { useReadContract } from '@wagmi/vue'
 import CRWeeklyClaimOwnerHeader from './CRWeeklyClaimOwnerHeader.vue'
+
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
+dayjs.extend(weekday)
+
+const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
+
+const userStore = useUserDataStore()
+const teamStore = useTeamStore()
+const currencyStore = useCurrencyStore()
+
+const cashRemunerationAddress = computed(() =>
+  teamStore.getContractAddressByType('CashRemunerationEIP712')
+)
+const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
+
+const weeklyClaimUrl = computed(
+  () =>
+    `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${!isCashRemunerationOwner.value ? `&memberAddress=${userStore.address}` : ''}`
+)
+const queryKey = computed(() => [
+  'weekly-claims',
+  teamStore.currentTeam?.id,
+  userStore.address,
+  'pending'
+])
+
+const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaimResponse>(
+  queryKey,
+  weeklyClaimUrl
+)
+const isFetching = computed(() => isLoading.value)
+
+const data = computed(() =>
+  loadedData.value?.filter(
+    (weeklyClaim) =>
+      weeklyClaim.status === 'pending' ||
+      (weeklyClaim.status === 'signed' &&
+        weeklyClaim.data.ownerAddress !== cashRemunerationOwner.value)
+  )
+)
+
+const {
+  data: cashRemunerationOwner,
+  // isFetching: isCashRemunerationOwnerFetching,
+  error: cashRemunerationOwnerError
+} = useReadContract({
+  functionName: 'owner',
+  address: cashRemunerationAddress,
+  abi: CashRemuneration_ABI
+})
+
+function getHourlyRateInUserCurrency(
+  ratePerHour: { type: string; amount: number }[],
+  tokenStore = currencyStore
+): number {
+  return ratePerHour.reduce((total: number, rate) => {
+    const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
+    const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
+    return total + rate.amount * localPrice
+  }, 0)
+}
 
 function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
 }
-
-const userStore = useUserDataStore()
-const teamStore = useTeamStore()
-
-const weeklyClaimUrl = computed(() => {
-  return `/weeklyClaim/?status=pending&teamId=${teamStore.currentTeam?.id}${
-    userStore.address !== teamStore.currentTeam?.ownerAddress
-      ? `&memberAddress=${userStore.address}`
-      : ''
-  }`
-})
-
-const { data, isFetching } = useCustomFetch(weeklyClaimUrl.value).get().json<WeeklyClaimResponse>()
-
-const isSameWeek = (weeklyClaimStartWeek: string) => {
-  console.log(`weeklyClaimStartWeek: ${weeklyClaimStartWeek}`)
-  const currentMonday = getMondayStart(new Date())
-  return currentMonday.toISOString() === weeklyClaimStartWeek
-}
-
-const currencyStore = useCurrencyStore()
-function getHoulyRateInUserCurrency(hourlyRate: number, tokenId: TokenId = 'native') {
-  const tokenInfo = currencyStore.getTokenInfo(tokenId)
-  const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
-  const code = currencyStore.localCurrency.code
-  return formatCurrencyShort(hourlyRate * localPrice, code)
-}
-
-function formatDate(date: string | Date) {
-  const monday = getMondayStart(new Date(date))
-  const sunday = getSundayEnd(new Date(date))
-  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-  const locale = navigator.language || 'en-US'
-  return `${monday.toLocaleDateString(locale, options)}-${sunday.toLocaleDateString(locale, options)}`
-}
-function getCurrentMonthYear(date: string | Date) {
-  const d = new Date(date)
-  const locale = navigator.language || 'en-US'
-  return d.toLocaleDateString(locale, {
-    month: 'long',
-    year: 'numeric'
-  })
-}
-
-const getHourlyRate = (ratePerHour: RatePerHour, type: SupportedTokens) => {
-  switch (type) {
-    case 'native':
-      return ratePerHour.find((rate) => rate.type === 'native')
-        ? ratePerHour.find((rate) => rate.type === 'native')!.amount
-        : 'N/A'
-    case 'sher':
-      return ratePerHour.find((rate) => rate.type === 'sher')
-        ? ratePerHour.find((rate) => rate.type === 'sher')!.amount
-        : 'N/A'
-    case 'usdc':
-      return ratePerHour.find((rate) => rate.type === 'usdc')
-        ? ratePerHour.find((rate) => rate.type === 'usdc')!.amount
-        : 'N/A'
-    default:
-      return 'N/A'
-  }
-}
-
-watch(data, (newVal) => {
-  if (newVal) {
-    console.log('New weekly claims: ', newVal)
-  }
-})
 
 const columns = [
   {
     key: 'weekStart',
     label: 'Productivity Diary',
     // sortable: true,
-    class: 'text-black text-base'
+    class: 'text-base'
   },
   {
     key: 'member',
     label: 'Member',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base'
   },
   {
     key: 'hoursWorked',
     label: 'Hour Worked',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base'
   },
   {
     key: 'hourlyRate',
     label: 'Hourly Rate',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base'
   },
   {
     key: 'totalAmount',
     label: 'Total Amount',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base'
   },
   {
     key: 'action',
     label: 'Action',
     sortable: false,
-    class: 'text-black text-base'
+    class: 'text-base'
   }
 ] as TableColumn[]
+
+watch(cashRemunerationOwnerError, (value) => {
+  if (value) {
+    console.log('New cash remuneration owner: ', value)
+    useToastStore().addErrorToast('Failed to fetch cash remuneration owner')
+  }
+})
 </script>
 
 <style scoped>

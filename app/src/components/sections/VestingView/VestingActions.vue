@@ -1,22 +1,26 @@
 <template>
   <div>
     <ButtonUI
-      v-if="team?.ownerAddress === userAddress"
+      v-if="teamStore.currentTeam?.ownerAddress === userStore.address"
       size="sm"
       variant="primary"
       class="w-max"
-      @click="addVestingModal = true"
+      @click="addVestingModal = { mount: true, show: true }"
       data-test="createAddVesting"
     >
       <IconifyIcon icon="heroicons-outline:plus-circle" class="size-6" /> add vesting
     </ButtonUI>
 
-    <ModalComponent v-model="addVestingModal">
+    <ModalComponent
+      v-model="addVestingModal.show"
+      v-if="addVestingModal.mount"
+      @reset="() => (addVestingModal = { mount: false, show: false })"
+    >
       <CreateVesting
-        v-if="team?.id"
-        :tokenAddress="sherToken?.address ?? ''"
-        @closeAddVestingModal="addVestingModal = false"
-        @reload="$emit('reload')"
+        v-if="teamStore.currentTeam?.id"
+        :tokenAddress="(teamStore.getContractAddressByType('InvestorsV1') as Address) ?? ''"
+        @closeAddVestingModal="handleClose"
+        @reload="handleReload"
         :reloadKey="reloadKey"
       />
     </ModalComponent>
@@ -24,26 +28,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
+import type { Address } from 'viem'
 
 defineProps<{
   reloadKey: number
 }>()
 
-defineEmits(['reload'])
+const emit = defineEmits(['reload'])
 
-const addVestingModal = ref(false)
+const addVestingModal = ref({ mount: false, show: false })
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 
-const userAddress = computed(() => userStore.address)
-const team = computed(() => teamStore.currentTeam)
-const sherToken = computed(() =>
-  team.value?.teamContracts?.find((contract) => contract.type === 'InvestorsV1')
-)
+const handleReload = () => {
+  emit('reload') // Propagate reload up
+}
+
+const handleClose = () => {
+  addVestingModal.value = { mount: false, show: false }
+}
 </script>

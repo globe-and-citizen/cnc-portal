@@ -1,164 +1,142 @@
 <template>
-  <CardComponent title="Current Election">
+  <CardComponent :title="`${isDetails ? `Past` : `Current`} Election`">
     <template #card-action>
       <div class="flex justify-between">
-        <div class="flex justify-between gap-2">
-          <ButtonUI
-            variant="primary"
-            size="md"
-            @click="showCreateElectionModal = !showCreateElectionModal"
-            data-test="create-proposal"
-          >
-            Create Election
-          </ButtonUI>
-          <ButtonUI> View Election </ButtonUI>
-        </div>
-        <ModalComponent v-model="showCreateElectionModal">
-          <!-- <VotingManagement :team="team" /> -->
-          <CreateElectionForm :is-loading="false" />
+        <ElectionActions
+          v-if="!isDetails"
+          :election-id="currentElectionId"
+          @show-results-modal="showResultsModal = true"
+          @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
+        />
+        <ModalComponent
+          v-if="showCreateElectionModal.mount"
+          v-model="showCreateElectionModal.show"
+          @reset="() => (showCreateElectionModal = { mount: false, show: false })"
+        >
+          <CreateElectionForm
+            :is-loading="isLoadingCreateElection /*|| isConfirmingCreateElection*/"
+            @create-proposal="createElection"
+            @close-modal="() => (showCreateElectionModal = { mount: false, show: false })"
+          />
         </ModalComponent>
       </div>
     </template>
-    <!-- Status and Countdown -->
-    <div class="flex items-center justify-start gap-2 mb-6">
-      <span class="px-2 py-1 text-xs font-medium rounded-full" :class="electionStatus.class">
-        {{ electionStatus.text }}
-      </span>
-      <span class="text-sm text-gray-600"> Ends in {{ timeRemaining }} </span>
-    </div>
-    <div>
-      <!-- Election Title -->
-      <h2 class="text-2xl text-center font-semibold mb-4">{{ electionData.title }}</h2>
+    <template #card-badge>
+      <ElectionStatus
+        v-if="formattedElection && (!formattedElection?.resultsPublished || isDetails)"
+        :election-id="currentElectionId"
+      />
+    </template>
+    <div
+      v-if="formattedElection && (!formattedElection?.resultsPublished || isDetails)"
+      class="mt-4"
+    >
+      <!-- Status and Countdown -->
 
-      <!-- Stats Row -->
-      <div class="flex justify-between items-stretch gap-4">
-        <!-- Candidates Stat -->
-        <div class="flex-1 flex gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
-          <div class="p-3 bg-blue-50 rounded-full">
-            <IconifyIcon icon="heroicons:user-group" class="h-6 w-6 text-blue-600" />
-          </div>
-          <div>
-            <p class="text-sm font-medium text-gray-500">Candidates</p>
-            <p class="text-xl font-semibold text-gray-900">
-              {{ electionData.candidates.length }}
-            </p>
-          </div>
-        </div>
+      <div>
+        <!-- Election Title -->
+        <h2 class="font-semibold">
+          {{ formattedElection?.title }}
+        </h2>
 
-        <!-- End Date Stat -->
-        <div
-          class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100"
-        >
-          <div class="p-3 bg-green-50 rounded-full">
-            <IconifyIcon icon="heroicons:calendar" class="h-6 w-6 text-green-600" />
-          </div>
-          <div>
-            <p class="text-sm font-medium text-gray-500">Ends</p>
-            <p class="text-xl font-semibold text-gray-900">
-              {{ formatDate(electionData.endDate) }}
-            </p>
-          </div>
-        </div>
+        <h4 class="mb-6">
+          {{ formattedElection?.description }}
+        </h4>
 
-        <!-- Votes Stat -->
-        <div
-          class="flex-1 flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100"
-        >
-          <div class="p-3 bg-purple-50 rounded-full">
-            <IconifyIcon icon="heroicons:chart-bar" class="h-6 w-6 text-purple-600" />
-          </div>
-          <div>
-            <p class="text-sm font-medium text-gray-500">Votes Cast</p>
-            <p class="text-xl font-semibold text-gray-900">
-              {{ votesCast }}
-            </p>
-          </div>
-        </div>
+        <!-- Stats Row -->
+        <ElectionStats :formatted-election="formattedElection" />
       </div>
     </div>
+    <CurrentBoDElection404
+      v-else
+      @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
+    />
   </CardComponent>
 </template>
 
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
+import { computed, ref } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
+import ElectionABI from '@/artifacts/abi/elections.json'
+import { useTeamStore, useToastStore } from '@/stores'
+import { type Abi } from 'viem'
+import { simulateContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
+import type { OldProposal } from '@/types'
+import { log, parseError } from '@/utils'
+import { config } from '@/wagmi.config'
+import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
+import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
+import ElectionActions from './ElectionActions.vue'
+import CurrentBoDElection404 from './CurrentBoDElection404.vue'
+import { useBoDElections } from '@/composables'
 
-// Mock votes data - replace with real data
-const votesCast = ref(1428)
-const showCreateElectionModal = ref(false)
+const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
-// Calculate time remaining
-const now = ref(new Date())
-let timer: ReturnType<typeof setInterval>
-
-const electionData = {
-  title: 'Q1 2025 Board of Directors Election',
-  description: 'Election for the next Board of Directors will be held on December 1, 2023.',
-  candidates: [
-    { name: 'Alice Johnson', address: '0x1234567890abcdef1234567890abcdef12345678' },
-    { name: 'Bob Smith', address: '0xabcdef1234567890abcdef1234567890abcdef12' },
-    { name: 'Charlie Brown', address: '0x7890abcdef1234567890abcdef12345678901234' }
-  ],
-  startDate: new Date('2025-06-01T00:00:00Z'),
-  endDate: new Date('2025-06-30T23:59:59Z')
-}
-
-onMounted(() => {
-  timer = setInterval(() => {
-    now.value = new Date()
-  }, 1000 * 60) // Update every minute
+const teamStore = useTeamStore()
+const { addSuccessToast, addErrorToast } = useToastStore()
+const showResultsModal = ref(false)
+const currentElectionId = computed(() => props.electionId)
+const { electionsAddress, formattedElection } = useBoDElections(currentElectionId)
+const showCreateElectionModal = ref({
+  mount: false,
+  show: false
 })
+const isLoadingCreateElection = ref(false)
 
-onBeforeUnmount(() => {
-  clearInterval(timer)
-})
+const createElection = async (electionData: OldProposal) => {
+  try {
+    isLoadingCreateElection.value = true
+    if (!electionsAddress.value) {
+      addErrorToast('Elections contract address not found')
+      return
+    }
 
-const timeRemaining = computed(() => {
-  const diff = electionData.endDate.getTime() - now.value.getTime()
+    const dateToUnixTimestamp = (date: Date) => Math.floor(date.getTime() / 1000)
+    const dateNow = dateToUnixTimestamp(new Date())
 
-  if (diff <= 0) return 'election ended'
+    const args = [
+      electionData.title,
+      electionData.description,
+      dateToUnixTimestamp(electionData.startDate as Date) < dateNow
+        ? dateNow + 60 // Start in 1 minute if start date is in the past
+        : dateToUnixTimestamp(electionData.startDate as Date),
+      dateToUnixTimestamp(electionData.startDate as Date) < dateNow
+        ? dateNow + 60 + 60 // End 1 minute after adjusted start time if start date is in the past
+        : dateToUnixTimestamp(electionData.endDate as Date),
+      electionData.winnerCount,
+      electionData.candidates?.map((c) => c.candidateAddress) || [],
+      teamStore.currentTeam?.members.map((m) => m.address) || []
+    ]
 
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  if (days > 0) return `${days} ${days === 1 ? 'day' : 'days'}`
+    console.log('Do nothing...')
 
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  if (hours > 0) return `${hours} ${hours === 1 ? 'hour' : 'hours'}`
+    await simulateContract(config, {
+      address: electionsAddress.value,
+      abi: ElectionABI,
+      functionName: 'createElection',
+      args
+    })
 
-  const minutes = Math.floor(diff / (1000 * 60))
-  return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
-})
+    const hash = await writeContract(config, {
+      address: electionsAddress.value,
+      abi: ElectionABI,
+      functionName: 'createElection',
+      args
+    })
 
-// Election status
-const electionStatus = computed(() => {
-  if (now.value < electionData.startDate) {
-    return { text: 'Upcoming', class: 'bg-yellow-100 text-yellow-800' }
+    await waitForTransactionReceipt(config, {
+      hash
+    })
+    addSuccessToast('Election created successfully!')
+    showCreateElectionModal.value.show = false
+    showCreateElectionModal.value.mount = false
+  } catch (error) {
+    addErrorToast(parseError(error, ElectionABI as Abi))
+    log.error('creatingElection error:', error)
+  } finally {
+    isLoadingCreateElection.value = false
   }
-  if (now.value > electionData.endDate) {
-    return { text: 'Completed', class: 'bg-gray-100 text-gray-800' }
-  }
-  return { text: 'Active', class: 'bg-green-100 text-green-800' }
-})
-
-// Format date as "Dec 15, 2023"
-const formatDate = (date: Date) => {
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  })
 }
 </script>
-
-<style scoped>
-/* Add slight spacing between stats on smaller screens */
-@media (max-width: 768px) {
-  .flex.justify-between {
-    flex-direction: column;
-    gap: 1rem;
-  }
-}
-</style>
