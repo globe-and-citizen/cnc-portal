@@ -1,11 +1,11 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from '@prisma/client'
 
 export type BudgetLimit = Prisma.JsonObject & {
-  approvedAddress: string;
+  approvedAddress: string
   budgetData: Array<{
-    budgetType: number;
-    value: number;
-  }>;
-  expiry: number;
-  tokenAddress: string;
-};
+    budgetType: number
+    value: number
+  }>
+  expiry: number
+  tokenAddress: string
+}

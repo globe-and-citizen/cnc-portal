@@ -8,19 +8,39 @@ steps:
 
   # Push the image to Google Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'push', '${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-api:$SHORT_SHA' ]
+    args:
+      [
+        'push',
+        '${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-api:$SHORT_SHA'
+      ]
     id: 'Push The Image'
     waitFor:
       - 'Build The Image'
 
       # Run the container in Cloud run
   - name: 'gcr.io/cloud-builders/gcloud'
-    args: [ 'run', 'deploy',  '${REPO_NAME}-api-prod', '--image', '${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-api:$SHORT_SHA', '--region', '${LOCATION}', '--platform', 'managed', '--allow-unauthenticated', '--port', '80', '--tag', 'tag-${SHORT_SHA}'  ]
+    args:
+      [
+        'run',
+        'deploy',
+        '${REPO_NAME}-api-prod',
+        '--image',
+        '${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-api:$SHORT_SHA',
+        '--region',
+        '${LOCATION}',
+        '--platform',
+        'managed',
+        '--allow-unauthenticated',
+        '--port',
+        '80',
+        '--tag',
+        'tag-${SHORT_SHA}'
+      ]
     secretEnv: ['DATABASE_URL']
     id: 'Deploy to Cloud Run'
     waitFor:
       - 'Push The Image'
 availableSecrets:
   secretManager:
-  - versionName: projects/931858555200/secrets/cnc-db-url/versions/latest
-    env: 'DATABASE_URL'
+    - versionName: projects/931858555200/secrets/cnc-db-url/versions/latest
+      env: 'DATABASE_URL'

@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig } from 'vitest/config'
 // import tsconfigPaths from "vite-tsconfig-paths"; // only if you are using custom tsconfig paths
 
 export default defineConfig({
@@ -9,9 +9,9 @@ export default defineConfig({
       enabled: true
     },
     env: {
-      DATABASE_URL: "postgresql://test:test@localhost:5432/test_db",
-      NODE_ENV: "test"
+      DATABASE_URL: 'postgresql://test:test@localhost:5432/test_db',
+      NODE_ENV: 'test'
     }
-  },
+  }
   // plugins: [tsconfigPaths()], // only if you are using custom tsconfig paths
-});
+})

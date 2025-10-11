@@ -1,6 +1,6 @@
-import express from "express";
-import { authorizeUser } from "../middleware/authMiddleware";
-import { addAction, executeAction, getActions } from "../controllers/actionController";
+import express from 'express'
+import { authorizeUser } from '../middleware/authMiddleware'
+import { addAction, executeAction, getActions } from '../controllers/actionController'
 
 const actionRoute = express.Router()
 

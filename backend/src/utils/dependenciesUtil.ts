@@ -1,8 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client'
 
 // Singleton pattern to ensure only one PrismaClient instance
 class PrismaClientSingleton {
-  private static instance: PrismaClient;
+  private static instance: PrismaClient
 
   public static getInstance(): PrismaClient {
     if (!PrismaClientSingleton.instance) {
@@ -13,24 +13,24 @@ class PrismaClientSingleton {
             url: process.env.DATABASE_URL
           }
         }
-      });
-      
-      console.log('✅ New PrismaClient instance created');
+      })
+
+      console.log('✅ New PrismaClient instance created')
     } else {
-      console.log('♻️  Reusing existing PrismaClient instance');
+      console.log('♻️  Reusing existing PrismaClient instance')
     }
-    
-    return PrismaClientSingleton.instance;
+
+    return PrismaClientSingleton.instance
   }
 
   // Method to disconnect when shutting down
   public static async disconnect(): Promise<void> {
     if (PrismaClientSingleton.instance) {
-      await PrismaClientSingleton.instance.$disconnect();
-      console.log('🔌 PrismaClient disconnected');
+      await PrismaClientSingleton.instance.$disconnect()
+      console.log('🔌 PrismaClient disconnected')
     }
   }
 }
 
-export const prisma = PrismaClientSingleton.getInstance();
-export const disconnectPrisma = PrismaClientSingleton.disconnect;
+export const prisma = PrismaClientSingleton.getInstance()
+export const disconnectPrisma = PrismaClientSingleton.disconnect

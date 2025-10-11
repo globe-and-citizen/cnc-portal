@@ -1,1 +1,1 @@
-export * from "./expense-account";
+export * from './expense-account'
