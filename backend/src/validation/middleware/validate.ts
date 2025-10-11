@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import { z, ZodSchema, ZodError } from "zod";
-import { errorResponse } from "../../utils/utils";
+import { Request, Response, NextFunction } from 'express';
+import { z, ZodSchema, ZodError } from 'zod';
+import { errorResponse } from '../../utils/utils';
 
 /**
  * Validation middleware factory for request validation using Zod schemas
@@ -19,9 +19,7 @@ interface ValidationSchemas {
  * @returns Formatted error message string
  */
 const formatZodError = (error: ZodError): string => {
-  return error.issues
-    .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-    .join(', ');
+  return error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ');
 };
 
 /**
@@ -64,7 +62,7 @@ export const validate = (schemas: ValidationSchemas) => {
 
       next();
     } catch (error) {
-      return errorResponse(500, "Validation middleware error", res);
+      return errorResponse(500, 'Validation middleware error', res);
     }
   };
 };
@@ -95,5 +93,8 @@ export const validateParamsAndQuery = (paramsSchema: ZodSchema, querySchema: Zod
   validate({ params: paramsSchema, query: querySchema });
 
 // Validate all three
-export const validateAll = (bodySchema: ZodSchema, querySchema: ZodSchema, paramsSchema: ZodSchema) =>
-  validate({ body: bodySchema, query: querySchema, params: paramsSchema });
+export const validateAll = (
+  bodySchema: ZodSchema,
+  querySchema: ZodSchema,
+  paramsSchema: ZodSchema
+) => validate({ body: bodySchema, query: querySchema, params: paramsSchema });

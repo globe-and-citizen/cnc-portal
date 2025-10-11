@@ -1,9 +1,9 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 
-import { Address, isAddress } from "viem";
-import { errorResponse } from "../utils/utils";
-import { addNotification, prisma } from "../utils";
-import { Prisma, User } from "@prisma/client";
+import { Address, isAddress } from 'viem';
+import { errorResponse } from '../utils/utils';
+import { addNotification, prisma } from '../utils';
+import { Prisma, User } from '@prisma/client';
 
 export const deleteMember = async (req: Request, res: Response) => {
   const { id, memberAddress } = req.params;
@@ -17,31 +17,21 @@ export const deleteMember = async (req: Request, res: Response) => {
 
     // Check if the team exists
     if (!team) {
-      return errorResponse(404, "Team not found", res);
+      return errorResponse(404, 'Team not found', res);
     }
     if (team.ownerAddress !== callerAddress) {
-      return errorResponse(
-        403,
-        "Unauthorized: Only the owner can delete a member",
-        res
-      );
+      return errorResponse(403, 'Unauthorized: Only the owner can delete a member', res);
     }
     if (team.ownerAddress === memberAddress) {
-      return errorResponse(
-        403,
-        "Unauthorized: The Owner cannot be removed",
-        res
-      );
+      return errorResponse(403, 'Unauthorized: The Owner cannot be removed', res);
     }
 
     // Find the index of the member in the team
-    const memberIndex = team.members.findIndex(
-      (member) => member.address === memberAddress
-    );
+    const memberIndex = team.members.findIndex((member) => member.address === memberAddress);
 
     // If member not found in the team, throw an error
     if (memberIndex === -1) {
-      return errorResponse(404, "Member not found in the team", res);
+      return errorResponse(404, 'Member not found in the team', res);
     }
 
     // Update the team to disconnect the specified member
@@ -58,7 +48,7 @@ export const deleteMember = async (req: Request, res: Response) => {
         },
       });
     } catch (error) {
-      console.log("Error deleting member Team data", error);
+      console.log('Error deleting member Team data', error);
     }
 
     const updatedTeam = await prisma.team.update({
@@ -82,13 +72,13 @@ export const deleteMember = async (req: Request, res: Response) => {
     res.status(204).json({ ...updatedTeam });
   } catch (error: any) {
     // Handle errors
-    return errorResponse(500, error.message || "Internal Server Error", res);
+    return errorResponse(500, error.message || 'Internal Server Error', res);
   }
 };
 
 export const addMembers = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const membersData = req.body as Array<Pick<User, "address">>;
+  const membersData = req.body as Array<Pick<User, 'address'>>;
 
   // Check if the data is valid
   if (
@@ -97,7 +87,7 @@ export const addMembers = async (req: Request, res: Response) => {
     !membersData.every((member) => isAddress(member.address))
   ) {
     return res.status(400).json({
-      message: "Bad Request: Members data is not well formated",
+      message: 'Bad Request: Members data is not well formated',
     });
   }
   try {
@@ -107,16 +97,12 @@ export const addMembers = async (req: Request, res: Response) => {
       include: { members: true },
     });
     if (!team) {
-      return res.status(404).json({ message: "Team not found" });
+      return res.status(404).json({ message: 'Team not found' });
     }
 
     const callerAddress = (req as any).address;
     if (team.ownerAddress !== callerAddress) {
-      return errorResponse(
-        403,
-        "Unauthorized: Only the owner can Add a member",
-        res
-      );
+      return errorResponse(403, 'Unauthorized: Only the owner can Add a member', res);
     }
 
     // List of members in membersData that already exist in the team.members
@@ -126,9 +112,7 @@ export const addMembers = async (req: Request, res: Response) => {
 
     if (existingMembers.length > 0) {
       return res.status(400).json({
-        message: `Members ${existingMembers.map(
-          (member) => member.address
-        )} already in the team`,
+        message: `Members ${existingMembers.map((member) => member.address)} already in the team`,
       });
     }
 
@@ -154,6 +138,6 @@ export const addMembers = async (req: Request, res: Response) => {
     // Return the updated members list
     return res.status(201).json({ members: updatedTeam?.members });
   } catch (error: any) {
-    return errorResponse(500, error.message || "Internal Server Error", res);
+    return errorResponse(500, error.message || 'Internal Server Error', res);
   }
 };

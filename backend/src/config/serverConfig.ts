@@ -1,44 +1,44 @@
 //#region networking modules
-import "../instrument"
-import * as Sentry from "@sentry/node"
-import cors from "cors";
-import express, { Express } from "express";
-import rateLimit from "express-rate-limit";
+import '../instrument';
+import * as Sentry from '@sentry/node';
+import cors from 'cors';
+import express, { Express } from 'express';
+import rateLimit from 'express-rate-limit';
 //#endregion networking modules
 
 //#region routing modules
-import teamRoutes from "../routes/teamRoutes";
-import userRoutes from "../routes/userRoutes";
-import authRoutes from "../routes/authRoutes";
-import notificationRoutes from "../routes/notificationRoute";
-import actionRoutes from "../routes/actionsRoute";
-import wageRoutes from "../routes/wageRoute";
-import claimRoutes from "../routes/claimRoute";
-import weeklyClaimRoutes from "../routes/weeklyClaimRoute";
-import expenseRoutes from "../routes/expenseRoute";
-import uploadRoute from "../routes/uploadRoute";
-import contractRoutes from "../routes/contractRoutes";
+import teamRoutes from '../routes/teamRoutes';
+import userRoutes from '../routes/userRoutes';
+import authRoutes from '../routes/authRoutes';
+import notificationRoutes from '../routes/notificationRoute';
+import actionRoutes from '../routes/actionsRoute';
+import wageRoutes from '../routes/wageRoute';
+import claimRoutes from '../routes/claimRoute';
+import weeklyClaimRoutes from '../routes/weeklyClaimRoute';
+import expenseRoutes from '../routes/expenseRoute';
+import uploadRoute from '../routes/uploadRoute';
+import contractRoutes from '../routes/contractRoutes';
 //#endregion routing modules
 
-import { authorizeUser } from "../middleware/authMiddleware";
-import { errorMessages } from "../utils/serverConfigUtil";
+import { authorizeUser } from '../middleware/authMiddleware';
+import { errorMessages } from '../utils/serverConfigUtil';
 
 // Swagger import
 
-import swaggerUi from "swagger-ui-express";
-import swaggerJsdoc from "swagger-jsdoc";
+import swaggerUi from 'swagger-ui-express';
+import swaggerJsdoc from 'swagger-jsdoc';
 const options = {
   definition: {
-    openapi: "3.0.0",
+    openapi: '3.0.0',
     info: {
-      title: "API Documentation",
-      version: "1.0.0",
+      title: 'API Documentation',
+      version: '1.0.0',
     },
   },
-  apis: ["./src/routes/*.ts"], // Point to route files containing JSDoc comments
+  apis: ['./src/routes/*.ts'], // Point to route files containing JSDoc comments
 };
 const swaggerSpec = swaggerJsdoc(options);
-const path = require("path");
+const path = require('path');
 
 class Server {
   private static instance: Server | undefined;
@@ -49,25 +49,22 @@ class Server {
   constructor() {
     this.app = express();
     // Trust proxy headers (needed for correct client IP detection behind load balancers/proxies)
-    if (
-      process.env.TRUST_PROXY === "true" ||
-      process.env.NODE_ENV === "production"
-    ) {
-      this.app.set("trust proxy", true);
+    if (process.env.TRUST_PROXY === 'true' || process.env.NODE_ENV === 'production') {
+      this.app.set('trust proxy', true);
     }
     this.paths = {
-      teams: "/api/teams/",
-      member: "/api/member/",
-      user: "/api/user/",
-      auth: "/api/auth/",
-      notification: "/api/notification/",
-      actions: "/api/actions/",
-      wage: "/api/wage/",
-      weeklyClaim: "/api/weeklyclaim/",
-      expense: "/api/expense/",
-      claim: "/api/claim/",
-      upload: "/api/upload/",
-      constract: "/api/contract/",
+      teams: '/api/teams/',
+      member: '/api/member/',
+      user: '/api/user/',
+      auth: '/api/auth/',
+      notification: '/api/notification/',
+      actions: '/api/actions/',
+      wage: '/api/wage/',
+      weeklyClaim: '/api/weeklyclaim/',
+      expense: '/api/expense/',
+      claim: '/api/claim/',
+      upload: '/api/upload/',
+      constract: '/api/contract/',
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -91,23 +88,16 @@ class Server {
   }
 
   private checks() {
-    if (process.env.NODE_ENV === undefined)
-      throw new Error(errorMessages.nodeEnv);
-    if (process.env.FRONTEND_URL === undefined)
-      throw new Error(errorMessages.frontendUrl);
-    if (process.env.SECRET_KEY === undefined)
-      throw new Error(errorMessages.secretKey);
-    if (process.env.DATABASE_URL === undefined)
-      throw new Error(errorMessages.databaseUrl);
-    if (process.env.CHAIN_ID === undefined)
-      throw new Error(errorMessages.chainId);
+    if (process.env.NODE_ENV === undefined) throw new Error(errorMessages.nodeEnv);
+    if (process.env.FRONTEND_URL === undefined) throw new Error(errorMessages.frontendUrl);
+    if (process.env.SECRET_KEY === undefined) throw new Error(errorMessages.secretKey);
+    if (process.env.DATABASE_URL === undefined) throw new Error(errorMessages.databaseUrl);
+    if (process.env.CHAIN_ID === undefined) throw new Error(errorMessages.chainId);
   }
 
   private middleware() {
     this.app.use(express.json());
-    this.app.use(
-      cors({ origin: process.env.FRONTEND_URL as string, credentials: true })
-    );
+    this.app.use(cors({ origin: process.env.FRONTEND_URL as string, credentials: true }));
   }
 
   private routes() {
@@ -122,7 +112,7 @@ class Server {
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
-    this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+    this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     // The error handler must be registered before any other error middleware and after all controllers
     Sentry.setupExpressErrorHandler(this.app);
 
@@ -132,20 +122,18 @@ class Server {
       // The error id is attached to `res.sentry` to be returned
       // and optionally displayed to the user for support.
       res.statusCode = 500;
-      res.end(res.sentry + "\n");
+      res.end(res.sentry + '\n');
     });
 
-    this.app.get("/debug-sentry", function mainHandler(req, res) {
-      throw new Error("My first Sentry error!");
+    this.app.get('/debug-sentry', function mainHandler(req, res) {
+      throw new Error('My first Sentry error!');
     });
   }
 
   public listen() {
     this.app.listen(this.port, () => {
       console.log(`helloworld: listening on port ${this.port}`);
-      console.log(
-        `Swagger docs V2 available at http://localhost:${this.port}/docs`
-      );
+      console.log(`Swagger docs V2 available at http://localhost:${this.port}/docs`);
     });
   }
 

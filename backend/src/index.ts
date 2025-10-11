@@ -1,7 +1,7 @@
-import "dotenv/config";
+import 'dotenv/config';
 // import "./instrument"
-import server from "./config/serverConfig";
-import { disconnectPrisma } from "./utils";
+import server from './config/serverConfig';
+import { disconnectPrisma } from './utils';
 
 // Start the server
 server.listen();
@@ -9,14 +9,14 @@ server.listen();
 // Graceful shutdown handling
 const gracefulShutdown = async (signal: string) => {
   console.log(`Received ${signal}. Starting graceful shutdown...`);
-  
+
   try {
     await disconnectPrisma();
     console.log('Prisma disconnected successfully');
   } catch (error) {
     console.error('Error disconnecting Prisma:', error);
   }
-  
+
   process.exit(0);
 };
 

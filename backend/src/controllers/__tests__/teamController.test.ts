@@ -1,25 +1,25 @@
-import request from "supertest";
-import express, { Request, Response, NextFunction } from "express";
-import { prisma } from "../../utils";
-import { describe, it, beforeEach, expect, vi } from "vitest";
-import publicClient from "../../utils/viem.config";
-import OFFICER_ABI from "../../artifacts/officer_abi.json";
-import { faker } from "@faker-js/faker";
-import { Team, User } from "@prisma/client";
-import teamRoutes from "../../routes/teamRoutes";
-import { authorizeUser } from "../../middleware/authMiddleware";
+import request from 'supertest';
+import express, { Request, Response, NextFunction } from 'express';
+import { prisma } from '../../utils';
+import { describe, it, beforeEach, expect, vi } from 'vitest';
+import publicClient from '../../utils/viem.config';
+import OFFICER_ABI from '../../artifacts/officer_abi.json';
+import { faker } from '@faker-js/faker';
+import { Team, User } from '@prisma/client';
+import teamRoutes from '../../routes/teamRoutes';
+import { authorizeUser } from '../../middleware/authMiddleware';
 
 // Mock the authorizeUser middleware
-vi.mock("../../middleware/authMiddleware", () => ({
+vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = "0x1234567890123456789012345678901234567890";
+    (req as any).address = '0x1234567890123456789012345678901234567890';
     next();
   }),
 }));
 
 // Mock prisma
-vi.mock("../../utils", async () => {
-  const actual = await vi.importActual("../../utils");
+vi.mock('../../utils', async () => {
+  const actual = await vi.importActual('../../utils');
   return {
     ...actual,
     prisma: {
@@ -66,7 +66,7 @@ vi.mock("../../utils", async () => {
 });
 
 // Mock viem config
-vi.mock("../../utils/viem.config", () => ({
+vi.mock('../../utils/viem.config', () => ({
   default: {
     readContract: vi.fn(),
   },
@@ -74,25 +74,25 @@ vi.mock("../../utils/viem.config", () => ({
 
 const app = express();
 app.use(express.json());
-app.use("/", authorizeUser, teamRoutes);
+app.use('/', authorizeUser, teamRoutes);
 
 const mockOwner: User = {
-  address: "0x1234567890123456789012345678901234567890",
-  name: "Test Owner",
-  nonce: "123456",
-  imageUrl: "https://example.com/image.jpg",
+  address: '0x1234567890123456789012345678901234567890',
+  name: 'Test Owner',
+  nonce: '123456',
+  imageUrl: 'https://example.com/image.jpg',
   createdAt: new Date(),
   updatedAt: new Date(),
 };
 const mockTeamData = {
-  name: "Test Team",
-  description: "Test Description",
+  name: 'Test Team',
+  description: 'Test Description',
   members: [
-    { address: faker.finance.ethereumAddress(), name: "Member 1" },
-    { address: faker.finance.ethereumAddress(), name: "Member 2" },
+    { address: faker.finance.ethereumAddress(), name: 'Member 1' },
+    { address: faker.finance.ethereumAddress(), name: 'Member 2' },
   ],
 
-  officerAddress: "0xOfficerAddress",
+  officerAddress: '0xOfficerAddress',
 };
 
 const teamMockResolve: Team = {
@@ -102,79 +102,77 @@ const teamMockResolve: Team = {
 
   members: [
     {
-      address: "0xmember1address000000000000000000000000",
-      name: "Member 1",
-      imageUrl: "https://example.com/image.jpg",
+      address: '0xmember1address000000000000000000000000',
+      name: 'Member 1',
+      imageUrl: 'https://example.com/image.jpg',
       createdAt: new Date(),
       updatedAt: new Date(),
     },
     {
       address: mockOwner.address,
       name: mockOwner.name,
-      imageUrl: "https://example.com/image.jpg",
+      imageUrl: 'https://example.com/image.jpg',
       createdAt: new Date(),
       updatedAt: new Date(),
     },
   ],
 };
 
-describe("Team Controller", () => {
-  describe("addTeam", () => {
+describe('Team Controller', () => {
+  describe('addTeam', () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
 
-    it("should return 400 if invalid wallet address provided", async () => {
+    it('should return 400 if invalid wallet address provided', async () => {
       const response = await request(app)
-        .post("/")
+        .post('/')
         .send({
           ...mockTeamData,
-          members: [{ address: "invalid-address", name: "Invalid Member" }],
+          members: [{ address: 'invalid-address', name: 'Invalid Member' }],
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toEqual(
-        "Invalid wallet address for member: Invalid Member"
-      );
+      expect(response.body.message).toEqual('Invalid wallet address for member: Invalid Member');
     });
 
-    it("should return 404 if the owner is not found", async () => {
+    it('should return 404 if the owner is not found', async () => {
       // Mock the findUnique method to return null for the owner
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(null);
 
       const response = await request(app)
-        .post("/")
+        .post('/')
         .send({
-          name: "Test Team",
-          description: "Test Description",
+          name: 'Test Team',
+          description: 'Test Description',
           members: [
-            { address: faker.finance.ethereumAddress(), name: "Member 1" },
-            { address: faker.finance.ethereumAddress(), name: "Member 2" },
+            { address: faker.finance.ethereumAddress(), name: 'Member 1' },
+            { address: faker.finance.ethereumAddress(), name: 'Member 2' },
           ],
-          officerAddress: "0xOfficerAddress",
+          officerAddress: '0xOfficerAddress',
         });
 
       // Assertions
       expect(response.status).toBe(404);
-      expect(response.body.message).toBe("Owner not found");
+      expect(response.body.message).toBe('Owner not found');
     });
 
-    it("should return 201 and create a team successfully", async () => {
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockOwner);
-      vi.spyOn(prisma.team, "create").mockResolvedValue(teamMockResolve);
+    it('should return 201 and create a team successfully', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
+      vi.spyOn(prisma.team, 'create').mockResolvedValue(teamMockResolve);
 
-      const response = await request(app).post("/").send(mockTeamData);
+      const response = await request(app).post('/').send(mockTeamData);
 
       expect(response.status).toBe(201);
-      expect(response.body.name).toEqual("Test Team");
+      expect(response.body.name).toEqual('Test Team');
     });
 
-    it("should return 201 and create a team successfully with the team owner in team members", async () => {
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockOwner);
-      vi.spyOn(prisma.team, "create").mockResolvedValue(teamMockResolve);
+    it('should return 201 and create a team successfully with the team owner in team members', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
+      vi.spyOn(prisma.team, 'create').mockResolvedValue(teamMockResolve);
 
       const response = await request(app)
-        .post("/")
+        .post('/')
         .send({
           ...mockTeamData,
           members: mockTeamData.members.concat({
@@ -184,314 +182,279 @@ describe("Team Controller", () => {
         });
 
       expect(response.status).toBe(201);
-      expect(response.body.name).toEqual("Test Team");
+      expect(response.body.name).toEqual('Test Team');
     });
 
-    it("should return 500 if there is a server error", async () => {
-      vi.spyOn(prisma.user, "findUnique").mockRejectedValue(
-        new Error("Server error")
-      );
+    it('should return 500 if there is a server error', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockRejectedValue(new Error('Server error'));
 
-      const response = await request(app).post("/").send(mockTeamData);
+      const response = await request(app).post('/').send(mockTeamData);
 
       expect(response.status).toBe(500);
-      expect(response.body.message).toEqual(
-        "Internal server error has occured"
-      );
+      expect(response.body.message).toEqual('Internal server error has occured');
     });
   });
 
-  describe("getTeam", () => {
+  describe('getTeam', () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
 
-    it("should return 403 if user is not part of the team", async () => {
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue({
+    it('should return 403 if user is not part of the team', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
         id: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
-        name: "Test Team",
-        ownerAddress: "0xOwnerAddress",
-        description: "Test Description",
-        officerAddress: "0xOfficerAddress",
+        name: 'Test Team',
+        ownerAddress: '0xOwnerAddress',
+        description: 'Test Description',
+        officerAddress: '0xOfficerAddress',
       });
 
-      const response = await request(app)
-        .get("/1")
-        .query({ teamId: 1 })
-        .set("address", "0xDEF");
+      const response = await request(app).get('/1').query({ teamId: 1 }).set('address', '0xDEF');
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe("Unauthorized");
+      expect(response.body.message).toBe('Unauthorized');
     });
 
-    it("should return 404 if team is not found", async () => {
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(null);
+    it('should return 404 if team is not found', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
 
-      const response = await request(app)
-        .get("/1")
-        .query({ teamId: 1 })
-        .set("address", "0xABC");
+      const response = await request(app).get('/1').query({ teamId: 1 }).set('address', '0xABC');
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toBe("Team not found");
+      expect(response.body.message).toBe('Team not found');
     });
 
-    it("should return 200 and team data if user is part of the team", async () => {
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(teamMockResolve);
+    it('should return 200 and team data if user is part of the team', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamMockResolve);
 
       const response = await request(app)
-        .get("/1")
+        .get('/1')
         .query({ teamId: 1 })
-        .set("Authorization", "Bearer mock-token");
+        .set('Authorization', 'Bearer mock-token');
 
       expect(response.status).toBe(200);
       // expect(response.body).toEqual(teamMockResolve);
     });
 
-    it("should return 500 if an exception is thrown", async () => {
-      vi.spyOn(prisma.team, "findUnique").mockRejectedValue(
-        new Error("DB failure")
-      );
+    it('should return 500 if an exception is thrown', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockRejectedValue(new Error('DB failure'));
 
-      const response = await request(app)
-        .get("/1")
-        .query({ teamId: 1 })
-        .set("address", "0xABC");
+      const response = await request(app).get('/1').query({ teamId: 1 }).set('address', '0xABC');
 
       expect(response.status).toBe(500);
-      expect(response.body.message).toBe("Internal server error has occured");
+      expect(response.body.message).toBe('Internal server error has occured');
     });
   });
 
-  describe("getAllTeams", () => {
+  describe('getAllTeams', () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
 
-    it("should return 200 and a lsit of teams the user is a member of", async () => {
+    it('should return 200 and a lsit of teams the user is a member of', async () => {
       const mockTeams = [
         {
           id: 1,
-          name: "Team 1",
-          description: "Description 1",
+          name: 'Team 1',
+          description: 'Description 1',
           owenrAddress: mockOwner.address,
           _count: { member: 3 },
         },
         {
           id: 2,
-          name: "Team 2",
-          description: "Description 2",
+          name: 'Team 2',
+          description: 'Description 2',
           ownerAddress: mockOwner.address,
           _count: { memebers: 5 },
         },
       ];
 
-      vi.spyOn(prisma.team, "findMany").mockResolvedValue(mockTeams);
+      vi.spyOn(prisma.team, 'findMany').mockResolvedValue(mockTeams);
 
-      const response = await request(app)
-        .get("/")
-        .set("address", "0xABC123");
+      const response = await request(app).get('/').set('address', '0xABC123');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockTeams);
     });
 
-    it("should return 500 if an error occurs", async () => {
-      vi.spyOn(prisma.team, "findMany").mockRejectedValue(
-        new Error("Database failure")
-      );
+    it('should return 500 if an error occurs', async () => {
+      vi.spyOn(prisma.team, 'findMany').mockRejectedValue(new Error('Database failure'));
 
-      const response = await request(app).get("/");
+      const response = await request(app).get('/');
 
       expect(response.status).toBe(500);
-      expect(response.body.message).toBe("Internal server error has occured");
+      expect(response.body.message).toBe('Internal server error has occured');
     });
   });
 
-  describe("updateTeam", () => {
+  describe('updateTeam', () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
 
-    it("should return 404 if team not found", async () => {
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(null);
+    it('should return 404 if team not found', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
 
-      const response = await request(app).put("/1").send({
+      const response = await request(app).put('/1').send({
         id: 1,
-        name: "Updated Team",
-        description: "Updated Description",
-        officerAddress: "0xNewOfficerAddress",
+        name: 'Updated Team',
+        description: 'Updated Description',
+        officerAddress: '0xNewOfficerAddress',
       });
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toBe("Team not found");
+      expect(response.body.message).toBe('Team not found');
     });
 
-    it("should return 403 if user is not the team owner", async () => {
+    it('should return 403 if user is not the team owner', async () => {
       const mockTeam = {
         id: 1,
         ownerAddress: faker.finance.ethereumAddress(),
-        name: "Test Team",
-        description: "Test Description",
-        officerAddress: "0xOfficerAddress",
+        name: 'Test Team',
+        description: 'Test Description',
+        officerAddress: '0xOfficerAddress',
       };
 
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
 
-      const response = await request(app).put("/1").send({
+      const response = await request(app).put('/1').send({
         id: 1,
-        name: "Updated Team",
-        description: "Updated Description",
-        officerAddress: "0xNewOfficerAddress",
+        name: 'Updated Team',
+        description: 'Updated Description',
+        officerAddress: '0xNewOfficerAddress',
       });
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe("Unauthorized");
+      expect(response.body.message).toBe('Unauthorized');
     });
 
-    it("should return 200 and update the team successfully", async () => {
+    it('should return 200 and update the team successfully', async () => {
       const mockTeam = {
         id: 1,
         ownerAddress: mockOwner.address,
-        name: "Test Team",
-        description: "Test Description",
-        officerAddress: "0xOfficerAddress",
+        name: 'Test Team',
+        description: 'Test Description',
+        officerAddress: '0xOfficerAddress',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeam);
-      vi.spyOn(prisma.team, "update").mockResolvedValue({
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, 'update').mockResolvedValue({
         ...mockTeam,
-        name: "Updated Team",
-        description: "Updated Description",
-        officerAddress: "0xNewOfficerAddress",
+        name: 'Updated Team',
+        description: 'Updated Description',
+        officerAddress: '0xNewOfficerAddress',
       });
 
-      const response = await request(app).put("/1").send({
+      const response = await request(app).put('/1').send({
         id: 1,
         owenrAddress: mockOwner.address,
-        name: "Updated Team",
-        description: "Updated Description",
-        officerAddress: "0xNewOfficerAddress",
+        name: 'Updated Team',
+        description: 'Updated Description',
+        officerAddress: '0xNewOfficerAddress',
       });
 
       expect(response.status).toBe(200);
-      expect(response.body.name).toEqual("Updated Team");
+      expect(response.body.name).toEqual('Updated Team');
     });
 
-    it("should return 500 if there is a server error", async () => {
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue({
+    it('should return 500 if there is a server error', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
         id: 1,
         ownerAddress: mockOwner.address,
-        name: "Test Team",
-        description: "Test Description",
-        officerAddress: "0xOfficerAddress",
+        name: 'Test Team',
+        description: 'Test Description',
+        officerAddress: '0xOfficerAddress',
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      vi.spyOn(prisma.team, "update").mockRejectedValue(
-        new Error("Server error")
-      );
+      vi.spyOn(prisma.team, 'update').mockRejectedValue(new Error('Server error'));
 
-      const response = await request(app).put("/1").send(mockTeamData);
+      const response = await request(app).put('/1').send(mockTeamData);
 
       expect(response.status).toBe(500);
-      expect(response.body.message).toEqual(
-        "Internal server error has occured"
-      );
+      expect(response.body.message).toEqual('Internal server error has occured');
     });
   });
 
-  describe("deleteTeam", () => {
+  describe('deleteTeam', () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
 
-    it("should return 404 if team not found", async () => {
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(null);
+    it('should return 404 if team not found', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
 
-      const response = await request(app)
-        .delete("/1")
-        .set("address", "0xOwnerAddress");
+      const response = await request(app).delete('/1').set('address', '0xOwnerAddress');
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toBe("Team not found");
+      expect(response.body.message).toBe('Team not found');
     });
 
-    it("should return 403 if user is not the team owner", async () => {
+    it('should return 403 if user is not the team owner', async () => {
       const mockTeam = {
         id: 1,
-        ownerAddress: "0xDifferentAddress",
-        name: "Test Team",
-        description: "Test Description",
-        officerAddress: "0xOfficerAddress",
+        ownerAddress: '0xDifferentAddress',
+        name: 'Test Team',
+        description: 'Test Description',
+        officerAddress: '0xOfficerAddress',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
 
-      const response = await request(app)
-        .delete("/1")
-        .set("address", "0xAnotherAddress");
+      const response = await request(app).delete('/1').set('address', '0xAnotherAddress');
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe("Unauthorized");
+      expect(response.body.message).toBe('Unauthorized');
     });
 
-    it("should return 200 and delete the team successfully", async () => {
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(teamMockResolve);
-      vi.spyOn(prisma.team, "delete").mockResolvedValue(teamMockResolve);
-      vi.spyOn(prisma.boardOfDirectorActions, "deleteMany").mockResolvedValue({
+    it('should return 200 and delete the team successfully', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamMockResolve);
+      vi.spyOn(prisma.team, 'delete').mockResolvedValue(teamMockResolve);
+      vi.spyOn(prisma.boardOfDirectorActions, 'deleteMany').mockResolvedValue({
         count: 0,
       });
-      vi.spyOn(prisma.memberTeamsData, "deleteMany").mockResolvedValue({
+      vi.spyOn(prisma.memberTeamsData, 'deleteMany').mockResolvedValue({
         count: 0,
       });
-      vi.spyOn(prisma.teamContract, "deleteMany").mockResolvedValue({
+      vi.spyOn(prisma.teamContract, 'deleteMany').mockResolvedValue({
         count: 0,
       });
-      vi.spyOn(prisma.boardOfDirectorActions, "deleteMany").mockResolvedValue({
+      vi.spyOn(prisma.boardOfDirectorActions, 'deleteMany').mockResolvedValue({
         count: 0,
       });
-      vi.spyOn(prisma.weeklyClaim, "deleteMany").mockResolvedValue({
+      vi.spyOn(prisma.weeklyClaim, 'deleteMany').mockResolvedValue({
         count: 0,
       });
-      vi.spyOn(prisma.claim, "deleteMany").mockResolvedValue({
+      vi.spyOn(prisma.claim, 'deleteMany').mockResolvedValue({
         count: 0,
       });
-      vi.spyOn(prisma.wage, "deleteMany").mockResolvedValue({
+      vi.spyOn(prisma.wage, 'deleteMany').mockResolvedValue({
         count: 0,
       });
-      vi.spyOn(prisma.expense, "deleteMany").mockResolvedValue({
+      vi.spyOn(prisma.expense, 'deleteMany').mockResolvedValue({
         count: 0,
       });
 
-      const response = await request(app)
-        .delete("/1")
-        .set("address", "0xOwnerAddress");
+      const response = await request(app).delete('/1').set('address', '0xOwnerAddress');
 
       expect(response.status).toBe(200);
       // expect(response.body).toEqual(teamMockResolve);
     });
 
-    it("should return 500 if there is a server error", async () => {
-      vi.spyOn(prisma.team, "findUnique").mockResolvedValue(teamMockResolve);
-      vi.spyOn(prisma.team, "delete").mockRejectedValue(
-        new Error("Server error")
-      );
+    it('should return 500 if there is a server error', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamMockResolve);
+      vi.spyOn(prisma.team, 'delete').mockRejectedValue(new Error('Server error'));
 
-      const response = await request(app)
-        .delete("/1")
-        .set("address", "0xOwnerAddress");
+      const response = await request(app).delete('/1').set('address', '0xOwnerAddress');
 
       expect(response.status).toBe(500);
-      expect(response.body.message).toEqual(
-        "Internal server error has occured"
-      );
+      expect(response.body.message).toEqual('Internal server error has occured');
     });
   });
 });
