@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import request from 'supertest'
-import express from 'express'
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import request from 'supertest';
+import express from 'express';
 
 // Hoist mocks
 const { mockUploadSingle, mockUploadImageToGCS } = vi.hoisted(() => ({
@@ -14,77 +14,77 @@ const { mockUploadSingle, mockUploadImageToGCS } = vi.hoisted(() => ({
           encoding: '7bit',
           mimetype: 'image/jpeg',
           buffer: Buffer.from('fake-image-data'),
-          size: 1024
-        }
+          size: 1024,
+        };
       }
-      next()
-    }
+      next();
+    };
   }),
-  mockUploadImageToGCS: vi.fn()
-}))
+  mockUploadImageToGCS: vi.fn(),
+}));
 
 vi.mock('../../utils/upload', () => ({
   upload: {
-    single: mockUploadSingle
+    single: mockUploadSingle,
   },
-  uploadImageToGCS: mockUploadImageToGCS
-}))
+  uploadImageToGCS: mockUploadImageToGCS,
+}));
 
 // Import after mock
-import uploadRouter from '../../routes/uploadRoute'
+import uploadRouter from '../../routes/uploadRoute';
 
 describe('uploadRoute', () => {
-  let app: express.Application
+  let app: express.Application;
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    app = express()
-    app.use(express.json())
-    app.use('/', uploadRouter)
-  })
+    vi.clearAllMocks();
+    app = express();
+    app.use(express.json());
+    app.use('/', uploadRouter);
+  });
 
   describe('POST /', () => {
     it('should return 400 if no file is provided', async () => {
-      const response = await request(app).post('/').send({})
+      const response = await request(app).post('/').send({});
 
-      expect(response.status).toBe(400)
-      expect(response.body).toEqual({ error: 'No file provided' })
-    })
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: 'No file provided' });
+    });
 
     it('should upload file and return image URL', async () => {
-      const mockPublicUrl = 'https://storage.googleapis.com/bucket-name/uuid-file.jpg'
-      mockUploadImageToGCS.mockResolvedValue(mockPublicUrl)
+      const mockPublicUrl = 'https://storage.googleapis.com/bucket-name/uuid-file.jpg';
+      mockUploadImageToGCS.mockResolvedValue(mockPublicUrl);
 
-      const response = await request(app).post('/').send({ hasFile: true })
+      const response = await request(app).post('/').send({ hasFile: true });
 
-      expect(response.status).toBe(200)
-      expect(response.body).toEqual({ imageUrl: mockPublicUrl })
-      expect(mockUploadImageToGCS).toHaveBeenCalled()
-    })
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ imageUrl: mockPublicUrl });
+      expect(mockUploadImageToGCS).toHaveBeenCalled();
+    });
 
     it('should return 500 if upload fails', async () => {
-      const errorMessage = 'Upload failed'
-      mockUploadImageToGCS.mockRejectedValue(new Error(errorMessage))
+      const errorMessage = 'Upload failed';
+      mockUploadImageToGCS.mockRejectedValue(new Error(errorMessage));
 
-      const response = await request(app).post('/').send({ hasFile: true })
+      const response = await request(app).post('/').send({ hasFile: true });
 
-      expect(response.status).toBe(500)
+      expect(response.status).toBe(500);
       expect(response.body).toEqual({
         error: 'Failed to upload image',
-        details: errorMessage
-      })
-    })
+        details: errorMessage,
+      });
+    });
 
     it('should handle non-Error exceptions', async () => {
-      mockUploadImageToGCS.mockRejectedValue('String error')
+      mockUploadImageToGCS.mockRejectedValue('String error');
 
-      const response = await request(app).post('/').send({ hasFile: true })
+      const response = await request(app).post('/').send({ hasFile: true });
 
-      expect(response.status).toBe(500)
+      expect(response.status).toBe(500);
       expect(response.body).toEqual({
         error: 'Failed to upload image',
-        details: 'String error'
-      })
-    })
-  })
-})
+        details: 'String error',
+      });
+    });
+  });
+});

@@ -1,16 +1,16 @@
-import express from 'express'
+import express from 'express';
 import {
   getNotification,
   updateNotification,
-  createBulkNotifications
-} from '../controllers/notificationController'
+  createBulkNotifications,
+} from '../controllers/notificationController';
 
-import { authorizeUser } from '../middleware/authMiddleware'
+import { authorizeUser } from '../middleware/authMiddleware';
 
-const notificationRoute = express.Router()
+const notificationRoute = express.Router();
 
-notificationRoute.get('/', authorizeUser, getNotification)
-notificationRoute.put('/:id', authorizeUser, updateNotification)
-notificationRoute.post('/bulk', authorizeUser, createBulkNotifications)
+notificationRoute.get('/', authorizeUser, getNotification);
+notificationRoute.put('/:id', authorizeUser, updateNotification);
+notificationRoute.post('/bulk', authorizeUser, createBulkNotifications);
 
-export default notificationRoute
+export default notificationRoute;

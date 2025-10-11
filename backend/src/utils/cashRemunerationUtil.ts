@@ -1,7 +1,7 @@
-import { Address, isAddress } from 'viem'
-import publicClient from './viem.config'
-import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json'
-import { prisma } from '.'
+import { Address, isAddress } from 'viem';
+import publicClient from './viem.config';
+import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json';
+import { prisma } from '.';
 
 /**
  * Get the owner address of the Cash Remuneration contract for a specific team
@@ -14,27 +14,27 @@ export const getCashRemunerationOwner = async (teamId: number): Promise<Address 
     const contract = await prisma.teamContract.findFirst({
       where: {
         teamId: teamId,
-        type: 'CashRemunerationEIP712'
-      }
-    })
+        type: 'CashRemunerationEIP712',
+      },
+    });
 
     if (!contract || !isAddress(contract.address)) {
-      return null
+      return null;
     }
 
     // Get the owner of the contract from the blockchain
     const owner = await publicClient.readContract({
       address: contract.address as `0x${string}`,
       abi: CASH_REMUNERATION_ABI,
-      functionName: 'owner'
-    })
+      functionName: 'owner',
+    });
 
-    return owner as Address
+    return owner as Address;
   } catch (error) {
-    console.error('Error getting Cash Remuneration owner:', error)
-    return null
+    console.error('Error getting Cash Remuneration owner:', error);
+    return null;
   }
-}
+};
 
 /**
  * Check if a user is the Cash Remuneration owner for a team
@@ -47,10 +47,10 @@ export const isCashRemunerationOwner = async (
   teamId: number
 ): Promise<boolean> => {
   try {
-    const owner = await getCashRemunerationOwner(teamId)
-    return owner === userAddress
+    const owner = await getCashRemunerationOwner(teamId);
+    return owner === userAddress;
   } catch (error) {
-    console.error('Error checking if user is Cash Remuneration owner:', error)
-    return false
+    console.error('Error checking if user is Cash Remuneration owner:', error);
+    return false;
   }
-}
+};

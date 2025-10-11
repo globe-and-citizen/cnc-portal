@@ -1,15 +1,15 @@
-import express from 'express'
+import express from 'express';
 
-import { getContracts, syncContracts, addContract } from '../controllers/contractController'
+import { getContracts, syncContracts, addContract } from '../controllers/contractController';
 import {
   validateBody,
   validateQuery,
   addContractBodySchema,
   syncContractsBodySchema,
-  getContractsQuerySchema
-} from '../validation'
+  getContractsQuerySchema,
+} from '../validation';
 
-const contractRoutes = express.Router()
+const contractRoutes = express.Router();
 
 /**
  * @openapi
@@ -97,7 +97,7 @@ const contractRoutes = express.Router()
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-contractRoutes.post('/', validateBody(addContractBodySchema), addContract)
+contractRoutes.post('/', validateBody(addContractBodySchema), addContract);
 
 /**
  * @openapi
@@ -140,7 +140,7 @@ contractRoutes.post('/', validateBody(addContractBodySchema), addContract)
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-contractRoutes.get('/', validateQuery(getContractsQuerySchema), getContracts)
+contractRoutes.get('/', validateQuery(getContractsQuerySchema), getContracts);
 
 /**
  * @openapi
@@ -188,6 +188,6 @@ contractRoutes.get('/', validateQuery(getContractsQuerySchema), getContracts)
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-contractRoutes.put('/sync', validateBody(syncContractsBodySchema), syncContracts)
+contractRoutes.put('/sync', validateBody(syncContractsBodySchema), syncContracts);
 
-export default contractRoutes
+export default contractRoutes;

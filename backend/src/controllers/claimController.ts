@@ -1,45 +1,45 @@
-import { Request, Response } from 'express'
-import { errorResponse } from '../utils/utils'
-import { prisma } from '../utils'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import weekday from 'dayjs/plugin/weekday'
+import { Request, Response } from 'express';
+import { errorResponse } from '../utils/utils';
+import { prisma } from '../utils';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import weekday from 'dayjs/plugin/weekday';
 
-import { Prisma, Claim } from '@prisma/client'
-import { isUserMemberOfTeam } from './wageController'
-import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil'
+import { Prisma, Claim } from '@prisma/client';
+import { isUserMemberOfTeam } from './wageController';
+import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
 
-dayjs.extend(utc)
-dayjs.extend(isoWeek)
-dayjs.extend(weekday)
+dayjs.extend(utc);
+dayjs.extend(isoWeek);
+dayjs.extend(weekday);
 
 type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
-  teamId: string
-}
+  teamId: string;
+};
 
 // TODO limit weeday only for the current week. Betwen Monday and the current day
 export const addClaim = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address
+  const callerAddress = (req as any).address;
 
-  const body = req.body as claimBodyRequest
-  const hoursWorked = Number(body.hoursWorked)
-  const memo = body.memo as string
+  const body = req.body as claimBodyRequest;
+  const hoursWorked = Number(body.hoursWorked);
+  const memo = body.memo as string;
   const dayWorked = body.dayWorked
     ? dayjs.utc(body.dayWorked).startOf('day').toDate()
-    : dayjs.utc().startOf('day').toDate()
-  const teamId = Number(body.teamId)
+    : dayjs.utc().startOf('day').toDate();
+  const teamId = Number(body.teamId);
 
-  const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate() // Monday 00:00 UTC
+  const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
   try {
     // Get user current
     const wage = await prisma.wage.findFirst({
-      where: { userAddress: callerAddress, nextWageId: null, teamId: teamId }
-    })
+      where: { userAddress: callerAddress, nextWageId: null, teamId: teamId },
+    });
 
     if (!wage) {
-      return errorResponse(400, 'No wage found for the user', res)
+      return errorResponse(400, 'No wage found for the user', res);
     }
 
     // get the member current wage
@@ -48,26 +48,26 @@ export const addClaim = async (req: Request, res: Response) => {
       where: {
         wage: {
           teamId: teamId,
-          nextWageId: null
+          nextWageId: null,
         },
         weekStart: weekStart,
         memberAddress: callerAddress,
-        teamId: teamId
+        teamId: teamId,
       },
-      include: { claims: true }
-    })
+      include: { claims: true },
+    });
 
     // Check total max hours.
 
-    const totalHours = weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0
+    const totalHours = weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0;
 
     if (totalHours + hoursWorked > wage.maximumHoursPerWeek) {
-      const remainingHours = Math.max(0, wage.maximumHoursPerWeek - totalHours)
+      const remainingHours = Math.max(0, wage.maximumHoursPerWeek - totalHours);
       return errorResponse(
         400,
         `Maximum weekly hours reached, cannot submit more claims for this week. You have ${remainingHours} hours remaining.`,
         res
-      )
+      );
     }
 
     if (!weeklyClaim) {
@@ -78,12 +78,12 @@ export const addClaim = async (req: Request, res: Response) => {
           memberAddress: callerAddress,
           teamId: teamId,
           data: {},
-          status: 'pending'
+          status: 'pending',
         },
         include: {
-          claims: true
-        }
-      })
+          claims: true,
+        },
+      });
     }
 
     if (
@@ -97,7 +97,7 @@ export const addClaim = async (req: Request, res: Response) => {
         400,
         'Submission failed: the total number of hours for this day would exceed 24 hours.',
         res
-      )
+      );
     }
 
     const claim = await prisma.claim.create({
@@ -107,51 +107,51 @@ export const addClaim = async (req: Request, res: Response) => {
         wageId: wage.id,
         status: 'pending',
         weeklyClaimId: weeklyClaim.id,
-        dayWorked: dayWorked
-      }
-    })
+        dayWorked: dayWorked,
+      },
+    });
 
-    return res.status(201).json(claim)
+    return res.status(201).json(claim);
   } catch (error) {
-    return errorResponse(500, error, res)
+    return errorResponse(500, error, res);
   }
-}
+};
 
 export const getClaims = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address
-  const teamId = Number(req.query.teamId)
-  const status = req.query.status as string
-  const memberAddress = req.query.memberAddress as string | undefined
+  const callerAddress = (req as any).address;
+  const teamId = Number(req.query.teamId);
+  const status = req.query.status as string;
+  const memberAddress = req.query.memberAddress as string | undefined;
 
   try {
     // Check if the user is a member of the provided team
     if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Caller is not a member of the team', res)
+      return errorResponse(403, 'Caller is not a member of the team', res);
     }
 
-    let statusFilter: Prisma.ClaimWhereInput = {}
+    let statusFilter: Prisma.ClaimWhereInput = {};
     if (status) {
-      statusFilter = { status }
+      statusFilter = { status };
     }
 
     // add filter for memberAddress if provided
-    let memberFilter: Prisma.ClaimWhereInput = {}
+    let memberFilter: Prisma.ClaimWhereInput = {};
     if (memberAddress) {
       memberFilter = {
         wage: {
-          userAddress: memberAddress
-        }
-      }
+          userAddress: memberAddress,
+        },
+      };
     }
 
     // Request all claims based on status, that have a wage where the teamId is the provided teamId
     const claims = await prisma.claim.findMany({
       where: {
         wage: {
-          teamId: teamId
+          teamId: teamId,
         },
         ...statusFilter,
-        ...memberFilter
+        ...memberFilter,
       },
       include: {
         wage: {
@@ -160,73 +160,73 @@ export const getClaims = async (req: Request, res: Response) => {
               select: {
                 address: true,
                 name: true,
-                imageUrl: true
-              }
-            }
-          }
-        }
-      }
-    })
-    return res.status(200).json(claims)
+                imageUrl: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    return res.status(200).json(claims);
   } catch (error) {
-    return errorResponse(500, 'Internal server error', res)
+    return errorResponse(500, 'Internal server error', res);
   }
-}
+};
 
 export const updateClaim = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address
-  const claimId = Number(req.params.claimId)
+  const callerAddress = (req as any).address;
+  const claimId = Number(req.params.claimId);
 
   // Action is only able to have this values: sign, withdraw, disable, enable, reject
-  const action = req.query.action as string
+  const action = req.query.action as string;
 
   // Prepare the data according to the action
-  let data: Prisma.ClaimUpdateInput = {}
+  let data: Prisma.ClaimUpdateInput = {};
   switch (action) {
     case 'sign':
-      const signature = req.body.signature as Claim['signature']
+      const signature = req.body.signature as Claim['signature'];
 
       // validate the signature
       if (!signature) {
-        return errorResponse(400, 'Missing signature', res)
+        return errorResponse(400, 'Missing signature', res);
       }
       // TODO: validate the signature (in the blockchain)
-      data.status = 'signed'
-      data.signature = req.body.signature
-      break
+      data.status = 'signed';
+      data.signature = req.body.signature;
+      break;
     case 'withdraw':
       // TODO: check if the signature is used to withdraw the claim
-      data.status = 'withdrawn'
-      break
+      data.status = 'withdrawn';
+      break;
     case 'disable':
       // TODO: Check if the signature is disabled in the blockchain
-      data.status = 'disabled'
-      break
+      data.status = 'disabled';
+      break;
     case 'enable':
-      data.status = 'signed'
-      break
+      data.status = 'signed';
+      break;
     case 'reject':
-      data.status = 'rejected'
-      break
+      data.status = 'rejected';
+      break;
   }
 
   try {
     // Fetch the claim including the required data
     const claim = await prisma.claim.findFirst({
       where: {
-        id: claimId
+        id: claimId,
       },
       include: {
         wage: {
           include: {
-            team: true
-          }
-        }
-      }
-    })
+            team: true,
+          },
+        },
+      },
+    });
 
     if (!claim) {
-      return errorResponse(404, 'Claim not found', res)
+      return errorResponse(404, 'Claim not found', res);
     }
 
     // sign, disable, enable, reject actions are only able to be done by the owner of the team
@@ -235,7 +235,7 @@ export const updateClaim = async (req: Request, res: Response) => {
       const isCallerCashRemunOwner = await isCashRemunerationOwner(
         callerAddress,
         claim.wage.team.id
-      )
+      );
 
       // If not Cash Remuneration owner, check if they're the team owner
       if (!isCallerCashRemunOwner && claim.wage.team.ownerAddress !== callerAddress) {
@@ -243,14 +243,14 @@ export const updateClaim = async (req: Request, res: Response) => {
           403,
           'Caller is not the Cash Remuneration owner or the team owner',
           res
-        )
+        );
       }
     }
 
     // withdraw action is only able to be done by the user that created the claim
     if (action === 'withdraw') {
       if (claim.wage.userAddress !== callerAddress) {
-        return errorResponse(403, 'Caller is not the owner of the claim', res)
+        return errorResponse(403, 'Caller is not the owner of the claim', res);
       }
     }
 
@@ -260,45 +260,45 @@ export const updateClaim = async (req: Request, res: Response) => {
       case 'sign':
         //  sine only if the claim is pending, or rejected
         if (claim.status !== 'pending' && claim.status !== 'rejected') {
-          return errorResponse(403, "Can't signe: Claim is not pending or rejected", res)
+          return errorResponse(403, "Can't signe: Claim is not pending or rejected", res);
         }
-        break
+        break;
       case 'withdraw':
         // withdraw only if the claim is signed
         if (claim.status !== 'signed') {
-          return errorResponse(403, "Can't withdraw: Claim is not signed", res)
+          return errorResponse(403, "Can't withdraw: Claim is not signed", res);
         }
-        break
+        break;
       case 'disable':
         // disable only if the claim is signed
         if (claim.status !== 'signed') {
-          return errorResponse(403, "Can't disable: Claim is not signed", res)
+          return errorResponse(403, "Can't disable: Claim is not signed", res);
         }
-        break
+        break;
       case 'enable':
         // enable only if the claim is disabled
         if (claim.status !== 'disabled') {
-          return errorResponse(403, "Can't enable: Claim is not disabled", res)
+          return errorResponse(403, "Can't enable: Claim is not disabled", res);
         }
-        break
+        break;
       case 'reject':
         // reject only if the claim is pending
         if (claim.status !== 'pending') {
-          return errorResponse(403, "Can't reject: Claim is not pending", res)
+          return errorResponse(403, "Can't reject: Claim is not pending", res);
         }
-        break
+        break;
     }
 
     // Update the claim status
     const updatedClaim = await prisma.claim.update({
       where: {
-        id: claimId
+        id: claimId,
       },
-      data
-    })
-    return res.status(200).json(updatedClaim)
+      data,
+    });
+    return res.status(200).json(updatedClaim);
   } catch (error) {
-    console.log('Error: ', error)
-    return errorResponse(500, 'Internal server error', res)
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
   }
-}
+};

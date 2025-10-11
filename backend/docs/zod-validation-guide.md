@@ -59,8 +59,8 @@ New Zod v4 best practices utilities:
 
 ```typescript
 // In validation/schemas/example.ts
-import { z } from 'zod'
-import { addressSchema, teamIdSchema, memoSchema } from './common'
+import { z } from 'zod';
+import { addressSchema, teamIdSchema, memoSchema } from './common';
 
 export const createUserBodySchema = z.object({
   name: z
@@ -69,15 +69,15 @@ export const createUserBodySchema = z.object({
     .min(1, 'Name cannot be empty')
     .max(100, 'Name cannot exceed 100 characters'),
   email: z.string({ message: 'Email is required' }).email('Invalid email format').toLowerCase(),
-  address: addressSchema // Reuse common schemas
-})
+  address: addressSchema, // Reuse common schemas
+});
 
 export const getUserParamsSchema = z.object({
   userId: z.coerce
     .number({ message: 'User ID must be a number' })
     .int('User ID must be an integer')
-    .positive('User ID must be positive')
-})
+    .positive('User ID must be positive'),
+});
 ```
 
 ### Route Validation
@@ -88,12 +88,12 @@ import {
   validateBody,
   validateParams,
   createUserBodySchema,
-  getUserParamsSchema
-} from '../validation'
+  getUserParamsSchema,
+} from '../validation';
 
 // Single validation
-router.post('/users', validateBody(createUserBodySchema), createUser)
-router.get('/users/:userId', validateParams(getUserParamsSchema), getUser)
+router.post('/users', validateBody(createUserBodySchema), createUser);
+router.get('/users/:userId', validateParams(getUserParamsSchema), getUser);
 
 // Multiple validations
 router.put(
@@ -101,7 +101,7 @@ router.put(
   validateParams(getUserParamsSchema),
   validateBody(createUserBodySchema),
   updateUser
-)
+);
 ```
 
 ### Advanced Schema Patterns
@@ -109,7 +109,7 @@ router.put(
 #### Enhanced Address Validation
 
 ```typescript
-import { addressSchema } from './common'
+import { addressSchema } from './common';
 // Validates Ethereum addresses using viem's isAddress() with detailed error messages
 ```
 
@@ -117,8 +117,8 @@ import { addressSchema } from './common'
 
 ```typescript
 const statusSchema = z.enum(['pending', 'approved', 'rejected'], {
-  message: 'Invalid status. Allowed: pending, approved, rejected'
-})
+  message: 'Invalid status. Allowed: pending, approved, rejected',
+});
 ```
 
 #### Advanced Array Validation
@@ -128,10 +128,10 @@ const rateSchema = z
   .array(
     z.object({
       type: z.string({ message: 'Rate type is required' }).min(1),
-      amount: z.coerce.number({ message: 'Amount must be a number' }).positive()
+      amount: z.coerce.number({ message: 'Amount must be a number' }).positive(),
     })
   )
-  .min(1, 'At least one rate required')
+  .min(1, 'At least one rate required');
 ```
 
 #### Enhanced Union Types
@@ -141,8 +141,8 @@ const dataSchema = z.union([
   z.string().transform((str) => JSON.parse(str)), // Parse JSON string
   z.object({
     /* predefined object */
-  }) // Or accept object directly
-])
+  }), // Or accept object directly
+]);
 ```
 
 #### Smart Type Coercion
@@ -151,7 +151,7 @@ const dataSchema = z.union([
 const teamIdSchema = z.coerce
   .number({ message: 'Must be a number' })
   .int('Must be an integer')
-  .positive('Must be positive')
+  .positive('Must be positive');
 ```
 
 ## Zod v4 Best Practices
@@ -163,28 +163,28 @@ const teamIdSchema = z.coerce
 const nameSchema = z
   .string({ message: 'Name is required' })
   .min(1, 'Name cannot be empty')
-  .max(100, 'Name cannot exceed 100 characters')
+  .max(100, 'Name cannot exceed 100 characters');
 
 // ❌ Avoid: Generic error messages
-const nameSchema = z.string().min(1).max(100)
+const nameSchema = z.string().min(1).max(100);
 ```
 
 ### 2. Performance Optimization
 
 ```typescript
 // Use caching for expensive validations
-import { createCachedValidationSchema } from './utils'
+import { createCachedValidationSchema } from './utils';
 
 const expensiveSchema = createCachedValidationSchema(
   complexValidationSchema,
   { maxSize: 50, ttl: 300000 } // 5 minutes cache
-)
+);
 ```
 
 ### 3. Type-Safe API Handlers
 
 ```typescript
-import { ApiHandler, InferInput, InferOutput } from '../validation'
+import { ApiHandler, InferInput, InferOutput } from '../validation';
 
 const createUserHandler: ApiHandler<
   typeof createUserBodySchema,
@@ -196,9 +196,9 @@ const createUserHandler: ApiHandler<
   params: userParamsSchema,
   handler: async ({ body, query, params }) => {
     // All parameters are properly typed
-    return await createUser(body, query, params)
-  }
-}
+    return await createUser(body, query, params);
+  },
+};
 ```
 
 ### 4. Schema Composition
@@ -207,13 +207,13 @@ const createUserHandler: ApiHandler<
 // Build complex schemas from simple ones
 const baseUserSchema = z.object({
   name: nonEmptyStringSchema,
-  email: emailSchema
-})
+  email: emailSchema,
+});
 
 const extendedUserSchema = baseUserSchema.extend({
   bio: z.string().max(500).optional(),
-  website: urlSchema.optional()
-})
+  website: urlSchema.optional(),
+});
 ```
 
 ## Error Handling
@@ -240,11 +240,11 @@ Zod v4 provides enhanced error messages with the new `issues` format:
 
 ```typescript
 const schema = z.enum(['a', 'b'], {
-  errorMap: () => ({ message: 'Invalid value' })
-})
+  errorMap: () => ({ message: 'Invalid value' }),
+});
 
 if (!result.success) {
-  const errors = result.error.errors.map((err) => err.message)
+  const errors = result.error.errors.map((err) => err.message);
 }
 ```
 
@@ -252,11 +252,11 @@ if (!result.success) {
 
 ```typescript
 const schema = z.enum(['a', 'b'], {
-  message: 'Invalid value'
-})
+  message: 'Invalid value',
+});
 
 if (!result.success) {
-  const errors = result.error.issues.map((issue) => issue.message)
+  const errors = result.error.issues.map((issue) => issue.message);
 }
 ```
 
@@ -268,12 +268,12 @@ if (!result.success) {
 const conditionalSchema = z
   .object({
     type: z.enum(['individual', 'business']),
-    taxId: z.string().optional()
+    taxId: z.string().optional(),
   })
   .refine((data) => data.type !== 'business' || data.taxId, {
     message: 'Tax ID is required for business accounts',
-    path: ['taxId']
-  })
+    path: ['taxId'],
+  });
 ```
 
 ### 2. Transform and Parse
@@ -282,7 +282,7 @@ const conditionalSchema = z
 const transformSchema = z
   .string()
   .transform((str) => str.toLowerCase().trim())
-  .pipe(z.string().email())
+  .pipe(z.string().email());
 ```
 
 ### 3. Async Validation
@@ -293,11 +293,11 @@ const uniqueEmailSchema = z
   .email()
   .refine(
     async (email) => {
-      const exists = await checkEmailExists(email)
-      return !exists
+      const exists = await checkEmailExists(email);
+      return !exists;
     },
     { message: 'Email already exists' }
-  )
+  );
 ```
 
 ## Performance Benefits

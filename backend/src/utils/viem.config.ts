@@ -1,32 +1,32 @@
-import { createPublicClient, http } from 'viem'
-import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from 'viem/chains'
+import { createPublicClient, http } from 'viem';
+import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from 'viem/chains';
 
-const chainId = process.env.CHAIN_ID
+const chainId = process.env.CHAIN_ID;
 
 export const getChain = (chainIdStr: string | undefined) => {
-  if (!chainIdStr) return sepolia // default to sepolia
+  if (!chainIdStr) return sepolia; // default to sepolia
 
-  const id = chainIdStr.startsWith('0x') ? parseInt(chainIdStr, 16) : parseInt(chainIdStr)
+  const id = chainIdStr.startsWith('0x') ? parseInt(chainIdStr, 16) : parseInt(chainIdStr);
 
   switch (id) {
     case mainnet.id:
-      return mainnet
+      return mainnet;
     case sepolia.id:
-      return sepolia
+      return sepolia;
     case polygon.id:
-      return polygon
+      return polygon;
     case hardhat.id:
-      return hardhat
+      return hardhat;
     case polygonAmoy.id:
-      return polygonAmoy
+      return polygonAmoy;
     default:
-      return sepolia
+      return sepolia;
   }
-}
+};
 
 const publicClient = createPublicClient({
   chain: getChain(chainId),
-  transport: http()
-})
+  transport: http(),
+});
 
-export default publicClient
+export default publicClient;

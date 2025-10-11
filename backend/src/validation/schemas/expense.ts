@@ -1,5 +1,5 @@
-import { z } from 'zod'
-import { teamIdSchema, positiveIntegerSchema } from './common'
+import { z } from 'zod';
+import { teamIdSchema, positiveIntegerSchema } from './common';
 
 /**
  * Expense-related validation schemas
@@ -15,33 +15,33 @@ export const addExpenseBodySchema = z.object({
       .array(
         z.object({
           budgetType: z.number().int().nonnegative(),
-          value: z.number().int().nonnegative()
+          value: z.number().int().nonnegative(),
         })
       )
       .min(1, 'budgetData must have at least one entry'),
     tokenAddress: z.string().min(1, 'tokenAddress is required'),
-    expiry: z.number().int().nonnegative()
-  })
-})
+    expiry: z.number().int().nonnegative(),
+  }),
+});
 
 // Get expenses query parameters
 export const getExpensesQuerySchema = z.object({
   teamId: teamIdSchema,
   status: z
     .enum(['all', 'pending', 'approved', 'rejected', 'disabled', 'enabled', 'signed'], {
-      message: 'Invalid status parameter'
+      message: 'Invalid status parameter',
     })
-    .default('all')
-})
+    .default('all'),
+});
 
 // Update expense request body
 export const updateExpenseBodySchema = z.object({
   status: z.enum(['disable', 'expired', 'limitReached'], {
-    message: 'Invalid status. Allowed values: disable, expired, limitReached'
-  })
-})
+    message: 'Invalid status. Allowed values: disable, expired, limitReached',
+  }),
+});
 
 // Update expense path parameters
 export const updateExpenseParamsSchema = z.object({
-  id: positiveIntegerSchema
-})
+  id: positiveIntegerSchema,
+});

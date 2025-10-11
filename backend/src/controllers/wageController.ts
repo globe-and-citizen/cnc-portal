@@ -1,9 +1,9 @@
-import { Request, Response } from 'express'
+import { Request, Response } from 'express';
 
-import { Address } from 'viem'
-import { errorResponse } from '../utils/utils'
-import { prisma } from '../utils'
-import { Wage } from '@prisma/client'
+import { Address } from 'viem';
+import { errorResponse } from '../utils/utils';
+import { prisma } from '../utils';
+import { Wage } from '@prisma/client';
 
 type wageBodyRequest = Pick<
   Wage,
@@ -16,33 +16,33 @@ type wageBodyRequest = Pick<
   // | "usdcRatePerHour"
 > & {
   ratePerHour: Array<{
-    type: string
-    amount: number
-  }>
-}
+    type: string;
+    amount: number;
+  }>;
+};
 export const setWage = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address
+  const callerAddress = (req as any).address;
 
-  const body = req.body as wageBodyRequest
-  const teamId = Number(body.teamId)
-  const userAddress = body.userAddress as Address
+  const body = req.body as wageBodyRequest;
+  const teamId = Number(body.teamId);
+  const userAddress = body.userAddress as Address;
   // const cashRatePerHour = Number(body.cashRatePerHour);
   // const tokenRatePerHour = Number(body.tokenRatePerHour);
-  const maximumHoursPerWeek = Number(body.maximumHoursPerWeek)
+  const maximumHoursPerWeek = Number(body.maximumHoursPerWeek);
   // const usdcRatePerHour = Number(body.usdcRatePerHour);
-  let ratePerHour = body.ratePerHour
+  let ratePerHour = body.ratePerHour;
 
-  console.log('setWage called with body: ', body)
+  console.log('setWage called with body: ', body);
 
   ratePerHour = ratePerHour?.map((rate) => ({
     type: rate.type,
-    amount: Number(rate.amount)
-  }))
+    amount: Number(rate.amount),
+  }));
 
   try {
     // Check if the caller is the owner of the team
     if (!(await isOwnerOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Caller is not the owner of the team', res)
+      return errorResponse(403, 'Caller is not the owner of the team', res);
     }
 
     // Check if the user has a current wage
@@ -50,9 +50,9 @@ export const setWage = async (req: Request, res: Response) => {
       where: {
         teamId: teamId,
         userAddress,
-        nextWageId: null
-      }
-    })
+        nextWageId: null,
+      },
+    });
 
     if (wage) {
       // Create wage and chain it to the previous wage
@@ -67,25 +67,25 @@ export const setWage = async (req: Request, res: Response) => {
           ratePerHour,
           previousWage: {
             connect: {
-              id: wage.id
-            }
-          }
-        }
-      })
+              id: wage.id,
+            },
+          },
+        },
+      });
 
-      res.status(201).json(wage)
+      res.status(201).json(wage);
     } else {
       // check if the user has wage not chained
       const wages = await prisma.wage.findMany({
         where: {
           teamId: Number(teamId),
-          userAddress
-        }
-      })
+          userAddress,
+        },
+      });
 
       // This should not be possible, but if it is, return an error
       if (wages.length > 0) {
-        return errorResponse(500, 'User has a wage not chained', res)
+        return errorResponse(500, 'User has a wage not chained', res);
       }
 
       // Create first wage
@@ -97,20 +97,20 @@ export const setWage = async (req: Request, res: Response) => {
           // tokenRatePerHour,
           maximumHoursPerWeek,
           // usdcRatePerHour
-          ratePerHour
-        }
-      })
-      res.status(201).json(createdWage)
+          ratePerHour,
+        },
+      });
+      res.status(201).json(createdWage);
     }
   } catch (error) {
-    console.log('Error: ', error)
-    return errorResponse(500, 'Internal server error', res)
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
   }
-}
+};
 // /wage/?teamId=teamId
 export const getWages = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address
-  const teamId = Number(req.query.teamId)
+  const callerAddress = (req as any).address;
+  const teamId = Number(req.query.teamId);
 
   // find the team and check if the caller is the owner
   // TODO: in the future only the owner should be able to see the wages
@@ -119,58 +119,58 @@ export const getWages = async (req: Request, res: Response) => {
   try {
     // check if the member is part of the provided team
     if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Member is not a team member', res)
+      return errorResponse(403, 'Member is not a team member', res);
     }
     const wages = await prisma.wage.findMany({
       where: {
         teamId: teamId,
-        nextWageId: null
+        nextWageId: null,
       },
       include: {
         previousWage: {
           select: {
-            id: true
-          }
-        }
-      }
-    })
+            id: true,
+          },
+        },
+      },
+    });
 
-    return res.status(200).json(wages)
+    return res.status(200).json(wages);
   } catch (error) {
-    console.log('Error: ', error)
-    return errorResponse(500, 'Internal server error', res)
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
   }
-}
+};
 
 export const isUserMemberOfTeam = async (
   userAddress: Address,
   teamId: number
 ): Promise<boolean> => {
-  let team
+  let team;
 
   team = await prisma.team.findFirst({
     where: {
       id: teamId,
       members: {
         some: {
-          address: userAddress
-        }
-      }
-    }
-  })
+          address: userAddress,
+        },
+      },
+    },
+  });
 
-  return !!team
-}
+  return !!team;
+};
 
 export const isOwnerOfTeam = async (userAddress: Address, teamId: number) => {
   const team = await prisma.team.findFirst({
     where: {
       id: teamId,
       owner: {
-        address: userAddress
-      }
-    }
-  })
+        address: userAddress,
+      },
+    },
+  });
 
-  return !!team
-}
+  return !!team;
+};

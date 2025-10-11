@@ -11,7 +11,7 @@ steps:
     args:
       [
         'push',
-        '${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-api:$SHORT_SHA'
+        '${LOCATION}-docker.pkg.dev/$PROJECT_ID/globe-and-citizen-docker-repo/${REPO_FULL_NAME}-api:$SHORT_SHA',
       ]
     id: 'Push The Image'
     waitFor:
@@ -34,7 +34,7 @@ steps:
         '--port',
         '80',
         '--tag',
-        'tag-${SHORT_SHA}'
+        'tag-${SHORT_SHA}',
       ]
     secretEnv: ['DATABASE_URL']
     id: 'Deploy to Cloud Run'

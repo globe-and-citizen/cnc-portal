@@ -1,50 +1,50 @@
-import request from 'supertest'
-import express, { Request, Response, NextFunction } from 'express'
-import { prisma } from '../../utils'
-import { describe, it, beforeEach, expect, vi } from 'vitest'
-import { WeeklyClaim } from '@prisma/client'
-import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil'
-import weeklyClaimRoutes from '../../routes/weeklyClaimRoute'
-import { authorizeUser } from '../../middleware/authMiddleware'
+import request from 'supertest';
+import express, { Request, Response, NextFunction } from 'express';
+import { prisma } from '../../utils';
+import { describe, it, beforeEach, expect, vi } from 'vitest';
+import { WeeklyClaim } from '@prisma/client';
+import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
+import weeklyClaimRoutes from '../../routes/weeklyClaimRoute';
+import { authorizeUser } from '../../middleware/authMiddleware';
 
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    ;(req as any).address = '0x1234567890123456789012345678901234567890'
-    next()
-  })
-}))
+    (req as any).address = '0x1234567890123456789012345678901234567890';
+    next();
+  }),
+}));
 
 // Mock cashRemunerationUtil
 vi.mock('../../utils/cashRemunerationUtil', () => ({
-  isCashRemunerationOwner: vi.fn().mockResolvedValue(true)
-}))
+  isCashRemunerationOwner: vi.fn().mockResolvedValue(true),
+}));
 
 // Mock prisma
 vi.mock('../../utils', async () => {
-  const actual = await vi.importActual('../../utils')
+  const actual = await vi.importActual('../../utils');
   return {
     ...actual,
     prisma: {
       weeklyClaim: {
         findMany: vi.fn(),
         update: vi.fn(),
-        findUnique: vi.fn()
+        findUnique: vi.fn(),
       },
       wage: {
-        findUnique: vi.fn()
+        findUnique: vi.fn(),
       },
-      $transaction: vi.fn()
-    }
-  }
-})
+      $transaction: vi.fn(),
+    },
+  };
+});
 
-const app = express()
-app.use(express.json())
-app.use('/', weeklyClaimRoutes)
+const app = express();
+app.use(express.json());
+app.use('/', weeklyClaimRoutes);
 
 function mockWage(ownerAddress = '0x1234567890123456789012345678901234567890') {
-  return { team: { ownerAddress } }
+  return { team: { ownerAddress } };
 }
 
 function mockWeeklyClaim({
@@ -58,7 +58,7 @@ function mockWeeklyClaim({
   wageId = 1,
   createdAt = new Date('2024-07-22'),
   updatedAt = new Date('2024-07-22'),
-  wage = mockWage()
+  wage = mockWage(),
 } = {}) {
   return {
     id,
@@ -71,15 +71,15 @@ function mockWeeklyClaim({
     wageId,
     createdAt,
     updatedAt,
-    wage
-  }
+    wage,
+  };
 }
 
 describe('Weekly Claim Controller', () => {
   describe('PUT: /:id', () => {
     beforeEach(() => {
-      vi.clearAllMocks()
-    })
+      vi.clearAllMocks();
+    });
 
     it('should return 200 if weekly claim is updated successfully', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
@@ -87,87 +87,87 @@ describe('Weekly Claim Controller', () => {
           id: 1,
           status: 'pending',
           weekStart: new Date('2024-07-22'),
-          wage: mockWage('0x123')
+          wage: mockWage('0x123'),
         })
-      )
+      );
       vi.spyOn(prisma, '$transaction').mockResolvedValue([
         mockWeeklyClaim({
           id: 1,
           status: 'signed',
           signature: '0xabc' as any,
-          wage: mockWage('0x123')
-        })
-      ])
+          wage: mockWage('0x123'),
+        }),
+      ]);
 
       const response = await request(app)
         .put('/1?action=sign')
         .set('address', '0x123')
-        .send({ signature: '0xabc' })
+        .send({ signature: '0xabc' });
 
-      expect(response.status).toBe(200)
-      expect(response.body).toHaveProperty('status', 'signed')
-    })
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('status', 'signed');
+    });
 
     it('should return 400 if action is invalid', async () => {
-      const response = await request(app).put('/1?action=invalid')
-      expect(response.status).toBe(400)
+      const response = await request(app).put('/1?action=invalid');
+      expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: 'Invalid action. Allowed actions are: sign, withdraw'
-      })
-    })
+        message: 'Invalid action. Allowed actions are: sign, withdraw',
+      });
+    });
 
     it('should return 404 if weekly claim is not found', async () => {
-      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(null)
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(null);
       const response = await request(app)
         .put('/1?action=sign')
         .set('address', '0x123')
-        .send({ signature: '0xabc' })
-      expect(response.status).toBe(404)
-      expect(response.body).toEqual({ message: 'WeeklyClaim not found' })
-    })
+        .send({ signature: '0xabc' });
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: 'WeeklyClaim not found' });
+    });
 
     it('should return 400 if id is invalid', async () => {
-      const response = await request(app).put('/invalidId?action=sign')
-      expect(response.status).toBe(400)
+      const response = await request(app).put('/invalidId?action=sign');
+      expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: 'Missing or invalid signature; Missing or invalid id'
-      })
-    })
+        message: 'Missing or invalid signature; Missing or invalid id',
+      });
+    });
 
     it('should return 404 if weekly claim is not found', async () => {
-      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(null)
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(null);
       const response = await request(app)
         .put('/1?action=sign')
         .set('address', '0x123')
-        .send({ signature: '0xabc' })
-      expect(response.status).toBe(404)
-      expect(response.body).toEqual({ message: 'WeeklyClaim not found' })
-    })
+        .send({ signature: '0xabc' });
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: 'WeeklyClaim not found' });
+    });
 
     it('it should return 400 if caller is not the Cash Remuneration owner or owner of the team', async () => {
-      ;(isCashRemunerationOwner as any).mockResolvedValueOnce(false)
+      (isCashRemunerationOwner as any).mockResolvedValueOnce(false);
 
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
         mockWeeklyClaim({
           id: 1,
           status: 'pending',
           weekStart: new Date('2024-07-22'),
-          wage: mockWage('0x456')
+          wage: mockWage('0x456'),
         })
-      )
+      );
 
       const response = await request(app)
         .put('/1?action=sign')
         .set('address', '0x456')
-        .send({ signature: '0xabc' })
-      expect(response.status).toBe(400)
+        .send({ signature: '0xabc' });
+      expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: 'Caller is not the Cash Remuneration owner or the team owner'
-      })
-    })
+        message: 'Caller is not the Cash Remuneration owner or the team owner',
+      });
+    });
 
     it('should return 400 if week is not yet completed', async () => {
-      const now = new Date()
+      const now = new Date();
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
         mockWeeklyClaim({
           id: 1,
@@ -180,20 +180,20 @@ describe('Weekly Claim Controller', () => {
           wageId: 1,
           createdAt: now,
           updatedAt: now,
-          wage: mockWage('0x123')
+          wage: mockWage('0x123'),
         })
-      )
+      );
 
       const response = await request(app)
         .put('/1?action=sign')
         .set('address', '0x123')
-        .send({ signature: '0xabc' })
+        .send({ signature: '0xabc' });
 
-      expect(response.status).toBe(400)
+      expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: 'Week not yet completed'
-      })
-    })
+        message: 'Week not yet completed',
+      });
+    });
 
     it('should return 400 if weekly claim is already signed', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
@@ -201,20 +201,20 @@ describe('Weekly Claim Controller', () => {
           id: 1,
           status: 'signed',
           weekStart: new Date('2024-07-22'),
-          wage: mockWage('0x123')
+          wage: mockWage('0x123'),
         })
-      )
+      );
 
       const response = await request(app)
         .put('/1?action=sign')
         .set('address', '0x123')
-        .send({ signature: '0xabc' })
+        .send({ signature: '0xabc' });
 
-      expect(response.status).toBe(400)
+      expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: 'Weekly claim already signed'
-      })
-    })
+        message: 'Weekly claim already signed',
+      });
+    });
 
     it('should return 400 if weekly claim is already withdrawn', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
@@ -222,20 +222,20 @@ describe('Weekly Claim Controller', () => {
           id: 1,
           status: 'withdrawn',
           weekStart: new Date('2024-07-22'),
-          wage: mockWage('0x123')
+          wage: mockWage('0x123'),
         })
-      )
+      );
 
       const response = await request(app)
         .put('/1?action=sign')
         .set('address', '0x123')
-        .send({ signature: '0xabc' })
+        .send({ signature: '0xabc' });
 
-      expect(response.status).toBe(400)
+      expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: 'Weekly claim already withdrawn'
-      })
-    })
+        message: 'Weekly claim already withdrawn',
+      });
+    });
 
     it('should return 400 if weekly claim is not signed before withdrawal', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
@@ -243,17 +243,17 @@ describe('Weekly Claim Controller', () => {
           id: 1,
           status: 'pending',
           weekStart: new Date('2024-07-22'),
-          wage: mockWage('0x123')
+          wage: mockWage('0x123'),
         })
-      )
+      );
 
-      const response = await request(app).put('/1?action=withdraw').set('address', '0x123')
+      const response = await request(app).put('/1?action=withdraw').set('address', '0x123');
 
-      expect(response.status).toBe(400)
+      expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: 'Weekly claim must be signed before it can be withdrawn'
-      })
-    })
+        message: 'Weekly claim must be signed before it can be withdrawn',
+      });
+    });
 
     it('should return 400 if weekly claim already withdrawn', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
@@ -261,17 +261,17 @@ describe('Weekly Claim Controller', () => {
           id: 1,
           status: 'withdrawn',
           weekStart: new Date('2024-07-22'),
-          wage: mockWage('0x123')
+          wage: mockWage('0x123'),
         })
-      )
+      );
 
-      const response = await request(app).put('/1?action=withdraw').set('address', '0x123')
+      const response = await request(app).put('/1?action=withdraw').set('address', '0x123');
 
-      expect(response.status).toBe(400)
+      expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: 'Weekly claim already withdrawn'
-      })
-    })
+        message: 'Weekly claim already withdrawn',
+      });
+    });
 
     it('should successfully withdraw a signed weekly claim', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
@@ -280,9 +280,9 @@ describe('Weekly Claim Controller', () => {
           status: 'signed',
           weekStart: new Date('2024-07-22'),
           wage: mockWage('0x123'),
-          signature: '0xprevioussignature' as any
+          signature: '0xprevioussignature' as any,
         })
-      )
+      );
 
       vi.spyOn(prisma, '$transaction').mockResolvedValue([
         mockWeeklyClaim({
@@ -290,60 +290,60 @@ describe('Weekly Claim Controller', () => {
           status: 'withdrawn',
           weekStart: new Date('2024-07-22'),
           wage: mockWage('0x123'),
-          signature: '0xprevioussignature' as any
-        })
-      ])
+          signature: '0xprevioussignature' as any,
+        }),
+      ]);
 
-      const response = await request(app).put('/1?action=withdraw').set('address', '0x123')
+      const response = await request(app).put('/1?action=withdraw').set('address', '0x123');
 
-      expect(response.status).toBe(200)
-      expect(response.body).toHaveProperty('status', 'withdrawn')
-      expect(prisma.$transaction).toHaveBeenCalled()
-    })
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('status', 'withdrawn');
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
 
     it('should handle errors gracefully', async () => {
-      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockRejectedValue(new Error('Database error'))
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockRejectedValue(new Error('Database error'));
 
-      const response = await request(app).put('/1?action=withdraw').set('address', '0x123')
+      const response = await request(app).put('/1?action=withdraw').set('address', '0x123');
 
-      expect(response.status).toBe(500)
+      expect(response.status).toBe(500);
       expect(response.body).toEqual({
         message: 'Internal server error has occured',
-        error: expect.any(String)
-      })
-    })
-  })
+        error: expect.any(String),
+      });
+    });
+  });
 
   describe('GET: /', () => {
     beforeEach(() => {
-      vi.clearAllMocks()
-    })
+      vi.clearAllMocks();
+    });
 
     it('should return 400 if teamId is missing', async () => {
-      const response = await request(app).get('/')
-      expect(response.status).toBe(400)
+      const response = await request(app).get('/');
+      expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: 'Missing or invalid teamId'
-      })
-    })
+        message: 'Missing or invalid teamId',
+      });
+    });
 
     it('should return 400 if status is invalid', async () => {
-      const response = await request(app).get('/?teamId=1&status=invalid')
-      expect(response.status).toBe(400)
+      const response = await request(app).get('/?teamId=1&status=invalid');
+      expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: 'Invalid status. Allowed status are: sign, withdraw, pending'
-      })
-    })
+        message: 'Invalid status. Allowed status are: sign, withdraw, pending',
+      });
+    });
 
     it('should return 200 if status is valid', async () => {
-      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([])
-      const response = await request(app).get('/?teamId=1&status=pending')
-      expect(response.status).toBe(200)
-      expect(response.body).toEqual([])
-    })
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([]);
+      const response = await request(app).get('/?teamId=1&status=pending');
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+    });
 
     it('should get weekly claims for a valid teamId', async () => {
-      const testDate = new Date()
+      const testDate = new Date();
       const mockWeeklyClaims: WeeklyClaim[] = [
         {
           id: 1,
@@ -355,7 +355,7 @@ describe('Weekly Claim Controller', () => {
           signature: null,
           createdAt: testDate,
           updatedAt: testDate,
-          wageId: 0
+          wageId: 0,
         },
         {
           id: 2,
@@ -367,27 +367,27 @@ describe('Weekly Claim Controller', () => {
           signature: null,
           createdAt: testDate,
           updatedAt: testDate,
-          wageId: 0
-        }
-      ]
+          wageId: 0,
+        },
+      ];
 
-      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue(mockWeeklyClaims)
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue(mockWeeklyClaims);
 
-      const response = await request(app).get('/?teamId=1')
-      expect(response.status).toBe(200)
+      const response = await request(app).get('/?teamId=1');
+      expect(response.status).toBe(200);
 
       const expectedResponse = mockWeeklyClaims.map((claim) => ({
         ...claim,
         weekStart: claim.weekStart.toISOString(),
         createdAt: claim.createdAt.toISOString(),
-        updatedAt: claim.updatedAt.toISOString()
-      }))
+        updatedAt: claim.updatedAt.toISOString(),
+      }));
 
-      expect(response.body).toEqual(expectedResponse)
-    })
+      expect(response.body).toEqual(expectedResponse);
+    });
 
     it('should filter weekly claims by memberAddress if provided', async () => {
-      const testDate = new Date()
+      const testDate = new Date();
       const mockWeeklyClaims: WeeklyClaim[] = [
         {
           id: 1,
@@ -399,36 +399,36 @@ describe('Weekly Claim Controller', () => {
           createdAt: testDate,
           updatedAt: testDate,
           wageId: 0,
-          status: null
-        }
-      ]
+          status: null,
+        },
+      ];
 
       const findManySpy = vi
         .spyOn(prisma.weeklyClaim, 'findMany')
-        .mockResolvedValue(mockWeeklyClaims)
+        .mockResolvedValue(mockWeeklyClaims);
 
-      const response = await request(app).get('/?teamId=1&memberAddress=0xAnotherAddress')
-      expect(response.status).toBe(200)
+      const response = await request(app).get('/?teamId=1&memberAddress=0xAnotherAddress');
+      expect(response.status).toBe(200);
 
       const expectedResponse = mockWeeklyClaims.map((claim) => ({
         ...claim,
         weekStart: claim.weekStart.toISOString(),
         createdAt: claim.createdAt.toISOString(),
-        updatedAt: claim.updatedAt.toISOString()
-      }))
+        updatedAt: claim.updatedAt.toISOString(),
+      }));
 
-      expect(response.body).toEqual(expectedResponse)
-    })
-  })
+      expect(response.body).toEqual(expectedResponse);
+    });
+  });
 
   it('should handle errors gracefully', async () => {
-    vi.spyOn(prisma.weeklyClaim, 'findMany').mockRejectedValue(new Error('Database error'))
+    vi.spyOn(prisma.weeklyClaim, 'findMany').mockRejectedValue(new Error('Database error'));
 
-    const response = await request(app).get('/?teamId=1')
-    expect(response.status).toBe(500)
+    const response = await request(app).get('/?teamId=1');
+    expect(response.status).toBe(500);
     expect(response.body).toEqual({
       message: 'Internal server error has occured',
-      error: expect.any(String)
-    })
-  })
-})
+      error: expect.any(String),
+    });
+  });
+});

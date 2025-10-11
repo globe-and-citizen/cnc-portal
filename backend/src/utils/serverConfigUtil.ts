@@ -24,5 +24,5 @@ export const errorMessages = {
         - Polygon Mainnet: 137
         - Polygon Amoy: 80002
         e.g In your .env file add the line CHAIN_ID=1
-    `
-}
+    `,
+};

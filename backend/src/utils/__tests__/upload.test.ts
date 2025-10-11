@@ -1,52 +1,52 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { Readable } from 'stream'
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { Readable } from 'stream';
 
 // Mock the bucket
 const mockBlobStream = {
   on: vi.fn(),
-  end: vi.fn()
-}
+  end: vi.fn(),
+};
 
 const mockBlob = {
   name: 'test-file-uuid',
-  createWriteStream: vi.fn(() => mockBlobStream)
-}
+  createWriteStream: vi.fn(() => mockBlobStream),
+};
 
 const mockBucket = {
   name: 'test-bucket',
-  file: vi.fn(() => mockBlob)
-}
+  file: vi.fn(() => mockBlob),
+};
 
 vi.mock('../storage', () => ({
-  bucket: mockBucket
-}))
+  bucket: mockBucket,
+}));
 
 vi.mock('uuid', () => ({
-  v4: vi.fn(() => 'test-uuid-1234')
-}))
+  v4: vi.fn(() => 'test-uuid-1234'),
+}));
 
 // Mock multer
 vi.mock('multer', () => {
-  const mockMemoryStorage = vi.fn(() => ({}))
+  const mockMemoryStorage = vi.fn(() => ({}));
   const mockMulter = vi.fn(() => ({
-    single: vi.fn()
-  }))
-  ;(mockMulter as any).memoryStorage = mockMemoryStorage
+    single: vi.fn(),
+  }));
+  (mockMulter as any).memoryStorage = mockMemoryStorage;
   return {
-    default: mockMulter
-  }
-})
+    default: mockMulter,
+  };
+});
 
 describe('upload', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockBlobStream.on.mockReturnThis()
-  })
+    vi.clearAllMocks();
+    mockBlobStream.on.mockReturnThis();
+  });
 
   describe('uploadImageToGCS', () => {
     it('should upload image successfully', async () => {
       // Import after mocks are set up
-      const { uploadImageToGCS } = await import('../upload')
+      const { uploadImageToGCS } = await import('../upload');
 
       const mockFile = {
         fieldname: 'image',
@@ -54,31 +54,31 @@ describe('upload', () => {
         encoding: '7bit',
         mimetype: 'image/jpeg',
         buffer: Buffer.from('test-image-data'),
-        size: 1024
-      }
+        size: 1024,
+      };
 
       // Setup the mock to simulate successful upload
       mockBlobStream.on.mockImplementation((event: string, handler: any) => {
         if (event === 'finish') {
           // Call the finish handler immediately
-          setImmediate(() => handler())
+          setImmediate(() => handler());
         }
-        return mockBlobStream
-      })
+        return mockBlobStream;
+      });
 
-      const result = await uploadImageToGCS(mockFile)
+      const result = await uploadImageToGCS(mockFile);
 
-      expect(result).toBe('https://storage.googleapis.com/test-bucket/test-file-uuid')
-      expect(mockBucket.file).toHaveBeenCalledWith('test-uuid-1234')
+      expect(result).toBe('https://storage.googleapis.com/test-bucket/test-file-uuid');
+      expect(mockBucket.file).toHaveBeenCalledWith('test-uuid-1234');
       expect(mockBlob.createWriteStream).toHaveBeenCalledWith({
         resumable: false,
-        contentType: 'image/jpeg'
-      })
-      expect(mockBlobStream.end).toHaveBeenCalledWith(mockFile.buffer)
-    })
+        contentType: 'image/jpeg',
+      });
+      expect(mockBlobStream.end).toHaveBeenCalledWith(mockFile.buffer);
+    });
 
     it('should reject if upload fails', async () => {
-      const { uploadImageToGCS } = await import('../upload')
+      const { uploadImageToGCS } = await import('../upload');
 
       const mockFile = {
         fieldname: 'image',
@@ -86,24 +86,24 @@ describe('upload', () => {
         encoding: '7bit',
         mimetype: 'image/jpeg',
         buffer: Buffer.from('test-image-data'),
-        size: 1024
-      }
+        size: 1024,
+      };
 
-      const uploadError = new Error('Upload failed')
+      const uploadError = new Error('Upload failed');
 
       // Setup the mock to simulate error
       mockBlobStream.on.mockImplementation((event: string, handler: any) => {
         if (event === 'error') {
-          setImmediate(() => handler(uploadError))
+          setImmediate(() => handler(uploadError));
         }
-        return mockBlobStream
-      })
+        return mockBlobStream;
+      });
 
-      await expect(uploadImageToGCS(mockFile)).rejects.toThrow('Upload failed')
-    })
+      await expect(uploadImageToGCS(mockFile)).rejects.toThrow('Upload failed');
+    });
 
     it('should handle different file types', async () => {
-      const { uploadImageToGCS } = await import('../upload')
+      const { uploadImageToGCS } = await import('../upload');
 
       const mockFile = {
         fieldname: 'image',
@@ -111,27 +111,27 @@ describe('upload', () => {
         encoding: '7bit',
         mimetype: 'image/png',
         buffer: Buffer.from('test-png-data'),
-        size: 2048
-      }
+        size: 2048,
+      };
 
       mockBlobStream.on.mockImplementation((event: string, handler: any) => {
         if (event === 'finish') {
-          setImmediate(() => handler())
+          setImmediate(() => handler());
         }
-        return mockBlobStream
-      })
+        return mockBlobStream;
+      });
 
-      const result = await uploadImageToGCS(mockFile)
+      const result = await uploadImageToGCS(mockFile);
 
       expect(mockBlob.createWriteStream).toHaveBeenCalledWith({
         resumable: false,
-        contentType: 'image/png'
-      })
-      expect(result).toBeTruthy()
-    })
+        contentType: 'image/png',
+      });
+      expect(result).toBeTruthy();
+    });
 
     it('should use uuid for file name', async () => {
-      const { uploadImageToGCS } = await import('../upload')
+      const { uploadImageToGCS } = await import('../upload');
 
       const mockFile = {
         fieldname: 'image',
@@ -139,30 +139,30 @@ describe('upload', () => {
         encoding: '7bit',
         mimetype: 'image/jpeg',
         buffer: Buffer.from('test-data'),
-        size: 512
-      }
+        size: 512,
+      };
 
       mockBlobStream.on.mockImplementation((event: string, handler: any) => {
         if (event === 'finish') {
-          setImmediate(() => handler())
+          setImmediate(() => handler());
         }
-        return mockBlobStream
-      })
+        return mockBlobStream;
+      });
 
-      await uploadImageToGCS(mockFile)
+      await uploadImageToGCS(mockFile);
 
       // Should use uuid, not original filename
-      expect(mockBucket.file).toHaveBeenCalledWith('test-uuid-1234')
-    })
-  })
+      expect(mockBucket.file).toHaveBeenCalledWith('test-uuid-1234');
+    });
+  });
 
   describe('upload middleware', () => {
     it('should export upload middleware', async () => {
-      const { upload } = await import('../upload')
+      const { upload } = await import('../upload');
 
-      expect(upload).toBeDefined()
-      expect(upload.single).toBeDefined()
-      expect(typeof upload.single).toBe('function')
-    })
-  })
-})
+      expect(upload).toBeDefined();
+      expect(upload.single).toBeDefined();
+      expect(typeof upload.single).toBe('function');
+    });
+  });
+});
