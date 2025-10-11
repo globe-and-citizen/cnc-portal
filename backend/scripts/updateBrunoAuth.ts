@@ -4,12 +4,26 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 async function updateBrunoAuth() {
+  console.log('🔄 Setting up Bruno authentication...\n');
+
+  // Check if server is running
+  try {
+    const healthCheck = await fetch('http://localhost:3000/api/user/nonce/0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
+    if (!healthCheck.ok) {
+      throw new Error('Server responded with error');
+    }
+  } catch (error) {
+    console.error('❌ Error: Backend server is not running on http://localhost:3000');
+    console.error('💡 Please start the server first: npm start');
+    process.exit(1);
+  }
+
   // Get nonce from API
   const nonceResponse = await fetch(`http://localhost:3000/api/user/nonce/0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`);
   const nonceData = await nonceResponse.json();
   const nonce = nonceData.nonce;
 
-  console.log('Fetched nonce:', nonce);
+  console.log('✓ Fetched nonce:', nonce);
 
   // Sign message
   const privateKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
@@ -45,8 +59,12 @@ async function updateBrunoAuth() {
 
   fs.writeFileSync(envPath, envContent);
 
-  console.log('\n✅ Bruno environment updated successfully!');
-  console.log(`\nYou can now run: cd "bruno/CNC Portal" && npx bru run Auth -r --env "CNC URI"`);
+  console.log('✓ Signed SIWE message');
+  console.log('✓ Updated Bruno environment file');
+  console.log('\n✅ Bruno authentication setup complete!');
+  console.log('\n📝 Run tests with:');
+  console.log('   npm run test:bruno       # Run all tests');
+  console.log('   npm run test:bruno:auth  # Run auth tests only');
 }
 
 updateBrunoAuth().catch(console.error);
