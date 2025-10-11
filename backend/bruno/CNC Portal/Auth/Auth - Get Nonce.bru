@@ -10,10 +10,6 @@ get {
   auth: none
 }
 
-vars:post-response {
-  nonce: res.body.nonce
-}
-
 tests {
   test("should return 200 status", function() {
     expect(res.getStatus()).to.equal(200);
