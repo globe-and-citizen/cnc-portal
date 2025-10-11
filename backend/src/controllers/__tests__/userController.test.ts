@@ -29,7 +29,6 @@ app.use(express.json());
 app.use('/', userRoutes);
 
 const mockUser: User = {
-  id: 1,
   address: '0x1234567890123456789012345678901234567890',
   name: 'MemberName',
   nonce: 'nonce123',
@@ -40,18 +39,16 @@ const mockUser: User = {
 
 const mockUsers = [
   {
-    id: 1,
-    name: 'Alice',
     address: '0x1111111111111111111111111111111111111111',
+    name: 'Alice',
     nonce: 'nonce123',
     imageUrl: 'https://example.com/image.jpg',
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
-    id: 2,
-    name: 'Bob',
     address: '0x2222222222222222222222222222222222222222',
+    name: 'Bob',
     nonce: 'nonce456',
     imageUrl: 'https://example.com/image2.jpg',
     createdAt: new Date(),
@@ -161,7 +158,6 @@ describe('User Controller', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
-        id: mockUser.id,
         address: mockUser.address,
         name: mockUser.name,
         nonce: mockUser.nonce,
@@ -188,10 +184,13 @@ describe('User Controller', () => {
       vi.clearAllMocks();
       // Reset to default behavior
 
-      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        (req as any).address = '0x1234567890123456789012345678901234567890';
-        next();
-      });
+      mockAuthorizeUser.mockImplementation(
+        async (req: Request, res: Response, next: NextFunction) => {
+          (req as any).address = '0x1234567890123456789012345678901234567890';
+          next();
+          return undefined;
+        }
+      );
     });
 
     it('should return 400 if caller address is missing', async () => {
@@ -251,10 +250,9 @@ describe('User Controller', () => {
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser);
 
       const updatedUser = {
-        ...mockUser,
+        address: mockUser.address,
         name: 'NewName',
         imageUrl: 'https://example.com/newimage.jpg',
-        updatedAt: new Date(), // simulate update timestamp
       };
 
       vi.spyOn(prisma.user, 'update').mockResolvedValue(updatedUser as any);
@@ -268,10 +266,7 @@ describe('User Controller', () => {
       expect(response.body).toEqual({
         address: updatedUser.address,
         name: 'NewName',
-        nonce: updatedUser.nonce,
         imageUrl: 'https://example.com/newimage.jpg',
-        createdAt: updatedUser.createdAt.toISOString(),
-        updatedAt: updatedUser.updatedAt.toISOString(),
       });
     });
 

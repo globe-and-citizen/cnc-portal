@@ -303,7 +303,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Unauthorized: Caller is not the owner of the team');
     });
 
-    it.skip('should return 200 and create a contract successfully', async () => {
+    it('should return 200 and create a contract successfully', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.teamContract, 'create').mockResolvedValue({
         id: 1,

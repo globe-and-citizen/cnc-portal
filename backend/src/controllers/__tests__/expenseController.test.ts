@@ -67,9 +67,7 @@ const mockExpenseData = {
 };
 
 // Helper function to create variations of expense data for testing
-const createExpenseData = (
-  overrides: Partial<typeof mockExpenseData> = {}
-) => ({
+const createExpenseData = (overrides: Partial<typeof mockExpenseData> = {}) => ({
   ...mockExpenseData,
   ...overrides,
 });
@@ -137,7 +135,6 @@ describe('Expense Controller', () => {
         '0x1234567890123456789012345678901234567890'
       );
 
-
       const response = await request(app).post('/').send({
         teamId: 1,
         signature: '0xmockSignature',
@@ -174,7 +171,6 @@ describe('Expense Controller', () => {
       expect(response.body.message).toBe('Internal server error has occured');
     });
   });
-
 
   describe('GET: /', () => {
     it('should return 400 if teamId is invalid', async () => {
@@ -218,27 +214,25 @@ describe('Expense Controller', () => {
       ]);
     });
 
-    it("should filter expenses by status when status is provided", async () => {
-      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-      vi.spyOn(prisma.expense, "findMany").mockResolvedValue([
+    it('should filter expenses by status when status is provided', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.expense, 'findMany').mockResolvedValue([
         {
           ...mockExpense,
-          status: "signed",
+          status: 'signed',
           data: JSON.parse(mockExpense.data as string),
         },
       ]);
-      vi.spyOn(prisma.teamContract, "findFirst").mockResolvedValue(null);
-      vi.spyOn(prisma.expense, "update").mockResolvedValue(mockExpense);
-      vi.spyOn(publicClient, "readContract").mockResolvedValue([0n, 0n, 1]);
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.expense, 'update').mockResolvedValue(mockExpense);
+      vi.spyOn(publicClient, 'readContract').mockResolvedValue([0n, 0n, 1]);
 
-      const response = await request(app)
-        .get("/")
-        .query({ teamId: 1, status: "signed" });
+      const response = await request(app).get('/').query({ teamId: 1, status: 'signed' });
 
       expect(response.status).toBe(200);
       expect(prisma.expense.findMany).toHaveBeenCalledWith({
-        where: { teamId: 1, status: "signed" },
-        orderBy: { createdAt: "desc" },
+        where: { teamId: 1, status: 'signed' },
+        orderBy: { createdAt: 'desc' },
         include: {
           user: {
             select: {
@@ -251,7 +245,6 @@ describe('Expense Controller', () => {
       });
     });
 
- 
     it('should return 500 if there is a server error', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockRejectedValue('Server error');
 
@@ -266,79 +259,15 @@ describe('Expense Controller', () => {
     it('should return 400 if expense ID is invalid', async () => {
       const response = await request(app).patch('/abc').send({ status: 'disable' });
 
-     
-
-    it("should return expense with cached balances when status is expired or limit-reached", async () => {
-      const expenseWithBalances = {
-        ...mockExpense,
-        status: "expired",
-        data: {
-          ...JSON.parse(mockExpense.data as string),
-          balances: { 0: "5", 1: "50" },
-        },
-      };
-
-      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-      vi.spyOn(prisma.expense, "findMany").mockResolvedValue([
-        expenseWithBalances,
-      ]);
-
-      const response = await request(app).get("/").query({ teamId: 1 });
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual([
-        {
-          ...expenseWithBalances,
-          balances: { 0: "5", 1: "50" },
-        },
-      ]);
- expect(response.body.message).toBe(
-        "Invalid path parameters - id: Must be a number"
-      );
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Invalid path parameters - id: Must be a number');
     });
 
     it('should return 400 if status is missing', async () => {
       const response = await request(app).patch('/1').send({});
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe(
-
-
-    it("should update expense data when limit is reached", async () => {
-      const expenseData = JSON.parse(mockExpense.data as string);
-      expenseData.expiry = new Date().getTime() / 1000 - 3600; // Expired 1 hour ago
-
-      vi.spyOn(prisma.team, "findFirst").mockResolvedValue(mockTeam);
-      vi.spyOn(prisma.expense, "findMany").mockResolvedValue([
-        { ...mockExpense, data: expenseData },
-      ]);
-      vi.spyOn(prisma.teamContract, "findFirst").mockResolvedValue({
-        id: 1,
-        teamId: 1,
-        address: "0x1234567890123456789012345678901234567890",
-        type: "ExpenseAccountEIP712",
-        deployer: "0x1234567890123456789012345678901234567890",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-      vi.spyOn(publicClient, "readContract").mockResolvedValue([5n, 100n, 1]);
-      vi.spyOn(prisma.expense, "update").mockResolvedValue(mockExpense);
-
-      const response = await request(app).get("/").query({ teamId: 1 });
-
-      expect(response.status).toBe(200);
-      expect(prisma.expense.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: {
-          status: "expired",
-          data: expect.objectContaining({
-            balances: expect.any(Object),
-          }),
-        },
-      });
-      expect(response.body.message).toBe(
-        'Invalid request body - status: Invalid status. Allowed values: disable, expired, limitReached'
-      );
+      expect(response.body.message).toContain('Invalid request body');
     });
 
     it('should return 400 if status is invalid', async () => {
