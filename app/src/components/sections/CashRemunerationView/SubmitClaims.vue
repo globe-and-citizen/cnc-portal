@@ -26,6 +26,7 @@
           auto-apply
           class="input input-bordered input-md"
           data-test="date-input"
+          :utc="'preserve'"
         />
         <!-- <VueDatePicker
           v-model="hoursWorked.dayWorked"

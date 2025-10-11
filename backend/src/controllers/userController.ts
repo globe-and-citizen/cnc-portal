@@ -1,9 +1,9 @@
-import { prisma } from "../utils";
-import { Request, Response } from "express";
-import { generateNonce, SiweMessage } from "siwe";
-import { errorResponse } from "../utils/utils";
-import { log } from "console";
-import { isAddress } from "viem";
+import { prisma } from '../utils';
+import { Request, Response } from 'express';
+import { generateNonce, SiweMessage } from 'siwe';
+import { errorResponse } from '../utils/utils';
+import { log } from 'console';
+import { isAddress } from 'viem';
 
 /**
  *
@@ -51,7 +51,7 @@ export const getUser = async (req: Request, res: Response) => {
       },
     });
 
-    if (!user) return errorResponse(404, "User not found", res);
+    if (!user) return errorResponse(404, 'User not found', res);
 
     return res.status(200).json(user);
   } catch (error) {
@@ -64,11 +64,10 @@ export const updateUser = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
 
   try {
-    if (!callerAddress)
-      return errorResponse(401, "Update user error: Missing user address", res);
+    if (!callerAddress) return errorResponse(401, 'Update user error: Missing user address', res);
 
     if (callerAddress !== address) {
-      return errorResponse(403, "Unauthorized", res);
+      return errorResponse(403, 'Unauthorized', res);
     }
     const user = await prisma.user.findUnique({
       where: {
@@ -80,7 +79,7 @@ export const updateUser = async (req: Request, res: Response) => {
       },
     });
 
-    if (!user) return errorResponse(404, "User not found", res);
+    if (!user) return errorResponse(404, 'User not found', res);
 
     const updatedUser = await prisma.user.update({
       where: {
@@ -135,7 +134,7 @@ export const searchUser = async (req: Request, res: Response) => {
           {
             name: {
               contains: name as string,
-              mode: "insensitive",
+              mode: 'insensitive',
             },
           },
           {

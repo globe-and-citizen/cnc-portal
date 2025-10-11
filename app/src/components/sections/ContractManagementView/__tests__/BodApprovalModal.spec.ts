@@ -54,11 +54,12 @@ function mountComponent(overrides?: { alreadyApproved?: boolean }) {
   })
 
   // Strongly-typed minimal row (only fields used by the component)
-  const baseRow: Pick<TableRow, 'id' | 'actionId' | 'title' | 'description'> = {
+  const baseRow: Pick<TableRow, 'id' | 'actionId' | 'title' | 'description' | 'requestedBy'> = {
     id: 42,
     actionId: 7,
-    title: 'Transfer Ownership',
-    description: 'Transfer ownership to BOD'
+    title: 'Ownership Transfer Request',
+    description: `Transfer ownership of SomeContract to BOD ${MEMBERS[1]}`,
+    requestedBy: { name: 'Alice', address: CURRENT_ADDR }
   }
   const row = baseRow as unknown as TableRow
 
