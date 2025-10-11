@@ -320,6 +320,26 @@ describe('Action Controller', () => {
       expect(response.status).toBe(404); // Express returns 404 for missing route params
     });
 
+    it('should return 400 when action ID is empty string', async () => {
+      const { executeAction } = await import('../actionController');
+
+      const mockReq = {
+        params: { id: '' },
+      } as any;
+
+      const mockRes = {
+        status: vi.fn().mockReturnThis(),
+        json: vi.fn().mockReturnThis(),
+      } as any;
+
+      await executeAction(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Action ID empty or not set',
+      });
+    });
+
     it('should return 404 when action is not found', async () => {
       vi.mocked(prisma.boardOfDirectorActions.findUnique).mockResolvedValueOnce(null);
 

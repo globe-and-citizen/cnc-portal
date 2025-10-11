@@ -172,6 +172,25 @@ describe('Wage Controller', () => {
       expect(prisma.wage.create).toHaveBeenCalled();
     });
 
+    it('should return 500 on internal server error', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockRejectedValue(new Error('Database error'));
+
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [
+            { type: 'cash', amount: 50 },
+            { type: 'token', amount: 100 },
+          ],
+          maximumHoursPerWeek: 40,
+        });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toContain('Internal server error');
+    });
+
     it('should return 500 if there is a server error', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockRejectedValue('Server error');
@@ -194,6 +213,7 @@ describe('Wage Controller', () => {
     beforeEach(() => {
       vi.clearAllMocks();
       // Reset to default behavior
+
       mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
         (req as any).address = '0x1234567890123456789012345678901234567890';
         next();

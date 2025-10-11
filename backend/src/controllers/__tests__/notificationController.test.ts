@@ -85,6 +85,20 @@ describe('Notification Controller', () => {
       expect(response.body.data).toEqual([]);
     });
 
+    it('should return 403 if user is not authorized', async () => {
+      const unauthorizedNotification = {
+        ...mockNotification,
+        userAddress: '0x9999999999999999999999999999999999999999',
+      };
+      // Use findMany instead of findUnique since getNotification uses findMany
+      vi.spyOn(prisma.notification, 'findMany').mockResolvedValue([unauthorizedNotification]);
+
+      const response = await request(app).get('/');
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe('Unauthorized access');
+    });
+
     it('should return 500 on server error', async () => {
       vi.spyOn(prisma.notification, 'findMany').mockRejectedValue(new Error('Database error'));
 
@@ -125,6 +139,7 @@ describe('Notification Controller', () => {
         ...mockNotification,
         userAddress: '0x9999999999999999999999999999999999999999',
       };
+
       vi.spyOn(prisma.notification, 'findUnique').mockResolvedValue(unauthorizedNotification);
 
       const response = await request(app).put('/1');

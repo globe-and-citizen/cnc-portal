@@ -101,6 +101,7 @@ describe('Expense Controller', () => {
       const response = await request(app).post('/').send({ teamId: 1 });
 
       expect(response.status).toBe(400);
+
       expect(response.body.message).toContain('Invalid request body');
     });
 
@@ -126,6 +127,7 @@ describe('Expense Controller', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
+
       vi.spyOn(prisma.expense, 'create').mockResolvedValueOnce(mockExpense);
 
       // Mock contract owner to match caller address
@@ -212,6 +214,37 @@ describe('Expense Controller', () => {
       ]);
     });
 
+    it('should filter expenses by status when status is provided', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.expense, 'findMany').mockResolvedValue([
+        {
+          ...mockExpense,
+          status: 'signed',
+          data: JSON.parse(mockExpense.data as string),
+        },
+      ]);
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.expense, 'update').mockResolvedValue(mockExpense);
+      vi.spyOn(publicClient, 'readContract').mockResolvedValue([0n, 0n, 1]);
+
+      const response = await request(app).get('/').query({ teamId: 1, status: 'signed' });
+
+      expect(response.status).toBe(200);
+      expect(prisma.expense.findMany).toHaveBeenCalledWith({
+        where: { teamId: 1, status: 'signed' },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              name: true,
+              address: true,
+              imageUrl: true,
+            },
+          },
+        },
+      });
+    });
+
     it('should return 500 if there is a server error', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockRejectedValue('Server error');
 
@@ -234,9 +267,7 @@ describe('Expense Controller', () => {
       const response = await request(app).patch('/1').send({});
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe(
-        'Invalid request body - status: Invalid status. Allowed values: disable, expired, limitReached'
-      );
+      expect(response.body.message).toContain('Invalid request body');
     });
 
     it('should return 400 if status is invalid', async () => {

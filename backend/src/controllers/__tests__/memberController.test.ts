@@ -139,6 +139,7 @@ describe('Member Controller', () => {
     it('Should return 400 when members already exist in the team', async () => {
       const teamWithExistingMembers = {
         ...mockResolvedTeam,
+
         members: fakeMembers.map((member) => ({ address: member.address, name: member.name })),
       };
       vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(teamWithExistingMembers as any);
@@ -156,6 +157,7 @@ describe('Member Controller', () => {
         ...mockResolvedTeam,
         ownerAddress: '0xNotOwnerAddress',
       };
+
       vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(teamWithDifferentOwner);
 
       const response = await request(app).post('/team/1/member').send(fakeMembers);
@@ -218,6 +220,7 @@ describe('Member Controller', () => {
         ...mockResolvedTeam,
         ownerAddress: '0xNotOwnerAddress',
       };
+
       vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(teamWithDifferentOwner);
 
       const response = await request(app).delete('/team/1/member/0xMemberAddress1');

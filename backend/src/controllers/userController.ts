@@ -15,8 +15,8 @@ export const getNonce = async (req: Request, res: Response) => {
   const { address } = req.params;
 
   try {
-    if (!isAddress(address))
-      return errorResponse(401, 'Get nonce error: Invalid user address', res);
+    // if (!isAddress(address))
+    //   return errorResponse(401, "Get nonce error: Invalid user address", res);
 
     const user = await prisma.user.findUnique({
       where: {

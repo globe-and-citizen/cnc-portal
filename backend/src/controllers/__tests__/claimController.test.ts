@@ -42,6 +42,7 @@ const createMockWage = (overrides: Partial<Wage> = {}): Wage =>
     id: 1,
     teamId: 1,
     userAddress: TEST_ADDRESS,
+
     ratePerHour: JSON.stringify([{ type: 'cash', amount: 50 }]),
     cashRatePerHour: 50,
     tokenRatePerHour: 0,
@@ -65,6 +66,7 @@ const createMockWeeklyClaim = (overrides: Partial<WeeklyClaim> = {}): WeeklyClai
     signature: null,
     claims: [{ hoursWorked: 30 }],
     wageId: 1,
+
     status: 'pending',
     ...overrides,
   }) as WeeklyClaim;
@@ -73,6 +75,7 @@ const createMockClaim = (overrides: Partial<Claim> = {}): Claim =>
   ({
     id: 123,
     hoursWorked: 5,
+
     memo: 'test memo',
     wageId: 1,
     status: 'pending',
@@ -92,18 +95,21 @@ const createMockClaimWithWage = (
   {
     id: 1,
     hoursWorked: 5,
+
     status: 'pending',
     createdAt: new Date(),
     updatedAt: new Date(),
     signature: null,
     wageId: 1,
     dayWorked: new Date(),
+
     memo: 'Test memo',
     tokenTx: null,
     weeklyClaimId: 1,
     wage: {
       teamId: 1,
       userAddress: TEST_ADDRESS,
+
       user: { address: TEST_ADDRESS, name: 'User1' },
       ...wageOverrides,
     },
@@ -336,6 +342,7 @@ describe('Claim Controller', () => {
     successScenarios.forEach(({ description, query }) => {
       it(`should return 200 and ${description}`, async () => {
         const mockClaimWithWage = createMockClaimWithWage();
+
         vi.spyOn(prisma.claim, 'findMany').mockResolvedValue(mockClaimWithWage as any);
 
         const response = await request(app).get('/').query(query);
@@ -379,6 +386,7 @@ describe('Claim Controller', () => {
     // Helper function for authorization tests
     const testAuthorization = async (
       action: string,
+
       authType: 'cashOwnerOrTeamOwner' | 'claimOwner',
       shouldSucceed = true
     ) => {

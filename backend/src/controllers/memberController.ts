@@ -48,7 +48,7 @@ export const deleteMember = async (req: Request, res: Response) => {
         },
       });
     } catch (error) {
-      console.log('Error deleting member Team data', error);
+      // console.log("Error deleting member Team data", error);
     }
 
     const updatedTeam = await prisma.team.update({

@@ -177,6 +177,18 @@ describe('authController', () => {
       expect(response.status).toBe(401);
     });
 
+    it('should return 401 if missing jwt payload address', async () => {
+      // Create a JWT token without address for testing
+      const testToken = jwt.sign({}, process.env.SECRET_KEY || 'test-secret-key');
+
+      const response = await request(app).get('/token').set('Authorization', `Bearer ${testToken}`);
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({
+        message: 'Unauthorized: Missing jwt payload',
+      });
+    });
+
     it('should return 200 if authorization successful', async () => {
       // Create a valid JWT token for testing
       const testAddress = '0x1234567890123456789012345678901234567890';

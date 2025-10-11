@@ -45,6 +45,12 @@ vi.mock('../../utils/viem.config', () => ({
 
 const app = express();
 app.use(express.json());
+// Add the auth middleware to all routes
+app.use((req: Request, res: Response, next: NextFunction) => {
+  (req as any).address = '0x1234567890123456789012345678901234567890';
+  next();
+});
+
 app.use('/', contractRoutes);
 
 const mockTeam = {
@@ -86,6 +92,7 @@ describe('contractController', () => {
         ...mockTeam,
         ownerAddress: '0x456',
       });
+
       const response = await request(app).put('/sync').send({ teamId: 1 });
       expect(response.status).toBe(403);
       expect(response.body.message).toContain('Unauthorized: Caller is not the owner of the team');
@@ -103,6 +110,78 @@ describe('contractController', () => {
       const response = await request(app).put('/sync').send({ teamId: 1 });
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('No new contracts Created');
+    });
+
+    it('should return 400 if no new contracts are created (all duplicates)', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      // mock readContract to return contracts from blockchain
+      vi.spyOn(publicClient, 'readContract').mockResolvedValue([
+        {
+          contractType: 'Voting',
+          contractAddress: '0xABCDEF1234567890123456789012345678901234',
+        },
+      ]);
+      // mock createMany to return count 0 (all duplicates were skipped)
+      vi.spyOn(prisma.teamContract, 'createMany').mockResolvedValue({
+        count: 0,
+      });
+
+      const response = await request(app).put('/sync').send({ teamId: 1 });
+
+      expect(prisma.team.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
+      expect(publicClient.readContract).toHaveBeenCalled();
+      expect(prisma.teamContract.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            teamId: 1,
+            address: '0xABCDEF1234567890123456789012345678901234',
+            type: 'Voting',
+            deployer: '0x1234567890123456789012345678901234567890',
+          }),
+        ]),
+        skipDuplicates: true,
+      });
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('No new contracts Created');
+    });
+
+    it('should return 200 when new contracts are successfully created', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      // mock readContract to return contracts from blockchain
+      vi.spyOn(publicClient, 'readContract').mockResolvedValue([
+        {
+          contractType: 'Voting',
+          contractAddress: '0xABCDEF1234567890123456789012345678901234',
+        },
+        {
+          contractType: 'Bank',
+          contractAddress: '0x9876543210987654321098765432109876543210',
+        },
+      ]);
+      // mock createMany to return count > 0 (new contracts created)
+      vi.spyOn(prisma.teamContract, 'createMany').mockResolvedValue({
+        count: 2,
+      });
+
+      const response = await request(app).put('/sync').send({ teamId: 1 });
+
+      expect(prisma.teamContract.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            teamId: 1,
+            type: 'Voting',
+          }),
+          expect.objectContaining({
+            teamId: 1,
+            type: 'Bank',
+          }),
+        ]),
+        skipDuplicates: true,
+      });
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ count: 2 });
     });
 
     it.skip('should return 200 if contracts are found', async () => {
@@ -153,9 +232,9 @@ describe('contractController', () => {
           deployer: '0xOwnerAddress',
           createdAt: new Date(),
           updatedAt: new Date(),
-          admins: [],
         },
       ]);
+
       const response = await request(app).get('/').query({ teamId: 1 });
       expect(response.status).toBe(200);
       expect(response.body).toBeInstanceOf(Array);
@@ -224,7 +303,7 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Unauthorized: Caller is not the owner of the team');
     });
 
-    it.skip('should return 200 and create a contract successfully', async () => {
+    it('should return 200 and create a contract successfully', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.teamContract, 'create').mockResolvedValue({
         id: 1,
@@ -234,7 +313,6 @@ describe('contractController', () => {
         deployer: '0xOwnerAddress',
         createdAt: new Date(),
         updatedAt: new Date(),
-        admins: [],
       });
       const response = await request(app).post('/').send({
         teamId: 1,

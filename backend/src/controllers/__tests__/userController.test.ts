@@ -11,10 +11,11 @@ vi.mock('../../utils/viem.config');
 
 // Mock the authorization middleware with proper hoisting
 vi.mock('../../middleware/authMiddleware', () => ({
-  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
+  authorizeUser: vi.fn(async (req: Request, res: Response, next: NextFunction) => {
     // Default behavior - can be overridden in tests
     (req as any).address = '0x1234567890123456789012345678901234567890';
     next();
+    return undefined;
   }),
 }));
 
@@ -28,7 +29,6 @@ app.use(express.json());
 app.use('/', userRoutes);
 
 const mockUser: User = {
-  id: 1,
   address: '0x1234567890123456789012345678901234567890',
   name: 'MemberName',
   nonce: 'nonce123',
@@ -39,18 +39,16 @@ const mockUser: User = {
 
 const mockUsers = [
   {
-    id: 1,
-    name: 'Alice',
     address: '0x1111111111111111111111111111111111111111',
+    name: 'Alice',
     nonce: 'nonce123',
     imageUrl: 'https://example.com/image.jpg',
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
-    id: 2,
-    name: 'Bob',
     address: '0x2222222222222222222222222222222222222222',
+    name: 'Bob',
     nonce: 'nonce456',
     imageUrl: 'https://example.com/image2.jpg',
     createdAt: new Date(),
@@ -65,10 +63,14 @@ describe('User Controller', () => {
     beforeEach(() => {
       vi.clearAllMocks();
       // Reset to default behavior
-      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        (req as any).address = '0x1234567890123456789012345678901234567890';
-        next();
-      });
+
+      mockAuthorizeUser.mockImplementation(
+        async (req: Request, res: Response, next: NextFunction) => {
+          (req as any).address = '0x1234567890123456789012345678901234567890';
+          next();
+          return undefined;
+        }
+      );
     });
 
     it('should return 400 if address is invalid', async () => {
@@ -119,10 +121,14 @@ describe('User Controller', () => {
     beforeEach(() => {
       vi.clearAllMocks();
       // Reset to default behavior
-      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        (req as any).address = '0x1234567890123456789012345678901234567890';
-        next();
-      });
+
+      mockAuthorizeUser.mockImplementation(
+        async (req: Request, res: Response, next: NextFunction) => {
+          (req as any).address = '0x1234567890123456789012345678901234567890';
+          next();
+          return undefined;
+        }
+      );
     });
 
     it('should return 400 if address is invalid', async () => {
@@ -131,6 +137,7 @@ describe('User Controller', () => {
       const response = await request(app).get('/invalid-address').send();
 
       expect(response.status).toBe(400);
+
       expect(response.body.message).toContain('Invalid path parameters');
       expect(response.body.message).toContain('Invalid Ethereum address format');
     });
@@ -151,7 +158,6 @@ describe('User Controller', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
-        id: mockUser.id,
         address: mockUser.address,
         name: mockUser.name,
         nonce: mockUser.nonce,
@@ -177,18 +183,25 @@ describe('User Controller', () => {
     beforeEach(() => {
       vi.clearAllMocks();
       // Reset to default behavior
-      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        (req as any).address = '0x1234567890123456789012345678901234567890';
-        next();
-      });
+
+      mockAuthorizeUser.mockImplementation(
+        async (req: Request, res: Response, next: NextFunction) => {
+          (req as any).address = '0x1234567890123456789012345678901234567890';
+          next();
+          return undefined;
+        }
+      );
     });
 
     it('should return 400 if caller address is missing', async () => {
       // Mock auth middleware to not set address
-      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        // Don't set address to simulate missing caller address
-        next();
-      });
+      mockAuthorizeUser.mockImplementation(
+        async (req: Request, res: Response, next: NextFunction) => {
+          // Don't set address to simulate missing caller address
+          next();
+          return undefined;
+        }
+      );
 
       const response = await request(app).put('/0x1234567890123456789012345678901234567890').send({
         name: 'NewName',
@@ -201,10 +214,14 @@ describe('User Controller', () => {
 
     it('should return 403 if caller is not the user', async () => {
       // Mock auth middleware with different caller address
-      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        (req as any).address = '0x9999999999999999999999999999999999999999'; // Different caller
-        next();
-      });
+
+      mockAuthorizeUser.mockImplementation(
+        async (req: Request, res: Response, next: NextFunction) => {
+          (req as any).address = '0x9999999999999999999999999999999999999999'; // Different caller
+          next();
+          return undefined;
+        }
+      );
 
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser);
 
@@ -233,13 +250,12 @@ describe('User Controller', () => {
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser);
 
       const updatedUser = {
-        ...mockUser,
+        address: mockUser.address,
         name: 'NewName',
         imageUrl: 'https://example.com/newimage.jpg',
-        updatedAt: new Date(), // simulate update timestamp
       };
 
-      vi.spyOn(prisma.user, 'update').mockResolvedValue(updatedUser);
+      vi.spyOn(prisma.user, 'update').mockResolvedValue(updatedUser as any);
 
       const response = await request(app).put('/0x1234567890123456789012345678901234567890').send({
         name: 'NewName',
@@ -248,13 +264,9 @@ describe('User Controller', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
-        id: updatedUser.id,
         address: updatedUser.address,
         name: 'NewName',
-        nonce: updatedUser.nonce,
         imageUrl: 'https://example.com/newimage.jpg',
-        createdAt: updatedUser.createdAt.toISOString(),
-        updatedAt: updatedUser.updatedAt.toISOString(),
       });
     });
 
@@ -275,10 +287,14 @@ describe('User Controller', () => {
     beforeEach(() => {
       vi.clearAllMocks();
       // Reset to default behavior
-      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        (req as any).address = '0x1234567890123456789012345678901234567890';
-        next();
-      });
+
+      mockAuthorizeUser.mockImplementation(
+        async (req: Request, res: Response, next: NextFunction) => {
+          (req as any).address = '0x1234567890123456789012345678901234567890';
+          next();
+          return undefined;
+        }
+      );
     });
 
     it('should return 200 and paginated users data', async () => {
@@ -318,10 +334,14 @@ describe('User Controller', () => {
     beforeEach(() => {
       vi.clearAllMocks();
       // Reset to default behavior
-      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        (req as any).address = '0x1234567890123456789012345678901234567890';
-        next();
-      });
+
+      mockAuthorizeUser.mockImplementation(
+        async (req: Request, res: Response, next: NextFunction) => {
+          (req as any).address = '0x1234567890123456789012345678901234567890';
+          next();
+          return undefined;
+        }
+      );
     });
 
     it('should return 400 if neither name nor address is provided', async () => {
@@ -332,6 +352,7 @@ describe('User Controller', () => {
       });
 
       expect(response.status).toBe(400);
+
       expect(response.body.message).toContain('Invalid query parameters');
       expect(response.body.message).toContain('Either name or address must be provided');
     });

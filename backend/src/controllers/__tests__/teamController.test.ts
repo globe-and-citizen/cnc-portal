@@ -257,6 +257,7 @@ describe('Team Controller', () => {
       const mockTeams = [
         {
           id: 1,
+
           name: 'Team 1',
           description: 'Description 1',
           owenrAddress: mockOwner.address,
@@ -351,6 +352,7 @@ describe('Team Controller', () => {
 
       const response = await request(app).put('/1').send({
         id: 1,
+
         owenrAddress: mockOwner.address,
         name: 'Updated Team',
         description: 'Updated Description',
