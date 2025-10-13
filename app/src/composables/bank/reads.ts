@@ -63,7 +63,7 @@ export function useBankReads() {
     })
   }
 
-  const useUnlockBalance = () => {
+  const useUnlockedBalance = () => {
     return useReadContract({
       address: bankAddress.value,
       abi: BANK_ABI,
@@ -77,7 +77,7 @@ export function useBankReads() {
     isBankAddressValid,
     useDividendBalance,
     useTotalDividend,
-    useUnlockBalance,
+    useUnlockedBalance,
     useBankPaused,
     useBankOwner,
     useBankSupportedTokens

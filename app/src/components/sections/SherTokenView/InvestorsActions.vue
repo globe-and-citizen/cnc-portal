@@ -94,7 +94,7 @@
         <PayDividendsForm
           v-if="payDividendsModal && teamStore.currentTeam"
           :loading="
-            (isBankLoading && bankFunctionName === 'depositDividends') ||
+            (isBankWriteLoading && bankWriteFunctionName === 'depositDividends') ||
             isLoadingAddAction ||
             isConfirmingAddAction
           "
@@ -132,7 +132,8 @@ import { zeroAddress } from 'viem'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
-const { depositDividends, bankFunctionName, isBankLoading, isConfirmed } = useBankContract()
+const { depositDividends, bankWriteFunctionName, isBankWriteLoading, isConfirmed } =
+  useBankContract()
 
 const {
   addAction,
@@ -274,8 +275,8 @@ watch(isConfirmingDistributeMint, (isConfirming, wasConfirming) => {
   }
 })
 
-watch([isConfirmed, bankFunctionName], ([newIsConfirmed, newBankFunctionName]) => {
-  if (newIsConfirmed && newBankFunctionName === 'depositDividends') {
+watch([isConfirmed, bankWriteFunctionName], ([newIsConfirmed, newbankWriteFunctionName]) => {
+  if (newIsConfirmed && newbankWriteFunctionName === 'depositDividends') {
     payDividendsModal.value = { mount: false, show: false }
   }
 })

@@ -18,12 +18,12 @@ export function useBankWritesFunctions() {
   const writes = useBankWrites()
   const { validateAmount, validateAddress } = useValidation()
 
-  const bankFunctionName =
+  const bankWriteFunctionName =
     'value' in writes.currentFunctionName
       ? writes.currentFunctionName
       : computed(() => unref(writes.currentFunctionName))
 
-  const isBankLoading =
+  const isBankWriteLoading =
     'value' in writes.isLoading ? writes.isLoading : computed(() => unref(writes.isLoading))
 
   const isBankConfirmed =
@@ -101,8 +101,8 @@ export function useBankWritesFunctions() {
     depositDividends,
     claimDividend,
     setInvestorAddress,
-    bankFunctionName,
-    isBankLoading,
+    bankWriteFunctionName,
+    isBankWriteLoading,
     isBankConfirmed
   }
 }

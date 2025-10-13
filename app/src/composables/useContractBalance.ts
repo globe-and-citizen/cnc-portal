@@ -6,6 +6,7 @@ import { useCurrencyStore, useTeamStore } from '@/stores'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { TokenId } from '@/constant'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
+import { BANK_ABI } from '@/artifacts/abi/bank'
 
 /**
  * @description Represents the value of a token balance in a specific currency
@@ -119,13 +120,26 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
     }
   })
 
+  const { data: totalDividend } = useReadContract({
+    address: unref(address),
+    abi: BANK_ABI,
+    functionName: 'totalDividend'
+  })
+
   // Computed balances for all tokens
   const balances = computed<TokenBalance[]>(() => {
     return tokenBalances.map(({ token, data, isNative }) => {
       let amount = 0
       if (data.value) {
         if (isNative) {
-          amount = Number(formatEther((data.value as { value: bigint }).value))
+          const rawAmount = Number(formatEther((data.value as { value: bigint }).value))
+          // Only subtract totalDividend if this is the Bank contract
+          if (unref(address) === teamStore.getContractAddressByType('Bank')) {
+            amount =
+              rawAmount - (totalDividend.value ? Number(formatEther(totalDividend.value)) : 0)
+          } else {
+            amount = rawAmount
+          }
         } else {
           amount = Number(formatUnits(data.value as bigint, token.decimals))
         }
