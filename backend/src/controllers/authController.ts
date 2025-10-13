@@ -1,9 +1,9 @@
-import { Request, Response } from "express";
-import { generateNonce, SiweMessage } from "siwe";
-import jwt from "jsonwebtoken";
-import { errorResponse, extractAddressAndNonce } from "../utils/utils";
-import { prisma } from "../utils";
-import { faker } from "@faker-js/faker";
+import { Request, Response } from 'express';
+import { generateNonce, SiweMessage } from 'siwe';
+import jwt from 'jsonwebtoken';
+import { errorResponse, extractAddressAndNonce } from '../utils/utils';
+import { prisma } from '../utils';
+import { faker } from '@faker-js/faker';
 
 export const authenticateSiwe = async (req: Request, res: Response) => {
   try {
@@ -11,10 +11,9 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     const { message, signature } = req.body;
 
     //Check if authentication and user data exists
-    if (!message) return errorResponse(401, "Auth error: Missing message", res);
+    if (!message) return errorResponse(401, 'Auth error: Missing message', res);
 
-    if (!signature)
-      return errorResponse(401, "Auth error: Missing signature", res);
+    if (!signature) return errorResponse(401, 'Auth error: Missing signature', res);
 
     let { address, nonce } = extractAddressAndNonce(message);
 
@@ -37,7 +36,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     //Update nonce for user and persist in database
     nonce = generateNonce();
 
-    console.log("user: ", user);
+    console.log('user: ', user);
     if (user)
       await prisma.user.update({
         where: { address },
@@ -55,7 +54,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
 
     //Create JWT for the user and send to the fron-end
     const secretKey = process.env.SECRET_KEY as string;
-    const accessToken = jwt.sign({ address }, secretKey, { expiresIn: "24h" });
+    const accessToken = jwt.sign({ address }, secretKey, { expiresIn: '24h' });
 
     return res.status(200).json({
       accessToken,
@@ -67,7 +66,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
 
 export const authenticateToken = (req: Request, res: Response) => {
   if (!(req as any).address) {
-    return errorResponse(401, "Unauthorized: Missing jwt payload", res);
+    return errorResponse(401, 'Unauthorized: Missing jwt payload', res);
   }
 
   return res.status(200).json({});

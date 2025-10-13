@@ -1,6 +1,6 @@
-import { prisma, errorResponse } from "../utils";
-import { Request, Response } from "express";
-import { addNotification } from "../utils";
+import { prisma, errorResponse } from '../utils';
+import { Request, Response } from 'express';
+import { addNotification } from '../utils';
 
 const getNotification = async (req: Request, res: Response) => {
   //check if userAddress property is set
@@ -13,15 +13,12 @@ const getNotification = async (req: Request, res: Response) => {
         userAddress: callerAddress as string,
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
     });
 
     //check if user is authorized to get notification
-    if (
-      notifications.length < 1 ||
-      callerAddress === notifications[0].userAddress
-    ) {
+    if (notifications.length < 1 || callerAddress === notifications[0].userAddress) {
       //send notification
       res.status(201).json({
         success: true,
@@ -29,7 +26,7 @@ const getNotification = async (req: Request, res: Response) => {
       });
     } else {
       //send error
-      return errorResponse(403, "Unauthorized access", res);
+      return errorResponse(403, 'Unauthorized access', res);
     }
   } catch (error) {
     return errorResponse(500, error, res);
@@ -42,7 +39,7 @@ const updateNotification = async (req: Request, res: Response) => {
   const _id = parseInt(id as string);
 
   if (isNaN(_id)) {
-    return errorResponse(400, "Notification ID invalid format", res);
+    return errorResponse(400, 'Notification ID invalid format', res);
   }
 
   const callerAddress = (req as any).address;
@@ -64,7 +61,7 @@ const updateNotification = async (req: Request, res: Response) => {
         success: true,
       });
     } else {
-      return errorResponse(403, "Unauthorized access", res);
+      return errorResponse(403, 'Unauthorized access', res);
     }
   } catch (error) {
     return errorResponse(500, error, res);
@@ -79,10 +76,10 @@ const createBulkNotifications = async (req: Request, res: Response) => {
     resource?: string;
   };
   if (!Array.isArray(userIds) || userIds.length === 0) {
-    return errorResponse(400, "userIds must be a non-empty array", res);
+    return errorResponse(400, 'userIds must be a non-empty array', res);
   }
-  if (!message || typeof message !== "string") {
-    return errorResponse(400, "message is required", res);
+  if (!message || typeof message !== 'string') {
+    return errorResponse(400, 'message is required', res);
   }
 
   try {
