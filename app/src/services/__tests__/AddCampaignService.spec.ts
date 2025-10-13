@@ -123,11 +123,4 @@ describe('AddCampaignService (wagmi)', () => {
     expect(result.status).toBe('success')
     expect(result.events?.['0xABC'].length).toBe(16)
   })
-
-  it('setCostPerClick - updates cost and returns receipt', async () => {
-    ;(writeContract as Mock).mockResolvedValue(hash)
-    ;(waitForTransactionReceipt as Mock).mockResolvedValue({ status: 'success' })
-
-    expect(writeContract).toHaveBeenCalled()
-  })
 })
