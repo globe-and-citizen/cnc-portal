@@ -98,9 +98,11 @@ const redirect = (notification: Notification) => {
   if (notification.resource) {
     const resourceArr = notification.resource.split('/')
     switch (resourceArr[0]) {
-      // === 'teams') return true
       case 'teams':
         router.push(`/${notification.resource}`)
+        break
+      case 'elections':
+        router.push(`/teams/${resourceArr[1]}/administration/bod-elections`)
         break
     }
   }
