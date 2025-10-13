@@ -94,6 +94,58 @@ const isUnread = computed(() => {
   return idx > -1
 })
 
+const paginatedNotifications = computed(() => {
+  if (!notificationStore.notifications) return []
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return notificationStore.notifications.slice(start, end)
+})
+
+// useFetch instance for getting team details
+const {
+  error: getTeamError,
+  data: team,
+  // isFetching: teamIsFetching,
+  execute: getTeamAPI
+} = useCustomFetch(updateEndPoint, {
+  immediate: false
+})
+  .get()
+  .json()
+
+//#region get claim
+const {
+  error: getClaimError,
+  // isFetching: isClaimFetching,
+  data: wageClaim,
+  execute: getWageClaimAPI
+} = useCustomFetch(updateEndPoint, {
+  immediate: false
+})
+  .get()
+  .json()
+//#endregion get claim
+
+//#region expense account composable
+const {
+  writeContract: executeCashRemunerationWithdraw,
+  // isPending: isLoadingWithdraw,
+  error: errorWithdraw,
+  data: withdrawHash
+} = useWriteContract()
+
+const { isLoading: isConfirmingWithdraw, isSuccess: isConfirmedWithdraw } =
+  useWaitForTransactionReceipt({
+    hash: withdrawHash
+  })
+
+const getResource = (notification: Notification) => {
+  if (notification.resource) {
+    const resourceArr = notification.resource.split('/')
+    return resourceArr
+  } else return []
+}
+
 const redirect = (notification: Notification) => {
   if (notification.resource) {
     const resourceArr = notification.resource.split('/')
@@ -109,78 +161,6 @@ const redirect = (notification: Notification) => {
 
   return false
 }
-
-const getResource = (notification: Notification) => {
-  if (notification.resource) {
-    const resourceArr = notification.resource.split('/')
-    return resourceArr
-  } else return []
-}
-
-// useFetch instance for getting team details
-const {
-  error: getTeamError,
-  data: team,
-  // isFetching: teamIsFetching,
-  execute: getTeamAPI
-} = useCustomFetch(updateEndPoint, {
-  immediate: false
-})
-  .get()
-  .json()
-
-// Watchers for getting team details
-watch(getTeamError, () => {
-  if (getTeamError.value) {
-    log.error(parseError(getTeamError.value))
-    addErrorToast(getTeamError.value)
-  }
-})
-
-//#region get claim
-const {
-  error: getClaimError,
-  // isFetching: isClaimFetching,
-  data: wageClaim,
-  execute: getWageClaimAPI
-} = useCustomFetch(updateEndPoint, {
-  immediate: false
-})
-  .get()
-  .json()
-
-watch(getClaimError, (newVal) => {
-  if (newVal) {
-    log.error(parseError(getTeamError.value))
-    addErrorToast(getTeamError.value)
-  }
-})
-//#endregion get claim
-
-//#region expense account composable
-const {
-  writeContract: executeCashRemunerationWithdraw,
-  // isPending: isLoadingWithdraw,
-  error: errorWithdraw,
-  data: withdrawHash
-} = useWriteContract()
-
-watch(errorWithdraw, (newVal) => {
-  if (newVal) {
-    log.error(parseError(newVal))
-    addErrorToast('Failed to withdraw')
-  }
-})
-
-const { isLoading: isConfirmingWithdraw, isSuccess: isConfirmedWithdraw } =
-  useWaitForTransactionReceipt({
-    hash: withdrawHash
-  })
-watch(isConfirmingWithdraw, async (isConfirming, wasConfirming) => {
-  if (!isConfirming && wasConfirming && isConfirmedWithdraw.value) {
-    addSuccessToast('Withdraw Successful')
-  }
-})
 
 const handleNotification = async (notification: Notification) => {
   await handleWage(notification)
@@ -218,10 +198,31 @@ const updateNotification = async (notification: Notification) => {
   await notificationStore.updateNotification(notification.id)
 }
 
-const paginatedNotifications = computed(() => {
-  if (!notificationStore.notifications) return []
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return notificationStore.notifications.slice(start, end)
+// Watchers for getting team details
+watch(getTeamError, () => {
+  if (getTeamError.value) {
+    log.error(parseError(getTeamError.value))
+    addErrorToast(getTeamError.value)
+  }
+})
+
+watch(getClaimError, (newVal) => {
+  if (newVal) {
+    log.error(parseError(getTeamError.value))
+    addErrorToast(getTeamError.value)
+  }
+})
+
+watch(errorWithdraw, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to withdraw')
+  }
+})
+
+watch(isConfirmingWithdraw, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedWithdraw.value) {
+    addSuccessToast('Withdraw Successful')
+  }
 })
 </script>
