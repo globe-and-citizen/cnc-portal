@@ -14,11 +14,7 @@
       data-test="notification-dropdown"
     >
       <li v-for="notification in paginatedNotifications" :key="notification.id">
-        <a
-          @click="handleNotification(notification)"
-          :href="isInvitation(notification) ? `/${notification.resource}` : `#`"
-          :data-test="`notification-${notification.id}`"
-        >
+        <a @click="handleNotification(notification)" :data-test="`notification-${notification.id}`">
           <div class="notification__body">
             <span :class="{ 'font-bold': !notification.isRead }">
               {{ notification.message }}
@@ -66,7 +62,9 @@ import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import cashRemunerationEip712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from './ButtonUI.vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const currentPage = ref(1)
 const itemsPerPage = ref(4)
 
@@ -96,10 +94,15 @@ const isUnread = computed(() => {
   return idx > -1
 })
 
-const isInvitation = (notification: Notification) => {
+const redirect = (notification: Notification) => {
   if (notification.resource) {
     const resourceArr = notification.resource.split('/')
-    if (resourceArr[0] === 'teams') return true
+    switch (resourceArr[0]) {
+      // === 'teams') return true
+      case 'teams':
+        router.push(`/${notification.resource}`)
+        break
+    }
   }
 
   return false
@@ -180,6 +183,7 @@ watch(isConfirmingWithdraw, async (isConfirming, wasConfirming) => {
 const handleNotification = async (notification: Notification) => {
   await handleWage(notification)
   await updateNotification(notification)
+  redirect(notification)
 }
 
 const handleWage = async (notification: Notification) => {
