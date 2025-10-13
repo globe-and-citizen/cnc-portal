@@ -136,7 +136,7 @@ describe('CustomDatePicker', () => {
     const customRange: [Date, Date] = [new Date('2024-01-01'), new Date('2024-01-31')]
 
     ;(wrapper.vm as unknown as IWrapper).dateRange = customRange
-    expect((wrapper.vm as unknown as IWrapper).displayDateRange).toBe('janvier 1 - janvier 31')
+    expect((wrapper.vm as unknown as IWrapper).displayDateRange).toBe('January 1 - January 31')
   })
 
   it('updates date range when modelValue prop changes after mount', async () => {
