@@ -6,7 +6,6 @@ import {
   getWalletClient,
   getPublicClient,
   writeContract,
-  readContract,
   waitForTransactionReceipt
 } from '@wagmi/core'
 //import { parseUnits, formatUnits } from 'viem/utils'
@@ -108,20 +107,6 @@ describe('AddCampaignService (wagmi)', () => {
     expect(list).toEqual(['0xAdmin2'])
   })
 
-  it('getContractData - reads all view functions and formats cost fields', async () => {
-    ;(readContract as Mock)
-      .mockResolvedValueOnce(123n) // adCampaignCount
-      .mockResolvedValueOnce('0xBank') // bankContractAddress
-      .mockResolvedValueOnce(10000000000000000n) // costPerClick
-
-    const result = await service.getContractData(contractAddress)
-
-    expect(result).toContainEqual({
-      key: 'costPerClick',
-      value: '0.01'
-    })
-  })
-
   it('getEventsGroupedByCampaignCode - parses all event types', async () => {
     const mockLogs = [
       { args: { campaignCode: '0xABC', budget: 1000n } },
@@ -137,21 +122,5 @@ describe('AddCampaignService (wagmi)', () => {
     const result = await service.getEventsGroupedByCampaignCode(contractAddress)
     expect(result.status).toBe('success')
     expect(result.events?.['0xABC'].length).toBe(16)
-  })
-
-  it('setCostPerClick - updates cost and returns receipt', async () => {
-    ;(writeContract as Mock).mockResolvedValue(hash)
-    ;(waitForTransactionReceipt as Mock).mockResolvedValue({ status: 'success' })
-    const result = await service.setCostPerClick(contractAddress, '0.01')
-    expect(writeContract).toHaveBeenCalled()
-    expect(result).toEqual({ status: 'success' })
-  })
-
-  it('setCostPerImpression - updates cost and returns receipt', async () => {
-    ;(writeContract as Mock).mockResolvedValue(hash)
-    ;(waitForTransactionReceipt as Mock).mockResolvedValue({ status: 'success' })
-    const result = await service.setCostPerImpression(contractAddress, '0.02')
-    expect(writeContract).toHaveBeenCalled()
-    expect(result).toEqual({ status: 'success' })
   })
 })

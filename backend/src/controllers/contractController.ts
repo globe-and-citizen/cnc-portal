@@ -1,18 +1,18 @@
-import { Request, Response } from "express";
-import { Prisma } from "@prisma/client";
-import { Address, getContract, isAddress } from "viem";
-import { errorResponse, prisma } from "../utils";
-import publicClient from "../utils/viem.config";
-import OFFICER_ABI from "../artifacts/officer_abi.json";
+import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
+import { Address, getContract, isAddress } from 'viem';
+import { errorResponse, prisma } from '../utils';
+import publicClient from '../utils/viem.config';
+import OFFICER_ABI from '../artifacts/officer_abi.json';
 const ContractType = {
-  Bank: "Bank",
-  InvestorsV1: "InvestorsV1",
-  Voting: "Voting",
-  BoardOfDirectors: "BoardOfDirectors",
-  ExpenseAccount: "ExpenseAccount",
-  ExpenseAccountEIP712: "ExpenseAccountEIP712",
-  CashRemunerationEIP712: "CashRemunerationEIP712",
-  Campaign: "Campaign",
+  Bank: 'Bank',
+  InvestorsV1: 'InvestorsV1',
+  Voting: 'Voting',
+  BoardOfDirectors: 'BoardOfDirectors',
+  ExpenseAccount: 'ExpenseAccount',
+  ExpenseAccountEIP712: 'ExpenseAccountEIP712',
+  CashRemunerationEIP712: 'CashRemunerationEIP712',
+  Campaign: 'Campaign',
 } as const;
 
 type ContractType = keyof typeof ContractType;
@@ -25,7 +25,7 @@ interface ContractBodyRequest {
 
 export const syncContracts = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address as Address;
-  const body = req.body as unknown as Pick<ContractBodyRequest, "teamId">;
+  const body = req.body as unknown as Pick<ContractBodyRequest, 'teamId'>;
 
   const teamId = Number(body.teamId);
 
@@ -33,41 +33,36 @@ export const syncContracts = async (req: Request, res: Response) => {
     const team = await prisma.team.findUnique({
       where: { id: Number(teamId) },
     });
-    if (!team) return errorResponse(404, "Team not found", res);
+    if (!team) return errorResponse(404, 'Team not found', res);
     if (team.ownerAddress !== callerAddress)
-      return errorResponse(
-        403,
-        "Unauthorized: Caller is not the owner of the team",
-        res
-      );
+      return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
 
     const contracts = (await publicClient.readContract({
       address: team.officerAddress as `0x${string}`,
       abi: OFFICER_ABI,
-      functionName: "getTeam",
+      functionName: 'getTeam',
     })) as { contractType: string; contractAddress: string }[];
 
     // Format the contracts to be created
-    const contractsToCreate: Prisma.TeamContractCreateManyInput[] =
-      contracts.map((contract) => ({
-        teamId: teamId,
-        address: contract.contractAddress,
-        type: contract.contractType,
-        deployer: callerAddress,
-      }));
+    const contractsToCreate: Prisma.TeamContractCreateManyInput[] = contracts.map((contract) => ({
+      teamId: teamId,
+      address: contract.contractAddress,
+      type: contract.contractType,
+      deployer: callerAddress,
+    }));
     const createdContract = await prisma.teamContract.createMany({
       data: contractsToCreate,
       skipDuplicates: true,
     });
 
     if (createdContract.count === 0) {
-      return errorResponse(400, "No new contracts Created", res);
+      return errorResponse(400, 'No new contracts Created', res);
     }
     // TODO: manage geting the owner of the contract directly from the contract with other metadata
     return res.status(200).json(createdContract);
   } catch (error) {
-    console.log("Error: ", error);
-    return errorResponse(500, "Internal server error", res);
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
   }
 };
 
@@ -81,12 +76,12 @@ export const getContracts = async (req: Request, res: Response) => {
     });
     // If no contracts are found, return a 404 error
     if (contracts.length === 0) {
-      return errorResponse(404, "Team or contracts not found", res);
+      return errorResponse(404, 'Team or contracts not found', res);
     }
     return res.status(200).json(contracts);
   } catch (error) {
-    console.log("Error: ", error);
-    return errorResponse(500, "Internal server error", res);
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
   }
 };
 
@@ -102,13 +97,9 @@ export const addContract = async (req: Request, res: Response) => {
     const team = await prisma.team.findUnique({
       where: { id: Number(teamId) },
     });
-    if (!team) return errorResponse(404, "Team not found", res);
+    if (!team) return errorResponse(404, 'Team not found', res);
     if (team.ownerAddress !== callerAddress)
-      return errorResponse(
-        403,
-        "Unauthorized: Caller is not the owner of the team",
-        res
-      );
+      return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
 
     const contract = await prisma.teamContract.create({
       data: {
@@ -120,7 +111,7 @@ export const addContract = async (req: Request, res: Response) => {
     });
     return res.status(200).json(contract);
   } catch (error) {
-    console.log("Error: ", error);
-    return errorResponse(500, "Internal server error", res);
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
   }
 };
