@@ -63,7 +63,7 @@ export const addElectionNotifications = async (req: Request, res: Response) => {
 					resource: `elections/${team.id}`,
 				}
 			);
-			res.status(201);
+			res.status(201).json(null);
 		} else {
 			addNotification(
 				team.members.map((member) => member.address),
@@ -74,7 +74,7 @@ export const addElectionNotifications = async (req: Request, res: Response) => {
 					resource: `elections/${team.id}`,
 				}
 			);
-			res.status(201);
+			res.status(201).json(null);
 		}
 	} catch (error) {
 		return errorResponse(500, error, res);
