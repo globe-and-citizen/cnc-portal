@@ -119,8 +119,6 @@ const createElection = async (electionData: OldProposal) => {
       teamStore.currentTeam?.members.map((m) => m.address) || []
     ]
 
-    console.log('Do nothing...')
-
     await simulateContract(config, {
       address: electionsAddress.value,
       abi: ElectionABI,
