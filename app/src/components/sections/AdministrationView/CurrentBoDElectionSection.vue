@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
@@ -150,4 +150,11 @@ const createElection = async (electionData: OldProposal) => {
     isLoadingCreateElection.value = false
   }
 }
+
+watch(electionNotificationError, (error) => {
+  if (error) {
+    addErrorToast('Failed to send election notifications')
+    log.error('electionNotificationError.value: ', error)
+  }
+})
 </script>
