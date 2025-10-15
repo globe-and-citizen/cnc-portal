@@ -14,11 +14,7 @@
       data-test="notification-dropdown"
     >
       <li v-for="notification in paginatedNotifications" :key="notification.id">
-        <a
-          @click="handleNotification(notification)"
-          :href="isInvitation(notification) ? `/${notification.resource}` : `#`"
-          :data-test="`notification-${notification.id}`"
-        >
+        <a @click="handleNotification(notification)" :data-test="`notification-${notification.id}`">
           <div class="notification__body">
             <span :class="{ 'font-bold': !notification.isRead }">
               {{ notification.message }}
@@ -66,7 +62,9 @@ import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import cashRemunerationEip712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from './ButtonUI.vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const currentPage = ref(1)
 const itemsPerPage = ref(4)
 
@@ -96,21 +94,12 @@ const isUnread = computed(() => {
   return idx > -1
 })
 
-const isInvitation = (notification: Notification) => {
-  if (notification.resource) {
-    const resourceArr = notification.resource.split('/')
-    if (resourceArr[0] === 'teams') return true
-  }
-
-  return false
-}
-
-const getResource = (notification: Notification) => {
-  if (notification.resource) {
-    const resourceArr = notification.resource.split('/')
-    return resourceArr
-  } else return []
-}
+const paginatedNotifications = computed(() => {
+  if (!notificationStore.notifications) return []
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return notificationStore.notifications.slice(start, end)
+})
 
 // useFetch instance for getting team details
 const {
@@ -124,14 +113,6 @@ const {
   .get()
   .json()
 
-// Watchers for getting team details
-watch(getTeamError, () => {
-  if (getTeamError.value) {
-    log.error(parseError(getTeamError.value))
-    addErrorToast(getTeamError.value)
-  }
-})
-
 //#region get claim
 const {
   error: getClaimError,
@@ -143,13 +124,6 @@ const {
 })
   .get()
   .json()
-
-watch(getClaimError, (newVal) => {
-  if (newVal) {
-    log.error(parseError(getTeamError.value))
-    addErrorToast(getTeamError.value)
-  }
-})
 //#endregion get claim
 
 //#region expense account composable
@@ -160,26 +134,38 @@ const {
   data: withdrawHash
 } = useWriteContract()
 
-watch(errorWithdraw, (newVal) => {
-  if (newVal) {
-    log.error(parseError(newVal))
-    addErrorToast('Failed to withdraw')
-  }
-})
-
 const { isLoading: isConfirmingWithdraw, isSuccess: isConfirmedWithdraw } =
   useWaitForTransactionReceipt({
     hash: withdrawHash
   })
-watch(isConfirmingWithdraw, async (isConfirming, wasConfirming) => {
-  if (!isConfirming && wasConfirming && isConfirmedWithdraw.value) {
-    addSuccessToast('Withdraw Successful')
+
+const getResource = (notification: Notification) => {
+  if (notification.resource) {
+    const resourceArr = notification.resource.split('/')
+    return resourceArr
+  } else return []
+}
+
+const redirect = (notification: Notification) => {
+  if (notification.resource) {
+    const resourceArr = notification.resource.split('/')
+    switch (resourceArr[0]) {
+      case 'teams':
+        router.push(`/${notification.resource}`)
+        break
+      case 'elections':
+        router.push(`/teams/${resourceArr[1]}/administration/bod-elections`)
+        break
+    }
   }
-})
+
+  return false
+}
 
 const handleNotification = async (notification: Notification) => {
   await handleWage(notification)
   await updateNotification(notification)
+  redirect(notification)
 }
 
 const handleWage = async (notification: Notification) => {
@@ -212,10 +198,31 @@ const updateNotification = async (notification: Notification) => {
   await notificationStore.updateNotification(notification.id)
 }
 
-const paginatedNotifications = computed(() => {
-  if (!notificationStore.notifications) return []
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return notificationStore.notifications.slice(start, end)
+// Watchers for getting team details
+watch(getTeamError, () => {
+  if (getTeamError.value) {
+    log.error(parseError(getTeamError.value))
+    addErrorToast(getTeamError.value)
+  }
+})
+
+watch(getClaimError, (newVal) => {
+  if (newVal) {
+    log.error(parseError(getTeamError.value))
+    addErrorToast(getTeamError.value)
+  }
+})
+
+watch(errorWithdraw, (newVal) => {
+  if (newVal) {
+    log.error(parseError(newVal))
+    addErrorToast('Failed to withdraw')
+  }
+})
+
+watch(isConfirmingWithdraw, async (isConfirming, wasConfirming) => {
+  if (!isConfirming && wasConfirming && isConfirmedWithdraw.value) {
+    addSuccessToast('Withdraw Successful')
+  }
 })
 </script>
