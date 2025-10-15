@@ -138,7 +138,7 @@ const hoursWorked = ref<{
 }>({
   hoursWorked: undefined,
   memo: undefined,
-  dayWorked: dayjs().utc().format('YYYY-MM-DD') // Store as simple date string.utc().startOf('day').toISOString() // Default to today's date
+  dayWorked: dayjs().utc().startOf('day').toISOString() // Default to today's date
 })
 
 const openModal = () => {
