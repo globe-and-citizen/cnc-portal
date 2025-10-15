@@ -187,12 +187,6 @@ const errorMessage = ref<{ message: string } | null>(null)
 // Accepts Date or string as some pickers may pass a Date instance to the formatter
 const formatUTC = (value: Date | string | null | undefined) => {
   if (!value) return ''
-  console.log(`Date: ${value}`)
-  // dayjs handles both Date and ISO string inputs
-  // return dayjs(value).utc().format('YYYY-MM-DD [UTC]')
-  // If it's a Date object, convert it to UTC by extracting the UTC components
-  // If it's a Date object, convert it to UTC by extracting the local date components
-  console.log('ISO String: ', value instanceof Date ? value.toISOString() : value)
   if (value instanceof Date) {
     // Extract the LOCAL date components (what the user actually selected)
     const year = value.getFullYear()
@@ -202,7 +196,6 @@ const formatUTC = (value: Date | string | null | undefined) => {
     // Create a UTC date using those components
     return dayjs.utc(Date.UTC(year, month, day)).format('YYYY-MM-DD [UTC]')
   }
-  // console.log('ISO String: ', isoString)
   return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
 }
 
