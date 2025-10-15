@@ -21,12 +21,11 @@
           v-model="hoursWorked.dayWorked"
           model-type="iso"
           :format="formatUTC"
-          :preview-format="formatUTC"
           :enable-time-picker="false"
           auto-apply
           class="input input-bordered input-md"
           data-test="date-input"
-          :utc="'preserve'"
+          utc="preserve"
         />
         <!-- <VueDatePicker
           v-model="hoursWorked.dayWorked"
@@ -139,7 +138,7 @@ const hoursWorked = ref<{
 }>({
   hoursWorked: undefined,
   memo: undefined,
-  dayWorked: dayjs().utc().startOf('day').toISOString() // Default to today's date
+  dayWorked: dayjs().utc().format('YYYY-MM-DD') // Store as simple date string.utc().startOf('day').toISOString() // Default to today's date
 })
 
 const openModal = () => {
@@ -188,8 +187,23 @@ const errorMessage = ref<{ message: string } | null>(null)
 // Accepts Date or string as some pickers may pass a Date instance to the formatter
 const formatUTC = (value: Date | string | null | undefined) => {
   if (!value) return ''
+  console.log(`Date: ${value}`)
   // dayjs handles both Date and ISO string inputs
-  return dayjs(value).utc().format('YYYY-MM-DD [UTC]')
+  // return dayjs(value).utc().format('YYYY-MM-DD [UTC]')
+  // If it's a Date object, convert it to UTC by extracting the UTC components
+  // If it's a Date object, convert it to UTC by extracting the local date components
+  console.log('ISO String: ', value instanceof Date ? value.toISOString() : value)
+  if (value instanceof Date) {
+    // Extract the LOCAL date components (what the user actually selected)
+    const year = value.getFullYear()
+    const month = value.getMonth()
+    const day = value.getDate()
+
+    // Create a UTC date using those components
+    return dayjs.utc(Date.UTC(year, month, day)).format('YYYY-MM-DD [UTC]')
+  }
+  // console.log('ISO String: ', isoString)
+  return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
 }
 
 watch(addWageClaimError, async () => {
@@ -199,6 +213,7 @@ watch(addWageClaimError, async () => {
 })
 
 const addWageClaim = async () => {
+  console.log('hoursWorked.value.dayWorked: ', hoursWorked.value.dayWorked)
   v$.value.$touch()
   if (v$.value.$invalid) return
 
