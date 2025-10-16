@@ -26,15 +26,7 @@ import { watch, computed } from 'vue'
 import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { useStorage } from '@vueuse/core'
 import type { TokenId } from '@/constant'
-import type { RatePerHour } from '@/types/cash-remuneration'
-
-// Interface pour typer les claims
-interface WeeklyClaim {
-  claims: { hoursWorked: number }[]
-  wage: {
-    ratePerHour: RatePerHour
-  }
-}
+import type { RatePerHour, WeeklyClaim } from '@/types/cash-remuneration'
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
