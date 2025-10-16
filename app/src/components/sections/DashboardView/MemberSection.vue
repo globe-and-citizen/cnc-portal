@@ -106,7 +106,7 @@ import MemberAction from './MemberAction.vue'
 import { useCustomFetch } from '@/composables'
 import type { Address } from 'viem'
 import { NETWORK } from '@/constant'
-import type { WageResponse } from '@/types'
+import type { Wage } from '@/types'
 
 const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
@@ -127,7 +127,7 @@ const {
 } = useCustomFetch(
   computed(() => `/wage/?teamId=${teamId.value}`),
   { immediate: false }
-).json<Array<WageResponse>>()
+).json<Array<Wage>>()
 
 // Watch team ID update to fetch the team wage data
 watch(

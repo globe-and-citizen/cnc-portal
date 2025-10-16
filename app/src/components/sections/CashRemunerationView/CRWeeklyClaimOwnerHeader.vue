@@ -1,7 +1,7 @@
 <template>
   <div v-if="isCashRemunerationOwner">
     <div class="px-8 pb-4 flex items-end" :class="{ 'justify-between': isCashRemunerationOwner }">
-      <span class="card-title" v-if="isCashRemunerationOwner">Pending Weekly Claim</span>
+      <span class="card-title"></span>
       <div class="card-actions justify-end">
         <CRAddERC20Support />
       </div>
