@@ -6,7 +6,7 @@ import { parseAbiItem, type PublicClient, type Address } from 'viem'
 import { writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import { parseUnits } from 'viem/utils'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import CampaignAbi from '../artifacts/abi/AdCampaignManager.json'
+import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
 
 export interface PaymentReleasedEvent extends Record<string, unknown> {
@@ -74,7 +74,7 @@ export class AddCampaignService {
     const walletClient = await getWalletClient(config)
 
     const hash = await walletClient.deployContract({
-      abi: CampaignAbi,
+      abi: AD_CAMPAIGN_MANAGER_ABI,
       bytecode: CAMPAIGN_BYTECODE as `0x${string}`,
       args: [click, impression, bankAddress],
       account: walletClient.account.address
@@ -109,7 +109,7 @@ export class AddCampaignService {
   async addAdmin(address: string, admin: string) {
     const hash = await writeContract(config, {
       address: address as `0x${string}`,
-      abi: CampaignAbi,
+      abi: AD_CAMPAIGN_MANAGER_ABI,
       functionName: 'addAdmin',
       args: [admin]
     })
@@ -120,7 +120,7 @@ export class AddCampaignService {
   async removeAdmin(address: string, admin: string) {
     const hash = await writeContract(config, {
       address: address as `0x${string}`,
-      abi: CampaignAbi,
+      abi: AD_CAMPAIGN_MANAGER_ABI,
       functionName: 'removeAdmin',
       args: [admin]
     })
