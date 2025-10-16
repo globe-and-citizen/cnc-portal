@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CRWeeklyClaimMemberHeader from '../CRWeeklyClaimMemberHeader.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { type WageResponse } from '@/types'
+import { type Wage } from '@/types'
 
 // Mock the custom fetch hook
-const mockFetchData = ref<Array<WageResponse> | null>(null)
+const mockFetchData = ref<Array<Wage> | null>(null)
 const mockFetchError = ref<Error | null>(null)
 
 const mocks = vi.hoisted(() => ({
@@ -54,7 +54,15 @@ describe.skip('CRWeeklyClaimMemberHeader', () => {
       {
         userAddress: '0x1234567890123456789012345678901234567890',
         maximumHoursPerWeek: 40,
-        cashRatePerHour: 100
+        cashRatePerHour: 100,
+        id: 0,
+        teamId: 0,
+        ratePerHour: [],
+        tokenRatePerHour: 0,
+        usdcRatePerHour: 0,
+        nextWageId: null,
+        createdAt: '',
+        updatedAt: ''
       }
     ]
 
@@ -109,7 +117,15 @@ describe.skip('CRWeeklyClaimMemberHeader', () => {
       {
         userAddress: '0x9876543210987654321098765432109876543210',
         maximumHoursPerWeek: 40,
-        cashRatePerHour: 100
+        cashRatePerHour: 100,
+        id: 0,
+        teamId: 0,
+        ratePerHour: [],
+        tokenRatePerHour: 0,
+        usdcRatePerHour: 0,
+        nextWageId: null,
+        createdAt: '',
+        updatedAt: ''
       }
     ]
 
