@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { useTeamStore, useToastStore} from '@/stores'
+import { useTeamStore, useToastStore } from '@/stores'
 import { log, parseError } from '@/utils'
 import { useWriteContract } from '@wagmi/vue'
 import {
