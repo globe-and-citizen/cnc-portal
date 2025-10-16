@@ -181,143 +181,6 @@ export const BANK_ABI = [
       {
         indexed: true,
         internalType: 'address',
-        name: 'addressWhoPushes',
-        type: 'address'
-      },
-      {
-        indexed: false,
-        internalType: 'address[]',
-        name: 'teamMembers',
-        type: 'address[]'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'totalAmount',
-        type: 'uint256'
-      }
-    ],
-    name: 'PushTip',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'addressWhoPushes',
-        type: 'address'
-      },
-      {
-        indexed: false,
-        internalType: 'address[]',
-        name: 'teamMembers',
-        type: 'address[]'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'token',
-        type: 'address'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'totalAmount',
-        type: 'uint256'
-      }
-    ],
-    name: 'PushTokenTip',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'addressWhoSends',
-        type: 'address'
-      },
-      {
-        indexed: false,
-        internalType: 'address[]',
-        name: 'teamMembers',
-        type: 'address[]'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'totalAmount',
-        type: 'uint256'
-      }
-    ],
-    name: 'SendTip',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'addressWhoSends',
-        type: 'address'
-      },
-      {
-        indexed: false,
-        internalType: 'address[]',
-        name: 'teamMembers',
-        type: 'address[]'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'token',
-        type: 'address'
-      },
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'totalAmount',
-        type: 'uint256'
-      }
-    ],
-    name: 'SendTokenTip',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'addressWhoChanged',
-        type: 'address'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'oldAddress',
-        type: 'address'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'newAddress',
-        type: 'address'
-      }
-    ],
-    name: 'TipsAddressChanged',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
         name: 'addressWhoChanged',
         type: 'address'
       },
@@ -366,6 +229,87 @@ export const BANK_ABI = [
       }
     ],
     name: 'TokenDeposited',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'account',
+        type: 'address'
+      },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'token',
+        type: 'address'
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256'
+      }
+    ],
+    name: 'TokenDividendClaimed',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'account',
+        type: 'address'
+      },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'token',
+        type: 'address'
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256'
+      }
+    ],
+    name: 'TokenDividendCredited',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'account',
+        type: 'address'
+      },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'token',
+        type: 'address'
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256'
+      },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'investorAddress',
+        type: 'address'
+      }
+    ],
+    name: 'TokenDividendDeposited',
     type: 'event'
   },
   {
@@ -440,19 +384,6 @@ export const BANK_ABI = [
   {
     inputs: [
       {
-        internalType: 'address',
-        name: '_tipsAddress',
-        type: 'address'
-      }
-    ],
-    name: 'changeTipsAddress',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
         internalType: 'string',
         name: '_symbol',
         type: 'string'
@@ -471,6 +402,19 @@ export const BANK_ABI = [
   {
     inputs: [],
     name: 'claimDividend',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_token',
+        type: 'address'
+      }
+    ],
+    name: 'claimTokenDividend',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function'
@@ -515,11 +459,90 @@ export const BANK_ABI = [
     inputs: [
       {
         internalType: 'address',
+        name: '_token',
+        type: 'address'
+      },
+      {
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256'
+      },
+      {
+        internalType: 'address',
+        name: '_investorAddress',
+        type: 'address'
+      }
+    ],
+    name: 'depositTokenDividends',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
         name: '',
         type: 'address'
       }
     ],
     name: 'dividendBalances',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_token',
+        type: 'address'
+      },
+      {
+        internalType: 'address',
+        name: '_account',
+        type: 'address'
+      }
+    ],
+    name: 'getTokenDividendBalance',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'getUnlockedBalance',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_token',
+        type: 'address'
+      }
+    ],
+    name: 'getUnlockedTokenBalance',
     outputs: [
       {
         internalType: 'uint256',
@@ -556,6 +579,19 @@ export const BANK_ABI = [
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'investorAddress',
+    outputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address'
+      }
+    ],
+    stateMutability: 'view',
     type: 'function'
   },
   {
@@ -611,90 +647,8 @@ export const BANK_ABI = [
     type: 'function'
   },
   {
-    inputs: [
-      {
-        internalType: 'address[]',
-        name: '_addresses',
-        type: 'address[]'
-      },
-      {
-        internalType: 'uint256',
-        name: '_amount',
-        type: 'uint256'
-      }
-    ],
-    name: 'pushTip',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address[]',
-        name: '_addresses',
-        type: 'address[]'
-      },
-      {
-        internalType: 'address',
-        name: '_token',
-        type: 'address'
-      },
-      {
-        internalType: 'uint256',
-        name: '_amount',
-        type: 'uint256'
-      }
-    ],
-    name: 'pushTokenTip',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
-  },
-  {
     inputs: [],
     name: 'renounceOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address[]',
-        name: '_addresses',
-        type: 'address[]'
-      },
-      {
-        internalType: 'uint256',
-        name: '_amount',
-        type: 'uint256'
-      }
-    ],
-    name: 'sendTip',
-    outputs: [],
-    stateMutability: 'payable',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address[]',
-        name: '_addresses',
-        type: 'address[]'
-      },
-      {
-        internalType: 'address',
-        name: '_token',
-        type: 'address'
-      },
-      {
-        internalType: 'uint256',
-        name: '_amount',
-        type: 'uint256'
-      }
-    ],
-    name: 'sendTokenTip',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function'
@@ -732,8 +686,51 @@ export const BANK_ABI = [
     type: 'function'
   },
   {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address'
+      },
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address'
+      }
+    ],
+    name: 'tokenDividendBalances',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
     inputs: [],
     name: 'totalDividend',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address'
+      }
+    ],
+    name: 'totalTokenDividends',
     outputs: [
       {
         internalType: 'uint256',
@@ -796,19 +793,6 @@ export const BANK_ABI = [
     name: 'transferToken',
     outputs: [],
     stateMutability: 'nonpayable',
-    type: 'function'
-  },
-  {
-    inputs: [],
-    name: 'unlockBalance',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    stateMutability: 'view',
     type: 'function'
   },
   {
