@@ -67,7 +67,7 @@
             <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
             <span>{{
               hasWage
-                ? 'You has a wage so you can submit your claim'
+                ? 'You have a wage so you can submit your claim'
                 : 'You need to have a wage set up to submit claims'
             }}</span>
             <div>
