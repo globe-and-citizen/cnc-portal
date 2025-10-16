@@ -52,7 +52,10 @@ const {
   }
 )
 
-function getHoulyRateInUserCurrency(ratePerHour: RatePerHour[], tokenStore = currencyStore): number {
+function getHoulyRateInUserCurrency(
+  ratePerHour: RatePerHour[],
+  tokenStore = currencyStore
+): number {
   return ratePerHour.reduce((total: number, rate: { type: TokenId; amount: number }) => {
     const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
     const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0

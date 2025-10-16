@@ -99,11 +99,11 @@ describe.skip('CRSigne', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
 
-      // Setup store mocks
-      ; (useTeamStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockTeamStore)
-      ; (useUserDataStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockUserDataStore)
-      ; (useToastStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockToastStore)
-      ; (useSignTypedData as ReturnType<typeof vi.fn>).mockReturnValue(mockSignTypedData)
+    // Setup store mocks
+    ;(useTeamStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockTeamStore)
+    ;(useUserDataStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockUserDataStore)
+    ;(useToastStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockToastStore)
+    ;(useSignTypedData as ReturnType<typeof vi.fn>).mockReturnValue(mockSignTypedData)
   })
 
   it('renders approve button when claim is pending and user is team owner', () => {
@@ -128,7 +128,7 @@ describe.skip('CRSigne', () => {
   })
 
   it('does not render approve button when user is not team owner', () => {
-    ; (useUserDataStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+    ;(useUserDataStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       address: '0x0000000000000000000000000000000000000000'
     })
 
@@ -170,14 +170,14 @@ describe.skip('CRSigne', () => {
 
   it('shows error toast when claim update fails', async () => {
     const mockError = ref(new Error('Update failed'))
-      ; (useCustomFetch as ReturnType<typeof vi.fn>).mockReturnValue({
-        put: () => ({
-          json: () => ({
-            execute: vi.fn(),
-            error: mockError
-          })
+    ;(useCustomFetch as ReturnType<typeof vi.fn>).mockReturnValue({
+      put: () => ({
+        json: () => ({
+          execute: vi.fn(),
+          error: mockError
         })
       })
+    })
 
     const wrapper = mount(CRSigne, {
       props: {
