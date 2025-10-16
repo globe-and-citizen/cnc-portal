@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import ElectionABI from '@/artifacts/abi/elections.json'
@@ -71,6 +71,7 @@ import ElectionStats from '@/components/sections/AdministrationView/ElectionStat
 import ElectionActions from './ElectionActions.vue'
 import CurrentBoDElection404 from './CurrentBoDElection404.vue'
 import { useBoDElections } from '@/composables'
+import { useCustomFetch } from '@/composables'
 
 const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
@@ -84,6 +85,14 @@ const showCreateElectionModal = ref({
   show: false
 })
 const isLoadingCreateElection = ref(false)
+const electionNotificationUrl = computed(() => `/elections/${teamStore.currentTeam?.id}`)
+
+const {
+  // data: claimUpdateData,
+  // isFetching: isClaimUpdateing,
+  error: electionNotificationError,
+  execute: executeAddElectionNotifications
+} = useCustomFetch(electionNotificationUrl, { immediate: false }).post().json()
 
 const createElection = async (electionData: OldProposal) => {
   try {
@@ -110,8 +119,6 @@ const createElection = async (electionData: OldProposal) => {
       teamStore.currentTeam?.members.map((m) => m.address) || []
     ]
 
-    console.log('Do nothing...')
-
     await simulateContract(config, {
       address: electionsAddress.value,
       abi: ElectionABI,
@@ -129,6 +136,8 @@ const createElection = async (electionData: OldProposal) => {
     await waitForTransactionReceipt(config, {
       hash
     })
+
+    await executeAddElectionNotifications()
     addSuccessToast('Election created successfully!')
     showCreateElectionModal.value.show = false
     showCreateElectionModal.value.mount = false
@@ -139,4 +148,11 @@ const createElection = async (electionData: OldProposal) => {
     isLoadingCreateElection.value = false
   }
 }
+
+watch(electionNotificationError, (error) => {
+  if (error) {
+    addErrorToast('Failed to send election notifications')
+    log.error('electionNotificationError.value: ', error)
+  }
+})
 </script>

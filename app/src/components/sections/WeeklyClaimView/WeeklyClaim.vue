@@ -14,9 +14,11 @@
       </template>
 
       <template #weekStart-data="{ row }">
-        <span class="font-bold">{{ getCurrentMonthYear(row.weekStart) }}</span>
+        <span class="font-bold">{{
+          dayjs(row.weekStart).utc().startOf('isoWeek').format('MMMM YYYY')
+        }}</span>
         <br />
-        <span>{{ formatDate(row.weekStart) }}</span>
+        <span>{{ formatIsoWeekRange(dayjs(row.weekStart).utc().startOf('isoWeek')) }}</span>
       </template>
 
       <template #hoursWorked-data="{ row }">
@@ -57,6 +59,14 @@
           </span>
         </div>
       </template>
+      <template #action-data="{ row }">
+        <CRSigne v-if="row.status == 'pending'" :weekly-claim="assertWeeklyClaimRow(row)" />
+        <CRWithdrawClaim
+          v-if="row.status == 'signed' || row.status == 'withdrawn'"
+          :disabled="row.status == 'withdrawn' || userStore.address != row.wage.userAddress"
+          :weekly-claim="assertWeeklyClaimRow(row)"
+        />
+      </template>
 
       <template #status-data="{ row }">
         <template v-if="row.status === 'signed'">
@@ -80,10 +90,6 @@
             {{ row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending' }}
           </span>
         </template>
-        <!-- <br />
-        <span class="text-sm">
-          {{ row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '-' }}
-        </span> -->
       </template>
     </TableComponent>
   </CardComponent>
@@ -91,21 +97,28 @@
 
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
-import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import UserComponent from '@/components/UserComponent.vue'
-import { NETWORK } from '@/constant'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
-import { computed } from 'vue'
-import { useCurrencyStore } from '@/stores'
-import { useTeamStore } from '@/stores'
-import { RouterLink } from 'vue-router'
-import type { RatePerHour } from '@/types/cash-remuneration'
-import type { TokenId } from '@/constant'
 import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
-// import { useReadContract } from '@wagmi/vue'
-// import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
+import UserComponent from '@/components/UserComponent.vue'
+import type { TokenId } from '@/constant'
+import { NETWORK } from '@/constant'
+import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
+import type { RatePerHour, WeeklyClaim } from '@/types/cash-remuneration'
+import { formatIsoWeekRange } from '@/utils/dayUtils'
+import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import utc from 'dayjs/plugin/utc'
+import weekday from 'dayjs/plugin/weekday'
+import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
+import CRSigne from '../CashRemunerationView/CRSigne.vue'
+import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
+import { useTanstackQuery } from '@/composables'
+
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
+dayjs.extend(weekday)
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -113,24 +126,15 @@ function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
 
 // const userStore = useUserDataStore()
 const teamStore = useTeamStore()
+const userStore = useUserDataStore()
 const props = defineProps<{
   memberAddress?: string
   singleUser?: boolean
 }>()
 
-// const cashRemunerationAddress = computed(() =>
-//   teamStore.getContractAddressByType('CashRemunerationEIP712')
-// )
-
-// const { data: cashRemunerationOwner } = useReadContract({
-//   functionName: 'owner',
-//   address: cashRemunerationAddress,
-//   abi: CashRemuneration_ABI
-// })
-
-// const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value == userStore.address)
-// : isCashRemunerationOwner.value
-//           ? `&memberAddress=${userStore.address}`
+function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
+  return row as WeeklyClaim
+}
 
 const weeklyClaimUrl = computed(
   () =>
@@ -139,8 +143,20 @@ const weeklyClaimUrl = computed(
     }`
 )
 
-const { data: fetchedData, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
+const weeklyClaimQueryKey = computed(() => [
+  'weekly-claims',
+  teamStore.currentTeam?.id,
+  props.memberAddress
+])
 
+const { data: fetchedData, error } = useTanstackQuery<Array<WeeklyClaim>>(
+  weeklyClaimQueryKey,
+  weeklyClaimUrl
+)
+
+// const { data: fetchedData, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
+
+// I think this sorting should be done in the backend
 const data = computed(() => {
   if (!fetchedData.value) return null
   //return the most recent first date
@@ -155,27 +171,15 @@ const isTeamClaimDataFetching = computed(() => !fetchedData.value && !error.valu
 
 const currencyStore = useCurrencyStore()
 
-function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = currencyStore): number {
+function getHoulyRateInUserCurrency(
+  ratePerHour: RatePerHour[],
+  tokenStore = currencyStore
+): number {
   return ratePerHour.reduce((total: number, rate: { type: TokenId; amount: number }) => {
     const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
     const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
     return total + rate.amount * localPrice
   }, 0)
-}
-
-function formatDate(date: string | Date) {
-  const monday = getMondayStart(new Date(date))
-  const sunday = getSundayEnd(new Date(date))
-  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-  return `${monday.toLocaleDateString('en-US', options)}-${sunday.toLocaleDateString('en-US', options)}`
-}
-
-function getCurrentMonthYear(date: string | Date) {
-  const d = new Date(date)
-  return d.toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric'
-  })
 }
 
 const columns = [
@@ -212,6 +216,12 @@ const columns = [
   {
     key: 'status',
     label: 'Status',
+    sortable: true,
+    class: 'text-base'
+  },
+  {
+    key: 'action',
+    label: 'Action',
     sortable: false,
     class: 'text-base'
   }

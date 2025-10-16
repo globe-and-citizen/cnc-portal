@@ -27,7 +27,7 @@
 import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { computed, watch } from 'vue'
 import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
-import { type WageResponse } from '@/types'
+import { type Wage } from '@/types'
 import SubmitClaims from './SubmitClaims.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
@@ -36,7 +36,7 @@ const teamStore = useTeamStore()
 const toastStore = useToastStore()
 
 const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeam?.id])
-const { data: teamWageData, error: teamWageDataError } = useTanstackQuery<Array<WageResponse>>(
+const { data: teamWageData, error: teamWageDataError } = useTanstackQuery<Array<Wage>>(
   teamWageQueryKey,
   computed(() => `/wage/?teamId=${teamStore.currentTeam?.id}`)
 )

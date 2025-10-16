@@ -340,5 +340,20 @@ describe('SelectComponent', () => {
 
       expect(wrapper.find(SELECTORS.dropdown).exists()).toBe(false)
     })
+
+    it('should select focused option with Enter during navigation', async () => {
+      const wrapper = mount(GenericSelect, {
+        props: { options: mockOptions, modelValue: 'ETH' }
+      })
+
+      await wrapper.find(SELECTORS.trigger).trigger('click')
+      await nextTick()
+
+      // Focus is on ETH (index 0), press Enter to select it again
+      await wrapper.find(SELECTORS.trigger).trigger('keydown', { key: 'Enter' })
+      await nextTick()
+
+      expect(wrapper.find(SELECTORS.dropdown).exists()).toBe(false)
+    })
   })
 })

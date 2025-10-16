@@ -15,7 +15,7 @@ services:
   frontend:
     build:
       context: ./app
-      dockerfile: Dockerfile
+      dockerfile: frontend.Dockerfile
       target: production
     # Build args will be picked up from .env.production if present
     env_file:
@@ -27,7 +27,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: backend.Dockerfile
       target: production
     env_file:
       - ./backend/.env.production
