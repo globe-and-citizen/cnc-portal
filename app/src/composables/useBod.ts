@@ -150,8 +150,8 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
       // })
       // actionId.value = BigInt(_actionId)
     } catch (error) {
-      log.error('Error approving action: ', parseError(error, BOD_ABI as Abi))
-      addErrorToast(parseError(error, BOD_ABI as Abi))
+      log.error('Error approving action: ', parseError(error, BOD_ABI))
+      addErrorToast(parseError(error, BOD_ABI))
     }
   }
 

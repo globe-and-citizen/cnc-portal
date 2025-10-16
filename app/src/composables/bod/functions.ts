@@ -167,8 +167,8 @@ export function useBodWritesFunctions() {
       // isLoadingApproveAction.value = false
       isActionApproved.value = true
     } catch (error) {
-      log.error('Error approving action: ', parseError(error, BOD_ABI as Abi))
-      addErrorToast(parseError(error, BOD_ABI as Abi))
+      log.error('Error approving action: ', parseError(error, BOD_ABI))
+      addErrorToast(parseError(error, BOD_ABI))
     } finally {
       isLoadingApproveAction.value = false
     }

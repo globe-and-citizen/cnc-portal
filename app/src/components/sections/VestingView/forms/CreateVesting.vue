@@ -100,7 +100,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { differenceInCalendarDays, differenceInMonths, differenceInYears } from '@/utils/dayUtils'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
-import VestingABI from '@/artifacts/abi/Vesting.json'
+import { VESTING_ABI } from '@/artifacts/abi/vesting'
 import { VESTING_ADDRESS } from '@/constant'
 import { parseEther, type Address, formatUnits, parseUnits } from 'viem'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
@@ -197,7 +197,7 @@ const {
 } = useReadContract({
   functionName: 'getTeamVestingsWithMembers',
   address: VESTING_ADDRESS as Address,
-  abi: VestingABI,
+  abi: VESTING_ABI,
   args: [teamStore.currentTeam?.id ?? 0]
 })
 watch(errorGetVestingInfo, () => {
@@ -394,7 +394,7 @@ async function submit() {
   }
   addVesting({
     address: VESTING_ADDRESS as Address,
-    abi: VestingABI,
+    abi: VESTING_ABI,
     functionName: 'addVesting',
     args: [
       teamStore.currentTeam?.id,

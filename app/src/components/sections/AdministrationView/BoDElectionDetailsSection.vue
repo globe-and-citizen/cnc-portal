@@ -16,8 +16,8 @@
 import CardComponent from '@/components/CardComponent.vue'
 import ElectionDetailsCard from './BoDElectionDetailsCard.vue'
 import { computed, reactive, watch } from 'vue'
-import ElectionABI from '@/artifacts/abi/elections.json'
-// import BoDABI from '@/artifacts/abi/bod.json'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+// import { BOD_ABI } from '@/artifacts/abi/bod'
 import { useTeamStore, useToastStore } from '@/stores'
 import { encodeFunctionData, zeroAddress, type Abi, type Address } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
@@ -40,7 +40,7 @@ const electionsAddress = computed(() => teamStore.getContractAddressByType('Elec
 const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useReadContract({
   functionName: 'getElectionCandidates',
   address: electionsAddress.value,
-  abi: ElectionABI,
+  abi: ELECTIONS_ABI,
   args: [electionId],
   query: { enabled: true }
 })
@@ -48,7 +48,7 @@ const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useRea
 const { data: election /*, error: errorVoteCount*/ } = useReadContract({
   functionName: 'getElection',
   address: electionsAddress.value,
-  abi: ElectionABI,
+  abi: ELECTIONS_ABI,
   args: [electionId],
   query: { enabled: computed(() => !!electionId.value) }
 })
@@ -59,7 +59,7 @@ const {
 } = useReadContract({
   functionName: 'getVoteCount',
   address: electionsAddress.value,
-  abi: ElectionABI,
+  abi: ELECTIONS_ABI,
   args: [electionId], // Supply currentElectionId as an argument
   query: {
     enabled: computed(() => !!electionId.value) // Only fetch if currentElectionId is available
@@ -113,7 +113,7 @@ const castVote = async (candidateAddress: string) => {
     const args = [electionId.value, candidateAddress]
 
     const data = encodeFunctionData({
-      abi: ElectionABI as Abi,
+      abi: ELECTIONS_ABI,
       functionName: 'castVote',
       args
     })
@@ -125,13 +125,13 @@ const castVote = async (candidateAddress: string) => {
 
     executeCastVote({
       address: electionsAddress.value,
-      abi: ElectionABI,
+      abi: ELECTIONS_ABI,
       functionName: 'castVote',
       args
     })
   } catch (error) {
-    addErrorToast(parseError(error, ElectionABI as Abi))
-    log.error('Error creating election:', parseError(error, ElectionABI as Abi))
+    addErrorToast(parseError(error, ELECTIONS_ABI))
+    log.error('Error creating election:', parseError(error, ELECTIONS_ABI))
   }
 }
 
@@ -147,7 +147,7 @@ const fetchVotes = async () => {
         candidatesList.map(async (candidate) => {
           const count = await readContract(config, {
             address: electionsAddress.value || zeroAddress,
-            abi: ElectionABI,
+            abi: ELECTIONS_ABI,
             functionName: '_voteCounts',
             args: [props.electionId, candidate]
           })
@@ -156,8 +156,8 @@ const fetchVotes = async () => {
       )
     }
   } catch (error) {
-    addErrorToast(parseError(error, ElectionABI as Abi))
-    log.error('Error fetching votes:', parseError(error, ElectionABI as Abi))
+    addErrorToast(parseError(error, ELECTIONS_ABI))
+    log.error('Error fetching votes:', parseError(error, ELECTIONS_ABI))
   }
 }
 

@@ -7,7 +7,7 @@ import { type TeamContract } from '@/types/teamContract'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { createConfig, http } from '@wagmi/core'
 import { mainnet } from '@wagmi/core/chains'
-import CampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
+import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { type Abi } from 'viem'
 
 createConfig({
@@ -215,7 +215,7 @@ describe('TeamContractAdmins', () => {
 
     expect(mocks.mockWrite).toHaveBeenCalledWith({
       address: contract.address,
-      abi: CampaignAbi as Abi,
+      abi: AD_CAMPAIGN_MANAGER_ABI,
       functionName: 'addAdmin',
       args: [newAdminAddress]
     })
@@ -261,7 +261,7 @@ describe('TeamContractAdmins', () => {
 
     expect(mocks.mockWrite).toHaveBeenCalledWith({
       address: newContract.address,
-      abi: CampaignAbi as Abi,
+      abi: AD_CAMPAIGN_MANAGER_ABI,
       functionName: 'removeAdmin',
       args: [firstRowTds[1].text()]
     })

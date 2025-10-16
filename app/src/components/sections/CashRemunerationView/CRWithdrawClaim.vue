@@ -23,7 +23,7 @@ import {
   type Address
 } from 'viem'
 import { computed, ref } from 'vue'
-import EIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { getBalance } from 'viem/actions'
 import { config } from '@/wagmi.config'
 import { useCustomFetch } from '@/composables'
@@ -102,7 +102,7 @@ const withdrawClaim = async () => {
   // withdraw
   try {
     const args = {
-      abi: EIP712ABI,
+      abi: CASH_REMUNERATION_EIP712_ABI,
       functionName: 'withdraw',
       args: [claimData, props.weeklyClaim.signature as Address]
     }
