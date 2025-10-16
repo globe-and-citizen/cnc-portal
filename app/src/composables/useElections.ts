@@ -1,6 +1,6 @@
 import { computed, ref, watch, type ComputedRef } from 'vue'
 import { useReadContract } from '@wagmi/vue'
-import ElectionABI from '@/artifacts/abi/elections.json'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { useTeamStore } from '@/stores'
 import { useIntervalFn, useNow } from '@vueuse/core'
 import { log } from '@/utils'
@@ -13,13 +13,13 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
   const { data: owner } = useReadContract({
     functionName: 'owner',
     address: electionsAddress.value,
-    abi: ElectionABI
+    abi: ELECTIONS_ABI
   })
 
   const { data: currentElection, error: errorGetCurrentElection } = useReadContract({
     functionName: 'getElection',
     address: electionsAddress.value,
-    abi: ElectionABI,
+    abi: ELECTIONS_ABI,
     args: [currentElectionId], // Supply currentElectionId as an argument
     query: {
       enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
@@ -29,7 +29,7 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
   const { data: voteCount, error: errorGetVoteCount } = useReadContract({
     functionName: 'getVoteCount',
     address: electionsAddress.value,
-    abi: ElectionABI,
+    abi: ELECTIONS_ABI,
     args: [currentElectionId], // Supply currentElectionId as an argument
     query: {
       enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
@@ -39,7 +39,7 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
   const { data: candidateList, error: errorGetCandidates } = useReadContract({
     functionName: 'getElectionCandidates',
     address: electionsAddress.value,
-    abi: ElectionABI,
+    abi: ELECTIONS_ABI,
     args: [currentElectionId],
     query: {
       enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
@@ -49,7 +49,7 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
   const { data: voterList } = useReadContract({
     functionName: 'getElectionEligibleVoters',
     address: electionsAddress.value,
-    abi: ElectionABI,
+    abi: ELECTIONS_ABI,
     args: [currentElectionId],
     query: {
       enabled: computed(() => !!currentElectionId.value)

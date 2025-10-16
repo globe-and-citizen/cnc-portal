@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { useAccount } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
 import { useContractWrites, type ContractWriteOptions } from './useContractWrites'
-import VestingABI from '@/artifacts/abi/Vesting.json'
+import { VESTING_ABI } from '@/artifacts/abi/vesting'
 import type { Abi } from 'viem'
 
 // Define Vesting function names (similar to Bank)
@@ -31,7 +31,7 @@ export function useVestingWrites() {
   // Use the generic contract writes composable
   const baseWrites = useContractWrites({
     contractAddress: vestingAddress.value!,
-    abi: VestingABI as Abi,
+    abi: VESTING_ABI,
     chainId: chainId.value
   })
 

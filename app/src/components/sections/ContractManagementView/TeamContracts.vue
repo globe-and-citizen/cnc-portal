@@ -103,7 +103,7 @@ import TeamContractsDetail from './TeamContractsDetail.vue'
 import { AddCampaignService } from '@/services/AddCampaignService'
 import { getContractData } from '@/composables/useContractFunctions'
 
-import CampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
+import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import TableComponent from '@/components/TableComponent.vue'
 
 import type {
@@ -194,7 +194,7 @@ const openEventsModal = async (contractAddress: Address) => {
 
 // Open Contract Data Modal
 const openContractDataModal = async (contractAddress: Address) => {
-  contractDataDialog.value.datas = await getContractData(contractAddress, CampaignAbi as Abi)
+  contractDataDialog.value.datas = await getContractData(contractAddress, AD_CAMPAIGN_MANAGER_ABI)
   contractDataDialog.value.address = contractAddress
   contractDataDialog.value.show = true
   contractDataDialog.value.key++

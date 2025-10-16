@@ -4,7 +4,7 @@ import { useCustomFetch } from './useCustomFetch'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import type { Address } from 'viem'
-import BoDABI from '@/artifacts/abi/bod.json'
+import { BOD_ABI } from '@/artifacts/abi/bod'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 
 export function useAddAction() {
@@ -36,7 +36,7 @@ export function useAddAction() {
       actionCount.value = (await readContract(config, {
         address: boardOfDirectorsAddress,
         functionName: 'actionCount',
-        abi: BoDABI
+        abi: BOD_ABI
       })) as bigint
       team.value = teamData
       action.value = actionData
@@ -44,7 +44,7 @@ export function useAddAction() {
       executeAddAction({
         address: boardOfDirectorsAddress,
         functionName: 'addAction',
-        abi: BoDABI,
+        abi: BOD_ABI,
         args: [actionData.targetAddress, actionData.description, actionData.data]
       })
     } catch (err) {
