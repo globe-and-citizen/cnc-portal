@@ -1,10 +1,10 @@
-import { Prisma, /*PrismaClient,*/ User } from "@prisma/client";
-import { Request, Response } from "express";
-import { isAddress } from "viem";
-import { errorResponse } from "../utils/utils";
-import { addNotification, prisma } from "../utils";
-import publicClient from "../utils/viem.config";
-import OFFICER_ABI from "../artifacts/officer_abi.json";
+import { Prisma, /*PrismaClient,*/ User } from '@prisma/client';
+import { Request, Response } from 'express';
+import { isAddress } from 'viem';
+import { errorResponse } from '../utils/utils';
+import { addNotification, prisma } from '../utils';
+import publicClient from '../utils/viem.config';
+import OFFICER_ABI from '../artifacts/officer_abi.json';
 //const prisma = new PrismaClient();
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
@@ -17,11 +17,7 @@ const addTeam = async (req: Request, res: Response) => {
     // Validate all members' wallet addresses
     for (const member of members) {
       if (!isAddress(member.address)) {
-        return errorResponse(
-          400,
-          `Invalid wallet address for member: ${member.name}`,
-          res
-        );
+        return errorResponse(400, `Invalid wallet address for member: ${member.name}`, res);
       }
     }
 
@@ -33,7 +29,7 @@ const addTeam = async (req: Request, res: Response) => {
     });
 
     if (!owner) {
-      return errorResponse(404, "Owner not found", res);
+      return errorResponse(404, 'Owner not found', res);
     }
 
     // Ensure the owner's wallet address is in the members list
@@ -71,8 +67,8 @@ const addTeam = async (req: Request, res: Response) => {
       members.map((member: User) => member.address),
       {
         message: `You have been added to a new team: ${name} by ${owner.name}`,
-        subject: "Team Invitation",
-        author: owner.address?.toString() || "",
+        subject: 'Team Invitation',
+        author: owner.address?.toString() || '',
         resource: `teams/${team.id}`,
       }
     );
@@ -107,11 +103,11 @@ const getTeam = async (req: Request, res: Response) => {
 
     // Handle 404
     if (!team) {
-      return errorResponse(404, "Team not found", res);
+      return errorResponse(404, 'Team not found', res);
     }
 
     if (!isUserPartOfTheTeam(team?.members ?? [], callerAddress)) {
-      return errorResponse(403, "Unauthorized", res);
+      return errorResponse(403, 'Unauthorized', res);
     }
 
     res.status(200).json(team);
@@ -168,10 +164,10 @@ const updateTeam = async (req: Request, res: Response) => {
       },
     });
     if (!team) {
-      return errorResponse(404, "Team not found", res);
+      return errorResponse(404, 'Team not found', res);
     }
     if (team.ownerAddress !== callerAddress) {
-      return errorResponse(403, "Unauthorized", res);
+      return errorResponse(403, 'Unauthorized', res);
     }
 
     const teamU = await prisma.team.update({
@@ -207,10 +203,10 @@ const deleteTeam = async (req: Request, res: Response) => {
   try {
     const team = await prisma.team.findUnique({ where: { id: Number(id) } });
     if (!team) {
-      return errorResponse(404, "Team not found", res);
+      return errorResponse(404, 'Team not found', res);
     }
     if (team.ownerAddress !== callerAddress) {
-      return errorResponse(403, "Unauthorized", res);
+      return errorResponse(403, 'Unauthorized', res);
     }
     await prisma.boardOfDirectorActions.deleteMany({
       where: { teamId: Number(id) },

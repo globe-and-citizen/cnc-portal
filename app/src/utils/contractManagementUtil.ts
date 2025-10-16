@@ -19,8 +19,15 @@ export type FormattedAction = (Action & {
   description: string
 })[]
 
-export const getUser = (address: string, members: User[], bodAddress = ''): User => {
-  if (address === bodAddress) return { name: 'Board of Directors', address }
+export const getUser = (
+  address: string,
+  members: User[],
+  bodAddress = '',
+  teamContracts?: TeamContract[]
+): User => {
+  const teamContract = teamContracts?.find((c) => c.address === address)
+  if (teamContracts && teamContract) return { name: teamContract.type, address: address }
+  else if (address === bodAddress) return { name: 'Board of Directors', address }
   else
     return (
       members.find((member) => member.address === address) || {

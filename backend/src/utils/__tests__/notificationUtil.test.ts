@@ -1,10 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { addNotification } from "../notificationUtil";
-import { prisma } from "../";
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { addNotification } from '../notificationUtil';
+import { prisma } from '../';
 
 // Mock prisma
-vi.mock("../", async () => {
-  const actual = await vi.importActual("../");
+vi.mock('../', async () => {
+  const actual = await vi.importActual('../');
   return {
     ...actual,
     prisma: {
@@ -15,22 +15,22 @@ vi.mock("../", async () => {
   };
 });
 
-describe("notificationUtil", () => {
+describe('notificationUtil', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe("addNotification", () => {
-    it("should create notifications for valid user addresses", async () => {
+  describe('addNotification', () => {
+    it('should create notifications for valid user addresses', async () => {
       const userIds = [
-        "0x1234567890123456789012345678901234567890",
-        "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+        '0x1234567890123456789012345678901234567890',
+        '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
       ];
       const notification = {
-        message: "Test notification",
-        subject: "Test Subject",
-        author: "0x9999999999999999999999999999999999999999",
-        resource: "test-resource",
+        message: 'Test notification',
+        subject: 'Test Subject',
+        author: '0x9999999999999999999999999999999999999999',
+        resource: 'test-resource',
       };
 
       const mockNotification = {
@@ -61,10 +61,10 @@ describe("notificationUtil", () => {
       });
     });
 
-    it("should create notifications without optional fields", async () => {
-      const userIds = ["0x1234567890123456789012345678901234567890"];
+    it('should create notifications without optional fields', async () => {
+      const userIds = ['0x1234567890123456789012345678901234567890'];
       const notification = {
-        message: "Test notification without optional fields",
+        message: 'Test notification without optional fields',
       };
 
       const mockNotification = {
@@ -94,24 +94,21 @@ describe("notificationUtil", () => {
       });
     });
 
-    it("should throw error for invalid user address", async () => {
-      const userIds = ["invalid-address"];
+    it('should throw error for invalid user address', async () => {
+      const userIds = ['invalid-address'];
       const notification = {
-        message: "Test notification",
+        message: 'Test notification',
       };
 
       await expect(addNotification(userIds, notification)).rejects.toThrow(
-        "Invalid user address: invalid-address"
+        'Invalid user address: invalid-address'
       );
     });
 
-    it("should handle multiple invalid addresses", async () => {
-      const userIds = [
-        "0x1234567890123456789012345678901234567890",
-        "invalid-address",
-      ];
+    it('should handle multiple invalid addresses', async () => {
+      const userIds = ['0x1234567890123456789012345678901234567890', 'invalid-address'];
       const notification = {
-        message: "Test notification",
+        message: 'Test notification',
       };
 
       const mockNotification = {
@@ -128,15 +125,15 @@ describe("notificationUtil", () => {
       vi.mocked(prisma.notification.create).mockResolvedValue(mockNotification);
 
       await expect(addNotification(userIds, notification)).rejects.toThrow(
-        "Invalid user address: invalid-address"
+        'Invalid user address: invalid-address'
       );
     });
 
-    it("should create notifications with only subject", async () => {
-      const userIds = ["0x1234567890123456789012345678901234567890"];
+    it('should create notifications with only subject', async () => {
+      const userIds = ['0x1234567890123456789012345678901234567890'];
       const notification = {
-        message: "Test notification",
-        subject: "Important Update",
+        message: 'Test notification',
+        subject: 'Important Update',
       };
 
       const mockNotification = {
@@ -166,10 +163,10 @@ describe("notificationUtil", () => {
       });
     });
 
-    it("should handle empty userIds array", async () => {
+    it('should handle empty userIds array', async () => {
       const userIds: string[] = [];
       const notification = {
-        message: "Test notification",
+        message: 'Test notification',
       };
 
       const result = await addNotification(userIds, notification);

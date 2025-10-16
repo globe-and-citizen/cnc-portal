@@ -6,7 +6,7 @@ export const config = createConfig({
   transports: {
     [mainnet.id]: http(),
     [sepolia.id]: http('https://sepolia.drpc.org'),
-    [polygon.id]: http(),
+    [polygon.id]: http(import.meta.env.VITE_APP_POLYGON_RPC_URL || 'https://polygon-rpc.com'),
     [polygonAmoy.id]: http(),
     [hardhat.id]: http()
   }

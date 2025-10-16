@@ -1,11 +1,6 @@
-import express from "express";
-import { getWages, setWage } from "../controllers/wageController";
-import {
-  validateBody,
-  validateQuery,
-  setWageBodySchema,
-  getWagesQuerySchema,
-} from "../validation";
+import express from 'express';
+import { getWages, setWage } from '../controllers/wageController';
+import { validateBody, validateQuery, setWageBodySchema, getWagesQuerySchema } from '../validation';
 
 const wageRoutes = express.Router();
 
@@ -105,7 +100,7 @@ const wageRoutes = express.Router();
  *                 type: string
  *                 description: Error message indicating an internal server error
  */
-wageRoutes.put("/setWage", validateBody(setWageBodySchema), setWage);
+wageRoutes.put('/setWage', validateBody(setWageBodySchema), setWage);
 
 /**
  * @openapi
@@ -186,6 +181,6 @@ wageRoutes.put("/setWage", validateBody(setWageBodySchema), setWage);
  *                 type: string
  *                 description: Error message indicating an internal server error
  */
-wageRoutes.get("/", validateQuery(getWagesQuerySchema), getWages);
+wageRoutes.get('/', validateQuery(getWagesQuerySchema), getWages);
 
 export default wageRoutes;

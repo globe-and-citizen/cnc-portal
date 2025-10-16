@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
 // Singleton pattern to ensure only one PrismaClient instance
 class PrismaClientSingleton {
@@ -7,19 +7,19 @@ class PrismaClientSingleton {
   public static getInstance(): PrismaClient {
     if (!PrismaClientSingleton.instance) {
       PrismaClientSingleton.instance = new PrismaClient({
-        log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
+        log: process.env.NODE_ENV === 'development' ? ['info', 'warn', 'error'] : ['error'],
         datasources: {
           db: {
-            url: process.env.DATABASE_URL
-          }
-        }
+            url: process.env.DATABASE_URL,
+          },
+        },
       });
-      
+
       console.log('✅ New PrismaClient instance created');
     } else {
       console.log('♻️  Reusing existing PrismaClient instance');
     }
-    
+
     return PrismaClientSingleton.instance;
   }
 

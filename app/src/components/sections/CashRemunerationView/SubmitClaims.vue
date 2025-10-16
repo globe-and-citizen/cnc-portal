@@ -21,11 +21,11 @@
           v-model="hoursWorked.dayWorked"
           model-type="iso"
           :format="formatUTC"
-          :preview-format="formatUTC"
           :enable-time-picker="false"
           auto-apply
           class="input input-bordered input-md"
           data-test="date-input"
+          utc="preserve"
         />
         <!-- <VueDatePicker
           v-model="hoursWorked.dayWorked"
@@ -187,8 +187,16 @@ const errorMessage = ref<{ message: string } | null>(null)
 // Accepts Date or string as some pickers may pass a Date instance to the formatter
 const formatUTC = (value: Date | string | null | undefined) => {
   if (!value) return ''
-  // dayjs handles both Date and ISO string inputs
-  return dayjs(value).utc().format('YYYY-MM-DD [UTC]')
+  if (value instanceof Date) {
+    // Extract the LOCAL date components (what the user actually selected)
+    const year = value.getFullYear()
+    const month = value.getMonth()
+    const day = value.getDate()
+
+    // Create a UTC date using those components
+    return dayjs.utc(Date.UTC(year, month, day)).format('YYYY-MM-DD [UTC]')
+  }
+  return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
 }
 
 watch(addWageClaimError, async () => {
@@ -198,6 +206,7 @@ watch(addWageClaimError, async () => {
 })
 
 const addWageClaim = async () => {
+  console.log('hoursWorked.value.dayWorked: ', hoursWorked.value.dayWorked)
   v$.value.$touch()
   if (v$.value.$invalid) return
 
