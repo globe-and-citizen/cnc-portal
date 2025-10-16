@@ -80,7 +80,7 @@ vi.mock('@/utils', () => ({
   parseError: (error: unknown) => String(error)
 }))
 
-vi.mock('@/artifacts/abi/bank.json', () => ({
+vi.mock('@/artifacts/abi/bank', () => ({
   default: [
     {
       type: 'function',
