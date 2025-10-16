@@ -47,7 +47,11 @@
     <div class="flex-1 space-y-6">
       <WeeklyRecap :weeklyClaim="selectWeekWeelyClaim" />
       <CardComponent>
-        <div role="alert" class="alert alert-vertical sm:alert-horizontal">
+        <div
+          role="alert"
+          class="alert alert-vertical sm:alert-horizontal"
+          v-if="memberAddress === userStore.address"
+        >
           <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
           <span>{{
             hasWage
@@ -67,7 +71,6 @@
             </ButtonUI>
           </div>
         </div>
-        <!-- <pre>        {{ selectWeekWeelyClaim }}</pre> -->
         <div
           role="alert"
           class="alert alert-vertical sm:alert-horizontal"
@@ -132,7 +135,6 @@ import isoWeek from 'dayjs/plugin/isoWeek'
 import weekday from 'dayjs/plugin/weekday'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { formatIsoWeekRange, getMonthWeeks, type Week } from '@/utils/dayUtils'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
@@ -168,17 +170,20 @@ const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const toastStore = useToastStore()
 const teamId = computed(() => teamStore.currentTeam?.id)
-const memberAddress = route.params.memberAddress as string | undefined
+const memberAddress = computed(() => route.params.memberAddress as string | undefined)
 
 const weeklyClaimQueryKey = computed(() => [
   'weekly-claims',
   teamId.value,
-  memberAddress || userStore.address
+  memberAddress.value || userStore.address
 ])
-
+const weeklyClaimURL = computed(
+  () =>
+    `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress.value || userStore.address}`
+)
 const { data: memberWeeklyClaims } = useTanstackQuery<Array<WeeklyClaim>>(
   weeklyClaimQueryKey,
-  computed(() => `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress}`)
+  weeklyClaimURL
 )
 
 const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeam?.id])
