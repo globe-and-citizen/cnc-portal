@@ -19,13 +19,24 @@
                 : 'hover:bg-gray-50'
             ]"
           >
-            <div class="text-base font-medium flex items-center gap-2">
+            <div class="text-base font-medium flex items-center justify-between">
               Week
 
-              <span
+              <div
+                class="badge badge-outline gap-3"
                 v-if="memberWeeklyClaims?.some((wc) => wc.weekStart === week.isoString)"
-                class="h-3 w-3 rounded-full bg-emerald-700"
-              />
+                :class="`badge-${getColor(
+                  memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)
+                )}`"
+              >
+                {{ memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)?.status }}
+                <span
+                  class="h-3 w-3 rounded-full"
+                  :class="`bg-${getColor(
+                    memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)
+                  )}`"
+                />
+              </div>
             </div>
             <div
               class="text-sm"
@@ -47,47 +58,74 @@
     <div class="flex-1 space-y-6">
       <WeeklyRecap :weeklyClaim="selectWeekWeelyClaim" />
       <CardComponent>
-        <div
-          role="alert"
-          class="alert alert-vertical sm:alert-horizontal"
-          v-if="memberAddress === userStore.address"
-        >
-          <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
-          <span>{{
-            hasWage
-              ? 'You has a wage so you can submit your claim'
-              : 'You need to have a wage set up to submit claims'
-          }}</span>
-          <div>
-            <SubmitClaims v-if="hasWage" />
-            <ButtonUI
-              v-else
-              variant="success"
-              size="sm"
-              :disabled="true"
-              data-test="submit-claim-disabled-button"
-            >
-              Submit Claim
-            </ButtonUI>
+        <div class="flex flex-col gap-4">
+          <div
+            role="alert"
+            class="alert alert-vertical sm:alert-horizontal"
+            v-if="memberAddress === userStore.address"
+          >
+            <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
+            <span>{{
+              hasWage
+                ? 'You has a wage so you can submit your claim'
+                : 'You need to have a wage set up to submit claims'
+            }}</span>
+            <div>
+              <SubmitClaims v-if="hasWage" />
+              <ButtonUI
+                v-else
+                variant="success"
+                size="sm"
+                :disabled="true"
+                data-test="submit-claim-disabled-button"
+              >
+                Submit Claim
+              </ButtonUI>
+            </div>
           </div>
-        </div>
-        <div
-          role="alert"
-          class="alert alert-vertical sm:alert-horizontal"
-          v-if="selectWeekWeelyClaim"
-        >
-          <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
-          <span>{{
-            selectWeekWeelyClaim?.weekStart === currentWeekStart
-              ? 'You cannot approve the current week claim, wait until the week is over'
-              : 'As the owner of the Cash Remuneration contract, you can approve this claim'
-          }}</span>
-          <div>
-            <CRSigne
-              v-if="selectWeekWeelyClaim.claims.length > 0 && selectWeekWeelyClaim.wage.ratePerHour"
-              :disabled="selectWeekWeelyClaim.weekStart === currentWeekStart"
-              :weekly-claim="selectWeekWeelyClaim"
-            />
+          <div
+            role="alert"
+            class="alert alert-vertical sm:alert-horizontal"
+            v-if="selectWeekWeelyClaim && !selectWeekWeelyClaim.signature"
+          >
+            <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
+            <span>{{
+              selectWeekWeelyClaim?.weekStart === currentWeekStart
+                ? 'You cannot approve the current week claim, wait until the week is over'
+                : 'As the owner of the Cash Remuneration contract, you can approve this claim'
+            }}</span>
+            <div>
+              <CRSigne
+                v-if="selectWeekWeelyClaim.claims.length > 0"
+                :disabled="selectWeekWeelyClaim.weekStart === currentWeekStart"
+                :weekly-claim="selectWeekWeelyClaim"
+              />
+            </div>
+          </div>
+
+          <!-- <pre>{{ selectWeekWeelyClaim }}</pre> -->
+          <div
+            role="alert"
+            class="alert alert-vertical sm:alert-horizontal"
+            v-if="
+              selectWeekWeelyClaim &&
+              (selectWeekWeelyClaim.status == 'signed' ||
+                selectWeekWeelyClaim.status == 'withdrawn') &&
+              userStore.address === selectWeekWeelyClaim.wage.userAddress
+            "
+          >
+            <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
+            <span v-if="selectWeekWeelyClaim.status == 'withdrawn'"
+              >You have withdrawn your weekly claim.</span
+            >
+            <span v-else>Your weekly claim has been approved. You can now withdraw it.</span>
+            <div>
+              <CRWithdrawClaim
+                v-if="selectWeekWeelyClaim.claims.length > 0"
+                :disabled="selectWeekWeelyClaim.status == 'withdrawn'"
+                :weekly-claim="selectWeekWeelyClaim"
+              />
+            </div>
           </div>
         </div>
       </CardComponent>
@@ -157,6 +195,7 @@ import type { Wage, WeeklyClaim } from '@/types'
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
+import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
 dayjs.extend(utc)
@@ -164,6 +203,14 @@ dayjs.extend(isoWeek)
 dayjs.extend(weekday)
 
 const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
+
+const getColor = (weeklyClaim?: WeeklyClaim) => {
+  if (!weeklyClaim) return 'accent'
+  if (weeklyClaim.status === 'pending') return 'primary'
+  if (weeklyClaim.status === 'signed') return 'warning'
+  if (weeklyClaim.status === 'withdrawn') return 'info'
+  return 'accent'
+}
 
 const route = useRoute()
 const teamStore = useTeamStore()
