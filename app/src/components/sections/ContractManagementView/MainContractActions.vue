@@ -110,7 +110,7 @@ const {
   isActionApproved,
   isLoadingApproveAction
 } = useBodContract()
-const { isBodAction } = useBodIsBodAction(props.row.address as Address, props.row.abi as Abi)
+const { isBodAction } = useBodIsBodAction(props.row.address as Address, props.row.abi)
 
 const showModal = ref(false)
 const showApprovalModal = ref(false)
@@ -176,7 +176,7 @@ const { isLoading: isConfirmingUnpauseContract, isSuccess: isConfirmedUnpauseCon
 const transferOwnership = async (address: Address) => {
   if (isBodAction.value) {
     const data = encodeFunctionData({
-      abi: props.row.abi as Abi,
+      abi: props.row.abi,
       functionName: 'transferOwnership',
       args: [address]
     })
@@ -193,7 +193,7 @@ const transferOwnership = async (address: Address) => {
   } else
     executeTransferOwnership({
       address: props.row.address as Address,
-      abi: props.row.abi as Abi,
+      abi: props.row.abi,
       functionName: 'transferOwnership',
       args: [address]
     })
@@ -203,13 +203,13 @@ const changeContractStatus = async (paused: boolean) => {
   if (paused) {
     executeUnpauseContract({
       address: props.row.address as Address,
-      abi: props.row.abi as Abi,
+      abi: props.row.abi,
       functionName: 'unpause'
     })
   } else {
     executePauseContract({
       address: props.row.address as Address,
-      abi: props.row.abi as Abi,
+      abi: props.row.abi,
       functionName: 'pause'
     })
   }
@@ -261,21 +261,21 @@ watch(isConfirmingUnpauseContract, async (isConfirming, wasConfirming) => {
 
 watch(errorTransferOwnership, (error) => {
   if (error) {
-    addErrorToast(parseError(error, props.row.abi as Abi))
+    addErrorToast(parseError(error, props.row.abi))
     log.error('errorTransferOwnership.value: ', error)
   }
 })
 
 watch(errorPauseContract, (error) => {
   if (error) {
-    addErrorToast(parseError(error, props.row.abi as Abi))
+    addErrorToast(parseError(error, props.row.abi))
     log.error('errorPauseContract.value: ', error)
   }
 })
 
 watch(errorUnpauseContract, (error) => {
   if (error) {
-    addErrorToast(parseError(error, props.row.abi as Abi))
+    addErrorToast(parseError(error, props.row.abi))
     log.error('errorUnpauseContract.value: ', error)
   }
 })

@@ -56,7 +56,7 @@
             @click.stop="
               stopVesting({
                 address: VESTING_ADDRESS as Address,
-                abi: VestingABI,
+                abi: VESTING_ABI,
                 functionName: 'stopVesting',
                 args: [row.member, team?.id]
               })
@@ -79,7 +79,7 @@
             @click.stop="
               releaseVesting({
                 address: VESTING_ADDRESS as Address,
-                abi: VestingABI,
+                abi: VESTING_ABI,
                 functionName: 'release',
                 args: [team?.id]
               })
@@ -109,7 +109,7 @@ import VestingStatusFilter from './VestingStatusFilter.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
-import VestingABI from '@/artifacts/abi/Vesting.json'
+import { VESTING_ABI } from '@/artifacts/abi/vesting'
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 import { VESTING_ADDRESS } from '@/constant'
@@ -161,7 +161,7 @@ const {
 } = useReadContract({
   functionName: 'getTeamAllArchivedVestingsFlat',
   address: VESTING_ADDRESS as Address,
-  abi: VestingABI,
+  abi: VESTING_ABI,
   args: [team?.value?.id ?? 0]
 })
 
@@ -180,7 +180,7 @@ const {
 } = useReadContract({
   functionName: 'getTeamVestingsWithMembers',
   address: VESTING_ADDRESS as Address,
-  abi: VestingABI,
+  abi: VESTING_ABI,
   args: [team?.value?.id ?? 0]
 })
 watch(errorGetVestingInfo, () => {

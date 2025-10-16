@@ -38,7 +38,7 @@ import { useToastStore } from '@/stores/useToastStore'
 import { type TokenSummary } from '@/types/vesting'
 import { VESTING_ADDRESS } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
-import VestingABI from '@/artifacts/abi/Vesting.json'
+import { VESTING_ABI } from '@/artifacts/abi/vesting'
 import { type Address, formatUnits } from 'viem'
 
 const teamStore = useTeamStore()
@@ -110,7 +110,7 @@ const {
 } = useReadContract({
   functionName: 'getTeamAllArchivedVestingsFlat',
   address: VESTING_ADDRESS as Address,
-  abi: VestingABI,
+  abi: VESTING_ABI,
   args: [team?.value?.id ?? 0]
 })
 
@@ -144,7 +144,7 @@ const {
 } = useReadContract({
   functionName: 'getTeamVestingsWithMembers',
   address: VESTING_ADDRESS as Address,
-  abi: VestingABI,
+  abi: VESTING_ABI,
   args: [team?.value?.id ?? 0]
 })
 watch(errorGetVestingInfo, () => {

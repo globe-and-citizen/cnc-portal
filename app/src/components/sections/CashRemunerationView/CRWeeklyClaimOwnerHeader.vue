@@ -13,7 +13,7 @@
 import { computed, watch } from 'vue'
 import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
-import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 
 import CRAddERC20Support from './CRAddERC20Support.vue'
 
@@ -28,7 +28,7 @@ const cashRemunerationAddress = computed(() =>
 const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
   functionName: 'owner',
   address: cashRemunerationAddress,
-  abi: CashRemuneration_ABI
+  abi: CASH_REMUNERATION_EIP712_ABI
 })
 
 // Compute if user has approval access (is cash remuneration contract owner)

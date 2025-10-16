@@ -147,7 +147,7 @@ const {
   isActionAdded
 } = useBodContract()
 
-const { isBodAction } = useBodIsBodAction(props.bankAddress as Address, BANK_ABI as Abi)
+const { isBodAction } = useBodIsBodAction(props.bankAddress as Address, BANK_ABI)
 
 const userStore = useUserDataStore()
 const currency = useStorage('currency', {

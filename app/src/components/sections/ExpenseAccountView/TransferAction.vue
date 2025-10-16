@@ -68,10 +68,10 @@ import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { getTokens, log, parseError } from '@/utils'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { encodeFunctionData, parseEther, zeroAddress, type Abi, type Address } from 'viem'
-import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
+import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import { estimateGas, readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import ERC20ABI from '@/artifacts/abi/erc20.json'
+import { ERC20_ABI } from '@/artifacts/abi/erc20'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { TableRow } from '@/components/TableComponent.vue'
 
@@ -176,7 +176,7 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
       props.row.signature
     ]
     const data = encodeFunctionData({
-      abi: expenseAccountABI,
+      abi: EXPENSE_ACCOUNT_EIP712_ABI,
       functionName: 'transfer',
       args
     })
@@ -187,13 +187,13 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
     executeExpenseAccountTransfer({
       address: expenseAccountEip712Address.value,
       args,
-      abi: expenseAccountABI,
+      abi: EXPENSE_ACCOUNT_EIP712_ABI,
       functionName: 'transfer'
     })
   } catch (error) {
-    console.error('Error in transferNativeToken:', parseError(error, expenseAccountABI as Abi))
-    log.error('Error in transferNativeToken:', parseError(error, expenseAccountABI as Abi))
-    addErrorToast(parseError(error, expenseAccountABI as Abi))
+    console.error('Error in transferNativeToken:', parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
+    log.error('Error in transferNativeToken:', parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
+    addErrorToast(parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
     transferERC20loading.value = false
     isLoadingTransfer.value = false
   }
@@ -218,7 +218,7 @@ const transferErc20Token = async () => {
 
   const allowance = await readContract(config, {
     address: tokenAddress as Address,
-    abi: ERC20ABI,
+    abi: ERC20_ABI,
     functionName: 'allowance',
     args: [userDataStore.address as Address, expenseAccountEip712Address.value]
   })
@@ -227,7 +227,7 @@ const transferErc20Token = async () => {
   if (Number(currentAllowance) < Number(_amount)) {
     approve({
       address: tokenAddress as Address,
-      abi: ERC20ABI,
+      abi: ERC20_ABI,
       functionName: 'approve',
       args: [expenseAccountEip712Address.value, _amount]
     })
@@ -246,7 +246,7 @@ const transferErc20Token = async () => {
         props.row.signature // signatureToTransfer.value
       ]
       const data = encodeFunctionData({
-        abi: expenseAccountABI,
+        abi: EXPENSE_ACCOUNT_EIP712_ABI,
         functionName: 'transfer',
         args
       })
@@ -256,13 +256,13 @@ const transferErc20Token = async () => {
       })
       executeExpenseAccountTransfer({
         address: expenseAccountEip712Address.value,
-        abi: expenseAccountABI,
+        abi: EXPENSE_ACCOUNT_EIP712_ABI,
         functionName: 'transfer',
         args
       })
     } catch (error) {
       log.error('Error in transferErc20Token:', error)
-      addErrorToast(parseError(error, expenseAccountABI as Abi))
+      addErrorToast(parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
       transferERC20loading.value = false
       isLoadingTransfer.value = false
     }

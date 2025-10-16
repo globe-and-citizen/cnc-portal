@@ -119,7 +119,7 @@ import { ref, watch } from 'vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
-import BANK_ABI from '@/artifacts/abi/bank.json'
+import { BANK_ABI } from '@/artifacts/abi/bank'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
@@ -239,7 +239,7 @@ const {
   abi: BANK_ABI
 })
 
-const { isBodAction } = useBodIsBodAction(bankAddress as Address, BANK_ABI as Abi)
+const { isBodAction } = useBodIsBodAction(bankAddress as Address, BANK_ABI)
 
 const {
   data: investorsOwner,

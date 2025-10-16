@@ -66,13 +66,13 @@ export const getTeamContracts = async (contracts: TeamContract[]) => {
           }
           const owner = await readContract(config, {
             address: contract.address,
-            abi: contract.abi as Abi,
+            abi: contract.abi,
             functionName: 'owner'
           })
 
           const paused = await readContract(config, {
             address: contract.address,
-            abi: contract.abi as Abi,
+            abi: contract.abi,
             functionName: 'paused'
           })
 

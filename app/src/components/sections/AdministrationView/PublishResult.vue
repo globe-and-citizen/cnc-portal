@@ -10,7 +10,7 @@
   </ButtonUI>
 </template>
 <script lang="ts" setup>
-import ELECTIONS_ABI from '@/artifacts/abi/elections.json'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import { log, parseError } from '@/utils'
@@ -63,8 +63,8 @@ const handlePublishResults = async (electionId: number) => {
       args: [BigInt(electionId)]
     })
   } catch (err) {
-    toastStore.addErrorToast(parseError(err, ELECTIONS_ABI as Abi))
-    log.error('Error creating election:', parseError(err, ELECTIONS_ABI as Abi))
+    toastStore.addErrorToast(parseError(err, ELECTIONS_ABI))
+    log.error('Error creating election:', parseError(err, ELECTIONS_ABI))
   }
 }
 

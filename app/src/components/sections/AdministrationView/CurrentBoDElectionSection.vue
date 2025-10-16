@@ -59,7 +59,7 @@ import CardComponent from '@/components/CardComponent.vue'
 import { computed, ref, watch } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
-import ElectionABI from '@/artifacts/abi/elections.json'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { useTeamStore, useToastStore } from '@/stores'
 import { type Abi } from 'viem'
 import { simulateContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
@@ -121,14 +121,14 @@ const createElection = async (electionData: OldProposal) => {
 
     await simulateContract(config, {
       address: electionsAddress.value,
-      abi: ElectionABI,
+      abi: ELECTIONS_ABI,
       functionName: 'createElection',
       args
     })
 
     const hash = await writeContract(config, {
       address: electionsAddress.value,
-      abi: ElectionABI,
+      abi: ELECTIONS_ABI,
       functionName: 'createElection',
       args
     })
@@ -142,7 +142,7 @@ const createElection = async (electionData: OldProposal) => {
     showCreateElectionModal.value.show = false
     showCreateElectionModal.value.mount = false
   } catch (error) {
-    addErrorToast(parseError(error, ElectionABI as Abi))
+    addErrorToast(parseError(error, ELECTIONS_ABI))
     log.error('creatingElection error:', error)
   } finally {
     isLoadingCreateElection.value = false
