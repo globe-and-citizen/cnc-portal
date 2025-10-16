@@ -3,7 +3,7 @@
     v-if="isCashRemunerationOwner"
     variant="success"
     data-test="approve-button"
-    :disabled="loading || disabled"
+    :disabled="loading || disabled || currentWeekStart === weeklyClaim.weekStart"
     size="sm"
     @click="async () => await approveClaim(weeklyClaim)"
   >
@@ -12,18 +12,18 @@
 </template>
 
 <script setup lang="ts">
+import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useCustomFetch } from '@/composables'
-import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
-import { parseEther, parseUnits, zeroAddress, type Address } from 'viem'
+import { USDC_ADDRESS } from '@/constant'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
 import { log } from '@/utils'
-import { computed, ref } from 'vue'
-import { USDC_ADDRESS } from '@/constant'
 import { useQueryClient } from '@tanstack/vue-query'
-import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
-import { watch } from 'vue'
+import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
+import dayjs from 'dayjs'
+import { parseEther, parseUnits, zeroAddress, type Address } from 'viem'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -40,6 +40,8 @@ const queryClient = useQueryClient()
 const cashRemunerationAddress = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
 )
+
+const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 
 // Composables
 const { signTypedDataAsync, data: signature } = useSignTypedData()
