@@ -79,11 +79,11 @@ import UserComponent from '@/components/UserComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useReadContract } from '@wagmi/vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import BOD_ABI from '@/artifacts/abi/bod.json'
+import { BOD_ABI } from '@/artifacts/abi/bod'
 import { log, parseError } from '@/utils'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import type { Abi, Address } from 'viem'
+import type { Address } from 'viem'
 import ToolTip from '@/components/ToolTip.vue'
 import BodApprovalDetails from './BodApprovalDetails.vue'
 
@@ -120,7 +120,7 @@ const membersApprovals = async () => {
         ? members.value.map(async (member: string) => {
             const isApproved = await readContract(config, {
               address: bodAddress.value as Address,
-              abi: BOD_ABI as Abi,
+              abi: BOD_ABI,
               functionName: 'isApproved',
               args: [actionId.value, member]
             })

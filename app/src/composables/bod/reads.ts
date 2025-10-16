@@ -3,7 +3,7 @@ import { useReadContract } from '@wagmi/vue'
 import { isAddress, type Abi, type Address } from 'viem'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { BOD_FUNCTION_NAMES } from './types'
-import BOD_ABI from '@/artifacts/abi/bod.json'
+import { BOD_ABI } from '@/artifacts/abi/bod'
 
 /**
  * BOD contract read operations

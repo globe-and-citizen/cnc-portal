@@ -65,7 +65,7 @@ import type { TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent from '@/components/TableComponent.vue'
-import CampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
+import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { type Abi } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
 const addCampaignService = new AddCampaignService()
@@ -132,7 +132,7 @@ const {
 } = useReadContract({
   functionName: 'getAdminList',
   address: computed(() => props.contract?.address || ''),
-  abi: CampaignAbi as Abi
+  abi: AD_CAMPAIGN_MANAGER_ABI
 })
 
 watch(
@@ -167,14 +167,14 @@ function handleAdminAction(adminAddress: string, action: string) {
   if (action === 'removeAdmin') {
     removeAdmin({
       address: props.contract.address,
-      abi: CampaignAbi as Abi,
+      abi: AD_CAMPAIGN_MANAGER_ABI,
       functionName: 'removeAdmin',
       args: [adminAddress]
     })
   } else {
     addAdmin({
       address: props.contract.address,
-      abi: CampaignAbi as Abi,
+      abi: AD_CAMPAIGN_MANAGER_ABI,
       functionName: 'addAdmin',
       args: [adminAddress]
     })

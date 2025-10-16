@@ -59,7 +59,7 @@ import { useToastStore, useUserDataStore, useNotificationStore } from '@/stores'
 import { log, parseError } from '@/utils'
 import { type Address, parseEther } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import cashRemunerationEip712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from './ButtonUI.vue'
 import { useRouter } from 'vue-router'
@@ -188,7 +188,7 @@ const handleWage = async (notification: Notification) => {
     executeCashRemunerationWithdraw({
       address: team.value.cashRemunerationEip712Address as Address,
       args: [claim, wageClaim.value.cashRemunerationSignature],
-      abi: cashRemunerationEip712ABI,
+      abi: CASH_REMUNERATION_EIP712_ABI,
       functionName: 'withdraw'
     })
   }

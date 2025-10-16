@@ -9,7 +9,7 @@ import {
   type ContractWriteConfig,
   type ContractWriteOptions
 } from '../contracts/useContractWrites'
-import BankABI from '@/artifacts/abi/bank.json'
+import { BANK_ABI } from '@/artifacts/abi/bank'
 
 /**
  * Bank contract specific write operations
@@ -24,7 +24,7 @@ export function useBankWrites() {
   // Use the generic contract writes composable
   const baseWrites = useContractWrites({
     contractAddress: bankAddress.value!,
-    abi: BankABI,
+    abi: BANK_ABI,
     chainId: chainId.value
   } as ContractWriteConfig)
 
