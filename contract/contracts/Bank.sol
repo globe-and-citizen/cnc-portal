@@ -20,6 +20,7 @@ interface IInvestorView {
 contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   // @deprecated
   address public tipsAddress;
+  address public investorAddress;
   mapping(string => address) public supportedTokens;
   mapping(address => uint256) public dividendBalances; // ETH/Native token dividend balance per account
   mapping(address => mapping(address => uint256)) public tokenDividendBalances; // token => account => balance
@@ -69,12 +70,12 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     supportedTokens['USDC'] = _usdcAddress;
   }
 
-  function unlockBalance() public view returns (uint256) {
+  function getUnlockedBalance() public view returns (uint256) {
     uint256 bal = address(this).balance;
     return bal > totalDividend ? bal - totalDividend : 0;
   }
 
-  function unlockTokenBalance(address _token) public view returns (uint256) {
+  function getUnlockedTokenBalance(address _token) public view returns (uint256) {
     require(isTokenSupported(_token), 'Unsupported token');
     uint256 bal = IERC20(_token).balanceOf(address(this));
     uint256 locked = totalTokenDividends[_token];
@@ -85,8 +86,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     return tokenDividendBalances[_token][_account];
   }
 
-  modifier UsesUnlockedBalance(uint256 amount) {
-    require(amount <= unlockBalance(), 'insufficient unlocked ');
+  modifier UsesUnlockedBalance(uint256 _amount) {
+    require(_amount <= getUnlockedBalance(), 'insufficient unlocked ');
     _;
   }
 
