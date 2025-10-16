@@ -170,8 +170,15 @@ const toastStore = useToastStore()
 const teamId = computed(() => teamStore.currentTeam?.id)
 const memberAddress = route.params.memberAddress as string | undefined
 
-const weeklyClaimUrl = computed(
-  () => `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress}`
+const weeklyClaimQueryKey = computed(() => [
+  'weekly-claims',
+  teamId.value,
+  memberAddress || userStore.address
+])
+
+const { data: memberWeeklyClaims } = useTanstackQuery<Array<WeeklyClaim>>(
+  weeklyClaimQueryKey,
+  computed(() => `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress}`)
 )
 
 const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeam?.id])
@@ -192,11 +199,6 @@ watch(teamWageDataError, (newVal) => {
     toastStore.addErrorToast('Failed to fetch user wage data')
   }
 })
-
-const { data: memberWeeklyClaims } = useCustomFetch(weeklyClaimUrl, {
-  immediate: true,
-  refetch: true
-}).json<Array<WeeklyClaim>>()
 
 const selectedMonthObject = ref<Week>({
   year: dayjs().utc().year(),
