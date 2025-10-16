@@ -5,7 +5,7 @@
     data-test="approve-button"
     :disabled="loading || disabled"
     size="sm"
-    @click="async () => await approveClaim(weeklyClaim as ClaimResponse)"
+    @click="async () => await approveClaim(weeklyClaim)"
   >
     Approve
   </ButtonUI>
@@ -17,7 +17,7 @@ import { useCustomFetch } from '@/composables'
 import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
 import { parseEther, parseUnits, zeroAddress, type Address } from 'viem'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
-import type { ClaimResponse, RatePerHour } from '@/types'
+import type { WeeklyClaim } from '@/types'
 import { log } from '@/utils'
 import { computed, ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
@@ -25,15 +25,8 @@ import { useQueryClient } from '@tanstack/vue-query'
 import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import { watch } from 'vue'
 
-// Props weeklyClaim : ClaimResponse
 const props = defineProps<{
-  weeklyClaim: Pick<ClaimResponse, 'id' | 'status' | 'hoursWorked' | 'createdAt'> & {
-    wage: {
-      ratePerHour: RatePerHour
-      userAddress: Address
-    }
-  }
-  // isWeeklyClaim?: boolean
+  weeklyClaim: WeeklyClaim
   disabled?: boolean
 }>()
 
@@ -52,10 +45,6 @@ const cashRemunerationAddress = computed(() =>
 const { signTypedDataAsync, data: signature } = useSignTypedData()
 const chainId = useChainId()
 
-// Computed properties
-// const teamOwner = computed(() => teamStore.currentTeam?.ownerAddress)
-const claimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=sign`)
-
 const loading = ref(false)
 
 const {
@@ -70,20 +59,21 @@ const {
 
 // Compute if user has approval access (is cash remuneration contract owner)
 const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
+const weeklyClaimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=sign`)
 
 const {
   // data: claimUpdateData,
   // isFetching: isClaimUpdateing,
   error: claimError,
   execute: executeUpdateClaim
-} = useCustomFetch(claimUrl, { immediate: false })
+} = useCustomFetch(weeklyClaimUrl, { immediate: false })
   .put(() => ({
     signature: signature.value,
     data: { ownerAddress: userStore.address }
   }))
-  .json<Array<ClaimResponse>>()
+  .json<Array<WeeklyClaim>>()
 
-const approveClaim = async (weeklyClaim: ClaimResponse) => {
+const approveClaim = async (weeklyClaim: WeeklyClaim) => {
   loading.value = true
 
   try {
