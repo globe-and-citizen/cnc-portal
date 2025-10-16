@@ -18,8 +18,6 @@
       :address="cashRemunerationAddress"
     />
 
-    <!-- Affiche le tableau CashRemunerationTable pour un membre individuel -->
-    <!-- <CashRemunerationTable v-if="memberAddress" /> -->
     <ClaimHistory v-if="memberAddress" />
     <!-- Sinon, vue classique -->
     <template v-else>
@@ -39,8 +37,6 @@ import { useReadContract } from '@wagmi/vue'
 import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
 
-// import CashRemunerationTransactions from '@/components/sections/CashRemunerationView/CashRemunerationTransactions.vue'
-// import CashRemunerationTable from '@/components/sections/CashRemunerationView/CashRemunerationTable.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
 import PendingWeeklyClaim from '@/components/sections/CashRemunerationView/PendingWeeklyClaim.vue'
