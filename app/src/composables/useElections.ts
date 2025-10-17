@@ -59,7 +59,7 @@ export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
   // Computed Properties
   const formattedElection = computed(() => {
     if (!currentElection.value) return null
-    const raw = currentElection.value as Array<string | bigint | boolean>
+    const raw = currentElection.value as unknown as readonly (string | bigint | boolean)[]
     return {
       id: Number(raw[0]),
       title: String(raw[1]),

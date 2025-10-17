@@ -106,7 +106,7 @@ export class AddCampaignService {
     return address
   }
 
-  async addAdmin(address: string, admin: string) {
+  async addAdmin(address: Address, admin: Address) {
     const hash = await writeContract(config, {
       address: address ,
       abi: AD_CAMPAIGN_MANAGER_ABI,
@@ -170,7 +170,7 @@ export class AddCampaignService {
   }
 
   async getEventsGroupedByCampaignCode(
-    contractAddress: string
+    contractAddress: Address
   ): Promise<GetEventsGroupedByCampaignCodeResult> {
     try {
       const client = getPublicClient(config) as PublicClient

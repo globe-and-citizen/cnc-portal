@@ -1,9 +1,11 @@
+import type { Address } from "viem"
+
 export interface Action {
   id: number
   actionId: number
-  targetAddress: `0x${string}`
+  targetAddress: Address
   description: string
-  userAddress: `0x${string}`
+  userAddress: Address
   isExecuted: boolean
   data: `0x${string}`
   teamId: number
