@@ -66,7 +66,6 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
-import { type Abi } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
 const addCampaignService = new AddCampaignService()
 

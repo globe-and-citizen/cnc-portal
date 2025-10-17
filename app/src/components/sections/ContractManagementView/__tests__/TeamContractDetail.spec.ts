@@ -7,7 +7,6 @@ import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { ref } from 'vue'
-import { type Abi } from 'viem'
 
 const setCostPerClickMock = vi.fn().mockResolvedValue({ status: 1 })
 const setCostPerImpressionMock = vi.fn().mockResolvedValue({ status: 1 })

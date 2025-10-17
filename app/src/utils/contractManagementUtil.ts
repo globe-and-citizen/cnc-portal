@@ -1,7 +1,6 @@
 import type { Action, ActionResponse, TeamContract, User } from '@/types'
 import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
-import { type Abi } from 'viem'
 import { log, parseError } from '@/utils'
 import { EXPENSE_ACCOUNT_EIP712_ABI as ExpenseAccountAbi } from '@/artifacts/abi/expense-account-eip712'
 import { BANK_ABI as BankAbi } from '@/artifacts/abi/bank'

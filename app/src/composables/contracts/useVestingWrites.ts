@@ -4,7 +4,6 @@ import { useAccount } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
 import { useContractWrites, type ContractWriteOptions } from './useContractWrites'
 import { VESTING_ABI } from '@/artifacts/abi/vesting'
-import type { Abi } from 'viem'
 
 // Define Vesting function names (similar to Bank)
 export const VESTING_FUNCTION_NAMES = {
