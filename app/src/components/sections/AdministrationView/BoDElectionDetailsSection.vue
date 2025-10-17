@@ -104,7 +104,7 @@ const candidates = computed(() => {
   } else return []
 })
 
-const castVote = async (candidateAddress: string) => {
+const castVote = async (candidateAddress: Address) => {
   try {
     if (!electionsAddress.value) {
       addErrorToast('Elections contract address not found')
