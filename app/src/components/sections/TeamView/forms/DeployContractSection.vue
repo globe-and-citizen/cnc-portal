@@ -103,7 +103,7 @@ const deployOfficerContract = async () => {
     const beaconConfigs = [
       {
         beaconType: 'Bank',
-        beaconAddress: BANK_BEACON_ADDRESS
+        beaconAddress: BANK_BEACON_ADDRESS as `0x${string}`
       },
       // {
       //   beaconType: 'Voting',
@@ -111,27 +111,27 @@ const deployOfficerContract = async () => {
       // },
       {
         beaconType: 'BoardOfDirectors',
-        beaconAddress: BOD_BEACON_ADDRESS
+        beaconAddress: BOD_BEACON_ADDRESS as `0x${string}`
       },
       {
         beaconType: 'Proposals',
-        beaconAddress: PROPOSALS_BEACON_ADDRESS
+        beaconAddress: PROPOSALS_BEACON_ADDRESS as `0x${string}`
       },
       {
         beaconType: 'ExpenseAccountEIP712',
-        beaconAddress: EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
+        beaconAddress: EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS as `0x${string}`
       },
       {
         beaconType: 'CashRemunerationEIP712',
-        beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS
+        beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS as `0x${string}`
       },
       {
         beaconType: 'InvestorsV1',
-        beaconAddress: INVESTOR_V1_BEACON_ADDRESS
+        beaconAddress: INVESTOR_V1_BEACON_ADDRESS as `0x${string}`
       },
       {
         beaconType: 'Elections',
-        beaconAddress: ELECTIONS_BEACON_ADDRESS
+        beaconAddress: ELECTIONS_BEACON_ADDRESS as `0x${string}`
       }
     ]
     const deployments = []
@@ -142,7 +142,7 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: BANK_ABI,
         functionName: 'initialize',
-        args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentUserAddress]
+        args: [TIPS_ADDRESS as `0x${string}`, USDT_ADDRESS as `0x${string}`, USDC_ADDRESS as `0x${string}`, currentUserAddress]
       })
     })
     deployments.push({
@@ -184,7 +184,7 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: EXPENSE_ACCOUNT_EIP712_ABI,
         functionName: 'initialize',
-        args: [currentUserAddress, USDT_ADDRESS, USDC_ADDRESS]
+        args: [currentUserAddress, USDT_ADDRESS as `0x${string}`, USDC_ADDRESS as `0x${string}`]
       })
     })
 
@@ -194,7 +194,7 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: CASH_REMUNERATION_EIP712_ABI,
         functionName: 'initialize',
-        args: [currentUserAddress, [USDC_ADDRESS]]
+        args: [currentUserAddress, [USDC_ADDRESS as `0x${string}`]]
       })
     })
 
