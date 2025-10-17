@@ -80,22 +80,6 @@ vi.mock('@/utils', () => ({
   parseError: (error: unknown) => String(error)
 }))
 
-vi.mock('@/artifacts/abi/bank', () => ({
-  default: [
-    {
-      type: 'function',
-      name: 'pause',
-      inputs: [],
-      outputs: []
-    },
-    {
-      type: 'function',
-      name: 'unpause',
-      inputs: [],
-      outputs: []
-    }
-  ]
-}))
 
 vi.mock('@/stores', () => ({
   useTeamStore: vi.fn(() => mockTeamStore),
