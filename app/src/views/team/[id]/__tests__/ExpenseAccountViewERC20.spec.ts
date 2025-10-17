@@ -7,7 +7,7 @@ import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import * as viem from 'viem'
-// import { EXPENSE_ACCOUNT_EIP712_ABI } from '../../../../artifacts/abi/expense-account-eip712'
+import { EXPENSE_ACCOUNT_EIP712_ABI } from '../../../../artifacts/abi/expense-account-eip712'
 // import erc20ABI from '../../../../artifacts/abi/erc20.json'
 // import * as utils from '@/utils'
 import type { Team } from '@/types'
@@ -331,7 +331,7 @@ describe.skip('ExpenseAccountEIP712Section ERC20', () => {
     expect(wrapperVm.tokenAmount).toBe(mockAmount)
     expect(wrapperVm.tokenRecipient).toBe(mockTo)
     expect(mockUseWriteContract.writeContract).toBeCalledWith({
-      abi: expenseABI,
+      abi: EXPENSE_ACCOUNT_EIP712_ABI,
       address: '0xExpenseAccount',
       args: [
         mockTo,
@@ -382,7 +382,7 @@ describe.skip('ExpenseAccountEIP712Section ERC20', () => {
   //   expect(wrapperVm.tokenAmount).toBe(mockAmount)
   //   expect(wrapperVm.tokenRecipient).toBe(mockTo)
   //   expect(mockUseWriteContract.writeContract).toBeCalledWith({
-  //     abi: expenseABI,
+  //     abi: EXPENSE_ACCOUNT_EIP712_ABI,
   //     address: '0xExpenseAccount',
   //     args: [
   //       mockTo,
@@ -472,7 +472,7 @@ describe.skip('ExpenseAccountEIP712Section ERC20', () => {
   //   await flushPromises()
   //   expect(mockUseToastStore.addSuccessToast).toBeCalledWith('Approval granted successfully')
   //   expect(mockUseWriteContract.writeContract).toBeCalledWith({
-  //     abi: expenseABI,
+  //     abi: EXPENSE_ACCOUNT_EIP712_ABI,
   //     address: '0xExpenseAccount',
   //     args: [
   //       mockTo,

@@ -25,7 +25,7 @@
   <div id="admins-table" class="overflow-x-auto">
     <TableComponent
       :rows="
-        (admins as `0x${string}`[])?.map((admin: `0x${string}`, index: number) => ({
+        (admins [])?.map((admin: `0x${string}`, index: number) => ({
           index: index + 1,
           address: admin,
           admin: admin

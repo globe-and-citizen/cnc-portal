@@ -63,7 +63,7 @@ export function useBodWritesFunctions() {
             userIds: recipients,
             message: 'New board action requires your approval',
             subject: 'New Board Action Created',
-            author: action.value.userAddress ?? ('' as `0x${string}`),
+            author: action.value.userAddress ?? ('' ),
             resource: `teams/${teamStore.currentTeamId}/contract-management`
           })
         }

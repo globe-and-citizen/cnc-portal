@@ -2,9 +2,9 @@
 
 exports[`Currency Store > fetchTokenPrice queryFn throws on fetch error 1`] = `
 {
-  "code": "SepoliaETH",
+  "code": "POL",
   "id": "native",
-  "name": "SepoliaETH",
+  "name": "POL",
   "prices": [
     {
       "code": "USD",
@@ -19,15 +19,15 @@ exports[`Currency Store > fetchTokenPrice queryFn throws on fetch error 1`] = `
       "symbol": "$",
     },
   ],
-  "symbol": "SepoliaETH",
+  "symbol": "POL",
 }
 `;
 
 exports[`Currency Store > fetches and returns token prices and info 1`] = `
 {
-  "code": "SepoliaETH",
+  "code": "POL",
   "id": "native",
-  "name": "SepoliaETH",
+  "name": "POL",
   "prices": [
     {
       "code": "EUR",
@@ -42,7 +42,7 @@ exports[`Currency Store > fetches and returns token prices and info 1`] = `
       "symbol": "$",
     },
   ],
-  "symbol": "SepoliaETH",
+  "symbol": "POL",
 }
 `;
 
