@@ -115,7 +115,9 @@ const isValidAmount = computed(() => {
 })
 
 const isFormValid = computed(() => {
-  return Boolean(recipientAddress.value && ethAmount.value && isValidRecipient.value && isValidAmount.value)
+  return Boolean(
+    recipientAddress.value && ethAmount.value && isValidRecipient.value && isValidAmount.value
+  )
 })
 
 // Get bank functionality (now includes all writes directly)
