@@ -16,9 +16,9 @@ export function useBodReads() {
 
   const useBodPaused = () => {
     return useReadContract({
-      address: bodAddress.value,
+      address: bodAddress,
       abi: BOD_ABI,
-      functionName: BOD_FUNCTION_NAMES.PAUSED,
+      functionName: 'paused' as const,
       query: { enabled: isBodAddressValid } // This enable the query only if the BOD address is available and valid
     })
   }
@@ -34,20 +34,20 @@ export function useBodReads() {
 
   const useBodIsActionExecuted = (actionId: number) => {
     return useReadContract({
-      address: bodAddress.value,
+      address: bodAddress,
       abi: BOD_ABI,
-      functionName: BOD_FUNCTION_NAMES.IS_ACTION_EXECUTED,
-      args: [actionId],
+      functionName: 'isActionExecuted' as const,
+      args: computed(() => [BigInt(actionId)]),
       query: { enabled: isBodAddressValid }
     })
   }
 
   const useBodIsApproved = (actionId: number, memberAddress: Address) => {
     return useReadContract({
-      address: bodAddress.value,
+      address: bodAddress,
       abi: BOD_ABI,
-      functionName: BOD_FUNCTION_NAMES.IS_APPROVED,
-      args: [actionId, memberAddress],
+      functionName: 'isApproved' as const,
+      args: computed(() => [BigInt(actionId), memberAddress]),
       query: {
         enabled: computed(
           () => !!bodAddress.value && isAddress(bodAddress.value) && isAddress(memberAddress)

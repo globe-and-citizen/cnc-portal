@@ -132,7 +132,7 @@ export function useBodWritesFunctions() {
       const data = encodeFunctionData({
         abi: BOD_ABI,
         functionName: 'approve',
-        args: [_actionId]
+        args: [BigInt(_actionId)]
       })
       await estimateGas(config, {
         to: bodAddress.value,
@@ -142,13 +142,13 @@ export function useBodWritesFunctions() {
         address: bodAddress.value,
         abi: BOD_ABI,
         functionName: 'approve',
-        args: [_actionId]
+        args: [BigInt(_actionId)]
       })
       const isActionExecuted = await readContract(config, {
         address: bodAddress.value,
         abi: BOD_ABI,
         functionName: 'isActionExecuted',
-        args: [_actionId]
+        args: [BigInt(_actionId)]
       })
       if (isActionExecuted) {
         actionUrl.value = `actions/${dbId}`

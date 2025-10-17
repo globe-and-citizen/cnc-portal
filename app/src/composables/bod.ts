@@ -45,7 +45,11 @@ export function useAddAction() {
         address: boardOfDirectorsAddress,
         functionName: 'addAction',
         abi: BOD_ABI,
-        args: [actionData.targetAddress, actionData.description, actionData.data]
+        args: [
+          actionData.targetAddress as Address,
+          actionData.description as string,
+          actionData.data as `0x${string}`
+        ]
       })
     } catch (err) {
       console.error(err)

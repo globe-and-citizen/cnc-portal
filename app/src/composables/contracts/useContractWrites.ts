@@ -162,14 +162,14 @@ export function useContractWrites(config: ContractWriteConfig) {
   watch(writeError, (error) => {
     if (error) {
       console.error('Contract write error:', error)
-      addErrorToast(`Transaction failed: ${parseError(error, config.abi)}`)
+      addErrorToast(`Transaction failed: ${parseError(error, unref(config.abi))}`)
     }
   })
 
   watch(receiptError, (error) => {
     if (error) {
       console.error('Transaction receipt error:', error)
-      addErrorToast(`Transaction confirmation failed: ${parseError(error, config.abi)}`)
+      addErrorToast(`Transaction confirmation failed: ${parseError(error, unref(config.abi))}`)
     }
   })
 
