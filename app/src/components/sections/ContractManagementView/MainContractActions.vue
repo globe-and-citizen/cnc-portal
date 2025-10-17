@@ -204,13 +204,15 @@ const changeContractStatus = async (paused: boolean) => {
     executeUnpauseContract({
       address: props.row.address as Address,
       abi: props.row.abi,
-      functionName: 'unpause' as const
+      functionName: 'unpause' as const,
+      args: []
     })
   } else {
     executePauseContract({
       address: props.row.address as Address,
       abi: props.row.abi,
-      functionName: 'pause' as const
+      functionName: 'pause' as const,
+      args: []
     })
   }
 }

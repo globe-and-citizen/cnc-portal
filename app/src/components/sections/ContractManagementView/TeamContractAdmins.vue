@@ -6,7 +6,7 @@
 
   <!-- Inline form to add new admin -->
   <form
-    @submit.prevent="handleAdminAction(newAdminAddress, 'addAdmin')"
+    @submit.prevent="handleAdminAction(newAdminAddress as `0x${string}`, 'addAdmin')"
     class="flex items-center space-x-2 mb-4"
   >
     <input

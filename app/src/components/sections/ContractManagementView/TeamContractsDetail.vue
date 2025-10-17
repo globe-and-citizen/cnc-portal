@@ -189,7 +189,7 @@ async function submit() {
         }
         pendingTransactions.value++
         setCostPerClick({
-          address: props.contractAddress,
+          address: props.contractAddress as `0x${string}`,
           abi: AD_CAMPAIGN_MANAGER_ABI,
           functionName: 'setCostPerClick',
           args: [parseUnits(String(costPerClick), 18)]
@@ -202,7 +202,7 @@ async function submit() {
         }
         pendingTransactions.value++
         setCostPerImpression({
-          address: props.contractAddress,
+          address: props.contractAddress as `0x${string}`,
           abi: AD_CAMPAIGN_MANAGER_ABI,
           functionName: 'setCostPerImpression',
           args: [parseUnits(String(costPerImpression), 18)]
