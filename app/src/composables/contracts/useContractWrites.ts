@@ -236,9 +236,7 @@ export function useContractWrites(config: ContractWriteConfig) {
       })
     } catch (error) {
       console.error(`Failed to execute ${functionName}:`, error)
-      addErrorToast(
-        `Failed to execute ${functionName}: ${parseError(error, unref(config.abi))}`
-      )
+      addErrorToast(`Failed to execute ${functionName}: ${parseError(error, unref(config.abi))}`)
       // Clear function name on error
       currentFunctionName.value = null
       throw error
