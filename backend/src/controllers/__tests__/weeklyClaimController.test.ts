@@ -382,9 +382,8 @@ describe('Weekly Claim Controller', () => {
         createdAt: claim.createdAt.toISOString(),
         updatedAt: claim.updatedAt.toISOString(),
       })).map((wc) => {
-        const hoursWorked = (wc.claims ?? []).reduce((sum, claim) => {
-          // assume claim.hoursWorked is a number, guard against null/undefined
-          const h = (claim as any).hoursWorked ?? 0;
+        const hoursWorked = wc.claims.reduce((sum, claim) => {
+          const h = claim.hoursWorked ?? 0;
           return sum + h;
         }, 0);
 
@@ -428,9 +427,8 @@ describe('Weekly Claim Controller', () => {
         updatedAt: claim.updatedAt.toISOString(),
         hoursWorked: claim.hoursWorked,
       })).map((wc) => {
-        const hoursWorked = (wc.claims ?? []).reduce((sum, claim) => {
-          // assume claim.hoursWorked is a number, guard against null/undefined
-          const h = (claim as any).hoursWorked ?? 0;
+        const hoursWorked = wc.claims.reduce((sum, claim) => {
+          const h = claim.hoursWorked ?? 0;
           return sum + h;
         }, 0);
 

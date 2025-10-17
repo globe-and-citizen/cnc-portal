@@ -73,9 +73,9 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           if (
             weeklyClaim.status === 'signed' &&
             callerAddress ===
-              (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-                ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
-                : undefined)
+            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
+              ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
+              : undefined)
           ) {
             signErrors.push('Weekly claim already signed');
           } else if (weeklyClaim.status === 'withdrawn') {
@@ -174,15 +174,14 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
     });
 
     const weeklyClaimsWithHours = weeklyClaims.map((wc) => {
-      const hoursWorked = (wc.claims ?? []).reduce((sum, claim) => {
-      // assume claim.hoursWorked is a number, guard against null/undefined
-      const h = (claim as any).hoursWorked ?? 0;
-      return sum + h;
+      const hoursWorked = wc.claims.reduce((sum, claim) => {
+        const h = claim.hoursWorked ?? 0;
+        return sum + h;
       }, 0);
 
       return {
-      ...wc,
-      hoursWorked,
+        ...wc,
+        hoursWorked,
       };
     });
 
