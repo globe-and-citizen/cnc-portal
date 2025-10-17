@@ -381,7 +381,18 @@ describe('Weekly Claim Controller', () => {
         weekStart: claim.weekStart.toISOString(),
         createdAt: claim.createdAt.toISOString(),
         updatedAt: claim.updatedAt.toISOString(),
-      }));
+      })).map((wc) => {
+        const hoursWorked = (wc.claims ?? []).reduce((sum, claim) => {
+          // assume claim.hoursWorked is a number, guard against null/undefined
+          const h = (claim as any).hoursWorked ?? 0;
+          return sum + h;
+        }, 0);
+
+        return {
+          ...wc,
+          hoursWorked,
+        };
+      });
 
       expect(response.body).toEqual(expectedResponse);
     });
@@ -415,7 +426,19 @@ describe('Weekly Claim Controller', () => {
         weekStart: claim.weekStart.toISOString(),
         createdAt: claim.createdAt.toISOString(),
         updatedAt: claim.updatedAt.toISOString(),
-      }));
+        hoursWorked: claim.hoursWorked,
+      })).map((wc) => {
+        const hoursWorked = (wc.claims ?? []).reduce((sum, claim) => {
+          // assume claim.hoursWorked is a number, guard against null/undefined
+          const h = (claim as any).hoursWorked ?? 0;
+          return sum + h;
+        }, 0);
+
+        return {
+          ...wc,
+          hoursWorked,
+        };
+      });
 
       expect(response.body).toEqual(expectedResponse);
     });
