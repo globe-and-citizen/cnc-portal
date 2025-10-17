@@ -25,7 +25,7 @@
   <div id="admins-table" class="overflow-x-auto">
     <TableComponent
       :rows="
-        (admins [])?.map((admin: `0x${string}`, index: number) => ({
+        admins?.map((admin: Address, index: number) => ({
           index: index + 1,
           address: admin,
           admin: admin
@@ -66,6 +66,7 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
+import type { Address } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
 const addCampaignService = new AddCampaignService()
 
@@ -162,7 +163,7 @@ watch(errorRemoveAdmin, () => {
   }
 })
 
-function handleAdminAction(adminAddress: string, action: string) {
+function handleAdminAction(adminAddress: Address, action: string) {
   if (action === 'removeAdmin') {
     removeAdmin({
       address: props.contract.address,
