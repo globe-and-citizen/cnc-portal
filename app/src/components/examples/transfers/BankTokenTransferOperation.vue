@@ -111,12 +111,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { isAddress } from 'viem'
+import { isAddress, type Address } from 'viem'
 import { useBankContract } from '@/composables/bank'
 
 // Form data
-const tokenAddress = ref('')
-const recipientAddress = ref('')
+const tokenAddress = ref<Address | null>(null)
+const recipientAddress = ref<Address | null>(null)
 const tokenAmount = ref('')
 
 // Computed validations
@@ -157,14 +157,12 @@ const {
 
 // Handle token transfer
 const handleTransferToken = async () => {
-  if (!isFormValid.value) return
-  await transferToken(
-    tokenAddress.value as `0x${string}`,
-    recipientAddress.value as `0x${string}`,
-    tokenAmount.value
-  )
-  tokenAddress.value = ''
-  recipientAddress.value = ''
+  if (!isFormValid.value && !tokenAddress.value && !recipientAddress.value) return
+  if (tokenAddress.value && recipientAddress.value) {
+    await transferToken(tokenAddress.value, recipientAddress.value, tokenAmount.value)
+  }
+  tokenAddress.value = null
+  recipientAddress.value = null
   tokenAmount.value = ''
 }
 </script>

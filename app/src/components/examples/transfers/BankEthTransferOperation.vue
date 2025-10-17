@@ -97,11 +97,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { isAddress } from 'viem'
+import { isAddress, type Address } from 'viem'
 import { useBankContract } from '@/composables/bank'
 
 // Form data
-const recipientAddress = ref('')
+const recipientAddress = ref<Address | null>(null)
 const ethAmount = ref('')
 
 // Computed validations
@@ -115,7 +115,7 @@ const isValidAmount = computed(() => {
 })
 
 const isFormValid = computed(() => {
-  return recipientAddress.value && ethAmount.value && isValidRecipient.value && isValidAmount.value
+  return Boolean(recipientAddress.value && ethAmount.value && isValidRecipient.value && isValidAmount.value)
 })
 
 // Get bank functionality (now includes all writes directly)
@@ -131,9 +131,13 @@ const {
 
 // Handle ETH transfer
 const handleTransferEth = async () => {
-  if (!isFormValid.value) return
-  await transferEth(recipientAddress.value as `0x${string}`, ethAmount.value)
-  recipientAddress.value = ''
+  const addr = recipientAddress.value
+  const amount = ethAmount.value
+
+  if (!addr || !amount || !isValidRecipient.value || !isValidAmount.value) return
+
+  await transferEth(addr, amount)
+  recipientAddress.value = null
   ethAmount.value = ''
 }
 </script>

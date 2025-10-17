@@ -168,8 +168,8 @@ const {
 const handleSendTokenTip = async () => {
   if (!isFormValid.value) return
   await sendTokenTip(
-    recipientList.value as `0x${string}`[],
-    tokenAddress.value as `0x${string}`,
+    recipientList.value [],
+    tokenAddress.value ,
     tipAmount.value
   )
   tokenAddress.value = ''

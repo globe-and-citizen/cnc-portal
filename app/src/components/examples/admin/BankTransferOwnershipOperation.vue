@@ -84,7 +84,7 @@ import { isAddress } from 'viem'
 import { useBankContract } from '@/composables/bank'
 
 // Form data
-const newOwnerAddress = ref('')
+const newOwnerAddress = ref<Address | null>(null)
 
 // Computed validation
 const isValidAddress = computed(() => {
@@ -105,7 +105,9 @@ const {
 // Handle transfer ownership
 const handleTransferOwnership = async () => {
   if (!isValidAddress.value || !newOwnerAddress.value) return
-  await transferOwnership(newOwnerAddress.value as `0x${string}`)
-  newOwnerAddress.value = ''
+  if (newOwnerAddress.value) {
+    await transferOwnership(newOwnerAddress.value)
+    newOwnerAddress.value = null
+  }
 }
 </script>

@@ -146,7 +146,7 @@ const {
 // Handle ETH tip
 const handleSendEthTip = async () => {
   if (!isFormValid.value) return
-  await sendEthTip(recipientList.value as `0x${string}`[], tipAmount.value)
+  await sendEthTip(recipientList.value [], tipAmount.value)
   recipientAddresses.value = ''
   tipAmount.value = ''
 }

@@ -80,11 +80,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { isAddress } from 'viem'
+import { isAddress, type Address } from 'viem'
 import { useBankContract } from '@/composables/bank'
 
 // Form data
-const newTipsAddress = ref('')
+const newTipsAddress = ref<Address | null>(null)
 
 // Computed validation
 const isValidAddress = computed(() => {
@@ -105,7 +105,9 @@ const {
 // Handle change tips address
 const handleChangeTipsAddress = async () => {
   if (!isValidAddress.value || !newTipsAddress.value) return
-  await changeTipsAddress(newTipsAddress.value as `0x${string}`)
-  newTipsAddress.value = ''
+  if (newTipsAddress.value) {
+    await changeTipsAddress(newTipsAddress.value)
+    newTipsAddress.value = null
+  }
 }
 </script>
