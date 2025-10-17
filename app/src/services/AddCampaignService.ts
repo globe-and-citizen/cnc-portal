@@ -75,8 +75,8 @@ export class AddCampaignService {
 
     const hash = await walletClient.deployContract({
       abi: AD_CAMPAIGN_MANAGER_ABI,
-      bytecode: CAMPAIGN_BYTECODE ,
-      args: [click, impression, bankAddress],
+      bytecode: CAMPAIGN_BYTECODE as `0x${string}`,
+      args: [click, impression, bankAddress as `0x${string}`],
       account: walletClient.account.address
     })
 

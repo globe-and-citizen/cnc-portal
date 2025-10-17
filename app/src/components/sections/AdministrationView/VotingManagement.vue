@@ -80,7 +80,7 @@
         async (newOwner: string) => {
           transferOwnership({
             functionName: 'transferOwnership',
-            args: [newOwner],
+            args: [newOwner as `0x${string}`],
             abi: VOTING_ABI,
             address: votingAddress as Address
           })
