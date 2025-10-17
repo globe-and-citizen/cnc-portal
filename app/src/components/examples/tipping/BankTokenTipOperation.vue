@@ -116,7 +116,7 @@ import { useBankContract } from '@/composables/bank'
 
 // Form data
 const tokenAddress = ref<Address | null>(null)
-const recipientAddresses = ref<Address | null>(null)
+const recipientAddresses = ref('')
 const tipAmount = ref('')
 
 // Computed validations
@@ -171,7 +171,7 @@ const handleSendTokenTip = async () => {
     await sendTokenTip(recipientList.value, tokenAddress.value, tipAmount.value)
   }
   tokenAddress.value = null
-  recipientAddresses.value = null
+  recipientAddresses.value = ''
   tipAmount.value = ''
 }
 </script>

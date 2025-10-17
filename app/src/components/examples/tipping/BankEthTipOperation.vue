@@ -97,7 +97,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { isAddress } from 'viem'
+import { isAddress, type Address } from 'viem'
 import { useBankContract } from '@/composables/bank'
 
 // Form data
@@ -109,7 +109,7 @@ const recipientList = computed(() => {
   return recipientAddresses.value
     .split(',')
     .map((addr) => addr.trim())
-    .filter((addr) => addr.length > 0)
+    .filter((addr) => addr.length > 0) as Address[]
 })
 
 const areValidRecipients = computed(() => {
@@ -146,7 +146,7 @@ const {
 // Handle ETH tip
 const handleSendEthTip = async () => {
   if (!isFormValid.value) return
-  await sendEthTip(recipientList.value [], tipAmount.value)
+  await sendEthTip(recipientList.value, tipAmount.value)
   recipientAddresses.value = ''
   tipAmount.value = ''
 }
