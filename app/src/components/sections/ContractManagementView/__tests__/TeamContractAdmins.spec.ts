@@ -8,7 +8,6 @@ import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { createConfig, http } from '@wagmi/core'
 import { mainnet } from '@wagmi/core/chains'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
-import { type Abi } from 'viem'
 
 createConfig({
   chains: [mainnet],

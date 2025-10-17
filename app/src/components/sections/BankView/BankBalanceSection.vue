@@ -113,7 +113,7 @@ import {
   useReadContract
 } from '@wagmi/vue'
 import { ref, watch, computed, type Ref } from 'vue'
-import { type Address, parseEther, encodeFunctionData, parseUnits, type Abi } from 'viem'
+import { type Address, parseEther, encodeFunctionData, parseUnits } from 'viem'
 import { useToastStore } from '@/stores'
 import { useUserDataStore } from '@/stores'
 import ModalComponent from '@/components/ModalComponent.vue'

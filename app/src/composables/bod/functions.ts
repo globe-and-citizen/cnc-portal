@@ -1,4 +1,4 @@
-import { encodeFunctionData, type Abi, type Address } from 'viem'
+import { encodeFunctionData, type Address } from 'viem'
 import { useToastStore, useTeamStore } from '@/stores'
 import { useBodWrites } from './writes'
 import { BOD_FUNCTION_NAMES } from './types'

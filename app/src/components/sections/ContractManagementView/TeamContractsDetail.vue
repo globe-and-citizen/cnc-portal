@@ -60,7 +60,6 @@ import { useToastStore } from '@/stores/useToastStore'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import { type Abi } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps<{
   datas: Array<{ key: string; value: string }>

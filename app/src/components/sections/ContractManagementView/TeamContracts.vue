@@ -113,7 +113,7 @@ import type {
 import { useToastStore } from '@/stores/useToastStore'
 const { addErrorToast } = useToastStore()
 import { useTeamStore } from '@/stores/'
-import type { Abi, Address } from 'viem'
+import type { Address } from 'viem'
 import TeamContractEventList from './TeamContractEventList.vue'
 import { type TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'

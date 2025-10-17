@@ -17,7 +17,7 @@ import { log, parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { estimateGas } from '@wagmi/core'
-import { type Abi, type Address, encodeFunctionData } from 'viem'
+import { type Address, encodeFunctionData } from 'viem'
 import { computed, watch } from 'vue'
 import { config } from '@/wagmi.config'
 
