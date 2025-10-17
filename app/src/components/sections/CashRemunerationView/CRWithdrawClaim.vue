@@ -103,7 +103,7 @@ const withdrawClaim = async () => {
   try {
     const args = {
       abi: CASH_REMUNERATION_EIP712_ABI,
-      functionName: 'withdraw',
+      functionName: 'withdraw' as const,
       args: [claimData, props.weeklyClaim.signature as Address]
     }
     const data = encodeFunctionData(args)
