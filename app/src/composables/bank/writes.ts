@@ -124,10 +124,7 @@ export function useBankWrites() {
         })
         // Also invalidate all readContract queries for this bank address
         await queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            { ...bankQueryKey, address: args ? (args[0] ) : undefined }
-          ]
+          queryKey: ['readContract', { ...bankQueryKey, address: args ? args[0] : undefined }]
         })
         break
 

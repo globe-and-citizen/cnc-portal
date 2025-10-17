@@ -80,7 +80,6 @@ vi.mock('@/utils', () => ({
   parseError: (error: unknown) => String(error)
 }))
 
-
 vi.mock('@/stores', () => ({
   useTeamStore: vi.fn(() => mockTeamStore),
   useToastStore: vi.fn(() => ({
