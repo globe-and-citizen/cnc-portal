@@ -73,9 +73,9 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           if (
             weeklyClaim.status === 'signed' &&
             callerAddress ===
-              (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-                ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
-                : undefined)
+            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
+              ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
+              : undefined)
           ) {
             signErrors.push('Weekly claim already signed');
           } else if (weeklyClaim.status === 'withdrawn') {
@@ -173,7 +173,19 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
       orderBy: { weekStart: 'asc' },
     });
 
-    return res.status(200).json(weeklyClaims);
+    const weeklyClaimsWithHours = weeklyClaims.map((wc) => {
+      const hoursWorked = wc.claims.reduce((sum, claim) => {
+        const h = claim.hoursWorked ?? 0;
+        return sum + h;
+      }, 0);
+
+      return {
+        ...wc,
+        hoursWorked,
+      };
+    });
+
+    return res.status(200).json(weeklyClaimsWithHours);
   } catch (error) {
     console.error(error);
     return errorResponse(500, 'Internal Server Error', res);

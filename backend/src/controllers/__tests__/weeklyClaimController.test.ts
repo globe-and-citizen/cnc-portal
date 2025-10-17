@@ -352,10 +352,11 @@ describe('Weekly Claim Controller', () => {
           memberAddress: '0xMemberAddress',
           teamId: 1,
           data: {},
+          claims: [],
           signature: null,
           createdAt: testDate,
           updatedAt: testDate,
-          wageId: 0,
+          wageId: 0
         },
         {
           id: 2,
@@ -364,10 +365,11 @@ describe('Weekly Claim Controller', () => {
           memberAddress: '0xMemberAddress',
           teamId: 1,
           data: {},
+          claims: [],
           signature: null,
           createdAt: testDate,
           updatedAt: testDate,
-          wageId: 0,
+          wageId: 0
         },
       ];
 
@@ -381,7 +383,17 @@ describe('Weekly Claim Controller', () => {
         weekStart: claim.weekStart.toISOString(),
         createdAt: claim.createdAt.toISOString(),
         updatedAt: claim.updatedAt.toISOString(),
-      }));
+      })).map((wc) => {
+        const hoursWorked = wc.claims.reduce((sum, claim) => {
+          const h = claim.hoursWorked ?? 0;
+          return sum + h;
+        }, 0);
+
+        return {
+          ...wc,
+          hoursWorked,
+        };
+      });
 
       expect(response.body).toEqual(expectedResponse);
     });
@@ -395,6 +407,7 @@ describe('Weekly Claim Controller', () => {
           memberAddress: '0xAnotherAddress',
           teamId: 1,
           data: {},
+          claims: [],
           signature: null,
           createdAt: testDate,
           updatedAt: testDate,
@@ -415,7 +428,18 @@ describe('Weekly Claim Controller', () => {
         weekStart: claim.weekStart.toISOString(),
         createdAt: claim.createdAt.toISOString(),
         updatedAt: claim.updatedAt.toISOString(),
-      }));
+        hoursWorked: claim.hoursWorked,
+      })).map((wc) => {
+        const hoursWorked = wc.claims.reduce((sum, claim) => {
+          const h = claim.hoursWorked ?? 0;
+          return sum + h;
+        }, 0);
+
+        return {
+          ...wc,
+          hoursWorked,
+        };
+      });
 
       expect(response.body).toEqual(expectedResponse);
     });
