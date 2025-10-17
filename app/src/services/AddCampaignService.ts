@@ -75,7 +75,7 @@ export class AddCampaignService {
 
     const hash = await walletClient.deployContract({
       abi: AD_CAMPAIGN_MANAGER_ABI,
-      bytecode: CAMPAIGN_BYTECODE as `0x${string}`,
+      bytecode: CAMPAIGN_BYTECODE ,
       args: [click, impression, bankAddress],
       account: walletClient.account.address
     })
@@ -108,7 +108,7 @@ export class AddCampaignService {
 
   async addAdmin(address: string, admin: string) {
     const hash = await writeContract(config, {
-      address: address as `0x${string}`,
+      address: address ,
       abi: AD_CAMPAIGN_MANAGER_ABI,
       functionName: 'addAdmin',
       args: [admin]
@@ -117,9 +117,9 @@ export class AddCampaignService {
     return await waitForTransactionReceipt(config, { hash })
   }
 
-  async removeAdmin(address: string, admin: string) {
+  async removeAdmin(address: Address, admin: Address) {
     const hash = await writeContract(config, {
-      address: address as `0x${string}`,
+      address: address ,
       abi: AD_CAMPAIGN_MANAGER_ABI,
       functionName: 'removeAdmin',
       args: [admin]
@@ -156,13 +156,13 @@ export class AddCampaignService {
 
     for (const log of addedLogs) {
       if (log.args.admin) {
-        set.add(log.args.admin as `0x${string}`)
+        set.add(log.args.admin )
       }
     }
 
     for (const log of removedLogs) {
       if (log.args.admin) {
-        set.delete(log.args.admin as `0x${string}`)
+        set.delete(log.args.admin )
       }
     }
 
@@ -179,19 +179,19 @@ export class AddCampaignService {
       const fromBlock = latestBlock > 9999n ? latestBlock - 9999n : 0n
       const [adCreated, released, withdrawn, releasedOnApproval] = await Promise.all([
         getLogs(client, {
-          address: contractAddress as `0x${string}`,
+          address: contractAddress ,
           event: parseAbiItem('event AdCampaignCreated(string campaignCode, uint256 budget)'),
           fromBlock: fromBlock,
           toBlock: latestBlock
         }),
         getLogs(client, {
-          address: contractAddress as `0x${string}`,
+          address: contractAddress ,
           event: parseAbiItem('event PaymentReleased(string campaignCode, uint256 paymentAmount)'),
           fromBlock: fromBlock,
           toBlock: latestBlock
         }),
         getLogs(client, {
-          address: contractAddress as `0x${string}`,
+          address: contractAddress ,
           event: parseAbiItem(
             'event BudgetWithdrawn(string campaignCode, address advertiser, uint256 amount)'
           ),
@@ -199,7 +199,7 @@ export class AddCampaignService {
           toBlock: latestBlock
         }),
         getLogs(client, {
-          address: contractAddress as `0x${string}`,
+          address: contractAddress ,
           event: parseAbiItem(
             'event PaymentReleasedOnWithdrawApproval(string campaignCode, uint256 paymentAmount)'
           ),
