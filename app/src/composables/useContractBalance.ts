@@ -106,7 +106,7 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
         address: token.address as Address,
         abi: ERC20_ABI,
         functionName: 'balanceOf' as const,
-        args: computed(() => [unref(address) as Address])
+        args: [unref(address) as Address] as const
         // query: { refetchInterval: 60000 }
       })
       return {
