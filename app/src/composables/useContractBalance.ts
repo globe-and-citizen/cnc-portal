@@ -103,10 +103,10 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
       } as NativeTokenBalanceEntry
     } else {
       const erc20 = useReadContract({
-        address: token.address,
+        address: token.address as Address,
         abi: ERC20_ABI,
-        functionName: 'balanceOf',
-        args: [unref(address)]
+        functionName: 'balanceOf' as const,
+        args: computed(() => [unref(address) as Address])
         // query: { refetchInterval: 60000 }
       })
       return {

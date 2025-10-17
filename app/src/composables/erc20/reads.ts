@@ -16,7 +16,7 @@ export function useERC20Reads(contractAddress: MaybeRef<Address>) {
     return useReadContract({
       address: erc20Address,
       abi: ERC20_ABI,
-      functionName: ERC20_FUNCTION_NAMES.NAME,
+      functionName: 'name' as const,
       query: { enabled: isErc20AddressValid }
     })
   }
@@ -25,7 +25,7 @@ export function useERC20Reads(contractAddress: MaybeRef<Address>) {
     return useReadContract({
       address: erc20Address,
       abi: ERC20_ABI,
-      functionName: ERC20_FUNCTION_NAMES.SYMBOL,
+      functionName: 'symbol' as const,
       query: { enabled: isErc20AddressValid }
     })
   }
@@ -34,7 +34,7 @@ export function useERC20Reads(contractAddress: MaybeRef<Address>) {
     return useReadContract({
       address: erc20Address,
       abi: ERC20_ABI,
-      functionName: ERC20_FUNCTION_NAMES.DECIMALS,
+      functionName: 'decimals' as const,
       query: { enabled: isErc20AddressValid }
     })
   }
@@ -43,7 +43,7 @@ export function useERC20Reads(contractAddress: MaybeRef<Address>) {
     return useReadContract({
       address: erc20Address,
       abi: ERC20_ABI,
-      functionName: ERC20_FUNCTION_NAMES.TOTAL_SUPPLY,
+      functionName: 'totalSupply' as const,
       query: { enabled: isErc20AddressValid }
     })
   }

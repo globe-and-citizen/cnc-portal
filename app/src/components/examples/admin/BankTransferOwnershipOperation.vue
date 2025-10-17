@@ -80,7 +80,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { isAddress } from 'viem'
+import { isAddress, type Address } from 'viem'
 import { useBankContract } from '@/composables/bank'
 
 // Form data
