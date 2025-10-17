@@ -14,14 +14,8 @@ export function useBodReads() {
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
   const isBodAddressValid = computed(() => !!bodAddress.value && isAddress(bodAddress.value))
 
-  const useBodPaused = () => {
-    return useReadContract({
-      address: bodAddress,
-      abi: BOD_ABI,
-      functionName: 'paused' as const,
-      query: { enabled: isBodAddressValid } // This enable the query only if the BOD address is available and valid
-    })
-  }
+  // Removed useBodPaused - BOD contract doesn't have a paused function
+  // If you need to check pause status, use the Bank contract's paused function instead
 
   const useBodOwner = (contractAddress: Address, contractAbi: Abi) => {
     return useReadContract({
@@ -105,7 +99,7 @@ export function useBodReads() {
     isBodAddressValid,
     boardOfDirectors,
     useBodIsBodAction,
-    useBodPaused,
+    // useBodPaused, // Removed: BOD contract doesn't have a paused function
     useBodOwner,
     useBodIsActionExecuted,
     useBodIsApproved,
