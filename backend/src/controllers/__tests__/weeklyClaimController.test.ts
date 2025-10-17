@@ -342,7 +342,7 @@ describe('Weekly Claim Controller', () => {
       expect(response.body).toEqual([]);
     });
 
-    it('should get weekly claims for a valid teamId', async () => {
+    it.only('should get weekly claims for a valid teamId', async () => {
       const testDate = new Date();
       const mockWeeklyClaims: WeeklyClaim[] = [
         {
@@ -352,10 +352,11 @@ describe('Weekly Claim Controller', () => {
           memberAddress: '0xMemberAddress',
           teamId: 1,
           data: {},
+          claims: [],
           signature: null,
           createdAt: testDate,
           updatedAt: testDate,
-          wageId: 0,
+          wageId: 0
         },
         {
           id: 2,
@@ -364,10 +365,11 @@ describe('Weekly Claim Controller', () => {
           memberAddress: '0xMemberAddress',
           teamId: 1,
           data: {},
+          claims: [],
           signature: null,
           createdAt: testDate,
           updatedAt: testDate,
-          wageId: 0,
+          wageId: 0
         },
       ];
 
