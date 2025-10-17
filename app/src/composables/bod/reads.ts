@@ -37,7 +37,7 @@ export function useBodReads() {
       address: bodAddress,
       abi: BOD_ABI,
       functionName: 'isActionExecuted' as const,
-      args: computed(() => [BigInt(actionId)]),
+      args: [BigInt(actionId)] as const,
       query: { enabled: isBodAddressValid }
     })
   }
@@ -47,7 +47,7 @@ export function useBodReads() {
       address: bodAddress,
       abi: BOD_ABI,
       functionName: 'isApproved' as const,
-      args: computed(() => [BigInt(actionId), memberAddress]),
+      args: [BigInt(actionId), memberAddress] as const,
       query: {
         enabled: computed(
           () => !!bodAddress.value && isAddress(bodAddress.value) && isAddress(memberAddress)
