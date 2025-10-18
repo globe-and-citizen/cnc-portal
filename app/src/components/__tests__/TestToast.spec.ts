@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+import { nextTick } from 'vue'
 import Toast from '../TestToast.vue'
 import { ToastType } from '../../types'
 
@@ -35,6 +36,28 @@ describe('Toast Component', () => {
       })
 
       expect(wrapper.find('.alert').classes()).toContain('alert-error')
+    })
+  })
+
+  describe('Behavior', () => {
+    it('closes automatically after timeout', async () => {
+      vi.useFakeTimers()
+      const wrapper = mount(Toast, {
+        props: { type: ToastType.Success, message: 'Auto-close message', timeout: 3000 }
+      })
+
+      expect(wrapper.isVisible()).toBe(true)
+      expect(wrapper.text()).toContain('3s')
+
+      vi.advanceTimersByTime(1000)
+      await nextTick()
+      expect(wrapper.text()).toContain('2s')
+
+      vi.advanceTimersByTime(2000)
+      await nextTick()
+      expect(wrapper.isVisible()).toBe(true)
+
+      vi.useRealTimers()
     })
   })
 })
