@@ -43,9 +43,7 @@ describe('BoardOfDirectors', async () => {
     const BankFactory = await ethers.getContractFactory('Bank')
     const bank = await BankFactory.connect(founder).deploy()
     await bank.initialize(
-      mockTipsAddress,
-      ethers.ZeroAddress, // USDT address
-      ethers.ZeroAddress, // USDC address
+      [], // token addresses array
       await founder.getAddress()
     )
 

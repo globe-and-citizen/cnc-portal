@@ -75,9 +75,7 @@ describe('Officer Contract', function () {
       ])
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
       const expenseInitData = expenseAccount.interface.encodeFunctionData('initialize', [
@@ -105,9 +103,7 @@ describe('Officer Contract', function () {
 
     it('Should restrict deployment to owners and founders', async function () {
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
-        addr1.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 
@@ -125,9 +121,7 @@ describe('Officer Contract', function () {
 
     it('Should fail when deploying proxy for unknown contract type', async function () {
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 
@@ -284,9 +278,7 @@ describe('Officer Contract', function () {
       ])
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 
@@ -354,9 +346,7 @@ describe('Officer Contract', function () {
       ])
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 
@@ -393,9 +383,7 @@ describe('Officer Contract', function () {
       ])
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 
@@ -535,9 +523,7 @@ describe('Officer Contract', function () {
         owner.address
       ])
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 
@@ -569,9 +555,7 @@ describe('Officer Contract', function () {
     it('Should maintain contract order as they are deployed', async function () {
       // Deploy contracts in specific order
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 
