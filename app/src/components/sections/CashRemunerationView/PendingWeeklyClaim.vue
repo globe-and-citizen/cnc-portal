@@ -100,7 +100,7 @@ import weekday from 'dayjs/plugin/weekday'
 import { computed, watch } from 'vue'
 import CRSigne from './CRSigne.vue'
 // import CRWithdrawClaim from './CRWithdrawClaim.vue'
-import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 import type { TokenId } from '@/constant'
@@ -153,7 +153,7 @@ const {
 } = useReadContract({
   functionName: 'owner',
   address: cashRemunerationAddress,
-  abi: CashRemuneration_ABI
+  abi: CASH_REMUNERATION_EIP712_ABI
 })
 
 function getHourlyRateInUserCurrency(

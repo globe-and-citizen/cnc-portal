@@ -6,7 +6,7 @@ import { parseAbiItem, type PublicClient, type Address } from 'viem'
 import { writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import { parseUnits } from 'viem/utils'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import CampaignAbi from '../artifacts/abi/AdCampaignManager.json'
+import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
 
 export interface PaymentReleasedEvent extends Record<string, unknown> {
@@ -74,9 +74,9 @@ export class AddCampaignService {
     const walletClient = await getWalletClient(config)
 
     const hash = await walletClient.deployContract({
-      abi: CampaignAbi,
+      abi: AD_CAMPAIGN_MANAGER_ABI,
       bytecode: CAMPAIGN_BYTECODE as `0x${string}`,
-      args: [click, impression, bankAddress],
+      args: [click, impression, bankAddress as `0x${string}`],
       account: walletClient.account.address
     })
 
@@ -106,10 +106,10 @@ export class AddCampaignService {
     return address
   }
 
-  async addAdmin(address: string, admin: string) {
+  async addAdmin(address: Address, admin: Address) {
     const hash = await writeContract(config, {
-      address: address as `0x${string}`,
-      abi: CampaignAbi,
+      address: address,
+      abi: AD_CAMPAIGN_MANAGER_ABI,
       functionName: 'addAdmin',
       args: [admin]
     })
@@ -117,10 +117,10 @@ export class AddCampaignService {
     return await waitForTransactionReceipt(config, { hash })
   }
 
-  async removeAdmin(address: string, admin: string) {
+  async removeAdmin(address: Address, admin: Address) {
     const hash = await writeContract(config, {
-      address: address as `0x${string}`,
-      abi: CampaignAbi,
+      address: address,
+      abi: AD_CAMPAIGN_MANAGER_ABI,
       functionName: 'removeAdmin',
       args: [admin]
     })
@@ -156,13 +156,13 @@ export class AddCampaignService {
 
     for (const log of addedLogs) {
       if (log.args.admin) {
-        set.add(log.args.admin as `0x${string}`)
+        set.add(log.args.admin)
       }
     }
 
     for (const log of removedLogs) {
       if (log.args.admin) {
-        set.delete(log.args.admin as `0x${string}`)
+        set.delete(log.args.admin)
       }
     }
 
@@ -170,7 +170,7 @@ export class AddCampaignService {
   }
 
   async getEventsGroupedByCampaignCode(
-    contractAddress: string
+    contractAddress: Address
   ): Promise<GetEventsGroupedByCampaignCodeResult> {
     try {
       const client = getPublicClient(config) as PublicClient
@@ -179,19 +179,19 @@ export class AddCampaignService {
       const fromBlock = latestBlock > 9999n ? latestBlock - 9999n : 0n
       const [adCreated, released, withdrawn, releasedOnApproval] = await Promise.all([
         getLogs(client, {
-          address: contractAddress as `0x${string}`,
+          address: contractAddress,
           event: parseAbiItem('event AdCampaignCreated(string campaignCode, uint256 budget)'),
           fromBlock: fromBlock,
           toBlock: latestBlock
         }),
         getLogs(client, {
-          address: contractAddress as `0x${string}`,
+          address: contractAddress,
           event: parseAbiItem('event PaymentReleased(string campaignCode, uint256 paymentAmount)'),
           fromBlock: fromBlock,
           toBlock: latestBlock
         }),
         getLogs(client, {
-          address: contractAddress as `0x${string}`,
+          address: contractAddress,
           event: parseAbiItem(
             'event BudgetWithdrawn(string campaignCode, address advertiser, uint256 amount)'
           ),
@@ -199,7 +199,7 @@ export class AddCampaignService {
           toBlock: latestBlock
         }),
         getLogs(client, {
-          address: contractAddress as `0x${string}`,
+          address: contractAddress,
           event: parseAbiItem(
             'event PaymentReleasedOnWithdrawApproval(string campaignCode, uint256 paymentAmount)'
           ),

@@ -3,7 +3,7 @@ import { useReadContract } from '@wagmi/vue'
 import { isAddress, type Abi, type Address } from 'viem'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { BOD_FUNCTION_NAMES } from './types'
-import BOD_ABI from '@/artifacts/abi/bod.json'
+import { BOD_ABI } from '@/artifacts/abi/bod'
 
 /**
  * BOD contract read operations
@@ -14,14 +14,8 @@ export function useBodReads() {
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
   const isBodAddressValid = computed(() => !!bodAddress.value && isAddress(bodAddress.value))
 
-  const useBodPaused = () => {
-    return useReadContract({
-      address: bodAddress.value,
-      abi: BOD_ABI,
-      functionName: BOD_FUNCTION_NAMES.PAUSED,
-      query: { enabled: isBodAddressValid } // This enable the query only if the BOD address is available and valid
-    })
-  }
+  // Removed useBodPaused - BOD contract doesn't have a paused function
+  // If you need to check pause status, use the Bank contract's paused function instead
 
   const useBodOwner = (contractAddress: Address, contractAbi: Abi) => {
     return useReadContract({
@@ -34,20 +28,20 @@ export function useBodReads() {
 
   const useBodIsActionExecuted = (actionId: number) => {
     return useReadContract({
-      address: bodAddress.value,
+      address: bodAddress,
       abi: BOD_ABI,
-      functionName: BOD_FUNCTION_NAMES.IS_ACTION_EXECUTED,
-      args: [actionId],
+      functionName: 'isActionExecuted' as const,
+      args: [BigInt(actionId)] as const,
       query: { enabled: isBodAddressValid }
     })
   }
 
   const useBodIsApproved = (actionId: number, memberAddress: Address) => {
     return useReadContract({
-      address: bodAddress.value,
+      address: bodAddress,
       abi: BOD_ABI,
-      functionName: BOD_FUNCTION_NAMES.IS_APPROVED,
-      args: [actionId, memberAddress],
+      functionName: 'isApproved' as const,
+      args: [BigInt(actionId), memberAddress] as const,
       query: {
         enabled: computed(
           () => !!bodAddress.value && isAddress(bodAddress.value) && isAddress(memberAddress)
@@ -105,7 +99,7 @@ export function useBodReads() {
     isBodAddressValid,
     boardOfDirectors,
     useBodIsBodAction,
-    useBodPaused,
+    // useBodPaused, // Removed: BOD contract doesn't have a paused function
     useBodOwner,
     useBodIsActionExecuted,
     useBodIsApproved,
