@@ -88,7 +88,7 @@ const candidates = computed(() => {
         (member) => member.address === candidate
       ) as User & { role?: string }
       return {
-      // @ts-expect-error type issue
+        // @ts-expect-error type issue
         id: BigInt((election.value as string | bigint[])[0]),
         user: {
           address: candidate,
@@ -98,9 +98,9 @@ const candidates = computed(() => {
         },
         totalVotes: Number(voteCount.value) || 0,
         currentVotes: votesPerCandidate[candidate], //5
-      // @ts-expect-error type issue
+        // @ts-expect-error type issue
         startDate: new Date(Number((election.value as bigint[])[4]) * 1000),
-      // @ts-expect-error type issue
+        // @ts-expect-error type issue
         endDate: new Date(Number((election.value as bigint[])[5]) * 1000)
       }
     })

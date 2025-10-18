@@ -167,7 +167,7 @@ const loadingGetProposals = ref(false)
 const fetchProposals = async () => {
   try {
     loadingGetProposals.value = true
-      // @ts-expect-error type issue
+    // @ts-expect-error type issue
     const proposalCount = (await readContract(config, {
       address: votingAddress.value,
       abi: VOTING_ABI,
@@ -179,7 +179,7 @@ const fetchProposals = async () => {
         address: votingAddress.value,
         abi: VOTING_ABI,
         functionName: 'getProposalById',
-      // @ts-expect-error type issue
+        // @ts-expect-error type issue
         args: [i]
       })
       // @ts-expect-error type issue
@@ -227,13 +227,13 @@ const createProposal = (newProposalInput: Ref<Partial<OldProposal>>) => {
       abi: VOTING_ABI,
       functionName: 'addProposal',
       args: [
-      // @ts-expect-error type issue
+        // @ts-expect-error type issue
         newProposalInput.value.title,
-      // @ts-expect-error type issue
+        // @ts-expect-error type issue
         newProposalInput.value.description,
-      // @ts-expect-error type issue
+        // @ts-expect-error type issue
         newProposalInput.value.isElection,
-      // @ts-expect-error type issue
+        // @ts-expect-error type issue
         newProposalInput.value.winnerCount,
         newProposalInput.value.voters!.map((voter) => voter.memberAddress) as Address[],
         newProposalInput.value.candidates!.map(

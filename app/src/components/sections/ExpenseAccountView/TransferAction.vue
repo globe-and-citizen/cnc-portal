@@ -180,7 +180,7 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
     const data = encodeFunctionData({
       abi: EXPENSE_ACCOUNT_EIP712_ABI,
       functionName: 'transfer',
-        // @ts-expect-error type issue
+      // @ts-expect-error type issue
       args
     })
     await estimateGas(config, {
@@ -189,7 +189,7 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
     })
     executeExpenseAccountTransfer({
       address: expenseAccountEip712Address.value,
-        // @ts-expect-error type issue
+      // @ts-expect-error type issue
       args,
       abi: EXPENSE_ACCOUNT_EIP712_ABI,
       functionName: 'transfer'
