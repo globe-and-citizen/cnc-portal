@@ -1,6 +1,6 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
-import { Bank, MockERC20, Tips, InvestorV1 } from '../typechain-types'
+import { Bank, MockERC20, InvestorV1 } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 
 describe('Bank', () => {
@@ -11,46 +11,41 @@ describe('Bank', () => {
   let contractor: SignerWithAddress
   let member1: SignerWithAddress
   let member2: SignerWithAddress
-  let tipsProxy: Tips
   let investorProxy: InvestorV1
 
   const ERRORS = {
-    INSUFFICIENT_UNLOCKED: 'insufficient unlocked ',
-    INVALID_INVESTOR: 'investor address invalid',
-    ZERO_SUPPLY: 'Splitter: zero supply',
-    NO_HOLDERS: 'Splitter: no holders',
-    ONLY_OWNER: 'Ownable: caller is not the owner',
-    NOTHING_TO_RELEASE: ' nothing to release',
+    INSUFFICIENT_UNLOCKED: 'Insufficient unlocked balance',
+    INVALID_INVESTOR: 'Investor address invalid',
+    ZERO_SUPPLY: 'Zero supply',
+    NO_HOLDERS: 'No shareholders',
+    NOTHING_TO_RELEASE: 'Nothing to release',
     PAUSED: 'EnforcedPause',
-    INSUFFICIENT_BANK_BALANCE: 'insufficient balance in the bank',
-    FAILED_TO_SEND: 'Failed to send dividend'
+    INSUFFICIENT_BANK_BALANCE: 'Insufficient balance in the bank',
+    FAILED_TO_SEND: 'Failed to send dividend',
+    UNSUPPORTED_TOKEN: 'Unsupported token',
+    TOKEN_ALREADY_SUPPORTED: 'Token already supported',
+    TOKEN_NOT_SUPPORTED: 'Token not supported',
+    ZERO_ADDRESS: 'Address cannot be zero',
+    TOKEN_ADDRESS_ZERO: 'Token address cannot be zero',
+    AMOUNT_ZERO: 'Amount must be greater than zero',
+    SENDER_ZERO: 'Sender cannot be zero'
   } as const
 
   async function deployContracts() {
     const InvestorsV1Implementation = await ethers.getContractFactory('InvestorV1')
-    const TipsImplementation = await ethers.getContractFactory('Tips')
     const BankImplementation = await ethers.getContractFactory('Bank')
 
     investorProxy = (await upgrades.deployProxy(
       InvestorsV1Implementation,
       ['SHARED', 'SHER', await owner.getAddress()],
       { initializer: 'initialize' }
-    )) as InvestorV1
-
-    tipsProxy = (await upgrades.deployProxy(TipsImplementation, [], {
-      initializer: 'initialize'
-    })) as Tips
+    )) as unknown as InvestorV1
 
     bankProxy = (await upgrades.deployProxy(
       BankImplementation,
-      [
-        await tipsProxy.getAddress(),
-        await mockUSDT.getAddress(),
-        await mockUSDC.getAddress(),
-        await owner.getAddress()
-      ],
+      [[await mockUSDT.getAddress(), await mockUSDC.getAddress()], await owner.getAddress()],
       { initializer: 'initialize' }
-    )) as Bank
+    )) as unknown as Bank
   }
 
   describe('Initial Setup', () => {
@@ -58,8 +53,8 @@ describe('Bank', () => {
       ;[owner, contractor, member1, member2] = await ethers.getSigners()
 
       const MockToken = await ethers.getContractFactory('MockERC20')
-      mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as MockERC20
-      mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as MockERC20
+      mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as unknown as MockERC20
+      mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as unknown as MockERC20
 
       await deployContracts()
 
@@ -69,19 +64,125 @@ describe('Bank', () => {
 
     it('should set the correct owner and initial values', async () => {
       expect(await bankProxy.owner()).to.eq(await owner.getAddress())
-      expect(await bankProxy.tipsAddress()).to.eq(await tipsProxy.getAddress())
-      expect(await bankProxy.supportedTokens('USDT')).to.eq(await mockUSDT.getAddress())
-      expect(await bankProxy.supportedTokens('USDC')).to.eq(await mockUSDC.getAddress())
+      expect(await bankProxy.supportedTokens(await mockUSDT.getAddress())).to.be.true
+      expect(await bankProxy.supportedTokens(await mockUSDC.getAddress())).to.be.true
     })
 
     it('should not allow to initialize the contract again', async () => {
+      await expect(bankProxy.initialize([], owner.address)).to.be.reverted
+    })
+
+    it('should reject zero address in initialization', async () => {
+      const BankImplementation = await ethers.getContractFactory('Bank')
       await expect(
-        bankProxy.initialize(
-          ethers.ZeroAddress,
-          ethers.ZeroAddress,
-          ethers.ZeroAddress,
-          owner.address
-        )
+        upgrades.deployProxy(BankImplementation, [[], ethers.ZeroAddress], {
+          initializer: 'initialize'
+        })
+      ).to.be.revertedWith(ERRORS.SENDER_ZERO)
+    })
+
+    it('should reject zero token address in initialization', async () => {
+      const BankImplementation = await ethers.getContractFactory('Bank')
+      await expect(
+        upgrades.deployProxy(BankImplementation, [[ethers.ZeroAddress], owner.address], {
+          initializer: 'initialize'
+        })
+      ).to.be.revertedWith(ERRORS.TOKEN_ADDRESS_ZERO)
+    })
+  })
+
+  describe('Token Support Management', () => {
+    beforeEach(async () => {
+      ;[owner, contractor, member1, member2] = await ethers.getSigners()
+
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as unknown as MockERC20
+      mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as unknown as MockERC20
+
+      await deployContracts()
+    })
+
+    it('should allow owner to add token support', async () => {
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
+
+      await expect(bankProxy.addTokenSupport(await newToken.getAddress()))
+        .to.emit(bankProxy, 'TokenSupportAdded')
+        .withArgs(await newToken.getAddress())
+
+      expect(await bankProxy.supportedTokens(await newToken.getAddress())).to.be.true
+    })
+
+    it('should not allow adding already supported token', async () => {
+      await expect(
+        bankProxy.addTokenSupport(await mockUSDT.getAddress())
+      ).to.be.revertedWith(ERRORS.TOKEN_ALREADY_SUPPORTED)
+    })
+
+    it('should not allow adding zero address token', async () => {
+      await expect(bankProxy.addTokenSupport(ethers.ZeroAddress)).to.be.revertedWith(
+        ERRORS.TOKEN_ADDRESS_ZERO
+      )
+    })
+
+    it('should allow owner to remove token support', async () => {
+      await expect(bankProxy.removeTokenSupport(await mockUSDT.getAddress()))
+        .to.emit(bankProxy, 'TokenSupportRemoved')
+        .withArgs(await mockUSDT.getAddress())
+
+      expect(await bankProxy.supportedTokens(await mockUSDT.getAddress())).to.be.false
+    })
+
+    it('should not allow removing unsupported token', async () => {
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
+
+      await expect(
+        bankProxy.removeTokenSupport(await newToken.getAddress())
+      ).to.be.revertedWith(ERRORS.TOKEN_NOT_SUPPORTED)
+    })
+
+    it('should not allow non-owner to add/remove token support', async () => {
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
+
+      await expect(bankProxy.connect(member1).addTokenSupport(await newToken.getAddress())).to.be
+        .reverted
+      await expect(bankProxy.connect(member1).removeTokenSupport(await mockUSDT.getAddress())).to
+        .be.reverted
+    })
+  })
+
+  describe('Investor Address Management', () => {
+    beforeEach(async () => {
+      ;[owner, contractor, member1, member2] = await ethers.getSigners()
+
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as unknown as MockERC20
+      mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as unknown as MockERC20
+
+      await deployContracts()
+    })
+
+    it('should allow owner to set investor address', async () => {
+      const previousAddress = await bankProxy.investorAddress()
+
+      await expect(bankProxy.setInvestorAddress(await investorProxy.getAddress()))
+        .to.emit(bankProxy, 'InvestorAddressUpdated')
+        .withArgs(previousAddress, await investorProxy.getAddress())
+
+      expect(await bankProxy.investorAddress()).to.equal(await investorProxy.getAddress())
+    })
+
+    it('should not allow setting zero address as investor', async () => {
+      await expect(bankProxy.setInvestorAddress(ethers.ZeroAddress)).to.be.revertedWith(
+        ERRORS.ZERO_ADDRESS
+      )
+    })
+
+    it('should not allow non-owner to set investor address', async () => {
+      await expect(
+        bankProxy.connect(member1).setInvestorAddress(await investorProxy.getAddress())
       ).to.be.reverted
     })
   })
@@ -91,8 +192,8 @@ describe('Bank', () => {
       ;[owner, contractor, member1, member2] = await ethers.getSigners()
 
       const MockToken = await ethers.getContractFactory('MockERC20')
-      mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as MockERC20
-      mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as MockERC20
+      mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as unknown as MockERC20
+      mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as unknown as MockERC20
 
       await deployContracts()
 
@@ -124,15 +225,15 @@ describe('Bank', () => {
         })
         // Transfer to null address
         const tx = bankProxy.transfer(ethers.ZeroAddress, transferAmount)
-        await expect(tx).to.be.revertedWith('Address cannot be zero')
+        await expect(tx).to.be.revertedWith(ERRORS.ZERO_ADDRESS)
 
         // Transfer 0 amount
         const tx2 = bankProxy.transfer(contractor.address, 0)
-        await expect(tx2).to.be.revertedWith('Amount must be greater than zero')
+        await expect(tx2).to.be.revertedWith(ERRORS.AMOUNT_ZERO)
 
         // Transfer more than the sender has
         const tx3 = bankProxy.transfer(contractor.address, ethers.parseEther('100'))
-        await expect(tx3).to.be.revertedWith('insufficient unlocked ')
+        await expect(tx3).to.be.revertedWith(ERRORS.INSUFFICIENT_UNLOCKED)
       })
 
       it('should allow any address to deposit but not transfer funds', async () => {
@@ -157,13 +258,7 @@ describe('Bank', () => {
         })
       })
 
-      it('should allow the owner to change tips address, pause, and unpause the contract', async () => {
-        const newTipsAddress = (await ethers.getSigners())[4]
-
-        await expect(bankProxy.changeTipsAddress(newTipsAddress.address))
-          .to.emit(bankProxy, 'TipsAddressChanged')
-          .withArgs(owner.address, await tipsProxy.getAddress(), newTipsAddress.address)
-
+      it('should allow the owner to pause and unpause the contract', async () => {
         await bankProxy.pause()
         expect(await bankProxy.paused()).to.be.true
         await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.be.reverted
@@ -174,12 +269,7 @@ describe('Bank', () => {
           .reverted
       })
 
-      it('should not allow other addresses to change tips address, pause, or unpause the contract', async () => {
-        const newTipsAddress = (await ethers.getSigners())[5]
-
-        await expect(bankProxy.connect(member1).changeTipsAddress(newTipsAddress.address)).to.be
-          .reverted
-
+      it('should not allow other addresses to pause or unpause the contract', async () => {
         await expect(bankProxy.connect(member1).pause()).to.be.reverted
         await bankProxy.pause()
         await expect(bankProxy.connect(member1).unpause()).to.be.reverted
@@ -216,43 +306,7 @@ describe('Bank', () => {
       await mockUSDC.mint(owner.address, ethers.parseUnits('1000', 6))
     })
 
-    context('Token Support', () => {
-      it('should correctly identify supported tokens', async () => {
-        expect(await bankProxy.isTokenSupported(await mockUSDT.getAddress())).to.be.true
-        expect(await bankProxy.isTokenSupported(await mockUSDC.getAddress())).to.be.true
-        expect(await bankProxy.isTokenSupported(ethers.ZeroAddress)).to.be.false
-      })
-
-      it('should allow owner to change token addresses', async () => {
-        const newAddress = member1.address
-
-        await expect(bankProxy.changeTokenAddress('USDT', newAddress))
-          .to.emit(bankProxy, 'TokenAddressChanged')
-          .withArgs(owner.address, 'USDT', await mockUSDT.getAddress(), newAddress)
-
-        expect(await bankProxy.supportedTokens('USDT')).to.equal(newAddress)
-      })
-
-      it('should not allow changing token address to zero address', async () => {
-        await expect(bankProxy.changeTokenAddress('USDT', ethers.ZeroAddress)).to.be.revertedWith(
-          'Address cannot be zero'
-        )
-      })
-
-      it('should not allow changing unsupported token symbols', async () => {
-        await expect(bankProxy.changeTokenAddress('INVALID', member1.address)).to.be.revertedWith(
-          'Invalid token symbol'
-        )
-      })
-    })
-
     context('Token Deposits and Transfers', () => {
-      beforeEach(async () => {
-        // Reset token addresses
-        await bankProxy.changeTokenAddress('USDT', await mockUSDT.getAddress())
-        await bankProxy.changeTokenAddress('USDC', await mockUSDC.getAddress())
-      })
-
       it('should allow depositing supported tokens', async () => {
         const amount = ethers.parseUnits('100', 6)
         await mockUSDT.approve(await bankProxy.getAddress(), amount)
@@ -271,7 +325,13 @@ describe('Bank', () => {
 
         await expect(
           bankProxy.depositToken(await unsupportedToken.getAddress(), 100)
-        ).to.be.revertedWith('Unsupported token')
+        ).to.be.revertedWith(ERRORS.UNSUPPORTED_TOKEN)
+      })
+
+      it('should not allow depositing zero amount', async () => {
+        await expect(
+          bankProxy.depositToken(await mockUSDT.getAddress(), 0)
+        ).to.be.revertedWith(ERRORS.AMOUNT_ZERO)
       })
 
       it('should allow owner to transfer tokens', async () => {
@@ -285,347 +345,544 @@ describe('Bank', () => {
           .to.emit(bankProxy, 'TokenTransfer')
           .withArgs(owner.address, contractor.address, await mockUSDT.getAddress(), amount)
       })
-    })
-    context('Tips System', () => {
-      describe('ETH Tips', () => {
-        const tipAmount = ethers.parseEther('3')
-        const amountPerAddress = ethers.parseEther('1')
-        const recipients: string[] = []
 
-        beforeEach(async () => {
-          recipients.length = 0
-          recipients.push(contractor.address, member1.address, member2.address)
-
-          // Fund the bank contract with ETH
-          await owner.sendTransaction({
-            to: await bankProxy.getAddress(),
-            value: ethers.parseEther('10')
-          })
-
-          // Set the tips address
-          await bankProxy.changeTipsAddress(await tipsProxy.getAddress())
-        })
-
-        it('should allow the owner to send and push tips', async () => {
-          // Send tips
-          const bankBalanceBefore = await ethers.provider.getBalance(await bankProxy.getAddress())
-          const ownerBalanceBefore = await ethers.provider.getBalance(owner.address)
-
-          await expect(bankProxy.connect(owner).sendTip(recipients, tipAmount))
-            .to.emit(bankProxy, 'SendTip')
-            .withArgs(owner.address, recipients, tipAmount)
-
-          // Verify balances after send
-          expect(await tipsProxy.getBalance(contractor.address)).to.equal(amountPerAddress)
-          expect(await tipsProxy.getBalance(member1.address)).to.equal(amountPerAddress)
-          expect(await tipsProxy.getBalance(member2.address)).to.equal(amountPerAddress)
-          expect(await ethers.provider.getBalance(await bankProxy.getAddress())).to.equal(
-            bankBalanceBefore - tipAmount
-          )
-          expect(await ethers.provider.getBalance(owner.address)).to.not.lessThanOrEqual(
-            ownerBalanceBefore - tipAmount
-          )
-
-          // Push tips
-          await expect(bankProxy.connect(owner).pushTip(recipients, tipAmount))
-            .to.emit(bankProxy, 'PushTip')
-            .withArgs(owner.address, recipients, tipAmount)
-
-          expect(await ethers.provider.getBalance(await bankProxy.getAddress())).to.equal(
-            bankBalanceBefore - (tipAmount + tipAmount)
-          )
-          expect(await ethers.provider.getBalance(owner.address)).to.not.lessThanOrEqual(
-            ownerBalanceBefore - tipAmount - tipAmount
-          )
-        })
-
-        it('should not allow other addresses to send or push tips', async () => {
-          await expect(bankProxy.connect(member1).sendTip(recipients, tipAmount)).to.be.reverted
-          await expect(bankProxy.connect(member1).pushTip(recipients, tipAmount)).to.be.reverted
-        })
-      })
-
-      describe('Token Tips', () => {
-        const tipAmount = ethers.parseUnits('30', 6)
-        const amountPerAddress = ethers.parseUnits('10', 6) // 30 / 3 recipients
-        const recipients: string[] = []
-
-        beforeEach(async () => {
-          recipients.length = 0
-          recipients.push(contractor.address, member1.address, member2.address)
-
-          // Mint tokens to owner and approve bank to spend
-          await mockUSDT.mint(owner.address, tipAmount)
-          await mockUSDT.approve(await bankProxy.getAddress(), tipAmount)
-
-          // Deposit tokens to bank for tips
-          await bankProxy.depositToken(await mockUSDT.getAddress(), tipAmount)
-        })
-
-        it('should allow owner to send token tips', async () => {
-          await expect(
-            bankProxy.sendTokenTip(recipients, await mockUSDT.getAddress(), amountPerAddress)
-          )
-            .to.emit(bankProxy, 'SendTokenTip')
-            .withArgs(owner.address, recipients, await mockUSDT.getAddress(), amountPerAddress)
-        })
-
-        it('should allow owner to push token tips', async () => {
-          // Approve additional tokens for push operation
-          await mockUSDT.approve(await bankProxy.getAddress(), tipAmount)
-
-          await expect(bankProxy.pushTokenTip(recipients, await mockUSDT.getAddress(), tipAmount))
-            .to.emit(bankProxy, 'PushTokenTip')
-            .withArgs(owner.address, recipients, await mockUSDT.getAddress(), tipAmount)
-        })
-
-        it('should not allow non-owners to send or push token tips', async () => {
-          await expect(
-            bankProxy
-              .connect(member1)
-              .sendTokenTip(recipients, await mockUSDT.getAddress(), amountPerAddress)
-          ).to.be.reverted
-
-          await expect(
-            bankProxy
-              .connect(member1)
-              .pushTokenTip(recipients, await mockUSDT.getAddress(), tipAmount)
-          ).to.be.reverted
-        })
-
-        it('should not allow tips with unsupported tokens', async () => {
-          const MockToken = await ethers.getContractFactory('MockERC20')
-          const unsupportedToken = (await MockToken.deploy(
-            'UNSUPPORTED',
-            'UNS'
-          )) as unknown as MockERC20
-
-          await expect(
-            bankProxy.sendTokenTip(
-              recipients,
-              await unsupportedToken.getAddress(),
-              amountPerAddress
-            )
-          ).to.be.revertedWith('Unsupported token')
-
-          await expect(
-            bankProxy.pushTokenTip(recipients, await unsupportedToken.getAddress(), tipAmount)
-          ).to.be.revertedWith('Unsupported token')
-        })
-      })
-    })
-
-    describe('Dividend System', () => {
-      const depositAmount = ethers.parseEther('50')
-
-      beforeEach(async () => {
-        ;[owner, contractor, member1, member2] = await ethers.getSigners()
-
+      it('should not allow transferring unsupported tokens', async () => {
         const MockToken = await ethers.getContractFactory('MockERC20')
-        mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as MockERC20
-        mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as MockERC20
-
-        await deployContracts()
-
-        // Fund the bank contract
-        await owner.sendTransaction({
-          to: await bankProxy.getAddress(),
-          value: ethers.parseEther('100')
-        })
-
-        // Setup InvestorsV1 data
-        await investorProxy.distributeMint([
-          { shareholder: member1.address, amount: ethers.parseEther('60') },
-          { shareholder: member2.address, amount: ethers.parseEther('40') }
-        ])
-      })
-
-      context('Dividend Deposits', () => {
-        it('should allow owner to deposit dividends', async () => {
-          const tx = await bankProxy.depositDividends(
-            depositAmount,
-            await investorProxy.getAddress()
-          )
-
-          await expect(tx)
-            .to.emit(bankProxy, 'DividendDeposited')
-            .withArgs(owner.address, depositAmount, await investorProxy.getAddress())
-
-          // Check dividend allocation
-          expect(await bankProxy.dividendBalances(member1.address)).to.equal(
-            ethers.parseEther('30') // 60% of 50 ETH
-          )
-          expect(await bankProxy.dividendBalances(member2.address)).to.equal(
-            ethers.parseEther('20') // 40% of 50 ETH
-          )
-          expect(await bankProxy.totalDividend()).to.equal(depositAmount)
-        })
-
-        it('should not allow depositing more than unlocked balance', async () => {
-          const unlockBalance = await bankProxy.unlockBalance()
-          await expect(
-            bankProxy.depositDividends(unlockBalance + 1n, await investorProxy.getAddress())
-          ).to.be.revertedWith(ERRORS.INSUFFICIENT_UNLOCKED)
-        })
-
-        it('should not allow non-owner to deposit dividends', async () => {
-          await expect(
-            bankProxy
-              .connect(member1)
-              .depositDividends(depositAmount, await investorProxy.getAddress())
-          )
-            .to.be.revertedWithCustomError(bankProxy, 'OwnableUnauthorizedAccount')
-            .withArgs(member1.address)
-        })
-
-        it('should not allow deposit with zero investor address', async () => {
-          await expect(
-            bankProxy.depositDividends(depositAmount, ethers.ZeroAddress)
-          ).to.be.revertedWith(ERRORS.INVALID_INVESTOR)
-        })
-
-        it('should emit DividendCredited events during allocation', async () => {
-          const tx = await bankProxy.depositDividends(
-            depositAmount,
-            await investorProxy.getAddress()
-          )
-
-          await expect(tx)
-            .to.emit(bankProxy, 'DividendCredited')
-            .withArgs(member1.address, ethers.parseEther('30'))
-            .to.emit(bankProxy, 'DividendCredited')
-            .withArgs(member2.address, ethers.parseEther('20'))
-        })
-
-        it('should handle rounding with defensive remaining check', async () => {
-          // Setup uneven distribution that could cause part > remaining
-          await investorProxy.distributeMint([
-            { shareholder: member1.address, amount: ethers.parseEther('99') },
-            { shareholder: member2.address, amount: ethers.parseEther('1') }
-          ])
-
-          // Use a small amount that could cause rounding issues
-          const smallAmount = ethers.parseEther('0.000000000000000003')
-
-          // This should trigger the defensive check on line 215
-          await bankProxy.depositDividends(smallAmount, await investorProxy.getAddress())
-
-          // Verify total allocated equals original amount
-          expect(await bankProxy.totalDividend()).to.equal(smallAmount)
-
-          // Sum individual balances to verify
-          const member1Balance = await bankProxy.dividendBalances(member1.address)
-          const member2Balance = await bankProxy.dividendBalances(member2.address)
-          expect(member1Balance + member2Balance).to.equal(smallAmount)
-        })
-      })
-
-      context('Dividend Claims', () => {
-        beforeEach(async () => {
-          await bankProxy.depositDividends(depositAmount, await investorProxy.getAddress())
-        })
-
-        it('should allow shareholders to claim their dividends', async () => {
-          const member1Balance = await bankProxy.dividendBalances(member1.address)
-          const member2Balance = await bankProxy.dividendBalances(member2.address)
-
-          await expect(() => bankProxy.connect(member1).claimDividend()).to.changeEtherBalance(
-            member1,
-            member1Balance
-          )
-
-          expect(await bankProxy.dividendBalances(member1.address)).to.equal(0)
-
-          await expect(() => bankProxy.connect(member2).claimDividend()).to.changeEtherBalance(
-            member2,
-            member2Balance
-          )
-
-          expect(await bankProxy.dividendBalances(member2.address)).to.equal(0)
-          expect(await bankProxy.totalDividend()).to.equal(0)
-        })
-
-        it('should not allow claiming with zero balance', async () => {
-          await expect(bankProxy.connect(contractor).claimDividend()).to.be.revertedWith(
-            ERRORS.NOTHING_TO_RELEASE
-          )
-        })
-
-        it('should not allow claiming twice', async () => {
-          await bankProxy.connect(member1).claimDividend()
-          await expect(bankProxy.connect(member1).claimDividend()).to.be.revertedWith(
-            ERRORS.NOTHING_TO_RELEASE
-          )
-        })
-
-        it('should emit DividendClaimed event on successful claim', async () => {
-          const member1Balance = await bankProxy.dividendBalances(member1.address)
-
-          await expect(bankProxy.connect(member1).claimDividend())
-            .to.emit(bankProxy, 'DividendClaimed')
-            .withArgs(member1.address, member1Balance)
-        })
-
-        it('should not allow claims when contract is paused', async () => {
-          await bankProxy.pause()
-          await expect(bankProxy.connect(member1).claimDividend()).to.be.revertedWithCustomError(
-            bankProxy,
-            ERRORS.PAUSED
-          )
-        })
-      })
-
-      context('Balance Management', () => {
-        const depositAmount = ethers.parseEther('10')
-
-        it('should correctly track total dividend balance', async () => {
-          expect(await bankProxy.totalDividend()).to.equal(0)
-
-          await bankProxy.depositDividends(depositAmount, await investorProxy.getAddress())
-          expect(await bankProxy.totalDividend()).to.equal(depositAmount)
-
-          await bankProxy.connect(member1).claimDividend()
-          expect(await bankProxy.totalDividend()).to.equal(ethers.parseEther('4'))
-        })
-
-        it('should correctly calculate unlocked balance', async () => {
-          const initialBalance = await ethers.provider.getBalance(await bankProxy.getAddress())
-          await bankProxy.depositDividends(depositAmount, await investorProxy.getAddress())
-
-          const expectedUnlocked = initialBalance - depositAmount
-          expect(await bankProxy.unlockBalance()).to.equal(expectedUnlocked)
-        })
-      })
-    })
-
-    describe('Edge Cases', () => {
-      beforeEach(async () => {
-        ;[owner, contractor, member1, member2] = await ethers.getSigners()
-
-        const MockToken = await ethers.getContractFactory('MockERC20')
-        mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as MockERC20
-        mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as MockERC20
-
-        await deployContracts()
-
-        await owner.sendTransaction({
-          to: await bankProxy.getAddress(),
-          value: ethers.parseEther('100')
-        })
-      })
-
-      it('should handle empty shareholders case', async () => {
-        await investorProxy
-          .connect(member1)
-          .transfer(owner.address, await investorProxy.balanceOf(member1.address))
-        await investorProxy
-          .connect(member2)
-          .transfer(owner.address, await investorProxy.balanceOf(member2.address))
+        const unsupportedToken = (await MockToken.deploy(
+          'UNSUPPORTED',
+          'UNS'
+        )) as unknown as MockERC20
 
         await expect(
-          bankProxy.depositDividends(ethers.parseEther('50'), await investorProxy.getAddress())
-        ).to.be.revertedWith(ERRORS.ZERO_SUPPLY)
+          bankProxy.transferToken(await unsupportedToken.getAddress(), contractor.address, 100)
+        ).to.be.revertedWith(ERRORS.UNSUPPORTED_TOKEN)
       })
+
+      it('should not allow transferring to zero address', async () => {
+        await expect(
+          bankProxy.transferToken(await mockUSDT.getAddress(), ethers.ZeroAddress, 100)
+        ).to.be.revertedWith(ERRORS.ZERO_ADDRESS)
+      })
+
+      it('should not allow transferring zero amount', async () => {
+        await expect(
+          bankProxy.transferToken(await mockUSDT.getAddress(), contractor.address, 0)
+        ).to.be.revertedWith(ERRORS.AMOUNT_ZERO)
+      })
+
+      it('should not allow transferring more than unlocked token balance', async () => {
+        const amount = ethers.parseUnits('10', 6)
+        await mockUSDT.approve(await bankProxy.getAddress(), amount)
+        await bankProxy.depositToken(await mockUSDT.getAddress(), amount)
+
+        const excessAmount = ethers.parseUnits('20', 6)
+        await expect(
+          bankProxy.transferToken(await mockUSDT.getAddress(), contractor.address, excessAmount)
+        ).to.be.revertedWith('Insufficient unlocked token balance')
+      })
+    })
+
+    context('Balance Queries', () => {
+      it('should correctly return unlocked token balance', async () => {
+        const amount = ethers.parseUnits('100', 6)
+        await mockUSDT.approve(await bankProxy.getAddress(), amount)
+        await bankProxy.depositToken(await mockUSDT.getAddress(), amount)
+
+        expect(await bankProxy.getUnlockedTokenBalance(await mockUSDT.getAddress())).to.equal(
+          amount
+        )
+      })
+
+      it('should correctly return token dividend balance', async () => {
+        expect(
+          await bankProxy.getTokenDividendBalance(await mockUSDT.getAddress(), member1.address)
+        ).to.equal(0)
+      })
+
+      it('should reject unsupported token in getUnlockedTokenBalance', async () => {
+        const MockToken = await ethers.getContractFactory('MockERC20')
+        const unsupportedToken = (await MockToken.deploy(
+          'UNSUPPORTED',
+          'UNS'
+        )) as unknown as MockERC20
+
+        await expect(
+          bankProxy.getUnlockedTokenBalance(await unsupportedToken.getAddress())
+        ).to.be.revertedWith(ERRORS.UNSUPPORTED_TOKEN)
+      })
+
+      it('should reject unsupported token in getTokenDividendBalance', async () => {
+        const MockToken = await ethers.getContractFactory('MockERC20')
+        const unsupportedToken = (await MockToken.deploy(
+          'UNSUPPORTED',
+          'UNS'
+        )) as unknown as MockERC20
+
+        await expect(
+          bankProxy.getTokenDividendBalance(
+            await unsupportedToken.getAddress(),
+            member1.address
+          )
+        ).to.be.revertedWith(ERRORS.UNSUPPORTED_TOKEN)
+      })
+    })
+  })
+
+  describe('Dividend System', () => {
+    const depositAmount = ethers.parseEther('50')
+
+    beforeEach(async () => {
+      ;[owner, contractor, member1, member2] = await ethers.getSigners()
+
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as unknown as MockERC20
+      mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as unknown as MockERC20
+
+      await deployContracts()
+
+      // Fund the bank contract
+      await owner.sendTransaction({
+        to: await bankProxy.getAddress(),
+        value: ethers.parseEther('100')
+      })
+
+      // Setup InvestorsV1 data
+      await investorProxy.distributeMint([
+        { shareholder: member1.address, amount: ethers.parseEther('60') },
+        { shareholder: member2.address, amount: ethers.parseEther('40') }
+      ])
+    })
+
+    context('ETH Dividend Deposits', () => {
+      it('should allow owner to deposit dividends', async () => {
+        const tx = await bankProxy.depositDividends(
+          depositAmount,
+          await investorProxy.getAddress()
+        )
+
+        await expect(tx)
+          .to.emit(bankProxy, 'DividendDeposited')
+          .withArgs(owner.address, depositAmount, await investorProxy.getAddress())
+
+        // Check dividend allocation
+        expect(await bankProxy.dividendBalances(member1.address)).to.equal(
+          ethers.parseEther('30') // 60% of 50 ETH
+        )
+        expect(await bankProxy.dividendBalances(member2.address)).to.equal(
+          ethers.parseEther('20') // 40% of 50 ETH
+        )
+        expect(await bankProxy.totalDividends()).to.equal(depositAmount)
+      })
+
+      it('should not allow depositing more than unlocked balance', async () => {
+        const unlockBalance = await bankProxy.getUnlockedBalance()
+        await expect(
+          bankProxy.depositDividends(unlockBalance + 1n, await investorProxy.getAddress())
+        ).to.be.revertedWith(ERRORS.INSUFFICIENT_UNLOCKED)
+      })
+
+      it('should not allow non-owner to deposit dividends', async () => {
+        await expect(
+          bankProxy
+            .connect(member1)
+            .depositDividends(depositAmount, await investorProxy.getAddress())
+        )
+          .to.be.revertedWithCustomError(bankProxy, 'OwnableUnauthorizedAccount')
+          .withArgs(member1.address)
+      })
+
+      it('should not allow deposit with zero investor address', async () => {
+        await expect(
+          bankProxy.depositDividends(depositAmount, ethers.ZeroAddress)
+        ).to.be.revertedWith(ERRORS.INVALID_INVESTOR)
+      })
+
+      it('should emit DividendCredited events during allocation', async () => {
+        const tx = await bankProxy.depositDividends(
+          depositAmount,
+          await investorProxy.getAddress()
+        )
+
+        await expect(tx)
+          .to.emit(bankProxy, 'DividendCredited')
+          .withArgs(member1.address, ethers.parseEther('30'))
+        await expect(tx)
+          .to.emit(bankProxy, 'DividendCredited')
+          .withArgs(member2.address, ethers.parseEther('20'))
+      })
+
+      it('should handle rounding with defensive remaining check', async () => {
+        // Setup uneven distribution that could cause share > remaining
+        await investorProxy.distributeMint([
+          { shareholder: member1.address, amount: ethers.parseEther('99') },
+          { shareholder: member2.address, amount: ethers.parseEther('1') }
+        ])
+
+        // Use a small amount that could cause rounding issues
+        const smallAmount = ethers.parseEther('0.000000000000000003')
+
+        await bankProxy.depositDividends(smallAmount, await investorProxy.getAddress())
+
+        // Verify total allocated equals original amount
+        expect(await bankProxy.totalDividends()).to.equal(smallAmount)
+
+        // Sum individual balances to verify
+        const member1Balance = await bankProxy.dividendBalances(member1.address)
+        const member2Balance = await bankProxy.dividendBalances(member2.address)
+        expect(member1Balance + member2Balance).to.equal(smallAmount)
+      })
+    })
+
+    context('ETH Dividend Claims', () => {
+      beforeEach(async () => {
+        await bankProxy.depositDividends(depositAmount, await investorProxy.getAddress())
+      })
+
+      it('should allow shareholders to claim their dividends', async () => {
+        const member1Balance = await bankProxy.dividendBalances(member1.address)
+        const member2Balance = await bankProxy.dividendBalances(member2.address)
+
+        await expect(() => bankProxy.connect(member1).claimDividend()).to.changeEtherBalance(
+          member1,
+          member1Balance
+        )
+
+        expect(await bankProxy.dividendBalances(member1.address)).to.equal(0)
+
+        await expect(() => bankProxy.connect(member2).claimDividend()).to.changeEtherBalance(
+          member2,
+          member2Balance
+        )
+
+        expect(await bankProxy.dividendBalances(member2.address)).to.equal(0)
+        expect(await bankProxy.totalDividends()).to.equal(0)
+      })
+
+      it('should not allow claiming with zero balance', async () => {
+        await expect(bankProxy.connect(contractor).claimDividend()).to.be.revertedWith(
+          ERRORS.NOTHING_TO_RELEASE
+        )
+      })
+
+      it('should not allow claiming twice', async () => {
+        await bankProxy.connect(member1).claimDividend()
+        await expect(bankProxy.connect(member1).claimDividend()).to.be.revertedWith(
+          ERRORS.NOTHING_TO_RELEASE
+        )
+      })
+
+      it('should emit DividendClaimed event on successful claim', async () => {
+        const member1Balance = await bankProxy.dividendBalances(member1.address)
+
+        await expect(bankProxy.connect(member1).claimDividend())
+          .to.emit(bankProxy, 'DividendClaimed')
+          .withArgs(member1.address, member1Balance)
+      })
+
+      it('should not allow claims when contract is paused', async () => {
+        await bankProxy.pause()
+        await expect(bankProxy.connect(member1).claimDividend()).to.be.revertedWithCustomError(
+          bankProxy,
+          ERRORS.PAUSED
+        )
+      })
+    })
+
+    context('Token Dividend Deposits', () => {
+      const tokenDepositAmount = ethers.parseUnits('1000', 6)
+
+      beforeEach(async () => {
+        // Mint and deposit tokens to bank
+        await mockUSDT.mint(owner.address, tokenDepositAmount)
+        await mockUSDT.approve(await bankProxy.getAddress(), tokenDepositAmount)
+        await bankProxy.depositToken(await mockUSDT.getAddress(), tokenDepositAmount)
+      })
+
+      it('should allow owner to deposit token dividends', async () => {
+        const dividendAmount = ethers.parseUnits('600', 6)
+
+        const tx = await bankProxy.depositTokenDividends(
+          await mockUSDT.getAddress(),
+          dividendAmount,
+          await investorProxy.getAddress()
+        )
+
+        await expect(tx)
+          .to.emit(bankProxy, 'TokenDividendDeposited')
+          .withArgs(
+            owner.address,
+            await mockUSDT.getAddress(),
+            dividendAmount,
+            await investorProxy.getAddress()
+          )
+
+        // Check token dividend allocation (60/40 split)
+        const member1TokenBalance = await bankProxy.getTokenDividendBalance(
+          await mockUSDT.getAddress(),
+          member1.address
+        )
+        const member2TokenBalance = await bankProxy.getTokenDividendBalance(
+          await mockUSDT.getAddress(),
+          member2.address
+        )
+
+        expect(member1TokenBalance).to.equal(ethers.parseUnits('360', 6)) // 60%
+        expect(member2TokenBalance).to.equal(ethers.parseUnits('240', 6)) // 40%
+        expect(await bankProxy.totalTokenDividends(await mockUSDT.getAddress())).to.equal(
+          dividendAmount
+        )
+      })
+
+      it('should not allow depositing unsupported token dividends', async () => {
+        const MockToken = await ethers.getContractFactory('MockERC20')
+        const unsupportedToken = (await MockToken.deploy(
+          'UNSUPPORTED',
+          'UNS'
+        )) as unknown as MockERC20
+
+        await expect(
+          bankProxy.depositTokenDividends(
+            await unsupportedToken.getAddress(),
+            100,
+            await investorProxy.getAddress()
+          )
+        ).to.be.revertedWith(ERRORS.UNSUPPORTED_TOKEN)
+      })
+
+      it('should not allow depositing zero amount token dividends', async () => {
+        await expect(
+          bankProxy.depositTokenDividends(
+            await mockUSDT.getAddress(),
+            0,
+            await investorProxy.getAddress()
+          )
+        ).to.be.revertedWith(ERRORS.AMOUNT_ZERO)
+      })
+
+      it('should not allow depositing more than unlocked token balance', async () => {
+        const excessAmount = ethers.parseUnits('2000', 6)
+        await expect(
+          bankProxy.depositTokenDividends(
+            await mockUSDT.getAddress(),
+            excessAmount,
+            await investorProxy.getAddress()
+          )
+        ).to.be.revertedWith(ERRORS.INSUFFICIENT_BANK_BALANCE)
+      })
+
+      it('should emit TokenDividendCredited events during allocation', async () => {
+        const dividendAmount = ethers.parseUnits('600', 6)
+
+        const tx = await bankProxy.depositTokenDividends(
+          await mockUSDT.getAddress(),
+          dividendAmount,
+          await investorProxy.getAddress()
+        )
+
+        await expect(tx)
+          .to.emit(bankProxy, 'TokenDividendCredited')
+          .withArgs(member1.address, await mockUSDT.getAddress(), ethers.parseUnits('360', 6))
+        await expect(tx)
+          .to.emit(bankProxy, 'TokenDividendCredited')
+          .withArgs(member2.address, await mockUSDT.getAddress(), ethers.parseUnits('240', 6))
+      })
+    })
+
+    context('Token Dividend Claims', () => {
+      const tokenDepositAmount = ethers.parseUnits('1000', 6)
+      const dividendAmount = ethers.parseUnits('600', 6)
+
+      beforeEach(async () => {
+        // Mint and deposit tokens to bank
+        await mockUSDT.mint(owner.address, tokenDepositAmount)
+        await mockUSDT.approve(await bankProxy.getAddress(), tokenDepositAmount)
+        await bankProxy.depositToken(await mockUSDT.getAddress(), tokenDepositAmount)
+
+        // Deposit token dividends
+        await bankProxy.depositTokenDividends(
+          await mockUSDT.getAddress(),
+          dividendAmount,
+          await investorProxy.getAddress()
+        )
+      })
+
+      it('should allow shareholders to claim their token dividends', async () => {
+        const member1Balance = await bankProxy.getTokenDividendBalance(
+          await mockUSDT.getAddress(),
+          member1.address
+        )
+        const member2Balance = await bankProxy.getTokenDividendBalance(
+          await mockUSDT.getAddress(),
+          member2.address
+        )
+
+        await expect(
+          bankProxy.connect(member1).claimTokenDividend(await mockUSDT.getAddress())
+        ).to.changeTokenBalance(mockUSDT, member1, member1Balance)
+
+        expect(
+          await bankProxy.getTokenDividendBalance(await mockUSDT.getAddress(), member1.address)
+        ).to.equal(0)
+
+        await expect(
+          bankProxy.connect(member2).claimTokenDividend(await mockUSDT.getAddress())
+        ).to.changeTokenBalance(mockUSDT, member2, member2Balance)
+
+        expect(
+          await bankProxy.getTokenDividendBalance(await mockUSDT.getAddress(), member2.address)
+        ).to.equal(0)
+        expect(await bankProxy.totalTokenDividends(await mockUSDT.getAddress())).to.equal(0)
+      })
+
+      it('should not allow claiming unsupported token dividends', async () => {
+        const MockToken = await ethers.getContractFactory('MockERC20')
+        const unsupportedToken = (await MockToken.deploy(
+          'UNSUPPORTED',
+          'UNS'
+        )) as unknown as MockERC20
+
+        await expect(
+          bankProxy.connect(member1).claimTokenDividend(await unsupportedToken.getAddress())
+        ).to.be.revertedWith(ERRORS.UNSUPPORTED_TOKEN)
+      })
+
+      it('should not allow claiming with zero balance', async () => {
+        await expect(
+          bankProxy.connect(contractor).claimTokenDividend(await mockUSDT.getAddress())
+        ).to.be.revertedWith(ERRORS.NOTHING_TO_RELEASE)
+      })
+
+      it('should not allow claiming twice', async () => {
+        await bankProxy.connect(member1).claimTokenDividend(await mockUSDT.getAddress())
+        await expect(
+          bankProxy.connect(member1).claimTokenDividend(await mockUSDT.getAddress())
+        ).to.be.revertedWith(ERRORS.NOTHING_TO_RELEASE)
+      })
+
+      it('should emit TokenDividendClaimed event on successful claim', async () => {
+        const member1Balance = await bankProxy.getTokenDividendBalance(
+          await mockUSDT.getAddress(),
+          member1.address
+        )
+
+        await expect(bankProxy.connect(member1).claimTokenDividend(await mockUSDT.getAddress()))
+          .to.emit(bankProxy, 'TokenDividendClaimed')
+          .withArgs(member1.address, await mockUSDT.getAddress(), member1Balance)
+      })
+
+      it('should not allow claims when contract is paused', async () => {
+        await bankProxy.pause()
+        await expect(
+          bankProxy.connect(member1).claimTokenDividend(await mockUSDT.getAddress())
+        ).to.be.revertedWithCustomError(bankProxy, ERRORS.PAUSED)
+      })
+    })
+
+    context('Balance Management', () => {
+      const depositAmount = ethers.parseEther('10')
+
+      it('should correctly track total dividend balance', async () => {
+        expect(await bankProxy.totalDividends()).to.equal(0)
+
+        await bankProxy.depositDividends(depositAmount, await investorProxy.getAddress())
+        expect(await bankProxy.totalDividends()).to.equal(depositAmount)
+
+        await bankProxy.connect(member1).claimDividend()
+        expect(await bankProxy.totalDividends()).to.equal(ethers.parseEther('4'))
+      })
+
+      it('should correctly calculate unlocked balance', async () => {
+        const initialBalance = await ethers.provider.getBalance(await bankProxy.getAddress())
+        await bankProxy.depositDividends(depositAmount, await investorProxy.getAddress())
+
+        const expectedUnlocked = initialBalance - depositAmount
+        expect(await bankProxy.getUnlockedBalance()).to.equal(expectedUnlocked)
+      })
+
+      it('should correctly track total token dividend balance', async () => {
+        const tokenAmount = ethers.parseUnits('1000', 6)
+        const dividendAmount = ethers.parseUnits('600', 6)
+
+        // Setup
+        await mockUSDT.mint(owner.address, tokenAmount)
+        await mockUSDT.approve(await bankProxy.getAddress(), tokenAmount)
+        await bankProxy.depositToken(await mockUSDT.getAddress(), tokenAmount)
+
+        expect(await bankProxy.totalTokenDividends(await mockUSDT.getAddress())).to.equal(0)
+
+        await bankProxy.depositTokenDividends(
+          await mockUSDT.getAddress(),
+          dividendAmount,
+          await investorProxy.getAddress()
+        )
+        expect(await bankProxy.totalTokenDividends(await mockUSDT.getAddress())).to.equal(
+          dividendAmount
+        )
+
+        await bankProxy.connect(member1).claimTokenDividend(await mockUSDT.getAddress())
+        expect(await bankProxy.totalTokenDividends(await mockUSDT.getAddress())).to.equal(
+          ethers.parseUnits('240', 6) // 40% remaining
+        )
+      })
+
+      it('should correctly calculate unlocked token balance', async () => {
+        const tokenAmount = ethers.parseUnits('1000', 6)
+        const dividendAmount = ethers.parseUnits('600', 6)
+
+        await mockUSDT.mint(owner.address, tokenAmount)
+        await mockUSDT.approve(await bankProxy.getAddress(), tokenAmount)
+        await bankProxy.depositToken(await mockUSDT.getAddress(), tokenAmount)
+
+        expect(await bankProxy.getUnlockedTokenBalance(await mockUSDT.getAddress())).to.equal(
+          tokenAmount
+        )
+
+        await bankProxy.depositTokenDividends(
+          await mockUSDT.getAddress(),
+          dividendAmount,
+          await investorProxy.getAddress()
+        )
+
+        const expectedUnlocked = tokenAmount - dividendAmount
+        expect(await bankProxy.getUnlockedTokenBalance(await mockUSDT.getAddress())).to.equal(
+          expectedUnlocked
+        )
+      })
+    })
+  })
+
+  describe('Edge Cases', () => {
+    beforeEach(async () => {
+      ;[owner, contractor, member1, member2] = await ethers.getSigners()
+
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as unknown as MockERC20
+      mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as unknown as MockERC20
+
+      await deployContracts()
+
+      await owner.sendTransaction({
+        to: await bankProxy.getAddress(),
+        value: ethers.parseEther('100')
+      })
+
+      await investorProxy.distributeMint([
+        { shareholder: member1.address, amount: ethers.parseEther('60') },
+        { shareholder: member2.address, amount: ethers.parseEther('40') }
+      ])
+    })
+
+    it('should handle empty shareholders case', async () => {
+      await investorProxy
+        .connect(member1)
+        .transfer(owner.address, await investorProxy.balanceOf(member1.address))
+      await investorProxy
+        .connect(member2)
+        .transfer(owner.address, await investorProxy.balanceOf(member2.address))
+
+      await expect(
+        bankProxy.depositDividends(ethers.parseEther('50'), await investorProxy.getAddress())
+      ).to.be.revertedWith(ERRORS.ZERO_SUPPLY)
     })
   })
 })
