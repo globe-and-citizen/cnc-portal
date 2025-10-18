@@ -50,7 +50,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * This represents the total dividends allocated to shareholders but not yet claimed
    * Only spendable by investor shareholders through the claim mechanism
    */
-  uint256 public totalDividend;
+  uint256 public totalDividends;
 
   /**
    * @dev Mapping to track total locked token balances for each supported token
@@ -98,13 +98,13 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
 
   /**
    * @dev Emitted when a token address is changed for a given symbol.
-   * @param addressWhoChanged The address that initiated the change (contract owner).
+   * @param account The address that initiated the change (contract owner).
    * @param tokenSymbol The symbol of the token (e.g., "USDT", "USDC").
    * @param oldAddress The previous token contract address.
    * @param newAddress The new token contract address.
    */
   event TokenAddressChanged(
-    address indexed addressWhoChanged,
+    address indexed account,
     string tokenSymbol,
     address indexed oldAddress,
     address indexed newAddress
@@ -234,7 +234,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   function getUnlockedBalance() public view returns (uint256) {
     uint256 bal = address(this).balance;
-    return bal > totalDividend ? bal - totalDividend : 0;
+    return bal > totalDividends ? bal - totalDividends : 0;
   }
 
   /**
@@ -258,6 +258,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @return The amount of token dividends available for claiming
    */
   function getTokenDividendBalance(address _token, address _account) public view returns (uint256) {
+    require(supportedTokens[_token], 'Unsupported token');
     return tokenDividendBalances[_token][_account];
   }
 
@@ -266,7 +267,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @param _amount The amount to be checked against unlocked balance
    * @custom:security Prevents spending of funds allocated as dividends
    */
-  modifier UsesUnlockedBalance(uint256 _amount) {
+  modifier requiresUnlockedBalance(uint256 _amount) {
     require(_amount <= getUnlockedBalance(), 'Insufficient unlocked balance');
     _;
   }
@@ -299,12 +300,12 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @dev Only owner can call this function and only unlocked balance can be transferred
    * @param _to The recipient address
    * @param _amount The amount of ETH/native tokens to transfer
-   * @custom:security Uses UsesUnlockedBalance modifier to prevent spending dividend funds
+   * @custom:security Uses requiresUnlockedBalance modifier to prevent spending dividend funds
    */
   function transfer(
     address _to,
     uint256 _amount
-  ) external onlyOwner nonReentrant whenNotPaused UsesUnlockedBalance(_amount) {
+  ) external onlyOwner nonReentrant whenNotPaused requiresUnlockedBalance(_amount) {
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
 
@@ -359,8 +360,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   function depositDividends(
     uint256 _amount,
     address _investorAddress
-  ) external payable onlyOwner whenNotPaused nonReentrant UsesUnlockedBalance(_amount) {
-    require(_amount <= (address(this).balance - totalDividend), 'Insufficient balance in the bank');
+  ) external payable onlyOwner whenNotPaused nonReentrant requiresUnlockedBalance(_amount) {
+    require(_amount <= (address(this).balance - totalDividends), 'Insufficient balance in the bank');
     require(_investorAddress != address(0), 'Investor address invalid');
 
     allocateDividends(_amount, _investorAddress);
@@ -401,32 +402,32 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @custom:precision Handles rounding by giving remainder to last shareholder
    */
   function allocateDividends(uint256 _amount, address _investorAddress) internal whenNotPaused {
-    IInvestorView inv = IInvestorView(_investorAddress);
-    IInvestorView.Shareholder[] memory holders = inv.getShareholders();
-    uint256 supply = inv.totalSupply();
+    IInvestorView investor = IInvestorView(_investorAddress);
+    IInvestorView.Shareholder[] memory holders = investor.getShareholders();
+    uint256 supply = investor.totalSupply();
 
-    require(supply > 0, 'Splitter: zero supply');
-    require(holders.length > 0, 'Splitter: no holders');
+    require(supply > 0, 'Zero supply');
+    require(holders.length > 0, 'No shareholders');
 
     uint256 remaining = _amount;
-    uint256 n = holders.length;
+    uint256 shareholderCount = holders.length;
 
-    for (uint256 i = 0; i < n; ++i) {
-      address acct = holders[i].shareholder;
-      uint256 bal = holders[i].amount;
+    for (uint256 i = 0; i < shareholderCount; ++i) {
+      address account = holders[i].shareholder;
+      uint256 balance = holders[i].amount;
 
-      uint256 part = (_amount * bal) / supply;
-      if (i == n - 1) {
-        part = remaining; // ensure exact sum
-      } else if (part > remaining) {
-        part = remaining; // defensive clamp
+      uint256 share = (_amount * balance) / supply;
+      if (i == shareholderCount - 1) {
+        share = remaining; // ensure exact sum
+      } else if (share > remaining) {
+        share = remaining; // defensive clamp
       }
 
-      if (part > 0) {
-        dividendBalances[acct] += part;
-        totalDividend += part;
-        remaining -= part;
-        emit DividendCredited(acct, part);
+      if (share > 0) {
+        dividendBalances[account] += share;
+        totalDividends += share;
+        remaining -= share;
+        emit DividendCredited(account, share);
       }
     }
   }
@@ -444,32 +445,32 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 _amount,
     address _investorAddress
   ) internal whenNotPaused {
-    IInvestorView inv = IInvestorView(_investorAddress);
-    IInvestorView.Shareholder[] memory holders = inv.getShareholders();
-    uint256 supply = inv.totalSupply();
+    IInvestorView investor = IInvestorView(_investorAddress);
+    IInvestorView.Shareholder[] memory holders = investor.getShareholders();
+    uint256 supply = investor.totalSupply();
 
-    require(supply > 0, 'Splitter: zero supply');
-    require(holders.length > 0, 'Splitter: no holders');
+    require(supply > 0, 'Zero supply');
+    require(holders.length > 0, 'No shareholders');
 
     uint256 remaining = _amount;
-    uint256 n = holders.length;
+    uint256 shareholderCount = holders.length;
 
-    for (uint256 i = 0; i < n; ++i) {
-      address acct = holders[i].shareholder;
-      uint256 bal = holders[i].amount;
+    for (uint256 i = 0; i < shareholderCount; ++i) {
+      address account = holders[i].shareholder;
+      uint256 balance = holders[i].amount;
 
-      uint256 part = (_amount * bal) / supply;
-      if (i == n - 1) {
-        part = remaining; // ensure exact sum
-      } else if (part > remaining) {
-        part = remaining; // defensive clamp
+      uint256 share = (_amount * balance) / supply;
+      if (i == shareholderCount - 1) {
+        share = remaining; // ensure exact sum
+      } else if (share > remaining) {
+        share = remaining; // defensive clamp
       }
 
-      if (part > 0) {
-        tokenDividendBalances[_token][acct] += part;
-        totalTokenDividends[_token] += part;
-        remaining -= part;
-        emit TokenDividendCredited(acct, _token, part);
+      if (share > 0) {
+        tokenDividendBalances[_token][account] += share;
+        totalTokenDividends[_token] += share;
+        remaining -= share;
+        emit TokenDividendCredited(account, _token, share);
       }
     }
   }
@@ -483,10 +484,10 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   function claimDividend() external whenNotPaused nonReentrant {
     uint256 amt = dividendBalances[msg.sender];
     require(amt > 0, 'Nothing to release');
-    require(totalDividend >= amt, 'Invariant: totalDividend too low');
+    require(totalDividends >= amt, 'Invariant: totalDividends too low');
     // effects
     dividendBalances[msg.sender] = 0;
-    totalDividend -= amt;
+    totalDividends -= amt;
 
     // interaction
     (bool sent, ) = payable(msg.sender).call{value: amt}('');
