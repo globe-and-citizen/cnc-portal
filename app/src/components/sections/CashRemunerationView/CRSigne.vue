@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useCustomFetch } from '@/composables'
 import { USDC_ADDRESS } from '@/constant'
@@ -56,7 +56,7 @@ const {
 } = useReadContract({
   functionName: 'owner',
   address: cashRemunerationAddress,
-  abi: CashRemuneration_ABI
+  abi: CASH_REMUNERATION_EIP712_ABI
 })
 
 // Compute if user has approval access (is cash remuneration contract owner)

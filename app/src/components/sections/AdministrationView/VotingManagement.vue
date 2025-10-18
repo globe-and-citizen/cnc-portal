@@ -22,13 +22,13 @@
             ? unpause({
                 functionName: 'unpause',
                 args: [],
-                abi: VotingABI,
+                abi: VOTING_ABI,
                 address: votingAddress
               })
             : pause({
                 functionName: 'pause',
                 args: [],
-                abi: VotingABI,
+                abi: VOTING_ABI,
                 address: votingAddress
               })
         "
@@ -62,7 +62,7 @@
             transferOwnership({
               functionName: 'transferOwnership',
               args: [boardOfDirectorsAddress],
-              abi: VotingABI,
+              abi: VOTING_ABI,
               address: votingAddress
             })
           "
@@ -80,8 +80,8 @@
         async (newOwner: string) => {
           transferOwnership({
             functionName: 'transferOwnership',
-            args: [newOwner],
-            abi: VotingABI,
+            args: [newOwner as `0x${string}`],
+            abi: VOTING_ABI,
             address: votingAddress as Address
           })
         }
@@ -98,7 +98,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import VotingABI from '@/artifacts/abi/voting.json'
+import { VOTING_ABI } from '@/artifacts/abi/voting'
 import type { Address } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 
@@ -129,7 +129,7 @@ const {
 } = useReadContract({
   address: votingAddress,
   functionName: 'paused',
-  abi: VotingABI
+  abi: VOTING_ABI
 })
 
 const {
@@ -140,7 +140,7 @@ const {
 } = useReadContract({
   address: votingAddress,
   functionName: 'owner',
-  abi: VotingABI
+  abi: VOTING_ABI
 })
 
 const {

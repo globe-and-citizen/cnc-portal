@@ -6,7 +6,7 @@
 
   <!-- Inline form to add new admin -->
   <form
-    @submit.prevent="handleAdminAction(newAdminAddress, 'addAdmin')"
+    @submit.prevent="handleAdminAction(newAdminAddress as `0x${string}`, 'addAdmin')"
     class="flex items-center space-x-2 mb-4"
   >
     <input
@@ -25,7 +25,7 @@
   <div id="admins-table" class="overflow-x-auto">
     <TableComponent
       :rows="
-        (admins as `0x${string}`[])?.map((admin: `0x${string}`, index: number) => ({
+        admins?.map((admin: Address, index: number) => ({
           index: index + 1,
           address: admin,
           admin: admin
@@ -65,8 +65,8 @@ import type { TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent from '@/components/TableComponent.vue'
-import CampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
-import { type Abi } from 'viem'
+import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
+import type { Address } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
 const addCampaignService = new AddCampaignService()
 
@@ -132,7 +132,7 @@ const {
 } = useReadContract({
   functionName: 'getAdminList',
   address: computed(() => props.contract?.address || ''),
-  abi: CampaignAbi as Abi
+  abi: AD_CAMPAIGN_MANAGER_ABI
 })
 
 watch(
@@ -163,18 +163,18 @@ watch(errorRemoveAdmin, () => {
   }
 })
 
-function handleAdminAction(adminAddress: string, action: string) {
+function handleAdminAction(adminAddress: Address, action: string) {
   if (action === 'removeAdmin') {
     removeAdmin({
       address: props.contract.address,
-      abi: CampaignAbi as Abi,
+      abi: AD_CAMPAIGN_MANAGER_ABI,
       functionName: 'removeAdmin',
       args: [adminAddress]
     })
   } else {
     addAdmin({
       address: props.contract.address,
-      abi: CampaignAbi as Abi,
+      abi: AD_CAMPAIGN_MANAGER_ABI,
       functionName: 'addAdmin',
       args: [adminAddress]
     })

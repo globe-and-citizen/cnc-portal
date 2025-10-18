@@ -10,7 +10,7 @@ import {
   type ContractWriteConfig,
   type ContractWriteOptions
 } from '../contracts/useContractWrites'
-import BankABI from '@/artifacts/abi/bank.json'
+import { BANK_ABI } from '@/artifacts/abi/bank'
 
 /**
  * Bank contract specific write operations
@@ -26,7 +26,7 @@ export function useBankWrites() {
   // Use the generic contract writes composable
   const baseWrites = useContractWrites({
     contractAddress: bankAddress.value!,
-    abi: BankABI,
+    abi: BANK_ABI,
     chainId: chainId.value
   } as ContractWriteConfig)
 
@@ -142,10 +142,7 @@ export function useBankWrites() {
         })
         // Also invalidate all readContract queries for this bank address
         await queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            { ...bankQueryKey, address: args ? (args[0] as `0x${string}`) : undefined }
-          ]
+          queryKey: ['readContract', { ...bankQueryKey, address: args ? args[0] : undefined }]
         })
         break
       default:

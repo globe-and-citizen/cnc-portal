@@ -114,14 +114,13 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { log } from '@/utils'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import { type Address, encodeFunctionData, formatUnits, type Abi } from 'viem'
-import { ref, watch, computed } from 'vue'
+import { type Address, encodeFunctionData, formatUnits } from 'viem'
+import { computed, ref, watch } from 'vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
-
+import { BANK_ABI } from '@/artifacts/abi/bank'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
-import BANK_ABI from '@/artifacts/abi/bank.json'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
@@ -201,6 +200,7 @@ const { isLoading: isConfirmingDistributeMint, isSuccess: isSuccessDistributingM
 
 const executePayDividends = async (value: bigint) => {
   if (isBodAction.value) {
+    if (!investorsAddress) return
     const data = encodeFunctionData({
       abi: BANK_ABI,
       functionName: 'depositDividends',
@@ -246,7 +246,7 @@ const {
   abi: BANK_ABI
 })
 
-const { isBodAction } = useBodIsBodAction(bankAddress as Address, BANK_ABI as Abi)
+const { isBodAction } = useBodIsBodAction(bankAddress as Address, BANK_ABI)
 
 const {
   data: investorsOwner,
