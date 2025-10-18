@@ -142,7 +142,12 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: BANK_ABI,
         functionName: 'initialize',
-        args: [TIPS_ADDRESS as `0x${string}`, USDT_ADDRESS as `0x${string}`, USDC_ADDRESS as `0x${string}`, currentUserAddress]
+        args: [
+          TIPS_ADDRESS as `0x${string}`,
+          USDT_ADDRESS as `0x${string}`,
+          USDC_ADDRESS as `0x${string}`,
+          currentUserAddress
+        ]
       })
     })
     deployments.push({
