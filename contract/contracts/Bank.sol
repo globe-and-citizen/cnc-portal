@@ -18,18 +18,74 @@ interface IInvestorView {
 }
 
 contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
-  // @deprecated
-  address public tipsAddress;
+  /**
+   * @dev Address of the investor contract that provides shareholder information
+   * Used to get the list of shareholders and their token amounts for dividend distribution
+   */
   address public investorAddress;
-  mapping(string => address) public supportedTokens;
-  mapping(address => uint256) public dividendBalances; // ETH/Native token dividend balance per account
-  mapping(address => mapping(address => uint256)) public tokenDividendBalances; // token => account => balance
-  uint256 public totalDividend; //locked ETH balance only spendable by investors shareholders
-  mapping(address => uint256) public totalTokenDividends; // token => total locked balance
 
+  /**
+   * @dev Mapping to track which ERC20 tokens are supported by the contract
+   * token address => true if supported, false otherwise
+   */
+  mapping(address => bool) public supportedTokens;
+
+  /**
+   * @dev Mapping to track ETH/native token dividend balances for each account
+   * account address => dividend amount available for claiming
+   */
+  mapping(address => uint256) public dividendBalances;
+
+  /**
+   * @dev Nested mapping to track ERC20 token dividend balances for each account
+   * token address => account address => dividend amount available for claiming
+   */
+  mapping(address => mapping(address => uint256)) public tokenDividendBalances;
+
+  /**
+   * @dev Total amount of ETH/native tokens locked as dividends
+   * This represents the total dividends allocated to shareholders but not yet claimed
+   * Only spendable by investor shareholders through the claim mechanism
+   */
+  uint256 public totalDividend;
+
+  /**
+   * @dev Mapping to track total locked token balances for each supported token
+   * token address => total amount locked as dividends for that token
+   * Represents the sum of all unclaimed token dividends across all shareholders
+   */
+  mapping(address => uint256) public totalTokenDividends;
+
+  /**
+   * @dev Emitted when ETH/native tokens are deposited into the contract.
+   * @param depositor The address that made the deposit.
+   * @param amount The amount of ETH/native tokens deposited.
+   */
   event Deposited(address indexed depositor, uint256 amount);
+
+  /**
+   * @dev Emitted when ERC20 tokens are deposited into the contract.
+   * @param depositor The address that made the deposit.
+   * @param token The address of the ERC20 token contract.
+   * @param amount The amount of tokens deposited.
+   */
   event TokenDeposited(address indexed depositor, address indexed token, uint256 amount);
+
+  /**
+   * @dev Emitted when ETH/native tokens are transferred from the contract.
+   * @param sender The address that initiated the transfer (contract owner).
+   * @param to The recipient address.
+   * @param amount The amount of ETH/native tokens transferred.
+   */
   event Transfer(address indexed sender, address indexed to, uint256 amount);
+
+  /**
+   * @dev Emitted when ERC20 tokens are transferred from the contract.
+   * @param sender The address that initiated the transfer (contract owner).
+   * @param to The recipient address.
+   * @param token The address of the ERC20 token contract.
+   * @param amount The amount of tokens transferred.
+   */
   event TokenTransfer(
     address indexed sender,
     address indexed to,
@@ -37,6 +93,13 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 amount
   );
 
+  /**
+   * @dev Emitted when a token address is changed for a given symbol.
+   * @param addressWhoChanged The address that initiated the change (contract owner).
+   * @param tokenSymbol The symbol of the token (e.g., "USDT", "USDC").
+   * @param oldAddress The previous token contract address.
+   * @param newAddress The new token contract address.
+   */
   event TokenAddressChanged(
     address indexed addressWhoChanged,
     string tokenSymbol,
@@ -44,30 +107,105 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     address indexed newAddress
   );
 
+  /**
+   * @dev Emitted when ETH/native token dividends are deposited for distribution.
+   * @param account The address that deposited the dividends (contract owner).
+   * @param amount The total amount of dividends deposited.
+   * @param investorAddress The address of the investor contract used for shareholder allocation.
+   */
   event DividendDeposited(address indexed account, uint256 amount, address indexed investorAddress);
+
+  /**
+   * @dev Emitted when ERC20 token dividends are deposited for distribution.
+   * @param account The address that deposited the dividends (contract owner).
+   * @param token The address of the ERC20 token contract.
+   * @param amount The total amount of token dividends deposited.
+   * @param investorAddress The address of the investor contract used for shareholder allocation.
+   */
   event TokenDividendDeposited(
     address indexed account,
     address indexed token,
     uint256 amount,
     address indexed investorAddress
   );
+
+  /**
+   * @dev Emitted when ETH/native token dividends are credited to a shareholder's account.
+   * @param account The shareholder address that received the dividend credit.
+   * @param amount The amount of dividends credited to the account.
+   */
   event DividendCredited(address indexed account, uint256 amount);
+
+  /**
+   * @dev Emitted when ERC20 token dividends are credited to a shareholder's account.
+   * @param account The shareholder address that received the dividend credit.
+   * @param token The address of the ERC20 token contract.
+   * @param amount The amount of token dividends credited to the account.
+   */
   event TokenDividendCredited(address indexed account, address indexed token, uint256 amount);
+
+  /**
+   * @dev Emitted when a shareholder claims their ETH/native token dividends.
+   * @param account The shareholder address that claimed the dividends.
+   * @param amount The amount of dividends claimed.
+   */
   event DividendClaimed(address indexed account, uint256 amount);
+
+  /**
+   * @dev Emitted when a shareholder claims their ERC20 token dividends.
+   * @param account The shareholder address that claimed the dividends.
+   * @param token The address of the ERC20 token contract.
+   * @param amount The amount of token dividends claimed.
+   */
   event TokenDividendClaimed(address indexed account, address indexed token, uint256 amount);
 
-  function initialize(
-    address _tipsAddress,
-    address _usdtAddress,
-    address _usdcAddress,
-    address _sender
-  ) public initializer {
+  /**
+   * @dev Emitted when a new token is added to the supported tokens list.
+   * @param tokenAddress The address of the token contract.
+   */
+  event TokenSupportAdded(address indexed tokenAddress);
+
+  /**
+   * @dev Emitted when a token is removed from the supported tokens list.
+   * @param tokenAddress The address of the token contract.
+   */
+  event TokenSupportRemoved(address indexed tokenAddress);
+
+  function initialize(address[] calldata _tokenAddresses, address _sender) public initializer {
     __Ownable_init(_sender);
     __ReentrancyGuard_init();
     __Pausable_init();
-    tipsAddress = _tipsAddress;
-    supportedTokens['USDT'] = _usdtAddress;
-    supportedTokens['USDC'] = _usdcAddress;
+    // Set the initial supported tokens
+    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
+      require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
+      supportedTokens[_tokenAddresses[i]] = true;
+    }
+  }
+
+  /**
+   * @notice Adds a supported token to the contract.
+   * @param _tokenAddress The address of the token contract.
+   * @dev Can only be called by the contract owner.
+   */
+  function addTokenSupport(address _tokenAddress) external onlyOwner {
+    require(_tokenAddress != address(0), 'Token address cannot be zero');
+    require(!supportedTokens[_tokenAddress], 'Token already supported');
+
+    supportedTokens[_tokenAddress] = true;
+    emit TokenSupportAdded(_tokenAddress);
+  }
+
+  /**
+   * @notice Removes a supported token from the contract.
+   * @param _tokenAddress The address of the token contract.
+   * @dev Can only be called by the contract owner.
+   */
+  function removeTokenSupport(address _tokenAddress) external onlyOwner {
+    require(_tokenAddress != address(0), 'Token address cannot be zero');
+    require(supportedTokens[_tokenAddress], 'Token not supported');
+
+    supportedTokens[_tokenAddress] = false;
+    emit TokenSupportRemoved(_tokenAddress);
   }
 
   function getUnlockedBalance() public view returns (uint256) {
@@ -76,7 +214,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   }
 
   function getUnlockedTokenBalance(address _token) public view returns (uint256) {
-    require(isTokenSupported(_token), 'Unsupported token');
+    require(supportedTokens[_token], 'Unsupported token');
     uint256 bal = IERC20(_token).balanceOf(address(this));
     uint256 locked = totalTokenDividends[_token];
     return bal > locked ? bal - locked : 0;
@@ -91,16 +229,12 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     _;
   }
 
-  function isTokenSupported(address _token) public view returns (bool) {
-    return _token == supportedTokens['USDT'] || _token == supportedTokens['USDC'];
-  }
-
   receive() external payable {
     emit Deposited(msg.sender, msg.value);
   }
 
   function depositToken(address _token, uint256 _amount) external nonReentrant whenNotPaused {
-    require(isTokenSupported(_token), 'Unsupported token');
+    require(supportedTokens[_token], 'Unsupported token');
     require(_amount > 0, 'Amount must be greater than zero');
 
     IERC20(_token).transferFrom(msg.sender, address(this), _amount);
@@ -125,12 +259,17 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     address _to,
     uint256 _amount
   ) external onlyOwner nonReentrant whenNotPaused {
-    require(isTokenSupported(_token), 'Unsupported token');
+    require(supportedTokens[_token], 'Unsupported token');
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
 
     IERC20(_token).transfer(_to, _amount);
     emit TokenTransfer(msg.sender, _to, _token, _amount);
+  }
+
+  function setInvestorAddress(address _investorAddress) external onlyOwner whenNotPaused {
+    require(_investorAddress != address(0), 'Address cannot be zero');
+    investorAddress = _investorAddress;
   }
 
   // function changeTipsAddress(address _tipsAddress) external onlyOwner whenNotPaused {
@@ -158,56 +297,6 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     emit TokenAddressChanged(msg.sender, _symbol, oldAddress, _newAddress);
   }
 
-  // function pushTip(
-  //   address[] calldata _addresses,
-  //   uint256 _amount
-  // ) external payable onlyOwner whenNotPaused {
-  //   ITips(tipsAddress).pushTip{value: _amount}(_addresses);
-  //   emit PushTip(msg.sender, _addresses, _amount);
-  // }
-
-  // function pushTokenTip(
-  //   address[] calldata _addresses,
-  //   address _token,
-  //   uint256 _amount
-  // ) external onlyOwner whenNotPaused {
-  //   require(isTokenSupported(_token), 'Unsupported token');
-  //   uint256 amountPerAddress = _amount / _addresses.length;
-
-  //   require(
-  //     IERC20(_token).transferFrom(msg.sender, address(this), _amount),
-  //     'Token transfer failed'
-  //   );
-
-  //   for (uint256 i = 0; i < _addresses.length; i++) {
-  //     require(_addresses[i] != address(0), 'Invalid address');
-  //     require(IERC20(_token).transfer(_addresses[i], amountPerAddress), 'Token transfer failed');
-  //   }
-
-  //   emit PushTokenTip(msg.sender, _addresses, _token, _amount);
-  // }
-
-  // function sendTip(
-  //   address[] calldata _addresses,
-  //   uint256 _amount
-  // ) external payable onlyOwner whenNotPaused {
-  //   ITips(tipsAddress).sendTip{value: _amount}(_addresses);
-  //   emit SendTip(msg.sender, _addresses, _amount);
-  // }
-
-  // function sendTokenTip(
-  //   address[] calldata _addresses,
-  //   address _token,
-  //   uint256 _amount
-  // ) external onlyOwner whenNotPaused {
-  //   require(isTokenSupported(_token), 'Unsupported token');
-  //   for (uint256 i = 0; i < _addresses.length; i++) {
-  //     require(_addresses[i] != address(0), 'Invalid address');
-  //     require(IERC20(_token).transfer(_addresses[i], _amount), 'Token transfer failed');
-  //   }
-  //   emit SendTokenTip(msg.sender, _addresses, _token, _amount);
-  // }
-
   function depositDividends(
     uint256 amount,
     address _investorAddress
@@ -224,7 +313,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 amount,
     address _investorAddress
   ) external onlyOwner whenNotPaused nonReentrant {
-    require(isTokenSupported(_token), 'Unsupported token');
+    require(supportedTokens[_token], 'Unsupported token');
     require(amount > 0, 'Amount must be greater than zero');
     require(_investorAddress != address(0), 'investor address invalid');
 
@@ -319,7 +408,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   }
 
   function claimTokenDividend(address _token) external whenNotPaused nonReentrant {
-    require(isTokenSupported(_token), 'Unsupported token');
+    require(supportedTokens[_token], 'Unsupported token');
     uint256 amt = tokenDividendBalances[_token][msg.sender];
     require(amt > 0, 'nothing to release');
     require(totalTokenDividends[_token] >= amt, 'Invariant: totalTokenDividends too low');
