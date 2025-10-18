@@ -57,10 +57,9 @@ import TableComponent from '@/components/TableComponent.vue'
 import { parseUnits } from 'viem/utils'
 
 import { useToastStore } from '@/stores/useToastStore'
-import CampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
+import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import { type Abi } from 'viem'
 const { addErrorToast, addSuccessToast } = useToastStore()
 const props = defineProps<{
   datas: Array<{ key: string; value: string }>
@@ -191,7 +190,7 @@ async function submit() {
         pendingTransactions.value++
         setCostPerClick({
           address: props.contractAddress as `0x${string}`,
-          abi: CampaignAbi as Abi,
+          abi: AD_CAMPAIGN_MANAGER_ABI,
           functionName: 'setCostPerClick',
           args: [parseUnits(String(costPerClick), 18)]
         })
@@ -204,7 +203,7 @@ async function submit() {
         pendingTransactions.value++
         setCostPerImpression({
           address: props.contractAddress as `0x${string}`,
-          abi: CampaignAbi as Abi,
+          abi: AD_CAMPAIGN_MANAGER_ABI,
           functionName: 'setCostPerImpression',
           args: [parseUnits(String(costPerImpression), 18)]
         })

@@ -100,7 +100,7 @@ import { log, parseError, tokenSymbol } from '@/utils'
 import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
 import { keccak256 } from 'viem'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
+import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTanstackQuery } from '@/composables'
@@ -182,7 +182,7 @@ const columns = [
 const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
   functionName: 'owner',
   address: expenseAccountEip712Address, //as unknown as Address,
-  abi: expenseAccountABI
+  abi: EXPENSE_ACCOUNT_EIP712_ABI
 })
 //deactivate approval
 const {
@@ -232,7 +232,7 @@ const deactivateApproval = async (signature: `0x{string}`) => {
   executeDeactivateApproval({
     address: expenseAccountEip712Address.value,
     args: [signatureHash],
-    abi: expenseAccountABI,
+    abi: EXPENSE_ACCOUNT_EIP712_ABI,
     functionName: 'deactivateApproval'
   })
 }
@@ -249,7 +249,7 @@ const activateApproval = async (signature: `0x{string}`) => {
   executeActivateApproval({
     address: expenseAccountEip712Address.value,
     args: [signatureHash],
-    abi: expenseAccountABI,
+    abi: EXPENSE_ACCOUNT_EIP712_ABI,
     functionName: 'activateApproval'
   })
 }

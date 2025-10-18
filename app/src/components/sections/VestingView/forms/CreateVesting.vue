@@ -100,7 +100,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { differenceInCalendarDays, differenceInMonths, differenceInYears } from '@/utils/dayUtils'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
-import VestingABI from '@/artifacts/abi/Vesting.json'
+import { VESTING_ABI } from '@/artifacts/abi/vesting'
 import { VESTING_ADDRESS } from '@/constant'
 import { parseEther, type Address, formatUnits, parseUnits } from 'viem'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
@@ -142,7 +142,7 @@ const tokenBalance = computed(() => {
   )
 })
 
-const activeMembers = computed<string[]>(() => {
+const activeMembers = computed(() => {
   if (vestingInfos.value && Array.isArray(vestingInfos.value) && vestingInfos.value.length === 2) {
     const [members] = vestingInfos.value
     return members
@@ -197,8 +197,8 @@ const {
 } = useReadContract({
   functionName: 'getTeamVestingsWithMembers',
   address: VESTING_ADDRESS as Address,
-  abi: VestingABI,
-  args: [teamStore.currentTeam?.id ?? 0]
+  abi: VESTING_ABI,
+  args: [BigInt(teamStore.currentTeam?.id ?? 0)]
 })
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
@@ -394,14 +394,14 @@ async function submit() {
   }
   addVesting({
     address: VESTING_ADDRESS as Address,
-    abi: VestingABI,
+    abi: VESTING_ABI,
     functionName: 'addVesting',
     args: [
-      teamStore.currentTeam?.id,
+      BigInt(teamStore.currentTeam?.id ?? 0),
       member.value.address as Address,
-      start,
-      durationInSeconds,
-      cliffInSeconds,
+      BigInt(start),
+      BigInt(durationInSeconds),
+      BigInt(cliffInSeconds),
       parseUnits(totalAmount.value.toString(), 6),
       props.tokenAddress as Address
     ]

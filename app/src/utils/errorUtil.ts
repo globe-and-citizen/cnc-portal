@@ -65,7 +65,7 @@ export const parseError = (error: unknown, abi: Abi | undefined = undefined) => 
 //   if (parts.some((part) => part.includes('custom error'))) {
 //     const errorData = errorString.split('custom error')[1].trim()
 //     const [selector, args] = errorData.split(' ').map((part) => part.replace(/[:.]/g, ''))
-//     const combined = `${selector}${args || ''}` as `0x${string}`
+//     const combined = `${selector}${args || ''}`
 //     if (!isHex(combined)) {
 //       return 'Contract reverted'
 //     }
