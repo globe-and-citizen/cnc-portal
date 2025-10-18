@@ -5,6 +5,7 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 interface IInvestorView {
   struct Shareholder {
@@ -18,6 +19,8 @@ interface IInvestorView {
 }
 
 contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
+  using SafeERC20 for IERC20;
+
   /**
    * @dev Address of the investor contract that provides shareholder information
    * Used to get the list of shareholders and their token amounts for dividend distribution
@@ -172,6 +175,13 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   event TokenSupportRemoved(address indexed tokenAddress);
 
   /**
+   * @dev Emitted when the investor address is updated.
+   * @param previousAddress The previous investor contract address.
+   * @param newAddress The new investor contract address.
+   */
+  event InvestorAddressUpdated(address indexed previousAddress, address indexed newAddress);
+
+  /**
    * @notice Initializes the Bank contract with supported tokens and owner
    * @dev This function replaces the constructor for upgradeable contracts
    * @param _tokenAddresses Array of ERC20 token addresses to be supported initially
@@ -179,11 +189,13 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @custom:security Only callable once due to initializer modifier
    */
   function initialize(address[] calldata _tokenAddresses, address _sender) public initializer {
+    require(_sender != address(0), 'Sender cannot be zero');
     __Ownable_init(_sender);
     __ReentrancyGuard_init();
     __Pausable_init();
     // Set the initial supported tokens
-    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
+    uint256 length = _tokenAddresses.length;
+    for (uint256 i = 0; i < length; ++i) {
       require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
       supportedTokens[_tokenAddresses[i]] = true;
     }
@@ -255,7 +267,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @custom:security Prevents spending of funds allocated as dividends
    */
   modifier UsesUnlockedBalance(uint256 _amount) {
-    require(_amount <= getUnlockedBalance(), 'insufficient unlocked ');
+    require(_amount <= getUnlockedBalance(), 'Insufficient unlocked balance');
     _;
   }
 
@@ -278,7 +290,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     require(supportedTokens[_token], 'Unsupported token');
     require(_amount > 0, 'Amount must be greater than zero');
 
-    IERC20(_token).transferFrom(msg.sender, address(this), _amount);
+    IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
     emit TokenDeposited(msg.sender, _token, _amount);
   }
 
@@ -318,8 +330,9 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     require(supportedTokens[_token], 'Unsupported token');
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
+    require(_amount <= getUnlockedTokenBalance(_token), 'Insufficient unlocked token balance');
 
-    IERC20(_token).transfer(_to, _amount);
+    IERC20(_token).safeTransfer(_to, _amount);
     emit TokenTransfer(msg.sender, _to, _token, _amount);
   }
 
@@ -331,7 +344,9 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   function setInvestorAddress(address _investorAddress) external onlyOwner whenNotPaused {
     require(_investorAddress != address(0), 'Address cannot be zero');
+    address previousAddress = investorAddress;
     investorAddress = _investorAddress;
+    emit InvestorAddressUpdated(previousAddress, _investorAddress);
   }
 
   /**
@@ -345,8 +360,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 amount,
     address _investorAddress
   ) external payable onlyOwner whenNotPaused nonReentrant UsesUnlockedBalance(amount) {
-    require(amount <= (address(this).balance - totalDividend), 'insufficient balance in the bank');
-    require(_investorAddress != address(0), 'investor address invalid');
+    require(amount <= (address(this).balance - totalDividend), 'Insufficient balance in the bank');
+    require(_investorAddress != address(0), 'Investor address invalid');
 
     allocateDividends(amount, _investorAddress);
     emit DividendDeposited(msg.sender, amount, _investorAddress);
@@ -367,12 +382,12 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   ) external onlyOwner whenNotPaused nonReentrant {
     require(supportedTokens[_token], 'Unsupported token');
     require(amount > 0, 'Amount must be greater than zero');
-    require(_investorAddress != address(0), 'investor address invalid');
+    require(_investorAddress != address(0), 'Investor address invalid');
 
     // Check if contract has enough token balance
     uint256 contractBalance = IERC20(_token).balanceOf(address(this));
     uint256 lockedBalance = totalTokenDividends[_token];
-    require(amount <= (contractBalance - lockedBalance), 'insufficient token balance in the bank');
+    require(amount <= (contractBalance - lockedBalance), 'Insufficient token balance in the bank');
 
     allocateTokenDividends(_token, amount, _investorAddress);
     emit TokenDividendDeposited(msg.sender, _token, amount, _investorAddress);
@@ -396,7 +411,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 remaining = amount;
     uint256 n = holders.length;
 
-    for (uint256 i = 0; i < n; i++) {
+    for (uint256 i = 0; i < n; ++i) {
       address acct = holders[i].shareholder;
       uint256 bal = holders[i].amount;
 
@@ -439,7 +454,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 remaining = amount;
     uint256 n = holders.length;
 
-    for (uint256 i = 0; i < n; i++) {
+    for (uint256 i = 0; i < n; ++i) {
       address acct = holders[i].shareholder;
       uint256 bal = holders[i].amount;
 
@@ -467,7 +482,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   function claimDividend() external whenNotPaused nonReentrant {
     uint256 amt = dividendBalances[msg.sender];
-    require(amt > 0, ' nothing to release');
+    require(amt > 0, 'Nothing to release');
     require(totalDividend >= amt, 'Invariant: totalDividend too low');
     // effects
     dividendBalances[msg.sender] = 0;
@@ -489,7 +504,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   function claimTokenDividend(address _token) external whenNotPaused nonReentrant {
     require(supportedTokens[_token], 'Unsupported token');
     uint256 amt = tokenDividendBalances[_token][msg.sender];
-    require(amt > 0, 'nothing to release');
+    require(amt > 0, 'Nothing to release');
     require(totalTokenDividends[_token] >= amt, 'Invariant: totalTokenDividends too low');
 
     // effects
@@ -497,7 +512,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     totalTokenDividends[_token] -= amt;
 
     // interaction
-    require(IERC20(_token).transfer(msg.sender, amt), 'Token transfer failed');
+    IERC20(_token).safeTransfer(msg.sender, amt);
     emit TokenDividendClaimed(msg.sender, _token, amt);
   }
 
