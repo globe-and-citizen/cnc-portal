@@ -58,7 +58,7 @@
                 address: VESTING_ADDRESS as Address,
                 abi: VESTING_ABI,
                 functionName: 'stopVesting',
-                args: [row.member, team?.id]
+                args: [row.member, BigInt(team?.id ?? 0)]
               })
             "
           >
@@ -81,7 +81,7 @@
                 address: VESTING_ADDRESS as Address,
                 abi: VESTING_ABI,
                 functionName: 'release',
-                args: [team?.id]
+                args: [BigInt(team?.id ?? 0)]
               })
             "
           >
@@ -162,7 +162,7 @@ const {
   functionName: 'getTeamAllArchivedVestingsFlat',
   address: VESTING_ADDRESS as Address,
   abi: VESTING_ABI,
-  args: [team?.value?.id ?? 0]
+  args: [BigInt(team?.value?.id ?? 0)]
 })
 
 watch(errorGetArchivedVestingInfo, () => {
@@ -181,7 +181,7 @@ const {
   functionName: 'getTeamVestingsWithMembers',
   address: VESTING_ADDRESS as Address,
   abi: VESTING_ABI,
-  args: [team?.value?.id ?? 0]
+  args: [BigInt(team?.value?.id ?? 0)]
 })
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
@@ -200,7 +200,9 @@ watch(
 const vestings = computed<VestingRow[]>(() => {
   const currentDateInSeconds = Math.floor(Date.now() / 1000)
 
+  // @ts-expect-error type assertion
   const allVestingsRaw: VestingTuple[] = [vestingInfos.value, archivedVestingInfos.value].filter(
+    // @ts-expect-error type assertion
     (v): v is VestingTuple =>
       Array.isArray(v) && v.length === 2 && Array.isArray(v[0]) && Array.isArray(v[1])
   )

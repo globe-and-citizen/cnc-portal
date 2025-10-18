@@ -190,6 +190,7 @@ const { isLoading: isConfirmingPayDividends, isSuccess: isSuccessPayDividends } 
 
 const executePayDividends = async (value: bigint) => {
   if (isBodAction.value) {
+    if (!investorsAddress) return
     const data = encodeFunctionData({
       abi: BANK_ABI,
       functionName: 'transfer',
@@ -206,6 +207,7 @@ const executePayDividends = async (value: bigint) => {
       data
     })
   } else {
+    if (!investorsAddress) return
     payDividends({
       abi: BANK_ABI,
       address: bankAddress as Address,

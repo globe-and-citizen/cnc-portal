@@ -117,7 +117,7 @@ const membersApprovals = async () => {
   try {
     return Promise.all(
       members.value && Array.isArray(members.value) && bodAddress.value
-        ? members.value.map(async (member: string) => {
+        ? members.value.map(async (member: Address) => {
             const isApproved = await readContract(config, {
               address: bodAddress.value as Address,
               abi: BOD_ABI,

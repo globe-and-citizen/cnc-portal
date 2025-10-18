@@ -187,6 +187,7 @@ const handleWage = async (notification: Notification) => {
 
     executeCashRemunerationWithdraw({
       address: team.value.cashRemunerationEip712Address as Address,
+      // @ts-expect-error type issue
       args: [claim, wageClaim.value.cashRemunerationSignature],
       abi: CASH_REMUNERATION_EIP712_ABI,
       functionName: 'withdraw'
