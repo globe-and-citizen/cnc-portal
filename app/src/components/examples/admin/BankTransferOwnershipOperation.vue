@@ -104,7 +104,7 @@ const {
 
 // Handle transfer ownership
 const handleTransferOwnership = async () => {
-  if (!isValidAddress.value || !newOwnerAddress.value) return
+  if (!isValidAddress.value) return
   if (newOwnerAddress.value) {
     await transferOwnership(newOwnerAddress.value)
     newOwnerAddress.value = null
