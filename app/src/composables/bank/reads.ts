@@ -72,7 +72,7 @@ export function useBankReads() {
     const addressValue = computed(() => unref(address))
     return useReadContract({
       address: bankAddress.value,
-      abi: BankABI,
+      abi: BANK_ABI,
       functionName: BANK_FUNCTION_NAMES.DIVIDEND_BALANCES,
       args: [addressValue],
       query: {
@@ -84,7 +84,7 @@ export function useBankReads() {
   const useTotalDividend = () => {
     return useReadContract({
       address: bankAddress.value,
-      abi: BankABI,
+      abi: BANK_ABI,
       functionName: BANK_FUNCTION_NAMES.TOTAL_DIVIDEND,
       query: { enabled: isBankAddressValid }
     })
@@ -93,7 +93,7 @@ export function useBankReads() {
   const useUnlockBalance = () => {
     return useReadContract({
       address: bankAddress.value,
-      abi: BankABI,
+      abi: BANK_ABI,
       functionName: BANK_FUNCTION_NAMES.UNLOCK_BALANCE,
       query: { enabled: isBankAddressValid }
     })
