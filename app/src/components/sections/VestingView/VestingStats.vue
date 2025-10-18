@@ -111,7 +111,7 @@ const {
   functionName: 'getTeamAllArchivedVestingsFlat',
   address: VESTING_ADDRESS as Address,
   abi: VESTING_ABI,
-  args: [team?.value?.id ?? 0]
+  args: [BigInt(team?.value?.id ?? 0)]
 })
 
 watch(errorGetArchivedVestingInfo, () => {
@@ -145,7 +145,7 @@ const {
   functionName: 'getTeamVestingsWithMembers',
   address: VESTING_ADDRESS as Address,
   abi: VESTING_ABI,
-  args: [team?.value?.id ?? 0]
+  args: [BigInt(team?.value?.id ?? 0)]
 })
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {

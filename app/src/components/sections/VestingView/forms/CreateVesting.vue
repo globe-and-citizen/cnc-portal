@@ -142,7 +142,7 @@ const tokenBalance = computed(() => {
   )
 })
 
-const activeMembers = computed<string[]>(() => {
+const activeMembers = computed(() => {
   if (vestingInfos.value && Array.isArray(vestingInfos.value) && vestingInfos.value.length === 2) {
     const [members] = vestingInfos.value
     return members
@@ -198,7 +198,7 @@ const {
   functionName: 'getTeamVestingsWithMembers',
   address: VESTING_ADDRESS as Address,
   abi: VESTING_ABI,
-  args: [teamStore.currentTeam?.id ?? 0]
+  args: [BigInt(teamStore.currentTeam?.id ?? 0)]
 })
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
@@ -397,11 +397,11 @@ async function submit() {
     abi: VESTING_ABI,
     functionName: 'addVesting',
     args: [
-      teamStore.currentTeam?.id,
+      BigInt(teamStore.currentTeam?.id ?? 0),
       member.value.address as Address,
-      start,
-      durationInSeconds,
-      cliffInSeconds,
+      BigInt(start),
+      BigInt(durationInSeconds),
+      BigInt(cliffInSeconds),
       parseUnits(totalAmount.value.toString(), 6),
       props.tokenAddress as Address
     ]

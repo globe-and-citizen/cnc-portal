@@ -106,6 +106,7 @@ const withdrawClaim = async () => {
       functionName: 'withdraw' as const,
       args: [claimData, props.weeklyClaim.signature as Address]
     }
+    // @ts-expect-error type issue
     const data = encodeFunctionData(args)
     // First run estimate gas to get errors
     await estimateGas(config, {
@@ -113,6 +114,7 @@ const withdrawClaim = async () => {
       data
     })
 
+    // @ts-expect-error type issue
     const hash = await withdraw({
       ...args,
       address: cashRemunerationEip712Address.value
