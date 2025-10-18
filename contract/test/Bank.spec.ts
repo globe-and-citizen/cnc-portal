@@ -20,7 +20,7 @@ describe('Bank', () => {
     NO_HOLDERS: 'No shareholders',
     NOTHING_TO_RELEASE: 'Nothing to release',
     PAUSED: 'EnforcedPause',
-    INSUFFICIENT_BANK_BALANCE: 'Insufficient balance in the bank',
+    INSUFFICIENT_BANK_BALANCE: 'Insufficient token balance in the bank',
     FAILED_TO_SEND: 'Failed to send dividend',
     UNSUPPORTED_TOKEN: 'Unsupported token',
     TOKEN_ALREADY_SUPPORTED: 'Token already supported',
@@ -873,15 +873,16 @@ describe('Bank', () => {
     })
 
     it('should handle empty shareholders case', async () => {
-      await investorProxy
-        .connect(member1)
-        .transfer(owner.address, await investorProxy.balanceOf(member1.address))
-      await investorProxy
-        .connect(member2)
-        .transfer(owner.address, await investorProxy.balanceOf(member2.address))
+      // Deploy a fresh investor contract with no tokens minted
+      const InvestorsV1Implementation = await ethers.getContractFactory('InvestorV1')
+      const emptyInvestorProxy = (await upgrades.deployProxy(
+        InvestorsV1Implementation,
+        ['EMPTY', 'EMPT', await owner.getAddress()],
+        { initializer: 'initialize' }
+      )) as unknown as InvestorV1
 
       await expect(
-        bankProxy.depositDividends(ethers.parseEther('50'), await investorProxy.getAddress())
+        bankProxy.depositDividends(ethers.parseEther('50'), await emptyInvestorProxy.getAddress())
       ).to.be.revertedWith(ERRORS.ZERO_SUPPLY)
     })
   })
