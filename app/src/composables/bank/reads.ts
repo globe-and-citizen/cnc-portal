@@ -94,7 +94,7 @@ export function useBankReads() {
     return useReadContract({
       address: bankAddress.value,
       abi: BANK_ABI,
-      functionName: BANK_FUNCTION_NAMES.UNLOCK_BALANCE,
+      functionName: BANK_FUNCTION_NAMES.GET_UNLOCK_BALANCE,
       query: { enabled: isBankAddressValid }
     })
   }

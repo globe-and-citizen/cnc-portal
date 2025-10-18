@@ -352,55 +352,55 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   /**
    * @notice Deposits ETH/native token dividends and allocates them to shareholders
    * @dev Allocates dividends proportionally based on shareholdings from investor contract
-   * @param amount The amount of ETH/native tokens to allocate as dividends
+   * @param _amount The amount of ETH/native tokens to allocate as dividends
    * @param _investorAddress The address of the investor contract to get shareholder data
    * @custom:security Only owner can call, uses unlocked balance, protected against reentrancy
    */
   function depositDividends(
-    uint256 amount,
+    uint256 _amount,
     address _investorAddress
-  ) external payable onlyOwner whenNotPaused nonReentrant UsesUnlockedBalance(amount) {
-    require(amount <= (address(this).balance - totalDividend), 'Insufficient balance in the bank');
+  ) external payable onlyOwner whenNotPaused nonReentrant UsesUnlockedBalance(_amount) {
+    require(_amount <= (address(this).balance - totalDividend), 'Insufficient balance in the bank');
     require(_investorAddress != address(0), 'Investor address invalid');
 
-    allocateDividends(amount, _investorAddress);
-    emit DividendDeposited(msg.sender, amount, _investorAddress);
+    allocateDividends(_amount, _investorAddress);
+    emit DividendDeposited(msg.sender, _amount, _investorAddress);
   }
 
   /**
    * @notice Deposits ERC20 token dividends and allocates them to shareholders
    * @dev Allocates token dividends proportionally based on shareholdings from investor contract
    * @param _token The address of the ERC20 token contract
-   * @param amount The amount of tokens to allocate as dividends
+   * @param _amount The amount of tokens to allocate as dividends
    * @param _investorAddress The address of the investor contract to get shareholder data
    * @custom:security Only owner can call, validates token support, protected against reentrancy
    */
   function depositTokenDividends(
     address _token,
-    uint256 amount,
+    uint256 _amount,
     address _investorAddress
   ) external onlyOwner whenNotPaused nonReentrant {
     require(supportedTokens[_token], 'Unsupported token');
-    require(amount > 0, 'Amount must be greater than zero');
+    require(_amount > 0, 'Amount must be greater than zero');
     require(_investorAddress != address(0), 'Investor address invalid');
 
     // Check if contract has enough token balance
     uint256 contractBalance = IERC20(_token).balanceOf(address(this));
     uint256 lockedBalance = totalTokenDividends[_token];
-    require(amount <= (contractBalance - lockedBalance), 'Insufficient token balance in the bank');
+    require(_amount <= (contractBalance - lockedBalance), 'Insufficient token balance in the bank');
 
-    allocateTokenDividends(_token, amount, _investorAddress);
-    emit TokenDividendDeposited(msg.sender, _token, amount, _investorAddress);
+    allocateTokenDividends(_token, _amount, _investorAddress);
+    emit TokenDividendDeposited(msg.sender, _token, _amount, _investorAddress);
   }
 
   /**
    * @dev Internal function to allocate ETH/native token dividends to shareholders
-   * @param amount The total amount of dividends to allocate
+   * @param _amount The total amount of dividends to allocate
    * @param _investorAddress The investor contract address to get shareholder information
    * @custom:logic Uses proportional allocation based on shareholder token amounts
    * @custom:precision Handles rounding by giving remainder to last shareholder
    */
-  function allocateDividends(uint256 amount, address _investorAddress) internal whenNotPaused {
+  function allocateDividends(uint256 _amount, address _investorAddress) internal whenNotPaused {
     IInvestorView inv = IInvestorView(_investorAddress);
     IInvestorView.Shareholder[] memory holders = inv.getShareholders();
     uint256 supply = inv.totalSupply();
@@ -408,14 +408,14 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     require(supply > 0, 'Splitter: zero supply');
     require(holders.length > 0, 'Splitter: no holders');
 
-    uint256 remaining = amount;
+    uint256 remaining = _amount;
     uint256 n = holders.length;
 
     for (uint256 i = 0; i < n; ++i) {
       address acct = holders[i].shareholder;
       uint256 bal = holders[i].amount;
 
-      uint256 part = (amount * bal) / supply;
+      uint256 part = (_amount * bal) / supply;
       if (i == n - 1) {
         part = remaining; // ensure exact sum
       } else if (part > remaining) {
@@ -434,14 +434,14 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   /**
    * @dev Internal function to allocate ERC20 token dividends to shareholders
    * @param _token The address of the ERC20 token contract
-   * @param amount The total amount of token dividends to allocate
+   * @param _amount The total amount of token dividends to allocate
    * @param _investorAddress The investor contract address to get shareholder information
    * @custom:logic Uses proportional allocation based on shareholder token amounts
    * @custom:precision Handles rounding by giving remainder to last shareholder
    */
   function allocateTokenDividends(
     address _token,
-    uint256 amount,
+    uint256 _amount,
     address _investorAddress
   ) internal whenNotPaused {
     IInvestorView inv = IInvestorView(_investorAddress);
@@ -451,14 +451,14 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     require(supply > 0, 'Splitter: zero supply');
     require(holders.length > 0, 'Splitter: no holders');
 
-    uint256 remaining = amount;
+    uint256 remaining = _amount;
     uint256 n = holders.length;
 
     for (uint256 i = 0; i < n; ++i) {
       address acct = holders[i].shareholder;
       uint256 bal = holders[i].amount;
 
-      uint256 part = (amount * bal) / supply;
+      uint256 part = (_amount * bal) / supply;
       if (i == n - 1) {
         part = remaining; // ensure exact sum
       } else if (part > remaining) {
