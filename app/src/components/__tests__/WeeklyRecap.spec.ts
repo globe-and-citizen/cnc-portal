@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import WeeklyRecap from '@/components/WeeklyRecap.vue'
-import type { WeeklyClaimResponse } from '@/types'
+import { type WeeklyClaimResponse } from '@/types'
 
 // Mock the currency store used by the component
 const mockCurrencyStore = {
@@ -86,6 +86,9 @@ describe('WeeklyRecap', () => {
     const wrapper = mount(WeeklyRecap, {
       props: { weeklyClaim: testWeeklyClaim }
     })
+
+    expect(wrapper.text()).toContain('Total Hours')
+    expect(wrapper.text()).toContain('6h')
 
     expect(wrapper.text()).toContain('Hourly Rate')
     expect(wrapper.html()).toContain('≃ $16.00 USD')
