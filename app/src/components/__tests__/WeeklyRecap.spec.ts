@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import WeeklyRecap from '@/components/WeeklyRecap.vue'
-import type { WeeklyClaimResponse } from '@/types/cash-remuneration'
+import type { WeeklyClaimResponse } from '@/types'
 
 // Mock the currency store used by the component
 const mockCurrencyStore = {
