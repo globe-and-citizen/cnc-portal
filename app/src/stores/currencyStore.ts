@@ -31,7 +31,7 @@ export const useCurrencyStore = defineStore('currency', () => {
 
   const supportedToken = computed(() => {
     const tokens = [...SUPPORTED_TOKENS]
-    const investorsV1Address = teamStore.getContractAddressByType('InvestorsV1')
+    const investorsV1Address = teamStore.getContractAddressByType('InvestorV1')
     if (investorsV1Address && !tokens.some((t) => t.id === 'sher')) {
       tokens.push({
         id: 'sher',

@@ -8,6 +8,8 @@
   >
     Deploy Contracts
   </ButtonUI>
+  br
+  <pre>{{ createOfficerError }}</pre>
 </template>
 
 <script lang="ts" setup>
@@ -41,7 +43,8 @@ import {
   USDT_ADDRESS,
   validateAddresses,
   // VOTING_BEACON_ADDRESS,
-  ELECTIONS_BEACON_ADDRESS
+  ELECTIONS_BEACON_ADDRESS,
+  // OFFICER_ADDRESS
 } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -135,7 +138,7 @@ const deployOfficerContract = async () => {
         beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS
       },
       {
-        beaconType: 'InvestorsV1',
+        beaconType: 'InvestorV1',
         beaconAddress: INVESTOR_V1_BEACON_ADDRESS
       },
       {
@@ -155,7 +158,7 @@ const deployOfficerContract = async () => {
       })
     })
     deployments.push({
-      contractType: 'InvestorsV1',
+      contractType: 'InvestorV1',
       initializerData: encodeFunctionData({
         abi: INVESTOR_ABI,
         functionName: 'initialize',
@@ -223,8 +226,14 @@ const deployOfficerContract = async () => {
       args: [currentUserAddress, beaconConfigs, deployments, true]
     })
 
+    if (!OFFICER_BEACON) {
+      log.error('Officer Beacon address is not defined')
+      addErrorToast('Officer Beacon address is not defined')
+      loading.value = false
+      return
+    }
     createOfficer({
-      address: OFFICER_BEACON as Address,
+      address: OFFICER_BEACON,
       abi: FACTORY_BEACON_ABI,
       functionName: 'createBeaconProxy',
       args: [encodedFunction]

@@ -96,7 +96,10 @@ export function safeResolveAddress(key: keyof AddressMapping): Address | null {
 }
 
 // Safe version with fallback value
-export function resolveAddressWithFallback(key: keyof AddressMapping, fallback: Address = zeroAddress): Address {
+export function resolveAddressWithFallback(
+  key: keyof AddressMapping,
+  fallback: Address = zeroAddress
+): Address {
   return safeResolveAddress(key) ?? fallback
 }
 // Token addresses for different networks
@@ -108,8 +111,8 @@ export const TOKEN_ADDRESSES: ChainTokenAddresses = {
   },
   // Sepolia Testnet
   11155111: {
-    USDC: safeResolveAddress('MockTokens#USDC') || '' as Address, // Safe resolution with fallback
-    USDT: safeResolveAddress('MockTokens#USDT') || '' as Address // Safe resolution with fallback
+    USDC: safeResolveAddress('MockTokens#USDC') || ('' as Address), // Safe resolution with fallback
+    USDT: safeResolveAddress('MockTokens#USDT') || ('' as Address) // Safe resolution with fallback
   },
   80002: {
     USDC: '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582', // Amoy USDC
@@ -117,8 +120,8 @@ export const TOKEN_ADDRESSES: ChainTokenAddresses = {
   },
   // Hardhat Local - only resolve mock addresses for local chain
   31337: {
-    USDC: safeResolveAddress('MockTokens#USDC') || '' as Address, // Safe resolution
-    USDT: safeResolveAddress('MockTokens#USDT') || '' as Address // Safe resolution
+    USDC: safeResolveAddress('MockTokens#USDC') || ('' as Address), // Safe resolution
+    USDT: safeResolveAddress('MockTokens#USDT') || ('' as Address) // Safe resolution
   }
 }
 
