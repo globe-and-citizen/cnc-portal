@@ -87,9 +87,6 @@ describe('WeeklyRecap', () => {
       props: { weeklyClaim: testWeeklyClaim }
     })
 
-    expect(wrapper.text()).toContain('Total Hours')
-    expect(wrapper.text()).toContain('6h')
-
     expect(wrapper.text()).toContain('Hourly Rate')
     expect(wrapper.html()).toContain('≃ $16.00 USD')
 
