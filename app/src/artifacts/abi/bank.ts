@@ -49,6 +49,17 @@ export const BANK_ABI = [
     type: 'error'
   },
   {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'token',
+        type: 'address'
+      }
+    ],
+    name: 'SafeERC20FailedOperation',
+    type: 'error'
+  },
+  {
     anonymous: false,
     inputs: [
       {
@@ -149,6 +160,25 @@ export const BANK_ABI = [
       {
         indexed: true,
         internalType: 'address',
+        name: 'previousAddress',
+        type: 'address'
+      },
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'newAddress',
+        type: 'address'
+      }
+    ],
+    name: 'InvestorAddressUpdated',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
         name: 'previousOwner',
         type: 'address'
       },
@@ -181,7 +211,7 @@ export const BANK_ABI = [
       {
         indexed: true,
         internalType: 'address',
-        name: 'addressWhoChanged',
+        name: 'account',
         type: 'address'
       },
       {
@@ -318,6 +348,32 @@ export const BANK_ABI = [
       {
         indexed: true,
         internalType: 'address',
+        name: 'tokenAddress',
+        type: 'address'
+      }
+    ],
+    name: 'TokenSupportAdded',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'tokenAddress',
+        type: 'address'
+      }
+    ],
+    name: 'TokenSupportRemoved',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
         name: 'sender',
         type: 'address'
       },
@@ -384,17 +440,12 @@ export const BANK_ABI = [
   {
     inputs: [
       {
-        internalType: 'string',
-        name: '_symbol',
-        type: 'string'
-      },
-      {
         internalType: 'address',
-        name: '_newAddress',
+        name: '_tokenAddress',
         type: 'address'
       }
     ],
-    name: 'changeTokenAddress',
+    name: 'addTokenSupport',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function'
@@ -423,7 +474,7 @@ export const BANK_ABI = [
     inputs: [
       {
         internalType: 'uint256',
-        name: 'amount',
+        name: '_amount',
         type: 'uint256'
       },
       {
@@ -464,7 +515,7 @@ export const BANK_ABI = [
       },
       {
         internalType: 'uint256',
-        name: 'amount',
+        name: '_amount',
         type: 'uint256'
       },
       {
@@ -556,19 +607,9 @@ export const BANK_ABI = [
   {
     inputs: [
       {
-        internalType: 'address',
-        name: '_tipsAddress',
-        type: 'address'
-      },
-      {
-        internalType: 'address',
-        name: '_usdtAddress',
-        type: 'address'
-      },
-      {
-        internalType: 'address',
-        name: '_usdcAddress',
-        type: 'address'
+        internalType: 'address[]',
+        name: '_tokenAddresses',
+        type: 'address[]'
       },
       {
         internalType: 'address',
@@ -589,25 +630,6 @@ export const BANK_ABI = [
         internalType: 'address',
         name: '',
         type: 'address'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: '_token',
-        type: 'address'
-      }
-    ],
-    name: 'isTokenSupported',
-    outputs: [
-      {
-        internalType: 'bool',
-        name: '',
-        type: 'bool'
       }
     ],
     stateMutability: 'view',
@@ -647,6 +669,19 @@ export const BANK_ABI = [
     type: 'function'
   },
   {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_tokenAddress',
+        type: 'address'
+      }
+    ],
+    name: 'removeTokenSupport',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
     inputs: [],
     name: 'renounceOwnership',
     outputs: [],
@@ -656,30 +691,30 @@ export const BANK_ABI = [
   {
     inputs: [
       {
-        internalType: 'string',
+        internalType: 'address',
+        name: '_investorAddress',
+        type: 'address'
+      }
+    ],
+    name: 'setInvestorAddress',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
         name: '',
-        type: 'string'
+        type: 'address'
       }
     ],
     name: 'supportedTokens',
     outputs: [
       {
-        internalType: 'address',
+        internalType: 'bool',
         name: '',
-        type: 'address'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
-    inputs: [],
-    name: 'tipsAddress',
-    outputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address'
+        type: 'bool'
       }
     ],
     stateMutability: 'view',
@@ -711,7 +746,7 @@ export const BANK_ABI = [
   },
   {
     inputs: [],
-    name: 'totalDividend',
+    name: 'totalDividends',
     outputs: [
       {
         internalType: 'uint256',
