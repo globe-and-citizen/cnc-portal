@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import WeeklyRecap from '@/components/WeeklyRecap.vue'
+import type { WeeklyClaimResponse } from '@/types/cash-remuneration'
 
 // Mock the currency store used by the component
 const mockCurrencyStore = {
@@ -21,34 +22,80 @@ describe('WeeklyRecap', () => {
   })
 
   it('renders totals and calculates amounts correctly', () => {
-    const wrapper = mount(WeeklyRecap, {
-      props: {
-        weeklyClaim: {
-          wage: {
-            ratePerHour: [
-              { type: 'native', amount: 5 },
-              { type: 'native', amount: 3 }
-            ],
-            maximumHoursPerWeek: 40
-          },
-          claims: [{ hoursWorked: 4 }, { hoursWorked: 2 }]
+    // Build a fully-typed WeeklyClaim object to satisfy TypeScript
+    type WeeklyClaim = WeeklyClaimResponse[number]
+
+    const testWeeklyClaim: WeeklyClaim = {
+      id: 1,
+      status: 'signed',
+      weekStart: '2025-10-13',
+      data: { ownerAddress: '0xOwner' },
+      memberAddress: '0xMember',
+      teamId: 2,
+      signature: null,
+      wageId: 2,
+      createdAt: '2025-10-13T00:00:00Z',
+      updatedAt: '2025-10-13T00:00:00Z',
+      wage: {
+        id: 1,
+        teamId: 1,
+        userAddress: '0xMember',
+        ratePerHour: [
+          { type: 'native', amount: 5 },
+          { type: 'native', amount: 3 }
+        ],
+        cashRatePerHour: 0,
+        tokenRatePerHour: 0,
+        usdcRatePerHour: 0,
+        maximumHoursPerWeek: 40,
+        nextWageId: null,
+        createdAt: '2025-10-13T00:00:00Z',
+        updatedAt: '2025-10-13T00:00:00Z'
+      },
+      claims: [
+        {
+          id: 1,
+          status: 'signed',
+          hoursWorked: 4,
+          dayWorked: '2025-10-13',
+          memo: '',
+          signature: null,
+          tokenTx: null,
+          wageId: 2,
+          weeklyClaimId: 1,
+          createdAt: '2025-10-13T00:00:00Z',
+          updatedAt: '2025-10-13T00:00:00Z'
+        },
+        {
+          id: 2,
+          status: 'signed',
+          hoursWorked: 2,
+          dayWorked: '2025-10-14',
+          memo: '',
+          signature: null,
+          tokenTx: null,
+          wageId: 2,
+          weeklyClaimId: 1,
+          createdAt: '2025-10-14T00:00:00Z',
+          updatedAt: '2025-10-14T00:00:00Z'
         }
-      }
+      ],
+      member: { address: '0xMember', name: 'Alice', imageUrl: 'img' }
+    }
+
+    const wrapper = mount(WeeklyRecap, {
+      props: { weeklyClaim: testWeeklyClaim }
     })
 
-    // total hours = 6
     expect(wrapper.text()).toContain('Total Hours')
     expect(wrapper.text()).toContain('6h')
 
-    // hourly rate in local currency = (5+3) * localPrice(2) = 8 * 2 = 16
     expect(wrapper.text()).toContain('Hourly Rate')
     expect(wrapper.html()).toContain('≃ $16.00 USD')
 
-    // total amount = totalHours * hourlyRate = 6 * 16 = 96.00
     expect(wrapper.text()).toContain('Total Amount')
     expect(wrapper.html()).toContain('≃ $96.00 USD')
 
-    // weekly limit text present
     expect(wrapper.text()).toContain('of 40 hrs weekly limit')
   })
 })
