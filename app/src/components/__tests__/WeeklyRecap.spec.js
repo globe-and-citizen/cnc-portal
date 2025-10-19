@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import WeeklyRecap from '@/components/WeeklyRecap.vue'
 
@@ -15,7 +15,7 @@ vi.mock('@/stores', () => ({
   useCurrencyStore: () => mockCurrencyStore
 }))
 
-describe('WeeklyRecap (JS)', () => {
+describe('WeeklyRecap', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -31,7 +31,7 @@ describe('WeeklyRecap (JS)', () => {
       },
       claims: [{ hoursWorked: 4 }, { hoursWorked: 2 }]
     }
-
+    // @ts-expect-error: partial test object
     const wrapper = mount(WeeklyRecap, {
       props: { weeklyClaim: testWeeklyClaim }
     })
