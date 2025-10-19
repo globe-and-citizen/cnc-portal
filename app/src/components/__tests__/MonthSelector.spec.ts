@@ -142,4 +142,55 @@ describe('MonthSelector', () => {
       expect(newValue.year).toBe(2025)
     })
   })
+
+  describe('Model Updates Structure', () => {
+    it('should emit correct model structure when month changes', async () => {
+      const initialModel = {
+        month: 5,
+        year: 2024,
+        isoWeek: 23,
+        formatted: '2024-W23',
+        isoString: dayjs.utc('2024-06-01').toISOString()
+      }
+
+      const wrapper = createWrapper(initialModel)
+      const nextButton = wrapper.findAll('button')[2]
+
+      await nextButton.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      const emitted = wrapper.emitted('update:modelValue')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newValue = (emitted?.[0] as any[])[0]
+
+      expect(newValue).toHaveProperty('month')
+      expect(newValue).toHaveProperty('year')
+      expect(newValue).toHaveProperty('isoWeek')
+      expect(newValue).toHaveProperty('formatted')
+      expect(newValue).toHaveProperty('isoString')
+    })
+  })
+
+  describe('toggleMonthPicker', () => {
+    it('toggles isMonthPickerOpen when center button is clicked', async () => {
+      const wrapper = createWrapper()
+      const setup = (
+        wrapper.vm as unknown as { $?: { setupState?: { isMonthPickerOpen?: boolean } } }
+      ).$?.setupState
+      if (!setup) throw new Error('setupState not available')
+
+      // initial value should be false
+      expect(Boolean((setup as { isMonthPickerOpen?: boolean }).isMonthPickerOpen)).toBe(false)
+
+      const centerButton = wrapper.findAll('button')[1]
+      await centerButton.trigger('click')
+      await wrapper.vm.$nextTick()
+      expect((setup as { isMonthPickerOpen?: boolean }).isMonthPickerOpen).toBe(true)
+
+      // clicking again should close
+      await centerButton.trigger('click')
+      await wrapper.vm.$nextTick()
+      expect((setup as { isMonthPickerOpen?: boolean }).isMonthPickerOpen).toBe(false)
+    })
+  })
 })
