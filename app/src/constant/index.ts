@@ -17,7 +17,7 @@ type ChainTokenAddresses = {
 }
 
 interface AddressMapping {
-  'TipsModule#Tips': string
+  // 'TipsModule#Tips': string
   'BankBeaconModule#Beacon': string
   'BankBeaconModule#Bank': string
   'ProposalBeaconModule#Beacon'?: string
@@ -26,8 +26,8 @@ interface AddressMapping {
   // 'VotingBeaconModule#Voting'?: string
   'BoardOfDirectorsModule#Beacon': string
   'BoardOfDirectorsModule#BoardOfDirectors': string
-  'ExpenseAccountModule#ExpenseAccount'?: string
-  'ExpenseAccountModule#FactoryBeacon'?: string
+  // 'ExpenseAccountModule#ExpenseAccount'?: string
+  // 'ExpenseAccountModule#FactoryBeacon'?: string
   'Officer#Officer'?: string
   'Officer#FactoryBeacon'?: string
   'ExpenseAccountEIP712Module#ExpenseAccountEIP712'?: string
@@ -124,7 +124,7 @@ export const TOKEN_ADDRESSES: ChainTokenAddresses = {
 
 export function validateAddresses() {
   const requiredKeys: (keyof AddressMapping)[] = [
-    'TipsModule#Tips',
+    // 'TipsModule#Tips',
     'VestingModule#Vesting',
     'BankBeaconModule#Beacon',
     'BankBeaconModule#Bank',
@@ -138,8 +138,8 @@ export function validateAddresses() {
     'BoardOfDirectorsModule#BoardOfDirectors',
     'Officer#Officer',
     'Officer#FactoryBeacon',
-    'ExpenseAccountModule#FactoryBeacon',
-    'ExpenseAccountModule#ExpenseAccount',
+    // 'ExpenseAccountModule#FactoryBeacon',
+    // 'ExpenseAccountModule#ExpenseAccount',
     'ExpenseAccountEIP712Module#ExpenseAccountEIP712',
     'ExpenseAccountEIP712Module#FactoryBeacon',
     'InvestorsV1BeaconModule#Beacon',
@@ -165,7 +165,7 @@ try {
   console.error(error)
 }
 
-export const TIPS_ADDRESS = safeResolveAddress('TipsModule#Tips')
+// export const TIPS_ADDRESS = safeResolveAddress('TipsModule#Tips')
 export const VESTING_ADDRESS = safeResolveAddress('VestingModule#Vesting')
 export const BANK_BEACON_ADDRESS = safeResolveAddress('BankBeaconModule#Beacon')
 export const BANK_IMPL_ADDRESS = safeResolveAddress('BankBeaconModule#Bank')
@@ -176,8 +176,8 @@ export const PROPOSALS_BEACON_ADDRESS = safeResolveAddress('ProposalBeaconModule
 export const PROPOSALS_IMPL_ADDRESS = safeResolveAddress('ProposalBeaconModule#Proposals')
 export const BOD_BEACON_ADDRESS = safeResolveAddress('BoardOfDirectorsModule#Beacon')
 export const BOD_IMPL_ADDRESS = safeResolveAddress('BoardOfDirectorsModule#BoardOfDirectors')
-export const EXPENSE_ACCOUNT_BEACON_ADDRESS = safeResolveAddress('ExpenseAccountModule#FactoryBeacon')
-export const EXPENSE_ACCOUNT_LOGIC_ADDRESS = safeResolveAddress('ExpenseAccountModule#ExpenseAccount')
+// export const EXPENSE_ACCOUNT_BEACON_ADDRESS = safeResolveAddress('ExpenseAccountModule#FactoryBeacon')
+// export const EXPENSE_ACCOUNT_LOGIC_ADDRESS = safeResolveAddress('ExpenseAccountModule#ExpenseAccount')
 export const EXPENSE_ACCOUNT_EIP712_IMPL_ADDRESS = safeResolveAddress(
   'ExpenseAccountEIP712Module#ExpenseAccountEIP712'
 )

@@ -15,7 +15,7 @@ vi.mock('../network', () => ({
 // Mock the imported JSON files
 vi.mock('@/artifacts/deployed_addresses/chain-11155111.json', () => ({
   default: {
-    'TipsModule#Tips': '0xbaC3A762bCB30046E04BdF8a9D65d99f483D9cBC',
+    // 'TipsModule#Tips': '0xbaC3A762bCB30046E04BdF8a9D65d99f483D9cBC',
     'BankBeaconModule#Beacon': '0x2345',
     'BankBeaconModule#Bank': '0x3456',
     'VotingBeaconModule#Beacon': '0x4567',
@@ -78,7 +78,7 @@ describe('Contract Address Resolution', () => {
       // Add mock token addresses to the hardhat mock
       vi.mock('@/artifacts/deployed_addresses/chain-31337.json', () => ({
         default: {
-          'TipsModule#Tips': '0x4567',
+          // 'TipsModule#Tips': '0x4567',
           'MockTokens#USDC': '0xLocalMockUSDC',
           'MockTokens#USDT': '0xLocalMockUSDT'
         }
