@@ -16,6 +16,12 @@ interface IElections {
 interface IProposal {
     function setBoardOfDirectorsContractAddress(address _bodAddress) external;
 }
+interface IInvestorV1Contract {
+    function initialize(string calldata _name, string calldata _symbol, address _owner) external;
+}
+interface IBank {
+    function setInvestorAddress(address _investorAddress) external;
+}
 /**
  * @notice Struct for contract deployment data
  * @param contractType Type of contract to deploy
@@ -125,6 +131,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         string calldata contractType,
         bytes calldata initializerData
     ) public whenNotPaused onlyInitializingOrOwners returns (address) {
+
+        // Validate inputs
         require(contractBeacons[contractType] != address(0), "Beacon not configured for this contract type");
         require(keccak256(bytes(contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Elections");
 
@@ -136,6 +144,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         address proxyAddress = address(proxy);
         deployedContracts.push(DeployedContract(contractType, proxyAddress));
         emit ContractDeployed(contractType, proxyAddress);
+
         if(keccak256(bytes(contractType)) == keccak256(bytes("Elections"))) {
             address bodContractBeacon = contractBeacons["BoardOfDirectors"];
             address[] memory args = new address[](1);
@@ -146,6 +155,18 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             IElections(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
         } else if(keccak256(bytes(contractType)) == keccak256(bytes("Proposals"))) {
             IProposal(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
+        } else if(keccak256(bytes(contractType)) == keccak256(bytes("Bank"))) {
+            address foundInvestorsV1Contract = findDeployedContract("InvestorsV1");
+            if (foundInvestorsV1Contract != address(0)) {
+                // InvestorsV1 already deployed, set the investor address
+                IBank(proxyAddress).setInvestorAddress(foundInvestorsV1Contract);
+            }
+        } else if(keccak256(bytes(contractType)) == keccak256(bytes("InvestorsV1"))) {
+            address foundBankContract = findDeployedContract("Bank");
+            if (foundBankContract != address(0)) {
+                // Bank already deployed, set the investor address
+                IBank(foundBankContract).setInvestorAddress(proxyAddress);
+            }
         }
 
         return proxyAddress;
@@ -157,6 +178,20 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      */
     function getTeam() external view returns (DeployedContract[] memory) {
         return ( deployedContracts);
+    }
+
+    /**
+     * @notice Finds a deployed contract address by its type
+     * @param contractType The type of contract to find
+     * @return The address of the contract, or address(0) if not found
+     */
+    function findDeployedContract(string memory contractType) internal view returns (address) {
+        for (uint256 i = 0; i < deployedContracts.length; i++) {
+            if (keccak256(bytes(deployedContracts[i].contractType)) == keccak256(bytes(contractType))) {
+                return deployedContracts[i].contractAddress;
+            }
+        }
+        return address(0);
     }
 
     /**
