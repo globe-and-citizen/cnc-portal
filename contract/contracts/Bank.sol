@@ -343,7 +343,11 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @param _investorAddress The address of the investor contract implementing IInvestorView
    * @custom:security Requires contract to be unpaused and validates non-zero address
    */
-  function setInvestorAddress(address _investorAddress) external onlyOwner whenNotPaused {
+  function setInvestorAddress(address _investorAddress) external whenNotPaused {
+    require(
+      msg.sender == owner() || investorAddress == address(0),
+      'Not allowed to set investor contract'
+    );
     require(_investorAddress != address(0), 'Address cannot be zero');
     address previousAddress = investorAddress;
     investorAddress = _investorAddress;
@@ -361,7 +365,10 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 _amount,
     address _investorAddress
   ) external payable onlyOwner whenNotPaused nonReentrant requiresUnlockedBalance(_amount) {
-    require(_amount <= (address(this).balance - totalDividends), 'Insufficient balance in the bank');
+    require(
+      _amount <= (address(this).balance - totalDividends),
+      'Insufficient balance in the bank'
+    );
     require(_investorAddress != address(0), 'Investor address invalid');
 
     allocateDividends(_amount, _investorAddress);

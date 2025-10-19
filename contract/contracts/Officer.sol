@@ -135,7 +135,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         // Validate inputs
         require(contractBeacons[contractType] != address(0), "Beacon not configured for this contract type");
         require(keccak256(bytes(contractType)) != keccak256(bytes("BoardOfDirectors")), "BoardOfDirectors must be deployed through Elections");
-
         BeaconProxy proxy = new BeaconProxy(
             contractBeacons[contractType],
             initializerData
@@ -156,12 +155,12 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         } else if(keccak256(bytes(contractType)) == keccak256(bytes("Proposals"))) {
             IProposal(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
         } else if(keccak256(bytes(contractType)) == keccak256(bytes("Bank"))) {
-            address foundInvestorsV1Contract = findDeployedContract("InvestorsV1");
+            address foundInvestorsV1Contract = findDeployedContract("InvestorV1");
             if (foundInvestorsV1Contract != address(0)) {
                 // InvestorsV1 already deployed, set the investor address
                 IBank(proxyAddress).setInvestorAddress(foundInvestorsV1Contract);
             }
-        } else if(keccak256(bytes(contractType)) == keccak256(bytes("InvestorsV1"))) {
+        } else if(keccak256(bytes(contractType)) == keccak256(bytes("InvestorV1"))) {
             address foundBankContract = findDeployedContract("Bank");
             if (foundBankContract != address(0)) {
                 // Bank already deployed, set the investor address
