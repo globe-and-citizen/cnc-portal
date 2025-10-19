@@ -8,16 +8,19 @@ import {
   Officer,
   UpgradeableBeacon,
   Elections__factory,
-  Proposals__factory
+  Proposals__factory,
+  InvestorV1__factory
 } from '../typechain-types'
 
 describe('Officer Contract', function () {
   let officer: Officer
   let bankAccount: Bank__factory
+  let investor: InvestorV1__factory
   let electionsContract: Elections__factory
   let expenseAccount: ExpenseAccount__factory
   let proposalsContract: Proposals__factory
   let bankAccountBeacon: UpgradeableBeacon
+  let investorBeacon: UpgradeableBeacon
   let electionsBeacon: UpgradeableBeacon
   let expenseAccountBeacon: UpgradeableBeacon
   let proposalsBeacon: UpgradeableBeacon
@@ -34,6 +37,11 @@ describe('Officer Contract', function () {
     // Deploy implementation contracts
     bankAccount = await ethers.getContractFactory('Bank')
     bankAccountBeacon = (await upgrades.deployBeacon(bankAccount)) as unknown as UpgradeableBeacon
+
+    investor = await ethers.getContractFactory('InvestorV1')
+    investorBeacon = (await upgrades.deployBeacon(
+      investor
+    )) as unknown as UpgradeableBeacon
 
     electionsContract = await ethers.getContractFactory('Elections')
     electionsBeacon = (await upgrades.deployBeacon(
@@ -61,6 +69,8 @@ describe('Officer Contract', function () {
 
     // Configure beacons
     await officer.connect(owner).configureBeacon('Bank', await bankAccountBeacon.getAddress())
+    // console.log("will configure investore beacon")
+    await officer.connect(owner).configureBeacon('InvestorV1', await investorBeacon.getAddress())
     await officer.connect(owner).configureBeacon('Elections', await electionsBeacon.getAddress())
     await officer.connect(owner).configureBeacon('BoardOfDirectors', await bodBeacon.getAddress())
     await officer
@@ -70,6 +80,7 @@ describe('Officer Contract', function () {
 
   describe('Contract Deployment', () => {
     it('Should deploy contracts via BeaconProxy', async function () {
+      // console.log("Ex of console log")
       const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
@@ -78,6 +89,9 @@ describe('Officer Contract', function () {
         [], // token addresses array
         owner.address
       ])
+
+      const investorInitData = investor.interface.encodeFunctionData('initialize', ['Bitcoin', 'BTC', owner.address])
+
       const expenseInitData = expenseAccount.interface.encodeFunctionData('initialize', [
         owner.address
       ])
@@ -91,6 +105,7 @@ describe('Officer Contract', function () {
       expect(deployedContracts[0].contractType).to.equal('Elections')
       expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
 
+      console.log()
       await expect(officer.connect(owner).deployBeaconProxy('Bank', bankInitData)).to.emit(
         officer,
         'ContractDeployed'
@@ -99,6 +114,11 @@ describe('Officer Contract', function () {
       await expect(
         officer.connect(owner).deployBeaconProxy('ExpenseAccount', expenseInitData)
       ).to.emit(officer, 'ContractDeployed')
+
+      await expect(officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)).to.emit(
+        officer,
+        'ContractDeployed'
+      )
     })
 
     it('Should restrict deployment to owners and founders', async function () {
