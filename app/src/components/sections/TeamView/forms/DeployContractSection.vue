@@ -43,7 +43,7 @@ import {
   USDT_ADDRESS,
   validateAddresses,
   // VOTING_BEACON_ADDRESS,
-  ELECTIONS_BEACON_ADDRESS,
+  ELECTIONS_BEACON_ADDRESS
   // OFFICER_ADDRESS
 } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
