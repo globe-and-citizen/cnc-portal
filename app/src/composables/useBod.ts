@@ -3,8 +3,8 @@ import type { Action, ContractType } from '@/types'
 import { useCustomFetch } from './useCustomFetch'
 import { estimateGas, readContract, writeContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import { encodeFunctionData, type Abi } from 'viem'
-import BOD_ABI from '@/artifacts/abi/bod.json'
+import { encodeFunctionData, type Abi, type Address } from 'viem'
+import { BOD_ABI } from '@/artifacts/abi/bod'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
@@ -114,7 +114,7 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
       const data = encodeFunctionData({
         abi: BOD_ABI,
         functionName: 'approve',
-        args: [_actionId]
+        args: [BigInt(_actionId)]
       })
       await estimateGas(config, {
         to: bodAddress.value,
@@ -124,13 +124,13 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
         address: bodAddress.value,
         abi: BOD_ABI,
         functionName: 'approve',
-        args: [_actionId]
+        args: [BigInt(_actionId)]
       })
       const isActionExecuted = await readContract(config, {
         address: bodAddress.value,
         abi: BOD_ABI,
         functionName: 'isActionExecuted',
-        args: [_actionId]
+        args: [BigInt(_actionId)]
       })
       if (isActionExecuted) {
         actionUrl.value = `actions/${dbId}`
@@ -150,8 +150,8 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
       // })
       // actionId.value = BigInt(_actionId)
     } catch (error) {
-      log.error('Error approving action: ', parseError(error, BOD_ABI as Abi))
-      addErrorToast(parseError(error, BOD_ABI as Abi))
+      log.error('Error approving action: ', parseError(error, BOD_ABI))
+      addErrorToast(parseError(error, BOD_ABI))
     }
   }
 
@@ -177,7 +177,11 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
         address: bodAddress.value,
         functionName: 'addAction',
         abi: BOD_ABI,
-        args: [actionData.targetAddress, actionData.description, actionData.data]
+        args: [
+          actionData.targetAddress as Address,
+          actionData.description as string,
+          actionData.data as `0x${string}`
+        ]
       })
     } catch (err) {
       console.error(err)

@@ -1,20 +1,20 @@
-import { Request, Response } from "express";
-import { errorResponse } from "../utils/utils";
-import { prisma } from "../utils";
-import dayjs from "dayjs";
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import weekday from 'dayjs/plugin/weekday'
+import { Request, Response } from 'express';
+import { errorResponse } from '../utils/utils';
+import { prisma } from '../utils';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import weekday from 'dayjs/plugin/weekday';
 
-import { Prisma, Claim } from "@prisma/client";
-import { isUserMemberOfTeam } from "./wageController";
-import { isCashRemunerationOwner } from "../utils/cashRemunerationUtil";
+import { Prisma, Claim } from '@prisma/client';
+import { isUserMemberOfTeam } from './wageController';
+import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
 
-dayjs.extend(utc)
-dayjs.extend(isoWeek)
-dayjs.extend(weekday)
+dayjs.extend(utc);
+dayjs.extend(isoWeek);
+dayjs.extend(weekday);
 
-type claimBodyRequest = Pick<Claim, "hoursWorked" | "dayWorked" | "memo"> & {
+type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
   teamId: string;
 };
 
@@ -39,7 +39,7 @@ export const addClaim = async (req: Request, res: Response) => {
     });
 
     if (!wage) {
-      return errorResponse(400, "No wage found for the user", res);
+      return errorResponse(400, 'No wage found for the user', res);
     }
 
     // get the member current wage
@@ -59,9 +59,7 @@ export const addClaim = async (req: Request, res: Response) => {
 
     // Check total max hours.
 
-    const totalHours =
-      weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ??
-      0;
+    const totalHours = weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0;
 
     if (totalHours + hoursWorked > wage.maximumHoursPerWeek) {
       const remainingHours = Math.max(0, wage.maximumHoursPerWeek - totalHours);
@@ -80,7 +78,7 @@ export const addClaim = async (req: Request, res: Response) => {
           memberAddress: callerAddress,
           teamId: teamId,
           data: {},
-          status: "pending",
+          status: 'pending',
         },
         include: {
           claims: true,
@@ -90,17 +88,14 @@ export const addClaim = async (req: Request, res: Response) => {
 
     if (
       (weeklyClaim?.claims
-        .filter(
-          (claim) =>
-            claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime()
-        )
+        .filter((claim) => claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime())
         .reduce((sum, claim) => sum + Number(claim.hoursWorked), 0) ?? 0) +
-      Number(hoursWorked) >
+        Number(hoursWorked) >
       24
     ) {
       return errorResponse(
         400,
-        "Submission failed: the total number of hours for this day would exceed 24 hours.",
+        'Submission failed: the total number of hours for this day would exceed 24 hours.',
         res
       );
     }
@@ -110,7 +105,7 @@ export const addClaim = async (req: Request, res: Response) => {
         hoursWorked,
         memo,
         wageId: wage.id,
-        status: "pending",
+        status: 'pending',
         weeklyClaimId: weeklyClaim.id,
         dayWorked: dayWorked,
       },
@@ -131,7 +126,7 @@ export const getClaims = async (req: Request, res: Response) => {
   try {
     // Check if the user is a member of the provided team
     if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, "Caller is not a member of the team", res);
+      return errorResponse(403, 'Caller is not a member of the team', res);
     }
 
     let statusFilter: Prisma.ClaimWhereInput = {};
@@ -174,7 +169,7 @@ export const getClaims = async (req: Request, res: Response) => {
     });
     return res.status(200).json(claims);
   } catch (error) {
-    return errorResponse(500, "Internal server error", res);
+    return errorResponse(500, 'Internal server error', res);
   }
 };
 
@@ -188,30 +183,30 @@ export const updateClaim = async (req: Request, res: Response) => {
   // Prepare the data according to the action
   let data: Prisma.ClaimUpdateInput = {};
   switch (action) {
-    case "sign":
-      const signature = req.body.signature as Claim["signature"];
+    case 'sign':
+      const signature = req.body.signature as Claim['signature'];
 
       // validate the signature
       if (!signature) {
-        return errorResponse(400, "Missing signature", res);
+        return errorResponse(400, 'Missing signature', res);
       }
       // TODO: validate the signature (in the blockchain)
-      data.status = "signed";
+      data.status = 'signed';
       data.signature = req.body.signature;
       break;
-    case "withdraw":
+    case 'withdraw':
       // TODO: check if the signature is used to withdraw the claim
-      data.status = "withdrawn";
+      data.status = 'withdrawn';
       break;
-    case "disable":
+    case 'disable':
       // TODO: Check if the signature is disabled in the blockchain
-      data.status = "disabled";
+      data.status = 'disabled';
       break;
-    case "enable":
-      data.status = "signed";
+    case 'enable':
+      data.status = 'signed';
       break;
-    case "reject":
-      data.status = "rejected";
+    case 'reject':
+      data.status = 'rejected';
       break;
   }
 
@@ -231,11 +226,11 @@ export const updateClaim = async (req: Request, res: Response) => {
     });
 
     if (!claim) {
-      return errorResponse(404, "Claim not found", res);
+      return errorResponse(404, 'Claim not found', res);
     }
 
     // sign, disable, enable, reject actions are only able to be done by the owner of the team
-    if (["sign", "disable", "enable", "reject"].includes(action)) {
+    if (['sign', 'disable', 'enable', 'reject'].includes(action)) {
       // Check if the caller is the Cash Remuneration owner
       const isCallerCashRemunOwner = await isCashRemunerationOwner(
         callerAddress,
@@ -243,59 +238,52 @@ export const updateClaim = async (req: Request, res: Response) => {
       );
 
       // If not Cash Remuneration owner, check if they're the team owner
-      if (
-        !isCallerCashRemunOwner &&
-        claim.wage.team.ownerAddress !== callerAddress
-      ) {
+      if (!isCallerCashRemunOwner && claim.wage.team.ownerAddress !== callerAddress) {
         return errorResponse(
           403,
-          "Caller is not the Cash Remuneration owner or the team owner",
+          'Caller is not the Cash Remuneration owner or the team owner',
           res
         );
       }
     }
 
     // withdraw action is only able to be done by the user that created the claim
-    if (action === "withdraw") {
+    if (action === 'withdraw') {
       if (claim.wage.userAddress !== callerAddress) {
-        return errorResponse(403, "Caller is not the owner of the claim", res);
+        return errorResponse(403, 'Caller is not the owner of the claim', res);
       }
     }
 
     // special check on the claim according to the action
 
     switch (action) {
-      case "sign":
+      case 'sign':
         //  sine only if the claim is pending, or rejected
-        if (claim.status !== "pending" && claim.status !== "rejected") {
-          return errorResponse(
-            403,
-            "Can't signe: Claim is not pending or rejected",
-            res
-          );
+        if (claim.status !== 'pending' && claim.status !== 'rejected') {
+          return errorResponse(403, "Can't signe: Claim is not pending or rejected", res);
         }
         break;
-      case "withdraw":
+      case 'withdraw':
         // withdraw only if the claim is signed
-        if (claim.status !== "signed") {
+        if (claim.status !== 'signed') {
           return errorResponse(403, "Can't withdraw: Claim is not signed", res);
         }
         break;
-      case "disable":
+      case 'disable':
         // disable only if the claim is signed
-        if (claim.status !== "signed") {
+        if (claim.status !== 'signed') {
           return errorResponse(403, "Can't disable: Claim is not signed", res);
         }
         break;
-      case "enable":
+      case 'enable':
         // enable only if the claim is disabled
-        if (claim.status !== "disabled") {
+        if (claim.status !== 'disabled') {
           return errorResponse(403, "Can't enable: Claim is not disabled", res);
         }
         break;
-      case "reject":
+      case 'reject':
         // reject only if the claim is pending
-        if (claim.status !== "pending") {
+        if (claim.status !== 'pending') {
           return errorResponse(403, "Can't reject: Claim is not pending", res);
         }
         break;
@@ -310,7 +298,7 @@ export const updateClaim = async (req: Request, res: Response) => {
     });
     return res.status(200).json(updatedClaim);
   } catch (error) {
-    console.log("Error: ", error);
-    return errorResponse(500, "Internal server error", res);
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
   }
 };

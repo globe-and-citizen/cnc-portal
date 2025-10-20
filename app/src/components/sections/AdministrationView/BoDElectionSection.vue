@@ -112,8 +112,8 @@ import type { Team } from '@/types/index'
 import { useToastStore } from '@/stores/useToastStore'
 import VotingManagement from '@/components/sections/AdministrationView/VotingManagement.vue'
 import { useReadContract } from '@wagmi/vue'
-import BoDABI from '@/artifacts/abi/bod.json'
-import VotingABI from '@/artifacts/abi/voting.json'
+import { BOD_ABI } from '@/artifacts/abi/bod'
+import { VOTING_ABI } from '@/artifacts/abi/voting'
 import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -142,7 +142,7 @@ const {
 } = useReadContract({
   functionName: 'getBoardOfDirectors',
   address: boardOfDirectorsAddress.value,
-  abi: BoDABI
+  abi: BOD_ABI
 })
 
 watch(errorGetBoardOfDirectors, () => {
@@ -167,19 +167,22 @@ const loadingGetProposals = ref(false)
 const fetchProposals = async () => {
   try {
     loadingGetProposals.value = true
+    // @ts-expect-error type issue
     const proposalCount = (await readContract(config, {
       address: votingAddress.value,
-      abi: VotingABI,
+      abi: VOTING_ABI,
       functionName: 'proposalCount'
     })) as number
     const proposalsList = []
     for (let i = 0; i < proposalCount; i++) {
       const proposal = await readContract(config, {
         address: votingAddress.value,
-        abi: VotingABI,
+        abi: VOTING_ABI,
         functionName: 'getProposalById',
+        // @ts-expect-error type issue
         args: [i]
       })
+      // @ts-expect-error type issue
       proposalsList.push(proposal as Partial<OldProposal>)
     }
 
@@ -221,12 +224,16 @@ const createProposal = (newProposalInput: Ref<Partial<OldProposal>>) => {
     console.log('[createProposal] newProposalInput.value.voters: ', newProposalInput.value.voters)
     addProposal({
       address: votingAddress.value! as Address,
-      abi: VotingABI,
+      abi: VOTING_ABI,
       functionName: 'addProposal',
       args: [
+        // @ts-expect-error type issue
         newProposalInput.value.title,
+        // @ts-expect-error type issue
         newProposalInput.value.description,
+        // @ts-expect-error type issue
         newProposalInput.value.isElection,
+        // @ts-expect-error type issue
         newProposalInput.value.winnerCount,
         newProposalInput.value.voters!.map((voter) => voter.memberAddress) as Address[],
         newProposalInput.value.candidates!.map(

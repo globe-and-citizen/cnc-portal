@@ -75,20 +75,7 @@
                 }
               }"
             /> -->
-            <CRWithdrawClaim
-              :is-weekly-claim="true"
-              :claim="{
-                id: row.id, //which id do we use, individual or weekly claim?
-                status: !row.status ? 'pending' : row.status,
-                hoursWorked: getTotalHoursWorked(row.claims),
-                createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
-                signature: row.signature,
-                wage: {
-                  ratePerHour: row.wage.ratePerHour as RatePerHour,
-                  userAddress: row.wage.userAddress as Address
-                }
-              }"
-            />
+            <CRWithdrawClaim :disabled="false" :weekly-claim="row as WeeklyClaim" />
           </template>
         </TableComponent>
       </div>
@@ -117,16 +104,14 @@ import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { computed, watch } from 'vue'
 import { useCurrencyStore, useToastStore } from '@/stores'
 import { useUserDataStore, useTeamStore } from '@/stores'
-import { type WeeklyClaimResponse, type RatePerHour } from '@/types'
-// import CRSigne from './CRSigne.vue'
-import type { Address } from 'viem'
+import { type WeeklyClaim } from '@/types'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
 import type { TokenId } from '@/constant'
 import CRWeeklyClaimMemberHeader from './CRWeeklyClaimMemberHeader.vue'
 import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
-import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { useReadContract } from '@wagmi/vue'
 // import { useQueryClient } from '@tanstack/vue-query'
 
@@ -144,7 +129,7 @@ const cashRemunerationAddress = computed(() =>
 const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
   functionName: 'owner',
   address: cashRemunerationAddress,
-  abi: CashRemuneration_ABI
+  abi: CASH_REMUNERATION_EIP712_ABI
 })
 
 const weeklyClaimUrl = computed(
@@ -159,10 +144,7 @@ const queryKey = computed(() => [
   'signed'
 ])
 
-const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaimResponse>(
-  queryKey,
-  weeklyClaimUrl
-)
+const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaim[]>(queryKey, weeklyClaimUrl)
 const isTeamClaimDataFetching = computed(() => isLoading.value)
 
 // const isSameWeek = (weeklyClaimStartWeek: string) => {

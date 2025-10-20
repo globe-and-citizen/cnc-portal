@@ -5,9 +5,8 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useTeamStore, useUserDataStore, useToastStore } from '@/stores'
 import { useSignTypedData } from '@wagmi/vue'
 import { useCustomFetch } from '@/composables'
-import type { ClaimResponse, RatePerHour } from '@/types'
+import type { WeeklyClaim } from '@/types'
 import { ref } from 'vue'
-import type { Address } from 'viem'
 
 // Mock the stores and composables
 vi.mock('@/stores', () => ({
@@ -33,15 +32,8 @@ vi.mock('@/composables', () => ({
   }))
 }))
 
-type CRSignClaim = Pick<ClaimResponse, 'id' | 'status' | 'hoursWorked' | 'createdAt'> & {
-  wage: {
-    ratePerHour: RatePerHour
-    userAddress: Address
-  }
-}
-
 describe.skip('CRSigne', () => {
-  const mockClaim: CRSignClaim = {
+  const mockClaim: WeeklyClaim = {
     id: 1,
     status: 'pending',
     hoursWorked: 8,
@@ -54,19 +46,27 @@ describe.skip('CRSigne', () => {
       // id: 1,
       // teamId: 1,
       userAddress: '0x1234567890123456789012345678901234567890',
-      ratePerHour: [{ type: 'native', amount: 10 }]
-      // cashRatePerHour: 10,
-      // tokenRatePerHour: 0,
-      // usdcRatePerHour: 0,
-      // maximumHoursPerWeek: 40,
-      // nextWageId: null,
-      // createdAt: '2024-01-01T00:00:00Z',
-      // updatedAt: '2024-01-01T00:00:00Z',
-      // user: {
-      //   address: '0x1234567890123456789012345678901234567890',
-      //   name: 'Test User'
-      // }
-    }
+      ratePerHour: [{ type: 'native', amount: 10 }],
+      id: 0,
+      teamId: 0,
+      cashRatePerHour: 0,
+      tokenRatePerHour: 0,
+      usdcRatePerHour: 0,
+      maximumHoursPerWeek: 0,
+      nextWageId: null,
+      createdAt: '',
+      updatedAt: ''
+    },
+    weekStart: '',
+    data: {
+      ownerAddress: '0x1234567890123456789012345678901234567890'
+    },
+    memberAddress: '0x1234567890123456789012345678901234567890',
+    teamId: 0,
+    signature: null,
+    wageId: 0,
+    updatedAt: '',
+    claims: []
   }
 
   const mockTeamStore = {

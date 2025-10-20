@@ -87,6 +87,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 })
 
 vi.mock('vue-router', () => ({
+  useRouter: vi.fn(),
   useRoute: vi.fn(() => ({
     params: {
       id: 0

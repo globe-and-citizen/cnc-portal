@@ -1,9 +1,5 @@
-import express from "express";
-import {
-  addClaim,
-  getClaims,
-  updateClaim,
-} from "../controllers/claimController";
+import express from 'express';
+import { addClaim, getClaims, updateClaim } from '../controllers/claimController';
 import {
   validateBody,
   validateQuery,
@@ -14,7 +10,7 @@ import {
   updateClaimQuerySchema,
   updateClaimBodySchema,
   claimIdParamsSchema,
-} from "../validation";
+} from '../validation';
 
 const claimRoutes = express.Router();
 /**
@@ -109,7 +105,7 @@ const claimRoutes = express.Router();
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.post("/", validateBody(addClaimBodySchema), addClaim);
+claimRoutes.post('/', validateBody(addClaimBodySchema), addClaim);
 
 /**
  * @openapi
@@ -156,7 +152,7 @@ claimRoutes.post("/", validateBody(addClaimBodySchema), addClaim);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.get("/", validateQuery(getClaimsQuerySchema), getClaims);
+claimRoutes.get('/', validateQuery(getClaimsQuerySchema), getClaims);
 
 /**
  * @openapi
@@ -220,7 +216,8 @@ claimRoutes.get("/", validateQuery(getClaimsQuerySchema), getClaims);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.put("/:claimId", 
+claimRoutes.put(
+  '/:claimId',
   validateParamsAndQuery(claimIdParamsSchema, updateClaimQuerySchema),
   validateBody(updateClaimBodySchema),
   updateClaim

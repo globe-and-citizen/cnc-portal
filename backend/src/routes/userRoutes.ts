@@ -1,12 +1,12 @@
-import express from "express";
+import express from 'express';
 import {
   getNonce,
   getUser,
   updateUser,
   searchUser,
   getAllUsers,
-} from "../controllers/userController";
-import { authorizeUser } from "../middleware/authMiddleware";
+} from '../controllers/userController';
+import { authorizeUser } from '../middleware/authMiddleware';
 import {
   validateParams,
   validateQuery,
@@ -15,7 +15,7 @@ import {
   userSearchQuerySchema,
   updateUserBodySchema,
   userPaginationQuerySchema,
-} from "../validation";
+} from '../validation';
 
 const userRoutes = express.Router();
 /**
@@ -56,9 +56,14 @@ const userRoutes = express.Router();
  *                   type: string
  *                   description: The nonce for the user
  */
-userRoutes.get("/nonce/:address", validateParams(addressParamsSchema), getNonce);
-userRoutes.get("/search", authorizeUser, validateQuery(userSearchQuerySchema), searchUser);
-userRoutes.get("/", authorizeUser, validateQuery(userPaginationQuerySchema), getAllUsers);
-userRoutes.get("/:address", authorizeUser, validateParams(addressParamsSchema), getUser);
-userRoutes.put("/:address", authorizeUser, validateBodyAndParams(updateUserBodySchema, addressParamsSchema), updateUser);
+userRoutes.get('/nonce/:address', validateParams(addressParamsSchema), getNonce);
+userRoutes.get('/search', authorizeUser, validateQuery(userSearchQuerySchema), searchUser);
+userRoutes.get('/', authorizeUser, validateQuery(userPaginationQuerySchema), getAllUsers);
+userRoutes.get('/:address', authorizeUser, validateParams(addressParamsSchema), getUser);
+userRoutes.put(
+  '/:address',
+  authorizeUser,
+  validateBodyAndParams(updateUserBodySchema, addressParamsSchema),
+  updateUser
+);
 export default userRoutes;

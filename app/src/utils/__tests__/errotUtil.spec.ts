@@ -53,7 +53,7 @@ describe('parseError', () => {
   //   contractError.shortMessage =
   //     'Execution reverted with reason: custom error 0x20435cc1: 0000000000000000000000000000000000000000000000000000000005f5e100.'
 
-  //   expect(parseError(contractError, expenseAbi as Abi)).toBe(
+  //   expect(parseError(contractError, expenseAbi)).toBe(
   //     'AmountPerPeriodExceeded: Contract reverted'
   //   )
   // })

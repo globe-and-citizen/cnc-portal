@@ -111,11 +111,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { isAddress } from 'viem'
+import { isAddress, type Address } from 'viem'
 import { useBankContract } from '@/composables/bank'
 
 // Form data
-const tokenAddress = ref('')
+const tokenAddress = ref<Address | null>(null)
 const recipientAddresses = ref('')
 const tipAmount = ref('')
 
@@ -128,7 +128,7 @@ const recipientList = computed(() => {
   return recipientAddresses.value
     .split(',')
     .map((addr) => addr.trim())
-    .filter((addr) => addr.length > 0)
+    .filter((addr) => addr.length > 0) as Address[]
 })
 
 const areValidRecipients = computed(() => {
@@ -167,12 +167,10 @@ const {
 // Handle token tip
 const handleSendTokenTip = async () => {
   if (!isFormValid.value) return
-  await sendTokenTip(
-    recipientList.value as `0x${string}`[],
-    tokenAddress.value as `0x${string}`,
-    tipAmount.value
-  )
-  tokenAddress.value = ''
+  if (tokenAddress.value) {
+    await sendTokenTip(recipientList.value, tokenAddress.value, tipAmount.value)
+  }
+  tokenAddress.value = null
   recipientAddresses.value = ''
   tipAmount.value = ''
 }

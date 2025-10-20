@@ -8,7 +8,7 @@ import { useWriteContract } from '@wagmi/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import * as util from '@/utils'
 import * as mocks from './mock/MyApprovedExpenseSection.mock'
-import expenseAccountAbi from '@/artifacts/abi/expense-account-eip712.json'
+import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import * as viem from 'viem'
 import { estimateGas, readContract } from '@wagmi/core'
 import { mockToastStore } from '@/tests/mocks/store.mock'
@@ -190,7 +190,7 @@ describe('ExpenseAccountSection', () => {
           },
           '0xNativeTokenSignature'
         ],
-        abi: expenseAccountAbi,
+        abi: EXPENSE_ACCOUNT_EIP712_ABI,
         functionName: 'transfer'
       })
     })

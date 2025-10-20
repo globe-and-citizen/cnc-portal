@@ -1,14 +1,12 @@
-import { createPublicClient, http } from "viem";
-import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from "viem/chains";
+import { createPublicClient, http } from 'viem';
+import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from 'viem/chains';
 
 const chainId = process.env.CHAIN_ID;
 
 export const getChain = (chainIdStr: string | undefined) => {
   if (!chainIdStr) return sepolia; // default to sepolia
 
-  const id = chainIdStr.startsWith("0x")
-    ? parseInt(chainIdStr, 16)
-    : parseInt(chainIdStr);
+  const id = chainIdStr.startsWith('0x') ? parseInt(chainIdStr, 16) : parseInt(chainIdStr);
 
   switch (id) {
     case mainnet.id:

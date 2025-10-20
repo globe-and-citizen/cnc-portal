@@ -16,10 +16,10 @@
 import CardComponent from '@/components/CardComponent.vue'
 import ElectionDetailsCard from './BoDElectionDetailsCard.vue'
 import { computed, reactive, watch } from 'vue'
-import ElectionABI from '@/artifacts/abi/elections.json'
-// import BoDABI from '@/artifacts/abi/bod.json'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
+// import { BOD_ABI } from '@/artifacts/abi/bod'
 import { useTeamStore, useToastStore } from '@/stores'
-import { encodeFunctionData, zeroAddress, type Abi, type Address } from 'viem'
+import { encodeFunctionData, zeroAddress, type Address } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
 import { estimateGas, readContract } from '@wagmi/core'
 import type { User } from '@/types'
@@ -40,7 +40,7 @@ const electionsAddress = computed(() => teamStore.getContractAddressByType('Elec
 const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useReadContract({
   functionName: 'getElectionCandidates',
   address: electionsAddress.value,
-  abi: ElectionABI,
+  abi: ELECTIONS_ABI,
   args: [electionId],
   query: { enabled: true }
 })
@@ -48,7 +48,7 @@ const { data: electionCandidates /*, error: errorElectionCandidates*/ } = useRea
 const { data: election /*, error: errorVoteCount*/ } = useReadContract({
   functionName: 'getElection',
   address: electionsAddress.value,
-  abi: ElectionABI,
+  abi: ELECTIONS_ABI,
   args: [electionId],
   query: { enabled: computed(() => !!electionId.value) }
 })
@@ -59,7 +59,7 @@ const {
 } = useReadContract({
   functionName: 'getVoteCount',
   address: electionsAddress.value,
-  abi: ElectionABI,
+  abi: ELECTIONS_ABI,
   args: [electionId], // Supply currentElectionId as an argument
   query: {
     enabled: computed(() => !!electionId.value) // Only fetch if currentElectionId is available
@@ -88,6 +88,7 @@ const candidates = computed(() => {
         (member) => member.address === candidate
       ) as User & { role?: string }
       return {
+        // @ts-expect-error type issue
         id: BigInt((election.value as string | bigint[])[0]),
         user: {
           address: candidate,
@@ -97,14 +98,16 @@ const candidates = computed(() => {
         },
         totalVotes: Number(voteCount.value) || 0,
         currentVotes: votesPerCandidate[candidate], //5
+        // @ts-expect-error type issue
         startDate: new Date(Number((election.value as bigint[])[4]) * 1000),
+        // @ts-expect-error type issue
         endDate: new Date(Number((election.value as bigint[])[5]) * 1000)
       }
     })
   } else return []
 })
 
-const castVote = async (candidateAddress: string) => {
+const castVote = async (candidateAddress: Address) => {
   try {
     if (!electionsAddress.value) {
       addErrorToast('Elections contract address not found')
@@ -113,8 +116,9 @@ const castVote = async (candidateAddress: string) => {
     const args = [electionId.value, candidateAddress]
 
     const data = encodeFunctionData({
-      abi: ElectionABI as Abi,
+      abi: ELECTIONS_ABI,
       functionName: 'castVote',
+      // @ts-expect-error type issue
       args
     })
 
@@ -125,13 +129,14 @@ const castVote = async (candidateAddress: string) => {
 
     executeCastVote({
       address: electionsAddress.value,
-      abi: ElectionABI,
+      abi: ELECTIONS_ABI,
       functionName: 'castVote',
+      // @ts-expect-error type issue
       args
     })
   } catch (error) {
-    addErrorToast(parseError(error, ElectionABI as Abi))
-    log.error('Error creating election:', parseError(error, ElectionABI as Abi))
+    addErrorToast(parseError(error, ELECTIONS_ABI))
+    log.error('Error creating election:', parseError(error, ELECTIONS_ABI))
   }
 }
 
@@ -147,7 +152,7 @@ const fetchVotes = async () => {
         candidatesList.map(async (candidate) => {
           const count = await readContract(config, {
             address: electionsAddress.value || zeroAddress,
-            abi: ElectionABI,
+            abi: ELECTIONS_ABI,
             functionName: '_voteCounts',
             args: [props.electionId, candidate]
           })
@@ -156,8 +161,8 @@ const fetchVotes = async () => {
       )
     }
   } catch (error) {
-    addErrorToast(parseError(error, ElectionABI as Abi))
-    log.error('Error fetching votes:', parseError(error, ElectionABI as Abi))
+    addErrorToast(parseError(error, ELECTIONS_ABI))
+    log.error('Error fetching votes:', parseError(error, ELECTIONS_ABI))
   }
 }
 
