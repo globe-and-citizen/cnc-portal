@@ -59,13 +59,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, computed } from 'vue'
 import { isAddress } from 'viem'
 import { required, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import ButtonUI from '../ButtonUI.vue'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
-import { ref } from 'vue'
 import BodAlert from '@/components/BodAlert.vue'
 import TokenAmount from './TokenAmount.vue'
 import type { TokenOption } from '@/types'
@@ -103,16 +102,25 @@ const model = defineModel<TransferModel>({
 
 const emit = defineEmits(['transfer', 'closeModal'])
 
-const selectedTokenId = ref<string>('usdc')
-
-// watch selectedTokenId to update model.token
-watch(selectedTokenId, (newTokenId) => {
-  const token = props.tokens.find((b) => b.tokenId === newTokenId)
-  if (token) {
-    model.value.token = token
+// Use a computed with getter/setter so the select binds directly to tokenId
+const selectedTokenId = computed<string>({
+  get: () => model.value.token?.tokenId ?? 'usdc',
+  set: (id) => {
+    const token = props.tokens.find((t) => t.tokenId === id)
+    if (token) model.value.token = token
   }
 })
 
+watch(
+  () => props.tokens,
+  (tokens) => {
+    if (!tokens?.length) return
+    if (!tokens.some((t) => t.tokenId === selectedTokenId.value)) {
+      selectedTokenId.value = tokens[0].tokenId
+      model.value.token = tokens[0]
+    }
+  }
+)
 const rules = {
   model: {
     address: {
