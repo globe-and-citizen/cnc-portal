@@ -13,7 +13,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { log, parseError } from '@/utils'
 import { useNotificationStore } from '@/stores/notificationStore'
 /**
- * BOD contract write functions - combines admin, transfers, and tipping
+ * BOD contract write functions - combines admin and transfers
  */
 export function useBodWritesFunctions() {
   const writes = useBodWrites()

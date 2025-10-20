@@ -8,16 +8,19 @@ import {
   Officer,
   UpgradeableBeacon,
   Elections__factory,
-  Proposals__factory
+  Proposals__factory,
+  InvestorV1__factory
 } from '../typechain-types'
 
 describe('Officer Contract', function () {
   let officer: Officer
   let bankAccount: Bank__factory
+  let investor: InvestorV1__factory
   let electionsContract: Elections__factory
   let expenseAccount: ExpenseAccount__factory
   let proposalsContract: Proposals__factory
   let bankAccountBeacon: UpgradeableBeacon
+  let investorBeacon: UpgradeableBeacon
   let electionsBeacon: UpgradeableBeacon
   let expenseAccountBeacon: UpgradeableBeacon
   let proposalsBeacon: UpgradeableBeacon
@@ -34,6 +37,9 @@ describe('Officer Contract', function () {
     // Deploy implementation contracts
     bankAccount = await ethers.getContractFactory('Bank')
     bankAccountBeacon = (await upgrades.deployBeacon(bankAccount)) as unknown as UpgradeableBeacon
+
+    investor = await ethers.getContractFactory('InvestorV1')
+    investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as UpgradeableBeacon
 
     electionsContract = await ethers.getContractFactory('Elections')
     electionsBeacon = (await upgrades.deployBeacon(
@@ -61,6 +67,8 @@ describe('Officer Contract', function () {
 
     // Configure beacons
     await officer.connect(owner).configureBeacon('Bank', await bankAccountBeacon.getAddress())
+    // console.log("will configure investore beacon")
+    await officer.connect(owner).configureBeacon('InvestorV1', await investorBeacon.getAddress())
     await officer.connect(owner).configureBeacon('Elections', await electionsBeacon.getAddress())
     await officer.connect(owner).configureBeacon('BoardOfDirectors', await bodBeacon.getAddress())
     await officer
@@ -70,16 +78,22 @@ describe('Officer Contract', function () {
 
   describe('Contract Deployment', () => {
     it('Should deploy contracts via BeaconProxy', async function () {
+      // console.log("Ex of console log")
       const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
+
+      const investorInitData = investor.interface.encodeFunctionData('initialize', [
+        'Bitcoin',
+        'BTC',
+        owner.address
+      ])
+
       const expenseInitData = expenseAccount.interface.encodeFunctionData('initialize', [
         owner.address
       ])
@@ -101,13 +115,15 @@ describe('Officer Contract', function () {
       await expect(
         officer.connect(owner).deployBeaconProxy('ExpenseAccount', expenseInitData)
       ).to.emit(officer, 'ContractDeployed')
+
+      await expect(
+        officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
+      ).to.emit(officer, 'ContractDeployed')
     })
 
     it('Should restrict deployment to owners and founders', async function () {
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
-        addr1.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 
@@ -125,9 +141,7 @@ describe('Officer Contract', function () {
 
     it('Should fail when deploying proxy for unknown contract type', async function () {
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 
@@ -284,9 +298,7 @@ describe('Officer Contract', function () {
       ])
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 
@@ -354,9 +366,7 @@ describe('Officer Contract', function () {
       ])
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 
@@ -393,9 +403,7 @@ describe('Officer Contract', function () {
       ])
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 
@@ -499,11 +507,12 @@ describe('Officer Contract', function () {
   describe('Contract Type Management', () => {
     it('Should track configured contract types', async function () {
       const types = await officer.getConfiguredContractTypes()
-      expect(types).to.have.lengthOf(4)
+      expect(types).to.have.lengthOf(5)
       expect(types).to.include('Bank')
       expect(types).to.include('Elections')
       expect(types).to.include('BoardOfDirectors')
       expect(types).to.include('ExpenseAccount')
+      expect(types).to.include('InvestorV1')
     })
 
     it('Should add new contract type only when configuring new beacon', async function () {
@@ -535,9 +544,7 @@ describe('Officer Contract', function () {
         owner.address
       ])
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 
@@ -569,9 +576,7 @@ describe('Officer Contract', function () {
     it('Should maintain contract order as they are deployed', async function () {
       // Deploy contracts in specific order
       const initData = bankAccount.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ethers.ZeroAddress,
-        ethers.ZeroAddress,
+        [], // token addresses array
         owner.address
       ])
 

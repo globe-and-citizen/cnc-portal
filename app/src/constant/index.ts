@@ -3,13 +3,13 @@ import sepolia from '@/artifacts/deployed_addresses/chain-11155111.json'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
 import polygon from '@/artifacts/deployed_addresses/chain-137.json'
 import amoy from '@/artifacts/deployed_addresses/chain-80002.json'
-import { zeroAddress, type Address } from 'viem'
+import { isAddress, zeroAddress, type Address } from 'viem'
 
 export const NETWORK = getNetwork()
 
 interface TokenAddresses {
-  USDC: string
-  USDT: string
+  USDC: Address
+  USDT: Address
 }
 
 type ChainTokenAddresses = {
@@ -17,17 +17,12 @@ type ChainTokenAddresses = {
 }
 
 interface AddressMapping {
-  'TipsModule#Tips': string
   'BankBeaconModule#Beacon': string
   'BankBeaconModule#Bank': string
   'ProposalBeaconModule#Beacon'?: string
   'ProposalBeaconModule#Proposals'?: string
-  // 'VotingBeaconModule#Beacon'?: string
-  // 'VotingBeaconModule#Voting'?: string
   'BoardOfDirectorsModule#Beacon': string
   'BoardOfDirectorsModule#BoardOfDirectors': string
-  'ExpenseAccountModule#ExpenseAccount'?: string
-  'ExpenseAccountModule#FactoryBeacon'?: string
   'Officer#Officer'?: string
   'Officer#FactoryBeacon'?: string
   'ExpenseAccountEIP712Module#ExpenseAccountEIP712'?: string
@@ -59,13 +54,48 @@ interface AddressValidationError extends Error {
 
 const missingAddresses = new Set<string>()
 
-export function resolveAddress(key: keyof AddressMapping): string {
+export function resolveAddress(key: keyof AddressMapping): Address {
   const address = addresses[key]
-  if (!address && key !== 'MockTokens#USDT' && key !== 'MockTokens#USDC') {
-    missingAddresses.add(key)
-    return ''
+
+  if (!address || typeof address !== 'string' || address.trim() === '') {
+    throw new Error(`Address not defined for "${key}" on chain ${chainId}`)
   }
-  return address ?? ''
+
+  if (isAddress(address) === false) {
+    throw new Error(`Invalid address format for "${key}": ${address}`)
+  }
+
+  return address as Address
+}
+
+// Safe version that returns null instead of throwing
+export function safeResolveAddress(key: keyof AddressMapping): Address | null {
+  try {
+    const address = addresses[key]
+
+    if (!address || typeof address !== 'string' || address.trim() === '') {
+      console.warn(`Address not defined for "${key}" on chain ${chainId}`)
+      return null
+    }
+
+    if (isAddress(address) === false) {
+      console.warn(`Invalid address format for "${key}": ${address}`)
+      return null
+    }
+
+    return address as Address
+  } catch (error) {
+    console.warn(`Failed to resolve address for "${key}":`, error)
+    return null
+  }
+}
+
+// Safe version with fallback value
+export function resolveAddressWithFallback(
+  key: keyof AddressMapping,
+  fallback: Address = zeroAddress
+): Address {
+  return safeResolveAddress(key) ?? fallback
 }
 // Token addresses for different networks
 export const TOKEN_ADDRESSES: ChainTokenAddresses = {
@@ -76,34 +106,25 @@ export const TOKEN_ADDRESSES: ChainTokenAddresses = {
   },
   // Sepolia Testnet
   11155111: {
-    USDC: resolveAddress('MockTokens#USDC'), // Mock contracts deployed on Sepolia
-    USDT: resolveAddress('MockTokens#USDT') // Mock contracts deployed on Sepolia
+    USDC: safeResolveAddress('MockTokens#USDC') || ('' as Address), // Safe resolution with fallback
+    USDT: safeResolveAddress('MockTokens#USDT') || ('' as Address) // Safe resolution with fallback
   },
   80002: {
     USDC: '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582', // Amoy USDC
     USDT: '0x83Ef79413e0DC985035bA0C49B0abD0dA62987eD' // Amoy USDT
   },
   // Hardhat Local - only resolve mock addresses for local chain
-  31337:
-    chainId === 31337
-      ? {
-          USDC: resolveAddress('MockTokens#USDC'), // Placeholder for local testing
-          USDT: resolveAddress('MockTokens#USDT') // Placeholder for local testing
-        }
-      : {
-          USDC: '',
-          USDT: ''
-        }
+  31337: {
+    USDC: safeResolveAddress('MockTokens#USDC') || ('' as Address), // Safe resolution
+    USDT: safeResolveAddress('MockTokens#USDT') || ('' as Address) // Safe resolution
+  }
 }
 
 export function validateAddresses() {
   const requiredKeys: (keyof AddressMapping)[] = [
-    'TipsModule#Tips',
     'VestingModule#Vesting',
     'BankBeaconModule#Beacon',
     'BankBeaconModule#Bank',
-    // 'VotingBeaconModule#Beacon',
-    // 'VotingBeaconModule#Voting',
     'ElectionsBeaconModule#Beacon',
     'ElectionsBeaconModule#Elections',
     'ProposalBeaconModule#Beacon',
@@ -112,8 +133,6 @@ export function validateAddresses() {
     'BoardOfDirectorsModule#BoardOfDirectors',
     'Officer#Officer',
     'Officer#FactoryBeacon',
-    'ExpenseAccountModule#FactoryBeacon',
-    'ExpenseAccountModule#ExpenseAccount',
     'ExpenseAccountEIP712Module#ExpenseAccountEIP712',
     'ExpenseAccountEIP712Module#FactoryBeacon',
     'InvestorsV1BeaconModule#Beacon',
@@ -138,37 +157,33 @@ try {
 } catch (error) {
   console.error(error)
 }
-export const TIPS_ADDRESS = resolveAddress('TipsModule#Tips')
-export const VESTING_ADDRESS = resolveAddress('VestingModule#Vesting')
-export const BANK_BEACON_ADDRESS = resolveAddress('BankBeaconModule#Beacon')
-export const BANK_IMPL_ADDRESS = resolveAddress('BankBeaconModule#Bank')
-// export const VOTING_BEACON_ADDRESS = resolveAddress('VotingBeaconModule#Beacon')
-// export const VOTING_IMPL_ADDRESS = resolveAddress('VotingBeaconModule#Voting')
 
-export const ELECTIONS_BEACON_ADDRESS = resolveAddress('ElectionsBeaconModule#Beacon')
-export const ELECTIONS_IMPL_ADDRESS = resolveAddress('ElectionsBeaconModule#Elections')
-export const PROPOSALS_BEACON_ADDRESS = resolveAddress('ProposalBeaconModule#Beacon')
-export const PROPOSALS_IMPL_ADDRESS = resolveAddress('ProposalBeaconModule#Proposals')
-export const BOD_BEACON_ADDRESS = resolveAddress('BoardOfDirectorsModule#Beacon')
-export const BOD_IMPL_ADDRESS = resolveAddress('BoardOfDirectorsModule#BoardOfDirectors')
-export const EXPENSE_ACCOUNT_BEACON_ADDRESS = resolveAddress('ExpenseAccountModule#FactoryBeacon')
-export const EXPENSE_ACCOUNT_LOGIC_ADDRESS = resolveAddress('ExpenseAccountModule#ExpenseAccount')
-export const EXPENSE_ACCOUNT_EIP712_IMPL_ADDRESS = resolveAddress(
+export const VESTING_ADDRESS = safeResolveAddress('VestingModule#Vesting')
+export const BANK_BEACON_ADDRESS = safeResolveAddress('BankBeaconModule#Beacon')
+export const BANK_IMPL_ADDRESS = safeResolveAddress('BankBeaconModule#Bank')
+
+export const ELECTIONS_BEACON_ADDRESS = safeResolveAddress('ElectionsBeaconModule#Beacon')
+export const ELECTIONS_IMPL_ADDRESS = safeResolveAddress('ElectionsBeaconModule#Elections')
+export const PROPOSALS_BEACON_ADDRESS = safeResolveAddress('ProposalBeaconModule#Beacon')
+export const PROPOSALS_IMPL_ADDRESS = safeResolveAddress('ProposalBeaconModule#Proposals')
+export const BOD_BEACON_ADDRESS = safeResolveAddress('BoardOfDirectorsModule#Beacon')
+export const BOD_IMPL_ADDRESS = safeResolveAddress('BoardOfDirectorsModule#BoardOfDirectors')
+export const EXPENSE_ACCOUNT_EIP712_IMPL_ADDRESS = safeResolveAddress(
   'ExpenseAccountEIP712Module#ExpenseAccountEIP712'
 )
-export const EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS = resolveAddress(
+export const EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS = safeResolveAddress(
   'ExpenseAccountEIP712Module#FactoryBeacon'
 )
-export const CASH_REMUNERATION_EIP712_IMPL_ADDRESS = resolveAddress(
+export const CASH_REMUNERATION_EIP712_IMPL_ADDRESS = safeResolveAddress(
   'CashRemunerationEIP712Module#CashRemunerationEIP712'
 )
-export const CASH_REMUNERATION_EIP712_BEACON_ADDRESS = resolveAddress(
+export const CASH_REMUNERATION_EIP712_BEACON_ADDRESS = safeResolveAddress(
   'CashRemunerationEIP712Module#FactoryBeacon'
 )
-export const OFFICER_ADDRESS = resolveAddress('Officer#Officer')
-export const OFFICER_BEACON = resolveAddress('Officer#FactoryBeacon')
-export const INVESTOR_V1_BEACON_ADDRESS = resolveAddress('InvestorsV1BeaconModule#Beacon')
-export const INVESTOR_V1_IMPL_ADDRESS = resolveAddress('InvestorsV1BeaconModule#InvestorV1')
+export const OFFICER_ADDRESS = safeResolveAddress('Officer#Officer')
+export const OFFICER_BEACON = safeResolveAddress('Officer#FactoryBeacon')
+export const INVESTOR_V1_BEACON_ADDRESS = safeResolveAddress('InvestorsV1BeaconModule#Beacon')
+export const INVESTOR_V1_IMPL_ADDRESS = safeResolveAddress('InvestorsV1BeaconModule#InvestorV1')
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
 

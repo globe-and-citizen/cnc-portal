@@ -37,12 +37,12 @@ import {
   INVESTOR_V1_BEACON_ADDRESS,
   OFFICER_BEACON,
   PROPOSALS_BEACON_ADDRESS,
-  TIPS_ADDRESS,
   USDC_ADDRESS,
   USDT_ADDRESS,
   validateAddresses,
   // VOTING_BEACON_ADDRESS,
   ELECTIONS_BEACON_ADDRESS
+  // OFFICER_ADDRESS
 } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -100,38 +100,48 @@ const deployOfficerContract = async () => {
       return
     }
 
-    const beaconConfigs = [
+    if (
+      !BANK_BEACON_ADDRESS ||
+      !BOD_BEACON_ADDRESS ||
+      !PROPOSALS_BEACON_ADDRESS ||
+      !EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS ||
+      !CASH_REMUNERATION_EIP712_BEACON_ADDRESS ||
+      !INVESTOR_V1_BEACON_ADDRESS ||
+      !ELECTIONS_BEACON_ADDRESS
+    ) {
+      addErrorToast('One or more beacon addresses are not defined. Cannot deploy contracts.')
+      loading.value = false
+      return
+    }
+
+    const beaconConfigs: Array<{ beaconType: string; beaconAddress: Address }> = [
       {
         beaconType: 'Bank',
-        beaconAddress: BANK_BEACON_ADDRESS as `0x${string}`
+        beaconAddress: BANK_BEACON_ADDRESS
       },
-      // {
-      //   beaconType: 'Voting',
-      //   beaconAddress: VOTING_BEACON_ADDRESS
-      // },
       {
         beaconType: 'BoardOfDirectors',
-        beaconAddress: BOD_BEACON_ADDRESS as `0x${string}`
+        beaconAddress: BOD_BEACON_ADDRESS
       },
       {
         beaconType: 'Proposals',
-        beaconAddress: PROPOSALS_BEACON_ADDRESS as `0x${string}`
+        beaconAddress: PROPOSALS_BEACON_ADDRESS
       },
       {
         beaconType: 'ExpenseAccountEIP712',
-        beaconAddress: EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS as `0x${string}`
+        beaconAddress: EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
       },
       {
         beaconType: 'CashRemunerationEIP712',
-        beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS as `0x${string}`
+        beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS
       },
       {
-        beaconType: 'InvestorsV1',
-        beaconAddress: INVESTOR_V1_BEACON_ADDRESS as `0x${string}`
+        beaconType: 'InvestorV1',
+        beaconAddress: INVESTOR_V1_BEACON_ADDRESS
       },
       {
         beaconType: 'Elections',
-        beaconAddress: ELECTIONS_BEACON_ADDRESS as `0x${string}`
+        beaconAddress: ELECTIONS_BEACON_ADDRESS
       }
     ]
     const deployments = []
@@ -142,16 +152,11 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: BANK_ABI,
         functionName: 'initialize',
-        args: [
-          TIPS_ADDRESS as `0x${string}`,
-          USDT_ADDRESS as `0x${string}`,
-          USDC_ADDRESS as `0x${string}`,
-          currentUserAddress
-        ]
+        args: [[USDT_ADDRESS, USDC_ADDRESS], currentUserAddress]
       })
     })
     deployments.push({
-      contractType: 'InvestorsV1',
+      contractType: 'InvestorV1',
       initializerData: encodeFunctionData({
         abi: INVESTOR_ABI,
         functionName: 'initialize',
@@ -189,7 +194,7 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: EXPENSE_ACCOUNT_EIP712_ABI,
         functionName: 'initialize',
-        args: [currentUserAddress, USDT_ADDRESS as `0x${string}`, USDC_ADDRESS as `0x${string}`]
+        args: [currentUserAddress, USDT_ADDRESS, USDC_ADDRESS]
       })
     })
 
@@ -199,7 +204,7 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: CASH_REMUNERATION_EIP712_ABI,
         functionName: 'initialize',
-        args: [currentUserAddress, [USDC_ADDRESS as `0x${string}`]]
+        args: [currentUserAddress, [USDC_ADDRESS]]
       })
     })
 
@@ -219,8 +224,14 @@ const deployOfficerContract = async () => {
       args: [currentUserAddress, beaconConfigs, deployments, true]
     })
 
+    if (!OFFICER_BEACON) {
+      log.error('Officer Beacon address is not defined')
+      addErrorToast('Officer Beacon address is not defined')
+      loading.value = false
+      return
+    }
     createOfficer({
-      address: OFFICER_BEACON as Address,
+      address: OFFICER_BEACON,
       abi: FACTORY_BEACON_ABI,
       functionName: 'createBeaconProxy',
       args: [encodedFunction]

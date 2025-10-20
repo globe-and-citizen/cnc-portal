@@ -357,7 +357,7 @@ describe('InvestorsHeader', () => {
       wrapper = createComponent()
 
       // The computed property should be evaluated during component creation
-      expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('InvestorsV1')
+      expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('InvestorV1')
     })
   })
 })

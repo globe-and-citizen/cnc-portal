@@ -48,7 +48,6 @@ describe('useBankReads', () => {
 describe('useValidation', () => {
   // validateAmount()
   // validateAddress()
-  // validateTipParams()
 })
 
 describe('amountToWei', () => {
@@ -118,7 +117,6 @@ describe('useBankWrites', () => {
 
 - ✅ Admin functions (pause, unpause, ownership, tips address)
 - ✅ Transfer functions (ETH, tokens, deposits)
-- ✅ Tipping functions (ETH tips, token tips, push/send variants)
 - ✅ Validation integration
 - ✅ Amount conversion to Wei
 - ✅ Error handling and early returns
@@ -129,7 +127,6 @@ describe('useBankWrites', () => {
 describe('useBankWritesFunctions', () => {
   // Admin Functions
   // Transfer Functions
-  // Tipping Functions
   // Return Interface
   // Validation Integration
   // Amount Conversion

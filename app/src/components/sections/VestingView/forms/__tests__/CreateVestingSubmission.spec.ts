@@ -14,7 +14,7 @@ import { mainnet } from 'viem/chains'
 import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
 
-// vi.mock('@/artifacts/abi/InvestorsV1', () => MOCK_INVESTOR_ABI)
+// vi.mock('@/artifacts/abi/InvestorV1', () => MOCK_INVESTOR_ABI)
 // Constants
 
 const wagmiConfig = createConfig({
@@ -32,7 +32,7 @@ const mockCurrentTeam = ref({
   ownerAddress: memberAddress,
   teamContracts: [
     {
-      type: 'InvestorsV1',
+      type: 'InvestorV1',
       address: '0x000000000000000000000000000000000000beef'
     }
   ]

@@ -252,23 +252,6 @@ describe('useBankWrites', () => {
       })
     })
 
-    it('should invalidate tips address queries for changeTipsAddress', async () => {
-      const { invalidateBankQueries } = useBankWrites()
-
-      await invalidateBankQueries(BANK_FUNCTION_NAMES.CHANGE_TIPS_ADDRESS)
-
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: [
-          'readContract',
-          {
-            address: MOCK_DATA.bankAddress,
-            chainId: MOCK_DATA.chainId,
-            functionName: BANK_FUNCTION_NAMES.TIPS_ADDRESS
-          }
-        ]
-      })
-    })
-
     it('should invalidate owner queries for ownership functions', async () => {
       const { invalidateBankQueries } = useBankWrites()
 
@@ -281,24 +264,6 @@ describe('useBankWrites', () => {
             address: MOCK_DATA.bankAddress,
             chainId: MOCK_DATA.chainId,
             functionName: BANK_FUNCTION_NAMES.OWNER
-          }
-        ]
-      })
-    })
-
-    it('should invalidate token queries for changeTokenAddress', async () => {
-      const { invalidateBankQueries } = useBankWrites()
-
-      await invalidateBankQueries(BANK_FUNCTION_NAMES.CHANGE_TOKEN_ADDRESS)
-
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledTimes(2)
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: [
-          'readContract',
-          {
-            address: MOCK_DATA.bankAddress,
-            chainId: MOCK_DATA.chainId,
-            functionName: BANK_FUNCTION_NAMES.IS_TOKEN_SUPPORTED
           }
         ]
       })

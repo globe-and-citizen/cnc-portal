@@ -156,7 +156,7 @@ const emits = defineEmits(['refetchShareholders'])
 const { address: currentAddress } = useUserDataStore()
 
 const teamStore = useTeamStore()
-const investorsAddress = teamStore.getContractAddressByType('InvestorsV1')
+const investorsAddress = teamStore.getContractAddressByType('InvestorV1')
 const bankAddress = teamStore.getContractAddressByType('Bank')
 
 const { data: deployedContracts } = useReadContract({
@@ -170,7 +170,7 @@ const { data: deployedContracts } = useReadContract({
 
 const investorAddress = computed(() => {
   if (!deployedContracts.value) return null
-  const investor = deployedContracts.value.find((c) => c.contractType === 'InvestorsV1')
+  const investor = deployedContracts.value.find((c) => c.contractType === 'InvestorV1')
   return investor?.contractAddress
 })
 

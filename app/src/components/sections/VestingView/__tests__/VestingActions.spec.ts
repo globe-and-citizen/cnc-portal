@@ -26,7 +26,7 @@ const mockCurrentTeam = ref({
   ownerAddress: memberAddress,
   teamContracts: [
     {
-      type: 'InvestorsV1',
+      type: 'InvestorV1',
       address: '0x000000000000000000000000000000000000beef'
     }
   ]
@@ -106,7 +106,7 @@ describe('VestingActions.vue', () => {
       ownerAddress: memberAddress,
       teamContracts: [
         {
-          type: 'InvestorsV1',
+          type: 'InvestorV1',
           address: '0x000000000000000000000000000000000000beef'
         }
       ]

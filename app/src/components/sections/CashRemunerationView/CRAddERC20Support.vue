@@ -53,7 +53,7 @@ const isValidAddress = computed(() => {
   return tokenAddress.value.token && isAddress(tokenAddress.value.token)
 })
 
-const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
+const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
 
 const cashRemunerationEip712Address = computed(() => {
   const address = teamStore.getContractAddressByType('CashRemunerationEIP712')

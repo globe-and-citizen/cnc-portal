@@ -31,40 +31,13 @@ export function useBankReads() {
     })
   }
 
-  const useBankTipsAddress = () => {
-    return useReadContract({
-      address: bankAddress.value,
-      abi: BANK_ABI,
-      functionName: BANK_FUNCTION_NAMES.TIPS_ADDRESS,
-      query: { enabled: isBankAddressValid }
-    })
-  }
-
-  const useBankIsTokenSupported = (tokenAddress: MaybeRef<Address>) => {
-    const tokenAddressValue = computed(() => unref(tokenAddress))
-    return useReadContract({
-      address: bankAddress.value,
-      abi: BANK_ABI,
-      functionName: BANK_FUNCTION_NAMES.IS_TOKEN_SUPPORTED,
-      args: [tokenAddressValue],
-      query: {
-        enabled: computed(
-          () =>
-            !!bankAddress.value &&
-            isAddress(bankAddress.value) &&
-            isAddress(tokenAddressValue.value)
-        )
-      }
-    })
-  }
-
-  const useBankSupportedTokens = (symbol: MaybeRef<string>) => {
+  const useBankSupportedTokens = (address: MaybeRef<Address>) => {
     return useReadContract({
       address: bankAddress.value,
       abi: BANK_ABI,
       functionName: BANK_FUNCTION_NAMES.SUPPORTED_TOKENS,
-      args: [unref(symbol)],
-      query: { enabled: computed(() => isBankAddressValid.value && !!unref(symbol)) }
+      args: [unref(address)],
+      query: { enabled: computed(() => isBankAddressValid.value && !!unref(address)) }
     })
   }
 
@@ -94,7 +67,7 @@ export function useBankReads() {
     return useReadContract({
       address: bankAddress.value,
       abi: BANK_ABI,
-      functionName: BANK_FUNCTION_NAMES.UNLOCK_BALANCE,
+      functionName: BANK_FUNCTION_NAMES.GET_UNLOCK_BALANCE,
       query: { enabled: isBankAddressValid }
     })
   }
@@ -107,8 +80,6 @@ export function useBankReads() {
     useUnlockBalance,
     useBankPaused,
     useBankOwner,
-    useBankTipsAddress,
-    useBankIsTokenSupported,
     useBankSupportedTokens
   }
 }

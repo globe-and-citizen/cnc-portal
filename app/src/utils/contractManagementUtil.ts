@@ -98,7 +98,7 @@ const contractsWithAbis = (contracts: TeamContract[]) => {
         return { ...contract, abi: ElectionsAbi }
       case 'ExpenseAccountEIP712':
         return { ...contract, abi: ExpenseAccountAbi }
-      case 'InvestorsV1':
+      case 'InvestorV1':
         return { ...contract, abi: InvestorsAbi }
       case 'Proposals':
         return { ...contract, abi: ProposalsAbi }

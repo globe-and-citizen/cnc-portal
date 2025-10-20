@@ -105,7 +105,7 @@ describe('InvestorsActions.vue', () => {
         {
           address: '0xcontractaddress',
           admins: [],
-          type: 'InvestorsV1',
+          type: 'InvestorV1',
           deployer: '0xdeployeraddress'
         },
         {
