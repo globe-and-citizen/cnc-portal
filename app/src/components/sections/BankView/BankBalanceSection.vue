@@ -176,7 +176,7 @@ const { data: bankOwner } = useReadContract({
 const { data: totalDividend } = useReadContract({
   address: props.bankAddress,
   abi: BANK_ABI,
-  functionName: 'totalDividend'
+  functionName: 'totalDividends'
 })
 
 const dividendInUSD = computed(() => {
