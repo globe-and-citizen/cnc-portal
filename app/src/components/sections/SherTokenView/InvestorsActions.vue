@@ -200,7 +200,7 @@ const { isLoading: isConfirmingDistributeMint, isSuccess: isSuccessDistributingM
   })
 
 const executePayDividends = async (value: bigint) => {
-  console.log("Value of dividend to pay", value)
+  console.log('Value of dividend to pay', value)
   if (isBodAction.value) {
     if (!investorsAddress) return
     const data = encodeFunctionData({
