@@ -158,7 +158,7 @@
             </ModalComponent>
             <ButtonUI
               variant="primary"
-              :enabled="teamStore.currentTeam?.ownerAddress == userStore.address"
+              :disabled="teamStore.currentTeam?.ownerAddress !== userStore.address"
               @click="showModal = true"
               data-test="createAddCampaign"
             >
