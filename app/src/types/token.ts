@@ -7,4 +7,5 @@ export interface TokenOption {
   balance: number
   price: number
   code: string
+  spendableBalance?: number
 }
