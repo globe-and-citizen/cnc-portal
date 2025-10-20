@@ -6,37 +6,37 @@ import dotenv from 'dotenv'
 import { NetworksUserConfig } from 'hardhat/types'
 
 dotenv.config()
-let networks: NetworksUserConfig = {
+const networks: NetworksUserConfig = {
   hardhat: { chainId: 31337 },
   localhost: { chainId: 31337, url: 'http://localhost:8545' }
 }
-if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefined) {
-  console.error('\x1b[33m Please set your SEPOLIA_URL and PRIVATE_KEY in a .env file\x1b[0m')
-} else {
-  networks = {
-    sepolia: {
-      url: process.env.SEPOLIA_URL,
-      accounts: [process.env.PRIVATE_KEY],
-      chainId: 11155111
-    },
-    // mainnet: {
-    //   url: process.env.MAINNET_URL,
-    //   accounts: [process.env.MAINNET_KEY!],
-    //   gasPrice: 1000000000
-    // }
-    polygon: {
-      url: process.env.POLYGON_URL,
-      accounts: [process.env.PRIVATE_KEY!],
-      gasPrice: 'auto',
-      chainId: 137
-    },
-    amoy: {
-      url: process.env.AMOY_URL,
-      accounts: [process.env.PRIVATE_KEY!],
-      chainId: 80002
-    }
-  }
-}
+// if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefined) {
+//   console.error('\x1b[33m Please set your SEPOLIA_URL and PRIVATE_KEY in a .env file\x1b[0m')
+// } else {
+//   networks = {
+//     sepolia: {
+//       url: process.env.SEPOLIA_URL,
+//       accounts: [process.env.PRIVATE_KEY],
+//       chainId: 11155111
+//     },
+//     // mainnet: {
+//     //   url: process.env.MAINNET_URL,
+//     //   accounts: [process.env.MAINNET_KEY!],
+//     //   gasPrice: 1000000000
+//     // }
+//     polygon: {
+//       url: process.env.POLYGON_URL,
+//       accounts: [process.env.PRIVATE_KEY!],
+//       gasPrice: 'auto',
+//       chainId: 137
+//     },
+//     amoy: {
+//       url: process.env.AMOY_URL,
+//       accounts: [process.env.PRIVATE_KEY!],
+//       chainId: 80002
+//     }
+//   }
+// }
 
 const config: HardhatUserConfig = {
   solidity: {

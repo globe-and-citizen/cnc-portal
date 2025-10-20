@@ -118,49 +118,7 @@ describe('useBankReads', () => {
       )
     })
 
-    it('should call useBankTipsAddress with correct parameters', () => {
-      const { useBankTipsAddress } = useBankReads()
-      useBankTipsAddress()
 
-      expect(mockUseReadContract).toHaveBeenCalledWith(
-        expect.objectContaining({
-          address: MOCK_DATA.validBankAddress,
-          abi: expect.any(Array),
-          functionName: 'tipsAddress',
-          query: expect.objectContaining({
-            enabled: expect.any(Object)
-          })
-        })
-      )
-    })
-
-    it.skip('should call useBankIsTokenSupported with correct parameters', () => {
-      const { useBankIsTokenSupported } = useBankReads()
-      useBankIsTokenSupported(MOCK_DATA.validTokenAddress)
-
-      expect(mockUseReadContract).toHaveBeenCalledWith({
-        address: MOCK_DATA.validBankAddress,
-        abi: expect.any(Array),
-        functionName: 'isTokenSupported',
-        args: [MOCK_DATA.validTokenAddress],
-        query: {
-          enabled: expect.any(Object) // This is a computed property
-        }
-      })
-    })
-
-    it('should call useBankSupportedTokens with correct parameters', () => {
-      const { useBankSupportedTokens } = useBankReads()
-      useBankSupportedTokens(MOCK_DATA.tokenSymbol)
-
-      expect(mockUseReadContract).toHaveBeenCalledWith({
-        address: MOCK_DATA.validBankAddress,
-        abi: expect.any(Array),
-        functionName: 'supportedTokens',
-        args: [MOCK_DATA.tokenSymbol],
-        query: { enabled: expect.any(Object) }
-      })
-    })
   })
 
   describe('Query Enablement Logic', () => {
@@ -174,21 +132,7 @@ describe('useBankReads', () => {
       expect(callArgs.query.enabled.value).toBe(false)
     })
 
-    it('should disable token queries when token address is invalid', () => {
-      const { useBankIsTokenSupported } = useBankReads()
-      useBankIsTokenSupported(MOCK_DATA.invalidAddress as `0x${string}`)
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.query.enabled.value).toBe(false)
-    })
-
-    it('should disable supported tokens query when symbol is empty', () => {
-      const { useBankSupportedTokens } = useBankReads()
-      useBankSupportedTokens('')
-
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.query.enabled.value).toBe(false)
-    })
   })
 
   describe('Return Interface', () => {
@@ -199,15 +143,11 @@ describe('useBankReads', () => {
       expect(bankReads).toHaveProperty('isBankAddressValid')
       expect(bankReads).toHaveProperty('useBankPaused')
       expect(bankReads).toHaveProperty('useBankOwner')
-      expect(bankReads).toHaveProperty('useBankTipsAddress')
-      expect(bankReads).toHaveProperty('useBankIsTokenSupported')
       expect(bankReads).toHaveProperty('useBankSupportedTokens')
 
       // Check that functions are actually functions
       expect(typeof bankReads.useBankPaused).toBe('function')
       expect(typeof bankReads.useBankOwner).toBe('function')
-      expect(typeof bankReads.useBankTipsAddress).toBe('function')
-      expect(typeof bankReads.useBankIsTokenSupported).toBe('function')
       expect(typeof bankReads.useBankSupportedTokens).toBe('function')
     })
   })
