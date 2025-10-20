@@ -49,10 +49,10 @@ export function useBodWritesFunctions() {
       try {
         const members = bodAddress.value
           ? ((await readContract(config, {
-            address: bodAddress.value,
-            abi: BOD_ABI,
-            functionName: 'getBoardOfDirectors'
-          })) as Address[])
+              address: bodAddress.value,
+              abi: BOD_ABI,
+              functionName: 'getBoardOfDirectors'
+            })) as Address[])
           : []
 
         if (members.length > 0 && action.value) {

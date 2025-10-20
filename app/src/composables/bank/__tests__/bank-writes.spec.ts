@@ -269,7 +269,6 @@ describe('useBankWrites', () => {
       })
     })
 
-
     it('should invalidate balance queries for transfer functions', async () => {
       const { invalidateBankQueries } = useBankWrites()
 
