@@ -97,20 +97,6 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   );
 
   /**
-   * @dev Emitted when a token address is changed for a given symbol.
-   * @param account The address that initiated the change (contract owner).
-   * @param tokenSymbol The symbol of the token (e.g., "USDT", "USDC").
-   * @param oldAddress The previous token contract address.
-   * @param newAddress The new token contract address.
-   */
-  event TokenAddressChanged(
-    address indexed account,
-    string tokenSymbol,
-    address indexed oldAddress,
-    address indexed newAddress
-  );
-
-  /**
    * @dev Emitted when ETH/native token dividends are deposited for distribution.
    * @param account The address that deposited the dividends (contract owner).
    * @param amount The total amount of dividends deposited.
