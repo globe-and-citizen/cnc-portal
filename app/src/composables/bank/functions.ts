@@ -36,11 +36,6 @@ export function useBankWritesFunctions() {
   const pauseContract = () => writes.executeWrite(BANK_FUNCTION_NAMES.PAUSE)
   const unpauseContract = () => writes.executeWrite(BANK_FUNCTION_NAMES.UNPAUSE)
 
-  const changeTipsAddress = (newTipsAddress: Address) => {
-    if (!validateAddress(newTipsAddress, 'tips address')) return
-    return writes.executeWrite(BANK_FUNCTION_NAMES.CHANGE_TIPS_ADDRESS, [newTipsAddress])
-  }
-
   const changeTokenAddress = (symbol: string, newTokenAddress: Address) => {
     if (!validateAddress(newTokenAddress, 'token address')) return
     if (!symbol.trim()) {
@@ -142,7 +137,7 @@ export function useBankWritesFunctions() {
     // Admin functions
     pauseContract,
     unpauseContract,
-    changeTipsAddress,
+    // changeTipsAddress,
     changeTokenAddress,
     transferOwnership,
     renounceOwnership,

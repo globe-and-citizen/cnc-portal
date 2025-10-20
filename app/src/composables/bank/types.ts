@@ -10,13 +10,12 @@ export const BANK_FUNCTION_NAMES = {
   PAUSED: 'paused',
   OWNER: 'owner',
   TIPS_ADDRESS: 'tipsAddress',
-  IS_TOKEN_SUPPORTED: 'isTokenSupported',
+  // IS_TOKEN_SUPPORTED: 'isTokenSupported',
   SUPPORTED_TOKENS: 'supportedTokens',
 
   // Write functions
   PAUSE: 'pause',
   UNPAUSE: 'unpause',
-  CHANGE_TIPS_ADDRESS: 'changeTipsAddress',
   CHANGE_TOKEN_ADDRESS: 'changeTokenAddress',
   TRANSFER_OWNERSHIP: 'transferOwnership',
   RENOUNCE_OWNERSHIP: 'renounceOwnership',
