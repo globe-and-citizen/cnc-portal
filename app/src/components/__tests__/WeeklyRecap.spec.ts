@@ -1,7 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import WeeklyRecap from '@/components/WeeklyRecap.vue'
-import { type WeeklyClaimResponse } from '@/types'
+
+type TestWeeklyClaimLocal = {
+  weekStart: string
+  hoursWorked?: number
+  wage: {
+    ratePerHour: Array<{ type: string; amount: number }>
+    maximumHoursPerWeek?: number
+  }
+  claims: Array<{ hoursWorked: number }>
+  member: { name: string }
+}
 
 // Mock the currency store used by the component
 const mockCurrencyStore = {
@@ -22,70 +32,22 @@ describe('WeeklyRecap', () => {
   })
 
   it('renders totals and calculates amounts correctly', () => {
-    // Build a fully-typed WeeklyClaim object to satisfy TypeScript
-    type WeeklyClaim = WeeklyClaimResponse[number]
-
-    const testWeeklyClaim: WeeklyClaim = {
-      id: 1,
-      status: 'signed',
+    const testWeeklyClaim: TestWeeklyClaimLocal = {
       weekStart: '2025-10-13',
-      data: { ownerAddress: '0xOwner' },
-      memberAddress: '0xMember',
-      teamId: 2,
-      signature: null,
-      wageId: 2,
-      createdAt: '2025-10-13T00:00:00Z',
-      updatedAt: '2025-10-13T00:00:00Z',
+      hoursWorked: 6,
       wage: {
-        id: 1,
-        teamId: 1,
-        userAddress: '0xMember',
         ratePerHour: [
           { type: 'native', amount: 5 },
           { type: 'native', amount: 3 }
         ],
-        cashRatePerHour: 0,
-        tokenRatePerHour: 0,
-        usdcRatePerHour: 0,
-        maximumHoursPerWeek: 40,
-        nextWageId: null,
-        createdAt: '2025-10-13T00:00:00Z',
-        updatedAt: '2025-10-13T00:00:00Z'
+        maximumHoursPerWeek: 40
       },
-      claims: [
-        {
-          id: 1,
-          status: 'signed',
-          hoursWorked: 4,
-          dayWorked: '2025-10-13',
-          memo: '',
-          signature: null,
-          tokenTx: null,
-          wageId: 2,
-          weeklyClaimId: 1,
-          createdAt: '2025-10-13T00:00:00Z',
-          updatedAt: '2025-10-13T00:00:00Z'
-        },
-        {
-          id: 2,
-          status: 'signed',
-          hoursWorked: 2,
-          dayWorked: '2025-10-14',
-          memo: '',
-          signature: null,
-          tokenTx: null,
-          wageId: 2,
-          weeklyClaimId: 1,
-          createdAt: '2025-10-14T00:00:00Z',
-          updatedAt: '2025-10-14T00:00:00Z'
-        }
-      ],
-      member: { address: '0xMember', name: 'Alice', imageUrl: 'img' }
+      claims: [{ hoursWorked: 4 }, { hoursWorked: 2 }],
+      member: { name: 'Alice' }
     }
 
-    const wrapper = mount(WeeklyRecap, {
-      props: { weeklyClaim: testWeeklyClaim }
-    })
+    // @ts-expect-error - provide minimal shape for the component
+    const wrapper = mount(WeeklyRecap, { props: { weeklyClaim: testWeeklyClaim } })
 
     expect(wrapper.text()).toContain('Total Hours')
     expect(wrapper.text()).toContain('6h')
