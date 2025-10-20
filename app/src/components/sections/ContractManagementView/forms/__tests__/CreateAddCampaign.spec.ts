@@ -5,7 +5,7 @@ import CreateAddCampaign from '@/components/sections/ContractManagementView/form
 import ButtonUI from '@/components/ButtonUI.vue'
 
 import { ref } from 'vue'
-//import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
+//import AdCampaignArtifact  from '@/artifacts/abi/AdCampaignManager.json'
 //import type { Abi } from 'viem'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 //vi.mock('@/stores/useToastStore')
