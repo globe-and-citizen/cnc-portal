@@ -114,9 +114,9 @@ describe('Bank', () => {
     })
 
     it('should not allow adding already supported token', async () => {
-      await expect(
-        bankProxy.addTokenSupport(await mockUSDT.getAddress())
-      ).to.be.revertedWith(ERRORS.TOKEN_ALREADY_SUPPORTED)
+      await expect(bankProxy.addTokenSupport(await mockUSDT.getAddress())).to.be.revertedWith(
+        ERRORS.TOKEN_ALREADY_SUPPORTED
+      )
     })
 
     it('should not allow adding zero address token', async () => {
@@ -137,9 +137,9 @@ describe('Bank', () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
 
-      await expect(
-        bankProxy.removeTokenSupport(await newToken.getAddress())
-      ).to.be.revertedWith(ERRORS.TOKEN_NOT_SUPPORTED)
+      await expect(bankProxy.removeTokenSupport(await newToken.getAddress())).to.be.revertedWith(
+        ERRORS.TOKEN_NOT_SUPPORTED
+      )
     })
 
     it('should not allow non-owner to add/remove token support', async () => {
@@ -148,8 +148,8 @@ describe('Bank', () => {
 
       await expect(bankProxy.connect(member1).addTokenSupport(await newToken.getAddress())).to.be
         .reverted
-      await expect(bankProxy.connect(member1).removeTokenSupport(await mockUSDT.getAddress())).to
-        .be.reverted
+      await expect(bankProxy.connect(member1).removeTokenSupport(await mockUSDT.getAddress())).to.be
+        .reverted
     })
   })
 
@@ -183,9 +183,8 @@ describe('Bank', () => {
     it('should not allow non-owner to set investor address', async () => {
       // TODO better checking, the first attempt should work but not the second
       bankProxy.connect(member1).setInvestorAddress(await investorProxy.getAddress())
-      await expect(
-        bankProxy.connect(member1).setInvestorAddress(await investorProxy.getAddress())
-      ).to.be.reverted
+      await expect(bankProxy.connect(member1).setInvestorAddress(await investorProxy.getAddress()))
+        .to.be.reverted
     })
   })
 
@@ -331,9 +330,9 @@ describe('Bank', () => {
       })
 
       it('should not allow depositing zero amount', async () => {
-        await expect(
-          bankProxy.depositToken(await mockUSDT.getAddress(), 0)
-        ).to.be.revertedWith(ERRORS.AMOUNT_ZERO)
+        await expect(bankProxy.depositToken(await mockUSDT.getAddress(), 0)).to.be.revertedWith(
+          ERRORS.AMOUNT_ZERO
+        )
       })
 
       it('should allow owner to transfer tokens', async () => {
@@ -421,10 +420,7 @@ describe('Bank', () => {
         )) as unknown as MockERC20
 
         await expect(
-          bankProxy.getTokenDividendBalance(
-            await unsupportedToken.getAddress(),
-            member1.address
-          )
+          bankProxy.getTokenDividendBalance(await unsupportedToken.getAddress(), member1.address)
         ).to.be.revertedWith(ERRORS.UNSUPPORTED_TOKEN)
       })
     })
@@ -457,10 +453,7 @@ describe('Bank', () => {
 
     context('ETH Dividend Deposits', () => {
       it('should allow owner to deposit dividends', async () => {
-        const tx = await bankProxy.depositDividends(
-          depositAmount,
-          await investorProxy.getAddress()
-        )
+        const tx = await bankProxy.depositDividends(depositAmount, await investorProxy.getAddress())
 
         await expect(tx)
           .to.emit(bankProxy, 'DividendDeposited')
@@ -500,10 +493,7 @@ describe('Bank', () => {
       })
 
       it('should emit DividendCredited events during allocation', async () => {
-        const tx = await bankProxy.depositDividends(
-          depositAmount,
-          await investorProxy.getAddress()
-        )
+        const tx = await bankProxy.depositDividends(depositAmount, await investorProxy.getAddress())
 
         await expect(tx)
           .to.emit(bankProxy, 'DividendCredited')

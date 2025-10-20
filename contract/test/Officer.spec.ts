@@ -39,9 +39,7 @@ describe('Officer Contract', function () {
     bankAccountBeacon = (await upgrades.deployBeacon(bankAccount)) as unknown as UpgradeableBeacon
 
     investor = await ethers.getContractFactory('InvestorV1')
-    investorBeacon = (await upgrades.deployBeacon(
-      investor
-    )) as unknown as UpgradeableBeacon
+    investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as UpgradeableBeacon
 
     electionsContract = await ethers.getContractFactory('Elections')
     electionsBeacon = (await upgrades.deployBeacon(
@@ -90,7 +88,11 @@ describe('Officer Contract', function () {
         owner.address
       ])
 
-      const investorInitData = investor.interface.encodeFunctionData('initialize', ['Bitcoin', 'BTC', owner.address])
+      const investorInitData = investor.interface.encodeFunctionData('initialize', [
+        'Bitcoin',
+        'BTC',
+        owner.address
+      ])
 
       const expenseInitData = expenseAccount.interface.encodeFunctionData('initialize', [
         owner.address
@@ -114,10 +116,9 @@ describe('Officer Contract', function () {
         officer.connect(owner).deployBeaconProxy('ExpenseAccount', expenseInitData)
       ).to.emit(officer, 'ContractDeployed')
 
-      await expect(officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)).to.emit(
-        officer,
-        'ContractDeployed'
-      )
+      await expect(
+        officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
+      ).to.emit(officer, 'ContractDeployed')
     })
 
     it('Should restrict deployment to owners and founders', async function () {
