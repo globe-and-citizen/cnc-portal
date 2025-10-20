@@ -123,7 +123,7 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
   const { data: totalDividend } = useReadContract({
     address: unref(address),
     abi: BANK_ABI,
-    functionName: 'totalDividend'
+    functionName: 'totalDividends'
   })
 
   // Computed balances for all tokens
