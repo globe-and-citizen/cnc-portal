@@ -506,7 +506,6 @@ describe('Officer Contract', function () {
   describe('Contract Type Management', () => {
     it('Should track configured contract types', async function () {
       const types = await officer.getConfiguredContractTypes()
-      console.log("types : ", types)
       expect(types).to.have.lengthOf(5)
       expect(types).to.include('Bank')
       expect(types).to.include('Elections')
