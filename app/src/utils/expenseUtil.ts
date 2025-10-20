@@ -3,7 +3,7 @@ import { tokenSymbol } from './constantUtil'
 import { zeroAddress } from 'viem'
 import type { TokenId } from '@/constant'
 import type { TableRow } from '@/components/TableComponent.vue'
-
+import type { BudgetData } from '@/types/expense-account'
 export const getCurrentUserExpenses = (expenses: ExpenseResponse[], userAddress: string) => {
   if (!expenses || !userAddress || !Array.isArray(expenses)) return []
   return expenses.filter((expense) => expense.data.approvedAddress === userAddress)
@@ -14,21 +14,26 @@ export const getTokens = (
   signature: string,
   balances: TokenBalance[]
 ): TokenOption[] => {
-  const tokenAddress = expenses.find((item) => item.signature === signature)?.data.tokenAddress
+  const expense = expenses.find((item) => item.signature === signature)
+  if (!expense) return []
 
+  const tokenAddress = expense.data.tokenAddress
   const symbol = tokenSymbol(tokenAddress ?? '')
+  const tokenId = tokenAddress === zeroAddress ? 'native' : 'usdc'
+
   const balance =
     tokenAddress === zeroAddress
       ? findToken('native', balances)?.amount
       : findToken('usdc', balances)?.amount
 
-  const tokenId = tokenAddress === zeroAddress ? 'native' : 'usdc'
+  const spendableBalance = getRemainingExpenseBalance(expense, balance ?? 0)
 
   return symbol && !isNaN(Number(balance))
     ? [
         {
           symbol,
           balance: Number(balance),
+          spendableBalance: spendableBalance,
           tokenId: tokenId as TokenId,
           price: balances.find((b) => b.token.id === tokenId)?.values['USD']?.price || 0,
           code: balances.find((b) => b.token.id === tokenId)?.token.code || ''
@@ -39,4 +44,22 @@ export const getTokens = (
 
 const findToken = (tokenId: TokenId, balances: TokenBalance[]) => {
   return balances.find((balance) => balance.token.id === tokenId)
+}
+
+/**
+ * Calculate remaining spendable balance for an expense
+ * @param expense The expense row data
+ * @returns The remaining balance that can be spent, or null if no budget data found
+ */
+export const getRemainingExpenseBalance = (expense: TableRow, contractBalance: number): number => {
+  const budgetData = expense.data.budgetData as BudgetData[]
+  const maxAmountData = budgetData.find((item) => item.budgetType === 1)?.value
+  const amountTransferred = expense.balances[1]
+
+  // Calculate remaining spendable amount
+  const remainingBudget =
+    maxAmountData && amountTransferred ? Number(maxAmountData) - Number(amountTransferred) : 0
+
+  // Return the minimum between contract balance and remaining budget
+  return Math.min(contractBalance, remainingBudget)
 }

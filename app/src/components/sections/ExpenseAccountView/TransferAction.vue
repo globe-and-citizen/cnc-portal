@@ -47,7 +47,7 @@
           <template #label>
             <span class="label-text">Transfer From</span>
             <span class="label-text-alt"
-              >Limit: {{ balanceLimit }} {{ transferData.token.symbol }}
+              >Limit: {{ transferData.token.spendableBalance }} {{ transferData.token.symbol }}
             </span>
           </template>
         </TransferForm>
@@ -74,7 +74,7 @@ import { config } from '@/wagmi.config'
 import { ERC20_ABI } from '@/artifacts/abi/erc20'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { TableRow } from '@/components/TableComponent.vue'
-
+import type { TransferData } from '@/types'
 const props = defineProps<{ row: TableRow }>()
 
 const teamStore = useTeamStore()
@@ -90,9 +90,16 @@ const tokenAmount = ref('')
 const tokenRecipient = ref('')
 
 // Helper function to create default transfer data
-const createDefaultTransferData = () => ({
+const createDefaultTransferData = (): TransferData => ({
   address: { name: '', address: '' },
-  token: { symbol: '', balance: 0, tokenId: 'usdc' as TokenId, price: 0, code: 'USD' },
+  token: {
+    symbol: '',
+    balance: 0,
+    tokenId: 'usdc' as TokenId,
+    price: 0,
+    code: 'USD',
+    spendableBalance: 0
+  },
   amount: '0'
 })
 
@@ -111,11 +118,6 @@ const expenseAccountEip712Address = computed(() =>
   teamStore.getContractAddressByType('ExpenseAccountEIP712')
 )
 
-// Retrun the minimum between balance and expenseBalance
-const balanceLimit = computed(() => {
-  if (expenseBalance.value === null) return transferData.value.token.balance
-  return Math.min(transferData.value.token.balance, expenseBalance.value)
-})
 const tokens = computed(() => getTokens([props.row], props.row.signature, balances.value))
 //#endregion
 
