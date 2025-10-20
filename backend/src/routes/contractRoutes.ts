@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { getContracts, syncContracts, addContract } from '../controllers/contractController';
+import { getContracts, syncContracts, addContract, resetTeamContracts } from '../controllers/contractController';
 import {
   validateBody,
   validateQuery,
@@ -189,5 +189,8 @@ contractRoutes.get('/', validateQuery(getContractsQuerySchema), getContracts);
  *             $ref: '#/components/schemas/ErrorResponse'
  */
 contractRoutes.put('/sync', validateBody(syncContractsBodySchema), syncContracts);
+
+
+contractRoutes.delete('/reset', validateBody(syncContractsBodySchema), resetTeamContracts);
 
 export default contractRoutes;

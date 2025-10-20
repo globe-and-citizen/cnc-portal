@@ -115,3 +115,32 @@ export const addContract = async (req: Request, res: Response) => {
     return errorResponse(500, 'Internal server error', res);
   }
 };
+
+export const resetTeamContracts = async (req: Request, res: Response) => {
+  const teamId = Number(req.body.teamId);
+
+  try {
+    const team = await prisma.team.findUnique({
+      where: { id: Number(teamId) },
+    });
+    if (!team) return errorResponse(404, 'Team not found', res);
+
+    // Only the team owner can reset contracts
+    const callerAddress = (req as any).address as Address;
+    if (team.ownerAddress !== callerAddress)
+      return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
+
+    await prisma.teamContract.deleteMany({
+      where: { teamId: Number(teamId) },
+    });
+    // Set team officerAddress to null
+    await prisma.team.update({
+      where: { id: Number(teamId) },
+      data: { officerAddress: null },
+    });
+    return res.status(200).json({ message: 'Team contracts reset successfully' });
+  } catch (error) {
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
+  }
+};
