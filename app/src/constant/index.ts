@@ -98,27 +98,36 @@ export function resolveAddressWithFallback(
   return safeResolveAddress(key) ?? fallback
 }
 // Token addresses for different networks
-export const TOKEN_ADDRESSES: ChainTokenAddresses = {
+export const TOKEN_ADDRESSES: Pick<ChainTokenAddresses, 137 | 80002> = {
   // Polygon Mainnet
   137: {
     USDC: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', // Polygon USDC
     USDT: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // Polygon USDT
   },
-  // Sepolia Testnet
-  11155111: {
-    USDC: safeResolveAddress('MockTokens#USDC') || ('' as Address), // Safe resolution with fallback
-    USDT: safeResolveAddress('MockTokens#USDT') || ('' as Address) // Safe resolution with fallback
-  },
   80002: {
     USDC: '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582', // Amoy USDC
     USDT: '0x83Ef79413e0DC985035bA0C49B0abD0dA62987eD' // Amoy USDT
-  },
-  // Hardhat Local - only resolve mock addresses for local chain
-  31337: {
-    USDC: safeResolveAddress('MockTokens#USDC') || ('' as Address), // Safe resolution
-    USDT: safeResolveAddress('MockTokens#USDT') || ('' as Address) // Safe resolution
   }
 }
+
+// Export token addresses for current network
+const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresses
+const getUSDCAddress = () => {
+  if (currentChainId === 11155111 || currentChainId === 31337) {
+    return safeResolveAddress('MockTokens#USDC') || ('' as Address)
+  }
+  return TOKEN_ADDRESSES[currentChainId]?.USDC || ''
+
+}
+const getUSDTAddress = () => {
+  if (currentChainId === 11155111 || currentChainId === 31337) {
+    return safeResolveAddress('MockTokens#USDC') || ('' as Address)
+  }
+  return TOKEN_ADDRESSES[currentChainId]?.USDT || ''
+}
+
+export const USDC_ADDRESS = getUSDCAddress()
+export const USDT_ADDRESS = getUSDTAddress()
 
 export function validateAddresses() {
   const requiredKeys: (keyof AddressMapping)[] = [
@@ -190,10 +199,6 @@ export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
 // GraphQL poll interval for transaction queries (in milliseconds)
 export const GRAPHQL_POLL_INTERVAL = 12000
 
-// Export token addresses for current network
-const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresses
-export const USDC_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDC || ''
-export const USDT_ADDRESS = TOKEN_ADDRESSES[currentChainId]?.USDT || ''
 
 const NETWORK_TO_COIN_ID: Record<string, string> = {
   POL: 'matic-network',
