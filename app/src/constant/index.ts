@@ -117,7 +117,6 @@ const getUSDCAddress = () => {
     return safeResolveAddress('MockTokens#USDC') || ('' as Address)
   }
   return TOKEN_ADDRESSES[currentChainId]?.USDC || ''
-
 }
 const getUSDTAddress = () => {
   if (currentChainId === 11155111 || currentChainId === 31337) {
@@ -198,7 +197,6 @@ export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
 
 // GraphQL poll interval for transaction queries (in milliseconds)
 export const GRAPHQL_POLL_INTERVAL = 12000
-
 
 const NETWORK_TO_COIN_ID: Record<string, string> = {
   POL: 'matic-network',

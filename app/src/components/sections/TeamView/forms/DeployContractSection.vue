@@ -281,7 +281,7 @@ useWatchContractEvent({
   abi: FACTORY_BEACON_ABI,
   eventName: 'BeaconProxyCreated',
   async onLogs(logs) {
-    console.log("try get BeaconProxyCreated logs")
+    console.log('try get BeaconProxyCreated logs')
     if (!logs.length) {
       log.error('No logs found')
       loading.value = false
