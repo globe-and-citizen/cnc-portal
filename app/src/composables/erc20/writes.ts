@@ -4,7 +4,7 @@ import { useAccount } from '@wagmi/vue'
 import { type Address } from 'viem'
 import { ERC20_FUNCTION_NAMES, type ERC20FunctionName, isValidERC20Function } from './types'
 import { useContractWrites, type ContractWriteConfig } from '../contracts/useContractWrites'
-import ERC20ABI from '@/artifacts/abi/erc20.json'
+import { ERC20_ABI } from '@/artifacts/abi/erc20'
 import { unref } from 'vue'
 
 /**
@@ -19,7 +19,7 @@ export function useERC20Writes(contractAddress: MaybeRef<Address>) {
   // Use the generic contract writes composable
   const baseWrites = useContractWrites({
     contractAddress: contractAddress,
-    abi: ERC20ABI,
+    abi: ERC20_ABI,
     chainId: chainId
   } as ContractWriteConfig)
 

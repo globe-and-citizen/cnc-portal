@@ -26,15 +26,7 @@ import { watch, computed } from 'vue'
 import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { useStorage } from '@vueuse/core'
 import type { TokenId } from '@/constant'
-import type { RatePerHour } from '@/types/cash-remuneration'
-
-// Interface pour typer les claims
-interface WeeklyClaim {
-  claims: { hoursWorked: number }[]
-  wage: {
-    ratePerHour: RatePerHour
-  }
-}
+import type { RatePerHour, WeeklyClaim } from '@/types/cash-remuneration'
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
@@ -60,11 +52,10 @@ const {
   }
 )
 
-function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
-  return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
-}
-
-function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = currencyStore): number {
+function getHoulyRateInUserCurrency(
+  ratePerHour: RatePerHour[],
+  tokenStore = currencyStore
+): number {
   return ratePerHour.reduce((total: number, rate: { type: TokenId; amount: number }) => {
     const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
     const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
@@ -75,9 +66,8 @@ function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = curre
 const totalPendingAmount = computed(() => {
   if (!weeklyClaims.value || !Array.isArray(weeklyClaims.value)) return ''
   const total = weeklyClaims.value.reduce((sum: number, weeklyClaim: WeeklyClaim) => {
-    const hours = getTotalHoursWorked(weeklyClaim.claims)
     const rate = getHoulyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
-    return sum + hours * rate
+    return sum + weeklyClaim.hoursWorked * rate
   }, 0)
   return formatCurrencyShort(total, currency.value.code)
 })

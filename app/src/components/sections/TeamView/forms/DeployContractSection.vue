@@ -20,14 +20,14 @@ import { encodeFunctionData, type Address } from 'viem'
 import { ref, watch, computed } from 'vue'
 
 // Contract ABIs
-import OfficerABI from '@/artifacts/abi/officer.json'
-import BankABI from '@/artifacts/abi/bank.json'
-// import VotingABI from '@/artifacts/abi/voting.json'
+import { OFFICER_ABI } from '@/artifacts/abi/officer'
+import { BANK_ABI } from '@/artifacts/abi/bank'
+// import { VOTING_ABI } from '@/artifacts/abi/voting'
 
-import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
-import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
-import FACTORY_BEACON_ABI from '@/artifacts/abi/factory-beacon.json'
-import ElectionsABI from '@/artifacts/abi/elections.json'
+import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
+import { FACTORY_BEACON_ABI } from '@/artifacts/abi/factory-beacon'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 
 import {
   BANK_BEACON_ADDRESS,
@@ -103,7 +103,7 @@ const deployOfficerContract = async () => {
     const beaconConfigs = [
       {
         beaconType: 'Bank',
-        beaconAddress: BANK_BEACON_ADDRESS
+        beaconAddress: BANK_BEACON_ADDRESS as `0x${string}`
       },
       // {
       //   beaconType: 'Voting',
@@ -111,27 +111,27 @@ const deployOfficerContract = async () => {
       // },
       {
         beaconType: 'BoardOfDirectors',
-        beaconAddress: BOD_BEACON_ADDRESS
+        beaconAddress: BOD_BEACON_ADDRESS as `0x${string}`
       },
       {
         beaconType: 'Proposals',
-        beaconAddress: PROPOSALS_BEACON_ADDRESS
+        beaconAddress: PROPOSALS_BEACON_ADDRESS as `0x${string}`
       },
       {
         beaconType: 'ExpenseAccountEIP712',
-        beaconAddress: EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS
+        beaconAddress: EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS as `0x${string}`
       },
       {
         beaconType: 'CashRemunerationEIP712',
-        beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS
+        beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS as `0x${string}`
       },
       {
         beaconType: 'InvestorsV1',
-        beaconAddress: INVESTOR_V1_BEACON_ADDRESS
+        beaconAddress: INVESTOR_V1_BEACON_ADDRESS as `0x${string}`
       },
       {
         beaconType: 'Elections',
-        beaconAddress: ELECTIONS_BEACON_ADDRESS
+        beaconAddress: ELECTIONS_BEACON_ADDRESS as `0x${string}`
       }
     ]
     const deployments = []
@@ -140,9 +140,14 @@ const deployOfficerContract = async () => {
     deployments.push({
       contractType: 'Bank',
       initializerData: encodeFunctionData({
-        abi: BankABI,
+        abi: BANK_ABI,
         functionName: 'initialize',
-        args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentUserAddress]
+        args: [
+          TIPS_ADDRESS as `0x${string}`,
+          USDT_ADDRESS as `0x${string}`,
+          USDC_ADDRESS as `0x${string}`,
+          currentUserAddress
+        ]
       })
     })
     deployments.push({
@@ -182,9 +187,9 @@ const deployOfficerContract = async () => {
     deployments.push({
       contractType: 'ExpenseAccountEIP712',
       initializerData: encodeFunctionData({
-        abi: ExpenseAccountEIP712ABI,
+        abi: EXPENSE_ACCOUNT_EIP712_ABI,
         functionName: 'initialize',
-        args: [currentUserAddress, USDT_ADDRESS, USDC_ADDRESS]
+        args: [currentUserAddress, USDT_ADDRESS as `0x${string}`, USDC_ADDRESS as `0x${string}`]
       })
     })
 
@@ -192,9 +197,9 @@ const deployOfficerContract = async () => {
     deployments.push({
       contractType: 'CashRemunerationEIP712',
       initializerData: encodeFunctionData({
-        abi: CashRemunerationEIP712ABI,
+        abi: CASH_REMUNERATION_EIP712_ABI,
         functionName: 'initialize',
-        args: [currentUserAddress, [USDC_ADDRESS]]
+        args: [currentUserAddress, [USDC_ADDRESS as `0x${string}`]]
       })
     })
 
@@ -202,14 +207,14 @@ const deployOfficerContract = async () => {
     deployments.push({
       contractType: 'Elections',
       initializerData: encodeFunctionData({
-        abi: ElectionsABI,
+        abi: ELECTIONS_ABI,
         functionName: 'initialize',
         args: [currentUserAddress]
       })
     })
 
     const encodedFunction = encodeFunctionData({
-      abi: OfficerABI,
+      abi: OFFICER_ABI,
       functionName: 'initialize',
       args: [currentUserAddress, beaconConfigs, deployments, true]
     })

@@ -56,12 +56,11 @@
 
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
-import ElectionABI from '@/artifacts/abi/elections.json'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { useTeamStore, useToastStore } from '@/stores'
-import { type Abi } from 'viem'
 import { simulateContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import type { OldProposal } from '@/types'
 import { log, parseError } from '@/utils'
@@ -71,6 +70,7 @@ import ElectionStats from '@/components/sections/AdministrationView/ElectionStat
 import ElectionActions from './ElectionActions.vue'
 import CurrentBoDElection404 from './CurrentBoDElection404.vue'
 import { useBoDElections } from '@/composables'
+import { useCustomFetch } from '@/composables'
 
 const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
@@ -84,6 +84,14 @@ const showCreateElectionModal = ref({
   show: false
 })
 const isLoadingCreateElection = ref(false)
+const electionNotificationUrl = computed(() => `/elections/${teamStore.currentTeam?.id}`)
+
+const {
+  // data: claimUpdateData,
+  // isFetching: isClaimUpdateing,
+  error: electionNotificationError,
+  execute: executeAddElectionNotifications
+} = useCustomFetch(electionNotificationUrl, { immediate: false }).post().json()
 
 const createElection = async (electionData: OldProposal) => {
   try {
@@ -110,33 +118,42 @@ const createElection = async (electionData: OldProposal) => {
       teamStore.currentTeam?.members.map((m) => m.address) || []
     ]
 
-    console.log('Do nothing...')
-
     await simulateContract(config, {
       address: electionsAddress.value,
-      abi: ElectionABI,
+      abi: ELECTIONS_ABI,
       functionName: 'createElection',
+      // @ts-expect-error type issue
       args
     })
 
     const hash = await writeContract(config, {
       address: electionsAddress.value,
-      abi: ElectionABI,
+      abi: ELECTIONS_ABI,
       functionName: 'createElection',
+      // @ts-expect-error type issue
       args
     })
 
     await waitForTransactionReceipt(config, {
       hash
     })
+
+    await executeAddElectionNotifications()
     addSuccessToast('Election created successfully!')
     showCreateElectionModal.value.show = false
     showCreateElectionModal.value.mount = false
   } catch (error) {
-    addErrorToast(parseError(error, ElectionABI as Abi))
+    addErrorToast(parseError(error, ELECTIONS_ABI))
     log.error('creatingElection error:', error)
   } finally {
     isLoadingCreateElection.value = false
   }
 }
+
+watch(electionNotificationError, (error) => {
+  if (error) {
+    addErrorToast('Failed to send election notifications')
+    log.error('electionNotificationError.value: ', error)
+  }
+})
 </script>

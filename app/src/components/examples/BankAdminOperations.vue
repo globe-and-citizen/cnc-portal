@@ -6,7 +6,7 @@
     <BankPauseOperation />
 
     <!-- Change Tips Address -->
-    <BankChangeTipsAddressOperation />
+    <!-- <BankChangeTipsAddressOperation /> -->
 
     <!-- Transfer Ownership -->
     <BankTransferOwnershipOperation />
@@ -15,6 +15,6 @@
 
 <script setup lang="ts">
 import BankPauseOperation from '@/components/examples/admin/BankPauseOperation.vue'
-import BankChangeTipsAddressOperation from '@/components/examples/admin/BankChangeTipsAddressOperation.vue'
+// import BankChangeTipsAddressOperation from '@/components/examples/admin/BankChangeTipsAddressOperation.vue'
 import BankTransferOwnershipOperation from '@/components/examples/admin/BankTransferOwnershipOperation.vue'
 </script>

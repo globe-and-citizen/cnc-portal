@@ -56,9 +56,9 @@
             @click.stop="
               stopVesting({
                 address: VESTING_ADDRESS as Address,
-                abi: VestingABI,
+                abi: VESTING_ABI,
                 functionName: 'stopVesting',
-                args: [row.member, team?.id]
+                args: [row.member, BigInt(team?.id ?? 0)]
               })
             "
           >
@@ -79,9 +79,9 @@
             @click.stop="
               releaseVesting({
                 address: VESTING_ADDRESS as Address,
-                abi: VestingABI,
+                abi: VESTING_ABI,
                 functionName: 'release',
-                args: [team?.id]
+                args: [BigInt(team?.id ?? 0)]
               })
             "
           >
@@ -109,7 +109,7 @@ import VestingStatusFilter from './VestingStatusFilter.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
-import VestingABI from '@/artifacts/abi/Vesting.json'
+import { VESTING_ABI } from '@/artifacts/abi/vesting'
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 import { VESTING_ADDRESS } from '@/constant'
@@ -161,8 +161,8 @@ const {
 } = useReadContract({
   functionName: 'getTeamAllArchivedVestingsFlat',
   address: VESTING_ADDRESS as Address,
-  abi: VestingABI,
-  args: [team?.value?.id ?? 0]
+  abi: VESTING_ABI,
+  args: [BigInt(team?.value?.id ?? 0)]
 })
 
 watch(errorGetArchivedVestingInfo, () => {
@@ -180,8 +180,8 @@ const {
 } = useReadContract({
   functionName: 'getTeamVestingsWithMembers',
   address: VESTING_ADDRESS as Address,
-  abi: VestingABI,
-  args: [team?.value?.id ?? 0]
+  abi: VESTING_ABI,
+  args: [BigInt(team?.value?.id ?? 0)]
 })
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
@@ -200,7 +200,9 @@ watch(
 const vestings = computed<VestingRow[]>(() => {
   const currentDateInSeconds = Math.floor(Date.now() / 1000)
 
+  // @ts-expect-error type assertion
   const allVestingsRaw: VestingTuple[] = [vestingInfos.value, archivedVestingInfos.value].filter(
+    // @ts-expect-error type assertion
     (v): v is VestingTuple =>
       Array.isArray(v) && v.length === 2 && Array.isArray(v[0]) && Array.isArray(v[1])
   )

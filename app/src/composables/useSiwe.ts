@@ -132,7 +132,7 @@ export function useSiwe() {
     const userData: Partial<User> = user.value
     userDataStore.setUserData(
       userData.name || '',
-      userData.address || '',
+      (userData.address || '') as `0x${string}`,
       userData.nonce || '',
       userData.imageUrl || ''
     )

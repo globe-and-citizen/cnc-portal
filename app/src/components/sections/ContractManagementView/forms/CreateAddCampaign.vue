@@ -68,15 +68,14 @@ import { useDeployContract } from '@/composables/useContractFunctions'
 import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
-import AdCampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
+import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
-import type { Abi, Hex } from 'viem'
+import type { Hex } from 'viem'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 
 const emit = defineEmits(['closeAddCampaignModal'])
 const { addErrorToast, addSuccessToast } = useToastStore()
 
-const campaignAbi = AdCampaignAbi as Abi
 const campaignBytecode = CAMPAIGN_BYTECODE as Hex
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
@@ -98,7 +97,7 @@ const {
   isDeploying: loading,
   contractAddress,
   error: deployError
-} = useDeployContract(campaignAbi, campaignBytecode)
+} = useDeployContract(AD_CAMPAIGN_MANAGER_ABI, campaignBytecode)
 
 watch(contractAddress, async (newAddress) => {
   if (newAddress && teamStore.currentTeam) {

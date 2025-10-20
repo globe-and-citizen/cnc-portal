@@ -67,16 +67,7 @@
             <CRSigne
               v-if="row.claims.length > 0 && row.wage.ratePerHour"
               :disabled="row.weekStart === currentWeekStart"
-              :weekly-claim="{
-                id: row.id, //which id do we use, individual or weekly claim?
-                status: !row.status ? 'pending' : row.status,
-                hoursWorked: getTotalHoursWorked(row.claims),
-                createdAt: row.createdAt as string, //which date do we use, latest claim or weekly claim?
-                wage: {
-                  ratePerHour: row.wage.ratePerHour as RatePerHour,
-                  userAddress: row.wage.userAddress as Address
-                }
-              }"
+              :weekly-claim="row as WeeklyClaim"
             />
           </template>
         </TableComponent>
@@ -101,16 +92,15 @@ import UserComponent from '@/components/UserComponent.vue'
 import { useTanstackQuery } from '@/composables/useTanstackQuery'
 import { NETWORK } from '@/constant'
 import { useCurrencyStore, useTeamStore, useToastStore, useUserDataStore } from '@/stores'
-import { type RatePerHour, type WeeklyClaimResponse } from '@/types'
+import { type WeeklyClaim } from '@/types'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import utc from 'dayjs/plugin/utc'
 import weekday from 'dayjs/plugin/weekday'
-import type { Address } from 'viem'
 import { computed, watch } from 'vue'
 import CRSigne from './CRSigne.vue'
 // import CRWithdrawClaim from './CRWithdrawClaim.vue'
-import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 import type { TokenId } from '@/constant'
@@ -144,10 +134,7 @@ const queryKey = computed(() => [
   'pending'
 ])
 
-const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaimResponse>(
-  queryKey,
-  weeklyClaimUrl
-)
+const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaim[]>(queryKey, weeklyClaimUrl)
 const isFetching = computed(() => isLoading.value)
 
 const data = computed(() =>
@@ -166,7 +153,7 @@ const {
 } = useReadContract({
   functionName: 'owner',
   address: cashRemunerationAddress,
-  abi: CashRemuneration_ABI
+  abi: CASH_REMUNERATION_EIP712_ABI
 })
 
 function getHourlyRateInUserCurrency(

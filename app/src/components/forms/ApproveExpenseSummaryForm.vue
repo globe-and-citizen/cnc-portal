@@ -19,21 +19,20 @@
 
   <div class="flex justify-between">
     <ButtonUI
-      :disabled="loading"
-      :loading="loading"
-      variant="primary"
-      @click="$emit('submit', budgetLimit)"
-      data-test="approve-button"
-      >Confirm Approval</ButtonUI
-    >
-
-    <ButtonUI
       outline
       variant="error"
       :disabled="loading"
       @click="$emit('close')"
       data-test="cancel-button"
       >Cancel</ButtonUI
+    >
+    <ButtonUI
+      :disabled="loading"
+      :loading="loading"
+      variant="primary"
+      @click="$emit('submit', budgetLimit)"
+      data-test="approve-button"
+      >Confirm Approval</ButtonUI
     >
   </div>
 </template>

@@ -97,6 +97,12 @@ const selectedTokenId = computed({
 const tokenList = computed(() => props.tokens)
 const selectedToken = computed(() => props.tokens.find((b) => b.tokenId === selectedTokenId.value))
 
+const availableBalance = computed(() => {
+  const token = selectedToken.value
+  if (!token) return 0
+  return token.spendableBalance ?? token.balance ?? 0
+})
+
 const estimatedPrice = computed(() => {
   const price = selectedToken.value?.price ?? 0
   const code = currency.value?.code ?? 'USD'
@@ -109,8 +115,7 @@ const notZero = helpers.withMessage('Amount must be greater than 0', (value: str
 })
 const notExceedingBalance = helpers.withMessage('Amount exceeds your balance', (value: string) => {
   if (!value || parseFloat(value) <= 0) return true
-  const amountValue = selectedToken.value?.balance ?? 0
-  return parseFloat(value) <= amountValue
+  return parseFloat(value) <= availableBalance.value
 })
 const numericWithMessage = helpers.withMessage('Value is not a valid number', numeric)
 const rules = {

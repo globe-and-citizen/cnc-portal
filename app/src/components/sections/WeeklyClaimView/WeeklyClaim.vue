@@ -59,6 +59,14 @@
           </span>
         </div>
       </template>
+      <template #action-data="{ row }">
+        <CRSigne v-if="row.status == 'pending'" :weekly-claim="assertWeeklyClaimRow(row)" />
+        <CRWithdrawClaim
+          v-if="row.status == 'signed' || row.status == 'withdrawn'"
+          :disabled="row.status == 'withdrawn' || userStore.address != row.wage.userAddress"
+          :weekly-claim="assertWeeklyClaimRow(row)"
+        />
+      </template>
 
       <template #status-data="{ row }">
         <template v-if="row.status === 'signed'">
@@ -82,10 +90,6 @@
             {{ row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending' }}
           </span>
         </template>
-        <!-- <br />
-        <span class="text-sm">
-          {{ row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '-' }}
-        </span> -->
       </template>
     </TableComponent>
   </CardComponent>
@@ -97,11 +101,10 @@ import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import type { TokenId } from '@/constant'
 import { NETWORK } from '@/constant'
-import { useCurrencyStore, useTeamStore } from '@/stores'
-import type { RatePerHour } from '@/types/cash-remuneration'
+import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
+import type { RatePerHour, WeeklyClaim } from '@/types/cash-remuneration'
 import { formatIsoWeekRange } from '@/utils/dayUtils'
 import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
@@ -109,6 +112,9 @@ import utc from 'dayjs/plugin/utc'
 import weekday from 'dayjs/plugin/weekday'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import CRSigne from '../CashRemunerationView/CRSigne.vue'
+import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
+import { useTanstackQuery } from '@/composables'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
@@ -120,10 +126,15 @@ function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
 
 // const userStore = useUserDataStore()
 const teamStore = useTeamStore()
+const userStore = useUserDataStore()
 const props = defineProps<{
   memberAddress?: string
   singleUser?: boolean
 }>()
+
+function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
+  return row as WeeklyClaim
+}
 
 const weeklyClaimUrl = computed(
   () =>
@@ -132,7 +143,18 @@ const weeklyClaimUrl = computed(
     }`
 )
 
-const { data: fetchedData, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
+const weeklyClaimQueryKey = computed(() => [
+  'weekly-claims',
+  teamStore.currentTeam?.id,
+  props.memberAddress
+])
+
+const { data: fetchedData, error } = useTanstackQuery<Array<WeeklyClaim>>(
+  weeklyClaimQueryKey,
+  weeklyClaimUrl
+)
+
+// const { data: fetchedData, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
 
 // I think this sorting should be done in the backend
 const data = computed(() => {
@@ -149,7 +171,10 @@ const isTeamClaimDataFetching = computed(() => !fetchedData.value && !error.valu
 
 const currencyStore = useCurrencyStore()
 
-function getHoulyRateInUserCurrency(ratePerHour: RatePerHour, tokenStore = currencyStore): number {
+function getHoulyRateInUserCurrency(
+  ratePerHour: RatePerHour[],
+  tokenStore = currencyStore
+): number {
   return ratePerHour.reduce((total: number, rate: { type: TokenId; amount: number }) => {
     const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
     const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
@@ -191,6 +216,12 @@ const columns = [
   {
     key: 'status',
     label: 'Status',
+    sortable: true,
+    class: 'text-base'
+  },
+  {
+    key: 'action',
+    label: 'Action',
     sortable: false,
     class: 'text-base'
   }
