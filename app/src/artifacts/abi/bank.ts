@@ -211,37 +211,6 @@ export const BANK_ABI = [
       {
         indexed: true,
         internalType: 'address',
-        name: 'account',
-        type: 'address'
-      },
-      {
-        indexed: false,
-        internalType: 'string',
-        name: 'tokenSymbol',
-        type: 'string'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'oldAddress',
-        type: 'address'
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'newAddress',
-        type: 'address'
-      }
-    ],
-    name: 'TokenAddressChanged',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
         name: 'depositor',
         type: 'address'
       },
