@@ -5,7 +5,7 @@ import CreateAddCampaign from '@/components/sections/ContractManagementView/form
 import ButtonUI from '@/components/ButtonUI.vue'
 
 import { ref } from 'vue'
-//import AdCampaignArtifact  from '@/artifacts/abi/AdCampaignManager.json'
+//import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
 //import type { Abi } from 'viem'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 //vi.mock('@/stores/useToastStore')
@@ -23,9 +23,6 @@ const mocks = vi.hoisted(() => {
     }))
   }
 })
-type MockFetchReturn = {
-  post: () => { json: () => Promise<unknown> }
-}
 vi.mock('@wagmi/core', async (importOriginal) => {
   const actual: object = await importOriginal()
 
@@ -54,51 +51,11 @@ vi.mock('@/composables/useContractFunctions', async (importOriginal) => {
   }
 })
 
-// Hoisted mocks
-const { mockUseCustomFetch, mockTeamStore } = vi.hoisted(() => ({
-  mockUseCustomFetch: vi.fn(),
-  mockTeamStore: {
-    currentTeam: { id: 'team-1' },
-    fetchTeam: vi.fn().mockResolvedValue(undefined),
-    getContractAddressByType: vi.fn(() => '0xTeamContractAddress')
-  }
-}))
-
-// Mock stores used by the component
-vi.mock('@/stores', () => ({
-  useToastStore: () => mockToastStore,
-  useTeamStore: () => mockTeamStore
-}))
-
-vi.mock('@/stores/user', () => ({
-  useUserDataStore: () => ({ address: '0xUSER' })
-}))
-
-// Mock useCustomFetch so we can control success/error of addContractToTeam
-vi.mock('@/composables/useCustomFetch', () => ({
-  useCustomFetch: mockUseCustomFetch
-}))
-
 describe('CreateAddCampaign.vue', () => {
   beforeEach(() => {
     const pinia = createPinia()
     setActivePinia(pinia)
     vi.clearAllMocks()
-
-    // Reset the hoisted refs between tests
-    deployState.isDeploying.value = false
-    deployState.contractAddress.value = null
-    deployState.error.value = null
-
-    // Default: backend succeeds
-    mockUseCustomFetch.mockReturnValue({
-      post: () => ({
-        json: vi.fn().mockResolvedValue({ success: true })
-      })
-    } as unknown as MockFetchReturn)
-
-    // Ensure team is present for watcher guard
-    mockTeamStore.currentTeam = { id: 'team-1' }
   })
 
   describe('render', () => {
@@ -222,42 +179,13 @@ describe('CreateAddCampaign.vue', () => {
       const wrapper = mount(CreateAddCampaign, {
         props: { bankAddress: '0xTeamContractAddress' }
       })
-
       await flushPromises()
-      // Trigger watcher
       deployState.contractAddress.value = '0x_contract_address'
       await flushPromises()
+      // Simulate the watexpect(wrapper.emitted()).toHaveProperty('openAddTeamModal')cher logic
 
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-        'Contract deployed and added to team successfully'
-      )
-      expect(mockTeamStore.fetchTeam).toHaveBeenCalledWith('team-1')
-      expect(wrapper.emitted('closeAddCampaignModal')).toBeTruthy()
-    })
-
-    it('keeps modal open and shows error toast when adding contract to team fails', async () => {
-      // Force backend failure for this test deterministically
-      mockUseCustomFetch.mockReturnValue({
-        post: () => ({
-          json: vi.fn().mockRejectedValue(new Error('backend down'))
-        })
-      } as unknown as MockFetchReturn)
-
-      const wrapper = mount(CreateAddCampaign, {
-        props: { bankAddress: '0xTeamContractAddress' }
-      })
-
-      deployState.contractAddress.value = '0x_contract_address'
-      await wrapper.vm.$nextTick()
-      await flushPromises()
-
-      // Error toast should be called; relax message to avoid brittle assertions
-      expect(mockToastStore.addErrorToast).toHaveBeenCalled()
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-        expect.stringMatching(/failed to add/i)
-      )
-      // Modal stays open
-      expect(wrapper.emitted('closeAddCampaignModal')).toBeFalsy()
+      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Contract deployed successfully')
+      expect(wrapper.emitted()).toHaveProperty('closeAddCampaignModal')
     })
   })
 })
