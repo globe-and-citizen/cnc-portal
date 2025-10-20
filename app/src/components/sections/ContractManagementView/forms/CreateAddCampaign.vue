@@ -101,28 +101,36 @@ const {
 
 watch(contractAddress, async (newAddress) => {
   if (newAddress && teamStore.currentTeam) {
-    addSuccessToast(`Contract deployed successfully`)
-    emit('closeAddCampaignModal')
-    await addContractToTeam(teamStore.currentTeam.id, newAddress, userDataStore.address)
-    await teamStore.fetchTeam(teamStore.currentTeam.id)
+    try {
+      // First try to add contract to team
+      await addContractToTeam(teamStore.currentTeam.id, newAddress, userDataStore.address)
+      await teamStore.fetchTeam(teamStore.currentTeam.id)
+
+      // Only show success and close modal if everything succeeds
+      addSuccessToast(`Contract deployed and added to team successfully`)
+      emit('closeAddCampaignModal')
+    } catch (error) {
+      console.error('Failed to add contract to team:', error)
+      addErrorToast('Contract deployed but failed to add to team. Please try again.')
+    }
   }
 })
 
 const addContractToTeam = async (teamId: string, address: string, deployer: string) => {
-  try {
-    await useCustomFetch(`contract`)
-      .post({
-        teamId,
-        contractAddress: address,
-        contractType: 'Campaign',
-        deployer
-      })
-      .json()
-    addSuccessToast(`Contract added to team  successfully`)
-  } catch (error) {
-    console.error(`Failed to add contract to team `, error)
-    addErrorToast('Failed to add contract to team')
+  const response = await useCustomFetch(`contract`)
+    .post({
+      teamId,
+      contractAddress: address,
+      contractType: 'Campaign',
+      deployer
+    })
+    .json()
+
+  if (!response) {
+    throw new Error('No response from server')
   }
+
+  return response
 }
 
 // Trigger deployment
