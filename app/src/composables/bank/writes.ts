@@ -64,7 +64,6 @@ export function useBankWrites() {
         await queryClient.invalidateQueries(key)
         break
 
-
       case BANK_FUNCTION_NAMES.TRANSFER_OWNERSHIP:
       case BANK_FUNCTION_NAMES.RENOUNCE_OWNERSHIP:
         // Invalidate owner query
@@ -95,25 +94,9 @@ export function useBankWrites() {
           })
         }
         break
-      case BANK_FUNCTION_NAMES.CHANGE_TOKEN_ADDRESS:
-        // Invalidate all token-related queries
-        await queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            {
-              ...bankQueryKey,
-              functionName: BANK_FUNCTION_NAMES.SUPPORTED_TOKENS
-            }
-          ]
-        })
-        break
 
       case BANK_FUNCTION_NAMES.TRANSFER:
       case BANK_FUNCTION_NAMES.TRANSFER_TOKEN:
-      case BANK_FUNCTION_NAMES.SEND_TIP:
-      case BANK_FUNCTION_NAMES.SEND_TOKEN_TIP:
-      case BANK_FUNCTION_NAMES.PUSH_TIP:
-      case BANK_FUNCTION_NAMES.PUSH_TOKEN_TIP:
       case BANK_FUNCTION_NAMES.DEPOSIT_TOKEN:
         // Invalidate balance queries
         await queryClient.invalidateQueries({

@@ -117,8 +117,6 @@ describe('useBankReads', () => {
         })
       )
     })
-
-
   })
 
   describe('Query Enablement Logic', () => {
@@ -131,8 +129,6 @@ describe('useBankReads', () => {
       const callArgs = mockUseReadContract.mock.calls[0][0]
       expect(callArgs.query.enabled.value).toBe(false)
     })
-
-
   })
 
   describe('Return Interface', () => {

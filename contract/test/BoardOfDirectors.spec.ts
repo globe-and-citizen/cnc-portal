@@ -4,7 +4,7 @@ import { expect } from 'chai'
 describe('BoardOfDirectors', async () => {
   async function deployFixture() {
     // Get users
-    const [founder, boD1, boD2, boD3, mockTipsAddress] = await ethers.getSigners()
+    const [founder, boD1, boD2, boD3] = await ethers.getSigners()
 
     // deploy voting contract and initialize
     const VotingFactory = await ethers.getContractFactory('Voting')

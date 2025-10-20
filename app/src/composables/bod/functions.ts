@@ -13,7 +13,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { log, parseError } from '@/utils'
 import { useNotificationStore } from '@/stores/notificationStore'
 /**
- * BOD contract write functions - combines admin, transfers, and tipping
+ * BOD contract write functions - combines admin and transfers
  */
 export function useBodWritesFunctions() {
   const writes = useBodWrites()
@@ -49,10 +49,10 @@ export function useBodWritesFunctions() {
       try {
         const members = bodAddress.value
           ? ((await readContract(config, {
-              address: bodAddress.value,
-              abi: BOD_ABI,
-              functionName: 'getBoardOfDirectors'
-            })) as Address[])
+            address: bodAddress.value,
+            abi: BOD_ABI,
+            functionName: 'getBoardOfDirectors'
+          })) as Address[])
           : []
 
         if (members.length > 0 && action.value) {

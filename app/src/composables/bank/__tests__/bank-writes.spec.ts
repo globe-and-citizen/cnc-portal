@@ -252,23 +252,6 @@ describe('useBankWrites', () => {
       })
     })
 
-    it('should invalidate tips address queries for changeTipsAddress', async () => {
-      const { invalidateBankQueries } = useBankWrites()
-
-      await invalidateBankQueries(BANK_FUNCTION_NAMES.CHANGE_TIPS_ADDRESS)
-
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: [
-          'readContract',
-          {
-            address: MOCK_DATA.bankAddress,
-            chainId: MOCK_DATA.chainId,
-            functionName: BANK_FUNCTION_NAMES.TIPS_ADDRESS
-          }
-        ]
-      })
-    })
-
     it('should invalidate owner queries for ownership functions', async () => {
       const { invalidateBankQueries } = useBankWrites()
 

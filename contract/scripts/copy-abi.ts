@@ -9,12 +9,9 @@ const contracts = [
   'CashRemunerationEIP712',
   'Elections',
   'ExpenseAccountEIP712',
-  // 'ExpenseAccount',
   'InvestorV1',
-  // 'Investor',
   'Officer',
   'Proposals',
-  // 'Tips',
   'Vesting',
   'Voting'
 ]
