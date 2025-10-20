@@ -105,7 +105,6 @@ describe('Officer Contract', function () {
       expect(deployedContracts[0].contractType).to.equal('Elections')
       expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
 
-      console.log()
       await expect(officer.connect(owner).deployBeaconProxy('Bank', bankInitData)).to.emit(
         officer,
         'ContractDeployed'
@@ -507,11 +506,13 @@ describe('Officer Contract', function () {
   describe('Contract Type Management', () => {
     it('Should track configured contract types', async function () {
       const types = await officer.getConfiguredContractTypes()
-      expect(types).to.have.lengthOf(4)
+      console.log("types : ", types)
+      expect(types).to.have.lengthOf(5)
       expect(types).to.include('Bank')
       expect(types).to.include('Elections')
       expect(types).to.include('BoardOfDirectors')
       expect(types).to.include('ExpenseAccount')
+      expect(types).to.include('InvestorV1')
     })
 
     it('Should add new contract type only when configuring new beacon', async function () {

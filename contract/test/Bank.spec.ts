@@ -181,6 +181,8 @@ describe('Bank', () => {
     })
 
     it('should not allow non-owner to set investor address', async () => {
+      // TODO better checking, the first attempt should work but not the second
+      bankProxy.connect(member1).setInvestorAddress(await investorProxy.getAddress())
       await expect(
         bankProxy.connect(member1).setInvestorAddress(await investorProxy.getAddress())
       ).to.be.reverted
