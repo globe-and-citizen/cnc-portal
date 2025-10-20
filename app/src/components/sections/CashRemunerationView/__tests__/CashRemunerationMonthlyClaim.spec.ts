@@ -84,4 +84,44 @@ describe('CashRemunerationMonthlyClaim.vue', () => {
     expect(options.queryKey.value).toEqual(['weekly-claims', 123, 'withdrawn'])
     expect(options.refetchOnWindowFocus).toBe(true)
   })
+
+  it('computes totalMonthlyClaim correctly', async () => {
+    mockUseTanstackQuery.mockReturnValueOnce({
+      data: ref([
+        {
+          claims: [{ hoursWorked: 10 }, { hoursWorked: 5 }],
+          wage: {
+            ratePerHour: [
+              { type: 'TOKEN1', amount: 2 },
+              { type: 'TOKEN2', amount: 1 }
+            ]
+          }
+        }
+      ]),
+      isLoading: ref(false),
+      error: mockError
+    })
+
+    wrapper = createComponent()
+    const result = (wrapper.vm as unknown as { totalMonthlyClaim: string }).totalMonthlyClaim
+    expect(result).toBe('45USD')
+  })
+
+  it('calls toast and log when error is set', async () => {
+    const { log } = await import('@/utils')
+    wrapper = createComponent()
+
+    mockError.value = new Error('Fetch error')
+    await wrapper.vm.$nextTick()
+
+    expect(mockToastError).toHaveBeenCalledWith('Failed to fetch monthly withdrawn amount')
+    expect(log.error).toHaveBeenCalled()
+  })
+
+  it('renders percentage increase text', () => {
+    wrapper = createComponent()
+    const percentageText = wrapper.find('[data-test="percentage-increase"]')
+    expect(percentageText.exists()).toBe(true)
+    expect(percentageText.text()).toContain('+ 26.3%')
+  })
 })
