@@ -269,23 +269,6 @@ describe('useBankWrites', () => {
       })
     })
 
-    it('should invalidate token queries for changeTokenAddress', async () => {
-      const { invalidateBankQueries } = useBankWrites()
-
-      await invalidateBankQueries(BANK_FUNCTION_NAMES.CHANGE_TOKEN_ADDRESS)
-
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledTimes(2)
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: [
-          'readContract',
-          {
-            address: MOCK_DATA.bankAddress,
-            chainId: MOCK_DATA.chainId,
-            functionName: BANK_FUNCTION_NAMES.IS_TOKEN_SUPPORTED
-          }
-        ]
-      })
-    })
 
     it('should invalidate balance queries for transfer functions', async () => {
       const { invalidateBankQueries } = useBankWrites()

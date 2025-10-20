@@ -9,7 +9,6 @@ export const BANK_FUNCTION_NAMES = {
   // Read functions
   PAUSED: 'paused',
   OWNER: 'owner',
-  // IS_TOKEN_SUPPORTED: 'isTokenSupported',
   SUPPORTED_TOKENS: 'supportedTokens',
 
   // Write functions
