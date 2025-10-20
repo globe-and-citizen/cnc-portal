@@ -8,8 +8,6 @@
   >
     Deploy Contracts
   </ButtonUI>
-  br
-  <pre>{{ createOfficerError }}</pre>
 </template>
 
 <script lang="ts" setup>
