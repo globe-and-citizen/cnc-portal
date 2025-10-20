@@ -162,14 +162,14 @@ export function useContractWrites(config: ContractWriteConfig) {
   watch(writeError, (error) => {
     if (error) {
       console.error('Contract write error:', error)
-      addErrorToast(`Transaction failed: ${parseError(error, config.abi as Abi)}`)
+      addErrorToast(`Transaction failed: ${parseError(error, unref(config.abi))}`)
     }
   })
 
   watch(receiptError, (error) => {
     if (error) {
       console.error('Transaction receipt error:', error)
-      addErrorToast(`Transaction confirmation failed: ${parseError(error, config.abi as Abi)}`)
+      addErrorToast(`Transaction confirmation failed: ${parseError(error, unref(config.abi))}`)
     }
   })
 
@@ -236,9 +236,7 @@ export function useContractWrites(config: ContractWriteConfig) {
       })
     } catch (error) {
       console.error(`Failed to execute ${functionName}:`, error)
-      addErrorToast(
-        `Failed to execute ${functionName}: ${parseError(error, unref(config.abi) as Abi)}`
-      )
+      addErrorToast(`Failed to execute ${functionName}: ${parseError(error, unref(config.abi))}`)
       // Clear function name on error
       currentFunctionName.value = null
       throw error

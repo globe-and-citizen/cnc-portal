@@ -23,7 +23,7 @@ import {
   type Address
 } from 'viem'
 import { computed, ref } from 'vue'
-import EIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { getBalance } from 'viem/actions'
 import { config } from '@/wagmi.config'
 import { useCustomFetch } from '@/composables'
@@ -102,10 +102,11 @@ const withdrawClaim = async () => {
   // withdraw
   try {
     const args = {
-      abi: EIP712ABI,
-      functionName: 'withdraw',
+      abi: CASH_REMUNERATION_EIP712_ABI,
+      functionName: 'withdraw' as const,
       args: [claimData, props.weeklyClaim.signature as Address]
     }
+    // @ts-expect-error type issue
     const data = encodeFunctionData(args)
     // First run estimate gas to get errors
     await estimateGas(config, {
@@ -113,6 +114,7 @@ const withdrawClaim = async () => {
       data
     })
 
+    // @ts-expect-error type issue
     const hash = await withdraw({
       ...args,
       address: cashRemunerationEip712Address.value

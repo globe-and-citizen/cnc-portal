@@ -44,7 +44,7 @@ vi.mock('@wagmi/core', async (importOriginal) => {
   }
 })
 
-//const campaignAbi = AdCampaignArtifact.abi as Abi
+//const campaignAbi = AdCampaignArtifact.abi
 vi.mock('@/composables/useContractFunctions', async (importOriginal) => {
   const actual: object = await importOriginal()
 

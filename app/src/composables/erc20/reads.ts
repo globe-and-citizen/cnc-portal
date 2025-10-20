@@ -2,7 +2,7 @@ import { computed, unref, type MaybeRef } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
 import { ERC20_FUNCTION_NAMES } from './types'
-import ERC20ABI from '@/artifacts/abi/erc20.json'
+import { ERC20_ABI } from '@/artifacts/abi/erc20'
 
 /**
  * ERC20 contract read operations
@@ -15,8 +15,8 @@ export function useERC20Reads(contractAddress: MaybeRef<Address>) {
   const useErc20Name = () => {
     return useReadContract({
       address: erc20Address,
-      abi: ERC20ABI,
-      functionName: ERC20_FUNCTION_NAMES.NAME,
+      abi: ERC20_ABI,
+      functionName: 'name' as const,
       query: { enabled: isErc20AddressValid }
     })
   }
@@ -24,8 +24,8 @@ export function useERC20Reads(contractAddress: MaybeRef<Address>) {
   const useErc20Symbol = () => {
     return useReadContract({
       address: erc20Address,
-      abi: ERC20ABI,
-      functionName: ERC20_FUNCTION_NAMES.SYMBOL,
+      abi: ERC20_ABI,
+      functionName: 'symbol' as const,
       query: { enabled: isErc20AddressValid }
     })
   }
@@ -33,8 +33,8 @@ export function useERC20Reads(contractAddress: MaybeRef<Address>) {
   const useErc20Decimals = () => {
     return useReadContract({
       address: erc20Address,
-      abi: ERC20ABI,
-      functionName: ERC20_FUNCTION_NAMES.DECIMALS,
+      abi: ERC20_ABI,
+      functionName: 'decimals' as const,
       query: { enabled: isErc20AddressValid }
     })
   }
@@ -42,8 +42,8 @@ export function useERC20Reads(contractAddress: MaybeRef<Address>) {
   const useErc20TotalSupply = () => {
     return useReadContract({
       address: erc20Address,
-      abi: ERC20ABI,
-      functionName: ERC20_FUNCTION_NAMES.TOTAL_SUPPLY,
+      abi: ERC20_ABI,
+      functionName: 'totalSupply' as const,
       query: { enabled: isErc20AddressValid }
     })
   }
@@ -52,7 +52,7 @@ export function useERC20Reads(contractAddress: MaybeRef<Address>) {
     const accountValue = computed(() => unref(account))
     return useReadContract({
       address: erc20Address,
-      abi: ERC20ABI,
+      abi: ERC20_ABI,
       functionName: ERC20_FUNCTION_NAMES.BALANCE_OF,
       args: [accountValue],
       query: { enabled: computed(() => isErc20AddressValid.value && !!accountValue.value) }
@@ -64,7 +64,7 @@ export function useERC20Reads(contractAddress: MaybeRef<Address>) {
     const spenderValue = computed(() => unref(spender))
     return useReadContract({
       address: erc20Address,
-      abi: ERC20ABI,
+      abi: ERC20_ABI,
       functionName: ERC20_FUNCTION_NAMES.ALLOWANCE,
       args: [ownerValue, spenderValue],
       query: {

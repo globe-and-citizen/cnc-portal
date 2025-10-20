@@ -8,7 +8,7 @@ import {
   type ContractWriteConfig,
   type ContractWriteOptions
 } from '../contracts/useContractWrites'
-import BOD_ABI from '@/artifacts/abi/bod.json'
+import { BOD_ABI } from '@/artifacts/abi/bod'
 
 /**
  * BOD contract specific write operations

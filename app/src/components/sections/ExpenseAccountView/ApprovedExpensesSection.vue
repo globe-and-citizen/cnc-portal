@@ -74,7 +74,7 @@ import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
-import expenseAccountABI from '@/artifacts/abi/expense-account-eip712.json'
+import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import type { User, BudgetLimit } from '@/types'
 import { log, parseError } from '@/utils'
 import ApproveExpenseSummaryForm from '@/components/forms/ApproveExpenseSummaryForm.vue'
@@ -116,7 +116,7 @@ const {
 } = useReadContract({
   functionName: 'owner',
   address: expenseAccountEip712Address,
-  abi: expenseAccountABI
+  abi: EXPENSE_ACCOUNT_EIP712_ABI
 })
 
 //#region Funtions
