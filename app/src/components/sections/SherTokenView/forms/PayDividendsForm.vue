@@ -69,20 +69,20 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
-import { useToastStore } from '@/stores'
+// import { useToastStore } from '@/stores'
 import type { Team } from '@/types'
 import useVuelidate from '@vuelidate/core'
 import { numeric, required } from '@vuelidate/validators'
 
-import { formatEther, parseEther, type Address } from 'viem'
-import { computed, onMounted, watch, type Ref } from 'vue'
+import { formatEther, parseEther } from 'viem'
+import { computed, watch, type Ref } from 'vue'
 import { ref } from 'vue'
 import BodAlert from '@/components/BodAlert.vue'
 import { useBankReads } from '@/composables/bank/index'
 
 const amount = ref<number | null>(null)
 
-const props = defineProps<{
+defineProps<{
   tokenSymbol: string | undefined
   loading: boolean
   team: Team
