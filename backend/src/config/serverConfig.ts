@@ -20,6 +20,7 @@ import expenseRoutes from '../routes/expenseRoute';
 import uploadRoute from '../routes/uploadRoute';
 import contractRoutes from '../routes/contractRoutes';
 import electionsRoute from '../routes/electionsRoute';
+
 //#endregion routing modules
 
 import { authorizeUser } from '../middleware/authMiddleware';
@@ -115,7 +116,6 @@ class Server {
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
-
     this.app.use(this.paths.elections, authorizeUser, electionsRoute);
     this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     // The error handler must be registered before any other error middleware and after all controllers
