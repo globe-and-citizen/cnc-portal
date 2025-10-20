@@ -446,7 +446,7 @@ describe('Bank', () => {
         value: ethers.parseEther('100')
       })
 
-      // Setup InvestorsV1 data
+      // Setup InvestorV1 data
       await investorProxy.distributeMint([
         { shareholder: member1.address, amount: ethers.parseEther('60') },
         { shareholder: member2.address, amount: ethers.parseEther('40') }

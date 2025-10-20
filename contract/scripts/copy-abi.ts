@@ -11,7 +11,7 @@ const contracts = [
   'ExpenseAccountEIP712',
   // 'ExpenseAccount',
   'InvestorV1',
-  'Investor',
+  // 'Investor',
   'Officer',
   'Proposals',
   // 'Tips',

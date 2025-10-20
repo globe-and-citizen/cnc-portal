@@ -27,7 +27,7 @@ export default buildModule('Officer', (m) => {
     { beaconType: 'BoardOfDirectors', beaconAddress: BoDBeacon },
     // { beaconType: 'ExpenseAccount', beaconAddress: expenseAccountFactoryBeacon },
     { beaconType: 'ExpenseAccountEIP712', beaconAddress: expenseAccountEip712FactoryBeacon },
-    { beaconType: 'InvestorsV1', beaconAddress: investorsV1Beacon },
+    { beaconType: 'InvestorV1', beaconAddress: investorsV1Beacon },
     { beaconType: 'CashRemunerationEIP712', beaconAddress: cashRemunerationEip712FactoryBeacon }
   ]
 

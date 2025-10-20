@@ -6,7 +6,7 @@ import publicClient from '../utils/viem.config';
 import OFFICER_ABI from '../artifacts/officer_abi.json';
 const ContractType = {
   Bank: 'Bank',
-  InvestorsV1: 'InvestorsV1',
+  InvestorV1: 'InvestorV1',
   Voting: 'Voting',
   BoardOfDirectors: 'BoardOfDirectors',
   ExpenseAccount: 'ExpenseAccount',

@@ -43,7 +43,7 @@ export const useCurrencyStore = defineStore('currency', () => {
         address: investorsV1Address
       })
     } else {
-      console.warn('InvestorsV1 contract address not found, Sher Token will not be included')
+      console.warn('InvestorV1 contract address not found, Sher Token will not be included')
     }
     return tokens
   })

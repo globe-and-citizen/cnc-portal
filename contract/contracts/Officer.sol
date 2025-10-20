@@ -157,7 +157,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         } else if(keccak256(bytes(contractType)) == keccak256(bytes("Bank"))) {
             address foundInvestorsV1Contract = findDeployedContract("InvestorV1");
             if (foundInvestorsV1Contract != address(0)) {
-                // InvestorsV1 already deployed, set the investor address
+                // InvestorV1 already deployed, set the investor address
                 IBank(proxyAddress).setInvestorAddress(foundInvestorsV1Contract);
             }
         } else if(keccak256(bytes(contractType)) == keccak256(bytes("InvestorV1"))) {

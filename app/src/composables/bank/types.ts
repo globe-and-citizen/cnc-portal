@@ -32,7 +32,7 @@ export const BANK_FUNCTION_NAMES = {
   CLAIM_DIVIDEND: 'claimDividend',
   SET_INVESTOR_ADDRESS: 'setInvestorAddress',
   DIVIDEND_BALANCES: 'dividendBalances',
-  TOTAL_DIVIDEND: 'totalDividend',
+  TOTAL_DIVIDEND: 'totalDividends',
   GET_UNLOCK_BALANCE: 'getUnlockedBalance'
 } as const
 
