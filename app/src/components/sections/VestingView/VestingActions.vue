@@ -18,7 +18,7 @@
     >
       <CreateVesting
         v-if="teamStore.currentTeam?.id"
-        :tokenAddress="(teamStore.getContractAddressByType('InvestorsV1') as Address) ?? ''"
+        :tokenAddress="(teamStore.getContractAddressByType('InvestorV1') as Address) ?? ''"
         @closeAddVestingModal="handleClose"
         @reload="handleReload"
         :reloadKey="reloadKey"

@@ -76,6 +76,11 @@ vi.mock('@/composables/useCustomFetch', () => {
         json: () => ({
           execute: vi.fn()
         })
+      }),
+      delete: () => ({
+        json: () => ({
+          execute: vi.fn()
+        })
       })
     }))
   }

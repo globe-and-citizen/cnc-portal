@@ -91,7 +91,7 @@ const queryClient = useQueryClient()
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
-const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
+const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
 
 const {
   data: mintHash,

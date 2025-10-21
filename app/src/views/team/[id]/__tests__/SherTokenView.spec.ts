@@ -18,7 +18,7 @@ describe('SherTokenView', () => {
     name: 'Test Team',
     teamContracts: [
       {
-        type: 'InvestorsV1',
+        type: 'InvestorV1',
         address: '0x1234567890123456789012345678901234567890'
       }
     ]
