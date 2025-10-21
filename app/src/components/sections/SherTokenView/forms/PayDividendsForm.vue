@@ -8,12 +8,13 @@
     </h3>
 
     <h6>
-      Current Bank contract balance <span v-if="balanceLoading">...</span>
-      <span v-else> {{ formatEther(bankBalance?.value ?? 0n) }}</span>
+      Current Bank contract balance
+      <span v-if="isBankBalanceLoading">...</span>
+      <span v-else> {{ formattedUnlockedBalance }}</span>
       {{ NETWORK.currencySymbol }}
     </h6>
     <div
-      v-if="!balanceLoading && (bankBalance?.value ?? 0n) === 0n"
+      v-if="!isBankBalanceLoading && (unlockedBalance ?? 0n) === 0n"
       class="alert alert-warning"
       data-test="bank-empty-warning"
     >
@@ -68,39 +69,42 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
-import { useToastStore } from '@/stores'
+// import { useToastStore } from '@/stores'
 import type { Team } from '@/types'
 import useVuelidate from '@vuelidate/core'
 import { numeric, required } from '@vuelidate/validators'
-import { useBalance } from '@wagmi/vue'
-import { formatEther, parseEther, type Address } from 'viem'
-import { computed, onMounted, watch } from 'vue'
+
+import { formatEther, parseEther } from 'viem'
+import { computed, watch, type Ref } from 'vue'
 import { ref } from 'vue'
 import BodAlert from '@/components/BodAlert.vue'
+import { useBankReads } from '@/composables/bank/index'
 
 const amount = ref<number | null>(null)
-const { addErrorToast } = useToastStore()
 
-const props = defineProps<{
+defineProps<{
   tokenSymbol: string | undefined
   loading: boolean
   team: Team
   isBodAction: boolean
 }>()
 
-const bankAddress = computed(
-  () => props.team.teamContracts.find((contract) => contract.type === 'Bank')?.address as Address
-)
+const { useUnlockedBalance } = useBankReads()
 
 const {
-  data: bankBalance,
-  isLoading: balanceLoading,
-  error: balanceError,
-  refetch: fetchBalance
-} = useBalance({
-  address: bankAddress.value as Address
-})
+  data: unlockedBalance,
+  isLoading: isBankBalanceLoading,
+  error: bankBalanceError
+} = useUnlockedBalance() as {
+  data: Ref<bigint | undefined>
+  isLoading: Ref<boolean>
+  error: Ref<unknown>
+}
 
+const formattedUnlockedBalance = computed(() => {
+  return formatEther(unlockedBalance?.value ?? 0n)
+})
+// Update maxValue validator to use availableBalance
 const emits = defineEmits(['submit'])
 
 const rules = {
@@ -112,9 +116,8 @@ const rules = {
       $message: 'Value should be greater than 0'
     },
     maxValue: {
-      $validator: (value: number) =>
-        parseFloat(formatEther(bankBalance.value?.value ?? 0n)) >= value,
-      $message: 'Amount exceeds the current bank balance'
+      $validator: (value: number) => parseFloat(formattedUnlockedBalance.value) >= value,
+      $message: 'Amount exceeds the current available balance'
     }
   }
 }
@@ -128,12 +131,9 @@ const onSubmit = () => {
 
 const $v = useVuelidate(rules, { amount })
 
-watch(balanceError, () => {
-  if (balanceError.value) {
-    addErrorToast('Failed to fetch team balance')
+watch(bankBalanceError, (err) => {
+  if (err) {
+    console.error('Error fetching bank balance:', err)
   }
-})
-onMounted(() => {
-  fetchBalance()
 })
 </script>

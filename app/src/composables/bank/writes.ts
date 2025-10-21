@@ -1,7 +1,8 @@
 import { computed, unref, type MaybeRef } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useAccount } from '@wagmi/vue'
-import { useTeamStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
+
 import { BANK_FUNCTION_NAMES, type BankFunctionName, isValidBankFunction } from './types'
 
 import {
@@ -20,6 +21,7 @@ export function useBankWrites() {
   const queryClient = useQueryClient()
   const { chainId } = useAccount()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+  const userDataStore = useUserDataStore()
 
   // Use the generic contract writes composable
   const baseWrites = useContractWrites({
@@ -62,19 +64,6 @@ export function useBankWrites() {
         await queryClient.invalidateQueries(key)
         break
 
-      case BANK_FUNCTION_NAMES.CHANGE_TIPS_ADDRESS:
-        // Invalidate tips address query
-        await queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            {
-              ...bankQueryKey,
-              functionName: BANK_FUNCTION_NAMES.TIPS_ADDRESS
-            }
-          ]
-        })
-        break
-
       case BANK_FUNCTION_NAMES.TRANSFER_OWNERSHIP:
       case BANK_FUNCTION_NAMES.RENOUNCE_OWNERSHIP:
         // Invalidate owner query
@@ -89,34 +78,25 @@ export function useBankWrites() {
         })
         break
 
-      case BANK_FUNCTION_NAMES.CHANGE_TOKEN_ADDRESS:
-        // Invalidate all token-related queries
-        await queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            {
-              ...bankQueryKey,
-              functionName: BANK_FUNCTION_NAMES.IS_TOKEN_SUPPORTED
-            }
-          ]
-        })
-        await queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            {
-              ...bankQueryKey,
-              functionName: BANK_FUNCTION_NAMES.SUPPORTED_TOKENS
-            }
-          ]
-        })
+      case BANK_FUNCTION_NAMES.DEPOSIT_DIVIDENDS:
+        const userAddr = userDataStore.address as `0x${string}` | undefined
+        if (userAddr) {
+          // precise: only the current wallet’s dividend balance
+          await queryClient.invalidateQueries({
+            queryKey: [
+              'readContract',
+              {
+                ...bankQueryKey, // { address: bankAddress.value, chainId: chainId.value }
+                functionName: 'dividendBalances',
+                args: [userAddr] as const // mapping key
+              }
+            ]
+          })
+        }
         break
 
       case BANK_FUNCTION_NAMES.TRANSFER:
       case BANK_FUNCTION_NAMES.TRANSFER_TOKEN:
-      case BANK_FUNCTION_NAMES.SEND_TIP:
-      case BANK_FUNCTION_NAMES.SEND_TOKEN_TIP:
-      case BANK_FUNCTION_NAMES.PUSH_TIP:
-      case BANK_FUNCTION_NAMES.PUSH_TOKEN_TIP:
       case BANK_FUNCTION_NAMES.DEPOSIT_TOKEN:
         // Invalidate balance queries
         await queryClient.invalidateQueries({
@@ -127,7 +107,6 @@ export function useBankWrites() {
           queryKey: ['readContract', { ...bankQueryKey, address: args ? args[0] : undefined }]
         })
         break
-
       default:
         // For any other function, invalidate all bank-related queries
         await queryClient.invalidateQueries({

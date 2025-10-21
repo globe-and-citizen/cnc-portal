@@ -36,7 +36,7 @@
               <span v-if="isProcessing">Processing...</span>
               <span v-else>Sign In With Ethereum</span>
             </ButtonUI>
-            <div class="flex items-center">
+            <!-- <div class="flex items-center">
               <div class="flex-grow h-px bg-gray-300"></div>
               <div class="px-4 text-gray-500 text-sm">OR</div>
               <div class="flex-grow h-px bg-gray-300"></div>
@@ -56,7 +56,7 @@
                   class="w-8 h-8 cursor-pointer transition-transform duration-300 ease-in-out hover:scale-110"
                 />
               </transition-group>
-            </div>
+            </div> -->
           </div>
         </div>
       </transition>
@@ -65,9 +65,9 @@
 </template>
 
 <script setup lang="ts">
-import IconGoogle from '@/components/icons/IconGoogle.vue'
-import IconFacebook from '@/components/icons/IconFacebook.vue'
-import IconTwitter from '@/components/icons/IconTwitter.vue'
+// import IconGoogle from '@/components/icons/IconGoogle.vue'
+// import IconFacebook from '@/components/icons/IconFacebook.vue'
+// import IconTwitter from '@/components/icons/IconTwitter.vue'
 import { useSiwe } from '@/composables/useSiwe'
 import ButtonUI from '@/components/ButtonUI.vue'
 

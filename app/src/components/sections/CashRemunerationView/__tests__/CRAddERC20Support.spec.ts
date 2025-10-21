@@ -21,7 +21,7 @@ const { mockReadContract, mockWriteContract, mockUseDebounceFn, mockTeamStore, m
     mockUseDebounceFn: vi.fn((fn) => fn),
     mockTeamStore: {
       getContractAddressByType: vi.fn((type) => {
-        if (type === 'InvestorsV1') return '0x1234567890123456789012345678901234567890'
+        if (type === 'InvestorV1') return '0x1234567890123456789012345678901234567890'
         if (type === 'CashRemunerationEIP712') return '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd'
         return undefined
       })

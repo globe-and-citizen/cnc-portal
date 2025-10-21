@@ -16,7 +16,7 @@ import InvestorsTransactionHistory from '@/components/sections/SherTokenView/Inv
 import { useCurrencyStore } from '@/stores'
 import type { TokenId } from '@/constant'
 
-const investorAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
+const investorAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
 
 const currencyStore = useCurrencyStore()
 const teamStore = useTeamStore()

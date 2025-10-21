@@ -64,6 +64,7 @@
           </div>
         </div>
       </div>
+
       <ModalComponent
         v-model="mintModal.show"
         v-if="mintModal.mount"
@@ -93,8 +94,7 @@
         <PayDividendsForm
           v-if="payDividendsModal && teamStore.currentTeam"
           :loading="
-            payDividendsLoading ||
-            isConfirmingPayDividends ||
+            (isBankWriteLoading && bankWriteFunctionName === 'depositDividends') ||
             isLoadingAddAction ||
             isConfirmingAddAction
           "
@@ -115,18 +115,25 @@ import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { log } from '@/utils'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { type Address, encodeFunctionData, formatUnits } from 'viem'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
 import { BANK_ABI } from '@/artifacts/abi/bank'
+import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 
 import { useBodContract } from '@/composables/bod/'
+import { useBankContract } from '@/composables/bank'
+import { tokenSymbol as tokenSymbolUtils } from '@/utils'
+import { zeroAddress } from 'viem'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
+
+const { depositDividends, bankWriteFunctionName, isBankWriteLoading, isConfirmed } =
+  useBankContract()
 
 const {
   addAction,
@@ -140,6 +147,7 @@ const mintModal = ref({
   mount: false,
   show: false
 })
+
 const distributeMintModal = ref(false)
 const payDividendsModal = ref({
   mount: false,
@@ -149,8 +157,23 @@ const emits = defineEmits(['refetchShareholders'])
 const { address: currentAddress } = useUserDataStore()
 
 const teamStore = useTeamStore()
-const investorsAddress = teamStore.getContractAddressByType('InvestorsV1')
+const investorsAddress = teamStore.getContractAddressByType('InvestorV1')
 const bankAddress = teamStore.getContractAddressByType('Bank')
+
+const { data: deployedContracts } = useReadContract({
+  address: teamStore.currentTeam?.officerAddress as Address,
+  abi: OFFICER_ABI,
+  functionName: 'getDeployedContracts',
+  query: {
+    enabled: computed(() => !!teamStore.currentTeam?.officerAddress)
+  }
+})
+
+const investorAddress = computed(() => {
+  if (!deployedContracts.value) return null
+  const investor = deployedContracts.value.find((c) => c.contractType === 'InvestorV1')
+  return investor?.contractAddress
+})
 
 const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
   abi: INVESTOR_ABI,
@@ -176,28 +199,17 @@ const { isLoading: isConfirmingDistributeMint, isSuccess: isSuccessDistributingM
     hash: distributeMintHash
   })
 
-const {
-  data: payDividendsHash,
-  writeContract: payDividends,
-  isPending: payDividendsLoading,
-  error: payDividendsError
-} = useWriteContract()
-
-const { isLoading: isConfirmingPayDividends, isSuccess: isSuccessPayDividends } =
-  useWaitForTransactionReceipt({
-    hash: payDividendsHash
-  })
-
 const executePayDividends = async (value: bigint) => {
+  console.log('Value of dividend to pay', value)
   if (isBodAction.value) {
     if (!investorsAddress) return
     const data = encodeFunctionData({
       abi: BANK_ABI,
-      functionName: 'transfer',
-      args: [investorsAddress, value]
+      functionName: 'depositDividends',
+      args: [value, investorAddress.value as Address]
     })
     const description = JSON.stringify({
-      text: `Pay dividends of ${formatUnits(value, 18)} to ${investorsAddress}`,
+      text: `Pay dividends of ${formatUnits(value, 18)} ${tokenSymbolUtils(zeroAddress)} to ${investorsAddress}`,
       title: `Pay Dividends Request`
     })
 
@@ -207,15 +219,10 @@ const executePayDividends = async (value: bigint) => {
       data
     })
   } else {
-    if (!investorsAddress) return
-    payDividends({
-      abi: BANK_ABI,
-      address: bankAddress as Address,
-      functionName: 'transfer',
-      args: [investorsAddress, value]
-    })
+    await depositDividends(value.toString(), investorAddress.value as Address)
   }
 }
+
 const executeDistributeMint = (
   shareholders: ReadonlyArray<{
     readonly shareholder: Address
@@ -261,13 +268,6 @@ watch(distributeMintError, () => {
   }
 })
 
-watch(payDividendsError, () => {
-  if (payDividendsError.value) {
-    log.error('Failed to pay dividends', payDividendsError.value)
-    addErrorToast('Failed to pay dividends')
-  }
-})
-
 watch(isConfirmingDistributeMint, (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isSuccessDistributingMint.value) {
     emits('refetchShareholders')
@@ -276,9 +276,8 @@ watch(isConfirmingDistributeMint, (isConfirming, wasConfirming) => {
   }
 })
 
-watch(isConfirmingPayDividends, (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isSuccessPayDividends.value) {
-    addSuccessToast('Paid dividends successfully')
+watch([isConfirmed, bankWriteFunctionName], ([newIsConfirmed, newbankWriteFunctionName]) => {
+  if (newIsConfirmed && newbankWriteFunctionName === 'depositDividends') {
     payDividendsModal.value = { mount: false, show: false }
   }
 })
