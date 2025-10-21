@@ -103,7 +103,7 @@ describe('CashRemunerationMonthlyClaim.vue', () => {
     })
 
     wrapper = createComponent()
-    const result = (wrapper.vm as unknown as { totalMonthlyClaim: string }).totalMonthlyClaim
+    const result = wrapper.vm.totalMonthlyClaim
     expect(result).toBe('45USD')
   })
 
