@@ -87,36 +87,6 @@
               </span>
             </td>
           </tr>
-          <tr>
-            <td class="px-4 py-2 text-sm font-medium text-gray-900">Tips Address</td>
-            <td class="px-4 py-2 text-sm text-gray-700">
-              <span v-if="tipsAddressLoading" class="text-blue-600">Loading...</span>
-              <span v-else-if="tipsAddressError" class="text-red-600">{{
-                tipsAddressError.message
-              }}</span>
-              <span v-else class="font-mono text-xs">{{ tipsAddressData || 'N/A' }}</span>
-            </td>
-            <td class="px-4 py-2 text-sm">
-              <span
-                v-if="tipsAddressLoading"
-                class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
-              >
-                Loading
-              </span>
-              <span
-                v-else-if="tipsAddressError"
-                class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full"
-              >
-                Error
-              </span>
-              <span
-                v-else
-                class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
-              >
-                Loaded
-              </span>
-            </td>
-          </tr>
         </tbody>
       </table>
     </div>
@@ -127,15 +97,9 @@
 import { useBankReads } from '@/composables/bank/index'
 
 // Get read operations functionality
-const { bankAddress, isBankAddressValid, useBankPaused, useBankOwner, useBankTipsAddress } =
-  useBankReads()
+const { bankAddress, isBankAddressValid, useBankPaused, useBankOwner } = useBankReads()
 
 // Get contract data with loading and error states
 const { data: pausedData, isLoading: pausedLoading, error: pausedError } = useBankPaused()
 const { data: ownerData, isLoading: ownerLoading, error: ownerError } = useBankOwner()
-const {
-  data: tipsAddressData,
-  isLoading: tipsAddressLoading,
-  error: tipsAddressError
-} = useBankTipsAddress()
 </script>

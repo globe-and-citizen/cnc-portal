@@ -69,15 +69,15 @@ export function handleContractDeployed(event: ContractDeployedEvent): void {
       event.params.deployedAddress.toHexString(),
     ]);
     CashRemunerationEIP712.create(event.params.deployedAddress);
-  } else if (event.params.contractType == "InvestorsV1") {
+  } else if (event.params.contractType == "InvestorV1") {
     // Add this condition
-    log.info("Creating InvestorsV1 template for address: {}", [
+    log.info("Creating InvestorV1 template for address: {}", [
       event.params.deployedAddress.toHexString(),
     ]);
     InvestorV1.create(event.params.deployedAddress);
   } else {
     log.info(
-      "Contract deployed is not 'ExpenseAccountEIP712' or 'Bank' or 'CashRemunerationEIP712' or 'InvestorsV1' but, '{}'",
+      "Contract deployed is not 'ExpenseAccountEIP712' or 'Bank' or 'CashRemunerationEIP712' or 'InvestorV1' but, '{}'",
       [event.params.contractType]
     );
   }

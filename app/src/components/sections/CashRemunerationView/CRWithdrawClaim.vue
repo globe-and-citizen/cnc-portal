@@ -94,7 +94,7 @@ const withdrawClaim = async () => {
           : rate.type === 'usdc'
             ? (USDC_ADDRESS as Address)
             : (teamStore.currentTeam?.teamContracts.find(
-                (contract) => contract.type === 'InvestorsV1'
+                (contract) => contract.type === 'InvestorV1'
               )?.address as Address)
     }))
   }

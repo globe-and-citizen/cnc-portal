@@ -22,7 +22,7 @@ export default buildModule('OfficerUpgradeModule', (m) => {
   //   { beaconType: 'Proposals', beaconAddress: '<network_proposal_beacon_address>' },
   //   { beaconType: 'BoardOfDirectors', beaconAddress: '<network_bod_address>' },
   //   { beaconType: 'ExpenseAccountEIP712', beaconAddress: '<network_expense_account_eip712_address>' },
-  //   { beaconType: 'InvestorsV1', beaconAddress: '<investors_v1_beacon_address>' },
+  //   { beaconType: 'InvestorV1', beaconAddress: '<investors_v1_beacon_address>' },
   //   { beaconType: 'CashRemunerationEIP712', beaconAddress: '<cash_remuneration_eip712_beacon_address>' }
 	// ]
 

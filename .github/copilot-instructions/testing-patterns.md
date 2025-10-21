@@ -63,7 +63,7 @@ const { mockReadContract, mockWriteContract, mockTeamStore, mockToastStore } = v
   mockWriteContract: vi.fn(),
   mockTeamStore: {
     getContractAddressByType: vi.fn((type) => {
-      if (type === 'InvestorsV1') return '0x1234567890123456789012345678901234567890'
+      if (type === 'InvestorV1') return '0x1234567890123456789012345678901234567890'
       return undefined
     })
   },

@@ -110,7 +110,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
               ? (zeroAddress as Address)
               : rate.type === 'usdc'
                 ? (USDC_ADDRESS as Address)
-                : (teamStore.getContractAddressByType('InvestorsV1') as Address)
+                : (teamStore.getContractAddressByType('InvestorV1') as Address)
         }))
       },
       primaryType: 'WageClaim'

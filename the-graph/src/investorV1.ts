@@ -14,7 +14,7 @@ export function handleMint(event: MintedEvent): void {
   transaction.from = Address.zero();
   transaction.to = event.params.shareholder;
   transaction.amount = event.params.amount;
-  transaction.contractType = "InvestorsV1";
+  transaction.contractType = "InvestorV1";
   transaction.contractAddress = event.address;
   transaction.transactionType = "mint";
   transaction.tokenAddress = event.address;
@@ -33,7 +33,7 @@ export function handleDividendDistributed(
   transaction.from = event.address; // Contract distributing dividends
   transaction.to = event.params.shareholder;
   transaction.amount = event.params.amount;
-  transaction.contractType = "InvestorsV1";
+  transaction.contractType = "InvestorV1";
   transaction.contractAddress = event.address;
   transaction.transactionType = "dividend";
   transaction.tokenAddress = Address.zero(); // ETH dividends
@@ -59,7 +59,7 @@ export function handleTransfer(event: TransferEvent): void {
   transaction.from = event.params.from;
   transaction.to = event.params.to;
   transaction.amount = event.params.value;
-  transaction.contractType = "InvestorsV1";
+  transaction.contractType = "InvestorV1";
   transaction.contractAddress = event.address;
   transaction.transactionType = "transfer";
   transaction.tokenAddress = event.address;

@@ -99,7 +99,7 @@ const { addErrorToast } = useToastStore()
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 
-const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
+const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
 
 const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
   abi: INVESTOR_ABI,
