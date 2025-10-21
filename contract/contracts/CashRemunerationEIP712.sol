@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./interfaces/IMintableERC20.sol";
 
 /**
  * @title CashRemunerationEIP712
@@ -226,14 +227,14 @@ contract CashRemunerationEIP712 is
                 emit Withdraw(wageClaim.employeeAddress, amountToPay);
             } else {
                 require(supportedTokens[wageClaim.wages[i].tokenAddress], "Token not supported");
-                require(
-                    IERC20(wageClaim.wages[i].tokenAddress).balanceOf(address(this)) >=
-                        wageClaim.hoursWorked * wageClaim.wages[i].hourlyRate,
-                    "Insufficient token balance"
-                );
+                // require(
+                //     IERC20(wageClaim.wages[i].tokenAddress).balanceOf(address(this)) >=
+                //         wageClaim.hoursWorked * wageClaim.wages[i].hourlyRate,
+                //     "Insufficient token balance"
+                // );
                 uint256 amountToPay = wageClaim.hoursWorked * wageClaim.wages[i].hourlyRate;
 
-                IERC20(wageClaim.wages[i].tokenAddress).transfer(
+                IMintableERC20(wageClaim.wages[i].tokenAddress).mint(
                     wageClaim.employeeAddress,
                     amountToPay
                 );
