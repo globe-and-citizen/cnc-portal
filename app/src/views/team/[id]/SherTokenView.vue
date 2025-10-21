@@ -11,7 +11,7 @@ import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
 const teamStore = useTeamStore()
 const team = ref(teamStore.currentTeam)
 
-const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
+const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
 
 onMounted(() => {
   team.value = teamStore.currentTeam

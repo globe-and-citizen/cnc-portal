@@ -14,11 +14,11 @@ if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefin
   console.error('\x1b[33m Please set your SEPOLIA_URL and PRIVATE_KEY in a .env file\x1b[0m')
 } else {
   networks = {
-    sepolia: {
-      url: process.env.SEPOLIA_URL,
-      accounts: [process.env.PRIVATE_KEY],
-      chainId: 11155111
-    },
+    // sepolia: {
+    //   url: process.env.SEPOLIA_URL,
+    //   accounts: [process.env.PRIVATE_KEY],
+    //   chainId: 11155111
+    // },
     // mainnet: {
     //   url: process.env.MAINNET_URL,
     //   accounts: [process.env.MAINNET_KEY!],
@@ -29,12 +29,12 @@ if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefin
       accounts: [process.env.PRIVATE_KEY!],
       gasPrice: 'auto',
       chainId: 137
-    },
-    amoy: {
-      url: process.env.AMOY_URL,
-      accounts: [process.env.PRIVATE_KEY!],
-      chainId: 80002
     }
+    // amoy: {
+    //   url: process.env.AMOY_URL,
+    //   accounts: [process.env.PRIVATE_KEY!],
+    //   chainId: 80002
+    // }
   }
 }
 

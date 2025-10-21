@@ -122,7 +122,7 @@ watch(errorGetArchivedVestingInfo, () => {
 })
 
 const investorsAddress = computed(() => {
-  return teamStore?.currentTeam?.teamContracts?.find((contract) => contract.type === 'InvestorsV1')
+  return teamStore?.currentTeam?.teamContracts?.find((contract) => contract.type === 'InvestorV1')
     ?.address as Address
 })
 

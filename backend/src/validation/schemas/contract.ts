@@ -8,7 +8,7 @@ import { addressSchema, teamIdSchema } from './common';
 // Valid contract types enum
 const contractTypes = [
   'Bank',
-  'InvestorsV1',
+  'InvestorV1',
   'Voting',
   'BoardOfDirectors',
   'ExpenseAccount',
