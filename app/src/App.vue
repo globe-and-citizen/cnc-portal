@@ -26,7 +26,7 @@
             :isCollapsed="toggleSide"
             @toggleEditUserModal="
               () => {
-                updateUserInput = { name, address, imageUrl: '' }
+                updateUserInput = { name, address, imageUrl: imageUrl }
                 showModal = true
               }
             "
