@@ -50,7 +50,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
           // name: faker.person.firstName(),
           // imageUrl: faker.image.avatar(),
           name: 'User',
-          imageUrl: 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp',
+          imageUrl: '/public/meta.svg',
         },
       });
 
