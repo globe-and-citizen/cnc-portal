@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { encodeFunctionData, type Address, type Abi } from 'viem'
 // import { useToastStore } from '@/stores'
 import { log, waitForCondition } from '@/utils'
+import { useTransactionTimeline } from '@/composables/useTransactionTimeline'
 
 export interface ContractWriteOptions {
   skipGasEstimation?: boolean
@@ -61,7 +62,6 @@ export function useContractWrites(config: ContractWriteConfig) {
   const isLoading = computed(() => isWritePending.value || isConfirming.value)
   const error = computed(() => writeError.value || receiptError.value)
 
-  // TODO encodeFunctionData can throw an error, need to handle that
   // Encode the function data 
   const encodedData = computed(() => {
     let data = undefined
@@ -89,7 +89,8 @@ export function useContractWrites(config: ContractWriteConfig) {
     value: unref(config.value),
     query: {
       refetchOnWindowFocus: false,
-      enabled: computed(() => !!unref(config.contractAddress) && !!encodedData.value)
+      refetchInterval: false,
+      enabled: false
     }
   })
 
@@ -142,8 +143,14 @@ export function useContractWrites(config: ContractWriteConfig) {
       if (!address) {
         throw new Error('Contract address is undefined')
       }
-      // I don't think this can throw an error, there is no need to wrap it in try/catch
+
+      // Estimate gas before executing the write
       await refetchGasEstimate()
+      if (!gasEstimate.value) {
+        throw new Error('Gas estimation failed')
+      }
+
+      // Execute the contract write
       const response = await writeContractAsync({
         address: address,
         abi: unref(config.abi),
@@ -151,15 +158,35 @@ export function useContractWrites(config: ContractWriteConfig) {
         args,
         ...(value !== undefined ? { value } : {})
       })
+
+      // Wait for transaction confirmation
       await waitForCondition(() => receipt.value?.status === 'success', 15000)
+
+      // Invalidate queries
       invalidateQueries()
       return response
     } catch (error) {
       log.error(`Failed to execute ${unref(config.functionName)}:`, error)
       // addErrorToast(`Failed to execute ${unref(config.functionName)}: ${parseError(error, unref(config.abi))}`)
-      throw error
+      // throw error
     }
+    return undefined
   }
+
+  const {
+    currentStep,
+    timelineSteps
+  } = useTransactionTimeline({
+    isEstimatingGas,
+    gasEstimateError,
+    gasEstimate,
+    isWritePending,
+    error,
+    writeContractData,
+    isConfirming,
+    isConfirmed,
+    receipt
+  })
 
   return {
     // Loading states
@@ -172,6 +199,10 @@ export function useContractWrites(config: ContractWriteConfig) {
     writeContractData,
     receipt,
     error,
+
+    // Timeline
+    currentStep,
+    timelineSteps,
 
     // Gas estimation
     gasEstimate,
