@@ -9,6 +9,9 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IMintableERC20.sol";
+import "./interfaces/IInvestorV1.sol";
+import "./interfaces/IOfficer.sol";
+import "hardhat/console.sol";
 
 /**
  * @title CashRemunerationEIP712
@@ -73,6 +76,12 @@ contract CashRemunerationEIP712 is
     /// @dev Mapping to track wage claims that have already been paid.
     mapping(bytes32 => bool) public paidWageClaims;
 
+    // Add new state variable - MUST be added after existing ones
+    address public officerAddress;
+    
+    // Storage gap for future upgrades
+    uint256[50] private __gap;
+
     /**
      * @dev Emitted when Ether is deposited into the contract.
      * @param depositor The address that sent the Ether.
@@ -129,12 +138,19 @@ contract CashRemunerationEIP712 is
         __Pausable_init();
         __EIP712_init("CashRemuneration", "1");
 
+        console.log("msg.sender in initialize: ", msg.sender);
+        console.log("owner: ", owner);
+
         // Set the initial supported tokens
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             require(tokenAddresses[i] != address(0), "Token address cannot be zero");
             supportedTokens[tokenAddresses[i]] = true;
         }
         // supportedTokens[_usdcAddress] = true;
+    }
+
+    function setOfficerAddress(address _officerAddress) external onlyOwner whenNotPaused {
+      officerAddress = _officerAddress;
     }
 
     /**
@@ -227,21 +243,33 @@ contract CashRemunerationEIP712 is
                 emit Withdraw(wageClaim.employeeAddress, amountToPay);
             } else {
                 require(supportedTokens[wageClaim.wages[i].tokenAddress], "Token not supported");
-                // require(
-                //     IERC20(wageClaim.wages[i].tokenAddress).balanceOf(address(this)) >=
-                //         wageClaim.hoursWorked * wageClaim.wages[i].hourlyRate,
-                //     "Insufficient token balance"
-                // );
                 uint256 amountToPay = wageClaim.hoursWorked * wageClaim.wages[i].hourlyRate;
 
-                IMintableERC20(wageClaim.wages[i].tokenAddress).mint(
-                    wageClaim.employeeAddress,
-                    amountToPay
-                );
+                if (
+                    officerAddress != address(0) &&
+                    wageClaim.wages[i].tokenAddress == IOfficer(officerAddress).findDeployedContract("InvestorV1")
+                ) {
+                    IInvestorV1(wageClaim.wages[i].tokenAddress).individualMint(
+                        wageClaim.employeeAddress,
+                        amountToPay
+                    );
 
-                emit WithdrawToken(wageClaim.employeeAddress, wageClaim.wages[i].tokenAddress, amountToPay);
+                    emit WithdrawToken(wageClaim.employeeAddress, wageClaim.wages[i].tokenAddress, amountToPay);
+                } else {
+                    require(
+                        IERC20(wageClaim.wages[i].tokenAddress).balanceOf(address(this)) >=
+                            wageClaim.hoursWorked * wageClaim.wages[i].hourlyRate,
+                        "Insufficient token balance"
+                    );
+
+                    IERC20(wageClaim.wages[i].tokenAddress).transfer(
+                        wageClaim.employeeAddress,
+                        amountToPay
+                    );
+
+                    emit WithdrawToken(wageClaim.employeeAddress, wageClaim.wages[i].tokenAddress, amountToPay);
+                }
             }
-
         }
     }
 
