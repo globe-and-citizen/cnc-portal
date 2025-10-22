@@ -1,4 +1,4 @@
-import { computed, readonly, ref, watch, unref, type MaybeRef } from 'vue'
+import { computed, watch, unref, type MaybeRef } from 'vue'
 import {
   useWriteContract,
   useWaitForTransactionReceipt,
@@ -7,8 +7,8 @@ import {
 } from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { encodeFunctionData, type Address, type Abi } from 'viem'
-import { useToastStore } from '@/stores'
-import { parseError, waitForCondition } from '@/utils'
+// import { useToastStore } from '@/stores'
+import { log, waitForCondition } from '@/utils'
 
 export interface ContractWriteOptions {
   skipGasEstimation?: boolean
@@ -21,6 +21,11 @@ export interface ContractWriteConfig {
   functionName: MaybeRef<string>,
   args: MaybeRef<readonly unknown[]>,
   value?: MaybeRef<bigint>
+  config?: {
+    log?: boolean,
+    toast?: boolean,
+    verbose?: boolean
+  }
 }
 
 /**
@@ -31,7 +36,7 @@ export function useContractWrites(config: ContractWriteConfig) {
   const queryClient = useQueryClient()
   const { chainId: currentChainId } = useAccount()
 
-  const { addSuccessToast, addErrorToast } = useToastStore()
+  // const { addErrorToast } = useToastStore()
 
   // Use provided chainId or current account chainId
   const chainId = computed(() => unref(config.chainId) || currentChainId.value)
@@ -56,20 +61,22 @@ export function useContractWrites(config: ContractWriteConfig) {
   const isLoading = computed(() => isWritePending.value || isConfirming.value)
   const error = computed(() => writeError.value || receiptError.value)
 
-  // Gas estimation state
-  // const gasEstimateParams = ref<{
-  //   to: Address
-  //   data: `0x${string}`
-  //   value?: bigint
-  // } | null>(null)
-
   // TODO encodeFunctionData can throw an error, need to handle that
   // Encode the function data 
-  const encodedData = computed(() => encodeFunctionData({
-    abi: unref(config.abi),
-    functionName: unref(config.functionName),
-    args: unref(config.args)
-  }))
+  const encodedData = computed(() => {
+    let data = undefined
+    try {
+      data = encodeFunctionData({
+        abi: unref(config.abi),
+        functionName: unref(config.functionName),
+        args: unref(config.args)
+      })
+    } catch (error) {
+      log.error('Failed to encode function data:', error)
+      // console.error('Failed to encode function data:', error)
+    }
+    return data
+  })
 
   const {
     data: gasEstimate,
@@ -86,18 +93,6 @@ export function useContractWrites(config: ContractWriteConfig) {
     }
   })
 
-
-  /**
-   * Check if a transaction will likely succeed by estimating gas
-   */
-  const canExecuteTransaction = async (
-    functionName: string,
-    args: readonly unknown[] = [],
-    value?: bigint
-  ): Promise<boolean> => {
-    const result = await refetchGasEstimate()
-    return !!result.data
-  }
 
   /**
    * Generic query invalidation function
@@ -119,44 +114,17 @@ export function useContractWrites(config: ContractWriteConfig) {
   // Error handling
   watch(writeError, (error) => {
     if (error) {
-      console.error('Contract write error:', error)
-      addErrorToast(`Transaction failed: ${parseError(error, unref(config.abi))}`)
+      log.error('Contract write error:', error)
+      // addErrorToast(`Transaction failed: ${parseError(error, unref(config.abi))}`)
     }
   })
 
   watch(receiptError, (error) => {
     if (error) {
-      console.error('Transaction receipt error:', error)
-      addErrorToast(`Transaction confirmation failed: ${parseError(error, unref(config.abi))}`)
+      log.error('Transaction receipt error:', error)
+      // addErrorToast(`Transaction confirmation failed: ${parseError(error, unref(config.abi))}`)
     }
   })
-
-  // Success handling with query invalidation
-  // watch(isConfirmed, async (confirmed) => {
-  //   if (confirmed && receipt.value && currentFunctionName.value) {
-  //     addSuccessToast('Transaction confirmed successfully')
-
-  //     // Invalidate queries based on the function that was executed
-  //     try {
-  //       await invalidateQueries()
-  //     } catch (error) {
-  //       console.warn('Could not invalidate queries for function:', currentFunctionName.value, error)
-  //       // Fallback: invalidate all contract queries
-  //       await queryClient.invalidateQueries({
-  //         queryKey: [
-  //           'readContract',
-  //           {
-  //             address: config.contractAddress,
-  //             chainId: chainId.value
-  //           }
-  //         ]
-  //       })
-  //     } finally {
-  //       // Clear the function name after processing
-  //       currentFunctionName.value = null
-  //     }
-  //   }
-  // })
 
   /**
    * Execute a contract write operation
@@ -164,40 +132,31 @@ export function useContractWrites(config: ContractWriteConfig) {
   const executeWrite = async (
     args: readonly unknown[] = [],
     value?: bigint,
-    options?: ContractWriteOptions
+    // options?: ContractWriteOptions
   ) => {
-    // Optional gas estimation before executing
-    // if (!options?.skipGasEstimation) {
-    //   try {
-    //     const canExecute = await canExecuteTransaction(functionName, args, value)
-    //     if (!canExecute) {
-    //       addErrorToast(`Transaction will likely fail due to insufficient gas or other constraints`)
-    //       return
-    //     }
-    //   } catch (gasError) {
-    //     console.warn(`Gas estimation failed for ${functionName}, proceeding anyway:`, gasError)
-    //     // Continue with transaction even if gas estimation fails
-    //     // TODO: check if it won't be better to not continue if gas estimation fails
-    //   }
-    // }
 
     // Store function name for query invalidation after transaction confirms
     // currentFunctionName.value = functionName
     try {
+      const address = unref(config.contractAddress)
+      if (!address) {
+        throw new Error('Contract address is undefined')
+      }
       // I don't think this can throw an error, there is no need to wrap it in try/catch
       await refetchGasEstimate()
       const response = await writeContractAsync({
-        address: unref(config.contractAddress),
+        address: address,
         abi: unref(config.abi),
         functionName: unref(config.functionName),
         args,
         ...(value !== undefined ? { value } : {})
       })
       await waitForCondition(() => receipt.value?.status === 'success', 15000)
+      invalidateQueries()
       return response
     } catch (error) {
-      console.error(`Failed to execute ${unref(config.functionName)}:`, error)
-      addErrorToast(`Failed to execute ${unref(config.functionName)}: ${parseError(error, unref(config.abi))}`)
+      log.error(`Failed to execute ${unref(config.functionName)}:`, error)
+      // addErrorToast(`Failed to execute ${unref(config.functionName)}: ${parseError(error, unref(config.abi))}`)
       throw error
     }
   }
@@ -221,7 +180,7 @@ export function useContractWrites(config: ContractWriteConfig) {
     refetchGasEstimate,
     // estimateGas,
     // estimateGasForEncodedData,
-    canExecuteTransaction,
+    // canExecuteTransaction,
 
     // Core functions
     executeWrite,
