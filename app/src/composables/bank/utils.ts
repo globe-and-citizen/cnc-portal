@@ -32,6 +32,7 @@ export function useValidation() {
 
 /**
  * Utility function to convert amount to wei
+ * @deprecated Use viem's parseEther directly instead
  */
 export function amountToWei(amount: string): bigint {
   return parseEther(amount)
