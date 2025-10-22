@@ -5,9 +5,9 @@
     <h2>
       Bank paused Status is <span class="text-red-500">{{ pauseResult.data }}</span>
     </h2>
-    <div>{{ gasEstimateError?.name }}</div>
-    ds
-    <div>{{ gasEstimateError?.message }}</div>
+    <!-- <div>{{ gasEstimateError?.name }}</div>
+    ds -->
+    <!-- <div>{{ gasEstimateError?.message }}</div> -->
 
     <!-- Timeline Demo -->
     <div class="card bg-base-100 shadow-xl">
@@ -16,8 +16,13 @@
 
         <TransactionTimeline
           :show="true"
-          :steps="currentTimelineSteps"
+          :steps="pauseTimelineSteps"
           title="Bank Pause Operation"
+        />
+        <TransactionTimeline
+          :show="true"
+          :steps="unpauseTimelineSteps"
+          title="Bank Un Pause Operation"
         />
       </div>
     </div>
@@ -26,7 +31,7 @@
       <pre>
     {{
           {
-            currentStep,
+            // currentStep,
             isLoading,
             isWritePending,
             isConfirming,
@@ -50,7 +55,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import TransactionTimeline from '@/components/ui/TransactionTimeline.vue'
 import { useBankReads } from '@/composables/bank'
 import { usePause, useUnpause } from '@/composables/bank/bankWrites'
-import { useTransactionTimeline } from '@/composables/useTransactionTimeline'
+// import { useTransactionTimeline } from '@/composables/useTransactionTimeline'
 
 const { useBankPaused } = useBankReads()
 
@@ -66,35 +71,39 @@ const {
 
   // Data
   writeContractData,
-  receipt,
+  // receipt,
   error,
 
   // Gas estimation
-  gasEstimate,
+  // gasEstimate,
   isEstimatingGas,
   gasEstimateError,
+
+  // Timeline
+  // currentStep: pauseCurrentStep,
+  timelineSteps: pauseTimelineSteps,
 
   // Core functions
   executeWrite
 } = usePause()
 
-const { executeWrite: executeUnPause } = useUnpause()
+const { executeWrite: executeUnPause, timelineSteps: unpauseTimelineSteps } = useUnpause()
 
 // Use transaction timeline composable
-const {
-  currentStep,
-  timelineSteps: currentTimelineSteps
-} = useTransactionTimeline({
-  isEstimatingGas,
-  gasEstimateError,
-  gasEstimate,
-  isWritePending,
-  error,
-  writeContractData,
-  isConfirming,
-  isConfirmed,
-  receipt
-})
+// const {
+//   currentStep,
+//   timelineSteps: currentTimelineSteps
+// } = useTransactionTimeline({
+//   isEstimatingGas,
+//   gasEstimateError,
+//   gasEstimate,
+//   isWritePending,
+//   error,
+//   writeContractData,
+//   isConfirming,
+//   isConfirmed,
+//   receipt
+// })
 </script>
 
 <style scoped></style>
