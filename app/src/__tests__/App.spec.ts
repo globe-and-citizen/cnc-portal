@@ -101,7 +101,7 @@ vi.mock('@/composables/useAuth', () => ({
 }))
 
 describe('App.vue', () => {
-  describe('Rendering', () => {
+  describe('Render', () => {
     it('renders ModalComponent if showModal is true', async () => {
       const wrapper = shallowMount(App, {
         global: {
@@ -114,22 +114,6 @@ describe('App.vue', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
-    })
-  })
-
-  describe('Wallet Disconnection', () => {
-    it('calls addErrorToast and logout on disconnect', async () => {
-      const wrapper = shallowMount(App, {
-        global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn })]
-        }
-      })
-
-      const { addErrorToast } = useToastStore()
-      mockUseAccount.isDisconnected.value = true
-      await wrapper.vm.$nextTick()
-
-      expect(addErrorToast).toHaveBeenCalledWith('Disconnected from wallet')
     })
   })
 
@@ -161,6 +145,22 @@ describe('App.vue', () => {
       )
       // @ts-expect-error: showModal on vm
       expect(wrapper.vm.showModal).toBe(false)
+    })
+  })
+
+  describe('Emits', () => {
+    it('should call addErrorToast and logout on disconnect', async () => {
+      const wrapper = shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      const { addErrorToast } = useToastStore()
+      mockUseAccount.isDisconnected.value = true
+      await wrapper.vm.$nextTick()
+
+      expect(addErrorToast).toHaveBeenCalledWith('Disconnected from wallet')
     })
   })
 })
