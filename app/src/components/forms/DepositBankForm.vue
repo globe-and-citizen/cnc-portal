@@ -59,6 +59,7 @@ import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import ButtonUI from '../ButtonUI.vue'
 import { useBankWritesFunctions } from '@/composables/bank'
+import { waitForCondition } from '@/utils'
 
 const emits = defineEmits(['closeModal'])
 // Add validation event
@@ -148,27 +149,6 @@ const {
 
 // Methods
 
-/**
- * Utility function to wait for a condition to be met
- * @description This function repeatedly checks a condition until it returns true or a timeout occurs.
- * @param condition () => boolean - A function that returns a boolean indicating whether the condition is met.
- * @param timeout
- */
-const waitForCondition = (condition: () => boolean, timeout = 5000) => {
-  return new Promise((resolve, reject) => {
-    const startTime = Date.now()
-    const interval = setInterval(() => {
-      console.log('Checking condition...')
-      if (condition()) {
-        clearInterval(interval)
-        resolve(true)
-      } else if (Date.now() - startTime > timeout) {
-        clearInterval(interval)
-        reject(new Error('Condition not met within timeout'))
-      }
-    }, 1000)
-  })
-}
 
 // Success handling
 watch(isNativeDepositConfirmed, (confirmed) => {
