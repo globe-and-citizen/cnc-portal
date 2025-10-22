@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-5 mt-4" data-test="edit-user-modal">
+  <div class="flex flex-col gap-5 mt-4 overflow-hidden" data-test="edit-user-modal">
     <!-- Input Name -->
     <label class="input input-bordered flex items-center gap-2 input-md">
       <span class="w-24" data-test="name-label">Name</span>
@@ -83,6 +83,7 @@
   </div>
   <div class="modal-action justify-center">
     <ButtonUI
+      v-if="hasChanges"
       variant="primary"
       :loading="isLoading"
       :disabled="isLoading"
@@ -104,7 +105,7 @@ import { useCurrencyStore, useToastStore } from '@/stores'
 import { LIST_CURRENCIES } from '@/constant'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import UploadImage from '@/components/forms/UploadImage.vue'
 
 // Props & emits
@@ -123,6 +124,33 @@ const user = defineModel({
     address: '',
     imageUrl: ''
   }
+})
+
+// Track initial values
+const initialValues = ref({
+  name: user.value.name,
+  imageUrl: user.value.imageUrl
+})
+
+watch(
+  () => user.value,
+  (newUser) => {
+    if (initialValues.value.name === '') {
+      initialValues.value = {
+        name: newUser.name,
+        imageUrl: newUser.imageUrl
+      }
+    }
+  },
+  { deep: true, immediate: true }
+)
+
+// Computed property to check if name or image has changed
+const hasChanges = computed(() => {
+  return (
+    user.value.name !== initialValues.value.name ||
+    user.value.imageUrl !== initialValues.value.imageUrl
+  )
 })
 
 const rules = {
