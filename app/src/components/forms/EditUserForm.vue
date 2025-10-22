@@ -60,6 +60,7 @@
       <select
         v-if="LIST_CURRENCIES && LIST_CURRENCIES.length"
         v-model="selectedCurrency"
+        @change="handleCurrencyChange"
         data-test="currency-select"
         class="select select-sm w-full focus:border-none focus:outline-none"
       >
@@ -99,7 +100,7 @@ import { required, minLength } from '@vuelidate/validators'
 import ToolTip from '@/components/ToolTip.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '../ButtonUI.vue'
-import { useCurrencyStore } from '@/stores'
+import { useCurrencyStore, useToastStore } from '@/stores'
 import { LIST_CURRENCIES } from '@/constant'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
@@ -112,6 +113,7 @@ const emits = defineEmits(['submitEditUser'])
 
 // Currency store
 const currencyStore = useCurrencyStore()
+const toastStore = useToastStore()
 const selectedCurrency = ref<string>(currencyStore.localCurrency?.code)
 
 // User form
@@ -141,12 +143,14 @@ const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
 
+const handleCurrencyChange = () => {
+  currencyStore.setCurrency(selectedCurrency.value)
+  toastStore.addSuccessToast('Currency updated')
+}
+
 const submitForm = () => {
   $v.value.$touch()
   if ($v.value.$invalid) return
-  currencyStore.setCurrency(selectedCurrency.value)
   emits('submitEditUser')
 }
-
-// Upload image logic
 </script>
