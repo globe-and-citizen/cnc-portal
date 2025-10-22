@@ -6,15 +6,29 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-contract InvestorV1 is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
+contract InvestorV1 is 
+  ERC20Upgradeable, 
+  OwnableUpgradeable, 
+  PausableUpgradeable, 
+  ReentrancyGuardUpgradeable,
+  AccessControlUpgradeable
+{
   using EnumerableSet for EnumerableSet.AddressSet;
+
+  // Add MINTER_ROLE constant - this doesn't affect storage
+  bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
   EnumerableSet.AddressSet private shareholders;
   struct Shareholder {
     address shareholder;
     uint256 amount;
   }
+
+  // address private officerAddress;
+  // Add a gap for future upgrades (important for upgradeable contracts)
+  uint256[50] private __gap;
 
   event Minted(address indexed shareholder, uint256 amount);
   event DividendDistributed(address indexed shareholder, uint256 amount);
@@ -25,7 +39,15 @@ contract InvestorV1 is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable
     __Ownable_init(_owner);
     __ReentrancyGuard_init();
     __Pausable_init();
+
+    // Grant roles
+    _grantRole(DEFAULT_ADMIN_ROLE, _owner);
+    _grantRole(MINTER_ROLE, _owner);
   }
+
+  // function setOfficerAddress(address _officerAddress) external onlyOwner whenNotPaused {
+  //     officerAddress = _officerAddress;
+  // }
 
   receive() external payable {
     distributeDividends();
@@ -44,7 +66,7 @@ contract InvestorV1 is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable
     }
   }
 
-  function individualMint(address shareholder, uint256 amount) external onlyOwner whenNotPaused nonReentrant {
+  function individualMint(address shareholder, uint256 amount) external onlyRole(MINTER_ROLE) whenNotPaused nonReentrant {
     _mint(shareholder, amount);
     emit Minted(shareholder, amount);
   }
