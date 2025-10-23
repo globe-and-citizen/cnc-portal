@@ -1,7 +1,9 @@
 <template>
   <div>
-    <ButtonUI variant="primary" @click="executeWrite()">Pause Bank</ButtonUI>
-    <ButtonUI variant="secondary" @click="executeUnPause()">Unpause Bank</ButtonUI>
+    <div class="flex gap-8">
+      <ButtonUI variant="primary" @click="executeWrite()">Pause Bank</ButtonUI>
+      <ButtonUI variant="secondary" @click="executeUnPause()">Unpause Bank</ButtonUI>
+    </div>
     <h2>
       Bank paused Status is <span class="text-red-500">{{ pauseResult.data }}</span>
     </h2>
@@ -14,6 +16,7 @@
       <div class="card-body">
         <h2 class="card-title mb-6">Bank Pause Operation</h2>
 
+      <pre>{{ writeData }}</pre>
         <TransactionTimeline
           :show="true"
           :steps="pauseTimelineSteps"
@@ -33,7 +36,7 @@
           {
             // currentStep,
             isLoading,
-            isWritePending,
+            isPending,
             isConfirming,
             isConfirmed,
             writeContractData, //not showing by default
@@ -64,8 +67,9 @@ const pauseResult = useBankPaused()
 
 const {
   // Loading states
+  writeData,
   isLoading,
-  isWritePending,
+  isPending,
   isConfirming,
   isConfirmed,
 
@@ -87,6 +91,8 @@ const {
   executeWrite
 } = usePause()
 
+console.log("writeData", writeData)
+
 const { executeWrite: executeUnPause, timelineSteps: unpauseTimelineSteps } = useUnpause()
 
 // Use transaction timeline composable
@@ -97,7 +103,7 @@ const { executeWrite: executeUnPause, timelineSteps: unpauseTimelineSteps } = us
 //   isEstimatingGas,
 //   gasEstimateError,
 //   gasEstimate,
-//   isWritePending,
+//   isPending,
 //   error,
 //   writeContractData,
 //   isConfirming,
