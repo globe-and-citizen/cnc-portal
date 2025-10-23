@@ -36,13 +36,18 @@ contract InvestorV1 is
 
   function initialize(string calldata _name, string calldata _symbol, address _owner) external initializer {
     __ERC20_init(_name, _symbol);
-    __Ownable_init(_owner);
+    if (_owner == address(0)) {
+      __Ownable_init(msg.sender);
+      _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    } else {
+      __Ownable_init(_owner);
+
+      // Grant roles
+      _grantRole(DEFAULT_ADMIN_ROLE, _owner);
+      _grantRole(MINTER_ROLE, _owner);
+    }
     __ReentrancyGuard_init();
     __Pausable_init();
-
-    // Grant roles
-    _grantRole(DEFAULT_ADMIN_ROLE, _owner);
-    _grantRole(MINTER_ROLE, _owner);
   }
 
   // function setOfficerAddress(address _officerAddress) external onlyOwner whenNotPaused {
