@@ -109,17 +109,21 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         if(_isDeployAllContracts){
             deployAllContracts(_deployments);
             address cashRemunerationAddress = findDeployedContract("CashRemunerationEIP712");
-            if (cashRemunerationAddress != address(0)) {
+            address investorV1Address = findDeployedContract("InvestorV1");
+            if (cashRemunerationAddress != address(0) && investorV1Address != address(0)) {
                 console.log("cashRemunerationAddress: ", cashRemunerationAddress);
                 console.log("officerAddress: ", address(this));
                 console.log("msg.sender: ", msg.sender);
-                ICashRemuneration(cashRemunerationAddress).setOfficerAddress(address(this));
+                // ICashRemuneration(cashRemunerationAddress).setOfficerAddress(address(this));
 
-                address investorV1Address = findDeployedContract("InvestorV1");
-                if (investorV1Address != address(0)){
-                    IInvestorV1 investorV1 = IInvestorV1(investorV1Address);
-                    investorV1.grantRole(investorV1.MINTER_ROLE(), address(cashRemunerationAddress));
-                }
+                
+                // if (investorV1Address != address(0))
+                IInvestorV1 investorV1 = IInvestorV1(investorV1Address);
+                investorV1.grantRole(investorV1.MINTER_ROLE(), address(cashRemunerationAddress));
+                investorV1.grantRole(investorV1.MINTER_ROLE(), msg.sender);
+                investorV1.grantRole(investorV1.DEFAULT_ADMIN_ROLE(), msg.sender);
+                investorV1.transferOwnership(msg.sender);
+                // }
             }
         }
     }
