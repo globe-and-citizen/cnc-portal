@@ -114,8 +114,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
                 console.log("cashRemunerationAddress: ", cashRemunerationAddress);
                 console.log("officerAddress: ", address(this));
                 console.log("msg.sender: ", msg.sender);
-                // ICashRemuneration(cashRemunerationAddress).setOfficerAddress(address(this));
-
+                ICashRemuneration cashRemuneration = ICashRemuneration(cashRemunerationAddress);
+                cashRemuneration.addTokenSupport(investorV1Address);
+                cashRemuneration.transferOwnership(msg.sender);
                 
                 // if (investorV1Address != address(0))
                 IInvestorV1 investorV1 = IInvestorV1(investorV1Address);
