@@ -22,7 +22,7 @@ export function useBankWrites() {
   const { chainId } = useAccount()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
   const userDataStore = useUserDataStore()
-
+  const userAddr = userDataStore.address as `0x${string}` | undefined
   // Use the generic contract writes composable
   const baseWrites = useContractWrites({
     contractAddress: bankAddress.value!,
@@ -79,7 +79,6 @@ export function useBankWrites() {
         break
 
       case BANK_FUNCTION_NAMES.DEPOSIT_DIVIDENDS:
-        const userAddr = userDataStore.address as `0x${string}` | undefined
         if (userAddr) {
           // precise: only the current wallet’s dividend balance
           await queryClient.invalidateQueries({
@@ -95,6 +94,21 @@ export function useBankWrites() {
         }
         break
 
+      case BANK_FUNCTION_NAMES.DEPOSIT_TOKEN_DIVIDENDS:
+        if (userAddr && args?.[0]) {
+          // precise: only the current wallet’s dividend balance
+          await queryClient.invalidateQueries({
+            queryKey: [
+              'readContract',
+              {
+                ...bankQueryKey, // { address: bankAddress.value, chainId: chainId.value }
+                functionName: 'tokenDividendBalances',
+                args: [args[0], userAddr] as const // [tokenAddress, userAddress]
+              }
+            ]
+          })
+        }
+        break
       case BANK_FUNCTION_NAMES.TRANSFER:
       case BANK_FUNCTION_NAMES.TRANSFER_TOKEN:
       case BANK_FUNCTION_NAMES.DEPOSIT_TOKEN:

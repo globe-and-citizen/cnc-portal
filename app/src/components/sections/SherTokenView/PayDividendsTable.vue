@@ -5,28 +5,45 @@
         <span class="font-bold text-lg">Your Pending Dividends</span>
       </div>
 
+      <!-- headless fetchers (one per discovered token) -->
+      <div class="hidden">
+        <TokenDividendAmountFetcher
+          v-for="t in discoveredTokens"
+          :key="t.tokenAddress + '-' + (currentAddress || '')"
+          :token-address="t.tokenAddress"
+          :shareholder="currentAddress as Address"
+          @update="onAmountUpdate"
+        />
+      </div>
+
       <div class="bg-base-100 w-full">
-        <TableComponent :rows="pendingDividends" :columns="columns" :loading="isReadLoading">
+        <TableComponent :rows="filteredRows" :columns="columns" :loading="isBalancesLoading">
           <template #shareholder-data="{ row }">
             <AddressToolTip :address="row.address" />
           </template>
 
-          <template #amount-data="{ row }">
-            <span class="font-bold"
-              >{{ Number(formatEther(row.amount)).toFixed(6) }} {{ tokenSymbol(zeroAddress) }}</span
-            >
+          <template #token-data="{ row }">
+            <span>{{ row.tokenSymbol }}</span>
           </template>
 
-          <template #action-data>
+          <template #amount-data="{ row }">
+            <span class="font-bold">
+              {{ formattedAmount(row.tokenAddress, row.decimals) }} {{ row.tokenSymbol }}
+            </span>
+          </template>
+
+          <template #action-data="{ row }">
             <ButtonUI
               variant="primary"
               size="sm"
               data-test="claim-dividend"
-              @click="executeClaim"
-              :disabled="isWriteLoading"
-              :loading="isWriteLoading"
+              @click="() => executeClaim(row.tokenAddress)"
+              :disabled="isWriteLoading && currentClaimingToken === row.tokenAddress"
+              :loading="isWriteLoading && currentClaimingToken === row.tokenAddress"
             >
-              {{ isWriteLoading ? 'Claiming ' : 'Claim' }}
+              {{
+                isWriteLoading && currentClaimingToken === row.tokenAddress ? 'Claiming' : 'Claim'
+              }}
             </ButtonUI>
           </template>
         </TableComponent>
@@ -36,69 +53,89 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { formatEther, type Address, zeroAddress } from 'viem'
-
-import { useToastStore, useUserDataStore } from '@/stores'
+import { computed, ref } from 'vue'
+import { zeroAddress, type Address, formatUnits } from 'viem'
 import CardComponent from '@/components/CardComponent.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { log } from '@/utils'
+import TokenDividendAmountFetcher from '@/components/sections/SherTokenView/TokenDividendAmountFetcher.vue'
+import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
+import { useContractBalance } from '@/composables/useContractBalance'
 import { useBankContract } from '@/composables/bank'
 import { tokenSymbol } from '@/utils'
 
-const { useDividendBalance, claimDividend, isLoading: isWriteLoading } = useBankContract()
-
-const toastStore = useToastStore()
+const toast = useToastStore()
 const { address: currentAddress } = useUserDataStore()
+const teamStore = useTeamStore()
 
-// Read contract state
-const { data: dividendBalance, isLoading: isReadLoading } = useDividendBalance(
-  currentAddress as Address
-)
+const bankAddress = teamStore.getContractAddressByType('Bank') as Address | undefined
+const { balances, isLoading: isBalancesLoading } = useContractBalance(bankAddress as Address)
 
-// Table columns
+const { claimDividend, claimTokenDividend, isLoading: isWriteLoading } = useBankContract()
+
 const columns: TableColumn[] = [
-  {
-    key: 'shareholder',
-    label: 'Address',
-    sortable: false,
-    class: 'text-black text-base'
-  },
-  {
-    key: 'amount',
-    label: 'Amount',
-    sortable: true,
-    class: 'text-black text-base'
-  },
-  {
-    key: 'action',
-    label: 'Action',
-    sortable: false,
-    class: 'text-black text-base'
-  }
+  { key: 'shareholder', label: 'Address', sortable: false, class: 'text-black text-base' },
+  { key: 'token', label: 'Token', sortable: true, class: 'text-black text-base' },
+  { key: 'amount', label: 'Amount', sortable: true, class: 'text-black text-base' },
+  { key: 'action', label: 'Action', sortable: false, class: 'text-black text-base' }
 ]
 
-// Format data for table
-const pendingDividends = computed(() => {
-  if (!currentAddress || !dividendBalance.value) return []
+// Discover tokens (native + ERC20) from bank balances
+const discoveredTokens = computed(() =>
+  balances.value
+    .filter((b) => b.token && b.token.symbol) // guard
+    .map((b) => ({
+      tokenAddress: b.token.id === 'native' ? zeroAddress : (b.token.address as Address),
+      tokenSymbol: b.token.symbol ?? tokenSymbol(b.token.address as Address),
+      decimals: b.token.decimals ?? 18
+    }))
+)
 
-  return [
-    {
-      address: currentAddress,
-      amount: dividendBalance.value as bigint
-    }
-  ]
+// Aggregated per-token user pending dividend (emitted by fetchers)
+const amounts = ref<Record<string, bigint>>({})
+
+const onAmountUpdate = ({ tokenAddress, amount }: { tokenAddress: Address; amount: bigint }) => {
+  amounts.value[tokenAddress.toLowerCase()] = amount
+}
+
+type Row = {
+  address: string
+  tokenAddress: Address
+  tokenSymbol: string
+  decimals: number
+}
+
+// Only rows with amount > 0n
+const filteredRows = computed<Row[]>(() => {
+  if (!currentAddress) return []
+  return discoveredTokens.value
+    .filter((t) => (amounts.value[t.tokenAddress.toLowerCase()] ?? 0n) > 0n)
+    .map((t) => ({
+      address: currentAddress as string,
+      tokenAddress: t.tokenAddress,
+      tokenSymbol: t.tokenSymbol,
+      decimals: t.decimals
+    }))
 })
 
-// Execute claim using write contract
-const executeClaim = async () => {
+const currentClaimingToken = ref<Address | null>(null)
+
+const formattedAmount = (tokenAddr: Address, decimals: number) => {
+  const amt = amounts.value[tokenAddr.toLowerCase()] ?? 0n
+  return formatUnits(amt, decimals)
+}
+
+const executeClaim = async (tokenAddr: Address) => {
+  currentClaimingToken.value = tokenAddr
   try {
-    await claimDividend()
-  } catch (e) {
-    log.error('Failed to claim dividend:', e)
-    toastStore.addErrorToast('Failed to claim dividend')
+    if (tokenAddr === zeroAddress) await claimDividend()
+    else await claimTokenDividend(tokenAddr)
+    toast.addSuccessToast('Claim successful')
+  } catch {
+    toast.addErrorToast('Failed to claim dividend')
+  } finally {
+    currentClaimingToken.value = null
   }
 }
 </script>

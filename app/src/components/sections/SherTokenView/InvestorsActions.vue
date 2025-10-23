@@ -94,7 +94,9 @@
         <PayDividendsForm
           v-if="payDividendsModal && teamStore.currentTeam"
           :loading="
-            (isBankWriteLoading && bankWriteFunctionName === 'depositDividends') ||
+            (isBankWriteLoading &&
+              (bankWriteFunctionName === 'depositDividends' ||
+                bankWriteFunctionName === 'depositTokenDividends')) ||
             isLoadingAddAction ||
             isConfirmingAddAction
           "
@@ -127,13 +129,19 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 
 import { useBodContract } from '@/composables/bod/'
 import { useBankContract } from '@/composables/bank'
-import { tokenSymbol as tokenSymbolUtils } from '@/utils'
+import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils'
 import { zeroAddress } from 'viem'
+import type { TokenId } from '@/constant'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 
-const { depositDividends, bankWriteFunctionName, isBankWriteLoading, isConfirmed } =
-  useBankContract()
+const {
+  depositDividends,
+  depositTokenDividends,
+  bankWriteFunctionName,
+  isBankWriteLoading,
+  isConfirmed
+} = useBankContract()
 
 const {
   addAction,
@@ -199,14 +207,21 @@ const { isLoading: isConfirmingDistributeMint, isSuccess: isSuccessDistributingM
     hash: distributeMintHash
   })
 
-const executePayDividends = async (value: bigint) => {
-  console.log('Value of dividend to pay', value)
+const executePayDividends = async (value: bigint, selectedTokenId: TokenId) => {
   if (isBodAction.value) {
     if (!investorsAddress) return
+
     const data = encodeFunctionData({
       abi: BANK_ABI,
-      functionName: 'depositDividends',
-      args: [value, investorAddress.value as Address]
+      functionName: selectedTokenId == 'native' ? 'depositDividends' : 'depositTokenDividends',
+      args:
+        selectedTokenId == 'native'
+          ? [value, investorAddress.value as Address]
+          : [
+              tokenSymbolAddresses[selectedTokenId] as Address,
+              value,
+              investorAddress.value as Address
+            ]
     })
     const description = JSON.stringify({
       text: `Pay dividends of ${formatUnits(value, 18)} ${tokenSymbolUtils(zeroAddress)} to ${investorsAddress}`,
@@ -219,7 +234,15 @@ const executePayDividends = async (value: bigint) => {
       data
     })
   } else {
-    await depositDividends(value.toString(), investorAddress.value as Address)
+    if (selectedTokenId == 'native') {
+      await depositDividends(value.toString(), investorAddress.value as Address)
+    } else {
+      await depositTokenDividends(
+        tokenSymbolAddresses[selectedTokenId] as Address,
+        value.toString(),
+        investorAddress.value as Address
+      )
+    }
   }
 }
 
@@ -277,7 +300,11 @@ watch(isConfirmingDistributeMint, (isConfirming, wasConfirming) => {
 })
 
 watch([isConfirmed, bankWriteFunctionName], ([newIsConfirmed, newbankWriteFunctionName]) => {
-  if (newIsConfirmed && newbankWriteFunctionName === 'depositDividends') {
+  if (
+    newIsConfirmed &&
+    (newbankWriteFunctionName === 'depositDividends' ||
+      newbankWriteFunctionName === 'depositTokenDividends')
+  ) {
     payDividendsModal.value = { mount: false, show: false }
   }
 })

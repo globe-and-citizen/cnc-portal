@@ -2,6 +2,7 @@
   <div class="flex flex-col gap-6">
     <BankBalanceSection v-if="bankAddress" ref="bankBalanceSection" :bank-address="bankAddress!" />
     <GenericTokenHoldingsSection v-if="bankAddress" :address="bankAddress!" />
+    <BankDividendsSection v-if="bankAddress" :address="bankAddress!" />
 
     <ContractOwnerCard v-if="bankAddress" :contractAddress="bankAddress" />
     <!-- <TransactionsHistorySection /> -->
@@ -14,6 +15,7 @@ import { computed, ref } from 'vue'
 import BankBalanceSection from '@/components/sections/BankView/BankBalanceSection.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+import BankDividendsSection from '@/components/sections/BankView/BankDividendsSection.vue'
 // import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
 import { useTeamStore } from '@/stores'
 
