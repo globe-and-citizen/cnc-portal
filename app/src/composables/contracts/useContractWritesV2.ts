@@ -18,13 +18,13 @@ export interface ContractWriteOptions {
 export interface ContractWriteConfig {
   contractAddress: MaybeRef<Address | undefined>
   abi: MaybeRef<Abi>
-  chainId?: MaybeRef<number>,// Optional chain ID, if not provided will use current account chain ID
-  functionName: MaybeRef<string>,
-  args: MaybeRef<readonly unknown[]>,
+  chainId?: MaybeRef<number> // Optional chain ID, if not provided will use current account chain ID
+  functionName: MaybeRef<string>
+  args: MaybeRef<readonly unknown[]>
   value?: MaybeRef<bigint>
   config?: {
-    log?: boolean,
-    toast?: boolean,
+    log?: boolean
+    toast?: boolean
     verbose?: boolean
   }
 }
@@ -50,7 +50,6 @@ export function useContractWrites(config: ContractWriteConfig) {
     // isPending,
     // error: writeError
 
-
     data: writeContractData,
     error: writeError,
     isError,
@@ -66,7 +65,7 @@ export function useContractWrites(config: ContractWriteConfig) {
     reset,
     status,
     submittedAt,
-    variables,
+    variables
   } = useWriteContract()
 
   const {
@@ -79,7 +78,7 @@ export function useContractWrites(config: ContractWriteConfig) {
   const isLoading = computed(() => isPending.value || isConfirming.value)
   const error = computed(() => writeError.value || receiptError.value)
 
-  // Encode the function data 
+  // Encode the function data
   const encodedData = computed(() => {
     let data = undefined
     try {
@@ -110,7 +109,6 @@ export function useContractWrites(config: ContractWriteConfig) {
       enabled: false
     }
   })
-
 
   /**
    * Generic query invalidation function
@@ -149,10 +147,9 @@ export function useContractWrites(config: ContractWriteConfig) {
    */
   const executeWrite = async (
     args: readonly unknown[] = [],
-    value?: bigint,
+    value?: bigint
     // options?: ContractWriteOptions
   ) => {
-
     // Store function name for query invalidation after transaction confirms
     // currentFunctionName.value = functionName
     try {
@@ -190,10 +187,7 @@ export function useContractWrites(config: ContractWriteConfig) {
     return undefined
   }
 
-  const {
-    currentStep,
-    timelineSteps
-  } = useTransactionTimeline({
+  const { currentStep, timelineSteps } = useTransactionTimeline({
     isEstimatingGas,
     gasEstimateError,
     gasEstimate,
@@ -219,7 +213,7 @@ export function useContractWrites(config: ContractWriteConfig) {
       reset,
       status,
       submittedAt,
-      variables,
+      variables
     },
     // Loading states
     isLoading,
@@ -247,7 +241,7 @@ export function useContractWrites(config: ContractWriteConfig) {
 
     // Core functions
     executeWrite,
-    invalidateQueries, // Exposed so contract-specific implementations can override
+    invalidateQueries // Exposed so contract-specific implementations can override
 
     // Internal state (for advanced usage)
     // currentFunctionName: readonly(currentFunctionName)

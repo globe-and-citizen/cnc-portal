@@ -1,8 +1,8 @@
-import { computed, type MaybeRef } from "vue";
-import type { Address } from "viem";
+import { computed, type MaybeRef } from 'vue'
+import type { Address } from 'viem'
 import { BANK_ABI } from '@/artifacts/abi/bank'
-import { useContractWrites } from "@/composables/contracts/useContractWritesV2";
-import { useTeamStore } from "@/stores/teamStore";
+import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
+import { useTeamStore } from '@/stores/teamStore'
 
 export function useDepositToken(token: MaybeRef<Address>, amount: MaybeRef<bigint>) {
   const teamStore = useTeamStore()
@@ -10,7 +10,7 @@ export function useDepositToken(token: MaybeRef<Address>, amount: MaybeRef<bigin
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "depositToken",
+    functionName: 'depositToken',
     args: [token, amount]
   })
 }
@@ -21,7 +21,7 @@ export function useAddTokenSupport(tokenAddress: MaybeRef<Address>) {
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "addTokenSupport",
+    functionName: 'addTokenSupport',
     args: [tokenAddress]
   })
 }
@@ -32,7 +32,7 @@ export function useRemoveTokenSupport(tokenAddress: MaybeRef<Address>) {
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "removeTokenSupport",
+    functionName: 'removeTokenSupport',
     args: [tokenAddress]
   })
 }
@@ -43,7 +43,7 @@ export function useClaimDividend() {
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "claimDividend",
+    functionName: 'claimDividend',
     args: []
   })
 }
@@ -54,7 +54,7 @@ export function useClaimTokenDividend(token: MaybeRef<Address>) {
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "claimTokenDividend",
+    functionName: 'claimTokenDividend',
     args: [token]
   })
 }
@@ -65,19 +65,23 @@ export function useDepositDividends(amount: MaybeRef<bigint>, investorAddress: M
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "depositDividends",
+    functionName: 'depositDividends',
     args: [amount, investorAddress],
     value: amount // This is a payable function
   })
 }
 
-export function useDepositTokenDividends(token: MaybeRef<Address>, amount: MaybeRef<bigint>, investorAddress: MaybeRef<Address>) {
+export function useDepositTokenDividends(
+  token: MaybeRef<Address>,
+  amount: MaybeRef<bigint>,
+  investorAddress: MaybeRef<Address>
+) {
   const teamStore = useTeamStore()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "depositTokenDividends",
+    functionName: 'depositTokenDividends',
     args: [token, amount, investorAddress]
   })
 }
@@ -88,7 +92,7 @@ export function useSetInvestorAddress(investorAddress: MaybeRef<Address>) {
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "setInvestorAddress",
+    functionName: 'setInvestorAddress',
     args: [investorAddress]
   })
 }
@@ -99,18 +103,22 @@ export function useTransfer(to: MaybeRef<Address>, amount: MaybeRef<bigint>) {
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "transfer",
+    functionName: 'transfer',
     args: [to, amount]
   })
 }
 
-export function useTransferToken(token: MaybeRef<Address>, to: MaybeRef<Address>, amount: MaybeRef<bigint>) {
+export function useTransferToken(
+  token: MaybeRef<Address>,
+  to: MaybeRef<Address>,
+  amount: MaybeRef<bigint>
+) {
   const teamStore = useTeamStore()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "transferToken",
+    functionName: 'transferToken',
     args: [token, to, amount]
   })
 }
@@ -121,7 +129,7 @@ export function useTransferOwnership(newOwner: MaybeRef<Address>) {
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "transferOwnership",
+    functionName: 'transferOwnership',
     args: [newOwner]
   })
 }
@@ -132,7 +140,7 @@ export function useRenounceOwnership() {
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "renounceOwnership",
+    functionName: 'renounceOwnership',
     args: []
   })
 }
@@ -143,7 +151,7 @@ export function usePause() {
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "pause",
+    functionName: 'pause',
     args: []
   })
 }
@@ -154,7 +162,7 @@ export function useUnpause() {
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: "unpause",
+    functionName: 'unpause',
     args: []
   })
 }

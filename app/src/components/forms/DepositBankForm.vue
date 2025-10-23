@@ -149,7 +149,6 @@ const {
 
 // Methods
 
-
 // Success handling
 watch(isNativeDepositConfirmed, (confirmed) => {
   if (confirmed && nativeReceipt.value) {

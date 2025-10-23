@@ -16,7 +16,7 @@
       <div class="card-body">
         <h2 class="card-title mb-6">Bank Pause Operation</h2>
 
-      <pre>{{ writeData }}</pre>
+        <pre>{{ writeData }}</pre>
         <TransactionTimeline
           :show="true"
           :steps="pauseTimelineSteps"
@@ -91,7 +91,7 @@ const {
   executeWrite
 } = usePause()
 
-console.log("writeData", writeData)
+console.log('writeData', writeData)
 
 const { executeWrite: executeUnPause, timelineSteps: unpauseTimelineSteps } = useUnpause()
 
