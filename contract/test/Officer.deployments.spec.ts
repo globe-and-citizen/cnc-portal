@@ -15,7 +15,6 @@ import { ZeroAddress } from 'ethers'
 
 describe('Officer Contract', function () {
   let officer: Officer
-  let officerBeacon: UpgradeableBeacon
   let bankAccount: Bank__factory
   let bankAccountBeacon: UpgradeableBeacon
   let investor: InvestorV1__factory
@@ -29,12 +28,9 @@ describe('Officer Contract', function () {
   let cashRemunerationEip712: CashRemunerationEIP712__factory
   let cashRemunerationEip712Beacon: UpgradeableBeacon
   let owner: SignerWithAddress
-  let addr1: SignerWithAddress
-  let addr2: SignerWithAddress
-  let addr3: SignerWithAddress
 
   it('Should deploy contracts', async function () {
-    ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
+    ;[owner] = await ethers.getSigners()
 
     // Deploy implementation contracts
     bankAccount = await ethers.getContractFactory('Bank')

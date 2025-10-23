@@ -21,8 +21,6 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   let cashRemunerationEip712Proxy: CashRemunerationEIP712
   let owner: SignerWithAddress
   let addr1: SignerWithAddress
-  let addr2: SignerWithAddress
-  let addr3: SignerWithAddress
 
   //EIP 712 variables
   const DOMAIN_NAME = 'CashRemuneration'
@@ -40,7 +38,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   }
 
   beforeEach(async function () {
-    ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
+    ;[owner, addr1] = await ethers.getSigners()
 
     // Deploy implementation contracts
     investor = await ethers.getContractFactory('InvestorV1')
