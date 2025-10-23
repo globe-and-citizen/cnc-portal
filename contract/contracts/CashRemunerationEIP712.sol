@@ -141,6 +141,8 @@ contract CashRemunerationEIP712 is
         console.log("msg.sender in initialize: ", msg.sender);
         console.log("owner: ", owner);
 
+        officerAddress = msg.sender;
+
         // Set the initial supported tokens
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             require(tokenAddresses[i] != address(0), "Token address cannot be zero");
