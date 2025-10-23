@@ -110,7 +110,7 @@ describe('Officer Contract', function () {
 			contractType: 'CashRemunerationEIP712',
 			initializerData: cashRemunerationEip712.interface.encodeFunctionData(
 				'initialize',
-				[owner.address, []]
+				[ZeroAddress, []]
 			)
 		})
 
@@ -145,63 +145,16 @@ describe('Officer Contract', function () {
 			contractAddresses.set(contract[0], contract[1])
 		}
 
-		console.log('contractAddresses: ', contractAddresses)
-
 		const cashRemunerationEip712Proxy = await ethers.getContractAt( 'CashRemunerationEIP712', contractAddresses.get('CashRemunerationEIP712') )
-
-		console.log('cashRemunerationEIP712.officerAddress: ', await cashRemunerationEip712Proxy.officerAddress())
-		expect((await cashRemunerationEip712Proxy.officerAddress()).toLocaleLowerCase()).to.be.equal((await officer.getAddress()).toLocaleLowerCase())
-
 		const investorV1Proxy = await ethers.getContractAt( 'InvestorV1', contractAddresses.get('InvestorV1') )
+
+		expect((await cashRemunerationEip712Proxy.officerAddress()).toLocaleLowerCase()).to.be.equal((await officer.getAddress()).toLocaleLowerCase())
+		expect((await cashRemunerationEip712Proxy.owner()).toLocaleLowerCase()).to.be.equal(owner.address.toLocaleLowerCase())
+		expect((await cashRemunerationEip712Proxy.supportedTokens(await investorV1Proxy.getAddress()))).to.be.equal(true)
+
 		expect((await investorV1Proxy.owner()).toLocaleLowerCase()).to.be.equal(owner.address.toLocaleLowerCase())
 		expect(await investorV1Proxy.hasRole(await investorV1Proxy.MINTER_ROLE(), await cashRemunerationEip712Proxy.getAddress())).to.be.equal(true)
 		expect(await investorV1Proxy.hasRole(await investorV1Proxy.MINTER_ROLE(), owner.address)).to.be.equal(true)
 		expect(await investorV1Proxy.hasRole(await investorV1Proxy.DEFAULT_ADMIN_ROLE(), owner.address)).to.be.equal(true)
 	})
-
-	// describe('Contract Deployment', () => {
-	// 	it('Should deploy contracts via BeaconProxy', async function () {
-	// 		// console.log("Ex of console log")
-	// 		const electionsInitData = elections.interface.encodeFunctionData('initialize', [
-	// 			owner.address
-	// 		])
-
-	// 		const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-	// 			[], // token addresses array
-	// 			owner.address
-	// 		])
-
-	// 		const investorInitData = investor.interface.encodeFunctionData('initialize', [
-	// 			'Bitcoin',
-	// 			'BTC',
-	// 			owner.address
-	// 		])
-
-	// 		const expenseInitData = expenseAccountEip712.interface.encodeFunctionData('initialize', [
-	// 			owner.address
-	// 		])
-
-	// 		await expect(
-	// 			officer.connect(owner).deployBeaconProxy('Elections', electionsInitData)
-	// 		).to.emit(officer, 'ContractDeployed')
-
-	// 		const deployedContracts = await officer.getTeam()
-	// 		expect(deployedContracts.length).to.equal(2)
-	// 		expect(deployedContracts[0].contractType).to.equal('Elections')
-	// 		expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
-
-	// 		await expect(officer.connect(owner).deployBeaconProxy('Bank', bankInitData)).to.emit(
-	// 			officer,
-	// 			'ContractDeployed'
-	// 		)
-
-	// 		await expect(
-	// 			officer.connect(owner).deployBeaconProxy('ExpenseAccount', expenseInitData)
-	// 		).to.emit(officer, 'ContractDeployed')
-
-	// 		await expect(
-	// 			officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
-	// 		).to.emit(officer, 'ContractDeployed')
-	// 	})
-	// })
 })
