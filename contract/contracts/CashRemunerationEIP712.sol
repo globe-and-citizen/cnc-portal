@@ -125,30 +125,31 @@ contract CashRemunerationEIP712 is
 
     /**
      * @dev Initializes the contract with the specified owner.
-     * @param owner The address of the contract owner.
+     * @param _owner The address of the contract owner.
      */
     function initialize(
-        address owner,
-        address[] calldata tokenAddresses
+        address _owner,
+        address[] calldata _tokenAddresses
     ) public initializer {
-        require(owner != address(0), "Owner address cannot be zero");
+        // require(owner != address(0), "Owner address cannot be zero");
         // require(_usdcAddress != address(0), "USDC address cannot be zero");
-        __Ownable_init(owner);
+        if (_owner == address(0)) {
+            __Ownable_init(msg.sender);
+        } else {
+            __Ownable_init(_owner);
+        }
+        // __Ownable_init(owner);
         __ReentrancyGuard_init();
         __Pausable_init();
         __EIP712_init("CashRemuneration", "1");
 
-        console.log("msg.sender in initialize: ", msg.sender);
-        console.log("owner: ", owner);
-
         officerAddress = msg.sender;
 
         // Set the initial supported tokens
-        for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            require(tokenAddresses[i] != address(0), "Token address cannot be zero");
-            supportedTokens[tokenAddresses[i]] = true;
+        for (uint256 i = 0; i < _tokenAddresses.length; i++) {
+            require(_tokenAddresses[i] != address(0), "Token address cannot be zero");
+            supportedTokens[_tokenAddresses[i]] = true;
         }
-        // supportedTokens[_usdcAddress] = true;
     }
 
     function setOfficerAddress(address _officerAddress) external onlyOwner whenNotPaused {
