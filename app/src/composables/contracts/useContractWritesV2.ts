@@ -46,10 +46,27 @@ export function useContractWrites(config: ContractWriteConfig) {
   // const currentFunctionName = ref<string | null>(null)
 
   const {
+    // data: writeContractData,
+    // isPending,
+    // error: writeError
+
+
     data: writeContractData,
+    error: writeError,
+    isError,
+    isIdle,
+    isPending,
+    isPaused,
+    isSuccess,
+    failureCount,
+    failureReason,
+    // mutate,
+    // mutateAsync,
     writeContractAsync,
-    isPending: isWritePending,
-    error: writeError
+    reset,
+    status,
+    submittedAt,
+    variables,
   } = useWriteContract()
 
   const {
@@ -59,7 +76,7 @@ export function useContractWrites(config: ContractWriteConfig) {
     error: receiptError
   } = useWaitForTransactionReceipt({ hash: writeContractData })
 
-  const isLoading = computed(() => isWritePending.value || isConfirming.value)
+  const isLoading = computed(() => isPending.value || isConfirming.value)
   const error = computed(() => writeError.value || receiptError.value)
 
   // Encode the function data 
@@ -180,7 +197,7 @@ export function useContractWrites(config: ContractWriteConfig) {
     isEstimatingGas,
     gasEstimateError,
     gasEstimate,
-    isWritePending,
+    isPending,
     error,
     writeContractData,
     isConfirming,
@@ -189,9 +206,24 @@ export function useContractWrites(config: ContractWriteConfig) {
   })
 
   return {
+    writeData: {
+      data: writeContractData,
+      error: writeError,
+      isError,
+      isIdle,
+      isPending,
+      isPaused,
+      isSuccess,
+      failureCount,
+      failureReason,
+      reset,
+      status,
+      submittedAt,
+      variables,
+    },
     // Loading states
     isLoading,
-    isWritePending,
+    isPending,
     isConfirming,
     isConfirmed,
 

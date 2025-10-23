@@ -6,7 +6,7 @@ export interface TransactionTimelineParams {
   isEstimatingGas: Ref<boolean>
   gasEstimateError: Ref<Error | null | undefined>
   gasEstimate: Ref<bigint | undefined>
-  isWritePending: Ref<boolean>
+  isPending: Ref<boolean>
   error: Ref<Error | null | undefined>
   writeContractData: Ref<unknown>
   isConfirming: Ref<boolean>
@@ -19,7 +19,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
     isEstimatingGas,
     gasEstimateError,
     gasEstimate,
-    isWritePending,
+    isPending,
     error,
     writeContractData,
     isConfirming,
@@ -52,7 +52,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
   })
 
   const getApprovalStatus = computed(() => {
-    if (isWritePending.value) {
+    if (isPending.value) {
       return 'active'
     } else if (error.value) {
       return 'error'
@@ -100,9 +100,9 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
   })
 
   const currentStep = computed(() => {
-    if (!isWritePending.value && !isEstimatingGas.value) {
+    if (!isPending.value && !isEstimatingGas.value) {
       return 0
-    } else if (isWritePending.value || error.value) {
+    } else if (isPending.value || error.value) {
       return 1
     } else if (isConfirming.value) {
       return 2
