@@ -181,4 +181,10 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     expect(paidWageClaim).to.be.equal(true)
     expect(await investorV1Proxy.balanceOf(addr1.address)).to.be.equal(amountSher)
   })
+
+  it("Should revert if address trying to mint doesn't have minter role", async () => {
+    await expect(
+      investorV1Proxy.connect(addr1).individualMint(owner.address, 20 * 1e6)
+    ).to.be.revertedWithCustomError(investorV1Proxy, 'AccessControlUnauthorizedAccount')
+  })
 })
