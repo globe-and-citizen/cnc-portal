@@ -135,6 +135,7 @@ contract CashRemunerationEIP712 is
         // require(_usdcAddress != address(0), "USDC address cannot be zero");
         if (_owner == address(0)) {
             __Ownable_init(msg.sender);
+            officerAddress = msg.sender;
         } else {
             __Ownable_init(_owner);
         }
@@ -143,7 +144,7 @@ contract CashRemunerationEIP712 is
         __Pausable_init();
         __EIP712_init("CashRemuneration", "1");
 
-        officerAddress = msg.sender;
+        // officerAddress = msg.sender;
 
         // Set the initial supported tokens
         for (uint256 i = 0; i < _tokenAddresses.length; i++) {
@@ -247,7 +248,7 @@ contract CashRemunerationEIP712 is
             } else {
                 require(supportedTokens[wageClaim.wages[i].tokenAddress], "Token not supported");
                 uint256 amountToPay = wageClaim.hoursWorked * wageClaim.wages[i].hourlyRate;
-
+                
                 if (
                     officerAddress != address(0) &&
                     wageClaim.wages[i].tokenAddress == IOfficer(officerAddress).findDeployedContract("InvestorV1")
