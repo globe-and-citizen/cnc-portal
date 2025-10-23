@@ -7,19 +7,14 @@ import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Pau
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {StockGrant} from "./types/StockGrant.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 contract Investor is 
     ERC20Upgradeable, 
     OwnableUpgradeable, 
     PausableUpgradeable, 
-    ReentrancyGuardUpgradeable,
-    AccessControlUpgradeable 
+    ReentrancyGuardUpgradeable
 {
     using EnumerableSet for EnumerableSet.AddressSet;
-
-    // Add MINTER_ROLE constant - this doesn't affect storage
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     EnumerableSet.AddressSet private shareholders;
     mapping(address => StockGrant) private stockGrants;
@@ -31,17 +26,10 @@ contract Investor is
     event DividendDistributed(address indexed shareholder, uint256 amount);
     event MintingStateChanged(bool state);
 
-    // New event for role management
-    event MinterRoleGranted(address indexed minter);
-
-    // Add a gap for future upgrades (important for upgradeable contracts)
-    uint256[50] private __gap;
-
     function initialize(
         string calldata _name, 
         string calldata _symbol, 
-        StockGrant[] calldata _stockGrants,
-        address[] calldata _minterAddreses
+        StockGrant[] calldata _stockGrants
     )
         external
         initializer {
@@ -49,17 +37,6 @@ contract Investor is
         __Ownable_init(msg.sender);
         __ReentrancyGuard_init();
         __Pausable_init();
-        __AccessControl_init();
-
-        // Grant roles
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(MINTER_ROLE, msg.sender);
-
-        for (uint8 i = 0; i < _minterAddreses.length; i++) {
-            require(_minterAddreses[i] != address(0), "Invalid minter address");
-            _grantRole(MINTER_ROLE, _minterAddreses[i]);
-            emit MinterRoleGranted(_minterAddreses[i]);
-        }
 
         for (uint256 i = 0; i < _stockGrants.length; i++) {
             require(_stockGrants[i].shareholder != address(0), "Invalid shareholder address");
@@ -70,7 +47,7 @@ contract Investor is
         }
     }
 
-    function mint() external onlyRole(MINTER_ROLE) whenNotPaused nonReentrant {
+    function mint() external onlyOwner whenNotPaused nonReentrant {
         for (uint256 i = 0; i < shareholders.length(); i++) {
             address shareholder = shareholders.at(i);
             StockGrant storage stockGrant = stockGrants[shareholder];
@@ -84,7 +61,7 @@ contract Investor is
         }
     }
 
-    function mint(address _shareholder, uint256 _amount) external onlyRole(MINTER_ROLE) whenNotPaused nonReentrant {
+    function mint(address _shareholder, uint256 _amount) external onlyOwner whenNotPaused nonReentrant {
         require(_shareholder != address(0), "Invalid shareholder address");
         require(_amount > 0, "Invalid amount");
 
