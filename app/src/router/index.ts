@@ -19,6 +19,7 @@ import ProposalsView from '@/views/team/[id]/ProposalsView.vue'
 import ProposalDetail from '@/components/sections/ProposalsView/ProposalDetail.vue'
 import BodElectionDetailsView from '@/views/team/[id]/BodElectionDetailsView.vue'
 import BankTestView from '@/views/BankTestView.vue'
+import DemoExample from '@/views/team/[id]/DemoExample.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -49,6 +50,12 @@ const router = createRouter({
       name: 'show-team',
       meta: { name: 'Team View' },
       children: [
+        {
+          path: '/teams/:id/demo',
+          name: 'team-demo',
+          meta: { name: 'Team Demo' },
+          component: DemoExample
+        },
         {
           path: '/teams/:id/cash-remunerations/weekly-claim',
           name: 'weekly-claim',
