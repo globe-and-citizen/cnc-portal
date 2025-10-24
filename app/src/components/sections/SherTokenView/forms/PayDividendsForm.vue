@@ -3,16 +3,17 @@
     <h2>Pay Dividends to the shareholders</h2>
     <BodAlert v-if="isBodAction" />
     <h3>
-      Please input amount of {{ NETWORK.currencySymbol }} to divide to the shareholders. This will
-      move funds from bank contract to the shareholders
+      Please input amount to divide to the shareholders. This will move funds from bank contract to
+      the shareholders
     </h3>
 
     <h6>
       Current Bank contract balance
       <span v-if="isBankBalanceLoading">...</span>
-      <span v-else> {{ formattedUnlockedBalance }}</span>
-      {{ NETWORK.currencySymbol }}
+      <span v-else>{{ formattedUnlockedBalance }}</span>
+      {{ selectedTokenId === 'native' ? NETWORK.currencySymbol : selectedTokenId.toUpperCase() }}
     </h6>
+
     <div
       v-if="!isBankBalanceLoading && (unlockedBalance ?? 0n) === 0n"
       class="alert alert-warning"
@@ -20,38 +21,18 @@
     >
       Please fund the bank contract before paying dividends.
     </div>
-    <!-- <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
-      <p>Amount</p>
-      |
-      <input type="number" class="grow" data-test="amount-input" v-model="amount" />
-      {{ NETWORK.currencySymbol }}
-    </label> -->
 
-    <div class="flex flex-col gap-2">
-      <label class="flex items-center">
-        <span class="w-full font-bold" data-test="amount-input">Amount</span>
-      </label>
-      <div class="relative">
-        <input
-          type="number"
-          class="input input-bordered input-md grow w-full pr-16"
-          data-test="amount-input"
-          v-model="amount"
-        />
-        <span
-          class="absolute right-4 top-1/2 transform -translate-y-1/2 text-black font-bold text-sm"
-        >
-          {{ NETWORK.currencySymbol }}
-        </span>
-      </div>
-      <div
-        class="pl-4 text-red-500 text-sm w-full text-left"
-        v-for="error of $v.amount.$errors"
-        :key="error.$uid"
-      >
-        {{ error.$message }}
-      </div>
-    </div>
+    <TokenAmount
+      v-model:modelValue="amount"
+      v-model:modelToken="selectedTokenId"
+      :tokens="tokens"
+      :loading="loading"
+    >
+      <template #label>
+        <span class="label-text">Amount</span>
+        <span class="label-text-alt">Available: {{ formattedUnlockedBalance }}</span>
+      </template>
+    </TokenAmount>
 
     <div class="text-center">
       <ButtonUI
@@ -71,16 +52,20 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
 // import { useToastStore } from '@/stores'
 import type { Team } from '@/types'
-import useVuelidate from '@vuelidate/core'
-import { numeric, required } from '@vuelidate/validators'
 
-import { formatEther, parseEther } from 'viem'
-import { computed, watch, type Ref } from 'vue'
-import { ref } from 'vue'
+import { parseUnits } from 'viem'
+import { computed, watch, ref, type Ref } from 'vue'
+import { useTeamStore } from '@/stores'
 import BodAlert from '@/components/BodAlert.vue'
 import { useBankReads } from '@/composables/bank/index'
-
-const amount = ref<number | null>(null)
+import type { TokenId } from '@/constant'
+import type { TokenOption } from '@/types'
+import { useContractBalance } from '@/composables/useContractBalance'
+import TokenAmount from '@/components/forms/TokenAmount.vue'
+import type { Address } from 'viem'
+const amount = ref<string>('')
+const selectedTokenId = ref<TokenId>('native')
+const teamStore = useTeamStore()
 
 defineProps<{
   tokenSymbol: string | undefined
@@ -90,6 +75,22 @@ defineProps<{
 }>()
 
 const { useUnlockedBalance } = useBankReads()
+const bankAddress = teamStore.getContractAddressByType('Bank')
+const { balances } = useContractBalance(bankAddress as Address)
+
+const getTokens = (): TokenOption[] =>
+  balances.value
+    .map((b) => ({
+      symbol: b.token.symbol,
+      balance: b.amount,
+      tokenId: b.token.id,
+      price: b.values['USD'].price || 0,
+      name: b.token.name,
+      code: b.token.code
+    }))
+    .filter((b) => b.tokenId !== 'sher')
+
+const tokens = computed(() => getTokens())
 
 const {
   data: unlockedBalance,
@@ -101,35 +102,27 @@ const {
   error: Ref<unknown>
 }
 
+const selectedTokenDecimals = computed<number>(() => {
+  const entry = balances.value.find((b) => b.token.id === selectedTokenId.value)
+  return entry?.token.decimals ?? 18
+})
+
+const selectedTokenBalance = computed<number>(() => {
+  const entry = balances.value.find((b) => b.token.id === selectedTokenId.value)
+  return entry?.amount ?? 0
+})
+
 const formattedUnlockedBalance = computed(() => {
-  return formatEther(unlockedBalance?.value ?? 0n)
+  return selectedTokenBalance.value
 })
 // Update maxValue validator to use availableBalance
 const emits = defineEmits(['submit'])
 
-const rules = {
-  amount: {
-    required,
-    numeric,
-    minValue: {
-      $validator: (value: number) => value > 0,
-      $message: 'Value should be greater than 0'
-    },
-    maxValue: {
-      $validator: (value: number) => parseFloat(formattedUnlockedBalance.value) >= value,
-      $message: 'Amount exceeds the current available balance'
-    }
-  }
-}
-
 const onSubmit = () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
-
-  emits('submit', parseEther((amount.value ?? 0).toString()))
+  if (!amount.value) return
+  const parsed = parseUnits(amount.value, selectedTokenDecimals.value)
+  emits('submit', parsed, selectedTokenId.value)
 }
-
-const $v = useVuelidate(rules, { amount })
 
 watch(bankBalanceError, (err) => {
   if (err) {
