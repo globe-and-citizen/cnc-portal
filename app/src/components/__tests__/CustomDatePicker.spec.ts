@@ -84,6 +84,22 @@ describe('CustomDatePicker', () => {
     expect((wrapper.vm as unknown as IWrapper).dateRange).toEqual([firstDayOfMonth, lastDayOfMonth])
   })
 
+  it.skip('updates date range when selecting current week option', async () => {
+    const button = wrapper.find('[data-test="test-date-picker-date-select"]')
+    await button.trigger('click')
+
+    const options = wrapper.findAll('li')
+    await options[2].trigger('click')
+
+    const today = new Date()
+    const firstDayOfWeek = new Date(today)
+    firstDayOfWeek.setDate(today.getDate() - today.getDay())
+    const lastDayOfWeek = new Date(firstDayOfWeek)
+    lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6)
+
+    expect((wrapper.vm as unknown as IWrapper).dateRange).toEqual([firstDayOfWeek, lastDayOfWeek])
+  })
+
   it('updates date range when selecting previous month option', async () => {
     const button = wrapper.find('[data-test="test-date-picker-date-select"]')
     await button.trigger('click')
