@@ -8,6 +8,10 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./interfaces/IMintableERC20.sol";
+import "./interfaces/IInvestorV1.sol";
+import "./interfaces/IOfficer.sol";
+import "hardhat/console.sol";
 
 /**
  * @title CashRemunerationEIP712
@@ -72,6 +76,12 @@ contract CashRemunerationEIP712 is
     /// @dev Mapping to track wage claims that have already been paid.
     mapping(bytes32 => bool) public paidWageClaims;
 
+    // Add new state variable - MUST be added after existing ones
+    address public officerAddress;
+    
+    // Storage gap for future upgrades
+    uint256[50] private __gap;
+
     /**
      * @dev Emitted when Ether is deposited into the contract.
      * @param depositor The address that sent the Ether.
@@ -115,25 +125,32 @@ contract CashRemunerationEIP712 is
 
     /**
      * @dev Initializes the contract with the specified owner.
-     * @param owner The address of the contract owner.
+     * @param _owner The address of the contract owner.
      */
     function initialize(
-        address owner,
-        address[] calldata tokenAddresses
+        address _owner,
+        address[] calldata _tokenAddresses
     ) public initializer {
-        require(owner != address(0), "Owner address cannot be zero");
-        // require(_usdcAddress != address(0), "USDC address cannot be zero");
-        __Ownable_init(owner);
+        if (_owner == address(0)) {
+            __Ownable_init(msg.sender);
+            officerAddress = msg.sender;
+        } else {
+            __Ownable_init(_owner);
+        }
+
         __ReentrancyGuard_init();
         __Pausable_init();
         __EIP712_init("CashRemuneration", "1");
 
         // Set the initial supported tokens
-        for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            require(tokenAddresses[i] != address(0), "Token address cannot be zero");
-            supportedTokens[tokenAddresses[i]] = true;
+        for (uint256 i = 0; i < _tokenAddresses.length; i++) {
+            require(_tokenAddresses[i] != address(0), "Token address cannot be zero");
+            supportedTokens[_tokenAddresses[i]] = true;
         }
-        // supportedTokens[_usdcAddress] = true;
+    }
+
+    function setOfficerAddress(address _officerAddress) external onlyOwner whenNotPaused {
+      officerAddress = _officerAddress;
     }
 
     /**
@@ -180,67 +197,121 @@ contract CashRemunerationEIP712 is
     }
 
     /**
-     * @notice Allows an employee to withdraw their wages.
-     * @param wageClaim The details of the wage being claimed.
-     * @param signature The ECDSA signature.
-     *
+     * @notice Allows an employee to withdraw their wages after verification.
+     * @dev This function handles both native ETH and ERC20 token payments, with special 
+     *      handling for mintable tokens (InvestorV1) when an officer address is configured.
+     *      It uses EIP-712 for secure signature verification to prevent unauthorized access.
+     * 
+     * @param wageClaim The structured wage claim containing employee details, hours worked, and wage information.
+     * @param signature The ECDSA signature signed by the contract owner authorizing this wage claim.
+     * 
      * Requirements:
-     * - The caller must be the employee specified in the wage claim.
-     * - The wage claim must be signed by the contract owner.
-     * - The wage claim must not have already been paid.
-     * - The contract must have sufficient Ether to fulfill the claim.
-     * - The contract must not be paused.
-     *
-     * Emits a {Withdraw} event.
+     * - The caller must be the employee specified in the wage claim
+     * - The signature must be valid and signed by the contract owner
+     * - The wage claim must not have been already paid
+     * - The contract must have sufficient balance for token transfers (unless minting)
+     * - The token must be supported if it's not ETH
+     * - The contract must not be paused
+     * - Must be non-reentrant to prevent reentrancy attacks
+     * 
+     * Emits:
+     * - {Withdraw} event for ETH payments
+     * - {WithdrawToken} event for token payments
+     * 
+     * Special Behavior:
+     * - If the token is the InvestorV1 contract and an officer address is configured, 
+     *   it will mint tokens instead of transferring from contract balance
      */
     function withdraw(
         WageClaim calldata wageClaim,
         bytes calldata signature
     ) external whenNotPaused nonReentrant {
+        // Step 1: Verify the caller is the authorized employee
+        // Prevents someone else from withdrawing another employee's wages
         require(msg.sender == wageClaim.employeeAddress, "Withdrawer not approved");
 
+        // Step 2: EIP-712 Signature Verification
+        // Create the EIP-712 compliant digest for signature recovery
         bytes32 digest = keccak256(abi.encodePacked(
-            "\x19\x01",
-            _domainSeparatorV4(),
-            wageClaimHash(wageClaim)
+            "\x19\x01",                    // EIP-712 prefix
+            _domainSeparatorV4(),          // Contract-specific domain separator
+            wageClaimHash(wageClaim)       // Hash of the wage claim data
         ));
 
+        // Step 3: Recover the signer address from the signature
+        // This uses ECDSA recovery to determine who signed the wage claim
         address signer = digest.recover(signature);
 
+        // Step 4: Verify the signer is the contract owner
+        // Ensures only authorized owners can approve wage claims
         if (signer != owner()) {
             revert UnauthorizedAccess(owner(), signer);
         }
 
+        // Step 5: Prevent double-spending of the same signature
+        // Each signature can only be used once to prevent replay attacks
         bytes32 sigHash = keccak256(signature);
-
         require(!paidWageClaims[sigHash], "Wage already paid");
 
+        // Step 6: Mark this signature as used to prevent reuse
         paidWageClaims[sigHash] = true;
 
+        // Step 7: Process each wage component in the claim
+        // A wage claim can contain multiple wage types (ETH and/or multiple tokens)
         for (uint8 i = 0; i < wageClaim.wages.length; i++) {
-            if (wageClaim.wages[i].tokenAddress == address(0)) {
-                uint256 amountToPay = wageClaim.hoursWorked * wageClaim.wages[i].hourlyRate;
+            // Calculate the total amount to pay for this wage component
+            uint256 amountToPay = wageClaim.hoursWorked * wageClaim.wages[i].hourlyRate;
 
+            // Step 7a: Handle Native ETH Payments
+            // tokenAddress == address(0) indicates native ETH
+            if (wageClaim.wages[i].tokenAddress == address(0)) {
+                // Transfer ETH directly to the employee
                 payable(wageClaim.employeeAddress).sendValue(amountToPay);
 
+                // Emit event for ETH withdrawal
                 emit Withdraw(wageClaim.employeeAddress, amountToPay);
-            } else {
+            } 
+            // Step 7b: Handle ERC20 Token Payments
+            else {
+                // Ensure the requested token is supported by the contract
                 require(supportedTokens[wageClaim.wages[i].tokenAddress], "Token not supported");
-                require(
-                    IERC20(wageClaim.wages[i].tokenAddress).balanceOf(address(this)) >=
-                        wageClaim.hoursWorked * wageClaim.wages[i].hourlyRate,
-                    "Insufficient token balance"
-                );
-                uint256 amountToPay = wageClaim.hoursWorked * wageClaim.wages[i].hourlyRate;
+                
+                // Step 7b(i): Special Case - Mintable InvestorV1 Token
+                // If we have an officer address configured and this is the InvestorV1 token,
+                // we mint new tokens instead of transferring from contract balance
+                if (
+                    officerAddress != address(0) &&
+                    wageClaim.wages[i].tokenAddress == IOfficer(officerAddress).findDeployedContract("InvestorV1")
+                ) {
+                    // Mint new tokens directly to the employee
+                    // This creates new supply rather than transferring existing tokens
+                    IInvestorV1(wageClaim.wages[i].tokenAddress).individualMint(
+                        wageClaim.employeeAddress,
+                        amountToPay
+                    );
 
-                IERC20(wageClaim.wages[i].tokenAddress).transfer(
-                    wageClaim.employeeAddress,
-                    amountToPay
-                );
+                    // Emit event for token withdrawal (minting)
+                    emit WithdrawToken(wageClaim.employeeAddress, wageClaim.wages[i].tokenAddress, amountToPay);
+                } 
+                // Step 7b(ii): Standard ERC20 Token Transfer
+                // For regular ERC20 tokens, transfer from contract's balance
+                else {
+                    // Verify the contract has sufficient token balance
+                    require(
+                        IERC20(wageClaim.wages[i].tokenAddress).balanceOf(address(this)) >= amountToPay,
+                        "Insufficient token balance"
+                    );
 
-                emit WithdrawToken(wageClaim.employeeAddress, wageClaim.wages[i].tokenAddress, amountToPay);
+                    // Transfer tokens from contract to employee
+                    IERC20(wageClaim.wages[i].tokenAddress).transfer(
+                        wageClaim.employeeAddress,
+                        amountToPay
+                    );
+
+                    // Emit event for token withdrawal (transfer)
+                    emit WithdrawToken(wageClaim.employeeAddress, wageClaim.wages[i].tokenAddress, amountToPay);
+                }
             }
-
         }
     }
 

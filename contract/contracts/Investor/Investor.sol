@@ -8,7 +8,12 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/ut
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {StockGrant} from "./types/StockGrant.sol";
 
-contract Investor is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
+contract Investor is 
+    ERC20Upgradeable, 
+    OwnableUpgradeable, 
+    PausableUpgradeable, 
+    ReentrancyGuardUpgradeable
+{
     using EnumerableSet for EnumerableSet.AddressSet;
 
     EnumerableSet.AddressSet private shareholders;
@@ -21,14 +26,18 @@ contract Investor is ERC20Upgradeable, OwnableUpgradeable, PausableUpgradeable, 
     event DividendDistributed(address indexed shareholder, uint256 amount);
     event MintingStateChanged(bool state);
 
-    function initialize(string calldata _name, string calldata _symbol, StockGrant[] calldata _stockGrants)
+    function initialize(
+        string calldata _name, 
+        string calldata _symbol, 
+        StockGrant[] calldata _stockGrants
+    )
         external
-        initializer
-    {
+        initializer {
         __ERC20_init(_name, _symbol);
         __Ownable_init(msg.sender);
         __ReentrancyGuard_init();
         __Pausable_init();
+
         for (uint256 i = 0; i < _stockGrants.length; i++) {
             require(_stockGrants[i].shareholder != address(0), "Invalid shareholder address");
 

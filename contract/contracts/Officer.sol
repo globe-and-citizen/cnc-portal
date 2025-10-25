@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "./interfaces/ICashRemuneration.sol";
+import "./interfaces/IInvestorV1.sol";
 
 interface IBodContract {    
     function initialize(address[] memory votingAddress) external;
@@ -104,6 +106,19 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         }
         if(_isDeployAllContracts){
             deployAllContracts(_deployments);
+            address cashRemunerationAddress = findDeployedContract("CashRemunerationEIP712");
+            address investorV1Address = findDeployedContract("InvestorV1");
+            if (cashRemunerationAddress != address(0) && investorV1Address != address(0)) {
+                ICashRemuneration cashRemuneration = ICashRemuneration(cashRemunerationAddress);
+                cashRemuneration.addTokenSupport(investorV1Address);
+                cashRemuneration.transferOwnership(msg.sender);
+                
+                IInvestorV1 investorV1 = IInvestorV1(investorV1Address);
+                investorV1.grantRole(investorV1.MINTER_ROLE(), address(cashRemunerationAddress));
+                investorV1.grantRole(investorV1.MINTER_ROLE(), msg.sender);
+                investorV1.grantRole(investorV1.DEFAULT_ADMIN_ROLE(), msg.sender);
+                investorV1.transferOwnership(msg.sender);
+            }
         }
     }
 
@@ -184,7 +199,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      * @param contractType The type of contract to find
      * @return The address of the contract, or address(0) if not found
      */
-    function findDeployedContract(string memory contractType) internal view returns (address) {
+    function findDeployedContract(string memory contractType) public view returns (address) {
         for (uint256 i = 0; i < deployedContracts.length; i++) {
             if (keccak256(bytes(deployedContracts[i].contractType)) == keccak256(bytes(contractType))) {
                 return deployedContracts[i].contractAddress;
