@@ -31,13 +31,12 @@ export function useBankReads() {
     })
   }
 
-  const useBankSupportedTokens = (address: MaybeRef<Address>) => {
+  const useBankSupportedTokens = () => {
     return useReadContract({
-      address: bankAddress.value,
+      address: bankAddress.value as Address,
       abi: BANK_ABI,
       functionName: BANK_FUNCTION_NAMES.SUPPORTED_TOKENS,
-      args: [unref(address)],
-      query: { enabled: computed(() => isBankAddressValid.value && !!unref(address)) }
+      query: { enabled: computed(() => isBankAddressValid.value) }
     })
   }
 
@@ -48,6 +47,19 @@ export function useBankReads() {
       abi: BANK_ABI,
       functionName: BANK_FUNCTION_NAMES.DIVIDEND_BALANCES,
       args: [addressValue],
+      query: {
+        enabled: computed(() => isBankAddressValid.value && isAddress(addressValue.value))
+      }
+    })
+  }
+
+  const useTokenDividendBalance = (tokenAddress: Address, address: MaybeRef<Address>) => {
+    const addressValue = computed(() => unref(address))
+    return useReadContract({
+      address: bankAddress.value,
+      abi: BANK_ABI,
+      functionName: BANK_FUNCTION_NAMES.TOKEN_DIVIDEND_BALANCES,
+      args: [tokenAddress, addressValue],
       query: {
         enabled: computed(() => isBankAddressValid.value && isAddress(addressValue.value))
       }
@@ -78,6 +90,7 @@ export function useBankReads() {
     useDividendBalance,
     useTotalDividend,
     useUnlockedBalance,
+    useTokenDividendBalance,
     useBankPaused,
     useBankOwner,
     useBankSupportedTokens
