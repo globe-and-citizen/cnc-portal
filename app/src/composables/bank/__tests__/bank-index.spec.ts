@@ -22,8 +22,6 @@ const mockReads = {
   isBankAddressValid: true,
   useBankPaused: vi.fn(),
   useBankOwner: vi.fn(),
-  useBankTipsAddress: vi.fn(),
-  useBankIsTokenSupported: vi.fn(),
   useBankSupportedTokens: vi.fn()
 }
 
@@ -33,17 +31,12 @@ const mockWriteFunctions = {
   canExecuteTransaction: vi.fn(),
   pauseContract: vi.fn(),
   unpauseContract: vi.fn(),
-  changeTipsAddress: vi.fn(),
   changeTokenAddress: vi.fn(),
   transferOwnership: vi.fn(),
   renounceOwnership: vi.fn(),
   depositToken: vi.fn(),
   transferEth: vi.fn(),
-  transferToken: vi.fn(),
-  sendEthTip: vi.fn(),
-  sendTokenTip: vi.fn(),
-  pushEthTip: vi.fn(),
-  pushTokenTip: vi.fn()
+  transferToken: vi.fn()
 }
 
 describe('useBankContract (Main Composable)', () => {
@@ -71,8 +64,6 @@ describe('useBankContract (Main Composable)', () => {
       expect(bankContract.isBankAddressValid).toBe(mockReads.isBankAddressValid)
       expect(bankContract.useBankPaused).toBe(mockReads.useBankPaused)
       expect(bankContract.useBankOwner).toBe(mockReads.useBankOwner)
-      expect(bankContract.useBankTipsAddress).toBe(mockReads.useBankTipsAddress)
-      expect(bankContract.useBankIsTokenSupported).toBe(mockReads.useBankIsTokenSupported)
       expect(bankContract.useBankSupportedTokens).toBe(mockReads.useBankSupportedTokens)
 
       // Should have all write function properties
@@ -83,8 +74,6 @@ describe('useBankContract (Main Composable)', () => {
       // Admin functions
       expect(bankContract.pauseContract).toBe(mockWriteFunctions.pauseContract)
       expect(bankContract.unpauseContract).toBe(mockWriteFunctions.unpauseContract)
-      expect(bankContract.changeTipsAddress).toBe(mockWriteFunctions.changeTipsAddress)
-      expect(bankContract.changeTokenAddress).toBe(mockWriteFunctions.changeTokenAddress)
       expect(bankContract.transferOwnership).toBe(mockWriteFunctions.transferOwnership)
       expect(bankContract.renounceOwnership).toBe(mockWriteFunctions.renounceOwnership)
 
@@ -92,12 +81,6 @@ describe('useBankContract (Main Composable)', () => {
       expect(bankContract.depositToken).toBe(mockWriteFunctions.depositToken)
       expect(bankContract.transferEth).toBe(mockWriteFunctions.transferEth)
       expect(bankContract.transferToken).toBe(mockWriteFunctions.transferToken)
-
-      // Tipping functions
-      expect(bankContract.sendEthTip).toBe(mockWriteFunctions.sendEthTip)
-      expect(bankContract.sendTokenTip).toBe(mockWriteFunctions.sendTokenTip)
-      expect(bankContract.pushEthTip).toBe(mockWriteFunctions.pushEthTip)
-      expect(bankContract.pushTokenTip).toBe(mockWriteFunctions.pushTokenTip)
     })
   })
 
@@ -134,8 +117,6 @@ describe('useBankContract (Main Composable)', () => {
       // Read functions should be functions
       expect(typeof bankContract.useBankPaused).toBe('function')
       expect(typeof bankContract.useBankOwner).toBe('function')
-      expect(typeof bankContract.useBankTipsAddress).toBe('function')
-      expect(typeof bankContract.useBankIsTokenSupported).toBe('function')
       expect(typeof bankContract.useBankSupportedTokens).toBe('function')
 
       // Write functions should be functions
@@ -146,8 +127,6 @@ describe('useBankContract (Main Composable)', () => {
       // Admin functions should be functions
       expect(typeof bankContract.pauseContract).toBe('function')
       expect(typeof bankContract.unpauseContract).toBe('function')
-      expect(typeof bankContract.changeTipsAddress).toBe('function')
-      expect(typeof bankContract.changeTokenAddress).toBe('function')
       expect(typeof bankContract.transferOwnership).toBe('function')
       expect(typeof bankContract.renounceOwnership).toBe('function')
 
@@ -155,12 +134,6 @@ describe('useBankContract (Main Composable)', () => {
       expect(typeof bankContract.depositToken).toBe('function')
       expect(typeof bankContract.transferEth).toBe('function')
       expect(typeof bankContract.transferToken).toBe('function')
-
-      // Tipping functions should be functions
-      expect(typeof bankContract.sendEthTip).toBe('function')
-      expect(typeof bankContract.sendTokenTip).toBe('function')
-      expect(typeof bankContract.pushEthTip).toBe('function')
-      expect(typeof bankContract.pushTokenTip).toBe('function')
     })
   })
 
@@ -189,30 +162,21 @@ describe('useBankContract (Main Composable)', () => {
 
   describe('Real-world Usage Patterns', () => {
     it('should support destructuring common patterns', () => {
-      const {
-        bankAddress,
-        isBankAddressValid,
-        useBankPaused,
-        pauseContract,
-        transferEth,
-        sendEthTip
-      } = useBankContract()
+      const { bankAddress, isBankAddressValid, useBankPaused, pauseContract, transferEth } =
+        useBankContract()
 
       expect(bankAddress).toBeDefined()
       expect(isBankAddressValid).toBeDefined()
       expect(useBankPaused).toBeDefined()
       expect(pauseContract).toBeDefined()
       expect(transferEth).toBeDefined()
-      expect(sendEthTip).toBeDefined()
     })
 
     it('should support selective destructuring of admin functions', () => {
-      const { pauseContract, unpauseContract, changeTipsAddress, transferOwnership } =
-        useBankContract()
+      const { pauseContract, unpauseContract, transferOwnership } = useBankContract()
 
       expect(pauseContract).toBe(mockWriteFunctions.pauseContract)
       expect(unpauseContract).toBe(mockWriteFunctions.unpauseContract)
-      expect(changeTipsAddress).toBe(mockWriteFunctions.changeTipsAddress)
       expect(transferOwnership).toBe(mockWriteFunctions.transferOwnership)
     })
 
@@ -222,15 +186,6 @@ describe('useBankContract (Main Composable)', () => {
       expect(transferEth).toBe(mockWriteFunctions.transferEth)
       expect(transferToken).toBe(mockWriteFunctions.transferToken)
       expect(depositToken).toBe(mockWriteFunctions.depositToken)
-    })
-
-    it('should support selective destructuring of tipping functions', () => {
-      const { sendEthTip, sendTokenTip, pushEthTip, pushTokenTip } = useBankContract()
-
-      expect(sendEthTip).toBe(mockWriteFunctions.sendEthTip)
-      expect(sendTokenTip).toBe(mockWriteFunctions.sendTokenTip)
-      expect(pushEthTip).toBe(mockWriteFunctions.pushEthTip)
-      expect(pushTokenTip).toBe(mockWriteFunctions.pushTokenTip)
     })
   })
 

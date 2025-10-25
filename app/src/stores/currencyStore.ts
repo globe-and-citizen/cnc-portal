@@ -31,7 +31,7 @@ export const useCurrencyStore = defineStore('currency', () => {
 
   const supportedToken = computed(() => {
     const tokens = [...SUPPORTED_TOKENS]
-    const investorsV1Address = teamStore.getContractAddressByType('InvestorsV1')
+    const investorsV1Address = teamStore.getContractAddressByType('InvestorV1')
     if (investorsV1Address && !tokens.some((t) => t.id === 'sher')) {
       tokens.push({
         id: 'sher',
@@ -43,7 +43,7 @@ export const useCurrencyStore = defineStore('currency', () => {
         address: investorsV1Address
       })
     } else {
-      console.warn('InvestorsV1 contract address not found, Sher Token will not be included')
+      console.warn('InvestorV1 contract address not found, Sher Token will not be included')
     }
     return tokens
   })

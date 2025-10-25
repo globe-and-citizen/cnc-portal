@@ -14,9 +14,6 @@
 
     <!-- Transfer Operations -->
     <BankTransferOperations />
-
-    <!-- Tipping Operations -->
-    <BankTippingOperations />
   </div>
 </template>
 
@@ -24,7 +21,6 @@
 import BankReadOperations from '@/components/examples/BankReadOperations.vue'
 import BankAdminOperations from '@/components/examples/BankAdminOperations.vue'
 import BankTransferOperations from '@/components/examples/BankTransferOperations.vue'
-import BankTippingOperations from '@/components/examples/BankTippingOperations.vue'
 </script>
 
 <style scoped>

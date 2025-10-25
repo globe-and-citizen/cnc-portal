@@ -136,62 +136,6 @@ type TokenDeposited @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type PushTip @entity(immutable: true) {
-  id: Bytes!
-  addressWhoPushes: Bytes! # address
-  teamMembers: [Bytes!]! # address[]
-  totalAmount: BigInt!
-  contractAddress: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type PushTokenTip @entity(immutable: true) {
-  id: Bytes!
-  addressWhoPushes: Bytes! # address
-  teamMembers: [Bytes!]! # address[]
-  token: Bytes! # address
-  totalAmount: BigInt!
-  contractAddress: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type SendTip @entity(immutable: true) {
-  id: Bytes!
-  addressWhoSends: Bytes! # address
-  teamMembers: [Bytes!]! # address[]
-  totalAmount: BigInt!
-  contractAddress: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type SendTokenTip @entity(immutable: true) {
-  id: Bytes!
-  addressWhoSends: Bytes! # address
-  teamMembers: [Bytes!]! # address[]
-  token: Bytes! # address
-  totalAmount: BigInt!
-  contractAddress: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type TipsAddressChanged @entity(immutable: true) {
-  id: Bytes!
-  addressWhoChanged: Bytes! # address
-  oldAddress: Bytes! # address
-  newAddress: Bytes! # address
-  contractAddress: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
 
 type TokenAddressChanged @entity(immutable: true) {
   id: Bytes!

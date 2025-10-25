@@ -1,41 +1,37 @@
 import { type Address } from 'viem'
-import { useToastStore } from '@/stores'
+// import { useToastStore } from '@/stores'
 import { useBankWrites } from './writes'
 import { BANK_FUNCTION_NAMES } from './types'
 import { useValidation, amountToWei } from './utils'
+import { computed, unref } from 'vue'
+
 /**
- * Bank contract write functions - combines admin, transfers, and tipping
+ * Bank contract write functions - combines admin and transfers
  *
  * @returns {object} All bank write state and functions:
  *   - ...writes: underlying write state and helpers
  *   - pauseContract, unpauseContract: admin pause/unpause
- *   - changeTipsAddress, changeTokenAddress: admin address changes
  *   - transferOwnership, renounceOwnership: admin ownership functions
  *   - depositToken, transferEth, transferToken: transfer functions
- *   - sendEthTip, sendTokenTip, pushEthTip, pushTokenTip: tipping functions
  */
 export function useBankWritesFunctions() {
   const writes = useBankWrites()
-  const { validateAmount, validateAddress, validateTipParams } = useValidation()
-  const { addErrorToast } = useToastStore()
+  const { validateAmount, validateAddress } = useValidation()
+
+  const bankWriteFunctionName =
+    'value' in writes.currentFunctionName
+      ? writes.currentFunctionName
+      : computed(() => unref(writes.currentFunctionName))
+
+  const isBankWriteLoading =
+    'value' in writes.isLoading ? writes.isLoading : computed(() => unref(writes.isLoading))
+
+  const isBankConfirmed =
+    'value' in writes.isConfirmed ? writes.isConfirmed : computed(() => unref(writes.isConfirmed))
 
   // Admin functions
   const pauseContract = () => writes.executeWrite(BANK_FUNCTION_NAMES.PAUSE)
   const unpauseContract = () => writes.executeWrite(BANK_FUNCTION_NAMES.UNPAUSE)
-
-  const changeTipsAddress = (newTipsAddress: Address) => {
-    if (!validateAddress(newTipsAddress, 'tips address')) return
-    return writes.executeWrite(BANK_FUNCTION_NAMES.CHANGE_TIPS_ADDRESS, [newTipsAddress])
-  }
-
-  const changeTokenAddress = (symbol: string, newTokenAddress: Address) => {
-    if (!validateAddress(newTokenAddress, 'token address')) return
-    if (!symbol.trim()) {
-      addErrorToast('Token symbol is required')
-      return
-    }
-    return writes.executeWrite(BANK_FUNCTION_NAMES.CHANGE_TOKEN_ADDRESS, [symbol, newTokenAddress])
-  }
 
   const transferOwnership = (newOwner: Address) => {
     if (!validateAddress(newOwner, 'new owner address')) return
@@ -57,7 +53,7 @@ export function useBankWritesFunctions() {
   const transferEth = (to: Address, amount: string) => {
     if (!validateAddress(to, 'recipient address') || !validateAmount(amount)) return
     const amountInWei = amountToWei(amount)
-    return writes.executeWrite(BANK_FUNCTION_NAMES.TRANSFER, [to, amountInWei], amountInWei)
+    return writes.executeWrite(BANK_FUNCTION_NAMES.TRANSFER, [to, amountInWei])
   }
 
   /**
@@ -75,37 +71,37 @@ export function useBankWritesFunctions() {
     return writes.executeWrite(BANK_FUNCTION_NAMES.TRANSFER_TOKEN, [tokenAddress, to, amountInWei])
   }
 
-  // Tipping functions
-  const sendEthTip = (addresses: Address[], totalAmount: string) => {
-    if (!validateTipParams(addresses, totalAmount)) return
-    const amountInWei = amountToWei(totalAmount)
-    return writes.executeWrite(BANK_FUNCTION_NAMES.SEND_TIP, [addresses, amountInWei], amountInWei)
+  const depositDividends = (amount: string, investorAddress: Address) => {
+    //if (!validateAmount(amount)) return
+    // const amountInWei = amountToWei(amount)
+    return writes.executeWrite(BANK_FUNCTION_NAMES.DEPOSIT_DIVIDENDS, [amount, investorAddress])
   }
 
-  const sendTokenTip = (addresses: Address[], tokenAddress: Address, totalAmount: string) => {
-    if (!validateTipParams(addresses, totalAmount, tokenAddress)) return
-    const amountInWei = amountToWei(totalAmount)
-    return writes.executeWrite(BANK_FUNCTION_NAMES.SEND_TOKEN_TIP, [
-      addresses,
+  const depositTokenDividends = (
+    tokenAddress: Address,
+    amount: string,
+    investorAddress: Address
+  ) => {
+    //if (!validateAmount(amount)) return
+    // const amountInWei = amountToWei(amount)
+    return writes.executeWrite(BANK_FUNCTION_NAMES.DEPOSIT_TOKEN_DIVIDENDS, [
       tokenAddress,
-      amountInWei
+      amount,
+      investorAddress
     ])
   }
 
-  const pushEthTip = (addresses: Address[], totalAmount: string) => {
-    if (!validateTipParams(addresses, totalAmount)) return
-    const amountInWei = amountToWei(totalAmount)
-    return writes.executeWrite(BANK_FUNCTION_NAMES.PUSH_TIP, [addresses, amountInWei], amountInWei)
+  const claimDividend = () => {
+    return writes.executeWrite(BANK_FUNCTION_NAMES.CLAIM_DIVIDEND)
   }
 
-  const pushTokenTip = (addresses: Address[], tokenAddress: Address, totalAmount: string) => {
-    if (!validateTipParams(addresses, totalAmount, tokenAddress)) return
-    const amountInWei = amountToWei(totalAmount)
-    return writes.executeWrite(BANK_FUNCTION_NAMES.PUSH_TOKEN_TIP, [
-      addresses,
-      tokenAddress,
-      amountInWei
-    ])
+  const claimTokenDividend = (tokenAddress: Address) => {
+    return writes.executeWrite(BANK_FUNCTION_NAMES.CLAIM_TOKEN_DIVIDEND, [tokenAddress])
+  }
+
+  const setInvestorAddress = (investorAddress: Address) => {
+    if (!validateAddress(investorAddress, 'investor address')) return
+    return writes.executeWrite(BANK_FUNCTION_NAMES.SET_INVESTOR_ADDRESS, [investorAddress])
   }
 
   return {
@@ -114,18 +110,19 @@ export function useBankWritesFunctions() {
     // Admin functions
     pauseContract,
     unpauseContract,
-    changeTipsAddress,
-    changeTokenAddress,
     transferOwnership,
     renounceOwnership,
     // Transfer functions
     depositToken,
     transferEth,
     transferToken,
-    // Tipping functions
-    sendEthTip,
-    sendTokenTip,
-    pushEthTip,
-    pushTokenTip
+    depositDividends,
+    claimDividend,
+    setInvestorAddress,
+    depositTokenDividends,
+    claimTokenDividend,
+    bankWriteFunctionName,
+    isBankWriteLoading,
+    isBankConfirmed
   }
 }

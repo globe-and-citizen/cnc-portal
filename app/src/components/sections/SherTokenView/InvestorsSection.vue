@@ -5,6 +5,8 @@
     <InvestorsActions />
     <div class="divider m-0"></div>
     <ShareholderList />
+    <div class="divider m-o"></div>
+    <PayDividendsTable />
     <div class="divider m-0"></div>
     <InvestorsTransactions />
   </div>
@@ -15,4 +17,5 @@ import InvestorsHeader from '@/components/sections/SherTokenView/InvestorsHeader
 import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import ShareholderList from '@/components/sections/SherTokenView/ShareholderList.vue'
 import InvestorsTransactions from '@/components/sections/SherTokenView/InvestorsTransactions.vue'
+import PayDividendsTable from '@/components/sections/SherTokenView/PayDividendsTable.vue'
 </script>

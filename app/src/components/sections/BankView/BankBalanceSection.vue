@@ -19,6 +19,11 @@
         <div class="text-sm text-gray-500 mt-1">
           ≈ {{ total[currency.code]?.formated ?? 0 }} {{ currency.code }}
         </div>
+        <div class="text-sm text-red-500 mt-1 flex gap-2">
+          <IconifyIcon icon="heroicons-outline:lock-closed" class="w-4 h-4" />
+          {{ dividendsTotal['USD']?.formated ?? 0 }} USD
+          <span class="text-xs">(dividends)</span>
+        </div>
       </div>
       <div class="flex flex-col items-end gap-4">
         <div class="flex gap-2">
@@ -104,6 +109,7 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
+
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { useStorage } from '@vueuse/core'
 import {
@@ -121,6 +127,7 @@ import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useContractBalance } from '@/composables/useContractBalance'
+
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useBodContract } from '@/composables/bod/'
@@ -167,7 +174,7 @@ const { data: bankOwner } = useReadContract({
 const isBankOwner = computed(() => bankOwner.value === userStore.address)
 
 // Use the contract balance composable
-const { total, balances, isLoading } = useContractBalance(props.bankAddress)
+const { total, balances, dividendsTotal, isLoading } = useContractBalance(props.bankAddress)
 
 // Add refs for modals and form data
 const depositModal = ref({
