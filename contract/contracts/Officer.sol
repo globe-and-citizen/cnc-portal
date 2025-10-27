@@ -88,7 +88,14 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         __ReentrancyGuard_init();
         __Pausable_init();
 
-        // Configure initial beacons if provided
+        _configureBeacons(beaconConfigs);
+    
+        if (_isDeployAllContracts) {
+            _deployAndSetupContracts(_deployments, _owner);
+        }
+    }
+
+    function _configureBeacons(BeaconConfig[] memory beaconConfigs) internal {
         for (uint256 i = 0; i < beaconConfigs.length; i++) {
             require(beaconConfigs[i].beaconAddress != address(0), "Invalid beacon address");
             require(bytes(beaconConfigs[i].beaconType).length > 0, "Empty beacon type");
@@ -104,27 +111,40 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             contractBeacons[beaconConfigs[i].beaconType] = beaconConfigs[i].beaconAddress;
             emit BeaconConfigured(beaconConfigs[i].beaconType, beaconConfigs[i].beaconAddress);
         }
-        if(_isDeployAllContracts){
-            deployAllContracts(_deployments);
-            address cashRemunerationAddress = findDeployedContract("CashRemunerationEIP712");
-            address investorV1Address = findDeployedContract("InvestorV1");
-            if (cashRemunerationAddress != address(0) && investorV1Address != address(0)) {
-                ICashRemuneration cashRemuneration = ICashRemuneration(cashRemunerationAddress);
-                cashRemuneration.addTokenSupport(investorV1Address);
-                cashRemuneration.transferOwnership(msg.sender);
-                
-                IInvestorV1 investorV1 = IInvestorV1(investorV1Address);
-                investorV1.grantRole(investorV1.MINTER_ROLE(), address(cashRemunerationAddress));
-                investorV1.grantRole(investorV1.MINTER_ROLE(), msg.sender);
-                investorV1.grantRole(investorV1.DEFAULT_ADMIN_ROLE(), msg.sender);
-                investorV1.transferOwnership(msg.sender);
-            }
+    }
+
+    function _deployAndSetupContracts(DeploymentData[] calldata _deployments, address _owner) internal {
+        deployAllContracts(_deployments);
+        address cashRemunerationAddress = findDeployedContract("CashRemunerationEIP712");
+        address investorV1Address = findDeployedContract("InvestorV1");
+        
+        if (cashRemunerationAddress != address(0) && investorV1Address != address(0)) {
+            _setupContractPermissions(cashRemunerationAddress, investorV1Address, _owner);
         }
     }
 
-    /**
-     * @notice Configures a new beacon for a contract type
-     * @param contractType Type identifier for the contract
+    function _setupContractPermissions(
+        address cashRemunerationAddress,
+        address investorV1Address,
+        address _owner
+    ) internal {
+        ICashRemuneration cashRemuneration = ICashRemuneration(cashRemunerationAddress);
+        cashRemuneration.addTokenSupport(investorV1Address);
+        cashRemuneration.transferOwnership(_owner);
+        
+        IInvestorV1 investorV1 = IInvestorV1(investorV1Address);
+        bytes32 minterRole = investorV1.MINTER_ROLE();
+        bytes32 adminRole = investorV1.DEFAULT_ADMIN_ROLE();
+        
+        investorV1.grantRole(minterRole, cashRemunerationAddress);
+        investorV1.grantRole(minterRole, _owner);
+        investorV1.grantRole(adminRole, _owner);
+        investorV1.transferOwnership(_owner);
+    }
+
+        /**
+         * @notice Configures a new beacon for a contract type
+         * @param contractType Type identifier for the contract
      * @param beaconAddress Address of the beacon contract
      */
     function configureBeacon(string calldata contractType, address beaconAddress) external onlyOwners {
