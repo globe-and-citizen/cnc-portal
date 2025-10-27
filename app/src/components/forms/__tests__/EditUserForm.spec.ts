@@ -1,9 +1,3 @@
-// Place all mocks at the very top for lint-friendly, robust solution
-import { mockUseCurrencyStore } from '../../../tests/mocks/index.mock'
-vi.mock('@/stores/currencyStore', () => ({
-  useCurrencyStore: mockUseCurrencyStore
-}))
-
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
@@ -26,6 +20,16 @@ vi.mock('@vueuse/core', async (importOriginal) => {
     useClipboard: vi.fn(() => mockClipboard)
   }
 })
+
+vi.mock('@/stores', () => ({
+  useCurrencyStore: () => ({
+    setCurrency: vi.fn(),
+    localCurrency: { code: 'XOF' }
+  }),
+  useToastStore: () => ({
+    addSuccessToast: vi.fn()
+  })
+}))
 
 interface ComponentData {
   selectedCurrency: string
