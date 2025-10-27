@@ -40,16 +40,14 @@ import type { Address } from 'viem'
 import CardComponent from '@/components/CardComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
+import { useTeamStore } from '@/stores/teamStore'
 import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
 import MaticIcon from '@/assets/matic-logo.png'
+const teamStore = useTeamStore()
 
-interface Props {
-  address: Address
-}
-const props = defineProps<Props>()
-
-const { dividends, isLoading } = useContractBalance(props.address)
+const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+const { dividends, isLoading } = useContractBalance(bankAddress.value as Address)
 
 // Columns config
 const columns = [

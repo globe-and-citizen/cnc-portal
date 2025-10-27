@@ -16,7 +16,7 @@ import InvestorsTransactionHistory from '@/components/sections/SherTokenView/Inv
 import { useCurrencyStore } from '@/stores'
 import type { TokenId } from '@/constant'
 
-const investorAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
+const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
 
 const currencyStore = useCurrencyStore()
 const teamStore = useTeamStore()
@@ -25,10 +25,12 @@ const selectedTokenId = ref<TokenId>('native')
 
 const { result, error } = useQuery(
   gql`
-    query GetDividendTransactions($investorAddress: Bytes!) {
-      # Get individual dividend distributions
-      dividendDistributions: transactions(
-        where: { contractAddress: $investorAddress, transactionType: "dividend" }
+    query GetDividendClaims($bankAddress: Bytes!) {
+      dividendClaims: transactions(
+        where: {
+          contractAddress: $bankAddress
+          transactionType_in: ["dividendClaim", "tokenDividendClaim"]
+        }
         orderBy: blockTimestamp
         orderDirection: desc
       ) {
@@ -46,14 +48,22 @@ const { result, error } = useQuery(
     }
   `,
   {
-    investorAddress: investorAddress.value
+    bankAddress: bankAddress.value
   },
   {
     pollInterval: GRAPHQL_POLL_INTERVAL,
     fetchPolicy: 'cache-and-network',
-    enabled: computed(() => Boolean(investorAddress.value))
+    enabled: computed(() => Boolean(bankAddress.value))
   }
 )
+
+watch(
+  () => result.value,
+  (newResult) => {
+    console.log('GraphQL result:', newResult)
+  }
+)
+
 const tokenPrices = computed(() => ({
   USDC: 1,
   default: currencyStore.getTokenPrice(selectedTokenId.value, false, 'USD')
@@ -82,8 +92,8 @@ const formatTransactions: (tx: RawInvestorsTransaction) => InvestorsTransaction 
 }
 
 const transactionData = computed<InvestorsTransaction[]>(() => {
-  const distributions = result.value?.dividendDistributions || []
-  return distributions.map(formatTransactions)
+  const claims = result.value?.dividendClaims || []
+  return claims.map(formatTransactions)
 })
 const lastError = ref<string | null>(null)
 watch(

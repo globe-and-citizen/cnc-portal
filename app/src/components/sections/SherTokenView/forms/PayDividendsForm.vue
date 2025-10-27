@@ -15,7 +15,7 @@
     </h6>
 
     <div
-      v-if="!isBankBalanceLoading && (unlockedBalance ?? 0n) === 0n"
+      v-if="!isBankBalanceLoading && (selectedTokenBalance ?? 0) === 0"
       class="alert alert-warning"
       data-test="bank-empty-warning"
     >
