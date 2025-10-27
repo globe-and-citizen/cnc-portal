@@ -4,6 +4,17 @@ export const EXPENSE_ACCOUNT_EIP712_ABI = [
   {
     inputs: [
       {
+        internalType: 'address',
+        name: 'account',
+        type: 'address'
+      }
+    ],
+    name: 'AddressInsufficientBalance',
+    type: 'error'
+  },
+  {
+    inputs: [
+      {
         internalType: 'uint256',
         name: 'amount',
         type: 'uint256'
@@ -62,23 +73,7 @@ export const EXPENSE_ACCOUNT_EIP712_ABI = [
   },
   {
     inputs: [],
-    name: 'FailedCall',
-    type: 'error'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: 'balance',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'needed',
-        type: 'uint256'
-      }
-    ],
-    name: 'InsufficientBalance',
+    name: 'FailedInnerCall',
     type: 'error'
   },
   {
