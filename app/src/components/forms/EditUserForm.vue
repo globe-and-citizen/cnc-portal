@@ -1,5 +1,43 @@
 <template>
   <div class="flex flex-col gap-5 mt-4 overflow-hidden" data-test="edit-user-modal">
+    <!-- Wallet Address -->
+    <div role="alert" class="alert shadow-sm flex text-gray-700">
+      <div class="flex flex-wrap gap-2">
+        <h3 class="font-bold">Wallet Address</h3>
+        <div class="flex items-center gap-2">
+          <ToolTip data-test="address-tooltip" content="Click to see address in block explorer">
+            <div
+              type="text"
+              class="w-full cursor-pointer"
+              @click="openExplorer(user.address)"
+              data-test="user-address"
+              readonly
+            >
+              {{ user.address }}
+            </div>
+          </ToolTip>
+          <ToolTip
+            data-test="copy-address-tooltip"
+            :content="copied ? 'Copied!' : 'Click to copy address'"
+          >
+            <IconifyIcon
+              v-if="isSupported && !copied"
+              data-test="copy-address-icon"
+              class="w-5 h-4 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+              @click="copy(user.address)"
+              icon="heroicons:clipboard-document"
+            />
+            <IconifyIcon
+              v-if="copied"
+              data-test="copied-icon"
+              class="w-5 h-5 text-emerald-500"
+              icon="heroicons:check"
+            />
+          </ToolTip>
+        </div>
+      </div>
+    </div>
+
     <!-- Input Name -->
     <label class="input input-bordered flex items-center gap-2 input-md">
       <span class="w-24" data-test="name-label">Name</span>
@@ -9,6 +47,7 @@
         data-test="name-input"
         placeholder="John Doe"
         v-model="user.name"
+        @blur="restoreName"
       />
     </label>
     <div
@@ -19,40 +58,6 @@
     >
       {{ error.$message }}
     </div>
-
-    <!-- Wallet Address -->
-    <label class="input input-bordered flex items-center gap-2 input-md input-disabled">
-      <span class="w-24 text-xs" data-test="address-label">Wallet Address</span>
-      <ToolTip data-test="address-tooltip" content="Click to see address in block explorer">
-        <div
-          type="text"
-          class="w-full cursor-pointer"
-          @click="openExplorer(user.address)"
-          data-test="user-address"
-          readonly
-        >
-          {{ user.address }}
-        </div>
-      </ToolTip>
-      <ToolTip
-        data-test="copy-address-tooltip"
-        :content="copied ? 'Copied!' : 'Click to copy address'"
-      >
-        <IconifyIcon
-          v-if="isSupported && !copied"
-          data-test="copy-address-icon"
-          class="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-          @click="copy(user.address)"
-          icon="heroicons:clipboard-document"
-        />
-        <IconifyIcon
-          v-if="copied"
-          data-test="copied-icon"
-          class="w-5 h-5 text-emerald-500"
-          icon="heroicons:check"
-        />
-      </ToolTip>
-    </label>
 
     <!-- Currency -->
     <label class="input input-bordered flex items-center gap-2 input-md">
@@ -81,7 +86,7 @@
       @update:model-value="($event) => (user.imageUrl = $event)"
     />
   </div>
-  <div class="modal-action justify-center">
+  <div class="modal-action justify-end">
     <ButtonUI
       v-if="hasChanges"
       variant="primary"
@@ -131,6 +136,12 @@ const initialValues = ref({
   name: user.value.name,
   imageUrl: user.value.imageUrl
 })
+
+const restoreName = () => {
+  if (user.value.name.trim() === '') {
+    user.value.name = initialValues.value.name
+  }
+}
 
 watch(
   () => user.value,
