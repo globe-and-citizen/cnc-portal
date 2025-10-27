@@ -5,6 +5,7 @@
   >
     <div role="button" class="relative group">
       <div
+        data-test="avatar-container"
         class="relative rounded-full overflow-hidden"
         :class="{
           'ring-gray-200 w-24 h-24 ring-4': isDetailedView,
@@ -12,6 +13,7 @@
         }"
       >
         <img
+          data-test="avatar-image"
           alt="User Avatar"
           :src="
             user.imageUrl ||
@@ -23,6 +25,7 @@
     </div>
     <div
       v-if="!isCollapsed"
+      data-test="user-info-container"
       class="flex flex-col text-gray-600"
       :class="{ 'items-center text-center': isDetailedView }"
     >

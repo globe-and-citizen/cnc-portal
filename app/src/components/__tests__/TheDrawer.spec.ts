@@ -66,7 +66,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-describe.skip('TheDrawer', () => {
+describe('TheDrawer', () => {
   const name = 'John Doe'
   const address = '0xc0ffee254729296a45a3885639AC7E10F9d54979'
 
@@ -173,13 +173,13 @@ describe.skip('TheDrawer', () => {
       )
     })
 
-    it.skip('should render custom avatar when avatarUrl provided', () => {
-      const avatarUrl = 'https://example.com/avatar.jpg'
+    it('should render custom avatar when imageUrl provided', () => {
+      const imageUrl = 'https://example.com/avatar.jpg'
       const wrapper = createWrapper({
-        user: { name, address, avatarUrl }
+        user: { name, address, imageUrl }
       })
       const avatar = wrapper.find('[alt="User Avatar"]')
-      expect(avatar.attributes('src')).toBe(avatarUrl)
+      expect(avatar.attributes('src')).toBe(imageUrl)
     })
   })
 
@@ -272,7 +272,7 @@ describe.skip('TheDrawer', () => {
       expect(activeItem.text()).toContain('Dashboard')
     })
 
-    it.skip('should show/hide conditional menu items based on team properties', async () => {
+    it('should show/hide conditional menu items based on team properties', async () => {
       const wrapper = createWrapper()
       /*{},
         {
@@ -285,7 +285,7 @@ describe.skip('TheDrawer', () => {
 
       await wrapper.vm.$nextTick()
       const menuItems = wrapper.findAll('nav a:not(.hidden)')
-      expect(menuItems.length).toBe(1)
+      expect(menuItems.length).toBe(3)
     })
   })
 

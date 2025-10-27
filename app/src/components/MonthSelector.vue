@@ -62,7 +62,7 @@ const isMonthPickerOpen = ref(false)
 
 // When monthPicked changes, update model
 watch(monthPicked, (newVal) => {
-  if (newVal && typeof newVal.month === 'number' && typeof newVal.year === 'number') {
+  if (newVal) {
     const day = dayjs.utc().year(newVal.year).month(newVal.month).startOf('month')
     model.value = {
       month: newVal.month,
