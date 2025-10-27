@@ -42,6 +42,7 @@ const config: HardhatUserConfig = {
   solidity: {
     version: '0.8.24',
     settings: {
+      viaIR: true,
       optimizer: {
         // Toggles whether the optimizer is on or off.
         // It's good to keep it off for development
