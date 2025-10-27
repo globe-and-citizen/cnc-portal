@@ -50,7 +50,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
           // name: faker.person.firstName(),
           // imageUrl: faker.image.avatar(),
           name: 'User',
-          imageUrl: '/public/meta.svg',
+          imageUrl: `https://api.dicebear.com/9.x/bottts/svg?seed=${address}`,
         },
       });
 
