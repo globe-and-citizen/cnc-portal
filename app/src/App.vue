@@ -11,7 +11,7 @@
             v-model="toggleSide"
             @openEditUserModal="
               () => {
-                showModal = true
+                editUserModal = { mount: true, show: true }
               }
             "
           />
@@ -26,8 +26,7 @@
             :isCollapsed="toggleSide"
             @toggleEditUserModal="
               () => {
-                updateUserInput = { name, address, imageUrl: imageUrl }
-                showModal = true
+                editUserModal = { mount: true, show: true }
               }
             "
           />
@@ -47,13 +46,17 @@
     </div>
 
     <!-- Modal for User Update -->
-    <ModalComponent v-model="showModal" v-if="showModal">
+    <ModalComponent
+      v-model="editUserModal.show"
+      v-if="editUserModal.mount"
+      @reset="
+        () => {
+          editUserModal = { mount: false, show: false }
+        }
+      "
+    >
       <p class="font-bold text-2xl border-b-2 border-0 pb-3">Update User Data</p>
-      <EditUserForm
-        v-model="updateUserInput"
-        @submitEditUser="handleUserUpdate"
-        :isLoading="userIsUpdating"
-      />
+      <EditUserForm />
     </ModalComponent>
     <!-- Add Team Modal -->
     <ModalComponent v-model="appStore.showAddTeamModal" v-if="appStore.showAddTeamModal">
@@ -78,7 +81,7 @@
 
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
@@ -90,73 +93,20 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
 import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 
-import { useCustomFetch } from './composables/useCustomFetch'
 import { useAccount } from '@wagmi/vue'
 import { useAuth } from './composables/useAuth'
 import { useAppStore } from './stores'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
-
-const { addErrorToast, addSuccessToast } = useToastStore()
+const { addErrorToast } = useToastStore()
 
 const appStore = useAppStore()
 const { isDisconnected } = useAccount()
 const { logout } = useAuth()
 const toggleSide = ref(false)
-const showModal = ref(false)
+const editUserModal = ref({ mount: false, show: false })
 
 const userStore = useUserDataStore()
 const { name, address, imageUrl } = storeToRefs(userStore)
-
-const updateUserInput = ref({
-  name: name.value,
-  address: address.value,
-  imageUrl: imageUrl?.value
-})
-const userUpdateEndpoint = ref('')
-const {
-  data: updatedUser,
-  isFetching: userIsUpdating,
-  error: userUpdateError,
-  execute: executeUpdateUser
-} = useCustomFetch(userUpdateEndpoint, { immediate: false })
-  .put(
-    computed(() => {
-      const { name, address, imageUrl } = updateUserInput.value
-      if (!imageUrl) {
-        return { name, address }
-      }
-      return { name, address, imageUrl }
-    })
-  )
-  .json()
-
-watch(userUpdateError, () => {
-  if (userUpdateError.value) {
-    addErrorToast(userUpdateError.value || 'Failed to update user')
-  }
-})
-watch(updatedUser, () => {
-  if (updatedUser.value) {
-    addSuccessToast('User updated')
-    userStore.setUserData(
-      updatedUser.value.name || '',
-      updatedUser.value.address || '',
-      updatedUser.value.nonce || '',
-      updatedUser.value.imageUrl || ''
-    )
-  }
-})
-
-const handleUserUpdate = async () => {
-  userUpdateEndpoint.value = `user/${address.value}`
-  await executeUpdateUser()
-}
-
-watch([() => userIsUpdating.value, () => userUpdateError.value], () => {
-  if (!userIsUpdating.value && !userUpdateError.value) {
-    showModal.value = false
-  }
-})
 
 watch(isDisconnected, (value) => {
   if (value && userStore.isAuth) {

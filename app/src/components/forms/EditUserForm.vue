@@ -9,11 +9,11 @@
             <div
               type="text"
               class="w-full cursor-pointer"
-              @click="openExplorer(user.address)"
+              @click="openExplorer(userStore.address)"
               data-test="user-address"
               readonly
             >
-              {{ user.address }}
+              {{ userStore.address }}
             </div>
           </ToolTip>
           <ToolTip
@@ -24,7 +24,7 @@
               v-if="isSupported && !copied"
               data-test="copy-address-icon"
               class="w-5 h-4 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-              @click="copy(user.address)"
+              @click="copy(userStore.address)"
               icon="heroicons:clipboard-document"
             />
             <IconifyIcon
@@ -46,8 +46,7 @@
         class="grow"
         data-test="name-input"
         placeholder="John Doe"
-        v-model="user.name"
-        @blur="restoreName"
+        v-model="userCopy.name"
       />
     </label>
     <div
@@ -82,16 +81,16 @@
 
     <!-- Upload -->
     <UploadImage
-      :model-value="user.imageUrl"
-      @update:model-value="($event) => (user.imageUrl = $event)"
+      :model-value="userCopy.imageUrl"
+      @update:model-value="($event) => (userCopy.imageUrl = $event)"
     />
   </div>
   <div class="modal-action justify-end">
     <ButtonUI
       v-if="hasChanges"
       variant="primary"
-      :loading="isLoading"
-      :disabled="isLoading"
+      :loading="userIsUpdating"
+      :disabled="userIsUpdating"
       data-test="submit-edit-user"
       @click="submitForm"
     >
@@ -106,62 +105,53 @@ import { required, minLength } from '@vuelidate/validators'
 import ToolTip from '@/components/ToolTip.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '../ButtonUI.vue'
-import { useCurrencyStore, useToastStore } from '@/stores'
+import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import { LIST_CURRENCIES } from '@/constant'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
 import { ref, computed, watch } from 'vue'
 import UploadImage from '@/components/forms/UploadImage.vue'
-
-// Props & emits
-defineProps<{ isLoading: boolean }>()
-const emits = defineEmits(['submitEditUser'])
+import { useCustomFetch } from '@/composables'
 
 // Currency store
 const currencyStore = useCurrencyStore()
 const toastStore = useToastStore()
+const userStore = useUserDataStore()
 const selectedCurrency = ref<string>(currencyStore.localCurrency?.code)
 
-// User form
-const user = defineModel({
-  default: {
-    name: '',
-    address: '',
-    imageUrl: ''
-  }
+const userCopy = ref({
+  name: userStore.name,
+  address: userStore.address,
+  imageUrl: userStore.imageUrl
 })
-
-// Track initial values
-const initialValues = ref({
-  name: user.value.name,
-  imageUrl: user.value.imageUrl
-})
-
-const restoreName = () => {
-  if (user.value.name.trim() === '') {
-    user.value.name = initialValues.value.name
-  }
-}
-
-watch(
-  () => user.value,
-  (newUser) => {
-    if (initialValues.value.name === '') {
-      initialValues.value = {
-        name: newUser.name,
-        imageUrl: newUser.imageUrl
-      }
-    }
-  },
-  { deep: true, immediate: true }
-)
 
 // Computed property to check if name or image has changed
 const hasChanges = computed(() => {
-  return (
-    user.value.name !== initialValues.value.name ||
-    user.value.imageUrl !== initialValues.value.imageUrl
-  )
+  return userCopy.value.name !== userStore.name || userCopy.value.imageUrl !== userStore.imageUrl
+})
+
+const userUpdateEndpoint = computed(() => `/users/${userStore.address}`)
+
+const {
+  isFetching: userIsUpdating,
+  isFinished: userUpdateFinished,
+  error: userUpdateError,
+  execute: executeUpdateUser
+} = useCustomFetch(userUpdateEndpoint, { immediate: false }).put(userCopy).json()
+
+watch(userUpdateError, () => {
+  if (userUpdateError.value) {
+    toastStore.addErrorToast(userUpdateError.value || 'Failed to update user')
+  }
+})
+
+watch(userUpdateFinished, () => {
+  if (userUpdateFinished.value && !userUpdateError.value) {
+    // Update user store
+    toastStore.addSuccessToast('User updated successfully')
+    // reload the page to reflect changes
+    window.location.reload()
+  }
 })
 
 const rules = {
@@ -172,7 +162,7 @@ const rules = {
     }
   }
 }
-const $v = useVuelidate(rules, { user })
+const $v = useVuelidate(rules, { user: userCopy })
 
 // Clipboard
 const { copy, copied, isSupported } = useClipboard()
@@ -190,6 +180,6 @@ const handleCurrencyChange = () => {
 const submitForm = () => {
   $v.value.$touch()
   if ($v.value.$invalid) return
-  emits('submitEditUser')
+  executeUpdateUser()
 }
 </script>
