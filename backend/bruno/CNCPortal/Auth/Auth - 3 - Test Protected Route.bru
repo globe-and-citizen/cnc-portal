@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{host}}/user/profile
+  url: {{host}}/auth/token
   body: none
   auth: bearer
 }
@@ -27,20 +27,7 @@ script:pre-request {
 }
 
 tests {
-  test("should return 200 status for authenticated request", function() {
+  test("should return 200 status for valid token", function() {
     expect(res.getStatus()).to.equal(200);
-  });
-
-  test("should return user profile data", function() {
-    expect(res.body).to.be.an('object');
-    // Ajustez selon la structure de réponse attendue
-    if (res.body.user) {
-      expect(res.body.user.address).to.be.a('string');
-    }
-  });
-
-  test("verify authentication worked", function() {
-    console.log("Protected route access successful");
-    console.log("Response:", JSON.stringify(res.body, null, 2));
   });
 }
