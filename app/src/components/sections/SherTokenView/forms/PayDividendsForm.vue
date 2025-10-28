@@ -9,13 +9,13 @@
 
     <h6>
       Current Bank contract balance
-      <span v-if="isBankBalanceLoading">...</span>
-      <span v-else>{{ formattedUnlockedBalance }}</span>
+
+      <span>{{ formattedUnlockedBalance }}</span>
       {{ selectedTokenId === 'native' ? NETWORK.currencySymbol : selectedTokenId.toUpperCase() }}
     </h6>
 
     <div
-      v-if="!isBankBalanceLoading && (selectedTokenBalance ?? 0) === 0"
+      v-if="(selectedTokenBalance ?? 0) === 0"
       class="alert alert-warning"
       data-test="bank-empty-warning"
     >
@@ -92,16 +92,6 @@ const getTokens = (): TokenOption[] =>
 
 const tokens = computed(() => getTokens())
 
-const {
-  data: unlockedBalance,
-  isLoading: isBankBalanceLoading,
-  error: bankBalanceError
-} = useUnlockedBalance() as {
-  data: Ref<bigint | undefined>
-  isLoading: Ref<boolean>
-  error: Ref<unknown>
-}
-
 const selectedTokenDecimals = computed<number>(() => {
   const entry = balances.value.find((b) => b.token.id === selectedTokenId.value)
   return entry?.token.decimals ?? 18
@@ -123,10 +113,4 @@ const onSubmit = () => {
   const parsed = parseUnits(amount.value, selectedTokenDecimals.value)
   emits('submit', parsed, selectedTokenId.value)
 }
-
-watch(bankBalanceError, (err) => {
-  if (err) {
-    console.error('Error fetching bank balance:', err)
-  }
-})
 </script>
