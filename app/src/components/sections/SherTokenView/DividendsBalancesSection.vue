@@ -46,8 +46,9 @@ import USDCIcon from '@/assets/usdc.png'
 import MaticIcon from '@/assets/matic-logo.png'
 const teamStore = useTeamStore()
 
-const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-const { dividends, isLoading } = useContractBalance(bankAddress.value as Address)
+const { dividends, isLoading } = useContractBalance(
+  teamStore.getContractAddressByType('Bank') as Address
+)
 
 // Columns config
 const columns = [
