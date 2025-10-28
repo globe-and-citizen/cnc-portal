@@ -16,10 +16,11 @@ import InvestorsTransactionHistory from '@/components/sections/SherTokenView/Inv
 import { useCurrencyStore } from '@/stores'
 import type { TokenId } from '@/constant'
 
-const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+const teamStore = useTeamStore()
+
+const bankAddress = teamStore.getContractAddressByType('Bank')
 
 const currencyStore = useCurrencyStore()
-const teamStore = useTeamStore()
 
 const selectedTokenId = ref<TokenId>('native')
 
@@ -48,12 +49,12 @@ const { result, error } = useQuery(
     }
   `,
   {
-    bankAddress: bankAddress.value
+    bankAddress: bankAddress
   },
   {
     pollInterval: GRAPHQL_POLL_INTERVAL,
     fetchPolicy: 'cache-and-network',
-    enabled: computed(() => Boolean(bankAddress.value))
+    enabled: computed(() => Boolean(bankAddress))
   }
 )
 
