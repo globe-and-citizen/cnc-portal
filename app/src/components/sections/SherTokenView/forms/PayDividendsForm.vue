@@ -54,10 +54,10 @@ import { NETWORK } from '@/constant'
 import type { Team } from '@/types'
 
 import { parseUnits } from 'viem'
-import { computed, watch, ref, type Ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useTeamStore } from '@/stores'
 import BodAlert from '@/components/BodAlert.vue'
-import { useBankReads } from '@/composables/bank/index'
+
 import type { TokenId } from '@/constant'
 import type { TokenOption } from '@/types'
 import { useContractBalance } from '@/composables/useContractBalance'
@@ -74,7 +74,6 @@ defineProps<{
   isBodAction: boolean
 }>()
 
-const { useUnlockedBalance } = useBankReads()
 const bankAddress = teamStore.getContractAddressByType('Bank')
 const { balances } = useContractBalance(bankAddress as Address)
 
