@@ -1,0 +1,46 @@
+meta {
+  name: Auth - 3 - Test Protected Route
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/user/profile
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+script:pre-request {
+  // Vérifier que nous avons un token d'authentification
+  const token = bru.getVar("authToken");
+  
+  if (!token) {
+    throw new Error("No authentication token found. Please run the login sequence first.");
+  }
+  
+  console.log("Using authentication token for protected route");
+  console.log("Token preview:", token.substring(0, 20) + "...");
+}
+
+tests {
+  test("should return 200 status for authenticated request", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should return user profile data", function() {
+    expect(res.body).to.be.an('object');
+    // Ajustez selon la structure de réponse attendue
+    if (res.body.user) {
+      expect(res.body.user.address).to.be.a('string');
+    }
+  });
+
+  test("verify authentication worked", function() {
+    console.log("Protected route access successful");
+    console.log("Response:", JSON.stringify(res.body, null, 2));
+  });
+}

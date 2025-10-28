@@ -1,5 +1,5 @@
 meta {
-  name: Auth - Get Nonce
+  name: Auth - 1 - Get Nonce
   type: http
   seq: 1
 }
@@ -8,6 +8,10 @@ get {
   url: {{host}}/user/nonce/{{testAddress}}
   body: none
   auth: none
+}
+
+vars:post-response {
+  nonce: res.body.nonce
 }
 
 tests {
@@ -22,5 +26,10 @@ tests {
   test("should return nonce", function() {
     expect(res.body.nonce).to.be.a('string');
     expect(res.body.nonce.length).to.be.greaterThan(0);
+  });
+
+  test("store nonce for next request", function() {
+    bru.setVar("userNonce", res.body.nonce);
+    console.log("Nonce captured:", res.body.nonce);
   });
 }

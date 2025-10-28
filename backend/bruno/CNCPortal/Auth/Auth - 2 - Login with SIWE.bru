@@ -1,0 +1,75 @@
+meta {
+  name: Auth - 2 - Login with SIWE
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{host}}/auth/siwe
+  body: json
+  auth: none
+}
+
+script:pre-request {
+  // Récupérer les variables nécessaires
+  const nonce = bru.getVar("userNonce");
+  const address = bru.getVar("testAddress");
+  const domain = bru.getVar("domain");
+  const chainId = bru.getVar("chainId");
+  
+  console.log("Creating SIWE message with nonce:", nonce);
+  
+  // Créer le message SIWE selon le standard
+  const uri = `http://${domain}`;
+  const version = "1";
+  const issuedAt = new Date().toISOString();
+  
+  const message = `${domain} wants you to sign in with your Ethereum account:
+${address}
+
+I accept the MetaMask Terms of Service: https://community.metamask.io/tos
+
+URI: ${uri}
+Version: ${version}
+Chain ID: ${chainId}
+Nonce: ${nonce}
+Issued At: ${issuedAt}`;
+  
+  // Pour les tests, on utilise une signature mock
+  // Dans un vrai scénario, cette signature viendrait d'un wallet
+  const mockSignature = "0x" + "a1b2c3d4e5f6".repeat(21) + "1b"; // 130 caractères hex
+  
+  // Stocker les variables pour utilisation dans le body
+  bru.setVar("siweMessage", message);
+  bru.setVar("siweSignature", mockSignature);
+  
+  console.log("SIWE message created");
+  console.log("Message:", message);
+}
+
+body:json {
+  {
+    "message": "{{siweMessage}}",
+    "signature": "{{siweSignature}}"
+  }
+}
+
+vars:post-response {
+  accessToken: res.body.accessToken
+}
+
+tests {
+  test("should return 200 status", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should return access token", function() {
+    expect(res.body.accessToken).to.be.a('string');
+    expect(res.body.accessToken.length).to.be.greaterThan(0);
+  });
+
+  test("store access token for authenticated requests", function() {
+    bru.setVar("authToken", res.body.accessToken);
+    console.log("Access token captured for authenticated requests");
+  });
+}
