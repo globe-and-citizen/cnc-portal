@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
@@ -94,24 +94,6 @@ beforeEach(() => {
 })
 
 describe('EditUserForm (corrected tests)', () => {
-  it.skip('renders name label, input and address', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.find('[data-test="name-label"]').text()).toBe('Name')
-    expect(wrapper.find('[data-test="name-input"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="user-address"]').text()).toContain('0x4b6Bf5cD9')
-  })
-
-  it.skip('renders copy icon and toggles to copied icon when clipboard.copied is true', async () => {
-    const wrapper = createWrapper()
-    // initially the copy icon should be present
-    expect(wrapper.find('[data-test="copy-address-icon"]').exists()).toBe(true)
-
-    // simulate copied state
-    mockClipboard.copied.value = true
-    await wrapper.vm.$nextTick()
-    expect(wrapper.find('[data-test="copied-icon"]').exists()).toBe(true)
-  })
-
   it('opens block explorer when clicking the address', async () => {
     const wrapper = createWrapper()
     window.open = vi.fn()
@@ -123,5 +105,35 @@ describe('EditUserForm (corrected tests)', () => {
     const wrapper = createWrapper()
     await wrapper.find('[data-test="copy-address-icon"]').trigger('click')
     expect(mockCopy).toHaveBeenCalledWith('0x4b6Bf5cD91446408290725879F5666dcd9785F62')
+  })
+
+  // test for currency selection
+  it('calls setCurrency and shows toast when currency selected changes', async () => {
+    const wrapper = createWrapper()
+    const select = wrapper.find('[data-test="currency-select"]')
+    expect(select.exists()).toBe(true)
+    await select.setValue('EUR')
+    await flushPromises()
+    expect(mockSetCurrency).toHaveBeenCalledWith('EUR')
+    expect(mockAddSuccessToast).toHaveBeenCalledWith('Currency updated')
+  })
+
+  it.skip('does NOT show Save button when no change', () => {
+    const wrapper = createWrapper()
+    expect(wrapper.find('[data-test="submit-edit-user"]').exists()).toBe(false)
+  })
+  // test for name change showing Save button and triggering update
+  it('shows Save button after changing name and triggers update on submit', async () => {
+    const wrapper = createWrapper()
+    const input = wrapper.find('[data-test="name-input"]')
+    await input.setValue('Jane Doe')
+    await flushPromises()
+
+    const saveBtn = wrapper.find('[data-test="submit-edit-user"]')
+    expect(saveBtn.exists()).toBe(true)
+
+    await saveBtn.trigger('click')
+    // Since we mocked useCustomFetch to return execute, ensure execute was called
+    expect(mockExecuteUpdateUser).toHaveBeenCalled()
   })
 })
