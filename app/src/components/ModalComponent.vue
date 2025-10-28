@@ -4,7 +4,7 @@
       <ButtonUI
         class="absolute right-4 top-4"
         size="sm"
-        variant="primary"
+        variant="error"
         outline
         @click="
           () => {

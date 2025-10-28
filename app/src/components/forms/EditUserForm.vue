@@ -1,5 +1,43 @@
 <template>
-  <div class="flex flex-col gap-5 mt-4" data-test="edit-user-modal">
+  <div class="flex flex-col gap-5 mt-4 overflow-hidden" data-test="edit-user-modal">
+    <!-- Wallet Address -->
+    <div role="alert" class="alert shadow-sm flex text-gray-700">
+      <div class="flex flex-wrap gap-2">
+        <h3 class="font-bold">Wallet Address</h3>
+        <div class="flex items-center gap-2">
+          <ToolTip data-test="address-tooltip" content="Click to see address in block explorer">
+            <div
+              type="text"
+              class="w-full cursor-pointer"
+              @click="openExplorer(userStore.address)"
+              data-test="user-address"
+              readonly
+            >
+              {{ userStore.address }}
+            </div>
+          </ToolTip>
+          <ToolTip
+            data-test="copy-address-tooltip"
+            :content="copied ? 'Copied!' : 'Click to copy address'"
+          >
+            <IconifyIcon
+              v-if="isSupported && !copied"
+              data-test="copy-address-icon"
+              class="w-5 h-4 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+              @click="copy(userStore.address)"
+              icon="heroicons:clipboard-document"
+            />
+            <IconifyIcon
+              v-if="copied"
+              data-test="copied-icon"
+              class="w-5 h-5 text-emerald-500"
+              icon="heroicons:check"
+            />
+          </ToolTip>
+        </div>
+      </div>
+    </div>
+
     <!-- Input Name -->
     <label class="input input-bordered flex items-center gap-2 input-md">
       <span class="w-24" data-test="name-label">Name</span>
@@ -8,7 +46,7 @@
         class="grow"
         data-test="name-input"
         placeholder="John Doe"
-        v-model="user.name"
+        v-model="userCopy.name"
       />
     </label>
     <div
@@ -20,46 +58,13 @@
       {{ error.$message }}
     </div>
 
-    <!-- Wallet Address -->
-    <label class="input input-bordered flex items-center gap-2 input-md input-disabled">
-      <span class="w-24 text-xs" data-test="address-label">Wallet Address</span>
-      <ToolTip data-test="address-tooltip" content="Click to see address in block explorer">
-        <div
-          type="text"
-          class="w-full cursor-pointer"
-          @click="openExplorer(user.address)"
-          data-test="user-address"
-          readonly
-        >
-          {{ user.address }}
-        </div>
-      </ToolTip>
-      <ToolTip
-        data-test="copy-address-tooltip"
-        :content="copied ? 'Copied!' : 'Click to copy address'"
-      >
-        <IconifyIcon
-          v-if="isSupported && !copied"
-          data-test="copy-address-icon"
-          class="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-          @click="copy(user.address)"
-          icon="heroicons:clipboard-document"
-        />
-        <IconifyIcon
-          v-if="copied"
-          data-test="copied-icon"
-          class="w-5 h-5 text-emerald-500"
-          icon="heroicons:check"
-        />
-      </ToolTip>
-    </label>
-
     <!-- Currency -->
     <label class="input input-bordered flex items-center gap-2 input-md">
       <span class="w-40" data-test="currency-label">Default Currency</span>
       <select
         v-if="LIST_CURRENCIES && LIST_CURRENCIES.length"
         v-model="selectedCurrency"
+        @change="handleCurrencyChange"
         data-test="currency-select"
         class="select select-sm w-full focus:border-none focus:outline-none"
       >
@@ -76,15 +81,16 @@
 
     <!-- Upload -->
     <UploadImage
-      :model-value="user.imageUrl"
-      @update:model-value="($event) => (user.imageUrl = $event)"
+      :model-value="userCopy.imageUrl"
+      @update:model-value="($event) => (userCopy.imageUrl = $event)"
     />
   </div>
-  <div class="modal-action justify-center">
+  <div class="modal-action justify-end">
     <ButtonUI
+      v-if="hasChanges"
       variant="primary"
-      :loading="isLoading"
-      :disabled="isLoading"
+      :loading="userIsUpdating"
+      :disabled="userIsUpdating"
       data-test="submit-edit-user"
       @click="submitForm"
     >
@@ -99,27 +105,52 @@ import { required, minLength } from '@vuelidate/validators'
 import ToolTip from '@/components/ToolTip.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '../ButtonUI.vue'
-import { useCurrencyStore } from '@/stores'
+import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import { LIST_CURRENCIES } from '@/constant'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import UploadImage from '@/components/forms/UploadImage.vue'
-
-// Props & emits
-defineProps<{ isLoading: boolean }>()
-const emits = defineEmits(['submitEditUser'])
+import { useCustomFetch } from '@/composables'
 
 // Currency store
 const currencyStore = useCurrencyStore()
+const toastStore = useToastStore()
+const userStore = useUserDataStore()
 const selectedCurrency = ref<string>(currencyStore.localCurrency?.code)
 
-// User form
-const user = defineModel({
-  default: {
-    name: '',
-    address: '',
-    imageUrl: ''
+const userCopy = ref({
+  name: userStore.name,
+  address: userStore.address,
+  imageUrl: userStore.imageUrl
+})
+
+// Computed property to check if name or image has changed
+const hasChanges = computed(() => {
+  return userCopy.value.name !== userStore.name || userCopy.value.imageUrl !== userStore.imageUrl
+})
+
+const userUpdateEndpoint = computed(() => `/users/${userStore.address}`)
+
+const {
+  isFetching: userIsUpdating,
+  isFinished: userUpdateFinished,
+  error: userUpdateError,
+  execute: executeUpdateUser
+} = useCustomFetch(userUpdateEndpoint, { immediate: false }).put(userCopy).json()
+
+watch(userUpdateError, () => {
+  if (userUpdateError.value) {
+    toastStore.addErrorToast(userUpdateError.value || 'Failed to update user')
+  }
+})
+
+watch(userUpdateFinished, () => {
+  if (userUpdateFinished.value && !userUpdateError.value) {
+    // Update user store
+    toastStore.addSuccessToast('User updated successfully')
+    // reload the page to reflect changes
+    window.location.reload()
   }
 })
 
@@ -131,7 +162,7 @@ const rules = {
     }
   }
 }
-const $v = useVuelidate(rules, { user })
+const $v = useVuelidate(rules, { user: userCopy })
 
 // Clipboard
 const { copy, copied, isSupported } = useClipboard()
@@ -141,12 +172,14 @@ const openExplorer = (address: string) => {
   window.open(`${NETWORK.blockExplorerUrl}/address/${address}`, '_blank')
 }
 
+const handleCurrencyChange = () => {
+  currencyStore.setCurrency(selectedCurrency.value)
+  toastStore.addSuccessToast('Currency updated')
+}
+
 const submitForm = () => {
   $v.value.$touch()
   if ($v.value.$invalid) return
-  currencyStore.setCurrency(selectedCurrency.value)
-  emits('submitEditUser')
+  executeUpdateUser()
 }
-
-// Upload image logic
 </script>
