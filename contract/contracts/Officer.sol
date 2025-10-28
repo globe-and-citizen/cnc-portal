@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "./interfaces/ICashRemuneration.sol";
+import "./interfaces/IInvestorV1.sol";
 
 interface IBodContract {    
     function initialize(address[] memory votingAddress) external;
@@ -86,7 +88,14 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         __ReentrancyGuard_init();
         __Pausable_init();
 
-        // Configure initial beacons if provided
+        _configureBeacons(beaconConfigs);
+    
+        if (_isDeployAllContracts) {
+            _deployAndSetupContracts(_deployments, _owner);
+        }
+    }
+
+    function _configureBeacons(BeaconConfig[] memory beaconConfigs) internal {
         for (uint256 i = 0; i < beaconConfigs.length; i++) {
             require(beaconConfigs[i].beaconAddress != address(0), "Invalid beacon address");
             require(bytes(beaconConfigs[i].beaconType).length > 0, "Empty beacon type");
@@ -102,14 +111,40 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             contractBeacons[beaconConfigs[i].beaconType] = beaconConfigs[i].beaconAddress;
             emit BeaconConfigured(beaconConfigs[i].beaconType, beaconConfigs[i].beaconAddress);
         }
-        if(_isDeployAllContracts){
-            deployAllContracts(_deployments);
+    }
+
+    function _deployAndSetupContracts(DeploymentData[] calldata _deployments, address _owner) internal {
+        deployAllContracts(_deployments);
+        address cashRemunerationAddress = findDeployedContract("CashRemunerationEIP712");
+        address investorV1Address = findDeployedContract("InvestorV1");
+        
+        if (cashRemunerationAddress != address(0) && investorV1Address != address(0)) {
+            _setupContractPermissions(cashRemunerationAddress, investorV1Address, _owner);
         }
     }
 
-    /**
-     * @notice Configures a new beacon for a contract type
-     * @param contractType Type identifier for the contract
+    function _setupContractPermissions(
+        address cashRemunerationAddress,
+        address investorV1Address,
+        address _owner
+    ) internal {
+        ICashRemuneration cashRemuneration = ICashRemuneration(cashRemunerationAddress);
+        cashRemuneration.addTokenSupport(investorV1Address);
+        cashRemuneration.transferOwnership(_owner);
+        
+        IInvestorV1 investorV1 = IInvestorV1(investorV1Address);
+        bytes32 minterRole = investorV1.MINTER_ROLE();
+        bytes32 adminRole = investorV1.DEFAULT_ADMIN_ROLE();
+        
+        investorV1.grantRole(minterRole, cashRemunerationAddress);
+        investorV1.grantRole(minterRole, _owner);
+        investorV1.grantRole(adminRole, _owner);
+        investorV1.transferOwnership(_owner);
+    }
+
+        /**
+         * @notice Configures a new beacon for a contract type
+         * @param contractType Type identifier for the contract
      * @param beaconAddress Address of the beacon contract
      */
     function configureBeacon(string calldata contractType, address beaconAddress) external onlyOwners {
@@ -184,7 +219,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      * @param contractType The type of contract to find
      * @return The address of the contract, or address(0) if not found
      */
-    function findDeployedContract(string memory contractType) internal view returns (address) {
+    function findDeployedContract(string memory contractType) public view returns (address) {
         for (uint256 i = 0; i < deployedContracts.length; i++) {
             if (keccak256(bytes(deployedContracts[i].contractType)) == keccak256(bytes(contractType))) {
                 return deployedContracts[i].contractAddress;
