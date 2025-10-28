@@ -8,7 +8,7 @@ import { ref } from 'vue'
 // Mock Apollo Query Result
 const mockQueryResult = {
   result: ref({
-    dividendDistributions: [
+    dividendClaims: [
       {
         id: '1',
         transactionHash: '0xtxhash1',
