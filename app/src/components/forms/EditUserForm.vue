@@ -130,11 +130,12 @@ const hasChanges = computed(() => {
   return userCopy.value.name !== userStore.name || userCopy.value.imageUrl !== userStore.imageUrl
 })
 
-const userUpdateEndpoint = computed(() => `/users/${userStore.address}`)
+const userUpdateEndpoint = computed(() => `user/${userStore.address}`)
 
 const {
+  data: updatedUser,
   isFetching: userIsUpdating,
-  isFinished: userUpdateFinished,
+  // isFinished: userUpdateFinished,
   error: userUpdateError,
   execute: executeUpdateUser
 } = useCustomFetch(userUpdateEndpoint, { immediate: false }).put(userCopy).json()
@@ -145,13 +146,20 @@ watch(userUpdateError, () => {
   }
 })
 
-watch(userUpdateFinished, () => {
-  if (userUpdateFinished.value && !userUpdateError.value) {
-    // Update user store
-    toastStore.addSuccessToast('User updated successfully')
-    // reload the page to reflect changes
-    window.location.reload()
+watch(updatedUser, () => {
+  if (updatedUser.value) {
+    toastStore.addSuccessToast('User updated')
+    userStore.setUserData(
+      updatedUser.value.name,
+      updatedUser.value.address,
+      updatedUser.value.nonce,
+      updatedUser.value.imageUrl
+    )
   }
+  setTimeout(() => {
+    toastStore.addSuccessToast('Reloading page to reflect changes')
+    window.location.reload()
+  }, 2000)
 })
 
 const rules = {
