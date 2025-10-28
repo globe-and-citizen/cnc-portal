@@ -26,6 +26,7 @@ vi.mock('@vueuse/core', async (importOriginal) => {
 const mockSetCurrency = vi.fn()
 const mockAddSuccessToast = vi.fn()
 const mockAddErrorToast = vi.fn()
+const mockSetUserData = vi.fn()
 
 vi.mock('@/stores', () => ({
   useCurrencyStore: () => ({
@@ -40,7 +41,9 @@ vi.mock('@/stores', () => ({
   useUserDataStore: () => ({
     name: 'John Doe',
     address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62',
-    imageUrl: 'https://example.com/image.jpg'
+    imageUrl: 'https://example.com/image.jpg',
+    nonce: 'nonce123',
+    setUserData: mockSetUserData
   })
 }))
 
@@ -48,6 +51,12 @@ const mockExecuteUpdateUser = vi.fn()
 const mockIsFetching = ref(false)
 const mockIsFinished = ref(false)
 const mockError = ref<null | string>(null)
+const mockUpdatedUser = ref<{
+  name: string
+  address: string
+  nonce: string
+  imageUrl: string
+} | null>(null)
 
 vi.mock('@/composables', () => {
   return {
@@ -57,6 +66,7 @@ vi.mock('@/composables', () => {
           return {
             json: () => {
               return {
+                data: mockUpdatedUser,
                 isFetching: mockIsFetching,
                 isFinished: mockIsFinished,
                 error: mockError,
@@ -91,6 +101,7 @@ beforeEach(() => {
   mockIsFetching.value = false
   mockIsFinished.value = false
   mockError.value = null
+  mockUpdatedUser.value = null
 })
 
 describe('EditUserForm (corrected tests)', () => {
@@ -141,31 +152,44 @@ describe('EditUserForm (corrected tests)', () => {
     it('should display error toast when userUpdateError is set', async () => {
       createWrapper()
 
-      // Set error value to trigger watcher
       mockError.value = 'Network error occurred'
       await flushPromises()
 
       expect(mockAddErrorToast).toHaveBeenCalledWith('Network error occurred')
     })
 
-    it('should display success toast and reload page when userUpdateFinished is true and no error', async () => {
+    it('should handle updatedUser watcher correctly', async () => {
+      vi.useFakeTimers()
+
       createWrapper()
-
-      // Mock window.location.reload
-      const reloadFn = vi.fn()
-      Object.defineProperty(window, 'location', {
-        value: { reload: reloadFn },
-        writable: true,
-        configurable: true
-      })
-
-      // Set success conditions
-      mockIsFinished.value = true
-      mockError.value = null
       await flushPromises()
 
-      expect(mockAddSuccessToast).toHaveBeenCalledWith('User updated successfully')
-      expect(reloadFn).toHaveBeenCalled()
+      mockUpdatedUser.value = {
+        name: 'Jane Doe',
+        address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62',
+        nonce: 'nonce123',
+        imageUrl: 'https://example.com/new.jpg'
+      }
+
+      // Wait for watchers to trigger
+      await flushPromises()
+
+      // Verify immediate effects
+      expect(mockAddSuccessToast).toHaveBeenCalledWith('User updated')
+      expect(mockSetUserData).toHaveBeenCalledWith(
+        'Jane Doe',
+        '0x4b6Bf5cD91446408290725879F5666dcd9785F62',
+        'nonce123',
+        'https://example.com/new.jpg'
+      )
+
+      // Run all timers to execute the setTimeout
+      vi.runAllTimers()
+      await flushPromises()
+
+      // Verify delayed effects
+      expect(mockAddSuccessToast).toHaveBeenCalledWith('Reloading page to reflect changes')
+      vi.useRealTimers()
     })
   })
 })
