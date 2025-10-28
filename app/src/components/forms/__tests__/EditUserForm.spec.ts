@@ -47,7 +47,7 @@ vi.mock('@/stores', () => ({
 const mockExecuteUpdateUser = vi.fn()
 const mockIsFetching = ref(false)
 const mockIsFinished = ref(false)
-const mockError = ref(null)
+const mockError = ref<null | string>(null)
 
 vi.mock('@/composables', () => {
   return {
@@ -94,21 +94,21 @@ beforeEach(() => {
 })
 
 describe('EditUserForm (corrected tests)', () => {
-  it('opens block explorer when clicking the address', async () => {
+  it('renders label when clicking the address', async () => {
     const wrapper = createWrapper()
     window.open = vi.fn()
     await wrapper.find('[data-test="user-address"]').trigger('click')
     expect(window.open).toHaveBeenCalledTimes(1)
   })
 
-  it('calls clipboard.copy with address when copy icon clicked', async () => {
+  it('emits submitEditUser when submit button is clicked', async () => {
     const wrapper = createWrapper()
     await wrapper.find('[data-test="copy-address-icon"]').trigger('click')
     expect(mockCopy).toHaveBeenCalledWith('0x4b6Bf5cD91446408290725879F5666dcd9785F62')
   })
 
   // test for currency selection
-  it('calls setCurrency and shows toast when currency selected changes', async () => {
+  it('emits setCurrency and shows toast when currency selected changes', async () => {
     const wrapper = createWrapper()
     const select = wrapper.find('[data-test="currency-select"]')
     expect(select.exists()).toBe(true)
@@ -123,7 +123,7 @@ describe('EditUserForm (corrected tests)', () => {
     expect(wrapper.find('[data-test="submit-edit-user"]').exists()).toBe(false)
   })
   // test for name change showing Save button and triggering update
-  it('shows Save button after changing name and triggers update on submit', async () => {
+  it('emits submitEditUser when submit button is clicked', async () => {
     const wrapper = createWrapper()
     const input = wrapper.find('[data-test="name-input"]')
     await input.setValue('Jane Doe')
@@ -135,5 +135,37 @@ describe('EditUserForm (corrected tests)', () => {
     await saveBtn.trigger('click')
     // Since we mocked useCustomFetch to return execute, ensure execute was called
     expect(mockExecuteUpdateUser).toHaveBeenCalled()
+  })
+
+  describe('Watchers Validation', () => {
+    it('should display error toast when userUpdateError is set', async () => {
+      createWrapper()
+
+      // Set error value to trigger watcher
+      mockError.value = 'Network error occurred'
+      await flushPromises()
+
+      expect(mockAddErrorToast).toHaveBeenCalledWith('Network error occurred')
+    })
+
+    it('should display success toast and reload page when userUpdateFinished is true and no error', async () => {
+      createWrapper()
+
+      // Mock window.location.reload
+      const reloadFn = vi.fn()
+      Object.defineProperty(window, 'location', {
+        value: { reload: reloadFn },
+        writable: true,
+        configurable: true
+      })
+
+      // Set success conditions
+      mockIsFinished.value = true
+      mockError.value = null
+      await flushPromises()
+
+      expect(mockAddSuccessToast).toHaveBeenCalledWith('User updated successfully')
+      expect(reloadFn).toHaveBeenCalled()
+    })
   })
 })
