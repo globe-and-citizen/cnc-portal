@@ -255,4 +255,3 @@ describe('PayDividendsForm.vue', () => {
     expect(wrapper.find('[data-test="bod-alert"]').exists()).toBe(true)
   })
 })
-
