@@ -28,10 +28,13 @@ export const parseError = (error: unknown, abi: Abi | undefined = undefined) => 
       const revertError = error.walk((err) => err instanceof ContractFunctionRevertedError)
 
       if (revertError instanceof ContractFunctionRevertedError) {
-        const errorName = revertError.data?.errorName ?? 'Contract reverted'
+        const errorName =
+          revertError.data?.errorName === 'Error'
+            ? revertError.data.args?.[0]
+            : revertError.data?.errorName || 'Contract reverted'
         return `${errorName}`
       }
-      return 'Contract reverted' // safeParse(error.shortMessage as string, abi)
+      return 'Contract reverted'
     } else {
       message = error.message
     }
