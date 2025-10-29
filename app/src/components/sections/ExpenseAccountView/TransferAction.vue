@@ -252,16 +252,6 @@ const transferErc20Token = async () => {
         },
         props.row.signature // signatureToTransfer.value
       ]
-      const data = encodeFunctionData({
-        abi: EXPENSE_ACCOUNT_EIP712_ABI,
-        functionName: 'transfer',
-        // @ts-expect-error type issue
-        args
-      })
-      // await estimateGas(config, {
-      //   to: expenseAccountEip712Address.value,
-      //   data
-      // })
       await simulateContract(config, {
         address: expenseAccountEip712Address.value,
         abi: EXPENSE_ACCOUNT_EIP712_ABI,

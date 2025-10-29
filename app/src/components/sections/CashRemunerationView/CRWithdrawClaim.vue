@@ -14,14 +14,7 @@
 import { useTeamStore, useToastStore } from '@/stores'
 import { log, parseError } from '@/utils'
 import { useWriteContract } from '@wagmi/vue'
-import {
-  encodeFunctionData,
-  formatEther,
-  parseEther,
-  parseUnits,
-  zeroAddress,
-  type Address
-} from 'viem'
+import { formatEther, parseEther, parseUnits, zeroAddress, type Address } from 'viem'
 import { computed, ref } from 'vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { getBalance } from 'viem/actions'
@@ -29,7 +22,7 @@ import { config } from '@/wagmi.config'
 import { useCustomFetch } from '@/composables'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { USDC_ADDRESS } from '@/constant'
-import { estimateGas, simulateContract } from '@wagmi/core'
+import { simulateContract } from '@wagmi/core'
 import { useQueryClient } from '@tanstack/vue-query'
 import { waitForTransactionReceipt } from '@wagmi/core'
 import type { WeeklyClaim } from '@/types'
