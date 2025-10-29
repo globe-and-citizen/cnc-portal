@@ -69,7 +69,7 @@ import { getTokens, log, parseError } from '@/utils'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { encodeFunctionData, parseEther, zeroAddress, type Address } from 'viem'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
-import { estimateGas, readContract } from '@wagmi/core'
+import { estimateGas, readContract, simulateContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { ERC20_ABI } from '@/artifacts/abi/erc20'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -130,10 +130,13 @@ const {
   data: transferHash
 } = useWriteContract()
 
-const { isLoading: isConfirmingTransfer, isSuccess: isConfirmedTransfer } =
-  useWaitForTransactionReceipt({
-    hash: transferHash
-  })
+const {
+  isLoading: isConfirmingTransfer,
+  isSuccess: isConfirmedTransfer,
+  error: confirmingTransferError
+} = useWaitForTransactionReceipt({
+  hash: transferHash
+})
 
 // Token approval
 const { writeContract: approve, error: approveError, data: approveHash } = useWriteContract()
@@ -255,9 +258,16 @@ const transferErc20Token = async () => {
         // @ts-expect-error type issue
         args
       })
-      await estimateGas(config, {
-        to: expenseAccountEip712Address.value,
-        data
+      // await estimateGas(config, {
+      //   to: expenseAccountEip712Address.value,
+      //   data
+      // })
+      await simulateContract(config, {
+        address: expenseAccountEip712Address.value,
+        abi: EXPENSE_ACCOUNT_EIP712_ABI,
+        functionName: 'transfer',
+        // @ts-expect-error type issue
+        args
       })
       executeExpenseAccountTransfer({
         address: expenseAccountEip712Address.value,
@@ -289,7 +299,7 @@ watch(errorTransfer, (newVal) => {
   if (errorTransfer.value) {
     transferERC20loading.value = false
     isLoadingTransfer.value = false
-    log.error(parseError(newVal))
+    log.error(parseError(newVal, EXPENSE_ACCOUNT_EIP712_ABI))
     addErrorToast('Failed to transfer')
   }
 })
@@ -305,6 +315,14 @@ watch(approveError, () => {
     transferERC20loading.value = false
     log.error(parseError(approveError.value))
     addErrorToast('Failed to approve token spending')
+  }
+})
+watch(confirmingTransferError, (newError) => {
+  if (newError) {
+    transferERC20loading.value = false
+    isLoadingTransfer.value = false
+    log.error(parseError(newError, EXPENSE_ACCOUNT_EIP712_ABI))
+    addErrorToast('Failed to transfer after approval')
   }
 })
 //#endregion
