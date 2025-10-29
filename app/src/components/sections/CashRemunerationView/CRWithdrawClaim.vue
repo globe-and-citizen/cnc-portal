@@ -29,7 +29,7 @@ import { config } from '@/wagmi.config'
 import { useCustomFetch } from '@/composables'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { USDC_ADDRESS } from '@/constant'
-import { estimateGas } from '@wagmi/core'
+import { estimateGas, simulateContract } from '@wagmi/core'
 import { useQueryClient } from '@tanstack/vue-query'
 import { waitForTransactionReceipt } from '@wagmi/core'
 import type { WeeklyClaim } from '@/types'
@@ -104,17 +104,14 @@ const withdrawClaim = async () => {
     const args = {
       abi: CASH_REMUNERATION_EIP712_ABI,
       functionName: 'withdraw' as const,
-      args: [claimData, props.weeklyClaim.signature as Address]
+      args: [claimData, props.weeklyClaim.signature as Address] as const
     }
-    // @ts-expect-error type issue
-    const data = encodeFunctionData(args)
-    // First run estimate gas to get errors
-    await estimateGas(config, {
-      to: cashRemunerationEip712Address.value,
-      data
+
+    await simulateContract(config, {
+      ...args,
+      address: cashRemunerationEip712Address.value
     })
 
-    // @ts-expect-error type issue
     const hash = await withdraw({
       ...args,
       address: cashRemunerationEip712Address.value
@@ -144,8 +141,9 @@ const withdrawClaim = async () => {
     isLoading.value = false
   } catch (error) {
     isLoading.value = false
-    log.info('Withdraw error', parseError(error))
-    const parsed = parseError(error)
+    log.error('Withdraw error', error)
+    const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
+
     if (parsed.includes('Insufficient token balance')) {
       toastStore.addErrorToast('Insufficient token balance')
     } else if (
@@ -155,7 +153,7 @@ const withdrawClaim = async () => {
     ) {
       toastStore.addErrorToast('Add Token support: Token not supported')
     } else {
-      toastStore.addErrorToast('Failed to withdraw')
+      toastStore.addErrorToast(/*'Failed to withdraw'*/ parsed)
     }
   }
 }
