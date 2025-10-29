@@ -15,7 +15,7 @@
     </h6>
 
     <div
-      v-if="(selectedTokenBalance ?? 0) === 0"
+      v-if="(formattedUnlockedBalance ?? 0) === 0"
       class="alert alert-warning"
       data-test="bank-empty-warning"
     >
@@ -37,7 +37,7 @@
     <div class="text-center">
       <ButtonUI
         :loading="loading"
-        :disabled="loading"
+        :disabled="loading || (formattedUnlockedBalance ?? 0) === 0"
         class="btn btn-primary w-44 text-center"
         @click="onSubmit()"
       >

@@ -58,13 +58,6 @@ const { result, error } = useQuery(
   }
 )
 
-watch(
-  () => result.value,
-  (newResult) => {
-    console.log('GraphQL result:', newResult)
-  }
-)
-
 const tokenPrices = computed(() => ({
   USDC: 1,
   default: currencyStore.getTokenPrice(selectedTokenId.value, false, 'USD')
