@@ -9,8 +9,8 @@ dataSources:
     network: matic
     source:
       abi: OfficerFactoryBeacon
-      address: "0x3016e02B59954E6B6564a5F3Ff67bdc5a69F78E0"
-      startBlock: 69852632
+      address: "0xC586FeAc8c44f547ad604179D5221Ca5B56CBFf5"
+      startBlock: 78209052
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -30,7 +30,7 @@ dataSources:
     source:
       abi: ERC20
       address: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
-      startBlock: 69852632
+      startBlock: 78209052
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -50,7 +50,7 @@ dataSources:
     source:
       abi: ERC20
       address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
-      startBlock: 69852632
+      startBlock: 78209052
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -111,6 +111,10 @@ templates:
           handler: handleTransfer
         - event: Deposited(indexed address,uint256)
           handler: handleDeposited
+        - event: DividendClaimed(indexed address,uint256)
+          handler: handleDividendClaimed
+        - event: TokenDividendClaimed(indexed address,indexed address,uint256)
+          handler: handleTokenDividendClaimed
   - name: CashRemunerationEIP712
     kind: ethereum/contract
     network: matic
