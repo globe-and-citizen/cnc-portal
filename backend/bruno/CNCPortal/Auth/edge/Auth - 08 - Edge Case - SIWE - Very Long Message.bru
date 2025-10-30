@@ -27,14 +27,31 @@ body:json {
 }
 
 tests {
-  test("should handle moderately long message", function() {
+  test("should handle moderately long message with appropriate status", function() {
     const status = res.getStatus();
-    // Should be 400 (validation error) or 401 (invalid signature)
     expect([400, 401]).to.include(status);
   });
 
-  test("should return appropriate error message", function() {
+  test("should return appropriate error for long message", function() {
     expect(res.body.message).to.be.a('string');
     expect(res.body.message.length).to.be.greaterThan(0);
+    
+    // Should indicate either validation or authentication failure
+    const message = res.body.message.toLowerCase();
+    const hasRelevantError = message.includes('invalid') || 
+                            message.includes('verification') || 
+                            message.includes('authentication') ||
+                            message.includes('signature') ||
+                            message.includes('siwe');
+    
+    expect(hasRelevantError).to.be.true;
+  });
+
+  test("should handle large payloads gracefully", function() {
+    // Should not indicate server errors or memory issues
+    expect(res.getStatus()).to.not.equal(500);
+    expect(res.body.message).to.not.contain("memory");
+    expect(res.body.message).to.not.contain("timeout");
+    expect(res.body.message).to.not.contain("payload too large");
   });
 }

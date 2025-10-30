@@ -19,7 +19,17 @@ tests {
     expect(res.getStatus()).to.equal(400);
   });
 
-  test("should return validation error", function() {
+  test("should return specific validation error for missing fields", function() {
     expect(res.body.message).to.contain("Invalid request body");
+    expect(res.body.message).to.contain("SIWE message is required");
+    expect(res.body.message).to.contain("Signature is required");
+  });
+
+  test("should have proper error message structure", function() {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message.length).to.be.greaterThan(10);
+    // Ensure it mentions both required fields
+    expect(res.body.message.toLowerCase()).to.contain('message');
+    expect(res.body.message.toLowerCase()).to.contain('signature');
   });
 }

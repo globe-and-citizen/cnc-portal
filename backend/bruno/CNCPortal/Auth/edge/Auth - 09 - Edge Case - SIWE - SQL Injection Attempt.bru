@@ -24,8 +24,30 @@ tests {
     expect([400, 401]).to.include(status);
   });
 
-  test("should handle malicious input safely", function() {
+  test("should return safe error message for malicious input", function() {
     expect(res.body.message).to.be.a('string');
     expect(res.body.message.length).to.be.greaterThan(0);
+    
+    // Should indicate authentication/validation failure
+    const message = res.body.message.toLowerCase();
+    const hasSafeError = message.includes('invalid') || 
+                        message.includes('authentication') || 
+                        message.includes('verification') ||
+                        message.includes('signature');
+    
+    expect(hasSafeError).to.be.true;
+  });
+
+  test("should not expose SQL injection vulnerabilities", function() {
+    // Should not contain SQL error messages or database information
+    expect(res.body.message).to.not.contain("SQL");
+    expect(res.body.message).to.not.contain("database");
+    expect(res.body.message).to.not.contain("table");
+    expect(res.body.message).to.not.contain("DROP");
+    expect(res.body.message).to.not.contain("INSERT");
+    expect(res.body.message).to.not.contain("SELECT");
+    
+    // Should not indicate server errors
+    expect(res.getStatus()).to.not.equal(500);
   });
 }

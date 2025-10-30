@@ -21,8 +21,14 @@ tests {
     expect(res.getStatus()).to.equal(400);
   });
 
-  test("should return validation error", function() {
+  test("should return specific validation error for missing message", function() {
     expect(res.body.message).to.contain("Invalid request body");
     expect(res.body.message).to.contain("SIWE message is required");
+    // Should also mention signature format issue since we provide invalid signature
+    expect(res.body.message).to.contain("Invalid signature format");
+  });
+
+  test("should specify correct signature format requirements", function() {
+    expect(res.body.message).to.contain("0x followed by 130 hexadecimal characters");
   });
 }

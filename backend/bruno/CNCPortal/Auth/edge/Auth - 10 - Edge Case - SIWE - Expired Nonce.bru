@@ -18,14 +18,32 @@ body:json {
 }
 
 tests {
-  test("should reject expired/invalid nonce", function() {
-    // Should return 400 (validation) or 401 (authentication error)
+  test("should reject expired/invalid nonce with appropriate status", function() {
     const status = res.getStatus();
     expect([400, 401]).to.include(status);
   });
 
-  test("should return authentication error", function() {
+  test("should return nonce or authentication related error", function() {
     expect(res.body.message).to.be.a('string');
     expect(res.body.message.length).to.be.greaterThan(0);
+    
+    // Should indicate nonce, authentication, or verification failure
+    const message = res.body.message.toLowerCase();
+    const hasNonceError = message.includes('nonce') || 
+                         message.includes('expired') || 
+                         message.includes('invalid') ||
+                         message.includes('authentication') ||
+                         message.includes('verification') ||
+                         message.includes('signature');
+    
+    expect(hasNonceError).to.be.true;
+  });
+
+  test("should handle expired nonce securely", function() {
+    // Should not expose nonce generation logic or timing information
+    expect(res.body.message).to.not.contain("timestamp");
+    expect(res.body.message).to.not.contain("generated");
+    expect(res.body.message).to.not.contain("time");
+    expect(res.getStatus()).to.not.equal(500);
   });
 }

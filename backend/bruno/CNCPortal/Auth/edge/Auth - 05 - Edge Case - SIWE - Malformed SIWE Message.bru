@@ -18,13 +18,33 @@ body:json {
 }
 
 tests {
-  test("should return 400 or 401 status for malformed SIWE message", function() {
-    const status = res.getStatus();
-    expect([400, 401]).to.include(status);
+  test("should return 400 status for malformed SIWE message", function() {
+    expect(res.getStatus()).to.equal(400);
   });
 
-  test("should return error message", function() {
+  test("should return comprehensive validation errors for malformed SIWE", function() {
     expect(res.body.message).to.be.a('string');
-    expect(res.body.message.length).to.be.greaterThan(0);
+    expect(res.body.message).to.contain("Invalid request body");
+    
+    // Should identify multiple SIWE validation issues
+    expect(res.body.message).to.contain("SIWE message is too short");
+    expect(res.body.message).to.contain("Invalid SIWE message format");
+    expect(res.body.message).to.contain("Message must contain required SIWE fields");
+    expect(res.body.message).to.contain("SIWE message must contain a valid Ethereum address");
+  });
+
+  test("should also validate signature format", function() {
+    // Should also catch signature format issues
+    expect(res.body.message).to.contain("Invalid signature format");
+    expect(res.body.message).to.contain("0x followed by 130 hexadecimal characters");
+  });
+
+  test("should handle malformed message gracefully without exposing internals", function() {
+    // Should not contain internal error details or stack traces
+    expect(res.body.message).to.not.contain("Error:");
+    expect(res.body.message).to.not.contain("at ");
+    expect(res.body.message).to.not.contain("stack");
+    expect(res.body.message).to.not.contain("TypeError");
+    expect(res.body.message).to.not.contain("SyntaxError");
   });
 }

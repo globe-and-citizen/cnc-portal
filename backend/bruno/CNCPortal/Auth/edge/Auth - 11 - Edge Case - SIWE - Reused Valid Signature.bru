@@ -30,14 +30,32 @@ body:json {
 }
 
 tests {
-  test("should reject reused/invalid signature", function() {
-    // Should return 400 (validation) or 401 (authentication error)
+  test("should reject reused/invalid signature with appropriate status", function() {
     const status = res.getStatus();
     expect([400, 401]).to.include(status);
   });
 
-  test("should return authentication error", function() {
+  test("should return signature or authentication related error", function() {
     expect(res.body.message).to.be.a('string');
     expect(res.body.message.length).to.be.greaterThan(0);
+    
+    // Should indicate signature reuse, authentication, or verification failure
+    const message = res.body.message.toLowerCase();
+    const hasSignatureError = message.includes('signature') || 
+                             message.includes('reuse') || 
+                             message.includes('invalid') ||
+                             message.includes('authentication') ||
+                             message.includes('verification') ||
+                             message.includes('nonce');
+    
+    expect(hasSignatureError).to.be.true;
+  });
+
+  test("should handle signature reuse securely", function() {
+    // Should not expose signature verification details or replay attack info
+    expect(res.body.message).to.not.contain("replay");
+    expect(res.body.message).to.not.contain("cache");
+    expect(res.body.message).to.not.contain("stored");
+    expect(res.getStatus()).to.not.equal(500);
   });
 }
