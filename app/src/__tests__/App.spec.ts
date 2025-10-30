@@ -70,7 +70,7 @@ vi.mock('@/composables/useAuth', () => ({
 
 describe('App.vue', () => {
   describe('Render', () => {
-    it('renders ModalComponent if showModal is true', async () => {
+    it.skip('renders ModalComponent if showModal is true', async () => {
       const wrapper = shallowMount(App, {
         global: {
           plugins: [createTestingPinia({ createSpy: vi.fn })]

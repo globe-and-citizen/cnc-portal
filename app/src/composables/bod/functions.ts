@@ -1,4 +1,4 @@
-import { encodeFunctionData, type Abi, type Address } from 'viem'
+import { encodeFunctionData, type Address } from 'viem'
 import { useToastStore, useTeamStore } from '@/stores'
 import { useBodWrites } from './writes'
 import { BOD_FUNCTION_NAMES } from './types'
@@ -7,13 +7,13 @@ import type { Action } from '@/types'
 import { computed, ref, watch } from 'vue'
 import { estimateGas, readContract, writeContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import BOD_ABI from '@/artifacts/abi/bod.json'
+import { BOD_ABI } from '@/artifacts/abi/bod'
 import { useCustomFetch } from '@/composables'
 import { useQueryClient } from '@tanstack/vue-query'
 import { log, parseError } from '@/utils'
 import { useNotificationStore } from '@/stores/notificationStore'
 /**
- * BOD contract write functions - combines admin, transfers, and tipping
+ * BOD contract write functions - combines admin and transfers
  */
 export function useBodWritesFunctions() {
   const writes = useBodWrites()
@@ -28,6 +28,7 @@ export function useBodWritesFunctions() {
   const isActionAdded = ref(false)
   const isActionApproved = ref(false)
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
+  const isLoadingBankAction = computed(() => writes.isLoading)
 
   const { execute: executeSaveAction } = useCustomFetch('actions/', {
     immediate: false
@@ -63,7 +64,7 @@ export function useBodWritesFunctions() {
             userIds: recipients,
             message: 'New board action requires your approval',
             subject: 'New Board Action Created',
-            author: action.value.userAddress ?? ('' as `0x${string}`),
+            author: action.value.userAddress ?? '',
             resource: `teams/${teamStore.currentTeamId}/contract-management`
           })
         }
@@ -132,7 +133,7 @@ export function useBodWritesFunctions() {
       const data = encodeFunctionData({
         abi: BOD_ABI,
         functionName: 'approve',
-        args: [_actionId]
+        args: [BigInt(_actionId)]
       })
       await estimateGas(config, {
         to: bodAddress.value,
@@ -142,13 +143,13 @@ export function useBodWritesFunctions() {
         address: bodAddress.value,
         abi: BOD_ABI,
         functionName: 'approve',
-        args: [_actionId]
+        args: [BigInt(_actionId)]
       })
       const isActionExecuted = await readContract(config, {
         address: bodAddress.value,
         abi: BOD_ABI,
         functionName: 'isActionExecuted',
-        args: [_actionId]
+        args: [BigInt(_actionId)]
       })
       if (isActionExecuted) {
         actionUrl.value = `actions/${dbId}`
@@ -167,8 +168,8 @@ export function useBodWritesFunctions() {
       // isLoadingApproveAction.value = false
       isActionApproved.value = true
     } catch (error) {
-      log.error('Error approving action: ', parseError(error, BOD_ABI as Abi))
-      addErrorToast(parseError(error, BOD_ABI as Abi))
+      log.error('Error approving action: ', parseError(error, BOD_ABI))
+      addErrorToast(parseError(error, BOD_ABI))
     } finally {
       isLoadingApproveAction.value = false
     }
@@ -187,6 +188,7 @@ export function useBodWritesFunctions() {
     // Reactive properties
     isLoadingApproveAction,
     isActionApproved,
-    isActionAdded
+    isActionAdded,
+    isLoadingBankAction
   }
 }

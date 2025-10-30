@@ -1,4 +1,5 @@
 import type { BytesLike } from 'ethers'
+import type { TokenOption } from '@/types'
 
 export interface BudgetLimit {
   approvedAddress: string
@@ -56,4 +57,13 @@ export interface ExpenseResponse {
   data: BudgetLimit
   createdAt: Date
   updatedAt: Date
+}
+
+export interface TransferData {
+  address: {
+    name: string
+    address: string
+  }
+  token: TokenOption
+  amount: string
 }

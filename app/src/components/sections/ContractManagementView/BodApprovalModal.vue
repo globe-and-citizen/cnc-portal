@@ -1,28 +1,41 @@
 <template>
   <span class="mb-4 text-xl font-semibold">Board Approval Required</span>
-  <div class="flex-1 flex gap-4 p-4 mt-4 bg-white rounded-lg shadow-sm border border-gray-300">
-    <div
-      class="p-1 rounded-full aspect-square flex items-center justify-center w-12 h-12 bg-gray-200"
-    >
-      <IconifyIcon icon="heroicons:arrow-right" class="h-7 w-7 text-gray-600" />
+  <!-- BOD Action Details -->
+  <div class="flex-col flex gap-4 p-4 mt-4 bg-white rounded-lg shadow-sm border border-gray-300">
+    <div class="flex items-center gap-3">
+      <div
+        class="p-1 rounded-full aspect-square flex items-center justify-center w-10 h-10 bg-gray-200"
+      >
+        <IconifyIcon icon="heroicons:arrow-right" class="h-5 w-5 text-gray-600" />
+      </div>
+      <div>
+        <p class="text-xl font-semibold text-gray-900">{{ row.title }}</p>
+      </div>
     </div>
-    <div>
-      <p class="text-xl font-semibold text-gray-900">{{ row.title }}</p>
-      <p class="text-gray-400">{{ row.description }}</p>
-    </div>
+
+    <BodApprovalDetails :row="row" :type="row.title" />
+    <!-- <p v-else class="text-gray-400 font-semibold">{{ row.description }}</p> -->
   </div>
 
-  <div class="flex justify-end mt-2">
-    <span class="text-lg font-bold text-gray-700">
-      {{ approvalCount.approved }}/{{ approvalCount.total }}
+  <!-- Approval Progress -->
+  <div class="flex justify-between mt-5 py-2">
+    <span>Approval progress</span>
+    <span class="badge badge-warning badge-outline font-semibold">
+      {{ approvalCount.approved }}/{{ approvalCount.total }} Approvals
     </span>
   </div>
   <progress
-    class="progress progress-info mb-4"
+    class="progress progress-info mb-1"
     :value="approvalCount.approved"
     :max="approvalCount.total"
   ></progress>
+  <span class="text-sm text-gray-500"
+    >{{ Math.floor(approvalCount.total / 2) + 1 - approvalCount.approved }} Approval(s) left</span
+  >
+
+  <!-- Approvals List-->
   <div class="flex flex-col gap-2">
+    <span class="mt-6">Board member approvals</span>
     <div
       v-for="approval in approvals"
       :key="approval.id"
@@ -66,12 +79,13 @@ import UserComponent from '@/components/UserComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useReadContract } from '@wagmi/vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import BOD_ABI from '@/artifacts/abi/bod.json'
+import { BOD_ABI } from '@/artifacts/abi/bod'
 import { log, parseError } from '@/utils'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import type { Abi, Address } from 'viem'
+import type { Address } from 'viem'
 import ToolTip from '@/components/ToolTip.vue'
+import BodApprovalDetails from './BodApprovalDetails.vue'
 
 const props = defineProps<{ row: TableRow; loading: boolean }>()
 
@@ -103,10 +117,10 @@ const membersApprovals = async () => {
   try {
     return Promise.all(
       members.value && Array.isArray(members.value) && bodAddress.value
-        ? members.value.map(async (member: string) => {
+        ? members.value.map(async (member: Address) => {
             const isApproved = await readContract(config, {
               address: bodAddress.value as Address,
-              abi: BOD_ABI as Abi,
+              abi: BOD_ABI,
               functionName: 'isApproved',
               args: [actionId.value, member]
             })

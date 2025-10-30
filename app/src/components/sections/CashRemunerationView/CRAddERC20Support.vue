@@ -33,7 +33,7 @@ import type { Address } from 'viem'
 import { isAddress } from 'viem'
 import { useDebounceFn } from '@vueuse/core'
 import { config } from '@/wagmi.config'
-import cashRemunerationAbi from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useReadContract } from '@wagmi/vue'
 
@@ -53,7 +53,7 @@ const isValidAddress = computed(() => {
   return tokenAddress.value.token && isAddress(tokenAddress.value.token)
 })
 
-const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorsV1'))
+const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
 
 const cashRemunerationEip712Address = computed(() => {
   const address = teamStore.getContractAddressByType('CashRemunerationEIP712')
@@ -66,7 +66,7 @@ const cashRemunerationEip712Address = computed(() => {
 const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
   functionName: 'owner',
   address: cashRemunerationEip712Address.value as Address,
-  abi: cashRemunerationAbi
+  abi: CASH_REMUNERATION_EIP712_ABI
 })
 
 const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value == userStore.address)
@@ -84,7 +84,7 @@ const checkTokenSupport = useDebounceFn(async (newAddress: string) => {
     try {
       const isSupported = await readContract(config, {
         address: cashRemunerationEip712Address.value as Address,
-        abi: cashRemunerationAbi,
+        abi: CASH_REMUNERATION_EIP712_ABI,
         functionName: 'supportedTokens',
         args: [newAddress as Address]
       })
@@ -116,7 +116,7 @@ const updateTokenSupport = async () => {
     if (tokenAddress.value.isSupported) {
       await writeContract(config, {
         address: cashRemunerationEip712Address.value as Address,
-        abi: cashRemunerationAbi,
+        abi: CASH_REMUNERATION_EIP712_ABI,
         functionName: 'removeTokenSupport',
         args: [tokenAddress.value.token as Address]
       })
@@ -125,7 +125,7 @@ const updateTokenSupport = async () => {
     } else {
       await writeContract(config, {
         address: cashRemunerationEip712Address.value as Address,
-        abi: cashRemunerationAbi,
+        abi: CASH_REMUNERATION_EIP712_ABI,
         functionName: 'addTokenSupport',
         args: [tokenAddress.value.token as Address]
       })

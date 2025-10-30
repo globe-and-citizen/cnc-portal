@@ -173,12 +173,12 @@ export interface TableColumn {
   [key: string]: any
 }
 
-interface LoadingState {
+export interface LoadingState {
   icon?: string
   label?: string
 }
 
-interface EmptyState {
+export interface EmptyState {
   icon?: string
   label?: string
 }

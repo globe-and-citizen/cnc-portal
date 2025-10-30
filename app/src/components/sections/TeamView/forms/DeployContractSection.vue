@@ -16,18 +16,18 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import type { Team } from '@/types'
 import { useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent } from '@wagmi/vue'
-import { encodeFunctionData, type Address } from 'viem'
+import { encodeFunctionData, zeroAddress, type Address } from 'viem'
 import { ref, watch, computed } from 'vue'
 
 // Contract ABIs
-import OfficerABI from '@/artifacts/abi/officer.json'
-import BankABI from '@/artifacts/abi/bank.json'
-// import VotingABI from '@/artifacts/abi/voting.json'
+import { OFFICER_ABI } from '@/artifacts/abi/officer'
+import { BANK_ABI } from '@/artifacts/abi/bank'
+// import { VOTING_ABI } from '@/artifacts/abi/voting'
 
-import ExpenseAccountEIP712ABI from '@/artifacts/abi/expense-account-eip712.json'
-import CashRemunerationEIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
-import FACTORY_BEACON_ABI from '@/artifacts/abi/factory-beacon.json'
-import ElectionsABI from '@/artifacts/abi/elections.json'
+import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
+import { FACTORY_BEACON_ABI } from '@/artifacts/abi/factory-beacon'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 
 import {
   BANK_BEACON_ADDRESS,
@@ -37,12 +37,12 @@ import {
   INVESTOR_V1_BEACON_ADDRESS,
   OFFICER_BEACON,
   PROPOSALS_BEACON_ADDRESS,
-  TIPS_ADDRESS,
   USDC_ADDRESS,
   USDT_ADDRESS,
   validateAddresses,
   // VOTING_BEACON_ADDRESS,
   ELECTIONS_BEACON_ADDRESS
+  // OFFICER_ADDRESS
 } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useCustomFetch } from '@/composables/useCustomFetch'
@@ -100,15 +100,25 @@ const deployOfficerContract = async () => {
       return
     }
 
-    const beaconConfigs = [
+    if (
+      !BANK_BEACON_ADDRESS ||
+      !BOD_BEACON_ADDRESS ||
+      !PROPOSALS_BEACON_ADDRESS ||
+      !EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS ||
+      !CASH_REMUNERATION_EIP712_BEACON_ADDRESS ||
+      !INVESTOR_V1_BEACON_ADDRESS ||
+      !ELECTIONS_BEACON_ADDRESS
+    ) {
+      addErrorToast('One or more beacon addresses are not defined. Cannot deploy contracts.')
+      loading.value = false
+      return
+    }
+
+    const beaconConfigs: Array<{ beaconType: string; beaconAddress: Address }> = [
       {
         beaconType: 'Bank',
         beaconAddress: BANK_BEACON_ADDRESS
       },
-      // {
-      //   beaconType: 'Voting',
-      //   beaconAddress: VOTING_BEACON_ADDRESS
-      // },
       {
         beaconType: 'BoardOfDirectors',
         beaconAddress: BOD_BEACON_ADDRESS
@@ -126,7 +136,7 @@ const deployOfficerContract = async () => {
         beaconAddress: CASH_REMUNERATION_EIP712_BEACON_ADDRESS
       },
       {
-        beaconType: 'InvestorsV1',
+        beaconType: 'InvestorV1',
         beaconAddress: INVESTOR_V1_BEACON_ADDRESS
       },
       {
@@ -140,20 +150,20 @@ const deployOfficerContract = async () => {
     deployments.push({
       contractType: 'Bank',
       initializerData: encodeFunctionData({
-        abi: BankABI,
+        abi: BANK_ABI,
         functionName: 'initialize',
-        args: [TIPS_ADDRESS, USDT_ADDRESS, USDC_ADDRESS, currentUserAddress]
+        args: [[USDT_ADDRESS, USDC_ADDRESS], currentUserAddress]
       })
     })
     deployments.push({
-      contractType: 'InvestorsV1',
+      contractType: 'InvestorV1',
       initializerData: encodeFunctionData({
         abi: INVESTOR_ABI,
         functionName: 'initialize',
         args: [
           props.investorContractInput.name,
           props.investorContractInput.symbol,
-          currentUserAddress
+          zeroAddress // currentUserAddress
         ]
       })
     })
@@ -182,7 +192,7 @@ const deployOfficerContract = async () => {
     deployments.push({
       contractType: 'ExpenseAccountEIP712',
       initializerData: encodeFunctionData({
-        abi: ExpenseAccountEIP712ABI,
+        abi: EXPENSE_ACCOUNT_EIP712_ABI,
         functionName: 'initialize',
         args: [currentUserAddress, USDT_ADDRESS, USDC_ADDRESS]
       })
@@ -192,9 +202,9 @@ const deployOfficerContract = async () => {
     deployments.push({
       contractType: 'CashRemunerationEIP712',
       initializerData: encodeFunctionData({
-        abi: CashRemunerationEIP712ABI,
+        abi: CASH_REMUNERATION_EIP712_ABI,
         functionName: 'initialize',
-        args: [currentUserAddress, [USDC_ADDRESS]]
+        args: [/*currentUserAddress*/ zeroAddress, [USDC_ADDRESS]]
       })
     })
 
@@ -202,20 +212,26 @@ const deployOfficerContract = async () => {
     deployments.push({
       contractType: 'Elections',
       initializerData: encodeFunctionData({
-        abi: ElectionsABI,
+        abi: ELECTIONS_ABI,
         functionName: 'initialize',
         args: [currentUserAddress]
       })
     })
 
     const encodedFunction = encodeFunctionData({
-      abi: OfficerABI,
+      abi: OFFICER_ABI,
       functionName: 'initialize',
       args: [currentUserAddress, beaconConfigs, deployments, true]
     })
 
+    if (!OFFICER_BEACON) {
+      log.error('Officer Beacon address is not defined')
+      addErrorToast('Officer Beacon address is not defined')
+      loading.value = false
+      return
+    }
     createOfficer({
-      address: OFFICER_BEACON as Address,
+      address: OFFICER_BEACON,
       abi: FACTORY_BEACON_ABI,
       functionName: 'createBeaconProxy',
       args: [encodedFunction]
@@ -265,6 +281,7 @@ useWatchContractEvent({
   abi: FACTORY_BEACON_ABI,
   eventName: 'BeaconProxyCreated',
   async onLogs(logs) {
+    console.log('try get BeaconProxyCreated logs')
     if (!logs.length) {
       log.error('No logs found')
       loading.value = false

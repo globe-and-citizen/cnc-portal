@@ -1,7 +1,6 @@
 <template>
   <ButtonUI
-    v-if="claim.status == 'signed'"
-    :disabled="userDataStore.address !== claim.wage.userAddress"
+    :disabled="disabled"
     :loading="isLoading"
     variant="warning"
     data-test="withdraw-button"
@@ -12,8 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
-import type { CRSignClaim } from '@/types'
+import { useTeamStore, useToastStore } from '@/stores'
 import { log, parseError } from '@/utils'
 import { useWriteContract } from '@wagmi/vue'
 import {
@@ -25,7 +23,7 @@ import {
   type Address
 } from 'viem'
 import { computed, ref } from 'vue'
-import EIP712ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { getBalance } from 'viem/actions'
 import { config } from '@/wagmi.config'
 import { useCustomFetch } from '@/composables'
@@ -34,11 +32,15 @@ import { USDC_ADDRESS } from '@/constant'
 import { estimateGas } from '@wagmi/core'
 import { useQueryClient } from '@tanstack/vue-query'
 import { waitForTransactionReceipt } from '@wagmi/core'
+import type { WeeklyClaim } from '@/types'
 
-const props = defineProps<{ claim: CRSignClaim; isWeeklyClaim?: boolean }>()
+const props = defineProps<{
+  weeklyClaim: WeeklyClaim
+  disabled?: boolean
+}>()
+
 const emit = defineEmits(['claim-withdrawn'])
 
-const userDataStore = useUserDataStore()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const queryClient = useQueryClient()
@@ -51,14 +53,11 @@ const cashRemunerationEip712Address = computed(
 )
 const { writeContractAsync: withdraw } = useWriteContract()
 
-const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(
-  computed(
-    () => `/${props.isWeeklyClaim ? 'weeklyClaim' : 'claim'}/${props.claim.id}/?action=withdraw`
-  ),
-  {
-    immediate: false
-  }
-)
+const weeklyClaimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=withdraw`)
+
+const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(weeklyClaimUrl, {
+  immediate: false
+})
   .put()
   .json()
 
@@ -74,21 +73,19 @@ const withdrawClaim = async () => {
   )
   if (
     Number(balance) <
-    Number(props.claim.wage.ratePerHour.find((rate) => rate.type === 'native')) *
-      Number(props.claim.hoursWorked)
+    Number(props.weeklyClaim.wage.ratePerHour.find((rate) => rate.type === 'native')) *
+      Number(props.weeklyClaim.hoursWorked)
   ) {
     isLoading.value = false
     toastStore.addErrorToast('Insufficient balance')
     return
   }
 
-  const { claim } = props
-
   const claimData = {
-    hoursWorked: claim.hoursWorked,
-    employeeAddress: claim.wage.userAddress as Address,
-    date: BigInt(Math.floor(new Date(claim.createdAt).getTime() / 1000)),
-    wages: claim.wage.ratePerHour.map((rate) => ({
+    hoursWorked: props.weeklyClaim.hoursWorked,
+    employeeAddress: props.weeklyClaim.wage.userAddress as Address,
+    date: BigInt(Math.floor(new Date(props.weeklyClaim.createdAt).getTime() / 1000)),
+    wages: props.weeklyClaim.wage.ratePerHour.map((rate) => ({
       hourlyRate:
         rate.type === 'native' ? parseEther(`${rate.amount}`) : parseUnits(`${rate.amount}`, 6), // Convert to wei (assuming 6 decimals for USDC)
       tokenAddress:
@@ -97,7 +94,7 @@ const withdrawClaim = async () => {
           : rate.type === 'usdc'
             ? (USDC_ADDRESS as Address)
             : (teamStore.currentTeam?.teamContracts.find(
-                (contract) => contract.type === 'InvestorsV1'
+                (contract) => contract.type === 'InvestorV1'
               )?.address as Address)
     }))
   }
@@ -105,10 +102,11 @@ const withdrawClaim = async () => {
   // withdraw
   try {
     const args = {
-      abi: EIP712ABI,
-      functionName: 'withdraw',
-      args: [claimData, props.claim.signature as Address]
+      abi: CASH_REMUNERATION_EIP712_ABI,
+      functionName: 'withdraw' as const,
+      args: [claimData, props.weeklyClaim.signature as Address]
     }
+    // @ts-expect-error type issue
     const data = encodeFunctionData(args)
     // First run estimate gas to get errors
     await estimateGas(config, {
@@ -116,13 +114,10 @@ const withdrawClaim = async () => {
       data
     })
 
+    // @ts-expect-error type issue
     const hash = await withdraw({
       ...args,
       address: cashRemunerationEip712Address.value
-      // abi: EIP712ABI,
-      // address: cashRemunerationEip712Address.value,
-      // functionName: 'withdraw',
-      // args: [claimData, props.claim.signature as Address]
     })
 
     // Wait for transaction receipt
@@ -165,5 +160,3 @@ const withdrawClaim = async () => {
   }
 }
 </script>
-
-<style scoped></style>

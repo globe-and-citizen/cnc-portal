@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { addressSchema, teamIdSchema } from "./common";
+import { z } from 'zod';
+import { addressSchema, teamIdSchema } from './common';
 
 /**
  * Contract-related validation schemas
@@ -7,14 +7,14 @@ import { addressSchema, teamIdSchema } from "./common";
 
 // Valid contract types enum
 const contractTypes = [
-  "Bank",
-  "InvestorsV1",
-  "Voting",
-  "BoardOfDirectors",
-  "ExpenseAccount",
-  "ExpenseAccountEIP712",
-  "CashRemunerationEIP712",
-  "Campaign",
+  'Bank',
+  'InvestorV1',
+  'Voting',
+  'BoardOfDirectors',
+  'ExpenseAccount',
+  'ExpenseAccountEIP712',
+  'CashRemunerationEIP712',
+  'Campaign',
 ] as const;
 
 // Add contract request body
@@ -22,7 +22,7 @@ export const addContractBodySchema = z.object({
   teamId: teamIdSchema,
   contractAddress: addressSchema,
   contractType: z.enum(contractTypes, {
-    message: "Invalid contract type"
+    message: 'Invalid contract type',
   }),
 });
 

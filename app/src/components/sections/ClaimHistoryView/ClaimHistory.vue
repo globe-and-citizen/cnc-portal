@@ -1,4 +1,22 @@
 <template>
+  <div class="w-full pb-6">
+    <CardComponent>
+      <div class="flex gap-4 items-start">
+        <div v-if="imageUrl" class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden">
+          <img :src="imageUrl" alt="Card image" class="w-full h-full object-cover" />
+        </div>
+        <div class="flex flex-col gap-8">
+          <div class="card-title mt-4">{{ name }}</div>
+
+          <div class="flex items-center gap-2">
+            <img src="/public/Vector.png" alt="" class="w-4 h-4" />
+            <AddressToolTip :address="address" />
+          </div>
+          <!-- <div class="text-sm text-gray-500">{{ description }}</div> -->
+        </div>
+      </div>
+    </CardComponent>
+  </div>
   <div class="flex bg-transparent gap-x-4">
     <!-- Left Sidebar -->
     <CardComponent class="w-1/3 flex flex-col justify-between">
@@ -19,13 +37,24 @@
                 : 'hover:bg-gray-50'
             ]"
           >
-            <div class="text-base font-medium flex items-center gap-2">
+            <div class="text-base font-medium flex items-center justify-between">
               Week
 
-              <span
+              <div
+                class="badge badge-outline gap-3"
                 v-if="memberWeeklyClaims?.some((wc) => wc.weekStart === week.isoString)"
-                class="h-3 w-3 rounded-full bg-emerald-700"
-              />
+                :class="`badge-${getColor(
+                  memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)
+                )}`"
+              >
+                {{ memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)?.status }}
+                <span
+                  class="h-3 w-3 rounded-full"
+                  :class="`bg-${getColor(
+                    memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)
+                  )}`"
+                />
+              </div>
             </div>
             <div
               class="text-sm"
@@ -46,7 +75,78 @@
     <!-- Right Content -->
     <div class="flex-1 space-y-6">
       <WeeklyRecap :weeklyClaim="selectWeekWeelyClaim" />
+      <CardComponent>
+        <div class="flex flex-col gap-4">
+          <div
+            role="alert"
+            class="alert alert-vertical sm:alert-horizontal"
+            v-if="memberAddress === userStore.address"
+          >
+            <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
+            <span>{{
+              hasWage
+                ? 'You have a wage so you can submit your claim'
+                : 'You need to have a wage set up to submit claims'
+            }}</span>
+            <div>
+              <SubmitClaims v-if="hasWage" />
+              <ButtonUI
+                v-else
+                variant="success"
+                size="sm"
+                :disabled="true"
+                data-test="submit-claim-disabled-button"
+              >
+                Submit Claim
+              </ButtonUI>
+            </div>
+          </div>
+          <div
+            role="alert"
+            class="alert alert-vertical sm:alert-horizontal"
+            v-if="selectWeekWeelyClaim && !selectWeekWeelyClaim.signature"
+          >
+            <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
+            <span>{{
+              selectWeekWeelyClaim?.weekStart === currentWeekStart
+                ? 'You cannot approve the current week claim, wait until the week is over'
+                : 'As the owner of the Cash Remuneration contract, you can approve this claim'
+            }}</span>
+            <div>
+              <CRSigne
+                v-if="selectWeekWeelyClaim.claims.length > 0"
+                :disabled="selectWeekWeelyClaim.weekStart === currentWeekStart"
+                :weekly-claim="selectWeekWeelyClaim"
+              />
+            </div>
+          </div>
 
+          <!-- <pre>{{ selectWeekWeelyClaim }}</pre> -->
+          <div
+            role="alert"
+            class="alert alert-vertical sm:alert-horizontal"
+            v-if="
+              selectWeekWeelyClaim &&
+              (selectWeekWeelyClaim.status == 'signed' ||
+                selectWeekWeelyClaim.status == 'withdrawn') &&
+              userStore.address === selectWeekWeelyClaim.wage.userAddress
+            "
+          >
+            <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
+            <span v-if="selectWeekWeelyClaim.status == 'withdrawn'"
+              >You have withdrawn your weekly claim.</span
+            >
+            <span v-else>Your weekly claim has been approved. You can now withdraw it.</span>
+            <div>
+              <CRWithdrawClaim
+                v-if="selectWeekWeelyClaim.claims.length > 0"
+                :disabled="selectWeekWeelyClaim.status == 'withdrawn'"
+                :weekly-claim="selectWeekWeelyClaim"
+              />
+            </div>
+          </div>
+        </div>
+      </CardComponent>
       <CardComponent title="" class="w-full">
         <div v-if="memberWeeklyClaims">
           <h2 class="pb-4">Weekly Claims: {{ selectedMonthObject.formatted }}</h2>
@@ -84,15 +184,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import weekday from 'dayjs/plugin/weekday'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { formatIsoWeekRange, getMonthWeeks, type Week } from '@/utils/dayUtils'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useTeamStore } from '@/stores'
+import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
 import WeeklyRecap from '@/components/WeeklyRecap.vue'
@@ -109,35 +208,70 @@ import {
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
+import { useTanstackQuery } from '@/composables'
+import type { Wage, WeeklyClaim } from '@/types'
+import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
+import CRSigne from '../CashRemunerationView/CRSigne.vue'
+import ButtonUI from '@/components/ButtonUI.vue'
+import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
+import { storeToRefs } from 'pinia'
+import AddressToolTip from '@/components/AddressToolTip.vue'
 
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 dayjs.extend(weekday)
 
-const route = useRoute()
-const teamStore = useTeamStore()
-const teamId = computed(() => teamStore.currentTeam?.id)
-const memberAddress = route.params.memberAddress as string | undefined
+const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 
-const weeklyClaimUrl = computed(
-  () => `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress}`
-)
-
-type WeeklyClaimResponse = {
-  weekStart: string
-  claims: {
-    dayWorked: string | Date
-    hoursWorked: number
-    memo?: string
-  }[]
-  hourlyRate: number
+const getColor = (weeklyClaim?: WeeklyClaim) => {
+  if (!weeklyClaim) return 'accent'
+  if (weeklyClaim.status === 'pending') return 'primary'
+  if (weeklyClaim.status === 'signed') return 'warning'
+  if (weeklyClaim.status === 'withdrawn') return 'info'
+  return 'accent'
 }
 
-const { data: memberWeeklyClaims } = useCustomFetch(weeklyClaimUrl, {
-  immediate: true,
-  refetch: true
-}).json<Array<WeeklyClaimResponse>>()
+const route = useRoute()
+const teamStore = useTeamStore()
+const userStore = useUserDataStore()
+const toastStore = useToastStore()
+const { imageUrl, name, address } = storeToRefs(userStore)
+const teamId = computed(() => teamStore.currentTeam?.id)
+const memberAddress = computed(() => route.params.memberAddress as string | undefined)
+
+const weeklyClaimQueryKey = computed(() => [
+  'weekly-claims',
+  teamId.value,
+  memberAddress.value || userStore.address
+])
+const weeklyClaimURL = computed(
+  () =>
+    `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress.value || userStore.address}`
+)
+const { data: memberWeeklyClaims } = useTanstackQuery<Array<WeeklyClaim>>(
+  weeklyClaimQueryKey,
+  weeklyClaimURL
+)
+
+const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeam?.id])
+const { data: teamWageData, error: teamWageDataError } = useTanstackQuery<Array<Wage>>(
+  teamWageQueryKey,
+  computed(() => `/wage/?teamId=${teamStore.currentTeam?.id}`)
+)
+
+const hasWage = computed(() => {
+  const userWage = teamWageData.value?.find((wage) => wage.userAddress === userStore.address)
+  if (!userWage) return false
+
+  return true
+})
+
+watch(teamWageDataError, (newVal) => {
+  if (newVal) {
+    toastStore.addErrorToast('Failed to fetch user wage data')
+  }
+})
 
 const selectedMonthObject = ref<Week>({
   year: dayjs().utc().year(),

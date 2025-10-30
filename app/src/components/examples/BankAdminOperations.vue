@@ -5,9 +5,6 @@
     <!-- Pause/Unpause Contract -->
     <BankPauseOperation />
 
-    <!-- Change Tips Address -->
-    <BankChangeTipsAddressOperation />
-
     <!-- Transfer Ownership -->
     <BankTransferOwnershipOperation />
   </div>
@@ -15,6 +12,5 @@
 
 <script setup lang="ts">
 import BankPauseOperation from '@/components/examples/admin/BankPauseOperation.vue'
-import BankChangeTipsAddressOperation from '@/components/examples/admin/BankChangeTipsAddressOperation.vue'
 import BankTransferOwnershipOperation from '@/components/examples/admin/BankTransferOwnershipOperation.vue'
 </script>

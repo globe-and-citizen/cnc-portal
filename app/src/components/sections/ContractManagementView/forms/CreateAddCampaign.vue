@@ -68,15 +68,14 @@ import { useDeployContract } from '@/composables/useContractFunctions'
 import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
-import AdCampaignAbi from '@/artifacts/abi/AdCampaignManager.json'
+import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
-import type { Abi, Hex } from 'viem'
+import type { Hex } from 'viem'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 
 const emit = defineEmits(['closeAddCampaignModal'])
 const { addErrorToast, addSuccessToast } = useToastStore()
 
-const campaignAbi = AdCampaignAbi as Abi
 const campaignBytecode = CAMPAIGN_BYTECODE as Hex
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
@@ -98,32 +97,40 @@ const {
   isDeploying: loading,
   contractAddress,
   error: deployError
-} = useDeployContract(campaignAbi, campaignBytecode)
+} = useDeployContract(AD_CAMPAIGN_MANAGER_ABI, campaignBytecode)
 
 watch(contractAddress, async (newAddress) => {
   if (newAddress && teamStore.currentTeam) {
-    addSuccessToast(`Contract deployed successfully`)
-    emit('closeAddCampaignModal')
-    await addContractToTeam(teamStore.currentTeam.id, newAddress, userDataStore.address)
-    await teamStore.fetchTeam(teamStore.currentTeam.id)
+    try {
+      // First try to add contract to team
+      await addContractToTeam(teamStore.currentTeam.id, newAddress, userDataStore.address)
+      await teamStore.fetchTeam(teamStore.currentTeam.id)
+
+      // Only show success and close modal if everything succeeds
+      addSuccessToast(`Contract deployed and added to team successfully`)
+      emit('closeAddCampaignModal')
+    } catch (error) {
+      console.error('Failed to add contract to team:', error)
+      addErrorToast('Contract deployed but failed to add to team. Please try again.')
+    }
   }
 })
 
 const addContractToTeam = async (teamId: string, address: string, deployer: string) => {
-  try {
-    await useCustomFetch(`contract`)
-      .post({
-        teamId,
-        contractAddress: address,
-        contractType: 'Campaign',
-        deployer
-      })
-      .json()
-    addSuccessToast(`Contract added to team  successfully`)
-  } catch (error) {
-    console.error(`Failed to add contract to team `, error)
-    addErrorToast('Failed to add contract to team')
+  const response = await useCustomFetch(`contract`)
+    .post({
+      teamId,
+      contractAddress: address,
+      contractType: 'Campaign',
+      deployer
+    })
+    .json()
+
+  if (!response) {
+    throw new Error('No response from server')
   }
+
+  return response
 }
 
 // Trigger deployment

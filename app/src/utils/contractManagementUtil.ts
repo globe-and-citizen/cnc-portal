@@ -1,7 +1,6 @@
 import type { Action, ActionResponse, TeamContract, User } from '@/types'
 import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
-import { type Abi } from 'viem'
 import { log, parseError } from '@/utils'
 import { EXPENSE_ACCOUNT_EIP712_ABI as ExpenseAccountAbi } from '@/artifacts/abi/expense-account-eip712'
 import { BANK_ABI as BankAbi } from '@/artifacts/abi/bank'
@@ -19,8 +18,15 @@ export type FormattedAction = (Action & {
   description: string
 })[]
 
-export const getUser = (address: string, members: User[], bodAddress = ''): User => {
-  if (address === bodAddress) return { name: 'Board of Directors', address }
+export const getUser = (
+  address: string,
+  members: User[],
+  bodAddress = '',
+  teamContracts?: TeamContract[]
+): User => {
+  const teamContract = teamContracts?.find((c) => c.address === address)
+  if (teamContracts && teamContract) return { name: teamContract.type, address: address }
+  else if (address === bodAddress) return { name: 'Board of Directors', address }
   else
     return (
       members.find((member) => member.address === address) || {
@@ -59,13 +65,13 @@ export const getTeamContracts = async (contracts: TeamContract[]) => {
           }
           const owner = await readContract(config, {
             address: contract.address,
-            abi: contract.abi as Abi,
+            abi: contract.abi,
             functionName: 'owner'
           })
 
           const paused = await readContract(config, {
             address: contract.address,
-            abi: contract.abi as Abi,
+            abi: contract.abi,
             functionName: 'paused'
           })
 
@@ -92,7 +98,7 @@ const contractsWithAbis = (contracts: TeamContract[]) => {
         return { ...contract, abi: ElectionsAbi }
       case 'ExpenseAccountEIP712':
         return { ...contract, abi: ExpenseAccountAbi }
-      case 'InvestorsV1':
+      case 'InvestorV1':
         return { ...contract, abi: InvestorsAbi }
       case 'Proposals':
         return { ...contract, abi: ProposalsAbi }

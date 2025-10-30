@@ -1,15 +1,15 @@
-import { Request, Response } from "express";
-import { prisma, errorResponse, getMondayStart } from "../utils";
+import { Request, Response } from 'express';
+import { prisma, errorResponse, getMondayStart } from '../utils';
 // import { errorResponse } from "../utils/utils";
-import { Prisma } from "@prisma/client";
-import { isHex } from "viem";
-import { isCashRemunerationOwner } from "../utils/cashRemunerationUtil";
+import { Prisma } from '@prisma/client';
+import { isHex } from 'viem';
+import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
 
-export type WeeklyClaimAction = "sign" | "withdraw";
-type statusType = "pending" | "signed" | "withdrawn";
+export type WeeklyClaimAction = 'sign' | 'withdraw';
+type statusType = 'pending' | 'signed' | 'withdrawn';
 
 function isValidWeeklyClaimAction(action: any): action is WeeklyClaimAction {
-  return ["sign", "withdraw", "pending"].includes(action);
+  return ['sign', 'withdraw', 'pending'].includes(action);
 }
 
 export const updateWeeklyClaims = async (req: Request, res: Response) => {
@@ -21,15 +21,15 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   // Validation stricte des actions autorisées
   const errors: string[] = [];
   if (!action || !isValidWeeklyClaimAction(action))
-    errors.push("Invalid action. Allowed actions are: sign, withdraw");
+    errors.push('Invalid action. Allowed actions are: sign, withdraw');
 
-  if (action == "sign" && (!signature || !isHex(signature)))
-    errors.push("Missing or invalid signature");
+  if (action == 'sign' && (!signature || !isHex(signature)))
+    errors.push('Missing or invalid signature');
 
-  if (!id || isNaN(id)) errors.push("Missing or invalid id");
+  if (!id || isNaN(id)) errors.push('Missing or invalid id');
 
   if (errors.length > 0) {
-    return errorResponse(400, errors.join("; "), res);
+    return errorResponse(400, errors.join('; '), res);
   }
 
   let data: Prisma.WeeklyClaimUpdateInput = {};
@@ -47,11 +47,11 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
     });
 
     if (!weeklyClaim) {
-      return errorResponse(404, "WeeklyClaim not found", res);
+      return errorResponse(404, 'WeeklyClaim not found', res);
     }
 
     switch (action) {
-      case "sign":
+      case 'sign':
         const signErrors: string[] = [];
 
         // Check if the caller is the Cash Remuneration owner
@@ -61,53 +61,43 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         );
 
         // If not Cash Remuneration owner, check if they're the team owner
-        if (
-          !isCallerCashRemunOwner &&
-          weeklyClaim.wage.team.ownerAddress !== callerAddress
-        )
-          signErrors.push(
-            "Caller is not the Cash Remuneration owner or the team owner"
-          );
+        if (!isCallerCashRemunOwner && weeklyClaim.wage.team.ownerAddress !== callerAddress)
+          signErrors.push('Caller is not the Cash Remuneration owner or the team owner');
 
         // Check if the week is completed
-        if (
-          weeklyClaim.weekStart.getTime() >=
-          getMondayStart(new Date()).getTime()
-        ) {
-          signErrors.push("Week not yet completed");
+        if (weeklyClaim.weekStart.getTime() >= getMondayStart(new Date()).getTime()) {
+          signErrors.push('Week not yet completed');
         }
         // check if the weekly claim is already signed or withdrawn
-        if (weeklyClaim.status !== "pending") {
+        if (weeklyClaim.status !== 'pending') {
           if (
-            weeklyClaim.status === "signed" &&
+            weeklyClaim.status === 'signed' &&
             callerAddress ===
-              (typeof weeklyClaim.data === "object" && weeklyClaim.data !== null
-                ? (weeklyClaim.data as { [key: string]: any })["ownerAddress"]
-                : undefined)
+            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
+              ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
+              : undefined)
           ) {
-            signErrors.push("Weekly claim already signed");
-          } else if (weeklyClaim.status === "withdrawn") {
-            signErrors.push("Weekly claim already withdrawn");
+            signErrors.push('Weekly claim already signed');
+          } else if (weeklyClaim.status === 'withdrawn') {
+            signErrors.push('Weekly claim already withdrawn');
           }
         }
 
-        if (signErrors.length > 0)
-          return errorResponse(400, signErrors.join("; "), res);
+        if (signErrors.length > 0) return errorResponse(400, signErrors.join('; '), res);
 
-        data = { signature, status: "signed", data: message };
+        data = { signature, status: 'signed', data: message };
         // singleClaimStatus = "signed";
         break;
-      case "withdraw":
+      case 'withdraw':
         // Check if the weekly claim is already signed
-        if (weeklyClaim.status !== "signed") {
-          let withdrawErrorMsg =
-            "Weekly claim must be signed before it can be withdrawn";
-          if (weeklyClaim.status === "withdrawn") {
-            withdrawErrorMsg = "Weekly claim already withdrawn";
+        if (weeklyClaim.status !== 'signed') {
+          let withdrawErrorMsg = 'Weekly claim must be signed before it can be withdrawn';
+          if (weeklyClaim.status === 'withdrawn') {
+            withdrawErrorMsg = 'Weekly claim already withdrawn';
           }
           return errorResponse(400, withdrawErrorMsg, res);
         }
-        data = { status: "withdrawn" };
+        data = { status: 'withdrawn' };
         // singleClaimStatus = "withdrawn";
         break;
     }
@@ -136,7 +126,7 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   const status = req.query.status as string;
 
   if (!teamId || isNaN(teamId)) {
-    return errorResponse(400, "Missing or invalid teamId", res);
+    return errorResponse(400, 'Missing or invalid teamId', res);
   }
 
   let memberAddressFilter: Prisma.WeeklyClaimWhereInput = {};
@@ -148,18 +138,10 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
 
   let statusFilter: Prisma.WeeklyClaimWhereInput = {};
   if (status) {
-    if (
-      (["pending", "signed", "withdrawn"] as statusType[]).includes(
-        status as statusType
-      )
-    ) {
+    if ((['pending', 'signed', 'withdrawn'] as statusType[]).includes(status as statusType)) {
       statusFilter = { status };
     } else {
-      return errorResponse(
-        400,
-        "Invalid status. Allowed status are: sign, withdraw, pending",
-        res
-      );
+      return errorResponse(400, 'Invalid status. Allowed status are: sign, withdraw, pending', res);
     }
   }
 
@@ -188,12 +170,24 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
           },
         },
       },
-      orderBy: { weekStart: "asc" },
+      orderBy: { weekStart: 'asc' },
     });
 
-    return res.status(200).json(weeklyClaims);
+    const weeklyClaimsWithHours = weeklyClaims.map((wc) => {
+      const hoursWorked = wc.claims.reduce((sum, claim) => {
+        const h = claim.hoursWorked ?? 0;
+        return sum + h;
+      }, 0);
+
+      return {
+        ...wc,
+        hoursWorked,
+      };
+    });
+
+    return res.status(200).json(weeklyClaimsWithHours);
   } catch (error) {
     console.error(error);
-    return errorResponse(500, "Internal Server Error", res);
+    return errorResponse(500, 'Internal Server Error', res);
   }
 };

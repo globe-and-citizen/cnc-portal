@@ -1,24 +1,24 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 
-import { Address } from "viem";
-import { errorResponse } from "../utils/utils";
-import { prisma } from "../utils";
-import { Wage } from "@prisma/client";
+import { Address } from 'viem';
+import { errorResponse } from '../utils/utils';
+import { prisma } from '../utils';
+import { Wage } from '@prisma/client';
 
 type wageBodyRequest = Pick<
   Wage,
-  | "teamId"
-  | "userAddress"
+  | 'teamId'
+  | 'userAddress'
   // | "cashRatePerHour"
   // | "tokenRatePerHour"
-  | "maximumHoursPerWeek"
-  | "ratePerHour"
+  | 'maximumHoursPerWeek'
+  | 'ratePerHour'
   // | "usdcRatePerHour"
 > & {
   ratePerHour: Array<{
     type: string;
     amount: number;
-  }>
+  }>;
 };
 export const setWage = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
@@ -32,7 +32,7 @@ export const setWage = async (req: Request, res: Response) => {
   // const usdcRatePerHour = Number(body.usdcRatePerHour);
   let ratePerHour = body.ratePerHour;
 
-  console.log("setWage called with body: ", body);
+  console.log('setWage called with body: ', body);
 
   ratePerHour = ratePerHour?.map((rate) => ({
     type: rate.type,
@@ -42,7 +42,7 @@ export const setWage = async (req: Request, res: Response) => {
   try {
     // Check if the caller is the owner of the team
     if (!(await isOwnerOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, "Caller is not the owner of the team", res);
+      return errorResponse(403, 'Caller is not the owner of the team', res);
     }
 
     // Check if the user has a current wage
@@ -85,7 +85,7 @@ export const setWage = async (req: Request, res: Response) => {
 
       // This should not be possible, but if it is, return an error
       if (wages.length > 0) {
-        return errorResponse(500, "User has a wage not chained", res);
+        return errorResponse(500, 'User has a wage not chained', res);
       }
 
       // Create first wage
@@ -97,14 +97,14 @@ export const setWage = async (req: Request, res: Response) => {
           // tokenRatePerHour,
           maximumHoursPerWeek,
           // usdcRatePerHour
-          ratePerHour
+          ratePerHour,
         },
       });
       res.status(201).json(createdWage);
     }
   } catch (error) {
-    console.log("Error: ", error);
-    return errorResponse(500, "Internal server error", res);
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
   }
 };
 // /wage/?teamId=teamId
@@ -119,7 +119,7 @@ export const getWages = async (req: Request, res: Response) => {
   try {
     // check if the member is part of the provided team
     if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, "Member is not a team member", res);
+      return errorResponse(403, 'Member is not a team member', res);
     }
     const wages = await prisma.wage.findMany({
       where: {
@@ -137,8 +137,8 @@ export const getWages = async (req: Request, res: Response) => {
 
     return res.status(200).json(wages);
   } catch (error) {
-    console.log("Error: ", error);
-    return errorResponse(500, "Internal server error", res);
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
   }
 };
 

@@ -1,9 +1,9 @@
-import { Request, Response } from "express";
-import { generateNonce, SiweMessage } from "siwe";
-import jwt from "jsonwebtoken";
-import { errorResponse, extractAddressAndNonce } from "../utils/utils";
-import { prisma } from "../utils";
-import { faker } from "@faker-js/faker";
+import { Request, Response } from 'express';
+import { generateNonce, SiweMessage } from 'siwe';
+import jwt from 'jsonwebtoken';
+import { errorResponse, extractAddressAndNonce } from '../utils/utils';
+import { prisma } from '../utils';
+// import { faker } from '@faker-js/faker';
 
 export const authenticateSiwe = async (req: Request, res: Response) => {
   try {
@@ -31,7 +31,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     //Update nonce for user and persist in database
     nonce = generateNonce();
 
-    console.log("user: ", user);
+    console.log('user: ', user);
     if (user)
       await prisma.user.update({
         where: { address },
@@ -42,14 +42,16 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
         data: {
           address,
           nonce,
-          name: faker.person.firstName(),
-          imageUrl: faker.image.avatar(),
+          // name: faker.person.firstName(),
+          // imageUrl: faker.image.avatar(),
+          name: 'User',
+          imageUrl: `https://api.dicebear.com/9.x/bottts/svg?seed=${address}`,
         },
       });
 
     //Create JWT for the user and send to the fron-end
     const secretKey = process.env.SECRET_KEY as string;
-    const accessToken = jwt.sign({ address }, secretKey, { expiresIn: "24h" });
+    const accessToken = jwt.sign({ address }, secretKey, { expiresIn: '24h' });
 
     return res.status(200).json({
       accessToken,
@@ -61,7 +63,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
 
 export const authenticateToken = (req: Request, res: Response) => {
   if (!(req as any).address) {
-    return errorResponse(401, "Unauthorized: Missing jwt payload", res);
+    return errorResponse(401, 'Unauthorized: Missing jwt payload', res);
   }
 
   return res.status(200).json({});
