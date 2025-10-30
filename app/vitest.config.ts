@@ -22,7 +22,7 @@ export default defineConfig((env) =>
           : false
       },
       env: {
-        VITE_APP_NETWORK_ALIAS: "sepolia"
+        VITE_APP_NETWORK_ALIAS: 'sepolia'
       }
     }
   })
