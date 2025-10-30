@@ -38,6 +38,9 @@ export function setupApp() {
   app.provide(DefaultApolloClient, apolloClient)
 
   app.component('VueDatePicker', VueDatePicker)
+  // Initialize single-tab guard after app mount
+
+  useTabGuardStore().init()
 
   // Initialize Sentry for error tracking
   Sentry.init({
@@ -71,7 +74,6 @@ export function setupApp() {
     replaysOnErrorSampleRate: 0.1 // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
   })
 
-  useTabGuardStore()
   return app
 }
 

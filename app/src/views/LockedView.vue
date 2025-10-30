@@ -5,7 +5,7 @@
       <p class="text-gray-600 mb-4">You already have this application open in another tab.</p>
       <p class="text-sm text-gray-500 mb-6">
         Close the other tab to continue.<br />
-        <span v-if="isWaiting" class="text-blue-600 font-medium">Waiting for unlock...</span>
+        <span class="text-blue-600 font-medium">Waiting for unlock...</span>
       </p>
     </div>
 
@@ -14,11 +14,3 @@
     </p>
   </div>
 </template>
-
-<script setup lang="ts">
-import { computed } from 'vue'
-import { useTabGuardStore } from '@/stores/useTabGuardStore'
-
-const tabGuard = useTabGuardStore()
-const isWaiting = computed(() => !tabGuard.isActiveTab)
-</script>
