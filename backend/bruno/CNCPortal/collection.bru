@@ -1,0 +1,9 @@
+script:pre-request {
+  // This script runs before every request in the collection
+  const testAddress = bru.getEnvVar('testAddress');
+
+  // Only set testAddress if not already set
+  if (!testAddress) {
+    bru.setEnvVar('testAddress', '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
+  }
+}

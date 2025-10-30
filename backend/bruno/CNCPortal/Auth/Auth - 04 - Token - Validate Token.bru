@@ -1,0 +1,21 @@
+meta {
+  name: Auth - 04 - Token - Validate Token
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{host}}/auth/token
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("should return 200 status for valid token", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

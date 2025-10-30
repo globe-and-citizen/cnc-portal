@@ -20,6 +20,9 @@ export default defineConfig((env) =>
         enabled: process.env.VITE_ENABLE_COVERAGE
           ? (process.env.VITE_ENABLE_COVERAGE as unknown as boolean)
           : false
+      },
+      env: {
+        VITE_APP_NETWORK_ALIAS: 'sepolia'
       }
     }
   })

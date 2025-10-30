@@ -8,6 +8,7 @@ import InvestorsSection from '@/components/sections/SherTokenView/InvestorsSecti
 import { useTeamStore } from '@/stores/teamStore'
 import { ref, onMounted, computed } from 'vue'
 import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+
 const teamStore = useTeamStore()
 const team = ref(teamStore.currentTeam)
 

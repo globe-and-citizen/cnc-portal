@@ -1,0 +1,53 @@
+meta {
+  name: Auth - 09 - Edge Case - SIWE - SQL Injection Attempt
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{host}}/auth/siwe
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "message": "localhost wants you to sign in with your Ethereum account:\n0x'; DROP TABLE users; --\n\nI accept the MetaMask Terms of Service: https://community.metamask.io/tos\n\nURI: http://localhost:3000\nVersion: 1\nChain ID: 1\nNonce: test123\nIssued At: 2025-10-30T08:00:00.000Z",
+    "signature": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234"
+  }
+}
+
+tests {
+  test("should handle SQL injection attempt safely", function() {
+    // Should return 400 (validation) or 401 (authentication error), not 500
+    const status = res.getStatus();
+    expect([400, 401]).to.include(status);
+  });
+
+  test("should return safe error message for malicious input", function() {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message.length).to.be.greaterThan(0);
+    
+    // Should indicate authentication/validation failure
+    const message = res.body.message.toLowerCase();
+    const hasSafeError = message.includes('invalid') || 
+                        message.includes('authentication') || 
+                        message.includes('verification') ||
+                        message.includes('signature');
+    
+    expect(hasSafeError).to.be.true;
+  });
+
+  test("should not expose SQL injection vulnerabilities", function() {
+    // Should not contain SQL error messages or database information
+    expect(res.body.message).to.not.contain("SQL");
+    expect(res.body.message).to.not.contain("database");
+    expect(res.body.message).to.not.contain("table");
+    expect(res.body.message).to.not.contain("DROP");
+    expect(res.body.message).to.not.contain("INSERT");
+    expect(res.body.message).to.not.contain("SELECT");
+    
+    // Should not indicate server errors
+    expect(res.getStatus()).to.not.equal(500);
+  });
+}
