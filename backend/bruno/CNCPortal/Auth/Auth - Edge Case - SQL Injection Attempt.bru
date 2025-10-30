@@ -1,0 +1,31 @@
+meta {
+  name: Auth - Edge Case - SQL Injection Attempt
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{host}}/auth/siwe
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "message": "localhost wants you to sign in with your Ethereum account:\n0x'; DROP TABLE users; --\n\nI accept the MetaMask Terms of Service: https://community.metamask.io/tos\n\nURI: http://localhost:3000\nVersion: 1\nChain ID: 1\nNonce: test123\nIssued At: 2025-10-30T08:00:00.000Z",
+    "signature": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234"
+  }
+}
+
+tests {
+  test("should handle SQL injection attempt safely", function() {
+    // Should return 400 (validation) or 401 (authentication error), not 500
+    const status = res.getStatus();
+    expect([400, 401]).to.include(status);
+  });
+
+  test("should handle malicious input safely", function() {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message.length).to.be.greaterThan(0);
+  });
+}

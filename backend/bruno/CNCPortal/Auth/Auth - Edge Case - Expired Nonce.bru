@@ -1,0 +1,31 @@
+meta {
+  name: Auth - Edge Case - Expired Nonce
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{host}}/auth/siwe
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "message": "localhost wants you to sign in with your Ethereum account:\n0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\n\nI accept the MetaMask Terms of Service: https://community.metamask.io/tos\n\nURI: http://localhost:3000\nVersion: 1\nChain ID: 1\nNonce: expired-or-invalid-nonce-12345\nIssued At: 2025-10-30T08:00:00.000Z",
+    "signature": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234"
+  }
+}
+
+tests {
+  test("should reject expired/invalid nonce", function() {
+    // Should return 400 (validation) or 401 (authentication error)
+    const status = res.getStatus();
+    expect([400, 401]).to.include(status);
+  });
+
+  test("should return authentication error", function() {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message.length).to.be.greaterThan(0);
+  });
+}

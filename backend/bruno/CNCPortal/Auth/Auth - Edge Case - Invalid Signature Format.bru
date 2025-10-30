@@ -1,0 +1,30 @@
+meta {
+  name: Auth - Edge Case - Invalid Signature Format
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{host}}/auth/siwe
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "message": "localhost wants you to sign in with your Ethereum account:\n0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\n\nI accept the MetaMask Terms of Service: https://community.metamask.io/tos\n\nURI: http://localhost:3000\nVersion: 1\nChain ID: 1\nNonce: test123\nIssued At: 2025-10-30T00:00:00.000Z",
+    "signature": "invalid-signature-format"
+  }
+}
+
+tests {
+  test("should return 400 or 401 status for invalid signature format", function() {
+    const status = res.getStatus();
+    expect([400, 401]).to.include(status);
+  });
+
+  test("should return error message", function() {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message.length).to.be.greaterThan(0);
+  });
+}

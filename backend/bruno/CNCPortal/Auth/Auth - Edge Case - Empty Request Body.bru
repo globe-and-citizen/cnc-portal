@@ -1,0 +1,25 @@
+meta {
+  name: Auth - Edge Case - Empty Request Body
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{host}}/auth/siwe
+  body: json
+  auth: none
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test("should return 400 status for empty body", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("should return validation error", function() {
+    expect(res.body.message).to.contain("Invalid request body");
+  });
+}

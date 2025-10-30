@@ -1,0 +1,28 @@
+meta {
+  name: Auth - Edge Case - Missing Message
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{host}}/auth/siwe
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "signature": "0x1234567890abcdef"
+  }
+}
+
+tests {
+  test("should return 400 status for missing message", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("should return validation error", function() {
+    expect(res.body.message).to.contain("Invalid request body");
+    expect(res.body.message).to.contain("SIWE message is required");
+  });
+}

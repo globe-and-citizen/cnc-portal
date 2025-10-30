@@ -1,0 +1,30 @@
+meta {
+  name: Auth - Edge Case - Malformed SIWE Message
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{host}}/auth/siwe
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "message": "This is not a valid SIWE message format at all",
+    "signature": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234"
+  }
+}
+
+tests {
+  test("should return 400 or 401 status for malformed SIWE message", function() {
+    const status = res.getStatus();
+    expect([400, 401]).to.include(status);
+  });
+
+  test("should return error message", function() {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message.length).to.be.greaterThan(0);
+  });
+}

@@ -1,0 +1,38 @@
+meta {
+  name: Auth - Edge Case - Wrong Signature for Message
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{host}}/auth/siwe
+  body: json
+  auth: none
+}
+
+script:pre-request {
+  // Get a fresh nonce first
+  const nonce = bru.getVar("userNonce") || "test123";
+  console.log("Using nonce for wrong signature test:", nonce);
+  bru.setVar("testNonce", nonce);
+}
+
+body:json {
+  {
+    "message": "localhost wants you to sign in with your Ethereum account:\n0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\n\nI accept the MetaMask Terms of Service: https://community.metamask.io/tos\n\nURI: http://localhost:3000\nVersion: 1\nChain ID: 1\nNonce: {{testNonce}}\nIssued At: 2025-10-30T08:00:00.000Z",
+    "signature": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234"
+  }
+}
+
+tests {
+  test("should reject wrong signature", function() {
+    // Should return 400 (validation) or 401 (authentication error)
+    const status = res.getStatus();
+    expect([400, 401]).to.include(status);
+  });
+
+  test("should return authentication error", function() {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message.length).to.be.greaterThan(0);
+  });
+}

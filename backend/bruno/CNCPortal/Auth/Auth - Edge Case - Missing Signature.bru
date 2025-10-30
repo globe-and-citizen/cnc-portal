@@ -1,0 +1,28 @@
+meta {
+  name: Auth - Edge Case - Missing Signature
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{host}}/auth/siwe
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "message": "localhost wants you to sign in with your Ethereum account:\n0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\n\nI accept the MetaMask Terms of Service: https://community.metamask.io/tos\n\nURI: http://localhost:3000\nVersion: 1\nChain ID: 1\nNonce: test123\nIssued At: 2025-10-30T00:00:00.000Z"
+  }
+}
+
+tests {
+  test("should return 400 status for missing signature", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("should return validation error", function() {
+    expect(res.body.message).to.contain("Invalid request body");
+    expect(res.body.message).to.contain("signature");
+  });
+}
