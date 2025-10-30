@@ -7,14 +7,8 @@ import { faker } from "@faker-js/faker";
 
 export const authenticateSiwe = async (req: Request, res: Response) => {
   try {
-    //Get authentication and user data from request body
+    // Get validated authentication data from request body (validated by middleware)
     const { message, signature } = req.body;
-
-    //Check if authentication and user data exists
-    if (!message) return errorResponse(401, "Auth error: Missing message", res);
-
-    if (!signature)
-      return errorResponse(401, "Auth error: Missing signature", res);
 
     let { address, nonce } = extractAddressAndNonce(message);
 
