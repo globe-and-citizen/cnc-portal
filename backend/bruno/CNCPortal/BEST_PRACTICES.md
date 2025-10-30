@@ -1,5 +1,207 @@
 # Bruno API Testing - Best Practices Guide
 
+## Bruno Test File Naming Convention
+
+### Overview
+
+Our Bruno test files follow a structured naming convention to clearly differentiate between different types of tests and their purposes. This ensures consistency, maintainability, and easy navigation across our test suite.
+
+### Naming Format
+
+#### 1. **Production API Tests** (Main Functionality)
+
+```text
+[Domain] - [Seq] - [Endpoint] - [Action/Feature]
+```
+
+**Purpose**: Test the expected behavior of production API endpoints.
+
+**Examples:**
+
+```text
+Auth - 01 - Nonce - Get Nonce.bru
+Auth - 03 - SIWE - Login with SIWE.bru
+Auth - 04 - Token - Validate Token.bru
+Auth - 05 - Protected - Test Protected Route.bru
+
+Team - 01 - Team - Create Team.bru
+Team - 02 - Members - Add Member.bru
+Team - 03 - Team - Get Team Details.bru
+
+Claim - 01 - Claims - Submit Claim.bru
+Claim - 02 - Claims - Approve Claim.bru
+Claim - 03 - Claims - Get Claims History.bru
+```
+
+#### 2. **Dev Helper Tests** (Complex Operations Support)
+
+```text
+[Domain] - [Seq] - Dev Helper - [Operation] - [Description]
+```
+
+**Purpose**: Call development endpoints to perform complex operations that cannot be executed in Bruno pre-request scripts due to runtime limitations.
+
+**Examples:**
+
+```text
+Auth - 02 - Dev Helper - SIWE - Generate SIWE Signature.bru
+Auth - 06 - Dev Helper - JWT - Create JWT Token.bru
+Auth - 07 - Dev Helper - Transaction - Sign Transaction.bru
+
+Team - 04 - Dev Helper - Data - Generate Team Data.bru
+Team - 05 - Dev Helper - Members - Create Mock Members.bru
+
+Claim - 04 - Dev Helper - Signature - Generate Claim Signature.bru
+Claim - 05 - Dev Helper - Merkle - Calculate Merkle Proof.bru
+```
+
+#### 3. **Edge Case Tests** (Error & Invalid Scenarios)
+
+```text
+[Domain] - [Seq] - Edge Case - [Endpoint] - [Error Type]
+```
+
+**Purpose**: Test endpoint behavior with unexpected, invalid, or error-inducing requests.
+
+**Examples:**
+
+```text
+Auth - 08 - Edge Case - SIWE - Missing Message.bru
+Auth - 09 - Edge Case - SIWE - Invalid Signature.bru
+Auth - 10 - Edge Case - SIWE - Expired Nonce.bru
+Auth - 13 - Edge Case - Token - Invalid Token.bru
+Auth - 14 - Edge Case - Token - Missing Token.bru
+
+Team - 06 - Edge Case - Create - Missing Name.bru
+Team - 07 - Edge Case - Create - Invalid Owner.bru
+Team - 08 - Edge Case - Members - Duplicate Address.bru
+
+Claim - 06 - Edge Case - Submit - Invalid Hours.bru
+Claim - 07 - Edge Case - Submit - Missing Team.bru
+Claim - 08 - Edge Case - Approve - Unauthorized User.bru
+```
+
+### Directory Structure
+
+```
+bruno/CNCPortal/
+├── Auth/
+│   ├── Auth - 01 - Nonce - Get Nonce.bru
+│   ├── Auth - 02 - Dev Helper - SIWE - Generate SIWE Signature.bru
+│   ├── Auth - 03 - SIWE - Login with SIWE.bru
+│   ├── Auth - 04 - Token - Validate Token.bru
+│   ├── Auth - 05 - Protected - Test Protected Route.bru
+│   └── edge/
+│       ├── Auth - 08 - Edge Case - SIWE - Missing Message.bru
+│       ├── Auth - 09 - Edge Case - SIWE - Invalid Signature.bru
+│       ├── Auth - 10 - Edge Case - SIWE - Expired Nonce.bru
+│       ├── Auth - 13 - Edge Case - Token - Invalid Token.bru
+│       └── Auth - 14 - Edge Case - Token - Missing Token.bru
+├── Team/
+│   ├── Team - 01 - Team - Create Team.bru
+│   ├── Team - 02 - Members - Add Member.bru
+│   ├── Team - 03 - Team - Get Team Details.bru
+│   ├── Team - 04 - Dev Helper - Data - Generate Team Data.bru
+│   └── edge/
+│       ├── Team - 05 - Edge Case - Create - Missing Name.bru
+│       ├── Team - 06 - Edge Case - Create - Invalid Owner.bru
+│       └── Team - 07 - Edge Case - Members - Duplicate Address.bru
+└── Claim/
+    ├── Claim - 01 - Claims - Submit Claim.bru
+    ├── Claim - 02 - Claims - Approve Claim.bru
+    ├── Claim - 03 - Claims - Get Claims History.bru
+    ├── Claim - 04 - Dev Helper - Signature - Generate Claim Signature.bru
+    └── edge/
+        ├── Claim - 05 - Edge Case - Submit - Invalid Hours.bru
+        ├── Claim - 06 - Edge Case - Submit - Missing Team.bru
+        └── Claim - 07 - Edge Case - Approve - Unauthorized User.bru
+```
+
+### Naming Rules and Guidelines
+
+#### Sequence Numbers
+
+- Use 2-digit numbers with leading zeros (01, 02, 03...)
+- Production tests start from 01
+- Dev Helper tests use next available numbers
+- Edge cases continue the sequence or are grouped together
+- Edge cases in subfolders can have their own numbering
+
+#### Endpoint Names
+
+- Use clear, short endpoint identifiers
+- Match the actual API endpoint when possible
+- Examples: `Nonce`, `SIWE`, `Token`, `Protected`, `Team`, `Members`, `Claims`
+
+#### Action/Feature Names
+
+- Use descriptive action verbs
+- Keep names concise but clear
+- Examples: `Get Nonce`, `Login with SIWE`, `Validate Token`, `Create Team`
+
+#### Error Type Names (Edge Cases)
+
+- Describe the specific error condition
+- Be specific about what's wrong
+- Examples: `Missing Message`, `Invalid Signature`, `Expired Nonce`, `Unauthorized User`
+
+### Benefits of This Convention
+
+#### ✅ **Clear Test Categories**
+
+- Immediately identify test purpose from filename
+- Easy to distinguish between production tests, dev helpers, and edge cases
+- Consistent structure across all domains
+
+#### ✅ **Logical Organization**
+
+- Sequential numbering provides execution order
+- Endpoint names allow grouping by API functionality
+- Edge cases are clearly separated in subfolders
+
+#### ✅ **Maintainable Structure**
+
+- Easy to add new tests in appropriate sequence
+- Clear relationship between related tests
+- Scalable naming system
+
+#### ✅ **Better Navigation and Discovery**
+
+- Bruno's file listing becomes self-documenting
+- Quick identification of test coverage
+- Easy to find specific test types
+
+### Meta Tag Consistency
+
+Ensure the `meta.name` inside each file matches the filename:
+
+```bruno
+meta {
+  name: Auth - 02 - Dev Helper - SIWE - Generate SIWE Signature
+  type: http
+  seq: 2
+}
+```
+
+### Running Tests by Category
+
+```bash
+# Run all Auth tests (includes edge cases)
+npx bru run Auth --env CNCURI
+
+# Run only Auth edge cases
+npx bru run Auth/edge --env CNCURI
+
+# Run specific domain tests
+npx bru run Team --env CNCURI
+npx bru run Claim --env CNCURI
+
+# Run complete test suite
+npx bru run . --env CNCURI
+```
+
+---
+
 ## Handling Complex Script Operations
 
 ### Problem Statement
