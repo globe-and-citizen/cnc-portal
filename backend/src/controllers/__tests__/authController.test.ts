@@ -56,33 +56,37 @@ const createMockUser = (overrides: Partial<User> = {}): User => ({
 });
 
 // Test message templates
-const createSiweMessage = (address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266', nonce = VALID_NONCE) => 
+const createSiweMessage = (
+  address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+  nonce = VALID_NONCE
+) =>
   `localhost:5173 wants you to sign in with your Ethereum account:\n${address}\n\nSign in with Ethereum to the app.\n\nURI: http://localhost:5173\nVersion: 1\nChain ID: 1\nNonce: ${nonce}\nIssued At: 2024-12-18T11:57:47.715Z`;
 
-const VALID_SIGNATURE = '0x162ef821f3a9fbd0d38fcad0d6f19014d031767944fe8d686166f08ce4328eda3eace9c0d57fbb0fcdb276005a3429ed54e75f67f1b0049f55ba71b646775f9f1b';
+const VALID_SIGNATURE =
+  '0x162ef821f3a9fbd0d38fcad0d6f19014d031767944fe8d686166f08ce4328eda3eace9c0d57fbb0fcdb276005a3429ed54e75f67f1b0049f55ba71b646775f9f1b';
 
 // Common test scenarios for parameterized tests
 const invalidSiweScenarios = [
-  { 
-    body: {}, 
+  {
+    body: {},
     description: 'message and signature not set',
     expectedStatus: 400,
-    expectedMessage: 'Invalid request body'
+    expectedMessage: 'Invalid request body',
   },
-  { 
-    body: { message: createSiweMessage() }, 
+  {
+    body: { message: createSiweMessage() },
     description: 'signature not set',
     expectedStatus: 400,
-    expectedMessage: 'Invalid request body'
+    expectedMessage: 'Invalid request body',
   },
-  { 
-    body: { 
+  {
+    body: {
       message: createSiweMessage('0x70997970C51812dc3A010C7d01b50e0d17dc79C8'),
-      signature: VALID_SIGNATURE
-    }, 
+      signature: VALID_SIGNATURE,
+    },
     description: 'SIWE verification fails',
     expectedStatus: 401,
-    expectedMessage: 'Signature does not match address of the message.'
+    expectedMessage: 'Signature does not match address of the message.',
   },
 ];
 
@@ -90,7 +94,7 @@ const invalidTokenScenarios = [
   {
     headers: {},
     description: 'missing authorization header',
-    expectedMessage: 'Unauthorized: Missing authorization header'
+    expectedMessage: 'Unauthorized: Missing authorization header',
   },
   {
     headers: { Authorization: 'Bearer invalid-token' },
@@ -98,9 +102,11 @@ const invalidTokenScenarios = [
     // Status 401 but no specific message check needed
   },
   {
-    headers: { Authorization: `Bearer ${jwt.sign({}, process.env.SECRET_KEY || 'test-secret-key')}` },
+    headers: {
+      Authorization: `Bearer ${jwt.sign({}, process.env.SECRET_KEY || 'test-secret-key')}`,
+    },
     description: 'missing jwt payload address',
-    expectedMessage: 'Unauthorized: Missing jwt payload'
+    expectedMessage: 'Unauthorized: Missing jwt payload',
   },
 ];
 
@@ -194,9 +200,7 @@ describe('authController', () => {
         process.env.SECRET_KEY || 'test-secret-key'
       );
 
-      const response = await request(app)
-        .get('/token')
-        .set('Authorization', `Bearer ${testToken}`);
+      const response = await request(app).get('/token').set('Authorization', `Bearer ${testToken}`);
 
       expect(response.status).toBe(200);
     });
