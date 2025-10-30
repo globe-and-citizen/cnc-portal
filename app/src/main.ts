@@ -10,6 +10,7 @@ import apolloClient from './apollo-client'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import VueDatePicker from '@vuepic/vue-datepicker'
+import { useTabGuardStore } from '@/stores/useTabGuardStore'
 import * as Sentry from '@sentry/vue'
 
 export function setupApp() {
@@ -70,6 +71,7 @@ export function setupApp() {
     replaysOnErrorSampleRate: 0.1 // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
   })
 
+  useTabGuardStore()
   return app
 }
 
