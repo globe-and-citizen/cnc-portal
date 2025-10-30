@@ -35,8 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { Address } from 'viem'
+import { computed, ref } from 'vue'
 import CardComponent from '@/components/CardComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
@@ -46,9 +45,11 @@ import USDCIcon from '@/assets/usdc.png'
 import MaticIcon from '@/assets/matic-logo.png'
 const teamStore = useTeamStore()
 
-const { dividends, isLoading } = useContractBalance(
-  teamStore.getContractAddressByType('Bank') as Address
-)
+const bankAddress = teamStore.getContractAddressByType('Bank')
+
+const { dividends, isLoading } = bankAddress
+  ? useContractBalance(bankAddress)
+  : { dividends: ref([]), isLoading: ref(false) }
 
 // Columns config
 const columns = [
