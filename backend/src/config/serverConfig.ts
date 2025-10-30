@@ -18,6 +18,7 @@ import weeklyClaimRoutes from "../routes/weeklyClaimRoute";
 import expenseRoutes from "../routes/expenseRoute";
 import uploadRoute from "../routes/uploadRoute";
 import contractRoutes from "../routes/contractRoutes";
+import devRoutes from "../routes/devRoutes";
 //#endregion routing modules
 
 import { authorizeUser } from "../middleware/authMiddleware";
@@ -68,6 +69,7 @@ class Server {
       claim: "/api/claim/",
       upload: "/api/upload/",
       constract: "/api/contract/",
+      dev: "/api/dev/",
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -122,6 +124,13 @@ class Server {
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
+    
+    // Dev routes - only available in development mode
+    if (process.env.NODE_ENV === 'development') {
+      this.app.use(this.paths.dev, devRoutes);
+      console.log('🔧 Dev routes enabled for development environment');
+    }
+    
     this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     // The error handler must be registered before any other error middleware and after all controllers
     Sentry.setupExpressErrorHandler(this.app);
