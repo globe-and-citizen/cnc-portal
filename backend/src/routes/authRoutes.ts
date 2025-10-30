@@ -1,7 +1,7 @@
-import express from "express";
-import { authenticateSiwe, authenticateToken } from "../controllers/authController";
-import { authorizeUser } from "../middleware/authMiddleware";
-import { validateBody, siweAuthRequestSchema } from "../validation";
+import express from 'express';
+import { authenticateSiwe, authenticateToken } from '../controllers/authController';
+import { authorizeUser } from '../middleware/authMiddleware';
+import { validateBody, siweAuthRequestSchema } from '../validation';
 
 const authRoutes = express.Router();
 
@@ -63,7 +63,7 @@ const authRoutes = express.Router();
  *       500:
  *         description: Internal server error
  */
-authRoutes.post("/siwe", validateBody(siweAuthRequestSchema), authenticateSiwe);
+authRoutes.post('/siwe', validateBody(siweAuthRequestSchema), authenticateSiwe);
 
 /**
  * @openapi
@@ -78,6 +78,6 @@ authRoutes.post("/siwe", validateBody(siweAuthRequestSchema), authenticateSiwe);
  *       401:
  *         description: Token is invalid or missing
  */
-authRoutes.get("/token", authorizeUser, authenticateToken);
+authRoutes.get('/token', authorizeUser, authenticateToken);
 
 export default authRoutes;

@@ -115,9 +115,9 @@ Le chaînage utilise ces variables Bruno:
 Tous les scripts incluent du logging console détaillé:
 
 ```javascript
-console.log("Nonce captured:", res.body.nonce);
-console.log("SIWE message created");
-console.log("Access token captured for authenticated requests");
+console.log('Nonce captured:', res.body.nonce);
+console.log('SIWE message created');
+console.log('Access token captured for authenticated requests');
 ```
 
 ## Signature Mock
@@ -125,7 +125,7 @@ console.log("Access token captured for authenticated requests");
 Pour les tests, une signature Ethereum mock est utilisée:
 
 ```javascript
-const mockSignature = "0x" + "a1b2c3d4e5f6".repeat(21) + "1b";
+const mockSignature = '0x' + 'a1b2c3d4e5f6'.repeat(21) + '1b';
 ```
 
 En production, cette signature viendrait d'un wallet réel.

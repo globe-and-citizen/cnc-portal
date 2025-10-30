@@ -20,7 +20,7 @@ import expenseRoutes from '../routes/expenseRoute';
 import uploadRoute from '../routes/uploadRoute';
 import contractRoutes from '../routes/contractRoutes';
 import electionsRoute from '../routes/electionsRoute';
-import devRoutes from "../routes/devRoutes";
+import devRoutes from '../routes/devRoutes';
 
 //#endregion routing modules
 
@@ -70,7 +70,7 @@ class Server {
       upload: '/api/upload/',
       constract: '/api/contract/',
       elections: '/api/elections/',
-      dev: "/api/dev/",
+      dev: '/api/dev/',
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -118,14 +118,14 @@ class Server {
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
-    
+
     // Dev routes - only available in development mode
     if (process.env.NODE_ENV === 'development') {
       this.app.use(this.paths.dev, devRoutes);
       console.log('🔧 Dev routes enabled for development environment');
     }
-    
-    this.app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+    this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     this.app.use(this.paths.elections, authorizeUser, electionsRoute);
     this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     // The error handler must be registered before any other error middleware and after all controllers

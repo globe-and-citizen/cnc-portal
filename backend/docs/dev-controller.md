@@ -124,22 +124,22 @@ const generateTestSignature = async () => {
         domain: 'localhost',
         chainId: 1337,
         statement: 'Test authentication',
-        uri: 'http://localhost:3000'
+        uri: 'http://localhost:3000',
       },
-      privateKey: '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d'
-    })
+      privateKey: '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
+    }),
   });
 
   const result = await response.json();
-  
+
   if (result.success) {
     console.log('Generated SIWE message:', result.message);
     console.log('Signature:', result.signature);
-    
+
     // Use the message and signature for testing authentication
     return {
       message: result.message,
-      signature: result.signature
+      signature: result.signature,
     };
   } else {
     console.error('Error generating signature:', result.error);

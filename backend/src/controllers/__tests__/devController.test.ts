@@ -6,11 +6,11 @@ import server from '../../config/serverConfig';
 
 // Mock dependencies at the top level
 vi.mock('viem/accounts', () => ({
-  privateKeyToAccount: vi.fn()
+  privateKeyToAccount: vi.fn(),
 }));
 
 vi.mock('siwe', () => ({
-  SiweMessage: vi.fn()
+  SiweMessage: vi.fn(),
 }));
 
 describe('DevController', () => {
@@ -31,14 +31,12 @@ describe('DevController', () => {
     it('should return success when in development mode', async () => {
       process.env.NODE_ENV = 'development';
 
-      const response = await request(app)
-        .get('/api/dev/health')
-        .expect(200);
+      const response = await request(app).get('/api/dev/health').expect(200);
 
       expect(response.body).toMatchObject({
         success: true,
         message: 'Dev controller is available',
-        environment: 'development'
+        environment: 'development',
       });
       expect(response.body.timestamp).toBeDefined();
     });
@@ -46,14 +44,12 @@ describe('DevController', () => {
     it('should return 403 when not in development mode', async () => {
       process.env.NODE_ENV = 'production';
 
-      const response = await request(app)
-        .get('/api/dev/health')
-        .expect(403);
+      const response = await request(app).get('/api/dev/health').expect(403);
 
       expect(response.body).toMatchObject({
         success: false,
         error: 'Development endpoints are only available in development mode',
-        environment: 'production'
+        environment: 'production',
       });
     });
   });
@@ -65,10 +61,11 @@ describe('DevController', () => {
       domain: 'localhost',
       chainId: 1337,
       statement: 'Test statement',
-      uri: 'http://localhost:3000'
+      uri: 'http://localhost:3000',
     };
 
-    const validPrivateKey = '0x1234567890123456789012345678901234567890123456789012345678901234' as const;
+    const validPrivateKey =
+      '0x1234567890123456789012345678901234567890123456789012345678901234' as const;
 
     beforeEach(() => {
       process.env.NODE_ENV = 'development';
@@ -79,7 +76,7 @@ describe('DevController', () => {
 
       const requestBody = {
         messageParams: validMessageParams,
-        privateKey: validPrivateKey
+        privateKey: validPrivateKey,
       };
 
       const response = await request(app)
@@ -87,12 +84,14 @@ describe('DevController', () => {
         .send(requestBody)
         .expect(403);
 
-      expect(response.body.error).toBe('Development endpoints are only available in development mode');
+      expect(response.body.error).toBe(
+        'Development endpoints are only available in development mode'
+      );
     });
 
     it('should return 400 when messageParams is missing', async () => {
       const requestBody = {
-        privateKey: validPrivateKey
+        privateKey: validPrivateKey,
       };
 
       const response = await request(app)
@@ -105,7 +104,7 @@ describe('DevController', () => {
 
     it('should return 400 when privateKey is missing', async () => {
       const requestBody = {
-        messageParams: validMessageParams
+        messageParams: validMessageParams,
       };
 
       const response = await request(app)
@@ -124,7 +123,7 @@ describe('DevController', () => {
 
       const requestBody = {
         messageParams: incompleteParams,
-        privateKey: validPrivateKey
+        privateKey: validPrivateKey,
       };
 
       const response = await request(app)
@@ -132,13 +131,15 @@ describe('DevController', () => {
         .send(requestBody)
         .expect(400);
 
-      expect(response.body.error).toBe('Missing required fields in messageParams: nonce, address, domain, chainId');
+      expect(response.body.error).toBe(
+        'Missing required fields in messageParams: nonce, address, domain, chainId'
+      );
     });
 
     it('should return 400 when private key format is invalid', async () => {
       const requestBody = {
         messageParams: validMessageParams,
-        privateKey: '1234567890123456789012345678901234567890123456789012345678901234' // missing 0x prefix
+        privateKey: '1234567890123456789012345678901234567890123456789012345678901234', // missing 0x prefix
       };
 
       const response = await request(app)
@@ -152,12 +153,12 @@ describe('DevController', () => {
     it('should return 400 when address format is invalid', async () => {
       const invalidParams = {
         ...validMessageParams,
-        address: 'invalid-address' as const
+        address: 'invalid-address' as const,
       };
 
       const requestBody = {
         messageParams: invalidParams,
-        privateKey: validPrivateKey
+        privateKey: validPrivateKey,
       };
 
       const response = await request(app)

@@ -232,20 +232,20 @@ export const performComplexOperation = async (req: Request, res: Response) => {
     }
 
     const { inputData, parameters } = req.body;
-    
+
     // Perform complex operation (crypto, external APIs, etc.)
     const result = await complexCryptographicOperation(inputData, parameters);
-    
+
     res.json({
       success: true,
       result: result,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Dev endpoint error:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -274,7 +274,7 @@ script:pre-request {
   // Simple parameter preparation
   const inputData = bru.getEnvVar("inputData");
   const parameters = bru.getEnvVar("parameters");
-  
+
   console.log("Preparing complex operation...");
   bru.setVar("inputData", inputData);
   bru.setVar("parameters", parameters);
@@ -296,11 +296,11 @@ tests {
   test("should return success", function() {
     expect(res.body.success).to.equal(true);
   });
-  
+
   test("should return operation result", function() {
     expect(res.body.result).to.be.a('string');
   });
-  
+
   test("store result for next request", function() {
     bru.setVar("complexResult", res.body.result);
     console.log("Complex operation completed, result stored");
@@ -326,11 +326,11 @@ post {
 script:pre-request {
   // Verify the complex operation was completed
   const complexResult = bru.getVar("complexResult");
-  
+
   if (!complexResult) {
     throw new Error("Complex operation must be completed first. Please run 'Step 1' before this request.");
   }
-  
+
   console.log("Using result from complex operation");
 }
 
@@ -477,7 +477,7 @@ const { error, value } = schema.validate(req.body);
 if (error) {
   return res.status(400).json({
     success: false,
-    error: error.details[0].message
+    error: error.details[0].message,
   });
 }
 ```

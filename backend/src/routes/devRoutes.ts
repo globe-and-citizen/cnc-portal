@@ -1,5 +1,5 @@
-import express from "express";
-import { generateSiweSignature, devHealthCheck } from "../controllers/devController";
+import express from 'express';
+import { generateSiweSignature, devHealthCheck } from '../controllers/devController';
 
 const devRoutes = express.Router();
 
@@ -10,8 +10,8 @@ const devModeOnly = (req: express.Request, res: express.Response, next: express.
   if (process.env.NODE_ENV !== 'development') {
     return res.status(403).json({
       success: false,
-      error: "Development endpoints are only available in development mode",
-      environment: process.env.NODE_ENV || 'unknown'
+      error: 'Development endpoints are only available in development mode',
+      environment: process.env.NODE_ENV || 'unknown',
     });
   }
   next();
@@ -50,7 +50,7 @@ devRoutes.use(devModeOnly);
  *       403:
  *         description: Not available in production mode
  */
-devRoutes.get("/health", devHealthCheck);
+devRoutes.get('/health', devHealthCheck);
 
 /**
  * @swagger
@@ -143,6 +143,6 @@ devRoutes.get("/health", devHealthCheck);
  *       500:
  *         description: Internal server error
  */
-devRoutes.post("/generate-siwe-signature", generateSiweSignature);
+devRoutes.post('/generate-siwe-signature', generateSiweSignature);
 
 export default devRoutes;
