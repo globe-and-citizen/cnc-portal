@@ -30,7 +30,7 @@ script:pre-request {
   
   // Store parameters for the request body
   bru.setVar("requestAddress", address);
-  bru.setVar("requestDomain", domain.replace('localhost:', 'localhost')); // Remove port from domain for SIWE message
+  bru.setVar("requestDomain", domain.replace(':3000', '')); // Remove port from domain for SIWE message
   bru.setVar("requestChainId", chainId);
   bru.setVar("requestNonce", nonce);
   bru.setVar("requestPrivateKey", privateKey);

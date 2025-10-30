@@ -21,12 +21,27 @@ script:pre-request {
   
   console.log("Using SIWE signature from previous request");
   console.log("Message length:", siweMessage.length);
+  console.log("Raw message:", siweMessage);
   console.log("Signature:", siweSignature);
+  
+  // Escape newlines for JSON serialization
+  const escapedMessage = siweMessage.replace(/\n/g, '\\n');
+  console.log("Escaped message:", escapedMessage);
+  
+  // Store escaped version for use in body
+  bru.setVar("escapedSiweMessage", escapedMessage);
+  
+  // Debug: Try to create the request body
+  const requestBody = {
+    message: escapedMessage,
+    signature: siweSignature
+  };
+  console.log("Request body that will be sent:", JSON.stringify(requestBody, null, 2));
 }
 
 body:json {
   {
-    "message": "{{siweMessage}}",
+    "message": "{{escapedSiweMessage}}",
     "signature": "{{siweSignature}}"
   }
 }
