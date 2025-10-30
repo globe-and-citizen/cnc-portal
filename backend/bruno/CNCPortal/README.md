@@ -65,6 +65,7 @@ bruno/CNC Portal/
 ## Test Account
 
 Uses Hardhat's default test account:
+
 - **Address**: `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`
 - **Private Key**: `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80`
 
@@ -83,14 +84,17 @@ For CI/CD pipelines:
 ## Troubleshooting
 
 **Tests fail with 401 errors:**
+
 - Make sure the backend server is running
 - Run `npm run test:bruno:setup` to regenerate credentials
 
 **Server not running error:**
+
 - Start the backend: `npm start`
 - Check if port 3000 is available
 
 **Nonce expired:**
+
 - Bruno credentials expire after some time
 - Re-run the setup script or use `npm run test:bruno` (auto-regenerates)
 
@@ -102,6 +106,7 @@ For CI/CD pipelines:
 4. Add test assertions using Bruno's test syntax
 
 Example:
+
 ```javascript
 tests {
   test("should return 200 status", function() {
@@ -109,3 +114,7 @@ tests {
   });
 }
 ```
+
+## Best Practices
+
+For complex operations that cannot be performed directly in Bruno scripts (cryptographic operations, external API calls, etc.), see our [Best Practices Guide](./BEST_PRACTICES.md) which demonstrates the "Dev Endpoint Pattern" used in our SIWE authentication flow.
