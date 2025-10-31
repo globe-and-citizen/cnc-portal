@@ -2,6 +2,28 @@ import type { Abi } from 'viem'
 
 export const BANK_ABI = [
   {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'target',
+        type: 'address'
+      }
+    ],
+    name: 'AddressEmptyCode',
+    type: 'error'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'account',
+        type: 'address'
+      }
+    ],
+    name: 'AddressInsufficientBalance',
+    type: 'error'
+  },
+  {
     inputs: [],
     name: 'EnforcedPause',
     type: 'error'
@@ -9,6 +31,11 @@ export const BANK_ABI = [
   {
     inputs: [],
     name: 'ExpectedPause',
+    type: 'error'
+  },
+  {
+    inputs: [],
+    name: 'FailedInnerCall',
     type: 'error'
   },
   {

@@ -1,0 +1,47 @@
+meta {
+  name: Auth - 07 - Edge Case - SIWE - Invalid Content Type
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{host}}/auth/siwe
+  body: text
+  auth: none
+}
+
+headers {
+  Content-Type: text/plain
+}
+
+body:text {
+  This is not JSON
+}
+
+tests {
+  test("should return 400 status for invalid content type", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("should return content-type related error", function() {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message.length).to.be.greaterThan(0);
+    
+    // Should indicate JSON parsing or content type issue
+    const message = res.body.message.toLowerCase();
+    const hasContentError = message.includes('json') || 
+                           message.includes('content') || 
+                           message.includes('parse') ||
+                           message.includes('body') ||
+                           message.includes('format');
+    
+    expect(hasContentError).to.be.true;
+  });
+
+  test("should handle non-JSON content gracefully", function() {
+    // Should not contain internal parser error details
+    expect(res.body.message).to.not.contain("SyntaxError");
+    expect(res.body.message).to.not.contain("at JSON.parse");
+    expect(res.body.message).to.not.contain("position");
+  });
+}

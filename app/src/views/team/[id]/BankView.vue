@@ -14,6 +14,7 @@ import { computed, ref } from 'vue'
 import BankBalanceSection from '@/components/sections/BankView/BankBalanceSection.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+
 // import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
 import { useTeamStore } from '@/stores'
 

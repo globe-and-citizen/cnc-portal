@@ -2,6 +2,17 @@ import type { Abi } from 'viem'
 
 export const CASH_REMUNERATION_EIP712_ABI = [
   {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'account',
+        type: 'address'
+      }
+    ],
+    name: 'AddressInsufficientBalance',
+    type: 'error'
+  },
+  {
     inputs: [],
     name: 'ECDSAInvalidSignature',
     type: 'error'
@@ -40,23 +51,7 @@ export const CASH_REMUNERATION_EIP712_ABI = [
   },
   {
     inputs: [],
-    name: 'FailedCall',
-    type: 'error'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: 'balance',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'needed',
-        type: 'uint256'
-      }
-    ],
-    name: 'InsufficientBalance',
+    name: 'FailedInnerCall',
     type: 'error'
   },
   {
@@ -338,18 +333,31 @@ export const CASH_REMUNERATION_EIP712_ABI = [
     inputs: [
       {
         internalType: 'address',
-        name: 'owner',
+        name: '_owner',
         type: 'address'
       },
       {
         internalType: 'address[]',
-        name: 'tokenAddresses',
+        name: '_tokenAddresses',
         type: 'address[]'
       }
     ],
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'officerAddress',
+    outputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address'
+      }
+    ],
+    stateMutability: 'view',
     type: 'function'
   },
   {
@@ -420,6 +428,19 @@ export const CASH_REMUNERATION_EIP712_ABI = [
   {
     inputs: [],
     name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_officerAddress',
+        type: 'address'
+      }
+    ],
+    name: 'setOfficerAddress',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function'

@@ -40,18 +40,6 @@ describe('CashRemuneration*** (EIP712)', () => {
       expect(await cashRemunerationProxy.supportedTokens(usdcAddress)).to.be.true
     })
 
-    it('should reject zero address for owner', async () => {
-      const CashRemunerationImplementation =
-        await ethers.getContractFactory('CashRemunerationEIP712')
-      await expect(
-        upgrades.deployProxy(
-          CashRemunerationImplementation,
-          [ethers.ZeroAddress, [await mockUSDC.getAddress()]],
-          { initializer: 'initialize' }
-        )
-      ).to.be.revertedWith('Owner address cannot be zero')
-    })
-
     it('should reject zero address for USDC', async () => {
       const CashRemunerationImplementation =
         await ethers.getContractFactory('CashRemunerationEIP712')

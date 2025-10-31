@@ -3,17 +3,12 @@ import { generateNonce, SiweMessage } from 'siwe';
 import jwt from 'jsonwebtoken';
 import { errorResponse, extractAddressAndNonce } from '../utils/utils';
 import { prisma } from '../utils';
-import { faker } from '@faker-js/faker';
+// import { faker } from '@faker-js/faker';
 
 export const authenticateSiwe = async (req: Request, res: Response) => {
   try {
-    //Get authentication and user data from request body
+    // Get validated authentication data from request body (validated by middleware)
     const { message, signature } = req.body;
-
-    //Check if authentication and user data exists
-    if (!message) return errorResponse(401, 'Auth error: Missing message', res);
-
-    if (!signature) return errorResponse(401, 'Auth error: Missing signature', res);
 
     let { address, nonce } = extractAddressAndNonce(message);
 
@@ -47,8 +42,10 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
         data: {
           address,
           nonce,
-          name: faker.person.firstName(),
-          imageUrl: faker.image.avatar(),
+          // name: faker.person.firstName(),
+          // imageUrl: faker.image.avatar(),
+          name: 'User',
+          imageUrl: `https://api.dicebear.com/9.x/bottts/svg?seed=${address}`,
         },
       });
 

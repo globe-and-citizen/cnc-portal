@@ -1,0 +1,67 @@
+meta {
+  name: Auth - 03 - SIWE - Login with SIWE
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{host}}/auth/siwe
+  body: json
+  auth: none
+}
+
+script:pre-request {
+  // Verify that SIWE signature was generated in previous request
+  const siweMessage = bru.getVar("siweMessage");
+  const siweSignature = bru.getVar("siweSignature");
+  
+  if (!siweMessage || !siweSignature) {
+    throw new Error("SIWE message and signature must be generated first. Please run 'Auth - 2 - Generate SIWE Signature' before this request.");
+  }
+  
+  console.log("Using SIWE signature from previous request");
+  console.log("Message length:", siweMessage.length);
+  console.log("Raw message:", siweMessage);
+  console.log("Signature:", siweSignature);
+  
+  // Escape newlines for JSON serialization
+  const escapedMessage = siweMessage.replace(/\n/g, '\\n');
+  console.log("Escaped message:", escapedMessage);
+  
+  // Store escaped version for use in body
+  bru.setVar("escapedSiweMessage", escapedMessage);
+  
+  // Debug: Try to create the request body
+  const requestBody = {
+    message: escapedMessage,
+    signature: siweSignature
+  };
+  console.log("Request body that will be sent:", JSON.stringify(requestBody, null, 2));
+}
+
+body:json {
+  {
+    "message": "{{escapedSiweMessage}}",
+    "signature": "{{siweSignature}}"
+  }
+}
+
+vars:post-response {
+  accessToken: res.body.accessToken
+}
+
+tests {
+  test("should return 200 status", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should return access token", function() {
+    expect(res.body.accessToken).to.be.a('string');
+    expect(res.body.accessToken.length).to.be.greaterThan(0);
+  });
+
+  test("store access token for authenticated requests", function() {
+    bru.setVar("authToken", res.body.accessToken);
+    console.log("Access token captured for authenticated requests");
+  });
+}

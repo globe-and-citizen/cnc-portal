@@ -73,9 +73,9 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           if (
             weeklyClaim.status === 'signed' &&
             callerAddress ===
-            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-              ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
-              : undefined)
+              (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
+                ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
+                : undefined)
           ) {
             signErrors.push('Weekly claim already signed');
           } else if (weeklyClaim.status === 'withdrawn') {

@@ -77,8 +77,26 @@ export function useBankWritesFunctions() {
     return writes.executeWrite(BANK_FUNCTION_NAMES.DEPOSIT_DIVIDENDS, [amount, investorAddress])
   }
 
+  const depositTokenDividends = (
+    tokenAddress: Address,
+    amount: string,
+    investorAddress: Address
+  ) => {
+    //if (!validateAmount(amount)) return
+    // const amountInWei = amountToWei(amount)
+    return writes.executeWrite(BANK_FUNCTION_NAMES.DEPOSIT_TOKEN_DIVIDENDS, [
+      tokenAddress,
+      amount,
+      investorAddress
+    ])
+  }
+
   const claimDividend = () => {
     return writes.executeWrite(BANK_FUNCTION_NAMES.CLAIM_DIVIDEND)
+  }
+
+  const claimTokenDividend = (tokenAddress: Address) => {
+    return writes.executeWrite(BANK_FUNCTION_NAMES.CLAIM_TOKEN_DIVIDEND, [tokenAddress])
   }
 
   const setInvestorAddress = (investorAddress: Address) => {
@@ -101,6 +119,8 @@ export function useBankWritesFunctions() {
     depositDividends,
     claimDividend,
     setInvestorAddress,
+    depositTokenDividends,
+    claimTokenDividend,
     bankWriteFunctionName,
     isBankWriteLoading,
     isBankConfirmed

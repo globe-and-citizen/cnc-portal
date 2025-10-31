@@ -8,7 +8,7 @@ import { ref } from 'vue'
 // Mock Apollo Query Result
 const mockQueryResult = {
   result: ref({
-    dividendDistributions: [
+    dividendClaims: [
       {
         id: '1',
         transactionHash: '0xtxhash1',
@@ -25,15 +25,17 @@ const mockQueryResult = {
   loading: ref(false)
 }
 
+const mockContractAddress = ref<string | undefined>('0xcontract')
 // Mock useQuery
+
 vi.mock('@vue/apollo-composable', () => ({
-  useQuery: vi.fn(() => mockQueryResult)
+  useQuery: () => mockQueryResult
 }))
 
 // Mock stores
 vi.mock('@/stores', () => ({
   useTeamStore: vi.fn(() => ({
-    getContractAddressByType: vi.fn(() => '0xcontract')
+    getContractAddressByType: vi.fn(() => mockContractAddress.value)
   })),
   useCurrencyStore: vi.fn(() => ({
     getTokenPrice: vi.fn(() => 1000)
@@ -89,5 +91,21 @@ describe('InvestorsTransactions.vue', () => {
 
     expect(transactions[0]).toHaveProperty('amountUSD')
     expect(typeof transactions[0].amountUSD).toBe('number')
+  })
+
+  it.skip('should set enabled to true when bankAddress is defined', () => {
+    const wrapper = createComponent()
+    // Access the enabled computed property
+    const enabled = (wrapper.vm as unknown as { enabled: boolean }).enabled
+    expect(enabled).toBe(true)
+  })
+
+  it.skip('should set enabled to false when bankAddress is undefined', () => {
+    // Mock bankAddress as undefined
+    mockContractAddress.value = undefined
+
+    const wrapper = createComponent()
+    const enabled = (wrapper.vm as unknown as { enabled: boolean }).enabled
+    expect(enabled).toBe(false)
   })
 })
