@@ -16,7 +16,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import type { Team } from '@/types'
 import { useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent } from '@wagmi/vue'
-import { encodeFunctionData, type Address } from 'viem'
+import { encodeFunctionData, zeroAddress, type Address } from 'viem'
 import { ref, watch, computed } from 'vue'
 
 // Contract ABIs
@@ -163,7 +163,7 @@ const deployOfficerContract = async () => {
         args: [
           props.investorContractInput.name,
           props.investorContractInput.symbol,
-          currentUserAddress
+          zeroAddress // currentUserAddress
         ]
       })
     })
@@ -204,7 +204,7 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: CASH_REMUNERATION_EIP712_ABI,
         functionName: 'initialize',
-        args: [currentUserAddress, [USDC_ADDRESS]]
+        args: [/*currentUserAddress*/ zeroAddress, [USDC_ADDRESS]]
       })
     })
 

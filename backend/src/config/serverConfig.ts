@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 //#endregion networking modules
 
 //#region routing modules
+
 import teamRoutes from '../routes/teamRoutes';
 import userRoutes from '../routes/userRoutes';
 import authRoutes from '../routes/authRoutes';
@@ -18,7 +19,9 @@ import weeklyClaimRoutes from '../routes/weeklyClaimRoute';
 import expenseRoutes from '../routes/expenseRoute';
 import uploadRoute from '../routes/uploadRoute';
 import contractRoutes from '../routes/contractRoutes';
-import electionsRoute from "../routes/electionsRoute";
+import electionsRoute from '../routes/electionsRoute';
+import devRoutes from '../routes/devRoutes';
+
 //#endregion routing modules
 
 import { authorizeUser } from '../middleware/authMiddleware';
@@ -66,7 +69,8 @@ class Server {
       claim: '/api/claim/',
       upload: '/api/upload/',
       constract: '/api/contract/',
-      elections: "/api/elections/"
+      elections: '/api/elections/',
+      dev: '/api/dev/',
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -114,7 +118,15 @@ class Server {
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
-    this.app.use(this.paths.elections, authorizeUser, electionsRoute)
+
+    // Dev routes - only available in development mode
+    if (process.env.NODE_ENV === 'development') {
+      this.app.use(this.paths.dev, devRoutes);
+      console.log('🔧 Dev routes enabled for development environment');
+    }
+
+    this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+    this.app.use(this.paths.elections, authorizeUser, electionsRoute);
     this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     // The error handler must be registered before any other error middleware and after all controllers
     Sentry.setupExpressErrorHandler(this.app);

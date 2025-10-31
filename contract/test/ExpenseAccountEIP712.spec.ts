@@ -1,6 +1,7 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import { time } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { ExpenseAccountEIP712 } from '../typechain-types'
 import { MockERC20 } from '../typechain-types'
 
@@ -445,7 +446,7 @@ describe('ExpenseAccount (EIP712)', () => {
             approvedAddress: withdrawer.address,
             budgetData,
             tokenAddress: ethers.ZeroAddress,
-            expiry: Math.floor((Date.now() - 3600) / 1000) // 1 hour from now
+            expiry: (await time.latest()) - 3600 // 1 hour ago
           }
 
           const signature = await owner.signTypedData(domain, types, budgetLimit)

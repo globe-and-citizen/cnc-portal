@@ -1,4 +1,22 @@
 <template>
+  <div class="w-full pb-6">
+    <CardComponent>
+      <div class="flex gap-4 items-start">
+        <div v-if="imageUrl" class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden">
+          <img :src="imageUrl" alt="Card image" class="w-full h-full object-cover" />
+        </div>
+        <div class="flex flex-col gap-8">
+          <div class="card-title mt-4">{{ name }}</div>
+
+          <div class="flex items-center gap-2">
+            <img src="/public/Vector.png" alt="" class="w-4 h-4" />
+            <AddressToolTip :address="address" />
+          </div>
+          <!-- <div class="text-sm text-gray-500">{{ description }}</div> -->
+        </div>
+      </div>
+    </CardComponent>
+  </div>
   <div class="flex bg-transparent gap-x-4">
     <!-- Left Sidebar -->
     <CardComponent class="w-1/3 flex flex-col justify-between">
@@ -196,6 +214,8 @@ import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
+import { storeToRefs } from 'pinia'
+import AddressToolTip from '@/components/AddressToolTip.vue'
 
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
 dayjs.extend(utc)
@@ -216,6 +236,7 @@ const route = useRoute()
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const toastStore = useToastStore()
+const { imageUrl, name, address } = storeToRefs(userStore)
 const teamId = computed(() => teamStore.currentTeam?.id)
 const memberAddress = computed(() => route.params.memberAddress as string | undefined)
 

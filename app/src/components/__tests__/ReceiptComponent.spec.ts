@@ -4,6 +4,7 @@ import ReceiptComponent from '@/components/ReceiptComponent.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { NETWORK } from '@/constant'
 import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
+import { ref } from 'vue'
 
 const DATE = new Date().toLocaleDateString()
 const mockReceiptData = {
@@ -23,11 +24,27 @@ vi.mock('@/stores/currencyStore', async (importOriginal) => {
   const original: object = await importOriginal()
   return {
     ...original,
-    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
+    useCurrencyStore: vi.fn(() => ({
+      ...mockUseCurrencyStore,
+      nativeToken: ref({
+        priceInUSD: 1.5
+      })
+    }))
+  }
+})
+vi.mock('@/composables', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useNativeToken: vi.fn(() => ({
+      value: {
+        priceInUSD: 1.5
+      }
+    }))
   }
 })
 
-describe.skip('ReceiptComponent', () => {
+describe('ReceiptComponent', () => {
   interface ComponentOptions {
     props?: Record<string, unknown>
     data?: () => Record<string, unknown>

@@ -1,0 +1,21 @@
+meta {
+  name: Auth - 13 - Edge Case - Token - Invalid Token
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{host}}/auth/token
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: invalid-token-12345
+}
+
+tests {
+  test("should return 401 status for invalid token", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+}
