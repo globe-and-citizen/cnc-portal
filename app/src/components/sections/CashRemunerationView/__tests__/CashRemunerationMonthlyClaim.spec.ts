@@ -124,4 +124,17 @@ describe('CashRemunerationMonthlyClaim.vue', () => {
     expect(percentageText.exists()).toBe(true)
     expect(percentageText.text()).toContain('+ 26.3%')
   })
+
+  it('returns empty string when weeklyClaims is null', () => {
+    mockUseTanstackQuery.mockReturnValueOnce({
+      data: ref(null),
+      isLoading: ref(false),
+      error: mockError
+    })
+
+    wrapper = createComponent()
+    const result = (wrapper.vm as unknown as { totalMonthlyClaim: string }).totalMonthlyClaim
+
+    expect(result).toBe('')
+  })
 })
