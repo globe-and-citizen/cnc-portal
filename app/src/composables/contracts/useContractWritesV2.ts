@@ -37,46 +37,14 @@ export function useContractWrites(config: ContractWriteConfig) {
   const queryClient = useQueryClient()
   const { chainId: currentChainId } = useAccount()
 
-  // const { addErrorToast } = useToastStore()
-
   // Use provided chainId or current account chainId
   const chainId = computed(() => unref(config.chainId) || currentChainId.value)
 
-  // Store the current function name for query invalidation
-  // const currentFunctionName = ref<string | null>(null)
+  const writeResult = useWriteContract()
 
-  const {
-    // data: writeContractData,
-    // isPending,
-    // error: writeError
-
-    data: writeContractData,
-    error: writeError,
-    isError,
-    isIdle,
-    isPending,
-    isPaused,
-    isSuccess,
-    failureCount,
-    failureReason,
-    // mutate,
-    // mutateAsync,
-    writeContractAsync,
-    reset,
-    status,
-    submittedAt,
-    variables
-  } = useWriteContract()
-
-  const {
-    data: receipt,
-    isLoading: isConfirming,
-    isSuccess: isConfirmed,
-    error: receiptError
-  } = useWaitForTransactionReceipt({ hash: writeContractData })
-
-  const isLoading = computed(() => isPending.value || isConfirming.value)
-  const error = computed(() => writeError.value || receiptError.value)
+  const receiptResult = useWaitForTransactionReceipt({
+    hash: writeResult.data
+  })
 
   // Encode the function data
   const encodedData = computed(() => {
@@ -94,12 +62,7 @@ export function useContractWrites(config: ContractWriteConfig) {
     return data
   })
 
-  const {
-    data: gasEstimate,
-    isLoading: isEstimatingGas,
-    error: gasEstimateError,
-    refetch: refetchGasEstimate
-  } = useEstimateGas({
+  const estimateGasResult = useEstimateGas({
     to: unref(config.contractAddress),
     data: encodedData,
     value: unref(config.value),
@@ -128,14 +91,14 @@ export function useContractWrites(config: ContractWriteConfig) {
   }
 
   // Error handling
-  watch(writeError, (error) => {
+  watch(writeResult.error, (error) => {
     if (error) {
       log.error('Contract write error:', error)
       // addErrorToast(`Transaction failed: ${parseError(error, unref(config.abi))}`)
     }
   })
 
-  watch(receiptError, (error) => {
+  watch(receiptResult.error, (error) => {
     if (error) {
       log.error('Transaction receipt error:', error)
       // addErrorToast(`Transaction confirmation failed: ${parseError(error, unref(config.abi))}`)
@@ -159,13 +122,13 @@ export function useContractWrites(config: ContractWriteConfig) {
       }
 
       // Estimate gas before executing the write
-      await refetchGasEstimate()
-      if (!gasEstimate.value) {
+      await estimateGasResult.refetch()
+      if (!estimateGasResult.data.value) {
         throw new Error('Gas estimation failed')
       }
 
       // Execute the contract write
-      const response = await writeContractAsync({
+      const response = await writeResult.writeContractAsync({
         address: address,
         abi: unref(config.abi),
         functionName: unref(config.functionName),
@@ -174,7 +137,7 @@ export function useContractWrites(config: ContractWriteConfig) {
       })
 
       // Wait for transaction confirmation
-      await waitForCondition(() => receipt.value?.status === 'success', 15000)
+      await waitForCondition(() => writeResult.isSuccess.value, 15000)
 
       // Invalidate queries
       invalidateQueries()
@@ -188,62 +151,22 @@ export function useContractWrites(config: ContractWriteConfig) {
   }
 
   const { currentStep, timelineSteps } = useTransactionTimeline({
-    isEstimatingGas,
-    gasEstimateError,
-    gasEstimate,
-    isPending,
-    error,
-    writeContractData,
-    isConfirming,
-    isConfirmed,
-    receipt
+    writeResult,
+    receiptResult,
+    estimateGasResult,
   })
 
   return {
-    writeData: {
-      data: writeContractData,
-      error: writeError,
-      isError,
-      isIdle,
-      isPending,
-      isPaused,
-      isSuccess,
-      failureCount,
-      failureReason,
-      reset,
-      status,
-      submittedAt,
-      variables
-    },
-    // Loading states
-    isLoading,
-    isPending,
-    isConfirming,
-    isConfirmed,
-
-    // Data
-    writeContractData,
-    receipt,
-    error,
+    writeResult,
+    receiptResult,
+    estimateGasResult,
 
     // Timeline
     currentStep,
     timelineSteps,
 
-    // Gas estimation
-    gasEstimate,
-    isEstimatingGas,
-    gasEstimateError,
-    refetchGasEstimate,
-    // estimateGas,
-    // estimateGasForEncodedData,
-    // canExecuteTransaction,
-
     // Core functions
     executeWrite,
     invalidateQueries // Exposed so contract-specific implementations can override
-
-    // Internal state (for advanced usage)
-    // currentFunctionName: readonly(currentFunctionName)
   }
 }
