@@ -1,38 +1,27 @@
-import { computed, type Ref } from 'vue'
+import { computed } from 'vue'
 import type { TimelineSteps } from '@/components/ui/TransactionTimeline.vue'
+import type { UseEstimateGasReturnType, UseWaitForTransactionReceiptReturnType, UseWriteContractReturnType } from '@wagmi/vue'
 
 // TODO: need improvement: Steps can be improved, message error also
 export interface TransactionTimelineParams {
-  isEstimatingGas: Ref<boolean>
-  gasEstimateError: Ref<Error | null | undefined>
-  gasEstimate: Ref<bigint | undefined>
-  isPending: Ref<boolean>
-  error: Ref<Error | null | undefined>
-  writeContractData: Ref<unknown>
-  isConfirming: Ref<boolean>
-  isConfirmed: Ref<boolean>
-  receipt: Ref<{ blockNumber?: bigint | number } | null | undefined>
+  writeResult: UseWriteContractReturnType
+  receiptResult: UseWaitForTransactionReceiptReturnType
+  estimateGasResult: UseEstimateGasReturnType
 }
 
 export function useTransactionTimeline(params: TransactionTimelineParams) {
   const {
-    isEstimatingGas,
-    gasEstimateError,
-    gasEstimate,
-    isPending,
-    error,
-    writeContractData,
-    isConfirming,
-    isConfirmed,
-    receipt
+    writeResult,
+    receiptResult,
+    estimateGasResult
   } = params
 
   const getEstimatingGasStatus = computed(() => {
-    if (isEstimatingGas.value) {
+    if (estimateGasResult.isLoading.value) {
       return 'active'
-    } else if (gasEstimateError.value) {
+    } else if (estimateGasResult.error.value) {
       return 'error'
-    } else if (gasEstimate.value) {
+    } else if (estimateGasResult.data.value) {
       return 'completed'
     } else {
       return 'pending'
@@ -45,18 +34,18 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
     } else if (getEstimatingGasStatus.value === 'error') {
       return 'Error estimating gas'
     } else if (getEstimatingGasStatus.value === 'completed') {
-      return `Gas estimated: ${gasEstimate.value}`
+      return `Gas estimated: ${estimateGasResult.data.value}`
     } else {
       return 'Gas estimation pending'
     }
   })
 
   const getApprovalStatus = computed(() => {
-    if (isPending.value) {
+    if (writeResult.isPending.value) {
       return 'active'
-    } else if (error.value) {
+    } else if (writeResult.error.value) {
       return 'error'
-    } else if (writeContractData.value) {
+    } else if (writeResult.data.value) {
       return 'completed'
     } else {
       return 'pending'
@@ -76,11 +65,11 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
   })
 
   const getTransactionReceiptStatus = computed(() => {
-    if (isConfirming.value) {
+    if (receiptResult.isLoading.value) {
       return 'active'
-    } else if (isConfirmed.value) {
+    } else if (receiptResult.isSuccess.value) {
       return 'completed'
-    } else if (error.value) {
+    } else if (receiptResult.error.value) {
       return 'error'
     } else {
       return 'pending'
@@ -91,7 +80,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
     if (getTransactionReceiptStatus.value === 'active') {
       return 'Transaction is being confirmed...'
     } else if (getTransactionReceiptStatus.value === 'completed') {
-      return `Transaction confirmed in block ${receipt.value?.blockNumber}`
+      return `Transaction confirmed in block ${receiptResult.data.value?.blockNumber}`
     } else if (getTransactionReceiptStatus.value === 'error') {
       return 'Error during transaction confirmation'
     } else {
@@ -100,13 +89,13 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
   })
 
   const currentStep = computed(() => {
-    if (!isPending.value && !isEstimatingGas.value) {
+    if (!writeResult.isPending.value && !estimateGasResult.isLoading.value) {
       return 0
-    } else if (isPending.value || error.value) {
+    } else if (writeResult.isPending.value || writeResult.error.value) {
       return 1
-    } else if (isConfirming.value) {
+    } else if (receiptResult.isLoading.value) {
       return 2
-    } else if (isConfirmed.value) {
+    } else if (receiptResult.isSuccess.value) {
       return 3
     } else {
       return 0
@@ -133,19 +122,12 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
       complete: {
         title: 'Confirm Transaction',
         description: 'The operation has been successful',
-        status: receipt.value ? 'completed' : 'pending'
+        status: receiptResult.data.value ? 'completed' : 'pending'
       }
     }
   })
 
   return {
-    // Individual status and message getters (for advanced usage)
-    // getEstimatingGasStatus,
-    // getEstimatingGasMessage,
-    // getApprovalStatus,
-    // getApprovalMessage,
-    // getTransactionReceiptStatus,
-    // getTransactionReceiptMessage,
     currentStep,
 
     // Main timeline steps for direct use with TransactionTimeline component
