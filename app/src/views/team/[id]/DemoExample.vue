@@ -7,48 +7,27 @@
     <h2>
       Bank paused Status is <span class="text-red-500">{{ pauseResult.data }}</span>
     </h2>
-    <!-- <div>{{ gasEstimateError?.name }}</div>
-    ds -->
-    <!-- <div>{{ gasEstimateError?.message }}</div> -->
-
     <!-- Timeline Demo -->
     <div class="card bg-base-100 shadow-xl">
       <div class="card-body">
         <h2 class="card-title mb-6">Bank Pause Operation</h2>
 
-        <pre>{{ writeData }}</pre>
-        <TransactionTimeline
-          :show="true"
-          :steps="pauseTimelineSteps"
-          title="Bank Pause Operation"
-        />
-        <TransactionTimeline
-          :show="true"
-          :steps="unpauseTimelineSteps"
-          title="Bank Un Pause Operation"
-        />
+        <div class="flex flex-row">
+          <TransactionTimeline
+            :show="true"
+            :steps="pauseTimelineSteps"
+            title="Bank Pause Operation"
+          />
+          <TransactionTimeline
+            :show="true"
+            :steps="unpauseTimelineSteps"
+            title="Bank Un Pause Operation"
+          />
+        </div>
       </div>
     </div>
     <div class="flex">
       <pre>{{ pauseResult }}</pre>
-      <pre>
-    {{
-          {
-            // currentStep,
-            isLoading,
-            isPending,
-            isConfirming,
-            isConfirmed,
-            writeContractData, //not showing by default
-            // receipt, // showing by default
-            error,
-            // gasEstimate,
-            isEstimatingGas,
-            gasEstimateError
-            // refetchGasEstimate()
-          }
-        }}</pre
-      >
     </div>
   </div>
 </template>
@@ -65,51 +44,9 @@ const { useBankPaused } = useBankReads()
 // Get contract data with loading and error states
 const pauseResult = useBankPaused()
 
-const {
-  // Loading states
-  writeData,
-  isLoading,
-  isPending,
-  isConfirming,
-  isConfirmed,
-
-  // Data
-  writeContractData,
-  // receipt,
-  error,
-
-  // Gas estimation
-  // gasEstimate,
-  isEstimatingGas,
-  gasEstimateError,
-
-  // Timeline
-  // currentStep: pauseCurrentStep,
-  timelineSteps: pauseTimelineSteps,
-
-  // Core functions
-  executeWrite
-} = usePause()
-
-console.log('writeData', writeData)
+const { timelineSteps: pauseTimelineSteps, executeWrite } = usePause()
 
 const { executeWrite: executeUnPause, timelineSteps: unpauseTimelineSteps } = useUnpause()
-
-// Use transaction timeline composable
-// const {
-//   currentStep,
-//   timelineSteps: currentTimelineSteps
-// } = useTransactionTimeline({
-//   isEstimatingGas,
-//   gasEstimateError,
-//   gasEstimate,
-//   isPending,
-//   error,
-//   writeContractData,
-//   isConfirming,
-//   isConfirmed,
-//   receipt
-// })
 </script>
 
 <style scoped></style>
