@@ -8,6 +8,33 @@ import { useToastStore } from '@/stores/__mocks__/useToastStore'
 
 import ModalComponent from '@/components/ModalComponent.vue'
 
+vi.mock('vue-router', () => ({
+  useRoute: vi.fn(() => ({
+    params: {
+      id: 0
+    }
+  })),
+  createRouter: vi.fn(() => ({
+    beforeEach: vi.fn(),
+    afterEach: vi.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
+    go: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn()
+  })),
+  createWebHistory: vi.fn(),
+  useRouter: vi.fn(() => ({
+    beforeEach: vi.fn(),
+    afterEach: vi.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
+    go: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn()
+  })),
+  RouterView: vi.fn(() => null)
+}))
 // Mock the composables
 vi.mock('@/stores/useToastStore')
 vi.mock('@/stores/user', () => ({
