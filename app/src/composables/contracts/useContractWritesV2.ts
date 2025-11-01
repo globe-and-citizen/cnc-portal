@@ -3,10 +3,11 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
   useAccount,
-  useEstimateGas
+  // useEstimateGas,
+  useSimulateContract
 } from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { encodeFunctionData, type Address, type Abi } from 'viem'
+import { type Address, type Abi } from 'viem'
 // import { useToastStore } from '@/stores'
 import { log, waitForCondition } from '@/utils'
 import { useTransactionTimeline } from '@/composables/useTransactionTimeline'
@@ -47,25 +48,37 @@ export function useContractWrites(config: ContractWriteConfig) {
   })
 
   // Encode the function data
-  const encodedData = computed(() => {
-    let data = undefined
-    try {
-      data = encodeFunctionData({
-        abi: unref(config.abi),
-        functionName: unref(config.functionName),
-        args: unref(config.args)
-      })
-    } catch (error) {
-      log.error('Failed to encode function data:', error)
-      // console.error('Failed to encode function data:', error)
-    }
-    return data
-  })
+  // const encodedData = computed(() => {
+  //   let data = undefined
+  //   try {
+  //     data = encodeFunctionData({
+  //       abi: unref(config.abi),
+  //       functionName: unref(config.functionName),
+  //       args: unref(config.args)
+  //     })
+  //   } catch (error) {
+  //     log.error('Failed to encode function data:', error)
+  //     // console.error('Failed to encode function data:', error)
+  //   }
+  //   return data
+  // })
 
-  const estimateGasResult = useEstimateGas({
-    to: unref(config.contractAddress),
-    data: encodedData,
-    value: unref(config.value),
+  // const estimateGasResult = useEstimateGas({
+  //   to: unref(config.contractAddress),
+  //   data: encodedData,
+  //   value: unref(config.value),
+  //   query: {
+  //     refetchOnWindowFocus: false,
+  //     refetchInterval: false,
+  //     enabled: false
+  //   }
+  // })
+
+  const simulateGasResult = useSimulateContract({
+    abi: unref(config.abi),
+    address: unref(config.contractAddress),
+    functionName: unref(config.functionName),
+    args: unref(config.args),
     query: {
       refetchOnWindowFocus: false,
       refetchInterval: false,
@@ -122,8 +135,8 @@ export function useContractWrites(config: ContractWriteConfig) {
       }
 
       // Estimate gas before executing the write
-      await estimateGasResult.refetch()
-      if (!estimateGasResult.data.value) {
+      await simulateGasResult.refetch()
+      if (!simulateGasResult.data.value) {
         throw new Error('Gas estimation failed')
       }
 
@@ -153,13 +166,13 @@ export function useContractWrites(config: ContractWriteConfig) {
   const { currentStep, timelineSteps } = useTransactionTimeline({
     writeResult,
     receiptResult,
-    estimateGasResult
+    simulateGasResult
   })
 
   return {
     writeResult,
     receiptResult,
-    estimateGasResult,
+    simulateGasResult,
 
     // Timeline
     currentStep,

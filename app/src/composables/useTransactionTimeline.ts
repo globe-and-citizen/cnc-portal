@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import type { TimelineSteps } from '@/components/ui/TransactionTimeline.vue'
 import type {
-  UseEstimateGasReturnType,
+  UseSimulateContractReturnType,
   UseWaitForTransactionReceiptReturnType,
   UseWriteContractReturnType
 } from '@wagmi/vue'
@@ -10,18 +10,18 @@ import type {
 export interface TransactionTimelineParams {
   writeResult: UseWriteContractReturnType
   receiptResult: UseWaitForTransactionReceiptReturnType
-  estimateGasResult: UseEstimateGasReturnType
+  simulateGasResult: UseSimulateContractReturnType
 }
 
 export function useTransactionTimeline(params: TransactionTimelineParams) {
-  const { writeResult, receiptResult, estimateGasResult } = params
+  const { writeResult, receiptResult, simulateGasResult } = params
 
   const getEstimatingGasStatus = computed(() => {
-    if (estimateGasResult.isLoading.value) {
+    if (simulateGasResult.isLoading.value) {
       return 'active'
-    } else if (estimateGasResult.error.value) {
+    } else if (simulateGasResult.error.value) {
       return 'error'
-    } else if (estimateGasResult.data.value) {
+    } else if (simulateGasResult.data.value) {
       return 'completed'
     } else {
       return 'pending'
@@ -34,7 +34,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
     } else if (getEstimatingGasStatus.value === 'error') {
       return 'Error estimating gas'
     } else if (getEstimatingGasStatus.value === 'completed') {
-      return `Gas estimated: ${estimateGasResult.data.value}`
+      return `Gas estimated: ${simulateGasResult.data.value}`
     } else {
       return 'Gas estimation pending'
     }
@@ -89,7 +89,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
   })
 
   const currentStep = computed(() => {
-    if (!writeResult.isPending.value && !estimateGasResult.isLoading.value) {
+    if (!writeResult.isPending.value && !simulateGasResult.isLoading.value) {
       return 0
     } else if (writeResult.isPending.value || writeResult.error.value) {
       return 1
