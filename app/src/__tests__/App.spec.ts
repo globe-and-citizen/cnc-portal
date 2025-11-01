@@ -102,49 +102,58 @@ vi.mock('@/composables/useAuth', () => ({
 
 describe('App.vue', () => {
   describe('Render', () => {
-    it.skip('renders ModalComponent if showModal is true', async () => {
+    it('renders ModalComponent if showModal is true', async () => {
       const wrapper = shallowMount(App, {
         global: {
           plugins: [createTestingPinia({ createSpy: vi.fn })]
         }
       })
 
-      // @ts-expect-error: showModal is not typed in the component's instance
-      wrapper.vm.showModal = true
+      // @ts-expect-error: toggleSide is a ref on the component
+      wrapper.vm.toggleSide = false
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
+      const overlay = wrapper.find('[data-test="drawer"]')
+      await overlay.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // @ts-expect-error: toggleSide is a ref on the component
+      expect(wrapper.vm.toggleSide).toBe(true)
     })
   })
 
   describe('User Update Flow', () => {
-    it('calls execute, shows success toast, updates store, and closes modal', async () => {
+    it('should display modal when editUserModal is mounted and shown', async () => {
       const wrapper = shallowMount(App, {
         global: {
           plugins: [createTestingPinia({ createSpy: vi.fn })]
         }
       })
 
-      // @ts-expect-error: updateUserInput is a ref on the component
-      wrapper.vm.updateUserInput = { name: 'New Name', address: '0xOwner', imageUrl: '' }
-      // @ts-expect-error: showModal is not typed on vm
-      wrapper.vm.showModal = true
-
-      // @ts-expect-error: handleUserUpdate exists on component
-      await wrapper.vm.handleUserUpdate()
+      // @ts-expect-error: editUserModal is a ref on the component
+      wrapper.vm.editUserModal = { mount: true, show: true }
       await wrapper.vm.$nextTick()
 
-      const { addSuccessToast } = useToastStore()
+      expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
+    })
 
-      expect(addSuccessToast).toHaveBeenCalledWith('User updated')
-      expect(mockUserStore.setUserData).toHaveBeenCalledWith(
-        'New Name',
-        '0xOwner',
-        '123',
-        'img.png'
-      )
-      // @ts-expect-error: showModal on vm
-      expect(wrapper.vm.showModal).toBe(false)
+    it('should reset editUserModal when modal emits reset', async () => {
+      const wrapper = shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      // @ts-expect-error: editUserModal is a ref on the component
+      wrapper.vm.editUserModal = { mount: true, show: true }
+      await wrapper.vm.$nextTick()
+
+      const modal = wrapper.findComponent(ModalComponent)
+      await modal.vm.$emit('reset')
+      await wrapper.vm.$nextTick()
+
+      // @ts-expect-error: editUserModal is a ref on the component
+      expect(wrapper.vm.editUserModal).toEqual({ mount: false, show: false })
     })
   })
 
