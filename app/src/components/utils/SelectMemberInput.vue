@@ -30,17 +30,19 @@
         :disabled="disabled"
       /> -->
     </label>
-    <!-- Dropdown positioned relative to the input 
-      v-if="showDropdown && users?.users && users?.users.length > 0"
-      -->
+    <div class="text-xm text-gray-900 mt-5" data-test="select-member-hint">
+      Click to Select a Member
+    </div>
+    <!-- Dropdown positioned relative to the input -->
     <div
-      class="left-0 top-full mt-5 w-full outline-none focus:outline-none focus:ring-0"
+      v-if="filteredUsers.length > 0"
+      class="left-0 top-full mt-4 w-full outline-none focus:outline-none focus:ring-0"
       data-test="user-dropdown"
     >
       <div class="shadow bg-base-100 rounded-box">
         <div class="grid grid-cols-2 gap-4" data-test="user-search-results">
           <div
-            v-for="user in users.users"
+            v-for="user in filteredUsers"
             :key="user.address"
             @click="selectMember(user)"
             class="flex items-center cursor-pointer"
@@ -64,7 +66,7 @@
 
 <script lang="ts" setup>
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { ref, useTemplateRef, onMounted } from 'vue'
+import { ref, useTemplateRef, onMounted, computed } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
 
@@ -72,11 +74,13 @@ interface Props {
   disabled?: boolean
   autoOpen?: boolean
   initialLimit?: number
+  excludeAddresses?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
   autoOpen: true,
-  initialLimit: 8
+  initialLimit: 8,
+  excludeAddresses: () => []
 })
 
 const emit = defineEmits(['selectMember'])
@@ -88,7 +92,6 @@ const input = defineModel({
   }
 })
 
-const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
 const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
@@ -107,7 +110,6 @@ const preloadUsers = async () => {
   if (props.disabled) return
   url.value = `user?limit=${props.initialLimit}&page=1`
   await executeSearchUser()
-  showDropdown.value = true
 }
 
 type User = { name: string; address: string }
@@ -120,14 +122,19 @@ const getCurrentUsers = (): User[] => {
   return []
 }
 
+const filteredUsers = computed<User[]>(() => {
+  const list = getCurrentUsers()
+  if (!props.excludeAddresses || props.excludeAddresses.length === 0) return list
+  const exclude = new Set(props.excludeAddresses.map((a) => a.toLowerCase()))
+  return list.filter((u) => !exclude.has(u.address.toLowerCase()))
+})
+
 // Open and preload when the field receives focus and no query is present yet
 const handleFocus = async () => {
   if (props.disabled) return
   // If we don't have any list yet, fetch a default page
   if (getCurrentUsers().length === 0) {
     await preloadUsers()
-  } else {
-    showDropdown.value = true
   }
 }
 
@@ -137,11 +144,9 @@ watchDebounced(
     if (nameInputFocus.value && name) {
       url.value = 'user/search?name=' + name
       await executeSearchUser()
-      showDropdown.value = true
     } else if (addressInputFocus.value && address) {
       url.value = 'user/search?address=' + address
       await executeSearchUser()
-      showDropdown.value = true
     }
   },
   { debounce: 500, maxWait: 5000 }
@@ -150,7 +155,6 @@ watchDebounced(
 const selectMember = (member: { name: string; address: string }) => {
   input.value = member
   emit('selectMember', member)
-  showDropdown.value = false
 }
 
 // Auto-open on mount if requested
