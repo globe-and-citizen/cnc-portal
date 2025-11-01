@@ -145,6 +145,21 @@ describe('ClaimHistory.vue', () => {
     expect(weeklyClaimURL).toContain('memberAddress=0x1234567890123456789012345678901234567890')
   })
 
+  it('should construct team wage query key correctly', async () => {
+    const wrapper = shallowMount(ClaimHistory, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+
+    await nextTick()
+
+    // @ts-expect-error: accessing component internal computed
+    const teamWageQueryKey = wrapper.vm.teamWageQueryKey
+
+    expect(Array.isArray(teamWageQueryKey)).toBe(true)
+    expect(teamWageQueryKey[0]).toBe('team-wage')
+    expect(teamWageQueryKey[1]).toBe('team-123')
+  })
+
   it('should calculate week day claims correctly', async () => {
     const weekStart = dayjs().utc().startOf('isoWeek')
     mockUseTanstackQuery.mockReturnValue({
