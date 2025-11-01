@@ -162,4 +162,38 @@ describe('ClaimHistory.vue', () => {
     expect(weekDayClaims.length).toBe(7)
     expect(weekDayClaims[0].hours).toBe(8)
   })
+
+  it('should check if user has wage set up', async () => {
+    let callCount = 0
+    mockUseTanstackQuery.mockImplementation(() => {
+      callCount++
+      // First call is for weekly claims, second call is for team wage
+      if (callCount === 2) {
+        return {
+          data: ref([
+            {
+              userAddress: mockUserStore.address.value,
+              amount: 100
+            }
+          ]),
+          error: ref(null),
+          isLoading: ref(false)
+        }
+      }
+      return {
+        data: ref([]),
+        error: ref(null),
+        isLoading: ref(false)
+      }
+    })
+
+    const wrapper = shallowMount(ClaimHistory, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+
+    await nextTick()
+
+    // @ts-expect-error: accessing component internal computed
+    expect(wrapper.vm.hasWage).toBe(false)
+  })
 })
