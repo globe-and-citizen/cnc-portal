@@ -129,4 +129,37 @@ describe('ClaimHistory.vue', () => {
     expect(Array.isArray(generatedWeeks)).toBe(true)
     expect(generatedWeeks.length).toBeGreaterThan(0)
   })
+
+  it('should calculate week day claims correctly', async () => {
+    const weekStart = dayjs().utc().startOf('isoWeek')
+    mockUseTanstackQuery.mockReturnValue({
+      data: ref([
+        {
+          weekStart: weekStart.toISOString(),
+          status: 'pending',
+          claims: [
+            {
+              dayWorked: weekStart.toISOString(),
+              hoursWorked: 8,
+              memo: 'Development work'
+            }
+          ]
+        }
+      ]),
+      error: ref(null),
+      isLoading: ref(false)
+    })
+
+    const wrapper = shallowMount(ClaimHistory, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+
+    await nextTick()
+
+    // @ts-expect-error: accessing component internal computed
+    const weekDayClaims = wrapper.vm.weekDayClaims
+    expect(Array.isArray(weekDayClaims)).toBe(true)
+    expect(weekDayClaims.length).toBe(7)
+    expect(weekDayClaims[0].hours).toBe(8)
+  })
 })
