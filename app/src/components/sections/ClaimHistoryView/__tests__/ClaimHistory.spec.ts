@@ -42,47 +42,6 @@ vi.mock('@/stores', () => ({
   useUserDataStore: () => mockUserStore
 }))
 
-// Mock child components
-vi.mock('@/components/CardComponent.vue', () => ({
-  default: { name: 'CardComponent', template: '<div><slot /></div>' }
-}))
-
-vi.mock('@/components/MonthSelector.vue', () => ({
-  default: { name: 'MonthSelector', template: '<div></div>', emits: ['update:modelValue'] }
-}))
-
-vi.mock('@/components/WeeklyRecap.vue', () => ({
-  default: { name: 'WeeklyRecap', template: '<div></div>' }
-}))
-
-vi.mock('@/components/AddressToolTip.vue', () => ({
-  default: { name: 'AddressToolTip', template: '<div></div>' }
-}))
-
-vi.mock('@/components/ButtonUI.vue', () => ({
-  default: { name: 'ButtonUI', template: '<button><slot /></button>' }
-}))
-
-vi.mock('../CashRemunerationView/SubmitClaims.vue', () => ({
-  default: { name: 'SubmitClaims', template: '<div></div>' }
-}))
-
-vi.mock('../CashRemunerationView/CRSigne.vue', () => ({
-  default: { name: 'CRSigne', template: '<div></div>' }
-}))
-
-vi.mock('../CashRemunerationView/CRWithdrawClaim.vue', () => ({
-  default: { name: 'CRWithdrawClaim', template: '<div></div>' }
-}))
-
-vi.mock('vue-echarts', () => ({
-  default: { name: 'VChart', template: '<div></div>' }
-}))
-
-vi.mock('@iconify/vue', () => ({
-  Icon: { name: 'IconifyIcon', template: '<span></span>' }
-}))
-
 describe('ClaimHistory.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
