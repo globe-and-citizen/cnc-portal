@@ -1,6 +1,8 @@
-import { describe, vi, beforeEach } from 'vitest'
-import { ref } from 'vue'
-
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { shallowMount } from '@vue/test-utils'
+import { ref, nextTick } from 'vue'
+import ClaimHistory from '../ClaimHistory.vue'
+import { createTestingPinia } from '@pinia/testing'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
@@ -89,5 +91,31 @@ describe('ClaimHistory.vue', () => {
       error: ref(null),
       isLoading: ref(false)
     })
+  })
+
+  it('should update selected month when MonthSelector v-model changes', async () => {
+    const wrapper = shallowMount(ClaimHistory, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+
+    // @ts-expect-error: accessing component internal state
+    const initialMonth = wrapper.vm.selectedMonthObject.month
+    expect(initialMonth).toBe(dayjs().utc().month())
+
+    // Simulate month change
+    const newWeek = {
+      year: dayjs().utc().year(),
+      month: dayjs().utc().month() === 0 ? 11 : dayjs().utc().month() - 1,
+      isoWeek: dayjs().utc().isoWeek(),
+      isoString: dayjs().utc().startOf('isoWeek').toISOString(),
+      formatted: 'Test Week'
+    }
+    // @ts-expect-error: accessing component internal state
+    wrapper.vm.selectedMonthObject = newWeek
+
+    await nextTick()
+
+    // @ts-expect-error: accessing component internal state
+    expect(wrapper.vm.selectedMonthObject.month).toBe(newWeek.month)
   })
 })
