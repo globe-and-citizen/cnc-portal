@@ -130,6 +130,21 @@ describe('ClaimHistory.vue', () => {
     expect(generatedWeeks.length).toBeGreaterThan(0)
   })
 
+  it('should construct weekly claim URL with team ID and member address', async () => {
+    const wrapper = shallowMount(ClaimHistory, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+
+    await nextTick()
+
+    // @ts-expect-error: accessing component internal computed
+    const weeklyClaimURL = wrapper.vm.weeklyClaimURL
+
+    expect(weeklyClaimURL).toContain('/weeklyClaim/?')
+    expect(weeklyClaimURL).toContain('teamId=team-123')
+    expect(weeklyClaimURL).toContain('memberAddress=0x1234567890123456789012345678901234567890')
+  })
+
   it('should calculate week day claims correctly', async () => {
     const weekStart = dayjs().utc().startOf('isoWeek')
     mockUseTanstackQuery.mockReturnValue({
