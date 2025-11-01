@@ -49,14 +49,15 @@ describe('SelectMemberInput.vue', () => {
     }
   })
 
-  it('should render correctly, open dropdown when typing and emit event on select', async () => {
+  it('should render correctly, show dropdown after mount and emit event on select', async () => {
     const nameInput = wrapper.find('[data-test="member-name-input"]')
-    const addressInput = wrapper.find('[data-test="member-address-input"]')
     expect(nameInput.exists()).toBe(true)
-    expect(addressInput.exists()).toBe(true)
-    expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(false)
 
-    // Focus the name input and type
+    // After mount with autoOpen, dropdown should appear once data is loaded
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(true)
+
+    // Focus the name input and type to simulate search
     await nameInput.trigger('focus')
     await nameInput.setValue('John')
     await wrapper.vm.$nextTick()
@@ -70,20 +71,6 @@ describe('SelectMemberInput.vue', () => {
     expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('John Doe')
 
-    // Focus the address input and type
-    await addressInput.trigger('focus')
-    await addressInput.setValue('0x1')
-    await wrapper.vm.$nextTick()
-    // Wait for debounce
-    await vi.advanceTimersByTime(300)
-    await wrapper.vm.$nextTick()
-
-    expect(
-      (wrapper.props() as { modelValue: { name: string; address: string } }).modelValue.address
-    ).toBe('0x1')
-    expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('0x123')
-
     // Test selecting user
     const item = wrapper.find('[data-test="user-dropdown-0x123"]')
     await item.trigger('click')
@@ -94,5 +81,22 @@ describe('SelectMemberInput.vue', () => {
       Array<{ address: string; name: string }>
     >
     expect(emittedEvents[0][0]).toEqual({ address: '0x123', name: 'John Doe' })
+  })
+
+  it('should filter out excluded addresses from the dropdown', async () => {
+    const input = ref({ name: '', address: '' })
+    const localWrapper = mount(SelectMemberInput, {
+      props: {
+        modelValue: input.value,
+        excludeAddresses: ['0x123']
+      }
+    })
+
+    await localWrapper.vm.$nextTick()
+
+    const dropdown = localWrapper.find('[data-test="user-dropdown"]')
+    expect(dropdown.exists()).toBe(true)
+    expect(dropdown.text()).not.toContain('0x123')
+    expect(dropdown.text()).toContain('0x456')
   })
 })
