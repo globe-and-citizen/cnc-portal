@@ -1,6 +1,10 @@
 import { computed } from 'vue'
 import type { TimelineSteps } from '@/components/ui/TransactionTimeline.vue'
-import type { UseEstimateGasReturnType, UseWaitForTransactionReceiptReturnType, UseWriteContractReturnType } from '@wagmi/vue'
+import type {
+  UseEstimateGasReturnType,
+  UseWaitForTransactionReceiptReturnType,
+  UseWriteContractReturnType
+} from '@wagmi/vue'
 
 // TODO: need improvement: Steps can be improved, message error also
 export interface TransactionTimelineParams {
@@ -10,11 +14,7 @@ export interface TransactionTimelineParams {
 }
 
 export function useTransactionTimeline(params: TransactionTimelineParams) {
-  const {
-    writeResult,
-    receiptResult,
-    estimateGasResult
-  } = params
+  const { writeResult, receiptResult, estimateGasResult } = params
 
   const getEstimatingGasStatus = computed(() => {
     if (estimateGasResult.isLoading.value) {

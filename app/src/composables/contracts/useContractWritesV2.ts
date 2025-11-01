@@ -153,7 +153,7 @@ export function useContractWrites(config: ContractWriteConfig) {
   const { currentStep, timelineSteps } = useTransactionTimeline({
     writeResult,
     receiptResult,
-    estimateGasResult,
+    estimateGasResult
   })
 
   return {
