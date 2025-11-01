@@ -196,4 +196,37 @@ describe('ClaimHistory.vue', () => {
     // @ts-expect-error: accessing component internal computed
     expect(wrapper.vm.hasWage).toBe(false)
   })
+
+  it('should generate correct bar chart options', async () => {
+    const weekStart = dayjs().utc().startOf('isoWeek')
+    mockUseTanstackQuery.mockReturnValue({
+      data: ref([
+        {
+          weekStart: weekStart.toISOString(),
+          status: 'pending',
+          claims: [
+            {
+              dayWorked: weekStart.toISOString(),
+              hoursWorked: 6,
+              memo: 'Work'
+            }
+          ]
+        }
+      ]),
+      error: ref(null),
+      isLoading: ref(false)
+    })
+
+    const wrapper = shallowMount(ClaimHistory, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+
+    await nextTick()
+
+    // @ts-expect-error: accessing component internal computed
+    const chartOptions = wrapper.vm.barChartOption
+    expect(chartOptions.title.text).toBe('Hours/Day')
+    expect(chartOptions.series[0].type).toBe('bar')
+    expect(chartOptions.xAxis.data.length).toBe(7)
+  })
 })
