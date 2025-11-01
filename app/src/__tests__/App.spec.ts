@@ -120,6 +120,45 @@ describe('App.vue', () => {
       // @ts-expect-error: toggleSide is a ref on the component
       expect(wrapper.vm.toggleSide).toBe(true)
     })
+
+    it('should update toggleSide when Drawer emits update:modelValue', async () => {
+      mockUserStore.isAuth.value = true
+      const wrapper = shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      // @ts-expect-error: toggleSide is a ref on the component
+      wrapper.vm.toggleSide = false
+      await wrapper.vm.$nextTick()
+
+      const drawerComponent = wrapper.findComponent({ name: 'Drawer' })
+      await drawerComponent.vm.$emit('update:modelValue', true)
+      await wrapper.vm.$nextTick()
+
+      // @ts-expect-error: toggleSide is a ref on the component
+      expect(wrapper.vm.toggleSide).toBe(true)
+    })
+
+    it('should set editUserModal when Drawer emits openEditUserModal', async () => {
+      mockUserStore.isAuth.value = true
+      const wrapper = shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      // @ts-expect-error: editUserModal is a ref on the component
+      expect(wrapper.vm.editUserModal).toEqual({ mount: false, show: false })
+
+      const drawerComponent = wrapper.findComponent({ name: 'Drawer' })
+      await drawerComponent.vm.$emit('openEditUserModal')
+      await wrapper.vm.$nextTick()
+
+      // @ts-expect-error: editUserModal is a ref on the component
+      expect(wrapper.vm.editUserModal).toEqual({ mount: true, show: true })
+    })
   })
 
   describe('User Update Flow', () => {
