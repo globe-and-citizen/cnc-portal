@@ -1,18 +1,22 @@
 <template>
-  <div class="flex flex-col gap-4" data-test="members-list">
+  <div class="grid grid-cols-2 gap-4" data-test="members-list">
     <div class="flex items-center" v-for="(member, index) of teamMembers" :key="index">
-      <UserComponent class="bg-base-200 p-4 flex-grow" :user="member" />
-      <div>
+      <UserComponent
+        class="bg-base-200 rounded-lg p-4 flex-grow hover:cursor-pointer"
+        :user="member"
+        @click="removeMember(index)"
+      />
+      <!-- <div>
         <ButtonUI variant="error" class="mt-4" size="sm" @click="removeMember(index)"> - </ButtonUI>
-      </div>
+      </div> -->
     </div>
-    <SelectMemberInput v-model="input" @selectMember="addMember"></SelectMemberInput>
+    <SelectMemberInput v-model="input" @selectMember="addMember" class="col-span-2" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import UserComponent from '@/components/UserComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
+// import ButtonUI from '@/components/ButtonUI.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { ref } from 'vue'
 import type { User } from '@/types'

@@ -53,11 +53,14 @@
       <hr class="mb-6" />
 
       <div class="flex flex-col gap-5">
-        <div class="text-sm text-gray-600 mb-2">
+        <div class="text-sm text-gray-00 mb-2">
           You can add team members now or invite them later.
         </div>
+        <div class="text-xm text-gray-900">Click to Remove a Member</div>
+
         <MultiSelectMemberInput v-model="teamData.members" />
 
+        <div class="static text-xm text-gray-900">Click to Select a Member</div>
         <div
           class="pl-4 pt-4 text-sm text-red-500"
           data-test="create-team-error"
