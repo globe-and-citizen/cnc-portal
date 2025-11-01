@@ -118,4 +118,15 @@ describe('ClaimHistory.vue', () => {
     // @ts-expect-error: accessing component internal state
     expect(wrapper.vm.selectedMonthObject.month).toBe(newWeek.month)
   })
+
+  it('should calculate generated month weeks correctly', async () => {
+    const wrapper = shallowMount(ClaimHistory, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+
+    // @ts-expect-error: accessing component internal computed
+    const generatedWeeks = wrapper.vm.generatedMonthWeek
+    expect(Array.isArray(generatedWeeks)).toBe(true)
+    expect(generatedWeeks.length).toBeGreaterThan(0)
+  })
 })
