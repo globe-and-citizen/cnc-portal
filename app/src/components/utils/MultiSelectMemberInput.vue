@@ -1,4 +1,5 @@
 <template>
+  <div class="text-xm text-gray-900" v-if="teamMembers.length > 0">Click to Remove a Member</div>
   <div class="grid grid-cols-2 gap-4" data-test="members-list">
     <div class="flex items-center" v-for="(member, index) of teamMembers" :key="index">
       <UserComponent
@@ -10,7 +11,12 @@
         <ButtonUI variant="error" class="mt-4" size="sm" @click="removeMember(index)"> - </ButtonUI>
       </div> -->
     </div>
-    <SelectMemberInput v-model="input" @selectMember="addMember" class="col-span-2" />
+    <SelectMemberInput
+      v-model="input"
+      @selectMember="addMember"
+      class="col-span-2"
+      :exclude-addresses="excludeAddresses"
+    />
   </div>
 </template>
 
@@ -18,7 +24,7 @@
 import UserComponent from '@/components/UserComponent.vue'
 // import ButtonUI from '@/components/ButtonUI.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { User } from '@/types'
 const teamMembers = defineModel<Array<Pick<User, 'address' | 'name'>>>({
   required: true,
@@ -26,6 +32,10 @@ const teamMembers = defineModel<Array<Pick<User, 'address' | 'name'>>>({
 })
 
 const input = ref({ name: '', address: '' })
+
+const excludeAddresses = computed<string[]>(() =>
+  teamMembers.value.map((m) => m.address).filter((a): a is string => !!a)
+)
 
 const addMember = (member: { name: string; address: string }) => {
   if (!teamMembers.value.find((m) => m.address === member.address)) {
