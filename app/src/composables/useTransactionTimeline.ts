@@ -36,39 +36,39 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
   // Helper function to detect error types
   const getErrorType = (error: Error | null): string => {
     if (!error) return 'none'
-
+    
     const message = error.message.toLowerCase()
-
+    
     // User rejection patterns
-    if (message.includes('user rejected') ||
-      message.includes('user denied') ||
-      message.includes('cancelled') ||
-      message.includes('user cancelled')) {
+    if (message.includes('user rejected') || 
+        message.includes('user denied') || 
+        message.includes('cancelled') ||
+        message.includes('user cancelled')) {
       return 'user_rejected'
     }
-
+    
     // Insufficient funds patterns
     if (message.includes('insufficient funds') ||
-      message.includes('insufficient balance') ||
-      message.includes('not enough') ||
-      message.includes('exceeds balance')) {
+        message.includes('insufficient balance') ||
+        message.includes('not enough') ||
+        message.includes('exceeds balance')) {
       return 'funds'
     }
-
+    
     // Revert/execution patterns
     if (message.includes('revert') ||
-      message.includes('execution reverted') ||
-      message.includes('transaction reverted')) {
+        message.includes('execution reverted') ||
+        message.includes('transaction reverted')) {
       return 'revert'
     }
-
+    
     // Transaction dropped patterns
     if (message.includes('dropped') ||
-      message.includes('replaced') ||
-      message.includes('nonce')) {
+        message.includes('replaced') ||
+        message.includes('nonce')) {
       return 'dropped'
     }
-
+    
     return 'generic'
   }
 
@@ -82,7 +82,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
 
   const prepareTransactionDescription = computed(() => {
     const status = prepareTransactionStatus.value
-
+    
     switch (status) {
       case 'idle':
         return 'Preparing to verify transaction…'
@@ -116,7 +116,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
   const approveTransactionDescription = computed(() => {
     const status = approveTransactionStatus.value
     const prepareStatus = prepareTransactionStatus.value
-
+    
     switch (status) {
       case 'idle':
         if (prepareStatus === 'loading') {
@@ -156,7 +156,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
   const processingTransactionDescription = computed(() => {
     const status = processingTransactionStatus.value
     const approveStatus = approveTransactionStatus.value
-
+    
     switch (status) {
       case 'idle':
         if (approveStatus === 'success') {
@@ -169,7 +169,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
         return 'Your transaction has been sent to the network. Waiting for confirmation…'
       case 'success':
         const blockNumber = receiptResult.data.value?.blockNumber
-        return blockNumber
+        return blockNumber 
           ? `Transaction confirmed successfully in block ${blockNumber}.`
           : 'Transaction confirmed successfully on the blockchain.'
       case 'error':
@@ -195,24 +195,28 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
     const prepareStatus = prepareTransactionStatus.value
     const approveStatus = approveTransactionStatus.value
     const processingStatus = processingTransactionStatus.value
-
+    
     // Success only if all previous steps succeeded
-    if (prepareStatus === 'success' &&
-      approveStatus === 'success' &&
-      processingStatus === 'success') {
+    if (prepareStatus === 'success' && 
+        approveStatus === 'success' && 
+        processingStatus === 'success') {
       return 'success'
     }
-
+    
     // Error if any step failed
-    if (processingStatus === 'error') {
+    if (prepareStatus === 'error' || 
+        approveStatus === 'error' || 
+        processingStatus === 'error') {
       return 'error'
     }
-
+    
     // Loading if any step is in progress
-    if (processingStatus === 'loading') {
+    if (prepareStatus === 'loading' || 
+        approveStatus === 'loading' || 
+        processingStatus === 'loading') {
       return 'loading'
     }
-
+    
     return 'idle'
   })
 
@@ -221,18 +225,18 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
     const approveStatus = approveTransactionStatus.value
     const processingStatus = processingTransactionStatus.value
     const summaryStatus = transactionSummaryStatus.value
-
+    
     if (summaryStatus === 'success') {
       const txHash = writeResult.data.value
       const blockNumber = receiptResult.data.value?.blockNumber
-
+      
       let message = 'Your transaction was confirmed successfully.'
       if (txHash && blockNumber) {
         message += ` Transaction hash: ${txHash.slice(0, 10)}...${txHash.slice(-8)}`
       }
       return message
     }
-
+    
     // Determine which step failed first
     if (prepareStatus === 'error') {
       const errorType = getErrorType(simulateGasResult.error.value)
@@ -241,7 +245,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
       }
       return 'The transaction couldn\'t start due to a simulation error.'
     }
-
+    
     if (approveStatus === 'error') {
       const errorType = getErrorType(writeResult.error.value)
       if (errorType === 'user_rejected') {
@@ -249,18 +253,16 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
       }
       return 'Transaction approval failed. Please try again.'
     }
-
+    
     if (processingStatus === 'error') {
       return 'Transaction failed during execution on the blockchain.'
     }
-
+    
     // Still in progress
-    if (prepareStatus === 'loading' ||
-      approveStatus === 'loading' ||
-      processingStatus === 'loading') {
+    if (summaryStatus === 'loading') {
       return 'Processing your transaction...'
     }
-
+    
     return 'Ready to begin transaction process.'
   })
 
@@ -269,7 +271,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
     const prepareStatus = prepareTransactionStatus.value
     const approveStatus = approveTransactionStatus.value
     const processingStatus = processingTransactionStatus.value
-
+    
     if (prepareStatus === 'loading' || prepareStatus === 'idle') {
       return 0
     } else if (prepareStatus === 'error') {
@@ -285,7 +287,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
     } else if (processingStatus === 'success') {
       return 3
     }
-
+    
     return 0
   })
 
@@ -317,7 +319,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
   return {
     currentStep,
     timelineSteps,
-
+    
     // Individual step statuses for external use if needed
     prepareTransactionStatus,
     approveTransactionStatus,
