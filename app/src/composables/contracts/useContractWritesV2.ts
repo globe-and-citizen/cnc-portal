@@ -47,38 +47,11 @@ export function useContractWrites(config: ContractWriteConfig) {
     hash: writeResult.data
   })
 
-  // Encode the function data
-  // const encodedData = computed(() => {
-  //   let data = undefined
-  //   try {
-  //     data = encodeFunctionData({
-  //       abi: unref(config.abi),
-  //       functionName: unref(config.functionName),
-  //       args: unref(config.args)
-  //     })
-  //   } catch (error) {
-  //     log.error('Failed to encode function data:', error)
-  //     // console.error('Failed to encode function data:', error)
-  //   }
-  //   return data
-  // })
-
-  // const estimateGasResult = useEstimateGas({
-  //   to: unref(config.contractAddress),
-  //   data: encodedData,
-  //   value: unref(config.value),
-  //   query: {
-  //     refetchOnWindowFocus: false,
-  //     refetchInterval: false,
-  //     enabled: false
-  //   }
-  // })
-
   const simulateGasResult = useSimulateContract({
-    abi: unref(config.abi),
-    address: unref(config.contractAddress),
-    functionName: unref(config.functionName),
-    args: unref(config.args),
+    abi: config.abi,
+    address: config.contractAddress,
+    functionName: config.functionName,
+    args: config.args,
     query: {
       refetchOnWindowFocus: false,
       refetchInterval: false,
@@ -104,6 +77,7 @@ export function useContractWrites(config: ContractWriteConfig) {
   }
 
   // Error handling
+
   watch(writeResult.error, (error) => {
     if (error) {
       log.error('Contract write error:', error)
@@ -140,6 +114,7 @@ export function useContractWrites(config: ContractWriteConfig) {
         throw new Error('Gas estimation failed')
       }
 
+      console.log("here")
       // Execute the contract write
       const response = await writeResult.writeContractAsync({
         address: address,
