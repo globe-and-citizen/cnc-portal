@@ -3,6 +3,9 @@
   "name": "CNC Portal",
   "type": "collection",
   "ignore": ["node_modules", ".git"],
+  "scripts": {
+    "moduleWhitelist": ["viem", "siwe", "viem/accounts"]
+  },
   "size": 0,
   "filesCount": 0,
   "presets": {

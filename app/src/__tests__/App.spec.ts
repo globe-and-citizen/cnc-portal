@@ -37,15 +37,47 @@ vi.mock('vue-router', () => ({
 }))
 // Mock the composables
 vi.mock('@/stores/useToastStore')
+
+// Shared mock user store so component and tests reference the same instance
+const mockUserStore = {
+  address: ref('0xOwner'),
+  name: ref('Owner'),
+  imageUrl: ref(''),
+  isAuth: ref(true),
+  setUserData: vi.fn()
+}
+
 vi.mock('@/stores/user', () => ({
-  useUserDataStore: vi.fn(() => {
-    return {
-      address: ref('0xOwner'),
-      name: ref('Owner'),
-      isAuth: ref(true)
-    }
-  })
+  useUserDataStore: vi.fn(() => mockUserStore)
 }))
+
+// Mock useCustomFetch to provide a chainable API used in App.vue
+vi.mock('@/composables/useCustomFetch', () => {
+  const data = ref<unknown>(null)
+  const isFetching = ref(false)
+  const error = ref(null)
+  const execute = vi.fn(async () => {
+    // simulate a successful update response
+    isFetching.value = true
+    await Promise.resolve()
+    data.value = {
+      name: 'New Name',
+      address: '0xOwner',
+      nonce: '123',
+      imageUrl: 'img.png'
+    }
+    isFetching.value = false
+    return
+  })
+
+  return {
+    useCustomFetch: vi.fn(() => ({
+      put: () => ({
+        json: () => ({ data, isFetching, error, execute })
+      })
+    }))
+  }
+})
 
 const mockUseReadContract = {
   data: ref<string | null>(null),
@@ -97,18 +129,97 @@ vi.mock('@/composables/useAuth', () => ({
 
 describe('App.vue', () => {
   describe('Render', () => {
-    it.skip('renders ModalComponent if showModal is true', async () => {
+    it('renders ModalComponent if showModal is true', async () => {
       const wrapper = shallowMount(App, {
         global: {
           plugins: [createTestingPinia({ createSpy: vi.fn })]
         }
       })
 
-      // @ts-expect-error: showModal is not typed in the component's instance
-      wrapper.vm.showModal = true
+      // @ts-expect-error: toggleSide is a ref on the component
+      wrapper.vm.toggleSide = false
+      await wrapper.vm.$nextTick()
+
+      const overlay = wrapper.find('[data-test="drawer"]')
+      await overlay.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      // @ts-expect-error: toggleSide is a ref on the component
+      expect(wrapper.vm.toggleSide).toBe(true)
+    })
+
+    it('should update toggleSide when Drawer emits update:modelValue', async () => {
+      mockUserStore.isAuth.value = true
+      const wrapper = shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      // @ts-expect-error: toggleSide is a ref on the component
+      wrapper.vm.toggleSide = false
+      await wrapper.vm.$nextTick()
+
+      const drawerComponent = wrapper.findComponent({ name: 'Drawer' })
+      await drawerComponent.vm.$emit('update:modelValue', true)
+      await wrapper.vm.$nextTick()
+
+      // @ts-expect-error: toggleSide is a ref on the component
+      expect(wrapper.vm.toggleSide).toBe(true)
+    })
+
+    it('should set editUserModal when Drawer emits openEditUserModal', async () => {
+      mockUserStore.isAuth.value = true
+      const wrapper = shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      // @ts-expect-error: editUserModal is a ref on the component
+      expect(wrapper.vm.editUserModal).toEqual({ mount: false, show: false })
+
+      const drawerComponent = wrapper.findComponent({ name: 'Drawer' })
+      await drawerComponent.vm.$emit('openEditUserModal')
+      await wrapper.vm.$nextTick()
+
+      // @ts-expect-error: editUserModal is a ref on the component
+      expect(wrapper.vm.editUserModal).toEqual({ mount: true, show: true })
+    })
+  })
+
+  describe('User Update Flow', () => {
+    it('should display modal when editUserModal is mounted and shown', async () => {
+      const wrapper = shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      // @ts-expect-error: editUserModal is a ref on the component
+      wrapper.vm.editUserModal = { mount: true, show: true }
       await wrapper.vm.$nextTick()
 
       expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
+    })
+
+    it('should reset editUserModal when modal emits reset', async () => {
+      const wrapper = shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      // @ts-expect-error: editUserModal is a ref on the component
+      wrapper.vm.editUserModal = { mount: true, show: true }
+      await wrapper.vm.$nextTick()
+
+      const modal = wrapper.findComponent(ModalComponent)
+      await modal.vm.$emit('reset')
+      await wrapper.vm.$nextTick()
+
+      // @ts-expect-error: editUserModal is a ref on the component
+      expect(wrapper.vm.editUserModal).toEqual({ mount: false, show: false })
     })
   })
 
@@ -125,7 +236,6 @@ describe('App.vue', () => {
       await wrapper.vm.$nextTick()
 
       expect(addErrorToast).toHaveBeenCalledWith('Disconnected from wallet')
-      // expect(mockUseAuth.logout).toHaveBeenCalled()
     })
   })
 })
