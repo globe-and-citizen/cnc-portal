@@ -3,68 +3,64 @@ import type { Address } from 'viem'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
 import { useTeamStore } from '@/stores/teamStore'
+import type { ExtractAbiFunctionNames } from 'abitype'
 
-export function useDepositToken(token: MaybeRef<Address>, amount: MaybeRef<bigint>) {
+type BankFunctionNames = ExtractAbiFunctionNames<typeof BANK_ABI>
+
+// Helper function to wrap useContractWrites for Bank contract
+export function useBankContractWrite(options: {
+  functionName: BankFunctionNames,
+  args?: unknown[],
+  value?: MaybeRef<bigint>
+}) {
   const teamStore = useTeamStore()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
   return useContractWrites({
     contractAddress: bankAddress,
     abi: BANK_ABI,
+    functionName: options.functionName,
+    args: options.args ?? [],
+    ...(options.value !== undefined ? { value: options.value } : {})
+  })
+}
+
+export function useDepositToken(token: MaybeRef<Address>, amount: MaybeRef<bigint>) {
+  return useBankContractWrite({
     functionName: 'depositToken',
     args: [token, amount]
   })
 }
 
 export function useAddTokenSupport(tokenAddress: MaybeRef<Address>) {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
-    contractAddress: bankAddress,
-    abi: BANK_ABI,
+  return useBankContractWrite({
     functionName: 'addTokenSupport',
     args: [tokenAddress]
   })
 }
 
 export function useRemoveTokenSupport(tokenAddress: MaybeRef<Address>) {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
-    contractAddress: bankAddress,
-    abi: BANK_ABI,
+  return useBankContractWrite({
     functionName: 'removeTokenSupport',
     args: [tokenAddress]
   })
 }
 
 export function useClaimDividend() {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
-    contractAddress: bankAddress,
-    abi: BANK_ABI,
+  return useBankContractWrite({
     functionName: 'claimDividend',
     args: []
   })
 }
 
 export function useClaimTokenDividend(token: MaybeRef<Address>) {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
-    contractAddress: bankAddress,
-    abi: BANK_ABI,
+  return useBankContractWrite({
     functionName: 'claimTokenDividend',
     args: [token]
   })
 }
 
 export function useDepositDividends(amount: MaybeRef<bigint>, investorAddress: MaybeRef<Address>) {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
-    contractAddress: bankAddress,
-    abi: BANK_ABI,
+  return useBankContractWrite({
     functionName: 'depositDividends',
     args: [amount, investorAddress],
     value: amount // This is a payable function
@@ -76,33 +72,21 @@ export function useDepositTokenDividends(
   amount: MaybeRef<bigint>,
   investorAddress: MaybeRef<Address>
 ) {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
-    contractAddress: bankAddress,
-    abi: BANK_ABI,
+  return useBankContractWrite({
     functionName: 'depositTokenDividends',
     args: [token, amount, investorAddress]
   })
 }
 
 export function useSetInvestorAddress(investorAddress: MaybeRef<Address>) {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
-    contractAddress: bankAddress,
-    abi: BANK_ABI,
+  return useBankContractWrite({
     functionName: 'setInvestorAddress',
     args: [investorAddress]
   })
 }
 
 export function useTransfer(to: MaybeRef<Address>, amount: MaybeRef<bigint>) {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
-    contractAddress: bankAddress,
-    abi: BANK_ABI,
+  return useBankContractWrite({
     functionName: 'transfer',
     args: [to, amount]
   })
@@ -113,55 +97,35 @@ export function useTransferToken(
   to: MaybeRef<Address>,
   amount: MaybeRef<bigint>
 ) {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
-    contractAddress: bankAddress,
-    abi: BANK_ABI,
+  return useBankContractWrite({
     functionName: 'transferToken',
     args: [token, to, amount]
   })
 }
 
 export function useTransferOwnership(newOwner: MaybeRef<Address>) {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
-    contractAddress: bankAddress,
-    abi: BANK_ABI,
+  return useBankContractWrite({
     functionName: 'transferOwnership',
     args: [newOwner]
   })
 }
 
 export function useRenounceOwnership() {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
-    contractAddress: bankAddress,
-    abi: BANK_ABI,
+  return useBankContractWrite({
     functionName: 'renounceOwnership',
     args: []
   })
 }
 
 export function usePause() {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
-    contractAddress: bankAddress,
-    abi: BANK_ABI,
+  return useBankContractWrite({
     functionName: 'pause',
     args: []
   })
 }
 
 export function useUnpause() {
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
-    contractAddress: bankAddress,
-    abi: BANK_ABI,
+  return useBankContractWrite({
     functionName: 'unpause',
     args: []
   })
