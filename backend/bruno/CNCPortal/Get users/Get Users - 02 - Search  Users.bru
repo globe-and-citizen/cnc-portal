@@ -1,0 +1,40 @@
+meta {
+  name: Get Users - 02 - Search  Users
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{host}}/user?search=hermann&limit=10
+  body: json
+  auth: bearer
+}
+
+params:query {
+  search: hermann
+  limit: 10
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("should return 200 status for valid token", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("should return users matching search input", function() {
+    const input = bru.getVar("searchInput");
+    expect(res.body.users).to.be.an('array');
+    res.body.users.forEach(user => {
+      const nameMatch = user.name && user.name.includes(input);
+      const addressMatch = user.address && user.address.includes(input);
+      expect(nameMatch || addressMatch).to.equal(true, `User ${user.address} does not match search input "${input}"`);
+    });
+  });
+  test("should respect limit parameter", function() {
+    const limit = parseInt(bru.getVar("searchLimit") || "10", 10);
+    expect(res.body.users.length).to.be.at.most(limit);
+  });
+ 
+}

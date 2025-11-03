@@ -14,12 +14,6 @@ auth:bearer {
   token: {{accessToken}}
 }
 
-script:pre-request {
-  // Verify that SIWE signature was generated in previous request
-  const accessToken = bru.getVar("accessToken");
-  console.log("empty",accessToken); 
-}
-
 tests {
   test("should return 200 status for valid token", function() {
     expect(res.getStatus()).to.equal(200);
