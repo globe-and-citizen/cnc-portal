@@ -33,7 +33,7 @@ vi.mock('@/utils', () => ({
   log: {
     error: vi.fn()
   },
-  parseError: vi.fn((error, abi) => `Parsed error: ${error}`),
+  parseError: vi.fn(() => `Parsed error:`),
   getTokens: vi.fn(() => [])
 }))
 
@@ -89,10 +89,7 @@ describe('TransferComponent', () => {
   let logErrorMock: unknown
 
   // Component factory function
-  const createComponent = (
-    props: { row?: Record<string, any> } = {},
-    mocks: Record<string, any> = {}
-  ) => {
+  const createComponent = (props: { row?: Record<string, unknown> } = {}) => {
     return mount(TransferAction, {
       global: {
         components: {
@@ -123,7 +120,7 @@ describe('TransferComponent', () => {
     options: {
       writeContractError?: Error | null
       writeContractPending?: boolean
-      writeContractData?: any
+      writeContractData?: unknown
       waitForReceiptError?: Error | null
       waitForReceiptLoading?: boolean
       waitForReceiptSuccess?: boolean
