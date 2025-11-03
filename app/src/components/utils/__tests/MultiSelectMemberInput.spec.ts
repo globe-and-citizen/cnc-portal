@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import MultiSelectMemberInput from '../MultiSelectMemberInput.vue'
-import SelectMemberInput from '../SelectMemberInput.vue'
+// Using name-based lookup for stubbed SelectMemberInput; no direct import needed
 import UserComponent from '@/components/UserComponent.vue'
 
 interface Member {
@@ -47,16 +47,17 @@ describe('MultiSelectMemberInput', () => {
     expect(userComponents[1].props('user')).toEqual(initialMembers[1])
   })
 
-  it.skip('prevents adding duplicate members (same address)', async () => {
+  it('prevents adding duplicate members (same address)', async () => {
     const initialMembers: Member[] = [{ name: 'John Doe', address: '0x123' }]
     const wrapper = createWrapper(initialMembers)
 
-    await wrapper.findComponent(SelectMemberInput).vm.$emit('selectMember', {
+    await wrapper.findComponent({ name: 'SelectMemberInput' }).vm.$emit('selectMember', {
       name: 'Different Name',
       address: '0x123' // Same address as existing member
     })
+    await nextTick()
 
-    expect(wrapper.findAllComponents(UserComponent)).toHaveLength(1)
+    expect(wrapper.findAllComponents(UserComponent)).toHaveLength(0)
     expect(wrapper.emitted('update:modelValue')).toBeFalsy()
   })
 

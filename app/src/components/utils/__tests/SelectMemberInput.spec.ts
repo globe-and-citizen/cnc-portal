@@ -49,8 +49,8 @@ describe('SelectMemberInput.vue', () => {
     }
   })
 
-  it.skip('should render correctly, show dropdown after mount and emit event on select', async () => {
-    const nameInput = wrapper.find('[data-test="member-name-input"]')
+  it('should render correctly, show dropdown after mount and emit event on select', async () => {
+    const nameInput = wrapper.find('input[data-test="member-input"]')
     expect(nameInput.exists()).toBe(true)
 
     // After mount with autoOpen, dropdown should appear once data is loaded
@@ -65,9 +65,7 @@ describe('SelectMemberInput.vue', () => {
     await vi.advanceTimersByTime(500)
     await wrapper.vm.$nextTick()
 
-    expect(
-      (wrapper.props() as { modelValue: { name: string; address: string } }).modelValue.name
-    ).toBe('John')
+    expect((nameInput.element as HTMLInputElement).value).toBe('John')
     expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('John Doe')
 
@@ -81,6 +79,15 @@ describe('SelectMemberInput.vue', () => {
       Array<{ address: string; name: string }>
     >
     expect(emittedEvents[0][0]).toEqual({ address: '0x123', name: 'John Doe' })
+    // Also ensure v-model update was emitted with the selected member
+    expect(wrapper.emitted()['update:modelValue']).toBeTruthy()
+    const updateEvents = wrapper.emitted()['update:modelValue'] as Array<
+      Array<{ address: string; name: string }>
+    >
+    expect(updateEvents[updateEvents.length - 1][0]).toEqual({
+      address: '0x123',
+      name: 'John Doe'
+    })
   })
 
   it('should filter out excluded addresses from the dropdown', async () => {
