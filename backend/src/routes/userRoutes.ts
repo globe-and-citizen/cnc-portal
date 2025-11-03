@@ -3,7 +3,7 @@ import {
   getNonce,
   getUser,
   updateUser,
-  searchUser,
+  // searchUser,
   getAllUsers,
 } from '../controllers/userController';
 import { authorizeUser } from '../middleware/authMiddleware';
@@ -12,7 +12,6 @@ import {
   validateQuery,
   validateBodyAndParams,
   addressParamsSchema,
-  userSearchQuerySchema,
   updateUserBodySchema,
   userPaginationQuerySchema,
 } from '../validation';
@@ -57,7 +56,7 @@ const userRoutes = express.Router();
  *                   description: The nonce for the user
  */
 userRoutes.get('/nonce/:address', validateParams(addressParamsSchema), getNonce);
-userRoutes.get('/search', authorizeUser, validateQuery(userSearchQuerySchema), searchUser);
+// userRoutes.get('/search', authorizeUser, validateQuery(userSearchQuerySchema), searchUser);
 userRoutes.get('/', authorizeUser, validateQuery(userPaginationQuerySchema), getAllUsers);
 userRoutes.get('/:address', authorizeUser, validateParams(addressParamsSchema), getUser);
 userRoutes.put(
