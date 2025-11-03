@@ -35,21 +35,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { Address } from 'viem'
+import { computed, ref } from 'vue'
 import CardComponent from '@/components/CardComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
+import { useTeamStore } from '@/stores/teamStore'
 import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
 import MaticIcon from '@/assets/matic-logo.png'
+const teamStore = useTeamStore()
 
-interface Props {
-  address: Address
-}
-const props = defineProps<Props>()
+const bankAddress = teamStore.getContractAddressByType('Bank')
 
-const { dividends, isLoading } = useContractBalance(props.address)
+const { dividends, isLoading } = bankAddress
+  ? useContractBalance(bankAddress)
+  : { dividends: ref([]), isLoading: ref(false) }
 
 // Columns config
 const columns = [
