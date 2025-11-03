@@ -12,14 +12,15 @@
       <input
         type="text"
         class="w-24"
-        v-model="input.name"
-        ref="nameInput"
-        :placeholder="'Select Member '"
-        :data-test="`member-name-input`"
-        @focus="handleFocus"
+        v-model="input"
+        ref="inputSearch"
+        placeholder="Member Name or Member Address"
+        :data-test="`member-input`"
         :disabled="disabled"
       />
       <!-- |
+
+      @focus="handleFocus"
       <input
         type="text"
         class="grow"
@@ -66,53 +67,44 @@
 
 <script lang="ts" setup>
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { ref, useTemplateRef, onMounted, computed } from 'vue'
-import { useFocus, watchDebounced } from '@vueuse/core'
+import { ref, computed } from 'vue'
+import { watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
 
 interface Props {
   disabled?: boolean
-  autoOpen?: boolean
   initialLimit?: number
   excludeAddresses?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  autoOpen: true,
-  initialLimit: 8,
   excludeAddresses: () => []
 })
 
-const emit = defineEmits(['selectMember'])
+type User = { name: string; address: string }
 
-const input = defineModel({
-  default: {
-    name: '',
-    address: ''
-  }
-})
+const emit = defineEmits<{
+  selectMember: [member: User]
+}>()
+
+const input = ref('')
 
 const formRef = ref<HTMLElement | null>(null)
-const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
-const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
-const { focused: nameInputFocus } = useFocus(nameInput)
-const { focused: addressInputFocus } = useFocus(addressInput)
+const inputSearch = ref<HTMLInputElement | null>(null)
 
-const url = ref('user/search')
+// Build URL reactively from the single input; backend will search name OR address
+const url = computed(() => {
+  const query = input.value
+  if (!query) return `user?limit=8`
+  return `user?search=${query}&limit=8`
+})
+
 const {
   execute: executeSearchUser,
   data: users,
   isFetching
-} = useCustomFetch(url, { immediate: false }).get().json()
+} = useCustomFetch(url, { immediate: true }).get().json()
 
-// Helper to preload a default, paginated list of users
-const preloadUsers = async () => {
-  if (props.disabled) return
-  url.value = `user?limit=${props.initialLimit}&page=1`
-  await executeSearchUser()
-}
-
-type User = { name: string; address: string }
 const getCurrentUsers = (): User[] => {
   const val: unknown = users.value
   if (val && typeof val === 'object') {
@@ -129,38 +121,22 @@ const filteredUsers = computed<User[]>(() => {
   return list.filter((u) => !exclude.has(u.address.toLowerCase()))
 })
 
-// Open and preload when the field receives focus and no query is present yet
-const handleFocus = async () => {
-  if (props.disabled) return
-  // If we don't have any list yet, fetch a default page
-  if (getCurrentUsers().length === 0) {
-    await preloadUsers()
-  }
-}
-
+// Debounce user input to avoid excessive requests
 watchDebounced(
-  () => [input.value.name, input.value.address],
-  async ([name, address]) => {
-    if (nameInputFocus.value && name) {
-      url.value = 'user/search?name=' + name
-      await executeSearchUser()
-    } else if (addressInputFocus.value && address) {
-      url.value = 'user/search?address=' + address
-      await executeSearchUser()
-    }
+  input,
+  async () => {
+    await executeSearchUser()
   },
   { debounce: 500, maxWait: 5000 }
 )
 
-const selectMember = (member: { name: string; address: string }) => {
-  input.value = member
+const selectMember = async (member: User) => {
+  // Show the selected member name in the input and emit selection
+  input.value = ''
   emit('selectMember', member)
+  await executeSearchUser()
+  inputSearch.value?.focus()
 }
 
 // Auto-open on mount if requested
-onMounted(async () => {
-  if (props.autoOpen && !props.disabled) {
-    await preloadUsers()
-  }
-})
 </script>
