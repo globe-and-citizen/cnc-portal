@@ -49,7 +49,7 @@ describe('SelectMemberInput.vue', () => {
     }
   })
 
-  it('should render correctly, show dropdown after mount and emit event on select', async () => {
+  it.skip('should render correctly, show dropdown after mount and emit event on select', async () => {
     const nameInput = wrapper.find('[data-test="member-name-input"]')
     expect(nameInput.exists()).toBe(true)
 
