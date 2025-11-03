@@ -1,15 +1,12 @@
 <template>
   <div class="text-xm text-gray-900" v-if="teamMembers.length > 0">Click to Remove a Member</div>
   <div class="grid grid-cols-2 gap-4" data-test="members-list">
-    <div class="flex items-center" v-for="(member, index) of teamMembers" :key="index">
+    <div class="flex items-center" v-for="member of teamMembers" :key="member.address">
       <UserComponent
         class="bg-base-200 rounded-lg p-4 flex-grow hover:cursor-pointer"
         :user="member"
-        @click="removeMember(index)"
+        @click="toggleMember(member)"
       />
-      <!-- <div>
-        <ButtonUI variant="error" class="mt-4" size="sm" @click="removeMember(index)"> - </ButtonUI>
-      </div> -->
     </div>
     <SelectMemberInput
       v-model="input"
@@ -22,28 +19,44 @@
 
 <script lang="ts" setup>
 import UserComponent from '@/components/UserComponent.vue'
-// import ButtonUI from '@/components/ButtonUI.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { ref, computed } from 'vue'
 import type { User } from '@/types'
-const teamMembers = defineModel<Array<Pick<User, 'address' | 'name'>>>({
+import { useTeamStore } from '@/stores'
+
+const teamStore = useTeamStore()
+
+const input = ref('')
+
+const teamMembers = defineModel<Array<User>>({
   required: true,
   default: []
 })
 
-const input = ref({ name: '', address: '' })
+// Exclude addresses already in the current team OR already selected above
+const excludeAddresses = computed<string[]>(() => {
+  const team = teamStore.currentTeam?.members ?? []
+  const selected = teamMembers.value ?? []
+  const addresses = [...team.map((m) => m.address), ...selected.map((m) => m.address)].filter(
+    (a): a is string => !!a
+  )
+  return Array.from(new Set(addresses))
+})
 
-const excludeAddresses = computed<string[]>(() =>
-  teamMembers.value.map((m) => m.address).filter((a): a is string => !!a)
-)
-
-const addMember = (member: { name: string; address: string }) => {
-  if (!teamMembers.value.find((m) => m.address === member.address)) {
-    teamMembers.value.push(member)
+const toggleMember = (member: User) => {
+  if (!member?.address) return
+  const idx = teamMembers.value.findIndex((m) => m.address === member.address)
+  if (idx === -1) {
+    // Add to top
+    teamMembers.value.unshift(member)
+  } else {
+    // Remove
+    teamMembers.value.splice(idx, 1)
   }
-  input.value = { name: '', address: '' }
+  input.value = ''
 }
-const removeMember = (id: number) => {
-  teamMembers.value.splice(id, 1)
+
+const addMember = (member: User) => {
+  toggleMember(member)
 }
 </script>
