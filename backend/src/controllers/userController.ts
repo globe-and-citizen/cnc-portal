@@ -102,51 +102,40 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 export const getAllUsers = async (req: Request, res: Response) => {
-  const { page, limit } = req.query;
+  const { page, limit, search } = req.query;
   const pageNumber = parseInt(page as string) || 1;
   const pageSize = parseInt(limit as string) || 10;
   const offset = (pageNumber - 1) * pageSize;
-
+  // const search = req.query.search as string | undefined | null;
   try {
+    // Normalize search into a string to satisfy Prisma types (req.query may contain ParsedQs)
+
+    const rawSearch = search;
+    const searchTerm = typeof rawSearch === 'string' ? rawSearch.trim() : '';
+
+    const where =
+      searchTerm !== ''
+        ? {
+            OR: [
+              { name: { contains: searchTerm, mode: 'insensitive' as const } },
+              { address: { contains: searchTerm, mode: 'insensitive' as const } },
+            ],
+          }
+        : undefined;
+    console.log('Where clause:', where);
+
     const users = await prisma.user.findMany({
       skip: offset,
       take: pageSize,
+      where,
     });
-    const totalUsers = await prisma.user.count();
+    const totalUsers = await prisma.user.count({ where });
     return res.status(200).json({
       users,
       totalUsers,
       currentPage: pageNumber,
       totalPages: Math.ceil(totalUsers / pageSize),
     });
-  } catch (error) {
-    return errorResponse(500, error, res);
-  }
-};
-
-export const searchUser = async (req: Request, res: Response) => {
-  const { name, address } = req.query;
-
-  try {
-    const users = await prisma.user.findMany({
-      where: {
-        OR: [
-          {
-            name: {
-              contains: name as string,
-              mode: 'insensitive',
-            },
-          },
-          {
-            address: {
-              contains: address as string,
-            },
-          },
-        ],
-      },
-    });
-
-    return res.status(200).json({ success: true, users });
   } catch (error) {
     return errorResponse(500, error, res);
   }
