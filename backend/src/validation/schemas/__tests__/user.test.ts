@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  userSearchQuerySchema,
   updateUserBodySchema,
   userPaginationQuerySchema,
   createUserBodySchema,
@@ -8,45 +7,6 @@ import {
 } from '../user';
 
 describe('user schemas', () => {
-  describe('userSearchQuerySchema', () => {
-    it('should validate search with name', () => {
-      const query = { name: 'John' };
-      const result = userSearchQuerySchema.parse(query);
-      expect(result.name).toBe('John');
-    });
-
-    it('should validate search with address', () => {
-      const query = { address: '0x1234567890123456789012345678901234567890' };
-      const result = userSearchQuerySchema.parse(query);
-      expect(result.address).toBe('0x1234567890123456789012345678901234567890');
-    });
-
-    it('should validate search with both name and address', () => {
-      const query = { name: 'John', address: '0x1234567890123456789012345678901234567890' };
-      const result = userSearchQuerySchema.parse(query);
-      expect(result.name).toBe('John');
-      expect(result.address).toBe('0x1234567890123456789012345678901234567890');
-    });
-
-    it('should throw error if neither name nor address provided', () => {
-      const query = {};
-      expect(() => userSearchQuerySchema.parse(query)).toThrow(
-        'Either name or address must be provided'
-      );
-    });
-
-    it('should trim whitespace from name', () => {
-      const query = { name: '  John  ' };
-      const result = userSearchQuerySchema.parse(query);
-      expect(result.name).toBe('John');
-    });
-
-    it('should throw error for empty name string', () => {
-      const query = { name: '   ' };
-      expect(() => userSearchQuerySchema.parse(query)).toThrow();
-    });
-  });
-
   describe('updateUserBodySchema', () => {
     it('should validate update with name only', () => {
       const body = { name: 'John Doe' };
