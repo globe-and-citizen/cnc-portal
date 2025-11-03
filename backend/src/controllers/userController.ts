@@ -108,8 +108,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
   const offset = (pageNumber - 1) * pageSize;
   // const search = req.query.search as string | undefined | null;
   try {
-    // Normalize search into a string to satisfy Prisma types (req.query may contain ParsedQs)
-
     const rawSearch = search;
     const searchTerm = typeof rawSearch === 'string' ? rawSearch.trim() : '';
 
