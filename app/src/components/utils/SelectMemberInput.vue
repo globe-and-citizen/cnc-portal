@@ -76,6 +76,11 @@ const emit = defineEmits<{
   selectMember: [member: User]
 }>()
 
+// v-model support for selected member
+const model = defineModel<Pick<User, 'name' | 'address'>>({
+  default: { name: '', address: '' }
+})
+
 const input = ref('')
 const teamStore = useTeamStore()
 
@@ -171,6 +176,8 @@ const selectMember = async (member: User) => {
   if (teamAddressSet.value.has(addr)) return
 
   input.value = ''
+  // update v-model for parent consumers
+  model.value = { name: member.name, address: member.address }
   emit('selectMember', member)
   await executeSearchUser()
   inputSearch.value?.focus()

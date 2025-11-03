@@ -26,7 +26,7 @@ import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()
 
-const input = ref('')
+const input = ref<{ name: string; address: string }>({ name: '', address: '' })
 
 const teamMembers = defineModel<Array<User>>({
   required: true,
@@ -53,7 +53,7 @@ const toggleMember = (member: User) => {
     // Remove
     teamMembers.value.splice(idx, 1)
   }
-  input.value = ''
+  input.value = { name: '', address: '' }
 }
 
 const addMember = (member: User) => {
