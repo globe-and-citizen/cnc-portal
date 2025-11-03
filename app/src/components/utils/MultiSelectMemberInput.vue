@@ -22,9 +22,6 @@ import UserComponent from '@/components/UserComponent.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { ref, computed } from 'vue'
 import type { User } from '@/types'
-import { useTeamStore } from '@/stores'
-
-const teamStore = useTeamStore()
 
 const input = ref<{ name: string; address: string }>({ name: '', address: '' })
 
@@ -33,13 +30,10 @@ const teamMembers = defineModel<Array<User>>({
   default: []
 })
 
-// Exclude addresses already in the current team OR already selected above
+// Exclude only addresses already selected above
 const excludeAddresses = computed<string[]>(() => {
-  const team = teamStore.currentTeam?.members ?? []
   const selected = teamMembers.value ?? []
-  const addresses = [...team.map((m) => m.address), ...selected.map((m) => m.address)].filter(
-    (a): a is string => !!a
-  )
+  const addresses = selected.map((m) => m.address).filter((a): a is string => !!a)
   return Array.from(new Set(addresses))
 })
 

@@ -32,13 +32,8 @@
           <div
             v-for="user in filteredUsers.slice(0, 8)"
             :key="user.address"
-            @click="!inTeam(user) && selectMember(user)"
-            class="flex items-center"
-            :class="
-              inTeam(user) ? 'cursor-not-allowed opacity-60 hover:opacity-80' : 'cursor-pointer'
-            "
-            :aria-disabled="inTeam(user) ? 'true' : 'false'"
-            :title="inTeam(user) ? 'Already in the team' : ''"
+            @click="selectMember(user)"
+            class="flex items-center cursor-pointer"
             data-test="user-row"
           >
             <UserComponent
@@ -59,7 +54,6 @@ import { ref, computed } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
 import type { User } from '@/types'
-import { useTeamStore } from '@/stores'
 
 interface Props {
   disabled?: boolean
@@ -82,32 +76,15 @@ const model = defineModel<Pick<User, 'name' | 'address'>>({
 })
 
 const input = ref('')
-const teamStore = useTeamStore()
-
 const inputSearch = ref<HTMLInputElement | null>(null)
 
 // Small helpers and precomputed sets for clarity/perf
 const lower = (a?: string) => (a ?? '').toLowerCase()
-const teamAddressSet = computed<Set<string>>(() => {
-  const set = new Set<string>()
-  for (const m of teamStore.currentTeam?.members ?? []) {
-    const addr = lower((m as Partial<User>).address)
-    if (addr) set.add(addr)
-  }
-  return set
-})
 const excludeAddressSet = computed<Set<string>>(() => {
   const set = new Set<string>()
   for (const a of props.excludeAddresses ?? []) {
     const addr = lower(a)
     if (addr) set.add(addr)
-  }
-  return set
-})
-const selectedOnlySet = computed<Set<string>>(() => {
-  const set = new Set<string>()
-  for (const addr of excludeAddressSet.value) {
-    if (addr && !teamAddressSet.value.has(addr)) set.add(addr)
   }
   return set
 })
@@ -139,28 +116,13 @@ const filteredUsers = computed<User[]>(() => {
     }
   }
 
-  const hasQuery = input.value.length > 0
-
-  // No search: hide everything in excludeAddresses (team members and already selected)
-  if (!hasQuery) {
-    if (excludeAddressSet.value.size === 0) return list
-    return list.filter((u) => {
-      const addr = lower(u.address)
-      return addr !== '' && !excludeAddressSet.value.has(addr)
-    })
-  }
-
-  // Searching: include team members, but still hide already selected (non-team) users
+  // Always hide already-selected users provided via excludeAddresses
+  if (excludeAddressSet.value.size === 0) return list
   return list.filter((u) => {
     const addr = lower(u.address)
-    if (!addr) return false
-    if (selectedOnlySet.value.has(addr)) return false
-    return true
+    return !!addr && !excludeAddressSet.value.has(addr)
   })
 })
-
-// Helper: check if a user already belongs to the current team
-const inTeam = (user: User) => teamAddressSet.value.has(lower(user?.address))
 
 watchDebounced(
   input,
@@ -171,17 +133,10 @@ watchDebounced(
 )
 
 const selectMember = async (member: User) => {
-  // Show the selected member name in the input and emit selection
-  const addr = lower(member?.address)
-  if (teamAddressSet.value.has(addr)) return
-
   input.value = ''
-  // update v-model for parent consumers
   model.value = { name: member.name, address: member.address }
   emit('selectMember', member)
   await executeSearchUser()
   inputSearch.value?.focus()
 }
-
-// Auto-open on mount if requested
 </script>
