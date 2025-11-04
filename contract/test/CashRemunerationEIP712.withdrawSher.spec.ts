@@ -102,6 +102,29 @@ describe('Cash Remuneration - Withdraw SHER', function () {
       contractAddresses.get('CashRemunerationEIP712')
     )
     investorV1Proxy = await ethers.getContractAt('InvestorV1', contractAddresses.get('InvestorV1'))
+
+    chainId = (await ethers.provider.getNetwork()).chainId
+    verifyingContract = await cashRemunerationEip712Proxy.getAddress()
+
+    domain = {
+      name: DOMAIN_NAME,
+      version: DOMAIN_VERSION,
+      chainId,
+      verifyingContract
+    }
+
+    types = {
+      Wage: [
+        { name: 'hourlyRate', type: 'uint256' },
+        { name: 'tokenAddress', type: 'address' }
+      ],
+      WageClaim: [
+        { name: 'employeeAddress', type: 'address' },
+        { name: 'hoursWorked', type: 'uint8' },
+        { name: 'wages', type: 'Wage[]' },
+        { name: 'date', type: 'uint256' }
+      ]
+    }
   })
 
   it('Should initialize contracts properly', async () => {
@@ -133,29 +156,6 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   })
 
   it('Should mint SHER to user if they earned SHER', async () => {
-    chainId = (await ethers.provider.getNetwork()).chainId
-    verifyingContract = await cashRemunerationEip712Proxy.getAddress()
-
-    domain = {
-      name: DOMAIN_NAME,
-      version: DOMAIN_VERSION,
-      chainId,
-      verifyingContract
-    }
-
-    types = {
-      Wage: [
-        { name: 'hourlyRate', type: 'uint256' },
-        { name: 'tokenAddress', type: 'address' }
-      ],
-      WageClaim: [
-        { name: 'employeeAddress', type: 'address' },
-        { name: 'hoursWorked', type: 'uint8' },
-        { name: 'wages', type: 'Wage[]' },
-        { name: 'date', type: 'uint256' }
-      ]
-    }
-
     const wageClaim = {
       employeeAddress: addr1.address,
       hoursWorked: 5,
@@ -189,29 +189,6 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   })
 
   it('Should disable claims so the user cannot withdraw SHER', async () => {
-    chainId = (await ethers.provider.getNetwork()).chainId
-    verifyingContract = await cashRemunerationEip712Proxy.getAddress()
-
-    domain = {
-      name: DOMAIN_NAME,
-      version: DOMAIN_VERSION,
-      chainId,
-      verifyingContract
-    }
-
-    types = {
-      Wage: [
-        { name: 'hourlyRate', type: 'uint256' },
-        { name: 'tokenAddress', type: 'address' }
-      ],
-      WageClaim: [
-        { name: 'employeeAddress', type: 'address' },
-        { name: 'hoursWorked', type: 'uint8' },
-        { name: 'wages', type: 'Wage[]' },
-        { name: 'date', type: 'uint256' }
-      ]
-    }
-
     const wageClaim = {
       employeeAddress: addr1.address,
       hoursWorked: 5,
@@ -238,29 +215,6 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   })
 
   it('Should enable claims so the user can withdraw SHER again', async () => {
-    chainId = (await ethers.provider.getNetwork()).chainId
-    verifyingContract = await cashRemunerationEip712Proxy.getAddress()
-
-    domain = {
-      name: DOMAIN_NAME,
-      version: DOMAIN_VERSION,
-      chainId,
-      verifyingContract
-    }
-
-    types = {
-      Wage: [
-        { name: 'hourlyRate', type: 'uint256' },
-        { name: 'tokenAddress', type: 'address' }
-      ],
-      WageClaim: [
-        { name: 'employeeAddress', type: 'address' },
-        { name: 'hoursWorked', type: 'uint8' },
-        { name: 'wages', type: 'Wage[]' },
-        { name: 'date', type: 'uint256' }
-      ]
-    }
-
     const wageClaim = {
       employeeAddress: addr1.address,
       hoursWorked: 5,
