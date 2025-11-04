@@ -70,11 +70,6 @@ const emit = defineEmits<{
   selectMember: [member: User]
 }>()
 
-// v-model support for selected member
-const model = defineModel<Pick<User, 'name' | 'address'>>({
-  default: { name: '', address: '' }
-})
-
 const input = ref('')
 const inputSearch = ref<HTMLInputElement | null>(null)
 
@@ -134,7 +129,6 @@ watchDebounced(
 
 const selectMember = async (member: User) => {
   input.value = ''
-  model.value = { name: member.name, address: member.address }
   emit('selectMember', member)
   await executeSearchUser()
   inputSearch.value?.focus()

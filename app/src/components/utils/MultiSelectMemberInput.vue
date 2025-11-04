@@ -5,7 +5,7 @@
       <UserComponent
         class="bg-base-200 rounded-lg p-4 flex-grow hover:cursor-pointer"
         :user="member"
-        @click="toggleMember(member)"
+        @click="addMember(member)"
       />
     </div>
     <SelectMemberInput
@@ -23,7 +23,7 @@ import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { ref, computed } from 'vue'
 import type { User } from '@/types'
 
-const input = ref<{ name: string; address: string }>({ name: '', address: '' })
+const input = ref('')
 
 const teamMembers = defineModel<Array<User>>({
   required: true,
@@ -37,7 +37,7 @@ const excludeAddresses = computed<string[]>(() => {
   return Array.from(new Set(addresses))
 })
 
-const toggleMember = (member: User) => {
+const addMember = (member: User) => {
   if (!member?.address) return
   const idx = teamMembers.value.findIndex((m) => m.address === member.address)
   if (idx === -1) {
@@ -47,10 +47,6 @@ const toggleMember = (member: User) => {
     // Remove
     teamMembers.value.splice(idx, 1)
   }
-  input.value = { name: '', address: '' }
-}
-
-const addMember = (member: User) => {
-  toggleMember(member)
+  input.value = ''
 }
 </script>

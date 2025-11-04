@@ -53,7 +53,7 @@
       <hr class="mb-6" />
 
       <div class="flex flex-col gap-5">
-        <div class="text-sm text-gray-00 mb-2">
+        <div class="text-sm text-gray-700 mb-2">
           You can add team members now or invite them later.
         </div>
 
