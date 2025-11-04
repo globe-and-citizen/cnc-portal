@@ -43,3 +43,9 @@ export const getClaimsQuerySchema = z.object({
   status: z.string().optional(),
   memberAddress: addressSchema.optional(),
 });
+
+export const updateClaimDetailsBodySchema = z.object({
+  hoursWorked: z.number().min(1).max(24).optional(),
+  memo: z.string().max(200).optional(),
+  dayWorked: z.string().optional(), // ISO date string
+})

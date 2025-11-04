@@ -302,3 +302,110 @@ export const updateClaim = async (req: Request, res: Response) => {
     return errorResponse(500, 'Internal server error', res);
   }
 };
+
+
+export const updateClaimDetails = async (req: Request, res: Response) => {
+  const callerAddress = (req as any).address
+  const claimId = Number(req.params.claimId)
+  const { hoursWorked, memo, dayWorked } = req.body
+
+  try {
+    const claim = await prisma.claim.findFirst({
+      where: { id: claimId },
+      include: {
+        wage: true,
+        weeklyClaim: true
+      }
+    })
+
+    if (!claim) {
+      return errorResponse(404, 'Claim not found', res)
+    }
+
+    // Only claim owner can edit
+    if (claim.wage.userAddress !== callerAddress) {
+      return errorResponse(403, 'Caller is not the owner of the claim', res)
+    }
+
+    // Can only edit pending claims
+    if (claim.status !== 'pending') {
+      return errorResponse(403, "Can't edit: Claim is not pending", res)
+    }
+
+    const newDayWorked = dayjs.utc(dayWorked).startOf('day').toDate()
+    const newWeekStart = dayjs.utc(newDayWorked).startOf('isoWeek').toDate()
+    const oldWeekStart = dayjs.utc(claim.dayWorked).startOf('isoWeek').toDate()
+
+    // If week changed
+    if (newWeekStart.getTime() !== oldWeekStart.getTime()) {
+      // Find or create weekly claim for the new week
+      let targetWeeklyClaim = await prisma.weeklyClaim.findFirst({
+        where: {
+          weekStart: newWeekStart,
+          memberAddress: callerAddress,
+          wageId: claim.wageId,
+          teamId: claim.weeklyClaim?.teamId ?? claim.wage.teamId
+        }
+      })
+
+      if (!targetWeeklyClaim) {
+        targetWeeklyClaim = await prisma.weeklyClaim.create({
+          data: {
+            weekStart: newWeekStart,
+            memberAddress: callerAddress,
+            wageId: claim.wageId,
+            teamId: claim.weeklyClaim?.teamId ?? claim.wage.teamId,
+            status: 'pending',
+            data: {}
+          }
+        })
+      }
+
+      // Move claim to new week
+      const updatedClaim = await prisma.claim.update({
+        where: { id: claimId },
+        data: {
+          hoursWorked: Number(hoursWorked),
+          memo,
+          dayWorked: newDayWorked,
+          weeklyClaimId: targetWeeklyClaim.id
+        }
+      })
+
+      // After moving the claim, check if old week has any remaining claims
+      if (claim.weeklyClaimId) { // Make sure weeklyClaimId exists
+        const remainingClaims = await prisma.claim.findMany({
+          where: {
+            weeklyClaimId: claim.weeklyClaimId,
+            id: { not: claimId } // Exclude the claim we just moved
+          }
+        })
+
+        // If no claims remain in old week, delete the weekly claim
+        if (remainingClaims.length === 0) {
+          await prisma.weeklyClaim.delete({
+            where: { id: claim.weeklyClaimId }
+          })
+        }
+      }
+
+      return res.status(200).json(updatedClaim)
+    }
+
+    // If same week, just update the claim
+    const updatedClaim = await prisma.claim.update({
+      where: { id: claimId },
+      data: {
+        hoursWorked: Number(hoursWorked),
+        memo,
+        dayWorked: newDayWorked
+      }
+    })
+
+    return res.status(200).json(updatedClaim)
+  } catch (error) {
+    console.error('Error updating claim details:', error)
+    return errorResponse(500, 'Internal server error', res)
+  }
+}
+

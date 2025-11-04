@@ -42,7 +42,10 @@
 
               <div
                 class="badge badge-outline gap-3"
-                v-if="memberWeeklyClaims?.some((wc) => wc.weekStart === week.isoString)"
+                v-if="
+                  memberWeeklyClaims?.some((wc) => wc.weekStart === week.isoString) &&
+                  hasWeekClaims(week.isoString)
+                "
                 :class="`badge-${getColor(
                   memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)
                 )}`"
@@ -169,7 +172,22 @@
             </div>
 
             <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-1">
-              <div v-for="(claim, idx) in entry.claims" :key="idx">{{ claim.memo }} ...</div>
+              <div
+                v-for="claim in entry.claims"
+                :key="claim.id"
+                class="flex items-center justify-between"
+              >
+                <span>{{ claim.memo }}</span>
+                <ButtonUI
+                  v-if="claim.status === 'pending'"
+                  variant="ghost"
+                  size="xs"
+                  @click="editClaim(claim)"
+                  data-test="edit-claim-button"
+                >
+                  <IconifyIcon icon="heroicons:pencil-square" class="w-4 h-4" />
+                </ButtonUI>
+              </div>
             </div>
 
             <div class="text-base flex items-center gap-2 w-1/5 justify-end">
@@ -181,6 +199,15 @@
       </CardComponent>
     </div>
   </div>
+
+  <!-- Add edit modal -->
+  <EditClaimModal
+    v-if="claimToEdit"
+    :claim="claimToEdit"
+    :team-id="teamId || 0"
+    @week-change="handleWeekChange"
+    @close="claimToEdit = null"
+  />
 </template>
 
 <script setup lang="ts">
@@ -216,13 +243,18 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import { storeToRefs } from 'pinia'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-
+import EditClaimModal from '../CashRemunerationView/EditClaimModal.vue'
+import type { Claim } from '@/types'
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 dayjs.extend(weekday)
 
 const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
+
+const emit = defineEmits<{
+  weekChange: [weekStart: string]
+}>()
 
 const getColor = (weeklyClaim?: WeeklyClaim) => {
   if (!weeklyClaim) return 'accent'
@@ -253,6 +285,11 @@ const { data: memberWeeklyClaims } = useTanstackQuery<Array<WeeklyClaim>>(
   weeklyClaimQueryKey,
   weeklyClaimURL
 )
+
+const hasWeekClaims = (weekStart: string) => {
+  const weekClaim = memberWeeklyClaims.value?.find((wc) => wc.weekStart === weekStart)
+  return weekClaim?.claims?.length ?? 0 > 0
+}
 
 const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeam?.id])
 const { data: teamWageData, error: teamWageDataError } = useTanstackQuery<Array<Wage>>(
@@ -379,4 +416,24 @@ const barChartOption = computed(() => {
     ]
   }
 })
+
+// Add state for editing
+const claimToEdit = ref<Claim | null>(null)
+
+// Add edit handler
+const editClaim = (claim: Claim) => {
+  claimToEdit.value = claim
+}
+
+// Handle week change from edit modal
+const handleWeekChange = (newWeekStart: string) => {
+  // Update selected week
+  selectedMonthObject.value = {
+    year: dayjs(newWeekStart).utc().year(),
+    month: dayjs(newWeekStart).utc().month(),
+    isoWeek: dayjs(newWeekStart).utc().isoWeek(),
+    isoString: newWeekStart,
+    formatted: formatIsoWeekRange(dayjs(newWeekStart).utc())
+  }
+}
 </script>

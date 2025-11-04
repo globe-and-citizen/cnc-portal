@@ -1,5 +1,5 @@
 import express from 'express';
-import { addClaim, getClaims, updateClaim } from '../controllers/claimController';
+import { addClaim, getClaims, updateClaim, updateClaimDetails } from '../controllers/claimController';
 import {
   validateBody,
   validateQuery,
@@ -10,6 +10,7 @@ import {
   updateClaimQuerySchema,
   updateClaimBodySchema,
   claimIdParamsSchema,
+  updateClaimDetailsBodySchema
 } from '../validation';
 
 const claimRoutes = express.Router();
@@ -222,5 +223,79 @@ claimRoutes.put(
   validateBody(updateClaimBodySchema),
   updateClaim
 );
+
+/**
+ * @openapi
+ * /claim/{claimId}/details:
+ *  put:
+ *   summary: Update claim details (hours worked, memo, or date)
+ *   description: Allows the claim owner to edit their own pending claim details.
+ *   parameters:
+ *     - in: path
+ *       name: claimId
+ *       required: true
+ *       schema:
+ *         type: integer
+ *         description: The ID of the claim to edit
+ *         minimum: 1
+ *   requestBody:
+ *     required: true
+ *     content:
+ *       application/json:
+ *         schema:
+ *           type: object
+ *           properties:
+ *             hoursWorked:
+ *               type: number
+ *               minimum: 1
+ *               maximum: 24
+ *               description: Updated number of hours worked
+ *             memo:
+ *               type: string
+ *               description: Optional memo for the claim
+ *               maxLength: 200
+ *             dayWorked:
+ *               type: string
+ *               format: date
+ *               description: Updated work date (UTC)
+ *   responses:
+ *     200:
+ *       description: Claim details updated successfully
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Claim'
+ *     400:
+ *       description: Bad request
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     403:
+ *       description: Forbidden
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     404:
+ *       description: Claim not found
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     500:
+ *       description: Internal server error
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ */
+claimRoutes.put(
+  '/:claimId/details',
+  validateBodyAndParams(updateClaimDetailsBodySchema, claimIdParamsSchema),
+  updateClaimDetails
+)
+
+
 
 export default claimRoutes;
