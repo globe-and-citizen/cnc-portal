@@ -38,11 +38,8 @@ const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const queryClient = useQueryClient()
 
-const cashRemunerationEip712Address = computed(
-  () =>
-    teamStore.currentTeam?.teamContracts.find(
-      (contract) => contract.type === 'CashRemunerationEIP712'
-    )?.address as Address
+const cashRemunerationEip712Address = computed(() =>
+  teamStore.getContractAddressByType('CashRemunerationEIP712')
 )
 const { writeContractAsync: withdraw } = useWriteContract()
 
@@ -58,6 +55,12 @@ const isLoading = ref(false)
 
 const withdrawClaim = async () => {
   isLoading.value = true
+
+  if (!cashRemunerationEip712Address.value) {
+    isLoading.value = false
+    toastStore.addErrorToast('Cash Remuneration EIP712 contract address not found')
+    return
+  }
   // balance check
   const balance = formatEther(
     await getBalance(config.getClient(), {
@@ -66,7 +69,7 @@ const withdrawClaim = async () => {
   )
   if (
     Number(balance) <
-    Number(props.weeklyClaim.wage.ratePerHour.find((rate) => rate.type === 'native')) *
+    Number(props.weeklyClaim.wage.ratePerHour.find((rate) => rate.type === 'native')?.amount || 0) *
       Number(props.weeklyClaim.hoursWorked)
   ) {
     isLoading.value = false
