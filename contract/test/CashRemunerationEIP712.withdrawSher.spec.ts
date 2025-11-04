@@ -187,4 +187,110 @@ describe('Cash Remuneration - Withdraw SHER', function () {
       investorV1Proxy.connect(addr1).individualMint(owner.address, 20 * 1e6)
     ).to.be.revertedWithCustomError(investorV1Proxy, 'AccessControlUnauthorizedAccount')
   })
+
+  it('Should disable claims so the user cannot withdraw SHER', async () => {
+    chainId = (await ethers.provider.getNetwork()).chainId
+    verifyingContract = await cashRemunerationEip712Proxy.getAddress()
+
+    domain = {
+      name: DOMAIN_NAME,
+      version: DOMAIN_VERSION,
+      chainId,
+      verifyingContract
+    }
+
+    types = {
+      Wage: [
+        { name: 'hourlyRate', type: 'uint256' },
+        { name: 'tokenAddress', type: 'address' }
+      ],
+      WageClaim: [
+        { name: 'employeeAddress', type: 'address' },
+        { name: 'hoursWorked', type: 'uint8' },
+        { name: 'wages', type: 'Wage[]' },
+        { name: 'date', type: 'uint256' }
+      ]
+    }
+
+    const wageClaim = {
+      employeeAddress: addr1.address,
+      hoursWorked: 5,
+      wages: [
+        {
+          hourlyRate: BigInt(20 * 1e6),
+          tokenAddress: await investorV1Proxy.getAddress()
+        }
+      ],
+      date: Math.floor(Date.now() / 1000)
+    }
+
+    const signature = await owner.signTypedData(domain, types, wageClaim)
+    const signatureHash = ethers.keccak256(signature)
+    const tx = await cashRemunerationEip712Proxy.connect(owner).disableClaim(signatureHash)
+
+    await expect(tx)
+      .to.emit(cashRemunerationEip712Proxy, 'WageClaimDisabled')
+      .withArgs(signatureHash)
+
+    await expect(
+      cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
+    ).to.be.revertedWith('Wage already paid')
+  })
+
+  it('Should enable claims so the user can withdraw SHER again', async () => {
+    chainId = (await ethers.provider.getNetwork()).chainId
+    verifyingContract = await cashRemunerationEip712Proxy.getAddress()
+
+    domain = {
+      name: DOMAIN_NAME,
+      version: DOMAIN_VERSION,
+      chainId,
+      verifyingContract
+    }
+
+    types = {
+      Wage: [
+        { name: 'hourlyRate', type: 'uint256' },
+        { name: 'tokenAddress', type: 'address' }
+      ],
+      WageClaim: [
+        { name: 'employeeAddress', type: 'address' },
+        { name: 'hoursWorked', type: 'uint8' },
+        { name: 'wages', type: 'Wage[]' },
+        { name: 'date', type: 'uint256' }
+      ]
+    }
+
+    const wageClaim = {
+      employeeAddress: addr1.address,
+      hoursWorked: 5,
+      wages: [
+        {
+          hourlyRate: BigInt(20 * 1e6),
+          tokenAddress: await investorV1Proxy.getAddress()
+        }
+      ],
+      date: Math.floor(Date.now() / 1000)
+    }
+
+    const signature = await owner.signTypedData(domain, types, wageClaim)
+    const signatureHash = ethers.keccak256(signature)
+
+    let tx = await cashRemunerationEip712Proxy.connect(owner).enableClaim(signatureHash)
+
+    await expect(tx)
+      .to.emit(cashRemunerationEip712Proxy, 'WageClaimEnabled')
+      .withArgs(signatureHash)
+
+    tx = await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
+
+    const amountSher = BigInt(wageClaim.hoursWorked) * wageClaim.wages[0].hourlyRate
+
+    await expect(tx)
+      .to.emit(cashRemunerationEip712Proxy, 'WithdrawToken')
+      .withArgs(addr1.address, await investorV1Proxy.getAddress(), amountSher)
+    const paidWageClaim = await cashRemunerationEip712Proxy.paidWageClaims(signatureHash)
+    expect(paidWageClaim).to.be.equal(true)
+    expect(await investorV1Proxy.balanceOf(addr1.address)).to.be.equal(amountSher)
+  })
 })
