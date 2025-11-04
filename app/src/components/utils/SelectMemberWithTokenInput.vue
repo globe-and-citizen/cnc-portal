@@ -1,7 +1,7 @@
 <template>
   <div
     class="input-group relative"
-    :class="isFetching ? 'animate-pulse' : ''"
+    :class="teamStore.currentTeamMeta.teamIsFetching ? 'animate-pulse' : ''"
     ref="formRef"
     data-test="member-input"
   >
@@ -27,16 +27,11 @@
         :placeholder="`Member Address`"
       />
       |
-      <!--<select v-model="input.token" class="bg-white grow" data-test="select-token">
-        <option disabled :value="null">-- Select a token --</option>
-        <option v-for="(address, symbol) of tokens" :value="address" :key="address">
-          {{ symbol }}
-        </option>
-      </select>-->
       <SelectComponent
+        v-if="filteredMembers.length > 0"
         v-model="input.token"
         :options="options"
-        :disabled="isFetching"
+        :disabled="teamStore.currentTeamMeta.teamIsFetching"
         :format-value="
           (value: string) => {
             return value === `SepoliaETH` ? `SepETH` : value
@@ -46,28 +41,40 @@
     </label>
     <!-- Dropdown positioned relative to the input -->
     <div
-      v-if="showDropdown && users?.users && users?.users.length > 0"
-      class="absolute left-0 top-full mt-1 w-full z-10"
+      v-if="showDropdown && filteredMembers && filteredMembers.length > 0"
+      class="left-0 top-full mt-4 w-full border rounded-xl p-4"
       data-test="user-dropdown"
     >
-      <ul class="p-2 shadow menu dropdown-content bg-base-100 rounded-box w-full">
-        <li v-for="user in users.users" :key="user.address">
-          <a :data-test="`user-dropdown-${user.address}`" @click="selectMember(user)">
-            {{ user.name }} | {{ user.address }}
-          </a>
-        </li>
-      </ul>
+      <p class="pb-3 font-bold">Click to select Member</p>
+      <div class="bg-base-100 rounded-box">
+        <div class="grid grid-cols-2 gap-4" data-test="user-search-results">
+          <div
+            v-for="user in filteredMembers.slice(0, 8)"
+            :key="user.address"
+            @click="selectMember(user)"
+            class="flex items-center cursor-pointer"
+            data-test="user-row"
+          >
+            <UserComponent
+              class="bg-base-200 p-4 flex-grow rounded-lg hover:bg-base-300"
+              :user="user"
+              :data-test="`user-dropdown-${user.address}`"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import { computed, ref, useTemplateRef } from 'vue'
-import { useFocus, watchDebounced } from '@vueuse/core'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import SelectComponent from '@/components/SelectComponent.vue'
+import { useTeamStore } from '@/stores'
+import { useFocus, watchDebounced } from '@vueuse/core'
+import UserComponent from '../UserComponent.vue'
 
 const emit = defineEmits(['selectMember'])
 const input = defineModel({
@@ -77,7 +84,7 @@ const input = defineModel({
     token: ''
   }
 })
-
+const teamStore = useTeamStore()
 const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
@@ -95,24 +102,21 @@ const options = computed(() => {
   }))
 })
 
-const url = ref('user/search')
-const {
-  execute: executeSearchUser,
-  data: users,
-  isFetching
-} = useCustomFetch(url, { immediate: false }).get().json()
+const filteredMembers = computed(() => {
+  if (!teamStore.currentTeam?.members) return []
+  return teamStore.currentTeam.members.filter(
+    (member) =>
+      member.name.includes(input.value.name) || member.address.includes(input.value.address)
+  )
+})
 
 watchDebounced(
-  () => [input.value.name, input.value.address],
-  async ([name, address]) => {
-    if (nameInputFocus.value && name) {
-      url.value = 'user/search?name=' + name
-      await executeSearchUser()
+  () => [input.value.name, input.value.address, nameInputFocus.value, addressInputFocus.value],
+  async () => {
+    if (nameInputFocus.value || addressInputFocus.value) {
       showDropdown.value = true
-    } else if (addressInputFocus.value && address) {
-      url.value = 'user/search?address=' + address
-      await executeSearchUser()
-      showDropdown.value = true
+    } else {
+      showDropdown.value = false
     }
   },
   { debounce: 500, maxWait: 5000 }
