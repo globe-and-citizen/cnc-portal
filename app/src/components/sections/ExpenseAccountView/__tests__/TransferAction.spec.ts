@@ -37,19 +37,6 @@ vi.mock('@/utils', () => ({
   getTokens: vi.fn(() => [])
 }))
 
-// vi.mock('@/stores', () => ({
-//   useTeamStore: () => ({
-//     getContractAddressByType: vi.fn(() => '0xExpenseAccountAddress')
-//   }),
-//   useToastStore: () => ({
-//     addErrorToast: addErrorToastMock,
-//     addSuccessToast: vi.fn()
-//   }),
-//   useUserDataStore: () => ({
-//     address: '0xUserAddress'
-//   })
-// }))
-
 vi.mock('@/composables', () => ({
   useContractBalance: () => ({
     balances: ref({})
