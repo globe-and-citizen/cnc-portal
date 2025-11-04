@@ -247,4 +247,16 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     expect(paidWageClaim).to.be.equal(true)
     expect(await investorV1Proxy.balanceOf(addr1.address)).to.be.equal(amountSher)
   })
+
+  it('Should update officer address', async () => {
+    const tx = await cashRemunerationEip712Proxy.connect(owner).setOfficerAddress(addr1.address)
+
+    await expect(tx)
+      .to.emit(cashRemunerationEip712Proxy, 'OfficerAddressUpdated')
+      .withArgs(addr1.address)
+
+    expect((await cashRemunerationEip712Proxy.officerAddress()).toLocaleLowerCase()).to.be.equal(
+      addr1.address.toLocaleLowerCase()
+    )
+  })
 })
