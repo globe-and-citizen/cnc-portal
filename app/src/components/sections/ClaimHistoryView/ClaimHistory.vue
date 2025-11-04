@@ -42,10 +42,7 @@
 
               <div
                 class="badge badge-outline gap-3"
-                v-if="
-                  memberWeeklyClaims?.some((wc) => wc.weekStart === week.isoString) &&
-                  hasWeekClaims(week.isoString)
-                "
+                v-if="memberWeeklyClaims?.some((wc) => wc.weekStart === week.isoString)"
                 :class="`badge-${getColor(
                   memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)
                 )}`"
@@ -285,11 +282,6 @@ const { data: memberWeeklyClaims } = useTanstackQuery<Array<WeeklyClaim>>(
   weeklyClaimQueryKey,
   weeklyClaimURL
 )
-
-const hasWeekClaims = (weekStart: string) => {
-  const weekClaim = memberWeeklyClaims.value?.find((wc) => wc.weekStart === weekStart)
-  return weekClaim?.claims?.length ?? 0 > 0
-}
 
 const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeam?.id])
 const { data: teamWageData, error: teamWageDataError } = useTanstackQuery<Array<Wage>>(

@@ -87,7 +87,7 @@ import { ref, watch } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import { required, numeric, minValue, maxValue, maxLength } from '@vuelidate/validators'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore, useTeamStore } from '@/stores'
+import { useToastStore } from '@/stores'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { Claim } from '@/types'
 import dayjs from 'dayjs'
@@ -101,7 +101,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  weekChange: [weekStart: string]
 }>()
 
 const showModal = ref(true)
@@ -168,11 +167,6 @@ const updateClaim = async () => {
     await queryClient.invalidateQueries({
       queryKey: ['weekly-claims', props.teamId]
     })
-
-    // If week changed, select the new week
-    if (oldWeekStart !== newWeekStart) {
-      emit('weekChange', newWeekStart)
-    }
 
     closeModal()
   } catch (error: any) {

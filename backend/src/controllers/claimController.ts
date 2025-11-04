@@ -372,17 +372,21 @@ export const updateClaimDetails = async (req: Request, res: Response) => {
         }
       })
 
-      // After moving the claim, check if old week has any remaining claims
-      if (claim.weeklyClaimId) { // Make sure weeklyClaimId exists
-        const remainingClaims = await prisma.claim.findMany({
+      // After moving the claim, check if old week has any actual hours logged
+      if (claim.weeklyClaimId) {
+        const remainingHours = await prisma.claim.aggregate({
           where: {
             weeklyClaimId: claim.weeklyClaimId,
-            id: { not: claimId } // Exclude the claim we just moved
+            id: { not: claimId }, // Exclude the moved claim
+            hoursWorked: { gt: 0 } // Only count claims with actual hours
+          },
+          _sum: {
+            hoursWorked: true
           }
         })
 
-        // If no claims remain in old week, delete the weekly claim
-        if (remainingClaims.length === 0) {
+        // If no hours remain in old week, delete the weekly claim
+        if (!remainingHours._sum.hoursWorked) {
           await prisma.weeklyClaim.delete({
             where: { id: claim.weeklyClaimId }
           })
