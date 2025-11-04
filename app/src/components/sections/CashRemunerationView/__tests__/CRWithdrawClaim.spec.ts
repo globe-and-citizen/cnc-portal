@@ -7,10 +7,11 @@ import { log } from '@/utils'
 import { parseError } from '@/utils'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import CRWithdrawClaim from '../CRWithdrawClaim.vue'
-import { mockToastStore } from '@/tests/mocks/store.mock'
+import { mockToastStore, mockTeamStore } from '@/tests/mocks/store.mock'
 import { getBalance } from 'viem/actions'
 import type { WeeklyClaim } from '@/types'
 import { parseEther, type Address } from 'viem'
+import { useTeamStore } from '@/stores'
 
 // Mock the dependencies
 vi.mock('@/wagmi.config', () => ({
@@ -295,5 +296,25 @@ describe('WithdrawComponent', () => {
     // Should show update claim status error
     expect(addErrorToastMock).toHaveBeenCalledWith('Failed to update Claim status')
     expect(addSuccessToastMock).toHaveBeenCalledWith('Claim withdrawn')
+  })
+
+  it('should handle missing team contract address gracefully', async () => {
+    //@ts-expect-error only mocking required values
+    vi.mocked(useTeamStore).mockReturnValue({
+      ...mockTeamStore,
+      getContractAddressByType: vi.fn().mockReturnValue(undefined)
+    })
+    wrapper = createComponent()
+
+    // Trigger the withdraw function
+    //@ts-expect-error not visible on wrapper.vm
+    await wrapper.vm.withdrawClaim()
+
+    // Should log error about missing contract address
+    expect(addErrorToastMock).toHaveBeenCalledWith(
+      'Cash Remuneration EIP712 contract address not found'
+    )
+    //@ts-expect-error not visible on wrapper.vm
+    expect(wrapper.vm.isLoading).toBe(false)
   })
 })
