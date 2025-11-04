@@ -102,26 +102,22 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 export const getAllUsers = async (req: Request, res: Response) => {
-  const { page, limit, search } = req.query;
+  const { page, limit, search } = req.query as { page: string; limit: string; search: string };
   const pageNumber = parseInt(page as string) || 1;
   const pageSize = parseInt(limit as string) || 10;
   const offset = (pageNumber - 1) * pageSize;
-  // const search = req.query.search as string | undefined | null;
+
+  console.log('Search query:', search);
   try {
-    const rawSearch = search;
-    const searchTerm = typeof rawSearch === 'string' ? rawSearch.trim() : '';
-
-    const where =
-      searchTerm !== ''
-        ? {
-            OR: [
-              { name: { contains: searchTerm, mode: 'insensitive' as const } },
-              { address: { contains: searchTerm, mode: 'insensitive' as const } },
-            ],
-          }
-        : undefined;
+    const where = !!search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' as const } },
+            { address: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
+      : undefined;
     console.log('Where clause:', where);
-
     const users = await prisma.user.findMany({
       skip: offset,
       take: pageSize,
