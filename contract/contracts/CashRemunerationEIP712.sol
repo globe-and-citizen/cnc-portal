@@ -117,6 +117,24 @@ contract CashRemunerationEIP712 is
     event TokenSupportRemoved(address indexed tokenAddress);
 
     /**
+     * @dev Emitted when the officer address is updated.
+     * @param newOfficerAddress The address of the new officer.
+     */
+    event OfficerAddressUpdated(address indexed newOfficerAddress);
+
+    /**
+     * @dev Emitted when a wage claim is enabled.
+     * @param signatureHash The hash of the wage claim signature.
+     */
+    event WageClaimEnabled(bytes32 indexed signatureHash);
+
+    /**
+     * @dev Emitted when a wage claim is disabled.
+     * @param signatureHash The hash of the wage claim signature.
+     */
+    event WageClaimDisabled(bytes32 indexed signatureHash);
+
+    /**
      * @dev Error thrown when an unauthorized address attempts to perform an action.
      * @param expected The expected authorized address.
      * @param received The unauthorized address that attempted the action.
@@ -150,7 +168,9 @@ contract CashRemunerationEIP712 is
     }
 
     function setOfficerAddress(address _officerAddress) external onlyOwner whenNotPaused {
-      officerAddress = _officerAddress;
+        officerAddress = _officerAddress;
+
+        emit OfficerAddressUpdated(_officerAddress);
     }
 
     /**
@@ -320,7 +340,7 @@ contract CashRemunerationEIP712 is
      * @param tokenAddress The address of the token contract.
      * @dev Can only be called by the contract owner.
      */
-    function addTokenSupport(address tokenAddress) external onlyOwner {
+    function addTokenSupport(address tokenAddress) external onlyOwner whenNotPaused {
         require(tokenAddress != address(0), "Token address cannot be zero");
         require(!supportedTokens[tokenAddress], "Token already supported");
 
@@ -333,12 +353,30 @@ contract CashRemunerationEIP712 is
      * @param tokenAddress The address of the token contract.
      * @dev Can only be called by the contract owner.
      */
-    function removeTokenSupport(address tokenAddress) external onlyOwner {
+    function removeTokenSupport(address tokenAddress) external onlyOwner whenNotPaused {
         require(tokenAddress != address(0), "Token address cannot be zero");
         require(supportedTokens[tokenAddress], "Token not supported");
 
         supportedTokens[tokenAddress] = false;
         emit TokenSupportRemoved(tokenAddress);
+    }
+
+    /**
+     * @notice Enables a wage claim.
+     * @param signatureHash The signature hash of the wage claim.
+     */
+    function enableClaim(bytes32 signatureHash) external onlyOwner whenNotPaused {
+        paidWageClaims[signatureHash] = false;
+        emit WageClaimEnabled(signatureHash);
+    }
+
+    /**
+     * @notice Disables a wage claim.
+     * @param signatureHash The signature hash of the wage claim.
+     */
+    function disableClaim(bytes32 signatureHash) external onlyOwner whenNotPaused {
+        paidWageClaims[signatureHash] = true;
+        emit WageClaimDisabled(signatureHash);
     }
 
     /**
