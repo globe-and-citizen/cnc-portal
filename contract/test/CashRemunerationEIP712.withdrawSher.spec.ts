@@ -211,7 +211,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     await expect(
       cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
-    ).to.be.revertedWith('Wage already paid')
+    ).to.be.revertedWith('Wage claim disabled')
   })
 
   it('Should enable claims so the user can withdraw SHER again', async () => {
