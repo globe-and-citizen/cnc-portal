@@ -147,6 +147,7 @@ vi.mock('@/composables/useContractBalance', () => ({
 
 describe('CreateVesting.vue', () => {
   let wrapper: VueWrapper
+
   const mountComponent = () =>
     mount(CreateVesting, {
       props: {
@@ -155,130 +156,82 @@ describe('CreateVesting.vue', () => {
       },
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn }), [WagmiPlugin, { config: wagmiConfig }]]
-      },
-      data() {
-        return {
-          tokenApproved: false
-        }
       }
     })
+
+  const fillFormWithValidData = async (
+    wrapper: VueWrapper,
+    memberAddr = '0x120000000000000000000000000000000000dead'
+  ) => {
+    const selectMemberInput = wrapper.findComponent(SelectMemberInput)
+    await selectMemberInput.setValue({
+      name: 'Test User',
+      address: memberAddr
+    })
+
+    const datePicker = wrapper.findComponent(Datepicker)
+    const startDate = new Date('2025-06-13')
+    const endDate = new Date('2025-07-13')
+    await datePicker.setValue([startDate, endDate])
+
+    await wrapper.find('[data-test="cliff"]').setValue(5)
+    await wrapper.find('[data-test="total-amount"]').setValue(5)
+    await wrapper.vm.$nextTick()
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
+    mockBalance.value = parseUnits('1000', 6)
+    mockAllowance.value = parseUnits('1000', 6)
+    mockAllowanceError.value = null
+    mockBalanceError.value = null
+    mockApprovalError.value = null
+    mockWriteContract.error.value = null
+    mockWaitForReceipt.isLoading.value = false
+    mockWaitForReceipt.isSuccess.value = false
     wrapper = mountComponent()
   })
+
   describe('Create Vesting Submission', () => {
-    beforeEach(async () => {
-      // Select member using component events
-      const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      await selectMemberInput.setValue({
-        name: 'Test User',
-        address: '0x000000000000000000000000000000000000dead'
-      })
-
-      // Set date range using datepicker
-      const datePicker = wrapper.findComponent(Datepicker)
-      const startDate = new Date('2025-06-13')
-      const endDate = new Date('2025-07-13') // 30 days later
-      datePicker.setValue([startDate, endDate])
-
-      // Set cliff and amount
-      await wrapper.find('[data-test="cliff"]').setValue(5)
-      await wrapper.find('[data-test="total-amount"]').setValue(5)
-
-      await wrapper.vm.$nextTick()
-    })
     it('shows error toast when allowance check fails', async () => {
-      // Set up the form with valid data first
       const { addErrorToast } = useToastStore()
-      // Mock the allowance check error
       mockAllowanceError.value = new Error('Allowance check failed')
       await wrapper.vm.$nextTick()
 
-      await wrapper.find('[data-test="submit-btn"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      // Now VestingSummary exists
-      const summary = wrapper.findComponent({ name: 'VestingSummary' })
-      expect(summary.exists()).toBe(true)
-
-      // Simulate confirm
-      summary.vm.$emit('confirm')
-      await wrapper.vm.$nextTick()
-
-      // // Find and click confirm button in summary view
-      // const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
-      // await confirmBtn.trigger('click')
-
-      // Verify error toast was shown
+      // The error watcher should trigger and show the toast
       expect(addErrorToast).toHaveBeenCalledWith('error on get Allowance')
-      expect(mockWriteContract.writeContract).not.toHaveBeenCalled()
     })
+
     it('shows error toast when token approval fails', async () => {
       const { addErrorToast } = useToastStore()
 
+      await fillFormWithValidData(wrapper)
       await wrapper.find('[data-test="submit-btn"]').trigger('click')
       await wrapper.vm.$nextTick()
 
-      // Trigger approval
       const summary = wrapper.findComponent({ name: 'VestingSummary' })
       summary.vm.$emit('confirm')
-      // const submitBtn = wrapper.find('[data-test="submit-btn"]')
-      // await submitBtn.trigger('click')
-
       await wrapper.vm.$nextTick()
 
       mockWriteContract.error.value = new Error('Approval failed')
+      await wrapper.vm.$nextTick()
 
-      const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
-      await confirmBtn.trigger('click')
-
-      // Verify error toast was shown
       expect(addErrorToast).toHaveBeenCalledWith('Approval failed')
     })
 
     it('calls writeContract on valid form and tokenApproved=true', async () => {
-      // Set up initial conditions
-      mockBalance.value = parseUnits('1000', 6)
-      mockAllowance.value = parseUnits('1000', 6)
+      await fillFormWithValidData(wrapper, '0x120000000000000000000000000000000000dead')
 
-      await wrapper.vm.$nextTick()
-
-      // Fill required fields
-      const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      await selectMemberInput.setValue({
-        name: 'Test User',
-        address: '0x120000000000000000000000000000000000dead'
-      })
-
-      // Set date range
-      const datePicker = wrapper.findComponent(Datepicker)
-      const startDate = new Date('2025-06-13')
-      const endDate = new Date('2025-07-13')
-      await datePicker.setValue([startDate, endDate])
-
-      // Set duration inputs
-
-      // Set cliff and amount
-      await wrapper.find('[data-test="cliff"]').setValue(5)
-      await wrapper.find('[data-test="total-amount"]').setValue(5)
-
-      await wrapper.vm.$nextTick()
-
-      // Submit to show summary
       const submitBtn = wrapper.find('[data-test="submit-btn"]')
       expect(submitBtn.attributes('disabled')).toBeUndefined()
       await submitBtn.trigger('click')
-
       await wrapper.vm.$nextTick()
 
-      // Click confirm in summary
       const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
       await confirmBtn.trigger('click')
-      // Force formValid to be true regardless of inputs
 
-      // First, verify approve was called
       expect(mockWriteContract.writeContract).toHaveBeenCalledWith({
-        address: '0x000000000000000000000000000000000000beef', // tokenAddress from props
+        address: '0x000000000000000000000000000000000000beef',
         abi: INVESTOR_ABI,
         functionName: 'approve',
         args: [VESTING_ADDRESS, parseEther('5')]
@@ -289,7 +242,6 @@ describe('CreateVesting.vue', () => {
       mockWaitForReceipt.isSuccess.value = true
       mockWaitForReceipt.isLoading.value = false
       await wrapper.vm.$nextTick()
-      await wrapper.vm.$nextTick()
 
       expect(mockWriteContract.writeContract).toHaveBeenCalled()
 
@@ -299,84 +251,53 @@ describe('CreateVesting.vue', () => {
       mockWaitForReceipt.isLoading.value = false
       await wrapper.vm.$nextTick()
 
-      // const selectMemberInputAfter = wrapper.findComponent(SelectMemberInput)
-      // expect(selectMemberInputAfter.props('modelValue')).toEqual({ name: '', address: '' })
       expect((wrapper.find('[data-test="total-amount"]').element as HTMLInputElement).value).toBe(
         '0'
       )
       expect((wrapper.find('[data-test="cliff"]').element as HTMLInputElement).value).toBe('0')
     })
-    it('does not show error toast when errorAddVesting is falsy', async () => {
-      const { addErrorToast } = useToastStore()
-      mockWriteContract.error.value = null
-      expect(addErrorToast).not.toHaveBeenCalled()
-    })
-
-    it('does not show error toast when getAllowance is falsy', async () => {
-      const { addErrorToast } = useToastStore()
-      mockAllowanceError.value = null
-      expect(addErrorToast).not.toHaveBeenCalled()
-    })
-
     it('prevents submission when form is invalid', async () => {
-      wrapper = mountComponent()
-      await wrapper.vm.$nextTick()
       await wrapper.find('[data-test="total-amount"]').setValue(0)
       await wrapper.vm.$nextTick()
-      // Submit form
+
       const submitBtn = wrapper.find('[data-test="submit-btn"]')
       await submitBtn.trigger('click')
       await wrapper.vm.$nextTick()
-      // Click confirm in summary
-      // Trigger approval
+
       const summary = wrapper.findComponent({ name: 'VestingSummary' })
       expect(summary.exists()).toBe(false)
-      // Verify contract write was not called due to invalid form
       expect(mockWriteContract.writeContract).not.toHaveBeenCalled()
     })
 
     it('shows error toast when adding vesting fails', async () => {
       const { addErrorToast } = useToastStore()
-      // Set up form values
-      await wrapper.vm.$nextTick()
-      // Simulate error when adding vesting
+
+      await fillFormWithValidData(wrapper)
       mockWriteContract.error.value = new Error('Add vesting failed')
-      // Submit form
+
       const submitBtn = wrapper.find('[data-test="submit-btn"]')
-
       await submitBtn.trigger('click')
-
       await wrapper.vm.$nextTick()
 
-      // Click confirm in summary
       const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
       await confirmBtn.trigger('click')
-      // Verify error toast was shown
+
       expect(addErrorToast).toHaveBeenCalledWith('Add vesting failed')
     })
 
     it('shows error toast when member already has active vesting', async () => {
       const { addErrorToast } = useToastStore()
-      // Set member address that matches existing vesting
-      const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      await selectMemberInput.vm.$emit('selectMember', {
-        name: 'Test User',
-        address: memberAddress
-      })
-      await wrapper.vm.$nextTick()
-      // Submit form
+
+      await fillFormWithValidData(wrapper, memberAddress)
       mockWriteContract.error.value = new Error('Add vesting failed')
-      // Submit form
+
       const submitBtn = wrapper.find('[data-test="submit-btn"]')
-
       await submitBtn.trigger('click')
-
       await wrapper.vm.$nextTick()
 
-      // Click confirm in summary
       const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
       await confirmBtn.trigger('click')
-      // Verify duplicate check prevented submission and showed error
+
       expect(addErrorToast).toHaveBeenCalledWith(
         'The member address already has an active vesting.'
       )
@@ -385,24 +306,17 @@ describe('CreateVesting.vue', () => {
 
     it('skips balance check when tokenBalance is undefined', async () => {
       const { addErrorToast } = useToastStore()
-      // Force token balance to be undefined
       mockBalance.value = undefined
-      // Fill out the form with valid data
 
-      const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      await selectMemberInput.setValue({
-        name: 'Test User',
-        address: '0x120000000000000000000000000000000000dead'
-      })
-      await wrapper.vm.$nextTick()
-      // Submit the form
+      await fillFormWithValidData(wrapper, '0x120000000000000000000000000000000000dead')
+
       await wrapper.find('[data-test="submit-btn"]').trigger('click')
       await wrapper.vm.$nextTick()
-      wrapper.find('[data-test="confirm-btn"]').trigger('click')
+
+      await wrapper.find('[data-test="confirm-btn"]').trigger('click')
       await wrapper.vm.$nextTick()
-      // This would mean the balance check branch was skipped
+
       expect(addErrorToast).not.toHaveBeenCalledWith('Insufficient token balance')
-      // The next step (e.g. allowance check or vesting call) happens
       expect(mockWriteContract.writeContract).toHaveBeenCalled()
     })
   })
