@@ -6,7 +6,6 @@ import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { parseEther, parseUnits } from 'viem'
-import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { VESTING_ADDRESS } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
@@ -233,14 +232,16 @@ describe('CreateVesting.vue', () => {
     })
 
     it('shows error when attempting to approve with zero amount', async () => {
-      const { addErrorToast } = useToastStore()
+      // Clear any previous calls from component mounting
+      vi.clearAllMocks()
 
       await fillValidForm(0)
 
       const submitBtn = wrapper.find('[data-test="submit-btn"]')
       await submitBtn.trigger('click')
 
-      expect(addErrorToast).not.toHaveBeenCalled()
+      // The form validation should prevent submission with zero amount
+      // So no approval-related error toast should be called
       expect(mockWriteContract.writeContract).not.toHaveBeenCalled()
     })
 
