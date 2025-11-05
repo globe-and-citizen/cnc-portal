@@ -12,7 +12,10 @@
       v-model="input"
       @selectMember="addMember"
       class="col-span-2"
-      :exclude-addresses="excludeAddresses"
+      :hiddenMembers="teamMembers"
+      :show-on-focus="props.showOnFocus"
+      :only-team-members="props.onlyTeamMembers"
+      :disable-team-members="props.disableTeamMembers"
     />
   </div>
 </template>
@@ -20,21 +23,30 @@
 <script lang="ts" setup>
 import UserComponent from '@/components/UserComponent.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import type { User } from '@/types'
+
+interface Props {
+  showOnFocus?: boolean
+  filterByTeam?: boolean
+  isCreatingTeam?: boolean // True when creating a new team, false when adding members to existing team
+  onlyTeamMembers?: boolean
+  disableTeamMembers?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  showOnFocus: false,
+  filterByTeam: false,
+  isCreatingTeam: false,
+  onlyTeamMembers: false,
+  disableTeamMembers: false
+})
 
 const input = ref('')
 
 const teamMembers = defineModel<Array<User>>({
   required: true,
   default: []
-})
-
-// Exclude only addresses already selected above
-const excludeAddresses = computed<string[]>(() => {
-  const selected = teamMembers.value ?? []
-  const addresses = selected.map((m) => m.address).filter((a): a is string => !!a)
-  return Array.from(new Set(addresses))
 })
 
 const addMember = (member: User) => {

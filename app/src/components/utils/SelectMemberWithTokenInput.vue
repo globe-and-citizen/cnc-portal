@@ -104,10 +104,31 @@ const options = computed(() => {
 
 const filteredMembers = computed(() => {
   if (!teamStore.currentTeam?.members) return []
-  return teamStore.currentTeam.members.filter(
-    (member) =>
-      member.name.includes(input.value.name) || member.address.includes(input.value.address)
-  )
+
+  const nameQuery = input.value.name.toLowerCase()
+  const addressQuery = input.value.address.toLowerCase()
+
+  // If both inputs are empty, return all members
+  if (!nameQuery && !addressQuery) {
+    return teamStore.currentTeam.members
+  }
+
+  return teamStore.currentTeam.members.filter((member) => {
+    const memberName = member.name.toLowerCase()
+    const memberAddress = member.address.toLowerCase()
+
+    // Search by name if name input has value
+    if (nameQuery) {
+      return memberName.includes(nameQuery)
+    }
+
+    // Search by address if address input has value
+    if (addressQuery) {
+      return memberAddress.includes(addressQuery)
+    }
+
+    return false
+  })
 })
 
 watchDebounced(
