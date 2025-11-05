@@ -78,9 +78,12 @@ contract CashRemunerationEIP712 is
 
     // Add new state variable - MUST be added after existing ones
     address public officerAddress;
+
+    // @dev Mapping to track enabled wage claims by their signature hash.
+    mapping(bytes32 => bool) public disabledWageClaims;
     
     // Storage gap for future upgrades
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 
     /**
      * @dev Emitted when Ether is deposited into the contract.
@@ -268,10 +271,11 @@ contract CashRemunerationEIP712 is
             revert UnauthorizedAccess(owner(), signer);
         }
 
-        // Step 5: Prevent double-spending of the same signature
+        // Step 5: Prevent double-spending of the same signature & usage of disabled claims
         // Each signature can only be used once to prevent replay attacks
         bytes32 sigHash = keccak256(signature);
         require(!paidWageClaims[sigHash], "Wage already paid");
+        require(!disabledWageClaims[sigHash], "Wage claim disabled");
 
         // Step 6: Mark this signature as used to prevent reuse
         paidWageClaims[sigHash] = true;
@@ -366,7 +370,7 @@ contract CashRemunerationEIP712 is
      * @param signatureHash The signature hash of the wage claim.
      */
     function enableClaim(bytes32 signatureHash) external onlyOwner whenNotPaused {
-        paidWageClaims[signatureHash] = false;
+        disabledWageClaims[signatureHash] = false;
         emit WageClaimEnabled(signatureHash);
     }
 
@@ -375,7 +379,7 @@ contract CashRemunerationEIP712 is
      * @param signatureHash The signature hash of the wage claim.
      */
     function disableClaim(bytes32 signatureHash) external onlyOwner whenNotPaused {
-        paidWageClaims[signatureHash] = true;
+        disabledWageClaims[signatureHash] = true;
         emit WageClaimDisabled(signatureHash);
     }
 
