@@ -101,22 +101,28 @@ describe('DropdownActions', () => {
 
       await flushPromises()
 
-      expect(wrapper.text()).toContain('Enable')
-      expect(wrapper.text()).toContain('Resign')
-      expect(wrapper.text()).not.toContain('Withdraw')
+      expect(wrapper.text()).toContain('Withdraw')
+      const disabledWithdraw = wrapper.find('[data-test="disabled-withdraw"]')
+      expect(disabledWithdraw.exists()).toBeTruthy()
+      expect(disabledWithdraw.classes()).toContain('disabled')
+      const disabledResign = wrapper.find('[data-test="disabled-resign"]')
+      expect(disabledResign.exists()).toBeTruthy()
+      expect(disabledResign.classes()).toContain('disabled')
+      const disabledEnable = wrapper.find('[data-test="disabled-enable"]')
+      expect(disabledEnable.exists()).toBeTruthy()
+      expect(disabledEnable.classes()).toContain('disabled')
       expect(wrapper.text()).not.toContain('Sign')
     })
 
     it('renders no actions available for withdrawn status', async () => {
       const wrapper = createWrapper('withdrawn')
       const button = wrapper.findComponent({ name: 'ButtonUI' })
-      button.trigger('click')
+      expect(button.exists()).toBeFalsy()
 
-      await flushPromises()
-
-      expect(wrapper.text()).toContain('No actions available')
+      expect(wrapper.text()).not.toContain('Enable')
       expect(wrapper.text()).not.toContain('Sign')
       expect(wrapper.text()).not.toContain('Withdraw')
+      expect(wrapper.text()).not.toContain('Resign')
     })
   })
 
@@ -305,14 +311,14 @@ describe('DropdownActions', () => {
       expect(menu.classes()).toContain('top-1/2')
     })
 
-    it('disables action for withdrawn status', async () => {
-      const wrapper = createWrapper('withdrawn')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      await button.trigger('click')
+    // it('disables action for withdrawn status', async () => {
+    //   const wrapper = createWrapper('withdrawn')
+    //   const button = wrapper.findComponent({ name: 'ButtonUI' })
+    //   await button.trigger('click')
 
-      const disabledAction = wrapper.find('a.text-gray-400')
-      expect(disabledAction.exists()).toBe(true)
-      expect(disabledAction.classes()).toContain('cursor-not-allowed')
-    })
+    //   const disabledAction = wrapper.find('a.text-gray-400')
+    //   expect(disabledAction.exists()).toBe(true)
+    //   expect(disabledAction.classes()).toContain('cursor-not-allowed')
+    // })
   })
 })
