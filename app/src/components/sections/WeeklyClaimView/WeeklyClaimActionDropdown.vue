@@ -1,15 +1,9 @@
 <template>
-  <div class="relative">
-    <!-- Dropdown trigger button -->
-    <ButtonUI class="btn-ghost" size="sm" @click="toggleDropdown">
-      <IconifyIcon :icon="ellipsisIcon" class="w-5 h-5" />
-    </ButtonUI>
-
-    <!-- Dropdown menu -->
+  <div class="relative inline-flex items-center" ref="dropdownRef">
+    <!-- Dropdown menu positioned to the left -->
     <ul
       v-if="isOpen"
-      ref="target"
-      class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 menu p-2 shadow bg-base-100 rounded-box w-52 z-[50]"
+      class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 menu p-2 shadow bg-base-100 rounded-box w-52 z-50"
     >
       <!-- Pending status: Sign -->
       <li v-if="status === 'pending'">
@@ -41,6 +35,11 @@
         <a class="text-sm text-gray-400 cursor-not-allowed"> No actions available </a>
       </li>
     </ul>
+
+    <!-- Dropdown trigger button -->
+    <ButtonUI class="btn-ghost" size="sm" @click.stop="toggleDropdown">
+      <IconifyIcon :icon="ellipsisIcon" class="w-5 h-5" />
+    </ButtonUI>
   </div>
 </template>
 
@@ -71,6 +70,7 @@ const emit = defineEmits<Emits>()
 
 // Reactive data
 const isOpen = ref<boolean>(false)
+const dropdownRef = ref<HTMLElement | null>(null)
 const ellipsisIcon: string = 'heroicons:ellipsis-vertical'
 
 // Methods
@@ -83,19 +83,21 @@ const handleAction = (action: Action): void => {
   isOpen.value = false
 }
 
-// const closeDropdown = (event: MouseEvent): void => {
-//   const target = event.target as HTMLElement
-//   if (!target.closest('.dropdown')) {
-//     isOpen.value = false
-//   }
-// }
+const handleClickOutside = (event: MouseEvent): void => {
+  if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
+    isOpen.value = false
+  }
+}
 
-// // Close dropdown when clicking outside
-// onMounted((): void => {
-//   document.addEventListener('click', closeDropdown)
-// })
+// Event listeners
+onMounted((): void => {
+  // Use setTimeout to ensure the listener is added after the current click event
+  setTimeout(() => {
+    document.addEventListener('click', handleClickOutside)
+  }, 0)
+})
 
-// onUnmounted((): void => {
-//   document.removeEventListener('click', closeDropdown)
-// })
+onUnmounted((): void => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
