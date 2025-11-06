@@ -1,5 +1,5 @@
 <template>
-  <div class="relative inline-flex items-center" ref="dropdownRef">
+  <div v-if="status !== 'withdrawn'" class="relative inline-flex items-center" ref="dropdownRef">
     <!-- Dropdown menu positioned to the left -->
     <ul
       v-if="isOpen"
@@ -35,18 +35,25 @@
 
       <!-- Disabled status: Enable and Resign -->
       <template v-else-if="status === 'disabled'">
-        <li>
-          <a @click="handleAction('enable')" class="text-sm"> Enable </a>
+        <li data-test="disabled-withdraw" class="disabled">
+          <a class="text-sm"> Withdraw </a>
         </li>
-        <li>
-          <a @click="handleAction('resign')" class="text-sm"> Resign </a>
+        <li data-test="disabled-enable" :class="{ disabled: !isCashRemunerationOwner }">
+          <a @click="isCashRemunerationOwner ? handleAction('enable') : null" class="text-sm">
+            Enable
+          </a>
+        </li>
+        <li data-test="disabled-resign" :class="{ disabled: !isCashRemunerationOwner }">
+          <a @click="isCashRemunerationOwner ? handleAction('resign') : null" class="text-sm">
+            Resign
+          </a>
         </li>
       </template>
 
-      <!-- Withdrawn status: No actions -->
+      <!-- Withdrawn status: No actions 
       <li v-else-if="status === 'withdrawn'">
         <a class="text-sm text-gray-400 cursor-not-allowed"> No actions available </a>
-      </li>
+      </li>-->
     </ul>
 
     <!-- Dropdown trigger button -->
