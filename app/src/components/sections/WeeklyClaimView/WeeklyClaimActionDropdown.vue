@@ -23,11 +23,13 @@
 
       <!-- Signed status: Withdraw and Disable -->
       <template v-else-if="status === 'signed'">
-        <li>
+        <li data-test="signed-withdraw">
           <a @click="handleAction('withdraw')" class="text-sm"> Withdraw </a>
         </li>
-        <li>
-          <a @click="handleAction('disable')" class="text-sm"> Disable </a>
+        <li data-test="signed-disable" :class="{ disabled: !isCashRemunerationOwner }">
+          <a @click="isCashRemunerationOwner ? handleAction('disable') : null" class="text-sm">
+            Disable
+          </a>
         </li>
       </template>
 
