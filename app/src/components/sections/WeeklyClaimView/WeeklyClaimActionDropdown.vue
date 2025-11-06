@@ -57,7 +57,7 @@ interface Props {
   status: Status
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   status: 'pending'
 })
 
