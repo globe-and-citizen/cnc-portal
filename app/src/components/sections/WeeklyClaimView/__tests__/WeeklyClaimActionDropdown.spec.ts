@@ -83,11 +83,15 @@ describe('DropdownActions', () => {
       button.trigger('click')
 
       await flushPromises()
-
+      //Should show only 'Withdraw' & 'Disable' for signed
       expect(wrapper.text()).toContain('Withdraw')
       expect(wrapper.text()).toContain('Disable')
       expect(wrapper.text()).not.toContain('Sign')
       expect(wrapper.text()).not.toContain('Enable')
+      //Should show disabled UI on disable action if not contract owner
+      const signedDisable = wrapper.find('[data-test="signed-disable"]')
+      expect(signedDisable.exists()).toBeTruthy()
+      expect(signedDisable.classes()).toContain('disabled')
     })
 
     it('renders Enable and Resign actions for disabled status', async () => {
@@ -187,6 +191,10 @@ describe('DropdownActions', () => {
     })
 
     it('emits correct actions for signed status', async () => {
+      //@ts-expect-error only mocking necessary fileds
+      vi.mocked(useUserDataStore).mockReturnValue({
+        address: '0xContractOwner'
+      })
       const wrapper = createWrapper('signed')
       const button = wrapper.findComponent({ name: 'ButtonUI' })
 
