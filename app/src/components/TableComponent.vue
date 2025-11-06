@@ -1,6 +1,6 @@
 // TableComponent.vue
 <template>
-  <div class="overflow-x-auto">
+  <div :class="overflow">
     <div v-if="loading" class="flex justify-center items-center py-4" data-test="loading">
       <span class="loading-icon" :class="loadingState?.icon">{{
         loadingState?.label || 'Loading...'
@@ -243,6 +243,10 @@ const props = defineProps({
   maxDisplayedPages: {
     type: Number,
     default: 5
+  },
+  overflow: {
+    type: String,
+    default: 'overflow-x-auto'
   }
 })
 
