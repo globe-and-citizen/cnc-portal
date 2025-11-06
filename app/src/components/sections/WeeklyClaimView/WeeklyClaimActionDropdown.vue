@@ -6,9 +6,20 @@
       class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 menu p-2 shadow bg-base-100 rounded-box w-52 z-50"
     >
       <!-- Pending status: Sign -->
-      <li v-if="status === 'pending'">
-        <a @click="handleAction('sign')" class="text-sm"> Sign </a>
-      </li>
+      <template v-if="status === 'pending'">
+        <li class="disabled" data-test="pending-withdraw">
+          <a class="text-sm"> Withdraw </a>
+        </li>
+        <li :class="{ disabled: !isCashRemunerationOwner }" data-test="pending-sign">
+          <a
+            data-test="sign-action"
+            @click="isCashRemunerationOwner ? handleAction('sign') : null"
+            class="text-sm"
+          >
+            Sign
+          </a>
+        </li>
+      </template>
 
       <!-- Signed status: Withdraw and Disable -->
       <template v-else-if="status === 'signed'">
@@ -46,7 +57,10 @@
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useUserDataStore, useTeamStore } from '@/stores'
+import { useReadContract } from '@wagmi/vue'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 
 // Types
 export type Status = 'pending' | 'signed' | 'disabled' | 'withdrawn'
@@ -68,10 +82,29 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 
+const userStore = useUserDataStore()
+const teamStore = useTeamStore()
+
 // Reactive data
 const isOpen = ref<boolean>(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 const ellipsisIcon: string = 'heroicons:ellipsis-vertical'
+
+const cashRemunerationAddress = computed(() =>
+  teamStore.getContractAddressByType('CashRemunerationEIP712')
+)
+
+const {
+  data: cashRemunerationOwner
+  // isFetching: isCashRemunerationOwnerFetching,
+  // error: cashRemunerationOwnerError
+} = useReadContract({
+  functionName: 'owner',
+  address: cashRemunerationAddress,
+  abi: CASH_REMUNERATION_EIP712_ABI
+})
+
+const isCashRemunerationOwner = computed(() => userStore.address === cashRemunerationOwner.value)
 
 // Methods
 const toggleDropdown = (): void => {
