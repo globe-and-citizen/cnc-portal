@@ -1,10 +1,8 @@
-// DropdownActions.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import DropdownActions from '../WeeklyClaimActionDropdown.vue'
 import type { Status } from '../WeeklyClaimActionDropdown.vue'
 import { ref } from 'vue'
-import { mockTeamStore } from '@/tests/mocks/store.mock'
 import { createPinia, setActivePinia } from 'pinia'
 import { useUserDataStore } from '@/stores'
 
