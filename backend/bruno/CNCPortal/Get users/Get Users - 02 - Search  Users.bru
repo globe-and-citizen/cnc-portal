@@ -5,13 +5,13 @@ meta {
 }
 
 get {
-  url: {{host}}/user?search=hermann&limit=10
+  url: {{host}}/user?search=user&limit=10
   body: json
   auth: bearer
 }
 
 params:query {
-  search: hermann
+  search: user
   limit: 10
 }
 
@@ -36,5 +36,5 @@ tests {
     const limit = parseInt(bru.getVar("searchLimit") || "10", 10);
     expect(res.body.users.length).to.be.at.most(limit);
   });
- 
+   
 }
