@@ -79,7 +79,6 @@ import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import ButtonUI from '../ButtonUI.vue'
 import TokenAmount from './TokenAmount.vue'
-import TransactionTimeline from '../ui/TransactionTimeline.vue'
 
 const emits = defineEmits(['closeModal'])
 // Add validation event
