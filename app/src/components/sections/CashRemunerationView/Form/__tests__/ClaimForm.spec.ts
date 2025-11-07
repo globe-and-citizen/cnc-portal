@@ -82,8 +82,10 @@ describe('ClaimForm.vue', () => {
     })
     await flushPromises()
 
-    const hoursInput = wrapper.find('input[data-test="hours-worked-input"]').element as HTMLInputElement
-    const memoInput = wrapper.find('textarea[data-test="memo-input"]').element as HTMLTextAreaElement
+    const hoursInput = wrapper.find('input[data-test="hours-worked-input"]')
+      .element as HTMLInputElement
+    const memoInput = wrapper.find('textarea[data-test="memo-input"]')
+      .element as HTMLTextAreaElement
     const dateInput = wrapper.find('[data-test="date-input"]').element as HTMLInputElement
 
     expect(hoursInput.value).toBe('6')
