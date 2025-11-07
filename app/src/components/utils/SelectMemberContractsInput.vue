@@ -84,7 +84,7 @@
             data-test="contract-row"
             @click="selectItem({ name: contract.type, address: contract.address }, 'contract')"
           >
-            <UserComponent
+            <ContractComponent
               class="p-4 flex-grow rounded-lg bg-white hover:bg-base-300"
               :user="{ name: contract.type, address: contract.address }"
               :data-test="`contract-dropdown-${contract.address}`"
@@ -115,6 +115,7 @@ import { ref, useTemplateRef, computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
+import ContractComponent from '@/components/ContractComponent.vue'
 
 const props = defineProps<{ disabled?: boolean }>()
 
