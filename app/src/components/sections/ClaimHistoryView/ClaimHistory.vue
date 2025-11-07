@@ -257,7 +257,6 @@ import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 
-import { useQueryClient } from '@tanstack/vue-query'
 import { storeToRefs } from 'pinia'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
@@ -284,7 +283,6 @@ const toastStore = useToastStore()
 const { imageUrl, name, address } = storeToRefs(userStore)
 const teamId = computed(() => teamStore.currentTeam?.id)
 const memberAddress = computed(() => route.params.memberAddress as string | undefined)
-const queryClient = useQueryClient()
 
 const weeklyClaimQueryKey = computed(() => [
   'weekly-claims',
