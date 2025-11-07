@@ -18,7 +18,9 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
   const { writeResult, receiptResult, simulateGasResult } = params
 
   // Helper function to map our internal status to timeline component status
-  const mapToTimelineStatus = (status: TimelineStepStatus): 'pending' | 'active' | 'completed' | 'error' => {
+  const mapToTimelineStatus = (
+    status: TimelineStepStatus
+  ): 'pending' | 'active' | 'completed' | 'error' => {
     switch (status) {
       case 'idle':
         return 'pending'
@@ -40,32 +42,36 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
     const message = error.message.toLowerCase()
 
     // User rejection patterns
-    if (message.includes('user rejected') ||
+    if (
+      message.includes('user rejected') ||
       message.includes('user denied') ||
       message.includes('cancelled') ||
-      message.includes('user cancelled')) {
+      message.includes('user cancelled')
+    ) {
       return 'user_rejected'
     }
 
     // Insufficient funds patterns
-    if (message.includes('insufficient funds') ||
+    if (
+      message.includes('insufficient funds') ||
       message.includes('insufficient balance') ||
       message.includes('not enough') ||
-      message.includes('exceeds balance')) {
+      message.includes('exceeds balance')
+    ) {
       return 'funds'
     }
 
     // Revert/execution patterns
-    if (message.includes('revert') ||
+    if (
+      message.includes('revert') ||
       message.includes('execution reverted') ||
-      message.includes('transaction reverted')) {
+      message.includes('transaction reverted')
+    ) {
       return 'revert'
     }
 
     // Transaction dropped patterns
-    if (message.includes('dropped') ||
-      message.includes('replaced') ||
-      message.includes('nonce')) {
+    if (message.includes('dropped') || message.includes('replaced') || message.includes('nonce')) {
       return 'dropped'
     }
 
@@ -197,9 +203,11 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
     const processingStatus = processingTransactionStatus.value
 
     // Success only if all previous steps succeeded
-    if (prepareStatus === 'success' &&
+    if (
+      prepareStatus === 'success' &&
       approveStatus === 'success' &&
-      processingStatus === 'success') {
+      processingStatus === 'success'
+    ) {
       return 'success'
     }
 
@@ -237,9 +245,9 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
     if (prepareStatus === 'error') {
       const errorType = getErrorType(simulateGasResult.error.value)
       if (errorType === 'funds') {
-        return 'The transaction couldn\'t start due to insufficient balance.'
+        return "The transaction couldn't start due to insufficient balance."
       }
-      return 'The transaction couldn\'t start due to a simulation error.'
+      return "The transaction couldn't start due to a simulation error."
     }
 
     if (approveStatus === 'error') {
@@ -272,11 +280,17 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
       return 0
     } else if (prepareStatus === 'error') {
       return 0 // Stay on step 0 if prepare fails
-    } else if (approveStatus === 'loading' || (prepareStatus === 'success' && approveStatus === 'idle')) {
+    } else if (
+      approveStatus === 'loading' ||
+      (prepareStatus === 'success' && approveStatus === 'idle')
+    ) {
       return 1
     } else if (approveStatus === 'error') {
       return 1 // Stay on step 1 if approve fails
-    } else if (processingStatus === 'loading' || (approveStatus === 'success' && processingStatus === 'idle')) {
+    } else if (
+      processingStatus === 'loading' ||
+      (approveStatus === 'success' && processingStatus === 'idle')
+    ) {
       return 2
     } else if (processingStatus === 'error') {
       return 2 // Stay on step 2 if processing fails
