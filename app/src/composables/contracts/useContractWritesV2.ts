@@ -143,7 +143,7 @@ export function useContractWrites(config: ContractWriteConfig) {
       })
 
       // Wait for transaction confirmation
-      await waitForCondition(() => writeResult.isSuccess.value, 15000)
+      await waitForCondition(() => receiptResult.isSuccess.value, 15000)
 
       // Invalidate queries
       invalidateQueries()
