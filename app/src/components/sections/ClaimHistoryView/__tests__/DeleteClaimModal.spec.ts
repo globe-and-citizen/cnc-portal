@@ -185,4 +185,101 @@ describe('DeleteClaimModal', () => {
 
     expect(wrapper.text()).toContain('Jan 01, 2024')
   })
+
+  describe('Error Handling', () => {
+    it.skip('should handle console error and toast message', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+
+      // Simulate error
+      mockDeleteError.value = new Error('Network error')
+      resolveExecute(null)
+      await flushPromises()
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to delete claim:', expect.any(Error))
+      expect(errorToastMock).toHaveBeenCalledWith('Network error')
+
+      consoleErrorSpy.mockRestore()
+    })
+
+    it('should handle error parsing failure', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+
+      // Simulate error with invalid JSON response
+      mockDeleteError.value = new Error('Parse error')
+      mockDeleteResponse.value = {
+        json: vi.fn().mockRejectedValue(new Error('Invalid JSON'))
+      }
+
+      resolveExecute(null)
+      await flushPromises()
+
+      expect(wrapper.find('[data-test="delete-claim-error"]').text()).toBe('Failed to delete claim')
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to parse delete claim error response',
+        expect.any(Error)
+      )
+
+      consoleErrorSpy.mockRestore()
+    })
+
+    it('should handle case when claim is null', async () => {
+      const wrapper = createWrapper({ claim: null })
+
+      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+
+      expect(executeDeleteMock).not.toHaveBeenCalled()
+    })
+
+    it.skip('should invalidate queries when queryKey is valid', async () => {
+      const queryClient = new QueryClient()
+      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
+      const wrapper = mount(DeleteClaimModal, {
+        props: {
+          claim: defaultClaim,
+          queryKey: ['weekly-claims', '1']
+        },
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
+        }
+      })
+
+      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+      mockDeleteStatus.value = 200
+      resolveExecute({})
+      await flushPromises()
+
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ['weekly-claims', '1']
+      })
+    })
+
+    it('should not invalidate queries when queryKey contains only undefined', async () => {
+      const queryClient = new QueryClient()
+      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
+      const wrapper = mount(DeleteClaimModal, {
+        props: {
+          claim: defaultClaim,
+          queryKey: [undefined, undefined]
+        },
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
+        }
+      })
+
+      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+      mockDeleteStatus.value = 200
+      resolveExecute({})
+      await flushPromises()
+
+      expect(invalidateQueriesSpy).not.toHaveBeenCalled()
+    })
+  })
 })
