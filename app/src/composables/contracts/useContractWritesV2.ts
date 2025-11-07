@@ -1,16 +1,11 @@
 import { computed, watch, unref, type MaybeRef } from 'vue'
-import {
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useAccount,
-  // useEstimateGas,
-  useSimulateContract
-} from '@wagmi/vue'
-import { useQueryClient } from '@tanstack/vue-query'
+import { useWriteContract, useWaitForTransactionReceipt, useAccount } from '@wagmi/vue'
+import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { type Address, type Abi } from 'viem'
-// import { useToastStore } from '@/stores'
-import { log, waitForCondition } from '@/utils'
+import { formatDataForDisplay, log, waitForCondition } from '@/utils'
 import { useTransactionTimeline } from '@/composables/useTransactionTimeline'
+import { simulateContract } from '@wagmi/core'
+import { config as wagmiConfig } from '@/wagmi.config'
 
 export interface ContractWriteOptions {
   skipGasEstimation?: boolean
@@ -47,16 +42,39 @@ export function useContractWrites(config: ContractWriteConfig) {
     hash: writeResult.data
   })
 
-  const simulateGasResult = useSimulateContract({
-    abi: config.abi,
-    address: config.contractAddress,
-    functionName: config.functionName,
-    args: config.args,
-    query: {
-      refetchOnWindowFocus: false,
-      refetchInterval: false,
-      enabled: false
-    }
+  // Individual computed properties for contract parameters
+  const contractAddress = computed(() => unref(config.contractAddress))
+  const contractAbi = computed(() => unref(config.abi))
+  const contractFunctionName = computed(() => unref(config.functionName))
+  const contractArgs = computed(() => unref(config.args))
+
+  const queryKey = [
+    'simulateContract',
+    computed(() => ({
+      address: contractAddress.value,
+      functionName: contractFunctionName.value,
+      args: formatDataForDisplay(contractArgs.value),
+      chainId: chainId.value
+    }))
+  ] as const
+
+  const simulateGasResult = useQuery({
+    queryKey,
+    queryFn: async () => {
+      if (!contractAddress.value) throw new Error('Missing contract address')
+
+      const result = await simulateContract(wagmiConfig, {
+        address: contractAddress.value,
+        abi: contractAbi.value,
+        functionName: contractFunctionName.value,
+        args: contractArgs.value
+      })
+
+      return result
+    },
+    enabled: false, // disable automatic query execution
+    refetchInterval: false, // disable the refetch
+    refetchOnWindowFocus: false // optionnel
   })
 
   /**
@@ -110,11 +128,11 @@ export function useContractWrites(config: ContractWriteConfig) {
 
       // Estimate gas before executing the write
       await simulateGasResult.refetch()
-      if (!simulateGasResult.data.value) {
+      if (!simulateGasResult.isSuccess.value) {
         throw new Error('Gas estimation failed')
       }
 
-      console.log("here")
+      console.log('here')
       // Execute the contract write
       const response = await writeResult.writeContractAsync({
         address: address,
@@ -141,13 +159,14 @@ export function useContractWrites(config: ContractWriteConfig) {
   const { currentStep, timelineSteps } = useTransactionTimeline({
     writeResult,
     receiptResult,
+    //@ts-expect-error -- IGNORE --
     simulateGasResult
   })
 
   return {
     writeResult,
     receiptResult,
-    simulateGasResult,
+    simulateGasResult: { ...simulateGasResult, queryKey },
 
     // Timeline
     currentStep,
