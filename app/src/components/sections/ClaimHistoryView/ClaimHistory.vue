@@ -172,18 +172,27 @@
               <div
                 v-for="claim in entry.claims"
                 :key="claim.id"
-                class="flex items-center justify-between"
+                class="flex items-center justify-between gap-3"
               >
                 <span>{{ claim.memo }}</span>
-                <ButtonUI
-                  v-if="claim.status === 'pending'"
-                  variant="ghost"
-                  size="xs"
-                  @click="editClaim(claim)"
-                  data-test="edit-claim-button"
-                >
-                  <IconifyIcon icon="heroicons:pencil-square" class="w-4 h-4" />
-                </ButtonUI>
+                <div v-if="canModifyClaims" class="flex items-center gap-1">
+                  <ButtonUI
+                    variant="ghost"
+                    size="xs"
+                    @click="editClaim(claim)"
+                    data-test="edit-claim-button"
+                  >
+                    <IconifyIcon icon="heroicons:pencil-square" class="w-4 h-4" />
+                  </ButtonUI>
+                  <ButtonUI
+                    variant="ghost"
+                    size="xs"
+                    @click="openDeleteModal(claim)"
+                    data-test="delete-claim-button"
+                  >
+                    <IconifyIcon icon="heroicons:trash" class="w-4 h-4 text-error" />
+                  </ButtonUI>
+                </div>
               </div>
             </div>
 
@@ -198,12 +207,20 @@
   </div>
 
   <!-- Add edit modal -->
-  <EditClaimModal
-    v-if="claimToEdit"
+  <EditClaims
+    v-model:show="showEditModal"
+    v-if="claimToEdit !== null"
     :claim="claimToEdit"
     :team-id="teamId || 0"
-    @week-change="handleWeekChange"
     @close="claimToEdit = null"
+  />
+
+  <DeleteClaimModal
+    v-model:show="showDeleteModal"
+    :claim="claimToDelete"
+    :query-key="weeklyClaimQueryKey"
+    @close="closeDeleteModal"
+    v-if="claimToDelete !== null"
   />
 </template>
 
@@ -216,6 +233,7 @@ import weekday from 'dayjs/plugin/weekday'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { formatIsoWeekRange, getMonthWeeks, type Week } from '@/utils/dayUtils'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import DeleteClaimModal from '@/components/sections/ClaimHistoryView/DeleteClaimModal.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
 import WeeklyRecap from '@/components/WeeklyRecap.vue'
@@ -238,9 +256,11 @@ import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
+
+import { useQueryClient } from '@tanstack/vue-query'
 import { storeToRefs } from 'pinia'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import EditClaimModal from '../CashRemunerationView/EditClaimModal.vue'
+import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
 import type { Claim } from '@/types'
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
 dayjs.extend(utc)
@@ -248,10 +268,6 @@ dayjs.extend(isoWeek)
 dayjs.extend(weekday)
 
 const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
-
-const emit = defineEmits<{
-  weekChange: [weekStart: string]
-}>()
 
 const getColor = (weeklyClaim?: WeeklyClaim) => {
   if (!weeklyClaim) return 'accent'
@@ -268,6 +284,7 @@ const toastStore = useToastStore()
 const { imageUrl, name, address } = storeToRefs(userStore)
 const teamId = computed(() => teamStore.currentTeam?.id)
 const memberAddress = computed(() => route.params.memberAddress as string | undefined)
+const queryClient = useQueryClient()
 
 const weeklyClaimQueryKey = computed(() => [
   'weekly-claims',
@@ -411,21 +428,36 @@ const barChartOption = computed(() => {
 
 // Add state for editing
 const claimToEdit = ref<Claim | null>(null)
+const claimToDelete = ref<Claim | null>(null)
+
+const showDeleteModal = ref(false)
+const showEditModal = ref(false)
+
+const canModifyClaims = computed(() => {
+  if (!selectWeekWeelyClaim.value) return false
+  return (
+    selectWeekWeelyClaim.value.status === 'pending' &&
+    selectWeekWeelyClaim.value.wage.userAddress === userStore.address
+  )
+})
+
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+  claimToDelete.value = null
+}
+
+const openDeleteModal = (claim: Claim) => {
+  claimToDelete.value = claim
+  showDeleteModal.value = true
+}
+
+watch([showDeleteModal, claimToDelete], ([showModal, claim]) => {
+  console.log('Delete modal state changed:', { showModal, claim })
+})
 
 // Add edit handler
 const editClaim = (claim: Claim) => {
   claimToEdit.value = claim
-}
-
-// Handle week change from edit modal
-const handleWeekChange = (newWeekStart: string) => {
-  // Update selected week
-  selectedMonthObject.value = {
-    year: dayjs(newWeekStart).utc().year(),
-    month: dayjs(newWeekStart).utc().month(),
-    isoWeek: dayjs(newWeekStart).utc().isoWeek(),
-    isoString: newWeekStart,
-    formatted: formatIsoWeekRange(dayjs(newWeekStart).utc())
-  }
+  showEditModal.value = true
 }
 </script>

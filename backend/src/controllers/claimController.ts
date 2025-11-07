@@ -8,7 +8,6 @@ import weekday from 'dayjs/plugin/weekday';
 
 import { Prisma, Claim } from '@prisma/client';
 import { isUserMemberOfTeam } from './wageController';
-import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
 
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
@@ -105,7 +104,6 @@ export const addClaim = async (req: Request, res: Response) => {
         hoursWorked,
         memo,
         wageId: wage.id,
-        status: 'pending',
         weeklyClaimId: weeklyClaim.id,
         dayWorked: dayWorked,
       },
@@ -129,11 +127,6 @@ export const getClaims = async (req: Request, res: Response) => {
       return errorResponse(403, 'Caller is not a member of the team', res);
     }
 
-    let statusFilter: Prisma.ClaimWhereInput = {};
-    if (status) {
-      statusFilter = { status };
-    }
-
     // add filter for memberAddress if provided
     let memberFilter: Prisma.ClaimWhereInput = {};
     if (memberAddress) {
@@ -150,7 +143,6 @@ export const getClaims = async (req: Request, res: Response) => {
         wage: {
           teamId: teamId,
         },
-        ...statusFilter,
         ...memberFilter,
       },
       include: {
@@ -176,40 +168,10 @@ export const getClaims = async (req: Request, res: Response) => {
 export const updateClaim = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const claimId = Number(req.params.claimId);
-
-  // Action is only able to have this values: sign, withdraw, disable, enable, reject
-  const action = req.query.action as string;
-
+ 
+  const { hoursWorked, memo } = req.body
   // Prepare the data according to the action
-  let data: Prisma.ClaimUpdateInput = {};
-  switch (action) {
-    case 'sign':
-      const signature = req.body.signature as Claim['signature'];
-
-      // validate the signature
-      if (!signature) {
-        return errorResponse(400, 'Missing signature', res);
-      }
-      // TODO: validate the signature (in the blockchain)
-      data.status = 'signed';
-      data.signature = req.body.signature;
-      break;
-    case 'withdraw':
-      // TODO: check if the signature is used to withdraw the claim
-      data.status = 'withdrawn';
-      break;
-    case 'disable':
-      // TODO: Check if the signature is disabled in the blockchain
-      data.status = 'disabled';
-      break;
-    case 'enable':
-      data.status = 'signed';
-      break;
-    case 'reject':
-      data.status = 'rejected';
-      break;
-  }
-
+  const data: Prisma.ClaimUpdateInput = {};
   try {
     // Fetch the claim including the required data
     const claim = await prisma.claim.findFirst({
@@ -217,11 +179,8 @@ export const updateClaim = async (req: Request, res: Response) => {
         id: claimId,
       },
       include: {
-        wage: {
-          include: {
-            team: true,
-          },
-        },
+        wage: true,
+        weeklyClaim: true,
       },
     });
 
@@ -229,70 +188,32 @@ export const updateClaim = async (req: Request, res: Response) => {
       return errorResponse(404, 'Claim not found', res);
     }
 
-    // sign, disable, enable, reject actions are only able to be done by the owner of the team
-    if (['sign', 'disable', 'enable', 'reject'].includes(action)) {
-      // Check if the caller is the Cash Remuneration owner
-      const isCallerCashRemunOwner = await isCashRemunerationOwner(
-        callerAddress,
-        claim.wage.team.id
-      );
-
-      // If not Cash Remuneration owner, check if they're the team owner
-      if (!isCallerCashRemunOwner && claim.wage.team.ownerAddress !== callerAddress) {
-        return errorResponse(
-          403,
-          'Caller is not the Cash Remuneration owner or the team owner',
-          res
-        );
-      }
+    // Only claim owner can edit
+    if (claim.wage.userAddress !== callerAddress) {
+      return errorResponse(403, 'Caller is not the owner of the claim', res)
     }
 
-    // withdraw action is only able to be done by the user that created the claim
-    if (action === 'withdraw') {
-      if (claim.wage.userAddress !== callerAddress) {
-        return errorResponse(403, 'Caller is not the owner of the claim', res);
-      }
+    // Can only edit pending claims
+    if (claim.weeklyClaim?.status !== 'pending' && claim.weeklyClaim?.status !== 'disabled') {
+      return errorResponse(403, "Can't edit: Claim is not pending", res)
     }
-
-    // special check on the claim according to the action
-
-    switch (action) {
-      case 'sign':
-        //  sine only if the claim is pending, or rejected
-        if (claim.status !== 'pending' && claim.status !== 'rejected') {
-          return errorResponse(403, "Can't signe: Claim is not pending or rejected", res);
-        }
-        break;
-      case 'withdraw':
-        // withdraw only if the claim is signed
-        if (claim.status !== 'signed') {
-          return errorResponse(403, "Can't withdraw: Claim is not signed", res);
-        }
-        break;
-      case 'disable':
-        // disable only if the claim is signed
-        if (claim.status !== 'signed') {
-          return errorResponse(403, "Can't disable: Claim is not signed", res);
-        }
-        break;
-      case 'enable':
-        // enable only if the claim is disabled
-        if (claim.status !== 'disabled') {
-          return errorResponse(403, "Can't enable: Claim is not disabled", res);
-        }
-        break;
-      case 'reject':
-        // reject only if the claim is pending
-        if (claim.status !== 'pending') {
-          return errorResponse(403, "Can't reject: Claim is not pending", res);
-        }
-        break;
-    }
-
     // Update the claim status
+    // Only update fields that are defined
+    if (hoursWorked !== undefined) {
+      data.hoursWorked = Number(hoursWorked);
+    }
+    if (memo !== undefined) {
+      data.memo = memo;
+    }
+
+    // Only proceed with update if there are fields to update
+    if (Object.keys(data).length === 0) {
+      return errorResponse(400, 'No valid fields provided for update', res);
+    }
+
     const updatedClaim = await prisma.claim.update({
       where: {
-        id: claimId,
+      id: claimId,
       },
       data,
     });
@@ -303,113 +224,59 @@ export const updateClaim = async (req: Request, res: Response) => {
   }
 };
 
-
-export const updateClaimDetails = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address
-  const claimId = Number(req.params.claimId)
-  const { hoursWorked, memo, dayWorked } = req.body
+export const deleteClaim = async (req: Request, res: Response) => {
+  const callerAddress = (req as any).address;
+  const claimId = Number(req.params.claimId);
 
   try {
     const claim = await prisma.claim.findFirst({
       where: { id: claimId },
       include: {
         wage: true,
-        weeklyClaim: true
-      }
-    })
+        weeklyClaim: {
+          include: {
+            claims: true,
+          },
+        },
+      },
+    });
 
     if (!claim) {
-      return errorResponse(404, 'Claim not found', res)
+      return errorResponse(404, 'Claim not found', res);
     }
 
-    // Only claim owner can edit
+    console.log('Claim owner address =======:', claim.wage.userAddress);
+    console.log('Caller address =======:', callerAddress);
     if (claim.wage.userAddress !== callerAddress) {
-      return errorResponse(403, 'Caller is not the owner of the claim', res)
+      return errorResponse(403, 'Caller is not the owner of the claim', res);
     }
 
-    // Can only edit pending claims
-    if (claim.status !== 'pending') {
-      return errorResponse(403, "Can't edit: Claim is not pending", res)
+    const weeklyClaim = claim.weeklyClaim;
+
+    if (
+      weeklyClaim?.status &&
+      weeklyClaim.status !== 'pending' &&
+      weeklyClaim.status !== 'disabled'
+    ) {
+      return errorResponse(403, "Can't delete: Claim is not pending or disabled", res);
     }
 
-    const newDayWorked = dayjs.utc(dayWorked).startOf('day').toDate()
-    const newWeekStart = dayjs.utc(newDayWorked).startOf('isoWeek').toDate()
-    const oldWeekStart = dayjs.utc(claim.dayWorked).startOf('isoWeek').toDate()
-
-    // If week changed
-    if (newWeekStart.getTime() !== oldWeekStart.getTime()) {
-      // Find or create weekly claim for the new week
-      let targetWeeklyClaim = await prisma.weeklyClaim.findFirst({
-        where: {
-          weekStart: newWeekStart,
-          memberAddress: callerAddress,
-          wageId: claim.wageId,
-          teamId: claim.weeklyClaim?.teamId ?? claim.wage.teamId
-        }
-      })
-
-      if (!targetWeeklyClaim) {
-        targetWeeklyClaim = await prisma.weeklyClaim.create({
-          data: {
-            weekStart: newWeekStart,
-            memberAddress: callerAddress,
-            wageId: claim.wageId,
-            teamId: claim.weeklyClaim?.teamId ?? claim.wage.teamId,
-            status: 'pending',
-            data: {}
-          }
-        })
-      }
-
-      // Move claim to new week
-      const updatedClaim = await prisma.claim.update({
-        where: { id: claimId },
-        data: {
-          hoursWorked: Number(hoursWorked),
-          memo,
-          dayWorked: newDayWorked,
-          weeklyClaimId: targetWeeklyClaim.id
-        }
-      })
-
-      // After moving the claim, check if old week has any actual hours logged
-      if (claim.weeklyClaimId) {
-        const remainingHours = await prisma.claim.aggregate({
-          where: {
-            weeklyClaimId: claim.weeklyClaimId,
-            id: { not: claimId }, // Exclude the moved claim
-            hoursWorked: { gt: 0 } // Only count claims with actual hours
-          },
-          _sum: {
-            hoursWorked: true
-          }
-        })
-
-        // If no hours remain in old week, delete the weekly claim
-        if (!remainingHours._sum.hoursWorked) {
-          await prisma.weeklyClaim.delete({
-            where: { id: claim.weeklyClaimId }
-          })
-        }
-      }
-
-      return res.status(200).json(updatedClaim)
-    }
-
-    // If same week, just update the claim
-    const updatedClaim = await prisma.claim.update({
+    await prisma.claim.delete({
       where: { id: claimId },
-      data: {
-        hoursWorked: Number(hoursWorked),
-        memo,
-        dayWorked: newDayWorked
+    });
+
+    if (weeklyClaim) {
+      const remainingClaims = (weeklyClaim.claims ?? []).filter((c) => c.id !== claimId);
+      if (remainingClaims.length === 0) {
+        await prisma.weeklyClaim.delete({
+          where: { id: weeklyClaim.id },
+        });
       }
-    })
+    }
 
-    return res.status(200).json(updatedClaim)
+    return res.status(200).json({ message: 'Claim deleted successfully' });
   } catch (error) {
-    console.error('Error updating claim details:', error)
-    return errorResponse(500, 'Internal server error', res)
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
   }
-}
-
+};

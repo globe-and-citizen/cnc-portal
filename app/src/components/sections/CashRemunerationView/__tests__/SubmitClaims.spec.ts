@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SubmitClaims from '../SubmitClaims.vue'
 import { createTestingPinia } from '@pinia/testing'
@@ -10,8 +10,9 @@ const mockPostStatus = ref<number | null>(null)
 const mockPostError = ref<unknown>(null)
 const mockPostIsFetching = ref(false)
 const mockPostData = ref(null)
+const mockPostResponse = ref<{ json: () => Promise<{ message: string }> } | null>(null)
 
-let resolveExecute: (val: unknown) => void
+let resolveExecute: (val: unknown) => void = () => {}
 
 const executePostMock = vi.fn(async () => {
   mockPostIsFetching.value = true
@@ -59,6 +60,10 @@ vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
 
 afterEach(() => {
   vi.clearAllMocks()
+  mockPostStatus.value = null
+  mockPostError.value = null
+  mockPostData.value = null
+  mockPostResponse.value = null
 })
 
 describe('SubmitClaims', () => {
@@ -70,7 +75,8 @@ describe('SubmitClaims', () => {
           error: mockPostError,
           statusCode: mockPostStatus,
           isFetching: mockPostIsFetching,
-          execute: executePostMock
+          execute: executePostMock,
+          response: mockPostResponse
         })
       }))
     })
@@ -90,7 +96,7 @@ describe('SubmitClaims', () => {
     expect(wrapper.exists()).toBeTruthy()
   })
 
-  it.skip('should show success toast on successful claim submission', async () => {
+  it('should show success toast on successful claim submission', async () => {
     const wrapper = createComponent()
 
     // Open modal
@@ -98,21 +104,26 @@ describe('SubmitClaims', () => {
 
     // Add input
     await wrapper.find('input[data-test="hours-worked-input"]').setValue('10')
+    await wrapper.find('textarea[data-test="memo-input"]').setValue('Worked on feature X')
 
     // Submit
-    await wrapper.find('[data-test="submit-claim-button"').trigger('click')
+    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
+
+    expect(executePostMock).toHaveBeenCalledTimes(1)
 
     // Mock the post status to simulate a successful submission
     mockPostStatus.value = 201
 
     // Resolve the promise to simulate the completion of the request
-    await wrapper.vm.$nextTick()
     resolveExecute({})
+    await flushPromises()
+
+    expect(executePostMock).toHaveBeenCalled()
 
     expect(successToastMock).toHaveBeenCalled()
   })
 
-  it.skip('should show error toast on failed claim submission', async () => {
+  it('should display error message on failed claim submission', async () => {
     const wrapper = createComponent()
 
     // Open modal
@@ -120,20 +131,26 @@ describe('SubmitClaims', () => {
 
     // Add input
     await wrapper.find('input[data-test="hours-worked-input"]').setValue('10')
+    await wrapper.find('textarea[data-test="memo-input"]').setValue('Worked on feature X')
 
     // Submit
     await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
 
-    // console.log('wlog du wra^er html', wrapper.html())
+    expect(executePostMock).toHaveBeenCalledTimes(1)
 
     // Mock the post status to simulate a failed submission
     mockPostStatus.value = 400
-    mockPostError.value = 'Error'
+    mockPostError.value = new Error('Error')
+    mockPostResponse.value = {
+      json: vi.fn().mockResolvedValue({ message: 'Failed to add claim' })
+    }
 
     // Resolve the promise to simulate the completion of the request
-    await wrapper.vm.$nextTick()
     resolveExecute(null)
+    await flushPromises()
 
-    expect(errorToastMock).toHaveBeenCalled()
+    expect(successToastMock).not.toHaveBeenCalled()
+    expect(errorToastMock).not.toHaveBeenCalled()
+    expect(wrapper.find('[role="alert"]').text()).toContain('Failed to add claim')
   })
 })
