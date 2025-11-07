@@ -1,4 +1,4 @@
-import { computed, type MaybeRef } from 'vue'
+import { computed, unref, type MaybeRef } from 'vue'
 import type { Address } from 'viem'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
@@ -9,8 +9,8 @@ type BankFunctionNames = ExtractAbiFunctionNames<typeof BANK_ABI>
 
 // Helper function to wrap useContractWrites for Bank contract
 export function useBankContractWrite(options: {
-  functionName: BankFunctionNames,
-  args?: unknown[],
+  functionName: BankFunctionNames
+  args?: MaybeRef<readonly unknown[]>
   value?: MaybeRef<bigint>
 }) {
   const teamStore = useTeamStore()
@@ -25,9 +25,11 @@ export function useBankContractWrite(options: {
 }
 
 export function useDepositToken(token: MaybeRef<Address>, amount: MaybeRef<bigint>) {
+  const args = computed(() => [unref(token), unref(amount)] as readonly unknown[])
+
   return useBankContractWrite({
     functionName: 'depositToken',
-    args: [token, amount]
+    args
   })
 }
 
