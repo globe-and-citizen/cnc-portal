@@ -1,79 +1,153 @@
 import { defineStore } from 'pinia'
 import router from '@/router'
+import { ref } from 'vue'
 
-const TAB_COUNT_KEY = 'app_open_tabs'
 const RETURN_PATH_KEY = 'app_last_path'
+const LOCK_TIMESTAMP_KEY = 'app_lock_timestamp'
+const TAB_HEARTBEAT_KEY = 'app_tab_heartbeats'
+const HEARTBEAT_INTERVAL = 5000 // update every 5s
+const CLEANUP_INTERVAL = 10000 // cleanup every 10s
+const HEARTBEAT_TIMEOUT = 15000 // consider tab dead after 15s
+
+interface DevToolsEvent extends CustomEvent {
+  detail: {
+    isOpen: boolean
+  }
+}
 
 export const useTabGuardStore = defineStore('tabGuard', () => {
-  // ---- Helpers ----------------------------------------------------
-  function ensureKeyExists() {
-    if (!localStorage.getItem(TAB_COUNT_KEY)) {
-      localStorage.setItem(TAB_COUNT_KEY, '0')
+  const isLocked = ref(false)
+  const tabId = crypto.randomUUID()
+  let heartbeatTimer: number | undefined
+  let cleanupTimer: number | undefined
+
+  // ---- Helpers ----
+  function getActiveHeartbeats(): Record<string, number> {
+    try {
+      return JSON.parse(localStorage.getItem(TAB_HEARTBEAT_KEY) || '{}')
+    } catch {
+      return {}
     }
   }
 
-  function incrementTabCount() {
-    ensureKeyExists()
-    const current = Number(localStorage.getItem(TAB_COUNT_KEY) || 0)
-    localStorage.setItem(TAB_COUNT_KEY, String(current + 1))
+  function saveHeartbeats(heartbeats: Record<string, number>) {
+    localStorage.setItem(TAB_HEARTBEAT_KEY, JSON.stringify(heartbeats))
   }
 
-  function decrementTabCount() {
-    ensureKeyExists()
-    const current = Number(localStorage.getItem(TAB_COUNT_KEY) || 0)
-    localStorage.setItem(TAB_COUNT_KEY, String(Math.max(0, current - 1)))
+  // ---- Heartbeat Management ----
+  function updateHeartbeat() {
+    const heartbeats = getActiveHeartbeats()
+    heartbeats[tabId] = Date.now()
+    saveHeartbeats(heartbeats)
   }
 
-  function evaluateLockState() {
-    const openTabs = Number(localStorage.getItem(TAB_COUNT_KEY) || 0)
+  function cleanupStaleHeartbeats() {
+    const heartbeats = getActiveHeartbeats()
+    const now = Date.now()
+    let changed = false
 
-    if (openTabs > 1) {
-      //  Multiple tabs detected → lock all
-      if (router.currentRoute.value.name !== 'LockedView') {
+    for (const [id, timestamp] of Object.entries(heartbeats)) {
+      if (now - timestamp > HEARTBEAT_TIMEOUT) {
+        delete heartbeats[id]
+        changed = true
+      }
+    }
+
+    if (changed) saveHeartbeats(heartbeats)
+    evaluateLockState(heartbeats)
+  }
+
+  // ---- Lock Handling ----
+  function evaluateLockState(heartbeats?: Record<string, number>) {
+    const activeTabs = Object.keys(heartbeats || getActiveHeartbeats()).length
+    const lockTimestamp = localStorage.getItem(LOCK_TIMESTAMP_KEY)
+    const routeName = router.currentRoute.value.name
+
+    // If a lock timestamp exists, always force LockedView
+    if (lockTimestamp && routeName !== 'LockedView') {
+      void router.replace({ name: 'LockedView' })
+      return
+    }
+
+    // More than one tab → lock
+    if (activeTabs > 1) {
+      if (routeName !== 'LockedView') {
         sessionStorage.setItem(RETURN_PATH_KEY, router.currentRoute.value.fullPath)
-        void router.replace({ name: 'LockedView' }).catch(() => {})
+        localStorage.setItem(LOCK_TIMESTAMP_KEY, Date.now().toString())
+        isLocked.value = true
+        void router.replace({ name: 'LockedView' })
       }
-    } else {
-      //  Single tab → unlock
-      if (router.currentRoute.value.name === 'LockedView') {
-        const returnPath = sessionStorage.getItem(RETURN_PATH_KEY)
-        sessionStorage.removeItem(RETURN_PATH_KEY)
-        void router.replace(returnPath || { name: 'home' }).catch(() => {})
-      }
+    } else if (routeName === 'LockedView') {
+      // Return to previous route
+      const returnPath = sessionStorage.getItem(RETURN_PATH_KEY)
+      sessionStorage.removeItem(RETURN_PATH_KEY)
+      localStorage.removeItem(LOCK_TIMESTAMP_KEY)
+      isLocked.value = false
+      void router.replace(returnPath || { name: 'home' })
     }
   }
 
-  // ---- Public initialization method -------------------------------
-  function init() {
-    ensureKeyExists()
-    incrementTabCount()
+  // ---- Heartbeat Loop ----
+  function startHeartbeat() {
+    updateHeartbeat()
+    setTimeout(cleanupStaleHeartbeats, 2000) // let other tabs sync first
 
-    // Decrement when tab closes
-    window.addEventListener('beforeunload', () => {
-      decrementTabCount()
-    })
-
-    // React to cross-tab storage events
-    window.addEventListener('storage', (event) => {
-      if (event.key === TAB_COUNT_KEY) {
-        if (event.newValue === null || event.newValue === 'NaN') {
-          // Key cleared (e.g., after logout)
-          localStorage.setItem(TAB_COUNT_KEY, '1')
-        }
-        evaluateLockState()
-      }
-    })
-
-    // Track last route to restore after unlock
-    router.afterEach((to) => {
-      if (to.name !== 'LockedView') {
-        sessionStorage.setItem(RETURN_PATH_KEY, to.fullPath)
-      }
-    })
-
-    // Initial check
-    router.isReady().then(evaluateLockState)
+    heartbeatTimer = window.setInterval(updateHeartbeat, HEARTBEAT_INTERVAL)
+    cleanupTimer = window.setInterval(cleanupStaleHeartbeats, CLEANUP_INTERVAL)
   }
 
-  return { init }
+  function stopHeartbeat() {
+    if (heartbeatTimer) clearInterval(heartbeatTimer)
+    if (cleanupTimer) clearInterval(cleanupTimer)
+
+    const heartbeats = getActiveHeartbeats()
+    delete heartbeats[tabId]
+    saveHeartbeats(heartbeats)
+    cleanupStaleHeartbeats()
+  }
+
+  // ---- DevTools Protection ----
+  function preventDevTools() {
+    const interval = setInterval(() => {
+      const check = /./
+      check.toString = () => {
+        clearInterval(interval)
+        return ''
+      }
+      console.log(check)
+    }, 100)
+
+    window.addEventListener('devtoolschange', ((event: DevToolsEvent) => {
+      if (event.detail.isOpen) {
+        void router.replace({ name: 'LockedView' })
+      }
+    }) as EventListener)
+  }
+
+  // ---- Init ----
+  function init() {
+    preventDevTools()
+    startHeartbeat()
+
+    // React to localStorage changes with debounce
+    let debounceTimer: number | undefined
+    window.addEventListener('storage', (event) => {
+      if (event.key === TAB_HEARTBEAT_KEY) {
+        if (debounceTimer) clearTimeout(debounceTimer)
+        debounceTimer = window.setTimeout(() => {
+          cleanupStaleHeartbeats()
+        }, 300)
+      }
+    })
+
+    // Cleanup on tab close
+    window.addEventListener('beforeunload', stopHeartbeat)
+  }
+
+  // ---- Return pattern ----
+  return {
+    init,
+    isLocked,
+    _getActiveHeartbeats: getActiveHeartbeats
+  }
 })

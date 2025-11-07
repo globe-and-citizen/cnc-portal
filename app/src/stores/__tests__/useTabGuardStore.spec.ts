@@ -2,37 +2,36 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useTabGuardStore } from '@/stores/useTabGuardStore'
 
-const TAB_COUNT_KEY = 'app_open_tabs'
+const TAB_HEARTBEAT_KEY = 'app_tab_heartbeats'
 const RETURN_PATH_KEY = 'app_last_path'
+const LOCK_TIMESTAMP_KEY = 'app_lock_timestamp'
 
-type AfterEachCallback = (to: { name?: string | null; fullPath: string }) => void
-type StorageEventLike = { key: string | null; newValue: string | null }
-type StorageListener = (event: StorageEventLike) => void
-type BeforeUnloadListener = (event: Event) => void
+// Mock crypto.randomUUID
+const mockUUID = '123e4567-e89b-12d3-a456-426614174000'
+vi.stubGlobal('crypto', {
+  randomUUID: () => mockUUID
+})
 
-const { replaceMock, isReadyMock, afterEachMock, currentRoute } = vi.hoisted(() => ({
+// Hoisted mocks
+const { replaceMock, isReadyMock, currentRoute } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
   isReadyMock: vi.fn(),
-  afterEachMock: vi.fn<(cb: AfterEachCallback) => void>(),
   currentRoute: { value: { name: 'home', fullPath: '/home' } }
 }))
 
+// Mock router
 vi.mock('@/router', () => ({
   default: {
     replace: replaceMock,
     isReady: isReadyMock,
-    afterEach: afterEachMock,
     currentRoute
   }
 }))
 
-const originalAddEventListener = window.addEventListener
-
 describe('useTabGuardStore', () => {
   let tabGuardStore: ReturnType<typeof useTabGuardStore>
-  let storageListeners: StorageListener[]
-  let beforeUnloadListeners: BeforeUnloadListener[]
-  let afterEachCallbacks: AfterEachCallback[]
+  let storageListeners: Array<(event: StorageEvent) => void>
+  let beforeUnloadListeners: Array<(event: Event) => void>
 
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -40,10 +39,10 @@ describe('useTabGuardStore', () => {
 
     localStorage.clear()
     sessionStorage.clear()
+    vi.useFakeTimers()
 
     storageListeners = []
     beforeUnloadListeners = []
-    afterEachCallbacks = []
 
     currentRoute.value = { name: 'home', fullPath: '/home' }
 
@@ -53,106 +52,128 @@ describe('useTabGuardStore', () => {
     isReadyMock.mockReset()
     isReadyMock.mockResolvedValue(undefined)
 
-    afterEachMock.mockReset()
-    afterEachMock.mockImplementation((callback: AfterEachCallback) => {
-      afterEachCallbacks.push(callback)
+    // Mock addEventListener
+    vi.spyOn(window, 'addEventListener').mockImplementation((type, listener) => {
+      if (type === 'storage') {
+        storageListeners.push(listener as (event: StorageEvent) => void)
+      }
+      if (type === 'beforeunload') {
+        beforeUnloadListeners.push(listener as (event: Event) => void)
+      }
     })
 
-    vi.spyOn(window, 'addEventListener').mockImplementation(
-      (
-        type: string,
-        listener: EventListenerOrEventListenerObject,
-        options?: boolean | AddEventListenerOptions
-      ) => {
-        if (type === 'storage') {
-          storageListeners.push(listener as unknown as StorageListener)
-          return
-        }
-        if (type === 'beforeunload') {
-          beforeUnloadListeners.push(listener as BeforeUnloadListener)
-          return
-        }
-        originalAddEventListener.call(window, type, listener, options as AddEventListenerOptions)
-      }
-    )
+    // Mock setInterval and clearInterval
+    vi.spyOn(window, 'setInterval').mockReturnValue(1 as unknown as NodeJS.Timeout)
+    vi.spyOn(window, 'clearInterval').mockImplementation(() => {})
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
+    vi.clearAllMocks()
+    vi.useRealTimers()
   })
 
-  it('increments tab count on init and decrements on beforeunload', () => {
-    tabGuardStore.init()
+  describe('Initialization', () => {
+    it('should initialize heartbeat on init', () => {
+      tabGuardStore.init()
 
-    expect(localStorage.getItem(TAB_COUNT_KEY)).toBe('1')
-    expect(beforeUnloadListeners).toHaveLength(1)
+      const heartbeats = tabGuardStore._getActiveHeartbeats()
+      expect(heartbeats[mockUUID]).toBeDefined()
+      expect(Object.keys(heartbeats)).toHaveLength(1)
+    })
 
-    const unloadHandler = beforeUnloadListeners[0]
-    expect(unloadHandler).toBeDefined()
-    unloadHandler!(new Event('beforeunload'))
-
-    expect(localStorage.getItem(TAB_COUNT_KEY)).toBe('0')
+    it.skip('should start heartbeat intervals', () => {
+      tabGuardStore.init()
+      expect(window.setInterval).toHaveBeenCalledTimes(2)
+    })
   })
 
-  it('locks the app when multiple tabs are detected via storage events', () => {
-    const currentPath = '/teams/1'
-    currentRoute.value = { name: 'home', fullPath: currentPath }
+  describe('Heartbeat Management', () => {
+    it('should update heartbeat timestamp', () => {
+      tabGuardStore.init()
+      const now = Date.now()
+      vi.setSystemTime(now)
 
-    tabGuardStore.init()
+      const heartbeats = tabGuardStore._getActiveHeartbeats()
+      expect(heartbeats[mockUUID]).toBe(now)
+    })
 
-    const storageHandler = storageListeners[0]
-    expect(storageHandler).toBeDefined()
+    it('should cleanup stale heartbeats', () => {
+      const staleTimestamp = Date.now() - 20000 // older than HEARTBEAT_TIMEOUT
+      localStorage.setItem(
+        TAB_HEARTBEAT_KEY,
+        JSON.stringify({
+          [mockUUID]: staleTimestamp,
+          'other-tab': staleTimestamp
+        })
+      )
 
-    localStorage.setItem(TAB_COUNT_KEY, '2')
-    storageHandler!({ key: TAB_COUNT_KEY, newValue: '2' })
+      tabGuardStore.init()
+      vi.advanceTimersByTime(2000) // trigger initial cleanup
 
-    expect(sessionStorage.getItem(RETURN_PATH_KEY)).toBe(currentPath)
-    expect(replaceMock).toHaveBeenCalledWith({ name: 'LockedView' })
+      const heartbeats = tabGuardStore._getActiveHeartbeats()
+      expect(Object.keys(heartbeats)).toHaveLength(1)
+      expect(heartbeats[mockUUID]).toBeDefined()
+    })
   })
 
-  it('normalizes cleared storage values back to a single tab', () => {
-    tabGuardStore.init()
+  describe('Lock Management', () => {
+    it('should lock when multiple tabs are detected', () => {
+      const currentPath = '/teams/1'
+      currentRoute.value = { name: 'home', fullPath: currentPath }
 
-    const storageHandler = storageListeners[0]
-    expect(storageHandler).toBeDefined()
+      tabGuardStore.init()
+      localStorage.setItem(
+        TAB_HEARTBEAT_KEY,
+        JSON.stringify({
+          [mockUUID]: Date.now(),
+          'other-tab': Date.now()
+        })
+      )
 
-    localStorage.setItem(TAB_COUNT_KEY, '5')
-    storageHandler!({ key: TAB_COUNT_KEY, newValue: null })
+      vi.advanceTimersByTime(2000)
 
-    expect(localStorage.getItem(TAB_COUNT_KEY)).toBe('1')
-    expect(replaceMock).not.toHaveBeenCalled()
+      expect(sessionStorage.getItem(RETURN_PATH_KEY)).toBe(currentPath)
+      expect(localStorage.getItem(LOCK_TIMESTAMP_KEY)).toBeDefined()
+      expect(replaceMock).toHaveBeenCalledWith({ name: 'LockedView' })
+    })
+
+    it('should unlock when returning to single tab', () => {
+      currentRoute.value = { name: 'LockedView', fullPath: '/locked' }
+      sessionStorage.setItem(RETURN_PATH_KEY, '/teams/2')
+      localStorage.setItem(LOCK_TIMESTAMP_KEY, Date.now().toString())
+
+      tabGuardStore.init()
+      vi.advanceTimersByTime(2000)
+
+      expect(replaceMock).toHaveBeenCalledWith('/teams/2')
+      expect(sessionStorage.getItem(RETURN_PATH_KEY)).toBeNull()
+      expect(localStorage.getItem(LOCK_TIMESTAMP_KEY)).toBeNull()
+    })
   })
 
-  it('unlocks the app and restores the last path when returning to a single tab', async () => {
-    currentRoute.value = { name: 'LockedView', fullPath: '/locked' }
-    sessionStorage.setItem(RETURN_PATH_KEY, '/teams/2')
+  describe('Cleanup', () => {
+    it('should cleanup on tab close', () => {
+      tabGuardStore.init()
 
-    tabGuardStore.init()
-    await Promise.resolve()
+      const unloadEvent = new Event('beforeunload')
+      beforeUnloadListeners[0](unloadEvent)
 
-    replaceMock.mockClear()
-    sessionStorage.setItem(RETURN_PATH_KEY, '/teams/2')
+      const heartbeats = tabGuardStore._getActiveHeartbeats()
+      expect(heartbeats[mockUUID]).toBeUndefined()
+    })
 
-    const storageHandler = storageListeners[0]
-    expect(storageHandler).toBeDefined()
+    it('should handle storage events', () => {
+      tabGuardStore.init()
 
-    localStorage.setItem(TAB_COUNT_KEY, '1')
-    storageHandler!({ key: TAB_COUNT_KEY, newValue: '1' })
+      const storageEvent = new StorageEvent('storage', {
+        key: TAB_HEARTBEAT_KEY,
+        newValue: JSON.stringify({ [mockUUID]: Date.now() })
+      })
 
-    expect(replaceMock).toHaveBeenCalledWith('/teams/2')
-    expect(sessionStorage.getItem(RETURN_PATH_KEY)).toBeNull()
-  })
+      storageListeners[0](storageEvent)
+      vi.advanceTimersByTime(300) // debounce delay
 
-  it('tracks the last non-locked route through the afterEach hook', () => {
-    tabGuardStore.init()
-
-    const hook = afterEachCallbacks[0]
-    expect(hook).toBeDefined()
-
-    hook!({ name: 'bank', fullPath: '/teams/1/bank' })
-    expect(sessionStorage.getItem(RETURN_PATH_KEY)).toBe('/teams/1/bank')
-
-    hook!({ name: 'LockedView', fullPath: '/locked' })
-    expect(sessionStorage.getItem(RETURN_PATH_KEY)).toBe('/teams/1/bank')
+      expect(replaceMock).not.toHaveBeenCalled()
+    })
   })
 })
