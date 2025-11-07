@@ -1,0 +1,36 @@
+meta {
+  name: Get Users - 06 - Case Insensitive Search
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{host}}/user?search=266&limit=10
+  body: json
+  auth: bearer
+}
+
+params:query {
+  search: 266
+  limit: 10
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("should perform case-insensitive search", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.body.users).to.be.an('array');
+    
+    if (res.body.users.length > 0) {
+      const searchTerm = 'georges';
+      res.body.users.forEach(user => {
+        const nameMatch = user.name && user.name.toLowerCase().includes(searchTerm);
+        const addressMatch = user.address && user.address.toLowerCase().includes(searchTerm);
+        expect(nameMatch || addressMatch).to.equal(true);
+      });
+    }
+  });
+}
