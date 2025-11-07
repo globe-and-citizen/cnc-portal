@@ -92,4 +92,27 @@ describe('ClaimForm.vue', () => {
     expect(memoInput.value).toBe('Updated memo')
     expect(dateInput.value).toBe('2024-01-15T00:00:00.000Z')
   })
+
+  describe('formatUTC helper', () => {
+    it('returns empty string when value is nullish', () => {
+      const wrapper = createWrapper()
+      const { formatUTC } = wrapper.vm as unknown as {
+        formatUTC: (value: Date | string | null | undefined) => string
+      }
+
+      expect(formatUTC(null)).toBe('')
+      expect(formatUTC(undefined)).toBe('')
+    })
+
+    it('formats Date instances and ISO strings into UTC labels', () => {
+      const wrapper = createWrapper()
+      const { formatUTC } = wrapper.vm as unknown as {
+        formatUTC: (value: Date | string | null | undefined) => string
+      }
+
+      const sampleDate = new Date(Date.UTC(2024, 0, 20, 5, 30, 0))
+      expect(formatUTC(sampleDate)).toBe('2024-01-20 UTC')
+      expect(formatUTC('2024-02-15T12:00:00.000Z')).toBe('2024-02-15 UTC')
+    })
+  })
 })

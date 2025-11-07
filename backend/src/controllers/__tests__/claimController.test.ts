@@ -394,9 +394,6 @@ describe('Claim Controller', () => {
       }
     };
 
-   
-
-
     it('should return 404 if claim is not found', async () => {
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(null);
       const response = await request(app)
@@ -435,17 +432,110 @@ describe('Claim Controller', () => {
       });
     });
 
-    
+    it('should update claim successfully with valid data', async () => {
+      const mockClaim = {
+        id: 1,
+        wage: { userAddress: TEST_ADDRESS },
+        weeklyClaim: { status: 'pending' }
+      };
 
+      vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
+      vi.spyOn(prisma.claim, 'update').mockResolvedValue({
+        id: 1,
+        hoursWorked: 6,
+        memo: 'Updated memo'
+      } as any);
 
-    it('should return 500 if an error occurs', async () => {
-      vi.spyOn(prisma.claim, 'findFirst').mockRejectedValue('Test');
       const response = await request(app)
         .put('/1')
-        .query({ action: 'sign' })
-        .send({ signature: '0xabc' });
+        .send({
+          hoursWorked: 6,
+          memo: 'Updated memo'
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        id: 1,
+        hoursWorked: 6,
+        memo: 'Updated memo'
+      });
+    });
+
+    it('should return 400 if no valid fields provided for update', async () => {
+      const mockClaim = {
+        id: 1,
+        wage: { userAddress: TEST_ADDRESS },
+        weeklyClaim: { status: 'pending' }
+      };
+
+      vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
+
+      const response = await request(app)
+        .put('/1')
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('No valid fields provided for update');
+    });
+
+    it('should update only provided fields', async () => {
+      const mockClaim = {
+        id: 1,
+        wage: { userAddress: TEST_ADDRESS },
+        weeklyClaim: { status: 'pending' }
+      };
+
+      vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
+      const updateSpy = vi.spyOn(prisma.claim, 'update').mockResolvedValue({
+        id: 1,
+        hoursWorked: 6,
+        memo: 'Original memo'
+      } as any);
+
+      const response = await request(app)
+        .put('/1')
+        .send({ hoursWorked: 6 });
+
+      expect(response.status).toBe(200);
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { hoursWorked: 6 }
+      });
+    });
+
+    it('should handle internal server error during update', async () => {
+      const mockClaim = {
+        id: 1,
+        wage: { userAddress: TEST_ADDRESS },
+        weeklyClaim: { status: 'pending' }
+      };
+
+      vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
+      vi.spyOn(prisma.claim, 'update').mockRejectedValue(new Error('DB error'));
+
+      const response = await request(app)
+        .put('/1')
+        .send({ hoursWorked: 6, memo: 'Updated memo' });
+
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
+    });
+
+    it('should handle null weeklyClaim status', async () => {
+      const mockClaim = {
+        id: 1,
+        wage: { userAddress: TEST_ADDRESS },
+        weeklyClaim: null
+      };
+
+      vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
+
+      const response = await request(app)
+        .put('/1')
+        .send({ hoursWorked: 6, memo: 'Updated memo' });
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe("Can't edit: Claim is not pending");
     });
   });
 

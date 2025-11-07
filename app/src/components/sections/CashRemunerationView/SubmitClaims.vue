@@ -123,4 +123,11 @@ const handleSubmit = async (data: ClaimSubmitPayload) => {
     errorMessage.value = null
   }
 }
+
+defineExpose({
+  handleSubmit,
+  modal,
+  errorMessage,
+  formInitialData
+})
 </script>
