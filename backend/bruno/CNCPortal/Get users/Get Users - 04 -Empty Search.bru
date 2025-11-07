@@ -1,0 +1,49 @@
+meta {
+  name: Get Users - 04 - Empty Search
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{host}}/user?limit=1
+  body: json
+  auth: bearer
+}
+
+params:query {
+  limit: 1
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+    
+  test("should return 200 status for valid token", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("should return users when search is empty", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.body.users).to.be.an('array');
+  });
+  
+  test("should have valid response structure", function() {
+    if (res.body.users.length > 0) {
+      const user = res.body.users[0];
+      expect(user).to.have.property('address');
+      expect(user.address).to.be.a('string');
+      expect(user.address).to.match(/^0x[a-fA-F0-9]{40}$/);
+      
+      expect(user).to.have.property('name');
+      expect(user).to.have.property('createdAt');
+    }
+  });
+  
+  test("should return valid Ethereum addresses", function() {
+    res.body.users.forEach(user => {
+      expect(user.address).to.match(/^0x[a-fA-F0-9]{40}$/);
+    });
+  });
+}
