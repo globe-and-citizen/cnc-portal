@@ -33,16 +33,18 @@ export const formatDataForDisplay = (data: unknown): string => {
   }
 
   try {
-    return JSON.parse(JSON.stringify(
-      data,
-      (key, value) => {
-        if (typeof value === 'bigint') {
-          return value.toString()
-        }
-        return value
-      },
-      2
-    ))
+    return JSON.parse(
+      JSON.stringify(
+        data,
+        (key, value) => {
+          if (typeof value === 'bigint') {
+            return value.toString()
+          }
+          return value
+        },
+        2
+      )
+    )
   } catch (error) {
     console.warn('Error formatting data for display:', error)
     return String(data)

@@ -45,7 +45,6 @@ const { useBankPaused } = useBankReads()
 const pauseStatus = useBankPaused()
 const pauseResult = usePause()
 const unpauseResult = useUnpause()
-
 </script>
 
 <style scoped></style>
