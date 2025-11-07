@@ -18,9 +18,9 @@ export interface Wage {
   teamId: number
   userAddress: Address
   ratePerHour: RatePerHour[]
-  cashRatePerHour: number //@deprecated use ratePerHour instead
-  tokenRatePerHour: number //@deprecated use ratePerHour instead
-  usdcRatePerHour: number //@deprecated use ratePerHour instead
+  cashRatePerHour?: number //@deprecated use ratePerHour instead
+  tokenRatePerHour?: number //@deprecated use ratePerHour instead
+  usdcRatePerHour?: number //@deprecated use ratePerHour instead
   maximumHoursPerWeek: number
   nextWageId: number | null
   createdAt: string // ISO date string
