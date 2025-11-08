@@ -21,6 +21,7 @@ import BodElectionDetailsView from '@/views/team/[id]/BodElectionDetailsView.vue
 import BankTestView from '@/views/BankTestView.vue'
 import DemoExample from '@/views/team/[id]/DemoExample.vue'
 
+import LockedView from '@/views/LockedView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -152,12 +153,22 @@ const router = createRouter({
       name: 'timeline-demo',
       meta: { name: 'Transaction Timeline Demo' },
       component: TransactionTimelineDemoView
+    },
+    {
+      path: '/locked',
+      name: 'LockedView',
+      meta: { noLayout: true },
+      component: LockedView
     }
   ]
 })
 const isAuth = useStorage('isAuth', false)
 router.beforeEach(async (to) => {
-  // Redirect to login page if not authenticated
+  // Skip auth redirects when visiting the locked session view
+  if (to.path === '/locked') {
+    return true
+  }
+
   if (!isAuth.value && to.name !== 'login') {
     return { name: 'login' }
   }
