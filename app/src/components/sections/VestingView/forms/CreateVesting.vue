@@ -5,7 +5,13 @@
       <label class="flex-col items-center gap-2">
         <div class="flex w-32 mb-3">Choose Member</div>
         <div class="flex grow w-full">
-          <SelectMemberInput v-model="member" data-test="member" class="text-xs w-full" />
+          <SelectMemberInput
+            v-model="member"
+            data-test="member"
+            class="text-xs w-full"
+            :hidden-members="[]"
+            :disable-team-members="false"
+          />
         </div>
       </label>
       <span v-for="error in $v.member.$errors" :key="error.$uid" class="text-xs text-red-500 mt-1">

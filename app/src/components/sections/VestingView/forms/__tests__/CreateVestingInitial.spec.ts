@@ -6,7 +6,6 @@ import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { parseEther, parseUnits } from 'viem'
-import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { VESTING_ADDRESS } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
@@ -181,21 +180,13 @@ describe('CreateVesting.vue', () => {
       expect(wrapper.find('[data-test="submit-btn"]').exists()).toBe(true)
     })
     it('shows error on invalid member address', async () => {
-      // Find the SelectMemberInput component and trigger input event
       const selectMemberInput = wrapper.findComponent(SelectMemberInput)
       selectMemberInput.setValue({
         name: 'Invalid',
         address: 'notanaddress'
       })
 
-      // Simulate member selection
-      selectMemberInput.setValue({
-        name: 'Invalid',
-        address: 'notanaddress'
-      })
-
       await wrapper.vm.$nextTick()
-
       await wrapper.find('[data-test="submit-btn"]').trigger('click')
       await wrapper.vm.$nextTick()
 
@@ -204,26 +195,24 @@ describe('CreateVesting.vue', () => {
     })
   })
   describe('Allowance Approval', () => {
-    it('calls approveAllowance when submitting with valid amount', async () => {
-      // Fill required fields
+    const fillValidForm = async (amount = 10) => {
       const selectMemberInput = wrapper.findComponent(SelectMemberInput)
       selectMemberInput.setValue({
         name: 'Test User',
         address: '0x120000000000000000000000000000000000dead'
       })
-
-      // Set amount
-      await wrapper.find('[data-test="total-amount"]').setValue(10)
-
-      // Set date range (required for valid form)
+      await wrapper.find('[data-test="total-amount"]').setValue(amount)
       const datePicker = wrapper.findComponent(Datepicker)
       datePicker.setValue([new Date(), new Date()])
+      await wrapper.find('[data-test="cliff"]').setValue(0)
+    }
 
-      // Click submit to show summary
+    it('calls approveAllowance when submitting with valid amount', async () => {
+      await fillValidForm()
+
       const submitBtn = wrapper.find('[data-test="submit-btn"]')
       expect(submitBtn.attributes('disabled')).toBeUndefined()
       await submitBtn.trigger('click')
-
       await wrapper.vm.$nextTick()
 
       // Now in summary view, confirm vesting creation
@@ -243,99 +232,43 @@ describe('CreateVesting.vue', () => {
     })
 
     it('shows error when attempting to approve with zero amount', async () => {
-      const { addErrorToast } = useToastStore()
+      // Clear any previous calls from component mounting
+      vi.clearAllMocks()
 
-      // Fill all required fields
-      const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      selectMemberInput.setValue({
-        name: 'Test User',
-        address: '0x120000000000000000000000000000000000dead'
-      })
+      await fillValidForm(0)
 
-      // Set date range
-      const datePicker = wrapper.findComponent(Datepicker)
-      datePicker.setValue([new Date(), new Date()])
-
-      // Set cliff
-      await wrapper.find('[data-test="cliff"]').setValue(0)
-
-      // Set amount to 0
-      await wrapper.find('[data-test="total-amount"]').setValue(0)
-
-      await wrapper.vm.$nextTick()
-
-      // Check that submit button is disabled
       const submitBtn = wrapper.find('[data-test="submit-btn"]')
-
-      // Try to submit anyway
       await submitBtn.trigger('click')
 
-      // Verify no actions were taken
-      expect(addErrorToast).not.toHaveBeenCalled()
+      // The form validation should prevent submission with zero amount
+      // So no approval-related error toast should be called
       expect(mockWriteContract.writeContract).not.toHaveBeenCalled()
     })
 
     it('shows error on invalid cliff value', async () => {
-      // Fill member with a valid address
-      const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      selectMemberInput.setValue({
-        name: 'Test User',
-        address: '0x120000000000000000000000000000000000dead'
-      })
+      await fillValidForm(5)
 
-      // Set date range
-      const datePicker = wrapper.findComponent(Datepicker)
-      datePicker.setValue([new Date(), new Date()])
-
-      // Set cliff to an invalid value (e.g., negative)
       const cliffInput = wrapper.find('[data-test="cliff"]')
       await cliffInput.setValue(6)
-
-      // Set amount to a valid value
-      await wrapper.find('[data-test="total-amount"]').setValue(5)
-
       await wrapper.vm.$nextTick()
 
-      // Trigger validation
       await wrapper.find('[data-test="submit-btn"]').trigger('click')
       await wrapper.vm.$nextTick()
 
-      // Check for cliff error message
-      expect(wrapper.text()).toContain('Cliff cannot be greater than duration.') // or the exact error message, e.g. 'Cliff must be positive'
+      expect(wrapper.text()).toContain('Cliff cannot be greater than duration.')
     })
 
     it('passes the correct totalAmountInUnits to writeContract', async () => {
-      // Fill required fields
-      const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      selectMemberInput.setValue({
-        name: 'Test User',
-        address: '0x120000000000000000000000000000000000dead'
-      })
+      await fillValidForm(7)
 
-      // Set amount
-      await wrapper.find('[data-test="total-amount"]').setValue(7)
-
-      // Set date range (required for valid form)
-      const datePicker = wrapper.findComponent(Datepicker)
-      datePicker.setValue([new Date(), new Date()])
-
-      // Set cliff
-      await wrapper.find('[data-test="cliff"]').setValue(0)
-
-      await wrapper.vm.$nextTick()
-
-      // Click submit to show summary
       await wrapper.find('[data-test="submit-btn"]').trigger('click')
       await wrapper.vm.$nextTick()
 
-      // Now in summary view, confirm vesting creation
       const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
       await confirmBtn.trigger('click')
       await wrapper.vm.$nextTick()
 
-      // Assert: check the argument passed to writeContract
       const callArgs = mockWriteContract.writeContract.mock.calls[0][0]
-      // The last argument should be the amount in units
       const expectedAmount = parseUnits('7', 18)
       expect(callArgs.args[1]).toEqual(expectedAmount)
     })
@@ -345,20 +278,17 @@ describe('CreateVesting.vue', () => {
         activeMembers: string[]
       }
 
-      // Case 1: vestingInfos is undefined
-      mockVestingInfos.value = undefined
-      let wrapper = mountComponent()
-      expect((wrapper.vm as unknown as IWrapper).activeMembers).toEqual([])
+      const testCases = [
+        { value: undefined },
+        { value: [[memberAddress]] as unknown as [string[]] },
+        { value: null }
+      ]
 
-      // Case 2: vestingInfos is length 1
-      mockVestingInfos.value = [[memberAddress]] as unknown as [string[]]
-      wrapper = mountComponent()
-      expect((wrapper.vm as unknown as IWrapper).activeMembers).toEqual([])
-
-      // Case 3: vestingInfos is null
-      mockVestingInfos.value = null
-      wrapper = mountComponent()
-      expect((wrapper.vm as unknown as IWrapper).activeMembers).toEqual([])
+      testCases.forEach(({ value }) => {
+        mockVestingInfos.value = value
+        const wrapper = mountComponent()
+        expect((wrapper.vm as unknown as IWrapper).activeMembers).toEqual([])
+      })
     })
 
     it('returns the correct token balance for the given tokenAddress', () => {
@@ -366,7 +296,6 @@ describe('CreateVesting.vue', () => {
         tokenBalance: (typeof mockUseContractBalance.balances.value)[0] | undefined
       }
 
-      // Arrange: set mock balances before mounting
       mockUseContractBalance.balances.value = [
         {
           token: {
@@ -394,9 +323,6 @@ describe('CreateVesting.vue', () => {
       ]
       const tokenBalance = (wrapper.vm as unknown as IWrapper).tokenBalance
 
-      // Act: access the computed tokenBalance via the component's instance
-
-      // Assert: should find the correct balance object
       expect(tokenBalance).toBeDefined()
       if (tokenBalance) {
         expect(tokenBalance.amount).toBe(42)

@@ -1,51 +1,104 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import CRSigne from '../CRSigne.vue'
 import { createPinia, setActivePinia } from 'pinia'
-import { useTeamStore, useUserDataStore, useToastStore } from '@/stores'
-import { useSignTypedData } from '@wagmi/vue'
-import { useCustomFetch } from '@/composables'
 import type { WeeklyClaim } from '@/types'
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
 
-// Mock the stores and composables
+// Configure dayjs plugins
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
+
+// Hoisted mocks
+const {
+  mockUseTeamStore,
+  mockUseUserDataStore,
+  mockUseToastStore,
+  mockUseSignTypedData,
+  mockUseReadContract,
+  mockUseCustomFetch,
+  mockUseQueryClient
+} = vi.hoisted(() => {
+  const mockExecuteUpdateClaim = vi.fn().mockResolvedValue(undefined)
+
+  return {
+    mockUseTeamStore: vi.fn(),
+    mockUseUserDataStore: vi.fn(),
+    mockUseToastStore: vi.fn(),
+    mockUseSignTypedData: vi.fn(),
+    mockUseReadContract: vi.fn(),
+    mockUseCustomFetch: vi.fn(() => ({
+      put: vi.fn(() => ({
+        json: vi.fn(() => ({
+          execute: mockExecuteUpdateClaim,
+          error: ref(null)
+        }))
+      }))
+    })),
+    mockUseQueryClient: vi.fn(() => ({
+      invalidateQueries: vi.fn()
+    }))
+  }
+})
+
+// Mock @tanstack/vue-query
+vi.mock('@tanstack/vue-query', () => ({
+  useQueryClient: mockUseQueryClient
+}))
+
+// Mock the stores
 vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(),
-  useUserDataStore: vi.fn(),
-  useToastStore: vi.fn()
+  useTeamStore: mockUseTeamStore,
+  useUserDataStore: mockUseUserDataStore,
+  useToastStore: mockUseToastStore
 }))
 
-vi.mock('@wagmi/vue', async (importOriginal) => ({
-  ...(await importOriginal()),
-  useSignTypedData: vi.fn(),
-  useChainId: vi.fn(() => ({ value: 1 }))
-}))
+// Mock wagmi
+vi.mock('@wagmi/vue', async () => {
+  const actual = await vi.importActual('@wagmi/vue')
+  return {
+    ...actual,
+    useSignTypedData: mockUseSignTypedData,
+    useChainId: vi.fn(() => ref(1)),
+    useReadContract: mockUseReadContract
+  }
+})
 
+// Mock composables
 vi.mock('@/composables', () => ({
-  useCustomFetch: vi.fn(() => ({
-    put: () => ({
-      json: () => ({
-        execute: vi.fn(),
-        error: ref(null as Error | null)
-      })
-    })
-  }))
+  useCustomFetch: mockUseCustomFetch
 }))
 
-describe.skip('CRSigne', () => {
+// Mock the constant imports
+vi.mock('@/constant', () => ({
+  USDC_ADDRESS: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+}))
+
+// Mock the utils
+vi.mock('@/utils', () => ({
+  log: {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn()
+  }
+}))
+
+describe('CRSigne', () => {
+  let wrapper: ReturnType<typeof mount>
+
+  const MOCK_OWNER_ADDRESS = '0x1234567890123456789012345678901234567890'
+  const MOCK_CONTRACT_ADDRESS = '0x9876543210987654321098765432109876543210'
+
   const mockClaim: WeeklyClaim = {
     id: 1,
     status: 'pending',
     hoursWorked: 8,
-    // signature: null,
-    // tokenTx: null,
-    // wageId: 1,
     createdAt: '2024-01-01T00:00:00Z',
-    // updatedAt: '2024-01-01T00:00:00Z',
     wage: {
-      // id: 1,
-      // teamId: 1,
-      userAddress: '0x1234567890123456789012345678901234567890',
+      userAddress: MOCK_OWNER_ADDRESS,
       ratePerHour: [{ type: 'native', amount: 10 }],
       id: 0,
       teamId: 0,
@@ -57,11 +110,11 @@ describe.skip('CRSigne', () => {
       createdAt: '',
       updatedAt: ''
     },
-    weekStart: '',
+    weekStart: '2024-01-01T00:00:00Z',
     data: {
-      ownerAddress: '0x1234567890123456789012345678901234567890'
+      ownerAddress: MOCK_OWNER_ADDRESS
     },
-    memberAddress: '0x1234567890123456789012345678901234567890',
+    memberAddress: MOCK_OWNER_ADDRESS,
     teamId: 0,
     signature: null,
     wageId: 0,
@@ -69,30 +122,31 @@ describe.skip('CRSigne', () => {
     claims: []
   }
 
-  const mockTeamStore = {
+  const mockTeamStoreValue = {
     currentTeam: {
-      ownerAddress: '0x1234567890123456789012345678901234567890',
+      id: 1,
+      ownerAddress: MOCK_OWNER_ADDRESS,
       teamContracts: [
         {
           type: 'CashRemunerationEIP712',
-          address: '0x9876543210987654321098765432109876543210'
+          address: MOCK_CONTRACT_ADDRESS
         }
       ]
-    }
+    },
+    getContractAddressByType: vi.fn((type: string) => {
+      if (type === 'CashRemunerationEIP712') return MOCK_CONTRACT_ADDRESS
+      if (type === 'InvestorV1') return '0x1111111111111111111111111111111111111111'
+      return undefined
+    })
   }
 
-  const mockUserDataStore = {
-    address: '0x1234567890123456789012345678901234567890'
+  const mockUserDataStoreValue = {
+    address: MOCK_OWNER_ADDRESS
   }
 
-  const mockToastStore = {
+  const mockToastStoreValue = {
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn()
-  }
-
-  const mockSignTypedData = {
-    signTypedDataAsync: vi.fn(),
-    data: { value: 'mock-signature' }
   }
 
   beforeEach(() => {
@@ -100,93 +154,118 @@ describe.skip('CRSigne', () => {
     vi.clearAllMocks()
 
     // Setup store mocks
-    ;(useTeamStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockTeamStore)
-    ;(useUserDataStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockUserDataStore)
-    ;(useToastStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockToastStore)
-    ;(useSignTypedData as ReturnType<typeof vi.fn>).mockReturnValue(mockSignTypedData)
-  })
+    mockUseTeamStore.mockReturnValue(mockTeamStoreValue)
+    mockUseUserDataStore.mockReturnValue(mockUserDataStoreValue)
+    mockUseToastStore.mockReturnValue(mockToastStoreValue)
 
-  it('renders approve button when claim is pending and user is team owner', () => {
-    const wrapper = mount(CRSigne, {
-      props: {
-        weeklyClaim: mockClaim
-      }
+    // Setup wagmi mocks
+    mockUseSignTypedData.mockReturnValue({
+      signTypedDataAsync: vi.fn().mockResolvedValue('0xmocksignature'),
+      data: ref('0xmocksignature')
     })
 
-    expect(wrapper.find('[data-test="approve-button"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Approve')
+    mockUseReadContract.mockReturnValue({
+      data: ref(MOCK_OWNER_ADDRESS),
+      error: ref(null),
+      isFetching: ref(false)
+    })
   })
 
-  it('does not render approve button when claim is not pending', () => {
-    const wrapper = mount(CRSigne, {
-      props: {
-        weeklyClaim: { ...mockClaim, status: 'signed' }
-      }
-    })
-
-    expect(wrapper.find('[data-test="approve-button"]').exists()).toBe(false)
+  afterEach(() => {
+    if (wrapper) wrapper.unmount()
   })
 
-  it('does not render approve button when user is not team owner', () => {
-    ;(useUserDataStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      address: '0x0000000000000000000000000000000000000000'
-    })
+  describe('Approve Functionality', () => {
+    it('should show success toast after successful approval', async () => {
+      const mockSignTypedDataAsync = vi.fn().mockResolvedValue('0xsignature')
+      const mockExecuteUpdate = vi.fn().mockResolvedValue(undefined)
 
-    const wrapper = mount(CRSigne, {
-      props: {
-        weeklyClaim: mockClaim
-      }
-    })
-
-    expect(wrapper.find('[data-test="approve-button"]').exists()).toBe(false)
-  })
-
-  it('calls signTypedDataAsync and executeUpdateClaim when approve button is clicked', async () => {
-    const wrapper = mount(CRSigne, {
-      props: {
-        weeklyClaim: mockClaim
-      }
-    })
-
-    await wrapper.find('[data-test="approve-button"]').trigger('click')
-
-    expect(mockSignTypedData.signTypedDataAsync).toHaveBeenCalled()
-  })
-
-  it('shows error toast when signature fails', async () => {
-    const error = new Error('User rejected the request')
-    mockSignTypedData.signTypedDataAsync.mockRejectedValue(error)
-
-    const wrapper = mount(CRSigne, {
-      props: {
-        weeklyClaim: mockClaim
-      }
-    })
-
-    await wrapper.find('[data-test="approve-button"]').trigger('click')
-
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('User rejected the request')
-  })
-
-  it('shows error toast when claim update fails', async () => {
-    const mockError = ref(new Error('Update failed'))
-    ;(useCustomFetch as ReturnType<typeof vi.fn>).mockReturnValue({
-      put: () => ({
-        json: () => ({
-          execute: vi.fn(),
-          error: mockError
-        })
+      mockUseSignTypedData.mockReturnValue({
+        signTypedDataAsync: mockSignTypedDataAsync,
+        data: ref('0xsignature')
       })
+
+      mockUseCustomFetch.mockReturnValue({
+        put: vi.fn(() => ({
+          json: vi.fn(() => ({
+            execute: mockExecuteUpdate,
+            error: ref(null)
+          }))
+        }))
+      })
+
+      wrapper = mount(CRSigne, {
+        props: {
+          weeklyClaim: mockClaim
+        }
+      })
+
+      await nextTick()
+      await wrapper.find('[data-test="approve-button"]').trigger('click')
+      await nextTick()
+      await vi.dynamicImportSettled()
+
+      expect(mockToastStoreValue.addSuccessToast).toHaveBeenCalledWith('Claim approved')
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('should show error toast when user rejects signature', async () => {
+      const mockSignTypedDataAsync = vi
+        .fn()
+        .mockRejectedValue(new Error('User rejected the request'))
+
+      mockUseSignTypedData.mockReturnValue({
+        signTypedDataAsync: mockSignTypedDataAsync,
+        data: ref(null)
+      })
+
+      wrapper = mount(CRSigne, {
+        props: {
+          weeklyClaim: mockClaim
+        }
+      })
+
+      await nextTick()
+      await wrapper.find('[data-test="approve-button"]').trigger('click')
+      await nextTick()
+
+      expect(mockToastStoreValue.addErrorToast).toHaveBeenCalledWith('User rejected the request')
     })
 
-    const wrapper = mount(CRSigne, {
-      props: {
-        weeklyClaim: mockClaim
-      }
+    it('should show error toast when claim update fails', async () => {
+      const mockSignTypedDataAsync = vi.fn().mockResolvedValue('0xsignature')
+      const mockExecuteUpdate = vi.fn().mockResolvedValue(undefined)
+      const errorRef = ref<Error | null>(new Error('Update failed'))
+
+      mockUseSignTypedData.mockReturnValue({
+        signTypedDataAsync: mockSignTypedDataAsync,
+        data: ref('0xsignature')
+      })
+
+      mockUseCustomFetch.mockReturnValue({
+        put: vi.fn(() => ({
+          json: vi.fn(() => ({
+            execute: mockExecuteUpdate,
+            error: errorRef
+          }))
+        }))
+      })
+
+      wrapper = mount(CRSigne, {
+        props: {
+          weeklyClaim: mockClaim
+        }
+      })
+
+      await nextTick()
+      await wrapper.find('[data-test="approve-button"]').trigger('click')
+      await nextTick()
+      await vi.dynamicImportSettled()
+
+      expect(mockToastStoreValue.addErrorToast).toHaveBeenCalledWith(
+        'Failed to approve weeklyClaim'
+      )
     })
-
-    await wrapper.find('[data-test="approve-button"]').trigger('click')
-
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to approve claim')
   })
 })
