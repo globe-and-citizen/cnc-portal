@@ -31,7 +31,7 @@ const {
     mockUseTransactionTimeline: vi.fn(),
     mockLog: { error: vi.fn() },
     mockWaitForCondition: vi.fn().mockResolvedValue(true),
-    mockFormatDataForDisplay: vi.fn(data => data)
+    mockFormatDataForDisplay: vi.fn((data) => data)
   }
 })
 

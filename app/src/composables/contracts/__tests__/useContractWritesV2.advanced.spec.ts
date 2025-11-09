@@ -30,7 +30,7 @@ const {
     mockUseTransactionTimeline: vi.fn(),
     mockLog: { error: vi.fn() },
     mockWaitForCondition: vi.fn().mockResolvedValue(true),
-    mockFormatDataForDisplay: vi.fn(data => data)
+    mockFormatDataForDisplay: vi.fn((data) => data)
   }
 })
 
@@ -313,13 +313,8 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
     it('should create correct query key structure', () => {
       const { simulateGasResult } = useContractWrites(mockConfig)
 
-      expect(simulateGasResult.queryKey).toEqual([
-        'simulateContract',
-        expect.any(Object)
-      ])
+      expect(simulateGasResult.queryKey).toEqual(['simulateContract', expect.any(Object)])
     })
-
-
 
     it('should setup query configuration correctly', () => {
       useContractWrites(mockConfig)
