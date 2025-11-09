@@ -232,7 +232,9 @@ describe('useTransactionTimeline', () => {
 
       expect(transactionSummaryStatus.value).toBe('success')
       expect(timelineSteps.value.complete.status).toBe('completed')
-      expect(timelineSteps.value.complete.description).toContain('Your transaction was confirmed successfully')
+      expect(timelineSteps.value.complete.description).toContain(
+        'Your transaction was confirmed successfully'
+      )
     })
 
     it('should show idle status when transaction not yet complete', () => {
