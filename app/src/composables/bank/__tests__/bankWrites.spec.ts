@@ -35,7 +35,6 @@ vi.mock('@/stores/teamStore', () => ({
   useTeamStore: vi.fn(() => mockTeamStore)
 }))
 
-
 // Test constants
 const MOCK_DATA = {
   tokenAddress: '0xA0b86a33E6441bB7bE6d0B9EB5Bbf26b2d60C1cd',
