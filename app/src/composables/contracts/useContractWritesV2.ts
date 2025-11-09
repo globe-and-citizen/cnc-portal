@@ -74,7 +74,7 @@ export function useContractWrites(config: ContractWriteConfig) {
     },
     enabled: false, // disable automatic query execution
     refetchInterval: false, // disable the refetch
-    refetchOnWindowFocus: false // optionnel
+    refetchOnWindowFocus: false // optional
   })
 
   /**
@@ -132,7 +132,6 @@ export function useContractWrites(config: ContractWriteConfig) {
         throw new Error('Gas estimation failed')
       }
 
-      console.log('here')
       // Execute the contract write
       const response = await writeResult.writeContractAsync({
         address: address,

@@ -22,7 +22,7 @@
             v-if="unpauseResult.timelineSteps.value"
             :show="true"
             :steps="unpauseResult.timelineSteps.value"
-            title="Bank Un Pause Operation"
+            title="Bank UnPause Operation"
           />
         </div>
       </div>

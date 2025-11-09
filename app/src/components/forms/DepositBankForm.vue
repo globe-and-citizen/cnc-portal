@@ -152,9 +152,9 @@ const bigIntAmount = computed(() => BigInt(Number(amount.value) * 1e6))
 
 const isAllowanceSufficient = computed(() => {
   if (selectedTokenId.value === 'native') return true
-  const currentAllowance = allowance.value ? allowance.value.toString() : 0n
+  const currentAllowance = allowance.value ?? 0n
   const requiredAmount = bigIntAmount.value
-  return Number(currentAllowance) >= Number(requiredAmount)
+  return currentAllowance >= requiredAmount
 })
 
 const ERC20ApproveResult = useERC20Approve(
