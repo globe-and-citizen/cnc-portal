@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useValidation, amountToWei } from '../utils'
-import type { Address } from 'viem'
+import { useValidation } from '../utils'
+import { parseEther, type Address } from 'viem'
 
 // Hoisted mock variables
 const { mockAddErrorToast, mockIsAddress, mockParseEther } = vi.hoisted(() => ({
@@ -118,7 +118,7 @@ describe('useValidation', () => {
   })
 })
 
-describe('amountToWei', () => {
+describe('parseEther', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockParseEther.mockImplementation((value: string) => BigInt(parseFloat(value) * 10 ** 18))
@@ -127,7 +127,7 @@ describe('amountToWei', () => {
   it('should convert amount to wei', () => {
     mockParseEther.mockReturnValueOnce(BigInt('1500000000000000000'))
 
-    const result = amountToWei('1.5')
+    const result = parseEther('1.5')
 
     expect(result).toBe(BigInt('1500000000000000000'))
     expect(mockParseEther).toHaveBeenCalledWith('1.5')
@@ -136,7 +136,7 @@ describe('amountToWei', () => {
   it('should handle zero amount', () => {
     mockParseEther.mockReturnValueOnce(BigInt(0))
 
-    const result = amountToWei('0')
+    const result = parseEther('0')
 
     expect(result).toBe(BigInt(0))
     expect(mockParseEther).toHaveBeenCalledWith('0')
