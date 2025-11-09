@@ -43,9 +43,23 @@
 
         <BodAlert v-if="isBodAction" />
 
+        <div class="h-20">
+          <UserComponent
+            class="bg-base-200 rounded-lg p-4 flex-grow hover:cursor-pointer"
+            v-if="input.address"
+            :user="input"
+          />
+        </div>
         <p class="mt-4">Select the member address to transfer ownership.</p>
         <hr class="mt-6" />
-        <SelectMemberInput v-model="input" />
+        <SelectMemberInput
+          v-model="input"
+          :disable-team-members="false"
+          :hidden-members="[]"
+          showOnFocus
+          only-team-members
+          @selectMember="selectMember"
+        />
         <div
           class="text-red-500 text-sm w-full text-left"
           v-for="error of $v.input.address.$errors"
@@ -95,6 +109,8 @@ import { isAddress, type Address } from 'viem'
 import BodAlert from '@/components/BodAlert.vue'
 import { helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
+import type { User } from '@/types'
+import UserComponent from '@/components/UserComponent.vue'
 
 const props = defineProps<{ loading: boolean; isBodAction: boolean }>()
 const emits = defineEmits(['transfer-ownership'])
@@ -109,6 +125,11 @@ const currentStep = ref(1)
 // Validation Rules
 
 // Functions
+const selectMember = (user: User) => {
+  //@ts-expect-error: Type mismatch
+  input.value = { name: user.name, address: user.address, imageUrl: user.imageUrl }
+}
+
 const handleContinue = () => {
   if (currentStep.value < 3) {
     currentStep.value++

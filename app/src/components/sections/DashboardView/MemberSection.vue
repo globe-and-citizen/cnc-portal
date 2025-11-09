@@ -21,8 +21,13 @@
           v-if="teamStore.currentTeam?.id && showAddMemberForm.mount"
           :teamId="teamStore.currentTeam?.id"
           @memberAdded="showAddMemberForm = { mount: false, show: false }"
-          @close-modal="() => (showAddMemberForm = { mount: false, show: false })"
         />
+        <!-- <AddMemberForm
+          v-if="teamStore.currentTeam?.id && showAddMemberForm.mount"
+          :teamId="teamStore.currentTeam?.id"
+          @memberAdded="showAddMemberForm = { mount: false, show: false }"
+          @close-modal="() => (showAddMemberForm = { mount: false, show: false })"
+        /> -->
       </ModalComponent>
     </template>
     <template #default>

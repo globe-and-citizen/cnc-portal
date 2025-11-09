@@ -1,0 +1,29 @@
+meta {
+  name: Get Users - 01 - Invalid Parameters
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/user?search=test&limit=invalid
+  body: json
+  auth: bearer
+}
+
+params:query {
+  search: test
+  limit: invalid
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  
+  test("should return 400 for invalid limit parameter", function() {
+    expect(res.getStatus()).to.equal(400);
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.match(/limit/i);
+  });
+}

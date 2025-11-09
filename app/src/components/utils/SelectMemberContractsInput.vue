@@ -34,32 +34,64 @@
       v-if="
         showDropdown && !disabled && (filteredMembers.length > 0 || filteredContracts.length > 0)
       "
-      class="absolute left-0 top-full mt-1 w-full z-10"
+      class="left-0 top-full mt-4 w-full outline-none focus:outline-none focus:ring-0 z-10"
       data-test="search-dropdown"
     >
-      <ul class="p-2 shadow menu dropdown-content bg-base-100 rounded-box w-full">
-        <!-- Members Section -->
-        <li v-if="filteredMembers.length > 0" class="menu-title">
-          <span>Team Members</span>
-        </li>
-        <li v-for="member in filteredMembers" :key="member.address">
-          <a :data-test="`user-dropdown-${member.address}`" @click="selectItem(member, 'member')">
-            {{ member.name }} | {{ member.address }}
-          </a>
-        </li>
-        <!-- Contracts Section -->
-        <li v-if="filteredContracts.length > 0" class="menu-title">
-          <span>Contracts</span>
-        </li>
-        <li v-for="contract in filteredContracts" :key="contract.address">
-          <a
-            :data-test="`contract-dropdown-${contract.address}`"
+      <div class="shadow bg-base-100 rounded-box">
+        <!-- Members -->
+        <div
+          v-if="filteredMembers.length > 0"
+          class="px-2 pt-3 pb-1 text-xs uppercase text-gray-500"
+        >
+          Team Members
+        </div>
+        <div
+          v-if="filteredMembers.length > 0"
+          class="grid grid-cols-2 gap-4 px-2 pb-3"
+          data-test="user-search-results"
+        >
+          <div
+            v-for="member in filteredMembers"
+            :key="member.address"
+            class="flex items-center relative group cursor-pointer"
+            data-test="user-row"
+            @click="selectItem(member, 'member')"
+          >
+            <UserComponent
+              class="p-4 flex-grow rounded-lg bg-white hover:bg-base-300"
+              :user="member"
+              :data-test="`user-dropdown-${member.address}`"
+            />
+          </div>
+        </div>
+
+        <!-- Contracts -->
+        <div
+          v-if="filteredContracts.length > 0"
+          class="px-2 pt-2 pb-1 text-xs uppercase text-gray-500"
+        >
+          Contracts
+        </div>
+        <div
+          v-if="filteredContracts.length > 0"
+          class="grid grid-rows-1 gap-4 px-2 pb-3"
+          data-test="contract-search-results"
+        >
+          <div
+            v-for="contract in filteredContracts"
+            :key="contract.address"
+            class="flex items-center relative group cursor-pointer"
+            data-test="contract-row"
             @click="selectItem({ name: contract.type, address: contract.address }, 'contract')"
           >
-            {{ contract.type }} | {{ contract.address }}
-          </a>
-        </li>
-      </ul>
+            <ContractComponent
+              class="p-4 flex-grow rounded-lg bg-white hover:bg-base-300"
+              :user="{ name: contract.type, address: contract.address }"
+              :data-test="`contract-dropdown-${contract.address}`"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -82,6 +114,8 @@
 import { ref, useTemplateRef, computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { watchDebounced } from '@vueuse/core'
+import UserComponent from '@/components/UserComponent.vue'
+import ContractComponent from '@/components/ContractComponent.vue'
 
 const props = defineProps<{ disabled?: boolean }>()
 

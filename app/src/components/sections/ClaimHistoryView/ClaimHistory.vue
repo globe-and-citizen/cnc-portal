@@ -9,7 +9,7 @@
           <div class="card-title mt-4">{{ name }}</div>
 
           <div class="flex items-center gap-2">
-            <img src="/public/Vector.png" alt="" class="w-4 h-4" />
+            <img src="/Vector.png" alt="" class="w-4 h-4" />
             <AddressToolTip :address="address" />
           </div>
           <!-- <div class="text-sm text-gray-500">{{ description }}</div> -->
