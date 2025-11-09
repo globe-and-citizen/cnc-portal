@@ -22,27 +22,6 @@
       >
     </template>
   </TokenAmount>
-
-  <!-- simulateGasResult{{ simulateGasResult.data }} -->
-  <!-- Transaction Timeline for Non-Native Tokens -->
-  <!-- <div v-if="selectedToken?.token.id !== 'native'" class="my-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      Approval Timeline
-      <TransactionTimeline
-        :show="currentStep >= 2 && !isAllowanceSufficient"
-        :steps="ERC20ApproveResult.timelineSteps.value"
-        title="Token Approval"
-      />
-
-      Deposit Timeline
-      <TransactionTimeline
-        :show="currentStep >= 3"
-        :steps="bankDepositTokenResult.timelineSteps.value"
-        title="Token Deposit"
-      />
-    </div>
-  </div> -->
-
   <div class="modal-action justify-between">
     <ButtonUI
       variant="error"
