@@ -48,7 +48,6 @@ describe('useValidation', () => {
   // validateAmount()
   // validateAddress()
 })
-
 ```
 
 ### 3. `bank-types.spec.ts` - Type System Tests

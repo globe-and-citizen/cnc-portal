@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useValidation} from '../utils'
+import { useValidation } from '../utils'
 import { parseEther, type Address } from 'viem'
 
 // Hoisted mock variables
