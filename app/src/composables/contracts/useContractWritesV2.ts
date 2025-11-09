@@ -58,6 +58,9 @@ export function useContractWrites(config: ContractWriteConfig) {
     }))
   ] as const
 
+  // Track skipGasEstimation option for conditional query enabling
+  let skipGasEstimation = false
+
   const simulateGasResult = useQuery({
     queryKey,
     queryFn: async () => {
@@ -72,7 +75,7 @@ export function useContractWrites(config: ContractWriteConfig) {
 
       return result
     },
-    enabled: false, // disable automatic query execution
+    enabled: computed(() => !skipGasEstimation), // only enable if not skipping gas estimation
     refetchInterval: false, // disable the refetch
     refetchOnWindowFocus: false // optional
   })
@@ -111,12 +114,16 @@ export function useContractWrites(config: ContractWriteConfig) {
   })
 
   /**
-   * Execute a contract write operation
+   * Executes a contract write operation.
+   * @param args - Arguments to pass to the contract function (default: []).
+   * @param value - Optional ETH value to send with the transaction.
+   * @param options - Optional settings for the write operation (e.g., skipGasEstimation).
+   * @returns The transaction response if successful, otherwise undefined.
    */
   const executeWrite = async (
     args: readonly unknown[] = [],
-    value?: bigint
-    // options?: ContractWriteOptions
+    value?: bigint,
+    options?: ContractWriteOptions
   ) => {
     // Store function name for query invalidation after transaction confirms
     // currentFunctionName.value = functionName
@@ -126,10 +133,15 @@ export function useContractWrites(config: ContractWriteConfig) {
         throw new Error('Contract address is undefined')
       }
 
-      // Estimate gas before executing the write
-      await simulateGasResult.refetch()
-      if (!simulateGasResult.isSuccess.value) {
-        throw new Error('Gas estimation failed')
+      // Set skipGasEstimation for conditional query enabling
+      skipGasEstimation = !!options?.skipGasEstimation
+
+      // Estimate gas before executing the write unless skipGasEstimation is true
+      if (!skipGasEstimation) {
+        await simulateGasResult.refetch()
+        if (!simulateGasResult.isSuccess.value) {
+          throw new Error('Gas estimation failed')
+        }
       }
 
       // Execute the contract write
@@ -145,7 +157,7 @@ export function useContractWrites(config: ContractWriteConfig) {
       await waitForCondition(() => receiptResult.isSuccess.value, 15000)
 
       // Invalidate queries
-      invalidateQueries()
+      await invalidateQueries()
       return response
     } catch (error) {
       log.error(`Failed to execute ${unref(config.functionName)}:`, error)
