@@ -1,4 +1,4 @@
-import { isAddress, parseEther, type Address } from 'viem'
+import { isAddress, type Address } from 'viem'
 import { useToastStore } from '@/stores'
 
 /**
@@ -28,12 +28,4 @@ export function useValidation() {
     validateAmount,
     validateAddress
   }
-}
-
-/**
- * Utility function to convert amount to wei
- * @deprecated Use viem's parseEther directly instead
- */
-export function amountToWei(amount: string): bigint {
-  return parseEther(amount)
 }

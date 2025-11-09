@@ -39,7 +39,6 @@ describe('useBankReads', () => {
 - ✅ Amount validation (positive, zero, negative, empty)
 - ✅ Address validation with custom labels
 - ✅ Tip parameter validation with multiple addresses
-- ✅ `amountToWei()` conversion utility
 - ✅ Error toast integration
 
 **Key Test Areas**:
@@ -50,9 +49,6 @@ describe('useValidation', () => {
   // validateAddress()
 })
 
-describe('amountToWei', () => {
-  // Wei conversion testing
-})
 ```
 
 ### 3. `bank-types.spec.ts` - Type System Tests
