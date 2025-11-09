@@ -38,9 +38,12 @@ const mockUserStore = {
   address: ref('0x0987654321098765432109876543210987654321')
 }
 
+const addSuccessToast = vi.fn()
+const addErrorToast = vi.fn()
+
 vi.mock('@/stores', () => ({
   useTeamStore: () => ({ currentTeam: { id: 'team-123' } }),
-  useToastStore: () => ({ addErrorToast: vi.fn() }),
+  useToastStore: () => ({ addErrorToast, addSuccessToast }),
   useUserDataStore: () => mockUserStore
 }))
 
@@ -373,6 +376,41 @@ describe('ClaimHistory.vue', () => {
 
       // @ts-expect-error: accessing component internal computed
       expect(wrapper.vm.canModifyClaims).toBe(false)
+    })
+  })
+
+  describe('Color and Status Handling', () => {
+    it('should return correct color for different weekly claim statuses', () => {
+      const wrapper = shallowMount(ClaimHistory, {
+        global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+      })
+
+      const testCases = [
+        { status: 'pending', expected: 'primary' },
+        { status: 'signed', expected: 'warning' },
+        { status: 'withdrawn', expected: 'info' }
+      ]
+
+      testCases.forEach(({ status, expected }) => {
+        const weeklyClaim = {
+          status,
+          weekStart: dayjs().utc().startOf('isoWeek').toISOString()
+        }
+        // @ts-expect-error: accessing component internal method
+        expect(wrapper.vm.getColor(weeklyClaim)).toBe(expected)
+      })
+
+      // Test undefined case
+      // @ts-expect-error: accessing component internal method
+      expect(wrapper.vm.getColor(undefined)).toBe('accent')
+
+      // Test unknown status
+      const unknownStatusClaim = {
+        status: 'unknown',
+        weekStart: dayjs().utc().startOf('isoWeek').toISOString()
+      }
+      // @ts-expect-error: accessing component internal method
+      expect(wrapper.vm.getColor(unknownStatusClaim)).toBe('accent')
     })
   })
 })

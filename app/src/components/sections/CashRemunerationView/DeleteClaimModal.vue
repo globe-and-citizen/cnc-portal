@@ -97,34 +97,27 @@ const handleDelete = async () => {
   if (!props.claim) return
 
   errorMessage.value = ''
-
-  try {
-    await deleteClaimRequest()
-    if (deleteClaimStatusCode.value === 200) {
-      toastStore.addSuccessToast('Claim deleted successfully')
-      if (props.queryKey.some((key) => key !== undefined)) {
-        await queryClient.invalidateQueries({
-          queryKey: props.queryKey
-        })
-      }
-      handleClose()
+  await deleteClaimRequest()
+  if (deleteClaimStatusCode.value === 200) {
+    toastStore.addSuccessToast('Claim deleted successfully')
+    if (props.queryKey.some((key) => key !== undefined)) {
+      await queryClient.invalidateQueries({
+        queryKey: props.queryKey
+      })
     }
-  } catch (error) {
-    console.error('Failed to delete claim:', error)
-    toastStore.addErrorToast((error as Error)?.message || 'Failed to delete claim')
+    handleClose()
   }
 }
-
 // Error handling
 watch(deleteClaimError, async () => {
-  if (deleteClaimError.value && deleteClaimResponse.value) {
-    try {
-      const errorData = await deleteClaimResponse.value.json()
-      errorMessage.value = errorData.message
-    } catch (err) {
-      errorMessage.value = 'Failed to delete claim'
-      console.error('Failed to parse delete claim error response', err)
-    }
+  if (!deleteClaimError.value || !deleteClaimResponse.value) return
+  try {
+    const errorData = await deleteClaimResponse.value.json()
+    errorMessage.value = errorData?.message || 'Failed to delete claim'
+  } catch (error) {
+    console.error('Failed to parse delete claim error response', error)
+    errorMessage.value = 'Failed to delete claim'
   }
+  toastStore.addErrorToast(errorMessage.value)
 })
 </script>

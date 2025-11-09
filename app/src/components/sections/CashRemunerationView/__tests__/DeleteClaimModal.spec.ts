@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import DeleteClaimModal from '../DeleteClaimModal.vue'
+import DeleteClaimModal from '@/components/sections/CashRemunerationView/DeleteClaimModal.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
@@ -161,7 +161,6 @@ describe('DeleteClaimModal', () => {
     await flushPromises()
 
     expect(successToastMock).not.toHaveBeenCalled()
-    expect(errorToastMock).not.toHaveBeenCalled()
     expect(wrapper.find('[data-test="delete-claim-error"]').text()).toContain(
       'Failed to delete claim'
     )
