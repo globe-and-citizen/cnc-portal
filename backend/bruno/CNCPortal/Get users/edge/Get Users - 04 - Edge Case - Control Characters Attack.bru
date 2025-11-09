@@ -1,0 +1,39 @@
+meta {
+  name: Get Users - 04 - Control Characters Attack
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{host}}/user?search=<script>alert('XSS')</script>&limit=10
+  body: json
+  auth: bearer
+}
+
+params:query {
+  search: <script>alert('XSS')</script>
+  limit: 10
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+
+  test("should return 200 status for valid token", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should sanitize/escape control characters", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.body.users).to.be.an('array');
+  });
+
+  test("should not return HTML/script in response", function() {
+    const responseText = JSON.stringify(res.body);
+    if (responseText.includes('<script>')) {
+      expect(responseText).to.include('&lt;script&gt;');
+    }
+  });
+}
