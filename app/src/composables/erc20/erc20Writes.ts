@@ -1,5 +1,4 @@
-import type { ComputedRef, MaybeRef } from 'vue'
-import { computed, unref } from 'vue'
+import type { MaybeRef } from 'vue'
 import type { Address } from 'viem'
 import { ERC20_ABI as erc20Abi } from '@/artifacts/abi/erc20'
 // import { erc20Abi } from 'viem'
@@ -12,7 +11,7 @@ type ERC20FunctionNames = ExtractAbiFunctionNames<typeof erc20Abi>
 export function useERC20ContractWrite(options: {
   contractAddress: MaybeRef<Address | undefined>
   functionName: ERC20FunctionNames
-  args?: ComputedRef<readonly unknown[]>
+  args?: Array<MaybeRef<unknown>> | MaybeRef<readonly unknown[]>
   value?: MaybeRef<bigint>
 }) {
   return useContractWrites({
@@ -29,12 +28,10 @@ export function useERC20Transfer(
   to: MaybeRef<Address>,
   amount: MaybeRef<bigint>
 ) {
-  const args = computed(() => [unref(to), unref(amount)] as readonly unknown[])
-
   return useERC20ContractWrite({
     contractAddress,
     functionName: 'transfer',
-    args
+    args: [to, amount]
   })
 }
 
@@ -44,12 +41,10 @@ export function useERC20TransferFrom(
   to: MaybeRef<Address>,
   amount: MaybeRef<bigint>
 ) {
-  const args = computed(() => [unref(from), unref(to), unref(amount)] as readonly unknown[])
-
   return useERC20ContractWrite({
     contractAddress,
     functionName: 'transferFrom',
-    args
+    args: [from, to, amount]
   })
 }
 
@@ -58,12 +53,9 @@ export function useERC20Approve(
   spender: MaybeRef<Address>,
   amount: MaybeRef<bigint>
 ) {
-  const args = computed(() => [unref(spender), unref(amount)] as readonly unknown[])
-
-  console.log('useERC20Approve called with', args.value)
   return useERC20ContractWrite({
     contractAddress,
     functionName: 'approve',
-    args
+    args: [spender, amount]
   })
 }
