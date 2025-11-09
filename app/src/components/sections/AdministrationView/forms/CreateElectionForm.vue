@@ -108,7 +108,11 @@
             {{ error.$message }}
           </div>
 
-          <MultiSelectMemberInput v-model="formData" />
+          <MultiSelectMemberInput
+            v-model="formData"
+            :show-on-focus="true"
+            :only-team-members="true"
+          />
 
           <div
             class="pl-4 text-red-500 text-sm w-full text-left"

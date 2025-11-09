@@ -259,7 +259,7 @@ describe('TheDrawer', () => {
     it('should render all menu items', () => {
       const wrapper = createWrapper()
       const menuItems = wrapper.findAll('nav a')
-      expect(menuItems.length).toBe(10) // Total number of menu items
+      expect(menuItems.length).toBe(9) // Total number of menu items
     })
 
     it('should highlight active menu item', async () => {
@@ -285,7 +285,7 @@ describe('TheDrawer', () => {
 
       await wrapper.vm.$nextTick()
       const menuItems = wrapper.findAll('nav a:not(.hidden)')
-      expect(menuItems.length).toBe(3)
+      expect(menuItems.length).toBe(2)
     })
   })
 

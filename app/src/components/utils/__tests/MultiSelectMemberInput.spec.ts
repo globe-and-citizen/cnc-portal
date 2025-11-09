@@ -1,61 +1,83 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import MultiSelectMemberInput from '../MultiSelectMemberInput.vue'
-import SelectMemberInput from '../SelectMemberInput.vue'
 import UserComponent from '@/components/UserComponent.vue'
+import { createTestingPinia } from '@pinia/testing'
 
 interface Member {
-  name: string
-  address: string
+  name?: string
+  address?: string
   id?: string
 }
 
 describe('MultiSelectMemberInput', () => {
-  const createWrapper = (initialMembers: Member[] = []) => {
-    return mount(MultiSelectMemberInput, {
-      props: {
-        modelValue: initialMembers,
-        'onUpdate:modelValue': () => {}
-      },
-      global: {
-        stubs: {
-          SelectMemberInput: true,
-          UserComponent: true,
-          ButtonUI: true
+  let wrapper: ReturnType<typeof mount>
+
+  afterEach(() => {
+    if (wrapper) wrapper.unmount()
+  })
+
+  describe('addMember function', () => {
+    it('should not add member if member is null', async () => {
+      const initialMembers: Member[] = [{ name: 'Existing Member', address: '0x123' }]
+      let currentMembers = [...initialMembers]
+
+      wrapper = mount(MultiSelectMemberInput, {
+        props: {
+          modelValue: currentMembers,
+          'onUpdate:modelValue': (value: Member[]) => {
+            currentMembers = value
+          }
+        },
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })],
+          components: { UserComponent }
         }
-      }
-    })
-  }
+      })
 
-  it('renders empty state correctly', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.find('[data-test="members-list"]').exists()).toBe(true)
-    expect(wrapper.findAllComponents(UserComponent)).toHaveLength(0)
-  })
+      const selectMemberInput = wrapper.findComponent({ name: 'SelectMemberInput' })
+      await selectMemberInput.vm.$emit('selectMember', null)
+      await wrapper.vm.$nextTick()
 
-  it('renders existing members correctly', () => {
-    const initialMembers: Member[] = [
-      { name: 'John Doe', address: '0x123' },
-      { name: 'Jane Smith', address: '0x456' }
-    ]
-    const wrapper = createWrapper(initialMembers)
-    const userComponents = wrapper.findAllComponents(UserComponent)
-
-    expect(userComponents).toHaveLength(2)
-    expect(userComponents[0].props('user')).toEqual(initialMembers[0])
-    expect(userComponents[1].props('user')).toEqual(initialMembers[1])
-  })
-
-  it('prevents adding duplicate members (same address)', async () => {
-    const initialMembers: Member[] = [{ name: 'John Doe', address: '0x123' }]
-    const wrapper = createWrapper(initialMembers)
-
-    await wrapper.findComponent(SelectMemberInput).vm.$emit('selectMember', {
-      name: 'Different Name',
-      address: '0x123' // Same address as existing member
+      expect(currentMembers).toHaveLength(1) // Should remain unchanged
     })
 
-    expect(wrapper.findAllComponents(UserComponent)).toHaveLength(1)
-    expect(wrapper.emitted('update:modelValue')).toBeFalsy()
+    it('should toggle member - add then remove same member', async () => {
+      let currentMembers: Member[] = []
+
+      wrapper = mount(MultiSelectMemberInput, {
+        props: {
+          modelValue: currentMembers,
+          'onUpdate:modelValue': (value: Member[]) => {
+            currentMembers = value
+          }
+        },
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })],
+          components: { UserComponent }
+        }
+      })
+
+      const member = { name: 'Toggle Member', address: '0x999' }
+
+      // First click - add member
+      const selectMemberInput = wrapper.findComponent({ name: 'SelectMemberInput' })
+      await selectMemberInput.vm.$emit('selectMember', member)
+      await wrapper.vm.$nextTick()
+
+      expect(currentMembers).toHaveLength(1)
+      expect(currentMembers[0]).toEqual(member)
+
+      // Update wrapper with new members
+      await wrapper.setProps({ modelValue: currentMembers })
+      await wrapper.vm.$nextTick()
+
+      // Second click - remove member
+      const userComponents = wrapper.findAllComponents(UserComponent)
+      await userComponents[0].trigger('click')
+      await wrapper.vm.$nextTick()
+
+      expect(currentMembers).toHaveLength(0)
+    })
   })
 })

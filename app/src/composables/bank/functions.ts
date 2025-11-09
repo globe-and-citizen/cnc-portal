@@ -1,8 +1,8 @@
-import { type Address } from 'viem'
+import { parseEther, type Address } from 'viem'
 // import { useToastStore } from '@/stores'
 import { useBankWrites } from './writes'
 import { BANK_FUNCTION_NAMES } from './types'
-import { useValidation, amountToWei } from './utils'
+import { useValidation } from './utils'
 import { computed, unref } from 'vue'
 
 /**
@@ -52,7 +52,7 @@ export function useBankWritesFunctions() {
 
   const transferEth = (to: Address, amount: string) => {
     if (!validateAddress(to, 'recipient address') || !validateAmount(amount)) return
-    const amountInWei = amountToWei(amount)
+    const amountInWei = parseEther(amount)
     return writes.executeWrite(BANK_FUNCTION_NAMES.TRANSFER, [to, amountInWei])
   }
 
@@ -67,13 +67,13 @@ export function useBankWritesFunctions() {
       !validateAmount(amount)
     )
       return
-    const amountInWei = amountToWei(amount)
+    const amountInWei = parseEther(amount)
     return writes.executeWrite(BANK_FUNCTION_NAMES.TRANSFER_TOKEN, [tokenAddress, to, amountInWei])
   }
 
   const depositDividends = (amount: string, investorAddress: Address) => {
     //if (!validateAmount(amount)) return
-    // const amountInWei = amountToWei(amount)
+    // const amountInWei = parseEther(amount)
     return writes.executeWrite(BANK_FUNCTION_NAMES.DEPOSIT_DIVIDENDS, [amount, investorAddress])
   }
 
@@ -83,7 +83,7 @@ export function useBankWritesFunctions() {
     investorAddress: Address
   ) => {
     //if (!validateAmount(amount)) return
-    // const amountInWei = amountToWei(amount)
+    // const amountInWei = parseEther(amount)
     return writes.executeWrite(BANK_FUNCTION_NAMES.DEPOSIT_TOKEN_DIVIDENDS, [
       tokenAddress,
       amount,

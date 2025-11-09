@@ -1,0 +1,21 @@
+meta {
+  name: Get Users - 01 - Default Get Users
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/user
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("should return 200 status for valid token", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

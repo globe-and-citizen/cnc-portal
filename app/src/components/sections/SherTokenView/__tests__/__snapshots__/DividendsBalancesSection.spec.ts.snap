@@ -1,3 +1,0 @@
-// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
-
-exports[`DividendsBalancesSection.vue > matches snapshot 1`] = `"<card-component-stub title="Dividends Holdings"></card-component-stub>"`;

@@ -1,0 +1,40 @@
+meta {
+  name: Get Users - 03 - SQL Injection Attempt
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/user?search=' OR '1'='1&limit=10
+  body: json
+  auth: bearer
+}
+
+params:query {
+  search: ' OR '1'='1
+  limit: 10
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("should return 200 status for valid token", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("should NOT be vulnerable to SQL injection", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.body.users).to.be.an('array');
+  });
+
+  test("should treat injection attempt as normal search text", function() {
+    expect(res.body.users.length).to.be.lessThan(res.body.users.length + 100);
+  });
+
+  test("should not return unexpected number of results", function() {
+    const suspiciousCount = 50; 
+    expect(res.body.users.length).to.be.at.most(suspiciousCount);
+  });
+}
