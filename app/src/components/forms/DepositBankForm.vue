@@ -73,12 +73,13 @@ import { ref, computed, watch } from 'vue'
 import { parseEther, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
-import { useERC20Reads, useERC20Approve } from '@/composables/erc20/index'
+import { useERC20Reads } from '@/composables/erc20/index'
 import { useDepositToken } from '@/composables/bank/bankWrites'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import ButtonUI from '../ButtonUI.vue'
 import TokenAmount from './TokenAmount.vue'
+import { useERC20Approve } from '@/composables/erc20/erc20Writes'
 
 const emits = defineEmits(['closeModal'])
 // Add validation event
