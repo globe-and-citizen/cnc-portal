@@ -168,8 +168,8 @@ export const getClaims = async (req: Request, res: Response) => {
 export const updateClaim = async (req: Request, res: Response) => {
   const callerAddress = (req as any).address;
   const claimId = Number(req.params.claimId);
- 
-  const { hoursWorked, memo } = req.body
+
+  const { hoursWorked, memo }: { hoursWorked: number; memo: string } = req.body;
   // Prepare the data according to the action
   const data: Prisma.ClaimUpdateInput = {};
   try {
@@ -190,32 +190,20 @@ export const updateClaim = async (req: Request, res: Response) => {
 
     // Only claim owner can edit
     if (claim.wage.userAddress !== callerAddress) {
-      return errorResponse(403, 'Caller is not the owner of the claim', res)
+      return errorResponse(403, 'Caller is not the owner of the claim', res);
     }
 
     // Can only edit pending claims
     if (claim.weeklyClaim?.status !== 'pending' && claim.weeklyClaim?.status !== 'disabled') {
-      return errorResponse(403, "Can't edit: Claim is not pending", res)
-    }
-    // Update the claim status
-    // Only update fields that are defined
-    if (hoursWorked !== undefined) {
-      data.hoursWorked = Number(hoursWorked);
-    }
-    if (memo !== undefined) {
-      data.memo = memo;
-    }
-
-    // Only proceed with update if there are fields to update
-    if (Object.keys(data).length === 0) {
-      return errorResponse(400, 'No valid fields provided for update', res);
+      return errorResponse(403, "Can't edit: Claim is not pending", res);
     }
 
     const updatedClaim = await prisma.claim.update({
-      where: {
-      id: claimId,
+      where: { id: claimId },
+      data: {
+        ...(memo !== undefined && { memo }),
+        ...(hoursWorked !== undefined && { hoursWorked: Number(hoursWorked) }),
       },
-      data,
     });
     return res.status(200).json(updatedClaim);
   } catch (error) {
@@ -245,8 +233,6 @@ export const deleteClaim = async (req: Request, res: Response) => {
       return errorResponse(404, 'Claim not found', res);
     }
 
-    console.log('Claim owner address =======:', claim.wage.userAddress);
-    console.log('Caller address =======:', callerAddress);
     if (claim.wage.userAddress !== callerAddress) {
       return errorResponse(403, 'Caller is not the owner of the claim', res);
     }

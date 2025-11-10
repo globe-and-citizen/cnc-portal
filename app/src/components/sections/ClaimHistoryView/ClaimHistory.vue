@@ -175,24 +175,7 @@
                 class="flex items-center justify-between gap-3"
               >
                 <span>{{ claim.memo }}</span>
-                <div v-if="canModifyClaims" class="flex items-center gap-1">
-                  <ButtonUI
-                    variant="ghost"
-                    size="xs"
-                    @click="editClaim(claim)"
-                    data-test="edit-claim-button"
-                  >
-                    <IconifyIcon icon="heroicons:pencil-square" class="w-4 h-4" />
-                  </ButtonUI>
-                  <ButtonUI
-                    variant="ghost"
-                    size="xs"
-                    @click="openDeleteModal(claim)"
-                    data-test="delete-claim-button"
-                  >
-                    <IconifyIcon icon="heroicons:trash" class="w-4 h-4 text-error" />
-                  </ButtonUI>
-                </div>
+                <ClaimActions v-if="canModifyClaims" :claim="claim" />
               </div>
             </div>
 
@@ -205,23 +188,6 @@
       </CardComponent>
     </div>
   </div>
-
-  <!-- Add edit modal -->
-  <EditClaims
-    v-model:show="showEditModal"
-    v-if="claimToEdit !== null"
-    :claim="claimToEdit"
-    :team-id="teamId || 0"
-    @close="claimToEdit = null"
-  />
-
-  <DeleteClaimModal
-    v-model:show="showDeleteModal"
-    :claim="claimToDelete"
-    :query-key="weeklyClaimQueryKey"
-    @close="closeDeleteModal"
-    v-if="claimToDelete !== null"
-  />
 </template>
 
 <script setup lang="ts">
@@ -233,7 +199,7 @@ import weekday from 'dayjs/plugin/weekday'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { formatIsoWeekRange, getMonthWeeks, type Week } from '@/utils/dayUtils'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
-import DeleteClaimModal from '@/components/sections/CashRemunerationView/DeleteClaimModal.vue'
+
 import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
 import WeeklyRecap from '@/components/WeeklyRecap.vue'
@@ -256,11 +222,10 @@ import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
-
 import { storeToRefs } from 'pinia'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
-import type { Claim } from '@/types'
+import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
+
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
@@ -424,13 +389,6 @@ const barChartOption = computed(() => {
   }
 })
 
-// Add state for editing
-const claimToEdit = ref<Claim | null>(null)
-const claimToDelete = ref<Claim | null>(null)
-
-const showDeleteModal = ref(false)
-const showEditModal = ref(false)
-
 const canModifyClaims = computed(() => {
   if (!selectWeekWeelyClaim.value) return false
   return (
@@ -438,24 +396,4 @@ const canModifyClaims = computed(() => {
     selectWeekWeelyClaim.value.wage.userAddress === userStore.address
   )
 })
-
-const closeDeleteModal = () => {
-  showDeleteModal.value = false
-  claimToDelete.value = null
-}
-
-const openDeleteModal = (claim: Claim) => {
-  claimToDelete.value = claim
-  showDeleteModal.value = true
-}
-
-watch([showDeleteModal, claimToDelete], ([showModal, claim]) => {
-  console.log('Delete modal state changed:', { showModal, claim })
-})
-
-// Add edit handler
-const editClaim = (claim: Claim) => {
-  claimToEdit.value = claim
-  showEditModal.value = true
-}
 </script>

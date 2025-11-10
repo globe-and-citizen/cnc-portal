@@ -134,12 +134,9 @@ const createTestApp = (address = TEST_ADDRESS) => {
   return testApp;
 };
 
-const app = createTestApp(); 
+const app = createTestApp();
 app.use(express.json());
 app.use('/', claimRoutes);
-
-
-
 
 // Common test scenarios for parameterized tests
 const invalidBodyScenarios = [
@@ -363,10 +360,7 @@ describe('Claim Controller', () => {
     });
 
     // Helper function to setup mock claim with authorization
-    const setupMockClaim = (
-      userAddress = TEST_ADDRESS,
-      teamOwnerAddress = TEST_ADDRESS
-    ) => {
+    const setupMockClaim = (userAddress = TEST_ADDRESS, teamOwnerAddress = TEST_ADDRESS) => {
       return vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue({
         id: 1,
         wage: {
@@ -374,8 +368,8 @@ describe('Claim Controller', () => {
           team: { ownerAddress: teamOwnerAddress },
         },
         weeklyClaim: {
-          status :'pending'
-        }
+          status: 'pending',
+        },
       } as any);
     };
 
@@ -388,7 +382,8 @@ describe('Claim Controller', () => {
     ) => {
       if (authType === 'cashOwnerOrTeamOwner') {
         mockIsCashRemunerationOwner.mockResolvedValue(shouldSucceed);
-        setupMockClaim('pending', TEST_ADDRESS, shouldSucceed ? TEST_ADDRESS : OTHER_ADDRESS);
+
+        setupMockClaim('pending', shouldSucceed ? TEST_ADDRESS : OTHER_ADDRESS);
       } else {
         setupMockClaim('signed', shouldSucceed ? TEST_ADDRESS : OTHER_ADDRESS);
       }
@@ -398,7 +393,7 @@ describe('Claim Controller', () => {
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(null);
       const response = await request(app)
         .put('/1')
-        .query()
+        .query({})
         .send({ hoursWorked: 5, memo: 'Updated memo' });
       expect(response.status).toBe(404);
       expect(response.body.message).toBe('Claim not found');
@@ -426,9 +421,7 @@ describe('Claim Controller', () => {
         const response = await requestBuilder;
 
         expect(response.status).toBe(403);
-        expect(response.body.message).toBe(
-         'Caller is not the owner of the claim'
-        );
+        expect(response.body.message).toBe('Caller is not the owner of the claim');
       });
     });
 
@@ -436,70 +429,49 @@ describe('Claim Controller', () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
-        weeklyClaim: { status: 'pending' }
+        weeklyClaim: { status: 'pending' },
       };
 
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
       vi.spyOn(prisma.claim, 'update').mockResolvedValue({
         id: 1,
         hoursWorked: 6,
-        memo: 'Updated memo'
+        memo: 'Updated memo',
       } as any);
 
-      const response = await request(app)
-        .put('/1')
-        .send({
-          hoursWorked: 6,
-          memo: 'Updated memo'
-        });
+      const response = await request(app).put('/1').send({
+        hoursWorked: 6,
+        memo: 'Updated memo',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         id: 1,
         hoursWorked: 6,
-        memo: 'Updated memo'
+        memo: 'Updated memo',
       });
-    });
-
-    it('should return 400 if no valid fields provided for update', async () => {
-      const mockClaim = {
-        id: 1,
-        wage: { userAddress: TEST_ADDRESS },
-        weeklyClaim: { status: 'pending' }
-      };
-
-      vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
-
-      const response = await request(app)
-        .put('/1')
-        .send({});
-
-      expect(response.status).toBe(400);
-      expect(response.body.message).toBe('No valid fields provided for update');
     });
 
     it('should update only provided fields', async () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
-        weeklyClaim: { status: 'pending' }
+        weeklyClaim: { status: 'pending' },
       };
 
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
       const updateSpy = vi.spyOn(prisma.claim, 'update').mockResolvedValue({
         id: 1,
         hoursWorked: 6,
-        memo: 'Original memo'
+        memo: 'Original memo',
       } as any);
 
-      const response = await request(app)
-        .put('/1')
-        .send({ hoursWorked: 6 });
+      const response = await request(app).put('/1').send({ hoursWorked: 6 });
 
       expect(response.status).toBe(200);
       expect(updateSpy).toHaveBeenCalledWith({
         where: { id: 1 },
-        data: { hoursWorked: 6 }
+        data: { hoursWorked: 6 },
       });
     });
 
@@ -507,15 +479,13 @@ describe('Claim Controller', () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
-        weeklyClaim: { status: 'pending' }
+        weeklyClaim: { status: 'pending' },
       };
 
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
       vi.spyOn(prisma.claim, 'update').mockRejectedValue(new Error('DB error'));
 
-      const response = await request(app)
-        .put('/1')
-        .send({ hoursWorked: 6, memo: 'Updated memo' });
+      const response = await request(app).put('/1').send({ hoursWorked: 6, memo: 'Updated memo' });
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
@@ -525,14 +495,12 @@ describe('Claim Controller', () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
-        weeklyClaim: null
+        weeklyClaim: null,
       };
 
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
 
-      const response = await request(app)
-        .put('/1')
-        .send({ hoursWorked: 6, memo: 'Updated memo' });
+      const response = await request(app).put('/1').send({ hoursWorked: 6, memo: 'Updated memo' });
 
       expect(response.status).toBe(403);
       expect(response.body.message).toBe("Can't edit: Claim is not pending");
@@ -550,52 +518,52 @@ describe('Claim Controller', () => {
       hasOtherClaims = false
     ) => {
       return vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue({
-      id: 1,
-      wage: { 'userAddress': userAddress },
-      weeklyClaim: {
         id: 1,
-        status,
-        claims: hasOtherClaims ? [{ id: 1 }, { id: 2 }] : [{ id: 1 }]
-      }
+        wage: { userAddress: userAddress },
+        weeklyClaim: {
+          id: 1,
+          status,
+          claims: hasOtherClaims ? [{ id: 1 }, { id: 2 }] : [{ id: 1 }],
+        },
       } as any);
     };
 
     it('should return 404 if claim is not found', async () => {
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(null);
-      
+
       const response = await request(app).delete('/1');
-      
+
       expect(response.status).toBe(404);
       expect(response.body.message).toBe('Claim not found');
     });
 
     it('should return 403 if claim status is not pending or disabled', async () => {
       setupMockClaim('signed', TEST_ADDRESS);
-      
+
       const response = await request(app).delete('/1');
-      
-      expect(response.status).toBe(403); 
+
+      expect(response.status).toBe(403);
       expect(response.body.message).toBe("Can't delete: Claim is not pending or disabled");
     });
 
     it('should return 403 if caller is not claim owner', async () => {
       setupMockClaim('pending', OTHER_ADDRESS);
-      
+
       const response = await request(app).delete('/1');
-      
+
       expect(response.status).toBe(403);
       expect(response.body.message).toBe('Caller is not the owner of the claim');
     });
 
-   
-
     it('should delete claim and weekly claim when no other claims exist', async () => {
       setupMockClaim('pending', TEST_ADDRESS, false);
       const mockClaimDelete = vi.spyOn(prisma.claim, 'delete').mockResolvedValue({} as any);
-      const mockWeeklyClaimDelete = vi.spyOn(prisma.weeklyClaim, 'delete').mockResolvedValue({} as any);
-      
+      const mockWeeklyClaimDelete = vi
+        .spyOn(prisma.weeklyClaim, 'delete')
+        .mockResolvedValue({} as any);
+
       const response = await request(app).delete('/1');
-      
+
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Claim deleted successfully');
       expect(mockClaimDelete).toHaveBeenCalledWith({ where: { id: 1 } });
@@ -606,9 +574,9 @@ describe('Claim Controller', () => {
       setupMockClaim('pending', TEST_ADDRESS, true);
       const mockClaimDelete = vi.spyOn(prisma.claim, 'delete').mockResolvedValue({} as any);
       const mockWeeklyClaimDelete = vi.spyOn(prisma.weeklyClaim, 'delete');
-      
+
       const response = await request(app).delete('/1');
-      
+
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Claim deleted successfully');
       expect(mockClaimDelete).toHaveBeenCalledWith({ where: { id: 1 } });
@@ -618,18 +586,18 @@ describe('Claim Controller', () => {
     it('should allow deletion of disabled claims', async () => {
       setupMockClaim('disabled');
       vi.spyOn(prisma.claim, 'delete').mockResolvedValue({} as any);
-      
+
       const response = await request(app).delete('/1');
-      
+
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Claim deleted successfully');
     });
 
     it('should return 500 if an error occurs', async () => {
       vi.spyOn(prisma.claim, 'findFirst').mockRejectedValue(new Error('DB error'));
-      
+
       const response = await request(app).delete('/1');
-      
+
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
     });

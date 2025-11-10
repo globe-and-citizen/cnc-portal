@@ -153,7 +153,6 @@ claimRoutes.post('/', validateBody(addClaimBodySchema), addClaim);
  */
 claimRoutes.get('/', validateQuery(getClaimsQuerySchema), getClaims);
 
-
 /**
  * @openapi
  * /claim/{claimId}:
@@ -182,7 +181,7 @@ claimRoutes.get('/', validateQuery(getClaimsQuerySchema), getClaims);
  *               description: Updated number of hours worked
  *             memo:
  *               type: string
- *               description: Optional memo for the claim
+ *               description: Updated memo
  *               maxLength: 200
  *             dayWorked:
  *               type: string
@@ -224,7 +223,7 @@ claimRoutes.put(
   '/:claimId',
   validateBodyAndParams(updateClaimBodySchema, claimIdParamsSchema),
   updateClaim
-)
+);
 
 /**
  * @openapi

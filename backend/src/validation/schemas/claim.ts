@@ -28,11 +28,7 @@ export const addClaimBodySchema = z.object({
 // Claim update request body (for signature)
 export const updateClaimBodySchema = z.object({
   hoursWorked: z.coerce.number().min(1).max(24).optional(),
-  memo: z
-    .string()
-    .trim()
-    .max(200, 'Memo is too long, maximum 200 characters')
-    .optional()
+  memo: z.string().trim().max(200, 'Memo is too long, maximum 200 characters').optional(),
 });
 
 // Get claims query parameters
@@ -41,9 +37,3 @@ export const getClaimsQuerySchema = z.object({
   status: z.string().optional(),
   memberAddress: addressSchema.optional(),
 });
-
-export const updateClaimDetailsBodySchema = z.object({
-  hoursWorked: z.number().min(1).max(24).optional(),
-  memo: z.string().max(200).optional(),
-  dayWorked: z.string().optional(), // ISO date string
-})

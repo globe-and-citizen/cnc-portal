@@ -252,58 +252,6 @@ describe('ClaimHistory.vue', () => {
       updatedAt: new Date().toISOString()
     }
 
-    it('should open delete modal when delete action is clicked', async () => {
-      const wrapper = shallowMount(ClaimHistory, {
-        global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
-      })
-
-      // @ts-expect-error: accessing component internal method
-      wrapper.vm.openDeleteModal(mockClaim)
-      await nextTick()
-
-      // @ts-expect-error: accessing component internal state
-      expect(wrapper.vm.showDeleteModal).toBe(true)
-      // @ts-expect-error: accessing component internal state
-      expect(wrapper.vm.claimToDelete).toEqual(mockClaim)
-    })
-
-    it('should close delete modal and reset claim state', async () => {
-      const wrapper = shallowMount(ClaimHistory, {
-        global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
-      })
-
-      // Set initial state
-      // @ts-expect-error: accessing component internal state
-      wrapper.vm.showDeleteModal = true
-      // @ts-expect-error: accessing component internal state
-      wrapper.vm.claimToDelete = mockClaim
-
-      // Close modal
-      // @ts-expect-error: accessing component internal method
-      wrapper.vm.closeDeleteModal()
-      await nextTick()
-
-      // @ts-expect-error: accessing component internal state
-      expect(wrapper.vm.showDeleteModal).toBe(false)
-      // @ts-expect-error: accessing component internal state
-      expect(wrapper.vm.claimToDelete).toBe(null)
-    })
-
-    it('should open edit modal when edit action is clicked', async () => {
-      const wrapper = shallowMount(ClaimHistory, {
-        global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
-      })
-
-      // @ts-expect-error: accessing component internal method
-      wrapper.vm.editClaim(mockClaim)
-      await nextTick()
-
-      // @ts-expect-error: accessing component internal state
-      expect(wrapper.vm.showEditModal).toBe(true)
-      // @ts-expect-error: accessing component internal state
-      expect(wrapper.vm.claimToEdit).toEqual(mockClaim)
-    })
-
     it('should reset edit claim state when modal is closed', async () => {
       const wrapper = shallowMount(ClaimHistory, {
         global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
@@ -322,33 +270,6 @@ describe('ClaimHistory.vue', () => {
 
       // @ts-expect-error: accessing component internal state
       expect(wrapper.vm.claimToEdit).toBe(null)
-    })
-
-    it.skip('should check if claims can be modified', async () => {
-      const weekStart = dayjs().utc().startOf('isoWeek')
-      mockUseTanstackQuery.mockReturnValue({
-        data: ref([
-          {
-            weekStart: weekStart.toISOString(),
-            status: 'pending',
-            wage: {
-              userAddress: mockUserStore.address.value
-            },
-            claims: [mockClaim]
-          }
-        ]),
-        error: ref(null),
-        isLoading: ref(false)
-      })
-
-      const wrapper = shallowMount(ClaimHistory, {
-        global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
-      })
-
-      await nextTick()
-
-      // @ts-expect-error: accessing component internal computed
-      expect(wrapper.vm.canModifyClaims).toBe(true)
     })
 
     it('should not allow claim modification if weekly claim is not pending', async () => {

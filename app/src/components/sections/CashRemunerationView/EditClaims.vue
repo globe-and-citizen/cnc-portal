@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import ClaimForm from './Form/ClaimForm.vue'
+import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
 import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'

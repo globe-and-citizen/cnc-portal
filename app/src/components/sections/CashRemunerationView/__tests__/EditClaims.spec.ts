@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import EditClaimModal from '../EditClaims.vue'
+import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
 import type { Claim } from '@/types'
 import type { Address } from 'viem'
 
@@ -101,7 +101,7 @@ vi.mock('@/composables/useCustomFetch', () => ({
 
 // Helper function for creating wrapper
 const createWrapper = (props: Partial<{ claim: Claim; teamId: number | string }> = {}) =>
-  mount(EditClaimModal, {
+  mount(EditClaims, {
     props: {
       claim: props.claim ?? defaultClaim,
       teamId: props.teamId ?? 42
@@ -114,7 +114,7 @@ const createWrapper = (props: Partial<{ claim: Claim; teamId: number | string }>
     }
   })
 
-describe('EditClaimModal.vue', () => {
+describe('EditClaims.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     isFetchingValue.value = false
@@ -141,7 +141,7 @@ describe('EditClaimModal.vue', () => {
 
   describe('Initial Rendering', () => {
     it('should pass initial claim data to ClaimForm', () => {
-      const wrapper = mount(EditClaimModal, {
+      const wrapper = mount(EditClaims, {
         props: {
           claim: defaultClaim,
           teamId: 42
