@@ -33,7 +33,8 @@ vi.mock('@/composables/useCustomFetch', () => {
           execute: vi.fn(),
           error: mockError,
           isFetching: mockIsFetching,
-          statusCode: mockStatusCode
+          statusCode: mockStatusCode,
+          data: { value: { users: [] } }
         })
       })
     })

@@ -39,7 +39,6 @@ describe('useBankReads', () => {
 - ✅ Amount validation (positive, zero, negative, empty)
 - ✅ Address validation with custom labels
 - ✅ Tip parameter validation with multiple addresses
-- ✅ `amountToWei()` conversion utility
 - ✅ Error toast integration
 
 **Key Test Areas**:
@@ -48,10 +47,6 @@ describe('useBankReads', () => {
 describe('useValidation', () => {
   // validateAmount()
   // validateAddress()
-})
-
-describe('amountToWei', () => {
-  // Wei conversion testing
 })
 ```
 

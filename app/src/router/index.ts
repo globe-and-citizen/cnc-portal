@@ -1,8 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
-// import TransactionsView from '@/views/TransactionsView.vue'
-import TransactionTimelineDemoView from '@/views/TransactionTimelineDemoView.vue'
 import CashRemunerationView from '@/views/team/[id]/CashRemunerationView.vue'
 import ExpenseAccountView from '@/views/team/[id]/ExpenseAccountView.vue'
 import ListIndex from '@/views/team/ListIndex.vue'
@@ -19,6 +17,8 @@ import ProposalsView from '@/views/team/[id]/ProposalsView.vue'
 import ProposalDetail from '@/components/sections/ProposalsView/ProposalDetail.vue'
 import BodElectionDetailsView from '@/views/team/[id]/BodElectionDetailsView.vue'
 import BankTestView from '@/views/BankTestView.vue'
+import DemoExample from '@/views/team/[id]/DemoExample.vue'
+
 import LockedView from '@/views/LockedView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -49,6 +49,12 @@ const router = createRouter({
       name: 'show-team',
       meta: { name: 'Team View' },
       children: [
+        {
+          path: '/teams/:id/demo',
+          name: 'team-demo',
+          meta: { name: 'Team Demo' },
+          component: DemoExample
+        },
         {
           path: '/teams/:id/cash-remunerations/weekly-claim',
           name: 'weekly-claim',
@@ -140,12 +146,6 @@ const router = createRouter({
     //   name: 'transactions',
     //   component: TransactionsView
     // },
-    {
-      path: '/timeline-demo',
-      name: 'timeline-demo',
-      meta: { name: 'Transaction Timeline Demo' },
-      component: TransactionTimelineDemoView
-    },
     {
       path: '/locked',
       name: 'LockedView',

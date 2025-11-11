@@ -6,17 +6,6 @@ import { addressSchema, positiveIntegerSchema, nonEmptyStringSchema, urlSchema }
  * Updated for Zod v4 best practices
  */
 
-// Enhanced user search query parameters with better validation
-export const userSearchQuerySchema = z
-  .object({
-    name: z.string().trim().min(1, 'Name must not be empty if provided').optional(),
-    address: z.string().trim().min(1, 'Address must not be empty if provided').optional(),
-  })
-  .refine((data) => data.name || data.address, {
-    message: 'Either name or address must be provided',
-    path: ['name'], // This will show the error on the name field
-  });
-
 // Enhanced user update request body with strict validation
 export const updateUserBodySchema = z
   .object({
@@ -40,6 +29,7 @@ export const userPaginationQuerySchema = z.object({
     .min(1, 'Minimum limit is 1')
     .max(100, 'Maximum limit is 100')
     .default(10),
+  search: z.coerce.string().trim().optional(),
 });
 
 // User creation schema (if needed for future endpoints)

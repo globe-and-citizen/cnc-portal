@@ -2,7 +2,6 @@
   <div
     class="input-group relative"
     :class="isFetching ? 'animate-pulse' : ''"
-    ref="formRef"
     data-test="member-input"
   >
     <label
@@ -11,90 +10,158 @@
     >
       <input
         type="text"
-        class="w-24"
-        v-model="input.name"
-        ref="nameInput"
-        :placeholder="'Member Name '"
-        :data-test="`member-name-input`"
-        :disabled="disabled"
-      />
-      |
-      <input
-        type="text"
-        class="grow"
-        ref="addressInput"
-        v-model="input.address"
-        :data-test="`member-address-input`"
-        :placeholder="`Member Address`"
+        class="w-full"
+        v-model="input"
+        ref="inputSearch"
+        placeholder="Member Name or Member Address"
+        :data-test="`member-input`"
         :disabled="disabled"
       />
     </label>
-    <!-- Dropdown positioned relative to the input -->
-    <div
-      v-if="showDropdown && users?.users && users?.users.length > 0"
-      class="absolute left-0 top-full mt-1 w-full z-10"
-      data-test="user-dropdown"
-    >
-      <ul class="p-2 shadow menu dropdown-content bg-base-100 rounded-box w-full">
-        <li v-for="user in users.users" :key="user.address">
-          <a :data-test="`user-dropdown-${user.address}`" @click="selectMember(user)">
-            {{ user.name }} | {{ user.address }}
-          </a>
-        </li>
-      </ul>
+    <div v-if="!showOnFocus || (showOnFocus && showDropdown)">
+      <div class="text-xm text-gray-900 mt-5" data-test="select-member-hint">
+        Click to Select a Member
+      </div>
+      <!-- Dropdown positioned relative to the input -->
+      <div
+        v-if="filteredUsers.length > 0"
+        class="left-0 top-full mt-4 w-full outline-none focus:outline-none focus:ring-0"
+        data-test="user-dropdown"
+      >
+        <div class="shadow bg-base-100 rounded-box">
+          <div class="grid grid-cols-2 gap-4" data-test="user-search-results">
+            <div
+              v-for="user in filteredUsers.slice(0, 8)"
+              :key="user.address"
+              @click="handleSelectMember(user)"
+              class="flex items-center relative group"
+              :class="
+                disableTeamMembers && isTeamMember(user) ? 'cursor-not-allowed' : 'cursor-pointer'
+              "
+              data-test="user-row"
+            >
+              <UserComponent
+                class="p-4 flex-grow rounded-lg"
+                :class="
+                  disableTeamMembers && isTeamMember(user)
+                    ? 'bg-gray-200 opacity-60'
+                    : 'bg-white hover:bg-base-300'
+                "
+                :user="user"
+                :data-test="`user-dropdown-${user.address}`"
+              />
+              <!-- Tooltip for users already in team -->
+              <div
+                v-if="disableTeamMembers && isTeamMember(user)"
+                class="absolute hidden group-hover:block bg-gray-800 text-white text-sm rounded px-2 py-1 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap z-10"
+              >
+                Already in your team
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { ref, useTemplateRef } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
+import UserComponent from '@/components/UserComponent.vue'
+import type { User } from '@/types'
+import { useTeamStore } from '@/stores/teamStore'
 
-defineProps<{ disabled?: boolean }>()
+interface Props {
+  disabled?: boolean
+  showOnFocus?: boolean
+  onlyTeamMembers?: boolean
+  hiddenMembers: User[]
+  disableTeamMembers: boolean
+}
 
-const emit = defineEmits(['selectMember'])
-
-const input = defineModel({
-  default: {
-    name: '',
-    address: ''
-  }
+const props = withDefaults(defineProps<Props>(), {
+  showOnFocus: false,
+  onlyTeamMembers: false,
+  hiddenMembers: () => [],
+  disableTeamMembers: false
 })
 
-const showDropdown = ref(false)
-const formRef = ref<HTMLElement | null>(null)
-const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
-const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
-const { focused: nameInputFocus } = useFocus(nameInput)
-const { focused: addressInputFocus } = useFocus(addressInput)
+const teamStore = useTeamStore()
 
-const url = ref('user/search')
+// type User = { name: string; address: string }
+
+const emit = defineEmits<{
+  selectMember: [member: User]
+}>()
+
+const input = ref('')
+const inputSearch = ref<HTMLInputElement | null>(null)
+const { focused: searchInputFocus } = useFocus(inputSearch)
+const showDropdown = ref(false)
+
+// Small helpers and precomputed sets for clarity/perf
+const lower = (a?: string) => (a ?? '').toLowerCase()
+
+// Build URL reactively from the single input; backend will search name OR address
+const url = computed(() => {
+  const query = input.value
+  if (!query) return `user?limit=100`
+  return `user?search=${query}&limit=100`
+})
+
 const {
   execute: executeSearchUser,
   data: users,
   isFetching
-} = useCustomFetch(url, { immediate: false }).get().json()
+} = useCustomFetch(url, { immediate: true }).get().json<{ users: User[] }>()
+
+const isTeamMember = (user: User): boolean => {
+  const members: User[] = teamStore.currentTeam?.members ?? []
+  return members.some((member) => lower(member.address) === lower(user.address))
+}
+
+const filteredUsers = computed<User[]>(() => {
+  let members: User[] = []
+  if (props.onlyTeamMembers) {
+    // get an empty array or the current team members
+    members = teamStore.currentTeam?.members ?? []
+  } else {
+    members = users.value ? (users.value.users as User[]) : []
+  }
+
+  // filter this members and remove hidden Members
+  return members.filter(
+    (user) => !props.hiddenMembers.some((hiddenMember) => hiddenMember.address === user.address)
+  )
+  // users.value
+})
 
 watchDebounced(
-  () => [input.value.name, input.value.address],
-  async ([name, address]) => {
-    if (nameInputFocus.value && name) {
-      url.value = 'user/search?name=' + name
+  input,
+  async () => {
+    if (!props.onlyTeamMembers) {
       await executeSearchUser()
-      showDropdown.value = true
-    } else if (addressInputFocus.value && address) {
-      url.value = 'user/search?address=' + address
-      await executeSearchUser()
-      showDropdown.value = true
     }
   },
   { debounce: 500, maxWait: 5000 }
 )
 
-const selectMember = (member: { name: string; address: string }) => {
-  input.value = member
-  emit('selectMember', member)
+watch(searchInputFocus, (newVal) => {
+  if (props.showOnFocus && newVal) {
+    showDropdown.value = true
+  }
+})
+
+const handleSelectMember = async (member: User) => {
+  if (props.disableTeamMembers && isTeamMember(member)) {
+    return
+  }
   showDropdown.value = false
+  input.value = ''
+  emit('selectMember', member)
+  await executeSearchUser()
+  inputSearch.value?.focus()
 }
 </script>

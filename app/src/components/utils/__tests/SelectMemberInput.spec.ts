@@ -1,98 +1,171 @@
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
-import { it, describe, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, VueWrapper } from '@vue/test-utils'
-import { ref } from 'vue'
-import type { ComponentPublicInstance } from 'vue'
+import UserComponent from '@/components/UserComponent.vue'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
+import { createTestingPinia } from '@pinia/testing'
+import type { User } from '@/types'
 
-describe('SelectMemberInput.vue', () => {
-  let wrapper: VueWrapper<ComponentPublicInstance>
+// Mock data
+const MOCK_USERS: User[] = [
+  { id: '1', address: '0x1234567890123456789012345678901234567890', name: 'John Doe' },
+  { id: '2', address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', name: 'Jane Smith' },
+  { id: '3', address: '0x9876543210987654321098765432109876543210', name: 'Bob Johnson' }
+]
 
-  beforeEach(() => {
-    vi.useFakeTimers()
-    const input = ref({
-      name: '',
-      address: ''
-    })
-    wrapper = mount(SelectMemberInput, {
-      props: {
-        modelValue: input.value
+// Hoisted mocks
+const { mockExecuteSearchUser, mockTeamStore, mockUseFocus, mockWatchDebounced } = vi.hoisted(
+  () => ({
+    mockExecuteSearchUser: vi.fn(),
+    mockTeamStore: {
+      currentTeam: {
+        id: 1,
+        name: 'Test Team',
+        members: [
+          { id: '2', address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', name: 'Jane Smith' }
+        ]
       }
+    },
+    mockUseFocus: vi.fn(() => ({ focused: { value: false } })),
+    mockWatchDebounced: vi.fn()
+  })
+)
+
+// Mocks
+vi.mock('@/composables/useCustomFetch', () => ({
+  useCustomFetch: vi.fn(() => ({
+    get: () => ({
+      json: () => ({
+        execute: mockExecuteSearchUser,
+        data: { value: { users: MOCK_USERS } },
+        isFetching: false
+      })
     })
+  }))
+}))
+
+vi.mock('@/stores/teamStore', () => ({
+  useTeamStore: vi.fn(() => mockTeamStore)
+}))
+
+vi.mock('@vueuse/core', () => ({
+  useFocus: mockUseFocus,
+  watchDebounced: mockWatchDebounced
+}))
+
+let wrapper: ReturnType<typeof mount>
+
+const SELECTORS = {
+  container: '[data-test="member-input"]',
+  input: 'input[data-test="member-input"]',
+  hint: '[data-test="select-member-hint"]',
+  dropdown: '[data-test="user-dropdown"]',
+  searchResults: '[data-test="user-search-results"]',
+  userRow: '[data-test="user-row"]'
+} as const
+
+const createWrapper = (props = {}) => {
+  return mount(SelectMemberInput, {
+    props: {
+      hiddenMembers: [],
+      disableTeamMembers: false,
+      ...props
+    },
+    global: {
+      components: { UserComponent },
+      plugins: [createTestingPinia({ createSpy: vi.fn })]
+    }
+  })
+}
+
+describe('SelectMemberInput', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
   })
 
   afterEach(() => {
+    if (wrapper) wrapper.unmount()
     vi.useRealTimers()
   })
 
-  vi.mock('@/composables/useCustomFetch', () => {
-    return {
-      useCustomFetch: vi.fn(() => ({
-        get: () => ({
-          json: () => {
-            const data = ref({
-              users: [
-                { address: '0x123', name: 'John Doe' },
-                { address: '0x456', name: 'Jane DoeV2' }
-              ]
-            })
-            return {
-              execute: vi.fn().mockImplementation(() => {
-                return Promise.resolve(data.value)
-              }),
-              data,
-              loading: ref(false),
-              error: ref<unknown>(null)
-            }
-          }
-        })
-      }))
-    }
+  it('should clear input after selecting a member', async () => {
+    wrapper = createWrapper()
+    const input = wrapper.find(SELECTORS.input)
+
+    await input.setValue('John')
+    await nextTick()
+
+    const userRow = wrapper.find(`[data-test="user-dropdown-${MOCK_USERS[0].address}"]`)
+    await userRow.trigger('click')
+    await nextTick()
+
+    expect((input.element as HTMLInputElement).value).toBe('')
   })
 
-  it('should render correctly, open dropdown when typing and emit event on select', async () => {
-    const nameInput = wrapper.find('[data-test="member-name-input"]')
-    const addressInput = wrapper.find('[data-test="member-address-input"]')
-    expect(nameInput.exists()).toBe(true)
-    expect(addressInput.exists()).toBe(true)
-    expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(false)
+  it('should handle multiple hidden members', async () => {
+    const hiddenMembers = [MOCK_USERS[0], MOCK_USERS[1]]
+    wrapper = createWrapper({ hiddenMembers })
+    await nextTick()
 
-    // Focus the name input and type
-    await nameInput.trigger('focus')
-    await nameInput.setValue('John')
-    await wrapper.vm.$nextTick()
-    // Wait for debounce
-    await vi.advanceTimersByTime(500)
-    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).not.toContain(MOCK_USERS[0].name)
+    expect(wrapper.text()).not.toContain(MOCK_USERS[1].name)
+    expect(wrapper.text()).toContain(MOCK_USERS[2].name)
+  })
 
-    expect(
-      (wrapper.props() as { modelValue: { name: string; address: string } }).modelValue.name
-    ).toBe('John')
-    expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('John Doe')
+  it('should show only team members when onlyTeamMembers is true', async () => {
+    wrapper = createWrapper({ onlyTeamMembers: true })
+    await nextTick()
 
-    // Focus the address input and type
-    await addressInput.trigger('focus')
-    await addressInput.setValue('0x1')
-    await wrapper.vm.$nextTick()
-    // Wait for debounce
-    await vi.advanceTimersByTime(300)
-    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).toContain('Jane Smith')
+  })
 
-    expect(
-      (wrapper.props() as { modelValue: { name: string; address: string } }).modelValue.address
-    ).toBe('0x1')
-    expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('0x123')
+  it('should not emit selectMember when clicking disabled team member', async () => {
+    wrapper = createWrapper({ disableTeamMembers: true })
+    await nextTick()
 
-    // Test selecting user
-    const item = wrapper.find('[data-test="user-dropdown-0x123"]')
-    await item.trigger('click')
-    await wrapper.vm.$nextTick()
+    const teamMemberElement = wrapper.find(`[data-test="user-dropdown-${MOCK_USERS[1].address}"]`)
+    await teamMemberElement.trigger('click')
+    await nextTick()
 
-    expect(wrapper.emitted()).toHaveProperty('selectMember')
-    const emittedEvents = wrapper.emitted().selectMember as unknown as Array<
-      Array<{ address: string; name: string }>
-    >
-    expect(emittedEvents[0][0]).toEqual({ address: '0x123', name: 'John Doe' })
+    expect(wrapper.emitted('selectMember')).toBeFalsy()
+  })
+
+  it('should call executeSearchUser when watchers are triggered', async () => {
+    type WatchCallback = (...args: unknown[]) => Promise<void>
+    let watchDebouncedCallback: WatchCallback | null = null
+    mockWatchDebounced.mockImplementation((_source, callback) => {
+      watchDebouncedCallback = callback as WatchCallback
+      return vi.fn()
+    })
+
+    wrapper = createWrapper({ onlyTeamMembers: false })
+    await nextTick()
+
+    if (watchDebouncedCallback) {
+      await (watchDebouncedCallback as WatchCallback)()
+    }
+
+    expect(mockExecuteSearchUser).toHaveBeenCalled()
+  })
+
+  it('should not call executeSearchUser when onlyTeamMembers is true', async () => {
+    type WatchCallback = (...args: unknown[]) => Promise<void>
+    let watchDebouncedCallback: WatchCallback | null = null
+    mockWatchDebounced.mockImplementation((_source, callback) => {
+      watchDebouncedCallback = callback as WatchCallback
+      return vi.fn()
+    })
+
+    wrapper = createWrapper({ onlyTeamMembers: true })
+    await nextTick()
+
+    mockExecuteSearchUser.mockClear()
+
+    if (watchDebouncedCallback) {
+      await (watchDebouncedCallback as WatchCallback)()
+    }
+
+    expect(mockExecuteSearchUser).not.toHaveBeenCalled()
   })
 })
