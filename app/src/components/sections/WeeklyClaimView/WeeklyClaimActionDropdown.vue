@@ -24,8 +24,13 @@
 
       <!-- Signed status: Withdraw and Disable -->
       <template v-else-if="status === 'signed'">
-        <li data-test="signed-withdraw">
-          <a @click="handleAction('withdraw')" class="text-sm"> Withdraw </a>
+        <li data-test="signed-withdraw" :class="{ disabled: !isClaimOwner }">
+          <!-- <a @click="handleAction('withdraw')" class="text-sm"> Withdraw </a> -->
+          <CRWithdrawClaim
+            :weekly-claim="weeklyClaim"
+            :is-drop-down="true"
+            :is-claim-owner="isClaimOwner"
+          />
         </li>
         <li data-test="signed-disable" :class="{ disabled: !isCashRemunerationOwner }">
           <a @click="isCashRemunerationOwner ? handleAction('disable') : null" class="text-sm">
@@ -73,6 +78,7 @@ import { useReadContract } from '@wagmi/vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import type { WeeklyClaim } from '@/types'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
+import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 
 // Types
 export type Status = 'pending' | 'signed' | 'disabled' | 'withdrawn'
@@ -84,7 +90,7 @@ interface Props {
   status: Status
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   status: 'pending'
 })
 
@@ -106,6 +112,8 @@ const ellipsisIcon: string = 'heroicons:ellipsis-vertical'
 const cashRemunerationAddress = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
 )
+
+const isClaimOwner = computed(() => userStore.address === props.weeklyClaim.memberAddress)
 
 const {
   data: cashRemunerationOwner
