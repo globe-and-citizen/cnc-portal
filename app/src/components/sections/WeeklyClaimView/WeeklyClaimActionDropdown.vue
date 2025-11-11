@@ -3,7 +3,7 @@
     <!-- Dropdown menu positioned to the left -->
     <ul
       v-if="isOpen"
-      class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 menu p-2 shadow bg-base-100 rounded-box w-52 z-50"
+      class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-[99999] border border-base-300"
     >
       <!-- Pending status: Sign -->
       <template v-if="status === 'pending'">
