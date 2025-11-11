@@ -66,7 +66,7 @@
           :disabled="row.status == 'withdrawn' || userStore.address != row.wage.userAddress"
           :weekly-claim="assertWeeklyClaimRow(row)"
         />-->
-        <WeeklyClaimActionDropdown :status="row.status" />
+        <WeeklyClaimActionDropdown :status="row.status" :weekly-claim="assertWeeklyClaimRow(row)" />
       </template>
 
       <template #status-data="{ row }">
@@ -134,9 +134,9 @@ const props = defineProps<{
   singleUser?: boolean
 }>()
 
-// function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
-//   return row as WeeklyClaim
-// }
+function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
+  return row as WeeklyClaim
+}
 
 const weeklyClaimUrl = computed(
   () =>
