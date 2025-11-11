@@ -10,3 +10,7 @@ export const mockUseSignTypedData = {
   data: ref('0xSignature'),
   signTypedDataAsync: vi.fn(() => console.log('signTypedDataAsync mock called...'))
 }
+
+export const mockUseWriteContract = {
+  writeContractAsync: vi.fn()
+}
