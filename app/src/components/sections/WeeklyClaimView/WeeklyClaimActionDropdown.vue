@@ -30,6 +30,7 @@
             :weekly-claim="weeklyClaim"
             :is-drop-down="true"
             :is-claim-owner="isClaimOwner"
+            @claim-withdrawn="isOpen = false"
           />
         </li>
         <li data-test="signed-disable" :class="{ disabled: !isCashRemunerationOwner }">
