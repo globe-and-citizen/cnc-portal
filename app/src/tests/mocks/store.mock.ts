@@ -33,3 +33,7 @@ export const mockToastStore = {
   addErrorToast: vi.fn(),
   addSuccessToast: vi.fn()
 }
+
+export const mockUserStore = {
+  address: '0xUserAddress'
+}
