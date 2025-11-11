@@ -241,7 +241,7 @@ describe('DropdownActions', () => {
       expect(wrapper.find('ul').exists()).toBe(false)
     })
 
-    it('emits correct actions for signed status', async () => {
+    it('closes dropdown after withdraw action', async () => {
       //@ts-expect-error only mocking necessary fileds
       vi.mocked(useUserDataStore).mockReturnValue({
         address: '0xContractOwner'
@@ -258,6 +258,8 @@ describe('DropdownActions', () => {
       // Test Withdraw action
       await withdrawAction.trigger('click')
       expect(crWithdrawClaim.emitted()).toHaveProperty('claim-withdrawn')
+      //@ts-expect-error not visible on wrapper
+      expect(wrapper.vm.isOpen).toBeFalsy()
 
       // Reset emitted events
       // wrapper.setProps({ status: 'signed' })
