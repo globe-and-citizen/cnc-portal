@@ -11,13 +11,14 @@
           <a class="text-sm"> Withdraw </a>
         </li>
         <li :class="{ disabled: !isCashRemunerationOwner }" data-test="pending-sign">
-          <a
+          <!-- <a
             data-test="sign-action"
             @click="isCashRemunerationOwner ? handleAction('sign') : null"
             class="text-sm"
           >
             Sign
-          </a>
+          </a> -->
+          <CRSigne :weekly-claim="weeklyClaim" :is-drop-down="true" @close="isOpen = false" />
         </li>
       </template>
 
@@ -70,6 +71,8 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
+import type { WeeklyClaim } from '@/types'
+import CRSigne from '../CashRemunerationView/CRSigne.vue'
 
 // Types
 export type Status = 'pending' | 'signed' | 'disabled' | 'withdrawn'
@@ -77,6 +80,7 @@ export type Action = 'sign' | 'withdraw' | 'disable' | 'enable' | 'resign'
 
 // Props
 interface Props {
+  weeklyClaim: WeeklyClaim
   status: Status
 }
 
