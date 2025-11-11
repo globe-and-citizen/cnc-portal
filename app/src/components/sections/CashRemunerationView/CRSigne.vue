@@ -1,6 +1,6 @@
 <template>
   <ButtonUI
-    v-if="isCashRemunerationOwner"
+    v-if="isCashRemunerationOwner && !isDropDown"
     variant="success"
     data-test="approve-button"
     :disabled="loading || disabled || currentWeekStart === weeklyClaim.weekStart"
@@ -9,6 +9,23 @@
   >
     Approve
   </ButtonUI>
+  <a
+    v-else-if="isDropDown"
+    data-test="sign-action"
+    @click="
+      async () => {
+        if (!isCashRemunerationOwner) {
+          $emit('close')
+          return
+        }
+        await approveClaim(weeklyClaim)
+        $emit('close')
+      }
+    "
+    class="text-sm"
+  >
+    Sign
+  </a>
 </template>
 
 <script setup lang="ts">
@@ -28,7 +45,10 @@ import { computed, ref, watch } from 'vue'
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
   disabled?: boolean
+  isDropDown?: boolean
 }>()
+
+defineEmits(['close'])
 
 // Stores
 const teamStore = useTeamStore()
