@@ -2,11 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import DropdownActions from '../WeeklyClaimActionDropdown.vue'
 import type { Status } from '../WeeklyClaimActionDropdown.vue'
-import { ref } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
-import { sign } from 'crypto'
 
 // Mock the dependencies
 vi.mock('@iconify/vue', () => ({
@@ -39,7 +37,6 @@ vi.mock('@/components/ButtonUI.vue', () => ({
 
 describe('DropdownActions', () => {
   const MOCK_OWNER_ADDRESS = '0xOwnerAddress'
-  const MOCK_CONTRACT_ADDRESS = '0xContractAddress'
 
   const weeklyClaim: WeeklyClaim = {
     id: 1,
@@ -133,6 +130,9 @@ describe('DropdownActions', () => {
       const signedDisable = wrapper.find('[data-test="signed-disable"]')
       expect(signedDisable.exists()).toBeTruthy()
       expect(signedDisable.classes()).toContain('disabled')
+      const signedWithdraw = wrapper.find('[data-test="signed-withdraw"]')
+      expect(signedWithdraw.exists()).toBeTruthy()
+      expect(signedWithdraw.classes()).toContain('disabled')
     })
 
     it('renders Enable and Resign actions for disabled status', async () => {
@@ -251,12 +251,13 @@ describe('DropdownActions', () => {
 
       await button.trigger('click')
 
-      const actions = wrapper.findAll('a')
-      expect(actions).toHaveLength(2)
+      const crWithdrawClaim = wrapper.findComponent({ name: 'CRWithdrawClaim' })
+      const withdrawAction = crWithdrawClaim.find('[data-test="withdraw-action"]')
+      expect(withdrawAction.exists()).toBeTruthy()
 
       // Test Withdraw action
-      await actions[0].trigger('click')
-      expect(wrapper.emitted('action')?.[0]).toEqual(['withdraw'])
+      await withdrawAction.trigger('click')
+      expect(crWithdrawClaim.emitted()).toHaveProperty('claim-withdrawn')
 
       // Reset emitted events
       // wrapper.setProps({ status: 'signed' })
