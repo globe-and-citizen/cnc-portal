@@ -151,6 +151,19 @@ export const CASH_REMUNERATION_EIP712_ABI = [
       {
         indexed: true,
         internalType: 'address',
+        name: 'newOfficerAddress',
+        type: 'address'
+      }
+    ],
+    name: 'OfficerAddressUpdated',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
         name: 'previousOwner',
         type: 'address'
       },
@@ -221,6 +234,32 @@ export const CASH_REMUNERATION_EIP712_ABI = [
     inputs: [
       {
         indexed: true,
+        internalType: 'bytes32',
+        name: 'signatureHash',
+        type: 'bytes32'
+      }
+    ],
+    name: 'WageClaimDisabled',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'bytes32',
+        name: 'signatureHash',
+        type: 'bytes32'
+      }
+    ],
+    name: 'WageClaimEnabled',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
         internalType: 'address',
         name: 'withdrawer',
         type: 'address'
@@ -274,6 +313,38 @@ export const CASH_REMUNERATION_EIP712_ABI = [
     type: 'function'
   },
   {
+    inputs: [
+      {
+        internalType: 'bytes32',
+        name: 'signatureHash',
+        type: 'bytes32'
+      }
+    ],
+    name: 'disableClaim',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'bytes32',
+        name: '',
+        type: 'bytes32'
+      }
+    ],
+    name: 'disabledWageClaims',
+    outputs: [
+      {
+        internalType: 'bool',
+        name: '',
+        type: 'bool'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
     inputs: [],
     name: 'eip712Domain',
     outputs: [
@@ -314,6 +385,19 @@ export const CASH_REMUNERATION_EIP712_ABI = [
       }
     ],
     stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'bytes32',
+        name: 'signatureHash',
+        type: 'bytes32'
+      }
+    ],
+    name: 'enableClaim',
+    outputs: [],
+    stateMutability: 'nonpayable',
     type: 'function'
   },
   {
