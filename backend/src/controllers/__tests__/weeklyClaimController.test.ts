@@ -80,6 +80,119 @@ describe('Weekly Claim Controller', () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
+    // enable error
+    it('it should return 400 if caller is not the Cash Remuneration owner or owner of the team', async () => {
+      (isCashRemunerationOwner as any).mockResolvedValueOnce(false);
+
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: 'disabled',
+          weekStart: new Date('2024-07-22'),
+          wage: mockWage('0x456'),
+          signature: '0xabc'
+        })
+      );
+
+      const response = await request(app)
+        .put('/1?action=enable')
+        .set('address', '0x456')
+        .send({ signature: '0xabc' });
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: 'Caller is not the Cash Remuneration owner or the team owner',
+      });
+    });
+
+    it('it should return 400 if no claim signature', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: 'pending',
+          weekStart: new Date('2024-07-22'),
+          wage: mockWage('0x456')
+        })
+      );
+
+      const response = await request(app)
+        .put('/1?action=enable')
+        .set('address', '0x456')
+        .send({ signature: '0xabc' });
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: 'No claim existing signature: You need to sign claim first',
+      });
+    });
+
+    it('it should return 400 if weekly claim already active', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: 'signed',
+          weekStart: new Date('2024-07-22'),
+          wage: mockWage('0x456'),
+          signature: '0xabc'
+        })
+      );
+
+      const response = await request(app)
+        .put('/1?action=enable')
+        .set('address', '0x456')
+        .send({ signature: '0xabc' });
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: 'Weekly claim already active',
+      });
+    });
+
+    it('it should return 400 if claim already withdrawn', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: 'withdrawn',
+          weekStart: new Date('2024-07-22'),
+          wage: mockWage('0x456'),
+          signature: '0xabc'
+        })
+      );
+
+      const response = await request(app)
+        .put('/1?action=enable')
+        .set('address', '0x456')
+        .send({ signature: '0xabc' });
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: 'Weekly claim already withdrawn',
+      });
+    });
+
+    it('should return 200 if weekly claim is enabled successfully', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: 'disabled',
+          weekStart: new Date('2024-07-22'),
+          wage: mockWage('0x123'),
+          signature: '0xabc'
+        })
+      );
+      vi.spyOn(prisma, '$transaction').mockResolvedValue([
+        mockWeeklyClaim({
+          id: 1,
+          status: 'signed',
+          signature: '0xabc' as any,
+          wage: mockWage('0x123'),
+        }),
+      ]);
+
+      const response = await request(app)
+        .put('/1?action=enable')
+        .set('address', '0x123')
+        .send({ signature: '0xabc' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('status', 'signed');
+    });
 
     // disable request error
     it('it should return 400 if caller is not the Cash Remuneration owner or owner of the team', async () => {
