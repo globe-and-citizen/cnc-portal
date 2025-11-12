@@ -1,6 +1,12 @@
 <template>
   <CardComponent :title="singleUser ? 'Weekly Claim (User)' : 'Weekly Claim'" class="w-full pb-7">
-    <TableComponent v-if="data" :rows="data" :columns="columns" :loading="isTeamClaimDataFetching">
+    <TableComponent
+      v-if="data"
+      :rows="data"
+      :columns="columns"
+      :loading="isTeamClaimDataFetching"
+      overflow="overflow-visible"
+    >
       <template #member-data="{ row }">
         <RouterLink
           :to="{
