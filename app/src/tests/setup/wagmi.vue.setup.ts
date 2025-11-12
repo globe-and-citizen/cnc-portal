@@ -12,3 +12,11 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWriteContract: vi.fn(() => ({ ...mocks.mockUseWriteContract }))
   }
 })
+
+vi.mock('@wagmi/core', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    ...mocks.mockWagmiCore
+  }
+})
