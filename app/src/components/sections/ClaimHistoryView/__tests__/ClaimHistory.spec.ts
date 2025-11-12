@@ -8,6 +8,8 @@ import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import weekday from 'dayjs/plugin/weekday'
 
+import type { Claim, SupportedTokens } from '@/types'
+
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 dayjs.extend(weekday)
@@ -36,9 +38,12 @@ const mockUserStore = {
   address: ref('0x0987654321098765432109876543210987654321')
 }
 
+const addSuccessToast = vi.fn()
+const addErrorToast = vi.fn()
+
 vi.mock('@/stores', () => ({
   useTeamStore: () => ({ currentTeam: { id: 'team-123' } }),
-  useToastStore: () => ({ addErrorToast: vi.fn() }),
+  useToastStore: () => ({ addErrorToast, addSuccessToast }),
   useUserDataStore: () => mockUserStore
 }))
 
@@ -217,5 +222,116 @@ describe('ClaimHistory.vue', () => {
     expect(chartOptions.title.text).toBe('Hours/Day')
     expect(chartOptions.series[0].type).toBe('bar')
     expect(chartOptions.xAxis.data.length).toBe(7)
+  })
+
+  describe('Claim Actions', () => {
+    const mockClaim: Claim = {
+      id: 1,
+      hoursWorked: 8,
+      memo: 'Test work',
+      dayWorked: dayjs().utc().startOf('day').toISOString(),
+      wageId: 1,
+      wage: {
+        id: 1,
+        userAddress: '0x',
+        teamId: 1,
+        ratePerHour: [
+          { type: 'native' as SupportedTokens, amount: 50 },
+          { type: 'usdc' as SupportedTokens, amount: 25 },
+          { type: 'sher' as SupportedTokens, amount: 25 }
+        ],
+        cashRatePerHour: 50,
+        tokenRatePerHour: 25,
+        usdcRatePerHour: 25,
+        maximumHoursPerWeek: 40,
+        nextWageId: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+
+    it('should reset edit claim state when modal is closed', async () => {
+      const wrapper = shallowMount(ClaimHistory, {
+        global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+      })
+
+      // Set initial state
+      // @ts-expect-error: accessing component internal state
+      wrapper.vm.claimToEdit = mockClaim
+      // @ts-expect-error: accessing component internal state
+      wrapper.vm.showEditModal = true
+
+      // Trigger close event
+      // @ts-expect-error: accessing component internal state
+      wrapper.vm.claimToEdit = null
+      await nextTick()
+
+      // @ts-expect-error: accessing component internal state
+      expect(wrapper.vm.claimToEdit).toBe(null)
+    })
+
+    it('should not allow claim modification if weekly claim is not pending', async () => {
+      const weekStart = dayjs().utc().startOf('isoWeek')
+      mockUseTanstackQuery.mockReturnValue({
+        data: ref([
+          {
+            weekStart: weekStart.toISOString(),
+            status: 'signed',
+            wage: {
+              userAddress: mockUserStore.address.value
+            },
+            claims: [mockClaim]
+          }
+        ]),
+        error: ref(null),
+        isLoading: ref(false)
+      })
+
+      const wrapper = shallowMount(ClaimHistory, {
+        global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+      })
+
+      await nextTick()
+
+      // @ts-expect-error: accessing component internal computed
+      expect(wrapper.vm.canModifyClaims).toBe(false)
+    })
+  })
+
+  describe('Color and Status Handling', () => {
+    it('should return correct color for different weekly claim statuses', () => {
+      const wrapper = shallowMount(ClaimHistory, {
+        global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+      })
+
+      const testCases = [
+        { status: 'pending', expected: 'primary' },
+        { status: 'signed', expected: 'warning' },
+        { status: 'withdrawn', expected: 'info' }
+      ]
+
+      testCases.forEach(({ status, expected }) => {
+        const weeklyClaim = {
+          status,
+          weekStart: dayjs().utc().startOf('isoWeek').toISOString()
+        }
+        // @ts-expect-error: accessing component internal method
+        expect(wrapper.vm.getColor(weeklyClaim)).toBe(expected)
+      })
+
+      // Test undefined case
+      // @ts-expect-error: accessing component internal method
+      expect(wrapper.vm.getColor(undefined)).toBe('accent')
+
+      // Test unknown status
+      const unknownStatusClaim = {
+        status: 'unknown',
+        weekStart: dayjs().utc().startOf('isoWeek').toISOString()
+      }
+      // @ts-expect-error: accessing component internal method
+      expect(wrapper.vm.getColor(unknownStatusClaim)).toBe('accent')
+    })
   })
 })

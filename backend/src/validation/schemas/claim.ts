@@ -27,14 +27,8 @@ export const addClaimBodySchema = z.object({
 
 // Claim update request body (for signature)
 export const updateClaimBodySchema = z.object({
-  signature: z.string().min(1, 'Signature cannot be empty').optional(),
-});
-
-// Claim update query parameters
-export const updateClaimQuerySchema = z.object({
-  action: z.enum(['sign', 'withdraw', 'disable', 'enable', 'reject'], {
-    message: 'Invalid action. Allowed actions are: sign, withdraw, disable, enable, reject',
-  }),
+  hoursWorked: z.coerce.number().min(1).max(24).optional(),
+  memo: z.string().trim().max(200, 'Memo is too long, maximum 200 characters').optional(),
 });
 
 // Get claims query parameters

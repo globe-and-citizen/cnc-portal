@@ -103,12 +103,9 @@ const mockWeeklyClaim: WeeklyClaim = {
   claims: [
     {
       id: 1,
-      status: 'signed',
       hoursWorked: 8,
       dayWorked: new Date().toISOString(),
       memo: 'Worked on project',
-      signature: '0xClaimSignature',
-      tokenTx: null,
       wageId: 1,
       wage: {
         id: 1,
