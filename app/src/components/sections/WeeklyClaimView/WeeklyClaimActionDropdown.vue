@@ -54,9 +54,14 @@
           <a class="text-sm"> Withdraw </a>
         </li>
         <li data-test="disabled-enable" :class="{ disabled: !isCashRemunerationOwner }">
-          <a @click="isCashRemunerationOwner ? handleAction('enable') : null" class="text-sm">
+          <!-- <a @click="isCashRemunerationOwner ? handleAction('enable') : null" class="text-sm">
             Enable
-          </a>
+          </a> -->
+          <WeeklyClaimActionEnable
+            :weekly-claim="weeklyClaim"
+            :is-cash-remuneration-owner="isCashRemunerationOwner"
+            @close="isOpen = false"
+          />
         </li>
         <li data-test="disabled-resign" :class="{ disabled: !isCashRemunerationOwner }">
           <a @click="isCashRemunerationOwner ? handleAction('resign') : null" class="text-sm">
@@ -94,6 +99,7 @@ import { useCustomFetch } from '@/composables'
 import { keccak256, type Address } from 'viem'
 import { log, parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
+import WeeklyClaimActionEnable from './WeeklyClaimActionEnable.vue'
 
 // Types
 export type Status = 'pending' | 'signed' | 'disabled' | 'withdrawn'
@@ -214,7 +220,7 @@ const disableClaim = async () => {
     log.error('Disable error', error)
     const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
 
-    toastStore.addErrorToast(/*'Failed to withdraw'*/ parsed)
+    toastStore.addErrorToast(parsed)
   }
 }
 
