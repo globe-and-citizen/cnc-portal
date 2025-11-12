@@ -34,7 +34,15 @@
           />
         </li>
         <li data-test="signed-disable" :class="{ disabled: !isCashRemunerationOwner }">
-          <a @click="isCashRemunerationOwner ? handleAction('disable') : null" class="text-sm">
+          <a
+            @click="
+              async () => {
+                await disableClaim()
+                isOpen = false
+              }
+            "
+            class="text-sm"
+          >
             Disable
           </a>
         </li>
@@ -74,12 +82,18 @@
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useUserDataStore, useTeamStore } from '@/stores'
+import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import type { WeeklyClaim } from '@/types'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
+import { simulateContract, waitForTransactionReceipt, writeContract } from '@wagmi/core'
+import { config } from '@/wagmi.config'
+import { useCustomFetch } from '@/composables'
+import { keccak256, type Address } from 'viem'
+import { log, parseError } from '@/utils'
+import { useQueryClient } from '@tanstack/vue-query'
 
 // Types
 export type Status = 'pending' | 'signed' | 'disabled' | 'withdrawn'
@@ -104,6 +118,8 @@ const emit = defineEmits<Emits>()
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
+const toastStore = useToastStore()
+const queryClient = useQueryClient()
 
 // Reactive data
 const isOpen = ref<boolean>(false)
@@ -128,7 +144,80 @@ const {
 
 const isCashRemunerationOwner = computed(() => userStore.address === cashRemunerationOwner.value)
 
+const claimAction = ref<'disable' | null>(null)
+
+const weeklyClaimUrl = computed(
+  () => `/weeklyclaim/${props.weeklyClaim.id}/?action=${claimAction.value}`
+)
+
+const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(weeklyClaimUrl, {
+  immediate: false
+})
+  .put()
+  .json()
+
+const isLoading = ref(false)
+
 // Methods
+const disableClaim = async () => {
+  if (!isCashRemunerationOwner.value) return
+
+  isLoading.value = true
+  if (!cashRemunerationAddress.value) {
+    isLoading.value = false
+    toastStore.addErrorToast('Cash Remuneration EIP712 contract address not found')
+    return
+  }
+  // disable
+  try {
+    const args = {
+      abi: CASH_REMUNERATION_EIP712_ABI,
+      functionName: 'disableClaim' as const,
+      args: [keccak256(props.weeklyClaim.signature as Address)] as const
+    }
+    await simulateContract(config, {
+      ...args,
+      address: cashRemunerationAddress.value
+    })
+
+    const hash = await writeContract(config, {
+      ...args,
+      address: cashRemunerationAddress.value
+    })
+
+    // Wait for transaction receipt
+    const receipt = await waitForTransactionReceipt(config, {
+      hash
+    })
+
+    if (receipt.status === 'success') {
+      toastStore.addSuccessToast('Claim disabled')
+
+      claimAction.value = 'disable'
+
+      await updateClaimStatus()
+
+      if (updateClaimError.value) {
+        toastStore.addErrorToast('Failed to update Claim status')
+      }
+      queryClient.invalidateQueries({
+        queryKey: ['weekly-claims', teamStore.currentTeam?.id]
+      })
+    } else {
+      toastStore.addErrorToast('Transaction failed: Failed to disable claim')
+    }
+
+    isLoading.value = false
+  } catch (error) {
+    console.log('error: ', error)
+    isLoading.value = false
+    log.error('Disable error', error)
+    const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
+
+    toastStore.addErrorToast(/*'Failed to withdraw'*/ parsed)
+  }
+}
+
 const toggleDropdown = (): void => {
   isOpen.value = !isOpen.value
 }
