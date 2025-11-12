@@ -7,11 +7,11 @@ import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
 import publicClient from '../utils/viem.config';
 import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json';
 
-export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable';
+export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
 
 function isValidWeeklyClaimAction(action: any): action is WeeklyClaimAction {
-  return ['sign', 'withdraw', 'pending', 'disable'].includes(action);
+  return ['sign', 'withdraw', 'pending', 'disable', 'enable'].includes(action);
 }
 
 const deriveWeeklyClaimStatus = (isPaid: boolean, isDisabled: boolean): statusType => {
@@ -59,6 +59,39 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
     }
 
     switch (action) {
+      case 'enable':
+        const enableErrors: string[] = [];
+
+        // Check if the caller is the Cash Remuneration owner
+        const isCallerCashRemunOwnerEnable = await isCashRemunerationOwner(
+          callerAddress,
+          weeklyClaim.wage.team.id
+        );
+
+        // If not Cash Remuneration owner, check if they're the team owner
+        if (!isCallerCashRemunOwnerEnable && weeklyClaim.wage.team.ownerAddress !== callerAddress)
+          enableErrors.push('Caller is not the Cash Remuneration owner or the team owner');
+
+        // check if the weekly claim is already signed or withdrawn
+        if (!weeklyClaim.signature)
+          enableErrors.push('No claim existing signature: You need to sign claim first');
+        if (
+          weeklyClaim.status === 'signed' &&
+          callerAddress ===
+            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
+              ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
+              : undefined)
+        ) {
+          enableErrors.push('Weekly claim already active');
+        } else if (weeklyClaim.status === 'withdrawn') {
+          enableErrors.push('Weekly claim already withdrawn');
+        }
+
+        if (enableErrors.length > 0) return errorResponse(400, enableErrors.join('; '), res);
+
+        data = { signature, status: 'signed', data: message };
+        // singleClaimStatus = "signed";
+        break;
       case 'disable':
         const disableErrors: string[] = [];
 
