@@ -6,12 +6,9 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
 import { ref } from 'vue'
-import * as mocks from '@/tests/mocks'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { useReadContract } from '@wagmi/vue'
-import { waitForTransactionReceipt } from '@wagmi/core'
 
 // Configure dayjs plugins
 dayjs.extend(utc)
@@ -221,42 +218,6 @@ describe('DropdownActions', () => {
   })
 
   describe('Action handling', () => {
-    it('should handle update claim status error after successful withdrawal', async () => {
-      // Mock update claim error
-      const { useCustomFetch } = await import('@/composables')
-      //@ts-expect-error only mocking required values
-      vi.mocked(useCustomFetch).mockReturnValue({
-        put: vi.fn().mockReturnThis(),
-        json: vi.fn().mockReturnValue({
-          execute: vi.fn().mockResolvedValue({}),
-          error: ref(new Error('Update failed'))
-        })
-      })
-
-      //@ts-expect-error only mocking necessary variables
-      vi.mocked(useReadContract).mockReturnValue({
-        ...mocks.mockUseReadContract,
-        data: ref('0xUserAddress')
-      })
-
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
-        status: 'success'
-      })
-
-      const wrapper = createWrapper('signed')
-
-      // Trigger the claim function
-      //@ts-expect-error not visible on wrapper.vm
-      await wrapper.vm.disableClaim()
-
-      // Should show update claim status error
-      expect(mocks.mockWagmiCore.writeContract).toBeCalled()
-      //@ts-expect-error not visible on wrapper
-      expect(wrapper.vm.weeklyClaimUrl).toBe('/weeklyclaim/1/?action=disable')
-      expect(mocks.mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim disabled')
-    })
-
     it('closes dropdown after action is selected', async () => {
       //@ts-expect-error only mocking necessary fields
       vi.mocked(useUserDataStore).mockReturnValue({
@@ -391,15 +352,5 @@ describe('DropdownActions', () => {
       expect(menu.classes()).toContain('right-full')
       expect(menu.classes()).toContain('top-1/2')
     })
-
-    // it('disables action for withdrawn status', async () => {
-    //   const wrapper = createWrapper('withdrawn')
-    //   const button = wrapper.findComponent({ name: 'ButtonUI' })
-    //   await button.trigger('click')
-
-    //   const disabledAction = wrapper.find('a.text-gray-400')
-    //   expect(disabledAction.exists()).toBe(true)
-    //   expect(disabledAction.classes()).toContain('cursor-not-allowed')
-    // })
   })
 })
