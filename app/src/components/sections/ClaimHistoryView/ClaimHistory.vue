@@ -169,7 +169,14 @@
             </div>
 
             <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-1">
-              <div v-for="(claim, idx) in entry.claims" :key="idx">{{ claim.memo }} ...</div>
+              <div
+                v-for="claim in entry.claims"
+                :key="claim.id"
+                class="flex items-center justify-between gap-3"
+              >
+                <span>{{ claim.memo }}</span>
+                <ClaimActions v-if="canModifyClaims" :claim="claim" />
+              </div>
             </div>
 
             <div class="text-base flex items-center gap-2 w-1/5 justify-end">
@@ -192,6 +199,7 @@ import weekday from 'dayjs/plugin/weekday'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { formatIsoWeekRange, getMonthWeeks, type Week } from '@/utils/dayUtils'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+
 import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
 import WeeklyRecap from '@/components/WeeklyRecap.vue'
@@ -216,6 +224,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import { storeToRefs } from 'pinia'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
 
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
 dayjs.extend(utc)
@@ -378,5 +387,13 @@ const barChartOption = computed(() => {
       }
     ]
   }
+})
+
+const canModifyClaims = computed(() => {
+  if (!selectWeekWeelyClaim.value) return false
+  return (
+    selectWeekWeelyClaim.value.status === 'pending' &&
+    selectWeekWeelyClaim.value.wage.userAddress === userStore.address
+  )
 })
 </script>

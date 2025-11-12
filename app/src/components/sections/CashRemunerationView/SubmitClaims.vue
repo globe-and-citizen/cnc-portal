@@ -13,82 +13,11 @@
     <div class="flex flex-col gap-4 mb-20">
       <h3 class="text-xl font-bold">Submit Claim</h3>
       <hr />
-      <div class="flex flex-col gap-2">
-        <label class="flex items-center">
-          <span class="w-full" data-test="hours-worked-label">Date</span>
-        </label>
-        <VueDatePicker
-          v-model="hoursWorked.dayWorked"
-          model-type="iso"
-          :format="formatUTC"
-          :enable-time-picker="false"
-          auto-apply
-          class="input input-bordered input-md"
-          data-test="date-input"
-          utc="preserve"
-        />
-        <!-- <VueDatePicker
-          v-model="hoursWorked.dayWorked"
-          :allowed-dates="allowedDates"
-          class="input input-bordered input-md"
-          data-test="date-input"
-          disable-month-year-select
-          :month-change-on-scroll="false"
-          :enable-time-picker="false"
-        /> -->
-      </div>
-      <div class="flex flex-col gap-2">
-        <label class="flex items-center">
-          <span class="w-full" data-test="hours-worked-label">Hours worked</span>
-        </label>
-        <input
-          type="text"
-          class="input input-bordered input-md grow"
-          data-test="hours-worked-input"
-          placeholder="10"
-          v-model="hoursWorked.hoursWorked"
-        />
-        <div
-          class="pl-4 text-red-500 text-sm"
-          v-for="error of v$.hoursWorked.hoursWorked.$errors"
-          :key="error.$uid"
-          data-test="hours-worked-error"
-        >
-          {{ error.$message }}
-        </div>
-      </div>
-      <div class="flex flex-col gap-2">
-        <label class="flex items-center">
-          <span class="w-full" data-test="hours-worked-label">Memo</span>
-        </label>
-        <textarea
-          class="textarea input-bordered"
-          placeholder="I worked on the ...."
-          data-test="memo-input"
-          v-model="hoursWorked.memo"
-        ></textarea>
-      </div>
-      <div
-        class="pl-4 text-red-500 text-sm"
-        v-for="error of v$.hoursWorked.memo.$errors"
-        :key="error.$uid"
-        data-test="memo-worked-error"
-      >
-        {{ error.$message }}
-      </div>
-
-      <div class="flex justify-center">
-        <ButtonUI
-          variant="success"
-          class="w-32"
-          :disabled="isWageClaimAdding"
-          :loading="isWageClaimAdding"
-          data-test="submit-claim-button"
-          @click="addWageClaim"
-        >
-          Submit
-        </ButtonUI>
-      </div>
+      <ClaimForm
+        :initial-data="formInitialData"
+        :is-loading="isWageClaimAdding"
+        @submit="handleSubmit"
+      />
       <div v-if="addWageClaimError && errorMessage" class="mt-4">
         <div role="alert" class="alert alert-error">
           <svg
@@ -112,57 +41,39 @@
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import { ref, computed, watch } from 'vue'
-import { useVuelidate } from '@vuelidate/core'
-import { required, numeric, minValue, maxValue } from '@vuelidate/validators'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore, useTeamStore } from '@/stores'
-import { maxLength } from '@vuelidate/validators'
-import { useQueryClient } from '@tanstack/vue-query'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
+import { useQueryClient } from '@tanstack/vue-query'
+import ButtonUI from '@/components/ButtonUI.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
+import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
+import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useToastStore, useTeamStore } from '@/stores'
+import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
+
+dayjs.extend(utc)
 
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const queryClient = useQueryClient()
 
-dayjs.extend(utc)
-
 const modal = ref(false)
-const hoursWorked = ref<{
-  hoursWorked: string | undefined
-  memo: string | undefined
-  dayWorked: string | undefined
-}>({
-  hoursWorked: undefined,
-  memo: undefined,
-  dayWorked: dayjs().utc().startOf('day').toISOString() // Default to today's date
+const errorMessage = ref<{ message: string } | null>(null)
+const createDefaultFormData = (): ClaimFormData => ({
+  hoursWorked: '',
+  memo: '',
+  dayWorked: dayjs().utc().startOf('day').toISOString()
 })
 
+const formInitialData = ref<ClaimFormData>(createDefaultFormData())
+const claimPayload = ref<ClaimSubmitPayload | null>(null)
+
 const openModal = () => {
+  formInitialData.value = createDefaultFormData()
+  errorMessage.value = null
   modal.value = true
 }
-
-const rules = {
-  hoursWorked: {
-    hoursWorked: {
-      required,
-      numeric,
-      minValue: minValue(1),
-      maxValue: maxValue(24)
-    },
-    memo: {
-      required,
-      maxLength: maxLength(200)
-    },
-    dayWorked: {
-      required
-    }
-  }
-}
-const v$ = useVuelidate(rules, { hoursWorked })
 
 const teamId = computed(() => teamStore.currentTeam?.id)
 
@@ -175,29 +86,16 @@ const {
 } = useCustomFetch('/claim', {
   immediate: false
 })
-  .post(() => ({
-    teamId: teamId.value,
-    ...hoursWorked.value
-  }))
+  .post(() => {
+    if (!claimPayload.value) {
+      throw new Error('Missing claim payload')
+    }
+    return {
+      teamId: teamId.value,
+      ...claimPayload.value
+    }
+  })
   .json()
-
-const errorMessage = ref<{ message: string } | null>(null)
-
-// Ensure the date picker displays the date in UTC in the input and preview
-// Accepts Date or string as some pickers may pass a Date instance to the formatter
-const formatUTC = (value: Date | string | null | undefined) => {
-  if (!value) return ''
-  if (value instanceof Date) {
-    // Extract the LOCAL date components (what the user actually selected)
-    const year = value.getFullYear()
-    const month = value.getMonth()
-    const day = value.getDate()
-
-    // Create a UTC date using those components
-    return dayjs.utc(Date.UTC(year, month, day)).format('YYYY-MM-DD [UTC]')
-  }
-  return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
-}
 
 watch(addWageClaimError, async () => {
   if (addWageClaimError.value) {
@@ -205,11 +103,13 @@ watch(addWageClaimError, async () => {
   }
 })
 
-const addWageClaim = async () => {
-  console.log('hoursWorked.value.dayWorked: ', hoursWorked.value.dayWorked)
-  v$.value.$touch()
-  if (v$.value.$invalid) return
+const handleSubmit = async (data: ClaimSubmitPayload) => {
+  if (!teamId.value) {
+    toastStore.addErrorToast('Team not selected')
+    return
+  }
 
+  claimPayload.value = data
   await addClaim()
 
   if (addWageClaimStatusCode.value === 201) {
@@ -218,14 +118,16 @@ const addWageClaim = async () => {
       queryKey: ['weekly-claims', teamStore.currentTeam?.id]
     })
     modal.value = false
-
-    // 🔁 Reset fields and validation after success
-    hoursWorked.value.hoursWorked = undefined
-    hoursWorked.value.memo = undefined
-    v$.value.$reset()
+    formInitialData.value = createDefaultFormData()
+    claimPayload.value = null
+    errorMessage.value = null
   }
-  // else if (addWageClaimError.value) {
-  //   toastStore.addErrorToast(addWageClaimError.value)
-  // }
 }
+
+defineExpose({
+  handleSubmit,
+  modal,
+  errorMessage,
+  formInitialData
+})
 </script>
