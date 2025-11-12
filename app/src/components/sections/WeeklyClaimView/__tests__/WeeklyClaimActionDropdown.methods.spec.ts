@@ -3,7 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import DropdownActions from '../WeeklyClaimActionDropdown.vue'
 import type { Status } from '../WeeklyClaimActionDropdown.vue'
 import { createPinia, setActivePinia } from 'pinia'
-import { useTeamStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
 import { ref } from 'vue'
 import * as mocks from '@/tests/mocks'
@@ -11,7 +11,7 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { useReadContract } from '@wagmi/vue'
-import { waitForTransactionReceipt } from '@wagmi/core'
+import { simulateContract, waitForTransactionReceipt } from '@wagmi/core'
 import { log } from '@/utils'
 
 // Configure dayjs plugins
@@ -148,13 +148,11 @@ describe('DropdownActions', () => {
     it('should handle disable claim errors properly', async () => {
       const { useCustomFetch } = await import('@/composables')
 
-      const updateError = new Error('Update error')
-
       //@ts-expect-error only mocking required values
       vi.mocked(useCustomFetch).mockReturnValue({
         put: vi.fn().mockReturnThis(),
         json: vi.fn().mockReturnValue({
-          execute: vi.fn().mockRejectedValue(updateError),
+          execute: vi.fn().mockResolvedValue({}),
           error: ref(new Error('Update failed'))
         })
       })
@@ -196,7 +194,39 @@ describe('DropdownActions', () => {
 
       //@ts-expect-error not visible on wrapper
       await wrapper.vm.disableClaim()
-      expect(logError).toBeCalledWith('Disable error', updateError)
+      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith('Failed to update Claim status')
+
+      vi.mocked(useToastStore).mockClear()
+      vi.mocked(useCustomFetch).mockRestore()
+      //@ts-expect-error only mocking necessary values
+      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
+        status: 'reverted'
+      })
+
+      wrapper = createWrapper('signed')
+
+      //@ts-expect-error not visible on wrapper
+      await wrapper.vm.disableClaim()
+
+      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith(
+        'Transaction failed: Failed to disable claim'
+      )
+
+      vi.mocked(useToastStore).mockClear()
+      vi.mocked(useCustomFetch).mockRestore()
+      //@ts-expect-error only mocking necessary values
+      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
+        status: 'success'
+      })
+      const simulateError = new Error('Simulate error')
+      vi.mocked(simulateContract).mockRejectedValue(simulateError)
+
+      wrapper = createWrapper('signed')
+
+      //@ts-expect-error not visible on wrapper
+      await wrapper.vm.disableClaim()
+
+      expect(logError).toBeCalledWith('Disable error', simulateError)
       expect(mocks.mockToastStore.addErrorToast).toBeCalledWith('Parsed error message')
     })
 
