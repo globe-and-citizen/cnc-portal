@@ -14,3 +14,10 @@ export const mockUseSignTypedData = {
 export const mockUseWriteContract = {
   writeContractAsync: vi.fn()
 }
+
+export const mockWagmiCore = {
+  simulateContract: vi.fn(),
+  waitForTransactionReceipt: vi.fn(),
+  writeContract: vi.fn(),
+  readContract: vi.fn()
+}
