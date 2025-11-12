@@ -65,17 +65,17 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           disableErrors.push('Caller is not the Cash Remuneration owner or the team owner');
 
         // check if the weekly claim is already signed or withdrawn
-          if (
-            weeklyClaim.status === 'disabled' &&
-            callerAddress ===
-              (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-                ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
-                : undefined)
-          ) {
-            disableErrors.push('Weekly claim already disabled');
-          } else if (weeklyClaim.status === 'withdrawn') {
-            disableErrors.push('Weekly claim already withdrawn');
-          }
+        if (
+          weeklyClaim.status === 'disabled' &&
+          callerAddress ===
+            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
+              ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
+              : undefined)
+        ) {
+          disableErrors.push('Weekly claim already disabled');
+        } else if (weeklyClaim.status === 'withdrawn') {
+          disableErrors.push('Weekly claim already withdrawn');
+        }
 
         if (disableErrors.length > 0) return errorResponse(400, disableErrors.join('; '), res);
 

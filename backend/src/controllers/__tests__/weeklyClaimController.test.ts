@@ -81,6 +81,72 @@ describe('Weekly Claim Controller', () => {
       vi.clearAllMocks();
     });
 
+    // disable request error
+    it('it should return 400 if caller is not the Cash Remuneration owner or owner of the team', async () => {
+      (isCashRemunerationOwner as any).mockResolvedValueOnce(false);
+
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: 'signed',
+          weekStart: new Date('2024-07-22'),
+          wage: mockWage('0x456'),
+        })
+      );
+
+      const response = await request(app)
+        .put('/1?action=disable')
+        .set('address', '0x456')
+        .send({ signature: '0xabc' });
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: 'Caller is not the Cash Remuneration owner or the team owner',
+      });
+    });
+
+    it('should return 400 if weekly claim is already disabled', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: 'disabled',
+          weekStart: new Date('2024-07-22'),
+          wage: mockWage('0x123'),
+        })
+      );
+
+      const response = await request(app)
+        .put('/1?action=disable')
+        .set('address', '0x123')
+        .send({ signature: '0xabc' });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: 'Weekly claim already disabled',
+      });
+    });
+
+    it('should return 400 if weekly claim is already withdrawn', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        mockWeeklyClaim({
+          id: 1,
+          status: 'withdrawn',
+          weekStart: new Date('2024-07-22'),
+          wage: mockWage('0x123'),
+        })
+      );
+
+      const response = await request(app)
+        .put('/1?action=disable')
+        .set('address', '0x123')
+        .send({ signature: '0xabc' });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: 'Weekly claim already withdrawn',
+      });
+    });
+
+
     it('should return 200 if weekly claim is updated successfully', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
         mockWeeklyClaim({
