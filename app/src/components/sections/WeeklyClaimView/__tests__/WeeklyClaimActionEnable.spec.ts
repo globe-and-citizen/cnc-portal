@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import DropdownActions from '../WeeklyClaimActionDropdown.vue'
+import WeeklyClaimActionEnable from '../WeeklyClaimActionEnable.vue'
 import type { Status } from '../WeeklyClaimActionDropdown.vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
@@ -95,10 +95,10 @@ describe('DropdownActions', () => {
     claims: []
   }
 
-  const createWrapper = (status: Status = 'pending') => {
-    return mount(DropdownActions, {
+  const createWrapper = (isCashRemunerationOwner: boolean) => {
+    return mount(WeeklyClaimActionEnable, {
       props: {
-        status,
+        isCashRemunerationOwner,
         weeklyClaim
       },
       global: {
@@ -120,24 +120,7 @@ describe('DropdownActions', () => {
     vi.useRealTimers()
   })
   describe('Action handling', () => {
-    it('should close menu after click enable', async () => {
-      const wrapper = createWrapper('disabled')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      button.trigger('click')
-
-      await flushPromises()
-      const disabledEnable = wrapper.find('[data-test="disabled-enable"]')
-      expect(disabledEnable).toBeTruthy()
-      const weeklyClaimActionEnable = wrapper.findComponent({ name: 'WeeklyClaimActionEnable' })
-      expect(weeklyClaimActionEnable.exists()).toBeTruthy()
-      const enableAction = weeklyClaimActionEnable.find('[data-test="enable-action"]')
-      expect(enableAction).toBeTruthy()
-      await enableAction.trigger('click')
-      expect(weeklyClaimActionEnable.emitted()).toHaveProperty('close')
-      //@ts-expect-error not visible on wrapper
-      expect(wrapper.vm.isOpen).toBe(false)
-    })
-    it('should handle disable claim properly', async () => {
+    it('should handle enable claim properly', async () => {
       //@ts-expect-error only mocking necessary variables
       vi.mocked(useReadContract).mockReturnValue({
         ...mocks.mockUseReadContract,
@@ -149,20 +132,20 @@ describe('DropdownActions', () => {
         status: 'success'
       })
 
-      const wrapper = createWrapper('signed')
+      const wrapper = createWrapper(true)
 
       // Trigger the claim function
       //@ts-expect-error not visible on wrapper.vm
-      await wrapper.vm.disableClaim()
+      await wrapper.vm.enableClaim()
 
       // Should show update claim status error
       expect(mocks.mockWagmiCore.writeContract).toBeCalled()
       //@ts-expect-error not visible on wrapper
-      expect(wrapper.vm.weeklyClaimUrl).toBe('/weeklyclaim/1/?action=disable')
-      expect(mocks.mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim disabled')
+      expect(wrapper.vm.weeklyClaimUrl).toBe('/weeklyclaim/1/?action=enable')
+      expect(mocks.mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim enabled')
     })
 
-    it('should handle disable claim errors properly', async () => {
+    it('should handle enable claim errors properly', async () => {
       const { useCustomFetch } = await import('@/composables')
 
       //@ts-expect-error only mocking required values
@@ -186,10 +169,10 @@ describe('DropdownActions', () => {
         data: ref('0xUserAddress')
       })
 
-      let wrapper = createWrapper('signed')
+      let wrapper = createWrapper(true)
 
       //@ts-expect-error not visible on wrapper
-      await wrapper.vm.disableClaim()
+      await wrapper.vm.enableClaim()
 
       //@ts-expect-error not visible on wrapper
       expect(wrapper.vm.isLoading).toBeFalsy()
@@ -207,10 +190,10 @@ describe('DropdownActions', () => {
 
       const logError = vi.spyOn(log, 'error')
 
-      wrapper = createWrapper('signed')
+      wrapper = createWrapper(true)
 
       //@ts-expect-error not visible on wrapper
-      await wrapper.vm.disableClaim()
+      await wrapper.vm.enableClaim()
       expect(mocks.mockToastStore.addErrorToast).toBeCalledWith('Failed to update Claim status')
 
       vi.mocked(useToastStore).mockClear()
@@ -220,13 +203,13 @@ describe('DropdownActions', () => {
         status: 'reverted'
       })
 
-      wrapper = createWrapper('signed')
+      wrapper = createWrapper(true)
 
       //@ts-expect-error not visible on wrapper
-      await wrapper.vm.disableClaim()
+      await wrapper.vm.enableClaim()
 
       expect(mocks.mockToastStore.addErrorToast).toBeCalledWith(
-        'Transaction failed: Failed to disable claim'
+        'Transaction failed: Failed to enable claim'
       )
 
       vi.mocked(useToastStore).mockClear()
@@ -238,59 +221,13 @@ describe('DropdownActions', () => {
       const simulateError = new Error('Simulate error')
       vi.mocked(simulateContract).mockRejectedValue(simulateError)
 
-      wrapper = createWrapper('signed')
+      wrapper = createWrapper(true)
 
       //@ts-expect-error not visible on wrapper
-      await wrapper.vm.disableClaim()
+      await wrapper.vm.enableClaim()
 
-      expect(logError).toBeCalledWith('Disable error', simulateError)
+      expect(logError).toBeCalledWith('Enable error', simulateError)
       expect(mocks.mockToastStore.addErrorToast).toBeCalledWith('Parsed error message')
-    })
-
-    it('closes dropdown after action is selected', async () => {
-      //@ts-expect-error only mocking necessary fields
-      vi.mocked(useUserDataStore).mockReturnValue({
-        address: '0xContractOwner'
-      })
-      const wrapper = createWrapper('pending')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-
-      // Open dropdown
-      await button.trigger('click')
-      //@ts-expect-error not visible wrapper
-      expect(wrapper.vm.isOpen).toBe(true)
-      // Click action
-      const crSign = wrapper.findComponent({ name: 'CRSigne' })
-      expect(crSign.exists()).toBeTruthy()
-      const signAction = crSign.find('[data-test="sign-action"]')
-      expect(signAction.exists()).toBeTruthy()
-      await signAction.trigger('click')
-
-      // Check dropdown is closed
-      //@ts-expect-error not visible wrapper
-      expect(wrapper.vm.isOpen).toBe(false)
-      expect(wrapper.find('ul').exists()).toBe(false)
-    })
-
-    it('closes dropdown after withdraw action', async () => {
-      //@ts-expect-error only mocking necessary fileds
-      vi.mocked(useUserDataStore).mockReturnValue({
-        address: '0xContractOwner'
-      })
-      const wrapper = createWrapper('signed')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-
-      await button.trigger('click')
-
-      const crWithdrawClaim = wrapper.findComponent({ name: 'CRWithdrawClaim' })
-      const withdrawAction = crWithdrawClaim.find('[data-test="withdraw-action"]')
-      expect(withdrawAction.exists()).toBeTruthy()
-
-      // Test Withdraw action
-      await withdrawAction.trigger('click')
-      expect(crWithdrawClaim.emitted()).toHaveProperty('claim-withdrawn')
-      //@ts-expect-error not visible on wrapper
-      expect(wrapper.vm.isOpen).toBeFalsy()
     })
   })
 })
