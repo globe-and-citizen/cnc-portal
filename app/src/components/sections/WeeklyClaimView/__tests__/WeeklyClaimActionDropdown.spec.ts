@@ -5,8 +5,26 @@ import type { Status } from '../WeeklyClaimActionDropdown.vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
+import { ref } from 'vue'
+import * as mocks from '@/tests/mocks'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import { useReadContract } from '@wagmi/vue'
+import { waitForTransactionReceipt } from '@wagmi/core'
+
+// Configure dayjs plugins
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
 
 // Mock the dependencies
+vi.mock('viem', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    keccak256: vi.fn()
+  }
+})
 vi.mock('@iconify/vue', () => ({
   Icon: {
     template: '<span>Icon</span>'
@@ -20,20 +38,28 @@ vi.mock('@/components/ButtonUI.vue', () => ({
   }
 }))
 
-// vi.mock('@/components/sections/CashRemunerationView/CRSigne.vue', () => ({
-//   default: {
-//     template: '<a><slot /></a>',
-//     props: ['weeklyClaim', 'isDropDown']
-//   }
-// }))
+vi.mock('@/utils', () => ({
+  log: {
+    error: vi.fn()
+  },
+  parseError: vi.fn(() => 'Parsed error message')
+}))
 
-// vi.mock('@wagmi/vue', async (importOriginal) => {
-//   const actual: object = await importOriginal()
-//   return {
-//     ...actual,
-//     useReadContract: vi.fn(() => ({ data: ref('0xContractOwner') }))
-//   }
-// })
+vi.mock('@/composables', () => ({
+  useCustomFetch: vi.fn(() => ({
+    put: vi.fn().mockReturnThis(),
+    json: vi.fn().mockReturnValue({
+      execute: vi.fn().mockResolvedValue({}),
+      error: ref(null)
+    })
+  }))
+}))
+
+vi.mock('@tanstack/vue-query', () => ({
+  useQueryClient: () => ({
+    invalidateQueries: vi.fn()
+  })
+}))
 
 describe('DropdownActions', () => {
   const MOCK_OWNER_ADDRESS = '0xOwnerAddress'
@@ -195,25 +221,41 @@ describe('DropdownActions', () => {
   })
 
   describe('Action handling', () => {
-    // it('emits action event when menu item is clicked', async () => {
-    //   //@ts-expect-error only mocking necessary fields
-    //   vi.mocked(useUserDataStore).mockReturnValue({
-    //     address: '0xContractOwner'
-    //   })
-    //   const wrapper = createWrapper('pending')
-    //   const button = wrapper.findComponent({ name: 'ButtonUI' })
+    it('should handle update claim status error after successful withdrawal', async () => {
+      // Mock update claim error
+      const { useCustomFetch } = await import('@/composables')
+      //@ts-expect-error only mocking required values
+      vi.mocked(useCustomFetch).mockReturnValue({
+        put: vi.fn().mockReturnThis(),
+        json: vi.fn().mockReturnValue({
+          execute: vi.fn().mockResolvedValue({}),
+          error: ref(new Error('Update failed'))
+        })
+      })
 
-    //   // Open dropdown
-    //   await button.trigger('click')
+      //@ts-expect-error only mocking necessary variables
+      vi.mocked(useReadContract).mockReturnValue({
+        ...mocks.mockUseReadContract,
+        data: ref('0xUserAddress')
+      })
 
-    //   // Click Sign action
-    //   const signAction = wrapper.find('[data-test="sign-action"]')
-    //   await signAction.trigger('click')
+      //@ts-expect-error only mocking necessary values
+      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
+        status: 'success'
+      })
 
-    //   // Check that action was emitted
-    //   expect(wrapper.emitted('action')).toBeTruthy()
-    //   expect(wrapper.emitted('action')?.[0]).toEqual(['sign'])
-    // })
+      const wrapper = createWrapper('signed')
+
+      // Trigger the claim function
+      //@ts-expect-error not visible on wrapper.vm
+      await wrapper.vm.disableClaim()
+
+      // Should show update claim status error
+      expect(mocks.mockWagmiCore.writeContract).toBeCalled()
+      //@ts-expect-error not visible on wrapper
+      expect(wrapper.vm.weeklyClaimUrl).toBe('/weeklyclaim/1/?action=disable')
+      expect(mocks.mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim disabled')
+    })
 
     it('closes dropdown after action is selected', async () => {
       //@ts-expect-error only mocking necessary fields
@@ -260,16 +302,6 @@ describe('DropdownActions', () => {
       expect(crWithdrawClaim.emitted()).toHaveProperty('claim-withdrawn')
       //@ts-expect-error not visible on wrapper
       expect(wrapper.vm.isOpen).toBeFalsy()
-
-      // Reset emitted events
-      // wrapper.setProps({ status: 'signed' })
-      // await button.trigger('click')
-
-      // // Test Disable action
-      // const newActions = wrapper.findAll('a')
-      // await newActions[1].trigger('click')
-      // wrapper.emitted()
-      // expect(wrapper.emitted('action')?.[1]).toEqual(['disable'])
     })
   })
 
