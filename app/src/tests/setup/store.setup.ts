@@ -15,6 +15,7 @@ vi.mock('@/stores', async (importOriginal) => {
         code: 'USD',
         symbol: '$'
       }
-    }))
+    })),
+    useUserDataStore: vi.fn(() => ({ ...mocks.mockUserStore }))
   }
 })
