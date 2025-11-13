@@ -1,13 +1,12 @@
 import express from 'express';
-import { addClaim, getClaims, updateClaim } from '../controllers/claimController';
+import { addClaim, getClaims, updateClaim, deleteClaim } from '../controllers/claimController';
 import {
   validateBody,
   validateQuery,
-  validateParamsAndQuery,
   validateBodyAndParams,
+  validateParams,
   addClaimBodySchema,
   getClaimsQuerySchema,
-  updateClaimQuerySchema,
   updateClaimBodySchema,
   claimIdParamsSchema,
 } from '../validation';
@@ -158,22 +157,16 @@ claimRoutes.get('/', validateQuery(getClaimsQuerySchema), getClaims);
  * @openapi
  * /claim/{claimId}:
  *  put:
- *   summary: Update a claim's status or perform actions like signing, withdrawing, disabling, enabling, or rejecting
+ *   summary: Update claim details (hours worked, memo, or date)
+ *   description: Allows the claim owner to edit their own pending claim details.
  *   parameters:
  *     - in: path
  *       name: claimId
  *       required: true
  *       schema:
  *         type: integer
- *         description: The ID of the claim to update
+ *         description: The ID of the claim to edit
  *         minimum: 1
- *     - in: query
- *       name: action
- *       required: true
- *       schema:
- *         type: string
- *         enum: [sign, withdraw, disable, enable, reject]
- *         description: The action to perform on the claim
  *   requestBody:
  *     required: true
  *     content:
@@ -181,12 +174,22 @@ claimRoutes.get('/', validateQuery(getClaimsQuerySchema), getClaims);
  *         schema:
  *           type: object
  *           properties:
- *             signature:
+ *             hoursWorked:
+ *               type: number
+ *               minimum: 1
+ *               maximum: 24
+ *               description: Updated number of hours worked
+ *             memo:
  *               type: string
- *               description: The signature for signing the claim (required for 'sign' action)
+ *               description: Updated memo
+ *               maxLength: 200
+ *             dayWorked:
+ *               type: string
+ *               format: date
+ *               description: Updated work date (UTC)
  *   responses:
  *     200:
- *       description: Claim updated successfully
+ *       description: Claim details updated successfully
  *       content:
  *         application/json:
  *           schema:
@@ -218,9 +221,59 @@ claimRoutes.get('/', validateQuery(getClaimsQuerySchema), getClaims);
  */
 claimRoutes.put(
   '/:claimId',
-  validateParamsAndQuery(claimIdParamsSchema, updateClaimQuerySchema),
-  validateBody(updateClaimBodySchema),
+  validateBodyAndParams(updateClaimBodySchema, claimIdParamsSchema),
   updateClaim
 );
 
+/**
+ * @openapi
+ * /claim/{claimId}:
+ *  delete:
+ *   summary: Delete a pending claim
+ *   description: Allows the claim owner to delete their own pending claim.
+ *   parameters:
+ *     - in: path
+ *       name: claimId
+ *       required: true
+ *       schema:
+ *         type: integer
+ *         description: The ID of the claim to delete
+ *         minimum: 1
+ *   responses:
+ *     200:
+ *       description: Claim deleted successfully
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 example: Claim deleted successfully
+ *     400:
+ *       description: Bad request
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     403:
+ *       description: Forbidden
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     404:
+ *       description: Claim not found
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     500:
+ *       description: Internal server error
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ */
+claimRoutes.delete('/:claimId', validateParams(claimIdParamsSchema), deleteClaim);
 export default claimRoutes;
