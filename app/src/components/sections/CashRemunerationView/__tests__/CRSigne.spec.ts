@@ -223,6 +223,7 @@ describe('CRSigne', () => {
       const signAction = wrapper.find('[data-test="sign-action"]')
       expect(signAction.exists()).toBeTruthy()
       await signAction.trigger('click')
+      await flushPromises()
       expect(wrapper.emitted()).toHaveProperty('close')
     })
   })
