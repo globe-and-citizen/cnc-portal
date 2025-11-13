@@ -1,11 +1,11 @@
 import request from 'supertest';
 import express, { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../utils';
 import { describe, it, beforeEach, expect, vi } from 'vitest';
 import { WeeklyClaim } from '@prisma/client';
 import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
 import weeklyClaimRoutes from '../../routes/weeklyClaimRoute';
 import { authorizeUser } from '../../middleware/authMiddleware';
+import { prisma } from '../../utils';
 
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
@@ -18,6 +18,14 @@ vi.mock('../../middleware/authMiddleware', () => ({
 // Mock cashRemunerationUtil
 vi.mock('../../utils/cashRemunerationUtil', () => ({
   isCashRemunerationOwner: vi.fn().mockResolvedValue(true),
+}));
+
+// Hoisted mock for viem public client to avoid initialization order issues
+const { readContractMock } = vi.hoisted(() => ({
+  readContractMock: vi.fn(),
+}));
+vi.mock('../../utils/viem.config', () => ({
+  default: { readContract: readContractMock },
 }));
 
 // Mock prisma
@@ -33,6 +41,9 @@ vi.mock('../../utils', async () => {
       },
       wage: {
         findUnique: vi.fn(),
+      },
+      teamContract: {
+        findFirst: vi.fn(),
       },
       $transaction: vi.fn(),
     },
@@ -90,7 +101,7 @@ describe('Weekly Claim Controller', () => {
           status: 'disabled',
           weekStart: new Date('2024-07-22'),
           wage: mockWage('0x456'),
-          signature: '0xabc'
+          signature: '0xabc',
         })
       );
 
@@ -110,7 +121,7 @@ describe('Weekly Claim Controller', () => {
           id: 1,
           status: 'pending',
           weekStart: new Date('2024-07-22'),
-          wage: mockWage('0x456')
+          wage: mockWage('0x456'),
         })
       );
 
@@ -131,7 +142,7 @@ describe('Weekly Claim Controller', () => {
           status: 'signed',
           weekStart: new Date('2024-07-22'),
           wage: mockWage('0x456'),
-          signature: '0xabc'
+          signature: '0xabc',
         })
       );
 
@@ -152,7 +163,7 @@ describe('Weekly Claim Controller', () => {
           status: 'withdrawn',
           weekStart: new Date('2024-07-22'),
           wage: mockWage('0x456'),
-          signature: '0xabc'
+          signature: '0xabc',
         })
       );
 
@@ -173,7 +184,7 @@ describe('Weekly Claim Controller', () => {
           status: 'disabled',
           weekStart: new Date('2024-07-22'),
           wage: mockWage('0x123'),
-          signature: '0xabc'
+          signature: '0xabc',
         })
       );
       vi.spyOn(prisma, '$transaction').mockResolvedValue([
@@ -258,7 +269,6 @@ describe('Weekly Claim Controller', () => {
         message: 'Weekly claim already withdrawn',
       });
     });
-
 
     it('should return 200 if weekly claim is updated successfully', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
@@ -510,7 +520,7 @@ describe('Weekly Claim Controller', () => {
       const response = await request(app).get('/?teamId=1&status=invalid');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: 'Invalid status. Allowed status are: sign, withdraw, pending',
+        message: 'Invalid status. Allowed statuses are: pending, signed, withdrawn, disabled',
       });
     });
 
@@ -625,6 +635,30 @@ describe('Weekly Claim Controller', () => {
         });
 
       expect(response.body).toEqual(expectedResponse);
+    });
+  });
+
+  describe('GET: /sync', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('should return 400 if teamId is missing', async () => {
+      const response = await request(app).get('/sync');
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: 'Missing or invalid teamId',
+      });
+    });
+
+    it('should return 404 if cash remuneration contract not found for team', async () => {
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(null);
+
+      const response = await request(app).get('/sync?teamId=1');
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({
+        message: 'Cash Remuneration contract not found for the team',
+      });
     });
   });
 
