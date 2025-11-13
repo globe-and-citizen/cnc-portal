@@ -4,6 +4,7 @@ import { ERC20_ABI as erc20Abi } from '@/artifacts/abi/erc20'
 // import { erc20Abi } from 'viem'
 import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
 import type { ExtractAbiFunctionNames } from 'abitype'
+import { computed, unref } from 'vue'
 
 type ERC20FunctionNames = ExtractAbiFunctionNames<typeof erc20Abi>
 
@@ -11,7 +12,7 @@ type ERC20FunctionNames = ExtractAbiFunctionNames<typeof erc20Abi>
 export function useERC20ContractWrite(options: {
   contractAddress: MaybeRef<Address | undefined>
   functionName: ERC20FunctionNames
-  args?: Array<MaybeRef<unknown>> | MaybeRef<readonly unknown[]>
+  args?: MaybeRef<readonly unknown[]>
   value?: MaybeRef<bigint>
 }) {
   return useContractWrites({
@@ -28,10 +29,12 @@ export function useERC20Transfer(
   to: MaybeRef<Address>,
   amount: MaybeRef<bigint>
 ) {
+
+  const args = computed(() => [unref(to), unref(amount)] as readonly unknown[])
   return useERC20ContractWrite({
     contractAddress,
     functionName: 'transfer',
-    args: [to, amount]
+    args
   })
 }
 
@@ -41,10 +44,11 @@ export function useERC20TransferFrom(
   to: MaybeRef<Address>,
   amount: MaybeRef<bigint>
 ) {
+  const args = computed(() => [unref(from), unref(to), unref(amount)] as readonly unknown[])
   return useERC20ContractWrite({
     contractAddress,
     functionName: 'transferFrom',
-    args: [from, to, amount]
+    args
   })
 }
 
@@ -53,9 +57,10 @@ export function useERC20Approve(
   spender: MaybeRef<Address>,
   amount: MaybeRef<bigint>
 ) {
+  const args = computed(() => [unref(spender), unref(amount)] as readonly unknown[])
   return useERC20ContractWrite({
     contractAddress,
     functionName: 'approve',
-    args: [spender, amount]
+    args
   })
 }
