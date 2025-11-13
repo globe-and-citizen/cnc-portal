@@ -106,6 +106,7 @@ export const addClaim = async (req: Request, res: Response) => {
         wageId: wage.id,
         weeklyClaimId: weeklyClaim.id,
         dayWorked: dayWorked,
+        status: 'pending',
       },
     });
 
