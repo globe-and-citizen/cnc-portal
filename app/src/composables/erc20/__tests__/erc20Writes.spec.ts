@@ -395,11 +395,7 @@ describe('ERC20 Contract Writes', () => {
     })
 
     it('should return contract write interface', () => {
-      const result = useERC20Approve(
-        MOCK_DATA.contractAddress,
-        MOCK_DATA.spender,
-        MOCK_DATA.amount
-      )
+      const result = useERC20Approve(MOCK_DATA.contractAddress, MOCK_DATA.spender, MOCK_DATA.amount)
 
       expect(result).toEqual(mockContractWrite)
     })
@@ -417,11 +413,7 @@ describe('ERC20 Contract Writes', () => {
     })
 
     it('should return consistent interface for all functions', () => {
-      const transfer = useERC20Transfer(
-        MOCK_DATA.contractAddress,
-        MOCK_DATA.to,
-        MOCK_DATA.amount
-      )
+      const transfer = useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.amount)
       const transferFrom = useERC20TransferFrom(
         MOCK_DATA.contractAddress,
         MOCK_DATA.from,

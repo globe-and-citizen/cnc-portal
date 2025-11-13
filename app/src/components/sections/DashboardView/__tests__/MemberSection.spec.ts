@@ -93,7 +93,10 @@ describe('MemberSection.vue', () => {
     }
   ]
 
-  const createWrapper = (ownerAddress: Address = '0x1234' as Address, userAddress: Address = '0x1234' as Address) => {
+  const createWrapper = (
+    ownerAddress: Address = '0x1234' as Address,
+    userAddress: Address = '0x1234' as Address
+  ) => {
     vi.clearAllMocks()
     mockWageData.value = wageDataMock
     mockWageError.value = null
@@ -309,11 +312,13 @@ describe('MemberSection.vue', () => {
       const table = wrapper.findComponent({ name: 'TableComponent' })
       const rows = table.props('rows')
       expect(rows).toHaveLength(2)
-      expect(rows[0]).toEqual(expect.objectContaining({
-        index: 1,
-        address: '0x1234',
-        name: 'Member 1'
-      }))
+      expect(rows[0]).toEqual(
+        expect.objectContaining({
+          index: 1,
+          address: '0x1234',
+          name: 'Member 1'
+        })
+      )
     })
   })
 })
