@@ -1,24 +1,27 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import LoginView from '../views/LoginView.vue'
-import CashRemunerationView from '@/views/team/[id]/CashRemunerationView.vue'
-import ExpenseAccountView from '@/views/team/[id]/ExpenseAccountView.vue'
-import ListIndex from '@/views/team/ListIndex.vue'
-import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { useStorage } from '@vueuse/core'
-import BankView from '@/views/team/[id]/BankView.vue'
-import ContractManagementView from '@/views/team/[id]/ContractManagementView.vue'
-import SherTokenView from '@/views/team/[id]/SherTokenView.vue'
-import VestingView from '@/views/team/[id]/VestingView.vue'
-import WeeklyClaimView from '@/views/team/[id]/WeeklyClaimView.vue'
-import ClaimHistoryView from '@/views/team/[id]/ClaimHistoryView.vue'
-import BodElectionView from '@/views/team/[id]/BodElectionView.vue'
-import ProposalsView from '@/views/team/[id]/ProposalsView.vue'
-import ProposalDetail from '@/components/sections/ProposalsView/ProposalDetail.vue'
-import BodElectionDetailsView from '@/views/team/[id]/BodElectionDetailsView.vue'
-import DemoExample from '@/views/team/[id]/DemoExample.vue'
 
-import LockedView from '@/views/LockedView.vue'
+// Dynamic imports for code-splitting
+const HomeView = () => import('@/views/HomeView.vue')
+const LoginView = () => import('@/views/LoginView.vue')
+const ListIndex = () => import('@/views/team/ListIndex.vue')
+const ShowIndex = () => import('@/views/team/[id]/ShowIndex.vue')
+const LockedView = () => import('@/views/LockedView.vue')
+
+// Team-specific views with dynamic imports
+const CashRemunerationView = () => import('@/views/team/[id]/CashRemunerationView.vue')
+const ExpenseAccountView = () => import('@/views/team/[id]/ExpenseAccountView.vue')
+const BankView = () => import('@/views/team/[id]/BankView.vue')
+const ContractManagementView = () => import('@/views/team/[id]/ContractManagementView.vue')
+const SherTokenView = () => import('@/views/team/[id]/SherTokenView.vue')
+const VestingView = () => import('@/views/team/[id]/VestingView.vue')
+const WeeklyClaimView = () => import('@/views/team/[id]/WeeklyClaimView.vue')
+const ClaimHistoryView = () => import('@/views/team/[id]/ClaimHistoryView.vue')
+const BodElectionView = () => import('@/views/team/[id]/BodElectionView.vue')
+const ProposalsView = () => import('@/views/team/[id]/ProposalsView.vue')
+const ProposalDetail = () => import('@/components/sections/ProposalsView/ProposalDetail.vue')
+const BodElectionDetailsView = () => import('@/views/team/[id]/BodElectionDetailsView.vue')
+const DemoExample = () => import('@/views/team/[id]/DemoExample.vue')
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
