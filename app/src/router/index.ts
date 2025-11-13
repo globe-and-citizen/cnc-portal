@@ -16,7 +16,6 @@ import BodElectionView from '@/views/team/[id]/BodElectionView.vue'
 import ProposalsView from '@/views/team/[id]/ProposalsView.vue'
 import ProposalDetail from '@/components/sections/ProposalsView/ProposalDetail.vue'
 import BodElectionDetailsView from '@/views/team/[id]/BodElectionDetailsView.vue'
-import BankTestView from '@/views/BankTestView.vue'
 import DemoExample from '@/views/team/[id]/DemoExample.vue'
 
 import LockedView from '@/views/LockedView.vue'
@@ -132,12 +131,6 @@ const router = createRouter({
           name: 'sher-token',
           meta: { name: 'SHER Token' },
           component: SherTokenView
-        },
-        {
-          path: '/teams/:id/bank-test',
-          name: 'bank-test',
-          meta: { name: 'Bank Testing' },
-          component: BankTestView
         }
       ]
     },
