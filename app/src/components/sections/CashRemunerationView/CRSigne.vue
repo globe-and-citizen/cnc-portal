@@ -24,7 +24,7 @@
     "
     class="text-sm"
   >
-    Sign
+    {{ isResign ? 'Resign' : 'Sign' }}
   </a>
 </template>
 
@@ -38,14 +38,17 @@ import type { WeeklyClaim } from '@/types'
 import { log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
+import { readContract, writeContract, simulateContract } from '@wagmi/core'
 import dayjs from 'dayjs'
-import { parseEther, parseUnits, zeroAddress, type Address } from 'viem'
+import { keccak256, parseEther, parseUnits, zeroAddress, type Address } from 'viem'
 import { computed, ref, watch } from 'vue'
+import { config } from '@/wagmi.config'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
   disabled?: boolean
   isDropDown?: boolean
+  isResign?: boolean
 }>()
 
 defineEmits(['close'])
@@ -135,6 +138,20 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
       },
       primaryType: 'WageClaim'
     })
+
+    if (signature.value) {
+      await enableClaim(signature.value)
+      await executeUpdateClaim()
+
+      if (claimError.value) {
+        toastStore.addErrorToast('Failed to approve weeklyClaim')
+      } else {
+        toastStore.addSuccessToast('Claim approved')
+        queryClient.invalidateQueries({
+          queryKey: ['weekly-claims', teamStore.currentTeam?.id]
+        })
+      }
+    }
   } catch (error) {
     const typedError = error as { message: string }
     log.error('Failed to sign weeklyClaim', typedError.message)
@@ -146,20 +163,49 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
       toastStore.addErrorToast(errorMessage)
     }
   }
-  if (signature.value) {
-    await executeUpdateClaim()
+  // if (signature.value) {
+  //   await enableClaim(signature.value)
+  //   await executeUpdateClaim()
 
-    if (claimError.value) {
-      toastStore.addErrorToast('Failed to approve weeklyClaim')
-    } else {
-      toastStore.addSuccessToast('Claim approved')
-      queryClient.invalidateQueries({
-        queryKey: ['weekly-claims', teamStore.currentTeam?.id]
+  //   if (claimError.value) {
+  //     toastStore.addErrorToast('Failed to approve weeklyClaim')
+  //   } else {
+  //     toastStore.addSuccessToast('Claim approved')
+  //     queryClient.invalidateQueries({
+  //       queryKey: ['weekly-claims', teamStore.currentTeam?.id]
+  //     })
+  //   }
+  // }
+
+  loading.value = false
+}
+
+const enableClaim = async (signature: Address) => {
+  if (!cashRemunerationAddress.value) throw Error('Cash remuneration address not found')
+  if (props.isResign) {
+    const isDisabled = await readContract(config, {
+      address: cashRemunerationAddress.value,
+      abi: CASH_REMUNERATION_EIP712_ABI,
+      functionName: 'disabledWageClaims',
+      args: [keccak256(signature)]
+    })
+
+    if (isDisabled) {
+      await simulateContract(config, {
+        address: cashRemunerationAddress.value,
+        abi: CASH_REMUNERATION_EIP712_ABI,
+        functionName: 'enableClaim',
+        args: [keccak256(signature)]
+      })
+
+      await writeContract(config, {
+        address: cashRemunerationAddress.value,
+        abi: CASH_REMUNERATION_EIP712_ABI,
+        functionName: 'enableClaim',
+        args: [keccak256(signature)]
       })
     }
   }
-
-  loading.value = false
 }
 
 watch(cashRemunerationOwnerError, (value) => {

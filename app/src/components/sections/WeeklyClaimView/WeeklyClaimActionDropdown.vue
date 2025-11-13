@@ -64,9 +64,15 @@
           />
         </li>
         <li data-test="disabled-resign" :class="{ disabled: !isCashRemunerationOwner }">
-          <a @click="isCashRemunerationOwner ? handleAction('resign') : null" class="text-sm">
+          <!-- <a @click="isCashRemunerationOwner ? handleAction('resign') : null" class="text-sm">
             Resign
-          </a>
+          </a> -->
+          <CRSigne
+            :weekly-claim="weeklyClaim"
+            :is-drop-down="true"
+            @close="isOpen = false"
+            :is-resign="true"
+          />
         </li>
       </template>
 
@@ -114,13 +120,6 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   status: 'pending'
 })
-
-// Emits
-interface Emits {
-  (event: 'action', action: Action): void
-}
-
-const emit = defineEmits<Emits>()
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
@@ -226,11 +225,6 @@ const disableClaim = async () => {
 
 const toggleDropdown = (): void => {
   isOpen.value = !isOpen.value
-}
-
-const handleAction = (action: Action): void => {
-  emit('action', action)
-  isOpen.value = false
 }
 
 const handleClickOutside = (event: MouseEvent): void => {
