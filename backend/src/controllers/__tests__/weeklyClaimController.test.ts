@@ -660,6 +660,79 @@ describe('Weekly Claim Controller', () => {
         message: 'Cash Remuneration contract not found for the team',
       });
     });
+
+    it('should return 404 if contract has invalid address', async () => {
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue({
+        id: 10,
+        teamId: 1,
+        type: 'CashRemunerationEIP712',
+        address: 'not-an-eth-address',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      const response = await request(app).get('/sync?teamId=1');
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({
+        message: 'Cash Remuneration contract not found for the team',
+      });
+    });
+
+    it('should skip invalid signatures and update status from signed->withdrawn when paid on-chain', async () => {
+      // Mock valid contract
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue({
+        id: 11,
+        teamId: 1,
+        type: 'CashRemunerationEIP712',
+        address: '0x1234567890123456789012345678901234567890',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      const claimWithInvalidSig = mockWeeklyClaim({
+        id: 1,
+        status: 'signed',
+        signature: 'not-hex',
+      }) as any;
+      const claimNeedingUpdate = mockWeeklyClaim({
+        id: 2,
+        status: 'signed',
+        signature: '0xabcdef',
+      }) as any;
+
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
+        claimWithInvalidSig,
+        claimNeedingUpdate,
+      ]);
+
+      // Arrange contract reads: first call -> paidWageClaims true, second -> disabledWageClaims false
+      readContractMock.mockReset();
+      readContractMock
+        .mockResolvedValueOnce(true) // paidWageClaims
+        .mockResolvedValueOnce(false); // disabledWageClaims
+
+      const updateSpy = vi.spyOn(prisma.weeklyClaim, 'update').mockResolvedValue({
+        ...claimNeedingUpdate,
+        status: 'withdrawn',
+      });
+
+      const response = await request(app).get('/sync?teamId=1');
+      expect(response.status).toBe(200);
+      expect(response.body.teamId).toBe(1);
+      expect(response.body.totalProcessed).toBe(2);
+      expect(response.body.skipped).toEqual([{ id: 1, reason: 'Missing or invalid signature' }]);
+      expect(response.body.updated).toEqual([
+        {
+          id: 2,
+          previousStatus: 'signed',
+          newStatus: 'withdrawn',
+        },
+      ]);
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: 2 },
+        data: { status: 'withdrawn' },
+      });
+    });
   });
 
   it('should handle errors gracefully', async () => {
