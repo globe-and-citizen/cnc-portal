@@ -1,5 +1,23 @@
 <template>
+  <a
+    v-if="isDropDown"
+    data-test="withdraw-action"
+    @click="
+      async () => {
+        if (!isClaimOwner) {
+          emit('claim-withdrawn')
+          return
+        }
+        await withdrawClaim()
+        emit('claim-withdrawn')
+      }
+    "
+    class="text-sm"
+  >
+    Withdraw
+  </a>
   <ButtonUI
+    v-else
     :disabled="disabled"
     :loading="isLoading"
     variant="warning"
@@ -30,6 +48,8 @@ import type { WeeklyClaim } from '@/types'
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
   disabled?: boolean
+  isDropDown?: boolean
+  isClaimOwner?: boolean
 }>()
 
 const emit = defineEmits(['claim-withdrawn'])

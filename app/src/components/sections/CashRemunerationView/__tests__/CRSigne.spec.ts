@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import CRSigne from '../CRSigne.vue'
 import { createPinia, setActivePinia } from 'pinia'
 import type { WeeklyClaim } from '@/types'
@@ -206,6 +206,25 @@ describe('CRSigne', () => {
       await vi.dynamicImportSettled()
 
       expect(mockToastStoreValue.addSuccessToast).toHaveBeenCalledWith('Claim approved')
+    })
+
+    it('Should emit close event after approve', async () => {
+      wrapper = mount(CRSigne, {
+        props: {
+          weeklyClaim: mockClaim,
+          isDropDown: true
+        }
+      })
+
+      await flushPromises()
+
+      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      expect(button.exists()).toBeFalsy()
+      const signAction = wrapper.find('[data-test="sign-action"]')
+      expect(signAction.exists()).toBeTruthy()
+      await signAction.trigger('click')
+      await flushPromises()
+      expect(wrapper.emitted()).toHaveProperty('close')
     })
   })
 
