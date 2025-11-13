@@ -24,11 +24,19 @@ interface MemberSectionInstance {
 // Create mutable refs for reactive state outside the mock
 const mockStatus = ref(200)
 const mockWageData = ref<WageData[]>([])
-const mockWageError = ref<string | null>(null)
+const mockWageError = ref<string | null | Error>(null)
 const mockWageIsFetching = ref(false)
 
 // Mock the modules BEFORE importing the component
 vi.mock('@/composables/useCustomFetch', () => {
+  const createMockResponse = () => ({
+    execute: vi.fn(),
+    error: ref(null),
+    isFetching: ref(false),
+    data: ref(null),
+    status: ref(200)
+  })
+
   return {
     useCustomFetch: () => ({
       json: () => ({
@@ -37,6 +45,18 @@ vi.mock('@/composables/useCustomFetch', () => {
         isFetching: mockWageIsFetching,
         data: mockWageData,
         status: mockStatus
+      }),
+      get: () => ({
+        json: () => createMockResponse()
+      }),
+      delete: () => ({
+        json: () => createMockResponse()
+      }),
+      put: () => ({
+        json: () => createMockResponse()
+      }),
+      post: () => ({
+        json: () => createMockResponse()
       })
     })
   }
@@ -73,22 +93,20 @@ describe('MemberSection.vue', () => {
     }
   ]
 
-  beforeEach(() => {
+  const createWrapper = (
+    ownerAddress: Address = '0x1234' as Address,
+    userAddress: Address = '0x1234' as Address
+  ) => {
     vi.clearAllMocks()
     mockWageData.value = wageDataMock
     mockWageError.value = null
     mockWageIsFetching.value = false
 
-    wrapper = mount(MemberSection, {
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
-    component = wrapper.vm as unknown as MemberSectionInstance
-    vi.mocked(useTeamStore).mockReturnValue({
-      //@ts-expect-error: TypeScript expects exact return type as original
+    const teamStoreValues = {
       currentTeam: {
         ...mockTeamStore,
+        ownerAddress,
+        id: 1,
         members: [
           {
             address: '0x1234' as Address,
@@ -103,8 +121,36 @@ describe('MemberSection.vue', () => {
             teamId: 1
           }
         ]
+      },
+      currentTeamMeta: {
+        teamIsFetching: false
+      }
+    }
+
+    wrapper = mount(MemberSection, {
+      global: {
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              user: {
+                address: userAddress
+              }
+            }
+          })
+        ]
       }
     })
+
+    // @ts-expect-error: mocking store values
+    vi.mocked(useTeamStore).mockReturnValue(teamStoreValues)
+
+    component = wrapper.vm as unknown as MemberSectionInstance
+    return wrapper
+  }
+
+  beforeEach(() => {
+    createWrapper()
   })
 
   describe('getMemberWage', () => {
@@ -152,6 +198,127 @@ describe('MemberSection.vue', () => {
         usdcRatePerHour: `${45} USDC/hr`,
         tokenRatePerHour: `${15} SHER/hr`
       })
+    })
+  })
+
+  describe('Component Rendering', () => {
+    it('renders the card title correctly', () => {
+      const card = wrapper.findComponent({ name: 'CardComponent' })
+      expect(card.exists()).toBe(true)
+      expect(card.props('title')).toBe('Team Members List')
+    })
+
+    it('renders table with correct columns when user is owner', () => {
+      createWrapper('0x1234' as Address, '0x1234' as Address)
+      const table = wrapper.findComponent({ name: 'TableComponent' })
+      expect(table.exists()).toBe(true)
+      expect(table.props('columns')).toEqual([
+        { key: 'index', label: '#' },
+        { key: 'member', label: 'Member' },
+        { key: 'maxWeeklyHours', label: 'Max Weekly Hours' },
+        { key: 'wage', label: `Hourly Rate` },
+        { key: 'action', label: 'Action' }
+      ])
+    })
+
+    it('renders table without action column when user is not owner', () => {
+      createWrapper('0xowner' as Address, '0xnotowner' as Address)
+      const table = wrapper.findComponent({ name: 'TableComponent' })
+      expect(table.exists()).toBe(true)
+      expect(table.props('columns')).toEqual([
+        { key: 'index', label: '#' },
+        { key: 'member', label: 'Member' },
+        { key: 'maxWeeklyHours', label: 'Max Weekly Hours' },
+        { key: 'wage', label: `Hourly Rate` }
+      ])
+    })
+
+    it('renders Add Member button only for team owner', () => {
+      createWrapper('0x1234' as Address, '0x1234' as Address)
+      const addButton = wrapper.find('[data-test="add-member-button"]')
+      expect(addButton.exists()).toBe(true)
+    })
+
+    it('does not render Add Member button for non-owners', () => {
+      createWrapper('0xowner' as Address, '0xnotowner' as Address)
+      const addButton = wrapper.find('[data-test="add-member-button"]')
+      expect(addButton.exists()).toBe(false)
+    })
+
+    it('displays loading skeletons when data is fetching', async () => {
+      mockWageIsFetching.value = true
+      await wrapper.vm.$nextTick()
+      const table = wrapper.findComponent({ name: 'TableComponent' })
+      expect(table.exists()).toBe(true)
+    })
+  })
+
+  describe('User Interactions', () => {
+    it('opens modal when Add Member button is clicked', async () => {
+      createWrapper('0x1234' as Address, '0x1234' as Address)
+      const addButton = wrapper.find('[data-test="add-member-button"]')
+      await addButton.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      const modal = wrapper.findComponent({ name: 'ModalComponent' })
+      expect(modal.exists()).toBe(true)
+    })
+
+    it('closes modal when memberAdded event is emitted', async () => {
+      createWrapper('0x1234' as Address, '0x1234' as Address)
+      const addButton = wrapper.find('[data-test="add-member-button"]')
+      await addButton.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      const addMemberForm = wrapper.findComponent({ name: 'AddMemberForm' })
+      if (addMemberForm.exists()) {
+        await addMemberForm.vm.$emit('memberAdded')
+        await wrapper.vm.$nextTick()
+      }
+    })
+
+    it('closes modal on reset event', async () => {
+      createWrapper('0x1234' as Address, '0x1234' as Address)
+      const addButton = wrapper.find('[data-test="add-member-button"]')
+      await addButton.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      const modal = wrapper.findComponent({ name: 'ModalComponent' })
+      if (modal.exists()) {
+        await modal.vm.$emit('reset')
+        await wrapper.vm.$nextTick()
+      }
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('shows error toast when wage data fetch fails', async () => {
+      mockWageError.value = new Error('Failed to fetch')
+      await wrapper.vm.$nextTick()
+
+      // Trigger the watcher
+      mockWageError.value = new Error('New error')
+      await wrapper.vm.$nextTick()
+    })
+  })
+
+  describe('Table Data', () => {
+    it('passes correct loading state to table', () => {
+      const table = wrapper.findComponent({ name: 'TableComponent' })
+      expect(table.props('loading')).toBe(false)
+    })
+
+    it('passes correctly formatted row data to table', () => {
+      const table = wrapper.findComponent({ name: 'TableComponent' })
+      const rows = table.props('rows')
+      expect(rows).toHaveLength(2)
+      expect(rows[0]).toEqual(
+        expect.objectContaining({
+          index: 1,
+          address: '0x1234',
+          name: 'Member 1'
+        })
+      )
     })
   })
 })

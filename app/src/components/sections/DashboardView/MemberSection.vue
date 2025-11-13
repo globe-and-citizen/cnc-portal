@@ -153,10 +153,6 @@ watch(
   }
 )
 
-watch(teamWageData, (newData) => {
-  if (newData) console.log('Team wage data fetched successfully:', newData)
-})
-
 const getMemberWage = (memberAddress: Address) => {
   let memberWage
   let cashRatePerHour
