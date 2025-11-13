@@ -705,12 +705,8 @@ describe('Weekly Claim Controller', () => {
         claimNeedingUpdate,
       ]);
 
-      // Arrange contract reads: first call -> paidWageClaims true, second -> disabledWageClaims false
       readContractMock.mockReset();
-      readContractMock
-        .mockResolvedValueOnce(true) // paidWageClaims
-        .mockResolvedValueOnce(false); // disabledWageClaims
-
+      readContractMock.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
       const updateSpy = vi.spyOn(prisma.weeklyClaim, 'update').mockResolvedValue({
         ...claimNeedingUpdate,
         status: 'withdrawn',
@@ -731,6 +727,48 @@ describe('Weekly Claim Controller', () => {
       expect(updateSpy).toHaveBeenCalledWith({
         where: { id: 2 },
         data: { status: 'withdrawn' },
+      });
+    });
+
+    it('should skip claim with readContract error and add Failed to read contract state reason', async () => {
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue({
+        id: 12,
+        teamId: 1,
+        type: 'CashRemunerationEIP712',
+        address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      const claim = mockWeeklyClaim({ id: 5, status: 'signed', signature: '0xdeadbeef' }) as any;
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([claim]);
+
+      readContractMock.mockReset();
+      readContractMock.mockRejectedValueOnce(new Error('RPC error'));
+
+      const response = await request(app).get('/sync?teamId=1');
+      expect(response.status).toBe(200);
+      expect(response.body.updated).toEqual([]);
+      expect(response.body.skipped).toEqual([{ id: 5, reason: 'Failed to read contract state' }]);
+    });
+
+    it('should return 500 when an unexpected error occurs before processing loop', async () => {
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue({
+        id: 13,
+        teamId: 1,
+        type: 'CashRemunerationEIP712',
+        address: '0x1234567890123456789012345678901234567890',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockRejectedValue(new Error('Database failure'));
+
+      const response = await request(app).get('/sync?teamId=1');
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        message: 'Internal server error has occured',
+        error: 'Database failure',
       });
     });
   });
