@@ -1,6 +1,12 @@
 <template>
   <CardComponent :title="singleUser ? 'Weekly Claim (User)' : 'Weekly Claim'" class="w-full pb-7">
-    <TableComponent v-if="data" :rows="data" :columns="columns" :loading="isTeamClaimDataFetching">
+    <TableComponent
+      v-if="data"
+      :rows="data"
+      :columns="columns"
+      :loading="isTeamClaimDataFetching"
+      overflow="overflow-visible"
+    >
       <template #member-data="{ row }">
         <RouterLink
           :to="{
@@ -66,7 +72,7 @@
           :disabled="row.status == 'withdrawn' || userStore.address != row.wage.userAddress"
           :weekly-claim="assertWeeklyClaimRow(row)"
         />-->
-        <WeeklyClaimActionDropdown :status="row.status" />
+        <WeeklyClaimActionDropdown :status="row.status" :weekly-claim="assertWeeklyClaimRow(row)" />
       </template>
 
       <template #status-data="{ row }">
@@ -134,9 +140,9 @@ const props = defineProps<{
   singleUser?: boolean
 }>()
 
-// function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
-//   return row as WeeklyClaim
-// }
+function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
+  return row as WeeklyClaim
+}
 
 const weeklyClaimUrl = computed(
   () =>
