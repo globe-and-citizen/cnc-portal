@@ -2,15 +2,24 @@
   <div class="w-full pb-6">
     <CardComponent>
       <div class="flex gap-4 items-start">
-        <div v-if="imageUrl" class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden">
-          <img :src="imageUrl" alt="Card image" class="w-full h-full object-cover" />
+        <div
+          v-if="displayedImageUrl"
+          class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden"
+          data-test="claim-user-image-wrapper"
+        >
+          <img
+            :src="displayedImageUrl"
+            alt="User image"
+            class="w-full h-full object-cover"
+            data-test="claim-user-image"
+          />
         </div>
         <div class="flex flex-col gap-8">
-          <div class="card-title mt-4">{{ name }}</div>
+          <div class="card-title mt-4" data-test="claim-user-name">{{ displayedName }}</div>
 
           <div class="flex items-center gap-2">
             <img src="/Vector.png" alt="" class="w-4 h-4" />
-            <AddressToolTip :address="address" />
+            <AddressToolTip :address="displayedAddress" data-test="claim-user-address" />
           </div>
           <!-- <div class="text-sm text-gray-500">{{ description }}</div> -->
         </div>
@@ -222,7 +231,6 @@ import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
-import { storeToRefs } from 'pinia'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
 
@@ -230,6 +238,38 @@ use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart,
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 dayjs.extend(weekday)
+
+const route = useRoute()
+const teamStore = useTeamStore()
+const userStore = useUserDataStore()
+const toastStore = useToastStore()
+// Adresse du membre ciblé via la route (peut être undefined -> on affiche l'utilisateur courant)
+const memberAddress = computed(() => route.params.memberAddress as string | undefined)
+
+// Détermine le membre affiché (priorité: membre paramètre route, sinon utilisateur courant)
+const displayedMember = computed(() => {
+  const members = teamStore.currentTeam?.members || []
+  const memberAddr = memberAddress.value?.toLowerCase()
+
+  if (memberAddr && memberAddr !== userStore.address.toLowerCase()) {
+    const memberFound = members.find((member) => member.address.toLowerCase() === memberAddr)
+    if (memberFound) return memberFound
+  }
+
+  return {
+    id: 'current-user',
+    name: userStore.name,
+    address: userStore.address,
+    teamId: Number(teamStore.currentTeam?.id) || 0,
+    imageUrl: userStore.imageUrl
+  }
+})
+
+const displayedName = computed(() => displayedMember.value.name)
+const displayedAddress = computed(() => displayedMember.value.address)
+const displayedImageUrl = computed(() => displayedMember.value.imageUrl)
+
+// Couleur des badges de statut de weekly claim
 
 const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 
@@ -241,13 +281,7 @@ const getColor = (weeklyClaim?: WeeklyClaim) => {
   return 'accent'
 }
 
-const route = useRoute()
-const teamStore = useTeamStore()
-const userStore = useUserDataStore()
-const toastStore = useToastStore()
-const { imageUrl, name, address } = storeToRefs(userStore)
 const teamId = computed(() => teamStore.currentTeam?.id)
-const memberAddress = computed(() => route.params.memberAddress as string | undefined)
 
 const weeklyClaimQueryKey = computed(() => [
   'weekly-claims',
