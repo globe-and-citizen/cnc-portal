@@ -24,7 +24,7 @@ interface MemberSectionInstance {
 // Create mutable refs for reactive state outside the mock
 const mockStatus = ref(200)
 const mockWageData = ref<WageData[]>([])
-const mockWageError = ref<string | null>(null)
+const mockWageError = ref<string | null | Error>(null)
 const mockWageIsFetching = ref(false)
 
 // Mock the modules BEFORE importing the component
@@ -103,7 +103,6 @@ describe('MemberSection.vue', () => {
     mockWageIsFetching.value = false
 
     const teamStoreValues = {
-      //@ts-expect-error: TypeScript expects exact return type as original
       currentTeam: {
         ...mockTeamStore,
         ownerAddress,
@@ -143,6 +142,7 @@ describe('MemberSection.vue', () => {
       }
     })
 
+    // @ts-expect-error: mocking store values
     vi.mocked(useTeamStore).mockReturnValue(teamStoreValues)
 
     component = wrapper.vm as unknown as MemberSectionInstance
