@@ -18,9 +18,9 @@ export interface Wage {
   teamId: number
   userAddress: Address
   ratePerHour: RatePerHour[]
-  cashRatePerHour: number //@deprecated use ratePerHour instead
-  tokenRatePerHour: number //@deprecated use ratePerHour instead
-  usdcRatePerHour: number //@deprecated use ratePerHour instead
+  cashRatePerHour?: number //@deprecated use ratePerHour instead
+  tokenRatePerHour?: number //@deprecated use ratePerHour instead
+  usdcRatePerHour?: number //@deprecated use ratePerHour instead
   maximumHoursPerWeek: number
   nextWageId: number | null
   createdAt: string // ISO date string
@@ -30,16 +30,25 @@ export interface Wage {
 
 export interface Claim {
   id: number
-  status: 'pending' | 'signed' | 'withdrawn' | 'disabled' // Assuming these are the possible statuses
   hoursWorked: number
   dayWorked: string // ISO date string
   memo: string
-  signature: string | null
-  tokenTx: string | null
   wageId: number
   wage: Wage
   createdAt: string // ISO date string
   updatedAt: string // ISO date string
+}
+
+export interface ClaimFormData {
+  hoursWorked: string
+  memo: string
+  dayWorked: string
+}
+
+export interface ClaimSubmitPayload {
+  hoursWorked: number
+  memo: string
+  dayWorked: string
 }
 
 export interface WeeklyClaim {

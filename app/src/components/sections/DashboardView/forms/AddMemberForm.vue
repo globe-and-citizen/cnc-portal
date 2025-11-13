@@ -2,7 +2,7 @@
   <h1 class="font-bold text-2xl">Add New Member</h1>
   <hr />
   <div class="flex flex-col gap-5 pt-5">
-    <MultiSelectMemberInput v-model="formData" />
+    <MultiSelectMemberInput v-model="formData" :disable-team-members="true" />
 
     <div v-if="addMembersError">
       <div class="alert alert-warning" v-if="statusCode === 401">

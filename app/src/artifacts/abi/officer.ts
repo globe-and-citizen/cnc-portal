@@ -269,6 +269,25 @@ export const OFFICER_ABI = [
     type: 'function'
   },
   {
+    inputs: [
+      {
+        internalType: 'string',
+        name: 'contractType',
+        type: 'string'
+      }
+    ],
+    name: 'findDeployedContract',
+    outputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
     inputs: [],
     name: 'getConfiguredContractTypes',
     outputs: [

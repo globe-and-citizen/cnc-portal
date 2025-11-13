@@ -1,0 +1,36 @@
+meta {
+  name: Get Users - 05 - Excessive Limit (DOS Prevention)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{host}}/user?search=test&limit=999999999
+  body: json
+  auth: bearer
+}
+
+params:query {
+  search: test
+  limit: 999999999
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("should reject excessive limit to prevent DOS attack", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("should return error message for invalid limit", function() {
+    expect(res.body).to.have.property('message');
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message.toLowerCase()).to.match(/limit|invalid|maximum/);
+  });
+
+  test("should not process the invalid request", function() {
+    expect(res.body).to.not.have.property('users');
+  });
+}

@@ -2,6 +2,17 @@ import type { Abi } from 'viem'
 
 export const CASH_REMUNERATION_EIP712_ABI = [
   {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'account',
+        type: 'address'
+      }
+    ],
+    name: 'AddressInsufficientBalance',
+    type: 'error'
+  },
+  {
     inputs: [],
     name: 'ECDSAInvalidSignature',
     type: 'error'
@@ -40,23 +51,7 @@ export const CASH_REMUNERATION_EIP712_ABI = [
   },
   {
     inputs: [],
-    name: 'FailedCall',
-    type: 'error'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: 'balance',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'needed',
-        type: 'uint256'
-      }
-    ],
-    name: 'InsufficientBalance',
+    name: 'FailedInnerCall',
     type: 'error'
   },
   {
@@ -156,6 +151,19 @@ export const CASH_REMUNERATION_EIP712_ABI = [
       {
         indexed: true,
         internalType: 'address',
+        name: 'newOfficerAddress',
+        type: 'address'
+      }
+    ],
+    name: 'OfficerAddressUpdated',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
         name: 'previousOwner',
         type: 'address'
       },
@@ -226,6 +234,32 @@ export const CASH_REMUNERATION_EIP712_ABI = [
     inputs: [
       {
         indexed: true,
+        internalType: 'bytes32',
+        name: 'signatureHash',
+        type: 'bytes32'
+      }
+    ],
+    name: 'WageClaimDisabled',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'bytes32',
+        name: 'signatureHash',
+        type: 'bytes32'
+      }
+    ],
+    name: 'WageClaimEnabled',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
         internalType: 'address',
         name: 'withdrawer',
         type: 'address'
@@ -279,6 +313,38 @@ export const CASH_REMUNERATION_EIP712_ABI = [
     type: 'function'
   },
   {
+    inputs: [
+      {
+        internalType: 'bytes32',
+        name: 'signatureHash',
+        type: 'bytes32'
+      }
+    ],
+    name: 'disableClaim',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'bytes32',
+        name: '',
+        type: 'bytes32'
+      }
+    ],
+    name: 'disabledWageClaims',
+    outputs: [
+      {
+        internalType: 'bool',
+        name: '',
+        type: 'bool'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
     inputs: [],
     name: 'eip712Domain',
     outputs: [
@@ -322,6 +388,19 @@ export const CASH_REMUNERATION_EIP712_ABI = [
     type: 'function'
   },
   {
+    inputs: [
+      {
+        internalType: 'bytes32',
+        name: 'signatureHash',
+        type: 'bytes32'
+      }
+    ],
+    name: 'enableClaim',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
     inputs: [],
     name: 'getBalance',
     outputs: [
@@ -338,18 +417,31 @@ export const CASH_REMUNERATION_EIP712_ABI = [
     inputs: [
       {
         internalType: 'address',
-        name: 'owner',
+        name: '_owner',
         type: 'address'
       },
       {
         internalType: 'address[]',
-        name: 'tokenAddresses',
+        name: '_tokenAddresses',
         type: 'address[]'
       }
     ],
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'officerAddress',
+    outputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address'
+      }
+    ],
+    stateMutability: 'view',
     type: 'function'
   },
   {
@@ -420,6 +512,19 @@ export const CASH_REMUNERATION_EIP712_ABI = [
   {
     inputs: [],
     name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_officerAddress',
+        type: 'address'
+      }
+    ],
+    name: 'setOfficerAddress',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function'

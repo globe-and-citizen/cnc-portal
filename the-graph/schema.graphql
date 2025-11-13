@@ -4,6 +4,8 @@ enum TransactionType {
   withdraw
   mint
   dividend
+  dividendClaim
+  tokenDividendClaim
 }
 
 type BeaconProxyCreated @entity(immutable: true) {

@@ -1,8 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
-// import TransactionsView from '@/views/TransactionsView.vue'
-import TransactionTimelineDemoView from '@/views/TransactionTimelineDemoView.vue'
 import CashRemunerationView from '@/views/team/[id]/CashRemunerationView.vue'
 import ExpenseAccountView from '@/views/team/[id]/ExpenseAccountView.vue'
 import ListIndex from '@/views/team/ListIndex.vue'
@@ -18,8 +16,9 @@ import BodElectionView from '@/views/team/[id]/BodElectionView.vue'
 import ProposalsView from '@/views/team/[id]/ProposalsView.vue'
 import ProposalDetail from '@/components/sections/ProposalsView/ProposalDetail.vue'
 import BodElectionDetailsView from '@/views/team/[id]/BodElectionDetailsView.vue'
-import BankTestView from '@/views/BankTestView.vue'
+import DemoExample from '@/views/team/[id]/DemoExample.vue'
 
+import LockedView from '@/views/LockedView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -49,6 +48,12 @@ const router = createRouter({
       name: 'show-team',
       meta: { name: 'Team View' },
       children: [
+        {
+          path: '/teams/:id/demo',
+          name: 'team-demo',
+          meta: { name: 'Team Demo' },
+          component: DemoExample
+        },
         {
           path: '/teams/:id/cash-remunerations/weekly-claim',
           name: 'weekly-claim',
@@ -126,12 +131,6 @@ const router = createRouter({
           name: 'sher-token',
           meta: { name: 'SHER Token' },
           component: SherTokenView
-        },
-        {
-          path: '/teams/:id/bank-test',
-          name: 'bank-test',
-          meta: { name: 'Bank Testing' },
-          component: BankTestView
         }
       ]
     },
@@ -141,16 +140,20 @@ const router = createRouter({
     //   component: TransactionsView
     // },
     {
-      path: '/timeline-demo',
-      name: 'timeline-demo',
-      meta: { name: 'Transaction Timeline Demo' },
-      component: TransactionTimelineDemoView
+      path: '/locked',
+      name: 'LockedView',
+      meta: { noLayout: true },
+      component: LockedView
     }
   ]
 })
 const isAuth = useStorage('isAuth', false)
 router.beforeEach(async (to) => {
-  // Redirect to login page if not authenticated
+  // Skip auth redirects when visiting the locked session view
+  if (to.path === '/locked') {
+    return true
+  }
+
   if (!isAuth.value && to.name !== 'login') {
     return { name: 'login' }
   }

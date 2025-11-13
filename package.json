@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "changelog:first": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
+  },
+  "devDependencies": {
+    "conventional-changelog-angular": "^8.1.0",
+    "conventional-changelog-cli": "^5.0.0"
+  }
+}

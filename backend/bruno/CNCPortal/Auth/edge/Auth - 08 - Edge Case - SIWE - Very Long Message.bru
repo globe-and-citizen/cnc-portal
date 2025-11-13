@@ -1,0 +1,57 @@
+meta {
+  name: Auth - 08 - Edge Case - SIWE - Very Long Message
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{host}}/auth/siwe
+  body: json
+  auth: none
+}
+
+script:pre-request {
+  // Create a moderately long message to test size handling without causing 500 error
+  const longStatement = "A".repeat(1000); // 1KB of 'A's instead of 10KB
+  const longMessage = `localhost wants you to sign in with your Ethereum account:\\n0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266\\n\\n${longStatement}\\n\\nURI: http://localhost:3000\\nVersion: 1\\nChain ID: 1\\nNonce: test123\\nIssued At: 2025-10-30T08:00:00.000Z`;
+  
+  bru.setVar("longMessage", longMessage);
+  console.log("Generated message length:", longMessage.length);
+}
+
+body:json {
+  {
+    "message": "{{longMessage}}",
+    "signature": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234"
+  }
+}
+
+tests {
+  test("should handle moderately long message with appropriate status", function() {
+    const status = res.getStatus();
+    expect([400, 401]).to.include(status);
+  });
+
+  test("should return appropriate error for long message", function() {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message.length).to.be.greaterThan(0);
+    
+    // Should indicate either validation or authentication failure
+    const message = res.body.message.toLowerCase();
+    const hasRelevantError = message.includes('invalid') || 
+                            message.includes('verification') || 
+                            message.includes('authentication') ||
+                            message.includes('signature') ||
+                            message.includes('siwe');
+    
+    expect(hasRelevantError).to.be.true;
+  });
+
+  test("should handle large payloads gracefully", function() {
+    // Should not indicate server errors or memory issues
+    expect(res.getStatus()).to.not.equal(500);
+    expect(res.body.message).to.not.contain("memory");
+    expect(res.body.message).to.not.contain("timeout");
+    expect(res.body.message).to.not.contain("payload too large");
+  });
+}

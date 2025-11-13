@@ -366,8 +366,7 @@ const menuItems = computed(() => [
     label: 'Teams List',
     icon: 'heroicons:squares-2x2',
     route: {
-      name: 'teams',
-      params: { id: teamStore.currentTeam?.id || '1' }
+      name: 'teams'
     },
     active: route.name === 'teams',
     show: true
@@ -542,15 +541,6 @@ const menuItems = computed(() => [
     },
     active: route.name === 'vesting',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
-  },
-  {
-    label: 'Timeline Demo',
-    icon: 'heroicons:queue-list',
-    route: {
-      name: 'timeline-demo'
-    },
-    active: route.name === 'timeline-demo',
-    show: true
   }
 ])
 

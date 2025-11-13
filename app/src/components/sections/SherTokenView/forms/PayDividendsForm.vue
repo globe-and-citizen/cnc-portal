@@ -9,13 +9,13 @@
 
     <h6>
       Current Bank contract balance
-      <span v-if="isBankBalanceLoading">...</span>
-      <span v-else>{{ formattedUnlockedBalance }}</span>
+
+      <span>{{ formattedUnlockedBalance }}</span>
       {{ selectedTokenId === 'native' ? NETWORK.currencySymbol : selectedTokenId.toUpperCase() }}
     </h6>
 
     <div
-      v-if="!isBankBalanceLoading && (unlockedBalance ?? 0n) === 0n"
+      v-if="(formattedUnlockedBalance ?? 0) === 0"
       class="alert alert-warning"
       data-test="bank-empty-warning"
     >
@@ -37,7 +37,7 @@
     <div class="text-center">
       <ButtonUI
         :loading="loading"
-        :disabled="loading"
+        :disabled="loading || (formattedUnlockedBalance ?? 0) === 0"
         class="btn btn-primary w-44 text-center"
         @click="onSubmit()"
       >
@@ -54,10 +54,10 @@ import { NETWORK } from '@/constant'
 import type { Team } from '@/types'
 
 import { parseUnits } from 'viem'
-import { computed, watch, ref, type Ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useTeamStore } from '@/stores'
 import BodAlert from '@/components/BodAlert.vue'
-import { useBankReads } from '@/composables/bank/index'
+
 import type { TokenId } from '@/constant'
 import type { TokenOption } from '@/types'
 import { useContractBalance } from '@/composables/useContractBalance'
@@ -74,7 +74,6 @@ defineProps<{
   isBodAction: boolean
 }>()
 
-const { useUnlockedBalance } = useBankReads()
 const bankAddress = teamStore.getContractAddressByType('Bank')
 const { balances } = useContractBalance(bankAddress as Address)
 
@@ -91,16 +90,6 @@ const getTokens = (): TokenOption[] =>
     .filter((b) => b.tokenId !== 'sher')
 
 const tokens = computed(() => getTokens())
-
-const {
-  data: unlockedBalance,
-  isLoading: isBankBalanceLoading,
-  error: bankBalanceError
-} = useUnlockedBalance() as {
-  data: Ref<bigint | undefined>
-  isLoading: Ref<boolean>
-  error: Ref<unknown>
-}
 
 const selectedTokenDecimals = computed<number>(() => {
   const entry = balances.value.find((b) => b.token.id === selectedTokenId.value)
@@ -123,10 +112,4 @@ const onSubmit = () => {
   const parsed = parseUnits(amount.value, selectedTokenDecimals.value)
   emits('submit', parsed, selectedTokenId.value)
 }
-
-watch(bankBalanceError, (err) => {
-  if (err) {
-    console.error('Error fetching bank balance:', err)
-  }
-})
 </script>

@@ -304,7 +304,7 @@ describe('ExpenseAccountTable', () => {
 
     it('should show loading button if enabling approval', async () => {
       const wrapper = createComponent()
-      wrapper.vm.contractOwnerAddress = '0xInitialUser'
+      wrapper.vm.contractOwnerAddress = '0xUserAddress'
       const statusDisabledInput = wrapper.find('[data-test="status-input-disabled"]')
       expect(statusDisabledInput.exists()).toBeTruthy()
       //@ts-expect-error: setChecked for setting the input to checked works instead of click

@@ -34,3 +34,6 @@ src/utils/backend_specs.html
 service-account.json
 # Sentry Config File
 .sentryclirc
+
+# Bruno generated environment files (use .template.bru instead)
+bruno/**/environments/CNC URI.bru

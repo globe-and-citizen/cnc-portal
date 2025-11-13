@@ -1,6 +1,12 @@
 <template>
   <CardComponent :title="singleUser ? 'Weekly Claim (User)' : 'Weekly Claim'" class="w-full pb-7">
-    <TableComponent v-if="data" :rows="data" :columns="columns" :loading="isTeamClaimDataFetching">
+    <TableComponent
+      v-if="data"
+      :rows="data"
+      :columns="columns"
+      :loading="isTeamClaimDataFetching"
+      overflow="overflow-visible"
+    >
       <template #member-data="{ row }">
         <RouterLink
           :to="{
@@ -60,12 +66,13 @@
         </div>
       </template>
       <template #action-data="{ row }">
-        <CRSigne v-if="row.status == 'pending'" :weekly-claim="assertWeeklyClaimRow(row)" />
+        <!--<CRSigne v-if="row.status == 'pending'" :weekly-claim="assertWeeklyClaimRow(row)" />
         <CRWithdrawClaim
           v-if="row.status == 'signed' || row.status == 'withdrawn'"
           :disabled="row.status == 'withdrawn' || userStore.address != row.wage.userAddress"
           :weekly-claim="assertWeeklyClaimRow(row)"
-        />
+        />-->
+        <WeeklyClaimActionDropdown :status="row.status" :weekly-claim="assertWeeklyClaimRow(row)" />
       </template>
 
       <template #status-data="{ row }">
@@ -103,7 +110,7 @@ import TableComponent, { type TableColumn } from '@/components/TableComponent.vu
 import UserComponent from '@/components/UserComponent.vue'
 import type { TokenId } from '@/constant'
 import { NETWORK } from '@/constant'
-import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
+import { useCurrencyStore, useTeamStore /*, useUserDataStore*/ } from '@/stores'
 import type { RatePerHour, WeeklyClaim } from '@/types/cash-remuneration'
 import { formatIsoWeekRange } from '@/utils/dayUtils'
 import dayjs from 'dayjs'
@@ -112,9 +119,10 @@ import utc from 'dayjs/plugin/utc'
 import weekday from 'dayjs/plugin/weekday'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import CRSigne from '../CashRemunerationView/CRSigne.vue'
-import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
+// import CRSigne from '../CashRemunerationView/CRSigne.vue'
+// import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import { useTanstackQuery } from '@/composables'
+import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
@@ -126,7 +134,7 @@ function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
 
 // const userStore = useUserDataStore()
 const teamStore = useTeamStore()
-const userStore = useUserDataStore()
+// const userStore = useUserDataStore()
 const props = defineProps<{
   memberAddress?: string
   singleUser?: boolean

@@ -74,9 +74,9 @@ describe('SelectMemberContractsInput.vue', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(true)
-    expect(wrapper.find('.menu-title span').text()).toBe('Team Members')
+    expect(wrapper.find('[data-test="user-search-results"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="user-dropdown-0x123"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="contract-dropdown-0x789"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="contract-search-results"]').exists()).toBe(false)
   })
 
   it('shows dropdown with only contracts when name matches contract type', async () => {
@@ -87,9 +87,9 @@ describe('SelectMemberContractsInput.vue', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(true)
-    expect(wrapper.findAll('.menu-title span').at(0)?.text()).toBe('Contracts')
+    expect(wrapper.find('[data-test="contract-search-results"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="contract-dropdown-0x789"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="user-dropdown-0x123"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="user-search-results"]').exists()).toBe(false)
   })
 
   it('shows both members and contracts when both match', async () => {
@@ -100,9 +100,8 @@ describe('SelectMemberContractsInput.vue', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(true)
-    const titles = wrapper.findAll('.menu-title span').map((el) => el.text())
-    expect(titles).toContain('Team Members')
-    expect(titles).toContain('Contracts')
+    expect(wrapper.find('[data-test="user-search-results"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="contract-search-results"]').exists()).toBe(true)
   })
 
   it('emits selectItem when clicking a member in the dropdown', async () => {
@@ -112,9 +111,9 @@ describe('SelectMemberContractsInput.vue', () => {
     await vi.advanceTimersByTime(300)
     await wrapper.vm.$nextTick()
 
-    const memberItem = wrapper.find('[data-test="user-dropdown-0x123"]')
-    expect(memberItem.exists()).toBe(true)
-    await memberItem.trigger('click')
+    const memberRows = wrapper.findAll('[data-test="user-row"]')
+    expect(memberRows.length).toBeGreaterThan(0)
+    await memberRows[0].trigger('click')
     await wrapper.vm.$nextTick()
 
     const emitted = wrapper.emitted('selectItem')
@@ -129,9 +128,9 @@ describe('SelectMemberContractsInput.vue', () => {
     await vi.advanceTimersByTime(300)
     await wrapper.vm.$nextTick()
 
-    const contractItem = wrapper.find('[data-test="contract-dropdown-0x789"]')
-    expect(contractItem.exists()).toBe(true)
-    await contractItem.trigger('click')
+    const contractRows = wrapper.findAll('[data-test="contract-row"]')
+    expect(contractRows.length).toBeGreaterThan(0)
+    await contractRows[0].trigger('click')
     await wrapper.vm.$nextTick()
 
     const emitted = wrapper.emitted('selectItem')

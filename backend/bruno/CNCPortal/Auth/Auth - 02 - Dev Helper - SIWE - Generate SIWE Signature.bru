@@ -1,0 +1,84 @@
+meta {
+  name: Auth - 02 - Dev Helper - SIWE - Generate SIWE Signature
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{host}}/dev/generate-siwe-signature
+  body: json
+  auth: none
+}
+
+script:pre-request {
+  // Get necessary variables
+  const nonce = bru.getVar("userNonce") || bru.getVar("nonce");
+  const address = bru.getEnvVar("testAddress");
+  const domain = bru.getEnvVar("domain");
+  const chainId = parseInt(bru.getEnvVar("chainId"));
+  const privateKey = bru.getEnvVar("privateKey");
+  
+  console.log("Preparing SIWE signature generation");
+  console.log("Address:", address);
+  console.log("Domain:", domain);
+  console.log("Chain ID:", chainId);
+  console.log("Nonce:", nonce);
+  
+  if (!nonce) {
+    throw new Error("No nonce found. Please run 'Auth - 1 - Get Nonce' first.");
+  }
+  
+  // Store parameters for the request body
+  bru.setVar("requestAddress", address);
+  bru.setVar("requestDomain", domain.replace(':3000', '')); // Remove port from domain for SIWE message
+  bru.setVar("requestChainId", chainId);
+  bru.setVar("requestNonce", nonce);
+  bru.setVar("requestPrivateKey", privateKey);
+}
+
+body:json {
+  {
+    "messageParams": {
+      "nonce": "{{requestNonce}}",
+      "address": "{{requestAddress}}",
+      "domain": "{{requestDomain}}",
+      "chainId": {{requestChainId}},
+      "statement": "I accept the MetaMask Terms of Service: https://community.metamask.io/tos",
+      "uri": "http://{{domain}}"
+    },
+    "privateKey": "{{requestPrivateKey}}"
+  }
+}
+
+vars:post-response {
+  siweMessage: res.body.message
+  siweSignature: res.body.signature
+}
+
+tests {
+  test("should return 200 status", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should return success response", function() {
+    expect(res.body.success).to.equal(true);
+  });
+
+  test("should return SIWE message", function() {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message.length).to.be.greaterThan(0);
+  });
+
+  test("should return SIWE signature", function() {
+    expect(res.body.signature).to.be.a('string');
+    expect(res.body.signature).to.match(/^0x[a-fA-F0-9]{130}$/);
+  });
+
+  test("store SIWE data for login request", function() {
+    bru.setVar("siweMessage", res.body.message);
+    bru.setVar("siweSignature", res.body.signature);
+    console.log("SIWE message and signature stored for login");
+    console.log("Message length:", res.body.message.length);
+    console.log("Signature:", res.body.signature);
+  });
+}

@@ -1,5 +1,23 @@
 <template>
+  <a
+    v-if="isDropDown"
+    data-test="withdraw-action"
+    @click="
+      async () => {
+        if (!isClaimOwner) {
+          emit('claim-withdrawn')
+          return
+        }
+        await withdrawClaim()
+        emit('claim-withdrawn')
+      }
+    "
+    class="text-sm"
+  >
+    Withdraw
+  </a>
   <ButtonUI
+    v-else
     :disabled="disabled"
     :loading="isLoading"
     variant="warning"
@@ -14,14 +32,7 @@
 import { useTeamStore, useToastStore } from '@/stores'
 import { log, parseError } from '@/utils'
 import { useWriteContract } from '@wagmi/vue'
-import {
-  encodeFunctionData,
-  formatEther,
-  parseEther,
-  parseUnits,
-  zeroAddress,
-  type Address
-} from 'viem'
+import { formatEther, parseEther, parseUnits, zeroAddress, type Address } from 'viem'
 import { computed, ref } from 'vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { getBalance } from 'viem/actions'
@@ -29,7 +40,7 @@ import { config } from '@/wagmi.config'
 import { useCustomFetch } from '@/composables'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { USDC_ADDRESS } from '@/constant'
-import { estimateGas } from '@wagmi/core'
+import { simulateContract } from '@wagmi/core'
 import { useQueryClient } from '@tanstack/vue-query'
 import { waitForTransactionReceipt } from '@wagmi/core'
 import type { WeeklyClaim } from '@/types'
@@ -37,6 +48,8 @@ import type { WeeklyClaim } from '@/types'
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
   disabled?: boolean
+  isDropDown?: boolean
+  isClaimOwner?: boolean
 }>()
 
 const emit = defineEmits(['claim-withdrawn'])
@@ -45,11 +58,8 @@ const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const queryClient = useQueryClient()
 
-const cashRemunerationEip712Address = computed(
-  () =>
-    teamStore.currentTeam?.teamContracts.find(
-      (contract) => contract.type === 'CashRemunerationEIP712'
-    )?.address as Address
+const cashRemunerationEip712Address = computed(() =>
+  teamStore.getContractAddressByType('CashRemunerationEIP712')
 )
 const { writeContractAsync: withdraw } = useWriteContract()
 
@@ -65,6 +75,12 @@ const isLoading = ref(false)
 
 const withdrawClaim = async () => {
   isLoading.value = true
+
+  if (!cashRemunerationEip712Address.value) {
+    isLoading.value = false
+    toastStore.addErrorToast('Cash Remuneration EIP712 contract address not found')
+    return
+  }
   // balance check
   const balance = formatEther(
     await getBalance(config.getClient(), {
@@ -73,7 +89,7 @@ const withdrawClaim = async () => {
   )
   if (
     Number(balance) <
-    Number(props.weeklyClaim.wage.ratePerHour.find((rate) => rate.type === 'native')) *
+    Number(props.weeklyClaim.wage.ratePerHour.find((rate) => rate.type === 'native')?.amount || 0) *
       Number(props.weeklyClaim.hoursWorked)
   ) {
     isLoading.value = false
@@ -104,17 +120,14 @@ const withdrawClaim = async () => {
     const args = {
       abi: CASH_REMUNERATION_EIP712_ABI,
       functionName: 'withdraw' as const,
-      args: [claimData, props.weeklyClaim.signature as Address]
+      args: [claimData, props.weeklyClaim.signature as Address] as const
     }
-    // @ts-expect-error type issue
-    const data = encodeFunctionData(args)
-    // First run estimate gas to get errors
-    await estimateGas(config, {
-      to: cashRemunerationEip712Address.value,
-      data
+
+    await simulateContract(config, {
+      ...args,
+      address: cashRemunerationEip712Address.value
     })
 
-    // @ts-expect-error type issue
     const hash = await withdraw({
       ...args,
       address: cashRemunerationEip712Address.value
@@ -144,8 +157,9 @@ const withdrawClaim = async () => {
     isLoading.value = false
   } catch (error) {
     isLoading.value = false
-    log.info('Withdraw error', parseError(error))
-    const parsed = parseError(error)
+    log.error('Withdraw error', error)
+    const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
+
     if (parsed.includes('Insufficient token balance')) {
       toastStore.addErrorToast('Insufficient token balance')
     } else if (
@@ -155,7 +169,7 @@ const withdrawClaim = async () => {
     ) {
       toastStore.addErrorToast('Add Token support: Token not supported')
     } else {
-      toastStore.addErrorToast('Failed to withdraw')
+      toastStore.addErrorToast(/*'Failed to withdraw'*/ parsed)
     }
   }
 }

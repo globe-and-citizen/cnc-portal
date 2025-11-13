@@ -10,6 +10,7 @@ import apolloClient from './apollo-client'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import VueDatePicker from '@vuepic/vue-datepicker'
+import { useTabGuardStore } from '@/stores/useTabGuardStore'
 import * as Sentry from '@sentry/vue'
 
 export function setupApp() {
@@ -37,6 +38,9 @@ export function setupApp() {
   app.provide(DefaultApolloClient, apolloClient)
 
   app.component('VueDatePicker', VueDatePicker)
+  // Initialize single-tab guard after app mount
+
+  useTabGuardStore().init()
 
   // Initialize Sentry for error tracking
   Sentry.init({
@@ -66,8 +70,8 @@ export function setupApp() {
     tracesSampleRate: 0.1,
     tracePropagationTargets: ['localhost', /^https:\/\/cncportal\.io/],
     // Session Replay
-    replaysSessionSampleRate: 1.0, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
-    replaysOnErrorSampleRate: 1.0 // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+    replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
+    replaysOnErrorSampleRate: 0.1 // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
   })
 
   return app

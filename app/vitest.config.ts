@@ -7,7 +7,9 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 process.env.TZ = 'UTC'
-const mockFiles = ['store', 'composables'].map((name) => `./src/tests/setup/${name}.setup.ts`)
+const mockFiles = ['store', 'composables', 'wagmi.vue'].map(
+  (name) => `./src/tests/setup/${name}.setup.ts`
+)
 export default defineConfig((env) =>
   mergeConfig(viteConfig(env), {
     test: {
@@ -20,6 +22,9 @@ export default defineConfig((env) =>
         enabled: process.env.VITE_ENABLE_COVERAGE
           ? (process.env.VITE_ENABLE_COVERAGE as unknown as boolean)
           : false
+      },
+      env: {
+        VITE_APP_NETWORK_ALIAS: 'sepolia'
       }
     }
   })

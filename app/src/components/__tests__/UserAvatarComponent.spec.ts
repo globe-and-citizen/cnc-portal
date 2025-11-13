@@ -47,7 +47,7 @@ describe('UserAvatarComponent.vue', () => {
         props: { user: mockUser, isCollapsed: true }
       })
 
-      const userInfoContainer = wrapper.find('.flex-1.text-gray-800')
+      const userInfoContainer = wrapper.find('[data-test="user-info-container"]')
       expect(userInfoContainer.exists()).toBe(false)
     })
 
@@ -56,7 +56,7 @@ describe('UserAvatarComponent.vue', () => {
         props: { user: mockUser, isCollapsed: false }
       })
 
-      const userInfoContainer = wrapper.find('.flex-1.text-gray-800')
+      const userInfoContainer = wrapper.find('[data-test="user-info-container"]')
       expect(userInfoContainer.exists()).toBe(true)
     })
   })
@@ -67,7 +67,7 @@ describe('UserAvatarComponent.vue', () => {
         props: { user: mockUser, isDetailedView: true }
       })
 
-      const avatarContainer = wrapper.find('.relative.rounded-full')
+      const avatarContainer = wrapper.find('[data-test="avatar-container"]')
       expect(avatarContainer.classes()).toContain('w-24')
       expect(avatarContainer.classes()).toContain('h-24')
 
@@ -81,7 +81,7 @@ describe('UserAvatarComponent.vue', () => {
         props: { user: mockUser, isDetailedView: false }
       })
 
-      const avatarContainer = wrapper.find('.relative.rounded-full')
+      const avatarContainer = wrapper.find('[data-test="avatar-container"]')
       expect(avatarContainer.classes()).toContain('w-11')
       expect(avatarContainer.classes()).toContain('h-11')
 
@@ -99,7 +99,7 @@ describe('UserAvatarComponent.vue', () => {
       const roleButton = wrapper.find('[role="button"]')
       expect(roleButton.exists()).toBe(true)
 
-      const avatarImg = wrapper.find('img')
+      const avatarImg = wrapper.find('[data-test="avatar-image"]')
       expect(avatarImg.attributes('alt')).toBe('User Avatar')
     })
   })

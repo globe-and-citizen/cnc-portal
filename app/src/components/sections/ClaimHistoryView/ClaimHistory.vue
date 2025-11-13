@@ -1,4 +1,22 @@
 <template>
+  <div class="w-full pb-6">
+    <CardComponent>
+      <div class="flex gap-4 items-start">
+        <div v-if="imageUrl" class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden">
+          <img :src="imageUrl" alt="Card image" class="w-full h-full object-cover" />
+        </div>
+        <div class="flex flex-col gap-8">
+          <div class="card-title mt-4">{{ name }}</div>
+
+          <div class="flex items-center gap-2">
+            <img src="/Vector.png" alt="" class="w-4 h-4" />
+            <AddressToolTip :address="address" />
+          </div>
+          <!-- <div class="text-sm text-gray-500">{{ description }}</div> -->
+        </div>
+      </div>
+    </CardComponent>
+  </div>
   <div class="flex bg-transparent gap-x-4">
     <!-- Left Sidebar -->
     <CardComponent class="w-1/3 flex flex-col justify-between">
@@ -151,7 +169,14 @@
             </div>
 
             <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-1">
-              <div v-for="(claim, idx) in entry.claims" :key="idx">{{ claim.memo }} ...</div>
+              <div
+                v-for="claim in entry.claims"
+                :key="claim.id"
+                class="flex items-center justify-between gap-3"
+              >
+                <span>{{ claim.memo }}</span>
+                <ClaimActions v-if="canModifyClaims" :claim="claim" />
+              </div>
             </div>
 
             <div class="text-base flex items-center gap-2 w-1/5 justify-end">
@@ -174,6 +199,7 @@ import weekday from 'dayjs/plugin/weekday'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { formatIsoWeekRange, getMonthWeeks, type Week } from '@/utils/dayUtils'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+
 import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
 import WeeklyRecap from '@/components/WeeklyRecap.vue'
@@ -196,6 +222,9 @@ import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
+import { storeToRefs } from 'pinia'
+import AddressToolTip from '@/components/AddressToolTip.vue'
+import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
 
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
 dayjs.extend(utc)
@@ -216,6 +245,7 @@ const route = useRoute()
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const toastStore = useToastStore()
+const { imageUrl, name, address } = storeToRefs(userStore)
 const teamId = computed(() => teamStore.currentTeam?.id)
 const memberAddress = computed(() => route.params.memberAddress as string | undefined)
 
@@ -357,5 +387,13 @@ const barChartOption = computed(() => {
       }
     ]
   }
+})
+
+const canModifyClaims = computed(() => {
+  if (!selectWeekWeelyClaim.value) return false
+  return (
+    selectWeekWeelyClaim.value.status === 'pending' &&
+    selectWeekWeelyClaim.value.wage.userAddress === userStore.address
+  )
 })
 </script>
