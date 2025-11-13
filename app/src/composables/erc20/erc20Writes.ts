@@ -29,7 +29,6 @@ export function useERC20Transfer(
   to: MaybeRef<Address>,
   amount: MaybeRef<bigint>
 ) {
-
   const args = computed(() => [unref(to), unref(amount)] as readonly unknown[])
   return useERC20ContractWrite({
     contractAddress,
