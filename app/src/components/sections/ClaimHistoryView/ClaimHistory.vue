@@ -28,7 +28,7 @@
   </div>
   <div class="flex bg-transparent gap-x-4">
     <!-- Left Sidebar -->
-    <CardComponent class="w-1/3 flex flex-col justify-between">
+    <CardComponent class="min-w[270px] flex flex-col justify-between">
       <div class="space-y-8">
         <!-- Month Selector -->
         <MonthSelector v-model="selectedMonthObject" />
@@ -169,7 +169,7 @@
                 : 'bg-gray-100 text-gray-400'
             ]"
           >
-            <div class="flex items-center gap-2 w-1/5">
+            <div class="flex items-center gap-2 min-w-[120px]">
               <span
                 class="h-3 w-3 rounded-full"
                 :class="entry.hours > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
@@ -188,7 +188,7 @@
               </div>
             </div>
 
-            <div class="text-base flex items-center gap-2 w-1/5 justify-end">
+            <div class="text-base flex items-center gap-2 min-w-[90px] justify-end">
               <IconifyIcon icon="heroicons:clock" class="w-4 h-4 text-gray-500" />
               {{ entry.hours }} hours
             </div>

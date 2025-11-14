@@ -8,7 +8,7 @@ import {
 const weeklyClaimRoutes = express.Router();
 
 weeklyClaimRoutes.get('/', getTeamWeeklyClaims);
-weeklyClaimRoutes.get('/sync', syncWeeklyClaims);
+weeklyClaimRoutes.post('/sync', syncWeeklyClaims);
 weeklyClaimRoutes.put('/:id', updateWeeklyClaims);
 
 export default weeklyClaimRoutes;
