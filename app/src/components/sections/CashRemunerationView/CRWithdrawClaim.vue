@@ -63,12 +63,14 @@ const cashRemunerationEip712Address = computed(() =>
 )
 const { writeContractAsync: withdraw } = useWriteContract()
 
-const weeklyClaimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=withdraw`)
+// const weeklyClaimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=withdraw`)
 
-const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(weeklyClaimUrl, {
+const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeam?.id}`)
+
+const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(weeklyClaimSyncUrl, {
   immediate: false
 })
-  .put()
+  .post()
   .json()
 
 const isLoading = ref(false)

@@ -40,14 +40,12 @@ const cashRemunerationAddress = computed(() =>
 
 const claimAction = ref<'enable' | null>(null)
 
-const weeklyClaimUrl = computed(
-  () => `/weeklyclaim/${props.weeklyClaim.id}/?action=${claimAction.value}`
-)
+const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeam?.id}`)
 
-const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(weeklyClaimUrl, {
+const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(weeklyClaimSyncUrl, {
   immediate: false
 })
-  .put()
+  .post()
   .json()
 
 const isLoading = ref(false)

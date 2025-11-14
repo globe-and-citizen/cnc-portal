@@ -151,14 +151,14 @@ const isCashRemunerationOwner = computed(() => userStore.address === cashRemuner
 
 const claimAction = ref<'disable' | null>(null)
 
-const weeklyClaimUrl = computed(
-  () => `/weeklyclaim/${props.weeklyClaim.id}/?action=${claimAction.value}`
-)
+const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeam?.id}`)
 
-const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(weeklyClaimUrl, {
+//  `/weeklyclaim/${props.weeklyClaim.id}/?action=${claimAction.value}`
+
+const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(weeklyClaimSyncUrl, {
   immediate: false
 })
-  .put()
+  .post()
   .json()
 
 const isLoading = ref(false)
