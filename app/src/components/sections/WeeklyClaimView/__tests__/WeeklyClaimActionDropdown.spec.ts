@@ -218,4 +218,47 @@ describe('DropdownActions', () => {
 
     expect(removeEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
   })
+
+  describe('Disabled status', () => {
+    it('closes dropdown after enable action', async () => {
+      //@ts-expect-error only mocking necessary fields
+      vi.mocked(useUserDataStore).mockReturnValue({
+        address: '0xContractOwner'
+      })
+      const wrapper = createWrapper('disabled')
+      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      await button.trigger('click')
+
+      const enableComponent = wrapper.findComponent({ name: 'WeeklyClaimActionEnable' })
+      const enableAction = enableComponent.find('[data-test="enable-action"]')
+      expect(enableAction.exists()).toBeTruthy()
+
+      await enableAction.trigger('click')
+      expect(enableComponent.emitted()).toHaveProperty('close')
+      //@ts-expect-error not visible on wrapper
+      expect(wrapper.vm.isOpen).toBeFalsy()
+    })
+  })
+
+  describe('Signed status', () => {
+    it('calls disableClaim and closes dropdown on Disable action', async () => {
+      //@ts-expect-error only mocking necessary fields
+      vi.mocked(useUserDataStore).mockReturnValue({
+        address: '0xContractOwner'
+      })
+
+      const wrapper = createWrapper('signed')
+      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      await button.trigger('click')
+
+      const signedDisable = wrapper.find('[data-test="signed-disable"]')
+      const disableLink = signedDisable.find('a')
+
+      await disableLink.trigger('click')
+      await flushPromises()
+
+      //@ts-expect-error not visible on wrapper
+      expect(wrapper.vm.isOpen).toBeFalsy()
+    })
+  })
 })
