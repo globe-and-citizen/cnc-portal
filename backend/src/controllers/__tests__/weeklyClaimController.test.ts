@@ -638,13 +638,13 @@ describe('Weekly Claim Controller', () => {
     });
   });
 
-  describe('GET: /sync', () => {
+  describe('POST: /sync', () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
 
     it('should return 400 if teamId is missing', async () => {
-      const response = await request(app).get('/sync');
+      const response = await request(app).post('/sync');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
         message: 'Missing or invalid teamId',
@@ -654,7 +654,7 @@ describe('Weekly Claim Controller', () => {
     it('should return 404 if cash remuneration contract not found for team', async () => {
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(null);
 
-      const response = await request(app).get('/sync?teamId=1');
+      const response = await request(app).post('/sync?teamId=1');
       expect(response.status).toBe(404);
       expect(response.body).toEqual({
         message: 'Cash Remuneration contract not found for the team',
@@ -671,7 +671,7 @@ describe('Weekly Claim Controller', () => {
         updatedAt: new Date(),
       } as any);
 
-      const response = await request(app).get('/sync?teamId=1');
+      const response = await request(app).post('/sync?teamId=1');
       expect(response.status).toBe(404);
       expect(response.body).toEqual({
         message: 'Cash Remuneration contract not found for the team',
@@ -712,7 +712,7 @@ describe('Weekly Claim Controller', () => {
         status: 'withdrawn',
       });
 
-      const response = await request(app).get('/sync?teamId=1');
+      const response = await request(app).post('/sync?teamId=1');
       expect(response.status).toBe(200);
       expect(response.body.teamId).toBe(1);
       expect(response.body.totalProcessed).toBe(2);
@@ -746,7 +746,7 @@ describe('Weekly Claim Controller', () => {
       readContractMock.mockReset();
       readContractMock.mockRejectedValueOnce(new Error('RPC error'));
 
-      const response = await request(app).get('/sync?teamId=1');
+      const response = await request(app).post('/sync?teamId=1');
       expect(response.status).toBe(200);
       expect(response.body.updated).toEqual([]);
       expect(response.body.skipped).toEqual([{ id: 5, reason: 'Failed to read contract state' }]);
@@ -764,7 +764,7 @@ describe('Weekly Claim Controller', () => {
 
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockRejectedValue(new Error('Database failure'));
 
-      const response = await request(app).get('/sync?teamId=1');
+      const response = await request(app).post('/sync?teamId=1');
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
         message: 'Internal server error has occured',
