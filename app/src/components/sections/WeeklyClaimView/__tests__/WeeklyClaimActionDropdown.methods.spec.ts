@@ -169,12 +169,12 @@ describe('DropdownActions', () => {
       expect(mocks.mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim disabled')
     })
 
-    it.skip('should handle disable claim errors properly', async () => {
+    it('should handle disable claim errors properly', async () => {
       const { useCustomFetch } = await import('@/composables')
 
       //@ts-expect-error only mocking required values
       vi.mocked(useCustomFetch).mockReturnValue({
-        put: vi.fn().mockReturnThis(),
+        post: vi.fn().mockReturnThis(),
         json: vi.fn().mockReturnValue({
           execute: vi.fn().mockResolvedValue({}),
           error: ref(new Error('Update failed'))
