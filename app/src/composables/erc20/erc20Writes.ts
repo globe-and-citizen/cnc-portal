@@ -6,7 +6,7 @@ import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
 import type { ExtractAbiFunctionNames } from 'abitype'
 import { computed, unref } from 'vue'
 
-type ERC20FunctionNames = ExtractAbiFunctionNames<typeof erc20Abi>
+export type ERC20FunctionNames = ExtractAbiFunctionNames<typeof erc20Abi>
 
 // Helper function to wrap useContractWrites for ERC20 contract
 export function useERC20ContractWrite(options: {

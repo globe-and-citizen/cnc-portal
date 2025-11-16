@@ -99,7 +99,9 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
         return 'Transaction verified successfully. Ready for approval.'
       case 'error':
         // return the first sentence of the error message
-        return parseErrorV2(simulateGasResult.error.value ?? new Error('Unknown error during simulation'))
+        return parseErrorV2(
+          simulateGasResult.error.value ?? new Error('Unknown error during simulation')
+        )
 
       // switch (errorType) {
       //   case 'revert':
