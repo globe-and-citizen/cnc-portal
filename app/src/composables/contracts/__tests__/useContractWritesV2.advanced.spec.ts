@@ -61,7 +61,8 @@ vi.mock('@/composables/useTransactionTimeline', () => ({
 vi.mock('@/utils', () => ({
   formatDataForDisplay: mockFormatDataForDisplay,
   log: mockLog,
-  waitForCondition: mockWaitForCondition
+  waitForCondition: mockWaitForCondition,
+  parseErrorV2: vi.fn((error) => error)
 }))
 
 // Test constants
