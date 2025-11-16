@@ -47,7 +47,7 @@ vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
   }))
 }))
 
-vi.mock('@/composables/erc20/index', () => ({
+vi.mock('@/composables/erc20/reads', () => ({
   useERC20Reads: vi.fn(() => ({
     useErc20Allowance: mockUseErc20Allowance
   }))

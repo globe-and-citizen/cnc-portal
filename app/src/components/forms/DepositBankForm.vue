@@ -71,13 +71,13 @@ import { ref, computed, watch } from 'vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
-import { useERC20Reads } from '@/composables/erc20/index'
+import { useERC20Approve } from '@/composables/erc20/erc20Writes'
+import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useDepositToken } from '@/composables/bank/bankWrites'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import ButtonUI from '../ButtonUI.vue'
 import TokenAmount from './TokenAmount.vue'
-import { useERC20Approve } from '@/composables/erc20/erc20Writes'
 // import { formatDataForDisplay, parseError } from '@/utils'
 // import TransactionTimeline from '../ui/TransactionTimeline.vue'
 
@@ -143,9 +143,12 @@ const selectedToken = computed(() =>
 const selectedTokenAddress = computed<Address>(
   () => selectedToken.value?.token.address ?? zeroAddress
 )
-const { useErc20Allowance } = useERC20Reads(selectedTokenAddress)
 
-const { data: allowance } = useErc20Allowance(userDataStore.address as Address, props.bankAddress)
+const { data: allowance } = useErc20Allowance(
+  selectedTokenAddress,
+  userDataStore.address as Address,
+  props.bankAddress
+)
 
 // Computed values for approval composable
 const bigIntAmount = computed(() => BigInt(Number(amount.value) * 1e6))
