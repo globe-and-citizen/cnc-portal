@@ -118,7 +118,6 @@ vi.mock('@/composables/useContractBalance', () => ({
 }))
 
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
-import { write } from 'fs'
 
 describe('DepositBankForm.vue', () => {
   const defaultProps = {
