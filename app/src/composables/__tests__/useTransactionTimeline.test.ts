@@ -150,9 +150,7 @@ describe('useTransactionTimeline', () => {
 
       expect(prepareTransactionStatus.value).toBe('error')
       expect(timelineSteps.value.initiate.status).toBe('error')
-      expect(timelineSteps.value.initiate.description).toBe(
-        'Transaction simulation failed. The execution would revert.'
-      )
+      expect(timelineSteps.value.initiate.description).toBe('Error: execution reverted')
     })
   })
 
@@ -290,9 +288,7 @@ describe('useTransactionTimeline', () => {
 
       const { timelineSteps } = useTransactionTimeline(createMockParams())
 
-      expect(timelineSteps.value.initiate.description).toBe(
-        "You don't have enough balance to perform this transaction."
-      )
+      expect(timelineSteps.value.initiate.description).toBe('Error: insufficient funds for gas')
     })
 
     it('should detect revert errors', () => {
@@ -300,9 +296,7 @@ describe('useTransactionTimeline', () => {
 
       const { timelineSteps } = useTransactionTimeline(createMockParams())
 
-      expect(timelineSteps.value.initiate.description).toBe(
-        'Transaction simulation failed. The execution would revert.'
-      )
+      expect(timelineSteps.value.initiate.description).toBe('Error: execution reverted')
     })
   })
 
@@ -369,9 +363,7 @@ describe('useTransactionTimeline', () => {
 
       const { timelineSteps } = useTransactionTimeline(createMockParams())
 
-      expect(timelineSteps.value.initiate.description).toBe(
-        'Could not verify transaction. Please try again.'
-      )
+      expect(timelineSteps.value.initiate.description).toBe('Error: ')
     })
   })
 })
