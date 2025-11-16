@@ -242,10 +242,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       errorRef.value = writeError
       await nextTick()
 
-      expect(mockLog.error).toHaveBeenCalledWith(
-        'Contract write error. \n',
-        expect.any(String)
-      )
+      expect(mockLog.error).toHaveBeenCalledWith('Contract write error. \n', expect.any(String))
     })
 
     it('should handle receipt error watchers', async () => {
