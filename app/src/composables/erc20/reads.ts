@@ -54,7 +54,7 @@ export function useErc20BalanceOf(contractAddress: MaybeRef<Address>, account: M
   return useReadContract({
     address: erc20Address,
     abi: ERC20_ABI,
-    functionName: "balanceOf" as const,
+    functionName: 'balanceOf' as const,
     args: [accountValue],
     query: { enabled: computed(() => isErc20AddressValid.value && !!accountValue.value) }
   })
@@ -73,7 +73,7 @@ export function useErc20Allowance(
   return useReadContract({
     address: erc20Address,
     abi: ERC20_ABI,
-    functionName: "allowance" as const,
+    functionName: 'allowance' as const,
     args: [ownerValue, spenderValue],
     query: {
       enabled: computed(
