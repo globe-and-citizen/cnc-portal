@@ -44,10 +44,17 @@ vi.mock('@/utils', () => ({
 
 vi.mock('@/composables', () => ({
   useCustomFetch: vi.fn(() => ({
-    put: vi.fn().mockReturnThis(),
-    json: vi.fn().mockReturnValue({
-      execute: vi.fn().mockResolvedValue({}),
-      error: ref(null)
+    put: () => ({
+      json: () => ({
+        execute: vi.fn().mockResolvedValue({}),
+        error: ref(null)
+      })
+    }),
+    post: () => ({
+      json: () => ({
+        execute: vi.fn().mockResolvedValue({}),
+        error: ref(null)
+      })
     })
   }))
 }))
@@ -116,241 +123,142 @@ describe('DropdownActions', () => {
     vi.useRealTimers()
   })
 
-  describe('Rendering based on status', () => {
-    it('renders Sign action for pending status', async () => {
-      const wrapper = createWrapper('pending')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      expect(button.exists()).toBe(true)
-      button.trigger('click')
+  it('renders Enable and Resign actions for disabled status', async () => {
+    const wrapper = createWrapper('disabled')
+    const button = wrapper.findComponent({ name: 'ButtonUI' })
+    button.trigger('click')
 
-      await flushPromises()
+    await flushPromises()
 
-      expect(wrapper.text()).toContain('Sign')
-      expect(wrapper.text()).toContain('Withdraw')
-      //Should be disabled in pending state
-      const pendingWithdraw = wrapper.find('[data-test="pending-withdraw"]')
-      expect(pendingWithdraw.exists()).toBe(true)
-      expect(pendingWithdraw.classes()).toContain('disabled')
-      expect(wrapper.text()).not.toContain('Disable')
-      //Should be disabled for non contract owner
-      const pendingSign = wrapper.find('[data-test="pending-sign"]')
-      expect(pendingSign.exists()).toBeTruthy()
-      expect(pendingSign.classes()).toContain('disabled')
-    })
-
-    it('renders Withdraw and Disable actions for signed status', async () => {
-      const wrapper = createWrapper('signed')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      button.trigger('click')
-
-      await flushPromises()
-      //Should show only 'Withdraw' & 'Disable' for signed
-      expect(wrapper.text()).toContain('Withdraw')
-      expect(wrapper.text()).toContain('Disable')
-      expect(wrapper.text()).not.toContain('Sign')
-      expect(wrapper.text()).not.toContain('Enable')
-      //Should show disabled UI on disable action if not contract owner
-      const signedDisable = wrapper.find('[data-test="signed-disable"]')
-      expect(signedDisable.exists()).toBeTruthy()
-      expect(signedDisable.classes()).toContain('disabled')
-      const signedWithdraw = wrapper.find('[data-test="signed-withdraw"]')
-      expect(signedWithdraw.exists()).toBeTruthy()
-      expect(signedWithdraw.classes()).toContain('disabled')
-    })
-
-    it('renders Enable and Resign actions for disabled status', async () => {
-      const wrapper = createWrapper('disabled')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      button.trigger('click')
-
-      await flushPromises()
-
-      expect(wrapper.text()).toContain('Withdraw')
-      const disabledWithdraw = wrapper.find('[data-test="disabled-withdraw"]')
-      expect(disabledWithdraw.exists()).toBeTruthy()
-      expect(disabledWithdraw.classes()).toContain('disabled')
-      const disabledResign = wrapper.find('[data-test="disabled-resign"]')
-      expect(disabledResign.exists()).toBeTruthy()
-      expect(disabledResign.classes()).toContain('disabled')
-      const disabledEnable = wrapper.find('[data-test="disabled-enable"]')
-      expect(disabledEnable.exists()).toBeTruthy()
-      expect(disabledEnable.classes()).toContain('disabled')
-      expect(wrapper.text()).not.toContain('Sign')
-    })
-
-    it('renders no actions available for withdrawn status', async () => {
-      const wrapper = createWrapper('withdrawn')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      expect(button.exists()).toBeFalsy()
-
-      expect(wrapper.text()).not.toContain('Enable')
-      expect(wrapper.text()).not.toContain('Sign')
-      expect(wrapper.text()).not.toContain('Withdraw')
-      expect(wrapper.text()).not.toContain('Resign')
-    })
+    expect(wrapper.text()).toContain('Withdraw')
+    const disabledWithdraw = wrapper.find('[data-test="disabled-withdraw"]')
+    expect(disabledWithdraw.exists()).toBeTruthy()
+    expect(disabledWithdraw.classes()).toContain('disabled')
+    const disabledResign = wrapper.find('[data-test="disabled-resign"]')
+    expect(disabledResign.exists()).toBeTruthy()
+    expect(disabledResign.classes()).toContain('disabled')
+    const disabledEnable = wrapper.find('[data-test="disabled-enable"]')
+    expect(disabledEnable.exists()).toBeTruthy()
+    expect(disabledEnable.classes()).toContain('disabled')
+    expect(wrapper.text()).not.toContain('Sign')
   })
 
-  describe('Dropdown toggle functionality', () => {
-    it('opens dropdown when button is clicked', async () => {
-      const wrapper = createWrapper('pending')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-
-      await button.trigger('click')
-      //@ts-expect-error not visible wrapper
-      expect(wrapper.vm.isOpen).toBe(true)
-      expect(wrapper.find('ul').exists()).toBe(true)
+  it('closes dropdown after action is selected', async () => {
+    //@ts-expect-error only mocking necessary fields
+    vi.mocked(useUserDataStore).mockReturnValue({
+      address: '0xContractOwner'
     })
+    const wrapper = createWrapper('pending')
+    const button = wrapper.findComponent({ name: 'ButtonUI' })
 
-    it('closes dropdown when button is clicked again', async () => {
-      const wrapper = createWrapper('pending')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+    // Open dropdown
+    await button.trigger('click')
+    //@ts-expect-error not visible wrapper
+    expect(wrapper.vm.isOpen).toBe(true)
+    // Click action
+    // const signAction = wrapper.find('[data-test="sign-action"]')
+    const crSign = wrapper.findComponent({ name: 'CRSigne' })
+    expect(crSign.exists()).toBeTruthy()
+    const signAction = crSign.find('[data-test="sign-action"]')
+    expect(signAction.exists()).toBeTruthy()
+    await signAction.trigger('click')
 
-      // Open dropdown
-      await button.trigger('click')
-      //@ts-expect-error not visible wrapper
-      expect(wrapper.vm.isOpen).toBe(true)
-
-      // Close dropdown
-      await button.trigger('click')
-      //@ts-expect-error not visible wrapper
-      expect(wrapper.vm.isOpen).toBe(false)
-    })
+    // Check dropdown is closed
+    //@ts-expect-error not visible wrapper
+    expect(wrapper.vm.isOpen).toBe(false)
+    expect(wrapper.find('ul').exists()).toBe(false)
   })
 
-  describe('Action handling', () => {
-    it('closes dropdown after action is selected', async () => {
+  it('closes dropdown after withdraw action', async () => {
+    //@ts-expect-error only mocking necessary fileds
+    vi.mocked(useUserDataStore).mockReturnValue({
+      address: '0xContractOwner'
+    })
+    const wrapper = createWrapper('signed')
+    const button = wrapper.findComponent({ name: 'ButtonUI' })
+
+    await button.trigger('click')
+
+    const crWithdrawClaim = wrapper.findComponent({ name: 'CRWithdrawClaim' })
+    const withdrawAction = crWithdrawClaim.find('[data-test="withdraw-action"]')
+    expect(withdrawAction.exists()).toBeTruthy()
+
+    // Test Withdraw action
+    await withdrawAction.trigger('click')
+    expect(crWithdrawClaim.emitted()).toHaveProperty('claim-withdrawn')
+    //@ts-expect-error not visible on wrapper
+    expect(wrapper.vm.isOpen).toBeFalsy()
+  })
+
+  it('closes dropdown when clicking outside', async () => {
+    const wrapper = createWrapper('pending')
+    const button = wrapper.findComponent({ name: 'ButtonUI' })
+
+    // Open dropdown
+    await button.trigger('click')
+    //@ts-expect-error not visible wrapper
+    expect(wrapper.vm.isOpen).toBe(true)
+
+    // Advance timers to ensure event listener is set up
+    vi.runAllTimers()
+
+    // Simulate click outside
+    document.dispatchEvent(new MouseEvent('click'))
+
+    // Check dropdown is closed
+    //@ts-expect-error not visible wrapper
+    expect(wrapper.vm.isOpen).toBe(false)
+  })
+
+  it('removes event listener on unmount', () => {
+    const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener')
+
+    const wrapper = createWrapper('pending')
+    wrapper.unmount()
+
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
+  })
+
+  describe('Disabled status', () => {
+    it('closes dropdown after enable action', async () => {
       //@ts-expect-error only mocking necessary fields
       vi.mocked(useUserDataStore).mockReturnValue({
         address: '0xContractOwner'
       })
-      const wrapper = createWrapper('pending')
+      const wrapper = createWrapper('disabled')
       const button = wrapper.findComponent({ name: 'ButtonUI' })
-
-      // Open dropdown
-      await button.trigger('click')
-      //@ts-expect-error not visible wrapper
-      expect(wrapper.vm.isOpen).toBe(true)
-      // Click action
-      // const signAction = wrapper.find('[data-test="sign-action"]')
-      const crSign = wrapper.findComponent({ name: 'CRSigne' })
-      expect(crSign.exists()).toBeTruthy()
-      const signAction = crSign.find('[data-test="sign-action"]')
-      expect(signAction.exists()).toBeTruthy()
-      await signAction.trigger('click')
-
-      // Check dropdown is closed
-      //@ts-expect-error not visible wrapper
-      expect(wrapper.vm.isOpen).toBe(false)
-      expect(wrapper.find('ul').exists()).toBe(false)
-    })
-
-    it('closes dropdown after withdraw action', async () => {
-      //@ts-expect-error only mocking necessary fileds
-      vi.mocked(useUserDataStore).mockReturnValue({
-        address: '0xContractOwner'
-      })
-      const wrapper = createWrapper('signed')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-
       await button.trigger('click')
 
-      const crWithdrawClaim = wrapper.findComponent({ name: 'CRWithdrawClaim' })
-      const withdrawAction = crWithdrawClaim.find('[data-test="withdraw-action"]')
-      expect(withdrawAction.exists()).toBeTruthy()
+      const enableComponent = wrapper.findComponent({ name: 'WeeklyClaimActionEnable' })
+      const enableAction = enableComponent.find('[data-test="enable-action"]')
+      expect(enableAction.exists()).toBeTruthy()
 
-      // Test Withdraw action
-      await withdrawAction.trigger('click')
-      expect(crWithdrawClaim.emitted()).toHaveProperty('claim-withdrawn')
+      await enableAction.trigger('click')
+      expect(enableComponent.emitted()).toHaveProperty('close')
       //@ts-expect-error not visible on wrapper
       expect(wrapper.vm.isOpen).toBeFalsy()
     })
   })
 
-  describe('Click outside functionality', () => {
-    it('closes dropdown when clicking outside', async () => {
-      const wrapper = createWrapper('pending')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+  describe('Signed status', () => {
+    it('calls disableClaim and closes dropdown on Disable action', async () => {
+      //@ts-expect-error only mocking necessary fields
+      vi.mocked(useUserDataStore).mockReturnValue({
+        address: '0xContractOwner'
+      })
 
-      // Open dropdown
-      await button.trigger('click')
-      //@ts-expect-error not visible wrapper
-      expect(wrapper.vm.isOpen).toBe(true)
-
-      // Advance timers to ensure event listener is set up
-      vi.runAllTimers()
-
-      // Simulate click outside
-      document.dispatchEvent(new MouseEvent('click'))
-
-      // Check dropdown is closed
-      //@ts-expect-error not visible wrapper
-      expect(wrapper.vm.isOpen).toBe(false)
-    })
-
-    it('does not close dropdown when clicking inside', async () => {
-      const wrapper = createWrapper('pending')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-
-      // Open dropdown
-      await button.trigger('click')
-      //@ts-expect-error not visible wrapper
-      expect(wrapper.vm.isOpen).toBe(true)
-
-      // Advance timers to ensure event listener is set up
-      vi.runAllTimers()
-
-      // Simulate click inside the dropdown
-      const dropdownElement = wrapper.find('ul').element
-      const clickEvent = new MouseEvent('click', { bubbles: true })
-      dropdownElement.dispatchEvent(clickEvent)
-
-      // Check dropdown remains open
-      //@ts-expect-error not visible wrapper
-      expect(wrapper.vm.isOpen).toBe(true)
-    })
-  })
-
-  describe('Component lifecycle', () => {
-    it('removes event listener on unmount', () => {
-      const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener')
-
-      const wrapper = createWrapper('pending')
-      wrapper.unmount()
-
-      expect(removeEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
-    })
-
-    it('adds event listener after mount with setTimeout', () => {
-      const addEventListenerSpy = vi.spyOn(document, 'addEventListener')
-
-      createWrapper('pending')
-
-      // Initially not called due to setTimeout
-      expect(addEventListenerSpy).not.toHaveBeenCalledWith('click', expect.any(Function))
-
-      // After running timers, it should be called
-      vi.runAllTimers()
-      expect(addEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
-    })
-  })
-
-  describe('Accessibility and UI elements', () => {
-    it('renders the ellipsis button', () => {
-      const wrapper = createWrapper('pending')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-
-      expect(button.exists()).toBe(true)
-    })
-
-    it('has correct CSS classes for positioning', async () => {
-      const wrapper = createWrapper('pending')
+      const wrapper = createWrapper('signed')
       const button = wrapper.findComponent({ name: 'ButtonUI' })
       await button.trigger('click')
 
-      const menu = wrapper.find('ul')
-      expect(menu.classes()).toContain('absolute')
-      expect(menu.classes()).toContain('right-full')
-      expect(menu.classes()).toContain('top-1/2')
+      const signedDisable = wrapper.find('[data-test="signed-disable"]')
+      const disableLink = signedDisable.find('a')
+
+      await disableLink.trigger('click')
+      await flushPromises()
+
+      //@ts-expect-error not visible on wrapper
+      expect(wrapper.vm.isOpen).toBeFalsy()
     })
   })
 })

@@ -40,14 +40,15 @@ const cashRemunerationAddress = computed(() =>
 
 const claimAction = ref<'enable' | null>(null)
 
-const weeklyClaimUrl = computed(
-  () => `/weeklyclaim/${props.weeklyClaim.id}/?action=${claimAction.value}`
-)
+const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeam?.id}`)
 
-const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(weeklyClaimUrl, {
-  immediate: false
-})
-  .put()
+const { execute: syncWeeklyClaim, error: syncWeeklyClaimError } = useCustomFetch(
+  weeklyClaimSyncUrl,
+  {
+    immediate: false
+  }
+)
+  .post()
   .json()
 
 const isLoading = ref(false)
@@ -89,9 +90,9 @@ const enableClaim = async () => {
 
       claimAction.value = 'enable'
 
-      await updateClaimStatus()
+      await syncWeeklyClaim()
 
-      if (updateClaimError.value) {
+      if (syncWeeklyClaimError.value) {
         toastStore.addErrorToast('Failed to update Claim status')
       }
       queryClient.invalidateQueries({

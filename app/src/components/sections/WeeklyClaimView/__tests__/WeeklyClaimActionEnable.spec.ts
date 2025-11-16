@@ -47,7 +47,7 @@ vi.mock('@/utils', () => ({
 
 vi.mock('@/composables', () => ({
   useCustomFetch: vi.fn(() => ({
-    put: vi.fn().mockReturnThis(),
+    post: vi.fn().mockReturnThis(),
     json: vi.fn().mockReturnValue({
       execute: vi.fn().mockResolvedValue({}),
       error: ref(null)
@@ -140,7 +140,7 @@ describe('DropdownActions', () => {
       // Should show update claim status error
       expect(mocks.mockWagmiCore.writeContract).toBeCalled()
       //@ts-expect-error not visible on wrapper
-      expect(wrapper.vm.weeklyClaimUrl).toBe('/weeklyclaim/1/?action=enable')
+      expect(wrapper.vm.weeklyClaimSyncUrl).toBe('/weeklyclaim/sync/?teamId=1')
       expect(mocks.mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim enabled')
     })
 
@@ -149,7 +149,7 @@ describe('DropdownActions', () => {
 
       //@ts-expect-error only mocking required values
       vi.mocked(useCustomFetch).mockReturnValue({
-        put: vi.fn().mockReturnThis(),
+        post: vi.fn().mockReturnThis(),
         json: vi.fn().mockReturnValue({
           execute: vi.fn().mockResolvedValue({}),
           error: ref(new Error('Update failed'))

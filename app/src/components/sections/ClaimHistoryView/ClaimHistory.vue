@@ -2,15 +2,24 @@
   <div class="w-full pb-6">
     <CardComponent>
       <div class="flex gap-4 items-start">
-        <div v-if="imageUrl" class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden">
-          <img :src="imageUrl" alt="Card image" class="w-full h-full object-cover" />
+        <div
+          v-if="displayedImageUrl"
+          class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden"
+          data-test="claim-user-image-wrapper"
+        >
+          <img
+            :src="displayedImageUrl"
+            alt="User image"
+            class="w-full h-full object-cover"
+            data-test="claim-user-image"
+          />
         </div>
         <div class="flex flex-col gap-8">
-          <div class="card-title mt-4">{{ name }}</div>
+          <div class="card-title mt-4" data-test="claim-user-name">{{ displayedName }}</div>
 
           <div class="flex items-center gap-2">
             <img src="/Vector.png" alt="" class="w-4 h-4" />
-            <AddressToolTip :address="address" />
+            <AddressToolTip :address="displayedAddress" data-test="claim-user-address" />
           </div>
           <!-- <div class="text-sm text-gray-500">{{ description }}</div> -->
         </div>
@@ -19,7 +28,7 @@
   </div>
   <div class="flex bg-transparent gap-x-4">
     <!-- Left Sidebar -->
-    <CardComponent class="w-1/3 flex flex-col justify-between">
+    <CardComponent class="min-w[270px] flex flex-col justify-between">
       <div class="space-y-8">
         <!-- Month Selector -->
         <MonthSelector v-model="selectedMonthObject" />
@@ -160,7 +169,7 @@
                 : 'bg-gray-100 text-gray-400'
             ]"
           >
-            <div class="flex items-center gap-2 w-1/5">
+            <div class="flex items-center gap-2 min-w-[120px]">
               <span
                 class="h-3 w-3 rounded-full"
                 :class="entry.hours > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
@@ -179,7 +188,7 @@
               </div>
             </div>
 
-            <div class="text-base flex items-center gap-2 w-1/5 justify-end">
+            <div class="text-base flex items-center gap-2 min-w-[90px] justify-end">
               <IconifyIcon icon="heroicons:clock" class="w-4 h-4 text-gray-500" />
               {{ entry.hours }} hours
             </div>
@@ -222,7 +231,6 @@ import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
-import { storeToRefs } from 'pinia'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
 
@@ -230,6 +238,38 @@ use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart,
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 dayjs.extend(weekday)
+
+const route = useRoute()
+const teamStore = useTeamStore()
+const userStore = useUserDataStore()
+const toastStore = useToastStore()
+// Adresse du membre ciblé via la route (peut être undefined -> on affiche l'utilisateur courant)
+const memberAddress = computed(() => route.params.memberAddress as string | undefined)
+
+// Détermine le membre affiché (priorité: membre paramètre route, sinon utilisateur courant)
+const displayedMember = computed(() => {
+  const members = teamStore.currentTeam?.members || []
+  const memberAddr = memberAddress.value?.toLowerCase()
+
+  if (memberAddr && memberAddr !== userStore.address.toLowerCase()) {
+    const memberFound = members.find((member) => member.address.toLowerCase() === memberAddr)
+    if (memberFound) return memberFound
+  }
+
+  return {
+    id: 'current-user',
+    name: userStore.name,
+    address: userStore.address,
+    teamId: Number(teamStore.currentTeam?.id) || 0,
+    imageUrl: userStore.imageUrl
+  }
+})
+
+const displayedName = computed(() => displayedMember.value.name)
+const displayedAddress = computed(() => displayedMember.value.address)
+const displayedImageUrl = computed(() => displayedMember.value.imageUrl)
+
+// Couleur des badges de statut de weekly claim
 
 const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 
@@ -241,13 +281,7 @@ const getColor = (weeklyClaim?: WeeklyClaim) => {
   return 'accent'
 }
 
-const route = useRoute()
-const teamStore = useTeamStore()
-const userStore = useUserDataStore()
-const toastStore = useToastStore()
-const { imageUrl, name, address } = storeToRefs(userStore)
 const teamId = computed(() => teamStore.currentTeam?.id)
-const memberAddress = computed(() => route.params.memberAddress as string | undefined)
 
 const weeklyClaimQueryKey = computed(() => [
   'weekly-claims',
