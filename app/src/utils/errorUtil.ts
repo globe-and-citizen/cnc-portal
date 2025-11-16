@@ -51,7 +51,9 @@ export const parseError = (error: unknown, abi: Abi | undefined = undefined) => 
  * @returns Error Name + First sentence of Error Message
  */
 export const parseErrorV2 = (error: Error) => {
-  return error.name + ': ' + error.message.split('.')[0]
+  const message = error.message || 'Unknown error'
+  const firstSentence = message.includes('.') ? message.split('.')[0] : message
+  return `${error.name}: ${firstSentence}`
 }
 
 /**
