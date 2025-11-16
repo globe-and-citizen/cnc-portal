@@ -5,7 +5,7 @@
       <ButtonUI variant="secondary" @click="unpauseResult.executeWrite()">Unpause Bank</ButtonUI>
     </div>
     <h2>
-      Bank paused Status is <span class="text-red-500">{{ pauseStatus.data }}</span>
+      <!-- Bank paused Status is <span class="text-red-500">{{ pauseStatus.data }}</span> -->
     </h2>
     <div class="card bg-base-100 shadow-xl">
       <div class="card-body">
@@ -28,21 +28,21 @@
       </div>
     </div>
     <div class="flex">
-      <pre>{{ pauseStatus }}</pre>
+      <!-- <pre>{{ pauseStatus }}</pre> -->
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useBankReads } from '@/composables/bank'
+// import { useBankReads } from '@/composables/bank'
 import { usePause, useUnpause } from '@/composables/bank/bankWrites'
 import ButtonUI from '@/components/ButtonUI.vue'
 import TransactionTimeline from '@/components/ui/TransactionTimeline.vue'
 
-const { useBankPaused } = useBankReads()
+// const { useBankPaused } = useBankReads()
 
 // Get contract data with loading and error states
-const pauseStatus = useBankPaused()
+// const pauseStatus = useBankPaused()
 const pauseResult = usePause()
 const unpauseResult = useUnpause()
 </script>

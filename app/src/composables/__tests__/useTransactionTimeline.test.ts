@@ -49,6 +49,7 @@ describe('useTransactionTimeline', () => {
 
   const mockSimulateData = ref<unknown>(null)
   const mockSimulateIsLoading = ref(false)
+  const mockSimulateIsSuccess = ref(false)
   const mockSimulateError = ref<unknown>(null)
 
   const createMockParams = (): TransactionTimelineParams => ({
@@ -66,6 +67,7 @@ describe('useTransactionTimeline', () => {
     simulateGasResult: {
       data: mockSimulateData,
       isLoading: mockSimulateIsLoading,
+      isSuccess: mockSimulateIsSuccess,
       error: mockSimulateError
     } as UseSimulateContractReturnType
   })
@@ -85,6 +87,7 @@ describe('useTransactionTimeline', () => {
 
     mockSimulateData.value = null
     mockSimulateIsLoading.value = false
+    mockSimulateIsSuccess.value = false
     mockSimulateError.value = null
   })
 
@@ -129,6 +132,7 @@ describe('useTransactionTimeline', () => {
 
     it('should show success state when simulation completes', () => {
       mockSimulateData.value = MOCK_DATA.simulateResult as unknown
+      mockSimulateIsSuccess.value = true
 
       const { timelineSteps, prepareTransactionStatus } = useTransactionTimeline(createMockParams())
 
@@ -146,15 +150,14 @@ describe('useTransactionTimeline', () => {
 
       expect(prepareTransactionStatus.value).toBe('error')
       expect(timelineSteps.value.initiate.status).toBe('error')
-      expect(timelineSteps.value.initiate.description).toBe(
-        'Transaction simulation failed. The execution would revert.'
-      )
+      expect(timelineSteps.value.initiate.description).toBe('Error: execution reverted')
     })
   })
 
   describe('Step 2: Approve Transaction', () => {
     it('should be ready when prepare succeeds', () => {
       mockSimulateData.value = MOCK_DATA.simulateResult
+      mockSimulateIsSuccess.value = true
 
       const { timelineSteps, currentStep } = useTransactionTimeline(createMockParams())
 
@@ -164,6 +167,7 @@ describe('useTransactionTimeline', () => {
 
     it('should show loading state when write is pending', () => {
       mockSimulateData.value = MOCK_DATA.simulateResult
+      mockSimulateIsSuccess.value = true
       mockWriteIsPending.value = true
 
       const { timelineSteps, approveTransactionStatus } = useTransactionTimeline(createMockParams())
@@ -177,6 +181,7 @@ describe('useTransactionTimeline', () => {
 
     it('should handle user rejection error', () => {
       mockSimulateData.value = MOCK_DATA.simulateResult
+      mockSimulateIsSuccess.value = true
       mockWriteError.value = new Error('User rejected the request')
 
       const { timelineSteps } = useTransactionTimeline(createMockParams())
@@ -191,6 +196,7 @@ describe('useTransactionTimeline', () => {
   describe('Step 3: Processing Transaction', () => {
     it('should show loading state when receipt is loading', () => {
       mockSimulateData.value = MOCK_DATA.simulateResult
+      mockSimulateIsSuccess.value = true
       mockWriteData.value = MOCK_DATA.validTxHash
       mockReceiptIsLoading.value = true
 
@@ -206,6 +212,7 @@ describe('useTransactionTimeline', () => {
 
     it('should show success state when receipt is received', () => {
       mockSimulateData.value = MOCK_DATA.simulateResult
+      mockSimulateIsSuccess.value = true
       mockWriteData.value = MOCK_DATA.validTxHash
       mockReceiptIsSuccess.value = true
       mockReceiptData.value = MOCK_DATA.receiptResult
@@ -224,6 +231,7 @@ describe('useTransactionTimeline', () => {
   describe('Transaction Summary', () => {
     it('should show success status when transaction completes', () => {
       mockSimulateData.value = MOCK_DATA.simulateResult
+      mockSimulateIsSuccess.value = true
       mockWriteData.value = MOCK_DATA.validTxHash
       mockReceiptIsSuccess.value = true
       mockReceiptData.value = MOCK_DATA.receiptResult
@@ -239,6 +247,7 @@ describe('useTransactionTimeline', () => {
 
     it('should show idle status when transaction not yet complete', () => {
       mockSimulateData.value = MOCK_DATA.simulateResult
+      mockSimulateIsSuccess.value = true
       mockWriteData.value = undefined
       mockReceiptIsSuccess.value = false
 
@@ -250,6 +259,7 @@ describe('useTransactionTimeline', () => {
 
     it('should show block number in description when available', () => {
       mockSimulateData.value = MOCK_DATA.simulateResult
+      mockSimulateIsSuccess.value = true
       mockWriteData.value = MOCK_DATA.validTxHash
       mockReceiptIsSuccess.value = true
       mockReceiptData.value = MOCK_DATA.receiptResult
@@ -264,6 +274,7 @@ describe('useTransactionTimeline', () => {
     it('should detect user rejection errors', () => {
       mockWriteError.value = new Error('user rejected the request')
       mockSimulateData.value = MOCK_DATA.simulateResult
+      mockSimulateIsSuccess.value = true
 
       const { timelineSteps } = useTransactionTimeline(createMockParams())
 
@@ -277,9 +288,7 @@ describe('useTransactionTimeline', () => {
 
       const { timelineSteps } = useTransactionTimeline(createMockParams())
 
-      expect(timelineSteps.value.initiate.description).toBe(
-        "You don't have enough balance to perform this transaction."
-      )
+      expect(timelineSteps.value.initiate.description).toBe('Error: insufficient funds for gas')
     })
 
     it('should detect revert errors', () => {
@@ -287,9 +296,7 @@ describe('useTransactionTimeline', () => {
 
       const { timelineSteps } = useTransactionTimeline(createMockParams())
 
-      expect(timelineSteps.value.initiate.description).toBe(
-        'Transaction simulation failed. The execution would revert.'
-      )
+      expect(timelineSteps.value.initiate.description).toBe('Error: execution reverted')
     })
   })
 
@@ -331,10 +338,12 @@ describe('useTransactionTimeline', () => {
       // Test success -> completed
       mockSimulateIsLoading.value = false
       mockSimulateData.value = MOCK_DATA.simulateResult
+      mockSimulateIsSuccess.value = true
       expect(timelineSteps.value.initiate.status).toBe('completed')
 
       // Test error -> error
       mockSimulateData.value = null
+      mockSimulateIsSuccess.value = false
       mockSimulateError.value = new Error('Test error')
       expect(timelineSteps.value.initiate.status).toBe('error')
     })
@@ -354,9 +363,7 @@ describe('useTransactionTimeline', () => {
 
       const { timelineSteps } = useTransactionTimeline(createMockParams())
 
-      expect(timelineSteps.value.initiate.description).toBe(
-        'Could not verify transaction. Please try again.'
-      )
+      expect(timelineSteps.value.initiate.description).toBe('Error: Unknown error')
     })
   })
 })
