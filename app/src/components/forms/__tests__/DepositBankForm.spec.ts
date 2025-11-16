@@ -28,7 +28,7 @@ const {
   mockUseDepositToken,
   mockExecuteApprove,
   mockExecuteDeposit
-} = vi.hoisted(() => ({
+} = vi.hoisted((): Record<string, unknown> => ({
   mockSendTransaction: vi.fn(),
   mockAddSuccessToast: vi.fn(),
   mockAddErrorToast: vi.fn(),
