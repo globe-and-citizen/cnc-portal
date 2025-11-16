@@ -216,7 +216,7 @@ describe('useContractWrites (V2)', () => {
 
       expect(result).toBeUndefined()
       expect(mockLog.error).toHaveBeenCalledWith(
-        `Failed to execute ${MOCK_DATA.functionName}:`,
+        `Failed to execute ${MOCK_DATA.functionName}: \n`,
         expect.any(Error)
       )
     })
@@ -325,7 +325,7 @@ describe('useContractWrites (V2)', () => {
 
       expect(result).toBeUndefined()
       expect(mockLog.error).toHaveBeenCalledWith(
-        `Failed to execute ${MOCK_DATA.functionName}:`,
+        `Failed to execute ${MOCK_DATA.functionName}: \n`,
         expect.any(Error)
       )
     })
@@ -356,7 +356,7 @@ describe('useContractWrites (V2)', () => {
 
       expect(result).toBeUndefined()
       expect(mockLog.error).toHaveBeenCalledWith(
-        `Failed to execute ${MOCK_DATA.functionName}:`,
+        `Failed to execute ${MOCK_DATA.functionName}: \n`,
         expect.any(Error)
       )
     })
