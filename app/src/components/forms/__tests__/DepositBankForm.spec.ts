@@ -28,7 +28,7 @@ const {
   mockUseDepositToken,
   mockExecuteApprove,
   mockExecuteDeposit
-} = vi.hoisted((): Record<string, unknown> => ({
+} = vi.hoisted(() => ({
   mockSendTransaction: vi.fn(),
   mockAddSuccessToast: vi.fn(),
   mockAddErrorToast: vi.fn(),
@@ -37,11 +37,13 @@ const {
   mockExecuteDeposit: vi.fn(),
   mockUseERC20Approve: vi.fn(() => ({
     executeWrite: mockExecuteApprove,
-    receiptResult: { data: ref(null) }
+    receiptResult: { data: ref(null), error: ref(null) },
+    writeResult: { data: ref(null), error: ref(null) }
   })),
   mockUseDepositToken: vi.fn(() => ({
     executeWrite: mockExecuteDeposit,
-    receiptResult: { data: ref(null) }
+    receiptResult: { data: ref(null), error: ref(null) },
+    writeResult: { data: ref(null), error: ref(null) }
   }))
 }))
 
@@ -116,6 +118,7 @@ vi.mock('@/composables/useContractBalance', () => ({
 }))
 
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+import { write } from 'fs'
 
 describe('DepositBankForm.vue', () => {
   const defaultProps = {
