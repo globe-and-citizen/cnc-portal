@@ -46,6 +46,15 @@ export const parseError = (error: unknown, abi: Abi | undefined = undefined) => 
 }
 
 /**
+ * @description Parses an Error object to extract the name and first sentence of the message
+ * @param error
+ * @returns Error Name + First sentence of Error Message
+ */
+export const parseErrorV2 = (error: Error) => {
+  return error.name + ': ' + error.message.split('.')[0]
+}
+
+/**
  * A type-guard function for `MetaMaskErrorInfo`.
  *
  * It checks whether an object has a structure consistent with the `info`

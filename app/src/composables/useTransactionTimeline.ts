@@ -5,6 +5,7 @@ import type {
   UseWaitForTransactionReceiptReturnType,
   UseWriteContractReturnType
 } from '@wagmi/vue'
+import { parseErrorV2 } from '@/utils/errorUtil'
 
 export type TimelineStepStatus = 'idle' | 'loading' | 'success' | 'error'
 
@@ -82,7 +83,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
   const prepareTransactionStatus = computed((): TimelineStepStatus => {
     if (simulateGasResult.isLoading.value) return 'loading'
     if (simulateGasResult.error.value) return 'error'
-    if (simulateGasResult.data.value) return 'success'
+    if (simulateGasResult.isSuccess.value === true) return 'success'
     return 'idle'
   })
 
@@ -97,15 +98,17 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
       case 'success':
         return 'Transaction verified successfully. Ready for approval.'
       case 'error':
-        const errorType = getErrorType(simulateGasResult.error.value)
-        switch (errorType) {
-          case 'revert':
-            return 'Transaction simulation failed. The execution would revert.'
-          case 'funds':
-            return "You don't have enough balance to perform this transaction."
-          default:
-            return 'Could not verify transaction. Please try again.'
-        }
+        // return the first sentence of the error message
+        return parseErrorV2(simulateGasResult.error.value ?? new Error('Unknown error during simulation'))
+
+      // switch (errorType) {
+      //   case 'revert':
+      //     return 'Transaction simulation failed. The execution would revert.'
+      //   case 'funds':
+      //     return "You don't have enough balance to perform this transaction."
+      //   default:
+      //     return 'Could not verify transaction. Please try again.'
+      // }
       default:
         return 'Preparing to verify transaction…'
     }

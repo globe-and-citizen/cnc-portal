@@ -2,7 +2,7 @@ import { computed, watch, unref, type MaybeRef } from 'vue'
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from '@wagmi/vue'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { type Address, type Abi } from 'viem'
-import { formatDataForDisplay, log, waitForCondition } from '@/utils'
+import { formatDataForDisplay, log, parseErrorV2, waitForCondition } from '@/utils'
 import { useTransactionTimeline } from '@/composables/useTransactionTimeline'
 import { simulateContract } from '@wagmi/core'
 import { config as wagmiConfig } from '@/wagmi.config'
@@ -101,20 +101,18 @@ export function useContractWrites(config: ContractWriteConfig) {
 
   watch(writeResult.error, (error) => {
     if (error) {
-      log.error('Contract write error:', error)
-      // addErrorToast(`Transaction failed: ${parseError(error, unref(config.abi))}`)
+      log.error('Contract write error. \n', parseErrorV2(error))
     }
   })
 
   watch(receiptResult.error, (error) => {
     if (error) {
-      log.error('Transaction receipt error:', error)
-      // addErrorToast(`Transaction confirmation failed: ${parseError(error, unref(config.abi))}`)
+      log.error('Transaction receipt error. \n', parseErrorV2(error))
     }
   })
 
   /**
-   * Executes a contract write operation.
+   * Executes a contract write operation. Wait for transaction confirmation and invalidate queries upon success.
    * @param args - Arguments to pass to the contract function (default: []).
    * @param value - Optional ETH value to send with the transaction.
    * @param options - Optional settings for the write operation (e.g., skipGasEstimation).
@@ -154,15 +152,21 @@ export function useContractWrites(config: ContractWriteConfig) {
       })
 
       // Wait for transaction confirmation
+
       await waitForCondition(() => receiptResult.isSuccess.value, 15000)
+      // try {
+      //   await waitForCondition(() => receiptResult.isSuccess.value, 15000)
+      // } catch (timeoutError) {
+      //   log.error('Transaction confirmation timeout:', timeoutError)
+      //   throw new Error('Transaction was sent but confirmation timed out. Please check your wallet or block explorer.')
+      // }
 
       // Invalidate queries
       await invalidateQueries()
       return response
     } catch (error) {
-      log.error(`Failed to execute ${unref(config.functionName)}:`, error)
-      // addErrorToast(`Failed to execute ${unref(config.functionName)}: ${parseError(error, unref(config.abi))}`)
-      // throw error
+      log.error(`Failed to execute ${unref(config.functionName)}: \n`, error)
+      // throw error // Re-throw to allow caller to handle
     }
     return undefined
   }
@@ -171,7 +175,7 @@ export function useContractWrites(config: ContractWriteConfig) {
     writeResult,
     receiptResult,
     //@ts-expect-error -- IGNORE --
-    simulateGasResult
+    simulateGasResult: { ...simulateGasResult, queryKey }
   })
 
   return {
