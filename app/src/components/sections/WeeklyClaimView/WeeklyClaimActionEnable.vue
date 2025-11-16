@@ -42,9 +42,12 @@ const claimAction = ref<'enable' | null>(null)
 
 const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeam?.id}`)
 
-const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(weeklyClaimSyncUrl, {
-  immediate: false
-})
+const { execute: syncWeeklyClaim, error: syncWeeklyClaimError } = useCustomFetch(
+  weeklyClaimSyncUrl,
+  {
+    immediate: false
+  }
+)
   .post()
   .json()
 
@@ -87,9 +90,9 @@ const enableClaim = async () => {
 
       claimAction.value = 'enable'
 
-      await updateClaimStatus()
+      await syncWeeklyClaim()
 
-      if (updateClaimError.value) {
+      if (syncWeeklyClaimError.value) {
         toastStore.addErrorToast('Failed to update Claim status')
       }
       queryClient.invalidateQueries({
