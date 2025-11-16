@@ -363,7 +363,7 @@ describe('useTransactionTimeline', () => {
 
       const { timelineSteps } = useTransactionTimeline(createMockParams())
 
-      expect(timelineSteps.value.initiate.description).toBe('Error: ')
+      expect(timelineSteps.value.initiate.description).toBe('Error: Unknown error')
     })
   })
 })
