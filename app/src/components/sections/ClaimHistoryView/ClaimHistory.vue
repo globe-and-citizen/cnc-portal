@@ -1,27 +1,32 @@
 <template>
   <div class="w-full pb-6">
     <CardComponent>
-      <div class="flex gap-4 items-start">
-        <div
-          v-if="displayedImageUrl"
-          class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden"
-          data-test="claim-user-image-wrapper"
-        >
-          <img
-            :src="displayedImageUrl"
-            alt="User image"
-            class="w-full h-full object-cover"
-            data-test="claim-user-image"
-          />
-        </div>
-        <div class="flex flex-col gap-8">
-          <div class="card-title mt-4" data-test="claim-user-name">{{ displayedName }}</div>
-
-          <div class="flex items-center gap-2">
-            <img src="/Vector.png" alt="" class="w-4 h-4" />
-            <AddressToolTip :address="displayedAddress" data-test="claim-user-address" />
+      <div class="flex justify-between">
+        <div class="flex gap-4 items-start">
+          <div
+            v-if="displayedImageUrl"
+            class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden"
+            data-test="claim-user-image-wrapper"
+          >
+            <img
+              :src="displayedImageUrl"
+              alt="User image"
+              class="w-full h-full object-cover"
+              data-test="claim-user-image"
+            />
           </div>
-          <!-- <div class="text-sm text-gray-500">{{ description }}</div> -->
+          <div class="flex flex-col gap-8">
+            <div class="card-title mt-4" data-test="claim-user-name">{{ displayedName }}</div>
+
+            <div class="flex items-center gap-2">
+              <img src="/Vector.png" alt="" class="w-4 h-4" />
+              <AddressToolTip :address="displayedAddress" data-test="claim-user-address" />
+            </div>
+            <!-- <div class="text-sm text-gray-500">{{ description }}</div> -->
+          </div>
+        </div>
+        <div class="w-60">
+          <SelectMemberItem v-model="selectedMemberAddress" />
         </div>
       </div>
     </CardComponent>
@@ -233,6 +238,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
+import SelectMemberItem from '@/components/SelectMemberItem.vue'
 
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
 dayjs.extend(utc)
@@ -245,6 +251,7 @@ const userStore = useUserDataStore()
 const toastStore = useToastStore()
 // Adresse du membre ciblé via la route (peut être undefined -> on affiche l'utilisateur courant)
 const memberAddress = computed(() => route.params.memberAddress as string | undefined)
+const selectedMemberAddress = ref<string>('')
 
 // Détermine le membre affiché (priorité: membre paramètre route, sinon utilisateur courant)
 const displayedMember = computed(() => {
