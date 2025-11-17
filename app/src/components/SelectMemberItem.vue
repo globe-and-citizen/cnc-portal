@@ -1,8 +1,8 @@
 <template>
-  <div class="w-full">
+  <div class="w-full relative">
     <!-- Trigger with selected user avatar + name -->
     <div
-      class="input input-bordered flex items-center gap-2 cursor-pointer"
+      class="input input-bordered input-lg flex items-center gap-2 cursor-pointer"
       data-test="select-member-item-trigger"
       @click="toggleOpen"
     >
@@ -19,7 +19,7 @@
 
       <IconifyIcon
         :icon="isOpen ? 'heroicons:chevron-up' : 'heroicons:chevron-down'"
-        class="w-4 h-4 ml-auto text-gray-400 transition-transform duration-400"
+        class="w-4 h-4 ml-auto text-gray-500 transition-transform duration-400"
         :class="isOpen ? 'rotate-180' : 'rotate-0'"
       />
     </div>
@@ -27,7 +27,7 @@
     <!-- Dropdown -->
     <div
       v-if="isOpen"
-      class="mt-2 w-full rounded-box bg-base-100 shadow max-h-72 overflow-y-auto z-20"
+      class="absolute left-0 mt-2 w-full rounded-box bg-base-100 shadow max-h-72 overflow-y-auto z-50"
       data-test="select-member-item-dropdown"
     >
       <!-- Search input -->
