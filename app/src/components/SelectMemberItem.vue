@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full relative">
+  <div ref="clickOutside" class="w-full relative">
     <!-- Trigger with selected user avatar + name -->
     <div
       class="input input-bordered input-lg flex items-center gap-2 cursor-pointer"
@@ -13,20 +13,18 @@
           data-test="select-member-item-selected-user"
         />
       </div>
-      <span v-else class="text-gray-400" data-test="select-member-item-placeholder">
-        {{ placeholder }}
-      </span>
 
       <IconifyIcon
-        :icon="isOpen ? 'heroicons:chevron-up' : 'heroicons:chevron-down'"
+        :icon="isOpen.show ? 'heroicons:chevron-up' : 'heroicons:chevron-down'"
         class="w-4 h-4 ml-auto text-gray-500 transition-transform duration-400"
-        :class="isOpen ? 'rotate-180' : 'rotate-0'"
+        :class="isOpen.show ? 'rotate-180' : 'rotate-0'"
       />
     </div>
 
     <!-- Dropdown -->
     <div
-      v-if="isOpen"
+      v-if="isOpen.mount"
+      v-show="isOpen.show"
       class="absolute left-0 mt-2 w-full rounded-box bg-base-100 shadow max-h-72 overflow-y-auto z-50"
       data-test="select-member-item-dropdown"
     >
@@ -67,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
@@ -82,7 +80,6 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
-  placeholder: 'Select a member',
   disabled: false
 })
 
@@ -93,8 +90,9 @@ const emit = defineEmits<{
 
 const teamStore = useTeamStore()
 
-const isOpen = ref(false)
+const isOpen = ref({ mount: false, show: false })
 const search = ref('')
+const clickOutside = ref<HTMLElement | null>(null)
 
 const members = computed<User[]>(() => {
   const team = teamStore.currentTeam
@@ -118,13 +116,21 @@ const selectedUser = computed<User | undefined>(() =>
   )
 )
 
-const toggleOpen = () => {
+const open = () => {
   if (props.disabled) return
-  isOpen.value = !isOpen.value
+  isOpen.value = { mount: true, show: true }
 }
 
 const close = () => {
-  isOpen.value = false
+  isOpen.value = { mount: false, show: false }
+}
+
+const toggleOpen = () => {
+  if (isOpen.value.show) {
+    close()
+  } else {
+    open()
+  }
 }
 
 const select = (member: User) => {
@@ -134,36 +140,30 @@ const select = (member: User) => {
   close()
 }
 
-const handleClickOutside = (event: MouseEvent) => {
-  const target = event.target as HTMLElement
-  const root = rootEl.value
-  if (root && !root.contains(target)) {
-    close()
-  }
-}
-
-const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') {
-    close()
-  }
-}
-
-const rootEl = ref<HTMLElement | null>(null)
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-  document.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-  document.removeEventListener('keydown', handleKeydown)
-})
-
 watch(
   () => props.modelValue,
   () => {
     search.value = ''
+  }
+)
+
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  if (!clickOutside.value) return
+
+  if (!clickOutside.value.contains(target)) {
+    close()
+  }
+}
+
+watch(
+  () => isOpen.value.show,
+  (show) => {
+    if (show) {
+      document.addEventListener('click', handleClickOutside)
+    } else {
+      document.removeEventListener('click', handleClickOutside)
+    }
   }
 )
 </script>
