@@ -251,6 +251,7 @@ const userStore = useUserDataStore()
 const toastStore = useToastStore()
 // Adresse du membre ciblé via la route (peut être undefined -> on affiche l'utilisateur courant)
 const memberAddress = computed(() => route.params.memberAddress as string | undefined)
+
 const selectedMemberAddress = ref<string>('')
 
 // Détermine le membre affiché (priorité: membre paramètre route, sinon utilisateur courant)
@@ -437,4 +438,14 @@ const canModifyClaims = computed(() => {
     selectWeekWeelyClaim.value.wage.userAddress === userStore.address
   )
 })
+
+watch(
+  [memberAddress, () => userStore.address],
+  ([routeMember, currentUser]) => {
+    selectedMemberAddress.value = (routeMember || currentUser)?.toLowerCase?.()
+      ? routeMember || currentUser
+      : ''
+  },
+  { immediate: true }
+)
 </script>
