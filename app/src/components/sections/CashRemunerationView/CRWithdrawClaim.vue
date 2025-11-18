@@ -63,12 +63,17 @@ const cashRemunerationEip712Address = computed(() =>
 )
 const { writeContractAsync: withdraw } = useWriteContract()
 
-const weeklyClaimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=withdraw`)
+// const weeklyClaimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=withdraw`)
 
-const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(weeklyClaimUrl, {
-  immediate: false
-})
-  .put()
+const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeam?.id}`)
+
+const { execute: syncWeeklyClaim, error: syncWeeklyClaimError } = useCustomFetch(
+  weeklyClaimSyncUrl,
+  {
+    immediate: false
+  }
+)
+  .post()
   .json()
 
 const isLoading = ref(false)
@@ -140,9 +145,9 @@ const withdrawClaim = async () => {
 
     if (receipt.status === 'success') {
       toastStore.addSuccessToast('Claim withdrawn')
-      await updateClaimStatus()
+      await syncWeeklyClaim()
 
-      if (updateClaimError.value) {
+      if (syncWeeklyClaimError.value) {
         toastStore.addErrorToast('Failed to update Claim status')
       }
       queryClient.invalidateQueries({
