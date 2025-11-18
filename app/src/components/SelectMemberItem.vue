@@ -66,6 +66,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import UserComponent from '@/components/UserComponent.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
@@ -89,6 +90,7 @@ const emit = defineEmits<{
 }>()
 
 const teamStore = useTeamStore()
+const router = useRouter()
 
 const isOpen = ref({ mount: false, show: false })
 const search = ref('')
@@ -134,10 +136,24 @@ const toggleOpen = () => {
 }
 
 const select = (member: User) => {
-  emit('update:modelValue', member.address ?? '')
+  const memberAddress = member.address ?? ''
+
+  emit('update:modelValue', memberAddress)
   emit('change', member)
   search.value = ''
   close()
+
+  // Navigate to the selected member's claim history
+  const teamId = teamStore.currentTeam?.id
+  if (teamId && memberAddress) {
+    router.push({
+      name: 'claim-history',
+      params: {
+        id: teamId,
+        memberAddress
+      }
+    })
+  }
 }
 
 watch(
