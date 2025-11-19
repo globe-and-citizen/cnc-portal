@@ -1,32 +1,34 @@
 <template>
-  <div class="w-full pb-6">
+  <div class="w-full pb-6" v-if="displayedMember">
     <CardComponent>
       <div class="flex justify-between">
         <div class="flex gap-4 items-start">
           <div
-            v-if="displayedImageUrl"
+            v-if="displayedMember?.imageUrl"
             class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden"
             data-test="claim-user-image-wrapper"
           >
             <img
-              :src="displayedImageUrl"
+              :src="displayedMember?.imageUrl"
               alt="User image"
               class="w-full h-full object-cover"
               data-test="claim-user-image"
             />
           </div>
           <div class="flex flex-col gap-8">
-            <div class="card-title mt-4" data-test="claim-user-name">{{ displayedName }}</div>
+            <div class="card-title mt-4" data-test="claim-user-name">
+              {{ displayedMember?.name }}
+            </div>
 
             <div class="flex items-center gap-2">
               <img src="/Vector.png" alt="" class="w-4 h-4" />
-              <AddressToolTip :address="displayedAddress" data-test="claim-user-address" />
+              <AddressToolTip :address="displayedMember?.address" data-test="claim-user-address" />
             </div>
             <!-- <div class="text-sm text-gray-500">{{ description }}</div> -->
           </div>
         </div>
         <div class="w-60">
-          <SelectMemberItem v-model="selectedMemberAddress" />
+          <SelectMemberItem v-if="memberAddress" :address="memberAddress" />
         </div>
       </div>
     </CardComponent>
@@ -232,6 +234,8 @@ import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
 import { useTanstackQuery } from '@/composables'
 import type { Wage, WeeklyClaim } from '@/types'
+import type { Address } from 'viem'
+
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -250,31 +254,13 @@ const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const toastStore = useToastStore()
 
-const memberAddress = computed(() => route.params.memberAddress as string | undefined)
-
-const selectedMemberAddress = ref<string>('')
+const memberAddress = computed(() => route.params.memberAddress as Address | undefined)
 
 const displayedMember = computed(() => {
-  const members = teamStore.currentTeam?.members || []
-  const memberAddr = memberAddress.value?.toLowerCase()
-
-  if (memberAddr && memberAddr !== userStore.address.toLowerCase()) {
-    const memberFound = members.find((member) => member.address.toLowerCase() === memberAddr)
-    if (memberFound) return memberFound
-  }
-
-  return {
-    id: 'current-user',
-    name: userStore.name,
-    address: userStore.address,
-    teamId: Number(teamStore.currentTeam?.id) || 0,
-    imageUrl: userStore.imageUrl
-  }
+  return (teamStore.currentTeam?.members || []).find(
+    (member) => member.address.toLowerCase() === memberAddress.value?.toLowerCase()
+  )
 })
-
-const displayedName = computed(() => displayedMember.value.name)
-const displayedAddress = computed(() => displayedMember.value.address)
-const displayedImageUrl = computed(() => displayedMember.value.imageUrl)
 
 // Couleur des badges de statut de weekly claim
 
@@ -290,18 +276,22 @@ const getColor = (weeklyClaim?: WeeklyClaim) => {
 
 const teamId = computed(() => teamStore.currentTeam?.id)
 
-const weeklyClaimQueryKey = computed(() => [
-  'weekly-claims',
-  teamId.value,
-  memberAddress.value || userStore.address
-])
+const weeklyClaimQueryKey = computed(() => ['weekly-claims', teamId.value, memberAddress.value])
 const weeklyClaimURL = computed(
-  () =>
-    `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress.value || userStore.address}`
+  () => `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress.value}`
 )
-const { data: memberWeeklyClaims } = useTanstackQuery<Array<WeeklyClaim>>(
+
+const { data: memberWeeklyClaims, refetch } = useTanstackQuery<Array<WeeklyClaim>>(
   weeklyClaimQueryKey,
   weeklyClaimURL
+)
+
+watch(
+  memberAddress,
+  () => {
+    refetch()
+  },
+  { immediate: true }
 )
 
 const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeam?.id])
@@ -437,14 +427,4 @@ const canModifyClaims = computed(() => {
     selectWeekWeelyClaim.value.wage.userAddress === userStore.address
   )
 })
-
-watch(
-  [memberAddress, () => userStore.address],
-  ([routeMember, currentUser]) => {
-    selectedMemberAddress.value = (routeMember || currentUser)?.toLowerCase?.()
-      ? routeMember || currentUser
-      : ''
-  },
-  { immediate: true }
-)
 </script>

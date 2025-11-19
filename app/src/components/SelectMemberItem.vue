@@ -1,6 +1,9 @@
 <template>
   <div ref="clickOutside" class="w-full relative">
     <!-- Trigger with selected user avatar + name -->
+    <div class="flex justify-end">
+      <span class="font-bold text-xl">Select a User</span>
+    </div>
     <div
       class="input input-bordered input-lg flex items-center gap-2 cursor-pointer"
       data-test="select-member-item-trigger"
@@ -71,23 +74,13 @@ import UserComponent from '@/components/UserComponent.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'
 import { Icon as IconifyIcon } from '@iconify/vue'
+import type { Address } from 'viem'
 
 interface Props {
-  modelValue?: string
-  teamId?: string | number
-  placeholder?: string
-  disabled?: boolean
+  address: Address
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  modelValue: '',
-  disabled: false
-})
-
-const emit = defineEmits<{
-  'update:modelValue': [value: string]
-  change: [member: User | undefined]
-}>()
+const props = defineProps<Props>()
 
 const teamStore = useTeamStore()
 const router = useRouter()
@@ -96,10 +89,7 @@ const isOpen = ref({ mount: false, show: false })
 const search = ref('')
 const clickOutside = ref<HTMLElement | null>(null)
 
-const members = computed<User[]>(() => {
-  const team = teamStore.currentTeam
-  return (team?.members as User[]) || []
-})
+const members = computed<User[]>(() => teamStore.currentTeam?.members || [])
 
 const filteredMembers = computed<User[]>(() => {
   if (!search.value.trim()) return members.value
@@ -114,12 +104,12 @@ const filteredMembers = computed<User[]>(() => {
 
 const selectedUser = computed<User | undefined>(() =>
   members.value.find(
-    (member) => (member.address || '').toLowerCase() === props.modelValue?.toLowerCase()
+    (member) => (member.address || '').toLowerCase() === props.address?.toLowerCase()
   )
 )
 
 const open = () => {
-  if (props.disabled) return
+  //   if (props.disabled) return
   isOpen.value = { mount: true, show: true }
 }
 
@@ -136,32 +126,30 @@ const toggleOpen = () => {
 }
 
 const select = (member: User) => {
-  const memberAddress = member.address ?? ''
+  //   const memberAddress = member.address ?? ''
 
-  emit('update:modelValue', memberAddress)
-  emit('change', member)
   search.value = ''
   close()
 
   // Navigate to the selected member's claim history
   const teamId = teamStore.currentTeam?.id
-  if (teamId && memberAddress) {
+  if (teamId) {
     router.push({
       name: 'claim-history',
       params: {
         id: teamId,
-        memberAddress
+        memberAddress: member.address
       }
     })
   }
 }
 
-watch(
-  () => props.modelValue,
-  () => {
-    search.value = ''
-  }
-)
+// watch(
+//   () => props.modelValue,
+//   () => {
+//     search.value = ''
+//   }
+// )
 
 const handleClickOutside = (event: MouseEvent) => {
   const target = event.target as HTMLElement
