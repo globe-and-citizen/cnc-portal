@@ -2,7 +2,6 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { ExpenseAccountEIP712V2 } from '../typechain-types'
-import { MockERC20 } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { AddressLike } from 'ethers'
 
@@ -88,7 +87,7 @@ describe('ExpenseAccountEIP712V2', function () {
 
   async function createSignature(
     owner: SignerWithAddress,
-    budgetLimit: Record<string, any>,
+    budgetLimit: Record<string, unknown>,
     expenseAccount: ExpenseAccountEIP712V2
   ) {
     const domain = {
@@ -289,7 +288,7 @@ describe('ExpenseAccountEIP712V2', function () {
     })
 
     it('Should reject transfer with invalid signature', async function () {
-      const { expenseAccount, owner, approvedAddress, recipient, other } = await loadFixture(
+      const { expenseAccount, approvedAddress, recipient, other } = await loadFixture(
         deployExpenseAccountFixture
       )
 
