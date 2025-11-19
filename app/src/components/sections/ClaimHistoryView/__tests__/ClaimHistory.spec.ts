@@ -257,4 +257,96 @@ describe('ClaimHistory.vue', () => {
     expect(weekDayClaims[0].hours).toBeGreaterThanOrEqual(0)
     expect(weekDayClaims[0].claims.length).toBeGreaterThanOrEqual(0)
   })
+
+  it('should build barChartOption with 7 labels and data points', async () => {
+    const weekStart = new Date().toISOString()
+    mockUseTanstackQuery.mockImplementation(() => ({
+      data: ref([
+        {
+          weekStart,
+          status: 'pending',
+          wage: { userAddress: mockUserStore.address },
+          claims: [
+            {
+              id: 1,
+              dayWorked: weekStart,
+              hoursWorked: 3,
+              memo: 'Chart test'
+            }
+          ]
+        }
+      ]),
+      error: ref(null),
+      isLoading: ref(false),
+      refetch: mockRefetch
+    }))
+
+    const wrapper = shallowMount(ClaimHistory, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+
+    await nextTick()
+
+    // Force selectedMonthObject to match weekStart
+    // @ts-expect-error: internal state
+    wrapper.vm.selectedMonthObject = {
+      year: new Date().getFullYear(),
+      month: new Date().getMonth(),
+      isoWeek: 1,
+      isoString: weekStart,
+      formatted: 'Test Week'
+    }
+
+    await nextTick()
+
+    // @ts-expect-error: internal computed
+    const barChartOption = wrapper.vm.barChartOption
+    expect(barChartOption.title.text).toBe('Hours/Day')
+    expect(barChartOption.xAxis.data).toHaveLength(7)
+    expect(barChartOption.series[0].data).toHaveLength(7)
+  })
+
+  it('should not allow modifying claims when status is not pending', async () => {
+    const weekStart = new Date().toISOString()
+    let callIndex = 0
+
+    mockUseTanstackQuery.mockImplementation(() => {
+      callIndex += 1
+      if (callIndex === 1) {
+        return {
+          data: ref([
+            {
+              weekStart,
+              status: 'signed',
+              wage: { userAddress: mockUserStore.address.value },
+              claims: []
+            }
+          ]),
+          error: ref(null),
+          isLoading: ref(false),
+          refetch: mockRefetch
+        }
+      }
+      return {
+        data: ref(null),
+        error: ref(null),
+        isLoading: ref(false),
+        refetch: vi.fn()
+      }
+    })
+
+    const wrapper = shallowMount(ClaimHistory, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+
+    await nextTick()
+
+    // @ts-expect-error: internal state
+    wrapper.vm.selectedMonthObject.isoString = weekStart
+
+    await nextTick()
+
+    // @ts-expect-error: internal computed
+    expect(wrapper.vm.canModifyClaims).toBe(false)
+  })
 })
