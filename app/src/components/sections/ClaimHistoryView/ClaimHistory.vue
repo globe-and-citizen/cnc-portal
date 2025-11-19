@@ -262,8 +262,6 @@ const displayedMember = computed(() => {
   )
 })
 
-// Couleur des badges de statut de weekly claim
-
 const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 
 const getColor = (weeklyClaim?: WeeklyClaim) => {
