@@ -27,6 +27,16 @@ vi.mock('@/stores', () => ({
   useTeamStore: vi.fn(() => mockTeamStore)
 }))
 
+vi.mock('vue-router', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useRouter: vi.fn(() => ({
+      push: vi.fn()
+    }))
+  }
+})
+
 describe('SelectMemberItem', () => {
   const createWrapper = (props: Record<string, unknown> = {}) => {
     return mount(SelectMemberItem, {
