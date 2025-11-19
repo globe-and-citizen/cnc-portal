@@ -23,6 +23,8 @@ const mockTeamStore = {
   }
 }
 
+const mockRouterPush = vi.fn()
+
 vi.mock('@/stores', () => ({
   useTeamStore: vi.fn(() => mockTeamStore)
 }))
@@ -32,7 +34,7 @@ vi.mock('vue-router', async (importOriginal) => {
   return {
     ...actual,
     useRouter: vi.fn(() => ({
-      push: vi.fn()
+      push: mockRouterPush
     }))
   }
 })
@@ -53,7 +55,7 @@ describe('SelectMemberItem', () => {
 
   describe('Component Rendering', () => {
     it('should render trigger and open dropdown on click', async () => {
-      const wrapper = createWrapper({ modelValue: mockTeamStore.currentTeam.members[0].address })
+      const wrapper = createWrapper({ address: mockTeamStore.currentTeam.members[0].address })
 
       const trigger = wrapper.find('[data-test="select-member-item-trigger"]')
       expect(trigger.exists()).toBe(true)
@@ -66,7 +68,7 @@ describe('SelectMemberItem', () => {
 
     it('should display selected user in trigger when modelValue matches a member', () => {
       const selectedAddress = mockTeamStore.currentTeam.members[1].address
-      const wrapper = createWrapper({ modelValue: selectedAddress })
+      const wrapper = createWrapper({ address: selectedAddress })
 
       const selectedUser = wrapper.find('[data-test="select-member-item-selected-user"]')
       expect(selectedUser.exists()).toBe(true)
@@ -74,8 +76,8 @@ describe('SelectMemberItem', () => {
   })
 
   describe('Selection Behavior', () => {
-    it('should emit update:modelValue and change when a member is selected', async () => {
-      const wrapper = createWrapper()
+    it('should navigate to selected member claim history on click', async () => {
+      const wrapper = createWrapper({ address: mockTeamStore.currentTeam.members[0].address })
 
       // Open dropdown
       await wrapper.find('[data-test="select-member-item-trigger"]').trigger('click')
@@ -83,16 +85,15 @@ describe('SelectMemberItem', () => {
       const options = wrapper.findAll('[data-test="select-member-item-option"]')
       expect(options.length).toBeGreaterThan(0)
 
-      const targetMember = mockTeamStore.currentTeam.members[0]
-
       await options[0].trigger('click')
 
-      expect(wrapper.emitted('update:modelValue')).toBeTruthy()
-      expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([targetMember.address])
-
-      expect(wrapper.emitted('change')).toBeTruthy()
-      const emittedMember = wrapper.emitted('change')?.[0][0] as User
-      expect(emittedMember.address).toBe(targetMember.address)
+      expect(mockRouterPush).toHaveBeenCalledWith({
+        name: 'claim-history',
+        params: {
+          id: mockTeamStore.currentTeam.id,
+          memberAddress: mockTeamStore.currentTeam.members[0].address
+        }
+      })
     })
   })
 })
