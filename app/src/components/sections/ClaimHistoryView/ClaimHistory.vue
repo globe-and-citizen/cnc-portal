@@ -249,12 +249,11 @@ const route = useRoute()
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const toastStore = useToastStore()
-// Adresse du membre ciblé via la route (peut être undefined -> on affiche l'utilisateur courant)
+
 const memberAddress = computed(() => route.params.memberAddress as string | undefined)
 
 const selectedMemberAddress = ref<string>('')
 
-// Détermine le membre affiché (priorité: membre paramètre route, sinon utilisateur courant)
 const displayedMember = computed(() => {
   const members = teamStore.currentTeam?.members || []
   const memberAddr = memberAddress.value?.toLowerCase()
