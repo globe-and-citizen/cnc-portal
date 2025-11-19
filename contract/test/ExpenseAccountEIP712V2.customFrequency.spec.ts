@@ -165,9 +165,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
     })
 
     it('Should handle custom frequency period boundaries correctly', async function () {
-      const { expenseAccount, approvedAddress } = await loadFixture(
-        deployExpenseAccountFixture
-      )
+      const { expenseAccount, approvedAddress } = await loadFixture(deployExpenseAccountFixture)
 
       const customFrequency = 1800 // 30 minutes
       const budgetLimit = createBudgetLimit({
