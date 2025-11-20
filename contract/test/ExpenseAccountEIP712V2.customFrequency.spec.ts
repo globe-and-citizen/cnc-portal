@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
-import { ExpenseAccountEIP712V2 } from '../typechain-types'
+import { ExpenseAccountEIP712 } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { AddressLike } from 'ethers'
 
@@ -22,7 +22,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
     const usdc = await USDC.deploy('USDC', 'USDC')
     await usdc.waitForDeployment()
 
-    const ExpenseAccount = await ethers.getContractFactory('ExpenseAccountEIP712V2')
+    const ExpenseAccount = await ethers.getContractFactory('ExpenseAccountEIP712')
     const expenseAccount = await ExpenseAccount.deploy()
     await expenseAccount.waitForDeployment()
 
@@ -88,7 +88,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
   async function createSignature(
     owner: SignerWithAddress,
     budgetLimit: Record<string, unknown>,
-    expenseAccount: ExpenseAccountEIP712V2
+    expenseAccount: ExpenseAccountEIP712
   ) {
     const domain = {
       name: 'CNCExpenseAccount',
@@ -132,7 +132,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
       // First transfer in current period (period 2 since 7200 seconds / 3600 = period 2)
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), signature)
+        .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
 
       // Verify period calculation
       const currentPeriod = await expenseAccount.getCurrentPeriod(budgetLimit)
@@ -141,7 +141,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
       // Check that we can make another transfer in same period
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.3'), signature)
+        .transfer(recipient.address, ethers.parseEther('0.3'), budgetLimit, signature)
 
       const signatureHash = ethers.keccak256(signature)
       const expenseBalance = await expenseAccount.expenseBalances(signatureHash)
@@ -210,13 +210,13 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
       // Use full budget in current period (period 2)
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('1'), signature)
+        .transfer(recipient.address, ethers.parseEther('1'), budgetLimit, signature)
 
       // Try to transfer more in same period - should fail
       await expect(
         expenseAccount
           .connect(approvedAddress)
-          .transfer(recipient.address, budgetLimit, ethers.parseEther('0.1'), signature)
+          .transfer(recipient.address, ethers.parseEther('0.1'), budgetLimit, signature)
       ).to.be.revertedWith('Exceeds period budget')
 
       // Verify we're in period 2

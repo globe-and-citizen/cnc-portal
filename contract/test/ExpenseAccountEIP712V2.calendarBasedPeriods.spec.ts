@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
-import { ExpenseAccountEIP712V2 } from '../typechain-types'
+import { ExpenseAccountEIP712 } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { AddressLike } from 'ethers'
 import { time } from '@nomicfoundation/hardhat-toolbox/network-helpers'
@@ -23,7 +23,7 @@ describe('ExpenseAccountEIP712V2', function () {
     const usdc = await USDC.deploy('USDC', 'USDC')
     await usdc.waitForDeployment()
 
-    const ExpenseAccount = await ethers.getContractFactory('ExpenseAccountEIP712V2')
+    const ExpenseAccount = await ethers.getContractFactory('ExpenseAccountEIP712')
     const expenseAccount = await ExpenseAccount.deploy()
     await expenseAccount.waitForDeployment()
 
@@ -89,7 +89,7 @@ describe('ExpenseAccountEIP712V2', function () {
   async function createSignature(
     owner: SignerWithAddress,
     budgetLimit: Record<string, unknown>,
-    expenseAccount: ExpenseAccountEIP712V2
+    expenseAccount: ExpenseAccountEIP712
   ) {
     const domain = {
       name: 'CNCExpenseAccount',
