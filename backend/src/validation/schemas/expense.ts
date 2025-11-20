@@ -15,7 +15,7 @@ export const addExpenseBodySchema = z.object({
       .array(
         z.object({
           budgetType: z.number().int().nonnegative(),
-          value: z.number().int().nonnegative(),
+          value: z.number().nonnegative(),
         })
       )
       .min(1, 'budgetData must have at least one entry'),
