@@ -142,9 +142,13 @@ contract ExpenseAccountEIP712V2 is
         // For one-time withdrawals
         if (budgetLimit.frequencyType == FrequencyType.OneTime) {
             require(
-                balance.totalWithdrawn + amount <= budgetLimit.amount,
-                "Exceeds one-time budget"
+                balance.totalWithdrawn == 0,
+                "One-time budget already used"
             );
+            // require(
+            //     amount <= budgetLimit.amount,
+            //     "Amount exceeds one-time budget"
+            // );
             return true;
         }
 
