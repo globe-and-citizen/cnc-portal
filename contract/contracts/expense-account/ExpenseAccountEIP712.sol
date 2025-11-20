@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@quant-finance/solidity-datetime/contracts/DateTime.sol";
 
 /**
  * @title ExpenseAccountEIP712
@@ -23,75 +24,25 @@ contract ExpenseAccountEIP712 is
 
     using Address for address payable;
     using ECDSA for bytes32;
+    using DateTime for uint256;
 
-    /**
-     * @title BudgetData
-     * @notice Represents a specific budget constraint applied to withdrawals.
-     * @dev Combines a constraint type (`budgetType`) with its associated value.
-     * 
-     * @param budgetType The type of budget constraint to apply.
-     * @param value The value associated with the budget constraint:
-     * - For `TransactionsPerPeriod`: the maximum number of transactions allowed.
-     * - For `AmountPerPeriod`: the total allowed withdrawal amount within the period.
-     * - For `AmountPerTransaction`: the maximum amount per transaction.
-     * @param token Address of the token (zero address for native ETH)
-     */
-    struct BudgetData {
-        BudgetType budgetType;
-        uint256 value;
-    }
+    enum FrequencyType {
+		OneTime,
+		Daily, 
+		Weekly,
+		Monthly,
+		Custom
+	}
 
-    /**
-     * @title BudgetLimit
-     * @notice Represents a collection of budget constraints for an authorized transfer.
-     * @dev This struct is signed and verified using EIP-712, ensuring constraints are enforced.
-     * 
-     * @param approvedAddress The address authorized to perform withdrawals under these constraints.
-     * @param budgetData An array of budget constraints to apply to transfers.
-     * Each element in the array represents a specific `BudgetData` constraint.
-     * @param expiry The expiry timestamp for the budget constraints.
-     * After this timestamp, the constraints are no longer valid, and transfers are prohibited.
-     */
-    struct BudgetLimit {
-        address approvedAddress;
-        BudgetData[] budgetData;
-        uint256 expiry;
-        address tokenAddress;
-    }
-
-    /**
-     * @title BudgetType
-     * @notice Defines the types of constraints that can be applied to withdrawals in the smart contract.
-     * @dev Used in conjunction with EIP-712 for signing and verifying constraints on withdrawals.
-     * 
-     * @param TransactionsPerPeriod Limits the number of transactions allowed within a specific time period.
-     * @param AmountPerPeriod Limits the total amount of funds that can be withdrawn within a specific time period.
-     * @param AmountPerTransaction Limits the maximum amount that can be withdrawn in a single transaction.
-     */
-    enum BudgetType {
-        TransactionsPerPeriod,
-        AmountPerPeriod,
-        AmountPerTransaction
-    }
-
-    /// @dev Type signature for the BudgetData struct, used in EIP-712 encoding.
-    string private constant BUDGETDATA_TYPE = "BudgetData(uint8 budgetType,uint256 value)"; // remove token address here
-
-    /// @dev Type signature for the BudgetLimit struct, used in EIP-712 encoding.
-    string private constant BUDGETLIMIT_TYPE = 
-        "BudgetLimit(address approvedAddress,BudgetData[] budgetData,uint256 expiry,address tokenAddress)"; //ad token address here
-
-    /// @dev Typehash for the BudgetData struct, used in EIP-712 encoding.
-    bytes32 constant BUDGETDATA_TYPEHASH = 
-        keccak256(
-            abi.encodePacked(BUDGETDATA_TYPE)
-        );
-
-    /// @dev Typehash for the BudgetLimit struct, used in EIP-712 encoding.
-    bytes32 constant BUDGETLIMIT_TYPEHASH = 
-        keccak256(
-            abi.encodePacked(BUDGETLIMIT_TYPE, BUDGETDATA_TYPE)
-        );
+	struct BudgetLimit {
+		uint256 amount;
+		FrequencyType frequencyType;
+		uint256 customFrequency;
+		uint256 startDate;
+		uint256 endDate;
+		address tokenAddress;
+		address approvedAddress;
+	}
 
     enum ApprovalState {
         Uninitialized,
@@ -99,26 +50,25 @@ contract ExpenseAccountEIP712 is
         Inactive
     }
 
-    /**
-     * @title Balance
-     * @notice Represents a set of variables used for tracking expense transfer balances.
-     * @dev Updated as the approved user makes transfers checking whether any of the relevant
-     * constraints have not been exceeded.
-     * 
-     * @param transactionCount Keeps track of the number of transfers made for a specific approval.
-     * @param amountWithdrawn Keeps track of the total withdrawals that have been made on an approval.
-     */
-    struct Balance {
-        uint256 transactionCount;
-        uint256 amountWithdrawn;
+	struct ExpenseBalance {
+		uint256 lastWithdrawnDate;
+		uint256 totalWithdrawn;
+		uint256 lastWithdrawnPeriod;
         ApprovalState state;
-    }
+	}
 
-    /// @dev Mapping to track transfer balances.
-    mapping(bytes32 => Balance) public balances;
+    mapping(bytes32 => ExpenseBalance) public expenseBalances;
 
     /// @dev Mapping to track supported tokens.
     mapping(string => address) public supportedTokens;
+
+    string private constant BUDGET_LIMIT_TYPE = 
+        "BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)";
+
+    bytes32 constant BUDGET_LIMIT_TYPEHASH = 
+        keccak256(
+            abi.encodePacked(BUDGET_LIMIT_TYPE)
+        );
 
     event Deposited(address indexed depositor, uint256 amount);
 
@@ -160,147 +110,270 @@ contract ExpenseAccountEIP712 is
     }
 
     /**
-     * @dev Computes the hash of a single BudgetData item.
-     * @param budgetData The BudgetData struct to hash.
-     * @return The hash of the BudgetData item.
-     */
-    function singleBudgetDataHash (BudgetData calldata budgetData) private pure returns( bytes32 ) {
-        return keccak256(abi.encode(
-            BUDGETDATA_TYPEHASH,
-            budgetData.budgetType,
-            budgetData.value
-        ));
-    }
-
-    /**
-     * @dev Computes the hash of an array of BudgetData items.
-     * @param budgetData The BudgetData items to hash.
-     * @return The hash of the BudgetData items.
-     */
-    function budgetDataHash (BudgetData[] calldata budgetData) private pure returns( bytes32 ) {
-        bytes32[] memory hashes = new bytes32[](budgetData.length);
-        for (uint8 i = 0; i < budgetData.length; i++) {
-            hashes[i] = singleBudgetDataHash(budgetData[i]);
-        }
-        return keccak256(abi.encodePacked(hashes)); // Hash the array of hashes
-    }
-
-    /**
-     * @dev Computes the hash of an BudgetLimit struct which is the object that
-     * was signed by the contract owner.
-     * @param limit The BudgetLimit struct to hash.
-     * @return The hash of the BudgetLimit struct.
-     */
-    function budgetLimitHash (BudgetLimit calldata limit) private pure returns( bytes32 ) {
-        return keccak256(abi.encode(
-            BUDGETLIMIT_TYPEHASH,
-            limit.approvedAddress,
-            budgetDataHash(limit.budgetData),
-            limit.expiry,
-            limit.tokenAddress
-        ));
-    }
-
-    /**
-     * @notice Allows an employee to withdraw their wages.
-     * @param to The address to transfer to.
-     * @param amount The amount to transfer.
-     * @param limit The BudgetLimit struct that was signed by the contract owner
-     * @param signature The ECDSA signature.
-     *
-     * Requirements:
-     * - The approval must not be inactive
-     * - The caller must be the member specified in the budget limit.
-     * - The budget limit must be signed by the contract owner.
-     * - The budgetData must not be an empty array.
-     * - The contract must not be paused.
-     *
-     * Emits a {Withdraw} event.
+     * @dev Withdraw funds using EIP-712 signed budget limit
+     * Signature can be reused within the valid period
      */
     function transfer(
         address to,
-        uint256 amount, 
-        BudgetLimit calldata limit, 
+        uint256 amount,
+        BudgetLimit calldata budgetLimit,
         bytes calldata signature
-    ) external whenNotPaused nonReentrant{
-        require(balances[keccak256(signature)].state != ApprovalState.Inactive, "Approval inactive");
-
-        require(msg.sender == limit.approvedAddress, "Withdrawer not approved");
-
+    ) external {
+        // Verify to address is non-zero address
         require(to != address(0), "Address required");
 
-        require(amount > 0, "Amount must be greater than zero");
+        // Verify the caller is the approved spender
+        require(msg.sender == budgetLimit.approvedAddress, "Spender not approved");
+        
+        // Verify EIP-712 signature
+        bytes32 budgetHash = _hashTypedDataV4(budgetLimitHash(budgetLimit));
+        require(budgetHash.recover(signature) == owner(), "Signer not authorized");
 
-        require(limit.budgetData.length > 0, "Empty budget data");
+        bytes32 signatureHash = keccak256(signature);
+        
+        // Validate transfer conditions
+        require(validateTransfer(budgetLimit, amount, signatureHash), "Transfer not allowed");
 
-        require(isTokenSupported(limit.tokenAddress), "Unsupported token");
+        // Update expense balance
+        updateExpenseBalance(budgetLimit, amount, signatureHash);
 
-        bytes32 digest = _hashTypedDataV4(budgetLimitHash(limit));
-
-        address signer = digest.recover(signature);
-
-        if (signer != owner()) {
-            revert UnauthorizedAccess(owner(), signer);
-        }
-
-        require((block.timestamp <= limit.expiry), "Authorization expired");
-
-        _checkAndUpdateBudgetData(limit.budgetData, amount, signature);
-
-        if (limit.tokenAddress == address(0)) {
+        // Perform transfer
+        if (budgetLimit.tokenAddress == address(0)) {
             payable(to).sendValue(amount);
-            emit Transfer(limit.approvedAddress, to, amount);
+            emit Transfer(budgetLimit.approvedAddress, to, amount);
         } else {
-            require(IERC20(limit.tokenAddress).transfer(to, amount), "Token transfer failed");
-            emit TokenTransfer(limit.approvedAddress, to, limit.tokenAddress, amount);
+            require(IERC20(budgetLimit.tokenAddress).transfer(to, amount), "Token transfer failed");
+            emit TokenTransfer(budgetLimit.approvedAddress, to, budgetLimit.tokenAddress, amount);
         }
     }
 
     /**
-     * @dev Checks each budget data item to ensure the transfer is valid and
-     * updates the relevant balances to reflect the current transfer.
-     * @param budgetData The budget data representing the set limits.
-     * @param amount The amount to transfer.
-     * @param signature The ECDSA signature.
-     *
-     * Requirements:
-     * - The number of transactions must not exceed the specified amount.
-     * - The total amount withdrawn must not exceed the allowed amount per period.
-     * - The amount being transferred must not exceed the allowed amount per transaction.
-     *
+     * @dev Validate transfer against budget limits
      */
-    function _checkAndUpdateBudgetData(
-        BudgetData[] calldata budgetData, 
-        uint256 amount, 
-        bytes calldata signature
-    ) private {
-        bytes32 sigHash = keccak256(signature);
+    function validateTransfer(
+        BudgetLimit calldata budgetLimit,
+        uint256 amount,
+        bytes32 signatureHash
+    ) public view returns (bool) {
+        // Check if within date range
+        require(
+            block.timestamp >= budgetLimit.startDate && 
+            block.timestamp <= budgetLimit.endDate,
+            "Outside valid date range"
+        );
 
-        bool isAmountWithdrawn;
+        // Check amount doesn't exceed single withdrawal limit
+        require(amount <= budgetLimit.amount, "Amount exceeds budget limit");
 
-        for (uint8 i = 0; i < budgetData.length; i++) {
-            if (budgetData[i].budgetType == BudgetType.TransactionsPerPeriod) {
-                require(balances[sigHash].transactionCount < budgetData[i].value, "Transaction limit reached");
-                balances[sigHash].transactionCount++;
-            } else if (budgetData[i].budgetType == BudgetType.AmountPerPeriod) {
-                if (balances[sigHash].amountWithdrawn+amount > budgetData[i].value)
-                    revert AmountPerPeriodExceeded(balances[sigHash].amountWithdrawn+amount);
-                if (!isAmountWithdrawn) {
-                    balances[sigHash].amountWithdrawn+=amount;
-                    isAmountWithdrawn = true;
-                }
-            } else if (budgetData[i].budgetType == BudgetType.AmountPerTransaction) {
-                if (amount > budgetData[i].value)
-                    revert AmountPerTransactionExceeded(amount);
-                if (!isAmountWithdrawn) {
-                    balances[sigHash].amountWithdrawn+=amount;
-                    isAmountWithdrawn = true;
-                }
-            }
+        ExpenseBalance storage balance = expenseBalances[signatureHash];
+        
+        // For one-time withdrawals
+        if (budgetLimit.frequencyType == FrequencyType.OneTime) {
+            require(
+                balance.totalWithdrawn == 0,
+                "One-time budget already used"
+            );
+            // require(
+            //     amount <= budgetLimit.amount,
+            //     "Amount exceeds one-time budget"
+            // );
+            return true;
         }
 
-        if (balances[sigHash].state == ApprovalState.Uninitialized)
-            balances[sigHash].state = ApprovalState.Active;
+        // For periodic withdrawals
+        uint256 currentPeriod = getCurrentPeriod(budgetLimit);
+        
+        if (currentPeriod > balance.lastWithdrawnPeriod || balance.lastWithdrawnDate == 0) {
+            // New period - check single withdrawal limit
+            require(amount <= budgetLimit.amount, "Amount exceeds period budget");
+        } else {
+            // Same period - check cumulative amount
+            require(
+                balance.totalWithdrawn + amount <= budgetLimit.amount,
+                "Exceeds period budget"
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * @dev Update expense balance after successful withdrawal
+     */
+    function updateExpenseBalance(
+        BudgetLimit calldata budgetLimit,
+        uint256 amount,
+        bytes32 signatureHash
+    ) internal {
+        ExpenseBalance storage balance = expenseBalances[signatureHash];
+        uint256 currentPeriod = getCurrentPeriod(budgetLimit);
+        
+        if (budgetLimit.frequencyType == FrequencyType.OneTime) {
+            // One-time withdrawal - just add to total
+            balance.totalWithdrawn += amount;
+        } else if (currentPeriod > balance.lastWithdrawnPeriod || balance.lastWithdrawnDate == 0) {
+            // New period - reset total and update period
+            balance.totalWithdrawn = amount;
+            balance.lastWithdrawnPeriod = currentPeriod;
+            balance.lastWithdrawnDate = block.timestamp;
+        } else {
+            // Same period - add to existing total
+            balance.totalWithdrawn += amount;
+        }
+    }
+
+    /**
+     * @dev Get current period based on frequency type using calendar periods
+     */
+    function getCurrentPeriod(BudgetLimit calldata budgetLimit) 
+        public 
+        view 
+        returns (uint256) 
+    {
+        return getPeriod(budgetLimit, block.timestamp);
+    }
+
+    /**
+     * @dev Calculate period for a given timestamp using calendar periods
+     */
+    function getPeriod(BudgetLimit calldata budgetLimit, uint256 timestamp) 
+        public 
+        pure 
+        returns (uint256) 
+    {
+        if (timestamp < budgetLimit.startDate) return 0;
+        
+        if (budgetLimit.frequencyType == FrequencyType.OneTime) {
+            return 0;
+        } else if (budgetLimit.frequencyType == FrequencyType.Daily) {
+            // Daily periods reset at midnight UTC
+            return (timestamp - budgetLimit.startDate) / 1 days;
+        } else if (budgetLimit.frequencyType == FrequencyType.Weekly) {
+            // Weekly periods: Sunday to Saturday
+            return getWeeksSinceStart(budgetLimit.startDate, timestamp);
+        } else if (budgetLimit.frequencyType == FrequencyType.Monthly) {
+            // Monthly periods: 1st to last day of each month
+            return getMonthsSinceStart(budgetLimit.startDate, timestamp);
+        } else if (budgetLimit.frequencyType == FrequencyType.Custom) {
+            require(budgetLimit.customFrequency > 0, "Custom frequency must be > 0");
+            return (timestamp - budgetLimit.startDate) / budgetLimit.customFrequency;
+        }
+        
+        revert("Invalid frequency type");
+    }
+
+	/**
+	 * @dev Calculate weeks since start date (Monday to Sunday weeks)
+	 */
+	function getWeeksSinceStart(uint256 startDate, uint256 timestamp) 
+		internal 
+		pure 
+		returns (uint256) 
+	{
+		// Get the Monday of the start date week
+		uint256 startMonday = getStartOfWeek(startDate);
+		// Get the Monday of the current timestamp week
+		uint256 currentMonday = getStartOfWeek(timestamp);
+		
+		// Ensure we don't underflow and calculate weeks between the two Mondays
+		if (currentMonday < startMonday) {
+			return 0;
+		}
+		
+		// Calculate weeks between the two Mondays
+		return (currentMonday - startMonday) / 1 weeks;
+	}
+
+	/**
+	 * @dev Get start of week (previous Monday) for a given timestamp
+	 */
+	function getStartOfWeek(uint256 timestamp) 
+		internal 
+		pure 
+		returns (uint256) 
+	{
+		// DateTime.getDayOfWeek returns 1 for Monday, 2 for Tuesday, ..., 7 for Sunday
+		uint256 dayOfWeek = DateTime.getDayOfWeek(timestamp);
+		
+		// Get the date at 00:00:00 of the current day
+		uint256 currentDayStart = DateTime.timestampFromDate(
+			DateTime.getYear(timestamp),
+			DateTime.getMonth(timestamp),
+			DateTime.getDay(timestamp)
+		);
+		
+		// If it's Monday, return the same day at 00:00:00
+		if (dayOfWeek == 1) {
+			return currentDayStart;
+		} else {
+			// Go back to previous Monday
+			// Subtract (dayOfWeek - 1) days to get to Monday
+			uint256 daysToSubtract = (dayOfWeek - 1) * 1 days;
+			if (currentDayStart >= daysToSubtract) {
+				return currentDayStart - daysToSubtract;
+			} else {
+				// If we would go before timestamp 0, just return 0
+				return 0;
+			}
+		}
+	}
+
+	/**
+	 * @dev Calculate months since start date (calendar months)
+	 */
+	function getMonthsSinceStart(uint256 startDate, uint256 timestamp) 
+		internal 
+		pure 
+		returns (uint256) 
+	{
+		uint256 startYear = DateTime.getYear(startDate);
+		uint256 startMonth = DateTime.getMonth(startDate);
+
+		uint256 currentYear = DateTime.getYear(timestamp);
+		uint256 currentMonth = DateTime.getMonth(timestamp);
+		
+		// Handle the case where current date is before start date
+		if (timestamp < startDate) {
+			return 0;
+		}
+		
+		// Calculate the difference safely
+		if (currentYear == startYear) {
+			// Same year
+			if (currentMonth >= startMonth) {
+				return currentMonth - startMonth;
+			}
+		} else if (currentYear > startYear) {
+			// Different years
+			uint256 fullYears = currentYear - startYear - 1;
+			uint256 monthsFromFirstYear = 12 - startMonth;
+			uint256 monthsFromCurrentYear = currentMonth;
+			
+			return fullYears * 12 + monthsFromFirstYear + monthsFromCurrentYear;
+		}
+		
+		// Should not reach here if timestamp >= startDate
+		return 0;
+	}
+
+    /**
+     * @dev Get hash of budget limit for tracking in expenseBalances mapping
+     */
+    function budgetLimitHash(BudgetLimit calldata budgetLimit) 
+        public 
+        pure 
+        returns (bytes32) 
+    {
+        return keccak256(abi.encode(
+            BUDGET_LIMIT_TYPEHASH,
+            budgetLimit.amount,
+            budgetLimit.frequencyType,
+            budgetLimit.customFrequency,
+            budgetLimit.startDate,
+            budgetLimit.endDate,
+            budgetLimit.tokenAddress,
+            budgetLimit.approvedAddress
+        ));
     }
 
     /**
@@ -309,7 +382,7 @@ contract ExpenseAccountEIP712 is
      * Emits {ApprovalDeactivated} event
      */
     function deactivateApproval(bytes32 signatureHash) external onlyOwner {
-        balances[signatureHash].state = ApprovalState.Inactive;
+        expenseBalances[signatureHash].state = ApprovalState.Inactive;
         emit ApprovalDeactivated(signatureHash);
     }
 
@@ -319,7 +392,7 @@ contract ExpenseAccountEIP712 is
      * Emits {ApprovalActivated} event
      */
     function activateApproval(bytes32 signatureHash) external onlyOwner {
-        balances[signatureHash].state = ApprovalState.Active;
+        expenseBalances[signatureHash].state = ApprovalState.Active;
         emit ApprovalActivated(signatureHash);
     }
 
