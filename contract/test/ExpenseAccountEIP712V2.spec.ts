@@ -138,7 +138,7 @@ describe('ExpenseAccountEIP712V2', function () {
       await expect(
         expenseAccount
           .connect(approvedAddress)
-          .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), signature)
+          .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
       ).to.emit(expenseAccount, 'Transfer')
 
       const finalBalance = await ethers.provider.getBalance(recipient.address)
@@ -160,12 +160,12 @@ describe('ExpenseAccountEIP712V2', function () {
       // First transfer
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.3'), signature)
+        .transfer(recipient.address, ethers.parseEther('0.3'), budgetLimit, signature)
 
       // Second transfer in same period
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.3'), signature)
+        .transfer(recipient.address, ethers.parseEther('0.3'), budgetLimit, signature)
 
       // Check total withdrawn
       const signatureHash = ethers.keccak256(signature)
@@ -198,13 +198,13 @@ describe('ExpenseAccountEIP712V2', function () {
       // Use full budget in current period
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('1'), signature)
+        .transfer(recipient.address, ethers.parseEther('1'), budgetLimit, signature)
 
       // Try to transfer more in same period - should fail
       await expect(
         expenseAccount
           .connect(approvedAddress)
-          .transfer(recipient.address, budgetLimit, ethers.parseEther('0.1'), signature)
+          .transfer(recipient.address, ethers.parseEther('0.1'), budgetLimit, signature)
       ).to.be.revertedWith('Exceeds period budget')
 
       // Check that we're tracking the correct period
@@ -238,18 +238,18 @@ describe('ExpenseAccountEIP712V2', function () {
       // First transfer - 0.6 ETH
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.6'), signature)
+        .transfer(recipient.address, ethers.parseEther('0.6'), budgetLimit, signature)
 
       // Second transfer - 0.4 ETH (total 1.0 ETH - at limit)
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.4'), signature)
+        .transfer(recipient.address, ethers.parseEther('0.4'), budgetLimit, signature)
 
       // Third transfer in same week - should fail (exceeds weekly budget)
       await expect(
         expenseAccount
           .connect(approvedAddress)
-          .transfer(recipient.address, budgetLimit, ethers.parseEther('0.1'), signature)
+          .transfer(recipient.address, ethers.parseEther('0.1'), budgetLimit, signature)
       ).to.be.revertedWith('Exceeds period budget')
 
       // Move to next Monday (new week)
@@ -259,7 +259,7 @@ describe('ExpenseAccountEIP712V2', function () {
       // Should be able to transfer again in new week (budget resets)
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), signature)
+        .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
     })
   })
 
@@ -282,7 +282,7 @@ describe('ExpenseAccountEIP712V2', function () {
       await expect(
         expenseAccount
           .connect(approvedAddress)
-          .transfer(recipient.address, budgetLimit, ethers.parseEther('100'), signature)
+          .transfer(recipient.address, ethers.parseEther('100'), budgetLimit, signature)
       ).to.emit(expenseAccount, 'TokenTransfer')
 
       const finalBalance = await usdt.balanceOf(recipient.address)
@@ -305,7 +305,7 @@ describe('ExpenseAccountEIP712V2', function () {
       await expect(
         expenseAccount
           .connect(approvedAddress)
-          .transfer(recipient.address, budgetLimit, ethers.parseEther('150'), signature)
+          .transfer(recipient.address, ethers.parseEther('150'), budgetLimit, signature)
       ).to.emit(expenseAccount, 'TokenTransfer')
     })
   })
@@ -325,7 +325,7 @@ describe('ExpenseAccountEIP712V2', function () {
       await expect(
         expenseAccount
           .connect(other)
-          .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), signature)
+          .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
       ).to.be.revertedWith('Spender not approved')
     })
 
@@ -343,7 +343,7 @@ describe('ExpenseAccountEIP712V2', function () {
       await expect(
         expenseAccount
           .connect(approvedAddress)
-          .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), invalidSignature)
+          .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, invalidSignature)
       ).to.be.revertedWith('Signer not authorized')
     })
 
@@ -363,7 +363,7 @@ describe('ExpenseAccountEIP712V2', function () {
       await expect(
         expenseAccount
           .connect(approvedAddress)
-          .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), signature)
+          .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
       ).to.be.revertedWith('Outside valid date range')
     })
 
@@ -382,7 +382,7 @@ describe('ExpenseAccountEIP712V2', function () {
       await expect(
         expenseAccount
           .connect(approvedAddress)
-          .transfer(recipient.address, budgetLimit, ethers.parseEther('1.5'), signature)
+          .transfer(recipient.address, ethers.parseEther('1.5'), budgetLimit, signature)
       ).to.be.revertedWith('Amount exceeds budget limit')
     })
 
@@ -403,7 +403,7 @@ describe('ExpenseAccountEIP712V2', function () {
       await expect(
         expenseAccount
           .connect(approvedAddress)
-          .transfer(recipient.address, budgetLimit, ethers.parseEther('1.1'), signature)
+          .transfer(recipient.address, ethers.parseEther('1.1'), budgetLimit, signature)
       ).to.be.revertedWith('Amount exceeds budget limit')
     })
 
@@ -423,13 +423,13 @@ describe('ExpenseAccountEIP712V2', function () {
       // First transfer - should work
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), signature)
+        .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
 
       // Second transfer - should fail even if within budget amount
       await expect(
         expenseAccount
           .connect(approvedAddress)
-          .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), signature)
+          .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
       ).to.be.revertedWith('One-time budget already used')
     })
   })
@@ -456,7 +456,7 @@ describe('ExpenseAccountEIP712V2', function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
       // Use a known Monday in the future
-      const mondayTimestamp = Date.UTC(2024, 0, 1, 0, 0, 0) / 1000 // Jan 1, 2024 (Monday)
+      const mondayTimestamp = Date.UTC(2030, 0, 7, 0, 0, 0) / 1000 // Jan 7, 2030 (Monday)
 
       const budgetLimit = createBudgetLimit({
         frequencyType: 2, // Weekly
@@ -487,7 +487,4 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(period).to.equal(2)
     })
   })
-
-  // Remove the duplicate calendar period tests since they're now covered above
-  // and in the separate calendar period test file
 })

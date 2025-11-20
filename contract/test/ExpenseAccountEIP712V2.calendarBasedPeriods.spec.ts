@@ -147,7 +147,7 @@ describe('ExpenseAccountEIP712V2', function () {
       // Transfer on the same Monday (period 0)
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), signature)
+        .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
 
       // Check period is 0 (same week)
       const currentPeriod = await expenseAccount.getCurrentPeriod(budgetLimit)
@@ -156,7 +156,7 @@ describe('ExpenseAccountEIP712V2', function () {
       // Try to transfer more in same week - should work
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.3'), signature)
+        .transfer(recipient.address, ethers.parseEther('0.3'), budgetLimit, signature)
 
       let expenseBalance = await expenseAccount.expenseBalances(signatureHash)
       expect(expenseBalance.totalWithdrawn).to.equal(ethers.parseEther('0.8'))
@@ -168,7 +168,7 @@ describe('ExpenseAccountEIP712V2', function () {
       // Should be able to transfer again in new period (budget resets)
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), signature)
+        .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
 
       // Check that total withdrawn reset for new period
       expenseBalance = await expenseAccount.expenseBalances(signatureHash)
@@ -206,7 +206,7 @@ describe('ExpenseAccountEIP712V2', function () {
       // Transfer in the current month (period 0)
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.8'), signature)
+        .transfer(recipient.address, ethers.parseEther('0.8'), budgetLimit, signature)
 
       // Check period is 0 (current month)
       const currentPeriod = await expenseAccount.getCurrentPeriod(budgetLimit)
@@ -216,7 +216,7 @@ describe('ExpenseAccountEIP712V2', function () {
       await expect(
         expenseAccount
           .connect(approvedAddress)
-          .transfer(recipient.address, budgetLimit, ethers.parseEther('0.3'), signature)
+          .transfer(recipient.address, ethers.parseEther('0.3'), budgetLimit, signature)
       ).to.be.revertedWith('Exceeds period budget')
 
       // Move to 1st of next month (period 1)
@@ -225,7 +225,7 @@ describe('ExpenseAccountEIP712V2', function () {
       // Should be able to transfer again in new period (budget resets)
       await expenseAccount
         .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.7'), signature)
+        .transfer(recipient.address, ethers.parseEther('0.7'), budgetLimit, signature)
 
       // Check that total withdrawn reset for new period
       const expenseBalance = await expenseAccount.expenseBalances(signatureHash)
