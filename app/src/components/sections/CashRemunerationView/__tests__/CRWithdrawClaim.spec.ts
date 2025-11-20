@@ -48,10 +48,17 @@ vi.mock('@/utils', () => ({
 
 vi.mock('@/composables', () => ({
   useCustomFetch: vi.fn(() => ({
-    put: vi.fn().mockReturnThis(),
-    json: vi.fn().mockReturnValue({
-      execute: vi.fn().mockResolvedValue({}),
-      error: ref(null)
+    put: () => ({
+      json: () => ({
+        execute: vi.fn().mockResolvedValue({}),
+        error: ref(null)
+      })
+    }),
+    post: () => ({
+      json: () => ({
+        execute: vi.fn().mockResolvedValue({}),
+        error: ref(null)
+      })
     })
   }))
 }))
@@ -277,7 +284,7 @@ describe('WithdrawComponent', () => {
     const { useCustomFetch } = await import('@/composables')
     //@ts-expect-error only mocking required values
     vi.mocked(useCustomFetch).mockReturnValue({
-      put: vi.fn().mockReturnThis(),
+      post: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnValue({
         execute: vi.fn().mockResolvedValue({}),
         error: ref(new Error('Update failed'))

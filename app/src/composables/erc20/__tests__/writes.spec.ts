@@ -5,7 +5,7 @@ import {
   useERC20Transfer,
   useERC20TransferFrom,
   useERC20Approve
-} from '../erc20Writes'
+} from '../writes'
 import type { Address } from 'viem'
 
 // Hoisted mock variables

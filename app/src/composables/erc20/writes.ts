@@ -1,79 +1,65 @@
-import { computed, type MaybeRef } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import { useAccount } from '@wagmi/vue'
-import { type Address } from 'viem'
-import { ERC20_FUNCTION_NAMES, type ERC20FunctionName, isValidERC20Function } from './types'
-import { useContractWrites, type ContractWriteConfig } from '../contracts/useContractWrites'
-import { ERC20_ABI } from '@/artifacts/abi/erc20'
-import { unref } from 'vue'
+import type { MaybeRef } from 'vue'
+import type { Address } from 'viem'
+import { ERC20_ABI as erc20Abi } from '@/artifacts/abi/erc20'
+// import { erc20Abi } from 'viem'
+import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
+import type { ExtractAbiFunctionNames } from 'abitype'
+import { computed, unref } from 'vue'
 
-/**
- * ERC20 contract specific write operations
- * This is a wrapper around the generic useContractWrites composable
- */
-export function useERC20Writes(contractAddress: MaybeRef<Address>) {
-  const queryClient = useQueryClient()
-  const { chainId } = useAccount()
-  const erc20Address = computed(() => unref(contractAddress))
+export type ERC20FunctionNames = ExtractAbiFunctionNames<typeof erc20Abi>
 
-  // Use the generic contract writes composable
-  const baseWrites = useContractWrites({
-    contractAddress: contractAddress,
-    abi: ERC20_ABI,
-    chainId: chainId
-  } as ContractWriteConfig)
+// Helper function to wrap useContractWrites for ERC20 contract
+export function useERC20ContractWrite(options: {
+  contractAddress: MaybeRef<Address | undefined>
+  functionName: ERC20FunctionNames
+  args?: MaybeRef<readonly unknown[]>
+  value?: MaybeRef<bigint>
+}) {
+  return useContractWrites({
+    contractAddress: options.contractAddress,
+    abi: erc20Abi,
+    functionName: options.functionName,
+    args: options.args ?? [],
+    ...(options.value !== undefined ? { value: options.value } : {})
+  })
+}
 
-  /**
-   * ERC20-specific query invalidation based on function name
-   */
-  const invalidateERC20Queries = async (functionName: ERC20FunctionName) => {
-    if (!erc20Address.value) return
+export function useERC20Transfer(
+  contractAddress: MaybeRef<Address | undefined>,
+  to: MaybeRef<Address>,
+  amount: MaybeRef<bigint>
+) {
+  const args = computed(() => [unref(to), unref(amount)] as readonly unknown[])
+  return useERC20ContractWrite({
+    contractAddress,
+    functionName: 'transfer',
+    args
+  })
+}
 
-    const erc20QueryKey = {
-      address: erc20Address.value,
-      chainId: chainId.value
-    }
+export function useERC20TransferFrom(
+  contractAddress: MaybeRef<Address | undefined>,
+  from: MaybeRef<Address>,
+  to: MaybeRef<Address>,
+  amount: MaybeRef<bigint>
+) {
+  const args = computed(() => [unref(from), unref(to), unref(amount)] as readonly unknown[])
+  return useERC20ContractWrite({
+    contractAddress,
+    functionName: 'transferFrom',
+    args
+  })
+}
 
-    // Invalidate function-specific queries
-    await queryClient.invalidateQueries({
-      queryKey: [{ ...erc20QueryKey, functionName }]
-    })
-
-    // Invalidate balance queries on transfers and approvals
-    if (
-      functionName === ERC20_FUNCTION_NAMES.TRANSFER ||
-      functionName === ERC20_FUNCTION_NAMES.TRANSFER_FROM ||
-      functionName === ERC20_FUNCTION_NAMES.APPROVE
-    ) {
-      await queryClient.invalidateQueries({
-        queryKey: [{ ...erc20QueryKey, functionName: ERC20_FUNCTION_NAMES.BALANCE_OF }]
-      })
-
-      // Also invalidate allowance queries for approvals
-      if (functionName === ERC20_FUNCTION_NAMES.APPROVE) {
-        await queryClient.invalidateQueries({
-          queryKey: [{ ...erc20QueryKey, functionName: ERC20_FUNCTION_NAMES.ALLOWANCE }]
-        })
-      }
-    }
-  }
-
-  /**
-   * Execute a write operation with proper error handling and query invalidation
-   */
-  const executeWrite = async (functionName: string, args: unknown[] = []) => {
-    if (!isValidERC20Function(functionName)) {
-      throw new Error(`Invalid ERC20 function: ${functionName}`)
-    }
-
-    const result = await baseWrites.executeWrite(functionName, args)
-    await invalidateERC20Queries(functionName)
-    return result
-  }
-
-  return {
-    // Re-export all base functionality
-    ...baseWrites,
-    executeWrite
-  }
+export function useERC20Approve(
+  contractAddress: MaybeRef<Address | undefined>,
+  spender: MaybeRef<Address>,
+  amount: MaybeRef<bigint>
+) {
+  const args = computed(() => [unref(spender), unref(amount)] as readonly unknown[])
+  return useERC20ContractWrite({
+    contractAddress,
+    functionName: 'approve',
+    args
+  })
 }
