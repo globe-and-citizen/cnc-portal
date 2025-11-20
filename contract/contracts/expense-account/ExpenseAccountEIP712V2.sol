@@ -87,8 +87,8 @@ contract ExpenseAccountEIP712V2 is
      */
     function transfer(
         address to,
-        BudgetLimit calldata budgetLimit,
         uint256 amount,
+        BudgetLimit calldata budgetLimit,
         bytes calldata signature
     ) external {
         // Verify to address is non-zero address
