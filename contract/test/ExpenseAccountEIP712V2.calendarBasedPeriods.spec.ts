@@ -150,7 +150,7 @@ describe('ExpenseAccountEIP712V2', function () {
         .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), signature)
 
       // Check period is 0 (same week)
-      let currentPeriod = await expenseAccount.getCurrentPeriod(budgetLimit)
+      const currentPeriod = await expenseAccount.getCurrentPeriod(budgetLimit)
       expect(currentPeriod).to.equal(0)
 
       // Try to transfer more in same week - should work
@@ -209,7 +209,7 @@ describe('ExpenseAccountEIP712V2', function () {
         .transfer(recipient.address, budgetLimit, ethers.parseEther('0.8'), signature)
 
       // Check period is 0 (current month)
-      let currentPeriod = await expenseAccount.getCurrentPeriod(budgetLimit)
+      const currentPeriod = await expenseAccount.getCurrentPeriod(budgetLimit)
       expect(currentPeriod).to.equal(0)
 
       // Verify we can't exceed current month budget
