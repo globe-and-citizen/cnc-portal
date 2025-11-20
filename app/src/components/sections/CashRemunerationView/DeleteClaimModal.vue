@@ -1,79 +1,69 @@
 <template>
-  <ModalComponent v-model="showModal">
-    <div class="flex flex-col gap-4">
-      <h3 class="text-xl font-bold">Delete Claim</h3>
-      <hr />
-      <p>
-        Are you sure you want to delete
-        <span class="font-semibold">{{ claim?.hoursWorked }} h</span>
-        claims submitted on
-        <span class="font-semibold">{{ formattedDate }}</span>
-        ?
-      </p>
-      <div v-if="errorMessage" class="alert alert-error" data-test="delete-claim-error">
-        {{ errorMessage }}
-      </div>
-      <div class="flex justify-end gap-2">
-        <ButtonUI
-          variant="error"
-          :loading="isDeleting"
-          :disabled="isDeleting"
-          @click="handleDelete"
-          data-test="confirm-delete-claim-button"
-        >
-          Delete
-        </ButtonUI>
-        <ButtonUI
-          variant="primary"
-          outline
-          :disabled="isDeleting"
-          @click="handleClose"
-          data-test="cancel-delete-claim-button"
-        >
-          Cancel
-        </ButtonUI>
-      </div>
+  <div class="flex flex-col gap-4">
+    <h3 class="text-xl font-bold">Delete Claim</h3>
+    <hr />
+    <p>
+      Are you sure you want to delete
+      <span class="font-semibold">{{ claim?.hoursWorked }} h</span>
+      claims submitted on
+      <span class="font-semibold">{{ formattedDate }}</span>
+      ?
+    </p>
+    <div v-if="errorMessage" class="alert alert-error" data-test="delete-claim-error">
+      {{ errorMessage }}
     </div>
-  </ModalComponent>
+    <div class="flex justify-end gap-2">
+      <ButtonUI
+        variant="error"
+        :loading="isDeleting"
+        :disabled="isDeleting"
+        @click="handleDelete"
+        data-test="confirm-delete-claim-button"
+      >
+        Delete
+      </ButtonUI>
+      <ButtonUI
+        variant="primary"
+        outline
+        :disabled="isDeleting"
+        @click="$emit('close')"
+        data-test="cancel-delete-claim-button"
+      >
+        Cancel
+      </ButtonUI>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import type { Claim } from '@/types'
-import ModalComponent from '@/components/ModalComponent.vue'
+
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore } from '@/stores'
+import { useToastStore, useTeamStore } from '@/stores'
 import { useQueryClient } from '@tanstack/vue-query'
 
-interface Props {
-  claim: Claim | null
-  queryKey: Array<string | undefined>
-}
+const props = defineProps<{
+  claim: Claim
+}>()
 
-const showModal = ref(true)
-const props = defineProps<Props>()
 const emit = defineEmits<{
-  'update:show': [value: boolean]
   close: []
 }>()
 
-// Store instances
 const toastStore = useToastStore()
+const teamStore = useTeamStore()
 const queryClient = useQueryClient()
 
-// Computed
 const formattedDate = computed(() => {
   return props.claim ? dayjs(props.claim.dayWorked).format('MMM DD, YYYY') : ''
 })
 
-const deleteClaimEndpoint = computed(() => (props.claim ? `/claim/${props.claim.id}` : ''))
-
-// State
+const deleteClaimEndpoint = computed(() => `/claim/${props.claim.id}`)
 const errorMessage = ref<string>('')
 
-// API call setup
 const {
   execute: deleteClaimRequest,
   isFetching: isDeleting,
@@ -86,31 +76,25 @@ const {
   .delete()
   .json()
 
-// Methods
-const handleClose = () => {
-  errorMessage.value = ''
-  emit('update:show', false)
-  emit('close')
-}
-
 const handleDelete = async () => {
-  if (!props.claim) return
-
   errorMessage.value = ''
   await deleteClaimRequest()
+
   if (deleteClaimStatusCode.value === 200) {
     toastStore.addSuccessToast('Claim deleted successfully')
-    if (props.queryKey.some((key) => key !== undefined)) {
-      await queryClient.invalidateQueries({
-        queryKey: props.queryKey
-      })
-    }
-    handleClose()
+
+    // Invalidate using the same query key pattern from parent
+    await queryClient.invalidateQueries({
+      queryKey: ['weekly-claims', teamStore.currentTeam?.id]
+    })
+
+    emit('close')
   }
 }
-// Error handling
+
 watch(deleteClaimError, async () => {
   if (!deleteClaimError.value || !deleteClaimResponse.value) return
+
   try {
     const errorData = await deleteClaimResponse.value.json()
     errorMessage.value = errorData?.message || 'Failed to delete claim'
@@ -118,6 +102,7 @@ watch(deleteClaimError, async () => {
     console.error('Failed to parse delete claim error response', error)
     errorMessage.value = 'Failed to delete claim'
   }
+
   toastStore.addErrorToast(errorMessage.value)
 })
 </script>
