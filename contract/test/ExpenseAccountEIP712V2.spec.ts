@@ -212,6 +212,55 @@ describe('ExpenseAccountEIP712V2', function () {
       const currentPeriod = await expenseAccount.getCurrentPeriod(budgetLimit)
       expect(expenseBalance.lastWithdrawnPeriod).to.equal(currentPeriod)
     })
+
+    it('Should enforce cumulative weekly budget limit', async function () {
+      const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
+        deployExpenseAccountFixture
+      )
+
+      // Use future dates to avoid timestamp conflicts
+      const mondayTimestamp = Date.UTC(2030, 0, 7, 0, 0, 0) / 1000 // Jan 7, 2030 (Monday)
+      const endDate = Date.UTC(2030, 0, 28, 0, 0, 0) / 1000 // Jan 28, 2030
+
+      const budgetLimit = createBudgetLimit({
+        amount: ethers.parseEther('1'),
+        frequencyType: 2, // Weekly
+        startDate: mondayTimestamp,
+        endDate: endDate,
+        approvedAddress: approvedAddress.address
+      })
+
+      const signature = await createSignature(owner, budgetLimit, expenseAccount)
+
+      // Set time to Monday
+      await time.setNextBlockTimestamp(mondayTimestamp)
+
+      // First transfer - 0.6 ETH
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.6'), signature)
+
+      // Second transfer - 0.4 ETH (total 1.0 ETH - at limit)
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.4'), signature)
+
+      // Third transfer in same week - should fail (exceeds weekly budget)
+      await expect(
+        expenseAccount
+          .connect(approvedAddress)
+          .transfer(recipient.address, budgetLimit, ethers.parseEther('0.1'), signature)
+      ).to.be.revertedWith('Exceeds period budget')
+
+      // Move to next Monday (new week)
+      const nextMonday = Date.UTC(2030, 0, 14, 0, 0, 0) / 1000 // Jan 14, 2030
+      await time.setNextBlockTimestamp(nextMonday)
+
+      // Should be able to transfer again in new week (budget resets)
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), signature)
+    })
   })
 
   describe('ERC20 Token Transfers', function () {
@@ -350,17 +399,38 @@ describe('ExpenseAccountEIP712V2', function () {
 
       const signature = await createSignature(owner, budgetLimit, expenseAccount)
 
-      // First transfer
-      await expenseAccount
-        .connect(approvedAddress)
-        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.6'), signature)
-
       // Second transfer exceeding total
       await expect(
         expenseAccount
           .connect(approvedAddress)
+          .transfer(recipient.address, budgetLimit, ethers.parseEther('1.1'), signature)
+      ).to.be.revertedWith('Amount exceeds budget limit')
+    })
+
+    it('Should reject one-time transfer if already withdrawn', async function () {
+      const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
+        deployExpenseAccountFixture
+      )
+
+      const budgetLimit = createBudgetLimit({
+        amount: ethers.parseEther('1'),
+        frequencyType: 0, // OneTime
+        approvedAddress: approvedAddress.address
+      })
+
+      const signature = await createSignature(owner, budgetLimit, expenseAccount)
+
+      // First transfer - should work
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), signature)
+
+      // Second transfer - should fail even if within budget amount
+      await expect(
+        expenseAccount
+          .connect(approvedAddress)
           .transfer(recipient.address, budgetLimit, ethers.parseEther('0.5'), signature)
-      ).to.be.revertedWith('Exceeds one-time budget')
+      ).to.be.revertedWith('One-time budget already used')
     })
   })
 
