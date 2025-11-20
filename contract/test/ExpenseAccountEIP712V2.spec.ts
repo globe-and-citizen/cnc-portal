@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
-import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
+import { loadFixture, time } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { ExpenseAccountEIP712V2 } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { AddressLike } from 'ethers'
@@ -34,15 +34,9 @@ describe('ExpenseAccountEIP712V2', function () {
       value: ethers.parseEther('10')
     })
 
-    // Fund owner with ERC20 tokens
-    await usdt.mint(
-      /* owner.address */ await expenseAccount.getAddress(),
-      ethers.parseEther('10000')
-    )
-    await usdc.mint(
-      /* owner.address */ await expenseAccount.getAddress(),
-      ethers.parseEther('10000')
-    )
+    // Fund contract with ERC20 tokens
+    await usdt.mint(await expenseAccount.getAddress(), ethers.parseEther('10000'))
+    await usdc.mint(await expenseAccount.getAddress(), ethers.parseEther('10000'))
 
     return {
       expenseAccount,
@@ -184,16 +178,24 @@ describe('ExpenseAccountEIP712V2', function () {
         deployExpenseAccountFixture
       )
 
+      // Use future dates to avoid timestamp issues
+      const startDate = Date.UTC(2030, 0, 1, 0, 0, 0) / 1000 // Jan 1, 2030
+      const endDate = Date.UTC(2030, 2, 1, 0, 0, 0) / 1000 // Mar 1, 2030 (2 months later)
+
       const budgetLimit = createBudgetLimit({
         amount: ethers.parseEther('1'),
-        startDate: Math.floor(Date.now() / 1000) - 60 * 86400, // Started 2 months ago
+        startDate: startDate,
+        endDate: endDate, // Explicitly set endDate to be after startDate
         approvedAddress: approvedAddress.address
       })
 
       const signature = await createSignature(owner, budgetLimit, expenseAccount)
       const signatureHash = ethers.keccak256(signature)
 
-      // Use full budget in "current" period
+      // Set time to start date
+      await time.setNextBlockTimestamp(startDate)
+
+      // Use full budget in current period
       await expenseAccount
         .connect(approvedAddress)
         .transfer(recipient.address, budgetLimit, ethers.parseEther('1'), signature)
@@ -217,11 +219,6 @@ describe('ExpenseAccountEIP712V2', function () {
       const { expenseAccount, owner, approvedAddress, recipient, usdt } = await loadFixture(
         deployExpenseAccountFixture
       )
-
-      // Approve contract to spend owner's USDT
-      await usdt
-        .connect(owner)
-        .approve(await expenseAccount.getAddress(), ethers.parseEther('1000'))
 
       const budgetLimit = createBudgetLimit({
         amount: ethers.parseEther('500'),
@@ -247,10 +244,6 @@ describe('ExpenseAccountEIP712V2', function () {
       const { expenseAccount, owner, approvedAddress, recipient, usdc } = await loadFixture(
         deployExpenseAccountFixture
       )
-
-      await usdc
-        .connect(owner)
-        .approve(await expenseAccount.getAddress(), ethers.parseEther('1000'))
 
       const budgetLimit = createBudgetLimit({
         amount: ethers.parseEther('300'),
@@ -375,62 +368,56 @@ describe('ExpenseAccountEIP712V2', function () {
     it('Should calculate daily periods correctly', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
+      // Use future date to avoid epoch issues
+      const startDate = Date.UTC(2030, 0, 1, 0, 0, 0) / 1000 // Jan 1, 2030
+
       const budgetLimit = createBudgetLimit({
         frequencyType: 1, // Daily
-        startDate: 0,
+        startDate: startDate,
         approvedAddress: approvedAddress.address
       })
 
       // 1 day after start = period 1
-      const period = await expenseAccount.getPeriod(budgetLimit, 86400)
+      const period = await expenseAccount.getPeriod(budgetLimit, startDate + 86400)
       expect(period).to.equal(1)
     })
 
-    // it('Should calculate weekly periods correctly', async function () {
-    //   const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
-
-    //   const budgetLimit = createBudgetLimit({
-    //     frequencyType: 2, // Weekly
-    //     startDate: 0,
-    //     approvedAddress: approvedAddress.address
-    //   })
-
-    //   // 7 days after start = period 1
-    //   const period = await expenseAccount.getPeriod(budgetLimit, 604800)
-    //   expect(period).to.equal(1)
-    // })
     it('Should calculate weekly periods correctly', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
-      // Use a known Sunday timestamp instead of 0
-      const sundayTimestamp = 1672531200 // January 4
-      // 1970 was a Sunday (4 days after epoch)
+      // Use a known Monday in the future
+      const mondayTimestamp = Date.UTC(2024, 0, 1, 0, 0, 0) / 1000 // Jan 1, 2024 (Monday)
 
       const budgetLimit = createBudgetLimit({
         frequencyType: 2, // Weekly
-        startDate: sundayTimestamp,
+        startDate: mondayTimestamp,
         approvedAddress: approvedAddress.address
       })
 
       // 7 days after start = period 1
-      const period = await expenseAccount.getPeriod(budgetLimit, sundayTimestamp + 604800)
+      const period = await expenseAccount.getPeriod(budgetLimit, mondayTimestamp + 604800)
       expect(period).to.equal(1)
     })
 
     it('Should calculate monthly periods correctly', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
+      // Use future dates
+      const startDate = Date.UTC(2030, 0, 1, 0, 0, 0) / 1000 // Jan 1, 2030
+
       const budgetLimit = createBudgetLimit({
         frequencyType: 3, // Monthly
-        startDate: 0, // Jan 1, 1970
+        startDate: startDate,
         approvedAddress: approvedAddress.address
       })
 
-      // Create a timestamp for March 15, 1970 (2 months + 14 days after start)
-      // Should be period 2 (Jan=0, Feb=1, Mar=2)
-      const march15 = 2 * 30 * 86400 + 14 * 86400 // Approximate
-      const period = await expenseAccount.getPeriod(budgetLimit, march15)
+      // March 1, 2030 should be period 2 (Jan=0, Feb=1, Mar=2)
+      const march1Timestamp = Date.UTC(2030, 2, 1, 0, 0, 0) / 1000 // Mar 1, 2030
+      const period = await expenseAccount.getPeriod(budgetLimit, march1Timestamp)
       expect(period).to.equal(2)
     })
   })
+
+  // Remove the duplicate calendar period tests since they're now covered above
+  // and in the separate calendar period test file
 })
