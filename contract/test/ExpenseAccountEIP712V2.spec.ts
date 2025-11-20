@@ -386,17 +386,34 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(period).to.equal(1)
     })
 
+    // it('Should calculate weekly periods correctly', async function () {
+    //   const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
+
+    //   const budgetLimit = createBudgetLimit({
+    //     frequencyType: 2, // Weekly
+    //     startDate: 0,
+    //     approvedAddress: approvedAddress.address
+    //   })
+
+    //   // 7 days after start = period 1
+    //   const period = await expenseAccount.getPeriod(budgetLimit, 604800)
+    //   expect(period).to.equal(1)
+    // })
     it('Should calculate weekly periods correctly', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
+      // Use a known Sunday timestamp instead of 0
+      const sundayTimestamp = 1672531200 // January 4
+      // 1970 was a Sunday (4 days after epoch)
+
       const budgetLimit = createBudgetLimit({
         frequencyType: 2, // Weekly
-        startDate: 0,
+        startDate: sundayTimestamp,
         approvedAddress: approvedAddress.address
       })
 
       // 7 days after start = period 1
-      const period = await expenseAccount.getPeriod(budgetLimit, 604800)
+      const period = await expenseAccount.getPeriod(budgetLimit, sundayTimestamp + 604800)
       expect(period).to.equal(1)
     })
 
