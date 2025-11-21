@@ -24,6 +24,12 @@ interface IInvestorV1Contract {
 interface IBank {
     function setInvestorAddress(address _investorAddress) external;
 }
+
+interface IFeeCollector {
+    function getFeeFor(string memory contractType) external view returns (uint16);
+}
+
+
 /**
  * @notice Struct for contract deployment data
  * @param contractType Type of contract to deploy
@@ -73,6 +79,14 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     /// @notice Address of the Board of Directors contract
     address private bodContract;
 
+    // @notice Address of the Commission Collector
+    address private feeCollector;
+
+    constructor(address _feeCollector) {
+        require(_feeCollector != address(0), "Invalid feeCollector");
+        feeCollector = _feeCollector;
+    }
+
     /**
      * @notice Initializes the contract with owner and optional beacon configurations
      * @param _owner Address of the contract owner
@@ -83,6 +97,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         BeaconConfig[] memory beaconConfigs,
         DeploymentData[] calldata _deployments,
         bool _isDeployAllContracts
+
     ) public initializer {
         __Ownable_init(_owner);
         __ReentrancyGuard_init();
@@ -297,5 +312,21 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
             "Caller is not an owner and contract is not initializing"
         );
         _;
+    }
+
+    function getFeeFor(string memory contractType)
+        external
+        view
+        returns (uint16)
+    {
+        return IFeeCollector(feeCollector).getFeeFor(contractType);
+    }
+
+    /**
+     * @notice Returns the fee collector address
+     * @return The address of the fee collector contract
+     */
+    function getFeeCollector() external view returns (address) {
+        return feeCollector;
     }
 }
