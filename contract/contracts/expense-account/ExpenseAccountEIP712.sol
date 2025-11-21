@@ -173,10 +173,6 @@ contract ExpenseAccountEIP712 is
                 balance.totalWithdrawn == 0,
                 "One-time budget already used"
             );
-            // require(
-            //     amount <= budgetLimit.amount,
-            //     "Amount exceeds one-time budget"
-            // );
             return true;
         }
 
@@ -193,6 +189,9 @@ contract ExpenseAccountEIP712 is
                 "Exceeds period budget"
             );
         }
+
+        // Check token is supported
+        require(isTokenSupported(budgetLimit.tokenAddress), "Token not supported");
 
         return true;
     }
