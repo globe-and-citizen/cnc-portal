@@ -315,6 +315,92 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(thirdMondayPeriod).to.equal(2)
     })
 
+    it('Should handle weekly budget starting mid-week with partial first week', async function () {
+      const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
+        deployExpenseAccountFixture
+      )
+
+      // Use future dates to avoid block timestamp issues
+      const currentTime = await time.latest()
+      const currentDate = new Date(currentTime * 1000)
+
+      // Calculate next Wednesday from current time
+      const currentDay = currentDate.getUTCDay() // 0 = Sunday, 1 = Monday, ..., 3 = Wednesday
+      const daysUntilWednesday = currentDay <= 3 ? 3 - currentDay : 10 - currentDay
+      const nextWednesday = new Date(currentDate)
+      nextWednesday.setUTCDate(currentDate.getUTCDate() + daysUntilWednesday)
+      nextWednesday.setUTCHours(12, 0, 0, 0) // Wednesday at 12:00:00 UTC
+
+      const wednesdayTimestamp = Math.floor(nextWednesday.getTime() / 1000)
+
+      // Calculate period boundaries
+      const startOfWeekMonday = new Date(nextWednesday)
+      startOfWeekMonday.setUTCDate(
+        nextWednesday.getUTCDate() -
+          (nextWednesday.getUTCDay() === 0 ? 6 : nextWednesday.getUTCDay() - 1)
+      )
+      startOfWeekMonday.setUTCHours(0, 0, 0, 0)
+      const startOfWeekMondayTimestamp = Math.floor(startOfWeekMonday.getTime() / 1000)
+
+      const endOfFirstWeekSunday = new Date(startOfWeekMonday)
+      endOfFirstWeekSunday.setUTCDate(startOfWeekMonday.getUTCDate() + 6)
+      endOfFirstWeekSunday.setUTCHours(23, 59, 59, 0)
+      const endOfFirstWeekSundayTimestamp = Math.floor(endOfFirstWeekSunday.getTime() / 1000)
+
+      const nextMondayReset = new Date(startOfWeekMonday)
+      nextMondayReset.setUTCDate(startOfWeekMonday.getUTCDate() + 7)
+      nextMondayReset.setUTCHours(0, 0, 0, 0)
+      const nextMondayResetTimestamp = Math.floor(nextMondayReset.getTime() / 1000)
+
+      const budgetLimit = createBudgetLimit({
+        amount: ethers.parseEther('1'),
+        frequencyType: 2, // Weekly
+        startDate: wednesdayTimestamp,
+        endDate: nextMondayResetTimestamp + 14 * 86400, // End 2 weeks after reset
+        approvedAddress: approvedAddress.address
+      })
+
+      const signature = await createSignature(owner, budgetLimit, expenseAccount)
+      const signatureHash = ethers.keccak256(signature)
+
+      // Set time to Wednesday (first partial week)
+      await time.setNextBlockTimestamp(wednesdayTimestamp)
+
+      // Should be able to use full budget in first partial week (Wed-Sun)
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
+
+      // Should be able to use remaining budget in same partial week
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
+
+      // Verify total withdrawn for first partial week
+      let expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      expect(expenseBalance.totalWithdrawn).to.equal(ethers.parseEther('1'))
+
+      // Move to next Monday (full new week)
+      await time.setNextBlockTimestamp(nextMondayResetTimestamp)
+
+      // Should be able to use full budget again in new week (budget resets)
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
+
+      // Verify we're in period 1 (second week) and budget reset
+      const currentPeriod = await expenseAccount.getCurrentPeriod(budgetLimit)
+      expect(currentPeriod).to.equal(1)
+
+      // Should be able to use full budget again in new week (budget resets)
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, ethers.parseEther('0.3'), budgetLimit, signature)
+
+      expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      expect(expenseBalance.totalWithdrawn).to.equal(ethers.parseEther('0.8'))
+    })
+
     it('Should handle year boundaries for monthly periods', async function () {
       const { expenseAccount } = await loadFixture(deployExpenseAccountFixture)
 
