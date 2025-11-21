@@ -340,12 +340,10 @@ describe('ExpenseAccountEIP712V2', function () {
           (nextWednesday.getUTCDay() === 0 ? 6 : nextWednesday.getUTCDay() - 1)
       )
       startOfWeekMonday.setUTCHours(0, 0, 0, 0)
-      const startOfWeekMondayTimestamp = Math.floor(startOfWeekMonday.getTime() / 1000)
 
       const endOfFirstWeekSunday = new Date(startOfWeekMonday)
       endOfFirstWeekSunday.setUTCDate(startOfWeekMonday.getUTCDate() + 6)
       endOfFirstWeekSunday.setUTCHours(23, 59, 59, 0)
-      const endOfFirstWeekSundayTimestamp = Math.floor(endOfFirstWeekSunday.getTime() / 1000)
 
       const nextMondayReset = new Date(startOfWeekMonday)
       nextMondayReset.setUTCDate(startOfWeekMonday.getUTCDate() + 7)
