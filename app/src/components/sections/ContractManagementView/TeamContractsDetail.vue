@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref, computed, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import TableComponent from '@/components/TableComponent.vue'
 
