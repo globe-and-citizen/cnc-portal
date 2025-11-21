@@ -311,6 +311,34 @@ describe('ExpenseAccountEIP712V2', function () {
   })
 
   describe('Validation', function () {
+    it('Should reject transfer with unsupported token', async function () {
+      const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
+        deployExpenseAccountFixture
+      )
+
+      // Create a mock unsupported token
+      const UnsupportedToken = await ethers.getContractFactory('MockERC20')
+      const unsupportedToken = await UnsupportedToken.deploy('UNSUPPORTED', 'UNSPT')
+      await unsupportedToken.waitForDeployment()
+
+      // Fund the contract with the unsupported token
+      await unsupportedToken.mint(await expenseAccount.getAddress(), ethers.parseEther('1000'))
+
+      const budgetLimit = createBudgetLimit({
+        amount: ethers.parseEther('100'),
+        tokenAddress: await unsupportedToken.getAddress(), // Use unsupported token
+        approvedAddress: approvedAddress.address
+      })
+
+      const signature = await createSignature(owner, budgetLimit, expenseAccount)
+
+      await expect(
+        expenseAccount
+          .connect(approvedAddress)
+          .transfer(recipient.address, ethers.parseEther('50'), budgetLimit, signature)
+      ).to.be.revertedWith('Token not supported')
+    })
+
     it('Should reject transfer from unauthorized spender', async function () {
       const { expenseAccount, owner, approvedAddress, recipient, other } = await loadFixture(
         deployExpenseAccountFixture
