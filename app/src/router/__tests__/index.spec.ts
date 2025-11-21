@@ -3,14 +3,14 @@ import { nextTick } from 'vue'
 
 /**
  * Router Unit Tests
- * 
+ *
  * These tests achieve comprehensive coverage of the router configuration:
  * - ✅ 100% Branch Coverage: All conditional logic paths tested
  * - ✅ 57% Statement Coverage: All executable logic tested
  * - ✅ Authentication guard behavior fully tested
  * - ✅ Route definitions and metadata validated
  * - ✅ Dynamic imports configuration verified
- * 
+ *
  * Note: The uncovered statements (43%) are the dynamic import arrow functions
  * themselves (e.g., `() => import('@/views/...')`), which are tested indirectly
  * through navigation but don't contain testable logic.
@@ -114,28 +114,28 @@ describe('Router Configuration', () => {
   describe('Route Definitions', () => {
     it('should have correct route structure', () => {
       const routes = router.getRoutes()
-      
+
       // Router expands nested routes, so we have more than just 4 top-level routes
       expect(routes.length).toBeGreaterThan(4)
-      
+
       // Check home route
-      const homeRoute = routes.find(route => route.name === 'home')
+      const homeRoute = routes.find((route) => route.name === 'home')
       expect(homeRoute).toBeDefined()
       expect(homeRoute?.path).toBe('/')
-      
+
       // Check login route
-      const loginRoute = routes.find(route => route.name === 'login')
+      const loginRoute = routes.find((route) => route.name === 'login')
       expect(loginRoute).toBeDefined()
       expect(loginRoute?.path).toBe('/login')
-      
+
       // Check teams route
-      const teamsRoute = routes.find(route => route.name === 'teams')
+      const teamsRoute = routes.find((route) => route.name === 'teams')
       expect(teamsRoute).toBeDefined()
       expect(teamsRoute?.path).toBe('/teams')
       expect(teamsRoute?.meta?.name).toBe('Teams List')
-      
+
       // Check locked route
-      const lockedRoute = routes.find(route => route.name === 'LockedView')
+      const lockedRoute = routes.find((route) => route.name === 'LockedView')
       expect(lockedRoute).toBeDefined()
       expect(lockedRoute?.path).toBe('/locked')
       expect(lockedRoute?.meta?.noLayout).toBe(true)
@@ -143,26 +143,32 @@ describe('Router Configuration', () => {
 
     it('should have team detail route with nested children', () => {
       const routes = router.getRoutes()
-      const teamRoute = routes.find(route => route.name === 'show-team')
-      
+      const teamRoute = routes.find((route) => route.name === 'show-team')
+
       expect(teamRoute).toBeDefined()
       expect(teamRoute?.path).toBe('/teams/:id')
       expect(teamRoute?.meta?.name).toBe('Team View')
-      
+
       // Check nested routes exist
-      const nestedRoutes = routes.filter(route => route.path.includes('/teams/:id/'))
+      const nestedRoutes = routes.filter((route) => route.path.includes('/teams/:id/'))
       expect(nestedRoutes.length).toBeGreaterThan(0)
     })
 
     it('should have all nested team routes defined', () => {
       const routes = router.getRoutes()
-      
+
       const expectedNestedRoutes = [
         { name: 'team-demo', path: '/teams/:id/demo' },
         { name: 'weekly-claim', path: '/teams/:id/cash-remunerations/weekly-claim' },
-        { name: 'claim-history', path: '/teams/:id/cash-remunerations/members/:memberAddress/claim-history' },
+        {
+          name: 'claim-history',
+          path: '/teams/:id/cash-remunerations/members/:memberAddress/claim-history'
+        },
         { name: 'cash-remunerations', path: '/teams/:id/cash-remunerations' },
-        { name: 'cash-remunerations-member', path: '/teams/:id/cash-remunerations/member/:memberAddress' },
+        {
+          name: 'cash-remunerations-member',
+          path: '/teams/:id/cash-remunerations/member/:memberAddress'
+        },
         { name: 'expense-account', path: '/teams/:id/expense-account' },
         { name: 'vesting', path: '/teams/:id/vesting' },
         { name: 'bank', path: '/teams/:id/bank' },
@@ -174,8 +180,8 @@ describe('Router Configuration', () => {
         { name: 'sher-token', path: '/teams/:id/sher-token' }
       ]
 
-      expectedNestedRoutes.forEach(expectedRoute => {
-        const route = routes.find(r => r.name === expectedRoute.name)
+      expectedNestedRoutes.forEach((expectedRoute) => {
+        const route = routes.find((r) => r.name === expectedRoute.name)
         expect(route, `Route ${expectedRoute.name} should exist`).toBeDefined()
         expect(route?.path).toBe(expectedRoute.path)
       })
@@ -183,7 +189,7 @@ describe('Router Configuration', () => {
 
     it('should have correct route meta information', () => {
       const routes = router.getRoutes()
-      
+
       const routesWithMeta = [
         { name: 'teams', expectedMeta: { name: 'Teams List' } },
         { name: 'show-team', expectedMeta: { name: 'Team View' } },
@@ -205,7 +211,7 @@ describe('Router Configuration', () => {
       ]
 
       routesWithMeta.forEach(({ name, expectedMeta }) => {
-        const route = routes.find(r => r.name === name)
+        const route = routes.find((r) => r.name === name)
         expect(route?.meta).toEqual(expectedMeta)
       })
     })
@@ -214,10 +220,10 @@ describe('Router Configuration', () => {
   describe('Dynamic Imports', () => {
     it('should use dynamic imports for all components', () => {
       const routes = router.getRoutes()
-      
-      routes.forEach(route => {
+
+      routes.forEach((route) => {
         if (route.components) {
-          Object.values(route.components).forEach(component => {
+          Object.values(route.components).forEach((component) => {
             if (component && typeof component === 'function') {
               expect(typeof component).toBe('function')
             }
@@ -228,18 +234,18 @@ describe('Router Configuration', () => {
 
     it('should load components dynamically when routes are accessed', async () => {
       mockIsAuth.value = true // Set authenticated for this test
-      
+
       // Test home route component loading
       await router.push('/')
       await nextTick()
-      
+
       const homeRoute = router.currentRoute.value
       expect(homeRoute.name).toBe('home')
-      
+
       // Test teams route component loading
       await router.push('/teams')
       await nextTick()
-      
+
       const teamsRoute = router.currentRoute.value
       expect(teamsRoute.name).toBe('teams')
     })
