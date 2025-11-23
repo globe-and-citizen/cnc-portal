@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type { NavigationMenuItem } from "@nuxt/ui";
+import type { DropdownMenuItem, NavigationMenuItem } from "@nuxt/ui";
 
-const route = useRoute();
-const toast = useToast();
+const { isNotificationsSlideoverOpen } = useDashboard();
 
 const open = ref(false);
 
@@ -88,6 +87,21 @@ const links = [
   ],
 ] satisfies NavigationMenuItem[][];
 
+const items = [
+  [
+    {
+      label: "New mail",
+      icon: "i-lucide-send",
+      to: "/inbox",
+    },
+    {
+      label: "New customer",
+      icon: "i-lucide-user-plus",
+      to: "/customers",
+    },
+  ],
+] satisfies DropdownMenuItem[][];
+
 const groups = computed(() => [
   {
     id: "links",
@@ -108,35 +122,6 @@ const groups = computed(() => [
     ],
   },
 ]);
-
-onMounted(async () => {
-  const cookie = useCookie("cookie-consent");
-  if (cookie.value === "accepted") {
-    return;
-  }
-
-  // toast.add({
-  //   title:
-  //     "We use first-party cookies to enhance your experience on our website.",
-  //   duration: 0,
-  //   close: false,
-  //   actions: [
-  //     {
-  //       label: "Accept",
-  //       color: "neutral",
-  //       variant: "outline",
-  //       onClick: () => {
-  //         cookie.value = "accepted";
-  //       },
-  //     },
-  //     {
-  //       label: "Opt out",
-  //       color: "neutral",
-  //       variant: "ghost",
-  //     },
-  //   ],
-  // });
-});
 </script>
 
 <template>
@@ -196,7 +181,38 @@ onMounted(async () => {
 
     <UDashboardSearch :groups="groups" />
 
-    <slot />
+    <UDashboardPanel id="home">
+      <template #header>
+        <UDashboardNavbar title="Home" :ui="{ right: 'gap-3' }">
+          <template #leading>
+            <UDashboardSidebarCollapse />
+          </template>
+
+          <template #right>
+            <UTooltip text="Notifications" :shortcuts="['N']">
+              <UButton
+                color="neutral"
+                variant="ghost"
+                square
+                @click="isNotificationsSlideoverOpen = true"
+              >
+                <UChip color="error" inset>
+                  <UIcon name="i-lucide-bell" class="size-5 shrink-0" />
+                </UChip>
+              </UButton>
+            </UTooltip>
+
+            <UDropdownMenu :items="items">
+              <UButton icon="i-lucide-plus" size="md" class="rounded-full" />
+            </UDropdownMenu>
+          </template>
+        </UDashboardNavbar>
+      </template>
+
+      <template #body>
+        <slot />
+      </template>
+    </UDashboardPanel>
 
     <NotificationsSlideover />
   </UDashboardGroup>
