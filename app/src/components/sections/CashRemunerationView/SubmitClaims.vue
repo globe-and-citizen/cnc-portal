@@ -2,9 +2,10 @@
   <ButtonUI
     :loading="isWageClaimAdding"
     variant="success"
-    data-test="modal-submit-hours-button"
     size="sm"
-    @click="openModal"
+    data-test="modal-submit-hours-button"
+    :disabled="!canSubmitClaim"
+    @click="canSubmitClaim ? openModal() : null"
   >
     Submit Claim
   </ButtonUI>
@@ -66,6 +67,12 @@ const createDefaultFormData = (): ClaimFormData => ({
   dayWorked: dayjs().utc().startOf('day').toISOString()
 })
 
+const props = defineProps<{
+  weeklyClaim?: {
+    status: 'pending' | 'signed' | 'withdrawn' | 'disabled'
+  }
+}>()
+
 const formInitialData = ref<ClaimFormData>(createDefaultFormData())
 const claimPayload = ref<ClaimSubmitPayload | null>(null)
 
@@ -101,6 +108,12 @@ watch(addWageClaimError, async () => {
   if (addWageClaimError.value) {
     errorMessage.value = await addWageClaimResponse.value?.json()
   }
+})
+
+const canSubmitClaim = computed(() => {
+  if (!props.weeklyClaim) return true
+
+  return props.weeklyClaim.status === 'pending'
 })
 
 const handleSubmit = async (data: ClaimSubmitPayload) => {
