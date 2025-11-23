@@ -2,8 +2,46 @@
 import type { DropdownMenuItem, NavigationMenuItem } from "@nuxt/ui";
 
 const { isNotificationsSlideoverOpen } = useDashboard();
+const route = useRoute();
 
 const open = ref(false);
+
+// Dynamic page title based on current route
+const pageTitle = computed(() => {
+  const routeName = route.name as string;
+  const path = route.path;
+
+  // Map route names to titles
+  const titleMap: Record<string, string> = {
+    index: "Overview",
+    teams: "Teams Management",
+    micropayments: "Micropayments",
+    contracts: "Contracts",
+    settings: "Settings",
+    "settings-members": "Members",
+    "settings-notifications": "Notifications",
+    "settings-security": "Security",
+  };
+
+  // Return mapped title or capitalize first segment of path
+  if (routeName && titleMap[routeName]) {
+    return titleMap[routeName];
+  }
+
+  // Fallback: capitalize the first path segment
+  const segment = path.split("/")[1] || "home";
+  return segment.charAt(0).toUpperCase() + segment.slice(1);
+});
+
+// Dynamic panel id based on current route
+const panelId = computed(() => {
+  return route.path === "/" ? "home" : route.path.split("/")[1] || "home";
+});
+
+// Set the page title in the browser tab
+useHead({
+  title: () => `${pageTitle.value} | CNC Portal`,
+});
 
 const links = [
   [
@@ -181,9 +219,9 @@ const groups = computed(() => [
 
     <UDashboardSearch :groups="groups" />
 
-    <UDashboardPanel id="home">
+    <UDashboardPanel :id="panelId">
       <template #header>
-        <UDashboardNavbar title="Home" :ui="{ right: 'gap-3' }">
+        <UDashboardNavbar :title="pageTitle" :ui="{ right: 'gap-3' }">
           <template #leading>
             <UDashboardSidebarCollapse />
           </template>
