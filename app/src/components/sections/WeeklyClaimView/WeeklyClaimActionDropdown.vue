@@ -10,7 +10,10 @@
         <li class="disabled" data-test="pending-withdraw">
           <a class="text-sm"> Withdraw </a>
         </li>
-        <li :class="{ disabled: !isCashRemunerationOwner }" data-test="pending-sign">
+        <li
+          :class="{ disabled: !isCashRemunerationOwner || isCurrentWeek(weeklyClaim) }"
+          data-test="pending-sign"
+        >
           <!-- <a
             data-test="sign-action"
             @click="isCashRemunerationOwner ? handleAction('sign') : null"
@@ -18,7 +21,12 @@
           >
             Sign
           </a> -->
-          <CRSigne :weekly-claim="weeklyClaim" :is-drop-down="true" @close="isOpen = false" />
+          <CRSigne
+            :weekly-claim="weeklyClaim"
+            :is-drop-down="true"
+            :disabled="isCurrentWeek(weeklyClaim)"
+            @close="isOpen = false"
+          />
         </li>
       </template>
 
@@ -106,6 +114,10 @@ import { keccak256, type Address } from 'viem'
 import { log, parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import WeeklyClaimActionEnable from './WeeklyClaimActionEnable.vue'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+
+dayjs.extend(utc)
 
 // Types
 export type Status = 'pending' | 'signed' | 'disabled' | 'withdrawn'
@@ -136,6 +148,8 @@ const cashRemunerationAddress = computed(() =>
 )
 
 const isClaimOwner = computed(() => userStore.address === props.weeklyClaim.memberAddress)
+const currentWeekStart = computed(() => dayjs().utc().startOf('isoWeek').toISOString())
+const isCurrentWeek = (claim: WeeklyClaim): boolean => currentWeekStart.value === claim.weekStart
 
 const {
   data: cashRemunerationOwner
