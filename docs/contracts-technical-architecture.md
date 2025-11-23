@@ -34,31 +34,49 @@ The CNC Portal smart contract system is a comprehensive organizational governanc
 
 The system uses the **Beacon Proxy Pattern** for upgradeability:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    FactoryBeacon                            │
-│  (Creates Officer instances via UserBeaconProxy)            │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Officer Contract                         │
-│  (Central orchestrator - manages all beacons)               │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            │ configures beacons for:
-        ┌───────────────────┼───────────────────┐
-        ▼                   ▼                   ▼
-    ┌──────┐          ┌──────────┐        ┌──────────┐
-    │ Bank │          │Elections │        │Proposals │
-    │Beacon│          │ Beacon   │        │ Beacon   │
-    └──────┘          └──────────┘        └──────────┘
-        │                   │                   │
-        ▼                   ▼                   ▼
-    ┌──────┐          ┌──────────┐        ┌──────────┐
-    │ Bank │          │Elections │        │Proposals │
-    │Proxy │          │  Proxy   │        │  Proxy   │
-    └──────┘          └──────────┘        └──────────┘
+```mermaid
+graph TB
+    FB["FactoryBeacon<br/>(Creates Officer instances via UserBeaconProxy)"]
+    
+    Officer["Officer Contract<br/>(Central orchestrator - manages all beacons)"]
+    
+    subgraph Beacons["Beacon Layer"]
+        BB["Bank<br/>Beacon"]
+        EB["Elections<br/>Beacon"]
+        PB["Proposals<br/>Beacon"]
+        BDB["BoD<br/>Beacon"]
+        IB["InvestorV1<br/>Beacon"]
+        EAB["ExpenseAccount<br/>Beacon"]
+        CRB["CashRem<br/>Beacon"]
+    end
+    
+    subgraph Proxies["Proxy Layer"]
+        BankP["Bank<br/>Proxy"]
+        ElectionsP["Elections<br/>Proxy"]
+        ProposalsP["Proposals<br/>Proxy"]
+        BodP["BoD<br/>Proxy"]
+        InvP["InvestorV1<br/>Proxy"]
+        ExpP["ExpenseAccount<br/>Proxy"]
+        CashP["CashRem<br/>Proxy"]
+    end
+    
+    FB -->|creates| Officer
+    Officer -->|configures| BB
+    Officer -->|configures| EB
+    Officer -->|configures| PB
+    
+    BB -.->|points to impl| BankP
+    EB -.->|points to impl| ElectionsP
+    PB -.->|points to impl| ProposalsP
+    BDB -.->|points to impl| BodP
+    IB -.->|points to impl| InvP
+    EAB -.->|points to impl| ExpP
+    CRB -.->|points to impl| CashP
+    
+    style FB fill:#e1f5ff,stroke:#0288d1,stroke-width:3px
+    style Officer fill:#fff3e0,stroke:#ef6c00,stroke-width:3px
+    style Beacons fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style Proxies fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
 ```
 
 **Benefits:**
@@ -394,39 +412,41 @@ function disableWageClaim(bytes32 signatureHash)
 
 ### Dependency Graph
 
-```
-                    ┌──────────────────┐
-                    │  FactoryBeacon   │
-                    │   (Singleton)    │
-                    └────────┬─────────┘
-                             │ creates
-                             ▼
-                    ┌──────────────────┐
-                    │     Officer      │◄────────────┐
-                    │   (Per Team)     │             │
-                    └────────┬─────────┘             │
-                             │                       │
-                             │ deploys & manages     │
-              ┌──────────────┼──────────────┐       │
-              │              │              │       │
-              ▼              ▼              ▼       │
-        ┌──────────┐   ┌──────────┐   ┌──────────┐│
-        │   Bank   │   │Elections │   │Proposals ││
-        └────┬─────┘   └────┬─────┘   └────┬─────┘│
-             │              │              │       │
-             │ queries      │ updates      │ uses  │
-             ▼              ▼              ▼       │
-        ┌──────────┐   ┌──────────┐   ┌──────────┐│
-        │InvestorV1│   │   BoD    │   │   BoD    ││
-        └────┬─────┘   └────┬─────┘   └──────────┘│
-             │              │                       │
-             │              └───────────────────────┘
-             │ mints                    owner
-             ▼
-    ┌───────────────────┐
-    │CashRemuneration   │
-    │     EIP712        │
-    └───────────────────┘
+```mermaid
+graph TB
+    FB["FactoryBeacon<br/>(Singleton)"]
+    Officer["Officer<br/>(Per Team)"]
+    Bank["Bank"]
+    Investor["InvestorV1"]
+    Elections["Elections"]
+    BoD["Board of<br/>Directors"]
+    Proposals["Proposals"]
+    Expense["ExpenseAccount"]
+    CashRem["CashRemuneration"]
+    
+    FB -->|creates| Officer
+    
+    Officer -->|deploys & manages| Bank
+    Officer -->|deploys & manages| Investor
+    Officer -->|deploys & manages| Elections
+    Officer -->|deploys & manages| Proposals
+    Officer -->|deploys & manages| Expense
+    Officer -->|deploys & manages| CashRem
+    
+    Bank -.->|queries shareholders| Investor
+    Elections -->|creates & updates| BoD
+    Proposals -.->|reads members| BoD
+    BoD -.->|owner| Elections
+    CashRem -->|mints tokens| Investor
+    
+    style FB fill:#e1f5ff,stroke:#0288d1,stroke-width:2px
+    style Officer fill:#fff3e0,stroke:#ef6c00,stroke-width:3px
+    style Bank fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style Investor fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    style Elections fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style BoD fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style Proposals fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    style CashRem fill:#ede7f6,stroke:#512da8,stroke-width:2px
 ```
 
 ### Key Relationships
