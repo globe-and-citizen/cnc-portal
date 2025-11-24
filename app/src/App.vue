@@ -100,6 +100,8 @@ import { useAccount } from '@wagmi/vue'
 import { useAuth } from './composables/useAuth'
 import { useAppStore } from './stores'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
+import '@vuepic/vue-datepicker/dist/main.css'
+
 const { addErrorToast } = useToastStore()
 
 const appStore = useAppStore()
