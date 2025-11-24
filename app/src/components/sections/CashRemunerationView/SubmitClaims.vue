@@ -5,7 +5,7 @@
     size="sm"
     data-test="modal-submit-hours-button"
     :disabled="!canSubmitClaim"
-    @click="canSubmitClaim ? openModal() : null"
+    @click="openModal()"
   >
     Submit Claim
   </ButtonUI>
