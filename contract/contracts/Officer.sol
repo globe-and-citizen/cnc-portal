@@ -82,6 +82,10 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     // @notice Address of the Commission Collector
     address private feeCollector;
 
+
+    /**
+     * @notice Address of the fee collector contract
+     */
     constructor(address _feeCollector) {
         require(_feeCollector != address(0), "Invalid feeCollector");
         feeCollector = _feeCollector;
