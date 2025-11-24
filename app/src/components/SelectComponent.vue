@@ -49,7 +49,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
 
 interface Option {
-  value: string
+  value: string | number
   label?: string
 }
 
