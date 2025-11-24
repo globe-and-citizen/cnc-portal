@@ -60,7 +60,7 @@
         step="0.01"
         min="0"
       />
-      <SelectComponent v-model="frequencyType as unknown as string" :options="frequencyTypes"/>
+      <SelectComponent v-model="frequencyType as unknown as string" :options="frequencyTypes" />
     </label>
     <div
       class="pl-4 text-red-500 text-sm w-full text-right"
@@ -71,35 +71,6 @@
       {{ error.$message }}
     </div>
   </div>
-
-  <!-- Frequency Type Selection -->
-  <!-- <div class="mt-3">
-    <span class="font-semibold">Frequency:</span>
-    <div class="flex flex-col gap-2 mt-2">
-      <label
-        v-for="(label, freqType) in frequencyTypes"
-        :key="freqType"
-        class="flex items-center gap-2 cursor-pointer"
-      >
-        <input
-          type="radio"
-          :value="Number(freqType)"
-          v-model="frequencyType"
-          class="radio radio-primary"
-          :data-test="`frequency-radio-${freqType}`"
-        />
-        <span>{{ label }}</span>
-      </label>
-    </div>
-    <div
-      class="pl-4 text-red-500 text-sm w-full text-right"
-      v-for="error of v$.frequencyType.$errors"
-      :key="error.$uid"
-      data-test="frequency-error"
-    >
-      {{ error.$message }}
-    </div>
-  </div> -->
 
   <!-- Custom Frequency Input (only shown when Custom is selected) -->
   <div v-if="frequencyType === 4" class="mt-3">
@@ -130,10 +101,11 @@
   </div>
 
   <!-- Date Range -->
-  <div class="grid grid-cols-2 gap-4 mt-3">
+  <div class="flex flex-col gap-2 mt-5">
     <div>
-      <span class="font-semibold">Start Date:</span>
+      <span class="font-semibold">Duration:</span>
       <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+        <span class="w-24">Start Date</span>
         <div class="grow" data-test="start-date-picker">
           <VueDatePicker
             v-model="startDate"
@@ -154,8 +126,9 @@
     </div>
 
     <div>
-      <span class="font-semibold">End Date:</span>
+      <!-- <span class="font-semibold">End Date:</span> -->
       <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+        <span class="w-24">End Date</span>
         <div class="grow" data-test="end-date-picker">
           <VueDatePicker
             v-model="endDate"
@@ -222,15 +195,10 @@ const description = ref<string>('')
 const frequencyTypes = [
   { value: 0, label: 'One Time' },
   { value: 1, label: 'Daily' },
-  { value: 2, label: 'Weekly' }, 
+  { value: 2, label: 'Weekly' },
   { value: 3, label: 'Monthly' },
   { value: 4, label: 'Custom' }
 ]
-
-// const frequencyTypes = /* Object.entries */(frequencyTypesData).map(([value, label]) => ({
-//   value,
-//   label
-// }))
 
 // Convert days to seconds for the contract
 const customFrequencyInSeconds = computed(() => {
@@ -258,18 +226,27 @@ const rules = {
   },
   frequencyType: {
     required: helpers.withMessage('Frequency type is required', required),
-    valid: helpers.withMessage('Invalid frequency type', (value: number) => value >= 0 && value <= 4)
+    valid: helpers.withMessage(
+      'Invalid frequency type',
+      (value: number) => value >= 0 && value <= 4
+    )
   },
   customFrequencyDays: {
-    required: helpers.withMessage('Custom frequency is required when Custom frequency type is selected', (value: number) => {
-      return frequencyType.value !== 4 || value > 0
-    }),
+    required: helpers.withMessage(
+      'Custom frequency is required when Custom frequency type is selected',
+      (value: number) => {
+        return frequencyType.value !== 4 || value > 0
+      }
+    ),
     positive: helpers.withMessage('Custom frequency must be at least 1 day', (value: number) => {
       return frequencyType.value !== 4 || value >= 1
     }),
-    integer: helpers.withMessage('Custom frequency must be a whole number of days', (value: number) => {
-      return frequencyType.value !== 4 || Number.isInteger(value)
-    })
+    integer: helpers.withMessage(
+      'Custom frequency must be a whole number of days',
+      (value: number) => {
+        return frequencyType.value !== 4 || Number.isInteger(value)
+      }
+    )
   },
   startDate: {
     required: helpers.withMessage('Start date is required', required),
@@ -284,7 +261,8 @@ const rules = {
     afterStart: helpers.withMessage('End date must be after start date', (value: Date | string) => {
       if (!value || !startDate.value) return false
       const end = typeof value === 'string' ? new Date(value) : value
-      const start = typeof startDate.value === 'string' ? new Date(startDate.value) : startDate.value
+      const start =
+        typeof startDate.value === 'string' ? new Date(startDate.value) : startDate.value
       return end > start
     })
   }
@@ -317,19 +295,22 @@ const submitApprove = () => {
     return
   }
 
+  console.log('This executed...')
+
   const budgetLimit = {
     approvedAddress: input.value.address,
     amount: amount.value,
     frequencyType: frequencyType.value,
     customFrequency: frequencyType.value === 4 ? customFrequencyInSeconds.value : 0,
-    startDate: typeof startDate.value === 'object' ? Math.floor(startDate.value.getTime() / 1000) : 0,
+    startDate:
+      typeof startDate.value === 'object' ? Math.floor(startDate.value.getTime() / 1000) : 0,
     endDate: typeof endDate.value === 'object' ? Math.floor(endDate.value.getTime() / 1000) : 0,
     tokenAddress: input.value.token
   }
 
   console.log('budgetLimit: ', budgetLimit)
 
-  // emit('approveUser', budgetLimit)
+  emit('approveUser', budgetLimit)
 }
 </script>
 
