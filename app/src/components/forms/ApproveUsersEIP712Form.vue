@@ -46,92 +46,134 @@
     </div>
   </div>
 
-  <!-- #region Multi Limit Inputs-->
-  <div class="space-y-4 mt-3 mb-3 pt-3 pb-3 border-t">
-    <h3 class="text-lg font-semibold">Budget Limits:</h3>
-    <div
-      v-for="(label, budgetType) in budgetTypes"
-      :key="budgetType"
-      data-test="budget-limit-input"
-    >
-      <div class="flex items-center gap-4">
-        <!-- Checkbox -->
-        <input
-          type="checkbox"
-          class="toggle toggle-info"
-          v-model="selectedOptions[budgetType]"
-          :id="'checkbox-' + budgetType"
-          :data-test="`limit-checkbox-${budgetType}`"
-          @change="toggleOption(budgetType)"
-        />
-        <!-- Numeric Input -->
-        <label class="input input-bordered flex items-center gap-2 input-md mt-2 text-xs w-full">
-          <span class="w-48">{{ label }}</span>
-          <input
-            :disabled="!selectedOptions[budgetType]"
-            class="grow"
-            type="number"
-            v-model.number="values[budgetType]"
-            :placeholder="budgetType == 0 ? '0' : '0.00'"
-            :data-test="`limit-input-${budgetType}`"
-            @input="updateValue(budgetType)"
-          />
-        </label>
-      </div>
-
-      <!-- Display errors specific to this budgetType -->
-      <div class="pl-16 text-red-500 text-sm w-full text-right">
-        <div
-          v-for="error of v$.resultArray.$errors"
-          :key="error.$uid"
-          data-test="budget-limit-error"
-        >
-          <div v-if="error.$validator === '$each'">
-            <div v-for="(subError, index) in error.$message" :key="index">
-              <div v-if="resultArray[index].budgetType == budgetType">
-                <div v-for="(msg, key) in subError" :key="key">
-                  {{ msg }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Budget Limit Validation Errors -->
-    <div class="pl-4 text-red-500 text-sm w-full text-right">
-      <div
-        v-for="error of v$.resultArray.$errors"
-        :key="error.$uid"
-        data-test="budget-limit-required-error"
-      >
-        <div v-if="error.$validator === 'required'">
-          {{ error.$message }}
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- #endregion Multi Limit Inputs -->
-
-  <hr />
-
+  <!-- Budget Amount Input -->
   <div class="mt-3">
-    <span class="font-semibold">Expiry date:</span>
+    <span class="font-semibold">Budget Amount:</span>
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-      <div class="grow" data-test="date-picker">
-        <VueDatePicker v-model="date" :min-date="new Date()" auto-apply placeholder="Pick a date" />
-      </div>
+      <span class="w-24">Amount</span>
+      <input
+        type="number"
+        class="grow"
+        data-test="amount-input"
+        v-model.number="amount"
+        placeholder="0.00"
+        step="0.01"
+        min="0"
+      />
+      <SelectComponent v-model="frequencyType as unknown as string" :options="frequencyTypes"/>
     </label>
+    <div
+      class="pl-4 text-red-500 text-sm w-full text-right"
+      v-for="error of v$.amount.$errors"
+      :key="error.$uid"
+      data-test="amount-error"
+    >
+      {{ error.$message }}
+    </div>
   </div>
 
-  <div
-    class="pl-4 text-red-500 text-sm w-full text-right"
-    v-for="error of v$.date.$errors"
-    :key="error.$uid"
-    data-test="date-error"
-  >
-    {{ error.$message }}
+  <!-- Frequency Type Selection -->
+  <!-- <div class="mt-3">
+    <span class="font-semibold">Frequency:</span>
+    <div class="flex flex-col gap-2 mt-2">
+      <label
+        v-for="(label, freqType) in frequencyTypes"
+        :key="freqType"
+        class="flex items-center gap-2 cursor-pointer"
+      >
+        <input
+          type="radio"
+          :value="Number(freqType)"
+          v-model="frequencyType"
+          class="radio radio-primary"
+          :data-test="`frequency-radio-${freqType}`"
+        />
+        <span>{{ label }}</span>
+      </label>
+    </div>
+    <div
+      class="pl-4 text-red-500 text-sm w-full text-right"
+      v-for="error of v$.frequencyType.$errors"
+      :key="error.$uid"
+      data-test="frequency-error"
+    >
+      {{ error.$message }}
+    </div>
+  </div> -->
+
+  <!-- Custom Frequency Input (only shown when Custom is selected) -->
+  <div v-if="frequencyType === 4" class="mt-3">
+    <span class="font-semibold">Custom Frequency:</span>
+    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+      <span class="w-24">Days</span>
+      <input
+        type="number"
+        class="grow"
+        data-test="custom-frequency-input"
+        v-model.number="customFrequencyDays"
+        placeholder="7"
+        min="1"
+        step="1"
+      />
+    </label>
+    <div class="text-xs text-gray-500 mt-1">
+      Frequency period in days (will be converted to seconds for the contract)
+    </div>
+    <div
+      class="pl-4 text-red-500 text-sm w-full text-right"
+      v-for="error of v$.customFrequencyDays.$errors"
+      :key="error.$uid"
+      data-test="custom-frequency-error"
+    >
+      {{ error.$message }}
+    </div>
+  </div>
+
+  <!-- Date Range -->
+  <div class="grid grid-cols-2 gap-4 mt-3">
+    <div>
+      <span class="font-semibold">Start Date:</span>
+      <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+        <div class="grow" data-test="start-date-picker">
+          <VueDatePicker
+            v-model="startDate"
+            :min-date="new Date()"
+            auto-apply
+            placeholder="Pick start date"
+          />
+        </div>
+      </label>
+      <div
+        class="pl-4 text-red-500 text-sm w-full text-right"
+        v-for="error of v$.startDate.$errors"
+        :key="error.$uid"
+        data-test="start-date-error"
+      >
+        {{ error.$message }}
+      </div>
+    </div>
+
+    <div>
+      <span class="font-semibold">End Date:</span>
+      <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+        <div class="grow" data-test="end-date-picker">
+          <VueDatePicker
+            v-model="endDate"
+            :min-date="startDate || new Date()"
+            auto-apply
+            placeholder="Pick end date"
+          />
+        </div>
+      </label>
+      <div
+        class="pl-4 text-red-500 text-sm w-full text-right"
+        v-for="error of v$.endDate.$errors"
+        :key="error.$uid"
+        data-test="end-date-error"
+      >
+        {{ error.$message }}
+      </div>
+    </div>
   </div>
 
   <div class="modal-action justify-center">
@@ -148,8 +190,9 @@
     </ButtonUI>
   </div>
 </template>
+
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { isAddress } from 'viem'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers, required } from '@vuelidate/validators'
@@ -158,6 +201,7 @@ import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import ButtonUI from '@/components/ButtonUI.vue'
 import SelectMemberWithTokenInput from '@/components/utils/SelectMemberWithTokenInput.vue'
+import SelectComponent from '@/components/SelectComponent.vue'
 
 const props = defineProps<{
   loadingApprove: boolean
@@ -167,51 +211,31 @@ const props = defineProps<{
 }>()
 
 const input = ref({ name: '', address: '', token: '' })
-const limitValue = ref('')
-const date = ref<Date | string>('')
+const amount = ref<number>(0)
+const frequencyType = ref<number>(0) // Default to OneTime
+const customFrequencyDays = ref<number>(7) // Default to 7 days
+const startDate = ref<Date | string>('')
+const endDate = ref<Date | string>('')
 const description = ref<string>('')
-const budgetLimitType = ref<0 | 1 | 2 | null>(null)
 
-//#region multi limit
-// Labels for budget types
-const budgetTypes = {
-  0: 'Max Transactions',
-  1: 'Maximum Amount',
-  2: 'Max Amount per Transaction'
-}
+// Frequency types mapping
+const frequencyTypes = [
+  { value: 0, label: 'One Time' },
+  { value: 1, label: 'Daily' },
+  { value: 2, label: 'Weekly' }, 
+  { value: 3, label: 'Monthly' },
+  { value: 4, label: 'Custom' }
+]
 
-// Reactive states
-const selectedOptions = reactive<{ [key in 0 | 1 | 2]: boolean }>({ 0: false, 1: false, 2: false })
-const values = reactive<{ [key in 0 | 1 | 2]: null | string | number }>({
-  0: null,
-  1: null,
-  2: null
+// const frequencyTypes = /* Object.entries */(frequencyTypesData).map(([value, label]) => ({
+//   value,
+//   label
+// }))
+
+// Convert days to seconds for the contract
+const customFrequencyInSeconds = computed(() => {
+  return customFrequencyDays.value * 24 * 60 * 60 // days * hours * minutes * seconds
 })
-
-// Result array
-const resultArray = computed(() =>
-  Object.entries(selectedOptions)
-    .filter(([, isSelected]) => isSelected)
-    .map(([budgetType]) => ({
-      budgetType: Number(budgetType),
-      value: values[budgetType as unknown as 0 | 1 | 2] || 0
-    }))
-)
-
-// Handlers
-const toggleOption = (budgetType: 0 | 1 | 2) => {
-  if (!selectedOptions[budgetType]) {
-    values[budgetType] = null // Reset value if deselected
-  }
-}
-
-const updateValue = (budgetType: 0 | 1 | 2) => {
-  if (values[budgetType] === null || isNaN(Number(values[budgetType]))) {
-    values[budgetType] = 0 // Default value if input is empty
-  }
-}
-
-//#endregion multi limit
 
 const rules = {
   input: {
@@ -228,49 +252,40 @@ const rules = {
       return props.isBodAction ? value.length > 0 : true
     })
   },
-  // Add validation for budget limits
-  resultArray: {
-    required: helpers.withMessage('At least one budget limit must be set', (value: unknown[]) => {
-      return value.length > 0
+  amount: {
+    required: helpers.withMessage('Budget amount is required', required),
+    positive: helpers.withMessage('Amount must be greater than zero', (value: number) => value > 0)
+  },
+  frequencyType: {
+    required: helpers.withMessage('Frequency type is required', required),
+    valid: helpers.withMessage('Invalid frequency type', (value: number) => value >= 0 && value <= 4)
+  },
+  customFrequencyDays: {
+    required: helpers.withMessage('Custom frequency is required when Custom frequency type is selected', (value: number) => {
+      return frequencyType.value !== 4 || value > 0
     }),
-    $each: helpers.forEach({
-      value: {
-        required: helpers.withMessage('Value is required', required),
-        numeric: helpers.withMessage('Must be a positive number', (value: string | number) => {
-          return !isNaN(Number(value)) && Number(value) > 0
-        }),
-        integer: helpers.withMessage('Must be an integer', (value) => {
-          const index = resultArray.value.findIndex((item) => item.value === value)
-          const budgetType = resultArray.value[index]?.budgetType
-
-          if (budgetType === 0) {
-            return Number.isInteger(value)
-          }
-          return true
-        }),
-        custom: helpers.withMessage('Must not exceed max amount', (value) => {
-          const index = resultArray.value.findIndex((item) => item.value === value)
-          const budgetType = resultArray.value[index]?.budgetType
-
-          if (budgetType === 2) {
-            const maxPerPeriod = resultArray.value.find((item) => item.budgetType === 1)?.value
-            if (maxPerPeriod && Number(value) > Number(maxPerPeriod)) {
-              return false
-            }
-          }
-
-          return true
-        })
-      }
+    positive: helpers.withMessage('Custom frequency must be at least 1 day', (value: number) => {
+      return frequencyType.value !== 4 || value >= 1
+    }),
+    integer: helpers.withMessage('Custom frequency must be a whole number of days', (value: number) => {
+      return frequencyType.value !== 4 || Number.isInteger(value)
     })
   },
-  // Add date validation
-  date: {
-    required: helpers.withMessage('Expiry date is required', required),
-    futureDate: helpers.withMessage('Expiry date must be in the future', (value: Date | string) => {
+  startDate: {
+    required: helpers.withMessage('Start date is required', required),
+    futureDate: helpers.withMessage('Start date must be in the future', (value: Date | string) => {
       if (!value) return false
       const date = typeof value === 'string' ? new Date(value) : value
       return date > new Date()
+    })
+  },
+  endDate: {
+    required: helpers.withMessage('End date is required', required),
+    afterStart: helpers.withMessage('End date must be after start date', (value: Date | string) => {
+      if (!value || !startDate.value) return false
+      const end = typeof value === 'string' ? new Date(value) : value
+      const start = typeof startDate.value === 'string' ? new Date(startDate.value) : startDate.value
+      return end > start
     })
   }
 }
@@ -278,16 +293,21 @@ const rules = {
 const v$ = useVuelidate(rules, {
   description,
   input,
-  resultArray,
-  date
+  amount,
+  frequencyType,
+  customFrequencyDays,
+  startDate,
+  endDate
 })
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
 const clear = () => {
-  limitValue.value = ''
-  budgetLimitType.value = null
-  date.value = ''
+  amount.value = 0
+  frequencyType.value = 0
+  customFrequencyDays.value = 7
+  startDate.value = ''
+  endDate.value = ''
   emit('closeModal')
 }
 
@@ -297,14 +317,22 @@ const submitApprove = () => {
     return
   }
 
-  emit('approveUser', {
+  const budgetLimit = {
     approvedAddress: input.value.address,
-    budgetData: resultArray.value,
-    tokenAddress: input.value.token,
-    expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0
-  })
+    amount: amount.value,
+    frequencyType: frequencyType.value,
+    customFrequency: frequencyType.value === 4 ? customFrequencyInSeconds.value : 0,
+    startDate: typeof startDate.value === 'object' ? Math.floor(startDate.value.getTime() / 1000) : 0,
+    endDate: typeof endDate.value === 'object' ? Math.floor(endDate.value.getTime() / 1000) : 0,
+    tokenAddress: input.value.token
+  }
+
+  console.log('budgetLimit: ', budgetLimit)
+
+  // emit('approveUser', budgetLimit)
 }
 </script>
+
 <style>
 .dp__input {
   border: none;
