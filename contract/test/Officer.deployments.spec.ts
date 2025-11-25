@@ -14,6 +14,12 @@ import {
 } from '../typechain-types'
 import { ZeroAddress } from 'ethers'
 
+// Define the DeployedContract type to match the contract struct
+interface DeployedContract {
+  contractType: string
+  contractAddress: string
+}
+
 describe('Officer Contract', function () {
   let officer: Officer
   let bankAccount: Bank__factory
@@ -138,21 +144,21 @@ describe('Officer Contract', function () {
 
     const deployedContracts = await officer.getDeployedContracts()
 
-    const contractAddresses = new Map()
+    const contractAddresses = new Map<string, string>()
 
     for (const contract of deployedContracts) {
-      const contractType = (contract as any).contractType ?? contract[0]
-      const contractAddress = (contract as any).contractAddress ?? contract[1]
-      contractAddresses.set(contractType, contractAddress)
+      // Type assertion to DeployedContract interface
+      const deployedContract = contract as unknown as DeployedContract
+      contractAddresses.set(deployedContract.contractType, deployedContract.contractAddress)
     }
 
     const cashRemunerationEip712Proxy = await ethers.getContractAt(
       'CashRemunerationEIP712',
-      contractAddresses.get('CashRemunerationEIP712')
+      contractAddresses.get('CashRemunerationEIP712')!
     )
     const investorV1Proxy = await ethers.getContractAt(
       'InvestorV1',
-      contractAddresses.get('InvestorV1')
+      contractAddresses.get('InvestorV1')!
     )
 
     expect((await cashRemunerationEip712Proxy.officerAddress()).toLocaleLowerCase()).to.be.equal(

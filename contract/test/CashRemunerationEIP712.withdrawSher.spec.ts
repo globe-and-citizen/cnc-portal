@@ -97,8 +97,8 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     const contractAddresses = new Map()
 
     for (const contract of deployedContracts) {
-      const contractType = (contract as any).contractType ?? contract[0]
-      const contractAddress = (contract as any).contractAddress ?? contract[1]
+      const contractType = 'contractType' in contract ? contract.contractType : contract[0]
+      const contractAddress = 'contractAddress' in contract ? contract.contractAddress : contract[1]
       contractAddresses.set(contractType, contractAddress)
     }
 
