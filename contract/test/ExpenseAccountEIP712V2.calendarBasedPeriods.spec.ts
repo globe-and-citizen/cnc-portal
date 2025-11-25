@@ -121,8 +121,8 @@ describe('ExpenseAccountEIP712V2', function () {
       )
 
       // Start from a known future Monday to avoid timing issues
-      const futureMonday = Date.UTC(2030, 0, 7, 0, 0, 0, 0) / 1000; // Jan 7, 2030 (Monday)
-      
+      const futureMonday = Date.UTC(2030, 0, 7, 0, 0, 0, 0) / 1000 // Jan 7, 2030 (Monday)
+
       const budgetLimit = createBudgetLimit({
         amount: ethers.parseEther('1'),
         frequencyType: 2, // Weekly
