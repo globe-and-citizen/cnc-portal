@@ -144,26 +144,27 @@ const approveUser = async (data: BudgetLimit) => {
   // }
 
   const types = {
-      BudgetLimit: [
-        { name: 'amount', type: 'uint256' },
-        { name: 'frequencyType', type: 'uint8' },
-        { name: 'customFrequency', type: 'uint256' },
-        { name: 'startDate', type: 'uint256' },
-        { name: 'endDate', type: 'uint256' },
-        { name: 'tokenAddress', type: 'address' },
-        { name: 'approvedAddress', type: 'address' }
-      ]
-    }
+    BudgetLimit: [
+      { name: 'amount', type: 'uint256' },
+      { name: 'frequencyType', type: 'uint8' },
+      { name: 'customFrequency', type: 'uint256' },
+      { name: 'startDate', type: 'uint256' },
+      { name: 'endDate', type: 'uint256' },
+      { name: 'tokenAddress', type: 'address' },
+      { name: 'approvedAddress', type: 'address' }
+    ]
+  }
 
   const message = {
     ...data,
-    amount: data.tokenAddress === zeroAddress
-      ? parseEther(`${data.amount}`)
-      : BigInt(Number(data.amount) * 1e6),
+    amount:
+      data.tokenAddress === zeroAddress
+        ? parseEther(`${data.amount}`)
+        : BigInt(Number(data.amount) * 1e6),
     frequencyType: Number(data.frequencyType),
     customFrequency: BigInt(Number(data.customFrequency)),
     startDate: Number(data.startDate),
-    endDate: Number(data.endDate),
+    endDate: Number(data.endDate)
   }
 
   await signTypedDataAsync({
