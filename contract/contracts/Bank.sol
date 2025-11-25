@@ -18,6 +18,12 @@ interface IInvestorView {
   function getShareholders() external view returns (Shareholder[] memory);
 }
 
+interface IOfficer {
+  function getFeeCollector() external view returns (address);
+  function getFeeFor(string calldata contractType) external view returns (uint16);
+}
+
+
 contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   using SafeERC20 for IERC20;
 
@@ -52,6 +58,9 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   uint256 public totalDividends;
 
+  // Add new state variable - MUST be added after existing ones
+  address public officerAddress;
+
   /**
    * @dev Mapping to track total locked token balances for each supported token
    * token address => total amount locked as dividends for that token
@@ -82,6 +91,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   event Transfer(address indexed sender, address indexed to, uint256 amount);
 
+  event FeePaid(address indexed feeCollector, uint256 amount);
   /**
    * @dev Emitted when ERC20 tokens are transferred from the contract.
    * @param sender The address that initiated the transfer (contract owner).
@@ -185,6 +195,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
       require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
       supportedTokens[_tokenAddresses[i]] = true;
     }
+    officerAddress=_sender;
   }
 
   /**
@@ -295,10 +306,26 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
 
-    (bool sent, ) = _to.call{value: _amount}('');
-    require(sent, 'Failed to transfer');
+    // --- Step 1: read global fee config ---
+    uint16 feeBps = _getFeeBps(); // e.g., 50 = 0.5%
+    uint256 fee = (_amount * feeBps) / 10_000;
+    uint256 net = _amount - fee;
 
-    emit Transfer(msg.sender, _to, _amount);
+    // --- Step 2: read global feeCollector address ---
+    address feeCollector = IOfficer(officerAddress).getFeeCollector();
+
+    // --- Step 3: send fee ---
+    if (fee > 0) {
+        (bool sentFee, ) = feeCollector.call{value: fee}("");
+        require(sentFee, "Fee transfer failed");
+    }
+
+    // --- Step 4: send net amount ---
+    (bool sentNet, ) = _to.call{value: net}("");
+    require(sentNet, "Transfer failed");
+
+    emit Transfer(msg.sender, _to, net);
+    emit FeePaid(feeCollector, fee);
   }
 
   /**
@@ -508,6 +535,10 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     // interaction
     IERC20(_token).safeTransfer(msg.sender, amt);
     emit TokenDividendClaimed(msg.sender, _token, amt);
+  }
+
+  function _getFeeBps() internal view returns (uint16) {
+      return IOfficer(officerAddress).getFeeFor("BANK");
   }
 
   /**
