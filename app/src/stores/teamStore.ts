@@ -1,4 +1,5 @@
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores/useToastStore'
 import type { ContractType } from '@/types'
 import type { Team } from '@/types/team'
@@ -18,6 +19,7 @@ export const useTeamStore = defineStore('team', () => {
   const teamsFetched = ref<Map<string, Team>>(new Map())
   const teamURI = ref<string>('teams/id')
   const { addErrorToast } = useToastStore()
+  const userDataStore = useUserDataStore()
 
   /**
    * @description Fetch teams lists
@@ -28,7 +30,7 @@ export const useTeamStore = defineStore('team', () => {
     error: teamsError,
     data: teams,
     execute: executeFetchTeams
-  } = useCustomFetch('teams', { immediate: false }).json()
+  } = useCustomFetch(`teams?userAddress=${userDataStore.address}`, { immediate: false }).json()
 
   /**
    * @description Fetch team by id

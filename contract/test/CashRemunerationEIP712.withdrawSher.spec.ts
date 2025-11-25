@@ -7,7 +7,8 @@ import {
   InvestorV1__factory,
   CashRemunerationEIP712__factory,
   CashRemunerationEIP712,
-  InvestorV1
+  InvestorV1,
+  FeeCollector
 } from '../typechain-types'
 import { ZeroAddress } from 'ethers'
 
@@ -21,6 +22,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   let cashRemunerationEip712Proxy: CashRemunerationEIP712
   let owner: SignerWithAddress
   let addr1: SignerWithAddress
+  let feeCollector: FeeCollector
 
   //EIP 712 variables
   const DOMAIN_NAME = 'CashRemuneration'
@@ -39,6 +41,11 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
   beforeEach(async function () {
     ;[owner, addr1] = await ethers.getSigners()
+
+    const FeeCollector = await ethers.getContractFactory('FeeCollector')
+    feeCollector = (await upgrades.deployProxy(FeeCollector, [owner.address, []], {
+      initializer: 'initialize'
+    })) as unknown as FeeCollector
 
     // Deploy implementation contracts
     investor = await ethers.getContractFactory('InvestorV1')
@@ -81,20 +88,18 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     // Deploy Officer contract
     const Officer = await ethers.getContractFactory('Officer')
-    officer = (await upgrades.deployProxy(
-      Officer,
-      [owner.address, beaconConfigs, deployments, true],
-      {
-        initializer: 'initialize'
-      }
-    )) as unknown as Officer
+    officer = (await Officer.deploy(await feeCollector.getAddress())) as unknown as Officer
+    await officer.waitForDeployment()
+    await officer.initialize(owner.address, beaconConfigs, deployments, true)
 
     const deployedContracts = await officer.getDeployedContracts()
 
     const contractAddresses = new Map()
 
     for (const contract of deployedContracts) {
-      contractAddresses.set(contract[0], contract[1])
+      const contractType = 'contractType' in contract ? contract.contractType : contract[0]
+      const contractAddress = 'contractAddress' in contract ? contract.contractAddress : contract[1]
+      contractAddresses.set(contractType, contractAddress)
     }
 
     cashRemunerationEip712Proxy = await ethers.getContractAt(

@@ -4,7 +4,8 @@ import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import {
   Bank__factory,
   BoardOfDirectors__factory,
-  ExpenseAccount__factory,
+  ExpenseAccountEIP712__factory,
+  FeeCollector,
   Officer,
   UpgradeableBeacon,
   Elections__factory,
@@ -17,8 +18,9 @@ describe('Officer Contract', function () {
   let bankAccount: Bank__factory
   let investor: InvestorV1__factory
   let electionsContract: Elections__factory
-  let expenseAccount: ExpenseAccount__factory
+  let expenseAccount: ExpenseAccountEIP712__factory
   let proposalsContract: Proposals__factory
+  let feeCollector: FeeCollector
   let bankAccountBeacon: UpgradeableBeacon
   let investorBeacon: UpgradeableBeacon
   let electionsBeacon: UpgradeableBeacon
@@ -31,8 +33,32 @@ describe('Officer Contract', function () {
   let addr2: SignerWithAddress
   let addr3: SignerWithAddress
 
+  async function deployOfficerInstance(
+    beaconConfigs: { beaconType: string; beaconAddress: string }[] = [],
+    deployments: { contractType: string; initializerData: string }[] = [],
+    isDeployAllContracts = false
+  ) {
+    const OfficerFactory = await ethers.getContractFactory('Officer')
+    const instance = (await OfficerFactory.deploy(
+      await feeCollector.getAddress()
+    )) as unknown as Officer
+    await instance.waitForDeployment()
+    await instance.initialize(
+      await owner.getAddress(),
+      beaconConfigs,
+      deployments,
+      isDeployAllContracts
+    )
+    return instance
+  }
+
   beforeEach(async function () {
     ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
+
+    const FeeCollector = await ethers.getContractFactory('FeeCollector')
+    feeCollector = (await upgrades.deployProxy(FeeCollector, [owner.address, []], {
+      initializer: 'initialize'
+    })) as unknown as FeeCollector
 
     // Deploy implementation contracts
     bankAccount = await ethers.getContractFactory('Bank')
@@ -60,10 +86,7 @@ describe('Officer Contract', function () {
     )) as unknown as UpgradeableBeacon
 
     // Deploy Officer contract
-    const Officer = await ethers.getContractFactory('Officer')
-    officer = (await upgrades.deployProxy(Officer, [owner.address, [], [], false], {
-      initializer: 'initialize'
-    })) as unknown as Officer
+    officer = await deployOfficerInstance()
 
     // Configure beacons
     await officer.connect(owner).configureBeacon('Bank', await bankAccountBeacon.getAddress())
@@ -188,7 +211,6 @@ describe('Officer Contract', function () {
 
   describe('Initialization and Beacon Configuration', () => {
     it('Should reject beacon configs with zero address', async function () {
-      const Officer = await ethers.getContractFactory('Officer')
       const invalidConfig = [
         {
           beaconType: 'TestBeacon',
@@ -196,15 +218,12 @@ describe('Officer Contract', function () {
         }
       ]
 
-      await expect(
-        upgrades.deployProxy(Officer, [owner.address, invalidConfig, [], false], {
-          initializer: 'initialize'
-        })
-      ).to.be.revertedWith('Invalid beacon address')
+      await expect(deployOfficerInstance(invalidConfig, [], false)).to.be.revertedWith(
+        'Invalid beacon address'
+      )
     })
 
     it('Should reject beacon configs with empty type', async function () {
-      const Officer = await ethers.getContractFactory('Officer')
       const invalidConfig = [
         {
           beaconType: '',
@@ -212,15 +231,12 @@ describe('Officer Contract', function () {
         }
       ]
 
-      await expect(
-        upgrades.deployProxy(Officer, [owner.address, invalidConfig, [], false], {
-          initializer: 'initialize'
-        })
-      ).to.be.revertedWith('Empty beacon type')
+      await expect(deployOfficerInstance(invalidConfig, [], false)).to.be.revertedWith(
+        'Empty beacon type'
+      )
     })
 
     it('Should reject duplicate beacon types in config', async function () {
-      const Officer = await ethers.getContractFactory('Officer')
       const duplicateConfigs = [
         {
           beaconType: 'TestBeacon',
@@ -232,15 +248,12 @@ describe('Officer Contract', function () {
         }
       ]
 
-      await expect(
-        upgrades.deployProxy(Officer, [owner.address, duplicateConfigs, [], false], {
-          initializer: 'initialize'
-        })
-      ).to.be.revertedWith('Duplicate beacon type')
+      await expect(deployOfficerInstance(duplicateConfigs, [], false)).to.be.revertedWith(
+        'Duplicate beacon type'
+      )
     })
 
     it('Should successfully initialize with valid beacon configs', async function () {
-      const Officer = await ethers.getContractFactory('Officer')
       const validConfigs = [
         {
           beaconType: 'TestBeacon1',
@@ -252,20 +265,13 @@ describe('Officer Contract', function () {
         }
       ]
 
-      const officerContract = (await upgrades.deployProxy(
-        Officer,
-        [owner.address, validConfigs, [], false],
-        {
-          initializer: 'initialize'
-        }
-      )) as unknown as Officer
+      const officerContract = await deployOfficerInstance(validConfigs, [], false)
 
       expect(await officerContract.contractBeacons('TestBeacon1')).to.equal(addr1.address)
       expect(await officerContract.contractBeacons('TestBeacon2')).to.equal(addr2.address)
     })
 
     it('Should initialize and deploy contracts in one transaction when isDeployAllContracts is true', async function () {
-      const Officer = await ethers.getContractFactory('Officer')
       const bankBeaconAddr = await bankAccountBeacon.getAddress()
       const electionsBeaconAddr = await electionsBeacon.getAddress()
       const bodBeaconAddr = await bodBeacon.getAddress()
@@ -317,13 +323,7 @@ describe('Officer Contract', function () {
         }
       ]
 
-      const officerContract = (await upgrades.deployProxy(
-        Officer,
-        [owner.address, validConfigs, deployments, true],
-        {
-          initializer: 'initialize'
-        }
-      )) as unknown as Officer
+      const officerContract = await deployOfficerInstance(validConfigs, deployments, true)
 
       const deployedContracts = await officerContract.getDeployedContracts()
       expect(deployedContracts.length).to.equal(4) // Bank, Elections, Proposals, and auto-deployed BoardOfDirectors
@@ -349,7 +349,6 @@ describe('Officer Contract', function () {
     })
 
     it('Should not deploy contracts during initialization when isDeployAllContracts is false', async function () {
-      const Officer = await ethers.getContractFactory('Officer')
       const validConfigs = [
         {
           beaconType: 'Bank',
@@ -381,13 +380,7 @@ describe('Officer Contract', function () {
         }
       ]
 
-      const officerContract = (await upgrades.deployProxy(
-        Officer,
-        [owner.address, validConfigs, deployments, false],
-        {
-          initializer: 'initialize'
-        }
-      )) as unknown as Officer
+      const officerContract = await deployOfficerInstance(validConfigs, deployments, false)
 
       const deployedContracts = await officerContract.getDeployedContracts()
       expect(deployedContracts.length).to.equal(0) // No contracts should be deployed

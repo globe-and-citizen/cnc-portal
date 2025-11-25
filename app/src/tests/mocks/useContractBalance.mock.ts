@@ -60,6 +60,17 @@ export const mockUseContractBalance = {
       formatedPrice: '$1K'
     }
   }),
+  dividendsTotal: ref({
+    USD: {
+      value: 100,
+      formated: '$100',
+      id: 'usd',
+      code: 'USD',
+      symbol: '$',
+      price: 1000,
+      formatedPrice: '$1K'
+    }
+  }),
   isLoading: ref(false),
   error: ref(null)
 }
