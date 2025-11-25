@@ -116,24 +116,43 @@ const getTeam = async (req: Request, res: Response) => {
   }
 };
 
-// Get teams owned by user
+// Get teams - either all teams or user-specific teams
 const getAllTeams = async (req: Request, res: Response) => {
   /*
   #swagger.tags = ['Teams']
   */
   const callerAddress = String((req as any).address);
+  const userAddress = req.query.userAddress as string | undefined;
   try {
-    // Get teams owned by the user
+    // If userAddress is provided, verify the caller is requesting their own teams
+    if (userAddress) {
+      if (userAddress !== callerAddress) {
+        return errorResponse(403, 'Unauthorized', res);
+      }
 
-    // Get teams where the user is a member
-    const memberTeams = await prisma.team.findMany({
-      where: {
-        members: {
-          some: {
-            address: callerAddress,
+      // Get teams where the user is a member
+      const memberTeams = await prisma.team.findMany({
+        where: {
+          members: {
+            some: {
+              address: callerAddress,
+            },
           },
         },
-      },
+        include: {
+          _count: {
+            select: {
+              members: true,
+            },
+          },
+        },
+      });
+
+      return res.status(200).json(memberTeams);
+    }
+
+    // No userAddress provided - return all teams
+    const allTeams = await prisma.team.findMany({
       include: {
         _count: {
           select: {
@@ -143,9 +162,7 @@ const getAllTeams = async (req: Request, res: Response) => {
       },
     });
 
-    // Combine owned and member teams
-
-    res.status(200).json(memberTeams);
+    res.status(200).json(allTeams);
   } catch (error: any) {
     return errorResponse(500, error.message, res);
   }

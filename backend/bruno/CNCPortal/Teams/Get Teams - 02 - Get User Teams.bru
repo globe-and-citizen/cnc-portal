@@ -1,0 +1,36 @@
+meta {
+  name: Get Teams - 02 - Get User Teams
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{host}}/team?userAddress={{testAddress}}
+  body: json
+  auth: bearer
+}
+
+params:query {
+  userAddress: {{testAddress}}
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("should return 200 status for valid token and matching userAddress", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("should return an array of teams", function() {
+    expect(res.body).to.be.an('array');
+  });
+  test("each team should have required properties", function() {
+    if (res.body.length > 0) {
+      res.body.forEach(team => {
+        expect(team).to.have.property('id');
+        expect(team).to.have.property('name');
+      });
+    }
+  });
+}
