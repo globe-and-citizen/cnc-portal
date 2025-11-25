@@ -56,7 +56,7 @@ import { getFrequencyName } from '@/utils'
 
 defineEmits(['submit', 'close'])
 
-const props = defineProps<{
+defineProps<{
   budgetLimit: BudgetLimit
   loading: boolean
 }>()
