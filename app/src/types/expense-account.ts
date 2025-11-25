@@ -1,11 +1,22 @@
-import type { BytesLike } from 'ethers'
+import type { AddressLike, BytesLike } from 'ethers'
 import type { TokenOption } from '@/types'
+import type { Address } from 'viem'
+
+// export interface BudgetLimit {
+//   approvedAddress: string
+//   budgetData: BudgetData[]
+//   expiry: number
+//   tokenAddress: string
+// }
 
 export interface BudgetLimit {
-  approvedAddress: string
-  budgetData: BudgetData[]
-  expiry: number
-  tokenAddress: string
+  amount: bigint | number
+  frequencyType: number
+  customFrequency: bigint | number
+  startDate: number
+  endDate: number
+  tokenAddress: Address
+  approvedAddress: Address
 }
 
 export interface ExpenseData {
