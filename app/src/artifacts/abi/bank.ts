@@ -2,28 +2,6 @@ import type { Abi } from 'viem'
 
 export const BANK_ABI = [
   {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'target',
-        type: 'address'
-      }
-    ],
-    name: 'AddressEmptyCode',
-    type: 'error'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
-      }
-    ],
-    name: 'AddressInsufficientBalance',
-    type: 'error'
-  },
-  {
     inputs: [],
     name: 'EnforcedPause',
     type: 'error'
@@ -31,11 +9,6 @@ export const BANK_ABI = [
   {
     inputs: [],
     name: 'ExpectedPause',
-    type: 'error'
-  },
-  {
-    inputs: [],
-    name: 'FailedInnerCall',
     type: 'error'
   },
   {
@@ -166,6 +139,25 @@ export const BANK_ABI = [
       }
     ],
     name: 'DividendDeposited',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'feeCollector',
+        type: 'address'
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256'
+      }
+    ],
+    name: 'FeePaid',
     type: 'event'
   },
   {
@@ -621,6 +613,19 @@ export const BANK_ABI = [
   {
     inputs: [],
     name: 'investorAddress',
+    outputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'officerAddress',
     outputs: [
       {
         internalType: 'address',
