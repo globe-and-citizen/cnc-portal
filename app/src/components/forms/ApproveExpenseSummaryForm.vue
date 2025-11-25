@@ -49,8 +49,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
-import { zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { BudgetLimit } from '@/types'
 import { tokenSymbol } from '@/utils'
@@ -62,24 +60,4 @@ const props = defineProps<{
   budgetLimit: BudgetLimit
   loading: boolean
 }>()
-
-function limitType(type: 0 | 1 | 2): string {
-  const budgetTypes = {
-    0: 'Max Transactions',
-    1: 'Maximum Amount',
-    2: 'Max Amount per Transaction'
-  }
-  return budgetTypes[type]
-}
-
-// function getToken(budgetType: 0 | 1 | 2): string {
-//   if (budgetType == 0) return ''
-
-//   const tokens = {
-//     [zeroAddress]: NETWORK.currencySymbol,
-//     [USDC_ADDRESS]: 'USDC',
-//     [USDT_ADDRESS]: 'USDT'
-//   }
-//   return tokens[props.budgetLimit.tokenAddress]
-// }
 </script>
