@@ -1,5 +1,10 @@
-import { ethers } from 'hardhat'
+import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
+import {
+  impersonateAccount,
+  setBalance,
+  stopImpersonatingAccount
+} from '@nomicfoundation/hardhat-toolbox/network-helpers'
 
 describe('BoardOfDirectors', async () => {
   async function deployFixture() {
@@ -40,12 +45,29 @@ describe('BoardOfDirectors', async () => {
     // set boardOfDirectors address in voting contract
     await voting.setBoardOfDirectorsContractAddress(await boardOfDirectorsProxy.getAddress())
 
+    const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
+    const feeCollector = await upgrades.deployProxy(FeeCollectorFactory, [founder.address, []], {
+      initializer: 'initialize'
+    })
+
+    const OfficerFactory = await ethers.getContractFactory('Officer')
+    const officer = await OfficerFactory.deploy(await feeCollector.getAddress())
+    await officer.waitForDeployment()
+    await officer.initialize(await founder.getAddress(), [], [], false)
+
     const BankFactory = await ethers.getContractFactory('Bank')
     const bank = await BankFactory.connect(founder).deploy()
     await bank.initialize(
       [], // token addresses array
-      await founder.getAddress()
+      await officer.getAddress()
     )
+
+    const officerAddress = await officer.getAddress()
+    await impersonateAccount(officerAddress)
+    await setBalance(officerAddress, ethers.parseEther('1'))
+    const officerSigner = await ethers.getSigner(officerAddress)
+    await bank.connect(officerSigner).transferOwnership(await founder.getAddress())
+    await stopImpersonatingAccount(officerAddress)
 
     // transfer ownership of bank to boardOfDirectors
     // so that only boardOfDirectors can call bank functions

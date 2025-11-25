@@ -7,10 +7,12 @@ import investorsV1BeaconModule from './InvestorsV1BeaconModule'
 import CashRemunerationEIP712Module from './CashRemunerationEIP712Module'
 import proposalBeaconModule from './ProposalModule'
 import electionsBeaconModule from './ElectionsModule'
+import FeeCollectorModule from './FeeCollectorModule'
 
 export default buildModule('Officer', (m) => {
   const beaconAdmin = m.getAccount(0)
-  const officer = m.contract('Officer')
+  const { feeCollector } = m.useModule(FeeCollectorModule)
+  const officer = m.contract('Officer', [feeCollector])
   const { beacon: bankBeacon } = m.useModule(bankBeaconModule)
   const { beacon: BoDBeacon } = m.useModule(boardOfDirectorsBeaconModule)
   const { beacon: proposalBeacon } = m.useModule(proposalBeaconModule)
