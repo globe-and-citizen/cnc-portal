@@ -1,12 +1,6 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
-import {
-  Bank,
-  FeeCollector,
-  InvestorV1,
-  MockERC20,
-  Officer
-} from '../typechain-types'
+import { Bank, FeeCollector, InvestorV1, MockERC20, Officer } from '../typechain-types'
 import {
   impersonateAccount,
   setBalance,
@@ -54,9 +48,7 @@ describe('Bank', () => {
     )) as unknown as FeeCollector
 
     const OfficerFactory = await ethers.getContractFactory('Officer')
-    officer = (await OfficerFactory.deploy(
-      await feeCollector.getAddress()
-    )) as unknown as Officer
+    officer = (await OfficerFactory.deploy(await feeCollector.getAddress())) as unknown as Officer
     await officer.waitForDeployment()
     await officer.initialize(await owner.getAddress(), [], [], false)
 
@@ -295,9 +287,7 @@ describe('Bank', () => {
           member1.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
         ).to.changeEtherBalance(bankProxy, depositAmount)
 
-        await expect(
-          bankProxy.connect(member1).transfer(contractor.address, transferAmount)
-        )
+        await expect(bankProxy.connect(member1).transfer(contractor.address, transferAmount))
           .to.be.revertedWithCustomError(bankProxy, 'OwnableUnauthorizedAccount')
           .withArgs(member1.address)
       })
