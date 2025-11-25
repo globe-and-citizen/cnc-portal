@@ -1,739 +1,261 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { time } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { ExpenseAccountEIP712 } from '../typechain-types'
 import { MockERC20 } from '../typechain-types'
 
-describe('ExpenseAccount (EIP712)', () => {
-  let expenseAccountProxy: ExpenseAccountEIP712
+describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
+  let expenseAccount: ExpenseAccountEIP712
   let mockUSDT: MockERC20
   let mockUSDC: MockERC20
+  let owner: SignerWithAddress
+  let withdrawer: SignerWithAddress
+  let imposter: SignerWithAddress
 
-  const deployContract = async (owner: SignerWithAddress) => {
+  const deployContract = async () => {
     // Deploy mock tokens first
     const MockToken = await ethers.getContractFactory('MockERC20')
     mockUSDT = await MockToken.deploy('USDT', 'USDT')
     mockUSDC = await MockToken.deploy('USDC', 'USDC')
 
     const ExpenseAccountImplementation = await ethers.getContractFactory('ExpenseAccountEIP712')
-    expenseAccountProxy = (await upgrades.deployProxy(
+    expenseAccount = (await upgrades.deployProxy(
       ExpenseAccountImplementation,
       [owner.address, await mockUSDT.getAddress(), await mockUSDC.getAddress()],
       { initializer: 'initialize' }
     )) as unknown as ExpenseAccountEIP712
   }
 
-  describe('As CNC Company Founder', () => {
-    let owner: SignerWithAddress
-    let withdrawer: SignerWithAddress
-    let imposter: SignerWithAddress
-    const DOMAIN_NAME = 'CNCExpenseAccount'
-    const DOMAIN_VERSION = '1'
-    let chainId: bigint
-    let verifyingContract: string
-    let domain: {
-      name: string
-      version: string
-      chainId: bigint
-      verifyingContract: string
-    }
-    let types: {
-      [key: string]: Array<{ name: string; type: string }>
-    }
+  beforeEach(async () => {
+    ;[owner, withdrawer, imposter] = await ethers.getSigners()
+    await deployContract()
+  })
 
-    context('I want to deploy my Expense Account Smart Contract', () => {
-      before(async () => {
-        ;[owner, withdrawer, imposter] = await ethers.getSigners()
-        await deployContract(owner)
-        chainId = (await ethers.provider.getNetwork()).chainId
-        verifyingContract = await expenseAccountProxy.getAddress()
+  describe('Contract Deployment and Ownership', () => {
+    it('Should set the right owner', async () => {
+      expect(await expenseAccount.owner()).to.equal(owner.address)
+    })
 
-        domain = {
-          name: DOMAIN_NAME,
-          version: DOMAIN_VERSION,
-          chainId,
-          verifyingContract
-        }
-
-        types = {
-          BudgetData: [
-            { name: 'budgetType', type: 'uint8' },
-            { name: 'value', type: 'uint256' } //,
-            //{ name: 'token', type: 'address' }
-          ],
-          BudgetLimit: [
-            { name: 'approvedAddress', type: 'address' },
-            { name: 'budgetData', type: 'BudgetData[]' },
-            { name: 'expiry', type: 'uint256' },
-            { name: 'tokenAddress', type: 'address' }
-          ]
-        }
-      })
-
-      it('Then I become the owner of the contract', async () => {
-        expect(await expenseAccountProxy.owner()).to.eq(await owner.getAddress())
-      })
-
-      it('Then I can deposit into the expense account contract', async () => {
-        const amount = ethers.parseEther('100')
-        const tx = await owner.sendTransaction({
-          to: await expenseAccountProxy.getAddress(),
-          value: amount
-        })
-
-        await expect(tx).to.changeEtherBalance(expenseAccountProxy, amount)
-        await expect(tx).to.emit(expenseAccountProxy, 'Deposited').withArgs(owner.address, amount)
-      })
-
-      it('Then I can get the contract balance', async () => {
-        const balance = await expenseAccountProxy.getBalance()
-        expect(balance).to.be.equal(ethers.parseEther('100'))
-      })
-
-      describe('Then I can authorize a user to transfer from the expense account by;', async () => {
-        // beforeEach(async () => {
-        //   domain = {
-        //     name: DOMAIN_NAME,
-        //     version: DOMAIN_VERSION,
-        //     chainId,
-        //     verifyingContract
-        //   }
-
-        //   types = {
-        //     BudgetLimit: [
-        //       { name: 'approvedAddress', type: 'address' },
-        //       { name: 'budgetType', type: 'uint8' },
-        //       { name: 'value', type: 'uint256' },
-        //       { name: 'expiry', type: 'uint256' }
-        //     ]
-        //   }
-        // })
-
-        it('transactions per period', async () => {
-          const budgetData = [{ budgetType: 0, value: 10 }] //, token: ethers.ZeroAddress }]
-
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            budgetData,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour from now
-            tokenAddress: ethers.ZeroAddress
-          }
-
-          const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const signatureHash = ethers.keccak256(signature)
-          const beforeTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
-
-          const amount = ethers.parseEther('5')
-          const tx = await expenseAccountProxy
-            .connect(withdrawer)
-            .transfer(withdrawer.address, amount, budgetLimit, signature)
-
-          const receipt = await tx.wait()
-
-          console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
-
-          // Try to exceed the transaction limit
-          await expect(tx).to.changeEtherBalance(withdrawer, amount)
-          await expect(tx)
-            .to.emit(expenseAccountProxy, 'Transfer')
-            .withArgs(withdrawer.address, withdrawer.address, amount)
-          const afterTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
-          expect(afterTxCount).to.be.equal(beforeTxCount + BigInt(1))
-        })
-
-        it('amount per period', async () => {
-          const budgetData = [
-            { budgetType: 1, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
-          ]
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            budgetData,
-            tokenAddress: ethers.ZeroAddress,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-          }
-
-          //const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
-          const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const signatureHash = ethers.keccak256(signature)
-          const beforeAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash))
-            .amountWithdrawn
-
-          //const { v, r, s } = ethers.Signature.from(signature)
-          const amount = ethers.parseEther('5')
-          const tx = await expenseAccountProxy
-            .connect(withdrawer)
-            .transfer(withdrawer.address, amount, budgetLimit, signature)
-
-          const receipt = await tx.wait()
-
-          console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
-
-          await expect(tx).to.changeEtherBalance(withdrawer, amount)
-          await expect(tx)
-            .to.emit(expenseAccountProxy, 'Transfer')
-            .withArgs(withdrawer.address, withdrawer.address, amount)
-          const afterAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash))
-            .amountWithdrawn
-          expect(afterAmountWithdrawn).to.be.equal(beforeAmountWithdrawn + amount)
-        })
-
-        it('amount per transaction', async () => {
-          const budgetData = [
-            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
-          ]
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            budgetData,
-            tokenAddress: ethers.ZeroAddress,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-          }
-
-          const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const signatureHash = ethers.keccak256(signature)
-
-          const beforeAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash))
-            .amountWithdrawn
-
-          const amount = ethers.parseEther('5')
-          const tx = await expenseAccountProxy
-            .connect(withdrawer)
-            .transfer(withdrawer.address, amount, budgetLimit, signature)
-
-          const receipt = await tx.wait()
-
-          console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
-
-          // Try to exceed the transaction limit
-          await expect(tx).to.changeEtherBalance(withdrawer, amount)
-          await expect(tx)
-            .to.emit(expenseAccountProxy, 'Transfer')
-            .withArgs(withdrawer.address, withdrawer.address, amount)
-          const afterAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash))
-            .amountWithdrawn
-          expect(afterAmountWithdrawn).to.be.equal(beforeAmountWithdrawn + amount)
-        })
-
-        it('all limits', async () => {
-          const budgetData = [
-            { budgetType: 0, value: 10, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('10') }, //, token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
-          ]
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            budgetData,
-            tokenAddress: ethers.ZeroAddress,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-          }
-
-          const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const signatureHash = ethers.keccak256(signature)
-
-          const beforeAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash))
-            .amountWithdrawn
-          const beforeTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
-
-          const amount = ethers.parseEther('5')
-          const tx = await expenseAccountProxy
-            .connect(withdrawer)
-            .transfer(withdrawer.address, amount, budgetLimit, signature)
-
-          const receipt = await tx.wait()
-
-          console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
-
-          // Try to exceed the transaction limit
-          await expect(tx).to.changeEtherBalance(withdrawer, amount)
-          await expect(tx)
-            .to.emit(expenseAccountProxy, 'Transfer')
-            .withArgs(withdrawer.address, withdrawer.address, amount)
-          const afterAmountWithdrawn = (await expenseAccountProxy.balances(signatureHash))
-            .amountWithdrawn
-          const afterTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
-          expect(afterAmountWithdrawn).to.be.equal(beforeAmountWithdrawn + amount)
-          expect(afterTxCount).to.be.equal(beforeTxCount + BigInt(1))
-        })
-      })
-
-      describe("Then a user can't transfer if;", () => {
-        it('the signer is not the contract owner', async () => {
-          const budgetData = [
-            { budgetType: 0, value: 10, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('10') }, // token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
-          ]
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            budgetData,
-            tokenAddress: ethers.ZeroAddress,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-          }
-
-          const signature = await imposter.signTypedData(domain, types, budgetLimit)
-
-          const amount = ethers.parseEther('5')
-          await expect(
-            expenseAccountProxy
-              .connect(withdrawer)
-              .transfer(withdrawer.address, amount, budgetLimit, signature)
-          ).to.be.revertedWithCustomError(expenseAccountProxy, 'UnauthorizedAccess')
-        })
-        it('the amount per period exceeds the budget limit', async () => {
-          const budgetData = [
-            { budgetType: 0, value: 10, token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('20') }, //token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
-          ]
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            budgetData,
-            tokenAddress: ethers.ZeroAddress,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-          }
-
-          const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const amount = ethers.parseEther('15')
-          await expect(
-            expenseAccountProxy
-              .connect(withdrawer)
-              .transfer(withdrawer.address, amount, budgetLimit, signature)
-          ).to.be.revertedWithCustomError(expenseAccountProxy, 'AmountPerPeriodExceeded')
-        })
-        it('the amount per transaction exceeds the budget limit', async () => {
-          const budgetData = [
-            { budgetType: 0, value: 10, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50') }, // token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
-          ]
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            budgetData,
-            tokenAddress: ethers.ZeroAddress,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-          }
-
-          const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const amount = ethers.parseEther('15')
-          await expect(
-            expenseAccountProxy
-              .connect(withdrawer)
-              .transfer(withdrawer.address, amount, budgetLimit, signature)
-          ).to.be.revertedWithCustomError(expenseAccountProxy, 'AmountPerTransactionExceeded')
-        })
-        it('the number of transactions exceed the transaction limit', async () => {
-          const budgetData = [
-            { budgetType: 0, value: 1, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50') }, // token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
-          ]
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            budgetData,
-            tokenAddress: ethers.ZeroAddress,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-          }
-
-          const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const amount = ethers.parseEther('5')
-          const N = Number(budgetData[0].value)
-          for (let i = 0; i <= N; i++) {
-            if (i < N) {
-              await expenseAccountProxy
-                .connect(withdrawer)
-                .transfer(withdrawer.address, amount, budgetLimit, signature)
-              continue
-            }
-          }
-          await expect(
-            expenseAccountProxy
-              .connect(withdrawer)
-              .transfer(withdrawer.address, amount, budgetLimit, signature)
-          ).to.be.revertedWith('Transaction limit reached')
-        })
-        it('the budget data is an empty array', async () => {
-          //@ts-expect-error test empty array passed to contract
-          const budgetData = []
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            //@ts-expect-error test empty array passed to contract
-            budgetData,
-            tokenAddress: ethers.ZeroAddress,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-          }
-
-          const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const amount = ethers.parseEther('20')
-          await expect(
-            expenseAccountProxy
-              .connect(withdrawer)
-              .transfer(withdrawer.address, amount, budgetLimit, signature)
-          ).to.be.revertedWith('Empty budget data')
-        })
-        it('the budget data contains an invalid type', async () => {
-          const budgetData = [
-            { budgetType: 4, value: ethers.parseEther('20') } //, token: ethers.ZeroAddress }
-          ]
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            budgetData,
-            tokenAddress: ethers.ZeroAddress,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-          }
-
-          const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const amount = ethers.parseEther('20')
-          await expect(
-            expenseAccountProxy
-              .connect(withdrawer)
-              .transfer(withdrawer.address, amount, budgetLimit, signature)
-          ).to.be.reverted
-        })
-        it('the to address is a zero address', async () => {
-          const budgetData = [
-            { budgetType: 0, value: 1, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50') }, // token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
-          ]
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            budgetData,
-            tokenAddress: ethers.ZeroAddress,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-          }
-
-          const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const amount = ethers.parseEther('5')
-          await expect(
-            expenseAccountProxy
-              .connect(withdrawer)
-              .transfer(
-                '0x0000000000000000000000000000000000000000',
-                amount,
-                budgetLimit,
-                signature
-              )
-          ).to.be.revertedWith('Address required')
-        })
-        it('the amount is zero or negative', async () => {
-          const budgetData = [
-            { budgetType: 0, value: 1, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50') }, // token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
-          ]
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            budgetData,
-            tokenAddress: ethers.ZeroAddress,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-          }
-
-          const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const amount = ethers.parseEther('0')
-          await expect(
-            expenseAccountProxy
-              .connect(withdrawer)
-              .transfer(withdrawer.address, amount, budgetLimit, signature)
-          ).to.be.revertedWith('Amount must be greater than zero')
-        })
-        it('the approval has expired', async () => {
-          const budgetData = [
-            { budgetType: 0, value: 1, token: ethers.ZeroAddress },
-            { budgetType: 1, value: ethers.parseEther('50') }, //, token: ethers.ZeroAddress },
-            { budgetType: 2, value: ethers.parseEther('10') } // token: ethers.ZeroAddress }
-          ]
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            budgetData,
-            tokenAddress: ethers.ZeroAddress,
-            expiry: (await time.latest()) - 3600 // 1 hour ago
-          }
-
-          const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const amount = ethers.parseEther('5')
-          await expect(
-            expenseAccountProxy
-              .connect(withdrawer)
-              .transfer(withdrawer.address, amount, budgetLimit, signature)
-          ).to.be.revertedWith('Authorization expired')
-        })
-        it('The approval is deactivated', async () => {
-          const budgetData = [
-            { budgetType: 1, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
-          ]
-          const budgetLimit = {
-            approvedAddress: withdrawer.address,
-            budgetData,
-            tokenAddress: ethers.ZeroAddress,
-            expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-          }
-
-          //const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
-          const signature = await owner.signTypedData(domain, types, budgetLimit)
-          const signatureHash = ethers.keccak256(signature)
-
-          await expect(expenseAccountProxy.deactivateApproval(signatureHash))
-            .to.emit(expenseAccountProxy, 'ApprovalDeactivated')
-            .withArgs(signatureHash)
-
-          const amount = ethers.parseEther('5')
-          await expect(
-            expenseAccountProxy
-              .connect(withdrawer)
-              .transfer(withdrawer.address, amount, budgetLimit, signature)
-          ).to.be.revertedWith('Approval inactive')
-        })
-      })
-      it('Then I can pause the account', async () => {
-        await expect(expenseAccountProxy.pause())
-          .to.emit(expenseAccountProxy, 'Paused')
-          .withArgs(owner.address)
-      })
-      it('Then I can unpause the account', async () => {
-        await expect(expenseAccountProxy.unpause())
-          .to.emit(expenseAccountProxy, 'Unpaused')
-          .withArgs(owner.address)
-      })
-      it('Then I can deactivate the approval', async () => {
-        const budgetData = [
-          { budgetType: 0, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
-        ]
-        const budgetLimit = {
-          approvedAddress: withdrawer.address,
-          budgetData,
-          tokenAddress: ethers.ZeroAddress,
-          expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-        }
-
-        //const digest = ethers.TypedDataEncoder.hash(domain, types, budgetLimit)
-        const signature = await owner.signTypedData(domain, types, budgetLimit)
-        const signatureHash = ethers.keccak256(signature)
-
-        await expect(expenseAccountProxy.deactivateApproval(signatureHash))
-          .to.emit(expenseAccountProxy, 'ApprovalDeactivated')
-          .withArgs(signatureHash)
-
-        const amount = ethers.parseEther('5')
-        await expect(
-          expenseAccountProxy
-            .connect(withdrawer)
-            .transfer(withdrawer.address, amount, budgetLimit, signature)
-        ).to.be.revertedWith('Approval inactive')
-      })
-      it('Then I can activate the approval', async () => {
-        const budgetData = [
-          { budgetType: 0, value: ethers.parseEther('10') } //, token: ethers.ZeroAddress }
-        ]
-        const budgetLimit = {
-          approvedAddress: withdrawer.address,
-          budgetData,
-          tokenAddress: ethers.ZeroAddress,
-          expiry: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour from now
-        }
-
-        const signature = await owner.signTypedData(domain, types, budgetLimit)
-        const signatureHash = ethers.keccak256(signature)
-
-        await expect(expenseAccountProxy.activateApproval(signatureHash))
-          .to.emit(expenseAccountProxy, 'ApprovalActivated')
-          .withArgs(signatureHash)
-
-        const beforeTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
-
-        const amount = ethers.parseEther('5')
-        const tx = await expenseAccountProxy
-          .connect(withdrawer)
-          .transfer(withdrawer.address, amount, budgetLimit, signature)
-
-        const receipt = await tx.wait()
-
-        console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
-
-        await expect(tx).to.changeEtherBalance(withdrawer, amount)
-        await expect(tx)
-          .to.emit(expenseAccountProxy, 'Transfer')
-          .withArgs(withdrawer.address, withdrawer.address, amount)
-        const afterTxCount = (await expenseAccountProxy.balances(signatureHash)).transactionCount
-        expect(afterTxCount).to.be.equal(beforeTxCount + BigInt(1))
-      })
+    it('Should initialize supported tokens correctly', async () => {
+      expect(await expenseAccount.supportedTokens('USDT')).to.equal(await mockUSDT.getAddress())
+      expect(await expenseAccount.supportedTokens('USDC')).to.equal(await mockUSDC.getAddress())
     })
   })
 
-  describe('Token functionality', () => {
-    let owner: SignerWithAddress
-    let withdrawer: SignerWithAddress
-    let imposter: SignerWithAddress
-    const DOMAIN_NAME = 'CNCExpenseAccount'
-    const DOMAIN_VERSION = '1'
-    let chainId: bigint
-    let verifyingContract: string
-    let domain: {
-      name: string
-      version: string
-      chainId: bigint
-      verifyingContract: string
-    }
-    let types: {
-      [key: string]: Array<{ name: string; type: string }>
-    }
-
-    before(async () => {
-      ;[owner, withdrawer, imposter] = await ethers.getSigners()
-
-      // Deploy expense account with token addresses
-      const ExpenseAccountImplementation = await ethers.getContractFactory('ExpenseAccountEIP712')
-      expenseAccountProxy = (await upgrades.deployProxy(
-        ExpenseAccountImplementation,
-        [owner.address, await mockUSDT.getAddress(), await mockUSDC.getAddress()],
-        { initializer: 'initialize' }
-      )) as unknown as ExpenseAccountEIP712
-
-      chainId = (await ethers.provider.getNetwork()).chainId
-      verifyingContract = await expenseAccountProxy.getAddress()
-
-      domain = {
-        name: DOMAIN_NAME,
-        version: DOMAIN_VERSION,
-        chainId,
-        verifyingContract
-      }
-
-      types = {
-        BudgetData: [
-          { name: 'budgetType', type: 'uint8' },
-          { name: 'value', type: 'uint256' } //,
-          //{ name: 'token', type: 'address' }
-        ],
-        BudgetLimit: [
-          { name: 'approvedAddress', type: 'address' },
-          { name: 'budgetData', type: 'BudgetData[]' },
-          { name: 'expiry', type: 'uint256' },
-          { name: 'tokenAddress', type: 'address' }
-        ]
-      }
-
-      // Mint and approve tokens
-      await mockUSDT.mint(owner.address, ethers.parseEther('1000'))
-      await mockUSDC.mint(owner.address, ethers.parseEther('1000'))
-      await mockUSDT.approve(expenseAccountProxy.getAddress(), ethers.parseEther('1000'))
-      await mockUSDC.approve(expenseAccountProxy.getAddress(), ethers.parseEther('1000'))
-    })
-
-    it('should correctly initialize with token addresses', async () => {
-      expect(await expenseAccountProxy.supportedTokens('USDT')).to.equal(
-        await mockUSDT.getAddress()
-      )
-      expect(await expenseAccountProxy.supportedTokens('USDC')).to.equal(
-        await mockUSDC.getAddress()
-      )
-    })
-
-    it('should allow token deposits', async () => {
+  describe('Native Token Management', () => {
+    it('Should allow owner to deposit native tokens', async () => {
       const amount = ethers.parseEther('100')
-
-      const tx = await expenseAccountProxy.depositToken(await mockUSDT.getAddress(), amount)
-
-      await expect(tx)
-        .to.emit(expenseAccountProxy, 'TokenDeposited')
-        .withArgs(owner.address, await mockUSDT.getAddress(), amount)
-
-      expect(await expenseAccountProxy.getTokenBalance(await mockUSDT.getAddress())).to.equal(
-        amount
-      )
-    })
-
-    it('should allow token transfers with valid budget limits', async () => {
-      const amount = ethers.parseEther('10')
-      const budgetData = [
-        { budgetType: 0, value: 10 }, // token: await mockUSDT.getAddress() },
-        { budgetType: 1, value: ethers.parseEther('50') }, // token: await mockUSDT.getAddress() },
-        { budgetType: 2, value: ethers.parseEther('20') } // token: await mockUSDT.getAddress() }
-      ]
-      const budgetLimit = {
-        approvedAddress: withdrawer.address,
-        budgetData,
-        tokenAddress: await mockUSDT.getAddress(),
-        expiry: Math.floor(Date.now() / 1000) + 60 * 60
-      }
-
-      const signature = await owner.signTypedData(domain, types, budgetLimit)
-
-      const tx = await expenseAccountProxy.connect(withdrawer).transfer(
-        /*Token*/ withdrawer.address,
-        //await mockUSDT.getAddress(),
-        amount,
-        budgetLimit,
-        signature
-      )
-
-      await expect(tx)
-        .to.emit(expenseAccountProxy, 'TokenTransfer')
-        .withArgs(withdrawer.address, withdrawer.address, await mockUSDT.getAddress(), amount)
-    })
-
-    it('should allow owner to change token addresses', async () => {
-      const newAddress = '0x1234567890123456789012345678901234567890'
-
-      const tx = await expenseAccountProxy.changeTokenAddress('USDT', newAddress)
-
-      await expect(tx)
-        .to.emit(expenseAccountProxy, 'TokenAddressChanged')
-        .withArgs(owner.address, 'USDT', await mockUSDT.getAddress(), newAddress)
-
-      expect(await expenseAccountProxy.supportedTokens('USDT')).to.equal(newAddress)
-    })
-
-    describe('Token transfer restrictions', () => {
-      it('should not allow transfers with unsupported tokens', async () => {
-        const amount = ethers.parseEther('10')
-        const unsupportedToken = '0x9876543210987654321098765432109876543210'
-        const budgetData = [
-          { budgetType: 1, value: ethers.parseEther('50') } // token: unsupportedToken }
-        ]
-        const budgetLimit = {
-          approvedAddress: withdrawer.address,
-          budgetData,
-          tokenAddress: unsupportedToken,
-          expiry: Math.floor(Date.now() / 1000) + 60 * 60
-        }
-
-        const signature = await owner.signTypedData(domain, types, budgetLimit)
-
-        await expect(
-          expenseAccountProxy
-            .connect(withdrawer)
-            .transfer(withdrawer.address, /*unsupportedToken, */ amount, budgetLimit, signature)
-        ).to.be.revertedWith('Unsupported token')
+      const tx = await owner.sendTransaction({
+        to: await expenseAccount.getAddress(),
+        value: amount
       })
 
-      it('should not allow token deposits with unsupported tokens', async () => {
+      await expect(tx).to.changeEtherBalance(expenseAccount, amount)
+      await expect(tx).to.emit(expenseAccount, 'Deposited').withArgs(owner.address, amount)
+    })
+
+    it('Should return correct contract balance', async () => {
+      const amount = ethers.parseEther('100')
+      await owner.sendTransaction({
+        to: await expenseAccount.getAddress(),
+        value: amount
+      })
+
+      const balance = await expenseAccount.getBalance()
+      expect(balance).to.equal(ethers.parseEther('100'))
+    })
+  })
+
+  describe('Approval State Management', () => {
+    let signatureHash: string
+
+    beforeEach(async () => {
+      // Create a signature hash for testing approval state
+      const budgetLimit = {
+        amount: ethers.parseEther('1000'),
+        frequencyType: 3, // Monthly
+        customFrequency: 0,
+        startDate: Math.floor(Date.now() / 1000),
+        endDate: Math.floor(Date.now() / 1000) + 86400,
+        tokenAddress: ethers.ZeroAddress,
+        approvedAddress: withdrawer.address
+      }
+
+      const signature = await owner.signTypedData(
+        {
+          name: 'CNCExpenseAccount',
+          version: '1',
+          chainId: (await ethers.provider.getNetwork()).chainId,
+          verifyingContract: await expenseAccount.getAddress()
+        },
+        {
+          BudgetLimit: [
+            { name: 'amount', type: 'uint256' },
+            { name: 'frequencyType', type: 'uint8' },
+            { name: 'customFrequency', type: 'uint256' },
+            { name: 'startDate', type: 'uint256' },
+            { name: 'endDate', type: 'uint256' },
+            { name: 'tokenAddress', type: 'address' },
+            { name: 'approvedAddress', type: 'address' }
+          ]
+        },
+        budgetLimit
+      )
+
+      signatureHash = ethers.keccak256(signature)
+    })
+
+    it('Should allow owner to deactivate approval', async () => {
+      await expect(expenseAccount.deactivateApproval(signatureHash))
+        .to.emit(expenseAccount, 'ApprovalDeactivated')
+        .withArgs(signatureHash)
+
+      const expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      expect(expenseBalance.state).to.equal(2) // Inactive state
+    })
+
+    it('Should allow owner to activate approval', async () => {
+      // First deactivate
+      await expenseAccount.deactivateApproval(signatureHash)
+
+      // Then activate
+      await expect(expenseAccount.activateApproval(signatureHash))
+        .to.emit(expenseAccount, 'ApprovalActivated')
+        .withArgs(signatureHash)
+
+      const expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      expect(expenseBalance.state).to.equal(1) // Active state
+    })
+
+    it('Should not allow non-owners to manage approvals', async () => {
+      await expect(
+        expenseAccount.connect(imposter).deactivateApproval(signatureHash)
+      ).to.be.revertedWithCustomError(expenseAccount, 'OwnableUnauthorizedAccount')
+
+      await expect(
+        expenseAccount.connect(imposter).activateApproval(signatureHash)
+      ).to.be.revertedWithCustomError(expenseAccount, 'OwnableUnauthorizedAccount')
+    })
+  })
+
+  describe('Pause/Unpause Functionality', () => {
+    it('Should allow owner to pause the contract', async () => {
+      await expect(expenseAccount.pause()).to.emit(expenseAccount, 'Paused').withArgs(owner.address)
+    })
+
+    it('Should allow owner to unpause the contract', async () => {
+      // First pause
+      await expenseAccount.pause()
+
+      // Then unpause
+      await expect(expenseAccount.unpause())
+        .to.emit(expenseAccount, 'Unpaused')
+        .withArgs(owner.address)
+    })
+
+    it('Should not allow non-owners to pause/unpause', async () => {
+      await expect(expenseAccount.connect(imposter).pause()).to.be.revertedWithCustomError(
+        expenseAccount,
+        'OwnableUnauthorizedAccount'
+      )
+
+      await expect(expenseAccount.connect(imposter).unpause()).to.be.revertedWithCustomError(
+        expenseAccount,
+        'OwnableUnauthorizedAccount'
+      )
+    })
+  })
+
+  describe('Token Management', () => {
+    beforeEach(async () => {
+      // Mint and approve tokens for deposit tests
+      await mockUSDT.mint(owner.address, ethers.parseEther('1000'))
+      await mockUSDC.mint(owner.address, ethers.parseEther('1000'))
+      await mockUSDT
+        .connect(owner)
+        .approve(await expenseAccount.getAddress(), ethers.parseEther('1000'))
+      await mockUSDC
+        .connect(owner)
+        .approve(await expenseAccount.getAddress(), ethers.parseEther('1000'))
+    })
+
+    it('Should allow token deposits', async () => {
+      const amount = ethers.parseEther('100')
+
+      const tx = await expenseAccount
+        .connect(owner)
+        .depositToken(await mockUSDT.getAddress(), amount)
+
+      await expect(tx)
+        .to.emit(expenseAccount, 'TokenDeposited')
+        .withArgs(owner.address, await mockUSDT.getAddress(), amount)
+
+      expect(await expenseAccount.getTokenBalance(await mockUSDT.getAddress())).to.equal(amount)
+    })
+
+    it('Should allow owner to change token addresses', async () => {
+      const newAddress = '0x1234567890123456789012345678901234567890'
+
+      const tx = await expenseAccount.changeTokenAddress('USDT', newAddress)
+
+      await expect(tx)
+        .to.emit(expenseAccount, 'TokenAddressChanged')
+        .withArgs(owner.address, 'USDT', await mockUSDT.getAddress(), newAddress)
+
+      expect(await expenseAccount.supportedTokens('USDT')).to.equal(newAddress)
+    })
+
+    it('Should correctly check if token is supported', async () => {
+      expect(await expenseAccount.isTokenSupported(await mockUSDT.getAddress())).to.be.true
+      expect(await expenseAccount.isTokenSupported(await mockUSDC.getAddress())).to.be.true
+      expect(await expenseAccount.isTokenSupported(ethers.ZeroAddress)).to.be.true // Native token
+      expect(await expenseAccount.isTokenSupported('0x1234567890123456789012345678901234567890')).to
+        .be.false
+    })
+
+    it('Should return correct token balance', async () => {
+      const amount = ethers.parseEther('50')
+      await expenseAccount.connect(owner).depositToken(await mockUSDT.getAddress(), amount)
+
+      const balance = await expenseAccount.getTokenBalance(await mockUSDT.getAddress())
+      expect(balance).to.equal(amount)
+    })
+
+    describe('Token Management Restrictions', () => {
+      it('Should not allow deposits with unsupported tokens', async () => {
         const amount = ethers.parseEther('100')
         const unsupportedToken = '0x9876543210987654321098765432109876543210'
 
-        await expect(expenseAccountProxy.depositToken(unsupportedToken, amount)).to.be.revertedWith(
-          'Unsupported token'
+        await expect(
+          expenseAccount.connect(owner).depositToken(unsupportedToken, amount)
+        ).to.be.revertedWith('Unsupported token')
+      })
+
+      it('Should not allow zero amount deposits', async () => {
+        await expect(
+          expenseAccount.connect(owner).depositToken(await mockUSDT.getAddress(), 0)
+        ).to.be.revertedWith('Amount must be greater than zero')
+      })
+
+      it('Should not allow non-owners to change token addresses', async () => {
+        const newAddress = '0x1234567890123456789012345678901234567890'
+
+        await expect(
+          expenseAccount.connect(imposter).changeTokenAddress('USDT', newAddress)
+        ).to.be.revertedWithCustomError(expenseAccount, 'OwnableUnauthorizedAccount')
+      })
+
+      it('Should not allow changing to invalid token symbols', async () => {
+        const newAddress = '0x1234567890123456789012345678901234567890'
+
+        await expect(expenseAccount.changeTokenAddress('INVALID', newAddress)).to.be.revertedWith(
+          'Invalid token symbol'
         )
       })
 
-      it('should not allow non-owners to change token addresses', async () => {
-        const newAddress = '0x1234567890123456789012345678901234567890'
-
+      it('Should not allow setting zero address as token address', async () => {
         await expect(
-          expenseAccountProxy.connect(imposter).changeTokenAddress('USDT', newAddress)
-        ).to.be.revertedWithCustomError(expenseAccountProxy, 'OwnableUnauthorizedAccount')
-      })
-
-      it('should not allow setting invalid token symbols', async () => {
-        const newAddress = '0x1234567890123456789012345678901234567890'
-
-        await expect(
-          expenseAccountProxy.changeTokenAddress('INVALID', newAddress)
-        ).to.be.revertedWith('Invalid token symbol')
-      })
-
-      it('should not allow setting zero address as token address', async () => {
-        await expect(
-          expenseAccountProxy.changeTokenAddress('USDT', ethers.ZeroAddress)
+          expenseAccount.changeTokenAddress('USDT', ethers.ZeroAddress)
         ).to.be.revertedWith('Address cannot be zero')
       })
     })
