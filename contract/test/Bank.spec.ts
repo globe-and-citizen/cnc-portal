@@ -1,6 +1,17 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
-import { Bank, MockERC20, InvestorV1 } from '../typechain-types'
+import {
+  Bank,
+  FeeCollector,
+  InvestorV1,
+  MockERC20,
+  Officer
+} from '../typechain-types'
+import {
+  impersonateAccount,
+  setBalance,
+  stopImpersonatingAccount
+} from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 
 describe('Bank', () => {
@@ -12,6 +23,8 @@ describe('Bank', () => {
   let member1: SignerWithAddress
   let member2: SignerWithAddress
   let investorProxy: InvestorV1
+  let officer: Officer
+  let feeCollector: FeeCollector
 
   const ERRORS = {
     INSUFFICIENT_UNLOCKED: 'Insufficient unlocked balance',
@@ -30,8 +43,23 @@ describe('Bank', () => {
     AMOUNT_ZERO: 'Amount must be greater than zero',
     SENDER_ZERO: 'Sender cannot be zero'
   } as const
+  const BANK_FEE_BPS = 50
 
   async function deployContracts() {
+    const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
+    feeCollector = (await upgrades.deployProxy(
+      FeeCollectorFactory,
+      [await owner.getAddress(), [{ contractType: 'BANK', feeBps: BANK_FEE_BPS }]],
+      { initializer: 'initialize' }
+    )) as unknown as FeeCollector
+
+    const OfficerFactory = await ethers.getContractFactory('Officer')
+    officer = (await OfficerFactory.deploy(
+      await feeCollector.getAddress()
+    )) as unknown as Officer
+    await officer.waitForDeployment()
+    await officer.initialize(await owner.getAddress(), [], [], false)
+
     const InvestorsV1Implementation = await ethers.getContractFactory('InvestorV1')
     const BankImplementation = await ethers.getContractFactory('Bank')
 
@@ -43,9 +71,20 @@ describe('Bank', () => {
 
     bankProxy = (await upgrades.deployProxy(
       BankImplementation,
-      [[await mockUSDT.getAddress(), await mockUSDC.getAddress()], await owner.getAddress()],
+      [[await mockUSDT.getAddress(), await mockUSDC.getAddress()], await officer.getAddress()],
       { initializer: 'initialize' }
     )) as unknown as Bank
+
+    await transferBankOwnershipToOwner()
+  }
+
+  async function transferBankOwnershipToOwner() {
+    const officerAddress = await officer.getAddress()
+    await impersonateAccount(officerAddress)
+    await setBalance(officerAddress, ethers.parseEther('1'))
+    const officerSigner = await ethers.getSigner(officerAddress)
+    await bankProxy.connect(officerSigner).transferOwnership(await owner.getAddress())
+    await stopImpersonatingAccount(officerAddress)
   }
 
   describe('Initial Setup', () => {
@@ -64,6 +103,7 @@ describe('Bank', () => {
 
     it('should set the correct owner and initial values', async () => {
       expect(await bankProxy.owner()).to.eq(await owner.getAddress())
+      expect(await bankProxy.officerAddress()).to.eq(await officer.getAddress())
       expect(await bankProxy.supportedTokens(await mockUSDT.getAddress())).to.be.true
       expect(await bankProxy.supportedTokens(await mockUSDC.getAddress())).to.be.true
     })
@@ -181,10 +221,11 @@ describe('Bank', () => {
     })
 
     it('should not allow non-owner to set investor address', async () => {
-      // TODO better checking, the first attempt should work but not the second
-      bankProxy.connect(member1).setInvestorAddress(await investorProxy.getAddress())
-      await expect(bankProxy.connect(member1).setInvestorAddress(await investorProxy.getAddress()))
-        .to.be.reverted
+      await bankProxy.setInvestorAddress(await investorProxy.getAddress())
+
+      await expect(
+        bankProxy.connect(member1).setInvestorAddress(await investorProxy.getAddress())
+      ).to.be.revertedWith('Not allowed to set investor contract')
     })
   })
 
@@ -206,14 +247,23 @@ describe('Bank', () => {
       it('should allow the owner to deposit and transfer funds', async () => {
         const depositAmount = ethers.parseEther('10')
         const transferAmount = ethers.parseEther('1')
+        const fee = (transferAmount * BigInt(BANK_FEE_BPS)) / 10_000n
+        const netAmount = transferAmount - fee
+        const feeCollectorAddress = await feeCollector.getAddress()
 
         await expect(async () =>
           owner.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
         ).to.changeEtherBalance(bankProxy, depositAmount)
 
         const tx = bankProxy.transfer(contractor.address, transferAmount)
-        await expect(tx).to.changeEtherBalance(bankProxy, -transferAmount)
-        await expect(tx).to.changeEtherBalance(contractor, transferAmount)
+        await expect(tx).to.changeEtherBalances(
+          [bankProxy, contractor, feeCollectorAddress],
+          [-transferAmount, netAmount, fee]
+        )
+        await expect(tx)
+          .to.emit(bankProxy, 'Transfer')
+          .withArgs(await owner.getAddress(), contractor.address, netAmount)
+        await expect(tx).to.emit(bankProxy, 'FeePaid').withArgs(feeCollectorAddress, fee)
       })
 
       it("should fail when the to address is zero, the amount is 0 or the sender doesn't have enough funds", async () => {
@@ -245,8 +295,11 @@ describe('Bank', () => {
           member1.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
         ).to.changeEtherBalance(bankProxy, depositAmount)
 
-        await expect(bankProxy.connect(member1).transfer(contractor.address, transferAmount)).to.be
-          .reverted
+        await expect(
+          bankProxy.connect(member1).transfer(contractor.address, transferAmount)
+        )
+          .to.be.revertedWithCustomError(bankProxy, 'OwnableUnauthorizedAccount')
+          .withArgs(member1.address)
       })
     })
 

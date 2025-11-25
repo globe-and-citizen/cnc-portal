@@ -9,7 +9,8 @@ import {
   Elections__factory,
   InvestorV1__factory,
   CashRemunerationEIP712__factory,
-  ExpenseAccountEIP712__factory
+  ExpenseAccountEIP712__factory,
+  FeeCollector
 } from '../typechain-types'
 import { ZeroAddress } from 'ethers'
 
@@ -28,9 +29,15 @@ describe('Officer Contract', function () {
   let cashRemunerationEip712: CashRemunerationEIP712__factory
   let cashRemunerationEip712Beacon: UpgradeableBeacon
   let owner: SignerWithAddress
+  let feeCollector: FeeCollector
 
   it('Should deploy contracts', async function () {
     ;[owner] = await ethers.getSigners()
+
+    const FeeCollector = await ethers.getContractFactory('FeeCollector')
+    feeCollector = (await upgrades.deployProxy(FeeCollector, [owner.address, []], {
+      initializer: 'initialize'
+    })) as unknown as FeeCollector
 
     // Deploy implementation contracts
     bankAccount = await ethers.getContractFactory('Bank')
@@ -86,7 +93,10 @@ describe('Officer Contract', function () {
 
     deployments.push({
       contractType: 'Bank',
-      initializerData: bankAccount.interface.encodeFunctionData('initialize', [[], owner.address])
+      initializerData: bankAccount.interface.encodeFunctionData('initialize', [
+        [],
+        await feeCollector.getAddress()
+      ])
     })
 
     deployments.push({
@@ -122,20 +132,18 @@ describe('Officer Contract', function () {
 
     // Deploy Officer contract
     const Officer = await ethers.getContractFactory('Officer')
-    officer = (await upgrades.deployProxy(
-      Officer,
-      [owner.address, beaconConfigs, deployments, true],
-      {
-        initializer: 'initialize'
-      }
-    )) as unknown as Officer
+    officer = (await Officer.deploy(await feeCollector.getAddress())) as unknown as Officer
+    await officer.waitForDeployment()
+    await officer.initialize(owner.address, beaconConfigs, deployments, true)
 
     const deployedContracts = await officer.getDeployedContracts()
 
     const contractAddresses = new Map()
 
     for (const contract of deployedContracts) {
-      contractAddresses.set(contract[0], contract[1])
+      const contractType = (contract as any).contractType ?? contract[0]
+      const contractAddress = (contract as any).contractAddress ?? contract[1]
+      contractAddresses.set(contractType, contractAddress)
     }
 
     const cashRemunerationEip712Proxy = await ethers.getContractAt(

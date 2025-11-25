@@ -19,8 +19,8 @@ interface IInvestorView {
 }
 
 interface IOfficer {
-    function feeCollector() external view returns (address);
-    function getFeeFor(string calldata contractType) external view returns (uint16);
+  function getFeeCollector() external view returns (address);
+  function getFeeFor(string calldata contractType) external view returns (uint16);
 }
 
 
@@ -312,7 +312,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 net = _amount - fee;
 
     // --- Step 2: read global feeCollector address ---
-    address feeCollector = IOfficer(officerAddress).feeCollector();
+    address feeCollector = IOfficer(officerAddress).getFeeCollector();
 
     // --- Step 3: send fee ---
     if (fee > 0) {
