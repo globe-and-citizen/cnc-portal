@@ -5,14 +5,26 @@
     with the following limits:
   </h3>
 
-  <h3 :key="limit.budgetType" v-for="limit in budgetLimit.budgetData">
-    {{ limitType(limit.budgetType as 0 | 1 | 2) }}:
-    <span class="font-bold">{{ limit.value }} {{ getToken(limit.budgetType as 0 | 1 | 2) }}</span>
+  <h3>
+    Amount:
+    <span class="font-bold"
+      >{{ budgetLimit.amount }} {{ tokenSymbol(budgetLimit.tokenAddress) }}</span
+    >
   </h3>
 
-  <h3 v-if="budgetLimit.expiry">
-    Valid Until:
-    <span class="font-bold">{{ new Date(budgetLimit.expiry * 1000).toLocaleString() }}</span>
+  <h3>
+    Frequency:
+    <span class="font-bold">{{ getFrequencyName(budgetLimit.frequencyType) }}</span>
+  </h3>
+
+  <h3 v-if="budgetLimit.startDate">
+    Start Date:
+    <span class="font-bold">{{ new Date(budgetLimit.startDate * 1000).toLocaleString() }}</span>
+  </h3>
+
+  <h3 v-if="budgetLimit.endDate">
+    End Date:
+    <span class="font-bold">{{ new Date(budgetLimit.endDate * 1000).toLocaleString() }}</span>
   </h3>
 
   <div class="divider" />
@@ -41,6 +53,8 @@ import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { BudgetLimit } from '@/types'
+import { tokenSymbol } from '@/utils'
+import { getFrequencyName } from '@/utils'
 
 defineEmits(['submit', 'close'])
 
@@ -58,14 +72,14 @@ function limitType(type: 0 | 1 | 2): string {
   return budgetTypes[type]
 }
 
-function getToken(budgetType: 0 | 1 | 2): string {
-  if (budgetType == 0) return ''
+// function getToken(budgetType: 0 | 1 | 2): string {
+//   if (budgetType == 0) return ''
 
-  const tokens = {
-    [zeroAddress]: NETWORK.currencySymbol,
-    [USDC_ADDRESS]: 'USDC',
-    [USDT_ADDRESS]: 'USDT'
-  }
-  return tokens[props.budgetLimit.tokenAddress]
-}
+//   const tokens = {
+//     [zeroAddress]: NETWORK.currencySymbol,
+//     [USDC_ADDRESS]: 'USDC',
+//     [USDT_ADDRESS]: 'USDT'
+//   }
+//   return tokens[props.budgetLimit.tokenAddress]
+// }
 </script>
