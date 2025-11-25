@@ -41,6 +41,8 @@ export const addExpense = async (req: Request, res: Response) => {
     if (callerAddress != owner) {
       return errorResponse(403, 'Caller is not the owner of the team', res);
     }
+
+    console.log('Adding expense: ', data, 'signature: ', signature)
     // TODO: should be only one expense active for the user
     const expense = await prisma.expense.create({
       data: {
@@ -125,11 +127,11 @@ const syncExpenseStatus = async (expense: Expense) => {
   const balances = (await publicClient.readContract({
     address: expenseAccountEip712Address?.address as Address,
     abi: ABI,
-    functionName: 'balances',
+    functionName: 'expenseBalances',
     args: [keccak256(expense.signature as Address)],
-  })) as unknown as [bigint, bigint, 0 | 1 | 2];
+  })) as unknown as [bigint, bigint, bigint, 0 | 1 | 2];
 
-  const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000);
+  const isExpired = data.endDate/* expiry */ <= Math.floor(new Date().getTime() / 1000);
 
   const amountTransferred =
     data.tokenAddress === zeroAddress
@@ -137,10 +139,10 @@ const syncExpenseStatus = async (expense: Expense) => {
       : `${Number(balances[1]) / 1e6}`;
 
   const isLimitReached =
-    (data.budgetData.find((item) => item.budgetType === 1)?.value ?? Number.MAX_VALUE) <=
-      Number(amountTransferred) ||
+    (Number(data.amount)/* budgetData.find((item) => item.budgetType === 1)?.value */ ?? Number.MAX_VALUE) <=
+      Number(amountTransferred) /* ||
     (data.budgetData.find((item) => item.budgetType === 0)?.value ?? Number.MAX_VALUE) <=
-      Number(balances[0]);
+      Number(balances[0] )*/;
 
   const formattedExpense = {
     ...expense,
@@ -152,7 +154,7 @@ const syncExpenseStatus = async (expense: Expense) => {
       ? 'expired'
       : isLimitReached
         ? 'limit-reached'
-        : balances[2] === 2
+        : balances[3] === 2
           ? 'disabled'
           : 'enabled',
   };
