@@ -168,15 +168,23 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
       parseEther(amount),
       {
         ...budgetLimit,
-        budgetData: budgetLimit.budgetData.map((item) => ({
-          ...item,
-          value:
-            item.budgetType === 0
-              ? item.value
-              : budgetLimit.tokenAddress === zeroAddress
-                ? parseEther(`${item.value}`)
-                : BigInt(Number(item.value) * 1e6)
-        }))
+        // budgetData: budgetLimit.budgetData.map((item) => ({
+        //   ...item,
+        //   value:
+        //     item.budgetType === 0
+        //       ? item.value
+        //       : budgetLimit.tokenAddress === zeroAddress
+        //         ? parseEther(`${item.value}`)
+        //         : BigInt(Number(item.value) * 1e6)
+        // }))
+        amount:
+          budgetLimit.tokenAddress === zeroAddress
+            ? parseEther(`${budgetLimit.amount}`)
+            : BigInt(Number(budgetLimit.amount) * 1e6),
+        frequencyType: Number(budgetLimit.frequencyType),
+        customFrequency: BigInt(Number(budgetLimit.customFrequency)),
+        startDate: Number(budgetLimit.startDate),
+        endDate: Number(budgetLimit.endDate)
       },
       props.row.signature
     ]
@@ -245,10 +253,15 @@ const transferErc20Token = async () => {
         _amount,
         {
           ...budgetLimit,
-          budgetData: budgetLimit.budgetData.map((item: BudgetData) => ({
-            ...item,
-            value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6)
-          }))
+          // budgetData: budgetLimit.budgetData.map((item: BudgetData) => ({
+          //   ...item,
+          //   value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6)
+          // }))
+          amount: BigInt(Number(budgetLimit.amount) * 1e6),
+          frequencyType: Number(budgetLimit.frequencyType),
+          customFrequency: BigInt(Number(budgetLimit.customFrequency)),
+          startDate: Number(budgetLimit.startDate),
+          endDate: Number(budgetLimit.endDate)
         },
         props.row.signature // signatureToTransfer.value
       ]
