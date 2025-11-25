@@ -120,29 +120,22 @@ describe('ExpenseAccountEIP712V2', function () {
         deployExpenseAccountFixture
       )
 
-      // Get current time and find the next Monday
-      const currentTime = await time.latest()
-      const currentDate = new Date(currentTime * 1000)
-
-      // Find the next Monday from current time
-      const currentDay = currentDate.getUTCDay() // 0 = Sunday, 1 = Monday, etc.
-      const daysUntilMonday = currentDay === 1 ? 0 : currentDay === 0 ? 1 : 8 - currentDay
-
-      const nextMonday = currentTime + daysUntilMonday * 86400
-
+      // Start from a known future Monday to avoid timing issues
+      const futureMonday = Date.UTC(2030, 0, 7, 0, 0, 0, 0) / 1000; // Jan 7, 2030 (Monday)
+      
       const budgetLimit = createBudgetLimit({
         amount: ethers.parseEther('1'),
         frequencyType: 2, // Weekly
-        startDate: nextMonday,
-        endDate: nextMonday + 14 * 86400, // 2 weeks
+        startDate: futureMonday,
+        endDate: futureMonday + 14 * 86400, // 2 weeks
         approvedAddress: approvedAddress.address
       })
 
       const signature = await createSignature(owner, budgetLimit, expenseAccount)
       const signatureHash = ethers.keccak256(signature)
 
-      // Set the blockchain time to our test Monday
-      await time.setNextBlockTimestamp(nextMonday)
+      // Set initial time to Monday
+      await time.setNextBlockTimestamp(futureMonday)
 
       // Transfer on the same Monday (period 0)
       await expenseAccount
@@ -161,9 +154,8 @@ describe('ExpenseAccountEIP712V2', function () {
       let expenseBalance = await expenseAccount.expenseBalances(signatureHash)
       expect(expenseBalance.totalWithdrawn).to.equal(ethers.parseEther('0.8'))
 
-      // Move to next Monday (period 1)
-      const followingMonday = nextMonday + 7 * 86400
-      await time.setNextBlockTimestamp(followingMonday)
+      // Move forward 7 days to next Monday
+      await time.increase(7 * 86400)
 
       // Should be able to transfer again in new period (budget resets)
       await expenseAccount
