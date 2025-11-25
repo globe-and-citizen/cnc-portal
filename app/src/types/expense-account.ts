@@ -1,4 +1,4 @@
-import type { AddressLike, BytesLike } from 'ethers'
+import type { BytesLike } from 'ethers'
 import type { TokenOption } from '@/types'
 import type { Address } from 'viem'
 
