@@ -1,0 +1,32 @@
+meta {
+  name: Get Teams - 01 - Get All Teams
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/teams
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("should return 200 status for valid token", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("should return an array of teams", function() {
+    expect(res.body).to.be.an('array');
+  });
+  test("each team should have required properties", function() {
+    if (res.body.length > 0) {
+      res.body.forEach(team => {
+        expect(team).to.have.property('id');
+        expect(team).to.have.property('name');
+      });
+    }
+  });
+}
