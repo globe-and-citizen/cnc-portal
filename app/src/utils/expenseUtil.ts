@@ -4,6 +4,21 @@ import { zeroAddress } from 'viem'
 import type { TokenId } from '@/constant'
 import type { TableRow } from '@/components/TableComponent.vue'
 import type { BudgetData } from '@/types/expense-account'
+
+// Frequency types mapping
+export const frequencyTypes = [
+  { value: 0, label: 'One Time' },
+  { value: 1, label: 'Daily' },
+  { value: 2, label: 'Weekly' },
+  { value: 3, label: 'Monthly' },
+  { value: 4, label: 'Custom' }
+]
+
+export const getFrequencyName = (frequencyType: number) => {
+  const frequency = frequencyTypes.find((f) => f.value === frequencyType)
+  return frequency ? frequency.label : 'Unknown'
+}
+
 export const getCurrentUserExpenses = (expenses: ExpenseResponse[], userAddress: string) => {
   if (!expenses || !userAddress || !Array.isArray(expenses)) return []
   return expenses.filter((expense) => expense.data.approvedAddress === userAddress)
