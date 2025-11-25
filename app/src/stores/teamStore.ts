@@ -30,7 +30,7 @@ export const useTeamStore = defineStore('team', () => {
     error: teamsError,
     data: teams,
     execute: executeFetchTeams
-  } = useCustomFetch(`teams/${userDataStore.address}`, { immediate: false }).json()
+  } = useCustomFetch(`teams?userAddress=${userDataStore.address}`, { immediate: false }).json()
 
   /**
    * @description Fetch team by id
