@@ -11,28 +11,18 @@
         <template #action-data="{ row }">
           <TransferAction :row="row" />
         </template>
-        <template #expiryDate-data="{ row }">
-          <span>{{ new Date(Number(row.data.expiry) * 1000).toLocaleString('en-US') }}</span>
+        <template #startDate-data="{ row }">
+          <span>{{ new Date(Number(row.data.startDate) * 1000).toLocaleString('en-US') }}</span>
         </template>
-        <template #maxAmountPerTx-data="{ row }">
-          <span>
-            {{ row.data.budgetData.find((item: BudgetData) => item.budgetType === 2)?.value }}
-            {{ tokenSymbol(row.data.tokenAddress) }}
-          </span>
+        <template #endDate-data="{ row }">
+          <span>{{ new Date(Number(row.data.endDate) * 1000).toLocaleString('en-US') }}</span>
         </template>
-        <template #transactions-data="{ row }">
-          <span
-            >{{ row.balances[0] }}/{{
-              row.data.budgetData.find((item: BudgetData) => item.budgetType === 0)?.value
-            }}
-            TXs</span
-          >
+        <template #frequencyType-data="{ row }">
+          <span> {{ row.data.frequencyType }} </span>
         </template>
         <template #amountTransferred-data="{ row }">
           <span
-            >{{ row.balances[1] }}/{{
-              row.data.budgetData.find((item: BudgetData) => item.budgetType === 1)?.value
-            }}
+            >{{ row.balances[1] }}/{{ row.data.amount }}
             {{ tokenSymbol(row.data.tokenAddress) }}</span
           >
         </template>
@@ -44,7 +34,7 @@
 <script setup lang="ts">
 //#region Imports
 import { computed } from 'vue'
-import type { BudgetData, ExpenseResponse } from '@/types'
+import type { ExpenseResponse } from '@/types'
 import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { tokenSymbol, getCurrentUserExpenses } from '@/utils'
@@ -71,20 +61,25 @@ const {
 
 const columns = [
   {
-    key: 'expiryDate',
-    label: 'Expiry Date',
+    key: 'startDate',
+    label: 'Start Date',
     sortable: true
   },
   {
-    key: 'maxAmountPerTx',
-    label: 'Max Ammount Per Tx',
-    sortable: false
+    key: 'endDate',
+    label: 'End Date',
+    sortable: true
   },
   {
-    key: 'transactions',
-    label: 'Max Transactions',
+    key: 'frequencyType',
+    label: 'Frequency',
     sortable: false
   },
+  /* {
+    key: '',
+    label: 'Max Transactions',
+    sortable: false
+  }, */
   {
     key: 'amountTransferred',
     label: 'Max Amount',
