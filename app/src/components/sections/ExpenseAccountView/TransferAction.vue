@@ -105,8 +105,7 @@ const createDefaultTransferData = (): TransferData => ({
 
 const transferData = ref(createDefaultTransferData())
 const expenseBalance = computed(() => {
-  const budgetData = props.row.data.budgetData as BudgetData[]
-  const maxAmountData = budgetData.find((item) => item.budgetType === 1)?.value
+  const maxAmountData = props.row.amount
   const amountTransferred = props.row.balances[1]
   return maxAmountData && amountTransferred
     ? Number(maxAmountData) - Number(amountTransferred)
@@ -168,15 +167,6 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
       parseEther(amount),
       {
         ...budgetLimit,
-        // budgetData: budgetLimit.budgetData.map((item) => ({
-        //   ...item,
-        //   value:
-        //     item.budgetType === 0
-        //       ? item.value
-        //       : budgetLimit.tokenAddress === zeroAddress
-        //         ? parseEther(`${item.value}`)
-        //         : BigInt(Number(item.value) * 1e6)
-        // }))
         amount:
           budgetLimit.tokenAddress === zeroAddress
             ? parseEther(`${budgetLimit.amount}`)
@@ -253,18 +243,15 @@ const transferErc20Token = async () => {
         _amount,
         {
           ...budgetLimit,
-          // budgetData: budgetLimit.budgetData.map((item: BudgetData) => ({
-          //   ...item,
-          //   value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6)
-          // }))
           amount: BigInt(Number(budgetLimit.amount) * 1e6),
           frequencyType: Number(budgetLimit.frequencyType),
           customFrequency: BigInt(Number(budgetLimit.customFrequency)),
           startDate: Number(budgetLimit.startDate),
           endDate: Number(budgetLimit.endDate)
         },
-        props.row.signature // signatureToTransfer.value
+        props.row.signature
       ]
+
       await simulateContract(config, {
         address: expenseAccountEip712Address.value,
         abi: EXPENSE_ACCOUNT_EIP712_ABI,
