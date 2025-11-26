@@ -159,19 +159,19 @@ describe('Router Configuration', () => {
 
       const expectedNestedRoutes = [
         { name: 'team-demo', path: '/teams/:id/demo' },
-        { name: 'weekly-claim', path: '/teams/:id/cash-remunerations/weekly-claim' },
+        { name: 'team-payroll', path: '/teams/:id/account/team-payroll' },
         {
-          name: 'claim-history',
-          path: '/teams/:id/cash-remunerations/members/:memberAddress/claim-history'
+          name: 'payroll-history',
+          path: '/teams/:id/account/members/:memberAddress/payroll-history'
         },
-        { name: 'cash-remunerations', path: '/teams/:id/cash-remunerations' },
+        { name: 'account', path: '/teams/:id/account' },
         {
           name: 'cash-remunerations-member',
           path: '/teams/:id/cash-remunerations/member/:memberAddress'
         },
-        { name: 'expense-account', path: '/teams/:id/expense-account' },
+        { name: 'expense-account', path: '/teams/:id/account/expense-account' },
         { name: 'vesting', path: '/teams/:id/vesting' },
-        { name: 'bank', path: '/teams/:id/bank' },
+        { name: 'bank', path: '/teams/:id/account/bank' },
         { name: 'contract-management', path: '/teams/:id/contract-management' },
         { name: 'bod-elections', path: '/teams/:id/administration/bod-elections' },
         { name: 'bod-proposals', path: '/teams/:id/administration/bod-proposals' },
@@ -194,9 +194,9 @@ describe('Router Configuration', () => {
         { name: 'teams', expectedMeta: { name: 'Teams List' } },
         { name: 'show-team', expectedMeta: { name: 'Team View' } },
         { name: 'team-demo', expectedMeta: { name: 'Team Demo' } },
-        { name: 'weekly-claim', expectedMeta: { name: 'Team Weekly Claim' } },
-        { name: 'claim-history', expectedMeta: { name: 'Claim History' } },
-        { name: 'cash-remunerations', expectedMeta: { name: 'Cash Remuneration' } },
+        { name: 'team-payroll', expectedMeta: { name: 'Team Payroll' } },
+        { name: 'payroll-history', expectedMeta: { name: 'Payroll History' } },
+        { name: 'payroll-account', expectedMeta: { name: 'Payroll Account' } },
         { name: 'cash-remunerations-member', expectedMeta: { name: 'Cash Remuneration Member' } },
         { name: 'expense-account', expectedMeta: { name: 'Expense Account' } },
         { name: 'vesting', expectedMeta: { name: 'Vesting' } },

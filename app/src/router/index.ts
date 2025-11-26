@@ -72,8 +72,8 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/ClaimHistoryView.vue')
         },
         {
-          path: '/teams/:id/account/member/:memberAddress',
-          name: 'account-member',
+          path: '/teams/:id/cash-remunerations/member/:memberAddress',
+          name: 'cash-remunerations-member',
           meta: { name: 'Cash Remuneration Member' },
           component: () => import('@/views/team/[id]/CashRemunerationView.vue')
         },
