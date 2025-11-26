@@ -14,7 +14,7 @@ export const frequencyTypes = [
   { value: 4, label: 'Custom' }
 ]
 
-export const getFrequencyName = (frequencyType: number) => {
+export const getFrequencyType = (frequencyType: number) => {
   const frequency = frequencyTypes.find((f) => f.value === frequencyType)
   return frequency ? frequency.label : 'Unknown'
 }
@@ -68,7 +68,7 @@ const findToken = (tokenId: TokenId, balances: TokenBalance[]) => {
  */
 export const getRemainingExpenseBalance = (expense: TableRow, contractBalance: number): number => {
   const budgetData = expense.data.budgetData as BudgetData[]
-  const maxAmountData = budgetData.find((item) => item.budgetType === 1)?.value
+  const maxAmountData = expense.amount // budgetData.find((item) => item.budgetType === 1)?.value
   const amountTransferred = expense.balances[1]
 
   // Calculate remaining spendable amount
