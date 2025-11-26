@@ -10,7 +10,10 @@
         :format="formatUTC"
         :enable-time-picker="false"
         auto-apply
-        class="input input-bordered input-md"
+        :ui="{
+          input: 'input input-bordered input-md'
+        }"
+        class=""
         data-test="date-input"
         utc="preserve"
         :disabled="isEdit"

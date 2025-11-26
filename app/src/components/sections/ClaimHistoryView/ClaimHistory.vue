@@ -105,7 +105,7 @@
                 : 'You need to have a wage set up to submit claims'
             }}</span>
             <div>
-              <SubmitClaims v-if="hasWage" />
+              <SubmitClaims v-if="hasWage" :weekly-claim="selectWeekWeelyClaim" />
               <ButtonUI
                 v-else
                 variant="success"

@@ -53,7 +53,8 @@ export interface ClaimSubmitPayload {
 
 export interface WeeklyClaim {
   id: number
-  status: 'signed' | 'withdrawn' | 'pending'
+  // Ajout de 'disabled' pour refléter les états backend susceptibles de bloquer la soumission
+  status: 'signed' | 'withdrawn' | 'pending' | 'disabled'
   weekStart: string // ISO date string
   data: {
     ownerAddress: Address
