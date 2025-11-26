@@ -36,9 +36,33 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/DemoExample.vue')
         },
         {
-          path: '/teams/:id/account/weekly-claim',
-          name: 'weekly-claim',
-          meta: { name: 'Team Weekly Claim' },
+          path: '/teams/:id/account',
+          name: 'account',
+          meta: { name: 'Payroll Account' },
+          component: () => import('@/views/team/[id]/CashRemunerationView.vue')
+        },
+        {
+          path: '/teams/:id/account/bank',
+          name: 'bank',
+          meta: { name: 'Team Bank' },
+          component: () => import('@/views/team/[id]/BankView.vue')
+        },
+        {
+          path: '/teams/:id/account/expense-account',
+          name: 'expense-account',
+          meta: { name: 'Expense Account' },
+          component: () => import('@/views/team/[id]/ExpenseAccountView.vue')
+        },
+        {
+          path: '/teams/:id/account/payroll-account',
+          name: 'payroll-account',
+          meta: { name: 'Payroll Account' },
+          component: () => import('@/views/team/[id]/CashRemunerationView.vue')
+        },
+        {
+          path: '/teams/:id/account/team-payroll',
+          name: 'team-payroll',
+          meta: { name: 'Team Payroll' },
           component: () => import('@/views/team/[id]/WeeklyClaimView.vue')
         },
         {
@@ -48,22 +72,10 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/ClaimHistoryView.vue')
         },
         {
-          path: '/teams/:id/account',
-          name: 'account',
-          meta: { name: 'Payroll Account' },
-          component: () => import('@/views/team/[id]/CashRemunerationView.vue')
-        },
-        {
           path: '/teams/:id/account/member/:memberAddress',
           name: 'account-member',
           meta: { name: 'Cash Remuneration Member' },
           component: () => import('@/views/team/[id]/CashRemunerationView.vue')
-        },
-        {
-          path: '/teams/:id/expense-account',
-          name: 'expense-account',
-          meta: { name: 'Expense Account' },
-          component: () => import('@/views/team/[id]/ExpenseAccountView.vue')
         },
         {
           path: '/teams/:id/vesting',
@@ -71,12 +83,7 @@ const router = createRouter({
           meta: { name: 'Vesting' },
           component: () => import('@/views/team/[id]/VestingView.vue')
         },
-        {
-          path: '/teams/:id/bank',
-          name: 'bank',
-          meta: { name: 'Team Bank' },
-          component: () => import('@/views/team/[id]/BankView.vue')
-        },
+
         {
           path: '/teams/:id/contract-management',
           name: 'contract-management',

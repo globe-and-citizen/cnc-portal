@@ -391,10 +391,12 @@ const menuItems = computed(() => [
     },
     // Active if any child is active or the parent route is active
     active:
-      route.name === 'account' ||
-      route.name === 'weekly-claim' ||
-      route.name === 'claim-history' ||
-      (route.name === 'claim-history' && route.params.memberAddress === userStore.address),
+      route.name === 'bank' ||
+      route.name === 'expense-account' ||
+      route.name === 'payroll-account' ||
+      route.name === 'team-payroll' ||
+      route.name === 'payroll-history' ||
+      (route.name === 'payroll-history' && route.params.memberAddress === userStore.address),
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
       {
@@ -420,10 +422,10 @@ const menuItems = computed(() => [
       {
         label: 'Payroll Account',
         route: {
-          name: 'account',
+          name: 'payroll-account',
           params: { id: teamStore.currentTeam?.id || '1' }
         },
-        active: route.name === 'account',
+        active: route.name === 'payroll-account',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       },
       {
@@ -456,10 +458,10 @@ const menuItems = computed(() => [
       {
         label: 'Team Payroll',
         route: {
-          name: 'weekly-claim',
+          name: 'team-payroll',
           params: { id: teamStore.currentTeam?.id || '1' }
         },
-        active: route.name === 'weekly-claim',
+        active: route.name === 'team-payroll',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       }
       // {
