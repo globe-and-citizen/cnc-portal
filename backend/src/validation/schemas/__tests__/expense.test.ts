@@ -10,25 +10,31 @@ import {
 describe('expense schemas', () => {
   describe('addExpenseBodySchema', () => {
     it('should validate expense with valid data structure', () => {
+      const START_DATE = Math.floor(Date.now() / 1000) + 3600;
+      const END_DATE = START_DATE + (3600 * 24 * 30);
+
       const validData = {
         teamId: '1',
         signature: '0xsignature',
         data: {
           approvedAddress: '0x1234567890123456789012345678901234567890',
-          budgetData: [
-            { budgetType: 0, value: 100 },
-            { budgetType: 1, value: 200 },
-          ],
-          tokenAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef',
-          expiry: 1640995200,
+          amount: 150,
+          frequencyType: 3,
+          customFrequency: 0,
+          tokenAddress: '0x1111111111111111111111111111111111111111',
+          startDate: START_DATE, // 1 hour from now
+          endDate: END_DATE // 30 days from start date
         },
       };
 
       const result = addExpenseBodySchema.parse(validData);
       expect(result.data.approvedAddress).toBe('0x1234567890123456789012345678901234567890');
-      expect(result.data.budgetData).toHaveLength(2);
-      expect(result.data.tokenAddress).toBe('0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef');
-      expect(result.data.expiry).toBe(1640995200);
+      expect(result.data.amount).toBe(150);
+      expect(result.data.frequencyType).toBe(3);
+      expect(result.data.customFrequency).toBe(0);
+      expect(result.data.tokenAddress).toBe('0x1111111111111111111111111111111111111111');
+      expect(result.data.startDate).toBe(START_DATE);
+      expect(result.data.endDate).toBe(END_DATE);
     });
 
     it('should throw error for missing required fields in data', () => {
@@ -42,23 +48,6 @@ describe('expense schemas', () => {
       };
 
       expect(() => addExpenseBodySchema.parse(invalidData)).toThrow();
-    });
-
-    it('should throw error for empty budgetData array', () => {
-      const invalidData = {
-        teamId: '1',
-        signature: '0xsignature',
-        data: {
-          approvedAddress: '0x1234567890123456789012345678901234567890',
-          budgetData: [], // Empty array should fail
-          tokenAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef',
-          expiry: 1640995200,
-        },
-      };
-
-      expect(() => addExpenseBodySchema.parse(invalidData)).toThrow(
-        'budgetData must have at least one entry'
-      );
     });
 
     it('should throw error for empty signature', () => {
