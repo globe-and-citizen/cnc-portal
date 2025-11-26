@@ -14,7 +14,7 @@
 
   <h3>
     Frequency:
-    <span class="font-bold">{{ getFrequencyName(budgetLimit.frequencyType) }}</span>
+    <span class="font-bold">{{ getFrequencyType(budgetLimit.frequencyType) }}</span>
   </h3>
 
   <h3 v-if="budgetLimit.startDate">
@@ -52,7 +52,7 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { BudgetLimit } from '@/types'
 import { tokenSymbol } from '@/utils'
-import { getFrequencyName } from '@/utils'
+import { getFrequencyType } from '@/utils'
 
 defineEmits(['submit', 'close'])
 
