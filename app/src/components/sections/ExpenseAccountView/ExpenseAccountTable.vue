@@ -70,7 +70,7 @@
         >
       </template>
       <template #frequencyType-data="{ row }">
-        <span>{{ row.frequencyType }}</span>
+        <span>{{ getFrequencyType(row.frequencyType) }}</span>
       </template>
       <template #amountTransferred-data="{ row }">
         <span>{{ row.balances[1] }}/{{ row.amount }} {{ tokenSymbol(row.tokenAddress) }}</span>
@@ -92,6 +92,7 @@ import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTanstackQuery } from '@/composables'
 import type { ExpenseResponse } from '@/types'
+import { getFrequencyType } from '@/utils'
 
 const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
@@ -278,11 +279,6 @@ watch(errorGetOwner, (newVal) => {
   if (newVal) {
     log.error(parseError(newVal))
     addErrorToast('Error Getting Contract Owner')
-  }
-})
-watch(expenseData, (newVal) => {
-  if (newVal) {
-    console.log('Expense Data Updated: ', newVal)
   }
 })
 //#endregion
