@@ -381,67 +381,80 @@ const menuItems = computed(() => [
     active: route.name === 'show-team',
     show: true
   },
+
   {
-    label: 'Bank',
-    icon: 'heroicons:banknotes',
-    route: {
-      name: 'bank',
-      params: { id: teamStore.currentTeam?.id || '1' }
-    },
-    active: route.name === 'bank',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
-  },
-  {
-    label: 'Cash Remuneration',
+    label: 'Accounts',
     icon: 'heroicons:currency-dollar',
     route: {
-      name: 'cash-remunerations',
+      name: 'account',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     // Active if any child is active or the parent route is active
     active:
-      route.name === 'cash-remunerations' ||
+      route.name === 'account' ||
       route.name === 'weekly-claim' ||
       route.name === 'claim-history' ||
       (route.name === 'claim-history' && route.params.memberAddress === userStore.address),
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
       {
-        label: 'CR Dashboard',
+        label: 'Bank',
+        icon: 'heroicons:banknotes',
         route: {
-          name: 'cash-remunerations',
+          name: 'bank',
           params: { id: teamStore.currentTeam?.id || '1' }
         },
-        active: route.name === 'cash-remunerations',
+        active: route.name === 'bank',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       },
       {
-        label: 'My Claim History',
+        label: 'Expense Account ',
+        icon: 'heroicons:briefcase',
         route: {
-          name: 'claim-history',
+          name: 'expense-account',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'expense-account',
+        show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      },
+      {
+        label: 'Payroll Account',
+        route: {
+          name: 'account',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'account',
+        show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      },
+      {
+        label: 'My Payroll History',
+        route: {
+          name: 'payroll-history',
           params: { id: teamStore.currentTeam?.id || '1', memberAddress: userStore.address }
         },
-        active: route.name === 'claim-history' && route.params.memberAddress === userStore.address,
+        active:
+          route.name === 'payroll-history' && route.params.memberAddress === userStore.address,
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       },
       {
-        label: ' Member Claim History',
+        label: ' Member Payroll History',
         route: {
-          name: 'claim-history',
+          name: 'payroll-history',
           params: {
             id: teamStore.currentTeam?.id || '1',
             memberAddress: route.params.memberAddress
           }
         },
         // Active if on claim-history and not the current user
-        active: route.name === 'claim-history' && route.params.memberAddress !== userStore.address,
+        active:
+          route.name === 'payroll-history' && route.params.memberAddress !== userStore.address,
         show:
           (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
           !!route.params.memberAddress &&
           route.params.memberAddress !== userStore.address
       },
       {
-        label: 'Team Weekly Claims',
+        label: 'Team Payroll',
         route: {
           name: 'weekly-claim',
           params: { id: teamStore.currentTeam?.id || '1' }
@@ -461,16 +474,6 @@ const menuItems = computed(() => [
       //     (teamStore.currentTeam?.teamContracts ?? []).length > 0 && !isCashRemunerationOwner.value
       // }
     ].filter((child) => child.show)
-  },
-  {
-    label: 'Expense Account ',
-    icon: 'heroicons:briefcase',
-    route: {
-      name: 'expense-account',
-      params: { id: teamStore.currentTeam?.id || '1' }
-    },
-    active: route.name === 'expense-account',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
 
   {

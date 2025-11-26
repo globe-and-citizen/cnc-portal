@@ -36,26 +36,26 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/DemoExample.vue')
         },
         {
-          path: '/teams/:id/cash-remunerations/weekly-claim',
+          path: '/teams/:id/account/weekly-claim',
           name: 'weekly-claim',
           meta: { name: 'Team Weekly Claim' },
           component: () => import('@/views/team/[id]/WeeklyClaimView.vue')
         },
         {
-          path: '/teams/:id/cash-remunerations/members/:memberAddress/claim-history',
-          name: 'claim-history',
-          meta: { name: 'Claim History' },
+          path: '/teams/:id/account/members/:memberAddress/payroll-history',
+          name: 'payroll-history',
+          meta: { name: 'Payroll History' },
           component: () => import('@/views/team/[id]/ClaimHistoryView.vue')
         },
         {
-          path: '/teams/:id/cash-remunerations',
-          name: 'cash-remunerations',
-          meta: { name: 'Cash Remuneration' },
+          path: '/teams/:id/account',
+          name: 'account',
+          meta: { name: 'Payroll Account' },
           component: () => import('@/views/team/[id]/CashRemunerationView.vue')
         },
         {
-          path: '/teams/:id/cash-remunerations/member/:memberAddress',
-          name: 'cash-remunerations-member',
+          path: '/teams/:id/account/member/:memberAddress',
+          name: 'account-member',
           meta: { name: 'Cash Remuneration Member' },
           component: () => import('@/views/team/[id]/CashRemunerationView.vue')
         },
