@@ -5,10 +5,6 @@ export type BudgetLimit = Prisma.JsonObject & {
   frequencyType: number;
   customFrequency: number | string;
   approvedAddress: string;
-  // budgetData: Array<{
-  //   budgetType: number;
-  //   value: number;
-  // }>;
   startDate: number;
   endDate: number;
   tokenAddress: string;
