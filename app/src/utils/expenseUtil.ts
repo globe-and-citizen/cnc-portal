@@ -3,7 +3,6 @@ import { tokenSymbol } from './constantUtil'
 import { zeroAddress } from 'viem'
 import type { TokenId } from '@/constant'
 import type { TableRow } from '@/components/TableComponent.vue'
-import type { BudgetData } from '@/types/expense-account'
 
 // Frequency types mapping
 export const frequencyTypes = [
@@ -67,7 +66,6 @@ const findToken = (tokenId: TokenId, balances: TokenBalance[]) => {
  * @returns The remaining balance that can be spent, or null if no budget data found
  */
 export const getRemainingExpenseBalance = (expense: TableRow, contractBalance: number): number => {
-  const budgetData = expense.data.budgetData as BudgetData[]
   const maxAmountData = expense.amount // budgetData.find((item) => item.budgetType === 1)?.value
   const amountTransferred = expense.balances[1]
 
