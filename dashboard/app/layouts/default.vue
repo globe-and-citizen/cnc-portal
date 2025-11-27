@@ -1,165 +1,165 @@
 <script setup lang="ts">
-import type { DropdownMenuItem, NavigationMenuItem } from "@nuxt/ui";
+import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
 
-const { isNotificationsSlideoverOpen } = useDashboard();
-const route = useRoute();
+const { isNotificationsSlideoverOpen } = useDashboard()
+const route = useRoute()
 
-const open = ref(false);
+const open = ref(false)
 
 // Dynamic page title based on current route
 const pageTitle = computed(() => {
-  const routeName = route.name as string;
-  const path = route.path;
+  const routeName = route.name as string
+  const path = route.path
 
   // Map route names to titles
   const titleMap: Record<string, string> = {
-    index: "Overview",
-    teams: "Teams Management",
-    micropayments: "Micropayments",
-    contracts: "Contracts",
-    settings: "Settings",
-    "settings-members": "Members",
-    "settings-notifications": "Notifications",
-    "settings-security": "Security",
-  };
+    'index': 'Overview',
+    'teams': 'Teams Management',
+    'micropayments': 'Micropayments',
+    'contracts': 'Contracts',
+    'settings': 'Settings',
+    'settings-members': 'Members',
+    'settings-notifications': 'Notifications',
+    'settings-security': 'Security'
+  }
 
   // Return mapped title or capitalize first segment of path
   if (routeName && titleMap[routeName]) {
-    return titleMap[routeName];
+    return titleMap[routeName]
   }
 
   // Fallback: capitalize the first path segment
-  const segment = path.split("/")[1] || "home";
-  return segment.charAt(0).toUpperCase() + segment.slice(1);
-});
+  const segment = path.split('/')[1] || 'home'
+  return segment.charAt(0).toUpperCase() + segment.slice(1)
+})
 
 // Dynamic panel id based on current route
 const panelId = computed(() => {
-  return route.path === "/" ? "home" : route.path.split("/")[1] || "home";
-});
+  return route.path === '/' ? 'home' : route.path.split('/')[1] || 'home'
+})
 
 // Set the page title in the browser tab
 useHead({
-  title: () => `${pageTitle.value} | CNC Portal`,
-});
+  title: () => `${pageTitle.value} | CNC Portal`
+})
 
 const links = [
   [
     {
-      label: "Overview",
-      icon: "i-lucide-house",
-      to: "/",
+      label: 'Overview',
+      icon: 'i-lucide-house',
+      to: '/',
       onSelect: () => {
-        open.value = false;
-      },
+        open.value = false
+      }
     },
     {
-      label: "Teams Management",
-      icon: "i-lucide-users",
-      to: "/teams",
-      badge: "4",
+      label: 'Teams Management',
+      icon: 'i-lucide-users',
+      to: '/teams',
+      badge: '4',
       onSelect: () => {
-        open.value = false;
-      },
+        open.value = false
+      }
     },
     {
-      label: "Micropayments",
-      icon: "i-lucide-wallet",
-      to: "/micropayments",
+      label: 'Micropayments',
+      icon: 'i-lucide-wallet',
+      to: '/micropayments',
       onSelect: () => {
-        open.value = false;
-      },
+        open.value = false
+      }
     },
     {
-      label: "Contracts",
-      to: "/contracts",
-      icon: "i-lucide-settings",
+      label: 'Contracts',
+      to: '/contracts',
+      icon: 'i-lucide-settings',
       defaultOpen: true,
-      type: "trigger",
+      type: 'trigger',
       children: [
         {
-          label: "General",
-          to: "/contracts",
+          label: 'General',
+          to: '/contracts',
           exact: true,
           onSelect: () => {
-            open.value = false;
-          },
+            open.value = false
+          }
         },
         {
-          label: "Members",
-          to: "/contracts",
+          label: 'Members',
+          to: '/contracts',
           onSelect: () => {
-            open.value = false;
-          },
+            open.value = false
+          }
         },
         {
-          label: "Notifications",
-          to: "/contracts",
+          label: 'Notifications',
+          to: '/contracts',
           onSelect: () => {
-            open.value = false;
-          },
+            open.value = false
+          }
         },
         {
-          label: "Security",
-          to: "/settings/security",
+          label: 'Security',
+          to: '/settings/security',
           onSelect: () => {
-            open.value = false;
-          },
-        },
-      ],
-    },
+            open.value = false
+          }
+        }
+      ]
+    }
   ],
   [
     {
-      label: "Feedback",
-      icon: "i-lucide-message-circle",
-      to: "https://discord.gg/HG2GAhN2",
-      target: "_blank",
+      label: 'Feedback',
+      icon: 'i-lucide-message-circle',
+      to: 'https://discord.gg/HG2GAhN2',
+      target: '_blank'
     },
     {
-      label: "Help & Support",
-      icon: "i-lucide-info",
-      to: "https://discord.gg/HG2GAhN2",
-      target: "_blank",
-    },
-  ],
-] satisfies NavigationMenuItem[][];
+      label: 'Help & Support',
+      icon: 'i-lucide-info',
+      to: 'https://discord.gg/HG2GAhN2',
+      target: '_blank'
+    }
+  ]
+] satisfies NavigationMenuItem[][]
 
 const items = [
   [
     {
-      label: "New mail",
-      icon: "i-lucide-send",
-      to: "/inbox",
+      label: 'New mail',
+      icon: 'i-lucide-send',
+      to: '/inbox'
     },
     {
-      label: "New customer",
-      icon: "i-lucide-user-plus",
-      to: "/customers",
-    },
-  ],
-] satisfies DropdownMenuItem[][];
+      label: 'New customer',
+      icon: 'i-lucide-user-plus',
+      to: '/customers'
+    }
+  ]
+] satisfies DropdownMenuItem[][]
 
 const groups = computed(() => [
   {
-    id: "links",
-    label: "Go to",
-    items: links.flat(),
+    id: 'links',
+    label: 'Go to',
+    items: links.flat()
   },
   {
-    id: "code",
-    label: "Code",
+    id: 'code',
+    label: 'Code',
     items: [
       {
-        id: "source",
-        label: "View page source",
-        icon: "i-simple-icons-github",
-        to: "https://github.com/globe-and-citizen/cnc-portal/",
-        target: "_blank",
-      },
-    ],
-  },
-]);
+        id: 'source',
+        label: 'View page source',
+        icon: 'i-simple-icons-github',
+        to: 'https://github.com/globe-and-citizen/cnc-portal/',
+        target: '_blank'
+      }
+    ]
+  }
+])
 </script>
 
 <template>

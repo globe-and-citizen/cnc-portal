@@ -1,23 +1,38 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
+import { useSiwe } from '~/composables/useSiwe'
+import { useAuthStore } from '~/stores/useAuthStore'
 
 defineProps<{
   collapsed?: boolean
 }>()
 
+const router = useRouter()
 const colorMode = useColorMode()
 const appConfig = useAppConfig()
+const { signOut } = useSiwe()
+const authStore = useAuthStore()
 
 const colors = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose']
 const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone']
 
-const user = ref({
-  name: 'Benjamin Canac',
-  avatar: {
-    src: 'https://github.com/benjamincanac.png',
-    alt: 'Benjamin Canac'
+// Generate user info from authenticated address
+const user = computed(() => {
+  const addr = authStore.address.value
+  const displayName = addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : 'Admin'
+  return {
+    name: displayName,
+    avatar: {
+      src: addr ? `https://api.dicebear.com/9.x/bottts/svg?seed=${addr}` : 'https://api.dicebear.com/9.x/bottts/svg?seed=admin',
+      alt: displayName
+    }
   }
 })
+
+const handleLogout = () => {
+  signOut()
+  router.push('/login')
+}
 
 const items = computed<DropdownMenuItem[][]>(() => ([[{
   type: 'label',
@@ -147,7 +162,8 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
   target: '_blank'
 }, {
   label: 'Log out',
-  icon: 'i-lucide-log-out'
+  icon: 'i-lucide-log-out',
+  onSelect: handleLogout
 }]]))
 </script>
 

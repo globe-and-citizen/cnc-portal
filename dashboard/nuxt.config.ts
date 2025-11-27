@@ -12,6 +12,12 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  runtimeConfig: {
+    public: {
+      backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+    }
+  },
+
   routeRules: {
     '/api/**': {
       cors: true
