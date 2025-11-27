@@ -38,35 +38,35 @@ const router = createRouter({
         {
           path: '/teams/:id/account',
           name: 'account',
-          meta: { name: 'Payroll Account' },
+          meta: { name: ' Account' },
           component: () => import('@/views/team/[id]/CashRemunerationView.vue')
         },
         {
-          path: '/teams/:id/account/bank',
+          path: '/teams/:id/accounts/bank',
           name: 'bank',
           meta: { name: 'Team Bank' },
           component: () => import('@/views/team/[id]/BankView.vue')
         },
         {
-          path: '/teams/:id/account/expense-account',
+          path: '/teams/:id/accounts/expense-account',
           name: 'expense-account',
           meta: { name: 'Expense Account' },
           component: () => import('@/views/team/[id]/ExpenseAccountView.vue')
         },
         {
-          path: '/teams/:id/account/payroll-account',
+          path: '/teams/:id/accounts/payroll-account',
           name: 'payroll-account',
           meta: { name: 'Payroll Account' },
           component: () => import('@/views/team/[id]/CashRemunerationView.vue')
         },
         {
-          path: '/teams/:id/account/team-payroll',
+          path: '/teams/:id/accounts/team-payroll',
           name: 'team-payroll',
           meta: { name: 'Team Payroll' },
           component: () => import('@/views/team/[id]/WeeklyClaimView.vue')
         },
         {
-          path: '/teams/:id/account/members/:memberAddress/payroll-history',
+          path: '/teams/:id/accounts/members/:memberAddress/payroll-history',
           name: 'payroll-history',
           meta: { name: 'Payroll History' },
           component: () => import('@/views/team/[id]/ClaimHistoryView.vue')
