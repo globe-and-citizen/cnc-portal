@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
-import { useSiwe } from '~/composables/useSiwe'
 import { useAuthStore } from '~/stores/useAuthStore'
 
 defineProps<{
@@ -10,8 +9,16 @@ defineProps<{
 const router = useRouter()
 const colorMode = useColorMode()
 const appConfig = useAppConfig()
-const { signOut } = useSiwe()
 const authStore = useAuthStore()
+
+// Will be initialized on client side
+let signOutFn: (() => void) | undefined
+
+onMounted(async () => {
+  const { useSiwe } = await import('~/composables/useSiwe')
+  const siwe = useSiwe()
+  signOutFn = siwe.signOut
+})
 
 const colors = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose']
 const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone']
@@ -30,7 +37,11 @@ const user = computed(() => {
 })
 
 const handleLogout = () => {
-  signOut()
+  if (signOutFn) {
+    signOutFn()
+  }
+  // Also clear auth store directly as a fallback
+  authStore.clearAuth()
   router.push('/login')
 }
 

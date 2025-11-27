@@ -1,18 +1,54 @@
 <script setup lang="ts">
-import { useSiwe } from '~/composables/useSiwe'
-
 definePageMeta({
   layout: 'auth'
 })
 
 const router = useRouter()
-const { isProcessing, error, isConnected, address, signIn, connectWallet } = useSiwe()
+
+// State for SSR compatibility
+const isProcessing = ref(false)
+const error = ref<string | null>(null)
+const isConnected = ref(false)
+const address = ref<string | undefined>(undefined)
+
+// Wagmi hooks will be initialized on client side
+let signIn: (() => Promise<boolean>) | undefined
+let connectWallet: (() => Promise<void>) | undefined
+
+onMounted(async () => {
+  // Only import and use wagmi on client side
+  const { useSiwe } = await import('~/composables/useSiwe')
+  const siwe = useSiwe()
+
+  // Sync reactive state
+  watchEffect(() => {
+    isProcessing.value = siwe.isProcessing.value
+    error.value = siwe.error.value
+    isConnected.value = siwe.isConnected.value
+    address.value = siwe.address.value
+  })
+
+  signIn = siwe.signIn
+  connectWallet = siwe.connectWallet
+})
 
 const handleSignIn = async () => {
-  const success = await signIn()
-  if (success) {
-    await router.push('/')
+  if (signIn) {
+    const success = await signIn()
+    if (success) {
+      await router.push('/')
+    }
   }
+}
+
+const handleConnectWallet = async () => {
+  if (connectWallet) {
+    await connectWallet()
+  }
+}
+
+const clearError = () => {
+  error.value = null
 }
 
 useHead({
@@ -45,7 +81,7 @@ useHead({
         variant="soft"
         class="mb-6"
         :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'link', padded: false }"
-        @close="error = null"
+        @close="clearError"
       >
         <template #title>
           {{ error }}
@@ -76,7 +112,7 @@ useHead({
           size="xl"
           block
           :loading="isProcessing"
-          @click="connectWallet"
+          @click="handleConnectWallet"
         >
           <template #leading>
             <UIcon name="i-lucide-wallet" class="size-5" />
