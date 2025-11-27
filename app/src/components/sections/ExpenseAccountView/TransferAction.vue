@@ -47,7 +47,7 @@
           <template #label>
             <span class="label-text">Transfer From</span>
             <span class="label-text-alt"
-              >Limit: {{ transferData.token.spendableBalance }} {{ transferData.token.symbol }}
+              >Limit: {{ row.data.amount }} {{ transferData.token.symbol }}
             </span>
           </template>
         </TransferForm>
@@ -105,7 +105,7 @@ const createDefaultTransferData = (): TransferData => ({
 
 const transferData = ref(createDefaultTransferData())
 const expenseBalance = computed(() => {
-  const maxAmountData = props.row.amount
+  const maxAmountData = props.row.data.amount
   const amountTransferred = props.row.balances[1]
   return maxAmountData && amountTransferred
     ? Number(maxAmountData) - Number(amountTransferred)
