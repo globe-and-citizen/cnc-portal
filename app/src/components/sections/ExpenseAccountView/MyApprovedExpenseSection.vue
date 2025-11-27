@@ -18,7 +18,13 @@
           <span>{{ new Date(Number(row.data.endDate) * 1000).toLocaleString('en-US') }}</span>
         </template>
         <template #frequencyType-data="{ row }">
-          <span> {{ getFrequencyType(row.data.frequencyType) }} </span>
+          <span>
+            {{
+              row.data.frequencyType == 4
+                ? getCustomFrequency(row.data.customFrequency)
+                : getFrequencyType(row.data.frequencyType)
+            }}
+          </span>
         </template>
         <template #amountTransferred-data="{ row }">
           <span
@@ -41,7 +47,7 @@ import { tokenSymbol, getCurrentUserExpenses } from '@/utils'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { useTanstackQuery } from '@/composables'
 import TransferAction from './TransferAction.vue'
-import { getFrequencyType } from '@/utils'
+import { getFrequencyType, getCustomFrequency } from '@/utils'
 //#endregion
 
 const teamStore = useTeamStore()
