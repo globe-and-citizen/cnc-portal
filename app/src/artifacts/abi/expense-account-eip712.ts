@@ -24,6 +24,38 @@ export const EXPENSE_ACCOUNT_EIP712_ABI = [
     type: 'error'
   },
   {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'currentTime',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'endDate',
+        type: 'uint256'
+      }
+    ],
+    name: 'ApprovalExpired',
+    type: 'error'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'currentTime',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'startDate',
+        type: 'uint256'
+      }
+    ],
+    name: 'ApprovalNotActive',
+    type: 'error'
+  },
+  {
     inputs: [],
     name: 'ECDSAInvalidSignature',
     type: 'error'
