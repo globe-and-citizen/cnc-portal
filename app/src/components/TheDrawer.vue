@@ -386,12 +386,12 @@ const menuItems = computed(() => [
     label: 'Accounts',
     icon: 'heroicons:currency-dollar',
     route: {
-      name: 'account',
+      name: 'bank-account',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     // Active if any child is active or the parent route is active
     active:
-      route.name === 'bank' ||
+      route.name === 'bank-account' ||
       route.name === 'expense-account' ||
       route.name === 'payroll-account' ||
       route.name === 'team-payroll' ||
@@ -400,13 +400,13 @@ const menuItems = computed(() => [
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
       {
-        label: 'Bank',
+        label: 'Bank Account',
         icon: 'heroicons:banknotes',
         route: {
-          name: 'bank',
+          name: 'bank-account',
           params: { id: teamStore.currentTeam?.id || '1' }
         },
-        active: route.name === 'bank',
+        active: route.name === 'bank-account',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       },
       {

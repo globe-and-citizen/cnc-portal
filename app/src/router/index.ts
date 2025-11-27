@@ -36,46 +36,40 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/DemoExample.vue')
         },
         {
-          path: '/teams/:id/account',
-          name: 'account',
-          meta: { name: ' Account' },
-          component: () => import('@/views/team/[id]/CashRemunerationView.vue')
-        },
-        {
-          path: '/teams/:id/accounts/bank',
-          name: 'bank',
-          meta: { name: 'Team Bank' },
-          component: () => import('@/views/team/[id]/BankView.vue')
+          path: '/teams/:id/accounts/bank-account',
+          name: 'bank-account',
+          meta: { name: 'Bank Account' },
+          component: () => import('@/views/team/[id]/Accounts/BankView.vue')
         },
         {
           path: '/teams/:id/accounts/expense-account',
           name: 'expense-account',
           meta: { name: 'Expense Account' },
-          component: () => import('@/views/team/[id]/ExpenseAccountView.vue')
+          component: () => import('@/views/team/[id]/Accounts/ExpenseAccountView.vue')
         },
         {
           path: '/teams/:id/accounts/payroll-account',
           name: 'payroll-account',
           meta: { name: 'Payroll Account' },
-          component: () => import('@/views/team/[id]/CashRemunerationView.vue')
+          component: () => import('@/views/team/[id]/Accounts/CashRemunerationView.vue')
         },
         {
           path: '/teams/:id/accounts/team-payroll',
           name: 'team-payroll',
           meta: { name: 'Team Payroll' },
-          component: () => import('@/views/team/[id]/WeeklyClaimView.vue')
+          component: () => import('@/views/team/[id]/Accounts/WeeklyClaimView.vue')
         },
         {
           path: '/teams/:id/accounts/members/:memberAddress/payroll-history',
           name: 'payroll-history',
           meta: { name: 'Payroll History' },
-          component: () => import('@/views/team/[id]/ClaimHistoryView.vue')
+          component: () => import('@/views/team/[id]/Accounts/ClaimHistoryView.vue')
         },
         {
           path: '/teams/:id/cash-remunerations/member/:memberAddress',
           name: 'cash-remunerations-member',
           meta: { name: 'Cash Remuneration Member' },
-          component: () => import('@/views/team/[id]/CashRemunerationView.vue')
+          component: () => import('@/views/team/[id]/Accounts/CashRemunerationView.vue')
         },
         {
           path: '/teams/:id/vesting',
