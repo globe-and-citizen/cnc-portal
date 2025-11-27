@@ -113,17 +113,17 @@ const estimatedPrice = computed(() => {
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
 })
-const notExceedingBalance = helpers.withMessage('Amount exceeds your balance', (value: string) => {
-  if (!value || parseFloat(value) <= 0) return true
-  return parseFloat(value) <= availableBalance.value
-})
+// const notExceedingBalance = helpers.withMessage('Amount exceeds your balance', (value: string) => {
+//   if (!value || parseFloat(value) <= 0) return true
+//   return parseFloat(value) <= availableBalance.value
+// })
 const numericWithMessage = helpers.withMessage('Value is not a valid number', numeric)
 const rules = {
   amount: {
     required,
     numeric: numericWithMessage,
-    notZero,
-    notExceedingBalance
+    notZero /* ,
+    notExceedingBalance */
   }
 }
 const $v = useVuelidate(rules, { amount })
