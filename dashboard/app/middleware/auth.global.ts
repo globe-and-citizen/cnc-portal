@@ -1,34 +1,53 @@
 import { useAuthStore } from '~/stores/useAuthStore'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  // Skip middleware for login page
-  if (to.path === '/login') {
+  // Skip middleware during SSR
+  if (import.meta.server) {
     return
   }
 
-  // Check authentication on client side only
-  // Server-side cannot validate JWT tokens as they're stored in client localStorage
-  if (import.meta.client) {
-    const authStore = useAuthStore()
+  const authStore = useAuthStore()
 
-    // First check if we have auth data in store
-    if (!authStore.isAuthenticated.value) {
+  // Public routes that don't require authentication
+  const publicRoutes = ['/login']
+  const isPublicRoute = publicRoutes.includes(to.path)
+
+  // If navigating to a public route, allow access
+  if (isPublicRoute) {
+    return
+  }
+
+  // Check if user is authenticated
+  const token = authStore.getToken()
+
+  if (!token) {
+    // Not authenticated, redirect to login
+    return navigateTo('/login')
+  }
+
+  // Validate token with backend
+  try {
+    const runtimeConfig = useRuntimeConfig()
+    const backendUrl = runtimeConfig.public.backendUrl
+
+    const response = await fetch(`${backendUrl}/api/auth/token`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    if (!response.ok) {
+      // Token is invalid, clear auth and redirect to login
+      authStore.clearAuth()
       return navigateTo('/login')
     }
 
-    // Optionally validate token on initial page load (not on every navigation)
-    // This balances security with performance
-    const hasValidatedToken = useState('hasValidatedToken', () => false)
-    if (!hasValidatedToken.value) {
-      hasValidatedToken.value = true
-      // Import useSiwe dynamically to avoid SSR issues
-      const { useSiwe } = await import('~/composables/useSiwe')
-      const { validateToken } = useSiwe()
-      const isValid = await validateToken()
-      if (!isValid) {
-        authStore.clearAuth()
-        return navigateTo('/login')
-      }
-    }
+    // Token is valid, allow navigation
+    return
+  } catch (error) {
+    console.error('Error validating token:', error)
+    // On error, clear auth and redirect to login
+    authStore.clearAuth()
+    return navigateTo('/login')
   }
 })
