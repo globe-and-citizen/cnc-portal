@@ -40,7 +40,7 @@ const panelId = computed(() => {
 
 // Set the page title in the browser tab
 useHead({
-  title: () => `${pageTitle.value} | CNC Portal`
+  title: () => `${pageTitle.value} | CNC Portal Dashboard`
 })
 
 const links = [
