@@ -97,11 +97,11 @@ const selectedTokenId = computed({
 const tokenList = computed(() => props.tokens)
 const selectedToken = computed(() => props.tokens.find((b) => b.tokenId === selectedTokenId.value))
 
-const availableBalance = computed(() => {
-  const token = selectedToken.value
-  if (!token) return 0
-  return token.spendableBalance ?? token.balance ?? 0
-})
+// const availableBalance = computed(() => {
+//   const token = selectedToken.value
+//   if (!token) return 0
+//   return token.spendableBalance ?? token.balance ?? 0
+// })
 
 const estimatedPrice = computed(() => {
   const price = selectedToken.value?.price ?? 0
