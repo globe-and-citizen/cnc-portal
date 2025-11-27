@@ -1,5 +1,5 @@
 import { SiweMessage } from 'siwe'
-import { useAccount, useSignMessage, useChainId, useConnect, useDisconnect } from '@wagmi/vue'
+import { useConnection, useSignMessage, useChainId, useConnect, useDisconnect, useSwitchChain, injected } from '@wagmi/vue'
 import { useAuthStore } from '~/stores/useAuthStore'
 
 export function useSiwe() {
@@ -10,29 +10,13 @@ export function useSiwe() {
   const error = ref<string | null>(null)
 
   const authStore = useAuthStore()
-  const { address, isConnected } = useAccount()
+  const connection = useConnection()
+  // const { address, isConnected } = connection
   const chainId = useChainId()
   const { signMessageAsync } = useSignMessage()
-  const { connect, connectors } = useConnect()
+  const { connectAsync } = useConnect()
   const { disconnect } = useDisconnect()
-
-  /**
-   * Connect wallet using injected connector (MetaMask, etc.)
-   */
-  const connectWallet = async () => {
-    error.value = null
-    const injectedConnector = connectors.value.find(c => c.id === 'injected')
-    if (injectedConnector) {
-      try {
-        await connect({ connector: injectedConnector })
-      } catch (e) {
-        error.value = 'Failed to connect wallet'
-        console.error('Failed to connect wallet:', e)
-      }
-    } else {
-      error.value = 'No wallet connector available'
-    }
-  }
+  const { switchChainAsync } = useSwitchChain()
 
   /**
    * Fetch nonce from backend for the given address
@@ -83,29 +67,27 @@ export function useSiwe() {
   const signIn = async () => {
     isProcessing.value = true
     error.value = null
+    const networkChainId = parseInt('31337')
 
     try {
       // Ensure wallet is connected
-      if (!isConnected.value || !address.value) {
-        await connectWallet()
+      if (!connection.isConnected.value || !connection.address.value) {
+        // await connectWallet()
+        await connectAsync({ connector: injected(), chainId: networkChainId })
 
-        // Wait for connection state to update by watching the reactive refs
-        let attempts = 0
-        const maxAttempts = 20 // 2 seconds max wait time
-        while (!address.value && attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 100))
-          attempts++
-        }
-
-        if (!address.value) {
-          error.value = 'Please connect your wallet first'
-          isProcessing.value = false
-          return false
+        // check if the current chainId matches the required network
+        if (chainId.value !== networkChainId) {
+          await switchChainAsync({ chainId: networkChainId })
         }
       }
 
       // Step 1: Fetch nonce from backend
-      const nonce = await fetchNonce(address.value)
+      if (!connection.address.value) {
+        error.value = 'Please connect your wallet first'
+        isProcessing.value = false
+        return false
+      }
+      const nonce = await fetchNonce(connection.address.value)
       if (!nonce) {
         error.value = 'Failed to get nonce from server'
         isProcessing.value = false
@@ -114,7 +96,7 @@ export function useSiwe() {
 
       // Step 2: Create SIWE message
       const siweMessage = new SiweMessage({
-        address: address.value,
+        address: connection.address.value,
         statement: 'Sign in to CNC Portal Admin Dashboard with Ethereum.',
         nonce,
         chainId: chainId.value,
@@ -148,7 +130,7 @@ export function useSiwe() {
       }
 
       // Step 5: Store authentication data
-      authStore.setAuth(token, address.value)
+      authStore.setAuth(token, connection.address.value)
 
       isProcessing.value = false
       return true
@@ -204,11 +186,8 @@ export function useSiwe() {
   return {
     isProcessing,
     error,
-    isConnected,
-    address,
     signIn,
     signOut,
-    connectWallet,
     validateToken
   }
 }

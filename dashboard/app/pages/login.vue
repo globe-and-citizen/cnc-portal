@@ -1,9 +1,22 @@
 <script setup lang="ts">
+import {
+  injected,
+  useConnection,
+  useChainId,
+  useConnect,
+  useSwitchChain
+} from '@wagmi/vue'
+
 definePageMeta({
-  layout: 'auth'
+  layout: 'auth',
+  ssr: false
 })
 
 const router = useRouter()
+const runtimeConfig = useRuntimeConfig()
+const networkChainId = parseInt(
+  (runtimeConfig.public.chainId as string) || '31337'
+)
 
 // State for SSR compatibility
 const isProcessing = ref(false)
@@ -11,30 +24,65 @@ const error = ref<string | null>(null)
 const isConnected = ref(false)
 const address = ref<string | undefined>(undefined)
 
-// Wagmi hooks will be initialized on client side
-let signIn: (() => Promise<boolean>) | undefined
-let connectWallet: (() => Promise<void>) | undefined
+// SIWE composable and Wagmi composables - initialized on client
+let siweInstance: ReturnType<typeof useSiwe> | null = null
+let connection: ReturnType<typeof useConnection> | null = null
+let chainId: ReturnType<typeof useChainId> | null = null
+let connectAsync: ReturnType<typeof useConnect>['connectAsync'] | null = null
+let switchChainAsync:
+  | ReturnType<typeof useSwitchChain>['switchChainAsync']
+  | null = null
 
-onMounted(async () => {
-  // Only import and use wagmi on client side
-  const { useSiwe } = await import('~/composables/useSiwe')
-  const siwe = useSiwe()
+// Initialize on client side only after mount
+onMounted(() => {
+  // Initialize Wagmi composables
+  connection = useConnection()
+  chainId = useChainId()
+  const connectComposable = useConnect()
+  connectAsync = connectComposable.connectAsync
+  const switchComposable = useSwitchChain()
+  switchChainAsync = switchComposable.switchChainAsync
 
-  // Sync reactive state
-  watchEffect(() => {
-    isProcessing.value = siwe.isProcessing.value
-    error.value = siwe.error.value
-    isConnected.value = siwe.isConnected.value
-    address.value = siwe.address.value
-  })
+  // Initialize SIWE
+  siweInstance = useSiwe()
 
-  signIn = siwe.signIn
-  connectWallet = siwe.connectWallet
+  // Sync all reactive state
+  watch(
+    () => siweInstance?.isProcessing.value,
+    (val) => {
+      isProcessing.value = val ?? false
+    },
+    { immediate: true }
+  )
+
+  watch(
+    () => siweInstance?.error.value,
+    (val) => {
+      error.value = val ?? null
+    },
+    { immediate: true }
+  )
+
+  watch(
+    () => connection?.isConnected.value,
+    (val) => {
+      isConnected.value = val ?? false
+    },
+    { immediate: true }
+  )
+
+  watch(
+    () => connection?.address.value,
+    (val) => {
+      address.value = val
+    },
+    { immediate: true }
+  )
 })
 
 const handleSignIn = async () => {
-  if (signIn) {
-    const success = await signIn()
+  if (siweInstance) {
+    const success = await siweInstance.signIn()
     if (success) {
       await router.push('/')
     }
@@ -42,8 +90,32 @@ const handleSignIn = async () => {
 }
 
 const handleConnectWallet = async () => {
-  if (connectWallet) {
-    await connectWallet()
+  console.log('Will connect wallet')
+  if (!connection || !connectAsync || !switchChainAsync || !chainId) {
+    error.value = 'Wallet connection not initialized'
+    return
+  }
+
+  console.log('Connecting wallet...')
+  try {
+    error.value = null
+    isProcessing.value = true
+
+    // Ensure wallet is connected
+    if (!connection.isConnected.value || !connection.address.value) {
+      await connectAsync({ connector: injected(), chainId: networkChainId })
+
+      // check if the current chainId matches the required network
+      if (chainId.value !== networkChainId) {
+        await switchChainAsync({ chainId: networkChainId })
+      }
+    }
+    console.log('Wallet connected:', connection.address.value)
+  } catch (e: unknown) {
+    console.error('Failed to connect wallet:', e)
+    error.value = e instanceof Error ? e.message : 'Failed to connect wallet'
+  } finally {
+    isProcessing.value = false
   }
 }
 
@@ -80,7 +152,12 @@ useHead({
         color="error"
         variant="soft"
         class="mb-6"
-        :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'link', padded: false }"
+        :close-button="{
+          icon: 'i-lucide-x',
+          color: 'gray',
+          variant: 'link',
+          padded: false
+        }"
         @close="clearError"
       >
         <template #title>
@@ -89,7 +166,10 @@ useHead({
       </UAlert>
 
       <!-- Connection Status -->
-      <div v-if="isConnected" class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+      <div
+        v-if="isConnected"
+        class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+      >
         <div class="flex items-center gap-3">
           <div class="w-3 h-3 bg-green-500 rounded-full" />
           <div>
@@ -131,7 +211,7 @@ useHead({
           <template #leading>
             <UIcon name="i-lucide-log-in" class="size-5" />
           </template>
-          {{ isProcessing ? 'Signing in...' : 'Sign In with Ethereum' }}
+          {{ isProcessing ? "Signing in..." : "Sign In with Ethereum" }}
         </UButton>
       </div>
 
