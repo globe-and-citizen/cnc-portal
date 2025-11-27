@@ -14,7 +14,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+      backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'http://localhost:3000',
+      chainId: process.env.NUXT_PUBLIC_CHAIN_ID || '31337'
     }
   },
 

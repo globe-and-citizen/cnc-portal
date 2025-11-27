@@ -103,7 +103,9 @@ class Server {
 
   private middleware() {
     this.app.use(express.json());
-    const allowedOrigins = process.env.FRONTEND_URL?.split(",") || [];
+    const allowedOrigins = process.env.FRONTEND_URL
+      ? process.env.FRONTEND_URL.split(",").map(origin => origin.trim())
+      : [];
     this.app.use(cors({ origin: allowedOrigins, credentials: true }));
   }
 

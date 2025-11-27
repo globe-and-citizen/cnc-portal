@@ -90,13 +90,11 @@ const handleSignIn = async () => {
 }
 
 const handleConnectWallet = async () => {
-  console.log('Will connect wallet')
   if (!connection || !connectAsync || !switchChainAsync || !chainId) {
     error.value = 'Wallet connection not initialized'
     return
   }
 
-  console.log('Connecting wallet...')
   try {
     error.value = null
     isProcessing.value = true
@@ -110,7 +108,6 @@ const handleConnectWallet = async () => {
         await switchChainAsync({ chainId: networkChainId })
       }
     }
-    console.log('Wallet connected:', connection.address.value)
   } catch (e: unknown) {
     console.error('Failed to connect wallet:', e)
     error.value = e instanceof Error ? e.message : 'Failed to connect wallet'

@@ -5,13 +5,13 @@ import { useAuthStore } from '~/stores/useAuthStore'
 export function useSiwe() {
   const runtimeConfig = useRuntimeConfig()
   const backendUrl = runtimeConfig.public.backendUrl
+  const configChainId = runtimeConfig.public.chainId
 
   const isProcessing = ref(false)
   const error = ref<string | null>(null)
 
   const authStore = useAuthStore()
   const connection = useConnection()
-  // const { address, isConnected } = connection
   const chainId = useChainId()
   const { signMessageAsync } = useSignMessage()
   const { connectAsync } = useConnect()
@@ -67,12 +67,12 @@ export function useSiwe() {
   const signIn = async () => {
     isProcessing.value = true
     error.value = null
-    const networkChainId = parseInt('31337')
+    // Use chainId from runtime config, fallback to hardhat local network
+    const networkChainId = configChainId ? parseInt(configChainId as string) : 31337
 
     try {
       // Ensure wallet is connected
       if (!connection.isConnected.value || !connection.address.value) {
-        // await connectWallet()
         await connectAsync({ connector: injected(), chainId: networkChainId })
 
         // check if the current chainId matches the required network

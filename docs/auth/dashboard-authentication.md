@@ -17,6 +17,81 @@ The admin dashboard uses SIWE (Sign-In with Ethereum) to authenticate administra
 | `dashboard/app/plugins/wagmi.client.ts` | Client-side wagmi setup |
 | `dashboard/app/utils/wagmi.config.ts` | Wagmi chain configuration |
 
+## Authentication Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant LoginPage as Login Page
+    participant Wagmi as Wagmi/Wallet
+    participant Backend
+    participant AuthStore as Auth Store
+
+    User->>LoginPage: Visit /login
+    User->>LoginPage: Click "Connect Wallet"
+    LoginPage->>Wagmi: connectAsync()
+    Wagmi->>User: MetaMask popup
+    User->>Wagmi: Approve connection
+    Wagmi-->>LoginPage: Connected (address)
+    
+    User->>LoginPage: Click "Sign In with Ethereum"
+    LoginPage->>Backend: GET /api/user/nonce/{address}
+    Backend-->>LoginPage: Return nonce
+    
+    LoginPage->>LoginPage: Build SIWE message
+    LoginPage->>Wagmi: signMessageAsync()
+    Wagmi->>User: Show signing prompt
+    User->>Wagmi: Sign message
+    Wagmi-->>LoginPage: Return signature
+    
+    LoginPage->>Backend: POST /api/auth/siwe
+    Note over LoginPage,Backend: {message, signature}
+    Backend-->>LoginPage: Return JWT token
+    
+    LoginPage->>AuthStore: setAuth(token, address)
+    AuthStore->>AuthStore: Store in localStorage
+    LoginPage->>LoginPage: Redirect to /
+```
+
+## Route Protection Flow
+
+```mermaid
+flowchart TD
+    A[User navigates to route] --> B{Is /login?}
+    B -->|Yes| C[Allow access]
+    B -->|No| D{Is client side?}
+    D -->|No| C
+    D -->|Yes| E{isAuthenticated?}
+    E -->|No| F[Redirect to /login]
+    E -->|Yes| G{Token validated this session?}
+    G -->|Yes| C
+    G -->|No| H[Validate token with backend]
+    H --> I{Token valid?}
+    I -->|Yes| J[Mark as validated]
+    J --> C
+    I -->|No| K[Clear auth]
+    K --> F
+```
+
+## SSR Compatibility Flow
+
+```mermaid
+flowchart TD
+    subgraph Server Side Rendering
+        A[Page Request] --> B[Nuxt SSR]
+        B --> C[Skip wagmi composables]
+        C --> D[Render HTML shell]
+    end
+    
+    subgraph Client Side Hydration
+        D --> E[onMounted hook]
+        E --> F[Dynamic import useSiwe]
+        F --> G[Initialize wagmi composables]
+        G --> H[Sync reactive state]
+        H --> I[Ready for user interaction]
+    end
+```
+
 ## Authentication Flow
 
 ### 1. Connect Wallet
@@ -186,6 +261,16 @@ const validateToken = async (): Promise<boolean> => {
 ```
 
 ## Logout
+
+```mermaid
+flowchart LR
+    A[User clicks Logout] --> B[signOut function]
+    B --> C[authStore.clearAuth]
+    C --> D[Clear localStorage]
+    B --> E[disconnect wallet]
+    E --> F[Wagmi disconnect]
+    B --> G[router.push /login]
+```
 
 ```typescript
 const signOut = () => {

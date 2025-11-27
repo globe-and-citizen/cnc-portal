@@ -8,69 +8,40 @@ CNC Portal uses SIWE (EIP-4361) to authenticate users across all frontend applic
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           CNC Portal Authentication                          │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────┐     ┌─────────────┐     ┌─────────────────────────────┐   │
-│  │    App      │     │  Dashboard  │     │         Backend              │   │
-│  │  (Vue.js)   │     │   (Nuxt)    │     │        (Express)             │   │
-│  └──────┬──────┘     └──────┬──────┘     └──────────────┬──────────────┘   │
-│         │                   │                           │                   │
-│         │   SIWE Message    │      SIWE Message         │                   │
-│         │   + Signature     │      + Signature          │                   │
-│         └───────────────────┴───────────────────────────┤                   │
-│                                                         │                   │
-│                                                         ▼                   │
-│                                              ┌──────────────────┐           │
-│                                              │  POST /auth/siwe │           │
-│                                              │                  │           │
-│                                              │  Verify & Issue  │           │
-│                                              │    JWT Token     │           │
-│                                              └──────────────────┘           │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph CNC Portal Authentication
+        App[App<br/>Vue.js]
+        Dashboard[Dashboard<br/>Nuxt]
+        Backend[Backend<br/>Express]
+        
+        App -->|SIWE Message + Signature| Backend
+        Dashboard -->|SIWE Message + Signature| Backend
+        
+        Backend --> Verify[POST /auth/siwe<br/>Verify & Issue JWT Token]
+    end
 ```
 
 ## SIWE Authentication Flow
 
 The authentication flow is the same for both the App and Dashboard:
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Frontend  │     │   Backend   │     │   Wallet    │
-└──────┬──────┘     └──────┬──────┘     └──────┬──────┘
-       │                   │                   │
-       │  1. Connect Wallet                    │
-       │──────────────────────────────────────>│
-       │                                       │
-       │  2. Wallet Connected (address)        │
-       │<──────────────────────────────────────│
-       │                                       │
-       │  3. GET /api/user/nonce/{address}     │
-       │──────────────────>│                   │
-       │                   │                   │
-       │  4. Return nonce  │                   │
-       │<──────────────────│                   │
-       │                   │                   │
-       │  5. Build SIWE message with nonce     │
-       │                                       │
-       │  6. Request signature                 │
-       │──────────────────────────────────────>│
-       │                                       │
-       │  7. User signs message                │
-       │<──────────────────────────────────────│
-       │                                       │
-       │  8. POST /api/auth/siwe               │
-       │     {message, signature}              │
-       │──────────────────>│                   │
-       │                   │                   │
-       │  9. Verify & Return JWT               │
-       │<──────────────────│                   │
-       │                   │                   │
-       │  10. Store token & redirect           │
-       │                   │                   │
+```mermaid
+sequenceDiagram
+    participant Frontend
+    participant Backend
+    participant Wallet
+
+    Frontend->>Wallet: 1. Connect Wallet
+    Wallet-->>Frontend: 2. Wallet Connected (address)
+    Frontend->>Backend: 3. GET /api/user/nonce/{address}
+    Backend-->>Frontend: 4. Return nonce
+    Note over Frontend: 5. Build SIWE message with nonce
+    Frontend->>Wallet: 6. Request signature
+    Wallet-->>Frontend: 7. User signs message
+    Frontend->>Backend: 8. POST /api/auth/siwe {message, signature}
+    Backend-->>Frontend: 9. Verify & Return JWT
+    Note over Frontend: 10. Store token & redirect
 ```
 
 ## API Endpoints

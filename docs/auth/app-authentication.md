@@ -15,6 +15,65 @@ The app uses SIWE (Sign-In with Ethereum) via the `useSiwe` composable to authen
 | `app/src/stores/user.ts` | User data store |
 | `app/src/constant/index.ts` | Backend URL configuration |
 
+## Authentication Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant App as Vue.js App
+    participant Wallet as MetaMask
+    participant Backend
+
+    User->>App: Click "Sign In"
+    App->>App: performWalletChecks()
+    App->>Wallet: Request connection
+    Wallet-->>App: Connected (address)
+    
+    App->>Backend: GET /api/user/nonce/{address}
+    Backend-->>App: Return nonce
+    
+    App->>App: Build SIWE message
+    App->>Wallet: Request signature
+    Wallet->>User: Show signing prompt
+    User->>Wallet: Approve signature
+    Wallet-->>App: Return signature
+    
+    App->>Backend: POST /api/auth/siwe
+    Note over App,Backend: {message, signature}
+    Backend->>Backend: Verify signature
+    Backend-->>App: Return JWT token
+    
+    App->>App: Store token in localStorage
+    App->>Backend: GET /api/user/{address}
+    Backend-->>App: Return user data
+    App->>App: Store user in Pinia store
+    App->>App: Redirect to /teams
+```
+
+## State Management Flow
+
+```mermaid
+flowchart TD
+    subgraph Authentication
+        A[User clicks Sign In] --> B{Wallet Connected?}
+        B -->|No| C[Connect Wallet]
+        C --> D{Correct Network?}
+        D -->|No| E[Switch Network]
+        E --> F[Fetch Nonce]
+        D -->|Yes| F
+        B -->|Yes| F
+        F --> G[Build SIWE Message]
+        G --> H[Sign Message]
+        H --> I[Send to Backend]
+        I --> J{Valid?}
+        J -->|Yes| K[Store JWT Token]
+        K --> L[Fetch User Data]
+        L --> M[Update User Store]
+        M --> N[Redirect to Teams]
+        J -->|No| O[Show Error]
+    end
+```
+
 ## Authentication Flow
 
 ### 1. Initiate Sign-In
@@ -92,6 +151,27 @@ router.push('/teams')
 ```
 
 ## Token Management
+
+```mermaid
+flowchart LR
+    subgraph Storage
+        LS[localStorage]
+    end
+    
+    subgraph App
+        A[useCustomFetch] -->|Read token| LS
+        A -->|Add Authorization header| B[API Request]
+        C[Login Success] -->|Store token| LS
+        D[Logout] -->|Clear token| LS
+    end
+    
+    subgraph Backend
+        B --> E{Token Valid?}
+        E -->|Yes| F[Return Data]
+        E -->|No| G[401 Unauthorized]
+        G --> D
+    end
+```
 
 ### Storage
 
