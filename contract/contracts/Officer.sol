@@ -27,6 +27,7 @@ interface IBank {
 
 interface IFeeCollector {
     function getFeeFor(string memory contractType) external view returns (uint16);
+    function supportedTokens(address token) external view returns (bool);
 }
 
 
@@ -80,7 +81,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address private bodContract;
 
     // @notice Address of the Commission Collector
-    address private feeCollector;
+    address private immutable feeCollector;
 
 
     /**
@@ -89,6 +90,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     constructor(address _feeCollector) {
         require(_feeCollector != address(0), "Invalid feeCollector");
         feeCollector = _feeCollector;
+         
     }
 
     /**
@@ -332,5 +334,19 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
      */
     function getFeeCollector() external view returns (address) {
         return feeCollector;
+    }
+
+    /**
+     * @notice Checks if a token address is supported by the FeeCollector
+     * @param _tokenAddress The address of the token to check
+     * @return True if the token is supported, false otherwise
+     */
+    function isFeeCollectorToken(address _tokenAddress) 
+        external 
+        view 
+        returns (bool) 
+    {
+        if (_tokenAddress == address(0)) return false;
+        return IFeeCollector(feeCollector).supportedTokens(_tokenAddress);
     }
 }
