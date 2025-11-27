@@ -68,8 +68,8 @@ const mockApprovals = [
     approvedAddress: '0x1234567890123456789012345678901234567890',
     tokenAddress: zeroAddress,
     amount: 10,
-    frequencyType: 0,
-    customFrequency: 0,
+    frequencyType: 4,
+    customFrequency: 3 * 24 * 60 * 60,
     startDate: START_DATE,
     endDate: END_DATE,
     signature: `0xSignatureThree`,
@@ -293,6 +293,7 @@ describe('ExpenseAccountTable', () => {
       const firstRow = expenseAccountTable.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
       expect(firstRow.html()).toContain(mockApprovals[2].amount)
+      expect(firstRow.html()).toContain('3 day(s)')
       expect(expenseAccountTable.find('[data-test="1-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="2-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="disable-button"]').exists()).toBeFalsy()

@@ -18,6 +18,12 @@ export const getFrequencyType = (frequencyType: number) => {
   return frequency ? frequency.label : 'Unknown'
 }
 
+export const getCustomFrequency = (customFrequency: number) => {
+  if (customFrequency <= 0) return 'N/A'
+  const days = Math.floor(customFrequency / (24 * 60 * 60))
+  return `${days} day(s)`
+}
+
 export const getCurrentUserExpenses = (expenses: ExpenseResponse[], userAddress: string) => {
   if (!expenses || !userAddress || !Array.isArray(expenses)) return []
   return expenses.filter((expense) => expense.data.approvedAddress === userAddress)

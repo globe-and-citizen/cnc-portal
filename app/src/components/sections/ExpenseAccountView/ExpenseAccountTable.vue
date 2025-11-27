@@ -70,7 +70,11 @@
         >
       </template>
       <template #frequencyType-data="{ row }">
-        <span>{{ getFrequencyType(row.frequencyType) }}</span>
+        <span>{{
+          row.frequencyType == 4
+            ? getCustomFrequency(row.customFrequency)
+            : getFrequencyType(row.frequencyType)
+        }}</span>
       </template>
       <template #amountTransferred-data="{ row }">
         <span>{{ row.balances[1] }}/{{ row.amount }} {{ tokenSymbol(row.tokenAddress) }}</span>
@@ -92,7 +96,7 @@ import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTanstackQuery } from '@/composables'
 import type { ExpenseResponse } from '@/types'
-import { getFrequencyType } from '@/utils'
+import { getFrequencyType, getCustomFrequency } from '@/utils'
 
 const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
