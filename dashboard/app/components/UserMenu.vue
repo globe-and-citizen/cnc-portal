@@ -24,15 +24,17 @@ const colors = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 
 const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone']
 
 // Generate user info from authenticated address
+// Note: Using dicebear API consistent with backend user avatar generation
 const user = computed(() => {
   const addr = authStore.address.value
   const displayName = addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : 'Admin'
+  // Using same avatar service as backend for consistency
+  const avatarSrc = addr
+    ? `https://api.dicebear.com/9.x/bottts/svg?seed=${addr}`
+    : undefined
   return {
     name: displayName,
-    avatar: {
-      src: addr ? `https://api.dicebear.com/9.x/bottts/svg?seed=${addr}` : 'https://api.dicebear.com/9.x/bottts/svg?seed=admin',
-      alt: displayName
-    }
+    avatar: avatarSrc ? { src: avatarSrc, alt: displayName } : undefined
   }
 })
 

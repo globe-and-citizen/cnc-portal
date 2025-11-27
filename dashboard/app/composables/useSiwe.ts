@@ -88,8 +88,14 @@ export function useSiwe() {
       // Ensure wallet is connected
       if (!isConnected.value || !address.value) {
         await connectWallet()
-        // Wait for connection to complete
-        await new Promise(resolve => setTimeout(resolve, 500))
+
+        // Wait for connection state to update by watching the reactive refs
+        let attempts = 0
+        const maxAttempts = 20 // 2 seconds max wait time
+        while (!address.value && attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+          attempts++
+        }
 
         if (!address.value) {
           error.value = 'Please connect your wallet first'
@@ -167,7 +173,10 @@ export function useSiwe() {
    */
   const validateToken = async (): Promise<boolean> => {
     const token = authStore.getToken()
-    if (!token) return false
+    if (!token) {
+      console.warn('No token found for validation')
+      return false
+    }
 
     try {
       const response = await fetch(`${backendUrl}/api/auth/token`, {
@@ -175,8 +184,19 @@ export function useSiwe() {
           Authorization: `Bearer ${token}`
         }
       })
-      return response.ok
-    } catch {
+
+      if (!response.ok) {
+        console.warn(`Token validation failed with status: ${response.status}`)
+        // Clear invalid token
+        if (response.status === 401) {
+          authStore.clearAuth()
+        }
+        return false
+      }
+
+      return true
+    } catch (e) {
+      console.error('Token validation error:', e)
       return false
     }
   }
