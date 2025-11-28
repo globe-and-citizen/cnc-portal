@@ -5,7 +5,7 @@ import type { ComponentPublicInstance } from 'vue'
 
 import { mockTeamStore } from '@/tests/mocks/store.mock'
 
-import BankView from '../BankView.vue'
+import BankView from '../Accounts/BankView.vue'
 
 vi.mock('@/stores', async (importOriginal) => {
   const original: object = await importOriginal()
