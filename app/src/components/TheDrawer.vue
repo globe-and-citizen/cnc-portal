@@ -1,7 +1,7 @@
 <template>
   <div
     class="p-3 gap-4 flex flex-col h-screen max-h-screen backdrop-blur-md border-0 border-r-2 border-slate-100 transition-all duration-300 ease-in-out"
-    :class="[isCollapsed ? 'w-20' : 'w-[280px]']"
+    :class="[isCollapsed ? 'w-24' : 'w-[280px]']"
   >
     <!-- Logo Group -->
     <div
@@ -125,7 +125,7 @@
     </div>
 
     <div class="flex-1 overflow-y-auto custom-scrollbar border-b-2">
-      <div class="mb-4">
+      <div class="mb-4" :class="{ 'text-center': isCollapsed }">
         <span class="text-xs font-bold text-gray-400 tracking-tight"> General </span>
       </div>
 
