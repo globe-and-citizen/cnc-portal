@@ -136,7 +136,7 @@ describe('InvestorsHeader', () => {
       const balanceCard = cards[1]
 
       expect(balanceCard.find(SELECTORS.amount).text()).toBe('100 BTC')
-      expect(balanceCard.find(SELECTORS.subtitle).text()).toBe('Balance')
+      expect(balanceCard.find(SELECTORS.subtitle).text()).toBe('Your Balance')
     })
 
     it('should render total supply card with formatted token amount', () => {

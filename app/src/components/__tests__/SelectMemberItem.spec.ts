@@ -103,7 +103,7 @@ describe('SelectMemberItem', () => {
       await options[0].trigger('click')
 
       expect(mockRouterPush).toHaveBeenCalledWith({
-        name: 'claim-history',
+        name: 'payroll-history',
         params: {
           id: mockTeamStore.currentTeam.id,
           memberAddress: targetMember.address
