@@ -107,11 +107,9 @@
                   style="min-width: 220px"
                 />
                 <span
-                  class="absolute right-4 top-1/2 -translate-y-1/2 px-2 py-1 rounded"
+                  class="badge absolute right-4 top-1/2 -translate-y-1/2"
                   :class="
-                    wageData.nativeEnabled
-                      ? 'bg-primary text-primary-content font-bold'
-                      : 'bg-gray-200 text-gray-400'
+                    wageData.nativeEnabled ? 'badge-primary font-bold' : 'badge-ghost text-gray-400'
                   "
                   style="transition: all 0.2s; pointer-events: none"
                 >
@@ -148,11 +146,9 @@
                   style="min-width: 220px"
                 />
                 <span
-                  class="absolute right-4 top-1/2 -translate-y-1/2 px-2 py-1 rounded"
+                  class="badge absolute right-4 top-1/2 -translate-y-1/2"
                   :class="
-                    wageData.usdcEnabled
-                      ? 'bg-primary text-primary-content font-bold'
-                      : 'bg-gray-200 text-gray-400'
+                    wageData.usdcEnabled ? 'badge-primary font-bold' : 'badge-ghost text-gray-400'
                   "
                   style="transition: all 0.2s; pointer-events: none"
                 >
@@ -189,11 +185,9 @@
                   style="min-width: 220px"
                 />
                 <span
-                  class="absolute right-4 top-1/2 -translate-y-1/2 px-2 py-1 rounded"
+                  class="badge absolute right-4 top-1/2 -translate-y-1/2"
                   :class="
-                    wageData.sherEnabled
-                      ? 'bg-primary text-primary-content font-bold'
-                      : 'bg-gray-200 text-gray-400'
+                    wageData.sherEnabled ? 'badge-primary font-bold' : 'badge-ghost text-gray-400'
                   "
                   style="transition: all 0.2s; pointer-events: none"
                 >
