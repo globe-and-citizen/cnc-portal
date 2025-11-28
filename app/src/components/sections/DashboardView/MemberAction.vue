@@ -11,7 +11,7 @@
     <ButtonUI
       size="sm"
       variant="success"
-      @click="() => (showSetMemberWageModal = { mount: true, show: true })"
+      @click="() => (showSetMemberWageModal = true)"
       data-test="set-wage-button"
     >
       Set Wage
@@ -53,7 +53,7 @@
       </div>
     </ModalComponent>
 
-    <ModalComponent v-model="showSetMemberWageModal.show" v-if="showSetMemberWageModal.mount">
+    <ModalComponent v-model="showSetMemberWageModal" v-if="showSetMemberWageModal">
       <p class="font-bold text-lg">Set Member Wage</p>
       <hr class="my-2" />
 
@@ -242,15 +242,10 @@
             outline
             @click="
               () => {
-                showSetMemberWageModal = { mount: false, show: false }
-                v$.value.$reset()
+                showSetMemberWageModal = false
+                v$.$reset()
                 wageData.maxWeeklyHours = 0
                 wageData.hourlyRate = 0
-                wageData.hourlyRateUsdc = 0
-                wageData.hourlyRateToken = 0
-                wageData.nativeEnabled = false
-                wageData.usdcEnabled = false
-                wageData.sherEnabled = false
               }
             "
             data-test="add-wage-cancel-button"
@@ -285,10 +280,8 @@ const props = defineProps<{
 const emits = defineEmits(['refetchWage'])
 
 const showDeleteMemberConfirmModal = ref(false)
-const showSetMemberWageModal = ref({
-  mount: false,
-  show: false
-})
+const showSetMemberWageModal = ref(false)
+
 const wageData = ref({
   maxWeeklyHours: 0,
   hourlyRate: 0,
@@ -393,29 +386,9 @@ const addMemberWageData = async () => {
     addSuccessToast('Member wage data set successfully')
 
     emits('refetchWage')
-    showSetMemberWageModal.value = {
-      mount: false,
-      show: false
-    }
+    showSetMemberWageModal.value = false
   }
 }
-// Reset wageData and validation when wage modal closes
-watch(
-  () => showSetMemberWageModal.value.show,
-  (val) => {
-    if (!val && showSetMemberWageModal.value.mount) {
-      v$.value.$reset()
-      wageData.value.maxWeeklyHours = 0
-      wageData.value.hourlyRate = 0
-      wageData.value.hourlyRateUsdc = 0
-      wageData.value.hourlyRateToken = 0
-      wageData.value.nativeEnabled = false
-      wageData.value.usdcEnabled = false
-      wageData.value.sherEnabled = false
-      showSetMemberWageModal.value.mount = false
-    }
-  }
-)
 </script>
 
 <style scoped></style>
