@@ -267,7 +267,7 @@ import type { Member } from '@/types'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { NETWORK } from '@/constant'
 const teamStore = useTeamStore()
 const { addSuccessToast } = useToastStore()
