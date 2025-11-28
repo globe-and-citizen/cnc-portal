@@ -7,9 +7,9 @@
           <span class="text-4xl font-bold">
             <span class="inline-block min-w-16 h-10">
               <span
-                data-test="loading-spinner"
-                class="loading loading-spinner loading-lg"
-                v-if="isLoading"
+                  data-test="loading-spinner"
+                  class="loading loading-spinner loading-lg"
+                  v-if="isLoading"
               ></span>
               <span v-else>{{ total['USD']?.formated ?? 0 }}</span>
             </span>
@@ -28,27 +28,27 @@
       <div class="flex flex-col items-end gap-4">
         <div class="flex gap-2">
           <ButtonUI
-            v-if="bankAddress"
-            variant="secondary"
-            class="flex items-center gap-2"
-            @click="depositModal = { mount: true, show: true }"
-            data-test="deposit-button"
+              v-if="bankAddress"
+              variant="secondary"
+              class="flex items-center gap-2"
+              @click="depositModal = { mount: true, show: true }"
+              data-test="deposit-button"
           >
             <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
             Deposit
           </ButtonUI>
 
           <div
-            v-if="bankAddress"
-            :class="{ tooltip: !isBankOwner }"
-            :data-tip="!isBankOwner ? 'Only the bank owner can transfer funds' : null"
+              v-if="bankAddress"
+              :class="{ tooltip: showOwnerTooltip || soldeBalance }"
+              :data-tip="showOwnerTooltip ? 'Only the bank owner can transfer funds' : (soldeBalance ? 'Bank balance is 0' : null)"
           >
             <ButtonUI
-              variant="secondary"
-              class="flex items-center gap-2"
-              @click="transferModal = { mount: true, show: true }"
-              :disabled="!isBankOwner && !isBodAction"
-              data-test="transfer-button"
+                variant="secondary"
+                class="flex items-center gap-2"
+                @click="transferModal = { mount: true, show: true }"
+                :disabled="(!isBankOwner && !isBodAction) || !hasPositiveBalance"
+                data-test="transfer-button"
             >
               <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
               Transfer
@@ -64,34 +64,34 @@
 
     <!-- Deposit Modal -->
     <ModalComponent
-      v-model="depositModal.show"
-      v-if="depositModal.mount"
-      data-test="deposit-modal"
-      @reset="() => (depositModal = { mount: false, show: false })"
+        v-model="depositModal.show"
+        v-if="depositModal.mount"
+        data-test="deposit-modal"
+        @reset="() => (depositModal = { mount: false, show: false })"
     >
       <DepositBankForm
-        @close-modal="() => (depositModal = { mount: false, show: false })"
-        :bank-address="bankAddress"
+          @close-modal="() => (depositModal = { mount: false, show: false })"
+          :bank-address="bankAddress"
       />
     </ModalComponent>
 
     <!-- Transfer Modal -->
 
     <ModalComponent
-      v-model="transferModal.show"
-      v-if="transferModal.mount"
-      data-test="transfer-modal"
-      @reset="resetTransferValues"
+        v-model="transferModal.show"
+        v-if="transferModal.mount"
+        data-test="transfer-modal"
+        @reset="resetTransferValues"
     >
       <TransferForm
-        v-model="transferData"
-        :tokens="tokens"
-        :loading="
+          v-model="transferData"
+          :tokens="tokens"
+          :loading="
           transferLoading || isConfirmingTransfer || isLoadingAddAction || isConfirmingAddAction
         "
-        @transfer="handleTransfer"
-        @closeModal="resetTransferValues"
-        :is-bod-action="isBodAction"
+          @transfer="handleTransfer"
+          @closeModal="resetTransferValues"
+          :is-bod-action="isBodAction"
       >
         <template #header>
           <h1 class="font-bold text-2xl">Transfer from Bank Contract</h1>
@@ -176,6 +176,14 @@ const isBankOwner = computed(() => bankOwner.value === userStore.address)
 // Use the contract balance composable
 const { total, balances, dividendsTotal, isLoading } = useContractBalance(props.bankAddress)
 
+const hasPositiveBalance = computed(() =>
+    balances.value.some((b) => b.token.id !== 'sher' && b.amount > 0)
+)
+const showOwnerTooltip = computed(() => !isBankOwner.value && !isBodAction.value)
+const soldeBalance = computed(
+    () => (isBankOwner.value || isBodAction.value) && !hasPositiveBalance.value
+)
+
 // Add refs for modals and form data
 const depositModal = ref({
   mount: false,
@@ -195,16 +203,16 @@ const {
 } = useWriteContract()
 
 const getTokens = (): TokenOption[] =>
-  balances.value
-    .map((b) => ({
-      symbol: b.token.symbol,
-      balance: b.amount,
-      tokenId: b.token.id,
-      price: b.values['USD'].price || 0,
-      name: b.token.name,
-      code: b.token.code
-    }))
-    .filter((b) => b.tokenId !== 'sher')
+    balances.value
+        .map((b) => ({
+          symbol: b.token.symbol,
+          balance: b.amount,
+          tokenId: b.token.id,
+          price: b.values['USD'].price || 0,
+          name: b.token.name,
+          code: b.token.code
+        }))
+        .filter((b) => b.tokenId !== 'sher')
 
 const tokens = computed(() => getTokens())
 
@@ -238,12 +246,12 @@ const handleTransfer = async (data: {
 
     if (isBodAction.value) {
       const encodedData = isNativeToken
-        ? encodeFunctionData({
+          ? encodeFunctionData({
             abi: BANK_ABI,
             functionName: 'transfer',
             args: [data.address.address, transferAmount]
           })
-        : encodeFunctionData({
+          : encodeFunctionData({
             abi: BANK_ABI,
             functionName: 'transferToken',
             args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
@@ -286,8 +294,8 @@ const handleTransfer = async (data: {
 
     // Invalidate relevant queries
     const queryKey = isNativeToken
-      ? ['balance', { address: props.bankAddress, chainId: chainId }]
-      : [
+        ? ['balance', { address: props.bankAddress, chainId: chainId }]
+        : [
           'readContract',
           {
             address: USDC_ADDRESS as Address,
