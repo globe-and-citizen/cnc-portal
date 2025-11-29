@@ -370,9 +370,7 @@ describe('Bank', () => {
         const amount = ethers.parseUnits('100', 6)
         await mockUSDT.approve(await bankProxy.getAddress(), amount)
 
-        await expect(
-          bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), amount)
-        )
+        await expect(bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), amount))
           .to.emit(bankProxy, 'TokenDeposited')
           .withArgs(owner.address, await mockUSDT.getAddress(), amount)
       })
@@ -658,9 +656,7 @@ describe('Bank', () => {
         // Mint and deposit tokens to bank
         await mockUSDT.mint(owner.address, tokenDepositAmount)
         await mockUSDT.approve(await bankProxy.getAddress(), tokenDepositAmount)
-        await bankProxy
-          .connect(owner)
-          .depositToken(await mockUSDT.getAddress(), tokenDepositAmount)
+        await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), tokenDepositAmount)
       })
 
       it('should allow owner to deposit token dividends', async () => {
@@ -761,9 +757,7 @@ describe('Bank', () => {
         // Mint and deposit tokens to bank
         await mockUSDT.mint(owner.address, tokenDepositAmount)
         await mockUSDT.approve(await bankProxy.getAddress(), tokenDepositAmount)
-        await bankProxy
-          .connect(owner)
-          .depositToken(await mockUSDT.getAddress(), tokenDepositAmount)
+        await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), tokenDepositAmount)
 
         // Deposit token dividends
         await bank.depositTokenDividends(

@@ -41,13 +41,9 @@ describe('FeeCollector', () => {
 
   async function deployFeeCollector(configs = INITIAL_CONFIGS, tokens: string[] = []) {
     const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
-    return (await upgrades.deployProxy(
-      FeeCollectorFactory,
-      [owner.address, configs, tokens],
-      {
-        initializer: 'initialize'
-      }
-    )) as unknown as FeeCollector
+    return (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, configs, tokens], {
+      initializer: 'initialize'
+    })) as unknown as FeeCollector
   }
 
   describe('Initialization', () => {
@@ -83,13 +79,9 @@ describe('FeeCollector', () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
 
       await expect(
-        upgrades.deployProxy(
-          FeeCollectorFactory,
-          [ethers.ZeroAddress, INITIAL_CONFIGS, []],
-          {
-            initializer: 'initialize'
-          }
-        )
+        upgrades.deployProxy(FeeCollectorFactory, [ethers.ZeroAddress, INITIAL_CONFIGS, []], {
+          initializer: 'initialize'
+        })
       ).to.be.revertedWith(ERRORS.OWNER_ZERO)
     })
 
@@ -102,13 +94,9 @@ describe('FeeCollector', () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
 
       await expect(
-        upgrades.deployProxy(
-          FeeCollectorFactory,
-          [owner.address, invalidConfigs, []],
-          {
-            initializer: 'initialize'
-          }
-        )
+        upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs, []], {
+          initializer: 'initialize'
+        })
       ).to.be.revertedWith(ERRORS.EMPTY_TYPE)
     })
 
@@ -121,13 +109,9 @@ describe('FeeCollector', () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
 
       await expect(
-        upgrades.deployProxy(
-          FeeCollectorFactory,
-          [owner.address, invalidConfigs, []],
-          {
-            initializer: 'initialize'
-          }
-        )
+        upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs, []], {
+          initializer: 'initialize'
+        })
       ).to.be.revertedWith(ERRORS.INVALID_BPS)
     })
 
@@ -140,13 +124,9 @@ describe('FeeCollector', () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
 
       await expect(
-        upgrades.deployProxy(
-          FeeCollectorFactory,
-          [owner.address, duplicateConfigs, []],
-          {
-            initializer: 'initialize'
-          }
-        )
+        upgrades.deployProxy(FeeCollectorFactory, [owner.address, duplicateConfigs, []], {
+          initializer: 'initialize'
+        })
       ).to.be.revertedWith(ERRORS.DUPLICATE_TYPE)
     })
 
@@ -360,15 +340,11 @@ describe('FeeCollector', () => {
     })
 
     it('should not allow non-owner to manage token support', async () => {
-      await expect(
-        feeCollector.connect(user1).addTokenSupport(await mockUSDC.getAddress())
-      )
+      await expect(feeCollector.connect(user1).addTokenSupport(await mockUSDC.getAddress()))
         .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
         .withArgs(user1.address)
 
-      await expect(
-        feeCollector.connect(user1).removeTokenSupport(await mockUSDT.getAddress())
-      )
+      await expect(feeCollector.connect(user1).removeTokenSupport(await mockUSDT.getAddress()))
         .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
         .withArgs(user1.address)
     })
@@ -406,11 +382,7 @@ describe('FeeCollector', () => {
 
       const tx = feeCollector.withdrawToken(await mockUSDT.getAddress(), amount)
 
-      await expect(tx).to.changeTokenBalances(
-        mockUSDT,
-        [feeCollector, owner],
-        [-amount, amount]
-      )
+      await expect(tx).to.changeTokenBalances(mockUSDT, [feeCollector, owner], [-amount, amount])
 
       expect(await mockUSDT.balanceOf(await feeCollector.getAddress())).to.equal(0)
     })
@@ -425,9 +397,9 @@ describe('FeeCollector', () => {
     })
 
     it('should not allow withdrawing zero amount', async () => {
-      await expect(
-        feeCollector.withdrawToken(await mockUSDT.getAddress(), 0)
-      ).to.be.revertedWith(ERRORS.AMOUNT_ZERO)
+      await expect(feeCollector.withdrawToken(await mockUSDT.getAddress(), 0)).to.be.revertedWith(
+        ERRORS.AMOUNT_ZERO
+      )
     })
 
     it('should not allow withdrawing unsupported tokens', async () => {
@@ -446,9 +418,7 @@ describe('FeeCollector', () => {
       const amount = ethers.parseUnits('10', 6)
       await mockUSDT.mint(await feeCollector.getAddress(), amount)
 
-      await expect(
-        feeCollector.connect(user1).withdrawToken(await mockUSDT.getAddress(), amount)
-      )
+      await expect(feeCollector.connect(user1).withdrawToken(await mockUSDT.getAddress(), amount))
         .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
         .withArgs(user1.address)
     })
