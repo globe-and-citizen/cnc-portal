@@ -2,8 +2,13 @@
   <a
     v-if="isDropDown"
     data-test="withdraw-action"
+    :class="['text-sm', { disabled: isLoad }]"
+    :aria-disabled="isLoad"
+    :tabindex="isLoad ? -1 : 0"
+    :style="{ pointerEvents: isLoad ? 'none' : undefined }"
     @click="
       async () => {
+        if (isLoad) return
         if (!isClaimOwner) {
           emit('claim-withdrawn')
           return
@@ -12,14 +17,14 @@
         emit('claim-withdrawn')
       }
     "
-    class="text-sm"
   >
+    <span v-if="isLoad" class="loading loading-spinner loading-xs mr-2"></span>
     Withdraw
   </a>
   <ButtonUI
     v-else
     :disabled="disabled"
-    :loading="isLoading"
+    :loading="isLoad"
     variant="warning"
     data-test="withdraw-button"
     size="sm"
@@ -50,9 +55,10 @@ const props = defineProps<{
   disabled?: boolean
   isDropDown?: boolean
   isClaimOwner?: boolean
+  loading?: boolean
 }>()
 
-const emit = defineEmits(['claim-withdrawn'])
+const emit = defineEmits(['claim-withdrawn', 'loading'])
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
@@ -77,12 +83,15 @@ const { execute: syncWeeklyClaim, error: syncWeeklyClaimError } = useCustomFetch
   .json()
 
 const isLoading = ref(false)
+const isLoad = computed(() => (props.loading ?? isLoading.value) as boolean)
 
 const withdrawClaim = async () => {
   isLoading.value = true
+  emit('loading', true)
 
   if (!cashRemunerationEip712Address.value) {
     isLoading.value = false
+    emit('loading', false)
     toastStore.addErrorToast('Cash Remuneration EIP712 contract address not found')
     return
   }
@@ -98,6 +107,7 @@ const withdrawClaim = async () => {
       Number(props.weeklyClaim.hoursWorked)
   ) {
     isLoading.value = false
+    emit('loading', false)
     toastStore.addErrorToast('Insufficient balance')
     return
   }
@@ -155,13 +165,16 @@ const withdrawClaim = async () => {
       })
 
       emit('claim-withdrawn')
+      isLoading.value = false
+      emit('loading', false)
     } else {
       toastStore.addErrorToast('Transaction failed: Failed to withdraw claim')
+      // keep loading until explicit success
     }
-
-    isLoading.value = false
   } catch (error) {
+    // Stop loading on cancel or explicit error
     isLoading.value = false
+    emit('loading', false)
     log.error('Withdraw error', error)
     const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
 
