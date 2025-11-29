@@ -26,7 +26,7 @@
             :is-drop-down="true"
             :disabled="isCurrentWeek(weeklyClaim)"
             :loading="signLoading"
-            @loading="(v:boolean) => (signLoading = v)"
+            @loading="(v: boolean) => (signLoading = v)"
             @close="isOpen = false"
           />
         </li>
@@ -41,7 +41,7 @@
             :is-drop-down="true"
             :is-claim-owner="isClaimOwner"
             :loading="withdrawLoading"
-            @loading="(v:boolean) => (withdrawLoading = v)"
+            @loading="(v: boolean) => (withdrawLoading = v)"
             @claim-withdrawn="isOpen = false"
           />
         </li>
@@ -77,7 +77,7 @@
             :weekly-claim="weeklyClaim"
             :is-cash-remuneration-owner="isCashRemunerationOwner"
             :loading="enableLoading"
-            @loading="(v:boolean) => (enableLoading = v)"
+            @loading="(v: boolean) => (enableLoading = v)"
             @close="isOpen = false"
           />
         </li>
@@ -89,7 +89,7 @@
             :weekly-claim="weeklyClaim"
             :is-drop-down="true"
             :loading="resignLoading"
-            @loading="(v:boolean) => (resignLoading = v)"
+            @loading="(v: boolean) => (resignLoading = v)"
             @close="isOpen = false"
             :is-resign="true"
           />
@@ -190,7 +190,6 @@ const { execute: syncWeeklyClaim, error: syncWeeklyClaimError } = useCustomFetch
   .post()
   .json()
 
-const isLoading = ref(false)
 const signLoading = ref(false)
 const resignLoading = ref(false)
 const disableLoading = ref(false)
