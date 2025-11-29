@@ -25,6 +25,8 @@
             :weekly-claim="weeklyClaim"
             :is-drop-down="true"
             :disabled="isCurrentWeek(weeklyClaim)"
+            :loading="signLoading"
+            @loading="(v:boolean) => (signLoading = v)"
             @close="isOpen = false"
           />
         </li>
@@ -38,19 +40,25 @@
             :weekly-claim="weeklyClaim"
             :is-drop-down="true"
             :is-claim-owner="isClaimOwner"
+            :loading="withdrawLoading"
+            @loading="(v:boolean) => (withdrawLoading = v)"
             @claim-withdrawn="isOpen = false"
           />
         </li>
         <li data-test="signed-disable" :class="{ disabled: !isCashRemunerationOwner }">
           <a
+            :class="['text-sm', { disabled: disableLoading }]"
+            :aria-disabled="disableLoading"
+            :tabindex="disableLoading ? -1 : 0"
+            :style="{ pointerEvents: disableLoading ? 'none' : undefined }"
             @click="
               async () => {
+                if (disableLoading) return
                 await disableClaim()
-                isOpen = false
               }
             "
-            class="text-sm"
           >
+            <span v-if="disableLoading" class="loading loading-spinner loading-xs mr-2"></span>
             Disable
           </a>
         </li>
@@ -68,6 +76,8 @@
           <WeeklyClaimActionEnable
             :weekly-claim="weeklyClaim"
             :is-cash-remuneration-owner="isCashRemunerationOwner"
+            :loading="enableLoading"
+            @loading="(v:boolean) => (enableLoading = v)"
             @close="isOpen = false"
           />
         </li>
@@ -78,6 +88,8 @@
           <CRSigne
             :weekly-claim="weeklyClaim"
             :is-drop-down="true"
+            :loading="resignLoading"
+            @loading="(v:boolean) => (resignLoading = v)"
             @close="isOpen = false"
             :is-resign="true"
           />
@@ -179,18 +191,22 @@ const { execute: syncWeeklyClaim, error: syncWeeklyClaimError } = useCustomFetch
   .json()
 
 const isLoading = ref(false)
+const signLoading = ref(false)
+const resignLoading = ref(false)
+const disableLoading = ref(false)
+const withdrawLoading = ref(false)
+const enableLoading = ref(false)
 
 // Methods
 const disableClaim = async () => {
   if (!isCashRemunerationOwner.value) return
 
-  isLoading.value = true
+  disableLoading.value = true
   if (!cashRemunerationAddress.value) {
-    isLoading.value = false
     toastStore.addErrorToast('Cash Remuneration EIP712 contract address not found')
+    disableLoading.value = false
     return
   }
-  // disable
   try {
     const args = {
       abi: CASH_REMUNERATION_EIP712_ABI,
@@ -225,18 +241,22 @@ const disableClaim = async () => {
       queryClient.invalidateQueries({
         queryKey: ['weekly-claims', teamStore.currentTeam?.id]
       })
+
+      // Stop loading only on success and close dropdown
+      disableLoading.value = false
+      isOpen.value = false
     } else {
       toastStore.addErrorToast('Transaction failed: Failed to disable claim')
+      // keep loading until explicit success
     }
-
-    isLoading.value = false
   } catch (error) {
     console.log('error: ', error)
-    isLoading.value = false
     log.error('Disable error', error)
     const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
 
     toastStore.addErrorToast(parsed)
+    // Stop loading on user cancel or any explicit error
+    disableLoading.value = false
   }
 }
 
