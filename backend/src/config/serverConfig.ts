@@ -106,6 +106,9 @@ class Server {
     const allowedOrigins = process.env.FRONTEND_URL
       ? process.env.FRONTEND_URL.split(",").map(origin => origin.trim())
       : [];
+      console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+      console.log('Allowed Origins for CORS:', allowedOrigins);
+
     this.app.use(cors({ origin: allowedOrigins, credentials: true }));
   }
 
