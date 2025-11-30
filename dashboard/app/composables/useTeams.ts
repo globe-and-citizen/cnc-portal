@@ -24,7 +24,7 @@ export function useTeams() {
         return []
       }
 
-      const response = await fetch(`${backendUrl}/api/team`, {
+      const response = await fetch(`${backendUrl}/api/teams`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
