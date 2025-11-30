@@ -10,7 +10,8 @@ import {
   UpgradeableBeacon,
   Elections__factory,
   Proposals__factory,
-  InvestorV1__factory
+  InvestorV1__factory,
+  MockERC20
 } from '../typechain-types'
 
 describe('Officer Contract', function () {
@@ -32,6 +33,9 @@ describe('Officer Contract', function () {
   let addr1: SignerWithAddress
   let addr2: SignerWithAddress
   let addr3: SignerWithAddress
+  let mockUSDT: MockERC20
+  let mockUSDC: MockERC20
+  let supportedTokenAddresses: string[]
 
   async function deployOfficerInstance(
     beaconConfigs: { beaconType: string; beaconAddress: string }[] = [],
@@ -55,10 +59,19 @@ describe('Officer Contract', function () {
   beforeEach(async function () {
     ;[owner, addr1, addr2, addr3] = await ethers.getSigners()
 
+    const MockToken = await ethers.getContractFactory('MockERC20')
+    mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as unknown as MockERC20
+    mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as unknown as MockERC20
+    supportedTokenAddresses = [await mockUSDT.getAddress(), await mockUSDC.getAddress()]
+
     const FeeCollector = await ethers.getContractFactory('FeeCollector')
-    feeCollector = (await upgrades.deployProxy(FeeCollector, [owner.address, []], {
-      initializer: 'initialize'
-    })) as unknown as FeeCollector
+    feeCollector = (await upgrades.deployProxy(
+      FeeCollector,
+      [owner.address, [], supportedTokenAddresses],
+      {
+        initializer: 'initialize'
+      }
+    )) as unknown as FeeCollector
 
     // Deploy implementation contracts
     bankAccount = await ethers.getContractFactory('Bank')
@@ -206,6 +219,18 @@ describe('Officer Contract', function () {
       await expect(officer.connect(addr3).unpause()).to.be.revertedWith(
         'You are not authorized to perform this action'
       )
+    })
+  })
+
+  describe('FeeCollector Integration', () => {
+    it('Should report supported fee collector tokens', async function () {
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      const unsupportedToken = await MockToken.deploy('DAI', 'DAI')
+
+      expect(await officer.isFeeCollectorToken(supportedTokenAddresses[0])).to.equal(true)
+      expect(await officer.isFeeCollectorToken(supportedTokenAddresses[1])).to.equal(true)
+      expect(await officer.isFeeCollectorToken(await unsupportedToken.getAddress())).to.equal(false)
+      expect(await officer.isFeeCollectorToken(ethers.ZeroAddress)).to.equal(false)
     })
   })
 

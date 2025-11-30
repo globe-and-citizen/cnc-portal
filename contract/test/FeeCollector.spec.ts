@@ -1,6 +1,6 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
-import { FeeCollector } from '../typechain-types'
+import { FeeCollector, MockERC20 } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 
 describe('FeeCollector', () => {
@@ -8,6 +8,8 @@ describe('FeeCollector', () => {
   let owner: SignerWithAddress
   let user1: SignerWithAddress
   let user2: SignerWithAddress
+  let mockUSDT: MockERC20
+  let mockUSDC: MockERC20
 
   const ERRORS = {
     OWNER_ZERO: 'Owner is zero',
@@ -15,7 +17,11 @@ describe('FeeCollector', () => {
     INVALID_BPS: 'Invalid BPS',
     DUPLICATE_TYPE: 'Duplicate contractType',
     INSUFFICIENT_BALANCE: 'Insufficient balance',
-    WITHDRAWAL_FAILED: ' withdrawal failed',
+    TOKEN_ADDRESS_ZERO: 'Token address cannot be zero',
+    TOKEN_ALREADY_SUPPORTED: 'Token already supported',
+    TOKEN_NOT_SUPPORTED: 'Token not supported',
+    AMOUNT_ZERO: 'Amount must be greater than zero',
+    INSUFFICIENT_TOKEN_BALANCE: 'Insufficient token balance',
     UNAUTHORIZED: 'OwnableUnauthorizedAccount'
   } as const
 
@@ -25,9 +31,17 @@ describe('FeeCollector', () => {
     { contractType: 'EXPENSE_ACCOUNT', feeBps: 75 } // 0.75%
   ]
 
-  async function deployFeeCollector(configs = INITIAL_CONFIGS) {
+  async function deployMockTokens() {
+    const MockToken = await ethers.getContractFactory('MockERC20')
+    mockUSDT = (await MockToken.deploy('USDT', 'USDT')) as unknown as MockERC20
+    mockUSDC = (await MockToken.deploy('USDC', 'USDC')) as unknown as MockERC20
+
+    return [await mockUSDT.getAddress(), await mockUSDC.getAddress()]
+  }
+
+  async function deployFeeCollector(configs = INITIAL_CONFIGS, tokens: string[] = []) {
     const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
-    return (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, configs], {
+    return (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, configs, tokens], {
       initializer: 'initialize'
     })) as unknown as FeeCollector
   }
@@ -53,11 +67,19 @@ describe('FeeCollector', () => {
       expect(configs[2].feeBps).to.equal(75)
     })
 
+    it('should initialize with supported tokens', async () => {
+      const tokenAddresses = await deployMockTokens()
+      feeCollector = await deployFeeCollector(INITIAL_CONFIGS, tokenAddresses)
+
+      expect(await feeCollector.supportedTokens(tokenAddresses[0])).to.be.true
+      expect(await feeCollector.supportedTokens(tokenAddresses[1])).to.be.true
+    })
+
     it('should reject zero address as owner', async () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
 
       await expect(
-        upgrades.deployProxy(FeeCollectorFactory, [ethers.ZeroAddress, INITIAL_CONFIGS], {
+        upgrades.deployProxy(FeeCollectorFactory, [ethers.ZeroAddress, INITIAL_CONFIGS, []], {
           initializer: 'initialize'
         })
       ).to.be.revertedWith(ERRORS.OWNER_ZERO)
@@ -72,7 +94,7 @@ describe('FeeCollector', () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
 
       await expect(
-        upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs], {
+        upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs, []], {
           initializer: 'initialize'
         })
       ).to.be.revertedWith(ERRORS.EMPTY_TYPE)
@@ -87,7 +109,7 @@ describe('FeeCollector', () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
 
       await expect(
-        upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs], {
+        upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs, []], {
           initializer: 'initialize'
         })
       ).to.be.revertedWith(ERRORS.INVALID_BPS)
@@ -102,10 +124,24 @@ describe('FeeCollector', () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
 
       await expect(
-        upgrades.deployProxy(FeeCollectorFactory, [owner.address, duplicateConfigs], {
+        upgrades.deployProxy(FeeCollectorFactory, [owner.address, duplicateConfigs, []], {
           initializer: 'initialize'
         })
       ).to.be.revertedWith(ERRORS.DUPLICATE_TYPE)
+    })
+
+    it('should reject zero token address in initialization', async () => {
+      const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
+
+      await expect(
+        upgrades.deployProxy(
+          FeeCollectorFactory,
+          [owner.address, INITIAL_CONFIGS, [ethers.ZeroAddress]],
+          {
+            initializer: 'initialize'
+          }
+        )
+      ).to.be.revertedWith(ERRORS.TOKEN_ADDRESS_ZERO)
     })
 
     it('should allow initialization with empty configs array', async () => {
@@ -119,7 +155,7 @@ describe('FeeCollector', () => {
     it('should not allow reinitialization', async () => {
       feeCollector = await deployFeeCollector()
 
-      await expect(feeCollector.initialize(owner.address, [])).to.be.reverted
+      await expect(feeCollector.initialize(owner.address, [], [])).to.be.reverted
     })
 
     it('should accept maximum valid BPS (10000 = 100%)', async () => {
@@ -253,6 +289,138 @@ describe('FeeCollector', () => {
       }
 
       expect(await feeCollector.getBalance()).to.equal(expectedTotal)
+    })
+  })
+
+  describe('Token Support Management', () => {
+    beforeEach(async () => {
+      ;[owner, user1, user2] = await ethers.getSigners()
+      const supportedTokens = await deployMockTokens()
+      feeCollector = await deployFeeCollector(INITIAL_CONFIGS, supportedTokens)
+    })
+
+    it('should allow owner to add token support', async () => {
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
+
+      await expect(feeCollector.addTokenSupport(await newToken.getAddress()))
+        .to.emit(feeCollector, 'TokenSupportAdded')
+        .withArgs(await newToken.getAddress())
+
+      expect(await feeCollector.supportedTokens(await newToken.getAddress())).to.be.true
+    })
+
+    it('should not allow adding already supported token', async () => {
+      await expect(feeCollector.addTokenSupport(await mockUSDT.getAddress())).to.be.revertedWith(
+        ERRORS.TOKEN_ALREADY_SUPPORTED
+      )
+    })
+
+    it('should not allow adding zero address token', async () => {
+      await expect(feeCollector.addTokenSupport(ethers.ZeroAddress)).to.be.revertedWith(
+        ERRORS.TOKEN_ADDRESS_ZERO
+      )
+    })
+
+    it('should allow owner to remove token support', async () => {
+      await expect(feeCollector.removeTokenSupport(await mockUSDT.getAddress()))
+        .to.emit(feeCollector, 'TokenSupportRemoved')
+        .withArgs(await mockUSDT.getAddress())
+
+      expect(await feeCollector.supportedTokens(await mockUSDT.getAddress())).to.be.false
+    })
+
+    it('should not allow removing unsupported token', async () => {
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
+
+      await expect(feeCollector.removeTokenSupport(await newToken.getAddress())).to.be.revertedWith(
+        ERRORS.TOKEN_NOT_SUPPORTED
+      )
+    })
+
+    it('should not allow non-owner to manage token support', async () => {
+      await expect(feeCollector.connect(user1).addTokenSupport(await mockUSDC.getAddress()))
+        .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
+        .withArgs(user1.address)
+
+      await expect(feeCollector.connect(user1).removeTokenSupport(await mockUSDT.getAddress()))
+        .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
+        .withArgs(user1.address)
+    })
+  })
+
+  describe('ERC20 Token Balances and Withdrawals', () => {
+    beforeEach(async () => {
+      ;[owner, user1, user2] = await ethers.getSigners()
+      const supportedTokens = await deployMockTokens()
+      feeCollector = await deployFeeCollector(INITIAL_CONFIGS, supportedTokens)
+    })
+
+    it('should return ERC20 balance for supported token', async () => {
+      const amount = ethers.parseUnits('250', 6)
+      await mockUSDT.mint(await feeCollector.getAddress(), amount)
+
+      expect(await feeCollector.getTokenBalance(await mockUSDT.getAddress())).to.equal(amount)
+    })
+
+    it('should revert balance query for unsupported token', async () => {
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      const unsupportedToken = (await MockToken.deploy(
+        'UNSUPPORTED',
+        'UNS'
+      )) as unknown as MockERC20
+
+      await expect(
+        feeCollector.getTokenBalance(await unsupportedToken.getAddress())
+      ).to.be.revertedWith(ERRORS.TOKEN_NOT_SUPPORTED)
+    })
+
+    it('should allow owner to withdraw ERC20 tokens', async () => {
+      const amount = ethers.parseUnits('100', 6)
+      await mockUSDT.mint(await feeCollector.getAddress(), amount)
+
+      const tx = feeCollector.withdrawToken(await mockUSDT.getAddress(), amount)
+
+      await expect(tx).to.changeTokenBalances(mockUSDT, [feeCollector, owner], [-amount, amount])
+
+      expect(await mockUSDT.balanceOf(await feeCollector.getAddress())).to.equal(0)
+    })
+
+    it('should not allow withdrawing more than token balance', async () => {
+      const amount = ethers.parseUnits('50', 6)
+      await mockUSDT.mint(await feeCollector.getAddress(), amount)
+
+      await expect(
+        feeCollector.withdrawToken(await mockUSDT.getAddress(), amount + 1n)
+      ).to.be.revertedWith(ERRORS.INSUFFICIENT_TOKEN_BALANCE)
+    })
+
+    it('should not allow withdrawing zero amount', async () => {
+      await expect(feeCollector.withdrawToken(await mockUSDT.getAddress(), 0)).to.be.revertedWith(
+        ERRORS.AMOUNT_ZERO
+      )
+    })
+
+    it('should not allow withdrawing unsupported tokens', async () => {
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      const unsupportedToken = (await MockToken.deploy(
+        'UNSUPPORTED',
+        'UNS'
+      )) as unknown as MockERC20
+
+      await expect(
+        feeCollector.withdrawToken(await unsupportedToken.getAddress(), 1)
+      ).to.be.revertedWith(ERRORS.TOKEN_NOT_SUPPORTED)
+    })
+
+    it('should not allow non-owner to withdraw ERC20 tokens', async () => {
+      const amount = ethers.parseUnits('10', 6)
+      await mockUSDT.mint(await feeCollector.getAddress(), amount)
+
+      await expect(feeCollector.connect(user1).withdrawToken(await mockUSDT.getAddress(), amount))
+        .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
+        .withArgs(user1.address)
     })
   })
 

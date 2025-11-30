@@ -6,6 +6,9 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@vueuse/nuxt'
   ],
+
+  ssr: false,
+
   devtools: {
     enabled: true
   },
@@ -26,7 +29,7 @@ export default defineNuxtConfig({
   },
 
   devServer: {
-    port: 30001
+    port: 3001
   },
   compatibilityDate: '2024-07-11',
 
