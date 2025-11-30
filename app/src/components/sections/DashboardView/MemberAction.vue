@@ -81,80 +81,127 @@
           </div>
         </div>
 
-        <!-- Hourly Rates - Horizontal Layout -->
-        <div>
-          <h3 class="font-medium mb-2">Hourly Rates</h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- #region Multi Limit Inputs - Hourly Rates Vertical -->
+        <div class="mb-4">
+          <h3 class="text-lg font-semibold mb-4">Hourly Rates</h3>
+          <div class="flex flex-col gap-6">
             <!-- Native Token -->
-            <div>
-              <div class="join w-full">
+            <div class="flex items-center gap-4">
+              <input
+                type="checkbox"
+                class="toggle toggle-info"
+                v-model="wageData.nativeEnabled"
+                :id="'toggle-native'"
+                data-test="toggle-hourly-rate-native"
+              />
+              <div class="relative w-full">
                 <input
+                  :disabled="!wageData.nativeEnabled"
                   type="text"
-                  class="input input-bordered join-item w-full"
+                  class="input input-bordered w-full rounded-xl pr-16"
                   v-model="wageData.hourlyRate"
-                  placeholder="Native token rate..."
+                  :placeholder="
+                    wageData.nativeEnabled ? 'Native token rate...' : NETWORK.currencySymbol
+                  "
                   data-test="hourly-rate-input"
+                  style="min-width: 220px"
                 />
-                <span class="join-item px-4 bg-primary text-primary-content flex items-center">
+                <span
+                  class="badge absolute right-4 top-1/2 -translate-y-1/2"
+                  :class="
+                    wageData.nativeEnabled ? 'badge-primary font-bold' : 'badge-ghost text-gray-400'
+                  "
+                  style="transition: all 0.2s; pointer-events: none"
+                >
                   {{ NETWORK.currencySymbol }}
                 </span>
               </div>
-              <div
-                data-test="hourly-rate-error"
-                class="text-red-500 text-sm w-full text-left"
-                v-for="error of v$.wageData.hourlyRate?.$errors"
-                :key="error.$uid"
-              >
-                {{ error.$message }}
-              </div>
+            </div>
+            <div
+              data-test="hourly-rate-error"
+              class="text-red-500 text-sm w-full text-left"
+              v-for="error of v$.wageData.hourlyRate?.$errors"
+              :key="error.$uid"
+            >
+              {{ error.$message }}
             </div>
 
             <!-- USDC -->
-            <div>
-              <div class="join w-full">
+            <div class="flex items-center gap-4">
+              <input
+                type="checkbox"
+                class="toggle toggle-info"
+                v-model="wageData.usdcEnabled"
+                :id="'toggle-usdc'"
+                data-test="toggle-hourly-rate-usdc"
+              />
+              <div class="relative w-full">
                 <input
+                  :disabled="!wageData.usdcEnabled"
                   type="text"
-                  class="input input-bordered join-item w-full"
+                  class="input input-bordered w-full rounded-xl pr-16"
                   v-model="wageData.hourlyRateUsdc"
-                  placeholder="USDC rate..."
+                  :placeholder="wageData.usdcEnabled ? 'USDC rate...' : 'USDC'"
                   data-test="hourly-rate-usdc-input"
+                  style="min-width: 220px"
                 />
-                <span class="join-item px-4 bg-primary text-primary-content flex items-center">
+                <span
+                  class="badge absolute right-4 top-1/2 -translate-y-1/2"
+                  :class="
+                    wageData.usdcEnabled ? 'badge-primary font-bold' : 'badge-ghost text-gray-400'
+                  "
+                  style="transition: all 0.2s; pointer-events: none"
+                >
                   USDC
                 </span>
               </div>
-              <div
-                data-test="hourly-rate-usdc-error"
-                class="text-red-500 text-sm w-full text-left"
-                v-for="error of v$.wageData.hourlyRateUsdc?.$errors"
-                :key="error.$uid"
-              >
-                {{ error.$message }}
-              </div>
+            </div>
+            <div
+              data-test="hourly-rate-usdc-error"
+              class="text-red-500 text-sm w-full text-left"
+              v-for="error of v$.wageData.hourlyRateUsdc?.$errors"
+              :key="error.$uid"
+            >
+              {{ error.$message }}
             </div>
 
             <!-- SHER -->
-            <div>
-              <div class="join w-full">
+            <div class="flex items-center gap-4">
+              <input
+                type="checkbox"
+                class="toggle toggle-info"
+                v-model="wageData.sherEnabled"
+                :id="'toggle-sher'"
+                data-test="toggle-hourly-rate-sher"
+              />
+              <div class="relative w-full">
                 <input
+                  :disabled="!wageData.sherEnabled"
                   type="text"
-                  class="input input-bordered join-item w-full"
+                  class="input input-bordered w-full rounded-xl pr-16"
                   v-model="wageData.hourlyRateToken"
-                  placeholder="SHER rate..."
+                  :placeholder="wageData.sherEnabled ? 'SHER rate...' : 'SHER'"
                   data-test="hourly-rate-sher-input"
+                  style="min-width: 220px"
                 />
-                <span class="join-item px-4 bg-primary text-primary-content flex items-center">
+                <span
+                  class="badge absolute right-4 top-1/2 -translate-y-1/2"
+                  :class="
+                    wageData.sherEnabled ? 'badge-primary font-bold' : 'badge-ghost text-gray-400'
+                  "
+                  style="transition: all 0.2s; pointer-events: none"
+                >
                   SHER
                 </span>
               </div>
-              <div
-                data-test="hourly-rate-sher-error"
-                class="text-red-500 text-sm w-full text-left"
-                v-for="error of v$.wageData.hourlyRateSher?.$errors"
-                :key="error.$uid"
-              >
-                {{ error.$message }}
-              </div>
+            </div>
+            <div
+              data-test="hourly-rate-sher-error"
+              class="text-red-500 text-sm w-full text-left"
+              v-for="error of v$.wageData.hourlyRateSher?.$errors"
+              :key="error.$uid"
+            >
+              {{ error.$message }}
             </div>
           </div>
         </div>
@@ -234,11 +281,15 @@ const emits = defineEmits(['refetchWage'])
 
 const showDeleteMemberConfirmModal = ref(false)
 const showSetMemberWageModal = ref(false)
+
 const wageData = ref({
   maxWeeklyHours: 0,
   hourlyRate: 0,
   hourlyRateUsdc: 0,
-  hourlyRateToken: 0
+  hourlyRateToken: 0,
+  nativeEnabled: false,
+  usdcEnabled: false,
+  sherEnabled: false
 })
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0

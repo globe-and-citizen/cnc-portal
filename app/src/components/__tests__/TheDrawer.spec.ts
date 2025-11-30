@@ -205,7 +205,7 @@ describe('TheDrawer', () => {
       expect(wrapper.classes()).toContain('w-[280px]')
 
       await wrapper.setProps({ modelValue: true })
-      expect(wrapper.classes()).toContain('w-20')
+      expect(wrapper.classes()).toContain('w-24')
     })
   })
 
