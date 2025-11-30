@@ -54,7 +54,8 @@ const columns: TableColumn<Team>[] = [
     }
   },
   {
-    accessorKey: '_count.members',
+    id: 'members',
+    accessorFn: row => row._count?.members || 0,
     header: 'Members',
     cell: ({ row }) => {
       const count = row.original._count?.members || 0

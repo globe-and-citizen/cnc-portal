@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   totalTeams: number
   totalMembers: number
   teamsWithOfficer: number
@@ -11,26 +11,22 @@ const statItems = computed(() => [
   {
     title: 'Total Teams',
     icon: 'i-lucide-users',
-    value: 0,
-    key: 'totalTeams'
+    value: props.totalTeams
   },
   {
     title: 'Total Members',
     icon: 'i-lucide-user',
-    value: 0,
-    key: 'totalMembers'
+    value: props.totalMembers
   },
   {
     title: 'Teams with Officer',
     icon: 'i-lucide-shield',
-    value: 0,
-    key: 'teamsWithOfficer'
+    value: props.teamsWithOfficer
   },
   {
     title: 'Avg Members/Team',
     icon: 'i-lucide-chart-bar',
-    value: 0,
-    key: 'avgMembersPerTeam'
+    value: props.avgMembersPerTeam
   }
 ])
 </script>
@@ -54,10 +50,7 @@ const statItems = computed(() => [
       <div class="flex items-center gap-2">
         <USkeleton v-if="isLoading" class="h-8 w-16" />
         <span v-else class="text-2xl font-semibold text-highlighted">
-          {{ stat.key === 'totalTeams' ? totalTeams
-            : stat.key === 'totalMembers' ? totalMembers
-              : stat.key === 'teamsWithOfficer' ? teamsWithOfficer
-                : avgMembersPerTeam }}
+          {{ stat.value }}
         </span>
       </div>
     </UPageCard>
