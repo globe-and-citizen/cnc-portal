@@ -28,6 +28,8 @@ describe('Officer Contract', function () {
   let investorBeacon: UpgradeableBeacon
   let elections: Elections__factory
   let electionsBeacon: UpgradeableBeacon
+  // let proposals: Proposals__factory
+  // let proposalsBeacon: UpgradeableBeacon
   let expenseAccountEip712: ExpenseAccountEIP712__factory
   let expenseAccountEip712Beacon: UpgradeableBeacon
   let bod: BoardOfDirectors__factory
@@ -40,10 +42,23 @@ describe('Officer Contract', function () {
   it('Should deploy contracts', async function () {
     ;[owner] = await ethers.getSigners()
 
+    const MockToken = await ethers.getContractFactory('MockERC20')
+    const usdt = await MockToken.deploy('USDT', 'USDT')
+    const usdc = await MockToken.deploy('USDC', 'USDC')
+    const usdtAddress = await usdt.getAddress()
+    const usdcAddress = await usdc.getAddress()
+
+    const feeConfigs = [{ contractType: 'BANK', feeBps: 50 }]
+    const supportedTokens = [usdtAddress, usdcAddress]
+
     const FeeCollector = await ethers.getContractFactory('FeeCollector')
-    feeCollector = (await upgrades.deployProxy(FeeCollector, [owner.address, []], {
-      initializer: 'initialize'
-    })) as unknown as FeeCollector
+    feeCollector = (await upgrades.deployProxy(
+      FeeCollector,
+      [owner.address, feeConfigs, supportedTokens],
+      {
+        initializer: 'initialize'
+      }
+    )) as unknown as FeeCollector
 
     // Deploy implementation contracts
     bankAccount = await ethers.getContractFactory('Bank')
@@ -51,6 +66,9 @@ describe('Officer Contract', function () {
 
     investor = await ethers.getContractFactory('InvestorV1')
     investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as UpgradeableBeacon
+
+    // proposals = await ethers.getContractFactory('Proposals')
+    // proposalsBeacon = (await upgrades.deployBeacon(proposals)) as unknown as UpgradeableBeacon
 
     elections = await ethers.getContractFactory('Elections')
     electionsBeacon = (await upgrades.deployBeacon(elections)) as unknown as UpgradeableBeacon
@@ -77,6 +95,10 @@ describe('Officer Contract', function () {
         beaconType: 'BoardOfDirectors',
         beaconAddress: await bodBeacon.getAddress()
       },
+      // {
+      //   beaconType: 'Proposals',
+      //   beaconAddress: await proposalsBeacon.getAddress()
+      // },
       {
         beaconType: 'ExpenseAccountEIP712',
         beaconAddress: await expenseAccountEip712Beacon.getAddress()
@@ -100,25 +122,8 @@ describe('Officer Contract', function () {
     deployments.push({
       contractType: 'Bank',
       initializerData: bankAccount.interface.encodeFunctionData('initialize', [
-        [],
-        await feeCollector.getAddress()
-      ])
-    })
-
-    deployments.push({
-      contractType: 'ExpenseAccountEIP712',
-      initializerData: expenseAccountEip712.interface.encodeFunctionData('initialize', [
-        owner.address,
-        ZeroAddress,
-        ZeroAddress
-      ])
-    })
-
-    deployments.push({
-      contractType: 'CashRemunerationEIP712',
-      initializerData: cashRemunerationEip712.interface.encodeFunctionData('initialize', [
-        ZeroAddress,
-        []
+        supportedTokens,
+        owner.address
       ])
     })
 
@@ -131,12 +136,34 @@ describe('Officer Contract', function () {
       ])
     })
 
+    // deployments.push({
+    //   contractType: 'Proposals',
+    //   initializerData: proposals.interface.encodeFunctionData('initialize', [owner.address])
+    // })
+
+    deployments.push({
+      contractType: 'ExpenseAccountEIP712',
+      initializerData: expenseAccountEip712.interface.encodeFunctionData('initialize', [
+        owner.address,
+        usdtAddress,
+        usdcAddress
+      ])
+    })
+
+    deployments.push({
+      contractType: 'CashRemunerationEIP712',
+      initializerData: cashRemunerationEip712.interface.encodeFunctionData('initialize', [
+        ZeroAddress,
+        [usdcAddress]
+      ])
+    })
+
     deployments.push({
       contractType: 'Elections',
       initializerData: elections.interface.encodeFunctionData('initialize', [owner.address])
     })
 
-    // Deploy Officer contract
+    // // Deploy Officer contract
     const Officer = await ethers.getContractFactory('Officer')
     officer = (await Officer.deploy(await feeCollector.getAddress())) as unknown as Officer
     await officer.waitForDeployment()
@@ -147,10 +174,16 @@ describe('Officer Contract', function () {
     const contractAddresses = new Map<string, string>()
 
     for (const contract of deployedContracts) {
-      // Type assertion to DeployedContract interface
       const deployedContract = contract as unknown as DeployedContract
       contractAddresses.set(deployedContract.contractType, deployedContract.contractAddress)
     }
+
+    // Test Officer's deployed contracts
+    const bankProxy = await ethers.getContractAt('Bank', contractAddresses.get('Bank')!)
+    const investorAddress = contractAddresses.get('InvestorV1')!
+
+    expect(await bankProxy.investorAddress()).to.equal(investorAddress)
+    expect(await bankProxy.officerAddress()).to.equal(await officer.getAddress())
 
     const cashRemunerationEip712Proxy = await ethers.getContractAt(
       'CashRemunerationEIP712',
@@ -186,5 +219,18 @@ describe('Officer Contract', function () {
     expect(
       await investorV1Proxy.hasRole(await investorV1Proxy.DEFAULT_ADMIN_ROLE(), owner.address)
     ).to.be.equal(true)
+
+    // Test Officer's FeeCollector integration (these are valid since Officer needs to query FeeCollector)
+    expect(await officer.isFeeCollectorToken(usdtAddress)).to.be.equal(true)
+    expect(await officer.isFeeCollectorToken(usdcAddress)).to.be.equal(true)
+
+    const unsupportedToken = await MockToken.deploy('DAI', 'DAI')
+    expect(await officer.isFeeCollectorToken(await unsupportedToken.getAddress())).to.be.equal(
+      false
+    )
+    expect(await officer.isFeeCollectorToken(ZeroAddress)).to.be.equal(false)
+
+    // Verify Officer has correct FeeCollector reference
+    expect(await officer.getFeeCollector()).to.equal(await feeCollector.getAddress())
   })
 })

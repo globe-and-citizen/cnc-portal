@@ -43,7 +43,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     ;[owner, addr1] = await ethers.getSigners()
 
     const FeeCollector = await ethers.getContractFactory('FeeCollector')
-    feeCollector = (await upgrades.deployProxy(FeeCollector, [owner.address, []], {
+    feeCollector = (await upgrades.deployProxy(FeeCollector, [owner.address, [], []], {
       initializer: 'initialize'
     })) as unknown as FeeCollector
 
