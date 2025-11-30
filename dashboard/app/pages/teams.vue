@@ -34,7 +34,11 @@ const handleRefresh = async () => {
     />
 
     <!-- Teams List Section -->
-    <UPageCard>
+    <UPageCard
+      :ui="{
+        header: 'w-full'
+      }"
+    >
       <template #header>
         <div class="flex items-center justify-between">
           <div>
