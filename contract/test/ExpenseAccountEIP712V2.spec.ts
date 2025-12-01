@@ -380,19 +380,35 @@ describe('ExpenseAccountEIP712V2', function () {
         deployExpenseAccountFixture
       )
 
-      const budgetLimit = createBudgetLimit({
+      // Test case 1: Approval not yet active (before start date)
+      const futureBudgetLimit = createBudgetLimit({
         startDate: Math.floor(Date.now() / 1000) + 86400, // Starts tomorrow
         endDate: Math.floor(Date.now() / 1000) + 30 * 86400,
         approvedAddress: approvedAddress.address
       })
 
-      const signature = await createSignature(owner, budgetLimit, expenseAccount)
+      const futureSignature = await createSignature(owner, futureBudgetLimit, expenseAccount)
 
       await expect(
         expenseAccount
           .connect(approvedAddress)
-          .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
-      ).to.be.revertedWith('Outside valid date range')
+          .transfer(recipient.address, ethers.parseEther('0.5'), futureBudgetLimit, futureSignature)
+      ).to.be.revertedWith('Approval not yet active')
+
+      // Test case 2: Approval expired (after end date)
+      const pastBudgetLimit = createBudgetLimit({
+        startDate: Math.floor(Date.now() / 1000) - 60 * 86400, // Started 60 days ago
+        endDate: Math.floor(Date.now() / 1000) - 30 * 86400, // Ended 30 days ago
+        approvedAddress: approvedAddress.address
+      })
+
+      const pastSignature = await createSignature(owner, pastBudgetLimit, expenseAccount)
+
+      await expect(
+        expenseAccount
+          .connect(approvedAddress)
+          .transfer(recipient.address, ethers.parseEther('0.5'), pastBudgetLimit, pastSignature)
+      ).to.be.revertedWith('Approval expired')
     })
 
     it('Should reject transfer exceeding single withdrawal limit', async function () {

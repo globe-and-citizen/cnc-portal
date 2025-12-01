@@ -75,6 +75,18 @@ describe('TransferComponent', () => {
   let wrapper
   let logErrorMock: unknown
 
+  const START_DATE = Math.floor(new Date().getTime() / 1000)
+  const END_DATE = START_DATE + 86400 * 30
+  const budgetLimit = {
+    tokenAddress: '0xTokenAddress',
+    approvedAddress: '0xApprovedAddress',
+    amount: 100,
+    frequencyType: 3,
+    startDate: START_DATE,
+    endDate: END_DATE,
+    customFrequency: 0
+  }
+
   // Component factory function
   const createComponent = (props: { row?: Record<string, unknown> } = {}) => {
     return mount(TransferAction, {
@@ -91,8 +103,14 @@ describe('TransferComponent', () => {
           status: 'enabled',
           signature: '0xSignature',
           data: {
-            tokenAddress: '0xTokenAddress',
-            budgetData: []
+            ...budgetLimit
+            // tokenAddress: '0xTokenAddress',
+            // approvedAddress: '0xApprovedAddress',
+            // amount: 100,
+            // frequencyType: 3,
+            // startDate: START_DATE,
+            // endDate: END_DATE,
+            // customFrequency: 0
           },
           balances: {},
           ...(props.row ?? {})
@@ -164,8 +182,9 @@ describe('TransferComponent', () => {
         '0xRecipientAddress',
         100000000n,
         {
-          budgetData: [],
-          tokenAddress: '0xTokenAddress'
+          ...budgetLimit,
+          amount: BigInt(Number(budgetLimit.amount) * 1e6),
+          customFrequency: 0n
         },
         '0xSignature'
       ]

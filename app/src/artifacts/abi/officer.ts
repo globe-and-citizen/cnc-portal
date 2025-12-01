@@ -2,6 +2,17 @@ import type { Abi } from 'viem'
 
 export const OFFICER_ABI = [
   {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_feeCollector',
+        type: 'address'
+      }
+    ],
+    stateMutability: 'nonpayable',
+    type: 'constructor'
+  },
+  {
     inputs: [],
     name: 'EnforcedPause',
     type: 'error'
@@ -320,6 +331,38 @@ export const OFFICER_ABI = [
         internalType: 'struct Officer.DeployedContract[]',
         name: '',
         type: 'tuple[]'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [],
+    name: 'getFeeCollector',
+    outputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'string',
+        name: 'contractType',
+        type: 'string'
+      }
+    ],
+    name: 'getFeeFor',
+    outputs: [
+      {
+        internalType: 'uint16',
+        name: '',
+        type: 'uint16'
       }
     ],
     stateMutability: 'view',

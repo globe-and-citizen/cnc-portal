@@ -47,7 +47,7 @@
           <template #label>
             <span class="label-text">Transfer From</span>
             <span class="label-text-alt"
-              >Limit: {{ transferData.token.spendableBalance }} {{ transferData.token.symbol }}
+              >Limit: {{ row.data.amount }} {{ transferData.token.symbol }}
             </span>
           </template>
         </TransferForm>
@@ -62,7 +62,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import { USDC_ADDRESS, type TokenId } from '@/constant'
-import type { BudgetData, BudgetLimit } from '@/types'
+import type { BudgetLimit } from '@/types'
 import { useContractBalance } from '@/composables'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { getTokens, log, parseError } from '@/utils'
@@ -105,8 +105,7 @@ const createDefaultTransferData = (): TransferData => ({
 
 const transferData = ref(createDefaultTransferData())
 const expenseBalance = computed(() => {
-  const budgetData = props.row.data.budgetData as BudgetData[]
-  const maxAmountData = budgetData.find((item) => item.budgetType === 1)?.value
+  const maxAmountData = props.row.data.amount
   const amountTransferred = props.row.balances[1]
   return maxAmountData && amountTransferred
     ? Number(maxAmountData) - Number(amountTransferred)
@@ -168,15 +167,14 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
       parseEther(amount),
       {
         ...budgetLimit,
-        budgetData: budgetLimit.budgetData.map((item) => ({
-          ...item,
-          value:
-            item.budgetType === 0
-              ? item.value
-              : budgetLimit.tokenAddress === zeroAddress
-                ? parseEther(`${item.value}`)
-                : BigInt(Number(item.value) * 1e6)
-        }))
+        amount:
+          budgetLimit.tokenAddress === zeroAddress
+            ? parseEther(`${budgetLimit.amount}`)
+            : BigInt(Number(budgetLimit.amount) * 1e6),
+        frequencyType: Number(budgetLimit.frequencyType),
+        customFrequency: BigInt(Number(budgetLimit.customFrequency)),
+        startDate: Number(budgetLimit.startDate),
+        endDate: Number(budgetLimit.endDate)
       },
       props.row.signature
     ]
@@ -245,13 +243,15 @@ const transferErc20Token = async () => {
         _amount,
         {
           ...budgetLimit,
-          budgetData: budgetLimit.budgetData.map((item: BudgetData) => ({
-            ...item,
-            value: item.budgetType === 0 ? item.value : BigInt(Number(item.value) * 1e6)
-          }))
+          amount: BigInt(Number(budgetLimit.amount) * 1e6),
+          frequencyType: Number(budgetLimit.frequencyType),
+          customFrequency: BigInt(Number(budgetLimit.customFrequency)),
+          startDate: Number(budgetLimit.startDate),
+          endDate: Number(budgetLimit.endDate)
         },
-        props.row.signature // signatureToTransfer.value
+        props.row.signature
       ]
+
       await simulateContract(config, {
         address: expenseAccountEip712Address.value,
         abi: EXPENSE_ACCOUNT_EIP712_ABI,

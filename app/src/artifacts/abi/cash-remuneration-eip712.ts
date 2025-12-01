@@ -2,17 +2,6 @@ import type { Abi } from 'viem'
 
 export const CASH_REMUNERATION_EIP712_ABI = [
   {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
-      }
-    ],
-    name: 'AddressInsufficientBalance',
-    type: 'error'
-  },
-  {
     inputs: [],
     name: 'ECDSAInvalidSignature',
     type: 'error'
@@ -51,7 +40,23 @@ export const CASH_REMUNERATION_EIP712_ABI = [
   },
   {
     inputs: [],
-    name: 'FailedInnerCall',
+    name: 'FailedCall',
+    type: 'error'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'balance',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'needed',
+        type: 'uint256'
+      }
+    ],
+    name: 'InsufficientBalance',
     type: 'error'
   },
   {

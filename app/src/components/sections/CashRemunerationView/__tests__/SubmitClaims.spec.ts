@@ -342,8 +342,8 @@ describe('SubmitClaims', () => {
           ]
         }
       })
-
-      expect((wrapper.vm as any).canSubmitClaim).toBe(false)
+      //@ts-expect-error not visible on wrapper
+      expect(wrapper.vm.canSubmitClaim).toBe(false)
     })
   })
 })

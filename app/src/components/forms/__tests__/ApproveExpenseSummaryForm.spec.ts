@@ -1,6 +1,8 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import ApproveExpenseSummaryForm from '../ApproveExpenseSummaryForm.vue'
+const START_DATE = Math.floor(new Date().getTime() / 1000)
+const END_DATE = START_DATE + 86400 * 30 // 30 days later
 
 describe('ApproveExpenseSummaryForm', () => {
   const createComponent = () => {
@@ -8,22 +10,12 @@ describe('ApproveExpenseSummaryForm', () => {
       props: {
         budgetLimit: {
           approvedAddress: '0x1234567890abcdef1234567890abcdef12345678',
-          budgetData: [
-            {
-              budgetType: 0,
-              value: 1000
-            },
-            {
-              budgetType: 1,
-              value: 2000
-            },
-            {
-              budgetType: 2,
-              value: 3000
-            }
-          ],
-          expiry: 1672531199000,
-          tokenAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdef'
+          amount: 1000,
+          frequencyType: 3,
+          customFrequency: 0,
+          startDate: START_DATE,
+          endDate: END_DATE,
+          tokenAddress: '0x0000000000000000000000000000000000000000'
         },
         loading: false
       }
@@ -33,6 +25,13 @@ describe('ApproveExpenseSummaryForm', () => {
   it('should render correctly', () => {
     const wrapper = createComponent()
     expect(wrapper.exists()).toBe(true)
+    expect(wrapper.text()).toContain(
+      `You are about to approve ${wrapper.props().budgetLimit.approvedAddress} with the following limits:`
+    )
+    expect(wrapper.text()).toContain('Amount: 1000 SepoliaETH')
+    expect(wrapper.text()).toContain('Frequency: Monthly')
+    expect(wrapper.text()).toContain(`Start Date: ${new Date(START_DATE * 1000).toLocaleString()}`)
+    expect(wrapper.text()).toContain(`End Date: ${new Date(END_DATE * 1000).toLocaleString()}`)
   })
 
   it('should emit submit event on button click', async () => {
