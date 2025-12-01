@@ -3,8 +3,10 @@
     <div class="max-w-md p-6 bg-white rounded-2xl shadow-lg">
       <h1 class="text-2xl font-bold text-red-500 mb-3">🔒 Session Locked</h1>
       <p class="text-gray-600 mb-4">
-        You are authenticated with this address {{ formatedUserAddress }}... But you have this
-        address connected {{ formatedConnectedAddress }}.
+        You are authenticated with this address
+        <span class="font-mono text-sm"> {{ formatedUserAddress }} </span>... But you have this
+        address connected <span class="font-mono text-sm">{{ formatedConnectedAddress }}</span
+        >.
       </p>
       <p class="text-sm text-gray-500 mb-6">
         Logout and login back.<br />
