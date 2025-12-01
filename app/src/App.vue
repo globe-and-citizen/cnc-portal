@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-base-200">
-    <RouterView v-if="isLockedRoute" />
+    <LockScreen v-if="lock" :user="{ address: userStore.address }" />
     <template v-else>
       <RouterView name="login" />
       <div v-if="userStore.isAuth">
@@ -101,6 +101,9 @@ import { useAuth } from './composables/useAuth'
 import { useAppStore } from './stores'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 import '@vuepic/vue-datepicker/dist/main.css'
+import LockScreen from './components/LockScreen.vue'
+
+const { address: connectedAddress } = useAccount()
 
 const { addErrorToast } = useToastStore()
 
@@ -116,12 +119,21 @@ const { name, address, imageUrl } = storeToRefs(userStore)
 const route = useRoute()
 const isLockedRoute = computed(() => route.path === '/locked')
 
+const lock = computed(() => {
+  if (userStore.isAuth) {
+    if (connectedAddress.value?.toLowerCase() !== userStore.address.toLowerCase()) {
+      return true
+    }
+  }
+  return false
+})
+
 watch(isDisconnected, (value) => {
   if (value && userStore.isAuth) {
     addErrorToast('Disconnected from wallet')
     setTimeout(() => {
       logout()
-    }, 3000)
+    }, 1000)
   }
 })
 </script>
