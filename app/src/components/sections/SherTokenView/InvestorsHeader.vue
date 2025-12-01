@@ -14,7 +14,7 @@
           ? formatUnits(tokenBalance, 6) + ' ' + tokenSymbol
           : '...'
       "
-      subtitle="Balance"
+      subtitle="Your Balance"
       variant="success"
       :card-icon="bagIcon"
       :loading="!teamStore.currentTeam"

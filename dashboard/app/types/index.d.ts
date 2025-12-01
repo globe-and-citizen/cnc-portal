@@ -58,3 +58,16 @@ export interface Range {
   start: Date
   end: Date
 }
+
+export interface Team {
+  id: number
+  name: string
+  description: string | null
+  ownerAddress: string
+  officerAddress: string | null
+  createdAt: string
+  updatedAt: string
+  _count?: {
+    members: number
+  }
+}

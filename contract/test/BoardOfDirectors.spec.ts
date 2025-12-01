@@ -46,9 +46,13 @@ describe('BoardOfDirectors', async () => {
     await voting.setBoardOfDirectorsContractAddress(await boardOfDirectorsProxy.getAddress())
 
     const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
-    const feeCollector = await upgrades.deployProxy(FeeCollectorFactory, [founder.address, []], {
-      initializer: 'initialize'
-    })
+    const feeCollector = await upgrades.deployProxy(
+      FeeCollectorFactory,
+      [founder.address, [], []],
+      {
+        initializer: 'initialize'
+      }
+    )
 
     const OfficerFactory = await ethers.getContractFactory('Officer')
     const officer = await OfficerFactory.deploy(await feeCollector.getAddress())
@@ -57,16 +61,14 @@ describe('BoardOfDirectors', async () => {
 
     const BankFactory = await ethers.getContractFactory('Bank')
     const bank = await BankFactory.connect(founder).deploy()
-    await bank.initialize(
-      [], // token addresses array
-      await officer.getAddress()
-    )
 
     const officerAddress = await officer.getAddress()
     await impersonateAccount(officerAddress)
     await setBalance(officerAddress, ethers.parseEther('1'))
     const officerSigner = await ethers.getSigner(officerAddress)
-    await bank.connect(officerSigner).transferOwnership(await founder.getAddress())
+
+    // Initialize from the officer (msg.sender) while setting the founder as the owner
+    await bank.connect(officerSigner).initialize([], await founder.getAddress())
     await stopImpersonatingAccount(officerAddress)
 
     // transfer ownership of bank to boardOfDirectors

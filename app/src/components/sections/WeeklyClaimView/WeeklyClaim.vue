@@ -10,7 +10,7 @@
       <template #member-data="{ row }">
         <RouterLink
           :to="{
-            name: 'claim-history',
+            name: 'payroll-history',
             params: { id: teamStore.currentTeam?.id, memberAddress: row.member.address }
           }"
           class="flex items-center gap-2 hover:underline text-emerald-700"

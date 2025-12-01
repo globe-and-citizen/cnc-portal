@@ -1,7 +1,7 @@
 <template>
   <div
     class="p-3 gap-4 flex flex-col h-screen max-h-screen backdrop-blur-md border-0 border-r-2 border-slate-100 transition-all duration-300 ease-in-out"
-    :class="[isCollapsed ? 'w-20' : 'w-[280px]']"
+    :class="[isCollapsed ? 'w-24' : 'w-[280px]']"
   >
     <!-- Logo Group -->
     <div
@@ -125,7 +125,7 @@
     </div>
 
     <div class="flex-1 overflow-y-auto custom-scrollbar border-b-2">
-      <div class="mb-4">
+      <div class="mb-4" :class="{ 'text-center': isCollapsed }">
         <span class="text-xs font-bold text-gray-400 tracking-tight"> General </span>
       </div>
 
@@ -381,72 +381,87 @@ const menuItems = computed(() => [
     active: route.name === 'show-team',
     show: true
   },
+
   {
-    label: 'Bank',
-    icon: 'heroicons:banknotes',
-    route: {
-      name: 'bank',
-      params: { id: teamStore.currentTeam?.id || '1' }
-    },
-    active: route.name === 'bank',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
-  },
-  {
-    label: 'Cash Remuneration',
+    label: 'Accounts',
     icon: 'heroicons:currency-dollar',
     route: {
-      name: 'cash-remunerations',
+      name: 'bank-account',
       params: { id: teamStore.currentTeam?.id || '1' }
     },
     // Active if any child is active or the parent route is active
     active:
-      route.name === 'cash-remunerations' ||
-      route.name === 'weekly-claim' ||
-      route.name === 'claim-history' ||
-      (route.name === 'claim-history' && route.params.memberAddress === userStore.address),
+      route.name === 'bank-account' ||
+      route.name === 'expense-account' ||
+      route.name === 'payroll-account' ||
+      route.name === 'team-payroll' ||
+      route.name === 'payroll-history' ||
+      (route.name === 'payroll-history' && route.params.memberAddress === userStore.address),
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
       {
-        label: 'CR Dashboard',
+        label: 'Bank Account',
+        icon: 'heroicons:banknotes',
         route: {
-          name: 'cash-remunerations',
+          name: 'bank-account',
           params: { id: teamStore.currentTeam?.id || '1' }
         },
-        active: route.name === 'cash-remunerations',
+        active: route.name === 'bank-account',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       },
       {
-        label: 'My Claim History',
+        label: 'Expense Account ',
+        icon: 'heroicons:briefcase',
         route: {
-          name: 'claim-history',
+          name: 'expense-account',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'expense-account',
+        show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      },
+      {
+        label: 'Payroll Account',
+        route: {
+          name: 'payroll-account',
+          params: { id: teamStore.currentTeam?.id || '1' }
+        },
+        active: route.name === 'payroll-account',
+        show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      },
+      {
+        label: 'My Payroll History',
+        route: {
+          name: 'payroll-history',
           params: { id: teamStore.currentTeam?.id || '1', memberAddress: userStore.address }
         },
-        active: route.name === 'claim-history' && route.params.memberAddress === userStore.address,
+        active:
+          route.name === 'payroll-history' && route.params.memberAddress === userStore.address,
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       },
       {
-        label: ' Member Claim History',
+        label: ' Member Payroll History',
         route: {
-          name: 'claim-history',
+          name: 'payroll-history',
           params: {
             id: teamStore.currentTeam?.id || '1',
             memberAddress: route.params.memberAddress
           }
         },
         // Active if on claim-history and not the current user
-        active: route.name === 'claim-history' && route.params.memberAddress !== userStore.address,
+        active:
+          route.name === 'payroll-history' && route.params.memberAddress !== userStore.address,
         show:
           (teamStore.currentTeam?.teamContracts ?? []).length > 0 &&
           !!route.params.memberAddress &&
           route.params.memberAddress !== userStore.address
       },
       {
-        label: 'Team Weekly Claims',
+        label: 'Team Payroll',
         route: {
-          name: 'weekly-claim',
+          name: 'team-payroll',
           params: { id: teamStore.currentTeam?.id || '1' }
         },
-        active: route.name === 'weekly-claim',
+        active: route.name === 'team-payroll',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
       }
       // {
@@ -461,16 +476,6 @@ const menuItems = computed(() => [
       //     (teamStore.currentTeam?.teamContracts ?? []).length > 0 && !isCashRemunerationOwner.value
       // }
     ].filter((child) => child.show)
-  },
-  {
-    label: 'Expense Account ',
-    icon: 'heroicons:briefcase',
-    route: {
-      name: 'expense-account',
-      params: { id: teamStore.currentTeam?.id || '1' }
-    },
-    active: route.name === 'expense-account',
-    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
 
   {
