@@ -55,15 +55,22 @@ const app = express();
 app.use(express.json());
 app.use('/', authorizeUser, expenseRoutes);
 
+const START_DATE = Math.floor(Date.now() / 1000) + 3600;
+const END_DATE = START_DATE + (3600 * 24 * 30);
+
 const mockExpenseData = {
   approvedAddress: '0x1234567890123456789012345678901234567890',
-  budgetData: [
+  /* budgetData: [
     { budgetType: 0, value: 10 },
     { budgetType: 1, value: 100 },
     { budgetType: 2, value: 10 },
-  ],
+  ], */
+  amount: 150,
+  frequencyType: 3,
+  customFrequency: 0,
   tokenAddress: '0x1111111111111111111111111111111111111111',
-  expiry: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+  startDate: START_DATE, // 1 hour from now
+  endDate: END_DATE, // 30 days from start date
 };
 
 // Helper function to create variations of expense data for testing

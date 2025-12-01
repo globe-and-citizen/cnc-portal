@@ -94,6 +94,10 @@ contract ExpenseAccountEIP712 is
     error AmountPerPeriodExceeded(uint256 amount);
 
     error AmountPerTransactionExceeded(uint256 amount);
+
+    error ApprovalNotActive(uint256 currentTime, uint256 startDate);
+
+    error ApprovalExpired(uint256 currentTime, uint256 endDate);
     
     function initialize(
         address owner,
@@ -139,9 +143,11 @@ contract ExpenseAccountEIP712 is
 
         // Perform transfer
         if (budgetLimit.tokenAddress == address(0)) {
+            require(address(this).balance >= amount, "Insufficient native balance");
             payable(to).sendValue(amount);
             emit Transfer(budgetLimit.approvedAddress, to, amount);
         } else {
+            require(IERC20(budgetLimit.tokenAddress).balanceOf(address(this)) >= amount, "Insufficient token balance");
             require(IERC20(budgetLimit.tokenAddress).transfer(to, amount), "Token transfer failed");
             emit TokenTransfer(budgetLimit.approvedAddress, to, budgetLimit.tokenAddress, amount);
         }
@@ -155,12 +161,8 @@ contract ExpenseAccountEIP712 is
         uint256 amount,
         bytes32 signatureHash
     ) public view returns (bool) {
-        // Check if within date range
-        require(
-            block.timestamp >= budgetLimit.startDate && 
-            block.timestamp <= budgetLimit.endDate,
-            "Outside valid date range"
-        );
+        require(block.timestamp >= budgetLimit.startDate, "Approval not yet active");
+        require(block.timestamp <= budgetLimit.endDate, "Approval expired" );
 
         // Check amount doesn't exceed single withdrawal limit
         require(amount <= budgetLimit.amount, "Amount exceeds budget limit");

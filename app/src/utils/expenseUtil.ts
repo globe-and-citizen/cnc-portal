@@ -3,7 +3,27 @@ import { tokenSymbol } from './constantUtil'
 import { zeroAddress } from 'viem'
 import type { TokenId } from '@/constant'
 import type { TableRow } from '@/components/TableComponent.vue'
-import type { BudgetData } from '@/types/expense-account'
+
+// Frequency types mapping
+export const frequencyTypes = [
+  { value: 0, label: 'One Time' },
+  { value: 1, label: 'Daily' },
+  { value: 2, label: 'Weekly' },
+  { value: 3, label: 'Monthly' },
+  { value: 4, label: 'Custom' }
+]
+
+export const getFrequencyType = (frequencyType: number) => {
+  const frequency = frequencyTypes.find((f) => f.value === frequencyType)
+  return frequency ? frequency.label : 'Unknown'
+}
+
+export const getCustomFrequency = (customFrequency: number) => {
+  if (customFrequency <= 0) return 'N/A'
+  const days = Math.floor(customFrequency / (24 * 60 * 60))
+  return `${days} day(s)`
+}
+
 export const getCurrentUserExpenses = (expenses: ExpenseResponse[], userAddress: string) => {
   if (!expenses || !userAddress || !Array.isArray(expenses)) return []
   return expenses.filter((expense) => expense.data.approvedAddress === userAddress)
@@ -52,8 +72,7 @@ const findToken = (tokenId: TokenId, balances: TokenBalance[]) => {
  * @returns The remaining balance that can be spent, or null if no budget data found
  */
 export const getRemainingExpenseBalance = (expense: TableRow, contractBalance: number): number => {
-  const budgetData = expense.data.budgetData as BudgetData[]
-  const maxAmountData = budgetData.find((item) => item.budgetType === 1)?.value
+  const maxAmountData = expense.amount // budgetData.find((item) => item.budgetType === 1)?.value
   const amountTransferred = expense.balances[1]
 
   // Calculate remaining spendable amount

@@ -11,16 +11,12 @@ export const addExpenseBodySchema = z.object({
   signature: z.string().min(1, 'Signature cannot be empty'),
   data: z.object({
     approvedAddress: z.string().min(1, 'approvedAddress is required'),
-    budgetData: z
-      .array(
-        z.object({
-          budgetType: z.number().int().nonnegative(),
-          value: z.number().nonnegative(),
-        })
-      )
-      .min(1, 'budgetData must have at least one entry'),
+    amount: z.number().nonnegative(),//.min(1, 'approvedAddress is required'),
+    frequencyType: z.number().int().nonnegative(),
+    customFrequency: z.number().int().nonnegative(),
     tokenAddress: z.string().min(1, 'tokenAddress is required'),
-    expiry: z.number().int().nonnegative(),
+    startDate: z.number().int().nonnegative(),
+    endDate: z.number().int().nonnegative(),
   }),
 });
 
