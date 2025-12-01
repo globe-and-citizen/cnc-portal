@@ -446,6 +446,25 @@ export const OFFICER_ABI = [
     type: 'function'
   },
   {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_tokenAddress',
+        type: 'address'
+      }
+    ],
+    name: 'isFeeCollectorToken',
+    outputs: [
+      {
+        internalType: 'bool',
+        name: '',
+        type: 'bool'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
     inputs: [],
     name: 'owner',
     outputs: [
