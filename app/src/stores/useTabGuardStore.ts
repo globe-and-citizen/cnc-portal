@@ -1,10 +1,11 @@
 import { defineStore } from 'pinia'
-import router from '@/router'
+import { ref } from 'vue'
 
 const TAB_COUNT_KEY = 'app_open_tabs'
-const RETURN_PATH_KEY = 'app_last_path'
 
 export const useTabGuardStore = defineStore('tabGuard', () => {
+  // expose the number of open tabs for per-tab decisions
+  const openTabs = ref(0)
   // ---- Helpers ----------------------------------------------------
   function ensureKeyExists() {
     if (!localStorage.getItem(TAB_COUNT_KEY)) {
@@ -25,22 +26,8 @@ export const useTabGuardStore = defineStore('tabGuard', () => {
   }
 
   function evaluateLockState() {
-    const openTabs = Number(localStorage.getItem(TAB_COUNT_KEY) || 0)
-
-    if (openTabs > 1) {
-      //  Multiple tabs detected → lock all
-      if (router.currentRoute.value.name !== 'LockedView') {
-        sessionStorage.setItem(RETURN_PATH_KEY, router.currentRoute.value.fullPath)
-        void router.replace({ name: 'LockedView' }).catch(() => {})
-      }
-    } else {
-      //  Single tab → unlock
-      if (router.currentRoute.value.name === 'LockedView') {
-        const returnPath = sessionStorage.getItem(RETURN_PATH_KEY)
-        sessionStorage.removeItem(RETURN_PATH_KEY)
-        void router.replace(returnPath || { name: 'home' }).catch(() => {})
-      }
-    }
+    const count = Number(localStorage.getItem(TAB_COUNT_KEY) || 0)
+    openTabs.value = count
   }
 
   // ---- Public initialization method -------------------------------
@@ -64,16 +51,9 @@ export const useTabGuardStore = defineStore('tabGuard', () => {
       }
     })
 
-    // Track last route to restore after unlock
-    router.afterEach((to) => {
-      if (to.name !== 'LockedView') {
-        sessionStorage.setItem(RETURN_PATH_KEY, to.fullPath)
-      }
-    })
-
     // Initial check
-    router.isReady().then(evaluateLockState)
+    evaluateLockState()
   }
 
-  return { init }
+  return { init, openTabs }
 })

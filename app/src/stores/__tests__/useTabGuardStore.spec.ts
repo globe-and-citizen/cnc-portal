@@ -3,28 +3,10 @@ import { setActivePinia, createPinia } from 'pinia'
 import { useTabGuardStore } from '@/stores/useTabGuardStore'
 
 const TAB_COUNT_KEY = 'app_open_tabs'
-const RETURN_PATH_KEY = 'app_last_path'
 
-type AfterEachCallback = (to: { name?: string | null; fullPath: string }) => void
 type StorageEventLike = { key: string | null; newValue: string | null }
 type StorageListener = (event: StorageEventLike) => void
 type BeforeUnloadListener = (event: Event) => void
-
-const { replaceMock, isReadyMock, afterEachMock, currentRoute } = vi.hoisted(() => ({
-  replaceMock: vi.fn(),
-  isReadyMock: vi.fn(),
-  afterEachMock: vi.fn<(cb: AfterEachCallback) => void>(),
-  currentRoute: { value: { name: 'home', fullPath: '/home' } }
-}))
-
-vi.mock('@/router', () => ({
-  default: {
-    replace: replaceMock,
-    isReady: isReadyMock,
-    afterEach: afterEachMock,
-    currentRoute
-  }
-}))
 
 const originalAddEventListener = window.addEventListener
 
@@ -32,7 +14,6 @@ describe('useTabGuardStore', () => {
   let tabGuardStore: ReturnType<typeof useTabGuardStore>
   let storageListeners: StorageListener[]
   let beforeUnloadListeners: BeforeUnloadListener[]
-  let afterEachCallbacks: AfterEachCallback[]
 
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -43,20 +24,6 @@ describe('useTabGuardStore', () => {
 
     storageListeners = []
     beforeUnloadListeners = []
-    afterEachCallbacks = []
-
-    currentRoute.value = { name: 'home', fullPath: '/home' }
-
-    replaceMock.mockReset()
-    replaceMock.mockResolvedValue(undefined)
-
-    isReadyMock.mockReset()
-    isReadyMock.mockResolvedValue(undefined)
-
-    afterEachMock.mockReset()
-    afterEachMock.mockImplementation((callback: AfterEachCallback) => {
-      afterEachCallbacks.push(callback)
-    })
 
     vi.spyOn(window, 'addEventListener').mockImplementation(
       (
@@ -94,20 +61,18 @@ describe('useTabGuardStore', () => {
     expect(localStorage.getItem(TAB_COUNT_KEY)).toBe('0')
   })
 
-  it('locks the app when multiple tabs are detected via storage events', () => {
-    const currentPath = '/teams/1'
-    currentRoute.value = { name: 'home', fullPath: currentPath }
-
+  it('updates openTabs when storage events change the tab count', () => {
     tabGuardStore.init()
 
     const storageHandler = storageListeners[0]
     expect(storageHandler).toBeDefined()
 
+    // simulate another tab incrementing the count
     localStorage.setItem(TAB_COUNT_KEY, '2')
     storageHandler!({ key: TAB_COUNT_KEY, newValue: '2' })
 
-    expect(sessionStorage.getItem(RETURN_PATH_KEY)).toBe(currentPath)
-    expect(replaceMock).toHaveBeenCalledWith({ name: 'LockedView' })
+    expect(localStorage.getItem(TAB_COUNT_KEY)).toBe('2')
+    expect(tabGuardStore.openTabs).toBe(2)
   })
 
   it('normalizes cleared storage values back to a single tab', () => {
@@ -120,39 +85,6 @@ describe('useTabGuardStore', () => {
     storageHandler!({ key: TAB_COUNT_KEY, newValue: null })
 
     expect(localStorage.getItem(TAB_COUNT_KEY)).toBe('1')
-    expect(replaceMock).not.toHaveBeenCalled()
-  })
-
-  it('unlocks the app and restores the last path when returning to a single tab', async () => {
-    currentRoute.value = { name: 'LockedView', fullPath: '/locked' }
-    sessionStorage.setItem(RETURN_PATH_KEY, '/teams/2')
-
-    tabGuardStore.init()
-    await Promise.resolve()
-
-    replaceMock.mockClear()
-    sessionStorage.setItem(RETURN_PATH_KEY, '/teams/2')
-
-    const storageHandler = storageListeners[0]
-    expect(storageHandler).toBeDefined()
-
-    localStorage.setItem(TAB_COUNT_KEY, '1')
-    storageHandler!({ key: TAB_COUNT_KEY, newValue: '1' })
-
-    expect(replaceMock).toHaveBeenCalledWith('/teams/2')
-    expect(sessionStorage.getItem(RETURN_PATH_KEY)).toBeNull()
-  })
-
-  it('tracks the last non-locked route through the afterEach hook', () => {
-    tabGuardStore.init()
-
-    const hook = afterEachCallbacks[0]
-    expect(hook).toBeDefined()
-
-    hook!({ name: 'bank', fullPath: '/teams/1/bank' })
-    expect(sessionStorage.getItem(RETURN_PATH_KEY)).toBe('/teams/1/bank')
-
-    hook!({ name: 'LockedView', fullPath: '/locked' })
-    expect(sessionStorage.getItem(RETURN_PATH_KEY)).toBe('/teams/1/bank')
+    expect(tabGuardStore.openTabs).toBe(1)
   })
 })
