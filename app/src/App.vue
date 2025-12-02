@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { RouterView, useRoute } from 'vue-router'
+import { RouterView } from 'vue-router'
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/useToastStore'
