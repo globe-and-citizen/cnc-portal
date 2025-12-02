@@ -117,7 +117,6 @@ const userStore = useUserDataStore()
 const { name, address, imageUrl } = storeToRefs(userStore)
 
 const route = useRoute()
-const isLockedRoute = computed(() => route.path === '/locked')
 
 const lock = computed(() => {
   if (userStore.isAuth) {
