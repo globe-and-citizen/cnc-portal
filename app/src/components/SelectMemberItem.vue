@@ -135,7 +135,7 @@ const select = (member: User) => {
   const teamId = teamStore.currentTeam?.id
   if (teamId) {
     router.push({
-      name: 'claim-history',
+      name: 'payroll-history',
       params: {
         id: teamId,
         memberAddress: member.address
