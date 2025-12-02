@@ -95,9 +95,7 @@ export const getExpenses = async (req: AuthenticatedRequest, res: Response) => {
       }
     })
 
-    const _expenses = await Promise.all(
-      expenses.map(async (expense) => await syncExpenseStatus(expense))
-    )
+    const _expenses = await Promise.all(expenses.map((expense) => syncExpenseStatus(expense)))
     // TODO: for each expense, check the status and update it
 
     return res.status(200).json(_expenses)

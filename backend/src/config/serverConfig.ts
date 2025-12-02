@@ -19,6 +19,7 @@ import contractRoutes from '../routes/contractRoutes'
 
 import { authorizeUser } from '../middleware/authMiddleware'
 import { errorMessages } from '../utils/serverConfigUtil'
+import path from 'path'
 
 // Swagger import
 
@@ -35,7 +36,6 @@ const options = {
   apis: ['./src/routes/*.ts'] // Point to route files containing JSDoc comments
 }
 const swaggerSpec = swaggerJsdoc(options)
-import path from 'path'
 
 class Server {
   private static instance: Server | undefined
