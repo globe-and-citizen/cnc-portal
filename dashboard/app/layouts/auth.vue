@@ -1,11 +1,9 @@
 <script setup lang="ts">
 const colorMode = useColorMode()
-const color = computed(() => colorMode.value === 'dark' ? '#1b1718' : 'white')
+const color = computed(() => (colorMode.value === 'dark' ? '#1b1718' : 'white'))
 
 useHead({
-  meta: [
-    { key: 'theme-color', name: 'theme-color', content: color }
-  ]
+  meta: [{ key: 'theme-color', name: 'theme-color', content: color }]
 })
 </script>
 

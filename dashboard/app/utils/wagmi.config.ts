@@ -4,9 +4,7 @@ import { injected } from '@wagmi/vue/connectors'
 
 export const wagmiConfig = createConfig({
   chains: [mainnet, sepolia, polygon, hardhat, polygonAmoy],
-  connectors: [
-    injected()
-  ],
+  connectors: [injected()],
   transports: {
     [mainnet.id]: http(),
     [sepolia.id]: http('https://sepolia.drpc.org'),
