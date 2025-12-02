@@ -1,47 +1,47 @@
 <script setup lang="ts">
-import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui';
+import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
 
-const { isNotificationsSlideoverOpen } = useDashboard();
-const route = useRoute();
+const { isNotificationsSlideoverOpen } = useDashboard()
+const route = useRoute()
 
-const open = ref(false);
+const open = ref(false)
 
 // Dynamic page title based on current route
 const pageTitle = computed(() => {
-  const routeName = route.name as string;
-  const path = route.path;
+  const routeName = route.name as string
+  const path = route.path
 
   // Map route names to titles
   const titleMap: Record<string, string> = {
-    index: 'Overview',
-    teams: 'Teams Management',
-    micropayments: 'Micropayments',
-    contracts: 'Contracts',
-    settings: 'Settings',
+    'index': 'Overview',
+    'teams': 'Teams Management',
+    'micropayments': 'Micropayments',
+    'contracts': 'Contracts',
+    'settings': 'Settings',
     'settings-members': 'Members',
     'settings-notifications': 'Notifications',
-    'settings-security': 'Security',
-  };
+    'settings-security': 'Security'
+  }
 
   // Return mapped title or capitalize first segment of path
   if (routeName && titleMap[routeName]) {
-    return titleMap[routeName];
+    return titleMap[routeName]
   }
 
   // Fallback: capitalize the first path segment
-  const segment = path.split('/')[1] || 'home';
-  return segment.charAt(0).toUpperCase() + segment.slice(1);
-});
+  const segment = path.split('/')[1] || 'home'
+  return segment.charAt(0).toUpperCase() + segment.slice(1)
+})
 
 // Dynamic panel id based on current route
 const panelId = computed(() => {
-  return route.path === '/' ? 'home' : route.path.split('/')[1] || 'home';
-});
+  return route.path === '/' ? 'home' : route.path.split('/')[1] || 'home'
+})
 
 // Set the page title in the browser tab
 useHead({
-  title: () => `${pageTitle.value} | CNC Portal Dashboard`,
-});
+  title: () => `${pageTitle.value} | CNC Portal Dashboard`
+})
 
 const links = [
   [
@@ -50,8 +50,8 @@ const links = [
       icon: 'i-lucide-house',
       to: '/',
       onSelect: () => {
-        open.value = false;
-      },
+        open.value = false
+      }
     },
     {
       label: 'Teams Management',
@@ -59,16 +59,16 @@ const links = [
       to: '/teams',
       badge: '4',
       onSelect: () => {
-        open.value = false;
-      },
+        open.value = false
+      }
     },
     {
       label: 'Micropayments',
       icon: 'i-lucide-wallet',
       to: '/micropayments',
       onSelect: () => {
-        open.value = false;
-      },
+        open.value = false
+      }
     },
     {
       label: 'Contracts',
@@ -82,69 +82,69 @@ const links = [
           to: '/contracts',
           exact: true,
           onSelect: () => {
-            open.value = false;
-          },
+            open.value = false
+          }
         },
         {
           label: 'Members',
           to: '/contracts',
           onSelect: () => {
-            open.value = false;
-          },
+            open.value = false
+          }
         },
         {
           label: 'Notifications',
           to: '/contracts',
           onSelect: () => {
-            open.value = false;
-          },
+            open.value = false
+          }
         },
         {
           label: 'Security',
           to: '/settings/security',
           onSelect: () => {
-            open.value = false;
-          },
-        },
-      ],
-    },
+            open.value = false
+          }
+        }
+      ]
+    }
   ],
   [
     {
       label: 'Feedback',
       icon: 'i-lucide-message-circle',
       to: 'https://discord.gg/HG2GAhN2',
-      target: '_blank',
+      target: '_blank'
     },
     {
       label: 'Help & Support',
       icon: 'i-lucide-info',
       to: 'https://discord.gg/HG2GAhN2',
-      target: '_blank',
-    },
-  ],
-] satisfies NavigationMenuItem[][];
+      target: '_blank'
+    }
+  ]
+] satisfies NavigationMenuItem[][]
 
 const items = [
   [
     {
       label: 'New mail',
       icon: 'i-lucide-send',
-      to: '/inbox',
+      to: '/inbox'
     },
     {
       label: 'New customer',
       icon: 'i-lucide-user-plus',
-      to: '/customers',
-    },
-  ],
-] satisfies DropdownMenuItem[][];
+      to: '/customers'
+    }
+  ]
+] satisfies DropdownMenuItem[][]
 
 const groups = computed(() => [
   {
     id: 'links',
     label: 'Go to',
-    items: links.flat(),
+    items: links.flat()
   },
   {
     id: 'code',
@@ -155,11 +155,11 @@ const groups = computed(() => [
         label: 'View page source',
         icon: 'i-simple-icons-github',
         to: 'https://github.com/globe-and-citizen/cnc-portal/',
-        target: '_blank',
-      },
-    ],
-  },
-]);
+        target: '_blank'
+      }
+    ]
+  }
+])
 </script>
 
 <template>
@@ -179,8 +179,13 @@ const groups = computed(() => [
             src="/logo-icon.png"
             alt="CNC Portal"
             class="h-8 w-8 object-contain"
-          />
-          <img v-else src="/logo.png" alt="CNC Portal" class="h-10 w-auto object-contain" />
+          >
+          <img
+            v-else
+            src="/logo.png"
+            alt="CNC Portal"
+            class="h-10 w-auto object-contain"
+          >
         </NuxtLink>
       </template>
 

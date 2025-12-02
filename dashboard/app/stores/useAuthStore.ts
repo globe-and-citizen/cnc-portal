@@ -1,28 +1,28 @@
-import { createSharedComposable, useLocalStorage } from '@vueuse/core';
+import { createSharedComposable, useLocalStorage } from '@vueuse/core'
 
 export interface AuthState {
-  isAuthenticated: boolean;
-  address: string | null;
-  token: string | null;
+  isAuthenticated: boolean
+  address: string | null
+  token: string | null
 }
 
 const _useAuthStore = () => {
-  const token = useLocalStorage<string | null>('dashboard-auth-token', null);
-  const address = useLocalStorage<string | null>('dashboard-auth-address', null);
+  const token = useLocalStorage<string | null>('dashboard-auth-token', null)
+  const address = useLocalStorage<string | null>('dashboard-auth-address', null)
 
-  const isAuthenticated = computed(() => !!token.value && !!address.value);
+  const isAuthenticated = computed(() => !!token.value && !!address.value)
 
   const setAuth = (authToken: string, userAddress: string) => {
-    token.value = authToken;
-    address.value = userAddress;
-  };
+    token.value = authToken
+    address.value = userAddress
+  }
 
   const clearAuth = () => {
-    token.value = null;
-    address.value = null;
-  };
+    token.value = null
+    address.value = null
+  }
 
-  const getToken = () => token.value;
+  const getToken = () => token.value
 
   return {
     token,
@@ -30,8 +30,8 @@ const _useAuthStore = () => {
     isAuthenticated,
     setAuth,
     clearAuth,
-    getToken,
-  };
-};
+    getToken
+  }
+}
 
-export const useAuthStore = createSharedComposable(_useAuthStore);
+export const useAuthStore = createSharedComposable(_useAuthStore)

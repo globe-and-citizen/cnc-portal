@@ -1,57 +1,63 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { breakpointsTailwind } from '@vueuse/core';
-import type { Mail } from '~/types';
+import { computed, ref, watch } from 'vue'
+import { breakpointsTailwind } from '@vueuse/core'
+import type { Mail } from '~/types'
 
 const tabItems = [
   {
     label: 'All',
-    value: 'all',
+    value: 'all'
   },
   {
     label: 'Unread',
-    value: 'unread',
-  },
-];
-const selectedTab = ref('all');
+    value: 'unread'
+  }
+]
+const selectedTab = ref('all')
 
-const { data: mails } = await useFetch<Mail[]>('/api/mails', { default: () => [] });
+const { data: mails } = await useFetch<Mail[]>('/api/mails', { default: () => [] })
 
 // Filter mails based on the selected tab
 const filteredMails = computed(() => {
   if (selectedTab.value === 'unread') {
-    return mails.value.filter((mail) => !!mail.unread);
+    return mails.value.filter(mail => !!mail.unread)
   }
 
-  return mails.value;
-});
+  return mails.value
+})
 
-const selectedMail = ref<Mail | null>();
+const selectedMail = ref<Mail | null>()
 
 const isMailPanelOpen = computed({
   get() {
-    return !!selectedMail.value;
+    return !!selectedMail.value
   },
   set(value: boolean) {
     if (!value) {
-      selectedMail.value = null;
+      selectedMail.value = null
     }
-  },
-});
+  }
+})
 
 // Reset selected mail if it's not in the filtered mails
 watch(filteredMails, () => {
-  if (!filteredMails.value.find((mail) => mail.id === selectedMail.value?.id)) {
-    selectedMail.value = null;
+  if (!filteredMails.value.find(mail => mail.id === selectedMail.value?.id)) {
+    selectedMail.value = null
   }
-});
+})
 
-const breakpoints = useBreakpoints(breakpointsTailwind);
-const isMobile = breakpoints.smaller('lg');
+const breakpoints = useBreakpoints(breakpointsTailwind)
+const isMobile = breakpoints.smaller('lg')
 </script>
 
 <template>
-  <UDashboardPanel id="inbox-1" :default-size="25" :min-size="20" :max-size="30" resizable>
+  <UDashboardPanel
+    id="inbox-1"
+    :default-size="25"
+    :min-size="20"
+    :max-size="30"
+    resizable
+  >
     <UDashboardNavbar title="Inbox">
       <template #leading>
         <UDashboardSidebarCollapse />
@@ -61,7 +67,12 @@ const isMobile = breakpoints.smaller('lg');
       </template>
 
       <template #right>
-        <UTabs v-model="selectedTab" :items="tabItems" :content="false" size="xs" />
+        <UTabs
+          v-model="selectedTab"
+          :items="tabItems"
+          :content="false"
+          size="xs"
+        />
       </template>
     </UDashboardNavbar>
     <InboxList v-model="selectedMail" :mails="filteredMails" />

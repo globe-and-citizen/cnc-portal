@@ -4,8 +4,8 @@ const state = reactive<{ [key: string]: boolean }>({
   desktop: false,
   product_updates: true,
   weekly_digest: false,
-  important_updates: true,
-});
+  important_updates: true
+})
 
 const sections = [
   {
@@ -15,14 +15,14 @@ const sections = [
       {
         name: 'email',
         label: 'Email',
-        description: 'Receive a daily email digest.',
+        description: 'Receive a daily email digest.'
       },
       {
         name: 'desktop',
         label: 'Desktop',
-        description: 'Receive desktop notifications.',
-      },
-    ],
+        description: 'Receive desktop notifications.'
+      }
+    ]
   },
   {
     title: 'Account updates',
@@ -31,26 +31,26 @@ const sections = [
       {
         name: 'weekly_digest',
         label: 'Weekly digest',
-        description: 'Receive a weekly digest of news.',
+        description: 'Receive a weekly digest of news.'
       },
       {
         name: 'product_updates',
         label: 'Product updates',
-        description: 'Receive a monthly email with all new features and updates.',
+        description: 'Receive a monthly email with all new features and updates.'
       },
       {
         name: 'important_updates',
         label: 'Important updates',
         description:
-          'Receive emails about important updates like security fixes, maintenance, etc.',
-      },
-    ],
-  },
-];
+          'Receive emails about important updates like security fixes, maintenance, etc.'
+      }
+    ]
+  }
+]
 
 async function onChange() {
   // Do something with data
-  console.log(state);
+  console.log(state)
 }
 </script>
 

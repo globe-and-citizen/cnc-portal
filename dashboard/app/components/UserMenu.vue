@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import type { DropdownMenuItem } from '@nuxt/ui';
-import { useAuthStore } from '~/stores/useAuthStore';
-import { useSiwe } from '~/composables/useSiwe';
+import type { DropdownMenuItem } from '@nuxt/ui'
+import { useAuthStore } from '~/stores/useAuthStore'
+import { useSiwe } from '~/composables/useSiwe'
 
 defineProps<{
-  collapsed?: boolean;
-}>();
+  collapsed?: boolean
+}>()
 
-const router = useRouter();
-const colorMode = useColorMode();
-const appConfig = useAppConfig();
-const authStore = useAuthStore();
+const router = useRouter()
+const colorMode = useColorMode()
+const appConfig = useAppConfig()
+const authStore = useAuthStore()
 
 // Initialize SIWE composable at setup time to maintain injection context
-const siwe = useSiwe();
-const signOutFn = siwe.signOut;
+const siwe = useSiwe()
+const signOutFn = siwe.signOut
 
 const colors = [
   'red',
@@ -33,52 +33,52 @@ const colors = [
   'purple',
   'fuchsia',
   'pink',
-  'rose',
-];
-const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone'];
+  'rose'
+]
+const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone']
 
 // Generate user info from authenticated address
 // Note: Using dicebear API consistent with backend user avatar generation
 const user = computed(() => {
-  const addr = authStore.address.value;
-  const displayName = addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : 'Admin';
+  const addr = authStore.address.value
+  const displayName = addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : 'Admin'
   // Using same avatar service as backend for consistency
-  const avatarSrc = addr ? `https://api.dicebear.com/9.x/bottts/svg?seed=${addr}` : undefined;
+  const avatarSrc = addr ? `https://api.dicebear.com/9.x/bottts/svg?seed=${addr}` : undefined
   return {
     name: displayName,
-    avatar: avatarSrc ? { src: avatarSrc, alt: displayName } : undefined,
-  };
-});
+    avatar: avatarSrc ? { src: avatarSrc, alt: displayName } : undefined
+  }
+})
 
 const handleLogout = () => {
-  signOutFn();
+  signOutFn()
   // Also clear auth store directly as a fallback
-  authStore.clearAuth();
-  router.push('/login');
-};
+  authStore.clearAuth()
+  router.push('/login')
+}
 
 const items = computed<DropdownMenuItem[][]>(() => [
   [
     {
       type: 'label',
       label: user.value.name,
-      avatar: user.value.avatar,
-    },
+      avatar: user.value.avatar
+    }
   ],
   [
     {
       label: 'Profile',
-      icon: 'i-lucide-user',
+      icon: 'i-lucide-user'
     },
     {
       label: 'Billing',
-      icon: 'i-lucide-credit-card',
+      icon: 'i-lucide-credit-card'
     },
     {
       label: 'Settings',
       icon: 'i-lucide-settings',
-      to: '/settings',
-    },
+      to: '/settings'
+    }
   ],
   [
     {
@@ -91,20 +91,20 @@ const items = computed<DropdownMenuItem[][]>(() => [
           chip: appConfig.ui.colors.primary,
           content: {
             align: 'center',
-            collisionPadding: 16,
+            collisionPadding: 16
           },
-          children: colors.map((color) => ({
+          children: colors.map(color => ({
             label: color,
             chip: color,
             slot: 'chip',
             checked: appConfig.ui.colors.primary === color,
             type: 'checkbox',
             onSelect: (e) => {
-              e.preventDefault();
+              e.preventDefault()
 
-              appConfig.ui.colors.primary = color;
-            },
-          })),
+              appConfig.ui.colors.primary = color
+            }
+          }))
         },
         {
           label: 'Neutral',
@@ -113,22 +113,22 @@ const items = computed<DropdownMenuItem[][]>(() => [
             appConfig.ui.colors.neutral === 'neutral' ? 'old-neutral' : appConfig.ui.colors.neutral,
           content: {
             align: 'end',
-            collisionPadding: 16,
+            collisionPadding: 16
           },
-          children: neutrals.map((color) => ({
+          children: neutrals.map(color => ({
             label: color,
             chip: color === 'neutral' ? 'old-neutral' : color,
             slot: 'chip',
             type: 'checkbox',
             checked: appConfig.ui.colors.neutral === color,
             onSelect: (e) => {
-              e.preventDefault();
+              e.preventDefault()
 
-              appConfig.ui.colors.neutral = color;
-            },
-          })),
-        },
-      ],
+              appConfig.ui.colors.neutral = color
+            }
+          }))
+        }
+      ]
     },
     {
       label: 'Appearance',
@@ -140,10 +140,10 @@ const items = computed<DropdownMenuItem[][]>(() => [
           type: 'checkbox',
           checked: colorMode.value === 'light',
           onSelect(e: Event) {
-            e.preventDefault();
+            e.preventDefault()
 
-            colorMode.preference = 'light';
-          },
+            colorMode.preference = 'light'
+          }
         },
         {
           label: 'Dark',
@@ -152,36 +152,36 @@ const items = computed<DropdownMenuItem[][]>(() => [
           checked: colorMode.value === 'dark',
           onUpdateChecked(checked: boolean) {
             if (checked) {
-              colorMode.preference = 'dark';
+              colorMode.preference = 'dark'
             }
           },
           onSelect(e: Event) {
-            e.preventDefault();
-          },
-        },
-      ],
-    },
+            e.preventDefault()
+          }
+        }
+      ]
+    }
   ],
   [
     {
       label: 'Documentation',
       icon: 'i-lucide-book-open',
       to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
-      target: '_blank',
+      target: '_blank'
     },
     {
       label: 'GitHub repository',
       icon: 'i-simple-icons-github',
       to: 'https://github.com/nuxt-ui-templates/dashboard',
-      target: '_blank',
+      target: '_blank'
     },
     {
       label: 'Log out',
       icon: 'i-lucide-log-out',
-      onSelect: handleLogout,
-    },
-  ],
-]);
+      onSelect: handleLogout
+    }
+  ]
+])
 </script>
 
 <template>
@@ -194,7 +194,7 @@ const items = computed<DropdownMenuItem[][]>(() => [
       v-bind="{
         ...user,
         label: collapsed ? undefined : user?.name,
-        trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down',
+        trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
       }"
       color="neutral"
       variant="ghost"
@@ -202,7 +202,7 @@ const items = computed<DropdownMenuItem[][]>(() => [
       :square="collapsed"
       class="data-[state=open]:bg-elevated"
       :ui="{
-        trailingIcon: 'text-dimmed',
+        trailingIcon: 'text-dimmed'
       }"
     />
 
@@ -212,7 +212,7 @@ const items = computed<DropdownMenuItem[][]>(() => [
           class="rounded-full ring ring-bg bg-(--chip-light) dark:bg-(--chip-dark) size-2"
           :style="{
             '--chip-light': `var(--color-${(item as any).chip}-500)`,
-            '--chip-dark': `var(--color-${(item as any).chip}-400)`,
+            '--chip-dark': `var(--color-${(item as any).chip}-400)`
           }"
         />
       </div>

@@ -1,37 +1,37 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui';
-import { getPaginationRowModel } from '@tanstack/table-core';
-import type { Team } from '~/types';
-import { formatDistanceToNow } from 'date-fns';
+import type { TableColumn } from '@nuxt/ui'
+import { getPaginationRowModel } from '@tanstack/table-core'
+import type { Team } from '~/types'
+import { formatDistanceToNow } from 'date-fns'
 
-const UButton = resolveComponent('UButton');
-const UBadge = resolveComponent('UBadge');
+const UButton = resolveComponent('UButton')
+const UBadge = resolveComponent('UBadge')
 
 const props = defineProps<{
-  teams: Team[];
-  isLoading?: boolean;
-}>();
+  teams: Team[]
+  isLoading?: boolean
+}>()
 
-const table = useTemplateRef('table');
+const table = useTemplateRef('table')
 
 const columnFilters = ref([
   {
     id: 'name',
-    value: '',
-  },
-]);
-const columnVisibility = ref();
+    value: ''
+  }
+])
+const columnVisibility = ref()
 
 const columns: TableColumn<Team>[] = [
   {
     accessorKey: 'id',
     header: 'ID',
-    cell: ({ row }) => `#${row.original.id}`,
+    cell: ({ row }) => `#${row.original.id}`
   },
   {
     accessorKey: 'name',
     header: ({ column }) => {
-      const isSorted = column.getIsSorted();
+      const isSorted = column.getIsSorted()
 
       return h(UButton, {
         color: 'neutral',
@@ -43,75 +43,75 @@ const columns: TableColumn<Team>[] = [
             : 'i-lucide-arrow-down-wide-narrow'
           : 'i-lucide-arrow-up-down',
         class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      });
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+      })
     },
     cell: ({ row }) => {
       return h('div', { class: 'flex flex-col' }, [
         h('p', { class: 'font-medium text-highlighted' }, row.original.name),
         row.original.description
           ? h('p', { class: 'text-sm text-muted truncate max-w-xs' }, row.original.description)
-          : null,
-      ]);
-    },
+          : null
+      ])
+    }
   },
   {
     id: 'members',
-    accessorFn: (row) => row._count?.members || 0,
+    accessorFn: row => row._count?.members || 0,
     header: 'Members',
     cell: ({ row }) => {
-      const count = row.original._count?.members || 0;
+      const count = row.original._count?.members || 0
       return h(
         UBadge,
         {
           color: 'neutral',
-          variant: 'subtle',
+          variant: 'subtle'
         },
         () => `${count} member${count !== 1 ? 's' : ''}`
-      );
-    },
+      )
+    }
   },
   {
     accessorKey: 'ownerAddress',
     header: 'Owner',
     cell: ({ row }) => {
-      const address = row.original.ownerAddress;
+      const address = row.original.ownerAddress
       return h(
         'span',
         { class: 'font-mono text-sm' },
         `${address.slice(0, 6)}...${address.slice(-4)}`
-      );
-    },
+      )
+    }
   },
   {
     accessorKey: 'officerAddress',
     header: 'Officer',
     cell: ({ row }) => {
-      const address = row.original.officerAddress;
+      const address = row.original.officerAddress
       if (!address) {
-        return h(UBadge, { color: 'warning', variant: 'subtle' }, () => 'Not Set');
+        return h(UBadge, { color: 'warning', variant: 'subtle' }, () => 'Not Set')
       }
       return h(
         'span',
         { class: 'font-mono text-sm' },
         `${address.slice(0, 6)}...${address.slice(-4)}`
-      );
-    },
+      )
+    }
   },
   {
     accessorKey: 'createdAt',
     header: 'Created',
     cell: ({ row }) => {
-      const date = new Date(row.original.createdAt);
-      return formatDistanceToNow(date, { addSuffix: true });
-    },
-  },
-];
+      const date = new Date(row.original.createdAt)
+      return formatDistanceToNow(date, { addSuffix: true })
+    }
+  }
+]
 
 const pagination = ref({
   pageIndex: 0,
-  pageSize: 10,
-});
+  pageSize: 10
+})
 </script>
 
 <template>
@@ -137,7 +137,7 @@ const pagination = ref({
       v-model:column-visibility="columnVisibility"
       v-model:pagination="pagination"
       :pagination-options="{
-        getPaginationRowModel: getPaginationRowModel(),
+        getPaginationRowModel: getPaginationRowModel()
       }"
       class="shrink-0"
       :data="teams"
@@ -149,7 +149,7 @@ const pagination = ref({
         tbody: '[&>tr]:last:[&>td]:border-b-0',
         th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
         td: 'border-b border-default',
-        separator: 'h-0',
+        separator: 'h-0'
       }"
     />
 

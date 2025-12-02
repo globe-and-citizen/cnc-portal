@@ -5,7 +5,7 @@ export default defineNuxtConfig({
   ssr: false,
 
   devtools: {
-    enabled: true,
+    enabled: true
   },
 
   css: ['~/assets/css/main.css'],
@@ -13,18 +13,18 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'http://localhost:3000',
-      chainId: process.env.NUXT_PUBLIC_CHAIN_ID || '31337',
-    },
+      chainId: process.env.NUXT_PUBLIC_CHAIN_ID || '31337'
+    }
   },
 
   routeRules: {
     '/api/**': {
-      cors: true,
-    },
+      cors: true
+    }
   },
 
   devServer: {
-    port: 3001,
+    port: 3001
   },
   compatibilityDate: '2024-07-11',
 
@@ -32,8 +32,8 @@ export default defineNuxtConfig({
     config: {
       stylistic: {
         commaDangle: 'never',
-        braceStyle: '1tbs',
-      },
-    },
-  },
-});
+        braceStyle: '1tbs'
+      }
+    }
+  }
+})

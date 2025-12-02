@@ -1,4 +1,4 @@
-import { sub } from 'date-fns';
+import { sub } from 'date-fns'
 
 const mails = [
   {
@@ -7,8 +7,8 @@ const mails = [
       name: 'Alex Smith',
       email: 'alex.smith@example.com',
       avatar: {
-        src: 'https://i.pravatar.cc/128?u=1',
-      },
+        src: 'https://i.pravatar.cc/128?u=1'
+      }
     },
     subject: 'Meeting Schedule: Q1 Marketing Strategy Review',
     body: `Dear Team,
@@ -27,7 +27,7 @@ Best regards,
 Alex Smith
 Senior Marketing Director
 Tel: (555) 123-4567`,
-    date: new Date().toISOString(),
+    date: new Date().toISOString()
   },
   {
     id: 2,
@@ -36,8 +36,8 @@ Tel: (555) 123-4567`,
       name: 'Jordan Brown',
       email: 'jordan.brown@example.com',
       avatar: {
-        src: 'https://i.pravatar.cc/128?u=2',
-      },
+        src: 'https://i.pravatar.cc/128?u=2'
+      }
     },
     subject: 'RE: Project Phoenix - Sprint 3 Update',
     body: `Hi team,
@@ -62,7 +62,7 @@ Jordan
 Jordan Brown
 Lead Developer | Tech Solutions
 Mobile: +1 (555) 234-5678`,
-    date: sub(new Date(), { minutes: 7 }).toISOString(),
+    date: sub(new Date(), { minutes: 7 }).toISOString()
   },
   {
     id: 3,
@@ -71,8 +71,8 @@ Mobile: +1 (555) 234-5678`,
       name: 'Taylor Green',
       email: 'taylor.green@example.com',
       avatar: {
-        src: 'https://i.pravatar.cc/128?u=3',
-      },
+        src: 'https://i.pravatar.cc/128?u=3'
+      }
     },
     subject: 'Lunch Plans',
     body: `Hi there!
@@ -85,7 +85,7 @@ Let me know what you think!
 
 Best,
 Taylor`,
-    date: sub(new Date(), { hours: 3 }).toISOString(),
+    date: sub(new Date(), { hours: 3 }).toISOString()
   },
   {
     id: 4,
@@ -93,8 +93,8 @@ Taylor`,
       name: 'Morgan White',
       email: 'morgan.white@example.com',
       avatar: {
-        src: 'https://i.pravatar.cc/128?u=4',
-      },
+        src: 'https://i.pravatar.cc/128?u=4'
+      }
     },
     subject: 'New Proposal: Project Horizon',
     body: `Hi team,
@@ -116,13 +116,13 @@ Thanks in advance,
 Morgan White
 Senior Project Manager
 Tel: (555) 234-5678`,
-    date: sub(new Date(), { days: 1 }).toISOString(),
+    date: sub(new Date(), { days: 1 }).toISOString()
   },
   {
     id: 5,
     from: {
       name: 'Casey Gray',
-      email: 'casey.gray@example.com',
+      email: 'casey.gray@example.com'
     },
     subject: 'Updated: San Francisco Conference Trip Itinerary',
     body: `Dear [Name],
@@ -152,13 +152,13 @@ Best regards,
 Casey Gray
 Travel Coordinator
 Office: (555) 345-6789`,
-    date: sub(new Date(), { days: 1 }).toISOString(),
+    date: sub(new Date(), { days: 1 }).toISOString()
   },
   {
     id: 6,
     from: {
       name: 'Jamie Johnson',
-      email: 'jamie.johnson@example.com',
+      email: 'jamie.johnson@example.com'
     },
     subject: 'Q1 2024 Financial Performance Review',
     body: `Dear Leadership Team,
@@ -181,7 +181,7 @@ Best regards,
 Jamie Johnson
 Chief Financial Officer
 Ext: 4567`,
-    date: sub(new Date(), { days: 2 }).toISOString(),
+    date: sub(new Date(), { days: 2 }).toISOString()
   },
   {
     id: 7,
@@ -189,8 +189,8 @@ Ext: 4567`,
       name: 'Riley Davis',
       email: 'riley.davis@example.com',
       avatar: {
-        src: 'https://i.pravatar.cc/128?u=7',
-      },
+        src: 'https://i.pravatar.cc/128?u=7'
+      }
     },
     subject: '[Mandatory] New DevOps Tools Training Session',
     body: `Hello Development Team,
@@ -220,7 +220,7 @@ Riley Davis
 DevOps Lead
 Technical Operations
 M: (555) 777-8888`,
-    date: sub(new Date(), { days: 2 }).toISOString(),
+    date: sub(new Date(), { days: 2 }).toISOString()
   },
   {
     id: 8,
@@ -229,8 +229,8 @@ M: (555) 777-8888`,
       name: 'Kelly Wilson',
       email: 'kelly.wilson@example.com',
       avatar: {
-        src: 'https://i.pravatar.cc/128?u=8',
-      },
+        src: 'https://i.pravatar.cc/128?u=8'
+      }
     },
     subject: '🎉 Happy Birthday!',
     body: `Dear [Name],
@@ -251,13 +251,13 @@ Kelly Wilson
 HR Director
 Human Resources Department
 Tel: (555) 999-0000`,
-    date: sub(new Date(), { days: 2 }).toISOString(),
+    date: sub(new Date(), { days: 2 }).toISOString()
   },
   {
     id: 9,
     from: {
       name: 'Drew Moore',
-      email: 'drew.moore@example.com',
+      email: 'drew.moore@example.com'
     },
     subject: 'Website Redesign Feedback Request - Phase 2',
     body: `Hi there,
@@ -287,13 +287,13 @@ Thanks in advance,
 Drew Moore
 UX Design Lead
 Product Design Team`,
-    date: sub(new Date(), { days: 5 }).toISOString(),
+    date: sub(new Date(), { days: 5 }).toISOString()
   },
   {
     id: 10,
     from: {
       name: 'Jordan Taylor',
-      email: 'jordan.taylor@example.com',
+      email: 'jordan.taylor@example.com'
     },
     subject: 'Corporate Wellness Program - Membership Renewal',
     body: `Dear Valued Member,
@@ -321,14 +321,14 @@ Jordan Taylor
 Corporate Wellness Coordinator
 Downtown Fitness Center
 Tel: (555) 123-7890`,
-    date: sub(new Date(), { days: 5 }).toISOString(),
+    date: sub(new Date(), { days: 5 }).toISOString()
   },
   {
     id: 11,
     unread: true,
     from: {
       name: 'Morgan Anderson',
-      email: 'morgan.anderson@example.com',
+      email: 'morgan.anderson@example.com'
     },
     subject: 'Important: Updates to Your Corporate Insurance Policy',
     body: `Dear [Employee Name],
@@ -360,13 +360,13 @@ Regards,
 Morgan Anderson
 Benefits Coordinator
 HR Department`,
-    date: sub(new Date(), { days: 12 }).toISOString(),
+    date: sub(new Date(), { days: 12 }).toISOString()
   },
   {
     id: 12,
     from: {
       name: 'Casey Thomas',
-      email: 'casey.thomas@example.com',
+      email: 'casey.thomas@example.com'
     },
     subject: '📚 March Book Club Meeting: "The Great Gatsby"',
     body: `Hello Book Lovers!
@@ -396,13 +396,13 @@ Casey
 Casey Thomas
 Book Club Coordinator
 Internal Culture Committee`,
-    date: sub(new Date(), { months: 1 }).toISOString(),
+    date: sub(new Date(), { months: 1 }).toISOString()
   },
   {
     id: 13,
     from: {
       name: 'Jamie Jackson',
-      email: 'jamie.jackson@example.com',
+      email: 'jamie.jackson@example.com'
     },
     subject: '🍳 Company Cookbook Project - Recipe Submission Reminder',
     body: `Dear Colleagues,
@@ -432,13 +432,13 @@ Cooking together,
 Jamie Jackson
 Community Engagement Committee
 Ext. 5432`,
-    date: sub(new Date(), { months: 1 }).toISOString(),
+    date: sub(new Date(), { months: 1 }).toISOString()
   },
   {
     id: 14,
     from: {
       name: 'Riley White',
-      email: 'riley.white@example.com',
+      email: 'riley.white@example.com'
     },
     subject: '🧘‍♀️ Updated Corporate Wellness Schedule - Spring 2024',
     body: `Dear Wellness Program Participants,
@@ -468,13 +468,13 @@ Namaste,
 Riley White
 Corporate Wellness Instructor
 Wellness & Benefits Team`,
-    date: sub(new Date(), { months: 1 }).toISOString(),
+    date: sub(new Date(), { months: 1 }).toISOString()
   },
   {
     id: 15,
     from: {
       name: 'Kelly Harris',
-      email: 'kelly.harris@example.com',
+      email: 'kelly.harris@example.com'
     },
     subject: '📚 Book Launch Event: "Digital Transformation in the Modern Age"',
     body: `Dear [Name],
@@ -505,13 +505,13 @@ Best regards,
 Kelly Harris
 Digital Strategy Consultant
 Author, "Digital Transformation in the Modern Age"`,
-    date: sub(new Date(), { months: 1 }).toISOString(),
+    date: sub(new Date(), { months: 1 }).toISOString()
   },
   {
     id: 16,
     from: {
       name: 'Drew Martin',
-      email: 'drew.martin@example.com',
+      email: 'drew.martin@example.com'
     },
     subject: '🚀 TechCon 2024: Early Bird Registration Now Open',
     body: `Dear Tech Enthusiasts,
@@ -544,13 +544,13 @@ Best regards,
 Drew Martin
 Conference Director
 TechCon 2024`,
-    date: sub(new Date(), { months: 1, days: 4 }).toISOString(),
+    date: sub(new Date(), { months: 1, days: 4 }).toISOString()
   },
   {
     id: 17,
     from: {
       name: 'Alex Thompson',
-      email: 'alex.thompson@example.com',
+      email: 'alex.thompson@example.com'
     },
     subject: '🎨 Modern Perspectives: Contemporary Art Exhibition',
     body: `Hi there,
@@ -580,13 +580,13 @@ Alex Thompson
 Curator
 Metropolitan Art Gallery
 Tel: (555) 234-5678`,
-    date: sub(new Date(), { months: 1, days: 15 }).toISOString(),
+    date: sub(new Date(), { months: 1, days: 15 }).toISOString()
   },
   {
     id: 18,
     from: {
       name: 'Jordan Garcia',
-      email: 'jordan.garcia@example.com',
+      email: 'jordan.garcia@example.com'
     },
     subject: '🤝 Industry Networking Event: "Connect & Innovate 2024"',
     body: `Dear Professional Network,
@@ -618,13 +618,13 @@ Best regards,
 Jordan Garcia
 Event Coordinator
 Professional Networking Association`,
-    date: sub(new Date(), { months: 1, days: 18 }).toISOString(),
+    date: sub(new Date(), { months: 1, days: 18 }).toISOString()
   },
   {
     id: 19,
     from: {
       name: 'Taylor Rodriguez',
-      email: 'taylor.rodriguez@example.com',
+      email: 'taylor.rodriguez@example.com'
     },
     subject: '🌟 Community Service Day - Volunteer Opportunities',
     body: `Dear Colleagues,
@@ -664,13 +664,13 @@ Making a difference together,
 Taylor Rodriguez
 Community Outreach Coordinator
 Corporate Social Responsibility Team`,
-    date: sub(new Date(), { months: 1, days: 25 }).toISOString(),
+    date: sub(new Date(), { months: 1, days: 25 }).toISOString()
   },
   {
     id: 20,
     from: {
       name: 'Morgan Lopez',
-      email: 'morgan.lopez@example.com',
+      email: 'morgan.lopez@example.com'
     },
     subject: '🚗 Vehicle Maintenance Reminder: 30,000 Mile Service',
     body: `Dear Valued Customer,
@@ -703,10 +703,10 @@ Morgan Lopez
 Service Coordinator
 Downtown Auto Care
 Emergency: (555) 987-6544`,
-    date: sub(new Date(), { months: 2 }).toISOString(),
-  },
-];
+    date: sub(new Date(), { months: 2 }).toISOString()
+  }
+]
 
 export default eventHandler(async () => {
-  return mails;
-});
+  return mails
+})
