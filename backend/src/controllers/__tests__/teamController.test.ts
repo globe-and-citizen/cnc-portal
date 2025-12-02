@@ -308,9 +308,7 @@ describe('Team Controller', () => {
 
       vi.spyOn(prisma.team, 'findMany').mockResolvedValue(mockTeams);
 
-      const response = await request(app)
-        .get('/')
-        .query({ userAddress: mockOwner.address });
+      const response = await request(app).get('/').query({ userAddress: mockOwner.address });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockTeams);

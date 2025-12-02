@@ -74,7 +74,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 
         // check if the weekly claim is already signed or withdrawn
         if (!weeklyClaim.signature)
-          enableErrors.push('No claim existing signature: You need to sign claim first')
+          enableErrors.push('No claim existing signature: You need to sign claim first');
         if (
           weeklyClaim.status === 'signed' &&
           callerAddress ===
@@ -92,7 +92,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         data = { signature, status: 'signed', data: message };
         // singleClaimStatus = "signed";
         break;
-      case 'disable': 
+      case 'disable':
         const disableErrors: string[] = [];
 
         // Check if the caller is the Cash Remuneration owner

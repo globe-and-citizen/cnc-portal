@@ -56,7 +56,7 @@ app.use(express.json());
 app.use('/', authorizeUser, expenseRoutes);
 
 const START_DATE = Math.floor(Date.now() / 1000) + 3600;
-const END_DATE = START_DATE + (3600 * 24 * 30);
+const END_DATE = START_DATE + 3600 * 24 * 30;
 
 const mockExpenseData = {
   approvedAddress: '0x1234567890123456789012345678901234567890',

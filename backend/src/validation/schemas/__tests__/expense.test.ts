@@ -11,7 +11,7 @@ describe('expense schemas', () => {
   describe('addExpenseBodySchema', () => {
     it('should validate expense with valid data structure', () => {
       const START_DATE = Math.floor(Date.now() / 1000) + 3600;
-      const END_DATE = START_DATE + (3600 * 24 * 30);
+      const END_DATE = START_DATE + 3600 * 24 * 30;
 
       const validData = {
         teamId: '1',
@@ -23,7 +23,7 @@ describe('expense schemas', () => {
           customFrequency: 0,
           tokenAddress: '0x1111111111111111111111111111111111111111',
           startDate: START_DATE, // 1 hour from now
-          endDate: END_DATE // 30 days from start date
+          endDate: END_DATE, // 30 days from start date
         },
       };
 

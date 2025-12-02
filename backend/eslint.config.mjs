@@ -8,14 +8,14 @@ export default tseslint.config(
     files: ['**/*.ts'],
     languageOptions: {
       ecmaVersion: 'latest',
-      sourceType: 'module'
+      sourceType: 'module',
     },
     rules: {
       '@typescript-eslint/no-unused-vars': 'error',
-      '@typescript-eslint/no-explicit-any': 'error'
-    }
+      '@typescript-eslint/no-explicit-any': 'error',
+    },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'prisma/**']
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'prisma/**'],
   }
 );
