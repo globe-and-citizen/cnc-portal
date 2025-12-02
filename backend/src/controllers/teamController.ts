@@ -85,7 +85,7 @@ const getTeam = async (req: Request, res: Response) => {
   const { id } = req.params;
   const callerAddress = (req as any).address;
   try {
-    let team = await prisma.team.findUnique({
+    const team = await prisma.team.findUnique({
       where: {
         id: Number(id),
       },

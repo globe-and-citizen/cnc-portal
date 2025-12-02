@@ -109,7 +109,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 
   console.log('Search query:', search);
   try {
-    const where = !!search
+    const where = search
       ? {
           OR: [
             { name: { contains: search, mode: 'insensitive' as const } },

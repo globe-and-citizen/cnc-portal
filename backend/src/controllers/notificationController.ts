@@ -8,7 +8,7 @@ const getNotification = async (req: Request, res: Response) => {
 
   try {
     //retrieve notification
-    let notifications = await prisma.notification.findMany({
+    const notifications = await prisma.notification.findMany({
       where: {
         userAddress: callerAddress as string,
       },
@@ -34,7 +34,7 @@ const getNotification = async (req: Request, res: Response) => {
 };
 
 const updateNotification = async (req: Request, res: Response) => {
-  let { id } = req.params;
+  const { id } = req.params;
 
   const _id = parseInt(id as string);
 
