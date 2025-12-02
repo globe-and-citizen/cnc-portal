@@ -1,34 +1,34 @@
 <script setup lang="ts">
 const props = defineProps<{
-  totalTeams: number
-  totalMembers: number
-  teamsWithOfficer: number
-  avgMembersPerTeam: number
-  isLoading?: boolean
-}>()
+  totalTeams: number;
+  totalMembers: number;
+  teamsWithOfficer: number;
+  avgMembersPerTeam: number;
+  isLoading?: boolean;
+}>();
 
 const statItems = computed(() => [
   {
     title: 'Total Teams',
     icon: 'i-lucide-users',
-    value: props.totalTeams
+    value: props.totalTeams,
   },
   {
     title: 'Total Members',
     icon: 'i-lucide-user',
-    value: props.totalMembers
+    value: props.totalMembers,
   },
   {
     title: 'Teams with Officer',
     icon: 'i-lucide-shield',
-    value: props.teamsWithOfficer
+    value: props.teamsWithOfficer,
   },
   {
     title: 'Avg Members/Team',
     icon: 'i-lucide-chart-bar',
-    value: props.avgMembersPerTeam
-  }
-])
+    value: props.avgMembersPerTeam,
+  },
+]);
 </script>
 
 <template>
@@ -43,7 +43,7 @@ const statItems = computed(() => [
         container: 'gap-y-1.5',
         wrapper: 'items-start',
         leading: 'p-2.5 rounded-full bg-primary/10 ring ring-inset ring-primary/25 flex-col',
-        title: 'font-normal text-muted text-xs uppercase'
+        title: 'font-normal text-muted text-xs uppercase',
       }"
       class="lg:rounded-none first:rounded-l-lg last:rounded-r-lg hover:z-1"
     >

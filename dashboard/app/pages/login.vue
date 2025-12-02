@@ -1,118 +1,118 @@
 <script setup lang="ts">
-import { injected, useConnection, useChainId, useConnect, useSwitchChain } from '@wagmi/vue'
+import { injected, useConnection, useChainId, useConnect, useSwitchChain } from '@wagmi/vue';
 
 definePageMeta({
   layout: 'auth',
-  ssr: false
-})
+  ssr: false,
+});
 
-const router = useRouter()
-const runtimeConfig = useRuntimeConfig()
-const networkChainId = parseInt((runtimeConfig.public.chainId as string) || '31337')
+const router = useRouter();
+const runtimeConfig = useRuntimeConfig();
+const networkChainId = parseInt((runtimeConfig.public.chainId as string) || '31337');
 
 // State for SSR compatibility
-const isProcessing = ref(false)
-const error = ref<string | null>(null)
-const isConnected = ref(false)
-const address = ref<string | undefined>(undefined)
+const isProcessing = ref(false);
+const error = ref<string | null>(null);
+const isConnected = ref(false);
+const address = ref<string | undefined>(undefined);
 
 // SIWE composable and Wagmi composables - initialized on client
-let siweInstance: ReturnType<typeof useSiwe> | null = null
-let connection: ReturnType<typeof useConnection> | null = null
-let chainId: ReturnType<typeof useChainId> | null = null
-let connectAsync: ReturnType<typeof useConnect>['connectAsync'] | null = null
-let switchChainAsync: ReturnType<typeof useSwitchChain>['switchChainAsync'] | null = null
+let siweInstance: ReturnType<typeof useSiwe> | null = null;
+let connection: ReturnType<typeof useConnection> | null = null;
+let chainId: ReturnType<typeof useChainId> | null = null;
+let connectAsync: ReturnType<typeof useConnect>['connectAsync'] | null = null;
+let switchChainAsync: ReturnType<typeof useSwitchChain>['switchChainAsync'] | null = null;
 
 // Initialize on client side only after mount
 onMounted(() => {
   // Initialize Wagmi composables
-  connection = useConnection()
-  chainId = useChainId()
-  const connectComposable = useConnect()
-  connectAsync = connectComposable.connectAsync
-  const switchComposable = useSwitchChain()
-  switchChainAsync = switchComposable.switchChainAsync
+  connection = useConnection();
+  chainId = useChainId();
+  const connectComposable = useConnect();
+  connectAsync = connectComposable.connectAsync;
+  const switchComposable = useSwitchChain();
+  switchChainAsync = switchComposable.switchChainAsync;
 
   // Initialize SIWE
-  siweInstance = useSiwe()
+  siweInstance = useSiwe();
 
   // Sync all reactive state
   watch(
     () => siweInstance?.isProcessing.value,
     (val) => {
-      isProcessing.value = val ?? false
+      isProcessing.value = val ?? false;
     },
     { immediate: true }
-  )
+  );
 
   watch(
     () => siweInstance?.error.value,
     (val) => {
-      error.value = val ?? null
+      error.value = val ?? null;
     },
     { immediate: true }
-  )
+  );
 
   watch(
     () => connection?.isConnected.value,
     (val) => {
-      isConnected.value = val ?? false
+      isConnected.value = val ?? false;
     },
     { immediate: true }
-  )
+  );
 
   watch(
     () => connection?.address.value,
     (val) => {
-      address.value = val
+      address.value = val;
     },
     { immediate: true }
-  )
-})
+  );
+});
 
 const handleSignIn = async () => {
   if (siweInstance) {
-    const success = await siweInstance.signIn()
+    const success = await siweInstance.signIn();
     if (success) {
-      await router.push('/')
+      await router.push('/');
     }
   }
-}
+};
 
 const handleConnectWallet = async () => {
   if (!connection || !connectAsync || !switchChainAsync || !chainId) {
-    error.value = 'Wallet connection not initialized'
-    return
+    error.value = 'Wallet connection not initialized';
+    return;
   }
 
   try {
-    error.value = null
-    isProcessing.value = true
+    error.value = null;
+    isProcessing.value = true;
 
     // Ensure wallet is connected
     if (!connection.isConnected.value || !connection.address.value) {
-      await connectAsync({ connector: injected(), chainId: networkChainId })
+      await connectAsync({ connector: injected(), chainId: networkChainId });
 
       // check if the current chainId matches the required network
       if (chainId.value !== networkChainId) {
-        await switchChainAsync({ chainId: networkChainId })
+        await switchChainAsync({ chainId: networkChainId });
       }
     }
   } catch (e: unknown) {
-    console.error('Failed to connect wallet:', e)
-    error.value = e instanceof Error ? e.message : 'Failed to connect wallet'
+    console.error('Failed to connect wallet:', e);
+    error.value = e instanceof Error ? e.message : 'Failed to connect wallet';
   } finally {
-    isProcessing.value = false
+    isProcessing.value = false;
   }
-}
+};
 
 const clearError = () => {
-  error.value = null
-}
+  error.value = null;
+};
 
 useHead({
-  title: 'Sign In | CNC Portal Dashboard'
-})
+  title: 'Sign In | CNC Portal Dashboard',
+});
 </script>
 
 <template>
@@ -120,14 +120,12 @@ useHead({
     <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-8">
       <!-- Logo -->
       <div class="flex justify-center mb-8">
-        <img src="/logo.png" alt="CNC Portal" class="h-12 w-auto">
+        <img src="/logo.png" alt="CNC Portal" class="h-12 w-auto" />
       </div>
 
       <!-- Title -->
       <div class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Admin Dashboard
-        </h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Admin Dashboard</h1>
         <p class="text-gray-600 dark:text-gray-400">
           Sign in with your Ethereum wallet to access the admin dashboard
         </p>
@@ -143,7 +141,7 @@ useHead({
           icon: 'i-lucide-x',
           color: 'gray',
           variant: 'link',
-          padded: false
+          padded: false,
         }"
         @close="clearError"
       >
@@ -157,9 +155,7 @@ useHead({
         <div class="flex items-center gap-3">
           <div class="w-3 h-3 bg-green-500 rounded-full" />
           <div>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              Connected Wallet
-            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Connected Wallet</p>
             <p class="font-mono text-sm text-gray-900 dark:text-white">
               {{ address?.slice(0, 6) }}...{{ address?.slice(-4) }}
             </p>
@@ -203,7 +199,7 @@ useHead({
       <div class="mt-8 text-center">
         <p class="text-xs text-gray-500 dark:text-gray-400">
           By signing in, you agree to sign a message with your wallet.
-          <br>
+          <br />
           No transaction will be made and no gas fees will be charged.
         </p>
       </div>

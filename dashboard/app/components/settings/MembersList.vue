@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import type { DropdownMenuItem } from '@nuxt/ui'
-import type { Member } from '~/types'
+import type { DropdownMenuItem } from '@nuxt/ui';
+import type { Member } from '~/types';
 
 defineProps<{
-  members: Member[]
-}>()
+  members: Member[];
+}>();
 
 const items = [
   {
     label: 'Edit member',
-    onSelect: () => console.log('Edit member')
+    onSelect: () => console.log('Edit member'),
   },
   {
     label: 'Remove member',
     color: 'error' as const,
-    onSelect: () => console.log('Remove member')
-  }
-] satisfies DropdownMenuItem[]
+    onSelect: () => console.log('Remove member'),
+  },
+] satisfies DropdownMenuItem[];
 </script>
 
 <template>

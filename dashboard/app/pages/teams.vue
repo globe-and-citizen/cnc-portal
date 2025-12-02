@@ -1,15 +1,15 @@
 <script setup lang="ts">
-const { teams, isLoading, error, stats, fetchTeams } = useTeams()
+const { teams, isLoading, error, stats, fetchTeams } = useTeams();
 
 // Fetch teams on mount
 onMounted(async () => {
-  await fetchTeams()
-})
+  await fetchTeams();
+});
 
 // Refresh handler
 const handleRefresh = async () => {
-  await fetchTeams()
-}
+  await fetchTeams();
+};
 </script>
 
 <template>
@@ -36,18 +36,14 @@ const handleRefresh = async () => {
     <!-- Teams List Section -->
     <UPageCard
       :ui="{
-        header: 'w-full'
+        header: 'w-full',
       }"
     >
       <template #header>
         <div class="flex items-center justify-between">
           <div>
-            <h3 class="text-lg font-semibold text-highlighted">
-              Teams
-            </h3>
-            <p class="text-sm text-muted">
-              Manage and view all teams in the system
-            </p>
+            <h3 class="text-lg font-semibold text-highlighted">Teams</h3>
+            <p class="text-sm text-muted">Manage and view all teams in the system</p>
           </div>
           <UButton
             icon="i-lucide-refresh-cw"
