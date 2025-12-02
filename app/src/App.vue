@@ -116,8 +116,6 @@ const editUserModal = ref({ mount: false, show: false })
 const userStore = useUserDataStore()
 const { name, address, imageUrl } = storeToRefs(userStore)
 
-const route = useRoute()
-
 const lock = computed(() => {
   if (userStore.isAuth) {
     if (connectedAddress.value?.toLowerCase() !== userStore.address.toLowerCase()) {
