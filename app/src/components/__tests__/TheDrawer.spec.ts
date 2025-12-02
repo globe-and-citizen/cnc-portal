@@ -205,7 +205,7 @@ describe('TheDrawer', () => {
       expect(wrapper.classes()).toContain('w-[280px]')
 
       await wrapper.setProps({ modelValue: true })
-      expect(wrapper.classes()).toContain('w-20')
+      expect(wrapper.classes()).toContain('w-24')
     })
   })
 
@@ -259,7 +259,7 @@ describe('TheDrawer', () => {
     it('should render all menu items', () => {
       const wrapper = createWrapper()
       const menuItems = wrapper.findAll('nav a')
-      expect(menuItems.length).toBe(9) // Total number of menu items
+      expect(menuItems.length).toBe(7) // Total number of menu items
     })
 
     it('should highlight active menu item', async () => {

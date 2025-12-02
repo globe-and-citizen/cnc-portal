@@ -108,8 +108,8 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
     if (token.id === 'native') {
       const native = useBalance({
         address: unref(address),
-        chainId
-        // query: { refetchInterval: 60000 }
+        chainId,
+        query: { refetchInterval: 5000 }
       })
       return {
         token,
@@ -123,8 +123,8 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
         address: token.address as Address,
         abi: ERC20_ABI,
         functionName: 'balanceOf' as const,
-        args: [unref(address) as Address] as const
-        // query: { refetchInterval: 60000 }
+        args: [unref(address) as Address] as const,
+        query: { refetchInterval: 5000 }
       })
       return {
         token,
@@ -141,7 +141,8 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
       const read = useReadContract({
         address: unref(address),
         abi: BANK_ABI,
-        functionName: 'totalDividends'
+        functionName: 'totalDividends',
+        query: { refetchInterval: 5000 }
       })
       return {
         token,
@@ -155,7 +156,8 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
         address: unref(address),
         abi: BANK_ABI,
         functionName: 'totalTokenDividends',
-        args: [token.address as Address]
+        args: [token.address as Address],
+        query: { refetchInterval: 5000 }
       })
       return {
         token,

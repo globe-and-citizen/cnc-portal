@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
-import ExpenseAccountSection from '../ExpenseAccountView.vue'
+import ExpenseAccountSection from '@/views/team/[id]/Accounts/ExpenseAccountView.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref, type Ref } from 'vue'
