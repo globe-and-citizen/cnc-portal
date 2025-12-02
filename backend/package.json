@@ -25,7 +25,10 @@
     "copy:docs": "npx shx cp src/utils/backend_specs.html dist/utils/backend_specs.html",
     "prisma:migrate": "npx prisma migrate deploy",
     "prisma:generate": "npx prisma generate",
-    "generate:docs": "tsc src/utils/swagger.ts && node src/utils/swagger.js && npx shx rm src/utils/swagger.js"
+    "generate:docs": "tsc src/utils/swagger.ts && node src/utils/swagger.js && npx shx rm src/utils/swagger.js",
+    "lint": "eslint . --fix",
+    "format": "prettier --write .",
+    "format-check": "prettier --check ."
   },
   "keywords": [],
   "author": "",
@@ -40,12 +43,16 @@
     "@types/node": "^20.17.30",
     "@types/uuid": "^10.0.0",
     "@vitest/coverage-istanbul": "^2.0.5",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^9.1.2",
     "morgan": "^1.10.0",
     "nodemon": "^3.1.0",
+    "prettier": "^3.7.3",
     "prisma": "^6.5.0",
     "supertest": "^7.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
+    "typescript-eslint": "^8.48.1",
     "vite-tsconfig-paths": "^4.3.2",
     "vitest": "^2.0.5"
   },

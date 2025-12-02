@@ -1,53 +1,51 @@
-import { prisma, errorResponse } from "../utils";
-import { Request, Response } from "express";
+import { prisma, errorResponse } from '../utils'
+import { Response } from 'express'
+import { AuthenticatedRequest } from '../types'
 
-const getNotification = async (req: Request, res: Response) => {
+const getNotification = async (req: AuthenticatedRequest, res: Response) => {
   //check if userAddress property is set
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address
 
   try {
     //retrieve notification
-    let notifications = await prisma.notification.findMany({
+    const notifications = await prisma.notification.findMany({
       where: {
-        userAddress: callerAddress as string,
+        userAddress: callerAddress as string
       },
       orderBy: {
         createdAt: 'desc'
       }
-    });
+    })
 
     //clean up
-    await prisma.$disconnect();
+    await prisma.$disconnect()
 
     //check if user is authorized to get notification
-    if (
-      notifications.length < 1 ||
-      callerAddress === notifications[0].userAddress
-    ) {
+    if (notifications.length < 1 || callerAddress === notifications[0].userAddress) {
       //send notification
       res.status(201).json({
         success: true,
-        data: notifications,
-      });
+        data: notifications
+      })
     } else {
       //send error
-      return errorResponse(403, "Unauthorized access", res);
+      return errorResponse(403, 'Unauthorized access', res)
     }
   } catch (error) {
-    return errorResponse(500, error, res);
+    return errorResponse(500, error, res)
   }
-};
+}
 
-const updateNotification = async (req: Request, res: Response) => {
-  let { id } = req.params;
+const updateNotification = async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params
 
   const _id = parseInt(id as string)
 
   if (isNaN(_id)) {
-    return errorResponse(400, "Notification ID invalid format", res)
+    return errorResponse(400, 'Notification ID invalid format', res)
   }
 
-  const callerAddress = (req as any).address
+  const callerAddress = req.address
 
   try {
     let notification = await prisma.notification.findUnique({
@@ -56,11 +54,9 @@ const updateNotification = async (req: Request, res: Response) => {
       }
     })
 
-    if (
-      callerAddress === notification?.userAddress
-    ) {
+    if (callerAddress === notification?.userAddress) {
       notification = await prisma.notification.update({
-        where: {id: _id},
+        where: { id: _id },
         data: { isRead: true }
       })
 
@@ -68,13 +64,10 @@ const updateNotification = async (req: Request, res: Response) => {
         success: true
       })
     } else {
-      return errorResponse(403, "Unauthorized access", res);
+      return errorResponse(403, 'Unauthorized access', res)
     }
-  } catch(error) {
+  } catch (error) {
     return errorResponse(500, error, res)
   }
 }
-export { 
-  getNotification,
-  updateNotification 
-};
+export { getNotification, updateNotification }

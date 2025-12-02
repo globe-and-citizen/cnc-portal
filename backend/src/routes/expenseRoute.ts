@@ -1,11 +1,7 @@
-import express from "express";
-import {
-  addExpense,
-  getExpenses,
-  updateExpense,
-} from "../controllers/expenseController";
+import express from 'express'
+import { addExpense, getExpenses, updateExpense } from '../controllers/expenseController'
 
-const expenseRoutes = express.Router();
+const expenseRoutes = express.Router()
 
 /**
  * @openapi
@@ -36,7 +32,7 @@ const expenseRoutes = express.Router();
  *     500:
  *       description: Internal server error
  */
-expenseRoutes.post("/", addExpense);
+expenseRoutes.post('/', addExpense)
 
 /**
  * @openapi
@@ -60,7 +56,7 @@ expenseRoutes.post("/", addExpense);
  *     500:
  *       description: Internal server error
  */
-expenseRoutes.get("/", getExpenses);
+expenseRoutes.get('/', getExpenses)
 
 /**
  * @openapi
@@ -95,6 +91,6 @@ expenseRoutes.get("/", getExpenses);
  *     500:
  *       description: Internal server error
  */
-expenseRoutes.patch("/:id", updateExpense);
+expenseRoutes.patch('/:id', updateExpense)
 
-export default expenseRoutes;
+export default expenseRoutes

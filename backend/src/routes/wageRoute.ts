@@ -1,7 +1,7 @@
-import express from "express";
-import { getWages, setWage } from "../controllers/wageController";
+import express from 'express'
+import { getWages, setWage } from '../controllers/wageController'
 
-const wageRoutes = express.Router();
+const wageRoutes = express.Router()
 
 /**
  * @openapi
@@ -99,7 +99,7 @@ const wageRoutes = express.Router();
  *                 type: string
  *                 description: Error message indicating an internal server error
  */
-wageRoutes.put("/setWage", setWage);
+wageRoutes.put('/setWage', setWage)
 
 /**
  * @openapi
@@ -180,6 +180,6 @@ wageRoutes.put("/setWage", setWage);
  *                 type: string
  *                 description: Error message indicating an internal server error
  */
-wageRoutes.get("/", getWages);
+wageRoutes.get('/', getWages)
 
-export default wageRoutes;
+export default wageRoutes

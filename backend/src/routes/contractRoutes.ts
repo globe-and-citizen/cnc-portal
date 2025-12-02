@@ -1,12 +1,8 @@
-import express from "express";
+import express from 'express'
 
-import {
-  getContracts,
-  syncContracts,
-  addContract,
-} from "../controllers/contractController";
+import { getContracts, syncContracts, addContract } from '../controllers/contractController'
 
-const contractRoutes = express.Router();
+const contractRoutes = express.Router()
 
 /**
  * @openapi
@@ -94,7 +90,7 @@ const contractRoutes = express.Router();
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-contractRoutes.post("/", addContract);
+contractRoutes.post('/', addContract)
 
 /**
  * @openapi
@@ -137,7 +133,7 @@ contractRoutes.post("/", addContract);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-contractRoutes.get("/", getContracts);
+contractRoutes.get('/', getContracts)
 
 /**
  * @openapi
@@ -185,6 +181,6 @@ contractRoutes.get("/", getContracts);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-contractRoutes.put("/sync", syncContracts);
+contractRoutes.put('/sync', syncContracts)
 
-export default contractRoutes;
+export default contractRoutes

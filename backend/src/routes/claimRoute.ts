@@ -1,11 +1,7 @@
-import express from "express";
-import {
-  addClaim,
-  getClaims,
-  updateClaim,
-} from "../controllers/claimController";
+import express from 'express'
+import { addClaim, getClaims, updateClaim } from '../controllers/claimController'
 
-const claimRoutes = express.Router();
+const claimRoutes = express.Router()
 /**
  * @openapi
  * components:
@@ -98,7 +94,7 @@ const claimRoutes = express.Router();
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.post("/", addClaim);
+claimRoutes.post('/', addClaim)
 
 /**
  * @openapi
@@ -145,7 +141,7 @@ claimRoutes.post("/", addClaim);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.get("/", getClaims);
+claimRoutes.get('/', getClaims)
 
 /**
  * @openapi
@@ -209,6 +205,6 @@ claimRoutes.get("/", getClaims);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.put("/:claimId", updateClaim);
+claimRoutes.put('/:claimId', updateClaim)
 
-export default claimRoutes;
+export default claimRoutes

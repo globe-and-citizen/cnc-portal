@@ -1,0 +1,10 @@
+dist
+node_modules
+coverage
+prisma
+src/utils/swagger-output.json
+src/utils/backend_specs.html
+src/utils/backend_specs.yaml
+cloudbuild.yaml
+cloudbuild.prod.yaml
+bruno

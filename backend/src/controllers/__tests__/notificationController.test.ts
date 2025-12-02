@@ -1,195 +1,204 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
-import { prisma, errorResponse } from "../../utils";
-import { Request, Response } from "express";
-import { getNotification, updateNotification } from "../notificationController";
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
+import { prisma } from '../../utils'
+import { Response } from 'express'
+import { getNotification, updateNotification } from '../notificationController'
+import { AuthenticatedRequest } from '../../types'
 
-describe("Get Notification", () => {
+interface MockResponse extends Partial<Response> {
+  status: (code: number) => MockResponse
+  json: (data: unknown) => MockResponse
+  statusCode?: number
+  data?: unknown
+}
+
+describe('Get Notification', () => {
   beforeAll(async () => {
-    await prisma.$connect();
-  });
+    await prisma.$connect()
+  })
 
   afterAll(async () => {
-    await prisma.$disconnect();
-  });
+    await prisma.$disconnect()
+  })
 
-  it("should return notifications if user is authorized", async () => {
+  it('should return notifications if user is authorized', async () => {
     const req = {
-      address: "0x123",
-    } as unknown as Request;
+      address: '0x123'
+    } as unknown as AuthenticatedRequest
 
-    const res: any = {
-      status: (code: number) => {
-        res.statusCode = code;
-        return res;
+    const res: MockResponse = {
+      status: function (code: number) {
+        res.statusCode = code
+        return res
       },
-      json: (data: any) => {
-        res.data = data;
-        return res;
+      json: function (data: unknown) {
+        res.data = data
+        return res
       },
-      data: undefined,
-    } as unknown as Response;
+      data: undefined
+    }
 
-    await getNotification(req, res);
-  });
+    await getNotification(req, res as Response)
+  })
 
-  it("should handle errors gracefully", async () => {
+  it('should handle errors gracefully', async () => {
     const req = {
-      address: 1,
-    } as unknown as Request;
+      address: 1
+    } as unknown as AuthenticatedRequest
 
-    const res: any = {
-      status: () => res,
-      json: (data: any) => {
-        res.data = data;
-        return res;
+    const res: MockResponse = {
+      status: function () {
+        return res
       },
-      data: undefined,
-    } as unknown as Response;
+      json: function (data: unknown) {
+        res.data = data
+        return res
+      },
+      data: undefined
+    }
 
-    await getNotification(req, res);
+    await getNotification(req, res as Response)
+  })
+})
 
-  });
-});
-
-describe("Update Notification", () => {
+describe('Update Notification', () => {
   beforeAll(async () => {
-    await prisma.$connect();
-  });
+    await prisma.$connect()
+  })
 
   afterAll(async () => {
-    await prisma.$disconnect();
-  });
+    await prisma.$disconnect()
+  })
 
-  it("should update notification if user is authorized", async () => {
+  it('should update notification if user is authorized', async () => {
     const req = {
       params: {
-        id: "1",
+        id: '1'
       },
-      address: "0x123",
-    } as unknown as Request;
+      address: '0x123'
+    } as unknown as AuthenticatedRequest
 
-    const res: any = {
-      status: () => {
-        return res;
+    const res: MockResponse = {
+      status: function () {
+        return res
       },
-      json: (data: any) => {
-        res.data = data;
-        return res;
+      json: function (data: unknown) {
+        res.data = data
+        return res
       },
-      data: undefined,
-    } as unknown as Response;
+      data: undefined
+    }
 
-    vi.spyOn(prisma.notification, "findUnique").mockResolvedValue({
+    vi.spyOn(prisma.notification, 'findUnique').mockResolvedValue({
       id: 1,
-      userAddress: "0x123",
+      userAddress: '0x123',
       isRead: false,
-      message: "Test Message",
-      subject: "Test Subject",
-      author: "0x345",
+      message: 'Test Message',
+      subject: 'Test Subject',
+      author: '0x345',
       createdAt: new Date(Date.now()),
-      resource: null,
-    });
-    vi.spyOn(prisma.notification, "update").mockResolvedValue({
+      resource: null
+    })
+    vi.spyOn(prisma.notification, 'update').mockResolvedValue({
       id: 1,
-      userAddress: "0x123",
+      userAddress: '0x123',
       isRead: true,
-      message: "Test Message",
-      subject: "Test Subject",
-      author: "0x345",
+      message: 'Test Message',
+      subject: 'Test Subject',
+      author: '0x345',
       createdAt: new Date(Date.now()),
-      resource: null,
-    });
+      resource: null
+    })
 
-    await updateNotification(req, res);
+    await updateNotification(req, res as Response)
 
     // Clean up the mocks
-    vi.restoreAllMocks();
-  });
+    vi.restoreAllMocks()
+  })
 
-  it("should return error if notification ID is invalid", async () => {
+  it('should return error if notification ID is invalid', async () => {
     const req = {
       params: {
-        id: "xyz",
+        id: 'xyz'
       },
-      address: "0x123",
-    } as unknown as Request;
+      address: '0x123'
+    } as unknown as AuthenticatedRequest
 
-    const res: any = {
-      status: () => {
-        return res;
+    const res: MockResponse = {
+      status: function () {
+        return res
       },
-      json: (data: any) => {
-        res.data = data;
-        return res;
+      json: function (data: unknown) {
+        res.data = data
+        return res
       },
-      data: undefined,
-    } as unknown as Response;
+      data: undefined
+    }
 
-    await updateNotification(req, res);
+    await updateNotification(req, res as Response)
 
-    expect(res.data.message).toBe("Notification ID invalid format");
-  });
+    expect((res.data as { message: string }).message).toBe('Notification ID invalid format')
+  })
 
-  it("should return error if user is unauthorized", async () => {
+  it('should return error if user is unauthorized', async () => {
     const req = {
       params: {
-        id: "1",
+        id: '1'
       },
-      address: "0x124",
-    } as unknown as Request;
+      address: '0x124'
+    } as unknown as AuthenticatedRequest
 
-    const res: any = {
-      status: () => {
-        return res;
+    const res: MockResponse = {
+      status: function () {
+        return res
       },
-      json: (data: any) => {
-        res.data = data;
-        return res;
+      json: function (data: unknown) {
+        res.data = data
+        return res
       },
-      data: undefined,
-    } as unknown as Response;
+      data: undefined
+    }
 
-    vi.spyOn(prisma.notification, "findUnique").mockResolvedValue({
+    vi.spyOn(prisma.notification, 'findUnique').mockResolvedValue({
       id: 1,
-      userAddress: "0x123",
+      userAddress: '0x123',
       isRead: false,
-      message: "Test Message",
-      subject: "Test Subject",
-      author: "0x345",
+      message: 'Test Message',
+      subject: 'Test Subject',
+      author: '0x345',
       createdAt: new Date(Date.now()),
-      resource: null,
-    });
+      resource: null
+    })
 
-    await updateNotification(req, res);
+    await updateNotification(req, res as Response)
 
-    expect(res.data.message).toBe("Unauthorized access");
+    expect((res.data as { message: string }).message).toBe('Unauthorized access')
 
     // Clean up the mocks
-    vi.restoreAllMocks();
-  });
+    vi.restoreAllMocks()
+  })
 
-  it("should handle errors gracefully", async () => {
+  it('should handle errors gracefully', async () => {
     const req = {
       params: {
-        id: "1",
+        id: '1'
       },
-      address: 1,
-    } as unknown as Request;
+      address: 1
+    } as unknown as AuthenticatedRequest
 
-    const res: any = {
-      status: () => {
-        return res;
+    const res: MockResponse = {
+      status: function () {
+        return res
       },
-      json: (data: any) => {
-        res.data = data;
-        return res;
+      json: function (data: unknown) {
+        res.data = data
+        return res
       },
-      data: undefined,
-    } as unknown as Response;
+      data: undefined
+    }
 
-    await updateNotification(req, res);
+    await updateNotification(req, res as Response)
 
     // Clean up the mocks
-    vi.restoreAllMocks();
-  });
-});
+    vi.restoreAllMocks()
+  })
+})

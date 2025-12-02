@@ -1,9 +1,10 @@
-import { PrismaClient } from "@prisma/client";
-import { Request, Response } from "express";
-import { generateNonce, SiweMessage } from "siwe";
-import { errorResponse } from "../utils/utils";
+import { PrismaClient } from '@prisma/client'
+import { Request, Response } from 'express'
+import { generateNonce } from 'siwe'
+import { errorResponse } from '../utils/utils'
+import { AuthenticatedRequest } from '../types'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
 /**
  *
@@ -12,137 +13,133 @@ const prisma = new PrismaClient();
  * @returns
  */
 export const getNonce = async (req: Request, res: Response) => {
-  const { address } = req.params;
+  const { address } = req.params
 
   try {
-    if (!address)
-      return errorResponse(401, "Get nonce error: Missing user address", res);
+    if (!address) return errorResponse(401, 'Get nonce error: Missing user address', res)
 
     const user = await prisma.user.findUnique({
       where: {
-        address: address,
-      },
-    });
+        address: address
+      }
+    })
 
-    await prisma.$disconnect();
+    await prisma.$disconnect()
 
     if (!user)
       return res.status(200).json({
         success: true,
-        nonce: generateNonce(),
-      });
+        nonce: generateNonce()
+      })
 
-    const nonce = user.nonce;
+    const nonce = user.nonce
 
     return res.status(200).json({
       success: true,
-      nonce,
-    });
+      nonce
+    })
   } catch (error) {
-    await prisma.$disconnect();
-    return errorResponse(500, error, res);
+    await prisma.$disconnect()
+    return errorResponse(500, error, res)
   }
-};
+}
 
 export const getUser = async (req: Request, res: Response) => {
-  const { address } = req.params;
+  const { address } = req.params
   try {
-    if (!address)
-      return errorResponse(401, "Get user error: Missing user address", res);
+    if (!address) return errorResponse(401, 'Get user error: Missing user address', res)
 
     const user = await prisma.user.findUnique({
       where: {
-        address: address,
-      },
-    });
+        address: address
+      }
+    })
 
-    await prisma.$disconnect();
+    await prisma.$disconnect()
 
-    if (!user) return errorResponse(404, "User not found", res);
+    if (!user) return errorResponse(404, 'User not found', res)
 
-    return res.status(200).json(user);
+    return res.status(200).json(user)
   } catch (error) {
-    await prisma.$disconnect();
-    return errorResponse(500, error, res);
+    await prisma.$disconnect()
+    return errorResponse(500, error, res)
   }
-};
-export const updateUser = async (req: Request, res: Response) => {
-  const { address } = req.params;
-  const { name, imageUrl } = req.body;
-  const callerAddress = (req as any).address;
+}
+export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
+  const { address } = req.params
+  const { name, imageUrl } = req.body
+  const callerAddress = req.address
 
   try {
-    if (!address)
-      return errorResponse(401, "Update user error: Missing user address", res);
+    if (!address) return errorResponse(401, 'Update user error: Missing user address', res)
     if (callerAddress !== address) {
-      return errorResponse(403, "Unauthorized", res);
+      return errorResponse(403, 'Unauthorized', res)
     }
     const user = await prisma.user.findUnique({
       where: {
-        address: address,
+        address: address
       },
       select: {
         address: true,
-        name: true,
-      },
-    });
+        name: true
+      }
+    })
 
-    await prisma.$disconnect();
+    await prisma.$disconnect()
 
-    if (!user) return errorResponse(404, "User not found", res);
+    if (!user) return errorResponse(404, 'User not found', res)
 
     const updatedUser = await prisma.user.update({
       where: {
-        address: address,
+        address: address
       },
       data: {
         name,
-        imageUrl,
+        imageUrl
       },
       select: {
         address: true,
         name: true,
-        imageUrl: true,
-      },
-    });
+        imageUrl: true
+      }
+    })
 
-    return res.status(200).json(updatedUser);
+    return res.status(200).json(updatedUser)
   } catch (error) {
-    await prisma.$disconnect();
-    return errorResponse(500, error, res);
+    await prisma.$disconnect()
+    return errorResponse(500, error, res)
   }
-};
+}
 export const getAllUsers = async (req: Request, res: Response) => {
-  const { page, limit } = req.query;
-  const pageNumber = parseInt(page as string) || 1;
-  const pageSize = parseInt(limit as string) || 10;
-  const offset = (pageNumber - 1) * pageSize;
+  const { page, limit } = req.query
+  const pageNumber = parseInt(page as string) || 1
+  const pageSize = parseInt(limit as string) || 10
+  const offset = (pageNumber - 1) * pageSize
 
   try {
     const users = await prisma.user.findMany({
       skip: offset,
-      take: pageSize,
-    });
-    const totalUsers = await prisma.user.count();
-    await prisma.$disconnect();
+      take: pageSize
+    })
+    const totalUsers = await prisma.user.count()
+    await prisma.$disconnect()
     return res.status(200).json({
       users,
       totalUsers,
       currentPage: pageNumber,
-      totalPages: Math.ceil(totalUsers / pageSize),
-    });
+      totalPages: Math.ceil(totalUsers / pageSize)
+    })
   } catch (error) {
-    await prisma.$disconnect();
-    return errorResponse(500, error, res);
+    await prisma.$disconnect()
+    return errorResponse(500, error, res)
   }
-};
+}
 
 export const searchUser = async (req: Request, res: Response) => {
-  const { name, address } = req.query;
+  const { name, address } = req.query
 
   try {
-    if (!name && !address)
-      return errorResponse(401, "Search error: Missing name and address", res);
+    if (!name && !address) return errorResponse(401, 'Search error: Missing name and address', res)
 
     const users = await prisma.user.findMany({
       where: {
@@ -150,23 +147,23 @@ export const searchUser = async (req: Request, res: Response) => {
           {
             name: {
               contains: name as string,
-              mode: "insensitive",
-            },
+              mode: 'insensitive'
+            }
           },
           {
             address: {
-              contains: address as string,
-            },
-          },
-        ],
-      },
-    });
+              contains: address as string
+            }
+          }
+        ]
+      }
+    })
 
-    await prisma.$disconnect();
+    await prisma.$disconnect()
 
-    return res.status(200).json({ success: true, users });
+    return res.status(200).json({ success: true, users })
   } catch (error) {
-    await prisma.$disconnect();
-    return errorResponse(500, error, res);
+    await prisma.$disconnect()
+    return errorResponse(500, error, res)
   }
-};
+}

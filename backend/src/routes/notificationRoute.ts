@@ -1,6 +1,6 @@
-import express from "express";
-import { getNotification, updateNotification } from '../controllers/notificationController';
-import { authorizeUser } from "../middleware/authMiddleware";
+import express from 'express'
+import { getNotification, updateNotification } from '../controllers/notificationController'
+import { authorizeUser } from '../middleware/authMiddleware'
 
 const notificationRoute = express.Router()
 
