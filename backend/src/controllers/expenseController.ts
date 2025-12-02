@@ -142,7 +142,7 @@ const syncExpenseStatus = async (expense: Expense) => {
 
   const amountTransferred =
     isNewPeriod
-      ? 0
+      ? "0"
       : data.tokenAddress === zeroAddress
         ? `${formatEther(balances[1])}`
         : `${Number(balances[1]) / 1e6}`;
