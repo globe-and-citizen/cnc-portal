@@ -39,11 +39,12 @@ vi.mock('vue-router', () => ({
 vi.mock('@/stores/useToastStore')
 
 // Shared mock user store so component and tests reference the same instance
+// Use plain values to mimic a Pinia store's properties (storeToRefs will create refs)
 const mockUserStore = {
-  address: ref('0xOwner'),
-  name: ref('Owner'),
-  imageUrl: ref(''),
-  isAuth: ref(true),
+  address: '0xOwner',
+  name: 'Owner',
+  imageUrl: '',
+  isAuth: true,
   setUserData: vi.fn()
 }
 
@@ -100,7 +101,8 @@ const mockUseWaitForTransactionReceipt = {
 
 const mockUseAccount = {
   isDisconnected: ref(false),
-  chainId: ref(11155111)
+  chainId: ref(11155111),
+  address: ref('0xOwner')
 }
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -149,7 +151,7 @@ describe('App.vue', () => {
     })
 
     it('should update toggleSide when Drawer emits update:modelValue', async () => {
-      mockUserStore.isAuth.value = true
+      mockUserStore.isAuth = true
       const wrapper = shallowMount(App, {
         global: {
           plugins: [createTestingPinia({ createSpy: vi.fn })]
@@ -169,7 +171,7 @@ describe('App.vue', () => {
     })
 
     it('should set editUserModal when Drawer emits openEditUserModal', async () => {
-      mockUserStore.isAuth.value = true
+      mockUserStore.isAuth = true
       const wrapper = shallowMount(App, {
         global: {
           plugins: [createTestingPinia({ createSpy: vi.fn })]
@@ -225,6 +227,7 @@ describe('App.vue', () => {
 
   describe('Emits', () => {
     it('should call addErrorToast and logout on disconnect', async () => {
+      vi.useFakeTimers()
       const wrapper = shallowMount(App, {
         global: {
           plugins: [createTestingPinia({ createSpy: vi.fn })]
@@ -235,7 +238,13 @@ describe('App.vue', () => {
       mockUseAccount.isDisconnected.value = true
       await wrapper.vm.$nextTick()
 
+      // toast should be called immediately
       expect(addErrorToast).toHaveBeenCalledWith('Disconnected from wallet')
+
+      // logout should be called after the timeout in App.vue
+      vi.runAllTimers()
+      expect(mockUseAuth.logout).toHaveBeenCalled()
+      vi.useRealTimers()
     })
   })
 })

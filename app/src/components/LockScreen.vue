@@ -4,15 +4,15 @@
       <h1 class="text-2xl font-bold text-red-500 mb-3">🔒 Session Locked</h1>
       <p class="text-gray-600 mb-4">
         You are authenticated with this address
-        <span class="font-mono text-sm"> {{ formatedUserAddress }} </span>... But you have this
-        address connected <span class="font-mono text-sm">{{ formatedConnectedAddress }}</span
+        <span class="font-mono text-sm"> {{ formatedUserAddress }} </span> but you have this address
+        connected <span class="font-mono text-sm">{{ formatedConnectedAddress }}</span
         >.
       </p>
       <p class="text-sm text-gray-500 mb-6">
         Logout and login back.<br />
         <span class="text-blue-600 font-medium">Waiting for unlock...</span>
       </p>
-      <ButtonUI @click="disconnect()">Logout</ButtonUI>
+      <ButtonUI @click="disconnect()" variant="warning">Logout</ButtonUI>
     </div>
 
     <p class="mt-6 text-xs text-gray-400">Or switch you account back to address...</p>
