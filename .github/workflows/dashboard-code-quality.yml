@@ -1,4 +1,6 @@
 name: Dashboard Code Quality Check
+permissions:
+  contents: read
 
 on:
   pull_request:
