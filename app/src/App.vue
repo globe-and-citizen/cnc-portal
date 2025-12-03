@@ -117,10 +117,11 @@ const userStore = useUserDataStore()
 const { name, address, imageUrl } = storeToRefs(userStore)
 
 const lock = computed(() => {
-  if (userStore.isAuth) {
-    if (connectedAddress.value?.toLowerCase() !== userStore.address.toLowerCase()) {
-      return true
-    }
+  if (
+    userStore.isAuth &&
+    connectedAddress.value?.toLowerCase() !== userStore.address.toLowerCase()
+  ) {
+    return true
   }
   return false
 })
