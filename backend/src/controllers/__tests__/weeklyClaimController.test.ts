@@ -5,10 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import weeklyClaimRoutes from '../../routes/weeklyClaimRoute';
 import { prisma } from '../../utils';
 import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
+import { Address } from 'viem';
 
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
-  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
+  authorizeUser: vi.fn((req: Request & { address: Address }, res: Response, next: NextFunction) => {
     req.address = '0x1234567890123456789012345678901234567890';
     next();
   }),
@@ -605,10 +606,6 @@ describe('Weekly Claim Controller', () => {
           status: null,
         },
       ];
-
-      const findManySpy = vi
-        .spyOn(prisma.weeklyClaim, 'findMany')
-        .mockResolvedValue(mockWeeklyClaims);
 
       const response = await request(app).get('/?teamId=1&memberAddress=0xAnotherAddress');
       expect(response.status).toBe(200);

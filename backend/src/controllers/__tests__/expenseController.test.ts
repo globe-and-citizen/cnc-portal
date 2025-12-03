@@ -73,12 +73,6 @@ const mockExpenseData = {
   endDate: END_DATE, // 30 days from start date
 };
 
-// Helper function to create variations of expense data for testing
-const createExpenseData = (overrides: Partial<typeof mockExpenseData> = {}) => ({
-  ...mockExpenseData,
-  ...overrides,
-});
-
 const mockExpense = {
   id: 1,
   teamId: 1,

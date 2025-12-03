@@ -139,7 +139,7 @@ describe('authMiddleware', () => {
 
       // Mock errorResponse to throw on 401 so we can catch 500 path
       const { errorResponse } = await import('../../utils/utils');
-      vi.mocked(errorResponse).mockImplementation((status: number, error: any, res: Response) => {
+      vi.mocked(errorResponse).mockImplementation((status: number, error: Error, res: Response) => {
         if (status === 401) {
           throw new Error('Triggering 500 path');
         }

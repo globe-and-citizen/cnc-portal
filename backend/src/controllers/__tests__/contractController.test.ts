@@ -1,13 +1,11 @@
-import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
-import { describe, vi, beforeEach, it, expect } from 'vitest';
-import { Address, getContract, isAddress } from 'viem';
-import { prisma } from '../../utils';
-import { Team } from '@prisma/client';
 import { faker } from '@faker-js/faker';
-import publicClient from '../../utils/viem.config';
+import { Team } from '@prisma/client';
+import express, { NextFunction, Request, Response } from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import contractRoutes from '../../routes/contractRoutes';
-import { authorizeUser } from '../../middleware/authMiddleware';
+import { prisma } from '../../utils';
+import publicClient from '../../utils/viem.config';
 
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
