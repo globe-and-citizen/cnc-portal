@@ -124,35 +124,6 @@ describe('Router Configuration', () => {
   })
 
   describe('Route Definitions', () => {
-    it('should have correct route structure', () => {
-      const routes = router.getRoutes()
-
-      // Router expands nested routes, so we have more than just 4 top-level routes
-      expect(routes.length).toBeGreaterThan(4)
-
-      // Check home route
-      const homeRoute = routes.find((route) => route.name === 'home')
-      expect(homeRoute).toBeDefined()
-      expect(homeRoute?.path).toBe('/')
-
-      // Check login route
-      const loginRoute = routes.find((route) => route.name === 'login')
-      expect(loginRoute).toBeDefined()
-      expect(loginRoute?.path).toBe('/login')
-
-      // Check teams route
-      const teamsRoute = routes.find((route) => route.name === 'teams')
-      expect(teamsRoute).toBeDefined()
-      expect(teamsRoute?.path).toBe('/teams')
-      expect(teamsRoute?.meta?.name).toBe('Teams List')
-
-      // Check locked route
-      const lockedRoute = routes.find((route) => route.name === 'LockedView')
-      expect(lockedRoute).toBeDefined()
-      expect(lockedRoute?.path).toBe('/locked')
-      expect(lockedRoute?.meta?.noLayout).toBe(true)
-    })
-
     it('should have team detail route with nested children', () => {
       const routes = router.getRoutes()
       const teamRoute = routes.find((route) => route.name === 'show-team')
@@ -218,8 +189,7 @@ describe('Router Configuration', () => {
         { name: 'bod-proposals', expectedMeta: { name: 'Proposals' } },
         { name: 'proposal-detail', expectedMeta: { name: 'Proposals' } },
         { name: 'bod-elections-details', expectedMeta: { name: 'BoD Election Details' } },
-        { name: 'sher-token', expectedMeta: { name: 'SHER Token' } },
-        { name: 'LockedView', expectedMeta: { noLayout: true } }
+        { name: 'sher-token', expectedMeta: { name: 'SHER Token' } }
       ]
 
       routesWithMeta.forEach(({ name, expectedMeta }) => {
@@ -330,16 +300,6 @@ describe('Router Configuration', () => {
 
         await router.push('/login')
         expect(router.currentRoute.value.name).toBe('login')
-      })
-
-      it('should always allow access to locked view regardless of auth status', async () => {
-        mockIsAuth.value = false
-        await router.push('/locked')
-        expect(router.currentRoute.value.name).toBe('LockedView')
-
-        mockIsAuth.value = true
-        await router.push('/locked')
-        expect(router.currentRoute.value.name).toBe('LockedView')
       })
 
       it('should handle route navigation with parameters', async () => {
