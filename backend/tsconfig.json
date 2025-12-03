@@ -48,5 +48,5 @@
     "**/*.spec.ts",
     "**/*.test.ts"
   ],
-  "include": ["prisma/seeds.ts", "src/*"]
+  "include": ["prisma/seeds.ts", "src/*", "src/types/**/*.d.ts"]
 }
