@@ -9,7 +9,7 @@ import { authorizeUser } from '../../middleware/authMiddleware';
 // Hoisted mock variables
 const { mockAuthorizeUser } = vi.hoisted(() => ({
   mockAuthorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = '0x1234567890123456789012345678901234567890';
+    req.address = '0x1234567890123456789012345678901234567890';
     next();
   }),
 }));
@@ -97,7 +97,7 @@ describe('Member Controller', () => {
     vi.clearAllMocks();
     app = createTestApp();
     mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-      (req as any).address = mockOwner.address;
+      req.address = mockOwner.address;
       next();
     });
   });
@@ -169,7 +169,7 @@ describe('Member Controller', () => {
     });
 
     it('Should return 500 when an error occurs', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
       vi.mocked(prisma.team.findUnique).mockRejectedValue('Server error');
 
       const response = await request(app).post('/team/1/member').send(fakeMembers);
@@ -243,7 +243,7 @@ describe('Member Controller', () => {
     });
 
     it('should return 500 when an error occurs', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
       vi.mocked(prisma.team.findUnique).mockRejectedValue('Server error');
 
       const response = await request(app).delete('/team/1/member/0xMemberAddress1');

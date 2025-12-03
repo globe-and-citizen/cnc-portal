@@ -25,7 +25,7 @@ const TEST_ADDRESS = '0x1234567890123456789012345678901234567890';
 // Mock the authorization middleware with proper hoisting
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = TEST_ADDRESS;
+    req.address = TEST_ADDRESS;
     next();
   }),
 }));
@@ -127,7 +127,7 @@ const createTestApp = (address = TEST_ADDRESS) => {
   const testApp = express();
   testApp.use(express.json());
   testApp.use((req, res, next) => {
-    (req as any).address = address;
+    req.address = address;
     next();
   });
   testApp.use('/', claimRoutes);

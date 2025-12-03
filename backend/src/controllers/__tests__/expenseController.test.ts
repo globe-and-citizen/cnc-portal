@@ -10,7 +10,7 @@ import { authorizeUser } from '../../middleware/authMiddleware';
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = '0x1234567890123456789012345678901234567890';
+    req.address = '0x1234567890123456789012345678901234567890';
     next();
   }),
 }));
