@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
-import { Address, getContract, isAddress } from 'viem';
+import { Request, Response } from 'express';
+import { Address } from 'viem';
+import OFFICER_ABI from '../artifacts/officer_abi.json';
 import { errorResponse, prisma } from '../utils';
 import publicClient from '../utils/viem.config';
-import OFFICER_ABI from '../artifacts/officer_abi.json';
 const ContractType = {
   Bank: 'Bank',
   InvestorV1: 'InvestorV1',
@@ -24,7 +24,7 @@ interface ContractBodyRequest {
 }
 
 export const syncContracts = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address as Address;
+  const callerAddress = req.address as Address;
   const body = req.body as unknown as Pick<ContractBodyRequest, 'teamId'>;
 
   const teamId = Number(body.teamId);
@@ -86,7 +86,7 @@ export const getContracts = async (req: Request, res: Response) => {
 };
 
 export const addContract = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address as Address;
+  const callerAddress = req.address as Address;
   const body = req.body as unknown as ContractBodyRequest;
 
   const teamId = Number(body.teamId);
@@ -126,7 +126,7 @@ export const resetTeamContracts = async (req: Request, res: Response) => {
     if (!team) return errorResponse(404, 'Team not found', res);
 
     // Only the team owner can reset contracts
-    const callerAddress = (req as any).address as Address;
+    const callerAddress = req.address as Address;
     if (team.ownerAddress !== callerAddress)
       return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
 

@@ -1,9 +1,7 @@
-import { prisma } from '../utils';
 import { Request, Response } from 'express';
-import { generateNonce, SiweMessage } from 'siwe';
+import { generateNonce } from 'siwe';
+import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
-import { log } from 'console';
-import { isAddress } from 'viem';
 
 /**
  *
@@ -61,7 +59,7 @@ export const getUser = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   const { address } = req.params;
   const { name, imageUrl } = req.body;
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
 
   try {
     if (!callerAddress) return errorResponse(401, 'Update user error: Missing user address', res);
@@ -111,11 +109,11 @@ export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const where = search
       ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' as const } },
-            { address: { contains: search, mode: 'insensitive' as const } },
-          ],
-        }
+        OR: [
+          { name: { contains: search, mode: 'insensitive' as const } },
+          { address: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }
       : undefined;
     console.log('Where clause:', where);
     const users = await prisma.user.findMany({

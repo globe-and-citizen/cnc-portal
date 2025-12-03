@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 
-import { Address } from 'viem';
-import { errorResponse } from '../utils/utils';
-import { prisma } from '../utils';
 import { Wage } from '@prisma/client';
+import { Address } from 'viem';
+import { prisma } from '../utils';
+import { errorResponse } from '../utils/utils';
 
 type wageBodyRequest = Pick<
   Wage,
@@ -13,7 +13,7 @@ type wageBodyRequest = Pick<
   // | "tokenRatePerHour"
   | 'maximumHoursPerWeek'
   | 'ratePerHour'
-  // | "usdcRatePerHour"
+// | "usdcRatePerHour"
 > & {
   ratePerHour: Array<{
     type: string;
@@ -21,7 +21,7 @@ type wageBodyRequest = Pick<
   }>;
 };
 export const setWage = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
 
   const body = req.body as wageBodyRequest;
   const teamId = Number(body.teamId);
@@ -109,7 +109,7 @@ export const setWage = async (req: Request, res: Response) => {
 };
 // /wage/?teamId=teamId
 export const getWages = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   const teamId = Number(req.query.teamId);
 
   // find the team and check if the caller is the owner
@@ -146,9 +146,7 @@ export const isUserMemberOfTeam = async (
   userAddress: Address,
   teamId: number
 ): Promise<boolean> => {
-  let team;
-
-  team = await prisma.team.findFirst({
+  const team = await prisma.team.findFirst({
     where: {
       id: teamId,
       members: {

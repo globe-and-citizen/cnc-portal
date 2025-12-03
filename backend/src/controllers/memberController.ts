@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
 
-import { Address, isAddress } from 'viem';
+import { User } from '@prisma/client';
+import { isAddress } from 'viem';
+import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
-import { addNotification, prisma } from '../utils';
-import { Prisma, User } from '@prisma/client';
 
 export const deleteMember = async (req: Request, res: Response) => {
   const { id, memberAddress } = req.params;
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   try {
     // Find the team
     const team = await prisma.team.findUnique({
@@ -100,7 +100,7 @@ export const addMembers = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Team not found' });
     }
 
-    const callerAddress = (req as any).address;
+    const callerAddress = req.address;
     if (team.ownerAddress !== callerAddress) {
       return errorResponse(403, 'Unauthorized: Only the owner can Add a member', res);
     }

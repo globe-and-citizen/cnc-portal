@@ -1,12 +1,12 @@
-import { Request, Response } from 'express';
-import { errorResponse } from '../utils/utils';
-import { prisma } from '../utils';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
 import isoWeek from 'dayjs/plugin/isoWeek';
+import utc from 'dayjs/plugin/utc';
 import weekday from 'dayjs/plugin/weekday';
+import { Request, Response } from 'express';
+import { prisma } from '../utils';
+import { errorResponse } from '../utils/utils';
 
-import { Prisma, Claim } from '@prisma/client';
+import { Claim, Prisma } from '@prisma/client';
 import { isUserMemberOfTeam } from './wageController';
 
 dayjs.extend(utc);
@@ -19,7 +19,7 @@ type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
 
 // TODO limit weeday only for the current week. Betwen Monday and the current day
 export const addClaim = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
 
   const body = req.body as claimBodyRequest;
   const hoursWorked = Number(body.hoursWorked);
@@ -89,7 +89,7 @@ export const addClaim = async (req: Request, res: Response) => {
       (weeklyClaim?.claims
         .filter((claim) => claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime())
         .reduce((sum, claim) => sum + Number(claim.hoursWorked), 0) ?? 0) +
-        Number(hoursWorked) >
+      Number(hoursWorked) >
       24
     ) {
       return errorResponse(
@@ -116,7 +116,7 @@ export const addClaim = async (req: Request, res: Response) => {
 };
 
 export const getClaims = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   const teamId = Number(req.query.teamId);
   const status = req.query.status as string;
   const memberAddress = req.query.memberAddress as string | undefined;
@@ -166,12 +166,11 @@ export const getClaims = async (req: Request, res: Response) => {
 };
 
 export const updateClaim = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   const claimId = Number(req.params.claimId);
 
   const { hoursWorked, memo }: { hoursWorked: number; memo: string } = req.body;
   // Prepare the data according to the action
-  const data: Prisma.ClaimUpdateInput = {};
   try {
     // Fetch the claim including the required data
     const claim = await prisma.claim.findFirst({
@@ -213,7 +212,7 @@ export const updateClaim = async (req: Request, res: Response) => {
 };
 
 export const deleteClaim = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   const claimId = Number(req.params.claimId);
 
   try {
