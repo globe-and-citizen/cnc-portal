@@ -118,7 +118,6 @@ export const addClaim = async (req: Request, res: Response) => {
 export const getClaims = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const teamId = Number(req.query.teamId);
-  const status = req.query.status as string;
   const memberAddress = req.query.memberAddress as string | undefined;
 
   try {

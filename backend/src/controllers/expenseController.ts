@@ -136,7 +136,7 @@ const syncExpenseStatus = async (expense: Expense) => {
       : `${Number(balances[1]) / 1e6}`;
 
   const isLimitReached =
-    (Number(data.amount) ?? Number.MAX_VALUE) <= Number(amountTransferred) ||
+    Number(data.amount || Number.MAX_VALUE) <= Number(amountTransferred) ||
     ((expense.data as BudgetLimit).frequencyType === 0 && balances[1] > 0);
 
   const formattedExpense = {
