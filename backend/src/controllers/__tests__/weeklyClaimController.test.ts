@@ -607,6 +607,8 @@ describe('Weekly Claim Controller', () => {
         },
       ];
 
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue(mockWeeklyClaims);
+
       const response = await request(app).get('/?teamId=1&memberAddress=0xAnotherAddress');
       expect(response.status).toBe(200);
 

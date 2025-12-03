@@ -88,7 +88,7 @@ describe('uploadRoute', () => {
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
         error: 'Failed to upload image',
-        details: 'String error',
+        details: 'Unknown error occurred',
       });
     });
   });

@@ -27,11 +27,10 @@ vi.mock('uuid', () => ({
 // Mock multer
 vi.mock('multer', () => {
   const mockMemoryStorage = vi.fn(() => ({}));
-  const mockMulter = vi.fn(() => ({
+  const mockMulter: any = vi.fn(() => ({
     single: vi.fn(),
-    memoryStorage: mockMemoryStorage,
   }));
-  // (mockMulter as any).memoryStorage = mockMemoryStorage;
+  mockMulter.memoryStorage = mockMemoryStorage;
   return {
     default: mockMulter,
   };
