@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import { prisma, errorResponse, getMondayStart } from '../utils';
+import { errorResponse, getMondayStart, prisma } from '../utils';
 // import { errorResponse } from "../utils/utils";
 import { Prisma } from '@prisma/client';
 import { Hex, isAddress, isHex, keccak256 } from 'viem';
+import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json';
 import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
 import publicClient from '../utils/viem.config';
-import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json';
 
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
@@ -78,9 +78,9 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         if (
           weeklyClaim.status === 'signed' &&
           callerAddress ===
-            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-              ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
-              : undefined)
+          (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
+            ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
+            : undefined)
         ) {
           enableErrors.push('Weekly claim already active');
         } else if (weeklyClaim.status === 'withdrawn') {
@@ -109,9 +109,9 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         if (
           weeklyClaim.status === 'disabled' &&
           callerAddress ===
-            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-              ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
-              : undefined)
+          (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
+            ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
+            : undefined)
         ) {
           disableErrors.push('Weekly claim already disabled');
         } else if (weeklyClaim.status === 'withdrawn') {
@@ -145,9 +145,9 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           if (
             weeklyClaim.status === 'signed' &&
             callerAddress ===
-              (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-                ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
-                : undefined)
+            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
+              ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
+              : undefined)
           ) {
             signErrors.push('Weekly claim already signed');
           } else if (weeklyClaim.status === 'withdrawn') {

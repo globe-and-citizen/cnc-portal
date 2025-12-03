@@ -1,10 +1,10 @@
-import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
-import claimRoutes from '../../routes/claimRoute';
-import { prisma } from '../../utils';
-import { describe, it, beforeEach, expect, vi } from 'vitest';
 import { Claim, Wage, WeeklyClaim } from '@prisma/client';
 import dayjs from 'dayjs';
+import express, { NextFunction, Request, Response } from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import claimRoutes from '../../routes/claimRoute';
+import { prisma } from '../../utils';
 
 vi.mock('../../utils');
 vi.mock('../../utils/viem.config');
@@ -94,30 +94,30 @@ const createMockClaimWithWage = (
   claimOverrides: Partial<Claim> = {},
   wageOverrides: Partial<Wage> = {}
 ) => [
-  {
-    id: 1,
-    hoursWorked: 5,
+    {
+      id: 1,
+      hoursWorked: 5,
 
-    status: 'pending',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    signature: null,
-    wageId: 1,
-    dayWorked: new Date(),
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      signature: null,
+      wageId: 1,
+      dayWorked: new Date(),
 
-    memo: 'Test memo',
-    tokenTx: null,
-    weeklyClaimId: 1,
-    wage: {
-      teamId: 1,
-      userAddress: TEST_ADDRESS,
+      memo: 'Test memo',
+      tokenTx: null,
+      weeklyClaimId: 1,
+      wage: {
+        teamId: 1,
+        userAddress: TEST_ADDRESS,
 
-      user: { address: TEST_ADDRESS, name: 'User1' },
-      ...wageOverrides,
-    },
-    ...claimOverrides,
-  } as Claim,
-];
+        user: { address: TEST_ADDRESS, name: 'User1' },
+        ...wageOverrides,
+      },
+      ...claimOverrides,
+    } as Claim,
+  ];
 
 // Test utilities
 const mockIsCashRemunerationOwner = vi.mocked(isCashRemunerationOwner);

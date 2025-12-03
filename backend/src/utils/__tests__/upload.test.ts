@@ -1,5 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { Readable } from 'stream';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the bucket
 const mockBlobStream = {
@@ -30,8 +29,9 @@ vi.mock('multer', () => {
   const mockMemoryStorage = vi.fn(() => ({}));
   const mockMulter = vi.fn(() => ({
     single: vi.fn(),
+    memoryStorage: mockMemoryStorage,
   }));
-  (mockMulter as any).memoryStorage = mockMemoryStorage;
+  // (mockMulter as any).memoryStorage = mockMemoryStorage;
   return {
     default: mockMulter,
   };
@@ -58,7 +58,7 @@ describe('upload', () => {
       };
 
       // Setup the mock to simulate successful upload
-      mockBlobStream.on.mockImplementation((event: string, handler: any) => {
+      mockBlobStream.on.mockImplementation((event: string, handler: () => void) => {
         if (event === 'finish') {
           // Call the finish handler immediately
           setImmediate(() => handler());
@@ -92,7 +92,7 @@ describe('upload', () => {
       const uploadError = new Error('Upload failed');
 
       // Setup the mock to simulate error
-      mockBlobStream.on.mockImplementation((event: string, handler: any) => {
+      mockBlobStream.on.mockImplementation((event: string, handler: (err: Error) => void) => {
         if (event === 'error') {
           setImmediate(() => handler(uploadError));
         }
@@ -114,7 +114,7 @@ describe('upload', () => {
         size: 2048,
       };
 
-      mockBlobStream.on.mockImplementation((event: string, handler: any) => {
+      mockBlobStream.on.mockImplementation((event: string, handler: () => void) => {
         if (event === 'finish') {
           setImmediate(() => handler());
         }
@@ -142,7 +142,7 @@ describe('upload', () => {
         size: 512,
       };
 
-      mockBlobStream.on.mockImplementation((event: string, handler: any) => {
+      mockBlobStream.on.mockImplementation((event: string, handler: () => void) => {
         if (event === 'finish') {
           setImmediate(() => handler());
         }

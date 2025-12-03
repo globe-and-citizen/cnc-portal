@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { addressSchema, positiveIntegerSchema, teamIdSchema } from './common';
+import { addressSchema, teamIdSchema } from './common';
 
 /**
  * Claim-related validation schemas
