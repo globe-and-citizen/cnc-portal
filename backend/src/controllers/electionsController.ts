@@ -6,7 +6,7 @@ import bodAbi from '../artifacts/bod.json';
 import electionsAbi from '../artifacts/elections.json';
 
 export const addElectionNotifications = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   const teamId = Number(req.params.teamId);
 
   try {

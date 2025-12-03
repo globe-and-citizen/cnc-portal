@@ -1,9 +1,7 @@
 // upload.ts
-import multer, { Multer, FileFilterCallback } from 'multer';
-import { bucket } from './storage';
+import multer, { Multer } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
-import { Request } from 'express';
-import { Storage } from '@google-cloud/storage';
+import { bucket } from './storage';
 
 interface MulterFile {
   fieldname: string;

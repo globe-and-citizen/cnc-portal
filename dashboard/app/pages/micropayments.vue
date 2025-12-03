@@ -1,13 +1,7 @@
 <template>
-  <div>
-    Micropayments Page
-  </div>
+  <div>Micropayments Page</div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts"></script>
 
-</script>
-
-<style scoped>
-
-</style>
+<style scoped></style>

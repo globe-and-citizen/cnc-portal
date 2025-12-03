@@ -19,10 +19,11 @@ uploadRouter.post('/', upload.single('image'), async (req: Request, res: Respons
 
     const publicUrl = await uploadImageToGCS(multerReq.file);
     res.json({ imageUrl: publicUrl });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
     res.status(500).json({
       error: 'Failed to upload image',
-      details: err.message || err,
+      details: errorMessage,
     });
   }
 });

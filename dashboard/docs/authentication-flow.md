@@ -26,21 +26,21 @@ The admin dashboard uses SIWE (Sign-In with Ethereum) to authenticate users. Thi
 
 ### API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/user/nonce/{address}` | GET | Get nonce for user |
-| `/api/auth/siwe` | POST | Authenticate with SIWE message and signature |
-| `/api/auth/token` | GET | Validate JWT token |
+| Endpoint                    | Method | Description                                  |
+| --------------------------- | ------ | -------------------------------------------- |
+| `/api/user/nonce/{address}` | GET    | Get nonce for user                           |
+| `/api/auth/siwe`            | POST   | Authenticate with SIWE message and signature |
+| `/api/auth/token`           | GET    | Validate JWT token                           |
 
 ### Key Files
 
-| File | Description |
-|------|-------------|
-| `app/composables/useSiwe.ts` | SIWE authentication logic |
-| `app/stores/useAuthStore.ts` | Authentication state management |
-| `app/middleware/auth.global.ts` | Route protection middleware |
-| `app/pages/login.vue` | Login page UI |
-| `app/plugins/wagmi.client.ts` | Wagmi/Web3 configuration |
+| File                            | Description                     |
+| ------------------------------- | ------------------------------- |
+| `app/composables/useSiwe.ts`    | SIWE authentication logic       |
+| `app/stores/useAuthStore.ts`    | Authentication state management |
+| `app/middleware/auth.global.ts` | Route protection middleware     |
+| `app/pages/login.vue`           | Login page UI                   |
+| `app/plugins/wagmi.client.ts`   | Wagmi/Web3 configuration        |
 
 ### Environment Configuration
 
@@ -51,5 +51,6 @@ NUXT_PUBLIC_BACKEND_URL=http://localhost:3000
 ## Detailed Documentation
 
 For in-depth implementation details, see:
+
 - [Full Authentication Documentation](/docs/auth/README.md)
 - [Dashboard-specific Authentication](/docs/auth/dashboard-authentication.md)

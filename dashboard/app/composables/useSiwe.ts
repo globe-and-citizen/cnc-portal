@@ -1,5 +1,13 @@
 import { SiweMessage } from 'siwe'
-import { useConnection, useSignMessage, useChainId, useConnect, useDisconnect, useSwitchChain, injected } from '@wagmi/vue'
+import {
+  useConnection,
+  useSignMessage,
+  useChainId,
+  useConnect,
+  useDisconnect,
+  useSwitchChain,
+  injected
+} from '@wagmi/vue'
 import { useAuthStore } from '~/stores/useAuthStore'
 
 export function useSiwe() {
@@ -38,7 +46,10 @@ export function useSiwe() {
   /**
    * Authenticate with SIWE by sending message and signature to backend
    */
-  const authenticateWithSiwe = async (message: string, signature: string): Promise<string | null> => {
+  const authenticateWithSiwe = async (
+    message: string,
+    signature: string
+  ): Promise<string | null> => {
     try {
       const response = await fetch(`${backendUrl}/api/auth/siwe`, {
         method: 'POST',

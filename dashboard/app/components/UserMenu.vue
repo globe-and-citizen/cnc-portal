@@ -16,7 +16,25 @@ const authStore = useAuthStore()
 const siwe = useSiwe()
 const signOutFn = siwe.signOut
 
-const colors = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose']
+const colors = [
+  'red',
+  'orange',
+  'amber',
+  'yellow',
+  'lime',
+  'green',
+  'emerald',
+  'teal',
+  'cyan',
+  'sky',
+  'blue',
+  'indigo',
+  'violet',
+  'purple',
+  'fuchsia',
+  'pink',
+  'rose'
+]
 const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone']
 
 // Generate user info from authenticated address
@@ -25,9 +43,7 @@ const user = computed(() => {
   const addr = authStore.address.value
   const displayName = addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : 'Admin'
   // Using same avatar service as backend for consistency
-  const avatarSrc = addr
-    ? `https://api.dicebear.com/9.x/bottts/svg?seed=${addr}`
-    : undefined
+  const avatarSrc = addr ? `https://api.dicebear.com/9.x/bottts/svg?seed=${addr}` : undefined
   return {
     name: displayName,
     avatar: avatarSrc ? { src: avatarSrc, alt: displayName } : undefined
@@ -41,106 +57,131 @@ const handleLogout = () => {
   router.push('/login')
 }
 
-const items = computed<DropdownMenuItem[][]>(() => ([[{
-  type: 'label',
-  label: user.value.name,
-  avatar: user.value.avatar
-}], [{
-  label: 'Profile',
-  icon: 'i-lucide-user'
-}, {
-  label: 'Billing',
-  icon: 'i-lucide-credit-card'
-}, {
-  label: 'Settings',
-  icon: 'i-lucide-settings',
-  to: '/settings'
-}], [{
-  label: 'Theme',
-  icon: 'i-lucide-palette',
-  children: [{
-    label: 'Primary',
-    slot: 'chip',
-    chip: appConfig.ui.colors.primary,
-    content: {
-      align: 'center',
-      collisionPadding: 16
-    },
-    children: colors.map(color => ({
-      label: color,
-      chip: color,
-      slot: 'chip',
-      checked: appConfig.ui.colors.primary === color,
-      type: 'checkbox',
-      onSelect: (e) => {
-        e.preventDefault()
-
-        appConfig.ui.colors.primary = color
-      }
-    }))
-  }, {
-    label: 'Neutral',
-    slot: 'chip',
-    chip: appConfig.ui.colors.neutral === 'neutral' ? 'old-neutral' : appConfig.ui.colors.neutral,
-    content: {
-      align: 'end',
-      collisionPadding: 16
-    },
-    children: neutrals.map(color => ({
-      label: color,
-      chip: color === 'neutral' ? 'old-neutral' : color,
-      slot: 'chip',
-      type: 'checkbox',
-      checked: appConfig.ui.colors.neutral === color,
-      onSelect: (e) => {
-        e.preventDefault()
-
-        appConfig.ui.colors.neutral = color
-      }
-    }))
-  }]
-}, {
-  label: 'Appearance',
-  icon: 'i-lucide-sun-moon',
-  children: [{
-    label: 'Light',
-    icon: 'i-lucide-sun',
-    type: 'checkbox',
-    checked: colorMode.value === 'light',
-    onSelect(e: Event) {
-      e.preventDefault()
-
-      colorMode.preference = 'light'
+const items = computed<DropdownMenuItem[][]>(() => [
+  [
+    {
+      type: 'label',
+      label: user.value.name,
+      avatar: user.value.avatar
     }
-  }, {
-    label: 'Dark',
-    icon: 'i-lucide-moon',
-    type: 'checkbox',
-    checked: colorMode.value === 'dark',
-    onUpdateChecked(checked: boolean) {
-      if (checked) {
-        colorMode.preference = 'dark'
-      }
+  ],
+  [
+    {
+      label: 'Profile',
+      icon: 'i-lucide-user'
     },
-    onSelect(e: Event) {
-      e.preventDefault()
+    {
+      label: 'Billing',
+      icon: 'i-lucide-credit-card'
+    },
+    {
+      label: 'Settings',
+      icon: 'i-lucide-settings',
+      to: '/settings'
     }
-  }]
-}], [{
-  label: 'Documentation',
-  icon: 'i-lucide-book-open',
-  to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
-  target: '_blank'
-}, {
-  label: 'GitHub repository',
-  icon: 'i-simple-icons-github',
-  to: 'https://github.com/nuxt-ui-templates/dashboard',
-  target: '_blank'
-}, {
-  label: 'Log out',
-  icon: 'i-lucide-log-out',
-  onSelect: handleLogout
-}]]))
+  ],
+  [
+    {
+      label: 'Theme',
+      icon: 'i-lucide-palette',
+      children: [
+        {
+          label: 'Primary',
+          slot: 'chip',
+          chip: appConfig.ui.colors.primary,
+          content: {
+            align: 'center',
+            collisionPadding: 16
+          },
+          children: colors.map(color => ({
+            label: color,
+            chip: color,
+            slot: 'chip',
+            checked: appConfig.ui.colors.primary === color,
+            type: 'checkbox',
+            onSelect: (e) => {
+              e.preventDefault()
+
+              appConfig.ui.colors.primary = color
+            }
+          }))
+        },
+        {
+          label: 'Neutral',
+          slot: 'chip',
+          chip:
+            appConfig.ui.colors.neutral === 'neutral' ? 'old-neutral' : appConfig.ui.colors.neutral,
+          content: {
+            align: 'end',
+            collisionPadding: 16
+          },
+          children: neutrals.map(color => ({
+            label: color,
+            chip: color === 'neutral' ? 'old-neutral' : color,
+            slot: 'chip',
+            type: 'checkbox',
+            checked: appConfig.ui.colors.neutral === color,
+            onSelect: (e) => {
+              e.preventDefault()
+
+              appConfig.ui.colors.neutral = color
+            }
+          }))
+        }
+      ]
+    },
+    {
+      label: 'Appearance',
+      icon: 'i-lucide-sun-moon',
+      children: [
+        {
+          label: 'Light',
+          icon: 'i-lucide-sun',
+          type: 'checkbox',
+          checked: colorMode.value === 'light',
+          onSelect(e: Event) {
+            e.preventDefault()
+
+            colorMode.preference = 'light'
+          }
+        },
+        {
+          label: 'Dark',
+          icon: 'i-lucide-moon',
+          type: 'checkbox',
+          checked: colorMode.value === 'dark',
+          onUpdateChecked(checked: boolean) {
+            if (checked) {
+              colorMode.preference = 'dark'
+            }
+          },
+          onSelect(e: Event) {
+            e.preventDefault()
+          }
+        }
+      ]
+    }
+  ],
+  [
+    {
+      label: 'Documentation',
+      icon: 'i-lucide-book-open',
+      to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
+      target: '_blank'
+    },
+    {
+      label: 'GitHub repository',
+      icon: 'i-simple-icons-github',
+      to: 'https://github.com/nuxt-ui-templates/dashboard',
+      target: '_blank'
+    },
+    {
+      label: 'Log out',
+      icon: 'i-lucide-log-out',
+      onSelect: handleLogout
+    }
+  ]
+])
 </script>
 
 <template>

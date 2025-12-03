@@ -42,7 +42,6 @@ const options = {
   apis: ['./src/routes/*.ts'], // Point to route files containing JSDoc comments
 };
 const swaggerSpec = swaggerJsdoc(options);
-const path = require('path');
 
 class Server {
   private static instance: Server | undefined;
@@ -104,10 +103,10 @@ class Server {
   private middleware() {
     this.app.use(express.json());
     const allowedOrigins = process.env.FRONTEND_URL
-      ? process.env.FRONTEND_URL.split(",").map(origin => origin.trim())
+      ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim())
       : [];
-      console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
-      console.log('Allowed Origins for CORS:', allowedOrigins);
+    console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+    console.log('Allowed Origins for CORS:', allowedOrigins);
 
     this.app.use(cors({ origin: allowedOrigins, credentials: true }));
   }
@@ -138,15 +137,15 @@ class Server {
     Sentry.setupExpressErrorHandler(this.app);
 
     // Optional fallthrough error handler
-    // @ts-ignore
-    this.app.use(function onError(err, req, res, next) {
+    this.app.use(function onError(err: Error, _req: express.Request, res: express.Response) {
       // The error id is attached to `res.sentry` to be returned
       // and optionally displayed to the user for support.
+      console.error('Error:', err);
       res.statusCode = 500;
-      res.end(res.sentry + '\n');
+      res.end((res as { sentry?: string }).sentry + '\n');
     });
 
-    this.app.get('/debug-sentry', function mainHandler(req, res) {
+    this.app.get('/debug-sentry', function mainHandler() {
       throw new Error('My first Sentry error!');
     });
   }
