@@ -13,7 +13,7 @@ type wageBodyRequest = Pick<
   // | "tokenRatePerHour"
   | 'maximumHoursPerWeek'
   | 'ratePerHour'
-// | "usdcRatePerHour"
+  // | "usdcRatePerHour"
 > & {
   ratePerHour: Array<{
     type: string;

@@ -168,7 +168,7 @@ describe('Member Controller', () => {
     });
 
     it('Should return 500 when an error occurs', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.team.findUnique).mockRejectedValue('Server error');
 
       const response = await request(app).post('/team/1/member').send(fakeMembers);
@@ -242,7 +242,7 @@ describe('Member Controller', () => {
     });
 
     it('should return 500 when an error occurs', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.team.findUnique).mockRejectedValue('Server error');
 
       const response = await request(app).delete('/team/1/member/0xMemberAddress1');

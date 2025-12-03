@@ -1,4 +1,4 @@
-import { Address } from "viem";
+import { Address } from 'viem';
 
 declare global {
   namespace Express {

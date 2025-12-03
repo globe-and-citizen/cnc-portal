@@ -98,4 +98,3 @@ const createBulkNotifications = async (req: Request, res: Response) => {
 };
 
 export { createBulkNotifications, getNotification, updateNotification };
-

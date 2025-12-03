@@ -289,7 +289,7 @@ describe('validation/utils', () => {
 
   describe('createPerformanceTrackedSchema', () => {
     it('should track validation performance', () => {
-      const consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(() => { });
+      const consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
 
       const schema = createPerformanceTrackedSchema(z.string(), 'testSchema');
       const result = schema.parse('test');

@@ -78,9 +78,9 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         if (
           weeklyClaim.status === 'signed' &&
           callerAddress ===
-          (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-            ? (weeklyClaim.data as Record<string, unknown>)['ownerAddress']
-            : undefined)
+            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
+              ? (weeklyClaim.data as Record<string, unknown>)['ownerAddress']
+              : undefined)
         ) {
           enableErrors.push('Weekly claim already active');
         } else if (weeklyClaim.status === 'withdrawn') {
@@ -110,9 +110,9 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         if (
           weeklyClaim.status === 'disabled' &&
           callerAddress ===
-          (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-            ? (weeklyClaim.data as Record<string, unknown>)['ownerAddress']
-            : undefined)
+            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
+              ? (weeklyClaim.data as Record<string, unknown>)['ownerAddress']
+              : undefined)
         ) {
           disableErrors.push('Weekly claim already disabled');
         } else if (weeklyClaim.status === 'withdrawn') {
@@ -147,9 +147,9 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           if (
             weeklyClaim.status === 'signed' &&
             callerAddress ===
-            (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-              ? (weeklyClaim.data as Record<string, unknown>)['ownerAddress']
-              : undefined)
+              (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
+                ? (weeklyClaim.data as Record<string, unknown>)['ownerAddress']
+                : undefined)
           ) {
             signErrors.push('Weekly claim already signed');
           } else if (weeklyClaim.status === 'withdrawn') {

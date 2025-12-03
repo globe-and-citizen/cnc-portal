@@ -109,11 +109,11 @@ export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const where = search
       ? {
-        OR: [
-          { name: { contains: search, mode: 'insensitive' as const } },
-          { address: { contains: search, mode: 'insensitive' as const } },
-        ],
-      }
+          OR: [
+            { name: { contains: search, mode: 'insensitive' as const } },
+            { address: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
       : undefined;
     console.log('Where clause:', where);
     const users = await prisma.user.findMany({

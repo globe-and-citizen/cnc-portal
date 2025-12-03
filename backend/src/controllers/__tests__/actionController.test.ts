@@ -177,7 +177,7 @@ describe('Action Controller', () => {
     });
 
     it('should return 500 on database error', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.boardOfDirectorActions.findMany).mockRejectedValue('Database error');
 
       const response = await request(app).get('/actions').query({ teamId: '1' });
@@ -232,7 +232,7 @@ describe('Action Controller', () => {
     });
 
     it('should return 500 on database error', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.boardOfDirectorActions.create).mockRejectedValue('Database error');
 
       const response = await request(app).post('/actions').send(validActionData);
@@ -312,7 +312,7 @@ describe('Action Controller', () => {
     });
 
     it('should return 500 on database error during findUnique', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.boardOfDirectorActions.findUnique).mockRejectedValue('Database error');
 
       const response = await request(app).patch('/actions/1');
@@ -327,7 +327,7 @@ describe('Action Controller', () => {
     });
 
     it('should return 500 on database error during update', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.boardOfDirectorActions.findUnique).mockResolvedValueOnce(mockAction);
       vi.mocked(prisma.boardOfDirectorActions.update).mockRejectedValue('Database error');
 

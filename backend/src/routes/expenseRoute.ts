@@ -7,7 +7,7 @@ import {
   updateExpenseParamsSchema,
   validateBody,
   validateBodyAndParams,
-  validateQuery
+  validateQuery,
 } from '../validation';
 
 const expenseRoutes = express.Router();

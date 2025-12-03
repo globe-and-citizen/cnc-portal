@@ -94,30 +94,28 @@ const createMockClaimWithWage = (
   claimOverrides: Partial<Claim> = {},
   wageOverrides: Partial<Wage> = {}
 ) => [
-    {
-      id: 1,
-      hoursWorked: 5,
+  {
+    id: 1,
+    hoursWorked: 5,
+    status: 'pending',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    signature: null,
+    wageId: 1,
+    dayWorked: new Date(),
+    memo: 'Test memo',
+    tokenTx: null,
+    weeklyClaimId: 1,
+    wage: {
+      teamId: 1,
+      userAddress: TEST_ADDRESS,
 
-      status: 'pending',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      signature: null,
-      wageId: 1,
-      dayWorked: new Date(),
-
-      memo: 'Test memo',
-      tokenTx: null,
-      weeklyClaimId: 1,
-      wage: {
-        teamId: 1,
-        userAddress: TEST_ADDRESS,
-
-        user: { address: TEST_ADDRESS, name: 'User1' },
-        ...wageOverrides,
-      },
-      ...claimOverrides,
-    } as Claim,
-  ];
+      user: { address: TEST_ADDRESS, name: 'User1' },
+      ...wageOverrides,
+    },
+    ...claimOverrides,
+  } as Claim,
+];
 
 // Test utilities
 const mockIsCashRemunerationOwner = vi.mocked(isCashRemunerationOwner);

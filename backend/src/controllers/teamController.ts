@@ -276,4 +276,3 @@ const isUserPartOfTheTeam = (
 // };
 
 export { addTeam, deleteTeam, getAllTeams, getTeam, updateTeam };
-
