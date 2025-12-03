@@ -24,7 +24,7 @@ const TEST_ADDRESS = '0x1234567890123456789012345678901234567890';
 
 // Mock the authorization middleware with proper hoisting
 vi.mock('../../middleware/authMiddleware', () => ({
-  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
+  authorizeUser: vi.fn((req: Request & { address?: string }, res: Response, next: NextFunction) => {
     req.address = TEST_ADDRESS;
     next();
   }),
@@ -148,34 +148,6 @@ const invalidBodyScenarios = [
   },
   { body: {}, description: 'required fields are missing' },
   { body: { teamId: 1, hoursWorked: -5, memo: '' }, description: 'hoursWorked is invalid' },
-];
-
-const claimStatusTransitions = [
-  {
-    action: 'sign',
-    fromStatus: 'pending',
-    toStatus: 'signed',
-    requiredAuth: 'cashOwnerOrTeamOwner',
-  },
-  { action: 'withdraw', fromStatus: 'signed', toStatus: 'withdrawn', requiredAuth: 'claimOwner' },
-  {
-    action: 'disable',
-    fromStatus: 'signed',
-    toStatus: 'disabled',
-    requiredAuth: 'cashOwnerOrTeamOwner',
-  },
-  {
-    action: 'enable',
-    fromStatus: 'disabled',
-    toStatus: 'enabled',
-    requiredAuth: 'cashOwnerOrTeamOwner',
-  },
-  {
-    action: 'reject',
-    fromStatus: 'pending',
-    toStatus: 'rejected',
-    requiredAuth: 'cashOwnerOrTeamOwner',
-  },
 ];
 
 describe('Claim Controller', () => {

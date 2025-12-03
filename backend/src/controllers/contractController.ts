@@ -20,7 +20,7 @@ type ContractType = keyof typeof ContractType;
 interface ContractBodyRequest {
   teamId: number;
   contractAddress: string;
-  contractType: string;
+  contractType: ContractType;
 }
 
 export const syncContracts = async (req: Request, res: Response) => {
