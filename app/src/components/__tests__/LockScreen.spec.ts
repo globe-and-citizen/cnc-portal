@@ -17,7 +17,42 @@ describe('LockScreen.vue', () => {
 
   afterEach(() => {
     if (wrapper) wrapper.unmount()
+    // reset hoisted mock address to default
+    mockAddress.value = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
     vi.clearAllMocks()
+  })
+
+  it('handles missing user and connected addresses gracefully', () => {
+    // simulate no connected address and no user address
+    mockAddress.value = undefined as unknown as string
+
+    wrapper = mount(LockScreen, {
+      props: {
+        user: { address: '' }
+      },
+      global: {
+        stubs: {
+          ButtonUI: defineComponent({
+            name: 'ButtonUI',
+            emits: ['click'],
+            setup(_, { slots, emit }) {
+              return () =>
+                h(
+                  'button',
+                  { 'data-test': 'logout', onClick: () => emit('click') },
+                  slots.default ? slots.default() : []
+                )
+            }
+          })
+        }
+      }
+    })
+
+    const monos = wrapper.findAll('span.font-mono')
+    // both formatted address spans should be empty
+    expect(monos.length).toBeGreaterThanOrEqual(2)
+    expect(monos[0].text().trim()).toBe('')
+    expect(monos[1].text().trim()).toBe('')
   })
 
   it('renders formatted user and connected addresses', () => {
