@@ -160,8 +160,9 @@ export const getClaims = async (req: Request, res: Response) => {
       },
     });
     return res.status(200).json(claims);
-  } catch (error) {
-    return errorResponse(500, 'Internal server error', res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };
 

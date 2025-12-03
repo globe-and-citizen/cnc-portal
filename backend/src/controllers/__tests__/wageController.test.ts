@@ -36,9 +36,7 @@ const mockTeam = {
   officerAddress: '0x2234567890123456789012345678901234567890',
 } as Team;
 
-const mockMember = {
-  address: '0x1234567890123456789012345678901234567890',
-};
+
 const mockWage = {
   id: 1,
   teamId: 1,

@@ -71,8 +71,9 @@ const addTeam = async (req: Request, res: Response) => {
       }
     );
     res.status(201).json(team);
-  } catch (error: any) {
-    return errorResponse(500, error.message, res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };
 // Get Team
@@ -109,8 +110,9 @@ const getTeam = async (req: Request, res: Response) => {
     }
 
     res.status(200).json(team);
-  } catch (error: any) {
-    return errorResponse(500, error.message, res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };
 
@@ -161,8 +163,9 @@ const getAllTeams = async (req: Request, res: Response) => {
     });
 
     res.status(200).json(allTeams);
-  } catch (error: any) {
-    return errorResponse(500, error.message, res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };
 
@@ -203,8 +206,9 @@ const updateTeam = async (req: Request, res: Response) => {
       },
     });
     res.status(200).json(teamU);
-  } catch (error: any) {
-    return errorResponse(500, error.message, res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };
 
@@ -244,8 +248,9 @@ const deleteTeam = async (req: Request, res: Response) => {
     const teamD = await prisma.team.delete({ where: { id: Number(id) } });
 
     res.status(200).json({ team: teamD, success: true });
-  } catch (error: any) {
-    return errorResponse(500, error.message, res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };
 

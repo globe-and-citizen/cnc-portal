@@ -191,7 +191,6 @@ describe('Claim Controller', () => {
     it('should return 400 if total hours exceed 24 hours for a single day', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
       const modifiedWeeklyClaims = createMockWeeklyClaim();
-      // @ts-ignore - Mock data structure for testing
       modifiedWeeklyClaims.claims = [{ dayWorked: testDate, hoursWorked: 20 }];
 
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());

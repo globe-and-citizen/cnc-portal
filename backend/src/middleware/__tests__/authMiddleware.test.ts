@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 // Mock dependencies
 vi.mock('jsonwebtoken');
 vi.mock('../../utils/utils', () => ({
-  errorResponse: vi.fn((status: number, error: any, res: Response) => {
+  errorResponse: vi.fn((status: number, error: Error, res: Response) => {
     res.status(status).json({ message: typeof error === 'string' ? error : error.message });
   }),
 }));
@@ -99,7 +99,7 @@ describe('authMiddleware', () => {
         authorization: 'Bearer valid-token',
       };
 
-      vi.mocked(jwt.verify).mockReturnValue(null as any);
+      vi.mocked(jwt.verify).mockReturnValue();
 
       await authorizeUser(mockRequest as Request, mockResponse as Response, mockNext);
 
@@ -118,7 +118,7 @@ describe('authMiddleware', () => {
 
       vi.mocked(jwt.verify).mockReturnValue({
         address: testAddress,
-      } as any);
+      } as unknown);
 
       await authorizeUser(mockRequest as Request, mockResponse as Response, mockNext);
 

@@ -1,10 +1,9 @@
-import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { prisma } from '../../utils';
 import { faker } from '@faker-js/faker';
+import express, { NextFunction, Request, Response } from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import teamRoutes from '../../routes/teamRoutes';
-import { authorizeUser } from '../../middleware/authMiddleware';
+import { prisma } from '../../utils';
 
 // Hoisted mock variables
 const { mockAuthorizeUser } = vi.hoisted(() => ({

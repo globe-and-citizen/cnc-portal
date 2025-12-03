@@ -207,7 +207,8 @@ export const updateExpense = async (req: Request, res: Response) => {
       data: { status: status },
     });
     return res.status(200).json(updatedExpense);
-  } catch (error) {
-    return errorResponse(500, 'Failed to update expense', res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };

@@ -43,6 +43,10 @@ const addAction = async (req: Request, res: Response) => {
     return errorResponse(400, 'Missing required fields', res);
   }
 
+  if (!req.address) {
+    return errorResponse(401, 'User address not authenticated', res);
+  }
+
   try {
     const newAction = await prisma.boardOfDirectorActions.create({
       data: {

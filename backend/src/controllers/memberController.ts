@@ -47,8 +47,9 @@ export const deleteMember = async (req: Request, res: Response) => {
           },
         },
       });
-    } catch (error) {
-      // console.log("Error deleting member Team data", error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Internal Server Error';
+      return errorResponse(500, message, res);
     }
 
     const updatedTeam = await prisma.team.update({
@@ -70,9 +71,10 @@ export const deleteMember = async (req: Request, res: Response) => {
       },
     });
     res.status(204).json({ ...updatedTeam });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Handle errors
-    return errorResponse(500, error.message || 'Internal Server Error', res);
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };
 
@@ -137,7 +139,8 @@ export const addMembers = async (req: Request, res: Response) => {
 
     // Return the updated members list
     return res.status(201).json({ members: updatedTeam?.members });
-  } catch (error: any) {
-    return errorResponse(500, error.message || 'Internal Server Error', res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };
