@@ -1,5 +1,5 @@
 // tests/App.spec.ts
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 import { ref } from 'vue'
 import App from '@/App.vue'
@@ -130,6 +130,12 @@ vi.mock('@/composables/useAuth', () => ({
 }))
 
 describe('App.vue', () => {
+  afterEach(() => {
+    // restore defaults between tests
+    mockUserStore.isAuth = true
+    mockUseAccount.address.value = '0xOwner'
+    vi.clearAllMocks()
+  })
   describe('Render', () => {
     it('renders ModalComponent if showModal is true', async () => {
       const wrapper = shallowMount(App, {
@@ -187,6 +193,35 @@ describe('App.vue', () => {
 
       // @ts-expect-error: editUserModal is a ref on the component
       expect(wrapper.vm.editUserModal).toEqual({ mount: true, show: true })
+    })
+
+    it('renders LockScreen when connected address does not match user address', async () => {
+      // make addresses mismatch
+      mockUserStore.isAuth = true
+      mockUseAccount.address.value = '0xotheraddress'
+
+      const wrapper = shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      // LockScreen should be present when lock computed is true
+      const lockScreen = wrapper.findComponent({ name: 'LockScreen' })
+      expect(lockScreen.exists()).toBe(true)
+    })
+
+    it('does not render Drawer when user is not authenticated', async () => {
+      mockUserStore.isAuth = false
+
+      const wrapper = shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      const drawer = wrapper.findComponent({ name: 'Drawer' })
+      expect(drawer.exists()).toBe(false)
     })
   })
 
