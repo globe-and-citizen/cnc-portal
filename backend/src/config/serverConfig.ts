@@ -42,7 +42,6 @@ const options = {
   apis: ['./src/routes/*.ts'], // Point to route files containing JSDoc comments
 };
 const swaggerSpec = swaggerJsdoc(options);
-const path = require('path');
 
 class Server {
   private static instance: Server | undefined;
@@ -138,15 +137,15 @@ class Server {
     Sentry.setupExpressErrorHandler(this.app);
 
     // Optional fallthrough error handler
-    // @ts-ignore
-    this.app.use(function onError(err, req, res, next) {
+    this.app.use(function onError(err: Error, _req: express.Request, res: express.Response) {
       // The error id is attached to `res.sentry` to be returned
       // and optionally displayed to the user for support.
+      console.error('Error:', err);
       res.statusCode = 500;
-      res.end(res.sentry + '\n');
+      res.end((res as { sentry?: string }).sentry + '\n');
     });
 
-    this.app.get('/debug-sentry', function mainHandler(req, res) {
+    this.app.get('/debug-sentry', function mainHandler() {
       throw new Error('My first Sentry error!');
     });
   }
