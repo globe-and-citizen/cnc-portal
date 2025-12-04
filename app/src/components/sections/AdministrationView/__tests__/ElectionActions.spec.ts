@@ -19,7 +19,7 @@ vi.mock('@/stores', () => ({
 // Mock composables module and provide a mutable mock function
 const mockUseBoDElections = vi.fn()
 vi.mock('@/composables', () => ({
-  useBoDElections: (...args: any[]) => mockUseBoDElections(...args)
+  useBoDElections: (...args: unknown[]) => mockUseBoDElections(...(args as unknown[]))
 }))
 
 describe('ElectionActions', () => {
