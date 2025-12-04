@@ -35,10 +35,10 @@ function getChainId(): number {
       return parseInt(config.public.chainId, 10)
     } catch {
       // Fallback during build time when useRuntimeConfig is not available
-      return 31337
+      return 137
     }
   }
-  return 31337
+  return 137
 }
 
 // Helper to get addresses for a specific chain
