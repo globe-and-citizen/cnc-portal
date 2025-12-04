@@ -1,11 +1,38 @@
 import { computed } from 'vue'
 import { useAccount, useReadContract } from '@wagmi/vue'
 import type { Address } from 'viem'
-import { FEE_COLLECTOR_ADDRESS, FEE_COLLECTOR_SUPPORTED_TOKENS } from '@/constant'
-import { FEE_COLLECTOR_ABI } from '@/artifacts/abi/feeCollector'
+import { formatUnits } from 'viem'
+import { FEE_COLLECTOR_ADDRESS, FEE_COLLECTOR_SUPPORTED_TOKENS, TOKEN_DECIMALS, TOKEN_SYMBOLS } from '@/constant'
+import { FEE_COLLECTOR_ABI } from '~/artifacts/abi/feeCollector'
+import { useNetwork } from '~/utils/network'
+import { useTokenPrices } from './useTokenPrices'
+import type { TokenDisplay } from '@/types/token'
+
+// Helper to create a token display object (matches tokenHelpers.ts)
+const makeToken = (
+  address: string,
+  raw: bigint,
+  decimals: number,
+  symbol: string,
+  isNative: boolean
+): TokenDisplay => ({
+  address,
+  symbol,
+  decimals,
+  balance: raw,
+  formattedBalance: formatUnits(raw, decimals),
+  pendingWithdrawals: 0n,
+  formattedPending: '0',
+  totalWithdrawn: 0n,
+  formattedWithdrawn: '0',
+  isNative,
+  shortAddress: isNative ? 'Native Token' : `${address.slice(0, 6)}...${address.slice(-4)}`
+})
 
 export const useFeeCollector = () => {
   const { address: userAddress } = useAccount()
+  const { nativeSymbol } = useNetwork()
+  const { prices, isLoading: isLoadingPrices, getCoinGeckoId } = useTokenPrices()
 
   // Owner check
   const { data: feeCollectorOwner } = useReadContract({
@@ -22,7 +49,8 @@ export const useFeeCollector = () => {
   const {
     data: nativeBalance,
     isLoading: isLoadingNativeBalance,
-    refetch: refetchNative
+    refetch: refetchNative,
+    error: errorNative
   } = useReadContract({
     address: FEE_COLLECTOR_ADDRESS as Address,
     abi: FEE_COLLECTOR_ABI,
@@ -30,23 +58,135 @@ export const useFeeCollector = () => {
   })
 
   // USDC balance
-  const { data: usdcBalance, refetch: refetchUsdc } = useReadContract({
+  const {
+    data: usdcBalance,
+    isLoading: isLoadingUsdc,
+    refetch: refetchUsdc,
+    error: errorUsdc
+  } = useReadContract({
     address: FEE_COLLECTOR_ADDRESS as Address,
     abi: FEE_COLLECTOR_ABI,
     functionName: 'getTokenBalance',
-    args: [FEE_COLLECTOR_SUPPORTED_TOKENS[0]]
+    args: FEE_COLLECTOR_SUPPORTED_TOKENS?.[0]
+      ? [FEE_COLLECTOR_SUPPORTED_TOKENS[0] as Address]
+      : undefined,
+    query: {
+      enabled: !!FEE_COLLECTOR_SUPPORTED_TOKENS?.[0]
+    }
   })
 
   // USDT balance
-  const { data: usdtBalance, refetch: refetchUsdt } = useReadContract({
+  const {
+    data: usdtBalance,
+    isLoading: isLoadingUsdt,
+    refetch: refetchUsdt,
+    error: errorUsdt
+  } = useReadContract({
     address: FEE_COLLECTOR_ADDRESS as Address,
     abi: FEE_COLLECTOR_ABI,
     functionName: 'getTokenBalance',
-    args: [FEE_COLLECTOR_SUPPORTED_TOKENS[1]]
+    args: FEE_COLLECTOR_SUPPORTED_TOKENS?.[1]
+      ? [FEE_COLLECTOR_SUPPORTED_TOKENS[1] as Address]
+      : undefined,
+    query: {
+      enabled: !!FEE_COLLECTOR_SUPPORTED_TOKENS?.[1]
+    }
   })
 
+  // Build tokens list (matches tokenHelpers.ts buildTokenList logic)
+  const tokens = computed<TokenDisplay[]>(() => {
+    const arr: TokenDisplay[] = []
+
+    // Native token - always show even if undefined (will show as 0)
+    const nativeBal = nativeBalance.value !== undefined && typeof nativeBalance.value === 'bigint'
+      ? nativeBalance.value
+      : 0n
+    arr.push(makeToken('native', nativeBal, 18, nativeSymbol.value, true))
+
+    // Build supported tokens array for processing - always include all configured tokens
+    const supportedTokensBalances: Array<{ address: string, balance: bigint }> = []
+
+    // USDC - always include even if zero
+    if (FEE_COLLECTOR_SUPPORTED_TOKENS?.[0]) {
+      const balance = usdcBalance.value && typeof usdcBalance.value === 'bigint'
+        ? usdcBalance.value
+        : 0n
+      supportedTokensBalances.push({
+        address: FEE_COLLECTOR_SUPPORTED_TOKENS[0],
+        balance
+      })
+    }
+
+    // USDT - always include even if zero
+    if (FEE_COLLECTOR_SUPPORTED_TOKENS?.[1]) {
+      const balance = usdtBalance.value && typeof usdtBalance.value === 'bigint'
+        ? usdtBalance.value
+        : 0n
+      supportedTokensBalances.push({
+        address: FEE_COLLECTOR_SUPPORTED_TOKENS[1],
+        balance
+      })
+    }
+
+    // ERC20 tokens (matches tokenHelpers.ts logic exactly)
+    supportedTokensBalances.forEach(({ address, balance }) => {
+      const checksummedAddress = address as `0x${string}`
+      const symbol = TOKEN_SYMBOLS[checksummedAddress] || 'UNKNOWN'
+      const decimals = TOKEN_DECIMALS[symbol as keyof typeof TOKEN_DECIMALS] || 18
+
+      arr.push(makeToken(address, balance, decimals, symbol, false))
+    })
+
+    return arr
+  })
+
+  // Calculate total USD value (reactive)
+  const totalUSD = computed(() => {
+    let total = 0
+
+    tokens.value.forEach((token) => {
+      const amount = parseFloat(token.formattedBalance)
+
+      // Skip if amount is NaN or 0
+      if (isNaN(amount) || amount === 0) return
+
+      let price = 0
+
+      // Native token - use CoinGecko ID based on network
+      if (token.isNative) {
+        price = prices.value[getCoinGeckoId() as keyof typeof prices.value] || 0
+      } // Stablecoins
+      else if (token.symbol.toUpperCase() === 'USDC') {
+        price = prices.value['usd-coin'] || 1
+      } else if (token.symbol.toUpperCase() === 'USDT') {
+        price = prices.value['tether'] || 1
+      }
+
+      // Skip if no price available
+      if (price === 0) return
+
+      total += amount * price
+    })
+
+    return total
+  })
+
+  const isLoading = computed(() =>
+    isLoadingNativeBalance.value || isLoadingUsdc.value || isLoadingUsdt.value
+  )
+
   const refetchAll = async () => {
-    await Promise.all([refetchNative(), refetchUsdc(), refetchUsdt()])
+    const promises = [refetchNative()]
+
+    if (FEE_COLLECTOR_SUPPORTED_TOKENS?.[0]) {
+      promises.push(refetchUsdc())
+    }
+
+    if (FEE_COLLECTOR_SUPPORTED_TOKENS?.[1]) {
+      promises.push(refetchUsdt())
+    }
+
+    await Promise.all(promises)
   }
 
   return {
@@ -54,7 +194,16 @@ export const useFeeCollector = () => {
     nativeBalance,
     usdcBalance,
     usdtBalance,
+    tokens,
+    totalUSD,
+    isLoading,
     isLoadingNativeBalance,
+    isLoadingUsdc,
+    isLoadingUsdt,
+    isLoadingPrices,
+    errorNative,
+    errorUsdc,
+    errorUsdt,
     refetchNative,
     refetchUsdc,
     refetchUsdt,

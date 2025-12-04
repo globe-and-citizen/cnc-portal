@@ -1,14 +1,8 @@
-import { getNetwork } from './network'
 import sepolia from '@/artifacts/deployed_addresses/chain-11155111.json'
 import hardhat from '@/artifacts/deployed_addresses/chain-31337.json'
 import polygon from '@/artifacts/deployed_addresses/chain-137.json'
 import amoy from '@/artifacts/deployed_addresses/chain-80002.json'
 import { isAddress, zeroAddress, type Address } from 'viem'
-
-export const NETWORK = getNetwork()
-
-console.log('🔍 Network Configuration:', NETWORK)
-console.log('🔍 Chain ID (string):', NETWORK.chainId)
 
 interface TokenAddresses {
   USDC: Address
@@ -32,18 +26,34 @@ const addressesMap: Record<number, AddressMapping> = {
   137: polygon as AddressMapping
 }
 
-// FIX: Parse as decimal, not hexadecimal
-const chainId = parseInt(NETWORK.chainId, 10) // Changed from 16 to 10
-const addresses = addressesMap[chainId] || ({} as AddressMapping)
+// Helper to get chain ID from Nuxt runtime config
+function getChainId(): number {
+  // This will be available in both client and server
+  if (import.meta.client || import.meta.server) {
+    try {
+      const config = useRuntimeConfig()
+      return parseInt(config.public.chainId, 10)
+    } catch {
+      // Fallback during build time when useRuntimeConfig is not available
+      return 31337
+    }
+  }
+  return 31337
+}
+
+// Helper to get addresses for a specific chain
+export function getAddressesForChain(targetChainId: number): AddressMapping {
+  return addressesMap[targetChainId] || ({} as AddressMapping)
+}
 
 interface AddressValidationError extends Error {
   missingAddresses: string[]
 }
 
-const missingAddresses = new Set<string>()
-
-export function resolveAddress(key: keyof AddressMapping): Address {
-  const address = addresses[key]
+export function resolveAddress(key: keyof AddressMapping, targetChainId?: number): Address {
+  const chainId = targetChainId || getChainId()
+  const chainAddresses = getAddressesForChain(chainId)
+  const address = chainAddresses[key]
 
   if (!address || typeof address !== 'string' || address.trim() === '') {
     throw new Error(`Address not defined for "${key}" on chain ${chainId}`)
@@ -57,9 +67,11 @@ export function resolveAddress(key: keyof AddressMapping): Address {
 }
 
 // Safe version that returns null instead of throwing
-export function safeResolveAddress(key: keyof AddressMapping): Address | null {
+export function safeResolveAddress(key: keyof AddressMapping, targetChainId?: number): Address | null {
   try {
-    const address = addresses[key]
+    const chainId = targetChainId || getChainId()
+    const chainAddresses = getAddressesForChain(chainId)
+    const address = chainAddresses[key]
 
     if (!address || typeof address !== 'string' || address.trim() === '') {
       console.warn(`Address not defined for "${key}" on chain ${chainId}`)
@@ -81,9 +93,10 @@ export function safeResolveAddress(key: keyof AddressMapping): Address | null {
 // Safe version with fallback value
 export function resolveAddressWithFallback(
   key: keyof AddressMapping,
-  fallback: Address = zeroAddress
+  fallback: Address = zeroAddress,
+  targetChainId?: number
 ): Address {
-  return safeResolveAddress(key) ?? fallback
+  return safeResolveAddress(key, targetChainId) ?? fallback
 }
 
 // Token addresses for different networks (Polygon Mainnet and Amoy Testnet)
@@ -98,23 +111,26 @@ export const TOKEN_ADDRESSES: Pick<ChainTokenAddresses, 137 | 80002> = {
   }
 }
 
-// Export token addresses for current network
-const currentChainId = parseInt(NETWORK.chainId, 10) as keyof ChainTokenAddresses // Changed from 16 to 10
+// Helper functions to get token addresses for a specific chain
+export const getUSDCAddress = (targetChainId?: number): Address => {
+  const chain = targetChainId || getChainId()
 
-const getUSDCAddress = (): Address => {
-  if (currentChainId === 11155111 || currentChainId === 31337) {
-    return safeResolveAddress('MockTokens#USDC') || (zeroAddress as Address)
+  if (chain === 11155111 || chain === 31337) {
+    return safeResolveAddress('MockTokens#USDC', chain) || (zeroAddress as Address)
   }
-  return TOKEN_ADDRESSES[currentChainId]?.USDC || zeroAddress
+  return TOKEN_ADDRESSES[chain as keyof typeof TOKEN_ADDRESSES]?.USDC || zeroAddress
 }
 
-const getUSDTAddress = (): Address => {
-  if (currentChainId === 11155111 || currentChainId === 31337) {
-    return safeResolveAddress('MockTokens#USDT') || (zeroAddress as Address)
+export const getUSDTAddress = (targetChainId?: number): Address => {
+  const chain = targetChainId || getChainId()
+
+  if (chain === 11155111 || chain === 31337) {
+    return safeResolveAddress('MockTokens#USDT', chain) || (zeroAddress as Address)
   }
-  return TOKEN_ADDRESSES[currentChainId]?.USDT || zeroAddress
+  return TOKEN_ADDRESSES[chain as keyof typeof TOKEN_ADDRESSES]?.USDT || zeroAddress
 }
 
+// Export token addresses for current chain (runtime)
 export const USDC_ADDRESS = getUSDCAddress()
 export const USDT_ADDRESS = getUSDTAddress()
 export const FEE_COLLECTOR_ADDRESS = safeResolveAddress('FeeCollectorModule#FeeCollector')
@@ -122,7 +138,13 @@ export const FEE_COLLECTOR_ADDRESS = safeResolveAddress('FeeCollectorModule#FeeC
 // Supported Tokens for FeeCollector
 export const FEE_COLLECTOR_SUPPORTED_TOKENS = [USDC_ADDRESS, USDT_ADDRESS] as const
 
-console.log('the supported tokens addresses are: ==', FEE_COLLECTOR_SUPPORTED_TOKENS)
+// Log configuration info
+if (import.meta.client) {
+  console.log('Runtime chain ID:', getChainId())
+  console.log('Fee Collector Address:', FEE_COLLECTOR_ADDRESS)
+  console.log('Supported token addresses:', FEE_COLLECTOR_SUPPORTED_TOKENS)
+}
+
 // Token Configuration
 export const TOKEN_DECIMALS = {
   USDC: 6,
@@ -134,33 +156,58 @@ export const TOKEN_SYMBOLS: Record<Address, string> = {
   [USDT_ADDRESS]: 'USDT'
 }
 
-export function validateAddresses() {
+export function validateAddresses(targetChainId?: number) {
+  const chainId = targetChainId || getChainId()
   const requiredKeys: (keyof AddressMapping)[] = ['FeeCollectorModule#FeeCollector']
+  const missingAddresses = new Set<string>()
 
-  requiredKeys.forEach(resolveAddress)
+  requiredKeys.forEach((key) => {
+    try {
+      resolveAddress(key, chainId)
+    } catch (error) {
+      missingAddresses.add(key)
+      console.error(error)
+    }
+  })
 
   if (missingAddresses.size > 0) {
     const error = new Error(
       `The following addresses are not defined in the current network configuration (chainId: ${chainId}):\n${Array.from(missingAddresses).join('\n')}`
     ) as AddressValidationError
     error.missingAddresses = Array.from(missingAddresses)
-    missingAddresses.clear()
     throw error
   }
 }
 
-try {
-  validateAddresses()
-} catch (error) {
-  console.error(error)
+// Validate on client only
+if (import.meta.client) {
+  try {
+    validateAddresses()
+  } catch (error) {
+    console.error('Address validation failed:', error)
+  }
 }
 
-export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
+// Helper to get backend URL from runtime config
+export function getBackendUrl(): string {
+  if (import.meta.client || import.meta.server) {
+    try {
+      const config = useRuntimeConfig()
+      return config.public.backendUrl
+    } catch {
+      return 'http://localhost:3000'
+    }
+  }
+  return 'http://localhost:3000'
+}
+
+export const BACKEND_URL = getBackendUrl()
 
 // GraphQL poll interval for transaction queries (in milliseconds)
 export const GRAPHQL_POLL_INTERVAL = 12000
 
-const NETWORK_TO_COIN_ID: Record<string, string> = {
+// Map currency symbols to CoinGecko IDs
+export const NETWORK_TO_COIN_ID: Record<string, string> = {
   POL: 'matic-network',
   ETH: 'ethereum',
   AMOYPOL: 'matic-network',
@@ -170,35 +217,54 @@ const NETWORK_TO_COIN_ID: Record<string, string> = {
 
 export type TokenId = 'native' | 'usdc' | 'usdt'
 
-export const SUPPORTED_TOKENS: TokenConfig[] = [
-  {
-    id: 'usdc',
-    name: 'USD Coin',
-    symbol: 'USDC',
-    code: 'USDC',
-    coingeckoId: 'usd-coin',
-    decimals: 6,
-    address: USDC_ADDRESS
-  },
-  {
-    id: 'usdt',
-    name: 'Tether USD',
-    symbol: 'USDT',
-    code: 'USDT',
-    coingeckoId: 'tether',
-    decimals: 6,
-    address: USDT_ADDRESS
-  },
-  {
-    id: 'native',
-    name: NETWORK.currencySymbol,
-    symbol: NETWORK.currencySymbol,
-    code: NETWORK.currencySymbol,
-    coingeckoId: NETWORK_TO_COIN_ID[NETWORK.currencySymbol] ?? '',
-    decimals: 18,
-    address: zeroAddress
-  }
-]
+export interface TokenConfig {
+  id: TokenId
+  name: string
+  symbol: string
+  coingeckoId: string
+  decimals: number
+  address: Address
+  code: string
+}
+
+// Helper to build supported tokens for a specific chain
+export function getSupportedTokens(nativeSymbol: string, targetChainId?: number): TokenConfig[] {
+  const usdcAddress = getUSDCAddress(targetChainId)
+  const usdtAddress = getUSDTAddress(targetChainId)
+
+  return [
+    {
+      id: 'usdc',
+      name: 'USD Coin',
+      symbol: 'USDC',
+      code: 'USDC',
+      coingeckoId: 'usd-coin',
+      decimals: 6,
+      address: usdcAddress
+    },
+    {
+      id: 'usdt',
+      name: 'Tether USD',
+      symbol: 'USDT',
+      code: 'USDT',
+      coingeckoId: 'tether',
+      decimals: 6,
+      address: usdtAddress
+    },
+    {
+      id: 'native',
+      name: nativeSymbol,
+      symbol: nativeSymbol,
+      code: nativeSymbol,
+      coingeckoId: NETWORK_TO_COIN_ID[nativeSymbol] ?? 'ethereum',
+      decimals: 18,
+      address: zeroAddress
+    }
+  ]
+}
+
+// Runtime default supported tokens (uses runtime config)
+export const SUPPORTED_TOKENS = getSupportedTokens('GO') // Uses GO for hardhat default
 
 export interface Currency {
   code: string
@@ -233,16 +299,6 @@ export const LIST_CURRENCIES: Currency[] = [
     symbol: '₹'
   }
 ]
-
-export interface TokenConfig {
-  id: TokenId
-  name: string
-  symbol: string
-  coingeckoId: string
-  decimals: number
-  address: Address
-  code: string
-}
 
 // Default pagination
 export const DEFAULT_PAGE_SIZE = 10
