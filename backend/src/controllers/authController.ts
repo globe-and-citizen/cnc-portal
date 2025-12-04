@@ -1,47 +1,47 @@
 import { Request, Response } from 'express';
-import { generateNonce, SiweMessage } from 'siwe';
 import jwt from 'jsonwebtoken';
-import { errorResponse, extractAddressAndNonce } from '../utils/utils';
+import { generateNonce, SiweMessage } from 'siwe';
 import { prisma } from '../utils';
-// import { faker } from '@faker-js/faker';
+import { errorResponse, extractAddressAndNonce } from '../utils/utils';
 
 export const authenticateSiwe = async (req: Request, res: Response) => {
   try {
     // Get validated authentication data from request body (validated by middleware)
     const { message, signature } = req.body;
 
-    let { address, nonce } = extractAddressAndNonce(message);
+    const { address, nonce } = extractAddressAndNonce(message);
 
     //Get nonce from user data from database
     const user = await prisma.user.findUnique({
       where: { address },
     });
 
-    nonce = user ? user.nonce : nonce;
+    const actualNonce = user ? user.nonce : nonce;
 
     //Very the data
     const SIWEObject = new SiweMessage(message);
 
     try {
-      await SIWEObject.verify({ signature, nonce });
+      await SIWEObject.verify({ signature, nonce: actualNonce });
     } catch (error) {
-      return errorResponse(401, (error as any).error.type, res);
+      const err = error as { error: { type: string } };
+      return errorResponse(401, err.error.type, res);
     }
 
     //Update nonce for user and persist in database
-    nonce = generateNonce();
+    const newNonce = generateNonce();
 
     console.log('user: ', user);
     if (user)
       await prisma.user.update({
         where: { address },
-        data: { nonce },
+        data: { nonce: newNonce },
       });
     else
       await prisma.user.create({
         data: {
           address,
-          nonce,
+          nonce: newNonce,
           // name: faker.person.firstName(),
           // imageUrl: faker.image.avatar(),
           name: 'User',
@@ -62,7 +62,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
 };
 
 export const authenticateToken = (req: Request, res: Response) => {
-  if (!(req as any).address) {
+  if (!(req as { address?: string }).address) {
     return errorResponse(401, 'Unauthorized: Missing jwt payload', res);
   }
 

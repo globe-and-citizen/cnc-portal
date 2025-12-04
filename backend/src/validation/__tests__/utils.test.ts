@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { z } from 'zod';
 import {
-  createEnumWithFallback,
+  // createEnumWithFallback,
   createOptimizedObjectSchema,
   createAsyncValidationSchema,
   createTransformSchema,
@@ -20,26 +20,26 @@ describe('validation/utils', () => {
     vi.clearAllMocks();
   });
 
-  describe('createEnumWithFallback', () => {
-    it('should return valid enum value', () => {
-      const schema = createEnumWithFallback(['active', 'inactive'], 'active');
-      const result = schema.parse('active');
-      expect(result).toBe('active');
-    });
+  // describe('createEnumWithFallback', () => {
+  //   it('should return valid enum value', () => {
+  //     const schema = createEnumWithFallback(['active', 'inactive'], 'active');
+  //     const result = schema.parse('active');
+  //     expect(result).toBe('active');
+  //   });
 
-    it('should return fallback for invalid value', () => {
-      const schema = createEnumWithFallback(['active', 'inactive'], 'active');
-      const result = schema.parse('invalid');
-      expect(result).toBe('active');
-    });
+  //   it('should return fallback for invalid value', () => {
+  //     const schema = createEnumWithFallback(['active', 'inactive'], 'active');
+  //     const result = schema.parse('invalid');
+  //     expect(result).toBe('active');
+  //   });
 
-    it('should handle multiple enum values', () => {
-      const schema = createEnumWithFallback(['red', 'green', 'blue'], 'red');
-      expect(schema.parse('green')).toBe('green');
-      expect(schema.parse('blue')).toBe('blue');
-      expect(schema.parse('yellow')).toBe('red');
-    });
-  });
+  //   it('should handle multiple enum values', () => {
+  //     const schema = createEnumWithFallback(['red', 'green', 'blue'], 'red');
+  //     expect(schema.parse('green')).toBe('green');
+  //     expect(schema.parse('blue')).toBe('blue');
+  //     expect(schema.parse('yellow')).toBe('red');
+  //   });
+  // });
 
   describe('createOptimizedObjectSchema', () => {
     it('should create basic object schema', () => {

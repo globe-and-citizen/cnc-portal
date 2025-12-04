@@ -3,13 +3,16 @@ import { computed, ref, watch } from 'vue'
 import { breakpointsTailwind } from '@vueuse/core'
 import type { Mail } from '~/types'
 
-const tabItems = [{
-  label: 'All',
-  value: 'all'
-}, {
-  label: 'Unread',
-  value: 'unread'
-}]
+const tabItems = [
+  {
+    label: 'All',
+    value: 'all'
+  },
+  {
+    label: 'Unread',
+    value: 'unread'
+  }
+]
 const selectedTab = ref('all')
 
 const { data: mails } = await useFetch<Mail[]>('/api/mails', { default: () => [] })

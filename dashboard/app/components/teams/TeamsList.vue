@@ -14,10 +14,12 @@ const props = defineProps<{
 
 const table = useTemplateRef('table')
 
-const columnFilters = ref([{
-  id: 'name',
-  value: ''
-}])
+const columnFilters = ref([
+  {
+    id: 'name',
+    value: ''
+  }
+])
 const columnVisibility = ref()
 
 const columns: TableColumn<Team>[] = [
@@ -59,10 +61,14 @@ const columns: TableColumn<Team>[] = [
     header: 'Members',
     cell: ({ row }) => {
       const count = row.original._count?.members || 0
-      return h(UBadge, {
-        color: 'neutral',
-        variant: 'subtle'
-      }, () => `${count} member${count !== 1 ? 's' : ''}`)
+      return h(
+        UBadge,
+        {
+          color: 'neutral',
+          variant: 'subtle'
+        },
+        () => `${count} member${count !== 1 ? 's' : ''}`
+      )
     }
   },
   {
@@ -70,7 +76,11 @@ const columns: TableColumn<Team>[] = [
     header: 'Owner',
     cell: ({ row }) => {
       const address = row.original.ownerAddress
-      return h('span', { class: 'font-mono text-sm' }, `${address.slice(0, 6)}...${address.slice(-4)}`)
+      return h(
+        'span',
+        { class: 'font-mono text-sm' },
+        `${address.slice(0, 6)}...${address.slice(-4)}`
+      )
     }
   },
   {
@@ -81,7 +91,11 @@ const columns: TableColumn<Team>[] = [
       if (!address) {
         return h(UBadge, { color: 'warning', variant: 'subtle' }, () => 'Not Set')
       }
-      return h('span', { class: 'font-mono text-sm' }, `${address.slice(0, 6)}...${address.slice(-4)}`)
+      return h(
+        'span',
+        { class: 'font-mono text-sm' },
+        `${address.slice(0, 6)}...${address.slice(-4)}`
+      )
     }
   },
   {
@@ -104,7 +118,7 @@ const pagination = ref({
   <div class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-1.5">
       <UInput
-        :model-value="(table?.tableApi?.getColumn('name')?.getFilterValue() as string)"
+        :model-value="table?.tableApi?.getColumn('name')?.getFilterValue() as string"
         class="max-w-sm"
         icon="i-lucide-search"
         placeholder="Filter by team name..."

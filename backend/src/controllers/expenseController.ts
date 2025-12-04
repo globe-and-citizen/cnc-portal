@@ -1,13 +1,12 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { errorResponse } from '../utils/utils';
-import { isUserMemberOfTeam, isOwnerOfTeam } from './wageController';
+import { isUserMemberOfTeam } from './wageController';
 
-import { prisma } from '../utils';
 import { Address, formatEther, keccak256, zeroAddress } from 'viem';
+import { prisma } from '../utils';
 import publicClient from '../utils/viem.config';
 
-import { Expense, Prisma } from '@prisma/client';
+import { Expense } from '@prisma/client';
 import ABI from '../artifacts/expense-account-eip712.json';
 import { BudgetLimit } from '../types';
 
@@ -17,7 +16,7 @@ type expenseBodyRequest = Pick<Expense, 'signature' | 'data'> & {
 };
 
 export const addExpense = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   const body = req.body as expenseBodyRequest;
   const teamId = Number(body.teamId);
   const signature = body.signature as string;
@@ -59,7 +58,7 @@ export const addExpense = async (req: Request, res: Response) => {
 };
 
 export const getExpenses = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   const teamId = Number(req.query.teamId);
   const status = String(req.query.status || 'all');
 
@@ -137,7 +136,7 @@ const syncExpenseStatus = async (expense: Expense) => {
       : `${Number(balances[1]) / 1e6}`;
 
   const isLimitReached =
-    (Number(data.amount) ?? Number.MAX_VALUE) <= Number(amountTransferred) ||
+    Number(data.amount || Number.MAX_VALUE) <= Number(amountTransferred) ||
     ((expense.data as BudgetLimit).frequencyType === 0 && balances[1] > 0);
 
   const formattedExpense = {
@@ -179,7 +178,7 @@ const syncExpenseStatus = async (expense: Expense) => {
 
 export const updateExpense = async (req: Request, res: Response) => {
   const expenseId = Number(req.params.id);
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   const { status } = req.body as {
     status: 'disable' | 'expired' | 'limitReached';
   };
@@ -208,7 +207,8 @@ export const updateExpense = async (req: Request, res: Response) => {
       data: { status: status },
     });
     return res.status(200).json(updatedExpense);
-  } catch (error) {
-    return errorResponse(500, 'Failed to update expense', res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };

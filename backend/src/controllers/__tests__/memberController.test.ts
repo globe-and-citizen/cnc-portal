@@ -1,15 +1,14 @@
-import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { prisma } from '../../utils';
 import { faker } from '@faker-js/faker';
+import express, { NextFunction, Request, Response } from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import teamRoutes from '../../routes/teamRoutes';
-import { authorizeUser } from '../../middleware/authMiddleware';
+import { prisma } from '../../utils';
 
 // Hoisted mock variables
 const { mockAuthorizeUser } = vi.hoisted(() => ({
   mockAuthorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = '0x1234567890123456789012345678901234567890';
+    req.address = '0x1234567890123456789012345678901234567890';
     next();
   }),
 }));
@@ -97,7 +96,7 @@ describe('Member Controller', () => {
     vi.clearAllMocks();
     app = createTestApp();
     mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-      (req as any).address = mockOwner.address;
+      req.address = mockOwner.address;
       next();
     });
   });

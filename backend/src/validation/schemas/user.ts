@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { addressSchema, positiveIntegerSchema, nonEmptyStringSchema, urlSchema } from './common';
+import { addressSchema, nonEmptyStringSchema, urlSchema } from './common';
 
 /**
  * User-related validation schemas

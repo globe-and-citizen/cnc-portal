@@ -1,10 +1,8 @@
-import { Prisma, /*PrismaClient,*/ User } from '@prisma/client';
+import { /*PrismaClient,*/ User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { isAddress } from 'viem';
-import { errorResponse } from '../utils/utils';
 import { addNotification, prisma } from '../utils';
-import publicClient from '../utils/viem.config';
-import OFFICER_ABI from '../artifacts/officer_abi.json';
+import { errorResponse } from '../utils/utils';
 //const prisma = new PrismaClient();
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
@@ -12,7 +10,7 @@ const addTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { name, members, description, officerAddress } = req.body;
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   try {
     // Validate all members' wallet addresses
     for (const member of members) {
@@ -73,8 +71,9 @@ const addTeam = async (req: Request, res: Response) => {
       }
     );
     res.status(201).json(team);
-  } catch (error: any) {
-    return errorResponse(500, error.message, res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };
 // Get Team
@@ -83,9 +82,9 @@ const getTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   try {
-    let team = await prisma.team.findUnique({
+    const team = await prisma.team.findUnique({
       where: {
         id: Number(id),
       },
@@ -111,8 +110,9 @@ const getTeam = async (req: Request, res: Response) => {
     }
 
     res.status(200).json(team);
-  } catch (error: any) {
-    return errorResponse(500, error.message, res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };
 
@@ -121,7 +121,7 @@ const getAllTeams = async (req: Request, res: Response) => {
   /*
   #swagger.tags = ['Teams']
   */
-  const callerAddress = String((req as any).address);
+  const callerAddress = String(req.address);
   const userAddress = req.query.userAddress as string | undefined;
   try {
     // If userAddress is provided, verify the caller is requesting their own teams
@@ -163,8 +163,9 @@ const getAllTeams = async (req: Request, res: Response) => {
     });
 
     res.status(200).json(allTeams);
-  } catch (error: any) {
-    return errorResponse(500, error.message, res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };
 
@@ -173,7 +174,7 @@ const getAllTeams = async (req: Request, res: Response) => {
 const updateTeam = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { name, description, officerAddress } = req.body;
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   try {
     const team = await prisma.team.findUnique({
       where: {
@@ -205,8 +206,9 @@ const updateTeam = async (req: Request, res: Response) => {
       },
     });
     res.status(200).json(teamU);
-  } catch (error: any) {
-    return errorResponse(500, error.message, res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };
 
@@ -216,7 +218,7 @@ const deleteTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   try {
     const team = await prisma.team.findUnique({ where: { id: Number(id) } });
     if (!team) {
@@ -246,8 +248,9 @@ const deleteTeam = async (req: Request, res: Response) => {
     const teamD = await prisma.team.delete({ where: { id: Number(id) } });
 
     res.status(200).json({ team: teamD, success: true });
-  } catch (error: any) {
-    return errorResponse(500, error.message, res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };
 
@@ -272,4 +275,4 @@ const isUserPartOfTheTeam = (
 //   return filterQuery;
 // };
 
-export { addTeam, updateTeam, deleteTeam, getTeam, getAllTeams };
+export { addTeam, deleteTeam, getAllTeams, getTeam, updateTeam };

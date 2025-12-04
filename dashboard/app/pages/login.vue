@@ -1,11 +1,5 @@
 <script setup lang="ts">
-import {
-  injected,
-  useConnection,
-  useChainId,
-  useConnect,
-  useSwitchChain
-} from '@wagmi/vue'
+import { injected, useConnection, useChainId, useConnect, useSwitchChain } from '@wagmi/vue'
 
 definePageMeta({
   layout: 'auth',
@@ -14,9 +8,7 @@ definePageMeta({
 
 const router = useRouter()
 const runtimeConfig = useRuntimeConfig()
-const networkChainId = parseInt(
-  (runtimeConfig.public.chainId as string) || '31337'
-)
+const networkChainId = parseInt((runtimeConfig.public.chainId as string) || '31337')
 
 // State for SSR compatibility
 const isProcessing = ref(false)
@@ -29,9 +21,7 @@ let siweInstance: ReturnType<typeof useSiwe> | null = null
 let connection: ReturnType<typeof useConnection> | null = null
 let chainId: ReturnType<typeof useChainId> | null = null
 let connectAsync: ReturnType<typeof useConnect>['connectAsync'] | null = null
-let switchChainAsync:
-  | ReturnType<typeof useSwitchChain>['switchChainAsync']
-  | null = null
+let switchChainAsync: ReturnType<typeof useSwitchChain>['switchChainAsync'] | null = null
 
 // Initialize on client side only after mount
 onMounted(() => {
@@ -163,10 +153,7 @@ useHead({
       </UAlert>
 
       <!-- Connection Status -->
-      <div
-        v-if="isConnected"
-        class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
-      >
+      <div v-if="isConnected" class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
         <div class="flex items-center gap-3">
           <div class="w-3 h-3 bg-green-500 rounded-full" />
           <div>
@@ -208,7 +195,7 @@ useHead({
           <template #leading>
             <UIcon name="i-lucide-log-in" class="size-5" />
           </template>
-          {{ isProcessing ? "Signing in..." : "Sign In with Ethereum" }}
+          {{ isProcessing ? 'Signing in...' : 'Sign In with Ethereum' }}
         </UButton>
       </div>
 

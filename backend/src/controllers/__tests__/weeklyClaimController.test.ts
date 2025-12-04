@@ -1,16 +1,16 @@
-import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
-import { describe, it, beforeEach, expect, vi } from 'vitest';
 import { WeeklyClaim } from '@prisma/client';
-import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
+import express, { NextFunction, Request, Response } from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import weeklyClaimRoutes from '../../routes/weeklyClaimRoute';
-import { authorizeUser } from '../../middleware/authMiddleware';
 import { prisma } from '../../utils';
+import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
+import { Address } from 'viem';
 
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
-  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = '0x1234567890123456789012345678901234567890';
+  authorizeUser: vi.fn((req: Request & { address: Address }, res: Response, next: NextFunction) => {
+    req.address = '0x1234567890123456789012345678901234567890';
     next();
   }),
 }));
@@ -607,9 +607,7 @@ describe('Weekly Claim Controller', () => {
         },
       ];
 
-      const findManySpy = vi
-        .spyOn(prisma.weeklyClaim, 'findMany')
-        .mockResolvedValue(mockWeeklyClaims);
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue(mockWeeklyClaims);
 
       const response = await request(app).get('/?teamId=1&memberAddress=0xAnotherAddress');
       expect(response.status).toBe(200);

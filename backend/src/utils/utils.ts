@@ -1,6 +1,6 @@
 import { Response } from 'express';
 
-export const errorResponse = (code: number, error: any, res: Response) => {
+export const errorResponse = (code: number, error: Error | string | unknown, res: Response) => {
   if (process.env.NODE_ENV !== 'test') {
     console.log('process.env.NODE_ENV', process.env.NODE_ENV);
     if (error instanceof Error) console.log(error.stack);
@@ -18,7 +18,7 @@ export const errorResponse = (code: number, error: any, res: Response) => {
   } else {
     return res.status(code).json({
       message: 'Internal server error has occured',
-      error: error.message ? error.message : '',
+      error: error instanceof Error && error.message ? error.message : '',
     });
   }
 };

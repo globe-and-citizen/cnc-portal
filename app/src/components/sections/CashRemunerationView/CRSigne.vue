@@ -84,8 +84,8 @@ const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 const { signTypedDataAsync, data: signature } = useSignTypedData()
 const chainId = useChainId()
 
-const loading = ref(false)
-const isLoad = computed(() => (props.loading ?? loading.value) as boolean)
+const isloading = ref(false)
+const isLoad = computed(() => (props.loading ?? isloading.value) as boolean)
 
 const {
   data: cashRemunerationOwner,
@@ -114,7 +114,7 @@ const {
   .json<Array<WeeklyClaim>>()
 
 const approveClaim = async (weeklyClaim: WeeklyClaim) => {
-  loading.value = true
+  isloading.value = true
   emit('loading', true)
 
   try {
@@ -167,7 +167,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
         queryClient.invalidateQueries({
           queryKey: ['weekly-claims', teamStore.currentTeam?.id]
         })
-        loading.value = false
+        isloading.value = false
         emit('loading', false)
       }
     }
@@ -180,7 +180,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
     }
     toastStore.addErrorToast(errorMessage)
     // Stop loading on cancel/error
-    loading.value = false
+    isloading.value = false
     emit('loading', false)
   }
   // if (signature.value) {

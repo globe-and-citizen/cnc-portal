@@ -1,6 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from 'viem/chains';
-import { createPublicClient, http } from 'viem';
+import { hardhat, mainnet, polygon, polygonAmoy, sepolia } from 'viem/chains';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the createPublicClient and http functions
 vi.mock('viem', () => ({
