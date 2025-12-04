@@ -3,7 +3,9 @@
     <UCard>
       <div class="flex items-center justify-between">
         <div class="flex-1">
-          <p class="text-sm text-gray-600 dark:text-gray-400">Total Balance (USD)</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Total Balance (USD)
+          </p>
           <p class="text-2xl font-bold mt-1">
             <span v-if="isLoading || isLoadingPrices">
               <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 animate-spin" />

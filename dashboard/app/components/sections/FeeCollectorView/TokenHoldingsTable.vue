@@ -3,8 +3,12 @@
     <template #header>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <h3 class="text-lg font-semibold">Token Holdings</h3>
-          <UBadge v-if="isFeeCollectorOwner" color="success">Owner</UBadge>
+          <h3 class="text-lg font-semibold">
+            Token Holdings
+          </h3>
+          <UBadge v-if="isFeeCollectorOwner" color="success">
+            Owner
+          </UBadge>
         </div>
 
         <UButton
@@ -65,7 +69,9 @@
                     {{ token.symbol.charAt(0) }}
                   </span>
                 </div>
-                <p class="font-semibold whitespace-nowrap">{{ token.symbol }}</p>
+                <p class="font-semibold whitespace-nowrap">
+                  {{ token.symbol }}
+                </p>
               </div>
             </td>
 
@@ -133,7 +139,7 @@ const getTokenPrice = (token: TokenDisplay): number => {
 const formatAmount = (amount: string): string => {
   const num = parseFloat(amount)
   if (isNaN(num)) return '0'
-  
+
   // Show more decimals for small amounts
   if (num < 0.01) return num.toFixed(6)
   if (num < 1) return num.toFixed(4)

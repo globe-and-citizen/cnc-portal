@@ -3,7 +3,9 @@
     <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold">Micro Payments management</h1>
+        <h1 class="text-3xl font-bold">
+          Micro Payments management
+        </h1>
         <p class="text-gray-600 dark:text-gray-400 mt-2">
           Manage and withdraw collected fees
         </p>
@@ -82,6 +84,7 @@ const handleRefresh = async () => {
       description: 'Failed to refresh balances',
       color: 'error'
     })
+    console.log('error ====', error)
   } finally {
     isRefreshing.value = false
   }

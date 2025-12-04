@@ -46,7 +46,7 @@
 
             <!-- TOKEN DROPDOWN -->
             <UDropdownMenu :items="dropdownItems">
-              <UButton 
+              <UButton
                 color="neutral"
                 variant="solid"
                 class="min-w-[70px] flex justify-between"
@@ -60,10 +60,18 @@
 
           <!-- % BUTTONS -->
           <div class="flex justify-end gap-4 text-xs text-gray-600 pt-1">
-            <button type="button" :disabled="!selectedToken" @click="setPercentAmount(25)">25%</button>
-            <button type="button" :disabled="!selectedToken" @click="setPercentAmount(50)">50%</button>
-            <button type="button" :disabled="!selectedToken" @click="setPercentAmount(75)">75%</button>
-            <button type="button" :disabled="!selectedToken" @click="setMaxAmount">Max</button>
+            <button type="button" :disabled="!selectedToken" @click="setPercentAmount(25)">
+              25%
+            </button>
+            <button type="button" :disabled="!selectedToken" @click="setPercentAmount(50)">
+              50%
+            </button>
+            <button type="button" :disabled="!selectedToken" @click="setPercentAmount(75)">
+              75%
+            </button>
+            <button type="button" :disabled="!selectedToken" @click="setMaxAmount">
+              Max
+            </button>
           </div>
         </div>
 
@@ -119,8 +127,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   'update:isOpen': [value: boolean]
-  close: []
-  withdraw: [token: TokenDisplay, amount: string]
+  'close': []
+  'withdraw': [token: TokenDisplay, amount: string]
 }>()
 
 // Get data from composables
@@ -133,7 +141,7 @@ const withdrawAmount = ref('')
 
 // Dropdown items
 const dropdownItems = computed<DropdownMenuItem[]>(() =>
-  tokens.value.map((t) => ({
+  tokens.value.map(t => ({
     label: `${t.symbol} — ${t.formattedBalance}`,
     onSelect: () => {
       selectedToken.value = t
@@ -158,10 +166,10 @@ const estimatedUSD = computed(() => {
   if (!selectedToken.value || !withdrawAmount.value) return '$0.00'
   const amount = parseFloat(withdrawAmount.value)
   if (isNaN(amount) || amount === 0) return '$0.00'
-  
+
   const price = getTokenPrice(selectedToken.value)
   if (price === 0) return '$0.00'
-  
+
   const usdValue = amount * price
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

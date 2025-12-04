@@ -1,6 +1,5 @@
 <template>
-  
-    <FeeCollectorManagement />
+  <FeeCollectorManagement />
 </template>
 
 <script setup lang="ts">

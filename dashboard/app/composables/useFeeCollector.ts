@@ -155,8 +155,8 @@ export const useFeeCollector = () => {
       // Native token - use CoinGecko ID based on network
       if (token.isNative) {
         price = prices.value[getCoinGeckoId() as keyof typeof prices.value] || 0
-      } // Stablecoins
-      else if (token.symbol.toUpperCase() === 'USDC') {
+      } else if (token.symbol.toUpperCase() === 'USDC') {
+        // Stablecoins
         price = prices.value['usd-coin'] || 1
       } else if (token.symbol.toUpperCase() === 'USDT') {
         price = prices.value['tether'] || 1
