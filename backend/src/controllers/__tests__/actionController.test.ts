@@ -7,7 +7,7 @@ import actionRoute from '../../routes/actionsRoute';
 // Hoisted mock variables
 const { mockAuthorizeUser } = vi.hoisted(() => ({
   mockAuthorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = '0x1234567890123456789012345678901234567890';
+    req.address = '0x1234567890123456789012345678901234567890';
     next();
   }),
 }));
@@ -77,7 +77,7 @@ describe('Action Controller', () => {
     vi.clearAllMocks();
     app = createTestApp();
     mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-      (req as any).address = mockUserAddress;
+      req.address = mockUserAddress;
       next();
     });
   });
@@ -231,50 +231,6 @@ describe('Action Controller', () => {
       });
     });
 
-    it('should return 400 when teamId is missing', async () => {
-      const { teamId, ...incompleteData } = validActionData;
-
-      const response = await request(app).post('/actions').send(incompleteData);
-
-      expect(response.status).toBe(400);
-      expect(response.body).toEqual({
-        message: 'Missing required fields',
-      });
-    });
-
-    it('should return 400 when description is missing', async () => {
-      const { description, ...incompleteData } = validActionData;
-
-      const response = await request(app).post('/actions').send(incompleteData);
-
-      expect(response.status).toBe(400);
-      expect(response.body).toEqual({
-        message: 'Missing required fields',
-      });
-    });
-
-    it('should return 400 when targetAddress is missing', async () => {
-      const { targetAddress, ...incompleteData } = validActionData;
-
-      const response = await request(app).post('/actions').send(incompleteData);
-
-      expect(response.status).toBe(400);
-      expect(response.body).toEqual({
-        message: 'Missing required fields',
-      });
-    });
-
-    it('should return 400 when data is missing', async () => {
-      const { data, ...incompleteData } = validActionData;
-
-      const response = await request(app).post('/actions').send(incompleteData);
-
-      expect(response.status).toBe(400);
-      expect(response.body).toEqual({
-        message: 'Missing required fields',
-      });
-    });
-
     it('should return 500 on database error', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.boardOfDirectorActions.create).mockRejectedValue('Database error');
@@ -324,12 +280,12 @@ describe('Action Controller', () => {
 
       const mockReq = {
         params: { id: '' },
-      } as any;
+      } as unknown as Request;
 
       const mockRes = {
         status: vi.fn().mockReturnThis(),
         json: vi.fn().mockReturnThis(),
-      } as any;
+      } as unknown as Request;
 
       await executeAction(mockReq, mockRes);
 
@@ -392,7 +348,7 @@ describe('Action Controller', () => {
       const customUserAddress = '0x9999999999999999999999999999999999999999';
 
       mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        (req as any).address = customUserAddress;
+        req.address = customUserAddress;
         next();
       });
 

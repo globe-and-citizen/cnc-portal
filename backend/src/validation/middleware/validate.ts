@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { z, ZodSchema, ZodError } from 'zod';
+import { NextFunction, Request, Response } from 'express';
+import { ZodError, ZodSchema } from 'zod';
 import { errorResponse } from '../../utils/utils';
 
 /**
@@ -47,7 +47,7 @@ export const validate = (schemas: ValidationSchemas) => {
           const errors = formatZodError(queryResult.error);
           return errorResponse(400, `Invalid query parameters - ${errors}`, res);
         }
-        req.query = queryResult.data as any;
+        req.query = queryResult.data as Request['query'];
       }
 
       // Validate params if schema provided
@@ -57,11 +57,12 @@ export const validate = (schemas: ValidationSchemas) => {
           const errors = formatZodError(paramsResult.error);
           return errorResponse(400, `Invalid path parameters - ${errors}`, res);
         }
-        req.params = paramsResult.data as any;
+        req.params = paramsResult.data as Request['params'];
       }
 
       next();
     } catch (error) {
+      console.error('Validation middleware error:', error);
       return errorResponse(500, 'Validation middleware error', res);
     }
   };

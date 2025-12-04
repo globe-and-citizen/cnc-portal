@@ -1,10 +1,10 @@
-import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
-import claimRoutes from '../../routes/claimRoute';
-import { prisma } from '../../utils';
-import { describe, it, beforeEach, expect, vi } from 'vitest';
 import { Claim, Wage, WeeklyClaim } from '@prisma/client';
 import dayjs from 'dayjs';
+import express, { NextFunction, Request, Response } from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import claimRoutes from '../../routes/claimRoute';
+import { prisma } from '../../utils';
 
 vi.mock('../../utils');
 vi.mock('../../utils/viem.config');
@@ -24,8 +24,8 @@ const TEST_ADDRESS = '0x1234567890123456789012345678901234567890';
 
 // Mock the authorization middleware with proper hoisting
 vi.mock('../../middleware/authMiddleware', () => ({
-  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = TEST_ADDRESS;
+  authorizeUser: vi.fn((req: Request & { address?: string }, res: Response, next: NextFunction) => {
+    req.address = TEST_ADDRESS;
     next();
   }),
 }));
@@ -97,14 +97,12 @@ const createMockClaimWithWage = (
   {
     id: 1,
     hoursWorked: 5,
-
     status: 'pending',
     createdAt: new Date(),
     updatedAt: new Date(),
     signature: null,
     wageId: 1,
     dayWorked: new Date(),
-
     memo: 'Test memo',
     tokenTx: null,
     weeklyClaimId: 1,
@@ -127,7 +125,7 @@ const createTestApp = (address = TEST_ADDRESS) => {
   const testApp = express();
   testApp.use(express.json());
   testApp.use((req, res, next) => {
-    (req as any).address = address;
+    req.address = address;
     next();
   });
   testApp.use('/', claimRoutes);
@@ -148,34 +146,6 @@ const invalidBodyScenarios = [
   },
   { body: {}, description: 'required fields are missing' },
   { body: { teamId: 1, hoursWorked: -5, memo: '' }, description: 'hoursWorked is invalid' },
-];
-
-const claimStatusTransitions = [
-  {
-    action: 'sign',
-    fromStatus: 'pending',
-    toStatus: 'signed',
-    requiredAuth: 'cashOwnerOrTeamOwner',
-  },
-  { action: 'withdraw', fromStatus: 'signed', toStatus: 'withdrawn', requiredAuth: 'claimOwner' },
-  {
-    action: 'disable',
-    fromStatus: 'signed',
-    toStatus: 'disabled',
-    requiredAuth: 'cashOwnerOrTeamOwner',
-  },
-  {
-    action: 'enable',
-    fromStatus: 'disabled',
-    toStatus: 'enabled',
-    requiredAuth: 'cashOwnerOrTeamOwner',
-  },
-  {
-    action: 'reject',
-    fromStatus: 'pending',
-    toStatus: 'rejected',
-    requiredAuth: 'cashOwnerOrTeamOwner',
-  },
 ];
 
 describe('Claim Controller', () => {
@@ -219,7 +189,6 @@ describe('Claim Controller', () => {
     it('should return 400 if total hours exceed 24 hours for a single day', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
       const modifiedWeeklyClaims = createMockWeeklyClaim();
-      // @ts-ignore - Mock data structure for testing
       modifiedWeeklyClaims.claims = [{ dayWorked: testDate, hoursWorked: 20 }];
 
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());

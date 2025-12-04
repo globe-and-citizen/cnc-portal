@@ -1,18 +1,16 @@
-import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../utils';
-import { describe, it, beforeEach, expect, vi } from 'vitest';
-import publicClient from '../../utils/viem.config';
-import OFFICER_ABI from '../../artifacts/officer_abi.json';
 import { faker } from '@faker-js/faker';
 import { Team, User } from '@prisma/client';
-import teamRoutes from '../../routes/teamRoutes';
+import express, { NextFunction, Request, Response } from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authorizeUser } from '../../middleware/authMiddleware';
+import teamRoutes from '../../routes/teamRoutes';
+import { prisma } from '../../utils';
 
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = '0x1234567890123456789012345678901234567890';
+    req.address = '0x1234567890123456789012345678901234567890';
     next();
   }),
 }));
@@ -308,9 +306,7 @@ describe('Team Controller', () => {
 
       vi.spyOn(prisma.team, 'findMany').mockResolvedValue(mockTeams);
 
-      const response = await request(app)
-        .get('/')
-        .query({ userAddress: mockOwner.address });
+      const response = await request(app).get('/').query({ userAddress: mockOwner.address });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockTeams);

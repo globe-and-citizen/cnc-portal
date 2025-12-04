@@ -1,11 +1,10 @@
-import request from 'supertest';
+import { User } from '@prisma/client';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { prisma } from '../../utils';
 import jwt from 'jsonwebtoken';
-import { describe, it, beforeEach, expect, vi } from 'vitest';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import authRoutes from '../../routes/authRoutes';
-import { User } from '@prisma/client';
 
 // Hoisted mock variables for consistent mocking
 const { mockPrisma } = vi.hoisted(() => ({

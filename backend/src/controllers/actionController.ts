@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
-import { prisma, errorResponse } from '../utils';
 import { Request, Response } from 'express';
+import { errorResponse, prisma } from '../utils';
 
 const getActions = async (req: Request, res: Response) => {
   try {
@@ -43,6 +43,10 @@ const addAction = async (req: Request, res: Response) => {
     return errorResponse(400, 'Missing required fields', res);
   }
 
+  if (!req.address) {
+    return errorResponse(401, 'User address not authenticated', res);
+  }
+
   try {
     const newAction = await prisma.boardOfDirectorActions.create({
       data: {
@@ -50,7 +54,7 @@ const addAction = async (req: Request, res: Response) => {
         actionId: parseInt(actionId as string),
         description: description as string,
         targetAddress: targetAddress as string,
-        userAddress: (req as any).address,
+        userAddress: req.address,
         data: data as string,
       },
     });
@@ -91,4 +95,4 @@ const executeAction = async (req: Request, res: Response) => {
   }
 };
 
-export { getActions, addAction, executeAction };
+export { addAction, executeAction, getActions };

@@ -115,18 +115,18 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/SherTokenView.vue')
         }
       ]
-    },
+    }
     // {
     //   path: '/transactions',
     //   name: 'transactions',
     //   component: TransactionsView
     // },
-    {
-      path: '/locked',
-      name: 'LockedView',
-      meta: { noLayout: true },
-      component: () => import('@/views/LockedView.vue')
-    }
+    // {
+    //   path: '/locked',
+    //   name: 'LockedView',
+    //   meta: { noLayout: true },
+    //   component: () => import('@/views/LockScreen.vue')
+    // }
   ]
 })
 const isAuth = useStorage('isAuth', false)
