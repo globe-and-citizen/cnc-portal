@@ -47,7 +47,11 @@ defineShortcuts({
     <div
       v-for="(mail, index) in mails"
       :key="index"
-      :ref="el => { mailsRefs[mail.id] = el as Element }"
+      :ref="
+        (el) => {
+          mailsRefs[mail.id] = el as Element;
+        }
+      "
     >
       <div
         class="p-4 sm:px-6 text-sm cursor-pointer border-l-2 transition-colors"
@@ -66,7 +70,11 @@ defineShortcuts({
             <UChip v-if="mail.unread" />
           </div>
 
-          <span>{{ isToday(new Date(mail.date)) ? format(new Date(mail.date), 'HH:mm') : format(new Date(mail.date), 'dd MMM') }}</span>
+          <span>{{
+            isToday(new Date(mail.date))
+              ? format(new Date(mail.date), 'HH:mm')
+              : format(new Date(mail.date), 'dd MMM')
+          }}</span>
         </div>
         <p class="truncate" :class="[mail.unread && 'font-semibold']">
           {{ mail.subject }}

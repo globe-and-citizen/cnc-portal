@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** November 21, 2025  
-**Author:** Development Team  
+**Author:** Development Team
 
 ---
 
@@ -39,10 +39,12 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 ### 2.2 Authentication
 
 **Authentication Method:**
+
 - Wallet-based authentication using message signing to verify ownership
 - Admin wallet addresses are pre-configured in the backend system
 
 **Session Management:**
+
 - JWT token-based session management
 - Automatic logout after 30 minutes of inactivity
 - Secure session storage and validation
@@ -58,6 +60,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### A. Platform Statistics Cards
 
 **Metrics to Display:**
+
 - Total number of teams on the platform
 - Number of active teams (teams with activity in the last 30 days)
 - Total number of members across all teams
@@ -75,6 +78,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### B. Activity Timeline (Last 30 Days)
 
 **Activity Metrics:**
+
 - Selectable time periods: 24 hours, 7 days, 30 days, or all time
 - Number of new teams created in the period
 - Number of new members added
@@ -92,6 +96,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### C. Recent Activity Feed
 
 **Activity Types:**
+
 - Team created
 - Member added to team
 - Contribution submitted
@@ -99,6 +104,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 - Vesting schedule created
 
 **Information Displayed:**
+
 - Timestamp of the activity
 - Team ID and name (when applicable)
 - Actor's wallet address and ENS name (if available)
@@ -115,18 +121,21 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### D. Top Performers Section
 
 **Top Teams by Activity:**
+
 - Team ID and name
 - Number of contributions
 - Number of members
 - Sorted by activity level
 
 **Top Contributors:**
+
 - Wallet address and ENS name (if available)
 - Number of contributions made
 - Total amount earned
 - Ranked by contribution count or earnings
 
 **Most Active Tokens:**
+
 - Token contract address and symbol
 - Number of transactions
 - Total volume transacted
@@ -141,6 +150,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### A. Teams Overview Grid
 
 **Team Information Displayed:**
+
 - Team ID and name
 - Team slug (URL identifier)
 - Creation date
@@ -163,19 +173,22 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 
 **Team Information Tab:**
 
-*Basic Information:*
+_Basic Information:_
+
 - Team name and description
 - Team slug
 - Creator's wallet address
 - Creation date
 
-*Contract Information:*
+_Contract Information:_
+
 - Member Management contract address
 - Cash Remuneration contract address
 - Vesting Manager contract address
 - Contract deployment date
 
-*Statistics:*
+_Statistics:_
+
 - Total number of members
 - Total number of contributions
 - Total value distributed
@@ -196,19 +209,22 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 
 **Financial Overview:**
 
-*Treasury Information:*
+_Treasury Information:_
+
 - Token contract addresses and symbols
 - Current balance for each token
 - USD value of each token balance
 
-*Distribution History:*
+_Distribution History:_
+
 - Date of distribution
 - Amount distributed
 - Token used
 - Recipient wallet address
 - Distribution type (direct payment or vesting)
 
-*Vesting Schedules:*
+_Vesting Schedules:_
+
 - Schedule ID
 - Recipient wallet address
 - Total vesting amount
@@ -232,6 +248,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### A. Members Overview
 
 **Member Information Displayed:**
+
 - Wallet address
 - ENS name (if available)
 - Profile avatar (if available)
@@ -259,11 +276,13 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### B. Member Detail View
 
 **Identity Information:**
+
 - Wallet address
 - ENS name (if available)
 - Profile avatar (if available)
 
 **Team Memberships:**
+
 - Team ID and name
 - Role in each team
 - Date joined
@@ -271,6 +290,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 - Amount earned from that team
 
 **Contributions List:**
+
 - Contribution ID
 - Team name
 - Amount
@@ -280,6 +300,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 - Status (pending, approved, distributed)
 
 **Vesting Schedules:**
+
 - Team name
 - Total vesting amount
 - Start and end dates
@@ -287,6 +308,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 - Remaining amount to be released
 
 **Member Statistics:**
+
 - Total number of contributions
 - Total amount earned across all teams
 - Average contribution value
@@ -310,6 +332,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### A. Contributions Overview
 
 **Contribution Information Displayed:**
+
 - Contribution ID
 - Submission timestamp
 - Team ID and name
@@ -341,26 +364,31 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### B. Contribution Statistics
 
 **Statistics by Status:**
+
 - Number of pending contributions
 - Number of approved contributions
 - Number of distributed contributions
 
 **Statistics by Team:**
+
 - Team ID and name
 - Contribution count per team
 - Total value of contributions per team
 
 **Statistics by Token:**
+
 - Token symbol
 - Number of contributions using each token
 - Total volume per token
 
 **Statistics by Category:**
+
 - Contribution category
 - Number of contributions per category
 - Percentage of total contributions per category
 
 **Trend Analysis:**
+
 - Daily trends: date, count, and value
 - Weekly trends: week identifier, count, and value
 - Monthly trends: month identifier, count, and value
@@ -382,15 +410,18 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### A. Treasury Overview
 
 **Overall Treasury Metrics:**
+
 - Total Value Locked (TVL) across all teams in USD
 
 **Breakdown by Token:**
+
 - Token contract address and symbol
 - Current balance of each token
 - USD value of each token
 - Percentage of total treasury
 
 **Breakdown by Team:**
+
 - Team ID and name
 - List of tokens held by each team with:
   - Token symbol
@@ -399,6 +430,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 - Total USD value per team
 
 **Historical Data:**
+
 - Historical Total Value Locked over time (date and USD value)
 
 **Visualizations:**
@@ -410,15 +442,18 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### B. Payment Analytics
 
 **Overall Payment Metrics:**
+
 - Total number of payments made
 - Total volume of payments
 - Average payment size
 
 **Payments by Type:**
+
 - Number of direct payments
 - Number of vesting payments
 
 **Payment History:**
+
 - Payment date
 - Team ID and name
 - Recipient wallet address
@@ -428,18 +463,21 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 - Transaction hash
 
 **Payment Trends:**
+
 - Volume over time (date and volume)
 - Frequency over time (date and count)
 
 #### C. Vesting Analytics
 
 **Vesting Overview:**
+
 - Number of active vesting schedules
 - Number of completed vesting schedules
 - Total amount currently vested
 - Total amount already released
 
 **Vesting Schedule Details:**
+
 - Schedule ID
 - Team ID and name
 - Recipient wallet address
@@ -453,6 +491,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 - Status (active or completed)
 
 **Upcoming Releases:**
+
 - Release date
 - Schedule ID
 - Amount to be released
@@ -473,6 +512,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### A. Contract Registry
 
 **Contract Information Displayed:**
+
 - Contract type (Member Management, Cash Remuneration, or Vesting Manager)
 - Contract address
 - Team ID and name that owns the contract
@@ -482,6 +522,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 - Status (active or deprecated)
 
 **Contract Statistics:**
+
 - Total number of interactions with the contract
 - Date of last interaction
 - Total gas used by the contract
@@ -497,6 +538,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### B. Contract Usage Statistics
 
 **Interactions by Contract:**
+
 - Contract address
 - Contract type
 - Total number of interactions
@@ -504,12 +546,14 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 - Total gas used
 
 **Interactions by Function:**
+
 - Function name
 - Number of times called
 - Average gas used per call
 - Success rate (percentage of successful calls)
 
 **Usage Trends Over Time:**
+
 - Date
 - Number of interactions
 - Gas used
@@ -530,6 +574,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 #### A. Report Types
 
 **Report Configuration Options:**
+
 - Report type: Platform, Team, Member, Financial, or Custom
 - Date range: Start and end dates for data inclusion
 - Filters:
@@ -540,6 +585,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 - Export format: CSV, PDF, or JSON
 
 **Generated Report Information:**
+
 - Unique report ID
 - Report type
 - Generation timestamp
@@ -586,6 +632,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 ### 4.1 Backend API Endpoints
 
 **Leverage existing endpoints:**
+
 - Get all teams: `/api/teams`
 - Get team by ID: `/api/teams/:id`
 - Get team members: `/api/teams/:id/members`
@@ -595,17 +642,20 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 
 **New read-only endpoints needed:**
 
-*Dashboard Statistics:*
+_Dashboard Statistics:_
+
 - Get overview statistics: `/api/admin/stats/overview`
 - Get teams statistics: `/api/admin/stats/teams`
 - Get members statistics: `/api/admin/stats/members`
 - Get contributions statistics: `/api/admin/stats/contributions`
 - Get financial statistics: `/api/admin/stats/financial`
 
-*Activity Feed:*
+_Activity Feed:_
+
 - Get recent activity: `/api/admin/activity/recent?limit=20&page=1`
 
-*Reports:*
+_Reports:_
+
 - Generate predefined report: `/api/admin/reports/generate`
 - Generate custom report: `/api/admin/reports/custom` (POST)
 - Download generated report: `/api/admin/reports/:id/download`
@@ -615,6 +665,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 **Leverage existing subgraph for blockchain data:**
 
 **Team Analytics Query:**
+
 - Query team data by team ID
 - Retrieved data includes:
   - Team ID and name
@@ -626,6 +677,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
   - List of vesting schedules with ID, amount, released amount, and status
 
 **Platform Statistics Query:**
+
 - Query platform-wide statistics
 - Retrieved data includes:
   - Total number of teams
@@ -635,6 +687,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
   - List of tokens with address, symbol, and total volume
 
 **Contract Events Query:**
+
 - Query contract interaction events by contract address
 - Retrieved data includes:
   - Event ID
@@ -666,6 +719,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 **Main Dashboard Application Directory (`dashboard/app/`):**
 
 **Components:**
+
 - Admin components organized by category:
   - Layout: Sidebar, Header, Breadcrumb navigation
   - Charts: Line, Pie, Bar, Heatmap, and Gantt chart components
@@ -675,6 +729,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
   - Widgets: Activity feed, Top performers, Recent activity widgets
 
 **Pages:**
+
 - Admin pages organized by feature:
   - Dashboard home (index)
   - Teams section: Teams list and individual team details pages
@@ -685,9 +740,11 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
   - Reports generation page
 
 **Layouts:**
+
 - Admin layout wrapper that provides consistent structure across all admin pages
 
 **State Management (Stores):**
+
 - Admin authentication store
 - Dashboard data store
 - Teams analytics store
@@ -696,6 +753,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 - Reports store
 
 **Composables:**
+
 - Reusable composition functions for:
   - Admin authentication logic
   - Dashboard data fetching
@@ -704,20 +762,24 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
   - Report generation
 
 **Type Definitions:**
+
 - TypeScript type definitions for:
   - Admin-related types
   - Analytics data structures
   - Report configurations
 
 **Middleware:**
+
 - Route protection middleware for admin authentication
 
 **Documentation:**
+
 - Functional specifications
 - Technical architecture documentation
 - API documentation
 
 **Configuration Files:**
+
 - Nuxt configuration
 - Tailwind CSS configuration
 - TypeScript configuration
@@ -922,6 +984,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 ### Platform Statistics Example
 
 **Sample data structure for platform statistics:**
+
 - Total teams: 42
 - Active teams: 38
 - Total members: 256
@@ -938,6 +1001,7 @@ The admin dashboard provides **centralized monitoring and analytics** for the CN
 ### Activity Feed Item Example
 
 **Sample activity feed entry:**
+
 - Activity ID: "activity-123"
 - Type: Contribution made
 - Timestamp: November 21, 2025 at 10:30 AM UTC

@@ -1,16 +1,13 @@
+import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
-import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest';
-import { prisma, errorResponse } from '../../utils';
-import { Request, Response } from 'express';
-import express, { NextFunction } from 'express';
-import { authorizeUser } from '../../middleware/authMiddleware';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import notificationRoute from '../../routes/notificationRoute';
-import { getNotification, updateNotification } from '../notificationController';
+import { prisma } from '../../utils';
 
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = '0x1234567890123456789012345678901234567890';
+    req.address = '0x1234567890123456789012345678901234567890';
     next();
   }),
 }));

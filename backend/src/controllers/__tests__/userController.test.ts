@@ -1,10 +1,10 @@
+import { faker } from '@faker-js/faker';
+import { User } from '@prisma/client';
+import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import userRoutes from '../../routes/userRoutes';
 import { prisma } from '../../utils';
-import { describe, it, beforeEach, expect, vi } from 'vitest';
-import { User } from '@prisma/client';
-import { de, faker } from '@faker-js/faker';
 
 vi.mock('../../utils');
 vi.mock('../../utils/viem.config');
@@ -13,7 +13,7 @@ vi.mock('../../utils/viem.config');
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn(async (req: Request, res: Response, next: NextFunction) => {
     // Default behavior - can be overridden in tests
-    (req as any).address = '0x1234567890123456789012345678901234567890';
+    req.address = '0x1234567890123456789012345678901234567890';
     next();
     return undefined;
   }),
@@ -66,7 +66,7 @@ describe('User Controller', () => {
 
       mockAuthorizeUser.mockImplementation(
         async (req: Request, res: Response, next: NextFunction) => {
-          (req as any).address = '0x1234567890123456789012345678901234567890';
+          req.address = '0x1234567890123456789012345678901234567890';
           next();
           return undefined;
         }
@@ -124,7 +124,7 @@ describe('User Controller', () => {
 
       mockAuthorizeUser.mockImplementation(
         async (req: Request, res: Response, next: NextFunction) => {
-          (req as any).address = '0x1234567890123456789012345678901234567890';
+          req.address = '0x1234567890123456789012345678901234567890';
           next();
           return undefined;
         }
@@ -186,7 +186,7 @@ describe('User Controller', () => {
 
       mockAuthorizeUser.mockImplementation(
         async (req: Request, res: Response, next: NextFunction) => {
-          (req as any).address = '0x1234567890123456789012345678901234567890';
+          req.address = '0x1234567890123456789012345678901234567890';
           next();
           return undefined;
         }
@@ -217,7 +217,7 @@ describe('User Controller', () => {
 
       mockAuthorizeUser.mockImplementation(
         async (req: Request, res: Response, next: NextFunction) => {
-          (req as any).address = '0x9999999999999999999999999999999999999999'; // Different caller
+          req.address = '0x9999999999999999999999999999999999999999'; // Different caller
           next();
           return undefined;
         }
@@ -290,7 +290,7 @@ describe('User Controller', () => {
 
       mockAuthorizeUser.mockImplementation(
         async (req: Request, res: Response, next: NextFunction) => {
-          (req as any).address = '0x1234567890123456789012345678901234567890';
+          req.address = '0x1234567890123456789012345678901234567890';
           next();
           return undefined;
         }

@@ -10,7 +10,7 @@ import { authorizeUser } from '../../middleware/authMiddleware';
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = '0x1234567890123456789012345678901234567890';
+    req.address = '0x1234567890123456789012345678901234567890';
     next();
   }),
 }));
@@ -56,7 +56,7 @@ app.use(express.json());
 app.use('/', authorizeUser, expenseRoutes);
 
 const START_DATE = Math.floor(Date.now() / 1000) + 3600;
-const END_DATE = START_DATE + (3600 * 24 * 30);
+const END_DATE = START_DATE + 3600 * 24 * 30;
 
 const mockExpenseData = {
   approvedAddress: '0x1234567890123456789012345678901234567890',
@@ -72,12 +72,6 @@ const mockExpenseData = {
   startDate: START_DATE, // 1 hour from now
   endDate: END_DATE, // 30 days from start date
 };
-
-// Helper function to create variations of expense data for testing
-const createExpenseData = (overrides: Partial<typeof mockExpenseData> = {}) => ({
-  ...mockExpenseData,
-  ...overrides,
-});
 
 const mockExpense = {
   id: 1,

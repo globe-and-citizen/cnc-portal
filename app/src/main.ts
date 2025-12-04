@@ -10,7 +10,6 @@ import apolloClient from './apollo-client'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import VueDatePicker from '@vuepic/vue-datepicker'
-import { useTabGuardStore } from '@/stores/useTabGuardStore'
 import * as Sentry from '@sentry/vue'
 
 export function setupApp() {
@@ -39,8 +38,6 @@ export function setupApp() {
 
   app.component('VueDatePicker', VueDatePicker)
   // Initialize single-tab guard after app mount
-
-  useTabGuardStore().init()
 
   // Initialize Sentry for error tracking
   Sentry.init({

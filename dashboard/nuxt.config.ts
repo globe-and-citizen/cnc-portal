@@ -6,12 +6,7 @@ console.log('NUXT_PUBLIC_BACKEND_URL:', process.env.NUXT_PUBLIC_BACKEND_URL)
 console.log('NUXT_PUBLIC_CHAIN_ID:', process.env.NUXT_PUBLIC_CHAIN_ID)
 
 export default defineNuxtConfig({
-
-  modules: [
-    '@nuxt/eslint',
-    '@nuxt/ui',
-    '@vueuse/nuxt'
-  ],
+  modules: ['@nuxt/eslint', '@nuxt/ui', '@vueuse/nuxt'],
 
   ssr: false,
 
@@ -39,14 +34,6 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2024-07-11',
-
-  // Add hook to log runtime config after it's resolved
-  hooks: {
-    ready: (nuxt) => {
-      console.log('✅ Nuxt is ready!')
-      console.log('📦 Runtime Config:', nuxt.options.runtimeConfig.public)
-    }
-  },
 
   eslint: {
     config: {

@@ -1,5 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { PrismaClient } from '@prisma/client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('dependenciesUtil', () => {
   beforeEach(() => {
