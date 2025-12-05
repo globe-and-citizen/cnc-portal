@@ -67,7 +67,7 @@
           @click="
             () => {
               const l = formData.length - 1
-              if (l >= 0) {
+              if (l >= 0 && formData[l]) {
                 formData[l].name = user.name ?? ''
                 formData[l].address = user.address ?? ''
                 dropdown = false
@@ -360,7 +360,7 @@ const submitApprove = () => {
   }
 
   emit('approveUser', {
-    approvedAddress: formData.value[0].address,
+    approvedAddress: formData.value[0]?.address ?? '',
     budgetData: resultArray.value,
     tokenAddress: selectedToken.value,
     expiry: typeof date.value === 'object' ? Math.floor(date.value.getTime() / 1000) : 0

@@ -73,7 +73,9 @@ const totalMonthlySpentAmount = computed(() => {
     )
     if (token) {
       const decimals = token.decimals
-      spentByToken[token.id] += parseFloat(formatUnits(transaction.amount, decimals))
+      if (spentByToken[token.id] !== undefined) {
+        spentByToken[token.id]! += parseFloat(formatUnits(transaction.amount, decimals))
+      }
     }
   })
 
@@ -81,7 +83,10 @@ const totalMonthlySpentAmount = computed(() => {
   for (const token of SUPPORTED_TOKENS) {
     const price =
       currencyStore.getTokenInfo(token.id)?.prices.find((p) => p.id === 'local')?.price || 0
-    totalInLocal += spentByToken[token.id] * price
+    const spent = spentByToken[token.id]
+    if (spent !== undefined) {
+      totalInLocal += spent * price
+    }
   }
   return formatCurrencyShort(totalInLocal, currencyStore.localCurrency.code)
 })

@@ -5,7 +5,24 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import wageRoutes from '../../routes/wageRoute';
 import { prisma } from '../../utils';
 
-vi.mock('../../utils');
+vi.mock('../../utils', async () => {
+  const actual = await vi.importActual('../../utils');
+  return {
+    ...actual,
+    prisma: {
+      team: {
+        findFirst: vi.fn(),
+        findUnique: vi.fn(),
+      },
+      wage: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
+    },
+  };
+});
 vi.mock('../../utils/viem.config');
 
 // Mock the authorization middleware with proper hoisting

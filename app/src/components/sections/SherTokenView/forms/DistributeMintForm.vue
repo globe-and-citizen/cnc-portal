@@ -38,7 +38,9 @@
                 data-test="found-user"
                 @click="
                   () => {
-                    shareholderWithAmounts[index].shareholder = user.address ?? ''
+                    if (shareholderWithAmounts[index]) {
+                      shareholderWithAmounts[index].shareholder = user.address ?? ''
+                    }
                     showDropdown[index] = false
                   }
                 "

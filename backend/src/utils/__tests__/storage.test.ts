@@ -13,12 +13,14 @@ const mockBucket = {
   name: 'test-bucket',
 };
 
-const mockStorage = vi.fn(() => ({
-  bucket: vi.fn(() => mockBucket),
-}));
+class MockStorage {
+  bucket() {
+    return mockBucket;
+  }
+}
 
 vi.mock('@google-cloud/storage', () => ({
-  Storage: mockStorage,
+  Storage: MockStorage,
 }));
 
 vi.mock('dotenv', () => ({
