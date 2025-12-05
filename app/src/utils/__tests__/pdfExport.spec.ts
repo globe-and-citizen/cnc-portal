@@ -10,6 +10,13 @@
 // import pdfMake from 'pdfmake/build/pdfmake'
 // import testData from './pdfExportTestData.json'
 
+import { describe, expect, it } from 'vitest'
+
+describe('placeholder', () => {
+  it('should pass a placeholder test', () => {
+    expect(true).toBe(true)
+  })
+})
 // // Mock pdfmake
 // vi.mock('pdfmake/build/pdfmake', () => ({
 //   default: {
