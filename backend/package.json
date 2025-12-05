@@ -75,6 +75,7 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "viem": "^2.29.4",
+    "yaml": "^2.8.2",
     "yamljs": "^0.3.0",
     "zod": "^4.1.11"
   }
