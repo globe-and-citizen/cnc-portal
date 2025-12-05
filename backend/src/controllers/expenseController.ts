@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request as ExpressRequest, Response } from 'express';
 import { errorResponse } from '../utils/utils';
 import { isUserMemberOfTeam } from './wageController';
 
@@ -15,8 +15,12 @@ type expenseBodyRequest = Pick<Expense, 'signature' | 'data'> & {
   teamId: string;
 };
 
+type Request = ExpressRequest & {
+  address?: string;
+};
+
 export const addExpense = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
+  const callerAddress = req.address as Address;
   const body = req.body as expenseBodyRequest;
   const teamId = Number(body.teamId);
   const signature = body.signature as string;
@@ -58,7 +62,7 @@ export const addExpense = async (req: Request, res: Response) => {
 };
 
 export const getExpenses = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
+  const callerAddress = req.address as Address;
   const teamId = Number(req.query.teamId);
   const status = String(req.query.status || 'all');
 
@@ -136,7 +140,13 @@ const syncExpenseStatus = async (expense: Expense) => {
     args: [expense.data, keccak256(expense.signature as Address)],
   });
 
-  const isExpired = data.endDate <= Math.floor(new Date().getTime() / 1000);
+  // 2. Fetch the latest block
+  const block = await publicClient.getBlock();
+
+  // 3. Access the timestamp
+  console.log(block.timestamp); // BigInt value (seconds since Unix epoch)
+  console.log('end date: ', data.endDate, 'block timestamp: ', Number(block.timestamp));
+  const isExpired = data.endDate <= Number(block.timestamp); // Math.floor(new Date().getTime() / 1000);
 
   const amountTransferred = isNewPeriod
     ? '0'
