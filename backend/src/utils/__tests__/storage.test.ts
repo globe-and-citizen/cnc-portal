@@ -14,7 +14,7 @@ const mockBucket = {
 };
 
 class MockStorage {
-  bucket(name: string) {
+  bucket() {
     return mockBucket;
   }
 }
