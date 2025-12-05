@@ -38,6 +38,9 @@
     // This improves issue grouping in Sentry.
     "sourceRoot": "/"
   },
+  "ts-node": {
+    "files": true
+  },
   "exclude": [
     "test",
     "vitest.config.unit.ts",
