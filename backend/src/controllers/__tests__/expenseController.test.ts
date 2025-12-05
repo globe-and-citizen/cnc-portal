@@ -191,6 +191,10 @@ describe('Expense Controller', () => {
     });
 
     it('should return expenses for a valid team', async () => {
+      // Replace the method directly
+      publicClient.getBlock = vi.fn().mockResolvedValue({
+        timestamp: BigInt(Math.floor(Date.now() / 1000)),
+      });
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.expense, 'findMany').mockResolvedValue([
         { ...mockExpense, data: mockExpenseData },

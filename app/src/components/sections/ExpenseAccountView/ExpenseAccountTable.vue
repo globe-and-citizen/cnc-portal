@@ -173,7 +173,7 @@ const columns = [
 //#endregion Composables
 const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
   functionName: 'owner',
-  address: expenseAccountEip712Address, //as unknown as Address,
+  address: expenseAccountEip712Address,
   abi: EXPENSE_ACCOUNT_EIP712_ABI
 })
 //deactivate approval
