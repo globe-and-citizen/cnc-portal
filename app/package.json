@@ -63,7 +63,7 @@
   },
   "devDependencies": {
     "@pinia/testing": "^1.0.3",
-    "@playwright/test": "^1.44.0",
+    "@playwright/test": "^1.48.2",
     "@synthetixio/synpress": "^4.0.3",
     "@tsconfig/node20": "^20.1.2",
     "@types/jsdom": "^21.1.6",
