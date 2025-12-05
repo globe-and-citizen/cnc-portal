@@ -19,7 +19,7 @@ import { formatEtherUtil, log, tokenSymbol } from '@/utils'
 import { useTeamStore } from '@/stores'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import type { ReceiptData } from '@/utils/excelExport'
-import type { Address } from 'viem'
+import { zeroAddress, type Address } from 'viem'
 import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 
 const teamStore = useTeamStore()
@@ -68,8 +68,11 @@ const transactionData = computed<ExpenseTransaction[]>(() =>
         date: new Date(Number(transaction.blockTimestamp) * 1000).toLocaleString('en-US'),
         from: transaction.from,
         to: transaction.to,
-        amount: formatEtherUtil(BigInt(transaction.amount ?? '0'), transaction.tokenAddress ?? ''),
-        token: tokenSymbol(transaction.tokenAddress ?? ''),
+        amount: formatEtherUtil(
+          BigInt(transaction.amount ?? '0'),
+          transaction.tokenAddress ?? zeroAddress
+        ),
+        token: tokenSymbol(transaction.tokenAddress ?? zeroAddress),
         type: transaction.transactionType
       }))
     : []
