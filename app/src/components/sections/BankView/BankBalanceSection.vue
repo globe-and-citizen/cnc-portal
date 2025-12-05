@@ -224,16 +224,16 @@ const tokens = computed(() => getTokens())
 
 const initialTransferDataValue = (): TransferModel => {
   const firstToken = tokens.value[0]
-  if (!firstToken) {
-    return {
-      address: { name: '', address: '' },
-      token: { symbol: '', balance: 0, tokenId: 'native', price: 0, name: '', code: '' },
-      amount: '0'
-    }
-  }
   return {
     address: { name: '', address: '' },
-    token: firstToken,
+    token: firstToken ?? {
+      symbol: '',
+      balance: 0,
+      tokenId: 'native',
+      price: 0,
+      name: '',
+      code: ''
+    },
     amount: '0'
   }
 }
