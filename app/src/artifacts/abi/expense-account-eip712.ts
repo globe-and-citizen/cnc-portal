@@ -757,6 +757,67 @@ export const EXPENSE_ACCOUNT_EIP712_ABI = [
   {
     inputs: [
       {
+        components: [
+          {
+            internalType: 'uint256',
+            name: 'amount',
+            type: 'uint256'
+          },
+          {
+            internalType: 'enum ExpenseAccountEIP712.FrequencyType',
+            name: 'frequencyType',
+            type: 'uint8'
+          },
+          {
+            internalType: 'uint256',
+            name: 'customFrequency',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'startDate',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'endDate',
+            type: 'uint256'
+          },
+          {
+            internalType: 'address',
+            name: 'tokenAddress',
+            type: 'address'
+          },
+          {
+            internalType: 'address',
+            name: 'approvedAddress',
+            type: 'address'
+          }
+        ],
+        internalType: 'struct ExpenseAccountEIP712.BudgetLimit',
+        name: 'budgetLimit',
+        type: 'tuple'
+      },
+      {
+        internalType: 'bytes32',
+        name: 'signatureHash',
+        type: 'bytes32'
+      }
+    ],
+    name: 'isNewPeriod',
+    outputs: [
+      {
+        internalType: 'bool',
+        name: '',
+        type: 'bool'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
         internalType: 'address',
         name: '_token',
         type: 'address'
