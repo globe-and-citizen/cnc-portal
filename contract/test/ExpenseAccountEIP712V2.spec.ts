@@ -380,10 +380,14 @@ describe('ExpenseAccountEIP712V2', function () {
         deployExpenseAccountFixture
       )
 
+      const currentTime = await time.latest()
+
       // Test case 1: Approval not yet active (before start date)
+      // Use a timestamp far in the future
+      const farFuture = currentTime + 365 * 86400 // 1 year from now
       const futureBudgetLimit = createBudgetLimit({
-        startDate: Math.floor(Date.now() / 1000) + 86400, // Starts tomorrow
-        endDate: Math.floor(Date.now() / 1000) + 30 * 86400,
+        startDate: farFuture,
+        endDate: farFuture + 30 * 86400,
         approvedAddress: approvedAddress.address
       })
 
@@ -396,9 +400,11 @@ describe('ExpenseAccountEIP712V2', function () {
       ).to.be.revertedWith('Approval not yet active')
 
       // Test case 2: Approval expired (after end date)
+      // Use a timestamp far in the past
+      const farPast = Date.UTC(2020, 0, 1, 0, 0, 0, 0) / 1000 // Jan 1, 2020
       const pastBudgetLimit = createBudgetLimit({
-        startDate: Math.floor(Date.now() / 1000) - 60 * 86400, // Started 60 days ago
-        endDate: Math.floor(Date.now() / 1000) - 30 * 86400, // Ended 30 days ago
+        startDate: farPast,
+        endDate: farPast + 30 * 86400, // Ended long ago
         approvedAddress: approvedAddress.address
       })
 

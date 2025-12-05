@@ -82,11 +82,6 @@ const columns = [
     label: 'Frequency',
     sortable: false
   },
-  /* {
-    key: '',
-    label: 'Max Transactions',
-    sortable: false
-  }, */
   {
     key: 'amountTransferred',
     label: 'Max Amount',
