@@ -6,7 +6,35 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import claimRoutes from '../../routes/claimRoute';
 import { prisma } from '../../utils';
 
-vi.mock('../../utils');
+vi.mock('../../utils', async () => {
+  const actual = await vi.importActual('../../utils');
+  return {
+    ...actual,
+    prisma: {
+      wage: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
+      weeklyClaim: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
+      claim: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+        count: vi.fn(),
+      },
+    },
+  };
+});
 vi.mock('../../utils/viem.config');
 
 // Mock the cash remuneration utility
@@ -94,28 +122,28 @@ const createMockClaimWithWage = (
   claimOverrides: Partial<Claim> = {},
   wageOverrides: Partial<Wage> = {}
 ) => [
-  {
-    id: 1,
-    hoursWorked: 5,
-    status: 'pending',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    signature: null,
-    wageId: 1,
-    dayWorked: new Date(),
-    memo: 'Test memo',
-    tokenTx: null,
-    weeklyClaimId: 1,
-    wage: {
-      teamId: 1,
-      userAddress: TEST_ADDRESS,
+    {
+      id: 1,
+      hoursWorked: 5,
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      signature: null,
+      wageId: 1,
+      dayWorked: new Date(),
+      memo: 'Test memo',
+      tokenTx: null,
+      weeklyClaimId: 1,
+      wage: {
+        teamId: 1,
+        userAddress: TEST_ADDRESS,
 
-      user: { address: TEST_ADDRESS, name: 'User1' },
-      ...wageOverrides,
-    },
-    ...claimOverrides,
-  } as Claim,
-];
+        user: { address: TEST_ADDRESS, name: 'User1' },
+        ...wageOverrides,
+      },
+      ...claimOverrides,
+    } as Claim,
+  ];
 
 // Test utilities
 const mockIsCashRemunerationOwner = vi.mocked(isCashRemunerationOwner);
