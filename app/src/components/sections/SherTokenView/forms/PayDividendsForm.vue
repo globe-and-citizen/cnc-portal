@@ -83,7 +83,7 @@ const getTokens = (): TokenOption[] =>
       symbol: b.token.symbol,
       balance: b.amount,
       tokenId: b.token.id,
-      price: b.values['USD'].price || 0,
+      price: b.values['USD']?.price ?? 0,
       name: b.token.name,
       code: b.token.code
     }))

@@ -214,7 +214,7 @@ const getTokens = (): TokenOption[] =>
       symbol: b.token.symbol,
       balance: b.amount,
       tokenId: b.token.id,
-      price: b.values['USD'].price || 0,
+      price: b.values['USD']?.price ?? 0,
       name: b.token.name,
       code: b.token.code
     }))
@@ -223,9 +223,17 @@ const getTokens = (): TokenOption[] =>
 const tokens = computed(() => getTokens())
 
 const initialTransferDataValue = (): TransferModel => {
+  const firstToken = tokens.value[0]
+  if (!firstToken) {
+    return {
+      address: { name: '', address: '' },
+      token: { symbol: '', balance: 0, tokenId: 'native', price: 0, name: '', code: '' },
+      amount: '0'
+    }
+  }
   return {
     address: { name: '', address: '' },
-    token: tokens.value[0] ?? null,
+    token: firstToken,
     amount: '0'
   }
 }
