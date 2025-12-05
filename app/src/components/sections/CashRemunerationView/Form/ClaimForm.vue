@@ -16,6 +16,7 @@
         class=""
         data-test="date-input"
         utc="preserve"
+        :disabled-dates="isDateDisabled"
         :disabled="isEdit"
       />
     </div>
@@ -96,13 +97,15 @@ interface Props {
   initialData?: Partial<ClaimFormData>
   isEdit?: boolean
   isLoading?: boolean
+  disabledWeekStarts?: string[]
 }
 
 dayjs.extend(utc)
 
 const props = withDefaults(defineProps<Props>(), {
   isEdit: false,
-  isLoading: false
+  isLoading: false,
+  disabledWeekStarts: () => []
 })
 
 const emit = defineEmits<{
@@ -145,6 +148,13 @@ const formatUTC = (value: Date | string | null | undefined) => {
     return dayjs.utc(Date.UTC(year, month, day)).format('YYYY-MM-DD [UTC]')
   }
   return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
+}
+
+const isDateDisabled = (value: Date | string | null | undefined) => {
+  if (!value) return false
+  const date = value instanceof Date ? value : new Date(value)
+  const weekStart = dayjs.utc(date).startOf('isoWeek').toISOString()
+  return (props.disabledWeekStarts ?? []).includes(weekStart)
 }
 
 const handleSubmit = async () => {
