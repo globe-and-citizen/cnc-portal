@@ -18,7 +18,7 @@
     "coverage": "npx serve coverage/",
     "prod": "node dist/index.js",
     "build-only": "vite build",
-    "type-check": "vue-tsc --build --force",
+    "type-check": "vue-tsc --build tsconfig.app.json --force",
     "lint": "eslint . --fix ",
     "format": "prettier --write .",
     "format-check": "prettier . --check",
