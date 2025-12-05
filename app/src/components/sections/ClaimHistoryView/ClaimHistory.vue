@@ -45,7 +45,11 @@
           <div
             v-for="week in generatedMonthWeek"
             :key="week.isoWeek"
-            @click="selectedMonthObject = week"
+            @click="
+              () => {
+                selectedMonthObject = week
+              }
+            "
             :class="[
               'border rounded-lg p-3 cursor-pointer',
               week.isoWeek === selectedMonthObject.isoWeek
@@ -105,7 +109,11 @@
                 : 'You need to have a wage set up to submit claims'
             }}</span>
             <div>
-              <SubmitClaims v-if="hasWage" :weekly-claim="selectWeekWeelyClaim" />
+              <SubmitClaims
+                v-if="hasWage"
+                :weekly-claim="selectWeekWeelyClaim"
+                :signed-week-starts="signedWeekStarts"
+              />
               <ButtonUI
                 v-else
                 variant="success"
@@ -326,6 +334,15 @@ const generatedMonthWeek = computed(() => {
 const selectWeekWeelyClaim = computed(() => {
   return memberWeeklyClaims.value?.find(
     (weeklyClaim) => weeklyClaim.weekStart === selectedMonthObject.value.isoString
+  )
+})
+
+// Current signed weeks for disabling dates in claim form
+const signedWeekStarts = computed(() => {
+  return (
+    memberWeeklyClaims.value
+      ?.filter((weeklyClaim) => weeklyClaim.status === 'signed' || weeklyClaim.signature)
+      .map((weeklyClaim) => weeklyClaim.weekStart) ?? []
   )
 })
 
