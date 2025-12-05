@@ -56,6 +56,11 @@ export const addClaim = async (req: Request, res: Response) => {
       include: { claims: true },
     });
 
+    // If a weekly claim exists and is already signed (status or signature), reject new submissions
+    if (weeklyClaim && (weeklyClaim.status === 'signed' || !!weeklyClaim.signature)) {
+      return errorResponse(409, 'Week already signed. Submission not allowed.', res);
+    }
+
     // Check total max hours.
 
     const totalHours = weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0;
