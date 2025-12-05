@@ -107,8 +107,7 @@ const syncExpenseStatus = async (expense: Expense) => {
   // TODO: implement the logic to get the current status of the expense
   if (
     expense.status === 'expired' ||
-    (expense.status === 'limit-reached' && (expense.data as BudgetLimit)?.frequencyType === 0) /* &&
-    'balances' in (expense.data as BudgetLimit) */
+    (expense.status === 'limit-reached' && (expense.data as BudgetLimit)?.frequencyType === 0)
   ) {
     return {
       ...expense,
@@ -144,9 +143,7 @@ const syncExpenseStatus = async (expense: Expense) => {
   const block = await publicClient.getBlock();
 
   // 3. Access the timestamp
-  console.log(block.timestamp); // BigInt value (seconds since Unix epoch)
-  console.log('end date: ', data.endDate, 'block timestamp: ', Number(block.timestamp));
-  const isExpired = data.endDate <= Number(block.timestamp); // Math.floor(new Date().getTime() / 1000);
+  const isExpired = data.endDate <= Number(block.timestamp);
 
   const amountTransferred = isNewPeriod
     ? '0'

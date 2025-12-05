@@ -202,10 +202,6 @@ describe('Expense Controller', () => {
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.expense, 'update').mockResolvedValue(mockExpense);
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([0n, 0n, 1]);
-      // //@ts-expect-error only using part of the mock
-      // vi.spyOn(publicClient, 'getBlock').mockResolvedValue({
-      //   timestamp: BigInt(Date.now() / 1000),
-      // })
 
       const response = await request(app).get('/').query({ teamId: 1 });
 
