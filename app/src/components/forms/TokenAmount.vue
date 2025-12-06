@@ -97,11 +97,11 @@ const selectedTokenId = computed({
 const tokenList = computed(() => props.tokens)
 const selectedToken = computed(() => props.tokens.find((b) => b.tokenId === selectedTokenId.value))
 
-// const availableBalance = computed(() => {
-//   const token = selectedToken.value
-//   if (!token) return 0
-//   return token.spendableBalance ?? token.balance ?? 0
-// })
+const availableBalance = computed(() => {
+  const token = selectedToken.value
+  if (!token) return 0
+  return token.spendableBalance ?? token.balance ?? 0
+})
 
 const estimatedPrice = computed(() => {
   const price = selectedToken.value?.price ?? 0
@@ -113,17 +113,17 @@ const estimatedPrice = computed(() => {
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
 })
-// const notExceedingBalance = helpers.withMessage('Amount exceeds your balance', (value: string) => {
-//   if (!value || parseFloat(value) <= 0) return true
-//   return parseFloat(value) <= availableBalance.value
-// })
+const notExceedingBalance = helpers.withMessage('Amount exceeds your balance', (value: string) => {
+  if (!value || parseFloat(value) <= 0) return true
+  return parseFloat(value) <= availableBalance.value
+})
 const numericWithMessage = helpers.withMessage('Value is not a valid number', numeric)
 const rules = {
   amount: {
     required,
     numeric: numericWithMessage,
-    notZero /* ,
-    notExceedingBalance */
+    notZero,
+    notExceedingBalance
   }
 }
 const $v = useVuelidate(rules, { amount })
