@@ -210,6 +210,20 @@ const vestings = computed<VestingRow[]>(() => {
   const allRows = allVestingsRaw.flatMap(([members, vestingsRaw]) =>
     members.map((member, idx): VestingRow => {
       const v = vestingsRaw[idx]
+      if (!v) {
+        return {
+          member,
+          teamId: Number(team.value?.id),
+          startDate: '',
+          isStarted: false,
+          durationDays: 0,
+          cliffDays: 0,
+          totalAmount: 0,
+          released: 0,
+          status: 'Inactive',
+          tokenSymbol: tokenSymbol?.value || 'default'
+        }
+      }
       const totalAmount = Number(formatUnits(v.totalAmount, 6))
       const released = Number(formatUnits(v.released, 6))
       const isStarted = currentDateInSeconds > Number(v.start)

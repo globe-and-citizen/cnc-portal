@@ -265,10 +265,11 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
   // Computed total balance for each currency
   const total = computed<Record<string, TokenBalanceValue>>(() => {
     const totals: Record<string, TokenBalanceValue> = {}
-    if (balances.value.length > 0) {
+    if (balances.value.length > 0 && balances.value[0]) {
       const allCodes = Object.keys(balances.value[0].values)
       for (const code of allCodes) {
         const first = balances.value[0].values[code]
+        if (!first) continue
         const sum = balances.value.reduce((acc, bal) => acc + (bal.values[code]?.value ?? 0), 0)
         totals[code] = {
           value: sum,
@@ -287,10 +288,11 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
   // New: totals for dividends
   const dividendsTotal = computed<Record<string, TokenBalanceValue>>(() => {
     const totals: Record<string, TokenBalanceValue> = {}
-    if (dividends.value.length > 0) {
+    if (dividends.value.length > 0 && dividends.value[0]) {
       const allCodes = Object.keys(dividends.value[0].values)
       for (const code of allCodes) {
         const first = dividends.value[0].values[code]
+        if (!first) continue
         const sum = dividends.value.reduce((acc, d) => acc + (d.values[code]?.value ?? 0), 0)
         totals[code] = {
           value: sum,

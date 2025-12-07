@@ -115,7 +115,7 @@ watch(
   () => props.tokens,
   (tokens) => {
     if (!tokens?.length) return
-    if (!tokens.some((t) => t.tokenId === selectedTokenId.value)) {
+    if (!tokens.some((t) => t.tokenId === selectedTokenId.value) && tokens[0]) {
       selectedTokenId.value = tokens[0].tokenId
       model.value.token = tokens[0]
     }
@@ -150,7 +150,7 @@ const handleSelectItem = (item: { name: string; address: string; type: 'member' 
 }
 
 onMounted(() => {
-  if (props.tokens.length > 0) {
+  if (props.tokens.length > 0 && props.tokens[0]) {
     model.value.token = props.tokens[0]
   }
 })

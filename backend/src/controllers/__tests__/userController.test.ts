@@ -6,7 +6,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import userRoutes from '../../routes/userRoutes';
 import { prisma } from '../../utils';
 
-vi.mock('../../utils');
+vi.mock('../../utils', async () => {
+  const actual = await vi.importActual('../../utils');
+  return {
+    ...actual,
+    prisma: {
+      user: {
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        count: vi.fn(),
+      },
+    },
+  };
+});
 vi.mock('../../utils/viem.config');
 
 // Mock the authorization middleware with proper hoisting

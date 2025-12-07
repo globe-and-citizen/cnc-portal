@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request as ExpressRequest, Response } from 'express';
 import { errorResponse } from '../utils/utils';
 import { isUserMemberOfTeam } from './wageController';
 
@@ -15,8 +15,12 @@ type expenseBodyRequest = Pick<Expense, 'signature' | 'data'> & {
   teamId: string;
 };
 
+type Request = ExpressRequest & {
+  address?: string;
+};
+
 export const addExpense = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
+  const callerAddress = req.address as Address;
   const body = req.body as expenseBodyRequest;
   const teamId = Number(body.teamId);
   const signature = body.signature as string;
@@ -58,7 +62,7 @@ export const addExpense = async (req: Request, res: Response) => {
 };
 
 export const getExpenses = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
+  const callerAddress = req.address as Address;
   const teamId = Number(req.query.teamId);
   const status = String(req.query.status || 'all');
 
@@ -102,8 +106,8 @@ export const getExpenses = async (req: Request, res: Response) => {
 const syncExpenseStatus = async (expense: Expense) => {
   // TODO: implement the logic to get the current status of the expense
   if (
-    (expense.status === 'expired' || expense.status === 'limit-reached') &&
-    'balances' in (expense.data as BudgetLimit)
+    expense.status === 'expired' ||
+    (expense.status === 'limit-reached' && (expense.data as BudgetLimit)?.frequencyType === 0)
   ) {
     return {
       ...expense,
@@ -128,16 +132,29 @@ const syncExpenseStatus = async (expense: Expense) => {
     args: [keccak256(expense.signature as Address)],
   })) as unknown as [bigint, bigint, bigint, 0 | 1 | 2];
 
-  const isExpired = data.endDate <= Math.floor(new Date().getTime() / 1000);
+  const isNewPeriod = await publicClient.readContract({
+    address: expenseAccountEip712Address?.address as Address,
+    abi: ABI,
+    functionName: 'isNewPeriod',
+    args: [expense.data, keccak256(expense.signature as Address)],
+  });
 
-  const amountTransferred =
-    data.tokenAddress === zeroAddress
+  // 2. Fetch the latest block
+  const block = await publicClient.getBlock();
+
+  // 3. Access the timestamp
+  const isExpired = data.endDate <= Number(block.timestamp);
+
+  const amountTransferred = isNewPeriod
+    ? '0'
+    : data.tokenAddress === zeroAddress
       ? `${formatEther(balances[1])}`
       : `${Number(balances[1]) / 1e6}`;
 
   const isLimitReached =
-    Number(data.amount || Number.MAX_VALUE) <= Number(amountTransferred) ||
-    ((expense.data as BudgetLimit).frequencyType === 0 && balances[1] > 0);
+    !isNewPeriod &&
+    (Number(data.amount || Number.MAX_VALUE) <= Number(amountTransferred) ||
+      ((expense.data as BudgetLimit).frequencyType === 0 && balances[1] > 0));
 
   const formattedExpense = {
     ...expense,
@@ -158,7 +175,7 @@ const syncExpenseStatus = async (expense: Expense) => {
     status: formattedExpense.status,
   };
 
-  if (isLimitReached || isExpired) {
+  if (((expense.data as BudgetLimit).frequencyType === 0 && isLimitReached) || isExpired) {
     updateData.data = {
       ...(formattedExpense.data as BudgetLimit),
       balances: {

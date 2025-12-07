@@ -15,7 +15,7 @@ import { formatEtherUtil, log, tokenSymbol } from '@/utils'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { computed, watch } from 'vue'
-import { type Address } from 'viem'
+import { zeroAddress, type Address } from 'viem'
 import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 
 const currencyStore = useCurrencyStore()
@@ -64,8 +64,11 @@ const transactionData = computed<CashRemunerationTransaction[]>(() => {
         date: new Date(Number(transaction.blockTimestamp) * 1000).toLocaleString('en-US'),
         from: transaction.from,
         to: transaction.to,
-        amount: formatEtherUtil(BigInt(transaction.amount), transaction.tokenAddress),
-        token: tokenSymbol(transaction.tokenAddress),
+        amount: formatEtherUtil(
+          BigInt(transaction.amount ?? '0'),
+          transaction.tokenAddress ?? zeroAddress
+        ),
+        token: tokenSymbol(transaction.tokenAddress ?? zeroAddress),
         type: transaction.transactionType
       }))
     : []

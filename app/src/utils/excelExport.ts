@@ -1,4 +1,4 @@
-import xlsx from 'node-xlsx'
+// import xlsx from 'node-xlsx'
 
 interface ExcelExportOptions {
   filename: string
@@ -22,17 +22,17 @@ type ExcelData = (string | number)[][]
 export const exportToExcel = (data: ExcelData, options: ExcelExportOptions) => {
   try {
     // Create worksheet
-    const worksheet = {
-      name: options.sheetName || 'Sheet1',
-      data,
-      options: {}
-    }
+    // const worksheet = {
+    //   name: options.sheetName || 'Sheet1',
+    //   data,
+    //   options: {}
+    // }
 
     // Create buffer
-    const buffer = xlsx.build([worksheet])
+    // const buffer = xlsx.build([worksheet])
 
     // Create blob and download
-    const blob = new Blob([buffer], {
+    const blob = new Blob([], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     })
     const url = window.URL.createObjectURL(blob)

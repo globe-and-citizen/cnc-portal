@@ -72,8 +72,8 @@ const transactions = computed<BankTransaction[]>(() =>
         date: new Date(Number(transaction.blockTimestamp) * 1000).toLocaleString('en-US'),
         from: transaction.from,
         to: transaction.to,
-        amount: formatEtherUtil(BigInt(transaction.amount), transaction.tokenAddress),
-        token: tokenSymbol(transaction.tokenAddress),
+        amount: formatEtherUtil(BigInt(transaction.amount ?? '0'), transaction.tokenAddress ?? ''),
+        token: tokenSymbol(transaction.tokenAddress ?? ''),
         type: transaction.transactionType
       }))
     : []

@@ -290,14 +290,16 @@ const columns = computed(() => {
   }
   const defaultColumns =
     props.columns ??
-    (Object.keys(props.rows[0]).map((key) => ({
-      key,
-      label: key,
-      // label: upperFirst(key),// Update by installing unjs https://github.com/unjs/scule
-      sortable: false,
-      class: undefined,
-      sort: defaultSort
-    })) as TableColumn[])
+    (props.rows[0]
+      ? (Object.keys(props.rows[0]).map((key) => ({
+          key,
+          label: key,
+          // label: upperFirst(key),// Update by installing unjs https://github.com/unjs/scule
+          sortable: false,
+          class: undefined,
+          sort: defaultSort
+        })) as TableColumn[])
+      : [])
 
   return defaultColumns
 })

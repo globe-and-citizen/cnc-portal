@@ -87,6 +87,7 @@ const candidates = computed(() => {
       const user = teamStore.currentTeam?.members?.find(
         (member) => member.address === candidate
       ) as User & { role?: string }
+      const currentVotes = votesPerCandidate[candidate] ?? 0
       return {
         // @ts-expect-error type issue
         id: BigInt((election.value as string | bigint[])[0]),
@@ -97,7 +98,7 @@ const candidates = computed(() => {
           imageUrl: user?.imageUrl
         },
         totalVotes: Number(voteCount.value) || 0,
-        currentVotes: votesPerCandidate[candidate], //5
+        currentVotes: currentVotes as number,
         // @ts-expect-error type issue
         startDate: new Date(Number((election.value as bigint[])[4]) * 1000),
         // @ts-expect-error type issue

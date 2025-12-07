@@ -358,6 +358,26 @@ contract ExpenseAccountEIP712 is
 	}
 
     /**
+     * @dev Helper to check if we're in a new period (for frontend)
+     */
+    function isNewPeriod(
+        BudgetLimit calldata budgetLimit, 
+        bytes32 signatureHash
+    ) public view returns (bool) {
+        if (budgetLimit.frequencyType == FrequencyType.OneTime) {
+            return false;
+        }
+        
+        ExpenseBalance storage balance = expenseBalances[signatureHash];
+        if (balance.lastWithdrawnDate == 0) {
+            return true; // Never withdrawn
+        }
+        
+        uint256 currentPeriod = getCurrentPeriod(budgetLimit);
+        return currentPeriod > balance.lastWithdrawnPeriod;
+    }
+
+    /**
      * @dev Get hash of budget limit for tracking in expenseBalances mapping
      */
     function budgetLimitHash(BudgetLimit calldata budgetLimit) 
