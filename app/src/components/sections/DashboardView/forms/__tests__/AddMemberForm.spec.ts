@@ -190,4 +190,25 @@ describe('AddMemberForm.vue', () => {
     expect(mocks.fetchTeam).toHaveBeenCalledWith('team-123')
     expect(wrapper.emitted('memberAdded')).toBeTruthy()
   })
+
+  it('computes membersAddress from formData correctly', async () => {
+    const wrapper = mountComponent()
+
+    // Set formData with multiple members
+    ;(wrapper.vm as unknown as AddMemberFormVm).formData = [
+      { address: '0x111', name: 'One' },
+      { address: '0x222', name: 'Two' },
+      { address: '0x333', name: 'Three' }
+    ]
+
+    // nextTick to ensure computed updates
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as unknown as AddMemberFormVm
+    expect(vm.membersAddress).toEqual([
+      { address: '0x111' },
+      { address: '0x222' },
+      { address: '0x333' }
+    ])
+  })
 })
