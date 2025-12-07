@@ -1,79 +1,102 @@
 <script setup lang="ts">
-import type { Period, Range, Stat } from '~/types'
+import type { Period, Range, Stat, StatsPeriod } from '~/types'
 
 const props = defineProps<{
   period: Period
   range: Range
 }>()
 
-function formatCurrency(value: number): string {
-  return value.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0
-  })
+const { getOverviewStats } = useStats()
+
+function formatNumber(value: number): string | number {
+  return value.toLocaleString('en-US')
 }
 
-const baseStats = [
-  {
-    title: 'Teams',
-    icon: 'i-lucide-users',
-    minValue: 400,
-    maxValue: 1000,
-    minVariation: -15,
-    maxVariation: 25
-  },
-  {
-    title: 'Members',
-    icon: 'i-lucide-chart-pie',
-    minValue: 1000,
-    maxValue: 2000,
-    minVariation: -10,
-    maxVariation: 20
-  },
-  {
-    title: 'Revenue',
-    icon: 'i-lucide-circle-dollar-sign',
-    minValue: 200000,
-    maxValue: 500000,
-    minVariation: -20,
-    maxVariation: 30,
-    formatter: formatCurrency
-  },
-  {
-    title: 'Contracts',
-    icon: 'i-lucide-shopping-cart',
-    minValue: 100,
-    maxValue: 300,
-    minVariation: -5,
-    maxVariation: 15
+// Map UI period to API period format
+const apiPeriod = computed<StatsPeriod>(() => {
+  const periodMap: Record<Period, StatsPeriod> = {
+    daily: '7d',
+    weekly: '30d',
+    monthly: '90d'
   }
-]
+  return periodMap[props.period] || '30d'
+})
 
-const { data: stats } = await useAsyncData<Stat[]>(
-  'stats',
+const { data: stats, pending, error } = await useAsyncData<Stat[]>(
+  'home-stats',
   async () => {
-    return baseStats.map((stat) => {
-      const value = randomInt(stat.minValue, stat.maxValue)
-      const variation = randomInt(stat.minVariation, stat.maxVariation)
+    const overviewData = await getOverviewStats(apiPeriod.value)
 
-      return {
-        title: stat.title,
-        icon: stat.icon,
-        value: stat.formatter ? stat.formatter(value) : value,
-        variation
+    if (!overviewData) {
+      // Return empty stats if API fails
+      return []
+    }
+
+    return [
+      {
+        title: 'Teams',
+        icon: 'i-lucide-users',
+        value: formatNumber(overviewData.totalTeams),
+        variation: overviewData.growthMetrics.teamsGrowth
+      },
+      {
+        title: 'Members',
+        icon: 'i-lucide-chart-pie',
+        value: formatNumber(overviewData.totalMembers),
+        variation: overviewData.growthMetrics.membersGrowth
+      },
+      {
+        title: 'Total Claims',
+        icon: 'i-lucide-file-text',
+        value: formatNumber(overviewData.totalClaims),
+        variation: overviewData.growthMetrics.claimsGrowth
+      },
+      {
+        title: 'Total Hours',
+        icon: 'i-lucide-clock',
+        value: formatNumber(overviewData.totalHoursWorked),
+        variation: 0
       }
-    })
+    ]
   },
   {
-    watch: [() => props.period, () => props.range],
+    watch: [apiPeriod],
     default: () => []
   }
 )
 </script>
 
 <template>
-  <UPageGrid class="lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-px">
+  <!-- Loading State -->
+  <UPageGrid v-if="pending" class="lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-px">
+    <UPageCard
+      v-for="index in 4"
+      :key="index"
+      variant="subtle"
+      :ui="{
+        container: 'gap-y-1.5',
+        wrapper: 'items-start'
+      }"
+      class="lg:rounded-none first:rounded-l-lg last:rounded-r-lg"
+    >
+      <USkeleton class="h-8 w-24" />
+      <USkeleton class="h-4 w-16 mt-2" />
+    </UPageCard>
+  </UPageGrid>
+
+  <!-- Error State -->
+  <UAlert
+    v-else-if="error"
+    icon="i-lucide-alert-circle"
+    color="error"
+    variant="subtle"
+    title="Failed to load statistics"
+    :description="error.message || 'Please try again later'"
+    class="mb-4"
+  />
+
+  <!-- Stats Data -->
+  <UPageGrid v-else class="lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-px">
     <UPageCard
       v-for="(stat, index) in stats"
       :key="index"
@@ -95,7 +118,7 @@ const { data: stats } = await useAsyncData<Stat[]>(
         </span>
 
         <UBadge :color="stat.variation > 0 ? 'success' : 'error'" variant="subtle" class="text-xs">
-          {{ stat.variation > 0 ? '+' : '' }}{{ stat.variation }}%
+          {{ stat.variation > 0 ? '+' : '' }}{{ stat.variation.toFixed(1) }}%
         </UBadge>
       </div>
     </UPageCard>
