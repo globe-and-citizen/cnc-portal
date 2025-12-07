@@ -133,7 +133,7 @@ const emit = defineEmits<{
 
 // Get data from composables
 const { tokens } = useFeeCollector()
-const { prices, getCoinGeckoId } = useTokenPrices()
+const { getTokenUSD } = useTokenPrices()
 
 // Local state
 const selectedToken = ref<TokenDisplay | null>(null)
@@ -150,33 +150,18 @@ const dropdownItems = computed<DropdownMenuItem[]>(() =>
   }))
 )
 
-// Get token price
-const getTokenPrice = (token: TokenDisplay): number => {
-  if (token.isNative) {
-    return prices.value[getCoinGeckoId() as keyof typeof prices.value] || 0
-  }
-  const symbol = token.symbol.toUpperCase()
-  if (symbol === 'USDC') return prices.value['usd-coin'] || 1
-  if (symbol === 'USDT') return prices.value['tether'] || 1
-  return 0
-}
-
-// Calculate estimated USD
+// Calculate estimated USD using composable
 const estimatedUSD = computed(() => {
   if (!selectedToken.value || !withdrawAmount.value) return '$0.00'
+
   const amount = parseFloat(withdrawAmount.value)
   if (isNaN(amount) || amount === 0) return '$0.00'
 
-  const price = getTokenPrice(selectedToken.value)
-  if (price === 0) return '$0.00'
+  // Use the composable's getTokenUSD function
+  const usdValue = getTokenUSD(selectedToken.value, amount)
 
-  const usdValue = amount * price
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(usdValue)
+  // If it returns empty or "< $0.0001", show a fallback
+  return usdValue || '$0.00'
 })
 
 // Set max amount

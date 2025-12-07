@@ -1,13 +1,13 @@
 import { ref, onMounted, watch } from 'vue'
 import { mainnet, sepolia, polygon, polygonAmoy, hardhat } from '@wagmi/vue/chains'
 import { useNetwork } from '~/utils/network'
+import type { TokenDisplay } from '@/types/token'
 
 interface TokenPrices {
   'ethereum': number
   'usd-coin': number
   'tether': number
   'matic-network': number
-  'polygon-ecosystem-token': number
 }
 
 const COINGECKO_API = 'https://api.coingecko.com/api/v3'
@@ -24,6 +24,12 @@ const CHAIN_TO_COINGECKO: Record<number, string> = {
   [hardhat.id]: 'ethereum'
 }
 
+// Stablecoin IDs
+const STABLECOIN_IDS = {
+  usdc: 'usd-coin',
+  usdt: 'tether'
+}
+
 export const useTokenPrices = () => {
   const { chainId, nativeSymbol } = useNetwork()
 
@@ -31,14 +37,16 @@ export const useTokenPrices = () => {
     'ethereum': 0,
     'usd-coin': 1,
     'tether': 1,
-    'matic-network': 0,
-    'polygon-ecosystem-token': 0
+    'matic-network': 0
   })
   const isLoading = ref(false)
   const error = ref<Error | null>(null)
 
+  // Get CoinGecko ID for current chain
   const getCoinGeckoId = () => {
-    return CHAIN_TO_COINGECKO[chainId.value || 1] || 'ethereum'
+    const id = CHAIN_TO_COINGECKO[chainId.value || 1] || 'ethereum'
+
+    return id
   }
 
   const fetchPrices = async () => {
@@ -53,36 +61,98 @@ export const useTokenPrices = () => {
 
     try {
       const nativeId = getCoinGeckoId()
-      const ids = ['usd-coin', 'tether', nativeId].filter((v, i, a) => a.indexOf(v) === i).join(',')
+      // Fetch all prices in a single batch request for better performance
+      const coinIds = [nativeId, STABLECOIN_IDS.usdc, STABLECOIN_IDS.usdt]
+      const uniqueIds = [...new Set(coinIds)].join(',')
+      const url = `${COINGECKO_API}/simple/price?ids=${uniqueIds}&vs_currencies=usd`
 
-      const response = await fetch(`${COINGECKO_API}/simple/price?ids=${ids}&vs_currencies=usd`)
+      const response = await fetch(url)
 
-      if (!response.ok) throw new Error('Failed to fetch prices')
+      if (!response.ok) {
+        throw new Error(`Failed to fetch prices: ${response.status}`)
+      }
 
       const data = await response.json()
 
+      // Update prices using CoinGecko IDs as keys
       prices.value = {
         'ethereum': data.ethereum?.usd || 0,
         'usd-coin': data['usd-coin']?.usd || 1,
         'tether': data.tether?.usd || 1,
-        'matic-network': data['matic-network']?.usd || 0,
-        'polygon-ecosystem-token': data['polygon-ecosystem-token']?.usd || 0
+        'matic-network': data['matic-network']?.usd || 0
       }
-
       pricesCache = { data: prices.value, timestamp: Date.now() }
     } catch (e) {
       error.value = e as Error
-      // Fallback prices
-      prices.value = {
-        'ethereum': 2000,
-        'usd-coin': 1,
-        'tether': 1,
-        'matic-network': 0.5,
-        'polygon-ecosystem-token': 0.5
-      }
     } finally {
       isLoading.value = false
     }
+  }
+
+  // Get token price by token info
+  const getTokenPrice = (token: TokenDisplay): number => {
+    if (isLoading.value) return 0
+
+    // Native token - use CoinGecko ID
+    if (token.isNative) {
+      const coinGeckoId = getCoinGeckoId()
+      return prices.value[coinGeckoId as keyof typeof prices.value] || 0
+    }
+
+    // Stablecoins
+    const symbol = token.symbol.toUpperCase()
+    if (symbol === 'USDC') {
+      return prices.value['usd-coin'] || 1
+    }
+    if (symbol === 'USDT') {
+      return prices.value.tether || 1
+    }
+
+    return 0
+  }
+
+  // Calculate USD value with formatting
+  const getTokenUSD = (token: TokenDisplay, amount: string | number): string => {
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
+
+    if (isNaN(numAmount) || numAmount === 0) return ''
+
+    const price = getTokenPrice(token)
+    if (price === 0) return ''
+
+    const usdValue = numAmount * price
+
+    // For very small amounts (< $0.01)
+    if (usdValue < 0.01) {
+      if (usdValue < 0.0001) {
+        return '< $0.0001'
+      }
+      // Show 4 decimals for cents
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4
+      }).format(usdValue)
+    }
+
+    // Normal formatting for >= $0.01
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(usdValue)
+  }
+
+  // Get raw USD value (without formatting)
+  const getTokenUSDValue = (token: TokenDisplay, amount: string | number): number => {
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
+
+    if (isNaN(numAmount) || numAmount === 0) return 0
+
+    const price = getTokenPrice(token)
+    return numAmount * price
   }
 
   // Watch for chain changes
@@ -93,17 +163,22 @@ export const useTokenPrices = () => {
     }
   })
 
-  onMounted(fetchPrices)
+  onMounted(() => {
+    fetchPrices()
+  })
 
   return {
     prices,
     isLoading,
     error,
     nativeSymbol,
+    getCoinGeckoId,
+    getTokenPrice,
+    getTokenUSD,
+    getTokenUSDValue,
     refetch: () => {
       pricesCache = null
       return fetchPrices()
-    },
-    getCoinGeckoId
+    }
   }
 }

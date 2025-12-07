@@ -32,7 +32,7 @@ const makeToken = (
 export const useFeeCollector = () => {
   const { address: userAddress } = useAccount()
   const { nativeSymbol } = useNetwork()
-  const { prices, isLoading: isLoadingPrices, getCoinGeckoId } = useTokenPrices()
+  const { isLoading: isLoadingPrices, getTokenUSDValue } = useTokenPrices()
 
   // Owner check
   const { data: feeCollectorOwner } = useReadContract({
@@ -140,7 +140,7 @@ export const useFeeCollector = () => {
     return arr
   })
 
-  // Calculate total USD value (reactive)
+  // Calculate total USD value (reactive) - using getTokenUSDValue from composable
   const totalUSD = computed(() => {
     let total = 0
 
@@ -150,22 +150,13 @@ export const useFeeCollector = () => {
       // Skip if amount is NaN or 0
       if (isNaN(amount) || amount === 0) return
 
-      let price = 0
-
-      // Native token - use CoinGecko ID based on network
-      if (token.isNative) {
-        price = prices.value[getCoinGeckoId() as keyof typeof prices.value] || 0
-      } else if (token.symbol.toUpperCase() === 'USDC') {
-        // Stablecoins
-        price = prices.value['usd-coin'] || 1
-      } else if (token.symbol.toUpperCase() === 'USDT') {
-        price = prices.value['tether'] || 1
-      }
+      // Use the composable's getTokenUSDValue function
+      const usdValue = getTokenUSDValue(token, amount)
 
       // Skip if no price available
-      if (price === 0) return
+      if (usdValue === 0) return
 
-      total += amount * price
+      total += usdValue
     })
 
     return total

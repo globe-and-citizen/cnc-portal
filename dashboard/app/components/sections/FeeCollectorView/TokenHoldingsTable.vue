@@ -107,7 +107,6 @@
 <script setup lang="ts">
 import { useFeeCollector } from '@/composables/useFeeCollector'
 import { useTokenPrices } from '@/composables/useTokenPrices'
-import type { TokenDisplay } from '@/types/token'
 
 defineEmits<{
   openBatchModal: []
@@ -115,25 +114,7 @@ defineEmits<{
 
 // Get data directly from composables
 const { tokens, isLoading, isFeeCollectorOwner } = useFeeCollector()
-const { prices, isLoading: isLoadingPrices, getCoinGeckoId } = useTokenPrices()
-
-// Get token price
-const getTokenPrice = (token: TokenDisplay): number => {
-  if (isLoadingPrices.value) return 0
-
-  // Native token - use CoinGecko ID based on network
-  if (token.isNative) {
-    const coinGeckoId = getCoinGeckoId()
-    return prices.value[coinGeckoId as keyof typeof prices.value] || 0
-  }
-
-  // Stablecoins
-  const symbol = token.symbol.toUpperCase()
-  if (symbol === 'USDC') return prices.value['usd-coin'] || 1
-  if (symbol === 'USDT') return prices.value['tether'] || 1
-
-  return 0
-}
+const { getTokenUSD } = useTokenPrices()
 
 // Format amount with appropriate decimals
 const formatAmount = (amount: string): string => {
@@ -144,23 +125,5 @@ const formatAmount = (amount: string): string => {
   if (num < 0.01) return num.toFixed(6)
   if (num < 1) return num.toFixed(4)
   return num.toFixed(2)
-}
-
-// Calculate USD value
-const getTokenUSD = (token: TokenDisplay, formattedAmount: string): string => {
-  const amount = parseFloat(formattedAmount)
-  if (isNaN(amount) || amount === 0) return ''
-
-  const price = getTokenPrice(token)
-  if (price === 0) return ''
-
-  const usdValue = amount * price
-
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(usdValue)
 }
 </script>
