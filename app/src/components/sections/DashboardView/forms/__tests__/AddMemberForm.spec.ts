@@ -211,4 +211,33 @@ describe('AddMemberForm.vue', () => {
       { address: '0x333' }
     ])
   })
+
+  it('MultiSelectMemberInput v-model updates formData and membersAddress', async () => {
+    const MultiSelectStub = {
+      template: `
+        <div>
+          <button data-test="stub-add" @click="$emit('update:modelValue', [{ address: '0xAAA', name: 'Alice' }])">add</button>
+        </div>
+      `,
+      props: ['modelValue']
+    }
+
+    const wrapper = mount(AddMemberForm, {
+      props: { teamId: 'team-123' },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          MultiSelectMemberInput: MultiSelectStub
+        }
+      }
+    })
+
+    // trigger the stub to emit update:modelValue
+    await wrapper.find('[data-test="stub-add"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as unknown as AddMemberFormVm
+    expect(vm.formData).toEqual([{ address: '0xAAA', name: 'Alice' }])
+    expect(vm.membersAddress).toEqual([{ address: '0xAAA' }])
+  })
 })
