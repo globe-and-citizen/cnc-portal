@@ -158,7 +158,7 @@ export function useStats() {
   const getRecentActivity = async (limit: number = 20, teamId?: number): Promise<RecentActivity | null> => {
     const params: Record<string, string> = { limit: limit.toString() }
     if (teamId) params.teamId = teamId.toString()
-    return await fetchStats<RecentActivity>('/recent-activity', params)
+    return await fetchStats<RecentActivity>('/activity/recent', params)
   }
 
   /**
