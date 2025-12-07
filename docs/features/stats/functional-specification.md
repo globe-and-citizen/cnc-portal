@@ -765,71 +765,30 @@ All inputs validated with Zod schemas:
 
 ---
 
-## 10. Testing Strategy
+## 10. Testing
 
-### 10.1 Unit Tests
+The Statistics feature follows platform testing standards. See [Testing Strategy](../../platform/testing-strategy.md) for general testing approach and requirements.
 
-**Backend Controller Tests:**
+### 10.1 Stats-Specific Testing
 
-- Test each controller function independently
-- Mock Prisma client
-- Test with various input parameters
-- Test error scenarios
-- Coverage target: > 90%
+**Backend Controller Tests (Coverage > 90%):**
 
-**Frontend Composable Tests:**
+- Test each controller function independently with mocked Prisma client
+- Test with various input parameters and edge cases (empty data, null values)
+- Test error scenarios and recovery mechanisms
+- Validate aggregation logic and calculations
+- Test pagination and filtering
 
-- Test `useStats` composable functions
-- Mock fetch API
-- Test error handling
-- Test authentication integration
-- Coverage target: > 85%
+**Frontend Tests (Coverage > 80%):**
 
-**Frontend Component Tests:**
+- **Composable tests:** Test `useStats` functions with mocked fetch API
+- **Component tests:** Test rendering with different props, user interactions, loading/error states
+- **Integration tests:** Test API integration with authentication flow
+- **E2E tests:** Test critical user flows (view stats, change period, refresh data)
 
-- Test rendering with different props
-- Test user interactions
-- Test loading and error states
-- Test data formatting
-- Coverage target: > 80%
+**Test Data Requirements:**
 
-### 10.2 Integration Tests
-
-**API Integration:**
-
-- Test complete request/response cycle
-- Test with real database (test database)
-- Test authentication flow
-- Test pagination
-- Test filtering
-
-**Database Integration:**
-
-- Test Prisma queries with real database
-- Test aggregations
-- Test complex joins
-- Test transaction rollback
-
-### 10.3 E2E Tests
-
-**User Flows:**
-
-- Complete statistics viewing flow
-- Period selection and data refresh
-- Tab navigation
-- Error handling and retry
-- Authentication expiry
-
-**Browser Testing:**
-
-- Chrome, Firefox, Safari
-- Desktop and mobile viewports
-- Keyboard navigation
-- Screen reader compatibility
-
-### 10.4 Test Data
-
-**Test Database Seeding:**
+Seed test database with:
 
 - 100 users
 - 20 teams
@@ -838,14 +797,20 @@ All inputs validated with Zod schemas:
 - 100 expenses
 - 30 contracts
 - 50 board actions
+- Historical data covering all time periods ('7d', '30d', '90d', 'all')
 
 **Test Scenarios:**
 
-- Empty database (no data)
-- Single team with data
+- Empty database (no statistics data)
+- Single team with minimal data
 - Multiple teams with varying activity levels
-- Historical data across all time periods
-- Edge cases (null values, zero counts)
+- Edge cases (null values, zero counts, large numbers)
+
+**Test Implementation:**
+
+- See `/backend/src/controllers/__tests__/statsController.test.ts` for backend tests
+- Follow patterns in `.github/copilot-instructions/testing-*.md`
+- Use `data-test` attributes for component testing
 
 ---
 
