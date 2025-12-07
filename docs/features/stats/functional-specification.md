@@ -481,7 +481,9 @@ When `teamId` query parameter is provided:
 
 ---
 
-## 6. Future Enhancements### 12.1 Phase 2 Features
+## 6. Future Enhancements
+
+### 6.1 Phase 2 Features
 
 **Advanced Visualizations:**
 
@@ -510,7 +512,7 @@ When `teamId` query parameter is provided:
 - Automatic refresh without page reload
 - Push notifications for significant changes
 
-### 12.2 Phase 3 Features
+### 6.2 Phase 3 Features
 
 **Predictive Analytics:**
 
@@ -540,7 +542,7 @@ When `teamId` query parameter is provided:
 - Benchmark against platform averages
 - Year-over-year comparisons
 
-### 12.3 Performance Improvements
+### 6.3 Performance Improvements
 
 **Caching:**
 
@@ -565,9 +567,9 @@ When `teamId` query parameter is provided:
 
 ---
 
-## 13. Success Metrics
+## 7. Success Metrics
 
-### 13.1 Key Performance Indicators (KPIs)
+### 7.1 Key Performance Indicators (KPIs)
 
 **Technical KPIs:**
 
@@ -583,7 +585,7 @@ When `teamId` query parameter is provided:
 - Number of custom reports generated: **Future feature**
 - User satisfaction score: **To be measured**
 
-### 13.2 Acceptance Criteria
+### 7.2 Acceptance Criteria
 
 - [x] All 9 API endpoints implemented and documented
 - [x] Frontend dashboard with home stats and detailed stats page
@@ -600,176 +602,36 @@ When `teamId` query parameter is provided:
 
 ---
 
-## 14. Risks and Mitigations
+## 8. Related Documentation
 
-### 14.1 Technical Risks
+**Stats-Specific Documentation:**
 
-**Risk:** Database performance degradation with large datasets
-**Probability:** Medium  
-**Impact:** High  
-**Mitigation:**
+- [Stats API Reference](./stats-api.md) - Complete REST API documentation with request/response examples
+- [Dashboard Integration Guide](./stats-dashboard-integration.md) - Frontend integration patterns and component usage
 
-- Implement database indexing strategy
-- Add caching layer (Redis)
-- Use database query optimization
-- Monitor query performance
-- Add read replicas for analytics
+**Platform Documentation:**
 
-**Risk:** API response time increases under load
-**Probability:** Medium  
-**Impact:** Medium  
-**Mitigation:**
+- [Architecture](../../platform/architecture.md) - System architecture and technology stack
+- [Security Standards](../../platform/security.md) - Authentication, authorization, and security requirements
+- [Performance Standards](../../platform/performance.md) - Performance targets and optimization strategies
+- [Testing Strategy](../../platform/testing-strategy.md) - Testing approach and coverage requirements
 
-- Load testing before production
-- Horizontal scaling of API servers
-- Implement caching
-- Optimize aggregation queries
-- Add CDN for static assets
+**Code References:**
 
-**Risk:** JWT token expiry disrupting user session
-**Probability:** Low  
-**Impact:** Medium  
-**Mitigation:**
-
-- Implement refresh token mechanism
-- Clear error messaging
-- Automatic redirect to login
-- Grace period for token expiry
-
-### 14.2 Business Risks
-
-**Risk:** Sensitive data exposure through statistics
-**Probability:** Low  
-**Impact:** High  
-**Mitigation:**
-
-- Implement strict authorization checks
-- Audit all data access logs
-- Regular security reviews
-- Anonymize sensitive data in aggregations
-
-**Risk:** Inaccurate statistics due to data inconsistencies
-**Probability:** Low  
-**Impact:** High  
-**Mitigation:**
-
-- Implement data validation at entry points
-- Regular data integrity checks
-- Automated data quality monitoring
-- Manual review of anomalies
+- Backend: `/backend/src/controllers/statsController.ts`
+- Backend Tests: `/backend/src/controllers/__tests__/statsController.test.ts`
+- Frontend Composable: `/dashboard/app/composables/useStats.ts`
+- Frontend Components: `/dashboard/app/components/stats/`
+- Database Schema: `/backend/prisma/schema.prisma`
 
 ---
 
-## 15. Documentation
+## 9. Version History
 
-### 15.1 Technical Documentation
-
-- [x] **API Documentation** (`stats-api.md`): Complete OpenAPI/Swagger documentation
-- [x] **Dashboard Integration Guide** (`stats-dashboard-integration.md`): Frontend integration patterns
-- [x] **Functional Specification** (this document): Complete business and technical requirements
-- [ ] **Database Schema Documentation** (Pending): Prisma schema with relationships
-- [ ] **Deployment Guide** (Pending): Step-by-step deployment instructions
-
-### 15.2 User Documentation
-
-- [ ] **User Guide** (Pending): How to use the statistics dashboard
-- [ ] **FAQ** (Pending): Common questions and troubleshooting
-- [ ] **Video Tutorials** (Pending): Screen recordings of key features
-- [ ] **Release Notes** (Pending): Changelog for statistics feature
-
-### 15.3 Code Documentation
-
-- [x] Inline JSDoc comments for complex logic
-- [x] TypeScript interfaces for all data structures
-- [x] Component prop documentation
-- [x] Test case descriptions
-- [x] README files in relevant directories
-
----
-
-## 16. Glossary
-
-**API (Application Programming Interface):** Set of rules and protocols for building and interacting with software applications.
-
-**JWT (JSON Web Token):** Compact token format for securely transmitting information between parties as a JSON object.
-
-**Prisma ORM:** Modern database toolkit for TypeScript and Node.js that provides type-safe database access.
-
-**Period:** Time range for filtering statistics (7 days, 30 days, 90 days, or all time).
-
-**Growth Metrics:** Percentage change comparing current period to previous period.
-
-**Active Entity:** Entity (team, user, etc.) that has activity within the selected period.
-
-**Aggregation:** Process of collecting and summarizing data to produce useful statistics.
-
-**Pagination:** Dividing large datasets into smaller pages for efficient loading and display.
-
-**Rate Limiting:** Controlling the number of requests a user can make to prevent abuse.
-
-**SSR (Server-Side Rendering):** Rendering web pages on the server before sending to client.
-
-**Composable:** Reusable Vue 3 function that encapsulates logic and state management.
-
-**OpenAPI/Swagger:** Specification for describing RESTful APIs in a machine-readable format.
-
-**TypeScript:** Typed superset of JavaScript that compiles to plain JavaScript.
-
-**Nuxt:** Vue.js framework for building server-side rendered and static web applications.
-
----
-
-## 17. Appendices
-
-### Appendix A: Database Schema Reference
-
-See `/backend/prisma/schema.prisma` for complete database schema.
-
-### Appendix B: API Response Examples
-
-See `/docs/stats/stats-api.md` for detailed request/response examples.
-
-### Appendix C: Component API
-
-See `/docs/stats/stats-dashboard-integration.md` for component props and usage.
-
-### Appendix D: Testing Examples
-
-See test files in:
-
-- `/backend/src/controllers/__tests__/statsController.test.ts`
-- `/dashboard/app/components/__tests__/`
-
-### Appendix E: Change Log
-
-#### Version 1.0.0 - December 7, 2025
+**Version 1.0.0 - December 7, 2025**
 
 - Initial implementation of statistics feature
 - 9 API endpoints with full documentation
 - Dashboard integration with home stats and detailed stats page
 - Comprehensive test coverage
 - Complete technical and functional documentation
-
----
-
-## 18. Approval
-
-**Prepared by:** GitHub Copilot Agent  
-**Date:** December 7, 2025  
-**Version:** 1.0.0  
-**Status:** Draft - Pending Review
-
-**Stakeholder Sign-offs:**
-
-| Role | Name | Signature | Date |
-|------|------|-----------|------|
-| Product Owner | | | |
-| Technical Lead | | | |
-| QA Lead | | | |
-| DevOps Lead | | | |
-
----
-
-## End of Document
-
-This functional specification has been reorganized to reference platform-wide standards instead of duplicating them. See `/docs/platform/` for security, performance, testing, and architecture standards applicable to all features.

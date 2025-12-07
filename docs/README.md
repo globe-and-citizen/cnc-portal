@@ -12,6 +12,7 @@ docs/
 │   ├── security.md                    # Security standards & requirements
 │   ├── performance.md                 # Performance standards & optimization
 │   ├── testing-strategy.md            # Testing standards & guidelines
+│   ├── feature-specification-guide.md # How to write feature specs (NEW)
 │   ├── deployment.md                  # Deployment procedures
 │   └── development-standards.md       # Code quality & development standards
 ├── features/                          # Feature-specific documentation
@@ -41,6 +42,7 @@ docs/
 - [Testing Strategy](./platform/testing-strategy.md) - Testing standards for the entire platform
 - [Deployment](./platform/deployment.md) - Deployment procedures and environment setup
 - [Development Standards](./platform/development-standards.md) - Code quality and conventions
+- [Feature Specification Guide](./platform/feature-specification-guide.md) - **How to write feature specs**
 
 ### Feature Documentation
 
@@ -64,17 +66,28 @@ docs/
 
 ## 📖 Documentation Guidelines
 
-### For Feature Specifications
+### Creating Feature Specifications
+
+**📋 Start Here:** [Feature Specification Guide](./platform/feature-specification-guide.md)
+
+This comprehensive guide provides:
+
+- Complete template for feature specifications
+- What to include vs what to reference
+- Good examples vs bad examples
+- Quality checklist before submission
+- Common mistakes to avoid
+
+**Quick Summary:**
 
 When creating documentation for a new feature:
 
-1. **Create a feature folder** under `docs/features/[feature-name]/`
-2. **Include these documents:**
-   - `functional-specification.md` - Business and technical requirements
-   - `[feature-name]-api.md` - API documentation (if applicable)
-   - `[feature-name]-integration.md` - Integration guide (if applicable)
-3. **Reference platform standards** instead of duplicating them
-4. **Keep feature-specific** - Only document what's unique to this feature
+1. **Read the guide first:** [Feature Specification Guide](./platform/feature-specification-guide.md)
+2. **Create a feature folder** under `docs/features/[feature-name]/`
+3. **Use the template** provided in the guide
+4. **Reference platform standards** instead of duplicating them
+5. **Keep it concise** - Target 400-700 lines
+6. **Focus on feature-specific information** only
 
 ### Document Structure
 
@@ -190,6 +203,48 @@ Each feature specification should follow this structure:
 - Check the feature folder for feature-specific documentation
 - Platform-wide standards are in `platform/` directory
 - Look for `README.md` files in each folder for navigation
+
+## 📖 Glossary
+
+### Platform Terms
+
+**API (Application Programming Interface):** Set of rules and protocols for building and interacting with software applications.
+
+**JWT (JSON Web Token):** Compact token format for securely transmitting information between parties as a JSON object.
+
+**Prisma ORM:** Modern database toolkit for TypeScript and Node.js that provides type-safe database access.
+
+**SSR (Server-Side Rendering):** Rendering web pages on the server before sending to client.
+
+**OpenAPI/Swagger:** Specification for describing RESTful APIs in a machine-readable format.
+
+**Rate Limiting:** Controlling the number of requests a user can make to prevent abuse.
+
+**TypeScript:** Typed superset of JavaScript that compiles to plain JavaScript.
+
+**Nuxt:** Vue.js framework for building server-side rendered and static web applications.
+
+**Composable:** Reusable Vue 3 function that encapsulates logic and state management.
+
+**Aggregation:** Process of collecting and summarizing data to produce useful statistics.
+
+**Pagination:** Dividing large datasets into smaller pages for efficient loading and display.
+
+### Project-Specific Terms
+
+**Team:** Organization unit within CNC Portal where members collaborate.
+
+**Claim:** Time or work entry submitted by a member for compensation.
+
+**Wage:** Compensation structure defining payment rates and terms.
+
+**Board Action:** Governance decision requiring approval or execution.
+
+**Active Entity:** Entity (team, user, contract, etc.) that has activity within the selected period.
+
+**Growth Metrics:** Percentage change comparing current period to previous period.
+
+**Period:** Time range for filtering data (7 days, 30 days, 90 days, or all time).
 
 ## 📞 Support
 
