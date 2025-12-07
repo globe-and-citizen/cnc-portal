@@ -223,7 +223,7 @@ export const SUPPORTED_TOKENS: TokenConfig[] = [
     name: NETWORK.currencySymbol,
     symbol: NETWORK.currencySymbol,
     code: NETWORK.currencySymbol,
-    coingeckoId: NETWORK_TO_COIN_ID[NETWORK.currencySymbol],
+    coingeckoId: NETWORK_TO_COIN_ID[NETWORK.currencySymbol] ?? 'unknown',
     decimals: 18,
     address: zeroAddress
   }

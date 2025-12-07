@@ -96,5 +96,5 @@ const isMetaMaskErrorInfo = (info: {
 const parseErrorInfo = (info: MetaMaskErrorInfo) => {
   const A: string[] = info.error.message.split(':')
 
-  return A[1].trim()
+  return A[1]?.trim() ?? info.error.message.trim()
 }

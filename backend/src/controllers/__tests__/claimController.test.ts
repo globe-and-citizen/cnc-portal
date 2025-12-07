@@ -6,7 +6,35 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import claimRoutes from '../../routes/claimRoute';
 import { prisma } from '../../utils';
 
-vi.mock('../../utils');
+vi.mock('../../utils', async () => {
+  const actual = await vi.importActual('../../utils');
+  return {
+    ...actual,
+    prisma: {
+      wage: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
+      weeklyClaim: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
+      claim: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+        count: vi.fn(),
+      },
+    },
+  };
+});
 vi.mock('../../utils/viem.config');
 
 // Mock the cash remuneration utility
