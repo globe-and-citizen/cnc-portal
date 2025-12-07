@@ -140,7 +140,7 @@ class Server {
     Sentry.setupExpressErrorHandler(this.app);
 
     // Optional fallthrough error handler
-    this.app.use(function onError(err: Error, _req: express.Request, res: express.Response) {
+    this.app.use(function onError(err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) {
       // The error id is attached to `res.sentry` to be returned
       // and optionally displayed to the user for support.
       console.error('Error:', err);
