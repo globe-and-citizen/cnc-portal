@@ -41,6 +41,32 @@ vi.mock('@/composables/useCustomFetch', () => {
   }
 })
 
+// Mock stores for toasts and team fetching
+const mocks = vi.hoisted(() => ({
+  addSuccessToast: vi.fn(),
+  addErrorToast: vi.fn(),
+  fetchTeam: vi.fn()
+}))
+
+vi.mock('@/stores', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useToastStore: vi.fn(() => ({
+      addSuccessToast: mocks.addSuccessToast,
+      addErrorToast: mocks.addErrorToast
+    })),
+    useTeamStore: vi.fn(() => ({
+      fetchTeam: mocks.fetchTeam
+    }))
+  }
+})
+
+interface AddMemberFormVm {
+  formData: Array<{ address: string; name: string }>
+  membersAddress?: Array<{ address: string }>
+}
+
 // Helper to mount the component
 const mountComponent = () => {
   return mount(AddMemberForm, {
@@ -135,6 +161,33 @@ describe('AddMemberForm.vue', () => {
     await wrapper.vm.$nextTick()
 
     // The component's watcher should trigger and emit 'memberAdded'
+    expect(wrapper.emitted('memberAdded')).toBeTruthy()
+  })
+
+  it('Clicking Add Members executes request and fetches team', async () => {
+    const wrapper = mountComponent()
+
+    // Prepare some members in formData (bypass child v-model)
+    ;(wrapper.vm as unknown as AddMemberFormVm).formData = [
+      { address: '0xabc', name: 'Alice' },
+      { address: '0xdef', name: 'Bob' }
+    ]
+
+    // Simulate loading transition: start loading, then stop with success
+    mockIsFetching.value = true
+    await wrapper.vm.$nextTick()
+
+    // Click button triggers executeAddMembers and teamStore.fetchTeam
+    const button = wrapper.findComponent({ name: 'ButtonUI' })
+    await button.trigger('click')
+
+    // Finish loading
+    mockIsFetching.value = false
+    mockError.value = null
+    mockStatusCode.value = 201
+    await wrapper.vm.$nextTick()
+
+    expect(mocks.fetchTeam).toHaveBeenCalledWith('team-123')
     expect(wrapper.emitted('memberAdded')).toBeTruthy()
   })
 })
