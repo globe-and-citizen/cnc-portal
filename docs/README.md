@@ -2,6 +2,48 @@
 
 Welcome to the CNC Portal documentation. This directory contains comprehensive documentation for all aspects of the platform.
 
+## 📑 Table of Contents
+
+- [Quick Links](#-quick-links)
+- [Documentation Structure](#-documentation-structure)
+- [Quick Navigation](#-quick-navigation)
+  - [Platform Documentation](#platform-documentation)
+  - [Feature Documentation](#feature-documentation)
+  - [Authentication](#authentication)
+  - [Smart Contracts](#smart-contracts)
+- [Documentation Guidelines](#-documentation-guidelines)
+- [Architecture Overview](#%EF%B8%8F-architecture-overview)
+- [Getting Started](#-getting-started)
+- [Contributing to Documentation](#-contributing-to-documentation)
+- [Search Tips](#-search-tips)
+- [Glossary](#-glossary)
+- [Support](#-support)
+
+---
+
+## 🚀 Quick Links
+
+**New to the project?**
+
+- 📖 [Getting Started](#-getting-started) - Start here
+- 🏗️ [Architecture Overview](./platform/architecture.md) - Understand the system
+- 🔐 [Authentication](./auth/README.md) - How users authenticate
+- 📊 [Statistics Feature](./features/stats/functional-specification.md) - Example feature
+
+**Writing Documentation?**
+
+- ✍️ [Feature Specification Guide](./platform/feature-specification-guide.md) - **How to write specs**
+- 📝 [Development Standards](./platform/development-standards.md) - Code quality standards
+- 🧪 [Testing Strategy](./platform/testing-strategy.md) - How to test
+
+**Deploying?**
+
+- 🚀 [Deployment Guide](./platform/deployment.md) - Deploy all components
+- 🔒 [Security Standards](./platform/security.md) - Security requirements
+- ⚡ [Performance Standards](./platform/performance.md) - Performance targets
+
+---
+
 ## 📚 Documentation Structure
 
 ```
@@ -29,6 +71,8 @@ docs/
     ├── contracts-quick-reference.md
     └── contracts-technical-architecture.md
 ```
+
+---
 
 ## 🎯 Quick Navigation
 
@@ -63,6 +107,8 @@ docs/
 - [Architecture Diagram](./contracts/contracts-architecture-diagram.md) - Visual contract architecture
 - [Quick Reference](./contracts/contracts-quick-reference.md) - Quick contract reference
 - [Technical Architecture](./contracts/contracts-technical-architecture.md) - Detailed technical specs
+
+---
 
 ## 📖 Documentation Guidelines
 
@@ -109,6 +155,8 @@ Each feature specification should follow this structure:
 - Technology stack details (reference `platform/architecture.md` instead)
 - Generic performance standards (reference `platform/performance.md` instead)
 
+---
+
 ## 🏗️ Architecture Overview
 
 ```
@@ -137,6 +185,8 @@ Each feature specification should follow this structure:
 │                                                       │
 └──────────────────────────────────────────────────────┘
 ```
+
+---
 
 ## 🚀 Getting Started
 
@@ -169,6 +219,8 @@ Each feature specification should follow this structure:
 2. Check feature-specific test requirements in functional specifications
 3. Follow testing guidelines in development standards
 
+---
+
 ## 📝 Contributing to Documentation
 
 ### Adding New Feature Documentation
@@ -197,12 +249,16 @@ Each feature specification should follow this structure:
 - Provide examples for complex concepts
 - Link to related documentation
 
+---
+
 ## 🔍 Search Tips
 
 - Use your IDE's search function to find specific topics
 - Check the feature folder for feature-specific documentation
 - Platform-wide standards are in `platform/` directory
 - Look for `README.md` files in each folder for navigation
+
+---
 
 ## 📖 Glossary
 
@@ -245,6 +301,8 @@ Each feature specification should follow this structure:
 **Growth Metrics:** Percentage change comparing current period to previous period.
 
 **Period:** Time range for filtering data (7 days, 30 days, 90 days, or all time).
+
+---
 
 ## 📞 Support
 

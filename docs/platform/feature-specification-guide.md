@@ -203,7 +203,7 @@ interface ComponentProps {
 
 [Only document feature-specific accessibility needs beyond platform standards]
 
-- Reference: See [Accessibility Standards](../../platform/accessibility.md) (if exists)
+- Reference: See [Accessibility Standards](./development-standards.md#accessibility-standards)
 - Feature-specific: [Unique accessibility requirements]
 
 ---
@@ -414,7 +414,7 @@ const schema = z.object({
 ```markdown
 ### Error Handling
 
-Follows platform error handling standards. See [Error Handling](../../platform/error-handling.md).
+Follows platform error handling standards. See [Error Handling](./development-standards.md#error-handling).
 
 **Feature-Specific Errors:**
 - `INVALID_PERIOD`: Period parameter must be '7d', '30d', '90d', or 'all'
