@@ -56,9 +56,17 @@ export const addClaim = async (req: Request, res: Response) => {
       include: { claims: true },
     });
 
-    // If a weekly claim exists and is already signed (status or signature), reject new submissions
-    if (weeklyClaim && (weeklyClaim.status === 'signed' || !!weeklyClaim.signature)) {
-      return errorResponse(409, 'Week already signed. Submission not allowed.', res);
+    if (weeklyClaim) {
+      if (weeklyClaim.status === 'disabled') {
+        return errorResponse(409, 'Week is disabled. Submission not allowed.', res);
+      }
+      if (weeklyClaim.status === 'withdrawn') {
+        return errorResponse(409, 'Week already withdrawn. Submission not allowed.', res);
+      }
+      // If status is signed or a signature exists, treat it as signed
+      if (weeklyClaim.status === 'signed' || !!weeklyClaim.signature) {
+        return errorResponse(409, 'Week already signed. Submission not allowed.', res);
+      }
     }
 
     // Check total max hours.

@@ -259,6 +259,42 @@ describe('Claim Controller', () => {
       });
     });
 
+    it('should return 409 if the claim is already signed', async () => {
+      const mockWage = createMockWage();
+      const mockWeeklyClaims = createMockWeeklyClaim({ status: 'signed', signature: '0xabc' });
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
+      const response = await request(app)
+        .post('/')
+        .send({ teamId: 1, hoursWorked: 5, memo: 'test memo' });
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe('Week already signed. Submission not allowed.');
+    });
+
+    it('should return 409 if the claim is already disabled', async () => {
+      const mockWage = createMockWage();
+      const mockWeeklyClaims = createMockWeeklyClaim({ status: 'disabled' });
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
+      const response = await request(app)
+        .post('/')
+        .send({ teamId: 1, hoursWorked: 5, memo: 'test memo' });
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe('Week is disabled. Submission not allowed.');
+    });
+
+    it('should return 409 if the claim is already withdrawn', async () => {
+      const mockWage = createMockWage();
+      const mockWeeklyClaims = createMockWeeklyClaim({ status: 'withdrawn' });
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
+      const response = await request(app)
+        .post('/')
+        .send({ teamId: 1, hoursWorked: 5, memo: 'test memo' });
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe('Week already withdrawn. Submission not allowed.');
+    });
+
     it('should return 201 when adding claim to existing weekly claim', async () => {
       const mockWage = createMockWage();
       const mockWeeklyClaims = createMockWeeklyClaim();
