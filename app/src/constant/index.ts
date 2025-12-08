@@ -120,7 +120,7 @@ const getUSDCAddress = () => {
 }
 const getUSDTAddress = () => {
   if (currentChainId === 11155111 || currentChainId === 31337) {
-    return safeResolveAddress('MockTokens#USDC') || ('' as Address)
+    return safeResolveAddress('MockTokens#USDT') || ('' as Address)
   }
   return TOKEN_ADDRESSES[currentChainId]?.USDT || ''
 }
