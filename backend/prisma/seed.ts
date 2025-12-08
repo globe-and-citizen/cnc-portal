@@ -140,6 +140,21 @@ function distributeDate(index: number, total: number): Date {
   }
 }
 
+function getMondayAtMidnight(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function getDateAtMidnight(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 // ============================================================================
 // SEED FUNCTIONS
 // ============================================================================
@@ -200,9 +215,10 @@ async function seedTeams(config: SeedConfig, users: any[], environment: Environm
 
     // Create MemberTeamsData records for tracking
     for (let j = 0; j < allMembers.length; j++) {
-      const memberCreatedAt = j === 0
-        ? teamCreatedAt
-        : new Date(teamCreatedAt.getTime() + Math.random() * 30 * 24 * 60 * 60 * 1000);
+      const memberCreatedAt =
+        j === 0
+          ? teamCreatedAt
+          : new Date(teamCreatedAt.getTime() + Math.random() * 30 * 24 * 60 * 60 * 1000);
 
       await prisma.memberTeamsData.create({
         data: {
@@ -221,8 +237,6 @@ async function seedTeams(config: SeedConfig, users: any[], environment: Environm
   return createdTeams;
 }
 
-
-
 async function seedWages(teams: any[], users: any[], config: SeedConfig) {
   console.log('\n💰 Seeding wages...');
 
@@ -235,34 +249,35 @@ async function seedWages(teams: any[], users: any[], config: SeedConfig) {
     });
 
     for (const member of teamMembers) {
-      const userWages = [];
+      let previousWage = null;
 
       for (let i = 0; i < config.wagesPerUser; i++) {
         const baseRate = 20 + Math.random() * 30; // $20-50/hr
+        const wageData: any = {
+          teamId: team.id,
+          userAddress: member.userAddress,
+          cashRatePerHour: parseFloat((baseRate * (1 + i * 0.1)).toFixed(2)),
+          tokenRatePerHour: parseFloat((baseRate * 0.5).toFixed(2)),
+          usdcRatePerHour: parseFloat((baseRate * 0.8).toFixed(2)),
+          maximumHoursPerWeek: 40,
+          createdAt: new Date(member.createdAt.getTime() + i * 60 * 24 * 60 * 60 * 1000),
+        };
+
+        // Link to previous wage if it exists (like wageController does)
+        if (previousWage) {
+          wageData.previousWage = {
+            connect: { id: previousWage.id },
+          };
+          wageChainCount++;
+        }
+
         const wage = await prisma.wage.create({
-          data: {
-            teamId: team.id,
-            userAddress: member.userAddress,
-            cashRatePerHour: parseFloat((baseRate * (1 + i * 0.1)).toFixed(2)),
-            tokenRatePerHour: parseFloat((baseRate * 0.5).toFixed(2)),
-            usdcRatePerHour: parseFloat((baseRate * 0.8).toFixed(2)),
-            maximumHoursPerWeek: 40,
-            createdAt: new Date(member.createdAt.getTime() + i * 60 * 24 * 60 * 60 * 1000),
-          },
+          data: wageData,
         });
-        userWages.push(wage);
-      }
 
-      // Link wages in chain
-      for (let i = 0; i < userWages.length - 1; i++) {
-        await prisma.wage.update({
-          where: { id: userWages[i].id },
-          data: { nextWageId: userWages[i + 1].id },
-        });
-        wageChainCount++;
+        wages.push(wage);
+        previousWage = wage;
       }
-
-      wages.push(...userWages);
     }
   }
 
@@ -280,7 +295,8 @@ async function seedWeeklyClaimsAndClaims(wages: any[], config: SeedConfig) {
     const numWeeklyClaims = Math.floor(Math.random() * config.weeklyClaimsPerUser) + 1;
 
     for (let i = 0; i < numWeeklyClaims; i++) {
-      const weekStart = distributeDate(i, numWeeklyClaims);
+      const randomDate = distributeDate(i, numWeeklyClaims);
+      const weekStart = getMondayAtMidnight(randomDate);
       const status = randomStatus(['pending', 'approved', 'rejected']);
 
       const weeklyClaim = await prisma.weeklyClaim.create({
@@ -308,8 +324,9 @@ async function seedWeeklyClaimsAndClaims(wages: any[], config: SeedConfig) {
         const hoursWorked = Math.floor(Math.random() * 8) + 1; // 1-8 hours
         totalHours += hoursWorked;
 
-        const dayWorked = new Date(weekStart);
-        dayWorked.setDate(dayWorked.getDate() + j);
+        const claimDate = new Date(weekStart);
+        claimDate.setDate(claimDate.getDate() + j);
+        const dayWorked = getDateAtMidnight(claimDate);
 
         await prisma.claim.create({
           data: {
