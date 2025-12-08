@@ -46,12 +46,12 @@ This feature encompasses:
 
 **Acceptance Criteria:**
 
-- Display total number of teams, members, claims, wages, expenses, contracts, actions, and notifications
-- Show count of active teams and members
-- Calculate total hours worked across all claims
-- Provide growth metrics comparing current period to previous period
-- Support filtering by time period (7d, 30d, 90d, all time)
-- Optionally filter by specific team
+- [x] Display total number of teams, members, claims, wages, expenses, contracts, actions, and notifications
+- [x] Show count of active teams and members
+- [x] Calculate total hours worked across all claims
+- [x] Provide growth metrics comparing current period to previous period
+- [x] Support filtering by time period (7d, 30d, 90d, all time)
+- [x] Optionally filter by specific team
 
 #### FR-2: Team Statistics
 
@@ -63,12 +63,12 @@ This feature encompasses:
 
 **Acceptance Criteria:**
 
-- List all teams with member count, claim count, and total hours
-- Calculate average members per team
-- Show team creation dates
-- Support pagination (configurable page size)
-- Filter by time period
-- Sort teams by various metrics
+- [x] List all teams with member count, claim count, and total hours
+- [x] Calculate average members per team
+- [x] Show team creation dates
+- [x] Support pagination (configurable page size)
+- [x] Filter by time period
+- [x] Sort teams by various metrics
 
 #### FR-3: User Statistics
 
@@ -80,12 +80,12 @@ This feature encompasses:
 
 **Acceptance Criteria:**
 
-- Display total number of users
-- Show users with at least one claim (active users)
-- Calculate average claims per user
-- Identify most active users
-- Track user registration trends
-- Filter by time period
+- [x] Display total number of users
+- [x] Show users with at least one claim (active users)
+- [x] Calculate average claims per user
+- [x] Identify most active users
+- [x] Track user registration trends
+- [x] Filter by time period
 
 #### FR-4: Claims Statistics
 
@@ -97,13 +97,13 @@ This feature encompasses:
 
 **Acceptance Criteria:**
 
-- Show total claims and weekly claims
-- Calculate total hours claimed
-- Display claim distribution by status (pending, approved, rejected)
-- Show average hours per claim
-- Group claims by team
-- Identify busiest teams by claim volume
-- Filter by time period and team
+- [x] Show total claims and weekly claims
+- [x] Calculate total hours claimed
+- [x] Display claim distribution by status (pending, approved, rejected)
+- [x] Show average hours per claim
+- [x] Group claims by team
+- [x] Identify busiest teams by claim volume
+- [x] Filter by time period and team
 
 #### FR-5: Wages Statistics
 
@@ -115,12 +115,12 @@ This feature encompasses:
 
 **Acceptance Criteria:**
 
-- Display total wages and active wages
-- Calculate total and average wage rates
-- Break down wages by type (cash, token, USDC)
-- Show average rate by wage type
-- Track wage creation trends
-- Filter by time period
+- [x] Display total wages and active wages
+- [x] Calculate total and average wage rates
+- [x] Break down wages by type (cash, token, USDC)
+- [x] Show average rate by wage type
+- [x] Track wage creation trends
+- [x] Filter by time period
 
 #### FR-6: Expenses Statistics
 
@@ -132,12 +132,12 @@ This feature encompasses:
 
 **Acceptance Criteria:**
 
-- Show total expense count
-- Calculate total expense amount
-- Display average expense amount
-- Break down expenses by status
-- Track most common expense categories
-- Filter by time period
+- [x] Show total expense count
+- [x] Calculate total expense amount
+- [x] Display average expense amount
+- [x] Break down expenses by status
+- [x] Track most common expense categories
+- [x] Filter by time period
 
 #### FR-7: Contracts Statistics
 
@@ -149,12 +149,12 @@ This feature encompasses:
 
 **Acceptance Criteria:**
 
-- Display total number of contracts
-- Show active contract count
-- Break down contracts by type (InvestorV1, CashRemunerationEIP712)
-- List contract addresses
-- Track deployment dates
-- Filter by time period
+- [x] Display total number of contracts
+- [x] Show active contract count
+- [x] Break down contracts by type (InvestorV1, CashRemunerationEIP712)
+- [x] List contract addresses
+- [x] Track deployment dates
+- [x] Filter by time period
 
 #### FR-8: Board Actions Statistics
 
@@ -166,12 +166,12 @@ This feature encompasses:
 
 **Acceptance Criteria:**
 
-- Show total actions and executed actions
-- Calculate execution rate percentage
-- Break down actions by type
-- Identify pending actions
-- Track action creation and execution timelines
-- Filter by time period
+- [x] Show total actions and executed actions
+- [x] Calculate execution rate percentage
+- [x] Break down actions by type
+- [x] Identify pending actions
+- [x] Track action creation and execution timelines
+- [x] Filter by time period
 
 #### FR-9: Recent Activity Feed
 
@@ -183,12 +183,12 @@ This feature encompasses:
 
 **Acceptance Criteria:**
 
-- Combine activities from multiple sources (claims, expenses, actions, contracts)
-- Sort activities chronologically (newest first)
-- Display activity type, user, team, and timestamp
-- Support configurable result limit (default 20, max 100)
-- Filter by team
-- Show activity-specific details
+- [x] Combine activities from multiple sources (claims, expenses, actions, contracts)
+- [x] Sort activities chronologically (newest first)
+- [x] Display activity type, user, team, and timestamp
+- [x] Support configurable result limit (default 20, max 100)
+- [x] Filter by team
+- [x] Show activity-specific details
 
 ---
 
