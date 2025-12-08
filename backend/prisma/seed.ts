@@ -168,57 +168,60 @@ async function seedUsers(config: SeedConfig, environment: Environment) {
 async function seedTeams(config: SeedConfig, users: any[], environment: Environment) {
   console.log('\n🏢 Seeding teams...');
 
-  const teams = Array.from({ length: config.teams }, (_, i) => ({
-    name: environment === 'test' ? `Team ${i + 1}` : faker.company.name(),
-    description: faker.company.catchPhrase(),
-    ownerAddress: users[i % users.length].address,
-    officerAddress: users[(i + 1) % users.length].address,
-    createdAt: distributeDate(i, config.teams),
-  }));
-
   const createdTeams = [];
-  for (const team of teams) {
-    const created = await prisma.team.create({ data: team });
-    createdTeams.push(created);
+  let totalMembers = 0;
+
+  for (let i = 0; i < config.teams; i++) {
+    const owner = users[i % users.length];
+    const officer = users[(i + 1) % users.length];
+    const teamCreatedAt = distributeDate(i, config.teams);
+
+    // Select additional members (excluding owner)
+    const memberCount = Math.min(config.membersPerTeam - 1, users.length - 1);
+    const availableUsers = users.filter((u) => u.address !== owner.address);
+    const selectedUsers = availableUsers.slice(0, memberCount);
+
+    // All team members including owner
+    const allMembers = [owner, ...selectedUsers];
+
+    // Create team with owner and connect all members
+    const team = await prisma.team.create({
+      data: {
+        name: environment === 'test' ? `Team ${i + 1}` : faker.company.name(),
+        description: faker.company.catchPhrase(),
+        ownerAddress: owner.address,
+        officerAddress: officer.address,
+        createdAt: teamCreatedAt,
+        members: {
+          connect: allMembers.map((user) => ({ address: user.address })),
+        },
+      },
+    });
+
+    // Create MemberTeamsData records for tracking
+    for (let j = 0; j < allMembers.length; j++) {
+      const memberCreatedAt = j === 0
+        ? teamCreatedAt
+        : new Date(teamCreatedAt.getTime() + Math.random() * 30 * 24 * 60 * 60 * 1000);
+
+      await prisma.memberTeamsData.create({
+        data: {
+          teamId: team.id,
+          userAddress: allMembers[j].address,
+          createdAt: memberCreatedAt,
+        },
+      });
+      totalMembers++;
+    }
+
+    createdTeams.push(team);
   }
 
-  console.log(`  ✓ Created ${createdTeams.length} teams`);
+  console.log(`  ✓ Created ${createdTeams.length} teams with ${totalMembers} memberships`);
   return createdTeams;
 }
 
-async function seedMemberTeamsData(teams: any[], users: any[], config: SeedConfig) {
-  console.log('\n👥 Seeding team memberships...');
 
-  const memberships = [];
-  for (const team of teams) {
-    // Add owner as member
-    memberships.push({
-      teamId: team.id,
-      userAddress: team.ownerAddress,
-      createdAt: team.createdAt,
-    });
-
-    // Add additional members
-    const memberCount = Math.min(config.membersPerTeam - 1, users.length - 1);
-    const availableUsers = users.filter((u) => u.address !== team.ownerAddress);
-    const selectedUsers = availableUsers.slice(0, memberCount);
-
-    for (const user of selectedUsers) {
-      memberships.push({
-        teamId: team.id,
-        userAddress: user.address,
-        createdAt: new Date(team.createdAt.getTime() + Math.random() * 30 * 24 * 60 * 60 * 1000),
-      });
-    }
-  }
-
-  await prisma.memberTeamsData.createMany({
-    data: memberships,
-    skipDuplicates: true,
-  });
-
-  console.log(`  ✓ Created ${memberships.length} team memberships`);
-}
 
 async function seedWages(teams: any[], users: any[], config: SeedConfig) {
   console.log('\n💰 Seeding wages...');
@@ -499,7 +502,6 @@ async function main() {
   // Seed in correct order
   const users = await seedUsers(config, env);
   const teams = await seedTeams(config, users, env);
-  await seedMemberTeamsData(teams, users, config);
   const wages = await seedWages(teams, users, config);
   await seedWeeklyClaimsAndClaims(wages, config);
   await seedExpenses(teams, config);
