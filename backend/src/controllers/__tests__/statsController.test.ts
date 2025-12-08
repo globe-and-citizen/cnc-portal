@@ -347,10 +347,7 @@ describe('Statistics Controller', () => {
 
       vi.mocked(prisma.wage.findMany)
         .mockResolvedValueOnce(mockWages) // allWages
-        .mockResolvedValueOnce([
-          { userAddress: '0x1' },
-          { userAddress: '0x2' },
-        ]); // membersWithWages
+        .mockResolvedValueOnce([{ userAddress: '0x1' }, { userAddress: '0x2' }]); // membersWithWages
 
       vi.mocked(prisma.user.count).mockResolvedValue(100);
 

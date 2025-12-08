@@ -170,10 +170,8 @@ export const getOverviewStats = async (req: Request, res: Response) => {
       totalNotifications > 0 ? (readNotifications / totalNotifications) * 100 : 0;
 
     // Calculate execution rate
-    const executedActions =
-      actionsStats.find((a) => a.isExecuted === true)?._count || 0;
-    const actionsExecutionRate =
-      totalActions > 0 ? (executedActions / totalActions) * 100 : 0;
+    const executedActions = actionsStats.find((a) => a.isExecuted === true)?._count || 0;
+    const actionsExecutionRate = totalActions > 0 ? (executedActions / totalActions) * 100 : 0;
 
     // Calculate growth percentages
     const calculateGrowth = (current: number, previous: number) => {
@@ -217,7 +215,8 @@ export const getOverviewStats = async (req: Request, res: Response) => {
       actionsExecutionRate: Math.round(actionsExecutionRate * 100) / 100,
       growthMetrics: {
         teamsGrowth: Math.round(calculateGrowth(recentTeams, previousPeriodTeams) * 100) / 100,
-        membersGrowth: Math.round(calculateGrowth(recentMembers, previousPeriodMembers) * 100) / 100,
+        membersGrowth:
+          Math.round(calculateGrowth(recentMembers, previousPeriodMembers) * 100) / 100,
         claimsGrowth: Math.round(calculateGrowth(recentClaims, previousPeriodClaims) * 100) / 100,
       },
       period,
@@ -243,51 +242,46 @@ export const getTeamsStats = async (req: Request, res: Response) => {
     const startDate = getDateRange(period as string);
     const skip = (Number(page) - 1) * Number(limit);
 
-    const [
-      totalTeams,
-      activeTeams,
-      teamsWithOfficer,
-      allTeams,
-      topTeamsByMembers,
-    ] = await Promise.all([
-      // Total teams
-      prisma.team.count(),
+    const [totalTeams, activeTeams, teamsWithOfficer, allTeams, topTeamsByMembers] =
+      await Promise.all([
+        // Total teams
+        prisma.team.count(),
 
-      // Active teams
-      prisma.team.count({
-        where: {
-          OR: [
-            { weeklyClaims: { some: { createdAt: { gte: startDate } } } },
-            { Expense: { some: { createdAt: { gte: startDate } } } },
-          ],
-        },
-      }),
-
-      // Teams with officer
-      prisma.team.count({
-        where: { officerAddress: { not: null } },
-      }),
-
-      // All teams for average calculation
-      prisma.team.findMany({
-        include: {
-          _count: {
-            select: { members: true },
+        // Active teams
+        prisma.team.count({
+          where: {
+            OR: [
+              { weeklyClaims: { some: { createdAt: { gte: startDate } } } },
+              { Expense: { some: { createdAt: { gte: startDate } } } },
+            ],
           },
-        },
-      }),
+        }),
 
-      // Top teams by member count
-      prisma.team.findMany({
-        take: Number(limit),
-        skip,
-        include: {
-          _count: {
-            select: { members: true },
+        // Teams with officer
+        prisma.team.count({
+          where: { officerAddress: { not: null } },
+        }),
+
+        // All teams for average calculation
+        prisma.team.findMany({
+          include: {
+            _count: {
+              select: { members: true },
+            },
           },
-        },
-      }),
-    ]);
+        }),
+
+        // Top teams by member count
+        prisma.team.findMany({
+          take: Number(limit),
+          skip,
+          include: {
+            _count: {
+              select: { members: true },
+            },
+          },
+        }),
+      ]);
 
     // Calculate average members per team
     const totalMembersCount = allTeams.reduce((sum, team) => sum + team._count.members, 0);
@@ -337,11 +331,7 @@ export const getUsersStats = async (req: Request, res: Response) => {
 
     const teamFilter = teamId ? { teamId: Number(teamId) } : {};
 
-    const [
-      totalUsers,
-      activeUsers,
-      allMemberTeamsData,
-    ] = await Promise.all([
+    const [totalUsers, activeUsers, allMemberTeamsData] = await Promise.all([
       // Total users
       prisma.user.count(),
 
@@ -371,12 +361,14 @@ export const getUsersStats = async (req: Request, res: Response) => {
     allMemberTeamsData.forEach((mtd) => {
       userTeamCounts.set(mtd.userAddress, (userTeamCounts.get(mtd.userAddress) || 0) + 1);
     });
-    const avgTeamsPerUser = userTeamCounts.size > 0
-      ? Array.from(userTeamCounts.values()).reduce((sum, count) => sum + count, 0) / userTeamCounts.size
-      : 0;
+    const avgTeamsPerUser =
+      userTeamCounts.size > 0
+        ? Array.from(userTeamCounts.values()).reduce((sum, count) => sum + count, 0) /
+          userTeamCounts.size
+        : 0;
 
     // Count users in multiple teams
-    const multiTeamUsers = Array.from(userTeamCounts.values()).filter(count => count > 1).length;
+    const multiTeamUsers = Array.from(userTeamCounts.values()).filter((count) => count > 1).length;
 
     res.status(200).json({
       totalUsers,
@@ -413,12 +405,7 @@ export const getClaimsStats = async (req: Request, res: Response) => {
       createdAt: { gte: startDate },
     };
 
-    const [
-      totalClaims,
-      totalHoursWorked,
-      avgHoursPerClaim,
-      allClaims,
-    ] = await Promise.all([
+    const [totalClaims, totalHoursWorked, avgHoursPerClaim, allClaims] = await Promise.all([
       // Total claims in period
       prisma.claim.count({
         where: whereClause,
@@ -459,7 +446,10 @@ export const getClaimsStats = async (req: Request, res: Response) => {
     ]);
 
     // Group claims by team
-    const teamClaimsMap = new Map<number, { teamName: string; claimCount: number; totalHours: number }>();
+    const teamClaimsMap = new Map<
+      number,
+      { teamName: string; claimCount: number; totalHours: number }
+    >();
     allClaims.forEach((claim) => {
       if (claim.weeklyClaim) {
         const teamId = claim.weeklyClaim.team.id;
@@ -575,9 +565,9 @@ export const getWagesStats = async (req: Request, res: Response) => {
 
     // Count wage distribution by type
     const wageDistribution = {
-      cash: allWages.filter(w => w.cashRatePerHour > 0).length,
-      token: allWages.filter(w => w.tokenRatePerHour > 0).length,
-      usdc: allWages.filter(w => w.usdcRatePerHour > 0).length,
+      cash: allWages.filter((w) => w.cashRatePerHour > 0).length,
+      token: allWages.filter((w) => w.tokenRatePerHour > 0).length,
+      usdc: allWages.filter((w) => w.usdcRatePerHour > 0).length,
     };
 
     res.status(200).json({
@@ -589,9 +579,8 @@ export const getWagesStats = async (req: Request, res: Response) => {
       },
       wageDistribution,
       membersWithWages: membersWithWages.length,
-      percentageWithWages: totalMembers > 0
-        ? Math.round((membersWithWages.length / totalMembers) * 10000) / 100
-        : 0,
+      percentageWithWages:
+        totalMembers > 0 ? Math.round((membersWithWages.length / totalMembers) * 10000) / 100 : 0,
       period,
     });
   } catch (error: unknown) {
@@ -618,11 +607,7 @@ export const getExpensesStats = async (req: Request, res: Response) => {
       ? { createdAt: { gte: startDate }, teamId: Number(teamId) }
       : { createdAt: { gte: startDate } };
 
-    const [
-      totalExpenses,
-      expensesByStatus,
-      allExpenses,
-    ] = await Promise.all([
+    const [totalExpenses, expensesByStatus, allExpenses] = await Promise.all([
       // Total expenses
       prisma.expense.count({
         where: whereClause,
@@ -650,7 +635,10 @@ export const getExpensesStats = async (req: Request, res: Response) => {
     ]);
 
     // Group expenses by team
-    const teamExpensesMap = new Map<number, { teamName: string; expenseCount: number; signedCount: number; expiredCount: number }>();
+    const teamExpensesMap = new Map<
+      number,
+      { teamName: string; expenseCount: number; signedCount: number; expiredCount: number }
+    >();
     allExpenses.forEach((expense) => {
       const teamId = expense.team.id;
       const existing = teamExpensesMap.get(teamId) || {
@@ -713,11 +701,7 @@ export const getContractsStats = async (req: Request, res: Response) => {
       ? { createdAt: { gte: startDate }, teamId: Number(teamId) }
       : { createdAt: { gte: startDate } };
 
-    const [
-      totalContracts,
-      contractsByType,
-      allContracts,
-    ] = await Promise.all([
+    const [totalContracts, contractsByType, allContracts] = await Promise.all([
       // Total contracts
       prisma.teamContract.count({
         where: whereClause,
@@ -739,9 +723,10 @@ export const getContractsStats = async (req: Request, res: Response) => {
     ]);
 
     // Calculate average contracts per team
-    const avgContractsPerTeam = allContracts.length > 0
-      ? allContracts.reduce((sum, item) => sum + item._count, 0) / allContracts.length
-      : 0;
+    const avgContractsPerTeam =
+      allContracts.length > 0
+        ? allContracts.reduce((sum, item) => sum + item._count, 0) / allContracts.length
+        : 0;
 
     res.status(200).json({
       totalContracts,
@@ -779,11 +764,7 @@ export const getActionsStats = async (req: Request, res: Response) => {
       ? { createdAt: { gte: startDate }, teamId: Number(teamId) }
       : { createdAt: { gte: startDate } };
 
-    const [
-      totalActions,
-      executedActions,
-      allActions,
-    ] = await Promise.all([
+    const [totalActions, executedActions, allActions] = await Promise.all([
       // Total actions
       prisma.boardOfDirectorActions.count({
         where: whereClause,
@@ -812,7 +793,10 @@ export const getActionsStats = async (req: Request, res: Response) => {
     ]);
 
     // Group actions by team
-    const teamActionsMap = new Map<number, { teamName: string; actionCount: number; executedCount: number }>();
+    const teamActionsMap = new Map<
+      number,
+      { teamName: string; actionCount: number; executedCount: number }
+    >();
     allActions.forEach((action) => {
       const teamId = action.team.id;
       const existing = teamActionsMap.get(teamId) || {
@@ -830,9 +814,10 @@ export const getActionsStats = async (req: Request, res: Response) => {
       teamName: data.teamName,
       actionCount: data.actionCount,
       executedCount: data.executedCount,
-      executionRate: data.actionCount > 0
-        ? Math.round((data.executedCount / data.actionCount) * 10000) / 100
-        : 0,
+      executionRate:
+        data.actionCount > 0
+          ? Math.round((data.executedCount / data.actionCount) * 10000) / 100
+          : 0,
     }));
 
     const executionRate = totalActions > 0 ? (executedActions / totalActions) * 100 : 0;
