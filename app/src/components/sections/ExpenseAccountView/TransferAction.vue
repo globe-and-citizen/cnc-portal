@@ -35,12 +35,13 @@
         >
           <template #header>
             <h1 class="font-bold text-2xl">Transfer from Expenses Contract</h1>
-            <h3 class="pt-4">
+            <!-- <h3 class="pt-4">
               Current contract balance: {{ transferData.token.balance }}
               {{ transferData.token.symbol }}
-            </h3>
+            </h3> -->
             <h3 v-if="expenseBalance" class="pt-4">
-              Expense balance: {{ expenseBalance }} {{ transferData.token.symbol }}
+              Spendable balance: {{ tokens[0]?.spendableBalance ?? tokens[0]?.balance ?? 0 }}
+              {{ transferData.token.symbol }}
             </h3>
           </template>
 
@@ -118,6 +119,10 @@ const expenseAccountEip712Address = computed(() =>
 )
 
 const tokens = computed(() => getTokens([props.row], props.row.signature, balances.value))
+
+watch(tokens, (newTokens) => {
+  if (newTokens.length > 0) console.log('Available tokens for transfer: ', tokens.value)
+})
 //#endregion
 
 //#region Composables
