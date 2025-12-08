@@ -38,6 +38,8 @@ export const getOverviewStats = async (req: Request, res: Response) => {
     const { period = '30d' } = req.query;
     const startDate = getDateRange(period as string);
 
+    const whereClause = { createdAt: { gte: startDate } };
+
     // Parallel execution of all stat queries
     const [
       totalTeams,
@@ -63,12 +65,15 @@ export const getOverviewStats = async (req: Request, res: Response) => {
       previousPeriodMembers,
       previousPeriodClaims,
     ] = await Promise.all([
-      // Total teams
-      prisma.team.count(),
+      // Total teams in period
+      prisma.team.count({
+        where: whereClause,
+      }),
 
       // Active teams (with activity in the period)
       prisma.team.count({
         where: {
+          createdAt: { gte: startDate },
           OR: [
             { weeklyClaims: { some: { createdAt: { gte: startDate } } } },
             { Expense: { some: { createdAt: { gte: startDate } } } },
@@ -76,66 +81,86 @@ export const getOverviewStats = async (req: Request, res: Response) => {
         },
       }),
 
-      // Total members
-      prisma.user.count(),
+      // Total members in period
+      prisma.user.count({
+        where: whereClause,
+      }),
 
-      // Total claims
-      prisma.claim.count(),
+      // Total claims in period
+      prisma.claim.count({
+        where: whereClause,
+      }),
 
-      // Total hours worked
+      // Total hours worked in period
       prisma.claim.aggregate({
+        where: whereClause,
         _sum: { hoursWorked: true },
       }),
 
-      // Total weekly claims
-      prisma.weeklyClaim.count(),
+      // Total weekly claims in period
+      prisma.weeklyClaim.count({
+        where: whereClause,
+      }),
 
-      // Weekly claims by status
+      // Weekly claims by status in period
       prisma.weeklyClaim.groupBy({
         by: ['status'],
+        where: whereClause,
         _count: true,
       }),
 
-      // Total expenses
-      prisma.expense.count(),
+      // Total expenses in period
+      prisma.expense.count({
+        where: whereClause,
+      }),
 
-      // Expenses by status
+      // Expenses by status in period
       prisma.expense.groupBy({
         by: ['status'],
+        where: whereClause,
         _count: true,
       }),
 
-      // Total notifications
-      prisma.notification.count(),
+      // Total notifications in period
+      prisma.notification.count({
+        where: whereClause,
+      }),
 
-      // Notification read stats
+      // Notification read stats in period
       prisma.notification.groupBy({
         by: ['isRead'],
+        where: whereClause,
         _count: true,
       }),
 
-      // Total contracts
-      prisma.teamContract.count(),
+      // Total contracts in period
+      prisma.teamContract.count({
+        where: whereClause,
+      }),
 
-      // Contracts by type
+      // Contracts by type in period
       prisma.teamContract.groupBy({
         by: ['type'],
+        where: whereClause,
         _count: true,
       }),
 
-      // Total actions
-      prisma.boardOfDirectorActions.count(),
+      // Total actions in period
+      prisma.boardOfDirectorActions.count({
+        where: whereClause,
+      }),
 
-      // Actions by execution status
+      // Actions by execution status in period
       prisma.boardOfDirectorActions.groupBy({
         by: ['isExecuted'],
+        where: whereClause,
         _count: true,
       }),
 
-      // Growth metrics - recent period
-      prisma.team.count({ where: { createdAt: { gte: startDate } } }),
-      prisma.user.count({ where: { createdAt: { gte: startDate } } }),
-      prisma.claim.count({ where: { createdAt: { gte: startDate } } }),
+      // Growth metrics - recent period (same as above for consistency)
+      prisma.team.count({ where: whereClause }),
+      prisma.user.count({ where: whereClause }),
+      prisma.claim.count({ where: whereClause }),
 
       // Growth metrics - previous period (for comparison)
       prisma.team.count({
@@ -241,15 +266,19 @@ export const getTeamsStats = async (req: Request, res: Response) => {
     const { period = '30d', page = 1, limit = 10 } = req.query;
     const startDate = getDateRange(period as string);
     const skip = (Number(page) - 1) * Number(limit);
+    const whereClause = { createdAt: { gte: startDate } };
 
     const [totalTeams, activeTeams, teamsWithOfficer, allTeams, topTeamsByMembers] =
       await Promise.all([
-        // Total teams
-        prisma.team.count(),
+        // Total teams in period
+        prisma.team.count({
+          where: whereClause,
+        }),
 
-        // Active teams
+        // Active teams in period
         prisma.team.count({
           where: {
+            createdAt: { gte: startDate },
             OR: [
               { weeklyClaims: { some: { createdAt: { gte: startDate } } } },
               { Expense: { some: { createdAt: { gte: startDate } } } },
@@ -257,13 +286,17 @@ export const getTeamsStats = async (req: Request, res: Response) => {
           },
         }),
 
-        // Teams with officer
+        // Teams with officer in period
         prisma.team.count({
-          where: { officerAddress: { not: null } },
+          where: {
+            ...whereClause,
+            officerAddress: { not: null },
+          },
         }),
 
-        // All teams for average calculation
+        // All teams in period for average calculation
         prisma.team.findMany({
+          where: whereClause,
           include: {
             _count: {
               select: { members: true },
@@ -271,8 +304,9 @@ export const getTeamsStats = async (req: Request, res: Response) => {
           },
         }),
 
-        // Top teams by member count
+        // Top teams by member count in period
         prisma.team.findMany({
+          where: whereClause,
           take: Number(limit),
           skip,
           include: {
@@ -328,12 +362,15 @@ export const getUsersStats = async (req: Request, res: Response) => {
   try {
     const { period = '30d', teamId, page = 1, limit = 10 } = req.query;
     const startDate = getDateRange(period as string);
+    const whereClause = { createdAt: { gte: startDate } };
 
     const teamFilter = teamId ? { teamId: Number(teamId) } : {};
 
     const [totalUsers, activeUsers, allMemberTeamsData] = await Promise.all([
-      // Total users
-      prisma.user.count(),
+      // Total users in period
+      prisma.user.count({
+        where: whereClause,
+      }),
 
       // Active users (with claims in period)
       prisma.user.count({
@@ -349,6 +386,7 @@ export const getUsersStats = async (req: Request, res: Response) => {
 
       // All member-team relationships for calculations
       prisma.memberTeamsData.findMany({
+        where: whereClause,
         select: {
           userAddress: true,
           teamId: true,
@@ -364,7 +402,7 @@ export const getUsersStats = async (req: Request, res: Response) => {
     const avgTeamsPerUser =
       userTeamCounts.size > 0
         ? Array.from(userTeamCounts.values()).reduce((sum, count) => sum + count, 0) /
-          userTeamCounts.size
+        userTeamCounts.size
         : 0;
 
     // Count users in multiple teams
