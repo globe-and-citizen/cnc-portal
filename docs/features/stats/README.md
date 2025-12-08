@@ -218,48 +218,6 @@ cd dashboard
 npm run test:e2e
 ```
 
----
-
-## 📈 Performance Metrics
-
-- **API Response Time:** < 500ms (95th percentile) ✅
-- **Code Coverage:** > 80% ✅
-- **Concurrent Users:** 100 ✅
-- **Rate Limit:** 100,000 requests / 15 minutes
-
----
-
-## 🔐 Security
-
-- **Authentication:** JWT Bearer tokens required
-- **Authorization:** Role-based access control
-- **Input Validation:** Zod schemas on all inputs
-- **Rate Limiting:** 100k requests per 15 minutes
-- **SQL Injection:** Protected via Prisma ORM
-- **XSS Prevention:** Vue automatic escaping
-
----
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Problem:** 401 Unauthorized errors  
-**Solution:** Check JWT token validity, ensure user is authenticated
-
-**Problem:** Slow API responses  
-**Solution:** Check database indexes, review query performance, consider caching
-
-**Problem:** TypeScript type errors  
-**Solution:** Verify types in `/dashboard/app/types/index.d.ts` match API responses
-
-**Problem:** Data not updating  
-**Solution:** Check `watch` configuration in `useAsyncData`, verify period changes trigger refetch
-
-See [Dashboard Integration Guide](./stats-dashboard-integration.md#troubleshooting) for detailed troubleshooting.
-
----
-
 ## 🚦 Status
 
 **Current Version:** 1.0.0  
