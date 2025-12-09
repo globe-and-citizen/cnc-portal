@@ -10,13 +10,13 @@
         :format="formatUTC"
         :enable-time-picker="false"
         auto-apply
+        :disabledDates="disabledDates"
         :ui="{
           input: 'input input-bordered input-md'
         }"
         class=""
         data-test="date-input"
         utc="preserve"
-        :disabled-dates="isDateDisabled"
         :disabled="isEdit"
       />
     </div>
@@ -150,11 +150,20 @@ const formatUTC = (value: Date | string | null | undefined) => {
   return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
 }
 
-const isDateDisabled = (value: Date | string | null | undefined) => {
-  if (!value) return false
-  const date = value instanceof Date ? value : new Date(value)
-  const weekStart = dayjs.utc(date).startOf('isoWeek').toISOString()
-  return (props.disabledWeekStarts ?? []).includes(weekStart)
+const disabledDates = (date: Date | string | null | undefined) => {
+  if (!date) return true
+
+  const today = dayjs.utc().startOf('day')
+  const d = dayjs.utc(date).startOf('day')
+
+  // Monday of the current week (UTC)
+  const monday = today.subtract((today.day() + 6) % 7, 'day')
+
+  // Earliest allowed day: max(monday, today - 4)
+  const earliestByDays = today.subtract(4, 'day')
+  const minAllowed = monday.isAfter(earliestByDays) ? monday : earliestByDays
+
+  return d.isBefore(minAllowed) || d.isAfter(today)
 }
 
 const handleSubmit = async () => {
