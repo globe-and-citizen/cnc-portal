@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi, afterEach } from 'vitest'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 
 const VueDatePickerStub = {
@@ -180,31 +180,6 @@ describe('ClaimForm.vue', () => {
     })
   })
 
-  describe('isDateDisabled helper', () => {
-    it('returns true when the week start is in disabledWeekStarts', () => {
-      const weekDate = new Date(Date.UTC(2024, 0, 8)) // Jan 8, 2024
-      const wrapper = createWrapper({
-        disabledWeekStarts: [new Date(Date.UTC(2024, 0, 8)).toISOString()]
-      })
-      const { isDateDisabled } = wrapper.vm as unknown as {
-        isDateDisabled: (v: Date | string | null | undefined) => boolean
-      }
-
-      expect(isDateDisabled(weekDate)).toBe(true)
-      expect(isDateDisabled(weekDate.toISOString())).toBe(true)
-    })
-
-    it('returns false when the week start is not in disabledWeekStarts', () => {
-      const weekDate = new Date(Date.UTC(2024, 0, 8))
-      const wrapper = createWrapper({ disabledWeekStarts: [] })
-      const { isDateDisabled } = wrapper.vm as unknown as {
-        isDateDisabled: (v: Date | string | null | undefined) => boolean
-      }
-
-      expect(isDateDisabled(weekDate)).toBe(false)
-    })
-  })
-
   it('shows memo length validation error and prevents submit when memo is too long', async () => {
     const wrapper = createWrapper()
     const longMemo = 'a'.repeat(201)
@@ -219,5 +194,41 @@ describe('ClaimForm.vue', () => {
     expect(wrapper.emitted('submit')).toBeFalsy()
     // memo errors are rendered in a generic red text block (we check for any red text)
     expect(wrapper.findAll('.text-red-500').length).toBeGreaterThan(0)
+  })
+})
+
+describe('disabledDates logic', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('allows Monday..today on a Friday (week min wins)', async () => {
+    // Use fake timers and set system date to Friday, 2024-01-12 UTC
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2024, 0, 12, 0, 0, 0)))
+
+    const wrapper = createWrapper()
+    const datePicker = wrapper.findComponent(VueDatePickerStub)
+    const disabledFn = datePicker.props('disabledDates') as (
+      d: Date | string | null | undefined
+    ) => boolean
+
+    // Dates that should be allowed (not disabled)
+    const allowed = [
+      new Date(Date.UTC(2024, 0, 8)), // Monday
+      new Date(Date.UTC(2024, 0, 9)),
+      new Date(Date.UTC(2024, 0, 10)),
+      new Date(Date.UTC(2024, 0, 11)),
+      new Date(Date.UTC(2024, 0, 12)) // Today (Friday)
+    ]
+
+    for (const d of allowed) {
+      expect(disabledFn(d)).toBe(false)
+    }
+
+    // Before Monday should be disabled
+    expect(disabledFn(new Date(Date.UTC(2024, 0, 7)))).toBe(true)
+    // After today should be disabled
+    expect(disabledFn(new Date(Date.UTC(2024, 0, 13)))).toBe(true)
   })
 })
