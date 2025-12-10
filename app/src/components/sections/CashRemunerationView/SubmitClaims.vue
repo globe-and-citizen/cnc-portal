@@ -17,6 +17,7 @@
       <ClaimForm
         :initial-data="formInitialData"
         :is-loading="isWageClaimAdding"
+        :disabled-week-starts="props.signedWeekStarts"
         @submit="handleSubmit"
       />
       <div v-if="addWageClaimError && errorMessage" class="mt-4">
@@ -71,6 +72,7 @@ const props = defineProps<{
   weeklyClaim?: {
     status: 'pending' | 'signed' | 'withdrawn' | 'disabled'
   }
+  signedWeekStarts?: string[]
 }>()
 
 const formInitialData = ref<ClaimFormData>(createDefaultFormData())

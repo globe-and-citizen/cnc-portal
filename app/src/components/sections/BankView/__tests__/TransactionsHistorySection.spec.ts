@@ -1,10 +1,21 @@
 import { describe, it, expect, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import TransactionHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
+// Mock stores before importing the component to avoid store initialization side-effects
+vi.mock('@/stores', () => ({
+  useTeamStore: vi.fn(() => ({
+    currentTeam: { teamContracts: [], members: [] },
+    setCurrentTeamId: vi.fn()
+  }))
+}))
+
+vi.mock('@/stores/currencyStore', () => ({
+  useCurrencyStore: vi.fn(() => ({
+    localCurrency: ref({ code: 'USD' }),
+    nativeToken: ref({ priceInUSD: 1, priceInLocal: 1 })
+  }))
+}))
+
 import type { ExpenseTransaction } from '@/types/transactions'
-import ButtonUI from '@/components/ButtonUI.vue'
-import ReceiptComponent from '@/components/ReceiptComponent.vue'
-import TableComponent from '@/components/TableComponent.vue'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import * as utils from '@/utils'
@@ -55,7 +66,7 @@ const mockUseQuery = {
       }
     ]
   }),
-  error: ref<Error | null>(),
+  error: ref<Error | null>(null),
   loading: ref(false)
 }
 
@@ -67,7 +78,12 @@ vi.mock('@vue/apollo-composable', async (importOriginal) => {
   }
 })
 
-describe.skip('TransactionHistorySection', () => {
+// Import the component after store mocks to avoid initializing real stores
+const TransactionHistorySection = (
+  await import('@/components/sections/BankView/TransactionsHistorySection.vue')
+).default
+
+describe('TransactionHistorySection', () => {
   const mockTransactions: ExpenseTransaction[] = [
     {
       txHash: '0x123',
@@ -104,29 +120,35 @@ describe.skip('TransactionHistorySection', () => {
   })
 
   it('displays transaction history component', async () => {
-    const wrapper = mount(TransactionHistorySection)
-    await flushPromises()
-    expect(wrapper.findComponent({ name: 'GenericTransactionHistory' }).exists()).toBe(true)
-  })
-
-  it.skip('handles receipt click', async () => {
     const wrapper = mount(TransactionHistorySection, {
-      props: defaultProps,
       global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           GenericTransactionHistory: true
         }
       }
     })
+    await flushPromises()
+    expect(wrapper.findComponent({ name: 'GenericTransactionHistory' }).exists()).toBe(true)
+  })
 
-    //@ts-expect-error: not visible on wrapper
-    wrapper.vm.handleReceiptClick(mockTransactions[0])
-    //@ts-expect-error: not visible on wrapper
-    expect(wrapper.vm.selectedTransaction).toEqual({
-      ...mockTransactions[0],
-      USDC: '100',
-      status: 'completed'
+  it('handles receipt click', async () => {
+    const wrapper = mount(TransactionHistorySection, {
+      props: defaultProps,
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          // keep child stubbed for this wrapper-level test
+          GenericTransactionHistory: true
+        }
+      }
     })
+
+    // TransactionHistorySection is a thin wrapper that renders GenericTransactionHistory.
+    // Ensure it passes the `transactions` prop through to the child component.
+    const child = wrapper.findComponent({ name: 'GenericTransactionHistory' })
+    expect(child.exists()).toBe(true)
+    expect(child.props('transactions')).toEqual(defaultProps.transactions)
   })
 
   describe('Render', () => {
@@ -144,31 +166,29 @@ describe.skip('TransactionHistorySection', () => {
       mount(TransactionHistorySection, {
         props: { ...props },
         data,
-        global: { ...global }
+        global: { ...global, plugins: [createTestingPinia({ createSpy: vi.fn })] }
       })
 
     it('should show receipt when receipt is clicked', async () => {
       const wrapper = createComponent()
       await flushPromises()
 
-      const transactionTable = wrapper.findComponent(TableComponent)
-      expect(transactionTable.exists()).toBeTruthy()
-      expect(transactionTable.find('[data-test="table"]').exists()).toBeTruthy()
-      const firstRow = transactionTable.find('[data-test="0-row"]')
+      const tableEl = wrapper.find('[data-test="table"]')
+      expect(tableEl.exists()).toBeTruthy()
+      const firstRow = wrapper.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
-      const receiptButton = firstRow.findComponent(ButtonUI)
+      const receiptButton = firstRow.find('[data-test="transaction-history-receipt-button"]')
       expect(receiptButton.exists()).toBeTruthy()
       await receiptButton.trigger('click')
 
       await flushPromises()
-      const receiptComponent = wrapper.findComponent(ReceiptComponent)
+      const receiptComponent = wrapper.findComponent({ name: 'ReceiptComponent' })
       expect(receiptComponent.exists()).toBeTruthy()
     })
 
     it('should log error if error querying: ', async () => {
       const logErrorSpy = vi.spyOn(utils.log, 'error')
-      const wrapper = createComponent()
-      wrapper.vm.error = new Error('Error querying subgraph')
+      mockUseQuery.error.value = new Error('Error querying subgraph')
       await flushPromises()
       expect(logErrorSpy).toBeCalledWith('useQueryError: ', new Error('Error querying subgraph'))
     })
