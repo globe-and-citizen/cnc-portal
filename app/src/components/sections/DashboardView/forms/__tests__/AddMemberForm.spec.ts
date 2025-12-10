@@ -41,6 +41,32 @@ vi.mock('@/composables/useCustomFetch', () => {
   }
 })
 
+// Mock stores for toasts and team fetching
+const mocks = vi.hoisted(() => ({
+  addSuccessToast: vi.fn(),
+  addErrorToast: vi.fn(),
+  fetchTeam: vi.fn()
+}))
+
+vi.mock('@/stores', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useToastStore: vi.fn(() => ({
+      addSuccessToast: mocks.addSuccessToast,
+      addErrorToast: mocks.addErrorToast
+    })),
+    useTeamStore: vi.fn(() => ({
+      fetchTeam: mocks.fetchTeam
+    }))
+  }
+})
+
+interface AddMemberFormVm {
+  formData: Array<{ address: string; name: string }>
+  membersAddress?: Array<{ address: string }>
+}
+
 // Helper to mount the component
 const mountComponent = () => {
   return mount(AddMemberForm, {
@@ -136,5 +162,82 @@ describe('AddMemberForm.vue', () => {
 
     // The component's watcher should trigger and emit 'memberAdded'
     expect(wrapper.emitted('memberAdded')).toBeTruthy()
+  })
+
+  it('Clicking Add Members executes request and fetches team', async () => {
+    const wrapper = mountComponent()
+
+    // Prepare some members in formData (bypass child v-model)
+    ;(wrapper.vm as unknown as AddMemberFormVm).formData = [
+      { address: '0xabc', name: 'Alice' },
+      { address: '0xdef', name: 'Bob' }
+    ]
+
+    // Simulate loading transition: start loading, then stop with success
+    mockIsFetching.value = true
+    await wrapper.vm.$nextTick()
+
+    // Click button triggers executeAddMembers and teamStore.fetchTeam
+    const button = wrapper.findComponent({ name: 'ButtonUI' })
+    await button.trigger('click')
+
+    // Finish loading
+    mockIsFetching.value = false
+    mockError.value = null
+    mockStatusCode.value = 201
+    await wrapper.vm.$nextTick()
+
+    expect(mocks.fetchTeam).toHaveBeenCalledWith('team-123')
+    expect(wrapper.emitted('memberAdded')).toBeTruthy()
+  })
+
+  it('computes membersAddress from formData correctly', async () => {
+    const wrapper = mountComponent()
+
+    // Set formData with multiple members
+    ;(wrapper.vm as unknown as AddMemberFormVm).formData = [
+      { address: '0x111', name: 'One' },
+      { address: '0x222', name: 'Two' },
+      { address: '0x333', name: 'Three' }
+    ]
+
+    // nextTick to ensure computed updates
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as unknown as AddMemberFormVm
+    expect(vm.membersAddress).toEqual([
+      { address: '0x111' },
+      { address: '0x222' },
+      { address: '0x333' }
+    ])
+  })
+
+  it('MultiSelectMemberInput v-model updates formData and membersAddress', async () => {
+    const MultiSelectStub = {
+      template: `
+        <div>
+          <button data-test="stub-add" @click="$emit('update:modelValue', [{ address: '0xAAA', name: 'Alice' }])">add</button>
+        </div>
+      `,
+      props: ['modelValue']
+    }
+
+    const wrapper = mount(AddMemberForm, {
+      props: { teamId: 'team-123' },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          MultiSelectMemberInput: MultiSelectStub
+        }
+      }
+    })
+
+    // trigger the stub to emit update:modelValue
+    await wrapper.find('[data-test="stub-add"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    const vm = wrapper.vm as unknown as AddMemberFormVm
+    expect(vm.formData).toEqual([{ address: '0xAAA', name: 'Alice' }])
+    expect(vm.membersAddress).toEqual([{ address: '0xAAA' }])
   })
 })

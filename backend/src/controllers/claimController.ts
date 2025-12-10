@@ -56,6 +56,19 @@ export const addClaim = async (req: Request, res: Response) => {
       include: { claims: true },
     });
 
+    if (weeklyClaim) {
+      if (weeklyClaim.status === 'disabled') {
+        return errorResponse(409, 'Week is disabled. Submission not allowed.', res);
+      }
+      if (weeklyClaim.status === 'withdrawn') {
+        return errorResponse(409, 'Week already withdrawn. Submission not allowed.', res);
+      }
+      // If status is signed or a signature exists, treat it as signed
+      if (weeklyClaim.status === 'signed' || !!weeklyClaim.signature) {
+        return errorResponse(409, 'Week already signed. Submission not allowed.', res);
+      }
+    }
+
     // Check total max hours.
 
     const totalHours = weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0;

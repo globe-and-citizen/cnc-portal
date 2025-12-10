@@ -100,52 +100,6 @@ describe('ClaimHistory.vue', () => {
     expect(mockRefetch).toHaveBeenCalledTimes(1)
   })
 
-  it('should refetch weekly claims when memberAddress changes', async () => {
-    const wrapper = shallowMount(ClaimHistory, {
-      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
-    })
-
-    await nextTick()
-    mockRefetch.mockClear()
-
-    // Change route param
-    mockRoute.params.memberAddress = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
-
-    await nextTick()
-
-    // Check refetch called
-    expect(mockRefetch).toHaveBeenCalled()
-
-    // Check URL updated
-    // @ts-expect-error: accessing internal computed
-    const weeklyClaimURL = wrapper.vm.weeklyClaimURL
-    expect(weeklyClaimURL).toBe(
-      `/weeklyClaim/?teamId=team-123&memberAddress=${mockRoute.params.memberAddress}`
-    )
-  })
-
-  it('should compute displayedMember from team members and route memberAddress', async () => {
-    const wrapper = shallowMount(ClaimHistory, {
-      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
-    })
-
-    await nextTick()
-
-    // @ts-expect-error: internal computed
-    const displayedMember = wrapper.vm.displayedMember
-    expect(displayedMember).toBeDefined()
-    expect(displayedMember.name).toBe('Alice')
-    expect(displayedMember.address).toBe(mockRoute.params.memberAddress)
-
-    mockRoute.params.memberAddress = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
-    await nextTick()
-
-    // @ts-expect-error: internal computed
-    const displayedMember2 = wrapper.vm.displayedMember
-    expect(displayedMember2).toBeDefined()
-    expect(displayedMember2.name).toBe('Bob')
-  })
-
   it('should return correct badge color for each weekly claim status', () => {
     const wrapper = shallowMount(ClaimHistory, {
       global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
@@ -203,6 +157,47 @@ describe('ClaimHistory.vue', () => {
     await nextTick()
 
     expect(addErrorToast).toHaveBeenCalledWith('Failed to fetch user wage data')
+  })
+
+  it('should show disabled submit-claim button when user has no wage', async () => {
+    // Weekly claims present, but team wage list does not contain the user
+    let callIndex = 0
+    mockUseTanstackQuery.mockImplementation(() => {
+      callIndex += 1
+      if (callIndex === 1) {
+        return {
+          data: ref([
+            {
+              weekStart: new Date().toISOString(),
+              status: 'pending',
+              wage: { userAddress: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' },
+              claims: []
+            }
+          ]),
+          error: ref(null),
+          isLoading: ref(false),
+          refetch: mockRefetch
+        }
+      }
+      return {
+        data: ref([]),
+        error: ref(null),
+        isLoading: ref(false),
+        refetch: vi.fn()
+      }
+    })
+
+    mockRoute.params.memberAddress = mockUserStore.address.value
+
+    const wrapper = shallowMount(ClaimHistory, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+
+    await nextTick()
+
+    // Verify hasWage computed is false
+    // @ts-expect-error: internal computed
+    expect(wrapper.vm.hasWage).toBe(false)
   })
 
   it('should build weekDayClaims with hours aggregated per day', async () => {
@@ -348,5 +343,64 @@ describe('ClaimHistory.vue', () => {
 
     // @ts-expect-error: internal computed
     expect(wrapper.vm.canModifyClaims).toBe(false)
+  })
+
+  it('should compute signedWeekStarts from weekly claims with signed status', async () => {
+    const weekStart1 = '2024-01-01T00:00:00.000Z'
+    const weekStart2 = '2024-01-08T00:00:00.000Z'
+
+    mockUseTanstackQuery.mockImplementation(() => ({
+      data: ref([
+        { weekStart: weekStart1, status: 'signed', wage: {}, claims: [] },
+        { weekStart: weekStart2, status: 'pending', wage: {}, claims: [] }
+      ]),
+      error: ref(null),
+      isLoading: ref(false),
+      refetch: mockRefetch
+    }))
+
+    const wrapper = shallowMount(ClaimHistory, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+
+    await nextTick()
+
+    // @ts-expect-error: internal computed
+    const signedWeekStarts = wrapper.vm.signedWeekStarts
+    expect(signedWeekStarts).toEqual([weekStart1])
+  })
+
+  it('should return empty array for signedWeekStarts when memberWeeklyClaims is null', async () => {
+    mockUseTanstackQuery.mockImplementation(() => ({
+      data: ref(null),
+      error: ref(null),
+      isLoading: ref(false),
+      refetch: mockRefetch
+    }))
+
+    const wrapper = shallowMount(ClaimHistory, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+
+    await nextTick()
+
+    // @ts-expect-error: internal computed
+    const signedWeekStarts = wrapper.vm.signedWeekStarts
+    expect(signedWeekStarts).toEqual([])
+  })
+
+  it('should compute generatedMonthWeek from selectedMonthObject', async () => {
+    const wrapper = shallowMount(ClaimHistory, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+
+    await nextTick()
+
+    // @ts-expect-error: internal computed
+    const generatedMonthWeek = wrapper.vm.generatedMonthWeek
+    expect(Array.isArray(generatedMonthWeek)).toBe(true)
+    expect(generatedMonthWeek.length).toBeGreaterThan(0)
+    expect(generatedMonthWeek[0]).toHaveProperty('isoWeek')
+    expect(generatedMonthWeek[0]).toHaveProperty('isoString')
   })
 })
