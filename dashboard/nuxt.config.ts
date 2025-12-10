@@ -1,4 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+
+// Log environment variables at build/startup time
+console.log('🔍 Environment Variables Check:')
+console.log('NUXT_PUBLIC_BACKEND_URL:', process.env.NUXT_PUBLIC_BACKEND_URL)
+console.log('NUXT_PUBLIC_CHAIN_ID:', process.env.NUXT_PUBLIC_CHAIN_ID)
+
 export default defineNuxtConfig({
   modules: ['@nuxt/eslint', '@nuxt/ui', '@vueuse/nuxt'],
 
@@ -13,7 +19,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'http://localhost:3000',
-      chainId: process.env.NUXT_PUBLIC_CHAIN_ID || '31337'
+      chainId: process.env.NUXT_PUBLIC_CHAIN_ID || '137'
     }
   },
 
@@ -26,6 +32,7 @@ export default defineNuxtConfig({
   devServer: {
     port: 3001
   },
+
   compatibilityDate: '2024-07-11',
 
   eslint: {

@@ -1,7 +1,7 @@
 <template>
-  <div>Micropayments Page</div>
+  <FeeCollectorManagement />
 </template>
 
-<script setup lang="ts"></script>
-
-<style scoped></style>
+<script setup lang="ts">
+import FeeCollectorManagement from '@/components/sections/FeeCollectorView/FeeCollectorManagement.vue'
+</script>
