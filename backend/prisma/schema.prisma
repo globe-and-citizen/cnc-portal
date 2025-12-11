@@ -102,6 +102,7 @@ model Claim {
   hoursWorked   Int
   dayWorked     DateTime?
   memo          String?
+  imageScreens  Json?
   wageId        Int
   wage          Wage         @relation(fields: [wageId], references: [id])
   weeklyClaimId Int?
