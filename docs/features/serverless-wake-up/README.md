@@ -40,20 +40,27 @@ curl https://your-backend.railway.app/api/health
 
 ### Frontend Setup
 
-**Use in Components:**
+**App.vue automatically wakes backend on mount:**
 
 ```vue
 <script setup>
 import { useBackendWake } from '@/composables/useBackendWake'
+
+// Wakes backend when app mounts/reloads
 useBackendWake()
 </script>
 ```
 
-**Configure Critical Routes:**
+**Optional: Use in specific components:**
 
-```typescript
-// app/src/router/index.ts
-const BACKEND_REQUIRED_ROUTES = ['login', 'teams', 'show-team']
+```vue
+<script setup>
+import { useBackendWake } from '@/composables/useBackendWake'
+
+// Wakes backend when this component mounts
+// (Shares cache with App.vue - won't duplicate requests)
+useBackendWake()
+</script>
 ```
 
 ---
@@ -72,18 +79,16 @@ const BACKEND_REQUIRED_ROUTES = ['login', 'teams', 'show-team']
    - No database queries (security)
    - < 50ms response when warm
 
-3. **Frontend Wake Service** (`app/src/services/BackendWakeService.ts`)
-   - Non-blocking calls
-   - 5s timeout with AbortController
-   - Silent failures (no user errors)
+3. **Frontend Wake Composable** (`app/src/composables/useBackendWake.ts`)
+   - Uses TanStack Query for caching and retry logic
+   - Wakes backend only on app mount/reload
+   - 3-minute cache prevents redundant calls
+   - Non-blocking with 5s timeout
+   - No automatic polling or refetching
 
-4. **Router Guard** (`app/src/router/index.ts`)
-   - Wakes backend before critical routes
-   - Configurable route list
-   - Non-blocking navigation
-
-5. **App-Level Integration** (`app/src/App.vue`)
-   - Global wake on mount
+4. **App-Level Integration** (`app/src/App.vue`)
+   - Global wake on mount via composable
+   - Runs once per page load
    - Runs in background
 
 ### Data Flow
@@ -123,6 +128,30 @@ User Opens App
 - `app/src/router/index.ts` - Navigation guard
 
 ### Key Design Decisions
+
+**TanStack Query Integration**
+
+The wake-up system uses TanStack Query for:
+
+- **Automatic caching**: Prevents redundant wake calls (3 min cache)
+- **Retry logic**: 2 retries with 1s delay between attempts
+- **Error handling**: Silent failures with debug logging
+- **Memory management**: Automatic garbage collection (5 min)
+- **No polling**: Manual wake on mount only, no auto-refetch
+
+Benefits over plain fetch:
+
+- Built-in request deduplication
+- User reloads within 3 min → Uses cache, no HTTP call
+- Better performance with shared state
+- Consistent with existing app patterns
+
+**Cache Strategy:**
+
+- Fresh for 3 minutes (Railway keeps services warm ~5 min)
+- User reloads page → Checks cache first
+- Cache hit → Skip wake call (backend likely still warm)
+- Cache miss → Wake backend, cache for next 3 min
 
 **Why No Database Query in Health Check?**
 
