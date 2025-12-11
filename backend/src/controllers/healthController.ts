@@ -9,6 +9,6 @@ export const healthCheck = (_req: Request, res: Response) => {
     success: true,
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    service: 'backend'
+    service: 'backend',
   });
 };

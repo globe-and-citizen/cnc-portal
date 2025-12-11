@@ -31,4 +31,7 @@ async function wakeDatabase() {
   }
 }
 
-wakeDatabase();
+wakeDatabase().catch((err) => {
+  console.error('❌ Unhandled error in wakeDatabase:', err);
+  process.exit(1);
+});
