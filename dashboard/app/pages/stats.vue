@@ -30,16 +30,17 @@ const periodOptions = [
 ]
 
 // Tab management
+const selectedTab = ref(0)
 const tabs = [
-  { label: 'Overview', icon: 'i-lucide-layout-dashboard', slot: 'overview' },
-  { label: 'Teams', icon: 'i-lucide-users', slot: 'teams' },
-  { label: 'Users', icon: 'i-lucide-user', slot: 'users' },
-  { label: 'Claims', icon: 'i-lucide-file-text', slot: 'claims' },
-  { label: 'Wages', icon: 'i-lucide-dollar-sign', slot: 'wages' },
-  { label: 'Expenses', icon: 'i-lucide-receipt', slot: 'expenses' },
-  { label: 'Contracts', icon: 'i-lucide-file-signature', slot: 'contracts' },
-  { label: 'Actions', icon: 'i-lucide-zap', slot: 'actions' },
-  { label: 'Activity', icon: 'i-lucide-activity', slot: 'activity' }
+  { label: 'Overview', icon: 'i-lucide-layout-dashboard' },
+  { label: 'Teams', icon: 'i-lucide-users' },
+  { label: 'Users', icon: 'i-lucide-user' },
+  { label: 'Claims', icon: 'i-lucide-file-text' },
+  { label: 'Wages', icon: 'i-lucide-dollar-sign' },
+  { label: 'Expenses', icon: 'i-lucide-receipt' },
+  { label: 'Contracts', icon: 'i-lucide-file-signature' },
+  { label: 'Actions', icon: 'i-lucide-zap' },
+  { label: 'Activity', icon: 'i-lucide-activity' }
 ]
 
 // Fetch stats data
@@ -128,8 +129,9 @@ const refreshAll = async () => {
       <div class="flex items-center gap-3">
         <USelectMenu
           v-model="selectedPeriod"
-          :items="periodOptions"
-          value-key="value"
+          :options="periodOptions"
+          value-attribute="value"
+          option-attribute="label"
           placeholder="Select period"
         />
         <UButton
@@ -156,43 +158,55 @@ const refreshAll = async () => {
 
     <!-- Tabs Navigation -->
     <div class="space-y-6">
-      <UTabs :items="tabs" class="w-full">
-        <template #overview>
+      <UTabs v-model="selectedTab" :items="tabs" class="w-full" />
+
+      <!-- Tab Content -->
+      <div class="mt-6">
+        <!-- Overview Tab -->
+        <div v-if="selectedTab === 0" class="space-y-6">
           <StatsOverviewSection :data="overviewData" :is-loading="isLoading" />
-        </template>
+        </div>
 
-        <template #teams>
+        <!-- Teams Tab -->
+        <div v-else-if="selectedTab === 1" class="space-y-6">
           <StatsTeamsSection :data="teamsData" :is-loading="isLoading" />
-        </template>
+        </div>
 
-        <template #users>
+        <!-- Users Tab -->
+        <div v-else-if="selectedTab === 2" class="space-y-6">
           <StatsUsersSection :data="usersData" :is-loading="isLoading" />
-        </template>
+        </div>
 
-        <template #claims>
+        <!-- Claims Tab -->
+        <div v-else-if="selectedTab === 3" class="space-y-6">
           <StatsClaimsSection :data="claimsData" :is-loading="isLoading" />
-        </template>
+        </div>
 
-        <template #wages>
+        <!-- Wages Tab -->
+        <div v-else-if="selectedTab === 4" class="space-y-6">
           <StatsWagesSection :data="wagesData" :is-loading="isLoading" />
-        </template>
+        </div>
 
-        <template #expenses>
+        <!-- Expenses Tab -->
+        <div v-else-if="selectedTab === 5" class="space-y-6">
           <StatsExpensesSection :data="expensesData" :is-loading="isLoading" />
-        </template>
+        </div>
 
-        <template #contracts>
+        <!-- Contracts Tab -->
+        <div v-else-if="selectedTab === 6" class="space-y-6">
           <StatsContractsSection :data="contractsData" :is-loading="isLoading" />
-        </template>
+        </div>
 
-        <template #actions>
+        <!-- Actions Tab -->
+        <div v-else-if="selectedTab === 7" class="space-y-6">
           <StatsActionsSection :data="actionsData" :is-loading="isLoading" />
-        </template>
+        </div>
 
-        <template #activity>
+        <!-- Activity Tab -->
+        <div v-else-if="selectedTab === 8" class="space-y-6">
           <StatsActivitySection :data="activityData" :is-loading="isLoading" />
-        </template>
-      </UTabs>
+        </div>
+      </div>
     </div>
   </div>
 </template>
