@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authorizeUser } from '../../middleware/authMiddleware';
 import statsRoutes from '../../routes/statsRoute';
 import { prisma } from '../../utils';
-
+import rateLimit from 'express-rate-limit';
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
@@ -72,7 +72,13 @@ vi.mock('../../utils', async () => {
 
 const app = express();
 app.use(express.json());
-app.use('/stats', authorizeUser, statsRoutes);
+const statsRateLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 1000, // allow 1000 requests per minute for testing
+  standardHeaders: true,
+  legacyHeaders: false
+});
+app.use('/stats', statsRateLimiter, authorizeUser, statsRoutes);
 
 describe('Statistics Controller', () => {
   beforeEach(() => {
