@@ -4,17 +4,6 @@ export const EXPENSE_ACCOUNT_EIP712_ABI = [
   {
     inputs: [
       {
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
-      }
-    ],
-    name: 'AddressInsufficientBalance',
-    type: 'error'
-  },
-  {
-    inputs: [
-      {
         internalType: 'uint256',
         name: 'amount',
         type: 'uint256'
@@ -32,6 +21,38 @@ export const EXPENSE_ACCOUNT_EIP712_ABI = [
       }
     ],
     name: 'AmountPerTransactionExceeded',
+    type: 'error'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'currentTime',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'endDate',
+        type: 'uint256'
+      }
+    ],
+    name: 'ApprovalExpired',
+    type: 'error'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'currentTime',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'startDate',
+        type: 'uint256'
+      }
+    ],
+    name: 'ApprovalNotActive',
     type: 'error'
   },
   {
@@ -73,7 +94,23 @@ export const EXPENSE_ACCOUNT_EIP712_ABI = [
   },
   {
     inputs: [],
-    name: 'FailedInnerCall',
+    name: 'FailedCall',
+    type: 'error'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'balance',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'needed',
+        type: 'uint256'
+      }
+    ],
+    name: 'InsufficientBalance',
     type: 'error'
   },
   {
@@ -366,30 +403,57 @@ export const EXPENSE_ACCOUNT_EIP712_ABI = [
   {
     inputs: [
       {
+        components: [
+          {
+            internalType: 'uint256',
+            name: 'amount',
+            type: 'uint256'
+          },
+          {
+            internalType: 'enum ExpenseAccountEIP712.FrequencyType',
+            name: 'frequencyType',
+            type: 'uint8'
+          },
+          {
+            internalType: 'uint256',
+            name: 'customFrequency',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'startDate',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'endDate',
+            type: 'uint256'
+          },
+          {
+            internalType: 'address',
+            name: 'tokenAddress',
+            type: 'address'
+          },
+          {
+            internalType: 'address',
+            name: 'approvedAddress',
+            type: 'address'
+          }
+        ],
+        internalType: 'struct ExpenseAccountEIP712.BudgetLimit',
+        name: 'budgetLimit',
+        type: 'tuple'
+      }
+    ],
+    name: 'budgetLimitHash',
+    outputs: [
+      {
         internalType: 'bytes32',
         name: '',
         type: 'bytes32'
       }
     ],
-    name: 'balances',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: 'transactionCount',
-        type: 'uint256'
-      },
-      {
-        internalType: 'uint256',
-        name: 'amountWithdrawn',
-        type: 'uint256'
-      },
-      {
-        internalType: 'enum ExpenseAccountEIP712.ApprovalState',
-        name: 'state',
-        type: 'uint8'
-      }
-    ],
-    stateMutability: 'view',
+    stateMutability: 'pure',
     type: 'function'
   },
   {
@@ -485,6 +549,40 @@ export const EXPENSE_ACCOUNT_EIP712_ABI = [
     type: 'function'
   },
   {
+    inputs: [
+      {
+        internalType: 'bytes32',
+        name: '',
+        type: 'bytes32'
+      }
+    ],
+    name: 'expenseBalances',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: 'lastWithdrawnDate',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'totalWithdrawn',
+        type: 'uint256'
+      },
+      {
+        internalType: 'uint256',
+        name: 'lastWithdrawnPeriod',
+        type: 'uint256'
+      },
+      {
+        internalType: 'enum ExpenseAccountEIP712.ApprovalState',
+        name: 'state',
+        type: 'uint8'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
     inputs: [],
     name: 'getBalance',
     outputs: [
@@ -495,6 +593,123 @@ export const EXPENSE_ACCOUNT_EIP712_ABI = [
       }
     ],
     stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        components: [
+          {
+            internalType: 'uint256',
+            name: 'amount',
+            type: 'uint256'
+          },
+          {
+            internalType: 'enum ExpenseAccountEIP712.FrequencyType',
+            name: 'frequencyType',
+            type: 'uint8'
+          },
+          {
+            internalType: 'uint256',
+            name: 'customFrequency',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'startDate',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'endDate',
+            type: 'uint256'
+          },
+          {
+            internalType: 'address',
+            name: 'tokenAddress',
+            type: 'address'
+          },
+          {
+            internalType: 'address',
+            name: 'approvedAddress',
+            type: 'address'
+          }
+        ],
+        internalType: 'struct ExpenseAccountEIP712.BudgetLimit',
+        name: 'budgetLimit',
+        type: 'tuple'
+      }
+    ],
+    name: 'getCurrentPeriod',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        components: [
+          {
+            internalType: 'uint256',
+            name: 'amount',
+            type: 'uint256'
+          },
+          {
+            internalType: 'enum ExpenseAccountEIP712.FrequencyType',
+            name: 'frequencyType',
+            type: 'uint8'
+          },
+          {
+            internalType: 'uint256',
+            name: 'customFrequency',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'startDate',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'endDate',
+            type: 'uint256'
+          },
+          {
+            internalType: 'address',
+            name: 'tokenAddress',
+            type: 'address'
+          },
+          {
+            internalType: 'address',
+            name: 'approvedAddress',
+            type: 'address'
+          }
+        ],
+        internalType: 'struct ExpenseAccountEIP712.BudgetLimit',
+        name: 'budgetLimit',
+        type: 'tuple'
+      },
+      {
+        internalType: 'uint256',
+        name: 'timestamp',
+        type: 'uint256'
+      }
+    ],
+    name: 'getPeriod',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256'
+      }
+    ],
+    stateMutability: 'pure',
     type: 'function'
   },
   {
@@ -537,6 +752,67 @@ export const EXPENSE_ACCOUNT_EIP712_ABI = [
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        components: [
+          {
+            internalType: 'uint256',
+            name: 'amount',
+            type: 'uint256'
+          },
+          {
+            internalType: 'enum ExpenseAccountEIP712.FrequencyType',
+            name: 'frequencyType',
+            type: 'uint8'
+          },
+          {
+            internalType: 'uint256',
+            name: 'customFrequency',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'startDate',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'endDate',
+            type: 'uint256'
+          },
+          {
+            internalType: 'address',
+            name: 'tokenAddress',
+            type: 'address'
+          },
+          {
+            internalType: 'address',
+            name: 'approvedAddress',
+            type: 'address'
+          }
+        ],
+        internalType: 'struct ExpenseAccountEIP712.BudgetLimit',
+        name: 'budgetLimit',
+        type: 'tuple'
+      },
+      {
+        internalType: 'bytes32',
+        name: 'signatureHash',
+        type: 'bytes32'
+      }
+    ],
+    name: 'isNewPeriod',
+    outputs: [
+      {
+        internalType: 'bool',
+        name: '',
+        type: 'bool'
+      }
+    ],
+    stateMutability: 'view',
     type: 'function'
   },
   {
@@ -632,40 +908,43 @@ export const EXPENSE_ACCOUNT_EIP712_ABI = [
       {
         components: [
           {
-            internalType: 'address',
-            name: 'approvedAddress',
-            type: 'address'
+            internalType: 'uint256',
+            name: 'amount',
+            type: 'uint256'
           },
           {
-            components: [
-              {
-                internalType: 'enum ExpenseAccountEIP712.BudgetType',
-                name: 'budgetType',
-                type: 'uint8'
-              },
-              {
-                internalType: 'uint256',
-                name: 'value',
-                type: 'uint256'
-              }
-            ],
-            internalType: 'struct ExpenseAccountEIP712.BudgetData[]',
-            name: 'budgetData',
-            type: 'tuple[]'
+            internalType: 'enum ExpenseAccountEIP712.FrequencyType',
+            name: 'frequencyType',
+            type: 'uint8'
           },
           {
             internalType: 'uint256',
-            name: 'expiry',
+            name: 'customFrequency',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'startDate',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'endDate',
             type: 'uint256'
           },
           {
             internalType: 'address',
             name: 'tokenAddress',
             type: 'address'
+          },
+          {
+            internalType: 'address',
+            name: 'approvedAddress',
+            type: 'address'
           }
         ],
         internalType: 'struct ExpenseAccountEIP712.BudgetLimit',
-        name: 'limit',
+        name: 'budgetLimit',
         type: 'tuple'
       },
       {
@@ -697,6 +976,72 @@ export const EXPENSE_ACCOUNT_EIP712_ABI = [
     name: 'unpause',
     outputs: [],
     stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        components: [
+          {
+            internalType: 'uint256',
+            name: 'amount',
+            type: 'uint256'
+          },
+          {
+            internalType: 'enum ExpenseAccountEIP712.FrequencyType',
+            name: 'frequencyType',
+            type: 'uint8'
+          },
+          {
+            internalType: 'uint256',
+            name: 'customFrequency',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'startDate',
+            type: 'uint256'
+          },
+          {
+            internalType: 'uint256',
+            name: 'endDate',
+            type: 'uint256'
+          },
+          {
+            internalType: 'address',
+            name: 'tokenAddress',
+            type: 'address'
+          },
+          {
+            internalType: 'address',
+            name: 'approvedAddress',
+            type: 'address'
+          }
+        ],
+        internalType: 'struct ExpenseAccountEIP712.BudgetLimit',
+        name: 'budgetLimit',
+        type: 'tuple'
+      },
+      {
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256'
+      },
+      {
+        internalType: 'bytes32',
+        name: 'signatureHash',
+        type: 'bytes32'
+      }
+    ],
+    name: 'validateTransfer',
+    outputs: [
+      {
+        internalType: 'bool',
+        name: '',
+        type: 'bool'
+      }
+    ],
+    stateMutability: 'view',
     type: 'function'
   },
   {

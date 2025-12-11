@@ -130,30 +130,41 @@ const approveUser = async (data: BudgetLimit) => {
     chainId: chainId.value,
     verifyingContract: verifyingContract as Address
   }
+  // const types = {
+  //   BudgetData: [
+  //     { name: 'budgetType', type: 'uint8' },
+  //     { name: 'value', type: 'uint256' }
+  //   ],
+  //   BudgetLimit: [
+  //     { name: 'approvedAddress', type: 'address' },
+  //     { name: 'budgetData', type: 'BudgetData[]' },
+  //     { name: 'expiry', type: 'uint256' },
+  //     { name: 'tokenAddress', type: 'address' }
+  //   ]
+  // }
+
   const types = {
-    BudgetData: [
-      { name: 'budgetType', type: 'uint8' },
-      { name: 'value', type: 'uint256' }
-    ],
     BudgetLimit: [
-      { name: 'approvedAddress', type: 'address' },
-      { name: 'budgetData', type: 'BudgetData[]' },
-      { name: 'expiry', type: 'uint256' },
-      { name: 'tokenAddress', type: 'address' }
+      { name: 'amount', type: 'uint256' },
+      { name: 'frequencyType', type: 'uint8' },
+      { name: 'customFrequency', type: 'uint256' },
+      { name: 'startDate', type: 'uint256' },
+      { name: 'endDate', type: 'uint256' },
+      { name: 'tokenAddress', type: 'address' },
+      { name: 'approvedAddress', type: 'address' }
     ]
   }
 
   const message = {
     ...data,
-    budgetData: data.budgetData?.map((item) => ({
-      ...item,
-      value:
-        item.budgetType === 0
-          ? item.value
-          : data.tokenAddress === zeroAddress
-            ? parseEther(`${item.value}`)
-            : BigInt(Number(item.value) * 1e6)
-    }))
+    amount:
+      data.tokenAddress === zeroAddress
+        ? parseEther(`${data.amount}`)
+        : BigInt(Number(data.amount) * 1e6),
+    frequencyType: Number(data.frequencyType),
+    customFrequency: BigInt(Number(data.customFrequency)),
+    startDate: Number(data.startDate),
+    endDate: Number(data.endDate)
   }
 
   await signTypedDataAsync({

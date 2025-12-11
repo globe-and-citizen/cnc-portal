@@ -21,6 +21,7 @@ import uploadRoute from '../routes/uploadRoute';
 import contractRoutes from '../routes/contractRoutes';
 import electionsRoute from '../routes/electionsRoute';
 import devRoutes from '../routes/devRoutes';
+import statsRoutes from '../routes/statsRoute';
 
 //#endregion routing modules
 
@@ -42,7 +43,6 @@ const options = {
   apis: ['./src/routes/*.ts'], // Point to route files containing JSDoc comments
 };
 const swaggerSpec = swaggerJsdoc(options);
-const path = require('path');
 
 class Server {
   private static instance: Server | undefined;
@@ -70,6 +70,7 @@ class Server {
       upload: '/api/upload/',
       constract: '/api/contract/',
       elections: '/api/elections/',
+      stats: '/api/stats/',
       dev: '/api/dev/',
     };
     const limiter = rateLimit({
@@ -103,7 +104,13 @@ class Server {
 
   private middleware() {
     this.app.use(express.json());
-    this.app.use(cors({ origin: process.env.FRONTEND_URL as string, credentials: true }));
+    const allowedOrigins = process.env.FRONTEND_URL
+      ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim())
+      : [];
+    console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+    console.log('Allowed Origins for CORS:', allowedOrigins);
+
+    this.app.use(cors({ origin: allowedOrigins, credentials: true }));
   }
 
   private routes() {
@@ -118,6 +125,7 @@ class Server {
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
+    this.app.use(this.paths.stats, authorizeUser, statsRoutes);
 
     // Dev routes - only available in development mode
     if (process.env.NODE_ENV === 'development') {
@@ -132,15 +140,15 @@ class Server {
     Sentry.setupExpressErrorHandler(this.app);
 
     // Optional fallthrough error handler
-    // @ts-ignore
-    this.app.use(function onError(err, req, res, next) {
+    this.app.use(function onError(err: Error, _req: express.Request, res: express.Response) {
       // The error id is attached to `res.sentry` to be returned
       // and optionally displayed to the user for support.
+      console.error('Error:', err);
       res.statusCode = 500;
-      res.end(res.sentry + '\n');
+      res.end((res as { sentry?: string }).sentry + '\n');
     });
 
-    this.app.get('/debug-sentry', function mainHandler(req, res) {
+    this.app.get('/debug-sentry', function mainHandler() {
       throw new Error('My first Sentry error!');
     });
   }

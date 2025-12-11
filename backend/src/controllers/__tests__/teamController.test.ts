@@ -1,18 +1,16 @@
-import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../utils';
-import { describe, it, beforeEach, expect, vi } from 'vitest';
-import publicClient from '../../utils/viem.config';
-import OFFICER_ABI from '../../artifacts/officer_abi.json';
 import { faker } from '@faker-js/faker';
 import { Team, User } from '@prisma/client';
-import teamRoutes from '../../routes/teamRoutes';
+import express, { NextFunction, Request, Response } from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authorizeUser } from '../../middleware/authMiddleware';
+import teamRoutes from '../../routes/teamRoutes';
+import { prisma } from '../../utils';
 
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = '0x1234567890123456789012345678901234567890';
+    req.address = '0x1234567890123456789012345678901234567890';
     next();
   }),
 }));
@@ -253,31 +251,90 @@ describe('Team Controller', () => {
       vi.clearAllMocks();
     });
 
-    it('should return 200 and a lsit of teams the user is a member of', async () => {
+    it('should return 200 and all teams when no userAddress is provided', async () => {
       const mockTeams = [
         {
           id: 1,
-
           name: 'Team 1',
           description: 'Description 1',
-          owenrAddress: mockOwner.address,
-          _count: { member: 3 },
+          ownerAddress: '0xOtherOwner',
+          _count: { members: 3 },
         },
         {
           id: 2,
           name: 'Team 2',
           description: 'Description 2',
           ownerAddress: mockOwner.address,
-          _count: { memebers: 5 },
+          _count: { members: 5 },
         },
       ];
 
       vi.spyOn(prisma.team, 'findMany').mockResolvedValue(mockTeams);
 
-      const response = await request(app).get('/').set('address', '0xABC123');
+      const response = await request(app).get('/');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockTeams);
+      expect(prisma.team.findMany).toHaveBeenCalledWith({
+        include: {
+          _count: {
+            select: {
+              members: true,
+            },
+          },
+        },
+      });
+    });
+
+    it('should return 200 and only user teams when userAddress matches callerAddress', async () => {
+      const mockTeams = [
+        {
+          id: 1,
+          name: 'Team 1',
+          description: 'Description 1',
+          ownerAddress: mockOwner.address,
+          _count: { members: 3 },
+        },
+        {
+          id: 2,
+          name: 'Team 2',
+          description: 'Description 2',
+          ownerAddress: mockOwner.address,
+          _count: { members: 5 },
+        },
+      ];
+
+      vi.spyOn(prisma.team, 'findMany').mockResolvedValue(mockTeams);
+
+      const response = await request(app).get('/').query({ userAddress: mockOwner.address });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockTeams);
+      expect(prisma.team.findMany).toHaveBeenCalledWith({
+        where: {
+          members: {
+            some: {
+              address: mockOwner.address,
+            },
+          },
+        },
+        include: {
+          _count: {
+            select: {
+              members: true,
+            },
+          },
+        },
+      });
+    });
+
+    it('should return 403 when userAddress does not match callerAddress', async () => {
+      const response = await request(app)
+        .get('/')
+        .query({ userAddress: '0xDifferentAddress1234567890123456789' });
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe('Unauthorized');
     });
 
     it('should return 500 if an error occurs', async () => {

@@ -3,7 +3,8 @@
     v-if="isCashRemunerationOwner && !isDropDown"
     variant="success"
     data-test="approve-button"
-    :disabled="loading || disabled || currentWeekStart === weeklyClaim.weekStart"
+    :disabled="isLoad || disabled || currentWeekStart === weeklyClaim.weekStart"
+    :loading="isLoad"
     size="sm"
     @click="async () => await approveClaim(weeklyClaim)"
   >
@@ -12,18 +13,25 @@
   <a
     v-else-if="isDropDown"
     data-test="sign-action"
+    :class="['text-sm', { disabled: isLoad }]"
+    :aria-disabled="isLoad"
+    :tabindex="isLoad ? -1 : 0"
+    :style="{ pointerEvents: isLoad ? 'none' : undefined }"
     @click="
       async () => {
+        if (isLoad) return
         if (!isCashRemunerationOwner) {
           $emit('close')
           return
         }
+        emit('loading', true)
         await approveClaim(weeklyClaim)
+        // loading cleared inside approveClaim only on success
         $emit('close')
       }
     "
-    class="text-sm"
   >
+    <span v-if="isLoad" class="loading loading-spinner loading-xs mr-2"></span>
     {{ isResign ? 'Resign' : 'Sign' }}
   </a>
 </template>
@@ -38,7 +46,12 @@ import type { WeeklyClaim } from '@/types'
 import { log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
-import { readContract, writeContract, simulateContract } from '@wagmi/core'
+import {
+  readContract,
+  writeContract,
+  simulateContract,
+  waitForTransactionReceipt
+} from '@wagmi/core'
 import dayjs from 'dayjs'
 import { keccak256, parseEther, parseUnits, zeroAddress, type Address } from 'viem'
 import { computed, ref, watch } from 'vue'
@@ -49,9 +62,10 @@ const props = defineProps<{
   disabled?: boolean
   isDropDown?: boolean
   isResign?: boolean
+  loading?: boolean
 }>()
 
-defineEmits(['close'])
+const emit = defineEmits(['close', 'loading'])
 
 // Stores
 const teamStore = useTeamStore()
@@ -70,7 +84,8 @@ const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 const { signTypedDataAsync, data: signature } = useSignTypedData()
 const chainId = useChainId()
 
-const loading = ref(false)
+const isloading = ref(false)
+const isLoad = computed(() => (props.loading ?? isloading.value) as boolean)
 
 const {
   data: cashRemunerationOwner,
@@ -99,7 +114,8 @@ const {
   .json<Array<WeeklyClaim>>()
 
 const approveClaim = async (weeklyClaim: WeeklyClaim) => {
-  loading.value = true
+  isloading.value = true
+  emit('loading', true)
 
   try {
     await signTypedDataAsync({
@@ -145,23 +161,27 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
 
       if (claimError.value) {
         toastStore.addErrorToast('Failed to approve weeklyClaim')
+        // keep loading until explicit success
       } else {
         toastStore.addSuccessToast('Claim approved')
         queryClient.invalidateQueries({
           queryKey: ['weekly-claims', teamStore.currentTeam?.id]
         })
+        isloading.value = false
+        emit('loading', false)
       }
     }
   } catch (error) {
     const typedError = error as { message: string }
     log.error('Failed to sign weeklyClaim', typedError.message)
     let errorMessage = 'Failed to sign weeklyClaim'
-    if (typedError.message.includes('User rejected the request')) {
-      if (typedError.message.includes('User rejected the request')) {
-        errorMessage = 'User rejected the request'
-      }
-      toastStore.addErrorToast(errorMessage)
+    if (typedError.message?.includes?.('User rejected the request')) {
+      errorMessage = 'User rejected the request'
     }
+    toastStore.addErrorToast(errorMessage)
+    // Stop loading on cancel/error
+    isloading.value = false
+    emit('loading', false)
   }
   // if (signature.value) {
   //   await enableClaim(signature.value)
@@ -176,8 +196,6 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
   //     })
   //   }
   // }
-
-  loading.value = false
 }
 
 const enableClaim = async (signature: Address) => {
@@ -198,12 +216,14 @@ const enableClaim = async (signature: Address) => {
         args: [keccak256(signature)]
       })
 
-      await writeContract(config, {
+      const hash = await writeContract(config, {
         address: cashRemunerationAddress.value,
         abi: CASH_REMUNERATION_EIP712_ABI,
         functionName: 'enableClaim',
         args: [keccak256(signature)]
       })
+
+      await waitForTransactionReceipt(config, { hash })
     }
   }
 }

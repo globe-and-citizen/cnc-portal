@@ -10,7 +10,7 @@ import { authorizeUser } from '../../middleware/authMiddleware';
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = '0x1234567890123456789012345678901234567890';
+    req.address = '0x1234567890123456789012345678901234567890';
     next();
   }),
 }));
@@ -55,22 +55,23 @@ const app = express();
 app.use(express.json());
 app.use('/', authorizeUser, expenseRoutes);
 
+const START_DATE = Math.floor(Date.now() / 1000) + 3600;
+const END_DATE = START_DATE + 3600 * 24 * 30;
+
 const mockExpenseData = {
   approvedAddress: '0x1234567890123456789012345678901234567890',
-  budgetData: [
+  /* budgetData: [
     { budgetType: 0, value: 10 },
     { budgetType: 1, value: 100 },
     { budgetType: 2, value: 10 },
-  ],
+  ], */
+  amount: 150,
+  frequencyType: 3,
+  customFrequency: 0,
   tokenAddress: '0x1111111111111111111111111111111111111111',
-  expiry: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+  startDate: START_DATE, // 1 hour from now
+  endDate: END_DATE, // 30 days from start date
 };
-
-// Helper function to create variations of expense data for testing
-const createExpenseData = (overrides: Partial<typeof mockExpenseData> = {}) => ({
-  ...mockExpenseData,
-  ...overrides,
-});
 
 const mockExpense = {
   id: 1,
@@ -190,6 +191,10 @@ describe('Expense Controller', () => {
     });
 
     it('should return expenses for a valid team', async () => {
+      // Replace the method directly
+      publicClient.getBlock = vi.fn().mockResolvedValue({
+        timestamp: BigInt(Math.floor(Date.now() / 1000)),
+      });
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.expense, 'findMany').mockResolvedValue([
         { ...mockExpense, data: mockExpenseData },

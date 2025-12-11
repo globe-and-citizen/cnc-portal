@@ -1,19 +1,27 @@
 import { Request, Response } from 'express';
-import { prisma, errorResponse, getMondayStart } from '../utils';
+import { errorResponse, getMondayStart, prisma } from '../utils';
 // import { errorResponse } from "../utils/utils";
 import { Prisma } from '@prisma/client';
-import { isHex } from 'viem';
+import { Hex, isAddress, isHex, keccak256 } from 'viem';
+import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json';
 import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
+import publicClient from '../utils/viem.config';
 
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
 
-function isValidWeeklyClaimAction(action: any): action is WeeklyClaimAction {
-  return ['sign', 'withdraw', 'pending', 'disable', 'enable'].includes(action);
+function isValidWeeklyClaimAction(action: unknown): action is WeeklyClaimAction {
+  return ['sign', 'withdraw', 'pending', 'disable', 'enable'].includes(action as string);
 }
 
+const deriveWeeklyClaimStatus = (isPaid: boolean, isDisabled: boolean): statusType => {
+  if (isPaid) return 'withdrawn';
+  if (isDisabled) return 'disabled';
+  return 'signed';
+};
+
 export const updateWeeklyClaims = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   const id = Number(req.params.id);
   const action = req.query.action as WeeklyClaimAction;
   const { signature, data: message } = req.body;
@@ -51,7 +59,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
     }
 
     switch (action) {
-      case 'enable':
+      case 'enable': {
         const enableErrors: string[] = [];
 
         // Check if the caller is the Cash Remuneration owner
@@ -66,12 +74,12 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 
         // check if the weekly claim is already signed or withdrawn
         if (!weeklyClaim.signature)
-          enableErrors.push('No claim existing signature: You need to sign claim first')
+          enableErrors.push('No claim existing signature: You need to sign claim first');
         if (
           weeklyClaim.status === 'signed' &&
           callerAddress ===
             (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-              ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
+              ? (weeklyClaim.data as Record<string, unknown>)['ownerAddress']
               : undefined)
         ) {
           enableErrors.push('Weekly claim already active');
@@ -84,7 +92,8 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         data = { signature, status: 'signed', data: message };
         // singleClaimStatus = "signed";
         break;
-      case 'disable': 
+      }
+      case 'disable': {
         const disableErrors: string[] = [];
 
         // Check if the caller is the Cash Remuneration owner
@@ -102,7 +111,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           weeklyClaim.status === 'disabled' &&
           callerAddress ===
             (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-              ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
+              ? (weeklyClaim.data as Record<string, unknown>)['ownerAddress']
               : undefined)
         ) {
           disableErrors.push('Weekly claim already disabled');
@@ -115,7 +124,8 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         data = { signature, status: 'disabled', data: message };
         // singleClaimStatus = "signed";
         break;
-      case 'sign':
+      }
+      case 'sign': {
         const signErrors: string[] = [];
 
         // Check if the caller is the Cash Remuneration owner
@@ -138,7 +148,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
             weeklyClaim.status === 'signed' &&
             callerAddress ===
               (typeof weeklyClaim.data === 'object' && weeklyClaim.data !== null
-                ? (weeklyClaim.data as { [key: string]: any })['ownerAddress']
+                ? (weeklyClaim.data as Record<string, unknown>)['ownerAddress']
                 : undefined)
           ) {
             signErrors.push('Weekly claim already signed');
@@ -152,7 +162,8 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         data = { signature, status: 'signed', data: message };
         // singleClaimStatus = "signed";
         break;
-      case 'withdraw':
+      }
+      case 'withdraw': {
         // Check if the weekly claim is already signed
         if (weeklyClaim.status !== 'signed') {
           let withdrawErrorMsg = 'Weekly claim must be signed before it can be withdrawn';
@@ -164,6 +175,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         data = { status: 'withdrawn' };
         // singleClaimStatus = "withdrawn";
         break;
+      }
     }
 
     // Transaction pour mettre à jour le weeklyClaim et les claims associés
@@ -202,10 +214,18 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
 
   let statusFilter: Prisma.WeeklyClaimWhereInput = {};
   if (status) {
-    if ((['pending', 'signed', 'withdrawn'] as statusType[]).includes(status as statusType)) {
+    if (
+      (['pending', 'signed', 'withdrawn', 'disabled'] as statusType[]).includes(
+        status as statusType
+      )
+    ) {
       statusFilter = { status };
     } else {
-      return errorResponse(400, 'Invalid status. Allowed status are: sign, withdraw, pending', res);
+      return errorResponse(
+        400,
+        'Invalid status. Allowed statuses are: pending, signed, withdrawn, disabled',
+        res
+      );
     }
   }
 
@@ -253,5 +273,106 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     return errorResponse(500, 'Internal Server Error', res);
+  }
+};
+
+export const syncWeeklyClaims = async (req: Request, res: Response) => {
+  const teamId = Number(req.query.teamId);
+
+  if (!teamId || Number.isNaN(teamId)) {
+    return errorResponse(400, 'Missing or invalid teamId', res);
+  }
+
+  try {
+    const teamContract = await prisma.teamContract.findFirst({
+      where: {
+        teamId,
+        type: 'CashRemunerationEIP712',
+      },
+    });
+
+    if (!teamContract || !teamContract.address || !isAddress(teamContract.address)) {
+      return errorResponse(404, 'Cash Remuneration contract not found for the team', res);
+    }
+
+    const weeklyClaims = await prisma.weeklyClaim.findMany({
+      where: {
+        teamId,
+        status: {
+          in: ['signed', 'disabled'],
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        signature: true,
+      },
+    });
+
+    if (weeklyClaims.length === 0) {
+      return res.status(200).json({
+        teamId,
+        totalProcessed: 0,
+        updated: [],
+        skipped: [],
+      });
+    }
+
+    const updatedClaims: Array<{ id: number; previousStatus: string; newStatus: string }> = [];
+    const skippedClaims: Array<{ id: number; reason: string }> = [];
+
+    for (const claim of weeklyClaims) {
+      if (!claim.signature || !isHex(claim.signature)) {
+        skippedClaims.push({ id: claim.id, reason: 'Missing or invalid signature' });
+        continue;
+      }
+
+      const signatureHash = keccak256(claim.signature as Hex);
+
+      try {
+        const [isPaid, isDisabled] = await Promise.all([
+          publicClient.readContract({
+            address: teamContract.address as `0x${string}`,
+            abi: CASH_REMUNERATION_ABI,
+            functionName: 'paidWageClaims',
+            args: [signatureHash],
+          }),
+          publicClient.readContract({
+            address: teamContract.address as `0x${string}`,
+            abi: CASH_REMUNERATION_ABI,
+            functionName: 'disabledWageClaims',
+            args: [signatureHash],
+          }),
+        ]);
+
+        const expectedStatus = deriveWeeklyClaimStatus(Boolean(isPaid), Boolean(isDisabled));
+
+        if (expectedStatus !== claim.status) {
+          await prisma.weeklyClaim.update({
+            where: { id: claim.id },
+            data: { status: expectedStatus },
+          });
+
+          updatedClaims.push({
+            id: claim.id,
+            previousStatus: claim.status ?? 'unknown',
+            newStatus: expectedStatus,
+          });
+        }
+      } catch (readError) {
+        console.error(`Failed to sync weekly claim ${claim.id}:`, readError);
+        skippedClaims.push({ id: claim.id, reason: 'Failed to read contract state' });
+      }
+    }
+
+    return res.status(200).json({
+      teamId,
+      totalProcessed: weeklyClaims.length,
+      updated: updatedClaims,
+      skipped: skippedClaims,
+    });
+  } catch (error) {
+    console.error('Error syncing weekly claims:', error);
+    return errorResponse(500, error, res);
   }
 };

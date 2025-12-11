@@ -1,0 +1,28 @@
+meta {
+  name: Get Teams - 02 - Edge Case - Empty User Address
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{host}}/teams?userAddress=
+  body: json
+  auth: bearer
+}
+
+params:query {
+  userAddress: 
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("should return 200 status for empty userAddress (returns all teams)", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("should return an array of teams", function() {
+    expect(res.body).to.be.an('array');
+  });
+}

@@ -1,18 +1,35 @@
+import { Team, Wage } from '@prisma/client';
+import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import wageRoutes from '../../routes/wageRoute';
 import { prisma } from '../../utils';
-import { describe, it, beforeEach, expect, vi } from 'vitest';
-import { Team, Wage } from '@prisma/client';
 
-vi.mock('../../utils');
+vi.mock('../../utils', async () => {
+  const actual = await vi.importActual('../../utils');
+  return {
+    ...actual,
+    prisma: {
+      team: {
+        findFirst: vi.fn(),
+        findUnique: vi.fn(),
+      },
+      wage: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
+    },
+  };
+});
 vi.mock('../../utils/viem.config');
 
 // Mock the authorization middleware with proper hoisting
 vi.mock('../../middleware/authMiddleware', () => ({
   authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
     // Default behavior - can be overridden in tests
-    (req as any).address = '0x1234567890123456789012345678901234567890';
+    req.address = '0x1234567890123456789012345678901234567890';
     next();
   }),
 }));
@@ -36,9 +53,6 @@ const mockTeam = {
   officerAddress: '0x2234567890123456789012345678901234567890',
 } as Team;
 
-const mockMember = {
-  address: '0x1234567890123456789012345678901234567890',
-};
 const mockWage = {
   id: 1,
   teamId: 1,
@@ -59,7 +73,7 @@ describe('Wage Controller', () => {
       vi.clearAllMocks();
       // Reset to default behavior
       mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        (req as any).address = '0x1234567890123456789012345678901234567890';
+        req.address = '0x1234567890123456789012345678901234567890';
         next();
       });
     });
@@ -215,7 +229,7 @@ describe('Wage Controller', () => {
       // Reset to default behavior
 
       mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
-        (req as any).address = '0x1234567890123456789012345678901234567890';
+        req.address = '0x1234567890123456789012345678901234567890';
         next();
       });
     });

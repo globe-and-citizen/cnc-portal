@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import DeleteClaimModal from '@/components/sections/CashRemunerationView/DeleteClaimModal.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import type { Claim } from '@/types'
 import dayjs from 'dayjs'
 
@@ -30,7 +29,6 @@ const successToastMock = vi.fn()
 const errorToastMock = vi.fn()
 
 // Test data
-// Test data
 const defaultClaim: Claim = {
   id: 1,
   hoursWorked: 8,
@@ -55,19 +53,37 @@ const defaultClaim: Claim = {
 }
 
 // Hoist and structure mocks
-const mocks = vi.hoisted(() => ({
-  mockUseCustomFetch: vi.fn(),
-  mockUseToastStore: vi.fn(() => ({
-    addErrorToast: errorToastMock,
-    addSuccessToast: successToastMock
-  }))
-}))
+const {
+  mockUseCustomFetch,
+  mockUseToastStore,
+  mockUseTeamStore,
+  mockUseQueryClient,
+  mockQueryClient
+} = vi.hoisted(() => {
+  const mockQueryClient = {
+    invalidateQueries: vi.fn()
+  }
+
+  return {
+    mockUseCustomFetch: vi.fn(),
+    mockUseToastStore: vi.fn(() => ({
+      addErrorToast: errorToastMock,
+      addSuccessToast: successToastMock
+    })),
+    mockUseTeamStore: vi.fn(() => ({
+      currentTeam: { id: 1 }
+    })),
+    mockUseQueryClient: vi.fn(() => mockQueryClient),
+    mockQueryClient
+  }
+})
 
 vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useToastStore: mocks.mockUseToastStore
+    useToastStore: mockUseToastStore,
+    useTeamStore: mockUseTeamStore
   }
 })
 
@@ -75,13 +91,17 @@ vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useCustomFetch: mocks.mockUseCustomFetch
+    useCustomFetch: mockUseCustomFetch
   }
 })
 
+vi.mock('@tanstack/vue-query', () => ({
+  useQueryClient: mockUseQueryClient
+}))
+
 describe('DeleteClaimModal', () => {
   beforeEach(() => {
-    mocks.mockUseCustomFetch.mockReturnValueOnce({
+    mockUseCustomFetch.mockReturnValueOnce({
       delete: vi.fn().mockImplementation(() => ({
         json: vi.fn().mockReturnValue({
           data: mockDeleteData,
@@ -104,103 +124,117 @@ describe('DeleteClaimModal', () => {
   })
 
   const createWrapper = (props = {}) => {
-    const queryClient = new QueryClient()
     return mount(DeleteClaimModal, {
       props: {
         claim: defaultClaim,
-        queryKey: ['weekly-claims', '1'],
         ...props
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
   }
 
-  it('should render correctly', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.exists()).toBeTruthy()
-  })
-
-  it('should show success toast on successful claim deletion', async () => {
-    const wrapper = createWrapper()
-
-    // Click delete button
-    await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-
-    expect(executeDeleteMock).toHaveBeenCalledTimes(1)
-
-    // Mock the delete status to simulate a successful deletion
-    mockDeleteStatus.value = 200
-
-    // Resolve the promise to simulate the completion of the request
-    resolveExecute({})
-    await flushPromises()
-
-    expect(executeDeleteMock).toHaveBeenCalled()
-    expect(successToastMock).toHaveBeenCalledWith('Claim deleted successfully')
-  })
-
-  it('should display error message on failed claim deletion', async () => {
-    const wrapper = createWrapper()
-
-    // Click delete button
-    await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-
-    expect(executeDeleteMock).toHaveBeenCalledTimes(1)
-
-    // Mock the delete status to simulate a failed deletion
-    mockDeleteStatus.value = 400
-    mockDeleteError.value = new Error('Error')
-    mockDeleteResponse.value = {
-      json: vi.fn().mockResolvedValue({ message: 'Failed to delete claim' })
-    }
-
-    // Resolve the promise to simulate the completion of the request
-    resolveExecute(null)
-    await flushPromises()
-
-    expect(successToastMock).not.toHaveBeenCalled()
-    expect(wrapper.find('[data-test="delete-claim-error"]').text()).toContain(
-      'Failed to delete claim'
-    )
-  })
-
-  it('should close modal when cancel is clicked', async () => {
-    const wrapper = createWrapper()
-
-    await wrapper.find('[data-test="cancel-delete-claim-button"]').trigger('click')
-
-    expect(wrapper.emitted('update:show')).toBeTruthy()
-    expect(wrapper.emitted('update:show')?.[0]).toEqual([false])
-    expect(wrapper.emitted('close')).toBeTruthy()
-  })
-
-  it('should format date correctly', () => {
-    const testDate = '2024-01-01T00:00:00.000Z'
-    const wrapper = createWrapper({
-      claim: { ...defaultClaim, dayWorked: testDate }
+  describe('Component Rendering', () => {
+    it('should render correctly', () => {
+      const wrapper = createWrapper()
+      expect(wrapper.exists()).toBeTruthy()
     })
 
-    expect(wrapper.text()).toContain('Jan 01, 2024')
+    it('should display claim details', () => {
+      const wrapper = createWrapper()
+      expect(wrapper.text()).toContain('8 h')
+      expect(wrapper.text()).toContain(dayjs(defaultClaim.dayWorked).format('MMM DD, YYYY'))
+    })
+
+    it('should render action buttons', () => {
+      const wrapper = createWrapper()
+      expect(wrapper.find('[data-test="confirm-delete-claim-button"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="cancel-delete-claim-button"]').exists()).toBe(true)
+    })
   })
 
-  describe('Error Handling', () => {
-    it.skip('should handle console error and toast message', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+  describe('Delete Functionality', () => {
+    it('should show success toast on successful claim deletion', async () => {
       const wrapper = createWrapper()
 
       await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
 
-      // Simulate error
-      mockDeleteError.value = new Error('Network error')
+      expect(executeDeleteMock).toHaveBeenCalledTimes(1)
+
+      mockDeleteStatus.value = 200
+      resolveExecute({})
+      await flushPromises()
+
+      expect(executeDeleteMock).toHaveBeenCalled()
+      expect(successToastMock).toHaveBeenCalledWith('Claim deleted successfully')
+    })
+
+    it('should invalidate weekly claims query after successful deletion', async () => {
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+
+      mockDeleteStatus.value = 200
+      resolveExecute({})
+      await flushPromises()
+
+      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: ['weekly-claims', 1]
+      })
+    })
+
+    it('should emit close event after successful deletion', async () => {
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+
+      mockDeleteStatus.value = 200
+      resolveExecute({})
+      await flushPromises()
+
+      expect(wrapper.emitted('close')).toBeTruthy()
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('should display error message on failed claim deletion', async () => {
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+
+      expect(executeDeleteMock).toHaveBeenCalledTimes(1)
+
+      mockDeleteStatus.value = 400
+      mockDeleteError.value = new Error('Error')
+      mockDeleteResponse.value = {
+        json: vi.fn().mockResolvedValue({ message: 'Failed to delete claim' })
+      }
+
       resolveExecute(null)
       await flushPromises()
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to delete claim:', expect.any(Error))
-      expect(errorToastMock).toHaveBeenCalledWith('Network error')
+      expect(successToastMock).not.toHaveBeenCalled()
+      expect(wrapper.find('[data-test="delete-claim-error"]').text()).toContain(
+        'Failed to delete claim'
+      )
+    })
 
-      consoleErrorSpy.mockRestore()
+    it('should show error toast when deletion fails', async () => {
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+
+      mockDeleteStatus.value = 400
+      mockDeleteError.value = new Error('Network error')
+      mockDeleteResponse.value = {
+        json: vi.fn().mockResolvedValue({ message: 'Network error' })
+      }
+
+      resolveExecute(null)
+      await flushPromises()
+
+      expect(errorToastMock).toHaveBeenCalledWith('Network error')
     })
 
     it('should handle error parsing failure', async () => {
@@ -209,7 +243,6 @@ describe('DeleteClaimModal', () => {
 
       await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
 
-      // Simulate error with invalid JSON response
       mockDeleteError.value = new Error('Parse error')
       mockDeleteResponse.value = {
         json: vi.fn().mockRejectedValue(new Error('Invalid JSON'))
@@ -227,58 +260,152 @@ describe('DeleteClaimModal', () => {
       consoleErrorSpy.mockRestore()
     })
 
-    it('should handle case when claim is null', async () => {
-      const wrapper = createWrapper({ claim: null })
+    it('should use default error message when API does not provide one', async () => {
+      const wrapper = createWrapper()
 
       await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
 
-      expect(executeDeleteMock).not.toHaveBeenCalled()
-    })
+      mockDeleteStatus.value = 500
+      mockDeleteError.value = new Error('Server error')
+      mockDeleteResponse.value = {
+        json: vi.fn().mockResolvedValue({})
+      }
 
-    it.skip('should invalidate queries when queryKey is valid', async () => {
-      const queryClient = new QueryClient()
-      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries')
-
-      const wrapper = mount(DeleteClaimModal, {
-        props: {
-          claim: defaultClaim,
-          queryKey: ['weekly-claims', '1']
-        },
-        global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
-        }
-      })
-
-      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-      mockDeleteStatus.value = 200
-      resolveExecute({})
+      resolveExecute(null)
       await flushPromises()
 
-      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-        queryKey: ['weekly-claims', '1']
-      })
+      expect(wrapper.find('[data-test="delete-claim-error"]').text()).toBe('Failed to delete claim')
+      expect(errorToastMock).toHaveBeenCalledWith('Failed to delete claim')
+    })
+  })
+
+  describe('Modal Interactions', () => {
+    it('should emit close when cancel button is clicked', async () => {
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="cancel-delete-claim-button"]').trigger('click')
+
+      expect(wrapper.emitted('close')).toBeTruthy()
     })
 
-    it('should not invalidate queries when queryKey contains only undefined', async () => {
-      const queryClient = new QueryClient()
-      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries')
-
-      const wrapper = mount(DeleteClaimModal, {
-        props: {
-          claim: defaultClaim,
-          queryKey: [undefined, undefined]
-        },
-        global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
-        }
-      })
+    it('should not emit close when deletion fails', async () => {
+      const wrapper = createWrapper()
 
       await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-      mockDeleteStatus.value = 200
-      resolveExecute({})
+
+      mockDeleteStatus.value = 400
+      mockDeleteError.value = new Error('Error')
+      mockDeleteResponse.value = {
+        json: vi.fn().mockResolvedValue({ message: 'Failed to delete claim' })
+      }
+
+      resolveExecute(null)
       await flushPromises()
 
-      expect(invalidateQueriesSpy).not.toHaveBeenCalled()
+      expect(wrapper.emitted('close')).toBeUndefined()
+    })
+  })
+
+  describe('Loading States', () => {
+    it('should show loading state during deletion', async () => {
+      const wrapper = createWrapper()
+
+      mockDeleteIsFetching.value = true
+      await wrapper.vm.$nextTick()
+
+      const deleteButton = wrapper.find('[data-test="confirm-delete-claim-button"]')
+      const cancelButton = wrapper.find('[data-test="cancel-delete-claim-button"]')
+      expect(deleteButton.classes()).toContain('btn-disabled')
+      expect(cancelButton.classes()).toContain('btn-disabled')
+    })
+
+    it('should disable buttons during deletion', async () => {
+      let resolveDelete: (value: unknown) => void
+      const deletePromise = new Promise((resolve) => {
+        resolveDelete = resolve
+      })
+
+      executeDeleteMock.mockReturnValue(deletePromise)
+
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+
+      mockDeleteIsFetching.value = true
+      await wrapper.vm.$nextTick()
+
+      const deleteButton = wrapper.find('[data-test="confirm-delete-claim-button"]')
+      const cancelButton = wrapper.find('[data-test="cancel-delete-claim-button"]')
+
+      expect(deleteButton.classes()).toContain('btn-disabled')
+      expect(cancelButton.classes()).toContain('btn-disabled')
+
+      mockDeleteIsFetching.value = false
+      resolveDelete!({})
+      await flushPromises()
+    })
+  })
+
+  describe('Date Formatting', () => {
+    it('should format date correctly', () => {
+      const testDate = '2024-01-01T00:00:00.000Z'
+      const wrapper = createWrapper({
+        claim: { ...defaultClaim, dayWorked: testDate }
+      })
+
+      expect(wrapper.text()).toContain('Jan 01, 2024')
+    })
+
+    it('should handle different date formats', () => {
+      const testDate = '2024-06-15T12:30:00.000Z'
+      const wrapper = createWrapper({
+        claim: { ...defaultClaim, dayWorked: testDate }
+      })
+
+      expect(wrapper.text()).toContain('Jun 15, 2024')
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('should clear error message on new delete attempt', async () => {
+      const wrapper = createWrapper()
+
+      // First attempt - trigger error
+      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+
+      mockDeleteStatus.value = 400
+      mockDeleteError.value = new Error('Error')
+      mockDeleteResponse.value = {
+        json: vi.fn().mockResolvedValue({ message: 'First error' })
+      }
+
+      resolveExecute(null)
+      await flushPromises()
+
+      expect(wrapper.find('[data-test="delete-claim-error"]').exists()).toBe(true)
+
+      // Second attempt - should clear previous error
+      executeDeleteMock.mockClear()
+      mockDeleteError.value = null
+      mockDeleteStatus.value = null
+
+      mockUseCustomFetch.mockReturnValueOnce({
+        delete: vi.fn().mockImplementation(() => ({
+          json: vi.fn().mockReturnValue({
+            data: mockDeleteData,
+            error: mockDeleteError,
+            statusCode: mockDeleteStatus,
+            isFetching: mockDeleteIsFetching,
+            execute: executeDeleteMock,
+            response: mockDeleteResponse
+          })
+        }))
+      })
+
+      const newWrapper = createWrapper()
+      await newWrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+
+      expect(newWrapper.find('[data-test="delete-claim-error"]').exists()).toBe(false)
     })
   })
 })

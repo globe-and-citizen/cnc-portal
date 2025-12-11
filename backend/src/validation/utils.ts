@@ -10,18 +10,18 @@ import { z } from 'zod';
  */
 
 // Enhanced enum schema with fallback and better error handling
-export const createEnumWithFallback = <T extends readonly [string, ...string[]]>(
-  values: T,
-  fallback: T[number],
-  customMessage?: string
-) => {
-  return z.string().transform((val) => {
-    if (values.includes(val as T[number])) {
-      return val as T[number];
-    }
-    return fallback;
-  });
-};
+// export const createEnumWithFallback = <T extends readonly [string, ...string[]]>(
+//   values: T,
+//   fallback: T[number],
+//   customMessage?: string
+// ) => {
+//   return z.string().transform((val) => {
+//     if (values.includes(val as T[number])) {
+//       return val as T[number];
+//     }
+//     return fallback;
+//   });
+// };
 
 // Performance-optimized schema for large objects
 export const createOptimizedObjectSchema = <T extends z.ZodRawShape>(
@@ -230,7 +230,7 @@ export const dateRangeSchema = z
   });
 
 export default {
-  createEnumWithFallback,
+  // createEnumWithFallback,
   createOptimizedObjectSchema,
   createAsyncValidationSchema,
   createTransformSchema,

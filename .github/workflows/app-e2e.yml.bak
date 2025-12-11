@@ -1,4 +1,6 @@
 name: Frontend E2E Synpress Playwright
+permissions:
+  contents: read
 
 on:
   pull_request:

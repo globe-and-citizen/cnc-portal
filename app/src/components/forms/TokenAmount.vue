@@ -138,12 +138,12 @@ watch(
 )
 
 const useMaxBalance = () => {
-  amount.value = selectedToken.value?.balance?.toString() ?? '0.00'
+  amount.value = availableBalance.value.toString() ?? '0.00'
   $v.value.$touch()
 }
 const usePercentageOfBalance = (percentage: number) => {
   // If you want to support decimals per token, add a decimals prop and use it here
-  amount.value = (((selectedToken.value?.balance ?? 0) * percentage) / 100).toFixed(4)
+  amount.value = (((availableBalance.value ?? 0) * percentage) / 100).toFixed(4)
   $v.value.$touch()
 }
 const handleAmountInput = (event: Event) => {

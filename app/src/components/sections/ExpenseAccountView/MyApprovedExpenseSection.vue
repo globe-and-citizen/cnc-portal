@@ -11,28 +11,24 @@
         <template #action-data="{ row }">
           <TransferAction :row="row" />
         </template>
-        <template #expiryDate-data="{ row }">
-          <span>{{ new Date(Number(row.data.expiry) * 1000).toLocaleString('en-US') }}</span>
+        <template #startDate-data="{ row }">
+          <span>{{ new Date(Number(row.data.startDate) * 1000).toLocaleString('en-US') }}</span>
         </template>
-        <template #maxAmountPerTx-data="{ row }">
+        <template #endDate-data="{ row }">
+          <span>{{ new Date(Number(row.data.endDate) * 1000).toLocaleString('en-US') }}</span>
+        </template>
+        <template #frequencyType-data="{ row }">
           <span>
-            {{ row.data.budgetData.find((item: BudgetData) => item.budgetType === 2)?.value }}
-            {{ tokenSymbol(row.data.tokenAddress) }}
-          </span>
-        </template>
-        <template #transactions-data="{ row }">
-          <span
-            >{{ row.balances[0] }}/{{
-              row.data.budgetData.find((item: BudgetData) => item.budgetType === 0)?.value
+            {{
+              row.data.frequencyType == 4
+                ? getCustomFrequency(row.data.customFrequency)
+                : getFrequencyType(row.data.frequencyType)
             }}
-            TXs</span
-          >
+          </span>
         </template>
         <template #amountTransferred-data="{ row }">
           <span
-            >{{ row.balances[1] }}/{{
-              row.data.budgetData.find((item: BudgetData) => item.budgetType === 1)?.value
-            }}
+            >{{ row.balances[1] }}/{{ row.data.amount }}
             {{ tokenSymbol(row.data.tokenAddress) }}</span
           >
         </template>
@@ -44,13 +40,14 @@
 <script setup lang="ts">
 //#region Imports
 import { computed } from 'vue'
-import type { BudgetData, ExpenseResponse } from '@/types'
+import type { ExpenseResponse } from '@/types'
 import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { tokenSymbol, getCurrentUserExpenses } from '@/utils'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { useTanstackQuery } from '@/composables'
 import TransferAction from './TransferAction.vue'
+import { getFrequencyType, getCustomFrequency } from '@/utils'
 //#endregion
 
 const teamStore = useTeamStore()
@@ -71,18 +68,18 @@ const {
 
 const columns = [
   {
-    key: 'expiryDate',
-    label: 'Expiry Date',
+    key: 'startDate',
+    label: 'Start Date',
     sortable: true
   },
   {
-    key: 'maxAmountPerTx',
-    label: 'Max Ammount Per Tx',
-    sortable: false
+    key: 'endDate',
+    label: 'End Date',
+    sortable: true
   },
   {
-    key: 'transactions',
-    label: 'Max Transactions',
+    key: 'frequencyType',
+    label: 'Frequency',
     sortable: false
   },
   {

@@ -1,4 +1,6 @@
 name: Frontend Vitest Unit Tests
+permissions:
+  contents: read
 
 on:
   pull_request_target:
@@ -18,10 +20,10 @@ jobs:
       - name: 🛫 Checkout
         uses: actions/checkout@v4
 
-      - name: 🏗 Set up NodeJS 20.10.0
-        uses: actions/setup-node@v4
+      - name: 🏗 Set up NodeJS 24.x
+        uses: actions/setup-node@v6
         with:
-          node-version: 20.10.0
+          node-version: 24.x
           cache: "npm"
           cache-dependency-path: ./app/package-lock.json
 

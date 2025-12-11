@@ -6,6 +6,7 @@ import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import { log } from '@/utils'
 import { parseError } from '@/utils'
+import * as utils from '@/utils'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import TransferAction from '../TransferAction.vue'
 import { mockToastStore } from '@/tests/mocks/store.mock'
@@ -75,6 +76,18 @@ describe('TransferComponent', () => {
   let wrapper
   let logErrorMock: unknown
 
+  const START_DATE = Math.floor(new Date().getTime() / 1000)
+  const END_DATE = START_DATE + 86400 * 30
+  const budgetLimit = {
+    tokenAddress: '0xTokenAddress',
+    approvedAddress: '0xApprovedAddress',
+    amount: 100,
+    frequencyType: 3,
+    startDate: START_DATE,
+    endDate: END_DATE,
+    customFrequency: 0
+  }
+
   // Component factory function
   const createComponent = (props: { row?: Record<string, unknown> } = {}) => {
     return mount(TransferAction, {
@@ -91,10 +104,9 @@ describe('TransferComponent', () => {
           status: 'enabled',
           signature: '0xSignature',
           data: {
-            tokenAddress: '0xTokenAddress',
-            budgetData: []
+            ...budgetLimit
           },
-          balances: {},
+          balances: ['0', '0'],
           ...(props.row ?? {})
         },
         ...props
@@ -145,6 +157,28 @@ describe('TransferComponent', () => {
     setupMocks()
   })
 
+  it('should render correctly', async () => {
+    vi.spyOn(utils, 'getTokens').mockReturnValue([
+      {
+        symbol: 'USDC',
+        balance: 500,
+        spendableBalance: 0,
+        tokenId: 'usdc',
+        price: 0.999801,
+        code: 'USDC'
+      }
+    ])
+    wrapper = createComponent()
+    //@ts-expect-error not visible on wrapper.vm
+    wrapper.vm.showModal = { mount: true, show: true }
+    await flushPromises()
+    const transferForm = wrapper.findComponent({ name: 'TransferForm' })
+    expect(transferForm.exists()).toBe(true)
+    const spendableBalance = transferForm.find('[data-test="spendable-balance"]')
+    expect(spendableBalance.exists()).toBe(true)
+    expect(spendableBalance.text()).toContain('Spendable balance: 0 USDC')
+  })
+
   it('should call simulateContract with correct arguments when transferring ERC20 token', async () => {
     vi.mocked(readContract).mockResolvedValue(BigInt(200 * 1e6))
     wrapper = createComponent()
@@ -164,8 +198,9 @@ describe('TransferComponent', () => {
         '0xRecipientAddress',
         100000000n,
         {
-          budgetData: [],
-          tokenAddress: '0xTokenAddress'
+          ...budgetLimit,
+          amount: BigInt(Number(budgetLimit.amount) * 1e6),
+          customFrequency: 0n
         },
         '0xSignature'
       ]

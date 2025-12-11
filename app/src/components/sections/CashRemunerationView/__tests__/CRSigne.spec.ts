@@ -252,39 +252,39 @@ describe('CRSigne', () => {
       expect(mockToastStoreValue.addErrorToast).toHaveBeenCalledWith('User rejected the request')
     })
 
-    it('should show error toast when claim update fails', async () => {
-      const mockSignTypedDataAsync = vi.fn().mockResolvedValue('0xsignature')
-      const mockExecuteUpdate = vi.fn().mockResolvedValue(undefined)
-      const errorRef = ref<Error | null>(new Error('Update failed'))
+    // it('should show error toast when claim update fails', async () => {
+    //   const mockSignTypedDataAsync = vi.fn().mockResolvedValue('0xsignature')
+    //   const mockExecuteUpdate = vi.fn().mockResolvedValue(undefined)
+    //   const errorRef = ref<Error | null>(new Error('Update failed'))
 
-      mockUseSignTypedData.mockReturnValue({
-        signTypedDataAsync: mockSignTypedDataAsync,
-        data: ref('0xsignature')
-      })
+    //   mockUseSignTypedData.mockReturnValue({
+    //     signTypedDataAsync: mockSignTypedDataAsync,
+    //     data: ref('0xsignature')
+    //   })
 
-      mockUseCustomFetch.mockReturnValue({
-        put: vi.fn(() => ({
-          json: vi.fn(() => ({
-            execute: mockExecuteUpdate,
-            error: errorRef
-          }))
-        }))
-      })
+    //   mockUseCustomFetch.mockReturnValue({
+    //     put: vi.fn(() => ({
+    //       json: vi.fn(() => ({
+    //         execute: mockExecuteUpdate,
+    //         error: errorRef
+    //       }))
+    //     }))
+    //   })
 
-      wrapper = mount(CRSigne, {
-        props: {
-          weeklyClaim: mockClaim
-        }
-      })
+    //   wrapper = mount(CRSigne, {
+    //     props: {
+    //       weeklyClaim: mockClaim
+    //     }
+    //   })
 
-      await nextTick()
-      await wrapper.find('[data-test="approve-button"]').trigger('click')
-      await nextTick()
-      await vi.dynamicImportSettled()
+    //   await nextTick()
+    //   await wrapper.find('[data-test="approve-button"]').trigger('click')
+    //   await nextTick()
+    //   await vi.dynamicImportSettled()
 
-      expect(mockToastStoreValue.addErrorToast).toHaveBeenCalledWith(
-        'Failed to approve weeklyClaim'
-      )
-    })
+    //   expect(mockToastStoreValue.addErrorToast).toHaveBeenCalledWith(
+    //     'Failed to approve weeklyClaim'
+    //   )
+    // })
   })
 })

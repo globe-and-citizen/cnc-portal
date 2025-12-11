@@ -52,8 +52,11 @@
       <template #member-data="{ row }">
         <UserComponent v-if="!!row.user" :user="row.user"></UserComponent>
       </template>
-      <template #expiryDate-data="{ row }">
-        <span>{{ new Date(Number(row.expiry) * 1000).toLocaleString('en-US') }}</span>
+      <template #startDate-data="{ row }">
+        <span>{{ new Date(Number(row.startDate) * 1000).toLocaleString('en-US') }}</span>
+      </template>
+      <template #endDate-data="{ row }">
+        <span>{{ new Date(Number(row.endDate) * 1000).toLocaleString('en-US') }}</span>
       </template>
       <template #status-data="{ row }">
         <span
@@ -66,27 +69,15 @@
           >{{ row.status }}</span
         >
       </template>
-      <template #maxAmountPerTx-data="{ row }">
-        <span
-          >{{ row.budgetData.find((item: BudgetData) => item.budgetType === 2)?.value }}
-          {{ tokenSymbol(row.tokenAddress) }}</span
-        >
-      </template>
-      <template #transactions-data="{ row }">
-        <span
-          >{{ row.balances[0] }}/{{
-            row.budgetData.find((item: BudgetData) => item.budgetType === 0)?.value
-          }}
-          TXs</span
-        >
+      <template #frequencyType-data="{ row }">
+        <span>{{
+          row.frequencyType == 4
+            ? getCustomFrequency(row.customFrequency)
+            : getFrequencyType(row.frequencyType)
+        }}</span>
       </template>
       <template #amountTransferred-data="{ row }">
-        <span
-          >{{ row.balances[1] }}/{{
-            row.budgetData.find((item: BudgetData) => item.budgetType === 1)?.value
-          }}
-          {{ tokenSymbol(row.tokenAddress) }}</span
-        >
+        <span>{{ row.balances[1] }}/{{ row.amount }} {{ tokenSymbol(row.tokenAddress) }}</span>
       </template>
     </TableComponent>
   </div>
@@ -104,7 +95,8 @@ import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip7
 import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTanstackQuery } from '@/composables'
-import type { BudgetData, ExpenseResponse } from '@/types'
+import type { ExpenseResponse } from '@/types'
+import { getFrequencyType, getCustomFrequency } from '@/utils'
 
 const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
@@ -148,18 +140,18 @@ const columns = [
     sortable: false
   },
   {
-    key: 'expiryDate',
-    label: 'Expiry',
+    key: 'startDate',
+    label: 'Start Date',
     sortable: true
   },
   {
-    key: 'maxAmountPerTx',
-    label: 'Max Ammount Per Tx',
-    sortable: false
+    key: 'endDate',
+    label: 'End Date',
+    sortable: true
   },
   {
-    key: 'transactions',
-    label: 'Max Transactions',
+    key: 'frequencyType',
+    label: 'Frequency',
     sortable: false
   },
   {
@@ -181,7 +173,7 @@ const columns = [
 //#endregion Composables
 const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
   functionName: 'owner',
-  address: expenseAccountEip712Address, //as unknown as Address,
+  address: expenseAccountEip712Address,
   abi: EXPENSE_ACCOUNT_EIP712_ABI
 })
 //deactivate approval

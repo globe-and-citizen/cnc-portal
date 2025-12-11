@@ -1,25 +1,41 @@
 <template>
-  <div class="w-full pb-6">
+  <div class="w-full pb-6" v-if="displayedMember">
     <CardComponent>
-      <div class="flex gap-4 items-start">
-        <div v-if="imageUrl" class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden">
-          <img :src="imageUrl" alt="Card image" class="w-full h-full object-cover" />
-        </div>
-        <div class="flex flex-col gap-8">
-          <div class="card-title mt-4">{{ name }}</div>
-
-          <div class="flex items-center gap-2">
-            <img src="/Vector.png" alt="" class="w-4 h-4" />
-            <AddressToolTip :address="address" />
+      <div class="flex justify-between">
+        <div class="flex gap-4 items-start">
+          <div
+            v-if="displayedMember?.imageUrl"
+            class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden"
+            data-test="claim-user-image-wrapper"
+          >
+            <img
+              :src="displayedMember?.imageUrl"
+              alt="User image"
+              class="w-full h-full object-cover"
+              data-test="claim-user-image"
+            />
           </div>
-          <!-- <div class="text-sm text-gray-500">{{ description }}</div> -->
+          <div class="flex flex-col gap-8">
+            <div class="card-title mt-4" data-test="claim-user-name">
+              {{ displayedMember?.name }}
+            </div>
+
+            <div class="flex items-center gap-2">
+              <img src="/Vector.png" alt="" class="w-4 h-4" />
+              <AddressToolTip :address="displayedMember?.address" data-test="claim-user-address" />
+            </div>
+            <!-- <div class="text-sm text-gray-500">{{ description }}</div> -->
+          </div>
+        </div>
+        <div class="w-60">
+          <SelectMemberItem v-if="memberAddress" :address="memberAddress" />
         </div>
       </div>
     </CardComponent>
   </div>
   <div class="flex bg-transparent gap-x-4">
     <!-- Left Sidebar -->
-    <CardComponent class="w-1/3 flex flex-col justify-between">
+    <CardComponent class="min-w[270px] flex flex-col justify-between">
       <div class="space-y-8">
         <!-- Month Selector -->
         <MonthSelector v-model="selectedMonthObject" />
@@ -29,7 +45,11 @@
           <div
             v-for="week in generatedMonthWeek"
             :key="week.isoWeek"
-            @click="selectedMonthObject = week"
+            @click="
+              () => {
+                selectedMonthObject = week
+              }
+            "
             :class="[
               'border rounded-lg p-3 cursor-pointer',
               week.isoWeek === selectedMonthObject.isoWeek
@@ -89,7 +109,11 @@
                 : 'You need to have a wage set up to submit claims'
             }}</span>
             <div>
-              <SubmitClaims v-if="hasWage" />
+              <SubmitClaims
+                v-if="hasWage"
+                :weekly-claim="selectWeekWeelyClaim"
+                :signed-week-starts="signedWeekStarts"
+              />
               <ButtonUI
                 v-else
                 variant="success"
@@ -160,7 +184,7 @@
                 : 'bg-gray-100 text-gray-400'
             ]"
           >
-            <div class="flex items-center gap-2 w-1/5">
+            <div class="flex items-center gap-2 min-w-[120px]">
               <span
                 class="h-3 w-3 rounded-full"
                 :class="entry.hours > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
@@ -179,7 +203,7 @@
               </div>
             </div>
 
-            <div class="text-base flex items-center gap-2 w-1/5 justify-end">
+            <div class="text-base flex items-center gap-2 min-w-[90px] justify-end">
               <IconifyIcon icon="heroicons:clock" class="w-4 h-4 text-gray-500" />
               {{ entry.hours }} hours
             </div>
@@ -218,18 +242,33 @@ import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
 import { useTanstackQuery } from '@/composables'
 import type { Wage, WeeklyClaim } from '@/types'
+import type { Address } from 'viem'
+
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
-import { storeToRefs } from 'pinia'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
+import SelectMemberItem from '@/components/SelectMemberItem.vue'
 
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 dayjs.extend(weekday)
+
+const route = useRoute()
+const teamStore = useTeamStore()
+const userStore = useUserDataStore()
+const toastStore = useToastStore()
+
+const memberAddress = computed(() => route.params.memberAddress as Address | undefined)
+
+const displayedMember = computed(() => {
+  return (teamStore.currentTeam?.members || []).find(
+    (member) => member.address.toLowerCase() === memberAddress.value?.toLowerCase()
+  )
+})
 
 const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 
@@ -241,26 +280,24 @@ const getColor = (weeklyClaim?: WeeklyClaim) => {
   return 'accent'
 }
 
-const route = useRoute()
-const teamStore = useTeamStore()
-const userStore = useUserDataStore()
-const toastStore = useToastStore()
-const { imageUrl, name, address } = storeToRefs(userStore)
 const teamId = computed(() => teamStore.currentTeam?.id)
-const memberAddress = computed(() => route.params.memberAddress as string | undefined)
 
-const weeklyClaimQueryKey = computed(() => [
-  'weekly-claims',
-  teamId.value,
-  memberAddress.value || userStore.address
-])
+const weeklyClaimQueryKey = computed(() => ['weekly-claims', teamId.value, memberAddress.value])
 const weeklyClaimURL = computed(
-  () =>
-    `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress.value || userStore.address}`
+  () => `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress.value}`
 )
-const { data: memberWeeklyClaims } = useTanstackQuery<Array<WeeklyClaim>>(
+
+const { data: memberWeeklyClaims, refetch } = useTanstackQuery<Array<WeeklyClaim>>(
   weeklyClaimQueryKey,
   weeklyClaimURL
+)
+
+watch(
+  memberAddress,
+  () => {
+    refetch()
+  },
+  { immediate: true }
 )
 
 const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeam?.id])
@@ -297,6 +334,15 @@ const generatedMonthWeek = computed(() => {
 const selectWeekWeelyClaim = computed(() => {
   return memberWeeklyClaims.value?.find(
     (weeklyClaim) => weeklyClaim.weekStart === selectedMonthObject.value.isoString
+  )
+})
+
+// Current signed weeks for disabling dates in claim form
+const signedWeekStarts = computed(() => {
+  return (
+    memberWeeklyClaims.value
+      ?.filter((weeklyClaim) => weeklyClaim.status === 'signed' || weeklyClaim.signature)
+      .map((weeklyClaim) => weeklyClaim.weekStart) ?? []
   )
 })
 

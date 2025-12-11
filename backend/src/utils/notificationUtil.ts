@@ -10,7 +10,7 @@ export const addNotification = async (
     resource?: string;
   }
 ) => {
-  let notifications = await Promise.all(
+  const notifications = await Promise.all(
     userIds.map(async (userId: string) => {
       if (!isAddress(userId)) {
         throw new Error(`Invalid user address: ${userId}`);

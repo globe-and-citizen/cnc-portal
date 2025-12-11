@@ -5,9 +5,9 @@
     <ButtonUI
       @click="goToPrevMonth"
       class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
+      size="sm"
     >
       <IconifyIcon icon="heroicons:chevron-left" class="w-4 h-4" />
-      <span class="ml-1">Prev</span>
     </ButtonUI>
 
     <div class="relative w-full sm:w-auto text-center">
@@ -22,6 +22,7 @@
           <ButtonUI
             @click="toggleMonthPicker"
             class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
+            size="sm"
           >
             <span v-if="model">{{ formatMonthYear(model.year, model.month) }}</span>
             <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4 ml-1" />
@@ -33,8 +34,8 @@
     <ButtonUI
       @click="goToNextMonth"
       class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
+      size="sm"
     >
-      <span class="mr-1">Next</span>
       <IconifyIcon icon="heroicons:chevron-right" class="w-4 h-4" />
     </ButtonUI>
   </div>

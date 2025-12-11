@@ -1,13 +1,12 @@
-import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { Request as ExpressRequest, Response } from 'express';
 import { errorResponse } from '../utils/utils';
-import { isUserMemberOfTeam, isOwnerOfTeam } from './wageController';
+import { isUserMemberOfTeam } from './wageController';
 
-import { prisma } from '../utils';
 import { Address, formatEther, keccak256, zeroAddress } from 'viem';
+import { prisma } from '../utils';
 import publicClient from '../utils/viem.config';
 
-import { Expense, Prisma } from '@prisma/client';
+import { Expense } from '@prisma/client';
 import ABI from '../artifacts/expense-account-eip712.json';
 import { BudgetLimit } from '../types';
 
@@ -16,8 +15,12 @@ type expenseBodyRequest = Pick<Expense, 'signature' | 'data'> & {
   teamId: string;
 };
 
+type Request = ExpressRequest & {
+  address?: string;
+};
+
 export const addExpense = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address as Address;
   const body = req.body as expenseBodyRequest;
   const teamId = Number(body.teamId);
   const signature = body.signature as string;
@@ -41,6 +44,7 @@ export const addExpense = async (req: Request, res: Response) => {
     if (callerAddress != owner) {
       return errorResponse(403, 'Caller is not the owner of the team', res);
     }
+
     // TODO: should be only one expense active for the user
     const expense = await prisma.expense.create({
       data: {
@@ -53,13 +57,12 @@ export const addExpense = async (req: Request, res: Response) => {
     });
     return res.status(201).json(expense);
   } catch (error) {
-    console.error(error);
     return errorResponse(500, error, res);
   }
 };
 
 export const getExpenses = async (req: Request, res: Response) => {
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address as Address;
   const teamId = Number(req.query.teamId);
   const status = String(req.query.status || 'all');
 
@@ -103,8 +106,8 @@ export const getExpenses = async (req: Request, res: Response) => {
 const syncExpenseStatus = async (expense: Expense) => {
   // TODO: implement the logic to get the current status of the expense
   if (
-    (expense.status === 'expired' || expense.status === 'limit-reached') &&
-    'balances' in (expense.data as BudgetLimit)
+    expense.status === 'expired' ||
+    (expense.status === 'limit-reached' && (expense.data as BudgetLimit)?.frequencyType === 0)
   ) {
     return {
       ...expense,
@@ -125,22 +128,33 @@ const syncExpenseStatus = async (expense: Expense) => {
   const balances = (await publicClient.readContract({
     address: expenseAccountEip712Address?.address as Address,
     abi: ABI,
-    functionName: 'balances',
+    functionName: 'expenseBalances',
     args: [keccak256(expense.signature as Address)],
-  })) as unknown as [bigint, bigint, 0 | 1 | 2];
+  })) as unknown as [bigint, bigint, bigint, 0 | 1 | 2];
 
-  const isExpired = data.expiry <= Math.floor(new Date().getTime() / 1000);
+  const isNewPeriod = await publicClient.readContract({
+    address: expenseAccountEip712Address?.address as Address,
+    abi: ABI,
+    functionName: 'isNewPeriod',
+    args: [expense.data, keccak256(expense.signature as Address)],
+  });
 
-  const amountTransferred =
-    data.tokenAddress === zeroAddress
+  // 2. Fetch the latest block
+  const block = await publicClient.getBlock();
+
+  // 3. Access the timestamp
+  const isExpired = data.endDate <= Number(block.timestamp);
+
+  const amountTransferred = isNewPeriod
+    ? '0'
+    : data.tokenAddress === zeroAddress
       ? `${formatEther(balances[1])}`
       : `${Number(balances[1]) / 1e6}`;
 
   const isLimitReached =
-    (data.budgetData.find((item) => item.budgetType === 1)?.value ?? Number.MAX_VALUE) <=
-      Number(amountTransferred) ||
-    (data.budgetData.find((item) => item.budgetType === 0)?.value ?? Number.MAX_VALUE) <=
-      Number(balances[0]);
+    !isNewPeriod &&
+    (Number(data.amount || Number.MAX_VALUE) <= Number(amountTransferred) ||
+      ((expense.data as BudgetLimit).frequencyType === 0 && balances[1] > 0));
 
   const formattedExpense = {
     ...expense,
@@ -152,7 +166,7 @@ const syncExpenseStatus = async (expense: Expense) => {
       ? 'expired'
       : isLimitReached
         ? 'limit-reached'
-        : balances[2] === 2
+        : balances[3] === 2
           ? 'disabled'
           : 'enabled',
   };
@@ -161,7 +175,7 @@ const syncExpenseStatus = async (expense: Expense) => {
     status: formattedExpense.status,
   };
 
-  if (isLimitReached || isExpired) {
+  if (((expense.data as BudgetLimit).frequencyType === 0 && isLimitReached) || isExpired) {
     updateData.data = {
       ...(formattedExpense.data as BudgetLimit),
       balances: {
@@ -181,7 +195,7 @@ const syncExpenseStatus = async (expense: Expense) => {
 
 export const updateExpense = async (req: Request, res: Response) => {
   const expenseId = Number(req.params.id);
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
   const { status } = req.body as {
     status: 'disable' | 'expired' | 'limitReached';
   };
@@ -210,7 +224,8 @@ export const updateExpense = async (req: Request, res: Response) => {
       data: { status: status },
     });
     return res.status(200).json(updatedExpense);
-  } catch (error) {
-    return errorResponse(500, 'Failed to update expense', res);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return errorResponse(500, message, res);
   }
 };

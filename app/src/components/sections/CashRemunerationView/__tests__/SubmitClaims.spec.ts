@@ -330,4 +330,20 @@ describe('SubmitClaims', () => {
       expect(wrapper.find('[role="alert"]').text()).toContain('Server error')
     })
   })
+
+  describe('canSubmitClaim computed', () => {
+    it('returns false when weeklyClaim.status is not \"pending\"', () => {
+      const wrapper = mount(SubmitClaims, {
+        props: { weeklyClaim: { status: 'signed' } },
+        global: {
+          plugins: [
+            createTestingPinia({ createSpy: vi.fn }),
+            [VueQueryPlugin, { queryClient: new QueryClient() }]
+          ]
+        }
+      })
+      //@ts-expect-error not visible on wrapper
+      expect(wrapper.vm.canSubmitClaim).toBe(false)
+    })
+  })
 })

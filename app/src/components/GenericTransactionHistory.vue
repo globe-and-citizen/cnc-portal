@@ -32,11 +32,18 @@
         <ButtonUI
           v-if="showExport"
           variant="success"
-          @click="handleExport"
           :data-test="`${dataTestPrefix}-export-button`"
           class="!ml-0 !px-4"
           >Export</ButtonUI
         >
+        <!-- <ButtonUI
+          v-if="showExport"
+          variant="success"
+          @click="handleExport"
+          :data-test="`${dataTestPrefix}-export-button`"
+          class="!ml-0 !px-4"
+          >Export</ButtonUI
+        > -->
       </div>
     </template>
 
@@ -156,34 +163,42 @@
         v-if="receiptModal && selectedTransaction"
         :receipt-data="formatReceiptData(selectedTransaction)"
         @export-excel="handleReceiptExport"
-        @export-pdf="handleReceiptPdfExport"
       />
+      <!-- <ReceiptComponent
+        v-if="receiptModal && selectedTransaction"
+        :receipt-data="formatReceiptData(selectedTransaction)"
+        @export-excel="handleReceiptExport"
+        @export-pdf="handleReceiptPdfExport"
+      /> -->
     </ModalComponent>
   </CardComponent>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
-import ReceiptComponent from '@/components/ReceiptComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
+import ReceiptComponent from '@/components/ReceiptComponent.vue'
+import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { NETWORK } from '@/constant'
 import type { BaseTransaction } from '@/types/transactions'
-import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
-import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
-import type { ReceiptData } from '@/utils/excelExport'
-import { useToastStore } from '@/stores/useToastStore'
-import { useCurrencyStore } from '@/stores/currencyStore'
+import { Icon as IconifyIcon } from '@iconify/vue'
+import { computed, onMounted, ref } from 'vue'
+
+import { exportReceiptToExcel } from '@/utils/excelExport'
+// import { exportReceiptToPdf } from '@/utils/pdfExport'
+// import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
+// import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 import { useTeamStore } from '@/stores'
+import { useCurrencyStore } from '@/stores/currencyStore'
+import { useToastStore } from '@/stores/useToastStore'
+import type { ReceiptData } from '@/utils/excelExport'
+import { onClickOutside } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
-import { onClickOutside } from '@vueuse/core'
 
 interface Props {
   transactions: BaseTransaction[]
@@ -305,52 +320,52 @@ const formatAmount = (transaction: BaseTransaction, currency: string) => {
       )
 }
 
-const handleExport = async () => {
-  try {
-    const headers = columns.value.map((col) => col.label)
-    const rows = displayedTransactions.value.map((tx) =>
-      columns.value.map((col) => {
-        switch (col.key) {
-          case 'date':
-            return formatDate(tx.date)
-          case 'txHash':
-            return tx.txHash
-          case 'type':
-            return tx.type
-          case 'from':
-            return tx.from
-          case 'to':
-            return tx.to
-          case 'receipt':
-            return getReceiptUrl(tx.txHash)
-          case 'amount':
-            return `${Number(tx.amount)} ${tx.token}`
-          case 'valueUSD':
-            return formatAmount(tx, 'USD')
-          case 'valueLocal':
-            return formatAmount(tx, currencyStore.localCurrency?.code)
-          default:
-            return ''
-        }
-      })
-    )
+// const handleExport = async () => {
+//   try {
+//     const headers = columns.value.map((col) => col.label)
+//     const rows = displayedTransactions.value.map((tx) =>
+//       columns.value.map((col) => {
+//         switch (col.key) {
+//           case 'date':
+//             return formatDate(tx.date)
+//           case 'txHash':
+//             return tx.txHash
+//           case 'type':
+//             return tx.type
+//           case 'from':
+//             return tx.from
+//           case 'to':
+//             return tx.to
+//           case 'receipt':
+//             return getReceiptUrl(tx.txHash)
+//           case 'amount':
+//             return `${Number(tx.amount)} ${tx.token}`
+//           case 'valueUSD':
+//             return formatAmount(tx, 'USD')
+//           case 'valueLocal':
+//             return formatAmount(tx, currencyStore.localCurrency?.code)
+//           default:
+//             return ''
+//         }
+//       })
+//     )
 
-    const date = new Date().toISOString().split('T')[0]
-    const [excelSuccess, pdfSuccess] = await Promise.all([
-      exportTransactionsToExcel(headers, rows, date),
-      exportTransactionsToPdf(headers, rows, date)
-    ])
+//     const date = new Date().toISOString().split('T')[0]
+//     const [excelSuccess, pdfSuccess] = await Promise.all([
+//       exportTransactionsToExcel(headers, rows, date),
+//       exportTransactionsToPdf(headers, rows, date)
+//     ])
 
-    toastStore.addSuccessToast(
-      excelSuccess && pdfSuccess
-        ? 'Transactions exported successfully'
-        : 'Failed to export some transactions'
-    )
-  } catch (error) {
-    console.error('Error exporting transactions:', error)
-    toastStore.addErrorToast('Failed to export transactions')
-  }
-}
+//     toastStore.addSuccessToast(
+//       excelSuccess && pdfSuccess
+//         ? 'Transactions exported successfully'
+//         : 'Failed to export some transactions'
+//     )
+//   } catch (error) {
+//     console.error('Error exporting transactions:', error)
+//     toastStore.addErrorToast('Failed to export transactions')
+//   }
+// }
 
 const handleReceiptClick = (transaction: BaseTransaction) => {
   const receiptData = formatReceiptData(transaction)
@@ -398,17 +413,17 @@ const handleReceiptExport = (receiptData: ReceiptData) => {
   }
 }
 
-const handleReceiptPdfExport = async (receiptData: ReceiptData) => {
-  try {
-    const success = await exportReceiptToPdf(receiptData)
-    toastStore.addSuccessToast(
-      success ? 'Receipt PDF exported successfully' : 'Failed to export receipt PDF'
-    )
-  } catch (error) {
-    console.error('Error exporting receipt PDF:', error)
-    toastStore.addErrorToast('Failed to export receipt PDF')
-  }
-}
+// const handleReceiptPdfExport = async (receiptData: ReceiptData) => {
+//   try {
+//     const success = await exportReceiptToPdf(receiptData)
+//     toastStore.addSuccessToast(
+//       success ? 'Receipt PDF exported successfully' : 'Failed to export receipt PDF'
+//     )
+//   } catch (error) {
+//     console.error('Error exporting receipt PDF:', error)
+//     toastStore.addErrorToast('Failed to export receipt PDF')
+//   }
+// }
 
 const getTypeClass = (type: string) => ({
   'badge-success': type.toLowerCase() === 'deposit',

@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref, computed, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import TableComponent from '@/components/TableComponent.vue'
 
@@ -222,7 +222,9 @@ const emit = defineEmits<{
 
 function updateValue(index: number, value: number) {
   const updatedDatas = [...props.datas]
-  updatedDatas[index].value = value.toString()
-  emit('update:datas', updatedDatas)
+  if (updatedDatas[index]) {
+    updatedDatas[index].value = value.toString()
+    emit('update:datas', updatedDatas)
+  }
 }
 </script>

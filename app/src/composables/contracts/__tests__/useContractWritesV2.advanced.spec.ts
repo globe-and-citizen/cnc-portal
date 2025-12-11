@@ -61,7 +61,8 @@ vi.mock('@/composables/useTransactionTimeline', () => ({
 vi.mock('@/utils', () => ({
   formatDataForDisplay: mockFormatDataForDisplay,
   log: mockLog,
-  waitForCondition: mockWaitForCondition
+  waitForCondition: mockWaitForCondition,
+  parseErrorV2: vi.fn((error: Error) => error.name + ': ' + error.message.split('.')[0])
 }))
 
 // Test constants
@@ -217,7 +218,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
 
       expect(result).toBeUndefined()
       expect(mockLog.error).toHaveBeenCalledWith(
-        `Failed to execute ${MOCK_DATA.functionName}:`,
+        `Failed to execute ${MOCK_DATA.functionName}: \n`,
         expect.any(Error)
       )
     })
@@ -241,7 +242,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       errorRef.value = writeError
       await nextTick()
 
-      expect(mockLog.error).toHaveBeenCalledWith('Contract write error:', writeError)
+      expect(mockLog.error).toHaveBeenCalledWith('Contract write error. \n', expect.any(String))
     })
 
     it('should handle receipt error watchers', async () => {
@@ -261,7 +262,10 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       errorRef.value = receiptError
       await nextTick()
 
-      expect(mockLog.error).toHaveBeenCalledWith('Transaction receipt error:', receiptError)
+      expect(mockLog.error).toHaveBeenCalledWith(
+        'Transaction receipt error. \n',
+        expect.any(String)
+      )
     })
   })
 

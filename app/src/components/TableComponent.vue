@@ -152,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineEmits, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import type { PropType } from 'vue'
 
@@ -290,14 +290,16 @@ const columns = computed(() => {
   }
   const defaultColumns =
     props.columns ??
-    (Object.keys(props.rows[0]).map((key) => ({
-      key,
-      label: key,
-      // label: upperFirst(key),// Update by installing unjs https://github.com/unjs/scule
-      sortable: false,
-      class: undefined,
-      sort: defaultSort
-    })) as TableColumn[])
+    (props.rows[0]
+      ? (Object.keys(props.rows[0]).map((key) => ({
+          key,
+          label: key,
+          // label: upperFirst(key),// Update by installing unjs https://github.com/unjs/scule
+          sortable: false,
+          class: undefined,
+          sort: defaultSort
+        })) as TableColumn[])
+      : [])
 
   return defaultColumns
 })

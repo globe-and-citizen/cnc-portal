@@ -1,0 +1,32 @@
+name: Dashboard Code Quality Check
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: ["**"]
+    paths:
+      - "dashboard/**"
+  workflow_dispatch:
+
+jobs:
+  dashboard_code_quality_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛫 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: "npm"
+          cache-dependency-path: ./dashboard/package-lock.json
+
+      - name: ⚙️ NPM install
+        run: npm ci
+        working-directory: ./dashboard
+
+      - name: ⚙️ Run lint
+        run: npm run lint
+        working-directory: ./dashboard

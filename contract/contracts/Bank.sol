@@ -18,6 +18,13 @@ interface IInvestorView {
   function getShareholders() external view returns (Shareholder[] memory);
 }
 
+interface IOfficer {
+  function getFeeCollector() external view returns (address);
+  function getFeeFor(string calldata contractType) external view returns (uint16);
+  function isFeeCollectorToken(address tokenAddress) external view returns (bool);
+}
+
+
 contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   using SafeERC20 for IERC20;
 
@@ -52,6 +59,9 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   uint256 public totalDividends;
 
+  // Add new state variable - MUST be added after existing ones
+  address public officerAddress;
+
   /**
    * @dev Mapping to track total locked token balances for each supported token
    * token address => total amount locked as dividends for that token
@@ -82,6 +92,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   event Transfer(address indexed sender, address indexed to, uint256 amount);
 
+  event FeePaid(address indexed feeCollector, uint256 amount);
   /**
    * @dev Emitted when ERC20 tokens are transferred from the contract.
    * @param sender The address that initiated the transfer (contract owner).
@@ -185,6 +196,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
       require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
       supportedTokens[_tokenAddresses[i]] = true;
     }
+    require(msg.sender!=address(0), 'msg send cannot be zero');
+    officerAddress=msg.sender;
   }
 
   /**
@@ -295,18 +308,41 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
 
-    (bool sent, ) = _to.call{value: _amount}('');
-    require(sent, 'Failed to transfer');
+    // --- Step 1: Get fee configuration ---
+    uint16 feeBps = _getFeeBps(); // e.g., 50 = 0.5%
+    require(feeBps <= 10_000, 'Fee cannot exceed 100%');
 
-    emit Transfer(msg.sender, _to, _amount);
+    uint256 fee = 0;
+    uint256 net = _amount;
+
+    // --- Step 2: Calculate and process fee if configured ---
+    if (feeBps > 0) {
+      fee = (_amount * feeBps) / 10_000;
+      net = _amount - fee;
+
+      // Get fee collector address
+      address feeCollector = IOfficer(officerAddress).getFeeCollector();
+      require(feeCollector != address(0), 'Fee collector not configured');
+
+      // Send fee to fee collector
+      (bool sentFee, ) = feeCollector.call{value: fee}('');
+      require(sentFee, 'Fee transfer failed');
+      emit FeePaid(feeCollector, fee);
+    }
+
+    // --- Step 3: Send net amount to recipient ---
+    (bool sentNet, ) = _to.call{value: net}('');
+    require(sentNet, 'Transfer failed');
+
+    emit Transfer(msg.sender, _to, net);
   }
 
   /**
    * @notice Transfers ERC20 tokens from the contract to a specified address
-   * @dev Only owner can call this function. Uses unlocked token balance for transfers
+   * @dev Only owner can call this function. Fees are only charged for FeeCollector-supported tokens
    * @param _token The address of the ERC20 token contract
    * @param _to The recipient address
-   * @param _amount The amount of tokens to transfer
+   * @param _amount The amount of tokens to transfer (before fees)
    * @custom:security Protected against reentrancy and requires contract to be unpaused
    */
   function transferToken(
@@ -319,8 +355,34 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     require(_amount > 0, 'Amount must be greater than zero');
     require(_amount <= getUnlockedTokenBalance(_token), 'Insufficient unlocked token balance');
 
-    IERC20(_token).safeTransfer(_to, _amount);
-    emit TokenTransfer(msg.sender, _to, _token, _amount);
+    // Check if this is a fee-supported token (USDC or USDT)
+    bool shouldChargeFee = _isSupportedFeeToken(_token);
+
+    uint256 fee = 0;
+    uint256 net = _amount;
+
+    // Only charge fee for FeeCollector-supported tokens
+    if (shouldChargeFee) {
+      uint16 feeBps = _getFeeBps(); // e.g., 50 = 0.5%
+      require(feeBps <= 10_000, 'Fee cannot exceed 100%');
+
+      if (feeBps > 0) {
+        fee = (_amount * feeBps) / 10_000;
+        net = _amount - fee;
+
+        // Get fee collector address
+        address feeCollector = IOfficer(officerAddress).getFeeCollector();
+        require(feeCollector != address(0), 'Fee collector not configured');
+
+        // Transfer fee to fee collector
+        IERC20(_token).safeTransfer(feeCollector, fee);
+        emit FeePaid(feeCollector, fee);
+      }
+    }
+
+    // Transfer net amount to recipient
+    IERC20(_token).safeTransfer(_to, net);
+    emit TokenTransfer(msg.sender, _to, _token, net);
   }
 
   /**
@@ -508,6 +570,24 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     // interaction
     IERC20(_token).safeTransfer(msg.sender, amt);
     emit TokenDividendClaimed(msg.sender, _token, amt);
+  }
+
+  /**
+   * @dev Internal function to get the fee basis points from Officer contract
+   * @return The fee in basis points (e.g., 50 = 0.5%)
+   */
+  function _getFeeBps() internal view returns (uint16) {
+      return IOfficer(officerAddress).getFeeFor('BANK');
+  }
+  
+
+  /**
+   * @dev Internal function to check if a token is supported by the FeeCollector
+   * @param _token The token address to check
+   * @return bool True if the token is supported by the FeeCollector
+   */
+  function _isSupportedFeeToken(address _token) internal view returns (bool) {
+    return IOfficer(officerAddress).isFeeCollectorToken(_token);
   }
 
   /**

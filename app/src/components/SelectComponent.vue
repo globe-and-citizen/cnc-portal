@@ -49,7 +49,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { onClickOutside } from '@vueuse/core'
 
 interface Option {
-  value: string
+  value: string | number
   label?: string
 }
 
@@ -82,7 +82,7 @@ const isDropdown = ref(false)
 const target = ref<HTMLElement>()
 const focusedIndex = ref(-1)
 const selectedValue = ref(
-  props.modelValue || (props.options.length > 0 ? props.options[0].value : '')
+  props.modelValue || (props.options.length > 0 ? (props.options[0]?.value ?? '') : '')
 )
 
 // Close dropdown when clicking outside
@@ -109,7 +109,10 @@ const handleKeydown = (event: KeyboardEvent) => {
     case 'Enter':
       event.preventDefault()
       if (focusedIndex.value >= 0) {
-        selectOption(props.options[focusedIndex.value])
+        const option = props.options[focusedIndex.value]
+        if (option) {
+          selectOption(option)
+        }
       }
       break
     case 'Escape':
@@ -146,8 +149,9 @@ const formattedSelectedValue = computed(() => {
   const displayValue =
     selectedOption?.label ||
     selectedOption?.value ||
-    props.options[0].label ||
-    props.options[0].value
+    props.options[0]?.label ||
+    props.options[0]?.value ||
+    ''
 
   try {
     return props.formatValue(displayValue)
@@ -169,7 +173,7 @@ watch(
 
 // Emit initial value if no modelValue is provided
 onMounted(() => {
-  if (!props.modelValue && props.options.length > 0) {
+  if (!props.modelValue && props.options.length > 0 && props.options[0]) {
     const initialValue = props.options[0].value
     selectedValue.value = initialValue
     emits('update:modelValue', initialValue)

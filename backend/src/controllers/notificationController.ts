@@ -1,14 +1,13 @@
-import { prisma, errorResponse } from '../utils';
 import { Request, Response } from 'express';
-import { addNotification } from '../utils';
+import { addNotification, errorResponse, prisma } from '../utils';
 
 const getNotification = async (req: Request, res: Response) => {
   //check if userAddress property is set
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
 
   try {
     //retrieve notification
-    let notifications = await prisma.notification.findMany({
+    const notifications = await prisma.notification.findMany({
       where: {
         userAddress: callerAddress as string,
       },
@@ -34,7 +33,7 @@ const getNotification = async (req: Request, res: Response) => {
 };
 
 const updateNotification = async (req: Request, res: Response) => {
-  let { id } = req.params;
+  const { id } = req.params;
 
   const _id = parseInt(id as string);
 
@@ -42,7 +41,7 @@ const updateNotification = async (req: Request, res: Response) => {
     return errorResponse(400, 'Notification ID invalid format', res);
   }
 
-  const callerAddress = (req as any).address;
+  const callerAddress = req.address;
 
   try {
     let notification = await prisma.notification.findUnique({
@@ -86,7 +85,7 @@ const createBulkNotifications = async (req: Request, res: Response) => {
     const notifications = await addNotification(userIds, {
       message,
       subject,
-      author: (req as any).address,
+      author: req.address,
       resource,
     });
     res.status(201).json({
@@ -98,4 +97,4 @@ const createBulkNotifications = async (req: Request, res: Response) => {
   }
 };
 
-export { getNotification, updateNotification, createBulkNotifications };
+export { createBulkNotifications, getNotification, updateNotification };

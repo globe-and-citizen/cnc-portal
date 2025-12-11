@@ -160,7 +160,7 @@ const groupEventsByCampaignCode = (events: ExtendedEvent[]) => {
       if (!acc[event.campaignCode]) {
         acc[event.campaignCode] = []
       }
-      acc[event.campaignCode].push(event)
+      acc[event.campaignCode]!.push(event)
       return acc
     },
     {} as Record<string, ExtendedEvent[]>

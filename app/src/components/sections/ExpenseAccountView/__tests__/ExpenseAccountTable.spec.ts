@@ -16,19 +16,18 @@ const mocks = vi.hoisted(() => ({
   mockReadContract: vi.fn()
 }))
 
-const validExpiry = new Date().getTime() / 1000 + 60 * 60
-const invalidExpiry = new Date().getTime() / 1000 - 60 * 60
+const START_DATE = new Date().getTime() / 1000 + 60 * 60
+const END_DATE = new Date().getTime() / 1000 + 2 * 60 * 60
 
 const mockApprovals = [
   {
     approvedAddress: '0x1234567890123456789012345678901234567890',
     tokenAddress: USDC_ADDRESS,
-    budgetData: [
-      { budgetType: 0, value: 10 },
-      { budgetType: 1, value: 100 },
-      { budgetType: 2, value: 10 }
-    ],
-    expiry: validExpiry,
+    amount: 150,
+    frequencyType: 0,
+    customFrequency: 0,
+    startDate: START_DATE,
+    endDate: END_DATE,
     signature: `0xSignatureOne`,
     name: `Some One`,
     avatarUrl: null,
@@ -46,12 +45,11 @@ const mockApprovals = [
   {
     approvedAddress: '0x1234567890123456789012345678901234567890',
     tokenAddress: USDC_ADDRESS,
-    budgetData: [
-      { budgetType: 0, value: 11 },
-      { budgetType: 1, value: 111 },
-      { budgetType: 2, value: 11 }
-    ],
-    expiry: validExpiry,
+    amount: 500,
+    frequencyType: 1,
+    customFrequency: 0,
+    startDate: START_DATE,
+    endDate: END_DATE,
     signature: `0xSignaturTwo`,
     name: `Another One`,
     avatarUrl: null,
@@ -69,12 +67,11 @@ const mockApprovals = [
   {
     approvedAddress: '0x1234567890123456789012345678901234567890',
     tokenAddress: zeroAddress,
-    budgetData: [
-      { budgetType: 0, value: 12 },
-      { budgetType: 1, value: 123 },
-      { budgetType: 2, value: 12 }
-    ],
-    expiry: invalidExpiry,
+    amount: 10,
+    frequencyType: 4,
+    customFrequency: 3 * 24 * 60 * 60,
+    startDate: START_DATE,
+    endDate: END_DATE,
     signature: `0xSignatureThree`,
     name: `Last One`,
     avatarUrl: null,
@@ -255,7 +252,7 @@ describe('ExpenseAccountTable', () => {
       expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
       const firstRow = expenseAccountTable.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[0].budgetData[0].value)
+      expect(firstRow.html()).toContain(mockApprovals[0].amount)
       expect(expenseAccountTable.find('[data-test="1-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="2-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="disable-button"]').exists()).toBeTruthy()
@@ -275,7 +272,7 @@ describe('ExpenseAccountTable', () => {
       expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
       const firstRow = expenseAccountTable.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[1].budgetData[0].value)
+      expect(firstRow.html()).toContain(mockApprovals[1].amount)
       expect(expenseAccountTable.find('[data-test="1-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="2-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="disable-button"]').exists()).toBeFalsy()
@@ -295,7 +292,8 @@ describe('ExpenseAccountTable', () => {
       expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
       const firstRow = expenseAccountTable.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[2].budgetData[0].value)
+      expect(firstRow.html()).toContain(mockApprovals[2].amount)
+      expect(firstRow.html()).toContain('3 day(s)')
       expect(expenseAccountTable.find('[data-test="1-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="2-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="disable-button"]').exists()).toBeFalsy()
@@ -316,7 +314,7 @@ describe('ExpenseAccountTable', () => {
       expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
       const firstRow = expenseAccountTable.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[1].budgetData[0].value)
+      expect(firstRow.html()).toContain(mockApprovals[1].amount)
       const disableButton = firstRow.findComponent(ButtonUI)
       expect(disableButton.exists()).toBeTruthy()
       expect(disableButton.props('disabled')).toBe(false)
@@ -339,7 +337,7 @@ describe('ExpenseAccountTable', () => {
       expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
       const firstRow = expenseAccountTable.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[0].budgetData[0].value)
+      expect(firstRow.html()).toContain(mockApprovals[0].amount)
       const enableButton = firstRow.findComponent(ButtonUI)
       expect(enableButton.exists()).toBeTruthy()
       enableButton.trigger('click')

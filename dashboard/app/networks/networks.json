@@ -1,0 +1,43 @@
+{
+  "polygon": {
+    "chainId": "0x89",
+    "networkName": "Polygon Mainnet",
+    "rpcUrl": "https://polygon-mainnet.infura.io",
+    "blockExplorerUrl": "https://polygonscan.com/",
+    "currencySymbol": "POL"
+  },
+  "hardhat": {
+    "chainId": "0x7a69",
+    "networkName": "Hardhat",
+    "rpcUrl": "http://localhost:8545",
+    "currencySymbol": "GO"
+  },
+  "sepolia": {
+    "chainId": "0xaa36a7",
+    "networkName": "Sepolia test network",
+    "rpcUrl": "https://sepolia.infura.io/v3/",
+    "blockExplorerUrl": "https://sepolia.etherscan.io",
+    "currencySymbol": "SepoliaETH"
+  },
+  "ethereum": {
+    "chainId": "0x1",
+    "networkName": "Ethereum Mainnet",
+    "rpcUrl": "https://mainnet.infura.io/v3/",
+    "blockExplorerUrl": "https://etherscan.io",
+    "currencySymbol": "ETH"
+  },
+  "amoy": {
+    "chainId": "0x13882",
+    "networkName": "Polygon Amoy Testnet",
+    "rpcUrl": "https://rpc-amoy.polygon.technology",
+    "blockExplorerUrl": "https://amoy.polygonscan.com",
+    "currencySymbol": "AMOYPOL"
+  },
+  "holesky": {
+    "chainId": "0x4268",
+    "networkName": "Holesky Testnet",
+    "rpcUrl": "https://ethereum-holesky.publicnode.com/",
+    "blockExplorerUrl": "https://holesky.etherscan.io/",
+    "currencySymbol": "ETH"
+  }
+}

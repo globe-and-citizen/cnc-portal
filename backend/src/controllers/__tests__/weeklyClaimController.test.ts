@@ -1,16 +1,16 @@
-import request from 'supertest';
-import express, { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../utils';
-import { describe, it, beforeEach, expect, vi } from 'vitest';
 import { WeeklyClaim } from '@prisma/client';
-import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
+import express, { NextFunction, Request, Response } from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import weeklyClaimRoutes from '../../routes/weeklyClaimRoute';
-import { authorizeUser } from '../../middleware/authMiddleware';
+import { prisma } from '../../utils';
+import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
+import { Address } from 'viem';
 
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
-  authorizeUser: vi.fn((req: Request, res: Response, next: NextFunction) => {
-    (req as any).address = '0x1234567890123456789012345678901234567890';
+  authorizeUser: vi.fn((req: Request & { address: Address }, res: Response, next: NextFunction) => {
+    req.address = '0x1234567890123456789012345678901234567890';
     next();
   }),
 }));
@@ -18,6 +18,14 @@ vi.mock('../../middleware/authMiddleware', () => ({
 // Mock cashRemunerationUtil
 vi.mock('../../utils/cashRemunerationUtil', () => ({
   isCashRemunerationOwner: vi.fn().mockResolvedValue(true),
+}));
+
+// Hoisted mock for viem public client to avoid initialization order issues
+const { readContractMock } = vi.hoisted(() => ({
+  readContractMock: vi.fn(),
+}));
+vi.mock('../../utils/viem.config', () => ({
+  default: { readContract: readContractMock },
 }));
 
 // Mock prisma
@@ -33,6 +41,9 @@ vi.mock('../../utils', async () => {
       },
       wage: {
         findUnique: vi.fn(),
+      },
+      teamContract: {
+        findFirst: vi.fn(),
       },
       $transaction: vi.fn(),
     },
@@ -90,7 +101,7 @@ describe('Weekly Claim Controller', () => {
           status: 'disabled',
           weekStart: new Date('2024-07-22'),
           wage: mockWage('0x456'),
-          signature: '0xabc'
+          signature: '0xabc',
         })
       );
 
@@ -110,7 +121,7 @@ describe('Weekly Claim Controller', () => {
           id: 1,
           status: 'pending',
           weekStart: new Date('2024-07-22'),
-          wage: mockWage('0x456')
+          wage: mockWage('0x456'),
         })
       );
 
@@ -131,7 +142,7 @@ describe('Weekly Claim Controller', () => {
           status: 'signed',
           weekStart: new Date('2024-07-22'),
           wage: mockWage('0x456'),
-          signature: '0xabc'
+          signature: '0xabc',
         })
       );
 
@@ -152,7 +163,7 @@ describe('Weekly Claim Controller', () => {
           status: 'withdrawn',
           weekStart: new Date('2024-07-22'),
           wage: mockWage('0x456'),
-          signature: '0xabc'
+          signature: '0xabc',
         })
       );
 
@@ -173,7 +184,7 @@ describe('Weekly Claim Controller', () => {
           status: 'disabled',
           weekStart: new Date('2024-07-22'),
           wage: mockWage('0x123'),
-          signature: '0xabc'
+          signature: '0xabc',
         })
       );
       vi.spyOn(prisma, '$transaction').mockResolvedValue([
@@ -258,7 +269,6 @@ describe('Weekly Claim Controller', () => {
         message: 'Weekly claim already withdrawn',
       });
     });
-
 
     it('should return 200 if weekly claim is updated successfully', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
@@ -510,7 +520,7 @@ describe('Weekly Claim Controller', () => {
       const response = await request(app).get('/?teamId=1&status=invalid');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: 'Invalid status. Allowed status are: sign, withdraw, pending',
+        message: 'Invalid status. Allowed statuses are: pending, signed, withdrawn, disabled',
       });
     });
 
@@ -597,9 +607,7 @@ describe('Weekly Claim Controller', () => {
         },
       ];
 
-      const findManySpy = vi
-        .spyOn(prisma.weeklyClaim, 'findMany')
-        .mockResolvedValue(mockWeeklyClaims);
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue(mockWeeklyClaims);
 
       const response = await request(app).get('/?teamId=1&memberAddress=0xAnotherAddress');
       expect(response.status).toBe(200);
@@ -625,6 +633,141 @@ describe('Weekly Claim Controller', () => {
         });
 
       expect(response.body).toEqual(expectedResponse);
+    });
+  });
+
+  describe('POST: /sync', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('should return 400 if teamId is missing', async () => {
+      const response = await request(app).post('/sync');
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: 'Missing or invalid teamId',
+      });
+    });
+
+    it('should return 404 if cash remuneration contract not found for team', async () => {
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(null);
+
+      const response = await request(app).post('/sync?teamId=1');
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({
+        message: 'Cash Remuneration contract not found for the team',
+      });
+    });
+
+    it('should return 404 if contract has invalid address', async () => {
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue({
+        id: 10,
+        teamId: 1,
+        type: 'CashRemunerationEIP712',
+        address: 'not-an-eth-address',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      const response = await request(app).post('/sync?teamId=1');
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({
+        message: 'Cash Remuneration contract not found for the team',
+      });
+    });
+
+    it('should skip invalid signatures and update status from signed->withdrawn when paid on-chain', async () => {
+      // Mock valid contract
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue({
+        id: 11,
+        teamId: 1,
+        type: 'CashRemunerationEIP712',
+        address: '0x1234567890123456789012345678901234567890',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      const claimWithInvalidSig = mockWeeklyClaim({
+        id: 1,
+        status: 'signed',
+        signature: 'not-hex',
+      }) as any;
+      const claimNeedingUpdate = mockWeeklyClaim({
+        id: 2,
+        status: 'signed',
+        signature: '0xabcdef',
+      }) as any;
+
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
+        claimWithInvalidSig,
+        claimNeedingUpdate,
+      ]);
+
+      readContractMock.mockReset();
+      readContractMock.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+      const updateSpy = vi.spyOn(prisma.weeklyClaim, 'update').mockResolvedValue({
+        ...claimNeedingUpdate,
+        status: 'withdrawn',
+      });
+
+      const response = await request(app).post('/sync?teamId=1');
+      expect(response.status).toBe(200);
+      expect(response.body.teamId).toBe(1);
+      expect(response.body.totalProcessed).toBe(2);
+      expect(response.body.skipped).toEqual([{ id: 1, reason: 'Missing or invalid signature' }]);
+      expect(response.body.updated).toEqual([
+        {
+          id: 2,
+          previousStatus: 'signed',
+          newStatus: 'withdrawn',
+        },
+      ]);
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: 2 },
+        data: { status: 'withdrawn' },
+      });
+    });
+
+    it('should skip claim with readContract error and add Failed to read contract state reason', async () => {
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue({
+        id: 12,
+        teamId: 1,
+        type: 'CashRemunerationEIP712',
+        address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      const claim = mockWeeklyClaim({ id: 5, status: 'signed', signature: '0xdeadbeef' }) as any;
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([claim]);
+
+      readContractMock.mockReset();
+      readContractMock.mockRejectedValueOnce(new Error('RPC error'));
+
+      const response = await request(app).post('/sync?teamId=1');
+      expect(response.status).toBe(200);
+      expect(response.body.updated).toEqual([]);
+      expect(response.body.skipped).toEqual([{ id: 5, reason: 'Failed to read contract state' }]);
+    });
+
+    it('should return 500 when an unexpected error occurs before processing loop', async () => {
+      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue({
+        id: 13,
+        teamId: 1,
+        type: 'CashRemunerationEIP712',
+        address: '0x1234567890123456789012345678901234567890',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockRejectedValue(new Error('Database failure'));
+
+      const response = await request(app).post('/sync?teamId=1');
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        message: 'Internal server error has occured',
+        error: 'Database failure',
+      });
     });
   });
 

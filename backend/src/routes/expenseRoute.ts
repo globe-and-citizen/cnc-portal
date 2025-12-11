@@ -1,14 +1,13 @@
 import express from 'express';
 import { addExpense, getExpenses, updateExpense } from '../controllers/expenseController';
 import {
-  validateBody,
-  validateQuery,
-  validateParams,
-  validateBodyAndParams,
   addExpenseBodySchema,
   getExpensesQuerySchema,
   updateExpenseBodySchema,
   updateExpenseParamsSchema,
+  validateBody,
+  validateBodyAndParams,
+  validateQuery,
 } from '../validation';
 
 const expenseRoutes = express.Router();

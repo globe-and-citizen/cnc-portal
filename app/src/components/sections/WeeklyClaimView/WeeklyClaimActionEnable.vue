@@ -1,14 +1,19 @@
 <template>
   <a
     data-test="enable-action"
+    :class="['text-sm', { disabled: isLoad }]"
+    :aria-disabled="isLoad"
+    :tabindex="isLoad ? -1 : 0"
+    :style="{ pointerEvents: isLoad ? 'none' : undefined }"
     @click="
       async () => {
+        if (isLoad) return
         await enableClaim()
         $emit('close')
       }
     "
-    class="text-sm"
   >
+    <span v-if="isLoad" class="loading loading-spinner loading-xs mr-2"></span>
     Enable
   </a>
 </template>
@@ -28,7 +33,7 @@ const props = defineProps<{
   isCashRemunerationOwner: boolean
   weeklyClaim: WeeklyClaim
 }>()
-defineEmits(['close'])
+const emit = defineEmits(['close', 'loading'])
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
@@ -40,25 +45,29 @@ const cashRemunerationAddress = computed(() =>
 
 const claimAction = ref<'enable' | null>(null)
 
-const weeklyClaimUrl = computed(
-  () => `/weeklyclaim/${props.weeklyClaim.id}/?action=${claimAction.value}`
-)
+const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeam?.id}`)
 
-const { execute: updateClaimStatus, error: updateClaimError } = useCustomFetch(weeklyClaimUrl, {
-  immediate: false
-})
-  .put()
+const { execute: syncWeeklyClaim, error: syncWeeklyClaimError } = useCustomFetch(
+  weeklyClaimSyncUrl,
+  {
+    immediate: false
+  }
+)
+  .post()
   .json()
 
 const isLoading = ref(false)
+const isLoad = computed(() => isLoading.value)
 
 // Methods
 const enableClaim = async () => {
   if (!props.isCashRemunerationOwner) return
 
   isLoading.value = true
+  emit('loading', true)
   if (!cashRemunerationAddress.value) {
     isLoading.value = false
+    emit('loading', false)
     toastStore.addErrorToast('Cash Remuneration EIP712 contract address not found')
     return
   }
@@ -89,22 +98,26 @@ const enableClaim = async () => {
 
       claimAction.value = 'enable'
 
-      await updateClaimStatus()
+      await syncWeeklyClaim()
 
-      if (updateClaimError.value) {
+      if (syncWeeklyClaimError.value) {
         toastStore.addErrorToast('Failed to update Claim status')
       }
       queryClient.invalidateQueries({
         queryKey: ['weekly-claims', teamStore.currentTeam?.id]
       })
+
+      isLoading.value = false
+      emit('loading', false)
     } else {
       toastStore.addErrorToast('Transaction failed: Failed to enable claim')
+      // keep loading until explicit success
     }
-
-    isLoading.value = false
   } catch (error) {
     console.log('error: ', error)
+    // Stop loading on cancel or explicit error
     isLoading.value = false
+    emit('loading', false)
     log.error('Enable error', error)
     const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
 

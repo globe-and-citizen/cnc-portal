@@ -1,0 +1,37 @@
+{
+  "name": "dashboard",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "dependencies": {
+    "@iconify-json/lucide": "^1.2.73",
+    "@iconify-json/simple-icons": "^1.2.58",
+    "@nuxt/ui": "^4.1.0",
+    "@tanstack/vue-query": "^5.92.0",
+    "@unovis/ts": "^1.6.1",
+    "@unovis/vue": "^1.6.1",
+    "@vueuse/nuxt": "^13.9.0",
+    "@wagmi/vue": "^0.4.2",
+    "date-fns": "^4.1.0",
+    "ethers": "^6.15.0",
+    "nuxt": "^4.2.1",
+    "siwe": "^3.0.0",
+    "viem": "^2.40.3",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.10.0",
+    "@types/node": "^24.10.1",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.1.3"
+  }
+}

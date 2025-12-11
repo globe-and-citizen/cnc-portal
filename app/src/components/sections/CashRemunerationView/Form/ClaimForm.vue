@@ -10,7 +10,11 @@
         :format="formatUTC"
         :enable-time-picker="false"
         auto-apply
-        class="input input-bordered input-md"
+        :disabledDates="disabledDates"
+        :ui="{
+          input: 'input input-bordered input-md'
+        }"
+        class=""
         data-test="date-input"
         utc="preserve"
         :disabled="isEdit"
@@ -93,13 +97,15 @@ interface Props {
   initialData?: Partial<ClaimFormData>
   isEdit?: boolean
   isLoading?: boolean
+  disabledWeekStarts?: string[]
 }
 
 dayjs.extend(utc)
 
 const props = withDefaults(defineProps<Props>(), {
   isEdit: false,
-  isLoading: false
+  isLoading: false,
+  disabledWeekStarts: () => []
 })
 
 const emit = defineEmits<{
@@ -142,6 +148,22 @@ const formatUTC = (value: Date | string | null | undefined) => {
     return dayjs.utc(Date.UTC(year, month, day)).format('YYYY-MM-DD [UTC]')
   }
   return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
+}
+
+const disabledDates = (date: Date | string | null | undefined) => {
+  if (!date) return true
+
+  const today = dayjs.utc().startOf('day')
+  const d = dayjs.utc(date).startOf('day')
+
+  // Monday of the current week (UTC)
+  const monday = today.subtract((today.day() + 6) % 7, 'day')
+
+  // Earliest allowed day: max(monday, today - 4)
+  const earliestByDays = today.subtract(4, 'day')
+  const minAllowed = monday.isAfter(earliestByDays) ? monday : earliestByDays
+
+  return d.isBefore(minAllowed) || d.isAfter(today)
 }
 
 const handleSubmit = async () => {

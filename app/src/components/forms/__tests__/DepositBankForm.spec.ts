@@ -1,10 +1,22 @@
-import { mount, shallowMount } from '@vue/test-utils'
+import { mount, shallowMount, flushPromises } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { ref, nextTick } from 'vue'
 import { zeroAddress, type Address } from 'viem'
 import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
+import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
+import { mainnet } from 'viem/chains'
+import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
+
+const wagmiConfig = createConfig({
+  chains: [mainnet],
+  transports: {
+    [mainnet.id]: http()
+  }
+})
+
+const queryClient = new QueryClient()
 
 // Hoisted mocks for transaction handling and composables
 const {
@@ -25,17 +37,46 @@ const {
   mockExecuteDeposit: vi.fn(),
   mockUseERC20Approve: vi.fn(() => ({
     executeWrite: mockExecuteApprove,
-    receiptResult: { data: ref(null) }
+    receiptResult: { data: ref(null), error: ref(null) },
+    writeResult: { data: ref(null), error: ref(null) }
   })),
   mockUseDepositToken: vi.fn(() => ({
     executeWrite: mockExecuteDeposit,
-    receiptResult: { data: ref(null) }
+    receiptResult: { data: ref(null), error: ref(null) },
+    writeResult: { data: ref(null), error: ref(null) }
   }))
 }))
 
 const nativeReceipt = ref<{ status: string } | null>(null)
 const isNativeDepositLoading = ref(false)
 const isNativeDepositConfirmed = ref(false)
+
+// Mock Wagmi hooks
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual = (await importOriginal()) as typeof import('@wagmi/vue')
+  return {
+    ...actual,
+    useSimulateContract: vi.fn(() => ({
+      data: ref(null),
+      error: ref(null),
+      isLoading: ref(false),
+      isSuccess: ref(false),
+      queryKey: ref([])
+    })),
+    useWriteContract: vi.fn(() => ({
+      data: ref(null),
+      error: ref(null),
+      isPending: ref(false),
+      writeContract: vi.fn()
+    })),
+    useWaitForTransactionReceipt: vi.fn(() => ({
+      data: ref(null),
+      error: ref(null),
+      isLoading: ref(false),
+      isSuccess: ref(false)
+    }))
+  }
+})
 
 // Mock composables
 vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
@@ -47,13 +88,11 @@ vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
   }))
 }))
 
-vi.mock('@/composables/erc20/index', () => ({
-  useERC20Reads: vi.fn(() => ({
-    useErc20Allowance: mockUseErc20Allowance
-  }))
+vi.mock('@/composables/erc20/reads', () => ({
+  useErc20Allowance: mockUseErc20Allowance
 }))
 
-vi.mock('@/composables/erc20/erc20Writes', () => ({
+vi.mock('@/composables/erc20/writes', () => ({
   useERC20Approve: mockUseERC20Approve
 }))
 
@@ -90,7 +129,11 @@ describe('DepositBankForm.vue', () => {
     mountFn(DepositBankForm, {
       props: { ...defaultProps, ...overrides },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [
+          createTestingPinia({ createSpy: vi.fn }),
+          [WagmiPlugin, { config: wagmiConfig }],
+          [VueQueryPlugin, { queryClient }]
+        ]
       }
     })
 
@@ -118,12 +161,14 @@ describe('DepositBankForm.vue', () => {
     // Reset composable mocks to default behavior
     mockUseERC20Approve.mockReturnValue({
       executeWrite: mockExecuteApprove,
-      receiptResult: { data: ref(null) }
+      writeResult: { data: ref(null), error: ref(null) },
+      receiptResult: { data: ref(null), error: ref(null) }
     })
 
     mockUseDepositToken.mockReturnValue({
       executeWrite: mockExecuteDeposit,
-      receiptResult: { data: ref(null) }
+      writeResult: { data: ref(null), error: ref(null) },
+      receiptResult: { data: ref(null), error: ref(null) }
     })
   })
 
@@ -181,11 +226,12 @@ describe('DepositBankForm.vue', () => {
   describe('ERC20 Token Deposit', () => {
     it('should handle token deposit flow when allowance is insufficient', async () => {
       mockUseErc20Allowance.mockReturnValue({ data: ref(0n) })
+      mockExecuteApprove.mockResolvedValueOnce(undefined)
 
       const wrapper = createWrapper({}, mount)
       await setTokenAmount(wrapper, '1', 'usdc', true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
+      await flushPromises()
 
       expect(mockExecuteApprove).toHaveBeenCalled()
     })
@@ -203,15 +249,16 @@ describe('DepositBankForm.vue', () => {
 
     it('should show error toast when selected token is not valid', async () => {
       mockUseErc20Allowance.mockReturnValue({ data: ref(0n) })
+      mockExecuteDeposit.mockRejectedValueOnce(new Error('Invalid token'))
 
       const wrapper = createWrapper({}, mount)
 
       // Set an invalid token scenario by manually triggering with empty selection
       await setTokenAmount(wrapper, '100', 'invalid-token' as unknown as string, true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
+      await flushPromises()
 
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Selected token is not valid')
+      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to deposit invalid-token')
     })
 
     it('should handle form validation correctly', async () => {

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { errorResponse } from '../utils/utils';
+import { Address } from 'viem';
 
 const authorizeUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -32,7 +33,7 @@ const authorizeUser = async (req: Request, res: Response, next: NextFunction) =>
       return errorResponse(401, 'Unauthorized: Missing jwt payload', res);
     }
 
-    (req as any).address = (payload as any).address;
+    req.address = (payload as { address: Address }).address;
 
     next();
   } catch (error) {

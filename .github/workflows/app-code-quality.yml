@@ -1,0 +1,39 @@
+name: Code Quality check
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: ["**"]
+    paths:
+      - "app/**"
+  workflow_dispatch:
+jobs:
+  code_quality_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛫 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: "npm"
+          cache-dependency-path: ./app/package-lock.json
+
+      - name: ⚙️ NPM install
+        run: npm ci
+        working-directory: ./app
+
+      - name: ⚙️ Run lint
+        run: npm run lint
+        working-directory: ./app
+
+      - name: 🧹Format code
+        run: npm run format-check
+        working-directory: ./app
+
+      - name: type check
+        run: npm run build
+        working-directory: ./app

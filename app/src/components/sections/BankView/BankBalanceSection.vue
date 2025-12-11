@@ -40,14 +40,20 @@
 
           <div
             v-if="bankAddress"
-            :class="{ tooltip: !isBankOwner }"
-            :data-tip="!isBankOwner ? 'Only the bank owner can transfer funds' : null"
+            :class="{ tooltip: showOwnerTooltip || soldeBalance }"
+            :data-tip="
+              showOwnerTooltip
+                ? 'Only the bank owner can transfer funds'
+                : soldeBalance
+                  ? 'Bank balance is 0'
+                  : null
+            "
           >
             <ButtonUI
               variant="secondary"
               class="flex items-center gap-2"
               @click="transferModal = { mount: true, show: true }"
-              :disabled="!isBankOwner && !isBodAction"
+              :disabled="(!isBankOwner && !isBodAction) || !hasPositiveBalance"
               data-test="transfer-button"
             >
               <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
@@ -176,6 +182,14 @@ const isBankOwner = computed(() => bankOwner.value === userStore.address)
 // Use the contract balance composable
 const { total, balances, dividendsTotal, isLoading } = useContractBalance(props.bankAddress)
 
+const hasPositiveBalance = computed(() =>
+  balances.value.some((b) => b.token.id !== 'sher' && b.amount > 0)
+)
+const showOwnerTooltip = computed(() => !isBankOwner.value && !isBodAction.value)
+const soldeBalance = computed(
+  () => (isBankOwner.value || isBodAction.value) && !hasPositiveBalance.value
+)
+
 // Add refs for modals and form data
 const depositModal = ref({
   mount: false,
@@ -200,7 +214,7 @@ const getTokens = (): TokenOption[] =>
       symbol: b.token.symbol,
       balance: b.amount,
       tokenId: b.token.id,
-      price: b.values['USD'].price || 0,
+      price: b.values['USD']?.price ?? 0,
       name: b.token.name,
       code: b.token.code
     }))
@@ -209,9 +223,17 @@ const getTokens = (): TokenOption[] =>
 const tokens = computed(() => getTokens())
 
 const initialTransferDataValue = (): TransferModel => {
+  const firstToken = tokens.value[0]
   return {
     address: { name: '', address: '' },
-    token: tokens.value[0] ?? null,
+    token: firstToken ?? {
+      symbol: '',
+      balance: 0,
+      tokenId: 'native',
+      price: 0,
+      name: '',
+      code: ''
+    },
     amount: '0'
   }
 }

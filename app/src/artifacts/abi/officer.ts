@@ -2,6 +2,17 @@ import type { Abi } from 'viem'
 
 export const OFFICER_ABI = [
   {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_feeCollector',
+        type: 'address'
+      }
+    ],
+    stateMutability: 'nonpayable',
+    type: 'constructor'
+  },
+  {
     inputs: [],
     name: 'EnforcedPause',
     type: 'error'
@@ -327,6 +338,38 @@ export const OFFICER_ABI = [
   },
   {
     inputs: [],
+    name: 'getFeeCollector',
+    outputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'string',
+        name: 'contractType',
+        type: 'string'
+      }
+    ],
+    name: 'getFeeFor',
+    outputs: [
+      {
+        internalType: 'uint16',
+        name: '',
+        type: 'uint16'
+      }
+    ],
+    stateMutability: 'view',
+    type: 'function'
+  },
+  {
+    inputs: [],
     name: 'getTeam',
     outputs: [
       {
@@ -400,6 +443,25 @@ export const OFFICER_ABI = [
     name: 'initialize',
     outputs: [],
     stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '_tokenAddress',
+        type: 'address'
+      }
+    ],
+    name: 'isFeeCollectorToken',
+    outputs: [
+      {
+        internalType: 'bool',
+        name: '',
+        type: 'bool'
+      }
+    ],
+    stateMutability: 'view',
     type: 'function'
   },
   {

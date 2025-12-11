@@ -1,7 +1,8 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
-import { Bank, MockERC20, InvestorV1 } from '../typechain-types'
-import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import { Bank, FeeCollector, InvestorV1, MockERC20, Officer } from '../typechain-types'
+import { HardhatEthersSigner, SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
+import { impersonateAccount, setBalance } from '@nomicfoundation/hardhat-network-helpers'
 
 describe('Bank', () => {
   let bankProxy: Bank
@@ -12,6 +13,12 @@ describe('Bank', () => {
   let member1: SignerWithAddress
   let member2: SignerWithAddress
   let investorProxy: InvestorV1
+  let bank: Bank
+  let feeCollector: FeeCollector
+  let officer: Officer
+  let officerSigner: HardhatEthersSigner
+
+  const BANK_FEE_BPS = 50n
 
   const ERRORS = {
     INSUFFICIENT_UNLOCKED: 'Insufficient unlocked balance',
@@ -34,18 +41,43 @@ describe('Bank', () => {
   async function deployContracts() {
     const InvestorsV1Implementation = await ethers.getContractFactory('InvestorV1')
     const BankImplementation = await ethers.getContractFactory('Bank')
+    const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
+    const OfficerFactory = await ethers.getContractFactory('Officer')
+
+    const supportedTokens = [await mockUSDT.getAddress(), await mockUSDC.getAddress()]
+
+    feeCollector = (await upgrades.deployProxy(
+      FeeCollectorFactory,
+      [
+        await owner.getAddress(),
+        [{ contractType: 'BANK', feeBps: Number(BANK_FEE_BPS) }],
+        supportedTokens
+      ],
+      { initializer: 'initialize' }
+    )) as unknown as FeeCollector
+
+    officer = (await OfficerFactory.deploy(await feeCollector.getAddress())) as unknown as Officer
+    await officer.waitForDeployment()
+    await officer.initialize(await owner.getAddress(), [], [], false)
+
+    const officerAddress = await officer.getAddress()
+    await impersonateAccount(officerAddress)
+    officerSigner = await ethers.getSigner(officerAddress)
+    await setBalance(officerAddress, ethers.parseEther('1000'))
+
+    bankProxy = (await upgrades.deployProxy(
+      BankImplementation.connect(officerSigner),
+      [supportedTokens, await owner.getAddress()],
+      { initializer: 'initialize', initialOwner: await owner.getAddress() }
+    )) as unknown as Bank
+
+    bank = bankProxy.connect(owner)
 
     investorProxy = (await upgrades.deployProxy(
       InvestorsV1Implementation,
       ['SHARED', 'SHER', await owner.getAddress()],
       { initializer: 'initialize' }
     )) as unknown as InvestorV1
-
-    bankProxy = (await upgrades.deployProxy(
-      BankImplementation,
-      [[await mockUSDT.getAddress(), await mockUSDC.getAddress()], await owner.getAddress()],
-      { initializer: 'initialize' }
-    )) as unknown as Bank
   }
 
   describe('Initial Setup', () => {
@@ -63,13 +95,15 @@ describe('Bank', () => {
     })
 
     it('should set the correct owner and initial values', async () => {
-      expect(await bankProxy.owner()).to.eq(await owner.getAddress())
+      const officerAddress = await officer.getAddress()
+      expect(await bankProxy.owner()).to.eq(owner.address)
+      expect(await bankProxy.officerAddress()).to.eq(officerAddress)
       expect(await bankProxy.supportedTokens(await mockUSDT.getAddress())).to.be.true
       expect(await bankProxy.supportedTokens(await mockUSDC.getAddress())).to.be.true
     })
 
     it('should not allow to initialize the contract again', async () => {
-      await expect(bankProxy.initialize([], owner.address)).to.be.reverted
+      await expect(bankProxy.initialize([], await officer.getAddress())).to.be.reverted
     })
 
     it('should reject zero address in initialization', async () => {
@@ -106,7 +140,7 @@ describe('Bank', () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
 
-      await expect(bankProxy.addTokenSupport(await newToken.getAddress()))
+      await expect(bank.addTokenSupport(await newToken.getAddress()))
         .to.emit(bankProxy, 'TokenSupportAdded')
         .withArgs(await newToken.getAddress())
 
@@ -114,19 +148,19 @@ describe('Bank', () => {
     })
 
     it('should not allow adding already supported token', async () => {
-      await expect(bankProxy.addTokenSupport(await mockUSDT.getAddress())).to.be.revertedWith(
+      await expect(bank.addTokenSupport(await mockUSDT.getAddress())).to.be.revertedWith(
         ERRORS.TOKEN_ALREADY_SUPPORTED
       )
     })
 
     it('should not allow adding zero address token', async () => {
-      await expect(bankProxy.addTokenSupport(ethers.ZeroAddress)).to.be.revertedWith(
+      await expect(bank.addTokenSupport(ethers.ZeroAddress)).to.be.revertedWith(
         ERRORS.TOKEN_ADDRESS_ZERO
       )
     })
 
     it('should allow owner to remove token support', async () => {
-      await expect(bankProxy.removeTokenSupport(await mockUSDT.getAddress()))
+      await expect(bank.removeTokenSupport(await mockUSDT.getAddress()))
         .to.emit(bankProxy, 'TokenSupportRemoved')
         .withArgs(await mockUSDT.getAddress())
 
@@ -137,7 +171,7 @@ describe('Bank', () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
 
-      await expect(bankProxy.removeTokenSupport(await newToken.getAddress())).to.be.revertedWith(
+      await expect(bank.removeTokenSupport(await newToken.getAddress())).to.be.revertedWith(
         ERRORS.TOKEN_NOT_SUPPORTED
       )
     })
@@ -146,10 +180,12 @@ describe('Bank', () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
 
-      await expect(bankProxy.connect(member1).addTokenSupport(await newToken.getAddress())).to.be
-        .reverted
-      await expect(bankProxy.connect(member1).removeTokenSupport(await mockUSDT.getAddress())).to.be
-        .reverted
+      await expect(bankProxy.connect(member1).addTokenSupport(await newToken.getAddress()))
+        .to.be.revertedWithCustomError(bankProxy, 'OwnableUnauthorizedAccount')
+        .withArgs(member1.address)
+      await expect(bankProxy.connect(member1).removeTokenSupport(await mockUSDT.getAddress()))
+        .to.be.revertedWithCustomError(bankProxy, 'OwnableUnauthorizedAccount')
+        .withArgs(member1.address)
     })
   })
 
@@ -167,7 +203,7 @@ describe('Bank', () => {
     it('should allow owner to set investor address', async () => {
       const previousAddress = await bankProxy.investorAddress()
 
-      await expect(bankProxy.setInvestorAddress(await investorProxy.getAddress()))
+      await expect(bank.setInvestorAddress(await investorProxy.getAddress()))
         .to.emit(bankProxy, 'InvestorAddressUpdated')
         .withArgs(previousAddress, await investorProxy.getAddress())
 
@@ -175,16 +211,26 @@ describe('Bank', () => {
     })
 
     it('should not allow setting zero address as investor', async () => {
-      await expect(bankProxy.setInvestorAddress(ethers.ZeroAddress)).to.be.revertedWith(
+      await expect(bank.setInvestorAddress(ethers.ZeroAddress)).to.be.revertedWith(
         ERRORS.ZERO_ADDRESS
       )
     })
 
     it('should not allow non-owner to set investor address', async () => {
-      // TODO better checking, the first attempt should work but not the second
-      bankProxy.connect(member1).setInvestorAddress(await investorProxy.getAddress())
-      await expect(bankProxy.connect(member1).setInvestorAddress(await investorProxy.getAddress()))
-        .to.be.reverted
+      // First set by owner (expected normal flow via Officer)
+      await bank.setInvestorAddress(await investorProxy.getAddress())
+
+      // Then ensure non-owner cannot update once set
+      const InvestorsV1Implementation = await ethers.getContractFactory('InvestorV1')
+      const anotherInvestor = (await upgrades.deployProxy(
+        InvestorsV1Implementation,
+        ['ALT', 'ALT', await owner.getAddress()],
+        { initializer: 'initialize' }
+      )) as unknown as InvestorV1
+
+      await expect(
+        bankProxy.connect(member1).setInvestorAddress(await anotherInvestor.getAddress())
+      ).to.be.revertedWith('Not allowed to set investor contract')
     })
   })
 
@@ -206,14 +252,23 @@ describe('Bank', () => {
       it('should allow the owner to deposit and transfer funds', async () => {
         const depositAmount = ethers.parseEther('10')
         const transferAmount = ethers.parseEther('1')
+        const fee = (transferAmount * BANK_FEE_BPS) / 10_000n
+        const netAmount = transferAmount - fee
+        const feeCollectorAddress = await feeCollector.getAddress()
 
         await expect(async () =>
           owner.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
         ).to.changeEtherBalance(bankProxy, depositAmount)
 
-        const tx = bankProxy.transfer(contractor.address, transferAmount)
-        await expect(tx).to.changeEtherBalance(bankProxy, -transferAmount)
-        await expect(tx).to.changeEtherBalance(contractor, transferAmount)
+        const tx = bank.transfer(contractor.address, transferAmount)
+        await expect(tx).to.changeEtherBalances(
+          [bankProxy, contractor, feeCollectorAddress],
+          [-transferAmount, netAmount, fee]
+        )
+        await expect(tx)
+          .to.emit(bankProxy, 'Transfer')
+          .withArgs(owner.address, contractor.address, netAmount)
+        await expect(tx).to.emit(bankProxy, 'FeePaid').withArgs(feeCollectorAddress, fee)
       })
 
       it("should fail when the to address is zero, the amount is 0 or the sender doesn't have enough funds", async () => {
@@ -225,15 +280,15 @@ describe('Bank', () => {
           value: depositAmount
         })
         // Transfer to null address
-        const tx = bankProxy.transfer(ethers.ZeroAddress, transferAmount)
+        const tx = bank.transfer(ethers.ZeroAddress, transferAmount)
         await expect(tx).to.be.revertedWith(ERRORS.ZERO_ADDRESS)
 
         // Transfer 0 amount
-        const tx2 = bankProxy.transfer(contractor.address, 0)
+        const tx2 = bank.transfer(contractor.address, 0)
         await expect(tx2).to.be.revertedWith(ERRORS.AMOUNT_ZERO)
 
         // Transfer more than the sender has
-        const tx3 = bankProxy.transfer(contractor.address, ethers.parseEther('100'))
+        const tx3 = bank.transfer(contractor.address, ethers.parseEther('100'))
         await expect(tx3).to.be.revertedWith(ERRORS.INSUFFICIENT_UNLOCKED)
       })
 
@@ -245,8 +300,9 @@ describe('Bank', () => {
           member1.sendTransaction({ to: await bankProxy.getAddress(), value: depositAmount })
         ).to.changeEtherBalance(bankProxy, depositAmount)
 
-        await expect(bankProxy.connect(member1).transfer(contractor.address, transferAmount)).to.be
-          .reverted
+        await expect(bankProxy.connect(member1).transfer(contractor.address, transferAmount))
+          .to.be.revertedWithCustomError(bankProxy, 'OwnableUnauthorizedAccount')
+          .withArgs(member1.address)
       })
     })
 
@@ -260,33 +316,35 @@ describe('Bank', () => {
       })
 
       it('should allow the owner to pause and unpause the contract', async () => {
-        await bankProxy.pause()
+        await bank.pause()
         expect(await bankProxy.paused()).to.be.true
-        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.be.reverted
+        await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.be.reverted
 
-        await bankProxy.unpause()
+        await bank.unpause()
         expect(await bankProxy.paused()).to.be.false
-        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.not.be
-          .reverted
+        await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.not.be.reverted
       })
 
       it('should not allow other addresses to pause or unpause the contract', async () => {
-        await expect(bankProxy.connect(member1).pause()).to.be.reverted
-        await bankProxy.pause()
-        await expect(bankProxy.connect(member1).unpause()).to.be.reverted
-        await bankProxy.unpause()
+        await expect(bankProxy.connect(member1).pause())
+          .to.be.revertedWithCustomError(bankProxy, 'OwnableUnauthorizedAccount')
+          .withArgs(member1.address)
+        await bank.pause()
+        await expect(bankProxy.connect(member1).unpause())
+          .to.be.revertedWithCustomError(bankProxy, 'OwnableUnauthorizedAccount')
+          .withArgs(member1.address)
+        await bank.unpause()
       })
 
       it('should only allow function execution when not paused', async () => {
-        await bankProxy.pause()
+        await bank.pause()
         expect(await bankProxy.paused()).to.be.true
 
-        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.be.reverted
+        await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.be.reverted
 
-        await bankProxy.unpause()
+        await bank.unpause()
         expect(await bankProxy.paused()).to.be.false
-        await expect(bankProxy.transfer(contractor.address, ethers.parseEther('1'))).to.not.be
-          .reverted
+        await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.not.be.reverted
       })
     })
   })
@@ -312,7 +370,7 @@ describe('Bank', () => {
         const amount = ethers.parseUnits('100', 6)
         await mockUSDT.approve(await bankProxy.getAddress(), amount)
 
-        await expect(bankProxy.depositToken(await mockUSDT.getAddress(), amount))
+        await expect(bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), amount))
           .to.emit(bankProxy, 'TokenDeposited')
           .withArgs(owner.address, await mockUSDT.getAddress(), amount)
       })
@@ -325,26 +383,37 @@ describe('Bank', () => {
         )) as unknown as MockERC20
 
         await expect(
-          bankProxy.depositToken(await unsupportedToken.getAddress(), 100)
+          bankProxy.connect(owner).depositToken(await unsupportedToken.getAddress(), 100)
         ).to.be.revertedWith(ERRORS.UNSUPPORTED_TOKEN)
       })
 
       it('should not allow depositing zero amount', async () => {
-        await expect(bankProxy.depositToken(await mockUSDT.getAddress(), 0)).to.be.revertedWith(
-          ERRORS.AMOUNT_ZERO
-        )
+        await expect(
+          bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), 0)
+        ).to.be.revertedWith(ERRORS.AMOUNT_ZERO)
       })
 
       it('should allow owner to transfer tokens', async () => {
         const amount = ethers.parseUnits('10', 6)
         await mockUSDT.approve(await bankProxy.getAddress(), amount)
-        await bankProxy.depositToken(await mockUSDT.getAddress(), amount)
+        await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), amount)
 
-        await expect(
-          bankProxy.transferToken(await mockUSDT.getAddress(), contractor.address, amount)
+        const fee = (amount * BANK_FEE_BPS) / 10_000n
+        const netAmount = amount - fee
+        const feeCollectorAddress = await feeCollector.getAddress()
+
+        const tx = bank.transferToken(await mockUSDT.getAddress(), contractor.address, amount)
+
+        await expect(tx).to.changeTokenBalances(
+          mockUSDT,
+          [bankProxy, contractor, feeCollectorAddress],
+          [-amount, netAmount, fee]
         )
+
+        await expect(tx)
           .to.emit(bankProxy, 'TokenTransfer')
-          .withArgs(owner.address, contractor.address, await mockUSDT.getAddress(), amount)
+          .withArgs(owner.address, contractor.address, await mockUSDT.getAddress(), netAmount)
+        await expect(tx).to.emit(bankProxy, 'FeePaid').withArgs(feeCollectorAddress, fee)
       })
 
       it('should not allow transferring unsupported tokens', async () => {
@@ -355,30 +424,30 @@ describe('Bank', () => {
         )) as unknown as MockERC20
 
         await expect(
-          bankProxy.transferToken(await unsupportedToken.getAddress(), contractor.address, 100)
+          bank.transferToken(await unsupportedToken.getAddress(), contractor.address, 100)
         ).to.be.revertedWith(ERRORS.UNSUPPORTED_TOKEN)
       })
 
       it('should not allow transferring to zero address', async () => {
         await expect(
-          bankProxy.transferToken(await mockUSDT.getAddress(), ethers.ZeroAddress, 100)
+          bank.transferToken(await mockUSDT.getAddress(), ethers.ZeroAddress, 100)
         ).to.be.revertedWith(ERRORS.ZERO_ADDRESS)
       })
 
       it('should not allow transferring zero amount', async () => {
         await expect(
-          bankProxy.transferToken(await mockUSDT.getAddress(), contractor.address, 0)
+          bank.transferToken(await mockUSDT.getAddress(), contractor.address, 0)
         ).to.be.revertedWith(ERRORS.AMOUNT_ZERO)
       })
 
       it('should not allow transferring more than unlocked token balance', async () => {
         const amount = ethers.parseUnits('10', 6)
         await mockUSDT.approve(await bankProxy.getAddress(), amount)
-        await bankProxy.depositToken(await mockUSDT.getAddress(), amount)
+        await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), amount)
 
         const excessAmount = ethers.parseUnits('20', 6)
         await expect(
-          bankProxy.transferToken(await mockUSDT.getAddress(), contractor.address, excessAmount)
+          bank.transferToken(await mockUSDT.getAddress(), contractor.address, excessAmount)
         ).to.be.revertedWith('Insufficient unlocked token balance')
       })
     })
@@ -387,7 +456,7 @@ describe('Bank', () => {
       it('should correctly return unlocked token balance', async () => {
         const amount = ethers.parseUnits('100', 6)
         await mockUSDT.approve(await bankProxy.getAddress(), amount)
-        await bankProxy.depositToken(await mockUSDT.getAddress(), amount)
+        await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), amount)
 
         expect(await bankProxy.getUnlockedTokenBalance(await mockUSDT.getAddress())).to.equal(
           amount
@@ -453,7 +522,7 @@ describe('Bank', () => {
 
     context('ETH Dividend Deposits', () => {
       it('should allow owner to deposit dividends', async () => {
-        const tx = await bankProxy.depositDividends(depositAmount, await investorProxy.getAddress())
+        const tx = await bank.depositDividends(depositAmount, await investorProxy.getAddress())
 
         await expect(tx)
           .to.emit(bankProxy, 'DividendDeposited')
@@ -472,7 +541,7 @@ describe('Bank', () => {
       it('should not allow depositing more than unlocked balance', async () => {
         const unlockBalance = await bankProxy.getUnlockedBalance()
         await expect(
-          bankProxy.depositDividends(unlockBalance + 1n, await investorProxy.getAddress())
+          bank.depositDividends(unlockBalance + 1n, await investorProxy.getAddress())
         ).to.be.revertedWith(ERRORS.INSUFFICIENT_UNLOCKED)
       })
 
@@ -487,13 +556,13 @@ describe('Bank', () => {
       })
 
       it('should not allow deposit with zero investor address', async () => {
-        await expect(
-          bankProxy.depositDividends(depositAmount, ethers.ZeroAddress)
-        ).to.be.revertedWith(ERRORS.INVALID_INVESTOR)
+        await expect(bank.depositDividends(depositAmount, ethers.ZeroAddress)).to.be.revertedWith(
+          ERRORS.INVALID_INVESTOR
+        )
       })
 
       it('should emit DividendCredited events during allocation', async () => {
-        const tx = await bankProxy.depositDividends(depositAmount, await investorProxy.getAddress())
+        const tx = await bank.depositDividends(depositAmount, await investorProxy.getAddress())
 
         await expect(tx)
           .to.emit(bankProxy, 'DividendCredited')
@@ -513,7 +582,7 @@ describe('Bank', () => {
         // Use a small amount that could cause rounding issues
         const smallAmount = ethers.parseEther('0.000000000000000003')
 
-        await bankProxy.depositDividends(smallAmount, await investorProxy.getAddress())
+        await bank.depositDividends(smallAmount, await investorProxy.getAddress())
 
         // Verify total allocated equals original amount
         expect(await bankProxy.totalDividends()).to.equal(smallAmount)
@@ -527,7 +596,7 @@ describe('Bank', () => {
 
     context('ETH Dividend Claims', () => {
       beforeEach(async () => {
-        await bankProxy.depositDividends(depositAmount, await investorProxy.getAddress())
+        await bank.depositDividends(depositAmount, await investorProxy.getAddress())
       })
 
       it('should allow shareholders to claim their dividends', async () => {
@@ -572,7 +641,7 @@ describe('Bank', () => {
       })
 
       it('should not allow claims when contract is paused', async () => {
-        await bankProxy.pause()
+        await bank.pause()
         await expect(bankProxy.connect(member1).claimDividend()).to.be.revertedWithCustomError(
           bankProxy,
           ERRORS.PAUSED
@@ -587,13 +656,13 @@ describe('Bank', () => {
         // Mint and deposit tokens to bank
         await mockUSDT.mint(owner.address, tokenDepositAmount)
         await mockUSDT.approve(await bankProxy.getAddress(), tokenDepositAmount)
-        await bankProxy.depositToken(await mockUSDT.getAddress(), tokenDepositAmount)
+        await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), tokenDepositAmount)
       })
 
       it('should allow owner to deposit token dividends', async () => {
         const dividendAmount = ethers.parseUnits('600', 6)
 
-        const tx = await bankProxy.depositTokenDividends(
+        const tx = await bank.depositTokenDividends(
           await mockUSDT.getAddress(),
           dividendAmount,
           await investorProxy.getAddress()
@@ -633,7 +702,7 @@ describe('Bank', () => {
         )) as unknown as MockERC20
 
         await expect(
-          bankProxy.depositTokenDividends(
+          bank.depositTokenDividends(
             await unsupportedToken.getAddress(),
             100,
             await investorProxy.getAddress()
@@ -643,7 +712,7 @@ describe('Bank', () => {
 
       it('should not allow depositing zero amount token dividends', async () => {
         await expect(
-          bankProxy.depositTokenDividends(
+          bank.depositTokenDividends(
             await mockUSDT.getAddress(),
             0,
             await investorProxy.getAddress()
@@ -654,7 +723,7 @@ describe('Bank', () => {
       it('should not allow depositing more than unlocked token balance', async () => {
         const excessAmount = ethers.parseUnits('2000', 6)
         await expect(
-          bankProxy.depositTokenDividends(
+          bank.depositTokenDividends(
             await mockUSDT.getAddress(),
             excessAmount,
             await investorProxy.getAddress()
@@ -665,7 +734,7 @@ describe('Bank', () => {
       it('should emit TokenDividendCredited events during allocation', async () => {
         const dividendAmount = ethers.parseUnits('600', 6)
 
-        const tx = await bankProxy.depositTokenDividends(
+        const tx = await bank.depositTokenDividends(
           await mockUSDT.getAddress(),
           dividendAmount,
           await investorProxy.getAddress()
@@ -688,10 +757,10 @@ describe('Bank', () => {
         // Mint and deposit tokens to bank
         await mockUSDT.mint(owner.address, tokenDepositAmount)
         await mockUSDT.approve(await bankProxy.getAddress(), tokenDepositAmount)
-        await bankProxy.depositToken(await mockUSDT.getAddress(), tokenDepositAmount)
+        await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), tokenDepositAmount)
 
         // Deposit token dividends
-        await bankProxy.depositTokenDividends(
+        await bank.depositTokenDividends(
           await mockUSDT.getAddress(),
           dividendAmount,
           await investorProxy.getAddress()
@@ -763,7 +832,7 @@ describe('Bank', () => {
       })
 
       it('should not allow claims when contract is paused', async () => {
-        await bankProxy.pause()
+        await bank.pause()
         await expect(
           bankProxy.connect(member1).claimTokenDividend(await mockUSDT.getAddress())
         ).to.be.revertedWithCustomError(bankProxy, ERRORS.PAUSED)
@@ -776,7 +845,7 @@ describe('Bank', () => {
       it('should correctly track total dividend balance', async () => {
         expect(await bankProxy.totalDividends()).to.equal(0)
 
-        await bankProxy.depositDividends(depositAmount, await investorProxy.getAddress())
+        await bank.depositDividends(depositAmount, await investorProxy.getAddress())
         expect(await bankProxy.totalDividends()).to.equal(depositAmount)
 
         await bankProxy.connect(member1).claimDividend()
@@ -785,7 +854,7 @@ describe('Bank', () => {
 
       it('should correctly calculate unlocked balance', async () => {
         const initialBalance = await ethers.provider.getBalance(await bankProxy.getAddress())
-        await bankProxy.depositDividends(depositAmount, await investorProxy.getAddress())
+        await bank.depositDividends(depositAmount, await investorProxy.getAddress())
 
         const expectedUnlocked = initialBalance - depositAmount
         expect(await bankProxy.getUnlockedBalance()).to.equal(expectedUnlocked)
@@ -798,11 +867,11 @@ describe('Bank', () => {
         // Setup
         await mockUSDT.mint(owner.address, tokenAmount)
         await mockUSDT.approve(await bankProxy.getAddress(), tokenAmount)
-        await bankProxy.depositToken(await mockUSDT.getAddress(), tokenAmount)
+        await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), tokenAmount)
 
         expect(await bankProxy.totalTokenDividends(await mockUSDT.getAddress())).to.equal(0)
 
-        await bankProxy.depositTokenDividends(
+        await bank.depositTokenDividends(
           await mockUSDT.getAddress(),
           dividendAmount,
           await investorProxy.getAddress()
@@ -823,13 +892,13 @@ describe('Bank', () => {
 
         await mockUSDT.mint(owner.address, tokenAmount)
         await mockUSDT.approve(await bankProxy.getAddress(), tokenAmount)
-        await bankProxy.depositToken(await mockUSDT.getAddress(), tokenAmount)
+        await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), tokenAmount)
 
         expect(await bankProxy.getUnlockedTokenBalance(await mockUSDT.getAddress())).to.equal(
           tokenAmount
         )
 
-        await bankProxy.depositTokenDividends(
+        await bank.depositTokenDividends(
           await mockUSDT.getAddress(),
           dividendAmount,
           await investorProxy.getAddress()
@@ -874,7 +943,7 @@ describe('Bank', () => {
       )) as unknown as InvestorV1
 
       await expect(
-        bankProxy.depositDividends(ethers.parseEther('50'), await emptyInvestorProxy.getAddress())
+        bank.depositDividends(ethers.parseEther('50'), await emptyInvestorProxy.getAddress())
       ).to.be.revertedWith(ERRORS.ZERO_SUPPLY)
     })
   })

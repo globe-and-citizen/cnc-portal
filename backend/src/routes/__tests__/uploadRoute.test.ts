@@ -1,11 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import request from 'supertest';
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
+import { Readable } from 'stream';
 
 // Hoist mocks
 const { mockUploadSingle, mockUploadImageToGCS } = vi.hoisted(() => ({
   mockUploadSingle: vi.fn((fieldName: string) => {
-    return (req: any, res: any, next: any) => {
+    return (req: Request, res: Response, next: NextFunction) => {
       // Simulate multer adding file to request
       if (req.body.hasFile) {
         req.file = {
@@ -14,7 +15,11 @@ const { mockUploadSingle, mockUploadImageToGCS } = vi.hoisted(() => ({
           encoding: '7bit',
           mimetype: 'image/jpeg',
           buffer: Buffer.from('fake-image-data'),
-          size: 1024,
+          stream: new Readable(),
+          destination: '',
+          filename: 'test-image.jpg',
+          path: '/tmp/test-image.jpg',
+          size: Buffer.from('fake-image-data').length,
         };
       }
       next();
@@ -83,7 +88,7 @@ describe('uploadRoute', () => {
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
         error: 'Failed to upload image',
-        details: 'String error',
+        details: 'Unknown error occurred',
       });
     });
   });

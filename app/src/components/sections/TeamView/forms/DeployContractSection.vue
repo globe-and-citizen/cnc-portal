@@ -287,7 +287,7 @@ useWatchContractEvent({
       loading.value = false
       return
     }
-    if (logs[0].transactionHash !== createOfficerHash.value) {
+    if (!logs[0] || logs[0].transactionHash !== createOfficerHash.value) {
       log.error('Transaction hash does not match')
       loading.value = false
       return
