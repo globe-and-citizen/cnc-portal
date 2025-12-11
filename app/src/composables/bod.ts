@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import type { Action, Team } from '@/types'
-import { useCustomFetch } from './useCustomFetch'
+import { useCreateAction } from '@/queries/action.queries'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import type { Address } from 'viem'
@@ -12,6 +12,8 @@ export function useAddAction() {
   const actionCount = ref<bigint | null>(null)
   const team = ref<Partial<Team> | null>(null)
   const action = ref<Partial<Action> | null>(null)
+  
+  const createActionMutation = useCreateAction()
 
   const {
     data: hash,
@@ -60,11 +62,9 @@ export function useAddAction() {
 
   watch(isSuccess, async (success) => {
     if (success) {
-      await useCustomFetch(`actions`, {
-        immediate: true
-      }).post({
-        teamId: team.value!.id?.toString(),
-        actionId: parseInt((actionCount.value ?? 0).toString()),
+      await createActionMutation.mutateAsync({
+        teamId: Number(team.value!.id),
+        actionId: Number(actionCount.value ?? 0),
         targetAddress: action.value!.targetAddress,
         description: action.value!.description,
         data: action.value!.data
