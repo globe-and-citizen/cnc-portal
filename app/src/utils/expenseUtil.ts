@@ -72,7 +72,7 @@ const findToken = (tokenId: TokenId, balances: TokenBalance[]) => {
  * @returns The remaining balance that can be spent, or null if no budget data found
  */
 export const getRemainingExpenseBalance = (expense: TableRow, contractBalance: number): number => {
-  const maxAmountData = expense.amount // budgetData.find((item) => item.budgetType === 1)?.value
+  const maxAmountData = expense.data.amount // budgetData.find((item) => item.budgetType === 1)?.value
   const amountTransferred = expense.balances[1]
 
   // Calculate remaining spendable amount

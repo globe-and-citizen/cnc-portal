@@ -35,12 +35,9 @@
         >
           <template #header>
             <h1 class="font-bold text-2xl">Transfer from Expenses Contract</h1>
-            <h3 class="pt-4">
-              Current contract balance: {{ transferData.token.balance }}
+            <h3 v-if="expenseBalance" class="pt-4" data-test="spendable-balance">
+              Spendable balance: {{ tokens[0]?.spendableBalance ?? tokens[0]?.balance ?? 0 }}
               {{ transferData.token.symbol }}
-            </h3>
-            <h3 v-if="expenseBalance" class="pt-4">
-              Expense balance: {{ expenseBalance }} {{ transferData.token.symbol }}
             </h3>
           </template>
 

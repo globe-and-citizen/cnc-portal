@@ -6,6 +6,7 @@ import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import { log } from '@/utils'
 import { parseError } from '@/utils'
+import * as utils from '@/utils'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import TransferAction from '../TransferAction.vue'
 import { mockToastStore } from '@/tests/mocks/store.mock'
@@ -104,15 +105,8 @@ describe('TransferComponent', () => {
           signature: '0xSignature',
           data: {
             ...budgetLimit
-            // tokenAddress: '0xTokenAddress',
-            // approvedAddress: '0xApprovedAddress',
-            // amount: 100,
-            // frequencyType: 3,
-            // startDate: START_DATE,
-            // endDate: END_DATE,
-            // customFrequency: 0
           },
-          balances: {},
+          balances: ['0', '0'],
           ...(props.row ?? {})
         },
         ...props
@@ -161,6 +155,28 @@ describe('TransferComponent', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     setupMocks()
+  })
+
+  it('should render correctly', async () => {
+    vi.spyOn(utils, 'getTokens').mockReturnValue([
+      {
+        symbol: 'USDC',
+        balance: 500,
+        spendableBalance: 0,
+        tokenId: 'usdc',
+        price: 0.999801,
+        code: 'USDC'
+      }
+    ])
+    wrapper = createComponent()
+    //@ts-expect-error not visible on wrapper.vm
+    wrapper.vm.showModal = { mount: true, show: true }
+    await flushPromises()
+    const transferForm = wrapper.findComponent({ name: 'TransferForm' })
+    expect(transferForm.exists()).toBe(true)
+    const spendableBalance = transferForm.find('[data-test="spendable-balance"]')
+    expect(spendableBalance.exists()).toBe(true)
+    expect(spendableBalance.text()).toContain('Spendable balance: 0 USDC')
   })
 
   it('should call simulateContract with correct arguments when transferring ERC20 token', async () => {
