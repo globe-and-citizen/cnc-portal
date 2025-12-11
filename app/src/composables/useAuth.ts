@@ -1,9 +1,9 @@
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types/user'
 import { log } from '@/utils/generalUtil'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useValidateToken } from '@/queries/auth.queries'
 
 export function useAuth() {
   const isAuthenticated = ref(false)
@@ -31,8 +31,9 @@ export function useAuth() {
   }
 
   const validateToken = async () => {
-    const { error } = await useCustomFetch(`auth/token`)
-    return error.value ? false : true
+    const { data, error, refetch } = useValidateToken()
+    await refetch()
+    return !error.value
   }
 
   return { isAuthenticated, user, logout, validateToken }

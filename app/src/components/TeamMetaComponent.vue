@@ -5,7 +5,7 @@
     </p>
     <div class="pr-8">
       <p class="min-w-max font-semibold">{{ team.name }}</p>
-      <p class="min-w-max text-slate-400">{{ team._count.members }} Team Members</p>
+      <p class="min-w-max text-slate-400">{{ team._count?.members ?? team.members?.length ?? 0 }} Team Members</p>
     </div>
     <IconifyIcon icon="heroicons-solid:check" class="size-6" v-if="isSelected" />
   </div>
@@ -16,7 +16,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import type { Team } from '@/types'
 
 defineProps<{
-  team: Team & { _count: { members: number } }
+  team: Team
   isSelected: boolean
 }>()
 </script>

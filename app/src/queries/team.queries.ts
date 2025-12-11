@@ -28,10 +28,21 @@ export const useTeam = (teamId: MaybeRefOrGetter<string | null>) => {
     queryFn: async () => {
       const id = toValue(teamId)
       if (!id) throw new Error('Team ID is required')
-      const { data } = await apiClient.get<Team>(`teams/${id}`)
-      return data
+      try {
+        const { data } = await apiClient.get<Team>(`teams/${id}`)
+        return data
+      } catch (error: any) {
+        // Preserve error status for component usage
+        if (error.response) {
+          const enhancedError = new Error(error.message) as Error & { status?: number }
+          enhancedError.status = error.response.status
+          throw enhancedError
+        }
+        throw error
+      }
     },
-    enabled: () => !!toValue(teamId)
+    enabled: () => !!toValue(teamId),
+    retry: false // Don't retry on 404
   })
 }
 

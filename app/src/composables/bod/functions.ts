@@ -8,10 +8,10 @@ import { computed, ref, watch } from 'vue'
 import { estimateGas, readContract, writeContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { BOD_ABI } from '@/artifacts/abi/bod'
-import { useCustomFetch } from '@/composables'
 import { useQueryClient } from '@tanstack/vue-query'
 import { log, parseError } from '@/utils'
 import { useNotificationStore } from '@/stores/notificationStore'
+import { useCreateAction, useUpdateAction } from '@/queries/action.queries'
 /**
  * BOD contract write functions - combines admin and transfers
  */
@@ -30,19 +30,16 @@ export function useBodWritesFunctions() {
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
   const isLoadingBankAction = computed(() => writes.isLoading)
 
-  const { execute: executeSaveAction } = useCustomFetch('actions/', {
-    immediate: false
-  }).post(action)
-
-  const { execute: executeUpdateAction } = useCustomFetch(actionUrl, {
-    immediate: false
-  }).patch()
+  const createActionMutation = useCreateAction()
+  const updateActionMutation = useUpdateAction()
 
   const { isConfirmed, isConfirming } = writes
 
   watch(isConfirming, async (newStatus, oldStatus) => {
     if (oldStatus && !newStatus && isConfirmed.value) {
-      await executeSaveAction()
+      if (action.value) {
+        await createActionMutation.mutateAsync(action.value)
+      }
       isActionAdded.value = true
       queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
 
@@ -152,8 +149,7 @@ export function useBodWritesFunctions() {
         args: [BigInt(_actionId)]
       })
       if (isActionExecuted) {
-        actionUrl.value = `actions/${dbId}`
-        await executeUpdateAction()
+        await updateActionMutation.mutateAsync(dbId)
       }
       queryClient.invalidateQueries({
         queryKey: ['readContract', { functionName: 'isMember' }],

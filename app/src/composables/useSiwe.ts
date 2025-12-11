@@ -6,8 +6,9 @@ import { log } from '@/utils'
 import { useFetch, useStorage } from '@vueuse/core'
 import { useAccount, useSignMessage, useChainId } from '@wagmi/vue'
 import { SiweMessage } from 'siwe'
-import { useCustomFetch, useWalletChecks } from '@/composables'
+import { useWalletChecks } from '@/composables'
 import { BACKEND_URL } from '@/constant/index'
+import { useUser } from '@/queries/user.queries'
 
 export function useSiwe() {
   //#region Refs
@@ -26,7 +27,6 @@ export function useSiwe() {
   //#endregion
 
   const fetchNonceEndpoint = computed(() => `${BACKEND_URL}/api/user/nonce/${address.value}`)
-  const userDataEndpoint = computed(() => `user/${address.value}`)
 
   //#region useCustomeFetch
   const {
@@ -43,11 +43,11 @@ export function useSiwe() {
     execute: executeFetchUserNonce
   } = useFetch(fetchNonceEndpoint, { immediate: false }).get().json<Partial<User>>()
 
-  const {
-    error: fetchUserError,
-    data: user,
-    execute: executeFetchUser
-  } = useCustomFetch(userDataEndpoint, { immediate: false }).get().json<Partial<User>>()
+  // Use TanStack Query for fetching user data (authenticated)
+  // Only fetch user data when address is available
+  const { data: userData, error: fetchUserError, refetch: refetchUser } = useUser(
+    computed(() => address.value || '')
+  )
   //#endregion
 
   //#region Functions
@@ -120,8 +120,9 @@ export function useSiwe() {
     await new Promise((resolve) => setTimeout(resolve, 100))
 
     //fetch user data from backend
-    await executeFetchUser()
-    if (!user.value || fetchUserError.value) {
+    await refetchUser()
+    const user = userData.value
+    if (!user || fetchUserError.value) {
       log.info('fetchUserError.value', fetchUserError.value)
       addErrorToast('Failed to fetch user data')
 
@@ -129,12 +130,12 @@ export function useSiwe() {
       return
     }
     //save user data to user store
-    const userData: Partial<User> = user.value
+    const userDataForStore: Partial<User> = user
     userDataStore.setUserData(
-      userData.name || '',
-      (userData.address || '') as `0x${string}`,
-      userData.nonce || '',
-      userData.imageUrl || ''
+      userDataForStore.name || '',
+      (userDataForStore.address || '') as `0x${string}`,
+      userDataForStore.nonce || '',
+      userDataForStore.imageUrl || ''
     )
     userDataStore.setAuthStatus(true)
 
