@@ -1,8 +1,8 @@
 import { testWithSynpress } from '@synthetixio/synpress'
 import { metaMaskFixtures } from '@synthetixio/synpress/playwright'
-import differentNetworkSetup from '../wallet-setup/different-network.setup'
+import connectedSetup from '../wallet-setup/connected.setup'
 
-const test = testWithSynpress(metaMaskFixtures(differentNetworkSetup))
+const test = testWithSynpress(metaMaskFixtures(connectedSetup))
 
 // const { expect } = test
 

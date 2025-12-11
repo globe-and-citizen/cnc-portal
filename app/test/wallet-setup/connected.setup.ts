@@ -8,13 +8,4 @@ export default defineWalletSetup(PASSWORD, async (context, walletPage) => {
   const metamask = new MetaMask(context, walletPage, PASSWORD)
 
   await metamask.importWallet(SEED_PHRASE)
-  
-  // Add hardhat network
-  await metamask.addNetwork({
-    chainId: 31337,
-    name: 'hardhat',
-    rpcUrl: 'http://localhost:8545',
-    symbol: 'GO'
-  })
-  await metamask.switchNetwork('hardhat', true)
 })
