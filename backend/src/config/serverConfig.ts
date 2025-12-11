@@ -118,7 +118,7 @@ class Server {
   private routes() {
     // Public health check endpoint (no auth required)
     this.app.use(this.paths.health, healthRoutes);
-    
+
     this.app.use(this.paths.teams, authorizeUser, teamRoutes);
     this.app.use(this.paths.wage, authorizeUser, wageRoutes);
     this.app.use(this.paths.user, userRoutes);
