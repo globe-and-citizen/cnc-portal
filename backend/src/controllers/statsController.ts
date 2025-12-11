@@ -402,7 +402,7 @@ export const getUsersStats = async (req: Request, res: Response) => {
     const avgTeamsPerUser =
       userTeamCounts.size > 0
         ? Array.from(userTeamCounts.values()).reduce((sum, count) => sum + count, 0) /
-        userTeamCounts.size
+          userTeamCounts.size
         : 0;
 
     // Count users in multiple teams

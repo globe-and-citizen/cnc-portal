@@ -76,7 +76,7 @@ const statsRateLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 1000, // allow 1000 requests per minute for testing
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
 });
 app.use('/stats', statsRateLimiter, authorizeUser, statsRoutes);
 
