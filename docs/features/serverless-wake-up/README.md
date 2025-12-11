@@ -79,15 +79,18 @@ useBackendWake()
    - No database queries (security)
    - < 50ms response when warm
 
-3. **Frontend Wake Composable** (`app/src/composables/useBackendWake.ts`)
+3. **Frontend Wake Composable** (Both App & Dashboard)
+   - **App**: `app/src/composables/useBackendWake.ts`
+   - **Dashboard**: `dashboard/app/composables/useBackendWake.ts`
    - Uses TanStack Query for caching and retry logic
    - Wakes backend only on app mount/reload
    - 3-minute cache prevents redundant calls
    - Non-blocking with 5s timeout
    - No automatic polling or refetching
 
-4. **App-Level Integration** (`app/src/App.vue`)
-   - Global wake on mount via composable
+4. **App-Level Integration**
+   - **App**: `app/src/App.vue` - Global wake on mount
+   - **Dashboard**: `dashboard/app/app.vue` - Global wake on mount
    - Runs once per page load
    - Runs in background
 
