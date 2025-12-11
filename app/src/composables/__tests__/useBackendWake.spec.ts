@@ -20,7 +20,7 @@ describe('useBackendWake Composable', () => {
         }
       }
     })
-    
+
     // Clear all mocks
     mockFetch.mockClear()
     vi.clearAllMocks()
@@ -152,7 +152,7 @@ describe('useBackendWake Composable', () => {
 
       // Both queries should have the same data (from cache)
       expect(wrapper.vm.data1).toEqual(wrapper.vm.data2)
-      
+
       // Should only have made one fetch call
       expect(mockFetch).toHaveBeenCalledTimes(1)
 
@@ -188,10 +188,10 @@ describe('useBackendWake Composable', () => {
       })
 
       await flushPromises()
-      await new Promise(resolve => setTimeout(resolve, 50))
+      await new Promise((resolve) => setTimeout(resolve, 50))
 
       expect(mockFetch).toHaveBeenCalled()
-      
+
       wrapper.unmount()
     })
 
@@ -228,7 +228,7 @@ describe('useBackendWake Composable', () => {
       // Component should be rendered immediately without waiting
       expect(wrapper.html()).toContain('Test')
       expect(wrapper.vm.rendered).toBe(true)
-      
+
       wrapper.unmount()
     })
 
@@ -260,7 +260,7 @@ describe('useBackendWake Composable', () => {
       })
 
       await flushPromises()
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 100))
 
       // Should only make one fetch call despite two useBackendWake calls
       // because they share the same queryClient and cache
