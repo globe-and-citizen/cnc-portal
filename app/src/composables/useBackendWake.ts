@@ -57,12 +57,12 @@ export function useBackendHealth() {
  * Composable to wake up backend on component mount
  * Uses TanStack Query with silent error handling
  * Cache is valid for 3 minutes to reduce redundant calls
- * 
+ *
  * @example
  * ```vue
  * <script setup>
  * import { useBackendWake } from '@/composables/useBackendWake'
- * 
+ *
  * // Wakes backend when component mounts
  * useBackendWake()
  * </script>
@@ -79,4 +79,3 @@ export function useBackendWake() {
     })
   })
 }
-
