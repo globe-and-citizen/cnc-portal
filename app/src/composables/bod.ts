@@ -61,13 +61,13 @@ export function useAddAction() {
   }
 
   watch(isSuccess, async (success) => {
-    if (success) {
+    if (success && team.value && action.value) {
       await createActionMutation.mutateAsync({
-        teamId: Number(team.value!.id),
+        teamId: Number(team.value.id),
         actionId: Number(actionCount.value ?? 0),
-        targetAddress: action.value!.targetAddress,
-        description: action.value!.description,
-        data: action.value!.data
+        targetAddress: action.value.targetAddress,
+        description: action.value.description,
+        data: action.value.data
       })
     }
   })

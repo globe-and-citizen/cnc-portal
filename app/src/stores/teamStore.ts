@@ -64,9 +64,10 @@ export const useTeamStore = defineStore('team', () => {
       }
     }
     currentTeamId.value = teamId
-    const result = await executeFetchTeam()
-    if (result.data) {
-      teamsFetched.value.set(String(result.data.id), result.data)
+    await executeFetchTeam()
+    // Use the reactive team reference which is automatically updated by TanStack Query
+    if (team.value) {
+      teamsFetched.value.set(String(team.value.id), team.value)
     } else {
       log.error('Team is falsy')
     }
