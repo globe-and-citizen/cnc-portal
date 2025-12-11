@@ -59,6 +59,8 @@
       {{ error.$message }}
     </div>
 
+    <UploadImage @update:screens="onScreensUpdate" />
+
     <div class="flex justify-center gap-4">
       <ButtonUI
         v-if="isEdit"
@@ -92,6 +94,7 @@ import type { ClaimFormData } from '@/types'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import ButtonUI from '@/components/ButtonUI.vue'
+import UploadImage from '@/components/sections/CashRemunerationView/Form/UploadImage.vue'
 
 interface Props {
   initialData?: Partial<ClaimFormData>
@@ -109,9 +112,15 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  submit: [data: { hoursWorked: number; memo: string; dayWorked: string }]
+  submit: [data: { hoursWorked: number; memo: string; dayWorked: string; imageScreens?: object[] }]
   cancel: []
 }>()
+
+const uploadedScreens = ref<object[]>([])
+
+const onScreensUpdate = (screens: object[]) => {
+  uploadedScreens.value = screens
+}
 
 const createDefaultFormData = (overrides?: Partial<ClaimFormData>): ClaimFormData => ({
   hoursWorked: overrides?.hoursWorked ?? '',
@@ -164,7 +173,8 @@ const handleSubmit = async () => {
   emit('submit', {
     hoursWorked: Number(formData.value.hoursWorked),
     memo: formData.value.memo,
-    dayWorked: formData.value.dayWorked
+    dayWorked: formData.value.dayWorked,
+    imageScreens: uploadedScreens.value.length ? uploadedScreens.value : undefined
   })
 }
 </script>
