@@ -1,0 +1,81 @@
+name: Frontend E2E Synpress Playwright
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: ["**"]
+    paths:
+      - "app/**"
+      - ".github/workflows/app-e2e.yml"
+  workflow_dispatch:
+
+jobs:
+  app-e2e-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: 🛫 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🏗 Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: ./app/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+        working-directory: ./app
+
+      - name: 🎭 Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+        working-directory: ./app
+
+      - name: ⛓️ Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: ⛓️ Start Local Blockchain (Anvil)
+        run: anvil --load-state ./local-node-state.json &
+        working-directory: ./app
+
+      - name: 💾 Build Synpress Cache
+        run: npm run test:build:cache
+        working-directory: ./app
+        env:
+          HEADLESS: true
+
+      - name: 🌎 Start Frontend Dev Server
+        run: |
+          VITE_APP_NETWORK_ALIAS=hardhat npm run dev &
+          sleep 10
+          timeout 60 bash -c 'until curl -s http://localhost:5173 > /dev/null; do sleep 1; done'
+        working-directory: ./app
+
+      - name: 🧪 Run E2E Tests
+        run: npm run test:e2e
+        working-directory: ./app
+        env:
+          CI: true
+          HEADLESS: true
+
+      - name: 📊 Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: app/playwright-report/
+          retention-days: 30
+
+      - name: 📈 Upload Test Traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: app/test-results/
+          retention-days: 7
