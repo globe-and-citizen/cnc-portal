@@ -17,10 +17,12 @@ async function wakeDatabase() {
       return;
     } catch {
       console.log(`⏳ Attempt ${i}/${maxRetries} failed. Retrying in ${retryDelay / 1000}s...`);
+      
+      // Disconnect to prevent connection leaks before retrying
+      await prisma.$disconnect();
 
       if (i === maxRetries) {
         console.error('❌ Failed to wake database after maximum retries');
-        await prisma.$disconnect();
         process.exit(1);
       }
 
