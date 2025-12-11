@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { AddCampaignService } from '@/services/AddCampaignService'
 
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import {
   getWalletClient,
   getPublicClient,
@@ -12,8 +11,8 @@ import {
 import { getLogs } from 'viem/actions'
 //import { parseAbiItem } from 'viem'
 
-vi.mock('@/composables/useCustomFetch', () => ({
-  useCustomFetch: vi.fn()
+vi.mock('@/queries/contract.queries', () => ({
+  useCreateContract: vi.fn()
 }))
 
 vi.mock('@wagmi/core', async () => {
