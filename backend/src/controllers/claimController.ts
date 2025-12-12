@@ -15,6 +15,7 @@ dayjs.extend(weekday);
 
 type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
   teamId: string;
+  imageScreens?: string[];
 };
 
 // TODO limit weeday only for the current week. Betwen Monday and the current day
@@ -119,6 +120,7 @@ export const addClaim = async (req: Request, res: Response) => {
         wageId: wage.id,
         weeklyClaimId: weeklyClaim.id,
         dayWorked: dayWorked,
+        ...(body.imageScreens && { imageScreens: body.imageScreens }),
       },
     });
 
@@ -182,7 +184,11 @@ export const updateClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const claimId = Number(req.params.claimId);
 
-  const { hoursWorked, memo }: { hoursWorked: number; memo: string } = req.body;
+  const {
+    hoursWorked,
+    memo,
+    imageScreens,
+  }: { hoursWorked?: number; memo?: string; imageScreens?: string[] } = req.body;
   // Prepare the data according to the action
   try {
     // Fetch the claim including the required data (include weeklyClaim.claims)
@@ -238,6 +244,7 @@ export const updateClaim = async (req: Request, res: Response) => {
       data: {
         ...(memo !== undefined && { memo }),
         ...(hoursWorked !== undefined && { hoursWorked: Number(hoursWorked) }),
+        ...(imageScreens !== undefined && { imageScreens }),
       },
     });
     return res.status(200).json(updatedClaim);
