@@ -215,7 +215,6 @@ export const updateClaim = async (req: Request, res: Response) => {
       return errorResponse(403, "Can't edit: Claim is not pending", res);
     }
 
-    // If hoursWorked is provided, validate it against the wage maximum for the week.
     if (hoursWorked !== undefined) {
       // Sum other claims in the same weeklyClaim excluding the current claim
       const otherClaimsTotal =
