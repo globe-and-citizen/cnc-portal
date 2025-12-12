@@ -124,7 +124,7 @@ const syncExpenseStatus = async (expense: Expense) => {
   });
 
   const data = expense.data as BudgetLimit;
-  console.log('1st readContract call');
+
   const balances = (await publicClient.readContract({
     address: expenseAccountEip712Address?.address as Address,
     abi: ABI,
