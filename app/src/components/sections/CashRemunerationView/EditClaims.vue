@@ -3,6 +3,7 @@
     <h3 class="text-xl font-bold">Edit Claim</h3>
     <hr />
     <ClaimForm
+      ref="claimFormRef"
       :initial-data="claimFormInitialData"
       :is-edit="true"
       :is-loading="isUpdating"
@@ -47,6 +48,7 @@ const emit = defineEmits<{
 }>()
 
 const errorMessage = ref<{ message: string } | null>(null)
+const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const queryClient = useQueryClient()
@@ -98,6 +100,9 @@ const updateClaim = async (data: ClaimSubmitPayload) => {
       await queryClient.invalidateQueries({
         queryKey: ['weekly-claims', teamStore.currentTeam?.id]
       })
+
+      // Reset upload images
+      claimFormRef.value?.resetForm()
 
       emit('close')
     }

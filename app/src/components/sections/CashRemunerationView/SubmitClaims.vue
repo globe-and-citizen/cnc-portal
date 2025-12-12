@@ -15,6 +15,7 @@
       <h3 class="text-xl font-bold">Submit Claim</h3>
       <hr />
       <ClaimForm
+        ref="claimFormRef"
         :initial-data="formInitialData"
         :is-loading="isWageClaimAdding"
         :disabled-week-starts="props.signedWeekStarts"
@@ -62,6 +63,7 @@ const queryClient = useQueryClient()
 
 const modal = ref(false)
 const errorMessage = ref<{ message: string } | null>(null)
+const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
 const createDefaultFormData = (): ClaimFormData => ({
   hoursWorked: '',
   memo: '',
@@ -136,6 +138,9 @@ const handleSubmit = async (data: ClaimSubmitPayload) => {
     formInitialData.value = createDefaultFormData()
     claimPayload.value = null
     errorMessage.value = null
+
+    // Reset upload images
+    claimFormRef.value?.resetForm()
   }
 }
 
