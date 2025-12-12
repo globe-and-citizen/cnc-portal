@@ -2,7 +2,7 @@ import { Request as ExpressRequest, Response } from 'express';
 import { errorResponse } from '../utils/utils';
 import { isUserMemberOfTeam } from './wageController';
 
-import { Address, formatEther, keccak256, zeroAddress } from 'viem';
+import { Address, formatEther, keccak256, parseEther, parseUnits, zeroAddress } from 'viem';
 import { prisma } from '../utils';
 import publicClient from '../utils/viem.config';
 
@@ -124,7 +124,7 @@ const syncExpenseStatus = async (expense: Expense) => {
   });
 
   const data = expense.data as BudgetLimit;
-
+  console.log('1st readContract call');
   const balances = (await publicClient.readContract({
     address: expenseAccountEip712Address?.address as Address,
     abi: ABI,
@@ -136,7 +136,16 @@ const syncExpenseStatus = async (expense: Expense) => {
     address: expenseAccountEip712Address?.address as Address,
     abi: ABI,
     functionName: 'isNewPeriod',
-    args: [expense.data, keccak256(expense.signature as Address)],
+    args: [
+      {
+        ...data,
+        amount:
+          data.tokenAddress === zeroAddress
+            ? parseEther(`${data.amount}`)
+            : parseUnits(`${data.amount}`, 6),
+      },
+      keccak256(expense.signature as Address),
+    ],
   });
 
   // 2. Fetch the latest block
