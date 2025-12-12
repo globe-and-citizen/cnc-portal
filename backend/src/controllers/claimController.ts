@@ -202,8 +202,7 @@ export const updateClaim = async (req: Request, res: Response) => {
       return errorResponse(404, 'Claim not found', res);
     }
 
-    const weeklyClaim = claim.weeklyClaim;
-    const wage = claim.wage;
+    const { weeklyClaim, wage } = claim;
 
     // Only claim owner can edit
     if (wage.userAddress !== callerAddress) {

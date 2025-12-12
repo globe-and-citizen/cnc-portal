@@ -1,4 +1,7 @@
 <script setup lang="ts">
+// Wake up backend on app mount
+useBackendWake()
+
 const colorMode = useColorMode()
 
 const color = computed(() => (colorMode.value === 'dark' ? '#1b1718' : 'white'))
