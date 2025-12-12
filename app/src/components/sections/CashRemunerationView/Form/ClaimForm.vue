@@ -59,7 +59,7 @@
       {{ error.$message }}
     </div>
 
-    <UploadImage @update:screens="onScreensUpdate" />
+    <UploadImage ref="uploadImageRef" @update:screens="onScreensUpdate" />
 
     <div class="flex justify-center gap-4">
       <ButtonUI
@@ -112,13 +112,14 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  submit: [data: { hoursWorked: number; memo: string; dayWorked: string; imageScreens?: object[] }]
+  submit: [data: { hoursWorked: number; memo: string; dayWorked: string; imageScreens?: string[] }]
   cancel: []
 }>()
 
-const uploadedScreens = ref<object[]>([])
+const uploadImageRef = ref<InstanceType<typeof UploadImage> | null>(null)
+const uploadedScreens = ref<string[]>([])
 
-const onScreensUpdate = (screens: object[]) => {
+const onScreensUpdate = (screens: string[]) => {
   uploadedScreens.value = screens
 }
 
@@ -177,4 +178,12 @@ const handleSubmit = async () => {
     imageScreens: uploadedScreens.value.length ? uploadedScreens.value : undefined
   })
 }
+
+const resetForm = () => {
+  uploadImageRef.value?.resetUpload()
+}
+
+defineExpose({
+  resetForm
+})
 </script>
