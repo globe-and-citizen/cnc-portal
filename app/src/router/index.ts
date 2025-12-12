@@ -130,6 +130,7 @@ const router = createRouter({
   ]
 })
 const isAuth = useStorage('isAuth', false)
+
 router.beforeEach(async (to) => {
   // Skip auth redirects when visiting the locked session view
   if (to.path === '/locked') {

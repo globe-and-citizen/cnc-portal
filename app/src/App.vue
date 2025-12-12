@@ -88,6 +88,7 @@ import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
+import { useBackendWake } from '@/composables/useBackendWake'
 
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
@@ -134,4 +135,7 @@ watch(isDisconnected, (value) => {
     }, 1000)
   }
 })
+
+// Wake up backend on app mount using TanStack Query
+useBackendWake()
 </script>

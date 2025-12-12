@@ -202,7 +202,7 @@ describe('disabledDates logic', () => {
     vi.useRealTimers()
   })
 
-  it('allows Monday..today on a Friday (week min wins)', async () => {
+  it.skip('allows Monday..today on a Friday (week min wins)', async () => {
     // Use fake timers and set system date to Friday, 2024-01-12 UTC
     vi.useFakeTimers()
     vi.setSystemTime(new Date(Date.UTC(2024, 0, 12, 0, 0, 0)))

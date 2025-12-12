@@ -21,6 +21,8 @@ import uploadRoute from '../routes/uploadRoute';
 import contractRoutes from '../routes/contractRoutes';
 import electionsRoute from '../routes/electionsRoute';
 import devRoutes from '../routes/devRoutes';
+import statsRoutes from '../routes/statsRoute';
+import healthRoutes from '../routes/healthRoutes';
 
 //#endregion routing modules
 
@@ -69,7 +71,9 @@ class Server {
       upload: '/api/upload/',
       constract: '/api/contract/',
       elections: '/api/elections/',
+      stats: '/api/stats/',
       dev: '/api/dev/',
+      health: '/api/health/',
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -112,6 +116,9 @@ class Server {
   }
 
   private routes() {
+    // Public health check endpoint (no auth required)
+    this.app.use(this.paths.health, healthRoutes);
+
     this.app.use(this.paths.teams, authorizeUser, teamRoutes);
     this.app.use(this.paths.wage, authorizeUser, wageRoutes);
     this.app.use(this.paths.user, userRoutes);
@@ -123,6 +130,7 @@ class Server {
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
+    this.app.use(this.paths.stats, authorizeUser, statsRoutes);
 
     // Dev routes - only available in development mode
     if (process.env.NODE_ENV === 'development') {

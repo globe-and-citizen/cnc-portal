@@ -38,6 +38,11 @@ vi.mock('vue-router', () => ({
 // Mock the composables
 vi.mock('@/stores/useToastStore')
 
+// Mock useBackendWake to prevent TanStack Query initialization in tests
+vi.mock('@/composables/useBackendWake', () => ({
+  useBackendWake: vi.fn()
+}))
+
 // Shared mock user store so component and tests reference the same instance
 // Use plain values to mimic a Pinia store's properties (storeToRefs will create refs)
 const mockUserStore = {
