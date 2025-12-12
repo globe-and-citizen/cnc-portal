@@ -33,6 +33,7 @@ export interface Claim {
   hoursWorked: number
   dayWorked: string // ISO date string
   memo: string
+  imageScreens?: string[] | null
   wageId: number
   wage: Wage
   createdAt: string // ISO date string
@@ -49,6 +50,7 @@ export interface ClaimSubmitPayload {
   hoursWorked: number
   memo: string
   dayWorked: string
+  imageScreens?: string[]
 }
 
 export interface WeeklyClaim {
