@@ -192,14 +192,72 @@
               <span class="font-medium">{{ entry.date.format('ddd DD MMM') }}</span>
             </div>
 
-            <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-1">
-              <div
-                v-for="claim in entry.claims"
-                :key="claim.id"
-                class="flex items-center justify-between gap-3"
-              >
-                <span>{{ claim.memo }}</span>
-                <ClaimActions v-if="canModifyClaims" :claim="claim" />
+            <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-3">
+              <div v-for="claim in entry.claims" :key="claim.id" class="space-y-2">
+                <div class="flex items-center justify-between gap-3">
+                  <span>{{ claim.memo }}</span>
+                  <ClaimActions v-if="canModifyClaims" :claim="claim" />
+                </div>
+
+                <!-- Files Gallery (Images + Documents) -->
+                <div
+                  v-if="claim.imageScreens && claim.imageScreens.length > 0"
+                  class="grid grid-cols-4 gap-2 mt-2"
+                  data-test="claim-files-gallery"
+                >
+                  <template v-for="(fileUrl, fileIndex) in claim.imageScreens" :key="fileIndex">
+                    <!-- Image thumbnail -->
+                    <div
+                      v-if="isImageUrl(fileUrl)"
+                      class="relative cursor-pointer group"
+                      @click="openLightbox(fileUrl)"
+                      data-test="claim-image-item"
+                    >
+                      <img
+                        :src="fileUrl"
+                        :alt="`Screenshot ${fileIndex + 1}`"
+                        class="w-full h-20 object-cover rounded border border-gray-300 hover:border-emerald-500 transition-all"
+                        loading="lazy"
+                        data-test="claim-image-thumbnail"
+                      />
+                      <div
+                        class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded flex items-center justify-center"
+                      >
+                        <IconifyIcon
+                          icon="heroicons:magnifying-glass-plus"
+                          class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Document file (PDF, ZIP, DOCX, TXT) -->
+                    <a
+                      v-else
+                      :href="fileUrl"
+                      target="_blank"
+                      download
+                      class="relative cursor-pointer group flex flex-col items-center justify-center w-full h-20 rounded border border-gray-300 hover:border-emerald-500 bg-gray-50 hover:bg-gray-100 transition-all"
+                      data-test="claim-document-item"
+                      @click.stop
+                    >
+                      <IconifyIcon
+                        :icon="getFileIconFromUrl(fileUrl)"
+                        class="w-8 h-8 text-gray-600 group-hover:text-emerald-600 transition-colors"
+                      />
+                      <span class="text-xs text-gray-500 mt-1 truncate w-full text-center px-1">
+                        {{ getFileNameFromUrl(fileUrl) }}
+                      </span>
+                      <div
+                        class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <IconifyIcon
+                          icon="heroicons:arrow-down-tray"
+                          class="w-4 h-4 text-emerald-600"
+                        />
+                      </div>
+                    </a>
+                  </template>
+                </div>
               </div>
             </div>
 
@@ -212,6 +270,31 @@
       </CardComponent>
     </div>
   </div>
+
+  <!-- Lightbox Modal -->
+  <Teleport to="body">
+    <div
+      v-if="lightboxImage"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4"
+      @click="closeLightbox"
+      data-test="lightbox-modal"
+    >
+      <button
+        class="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+        @click="closeLightbox"
+        data-test="lightbox-close-button"
+      >
+        <IconifyIcon icon="heroicons:x-mark" class="w-8 h-8" />
+      </button>
+      <img
+        :src="lightboxImage"
+        alt="Full size screenshot"
+        class="max-w-full max-h-full object-contain"
+        @click.stop
+        data-test="lightbox-image"
+      />
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -330,6 +413,51 @@ const selectedMonthObject = ref<Week>({
 const generatedMonthWeek = computed(() => {
   return getMonthWeeks(selectedMonthObject.value.year, selectedMonthObject.value.month)
 })
+
+// Lightbox state
+const lightboxImage = ref<string | null>(null)
+
+const openLightbox = (imageUrl: string) => {
+  lightboxImage.value = imageUrl
+}
+
+const closeLightbox = () => {
+  lightboxImage.value = null
+}
+
+// File type detection utilities
+const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp']
+
+const isImageUrl = (url: string): boolean => {
+  const urlLower = url.toLowerCase()
+  return IMAGE_EXTENSIONS.some((ext) => urlLower.includes(ext))
+}
+
+const getFileIconFromUrl = (url: string): string => {
+  const urlLower = url.toLowerCase()
+  if (urlLower.includes('.pdf')) return 'heroicons:document-text'
+  if (urlLower.includes('.zip')) return 'heroicons:archive-box'
+  if (urlLower.includes('.docx') || urlLower.includes('.doc')) return 'heroicons:document'
+  if (urlLower.includes('.txt')) return 'heroicons:document-text'
+  return 'heroicons:paper-clip'
+}
+
+const getFileNameFromUrl = (url: string): string => {
+  try {
+    const urlObj = new URL(url)
+    const pathname = urlObj.pathname
+    const fileName = pathname.split('/').pop() || 'file'
+    // Truncate if too long
+    if (fileName.length > 12) {
+      const ext = fileName.split('.').pop() || ''
+      const baseName = fileName.slice(0, fileName.length - ext.length - 1)
+      return `${baseName.slice(0, 8)}...${ext}`
+    }
+    return fileName
+  } catch {
+    return 'file'
+  }
+}
 
 const selectWeekWeelyClaim = computed(() => {
   return memberWeeklyClaims.value?.find(
