@@ -124,7 +124,7 @@ const formData = ref<ClaimFormData>(createDefaultFormData(props.initialData))
 const rules = {
   formData: {
     hoursWorked: { required, numeric, minValue: minValue(1), maxValue: maxValue(24) },
-    memo: { required, maxLength: maxLength(200) },
+    memo: { required, maxLength: maxLength(3000) },
     dayWorked: { required }
   }
 }
