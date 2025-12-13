@@ -458,6 +458,30 @@ describe('Claim Controller', () => {
       });
     });
 
+    it('should return 400 if updating claim exceeds maximum weekly hours', async () => {
+      const mockClaim = {
+        id: 1,
+        wage: { userAddress: TEST_ADDRESS, maximumHoursPerWeek: 40 },
+        weeklyClaim: {
+          status: 'pending',
+          claims: [
+            { id: 2, hoursWorked: 30 },
+            { id: 3, hoursWorked: 8 },
+          ],
+        },
+      };
+      vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
+
+      const response = await request(app).put('/1').send({
+        hoursWorked: 5,
+        memo: 'Updated memo',
+      });
+      expect(response.status).toBe(400);
+      expect(response.body.message).toMatch(
+        /Maximum weekly hours reached, cannot update claim\. You have \d+ hours remaining for this week\./
+      );
+    });
+
     it('should update claim successfully with valid data', async () => {
       const mockClaim = {
         id: 1,
