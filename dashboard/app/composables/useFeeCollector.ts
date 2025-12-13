@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { useAccount, useReadContract } from '@wagmi/vue'
+import { useAccount, useReadContract, useWriteContract } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { formatUnits } from 'viem'
 import { FEE_COLLECTOR_ADDRESS, FEE_COLLECTOR_SUPPORTED_TOKENS, TOKEN_DECIMALS, TOKEN_SYMBOLS } from '@/constant'
@@ -7,6 +7,7 @@ import { FEE_COLLECTOR_ABI } from '~/artifacts/abi/feeCollector'
 import { useNetwork } from '~/utils/network'
 import { useTokenPrices } from './useTokenPrices'
 import type { TokenDisplay } from '@/types/token'
+import { teamContractTypes } from '@/types/teamContracts'
 
 // Helper to create a token display object (matches tokenHelpers.ts)
 const makeToken = (
@@ -91,6 +92,21 @@ export const useFeeCollector = () => {
     query: {
       enabled: !!FEE_COLLECTOR_SUPPORTED_TOKENS?.[1]
     }
+  })
+
+  // --- Add contract read for fee configs ---
+  const { data: feeConfigsRaw, refetch: refetchFeeConfigs, isLoading: isLoadingFeeConfigs } = useReadContract({
+    address: FEE_COLLECTOR_ADDRESS as Address,
+    abi: FEE_COLLECTOR_ABI,
+    functionName: 'getAllFeeConfigs'
+  })
+
+  // Format fee configs for the UI
+  const feeConfigs = computed(() => {
+    // If contract returns undefined, fallback to empty array
+    if (!feeConfigsRaw.value) return []
+    // If contract returns array of structs, just pass through
+    return feeConfigsRaw.value as { contractType: string, feeBps: number }[]
   })
 
   // Build tokens list (matches tokenHelpers.ts buildTokenList logic)
@@ -180,6 +196,29 @@ export const useFeeCollector = () => {
     await Promise.all(promises)
   }
 
+  // --- Add setFee function ---
+  const { writeContractAsync } = useWriteContract()
+
+  /**
+   * Set or update a fee config for a contract type
+   * @param contractType string
+   * @param feeBps number
+   */
+  const setFee = async (contractType: string, feeBps: number) => {
+    return await writeContractAsync({
+      address: FEE_COLLECTOR_ADDRESS as Address,
+      abi: FEE_COLLECTOR_ABI,
+      functionName: 'setFee',
+      args: [contractType, feeBps]
+    })
+  }
+
+  // Available contract types not yet set in the contract
+  const availableContractTypes = computed(() => {
+    const alreadySet = new Set((feeConfigs.value || []).map(cfg => cfg.contractType))
+    return teamContractTypes.filter(type => !alreadySet.has(type))
+  })
+
   return {
     isFeeCollectorOwner,
     nativeBalance,
@@ -198,6 +237,11 @@ export const useFeeCollector = () => {
     refetchNative,
     refetchUsdc,
     refetchUsdt,
-    refetchAll
+    refetchAll,
+    feeConfigs,
+    refetchFeeConfigs,
+    isLoadingFeeConfigs,
+    setFee,
+    availableContractTypes
   }
 }
