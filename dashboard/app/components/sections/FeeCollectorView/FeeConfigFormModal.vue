@@ -1,5 +1,5 @@
 <template>
-  <UModal :open="modelValue" @update:model-value="$emit('update:modelValue', $event)" :title="mode === 'edit' ? 'Edit Fee Config' : 'Add Fee Config'">
+  <UModal :open="modelValue" :title="mode === 'edit' ? 'Edit Fee Config' : 'Add Fee Config'" @update:model-value="$emit('update:modelValue', $event)">
     <template #header>
       <div class="flex items-center justify-between pb-2">
         <p class="text-xl font-semibold">
@@ -98,8 +98,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:modelValue', 'submit', 'close'])
 
-
-
 const { availableContractTypes } = useFeeCollector()
 
 const localConfig = ref<FeeConfig>({
@@ -135,9 +133,9 @@ watch(
 const feeBps = computed(() => Math.round(feePercent.value * 100))
 
 const isValid = computed(() =>
-  !!localConfig.value.contractType &&
-  feePercent.value >= 0 &&
-  feePercent.value <= 100
+  !!localConfig.value.contractType
+  && feePercent.value >= 0
+  && feePercent.value <= 100
 )
 
 const handleClose = () => {

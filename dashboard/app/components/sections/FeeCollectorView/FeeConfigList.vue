@@ -2,7 +2,9 @@
   <UCard>
     <template #header>
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold">Fee Configurations</h3>
+        <h3 class="text-lg font-semibold">
+          Fee Configurations
+        </h3>
         <FeeConfigAddActions @added="refetchFeeConfigs" />
       </div>
     </template>
@@ -11,9 +13,15 @@
       <table class="w-full">
         <thead>
           <tr class="border-b border-gray-200 dark:border-gray-700">
-            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Contract Type</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Fee (BPS)</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Actions</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              Contract Type
+            </th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              Fee (BPS)
+            </th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -23,16 +31,25 @@
             </td>
           </tr>
           <tr v-for="config in feeConfigs" :key="config.contractType" class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-            <td class="px-4 py-4 font-mono">{{ config.contractType }}</td>
+            <td class="px-4 py-4 font-mono">
+              {{ config.contractType }}
+            </td>
             <td class="px-4 py-4">
               {{ config.feeBps }} BPS ({{ (config.feeBps / 100).toFixed(2) }}%)
             </td>
             <td class="px-4 py-4">
-              <UButton v-if="isFeeCollectorOwner" icon="i-heroicons-pencil" size="xs" @click="openEdit(config)" />
+              <UButton
+                v-if="isFeeCollectorOwner"
+                icon="i-heroicons-pencil"
+                size="xs"
+                @click="openEdit(config)"
+              />
             </td>
           </tr>
           <tr v-if="!isLoadingFeeConfigs && feeConfigs.length === 0">
-            <td colspan="3" class="text-center py-8 text-gray-500">No fee configs available</td>
+            <td colspan="3" class="text-center py-8 text-gray-500">
+              No fee configs available
+            </td>
           </tr>
         </tbody>
       </table>
@@ -58,15 +75,15 @@ const { feeConfigs, refetchFeeConfigs, setFee, isLoadingFeeConfigs, isFeeCollect
 
 const isEditModalOpen = ref(false)
 const isEditLoading = ref(false)
-const selectedConfig = ref<{ contractType: string; feeBps: number } | null>(null)
+const selectedConfig = ref<{ contractType: string, feeBps: number } | null>(null)
 const toast = useToast()
 
-const openEdit = (cfg: { contractType: string; feeBps: number }) => {
+const openEdit = (cfg: { contractType: string, feeBps: number }) => {
   selectedConfig.value = cfg
   isEditModalOpen.value = true
 }
 
-const handleEdit = async (cfg: { contractType: string; feeBps: number }) => {
+const handleEdit = async (cfg: { contractType: string, feeBps: number }) => {
   isEditLoading.value = true
   try {
     await setFee(cfg.contractType, cfg.feeBps)
@@ -83,6 +100,7 @@ const handleEdit = async (cfg: { contractType: string; feeBps: number }) => {
       description: 'Failed to update fee config.',
       color: 'error'
     })
+    console.error(e)
   } finally {
     isEditLoading.value = false
   }

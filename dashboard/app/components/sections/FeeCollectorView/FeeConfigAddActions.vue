@@ -1,6 +1,12 @@
 <template>
   <div>
-    <UButton  v-if="isFeeCollectorOwner" color="primary" icon="i-heroicons-plus" @click="isAddModalOpen = true" :disabled="availableContractTypes.length === 0">
+    <UButton
+      v-if="isFeeCollectorOwner"
+      color="primary"
+      icon="i-heroicons-plus"
+      :disabled="availableContractTypes.length === 0"
+      @click="isAddModalOpen = true"
+    >
       Add Fee Config
     </UButton>
     <FeeConfigFormModal
@@ -17,15 +23,14 @@ import { ref } from 'vue'
 import { useFeeCollector } from '@/composables/useFeeCollector'
 import FeeConfigFormModal from '@/components/sections/FeeCollectorView/FeeConfigFormModal.vue'
 
-
 const emit = defineEmits(['added'])
 const isAddModalOpen = ref(false)
 const isLoading = ref(false)
-const { setFee, availableContractTypes,isFeeCollectorOwner } = useFeeCollector()
+const { setFee, availableContractTypes, isFeeCollectorOwner } = useFeeCollector()
 
 const toast = useToast()
 
-const handleAdd = async (cfg: { contractType: string; feeBps: number }) => {
+const handleAdd = async (cfg: { contractType: string, feeBps: number }) => {
   isLoading.value = true
   try {
     await setFee(cfg.contractType, cfg.feeBps)
@@ -42,6 +47,7 @@ const handleAdd = async (cfg: { contractType: string; feeBps: number }) => {
       description: 'Failed to add fee config.',
       color: 'error'
     })
+    console.error(e)
   } finally {
     isLoading.value = false
   }
