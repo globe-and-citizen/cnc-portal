@@ -2,7 +2,7 @@
   <UModal
     :open="isOpen"
     :prevent-close="isLoadingWithdraw || isConfirmingWithdraw"
-    title="Withdraw to Fee Collector Contract"
+    title="Withdraw from Fee Collector Contract"
     :close="{ onClick: () => handleClose() }"
     @update:model-value="$emit('update:isOpen', $event)"
   >
