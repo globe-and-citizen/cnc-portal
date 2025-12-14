@@ -1,21 +1,10 @@
 <template>
-  <UModal :open="modelValue" :title="mode === 'edit' ? 'Edit Fee Config' : 'Add Fee Config'" @update:model-value="$emit('update:modelValue', $event)">
-    <template #header>
-      <div class="flex items-center justify-between pb-2">
-        <p class="text-xl font-semibold">
-          {{ mode === 'edit' ? 'Edit Fee Config' : 'Add Fee Config' }}
-        </p>
-        <UButton
-          icon="i-heroicons-x-mark"
-          variant="ghost"
-          color="neutral"
-          size="sm"
-          :disabled="loading"
-          @click="handleClose"
-        />
-      </div>
-    </template>
-
+  <UModal
+    :open="modelValue"
+    :title="mode === 'edit' ? 'Edit Fee Config' : 'Add Fee Config'"
+    :close="{ onClick: () => handleClose() }"
+    @update:model-value="$emit('update:modelValue', $event)"
+  >
     <template #body>
       <UFlex class="items-center">
         <UFormGroup label="Contract Type" class="flex-1 mr-3">

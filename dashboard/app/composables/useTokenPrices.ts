@@ -2,6 +2,7 @@ import { ref, onMounted, watch } from 'vue'
 import { mainnet, sepolia, polygon, polygonAmoy, hardhat } from '@wagmi/vue/chains'
 import { useNetwork } from '~/utils/network'
 import type { TokenDisplay } from '@/types/token'
+import { formatUSD } from '@/utils/currency'
 
 interface TokenPrices {
   'ethereum': number
@@ -137,12 +138,7 @@ export const useTokenPrices = () => {
     }
 
     // Normal formatting for >= $0.01
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(usdValue)
+    return formatUSD(usdValue)
   }
 
   // Get raw USD value (without formatting)
