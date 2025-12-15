@@ -48,7 +48,8 @@ interface ExtendedBudgetWithdrawnEvent extends BudgetWithdrawnEvent {
   eventName: 'BudgetWithdrawn'
 }
 
-export interface ExtendedPaymentReleasedOnWithdrawApprovalEvent extends PaymentReleasedOnWithdrawApprovalEvent {
+export interface ExtendedPaymentReleasedOnWithdrawApprovalEvent
+  extends PaymentReleasedOnWithdrawApprovalEvent {
   eventName: 'PaymentReleasedOnWithdrawApproval'
 }
 

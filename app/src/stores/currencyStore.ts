@@ -26,8 +26,6 @@ interface DexScreenerPair {
   liquidity?: { usd?: number }
 }
 
-
-
 const COINGECKO_COIN_API = 'https://api.coingecko.com/api/v3/coins'
 const DEXSCREENER_API = 'https://api.dexscreener.com/latest/dex/tokens'
 
@@ -39,8 +37,6 @@ const FALLBACK_NATIVE_ADDRESSES: Record<string, string> = {
 
 // Which CoinGecko IDs are allowed to fallback
 const FALLBACK_ALLOWED_IDS = new Set(['ethereum', 'matic-network'])
-
-
 
 export const useCurrencyStore = defineStore('currency', () => {
   const currency = useStorage('currency', {
@@ -69,10 +65,7 @@ export const useCurrencyStore = defineStore('currency', () => {
     return tokens
   })
 
-
-  async function fetchNativePriceFallback(
-    coingeckoId: string
-  ): Promise<number> {
+  async function fetchNativePriceFallback(coingeckoId: string): Promise<number> {
     const address = FALLBACK_NATIVE_ADDRESSES[coingeckoId]
     if (!address) return 0
 
@@ -83,12 +76,8 @@ export const useCurrencyStore = defineStore('currency', () => {
       const json = await res.json()
 
       const bestPair = (json.pairs as DexScreenerPair[] | undefined)
-        ?.filter(p => Number(p.liquidity?.usd) > 10_000)
-        ?.sort(
-          (a, b) =>
-            Number(b.liquidity?.usd ?? 0) -
-            Number(a.liquidity?.usd ?? 0)
-        )[0]
+        ?.filter((p) => Number(p.liquidity?.usd) > 10_000)
+        ?.sort((a, b) => Number(b.liquidity?.usd ?? 0) - Number(a.liquidity?.usd ?? 0))[0]
 
       return Number(bestPair?.priceUsd ?? 0)
     } catch {

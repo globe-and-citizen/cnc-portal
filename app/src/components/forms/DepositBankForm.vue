@@ -62,8 +62,7 @@
     v-if="bankDepositTokenResult.timelineSteps.value && currentStep === 3"
     :show="true"
     :steps="bankDepositTokenResult.timelineSteps.value"
-    title="Bank Deposit" -->
-  />
+    title="Bank Deposit" /> -->
 </template>
 
 <script setup lang="ts">
