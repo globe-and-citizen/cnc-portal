@@ -6,8 +6,8 @@ export default buildModule('FeeCollectorUpgradeModule', (m) => {
   //0xba2023f86c8f1d57e8057508c90f7b3f6f0f73e
   
   // 1. Deploy new implementation (must match your Solidity contract name)
-  const newImpl = m.contract('FeeCollectorV2', [], {
-    id: 'FeeCollectorV2_impl_v4',
+  const newImpl = m.contract('FeeCollector', [], {
+    id: 'FeeCollector_impl_v2',
   })
 
   // 2. Existing proxy address (from your JSON)
@@ -17,7 +17,7 @@ export default buildModule('FeeCollectorUpgradeModule', (m) => {
   const proxyAdminContract = m.contractAt(
     'ProxyAdmin',
     '0x7f51beeeedebd79078d9e57e78c5f9c8230ad7cd',// the proxy admin address
-    { id: 'FeeCollectorProxyAdmin_v4' }
+    { id: 'FeeCollectorProxyAdmin_v2' }
   )
 
   // 4. Call upgradeAndCall(proxy, implementation, data)
@@ -30,8 +30,8 @@ export default buildModule('FeeCollectorUpgradeModule', (m) => {
   )
 
   // 5. Bind new ABI to the proxy for later interaction
-  const feeCollector = m.contractAt('FeeCollectorV2', proxyAddress, {
-    id: 'FeeCollectorProxyABI_v4',
+  const feeCollector = m.contractAt('FeeCollector', proxyAddress, {
+    id: 'FeeCollectorProxyABI_v2',
   })
 
   return { newImpl, feeCollector }
