@@ -21,6 +21,27 @@ export interface PriceResponse {
   }
 }
 
+interface DexScreenerPair {
+  priceUsd?: string
+  liquidity?: { usd?: number }
+}
+
+
+
+const COINGECKO_COIN_API = 'https://api.coingecko.com/api/v3/coins'
+const DEXSCREENER_API = 'https://api.dexscreener.com/latest/dex/tokens'
+
+// Wrapped native tokens for fallback
+const FALLBACK_NATIVE_ADDRESSES: Record<string, string> = {
+  ethereum: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH
+  'matic-network': '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270' // WMATIC
+}
+
+// Which CoinGecko IDs are allowed to fallback
+const FALLBACK_ALLOWED_IDS = new Set(['ethereum', 'matic-network'])
+
+
+
 export const useCurrencyStore = defineStore('currency', () => {
   const currency = useStorage('currency', {
     code: 'USD',
@@ -48,16 +69,81 @@ export const useCurrencyStore = defineStore('currency', () => {
     return tokens
   })
 
-  // Fetch prices for all tokens
-  async function fetchTokenPrice(coingeckoId: string) {
-    const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coingeckoId}`)
-    if (!res.ok) throw new Error('Failed to fetch price')
-    return res.json() as Promise<PriceResponse>
+
+  async function fetchNativePriceFallback(
+    coingeckoId: string
+  ): Promise<number> {
+    const address = FALLBACK_NATIVE_ADDRESSES[coingeckoId]
+    if (!address) return 0
+
+    try {
+      const res = await fetch(`${DEXSCREENER_API}/${address}`)
+      if (!res.ok) return 0
+
+      const json = await res.json()
+
+      const bestPair = (json.pairs as DexScreenerPair[] | undefined)
+        ?.filter(p => Number(p.liquidity?.usd) > 10_000)
+        ?.sort(
+          (a, b) =>
+            Number(b.liquidity?.usd ?? 0) -
+            Number(a.liquidity?.usd ?? 0)
+        )[0]
+
+      return Number(bestPair?.priceUsd ?? 0)
+    } catch {
+      return 0
+    }
   }
-  /**
-   * @dev For a dynamic supported token, Map is better than Array
-   */
-  // Combine price and loading into a single array
+
+  /* =======================
+     FETCH (PRIMARY + FALLBACK)
+  ======================= */
+
+  async function fetchTokenPrice(coingeckoId: string): Promise<PriceResponse> {
+    try {
+      const res = await fetch(`${COINGECKO_COIN_API}/${coingeckoId}`)
+      if (!res.ok) throw new Error('CoinGecko failed')
+      const json = await res.json()
+      // Defensive: If CoinGecko returns 0 or missing for native, try fallback
+      const nativeAllowed = FALLBACK_ALLOWED_IDS.has(coingeckoId)
+      const cgUsd = json?.market_data?.current_price?.usd
+      if (nativeAllowed && (!cgUsd || cgUsd === 0)) {
+        // Try fallback if CoinGecko USD price is missing or zero
+        const usd = await fetchNativePriceFallback(coingeckoId)
+        return {
+          market_data: {
+            current_price: {
+              usd,
+              cad: usd,
+              eur: usd,
+              idr: usd,
+              inr: usd
+            }
+          }
+        }
+      }
+      return json as PriceResponse
+    } catch {
+      // Fallback ONLY for native tokens
+      if (!FALLBACK_ALLOWED_IDS.has(coingeckoId)) {
+        throw new Error('No fallback available')
+      }
+      const usd = await fetchNativePriceFallback(coingeckoId)
+      return {
+        market_data: {
+          current_price: {
+            usd,
+            cad: usd,
+            eur: usd,
+            idr: usd,
+            inr: usd
+          }
+        }
+      }
+    }
+  }
+
   const tokenStates: Array<{
     id: string
     data: Ref<PriceResponse | undefined>
@@ -94,20 +180,15 @@ export const useCurrencyStore = defineStore('currency', () => {
     // refetchPrice()
   }
 
-  /**
-   * @description Get the price of a token in a specific currency
-   * @param tokenId
-   * @param local - If true, use local currency, otherwise use provided currencyCode
-   * @param currencyCode - If local is false, use this currency code
-   * @returns
-   */
   function getTokenPrice(tokenId: TokenId, local: boolean = true, currencyCode?: string): number {
     const token = tokenStates.find((t) => t.id === tokenId)
     const priceData = token?.data.value
     if (!priceData) return 0
     // Use local currency by default, otherwise use provided currencyCode
     const code = local ? currency.value.code.toLowerCase() : (currencyCode ?? 'usd').toLowerCase()
+
     if (!(code in priceData.market_data.current_price)) return 0
+
     return priceData.market_data.current_price[code] ?? 0
   }
 
@@ -136,7 +217,7 @@ export const useCurrencyStore = defineStore('currency', () => {
     const currentCode = currency.value.code
     prices.push({
       id: 'local',
-      price: priceData?.market_data.current_price[currentCode.toLocaleLowerCase()] ?? null,
+      price: priceData?.market_data.current_price[currentCode.toLowerCase()] ?? null,
       code: currentCode,
       symbol: currency.value.symbol
     })
