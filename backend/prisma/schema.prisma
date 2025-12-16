@@ -180,15 +180,14 @@ model GlobalSetting {
 }
 
 model TeamFunctionOverride {
-  id              Int           @id @default(autoincrement())
-  teamId          Int
-  team            Team          @relation(fields: [teamId], references: [id])
-  functionName    String
-  globalSettingId Int
-  globalSetting   GlobalSetting @relation(fields: [globalSettingId, functionName], references: [id, fonctionName])
-  status          String
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id            Int           @id @default(autoincrement())
+  teamId        Int
+  team          Team          @relation(fields: [teamId], references: [id])
+  functionName  String
+  globalSetting GlobalSetting @relation(fields: [functionName], references: [fonctionName])
+  status        String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   @@unique([teamId, functionName], name: "unique_team_function")
   @@index([teamId])
