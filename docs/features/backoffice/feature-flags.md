@@ -410,11 +410,13 @@ NEW_NOTIFICATION_SYSTEM
 ### Naming Conventions
 
 ✅ **Good:**
+
 - `NEW_DASHBOARD` - Clear, descriptive
 - `CLAIM_BULK_EDIT` - Specific action
 - `BETA_ANALYTICS_V2` - Version indicated
 
 ❌ **Bad:**
+
 - `feature1` - Not descriptive
 - `newFeature` - Use SCREAMING_SNAKE_CASE
 - `dashboard` - Too generic
