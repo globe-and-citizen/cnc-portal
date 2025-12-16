@@ -32,21 +32,22 @@ model User {
 }
 
 model Team {
-  id                     Int                      @id @default(autoincrement())
-  members                User[]                   @relation("MemberTeams")
-  owner                  User                     @relation("OwnedTeams", fields: [ownerAddress], references: [address])
-  ownerAddress           String
-  description            String?
-  name                   String                   @unique
-  officerAddress         String?
-  BoardOfDirectorActions BoardOfDirectorActions[]
-  teamContracts          TeamContract[]
-  memberTeamsData        MemberTeamsData[]
-  Wage                   Wage[]
-  weeklyClaims           WeeklyClaim[]
-  Expense                Expense[]
-  createdAt              DateTime                 @default(now())
-  updatedAt              DateTime                 @updatedAt
+  id                      Int                      @id @default(autoincrement())
+  members                 User[]                   @relation("MemberTeams")
+  owner                   User                     @relation("OwnedTeams", fields: [ownerAddress], references: [address])
+  ownerAddress            String
+  description             String?
+  name                    String                   @unique
+  officerAddress          String?
+  BoardOfDirectorActions  BoardOfDirectorActions[]
+  teamContracts           TeamContract[]
+  memberTeamsData         MemberTeamsData[]
+  Wage                    Wage[]
+  weeklyClaims            WeeklyClaim[]
+  Expense                 Expense[]
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  teamRestrictionOverride TeamRestrictionOverride?
 }
 
 model MemberTeamsData {
@@ -168,19 +169,26 @@ model BoardOfDirectorActions {
   updatedAt     DateTime @updatedAt
 }
 
-model GlobalRestrictionSetting {
+model GlobalSetting {
   id                   Int      @id @default(autoincrement())
+  fonctionName         String   @unique
+  status               String
   isGloballyRestricted Boolean  @default(true)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 }
 
-model TeamRestrictionOverride {
-  id                 Int      @id @default(autoincrement())
-  teamId             Int      @unique
-  isSubmitRestricted Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+model TeamFunctionOverride {
+  id              Int           @id @default(autoincrement())
+  teamId          Int
+  team            Team          @relation(fields: [teamId], references: [id])
+  functionName    String
+  globalSettingId Int
+  globalSetting   GlobalSetting @relation(fields: [globalSettingId, functionName], references: [id, fonctionName])
+  status          String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
+  @@unique([teamId, functionName], name: "unique_team_function")
   @@index([teamId])
 }
