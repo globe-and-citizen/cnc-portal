@@ -187,12 +187,14 @@ export const updateClaim = async (req: Request, res: Response) => {
   try {
     // Fetch the claim including the required data
     const claim = await prisma.claim.findFirst({
-      where: {
-        id: claimId,
-      },
+      where: { id: claimId },
       include: {
         wage: true,
-        weeklyClaim: true,
+        weeklyClaim: {
+          include: {
+            claims: true,
+          },
+        },
       },
     });
 
@@ -200,14 +202,35 @@ export const updateClaim = async (req: Request, res: Response) => {
       return errorResponse(404, 'Claim not found', res);
     }
 
+    const { weeklyClaim, wage } = claim;
+
     // Only claim owner can edit
-    if (claim.wage.userAddress !== callerAddress) {
+    if (wage.userAddress !== callerAddress) {
       return errorResponse(403, 'Caller is not the owner of the claim', res);
     }
 
     // Can only edit pending claims
     if (claim.weeklyClaim?.status !== 'pending' && claim.weeklyClaim?.status !== 'disabled') {
       return errorResponse(403, "Can't edit: Claim is not pending", res);
+    }
+
+    if (hoursWorked !== undefined) {
+      // Sum other claims in the same weeklyClaim excluding the current claim
+      const otherClaimsTotal =
+        (weeklyClaim?.claims ?? [])
+          .filter((c) => c.id !== claim.id)
+          .reduce((sum, c) => sum + Number(c.hoursWorked), 0) ?? 0;
+
+      const newHours = Number(hoursWorked);
+
+      if (otherClaimsTotal + newHours > wage.maximumHoursPerWeek) {
+        const remainingHours = Math.max(0, wage.maximumHoursPerWeek - otherClaimsTotal);
+        return errorResponse(
+          400,
+          `Maximum weekly hours reached, cannot update claim. You have ${remainingHours} hours remaining for this week.`,
+          res
+        );
+      }
     }
 
     const updatedClaim = await prisma.claim.update({

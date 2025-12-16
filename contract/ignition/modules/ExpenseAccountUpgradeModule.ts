@@ -39,7 +39,7 @@ export default buildModule('ExpenseAccountUpgradeModule', (m) => {
   console.log(`factoryBeaconAddress`, deployedAddresses)
 
   // Retrieve the FactoryBeacon address from the loaded addresses
-  const factoryBeaconAddress = deployedAddresses["ExpenseAccountModule#FactoryBeacon"]
+  const factoryBeaconAddress = deployedAddresses["ExpenseAccountEIP712Module#FactoryBeacon"]
 
   if (!factoryBeaconAddress) {
     throw new Error(`No FactoryBeacon address found in the deployed addresses`)
@@ -48,7 +48,7 @@ export default buildModule('ExpenseAccountUpgradeModule', (m) => {
   const expenseAccountFactoryBeacon = m.contractAt('FactoryBeacon', factoryBeaconAddress)
 
   // Deploy the new implementation contract
-  const newExpenseAccountImplementation = m.contract('ExpenseAccount')
+  const newExpenseAccountImplementation = m.contract('ExpenseAccountEIP712')
 
   // Call the beacon's upgrade function to set the new implementation
   m.call(expenseAccountFactoryBeacon, 'upgradeTo', [newExpenseAccountImplementation], {
