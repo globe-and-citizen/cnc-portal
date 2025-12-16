@@ -236,13 +236,11 @@ export async function seedFeatureFlags() {
   const features = [
     {
       functionName: 'NEW_DASHBOARD',
-      status: 'beta',
-      isGloballyRestricted: true
+      status: 'beta'
     },
     {
       functionName: 'CLAIM_SUBMISSION',
-      status: 'enabled',
-      isGloballyRestricted: false
+      status: 'enabled'
     }
   ]
 
@@ -423,9 +421,9 @@ NEW_NOTIFICATION_SYSTEM
 
 ### Feature Lifecycle
 
-1. **Creation**: Start with `disabled` status, `isGloballyRestricted: true`
+1. **Creation**: Start with `disabled` status
 2. **Beta Testing**: Change to `beta`, enable for specific teams
-3. **Rollout**: Change to `enabled`, set `isGloballyRestricted: false`
+3. **Rollout**: Change to `enabled`
 4. **Deprecation**: Change to `deprecated`, gradually disable
 5. **Removal**: Delete flag and remove code references
 
@@ -446,7 +444,7 @@ NEW_NOTIFICATION_SYSTEM
 ### Feature not working after enabling
 
 1. Check cache expiration (5 min default)
-2. Verify `isGloballyRestricted` is `false` for global access
+2. Verify feature status is not `disabled` for global access
 3. Check team override if using team-specific features
 4. Clear browser cache / hard refresh
 
