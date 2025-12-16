@@ -2,7 +2,7 @@
 
 **Version:** 1.0.0  
 **Date:** December 16, 2025  
-**Status:** Planned
+**Status:** In Development (Feature Flags: ✅ Documented | Others: 📝 Planned)
 
 ---
 
@@ -22,10 +22,15 @@ The Backoffice Feature Management system provides administrators with centralize
 
 ### 1. Feature Flags
 
+Dynamic feature toggling system with global and team-level control.
+
 - Toggle features on/off globally
-- Enable beta features for specific users/teams
-- Gradual rollout controls (percentage-based)
-- Environment-specific flags (dev, staging, production)
+- Team-specific overrides for granular control
+- Beta testing with selected teams
+- Instant activation/deactivation without deployment
+- Status management (enabled, disabled, beta, deprecated, maintenance)
+
+**[📖 Complete Feature Flags Documentation →](./feature-flags.md)**
 
 ### 2. User Management
 
@@ -108,21 +113,28 @@ npm run seed:admin
 
 **2. Admin Routes:**
 
-```md
+```http
+# User Management
 GET    /api/admin/users          # List all users
 GET    /api/admin/users/:id      # Get user details
 PUT    /api/admin/users/:id      # Update user
 DELETE /api/admin/users/:id      # Delete user
 
+# Team Management
 GET    /api/admin/teams          # List all teams
 PUT    /api/admin/teams/:id      # Update team
 
-GET    /api/admin/features       # List feature flags
-PUT    /api/admin/features/:key  # Toggle feature flag
+# Feature Flags (see feature-flags.md for complete API)
+GET    /api/admin/features                           # List all feature flags
+POST   /api/admin/features                           # Create feature flag
+GET    /api/admin/features/:functionName             # Get feature details
+PUT    /api/admin/features/:functionName             # Update feature flag
+DELETE /api/admin/features/:functionName             # Delete feature flag
+POST   /api/admin/features/:functionName/teams/:id   # Set team override
 
+# System
 GET    /api/admin/config         # Get system config
 PUT    /api/admin/config         # Update config
-
 GET    /api/admin/audit          # View audit logs
 GET    /api/admin/stats          # Platform statistics
 ```
@@ -165,8 +177,21 @@ All admin actions are logged:
 - [ ] Multi-factor authentication enforcement
 - [ ] API rate limiting per user/team
 
+## Documentation Structure
+
+This backoffice feature is divided into focused documentation:
+
+- **[Feature Flags](./feature-flags.md)** - Complete feature flags system documentation with database schema, API endpoints, and implementation examples
+- **User Management** - (To be documented)
+- **Team Management** - (To be documented)
+- **System Configuration** - (To be documented)
+- **Audit Logging** - (To be documented)
+
+---
+
 ## Related Documentation
 
+- [Feature Flags System](./feature-flags.md) - Complete feature flags documentation
 - [Security Standards](../../platform/security.md)
 - [Testing Strategy](../../platform/testing-strategy.md)
 - [Deployment Guide](../../platform/deployment.md)
