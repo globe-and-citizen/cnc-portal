@@ -60,11 +60,18 @@
 
 <script setup lang="ts">
 import { h, computed } from 'vue'
-import type { TeamRestrictionOverride } from '~/types/restrictions'
 import type { ColumnDef } from '@tanstack/vue-table'
 import { UBadge, USwitch, UButton } from '#components'
 
 // Props
+interface TeamRestrictionOverride {
+  teamId: number
+  teamName: string
+  isRestricted: boolean
+  memberCount?: number
+  updatedAt?: string
+}
+
 interface Props {
   teams: TeamRestrictionOverride[]
   loading?: boolean
