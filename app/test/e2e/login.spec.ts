@@ -9,32 +9,42 @@ const test = testWithSynpress(metaMaskFixtures(connectedSetup))
 test.describe('Sign in', () => {
   test('should be able to sign in and redirect to the teams page', async ({ page, metamask }) => {
     // Mock API
-    // const address = await metamask.getAccountAddress()
-    // await page.route('**/api/user/nonce/*', async (route) => {
-    //   await route.fulfill({
-    //     status: 200,
-    //     contentType: 'application/json',
-    //     body: JSON.stringify({ success: true, nonce: '41vj7bz5Ow8oT5xaE' })
-    //   })
-    // })
-    // await page.route('**/api/auth/siwe', async (route) => {
-    //   await route.fulfill({
-    //     status: 200,
-    //     contentType: 'application/json',
-    //     body: JSON.stringify({ success: true, accessToken: 'token' })
-    //   })
-    // })
-    // await page.route(`**/api/user/${address}`, async (route) => {
-    //   await route.fulfill({
-    //     status: 200,
-    //     contentType: 'application/json',
-    //     body: JSON.stringify({
-    //       address: await metamask.getAccountAddress(),
-    //       name: null,
-    //       nonce: '41vj7bz5Ow8oT5xaE'
-    //     })
-    //   })
-    // })
+    const address = await metamask.getAccountAddress()
+    await page.route('**/api/user/nonce/*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, nonce: '41vj7bz5Ow8oT5xaE' })
+      })
+    })
+    await page.route('**/api/auth/siwe', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, accessToken: 'token' })
+      })
+    })
+    await page.route(`**/api/user/${address}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          address: await metamask.getAccountAddress(),
+          name: null,
+          nonce: '41vj7bz5Ow8oT5xaE'
+        })
+      })
+    })
+
+    await page.route('**/api/teams', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ teams: [] })
+      })
+    })
+
+
 
     // Click sign-in button
     await page.getByTestId('sign-in').click()
