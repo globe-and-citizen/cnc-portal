@@ -44,8 +44,6 @@ test.describe('Sign in', () => {
       })
     })
 
-
-
     // Click sign-in button
     await page.getByTestId('sign-in').click()
 
