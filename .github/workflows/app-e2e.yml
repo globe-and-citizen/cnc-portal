@@ -15,7 +15,7 @@ jobs:
   app-e2e-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+
     steps:
       - name: 🛫 Checkout
         uses: actions/checkout@v4
@@ -41,7 +41,12 @@ jobs:
           version: stable
 
       - name: ⛓️ Start Local Blockchain (Anvil)
-        run: anvil --load-state ./local-node-state.json &
+        run: |
+          anvil --load-state ./local-node-state.json > anvil.log 2>&1 &
+          ANVIL_PID=$!
+          # Wait for Anvil to be ready
+          timeout 30 bash -c 'until curl -s http://127.0.0.1:8545 -X POST -d "{}" > /dev/null 2>&1; do sleep 0.5; done'
+          echo "Anvil started with PID: $ANVIL_PID"
         working-directory: ./app
 
       - name: 💾 Build Synpress Cache
@@ -52,9 +57,11 @@ jobs:
 
       - name: 🌎 Start Frontend Dev Server
         run: |
-          VITE_APP_NETWORK_ALIAS=hardhat npm run dev &
-          sleep 10
+          VITE_APP_NETWORK_ALIAS=hardhat npm run dev > vite.log 2>&1 &
+          VITE_PID=$!
+          sleep 15
           timeout 60 bash -c 'until curl -s http://localhost:5173 > /dev/null; do sleep 1; done'
+          echo "Vite dev server started with PID: $VITE_PID"
         working-directory: ./app
 
       - name: 🧪 Run E2E Tests
