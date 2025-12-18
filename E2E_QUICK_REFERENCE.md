@@ -3,6 +3,7 @@
 ## 🚀 Quick Start Commands
 
 ### First Time Setup
+
 ```bash
 cd app
 npm install
@@ -54,6 +55,7 @@ rm -rf .cache-synpress/
 ## 🏗️ Full Stack Setup (Required for Tests)
 
 ### Terminal 1 - Backend
+
 ```bash
 cd backend
 npm install
@@ -62,6 +64,7 @@ npm run dev
 ```
 
 ### Terminal 2 - Local Blockchain
+
 ```bash
 cd app
 anvil --load-state ./local-node-state.json
@@ -69,6 +72,7 @@ anvil --load-state ./local-node-state.json
 ```
 
 ### Terminal 3 - Frontend
+
 ```bash
 cd app
 VITE_APP_NETWORK_ALIAS=hardhat npm run dev
@@ -76,6 +80,7 @@ VITE_APP_NETWORK_ALIAS=hardhat npm run dev
 ```
 
 ### Terminal 4 - Tests
+
 ```bash
 cd app
 npm run test:e2e
@@ -84,16 +89,19 @@ npm run test:e2e
 ## 🐛 Common Issues & Quick Fixes
 
 ### "Cache does not exist"
+
 ```bash
 npm run test:build:cache:force
 ```
 
 ### "Browser not found"
+
 ```bash
 npx playwright install chromium --with-deps
 ```
 
 ### Tests timeout
+
 ```bash
 # Ensure all services are running
 lsof -i :3000  # Backend
@@ -102,6 +110,7 @@ lsof -i :8545  # Anvil
 ```
 
 ### Port already in use
+
 ```bash
 # Kill process on port 5173
 lsof -ti:5173 | xargs kill -9
@@ -111,6 +120,7 @@ PORT=5174 npm run dev
 ```
 
 ### Clear test artifacts
+
 ```bash
 rm -rf test-results/
 rm -rf playwright-report/
