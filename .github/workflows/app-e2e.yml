@@ -35,19 +35,18 @@ jobs:
         run: npx playwright install chromium --with-deps
         working-directory: ./app
 
-      - name: ⛓️ Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: stable
+      - name: ⛓️ Install Hardhat and dependencies
+        run: npm ci
+        working-directory: ./contract
 
-      - name: ⛓️ Start Local Blockchain (Anvil)
+      - name: ⛓️ Start Local Blockchain (Hardhat Node)
         run: |
-          anvil --load-state ./local-node-state.json > anvil.log 2>&1 &
-          ANVIL_PID=$!
-          # Wait for Anvil to be ready
-          timeout 30 bash -c 'until curl -s http://127.0.0.1:8545 -X POST -d "{}" > /dev/null 2>&1; do sleep 0.5; done'
-          echo "Anvil started with PID: $ANVIL_PID"
-        working-directory: ./app
+          npx hardhat node > hardhat.log 2>&1 &
+          HARDHAT_PID=$!
+          # Wait for Hardhat node to be ready
+          timeout 30 bash -c 'until curl -s http://127.0.0.1:8545 -X POST -d "{\"jsonrpc\":\"2.0\",\"method\":\"net_version\",\"params\":[],\"id\":1}" > /dev/null 2>&1; do sleep 0.5; done'
+          echo "Hardhat node started with PID: $HARDHAT_PID"
+        working-directory: ./contract
 
       - name: 💾 Build Synpress Cache
         run: npm run test:build:cache
