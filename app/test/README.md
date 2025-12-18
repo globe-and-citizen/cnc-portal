@@ -48,16 +48,16 @@ npm run test:e2e:report
 
 ## 📁 Project Structure
 
-```
+```md
 test/
-├── e2e/                    # E2E test files
-│   ├── dashboard.spec.ts   # Dashboard tests
-│   ├── login.spec.ts       # Authentication tests
-│   ├── navbar.spec.ts      # Navigation tests
-│   └── teams.spec.ts       # Team management tests
-├── wallet-setup/           # MetaMask wallet configurations
-│   └── connected.setup.ts  # Standard wallet setup
-└── sypress.ts             # Synpress test configuration
+├── e2e/ # E2E test files
+│ ├── dashboard.spec.ts # Dashboard tests
+│ ├── login.spec.ts # Authentication tests
+│ ├── navbar.spec.ts # Navigation tests
+│ └── teams.spec.ts # Team management tests
+├── wallet-setup/ # MetaMask wallet configurations
+│ └── connected.setup.ts # Standard wallet setup
+└── sypress.ts # Synpress test configuration
 ```
 
 ## 🔧 Configuration
@@ -72,7 +72,7 @@ VITE_APP_BACKEND_URL=http://localhost:3000
 VITE_APP_NETWORK_ALIAS=hardhat
 VITE_APP_CHAIN_ID=31337
 
-# Test Configuration  
+# Test Configuration
 BASE_URL=http://localhost:5173
 SKIP_SERVER=false
 HEADLESS=true
@@ -88,6 +88,7 @@ TEST_WALLET_ADDRESS="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 ### Playwright Configuration
 
 The `playwright.config.ts` file contains:
+
 - Test directory location
 - Timeout settings (5 minutes per test)
 - Retry strategy (2 retries on CI)
@@ -110,13 +111,13 @@ describe('Feature Name', () => {
   test('should do something', async ({ page, metamask }) => {
     // Navigate to page
     await page.goto('/')
-    
+
     // Interact with app
     await page.click('[data-testid="button"]')
-    
+
     // Interact with MetaMask if needed
     await metamask.connectToDapp()
-    
+
     // Assert expected behavior
     await expect(page.locator('[data-testid="result"]')).toBeVisible()
   })
@@ -174,6 +175,7 @@ const address = await metamask.getAccountAddress()
 **Issue**: `Executable doesn't exist at /home/runner/.cache/ms-playwright/chromium-XXXX`
 
 **Solution**: Install Playwright browsers:
+
 ```bash
 npx playwright install chromium --with-deps
 ```
@@ -189,6 +191,7 @@ npx playwright install chromium --with-deps
 **Issue**: Tests hang or timeout
 
 **Solutions**:
+
 1. Ensure the dev server is running if tests need it
 2. Increase timeout in `playwright.config.ts`
 3. Check if MetaMask interactions are waiting for user input
@@ -199,12 +202,14 @@ npx playwright install chromium --with-deps
 **Issue**: Playwright can't start the dev server
 
 **Solution**: Start the server manually in another terminal:
+
 ```bash
 cd app
 npm run dev
 ```
 
 Then run tests with:
+
 ```bash
 SKIP_SERVER=true npm run test:e2e
 ```
@@ -212,11 +217,13 @@ SKIP_SERVER=true npm run test:e2e
 ## 📊 Best Practices
 
 1. **Use data-testid attributes** for stable selectors:
+
    ```vue
    <button data-testid="connect-wallet">Connect</button>
    ```
 
 2. **Mock API calls** for consistent test data:
+
    ```typescript
    await page.route('**/api/teams', async (route) => {
      await route.fulfill({
@@ -227,11 +234,13 @@ SKIP_SERVER=true npm run test:e2e
    ```
 
 3. **Wait for network idle** after navigation:
+
    ```typescript
    await page.goto('/', { waitUntil: 'networkidle' })
    ```
 
 4. **Use explicit waits** instead of arbitrary timeouts:
+
    ```typescript
    await page.waitForSelector('[data-testid="result"]', {
      state: 'visible',
@@ -240,6 +249,7 @@ SKIP_SERVER=true npm run test:e2e
    ```
 
 5. **Clean up state** between tests if needed:
+
    ```typescript
    test.afterEach(async ({ page }) => {
      await page.evaluate(() => localStorage.clear())
@@ -251,6 +261,7 @@ SKIP_SERVER=true npm run test:e2e
 ### View Test Traces
 
 After a test failure, view the trace:
+
 ```bash
 npx playwright show-trace test-results/[test-name]/trace.zip
 ```
@@ -270,6 +281,7 @@ HEADLESS=false npx playwright test
 ### Generate Test Code
 
 Use Playwright Codegen to generate test code by interacting with the app:
+
 ```bash
 npx playwright codegen http://localhost:5173
 ```
@@ -292,6 +304,6 @@ npx playwright codegen http://localhost:5173
 ## 🔐 Security Notes
 
 - Never commit real private keys or seed phrases
-- Use test wallets with test ETH only  
+- Use test wallets with test ETH only
 - Test credentials are in `.env.e2e` (gitignored)
 - Default test wallet is Hardhat account #0 (publicly known test account)

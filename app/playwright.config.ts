@@ -20,10 +20,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
 
   // Reporter to use
-  reporter: [
-    ['html'],
-    ['list']
-  ],
+  reporter: [['html'], ['list']],
 
   // Timeout for each test (5 minutes)
   timeout: 300000,
@@ -46,12 +43,14 @@ export default defineConfig({
   ],
 
   // Only start webServer if SKIP_SERVER is not set
-  webServer: process.env.SKIP_SERVER ? undefined : {
-    command: 'VITE_APP_NETWORK_ALIAS=hardhat npm run dev',
-    port: 5173,
-    reuseExistingServer: true,
-    timeout: 120000,
-    stdout: 'pipe',
-    stderr: 'pipe'
-  }
+  webServer: process.env.SKIP_SERVER
+    ? undefined
+    : {
+        command: 'VITE_APP_NETWORK_ALIAS=hardhat npm run dev',
+        port: 5173,
+        reuseExistingServer: true,
+        timeout: 120000,
+        stdout: 'pipe',
+        stderr: 'pipe'
+      }
 })
