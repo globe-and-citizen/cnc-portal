@@ -9,6 +9,9 @@ export function useAuth() {
   const isAuthenticated = ref(false)
   const user = ref<User | null>(null)
   const router = useRouter()
+  
+  // Initialize the query at the top level
+  const { error, refetch } = useValidateToken()
 
   // TODO: Handle auth status and user data here
 
@@ -31,7 +34,6 @@ export function useAuth() {
   }
 
   const validateToken = async () => {
-    const { data, error, refetch } = useValidateToken()
     await refetch()
     return !error.value
   }

@@ -45,9 +45,11 @@ export function useSiwe() {
 
   // Use TanStack Query for fetching user data (authenticated)
   // Only fetch user data when address is available
-  const { data: userData, error: fetchUserError, refetch: refetchUser } = useUser(
-    computed(() => address.value || '')
-  )
+  const {
+    data: userData,
+    error: fetchUserError,
+    refetch: refetchUser
+  } = useUser(computed(() => address.value || ''))
   //#endregion
 
   //#region Functions

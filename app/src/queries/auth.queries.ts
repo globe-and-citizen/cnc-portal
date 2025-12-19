@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/vue-query'
+import { useQuery } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
 
 /**

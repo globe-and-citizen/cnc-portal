@@ -31,11 +31,12 @@ export const useTeam = (teamId: MaybeRefOrGetter<string | null>) => {
       try {
         const { data } = await apiClient.get<Team>(`teams/${id}`)
         return data
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Preserve error status for component usage
-        if (error.response) {
-          const enhancedError = new Error(error.message) as Error & { status?: number }
-          enhancedError.status = error.response.status
+        const err = error as { response?: { status: number }; message?: string }
+        if (err.response) {
+          const enhancedError = new Error(err.message) as Error & { status?: number }
+          enhancedError.status = err.response.status
           throw enhancedError
         }
         throw error

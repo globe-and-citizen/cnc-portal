@@ -23,7 +23,6 @@ export function useBodWritesFunctions() {
   const queryClient = useQueryClient()
   const notificationStore = useNotificationStore()
   const action = ref<Partial<Action> | null>(null)
-  const actionUrl = ref('')
   const isLoadingApproveAction = ref(false)
   const isActionAdded = ref(false)
   const isActionApproved = ref(false)

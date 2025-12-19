@@ -1,49 +1,41 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { mount } from '@vue/test-utils'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { Team } from '@/types/team'
 import { createRouter, createWebHistory } from 'vue-router'
+
 // Create mutable refs for reactive state outside the mock
-const mockError = ref<string | null>(null)
+const mockError = ref<Error | null>(null)
 const mockIsFetching = ref(false)
 const mockData = ref<Team | null>(null)
-const mockStatus = ref(200)
+const mockStatusCode = computed(() => {
+  if (mockError.value) {
+    const errorWithStatus = mockError.value as Error & { status?: number }
+    return errorWithStatus.status
+  }
+  return undefined
+})
 
-// Mock the modules BEFORE importing the component
-vi.mock('@/composables/useCustomFetch', () => {
-  // Inline the fake implementation to avoid hoisting issues
+// Mock the team queries to control the reactive state
+vi.mock('@/queries/team.queries', () => {
   return {
-    useCustomFetch: () => ({
-      json: () => ({
-        execute: vi.fn(),
-        error: mockError,
-        isFetching: mockIsFetching,
-        data: mockData,
-        status: mockStatus
-      }),
-      post: () => ({
-        json: () => ({
-          execute: vi.fn(),
-          error: mockError,
-          isFetching: mockIsFetching,
-          data: mockData,
-          status: mockStatus
-        })
-      }),
-      get: () => ({
-        json: () => ({
-          execute: vi.fn(),
-          error: mockError,
-          isFetching: mockIsFetching,
-          data: mockData,
-          status: mockStatus
-        })
-      })
+    useTeams: () => ({
+      data: ref([]),
+      isLoading: ref(false),
+      error: ref(null),
+      refetch: vi.fn()
+    }),
+    useTeam: () => ({
+      data: mockData,
+      isLoading: mockIsFetching,
+      error: mockError,
+      refetch: vi.fn()
     })
   }
 })
+
 describe('ShowIndex', () => {
   // Define interface for component instance
   beforeEach(() => {
@@ -52,7 +44,6 @@ describe('ShowIndex', () => {
     mockError.value = null
     mockIsFetching.value = false
     mockData.value = null
-    mockStatus.value = 200
   })
   const router = createRouter({
     history: createWebHistory(),
@@ -97,15 +88,17 @@ describe('ShowIndex', () => {
     // Set state after mount (simulate async change)
     // set error to a string
     mockIsFetching.value = false
-    mockError.value = 'New Error'
-    mockStatus.value = 500
+    const error500 = new Error('New Error') as Error & { status?: number }
+    error500.status = 500
+    mockError.value = error500
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('[data-test="loader"]').exists()).toBeFalsy()
     expect(wrapper.find('[data-test="error-state"]').exists()).toBeTruthy()
 
-    mockError.value = 'New Error'
-    mockStatus.value = 404
+    const error404 = new Error('New Error') as Error & { status?: number }
+    error404.status = 404
+    mockError.value = error404
     await wrapper.vm.$nextTick()
 
     mockData.value = {

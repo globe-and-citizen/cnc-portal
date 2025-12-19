@@ -1,21 +1,25 @@
 # Axios + TanStack Query Migration Summary
 
 ## Overview
+
 This document summarizes the migration from `useCustomFetch` to Axios + TanStack Query for the CNC Portal application.
 
 ## What Was Migrated
 
 ### Core Infrastructure
+
 - ✅ Created Axios client instance (`src/lib/axios.ts`) with authentication interceptors
 - ✅ Created query files in `src/queries/` directory
 - ✅ Added central export file (`src/queries/index.ts`)
 
 ### Stores
+
 - ✅ `teamStore.ts` - Migrated to use `useTeams` and `useTeam` queries
 - ✅ `notificationStore.ts` - Migrated to use `useNotifications`, `useAddBulkNotifications`, and `useUpdateNotification`
 - ✅ `expenseStore.ts` - Migrated to use `useExpenses` query
 
 ### Composables
+
 - ✅ `useAuth.ts` - Migrated to use `useValidateToken` query
 - ✅ `useSiwe.ts` - Migrated to use `useUser` query (kept useFetch for non-authenticated endpoints)
 - ✅ `useBod.ts` - Migrated to use `useCreateAction` and `useUpdateAction` mutations
@@ -23,9 +27,11 @@ This document summarizes the migration from `useCustomFetch` to Axios + TanStack
 - ✅ `bod.ts` - Migrated to use `useCreateAction` mutation
 
 ### Services
+
 - ✅ `AddCampaignService.ts` - Migrated to use `useCreateContract` mutation
 
 ### Query Files Created
+
 1. **auth.queries.ts** - Authentication token validation
 2. **team.queries.ts** - Team CRUD operations (list, get, create, update, delete)
 3. **user.queries.ts** - User data fetching by address, nonce retrieval
@@ -49,6 +55,7 @@ This document summarizes the migration from `useCustomFetch` to Axios + TanStack
 The following components still use `useCustomFetch` but are less critical and can be migrated incrementally:
 
 ### Components
+
 - `NotificationDropdown.vue` - Notification updates
 - `SelectMemberInput.vue` - User search
 - `AddTeamForm.vue` - Team creation form
@@ -60,16 +67,20 @@ The following components still use `useCustomFetch` but are less critical and ca
 - Various other components in views
 
 ### Recommendation
+
 These components can be migrated incrementally as part of future work. The core infrastructure is now in place, making it easy to create new query/mutation hooks as needed.
 
 ## Testing Updates
 
 ### Updated Tests
+
 - ✅ `notificationStore.spec.ts` - Updated to mock TanStack Query hooks
 - ✅ `AddCampaignService.spec.ts` - Updated to mock `useCreateContract`
 
 ### Test Strategy
+
 Tests now mock TanStack Query hooks instead of `useCustomFetch`. This provides:
+
 - More realistic test scenarios
 - Better type safety in tests
 - Easier to mock query/mutation states
@@ -77,6 +88,7 @@ Tests now mock TanStack Query hooks instead of `useCustomFetch`. This provides:
 ## Breaking Changes
 
 ### Store API Changes
+
 1. **teamStore.ts**
    - Removed `statusCode` from return (now computed from error)
    - `teams` is now a computed ref from TanStack Query
@@ -91,12 +103,14 @@ Tests now mock TanStack Query hooks instead of `useCustomFetch`. This provides:
    - Query automatically refetches when teamId changes
 
 ### Migration Notes
+
 - Views using `statusCode` were updated to use computed values from error state
 - Components are backward compatible as store interfaces remain similar
 
 ## Usage Examples
 
 ### Using Queries in Components
+
 ```typescript
 import { useTeams } from '@/queries'
 import { computed } from 'vue'
@@ -105,20 +119,21 @@ export default {
   setup() {
     const userAddress = computed(() => '0x...')
     const { data: teams, isLoading, error, refetch } = useTeams(userAddress)
-    
+
     return { teams, isLoading, error, refetch }
   }
 }
 ```
 
 ### Using Mutations in Components
+
 ```typescript
 import { useCreateTeam } from '@/queries'
 
 export default {
   setup() {
     const createTeam = useCreateTeam()
-    
+
     const handleSubmit = async (teamData) => {
       try {
         await createTeam.mutateAsync(teamData)
@@ -127,10 +142,10 @@ export default {
         console.error('Failed to create team:', error)
       }
     }
-    
-    return { 
-      handleSubmit, 
-      isCreating: createTeam.isPending 
+
+    return {
+      handleSubmit,
+      isCreating: createTeam.isPending
     }
   }
 }
@@ -139,14 +154,18 @@ export default {
 ## Configuration
 
 ### Axios Instance
+
 Located in `src/lib/axios.ts`:
+
 - Base URL from environment variable
 - Automatic auth token injection from localStorage
 - JSON content-type by default
 - Global error interceptor for 401 handling
 
 ### TanStack Query Setup
+
 Located in `src/main.ts`:
+
 - Refetch interval: 20 seconds
 - Refetch on window focus: enabled
 - Retry on failure: 2 attempts

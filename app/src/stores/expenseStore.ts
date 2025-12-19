@@ -1,5 +1,4 @@
 import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
-import type { ExpenseResponse } from '@/types'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
 import { computed, onMounted, watch } from 'vue'
@@ -43,7 +42,7 @@ export const useExpenseDataStore = defineStore('expense', () => {
     return []
   })
 
-  const fetchAllExpenseData = async (teamId = teamStore.currentTeamId) => {
+  const fetchAllExpenseData = async () => {
     // Note: TanStack Query will automatically refetch when teamId changes
     await executeFetchAllExpenseData()
   }

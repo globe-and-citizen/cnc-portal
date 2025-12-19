@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
-import type { Notification, NotificationResponse, BulkNotificationPayload } from '@/types/notification'
+import type { NotificationResponse, BulkNotificationPayload } from '@/types/notification'
 
 /**
  * Fetch all notifications for the current user

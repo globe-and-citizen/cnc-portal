@@ -6,37 +6,24 @@ import { createTestingPinia } from '@pinia/testing'
 // import { createPinia, setActivePinia } from 'pinia'
 
 // Create mutable refs for reactive state outside the mock
-const mockError = ref<string | null>(null)
+const mockError = ref<Error | null>(null)
 const mockIsFetching = ref(false)
 const mockData = ref<Array<unknown> | null>(null)
 
-// Mock the modules BEFORE importing the component
-vi.mock('@/composables/useCustomFetch', () => {
-  // Inline the fake implementation to avoid hoisting issues
+// Mock the team queries to control the reactive state
+vi.mock('@/queries/team.queries', () => {
   return {
-    useCustomFetch: () => ({
-      json: () => ({
-        execute: vi.fn(),
-        error: mockError,
-        isFetching: mockIsFetching,
-        data: mockData
-      }),
-      post: () => ({
-        json: () => ({
-          execute: vi.fn(),
-          error: mockError,
-          isFetching: mockIsFetching,
-          data: mockData
-        })
-      }),
-      get: () => ({
-        json: () => ({
-          execute: vi.fn(),
-          error: mockError,
-          isFetching: mockIsFetching,
-          data: mockData
-        })
-      })
+    useTeams: () => ({
+      data: mockData,
+      isLoading: mockIsFetching,
+      error: mockError,
+      refetch: vi.fn()
+    }),
+    useTeam: () => ({
+      data: ref(null),
+      isLoading: ref(false),
+      error: ref(null),
+      refetch: vi.fn()
     })
   }
 })
