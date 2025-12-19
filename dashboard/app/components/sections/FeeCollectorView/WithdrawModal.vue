@@ -112,7 +112,7 @@ import { ref, computed, watch } from 'vue'
 import type { TokenDisplay } from '@/types/token'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import { useFeeCollector } from '@/composables/useFeeCollector'
-import { useTokenPrices } from '@/composables/useTokenPrices'
+import { useTokenPriceStore } from '@/stores/useTokenPriceStore'
 
 interface Props {
   isOpen: boolean
@@ -133,7 +133,7 @@ const emit = defineEmits<{
 
 // Get data from composables
 const { tokens } = useFeeCollector()
-const { getTokenUSD } = useTokenPrices()
+const tokenPriceStore = useTokenPriceStore()
 
 // Local state
 const selectedToken = ref<TokenDisplay | null>(null)
@@ -150,18 +150,19 @@ const dropdownItems = computed<DropdownMenuItem[]>(() =>
   }))
 )
 
-// Calculate estimated USD using composable
+// Calculate estimated USD using store
 const estimatedUSD = computed(() => {
   if (!selectedToken.value || !withdrawAmount.value) return '$0.00'
 
   const amount = parseFloat(withdrawAmount.value)
   if (isNaN(amount) || amount === 0) return '$0.00'
 
-  // Use the composable's getTokenUSD function
-  const usdValue = getTokenUSD(selectedToken.value, amount)
+  const price = tokenPriceStore.getTokenPrice(selectedToken.value)
+  const usdValue = price * amount
 
-  // If it returns empty or "< $0.0001", show a fallback
-  return usdValue || '$0.00'
+  if (usdValue < 0.0001) return '< $0.0001'
+  if (usdValue < 0.01) return `$${usdValue.toFixed(4)}`
+  return `$${usdValue.toFixed(2)}`
 })
 
 // Set max amount

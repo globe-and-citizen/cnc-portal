@@ -1,11 +1,11 @@
 import { computed } from 'vue'
-import { useAccount, useReadContract } from '@wagmi/vue'
+import { useConnection, useReadContract } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { formatUnits } from 'viem'
 import { FEE_COLLECTOR_ADDRESS, FEE_COLLECTOR_SUPPORTED_TOKENS, TOKEN_DECIMALS, TOKEN_SYMBOLS } from '@/constant'
 import { FEE_COLLECTOR_ABI } from '~/artifacts/abi/feeCollector'
-import { useNetwork } from '~/utils/network'
-import { useTokenPrices } from './useTokenPrices'
+// import { useNetwork } from '~/utils/network'
+// import { useTokenPriceStore } from '@/stores/useTokenPriceStore'
 import type { TokenDisplay } from '@/types/token'
 
 // Helper to create a token display object (matches tokenHelpers.ts)
@@ -30,9 +30,9 @@ const makeToken = (
 })
 
 export const useFeeCollector = () => {
-  const { address: userAddress } = useAccount()
-  const { nativeSymbol } = useNetwork()
-  const { isLoading: isLoadingPrices, getTokenUSDValue } = useTokenPrices()
+  const connection = useConnection()
+  // const { nativeSymbol } = useNetwork()
+  // const tokenPriceStore = useTokenPriceStore()
 
   // Owner check
   const { data: feeCollectorOwner } = useReadContract({
@@ -42,7 +42,7 @@ export const useFeeCollector = () => {
   })
 
   const isFeeCollectorOwner = computed(
-    () => feeCollectorOwner.value === userAddress.value
+    () => feeCollectorOwner.value === connection.address.value
   )
 
   // Native balance
@@ -140,27 +140,28 @@ export const useFeeCollector = () => {
     return arr
   })
 
-  // Calculate total USD value (reactive) - using getTokenUSDValue from composable
-  const totalUSD = computed(() => {
-    let total = 0
+  // Calculate total USD value (reactive) - using price store
+  // const totalUSD = computed(() => {
+  //   let total = 0
 
-    tokens.value.forEach((token) => {
-      const amount = parseFloat(token.formattedBalance)
+  //   tokens.value.forEach((token) => {
+  //     const amount = parseFloat(token.formattedBalance)
 
-      // Skip if amount is NaN or 0
-      if (isNaN(amount) || amount === 0) return
+  //     // Skip if amount is NaN or 0
+  //     if (isNaN(amount) || amount === 0) return
 
-      // Use the composable's getTokenUSDValue function
-      const usdValue = getTokenUSDValue(token, amount)
+  //     // Get token price and calculate USD value
+  //     const price = tokenPriceStore.getTokenPrice(token)
+  //     const usdValue = price * amount
 
-      // Skip if no price available
-      if (usdValue === 0) return
+  //     // Skip if no price available
+  //     if (usdValue === 0) return
 
-      total += usdValue
-    })
+  //     total += usdValue
+  //   })
 
-    return total
-  })
+  //   return total
+  // })
 
   const isLoading = computed(() =>
     isLoadingNativeBalance.value || isLoadingUsdc.value || isLoadingUsdt.value
@@ -186,12 +187,10 @@ export const useFeeCollector = () => {
     usdcBalance,
     usdtBalance,
     tokens,
-    totalUSD,
     isLoading,
     isLoadingNativeBalance,
     isLoadingUsdc,
     isLoadingUsdt,
-    isLoadingPrices,
     errorNative,
     errorUsdc,
     errorUsdt,

@@ -83,14 +83,14 @@
             </td>
 
             <!-- Amount -->
-            <td class="px-4 py-4">
+            <!-- <td class="px-4 py-4">
               <div class="font-medium whitespace-nowrap">
                 {{ formatAmount(token.formattedBalance) }} {{ token.symbol }}
               </div>
               <div v-if="getTokenUSD(token, token.formattedBalance)" class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                 {{ getTokenUSD(token, token.formattedBalance) }}
               </div>
-            </td>
+            </td> -->
           </tr>
 
           <tr v-if="!isLoading && tokens.length === 0">
@@ -106,24 +106,24 @@
 
 <script setup lang="ts">
 import { useFeeCollector } from '@/composables/useFeeCollector'
-import { useTokenPrices } from '@/composables/useTokenPrices'
+// import { useTokenPriceStore } from '@/stores/useTokenPriceStore'
 
 defineEmits<{
   openBatchModal: []
 }>()
 
-// Get data directly from composables
+// Get data directly from composables and store
 const { tokens, isLoading, isFeeCollectorOwner } = useFeeCollector()
-const { getTokenUSD } = useTokenPrices()
+// const { getTokenUSD } = useTokenPriceStore()
 
 // Format amount with appropriate decimals
-const formatAmount = (amount: string): string => {
-  const num = parseFloat(amount)
-  if (isNaN(num)) return '0'
+// const formatAmount = (amount: string): string => {
+//   const num = parseFloat(amount)
+//   if (isNaN(num)) return '0'
 
-  // Show more decimals for small amounts
-  if (num < 0.01) return num.toFixed(6)
-  if (num < 1) return num.toFixed(4)
-  return num.toFixed(2)
-}
+//   // Show more decimals for small amounts
+//   if (num < 0.01) return num.toFixed(6)
+//   if (num < 1) return num.toFixed(4)
+//   return num.toFixed(2)
+// }
 </script>
