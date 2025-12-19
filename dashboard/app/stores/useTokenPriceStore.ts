@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { useChainId } from '@wagmi/vue'
 import { useTokenPricesQuery, CHAIN_TO_COINGECKO } from '@/queries/useTokenPricesQuery'
 import type { TokenDisplay } from '@/types/token'
+import { zeroAddress } from 'viem'
 
 /**
  * Token Price Store
@@ -42,11 +43,11 @@ export const useTokenPriceStore = defineStore('tokenPrices', () => {
    * const ethPrice = store.getTokenPrice(ethToken)
    * console.log(ethPrice) // 2500
    */
-  const getTokenPrice = (token: Pick<TokenDisplay, 'symbol' | 'isNative'>): number => {
+  const getTokenPrice = (token: Pick<TokenDisplay, 'symbol' | 'address'>): number => {
     if (!prices.value) return 0
 
     // Native token - use CoinGecko ID
-    if (token.isNative) {
+    if (token.address === zeroAddress) {
       const coinGeckoId = CHAIN_TO_COINGECKO[chainId.value || 1] || 'ethereum'
       return prices.value[coinGeckoId as keyof typeof prices.value] || 0
     }
