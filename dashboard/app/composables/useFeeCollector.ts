@@ -101,7 +101,7 @@ export const useFeeCollector = () => {
     const nativeBal = nativeBalance.value !== undefined && typeof nativeBalance.value === 'bigint'
       ? nativeBalance.value
       : 0n
-    arr.push(makeToken('native', nativeBal, 18, nativeSymbol.value, true))
+    arr.push(makeToken('native', nativeBal, 18, connection.chain.value?.nativeCurrency.symbol || 'ETH', true))
 
     // Build supported tokens array for processing - always include all configured tokens
     const supportedTokensBalances: Array<{ address: string, balance: bigint }> = []
