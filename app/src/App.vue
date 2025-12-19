@@ -4,9 +4,9 @@
     <template v-else>
       <RouterView name="login" />
       <div v-if="userStore.isAuth">
-        <!-- Responsive Drawer and Content -->
+          <!-- Responsive Drawer and Content -->
         <div class="h-screen flex">
-          <!-- Drawer -->
+            <!-- Drawer -->
           <div class="bg-base-100 transition-transform duration-300 ease-in-out z-10">
             <Drawer
               :user="{ name, address, imageUrl }"
@@ -89,6 +89,8 @@ import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import { useBackendWake } from '@/composables/useBackendWake'
+import { BACKEND_URL } from '@/constant'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
 
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
@@ -103,13 +105,12 @@ import { useAppStore } from './stores'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 import '@vuepic/vue-datepicker/dist/main.css'
 import LockScreen from './components/LockScreen.vue'
+import { useTeamStore } from '@/stores/teamStore'
+import { useAuthToken } from '@/composables/useAuthToken'
 
-const { address: connectedAddress } = useAccount()
-
+const { address: connectedAddress, isDisconnected } = useAccount()
 const { addErrorToast } = useToastStore()
-
 const appStore = useAppStore()
-const { isDisconnected } = useAccount()
 const { logout } = useAuth()
 const toggleSide = ref(false)
 const editUserModal = ref({ mount: false, show: false })
@@ -118,14 +119,49 @@ const userStore = useUserDataStore()
 const { name, address, imageUrl } = storeToRefs(userStore)
 
 const lock = computed(() => {
-  if (
-    userStore.isAuth &&
-    connectedAddress.value?.toLowerCase() !== userStore.address.toLowerCase()
-  ) {
-    return true
-  }
-  return false
+  return userStore.isAuth && connectedAddress.value?.toLowerCase() !== userStore.address.toLowerCase()
 })
+
+const teamStore = useTeamStore()
+const authToken = useAuthToken()
+const queryClient = useQueryClient()
+
+async function syncWeeklyClaims(teamId: string, token: string) {
+  const res = await fetch(`${BACKEND_URL}/api/weeklyclaim/sync/?teamId=${teamId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    credentials: 'include',
+  })
+  if (!res.ok) {
+    throw new Error('Failed to sync weekly claims')
+  }
+  return res.json()
+}
+
+const syncMutation = useMutation({
+  mutationFn: () => syncWeeklyClaims(teamStore.currentTeam!.id, authToken.value),
+  onSuccess: (data) => {
+    if (data.updated?.length > 0) {
+      queryClient.invalidateQueries({ queryKey: ['weekly-claims', teamStore.currentTeam?.id] })
+    }
+  },
+  onError: () => {
+    addErrorToast('Failed to sync weekly claims')
+  },
+})
+
+watch(
+  () => teamStore.currentTeam?.id,
+  (teamId) => {
+    if (teamId && userStore.isAuth) {
+      syncMutation.mutate()
+    }
+  },
+  { immediate: true }
+)
 
 watch(isDisconnected, (value) => {
   if (value && userStore.isAuth) {
