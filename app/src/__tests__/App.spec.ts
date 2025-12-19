@@ -43,6 +43,38 @@ vi.mock('@/composables/useBackendWake', () => ({
   useBackendWake: vi.fn()
 }))
 
+// Mock useAuthToken
+vi.mock('@/composables/useAuthToken', () => ({
+  useAuthToken: vi.fn(() => ref('mock-token'))
+}))
+
+// Mock useTeamStore
+const mockTeamStore = {
+  currentTeam: { id: '1', name: 'Test Team' },
+  currentTeamId: '1',
+  teams: [],
+  setCurrentTeamId: vi.fn(),
+  getContractAddressByType: vi.fn()
+}
+
+vi.mock('@/stores/teamStore', () => ({
+  useTeamStore: vi.fn(() => mockTeamStore)
+}))
+
+// Mock TanStack Vue Query
+vi.mock('@tanstack/vue-query', () => ({
+  useQueryClient: vi.fn(() => ({
+    invalidateQueries: vi.fn()
+  })),
+  useMutation: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: ref(false),
+    isSuccess: ref(false),
+    isError: ref(false),
+    error: ref(null)
+  }))
+}))
+
 // Shared mock user store so component and tests reference the same instance
 // Use plain values to mimic a Pinia store's properties (storeToRefs will create refs)
 const mockUserStore = {
