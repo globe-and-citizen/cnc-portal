@@ -4,15 +4,15 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <h3 class="text-lg font-semibold">
-            Token Holdings
+            Token Holdings {{ isOwner }}
           </h3>
-          <UBadge v-if="isFeeCollectorOwner" color="success">
+          <UBadge v-if="isOwner" color="success">
             Owner
           </UBadge>
         </div>
 
         <UButton
-          v-if="isFeeCollectorOwner"
+          v-if="isOwner"
           color="primary"
           size="sm"
           icon="i-heroicons-arrow-down-tray"
@@ -39,47 +39,46 @@
 
       <template #rank-cell="{ row }">
         <span class="text-gray-500 dark:text-gray-400">
-          dssdds
-          <pre> {{ row }}</pre>
+          {{ row.original.rank }}
         </span>
       </template>
 
-      <!-- <template #token-data="{ row }">
+      <template #symbol-cell="{ row }">
         <div class="flex items-center gap-3">
           <UAvatar
-            :alt="(row as unknown as TableRow).symbol"
+            :alt="row.original.symbol"
             size="sm"
           >
             <template #fallback>
               <span class="text-sm font-semibold">
-                {{ (row as unknown as TableRow).symbol.charAt(0) }}
+                {{ row.original.symbol.charAt(0) }}
               </span>
             </template>
           </UAvatar>
           <span class="font-semibold whitespace-nowrap">
-            {{ (row as unknown as TableRow).symbol }}
+            {{ row.original.symbol }}
           </span>
         </div>
       </template>
 
-      <template #address-data="{ row }">
+      <template #shortAddress-cell="{ row }">
         <UBadge variant="subtle" color="neutral">
           <span class="font-mono text-xs">
-            {{ (row as unknown as TableRow).shortAddress }}
+            {{ row.original.shortAddress }}
           </span>
         </UBadge>
       </template>
 
-      <template #amount-data="{ row }">
+      <template #formattedBalance-cell="{ row }">
         <div>
-          <div class="font-medium whitespace-nowrap">
-            {{ formatAmount((row as unknown as TableRow).formattedBalance) }} {{ (row as unknown as TableRow).symbol }}
+          <div v-if="row.original.formattedBalance" class="font-medium whitespace-nowrap">
+            {{ formatAmount(row.original.formattedBalance) }} {{ row.original.symbol }}
           </div>
-          <div v-if="(row as unknown as TableRow).usdValue" class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-            {{ (row as unknown as TableRow).usdValue }}
+          <div v-if="row.original.formattedValue" class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+            {{ row.original.formattedValue }}
           </div>
         </div>
-      </template> -->
+      </template>
     </UTable>
   </UCard>
 </template>
@@ -87,34 +86,24 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useFeeCollector } from '@/composables/useFeeCollector'
-import { useTokenPriceStore } from '@/stores/useTokenPriceStore'
 import type { TokenDisplay } from '@/types/token'
-import type { TableColumn } from '@nuxt/ui'
+import { isFeeCollectorOwner } from '~/composables/FeeCollector/read'
 
 defineEmits<{
   openBatchModal: []
 }>()
 
-interface TableRow {
+interface TableRow extends TokenDisplay {
   rank: number
-  usdValue: string | null
 }
+
+const isOwner = isFeeCollectorOwner()
 
 // Get data directly from composables and store
-const { tokens, isLoading, isFeeCollectorOwner } = useFeeCollector()
-const tokenPriceStore = useTokenPriceStore()
-
-type Payment = {
-  id: string
-  date: string
-  status: 'paid' | 'failed' | 'refunded'
-  email: string
-  amount: number
-}
+const { tokens, isLoading } = useFeeCollector()
 
 // Define table columns
-
-const columns: TableColumn<Payment>[] = [
+const columns = [
   {
     accessorKey: 'rank',
     header: 'RANK'
@@ -144,44 +133,11 @@ const formatAmount = (amount: string): string => {
   return num.toFixed(2)
 }
 
-// Get USD value for token
-const getTokenUSD = (token: TokenDisplay, formattedBalance: string): string | null => {
-  try {
-    const price = tokenPriceStore.getTokenPrice({
-      isNative: token.isNative,
-      symbol: token.symbol
-    })
-
-    if (!price || price <= 0) return null
-
-    const amount = parseFloat(formattedBalance)
-    if (isNaN(amount) || amount === 0) return null
-
-    const usdValue = amount * price
-
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(usdValue)
-  } catch (err) {
-    console.error('Error calculating USD value:', err)
-    return null
-  }
-}
-
 // Transform tokens into table rows with rank
 const tableRows = computed<TableRow[]>(() => {
   return tokens.value.map((token, index) => ({
     ...token,
-    rank: index + 1,
-    niveau: 1,
-    usdValue: getTokenUSD(token, token.formattedBalance)
+    rank: index + 1
   }))
-})
-
-watch(tableRows, () => {
-  console.log('Tokens updated:', tableRows.value)
 })
 </script>
