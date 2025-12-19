@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { watch } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { mainnet, sepolia, polygon, polygonAmoy, hardhat } from '@wagmi/vue/chains'
-import { useNetwork } from '~/utils/network'
+import { useChainId } from '@wagmi/vue'
 import type { TokenDisplay } from '@/types/token'
 
 interface TokenPrices {
@@ -32,11 +32,10 @@ const STABLECOIN_IDS = {
 
 // Function to fetch prices from CoinGecko
 const fetchTokenPrices = async (): Promise<TokenPrices> => {
-  const { chainId } = useNetwork()
+  const chainId = useChainId()
 
   const nativeId = CHAIN_TO_COINGECKO[chainId.value || 1] || 'ethereum'
-  const coinIds = [nativeId, STABLECOIN_IDS.usdc, STABLECOIN_IDS.usdt]
-  const uniqueIds = [...new Set(coinIds)].join(',')
+  const uniqueIds = [nativeId, STABLECOIN_IDS.usdc, STABLECOIN_IDS.usdt].join(',')
   const url = `${COINGECKO_API}/simple/price?ids=${uniqueIds}&vs_currencies=usd`
 
   const response = await fetch(url)
@@ -55,21 +54,44 @@ const fetchTokenPrices = async (): Promise<TokenPrices> => {
   }
 }
 
+/**
+ * Token Price Store
+ *
+ * Manages token prices from CoinGecko API with automatic 1-hour caching via TanStack Query.
+ * Automatically handles chain switching and cache invalidation.
+ *
+ * Fetches and caches prices for:
+ * - ETH (Ethereum)
+ * - USDC (USD Coin)
+ * - USDT (Tether)
+ * - MATIC (Polygon)
+ *
+ * @example
+ * const store = useTokenPriceStore()
+ *
+ * // Get token price
+ * const ethPrice = store.getTokenPrice(ethToken)
+ *
+ * // Check loading state
+ * if (store.isLoading.value) {
+ *   // Show loading indicator
+ * }
+ */
+
 export const useTokenPriceStore = defineStore('tokenPrices', () => {
-  const { chainId, nativeSymbol } = useNetwork()
-  const currentChainId = ref(chainId.value)
+  const chainId = useChainId()
 
   // Watch for chain changes to invalidate cache
   watch(chainId, (newId) => {
-    if (newId && newId !== currentChainId.value) {
-      currentChainId.value = newId
+    if (newId && newId !== chainId.value) {
+      chainId.value = newId
       refetch()
     }
   })
 
   // TanStack Query setup with 1 hour stale time
-  const { data: prices, isLoading, error, refetch } = useQuery({
-    queryKey: ['tokenPrices', currentChainId],
+  const { data: prices, isLoading, refetch } = useQuery({
+    queryKey: ['tokenPrices', chainId],
     queryFn: fetchTokenPrices,
     staleTime: CACHE_DURATION,
     gcTime: CACHE_DURATION, // formerly cacheTime
@@ -79,19 +101,22 @@ export const useTokenPriceStore = defineStore('tokenPrices', () => {
     }
   })
 
-  // Get CoinGecko ID for current chain
-  const getCoinGeckoId = (): string => {
-    const id = CHAIN_TO_COINGECKO[currentChainId.value || 1] || 'ethereum'
-    return id
-  }
-
   // Get token price by token info
+  /**
+   * Get the current price for a token
+   * @param token - Token display object with symbol and isNative flag
+   * @returns Token price in USD (0 if no price available)
+   * @example
+   * const store = useTokenPriceStore()
+   * const ethPrice = store.getTokenPrice(ethToken)
+   * console.log(ethPrice) // 2500
+   */
   const getTokenPrice = (token: TokenDisplay): number => {
     if (!prices.value) return 0
 
     // Native token - use CoinGecko ID
     if (token.isNative) {
-      const coinGeckoId = getCoinGeckoId()
+      const coinGeckoId = CHAIN_TO_COINGECKO[chainId.value || 1] || 'ethereum'
       return prices.value[coinGeckoId as keyof TokenPrices] || 0
     }
 
@@ -107,59 +132,21 @@ export const useTokenPriceStore = defineStore('tokenPrices', () => {
     return 0
   }
 
-  // Calculate USD value with formatting
-  const getTokenUSD = (token: TokenDisplay, amount: string | number): string => {
-    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
-
-    if (isNaN(numAmount) || numAmount === 0) return ''
-
-    const price = getTokenPrice(token)
-    if (price === 0) return ''
-
-    const usdValue = numAmount * price
-
-    // For very small amounts (< $0.01)
-    if (usdValue < 0.01) {
-      if (usdValue < 0.0001) {
-        return '< $0.0001'
-      }
-      // Show 4 decimals for cents
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4
-      }).format(usdValue)
-    }
-
-    // Normal formatting for >= $0.01
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(usdValue)
-  }
-
-  // Get raw USD value (without formatting)
-  const getTokenUSDValue = (token: TokenDisplay, amount: string | number): number => {
-    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
-
-    if (isNaN(numAmount) || numAmount === 0) return 0
-
-    const price = getTokenPrice(token)
-    return numAmount * price
-  }
-
   return {
-    prices,
+    /**
+     * Reactive ref indicating if prices are currently being loaded
+     * @type {Ref<boolean>}
+     * @example
+     * if (store.isLoading.value) {
+     *   // Show skeleton loader
+     * }
+     */
     isLoading,
-    error,
-    nativeSymbol,
-    getCoinGeckoId,
-    getTokenPrice,
-    getTokenUSD,
-    getTokenUSDValue,
-    refetch
+
+    /**
+     * Get the current price for a token in USD
+     * @function getTokenPrice
+     */
+    getTokenPrice
   }
 })
