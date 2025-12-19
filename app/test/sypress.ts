@@ -1,5 +1,5 @@
 import { testWithSynpress } from '@synthetixio/synpress'
 import { metaMaskFixtures } from '@synthetixio/synpress/playwright'
-import basicSetup from './wallet-setup/basic.setup'
+import connectedSetup from './wallet-setup/connected.setup'
 
-export default testWithSynpress(metaMaskFixtures(basicSetup))
+export default testWithSynpress(metaMaskFixtures(connectedSetup))
