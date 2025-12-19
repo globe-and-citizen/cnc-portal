@@ -44,9 +44,8 @@ jobs:
           npx hardhat node > hardhat.log 2>&1 &
           HARDHAT_PID=$!
           # Wait for Hardhat node to be ready
-          timeout 30 bash -c 'until curl -s http://127.0.0.1:8545 -X POST -d "{\"jsonrpc\":\"2.0\",\"method\":\"net_version\",\"params\":[],\"id\":1}" > /dev/null 2>&1; do sleep 0.5; done'
+          timeout 30 bash -c 'until curl -s http://127.0.0.1:8545 -X POST -H "Content-Type: application/json" -d "{\"jsonrpc\":\"2.0\",\"method\":\"net_version\",\"params\":[],\"id\":1}" > /dev/null 2>&1; do sleep 1; done'
           echo "Hardhat node started with PID: $HARDHAT_PID"
-          sleep 30
         working-directory: ./contract
 
       - name: 💾 Build Synpress Cache
@@ -59,10 +58,11 @@ jobs:
         run: |
           VITE_APP_NETWORK_ALIAS=hardhat npm run dev > vite.log 2>&1 &
           VITE_PID=$!
-          sleep 20
+          sleep 10
           timeout 60 bash -c 'until curl -s http://localhost:5173 > /dev/null; do sleep 1; done'
           echo "Vite dev server started with PID: $VITE_PID"
-          sleep 30
+          echo "Waiting for app to be fully ready..."
+          sleep 5
         working-directory: ./app
 
       - name: 🧪 Run E2E Tests
@@ -71,6 +71,7 @@ jobs:
         env:
           CI: true
           HEADLESS: true
+          SKIP_SERVER: true
 
       - name: 📊 Upload Test Results
         if: always()
@@ -86,4 +87,14 @@ jobs:
         with:
           name: playwright-traces
           path: app/test-results/
+          retention-days: 7
+
+      - name: 📋 Upload Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs
+          path: |
+            contract/hardhat.log
+            app/vite.log
           retention-days: 7
