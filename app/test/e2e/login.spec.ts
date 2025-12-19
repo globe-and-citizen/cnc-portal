@@ -10,7 +10,7 @@ test.describe('Sign in', () => {
   test('should be able to sign in and redirect to the teams page', async ({ page, metamask }) => {
     // Get wallet address
     const address = await metamask.getAccountAddress()
-    
+
     // Set up API mocks before navigation
     await page.route('**/api/user/nonce/*', async (route) => {
       await route.fulfill({
@@ -48,7 +48,7 @@ test.describe('Sign in', () => {
 
     // Navigate to the app
     await page.goto('/')
-    
+
     // Wait for the page to load
     await page.waitForLoadState('domcontentloaded')
 
