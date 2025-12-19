@@ -61,18 +61,49 @@ vi.mock('@/stores/teamStore', () => ({
   useTeamStore: vi.fn(() => mockTeamStore)
 }))
 
-// Mock TanStack Vue Query
+// Mock TanStack Vue Query with spies we can assert
+const invalidateQueriesSpy = vi.fn()
+const mutateSpy = vi.fn()
+// Strongly-typed shape for App.vue weekly claim sync response
+type WeeklyClaimSyncUpdate = {
+  id: number
+  previousStatus: string
+  newStatus: string
+}
+
+type WeeklyClaimSyncResponse = {
+  teamId?: number | string
+  totalProcessed?: number
+  updated?: WeeklyClaimSyncUpdate[]
+  skipped?: { id: number; reason: string }[]
+}
+
+let latestMutationOptions: {
+  onSuccess?: (data: WeeklyClaimSyncResponse) => void
+  onError?: (err?: Error) => void
+  mutationFn?: () => Promise<WeeklyClaimSyncResponse>
+} | null = null
+
 vi.mock('@tanstack/vue-query', () => ({
   useQueryClient: vi.fn(() => ({
-    invalidateQueries: vi.fn()
+    invalidateQueries: invalidateQueriesSpy
   })),
-  useMutation: vi.fn(() => ({
-    mutate: vi.fn(),
-    isPending: ref(false),
-    isSuccess: ref(false),
-    isError: ref(false),
-    error: ref(null)
-  }))
+  useMutation: vi.fn(
+    (options?: {
+      onSuccess?: (data: WeeklyClaimSyncResponse) => void
+      onError?: (err?: Error) => void
+      mutationFn?: () => Promise<WeeklyClaimSyncResponse>
+    }) => {
+      latestMutationOptions = options || null
+      return {
+        mutate: mutateSpy,
+        isPending: ref(false),
+        isSuccess: ref(false),
+        isError: ref(false),
+        error: ref(null)
+      }
+    }
+  )
 }))
 
 // Shared mock user store so component and tests reference the same instance
@@ -259,6 +290,44 @@ describe('App.vue', () => {
 
       const drawer = wrapper.findComponent({ name: 'Drawer' })
       expect(drawer.exists()).toBe(false)
+    })
+
+    it('invalidates queries only when updated length > 0', async () => {
+      // Mount the component
+      mockUserStore.isAuth = true
+      shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      // Guard: ensure mutation options captured
+      expect(latestMutationOptions).toBeTruthy()
+
+      // Case 1: updated empty -> no invalidation
+      invalidateQueriesSpy.mockClear()
+      latestMutationOptions!.onSuccess?.({ updated: [] })
+      expect(invalidateQueriesSpy).not.toHaveBeenCalled()
+
+      // Case 2: updated has items -> invalidation occurs
+      invalidateQueriesSpy.mockClear()
+      latestMutationOptions!.onSuccess?.({
+        updated: [{ id: 1, previousStatus: 'signed', newStatus: 'withdrawn' }]
+      })
+      expect(invalidateQueriesSpy).toHaveBeenCalled()
+    })
+
+    it('shows error toast when sync mutation fails', async () => {
+      const wrapper = shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      const { addErrorToast } = useToastStore()
+      latestMutationOptions!.onError?.(new Error('fail'))
+      await wrapper.vm.$nextTick()
+      expect(addErrorToast).toHaveBeenCalledWith('Failed to sync weekly claims')
     })
   })
 
