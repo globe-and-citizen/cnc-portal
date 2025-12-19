@@ -1,58 +1,7 @@
 import { defineStore } from 'pinia'
-import { watch } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
-import { mainnet, sepolia, polygon, polygonAmoy, hardhat } from '@wagmi/vue/chains'
 import { useChainId } from '@wagmi/vue'
+import { useTokenPricesQuery, CHAIN_TO_COINGECKO } from '@/queries/useTokenPricesQuery'
 import type { TokenDisplay } from '@/types/token'
-
-interface TokenPrices {
-  'ethereum': number
-  'usd-coin': number
-  'tether': number
-  'polygon-ecosystem-token': number
-}
-
-const COINGECKO_API = 'https://api.coingecko.com/api/v3'
-const CACHE_DURATION = 3600000 // 1 hour in milliseconds
-
-// Map chain IDs to CoinGecko IDs
-const CHAIN_TO_COINGECKO: Record<number, string> = {
-  [mainnet.id]: 'ethereum',
-  [sepolia.id]: 'ethereum',
-  [polygon.id]: 'polygon-ecosystem-token',
-  [polygonAmoy.id]: 'polygon-ecosystem-token',
-  [hardhat.id]: 'ethereum'
-}
-
-// Stablecoin IDs
-const STABLECOIN_IDS = {
-  usdc: 'usd-coin',
-  usdt: 'tether'
-}
-
-// Function to fetch prices from CoinGecko
-const fetchTokenPrices = async (): Promise<TokenPrices> => {
-  const chainId = useChainId()
-
-  const nativeId = CHAIN_TO_COINGECKO[chainId.value || 1] || 'ethereum'
-  const uniqueIds = [nativeId, STABLECOIN_IDS.usdc, STABLECOIN_IDS.usdt].join(',')
-  const url = `${COINGECKO_API}/simple/price?ids=${uniqueIds}&vs_currencies=usd`
-
-  const response = await fetch(url)
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch prices: ${response.status}`)
-  }
-
-  const data = await response.json()
-
-  return {
-    'ethereum': data.ethereum?.usd || 0,
-    'usd-coin': data['usd-coin']?.usd || 1,
-    'tether': data.tether?.usd || 1,
-    'polygon-ecosystem-token': data['polygon-ecosystem-token']?.usd || 0
-  }
-}
 
 /**
  * Token Price Store
@@ -81,27 +30,9 @@ const fetchTokenPrices = async (): Promise<TokenPrices> => {
 export const useTokenPriceStore = defineStore('tokenPrices', () => {
   const chainId = useChainId()
 
-  // Watch for chain changes to invalidate cache
-  watch(chainId, (newId) => {
-    if (newId && newId !== chainId.value) {
-      chainId.value = newId
-      refetch()
-    }
-  })
+  // Use the composable query hook
+  const { data: prices, isLoading } = useTokenPricesQuery()
 
-  // TanStack Query setup with 1 hour stale time
-  const { data: prices, isLoading, refetch } = useQuery({
-    queryKey: ['tokenPrices', chainId],
-    queryFn: fetchTokenPrices,
-    staleTime: CACHE_DURATION,
-    gcTime: CACHE_DURATION, // formerly cacheTime
-    retry: 2,
-    retryDelay: (attemptIndex: number) => {
-      return Math.min(1000 * (2 ** attemptIndex), 30000)
-    }
-  })
-
-  // Get token price by token info
   /**
    * Get the current price for a token
    * @param token - Token display object with symbol and isNative flag
@@ -117,7 +48,7 @@ export const useTokenPriceStore = defineStore('tokenPrices', () => {
     // Native token - use CoinGecko ID
     if (token.isNative) {
       const coinGeckoId = CHAIN_TO_COINGECKO[chainId.value || 1] || 'ethereum'
-      return prices.value[coinGeckoId as keyof TokenPrices] || 0
+      return prices.value[coinGeckoId as keyof typeof prices.value] || 0
     }
 
     // Stablecoins
