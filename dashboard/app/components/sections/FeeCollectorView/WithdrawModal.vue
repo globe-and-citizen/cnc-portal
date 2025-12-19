@@ -2,25 +2,11 @@
   <UModal
     :open="isOpen"
     :prevent-close="isLoadingWithdraw || isConfirmingWithdraw"
+    title="Withdraw from Fee Collector Contract"
+    :close="{ onClick: () => handleClose() }"
     @update:model-value="$emit('update:isOpen', $event)"
   >
     <!-- HEADER -->
-    <template #header>
-      <div class="flex items-center justify-between pb-2">
-        <p class="text-xl font-semibold">
-          Withdraw to Fee Collector Contract
-        </p>
-
-        <UButton
-          icon="i-heroicons-x-mark"
-          variant="ghost"
-          color="neutral"
-          size="sm"
-          :disabled="isLoadingWithdraw || isConfirmingWithdraw"
-          @click="handleClose"
-        />
-      </div>
-    </template>
 
     <!-- BODY -->
     <template #body>
