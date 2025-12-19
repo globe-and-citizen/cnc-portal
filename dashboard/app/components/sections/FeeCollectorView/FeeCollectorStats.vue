@@ -7,17 +7,21 @@
             Total Balance (USD)
           </p>
           <p class="text-2xl font-bold mt-1">
-            <span v-if="isLoading || isLoadingPrices">
+            <span v-if="isLoading">
               <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 animate-spin" />
+            </span>
+            <span v-else-if="error" class="text-red-600 dark:text-red-400 text-base">
+              Failed to load balance
             </span>
             <span v-else>{{ formattedTotalUSD }}</span>
           </p>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Available to withdraw
+            <span v-if="error">Please try again later</span>
+            <span v-else>Available to withdraw</span>
           </p>
         </div>
 
-        <div class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100 dark:bg-blue-900">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-blue-100 dark:bg-blue-900">
           <UIcon name="i-heroicons-wallet" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
         </div>
       </div>
@@ -27,23 +31,53 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useFeeCollector } from '@/composables/useFeeCollector'
+// import { useFeeCollector } from '@/composables/useFeeCollector'
+import { useConnection, useReadContract } from '@wagmi/vue'
+import { FEE_COLLECTOR_ABI } from '~/artifacts/abi/feeCollector'
+import { FEE_COLLECTOR_ADDRESS } from '~/constant/index'
+import { useTokenPriceStore } from '@/stores/useTokenPriceStore'
+import { formatUnits, type Address } from 'viem'
 
 // Get total USD directly from composable
-const { totalUSD, isLoading, isLoadingPrices } = useFeeCollector()
+// const { totalUSD, isLoadingPrices } = useFeeCollector()
+const connection = useConnection()
+
+const tokenPriceStore = useTokenPriceStore()
+
+// Native balance
+const {
+  data: nativeBalance,
+  isLoading,
+  error
+} = useReadContract({
+  address: FEE_COLLECTOR_ADDRESS as Address,
+  abi: FEE_COLLECTOR_ABI,
+  functionName: 'getBalance'
+})
 
 // Format total USD
 const formattedTotalUSD = computed(() => {
-  // Check if totalUSD is valid
-  if (isLoading.value || isLoadingPrices.value || isNaN(totalUSD.value)) {
+  // Check if data is loading first
+  if (isLoading.value || !nativeBalance.value || typeof nativeBalance.value !== 'bigint') {
     return '$0.00'
   }
+
+  const nativeTokenPrice = tokenPriceStore.getTokenPrice({
+    isNative: true,
+    symbol: connection.chain.value?.nativeCurrency.symbol || 'ETH'
+  })
+
+  // Convert from wei to ETH (18 decimals)
+  const nativeDecimals = connection.chain.value?.nativeCurrency.decimals || 18
+  const ethAmount = Number(formatUnits(nativeBalance.value as bigint, nativeDecimals))
+
+  const totalUSD = ethAmount * nativeTokenPrice
 
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 4,
     maximumFractionDigits: 4
-  }).format(totalUSD.value)
+  }).format(totalUSD)
 })
 </script>
