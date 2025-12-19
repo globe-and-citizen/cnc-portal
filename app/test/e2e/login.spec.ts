@@ -8,8 +8,10 @@ const test = testWithSynpress(metaMaskFixtures(connectedSetup))
 
 test.describe('Sign in', () => {
   test('should be able to sign in and redirect to the teams page', async ({ page, metamask }) => {
-    // Mock API
+    // Get wallet address
     const address = await metamask.getAccountAddress()
+    
+    // Set up API mocks before navigation
     await page.route('**/api/user/nonce/*', async (route) => {
       await route.fulfill({
         status: 200,
@@ -44,26 +46,33 @@ test.describe('Sign in', () => {
       })
     })
 
+    // Navigate to the app
+    await page.goto('/')
+    
+    // Wait for the page to load
+    await page.waitForLoadState('domcontentloaded')
+
     // Click sign-in button
     await page.getByTestId('sign-in').click()
 
-    await page.waitForLoadState('networkidle')
+    // Wait for wallet connection request to be triggered
+    await page.waitForTimeout(2000)
 
-    // Connect to dapp
+    // Connect to dapp (this will handle the MetaMask popup)
     await metamask.connectToDapp()
 
-    // // Switch network
+    // Switch network
     await metamask.approveNewNetwork()
     await metamask.approveSwitchNetwork()
 
-    // // Confirm signature
+    // Confirm signature
     await page.waitForTimeout(3000)
     await metamask.confirmSignature()
 
-    // // Wait for redirection
+    // Wait for redirection
     await page.waitForURL('http://localhost:5173/teams')
 
-    // // Check redirection
+    // Check redirection
     // expect(page.url()).toBe('http://localhost:5173/teams')
   })
 })
