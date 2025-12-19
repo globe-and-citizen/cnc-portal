@@ -25,11 +25,15 @@ vi.mock('@/stores', async (importOriginal) => {
 import SignedWeeklyClaim from '../SignedWeeklyClaim.vue'
 
 // hoisted mocks for vitest (avoid hoisting issues)
-const { mockUseReadContract, mockUseTanstackQuery, mockOwnerValue } = vi.hoisted(() => ({
-  mockUseReadContract: vi.fn(),
-  mockUseTanstackQuery: vi.fn(),
-  mockOwnerValue: '0xOwnerAddress'
-}))
+const { mockUseReadContract, mockUseTanstackQuery, mockOwnerValue, mockUseQueryClient } =
+  vi.hoisted(() => ({
+    mockUseReadContract: vi.fn(),
+    mockUseTanstackQuery: vi.fn(),
+    mockOwnerValue: '0xOwnerAddress',
+    mockUseQueryClient: vi.fn(() => ({
+      invalidateQueries: vi.fn()
+    }))
+  }))
 
 // Mock wagmi's useReadContract
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -41,9 +45,32 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 })
 
 // Mock the tanstack query composable used by the component
-vi.mock('@/composables/useTanstackQuery', () => ({
-  useTanstackQuery: mockUseTanstackQuery
+vi.mock('@/composables', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/composables')>()
+  return {
+    ...actual,
+    useTanstackQuery: mockUseTanstackQuery
+  }
+})
+
+// Mock useAuthToken
+vi.mock('@/composables/useAuthToken', () => ({
+  useAuthToken: vi.fn(() => ref('mock-token'))
 }))
+
+// Mock useQueryClient from tanstack
+vi.mock('@tanstack/vue-query', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/vue-query')>()
+  return {
+    ...actual,
+    useQueryClient: mockUseQueryClient
+  }
+})
+
+// Mock global fetch
+global.fetch = vi.fn(() =>
+  Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
+) as unknown as typeof fetch
 
 // Minimal TableComponent stub that exposes the named slots used by the component
 const TableComponentStub = {
@@ -101,6 +128,10 @@ describe('SignedWeeklyClaim.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({})
+    })
 
     mockUseReadContract.mockReturnValue({ data: ref(mockOwnerValue), error: ref(null) })
     mockUseTanstackQuery.mockReturnValue({ data: ref(mockWeeklyClaims), isLoading: ref(false) })
