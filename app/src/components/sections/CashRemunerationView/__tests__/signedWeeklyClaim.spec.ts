@@ -18,22 +18,30 @@ vi.mock('@/stores', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/stores')>()
   return {
     ...actual,
-    useCurrencyStore: () => currencyStoreMock
+    useCurrencyStore: () => currencyStoreMock,
+    useToastStore: () => ({
+      addErrorToast: mockAddErrorToast,
+      addSuccessToast: vi.fn()
+    })
   }
 })
 
 import SignedWeeklyClaim from '../SignedWeeklyClaim.vue'
 
 // hoisted mocks for vitest (avoid hoisting issues)
-const { mockUseReadContract, mockUseTanstackQuery, mockOwnerValue, mockUseQueryClient } =
-  vi.hoisted(() => ({
-    mockUseReadContract: vi.fn(),
-    mockUseTanstackQuery: vi.fn(),
-    mockOwnerValue: '0xOwnerAddress',
-    mockUseQueryClient: vi.fn(() => ({
-      invalidateQueries: vi.fn()
-    }))
-  }))
+const {
+  mockUseReadContract,
+  mockUseTanstackQuery,
+  mockOwnerValue,
+  mockInvalidateQueries,
+  mockAddErrorToast
+} = vi.hoisted(() => ({
+  mockUseReadContract: vi.fn(),
+  mockUseTanstackQuery: vi.fn(),
+  mockOwnerValue: '0xOwnerAddress',
+  mockInvalidateQueries: vi.fn(),
+  mockAddErrorToast: vi.fn()
+}))
 
 // Mock wagmi's useReadContract
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -63,7 +71,9 @@ vi.mock('@tanstack/vue-query', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@tanstack/vue-query')>()
   return {
     ...actual,
-    useQueryClient: mockUseQueryClient
+    useQueryClient: () => ({
+      invalidateQueries: mockInvalidateQueries
+    })
   }
 })
 
@@ -219,5 +229,60 @@ describe('SignedWeeklyClaim.vue', () => {
 
     // Total hours 15 * hourly 40 = 600
     expect(wrapper.text()).toContain('≃ $600.00 USD')
+  })
+
+  it('logs new weekly claims when data changes', async () => {
+    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const dataRef = ref(mockWeeklyClaims)
+    mockUseTanstackQuery.mockReturnValue({ data: dataRef, isLoading: ref(false) })
+
+    wrapper = createWrapper()
+    await flushPromises()
+
+    // Trigger watcher by updating data
+    dataRef.value = [...mockWeeklyClaims, { id: '4', status: 'signed', weekStart: '2023-10-23' }]
+    await flushPromises()
+
+    expect(consoleLogSpy).toHaveBeenCalledWith('New weekly claims: ', expect.any(Array))
+    consoleLogSpy.mockRestore()
+  })
+
+  it('handles token with no price info gracefully', async () => {
+    // Override getTokenInfo to return undefined for unknown token
+    currencyStoreMock.getTokenInfo.mockImplementation((tokenId: string) => {
+      if (tokenId === 'native') return { prices: [{ id: 'local', price: 2 }] }
+      if (tokenId === 'usdc') return { prices: [] } // No local price
+      return undefined // Unknown token
+    })
+
+    wrapper = createWrapper()
+    await flushPromises()
+
+    // Should still render without crashing, native=10*2=20, usdc=20*0=0
+    expect(wrapper.text()).toContain('≃ $20.00 USD / Hour')
+
+    // Reset mock
+    currencyStoreMock.getTokenInfo.mockImplementation((tokenId: string) => {
+      if (tokenId === 'native') return { prices: [{ id: 'local', price: 2 }] }
+      if (tokenId === 'usdc') return { prices: [{ id: 'local', price: 1 }] }
+      return { prices: [{ id: 'local', price: 0 }] }
+    })
+  })
+
+  it('shows error toast when cashRemunerationOwner fetch fails', async () => {
+    const errorRef = ref<Error | null>(null)
+    mockUseReadContract.mockReturnValue({
+      data: ref(null),
+      error: errorRef
+    })
+
+    wrapper = createWrapper()
+    await flushPromises()
+
+    // Trigger watcher by setting error
+    errorRef.value = new Error('Contract read failed')
+    await flushPromises()
+
+    expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to fetch cash remuneration owner')
   })
 })
