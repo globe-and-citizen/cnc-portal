@@ -32,45 +32,59 @@ export const useFeeCollector = () => {
 
   const tokenPriceStore = useTokenPriceStore()
 
-  const valideBalance = (balance: unknown): balance is bigint => {
+  const validateBalance = (balance: unknown): balance is bigint => {
     return balance !== undefined && typeof balance === 'bigint'
   }
 
-  // Utility function to get toke formatted Balance
+  // Utility function to get token formatted Balance
 
   const formatTokenBalance = (balance: unknown, decimals: number = 18) => {
-    return valideBalance(balance)
+    return validateBalance(balance)
       ? formatUnits(balance, decimals)
       : '0'
   }
 
   const formatTokenBalanceValue = (balance: unknown, address: Address, decimals: number = 18, symbol: string) => {
-    if (valideBalance(balance)) {
+    if (validateBalance(balance)) {
       const val = tokenPriceStore.getTokenPrice({ address: address, symbol }) * Number(formatUnits(balance, decimals))
 
+      if (val < 0.01) {
+        if (val < 0.0001) {
+          return '< $0.0001'
+        }
+        // Show 4 decimals for cents
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 4,
+          maximumFractionDigits: 4
+        }).format(val)
+      }
+
+      // Normal formatting for >= $0.01
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
       }).format(val)
     }
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      minimumFractionDigits: 4,
-      maximumFractionDigits: 4
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
     }).format(0)
   }
 
   // Build tokens list (matches tokenHelpers.ts buildTokenList logic)
   const tokens = computed<TokenDisplay[]>(() => {
-    const arr: TokenDisplay[] = [
+    return [
       {
         address: zeroAddress,
         symbol: connection.chain.value?.nativeCurrency.symbol || 'ETH',
         decimals: connection.chain.value?.nativeCurrency.decimals || 18,
-        balance: valideBalance(nativeBalance.value)
+        balance: validateBalance(nativeBalance.value)
           ? nativeBalance.value
           : 0n,
         formattedBalance: formatTokenBalance(nativeBalance.value, connection.chain.value?.nativeCurrency.decimals || 18),
@@ -86,7 +100,7 @@ export const useFeeCollector = () => {
         address: FEE_COLLECTOR_SUPPORTED_TOKENS[0] as Address,
         symbol: TOKEN_SYMBOLS[FEE_COLLECTOR_SUPPORTED_TOKENS[0] as `0x${string}`] || 'USDC',
         decimals: TOKEN_DECIMALS['USDC'],
-        balance: valideBalance(usdcBalance.value)
+        balance: validateBalance(usdcBalance.value)
           ? usdcBalance.value
           : 0n,
         formattedBalance: formatTokenBalance(usdcBalance.value, TOKEN_DECIMALS['USDC']),
@@ -102,7 +116,7 @@ export const useFeeCollector = () => {
         address: FEE_COLLECTOR_SUPPORTED_TOKENS[1] as Address,
         symbol: TOKEN_SYMBOLS[FEE_COLLECTOR_SUPPORTED_TOKENS[1] as `0x${string}`] || 'USDT',
         decimals: TOKEN_DECIMALS['USDT'],
-        balance: valideBalance(usdtBalance.value)
+        balance: validateBalance(usdtBalance.value)
           ? usdtBalance.value
           : 0n,
         formattedBalance: formatTokenBalance(usdtBalance.value, TOKEN_DECIMALS['USDT']),
@@ -115,7 +129,6 @@ export const useFeeCollector = () => {
         )
       }
     ]
-    return arr
   })
 
   const isLoading = computed(() =>
