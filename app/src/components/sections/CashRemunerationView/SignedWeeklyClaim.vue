@@ -99,8 +99,9 @@
 <script setup lang="ts">
 import UserComponent from '@/components/UserComponent.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { NETWORK } from '@/constant'
-import { useTanstackQuery, useCustomFetch } from '@/composables'
+import { BACKEND_URL, NETWORK } from '@/constant'
+import { useTanstackQuery } from '@/composables'
+import { useAuthToken } from '@/composables/useAuthToken'
 import { computed, watch, onMounted } from 'vue'
 import { useCurrencyStore, useToastStore } from '@/stores'
 import { useUserDataStore, useTeamStore } from '@/stores'
@@ -148,19 +149,28 @@ const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaim[]>(queryKey
 const isTeamClaimDataFetching = computed(() => isLoading.value)
 
 // Sync weekly claims with blockchain on mount to ensure status is up to date
-const syncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeam?.id}`)
-const { execute: syncWeeklyClaims } = useCustomFetch(syncUrl, { immediate: false }).post().json()
+const authToken = useAuthToken()
 const queryClient = useQueryClient()
 
 onMounted(async () => {
   if (teamStore.currentTeam?.id) {
-    await syncWeeklyClaims()
-    // Refresh data after sync
-    queryClient.invalidateQueries({ queryKey: ['weekly-claims', teamStore.currentTeam?.id] })
+    try {
+      await fetch(`${BACKEND_URL}/api/weeklyclaim/sync/?teamId=${teamStore.currentTeam.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken.value}`
+        },
+        credentials: 'include'
+      })
+      // Refresh data after sync
+      queryClient.invalidateQueries({ queryKey: ['weekly-claims', teamStore.currentTeam.id] })
+    } catch (error) {
+      console.error('Failed to sync weekly claims:', error)
+    }
   }
 })
 
-// cashRemunerationOwner is now fetched from the contract using useReadContract
 
 const data = computed(() =>
   loadedData.value?.filter(
