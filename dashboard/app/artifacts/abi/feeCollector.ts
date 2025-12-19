@@ -53,6 +53,25 @@ export const FEE_COLLECTOR_ABI = [
     anonymous: false,
     inputs: [
       {
+        indexed: true,
+        internalType: 'string',
+        name: 'contractType',
+        type: 'string'
+      },
+      {
+        indexed: false,
+        internalType: 'uint16',
+        name: 'feeBps',
+        type: 'uint16'
+      }
+    ],
+    name: 'FeeConfigUpdated',
+    type: 'event'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
         indexed: false,
         internalType: 'uint64',
         name: 'version',
@@ -285,6 +304,24 @@ export const FEE_COLLECTOR_ABI = [
   {
     inputs: [],
     name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'string',
+        name: 'contractType',
+        type: 'string'
+      },
+      {
+        internalType: 'uint16',
+        name: 'feeBps',
+        type: 'uint16'
+      }
+    ],
+    name: 'setFee',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function'

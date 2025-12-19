@@ -107,6 +107,7 @@
 <script setup lang="ts">
 import { useFeeCollector } from '@/composables/useFeeCollector'
 import { useTokenPrices } from '@/composables/useTokenPrices'
+import { formatAmount } from '@/utils/currency'
 
 defineEmits<{
   openBatchModal: []
@@ -115,15 +116,4 @@ defineEmits<{
 // Get data directly from composables
 const { tokens, isLoading, isFeeCollectorOwner } = useFeeCollector()
 const { getTokenUSD } = useTokenPrices()
-
-// Format amount with appropriate decimals
-const formatAmount = (amount: string): string => {
-  const num = parseFloat(amount)
-  if (isNaN(num)) return '0'
-
-  // Show more decimals for small amounts
-  if (num < 0.01) return num.toFixed(6)
-  if (num < 1) return num.toFixed(4)
-  return num.toFixed(2)
-}
 </script>

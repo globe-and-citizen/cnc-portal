@@ -28,22 +28,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useFeeCollector } from '@/composables/useFeeCollector'
-
+import { formatUSD } from '@/utils/currency'
 // Get total USD directly from composable
 const { totalUSD, isLoading, isLoadingPrices } = useFeeCollector()
 
 // Format total USD
 const formattedTotalUSD = computed(() => {
-  // Check if totalUSD is valid
   if (isLoading.value || isLoadingPrices.value || isNaN(totalUSD.value)) {
     return '$0.00'
   }
 
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 4,
-    maximumFractionDigits: 4
-  }).format(totalUSD.value)
+  return formatUSD(totalUSD.value)
 })
 </script>

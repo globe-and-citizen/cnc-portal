@@ -36,6 +36,9 @@
       @close="isWithdrawModalOpen = false"
       @withdraw="handleWithdraw"
     />
+
+    <!-- Fee Config List -->
+    <FeeConfigList />
   </div>
 </template>
 
@@ -47,6 +50,7 @@ import type { TokenDisplay } from '@/types/token'
 import FeeCollectorStats from './FeeCollectorStats.vue'
 import TokenHoldingsTable from './TokenHoldingsTable.vue'
 import WithdrawModal from './WithdrawModal.vue'
+import FeeConfigList from './FeeConfigList.vue'
 
 const toast = useToast()
 
