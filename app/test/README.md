@@ -57,7 +57,7 @@ test/
 │ └── teams.spec.ts # Team management tests
 ├── wallet-setup/ # MetaMask wallet configurations
 │ └── connected.setup.ts # Standard wallet setup
-└── sypress.ts # Synpress test configuration
+└── synpress.ts # Synpress test configuration
 ```
 
 ## 🔧 Configuration
