@@ -4,9 +4,9 @@
     <template v-else>
       <RouterView name="login" />
       <div v-if="userStore.isAuth">
-          <!-- Responsive Drawer and Content -->
+        <!-- Responsive Drawer and Content -->
         <div class="h-screen flex">
-            <!-- Drawer -->
+          <!-- Drawer -->
           <div class="bg-base-100 transition-transform duration-300 ease-in-out z-10">
             <Drawer
               :user="{ name, address, imageUrl }"
@@ -119,7 +119,9 @@ const userStore = useUserDataStore()
 const { name, address, imageUrl } = storeToRefs(userStore)
 
 const lock = computed(() => {
-  return userStore.isAuth && connectedAddress.value?.toLowerCase() !== userStore.address.toLowerCase()
+  return (
+    userStore.isAuth && connectedAddress.value?.toLowerCase() !== userStore.address.toLowerCase()
+  )
 })
 
 const teamStore = useTeamStore()
@@ -131,9 +133,9 @@ async function syncWeeklyClaims(teamId: string, token: string) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${token}`
     },
-    credentials: 'include',
+    credentials: 'include'
   })
   if (!res.ok) {
     throw new Error('Failed to sync weekly claims')
@@ -150,7 +152,7 @@ const syncMutation = useMutation({
   },
   onError: () => {
     addErrorToast('Failed to sync weekly claims')
-  },
+  }
 })
 
 watch(
