@@ -42,7 +42,7 @@ export const useTokenPriceStore = defineStore('tokenPrices', () => {
    * const ethPrice = store.getTokenPrice(ethToken)
    * console.log(ethPrice) // 2500
    */
-  const getTokenPrice = (token: TokenDisplay): number => {
+  const getTokenPrice = (token: Pick<TokenDisplay, 'symbol' | 'isNative'>): number => {
     if (!prices.value) return 0
 
     // Native token - use CoinGecko ID
