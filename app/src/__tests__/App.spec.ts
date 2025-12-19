@@ -292,6 +292,49 @@ describe('App.vue', () => {
       expect(drawer.exists()).toBe(false)
     })
 
+    it('calls sync mutation function and returns response when backend returns ok', async () => {
+      // Mock fetch to simulate successful sync
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ updated: [], totalProcessed: 0 })
+      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(globalThis as any).fetch = fetchMock
+
+      mockUserStore.isAuth = true
+      shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      expect(latestMutationOptions?.mutationFn).toBeTruthy()
+      const result = await latestMutationOptions!.mutationFn!()
+
+      expect(fetchMock).toHaveBeenCalled()
+      expect(result).toEqual({ updated: [], totalProcessed: 0 })
+    })
+
+    it('throws when sync mutation function receives non-ok response', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: false,
+        json: vi.fn()
+      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(globalThis as any).fetch = fetchMock
+
+      mockUserStore.isAuth = true
+      shallowMount(App, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })]
+        }
+      })
+
+      await expect(latestMutationOptions!.mutationFn!()).rejects.toThrow(
+        'Failed to sync weekly claims'
+      )
+    })
+
     it('invalidates queries only when updated length > 0', async () => {
       // Mount the component
       mockUserStore.isAuth = true
