@@ -21,6 +21,7 @@
     "@unovis/vue": "^1.6.1",
     "@vueuse/nuxt": "^13.9.0",
     "@wagmi/vue": "^0.4.2",
+    "axios": "^1.13.2",
     "date-fns": "^4.1.0",
     "ethers": "^6.15.0",
     "nuxt": "^4.2.1",
