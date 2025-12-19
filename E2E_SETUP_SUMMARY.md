@@ -110,28 +110,27 @@
 
 ### Tests Need Individual Review
 
-The existing tests may need updates:
+The current E2E tests and coverage gaps are:
 
-1. **Dashboard Test** (`test/e2e/dashboard.spec.ts`)
-   - Simple test, should work once app is running
-   - Checks for welcome message
-
-2. **Login Test** (`test/e2e/login.spec.ts`)
+1. **Login Test** (`test/e2e/login.spec.ts`)
    - Mocks API calls
    - Tests require MetaMask interaction flow to be re-enabled
    - Currently has commented-out MetaMask steps
 
-3. **Navbar Test** (`test/e2e/navbar.spec.ts`)
-   - Tests user profile editing
-   - Tests logout functionality
-   - Tests notifications
+2. **Dashboard Coverage**
+   - Previous E2E test file (`test/e2e/dashboard.spec.ts`) was removed in this PR
+   - Dashboard behavior is currently **not covered** by E2E tests
+   - A new dashboard E2E suite should be created when flows are stable
 
-4. **Teams Test** (`test/e2e/teams.spec.ts`)
-   - Most complex test suite
-   - Tests team creation flow
-   - Many tests are commented out
-   - Requires contract deployment interactions
+3. **Navbar Coverage**
+   - Previous E2E test file (`test/e2e/navbar.spec.ts`) was removed in this PR
+   - Profile editing, logout, and notification flows are currently **not covered** by E2E tests
+   - Consider reintroducing navbar tests once UX flows are finalized
 
+4. **Teams Coverage**
+   - Previous E2E test file (`test/e2e/teams.spec.ts`) was removed in this PR
+   - Team creation and related contract-interaction flows are currently **not covered** by E2E tests
+   - A new teams test suite should be designed, including required contract deployment interactions
 ### Potential Test Fixes Needed
 
 1. **Selector Issues**
