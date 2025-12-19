@@ -171,7 +171,6 @@ onMounted(async () => {
   }
 })
 
-
 const data = computed(() =>
   loadedData.value?.filter(
     (WeeklyClaim) =>
