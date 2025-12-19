@@ -13,6 +13,17 @@ const currencyStoreMock = {
   localCurrency: { code: 'USD' }
 }
 
+// Mock team store
+const mockTeamStore = {
+  currentTeam: { id: 'team-1' },
+  getContractAddressByType: vi.fn(() => '0xCashRemunerationAddress')
+}
+
+// Mock user data store
+const mockUserDataStore = {
+  address: '0xUserAddress'
+}
+
 // Mock the stores module so component and tests use the same store instance
 vi.mock('@/stores', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/stores')>()
@@ -22,7 +33,9 @@ vi.mock('@/stores', async (importOriginal) => {
     useToastStore: () => ({
       addErrorToast: mockAddErrorToast,
       addSuccessToast: vi.fn()
-    })
+    }),
+    useTeamStore: () => mockTeamStore,
+    useUserDataStore: () => mockUserDataStore
   }
 })
 
@@ -240,7 +253,26 @@ describe('SignedWeeklyClaim.vue', () => {
     await flushPromises()
 
     // Trigger watcher by updating data
-    dataRef.value = [...mockWeeklyClaims, { id: '4', status: 'signed', weekStart: '2023-10-23' }]
+    dataRef.value = [
+      ...mockWeeklyClaims,
+      {
+        id: '4',
+        status: 'signed',
+        weekStart: '2023-10-23T00:00:00.000Z',
+        createdAt: '2023-10-29T00:00:00.000Z',
+        member: { name: 'Jane Smith', address: '0xUserAddress' },
+        claims: [{ hoursWorked: 8, status: 'approved' }],
+        wage: {
+          maximumHoursPerWeek: 40,
+          ratePerHour: [
+            { type: 'native', amount: 10 },
+            { type: 'usdc', amount: 20 }
+          ],
+          userAddress: '0xUserAddress'
+        },
+        data: { ownerAddress: mockOwnerValue }
+      }
+    ]
     await flushPromises()
 
     expect(consoleLogSpy).toHaveBeenCalledWith('New weekly claims: ', expect.any(Array))
@@ -248,11 +280,11 @@ describe('SignedWeeklyClaim.vue', () => {
   })
 
   it('handles token with no price info gracefully', async () => {
-    // Override getTokenInfo to return undefined for unknown token
+    // Override getTokenInfo to return empty prices or zero price for unknown token
     currencyStoreMock.getTokenInfo.mockImplementation((tokenId: string) => {
       if (tokenId === 'native') return { prices: [{ id: 'local', price: 2 }] }
       if (tokenId === 'usdc') return { prices: [] } // No local price
-      return undefined // Unknown token
+      return { prices: [{ id: 'local', price: 0 }] } // Unknown token with zero price
     })
 
     wrapper = createWrapper()
@@ -284,5 +316,47 @@ describe('SignedWeeklyClaim.vue', () => {
     await flushPromises()
 
     expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to fetch cash remuneration owner')
+  })
+
+  describe('Weekly Claims Sync on Mount', () => {
+    it('should handle sync API errors gracefully', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const syncError = new Error('Network error during sync')
+
+      const fetchMock = vi.fn().mockRejectedValue(syncError)
+      global.fetch = fetchMock
+
+      wrapper = createWrapper()
+      await flushPromises()
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to sync weekly claims:', syncError)
+      // Should not crash the component
+      expect(wrapper.exists()).toBe(true)
+
+      consoleErrorSpy.mockRestore()
+    })
+
+    it('should not call sync API when team is not available', async () => {
+      // Temporarily set currentTeam to null
+      const originalTeam = mockTeamStore.currentTeam
+      mockTeamStore.currentTeam = null as unknown as { id: string }
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({})
+      })
+      global.fetch = fetchMock
+
+      wrapper = createWrapper()
+      await flushPromises()
+
+      expect(fetchMock).not.toHaveBeenCalledWith(
+        expect.stringContaining('/api/weeklyclaim/sync/'),
+        expect.any(Object)
+      )
+
+      // Restore
+      mockTeamStore.currentTeam = originalTeam
+    })
   })
 })
