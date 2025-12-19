@@ -100,8 +100,8 @@
 import UserComponent from '@/components/UserComponent.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { NETWORK } from '@/constant'
-import { useTanstackQuery } from '@/composables/useTanstackQuery'
-import { computed, watch } from 'vue'
+import { useTanstackQuery, useCustomFetch } from '@/composables'
+import { computed, watch, onMounted } from 'vue'
 import { useCurrencyStore, useToastStore } from '@/stores'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { type WeeklyClaim } from '@/types'
@@ -113,7 +113,7 @@ import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { useReadContract } from '@wagmi/vue'
-// import { useQueryClient } from '@tanstack/vue-query'
+import { useQueryClient } from '@tanstack/vue-query'
 
 function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
@@ -147,10 +147,18 @@ const queryKey = computed(() => [
 const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaim[]>(queryKey, weeklyClaimUrl)
 const isTeamClaimDataFetching = computed(() => isLoading.value)
 
-// const isSameWeek = (weeklyClaimStartWeek: string) => {
-//   const currentMonday = getMondayStart(new Date())
-//   return currentMonday.toISOString() === weeklyClaimStartWeek
-// }
+// Sync weekly claims with blockchain on mount to ensure status is up to date
+const syncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeam?.id}`)
+const { execute: syncWeeklyClaims } = useCustomFetch(syncUrl, { immediate: false }).post().json()
+const queryClient = useQueryClient()
+
+onMounted(async () => {
+  if (teamStore.currentTeam?.id) {
+    await syncWeeklyClaims()
+    // Refresh data after sync
+    queryClient.invalidateQueries({ queryKey: ['weekly-claims', teamStore.currentTeam?.id] })
+  }
+})
 
 // cashRemunerationOwner is now fetched from the contract using useReadContract
 
