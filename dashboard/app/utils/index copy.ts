@@ -1,9 +1,9 @@
 export * from './errorUtil'
 export * from './generalUtil'
-// export * from './constantUtil'
-// export * from './currencyUtil'
-// export * from './expenseUtil'
-// export * from './contractManagementUtil'
+export * from './constantUtil'
+export * from './currencyUtil'
+export * from './expenseUtil'
+export * from './contractManagementUtil'
 /**
  * Utility function to wait for a condition to be met
  * @description This function repeatedly checks a condition until it returns true or a timeout occurs.
@@ -49,12 +49,4 @@ export const formatDataForDisplay = (data: unknown): string => {
     console.warn('Error formatting data for display:', error)
     return String(data)
   }
-}
-
-export function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-export function randomFrom<T>(array: T[]): T {
-  return array[Math.floor(Math.random() * array.length)]!
 }
