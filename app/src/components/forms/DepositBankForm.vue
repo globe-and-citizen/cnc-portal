@@ -63,8 +63,7 @@
     :show="true"
     :steps="bankDepositTokenResult.timelineSteps.value"
     title="Bank Deposit"
-    />
-  -->
+    />  -->
   
 </template>
 

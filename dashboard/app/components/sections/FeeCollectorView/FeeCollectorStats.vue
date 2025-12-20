@@ -36,7 +36,7 @@ import { useConnection, useReadContract } from '@wagmi/vue'
 import { FEE_COLLECTOR_ABI } from '~/artifacts/abi/feeCollector'
 import { FEE_COLLECTOR_ADDRESS } from '~/constant/index'
 import { useTokenPriceStore } from '@/stores/useTokenPriceStore'
-import { formatUnits, type Address } from 'viem'
+import { formatUnits, zeroAddress, type Address } from 'viem'
 
 // Get total USD directly from composable
 // const { totalUSD, isLoadingPrices } = useFeeCollector()
@@ -63,8 +63,8 @@ const formattedTotalUSD = computed(() => {
   }
 
   const nativeTokenPrice = tokenPriceStore.getTokenPrice({
-    isNative: true,
-    symbol: connection.chain.value?.nativeCurrency.symbol || 'ETH'
+    symbol: connection.chain.value?.nativeCurrency.symbol || 'ETH',
+    address: zeroAddress
   })
 
   // Convert from wei to ETH (18 decimals)
