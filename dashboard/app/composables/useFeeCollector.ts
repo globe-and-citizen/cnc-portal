@@ -77,6 +77,21 @@ export const useFeeCollector = () => {
     }).format(0)
   }
 
+  // --- Add contract read for fee configs ---
+  const { data: feeConfigsRaw, refetch: refetchFeeConfigs, isLoading: isLoadingFeeConfigs } = useReadContract({
+    address: FEE_COLLECTOR_ADDRESS as Address,
+    abi: FEE_COLLECTOR_ABI,
+    functionName: 'getAllFeeConfigs'
+  })
+
+  // Format fee configs for the UI
+  const feeConfigs = computed(() => {
+    // If contract returns undefined, fallback to empty array
+    if (!feeConfigsRaw.value) return []
+    // If contract returns array of structs, just pass through
+    return feeConfigsRaw.value as { contractType: string, feeBps: number }[]
+  })
+
   // Build tokens list (matches tokenHelpers.ts buildTokenList logic)
   const tokens = computed<TokenDisplay[]>(() => {
     return [

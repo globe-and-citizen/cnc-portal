@@ -667,4 +667,45 @@ describe('FeeCollector', () => {
         .withArgs(owner.address)
     })
   })
+
+  describe('Fee Configuration Management (setFee)', () => {
+    beforeEach(async () => {
+      ;[owner, user1, user2] = await ethers.getSigners()
+      feeCollector = await deployFeeCollector()
+    })
+
+    it('should allow owner to add a new fee config', async () => {
+      await expect(feeCollector.setFee('NEW_TYPE', 123))
+        .to.emit(feeCollector, 'FeeConfigUpdated')
+        .withArgs('NEW_TYPE', 123)
+
+      expect(await feeCollector.getFeeFor('NEW_TYPE')).to.equal(123)
+      const configs = await feeCollector.getAllFeeConfigs()
+      expect(configs.length).to.equal(4)
+    })
+
+    it('should allow owner to update an existing fee config', async () => {
+      await expect(feeCollector.setFee('BANK', 999))
+        .to.emit(feeCollector, 'FeeConfigUpdated')
+        .withArgs('BANK', 999)
+
+      expect(await feeCollector.getFeeFor('BANK')).to.equal(999)
+      const configs = await feeCollector.getAllFeeConfigs()
+      expect(configs.length).to.equal(3)
+    })
+
+    it('should not allow non-owner to set fee', async () => {
+      await expect(feeCollector.connect(user1).setFee('BANK', 100))
+        .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
+        .withArgs(user1.address)
+    })
+
+    it('should reject empty contract type', async () => {
+      await expect(feeCollector.setFee('', 100)).to.be.revertedWith(ERRORS.EMPTY_TYPE)
+    })
+
+    it('should reject invalid BPS (> 10000)', async () => {
+      await expect(feeCollector.setFee('BANK', 10001)).to.be.revertedWith(ERRORS.INVALID_BPS)
+    })
+  })
 })
