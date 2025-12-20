@@ -12,22 +12,22 @@ export const useFeeCollector = () => {
   // Native balance
   const {
     data: nativeBalance,
-    isLoading: isLoadingNativeBalance
-    // error: errorNative
+    isLoading: isLoadingNativeBalance,
+    error: errorNative
   } = useFeeBalance()
 
   // USDC balance
   const {
     data: usdcBalance,
-    isLoading: isLoadingUsdc
-    // error: errorUsdc
+    isLoading: isLoadingUsdc,
+    error: errorUsdc
   } = useFeeTokenBalance(getUSDCAddress())
 
   // USDT balance
   const {
     data: usdtBalance,
-    isLoading: isLoadingUsdt
-    // error: errorUsdt
+    isLoading: isLoadingUsdt,
+    error: errorUsdt
   } = useFeeTokenBalance(getUSDTAddress())
 
   const tokenPriceStore = useTokenPriceStore()
@@ -87,8 +87,40 @@ export const useFeeCollector = () => {
     isLoadingNativeBalance.value || isLoadingUsdc.value || isLoadingUsdt.value
   )
 
+  // Calculate total USD balance (raw and formatted)
+  const totalUsdAmount = computed(() => {
+    return tokens.value.reduce((sum, token) => {
+      // Parse formattedValue back to number (strip $ and commas)
+      const rawValue = typeof token.formattedValue === 'string'
+        ? Number(token.formattedValue.replace(/[^\d.-]/g, ''))
+        : 0
+      return sum + rawValue
+    }, 0)
+  })
+
+  const formattedTotalUsd = computed(() => formatUSD(totalUsdAmount.value))
+
+  // Return an array of items with errors
+  const error = computed(() => {
+    const errors = []
+    if (errorNative.value) {
+      errors.push({ id: 'native', error: errorNative.value })
+    }
+    if (errorUsdc.value) {
+      errors.push({ id: 'usdc', error: errorUsdc.value })
+      console.log('USDC Error:', errorUsdc.value)
+    }
+    if (errorUsdt.value) {
+      errors.push({ id: 'usdt', error: errorUsdt.value })
+    }
+    return errors.length > 0 ? errors : null
+  })
+
   return {
     tokens,
-    isLoading
+    isLoading,
+    totalUsdAmount,
+    formattedTotalUsd,
+    error
   }
 }
