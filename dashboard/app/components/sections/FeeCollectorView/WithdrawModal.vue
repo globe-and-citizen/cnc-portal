@@ -127,10 +127,10 @@ const withdrawAmount = ref('')
 
 // Dropdown items
 const dropdownItems = computed<DropdownMenuItem[]>(() =>
-  tokens.value.map(t => ({
-    label: `${t.symbol} — ${t.formattedBalance}`,
+  tokens.value.map(token => ({
+    label: `${token.symbol} — ${token.formattedBalance}`,
     onSelect: () => {
-      selectedToken.value = t
+      selectedToken.value = token
       withdrawAmount.value = ''
     }
   }))
@@ -153,14 +153,14 @@ const estimatedUSD = computed(() => {
 
 // Set max amount
 const setMaxAmount = () => {
-  if (selectedToken.value) {
+  if (selectedToken.value && selectedToken.value.formattedBalance) {
     withdrawAmount.value = selectedToken.value.formattedBalance
   }
 }
 
 // Set percentage amount
 const setPercentAmount = (percent: number) => {
-  if (selectedToken.value) {
+  if (selectedToken.value && selectedToken.value.formattedBalance) {
     const maxAmount = parseFloat(selectedToken.value.formattedBalance)
     const percentAmount = (maxAmount * percent) / 100
     withdrawAmount.value = percentAmount.toFixed(selectedToken.value.decimals)
@@ -169,7 +169,7 @@ const setPercentAmount = (percent: number) => {
 
 // Validation
 const isValid = computed(() => {
-  if (!selectedToken.value || !withdrawAmount.value) return false
+  if (!selectedToken.value || !withdrawAmount.value || !selectedToken.value.formattedBalance) return false
   const amount = parseFloat(withdrawAmount.value)
   const maxAmount = parseFloat(selectedToken.value.formattedBalance)
   return !isNaN(amount) && amount > 0 && amount <= maxAmount
