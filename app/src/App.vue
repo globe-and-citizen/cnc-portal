@@ -144,7 +144,7 @@ async function syncWeeklyClaims(teamId: string, token: string) {
 }
 
 const syncMutation = useMutation({
-  mutationFn: () => syncWeeklyClaims(teamStore.currentTeam!.id, authToken.value),
+  mutationFn: (teamId: string) => syncWeeklyClaims(teamId, authToken.value),
   onSuccess: (data) => {
     if (data.updated?.length > 0) {
       queryClient.invalidateQueries({ queryKey: ['weekly-claims', teamStore.currentTeam?.id] })
@@ -159,7 +159,7 @@ watch(
   () => teamStore.currentTeam?.id,
   (teamId) => {
     if (teamId && userStore.isAuth) {
-      syncMutation.mutate()
+      syncMutation.mutate(teamId)
     }
   },
   { immediate: true }
