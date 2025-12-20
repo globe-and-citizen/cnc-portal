@@ -72,7 +72,7 @@
       <template #formattedBalance-cell="{ row }">
         <div>
           <div v-if="row.original.formattedBalance" class="font-medium whitespace-nowrap">
-            {{ formatAmount(row.original.formattedBalance) }} {{ row.original.symbol }}
+            {{ row.original.formattedBalance }} {{ row.original.symbol }}
           </div>
           <div v-if="row.original.formattedValue" class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
             {{ row.original.formattedValue }}
@@ -121,17 +121,6 @@ const columns = [
     header: 'Amount'
   }
 ]
-
-// Format amount with appropriate decimals
-const formatAmount = (amount: string): string => {
-  const num = parseFloat(amount)
-  if (isNaN(num)) return '0'
-
-  // Show more decimals for small amounts
-  if (num < 0.01) return num.toFixed(6)
-  if (num < 1) return num.toFixed(4)
-  return num.toFixed(2)
-}
 
 // Transform tokens into table rows with rank
 const tableRows = computed<TableRow[]>(() => {
