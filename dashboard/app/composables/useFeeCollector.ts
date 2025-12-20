@@ -1,8 +1,8 @@
 import { computed } from 'vue'
 import { useConnection } from '@wagmi/vue'
 import type { Address } from 'viem'
-import { formatUnits, zeroAddress } from 'viem'
-import { FEE_COLLECTOR_SUPPORTED_TOKENS, TOKEN_DECIMALS, TOKEN_SYMBOLS } from '@/constant'
+import { formatUnits } from 'viem'
+import { getSupportedTokens, getUSDCAddress, getUSDTAddress } from '@/constant'
 import type { TokenDisplay } from '@/types/token'
 import { useFeeBalance, useFeeTokenBalance } from '~/composables/FeeCollector/read'
 
@@ -21,14 +21,14 @@ export const useFeeCollector = () => {
     data: usdcBalance,
     isLoading: isLoadingUsdc
     // error: errorUsdc
-  } = useFeeTokenBalance(FEE_COLLECTOR_SUPPORTED_TOKENS[0] as Address)
+  } = useFeeTokenBalance(getUSDCAddress())
 
   // USDT balance
   const {
     data: usdtBalance,
     isLoading: isLoadingUsdt
     // error: errorUsdt
-  } = useFeeTokenBalance(FEE_COLLECTOR_SUPPORTED_TOKENS[1] as Address)
+  } = useFeeTokenBalance(getUSDTAddress())
 
   const tokenPriceStore = useTokenPriceStore()
 
@@ -55,60 +55,32 @@ export const useFeeCollector = () => {
     return formatUSD(tokenPrice * tokenAmount)
   }
 
-  //
-
-  // Build tokens list (matches tokenHelpers.ts buildTokenList logic)
+  // Build tokens list using getSupportedTokens helper
   const tokens = computed<TokenDisplay[]>(() => {
-    return [
-      {
-        address: zeroAddress,
-        symbol: connection.chain.value?.nativeCurrency.symbol || 'ETH',
-        decimals: connection.chain.value?.nativeCurrency.decimals || 18,
-        balance: validateBalance(nativeBalance.value)
-          ? nativeBalance.value
-          : 0n,
-        formattedBalance: formatTokenBalance(nativeBalance.value, connection.chain.value?.nativeCurrency.decimals || 18),
-        shortAddress: 'Native Token',
-        formattedValue: formatTokenBalanceValue(
-          nativeBalance.value,
-          zeroAddress,
-          connection.chain.value?.nativeCurrency.decimals || 18,
-          connection.chain.value?.nativeCurrency.symbol || 'ETH'
-        )
-      },
-      {
-        address: FEE_COLLECTOR_SUPPORTED_TOKENS[0] as Address,
-        symbol: TOKEN_SYMBOLS[FEE_COLLECTOR_SUPPORTED_TOKENS[0] as `0x${string}`] || 'USDC',
-        decimals: TOKEN_DECIMALS['USDC'],
-        balance: validateBalance(usdcBalance.value)
-          ? usdcBalance.value
-          : 0n,
-        formattedBalance: formatTokenBalance(usdcBalance.value, TOKEN_DECIMALS['USDC']),
-        shortAddress: `${(FEE_COLLECTOR_SUPPORTED_TOKENS[0] as Address).slice(0, 6)}...${(FEE_COLLECTOR_SUPPORTED_TOKENS[0] as Address).slice(-4)}`,
-        formattedValue: formatTokenBalanceValue(
-          usdcBalance.value,
-          FEE_COLLECTOR_SUPPORTED_TOKENS[0] as Address,
-          TOKEN_DECIMALS['USDC'],
-          TOKEN_SYMBOLS[FEE_COLLECTOR_SUPPORTED_TOKENS[0] as `0x${string}`] || 'USDC'
-        )
-      },
-      {
-        address: FEE_COLLECTOR_SUPPORTED_TOKENS[1] as Address,
-        symbol: TOKEN_SYMBOLS[FEE_COLLECTOR_SUPPORTED_TOKENS[1] as `0x${string}`] || 'USDT',
-        decimals: TOKEN_DECIMALS['USDT'],
-        balance: validateBalance(usdtBalance.value)
-          ? usdtBalance.value
-          : 0n,
-        formattedBalance: formatTokenBalance(usdtBalance.value, TOKEN_DECIMALS['USDT']),
-        shortAddress: `${(FEE_COLLECTOR_SUPPORTED_TOKENS[1] as Address).slice(0, 6)}...${(FEE_COLLECTOR_SUPPORTED_TOKENS[1] as Address).slice(-4)}`,
-        formattedValue: formatTokenBalanceValue(
-          usdtBalance.value,
-          FEE_COLLECTOR_SUPPORTED_TOKENS[1] as Address,
-          TOKEN_DECIMALS['USDT'],
-          TOKEN_SYMBOLS[FEE_COLLECTOR_SUPPORTED_TOKENS[1] as `0x${string}`] || 'USDT'
-        )
+    const nativeSymbol = connection.chain.value?.nativeCurrency.symbol || 'ETH'
+    const chainId = connection.chain.value?.id
+
+    const supportedTokens = getSupportedTokens(nativeSymbol, chainId)
+
+    // Map balance data to each token config
+    const balanceMap: Record<string, unknown> = {
+      native: nativeBalance.value,
+      usdc: usdcBalance.value,
+      usdt: usdtBalance.value
+    }
+
+    return supportedTokens.map((token) => {
+      const balance = balanceMap[token.id]
+      return {
+        address: token.address,
+        symbol: token.symbol,
+        decimals: token.decimals,
+        balance: validateBalance(balance) ? balance : 0n,
+        formattedBalance: formatTokenBalance(balance, token.decimals),
+        shortAddress: token.shortAddress,
+        formattedValue: formatTokenBalanceValue(balance, token.address, token.decimals, token.symbol)
       }
-    ]
+    })
   })
 
   const isLoading = computed(() =>
