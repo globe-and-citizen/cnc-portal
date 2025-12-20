@@ -1,5 +1,5 @@
 export function formatUSD(amount: number): string {
-  if (isNaN(amount)) return '$0.00'
+  if (isNaN(amount) || amount === 0) return '$0.00'
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
