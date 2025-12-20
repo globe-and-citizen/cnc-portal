@@ -13,7 +13,7 @@
             <span v-else-if="error" class="text-red-600 dark:text-red-400 text-base">
               Failed to load balance
             </span>
-            <span v-else>{{ formattedTotalUSD }}</span>
+            <span v-else>{{ formattedTotalUsd }}</span>
           </p>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
             <span v-if="error">Please try again later</span>
@@ -30,54 +30,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-// import { useFeeCollector } from '@/composables/useFeeCollector'
-import { useConnection, useReadContract } from '@wagmi/vue'
-import { FEE_COLLECTOR_ABI } from '~/artifacts/abi/feeCollector'
-import { FEE_COLLECTOR_ADDRESS } from '~/constant/index'
-import { useTokenPriceStore } from '@/stores/useTokenPriceStore'
-import { formatUnits, zeroAddress, type Address } from 'viem'
+import { useFeeCollector } from '@/composables/useFeeCollector'
 
 // Get total USD directly from composable
-// const { totalUSD, isLoadingPrices } = useFeeCollector()
-const connection = useConnection()
-
-const tokenPriceStore = useTokenPriceStore()
-
-// Native balance
 const {
-  data: nativeBalance,
   isLoading,
-  error
-} = useReadContract({
-  address: FEE_COLLECTOR_ADDRESS as Address,
-  abi: FEE_COLLECTOR_ABI,
-  functionName: 'getBalance'
-})
-
-// Format total USD
-const formattedTotalUSD = computed(() => {
-  // Check if data is loading first
-  if (isLoading.value || !nativeBalance.value || typeof nativeBalance.value !== 'bigint') {
-    return '$0.00'
-  }
-
-  const nativeTokenPrice = tokenPriceStore.getTokenPrice({
-    symbol: connection.chain.value?.nativeCurrency.symbol || 'ETH',
-    address: zeroAddress
-  })
-
-  // Convert from wei to ETH (18 decimals)
-  const nativeDecimals = connection.chain.value?.nativeCurrency.decimals || 18
-  const ethAmount = Number(formatUnits(nativeBalance.value as bigint, nativeDecimals))
-
-  const totalUSD = ethAmount * nativeTokenPrice
-
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 4,
-    maximumFractionDigits: 4
-  }).format(totalUSD)
-})
+  error,
+  formattedTotalUsd } = useFeeCollector()
 </script>
