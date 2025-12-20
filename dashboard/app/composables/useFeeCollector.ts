@@ -45,52 +45,17 @@ export const useFeeCollector = () => {
   }
 
   const formatTokenBalanceValue = (balance: unknown, address: Address, decimals: number = 18, symbol: string) => {
-    if (validateBalance(balance)) {
-      const val = tokenPriceStore.getTokenPrice({ address: address, symbol }) * Number(formatUnits(balance, decimals))
+    // Get token prince in USD ex: 1 USDC = $1.0
+    const tokenPrice = tokenPriceStore.getTokenPrice({ address: address, symbol })
 
-      if (val < 0.01) {
-        if (val < 0.0001) {
-          return '< $0.0001'
-        }
-        // Show 4 decimals for cents
-        return new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: 'USD',
-          minimumFractionDigits: 4,
-          maximumFractionDigits: 4
-        }).format(val)
-      }
+    // Convert the token balance in bigint to number: ex: 1000000n -> 1.0 (for 6 decimals)
+    const tokenAmount = Number(formatUnits(validateBalance(balance) ? balance : 0n, decimals))
 
-      // Normal formatting for >= $0.01
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(val)
-    }
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1
-    }).format(0)
+    // Format the token value in USD : ex: $1.0 * 1.0 = 1.0 -> $1.00
+    return formatUSD(tokenPrice * tokenAmount)
   }
 
-  // --- Add contract read for fee configs ---
-  const { data: feeConfigsRaw, refetch: refetchFeeConfigs, isLoading: isLoadingFeeConfigs } = useReadContract({
-    address: FEE_COLLECTOR_ADDRESS as Address,
-    abi: FEE_COLLECTOR_ABI,
-    functionName: 'getAllFeeConfigs'
-  })
-
-  // Format fee configs for the UI
-  const feeConfigs = computed(() => {
-    // If contract returns undefined, fallback to empty array
-    if (!feeConfigsRaw.value) return []
-    // If contract returns array of structs, just pass through
-    return feeConfigsRaw.value as { contractType: string, feeBps: number }[]
-  })
+  //
 
   // Build tokens list (matches tokenHelpers.ts buildTokenList logic)
   const tokens = computed<TokenDisplay[]>(() => {
@@ -151,17 +116,7 @@ export const useFeeCollector = () => {
   )
 
   return {
-    // isFeeCollectorOwner,
-    // nativeBalance,
-    // usdcBalance,
-    // usdtBalance,
     tokens,
     isLoading
-    // isLoadingNativeBalance,
-    // isLoadingUsdc,
-    // isLoadingUsdt,
-    // errorNative,
-    // errorUsdc,
-    // errorUsdt
   }
 }
