@@ -42,3 +42,12 @@ export function isFeeCollectorOwner() {
     return (owner.value as Address).toLowerCase() === connection.address.value.toLowerCase()
   })
 }
+
+export function useFeeConfigs() {
+  // Fee configurations
+  return useReadContract({
+    address: FEE_COLLECTOR_ADDRESS as Address,
+    abi: FEE_COLLECTOR_ABI,
+    functionName: 'getAllFeeConfigs'
+  })
+}
