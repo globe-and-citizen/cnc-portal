@@ -28,7 +28,7 @@
     />
 
     <!-- Fee Config List -->
-    <!-- <FeeConfigList /> -->
+    <FeeConfigList />
   </div>
 </template>
 
