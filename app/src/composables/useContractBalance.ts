@@ -124,7 +124,7 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
         abi: ERC20_ABI,
         functionName: 'balanceOf' as const,
         args: [unref(address) as Address] as const,
-        query: { refetchInterval: 5000 }
+        query: { refetchInterval: 300000 }
       })
       return {
         token,
@@ -142,7 +142,7 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
         address: unref(address),
         abi: BANK_ABI,
         functionName: 'totalDividends',
-        query: { refetchInterval: 5000 }
+        query: { refetchInterval: 300000 }
       })
       return {
         token,
@@ -157,7 +157,7 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
         abi: BANK_ABI,
         functionName: 'totalTokenDividends',
         args: [token.address as Address],
-        query: { refetchInterval: 5000 }
+        query: { refetchInterval: 300000 }
       })
       return {
         token,

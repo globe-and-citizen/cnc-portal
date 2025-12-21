@@ -5,10 +5,9 @@
         <h3 class="text-lg font-semibold">
           Fee Configurations
         </h3>
-        <FeeConfigAddActions @added="refetchFeeConfigs" />
+        <FeeConfigAddActions />
       </div>
     </template>
-
     <div class="overflow-x-auto">
       <table class="w-full">
         <thead>
@@ -25,7 +24,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-if="isLoadingFeeConfigs">
+          <tr v-if="isLoading">
             <td colspan="3" class="text-center py-8">
               <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin inline-block" />
             </td>
@@ -39,14 +38,14 @@
             </td>
             <td class="px-4 py-4">
               <UButton
-                v-if="isFeeCollectorOwner"
+                v-if="isFeeOwner"
                 icon="i-heroicons-pencil"
                 size="xs"
                 @click="openEdit(config)"
               />
             </td>
           </tr>
-          <tr v-if="!isLoadingFeeConfigs && feeConfigs.length === 0">
+          <tr v-if="!isLoading && feeConfigs?.length === 0">
             <td colspan="3" class="text-center py-8 text-gray-500">
               No fee configs available
             </td>
@@ -56,53 +55,29 @@
     </div>
 
     <FeeConfigFormModal
+      v-if="isEditModalOpen"
       v-model="isEditModalOpen"
       :fee-config="selectedConfig ?? undefined"
       mode="edit"
       :loading="isEditLoading"
-      @submit="handleEdit"
     />
   </UCard>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useFeeCollector } from '@/composables/useFeeCollector'
 import FeeConfigFormModal from '@/components/sections/FeeCollectorView/FeeConfigFormModal.vue'
 import FeeConfigAddActions from '@/components/sections/FeeCollectorView/FeeConfigAddActions.vue'
+import { isFeeCollectorOwner, useFeeConfigs } from '~/composables/FeeCollector/read'
 
-const { feeConfigs, refetchFeeConfigs, setFee, isLoadingFeeConfigs, isFeeCollectorOwner } = useFeeCollector()
-
+const { data: feeConfigs, isLoading } = useFeeConfigs()
+const isFeeOwner = isFeeCollectorOwner()
 const isEditModalOpen = ref(false)
 const isEditLoading = ref(false)
 const selectedConfig = ref<{ contractType: string, feeBps: number } | null>(null)
-const toast = useToast()
 
 const openEdit = (cfg: { contractType: string, feeBps: number }) => {
   selectedConfig.value = cfg
   isEditModalOpen.value = true
-}
-
-const handleEdit = async (cfg: { contractType: string, feeBps: number }) => {
-  isEditLoading.value = true
-  try {
-    await setFee(cfg.contractType, cfg.feeBps)
-    toast.add({
-      title: 'Success',
-      description: `Fee for "${cfg.contractType}" updated.`,
-      color: 'success'
-    })
-    isEditModalOpen.value = false
-    refetchFeeConfigs()
-  } catch (e) {
-    toast.add({
-      title: 'Error',
-      description: 'Failed to update fee config.',
-      color: 'error'
-    })
-    console.error(e)
-  } finally {
-    isEditLoading.value = false
-  }
 }
 </script>

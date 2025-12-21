@@ -1,10 +1,10 @@
 <template>
   <div>
     <UButton
-      v-if="isFeeCollectorOwner"
+      v-if="isFeeOwner"
       color="primary"
       icon="i-heroicons-plus"
-      :disabled="availableContractTypes.length === 0"
+      :disabled="!feeConfigs"
       @click="isAddModalOpen = true"
     >
       Add Fee Config
@@ -13,43 +13,21 @@
       v-model="isAddModalOpen"
       mode="add"
       :loading="isLoading"
-      @submit="handleAdd"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useFeeCollector } from '@/composables/useFeeCollector'
 import FeeConfigFormModal from '@/components/sections/FeeCollectorView/FeeConfigFormModal.vue'
+import { isFeeCollectorOwner, useFeeConfigs } from '~/composables/FeeCollector/read'
 
-const emit = defineEmits(['added'])
+// const emit = defineEmits(['added'])
 const isAddModalOpen = ref(false)
 const isLoading = ref(false)
-const { setFee, availableContractTypes, isFeeCollectorOwner } = useFeeCollector()
 
-const toast = useToast()
+const isFeeOwner = isFeeCollectorOwner()
+const { data: feeConfigs } = useFeeConfigs()
 
-const handleAdd = async (cfg: { contractType: string, feeBps: number }) => {
-  isLoading.value = true
-  try {
-    await setFee(cfg.contractType, cfg.feeBps)
-    toast.add({
-      title: 'Success',
-      description: `Fee for "${cfg.contractType}" added.`,
-      color: 'success'
-    })
-    isAddModalOpen.value = false
-    emit('added')
-  } catch (e) {
-    toast.add({
-      title: 'Error',
-      description: 'Failed to add fee config.',
-      color: 'error'
-    })
-    console.error(e)
-  } finally {
-    isLoading.value = false
-  }
-}
+// const toast = useToast()
 </script>

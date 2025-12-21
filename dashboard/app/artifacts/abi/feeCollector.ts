@@ -1,5 +1,3 @@
-import type { Abi } from 'viem'
-
 export const FEE_COLLECTOR_ABI = [
   {
     inputs: [],
@@ -393,4 +391,4 @@ export const FEE_COLLECTOR_ABI = [
     stateMutability: 'payable',
     type: 'receive'
   }
-] as Abi
+] as const
