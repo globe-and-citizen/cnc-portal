@@ -6,6 +6,8 @@ import { Expense, Team } from '@prisma/client';
 import publicClient from '../../utils/viem.config';
 import expenseRoutes from '../../routes/expenseRoute';
 import { authorizeUser } from '../../middleware/authMiddleware';
+import ABI from '../../artifacts/expense-account-eip712.json';
+import * as viem from 'viem';
 
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
@@ -60,11 +62,6 @@ const END_DATE = START_DATE + 3600 * 24 * 30;
 
 const mockExpenseData = {
   approvedAddress: '0x1234567890123456789012345678901234567890',
-  /* budgetData: [
-    { budgetType: 0, value: 10 },
-    { budgetType: 1, value: 100 },
-    { budgetType: 2, value: 10 },
-  ], */
   amount: 150,
   frequencyType: 3,
   customFrequency: 0,
@@ -202,9 +199,22 @@ describe('Expense Controller', () => {
       vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.expense, 'update').mockResolvedValue(mockExpense);
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([0n, 0n, 1]);
+      // vi.spyOn(viem, 'keccak256').mockReturnValue('0xmockedHash');
 
       const response = await request(app).get('/').query({ teamId: 1 });
 
+      expect(vi.mocked(publicClient.readContract)).toBeCalledWith({
+        address: undefined,
+        abi: ABI,
+        functionName: 'isNewPeriod',
+        args: [
+          {
+            ...mockExpenseData,
+            amount: viem.parseUnits(mockExpenseData.amount.toString(), 6),
+          },
+          '0xdfe1aec4a1b77ff33c295850060a264c2a6c628ccb530f212338801f3f08b8c5',
+        ],
+      });
       expect(response.status).toBe(200);
       expect(response.body).toEqual([
         {

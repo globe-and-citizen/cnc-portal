@@ -6,7 +6,7 @@ console.log('NUXT_PUBLIC_BACKEND_URL:', process.env.NUXT_PUBLIC_BACKEND_URL)
 console.log('NUXT_PUBLIC_CHAIN_ID:', process.env.NUXT_PUBLIC_CHAIN_ID)
 
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@nuxt/ui', '@vueuse/nuxt'],
+  modules: ['@nuxt/eslint', '@nuxt/ui', '@vueuse/nuxt', '@pinia/nuxt'],
 
   ssr: false,
 
