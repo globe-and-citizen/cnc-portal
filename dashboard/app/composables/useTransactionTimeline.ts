@@ -232,7 +232,7 @@ export function useTransactionTimeline(params: TransactionTimelineParams) {
     }
 
     // Error if any step failed
-    if (processingStatus === 'error') {
+    if (processingStatus === 'error' || approveStatus === 'error') {
       return 'error'
     }
 
