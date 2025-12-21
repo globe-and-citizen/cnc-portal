@@ -6,8 +6,13 @@
     @update:model-value="$emit('update:modelValue', $event)"
   >
     <template #body>
-      <UFlex class="items-center">
-        <UFormGroup label="Contract Type" class="flex-1 mr-3">
+      <UForm
+        :schema="feeConfigSchema"
+        :state="localConfig"
+        class="space-y-4"
+        @submit="handleSubmit"
+      >
+        <UFormField label="Contract Type" class="flex-1 mr-3">
           <template v-if="mode === 'add' && feeConfigs">
             <USelect
               v-model="localConfig.contractType"
@@ -24,10 +29,14 @@
               placeholder="e.g. Marketplace, NFT, Token"
             />
           </template>
-        </UFormGroup>
-        <UFormGroup label="Fee (%)">
+        </UFormField>
+        <UFormField
+          label="Fee (%)"
+          name="feePercent"
+        >
           <UInput
-            v-model.number="feePercent"
+            v-model.number="localConfig.feePercent"
+            name="feePercent"
             type="number"
             min="0"
             max="100"
@@ -38,10 +47,10 @@
           <div class="text-xs text-gray-500 mt-1">
             Max: 100%
           </div>
-        </UFormGroup>
-      </UFlex>
+        </UFormField>
+      </UForm>
       <div class="text-xs text-gray-500 mt-2">
-        Will be saved as {{ localConfig.feeBps }} BPS ({{ feePercent }}%)
+        Will be saved as {{ Math.round(localConfig.feePercent * 100) }} BPS ({{ localConfig.feePercent }}%)
       </div>
     </template>
 
@@ -57,9 +66,9 @@
         </UButton>
         <UButton
           color="primary"
-          :disabled="!isValid || isLoading"
+          :disabled="isLoading"
           :loading="isLoading"
-          @click="handleSubmit"
+          type="submit"
         >
           {{ mode === 'edit' ? 'Update Fee' : 'Add Fee' }}
         </UButton>
@@ -69,7 +78,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
+import { z } from 'zod'
 
 import { useFeeConfigs } from '~/composables/FeeCollector/read'
 import { useSetFee } from '~/composables/FeeCollector/writes'
@@ -78,6 +88,7 @@ import { teamContractTypes } from '~/types/teamContracts'
 interface FeeConfig {
   contractType: string
   feeBps: number
+  feePercent: number
 }
 
 const props = defineProps<{
@@ -90,14 +101,16 @@ const emit = defineEmits(['update:modelValue', 'submit', 'close'])
 
 const { data: feeConfigs } = useFeeConfigs()
 
-const localConfig = ref<FeeConfig>({
+const localConfig = ref<FeeConfigInput>({
   contractType: props.feeConfig?.contractType || '',
-  feeBps: props.feeConfig?.feeBps ?? 0
+  feePercent: props.feeConfig
+    ? props.feeConfig.feeBps / 100
+    : 0
 })
 
 const setFeeResult = useSetFee(
   computed(() => localConfig.value.contractType),
-  computed(() => localConfig.value.feeBps)
+  computed(() => Math.round(localConfig.value.feePercent * 100))
 )
 
 const isLoading = computed(() =>
@@ -110,27 +123,33 @@ const availableContractTypes = computed(() => {
   return teamContractTypes.filter(type => !alreadySet.has(type))
 })
 
-const feePercent = ref(
-  props.feeConfig?.feeBps ? props.feeConfig.feeBps / 100 : 0
-)
-
-watch(() => feePercent.value, (newVal) => {
-  localConfig.value.feeBps = Math.round(newVal * 100)
+const feeConfigSchema = z.object({
+  contractType: z.string().min(1, 'Contract type is required'),
+  feePercent: z
+    .number()
+    .min(0, 'Fee must be at least 0')
+    .max(100, 'Fee cannot exceed 100%')
 })
+  .transform(data => ({
+    contractType: data.contractType,
+    feeBps: Math.round(data.feePercent * 100)
+  }))
 
-const isValid = computed(() =>
-  !!localConfig.value.contractType
-  && feePercent.value >= 0
-  && feePercent.value <= 100
-)
+// { contractType: string; feePercent: number }
+type FeeConfigInput = z.input<typeof feeConfigSchema>
+
+// { contractType: string; feeBps: number }
+type FeeConfigOutput = z.output<typeof feeConfigSchema>
 
 const handleClose = () => {
   emit('update:modelValue', false)
   emit('close')
 }
+const handleSubmit = (event: { data: FeeConfigOutput }) => {
+  if (isLoading.value) return
 
-const handleSubmit = () => {
-  if (!isValid.value || isLoading.value) return
-  setFeeResult.executeWrite([localConfig.value.contractType, localConfig.value.feeBps])
+  const { contractType, feeBps } = event.data
+
+  setFeeResult.executeWrite([contractType, feeBps])
 }
 </script>
