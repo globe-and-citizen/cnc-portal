@@ -1,5 +1,3 @@
-import type { Abi } from 'viem'
-
 export const FEE_COLLECTOR_ABI = [
   {
     inputs: [],
