@@ -199,9 +199,9 @@ export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
 export const GRAPHQL_POLL_INTERVAL = 12000
 
 const NETWORK_TO_COIN_ID: Record<string, string> = {
-  POL: 'matic-network',
+  POL: 'polygon-ecosystem-token',
   ETH: 'ethereum',
-  AMOYPOL: 'matic-network',
+  AMOYPOL: 'polygon-ecosystem-token',
   SepoliaETH: 'ethereum',
   GO: 'ethereum'
 }

@@ -1,5 +1,3 @@
-import type { Abi } from 'viem'
-
 export const FEE_COLLECTOR_ABI = [
   {
     inputs: [],
@@ -48,6 +46,25 @@ export const FEE_COLLECTOR_ABI = [
     ],
     name: 'SafeERC20FailedOperation',
     type: 'error'
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'string',
+        name: 'contractType',
+        type: 'string'
+      },
+      {
+        indexed: false,
+        internalType: 'uint16',
+        name: 'feeBps',
+        type: 'uint16'
+      }
+    ],
+    name: 'FeeConfigUpdated',
+    type: 'event'
   },
   {
     anonymous: false,
@@ -292,6 +309,24 @@ export const FEE_COLLECTOR_ABI = [
   {
     inputs: [
       {
+        internalType: 'string',
+        name: 'contractType',
+        type: 'string'
+      },
+      {
+        internalType: 'uint16',
+        name: 'feeBps',
+        type: 'uint16'
+      }
+    ],
+    name: 'setFee',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
         internalType: 'address',
         name: '',
         type: 'address'
@@ -356,4 +391,4 @@ export const FEE_COLLECTOR_ABI = [
     stateMutability: 'payable',
     type: 'receive'
   }
-] as Abi
+] as const
