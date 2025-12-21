@@ -81,6 +81,14 @@
           </UButton>
         </div>
       </UForm>
+      <UAlert
+        v-if="setFeeResult.transactionTimelineResult.transactionSummaryStatus.value==='error'"
+        color="error"
+        variant="subtle"
+        :title="`Failed to ${mode === 'edit' ? 'update' : 'add'} fee`"
+        :description="setFeeResult.transactionTimelineResult.timelineSteps.value['complete'].description"
+        icon="i-lucide-terminal"
+      />
     </template>
   </UModal>
 </template>
@@ -105,7 +113,7 @@ const props = defineProps<{
   mode: 'edit' | 'add'
 }>()
 
-const emit = defineEmits(['update:modelValue', 'submit', 'close'])
+const emit = defineEmits(['update:modelValue', 'close'])
 
 const { data: feeConfigs } = useFeeConfigs()
 
@@ -122,7 +130,7 @@ const setFeeResult = useSetFee(
 )
 
 const isLoading = computed(() =>
-  setFeeResult.transactionTimelineResult.transactionSummaryStatus.value === 'loading'
+  setFeeResult.receiptResult.isLoading.value || setFeeResult.writeResult.isPending.value || setFeeResult.simulateGasResult.isLoading.value
 )
 
 // Available contract types not yet set in the contract
@@ -153,11 +161,14 @@ const handleClose = () => {
   emit('update:modelValue', false)
   emit('close')
 }
-const handleSubmit = (event: { data: FeeConfigOutput }) => {
+const handleSubmit = async (event: { data: FeeConfigOutput }) => {
   if (isLoading.value) return
 
   const { contractType, feeBps } = event.data
 
-  setFeeResult.executeWrite([contractType, feeBps])
+  await setFeeResult.executeWrite([contractType, feeBps])
+  if (setFeeResult.receiptResult.isSuccess.value) {
+    handleClose()
+  }
 }
 </script>
