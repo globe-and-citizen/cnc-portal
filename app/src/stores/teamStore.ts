@@ -1,4 +1,3 @@
-import { useUserDataStore } from '@/stores/user'
 import { useToastStore } from '@/stores/useToastStore'
 import type { ContractType } from '@/types'
 import type { Team } from '@/types/team'
@@ -18,17 +17,7 @@ export const useTeamStore = defineStore('team', () => {
   const currentTeamId = ref<string | null>(null)
   const teamsFetched = ref<Map<string, Team>>(new Map())
   const { addErrorToast } = useToastStore()
-  const userDataStore = useUserDataStore()
 
-  /**
-   * @description Fetch teams lists using TanStack Query
-   */
-  const {
-    data: teams,
-    isLoading: teamsAreFetching,
-    error: teamsError,
-    refetch: executeFetchTeams
-  } = useTeams(() => userDataStore.address)
 
   /**
    * @description Fetch team by id using TanStack Query
@@ -92,24 +81,6 @@ export const useTeamStore = defineStore('team', () => {
     return currentTeam.value?.teamContracts.find((contract) => contract.type === type)?.address
   }
 
-  watch(teams, (newTeamsVal) => {
-    // set the current team id to the first team id if not already set and teams is not empty
-    if (!currentTeamId.value && newTeamsVal && newTeamsVal.length > 0) {
-      const firstTeam = newTeamsVal[0]
-      if (firstTeam) {
-        log.info('new Val', newTeamsVal)
-        log.info('Current team id not set, setting to first team id:', firstTeam.id)
-        setCurrentTeamId(firstTeam.id)
-      }
-    }
-  })
-
-  watch(teamsError, () => {
-    if (teamsError.value) {
-      log.error('Failed to load user teams \n', teamsError.value)
-      addErrorToast('Failed to load user teams')
-    }
-  })
   watch(teamError, () => {
     if (teamError.value) {
       log.error('Failed to load user team \n', teamError.value)
@@ -117,28 +88,8 @@ export const useTeamStore = defineStore('team', () => {
     }
   })
 
-  // Check if the teams are fetching if not fetch team again
-  const reloadTeams = () => {
-    if (teamsAreFetching.value) return
-    else {
-      executeFetchTeams()
-    }
-  }
-
-  // Fetch teams on mounted
-  // Todo count how many time it's called or mounted
-  onMounted(() => {
-    reloadTeams()
-  })
-
   return {
     currentTeamId,
-    teamsMeta: {
-      teams,
-      teamsAreFetching,
-      teamsError,
-      reloadTeams
-    },
     fetchTeam,
     setCurrentTeamId,
     currentTeam,
