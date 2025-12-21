@@ -29,3 +29,26 @@ export function useSetFee(
     args
   })
 }
+
+// 'withdraw' : 'withdrawToken',
+
+export function useWithdrawToken(
+  tokenAddress: MaybeRef<Address>,
+  amount: MaybeRef<bigint>
+) {
+  const args = computed(() => [unref(tokenAddress), unref(amount)] as readonly unknown[])
+  return useFeeCollectorContractWrite({
+    functionName: 'withdrawToken',
+    args
+  })
+}
+
+export function useWithdrawNative(
+  amount: MaybeRef<bigint>
+) {
+  const args = computed(() => [unref(amount)] as readonly unknown[])
+  return useFeeCollectorContractWrite({
+    functionName: 'withdraw',
+    args
+  })
+}
