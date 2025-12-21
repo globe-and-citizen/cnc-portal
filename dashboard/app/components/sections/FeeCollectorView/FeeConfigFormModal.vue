@@ -3,23 +3,29 @@
     :open="modelValue"
     :title="mode === 'edit' ? 'Edit Fee Config' : 'Add Fee Config'"
     :close="{ onClick: () => handleClose() }"
+    class="max-w-lg mx-auto rounded-xl shadow-lg bg-white dark:bg-gray-900 p-0"
     @update:model-value="$emit('update:modelValue', $event)"
   >
     <template #body>
       <UForm
         :schema="feeConfigSchema"
         :state="localConfig"
-        class="space-y-4"
+        class="space-y-6 px-6 pt-6 pb-2"
         @submit="handleSubmit"
       >
-        <UFormField label="Contract Type" class="flex-1 mr-3">
+        <!-- <div class="flex flex-row md:flex-row gap-4 items-start"> -->
+        <UFormField
+          label="Contract Type"
+          name="contractType"
+          class="flex-1"
+        >
           <template v-if="mode === 'add' && feeConfigs">
             <USelect
               v-model="localConfig.contractType"
               :items="availableContractTypes"
               placeholder="Select contract type"
               :disabled="isLoading"
-              class="w-1/2"
+              class="w-full"
             />
           </template>
           <template v-else>
@@ -27,12 +33,14 @@
               v-model="localConfig.contractType"
               :disabled="true"
               placeholder="e.g. Marketplace, NFT, Token"
+              class="w-full"
             />
           </template>
         </UFormField>
         <UFormField
           label="Fee (%)"
           name="feePercent"
+          class="flex-1"
         >
           <UInput
             v-model.number="localConfig.feePercent"
@@ -43,36 +51,36 @@
             step="0.01"
             placeholder="0"
             :disabled="isLoading"
+            class="w-full"
           />
           <div class="text-xs text-gray-500 mt-1">
             Max: 100%
           </div>
         </UFormField>
+        <!-- </div> -->
+        <div class="text-xs text-gray-500 mt-2">
+          Will be saved as <span class="font-semibold">{{ Math.round(localConfig.feePercent * 100) }} BPS</span> (<span class="font-semibold">{{ localConfig.feePercent }}%</span>)
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800 mt-6">
+          <UButton
+            color="neutral"
+            variant="outline"
+            :disabled="isLoading"
+            type="button"
+            @click="handleClose"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            color="primary"
+            :disabled="isLoading"
+            :loading="isLoading"
+            type="submit"
+          >
+            {{ mode === 'edit' ? 'Update Fee' : 'Add Fee' }}
+          </UButton>
+        </div>
       </UForm>
-      <div class="text-xs text-gray-500 mt-2">
-        Will be saved as {{ Math.round(localConfig.feePercent * 100) }} BPS ({{ localConfig.feePercent }}%)
-      </div>
-    </template>
-
-    <template #footer>
-      <div class="flex justify-end gap-3 pt-2">
-        <UButton
-          color="neutral"
-          variant="outline"
-          :disabled="isLoading"
-          @click="handleClose"
-        >
-          Cancel
-        </UButton>
-        <UButton
-          color="primary"
-          :disabled="isLoading"
-          :loading="isLoading"
-          type="submit"
-        >
-          {{ mode === 'edit' ? 'Update Fee' : 'Add Fee' }}
-        </UButton>
-      </div>
     </template>
   </UModal>
 </template>
