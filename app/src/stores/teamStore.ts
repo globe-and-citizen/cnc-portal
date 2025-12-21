@@ -4,16 +4,10 @@ import type { Team } from '@/types/team'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
 import type { Address } from 'viem'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useTeams, useTeam } from '@/queries/team.queries'
+import { computed,  ref, watch } from 'vue'
+import {  useTeam } from '@/queries/team.queries'
 
 export const useTeamStore = defineStore('team', () => {
-  // TODO: fetch teams on mounted
-  // Having caching system,
-  // And trigger fetch on demand
-  // Update cache system.
-
-  // const teams = ref([])
   const currentTeamId = ref<string | null>(null)
   const teamsFetched = ref<Map<string, Team>>(new Map())
   const { addErrorToast } = useToastStore()
