@@ -1,0 +1,29 @@
+import { useQuery } from '@tanstack/vue-query'
+import apiClient from '@/lib/axios'
+
+export interface HealthCheckResponse {
+  success: boolean
+  status: string
+  timestamp: string
+  service: string
+}
+
+/**
+ * Query for backend health check using Axios
+ */
+export const useBackendHealthQuery = () => {
+  return useQuery<HealthCheckResponse>({
+    queryKey: ['backend-health'],
+    queryFn: async () => {
+      const { data } = await apiClient.get('health')
+      return data
+    },
+    retry: 2,
+    retryDelay: 1000,
+    staleTime: 180000, // 3 minutes
+    gcTime: 300000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false // Disable automatic polling
+  })
+}
