@@ -15,6 +15,7 @@ const pageTitle = computed(() => {
   const titleMap: Record<string, string> = {
     'index': 'Overview',
     'teams': 'Teams Management',
+    'features': 'Submit Restriction',
     'micropayments': 'Micropayments',
     'contracts': 'Contracts',
     'settings': 'Settings',
@@ -69,6 +70,21 @@ const links = [
       onSelect: () => {
         open.value = false
       }
+    },
+    {
+      label: 'Feature',
+      icon: 'i-lucide-clipboard-check',
+      to: '/features',
+      type: 'trigger',
+      children: [
+        {
+          label: 'Submit Restriction',
+          to: '/features/SubmitRestriction',
+          onSelect: () => {
+            open.value = false
+          }
+        }
+      ]
     },
     {
       label: 'Contracts',

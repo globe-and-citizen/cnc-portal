@@ -1,5 +1,5 @@
 import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
-
+//import MockTokensModule from "./MockTokensModule";
 const FeeCollectorProxyModule = buildModule('FeeCollectorProxyModule', (m) => {
   const deployer = m.getAccount(0)
 
@@ -20,8 +20,15 @@ const FeeCollectorProxyModule = buildModule('FeeCollectorProxyModule', (m) => {
 
 const FeeCollectorModule = buildModule('FeeCollectorModule', (m) => {
   const deployer = m.getAccount(0)
-
-  // Get mock tokens for local/test networks
+  // ********* use this for hardhat 
+  // const { usdc, usdt } = m.useModule(MockTokensModule)
+  // const supportedTokens = [usdc, usdt]
+  
+  //**use this for polygon */
+  const supportedTokens = [
+    '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+    '0xc2132D05D31c914a87C6611C10748AEb04B58e8F'
+  ]
 
   // Use the proxy module we just defined
   const { proxy, proxyAdmin } = m.useModule(FeeCollectorProxyModule)
@@ -33,9 +40,6 @@ const FeeCollectorModule = buildModule('FeeCollectorModule', (m) => {
   const feeConfigs = [
     { contractType: 'BANK', feeBps: 50 } // 0.5%
   ]
-
-  // Supported tokens array (same pattern as Bank)
-  const supportedTokens = ['0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', '0xc2132D05D31c914a87C6611C10748AEb04B58e8F']
 
   // Call initialize with token addresses array
   m.call(feeCollector, 'initialize', [deployer, feeConfigs, supportedTokens])
