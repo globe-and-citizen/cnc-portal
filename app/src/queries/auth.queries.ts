@@ -13,6 +13,9 @@ export const useValidateToken = () => {
     },
     // Don't automatically refetch for token validation
     refetchOnWindowFocus: false,
-    retry: false
+    refetchOnReconnect: false,
+    retry: false,
+    refetchInterval: false,
+    staleTime: Infinity,
   })
 }

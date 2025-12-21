@@ -20,10 +20,10 @@ export const useBackendHealthQuery = () => {
     },
     retry: 2,
     retryDelay: 1000,
-    staleTime: 180000, // 3 minutes
     gcTime: 300000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    refetchInterval: false // Disable automatic polling
+    refetchInterval: false, // Disable automatic polling
+    staleTime: Infinity,
   })
 }
