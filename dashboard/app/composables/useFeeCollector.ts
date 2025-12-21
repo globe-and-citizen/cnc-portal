@@ -108,7 +108,6 @@ export const useFeeCollector = () => {
     }
     if (errorUsdc.value) {
       errors.push({ id: 'usdc', error: errorUsdc.value })
-      console.log('USDC Error:', errorUsdc.value)
     }
     if (errorUsdt.value) {
       errors.push({ id: 'usdt', error: errorUsdt.value })

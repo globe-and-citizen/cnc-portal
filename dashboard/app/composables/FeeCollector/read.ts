@@ -38,7 +38,6 @@ export function isFeeCollectorOwner() {
     if (!owner.value || !connection.address.value) {
       return false
     }
-    console.log('Owner:', (owner.value as Address).toLowerCase(), 'User:', connection.address.value.toLowerCase())
     return (owner.value as Address).toLowerCase() === connection.address.value.toLowerCase()
   })
 }
