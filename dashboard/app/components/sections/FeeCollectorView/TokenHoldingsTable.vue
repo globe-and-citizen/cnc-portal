@@ -4,7 +4,7 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <h3 class="text-lg font-semibold">
-            Token Holdings {{ isOwner }}
+            Token Holdings
           </h3>
           <UBadge v-if="isOwner" color="success">
             Owner
