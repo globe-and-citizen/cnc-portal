@@ -9,7 +9,7 @@ export function useAuth() {
   const isAuthenticated = ref(false)
   const user = ref<User | null>(null)
   const router = useRouter()
-  
+
   // Initialize the query at the top level
   const { error, refetch } = useValidateToken()
 
