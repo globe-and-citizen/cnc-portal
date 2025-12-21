@@ -63,6 +63,7 @@ export function useContractWrites(config: ContractWriteConfig) {
     queryFn: async () => {
       if (!contractAddress.value) throw new Error('Missing contract address')
 
+      console.log('Args for gas estimation:', contractArgs.value)
       const result = await simulateContract(wagmiConfig, {
         address: contractAddress.value,
         abi: contractAbi.value,
@@ -122,6 +123,7 @@ export function useContractWrites(config: ContractWriteConfig) {
   ) => {
     // Store function name for query invalidation after transaction confirms
     // currentFunctionName.value = functionName
+    console.log('args', args)
     try {
       const address = unref(config.contractAddress)
       if (!address) {
@@ -162,7 +164,7 @@ export function useContractWrites(config: ContractWriteConfig) {
     return undefined
   }
 
-  const { currentStep, timelineSteps } = useTransactionTimeline({
+  const transactionTimelineResult = useTransactionTimeline({
     writeResult,
     receiptResult,
     // @ts-expect-error -- IGNORE --
@@ -174,9 +176,7 @@ export function useContractWrites(config: ContractWriteConfig) {
     receiptResult,
     simulateGasResult: { ...simulateGasResult, queryKey },
 
-    // Timeline
-    currentStep,
-    timelineSteps,
+    transactionTimelineResult,
 
     // Core functions
     executeWrite,
