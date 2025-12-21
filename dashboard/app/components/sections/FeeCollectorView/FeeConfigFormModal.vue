@@ -8,12 +8,12 @@
     <template #body>
       <UFlex class="items-center">
         <UFormGroup label="Contract Type" class="flex-1 mr-3">
-          <template v-if="mode === 'add'">
+          <template v-if="mode === 'add' && feeConfigs">
             <USelect
               v-model="localConfig.contractType"
               :items="availableContractTypes"
               placeholder="Select contract type"
-              :disabled="loading"
+              :disabled="isLoading"
               class="w-1/2"
             />
           </template>
@@ -33,7 +33,7 @@
             max="100"
             step="0.01"
             placeholder="0"
-            :disabled="loading"
+            :disabled="isLoading"
           />
           <div class="text-xs text-gray-500 mt-1">
             Max: 100%
@@ -41,7 +41,7 @@
         </UFormGroup>
       </UFlex>
       <div class="text-xs text-gray-500 mt-2">
-        Will be saved as {{ feeBps }} BPS ({{ feePercent }}%)
+        Will be saved as {{ localConfig.feeBps }} BPS ({{ feePercent }}%)
       </div>
     </template>
 
@@ -50,15 +50,15 @@
         <UButton
           color="neutral"
           variant="outline"
-          :disabled="loading"
+          :disabled="isLoading"
           @click="handleClose"
         >
           Cancel
         </UButton>
         <UButton
           color="primary"
-          :disabled="!isValid || loading"
-          :loading="loading"
+          :disabled="!isValid || isLoading"
+          :loading="isLoading"
           @click="handleSubmit"
         >
           {{ mode === 'edit' ? 'Update Fee' : 'Add Fee' }}
@@ -71,7 +71,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 
-import { useFeeCollector } from '@/composables/useFeeCollector'
+import { useFeeConfigs } from '~/composables/FeeCollector/read'
+import { useSetFee } from '~/composables/FeeCollector/writes'
+import { teamContractTypes } from '~/types/teamContracts'
 
 interface FeeConfig {
   contractType: string
@@ -82,44 +84,39 @@ const props = defineProps<{
   modelValue: boolean
   feeConfig?: FeeConfig
   mode: 'edit' | 'add'
-  loading?: boolean
 }>()
 
 const emit = defineEmits(['update:modelValue', 'submit', 'close'])
 
-const { availableContractTypes } = useFeeCollector()
+const { data: feeConfigs } = useFeeConfigs()
 
 const localConfig = ref<FeeConfig>({
   contractType: props.feeConfig?.contractType || '',
   feeBps: props.feeConfig?.feeBps ?? 0
 })
 
+const setFeeResult = useSetFee(
+  computed(() => localConfig.value.contractType),
+  computed(() => localConfig.value.feeBps)
+)
+
+const isLoading = computed(() =>
+  setFeeResult.transactionTimelineResult.transactionSummaryStatus.value === 'loading'
+)
+
+// Available contract types not yet set in the contract
+const availableContractTypes = computed(() => {
+  const alreadySet = new Set((feeConfigs.value || []).map(cfg => cfg.contractType))
+  return teamContractTypes.filter(type => !alreadySet.has(type))
+})
+
 const feePercent = ref(
   props.feeConfig?.feeBps ? props.feeConfig.feeBps / 100 : 0
 )
 
-watch(() => props.feeConfig, (cfg) => {
-  if (cfg) {
-    localConfig.value = { ...cfg }
-    feePercent.value = cfg.feeBps / 100
-  } else {
-    localConfig.value = { contractType: '', feeBps: 0 }
-    feePercent.value = 0
-  }
+watch(() => feePercent.value, (newVal) => {
+  localConfig.value.feeBps = Math.round(newVal * 100)
 })
-
-watch(
-  () => props.modelValue,
-  (open) => {
-    if (!open && props.mode === 'add') {
-      // Reset only for add mode
-      localConfig.value = { contractType: '', feeBps: 0 }
-      feePercent.value = 0
-    }
-  }
-)
-
-const feeBps = computed(() => Math.round(feePercent.value * 100))
 
 const isValid = computed(() =>
   !!localConfig.value.contractType
@@ -133,10 +130,7 @@ const handleClose = () => {
 }
 
 const handleSubmit = () => {
-  if (!isValid.value || props.loading) return
-  emit('submit', {
-    contractType: localConfig.value.contractType,
-    feeBps: feeBps.value
-  })
+  if (!isValid.value || isLoading.value) return
+  setFeeResult.executeWrite([localConfig.value.contractType, localConfig.value.feeBps])
 }
 </script>
