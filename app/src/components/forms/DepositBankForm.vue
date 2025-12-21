@@ -64,7 +64,6 @@
     :steps="bankDepositTokenResult.timelineSteps.value"
     title="Bank Deposit"
     />  -->
-  
 </template>
 
 <script setup lang="ts">
