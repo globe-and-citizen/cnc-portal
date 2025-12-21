@@ -62,7 +62,9 @@ docs/
 │   │   ├── functional-specification.md
 │   │   ├── stats-api.md
 │   │   └── stats-dashboard-integration.md
-│   └── serverless-wake-up/           # Serverless wake-up feature
+│   ├── serverless-wake-up/           # Serverless wake-up feature
+│   │   └── README.md
+│   └── backoffice/                   # Backoffice admin feature
 │       └── README.md
 ├── auth/                              # Authentication documentation
 │   ├── README.md
@@ -101,6 +103,11 @@ docs/
 **Serverless Wake-up Feature:**
 
 - [Feature Documentation](./features/serverless-wake-up/README.md) - Complete feature documentation and quick start
+
+**Backoffice Feature:**
+
+- [Feature Flags](./features/backoffice/feature-flags.md) - Feature flag system with API endpoints
+- [Admin Panel Overview](./features/backoffice/README.md) - Backoffice management system
 
 ### Authentication
 
@@ -325,4 +332,4 @@ This documentation is part of the CNC Portal project.
 
 ---
 
-**Last Updated:** December 11, 2025  
+**Last Updated:** December 16, 2025  

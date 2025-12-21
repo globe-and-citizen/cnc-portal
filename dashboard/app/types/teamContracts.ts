@@ -1,0 +1,12 @@
+export const teamContractTypes: string[] = [
+  'BANK',
+  'INVESTOR_V1',
+  'VOTING',
+  'BOARD_OF_DIRECTORS',
+  'EXPENSE_ACCOUNT_EIP712',
+  'CASH_REMUNERATION_EIP712',
+  'CAMPAIGN',
+  'ELECTIONS',
+  'PROPOSALS',
+  'VESTING_V1'
+]

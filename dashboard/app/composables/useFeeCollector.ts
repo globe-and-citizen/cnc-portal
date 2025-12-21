@@ -1,203 +1,125 @@
 import { computed } from 'vue'
-import { useAccount, useReadContract } from '@wagmi/vue'
+import { useConnection } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { formatUnits } from 'viem'
-import { FEE_COLLECTOR_ADDRESS, FEE_COLLECTOR_SUPPORTED_TOKENS, TOKEN_DECIMALS, TOKEN_SYMBOLS } from '@/constant'
-import { FEE_COLLECTOR_ABI } from '~/artifacts/abi/feeCollector'
-import { useNetwork } from '~/utils/network'
-import { useTokenPrices } from './useTokenPrices'
+import { getSupportedTokens, getUSDCAddress, getUSDTAddress } from '@/constant'
 import type { TokenDisplay } from '@/types/token'
-
-// Helper to create a token display object (matches tokenHelpers.ts)
-const makeToken = (
-  address: string,
-  raw: bigint,
-  decimals: number,
-  symbol: string,
-  isNative: boolean
-): TokenDisplay => ({
-  address,
-  symbol,
-  decimals,
-  balance: raw,
-  formattedBalance: formatUnits(raw, decimals),
-  pendingWithdrawals: 0n,
-  formattedPending: '0',
-  totalWithdrawn: 0n,
-  formattedWithdrawn: '0',
-  isNative,
-  shortAddress: isNative ? 'Native Token' : `${address.slice(0, 6)}...${address.slice(-4)}`
-})
+import { useFeeBalance, useFeeTokenBalance } from '~/composables/FeeCollector/read'
 
 export const useFeeCollector = () => {
-  const { address: userAddress } = useAccount()
-  const { nativeSymbol } = useNetwork()
-  const { isLoading: isLoadingPrices, getTokenUSDValue } = useTokenPrices()
-
-  // Owner check
-  const { data: feeCollectorOwner } = useReadContract({
-    address: FEE_COLLECTOR_ADDRESS as Address,
-    abi: FEE_COLLECTOR_ABI,
-    functionName: 'owner'
-  })
-
-  const isFeeCollectorOwner = computed(
-    () => feeCollectorOwner.value === userAddress.value
-  )
+  const connection = useConnection()
 
   // Native balance
   const {
     data: nativeBalance,
     isLoading: isLoadingNativeBalance,
-    refetch: refetchNative,
     error: errorNative
-  } = useReadContract({
-    address: FEE_COLLECTOR_ADDRESS as Address,
-    abi: FEE_COLLECTOR_ABI,
-    functionName: 'getBalance'
-  })
+  } = useFeeBalance()
 
   // USDC balance
   const {
     data: usdcBalance,
     isLoading: isLoadingUsdc,
-    refetch: refetchUsdc,
     error: errorUsdc
-  } = useReadContract({
-    address: FEE_COLLECTOR_ADDRESS as Address,
-    abi: FEE_COLLECTOR_ABI,
-    functionName: 'getTokenBalance',
-    args: FEE_COLLECTOR_SUPPORTED_TOKENS?.[0]
-      ? [FEE_COLLECTOR_SUPPORTED_TOKENS[0] as Address]
-      : undefined,
-    query: {
-      enabled: !!FEE_COLLECTOR_SUPPORTED_TOKENS?.[0]
-    }
-  })
+  } = useFeeTokenBalance(getUSDCAddress())
 
   // USDT balance
   const {
     data: usdtBalance,
     isLoading: isLoadingUsdt,
-    refetch: refetchUsdt,
     error: errorUsdt
-  } = useReadContract({
-    address: FEE_COLLECTOR_ADDRESS as Address,
-    abi: FEE_COLLECTOR_ABI,
-    functionName: 'getTokenBalance',
-    args: FEE_COLLECTOR_SUPPORTED_TOKENS?.[1]
-      ? [FEE_COLLECTOR_SUPPORTED_TOKENS[1] as Address]
-      : undefined,
-    query: {
-      enabled: !!FEE_COLLECTOR_SUPPORTED_TOKENS?.[1]
-    }
-  })
+  } = useFeeTokenBalance(getUSDTAddress())
 
-  // Build tokens list (matches tokenHelpers.ts buildTokenList logic)
+  const tokenPriceStore = useTokenPriceStore()
+
+  const validateBalance = (balance: unknown): balance is bigint => {
+    return balance !== undefined && typeof balance === 'bigint'
+  }
+
+  // Utility function to get token formatted Balance
+
+  const formatTokenBalance = (balance: unknown, decimals: number = 18) => {
+    return validateBalance(balance)
+      ? formatUnits(balance, decimals)
+      : '0'
+  }
+
+  const formatTokenBalanceValue = (balance: unknown, address: Address, decimals: number = 18, symbol: string) => {
+    // Get token prince in USD ex: 1 USDC = $1.0
+    const tokenPrice = tokenPriceStore.getTokenPrice({ address: address, symbol })
+
+    // Convert the token balance in bigint to number: ex: 1000000n -> 1.0 (for 6 decimals)
+    const tokenAmount = Number(formatUnits(validateBalance(balance) ? balance : 0n, decimals))
+
+    // Format the token value in USD : ex: $1.0 * 1.0 = 1.0 -> $1.00
+    return formatUSD(tokenPrice * tokenAmount)
+  }
+
+  // Build tokens list using getSupportedTokens helper
   const tokens = computed<TokenDisplay[]>(() => {
-    const arr: TokenDisplay[] = []
+    const nativeSymbol = connection.chain.value?.nativeCurrency.symbol || 'ETH'
+    const chainId = connection.chain.value?.id
 
-    // Native token - always show even if undefined (will show as 0)
-    const nativeBal = nativeBalance.value !== undefined && typeof nativeBalance.value === 'bigint'
-      ? nativeBalance.value
-      : 0n
-    arr.push(makeToken('native', nativeBal, 18, nativeSymbol.value, true))
+    const supportedTokens = getSupportedTokens(nativeSymbol, chainId)
 
-    // Build supported tokens array for processing - always include all configured tokens
-    const supportedTokensBalances: Array<{ address: string, balance: bigint }> = []
-
-    // USDC - always include even if zero
-    if (FEE_COLLECTOR_SUPPORTED_TOKENS?.[0]) {
-      const balance = usdcBalance.value && typeof usdcBalance.value === 'bigint'
-        ? usdcBalance.value
-        : 0n
-      supportedTokensBalances.push({
-        address: FEE_COLLECTOR_SUPPORTED_TOKENS[0],
-        balance
-      })
+    // Map balance data to each token config
+    const balanceMap: Record<string, unknown> = {
+      native: nativeBalance.value,
+      usdc: usdcBalance.value,
+      usdt: usdtBalance.value
     }
 
-    // USDT - always include even if zero
-    if (FEE_COLLECTOR_SUPPORTED_TOKENS?.[1]) {
-      const balance = usdtBalance.value && typeof usdtBalance.value === 'bigint'
-        ? usdtBalance.value
-        : 0n
-      supportedTokensBalances.push({
-        address: FEE_COLLECTOR_SUPPORTED_TOKENS[1],
-        balance
-      })
-    }
-
-    // ERC20 tokens (matches tokenHelpers.ts logic exactly)
-    supportedTokensBalances.forEach(({ address, balance }) => {
-      const checksummedAddress = address as `0x${string}`
-      const symbol = TOKEN_SYMBOLS[checksummedAddress] || 'UNKNOWN'
-      const decimals = TOKEN_DECIMALS[symbol as keyof typeof TOKEN_DECIMALS] || 18
-
-      arr.push(makeToken(address, balance, decimals, symbol, false))
+    return supportedTokens.map((token) => {
+      const balance = balanceMap[token.id]
+      return {
+        address: token.address,
+        symbol: token.symbol,
+        decimals: token.decimals,
+        balance: validateBalance(balance) ? balance : 0n,
+        formattedBalance: formatTokenBalance(balance, token.decimals),
+        shortAddress: token.shortAddress,
+        formattedValue: formatTokenBalanceValue(balance, token.address, token.decimals, token.symbol)
+      }
     })
-
-    return arr
-  })
-
-  // Calculate total USD value (reactive) - using getTokenUSDValue from composable
-  const totalUSD = computed(() => {
-    let total = 0
-
-    tokens.value.forEach((token) => {
-      const amount = parseFloat(token.formattedBalance)
-
-      // Skip if amount is NaN or 0
-      if (isNaN(amount) || amount === 0) return
-
-      // Use the composable's getTokenUSDValue function
-      const usdValue = getTokenUSDValue(token, amount)
-
-      // Skip if no price available
-      if (usdValue === 0) return
-
-      total += usdValue
-    })
-
-    return total
   })
 
   const isLoading = computed(() =>
     isLoadingNativeBalance.value || isLoadingUsdc.value || isLoadingUsdt.value
   )
 
-  const refetchAll = async () => {
-    const promises = [refetchNative()]
+  // Calculate total USD balance (raw and formatted)
+  const totalUsdAmount = computed(() => {
+    return tokens.value.reduce((sum, token) => {
+      // Parse formattedValue back to number (strip $ and commas)
+      const rawValue = typeof token.formattedValue === 'string'
+        ? Number(token.formattedValue.replace(/[^\d.-]/g, ''))
+        : 0
+      return sum + rawValue
+    }, 0)
+  })
 
-    if (FEE_COLLECTOR_SUPPORTED_TOKENS?.[0]) {
-      promises.push(refetchUsdc())
+  const formattedTotalUsd = computed(() => formatUSD(totalUsdAmount.value))
+
+  // Return an array of items with errors
+  const error = computed(() => {
+    const errors = []
+    if (errorNative.value) {
+      errors.push({ id: 'native', error: errorNative.value })
     }
-
-    if (FEE_COLLECTOR_SUPPORTED_TOKENS?.[1]) {
-      promises.push(refetchUsdt())
+    if (errorUsdc.value) {
+      errors.push({ id: 'usdc', error: errorUsdc.value })
     }
-
-    await Promise.all(promises)
-  }
+    if (errorUsdt.value) {
+      errors.push({ id: 'usdt', error: errorUsdt.value })
+    }
+    return errors.length > 0 ? errors : null
+  })
 
   return {
-    isFeeCollectorOwner,
-    nativeBalance,
-    usdcBalance,
-    usdtBalance,
     tokens,
-    totalUSD,
     isLoading,
-    isLoadingNativeBalance,
-    isLoadingUsdc,
-    isLoadingUsdt,
-    isLoadingPrices,
-    errorNative,
-    errorUsdc,
-    errorUsdt,
-    refetchNative,
-    refetchUsdc,
-    refetchUsdt,
-    refetchAll
+    totalUsdAmount,
+    formattedTotalUsd,
+    error
   }
 }

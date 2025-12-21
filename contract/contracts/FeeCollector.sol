@@ -38,6 +38,8 @@ contract FeeCollector is
     /// @notice Emitted when ERC20 tokens are withdrawn
     event TokenWithdrawn(address indexed owner, address indexed token, uint256 amount);
 
+    event FeeConfigUpdated(string indexed contractType, uint16 feeBps);
+
     /**
      * @notice Initializes the FeeCollector with owner, fee configs, and supported tokens
      * @param _owner The address that will own this contract
@@ -156,19 +158,16 @@ contract FeeCollector is
      * @return The fee in basis points (e.g., 50 = 0.5%)
      */
     function getFeeFor(string memory contractType)
-        public
-        view
-        returns (uint16)
+    public
+    view
+    returns (uint16)
     {
-        for (uint256 i = 0; i < feeConfigs.length; i++) {
-            if (
-                keccak256(bytes(feeConfigs[i].contractType))
-                == keccak256(bytes(contractType))
-            ) {
-                return feeConfigs[i].feeBps;
-            }
-        }
-        return 0; // default: no fee
+        bytes32 key = keccak256(bytes(contractType));
+        (bool exists, uint256 idx) = _findFeeIndex(key);
+
+        if (!exists) return 0;
+
+        return feeConfigs[idx].feeBps;
     }
 
     /**
@@ -189,11 +188,47 @@ contract FeeCollector is
         return IERC20(_token).balanceOf(address(this));
     }
 
+
+    /**
+     * @notice Add or update a single fee configuration
+     */
+    function setFee(string memory contractType, uint16 feeBps)
+    external
+    onlyOwner
+    {
+        require(bytes(contractType).length > 0, "Empty type");
+        require(feeBps <= 10000, "Invalid BPS");
+
+        bytes32 key = keccak256(bytes(contractType));
+
+        (bool exists, uint256 idx) = _findFeeIndex(key);
+
+        if (exists) {
+            // Update
+            feeConfigs[idx].feeBps = feeBps;
+            emit FeeConfigUpdated(contractType, feeBps);
+            return;
+        }
+
+        // Add new
+        feeConfigs.push(FeeConfig(contractType, feeBps));
+        emit FeeConfigUpdated(contractType, feeBps);
+    }
+    
     /**
      * @notice Get all fee configurations
      * @return Array of fee configurations
      */
     function getAllFeeConfigs() external view returns (FeeConfig[] memory) {
         return feeConfigs;
+    }
+
+    function _findFeeIndex(bytes32 key) private view returns (bool, uint256) {
+        for (uint256 i = 0; i < feeConfigs.length; i++) {
+            if (keccak256(bytes(feeConfigs[i].contractType)) == key) {
+                return (true, i);
+            }
+        }
+        return (false, 0);
     }
 }

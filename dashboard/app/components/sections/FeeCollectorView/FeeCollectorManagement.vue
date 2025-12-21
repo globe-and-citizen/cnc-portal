@@ -10,16 +10,6 @@
           Manage and withdraw collected fees
         </p>
       </div>
-
-      <UButton
-        v-if="isFeeCollectorOwner"
-        color="primary"
-        icon="i-heroicons-arrow-path"
-        :loading="isRefreshing"
-        @click="handleRefresh"
-      >
-        Refresh
-      </UButton>
     </div>
 
     <!-- Stats Cards -->
@@ -36,22 +26,23 @@
       @close="isWithdrawModalOpen = false"
       @withdraw="handleWithdraw"
     />
+
+    <!-- Fee Config List -->
+    <FeeConfigList />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useFeeCollector } from '@/composables/useFeeCollector'
+// import { useFeeCollector } from '@/composables/useFeeCollector'
 import { useTokenWithdraw } from '@/composables/useTokenWithdraw'
 import type { TokenDisplay } from '@/types/token'
 import FeeCollectorStats from './FeeCollectorStats.vue'
 import TokenHoldingsTable from './TokenHoldingsTable.vue'
 import WithdrawModal from './WithdrawModal.vue'
+import FeeConfigList from './FeeConfigList.vue'
 
 const toast = useToast()
-
-// Composables
-const { isFeeCollectorOwner, refetchAll } = useFeeCollector()
 
 const {
   withdraw,
@@ -62,32 +53,10 @@ const {
 
 // State
 const isWithdrawModalOpen = ref(false)
-const isRefreshing = ref(false)
 
 // Handlers
 const handleWithdraw = (token: TokenDisplay, amount: string) => {
   withdraw(token, amount)
-}
-
-const handleRefresh = async () => {
-  isRefreshing.value = true
-  try {
-    await refetchAll()
-    toast.add({
-      title: 'Success',
-      description: 'Balances refreshed successfully',
-      color: 'success'
-    })
-  } catch (error) {
-    toast.add({
-      title: 'Error',
-      description: 'Failed to refresh balances',
-      color: 'error'
-    })
-    console.log('error ====', error)
-  } finally {
-    isRefreshing.value = false
-  }
 }
 
 // Watch for successful withdrawal
@@ -99,7 +68,6 @@ watch(isConfirmedWithdraw, (confirmed) => {
       color: 'success'
     })
     isWithdrawModalOpen.value = false
-    refetchAll()
   }
 })
 </script>
