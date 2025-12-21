@@ -63,7 +63,6 @@ export function useContractWrites(config: ContractWriteConfig) {
     queryFn: async () => {
       if (!contractAddress.value) throw new Error('Missing contract address')
 
-      console.log('Args for gas estimation:', contractArgs.value)
       const result = await simulateContract(wagmiConfig, {
         address: contractAddress.value,
         abi: contractAbi.value,
@@ -123,7 +122,6 @@ export function useContractWrites(config: ContractWriteConfig) {
   ) => {
     // Store function name for query invalidation after transaction confirms
     // currentFunctionName.value = functionName
-    console.log('args', args)
     try {
       const address = unref(config.contractAddress)
       if (!address) {
