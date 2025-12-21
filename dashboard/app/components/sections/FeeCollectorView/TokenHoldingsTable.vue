@@ -6,13 +6,13 @@
           <h3 class="text-lg font-semibold">
             Token Holdings
           </h3>
-          <UBadge v-if="isFeeCollectorOwner" color="success">
+          <UBadge v-if="isOwner" color="success">
             Owner
           </UBadge>
         </div>
 
         <UButton
-          v-if="isFeeCollectorOwner"
+          v-if="isOwner"
           color="primary"
           size="sm"
           icon="i-heroicons-arrow-down-tray"
@@ -22,98 +22,111 @@
         </UButton>
       </div>
     </template>
+    <!-- <pre>{{ tableRows }}</pre> -->
+    <UTable
+      :data="tableRows"
+      :columns="columns"
+      :loading="isLoading"
+    >
+      <template #empty>
+        <div class="flex flex-col items-center justify-center py-8">
+          <UIcon name="i-heroicons-circle-stack-20-solid" class="w-12 h-12 text-gray-400 mb-3" />
+          <p class="text-gray-500">
+            No tokens available
+          </p>
+        </div>
+      </template>
 
-    <div class="overflow-x-auto">
-      <table class="w-full">
-        <thead>
-          <tr class="border-b border-gray-200 dark:border-gray-700">
-            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 w-20">
-              RANK
-            </th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
-              Token
-            </th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
-              Address
-            </th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
-              Amount
-            </th>
-          </tr>
-        </thead>
+      <template #rank-cell="{ row }">
+        <span class="text-gray-500 dark:text-gray-400">
+          {{ row.original.rank }}
+        </span>
+      </template>
 
-        <tbody>
-          <!-- Loading -->
-          <tr v-if="isLoading">
-            <td colspan="4" class="text-center py-8">
-              <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin inline-block" />
-            </td>
-          </tr>
-
-          <!-- Rows -->
-          <tr
-            v-for="(token, index) in tokens"
-            :key="token.address"
-            class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      <template #symbol-cell="{ row }">
+        <div class="flex items-center gap-3">
+          <UAvatar
+            :alt="row.original.symbol"
+            size="sm"
           >
-            <!-- RANK -->
-            <td class="px-4 py-4 text-gray-500 dark:text-gray-400 w-20">
-              {{ index + 1 }}
-            </td>
+            <template #fallback>
+              <span class="text-sm font-semibold">
+                {{ row.original.symbol.charAt(0) }}
+              </span>
+            </template>
+          </UAvatar>
+          <span class="font-semibold whitespace-nowrap">
+            {{ row.original.symbol }}
+          </span>
+        </div>
+      </template>
 
-            <!-- Token -->
-            <td class="px-4 py-4">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span class="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                    {{ token.symbol.charAt(0) }}
-                  </span>
-                </div>
-                <p class="font-semibold whitespace-nowrap">
-                  {{ token.symbol }}
-                </p>
-              </div>
-            </td>
+      <template #shortAddress-cell="{ row }">
+        <UBadge variant="subtle" color="neutral">
+          <span class="font-mono text-xs">
+            {{ row.original.shortAddress }}
+          </span>
+        </UBadge>
+      </template>
 
-            <!-- Address -->
-            <td class="px-4 py-4">
-              <p class="text-sm text-gray-600 dark:text-gray-400 font-mono whitespace-nowrap">
-                {{ token.shortAddress }}
-              </p>
-            </td>
-
-            <!-- Amount -->
-            <td class="px-4 py-4">
-              <div class="font-medium whitespace-nowrap">
-                {{ formatAmount(token.formattedBalance) }} {{ token.symbol }}
-              </div>
-              <div v-if="getTokenUSD(token, token.formattedBalance)" class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                {{ getTokenUSD(token, token.formattedBalance) }}
-              </div>
-            </td>
-          </tr>
-
-          <tr v-if="!isLoading && tokens.length === 0">
-            <td colspan="4" class="text-center py-8 text-gray-500">
-              No tokens available
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <template #formattedBalance-cell="{ row }">
+        <div>
+          <div v-if="row.original.formattedBalance" class="font-medium whitespace-nowrap">
+            {{ row.original.formattedBalance }} {{ row.original.symbol }}
+          </div>
+          <div v-if="row.original.formattedValue" class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+            {{ row.original.formattedValue }}
+          </div>
+        </div>
+      </template>
+    </UTable>
   </UCard>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useFeeCollector } from '@/composables/useFeeCollector'
-import { useTokenPrices } from '@/composables/useTokenPrices'
-import { formatAmount } from '@/utils/currency'
+import type { TokenDisplay } from '@/types/token'
+import { isFeeCollectorOwner } from '~/composables/FeeCollector/read'
 
 defineEmits<{
   openBatchModal: []
 }>()
 
-// Get data directly from composables
-const { tokens, isLoading, isFeeCollectorOwner } = useFeeCollector()
-const { getTokenUSD } = useTokenPrices()
+interface TableRow extends TokenDisplay {
+  rank: number
+}
+
+const isOwner = isFeeCollectorOwner()
+
+// Get data directly from composables and store
+const { tokens, isLoading } = useFeeCollector()
+
+// Define table columns
+const columns = [
+  {
+    accessorKey: 'rank',
+    header: 'RANK'
+  },
+  {
+    accessorKey: 'symbol',
+    header: 'Token'
+  },
+  {
+    accessorKey: 'shortAddress',
+    header: 'Address'
+  },
+  {
+    accessorKey: 'formattedBalance',
+    header: 'Amount'
+  }
+]
+
+// Transform tokens into table rows with rank
+const tableRows = computed<TableRow[]>(() => {
+  return tokens.value.map((token, index) => ({
+    ...token,
+    rank: index + 1
+  }))
+})
 </script>

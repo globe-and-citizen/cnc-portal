@@ -1,6 +1,6 @@
 import { ref, watch } from 'vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { parseUnits, parseEther, type Address } from 'viem'
+import { parseUnits, parseEther, type Address, zeroAddress } from 'viem'
 import { FEE_COLLECTOR_ADDRESS } from '@/constant'
 import { FEE_COLLECTOR_ABI } from '@/artifacts/abi/feeCollector'
 import type { TokenDisplay } from '@/types/token'
@@ -34,9 +34,10 @@ export const useTokenWithdraw = () => {
 
   watch(errorWithdraw, (err) => {
     if (!err) return
+    console.error('Withdraw error:', err.message)
     toast.add({
       title: 'Error',
-      description: err.message || 'Failed to withdraw tokens',
+      description: 'Failed to withdraw tokens',
       color: 'error'
     })
   })
@@ -47,15 +48,15 @@ export const useTokenWithdraw = () => {
     }
 
     try {
-      const parsedAmount = token.isNative
+      const parsedAmount = token.address === zeroAddress
         ? parseEther(amount)
         : parseUnits(amount, token.decimals)
 
       executeWithdraw({
         address: FEE_COLLECTOR_ADDRESS as Address,
         abi: FEE_COLLECTOR_ABI,
-        functionName: token.isNative ? 'withdraw' : 'withdrawToken',
-        args: token.isNative
+        functionName: token.address === zeroAddress ? 'withdraw' : 'withdrawToken',
+        args: token.address
           ? [parsedAmount]
           : [token.address as Address, parsedAmount]
       })

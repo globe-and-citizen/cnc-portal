@@ -207,10 +207,10 @@ export const BACKEND_URL = getBackendUrl()
 export const GRAPHQL_POLL_INTERVAL = 12000
 
 // Map currency symbols to CoinGecko IDs
-export const NETWORK_TO_COIN_ID: Record<string, string> = {
-  POL: 'matic-network',
+const NETWORK_TO_COIN_ID: Record<string, string> = {
+  POL: 'polygon-ecosystem-token',
   ETH: 'ethereum',
-  AMOYPOL: 'matic-network',
+  AMOYPOL: 'polygon-ecosystem-token',
   SepoliaETH: 'ethereum',
   GO: 'ethereum'
 }
@@ -225,6 +225,7 @@ export interface TokenConfig {
   decimals: number
   address: Address
   code: string
+  shortAddress: string
 }
 
 // Helper to build supported tokens for a specific chain
@@ -234,13 +235,24 @@ export function getSupportedTokens(nativeSymbol: string, targetChainId?: number)
 
   return [
     {
+      id: 'native',
+      name: nativeSymbol,
+      symbol: nativeSymbol,
+      code: nativeSymbol,
+      coingeckoId: NETWORK_TO_COIN_ID[nativeSymbol] ?? 'ethereum',
+      decimals: 18,
+      address: zeroAddress,
+      shortAddress: 'Native Token'
+    },
+    {
       id: 'usdc',
       name: 'USD Coin',
       symbol: 'USDC',
       code: 'USDC',
       coingeckoId: 'usd-coin',
       decimals: 6,
-      address: usdcAddress
+      address: usdcAddress,
+      shortAddress: `${usdcAddress.slice(0, 6)}...${usdcAddress.slice(-4)}`
     },
     {
       id: 'usdt',
@@ -249,16 +261,8 @@ export function getSupportedTokens(nativeSymbol: string, targetChainId?: number)
       code: 'USDT',
       coingeckoId: 'tether',
       decimals: 6,
-      address: usdtAddress
-    },
-    {
-      id: 'native',
-      name: nativeSymbol,
-      symbol: nativeSymbol,
-      code: nativeSymbol,
-      coingeckoId: NETWORK_TO_COIN_ID[nativeSymbol] ?? 'ethereum',
-      decimals: 18,
-      address: zeroAddress
+      address: usdtAddress,
+      shortAddress: `${usdtAddress.slice(0, 6)}...${usdtAddress.slice(-4)}`
     }
   ]
 }
