@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { useDisconnect, useConnection, useConnectionEffect } from '@wagmi/vue'
+import { useDisconnect, useConnection } from '@wagmi/vue'
 import type { User } from '@/types'
 import ButtonUI from './ButtonUI.vue'
 import { computed } from 'vue'
@@ -45,13 +45,6 @@ const formatedConnectedAddress = computed(() => {
     ? connection.address.value.slice(0, 6) +
         '...' +
         connection.address.value.slice(connection.address.value.length - 4)
-    : ''
-})
-
-// Handle connection/disconnection lifecycle events
-useConnectionEffect({
-  onDisconnect() {
-    console.log('Connection disconnected')
-  }
+    : 'Not connected'
 })
 </script>

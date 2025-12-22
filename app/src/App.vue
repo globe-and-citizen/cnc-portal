@@ -84,7 +84,7 @@
 
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
@@ -97,19 +97,19 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
 import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 
-import { useAccount } from '@wagmi/vue'
+import { useConnection, useConnectionEffect } from '@wagmi/vue'
 import { useAuth } from './composables/useAuth'
 import { useAppStore } from './stores'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 import '@vuepic/vue-datepicker/dist/main.css'
 import LockScreen from './components/LockScreen.vue'
 
-const { address: connectedAddress } = useAccount()
+const connection = useConnection()
+useBackendWake()
 
 const { addErrorToast } = useToastStore()
 
 const appStore = useAppStore()
-const { isDisconnected } = useAccount()
 const { logout } = useAuth()
 const toggleSide = ref(false)
 const editUserModal = ref({ mount: false, show: false })
@@ -120,22 +120,24 @@ const { name, address, imageUrl } = storeToRefs(userStore)
 const lock = computed(() => {
   if (
     userStore.isAuth &&
-    connectedAddress.value?.toLowerCase() !== userStore.address.toLowerCase()
+    connection.address.value?.toLowerCase() !== userStore.address.toLowerCase()
   ) {
     return true
   }
   return false
 })
 
-watch(isDisconnected, (value) => {
-  if (value && userStore.isAuth) {
-    addErrorToast('Disconnected from wallet')
-    setTimeout(() => {
-      logout()
-    }, 1000)
+useConnectionEffect({
+  onDisconnect() {
+    if (userStore.isAuth) {
+      addErrorToast('Disconnected from wallet')
+      setTimeout(() => {
+        logout()
+      }, 1000)
+      console.log('Connection disconnected')
+    }
   }
 })
 
 // Wake up backend on app mount using TanStack Query
-useBackendWake()
 </script>
