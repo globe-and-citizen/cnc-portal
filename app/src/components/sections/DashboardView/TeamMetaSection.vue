@@ -36,18 +36,17 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref } from 'vue'
 import UpdateTeamForm from '@/components/sections/DashboardView/forms/UpdateTeamForm.vue'
 import TeamDetails from '@/components/sections/DashboardView/TeamDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import type { Member } from '@/types'
 import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import { useUpdateTeam } from '@/queries/team.queries'
+import { useUpdateTeam, useDeleteTeam } from '@/queries/team.queries'
 
 const showDeleteTeamConfirmModal = ref(false)
 const showModal = ref(false)
@@ -58,7 +57,6 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 const router = useRouter()
 const inputs = ref<Member[]>([])
 const { currentTeam } = storeToRefs(teamStore)
-const teamUrl = computed(() => `/teams/${currentTeam.value?.id}` || '')
 
 const updateTeamInput = ref<{ name: string; description: string }>({
   name: '',
@@ -68,55 +66,58 @@ const updateTeamInput = ref<{ name: string; description: string }>({
 const {
   isPending: teamIsUpdating,
   error: updateTeamError,
-  mutateAsync: updateTeamAPI
+  mutate: updateTeamMutate
 } = useUpdateTeam()
 
-const executeUpdateTeam = async () => {
-  await updateTeamAPI({
-    id: currentTeam.value?.id || '',
-    teamData: {
-      name: updateTeamInput.value.name,
-      description: updateTeamInput.value.description
+const executeUpdateTeam = () => {
+  updateTeamMutate(
+    {
+      id: currentTeam.value?.id || '',
+      teamData: {
+        name: updateTeamInput.value.name,
+        description: updateTeamInput.value.description
+      }
+    },
+    {
+      onSuccess: () => {
+        addSuccessToast('Team updated successfully')
+        showModal.value = false
+      },
+      onError: () => {
+        addErrorToast(updateTeamError.value?.message || 'Failed to update team')
+      }
+    }
+  )
+}
+
+// Mutation for deleting team
+const {
+  mutate: deleteTeamMutate,
+  isPending: teamIsDeleting,
+  error: deleteTeamError
+} = useDeleteTeam()
+
+const deleteTeam = async () => {
+  const teamId = currentTeam.value?.id
+  if (!teamId) {
+    addErrorToast('Team ID is required')
+    return
+  }
+
+  deleteTeamMutate(String(teamId), {
+    onSuccess: async () => {
+      addSuccessToast('Team deleted successfully')
+      showDeleteTeamConfirmModal.value = false
+      // wait for 3 seconds to show the toast before navigating
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+      router.push('/teams')
+    },
+    onError: () => {
+      addErrorToast(deleteTeamError.value?.message || 'Failed to delete team')
     }
   })
 }
 
-// useFetch instance for deleting team
-const {
-  execute: deleteTeamAPI,
-  isFetching: teamIsDeleting,
-  error: deleteTeamError,
-  statusCode: deleteStatus
-} = useCustomFetch(teamUrl, {
-  immediate: false
-})
-  .delete()
-  .json()
-
-// Watchers for updating team details
-watch(updateTeamError, () => {
-  if (updateTeamError.value) {
-    addErrorToast(updateTeamError.value.message || 'Failed to update team')
-  }
-})
-
-watch([() => teamIsUpdating.value, () => updateTeamError.value], async () => {
-  if (!teamIsUpdating.value && !updateTeamError.value) {
-    addSuccessToast('Team updated successfully')
-    showModal.value = false
-  }
-})
-
-const deleteTeam = async () => {
-  await deleteTeamAPI()
-  if (deleteStatus.value === 200) {
-    addSuccessToast('Team deleted successfully')
-    showDeleteTeamConfirmModal.value = false
-    router.push('/teams')
-  } else if (deleteTeamError.value) {
-    addErrorToast('Failed to delete team')
-  }
-}
 const updateTeamModalOpen = async () => {
   showModal.value = true
   updateTeamInput.value.name = currentTeam.value?.name || ''
