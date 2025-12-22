@@ -16,6 +16,6 @@ export const useValidateToken = () => {
     refetchOnReconnect: false,
     retry: false,
     refetchInterval: false,
-    staleTime: Infinity,
+    staleTime: Infinity
   })
 }
