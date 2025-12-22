@@ -32,7 +32,7 @@ import { computed, ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore, useTeamStore } from '@/stores'
+import { useToastStore } from '@/stores'
 import type { User } from '@/types'
 
 const emits = defineEmits(['memberAdded'])

@@ -44,7 +44,7 @@ vi.mock('@/composables/useCustomFetch', () => {
 // Mock stores for toasts and team fetching
 const mocks = vi.hoisted(() => ({
   addSuccessToast: vi.fn(),
-  addErrorToast: vi.fn(),
+  addErrorToast: vi.fn()
 }))
 
 vi.mock('@/stores', async (importOriginal) => {
@@ -54,7 +54,7 @@ vi.mock('@/stores', async (importOriginal) => {
     useToastStore: vi.fn(() => ({
       addSuccessToast: mocks.addSuccessToast,
       addErrorToast: mocks.addErrorToast
-    })),
+    }))
   }
 })
 

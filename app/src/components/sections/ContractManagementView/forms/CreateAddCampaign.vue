@@ -81,7 +81,7 @@ const campaignBytecode = CAMPAIGN_BYTECODE as Hex
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const bankAddress = teamStore.getContractAddressByType('Bank')
-  const queryClient = useQueryClient()
+const queryClient = useQueryClient()
 
 const costPerClick = ref<string | null>(null)
 const costPerImpression = ref<string | null>(null)
@@ -107,7 +107,9 @@ watch(contractAddress, async (newAddress) => {
       // First try to add contract to team
       await addContractToTeam(teamStore.currentTeam.id, newAddress, userDataStore.address)
 
-      queryClient.invalidateQueries({ queryKey: ['team', { teamId: teamStore.currentTeam.id }] })
+      queryClient.invalidateQueries({
+        queryKey: ['team', { teamId: String(teamStore.currentTeam.id) }]
+      })
 
       // Only show success and close modal if everything succeeds
       addSuccessToast(`Contract deployed and added to team successfully`)

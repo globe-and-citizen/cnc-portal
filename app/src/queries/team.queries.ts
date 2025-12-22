@@ -14,11 +14,10 @@ export const useTeams = () => {
       const { data } = await apiClient.get<Team[]>(`teams`)
       return data
     },
-    // Example useQuery options for backend API queries:
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchInterval: false,
-    staleTime: 180000, // or longer for caching
+    staleTime: 180000,
     gcTime: 300000
   })
 }
@@ -47,12 +46,12 @@ export const useTeam = (teamId: MaybeRefOrGetter<string | null>) => {
       }
     },
     enabled: () => !!toValue(teamId),
-    retry: false, // Don't retry on 404
-    // Example useQuery options for backend API queries:
+    retry: false,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchInterval: false,
-    staleTime: 180000, // or longer for caching
+    staleTime: 180000,
+    gcTime: 300000
   })
 }
 
@@ -87,8 +86,7 @@ export const useUpdateTeam = () => {
     },
     onSuccess: (_, variables) => {
       // Invalidate specific team and teams list
-      console.log('Invalidating team with ID:', { queryKey: ['team', { teamId: variables.id }] })
-      queryClient.invalidateQueries({ queryKey: ['team', { teamId: variables.id }] })
+      queryClient.invalidateQueries({ queryKey: ['team', { teamId: String(variables.id) }] })
       queryClient.invalidateQueries({ queryKey: ['teams'] })
     }
   })

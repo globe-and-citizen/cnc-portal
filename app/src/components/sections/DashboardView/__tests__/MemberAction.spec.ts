@@ -58,7 +58,7 @@ vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
 
   return {
-    ...actual,
+    ...actual
   }
 })
 

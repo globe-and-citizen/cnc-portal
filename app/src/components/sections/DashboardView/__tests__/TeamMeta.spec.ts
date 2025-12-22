@@ -40,7 +40,7 @@ const mockTeam = {
 }
 const mocks = vi.hoisted(() => ({
   mockUseTeamStore: vi.fn(() => ({
-    currentTeam: mockTeam,
+    currentTeam: mockTeam
   })),
   mockUseCustomFetch: vi.fn()
 }))
@@ -56,7 +56,6 @@ vi.mock('vue-router', async (importOriginal) => {
 })
 
 vi.mock('@/stores/useToastStore')
-
 
 vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()

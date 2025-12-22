@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { mount } from '@vue/test-utils'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { Team } from '@/types/team'
 import { createRouter, createWebHistory } from 'vue-router'
@@ -10,13 +10,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 const mockError = ref<Error | null>(null)
 const mockIsFetching = ref(false)
 const mockData = ref<Team | null>(null)
-const mockStatusCode = computed(() => {
-  if (mockError.value) {
-    const errorWithStatus = mockError.value as Error & { status?: number }
-    return errorWithStatus.status
-  }
-  return undefined
-})
+// const mockStatusCode = computed(() => {
+//   if (mockError.value) {
+//     const errorWithStatus = mockError.value as Error & { status?: number }
+//     return errorWithStatus.status
+//   }
+//   return undefined
+// })
 
 // Mock the team queries to control the reactive state
 vi.mock('@/queries/team.queries', () => {

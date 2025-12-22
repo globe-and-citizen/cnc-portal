@@ -262,14 +262,14 @@
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useCustomFetch } from '@/composables'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
 import { computed, ref } from 'vue'
 import { NETWORK } from '@/constant'
-const teamStore = useTeamStore()
+// const teamStore = useTeamStore()
 const { addSuccessToast } = useToastStore()
 
 const props = defineProps<{
