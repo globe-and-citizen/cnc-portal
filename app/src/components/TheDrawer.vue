@@ -550,7 +550,7 @@ const menuItems = computed(() => [
 ])
 
 const toggleDropdown = () => {
-  teamStore.teamsMeta.reloadTeams()
+  // teamStore.teamsMeta.reloadTeams()
   isDropdownOpen.value = !isDropdownOpen.value
 }
 </script>

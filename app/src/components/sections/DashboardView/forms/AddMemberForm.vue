@@ -16,11 +16,7 @@
       class="justify-center"
       :loading="addMembersLoading"
       :disabled="addMembersLoading"
-      @click="
-        async () => {
-          await executeAddMembers()
-        }
-      "
+      @click="handleAddMembers"
       >Add Members</ButtonUI
     >
   </div>
@@ -28,47 +24,54 @@
   <div class="divider m-0"></div>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore } from '@/stores'
-import type { User } from '@/types'
+import type { Member } from '@/types'
+import { useAddMembers, type MemberInput } from '@/queries/member.queries'
 
 const emits = defineEmits(['memberAdded'])
 const { addSuccessToast, addErrorToast } = useToastStore()
-// const teamStore = useTeamStore()
 
 const props = defineProps<{
   teamId: string | number
 }>()
 
-const formData = ref<Array<Pick<User, 'address' | 'name'>>>([])
+const formData = ref<Array<Member>>([])
 
-const membersAddress = computed(() =>
-  formData.value.map((member) => {
-    return { address: member.address }
+const { mutate: executeAddMembers, isPending: addMembersLoading, error: addMembersError } = useAddMembers(props.teamId)
+
+const statusCode = ref<number | null>(null)
+
+const handleAddMembers = async () => {
+
+  executeAddMembers(
+    formData.value.map(({ address, name }) => ({ address, name })) as unknown as MemberInput[],
+    {
+    onSuccess: () => {
+      addSuccessToast('Members added successfully')
+      formData.value = []
+      statusCode.value = 201
+      emits('memberAdded')
+    },
+    onError: (error: unknown) => {
+      let status = null
+      let errorMessage = 'Failed to add members'
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: unknown }).response === 'object' &&
+        (error as { response?: unknown }).response !== null
+      ) {
+        const response = (error as { response: { status?: number; data?: { message?: string } } }).response
+        status = response.status ?? null
+        errorMessage = response.data?.message ?? errorMessage
+      }
+      statusCode.value = status
+      addErrorToast(errorMessage)
+    }
   })
-)
-const {
-  execute: executeAddMembers,
-  error: addMembersError,
-  isFetching: addMembersLoading,
-  statusCode
-} = useCustomFetch(`teams/${props.teamId}/member`, { immediate: false })
-  .post(membersAddress)
-  .json<{ member: string }>()
-
-watch(addMembersError, () => {
-  if (addMembersError.value) {
-    addErrorToast(addMembersError.value || 'Failed to add members')
-  }
-})
-
-watch(addMembersLoading, () => {
-  if (!addMembersLoading.value && !addMembersError.value) {
-    addSuccessToast('Members added successfully')
-    emits('memberAdded')
-  }
-})
+}
 </script>
