@@ -72,6 +72,7 @@ import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
 import type { Hex } from 'viem'
 import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const emit = defineEmits(['closeAddCampaignModal'])
 const { addErrorToast, addSuccessToast } = useToastStore()
@@ -80,6 +81,7 @@ const campaignBytecode = CAMPAIGN_BYTECODE as Hex
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const bankAddress = teamStore.getContractAddressByType('Bank')
+  const queryClient = useQueryClient()
 
 const costPerClick = ref<string | null>(null)
 const costPerImpression = ref<string | null>(null)
@@ -104,7 +106,8 @@ watch(contractAddress, async (newAddress) => {
     try {
       // First try to add contract to team
       await addContractToTeam(teamStore.currentTeam.id, newAddress, userDataStore.address)
-      await teamStore.fetchTeam(teamStore.currentTeam.id)
+
+      queryClient.invalidateQueries({ queryKey: ['team', { teamId: teamStore.currentTeam.id }] })
 
       // Only show success and close modal if everything succeeds
       addSuccessToast(`Contract deployed and added to team successfully`)

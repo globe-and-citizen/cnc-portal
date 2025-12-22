@@ -357,7 +357,6 @@ const deleteMember = async (): Promise<void> => {
   await executeDeleteMember()
   if (deleteMemberStatusCode.value === 204) {
     showDeleteMemberConfirmModal.value = false
-    teamStore.fetchTeam(String(props.teamId))
   }
 }
 const {

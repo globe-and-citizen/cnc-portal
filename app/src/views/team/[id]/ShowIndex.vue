@@ -45,7 +45,6 @@
             @done="
               () => {
                 showModal = false
-                teamStore.fetchTeam(teamStore.currentTeamMeta.team?.id)
               }
             "
           ></ContinueAddTeamForm>

@@ -45,7 +45,6 @@ vi.mock('@/composables/useCustomFetch', () => {
 const mocks = vi.hoisted(() => ({
   addSuccessToast: vi.fn(),
   addErrorToast: vi.fn(),
-  fetchTeam: vi.fn()
 }))
 
 vi.mock('@/stores', async (importOriginal) => {
@@ -56,9 +55,6 @@ vi.mock('@/stores', async (importOriginal) => {
       addSuccessToast: mocks.addSuccessToast,
       addErrorToast: mocks.addErrorToast
     })),
-    useTeamStore: vi.fn(() => ({
-      fetchTeam: mocks.fetchTeam
-    }))
   }
 })
 
@@ -187,7 +183,6 @@ describe('AddMemberForm.vue', () => {
     mockStatusCode.value = 201
     await wrapper.vm.$nextTick()
 
-    expect(mocks.fetchTeam).toHaveBeenCalledWith('team-123')
     expect(wrapper.emitted('memberAdded')).toBeTruthy()
   })
 

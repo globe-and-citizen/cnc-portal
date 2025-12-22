@@ -19,7 +19,6 @@
       @click="
         async () => {
           await executeAddMembers()
-          teamStore.fetchTeam(String(props.teamId))
         }
       "
       >Add Members</ButtonUI
@@ -38,7 +37,7 @@ import type { User } from '@/types'
 
 const emits = defineEmits(['memberAdded'])
 const { addSuccessToast, addErrorToast } = useToastStore()
-const teamStore = useTeamStore()
+// const teamStore = useTeamStore()
 
 const props = defineProps<{
   teamId: string | number

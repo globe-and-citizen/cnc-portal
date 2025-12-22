@@ -30,7 +30,7 @@
       <UpdateTeamForm
         :teamIsUpdating="teamIsUpdating"
         v-model="updateTeamInput"
-        @updateTeam="updateTeamAPI()"
+        @updateTeam="executeUpdateTeam"
       />
     </ModalComponent>
   </div>
@@ -47,6 +47,7 @@ import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
 import { storeToRefs } from 'pinia'
+import { useUpdateTeam } from '@/queries/team.queries'
 
 const showDeleteTeamConfirmModal = ref(false)
 const showModal = ref(false)
@@ -64,16 +65,21 @@ const updateTeamInput = ref<{ name: string; description: string }>({
   description: ''
 })
 
-// useFetch instance for updating team details
 const {
-  execute: updateTeamAPI,
-  isFetching: teamIsUpdating,
-  error: updateTeamError
-} = useCustomFetch(teamUrl, {
-  immediate: false
-})
-  .json()
-  .put(updateTeamInput)
+  isPending: teamIsUpdating,
+  error: updateTeamError,
+  mutateAsync: updateTeamAPI
+} = useUpdateTeam()
+
+const executeUpdateTeam = async () => {
+  await updateTeamAPI({
+    id: currentTeam.value?.id || '',
+    teamData: {
+      name: updateTeamInput.value.name,
+      description: updateTeamInput.value.description
+    }
+  })
+}
 
 // useFetch instance for deleting team
 const {
@@ -90,7 +96,7 @@ const {
 // Watchers for updating team details
 watch(updateTeamError, () => {
   if (updateTeamError.value) {
-    addErrorToast(updateTeamError.value || 'Failed to update team')
+    addErrorToast(updateTeamError.value.message || 'Failed to update team')
   }
 })
 
@@ -98,7 +104,6 @@ watch([() => teamIsUpdating.value, () => updateTeamError.value], async () => {
   if (!teamIsUpdating.value && !updateTeamError.value) {
     addSuccessToast('Team updated successfully')
     showModal.value = false
-    await teamStore.currentTeamMeta.executeFetchTeam()
   }
 })
 
@@ -107,7 +112,6 @@ const deleteTeam = async () => {
   if (deleteStatus.value === 200) {
     addSuccessToast('Team deleted successfully')
     showDeleteTeamConfirmModal.value = false
-    teamStore.teamsMeta.reloadTeams()
     router.push('/teams')
   } else if (deleteTeamError.value) {
     addErrorToast('Failed to delete team')

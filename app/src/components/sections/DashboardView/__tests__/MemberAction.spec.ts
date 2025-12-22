@@ -42,9 +42,6 @@ const executePutMock = vi.fn(() => {
 })
 
 const mocks = vi.hoisted(() => ({
-  mockUseTeamStore: vi.fn(() => ({
-    fetchTeam: vi.fn()
-  })),
   mockUseCustomFetch: vi.fn()
 }))
 
@@ -62,7 +59,6 @@ vi.mock('@/stores', async (importOriginal) => {
 
   return {
     ...actual,
-    useTeamStore: mocks.mockUseTeamStore
   }
 })
 

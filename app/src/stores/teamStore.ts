@@ -4,24 +4,20 @@ import type { Team } from '@/types/team'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
 import type { Address } from 'viem'
-import { computed,  ref, watch } from 'vue'
-import {  useTeam } from '@/queries/team.queries'
+import { computed, ref, watch } from 'vue'
+import { useTeam } from '@/queries/team.queries'
+import { useQueryClient } from '@tanstack/vue-query'
 
 export const useTeamStore = defineStore('team', () => {
   const currentTeamId = ref<string | null>(null)
   const teamsFetched = ref<Map<string, Team>>(new Map())
   const { addErrorToast } = useToastStore()
-
+  const queryClient = useQueryClient()
 
   /**
    * @description Fetch team by id using TanStack Query
    */
-  const {
-    data: team,
-    isLoading: teamIsFetching,
-    error: teamError,
-    refetch: executeFetchTeam
-  } = useTeam(currentTeamId)
+  const { data: team, isLoading: teamIsFetching, error: teamError } = useTeam(currentTeamId)
 
   // Compute status code from error if available
   const statusCode = computed(() => {
@@ -32,40 +28,11 @@ export const useTeamStore = defineStore('team', () => {
     return undefined
   })
 
-  /**
-   * @description Fetch team by id and update the team cache
-   * @param teamId
-   * @returns team, teamIsFetching, teamError, executeFetchTeam
-   */
-  const fetchTeam = async (teamId: string | undefined) => {
-    if (!teamId) {
-      log.error('Team ID is required')
-      return {
-        teamIsFetching,
-        teamError,
-        team
-      }
-    }
-    currentTeamId.value = teamId
-    await executeFetchTeam()
-    // Use the reactive team reference which is automatically updated by TanStack Query
-    if (team.value) {
-      teamsFetched.value.set(String(team.value.id), team.value)
-    } else {
-      log.error('Team is falsy')
-    }
-    return {
-      teamIsFetching,
-      teamError,
-      team
-    }
-  }
 
   const setCurrentTeamId = async (teamId: string) => {
     log.info('Setting current team id to :', teamId)
     if (currentTeamId.value === teamId) return
     currentTeamId.value = teamId
-    await fetchTeam(currentTeamId.value)
   }
   const currentTeam = computed(() => {
     return currentTeamId.value ? teamsFetched.value.get(String(currentTeamId.value)) : undefined
@@ -84,15 +51,13 @@ export const useTeamStore = defineStore('team', () => {
 
   return {
     currentTeamId,
-    fetchTeam,
     setCurrentTeamId,
     currentTeam,
     currentTeamMeta: {
       teamIsFetching,
       teamError,
       team,
-      statusCode,
-      executeFetchTeam
+      statusCode
     },
     getContractAddressByType
   }

@@ -5,17 +5,21 @@ import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 
 /**
- * Fetch all teams for a user by their address
+ * Fetch all teams for a user, for the authenticated user it will be his teams
  */
-export const useTeams = (userAddress: MaybeRefOrGetter<string>) => {
+export const useTeams = () => {
   return useQuery({
-    queryKey: ['teams', { userAddress }],
+    queryKey: ['teams'],
     queryFn: async () => {
-      const address = toValue(userAddress)
-      const { data } = await apiClient.get<Team[]>(`teams?userAddress=${address}`)
+      const { data } = await apiClient.get<Team[]>(`teams`)
       return data
     },
-    enabled: () => !!toValue(userAddress)
+    // Example useQuery options for backend API queries:
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    staleTime: 180000, // or longer for caching
+    gcTime: 300000
   })
 }
 
@@ -43,7 +47,12 @@ export const useTeam = (teamId: MaybeRefOrGetter<string | null>) => {
       }
     },
     enabled: () => !!toValue(teamId),
-    retry: false // Don't retry on 404
+    retry: false, // Don't retry on 404
+    // Example useQuery options for backend API queries:
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    staleTime: 180000, // or longer for caching
   })
 }
 
@@ -78,6 +87,7 @@ export const useUpdateTeam = () => {
     },
     onSuccess: (_, variables) => {
       // Invalidate specific team and teams list
+      console.log('Invalidating team with ID:', { queryKey: ['team', { teamId: variables.id }] })
       queryClient.invalidateQueries({ queryKey: ['team', { teamId: variables.id }] })
       queryClient.invalidateQueries({ queryKey: ['teams'] })
     }

@@ -86,29 +86,10 @@ vi.mock('@/composables/useCustomFetch', () => {
   }
 })
 
-// Add mock for fetchTeam
-vi.mock('@/composables/fetchTeam', () => ({
-  fetchTeam: vi.fn(async (teamId: string) => {
-    if (teamId === '1') {
-      return {
-        teamIsFetching: ref(false),
-        teamError: ref(null),
-        team: teamDataMock
-      }
-    } else {
-      return {
-        teamIsFetching: ref(false),
-        teamError: ref('Team not found'),
-        team: ref(null)
-      }
-    }
-  })
-}))
 // Add mock for teamStore
 const mockTeamStore = {
   currentTeam: teamDataMock.value,
-  currentTeamMeta: { teamIsFetching: false, team: teamDataMock.value },
-  fetchTeam: vi.fn()
+  currentTeamMeta: { teamIsFetching: false, team: teamDataMock.value }
 }
 
 vi.mock('@/stores', () => ({
