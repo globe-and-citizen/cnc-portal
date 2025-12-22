@@ -40,38 +40,43 @@ const props = defineProps<{
 
 const formData = ref<Array<Member>>([])
 
-const { mutate: executeAddMembers, isPending: addMembersLoading, error: addMembersError } = useAddMembers(props.teamId)
+const {
+  mutate: executeAddMembers,
+  isPending: addMembersLoading,
+  error: addMembersError
+} = useAddMembers(props.teamId)
 
 const statusCode = ref<number | null>(null)
 
 const handleAddMembers = async () => {
-
   executeAddMembers(
     formData.value.map(({ address, name }) => ({ address, name })) as unknown as MemberInput[],
     {
-    onSuccess: () => {
-      addSuccessToast('Members added successfully')
-      formData.value = []
-      statusCode.value = 201
-      emits('memberAdded')
-    },
-    onError: (error: unknown) => {
-      let status = null
-      let errorMessage = 'Failed to add members'
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error &&
-        typeof (error as { response?: unknown }).response === 'object' &&
-        (error as { response?: unknown }).response !== null
-      ) {
-        const response = (error as { response: { status?: number; data?: { message?: string } } }).response
-        status = response.status ?? null
-        errorMessage = response.data?.message ?? errorMessage
+      onSuccess: () => {
+        addSuccessToast('Members added successfully')
+        formData.value = []
+        statusCode.value = 201
+        emits('memberAdded')
+      },
+      onError: (error: unknown) => {
+        let status = null
+        let errorMessage = 'Failed to add members'
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'response' in error &&
+          typeof (error as { response?: unknown }).response === 'object' &&
+          (error as { response?: unknown }).response !== null
+        ) {
+          const response = (error as { response: { status?: number; data?: { message?: string } } })
+            .response
+          status = response.status ?? null
+          errorMessage = response.data?.message ?? errorMessage
+        }
+        statusCode.value = status
+        addErrorToast(errorMessage)
       }
-      statusCode.value = status
-      addErrorToast(errorMessage)
     }
-  })
+  )
 }
 </script>

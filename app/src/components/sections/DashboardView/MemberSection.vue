@@ -1,6 +1,9 @@
 <template>
   <CardComponent title="Team Members List">
-    <template #card-action v-if="teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address">
+    <template
+      #card-action
+      v-if="teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address"
+    >
       <ButtonUI
         @click="
           () => {
@@ -76,13 +79,19 @@
           ></template>
           <template
             #action-data="{ row }"
-            v-if="teamStore.currentTeamMeta.data?.ownerAddress === userDataStore.address"
+            v-if="teamId && teamStore.currentTeamMeta.data?.ownerAddress === userDataStore.address"
           >
-            <MemberAction
-              :member="{ name: row.name, address: row.address }"
-              :team-id="teamStore.currentTeamMeta.data?.id"
-              @refetch-wage="refetchTeamWages"
-            ></MemberAction>
+            <div class="flex flex-wrap gap-2">
+              <DeleteMemberModal
+                :member="{ name: row.name, address: row.address }"
+                :teamId="teamId"
+              />
+              <SetMemberWageModal
+                :member="{ name: row.name, address: row.address }"
+                :teamId="teamId"
+                :wage="teamWageData?.find((wage) => wage.userAddress === row.address)"
+              />
+            </div>
           </template>
         </TableComponent>
       </div>
@@ -105,6 +114,8 @@ import MemberAction from './MemberAction.vue'
 import { useTeamWages } from '@/queries/wage.queries'
 import type { Address } from 'viem'
 import { NETWORK } from '@/constant'
+import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
+import SetMemberWageModal from '@/components/sections/DashboardView/SetMemberWageModal.vue'
 
 const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
@@ -121,16 +132,18 @@ const teamId = computed(() => teamStore.currentTeamId)
 const {
   data: teamWageData,
   isLoading: isTeamWageDataFetching,
-  error: teamWageDataError,
-  refetch: refetchTeamWages
+  error: teamWageDataError
 } = useTeamWages(teamId)
 
 // Handle wage data fetch errors
-watch(() => teamWageDataError.value, (error) => {
-  if (error) {
-    toastStore.addErrorToast('Failed to fetch team wage data')
+watch(
+  () => teamWageDataError.value,
+  (error) => {
+    if (error) {
+      toastStore.addErrorToast('Failed to fetch team wage data')
+    }
   }
-})
+)
 
 const getMemberWage = (memberAddress: Address) => {
   let memberWage

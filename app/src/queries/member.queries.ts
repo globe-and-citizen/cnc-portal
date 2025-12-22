@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
 import type { Member } from '@/types/member'
+import type { AxiosError } from 'axios'
 
 export type MemberInput = Array<Pick<Member, 'address' | 'name'>>
 /**
@@ -9,7 +10,7 @@ export type MemberInput = Array<Pick<Member, 'address' | 'name'>>
 export const useAddMembers = (teamId: string | number) => {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useMutation<{ members: Member[] }, AxiosError, MemberInput[]>({
     mutationFn: async (members: MemberInput[]) => {
       const { data } = await apiClient.post<{ members: Member[] }>(
         `teams/${teamId}/member`,
@@ -31,7 +32,7 @@ export const useAddMembers = (teamId: string | number) => {
 export const useDeleteMember = (teamId: string | number, memberAddress: string) => {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useMutation<void, AxiosError, void>({
     mutationFn: async () => {
       await apiClient.delete(`teams/${teamId}/member/${memberAddress}`)
     },
