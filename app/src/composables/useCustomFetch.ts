@@ -7,6 +7,9 @@ const isRedirecting = ref(false)
 import { ref } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 
+/**
+ * @deprecated use apiClient from '@/lib/axios' + Queries/Mutations instead
+ */
 export const useCustomFetch = createFetch({
   baseUrl: `${BACKEND_URL}/api/`,
   combination: 'chain',
