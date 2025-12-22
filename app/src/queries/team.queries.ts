@@ -32,8 +32,8 @@ export const useTeam = (teamId: MaybeRefOrGetter<string | null>) => {
     queryFn: async () => {
       const id = toValue(teamId)
       if (!id) throw new Error('Team ID is required')
-        const { data } = await apiClient.get<Team>(`teams/${id}`)
-        return data
+      const { data } = await apiClient.get<Team>(`teams/${id}`)
+      return data
     },
     enabled: () => !!toValue(teamId),
     retry: false,

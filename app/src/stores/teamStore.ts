@@ -32,7 +32,8 @@ export const useTeamStore = defineStore('team', () => {
   }
 
   const getContractAddressByType = (type: ContractType): Address | undefined => {
-    return currentTeamMeta.data.value?.teamContracts.find((contract) => contract.type === type)?.address
+    return currentTeamMeta.data.value?.teamContracts.find((contract) => contract.type === type)
+      ?.address
   }
 
   watch(currentTeamMeta.error, () => {

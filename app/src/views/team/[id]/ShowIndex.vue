@@ -21,7 +21,10 @@
       </div>
     </div>
     <div v-if="teamStore.currentTeamMeta?.error" data-test="error-state">
-      <div class="alert alert-warning" v-if="teamStore.currentTeamMeta.error.response?.status==404">
+      <div
+        class="alert alert-warning"
+        v-if="teamStore.currentTeamMeta.error.response?.status == 404"
+      >
         Error! Team not found
       </div>
       <div class="alert alert-error" v-else>Error! Something went wrong, try again later.</div>
