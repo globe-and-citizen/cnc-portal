@@ -3,12 +3,13 @@ import apiClient from '@/lib/axios'
 import type { Team } from '@/types/team'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
+import type { AxiosError } from 'axios'
 
 /**
  * Fetch all teams for a user, for the authenticated user it will be his teams
  */
 export const useTeams = () => {
-  return useQuery({
+  return useQuery<Team[], AxiosError>({
     queryKey: ['teams'],
     queryFn: async () => {
       const { data } = await apiClient.get<Team[]>(`teams`)
@@ -26,24 +27,13 @@ export const useTeams = () => {
  * Fetch a single team by ID
  */
 export const useTeam = (teamId: MaybeRefOrGetter<string | null>) => {
-  return useQuery({
+  return useQuery<Team, AxiosError>({
     queryKey: ['team', { teamId }],
     queryFn: async () => {
       const id = toValue(teamId)
       if (!id) throw new Error('Team ID is required')
-      try {
         const { data } = await apiClient.get<Team>(`teams/${id}`)
         return data
-      } catch (error: unknown) {
-        // Preserve error status for component usage
-        const err = error as { response?: { status: number }; message?: string }
-        if (err.response) {
-          const enhancedError = new Error(err.message) as Error & { status?: number }
-          enhancedError.status = err.response.status
-          throw enhancedError
-        }
-        throw error
-      }
     },
     enabled: () => !!toValue(teamId),
     retry: false,
@@ -61,7 +51,7 @@ export const useTeam = (teamId: MaybeRefOrGetter<string | null>) => {
 export const useCreateTeam = () => {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useMutation<Team, AxiosError, Partial<Team>>({
     mutationFn: async (teamData: Partial<Team>) => {
       const { data } = await apiClient.post<Team>('teams', teamData)
       return data
@@ -79,7 +69,7 @@ export const useCreateTeam = () => {
 export const useUpdateTeam = () => {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useMutation<Team, AxiosError, { id: string; teamData: Partial<Team> }>({
     mutationFn: async ({ id, teamData }: { id: string; teamData: Partial<Team> }) => {
       const { data } = await apiClient.put<Team>(`teams/${id}`, teamData)
       return data
@@ -98,7 +88,7 @@ export const useUpdateTeam = () => {
 export const useDeleteTeam = () => {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useMutation<void, AxiosError, string>({
     mutationFn: async (teamId: string) => {
       const { data } = await apiClient.delete(`teams/${teamId}`)
       return data
