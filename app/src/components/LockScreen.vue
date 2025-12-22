@@ -12,7 +12,7 @@
         Logout and login back.<br />
         <span class="text-blue-600 font-medium">Waiting for unlock...</span>
       </p>
-      <ButtonUI @click="disconnect()" variant="warning">Logout</ButtonUI>
+      <ButtonUI @click="disconnect.mutate()" variant="warning">Logout</ButtonUI>
     </div>
 
     <p class="mt-6 text-xs text-gray-400">Or switch you account back to address...</p>
@@ -20,14 +20,13 @@
 </template>
 
 <script setup lang="ts">
-import { useDisconnect, useAccount } from '@wagmi/vue'
+import { useDisconnect, useConnection, useConnectionEffect } from '@wagmi/vue'
 import type { User } from '@/types'
 import ButtonUI from './ButtonUI.vue'
 import { computed } from 'vue'
 
-const { disconnect } = useDisconnect()
-
-const { address: connectedAddress } = useAccount()
+const disconnect = useDisconnect()
+const connection = useConnection()
 
 const props = defineProps<{
   user: Pick<User, 'address'> & { role?: string }
@@ -42,10 +41,17 @@ const formatedUserAddress = computed(() => {
 })
 
 const formatedConnectedAddress = computed(() => {
-  return connectedAddress?.value
-    ? connectedAddress.value.slice(0, 6) +
+  return connection.address.value
+    ? connection.address.value.slice(0, 6) +
         '...' +
-        connectedAddress.value.slice(connectedAddress.value.length - 4)
+        connection.address.value.slice(connection.address.value.length - 4)
     : ''
+})
+
+// Handle connection/disconnection lifecycle events
+useConnectionEffect({
+  onDisconnect() {
+    console.log('Connection disconnected')
+  }
 })
 </script>
