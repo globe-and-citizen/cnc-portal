@@ -14,7 +14,7 @@ export const useTeamStore = defineStore('team', () => {
   /**
    * @description Fetch team by id using TanStack Query
    */
-  const { data: team, isLoading: teamIsFetching, error: teamError } = useTeam(currentTeamId)
+  const currentTeamMeta = useTeam(currentTeamId)
 
   // Compute status code from error if available
   // const statusCode = computed(() => {
@@ -32,12 +32,12 @@ export const useTeamStore = defineStore('team', () => {
   }
 
   const getContractAddressByType = (type: ContractType): Address | undefined => {
-    return team.value?.teamContracts.find((contract) => contract.type === type)?.address
+    return currentTeamMeta.data.value?.teamContracts.find((contract) => contract.type === type)?.address
   }
 
-  watch(teamError, () => {
-    if (teamError.value) {
-      log.error('Failed to load user team \n', teamError.value)
+  watch(currentTeamMeta.error, () => {
+    if (currentTeamMeta.error.value) {
+      log.error('Failed to load user team \n', currentTeamMeta.error.value)
       addErrorToast('Failed to load user team')
     }
   })
@@ -46,15 +46,10 @@ export const useTeamStore = defineStore('team', () => {
     currentTeamId,
     setCurrentTeamId,
     /**
-     * @deprecated use currentTeamMeta.team instead
+     * @deprecated use currentTeamMeta.data instead
      */
-    currentTeam: team,
-    currentTeamMeta: {
-      teamIsFetching,
-      teamError,
-      team
-      // statusCode
-    },
+    currentTeam: currentTeamMeta.data,
+    currentTeamMeta,
     getContractAddressByType
   }
 })
