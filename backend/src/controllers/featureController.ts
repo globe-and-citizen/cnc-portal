@@ -21,14 +21,7 @@ import {
   teamOverrideSchema,
 } from '../validation/featureValidation';
 
-// ============================================
-// Feature CRUD Operations
-// ============================================
-
-/**
- * List all features
- * GET /api/admin/features
- */
+// List all features
 export const listFeatures = async (_req: Request, res: Response) => {
   try {
     const features = await getAllFeatures();
@@ -42,10 +35,7 @@ export const listFeatures = async (_req: Request, res: Response) => {
   }
 };
 
-/**
- * Get a specific feature by functionName
- * GET /api/admin/features/:functionName
- */
+// Get a specific feature by functionName
 export const getFeatureByName = async (req: Request, res: Response) => {
   try {
     const paramValidation = functionNameParamSchema.safeParse(req.params);
@@ -70,10 +60,7 @@ export const getFeatureByName = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Create a new feature
- * POST /api/admin/features
- */
+// Create a new feature
 export const createNewFeature = async (req: Request, res: Response) => {
   try {
     const bodyValidation = createFeatureSchema.safeParse(req.body);
@@ -101,10 +88,7 @@ export const createNewFeature = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Update a feature's status
- * PUT /api/admin/features/:functionName
- */
+// Update a feature's status
 export const updateFeatureByName = async (req: Request, res: Response) => {
   try {
     const paramValidation = functionNameParamSchema.safeParse(req.params);
@@ -139,10 +123,7 @@ export const updateFeatureByName = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Delete a feature
- * DELETE /api/admin/features/:functionName
- */
+// Delete a feature
 export const deleteFeatureByName = async (req: Request, res: Response) => {
   try {
     const paramValidation = functionNameParamSchema.safeParse(req.params);
@@ -173,14 +154,7 @@ export const deleteFeatureByName = async (req: Request, res: Response) => {
   }
 };
 
-// ============================================
-// Team Override Operations
-// ============================================
-
-/**
- * Create a team override for a feature
- * POST /api/admin/features/:functionName/teams/:teamId
- */
+// Create a team override for a feature
 export const createOverride = async (req: Request, res: Response) => {
   try {
     const paramValidation = featureTeamParamsSchema.safeParse(req.params);
@@ -229,10 +203,7 @@ export const createOverride = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Update a team override
- * PUT /api/admin/features/:functionName/teams/:teamId
- */
+// Update a team override
 export const updateOverride = async (req: Request, res: Response) => {
   try {
     const paramValidation = featureTeamParamsSchema.safeParse(req.params);
@@ -281,10 +252,7 @@ export const updateOverride = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Delete a team override
- * DELETE /api/admin/features/:functionName/teams/:teamId
- */
+// Delete a team override
 export const removeOverride = async (req: Request, res: Response) => {
   try {
     const paramValidation = featureTeamParamsSchema.safeParse(req.params);
