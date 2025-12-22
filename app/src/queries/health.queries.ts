@@ -24,6 +24,6 @@ export const useBackendHealthQuery = () => {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchInterval: false, // Disable automatic polling
-    staleTime: Infinity,
+    staleTime: Infinity
   })
 }
