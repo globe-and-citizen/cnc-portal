@@ -1,6 +1,6 @@
 <template>
   <CardComponent title="Team Members List">
-    <template #card-action v-if="teamStore.currentTeam?.ownerAddress == userDataStore.address">
+    <template #card-action v-if="teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address">
       <ButtonUI
         @click="
           () => {
@@ -18,16 +18,10 @@
         @reset="() => (showAddMemberForm = { mount: false, show: false })"
       >
         <AddMemberForm
-          v-if="teamStore.currentTeam?.id && showAddMemberForm.mount"
-          :teamId="teamStore.currentTeam?.id"
+          v-if="teamStore.currentTeamMeta.data?.id && showAddMemberForm.mount"
+          :teamId="teamStore.currentTeamMeta.data?.id"
           @memberAdded="showAddMemberForm = { mount: false, show: false }"
         />
-        <!-- <AddMemberForm
-          v-if="teamStore.currentTeam?.id && showAddMemberForm.mount"
-          :teamId="teamStore.currentTeam?.id"
-          @memberAdded="showAddMemberForm = { mount: false, show: false }"
-          @close-modal="() => (showAddMemberForm = { mount: false, show: false })"
-        /> -->
       </ModalComponent>
     </template>
     <template #default>
@@ -35,11 +29,11 @@
       <div class="overflow-x-auto">
         <TableComponent
           :rows="
-            teamStore.currentTeam?.members.map((member: any, index: number) => {
+            teamStore.currentTeamMeta.data?.members.map((member: any, index: number) => {
               return { index: index + 1, ...member }
             })
           "
-          :loading="teamStore.currentTeamMeta?.teamIsFetching"
+          :loading="isTeamWageDataFetching"
           :columns="columns"
           data-test="members-table"
         >
@@ -82,12 +76,12 @@
           ></template>
           <template
             #action-data="{ row }"
-            v-if="teamStore.currentTeam?.ownerAddress === userDataStore.address"
+            v-if="teamStore.currentTeamMeta.data?.ownerAddress === userDataStore.address"
           >
             <MemberAction
               :member="{ name: row.name, address: row.address }"
-              :team-id="teamStore.currentTeam?.id"
-              @refetch-wage="fetchTeamWageData"
+              :team-id="teamStore.currentTeamMeta.data?.id"
+              @refetch-wage="refetchTeamWages"
             ></MemberAction>
           </template>
         </TableComponent>
@@ -108,10 +102,9 @@ import CardComponent from '@/components/CardComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import MemberAction from './MemberAction.vue'
-import { useCustomFetch } from '@/composables'
+import { useTeamWages } from '@/queries/wage.queries'
 import type { Address } from 'viem'
 import { NETWORK } from '@/constant'
-import type { Wage } from '@/types'
 
 const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
@@ -121,37 +114,23 @@ const showAddMemberForm = ref({
   show: false
 })
 
-// Create a computed property for team ID
-const teamId = computed(() => teamStore.currentTeam?.id)
-const teamIsLoading = computed(() => teamStore.currentTeamMeta?.teamIsFetching)
+// Use computed team ID from store
+const teamId = computed(() => teamStore.currentTeamId)
+
+// Fetch team wages using the new query
 const {
   data: teamWageData,
-  isFetching: isTeamWageDataFetching,
+  isLoading: isTeamWageDataFetching,
   error: teamWageDataError,
-  execute: fetchTeamWageData
-} = useCustomFetch(
-  computed(() => `/wage/?teamId=${teamId.value}`),
-  { immediate: false }
-).json<Array<Wage>>()
+  refetch: refetchTeamWages
+} = useTeamWages(teamId)
 
-// Watch team ID update to fetch the team wage data
-watch(
-  [teamId, teamIsLoading],
-  ([newTeamId, newIsloading]) => {
-    if (newTeamId && !newIsloading) fetchTeamWageData()
-  },
-  { immediate: true }
-)
-
-// Watch for errors in fetching team wage data
-watch(
-  () => teamWageDataError.value,
-  (error) => {
-    if (error) {
-      toastStore.addErrorToast('Failed to fetch team wage data')
-    }
+// Handle wage data fetch errors
+watch(() => teamWageDataError.value, (error) => {
+  if (error) {
+    toastStore.addErrorToast('Failed to fetch team wage data')
   }
-)
+})
 
 const getMemberWage = (memberAddress: Address) => {
   let memberWage
@@ -183,7 +162,7 @@ const columns = computed(() => {
     { key: 'maxWeeklyHours', label: 'Max Weekly Hours' },
     { key: 'wage', label: `Hourly Rate` }
   ]
-  if (teamStore.currentTeam?.ownerAddress == userDataStore.address) {
+  if (teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address) {
     columns.push({ key: 'action', label: 'Action' })
   }
   return columns
