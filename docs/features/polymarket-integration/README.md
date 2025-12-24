@@ -196,7 +196,7 @@ console.log("Order ID:", response.orderID);
   - **Signature**
   - **Signature Type**
 
-- **Validation rule:** If the Safe Wallet address in the payload does not match the deterministically derived Safe address for the provided EOA, the order will fail validation.
+- **Validation rule:** If the Safe Wallet address in the payload does not match the one deterministically derived from the provided EOA, the order will fail validation.
 
 ```TypeScript
 {
