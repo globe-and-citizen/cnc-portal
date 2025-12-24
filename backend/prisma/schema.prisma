@@ -14,6 +14,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum GlobalSettingStatus {
+  enabled
+  disabled
+  beta
+}
+
 model User {
   address                String                   @id @unique
   name                   String?
@@ -171,9 +177,8 @@ model BoardOfDirectorActions {
 
 model GlobalSetting {
   id                    Int                    @id @default(autoincrement())
-  fonctionName          String                 @unique
-  status                String
-  isGloballyRestricted  Boolean                @default(true)
+  functionName          String                 @unique
+  status                GlobalSettingStatus    @default(disabled)
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   teamFunctionOverrides TeamFunctionOverride[]
@@ -184,7 +189,7 @@ model TeamFunctionOverride {
   teamId        Int
   team          Team          @relation(fields: [teamId], references: [id])
   functionName  String
-  globalSetting GlobalSetting @relation(fields: [functionName], references: [fonctionName])
+  globalSetting GlobalSetting @relation(fields: [functionName], references: [functionName])
   status        String
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
