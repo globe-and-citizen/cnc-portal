@@ -219,4 +219,4 @@ Before trading, you must approve Polymarket contracts to spend tokens on your be
 - Polymarket integrates Safe Wallets as **deterministic 1‑of‑1 multisigs**.  
 - Orders are validated against the Safe Wallet ↔ EOA mapping.  
 - Approvals are a one‑time setup across core Polymarket contracts.  
-- The Safe Wallet provides a secure, auditable layer for executing trades while preserving EOA signature authority.
+- The Safe derived and deployed by Polymarket for use within their ecosystem needs to be extended to fit the CNC use case.
