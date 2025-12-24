@@ -20,13 +20,13 @@ const mockUseAccount = {
 }
 
 const mockUseConnect = {
-  connectAsync: vi.fn(),
   error: ref<Error | null>(null),
-  isPending: ref(true)
+  isPending: ref(true),
+  mutate: vi.fn()
 }
 
 const mockUseSwitchChain = {
-  switchChainAsync: vi.fn(),
+  mutate: vi.fn(),
   error: ref<Error | null>(null)
 }
 
@@ -36,19 +36,16 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     ...actual,
     useAccount: vi.fn(() => mockUseAccount),
     useConnect: vi.fn(() => mockUseConnect),
+    useConnection: vi.fn(() => ({
+      address: mockUseAccount.address,
+      chainId: ref(123),
+      isConnected: mockUseAccount.isConnected
+    })),
     useSwitchChain: vi.fn(() => mockUseSwitchChain),
     useChainId: mocks.mockUseChainId,
     injected: mocks.mockInjected
   }
 })
-
-// vi.mock('@/stores/user', async (importOriginal) => {
-//   const actual: object = await importOriginal()
-//   return {
-//     ...actual,
-//     useToastStore: vi.fn(() => ({ addErrorToast: mocks.mockUseToastStore.addErrorToast }))
-//   }
-// })
 
 describe('useWalletChecks', () => {
   const logErrorSpy = vi.spyOn(utils.log, 'error')
@@ -67,7 +64,7 @@ describe('useWalletChecks', () => {
   })
   it('should give an error if an error connecting', async () => {
     mockUseAccount.isConnected.value = false
-    mockUseConnect.connectAsync.mockImplementation(
+    mockUseConnect.mutate.mockImplementation(
       () => (mockUseConnect.error.value = new Error('Wallet not installed'))
     )
     const { isProcessing, performChecks, isSuccess } = useWalletChecks()
@@ -78,16 +75,16 @@ describe('useWalletChecks', () => {
     )
     expect(isProcessing.value).toBe(false)
     expect(isSuccess.value).toBe(false)
-    mockUseConnect.connectAsync.mockReset()
+    mockUseConnect.mutate.mockReset()
   })
   it('should connect wallet if not connected', async () => {
-    mockUseSwitchChain.switchChainAsync.mockImplementation(
+    mockUseSwitchChain.mutate.mockImplementation(
       () => (mockUseAccount.isConnected.value = true)
     )
     const { isProcessing, performChecks } = useWalletChecks()
     await performChecks()
     await flushPromises()
-    expect(mockUseConnect.connectAsync).toBeCalledWith({
+    expect(mockUseConnect.mutate).toBeCalledWith({
       connector: 'connector',
       chainId: parseInt(NETWORK.chainId)
     })
@@ -98,7 +95,7 @@ describe('useWalletChecks', () => {
   it('should switch networks if user on different network', async () => {
     const { isProcessing, performChecks, isSuccess } = useWalletChecks()
     await performChecks()
-    expect(mockUseSwitchChain.switchChainAsync).toBeCalledWith({
+    expect(mockUseSwitchChain.mutate).toBeCalledWith({
       chainId: parseInt(NETWORK.chainId)
     })
     expect(isProcessing.value).toBe(true)
@@ -107,7 +104,7 @@ describe('useWalletChecks', () => {
   it('should notify error if error switching network', async () => {
     const error = new Error('Error switching network')
     error.name = 'UserRejectedRequestError'
-    mockUseSwitchChain.switchChainAsync.mockImplementation(() => {
+    mockUseSwitchChain.mutate.mockImplementation(() => {
       mockUseSwitchChain.error.value = error
       mockUseAccount.isConnected.value = false
     })
@@ -122,14 +119,14 @@ describe('useWalletChecks', () => {
     expect(isSuccess.value).toBe(false)
     mockUseSwitchChain.error.value = null
     error.name = 'CustomError'
-    mockUseSwitchChain.switchChainAsync.mockReset()
-    mockUseSwitchChain.switchChainAsync.mockImplementation(
+    mockUseSwitchChain.mutate.mockReset()
+    mockUseSwitchChain.mutate.mockImplementation(
       () => (mockUseSwitchChain.error.value = error)
     )
     await performChecks()
     await flushPromises()
     expect(/*mocks.mockUseToastStore*/ mockToastStore.addErrorToast).toBeCalledWith(
-      'Something went wrong: Failed switch network'
+      'Network switch rejected: You need to switch to the correct network to use the CNC Portal'
     )
     expect(logErrorSpy).toBeCalledWith('switchChainError.value', error)
     expect(isProcessing.value).toBe(false)
@@ -138,14 +135,14 @@ describe('useWalletChecks', () => {
   it('should notify error if error connecting wallet', async () => {
     let error = new Error('Error connecting wallet')
     error.name = 'UserRejectedRequestError'
-    mockUseConnect.connectAsync.mockImplementation(() => {
+    mockUseConnect.mutate.mockImplementation(() => {
       mockUseConnect.error.value = error
       mockUseAccount.isConnected.value = false
     })
     const { isProcessing, performChecks, isSuccess } = useWalletChecks()
     await performChecks()
     await flushPromises()
-    expect(/*mocks.mockUseToastStore*/ mockToastStore.addErrorToast).toBeCalledWith(
+    expect(mockToastStore.addErrorToast).toBeCalledWith(
       'Wallet connection rejected: You need to connect your wallet to use the CNC Portal.'
     )
     expect(logErrorSpy).toBeCalledWith('connectError.value', error)
@@ -157,9 +154,9 @@ describe('useWalletChecks', () => {
     mocks.mockUseToastStore.addErrorToast.mockClear()
     error = new Error('A new error has occurred')
     error.name = 'ProviderNotFoundError'
-    mockUseConnect.connectAsync.mockReset()
+    mockUseConnect.mutate.mockReset()
 
-    mockUseConnect.connectAsync.mockImplementation(() => (mockUseConnect.error.value = error))
+    mockUseConnect.mutate.mockImplementation(() => (mockUseConnect.error.value = error))
     await performChecks()
     await flushPromises()
 
@@ -171,7 +168,7 @@ describe('useWalletChecks', () => {
     expect(isSuccess.value).toBe(false)
   })
   it('should set return false if network invalid', async () => {
-    mockUseConnect.connectAsync.mockImplementation(() => {
+    mockUseConnect.mutate.mockImplementation(() => {
       mockUseAccount.isConnected.value = false
       mockUseConnect.isPending.value = false
     })
