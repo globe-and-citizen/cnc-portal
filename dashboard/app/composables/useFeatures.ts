@@ -1,8 +1,7 @@
 import type {
   Feature,
   FeatureDetail,
-  FeatureStatus,
-  TeamRestrictionOverride
+  FeatureStatus
 } from '~/types'
 import { useAuthStore } from '~/stores/useAuthStore'
 
@@ -416,18 +415,18 @@ export function useFeatures() {
   /**
    * Transform feature overrides to TeamRestrictionOverride format
    */
-  const transformToTeamOverrides = (
-    feature: FeatureDetail | null
-  ): TeamRestrictionOverride[] => {
-    if (!feature || !feature.overrides) return []
+  // const transformToTeamOverrides = (
+  //   feature: FeatureDetail | null
+  // ): TeamRestrictionOverride[] => {
+  //   if (!feature || !feature.teamFunctionOverrides) return []
 
-    return feature.overrides.map(override => ({
-      teamId: override.teamId,
-      teamName: override.teamName,
-      isRestricted: override.status === 'enabled',
-      updatedAt: override.updatedAt
-    }))
-  }
+  //   return feature.teamFunctionOverrides.map(override => ({
+  //     teamId: override.teamId,
+  //     teamName: override.team?.name || `Team ${override.teamId}`,
+  //     isRestricted: override.status === 'enabled',
+  //     updatedAt: override.updatedAt
+  //   }))
+  // }
 
   /**
    * Check if global restriction is enabled
@@ -435,13 +434,6 @@ export function useFeatures() {
   const isGloballyRestricted = computed(() => {
     if (!currentFeature.value) return true // Default to restricted
     return currentFeature.value.status === 'enabled'
-  })
-
-  /**
-   * Get team overrides from current feature
-   */
-  const teamOverrides = computed(() => {
-    return transformToTeamOverrides(currentFeature.value)
   })
 
   return {
@@ -453,7 +445,6 @@ export function useFeatures() {
 
     // Computed
     isGloballyRestricted,
-    teamOverrides,
 
     // Generic feature methods
     fetchFeatures,
@@ -470,7 +461,7 @@ export function useFeatures() {
     updateSubmitRestrictionGlobal,
     createSubmitRestrictionOverride,
     updateSubmitRestrictionOverride,
-    removeSubmitRestrictionOverride,
-    transformToTeamOverrides
+    removeSubmitRestrictionOverride
+
   }
 }
