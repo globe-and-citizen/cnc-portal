@@ -103,11 +103,10 @@ const mockUseWaitForTransactionReceipt = {
   isSuccess: ref(false)
 }
 
-const 
-    mockUseConnection=  {
-      address: ref('0xOwner'),
-      chainId: ref(11155111)
-    }
+const mockUseConnection = {
+  address: ref('0xOwner'),
+  chainId: ref(11155111)
+}
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -117,7 +116,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWriteContract: vi.fn(() => mockUseWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
     useConnection: vi.fn(() => mockUseConnection),
-    useConnectionEffect:  vi.fn(),
+    useConnectionEffect: vi.fn(),
     useDisconnect: vi.fn(() => ({
       mutate: vi.fn()
     })),

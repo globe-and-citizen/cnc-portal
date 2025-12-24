@@ -78,9 +78,7 @@ describe('useWalletChecks', () => {
     mockUseConnect.mutate.mockReset()
   })
   it('should connect wallet if not connected', async () => {
-    mockUseSwitchChain.mutate.mockImplementation(
-      () => (mockUseAccount.isConnected.value = true)
-    )
+    mockUseSwitchChain.mutate.mockImplementation(() => (mockUseAccount.isConnected.value = true))
     const { isProcessing, performChecks } = useWalletChecks()
     await performChecks()
     await flushPromises()
@@ -120,9 +118,7 @@ describe('useWalletChecks', () => {
     mockUseSwitchChain.error.value = null
     error.name = 'CustomError'
     mockUseSwitchChain.mutate.mockReset()
-    mockUseSwitchChain.mutate.mockImplementation(
-      () => (mockUseSwitchChain.error.value = error)
-    )
+    mockUseSwitchChain.mutate.mockImplementation(() => (mockUseSwitchChain.error.value = error))
     await performChecks()
     await flushPromises()
     expect(/*mocks.mockUseToastStore*/ mockToastStore.addErrorToast).toBeCalledWith(

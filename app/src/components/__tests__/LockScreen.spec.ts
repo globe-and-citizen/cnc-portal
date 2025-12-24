@@ -7,7 +7,6 @@ import LockScreen from '../LockScreen.vue'
 const mockDisconnect = vi.fn()
 const mockAddress = ref('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
 
-
 vi.mock('@wagmi/vue', () => ({
   useConnection: () => ({ address: mockAddress }),
   useDisconnect: () => ({ mutate: mockDisconnect })
