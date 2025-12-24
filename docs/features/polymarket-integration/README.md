@@ -45,7 +45,7 @@ Polymarket supports three signature types for interacting with its contracts:
 
 - To place an order:
   1. Construct an **EIP‑712** data structure with the order details.  
-  2. Sign it using the EOA that owns the Safe Wallet.  
+  2. Sign it using the EOA that owns the Safe Wallet (The one from which the Safe is derived).  
   3. Submit it via a `POST` request to the CLOB endpoint.
 
 - The payload includes:
