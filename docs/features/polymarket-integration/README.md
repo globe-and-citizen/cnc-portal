@@ -167,6 +167,28 @@ flowchart TB
   1. Construct an **EIP‑712** data structure with the order details.  
   2. Sign it using the EOA that owns the Safe Wallet (The one from which the Safe is derived).  
   3. Submit it via a `POST` request to the CLOB endpoint.
+ 
+```TypeScript
+// Create order
+const order = {
+  tokenID: "0x...", // Outcome token address
+  price: 0.65, // Price in decimal (65 cents)
+  size: 10, // Number of shares
+  side: "BUY", // or 'SELL'
+  feeRateBps: 0,
+  expiration: 0, // 0 = Good-til-Cancel
+  taker: "0x0000000000000000000000000000000000000000",
+};
+
+// Submit order (prompts user signature)
+const response = await clobClient.createAndPostOrder(
+  order,
+  { negRisk: false }, // Market-specific flag
+  OrderType.GTC
+);
+
+console.log("Order ID:", response.orderID);
+```
 
 - The payload includes:
   - **Safe Wallet address**  
