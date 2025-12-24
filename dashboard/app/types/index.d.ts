@@ -244,8 +244,23 @@ export interface FeatureOverride {
   updatedAt: string
 }
 
+export interface TeamFunctionOverride {
+  id: number
+  teamId: number
+  functionName: string
+  status: string
+  createdAt: string
+  updatedAt: string
+  team?: {
+    id: number
+    name: string
+  }
+}
+
 export interface FeatureDetail extends Omit<Feature, 'overridesCount'> {
-  overrides: FeatureOverride[]
+  id?: number
+  overrides?: FeatureOverride[]
+  teamFunctionOverrides?: TeamFunctionOverride[]
 }
 
 export interface TeamRestrictionOverride {
