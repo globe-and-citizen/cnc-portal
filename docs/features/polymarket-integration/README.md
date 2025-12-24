@@ -23,6 +23,26 @@ Polymarket supports three signature types for interacting with its contracts:
    - Custom Safe implementation deployed via Polymarket’s Safe Factory when a user connects their wallet to the Polymarket app  
    - It is represented by **Signature Type 2** in the payload that is sent to the CLOB when placing a bet
 
+The signature type is part of the payload sent to the CLOB and represents the type of account making the bet
+
+```TypeScript
+{
+    "salt": 99502677744,
+    "maker": "0x...",
+    "signer": "0x...",
+    "taker": "0x...",
+    "tokenId": "1..",
+    "makerAmount": "1..",
+    "takerAmount": "1...",
+    "side": "BUY",
+    "expiration": "0",
+    "nonce": "0",
+    "feeRateBps": "0",
+    "signatureType": 2, // Means signature provided is for Safe Wallet
+    "signature": "0x..."
+}
+```
+
 ---
 
 ## 🔐 Safe Wallet in the Context of Polymarket
