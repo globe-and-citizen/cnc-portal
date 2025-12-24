@@ -36,6 +36,85 @@ Polymarket supports three signature types for interacting with its contracts:
 - It is not possible to enforce multisig approvals when placing bets because of the architecture of the Polymarket CLOB and CFT Exchange contracts.
 - It is possible to interact with this Safe{Wallet} using the Safe{Wallet} SDK.
 
+## 🏛 Proposed Multisig Architecture for Polymarket Safe
+
+The diagram below illustrates a **hierarchical Safe architecture** designed to enforce multisig governance on top of Polymarket’s default 1‑of‑1 Safe. In this model:
+
+- A **Bank (Parent Safe)** acts as the controlling entity with a 2‑of‑3 threshold among its owners.  
+- Each **Investor Safe** is configured with its own 2‑of‑3 threshold, but one of its owners is the **Parent Safe** itself.
+  - The ***Investor Safe*** is the Polymarket Safe which by default is a 1-of-1 Safe
+  - It is altered to have 2 other owners, one being an EOA and the other the Parent Safe
+  - The EOA that can trade using it is the one from which it was derived
+- This setup ensures that no single EOA can unilaterally control trades — approvals require coordination between investor EOAs and the parent Safe.  
+- The legend clarifies the roles of parent Safes, investor Safes, EOAs, and threshold configurations.
+
+```mermaid
+flowchart TB
+ subgraph subGraph0["Bank (Parent Safe)"]
+    direction TB
+        BankSafe["Bank Safe<br>0xParent..."]
+        BankThreshold["Threshold: 2/3"]
+        Owner1("Owner 1<br>EOA 0xA1...")
+        Owner2("Owner 2<br>EOA 0xA2...")
+        Owner3("Owner 3<br>EOA 0xA3...")
+  end
+ subgraph subGraph1["Investor 1 Safe"]
+    direction TB
+        Investor1Safe["Investor 1 Safe<br>0xInvestor1..."]
+        Investor1Threshold["Threshold: 2/3"]
+        Investor1Owner1("Owner 1<br>EOA 0xB1...")
+        Investor1Owner2("Owner 2<br>EOA 0xB2...")
+        Investor1Owner3("Owner 3<br>Safe 0xParent...")
+  end
+ subgraph subGraph2["Investor 2 Safe"]
+    direction TB
+        Investor2Safe["Investor 2 Safe<br>0xInvestor2..."]
+        Investor2Threshold["Threshold: 2/3"]
+        Investor2Owner1("Owner 1<br>EOA 0xC1...")
+        Investor2Owner2("Owner 2<br>EOA 0xC2...")
+        Investor2Owner3("Owner 3<br>Safe 0xParent...")
+  end
+ subgraph Legend["Legend"]
+        L1["Parent Safe/Safe Owner"]
+        L2["Investor Safe"]
+        L3["EOA Owner"]
+        L4["Threshold Config"]
+  end
+    BankSafe --> BankThreshold
+    BankThreshold --> Owner1 & Owner2 & Owner3
+    Investor1Safe --> Investor1Threshold
+    Investor1Threshold --> Investor1Owner1 & Investor1Owner2 & Investor1Owner3
+    Investor2Safe --> Investor2Threshold
+    Investor2Threshold --> Investor2Owner1 & Investor2Owner2 & Investor2Owner3
+    BankSafe -- is owner of --> Investor1Owner3 & Investor2Owner3
+
+     BankSafe:::bank
+     BankThreshold:::threshold
+     Owner1:::owner
+     Owner2:::owner
+     Owner3:::owner
+     Investor1Safe:::investor
+     Investor1Threshold:::threshold
+     Investor1Owner1:::owner
+     Investor1Owner2:::owner
+     Investor1Owner3:::bank
+     Investor2Safe:::investor
+     Investor2Threshold:::threshold
+     Investor2Owner1:::owner
+     Investor2Owner2:::owner
+     Investor2Owner3:::bank
+     L1:::bank
+     L2:::investor
+     L3:::owner
+     L4:::threshold
+    classDef bank fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef investor fill:#f3e5f5,stroke:#4a148c
+    classDef owner fill:#e8f5e8,stroke:#2e7d32
+    classDef threshold fill:#fff3e0,stroke:#ef6c00
+    linkStyle 6 stroke:#01579b,stroke-width:2px,stroke: 5 5,fill:none
+    linkStyle 7 stroke:#01579b,stroke-width:2px,stroke: 5 5,fill:none
+```
+
 ---
 
 ## 📈 Making Orders
