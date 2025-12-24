@@ -1,126 +1,60 @@
 import { prisma } from './dependenciesUtil';
 import type { FeatureStatus } from '../validation/featureValidation';
 
-/**
- * Derive isGloballyRestricted from status.
- * - 'enabled' means restriction IS active globally
- * - 'disabled' means no restriction
- */
-export const isRestrictionActive = (status: FeatureStatus): boolean => status === 'enabled';
-
-/**
- * Map a GlobalSetting record to API response shape.
- */
-export const mapFeatureToResponse = (feature: {
-  fonctionName: string;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
-}) => ({
-  functionName: feature.fonctionName,
-  status: feature.status as FeatureStatus,
-  isGloballyRestricted: isRestrictionActive(feature.status as FeatureStatus),
-  createdAt: feature.createdAt,
-  updatedAt: feature.updatedAt,
-});
-
-/**
- * Map a TeamFunctionOverride record to API response shape.
- */
-export const mapOverrideToResponse = (override: {
-  functionName: string;
-  teamId: number;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
-  team: { id: number; name: string };
-}) => ({
-  functionName: override.functionName,
-  teamId: override.teamId,
-  teamName: override.team.name,
-  status: override.status as FeatureStatus,
-  createdAt: override.createdAt,
-  updatedAt: override.updatedAt,
-});
 
 export async function findAllFeatures() {
   const features = await prisma.globalSetting.findMany({
-    orderBy: { fonctionName: 'asc' },
+    orderBy: { functionName: 'asc' },
+    include: {
+      teamFunctionOverrides: {
+        select: { id: true },
+      },
+    },
   });
-
-  const overrideCounts = await prisma.teamFunctionOverride.groupBy({
-    by: ['functionName'],
-    _count: { id: true },
-  });
-
-  const overrideMap = new Map(overrideCounts.map((o) => [o.functionName, o._count.id]));
 
   return features.map((feature) => ({
-    ...mapFeatureToResponse(feature),
-    overridesCount: overrideMap.get(feature.fonctionName) ?? 0,
+    ...feature,
+    overridesCount: feature.teamFunctionOverrides.length,
   }));
 }
 
 export async function findFeatureByName(functionName: string) {
   const feature = await prisma.globalSetting.findUnique({
-    where: { fonctionName: functionName },
-    include:{
-      teamFunctionOverrides: {
-    include: { team: { select: { id: true, name: true } } },
-      }
-    }
-  });
-  
-  return []
-
-  if (!feature) return null;
-
-  const overrides = await prisma.teamFunctionOverride.findMany({
-    where: { functionName },
-    include: { team: { select: { id: true, name: true } } },
-    orderBy: { updatedAt: 'desc' },
+    where: { functionName: functionName },
+    include: {
+      teamFunctionOverrides: true,
+    },
   });
 
-  return {
-  //   ...mapFeatureToResponse(feature),
-  //   overrides: overrides.map((o) => ({
-  //     teamId: o.teamId,
-  //     teamName: o.team.name,
-  //     status: o.status as FeatureStatus,
-  //     createdAt: o.createdAt,
-  //     updatedAt: o.updatedAt,
-  //   })),
-  // };
+  return feature;
 }
 
 export async function insertFeature(functionName: string, status: FeatureStatus) {
   const feature = await prisma.globalSetting.create({
     data: {
-      fonctionName: functionName,
+      functionName: functionName,
       status,
-      isGloballyRestricted: isRestrictionActive(status),
     },
   });
 
-  return mapFeatureToResponse(feature);
+  return feature;
 }
 
 export async function patchFeature(functionName: string, status: FeatureStatus) {
   const feature = await prisma.globalSetting.update({
-    where: { fonctionName: functionName },
+    where: { functionName: functionName },
     data: {
       status,
-      isGloballyRestricted: isRestrictionActive(status),
     },
   });
 
-  return mapFeatureToResponse(feature);
+  return feature;
 }
 
 export async function removeFeature(functionName: string): Promise<boolean> {
   try {
     await prisma.teamFunctionOverride.deleteMany({ where: { functionName } });
-    await prisma.globalSetting.delete({ where: { fonctionName: functionName } });
+    await prisma.globalSetting.delete({ where: { functionName: functionName } });
     return true;
   } catch {
     return false;
@@ -129,8 +63,8 @@ export async function removeFeature(functionName: string): Promise<boolean> {
 
 export async function featureExists(functionName: string): Promise<boolean> {
   const feature = await prisma.globalSetting.findUnique({
-    where: { fonctionName: functionName },
-    select: { fonctionName: true },
+    where: { functionName: functionName },
+    select: { functionName: true },
   });
   return feature !== null;
 }
@@ -156,7 +90,7 @@ export async function insertOverride(functionName: string, teamId: number, statu
     data: { functionName, teamId, status },
     include: { team: { select: { id: true, name: true } } },
   });
-  return mapOverrideToResponse(override);
+  return override;
 }
 
 export async function patchOverride(functionName: string, teamId: number, status: FeatureStatus) {
@@ -165,7 +99,7 @@ export async function patchOverride(functionName: string, teamId: number, status
     data: { status },
     include: { team: { select: { id: true, name: true } } },
   });
-  return mapOverrideToResponse(override);
+  return override;
 }
 
 export async function removeOverrideRecord(functionName: string, teamId: number): Promise<boolean> {
@@ -194,7 +128,7 @@ export async function getEffectiveStatus(
   if (override) return override.status as FeatureStatus;
 
   const globalSetting = await prisma.globalSetting.findUnique({
-    where: { fonctionName: functionName },
+    where: { functionName: functionName },
     select: { status: true },
   });
 

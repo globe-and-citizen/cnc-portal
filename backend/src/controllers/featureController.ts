@@ -1,18 +1,18 @@
 import { Request, Response } from 'express';
 import { errorResponse } from '../utils/utils';
 import {
-  // featureExists,
+  featureExists,
   findAllFeatures,
   findFeatureByName,
-  // getEffectiveStatus,
-  // insertFeature,
-  // insertOverride,
-  // overrideExists,
-  // patchFeature,
-  // patchOverride,
-  // removeFeature,
-  // removeOverrideRecord,
-  // teamExists,
+  getEffectiveStatus,
+  insertFeature,
+  insertOverride,
+  overrideExists,
+  patchFeature,
+  patchOverride,
+  removeFeature,
+  removeOverrideRecord,
+  teamExists,
 } from '../utils/featureUtils';
 import {
   functionNameParamSchema,
@@ -40,6 +40,7 @@ export const listFeatures = async (_req: Request, res: Response) => {
 
 /** GET /features/:functionName — Get a single feature */
 export const getFeatureByName = async (req: Request, res: Response) => {
+  console.log('getFeatureByName req.params', req.params);
   try {
     const validation = functionNameParamSchema.safeParse(req.params);
     if (!validation.success) {
@@ -49,7 +50,7 @@ export const getFeatureByName = async (req: Request, res: Response) => {
     const { functionName } = validation.data;
     const feature = await findFeatureByName(functionName);
     console.log('feature', feature);
-    return []
+    // return { functionName };
 
     if (!feature) {
       return errorResponse(404, `Feature "${functionName}" not found`, res);
@@ -187,7 +188,7 @@ export const createOverride = async (req: Request, res: Response) => {
 
     return res.status(201).json({
       success: true,
-      message: `Override created for team ${override.teamName} on feature "${functionName}"`,
+      message: `Override created for team ${override.team.name} on feature "${functionName}"`,
       data: override,
     });
   } catch (error) {
@@ -231,7 +232,7 @@ export const updateOverride = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      message: `Override updated to "${status}" for team ${override.teamName}`,
+      message: `Override updated to "${status}" for team ${override.team.name}`,
       data: override,
     });
   } catch (error) {
