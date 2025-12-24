@@ -6,10 +6,13 @@ import LockScreen from '../LockScreen.vue'
 // Hoisted mocks for wagmi composables
 const mockDisconnect = vi.fn()
 const mockAddress = ref('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+const mockConnection = ref({
+  address: mockAddress
+})
 
 vi.mock('@wagmi/vue', () => ({
-  useAccount: () => ({ address: mockAddress }),
-  useDisconnect: () => ({ disconnect: mockDisconnect })
+  useConnection: () => ({ address: mockAddress }),
+  useDisconnect: () => ({ mutate: mockDisconnect })
 }))
 
 describe('LockScreen.vue', () => {
