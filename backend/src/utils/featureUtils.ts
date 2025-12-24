@@ -22,11 +22,37 @@ export async function findFeatureByName(functionName: string) {
   const feature = await prisma.globalSetting.findUnique({
     where: { functionName: functionName },
     include: {
-      teamFunctionOverrides: true,
+      teamFunctionOverrides: {
+        include: {
+          team: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
     },
   });
 
-  return feature;
+  if (!feature) return null;
+
+  return {
+    id: feature.id,
+    functionName: feature.functionName,
+    status: feature.status as FeatureStatus,
+    createdAt: feature.createdAt,
+    updatedAt: feature.updatedAt,
+    teamFunctionOverrides: feature.teamFunctionOverrides.map((override) => ({
+      id: override.id,
+      teamId: override.teamId,
+      functionName: override.functionName,
+      status: override.status as FeatureStatus,
+      createdAt: override.createdAt,
+      updatedAt: override.updatedAt,
+      team: override.team,
+    })),
+  };
 }
 
 export async function insertFeature(functionName: string, status: FeatureStatus) {
