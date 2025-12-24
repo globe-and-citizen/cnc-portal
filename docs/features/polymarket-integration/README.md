@@ -176,6 +176,24 @@ flowchart TB
 
 - **Validation rule:** If the Safe Wallet address in the payload does not match the deterministically derived Safe address for the provided EOA, the order will fail validation.
 
+```TypeScript
+{
+    "salt": 99502677744,
+    "maker": "0x...", // If this is different from the address deterministically derived from the "signer" value validation will fail
+    "signer": "0x...",
+    "taker": "0x...",
+    "tokenId": "1..",
+    "makerAmount": "1..",
+    "takerAmount": "1...",
+    "side": "BUY",
+    "expiration": "0",
+    "nonce": "0",
+    "feeRateBps": "0",
+    "signatureType": 2,
+    "signature": "0x..."
+}
+```
+
 ---
 
 ## ✅ Approvals
