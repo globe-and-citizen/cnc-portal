@@ -35,10 +35,24 @@
               Enable Restriction Globally
             </p>
             <p class="text-sm text-muted">
-              When enabled, all team members can only submit claims for current week
+              When enabled, all team members can only submit claims for current
+              week
             </p>
           </div>
-          <USwitch v-model="globalRestrictionEnabled" :disabled="isLoadingGlobal" @update:model-value="saveGlobalSettings" />
+          <div class="flex items-center gap-3">
+            <span
+              class="text-sm font-medium"
+              :class="globalRestrictionEnabled ? 'text-error' : 'text-success'"
+            >
+              {{ globalRestrictionEnabled ? "ON" : "OFF" }}
+            </span>
+            <USwitch
+              v-model="globalRestrictionEnabled"
+              :disabled="isLoadingGlobal"
+              data-test="global-restriction-switch"
+              @update:model-value="saveGlobalSettings"
+            />
+          </div>
         </div>
       </UCard>
 
@@ -49,7 +63,8 @@
             Team Overrides
           </h4>
           <p class="text-sm text-muted">
-            Teams with custom restriction settings ({{ totalOverrides }} overrides)
+            Teams with custom restriction settings ({{ teamOverrides.length }}
+            overrides)
           </p>
         </div>
         <UButton
@@ -63,22 +78,19 @@
       </div>
 
       <!-- Team Overrides Table -->
-      <UPageCard variant="subtle">
-        <template #header>
-          <h4 class="font-semibold text-highlighted">
-            Overridden Teams
-          </h4>
-        </template>
-        <div v-if="!isLoading && teamOverrides.length === 0" class="text-center py-8">
-          <UIcon name="i-lucide-users" class="w-12 h-12 text-muted mx-auto mb-3" />
-          <p class="text-muted">
-            No team overrides configured
-          </p>
-        </div>
-        <div v-else class="text-sm text-muted">
-          <p>Teams with custom restriction settings: {{ totalOverrides }}</p>
-        </div>
-      </UPageCard>
+      <TeamOverridesTable
+        :teams="teamOverrides"
+        :loading="isLoading"
+        :loading-team-id="loadingTeamId"
+        :global-restriction-enabled="globalRestrictionEnabled"
+        :total="teamOverrides.length"
+        :current-page="pagination.page"
+        :page-size="pagination.pageSize"
+        @toggle-restriction="handleToggleRestriction"
+        @remove-override="handleRemoveOverride"
+        @page-change="handlePageChange"
+        @page-size-change="handlePageSizeChange"
+      />
 
       <!-- Add Override Modal -->
       <UModal v-model:open="isAddOverrideModalOpen">
@@ -108,11 +120,19 @@
                   value-key="value"
                   placeholder="Choose a team..."
                   :loading="isLoadingTeams"
-                  :disabled="isLoadingTeams || availableTeamsOptions.length === 0"
+                  :disabled="
+                    isLoadingTeams || availableTeamsOptions.length === 0
+                  "
                   data-test="team-select"
                   class="w-full"
                   icon="i-lucide-users"
                 />
+                <p
+                  v-if="availableTeamsOptions.length === 0 && !isLoadingTeams"
+                  class="text-sm text-muted mt-2"
+                >
+                  All teams already have overrides configured.
+                </p>
               </div>
 
               <div>
@@ -123,7 +143,11 @@
                     data-test="new-override-switch"
                   />
                   <span class="text-sm">
-                    {{ newOverrideRestricted ? 'Restricted (current week only)' : 'Unrestricted (submit anytime)' }}
+                    {{
+                      newOverrideRestricted
+                        ? "Restricted (current week only)"
+                        : "Unrestricted (submit anytime)"
+                    }}
                   </span>
                 </div>
               </div>
@@ -143,7 +167,7 @@
                   :loading="isCreatingOverride"
                   :disabled="!selectedTeamId"
                   data-test="create-override-btn"
-                  @click="createOverride"
+                  @click="createNewOverride"
                 >
                   Create Override
                 </UButton>
@@ -157,18 +181,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import type { Team, TeamRestrictionOverride } from '~/types'
+import TeamOverridesTable from './TeamOverridesTable.vue'
+import { useFeatures } from '~/composables/useFeatures'
 
-// Global State
+// Composables
+const { fetchTeams } = useTeams()
+const {
+  currentFeature,
+  isLoading: featuresLoading,
+  ensureSubmitRestrictionExists,
+  updateSubmitRestrictionGlobal,
+  createSubmitRestrictionOverride,
+  updateSubmitRestrictionOverride,
+  removeSubmitRestrictionOverride,
+  transformToTeamOverrides
+} = useFeatures()
+
+// State
 const globalRestrictionEnabled = ref(true)
 const isLoadingGlobal = ref(false)
-
-// Team Overrides State
-const teamOverrides = ref<TeamOverride[]>([])
 const isLoading = ref(false)
 const loadingTeamId = ref<number | null>(null)
-const totalOverrides = ref(0)
-const currentPage = ref(1)
 
 // Pagination
 const pagination = ref({
@@ -177,81 +212,89 @@ const pagination = ref({
   pageIndex: 0
 })
 
-// Interface for TeamOverride
-interface TeamOverride {
-  teamId: number
-  teamName: string
-  isRestricted: boolean
-  memberCount?: number
-  updatedAt?: string
-}
-
 // Add Override Modal State
 const isAddOverrideModalOpen = ref(false)
-const availableTeams = ref<Team[]>([])
+const allTeams = ref<Team[]>([])
 const selectedTeamId = ref<number | undefined>(undefined)
 const newOverrideRestricted = ref(false)
 const isCreatingOverride = ref(false)
 const isLoadingTeams = ref(false)
 
-// Interface for Team
-interface Team {
-  id: number
-  name: string
-  memberCount?: number
-}
-
 // Computed
+const teamOverrides = computed<TeamRestrictionOverride[]>(() => {
+  return transformToTeamOverrides(currentFeature.value)
+})
+
 const availableTeamsOptions = computed(() => {
-  return availableTeams.value.map(team => ({
-    label: `${team.name} (${team.memberCount || 0} members)`,
-    value: team.id
-  }))
+  // Filter out teams that already have overrides
+  const overriddenTeamIds = new Set(teamOverrides.value.map(o => o.teamId))
+  return allTeams.value
+    .filter(team => !overriddenTeamIds.has(team.id))
+    .map(team => ({
+      label: `${team.name} (${team._count?.members || 0} members)`,
+      value: team.id
+    }))
 })
 
 // Handlers
-const _handlePageSizeChange = async (newSize: number) => {
-  pagination.value.pageSize = newSize
-  currentPage.value = 1
-  pagination.value.page = 1
-  // TODO: Implement pagination
-}
-
-const _handlePageChange = async (page: number) => {
-  currentPage.value = page
-  pagination.value.page = page
-  // TODO: Implement pagination
-}
-
 const saveGlobalSettings = async (value: boolean) => {
   isLoadingGlobal.value = true
-  setTimeout(() => {
-    globalRestrictionEnabled.value = value
+  try {
+    const success = await updateSubmitRestrictionGlobal(value)
+    if (success) {
+      globalRestrictionEnabled.value = value
+      // Refresh the feature data
+      await loadFeatureData()
+    } else {
+      // Revert on failure
+      globalRestrictionEnabled.value = !value
+    }
+  } catch (error) {
+    console.error('Error updating global restriction:', error)
+    globalRestrictionEnabled.value = !value
+  } finally {
     isLoadingGlobal.value = false
-  }, 500)
+  }
 }
 
-const _handleToggleRestriction = async (team: TeamOverride, _value: boolean) => {
+const handleToggleRestriction = async (
+  team: TeamRestrictionOverride,
+  value: boolean
+) => {
   loadingTeamId.value = team.teamId
-  // TODO: Implement
-  setTimeout(() => {
+  try {
+    const success = await updateSubmitRestrictionOverride(team.teamId, value)
+    if (success) {
+      await loadFeatureData()
+    }
+  } catch (error) {
+    console.error('Error toggling team restriction:', error)
+  } finally {
     loadingTeamId.value = null
-  }, 500)
+  }
 }
 
-const _handleRemoveOverride = async (team: TeamOverride) => {
+const handleRemoveOverride = async (team: TeamRestrictionOverride) => {
   loadingTeamId.value = team.teamId
-  // TODO: Implement
-  setTimeout(() => {
+  try {
+    const success = await removeSubmitRestrictionOverride(team.teamId)
+    if (success) {
+      await loadFeatureData()
+    }
+  } catch (error) {
+    console.error('Error removing team override:', error)
+  } finally {
     loadingTeamId.value = null
-  }, 500)
+  }
 }
 
-const _loadTeamOverrides = async () => {
-  isLoading.value = true
-  setTimeout(() => {
-    isLoading.value = false
-  }, 500)
+const handlePageChange = (page: number) => {
+  pagination.value.page = page
+}
+
+const handlePageSizeChange = (size: number) => {
+  pagination.value.pageSize = size
+  pagination.value.page = 1
 }
 
 // Add Override Modal Functions
@@ -259,35 +302,73 @@ const openAddOverrideModal = async () => {
   selectedTeamId.value = undefined
   newOverrideRestricted.value = false
   isAddOverrideModalOpen.value = true
-  isLoadingTeams.value = true
-  setTimeout(() => {
-    isLoadingTeams.value = false
-  }, 500)
+
+  // Load teams if not already loaded
+  if (allTeams.value.length === 0) {
+    isLoadingTeams.value = true
+    try {
+      allTeams.value = await fetchTeams()
+    } catch (error) {
+      console.error('Error fetching teams:', error)
+    } finally {
+      isLoadingTeams.value = false
+    }
+  }
 }
 
-const createOverride = async () => {
+const createNewOverride = async () => {
   if (!selectedTeamId.value) return
+
   isCreatingOverride.value = true
-  setTimeout(() => {
+  try {
+    const success = await createSubmitRestrictionOverride(
+      selectedTeamId.value,
+      newOverrideRestricted.value
+    )
+    if (success) {
+      isAddOverrideModalOpen.value = false
+      await loadFeatureData()
+    }
+  } catch (error) {
+    console.error('Error creating override:', error)
+  } finally {
     isCreatingOverride.value = false
-    isAddOverrideModalOpen.value = false
-  }, 500)
+  }
+}
+
+// Load feature data
+const loadFeatureData = async () => {
+  isLoading.value = true
+  try {
+    const feature = await ensureSubmitRestrictionExists()
+    if (feature) {
+      globalRestrictionEnabled.value = feature.status === 'enabled'
+    }
+  } catch (error) {
+    console.error('Error loading feature data:', error)
+  } finally {
+    isLoading.value = false
+  }
 }
 
 // Expose methods for external use
 defineExpose({
-  refreshTeams: _loadTeamOverrides
+  refreshTeams: loadFeatureData
 })
 
 // Initialize on mount
 onMounted(async () => {
   isLoadingGlobal.value = true
-  setTimeout(() => {
+  isLoading.value = true
+  try {
+    await loadFeatureData()
+    // Pre-load teams for the modal
+    allTeams.value = await fetchTeams()
+  } catch (error) {
+    console.error('Error initializing component:', error)
+  } finally {
     isLoadingGlobal.value = false
-  }, 500)
-})
-
-onUnmounted(() => {
-  // Cleanup
+    isLoading.value = featuresLoading.value
+  }
 })
 </script>

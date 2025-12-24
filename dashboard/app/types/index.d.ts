@@ -223,3 +223,35 @@ export interface RecentActivity {
   activities: Activity[]
   total: number
 }
+
+// Feature Management Types
+export type FeatureStatus = 'enabled' | 'disabled' | 'beta'
+
+export interface Feature {
+  functionName: string
+  status: FeatureStatus
+  isGloballyRestricted?: boolean
+  overridesCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FeatureOverride {
+  teamId: number
+  teamName: string
+  status: FeatureStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FeatureDetail extends Omit<Feature, 'overridesCount'> {
+  overrides: FeatureOverride[]
+}
+
+export interface TeamRestrictionOverride {
+  teamId: number
+  teamName: string
+  isRestricted: boolean
+  memberCount?: number
+  updatedAt?: string
+}
