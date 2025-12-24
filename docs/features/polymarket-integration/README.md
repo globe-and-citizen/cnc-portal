@@ -36,6 +36,27 @@ Polymarket supports three signature types for interacting with its contracts:
 - It is not possible to enforce multisig approvals when placing bets because of the architecture of the Polymarket CLOB and CFT Exchange contracts.
 - It is possible to interact with this Safe{Wallet} using the Safe{Wallet} SDK.
 
+The Safe Wallet is deterministically derived and deployed for you so as to be compatible with the Polymarket platform
+
+```TypeScript
+import { deriveSafe } from "@polymarket/builder-relayer-client/dist/builder/derive";
+import { getContractConfig } from "@polymarket/builder-relayer-client/dist/config";
+
+// Step 1: Derive Safe address (deterministic)
+const config = getContractConfig(137); // Polygon
+const safeAddress = deriveSafe(eoaAddress, config.SafeContracts.SafeFactory);
+
+// Step 2: Check if Safe is deployed
+const deployed = await relayClient.getDeployed(safeAddress);
+
+// Step 3: Deploy Safe if needed (prompts user signature)
+if (!deployed) {
+  const response = await relayClient.deploy();
+  const result = await response.wait();
+  console.log("Safe deployed at:", result.proxyAddress);
+}
+```
+
 ## 🏛 Proposed Multisig Architecture for Polymarket Safe
 
 The diagram below illustrates a **hierarchical Safe architecture** designed to enforce multisig governance on top of Polymarket’s default 1‑of‑1 Safe. In this model:
