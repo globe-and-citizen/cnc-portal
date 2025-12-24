@@ -212,6 +212,36 @@ Before trading, you must approve Polymarket contracts to spend tokens on your be
 - This is the only operation that requires multisig approval on the Polymarket side
   - This means once the approvals are made the EOA owner from which the Safe is deterministically derived can trade without requiring other owners of the Safe to approve.
 
+The token approvals are Safe Transactions but placing bets is not
+
+```TypeScript
+import { encodeFunctionData, erc20Abi } from "viem";
+
+// ERC-20 approval (USDC.e)
+{
+  to: USDC_E_CONTRACT_ADDRESS,
+  operation: OperationType.Call,
+  data: encodeFunctionData({
+    abi: erc20Abi,
+    functionName: 'approve',
+    args: [spenderAddress as `0x${string}`, BigInt(MAX_UINT256)]
+  }),
+  value: '0'
+}
+
+// ERC-1155 approval (outcome tokens)
+{
+  to: CTF_CONTRACT_ADDRESS,
+  operation: OperationType.Call,
+  data: encodeFunctionData({
+    abi: erc1155Abi,
+    functionName: 'setApprovalForAll',
+    args: [operatorAddress as `0x${string}`, true]
+  }),
+  value: '0'
+}
+```
+
 ---
 
 ## 🎯 Key Takeaways
