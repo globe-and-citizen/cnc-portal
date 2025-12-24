@@ -40,7 +40,6 @@ export const listFeatures = async (_req: Request, res: Response) => {
 
 /** GET /features/:functionName — Get a single feature */
 export const getFeatureByName = async (req: Request, res: Response) => {
-  console.log('getFeatureByName req.params', req.params);
   try {
     const validation = functionNameParamSchema.safeParse(req.params);
     if (!validation.success) {
@@ -49,8 +48,6 @@ export const getFeatureByName = async (req: Request, res: Response) => {
 
     const { functionName } = validation.data;
     const feature = await findFeatureByName(functionName);
-    console.log('feature', feature);
-    // return { functionName };
 
     if (!feature) {
       return errorResponse(404, `Feature "${functionName}" not found`, res);
