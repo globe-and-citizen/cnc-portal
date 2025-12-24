@@ -1,6 +1,6 @@
 import { ref, watch } from 'vue'
 import { useToastStore } from '@/stores'
-import { useConnect, useSwitchChain, useAccount, injected } from '@wagmi/vue'
+import { useConnect, useSwitchChain, injected, useConnection } from '@wagmi/vue'
 import { NETWORK } from '@/constant'
 import { log } from '@/utils'
 
@@ -11,9 +11,10 @@ export function useWalletChecks() {
 
   // Composables
   const { addErrorToast } = useToastStore()
-  const { connectAsync, error: connectError } = useConnect()
-  const { switchChainAsync, error: switchChainError } = useSwitchChain()
-  const { isConnected } = useAccount()
+  const connect = useConnect()
+  const connection = useConnection()
+  const switchChain = useSwitchChain()
+  // const
 
   // Functions
   async function performChecks() {
@@ -21,15 +22,13 @@ export function useWalletChecks() {
     isProcessing.value = true
     const networkChainId = parseInt(NETWORK.chainId)
 
-    if (!isConnected.value) {
-      await connectAsync({ connector: injected(), chainId: networkChainId })
+    if (!connection.isConnected.value) {
+      connect.mutate({ connector: injected(), chainId: networkChainId })
     }
 
-    await switchChainAsync({
-      chainId: networkChainId
-    })
+    switchChain.mutate({ chainId: networkChainId })
 
-    if (isConnected.value) {
+    if (connection.isConnected.value) {
       isSuccess.value = true
     } else {
       isProcessing.value = false
@@ -38,7 +37,7 @@ export function useWalletChecks() {
   }
 
   // Watch
-  watch(switchChainError, (newError) => {
+  watch(switchChain.error, (newError) => {
     if (newError) {
       addErrorToast(
         newError.name === 'UserRejectedRequestError'
@@ -50,7 +49,7 @@ export function useWalletChecks() {
     }
   })
 
-  watch(connectError, (newError) => {
+  watch(connect.error, (newError) => {
     if (newError) {
       let message = 'Something went wrong: Failed to connect wallet'
       switch (newError.name) {

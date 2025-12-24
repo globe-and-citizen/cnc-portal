@@ -9,6 +9,7 @@ const {
   mockUseWriteContract,
   mockUseWaitForTransactionReceipt,
   mockUseAccount,
+  mockUseChainId,
   mockUseQuery,
   mockUseQueryClient,
   mockQueryClient,
@@ -17,6 +18,7 @@ const {
   mockWaitForCondition,
   mockFormatDataForDisplay
 } = vi.hoisted(() => {
+  // const { ref: refVue } = require('vue')
   const mockQueryClient = {
     invalidateQueries: vi.fn().mockResolvedValue(undefined)
   }
@@ -25,6 +27,7 @@ const {
     mockUseWriteContract: vi.fn(),
     mockUseWaitForTransactionReceipt: vi.fn(),
     mockUseAccount: vi.fn(),
+    mockUseChainId: vi.fn(() => ref(11155111)),
     mockUseQuery: vi.fn(),
     mockUseQueryClient: vi.fn(() => mockQueryClient),
     mockQueryClient,
@@ -39,7 +42,8 @@ const {
 vi.mock('@wagmi/vue', () => ({
   useWriteContract: mockUseWriteContract,
   useWaitForTransactionReceipt: mockUseWaitForTransactionReceipt,
-  useAccount: mockUseAccount
+  useAccount: mockUseAccount,
+  useChainId: mockUseChainId
 }))
 
 vi.mock('@tanstack/vue-query', () => ({
@@ -141,7 +145,7 @@ describe('useContractWrites (V2)', () => {
 
       expect(mockUseWriteContract).toHaveBeenCalled()
       expect(mockUseWaitForTransactionReceipt).toHaveBeenCalled()
-      expect(mockUseAccount).toHaveBeenCalled()
+      expect(mockUseChainId).toHaveBeenCalled()
       expect(mockUseQuery).toHaveBeenCalled()
       expect(mockUseQueryClient).toHaveBeenCalled()
       expect(mockUseTransactionTimeline).toHaveBeenCalled()
@@ -380,7 +384,7 @@ describe('useContractWrites (V2)', () => {
           'readContract',
           {
             address: MOCK_DATA.contractAddress,
-            chainId: 1
+            chainId: 11155111
           }
         ]
       })
