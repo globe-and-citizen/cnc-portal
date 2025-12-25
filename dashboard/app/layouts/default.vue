@@ -84,12 +84,6 @@ const links = [
           onSelect: () => {
             open.value = false
           }
-        }, {
-          label: 'Submit Restriction',
-          to: '/features/SubmitRestriction',
-          onSelect: () => {
-            open.value = false
-          }
         }
       ]
     },
