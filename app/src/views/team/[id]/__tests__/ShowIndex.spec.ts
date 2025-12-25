@@ -59,7 +59,11 @@ describe('ShowIndex', () => {
     // Your test here
     const wrapper = mount(ShowIndex, {
       global: {
-        plugins: [router, createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
+        plugins: [
+          router,
+          createTestingPinia({ createSpy: vi.fn }),
+          [VueQueryPlugin, { queryClient }]
+        ],
         stubs: {
           ContinueAddTeamForm: true,
           TeamMeta: true,
