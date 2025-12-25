@@ -44,13 +44,16 @@
               </span>
             </td>
             <td class="py-4 px-4">
-              <UBadge
-                :color="getStatusColor(feature.status)"
-                variant="soft"
+              <USelect
+                :model-value="feature.status"
+                :items="statusOptions"
+                value-key="value"
                 size="sm"
-              >
-                {{ feature.status }}
-              </UBadge>
+                :disabled="updatingFeature === feature.functionName"
+                :loading="updatingFeature === feature.functionName"
+                data-test="status-select"
+                @update:model-value="(value) => $emit('update-status', feature, value as FeatureStatus)"
+              />
             </td>
             <td class="py-4 px-4">
               <span class="text-sm text-gray-600 dark:text-gray-400">
@@ -138,22 +141,31 @@ interface Props {
   features: Feature[]
   loading?: boolean
   deletingFeature?: string | null
+  updatingFeature?: string | null
 }
 
 withDefaults(defineProps<Props>(), {
   loading: false,
-  deletingFeature: null
+  deletingFeature: null,
+  updatingFeature: null
 })
 
 // Emits
 defineEmits<{
-  delete: [feature: Feature]
-  create: []
+  'delete': [feature: Feature]
+  'create': []
+  'update-status': [feature: Feature, status: FeatureStatus]
 }>()
 
 const FEATURE_ROUTES: Record<string, string> = {
   SUBMIT_RESTRICTION: '/features/submit-restriction'
 }
+
+const statusOptions = [
+  { label: 'Enabled', value: 'enabled' },
+  { label: 'Disabled', value: 'disabled' },
+  { label: 'Beta', value: 'beta' }
+]
 
 const getFeatureRoute = (functionName: string): string | undefined => {
   return FEATURE_ROUTES[functionName]
@@ -170,15 +182,6 @@ const formatDate = (dateString?: string) => {
     hour: '2-digit',
     minute: '2-digit'
   })
-}
-
-const getStatusColor = (status: FeatureStatus): 'success' | 'error' | 'warning' | 'neutral' => {
-  const colors: Record<FeatureStatus, 'success' | 'error' | 'warning'> = {
-    enabled: 'success',
-    disabled: 'error',
-    beta: 'warning'
-  }
-  return colors[status] || 'neutral'
 }
 </script>
 
