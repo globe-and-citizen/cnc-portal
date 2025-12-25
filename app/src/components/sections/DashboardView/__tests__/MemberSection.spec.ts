@@ -7,6 +7,7 @@ import type { Address } from 'viem'
 import { useTeamStore } from '@/stores'
 import { mockTeamStore } from '@/tests/mocks/store.mock'
 import { NETWORK } from '@/constant'
+import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 
 interface WageData {
   userAddress: Address
@@ -62,9 +63,19 @@ vi.mock('@/composables/useCustomFetch', () => {
   }
 })
 
+// Mock useTeamWages query hook
+vi.mock('@/queries/wage.queries', () => ({
+  useTeamWages: vi.fn(() => ({
+    data: mockWageData,
+    isLoading: mockWageIsFetching,
+    error: mockWageError
+  }))
+}))
+
 describe('MemberSection.vue', () => {
   let wrapper: ReturnType<typeof mount>
   let component: MemberSectionInstance
+  const queryClient = new QueryClient()
 
   const wageDataMock: WageData[] = [
     {
@@ -123,6 +134,24 @@ describe('MemberSection.vue', () => {
         ]
       },
       currentTeamMeta: {
+        data: {
+          id: 1,
+          ownerAddress,
+          members: [
+            {
+              address: '0x1234' as Address,
+              name: 'Member 1',
+              id: '1',
+              teamId: 1
+            },
+            {
+              address: '0x5678' as Address,
+              name: 'Member 2',
+              id: '2',
+              teamId: 1
+            }
+          ]
+        },
         teamIsFetching: false
       }
     }
@@ -137,7 +166,8 @@ describe('MemberSection.vue', () => {
                 address: userAddress
               }
             }
-          })
+          }),
+          [VueQueryPlugin, { queryClient }]
         ]
       }
     })
