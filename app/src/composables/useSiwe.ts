@@ -52,7 +52,7 @@ export function useSiwe() {
     data: userData,
     error: fetchUserError,
     refetch: refetchUser
-  } = useUser(computed(() => address.value || ''))
+  } = useUser(computed(() => connection.address.value || ''))
   //#endregion
 
   //#region Functions
