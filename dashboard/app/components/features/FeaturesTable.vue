@@ -69,9 +69,11 @@
             </td>
             <td class="py-4 px-4">
               <div class="flex items-center justify-end gap-2">
+                <!-- Bouton View avec route dynamique -->
                 <UButton
+                  v-if="getFeatureRoute(feature.functionName)"
                   :to="{
-                    path: '/features/submit-restriction',
+                    path: getFeatureRoute(feature.functionName),
                     query: { feature: feature.functionName }
                   }"
                   icon="i-lucide-eye"
@@ -83,6 +85,7 @@
                 >
                   View
                 </UButton>
+
                 <UButton
                   icon="i-lucide-trash-2"
                   color="error"
@@ -147,6 +150,14 @@ defineEmits<{
   delete: [feature: Feature]
   create: []
 }>()
+
+const FEATURE_ROUTES: Record<string, string> = {
+  SUBMIT_RESTRICTION: '/features/submit-restriction'
+}
+
+const getFeatureRoute = (functionName: string): string | undefined => {
+  return FEATURE_ROUTES[functionName]
+}
 
 // Utility methods
 const formatDate = (dateString?: string) => {
