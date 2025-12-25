@@ -85,7 +85,7 @@
               data-test="team-dropdown"
               ref="target"
             >
-              <div v-if="teams.isPending.value">
+              <div v-if="teams.isPending">
                 <div class="p-4 flex gap-4 border-b-2">
                   <div class="skeleton w-11 h-11"></div>
                   <div class="flex flex-col gap-2">

@@ -89,7 +89,7 @@ vi.mock('@/composables/useCustomFetch', () => {
 // Add mock for teamStore
 const mockTeamStore = {
   currentTeam: teamDataMock.value,
-  currentTeamMeta: { teamIsFetching: false, team: teamDataMock.value }
+  currentTeamMeta: { isPending: false, team: teamDataMock.value }
 }
 
 vi.mock('@/stores', () => ({
@@ -138,7 +138,7 @@ describe('ContractManagementView.vue', () => {
   beforeEach(() => {
     executeMock.mockClear()
     mockTeamStore.currentTeam = teamDataMock.value
-    mockTeamStore.currentTeamMeta = { teamIsFetching: false, team: teamDataMock.value }
+    mockTeamStore.currentTeamMeta = { isPending: false, team: teamDataMock.value }
     vi.mocked(useToastStore).mockClear()
   })
 
@@ -168,7 +168,7 @@ describe('ContractManagementView.vue', () => {
   })
 
   it('shows loading spinner when team is fetching', async () => {
-    mockTeamStore.currentTeamMeta.teamIsFetching = true
+    mockTeamStore.currentTeamMeta.isPending = true
     const wrapper = createComponent()
     await wrapper.vm.$nextTick()
 

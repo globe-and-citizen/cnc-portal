@@ -55,10 +55,7 @@
       </div>
       <TeamMeta />
 
-      <MemberSection
-        :team="teamStore.currentTeamMeta.data"
-        :teamIsFetching="teamStore.currentTeamMeta.isFetching"
-      />
+      <MemberSection />
     </div>
     <RouterView v-if="teamStore.currentTeam" />
   </div>
