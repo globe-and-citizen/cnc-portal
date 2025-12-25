@@ -5,7 +5,7 @@
     <MultiSelectMemberInput v-model="formData" :disable-team-members="true" />
 
     <div v-if="addMembersError">
-      <div class="alert alert-warning" v-if="statusCode === 401">
+      <div class="alert alert-warning" v-if="addMembersResponse?.status === 401">
         You don't have the right for this
       </div>
       <div class="alert alert-danger" v-else>Something went wrong, Unable to add team Members</div>
@@ -30,6 +30,7 @@ import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vu
 import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { useAddMembers, type MemberInput } from '@/queries/member.queries'
+import { log } from '@/utils/generalUtil'
 
 const emits = defineEmits(['memberAdded'])
 const { addSuccessToast, addErrorToast } = useToastStore()
@@ -43,10 +44,11 @@ const formData = ref<Array<Member>>([])
 const {
   mutate: executeAddMembers,
   isPending: addMembersLoading,
-  error: addMembersError
+  error: addMembersError,
+  data: addMembersResponse
 } = useAddMembers(props.teamId)
 
-const statusCode = ref<number | null>(null)
+// const statusCode = ref<number | null>(null)
 
 const handleAddMembers = async () => {
   executeAddMembers(
@@ -55,25 +57,12 @@ const handleAddMembers = async () => {
       onSuccess: () => {
         addSuccessToast('Members added successfully')
         formData.value = []
-        statusCode.value = 201
+        // statusCode.value = 201
         emits('memberAdded')
       },
       onError: (error: unknown) => {
-        let status = null
-        let errorMessage = 'Failed to add members'
-        if (
-          typeof error === 'object' &&
-          error !== null &&
-          'response' in error &&
-          typeof (error as { response?: unknown }).response === 'object' &&
-          (error as { response?: unknown }).response !== null
-        ) {
-          const response = (error as { response: { status?: number; data?: { message?: string } } })
-            .response
-          status = response.status ?? null
-          errorMessage = response.data?.message ?? errorMessage
-        }
-        statusCode.value = status
+        log.error('AddMemberForm - handleAddMembers error:', error)
+        const errorMessage = 'Failed to add members'
         addErrorToast(errorMessage)
       }
     }

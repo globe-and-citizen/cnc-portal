@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
 import type { Member } from '@/types/member'
-import type { AxiosError } from 'axios'
+import type { AxiosError, AxiosResponse } from 'axios'
 
 export type MemberInput = Array<Pick<Member, 'address' | 'name'>>
 /**
@@ -10,13 +10,12 @@ export type MemberInput = Array<Pick<Member, 'address' | 'name'>>
 export const useAddMembers = (teamId: string | number) => {
   const queryClient = useQueryClient()
 
-  return useMutation<{ members: Member[] }, AxiosError, MemberInput[]>({
+  return useMutation<AxiosResponse<{ members: Member[] }>, AxiosError, MemberInput[]>({
     mutationFn: async (members: MemberInput[]) => {
-      const { data } = await apiClient.post<{ members: Member[] }>(
+      return await apiClient.post<{ members: Member[] }>(
         `teams/${teamId}/member`,
         members
       )
-      return data
     },
     onSuccess: () => {
       // Invalidate team data to refetch with updated members
