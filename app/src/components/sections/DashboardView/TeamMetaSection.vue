@@ -9,7 +9,7 @@
       <hr class="" />
       <p class="py-4">
         Are you sure you want to delete the team
-        <span class="font-bold">{{ currentTeam?.name }}</span
+        <span class="font-bold">{{ teamStore.currentTeamMeta.data?.name }}</span
         >?
       </p>
       <div class="modal-action justify-center">
@@ -28,7 +28,7 @@
     </ModalComponent>
     <ModalComponent v-model="showModal">
       <UpdateTeamForm
-        :teamIsUpdating="teamIsUpdating"
+        :teamIsUpdating="!!teamIsUpdating"
         v-model="updateTeamInput"
         @updateTeam="executeUpdateTeam"
       />
@@ -45,7 +45,6 @@ import type { Member } from '@/types'
 import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
-import { storeToRefs } from 'pinia'
 import { useUpdateTeam, useDeleteTeam } from '@/queries/team.queries'
 
 const showDeleteTeamConfirmModal = ref(false)
@@ -56,7 +55,7 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 // const route = useRoute()
 const router = useRouter()
 const inputs = ref<Member[]>([])
-const { currentTeam } = storeToRefs(teamStore)
+// const { teamStore.currentTeamMeta.data } = storeToRefs(teamStore)
 
 const updateTeamInput = ref<{ name: string; description: string }>({
   name: '',
@@ -72,7 +71,7 @@ const {
 const executeUpdateTeam = () => {
   updateTeamMutate(
     {
-      id: currentTeam.value?.id || '',
+      id: teamStore.currentTeamMeta.data?.id || '',
       teamData: {
         name: updateTeamInput.value.name,
         description: updateTeamInput.value.description
@@ -98,7 +97,7 @@ const {
 } = useDeleteTeam()
 
 const deleteTeam = async () => {
-  const teamId = currentTeam.value?.id
+  const teamId = teamStore.currentTeamMeta.data?.id
   if (!teamId) {
     addErrorToast('Team ID is required')
     return
@@ -120,8 +119,8 @@ const deleteTeam = async () => {
 
 const updateTeamModalOpen = async () => {
   showModal.value = true
-  updateTeamInput.value.name = currentTeam.value?.name || ''
-  updateTeamInput.value.description = currentTeam.value?.description || ''
-  inputs.value = currentTeam.value?.members || []
+  updateTeamInput.value.name = teamStore.currentTeamMeta.data?.name || ''
+  updateTeamInput.value.description = teamStore.currentTeamMeta.data?.description || ''
+  inputs.value = teamStore.currentTeamMeta.data?.members || []
 }
 </script>
