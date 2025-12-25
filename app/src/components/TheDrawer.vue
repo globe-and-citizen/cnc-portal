@@ -85,7 +85,7 @@
               data-test="team-dropdown"
               ref="target"
             >
-              <div v-if="teamStore.teamsMeta.teamsAreFetching">
+              <div v-if="teams.isPending.value">
                 <div class="p-4 flex gap-4 border-b-2">
                   <div class="skeleton w-11 h-11"></div>
                   <div class="flex flex-col gap-2">
@@ -95,16 +95,17 @@
                 </div>
               </div>
 
+              <!-- <pre>{{ teams.data   }}</pre> -->
               <RouterLink
                 :to="`/teams/${team.id}`"
                 v-else
-                v-for="team in teamStore.teamsMeta.teams"
+                v-for="team in teams.data.value"
                 :key="team.id"
                 data-test="team-item"
               >
                 <TeamMetaComponent
                   class="hover:bg-slate-100"
-                  :isSelected="team.id === teamStore.currentTeam?.id"
+                  :isSelected="team.id === teamStore.currentTeamId"
                   :team="team"
                   :to="team.id"
               /></RouterLink>
@@ -274,12 +275,14 @@ import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
 import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
 import { useRoute } from 'vue-router'
+import { useTeams } from '@/queries/team.queries'
 // import { useReadContract } from '@wagmi/vue'
 // import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 
 const appStore = useAppStore()
 const route = useRoute()
 const userStore = useUserDataStore()
+const teams = useTeams()
 
 interface User {
   name: string

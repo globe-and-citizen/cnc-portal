@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col gap-6">
     <span
-      v-if="teamStore.currentTeamMeta.teamIsFetching"
+      v-if="teamStore.currentTeamMeta.isPending"
       class="loading loading-spinner loading-lg"
     ></span>
     <div
-      v-if="!teamStore.currentTeamMeta.teamIsFetching && teamStore"
+      v-if="!teamStore.currentTeamMeta.isPending && teamStore"
       class="flex flex-col gap-5 w-full items-center"
     >
       <CardComponent class="w-full" title="Main contract">

@@ -16,7 +16,7 @@ export const mockTeamStore = {
     ownerAddress: '0xOwnerAddress'
   },
   currentTeamMeta: {
-    teamIsFetching: false
+    isPending: false
   },
   teamsMeta: {
     reloadTeams: vi.fn()

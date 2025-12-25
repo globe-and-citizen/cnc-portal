@@ -152,7 +152,7 @@ describe('MemberSection.vue', () => {
             }
           ]
         },
-        teamIsFetching: false
+        isPending: false
       }
     }
 

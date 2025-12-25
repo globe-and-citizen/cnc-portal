@@ -137,7 +137,7 @@ const formRef = ref<HTMLElement | null>(null)
 const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
 const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
 
-const isFetching = computed(() => teamStore.currentTeamMeta.teamIsFetching)
+const isFetching = computed(() => teamStore.currentTeamMeta.isPending)
 
 const filteredMembers = computed(() => {
   if (!teamStore.currentTeam?.members) return []
