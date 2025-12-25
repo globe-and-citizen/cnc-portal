@@ -3,7 +3,7 @@ import ListIndex from '@/views/team/ListIndex.vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
-// import { createPinia, setActivePinia } from 'pinia'
+import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 
 // Create mutable refs for reactive state outside the mock
 const mockError = ref<Error | null>(null)
@@ -15,13 +15,13 @@ vi.mock('@/queries/team.queries', () => {
   return {
     useTeams: () => ({
       data: mockData,
-      isLoading: mockIsFetching,
+      isPending: mockIsFetching,
       error: mockError,
       refetch: vi.fn()
     }),
     useTeam: () => ({
       data: ref(null),
-      isLoading: ref(false),
+      isPending: ref(false),
       error: ref(null),
       refetch: vi.fn()
     })
@@ -69,6 +69,8 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 
 describe('ListIndex', () => {
   // Define interface for component instance
+  const queryClient = new QueryClient()
+
   beforeEach(() => {
     // Use original stores
     vi.unmock('@/stores')
@@ -82,7 +84,7 @@ describe('ListIndex', () => {
   it('should render the team List and switch from loading, to error , empty data or somes data', async () => {
     const wrapper = mount(ListIndex, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
         stubs: ['AddTeamForm']
       }
     })
@@ -135,6 +137,7 @@ describe('ListIndex', () => {
     // const appStore = useAppStore()
     const wrapper = mount(ListIndex, {
       global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
         stubs: ['AddTeamForm']
       }
     })
