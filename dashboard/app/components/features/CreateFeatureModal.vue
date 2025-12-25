@@ -24,14 +24,14 @@
             </label>
             <UInput
               v-model="form.functionName"
-              placeholder="e.g., SubmitRestriction"
+              placeholder="e.g., SUBMIT_RESTRICTION"
               data-test="function-name-input"
               :disabled="loading"
               icon="i-lucide-code"
               required
             />
             <p class="text-xs text-muted mt-1">
-              Enter a unique function name (e.g., SubmitRestriction, ApprovalFlow)
+              Enter a unique function name (e.g., SUBMIT_RESTRICTION, APPROVAL_FLOW)
             </p>
             <p v-if="formErrors.functionName" class="text-xs text-red-500 mt-1">
               {{ formErrors.functionName }}
@@ -55,18 +55,7 @@
             </p>
           </div>
 
-          <div class="flex items-center gap-3 pt-4">
-            <UButton
-              type="submit"
-              color="primary"
-              :loading="loading"
-              :disabled="!isFormValid || loading"
-              data-test="submit-create-btn"
-              icon="i-lucide-check"
-              class="flex-1"
-            >
-              Create Feature
-            </UButton>
+          <div class="flex items-center gap-3 pt-4 justify-between">
             <UButton
               type="button"
               color="neutral"
@@ -75,6 +64,16 @@
               @click="handleClose"
             >
               Cancel
+            </UButton>
+            <UButton
+              type="submit"
+              color="primary"
+              :loading="loading"
+              :disabled="!isFormValid || loading"
+              data-test="submit-create-btn"
+              icon="i-lucide-check"
+            >
+              Create Feature
             </UButton>
           </div>
         </form>
