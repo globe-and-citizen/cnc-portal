@@ -18,6 +18,11 @@ interface CreateFeaturePayload {
   status: FeatureStatus
 }
 
+interface UpdateFeaturePayload {
+  functionName: string
+  status: FeatureStatus
+}
+
 /**
  * Fetch all features
  */
@@ -104,14 +109,37 @@ export const useDeleteFeature = () => {
 }
 
 /**
- * Update a feature's status (available for future use)
+ * Update a feature's status
  */
-export const updateFeature = async (
-  functionName: string,
-  status: FeatureStatus
-): Promise<ApiResponse<Feature>> => {
-  const { data } = await apiClient.put<ApiResponse<Feature>>(`admin/features/${functionName}`, {
-    status
+export const useUpdateFeature = () => {
+  const queryClient = useQueryClient()
+  const toast = useToast()
+
+  return useMutation<ApiResponse<Feature>, AxiosError, UpdateFeaturePayload>({
+    mutationFn: async (payload: UpdateFeaturePayload) => {
+      const { data } = await apiClient.put<ApiResponse<Feature>>(
+        `admin/features/${payload.functionName}`,
+        { status: payload.status }
+      )
+      return data
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['features'] })
+      toast.add({
+        title: 'Success',
+        description: data.message || 'Feature updated successfully',
+        color: 'success',
+        icon: 'i-lucide-check-circle'
+      })
+    },
+    onError: (error) => {
+      const errorMessage = (error.response?.data as ErrorResponse)?.message || 'Failed to update feature'
+      toast.add({
+        title: 'Error',
+        description: errorMessage,
+        color: 'error',
+        icon: 'i-lucide-alert-circle'
+      })
+    }
   })
-  return data
 }
