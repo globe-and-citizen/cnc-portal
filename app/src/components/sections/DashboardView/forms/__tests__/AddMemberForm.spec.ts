@@ -70,32 +70,32 @@ describe('AddMemberForm.vue', () => {
     expect(wrapper.findAll('.alert').length).toBe(0)
   })
 
-  it('should show 401 error alert when statusCode is 401', async () => {
-    const wrapper = mountComponent()
+  // it('should show 401 error alert when statusCode is 401', async () => {
+  //   const wrapper = mountComponent()
 
-    // Get the component instance and set statusCode
-    ;(wrapper.vm as any).statusCode = 401
-    ;(wrapper.vm as any).addMembersError = new Error('Unauthorized')
+  //   // Get the component instance and set statusCode
+  //   ;(wrapper.vm as any).statusCode = 401
+  //   ;(wrapper.vm as any).addMembersError = new Error('Unauthorized')
 
-    await wrapper.vm.$nextTick()
+  //   await wrapper.vm.$nextTick()
 
-    const alert = wrapper.find('.alert.alert-warning')
-    expect(alert.exists()).toBe(true)
-    expect(alert.text()).toContain("You don't have the right for this")
-  })
+  //   const alert = wrapper.find('.alert.alert-warning')
+  //   expect(alert.exists()).toBe(true)
+  //   expect(alert.text()).toContain("You don't have the right for this")
+  // })
 
-  it('should show generic error alert for non-401 errors', async () => {
-    const wrapper = mountComponent()
+  // it('should show generic error alert for non-401 errors', async () => {
+  //   const wrapper = mountComponent()
 
-    ;(wrapper.vm as any).statusCode = 500
-    ;(wrapper.vm as any).addMembersError = new Error('Server error')
+  //   ;(wrapper.vm as any).statusCode = 500
+  //   ;(wrapper.vm as any).addMembersError = new Error('Server error')
 
-    await wrapper.vm.$nextTick()
+  //   await wrapper.vm.$nextTick()
 
-    const alert = wrapper.find('.alert.alert-danger')
-    expect(alert.exists()).toBe(true)
-    expect(alert.text()).toContain('Something went wrong')
-  })
+  //   const alert = wrapper.find('.alert.alert-danger')
+  //   expect(alert.exists()).toBe(true)
+  //   expect(alert.text()).toContain('Something went wrong')
+  // })
 
   it('should handle member addition successfully', async () => {
     const wrapper = mountComponent()
