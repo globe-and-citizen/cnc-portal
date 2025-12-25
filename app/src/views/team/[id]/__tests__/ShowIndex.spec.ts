@@ -5,31 +5,26 @@ import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { Team } from '@/types/team'
 import { createRouter, createWebHistory } from 'vue-router'
+import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 
 // Create mutable refs for reactive state outside the mock
 const mockError = ref<Error | null>(null)
 const mockIsFetching = ref(false)
 const mockData = ref<Team | null>(null)
-// const mockStatusCode = computed(() => {
-//   if (mockError.value) {
-//     const errorWithStatus = mockError.value as Error & { status?: number }
-//     return errorWithStatus.status
-//   }
-//   return undefined
-// })
 
 // Mock the team queries to control the reactive state
 vi.mock('@/queries/team.queries', () => {
   return {
     useTeams: () => ({
       data: ref([]),
-      isLoading: ref(false),
+      isPending: ref(false),
       error: ref(null),
       refetch: vi.fn()
     }),
     useTeam: () => ({
       data: mockData,
-      isLoading: mockIsFetching,
+      isPending: mockIsFetching,
+      isEnabled: mockIsFetching,
       error: mockError,
       refetch: vi.fn()
     })
@@ -38,6 +33,8 @@ vi.mock('@/queries/team.queries', () => {
 
 describe('ShowIndex', () => {
   // Define interface for component instance
+  const queryClient = new QueryClient()
+
   beforeEach(() => {
     vi.clearAllMocks()
     // Reset refs between tests if needed
@@ -62,7 +59,7 @@ describe('ShowIndex', () => {
     // Your test here
     const wrapper = mount(ShowIndex, {
       global: {
-        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
+        plugins: [router, createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
         stubs: {
           ContinueAddTeamForm: true,
           TeamMeta: true,
