@@ -1,0 +1,103 @@
+<template>
+  <UModal v-model:open="isOpen">
+    <template #content>
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-error-600">
+              Confirm Deletion
+            </h3>
+            <UButton
+              icon="i-lucide-x"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              @click="handleClose"
+            />
+          </div>
+        </template>
+
+        <div class="space-y-4">
+          <UAlert
+            color="error"
+            variant="soft"
+            icon="i-lucide-alert-triangle"
+            title="Warning: This action cannot be undone"
+          >
+            <template #description>
+              <div class="space-y-2">
+                <p>You are about to delete the feature:</p>
+                <p class="font-semibold">
+                  {{ feature?.functionName }}
+                </p>
+                <p class="text-sm">
+                  This will also delete all
+                  <span class="font-semibold">{{ feature?.overridesCount || 0 }}</span>
+                  associated team override(s).
+                </p>
+              </div>
+            </template>
+          </UAlert>
+
+          <div class="flex items-center gap-3 pt-4">
+            <UButton
+              color="error"
+              :loading="loading"
+              :disabled="loading"
+              data-test="confirm-delete-btn"
+              icon="i-lucide-trash-2"
+              class="flex-1"
+              @click="handleConfirm"
+            >
+              Delete Feature
+            </UButton>
+            <UButton
+              color="neutral"
+              variant="outline"
+              :disabled="loading"
+              @click="handleClose"
+            >
+              Cancel
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+    </template>
+  </UModal>
+</template>
+
+<script setup lang="ts">
+import type { Feature } from '~/types'
+
+// Props
+interface Props {
+  open: boolean
+  feature: Feature | null
+  loading?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  loading: false
+})
+
+// Emits
+const emit = defineEmits<{
+  'update:open': [value: boolean]
+  'confirm': []
+}>()
+
+// Computed
+const isOpen = computed({
+  get: () => props.open,
+  set: value => emit('update:open', value)
+})
+
+// Methods
+const handleConfirm = () => {
+  emit('confirm')
+}
+
+const handleClose = () => {
+  emit('update:open', false)
+}
+</script>
