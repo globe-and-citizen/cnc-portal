@@ -1,7 +1,8 @@
 import type {
   Feature,
   FeatureDetail,
-  FeatureStatus
+  FeatureStatus,
+  TeamRestrictionOverride
 } from '~/types'
 import { useAuthStore } from '~/stores/useAuthStore'
 
@@ -415,18 +416,18 @@ export function useFeatures() {
   /**
    * Transform feature overrides to TeamRestrictionOverride format
    */
-  // const transformToTeamOverrides = (
-  //   feature: FeatureDetail | null
-  // ): TeamRestrictionOverride[] => {
-  //   if (!feature || !feature.teamFunctionOverrides) return []
+  const transformToTeamOverrides = (
+    feature: FeatureDetail | null
+  ): TeamRestrictionOverride[] => {
+    if (!feature || !feature.teamFunctionOverrides) return []
 
-  //   return feature.teamFunctionOverrides.map(override => ({
-  //     teamId: override.teamId,
-  //     teamName: override.team?.name || `Team ${override.teamId}`,
-  //     isRestricted: override.status === 'enabled',
-  //     updatedAt: override.updatedAt
-  //   }))
-  // }
+    return feature.teamFunctionOverrides.map(override => ({
+      teamId: override.teamId,
+      teamName: override.team?.name || `Team ${override.teamId}`,
+      isRestricted: override.status === 'enabled',
+      updatedAt: override.updatedAt
+    }))
+  }
 
   /**
    * Check if global restriction is enabled
@@ -461,7 +462,7 @@ export function useFeatures() {
     updateSubmitRestrictionGlobal,
     createSubmitRestrictionOverride,
     updateSubmitRestrictionOverride,
-    removeSubmitRestrictionOverride
-
+    removeSubmitRestrictionOverride,
+    transformToTeamOverrides
   }
 }
