@@ -46,8 +46,10 @@
         :features="features"
         :loading="isLoading"
         :deleting-feature="deletingFeature"
+        :updating-feature="updatingFeature"
         @create="isCreateModalOpen = true"
         @delete="openDeleteModal"
+        @update-status="handleUpdateStatus"
       />
     </div>
 
@@ -71,7 +73,7 @@
 
 <script setup lang="ts">
 import type { Feature, FeatureStatus } from '~/types'
-import { useFeatures, useCreateFeature, useDeleteFeature } from '~/queries/function.query'
+import { useFeatures, useCreateFeature, useDeleteFeature, useUpdateFeature } from '~/queries/function.query'
 import FeaturesTable from '~/components/features/FeaturesTable.vue'
 import CreateFeatureModal from '~/components/features/CreateFeatureModal.vue'
 import DeleteFeatureModal from '~/components/features/DeleteFeatureModal.vue'
@@ -83,12 +85,14 @@ const features = computed(() => data.value?.data || [])
 // Mutations
 const createFeatureMutation = useCreateFeature()
 const deleteFeatureMutation = useDeleteFeature()
+const updateFeatureMutation = useUpdateFeature()
 
 // Modal states
 const isCreateModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const featureToDelete = ref<Feature | null>(null)
 const deletingFeature = ref<string | null>(null)
+const updatingFeature = ref<string | null>(null)
 
 // Computed
 const isCreating = computed(() => createFeatureMutation.isPending.value)
@@ -122,6 +126,24 @@ const handleDeleteFeature = async () => {
     console.error('Failed to delete feature:', error)
   } finally {
     deletingFeature.value = null
+  }
+}
+
+// Update Feature Status Handler
+const handleUpdateStatus = async (feature: Feature, newStatus: FeatureStatus) => {
+  // Don't update if status is the same
+  if (feature.status === newStatus) return
+
+  try {
+    updatingFeature.value = feature.functionName
+    await updateFeatureMutation.mutateAsync({
+      functionName: feature.functionName,
+      status: newStatus
+    })
+  } catch (error) {
+    console.error('Failed to update feature status:', error)
+  } finally {
+    updatingFeature.value = null
   }
 }
 </script>
