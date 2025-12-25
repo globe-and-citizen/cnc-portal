@@ -63,7 +63,7 @@
             Team Overrides
           </h4>
           <p class="text-sm text-muted">
-            Teams with custom restriction settings ({{ teamOverrides.length }}
+            Teams with custom restriction settings ({{ teamFunctionOverrides.length }}
             overrides)
           </p>
         </div>
@@ -79,11 +79,11 @@
 
       <!-- Team Overrides Table -->
       <TeamOverridesTable
-        :teams="teamOverrides"
+        :teams="teamFunctionOverrides"
         :loading="isLoading"
         :loading-team-id="loadingTeamId"
         :global-restriction-enabled="globalRestrictionEnabled"
-        :total="teamOverrides.length"
+        :total="teamFunctionOverrides.length"
         :current-page="pagination.page"
         :page-size="pagination.pageSize"
         @toggle-restriction="handleToggleRestriction"
@@ -184,7 +184,6 @@
 import { ref, computed, onMounted } from 'vue'
 import type { Team, TeamRestrictionOverride } from '~/types'
 import TeamOverridesTable from './TeamOverridesTable.vue'
-import { useFeatures } from '~/composables/useFeatures'
 
 // Composables
 const { fetchTeams } = useTeams()
@@ -208,8 +207,7 @@ const loadingTeamId = ref<number | null>(null)
 // Pagination
 const pagination = ref({
   page: 1,
-  pageSize: 10,
-  pageIndex: 0
+  pageSize: 10
 })
 
 // Add Override Modal State
@@ -221,13 +219,13 @@ const isCreatingOverride = ref(false)
 const isLoadingTeams = ref(false)
 
 // Computed
-const teamOverrides = computed<TeamRestrictionOverride[]>(() => {
+const teamFunctionOverrides = computed<TeamRestrictionOverride[]>(() => {
   return transformToTeamOverrides(currentFeature.value)
 })
 
 const availableTeamsOptions = computed(() => {
   // Filter out teams that already have overrides
-  const overriddenTeamIds = new Set(teamOverrides.value.map(o => o.teamId))
+  const overriddenTeamIds = new Set(teamFunctionOverrides.value.map(o => o.teamId))
   return allTeams.value
     .filter(team => !overriddenTeamIds.has(team.id))
     .map(team => ({
