@@ -8,7 +8,6 @@
 - Use proper heading hierarchy
 - Provide alternative text for images
 
-
 # Accessibility Guidelines
 
 Make all interfaces accessible for everyone, including users with disabilities.

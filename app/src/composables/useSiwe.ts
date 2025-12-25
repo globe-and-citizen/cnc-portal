@@ -4,7 +4,7 @@ import { useUserDataStore, useToastStore } from '@/stores'
 import type { User } from '@/types'
 import { log } from '@/utils'
 import { useFetch, useStorage } from '@vueuse/core'
-import { useAccount, useSignMessage, useChainId } from '@wagmi/vue'
+import { useSignMessage, useChainId, useConnection } from '@wagmi/vue'
 import { SiweMessage } from 'siwe'
 import { useWalletChecks } from '@/composables'
 import { BACKEND_URL } from '@/constant/index'
@@ -19,14 +19,17 @@ export function useSiwe() {
   //#region Composables
   const { addErrorToast } = useToastStore()
   const userDataStore = useUserDataStore()
-  const { address } = useAccount()
+
+  const connection = useConnection()
   const chainId = useChainId()
   const { data: signature, error: signMessageError, signMessageAsync } = useSignMessage()
   const { performChecks, isSuccess: isSuccessWalletCheck } = useWalletChecks()
 
   //#endregion
 
-  const fetchNonceEndpoint = computed(() => `${BACKEND_URL}/api/user/nonce/${address.value}`)
+  const fetchNonceEndpoint = computed(
+    () => `${BACKEND_URL}/api/user/nonce/${connection.address.value}`
+  )
 
   //#region useCustomeFetch
   const {
@@ -73,7 +76,7 @@ export function useSiwe() {
     }
 
     const siweMessage = new SiweMessage({
-      address: address.value as string,
+      address: connection.address.value as string,
       statement: 'Sign in with Ethereum to the app.',
       nonce: nonce.value.nonce,
       chainId: chainId.value,
