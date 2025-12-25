@@ -4,7 +4,7 @@
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-error-600">
+            <h3 class="text-lg font-semibold text-error-400">
               Confirm Deletion
             </h3>
             <UButton
@@ -32,25 +32,14 @@
                 </p>
                 <p class="text-sm">
                   This will also delete all
-                  <span class="font-semibold">{{ feature?.overridesCount || 0 }}</span>
+                  <span class="font-semibold">" {{ feature?.overridesCount || 0 }} "</span>
                   associated team override(s).
                 </p>
               </div>
             </template>
           </UAlert>
 
-          <div class="flex items-center gap-3 pt-4">
-            <UButton
-              color="error"
-              :loading="loading"
-              :disabled="loading"
-              data-test="confirm-delete-btn"
-              icon="i-lucide-trash-2"
-              class="flex-1"
-              @click="handleConfirm"
-            >
-              Delete Feature
-            </UButton>
+          <div class="flex items-center gap-3 pt-4 justify-between">
             <UButton
               color="neutral"
               variant="outline"
@@ -58,6 +47,16 @@
               @click="handleClose"
             >
               Cancel
+            </UButton>
+            <UButton
+              color="error"
+              :loading="loading"
+              :disabled="loading"
+              data-test="confirm-delete-btn"
+              icon="i-lucide-trash-2"
+              @click="handleConfirm"
+            >
+              Delete Feature
             </UButton>
           </div>
         </div>
