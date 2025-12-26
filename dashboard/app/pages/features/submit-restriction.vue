@@ -21,7 +21,7 @@
       </div>
     </template>
 
-    <SubmitRestrictionCard />
+    <SubmitRestrictionCard :is-editable="isFeatureEnabled" />
   </UPageCard>
 </template>
 
@@ -29,13 +29,25 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from '#imports'
 import SubmitRestrictionCard from '@/components/features/SubmitRestrictionCard.vue'
+import { useFeatures } from '~/queries/function.query'
 
 const router = useRouter()
 const route = useRoute()
 
+// Get features data to check status
+const { data } = useFeatures()
+const features = computed(() => data.value?.data || [])
+
 const featureLabel = computed(() => {
   const feature = (route.query.feature as string) || (route.params.feature as string) || 'Feature'
   return `Feature: ${feature}`
+})
+
+// Check if the feature is enabled
+const isFeatureEnabled = computed(() => {
+  const featureName = (route.query.feature as string) || 'SUBMIT_RESTRICTION'
+  const feature = features.value.find(f => f.functionName === featureName)
+  return feature?.status === 'enabled'
 })
 
 const goBack = () => {
