@@ -2,13 +2,13 @@
   <UModal
     :open="modelValue"
     title="Deploy New Safe"
-    @update:model-value="emit('update:modelValue', $event)"
     prevent-close
     :close="{ onClick: handleClose }"
     class="max-w-lg mx-auto rounded-xl shadow-lg "
+    @update:model-value="emit('update:modelValue', $event)"
   >
     <template #body>
-      <UForm @submit.prevent="onSubmit" class="space-y-6 px-6 pt-6 pb-4">
+      <UForm class="space-y-6 px-6 pt-6 pb-4" @submit.prevent="onSubmit">
         <div>
           <label class="block font-medium mb-2">Owners</label>
           <div class="space-y-2">
@@ -19,19 +19,21 @@
                 class="flex-1"
                 :disabled="isLoading"
                 :state="ownerStates[idx]"
-                @blur="validateOwner(idx)"
                 required
+                @blur="validateOwner(idx)"
               />
               <UButton
                 icon="i-heroicons-trash"
                 color="error"
                 variant="ghost"
                 size="xs"
-                @click="removeOwner(idx)"
                 :disabled="owners.length === 1 || isLoading"
+                @click="removeOwner(idx)"
               />
             </div>
-            <div v-for="(msg, idx) in ownerErrors" :key="'err-' + idx" class="text-xs text-red-500">{{ msg }}</div>
+            <div v-for="(msg, idx) in ownerErrors" :key="'err-' + idx" class="text-xs text-red-500">
+              {{ msg }}
+            </div>
           </div>
           <UButton
             icon="i-lucide-plus"
@@ -39,8 +41,8 @@
             variant="ghost"
             size="xs"
             class="mt-2"
-            @click="addOwner"
             :disabled="isLoading"
+            @click="addOwner"
           >
             Add Owner
           </UButton>
@@ -54,19 +56,28 @@
             :disabled="isLoading"
             required
           />
-          <div v-if="thresholdError" class="text-xs text-red-500">{{ thresholdError }}</div>
+          <div v-if="thresholdError" class="text-xs text-red-500">
+            {{ thresholdError }}
+          </div>
         </UFormField>
         <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
           <UButton
             type="button"
             color="neutral"
             variant="outline"
-            @click="handleClose"
             :disabled="isLoading"
+            @click="handleClose"
           >
             Cancel
           </UButton>
-          <UButton type="submit" color="primary" :loading="isLoading" :disabled="!formValid">Deploy Safe</UButton>
+          <UButton
+            type="submit"
+            color="primary"
+            :loading="isLoading"
+            :disabled="!formValid"
+          >
+            Deploy Safe
+          </UButton>
         </div>
         <UAlert v-if="error" color="error" :title="error" />
         <UAlert v-if="success" color="success" :title="success" />
@@ -81,7 +92,7 @@ import { useSafe } from '@/composables/useSafe'
 import { useConnection } from '@wagmi/vue'
 import { isAddress } from 'viem'
 
-const props = defineProps<{
+defineProps<{
   modelValue: boolean
 }>()
 const emit = defineEmits<{
@@ -128,11 +139,11 @@ function validateOwner(idx: number) {
 }
 
 const formValid = computed(() =>
-  !isLoading.value &&
-  !duplicateError.value &&
-  !thresholdError.value &&
-  owners.value.length > 0 &&
-  owners.value.every((_, idx) => (ownerStates.value?.[idx] !== false) && !!owners.value[idx]?.trim())
+  !isLoading.value
+  && !duplicateError.value
+  && !thresholdError.value
+  && owners.value.length > 0
+  && owners.value.every((_, idx) => (ownerStates.value?.[idx] !== false) && !!owners.value[idx]?.trim())
 )
 
 function checkDuplicates() {
@@ -203,8 +214,11 @@ const onSubmit = async () => {
     emit('deployed', `Safe deployed at: ${safeAddress}`)
     handleClose()
     resetForm()
-  } catch (e: any) {
-    error.value = e?.message || 'Failed to deploy Safe'
+  } catch (err) {
+    error.value
+      = err instanceof Error
+        ? err.message
+        : 'Failed to deploy Safe'
   } finally {
     isLoading.value = false
   }

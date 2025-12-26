@@ -2,7 +2,9 @@
   <UCard>
     <template #header>
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold">My Safes</h3>
+        <h3 class="text-lg font-semibold">
+          My Safes
+        </h3>
         <div class="flex items-center gap-2">
           <UInput
             v-model="search"
@@ -11,7 +13,14 @@
             class="w-56"
             icon="i-heroicons-magnifying-glass"
           />
-          <UButton icon="i-heroicons-arrow-path" @click="fetchSafes" :loading="isLoading" size="xs">Refresh</UButton>
+          <UButton
+            icon="i-heroicons-arrow-path"
+            :loading="isLoading"
+            size="xs"
+            @click="fetchSafes"
+          >
+            Refresh
+          </UButton>
         </div>
       </div>
     </template>
@@ -19,11 +28,21 @@
       <table class="w-full">
         <thead>
           <tr class="border-b border-gray-200 dark:border-gray-700">
-            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">#</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Safe Address</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Network</th>
-            <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Balance</th>
-            <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Symbol</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              #
+            </th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              Safe Address
+            </th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              Network
+            </th>
+            <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              Balance
+            </th>
+            <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              Symbol
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -37,7 +56,9 @@
             :key="safe.address"
             class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
-            <td class="px-4 py-4 text-sm text-gray-500">{{ idx + 1 }}</td>
+            <td class="px-4 py-4 text-sm text-gray-500">
+              {{ idx + 1 }}
+            </td>
             <td class="px-4 py-4 text-sm font-mono truncate flex items-center gap-2">
               <span>{{ safe.address }}</span>
               <UButton
@@ -49,9 +70,15 @@
                 @click="copyAddress(safe.address)"
               />
             </td>
-            <td class="px-4 py-4 text-sm text-left text-gray-500 dark:text-gray-400">{{ safe.chain }}</td>
-            <td class="px-4 py-4 text-sm text-right font-semibold">{{ safe.balance }}</td>
-            <td class="px-4 py-4 text-sm text-right font-medium">{{ safe.symbol }}</td>
+            <td class="px-4 py-4 text-sm text-left text-gray-500 dark:text-gray-400">
+              {{ safe.chain }}
+            </td>
+            <td class="px-4 py-4 text-sm text-right font-semibold">
+              {{ safe.balance }}
+            </td>
+            <td class="px-4 py-4 text-sm text-right font-medium">
+              {{ safe.symbol }}
+            </td>
           </tr>
           <tr v-if="!isLoading && filteredSafes.length === 0">
             <td colspan="5" class="text-center py-8 text-gray-500">
@@ -80,9 +107,9 @@ const filteredSafes = computed(() => {
   const q = search.value.toLowerCase()
   return safes.value.filter(
     safe =>
-      safe.address.toLowerCase().includes(q) ||
-      safe.chain.toLowerCase().includes(q) ||
-      (safe.symbol && safe.symbol.toLowerCase().includes(q))
+      safe.address.toLowerCase().includes(q)
+      || safe.chain.toLowerCase().includes(q)
+      || (safe.symbol && safe.symbol.toLowerCase().includes(q))
   )
 })
 

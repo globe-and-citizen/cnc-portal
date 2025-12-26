@@ -22,7 +22,7 @@ const pageTitle = computed(() => {
     'settings-members': 'Members',
     'settings-notifications': 'Notifications',
     'settings-security': 'Security',
-    'safe': "Safe"
+    'safe': 'Safe'
   }
 
   // Return mapped title or capitalize first segment of path

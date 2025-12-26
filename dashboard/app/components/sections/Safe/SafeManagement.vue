@@ -27,10 +27,10 @@
 import { ref } from 'vue'
 import SafeDeployForm from './SafeDeployForm.vue'
 import SafeList from './SafeList.vue'
+
 const toast = useToast()
 const isDeployModalOpen = ref(false)
 const safeListRef = ref()
-
 
 function handleDeployed(message?: string) {
   safeListRef.value?.fetchSafes?.()
