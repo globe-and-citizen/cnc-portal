@@ -14,6 +14,16 @@
     </template>
 
     <div class="space-y-6">
+      <!-- Disabled Feature Alert -->
+      <UAlert
+        v-if="!isEditable"
+        color="warning"
+        variant="soft"
+        icon="i-lucide-lock"
+        title="Feature is Disabled"
+        description="This feature is currently disabled or in beta. Enable it from the features page to make changes."
+      />
+
       <UAlert
         color="info"
         variant="soft"
@@ -48,7 +58,7 @@
             </span>
             <USwitch
               v-model="globalRestrictionEnabled"
-              :disabled="isLoadingGlobal"
+              :disabled="isLoadingGlobal || !isEditable"
               data-test="global-restriction-switch"
               @update:model-value="saveGlobalSettings"
             />
@@ -71,6 +81,7 @@
           icon="i-lucide-plus"
           color="primary"
           data-test="add-override-btn"
+          :disabled="!isEditable"
           @click="openAddOverrideModal"
         >
           Add Override
@@ -83,6 +94,7 @@
         :loading="isLoading"
         :loading-team-id="loadingTeamId"
         :global-restriction-enabled="globalRestrictionEnabled"
+        :is-editable="isEditable"
         :total="teamFunctionOverrides.length"
         :current-page="pagination.page"
         :page-size="pagination.pageSize"
@@ -184,6 +196,15 @@
 import { ref, computed, onMounted } from 'vue'
 import type { Team, TeamRestrictionOverride } from '~/types'
 import TeamOverridesTable from './TeamOverridesTable.vue'
+
+// Props
+interface Props {
+  isEditable?: boolean
+}
+
+withDefaults(defineProps<Props>(), {
+  isEditable: true
+})
 
 // Composables
 const { fetchTeams } = useTeams()
