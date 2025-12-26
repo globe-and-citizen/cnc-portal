@@ -3,15 +3,11 @@ import type { User } from '@/types/user'
 import { log } from '@/utils/generalUtil'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useValidateToken } from '@/queries/auth.queries'
 
 export function useAuth() {
   const isAuthenticated = ref(false)
   const user = ref<User | null>(null)
   const router = useRouter()
-
-  // Initialize the query at the top level
-  const { error, refetch } = useValidateToken()
 
   // TODO: Handle auth status and user data here
 
@@ -33,10 +29,10 @@ export function useAuth() {
     }, 5000)
   }
 
-  const validateToken = async () => {
-    await refetch()
-    return !error.value
-  }
+  // const validateToken = async () => {
+  //   await refetch()
+  //   return !error.value
+  // }
 
-  return { isAuthenticated, user, logout, validateToken }
+  return { isAuthenticated, user, logout }
 }

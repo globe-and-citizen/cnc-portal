@@ -1,5 +1,7 @@
 import axios from 'axios'
 import { BACKEND_URL } from '@/constant'
+import type { Router } from 'vue-router'
+import { useUserDataStore } from '@/stores/user'
 
 const apiClient = axios.create({
   baseURL: `${BACKEND_URL}/api/`,
@@ -17,17 +19,31 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
-// Add response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Handle 401 errors globally if needed
-    if (error.response?.status === 401) {
-      // Will be handled by individual queries if needed
-      console.warn('Unauthorized request detected')
+/**
+ * Setup the 401 response interceptor
+ * This should be called after app initialization to ensure router and Pinia are available
+ */
+export const setupAuthInterceptor = (router: Router) => {
+  apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      // Handle 401 errors globally - logout user
+      if (error.response?.status === 401) {
+        console.warn('Unauthorized request detected - logging out user')
+
+        // Use Pinia store to clear auth data (guaranteed to be available)
+        const userStore = useUserDataStore()
+        userStore.clearUserData()
+
+        // Redirect to login page
+        router.push({ name: 'login' }).catch(() => {
+          // Fallback to direct navigation if router push fails
+          window.location.href = '/login'
+        })
+      }
+      return Promise.reject(error)
     }
-    return Promise.reject(error)
-  }
-)
+  )
+}
 
 export default apiClient

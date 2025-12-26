@@ -12,10 +12,7 @@ export const useAddMembers = (teamId: string | number) => {
 
   return useMutation<AxiosResponse<{ members: Member[] }>, AxiosError, MemberInput[]>({
     mutationFn: async (members: MemberInput[]) => {
-      return await apiClient.post<{ members: Member[] }>(
-        `teams/${teamId}/member`,
-        members
-      )
+      return await apiClient.post<{ members: Member[] }>(`teams/${teamId}/member`, members)
     },
     onSuccess: () => {
       // Invalidate team data to refetch with updated members

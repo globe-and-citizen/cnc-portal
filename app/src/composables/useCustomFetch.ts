@@ -5,7 +5,7 @@ import { useToastStore } from '@/stores/useToastStore'
 const isRedirecting = ref(false)
 
 import { ref } from 'vue'
-import { useAuth } from '@/composables/useAuth'
+// import { useAuth } from '@/composables/useAuth'
 
 /**
  * @deprecated use apiClient from '@/lib/axios' + Queries/Mutations instead
@@ -34,13 +34,13 @@ export const useCustomFetch = createFetch({
         log.info('Unauthorized, will check the token')
 
         // TODO : Instead of logging out the user, we can recheck if the token is expired and refresh it.
-        const { logout, validateToken } = useAuth()
-        if (!(await validateToken())) {
-          log.info('Token is not valid, will logout the user')
-          logout()
-        } else {
-          log.warn('There is an **401 Error** but the Token is valid, try ')
-        }
+        // const { logout, validateToken } = useAuth()
+        // if (!(await validateToken())) {
+        //   log.info('Token is not valid, will logout the user')
+        //   logout()
+        // } else {
+        //   log.warn('There is an **401 Error** but the Token is valid, try ')
+        // }
       }
       return ctx
     }
