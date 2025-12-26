@@ -97,19 +97,29 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
 import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 
-import { useAccount } from '@wagmi/vue'
+import { useChainId, useConnection, useConnectionEffect, useSwitchChain } from '@wagmi/vue'
 import { useAuth } from './composables/useAuth'
 import { useAppStore } from './stores'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 import '@vuepic/vue-datepicker/dist/main.css'
 import LockScreen from './components/LockScreen.vue'
+import { NETWORK } from '@/constant/index'
 
-const { address: connectedAddress } = useAccount()
+const connection = useConnection()
+const switchChain = useSwitchChain()
+
+const networkChainId = parseInt(NETWORK.chainId)
+const chainId = useChainId()
+watch(chainId, (val) => {
+  if (val === undefined) return
+
+  switchChain.mutate({ chainId: networkChainId })
+})
+useBackendWake()
 
 const { addErrorToast } = useToastStore()
 
 const appStore = useAppStore()
-const { isDisconnected } = useAccount()
 const { logout } = useAuth()
 const toggleSide = ref(false)
 const editUserModal = ref({ mount: false, show: false })
@@ -120,22 +130,24 @@ const { name, address, imageUrl } = storeToRefs(userStore)
 const lock = computed(() => {
   if (
     userStore.isAuth &&
-    connectedAddress.value?.toLowerCase() !== userStore.address.toLowerCase()
+    connection.address?.value?.toLowerCase() !== userStore.address.toLowerCase()
   ) {
     return true
   }
   return false
 })
 
-watch(isDisconnected, (value) => {
-  if (value && userStore.isAuth) {
-    addErrorToast('Disconnected from wallet')
-    setTimeout(() => {
-      logout()
-    }, 1000)
+useConnectionEffect({
+  onDisconnect() {
+    if (userStore.isAuth) {
+      addErrorToast('Disconnected from wallet')
+      setTimeout(() => {
+        logout()
+      }, 1000)
+      console.log('Connection disconnected')
+    }
   }
 })
 
 // Wake up backend on app mount using TanStack Query
-useBackendWake()
 </script>
