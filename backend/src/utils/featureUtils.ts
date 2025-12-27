@@ -69,9 +69,7 @@ export async function insertFeature(functionName: string, status: FeatureStatus)
 export async function patchFeature(functionName: string, status: FeatureStatus) {
   const feature = await prisma.globalSetting.update({
     where: { functionName: functionName },
-    data: {
-      status,
-    },
+    data: { status },
   });
 
   return feature;
