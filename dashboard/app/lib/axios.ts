@@ -1,42 +1,12 @@
 import axios from 'axios'
-
-const runtimeConfig = useRuntimeConfig()
-const backendUrl = runtimeConfig.public.backendUrl
-
-const apiClient = axios.create({
-  baseURL: `${backendUrl}/api/`,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-})
-
-// Add auth interceptor
-apiClient.interceptors.request.use((config) => {
-  const authStore = useAuthStore()
-  const token = authStore.getToken()
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
-
-// Add response interceptor for error handling
-apiClient.interceptors.response.use(
-  response => response,
-  (error) => {
-    // Handle 401 errors globally if needed
-    if (error.response?.status === 401) {
-      // Will be handled by individual queries if needed
-      console.warn('Unauthorized request detected')
-    }
-import type { AxiosInstance } from 'axios'
+import type { AxiosInstance, InternalAxiosRequestConfig, AxiosRequestHeaders } from 'axios'
 import type { Router } from 'vue-router'
-// import { useAuthStore } from '@/stores/useAuthStore'
+import { useAuthStore } from '@/stores/useAuthStore'
 import { BACKEND_URL } from '~/constant/index'
 
 /**
- * Create axios instance with configured base URL
- * Uses Nuxt runtime config to get the backend URL
+ * Create a configured axios instance.
+ * Uses Nuxt runtime config via BACKEND_URL helper, with sensible defaults.
  */
 function createApiClient(): AxiosInstance {
   return axios.create({
@@ -51,14 +21,26 @@ function createApiClient(): AxiosInstance {
 export const apiClient = createApiClient()
 
 /**
- * Setup request interceptor to add auth token
- * Adds Bearer token from localStorage to all requests
+ * Request interceptor: attach Bearer token from AuthStore (preferred)
+ * and fallback to localStorage if store is not available yet.
  */
 apiClient.interceptors.request.use(
-  (config) => {
-    const token = useLocalStorage<string | null>('dashboard-auth-token', null)
-    if (token.value) {
-      config.headers.Authorization = `Bearer ${token.value}`
+  (config: InternalAxiosRequestConfig) => {
+    let token: string | null = null
+    try {
+      const authStore = useAuthStore()
+      token = authStore.getToken()
+    } catch {
+      // Pinia not ready (early import or SSR context) – fallback
+      token = (typeof localStorage !== 'undefined')
+        ? localStorage.getItem('dashboard-auth-token')
+        : null
+    }
+
+    if (token) {
+      const headers = (config.headers ?? {}) as AxiosRequestHeaders
+      headers.Authorization = `Bearer ${token}`
+      config.headers = headers
     }
     return config
   },
@@ -69,65 +51,66 @@ apiClient.interceptors.request.use(
 )
 
 /**
- * Setup response interceptor for error handling
- * Should be called after app initialization to ensure router and Pinia are available
- *
- * @param router - Vue Router instance for redirects
- * @throws Error if called before router is available
- *
- * @example
- * // In app setup
- * setupAuthInterceptor(router)
+ * Base response interceptor: lightweight handling/logging.
+ * For full auth flows (redirects), use setupAuthInterceptor(router).
+ */
+apiClient.interceptors.response.use(
+  response => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Keep minimal global handling; pages/queries can decide specifics
+      console.warn('Unauthorized request detected')
+    }
+    return Promise.reject(error)
+  }
+)
+
+/**
+ * Optional router-aware interceptor with richer handling.
+ * Call once in app initialization (e.g., a Nuxt plugin).
  */
 export const setupAuthInterceptor = (router: Router) => {
   apiClient.interceptors.response.use(
     response => response,
     async (error) => {
-      // Handle 401 Unauthorized - clear auth and redirect to login
       if (error.response?.status === 401) {
-        console.warn('Unauthorized request (401) - clearing auth and redirecting to login')
-
-        // Clear auth store
-        // const authStore = useAuthStore()
-        // authStore.logout()
-
-        // Clear auth token from localStorage
-        localStorage.removeItem('authToken')
-
-        // Redirect to login
+        console.warn('Unauthorized (401) – clearing auth and redirecting to login')
+        try {
+          const authStore = useAuthStore()
+          authStore.clearAuth()
+        } catch {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem('dashboard-auth-token')
+            localStorage.removeItem('dashboard-auth-address')
+          }
+        }
         try {
           await router.push({ name: 'login' })
         } catch (e) {
-          // Fallback to direct navigation if router push fails
           console.warn('Router push failed, using window navigation', e)
           window.location.href = '/login'
         }
       }
 
-      // Handle 403 Forbidden - user lacks permissions
       if (error.response?.status === 403) {
-        console.warn('Access forbidden (403) - user lacks required permissions')
-        // Optionally redirect to an access-denied page or home
+        console.warn('Access forbidden (403) – insufficient permissions')
         try {
           await router.push({ name: 'index' })
         } catch {
-          // Silently fail if router push fails
+          // no-op if routing fails
         }
       }
 
-      // Handle 404 Not Found
       if (error.response?.status === 404) {
         console.warn('Resource not found (404)')
       }
 
-      // Handle 500 Server Error
       if (error.response?.status === 500) {
         console.error('Server error (500)', error.response.data)
       }
 
-      // Handle network errors
       if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK') {
-        console.error('Network error - request timeout or connection refused', error)
+        console.error('Network error – timeout or connection refused', error)
       }
 
       return Promise.reject(error)
@@ -136,17 +119,8 @@ export const setupAuthInterceptor = (router: Router) => {
 }
 
 /**
- * Get the current axios instance
- * Can be used to make requests directly if needed
- *
- * @returns Configured axios instance
- *
- * @example
- * const client = getApiClient()
- * const response = await client.get('/user/0x123...')
+ * Get the configured axios instance.
  */
-export const getApiClient = (): AxiosInstance => {
-  return apiClient
-}
+export const getApiClient = (): AxiosInstance => apiClient
 
 export default apiClient
