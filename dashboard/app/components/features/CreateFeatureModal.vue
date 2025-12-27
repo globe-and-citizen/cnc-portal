@@ -22,16 +22,18 @@
             <label class="block text-sm font-medium mb-2">
               Function Name <span class="text-red-500">*</span>
             </label>
-            <UInput
+            <USelect
               v-model="form.functionName"
-              placeholder="e.g., SUBMIT_RESTRICTION"
-              data-test="function-name-input"
-              :disabled="loading"
+              :items="availableFunctionOptions"
+              searchable
+              clearable
+              data-test="function-name-select"
+              :disabled="loading || availableFunctionOptions.length === 0"
               icon="i-lucide-code"
-              required
+              placeholder="Select a function or search..."
             />
             <p class="text-xs text-muted mt-1">
-              Enter a unique function name (e.g., SUBMIT_RESTRICTION, APPROVAL_FLOW)
+              Select a predefined function name
             </p>
             <p v-if="formErrors.functionName" class="text-xs text-red-500 mt-1">
               {{ formErrors.functionName }}
@@ -118,12 +120,24 @@ const formErrors = reactive({
   functionName: ''
 })
 
+// Predefined functions with readable labels
+const PREDEFINED_FUNCTIONS = [
+  { label: 'SUBMIT_RESTRICTION', value: 'SUBMIT_RESTRICTION' }
+]
+
 // Status options
 const statusOptions = [
   { label: 'Enabled', value: 'enabled' },
   { label: 'Disabled', value: 'disabled' },
   { label: 'Beta', value: 'beta' }
 ]
+
+const availableFunctionOptions = computed(() => {
+  const createdFunctionNames = props.existingFeatures.map(fonction => fonction.functionName)
+  return PREDEFINED_FUNCTIONS.filter(func =>
+    !createdFunctionNames.includes(func.value)
+  )
+})
 
 // Computed
 const isFormValid = computed(() => {
@@ -142,17 +156,6 @@ const validateForm = () => {
 
   if (!form.functionName.trim()) {
     formErrors.functionName = 'Function name is required'
-    return false
-  }
-
-  if (form.functionName.length < 3) {
-    formErrors.functionName = 'Function name must be at least 3 characters'
-    return false
-  }
-
-  // Check if feature already exists
-  if (props.existingFeatures.some(f => f.functionName.toLowerCase() === form.functionName.toLowerCase())) {
-    formErrors.functionName = 'A feature with this name already exists'
     return false
   }
 
