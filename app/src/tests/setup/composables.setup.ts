@@ -99,3 +99,22 @@ vi.mock('@/queries/contract.queries', () => ({
 vi.mock('@/queries/health.queries', () => ({
   useBackendHealthQuery: vi.fn(queryMocks.useBackendHealthQuery)
 }))
+
+/**
+ * Mock useBackendWake composable
+ */
+vi.mock('@/composables/useBackendWake', () => ({
+  useBackendWake: vi.fn()
+}))
+
+/**
+ * Mock useAuth composable
+ */
+vi.mock('@/composables/useAuth', () => ({
+  useAuth: vi.fn(() => ({
+    logout: vi.fn(),
+    login: vi.fn(),
+    validateToken: vi.fn()
+  }))
+}))
+
