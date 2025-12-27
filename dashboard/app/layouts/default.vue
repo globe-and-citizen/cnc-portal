@@ -1,10 +1,25 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
+import { useUser } from '~/queries/index'
 
 const { isNotificationsSlideoverOpen } = useDashboard()
 const route = useRoute()
+const router = useRouter()
 
 const open = ref(false)
+
+// Get role store
+const roleStore = useRoleStore()
+
+// Check if user is admin - redirect to access denied if not
+const isAdmin = computed(() => roleStore.isAdmin)
+
+// Watch for role changes and redirect if user is not admin
+watch(isAdmin, (newValue) => {
+  if (!newValue && route.name !== 'access-denied') {
+    router.push({ name: 'access-denied' })
+  }
+}, { immediate: true })
 
 // Dynamic page title based on current route
 const pageTitle = computed(() => {
@@ -179,92 +194,105 @@ const groups = computed(() => [
 </script>
 
 <template>
-  <UDashboardGroup unit="rem">
-    <UDashboardSidebar
-      id="default"
-      v-model:open="open"
-      collapsible
-      resizable
-      class="bg-elevated/25"
-      :ui="{ footer: 'lg:border-t lg:border-default' }"
-    >
-      <template #header="{ collapsed }">
-        <NuxtLink to="/" class="flex items-center justify-center">
-          <img
-            v-if="collapsed"
-            src="/logo-icon.png"
-            alt="CNC Portal"
-            class="h-8 w-8 object-contain"
-          >
-          <img
-            v-else
-            src="/logo.png"
-            alt="CNC Portal"
-            class="h-10 w-auto object-contain"
-          >
-        </NuxtLink>
-      </template>
+  <!-- Admin Dashboard -->
+  <div v-if="isAdmin">
+    <UDashboardGroup unit="rem">
+      <UDashboardSidebar
+        id="default"
+        v-model:open="open"
+        collapsible
+        resizable
+        class="bg-elevated/25"
+        :ui="{ footer: 'lg:border-t lg:border-default' }"
+      >
+        <template #header="{ collapsed }">
+          <NuxtLink to="/" class="flex items-center justify-center">
+            <img
+              v-if="collapsed"
+              src="/logo-icon.png"
+              alt="CNC Portal"
+              class="h-8 w-8 object-contain"
+            >
+            <img
+              v-else
+              src="/logo.png"
+              alt="CNC Portal"
+              class="h-10 w-auto object-contain"
+            >
+          </NuxtLink>
+        </template>
 
-      <template #default="{ collapsed }">
-        <UDashboardSearchButton :collapsed="collapsed" class="bg-transparent ring-default" />
+        <template #default="{ collapsed }">
+          <UDashboardSearchButton :collapsed="collapsed" class="bg-transparent ring-default" />
 
-        <UNavigationMenu
-          :collapsed="collapsed"
-          :items="links[0]"
-          orientation="vertical"
-          tooltip
-          popover
-        />
+          <UNavigationMenu
+            :collapsed="collapsed"
+            :items="links[0]"
+            orientation="vertical"
+            tooltip
+            popover
+          />
 
-        <UNavigationMenu
-          :collapsed="collapsed"
-          :items="links[1]"
-          orientation="vertical"
-          tooltip
-          class="mt-auto"
-        />
-      </template>
+          <UNavigationMenu
+            :collapsed="collapsed"
+            :items="links[1]"
+            orientation="vertical"
+            tooltip
+            class="mt-auto"
+          />
+        </template>
 
-      <template #footer="{ collapsed }">
-        <UserMenu :collapsed="collapsed" />
-      </template>
-    </UDashboardSidebar>
+        <template #footer="{ collapsed }">
+          <UserMenu :collapsed="collapsed" />
+        </template>
+      </UDashboardSidebar>
 
-    <UDashboardSearch :groups="groups" />
+      <UDashboardSearch :groups="groups" />
 
-    <UDashboardPanel :id="panelId">
-      <template #header>
-        <UDashboardNavbar :title="pageTitle" :ui="{ right: 'gap-3' }">
-          <template #leading>
-            <UDashboardSidebarCollapse />
-          </template>
+      <UDashboardPanel :id="panelId">
+        <template #header>
+          <UDashboardNavbar :title="pageTitle" :ui="{ right: 'gap-3' }">
+            <template #leading>
+              <UDashboardSidebarCollapse />
+            </template>
 
-          <template #right>
-            <UTooltip text="Notifications" :shortcuts="['N']">
-              <UButton
-                color="neutral"
-                variant="ghost"
-                square
-                @click="isNotificationsSlideoverOpen = true"
-              >
-                <UChip color="error" inset>
-                  <UIcon name="i-lucide-bell" class="size-5 shrink-0" />
-                </UChip>
-              </UButton>
-            </UTooltip>
+            <template #right>
+              <UTooltip text="Notifications" :shortcuts="['N']">
+                <UButton
+                  color="neutral"
+                  variant="ghost"
+                  square
+                  @click="isNotificationsSlideoverOpen = true"
+                >
+                  <UChip color="error" inset>
+                    <UIcon name="i-lucide-bell" class="size-5 shrink-0" />
+                  </UChip>
+                </UButton>
+              </UTooltip>
 
-            <UDropdownMenu :items="items">
-              <UButton icon="i-lucide-plus" size="md" class="rounded-full" />
-            </UDropdownMenu>
-          </template>
-        </UDashboardNavbar>
-      </template>
+              <UDropdownMenu :items="items">
+                <UButton icon="i-lucide-plus" size="md" class="rounded-full" />
+              </UDropdownMenu>
+            </template>
+          </UDashboardNavbar>
+        </template>
 
-      <template #body>
-        <slot />
-      </template>
-    </UDashboardPanel>
+        <template #body>
+          <slot />
+        </template>
+      </UDashboardPanel>
 
-    <NotificationsSlideover />
-  </UDashboardGroup>
+      <NotificationsSlideover />
+    </UDashboardGroup>
+  </div>
+
+  <!-- Non-Admin Redirect (will be redirected to access-denied page) -->
+  <div v-else class="flex items-center justify-center min-h-screen bg-slate-900">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
+      <p class="text-slate-400">
+        Checking permissions...
+      </p>
+    </div>
+  </div>
 </template>
