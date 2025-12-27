@@ -165,7 +165,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
       } else {
         toastStore.addSuccessToast('Claim approved')
         queryClient.invalidateQueries({
-          queryKey: ['weekly-claims', teamStore.currentTeam?.id]
+          queryKey: ['weekly-claims', teamStore.currentTeamId]
         })
         isloading.value = false
         emit('loading', false)
@@ -183,19 +183,6 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
     isloading.value = false
     emit('loading', false)
   }
-  // if (signature.value) {
-  //   await enableClaim(signature.value)
-  //   await executeUpdateClaim()
-
-  //   if (claimError.value) {
-  //     toastStore.addErrorToast('Failed to approve weeklyClaim')
-  //   } else {
-  //     toastStore.addSuccessToast('Claim approved')
-  //     queryClient.invalidateQueries({
-  //       queryKey: ['weekly-claims', teamStore.currentTeam?.id]
-  //     })
-  //   }
-  // }
 }
 
 const enableClaim = async (signature: Address) => {

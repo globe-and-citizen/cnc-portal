@@ -31,7 +31,7 @@ const currency = useStorage('currency', {
 })
 const teamStore = useTeamStore()
 
-const contractAddress = teamStore.currentTeam?.teamContracts.find(
+const contractAddress = teamStore.currentTeamMeta.data?.teamContracts.find(
   (contract) => contract.type === 'CashRemunerationEIP712'
 )?.address
 const { isLoading: isLoadingBalance, total } = useContractBalance(contractAddress as Address)

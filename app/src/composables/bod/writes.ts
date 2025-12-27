@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useAccount } from '@wagmi/vue'
+import { useChainId } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
 import { BOD_FUNCTION_NAMES, type BodFunctionName, isValidBodFunction } from './types'
 import {
@@ -17,7 +17,7 @@ import { BOD_ABI } from '@/artifacts/abi/bod'
 export function useBodWrites() {
   const teamStore = useTeamStore()
   const queryClient = useQueryClient()
-  const { chainId } = useAccount()
+  const chainId = useChainId()
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
 
   // Use the generic contract writes composable

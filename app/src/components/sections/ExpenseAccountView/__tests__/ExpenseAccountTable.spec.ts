@@ -169,6 +169,14 @@ vi.mock('@/composables/useCustomFetch', () => {
   }
 })
 
+vi.mock('@/composables', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useTanstackQuery: vi.fn()
+  }
+})
+
 describe('ExpenseAccountTable', () => {
   setActivePinia(createPinia())
 
@@ -203,11 +211,10 @@ describe('ExpenseAccountTable', () => {
   }
 
   beforeEach(() => {
-    //@ts-expect-error: fewer return values than original
     vi.mocked(useTanstackQuery).mockReturnValue({
       data: ref(mockApprovals),
       isLoading: ref(false)
-    })
+    } as ReturnType<typeof useTanstackQuery>)
   })
 
   describe('Render', () => {

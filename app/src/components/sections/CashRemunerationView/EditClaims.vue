@@ -98,7 +98,7 @@ const updateClaim = async (data: ClaimSubmitPayload) => {
       toastStore.addSuccessToast('Claim updated successfully')
 
       await queryClient.invalidateQueries({
-        queryKey: ['weekly-claims', teamStore.currentTeam?.id]
+        queryKey: ['weekly-claims', teamStore.currentTeamId]
       })
 
       // Reset upload images

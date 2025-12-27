@@ -177,7 +177,7 @@ const isCashRemunerationOwner = computed(() => userStore.address === cashRemuner
 
 const claimAction = ref<'disable' | null>(null)
 
-const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeam?.id}`)
+const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeamId}`)
 
 //  `/weeklyclaim/${props.weeklyClaim.id}/?action=${claimAction.value}`
 
@@ -238,7 +238,7 @@ const disableClaim = async () => {
         toastStore.addErrorToast('Failed to update Claim status')
       }
       queryClient.invalidateQueries({
-        queryKey: ['weekly-claims', teamStore.currentTeam?.id]
+        queryKey: ['weekly-claims', teamStore.currentTeamId]
       })
 
       // Stop loading only on success and close dropdown
