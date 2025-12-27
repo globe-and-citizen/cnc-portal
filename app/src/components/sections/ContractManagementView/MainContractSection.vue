@@ -191,13 +191,13 @@ const router = useRouter()
 const { execute: resetContracts } = useCustomFetch('contract/reset', {
   immediate: false
 })
-  .delete({ teamId: teamStore.currentTeam?.id })
+  .delete({ teamId: teamStore.currentTeamId })
   .json()
 
 const redeployContracts = async () => {
   await resetContracts()
   showModal.value = false
   // redirect to team page
-  await router.push({ name: 'show-team', params: { id: teamStore.currentTeam?.id } })
+  await router.push({ name: 'show-team', params: { id: teamStore.currentTeamId } })
 }
 </script>
