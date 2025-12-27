@@ -146,7 +146,6 @@ const columns = computed<ColumnDef<TeamRestrictionOverride>[]>(() => [
         h(USwitch, {
           'modelValue': row.original.isRestricted,
           'data-test': 'team-restriction-switch',
-          'disabled': !props.isEditable,
           'loading': props.loadingTeamId === row.original.teamId,
           'onUpdate:modelValue': (value: boolean) => emit('toggle-restriction', row.original, value)
         }),
@@ -166,7 +165,6 @@ const columns = computed<ColumnDef<TeamRestrictionOverride>[]>(() => [
           'size': 'xs',
           'data-test': 'remove-override-btn',
           'icon': 'i-lucide-trash-2',
-          'disabled': !props.isEditable,
           'loading': props.loadingTeamId === row.original.teamId,
           'onClick': () => emit('remove-override', row.original)
         },
