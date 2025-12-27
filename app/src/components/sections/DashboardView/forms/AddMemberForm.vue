@@ -44,8 +44,7 @@ const formData = ref<Array<Member>>([])
 const {
   mutate: executeAddMembers,
   isPending: addMembersLoading,
-  error: addMembersError,
-  data: addMembersResponse
+  error: addMembersError
 } = useAddMembers(props.teamId)
 
 // const statusCode = ref<number | null>(null)

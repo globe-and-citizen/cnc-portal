@@ -20,6 +20,11 @@ export const mockTeamData: Team = {
       address: '0x0987654321098765432109876543210987654321',
       name: 'Member 2',
       imageUrl: 'https://example.com/avatar2.jpg'
+    },
+    {
+      address: '0x1111111111111111111111111111111111111111',
+      name: 'Bob',
+      imageUrl: 'https://example.com/avatar-bob.jpg'
     }
   ] as Member[],
   teamContracts: [
