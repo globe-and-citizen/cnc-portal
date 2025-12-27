@@ -308,4 +308,134 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(500, error, res);
     });
   });
+
+  describe('createOverride', () => {
+    it('should return 400 for invalid function name', async () => {
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+      const req = createMockRequest({
+        params: { functionName: '', teamId: '5' },
+        body: { status: 'enabled' },
+      });
+      const res = createMockResponse();
+      await featureController.createOverride(req as Request, res as Response);
+      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
+    });
+
+    it('should return 400 for invalid team ID', async () => {
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+      const req = createMockRequest({
+        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '-1' },
+        body: { status: 'enabled' },
+      });
+      const res = createMockResponse();
+      await featureController.createOverride(req as Request, res as Response);
+      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
+    });
+
+    it('should return 400 for invalid body - missing status', async () => {
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+      const req = createMockRequest({
+        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
+        body: {}, // Missing required status field
+      });
+      const res = createMockResponse();
+      await featureController.createOverride(req as Request, res as Response);
+      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
+    });
+
+    it('should return 404 if feature not found', async () => {
+      vi.mocked(featureUtils.featureExists).mockResolvedValue(false);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+
+      const req = createMockRequest({
+        params: { functionName: 'NONEXISTENT', teamId: '5' },
+        body: { status: 'disabled' },
+      });
+      const res = createMockResponse();
+
+      await featureController.createOverride(req as Request, res as Response);
+
+      expect(errorResponse).toHaveBeenCalledWith(404, 'Feature "NONEXISTENT" not found', res);
+    });
+
+    it('should return 404 if team not found', async () => {
+      vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.teamExists).mockResolvedValue(false);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+
+      const req = createMockRequest({
+        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '999' },
+        body: { status: 'disabled' },
+      });
+      const res = createMockResponse();
+
+      await featureController.createOverride(req as Request, res as Response);
+
+      expect(errorResponse).toHaveBeenCalledWith(404, 'Team with ID 999 not found', res);
+    });
+
+    it('should return 409 if override already exists', async () => {
+      vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.teamExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.overrideExists).mockResolvedValue(true);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+
+      const req = createMockRequest({
+        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
+        body: { status: 'disabled' },
+      });
+      const res = createMockResponse();
+
+      await featureController.createOverride(req as Request, res as Response);
+
+      expect(errorResponse).toHaveBeenCalledWith(
+        409,
+        expect.stringContaining('Override already exists'),
+        res
+      );
+    });
+
+    it('should create a team override with status 201', async () => {
+      const mockOverride = {
+        id: 1,
+        functionName: 'SUBMIT_RESTRICTION',
+        teamId: 5,
+        status: 'disabled',
+        team: { name: 'Team A' },
+      };
+
+      vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.teamExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.overrideExists).mockResolvedValue(false);
+      vi.mocked(featureUtils.insertOverride).mockResolvedValue(mockOverride as any);
+
+      const req = createMockRequest({
+        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
+        body: { status: 'disabled' },
+      });
+      const res = createMockResponse();
+
+      await featureController.createOverride(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Override created for team Team A on feature "SUBMIT_RESTRICTION"',
+        data: mockOverride,
+      });
+    });
+
+    it('should return 500 on error', async () => {
+      const error = new Error('Database error');
+      vi.mocked(featureUtils.featureExists).mockRejectedValue(error);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+      const req = createMockRequest({
+        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
+        body: { status: 'disabled' },
+      });
+      const res = createMockResponse();
+      await featureController.createOverride(req as Request, res as Response);
+      expect(errorResponse).toHaveBeenCalledWith(500, error, res);
+    });
+  });
 });
