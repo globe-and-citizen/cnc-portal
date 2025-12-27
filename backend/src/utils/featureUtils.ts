@@ -1,7 +1,6 @@
 import { prisma } from './dependenciesUtil';
 import type { FeatureStatus } from '../validation/featureValidation';
 
-
 export async function findAllFeatures() {
   const features = await prisma.globalSetting.findMany({
     orderBy: { functionName: 'asc' },
