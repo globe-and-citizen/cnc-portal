@@ -170,4 +170,77 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(500, error, res);
     });
   });
+
+  describe('updateFeatureByName', () => {
+    it('should return 400 for invalid function name', async () => {
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+      const req = createMockRequest({
+        params: { functionName: '' },
+        body: { status: 'enabled' },
+      });
+      const res = createMockResponse();
+      await featureController.updateFeatureByName(req as Request, res as Response);
+      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
+    });
+
+    it('should return 400 for invalid request body', async () => {
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+      const req = createMockRequest({
+        params: { functionName: 'SUBMIT_RESTRICTION' },
+        body: { status: 'invalid_status' },
+      });
+      const res = createMockResponse();
+      await featureController.updateFeatureByName(req as Request, res as Response);
+      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
+    });
+
+    it('should return 404 when feature not found', async () => {
+      vi.mocked(featureUtils.featureExists).mockResolvedValue(false);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+
+      const req = createMockRequest({
+        params: { functionName: 'NONEXISTENT' },
+        body: { status: 'disabled' },
+      });
+      const res = createMockResponse();
+
+      await featureController.updateFeatureByName(req as Request, res as Response);
+
+      expect(errorResponse).toHaveBeenCalledWith(404, 'Feature "NONEXISTENT" not found', res);
+    });
+
+    it('should update feature status with status 200', async () => {
+      const mockFeature = { functionName: 'SUBMIT_RESTRICTION', status: 'disabled' };
+      vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.patchFeature).mockResolvedValue(mockFeature as any);
+
+      const req = createMockRequest({
+        params: { functionName: 'SUBMIT_RESTRICTION' },
+        body: { status: 'disabled' },
+      });
+      const res = createMockResponse();
+
+      await featureController.updateFeatureByName(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Feature "SUBMIT_RESTRICTION" updated to "disabled"',
+        data: mockFeature,
+      });
+    });
+
+    it('should return 500 on error', async () => {
+      const error = new Error('Database error');
+      vi.mocked(featureUtils.featureExists).mockRejectedValue(error);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+      const req = createMockRequest({
+        params: { functionName: 'SUBMIT_RESTRICTION' },
+        body: { status: 'disabled' },
+      });
+      const res = createMockResponse();
+      await featureController.updateFeatureByName(req as Request, res as Response);
+      expect(errorResponse).toHaveBeenCalledWith(500, error, res);
+    });
+  });
 });
