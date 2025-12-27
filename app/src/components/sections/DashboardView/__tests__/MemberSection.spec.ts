@@ -8,6 +8,7 @@ import { useTeamStore } from '@/stores'
 import { mockTeamStore } from '@/tests/mocks/store.mock'
 import { NETWORK } from '@/constant'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
+import { createMockQueryResponse } from '@/tests/mocks/index'
 
 interface WageData {
   userAddress: Address
@@ -69,6 +70,11 @@ vi.mock('@/queries/wage.queries', () => ({
     data: mockWageData,
     isLoading: mockWageIsFetching,
     error: mockWageError
+  })),
+  useSetMemberWage: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: ref(false),
+    error: ref<Error | null>(null)
   }))
 }))
 
@@ -109,11 +115,12 @@ describe('MemberSection.vue', () => {
     userAddress: Address = '0x1234' as Address
   ) => {
     vi.clearAllMocks()
-    mockWageData.value = wageDataMock
+    mockWageData.value = { data: wageDataMock } as unknown as WageData[]
     mockWageError.value = null
     mockWageIsFetching.value = false
 
     const teamStoreValues = {
+      currentTeamId: 1,
       currentTeam: {
         ...mockTeamStore,
         ownerAddress,
@@ -134,7 +141,7 @@ describe('MemberSection.vue', () => {
         ]
       },
       currentTeamMeta: {
-        data: {
+        data: createMockQueryResponse({
           id: 1,
           ownerAddress,
           members: [
@@ -151,7 +158,7 @@ describe('MemberSection.vue', () => {
               teamId: 1
             }
           ]
-        },
+        }),
         isPending: false
       }
     }
@@ -185,7 +192,7 @@ describe('MemberSection.vue', () => {
 
   describe('getMemberWage', () => {
     it('returns N/A when teamWageData is null', () => {
-      mockWageData.value = []
+      mockWageData.value = { data: [] } as unknown as WageData[]
       expect(component.getMemberWage('0x1234' as Address)).toEqual({
         cashRatePerHour: 'N/A',
         maximumHoursPerWeek: 'N/A',

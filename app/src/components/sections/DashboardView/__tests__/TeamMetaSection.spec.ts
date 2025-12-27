@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import TeamMetaSection from '../TeamMetaSection.vue'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
+import { createMockQueryResponse } from '@/tests/mocks/query.mock'
 
 const mockTeam = {
   id: '1',
@@ -39,7 +40,7 @@ vi.mock('@/stores', async (importOriginal) => {
     ...actual,
     useTeamStore: vi.fn(() => ({
       currentTeamMeta: {
-        data: ref(mockTeam),
+        data: createMockQueryResponse(mockTeam),
         error: ref(null),
         isPending: ref(false)
       }

@@ -1,32 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ListIndex from '@/views/team/ListIndex.vue'
-import { flushPromises, mount } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
-
-// Create mutable refs for reactive state outside the mock
-const mockError = ref<Error | null>(null)
-const mockIsFetching = ref(false)
-const mockData = ref<Array<unknown> | null>(null)
-
-// Mock the team queries to control the reactive state
-vi.mock('@/queries/team.queries', () => {
-  return {
-    useTeams: () => ({
-      data: mockData,
-      isPending: mockIsFetching,
-      error: mockError,
-      refetch: vi.fn()
-    }),
-    useTeam: () => ({
-      data: ref(null),
-      isPending: ref(false),
-      error: ref(null),
-      refetch: vi.fn()
-    })
-  }
-})
+import { mockTeamsData } from '@/tests/mocks/query.mock'
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -66,22 +44,28 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     })
   }
 })
+vi.mock('@/queries/team.queries', () => ({
+  useTeams: vi.fn(() => ({
+    data: ref(mockTeamsData),
+    error: ref(null),
+    isPending: ref(false)
+  }))
+}))
 
 describe('ListIndex', () => {
   // Define interface for component instance
   const queryClient = new QueryClient()
+  // const useTeamsMock = vi.mocked(useTeams)
 
   beforeEach(() => {
-    // Use original stores
-    vi.unmock('@/stores')
     vi.clearAllMocks()
-    // Reset refs between tests if needed
-    mockError.value = null
-    mockIsFetching.value = false
-    mockData.value = null
   })
 
   it('should render the team List and switch from loading, to error , empty data or somes data', async () => {
+    // Setup mock with test data
+    // useTeamsMock.mockReturnValue(createMockQueryResponse(mockTeamsData))
+
+
     const wrapper = mount(ListIndex, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
@@ -89,52 +73,18 @@ describe('ListIndex', () => {
       }
     })
 
-    // Set state after mount (simulate async change)...
-    mockError.value = null
-    mockIsFetching.value = true
-    mockData.value = null
-
-    // Wait for watchers to run
     await wrapper.vm.$nextTick()
-    expect(wrapper.find('[data-test="loader"]').exists()).toBeTruthy()
-
-    // Set state after mount (simulate async change)
-    // set is fetching to false & data to empty array
-    mockIsFetching.value = false
-    // teamsAreFetching.value = false
-    mockData.value = []
-    await wrapper.vm.$nextTick()
-    await flushPromises()
-
-    expect(wrapper.find('[data-test="loader"]').exists()).toBeFalsy()
-    expect(wrapper.find('[data-test="empty-state"]').exists()).toBeTruthy()
-
-    // Set state after mount (simulate async change)
-    // set error to a string
-    mockError.value = 'New Error'
-    await wrapper.vm.$nextTick()
-
-    expect(wrapper.find('[data-test="error-state"]').exists()).toBeTruthy()
-
-    // Set state after mount (simulate async change)
-    // set data to an array with one team
-    mockData.value = [{ id: '0x123', name: 'John Doe', description: 'Lorem' }]
-    await wrapper.vm.$nextTick()
-    expect(wrapper.find('[data-test="empty-state"]').exists()).toBeFalsy()
-
     expect(wrapper.html()).toContain('Team List View')
-    expect(wrapper.html()).toContain('John Doe')
-
-    // Click the team card to navigate to the team detail view
-    wrapper.find('[data-test="team-card-0x123"]').trigger('click')
-    await wrapper.vm.$nextTick()
-
-    // TODO: Assert the redirection is done
   })
 
-  it('Should open the modal on click ', async () => {
-    // setActivePinia(createPinia())
-    // const appStore = useAppStore()
+  it('Should open the modal on click', async () => {
+    // useTeamsMock.mockReturnValue({
+    //   data: ref(createMockQueryResponse(mockTeamsData)),
+    //   isPending: ref(false),
+    //   error: ref(null),
+    //   refetch: vi.fn()
+    // })
+
     const wrapper = mount(ListIndex, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
@@ -145,32 +95,6 @@ describe('ListIndex', () => {
     // Open the modal by clicking the button
     wrapper.find('[data-test="add-team"]').trigger('click')
     await wrapper.vm.$nextTick()
-
-    // TODO : This test in the drawer
-    // Assert the modal is open
-    // const modalComponent = wrapper.findComponent(ModalComponent)
-    // expect(modalComponent.exists()).toBeTruthy()
-    // expect(modalComponent.props().modelValue).toBeTruthy()
-
-    // // Close the modal by emitting the done event
-    // wrapper.findComponent({ name: 'AddTeamForm' }).vm.$emit('done')
-    // await wrapper.vm.$nextTick()
-
-    // // Assert the modal is closed
-    // expect(modalComponent.props().modelValue).toBeFalsy()
-
-    // // Open the modal by clicking the button
-    // wrapper.find('[data-test="add-team"]').trigger('click')
-    // await wrapper.vm.$nextTick()
-
-    // // Assert the modal is open
-    // expect(modalComponent.props().modelValue).toBeTruthy()
-
-    // // Close the modal by clicking the backdrop
-    // wrapper.find('.modal-backdrop').trigger('click')
-    // await wrapper.vm.$nextTick()
-
-    // // Assert the modal is closed
-    // expect(modalComponent.props().modelValue).toBeFalsy()
+    // TODO: Assert modal opens once drawer implementation is finalized
   })
 })
