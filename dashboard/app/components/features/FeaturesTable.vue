@@ -72,13 +72,9 @@
             </td>
             <td class="py-4 px-4">
               <div class="flex items-center justify-end gap-2">
-                <!-- Bouton View avec route dynamique -->
+                <!-- Dynamic View Button -->
                 <UButton
-                  v-if="getFeatureRoute(feature.functionName)"
-                  :to="{
-                    path: getFeatureRoute(feature.functionName),
-                    query: { feature: feature.functionName }
-                  }"
+                  :to="`/features/${feature.functionName}`"
                   icon="i-lucide-eye"
                   color="primary"
                   variant="ghost"
@@ -157,19 +153,11 @@ defineEmits<{
   'update-status': [feature: Feature, status: FeatureStatus]
 }>()
 
-const FEATURE_ROUTES: Record<string, string> = {
-  SUBMIT_RESTRICTION: '/features/submit-restriction'
-}
-
 const statusOptions = [
   { label: 'Enabled', value: 'enabled' },
   { label: 'Disabled', value: 'disabled' },
   { label: 'Beta', value: 'beta' }
 ]
-
-const getFeatureRoute = (functionName: string): string | undefined => {
-  return FEATURE_ROUTES[functionName]
-}
 
 // Utility methods
 const formatDate = (dateString?: string) => {
