@@ -101,10 +101,13 @@ vi.mock('@/queries/health.queries', () => ({
 }))
 
 /**
- * Mock useBackendWake composable
+ * Mock useBackendWake composable - returns a function that does nothing
+ * Individual tests can override this mock if needed
  */
 vi.mock('@/composables/useBackendWake', () => ({
-  useBackendWake: vi.fn()
+  useBackendWake: vi.fn(() => {
+    // No-op - just prevent the real implementation from being called
+  })
 }))
 
 /**

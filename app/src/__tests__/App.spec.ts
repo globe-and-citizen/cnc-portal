@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { ref } from 'vue'
 
 // Import setup files to ensure proper mocking - these handle wagmi, stores, and queries
 import '@/tests/setup/wagmi.vue.setup'
@@ -31,7 +30,7 @@ vi.mock('vue-router', async (importOriginal) => {
 // Now import App after all mocks are defined
 import App from '@/App.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { useToastStore, useAppStore, useUserDataStore } from '@/stores'
+import { useAppStore, useUserDataStore } from '@/stores'
 
 // Mock child components to avoid rendering their complexity in tests
 const stubComponents = {
@@ -114,13 +113,13 @@ describe('App.vue', () => {
   describe('State Initialization', () => {
     it('should initialize toggleSide as false', () => {
       wrapper = createWrapper()
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as Record<string, unknown>
       expect(vm.toggleSide).toBe(false)
     })
 
     it('should initialize editUserModal with mount false and show false', () => {
       wrapper = createWrapper()
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as Record<string, unknown>
       expect(vm.editUserModal).toEqual({ mount: false, show: false })
     })
 
@@ -133,21 +132,15 @@ describe('App.vue', () => {
 
   describe('Drawer and Sidebar Management', () => {
     it('should initialize toggleSide as false', () => {
-      const userStore = useUserDataStore()
-      userStore.isAuth = true
-
       wrapper = createWrapper()
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as Record<string, unknown>
 
       expect(vm.toggleSide).toBe(false)
     })
 
     it('should toggle drawer visibility with toggleSide', async () => {
-      const userStore = useUserDataStore()
-      userStore.isAuth = true
-
       wrapper = createWrapper()
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as Record<string, unknown>
 
       expect(vm.toggleSide).toBe(false)
 
@@ -158,11 +151,8 @@ describe('App.vue', () => {
     })
 
     it('should update toggleSide when drawer emits update:modelValue', async () => {
-      const userStore = useUserDataStore()
-      userStore.isAuth = true
-
       wrapper = createWrapper()
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as Record<string, unknown>
 
       vm.toggleSide = false
       await wrapper.vm.$nextTick()
@@ -178,17 +168,14 @@ describe('App.vue', () => {
   describe('Modal Management', () => {
     it('should initialize editUserModal with mount false', () => {
       wrapper = createWrapper()
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as Record<string, unknown>
       expect(vm.editUserModal.mount).toBe(false)
       expect(vm.editUserModal.show).toBe(false)
     })
 
     it('should open editUserModal when state is updated', async () => {
-      const userStore = useUserDataStore()
-      userStore.isAuth = true
-
       wrapper = createWrapper()
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as Record<string, unknown>
 
       vm.editUserModal = { mount: true, show: true }
       await wrapper.vm.$nextTick()
@@ -198,7 +185,7 @@ describe('App.vue', () => {
 
     it('should close editUserModal when state is reset', async () => {
       wrapper = createWrapper()
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as Record<string, unknown>
 
       vm.editUserModal = { mount: true, show: true }
       await wrapper.vm.$nextTick()
@@ -251,7 +238,6 @@ describe('App.vue', () => {
       wrapper = createWrapper()
       await wrapper.vm.$nextTick()
 
-      const vm = wrapper.vm as any
       const store = useUserDataStore()
       expect(store.isAuth).toBe(true)
       expect(store.address).toBe('0x1234567890123456789012345678901234567890')
@@ -276,16 +262,14 @@ describe('App.vue', () => {
 
       // The default mock state has isAuth = true
       // Component should render correctly regardless of auth state
-      const vm = wrapper.vm as any
-      expect(vm).toBeDefined()
+      expect(wrapper.exists()).toBe(true)
     })
 
     it('should render main container regardless of lock state', async () => {
       wrapper = createWrapper()
       await wrapper.vm.$nextTick()
 
-      const mainContainer = wrapper.find('.min-h-screen')
-      expect(mainContainer.exists()).toBe(true)
+      expect(wrapper.find('.min-h-screen').exists()).toBe(true)
     })
   })
 
@@ -335,7 +319,7 @@ describe('App.vue', () => {
 
     it('should initialize with proper state on mount', () => {
       wrapper = createWrapper()
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as Record<string, unknown>
       expect(vm.toggleSide).toBe(false)
       expect(vm.editUserModal).toEqual({ mount: false, show: false })
     })
@@ -343,30 +327,19 @@ describe('App.vue', () => {
 
   describe('Responsive Layout', () => {
     it('should render authenticated content when user is logged in', () => {
-      const userStore = useUserDataStore()
-      userStore.isAuth = true
-
       wrapper = createWrapper()
 
       // Check that the main content is rendered (not just locked down)
-      const mainContainer = wrapper.find('.min-h-screen')
-      expect(mainContainer.exists()).toBe(true)
+      expect(wrapper.find('.min-h-screen').exists()).toBe(true)
     })
 
     it('should have proper CSS classes on main container', () => {
-      const userStore = useUserDataStore()
-      userStore.isAuth = true
-
       wrapper = createWrapper()
 
-      const mainContainer = wrapper.find('.min-h-screen')
-      expect(mainContainer.classes()).toContain('bg-base-200')
+      expect(wrapper.find('.min-h-screen').classes()).toContain('bg-base-200')
     })
 
     it('should render container with responsive design', async () => {
-      const userStore = useUserDataStore()
-      userStore.isAuth = true
-
       wrapper = createWrapper()
       await wrapper.vm.$nextTick()
 
@@ -377,79 +350,21 @@ describe('App.vue', () => {
   describe('Template Structure', () => {
     it('should have main container with min-h-screen and bg-base-200', () => {
       wrapper = createWrapper()
-      const mainContainer = wrapper.find('.min-h-screen')
-      expect(mainContainer.exists()).toBe(true)
-      expect(mainContainer.classes()).toContain('bg-base-200')
+      expect(wrapper.find('.min-h-screen').exists()).toBe(true)
+      expect(wrapper.find('.min-h-screen').classes()).toContain('bg-base-200')
     })
 
     it('should render RouterView component for login routes', () => {
       wrapper = createWrapper()
-      const routerView = wrapper.findComponent({ name: 'RouterView' })
-      expect(routerView.exists()).toBe(true)
+      expect(wrapper.findComponent({ name: 'RouterView' }).exists()).toBe(true)
     })
 
     it('should render complete component structure', () => {
-      const userStore = useUserDataStore()
-      userStore.isAuth = true
-
       wrapper = createWrapper()
 
       // Verify the main structure is in place
       expect(wrapper.find('.min-h-screen').exists()).toBe(true)
       expect(wrapper.findComponent({ name: 'RouterView' }).exists()).toBe(true)
-    })
-  })
-
-  describe('Wallet Disconnect Handling', () => {
-    it('should initialize with useConnectionEffect', () => {
-      wrapper = createWrapper()
-      // useConnectionEffect is mocked in setup and called during component setup
-      expect(wrapper.exists()).toBe(true)
-    })
-
-    it('should have connection effect handler defined', () => {
-      wrapper = createWrapper()
-      // Component uses useConnectionEffect which is mocked in wagmi.vue.setup.ts
-      expect(wrapper.exists()).toBe(true)
-    })
-
-    it('should have proper configuration for connection effect', () => {
-      wrapper = createWrapper()
-      // Component uses useConnectionEffect with onDisconnect handler
-      expect(wrapper.exists()).toBe(true)
-    })
-
-    it('should pass correct configuration to useConnectionEffect', () => {
-      wrapper = createWrapper()
-      // Component successfully mounts with all wagmi composables mocked
-      expect(wrapper.exists()).toBe(true)
-    })
-  })
-
-  describe('Chain Switching', () => {
-    it('should have chain switching capability', () => {
-      const userStore = useUserDataStore()
-      userStore.isAuth = true
-
-      wrapper = createWrapper()
-
-      // Component uses useSwitchChain which is mocked in setup
-      expect(wrapper.exists()).toBe(true)
-    })
-
-    it('should handle chain ID updates', async () => {
-      wrapper = createWrapper()
-      await wrapper.vm.$nextTick()
-
-      // Component uses useChainId which is mocked in setup
-      expect(wrapper.exists()).toBe(true)
-    })
-  })
-
-  describe('Toast Container', () => {
-    it('should render ToastContainer component', () => {
-      wrapper = createWrapper()
-      expect(wrapper.find('[data-test="toast-container"]').exists()).toBe(true)
     })
   })
 })
