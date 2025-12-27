@@ -84,9 +84,8 @@ describe('Feature Controller', () => {
 
       expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
     });
-  });
 
-  it('should return feature by name with status 200', async () => {
+    it('should return feature by name with status 200', async () => {
     const mockFeature = { functionName: 'SUBMIT_RESTRICTION', status: 'enabled' };
     vi.mocked(featureUtils.findFeatureByName).mockResolvedValue(mockFeature as any);
 
@@ -111,4 +110,5 @@ describe('Feature Controller', () => {
     await featureController.getFeatureByName(req as Request, res as Response);
     expect(errorResponse).toHaveBeenCalledWith(500, error, res);
   });
+  });  
 });
