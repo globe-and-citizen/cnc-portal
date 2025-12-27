@@ -36,6 +36,10 @@ const mocks = vi.hoisted(() => ({
   mockUseToastStore: vi.fn(() => ({
     addErrorToast: errorToastMock,
     addSuccessToast: successToastMock
+  })),
+  mockUseSubmitRestriction: vi.fn(() => ({
+    isRestricted: ref(false),
+    checkRestriction: vi.fn()
   }))
 }))
 
@@ -55,6 +59,10 @@ vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
     useCustomFetch: mocks.mockUseCustomFetch
   }
 })
+
+vi.mock('@/composables/useSubmitRestriction', () => ({
+  useSubmitRestriction: mocks.mockUseSubmitRestriction
+}))
 
 afterEach(() => {
   vi.clearAllMocks()
@@ -332,16 +340,22 @@ describe('SubmitClaims', () => {
   })
 
   describe('canSubmitClaim computed', () => {
-    it('returns false when weeklyClaim.status is not \"pending\"', () => {
+    it('returns false when weeklyClaim.status is not "pending"', async () => {
       const wrapper = mount(SubmitClaims, {
         props: { weeklyClaim: { status: 'signed' } },
         global: {
           plugins: [
             createTestingPinia({ createSpy: vi.fn }),
             [VueQueryPlugin, { queryClient: new QueryClient() }]
-          ]
+          ],
+          stubs: {
+            ButtonUI: true,
+            ModalComponent: true,
+            ClaimForm: true
+          }
         }
       })
+      await nextTick()
       //@ts-expect-error not visible on wrapper
       expect(wrapper.vm.canSubmitClaim).toBe(false)
     })
