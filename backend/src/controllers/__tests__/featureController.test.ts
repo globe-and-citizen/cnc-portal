@@ -243,4 +243,69 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(500, error, res);
     });
   });
+
+  describe('deleteFeatureByName', () => {
+    it('should return 400 for invalid function name', async () => {
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+      const req = createMockRequest({ params: { functionName: '' } });
+      const res = createMockResponse();
+      await featureController.deleteFeatureByName(req as Request, res as Response);
+      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
+    });
+
+    it('should return 404 when feature not found', async () => {
+      vi.mocked(featureUtils.featureExists).mockResolvedValue(false);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+
+      const req = createMockRequest({ params: { functionName: 'NONEXISTENT' } });
+      const res = createMockResponse();
+
+      await featureController.deleteFeatureByName(req as Request, res as Response);
+
+      expect(errorResponse).toHaveBeenCalledWith(404, 'Feature "NONEXISTENT" not found', res);
+    });
+
+    it('should return 500 if deletion fails', async () => {
+      vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.removeFeature).mockResolvedValue(false);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+
+      const req = createMockRequest({ params: { functionName: 'FAIL_DELETE' } });
+      const res = createMockResponse();
+
+      await featureController.deleteFeatureByName(req as Request, res as Response);
+
+      expect(errorResponse).toHaveBeenCalledWith(
+        500,
+        'Failed to delete feature "FAIL_DELETE"',
+        res
+      );
+    });
+
+    it('should delete feature with status 200', async () => {
+      vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.removeFeature).mockResolvedValue(true);
+
+      const req = createMockRequest({ params: { functionName: 'TO_DELETE' } });
+      const res = createMockResponse();
+
+      await featureController.deleteFeatureByName(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Feature "TO_DELETE" and all its overrides have been deleted',
+      });
+    });
+
+    it('should return 500 on error', async () => {
+      const error = new Error('Database error');
+      vi.mocked(featureUtils.featureExists).mockRejectedValue(error);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+      const req = createMockRequest({ params: { functionName: 'ERROR_CASE' } });
+      const res = createMockResponse();
+      await featureController.deleteFeatureByName(req as Request, res as Response);
+      expect(errorResponse).toHaveBeenCalledWith(500, error, res);
+    });
+  });
 });
