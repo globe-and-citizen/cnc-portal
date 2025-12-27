@@ -56,6 +56,7 @@ export const getUser = async (req: Request, res: Response) => {
     return errorResponse(500, error, res);
   }
 };
+
 export const updateUser = async (req: Request, res: Response) => {
   const { address } = req.params;
   const { name, imageUrl } = req.body;
@@ -99,6 +100,7 @@ export const updateUser = async (req: Request, res: Response) => {
     return errorResponse(500, error, res);
   }
 };
+
 export const getAllUsers = async (req: Request, res: Response) => {
   const { page, limit, search } = req.query as { page: string; limit: string; search: string };
   const pageNumber = parseInt(page as string) || 1;

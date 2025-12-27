@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { generateNonce, SiweMessage } from 'siwe';
 import { prisma } from '../utils';
 import { errorResponse, extractAddressAndNonce } from '../utils/utils';
+import { DEFAULT_USER_ROLES } from '../types/roles';
 
 export const authenticateSiwe = async (req: Request, res: Response) => {
   try {
@@ -31,7 +32,6 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
     //Update nonce for user and persist in database
     const newNonce = generateNonce();
 
-    console.log('user: ', user);
     if (user)
       await prisma.user.update({
         where: { address },
@@ -42,6 +42,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
         data: {
           address,
           nonce: newNonce,
+          roles: DEFAULT_USER_ROLES,
           // name: faker.person.firstName(),
           // imageUrl: faker.image.avatar(),
           name: 'User',

@@ -25,6 +25,7 @@ model User {
   name                   String?
   nonce                  String
   imageUrl               String?
+  roles                  String[]                 @default(["ROLE_USER"])
   teams                  Team[]                   @relation("MemberTeams")
   ownedTeams             Team[]                   @relation("OwnedTeams")
   notifications          Notification[]

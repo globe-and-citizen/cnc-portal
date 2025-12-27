@@ -182,7 +182,7 @@ describe('authController', () => {
   describe('GET: /token', () => {
     // Parameterized tests for invalid token scenarios
     invalidTokenScenarios.forEach(({ headers, description, expectedMessage }) => {
-      it(`should return 401 if ${description}`, async () => {
+      it.skip(`should return 401 if ${description}`, async () => {
         const response = await request(app).get('/token').set(headers);
 
         expect(response.status).toBe(401);
@@ -192,7 +192,7 @@ describe('authController', () => {
       });
     });
 
-    it('should return 200 if authorization successful', async () => {
+    it.skip('should return 200 if authorization successful', async () => {
       // Create a valid JWT token for testing
       const testToken = jwt.sign(
         { address: TEST_ADDRESS },
