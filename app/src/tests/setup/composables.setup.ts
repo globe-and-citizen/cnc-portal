@@ -99,3 +99,24 @@ vi.mock('@/queries/contract.queries', () => ({
 vi.mock('@/queries/health.queries', () => ({
   useBackendHealthQuery: vi.fn(queryMocks.useBackendHealthQuery)
 }))
+
+/**
+ * Mock useBackendWake composable - returns a function that does nothing
+ * Individual tests can override this mock if needed
+ */
+vi.mock('@/composables/useBackendWake', () => ({
+  useBackendWake: vi.fn(() => {
+    // No-op - just prevent the real implementation from being called
+  })
+}))
+
+/**
+ * Mock useAuth composable
+ */
+vi.mock('@/composables/useAuth', () => ({
+  useAuth: vi.fn(() => ({
+    logout: vi.fn(),
+    login: vi.fn(),
+    validateToken: vi.fn()
+  }))
+}))
