@@ -6,7 +6,7 @@
  * to ensure router is available when setting up the interceptor
  */
 
-export default defineNuxtPlugin(async (nuxtApp) => {
+export default defineNuxtPlugin(async () => {
   // Get router from nuxt context
   const router = useRouter()
 

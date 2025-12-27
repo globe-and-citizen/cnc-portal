@@ -1,7 +1,7 @@
 import axios from 'axios'
 import type { AxiosInstance } from 'axios'
 import type { Router } from 'vue-router'
-import { useAuthStore } from '@/stores/useAuthStore'
+// import { useAuthStore } from '@/stores/useAuthStore'
 import { BACKEND_URL } from '~/constant/index'
 
 /**
@@ -58,8 +58,8 @@ export const setupAuthInterceptor = (router: Router) => {
         console.warn('Unauthorized request (401) - clearing auth and redirecting to login')
 
         // Clear auth store
-        const authStore = useAuthStore()
-        authStore.logout()
+        // const authStore = useAuthStore()
+        // authStore.logout()
 
         // Clear auth token from localStorage
         localStorage.removeItem('authToken')
@@ -67,9 +67,9 @@ export const setupAuthInterceptor = (router: Router) => {
         // Redirect to login
         try {
           await router.push({ name: 'login' })
-        } catch (err) {
+        } catch (e) {
           // Fallback to direct navigation if router push fails
-          console.warn('Router push failed, using window navigation')
+          console.warn('Router push failed, using window navigation', e)
           window.location.href = '/login'
         }
       }
