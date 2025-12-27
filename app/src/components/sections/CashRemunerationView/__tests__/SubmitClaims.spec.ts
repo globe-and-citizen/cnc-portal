@@ -31,7 +31,7 @@ const errorToastMock = vi.fn()
 const mocks = vi.hoisted(() => ({
   mockUseCustomFetch: vi.fn(),
   mockUseTeamStore: vi.fn(() => ({
-    currentTeam: { id: 1 } as { id: number } | null // Default mock with correct type
+    currentTeamId: 1
   })),
   mockUseToastStore: vi.fn(() => ({
     addErrorToast: errorToastMock,

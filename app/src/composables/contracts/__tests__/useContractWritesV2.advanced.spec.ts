@@ -9,6 +9,7 @@ const {
   mockUseWriteContract,
   mockUseWaitForTransactionReceipt,
   mockUseAccount,
+  mockUseChainId,
   mockUseQuery,
   mockUseQueryClient,
   mockUseTransactionTimeline,
@@ -24,6 +25,7 @@ const {
     mockUseWriteContract: vi.fn(),
     mockUseWaitForTransactionReceipt: vi.fn(),
     mockUseAccount: vi.fn(),
+    mockUseChainId: vi.fn(() => 11155111),
     mockUseQuery: vi.fn(),
     mockUseQueryClient: vi.fn(() => mockQueryClient),
     mockQueryClient,
@@ -38,7 +40,8 @@ const {
 vi.mock('@wagmi/vue', () => ({
   useWriteContract: mockUseWriteContract,
   useWaitForTransactionReceipt: mockUseWaitForTransactionReceipt,
-  useAccount: mockUseAccount
+  useAccount: mockUseAccount,
+  useChainId: mockUseChainId
 }))
 
 vi.mock('@tanstack/vue-query', () => ({

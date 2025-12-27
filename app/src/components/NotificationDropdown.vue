@@ -105,7 +105,7 @@ const paginatedNotifications = computed(() => {
 const {
   error: getTeamError,
   data: team,
-  // isFetching: teamIsFetching,
+  // isFetching: isPending,
   execute: getTeamAPI
 } = useCustomFetch(updateEndPoint, {
   immediate: false

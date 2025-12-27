@@ -44,6 +44,17 @@ CNC Portal is a Crypto Native Corporation Portal built with:
 
 When working on the CNC Portal project, GitHub Copilot will automatically reference these instructions to provide contextually appropriate suggestions that follow the established patterns and best practices.
 
+## Context7 MCP Integration
+
+Always use Context7 when you need code generation, setup or configuration steps, or library/API documentation. This means you should automatically use the Context7 MCP tools to resolve library IDs and get library documentation without requiring explicit requests.
+
+**When to use Context7:**
+
+- Generating code examples or implementation patterns
+- Setting up project configurations or dependencies
+- Retrieving current API documentation for libraries
+- Checking for library compatibility or version-specific features
+
 ## File Status
 
 ### Complete Files

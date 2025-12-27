@@ -1,9 +1,8 @@
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
-import type { ExpenseResponse } from '@/types'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
+import { useExpenses } from '@/queries/expense.queries'
 
 export const useExpenseDataStore = defineStore('expense', () => {
   // TODO: fetch teams on mounted
@@ -15,15 +14,12 @@ export const useExpenseDataStore = defineStore('expense', () => {
   const teamStore = useTeamStore()
   const { addErrorToast } = useToastStore()
 
-  const allExpenseURI = ref<string>(`/expense?teamId=${teamStore.currentTeamId}`)
-
   const {
-    isFetching: allExpenseDataIsFetching,
-    error: allExpenseDataError,
     data: allExpenseData,
-    execute: executeFetchAllExpenseData,
-    statusCode: allExpenseDataStatusCode
-  } = useCustomFetch(allExpenseURI, { immediate: false }).get().json<ExpenseResponse[]>()
+    isLoading: allExpenseDataIsFetching,
+    error: allExpenseDataError,
+    refetch: executeFetchAllExpenseData
+  } = useExpenses(() => teamStore.currentTeamId)
 
   const myApprovedExpenses = computed(() => {
     if (allExpenseData.value) {
@@ -46,8 +42,8 @@ export const useExpenseDataStore = defineStore('expense', () => {
     return []
   })
 
-  const fetchAllExpenseData = async (teamId = teamStore.currentTeamId) => {
-    allExpenseURI.value = `/expense?teamId=${teamId}`
+  const fetchAllExpenseData = async () => {
+    // Note: TanStack Query will automatically refetch when teamId changes
     await executeFetchAllExpenseData()
   }
 
@@ -77,7 +73,6 @@ export const useExpenseDataStore = defineStore('expense', () => {
     allExpenseData,
     allExpenseDataParsed,
     allExpenseDataError,
-    allExpenseDataIsFetching,
-    allExpenseDataStatusCode
+    allExpenseDataIsFetching
   }
 })

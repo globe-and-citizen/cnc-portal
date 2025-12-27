@@ -71,7 +71,7 @@ const { writeContractAsync: withdraw } = useWriteContract()
 
 // const weeklyClaimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=withdraw`)
 
-const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeam?.id}`)
+const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeamId}`)
 
 const { execute: syncWeeklyClaim, error: syncWeeklyClaimError } = useCustomFetch(
   weeklyClaimSyncUrl,
@@ -161,7 +161,7 @@ const withdrawClaim = async () => {
         toastStore.addErrorToast('Failed to update Claim status')
       }
       queryClient.invalidateQueries({
-        queryKey: ['weekly-claims', teamStore.currentTeam?.id]
+        queryKey: ['weekly-claims', teamStore.currentTeamId]
       })
 
       emit('claim-withdrawn')

@@ -84,7 +84,7 @@ const openModal = () => {
   modal.value = true
 }
 
-const teamId = computed(() => teamStore.currentTeam?.id)
+const teamId = computed(() => teamStore.currentTeamId)
 
 const {
   error: addWageClaimError,
@@ -130,7 +130,7 @@ const handleSubmit = async (data: ClaimSubmitPayload) => {
   if (addWageClaimStatusCode.value === 201) {
     toastStore.addSuccessToast('Wage claim added successfully')
     queryClient.invalidateQueries({
-      queryKey: ['weekly-claims', teamStore.currentTeam?.id]
+      queryKey: ['weekly-claims', teamStore.currentTeamId]
     })
     modal.value = false
     formInitialData.value = createDefaultFormData()

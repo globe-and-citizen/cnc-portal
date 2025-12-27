@@ -184,9 +184,7 @@ const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = false
   approveUsersModal.value = { mount: false, show: false }
   confirmationModal.value = false
-  await expenseDataStore.fetchAllExpenseData(
-    Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
-  )
+  await expenseDataStore.fetchAllExpenseData()
 }
 
 const errorMessage = (error: {}, message: string) =>
