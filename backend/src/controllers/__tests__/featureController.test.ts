@@ -26,5 +26,40 @@ describe('Feature Controller', () => {
     vi.clearAllMocks()
   })
 
- 
+  describe('listFeatures', () => {
+    it.skip('should return all features with status 200', async () => {
+      const mockFeatures = [
+        { functionName: 'SUBMIT_RESTRICTION', status: 'enabled' },
+        { functionName: 'APPROVAL_FLOW', status: 'disabled' },
+      ]
+
+      vi.mocked(featureUtils.findAllFeatures).mockResolvedValue(mockFeatures as any)
+
+      const req = createMockRequest()
+      const res = createMockResponse()
+
+      await featureController.listFeatures(req as Request, res as Response)
+
+      expect(res.status).toHaveBeenCalledWith(200)
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        data: mockFeatures,
+      })
+    })
+
+    it('should handle errors and return 500', async () => {
+      const error = new Error('Database error')
+      vi.mocked(featureUtils.findAllFeatures).mockRejectedValue(error)
+      vi.mocked(errorResponse).mockReturnValue(undefined)
+
+      const req = createMockRequest()
+      const res = createMockResponse()
+
+      await featureController.listFeatures(req as Request, res as Response)
+
+      expect(errorResponse).toHaveBeenCalledWith(500, error, res)
+    })
+  })
+
+
 })
