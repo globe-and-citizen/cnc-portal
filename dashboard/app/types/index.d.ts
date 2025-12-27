@@ -223,3 +223,44 @@ export interface RecentActivity {
   activities: Activity[]
   total: number
 }
+
+/**
+ * User type for API user endpoints
+ * Represents a user in the CNC Portal system
+ */
+export interface ApiUser {
+  id?: string
+  address: string
+  name?: string
+  imageUrl?: string
+  roles: string[]
+  nonce?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+/**
+ * User update payload for profile updates
+ */
+export interface UpdateUserPayload {
+  name?: string
+  imageUrl?: string
+}
+
+/**
+ * Paginated users response from API
+ */
+export interface UsersResponse {
+  users: ApiUser[]
+  totalUsers: number
+  currentPage: number
+  totalPages: number
+}
+
+/**
+ * User nonce response for SIWE authentication
+ */
+export interface NonceResponse {
+  success: boolean
+  nonce: string
+}
