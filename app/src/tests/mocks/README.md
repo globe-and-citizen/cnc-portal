@@ -12,23 +12,18 @@ All query and composable mocks are now centralized in `query.mock.ts` and are gl
 
 Contains all the mock factories and data:
 
-1. **`createMockAxiosResponse<T>(data, status, statusText)`**
-   - Factory function to create a mock `AxiosResponse` object
-   - Used internally by all query mocks
-   - Returns: `AxiosResponse<T>` with proper structure (data, status, statusText, headers, config)
-
-2. **Mock Data Objects**
+1. **Mock Data Objects**
    - `mockTeamData` - Sample team data
    - `mockTeamsData` - Array of teams
    - `mockWageData` - Sample wage data
    - `mockNotificationData` - Sample notifications
    - Pre-created response objects: `mockTeamResponse`, `mockTeamsResponse`, etc.
 
-3. **Factory Functions**
+2. **Factory Functions**
    - `createMockQueryResponse<T>(data, isLoading, error)` - Creates a TanStack Query response
    - `createMockMutationResponse()` - Creates a TanStack Query mutation response
 
-4. **`queryMocks` Object**
+3. **`queryMocks` Object**
    - Single source of truth for all query/mutation hooks
    - Contains functions for every query/mutation hook
    - Each returns proper TanStack Query response structure
