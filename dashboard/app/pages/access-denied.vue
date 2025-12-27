@@ -5,7 +5,8 @@ definePageMeta({
 })
 
 const router = useRouter()
-const authStore = useAuthStore()
+// const authStore = useAuthStore()
+const roleStore = useRoleStore()
 
 const goHome = () => {
   router.push({ name: 'login' })
@@ -77,7 +78,7 @@ const goBack = () => {
                 color="error"
                 variant="subtle"
               >
-                {{ authStore.roles?.[0] || 'User' }}
+                {{ roleStore.userRoles || 'User' }} {{ roleStore.isAdmin ? '(Admin)' : '' }}
               </UBadge>
             </div>
             <div class="flex items-center justify-between">

@@ -7,7 +7,7 @@
 import { Request, Response, NextFunction } from 'express';
 // import { Address } from 'viem';
 import { errorResponse } from '../utils/utils';
-import { UserRole } from '../types/roles';
+import { UserRole, UserRoles } from '../types/roles';
 import { hasRole, hasAnyRole } from '../utils/roleUtils';
 
 /**
@@ -34,7 +34,7 @@ import 'express';
  */
 export const requireRole = (requiredRole: UserRole) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const userRoles = req.user?.roles || [];
+    const userRoles: UserRoles = (req.user?.roles ?? []) as UserRoles;
 
     if (!hasRole(userRoles, requiredRole)) {
       return errorResponse(
@@ -43,7 +43,7 @@ export const requireRole = (requiredRole: UserRole) => {
         res
       );
     }
-
+    
     next();
   };
 };
@@ -60,7 +60,7 @@ export const requireRole = (requiredRole: UserRole) => {
  */
 export const requireAnyRole = (requiredRoles: UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const userRoles = req.user?.roles || [];
+    const userRoles: UserRoles = (req.user?.roles ?? []) as UserRoles;
 
     if (!hasAnyRole(userRoles, requiredRoles)) {
       return errorResponse(
@@ -86,7 +86,7 @@ export const requireAnyRole = (requiredRoles: UserRole[]) => {
  */
 export const requireAllRoles = (requiredRoles: UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const userRoles = req.user?.roles || [];
+    const userRoles: UserRoles = (req.user?.roles ?? []) as UserRoles;
 
     if (!hasAnyRole(userRoles, requiredRoles)) {
       return errorResponse(

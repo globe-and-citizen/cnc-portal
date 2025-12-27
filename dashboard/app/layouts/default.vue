@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
-import { useUser } from '~/queries/index'
 
 const { isNotificationsSlideoverOpen } = useDashboard()
 const route = useRoute()
@@ -19,7 +18,7 @@ watch(isAdmin, (newValue) => {
   if (!newValue && route.name !== 'access-denied') {
     router.push({ name: 'access-denied' })
   }
-}, { immediate: true })
+}, { immediate: false })
 
 // Dynamic page title based on current route
 const pageTitle = computed(() => {
