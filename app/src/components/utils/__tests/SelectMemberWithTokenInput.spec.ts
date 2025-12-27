@@ -15,7 +15,7 @@ const mockTeamStore = {
     ]
   },
   currentTeamMeta: {
-    teamIsFetching: false
+    isPending: false
   }
 }
 

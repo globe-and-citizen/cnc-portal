@@ -132,7 +132,7 @@ const select = (member: User) => {
   close()
 
   // Navigate to the selected member's claim history
-  const teamId = teamStore.currentTeam?.id
+  const teamId = teamStore.currentTeamId
   if (teamId) {
     router.push({
       name: 'payroll-history',

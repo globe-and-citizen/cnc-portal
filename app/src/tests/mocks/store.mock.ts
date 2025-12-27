@@ -1,30 +1,16 @@
+import { mockTeamData } from '@/tests/mocks/index'
 import { vi } from 'vitest'
 export const mockTeamStore = {
-  currentTeam: {
-    id: '1',
-    name: 'Team Name',
-    description: 'Team Description',
-    members: [],
-    teamContracts: [
-      {
-        address: '0xTeamContractAddress',
-        admins: [],
-        type: 'ContractType',
-        deployer: '0xDeployerAddress'
-      }
-    ],
-    ownerAddress: '0xOwnerAddress'
-  },
+  currentTeam: mockTeamData,
+  currentTeamId: mockTeamData.id,
   currentTeamMeta: {
-    teamIsFetching: false
+    isPending: false
   },
   teamsMeta: {
     reloadTeams: vi.fn()
   },
   getContractAddressByType: vi.fn((type) => {
-    // console.log('getContractAddressByType called with type:', type)
     return type ? '0xTeamContractAddress' : undefined
-    // return mockTeamStore.currentTeam.teamContracts.find((contract) => contract.type === type)?.address
   }),
   fetchTeam: vi.fn()
 }
@@ -35,5 +21,8 @@ export const mockToastStore = {
 }
 
 export const mockUserStore = {
-  address: '0xUserAddress'
+  address: '0x1234567890123456789012345678901234567890',
+  name: 'Test User',
+  imageUrl: 'https://example.com/avatar.jpg',
+  isAuth: true
 }

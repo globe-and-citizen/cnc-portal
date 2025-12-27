@@ -37,7 +37,7 @@ const currency = useStorage('currency', {
   name: 'US Dollar',
   symbol: '$'
 })
-const signedQueryKey = computed(() => ['weekly-claims', teamStore.currentTeam?.id, 'signed'])
+const signedQueryKey = computed(() => ['weekly-claims', teamStore.currentTeamId, 'signed'])
 
 const {
   data: weeklyClaims,

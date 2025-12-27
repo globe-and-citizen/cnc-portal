@@ -83,7 +83,7 @@ vi.mock('@/stores', () => ({
       officerAddress: '0xofficeraddress'
     },
     currentTeamMeta: {
-      teamIsFetching: false
+      isPending: false
     }
   })),
   useUserDataStore: vi.fn(() => ({
