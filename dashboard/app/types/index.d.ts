@@ -269,6 +269,7 @@ export interface TeamRestrictionOverride {
   isRestricted: boolean
   memberCount?: number
   updatedAt?: string
+}
 /**
  * User type for API user endpoints
  * Represents a user in the CNC Portal system
