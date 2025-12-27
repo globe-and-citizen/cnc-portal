@@ -39,18 +39,18 @@ For detailed documentation on:
 
 The system mocks all query hooks from:
 
-| Module | Mocks |
-|--------|-------|
-| `team.queries.ts` | `useTeams`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam` |
-| `member.queries.ts` | `useAddMembers`, `useDeleteMember` |
-| `wage.queries.ts` | `useTeamWages`, `useSetMemberWage` |
-| `notification.queries.ts` | `useNotifications`, `useAddBulkNotifications`, `useUpdateNotification` |
-| `expense.queries.ts` | `useExpenses` |
-| `user.queries.ts` | `useUser`, `useUserNonce` |
-| `action.queries.ts` | `useCreateAction`, `useUpdateAction` |
-| `auth.queries.ts` | `useValidateToken` |
-| `contract.queries.ts` | `useCreateContract` |
-| `health.queries.ts` | `useBackendHealthQuery` |
+| Module                    | Mocks                                                                    |
+| ------------------------- | ------------------------------------------------------------------------ |
+| `team.queries.ts`         | `useTeams`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam` |
+| `member.queries.ts`       | `useAddMembers`, `useDeleteMember`                                       |
+| `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                       |
+| `notification.queries.ts` | `useNotifications`, `useAddBulkNotifications`, `useUpdateNotification`   |
+| `expense.queries.ts`      | `useExpenses`                                                            |
+| `user.queries.ts`         | `useUser`, `useUserNonce`                                                |
+| `action.queries.ts`       | `useCreateAction`, `useUpdateAction`                                     |
+| `auth.queries.ts`         | `useValidateToken`                                                       |
+| `contract.queries.ts`     | `useCreateContract`                                                      |
+| `health.queries.ts`       | `useBackendHealthQuery`                                                  |
 
 ## Common Tasks
 
@@ -60,9 +60,7 @@ The system mocks all query hooks from:
 import { useTeams } from '@/queries/team.queries'
 import { createMockQueryResponse } from '@/tests/mocks/query.mock'
 
-vi.mocked(useTeams).mockReturnValue(
-  createMockQueryResponse([{ id: '1', name: 'Custom Team' }])
-)
+vi.mocked(useTeams).mockReturnValue(createMockQueryResponse([{ id: '1', name: 'Custom Team' }]))
 ```
 
 ### Test Loading State
@@ -76,9 +74,7 @@ vi.mocked(useTeams).mockReturnValue(
 ### Test Error State
 
 ```typescript
-vi.mocked(useTeams).mockReturnValue(
-  createMockQueryResponse(null, false, new Error('Failed'))
-)
+vi.mocked(useTeams).mockReturnValue(createMockQueryResponse(null, false, new Error('Failed')))
 ```
 
 ## Related Documentation

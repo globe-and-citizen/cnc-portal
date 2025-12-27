@@ -49,20 +49,26 @@ describe('ListIndex - Team List View', () => {
   })
 
   // Helper function for component mounting
-  const createWrapper = (teamsData: Team[] = mockTeamsData, isLoading = false, error: Error | null = null) => {
+  const createWrapper = (
+    teamsData: Team[] = mockTeamsData,
+    isLoading = false,
+    error: Error | null = null
+  ) => {
     const useTeamsMock = vi.fn()
-    useTeamsMock.mockReturnValue(
-      createMockQueryResponse(teamsData, isLoading, error)
-    )
+    useTeamsMock.mockReturnValue(createMockQueryResponse(teamsData, isLoading, error))
     vi.mocked(useTeams).mockImplementation(useTeamsMock)
 
     return mount(ListIndex, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
         stubs: {
-          AddTeamCard: { template: '<div data-test="add-team-card"><button data-test="add-team">Add Team</button></div>' },
-          TeamCard: { 
-            template: '<div :data-test="`team-card-${team.id}`" class="team-card"><strong>{{ team.name }}</strong></div>',
+          AddTeamCard: {
+            template:
+              '<div data-test="add-team-card"><button data-test="add-team">Add Team</button></div>'
+          },
+          TeamCard: {
+            template:
+              '<div :data-test="`team-card-${team.id}`" class="team-card"><strong>{{ team.name }}</strong></div>',
             props: ['team']
           }
         }
@@ -234,9 +240,9 @@ describe('ListIndex - Team List View', () => {
 
       const teamCardContainer = wrapper.find('.grid.grid-cols-1')
       const teamCardChildren = teamCardContainer.findAll('.cursor-pointer')
-      
+
       expect(teamCardChildren.length).toBeGreaterThan(0)
-      teamCardChildren.forEach(element => {
+      teamCardChildren.forEach((element) => {
         expect(element.classes()).toContain('cursor-pointer')
         expect(element.classes()).toContain('transition')
         expect(element.classes()).toContain('duration-300')
@@ -344,17 +350,13 @@ describe('ListIndex - Team List View', () => {
 
       // Simulate data loaded
       await wrapper.setData({}) // Force re-render
-      vi.mocked(useTeams).mockReturnValue(
-        createMockQueryResponse(mockTeamsData, false)
-      )
+      vi.mocked(useTeams).mockReturnValue(createMockQueryResponse(mockTeamsData, false))
       await wrapper.vm.$nextTick()
     })
 
     it('should handle null/undefined team data gracefully', async () => {
       const useTeamsMock = vi.fn()
-      useTeamsMock.mockReturnValue(
-        createMockQueryResponse(null, false)
-      )
+      useTeamsMock.mockReturnValue(createMockQueryResponse(null, false))
       vi.mocked(useTeams).mockImplementation(useTeamsMock)
 
       const wrapper = mount(ListIndex, {

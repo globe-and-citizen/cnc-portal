@@ -50,8 +50,9 @@ export const useSetMemberWage = () => {
     },
     onSuccess: (_, variables) => {
       // Invalidate wage queries to refetch
-      queryClient.invalidateQueries({ queryKey: ['teamWages', { teamId: String(variables.teamId) }] })
+      queryClient.invalidateQueries({
+        queryKey: ['teamWages', { teamId: String(variables.teamId) }]
+      })
     }
-
   })
 }
