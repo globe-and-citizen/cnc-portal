@@ -2,26 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import SelectMemberItem from '@/components/SelectMemberItem.vue'
-import type { User } from '@/types'
+import { mockTeamStore } from '@/tests/mocks/index'
+import type { Address } from 'viem'
 
-const mockTeamStore = {
-  currentTeam: {
-    id: '1',
-    name: 'Team A',
-    members: [
-      {
-        id: 'user-1',
-        name: 'Alice',
-        address: '0x1111111111111111111111111111111111111111'
-      },
-      {
-        id: 'user-2',
-        name: 'Bob',
-        address: '0x2222222222222222222222222222222222222222'
-      }
-    ] as User[]
-  }
-}
 
 const mockRouterPush = vi.fn()
 
@@ -40,10 +23,10 @@ vi.mock('vue-router', async (importOriginal) => {
 })
 
 describe('SelectMemberItem', () => {
-  const defaultAddress = mockTeamStore.currentTeam.members[0].address as `0x${string}`
+  const defaultAddress = '0x1111111111111111111111111111111111111111' as Address
 
-  const createWrapper = (props: Partial<{ address: `0x${string}` }> = {}) => {
-    const address = (props.address ?? defaultAddress) as `0x${string}`
+  const createWrapper = (props: Partial<{ address: Address }> = {}) => {
+    const address = (props.address ?? defaultAddress) as Address
     return mount(SelectMemberItem, {
       props: {
         address,
@@ -80,7 +63,7 @@ describe('SelectMemberItem', () => {
     })
 
     it('should display selected user in trigger when address matches a member', () => {
-      const selectedAddress = mockTeamStore.currentTeam.members[1].address as `0x${string}`
+      const selectedAddress = '0x1111111111111111111111111111111111111111' as Address
       const wrapper = createWrapper({ address: selectedAddress })
 
       const selectedUser = wrapper.find('[data-test="select-member-item-selected-user"]')
@@ -113,6 +96,7 @@ describe('SelectMemberItem', () => {
 
     it('should not navigate if teamId is missing', async () => {
       ;(mockTeamStore.currentTeam as Partial<typeof mockTeamStore.currentTeam>).id = undefined
+      mockTeamStore.currentTeamId = undefined
 
       const wrapper = createWrapper()
 
@@ -124,6 +108,7 @@ describe('SelectMemberItem', () => {
 
       // Remettre l'id pour ne pas polluer d'autres tests
       mockTeamStore.currentTeam.id = '1'
+      mockTeamStore.currentTeamId = '1'
     })
   })
 
