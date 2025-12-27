@@ -161,7 +161,6 @@
         @contractDeployed="
           () => {
             $emit('done')
-            teamStore.teamsMeta.reloadTeams()
           }
         "
       >
@@ -177,21 +176,25 @@ import useVuelidate from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
 import { isAddress } from 'viem'
 import { log } from '@/utils'
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { onClickOutside } from '@vueuse/core'
-import type { TeamInput, Team } from '@/types'
+import type { Team } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
-import { useTeamStore } from '../../stores/teamStore'
+import { useCreateTeam } from '@/queries/team.queries'
 
 defineEmits(['done'])
 const { addSuccessToast, addErrorToast } = useToastStore()
-const teamStore = useTeamStore()
+const {
+  isPending: createTeamFetching,
+  error: createTeamError,
+  mutateAsync: executeCreateTeam,
+  data: createdTeamData
+} = useCreateTeam()
 
 // Refs
-const teamData = ref<TeamInput>({
+const teamData = ref<Pick<Team, 'name' | 'description' | 'members'>>({
   name: '',
   description: '',
   members: []
@@ -205,18 +208,6 @@ const investorContractInput = ref({
 const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const currentStep = ref(1)
-
-// Team creation API call
-const {
-  isFetching: createTeamFetching,
-  error: createTeamError,
-  execute: executeCreateTeam,
-  data: createdTeamData
-} = useCustomFetch('teams', {
-  immediate: false
-})
-  .post(teamData.value)
-  .json<Partial<Team>>()
 
 // Validation Rules
 const rules = {
@@ -276,13 +267,12 @@ const nextStep = () => {
 const saveTeamToDatabase = async () => {
   $v.value.$touch()
   if ($v.value.$invalid) return
-  await executeCreateTeam()
+  await executeCreateTeam(teamData.value)
   if (createTeamError.value) {
     addErrorToast('Failed to create team')
     log.error('Failed to create team', createTeamError.value)
     return
   }
-  teamStore.teamsMeta.reloadTeams()
   addSuccessToast('Team created successfully')
   // Move to next step only after successful team creation
   nextStep()

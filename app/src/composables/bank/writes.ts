@@ -1,6 +1,6 @@
 import { computed, unref, type MaybeRef } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useAccount } from '@wagmi/vue'
+import { useChainId } from '@wagmi/vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 
 import { BANK_FUNCTION_NAMES, type BankFunctionName, isValidBankFunction } from './types'
@@ -19,7 +19,7 @@ import { BANK_ABI } from '@/artifacts/abi/bank'
 export function useBankWrites() {
   const teamStore = useTeamStore()
   const queryClient = useQueryClient()
-  const { chainId } = useAccount()
+  const chainId = useChainId()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
   const userDataStore = useUserDataStore()
   const userAddr = userDataStore.address as `0x${string}` | undefined

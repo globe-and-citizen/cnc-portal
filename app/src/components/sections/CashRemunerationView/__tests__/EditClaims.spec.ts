@@ -82,7 +82,7 @@ const {
       addSuccessToast: successToastMock
     })),
     mockUseTeamStore: vi.fn(() => ({
-      currentTeam: { id: 1 } as { id: number } | null
+      currentTeamId: 1
     })),
     mockUseQueryClient: vi.fn(() => mockQueryClient),
     mockQueryClient

@@ -89,8 +89,6 @@ import { storeToRefs } from 'pinia'
 import { useToastStore } from '@/stores/useToastStore'
 import { useUserDataStore } from '@/stores/user'
 import { useBackendWake } from '@/composables/useBackendWake'
-import { BACKEND_URL } from '@/constant'
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
 
 import Drawer from '@/components/TheDrawer.vue'
 import NavBar from '@/components/NavBar.vue'
@@ -99,16 +97,26 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
 import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 
-import { useAccount } from '@wagmi/vue'
+import { useChainId, useConnection, useConnectionEffect, useSwitchChain } from '@wagmi/vue'
 import { useAuth } from './composables/useAuth'
 import { useAppStore } from './stores'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 import '@vuepic/vue-datepicker/dist/main.css'
 import LockScreen from './components/LockScreen.vue'
-import { useTeamStore } from '@/stores/teamStore'
-import { useAuthToken } from '@/composables/useAuthToken'
+import { NETWORK } from '@/constant/index'
 
-const { address: connectedAddress, isDisconnected } = useAccount()
+const connection = useConnection()
+const switchChain = useSwitchChain()
+
+const networkChainId = parseInt(NETWORK.chainId)
+const chainId = useChainId()
+watch(chainId, (val) => {
+  if (val === undefined) return
+
+  switchChain.mutate({ chainId: networkChainId })
+})
+useBackendWake()
+
 const { addErrorToast } = useToastStore()
 const appStore = useAppStore()
 const { logout } = useAuth()
@@ -119,61 +127,26 @@ const userStore = useUserDataStore()
 const { name, address, imageUrl } = storeToRefs(userStore)
 
 const lock = computed(() => {
-  return (
-    userStore.isAuth && connectedAddress.value?.toLowerCase() !== userStore.address.toLowerCase()
-  )
+  if (
+    userStore.isAuth &&
+    connection.address?.value?.toLowerCase() !== userStore.address.toLowerCase()
+  ) {
+    return true
+  }
+  return false
 })
 
-const teamStore = useTeamStore()
-const authToken = useAuthToken()
-const queryClient = useQueryClient()
-
-async function syncWeeklyClaims(teamId: string, token: string) {
-  const res = await fetch(`${BACKEND_URL}/api/weeklyclaim/sync/?teamId=${teamId}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
-    },
-    credentials: 'include'
-  })
-  if (!res.ok) {
-    throw new Error('Failed to sync weekly claims')
-  }
-  return res.json()
-}
-
-const syncMutation = useMutation({
-  mutationFn: (teamId: string) => syncWeeklyClaims(teamId, authToken.value),
-  onSuccess: (data) => {
-    if (data.updated?.length > 0) {
-      queryClient.invalidateQueries({ queryKey: ['weekly-claims', teamStore.currentTeam?.id] })
+useConnectionEffect({
+  onDisconnect() {
+    if (userStore.isAuth) {
+      addErrorToast('Disconnected from wallet')
+      setTimeout(() => {
+        logout()
+      }, 1000)
+      console.log('Connection disconnected')
     }
-  },
-  onError: () => {
-    addErrorToast('Failed to sync weekly claims')
-  }
-})
-
-watch(
-  () => teamStore.currentTeam?.id,
-  (teamId) => {
-    if (teamId && userStore.isAuth) {
-      syncMutation.mutate(teamId)
-    }
-  },
-  { immediate: true }
-)
-
-watch(isDisconnected, (value) => {
-  if (value && userStore.isAuth) {
-    addErrorToast('Disconnected from wallet')
-    setTimeout(() => {
-      logout()
-    }, 1000)
   }
 })
 
 // Wake up backend on app mount using TanStack Query
-useBackendWake()
 </script>

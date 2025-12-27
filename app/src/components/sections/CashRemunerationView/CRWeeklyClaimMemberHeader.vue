@@ -35,10 +35,10 @@ const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 
-const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeam?.id])
+const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeamId])
 const { data: teamWageData, error: teamWageDataError } = useTanstackQuery<Array<Wage>>(
   teamWageQueryKey,
-  computed(() => `/wage/?teamId=${teamStore.currentTeam?.id}`)
+  computed(() => `/wage/?teamId=${teamStore.currentTeamId}`)
 )
 
 const hasWage = computed(() => {

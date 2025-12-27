@@ -1,6 +1,5 @@
 import { computed, ref, watch } from 'vue'
 import type { Action, ContractType } from '@/types'
-import { useCustomFetch } from './useCustomFetch'
 import { estimateGas, readContract, writeContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { encodeFunctionData, type Abi, type Address } from 'viem'
@@ -9,6 +8,7 @@ import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from 
 import { useQueryClient } from '@tanstack/vue-query'
 import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
 import { log, parseError } from '@/utils'
+import { useCreateAction, useUpdateAction } from '@/queries/action.queries'
 
 export function useBod(contractType: ContractType, contractAbi: Abi) {
   const teamStore = useTeamStore()
@@ -22,19 +22,13 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
   const action = ref<Partial<Action> | null>(null)
   const isActionAdded = ref(false)
   const isActionApproved = ref(false)
-  const actionUrl = ref('')
   const isLoadingApproveAction = ref(false)
+
+  const createActionMutation = useCreateAction()
+  const updateActionMutation = useUpdateAction()
 
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
   const contractAddress = computed(() => teamStore.getContractAddressByType(contractType))
-
-  const { /*error: errorSaveAction,*/ execute: executeSaveAction } = useCustomFetch('actions/', {
-    immediate: false
-  }).post(action)
-
-  const { /*error: errorUpdateAction,*/ execute: executeUpdateAction } = useCustomFetch(actionUrl, {
-    immediate: false
-  }).patch()
 
   const { data: isMember } = useReadContract({
     address: bodAddress,
@@ -91,7 +85,9 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
 
   watch(isConfirmingAddAction, async (isConfirming, wasConfirming) => {
     if (wasConfirming && !isConfirming && isConfirmedAddAction.value) {
-      await executeSaveAction()
+      if (action.value) {
+        await createActionMutation.mutateAsync(action.value)
+      }
       addSuccessToast('Action added successfully!')
       // emits('contract-status-changed')
       isActionAdded.value = true
@@ -133,8 +129,7 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
         args: [BigInt(_actionId)]
       })
       if (isActionExecuted) {
-        actionUrl.value = `actions/${dbId}`
-        await executeUpdateAction()
+        await updateActionMutation.mutateAsync(dbId)
       }
       await queryClient.invalidateQueries({
         queryKey: ['readContract']

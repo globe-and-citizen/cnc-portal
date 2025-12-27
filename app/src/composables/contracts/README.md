@@ -77,7 +77,7 @@ export type MyContractFunctionName =
   (typeof MY_CONTRACT_FUNCTION_NAMES)[keyof typeof MY_CONTRACT_FUNCTION_NAMES]
 ```
 
-2. **Create the wrapper composable:**
+1. **Create the wrapper composable:**
 
 ```typescript
 import { useContractWrites } from './useContractWrites'
@@ -85,7 +85,7 @@ import MyContractABI from '@/artifacts/abi/MyContract.json'
 
 export function useMyContractWrites() {
   const teamStore = useTeamStore()
-  const { chainId } = useAccount()
+  const chainId = useChainId()
   const contractAddress = computed(() => teamStore.getContractAddressByType('MyContract'))
 
   const baseWrites = useContractWrites({
@@ -118,7 +118,7 @@ export function useMyContractWrites() {
 }
 ```
 
-3. **Export from index.ts:**
+1. **Export from index.ts:**
 
 ```typescript
 export { useMyContractWrites } from './useMyContractWrites'

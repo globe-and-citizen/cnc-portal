@@ -1,5 +1,5 @@
 import { computed, watch, unref, type MaybeRef } from 'vue'
-import { useWriteContract, useWaitForTransactionReceipt, useAccount } from '@wagmi/vue'
+import { useWriteContract, useWaitForTransactionReceipt, useChainId } from '@wagmi/vue'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { type Address, type Abi } from 'viem'
 import { formatDataForDisplay, log, parseErrorV2, waitForCondition } from '@/utils'
@@ -31,7 +31,8 @@ export interface ContractWriteConfig {
  */
 export function useContractWrites(config: ContractWriteConfig) {
   const queryClient = useQueryClient()
-  const { chainId: currentChainId } = useAccount()
+
+  const currentChainId = useChainId()
 
   // Use provided chainId or current account chainId
   const chainId = computed(() => unref(config.chainId) || currentChainId.value)

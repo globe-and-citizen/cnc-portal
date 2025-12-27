@@ -112,6 +112,10 @@ describe('DropdownActions', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.useFakeTimers()
+
+    // Set up team store with currentTeamId
+    const teamStore = useTeamStore()
+    teamStore.currentTeamId = '1'
   })
 
   afterEach(() => {
