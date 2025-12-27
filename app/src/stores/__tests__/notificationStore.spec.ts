@@ -1,17 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useNotificationStore } from '../notificationStore'
-import { ref } from 'vue'
-import type { Notification } from '@/types/notification'
+import { createMockQueryResponse, mockNotificationData } from '@/tests/mocks/query.mock'
+// import { ref } from 'vue'
+// import type { Notification } from '@/types/notification'
 
-// Mock TanStack Query hooks
+// Mock TanStack Query hooks using centralized mocks
 vi.mock('@/queries/notification.queries', () => ({
-  useNotifications: vi.fn(() => ({
-    data: ref<Notification[]>([]),
-    isLoading: ref(false),
-    error: ref(null),
-    refetch: vi.fn()
-  })),
+  useNotifications: vi.fn(() => createMockQueryResponse(mockNotificationData)),
   useAddBulkNotifications: vi.fn(() => ({
     mutateAsync: vi.fn()
   })),
