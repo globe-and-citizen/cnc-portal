@@ -71,9 +71,7 @@ export const useTeamWeeklyClaims = (
 /**
  * Fetch a single weekly claim by ID
  */
-export const useWeeklyClaimById = (
-  claimId: MaybeRefOrGetter<string | number | null>
-) => {
+export const useWeeklyClaimById = (claimId: MaybeRefOrGetter<string | number | null>) => {
   return useQuery<WeeklyClaim, AxiosError>({
     queryKey: ['weeklyClaim', { claimId }],
     queryFn: async () => {

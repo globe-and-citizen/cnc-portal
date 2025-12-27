@@ -120,4 +120,3 @@ vi.mock('@/composables/useAuth', () => ({
     validateToken: vi.fn()
   }))
 }))
-

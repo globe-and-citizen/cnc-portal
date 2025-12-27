@@ -104,7 +104,6 @@ import { useBackendWake } from '@/composables/useBackendWake'
 import { NETWORK } from '@/constant/index'
 import { useAppStore, useToastStore, useUserDataStore } from '@/stores/index'
 
-
 const connection = useConnection()
 const switchChain = useSwitchChain()
 
