@@ -5,7 +5,7 @@
     <MultiSelectMemberInput v-model="formData" :disable-team-members="true" />
 
     <div v-if="addMembersError">
-      <div class="alert alert-warning" v-if="addMembersResponse?.status === 401">
+      <div class="alert alert-warning" v-if="addMembersError?.status === 401">
         You don't have the right for this
       </div>
       <div class="alert alert-danger" v-else>Something went wrong, Unable to add team Members</div>
