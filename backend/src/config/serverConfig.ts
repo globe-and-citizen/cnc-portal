@@ -27,6 +27,7 @@ import healthRoutes from '../routes/healthRoutes';
 //#endregion routing modules
 
 import { authorizeUser } from '../middleware/authMiddleware';
+import { requireAdmin } from '../middleware/roleMiddleware';
 import { errorMessages } from '../utils/serverConfigUtil';
 
 // Swagger import
@@ -130,7 +131,7 @@ class Server {
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
-    this.app.use(this.paths.stats, authorizeUser, statsRoutes);
+    this.app.use(this.paths.stats, authorizeUser, requireAdmin, statsRoutes);
 
     // Dev routes - only available in development mode
     if (process.env.NODE_ENV === 'development') {
