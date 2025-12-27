@@ -551,4 +551,93 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(500, error, res);
     });
   });
+
+  describe('removeOverride', () => {
+    it('should return 400 for invalid function name', async () => {
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+      const req = createMockRequest({
+        params: { functionName: '', teamId: '5' },
+      });
+      const res = createMockResponse();
+      await featureController.removeOverride(req as Request, res as Response);
+      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
+    });
+
+    it('should return 404 if feature not found', async () => {
+      vi.mocked(featureUtils.featureExists).mockResolvedValue(false);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+      const req = createMockRequest({
+        params: { functionName: 'NONEXISTENT', teamId: '5' },
+      });
+      const res = createMockResponse();
+      await featureController.removeOverride(req as Request, res as Response);
+      expect(errorResponse).toHaveBeenCalledWith(404, 'Feature "NONEXISTENT" not found', res);
+    });
+
+    it('should return 404 if override not found', async () => {
+      vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.overrideExists).mockResolvedValue(false);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+
+      const req = createMockRequest({
+        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
+      });
+      const res = createMockResponse();
+
+      await featureController.removeOverride(req as Request, res as Response);
+
+      expect(errorResponse).toHaveBeenCalledWith(
+        404,
+        expect.stringContaining('No override found'),
+        res
+      );
+    });
+
+    it('should return 500 if deletion fails', async () => {
+      vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.overrideExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.removeOverrideRecord).mockResolvedValue(false);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+
+      const req = createMockRequest({
+        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
+      });
+      const res = createMockResponse();
+
+      await featureController.removeOverride(req as Request, res as Response);
+
+      expect(errorResponse).toHaveBeenCalledWith(500, 'Failed to delete override', res);
+    });
+
+    it('should remove a team override with status 200', async () => {
+      vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.overrideExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.removeOverrideRecord).mockResolvedValue(true);
+
+      const req = createMockRequest({
+        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
+      });
+      const res = createMockResponse();
+
+      await featureController.removeOverride(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Override removed for team 5. Team now inherits global setting.',
+      });
+    });
+
+    it('should return 500 on error', async () => {
+      const error = new Error('Database error');
+      vi.mocked(featureUtils.featureExists).mockRejectedValue(error);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+      const req = createMockRequest({
+        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
+      });
+      const res = createMockResponse();
+      await featureController.removeOverride(req as Request, res as Response);
+      expect(errorResponse).toHaveBeenCalledWith(500, error, res);
+    });
+  });
 });
