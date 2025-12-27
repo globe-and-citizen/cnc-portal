@@ -81,7 +81,7 @@ onMounted(() => {
 })
 
 const hasContract = computed(() => {
-  return (teamStore.currentTeamMeta.data?.data.teamContracts ?? []).length > 0
+  return (teamStore.currentTeamMeta.data?.teamContracts ?? []).length > 0
 })
 
 // Watch for changes in the route params then update the current team id

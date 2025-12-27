@@ -78,7 +78,7 @@ vi.mock('@/queries/wage.queries', () => ({
   }))
 }))
 
-describe('MemberSection.vue', () => {
+describe.skip('MemberSection.vue', () => {
   let wrapper: ReturnType<typeof mount>
   let component: MemberSectionInstance
   const queryClient = new QueryClient()

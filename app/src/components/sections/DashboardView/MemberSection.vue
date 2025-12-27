@@ -32,7 +32,7 @@
       <div class="overflow-x-auto">
         <TableComponent
           :rows="
-            teamStore.currentTeamMeta.data?.data.members.map((member: any, index: number) => {
+            teamStore.currentTeamMeta.data?.members.map((member: any, index: number) => {
               return { index: index + 1, ...member }
             })
           "
