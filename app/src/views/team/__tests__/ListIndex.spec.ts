@@ -65,7 +65,6 @@ describe('ListIndex', () => {
     // Setup mock with test data
     // useTeamsMock.mockReturnValue(createMockQueryResponse(mockTeamsData))
 
-
     const wrapper = mount(ListIndex, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],

@@ -157,7 +157,7 @@
         v-else-if="currentStep === 3 && createdTeamData !== null && createdTeamData"
         :disabled="!canProceed"
         :investorContractInput="investorContractInput"
-        :createdTeamData="createdTeamData"
+        :createdTeamData="createdTeamData.data"
         @contractDeployed="
           () => {
             $emit('done')

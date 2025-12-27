@@ -5,7 +5,6 @@ import SelectMemberItem from '@/components/SelectMemberItem.vue'
 import { mockTeamStore } from '@/tests/mocks/index'
 import type { Address } from 'viem'
 
-
 const mockRouterPush = vi.fn()
 
 vi.mock('@/stores', () => ({

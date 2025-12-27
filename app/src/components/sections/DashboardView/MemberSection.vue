@@ -79,9 +79,7 @@
           ></template>
           <template
             #action-data="{ row }"
-            v-if="
-              teamId && teamStore.currentTeamMeta.data?.ownerAddress === userDataStore.address
-            "
+            v-if="teamId && teamStore.currentTeamMeta.data?.ownerAddress === userDataStore.address"
           >
             <div class="flex flex-wrap gap-2">
               <DeleteMemberModal

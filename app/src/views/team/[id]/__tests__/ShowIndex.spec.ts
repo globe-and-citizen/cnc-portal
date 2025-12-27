@@ -7,7 +7,6 @@ import type { Team } from '@/types/team'
 import { createRouter, createWebHistory } from 'vue-router'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { useTeam } from '@/queries/team.queries'
-import { createMockAxiosResponse } from '@/tests/mocks/query.mock'
 
 describe('ShowIndex', () => {
   // Define interface for component instance
