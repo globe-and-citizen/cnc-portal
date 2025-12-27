@@ -74,7 +74,7 @@ const route = useRoute()
 
 onMounted(() => {
   if (route.params.id) {
-    teamStore.setcurrentTeamId(route.params.id as string)
+    teamStore.setCurrentTeamId(route.params.id as string)
   } else {
     // e.g. this.$router.push('/teams')
   }
@@ -89,7 +89,7 @@ watch(
   () => route.params.id,
   (newId) => {
     if (newId && newId !== teamStore.currentTeamId) {
-      teamStore.setcurrentTeamId(newId as string)
+      teamStore.setCurrentTeamId(newId as string)
     }
   }
 )

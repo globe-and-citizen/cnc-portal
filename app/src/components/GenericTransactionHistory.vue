@@ -243,7 +243,6 @@ const selectedTypeLabel = computed(() => (selectedType.value ? selectedType.valu
 onMounted(async () => {
   const teamId = route.params.id as string
   if (teamId && (!currentTeam.value || currentTeam.value.id !== teamId)) {
-    // await teamStore.setcurrentTeamId(teamId)
   }
 })
 
