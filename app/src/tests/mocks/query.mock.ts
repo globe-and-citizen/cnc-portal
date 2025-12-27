@@ -1,27 +1,7 @@
 import { ref } from 'vue'
 import { vi } from 'vitest'
-// import type { AxiosResponse } from 'axios'
 import type { Team, Member, Wage, Notification } from '@/types'
-
-/**
- * Factory function to create a mock AxiosResponse
- * This ensures all query mocks return consistent response structures
- */
-// export const createMockAxiosResponse = <T>(
-//   data: T,
-//   status: number = 200,
-//   statusText: string = 'OK'
-// ): AxiosResponse<T> => ({
-//   data,
-//   status,
-//   statusText,
-//   headers: {},
-//   config: {
-//     url: '',
-//     method: 'get',
-//     headers: {}
-//   } as unknown as import('axios').InternalAxiosRequestConfig
-// })
+import type { HealthCheckResponse } from '@/queries/health.queries'
 
 /**
  * Team Query Mocks
@@ -97,7 +77,15 @@ export const mockNotificationData: Notification[] = [
   }
 ]
 
-// export const mockNotificationResponse = createMockAxiosResponse(mockNotificationData)
+/**
+ * Health Check Query Mocks
+ */
+export const mockHealthCheckData: HealthCheckResponse = {
+  success: true,
+  status: 'OK',
+  timestamp: new Date().toISOString(),
+  service: 'backend-api'
+}
 
 /**
  * Generic Query Hook Response Factory
@@ -134,45 +122,46 @@ export const createMockMutationResponse = (): Record<string, unknown> => ({
 /**
  * Query Hook Mocks for use in vi.mock()
  * These are the functions that get mocked globally
+ * Each mock corresponds to a query/mutation hook from @/queries/*
  */
 export const queryMocks: Record<string, () => Record<string, unknown>> = {
-  // Team queries
+  // Team queries - team.queries.ts
   useTeams: () => createMockQueryResponse(mockTeamsData),
   useTeam: () => createMockQueryResponse(mockTeamData),
   useCreateTeam: () => createMockMutationResponse(),
   useUpdateTeam: () => createMockMutationResponse(),
   useDeleteTeam: () => createMockMutationResponse(),
 
-  // Wage queries
+  // Member queries - member.queries.ts
+  useAddMembers: () => createMockMutationResponse(),
+  useDeleteMember: () => createMockMutationResponse(),
+
+  // Wage queries - wage.queries.ts
   useTeamWages: () => createMockQueryResponse(mockWageData),
   useSetMemberWage: () => createMockMutationResponse(),
 
-  // Notification queries
+  // Notification queries - notification.queries.ts
   useNotifications: () => createMockQueryResponse(mockNotificationData),
   useAddBulkNotifications: () => createMockMutationResponse(),
   useUpdateNotification: () => createMockMutationResponse(),
 
-  // Member queries
-  useAddMembers: () => createMockMutationResponse(),
-  useDeleteMember: () => createMockMutationResponse(),
-
-  // Action queries
-  useCreateAction: () => createMockMutationResponse(),
-  useUpdateAction: () => createMockMutationResponse(),
-
-  // Expense queries
+  // Expense queries - expense.queries.ts
   useExpenses: () => createMockQueryResponse([]),
 
-  // User queries
+  // User queries - user.queries.ts
   useUser: () => createMockQueryResponse(null),
   useUserNonce: () => createMockQueryResponse(null),
 
-  // Auth queries
+  // Action queries - action.queries.ts
+  useCreateAction: () => createMockMutationResponse(),
+  useUpdateAction: () => createMockMutationResponse(),
+
+  // Auth queries - auth.queries.ts
   useValidateToken: () => createMockQueryResponse(null),
 
-  // Contract queries
+  // Contract queries - contract.queries.ts
   useCreateContract: () => createMockMutationResponse(),
 
-  // Health queries
-  useBackendHealthQuery: () => createMockQueryResponse({ status: 'ok' })
+  // Health queries - health.queries.ts
+  useBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData)
 }

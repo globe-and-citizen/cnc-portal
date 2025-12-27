@@ -1,142 +1,88 @@
 # Global Mocks Setup
 
-This directory contains centralized mock definitions for testing across the application.
+This directory contains centralized mock definitions for testing across the application using TanStack Vue Query and Axios.
 
-## Overview
+## Quick Overview
 
-All query and composable mocks are now centralized in `query.mock.ts` and are globally applied via `setup/composables.setup.ts`. This ensures consistency across all tests without needing to define mocks individually in each test file.
+All query and mutation mocks are centralized in `query.mock.ts` and globally applied via `setup/composables.setup.ts`. This ensures consistency across all tests without needing to define mocks individually in each test file.
 
-## Structure
+## Key Files
 
-### `query.mock.ts`
+- **`query.mock.ts`** - Mock data objects and factory functions for creating query/mutation responses
+- **`setup/composables.setup.ts`** - Global mock registration that applies to all tests
 
-Contains all the mock factories and data:
+## Quick Start
 
-1. **Mock Data Objects**
-   - `mockTeamData` - Sample team data
-   - `mockTeamsData` - Array of teams
-   - `mockWageData` - Sample wage data
-   - `mockNotificationData` - Sample notifications
-   - Pre-created response objects: `mockTeamResponse`, `mockTeamsResponse`, etc.
-
-2. **Factory Functions**
-   - `createMockQueryResponse<T>(data, isLoading, error)` - Creates a TanStack Query response
-   - `createMockMutationResponse()` - Creates a TanStack Query mutation response
-
-3. **`queryMocks` Object**
-   - Single source of truth for all query/mutation hooks
-   - Contains functions for every query/mutation hook
-   - Each returns proper TanStack Query response structure
-
-### `setup/composables.setup.ts`
-
-Global mock configuration:
-
-- Applies all mocks from `query.mock.ts` globally
-- Runs automatically before all tests via Vitest setup
-- Uses `queryMocks` object to avoid code duplication
-
-## Usage
-
-### In Tests
-
-Most tests don't need custom mocks - they use the global defaults:
+Most tests automatically use the global mocks:
 
 ```typescript
-import { mount } from '@vue/test-utils'
-import MyComponent from '@/components/MyComponent.vue'
-
-describe('MyComponent', () => {
-  it('should work', () => {
-    const wrapper = mount(MyComponent)
-    // Mocks are already applied globally!
-  })
+const wrapper = mount(MyComponent, {
+  global: {
+    plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
+  }
 })
+// Global mocks are already active!
 ```
 
-### Overriding Mocks in Specific Tests
+## Comprehensive Guide
 
-If you need different mock data for a specific test, use `vi.mocked()`:
+For detailed documentation on:
+
+- How the mock system works
+- How to override mocks in specific tests
+- Complete response structure reference
+- Common testing patterns and best practices
+
+👉 **See [Global Mocks Setup Guide in docs/testing/](../../../../docs/testing/global-mocks-setup.md)**
+
+## Available Mocks
+
+The system mocks all query hooks from:
+
+| Module | Mocks |
+|--------|-------|
+| `team.queries.ts` | `useTeams`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam` |
+| `member.queries.ts` | `useAddMembers`, `useDeleteMember` |
+| `wage.queries.ts` | `useTeamWages`, `useSetMemberWage` |
+| `notification.queries.ts` | `useNotifications`, `useAddBulkNotifications`, `useUpdateNotification` |
+| `expense.queries.ts` | `useExpenses` |
+| `user.queries.ts` | `useUser`, `useUserNonce` |
+| `action.queries.ts` | `useCreateAction`, `useUpdateAction` |
+| `auth.queries.ts` | `useValidateToken` |
+| `contract.queries.ts` | `useCreateContract` |
+| `health.queries.ts` | `useBackendHealthQuery` |
+
+## Common Tasks
+
+### Override Mock Data for Specific Test
 
 ```typescript
 import { useTeams } from '@/queries/team.queries'
-import { vi } from 'vitest'
+import { createMockQueryResponse } from '@/tests/mocks/query.mock'
 
-describe('CustomTeamsTest', () => {
-  it('should handle custom team data', () => {
-    const mockedUseTeams = vi.mocked(useTeams)
-    mockedUseTeams.mockReturnValueOnce({
-      data: ref(createMockAxiosResponse([customTeamData])),
-      isLoading: ref(false),
-      error: ref(null)
-      // ... other properties
-    })
-
-    // Test with custom data
-  })
-})
+vi.mocked(useTeams).mockReturnValue(
+  createMockQueryResponse([{ id: '1', name: 'Custom Team' }])
+)
 ```
 
-### Adding New Mocks
-
-When adding a new query hook:
-
-1. Add data to `query.mock.ts`:
-
-   ```typescript
-   export const mockMyData = {
-     /* data */
-   }
-   export const mockMyResponse = createMockAxiosResponse(mockMyData)
-   ```
-
-2. Add function to `queryMocks`:
-
-   ```typescript
-   export const queryMocks = {
-     // ... existing
-     useMyQuery: () => createMockQueryResponse(mockMyData),
-     useMyMutation: () => createMockMutationResponse()
-   }
-   ```
-
-3. Add mock to `setup/composables.setup.ts`:
-
-   ```typescript
-   vi.mock('@/queries/my.queries', () => ({
-     useMyQuery: vi.fn(queryMocks.useMyQuery),
-     useMyMutation: vi.fn(queryMocks.useMyMutation)
-   }))
-   ```
-
-## Key Points
-
-- **AxiosResponse Structure**: All query mocks return proper `AxiosResponse` objects with `.data`, `.status`, `.statusText`, etc.
-- **Consistency**: Using centralized mocks ensures all tests have consistent behavior
-- **Easy Maintenance**: Changes to mock structure only need to be made in one place
-- **Flexibility**: Individual tests can still override mocks when needed
-- **Type Safety**: All mocks are properly typed with TypeScript
-
-## Testing with AxiosResponse Data
-
-Components accessing query data now need to handle the AxiosResponse structure:
+### Test Loading State
 
 ```typescript
-// In composables.setup.ts, the mock returns:
-// useTeams().data.value = AxiosResponse<Team[]> = {
-//   data: Team[],
-//   status: 200,
-//   statusText: 'OK',
-//   ...
-// }
-
-// In components using the query:
-// teamStore.currentTeam = computed(() => currentTeamMeta.data.value?.data)
-// Now safely accesses Team[] from the AxiosResponse.data property
+vi.mocked(useTeams).mockReturnValue(
+  createMockQueryResponse([], true) // isLoading = true
+)
 ```
 
-This structure allows components and composables to access:
+### Test Error State
 
-- Response data: `.data.value.data`
-- Response status: `.data.value.status`
-- Response metadata: `.data.value.headers`, `.data.value.config`, etc.
+```typescript
+vi.mocked(useTeams).mockReturnValue(
+  createMockQueryResponse(null, false, new Error('Failed'))
+)
+```
+
+## Related Documentation
+
+- [Unit Testing Guide](../../../../docs/testing/unit-testing.md) - How to write unit tests
+- [Testing Overview](../../../../docs/testing/) - Full testing documentation
+- [Development Guide](../../../../docs/development-guide/) - General development guidelines
