@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/vue-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
 import type { Wage } from '@/types'
 import type { MaybeRefOrGetter } from 'vue'
@@ -38,6 +38,7 @@ export interface SetWageInput {
 }
 
 export const useSetMemberWage = () => {
+  const queryClient = useQueryClient()
   return useMutation<void, AxiosError, SetWageInput>({
     mutationFn: async (wageInput) => {
       await apiClient.put('/wage/setWage', {
@@ -46,6 +47,11 @@ export const useSetMemberWage = () => {
         ratePerHour: wageInput.ratePerHour,
         maximumHoursPerWeek: wageInput.maximumHoursPerWeek
       })
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate wage queries to refetch
+      queryClient.invalidateQueries({ queryKey: ['teamWages', { teamId: String(variables.teamId) }] })
     }
+
   })
 }
