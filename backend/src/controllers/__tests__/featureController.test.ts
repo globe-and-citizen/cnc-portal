@@ -640,4 +640,89 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(500, error, res);
     });
   });
+
+  describe('checkSubmitRestriction', () => {
+    it('should return 400 if Team ID is missing', async () => {
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+
+      const req = createMockRequest({ params: {} });
+      const res = createMockResponse();
+
+      await featureController.checkSubmitRestriction(req as Request, res as Response);
+
+      expect(errorResponse).toHaveBeenCalledWith(400, 'Team ID is required', res);
+    });
+
+    it('should return 400 if Team ID is invalid', async () => {
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+
+      const req = createMockRequest({ params: { id: 'invalid' } });
+      const res = createMockResponse();
+
+      await featureController.checkSubmitRestriction(req as Request, res as Response);
+
+      expect(errorResponse).toHaveBeenCalledWith(400, 'Team ID must be a positive integer', res);
+    });
+
+    it('should return 404 if team not found', async () => {
+      vi.mocked(featureUtils.teamExists).mockResolvedValue(false);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+
+      const req = createMockRequest({ params: { id: '999' } });
+      const res = createMockResponse();
+
+      await featureController.checkSubmitRestriction(req as Request, res as Response);
+
+      expect(errorResponse).toHaveBeenCalledWith(404, 'Team with ID 999 not found', res);
+    });
+    it('should return isRestricted as true when no feature/override is configured', async () => {
+      vi.mocked(featureUtils.teamExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.getEffectiveStatus).mockResolvedValue(null);
+
+      const req = createMockRequest({ params: { id: '5' } });
+      const res = createMockResponse();
+
+      await featureController.checkSubmitRestriction(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        data: {
+          teamId: 5,
+          isRestricted: true,
+          effectiveStatus: 'enabled',
+        },
+      });
+    });
+
+    it('should return isRestricted as false when feature status is disabled', async () => {
+      vi.mocked(featureUtils.teamExists).mockResolvedValue(true);
+      vi.mocked(featureUtils.getEffectiveStatus).mockResolvedValue('disabled');
+
+      const req = createMockRequest({ params: { id: '5' } });
+      const res = createMockResponse();
+
+      await featureController.checkSubmitRestriction(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        data: {
+          teamId: 5,
+          isRestricted: false,
+          effectiveStatus: 'disabled',
+        },
+      });
+    });
+
+    it('should return 500 on error', async () => {
+      const error = new Error('Database error');
+      vi.mocked(featureUtils.teamExists).mockRejectedValue(error);
+      vi.mocked(errorResponse).mockReturnValue(undefined);
+      const req = createMockRequest({ params: { id: '5' } });
+      const res = createMockResponse();
+      await featureController.checkSubmitRestriction(req as Request, res as Response);
+      expect(errorResponse).toHaveBeenCalledWith(500, error, res);
+    });
+  });
 });
