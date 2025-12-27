@@ -36,7 +36,7 @@ const authorizeUser = async (req: Request, res: Response, next: NextFunction) =>
     }
 
     const decodedPayload = payload as { address: Address; roles?: UserRole[] };
-// Find user by address in the database
+    // Find user by address in the database
 
     const user = await prisma.user.findUnique({
       where: { address: decodedPayload.address },

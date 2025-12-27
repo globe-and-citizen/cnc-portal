@@ -1,6 +1,6 @@
 /**
  * Role-based access control middleware
- * 
+ *
  * Middleware functions for protecting routes based on user roles
  */
 
@@ -25,10 +25,10 @@ import 'express';
 /**
  * Middleware factory to require a specific role
  * Must be used AFTER the authorizeUser middleware
- * 
+ *
  * @param requiredRole - Single role that is required
  * @returns Express middleware function
- * 
+ *
  * @example
  * router.get('/admin-only', authorizeUser, requireRole(UserRole.ROLE_ADMIN), controller)
  */
@@ -37,13 +37,9 @@ export const requireRole = (requiredRole: UserRole) => {
     const userRoles: UserRoles = (req.user?.roles ?? []) as UserRoles;
 
     if (!hasRole(userRoles, requiredRole)) {
-      return errorResponse(
-        403,
-        `Forbidden: This endpoint requires ${requiredRole} role`,
-        res
-      );
+      return errorResponse(403, `Forbidden: This endpoint requires ${requiredRole} role`, res);
     }
-    
+
     next();
   };
 };
@@ -51,10 +47,10 @@ export const requireRole = (requiredRole: UserRole) => {
 /**
  * Middleware factory to require ANY of the specified roles
  * Must be used AFTER the authorizeUser middleware
- * 
+ *
  * @param requiredRoles - Array of roles, user needs at least one
  * @returns Express middleware function
- * 
+ *
  * @example
  * router.get('/admin-area', authorizeUser, requireAnyRole([ROLE_ADMIN, ROLE_SUPER_ADMIN]), controller)
  */
@@ -77,10 +73,10 @@ export const requireAnyRole = (requiredRoles: UserRole[]) => {
 /**
  * Middleware factory to require ALL of the specified roles
  * Must be used AFTER the authorizeUser middleware
- * 
+ *
  * @param requiredRoles - Array of roles, user must have all
  * @returns Express middleware function
- * 
+ *
  * @example
  * router.delete('/critical-action', authorizeUser, requireAllRoles([ROLE_ADMIN, ROLE_SPECIAL]), controller)
  */
@@ -106,9 +102,9 @@ export const requireAllRoles = (requiredRoles: UserRole[]) => {
  */
 export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
   const userRoles = req.user?.roles || [];
-  
-  const isAdminRole = userRoles.some(role => 
-    role === UserRole.ROLE_ADMIN || role === UserRole.ROLE_SUPER_ADMIN
+
+  const isAdminRole = userRoles.some(
+    (role) => role === UserRole.ROLE_ADMIN || role === UserRole.ROLE_SUPER_ADMIN
   );
 
   if (!isAdminRole) {

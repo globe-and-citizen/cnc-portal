@@ -27,7 +27,7 @@ import healthRoutes from '../routes/healthRoutes';
 //#endregion routing modules
 
 import { authorizeUser } from '../middleware/authMiddleware';
-import { requireAdmin } from '../middleware/roleMiddleware'
+import { requireAdmin } from '../middleware/roleMiddleware';
 import { errorMessages } from '../utils/serverConfigUtil';
 
 // Swagger import

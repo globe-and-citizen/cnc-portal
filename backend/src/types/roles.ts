@@ -1,6 +1,6 @@
 /**
  * Role-Based Access Control (RBAC) Types and Constants
- * 
+ *
  * This file defines all roles and permission constants for the CNC Portal.
  * All users have roles as an array, allowing for flexible permission modeling.
  */
@@ -12,12 +12,12 @@
 export enum UserRole {
   /** Default role for all users - basic platform access */
   ROLE_USER = 'ROLE_USER',
-  
+
   /** Administrator role - access to admin endpoints and dashboard */
   ROLE_ADMIN = 'ROLE_ADMIN',
-  
+
   /** Super Admin role - full platform access including user management */
-  ROLE_SUPER_ADMIN = 'ROLE_SUPER_ADMIN'
+  ROLE_SUPER_ADMIN = 'ROLE_SUPER_ADMIN',
 }
 
 /**
@@ -37,7 +37,7 @@ export type RequiredRoles = UserRole | UserRole[];
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   [UserRole.ROLE_USER]: 'Default user role with basic platform access',
   [UserRole.ROLE_ADMIN]: 'Administrator with access to admin endpoints and dashboard',
-  [UserRole.ROLE_SUPER_ADMIN]: 'Super administrator with full platform access and user management'
+  [UserRole.ROLE_SUPER_ADMIN]: 'Super administrator with full platform access and user management',
 };
 
 /**
@@ -48,7 +48,7 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
 export const ROLE_HIERARCHY: Record<UserRole, UserRole[]> = {
   [UserRole.ROLE_USER]: [UserRole.ROLE_USER],
   [UserRole.ROLE_ADMIN]: [UserRole.ROLE_ADMIN, UserRole.ROLE_USER],
-  [UserRole.ROLE_SUPER_ADMIN]: [UserRole.ROLE_SUPER_ADMIN, UserRole.ROLE_ADMIN, UserRole.ROLE_USER]
+  [UserRole.ROLE_SUPER_ADMIN]: [UserRole.ROLE_SUPER_ADMIN, UserRole.ROLE_ADMIN, UserRole.ROLE_USER],
 };
 
 /**
