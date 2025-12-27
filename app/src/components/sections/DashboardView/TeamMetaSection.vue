@@ -71,7 +71,7 @@ const {
 const executeUpdateTeam = () => {
   updateTeamMutate(
     {
-      id: teamStore.currentTeamMeta.data?.id || '',
+      id: teamStore.currentTeamId || '',
       teamData: {
         name: updateTeamInput.value.name,
         description: updateTeamInput.value.description
@@ -97,7 +97,7 @@ const {
 } = useDeleteTeam()
 
 const deleteTeam = async () => {
-  const teamId = teamStore.currentTeamMeta.data?.id
+  const teamId = teamStore.currentTeamId
   if (!teamId) {
     addErrorToast('Team ID is required')
     return

@@ -17,7 +17,7 @@
       @reset="() => (addVestingModal = { mount: false, show: false })"
     >
       <CreateVesting
-        v-if="teamStore.currentTeam?.id"
+        v-if="teamStore.currentTeamId"
         :tokenAddress="(teamStore.getContractAddressByType('InvestorV1') as Address) ?? ''"
         @closeAddVestingModal="handleClose"
         @reload="handleReload"

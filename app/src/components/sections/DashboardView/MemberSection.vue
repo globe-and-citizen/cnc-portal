@@ -21,8 +21,8 @@
         @reset="() => (showAddMemberForm = { mount: false, show: false })"
       >
         <AddMemberForm
-          v-if="teamStore.currentTeamMeta.data?.id && showAddMemberForm.mount"
-          :teamId="teamStore.currentTeamMeta.data?.id"
+          v-if="teamStore.currentTeamId && showAddMemberForm.mount"
+          :teamId="teamStore.currentTeamId"
           @memberAdded="showAddMemberForm = { mount: false, show: false }"
         />
       </ModalComponent>
@@ -32,7 +32,7 @@
       <div class="overflow-x-auto">
         <TableComponent
           :rows="
-            teamStore.currentTeamMeta.data?.members.map((member: any, index: number) => {
+            teamStore.currentTeamMeta.data?.data.members.map((member: any, index: number) => {
               return { index: index + 1, ...member }
             })
           "
@@ -79,7 +79,9 @@
           ></template>
           <template
             #action-data="{ row }"
-            v-if="teamId && teamStore.currentTeamMeta.data?.ownerAddress === userDataStore.address"
+            v-if="
+              teamId && teamStore.currentTeamMeta.data?.ownerAddress === userDataStore.address
+            "
           >
             <div class="flex flex-wrap gap-2">
               <DeleteMemberModal

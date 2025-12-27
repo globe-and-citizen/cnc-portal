@@ -11,7 +11,7 @@
         <RouterLink
           :to="{
             name: 'payroll-history',
-            params: { id: teamStore.currentTeam?.id, memberAddress: row.member.address }
+            params: { id: teamStore.currentTeamId, memberAddress: row.member.address }
           }"
           class="flex items-center gap-2 hover:underline text-emerald-700"
         >
@@ -146,14 +146,14 @@ function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
 
 const weeklyClaimUrl = computed(
   () =>
-    `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${
+    `/weeklyClaim/?teamId=${teamStore.currentTeamId}${
       props.memberAddress ? `&memberAddress=${props.memberAddress}` : ''
     }`
 )
 
 const weeklyClaimQueryKey = computed(() => [
   'weekly-claims',
-  teamStore.currentTeam?.id,
+  teamStore.currentTeamId,
   props.memberAddress
 ])
 

@@ -241,7 +241,6 @@ const showModal = ref(false)
 const { addSuccessToast } = useToastStore()
 
 const initializeWageData = () => {
-  console.log('Initializing wage data with props.wage:', props.wage)
   if (props.wage) {
     const nativeRate = props.wage.ratePerHour.find((r) => r.type === 'native')?.amount || 0
     const usdcRate = props.wage.ratePerHour.find((r) => r.type === 'usdc')?.amount || 0
