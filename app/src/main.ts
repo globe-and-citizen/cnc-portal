@@ -11,6 +11,7 @@ import { DefaultApolloClient } from '@vue/apollo-composable'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import * as Sentry from '@sentry/vue'
+import { setupAuthInterceptor } from '@/lib/axios'
 
 export function setupApp() {
   const app = createApp(App)
@@ -37,6 +38,11 @@ export function setupApp() {
   app.provide(DefaultApolloClient, apolloClient)
 
   app.component('VueDatePicker', VueDatePicker)
+
+  // Setup axios interceptors after app initialization
+  // This ensures router and Pinia are fully available for the interceptor
+  setupAuthInterceptor(router)
+
   // Initialize single-tab guard after app mount
 
   // Initialize Sentry for error tracking

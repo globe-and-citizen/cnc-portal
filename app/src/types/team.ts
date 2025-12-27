@@ -10,6 +10,7 @@ export interface Team {
   ownerAddress: Address
   officerAddress?: Address
   teamContracts: TeamContract[]
+  _count?: { members: number }
 }
 export interface TeamsResponse {
   teams: Team[]

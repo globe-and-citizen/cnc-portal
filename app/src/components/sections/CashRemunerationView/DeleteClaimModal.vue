@@ -85,7 +85,7 @@ const handleDelete = async () => {
 
     // Invalidate using the same query key pattern from parent
     await queryClient.invalidateQueries({
-      queryKey: ['weekly-claims', teamStore.currentTeam?.id]
+      queryKey: ['weekly-claims', teamStore.currentTeamId]
     })
 
     emit('close')

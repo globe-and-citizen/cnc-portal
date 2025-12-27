@@ -125,11 +125,11 @@ const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === u
 
 const weeklyClaimUrl = computed(
   () =>
-    `/weeklyClaim/?teamId=${teamStore.currentTeam?.id}${!isCashRemunerationOwner.value ? `&memberAddress=${userStore.address}` : ''}`
+    `/weeklyClaim/?teamId=${teamStore.currentTeamId}${!isCashRemunerationOwner.value ? `&memberAddress=${userStore.address}` : ''}`
 )
 const queryKey = computed(() => [
   'weekly-claims',
-  teamStore.currentTeam?.id,
+  teamStore.currentTeamId,
   userStore.address,
   'pending'
 ])
