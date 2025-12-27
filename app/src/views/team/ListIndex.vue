@@ -14,7 +14,10 @@
     </div>
 
     <!-- Empty team or Error -->
-    <div class="flex flex-col items-center animate-fade-in" v-if="teams?.length == 0 || teamsError">
+    <div
+      class="flex flex-col items-center animate-fade-in"
+      v-if="teams?.length == 0 || teamsError"
+    >
       <img src="../../assets/login-illustration.png" alt="Login illustration" width="300" />
 
       <span

@@ -21,10 +21,7 @@
       </div>
     </div>
     <div v-if="teamStore.currentTeamMeta?.error" data-test="error-state">
-      <div
-        class="alert alert-warning"
-        v-if="teamStore.currentTeamMeta.error.response?.status == 404"
-      >
+      <div class="alert alert-warning" v-if="teamStore.currentTeamMeta.error?.status == 404">
         Error! Team not found
       </div>
       <div class="alert alert-error" v-else>Error! Something went wrong, try again later.</div>
@@ -77,14 +74,14 @@ const route = useRoute()
 
 onMounted(() => {
   if (route.params.id) {
-    teamStore.setCurrentTeamId(route.params.id as string)
+    teamStore.setcurrentTeamId(route.params.id as string)
   } else {
     // e.g. this.$router.push('/teams')
   }
 })
 
 const hasContract = computed(() => {
-  return (teamStore.currentTeamMeta.data?.teamContracts ?? []).length > 0
+  return (teamStore.currentTeamMeta.data?.data.teamContracts ?? []).length > 0
 })
 
 // Watch for changes in the route params then update the current team id
@@ -92,7 +89,7 @@ watch(
   () => route.params.id,
   (newId) => {
     if (newId && newId !== teamStore.currentTeamId) {
-      teamStore.setCurrentTeamId(newId as string)
+      teamStore.setcurrentTeamId(newId as string)
     }
   }
 )
