@@ -22,7 +22,6 @@ import {
   teamOverrideSchema,
 } from '../validation/featureValidation';
 
-
 /** GET /features — List all features */
 export const listFeatures = async (_req: Request, res: Response) => {
   try {
@@ -139,7 +138,6 @@ export const deleteFeatureByName = async (req: Request, res: Response) => {
     return errorResponse(500, error, res);
   }
 };
-
 
 /** POST /features/:functionName/teams/:teamId — Create a team override */
 export const createOverride = async (req: Request, res: Response) => {
