@@ -22,11 +22,6 @@ import {
   teamOverrideSchema,
 } from '../validation/featureValidation';
 
-// DB helpers & mappers live in `src/utils/featureUtils.ts`.
-
-// =============================================================================
-// FEATURE CRUD HANDLERS
-// =============================================================================
 
 /** GET /features — List all features */
 export const listFeatures = async (_req: Request, res: Response) => {
@@ -145,9 +140,6 @@ export const deleteFeatureByName = async (req: Request, res: Response) => {
   }
 };
 
-// =============================================================================
-// TEAM OVERRIDE HANDLERS
-// =============================================================================
 
 /** POST /features/:functionName/teams/:teamId — Create a team override */
 export const createOverride = async (req: Request, res: Response) => {
@@ -273,16 +265,7 @@ export const removeOverride = async (req: Request, res: Response) => {
   }
 };
 
-// =============================================================================
-// PUBLIC ENDPOINT — SUBMIT RESTRICTION CHECK
-// =============================================================================
-
-/**
- * GET /teams/:id/submit-restriction
- * Check if submit restriction is active for a team (used by frontend).
- * - enabled  = restriction active (current week only)
- * - disabled = no restriction (any date)
- */
+//Check if submit restriction is active for a team (used by frontend).
 export const checkSubmitRestriction = async (req: Request, res: Response) => {
   try {
     const teamIdParam = req.params.id;
