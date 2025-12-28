@@ -30,6 +30,9 @@ export async function findFeatureByName(functionName: string) {
             },
           },
         },
+        orderBy: {
+          id: 'asc'
+        }
       },
     },
   });
@@ -42,14 +45,10 @@ export async function findFeatureByName(functionName: string) {
     status: feature.status as FeatureStatus,
     createdAt: feature.createdAt,
     updatedAt: feature.updatedAt,
-    teamFunctionOverrides: feature.teamFunctionOverrides.map((override) => ({
-      id: override.id,
+    overrides: feature.teamFunctionOverrides.map((override) => ({
       teamId: override.teamId,
-      functionName: override.functionName,
+      teamName: override.team.name,
       status: override.status as FeatureStatus,
-      createdAt: override.createdAt,
-      updatedAt: override.updatedAt,
-      team: override.team,
     })),
   };
 }
