@@ -1,0 +1,40 @@
+meta {
+  name: Feature - 04 - Update Feature
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{host}}/admin/features/{{testFeatureName}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "status": "enabled"
+  }
+}
+
+tests {
+  test("should return 200 status", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should return success true", function() {
+    expect(res.body.success).to.equal(true);
+  });
+
+  test("should return updated feature", function() {
+    expect(res.body.data).to.be.an('object');
+    expect(res.body.data.status).to.equal('enabled');
+  });
+
+  test("log updated feature", function() {
+    console.log("Updated feature:", JSON.stringify(res.body.data, null, 2));
+  });
+}

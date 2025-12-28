@@ -30,6 +30,7 @@ const pageTitle = computed(() => {
     'index': 'Overview',
     'teams': 'Teams Management',
     'features': 'Submit Restriction',
+    'feature': 'Feature',
     'micropayments': 'Micropayments',
     'contracts': 'Contracts',
     'settings': 'Settings',
@@ -92,8 +93,8 @@ const links = [
       type: 'trigger',
       children: [
         {
-          label: 'Submit Restriction',
-          to: '/features/SubmitRestriction',
+          label: 'Feature List ',
+          to: '/features',
           onSelect: () => {
             open.value = false
           }

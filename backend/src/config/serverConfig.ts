@@ -23,6 +23,7 @@ import electionsRoute from '../routes/electionsRoute';
 import devRoutes from '../routes/devRoutes';
 import statsRoutes from '../routes/statsRoute';
 import healthRoutes from '../routes/healthRoutes';
+import featureRoutes from '../routes/featureRoutes';
 
 //#endregion routing modules
 
@@ -75,6 +76,7 @@ class Server {
       stats: '/api/stats/',
       dev: '/api/dev/',
       health: '/api/health/',
+      features: '/api/admin/features/',
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -132,6 +134,7 @@ class Server {
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
     this.app.use(this.paths.stats, authorizeUser, requireAdmin, statsRoutes);
+    this.app.use(this.paths.features, authorizeUser, requireAdmin, featureRoutes);
 
     // Dev routes - only available in development mode
     if (process.env.NODE_ENV === 'development') {

@@ -113,6 +113,7 @@
                 v-if="hasWage"
                 :weekly-claim="selectWeekWeelyClaim"
                 :signed-week-starts="signedWeekStarts"
+                :restrict-submit="false"
               />
               <ButtonUI
                 v-else

@@ -1,0 +1,42 @@
+meta {
+  name: Feature - 06 - Create Team Override
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{host}}/admin/features/{{testFeatureName}}/teams/{{teamId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "status": "enabled"
+  }
+}
+
+tests {
+  test("should return 201 status", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("should return success true", function() {
+    expect(res.body.success).to.equal(true);
+  });
+
+  test("should return override data", function() {
+    expect(res.body.data).to.be.an('object');
+    const expectedTeamId = parseInt(bru.getVar('teamId') || bru.getEnvVar('teamId'));
+    expect(res.body.data.teamId).to.equal(expectedTeamId);
+    expect(res.body.data.status).to.equal('enabled');
+  });
+
+  test("log created override", function() {
+    console.log("Created override:", JSON.stringify(res.body.data, null, 2));
+  });
+}

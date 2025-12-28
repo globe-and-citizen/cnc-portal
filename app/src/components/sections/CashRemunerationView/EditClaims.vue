@@ -6,6 +6,7 @@
       :initial-data="claimFormInitialData"
       :is-edit="true"
       :is-loading="isUpdating"
+      :restrict-submit="isRestricted"
       @submit="updateClaim"
       @cancel="$emit('close')"
     />
@@ -31,9 +32,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useCustomFetch, useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
 import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -50,6 +51,9 @@ const errorMessage = ref<{ message: string } | null>(null)
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const queryClient = useQueryClient()
+const { isRestricted, checkRestriction } = useSubmitRestriction()
+
+const teamId = computed(() => teamStore.currentTeam?.id)
 
 const claimFormInitialData = computed<ClaimFormData>(() => ({
   hoursWorked: String(props.claim.hoursWorked ?? ''),
@@ -86,6 +90,17 @@ watch(updateClaimError, async () => {
   }
 })
 
+// Check restriction when team changes
+watch(
+  teamId,
+  async (newTeamId) => {
+    if (newTeamId) {
+      await checkRestriction(newTeamId)
+    }
+  },
+  { immediate: true }
+)
+
 const updateClaim = async (data: ClaimSubmitPayload) => {
   updatePayload.value = data
   errorMessage.value = null
@@ -106,4 +121,11 @@ const updateClaim = async (data: ClaimSubmitPayload) => {
     toastStore.addErrorToast((error as Error)?.message || 'Failed to update claim')
   }
 }
+
+// Check restriction on mount
+onMounted(async () => {
+  if (teamId.value) {
+    await checkRestriction(teamId.value)
+  }
+})
 </script>
