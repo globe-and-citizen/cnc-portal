@@ -20,7 +20,6 @@ import {
   updateFeatureSchema,
   featureTeamParamsSchema,
   teamOverrideSchema,
-  createTeamOverrideSchema,
 } from '../validation/featureValidation';
 
 /** GET /features — List all features */
@@ -140,21 +139,21 @@ export const deleteFeatureByName = async (req: Request, res: Response) => {
   }
 };
 
-/** POST /features/:functionName/teams — Create a team override */
+/** POST /features/:functionName/teams/:teamId — Create a team override */
 export const createOverride = async (req: Request, res: Response) => {
   try {
-    const paramValidation = functionNameParamSchema.safeParse(req.params);
+    const paramValidation = featureTeamParamsSchema.safeParse(req.params);
     if (!paramValidation.success) {
       return errorResponse(400, paramValidation.error.issues[0].message, res);
     }
 
-    const bodyValidation = createTeamOverrideSchema.safeParse(req.body);
+    const bodyValidation = teamOverrideSchema.safeParse(req.body);
     if (!bodyValidation.success) {
       return errorResponse(400, bodyValidation.error.issues[0].message, res);
     }
 
-    const { functionName } = paramValidation.data;
-    const { teamId, status } = bodyValidation.data;
+    const { functionName, teamId } = paramValidation.data;
+    const { status } = bodyValidation.data;
 
     if (!(await featureExists(functionName))) {
       return errorResponse(404, `Feature "${functionName}" not found`, res);
