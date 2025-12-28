@@ -12,10 +12,10 @@
         />
         <div>
           <h3 class="text-lg font-semibold">
-            {{ featureName || 'Feature Details' }}
+            {{ featureDisplayName }} Settings
           </h3>
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            View and manage feature settings
+            Configure restriction settings for this feature
           </p>
         </div>
       </div>
@@ -70,13 +70,20 @@ const features = computed(() => data.value?.data || [])
 // Get feature ID from route params
 const featureId = computed(() => route.params.id as string)
 
+const featureDisplayName = computed(() => {
+  if (!currentFeature.value?.functionName) return 'Feature'
+  // Convert SUBMIT_RESTRICTION to Submit Restriction format
+  return currentFeature.value?.functionName
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
+})
 // Find current feature
 const currentFeature = computed(() => {
   return features.value.find(f => f.functionName === featureId.value)
 })
 
 // Computed properties
-const featureName = computed(() => currentFeature.value?.functionName || featureId.value)
 
 // Check if the feature is enabled (both "enabled" and "beta" are considered enabled for viewing)
 const isFeatureEnabled = computed(() => {

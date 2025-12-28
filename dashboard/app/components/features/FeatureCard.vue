@@ -1,18 +1,5 @@
 <template>
   <UPageCard>
-    <template #header>
-      <div class="flex items-center justify-between">
-        <div>
-          <h3 class="text-lg font-semibold text-highlighted">
-            {{ featureDisplayName }} Settings
-          </h3>
-          <p class="text-sm text-muted">
-            Configure restriction settings for this feature
-          </p>
-        </div>
-      </div>
-    </template>
-
     <div class="space-y-6">
       <UAlert
         color="info"
