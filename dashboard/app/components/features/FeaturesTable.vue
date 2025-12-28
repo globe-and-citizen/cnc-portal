@@ -49,6 +49,7 @@
                 :items="statusOptions"
                 value-key="value"
                 size="sm"
+                class="w-32"
                 :disabled="updatingFeature === feature.functionName"
                 :loading="updatingFeature === feature.functionName"
                 data-test="status-select"

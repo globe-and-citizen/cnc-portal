@@ -24,16 +24,82 @@
       </p>
     </div>
 
-    <!-- Table -->
-    <UTable
-      v-else
-      :data="teams"
-      :columns="columns"
-      :loading="loading"
-    />
+    <!-- Teams Table -->
+    <div v-else class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="border-b border-gray-200 dark:border-gray-700">
+          <tr>
+            <th class="text-left py-3 px-4 font-semibold text-sm text-highlighted">
+              Team
+            </th>
+            <th class="text-left py-3 px-4 font-semibold text-sm text-highlighted">
+              Status
+            </th>
+            <th class="text-left py-3 px-4 font-semibold text-sm text-highlighted">
+              Restriction
+            </th>
+            <th class="text-right py-3 px-4 font-semibold text-sm text-highlighted">
+              Action
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="team in teams"
+            :key="team.teamId"
+            class="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          >
+            <!-- Team Column -->
+            <td class="py-3 px-4">
+              <p class="font-medium text-highlighted">
+                {{ team.teamName }}
+              </p>
+            </td>
 
-    <!-- Pagination directly below the table -->
-    <div v-if="total > 0" class="flex justify-between items-center pt-4 gap-4">
+            <!-- Status Column -->
+            <td class="py-3 px-4">
+              <UBadge
+                :color="statusColorsMap[team.status]"
+                variant="soft"
+              >
+                {{ statusLabelsMap[team.status] }}
+              </UBadge>
+            </td>
+
+            <!-- Restriction Column -->
+            <td class="py-3 px-4">
+              <USelect
+                :model-value="team.status"
+                :items="FEATURE_STATUS_OPTIONS"
+                value-key="value"
+                :disabled="loadingTeamId === team.teamId || !isEditable"
+                class="w-40"
+                data-test="team-status-select"
+                @update:model-value="(value) => value && emit('toggle-restriction', team, value)"
+              />
+            </td>
+
+            <!-- Action Column -->
+            <td class="py-3 px-4 text-right">
+              <UButton
+                label="Remove"
+                color="error"
+                variant="ghost"
+                size="sm"
+                icon="i-lucide-trash-2"
+                :disabled="!isEditable"
+                :loading="loadingTeamId === team.teamId"
+                data-test="remove-override-btn"
+                @click="emit('remove-override', team)"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="total > 0" class="flex justify-between items-center pt-4 gap-4 border-t border-gray-200 dark:border-gray-700 mt-4">
       <div class="flex items-center gap-3">
         <div class="text-sm text-muted">
           Showing {{ (currentPage - 1) * pageSize + 1 }} to
@@ -59,19 +125,13 @@
 </template>
 
 <script setup lang="ts">
-import { h, computed } from 'vue'
-import type { ColumnDef } from '@tanstack/vue-table'
-import { UBadge, USwitch, UButton } from '#components'
+import {
+  FEATURE_STATUS_OPTIONS,
+  type FeatureStatus,
+  type TeamRestrictionOverride
+} from '~/lib/axios'
 
 // Props
-interface TeamRestrictionOverride {
-  teamId: number
-  teamName: string
-  isRestricted: boolean
-  memberCount?: number
-  updatedAt?: string
-}
-
 interface Props {
   teams: TeamRestrictionOverride[]
   loading?: boolean
@@ -83,7 +143,7 @@ interface Props {
   isEditable?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   loading: false,
   loadingTeamId: null,
   isEditable: true
@@ -91,11 +151,24 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Emits
 const emit = defineEmits<{
-  'toggle-restriction': [team: TeamRestrictionOverride, value: boolean]
+  'toggle-restriction': [team: TeamRestrictionOverride, value: FeatureStatus]
   'remove-override': [team: TeamRestrictionOverride]
   'page-change': [page: number]
   'page-size-change': [size: number]
 }>()
+
+// Status color and label mappings
+const statusColorsMap = {
+  enabled: 'success',
+  disabled: 'error',
+  beta: 'warning'
+} as const
+
+const statusLabelsMap = {
+  enabled: 'Enabled',
+  disabled: 'Disabled',
+  beta: 'Beta'
+} as const
 
 // Page size options
 const pageSizeOptions = [
@@ -103,76 +176,6 @@ const pageSizeOptions = [
   { label: '15 per page', value: 15 },
   { label: '20 per page', value: 20 }
 ]
-
-// Table columns definition
-const columns = computed<ColumnDef<TeamRestrictionOverride>[]>(() => [
-  {
-    id: 'team',
-    accessorKey: 'teamName',
-    header: 'Team',
-    cell: ({ row }) => {
-      return h('div', { class: 'flex flex-col' }, [
-        h('span', { class: 'font-medium text-highlighted' }, row.original.teamName),
-        row.original.memberCount
-          ? h(
-              'span',
-              { class: 'text-xs text-muted' },
-              `${row.original.memberCount} ${row.original.memberCount === 1 ? 'member' : 'members'}`
-            )
-          : null
-      ])
-    }
-  },
-  {
-    id: 'status',
-    accessorKey: 'isRestricted',
-    header: 'Status',
-    cell: ({ row }) => {
-      return h(
-        UBadge,
-        {
-          color: row.original.isRestricted ? 'error' : 'success',
-          variant: 'soft'
-        },
-        () => (row.original.isRestricted ? 'Restricted' : 'Unrestricted')
-      )
-    }
-  },
-  {
-    id: 'toggle',
-    header: 'Restriction',
-    cell: ({ row }) => {
-      return h('div', { class: 'flex items-center gap-2' }, [
-        h(USwitch, {
-          'modelValue': row.original.isRestricted,
-          'data-test': 'team-restriction-switch',
-          'loading': props.loadingTeamId === row.original.teamId,
-          'onUpdate:modelValue': (value: boolean) => emit('toggle-restriction', row.original, value)
-        }),
-        h('span', { class: 'text-sm text-muted' }, row.original.isRestricted ? 'ON' : 'OFF')
-      ])
-    }
-  },
-  {
-    id: 'action',
-    header: 'Action',
-    cell: ({ row }) => {
-      return h(
-        UButton,
-        {
-          'color': 'error',
-          'variant': 'ghost',
-          'size': 'xs',
-          'data-test': 'remove-override-btn',
-          'icon': 'i-lucide-trash-2',
-          'loading': props.loadingTeamId === row.original.teamId,
-          'onClick': () => emit('remove-override', row.original)
-        },
-        () => 'Remove'
-      )
-    }
-  }
-])
 
 // Handlers
 const handlePageChange = (page: number) => {
