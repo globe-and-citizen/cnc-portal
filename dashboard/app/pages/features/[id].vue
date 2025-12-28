@@ -47,6 +47,7 @@
       <!-- Feature-Specific Component -->
       <FeatureCard
         v-if="currentFeature.functionName"
+        :feature-name="currentFeature.functionName"
         :is-editable="isFeatureEnabled"
       />
     </div>
