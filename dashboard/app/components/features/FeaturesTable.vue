@@ -17,9 +17,9 @@
             <th class="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
               Status
             </th>
-            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
+            <!-- <th class="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
               Overrides
-            </th>
+            </th> -->
             <th class="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
               Created
             </th>
@@ -56,11 +56,11 @@
                 @update:model-value="(value) => $emit('update-status', feature, value as FeatureStatus)"
               />
             </td>
-            <td class="py-4 px-4">
+            <!-- <td class="py-4 px-4">
               <span class="text-sm text-gray-600 dark:text-gray-400">
                 {{ feature.overridesCount }}
               </span>
-            </td>
+            </td> -->
             <td class="py-4 px-4">
               <span class="text-xs text-gray-500 dark:text-gray-500">
                 {{ formatDate(feature.createdAt) }}

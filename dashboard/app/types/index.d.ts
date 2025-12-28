@@ -231,7 +231,7 @@ export interface Feature {
   functionName: string
   status: FeatureStatus
   isGloballyRestricted?: boolean
-  overridesCount: number
+  // overridesCount: number
   createdAt: string
   updatedAt: string
 }
@@ -257,7 +257,7 @@ export interface TeamFunctionOverride {
   }
 }
 
-export interface FeatureDetail extends Omit<Feature, 'overridesCount'> {
+export interface FeatureDetail extends Omit<Feature> {
   id?: number
   overrides?: FeatureOverride[]
   teamFunctionOverrides?: TeamFunctionOverride[]
@@ -266,7 +266,6 @@ export interface FeatureDetail extends Omit<Feature, 'overridesCount'> {
 export interface TeamRestrictionOverride {
   teamId: number
   teamName: string
-  isRestricted: boolean
   memberCount?: number
   updatedAt?: string
 }
