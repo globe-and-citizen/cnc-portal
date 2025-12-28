@@ -167,7 +167,7 @@ router.delete('/:functionName', deleteFeatureByName);
 
 /**
  * @swagger
- * /api/admin/features/{functionName}/teams/{teamId}:
+ * /api/admin/features/{functionName}/teams:
  *   post:
  *     summary: Create a team override for a feature
  *     tags: [Features]
@@ -179,11 +179,6 @@ router.delete('/:functionName', deleteFeatureByName);
  *         required: true
  *         schema:
  *           type: string
- *       - in: path
- *         name: teamId
- *         required: true
- *         schema:
- *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -191,8 +186,11 @@ router.delete('/:functionName', deleteFeatureByName);
  *           schema:
  *             type: object
  *             required:
+ *               - teamId
  *               - status
  *             properties:
+ *               teamId:
+ *                 type: integer
  *               status:
  *                 type: string
  *                 enum: [enabled, disabled, beta]
@@ -204,7 +202,7 @@ router.delete('/:functionName', deleteFeatureByName);
  *       409:
  *         description: Override already exists
  */
-router.post('/:functionName/teams/:teamId', createOverride);
+router.post('/:functionName/teams', createOverride);
 
 /**
  * @swagger
