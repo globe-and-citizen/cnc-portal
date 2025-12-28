@@ -1,5 +1,9 @@
 import axios from 'axios'
-import type { AxiosInstance, InternalAxiosRequestConfig, AxiosRequestHeaders } from 'axios'
+import type {
+  AxiosInstance,
+  InternalAxiosRequestConfig,
+  AxiosRequestHeaders
+} from 'axios'
 import type { Router } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { BACKEND_URL } from '~/constant/index'
@@ -32,9 +36,10 @@ apiClient.interceptors.request.use(
       token = authStore.getToken()
     } catch {
       // Pinia not ready (early import or SSR context) – fallback
-      token = (typeof localStorage !== 'undefined')
-        ? localStorage.getItem('dashboard-auth-token')
-        : null
+      token
+        = typeof localStorage !== 'undefined'
+          ? localStorage.getItem('dashboard-auth-token')
+          : null
     }
 
     if (token) {
@@ -74,7 +79,9 @@ export const setupAuthInterceptor = (router: Router) => {
     response => response,
     async (error) => {
       if (error.response?.status === 401) {
-        console.warn('Unauthorized (401) – clearing auth and redirecting to login')
+        console.warn(
+          'Unauthorized (401) – clearing auth and redirecting to login'
+        )
         try {
           const authStore = useAuthStore()
           authStore.clearAuth()
@@ -160,7 +167,9 @@ export const FEATURE_STATUS_OPTIONS = [
  * Fetch feature data with all overrides (generic for any feature)
  * @param featureName The name of the feature (e.g., 'SUBMIT_RESTRICTION')
  */
-export async function fetchFeatureRestrictions(featureName: string): Promise<FeatureWithOverrides> {
+export async function fetchFeatureRestrictions(
+  featureName: string
+): Promise<FeatureWithOverrides> {
   try {
     const { data } = await apiClient.get<{
       success: boolean
@@ -209,8 +218,8 @@ export async function createFeatureTeamOverride(
 ): Promise<boolean> {
   try {
     const { data } = await apiClient.post<{ success: boolean }>(
-      `admin/features/${featureName}/teams`,
-      { teamId, status }
+      `admin/features/${featureName}/teams/${teamId}`,
+      { status }
     )
 
     return data.success
@@ -285,7 +294,9 @@ export async function fetchSubmitRestrictionFeature(): Promise<FeatureWithOverri
   return fetchFeatureRestrictions('SUBMIT_RESTRICTION')
 }
 
-export async function updateGlobalRestriction(status: FeatureStatus): Promise<boolean> {
+export async function updateGlobalRestriction(
+  status: FeatureStatus
+): Promise<boolean> {
   return updateGlobalFeatureRestriction('SUBMIT_RESTRICTION', status)
 }
 

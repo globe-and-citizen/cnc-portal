@@ -2,17 +2,12 @@ import { z } from 'zod';
 
 /**
  * Valid status values for features
- * - "enabled": Feature is active
- * - "disabled": Feature is inactive
- * - "beta": Feature is in beta testing
  */
 export const featureStatusEnum = z.enum(['enabled', 'disabled', 'beta'], {
   message: 'status must be "enabled", "disabled", or "beta"',
 });
 
-/**
- * Schema for functionName path parameter
- */
+/** Schema for functionName path parameter */
 export const functionNameParamSchema = z.object({
   functionName: z
     .string()
@@ -23,9 +18,7 @@ export const functionNameParamSchema = z.object({
     }),
 });
 
-/**
- * Schema for creating a new feature
- */
+/** Schema for creating a new feature */
 export const createFeatureSchema = z.object({
   functionName: z
     .string()
@@ -36,16 +29,12 @@ export const createFeatureSchema = z.object({
   status: featureStatusEnum,
 });
 
-/**
- * Schema for updating a feature
- */
+/** Schema for updating a feature */
 export const updateFeatureSchema = z.object({
   status: featureStatusEnum,
 });
 
-/**
- * Schema for team ID path parameter
- */
+/** Schema for team ID path parameter */
 export const teamIdParamSchema = z.object({
   teamId: z
     .string()
@@ -55,9 +44,7 @@ export const teamIdParamSchema = z.object({
     }),
 });
 
-/**
- * Schema for combined functionName and teamId params
- */
+/** Schema for combined functionName and teamId params */
 export const featureTeamParamsSchema = z.object({
   functionName: z
     .string()
@@ -73,24 +60,12 @@ export const featureTeamParamsSchema = z.object({
     }),
 });
 
-/**
- * Schema for creating/updating a team override
- */
+/** Schema for creating/updating a team override */
 export const teamOverrideSchema = z.object({
   status: featureStatusEnum,
 });
 
-/**
- * Schema for creating a team override (with teamId in body)
- */
-export const createTeamOverrideSchema = z.object({
-  teamId: z.number().int().positive({ message: 'teamId must be a positive integer' }),
-  status: featureStatusEnum,
-});
-
-/**
- * Schema for pagination query parameters
- */
+/** Schema for pagination query parameters */
 export const paginationQuerySchema = z.object({
   page: z
     .string()
@@ -118,5 +93,4 @@ export type UpdateFeatureInput = z.infer<typeof updateFeatureSchema>;
 export type TeamIdParam = z.infer<typeof teamIdParamSchema>;
 export type FeatureTeamParams = z.infer<typeof featureTeamParamsSchema>;
 export type TeamOverrideInput = z.infer<typeof teamOverrideSchema>;
-export type CreateTeamOverrideInput = z.infer<typeof createTeamOverrideSchema>;
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
