@@ -128,6 +128,9 @@ describe('featureUtils', () => {
                 },
               },
             },
+            orderBy: {
+              id: 'asc',
+            },
           },
         },
       });
@@ -138,15 +141,11 @@ describe('featureUtils', () => {
         status: 'ENABLED',
         createdAt: mockFeature.createdAt,
         updatedAt: mockFeature.updatedAt,
-        teamFunctionOverrides: [
+        overrides: [
           {
-            id: 1,
             teamId: 100,
-            functionName: 'SUBMIT_RESTRICTION',
+            teamName: 'Team Alpha',
             status: 'DISABLED',
-            createdAt: mockFeature.teamFunctionOverrides[0].createdAt,
-            updatedAt: mockFeature.teamFunctionOverrides[0].updatedAt,
-            team: { id: 100, name: 'Team Alpha' },
           },
         ],
       });
