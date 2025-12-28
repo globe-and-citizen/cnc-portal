@@ -72,7 +72,7 @@
                 :model-value="team.status"
                 :items="FEATURE_STATUS_OPTIONS"
                 value-key="value"
-                :disabled="loadingTeamId === team.teamId || !isEditable"
+                :disabled="loadingTeamId === team.teamId "
                 class="w-40"
                 data-test="team-status-select"
                 @update:model-value="(value) => value && emit('toggle-restriction', team, value)"
@@ -87,7 +87,7 @@
                 variant="ghost"
                 size="sm"
                 icon="i-lucide-trash-2"
-                :disabled="!isEditable"
+
                 :loading="loadingTeamId === team.teamId"
                 data-test="remove-override-btn"
                 @click="emit('remove-override', team)"
@@ -140,13 +140,11 @@ interface Props {
   total: number
   currentPage: number
   pageSize: number
-  isEditable?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
   loading: false,
-  loadingTeamId: null,
-  isEditable: true
+  loadingTeamId: null
 })
 
 // Emits
