@@ -40,16 +40,13 @@
             </p>
           </div>
           <div class="flex items-center gap-3">
-            <span
-              class="text-sm font-medium"
-              :class="globalRestrictionEnabled ? 'text-error' : 'text-success'"
-            >
-              {{ globalRestrictionEnabled ? "ON" : "OFF" }}
-            </span>
-            <USwitch
-              v-model="globalRestrictionEnabled"
+            <USelect
+              v-model="globalStatus"
+              :items="FEATURE_STATUS_OPTIONS"
+              value-key="value"
               :disabled="isLoadingGlobal"
-              data-test="global-restriction-switch"
+              data-test="global-restriction-select"
+              class="w-32"
               @update:model-value="saveGlobalSettings"
             />
           </div>
@@ -82,7 +79,7 @@
         :teams="teamFunctionOverrides"
         :loading="isLoading"
         :loading-team-id="loadingTeamId"
-        :global-restriction-enabled="globalRestrictionEnabled"
+        :global-restriction-enabled="true"
         :is-editable="isEditable"
         :total="teamFunctionOverrides.length"
         :current-page="pagination.page"
@@ -138,19 +135,13 @@
 
               <div>
                 <label class="block text-sm font-medium mb-2">Restriction Setting</label>
-                <div class="flex items-center gap-3">
-                  <USwitch
-                    v-model="newOverrideRestricted"
-                    data-test="new-override-switch"
-                  />
-                  <span class="text-sm">
-                    {{
-                      newOverrideRestricted
-                        ? "Restricted (current week only)"
-                        : "Unrestricted (submit anytime)"
-                    }}
-                  </span>
-                </div>
+                <USelect
+                  v-model="newOverrideStatus"
+                  :items="FEATURE_STATUS_OPTIONS"
+                  value-key="value"
+                  data-test="new-override-select"
+                  class="w-full"
+                />
               </div>
             </div>
 
@@ -183,8 +174,21 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import type { Team, TeamRestrictionOverride } from '~/types'
+import type { Team } from '~/types'
 import TeamOverridesTable from './TeamOverridesTable.vue'
+import { useToast } from '#ui/composables/useToast'
+import {
+  fetchSubmitRestrictionFeature,
+  updateGlobalRestriction,
+  createTeamOverride,
+  updateTeamOverride,
+  removeTeamOverride,
+  transformToTeamOverrides,
+  FEATURE_STATUS_OPTIONS,
+  type SubmitRestrictionFeature,
+  type TeamRestrictionOverride,
+  type FeatureStatus
+} from '~/lib/axios'
 
 // Props
 interface Props {
@@ -195,24 +199,18 @@ withDefaults(defineProps<Props>(), {
   isEditable: true
 })
 
+// Toast notifications
+const toast = useToast()
+
 // Composables
 const { fetchTeams } = useTeams()
-const {
-  currentFeature,
-  isLoading: featuresLoading,
-  ensureSubmitRestrictionExists,
-  updateSubmitRestrictionGlobal,
-  createSubmitRestrictionOverride,
-  updateSubmitRestrictionOverride,
-  removeSubmitRestrictionOverride,
-  transformToTeamOverrides
-} = useFeatures()
 
 // State
-const globalRestrictionEnabled = ref(true)
 const isLoadingGlobal = ref(false)
 const isLoading = ref(false)
 const loadingTeamId = ref<number | null>(null)
+const currentFeature = ref<SubmitRestrictionFeature | null>(null)
+const globalStatus = ref<FeatureStatus>('enabled')
 
 // Pagination
 const pagination = ref({
@@ -224,7 +222,7 @@ const pagination = ref({
 const isAddOverrideModalOpen = ref(false)
 const allTeams = ref<Team[]>([])
 const selectedTeamId = ref<number | undefined>(undefined)
-const newOverrideRestricted = ref(false)
+const newOverrideStatus = ref<FeatureStatus>('enabled')
 const isCreatingOverride = ref(false)
 const isLoadingTeams = ref(false)
 
@@ -245,21 +243,35 @@ const availableTeamsOptions = computed(() => {
 })
 
 // Handlers
-const saveGlobalSettings = async (value: boolean) => {
+const saveGlobalSettings = async (value: FeatureStatus | undefined) => {
+  if (!value) return
   isLoadingGlobal.value = true
+  const previousStatus = globalStatus.value
   try {
-    const success = await updateSubmitRestrictionGlobal(value)
+    const success = await updateGlobalRestriction(value)
     if (success) {
-      globalRestrictionEnabled.value = value
+      globalStatus.value = value
       // Refresh the feature data
       await loadFeatureData()
+      toast.add({
+        title: 'Success',
+        description: `Global restriction setting updated to ${value}`,
+        color: 'success',
+        icon: 'i-lucide-check-circle'
+      })
     } else {
       // Revert on failure
-      globalRestrictionEnabled.value = !value
+      globalStatus.value = previousStatus
     }
   } catch (error) {
     console.error('Error updating global restriction:', error)
-    globalRestrictionEnabled.value = !value
+    globalStatus.value = previousStatus
+    toast.add({
+      title: 'Error',
+      description: 'Failed to update global restriction setting',
+      color: 'error',
+      icon: 'i-lucide-alert-circle'
+    })
   } finally {
     isLoadingGlobal.value = false
   }
@@ -267,16 +279,28 @@ const saveGlobalSettings = async (value: boolean) => {
 
 const handleToggleRestriction = async (
   team: TeamRestrictionOverride,
-  value: boolean
+  value: FeatureStatus
 ) => {
   loadingTeamId.value = team.teamId
   try {
-    const success = await updateSubmitRestrictionOverride(team.teamId, value)
+    const success = await updateTeamOverride(team.teamId, value)
     if (success) {
       await loadFeatureData()
+      toast.add({
+        title: 'Success',
+        description: `Team override updated to ${value}`,
+        color: 'success',
+        icon: 'i-lucide-check-circle'
+      })
     }
   } catch (error) {
     console.error('Error toggling team restriction:', error)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to update team override',
+      color: 'error',
+      icon: 'i-lucide-alert-circle'
+    })
   } finally {
     loadingTeamId.value = null
   }
@@ -285,12 +309,24 @@ const handleToggleRestriction = async (
 const handleRemoveOverride = async (team: TeamRestrictionOverride) => {
   loadingTeamId.value = team.teamId
   try {
-    const success = await removeSubmitRestrictionOverride(team.teamId)
+    const success = await removeTeamOverride(team.teamId)
     if (success) {
       await loadFeatureData()
+      toast.add({
+        title: 'Success',
+        description: 'Team override removed',
+        color: 'success',
+        icon: 'i-lucide-check-circle'
+      })
     }
   } catch (error) {
     console.error('Error removing team override:', error)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to remove team override',
+      color: 'error',
+      icon: 'i-lucide-alert-circle'
+    })
   } finally {
     loadingTeamId.value = null
   }
@@ -308,7 +344,7 @@ const handlePageSizeChange = (size: number) => {
 // Add Override Modal Functions
 const openAddOverrideModal = async () => {
   selectedTeamId.value = undefined
-  newOverrideRestricted.value = false
+  newOverrideStatus.value = 'enabled'
   isAddOverrideModalOpen.value = true
 
   // Load teams if not already loaded
@@ -329,16 +365,28 @@ const createNewOverride = async () => {
 
   isCreatingOverride.value = true
   try {
-    const success = await createSubmitRestrictionOverride(
+    const success = await createTeamOverride(
       selectedTeamId.value,
-      newOverrideRestricted.value
+      newOverrideStatus.value
     )
     if (success) {
+      toast.add({
+        title: 'Success',
+        description: 'Team override created successfully',
+        color: 'success',
+        icon: 'i-lucide-check-circle'
+      })
       isAddOverrideModalOpen.value = false
       await loadFeatureData()
     }
   } catch (error) {
     console.error('Error creating override:', error)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to create team override',
+      color: 'error',
+      icon: 'i-lucide-alert-circle'
+    })
   } finally {
     isCreatingOverride.value = false
   }
@@ -348,12 +396,19 @@ const createNewOverride = async () => {
 const loadFeatureData = async () => {
   isLoading.value = true
   try {
-    const feature = await ensureSubmitRestrictionExists()
+    const feature = await fetchSubmitRestrictionFeature()
     if (feature) {
-      globalRestrictionEnabled.value = feature.status === 'enabled'
+      currentFeature.value = feature
+      globalStatus.value = feature.status || 'enabled'
     }
   } catch (error) {
     console.error('Error loading feature data:', error)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to load feature settings',
+      color: 'error',
+      icon: 'i-lucide-alert-circle'
+    })
   } finally {
     isLoading.value = false
   }
@@ -376,7 +431,6 @@ onMounted(async () => {
     console.error('Error initializing component:', error)
   } finally {
     isLoadingGlobal.value = false
-    isLoading.value = featuresLoading.value
   }
 })
 </script>

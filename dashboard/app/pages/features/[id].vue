@@ -45,8 +45,8 @@
 
     <div v-else-if="currentFeature">
       <!-- Feature-Specific Component -->
-      <SubmitRestrictionCard
-        v-if="currentFeature.functionName === 'SUBMIT_RESTRICTION'"
+      <FeatureCard
+        v-if="currentFeature.functionName"
         :is-editable="isFeatureEnabled"
       />
     </div>
@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter, useRoute } from '#imports'
-import SubmitRestrictionCard from '@/components/features/SubmitRestrictionCard.vue'
+import FeatureCard from '~/components/features/FeatureCard.vue'
 import { useFeatures } from '~/queries/function.query'
 
 const router = useRouter()
