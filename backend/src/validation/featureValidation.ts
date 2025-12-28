@@ -84,10 +84,7 @@ export const teamOverrideSchema = z.object({
  * Schema for creating a team override (with teamId in body)
  */
 export const createTeamOverrideSchema = z.object({
-  teamId: z
-    .number()
-    .int()
-    .positive({ message: 'teamId must be a positive integer' }),
+  teamId: z.number().int().positive({ message: 'teamId must be a positive integer' }),
   status: featureStatusEnum,
 });
 

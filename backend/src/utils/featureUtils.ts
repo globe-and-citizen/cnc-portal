@@ -31,8 +31,8 @@ export async function findFeatureByName(functionName: string) {
           },
         },
         orderBy: {
-          id: 'asc'
-        }
+          id: 'asc',
+        },
       },
     },
   });
