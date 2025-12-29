@@ -26,13 +26,8 @@ export const setWage = async (req: Request, res: Response) => {
   const body = req.body as wageBodyRequest;
   const teamId = Number(body.teamId);
   const userAddress = body.userAddress as Address;
-  // const cashRatePerHour = Number(body.cashRatePerHour);
-  // const tokenRatePerHour = Number(body.tokenRatePerHour);
   const maximumHoursPerWeek = Number(body.maximumHoursPerWeek);
-  // const usdcRatePerHour = Number(body.usdcRatePerHour);
   let ratePerHour = body.ratePerHour;
-
-  console.log('setWage called with body: ', body);
 
   ratePerHour = ratePerHour?.map((rate) => ({
     type: rate.type,
@@ -60,10 +55,7 @@ export const setWage = async (req: Request, res: Response) => {
         data: {
           teamId: Number(teamId),
           userAddress,
-          // cashRatePerHour,
-          // tokenRatePerHour,
           maximumHoursPerWeek,
-          // usdcRatePerHour,
           ratePerHour,
           previousWage: {
             connect: {
