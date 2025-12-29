@@ -26,15 +26,13 @@
           >
             <template #description>
               <div class="space-y-2">
-                <p>You are about to delete the feature:</p>
+                <p>You are about to remove the team override:</p>
                 <p class="font-semibold">
-                  {{ feature?.functionName }}
+                  "{{ override?.teamName }}"
                 </p>
-                <!-- <p class="text-sm">
-                  This will also delete all
-                  <span class="font-semibold">" {{ feature?.overridesCount || 0 }} "</span>
-                  associated team override(s).
-                </p> -->
+                <p class="text-sm">
+                  This team will revert to using the global restriction settings.
+                </p>
               </div>
             </template>
           </UAlert>
@@ -52,11 +50,11 @@
               color="error"
               :loading="loading"
               :disabled="loading"
-              data-test="confirm-delete-btn"
+              data-test="confirm-delete-override-btn"
               icon="i-lucide-trash-2"
               @click="handleConfirm"
             >
-              Delete Feature
+              Remove Override
             </UButton>
           </div>
         </div>
@@ -66,12 +64,12 @@
 </template>
 
 <script setup lang="ts">
-import type { Feature } from '~/types'
+import type { TeamRestrictionOverride } from '~/lib/axios'
 
 // Props
 interface Props {
   open: boolean
-  feature: Feature | null
+  override: TeamRestrictionOverride | null
   loading?: boolean
 }
 

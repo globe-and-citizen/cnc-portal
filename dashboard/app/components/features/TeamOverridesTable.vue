@@ -87,10 +87,9 @@
                 variant="ghost"
                 size="sm"
                 icon="i-lucide-trash-2"
-
-                :loading="loadingTeamId === team.teamId"
+                :loading="removingTeamId === team.teamId"
                 data-test="remove-override-btn"
-                @click="emit('remove-override', team)"
+                @click="handleRemoveClick(team)"
               />
             </td>
           </tr>
@@ -121,21 +120,32 @@
         @update:page="handlePageChange"
       />
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <DeleteTeamOverrideModal
+      v-model:open="isDeleteModalOpen"
+      :override="teamToDelete"
+      :loading="removingTeamId === teamToDelete?.teamId"
+      @confirm="handleConfirmDelete"
+    />
   </UPageCard>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import {
   FEATURE_STATUS_OPTIONS,
   type FeatureStatus,
   type TeamRestrictionOverride
 } from '~/lib/axios'
+import DeleteTeamOverrideModal from './DeleteTeamOverrideModal.vue'
 
 // Props
 interface Props {
   teams: TeamRestrictionOverride[]
   loading?: boolean
   loadingTeamId?: number | null
+  removingTeamId?: number | null
   globalRestrictionEnabled: boolean
   total: number
   currentPage: number
@@ -154,6 +164,10 @@ const emit = defineEmits<{
   'page-change': [page: number]
   'page-size-change': [size: number]
 }>()
+
+// State
+const isDeleteModalOpen = ref(false)
+const teamToDelete = ref<TeamRestrictionOverride | null>(null)
 
 // Status color and label mappings
 const statusColorsMap = {
@@ -182,5 +196,18 @@ const handlePageChange = (page: number) => {
 
 const handlePageSizeChange = (size: number) => {
   emit('page-size-change', size)
+}
+
+const handleRemoveClick = (team: TeamRestrictionOverride) => {
+  teamToDelete.value = team
+  isDeleteModalOpen.value = true
+}
+
+const handleConfirmDelete = () => {
+  if (teamToDelete.value) {
+    emit('remove-override', teamToDelete.value)
+  }
+  isDeleteModalOpen.value = false
+  teamToDelete.value = null
 }
 </script>
