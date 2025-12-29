@@ -30,11 +30,11 @@
                 <p class="font-semibold">
                   {{ feature?.functionName }}
                 </p>
-                <p class="text-sm">
+                <!-- <p class="text-sm">
                   This will also delete all
                   <span class="font-semibold">" {{ feature?.overridesCount || 0 }} "</span>
                   associated team override(s).
-                </p>
+                </p> -->
               </div>
             </template>
           </UAlert>
