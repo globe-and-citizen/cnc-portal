@@ -7,7 +7,6 @@ import { seedTeams } from './seeders/teams';
 import { seedWages } from './seeders/wages';
 import { seedWeeklyClaimsAndClaims } from './seeders/claims';
 import { seedExpenses } from './seeders/expenses';
-import { seedTeamContracts } from './seeders/contracts';
 import { seedBoardActions } from './seeders/actions';
 import { seedNotifications } from './seeders/notifications';
 
@@ -81,7 +80,6 @@ async function main() {
   const wages = await seedWages(prisma, teams, config);
   await seedWeeklyClaimsAndClaims(prisma, wages, config);
   await seedExpenses(prisma, teams, config);
-  await seedTeamContracts(prisma, teams, config);
   await seedBoardActions(prisma, teams, config);
   await seedNotifications(prisma, users, config);
 

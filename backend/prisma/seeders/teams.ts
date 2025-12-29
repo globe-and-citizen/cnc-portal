@@ -5,6 +5,18 @@ import { faker } from '@faker-js/faker';
 import { type SeedConfig } from './config';
 import { distributeDate } from './helpers';
 
+// All available contract types
+const CONTRACT_TYPES = [
+  'Bank',
+  'InvestorV1',
+  'Voting',
+  'BoardOfDirectors',
+  'ExpenseAccount',
+  'ExpenseAccountEIP712',
+  'CashRemunerationEIP712',
+  'Campaign',
+] as const;
+
 export async function seedTeams(prisma: PrismaClient, config: SeedConfig, users: User[]) {
   console.log('\n🏢 Seeding teams...');
 
@@ -13,7 +25,7 @@ export async function seedTeams(prisma: PrismaClient, config: SeedConfig, users:
 
   for (let i = 0; i < config.teams; i++) {
     const owner = users[i % users.length];
-    const officer = users[(i + 1) % users.length];
+    const officerAddress = faker.finance.ethereumAddress();
     const teamCreatedAt = distributeDate(i, config.teams);
 
     // Select additional members (excluding owner)
@@ -24,16 +36,24 @@ export async function seedTeams(prisma: PrismaClient, config: SeedConfig, users:
     // All team members including owner
     const allMembers = [owner, ...selectedUsers];
 
-    // Create team with owner and connect all members
+    // Create team with owner, members, and contracts
     const team = await prisma.team.create({
       data: {
         name: faker.company.name(),
         description: faker.company.catchPhrase(),
         ownerAddress: owner.address,
-        officerAddress: officer.address,
+        officerAddress: officerAddress,
         createdAt: teamCreatedAt,
         members: {
           connect: allMembers.map((user) => ({ address: user.address })),
+        },
+        teamContracts: {
+          create: CONTRACT_TYPES.map((contractType, typeIndex) => ({
+            type: contractType,
+            address: faker.finance.ethereumAddress(),
+            deployer: owner.address,
+            createdAt: teamCreatedAt, // Use team creation date for contracts
+          })),
         },
       },
     });
