@@ -20,7 +20,7 @@
         No team overrides configured
       </p>
       <p class="text-sm text-muted">
-        Click "Add Override" to create custom setting for a team
+        Click "Add Override" to create custom settings for a team
       </p>
     </div>
 
