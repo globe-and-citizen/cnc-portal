@@ -36,7 +36,7 @@ export async function seedTeams(prisma: PrismaClient, config: SeedConfig, users:
     // All team members including owner
     const allMembers = [owner, ...selectedUsers];
 
-    // Create team with owner, members, and contracts
+    // Create team with owner, members, contracts, and memberships (all in one atomic transaction)
     const team = await prisma.team.create({
       data: {
         name: faker.company.name(),
@@ -55,26 +55,22 @@ export async function seedTeams(prisma: PrismaClient, config: SeedConfig, users:
             createdAt: teamCreatedAt,
           })),
         },
+        memberTeamsData: {
+          create: allMembers.map((member, index) => ({
+            memberAddress: member.address,
+            createdAt:
+              index === 0
+                ? teamCreatedAt
+                : faker.date.between({
+                    from: teamCreatedAt,
+                    to: new Date(),
+                  }),
+          })),
+        },
       },
     });
 
-    // Create MemberTeamsData records for tracking membership with specific timestamps
-    for (let j = 0; j < allMembers.length; j++) {
-      const memberCreatedAt =
-        j === 0
-          ? teamCreatedAt
-          : new Date(teamCreatedAt.getTime() + Math.random() * 30 * 24 * 60 * 60 * 1000);
-
-      await prisma.memberTeamsData.create({
-        data: {
-          teamId: team.id,
-          memberAddress: allMembers[j].address,
-          createdAt: memberCreatedAt,
-        },
-      });
-      totalMembers++;
-    }
-
+    totalMembers += allMembers.length;
     createdTeams.push(team);
   }
 
