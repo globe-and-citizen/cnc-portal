@@ -20,7 +20,11 @@
               currentStep < step.id && 'pending'
             ]"
           >
-            <icon v-if="currentStep > step.id" icon="heroicons:check-20-solid" class="w-5 h-5" />
+            <IconifyIcon
+              v-if="currentStep > step.id"
+              icon="heroicons:check-20-solid"
+              class="w-5 h-5"
+            />
             <span v-else>{{ step.id }}</span>
           </div>
           <div
@@ -55,7 +59,7 @@
         <div v-if="currentStep === 1" class="space-y-6 animate-fade-in">
           <div class="bg-base-200 p-6 rounded-xl space-y-4">
             <div class="flex items-center gap-3">
-              <icon icon="heroicons:shield-check" class="w-8 h-8 text-primary" />
+              <IconifyIcon icon="heroicons:shield-check" class="w-8 h-8 text-primary" />
               <div>
                 <h3 class="font-semibold">Polymarket Safe Deployment</h3>
                 <p class="text-sm text-gray-500">Gnosis Safe wallet for trading</p>
@@ -72,14 +76,21 @@
               </div>
             </div>
           </div>
-          <button
+          <ButtonUI
             @click="handleStepAction"
             :disabled="isProcessing"
-            class="btn btn-primary btn-lg w-full"
+            variant="primary"
+            size="lg"
+            :wide="true"
+            class="w-full text-white"
           >
-            <icon v-if="isProcessing" icon="heroicons:arrow-path" class="w-4 h-4 animate-spin" />
+            <IconifyIcon
+              v-if="isProcessing"
+              icon="heroicons:arrow-path"
+              class="w-4 h-4 animate-spin"
+            />
             {{ isProcessing ? 'Deploying...' : 'Deploy Polymarket Safe' }}
-          </button>
+          </ButtonUI>
         </div>
 
         <div v-else-if="currentStep === 2" class="space-y-6 animate-fade-in">
@@ -87,9 +98,9 @@
             <input type="checkbox" />
             <div class="collapse-title text-xl font-medium px-6 py-4">
               <div class="flex items-center gap-3">
-                <icon icon="heroicons:currency-dollar" class="w-6 h-6 text-primary" />
+                <IconifyIcon icon="heroicons:currency-dollar" class="w-6 h-6 text-primary" />
                 <div class="text-left">
-                  <h3 class="font-semibold">USDC.e Approvals</h3>
+                  <p class="text-lg font-semibold">USDC.e Approvals</p>
                   <p class="text-sm text-gray-500">Approve USDC for Polymarket trading</p>
                 </div>
               </div>
@@ -124,9 +135,9 @@
             <input type="checkbox" />
             <div class="collapse-title text-xl font-medium px-6 py-4">
               <div class="flex items-center gap-3">
-                <icon icon="heroicons:currency-dollar" class="w-6 h-6 text-accent" />
+                <IconifyIcon icon="heroicons:currency-dollar" class="w-6 h-6 text-accent" />
                 <div class="text-left">
-                  <h3 class="font-semibold">Outcome Token Approvals</h3>
+                  <p class="text-lg font-semibold">Outcome Token Approvals</p>
                   <p class="text-sm text-gray-500">Approve Outcome Token for Polymarket trading</p>
                 </div>
               </div>
@@ -161,9 +172,9 @@
             <input type="checkbox" />
             <div class="collapse-title text-xl font-medium px-6 py-4">
               <div class="flex items-center gap-3">
-                <icon icon="heroicons:users" class="w-6 h-6 text-primary" />
+                <IconifyIcon icon="heroicons:users" class="w-6 h-6 text-primary" />
                 <div class="text-left">
-                  <h3 class="font-semibold">Safe Owners</h3>
+                  <p class="text-lg font-semibold">Safe Owners</p>
                   <p class="text-sm text-gray-500">Add CNC Safe owners</p>
                 </div>
               </div>
@@ -179,7 +190,7 @@
                     <p class="text-sm font-medium">{{ owner.label }}</p>
                     <p class="font-mono text-xs text-gray-500">{{ owner.address }}</p>
                   </div>
-                  <icon icon="heroicons:check-circle" class="w-4 h-4 text-green-500" />
+                  <IconifyIcon icon="heroicons:check-circle" class="w-4 h-4 text-green-500" />
                 </div>
               </div>
               <p class="text-xs text-gray-500 mt-3">
@@ -190,18 +201,24 @@
 
           <!-- Batch indicator -->
           <div class="flex items-center justify-center gap-2 text-sm text-gray-500">
-            <icon icon="heroicons:cog-6-tooth" class="w-4 h-4" />
+            <IconifyIcon icon="heroicons:cog-6-tooth" class="w-4 h-4" />
             <span>Batching 2 actions into 1 transaction</span>
           </div>
 
-          <button
+          <ButtonUI
             @click="handleStepAction"
             :disabled="isProcessing"
-            class="btn btn-primary btn-lg w-full"
+            variant="success"
+            size="lg"
+            class="w-full text-white"
           >
-            <icon v-if="isProcessing" icon="heroicons:arrow-path" class="w-4 h-4 animate-spin" />
+            <IconifyIcon
+              v-if="isProcessing"
+              icon="heroicons:arrow-path"
+              class="w-4 h-4 animate-spin"
+            />
             {{ isProcessing ? 'Executing Batch Transaction...' : 'Approve & Add Owners' }}
-          </button>
+          </ButtonUI>
         </div>
       </div>
     </div>
@@ -210,7 +227,8 @@
 
 <script setup>
 import { ref } from 'vue'
-import { Icon } from '@iconify/vue'
+import { Icon as IconifyIcon } from '@iconify/vue'
+import ButtonUI from '@/components/ButtonUI.vue'
 
 const props = defineProps({
   onComplete: {
