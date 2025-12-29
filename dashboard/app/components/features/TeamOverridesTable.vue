@@ -87,8 +87,7 @@
                 variant="ghost"
                 size="sm"
                 icon="i-lucide-trash-2"
-
-                :loading="loadingTeamId === team.teamId"
+                :loading="removingTeamId === team.teamId"
                 data-test="remove-override-btn"
                 @click="emit('remove-override', team)"
               />
@@ -136,6 +135,7 @@ interface Props {
   teams: TeamRestrictionOverride[]
   loading?: boolean
   loadingTeamId?: number | null
+  removingTeamId?: number | null
   globalRestrictionEnabled: boolean
   total: number
   currentPage: number
