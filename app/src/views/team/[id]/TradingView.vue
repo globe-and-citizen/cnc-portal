@@ -202,7 +202,7 @@
           <!-- Batch indicator -->
           <div class="flex items-center justify-center gap-2 text-sm text-gray-500">
             <IconifyIcon icon="heroicons:cog-6-tooth" class="w-4 h-4" />
-            <span>Batching 2 actions into 1 transaction</span>
+            <span>Batching 3 actions into 1 transaction</span>
           </div>
 
           <ButtonUI
