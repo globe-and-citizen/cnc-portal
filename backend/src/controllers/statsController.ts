@@ -388,7 +388,7 @@ export const getUsersStats = async (req: Request, res: Response) => {
       prisma.memberTeamsData.findMany({
         where: whereClause,
         select: {
-          userAddress: true,
+          memberAddress: true,
           teamId: true,
         },
       }),
@@ -397,7 +397,7 @@ export const getUsersStats = async (req: Request, res: Response) => {
     // Calculate average teams per user
     const userTeamCounts = new Map<string, number>();
     allMemberTeamsData.forEach((mtd) => {
-      userTeamCounts.set(mtd.userAddress, (userTeamCounts.get(mtd.userAddress) || 0) + 1);
+      userTeamCounts.set(mtd.memberAddress, (userTeamCounts.get(mtd.memberAddress) || 0) + 1);
     });
     const avgTeamsPerUser =
       userTeamCounts.size > 0

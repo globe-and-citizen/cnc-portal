@@ -33,7 +33,7 @@ export async function seedBoardActions(
         teamId: team.id,
         actionId: i + 1,
         userAddress: team.ownerAddress,
-        targetAddress: targetMember.userAddress,
+        targetAddress: targetMember.memberAddress,
         description: faker.lorem.sentence(),
         data: JSON.stringify({
           actionType: faker.helpers.arrayElement([

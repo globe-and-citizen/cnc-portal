@@ -68,7 +68,7 @@ export async function seedTeams(prisma: PrismaClient, config: SeedConfig, users:
       await prisma.memberTeamsData.create({
         data: {
           teamId: team.id,
-          userAddress: allMembers[j].address,
+          memberAddress: allMembers[j].address,
           createdAt: memberCreatedAt,
         },
       });

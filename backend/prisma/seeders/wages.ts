@@ -34,7 +34,7 @@ export async function seedWages(
         const baseRate = 20 + Math.random() * 30; // $20-50/hr
         const wageData: any = {
           teamId: team.id,
-          userAddress: member.userAddress,
+          userAddress: member.memberAddress,
           cashRatePerHour: parseFloat((baseRate * (1 + i * 0.1)).toFixed(2)),
           tokenRatePerHour: parseFloat((baseRate * 0.5).toFixed(2)),
           usdcRatePerHour: parseFloat((baseRate * 0.8).toFixed(2)),

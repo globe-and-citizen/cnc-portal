@@ -29,7 +29,7 @@ export async function seedExpenses(
       const status = randomStatus(['signed', 'expired', 'disabled']);
 
       expenses.push({
-        userAddress: member.userAddress,
+        userAddress: member.memberAddress,
         teamId: team.id,
         signature: status === 'signed' ? faker.string.hexadecimal({ length: 130 }) : '',
         status,
