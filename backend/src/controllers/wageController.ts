@@ -9,11 +9,8 @@ type wageBodyRequest = Pick<
   Wage,
   | 'teamId'
   | 'userAddress'
-  // | "cashRatePerHour"
-  // | "tokenRatePerHour"
   | 'maximumHoursPerWeek'
   | 'ratePerHour'
-  // | "usdcRatePerHour"
 > & {
   ratePerHour: Array<{
     type: string;

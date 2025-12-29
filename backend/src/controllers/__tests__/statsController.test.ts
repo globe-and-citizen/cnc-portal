@@ -321,6 +321,7 @@ describe('Statistics Controller', () => {
 
   describe('GET /stats/wages', () => {
     it('should return wage statistics', async () => {
+      // TODO: thoses rate a deprecate
       const mockWages = [
         { cashRatePerHour: 20, tokenRatePerHour: 0, usdcRatePerHour: 0 },
         { cashRatePerHour: 0, tokenRatePerHour: 10, usdcRatePerHour: 0 },
