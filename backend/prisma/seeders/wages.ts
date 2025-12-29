@@ -1,16 +1,27 @@
 // backend/prisma/seeders/wages.ts
 
 import { PrismaClient, Team } from '@prisma/client';
+import { faker } from '@faker-js/faker';
 import { type SeedConfig } from './config';
-import { distributeDate } from './helpers';
 
-// interface Team {
-//   id: string;
-// }
+// Available rate types
+const RATE_TYPES = ['native', 'usdc', 'sher'] as const;
 
-// interface User {
-//   address: string;
-// }
+/**
+ * Generates random rates per hour for different token types
+ * Randomly selects 1-3 rate types (or none)
+ * @returns Array of rate objects with type and amount
+ */
+function generateRates() {
+  // Randomly select 1-3 rate types
+  const rateCount = faker.number.int({ min: 1, max: 3 });
+  const selectedTypes = faker.helpers.shuffle(RATE_TYPES).slice(0, rateCount);
+
+  return selectedTypes.map((type) => ({
+    type,
+    amount: parseFloat((Math.random() * 20 + 5).toFixed(2)), // 5-25 per hour
+  }));
+}
 
 export async function seedWages(
   prisma: PrismaClient,
@@ -28,34 +39,39 @@ export async function seedWages(
     });
 
     for (const member of teamMembers) {
-      let previousWage = null;
+      // Randomly decide if this member should have wages (70% chance)
+      if (faker.datatype.boolean({ probability: 0.7 })) {
+        let previousWage = null;
+        let previousWageDate = member.createdAt;
 
-      for (let i = 0; i < config.wagesPerUser; i++) {
-        const baseRate = 20 + Math.random() * 30; // $20-50/hr
-        const wageData: any = {
-          teamId: team.id,
-          userAddress: member.memberAddress,
-          cashRatePerHour: parseFloat((baseRate * (1 + i * 0.1)).toFixed(2)),
-          tokenRatePerHour: parseFloat((baseRate * 0.5).toFixed(2)),
-          usdcRatePerHour: parseFloat((baseRate * 0.8).toFixed(2)),
-          maximumHoursPerWeek: 40,
-          createdAt: new Date(member.createdAt.getTime() + i * 60 * 24 * 60 * 60 * 1000),
-        };
-
-        // Link to previous wage if it exists
-        if (previousWage) {
-          wageData.previousWage = {
-            connect: { id: previousWage.id },
+        for (let i = 0; i < config.wagesPerUser; i++) {
+          const wageData: any = {
+            teamId: team.id,
+            userAddress: member.memberAddress,
+            ratePerHour: generateRates(),
+            maximumHoursPerWeek: faker.number.int({ min: 20, max: 50 }),
+            createdAt: faker.date.between({
+              from: previousWageDate,
+              to: new Date(),
+            }),
           };
-          wageChainCount++;
+
+          // Link to previous wage if it exists
+          if (previousWage) {
+            wageData.previousWage = {
+              connect: { id: previousWage.id },
+            };
+            wageChainCount++;
+          }
+
+          const wage = await prisma.wage.create({
+            data: wageData,
+          });
+
+          wages.push(wage);
+          previousWage = wage;
+          previousWageDate = wage.createdAt; // Update reference date for next wage
         }
-
-        const wage = await prisma.wage.create({
-          data: wageData,
-        });
-
-        wages.push(wage);
-        previousWage = wage;
       }
     }
   }
