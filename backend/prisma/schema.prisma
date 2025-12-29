@@ -130,6 +130,8 @@ model WeeklyClaim {
   wage          Wage     @relation(fields: [wageId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@unique([wageId, weekStart])
 }
 
 model Notification {

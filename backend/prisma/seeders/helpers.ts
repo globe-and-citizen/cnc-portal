@@ -7,10 +7,6 @@ export function generateNonce(): string {
   return Math.random().toString(36).substring(2, 15);
 }
 
-export function randomStatus<T extends string>(statuses: T[]): T {
-  return statuses[Math.floor(Math.random() * statuses.length)];
-}
-
 export function getEthereumAddress(index: number, environment: Environment): string {
   if (environment === 'test') {
     return HARDHAT_ADDRESSES[index % HARDHAT_ADDRESSES.length];
@@ -54,19 +50,4 @@ export function distributeDate(index: number, total: number): Date {
       to: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
     });
   }
-}
-
-export function getMondayAtMidnight(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-  d.setDate(diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-export function getDateAtMidnight(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
 }

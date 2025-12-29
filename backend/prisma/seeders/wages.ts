@@ -66,6 +66,10 @@ export async function seedWages(
 
           const wage = await prisma.wage.create({
             data: wageData,
+            include: {
+              nextWage: true,
+              previousWage: true,
+            }
           });
 
           wages.push(wage);
