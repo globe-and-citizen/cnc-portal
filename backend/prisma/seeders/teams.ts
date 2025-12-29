@@ -1,16 +1,9 @@
 // backend/prisma/seeders/teams.ts
 
 import { PrismaClient, User } from '@prisma/client';
+import { faker } from '@faker-js/faker';
 import { type SeedConfig } from './config';
 import { distributeDate } from './helpers';
-
-// interface User {
-//   address: string;
-//   name: string;
-//   nonce: string;
-//   imageUrl: string;
-//   createdAt: Date;
-// }
 
 export async function seedTeams(prisma: PrismaClient, config: SeedConfig, users: User[]) {
   console.log('\n🏢 Seeding teams...');
@@ -34,8 +27,8 @@ export async function seedTeams(prisma: PrismaClient, config: SeedConfig, users:
     // Create team with owner and connect all members
     const team = await prisma.team.create({
       data: {
-        name: `Team ${i + 1}`,
-        description: `Description for team ${i + 1}`,
+        name: faker.company.name(),
+        description: faker.company.catchPhrase(),
         ownerAddress: owner.address,
         officerAddress: officer.address,
         createdAt: teamCreatedAt,

@@ -7,10 +7,6 @@ export function generateNonce(): string {
   return Math.random().toString(36).substring(2, 15);
 }
 
-export function randomDate(start: Date, end: Date): Date {
-  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-}
-
 export function randomStatus<T extends string>(statuses: T[]): T {
   return statuses[Math.floor(Math.random() * statuses.length)];
 }
@@ -25,30 +21,38 @@ export function getEthereumAddress(index: number, environment: Environment): str
   return faker.finance.ethereumAddress();
 }
 
-export function getDateRanges() {
-  const now = new Date();
-  return {
-    last7d: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
-    last30d: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
-    last90d: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
-    lastYear: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000),
-  };
-}
-
+/**
+ * Distributes dates across different time ranges with weighted probability
+ * - 30% in last 7 days
+ * - 40% in last 30 days
+ * - 20% in last 90 days
+ * - 10% older than 90 days (up to 1 year)
+ */
 export function distributeDate(index: number, total: number): Date {
-  const ranges = getDateRanges();
   const now = new Date();
-
-  // 30% in last 7 days, 40% in last 30 days, 20% in last 90 days, 10% older
   const ratio = index / total;
+
   if (ratio < 0.3) {
-    return randomDate(ranges.last7d, now);
+    // 30% in last 7 days
+    return faker.date.recent({ days: 7 });
   } else if (ratio < 0.7) {
-    return randomDate(ranges.last30d, ranges.last7d);
+    // 40% in last 30 days (but older than 7 days)
+    return faker.date.between({
+      from: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+      to: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+    });
   } else if (ratio < 0.9) {
-    return randomDate(ranges.last90d, ranges.last30d);
+    // 20% in last 90 days (but older than 30 days)
+    return faker.date.between({
+      from: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
+      to: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+    });
   } else {
-    return randomDate(ranges.lastYear, ranges.last90d);
+    // 10% older than 90 days (up to 1 year)
+    return faker.date.between({
+      from: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000),
+      to: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
+    });
   }
 }
 
