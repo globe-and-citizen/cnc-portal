@@ -48,17 +48,17 @@ export async function seedTeams(prisma: PrismaClient, config: SeedConfig, users:
           connect: allMembers.map((user) => ({ address: user.address })),
         },
         teamContracts: {
-          create: CONTRACT_TYPES.map((contractType, typeIndex) => ({
+          create: CONTRACT_TYPES.map((contractType) => ({
             type: contractType,
             address: faker.finance.ethereumAddress(),
             deployer: owner.address,
-            createdAt: teamCreatedAt, // Use team creation date for contracts
+            createdAt: teamCreatedAt,
           })),
         },
       },
     });
 
-    // Create MemberTeamsData records for tracking
+    // Create MemberTeamsData records for tracking membership with specific timestamps
     for (let j = 0; j < allMembers.length; j++) {
       const memberCreatedAt =
         j === 0
