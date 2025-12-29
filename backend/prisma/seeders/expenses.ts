@@ -2,7 +2,6 @@
 
 import { PrismaClient, Team } from '@prisma/client';
 import { type SeedConfig } from './config';
-import { distributeDate, randomStatus } from './helpers';
 import { faker } from '@faker-js/faker';
 
 // interface Team {
@@ -24,9 +23,15 @@ export async function seedExpenses(
     });
 
     for (let i = 0; i < config.expensesPerTeam; i++) {
-      const member = teamMembers[Math.floor(Math.random() * teamMembers.length)];
-      const amount = parseFloat((Math.random() * 500 + 50).toFixed(2));
-      const status = randomStatus(['signed', 'expired', 'disabled']);
+      const member = faker.helpers.arrayElement(teamMembers);
+      const amount = faker.number.float({ min: 50, max: 550, fractionDigits: 2 });
+      const status = faker.helpers.arrayElement(['signed', 'expired', 'disabled']);
+
+      // Expense created after member joined the team
+      const createdAt = faker.date.between({
+        from: member.createdAt,
+        to: new Date(),
+      });
 
       expenses.push({
         userAddress: member.memberAddress,
@@ -44,7 +49,7 @@ export async function seedExpenses(
           ]),
           description: faker.lorem.sentence(),
         },
-        createdAt: distributeDate(i, config.expensesPerTeam),
+        createdAt,
       });
     }
   }
