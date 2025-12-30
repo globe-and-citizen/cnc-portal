@@ -9,6 +9,7 @@ import { seedWeeklyClaimsAndClaims } from './seeders/claims';
 import { seedExpenses } from './seeders/expenses';
 import { seedBoardActions } from './seeders/actions';
 import { seedNotifications } from './seeders/notifications';
+import { seedAdmins } from './seeders/admin';
 
 const prisma = new PrismaClient();
 
@@ -17,14 +18,6 @@ const prisma = new PrismaClient();
  */
 async function clearData() {
   console.log('\n🗑️  Clearing existing data...');
-  await prisma.notification.deleteMany();
-  await prisma.boardOfDirectorActions.deleteMany();
-  await prisma.teamContract.deleteMany();
-  await prisma.expense.deleteMany();
-  await prisma.claim.deleteMany();
-  await prisma.weeklyClaim.deleteMany();
-  await prisma.wage.deleteMany();
-  await prisma.memberTeamsData.deleteMany();
   await prisma.team.deleteMany();
   await prisma.user.deleteMany();
   console.log('  ✓ Data cleared');
@@ -59,34 +52,62 @@ async function main() {
   (globalThis as any).seedStartTime = Date.now();
   console.log('🌱 Starting database seeding...');
 
-  // import.meta.env.NODE_ENV;
   const env = (process.env.NODE_ENV || 'development') as Environment;
   console.log(`📍 Environment: ${env}`);
 
+  // Parse control flags
+  const shouldClearData = process.env.CLEAR_DATA === 'true';
+  const shouldSeedDatabase = process.env.SEED_DATABASE === 'true';
+  const shouldSeedAdmins = process.env.SEED_ADMINS === 'true';
+  const hasAdminConfig = !!(process.env.ADMIN_ADDRESSES && process.env.ADMIN_ROLES);
+
+  // Validate flags
+  if (shouldSeedAdmins && !hasAdminConfig) {
+    throw new Error(
+      '⚠️  INVALID CONFIGURATION: SEED_ADMINS=true requires ADMIN_ADDRESSES and ADMIN_ROLES to be set'
+    );
+  }
+
+  // Production restrictions
   if (env === 'production') {
-    throw new Error('⚠️  PRODUCTION SEEDING BLOCKED: Seeds cannot run in production');
+    if (shouldClearData) {
+      throw new Error('⚠️  PRODUCTION RESTRICTION: Cannot clear database in production');
+    }
+
+    if (!shouldSeedAdmins && !shouldSeedDatabase) {
+      throw new Error(
+        '⚠️  PRODUCTION MODE: Must explicitly set SEED_DATABASE=true or SEED_ADMINS=true in production'
+      );
+    }
   }
 
   const config = CONFIGS[env];
 
-  // Optional: Clear existing data
-  if (process.env.CLEAR_DATA === 'true') {
+  // Clear data if requested (only non-production)
+  if (shouldClearData && env !== 'production') {
     await clearData();
   }
 
-  // Seed in correct order
-  const users = await seedUsers(prisma, config, env);
-  const teams = await seedTeams(prisma, config, users);
-  const wages = await seedWages(prisma, teams, config);
-  await seedWeeklyClaimsAndClaims(prisma, wages, config);
-  await seedExpenses(prisma, teams, config);
-  await seedBoardActions(prisma, teams, config);
-  await seedNotifications(prisma, users, config);
+  // Run normal database seeding if requested
+  if (shouldSeedDatabase) {
+    console.log('\n📊 Database seeding...');
+    const users = await seedUsers(prisma, config, env);
+    const teams = await seedTeams(prisma, config, users);
+    const wages = await seedWages(prisma, teams, config);
+    await seedWeeklyClaimsAndClaims(prisma, wages, config);
+    await seedExpenses(prisma, teams, config);
+    await seedBoardActions(prisma, teams, config);
+    await seedNotifications(prisma, users, config);
+  }
+
+  // Run admin seeding if requested
+  if (shouldSeedAdmins) {
+    console.log('\n👤 Admin role seeding...');
+    await seedAdmins(prisma);
+  }
 
   await printSummary(env);
-}
-
-main()
+}main()
   .catch((e) => {
     console.error('❌ Seeding failed:', e);
     process.exit(1);

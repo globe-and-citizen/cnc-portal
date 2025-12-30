@@ -140,7 +140,7 @@ model Notification {
   message     String
   isRead      Boolean  @default(false)
   userAddress String
-  user        User     @relation(fields: [userAddress], references: [address])
+  user        User     @relation(fields: [userAddress], references: [address], onDelete: Cascade)
   author      String?
   resource    String?
   createdAt   DateTime @default(now())
@@ -153,7 +153,7 @@ model TeamContract {
   type      String
   deployer  String
   teamId    Int
-  team      Team     @relation(fields: [teamId], references: [id])
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -187,9 +187,9 @@ model GlobalSetting {
 model TeamFunctionOverride {
   id            Int           @id @default(autoincrement())
   teamId        Int
-  team          Team          @relation(fields: [teamId], references: [id])
+  team          Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
   functionName  String
-  globalSetting GlobalSetting @relation(fields: [functionName], references: [functionName])
+  globalSetting GlobalSetting @relation(fields: [functionName], references: [functionName], onDelete: Cascade)
   status        String
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt

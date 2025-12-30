@@ -540,51 +540,12 @@ export const getWagesStats = async (req: Request, res: Response) => {
       ? { createdAt: { gte: startDate }, teamId: Number(teamId) }
       : { createdAt: { gte: startDate } };
 
-    const [
-      totalWages,
-      avgCashRate,
-      avgTokenRate,
-      avgUsdcRate,
-      allWages,
-      membersWithWages,
-      totalMembers,
-    ] = await Promise.all([
-      // Total wage records
-      prisma.wage.count({
-        where: whereClause,
-      }),
-
-      // Average cash rate
-      prisma.wage.aggregate({
-        where: whereClause,
-        _avg: {
-          cashRatePerHour: true,
-        },
-      }),
-
-      // Average token rate
-      prisma.wage.aggregate({
-        where: whereClause,
-        _avg: {
-          tokenRatePerHour: true,
-        },
-      }),
-
-      // Average USDC rate
-      prisma.wage.aggregate({
-        where: whereClause,
-        _avg: {
-          usdcRatePerHour: true,
-        },
-      }),
-
-      // All wages for distribution
+    const [allWages, membersWithWages, totalMembers] = await Promise.all([
+      // All wages for distribution and rate calculations
       prisma.wage.findMany({
         where: whereClause,
         select: {
-          cashRatePerHour: true,
-          tokenRatePerHour: true,
-          usdcRatePerHour: true,
+          ratePerHour: true,
         },
       }),
 
@@ -601,20 +562,47 @@ export const getWagesStats = async (req: Request, res: Response) => {
       prisma.user.count(),
     ]);
 
-    // Count wage distribution by type
+    // Calculate average rates by type from JSON data
+    const ratesByType = {
+      cash: [] as number[],
+      token: [] as number[],
+      usdc: [] as number[],
+    };
+
     const wageDistribution = {
-      cash: allWages.filter((w) => w.cashRatePerHour > 0).length,
-      token: allWages.filter((w) => w.tokenRatePerHour > 0).length,
-      usdc: allWages.filter((w) => w.usdcRatePerHour > 0).length,
+      cash: 0,
+      token: 0,
+      usdc: 0,
+    };
+
+    allWages.forEach((wage) => {
+      const rates = wage.ratePerHour as Array<{ type: string; amount: number }>;
+      rates.forEach((rate) => {
+        const type = rate.type as keyof typeof ratesByType;
+        if (type in ratesByType) {
+          ratesByType[type].push(rate.amount);
+          if (rate.amount > 0) {
+            wageDistribution[type]++;
+          }
+        }
+      });
+    });
+
+    // Calculate averages
+    const calculateAverage = (values: number[]) => {
+      if (values.length === 0) return 0;
+      return values.reduce((sum, val) => sum + val, 0) / values.length;
+    };
+
+    const averageRates = {
+      cash: Math.round(calculateAverage(ratesByType.cash) * 100) / 100,
+      token: Math.round(calculateAverage(ratesByType.token) * 100) / 100,
+      usdc: Math.round(calculateAverage(ratesByType.usdc) * 100) / 100,
     };
 
     res.status(200).json({
-      totalWages,
-      averageRates: {
-        cash: Math.round((avgCashRate._avg.cashRatePerHour || 0) * 100) / 100,
-        token: Math.round((avgTokenRate._avg.tokenRatePerHour || 0) * 100) / 100,
-        usdc: Math.round((avgUsdcRate._avg.usdcRatePerHour || 0) * 100) / 100,
-      },
+      totalWages: allWages.length,
+      averageRates,
       wageDistribution,
       membersWithWages: membersWithWages.length,
       percentageWithWages:
