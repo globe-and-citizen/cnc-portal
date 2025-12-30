@@ -1,7 +1,7 @@
 # Database Seed - Quick Start Guide
 
 **Status:** ✅ Production Ready  
-**Last Updated:** December 8, 2025
+**Last Updated:** December 30, 2025
 
 ---
 
@@ -17,7 +17,23 @@ npm run seed:test
 # Staging environment (50 users, 20 teams)
 npm run seed:staging
 
-# Clear data and reseed
+# Production - seed database only (explicit flag required)
+SEED_DATABASE=true NODE_ENV=production npx prisma db seed
+
+# Production - assign admin roles (recommended for production)
+SEED_ADMINS=true \
+ADMIN_ADDRESSES="0xaddress1,0xaddress2" \
+ADMIN_ROLES="ROLE_ADMIN,ROLE_SUPER_ADMIN" \
+NODE_ENV=production npx prisma db seed
+
+# Production - both database and admins
+SEED_DATABASE=true \
+SEED_ADMINS=true \
+ADMIN_ADDRESSES="0xaddress1" \
+ADMIN_ROLES="ROLE_SUPER_ADMIN" \
+NODE_ENV=production npx prisma db seed
+
+# Clear data and reseed (dev/test/staging only)
 CLEAR_DATA=true npm run seed:dev
 
 # Full database reset
@@ -42,6 +58,32 @@ npm run seed:reset
 
 ---
 
+## Configuration Variables
+
+### Standard Seeding
+
+- `NODE_ENV` - Environment (development/test/staging/production)
+- `CLEAR_DATA` - Clear database before seeding (default: false, blocked in production)
+- `SEED_DATABASE` - Seed all database entities (default: false)
+- `SEED_ADMINS` - Seed admin roles to addresses (default: false)
+
+### Admin Provisioning
+
+- `ADMIN_ADDRESSES` - Comma-separated Ethereum addresses (required if SEED_ADMINS=true)
+- `ADMIN_ROLES` - Comma-separated role names (required if SEED_ADMINS=true)
+  - Valid values: `ROLE_ADMIN`, `ROLE_SUPER_ADMIN`
+
+**Example with multiple admins:**
+
+```bash
+SEED_ADMINS=true \
+ADMIN_ADDRESSES="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb,0x1234567890123456789012345678901234567890" \
+ADMIN_ROLES="ROLE_SUPER_ADMIN,ROLE_ADMIN" \
+NODE_ENV=production npx prisma db seed
+```
+
+---
+
 ## Environment Detection
 
 The seed automatically detects your environment from `NODE_ENV`:
@@ -53,13 +95,14 @@ npm run seed
 # Explicitly set environment
 NODE_ENV=test npm run seed
 NODE_ENV=staging npm run seed
+NODE_ENV=production npx prisma db seed
 ```
 
-**Production is blocked** - Seeds will not run if `NODE_ENV=production`
+**Production Restrictions:**
 
----
-
-## Data Characteristics
+- ❌ Cannot use `CLEAR_DATA=true` (prevents data loss)
+- ⚠️ Must set at least one of: `SEED_DATABASE=true` or `SEED_ADMINS=true`
+- ✅ All other operations allowed with explicit flags## Data Characteristics
 
 ### Test Environment
 
@@ -123,6 +166,30 @@ NODE_ENV=staging npm run seed
 
 Creates production-like data volumes.
 
+### 5. Seeding Admin Roles in Production
+
+```bash
+SEED_ADMINS=true \
+ADMIN_ADDRESSES="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb" \
+ADMIN_ROLES="ROLE_SUPER_ADMIN" \
+NODE_ENV=production npx prisma db seed
+```
+
+Creates user if not found, assigns admin role. Users are auto-created with a default name if they don't exist.
+
+### 6. Combined Production Seeding
+
+```bash
+CLEAR_DATA=false \
+SEED_DATABASE=true \
+SEED_ADMINS=true \
+ADMIN_ADDRESSES="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb" \
+ADMIN_ROLES="ROLE_SUPER_ADMIN" \
+NODE_ENV=production npx prisma db seed
+```
+
+Seeds both database entities and admin roles.
+
 ---
 
 ## Date Distribution
@@ -161,6 +228,33 @@ npm run seed:test
 
 ```bash
 CLEAR_DATA=true npm run seed:dev
+```
+
+### Error: "Production seeding blocked"
+
+**Solution:** Production requires explicit flags
+
+```bash
+# Seed database only
+SEED_DATABASE=true NODE_ENV=production npx prisma db seed
+
+# OR seed admins only (recommended for production)
+SEED_ADMINS=true \
+ADMIN_ADDRESSES="0xaddress" \
+ADMIN_ROLES="ROLE_ADMIN" \
+NODE_ENV=production npx prisma db seed
+```
+
+### Error: "Invalid Ethereum address"
+
+**Solution:** Ensure addresses are valid and comma-separated (no spaces)
+
+```bash
+# ❌ Bad
+ADMIN_ADDRESSES="0xabc, 0xdef"
+
+# ✅ Good
+ADMIN_ADDRESSES="0xabc,0xdef"
 ```
 
 ### Slow Performance
@@ -229,10 +323,54 @@ npx playwright test
 ## Tips & Best Practices
 
 1. **Use test environment for CI/CD** - Fast and predictable
-2. **Clear data in dev regularly** - Prevents data accumulation
+2. **Clear data in dev regularly** - Prevents data accumulation  
 3. **Use Hardhat addresses in test** - Matches local blockchain
 4. **Staging for performance testing** - Production-like volumes
-5. **Never seed production** - Built-in safeguard blocks this
+5. **Production admin seeding** - Use `SEED_ADMINS=true` for safe provisioning
+6. **Never clear production** - `CLEAR_DATA` is permanently blocked
+7. **Auto-creates users** - Admin seeder creates users if they don't exist
+
+---
+
+## Admin Seeding Deep Dive
+
+### What Happens When You Seed Admins?
+
+1. Validates each Ethereum address format (0x + 40 hex chars)
+2. Validates each role against allowed values (ROLE_ADMIN, ROLE_SUPER_ADMIN)
+3. For each address:
+   - Checks if user exists
+   - **Creates user if not found** with auto-generated name
+   - Assigns the specified role
+   - Skips if role already assigned (idempotent)
+4. Prints audit log with results
+
+### Example: Multi-Admin Setup
+
+```bash
+# Create 3 admins with different roles
+SEED_ADMINS=true \
+ADMIN_ADDRESSES="0xaddr1,0xaddr2,0xaddr3" \
+ADMIN_ROLES="ROLE_SUPER_ADMIN,ROLE_ADMIN,ROLE_ADMIN" \
+NODE_ENV=production npx prisma db seed
+```
+
+**Results:**
+
+- User1 (0xaddr1): ROLE_SUPER_ADMIN + user created
+- User2 (0xaddr2): ROLE_ADMIN + user created  
+- User3 (0xaddr3): ROLE_ADMIN + user created
+
+### Combining with Database Seeding
+
+```bash
+# Seed both test data AND admin roles
+SEED_DATABASE=true \
+SEED_ADMINS=true \
+ADMIN_ADDRESSES="0xaddr1" \
+ADMIN_ROLES="ROLE_SUPER_ADMIN" \
+NODE_ENV=staging npx prisma db seed
+```
 
 ---
 
@@ -240,7 +378,8 @@ npx playwright test
 
 - Read [functional-specification.md](./functional-specification.md) for detailed requirements
 - Check [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) for full feature overview
-- View [seed implementation](../../../backend/prisma/seed.ts) for actual code (~550 lines)
+- View [seed implementation](../../../backend/prisma/seed.ts) for main orchestrator code
+- View [admin seeder](../../../backend/prisma/seeders/admin.ts) for admin provisioning code
 
 ---
 
