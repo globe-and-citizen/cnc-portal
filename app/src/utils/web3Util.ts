@@ -1,5 +1,34 @@
 import { NETWORK } from '@/constant'
 import type { Network } from '@/types'
+import { createPublicClient, http } from 'viem'
+import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from 'viem/chains'
+
+export const getChain = (chainIdStr: string | undefined) => {
+  if (!chainIdStr) return sepolia // default to sepolia
+
+  const id = chainIdStr.startsWith('0x') ? parseInt(chainIdStr, 16) : parseInt(chainIdStr)
+
+  switch (id) {
+    case mainnet.id:
+      return mainnet
+    case sepolia.id:
+      return sepolia
+    case polygon.id:
+      return polygon
+    case hardhat.id:
+      return hardhat
+    case polygonAmoy.id:
+      return polygonAmoy
+    default:
+      return sepolia
+  }
+}
+
+export const getPublicClient = (chainId = NETWORK.chainId) =>
+  createPublicClient({
+    chain: getChain(chainId),
+    transport: http()
+  })
 
 // TODO: this don't need to be a class
 /*
