@@ -32,6 +32,7 @@
     </ButtonUI>
   </div>
 </template>
+
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -39,3 +40,20 @@ import ButtonUI from '@/components/ButtonUI.vue'
 defineProps<{ isProcessing: boolean }>()
 defineEmits(['deploy-safe'])
 </script>
+
+<style scoped>
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
