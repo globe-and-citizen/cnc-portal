@@ -188,6 +188,7 @@ describe('Router Configuration', () => {
         { name: 'cash-remunerations-member', expectedMeta: { name: 'Cash Remuneration Member' } },
         { name: 'expense-account', expectedMeta: { name: 'Expense Account' } },
         { name: 'vesting', expectedMeta: { name: 'Vesting' } },
+        { name: 'trading', expectedMeta: { name: 'Trading' } },
         { name: 'bank-account', expectedMeta: { name: 'Bank Account' } },
         { name: 'contract-management', expectedMeta: { name: 'Contract Management' } },
         { name: 'bod-elections', expectedMeta: { name: 'BoD Election' } },
