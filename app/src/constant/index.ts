@@ -283,8 +283,7 @@ export const POLYMARKET_PROFILE_URL = (address: string) => `https://polymarket.c
 export const POLYGON_RPC_URL = import.meta.env.VITE_APP_POLYGON_RPC_URL || 'https://polygon-rpc.com'
 
 // Remote signing
-export const REMOTE_SIGNING_URL = () =>
-  `${BACKEND_URL}/api/polymarket/sign`
+export const REMOTE_SIGNING_URL = () => `${BACKEND_URL}/api/polymarket/sign`
 
 // Other constants
 export const POLYGON_CHAIN_ID = 137

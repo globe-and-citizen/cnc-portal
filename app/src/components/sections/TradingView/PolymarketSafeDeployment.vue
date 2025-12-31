@@ -16,7 +16,11 @@
         <div class="bg-base-300 p-3 rounded-lg">
           <span class="text-gray-500">Safe Address</span>
           <p class="font-mono">
-            {{ derivedSafeAddressFromEoa ? `${derivedSafeAddressFromEoa.slice(0, 6)}...${derivedSafeAddressFromEoa.slice(-4)}` : '' }}
+            {{
+              derivedSafeAddressFromEoa
+                ? `${derivedSafeAddressFromEoa.slice(0, 6)}...${derivedSafeAddressFromEoa.slice(-4)}`
+                : ''
+            }}
           </p>
         </div>
       </div>
@@ -38,7 +42,7 @@
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { useSafeDeployment } from '@/composables/trading';
+import { useSafeDeployment } from '@/composables/trading'
 
 defineProps<{ isProcessing: boolean }>()
 defineEmits(['deploy-safe'])

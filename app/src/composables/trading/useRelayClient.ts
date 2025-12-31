@@ -37,7 +37,7 @@ export const useRelayClient = (): UseRelayClientReturn => {
   const ethersSigner = computed(() => {
     if (!client.value) return null
     const signer = clientToSigner(client.value)
-    return markRaw(signer) 
+    return markRaw(signer)
   })
 
   const POLYGON_CHAIN_ID = parseInt(networks['polygon'].chainId, 16)

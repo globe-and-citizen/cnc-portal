@@ -68,10 +68,7 @@ const handleDeploySafe = async () => {
     console.log('Derived Safe Address:', derivedSafeAddressFromEoa.value)
     const relayClient = await getOrInitializeRelayClient()
     const _isSafeDeployed = await isSafeDeployed(relayClient, derivedSafeAddressFromEoa.value)
-    console.log(
-      'Is Safe Deployed: ',
-      _isSafeDeployed
-    )
+    console.log('Is Safe Deployed: ', _isSafeDeployed)
     if (!_isSafeDeployed) {
       const result = await deploySafe(relayClient.value)
       console.log('Safe Deployment Result: ', result)
@@ -104,10 +101,7 @@ const handleApproveAndConfigure = async () => {
     console.log('Approval Check Result: ', approvalCheck)
 
     if (!approvalCheck.allApproved) {
-      const result = await completeSetup(
-        relayClient,
-        derivedSafeAddressFromEoa.value
-      )
+      const result = await completeSetup(relayClient, derivedSafeAddressFromEoa.value)
       console.log('Approve and Configure Result: ', result)
     }
 

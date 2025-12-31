@@ -1,11 +1,11 @@
 // composables/useTokenApprovals.ts
 import { ref } from 'vue'
 import type { RelayClient } from '@polymarket/builder-relayer-client'
-import { 
-  checkAllApprovals, 
+import {
+  checkAllApprovals,
   createAllApprovalTxs,
   createCompleteSetupTransactions,
-  type ApprovalCheckResult 
+  type ApprovalCheckResult
 } from '@/utils/trading/approvalsUtil'
 
 export const useTokenApprovals = () => {
@@ -27,7 +27,7 @@ export const useTokenApprovals = () => {
       isLoading.value = false
       return result
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to check approvals and owners"
+      const errorMsg = err instanceof Error ? err.message : 'Failed to check approvals and owners'
       error.value = errorMsg
       isLoading.value = false
       throw err instanceof Error ? err : new Error(errorMsg)
@@ -43,20 +43,17 @@ export const useTokenApprovals = () => {
 
     try {
       const approvalTxs = createAllApprovalTxs()
-      const response = await relayClient.execute(
-        approvalTxs,
-        "Set all token approvals for trading"
-      )
+      const response = await relayClient.execute(approvalTxs, 'Set all token approvals for trading')
       await response.wait()
-      
+
       approvalStatus.value = null
       isLoading.value = false
       return true
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to set all token approvals"
+      const errorMsg = err instanceof Error ? err.message : 'Failed to set all token approvals'
       error.value = errorMsg
       isLoading.value = false
-      console.error("Failed to set all token approvals:", err)
+      console.error('Failed to set all token approvals:', err)
       return false
     }
   }
@@ -72,18 +69,18 @@ export const useTokenApprovals = () => {
       const setupTxs = createCompleteSetupTransactions(safeAddress)
       const response = await relayClient.execute(
         setupTxs,
-        "Complete trading setup: approvals and owners"
+        'Complete trading setup: approvals and owners'
       )
       await response.wait()
-      
+
       approvalStatus.value = null
       isLoading.value = false
       return true
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to complete setup"
+      const errorMsg = err instanceof Error ? err.message : 'Failed to complete setup'
       error.value = errorMsg
       isLoading.value = false
-      console.error("Failed to complete setup:", err)
+      console.error('Failed to complete setup:', err)
       return false
     }
   }
@@ -102,11 +99,11 @@ export const useTokenApprovals = () => {
     isLoading,
     error,
     approvalStatus,
-    
+
     // Methods
     checkAllApprovals: checkAllApprovalsWithOwners,
     setAllTokenApprovals,
     completeSetup,
-    reset,
+    reset
   }
 }
