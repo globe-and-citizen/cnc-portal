@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center justify-center p-4">
     <div class="w-full" style="max-width: 900px">
-      <!-- Increased width to 900px -->
+      <!-- Heading -->
       <div class="text-center mb-10">
         <h1 class="text-3xl font-bold mb-2">Account Setup</h1>
         <p class="text-gray-500">
@@ -18,13 +18,13 @@
         <PolymarketSafeDeployment
           v-if="currentStep === 1"
           :is-processing="isProcessing"
-          @deploy-safe="handleStepAction"
+          @deploy-safe="handleDeploySafe"
         />
 
         <ApprovalAndConfig
           v-else-if="currentStep === 2"
-          :is-processing="isProcessing"
-          @approve-and-configure="handleStepAction"
+          :is-processing="isProcessing || isLoading"
+          @approve-and-configure="handleApproveAndConfigure"
         />
       </div>
     </div>
@@ -37,9 +37,15 @@ import PolymarketSafeDeployment from './PolymarketSafeDeployment.vue'
 import ApprovalAndConfig from './ApprovalAndConfig.vue'
 import StepIndicator from './StepIndicators.vue'
 import StepLabels from './StepLabels.vue'
+import { useSafeDeployment, useRelayClient, useTokenApprovals } from '@/composables/trading'
+import { log, parseError } from '@/utils'
+import type { ApprovalCheckResult } from '@/utils/trading/approvalsUtil'
 
 const currentStep = ref(1)
 const isProcessing = ref(false)
+const { derivedSafeAddressFromEoa, isSafeDeployed, deploySafe } = useSafeDeployment()
+const { checkAllApprovals, completeSetup } = useTokenApprovals()
+const { getOrInitializeRelayClient, isLoading } = useRelayClient()
 
 const steps = [
   {
@@ -54,16 +60,66 @@ const steps = [
   }
 ]
 
-const handleStepAction = async () => {
+const handleDeploySafe = async () => {
+  isProcessing.value = true
+  try {
+    if (!derivedSafeAddressFromEoa.value) return
+    // if (!relayClient.value) return
+    console.log('Derived Safe Address:', derivedSafeAddressFromEoa.value)
+    const relayClient = await getOrInitializeRelayClient()
+    const _isSafeDeployed = await isSafeDeployed(relayClient, derivedSafeAddressFromEoa.value)
+    console.log(
+      'Is Safe Deployed: ',
+      _isSafeDeployed
+    )
+    if (!_isSafeDeployed) {
+      const result = await deploySafe(relayClient.value)
+      console.log('Safe Deployment Result: ', result)
+    }
+
+    if (currentStep.value < steps.length) {
+      currentStep.value = currentStep.value + 1
+    } else {
+      // props.onComplete()
+    }
+  } catch (error) {
+    log.info('deploy Safe error: ', parseError(error))
+  } finally {
+    isProcessing.value = false
+  }
+}
+
+const handleApproveAndConfigure = async () => {
   isProcessing.value = true
   // Simulate blockchain transaction
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-  isProcessing.value = false
+  // await new Promise((resolve) => setTimeout(resolve, 2000))
+  try {
+    if (!derivedSafeAddressFromEoa.value) return
+    console.log('Derived Safe Address:', derivedSafeAddressFromEoa.value)
+    const relayClient = await getOrInitializeRelayClient()
 
-  if (currentStep.value < steps.length) {
-    currentStep.value = currentStep.value + 1
-  } else {
-    // props.onComplete()
+    const approvalCheck: ApprovalCheckResult = await checkAllApprovals(
+      derivedSafeAddressFromEoa.value
+    )
+    console.log('Approval Check Result: ', approvalCheck)
+
+    if (!approvalCheck.allApproved) {
+      const result = await completeSetup(
+        relayClient,
+        derivedSafeAddressFromEoa.value
+      )
+      console.log('Approve and Configure Result: ', result)
+    }
+
+    if (currentStep.value < steps.length) {
+      currentStep.value = currentStep.value + 1
+    } else {
+      // props.onComplete()
+    }
+  } catch (error) {
+    log.info('Approve and Configure error: ', parseError(error))
+  } finally {
+    isProcessing.value = false
   }
 }
 </script>
