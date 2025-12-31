@@ -1,8 +1,5 @@
-import { Request, Response } from "express";
-import {
-  BuilderApiKeyCreds,
-  buildHmacSignature,
-} from "@polymarket/builder-signing-sdk";
+import { Request, Response } from 'express';
+import { BuilderApiKeyCreds, buildHmacSignature } from '@polymarket/builder-signing-sdk';
 import { errorResponse } from '../utils/utils';
 
 const BUILDER_CREDENTIALS: BuilderApiKeyCreds = {
@@ -24,13 +21,13 @@ export const signBuilderMessage = async (req: Request, res: Response) => {
       !BUILDER_CREDENTIALS.secret ||
       !BUILDER_CREDENTIALS.passphrase
     ) {
-      return res.status(500).json({ error: "Builder credentials not configured" });
+      return res.status(500).json({ error: 'Builder credentials not configured' });
     }
 
     // Validate Request Body
     if (!method || !path || !requestBody) {
-      return res.status(400).json({ 
-        error: "Missing required parameters: method, path, or body" 
+      return res.status(400).json({
+        error: 'Missing required parameters: method, path, or body',
       });
     }
 
@@ -53,6 +50,6 @@ export const signBuilderMessage = async (req: Request, res: Response) => {
   } catch (error) {
     // console.error("Signing error:", error);
     // return res.status(500).json({ error: "Failed to sign message" });
-		return errorResponse(500, error, res)
+    return errorResponse(500, error, res);
   }
 };
