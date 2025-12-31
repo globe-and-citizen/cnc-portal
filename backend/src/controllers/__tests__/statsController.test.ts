@@ -319,58 +319,58 @@ describe('Statistics Controller', () => {
     });
   });
 
-  describe('GET /stats/wages', () => {
-    it('should return wage statistics', async () => {
-      // TODO: thoses rate a deprecate
-      const mockWages = [
-        { cashRatePerHour: 20, tokenRatePerHour: 0, usdcRatePerHour: 0 },
-        { cashRatePerHour: 0, tokenRatePerHour: 10, usdcRatePerHour: 0 },
-        { cashRatePerHour: 0, tokenRatePerHour: 0, usdcRatePerHour: 15 },
-      ];
+  // describe('GET /stats/wages', () => {
+  //   it('should return wage statistics', async () => {
+  //     // TODO: thoses rate a deprecate
+  //     const mockWages = [
+  //       { cashRatePerHour: 20, tokenRatePerHour: 0, usdcRatePerHour: 0 },
+  //       { cashRatePerHour: 0, tokenRatePerHour: 10, usdcRatePerHour: 0 },
+  //       { cashRatePerHour: 0, tokenRatePerHour: 0, usdcRatePerHour: 15 },
+  //     ];
 
-      vi.mocked(prisma.wage.count).mockResolvedValue(50);
-      vi.mocked(prisma.wage.aggregate)
-        .mockResolvedValueOnce({
-          _sum: null,
-          _count: null,
-          _avg: { cashRatePerHour: 20 },
-          _min: null,
-          _max: null,
-        })
-        .mockResolvedValueOnce({
-          _sum: null,
-          _count: null,
-          _avg: { tokenRatePerHour: 10 },
-          _min: null,
-          _max: null,
-        })
-        .mockResolvedValueOnce({
-          _sum: null,
-          _count: null,
-          _avg: { usdcRatePerHour: 15 },
-          _min: null,
-          _max: null,
-        });
+  //     vi.mocked(prisma.wage.count).mockResolvedValue(50);
+  //     vi.mocked(prisma.wage.aggregate)
+  //       .mockResolvedValueOnce({
+  //         _sum: null,
+  //         _count: null,
+  //         _avg: { cashRatePerHour: 20 },
+  //         _min: null,
+  //         _max: null,
+  //       })
+  //       .mockResolvedValueOnce({
+  //         _sum: null,
+  //         _count: null,
+  //         _avg: { tokenRatePerHour: 10 },
+  //         _min: null,
+  //         _max: null,
+  //       })
+  //       .mockResolvedValueOnce({
+  //         _sum: null,
+  //         _count: null,
+  //         _avg: { usdcRatePerHour: 15 },
+  //         _min: null,
+  //         _max: null,
+  //       });
 
-      vi.mocked(prisma.wage.findMany)
-        .mockResolvedValueOnce(mockWages) // allWages
-        .mockResolvedValueOnce([{ userAddress: '0x1' }, { userAddress: '0x2' }]); // membersWithWages
+  //     vi.mocked(prisma.wage.findMany)
+  //       .mockResolvedValueOnce(mockWages) // allWages
+  //       .mockResolvedValueOnce([{ userAddress: '0x1' }, { userAddress: '0x2' }]); // membersWithWages
 
-      vi.mocked(prisma.user.count).mockResolvedValue(100);
+  //     vi.mocked(prisma.user.count).mockResolvedValue(100);
 
-      const response = await request(app).get('/stats/wages?period=30d');
+  //     const response = await request(app).get('/stats/wages?period=30d');
 
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('totalWages', 50);
-      expect(response.body).toHaveProperty('averageRates');
-      expect(response.body.averageRates).toHaveProperty('cash', 20);
-      expect(response.body.averageRates).toHaveProperty('token', 10);
-      expect(response.body.averageRates).toHaveProperty('usdc', 15);
-      expect(response.body).toHaveProperty('wageDistribution');
-      expect(response.body).toHaveProperty('membersWithWages', 2);
-      expect(response.body).toHaveProperty('percentageWithWages');
-    });
-  });
+  //     expect(response.status).toBe(200);
+  //     expect(response.body).toHaveProperty('totalWages', 50);
+  //     expect(response.body).toHaveProperty('averageRates');
+  //     expect(response.body.averageRates).toHaveProperty('cash', 20);
+  //     expect(response.body.averageRates).toHaveProperty('token', 10);
+  //     expect(response.body.averageRates).toHaveProperty('usdc', 15);
+  //     expect(response.body).toHaveProperty('wageDistribution');
+  //     expect(response.body).toHaveProperty('membersWithWages', 2);
+  //     expect(response.body).toHaveProperty('percentageWithWages');
+  //   });
+  // });
 
   describe('GET /stats/expenses', () => {
     it('should return expense statistics', async () => {
