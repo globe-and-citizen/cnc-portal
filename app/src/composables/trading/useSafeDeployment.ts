@@ -25,7 +25,7 @@ export const useSafeDeployment = (): UseSafeDeploymentReturn => {
   // This function derives the Safe address from the EOA address
   const derivedSafeAddressFromEoa = computed(() => {
     try {
-      console.log('ChainId: ', parseInt(NETWORK.chainId, 16))
+      // Using Polygon network for Polymarket Safe
       const config = getContractConfig(parseInt(networks['polygon'].chainId, 16))
       return deriveSafe(userDataStore.address, config.SafeContracts.SafeFactory)
     } catch (error) {
