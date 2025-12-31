@@ -4,7 +4,7 @@ import { faker } from '@faker-js/faker';
 import { HARDHAT_ADDRESSES, type Environment } from './config';
 
 export function generateNonce(): string {
-  return Math.random().toString(36).substring(2, 15);
+  return faker.string.alphanumeric(13);
 }
 
 export function getEthereumAddress(index: number, environment: Environment): string {

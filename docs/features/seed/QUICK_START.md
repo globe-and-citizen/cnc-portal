@@ -44,17 +44,17 @@ npm run seed:reset
 
 ## What Gets Seeded?
 
-| Entity | Test | Dev | Staging |
-|--------|------|-----|---------|
-| Users | 3 | 10 | 50 |
-| Teams | 2 | 5 | 20 |
-| Wages | 8 | 45 | 200+ |
-| Weekly Claims | 13 | 110 | 400+ |
-| Claims | 41 | 471 | 2800+ |
-| Expenses | 4 | 15 | 100 |
-| Contracts | 4 | 10 | 60 |
-| Board Actions | 6 | 20 | 100 |
-| Notifications | 8 | 50 | 500 |
+| Entity        | Test | Dev | Staging |
+| ------------- | ---- | --- | ------- |
+| Users         | 3    | 10  | 50      |
+| Teams         | 2    | 5   | 20      |
+| Wages         | 8    | 45  | 200+    |
+| Weekly Claims | 13   | 110 | 400+    |
+| Claims        | 41   | 471 | 2800+   |
+| Expenses      | 4    | 15  | 100     |
+| Contracts     | 4    | 10  | 60      |
+| Board Actions | 6    | 20  | 100     |
+| Notifications | 8    | 50  | 500     |
 
 ---
 
@@ -102,7 +102,9 @@ NODE_ENV=production npx prisma db seed
 
 - ❌ Cannot use `CLEAR_DATA=true` (prevents data loss)
 - ⚠️ Must set at least one of: `SEED_DATABASE=true` or `SEED_ADMINS=true`
-- ✅ All other operations allowed with explicit flags## Data Characteristics
+- ✅ All other operations allowed with explicit flags
+
+## Data Characteristics
 
 ### Test Environment
 
@@ -301,13 +303,13 @@ Expected counts (development):
 ### Unit Tests
 
 ```typescript
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from "@prisma/client";
 
 beforeAll(async () => {
   // Seed test database
-  process.env.NODE_ENV = 'test'
-  await import('./prisma/seed')
-})
+  process.env.NODE_ENV = "test";
+  await import("./prisma/seed");
+});
 ```
 
 ### E2E Tests
@@ -323,7 +325,7 @@ npx playwright test
 ## Tips & Best Practices
 
 1. **Use test environment for CI/CD** - Fast and predictable
-2. **Clear data in dev regularly** - Prevents data accumulation  
+2. **Clear data in dev regularly** - Prevents data accumulation
 3. **Use Hardhat addresses in test** - Matches local blockchain
 4. **Staging for performance testing** - Production-like volumes
 5. **Production admin seeding** - Use `SEED_ADMINS=true` for safe provisioning
@@ -358,7 +360,7 @@ NODE_ENV=production npx prisma db seed
 **Results:**
 
 - User1 (0xaddr1): ROLE_SUPER_ADMIN + user created
-- User2 (0xaddr2): ROLE_ADMIN + user created  
+- User2 (0xaddr2): ROLE_ADMIN + user created
 - User3 (0xaddr3): ROLE_ADMIN + user created
 
 ### Combining with Database Seeding

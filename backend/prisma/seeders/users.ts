@@ -5,7 +5,11 @@ import { faker } from '@faker-js/faker';
 import { type SeedConfig, type Environment } from './config';
 import { getEthereumAddress, generateNonce, distributeDate } from './helpers';
 
-export async function seedUsers(prisma: PrismaClient, config: SeedConfig, environment: Environment) {
+export async function seedUsers(
+  prisma: PrismaClient,
+  config: SeedConfig,
+  environment: Environment
+) {
   console.log('\n👥 Seeding users...');
 
   const users = Array.from({ length: config.users }, (_, i) => ({

@@ -107,7 +107,9 @@ async function main() {
   }
 
   await printSummary(env);
-}main()
+}
+
+main()
   .catch((e) => {
     console.error('❌ Seeding failed:', e);
     process.exit(1);

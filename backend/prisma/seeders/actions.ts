@@ -5,16 +5,7 @@ import { type SeedConfig } from './config';
 import { distributeDate } from './helpers';
 import { faker } from '@faker-js/faker';
 
-// interface Team {
-//   id: string;
-//   ownerAddress: string;
-// }
-
-export async function seedBoardActions(
-  prisma: PrismaClient,
-  teams: Team[],
-  config: SeedConfig
-) {
+export async function seedBoardActions(prisma: PrismaClient, teams: Team[], config: SeedConfig) {
   console.log('\n🎯 Seeding board of director actions...');
 
   const actions = [];
@@ -26,8 +17,9 @@ export async function seedBoardActions(
 
     for (let i = 0; i < config.actionsPerTeam; i++) {
       const createdAt = distributeDate(i, config.actionsPerTeam);
-      const isExecuted = Math.random() > 0.4;
-      const targetMember = teamMembers[Math.floor(Math.random() * teamMembers.length)];
+
+      const isExecuted = faker.datatype.boolean(0.6); // ~60% true, ~40% false
+      const targetMember = faker.helpers.arrayElement(teamMembers);
 
       actions.push({
         teamId: team.id,

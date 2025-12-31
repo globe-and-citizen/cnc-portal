@@ -19,15 +19,11 @@ function generateRates() {
 
   return selectedTypes.map((type) => ({
     type,
-    amount: parseFloat((Math.random() * 20 + 5).toFixed(2)), // 5-25 per hour
+    amount: faker.number.float({ min: 5, max: 25, fractionDigits: 2 }), // 5-25 per hour
   }));
 }
 
-export async function seedWages(
-  prisma: PrismaClient,
-  teams: Team[],
-  config: SeedConfig
-) {
+export async function seedWages(prisma: PrismaClient, teams: Team[], config: SeedConfig) {
   console.log('\n💰 Seeding wages...');
 
   const wages = [];
@@ -69,7 +65,7 @@ export async function seedWages(
             include: {
               nextWage: true,
               previousWage: true,
-            }
+            },
           });
 
           wages.push(wage);

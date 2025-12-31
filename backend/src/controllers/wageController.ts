@@ -7,10 +7,7 @@ import { errorResponse } from '../utils/utils';
 
 type wageBodyRequest = Pick<
   Wage,
-  | 'teamId'
-  | 'userAddress'
-  | 'maximumHoursPerWeek'
-  | 'ratePerHour'
+  'teamId' | 'userAddress' | 'maximumHoursPerWeek' | 'ratePerHour'
 > & {
   ratePerHour: Array<{
     type: string;

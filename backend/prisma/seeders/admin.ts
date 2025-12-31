@@ -2,6 +2,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { isAddress } from 'viem';
+const { generateNonce } = require('./helpers');
 
 /**
  * Valid admin roles that can be assigned
@@ -113,12 +114,13 @@ export async function seedAdmins(prisma: PrismaClient): Promise<void> {
 
       if (!user) {
         // Create new user with admin role
-        user = await prisma.user.create({
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        await prisma.user.create({
           data: {
             address,
             roles: [role],
             name: `Admin ${address.substring(2, 8)}`, // Generate a default name
-            nonce: Math.random().toString(36).substring(2, 15),
+            nonce: generateNonce(),
           },
         });
 

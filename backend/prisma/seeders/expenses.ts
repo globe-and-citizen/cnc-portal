@@ -4,15 +4,7 @@ import { PrismaClient, Team } from '@prisma/client';
 import { type SeedConfig } from './config';
 import { faker } from '@faker-js/faker';
 
-// interface Team {
-//   id: string;
-// }
-
-export async function seedExpenses(
-  prisma: PrismaClient,
-  teams: Team[],
-  config: SeedConfig
-) {
+export async function seedExpenses(prisma: PrismaClient, teams: Team[], config: SeedConfig) {
   console.log('\n💸 Seeding expenses...');
 
   const expenses = [];
