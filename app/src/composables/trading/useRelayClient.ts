@@ -1,13 +1,12 @@
 // composables/useRelayClient.ts
 import { computed, markRaw, ref, type Ref } from 'vue'
-// import { useWallet } from '@/composables/useWallet'
 import { BuilderConfig } from '@polymarket/builder-signing-sdk'
 import { RelayClient } from '@polymarket/builder-relayer-client'
 import { RELAYER_URL, REMOTE_SIGNING_URL } from '@/constant'
 import networks from '@/networks/networks.json'
 import { useUserDataStore } from '@/stores'
 import { useConnectorClient } from '@wagmi/vue'
-import { clientToSigner } from '@/utils/ethers-adapter'
+import { clientToSigner } from '@/utils'
 
 declare global {
   interface Window {
@@ -33,7 +32,7 @@ export const useRelayClient = (): UseRelayClientReturn => {
   const userDataStore = useUserDataStore()
   const { data: client } = useConnectorClient()
 
-  // const ethersSigner = window.ethereum as providers.JsonRpcSigner | undefined
+  // Get ethers Signer from wagmi client
   const ethersSigner = computed(() => {
     if (!client.value) return null
     const signer = clientToSigner(client.value)
