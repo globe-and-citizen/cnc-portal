@@ -84,7 +84,7 @@ const showCreateElectionModal = ref({
   show: false
 })
 const isLoadingCreateElection = ref(false)
-const electionNotificationUrl = computed(() => `/elections/${teamStore.currentTeam?.id}`)
+const electionNotificationUrl = computed(() => `/elections/${teamStore.currentTeamId}`)
 
 const {
   // data: claimUpdateData,

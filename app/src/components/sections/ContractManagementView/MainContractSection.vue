@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col gap-6">
     <span
-      v-if="teamStore.currentTeamMeta.teamIsFetching"
+      v-if="teamStore.currentTeamMeta.isPending"
       class="loading loading-spinner loading-lg"
     ></span>
     <div
-      v-if="!teamStore.currentTeamMeta.teamIsFetching && teamStore"
+      v-if="!teamStore.currentTeamMeta.isPending && teamStore"
       class="flex flex-col gap-5 w-full items-center"
     >
       <CardComponent class="w-full" title="Main contract">
@@ -191,13 +191,13 @@ const router = useRouter()
 const { execute: resetContracts } = useCustomFetch('contract/reset', {
   immediate: false
 })
-  .delete({ teamId: teamStore.currentTeam?.id })
+  .delete({ teamId: teamStore.currentTeamId })
   .json()
 
 const redeployContracts = async () => {
   await resetContracts()
   showModal.value = false
   // redirect to team page
-  await router.push({ name: 'show-team', params: { id: teamStore.currentTeam?.id } })
+  await router.push({ name: 'show-team', params: { id: teamStore.currentTeamId } })
 }
 </script>

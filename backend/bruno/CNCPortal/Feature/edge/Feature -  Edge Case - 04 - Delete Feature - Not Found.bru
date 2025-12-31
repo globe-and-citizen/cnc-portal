@@ -1,0 +1,26 @@
+meta {
+  name: Feature -  Edge Case - 04 - Delete Feature - Not Found
+  type: http
+  seq: 12
+}
+
+delete {
+  url: {{host}}/admin/features/NON_EXISTENT_FEATURE
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+tests {
+  test("should return 404 status", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+
+  test("should mention feature not found", function() {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message.toLowerCase()).to.include('not found');
+  });
+}

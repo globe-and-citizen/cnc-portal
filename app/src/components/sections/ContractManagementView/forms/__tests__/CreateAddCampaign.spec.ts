@@ -59,7 +59,6 @@ const { mockUseCustomFetch, mockTeamStore } = vi.hoisted(() => ({
   mockUseCustomFetch: vi.fn(),
   mockTeamStore: {
     currentTeam: { id: 'team-1' },
-    fetchTeam: vi.fn().mockResolvedValue(undefined),
     getContractAddressByType: vi.fn(() => '0xTeamContractAddress')
   }
 }))
@@ -231,7 +230,6 @@ describe('CreateAddCampaign.vue', () => {
       expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
         'Contract deployed and added to team successfully'
       )
-      expect(mockTeamStore.fetchTeam).toHaveBeenCalledWith('team-1')
       expect(wrapper.emitted('closeAddCampaignModal')).toBeTruthy()
     })
 

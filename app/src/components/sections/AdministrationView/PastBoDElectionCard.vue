@@ -46,7 +46,7 @@
         @click="
           () =>
             router.push(
-              `/teams/${teamStore.currentTeam?.id}/administration/bod-elections-details?electionId=${election.id}`
+              `/teams/${teamStore.currentTeamId}/administration/bod-elections-details?electionId=${election.id}`
             )
         "
       >

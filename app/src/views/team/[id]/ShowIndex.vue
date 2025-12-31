@@ -3,16 +3,16 @@
   <div class="flex flex-col gap-6">
     <div>
       <h2>{{ route.meta.name }}</h2>
-      <div class="breadcrumbs text-sm" v-if="!teamStore.currentTeamMeta?.teamError">
+      <div class="breadcrumbs text-sm" v-if="!teamStore.currentTeamMeta.error">
         <ul>
           <li>
             <div
               class="skeleton h-4 w-20"
               data-test="loader"
-              v-if="teamStore.currentTeamMeta?.teamIsFetching"
+              v-if="teamStore.currentTeamMeta?.isEnabled"
             ></div>
-            <a v-else-if="teamStore.currentTeamMeta?.team"
-              >TEAM : {{ teamStore.currentTeamMeta.team?.name }}</a
+            <a v-else-if="teamStore.currentTeamMeta?.data"
+              >TEAM : {{ teamStore.currentTeamMeta.data?.name }}</a
             >
           </li>
 
@@ -20,14 +20,14 @@
         </ul>
       </div>
     </div>
-    <div v-if="teamStore.currentTeamMeta?.teamError" data-test="error-state">
-      <div class="alert alert-warning" v-if="teamStore.currentTeamMeta?.statusCode === 404">
+    <div v-if="teamStore.currentTeamMeta?.error" data-test="error-state">
+      <div class="alert alert-warning" v-if="teamStore.currentTeamMeta.error?.status == 404">
         Error! Team not found
       </div>
-      <div class="alert alert-error" v-else>Error! Something went wrong</div>
+      <div class="alert alert-error" v-else>Error! Something went wrong, try again later.</div>
     </div>
     <div
-      v-if="route.name == 'show-team' && teamStore.currentTeamMeta?.team"
+      v-if="route.name == 'show-team' && teamStore.currentTeamMeta?.data"
       class="flex flex-col gap-6"
     >
       <!-- Continue Team Creation section -->
@@ -41,11 +41,10 @@
         <ModalComponent v-model="showModal" v-if="showModal">
           <!-- May be return an event that will trigger team reload -->
           <ContinueAddTeamForm
-            :team="teamStore.currentTeamMeta.team"
+            :team="teamStore.currentTeamMeta.data"
             @done="
               () => {
                 showModal = false
-                teamStore.fetchTeam(teamStore.currentTeamMeta.team?.id)
               }
             "
           ></ContinueAddTeamForm>
@@ -53,10 +52,7 @@
       </div>
       <TeamMeta />
 
-      <MemberSection
-        :team="teamStore.currentTeamMeta.team"
-        :teamIsFetching="teamStore.currentTeamMeta.teamIsFetching"
-      />
+      <MemberSection />
     </div>
     <RouterView v-if="teamStore.currentTeam" />
   </div>
@@ -66,6 +62,7 @@ import { useTeamStore } from '@/stores/teamStore'
 import { computed, ref, watch } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useSyncWeeklyClaims } from '@/queries/weeklyClaim.queries'
 import MemberSection from '@/components/sections/DashboardView/MemberSection.vue'
 import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
@@ -75,17 +72,20 @@ const teamStore = useTeamStore()
 const showModal = ref(false)
 
 const route = useRoute()
+const { mutate: syncWeeklyClaims } = useSyncWeeklyClaims()
 
 onMounted(() => {
   if (route.params.id) {
     teamStore.setCurrentTeamId(route.params.id as string)
+    // Sync weekly claims on component mount
+    syncWeeklyClaims({ teamId: route.params.id as string })
   } else {
     // e.g. this.$router.push('/teams')
   }
 })
 
 const hasContract = computed(() => {
-  return (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  return (teamStore.currentTeamMeta.data?.teamContracts ?? []).length > 0
 })
 
 // Watch for changes in the route params then update the current team id

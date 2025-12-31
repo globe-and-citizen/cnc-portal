@@ -1,4 +1,3 @@
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import { useUserDataStore } from '@/stores/user'
 import type { User } from '@/types/user'
 import { log } from '@/utils/generalUtil'
@@ -30,10 +29,10 @@ export function useAuth() {
     }, 5000)
   }
 
-  const validateToken = async () => {
-    const { error } = await useCustomFetch(`auth/token`)
-    return error.value ? false : true
-  }
+  // const validateToken = async () => {
+  //   await refetch()
+  //   return !error.value
+  // }
 
-  return { isAuthenticated, user, logout, validateToken }
+  return { isAuthenticated, user, logout }
 }

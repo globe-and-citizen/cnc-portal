@@ -134,12 +134,12 @@ const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useRe
 
 const weeklyClaimUrl = computed(
   () =>
-    `/weeklyClaim/?status=signed&teamId=${teamStore.currentTeam?.id}&memberAddress=${userStore.address}`
+    `/weeklyClaim/?status=signed&teamId=${teamStore.currentTeamId}&memberAddress=${userStore.address}`
 )
 
 const queryKey = computed(() => [
   'weekly-claims',
-  teamStore.currentTeam?.id,
+  teamStore.currentTeamId,
   userStore.address,
   'signed'
 ])

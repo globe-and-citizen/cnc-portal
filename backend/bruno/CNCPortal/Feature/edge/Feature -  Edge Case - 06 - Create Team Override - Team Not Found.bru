@@ -1,0 +1,33 @@
+meta {
+  name: Feature -  Edge Case - 06 - Create Team Override - Team Not Found
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{host}}/admin/features/{{testFeatureName}}/teams/999999
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "status": "enabled"
+  }
+}
+
+tests {
+  test("should return 404 status", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+
+  test("should mention team not found", function() {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message).to.include('Team');
+    expect(res.body.message.toLowerCase()).to.include('not found');
+  });
+}

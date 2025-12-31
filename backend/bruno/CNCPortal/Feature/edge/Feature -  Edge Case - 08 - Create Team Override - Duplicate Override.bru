@@ -1,0 +1,37 @@
+meta {
+  name: Feature -  Edge Case - 08 - Create Team Override - Duplicate Override
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{host}}/admin/features/{{testFeatureName}}/teams/{{teamId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "status": "enabled"
+  }
+}
+
+tests {
+  test("should return 409 status when override exists", function() {
+    expect([409, 201]).to.include(res.getStatus());
+  });
+
+  test("should indicate duplicate or create once", function() {
+    if (res.getStatus() === 409) {
+      expect(res.body.message).to.be.a('string');
+      expect(res.body.message).to.include('Override already exists');
+    } else {
+      // If the override didn't exist yet, the first run may create it (201)
+      expect(res.body.success).to.equal(true);
+    }
+  });
+}

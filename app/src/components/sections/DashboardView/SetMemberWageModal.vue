@@ -1,59 +1,15 @@
 <template>
-  <div class="flex flex-wrap gap-2">
-    <ButtonUI
-      variant="error"
-      size="sm"
-      @click="() => (showDeleteMemberConfirmModal = true)"
-      data-test="delete-member-button"
-    >
-      <IconifyIcon icon="heroicons-outline:trash" class="size-4" />
-    </ButtonUI>
+  <div>
     <ButtonUI
       size="sm"
       variant="success"
-      @click="() => (showSetMemberWageModal = true)"
+      @click="() => (showModal = true)"
       data-test="set-wage-button"
     >
       Set Wage
     </ButtonUI>
 
-    <ModalComponent v-model="showDeleteMemberConfirmModal" v-if="showDeleteMemberConfirmModal">
-      <p class="font-bold text-lg">Confirmation</p>
-      <hr class="" />
-      <p class="py-4">
-        Are you sure you want to delete
-        <span class="font-bold">{{ member.name }}</span>
-        with address <span class="font-bold">{{ member.address }}</span>
-        from the team?
-      </p>
-
-      <div v-if="deleteMemberError" data-test="error-state">
-        <div class="alert alert-warning" v-if="deleteMemberStatusCode === 403">
-          You don't have the permission to delete this member
-        </div>
-        <div class="alert" v-else>Error! Something went wrong</div>
-      </div>
-      <div class="modal-action justify-center">
-        <ButtonUI
-          :loading="memberIsDeleting"
-          :disabled="memberIsDeleting"
-          variant="error"
-          @click="deleteMember()"
-          data-test="delete-member-confirm-button"
-          >Delete</ButtonUI
-        >
-        <ButtonUI
-          variant="primary"
-          outline
-          @click="showDeleteMemberConfirmModal = false"
-          data-test="delete-member-cancel-button"
-        >
-          Cancel
-        </ButtonUI>
-      </div>
-    </ModalComponent>
-
-    <ModalComponent v-model="showSetMemberWageModal" v-if="showSetMemberWageModal">
+    <ModalComponent v-model="showModal" v-if="showModal">
       <p class="font-bold text-lg">Set Member Wage</p>
       <hr class="my-2" />
 
@@ -216,41 +172,43 @@
           {{ error.$message }}
         </div>
 
-        <div v-if="addMemberWageDataError" data-test="error-state">
-          <div
-            class="alert alert-warning"
-            v-if="addMemberWageDataStatusCode === 403 || addMemberWageDataStatusCode === 404"
-          >
-            {{ addMemberWageDataError.message }}
+        <div v-if="setWageError" data-test="error-state">
+          <div class="alert alert-error">
+            {{
+              (setWageError as AxiosError<{ message?: string }>).response?.data?.message ||
+              'Error setting wage'
+            }}
           </div>
-          <div class="alert" v-else>Error! Something went wrong</div>
         </div>
 
         <!-- Action Buttons -->
-        <div class="modal-action justify-center">
+        <div class="modal-action justify-between w-full">
           <ButtonUI
+            v-if="props.wage"
             :loading="isMemberWageSaving"
             :disabled="isMemberWageSaving"
-            variant="success"
-            @click="addMemberWageData"
-            data-test="add-wage-button"
+            variant="error"
+            @click="wageData = initializeWageData()"
+            data-test="reset-wage-button"
           >
-            Save
+            Reset Wage
           </ButtonUI>
           <ButtonUI
             variant="error"
             outline
-            @click="
-              () => {
-                showSetMemberWageModal = false
-                v$.$reset()
-                wageData.maxWeeklyHours = 0
-                wageData.hourlyRate = 0
-              }
-            "
+            @click="handleCancel"
             data-test="add-wage-cancel-button"
           >
             Cancel
+          </ButtonUI>
+          <ButtonUI
+            :loading="isMemberWageSaving"
+            :disabled="isMemberWageSaving"
+            variant="success"
+            @click="handleSaveWage"
+            data-test="add-wage-button"
+          >
+            Save
           </ButtonUI>
         </div>
       </div>
@@ -259,41 +217,63 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { useCustomFetch } from '@/composables'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
-import { computed, ref } from 'vue'
 import { NETWORK } from '@/constant'
-const teamStore = useTeamStore()
-const { addSuccessToast } = useToastStore()
+import { useSetMemberWage } from '@/queries/wage.queries'
+import type { AxiosError } from 'axios'
+import type { Wage } from '@/types'
 
 const props = defineProps<{
   member: Partial<Member>
   teamId: number | string
-  // ownerAddress: string
+  wage?: Wage
 }>()
-const emits = defineEmits(['refetchWage'])
 
-const showDeleteMemberConfirmModal = ref(false)
-const showSetMemberWageModal = ref(false)
+const emits = defineEmits<{ wageUpdated: [] }>()
 
-const wageData = ref({
-  maxWeeklyHours: 0,
-  hourlyRate: 0,
-  hourlyRateUsdc: 0,
-  hourlyRateToken: 0,
-  nativeEnabled: false,
-  usdcEnabled: false,
-  sherEnabled: false
-})
+const showModal = ref(false)
+const { addSuccessToast } = useToastStore()
+
+const initializeWageData = () => {
+  if (props.wage) {
+    const nativeRate = props.wage.ratePerHour.find((r) => r.type === 'native')?.amount || 0
+    const usdcRate = props.wage.ratePerHour.find((r) => r.type === 'usdc')?.amount || 0
+    const sherRate = props.wage.ratePerHour.find((r) => r.type === 'sher')?.amount || 0
+
+    return {
+      maxWeeklyHours: props.wage.maximumHoursPerWeek || 0,
+      hourlyRate: nativeRate,
+      hourlyRateUsdc: usdcRate,
+      hourlyRateToken: sherRate,
+      nativeEnabled: nativeRate > 0,
+      usdcEnabled: usdcRate > 0,
+      sherEnabled: sherRate > 0
+    }
+  }
+
+  return {
+    maxWeeklyHours: 0,
+    hourlyRate: 0,
+    hourlyRateUsdc: 0,
+    hourlyRateToken: 0,
+    nativeEnabled: false,
+    usdcEnabled: false,
+    sherEnabled: false
+  }
+}
+
+const wageData = ref(initializeWageData())
+
 const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
   return parseFloat(value) > 0
 })
+
 const ratePerHour = computed(() => {
   return [
     ...(wageData.value.hourlyRate > 0
@@ -307,6 +287,7 @@ const ratePerHour = computed(() => {
       : [])
   ]
 })
+
 const atLeastOneRate = helpers.withMessage(
   'At least one hourly rate must be set',
   (value: { type: string; amount: number }[]) => {
@@ -336,59 +317,45 @@ const rules = {
     atLeastOneRate
   }
 }
+
 const v$ = useVuelidate(rules, { wageData, ratePerHour })
 
-// useFetch instance for deleting member
 const {
-  error: deleteMemberError,
-  isFetching: memberIsDeleting,
-  statusCode: deleteMemberStatusCode,
-  execute: executeDeleteMember
-} = useCustomFetch(
-  computed(() => `teams/${props.teamId}/member/${props.member.address}`),
-  {
-    immediate: false
-  }
-)
-  .delete()
-  .json()
+  mutate: executeSetWage,
+  isPending: isMemberWageSaving,
+  error: setWageError
+} = useSetMemberWage()
 
-const deleteMember = async (): Promise<void> => {
-  await executeDeleteMember()
-  if (deleteMemberStatusCode.value === 204) {
-    showDeleteMemberConfirmModal.value = false
-    teamStore.fetchTeam(String(props.teamId))
-  }
-}
-const {
-  error: addMemberWageDataError,
-  isFetching: isMemberWageSaving,
-  statusCode: addMemberWageDataStatusCode,
-  execute: addMemberWageDataAPI
-} = useCustomFetch('/wage/setWage', {
-  immediate: false
-})
-  .put(() => ({
-    teamId: props.teamId,
-    userAddress: props.member.address,
-    ratePerHour: ratePerHour.value,
-    maximumHoursPerWeek: wageData.value.maxWeeklyHours
-  }))
-  .json()
-
-const addMemberWageData = async () => {
+const handleSaveWage = async () => {
   v$.value.$touch()
   if (v$.value.$invalid) {
     return
   }
-  await addMemberWageDataAPI()
-  if (addMemberWageDataStatusCode.value === 201) {
-    addSuccessToast('Member wage data set successfully')
 
-    emits('refetchWage')
-    showSetMemberWageModal.value = false
-  }
+  executeSetWage(
+    {
+      teamId: props.teamId,
+      userAddress: props.member.address || '',
+      ratePerHour: ratePerHour.value,
+      maximumHoursPerWeek: wageData.value.maxWeeklyHours
+    },
+    {
+      onSuccess: () => {
+        addSuccessToast('Member wage data set successfully')
+        emits('wageUpdated')
+        handleCancel()
+      },
+      onError: (error: AxiosError) => {
+        console.error('Error setting member wage:', error)
+        // Toast notification will be handled by parent or error state
+      }
+    }
+  )
+}
+
+const handleCancel = () => {
+  showModal.value = false
+  v$.value.$reset()
+  wageData.value = initializeWageData()
 }
 </script>
-
-<style scoped></style>
