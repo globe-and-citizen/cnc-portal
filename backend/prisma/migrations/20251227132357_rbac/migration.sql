@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "roles" TEXT[] DEFAULT ARRAY['ROLE_USER']::TEXT[];

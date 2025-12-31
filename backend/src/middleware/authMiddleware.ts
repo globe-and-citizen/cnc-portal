@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { errorResponse } from '../utils/utils';
 import { Address } from 'viem';
+import { UserRole } from '../types/roles';
+import { prisma } from '../utils/dependenciesUtil';
 
 const authorizeUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -33,7 +35,19 @@ const authorizeUser = async (req: Request, res: Response, next: NextFunction) =>
       return errorResponse(401, 'Unauthorized: Missing jwt payload', res);
     }
 
-    req.address = (payload as { address: Address }).address;
+    const decodedPayload = payload as { address: Address; roles?: UserRole[] };
+    // Find user by address in the database
+
+    const user = await prisma.user.findUnique({
+      where: { address: decodedPayload.address },
+    });
+
+    if (!user) {
+      return errorResponse(401, 'Unauthorized: User not found', res);
+    }
+
+    req.address = decodedPayload.address;
+    req.user = user;
 
     next();
   } catch (error) {
