@@ -284,9 +284,7 @@ export const POLYGON_RPC_URL = import.meta.env.VITE_APP_POLYGON_RPC_URL || 'http
 
 // Remote signing
 export const REMOTE_SIGNING_URL = () =>
-  typeof window !== 'undefined'
-    ? `${window.location.origin}/api/polymarket/sign`
-    : '/api/polymarket/sign'
+  `${BACKEND_URL}/api/polymarket/sign`
 
 // Other constants
 export const POLYGON_CHAIN_ID = 137
