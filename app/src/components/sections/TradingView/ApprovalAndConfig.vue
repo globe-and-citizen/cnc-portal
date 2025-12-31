@@ -16,7 +16,7 @@
       title="Outcome Token Approvals"
       description="Approve Outcome Token for Polymarket trading"
       symbol="1155"
-      color="accent"
+      color="info"
       value="Approved"
     />
 
