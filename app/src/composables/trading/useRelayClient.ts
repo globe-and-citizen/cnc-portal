@@ -1,12 +1,11 @@
 // composables/useRelayClient.ts
-import { computed, ref, type Ref } from 'vue'
+import { computed, markRaw, ref, type Ref } from 'vue'
 // import { useWallet } from '@/composables/useWallet'
 import { BuilderConfig } from '@polymarket/builder-signing-sdk'
 import { RelayClient } from '@polymarket/builder-relayer-client'
 import { RELAYER_URL, REMOTE_SIGNING_URL } from '@/constant'
 import networks from '@/networks/networks.json'
 import { useUserDataStore } from '@/stores'
-import { providers } from 'ethers'
 import { useConnectorClient } from '@wagmi/vue'
 import { clientToSigner } from '@/utils/ethers-adapter'
 
@@ -37,12 +36,11 @@ export const useRelayClient = (): UseRelayClientReturn => {
   // const ethersSigner = window.ethereum as providers.JsonRpcSigner | undefined
   const ethersSigner = computed(() => {
     if (!client.value) return null
-    return clientToSigner(client.value)
+    const signer = clientToSigner(client.value)
+    return markRaw(signer) 
   })
-  const POLYGON_CHAIN_ID = parseInt(networks['polygon'].chainId, 16)
 
-  // Get wallet context
-  // const wallet = useWallet()
+  const POLYGON_CHAIN_ID = parseInt(networks['polygon'].chainId, 16)
 
   /**
    * This function initializes the relay client with
