@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { useBackendWake } from '@/composables/useBackendWake'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { defineComponent, h } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 
-// Mock the health query
+// Mock the health query with hoisting
 const mockRefetch = vi.fn()
 
 vi.mock('@/queries/health.queries', () => ({
@@ -17,6 +16,11 @@ vi.mock('@/queries/health.queries', () => ({
     refetch: mockRefetch.mockResolvedValue({})
   }))
 }))
+
+// Unmock the useBackendWake so we can test the real implementation
+vi.unmock('@/composables/useBackendWake')
+
+import { useBackendWake } from '@/composables/useBackendWake'
 
 describe('useBackendWake Composable', () => {
   let queryClient: QueryClient

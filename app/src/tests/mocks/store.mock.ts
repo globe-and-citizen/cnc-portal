@@ -21,5 +21,8 @@ export const mockToastStore = {
 }
 
 export const mockUserStore = {
-  address: '0xUserAddress'
+  address: '0x1234567890123456789012345678901234567890',
+  name: 'Test User',
+  imageUrl: 'https://example.com/avatar.jpg',
+  isAuth: true
 }

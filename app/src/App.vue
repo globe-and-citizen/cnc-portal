@@ -83,27 +83,26 @@
 </template>
 
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
-import { computed, ref, watch } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useToastStore } from '@/stores/useToastStore'
-import { useUserDataStore } from '@/stores/user'
-import { useBackendWake } from '@/composables/useBackendWake'
-
-import Drawer from '@/components/TheDrawer.vue'
-import NavBar from '@/components/NavBar.vue'
-import ToastContainer from '@/components/ToastContainer.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
-import EditUserForm from '@/components/forms/EditUserForm.vue'
-import AddTeamForm from '@/components/forms/AddTeamForm.vue'
-
-import { useChainId, useConnection, useConnectionEffect, useSwitchChain } from '@wagmi/vue'
-import { useAuth } from './composables/useAuth'
-import { useAppStore } from './stores'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 import '@vuepic/vue-datepicker/dist/main.css'
-import LockScreen from './components/LockScreen.vue'
+import { useChainId, useConnection, useConnectionEffect, useSwitchChain } from '@wagmi/vue'
+import { storeToRefs } from 'pinia'
+import { computed, ref, watch } from 'vue'
+import { RouterView } from 'vue-router'
+
+import AddTeamForm from '@/components/forms/AddTeamForm.vue'
+import EditUserForm from '@/components/forms/EditUserForm.vue'
+import LockScreen from '@/components/LockScreen.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
+import NavBar from '@/components/NavBar.vue'
+import Drawer from '@/components/TheDrawer.vue'
+import ToastContainer from '@/components/ToastContainer.vue'
+
+import { useAuth } from '@/composables/useAuth'
+import { useBackendWake } from '@/composables/useBackendWake'
+
 import { NETWORK } from '@/constant/index'
+import { useAppStore, useToastStore, useUserDataStore } from '@/stores/index'
 
 const connection = useConnection()
 const switchChain = useSwitchChain()
@@ -118,7 +117,6 @@ watch(chainId, (val) => {
 useBackendWake()
 
 const { addErrorToast } = useToastStore()
-
 const appStore = useAppStore()
 const { logout } = useAuth()
 const toggleSide = ref(false)

@@ -4,17 +4,18 @@
       <label class="flex items-center">
         <span class="w-full" data-test="hours-worked-label">Date</span>
       </label>
+      <!-- :key forces VueDatePicker to re-render when restriction mode changes -->
       <VueDatePicker
         v-model="formData.dayWorked"
         model-type="iso"
         :format="formatUTC"
         :enable-time-picker="false"
         auto-apply
-        :disabledDates="isDateDisabled"
+        :key="restrictSubmitKey"
+        :disabled-dates="disabledDatesFn"
         :ui="{
           input: 'input input-bordered input-md'
         }"
-        class=""
         data-test="date-input"
         utc="preserve"
         :disabled="isEdit"
@@ -87,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import { required, numeric, minValue, maxValue, maxLength } from '@vuelidate/validators'
 import type { ClaimFormData } from '@/types'
@@ -101,6 +102,7 @@ interface Props {
   isEdit?: boolean
   isLoading?: boolean
   disabledWeekStarts?: string[]
+  restrictSubmit?: boolean
 }
 
 dayjs.extend(utc)
@@ -108,7 +110,13 @@ dayjs.extend(utc)
 const props = withDefaults(defineProps<Props>(), {
   isEdit: false,
   isLoading: false,
-  disabledWeekStarts: () => []
+  disabledWeekStarts: () => [],
+  restrictSubmit: true
+})
+
+// Key to force VueDatePicker re-render when restriction mode or disabled weeks change
+const restrictSubmitKey = computed(() => {
+  return `restrict-${props.restrictSubmit}-${(props.disabledWeekStarts ?? []).length}`
 })
 
 const emit = defineEmits<{
@@ -160,12 +168,43 @@ const formatUTC = (value: Date | string | null | undefined) => {
   return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
 }
 
-const isDateDisabled = (value: Date | string | null | undefined) => {
-  if (!value) return false
-  const date = value instanceof Date ? value : new Date(value)
-  const weekStart = dayjs.utc(date).startOf('isoWeek').toISOString()
-  return (props.disabledWeekStarts ?? []).includes(weekStart)
-}
+const disabledDatesFn = computed(() => {
+  return (value: Date | string | null): boolean => {
+    if (!value) return false
+
+    const date = dayjs.utc(value).startOf('day')
+    const today = dayjs.utc().startOf('day')
+
+    const disabledWeekKeys = (props.disabledWeekStarts ?? []).map((w) =>
+      dayjs.utc(w).startOf('isoWeek').format('YYYY-MM-DD')
+    )
+
+    const dateWeekKey = date.startOf('isoWeek').format('YYYY-MM-DD')
+
+    // 🔒 Rule 1: approved weeks are ALWAYS disabled
+    if (disabledWeekKeys.includes(dateWeekKey)) {
+      return true
+    }
+
+    // 🔐 Rule 2: restriction mode (current week only)
+    if (props.restrictSubmit) {
+      const currentWeekStart = today.startOf('isoWeek')
+      const currentWeekEnd = today.endOf('isoWeek')
+
+      // Outside current week
+      if (date.isBefore(currentWeekStart, 'day') || date.isAfter(currentWeekEnd, 'day')) {
+        return true
+      }
+
+      // Max 4 days in the past (within current week)
+      const daysDiff = today.diff(date, 'day')
+      return daysDiff < 0 || daysDiff > 4
+    }
+
+    // 🟢 Rule 3: free mode → everything else allowed
+    return false
+  }
+})
 
 const handleSubmit = async () => {
   v$.value.$touch()

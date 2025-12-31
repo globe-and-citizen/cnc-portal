@@ -14,11 +14,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum GlobalSettingStatus {
+  enabled
+  disabled
+  beta
+}
+
 model User {
   address                String                   @id @unique
   name                   String?
   nonce                  String
   imageUrl               String?
+  roles                  String[]                 @default(["ROLE_USER"])
   teams                  Team[]                   @relation("MemberTeams")
   ownedTeams             Team[]                   @relation("OwnedTeams")
   notifications          Notification[]
@@ -47,6 +54,7 @@ model Team {
   Expense                Expense[]
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
+  teamFunctionOverrides  TeamFunctionOverride[]
 }
 
 model MemberTeamsData {
@@ -167,4 +175,27 @@ model BoardOfDirectorActions {
   team          Team     @relation(fields: [teamId], references: [id])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model GlobalSetting {
+  id                    Int                    @id @default(autoincrement())
+  functionName          String                 @unique
+  status                GlobalSettingStatus    @default(disabled)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  teamFunctionOverrides TeamFunctionOverride[]
+}
+
+model TeamFunctionOverride {
+  id            Int           @id @default(autoincrement())
+  teamId        Int
+  team          Team          @relation(fields: [teamId], references: [id])
+  functionName  String
+  globalSetting GlobalSetting @relation(fields: [functionName], references: [functionName])
+  status        String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([teamId, functionName], name: "unique_team_function")
+  @@index([teamId])
 }

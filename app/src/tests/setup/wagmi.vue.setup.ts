@@ -9,7 +9,17 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useChainId: vi.fn(() => ref(1)),
     useReadContract: vi.fn(() => ({ ...mocks.mockUseReadContract })),
     useSignTypedData: vi.fn(() => ({ ...mocks.mockUseSignTypedData })),
-    useWriteContract: vi.fn(() => ({ ...mocks.mockUseWriteContract }))
+    useWriteContract: vi.fn(() => ({ ...mocks.mockUseWriteContract })),
+    useConnection: vi.fn(() => ({
+      address: ref('0x1234567890123456789012345678901234567890'),
+      status: ref('connected'),
+      isConnected: ref(true)
+    })),
+    useConnectionEffect: vi.fn(),
+    useSwitchChain: vi.fn(() => ({
+      mutate: vi.fn(),
+      isPending: ref(false)
+    }))
   }
 })
 

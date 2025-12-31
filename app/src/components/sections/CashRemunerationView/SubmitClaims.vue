@@ -19,6 +19,7 @@
         :initial-data="formInitialData"
         :is-loading="isWageClaimAdding"
         :disabled-week-starts="props.signedWeekStarts"
+        :restrict-submit="isRestricted"
         @submit="handleSubmit"
       />
       <div v-if="addWageClaimError && errorMessage" class="mt-4">
@@ -44,14 +45,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { useQueryClient } from '@tanstack/vue-query'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useCustomFetch, useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
 import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
 
@@ -60,6 +61,7 @@ dayjs.extend(utc)
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const queryClient = useQueryClient()
+const { isRestricted, checkRestriction } = useSubmitRestriction()
 
 const modal = ref(false)
 const errorMessage = ref<{ message: string } | null>(null)
@@ -87,6 +89,17 @@ const openModal = () => {
 }
 
 const teamId = computed(() => teamStore.currentTeamId)
+
+// Check restriction when team changes
+watch(
+  teamId,
+  async (newTeamId) => {
+    if (newTeamId) {
+      await checkRestriction(newTeamId)
+    }
+  },
+  { immediate: true }
+)
 
 const {
   error: addWageClaimError,
@@ -143,6 +156,13 @@ const handleSubmit = async (data: ClaimSubmitPayload) => {
     claimFormRef.value?.resetForm()
   }
 }
+
+// Check restriction on mount
+onMounted(async () => {
+  if (teamId.value) {
+    await checkRestriction(teamId.value)
+  }
+})
 
 defineExpose({
   handleSubmit,
