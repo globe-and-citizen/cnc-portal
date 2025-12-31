@@ -27,7 +27,7 @@ const addressesMap: Record<number, AddressMapping> = {
 }
 
 // Helper to get chain ID from Nuxt runtime config
-function getChainId(): number {
+export function getChainId(): number {
   // This will be available in both client and server
   if (import.meta.client || import.meta.server) {
     try {
