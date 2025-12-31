@@ -17,7 +17,7 @@ export function clientToSigner(client: Client<Transport, Chain, Account>) {
   const { account, transport } = client
 
   // Use the hard-coded POLYGON_NETWORK instead of client.chain
-  const provider = new providers.Web3Provider(transport as any, POLYGON_NETWORK)
+  const provider = new providers.Web3Provider(transport, POLYGON_NETWORK)
 
   return provider.getSigner(account.address)
 }

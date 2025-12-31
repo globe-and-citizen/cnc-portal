@@ -188,7 +188,7 @@ export const checkAllApprovals = async (
   const outcomeTokenApprovals: Record<string, boolean> = {}
 
   // Check token approvals in parallel
-  const [usdcResults, outcomeTokenResults, safeOwnerResults] = await Promise.all([
+  const [, , safeOwnerResults] = await Promise.all([
     Promise.all(
       USDC_E_SPENDERS.map(async ({ address, name }) => {
         const approved = await checkUSDCApprovalForSpender(safeAddress, address)

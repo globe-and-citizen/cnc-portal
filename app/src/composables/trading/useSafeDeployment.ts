@@ -1,12 +1,9 @@
 // composables/useSafeDeployment.ts
-import { computed, ref, type Ref } from 'vue'
-import { useWalletStore } from '@/stores/walletStore'
+import { computed, type Ref } from 'vue'
 import { RelayClient } from '@polymarket/builder-relayer-client'
 import { deriveSafe } from '@polymarket/builder-relayer-client/dist/builder/derive'
 import { getContractConfig } from '@polymarket/builder-relayer-client/dist/config'
-import { NETWORK } from '@/constant'
 import { useUserDataStore } from '@/stores'
-// import { getPublicClient } from '@wagmi/core'
 import { getPublicClient } from '@/utils'
 import networks from '@/networks/networks.json'
 
@@ -17,8 +14,6 @@ export interface UseSafeDeploymentReturn {
 }
 
 export const useSafeDeployment = (): UseSafeDeploymentReturn => {
-  const wallet = useWalletStore()
-  // const { eoaAddress, isConnected, publicClient } = wallet
   const userDataStore = useUserDataStore()
   const publicClient = getPublicClient(networks['polygon'].chainId)
 

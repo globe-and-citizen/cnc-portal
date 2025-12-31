@@ -64,13 +64,12 @@ const handleDeploySafe = async () => {
   isProcessing.value = true
   try {
     if (!derivedSafeAddressFromEoa.value) return
-    // if (!relayClient.value) return
     console.log('Derived Safe Address:', derivedSafeAddressFromEoa.value)
     const relayClient = await getOrInitializeRelayClient()
     const _isSafeDeployed = await isSafeDeployed(relayClient, derivedSafeAddressFromEoa.value)
     console.log('Is Safe Deployed: ', _isSafeDeployed)
     if (!_isSafeDeployed) {
-      const result = await deploySafe(relayClient.value)
+      const result = await deploySafe(relayClient)
       console.log('Safe Deployment Result: ', result)
     }
 
@@ -88,8 +87,6 @@ const handleDeploySafe = async () => {
 
 const handleApproveAndConfigure = async () => {
   isProcessing.value = true
-  // Simulate blockchain transaction
-  // await new Promise((resolve) => setTimeout(resolve, 2000))
   try {
     if (!derivedSafeAddressFromEoa.value) return
     console.log('Derived Safe Address:', derivedSafeAddressFromEoa.value)

@@ -16,18 +16,18 @@ declare global {
 }
 
 interface UseRelayClientReturn {
-  relayClient: Ref<any>
+  relayClient: Ref<RelayClient | null>
   isLoading: Ref<boolean>
   error: Ref<string | null>
-  initializeRelayClient: () => Promise<any>
+  initializeRelayClient: () => Promise<RelayClient>
   clearRelayClient: () => void
-  getOrInitializeRelayClient: () => Promise<any>
+  getOrInitializeRelayClient: () => Promise<RelayClient>
   reset: () => void
 }
 
 export const useRelayClient = (): UseRelayClientReturn => {
   // Reactive state
-  const relayClient = ref<RelayClient | null>(null)
+  const relayClient = ref<RelayClient | null>(null) as Ref<RelayClient | null>
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const userDataStore = useUserDataStore()
@@ -74,7 +74,7 @@ export const useRelayClient = (): UseRelayClientReturn => {
         POLYGON_CHAIN_ID,
         ethersSigner.value,
         builderConfig
-      )
+      ) as unknown as RelayClient
 
       relayClient.value = client
       isLoading.value = false
@@ -101,7 +101,7 @@ export const useRelayClient = (): UseRelayClientReturn => {
    */
   const getOrInitializeRelayClient = async (): Promise<RelayClient> => {
     if (relayClient.value) {
-      return relayClient.value as RelayClient
+      return relayClient.value
     }
     return await initializeRelayClient()
   }
