@@ -55,7 +55,7 @@ const steps = [
   {
     id: 1,
     title: 'Deploy Polymarket Safe',
-    description: 'Create your multi-sig trading wallet on the blockchain'
+    description: 'Create your multi-sig trading wallet on Polymarket'
   },
   {
     id: 2,
@@ -75,6 +75,7 @@ const handleDeploySafe = async () => {
     if (!isDeployed) {
       const result = await deploySafe(relayClient)
       console.log('Safe Deployment Result: ', result)
+      if (!result) return
     }
 
     if (currentStep.value < steps.length) {
@@ -104,6 +105,7 @@ const handleApproveAndConfigure = async () => {
     if (!approvalCheck.isSetupComplete) {
       const result = await completeSetup(relayClient, derivedSafeAddressFromEoa.value)
       console.log('Approve and Configure Result: ', result)
+      if (!result) return
     }
 
     if (currentStep.value < steps.length) {
