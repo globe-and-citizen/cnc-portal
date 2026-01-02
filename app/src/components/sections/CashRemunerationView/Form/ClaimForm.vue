@@ -318,6 +318,7 @@ const handleSubmit = async () => {
 
 const resetForm = () => {
   uploadFileRef.value?.resetUpload()
+  uploadedFiles.value = []
 }
 
 defineExpose({
