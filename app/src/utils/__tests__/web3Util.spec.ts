@@ -2,9 +2,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NETWORK } from '@/constant'
 import { getChain, getPublicClient, clientToSigner } from '../web3Util'
-import { createPublicClient, http } from 'viem'
+import {
+  createPublicClient,
+  http,
+  type Account,
+  type Chain,
+  type Client,
+  type HttpTransport,
+  type RpcSchema,
+  type Transport
+} from 'viem'
 import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from 'viem/chains'
-import { providers } from 'ethers'
 
 const { mockGetSigner, MockWeb3Provider } = vi.hoisted(() => ({
   mockGetSigner: vi.fn(),
@@ -24,10 +32,6 @@ vi.mock('viem/chains', () => ({
   hardhat: { id: 31337 },
   polygonAmoy: { id: 80002 }
 }))
-
-// Add this at the top of your file with the other mock definitions
-// const mockGetSigner = vi.fn()
-// const MockWeb3Provider = vi.fn()
 
 // Update your ethers mock to use these
 vi.mock('ethers', () => ({
@@ -120,14 +124,16 @@ describe('getChain', () => {
 })
 
 describe('getPublicClient', () => {
-  const mockChain = { id: 1, name: 'mock-chain' }
   const mockHttpTransport = {}
   const mockPublicClient = {}
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(http).mockReturnValue(mockHttpTransport as any)
-    vi.mocked(createPublicClient).mockReturnValue(mockPublicClient as any)
+    vi.mocked(http).mockReturnValue(
+      mockHttpTransport as HttpTransport<RpcSchema | undefined, boolean>
+    )
+    //@ts-expect-error: mock value
+    vi.mocked(createPublicClient).mockReturnValue(mockPublicClient)
   })
 
   it('should create public client with default chain from NETWORK', () => {
@@ -177,7 +183,7 @@ describe('clientToSigner', () => {
     MockWeb3Provider.mockClear()
 
     // Create fresh mock instance for each test
-    MockWeb3Provider.mockImplementation(function (this: any) {
+    MockWeb3Provider.mockImplementation(function (this: { getSigner: () => void }) {
       // 'this' will refer to the instance when called with 'new'
       this.getSigner = mockGetSigner
       return this
@@ -191,7 +197,7 @@ describe('clientToSigner', () => {
       account: mockAccount,
       transport: mockTransport,
       chain: { id: 1, name: 'mainnet' }
-    } as any
+    } as Client<Transport, Chain, Account>
 
     const result = clientToSigner(mockClient)
 
@@ -214,7 +220,7 @@ describe('clientToSigner', () => {
       account: differentAccount,
       transport: mockTransport,
       chain: { id: 1, name: 'mainnet' }
-    } as any
+    } as Client<Transport, Chain, Account>
 
     const result = clientToSigner(mockClient)
 
@@ -242,7 +248,7 @@ describe('clientToSigner', () => {
       MockWeb3Provider.mockClear()
 
       // Reset mock implementation
-      MockWeb3Provider.mockImplementation(function (this: any) {
+      MockWeb3Provider.mockImplementation(function (this: { getSigner: () => void }) {
         this.getSigner = mockGetSigner
         return this
       })
@@ -253,7 +259,7 @@ describe('clientToSigner', () => {
         account: mockAccount,
         transport: mockTransport,
         chain
-      } as any
+      } as Client<Transport, Chain, Account>
 
       clientToSigner(mockClient)
 
@@ -281,13 +287,16 @@ describe('Edge Cases', () => {
   })
 
   it('getPublicClient should handle undefined chain id', () => {
-    // Temporarily mock NETWORK to have undefined chainId
+    //@ts-expect-error: test mock value
     vi.mocked(NETWORK).chainId = undefined
 
     const mockHttpTransport = {}
     const mockPublicClient = {}
-    vi.mocked(http).mockReturnValue(mockHttpTransport as any)
-    vi.mocked(createPublicClient).mockReturnValue(mockPublicClient as any)
+    vi.mocked(http).mockReturnValue(
+      mockHttpTransport as HttpTransport<RpcSchema | undefined, boolean>
+    )
+    //@ts-expect-error: mock value
+    vi.mocked(createPublicClient).mockReturnValue(mockPublicClient)
 
     const result = getPublicClient()
 
