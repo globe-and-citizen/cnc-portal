@@ -1,5 +1,5 @@
 // composables/useRelayClient.ts
-import { computed, markRaw, ref, type Ref } from 'vue'
+import { computed, markRaw, ref, watch, type Ref } from 'vue'
 import { BuilderConfig } from '@polymarket/builder-signing-sdk'
 import { RelayClient } from '@polymarket/builder-relayer-client'
 import { RELAYER_URL, REMOTE_SIGNING_URL } from '@/constant'
@@ -17,6 +17,7 @@ declare global {
 interface UseRelayClientReturn {
   relayClient: Ref<RelayClient | null>
   isLoading: Ref<boolean>
+  isReady: Ref<boolean>
   error: Ref<string | null>
   initializeRelayClient: () => Promise<RelayClient>
   clearRelayClient: () => void
@@ -28,6 +29,7 @@ export const useRelayClient = (): UseRelayClientReturn => {
   // Reactive state
   const relayClient = ref<RelayClient | null>(null) as Ref<RelayClient | null>
   const isLoading = ref(false)
+  const isReady = ref(false)
   const error = ref<string | null>(null)
   const userDataStore = useUserDataStore()
   const { data: client } = useConnectorClient()
@@ -37,6 +39,15 @@ export const useRelayClient = (): UseRelayClientReturn => {
     if (!client.value) return null
     const signer = clientToSigner(client.value)
     return markRaw(signer)
+  })
+
+  watch([ethersSigner, () => userDataStore.address], ([newSigner, newAddress]) => {
+    if (newSigner && newAddress) {
+      isReady.value = true
+    } else {
+      isReady.value = false
+      relayClient.value = null
+    }
   })
 
   const POLYGON_CHAIN_ID = parseInt(networks['polygon'].chainId, 16)
@@ -118,6 +129,7 @@ export const useRelayClient = (): UseRelayClientReturn => {
     // State
     relayClient,
     isLoading,
+    isReady,
     error,
 
     // Methods
