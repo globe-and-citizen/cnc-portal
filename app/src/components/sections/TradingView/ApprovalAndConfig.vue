@@ -53,13 +53,14 @@
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ApprovalItemCard from './ApprovalItemCard.vue'
+import { TREASURY_SIGNER, BOD_SIGNER } from '@/utils/trading/approvalsUtil'
 
 defineProps<{ isProcessing: boolean }>()
 defineEmits(['approve-and-configure'])
 
 const systemOwners = [
-  { address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266', name: 'Treasury Signer' },
-  { address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8', name: 'Council Member 1' }
+  { address: TREASURY_SIGNER, name: 'Treasury Signer' },
+  { address: BOD_SIGNER, name: 'Council Member 1' }
 ]
 
 const usdcApprovals = [

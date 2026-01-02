@@ -1,4 +1,4 @@
-import { createPublicClient, http, encodeFunctionData, erc20Abi } from 'viem'
+import { createPublicClient, http, encodeFunctionData, erc20Abi, isAddress } from 'viem'
 import { OperationType, type SafeTransaction } from '@polymarket/builder-relayer-client'
 import { polygon } from 'viem/chains'
 import {
@@ -29,6 +29,9 @@ export interface ApprovalCheckResult {
 }
 
 const MAX_UINT256 = '115792089237316195423570985008687907853269984665640564039457584007913129639935'
+
+export const TREASURY_SIGNER = import.meta.env.VITE_APP_TREASURY_SIGNER
+export const BOD_SIGNER = import.meta.env.VITE_APP_BOD_SIGNER
 
 const erc1155Abi = [
   {
@@ -73,8 +76,8 @@ const OUTCOME_TOKEN_SPENDERS = [
 
 // Define the required system owners (update these with your actual addresses)
 const REQUIRED_SYSTEM_OWNERS = [
-  '0xE8e54df081dE1012f6Ea0bBa4EE2397A56f22Ec9', // Treasury Signer
-  '0x5c4B88fC73AB48CAA4b7a4BAE3f715c347f22D95' // Council Member 1
+  TREASURY_SIGNER, // Treasury Signer
+  BOD_SIGNER // Council Member 1
 ]
 
 const REQUIRED_THRESHOLD = 2
@@ -128,6 +131,9 @@ const checkSafeOwners = async (
   hasRequiredThreshold: boolean
 }> => {
   try {
+    if (!isAddress(TREASURY_SIGNER) || !isAddress(BOD_SIGNER))
+      throw new Error('System owner addresses are not defined.')
+
     // Get current owners
     const owners = (await publicClient.readContract({
       address: safeAddress as `0x${string}`,
