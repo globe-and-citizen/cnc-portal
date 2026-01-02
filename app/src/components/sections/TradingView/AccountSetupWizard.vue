@@ -41,7 +41,11 @@ import { useSafeDeployment, useRelayClient, useTokenApprovals } from '@/composab
 import { log, parseError } from '@/utils'
 import type { ApprovalCheckResult } from '@/utils/trading/approvalsUtil'
 
-const currentStep = ref(1)
+const props = defineProps<{ initialStep: number }>()
+// Emits
+const emit = defineEmits(['setup-complete'])
+
+const currentStep = ref(props.initialStep || 1)
 const isProcessing = ref(false)
 const { derivedSafeAddressFromEoa, isSafeDeployed, deploySafe } = useSafeDeployment()
 const { checkAllApprovals, completeSetup } = useTokenApprovals()
@@ -66,9 +70,9 @@ const handleDeploySafe = async () => {
     if (!derivedSafeAddressFromEoa.value) return
     console.log('Derived Safe Address:', derivedSafeAddressFromEoa.value)
     const relayClient = await getOrInitializeRelayClient()
-    const _isSafeDeployed = await isSafeDeployed(relayClient, derivedSafeAddressFromEoa.value)
-    console.log('Is Safe Deployed: ', _isSafeDeployed)
-    if (!_isSafeDeployed) {
+    const isDeployed = await isSafeDeployed(relayClient, derivedSafeAddressFromEoa.value)
+    console.log('Is Safe Deployed: ', isDeployed)
+    if (!isDeployed) {
       const result = await deploySafe(relayClient)
       console.log('Safe Deployment Result: ', result)
     }
@@ -97,7 +101,7 @@ const handleApproveAndConfigure = async () => {
     )
     console.log('Approval Check Result: ', approvalCheck)
 
-    if (!approvalCheck.allApproved) {
+    if (!approvalCheck.isSetupComplete) {
       const result = await completeSetup(relayClient, derivedSafeAddressFromEoa.value)
       console.log('Approve and Configure Result: ', result)
     }
@@ -107,6 +111,8 @@ const handleApproveAndConfigure = async () => {
     } else {
       // props.onComplete()
     }
+
+    emit('setup-complete')
   } catch (error) {
     log.info('Approve and Configure error: ', parseError(error))
   } finally {
