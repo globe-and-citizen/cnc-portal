@@ -38,7 +38,6 @@ const initialStep = ref(1) // 1 = deploy safe, 2 = approve & configure
 
 const checkAccountStatus = async () => {
   if (!derivedSafeAddressFromEoa.value || !isReady.value) {
-    isCheckingStatus.value = false
     return false
   }
 
