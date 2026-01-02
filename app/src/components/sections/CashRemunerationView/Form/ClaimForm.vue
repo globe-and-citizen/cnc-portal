@@ -60,7 +60,75 @@
       {{ error.$message }}
     </div>
 
-    <UploadImage ref="uploadImageRef" @update:screens="onScreensUpdate" />
+    <UploadFileDB ref="uploadFileRef" @update:files="onFilesUpdate" :disabled="isLoading" />
+
+    <!-- Existing Files Display - Before Buttons -->
+    <div v-if="existingFiles && existingFiles.length > 0" class="pt-4">
+      <h4 class="text-sm font-semibold mb-3 text-gray-700">Attached Files:</h4>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+        <div
+          v-for="(file, index) in existingFiles"
+          :key="index"
+          class="relative group"
+          :data-test="`existing-file-${index}`"
+        >
+          <!-- Image preview -->
+          <div
+            v-if="isImageFile(file)"
+            class="relative cursor-pointer"
+            @click="() => $emit('preview-image', file)"
+          >
+            <img
+              :src="getFileDataUrl(file)"
+              :alt="file.fileName"
+              class="w-full h-20 object-cover rounded border border-gray-300 hover:border-emerald-500 transition-all group-hover:brightness-90"
+            />
+            <div
+              class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded flex items-center justify-center pointer-events-none"
+            >
+              <Icon
+                icon="heroicons:magnifying-glass-plus"
+                class="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              />
+            </div>
+            <button
+              @click.stop.prevent="$emit('delete-file', index)"
+              :disabled="deletingFileIndex === index"
+              class="absolute top-1 right-1 btn btn-xs btn-circle btn-error opacity-0 group-hover:opacity-100 transition-opacity"
+              :data-test="`delete-file-${index}`"
+            >
+              <Icon v-if="deletingFileIndex !== index" icon="heroicons:x-mark" class="w-4 h-4" />
+              <span v-else class="loading loading-spinner loading-xs"></span>
+            </button>
+          </div>
+
+          <!-- Document preview -->
+          <div
+            v-else
+            class="relative flex flex-col items-center justify-center h-20 rounded border border-gray-300 bg-gray-50"
+          >
+            <button
+              @click.prevent="$emit('preview-document', file)"
+              class="flex flex-col items-center justify-center w-full h-full rounded cursor-pointer hover:bg-gray-100 transition-colors"
+            >
+              <Icon :icon="getFileIcon(file)" class="w-8 h-8 text-gray-600" />
+              <span class="text-xs text-gray-500 mt-1 truncate w-full text-center px-1">
+                {{ file.fileName }}
+              </span>
+            </button>
+            <button
+              @click.prevent="$emit('delete-file', index)"
+              :disabled="deletingFileIndex === index"
+              class="absolute top-1 right-1 btn btn-xs btn-circle btn-error opacity-0 group-hover:opacity-100 transition-opacity"
+              :data-test="`delete-file-${index}`"
+            >
+              <Icon v-if="deletingFileIndex !== index" icon="heroicons:x-mark" class="w-4 h-4" />
+              <span v-else class="loading loading-spinner loading-xs"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="flex justify-center gap-4">
       <ButtonUI
@@ -95,7 +163,15 @@ import type { ClaimFormData } from '@/types'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import ButtonUI from '@/components/ButtonUI.vue'
-import UploadImage from '@/components/sections/CashRemunerationView/Form/UploadImage.vue'
+import { Icon } from '@iconify/vue'
+// import UploadImage from '@/components/sections/CashRemunerationView/Form/UploadImage.vue' // Deprecated: cloud storage
+import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue' // New: database storage
+
+interface FileData {
+  fileName: string
+  fileType: string
+  fileData: string
+}
 
 interface Props {
   initialData?: Partial<ClaimFormData>
@@ -103,6 +179,8 @@ interface Props {
   isLoading?: boolean
   disabledWeekStarts?: string[]
   restrictSubmit?: boolean
+  existingFiles?: FileData[]
+  deletingFileIndex?: number | null
 }
 
 dayjs.extend(utc)
@@ -111,7 +189,9 @@ const props = withDefaults(defineProps<Props>(), {
   isEdit: false,
   isLoading: false,
   disabledWeekStarts: () => [],
-  restrictSubmit: true
+  restrictSubmit: true,
+  existingFiles: () => [],
+  deletingFileIndex: null
 })
 
 // Key to force VueDatePicker re-render when restriction mode or disabled weeks change
@@ -120,15 +200,18 @@ const restrictSubmitKey = computed(() => {
 })
 
 const emit = defineEmits<{
-  submit: [data: { hoursWorked: number; memo: string; dayWorked: string; imageScreens?: string[] }]
+  submit: [data: { hoursWorked: number; memo: string; dayWorked: string; files?: File[] }]
   cancel: []
+  'delete-file': [index: number]
+  'preview-image': [file: FileData]
+  'preview-document': [file: FileData]
 }>()
 
-const uploadImageRef = ref<InstanceType<typeof UploadImage> | null>(null)
-const uploadedScreens = ref<string[]>([])
+const uploadFileRef = ref<InstanceType<typeof UploadFileDB> | null>(null)
+const uploadedFiles = ref<File[]>([])
 
-const onScreensUpdate = (screens: string[]) => {
-  uploadedScreens.value = screens
+const onFilesUpdate = (files: File[]): void => {
+  uploadedFiles.value = files
 }
 
 const createDefaultFormData = (overrides?: Partial<ClaimFormData>): ClaimFormData => ({
@@ -201,10 +284,25 @@ const disabledDatesFn = computed(() => {
       return daysDiff < 0 || daysDiff > 4
     }
 
-    // 🟢 Rule 3: free mode → everything else allowed
     return false
   }
 })
+
+// File helper functions for existing files display
+const getFileDataUrl = (file: FileData): string => {
+  return `data:${file.fileType};base64,${file.fileData}`
+}
+
+const isImageFile = (file: FileData): boolean => {
+  return file.fileType.startsWith('image/')
+}
+
+const getFileIcon = (file: FileData): string => {
+  if (file.fileType === 'application/pdf') return 'heroicons:document-text'
+  if (file.fileType.includes('zip')) return 'heroicons:archive-box'
+  if (file.fileType.includes('word')) return 'heroicons:document'
+  return 'heroicons:document'
+}
 
 const handleSubmit = async () => {
   v$.value.$touch()
@@ -214,12 +312,12 @@ const handleSubmit = async () => {
     hoursWorked: Number(formData.value.hoursWorked),
     memo: formData.value.memo,
     dayWorked: formData.value.dayWorked,
-    imageScreens: uploadedScreens.value.length ? uploadedScreens.value : undefined
+    files: uploadedFiles.value.length ? uploadedFiles.value : undefined
   })
 }
 
 const resetForm = () => {
-  uploadImageRef.value?.resetUpload()
+  uploadFileRef.value?.resetUpload()
 }
 
 defineExpose({
