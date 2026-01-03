@@ -6,85 +6,6 @@ Always use Composition API with `<script setup lang="ts">` syntax for all new co
 
 ### Component Structure
 
-```vue
-<template>
-  <!-- Template content -->
-</template>
-
-<script setup lang="ts">
-// 1. Imports (external libraries first, then internal modules, then relative imports)
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { isAddress } from 'viem'
-import { useToastStore } from '@/stores'
-import type { ComponentProps } from './types'
-
-// 2. Props and emits definitions
-interface Props {
-  modelValue?: string
-  options: Array<{ value: string; label: string }>
-  disabled?: boolean
-  ariaLabel?: string
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  modelValue: '',
-  disabled: false,
-  ariaLabel: 'Select option'
-})
-
-const emit = defineEmits<{
-  'update:modelValue': [value: string]
-  submit: [data: FormData]
-}>()
-
-// 3. Reactive state
-const isOpen = ref(false)
-const selectedValue = ref(props.modelValue)
-const loading = ref(false)
-
-// 4. Computed properties
-const displayValue = computed(() => {
-  const option = props.options.find(opt => opt.value === selectedValue.value)
-  return option?.label || selectedValue.value
-})
-
-const isValid = computed(() => {
-  return selectedValue.value.length > 0 && !props.disabled
-})
-
-// 5. Watchers
-watch(() => props.modelValue, (newValue) => {
-  selectedValue.value = newValue
-})
-
-// 6. Functions/methods
-const toggleDropdown = () => {
-  if (!props.disabled) {
-    isOpen.value = !isOpen.value
-  }
-}
-
-const selectOption = (value: string) => {
-  selectedValue.value = value
-  emit('update:modelValue', value)
-  isOpen.value = false
-}
-
-// 7. Lifecycle hooks
-onMounted(() => {
-  // Component initialization
-})
-
-onUnmounted(() => {
-  // Cleanup
-})
-</script>
-
-<style scoped>
-/* Component styles */
-</style>
-```
-
 ## Props and Events
 
 ### Props Definition
@@ -136,7 +57,7 @@ emit('error', new Error('Something went wrong'))
 
 All interactive elements must have `data-test` attributes for testing:
 
-```vue
+```html
 <template>
   <div class="component">
     <button 
@@ -232,40 +153,11 @@ const handleSubmit = async () => {
 }
 ```
 
-### Form Validation
-
-```typescript
-const email = ref('')
-const emailError = ref('')
-
-const validateEmail = () => {
-  if (!email.value) {
-    emailError.value = 'Email is required'
-    return false
-  }
-  
-  if (!email.value.includes('@')) {
-    emailError.value = 'Invalid email format'
-    return false
-  }
-  
-  emailError.value = ''
-  return true
-}
-
-// Real-time validation
-watch(email, () => {
-  if (emailError.value) {
-    validateEmail()
-  }
-})
-```
-
 ## Accessibility Standards
 
 ### ARIA Attributes
 
-```vue
+```html
 <template>
   <button
     data-test="dropdown-trigger"
@@ -303,36 +195,6 @@ watch(email, () => {
 </template>
 ```
 
-### Keyboard Navigation
-
-```typescript
-const focusedIndex = ref(0)
-
-const handleKeydown = (event: KeyboardEvent) => {
-  switch (event.key) {
-    case 'ArrowDown':
-      event.preventDefault()
-      focusedIndex.value = Math.min(focusedIndex.value + 1, options.length - 1)
-      break
-      
-    case 'ArrowUp':
-      event.preventDefault()
-      focusedIndex.value = Math.max(focusedIndex.value - 1, 0)
-      break
-      
-    case 'Enter':
-    case ' ':
-      event.preventDefault()
-      selectOption(options[focusedIndex.value].value)
-      break
-      
-    case 'Escape':
-      closeDropdown()
-      break
-  }
-}
-```
-
 ## Performance Optimization
 
 ### Lazy Loading Components
@@ -344,77 +206,6 @@ import { defineAsyncComponent } from 'vue'
 const HeavyComponent = defineAsyncComponent(
   () => import('./HeavyComponent.vue')
 )
-```
-
-### Conditional Rendering Optimization
-
-```vue
-<template>
-  <!-- Use v-show for frequently toggled elements -->
-  <div v-show="isVisible" class="frequently-toggled">
-    Content that toggles often
-  </div>
-  
-  <!-- Use v-if for conditionally rendered elements -->
-  <div v-if="shouldRender" class="conditionally-rendered">
-    Content that rarely changes
-  </div>
-  
-  <!-- Use v-memo for expensive lists -->
-  <div
-    v-for="item in expensiveList"
-    :key="item.id"
-    v-memo="[item.id, item.updatedAt]"
-  >
-    {{ expensiveComputation(item) }}
-  </div>
-</template>
-```
-
-## Component Communication
-
-### Parent-Child Communication
-
-```typescript
-// Child component
-interface Props {
-  data: UserData
-}
-
-const props = defineProps<Props>()
-
-const emit = defineEmits<{
-  'update:data': [data: UserData]
-  'data-changed': [changes: Partial<UserData>]
-}>()
-
-// Parent component
-<template>
-  <ChildComponent
-    :data="userData"
-    @update:data="userData = $event"
-    @data-changed="handleDataChange"
-  />
-</template>
-```
-
-### Provide/Inject Pattern
-
-```typescript
-// Parent component
-import { provide } from 'vue'
-
-const userSettings = reactive({
-  theme: 'dark',
-  language: 'en'
-})
-
-provide('userSettings', userSettings)
-
-// Child component
-import { inject } from 'vue'
-
-const userSettings = inject<UserSettings>('userSettings')
 ```
 
 ## Component Testing Helpers
@@ -442,31 +233,7 @@ export interface ComponentMethods {
 }
 ```
 
-### Test-Friendly Component Structure
-
-```typescript
-// Expose methods and state for testing when needed
-defineExpose({
-  // Only expose what's necessary for testing
-  validateInput,
-  resetForm,
-  focusInput
-})
-```
-
 ## Common Anti-Patterns to Avoid
-
-### Don't Mutate Props
-
-```typescript
-// ❌ Bad: Direct prop mutation
-const props = defineProps<{ value: string }>()
-props.value = 'new value' // This will cause an error
-
-// ✅ Good: Emit events for changes
-const emit = defineEmits<{ 'update:value': [value: string] }>()
-emit('update:value', 'new value')
-```
 
 ### Avoid Memory Leaks
 
@@ -488,7 +255,7 @@ onUnmounted(() => {
 
 ### Don't Use v-if and v-for Together
 
-```vue
+```html
 <!-- ❌ Bad: v-if and v-for on same element -->
 <li v-for="user in users" v-if="user.isActive" :key="user.id">
   {{ user.name }}

@@ -216,7 +216,6 @@ describe('Wage Controller', () => {
         maximumHoursPerWeek: 40,
       });
 
-      // console.log({ body: response.body, status: response.status });
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Invalid request body');
     });
