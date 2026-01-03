@@ -26,7 +26,7 @@
     "prod": "node  dist/index.js",
     "copy:docs": "npx shx cp src/utils/backend_specs.html dist/utils/backend_specs.html",
     "db:wake": "ts-node scripts/wake-db.ts",
-    "prisma:migrate": "npx prisma migrate reset --force",
+    "prisma:migrate": "npx prisma migrate reset",
     "prisma:generate": "npx prisma generate",
     "seed": "ts-node prisma/seed.ts",
     "seed:dev": "NODE_ENV=development ts-node prisma/seed.ts",
