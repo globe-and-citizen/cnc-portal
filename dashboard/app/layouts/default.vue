@@ -11,7 +11,8 @@ const open = ref(false)
 const roleStore = useRoleStore()
 
 // Check if user is admin - redirect to access denied if not
-const isAdmin = computed(() => roleStore.isAdmin)
+const roleStoreRefs = storeToRefs(roleStore)
+const isAdmin = computed(() => roleStoreRefs.isAdmin)
 
 // Watch for role changes and redirect if user is not admin
 watch(isAdmin, (newValue) => {
@@ -204,7 +205,7 @@ const groups = computed(() => [
 
 <template>
   <!-- Admin Dashboard -->
-  <div v-if="isAdmin">
+  <div v-if="roleStoreRefs.isAdmin">
     <UDashboardGroup unit="rem">
       <UDashboardSidebar
         id="default"
