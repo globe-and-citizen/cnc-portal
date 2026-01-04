@@ -33,10 +33,9 @@ export const addClaimBodySchema = z.object({
 export const updateClaimBodySchema = z.object({
   hoursWorked: z.coerce.number().min(1).max(24).optional(),
   memo: z.string().trim().max(200, 'Memo is too long, maximum 200 characters').optional(),
-  imageScreens: z
-    .array(z.string().url('Invalid image URL'))
-    .max(10, 'Maximum 10 images allowed')
-    .optional(),
+  dayWorked: z.string().optional(),
+  deletedFileIndexes: z.string().optional(), // JSON string of indexes to delete
+  // fileAttachments are sent via multipart files; body carries only text fields
 });
 
 // Get claims query parameters

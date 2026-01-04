@@ -70,6 +70,11 @@ export const claimIdParamsSchema = z.object({
   claimId: claimIdSchema,
 });
 
+export const deleteClaimFileParamsSchema = z.object({
+  claimId: claimIdSchema,
+  fileIndex: z.coerce.number().nonnegative('File index must be a non-negative number'),
+});
+
 // URL validation schema for better error messages
 export const urlSchema = z
   .url('Must be a valid URL')
