@@ -23,19 +23,37 @@
         <table class="w-full text-xs">
           <thead>
             <tr>
-              <th class="text-left px-2 py-2">Nonce</th>
-              <th class="text-left px-2 py-2">To</th>
-              <th class="text-left px-2 py-2">Value</th>
-              <th class="text-left px-2 py-2">Status</th>
-              <th class="text-left px-2 py-2">Tx Hash</th>
-              <th class="text-left px-2 py-2">Actions</th>
+              <th class="text-left px-2 py-2">
+                Nonce
+              </th>
+              <th class="text-left px-2 py-2">
+                To
+              </th>
+              <th class="text-left px-2 py-2">
+                Value
+              </th>
+              <th class="text-left px-2 py-2">
+                Status
+              </th>
+              <th class="text-left px-2 py-2">
+                Tx Hash
+              </th>
+              <th class="text-left px-2 py-2">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="tx in txs" :key="tx.safeTxHash">
-              <td class="px-2 py-2">{{ tx.nonce }}</td>
-              <td class="px-2 py-2 font-mono truncate">{{ tx.to }}</td>
-              <td class="px-2 py-2">{{ tx.value }}</td>
+              <td class="px-2 py-2">
+                {{ tx.nonce }}
+              </td>
+              <td class="px-2 py-2 font-mono truncate">
+                {{ tx.to }}
+              </td>
+              <td class="px-2 py-2">
+                {{ tx.value }}
+              </td>
               <td class="px-2 py-2">
                 <UBadge :color="txMeta[tx.safeTxHash]?.statusColor" variant="soft">
                   {{ txMeta[tx.safeTxHash]?.status }}
@@ -48,7 +66,7 @@
               </td>
               <td class="px-2 py-2 font-mono truncate">
                 <a :href="tx.isExecuted ? txUrl(tx) : '#'" target="_blank" class="underline">
-                    {{ tx.isExecuted ? tx.transactionHash?.slice(0, 6) : '' }}
+                  {{ tx.isExecuted ? tx.transactionHash?.slice(0, 6) : '' }}
                 </a>
               </td>
               <td class="px-2 py-2">
@@ -96,7 +114,9 @@
         :title="`Execution successful`"
       >
         <template #description>
-          <p class="mt-2 text-xs break-all">Tx Hash: {{ success }}</p>
+          <p class="mt-2 text-xs break-all">
+            Tx Hash: {{ success }}
+          </p>
         </template>
       </UAlert>
     </template>
@@ -153,7 +173,7 @@ watch(open, (v) => {
   }
 })
 
-const { txs, loading, refetch: fetchTransactions } = useSafeTransactions({
+const { txs, loading } = useSafeTransactions({
   safeAddress: computed(() => props.safeAddress),
   executed: computed(() => tab.value === 'executed'),
   enabled: computed(() => open.value && !!props.safeAddress)
@@ -174,7 +194,7 @@ const txMeta = computed(() => {
   }>>((acc, tx: SafeTx) => {
     const confirmations = tx.confirmations?.length || 0
     const required = tx.confirmationsRequired || 0
-    const alreadyConfirmed = !!addr && tx.confirmations?.some(c => c.owner.toLowerCase() === addr) || false
+    const alreadyConfirmed = !!addr && (tx.confirmations?.some(c => c.owner.toLowerCase() === addr) || false)
     const locallyExecuted = tx.isExecuted || executedSet.has(tx.safeTxHash)
     const canApprove = !!addr && !locallyExecuted && !alreadyConfirmed && confirmations < required
     const canExecute = !locallyExecuted && confirmations >= required

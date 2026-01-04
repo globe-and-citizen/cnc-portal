@@ -63,14 +63,14 @@
               No view/pure functions detected.
             </div>
 
-          <div v-else class="space-y-3">
-            <USelectMenu
-              v-model="selectedReadOption"
-              :items="readOptions"
-              option-attribute="label"
-              value-attribute="value"
-              placeholder="Select a read function"
-            />
+            <div v-else class="space-y-3">
+              <USelectMenu
+                v-model="selectedReadOption"
+                :items="readOptions"
+                option-attribute="label"
+                value-attribute="value"
+                placeholder="Select a read function"
+              />
 
               <div v-if="selectedReadFunction">
                 <div
@@ -136,14 +136,14 @@
               No nonpayable/payable functions detected.
             </div>
 
-          <div v-else class="space-y-3">
-            <USelectMenu
-              v-model="selectedWriteOption"
-              :items="writeOptions"
-              option-attribute="label"
-              value-attribute="value"
-              placeholder="Select a write function"
-            />
+            <div v-else class="space-y-3">
+              <USelectMenu
+                v-model="selectedWriteOption"
+                :items="writeOptions"
+                option-attribute="label"
+                value-attribute="value"
+                placeholder="Select a write function"
+              />
 
               <div v-if="selectedWriteFunction">
                 <div

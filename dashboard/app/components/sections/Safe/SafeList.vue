@@ -28,12 +28,24 @@
       <table class="w-full">
         <thead>
           <tr class="border-b border-gray-200 dark:border-gray-700">
-            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">#</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Safe Address</th>
-            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Network</th>
-            <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Balance</th>
-            <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Symbol</th>
-            <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Actions</th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              #
+            </th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              Safe Address
+            </th>
+            <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              Network
+            </th>
+            <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              Balance
+            </th>
+            <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              Symbol
+            </th>
+            <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -71,7 +83,9 @@
               {{ safe.symbol }}
             </td>
             <td class="px-4 py-4 text-right flex gap-2 justify-end">
-              <UButton size="xs" @click="openTxModal(safe)">View Transactions</UButton>
+              <UButton size="xs" @click="openTxModal(safe)">
+                View Transactions
+              </UButton>
               <UButton
                 size="xs"
                 color="primary"
@@ -96,16 +110,16 @@
       :chain="selectedSafe.chain"
     />
     <SafeContractInteraction
-      v-model="showContractModal"
       v-if="selectedContractSafe"
+      v-model="showContractModal"
       :safe-address="selectedContractSafe.address"
-      @update:modelValue="onCloseContractModal"
+      @update:model-value="onCloseContractModal"
     />
   </UCard>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useConnection } from '@wagmi/vue'
 import { useSafes } from '@/composables/Safe/read'
 import { useToast } from '#imports'
@@ -132,7 +146,7 @@ const filteredSafes = computed(() => {
   )
 })
 
-function handleRefreshClick(event: MouseEvent) {
+function handleRefreshClick() {
   fetchSafes()
 }
 
@@ -157,5 +171,4 @@ function onCloseContractModal(val: boolean) {
     selectedContractSafe.value = null
   }
 }
-
 </script>
