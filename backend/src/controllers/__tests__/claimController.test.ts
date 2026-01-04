@@ -325,6 +325,48 @@ describe('Claim Controller', () => {
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
     });
+
+    // File attachment tests for addClaim
+    describe('File Attachments', () => {
+      it('should create claim with file attachments', async () => {
+        const mockWage = createMockWage();
+        const mockWeeklyClaim = createMockWeeklyClaim();
+        const mockClaim = createMockClaim({
+          fileAttachments: [
+            {
+              fileName: 'test.pdf',
+              fileType: 'application/pdf',
+              fileSize: 1024,
+              fileData: 'base64data',
+            },
+          ],
+        });
+
+        vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+        vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaim);
+        const createSpy = vi.spyOn(prisma.claim, 'create').mockResolvedValue(mockClaim);
+
+        const response = await request(app)
+          .post('/')
+          .field('teamId', '1')
+          .field('hoursWorked', '5')
+          .field('memo', 'test memo')
+          .attach('files', Buffer.from('test file content'), 'test.pdf');
+
+        expect(response.status).toBe(201);
+        expect(createSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              fileAttachments: expect.arrayContaining([
+                expect.objectContaining({
+                  fileName: 'test.pdf',
+                }),
+              ]),
+            }),
+          })
+        );
+      });
+    });
   });
 
   describe('GET: /', () => {
@@ -563,6 +605,128 @@ describe('Claim Controller', () => {
 
       expect(response.status).toBe(403);
       expect(response.body.message).toBe("Can't edit: Claim is not pending");
+    });
+
+    // File attachment tests
+    describe('File Attachments', () => {
+      it('should handle invalid deletedFileIndexes JSON gracefully', async () => {
+        const existingAttachments = [
+          { fileName: 'file1.pdf', fileType: 'application/pdf', fileSize: 1024, fileData: 'data1' },
+        ];
+
+        const mockClaim = {
+          id: 1,
+          wage: { userAddress: TEST_ADDRESS },
+          weeklyClaim: { status: 'pending', claims: [] },
+          fileAttachments: existingAttachments,
+        };
+
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
+        vi.spyOn(prisma.claim, 'update').mockResolvedValue({
+          id: 1,
+          fileAttachments: existingAttachments,
+        } as any);
+
+        // Send invalid JSON
+        const response = await request(app).put('/1').send({
+          deletedFileIndexes: 'invalid-json',
+          memo: 'Updated memo',
+        });
+
+        expect(response.status).toBe(200);
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Error parsing deletedFileIndexes:',
+          expect.any(Error)
+        );
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('should delete files and add new files in the same request', async () => {
+        const existingAttachments = [
+          { fileName: 'file1.pdf', fileType: 'application/pdf', fileSize: 1024, fileData: 'data1' },
+          { fileName: 'file2.jpg', fileType: 'image/jpeg', fileSize: 2048, fileData: 'data2' },
+        ];
+
+        const mockClaim = {
+          id: 1,
+          wage: { userAddress: TEST_ADDRESS },
+          weeklyClaim: { status: 'pending', claims: [] },
+          fileAttachments: existingAttachments,
+        };
+
+        vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
+        const updateSpy = vi.spyOn(prisma.claim, 'update').mockResolvedValue({
+          id: 1,
+          fileAttachments: [
+            existingAttachments[1], // file2.jpg remains
+            {
+              fileName: 'newfile.png',
+              fileType: 'image/png',
+              fileSize: 3072,
+              fileData: 'data3',
+            },
+          ],
+        } as any);
+
+        // Delete index 0 and add a new file
+        const response = await request(app)
+          .put('/1')
+          .field('deletedFileIndexes', JSON.stringify([0]))
+          .field('memo', 'Updated memo')
+          .attach('files', Buffer.from('new file'), 'newfile.png');
+
+        expect(response.status).toBe(200);
+        expect(updateSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { id: 1 },
+            data: expect.objectContaining({
+              fileAttachments: expect.arrayContaining([
+                expect.objectContaining({ fileName: 'file2.jpg' }),
+                expect.objectContaining({ fileName: 'newfile.png' }),
+              ]),
+            }),
+          })
+        );
+      });
+
+      it('should handle out of bounds file indexes gracefully', async () => {
+        const existingAttachments = [
+          { fileName: 'file1.pdf', fileType: 'application/pdf', fileSize: 1024, fileData: 'data1' },
+        ];
+
+        const mockClaim = {
+          id: 1,
+          wage: { userAddress: TEST_ADDRESS },
+          weeklyClaim: { status: 'pending', claims: [] },
+          fileAttachments: existingAttachments,
+        };
+
+        vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
+        const updateSpy = vi.spyOn(prisma.claim, 'update').mockResolvedValue({
+          id: 1,
+          fileAttachments: existingAttachments,
+        } as any);
+
+        // Try to delete index 99 which doesn't exist
+        const response = await request(app)
+          .put('/1')
+          .send({
+            deletedFileIndexes: JSON.stringify([99, -1]),
+            memo: 'Updated memo',
+          });
+
+        expect(response.status).toBe(200);
+        // File should remain unchanged as indexes are out of bounds
+        expect(updateSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { id: 1 },
+            data: expect.objectContaining({
+              fileAttachments: existingAttachments,
+            }),
+          })
+        );
+      });
     });
   });
 
