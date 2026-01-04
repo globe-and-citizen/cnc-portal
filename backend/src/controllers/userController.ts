@@ -107,7 +107,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
   const pageSize = parseInt(limit as string) || 10;
   const offset = (pageNumber - 1) * pageSize;
 
-  console.log('Search query:', search);
   try {
     const where = search
       ? {
@@ -117,7 +116,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
           ],
         }
       : undefined;
-    console.log('Where clause:', where);
     const users = await prisma.user.findMany({
       skip: offset,
       take: pageSize,

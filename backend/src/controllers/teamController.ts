@@ -38,7 +38,7 @@ const addTeam = async (req: Request, res: Response) => {
       });
     }
 
-    // Create the team with the members connected
+    // Create the team with the members connected and membership tracking records
     const team = await prisma.team.create({
       data: {
         name,
@@ -47,6 +47,11 @@ const addTeam = async (req: Request, res: Response) => {
         members: {
           connect: members.map((member: User) => ({
             address: member.address,
+          })),
+        },
+        memberTeamsData: {
+          create: members.map((member: User) => ({
+            userAddress: member.address,
           })),
         },
         officerAddress: officerAddress,
@@ -227,24 +232,7 @@ const deleteTeam = async (req: Request, res: Response) => {
     if (team.ownerAddress !== callerAddress) {
       return errorResponse(403, 'Unauthorized', res);
     }
-    await prisma.boardOfDirectorActions.deleteMany({
-      where: { teamId: Number(id) },
-    });
-
-    await prisma.memberTeamsData.deleteMany({ where: { teamId: Number(id) } });
-
-    await prisma.teamContract.deleteMany({ where: { teamId: Number(id) } });
-
-    await prisma.boardOfDirectorActions.deleteMany({ where: { teamId: Number(id) } });
-
-    await prisma.weeklyClaim.deleteMany({ where: { wage: { teamId: Number(id) } } });
-
-    await prisma.claim.deleteMany({ where: { wage: { teamId: Number(id) } } });
-
-    await prisma.wage.deleteMany({ where: { teamId: Number(id) } });
-
-    await prisma.expense.deleteMany({ where: { teamId: Number(id) } });
-
+    // Cascading deletes handle all related records (teamContracts, memberTeamsData, wages, claims, etc.)
     const teamD = await prisma.team.delete({ where: { id: Number(id) } });
 
     res.status(200).json({ team: teamD, success: true });

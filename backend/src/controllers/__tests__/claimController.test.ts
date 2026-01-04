@@ -74,9 +74,6 @@ const createMockWage = (overrides: Partial<Wage> = {}): Wage =>
     userAddress: TEST_ADDRESS,
 
     ratePerHour: JSON.stringify([{ type: 'cash', amount: 50 }]),
-    cashRatePerHour: 50,
-    tokenRatePerHour: 0,
-    usdcRatePerHour: 0,
     maximumHoursPerWeek: 40,
     nextWageId: null,
     createdAt: new Date(),
