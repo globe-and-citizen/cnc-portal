@@ -1,17 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { mount } from '@vue/test-utils'
-import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
-import type { Team } from '@/types/team'
 import { createRouter, createWebHistory } from 'vue-router'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
-import { useTeam } from '@/queries/team.queries'
+import { mockTeamData } from '@/tests/mocks/index'
 
 describe('ShowIndex', () => {
   // Define interface for component instance
   const queryClient = new QueryClient()
-  const useTeamMock = vi.mocked(useTeam)
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -31,25 +28,6 @@ describe('ShowIndex', () => {
   // TODO test navigation
 
   it('should render the team Breadcrumb', async () => {
-    const customTeamData: Team = {
-      id: '0x123',
-      name: 'Team Name',
-      description: 'Lorem',
-      members: [],
-      ownerAddress: '0xDDDD',
-      officerAddress: '0x123',
-      teamContracts: []
-    }
-
-    // Override the useTeam mock for this test
-    useTeamMock.mockReturnValue({
-      data: ref(customTeamData),
-      isPending: ref(false),
-      isEnabled: ref(false),
-      error: ref(null),
-      refetch: vi.fn()
-    })
-
     const wrapper = mount(ShowIndex, {
       global: {
         plugins: [
@@ -69,7 +47,7 @@ describe('ShowIndex', () => {
     expect(wrapper.html()).toContain('Team View')
 
     // Test that team name is rendered
-    expect(wrapper.html()).toContain('Team Name')
+    expect(wrapper.html()).toContain(mockTeamData.name)
   })
 
   // Display the component whit the officer address

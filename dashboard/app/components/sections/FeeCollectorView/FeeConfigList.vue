@@ -74,10 +74,14 @@ const { data: feeConfigs, isLoading } = useFeeConfigs()
 const isFeeOwner = isFeeCollectorOwner()
 const isEditModalOpen = ref(false)
 const isEditLoading = ref(false)
-const selectedConfig = ref<{ contractType: string, feeBps: number } | null>(null)
+const selectedConfig = ref<{ contractType: string, feeBps: number, feePercent: number } | null>(null)
 
-const openEdit = (cfg: { contractType: string, feeBps: number }) => {
-  selectedConfig.value = cfg
+const openEdit = (cfg: { contractType: string, feeBps: number, feePercent?: number }) => {
+  selectedConfig.value = {
+    contractType: cfg.contractType,
+    feeBps: cfg.feeBps,
+    feePercent: cfg.feePercent ?? (cfg.feeBps / 100)
+  }
   isEditModalOpen.value = true
 }
 </script>
