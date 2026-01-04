@@ -466,6 +466,7 @@ describe('Claim Controller', () => {
             { id: 3, hoursWorked: 8 },
           ],
         },
+        fileAttachments: null,
       };
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
 
@@ -484,6 +485,7 @@ describe('Claim Controller', () => {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
         weeklyClaim: { status: 'pending' },
+        fileAttachments: null,
       };
 
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
@@ -511,6 +513,7 @@ describe('Claim Controller', () => {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
         weeklyClaim: { status: 'pending' },
+        fileAttachments: null,
       };
 
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
@@ -525,7 +528,7 @@ describe('Claim Controller', () => {
       expect(response.status).toBe(200);
       expect(updateSpy).toHaveBeenCalledWith({
         where: { id: 1 },
-        data: { hoursWorked: 6 },
+        data: { hoursWorked: 6, fileAttachments: [] },
       });
     });
 
@@ -534,6 +537,7 @@ describe('Claim Controller', () => {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
         weeklyClaim: { status: 'pending' },
+        fileAttachments: null,
       };
 
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
@@ -550,6 +554,7 @@ describe('Claim Controller', () => {
         id: 1,
         wage: { userAddress: TEST_ADDRESS },
         weeklyClaim: null,
+        fileAttachments: null,
       };
 
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
