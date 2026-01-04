@@ -130,12 +130,14 @@ export const addClaim = async (req: Request, res: Response) => {
     // Prepare file attachments data if any files were uploaded
     let fileAttachmentsData: FileAttachmentData[] | undefined = undefined;
     if (uploadedFiles.length > 0) {
-      fileAttachmentsData = uploadedFiles.map((file) => ({
-        fileName: file.originalname,
-        fileType: file.mimetype,
-        fileSize: file.size,
-        fileData: file.buffer.toString('base64'), // Convert buffer to base64 string for JSON storage
-      }));
+      fileAttachmentsData = uploadedFiles
+        .map((file) => ({
+          fileName: file.originalname,
+          fileType: file.mimetype,
+          fileSize: file.size,
+          fileData: file.buffer.toString('base64'), // Convert buffer to base64 string for JSON storage
+        }))
+        .slice(0, 10); // Limit to 10 files maximum
     }
 
     // Create the claim with file attachments
