@@ -1,7 +1,6 @@
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import utc from 'dayjs/plugin/utc';
-import weekday from 'dayjs/plugin/weekday';
 import { Request, Response } from 'express';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
@@ -9,18 +8,30 @@ import { errorResponse } from '../utils/utils';
 import { Claim, Prisma } from '@prisma/client';
 import { isUserMemberOfTeam } from './wageController';
 
+// Type for multipart/form-data request with files
+interface MulterRequest extends Request {
+  files?: Express.Multer.File[];
+}
+
+// Type for file attachment data
+type FileAttachmentData = {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileData: string;
+};
+
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
-dayjs.extend(weekday);
 
 type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
   teamId: string;
-  imageScreens?: string[];
 };
 
 // TODO limit weeday only for the current week. Betwen Monday and the current day
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
+  const multerReq = req as MulterRequest;
 
   const body = req.body as claimBodyRequest;
   const hoursWorked = Number(body.hoursWorked);
@@ -29,6 +40,9 @@ export const addClaim = async (req: Request, res: Response) => {
     ? dayjs.utc(body.dayWorked).startOf('day').toDate()
     : dayjs.utc().startOf('day').toDate();
   const teamId = Number(body.teamId);
+  
+  // Get uploaded files (if any)
+  const uploadedFiles = multerReq.files || [];
 
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
@@ -113,6 +127,18 @@ export const addClaim = async (req: Request, res: Response) => {
       );
     }
 
+    // Prepare file attachments data if any files were uploaded
+    let fileAttachmentsData: FileAttachmentData[] | undefined = undefined;
+    if (uploadedFiles.length > 0) {
+      fileAttachmentsData = uploadedFiles.map((file) => ({
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        fileData: file.buffer.toString('base64'), // Convert buffer to base64 string for JSON storage
+      }));
+    }
+
+    // Create the claim with file attachments
     const claim = await prisma.claim.create({
       data: {
         hoursWorked,
@@ -120,7 +146,7 @@ export const addClaim = async (req: Request, res: Response) => {
         wageId: wage.id,
         weeklyClaimId: weeklyClaim.id,
         dayWorked: dayWorked,
-        ...(body.imageScreens && { imageScreens: body.imageScreens }),
+        fileAttachments: fileAttachmentsData,
       },
     });
 
@@ -183,13 +209,10 @@ export const getClaims = async (req: Request, res: Response) => {
 export const updateClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const claimId = Number(req.params.claimId);
+  const uploadedFiles = (req.files as Express.Multer.File[]) || [];
 
-  const {
-    hoursWorked,
-    memo,
-    imageScreens,
-  }: { hoursWorked?: number; memo?: string; imageScreens?: string[] } = req.body;
-  // Prepare the data according to the action
+  const { hoursWorked, memo, deletedFileIndexes }: { hoursWorked?: number; memo?: string; deletedFileIndexes?: string } = req.body;
+
   try {
     // Fetch the claim including the required data (include weeklyClaim.claims)
     const claim = await prisma.claim.findFirst({
@@ -239,14 +262,49 @@ export const updateClaim = async (req: Request, res: Response) => {
       }
     }
 
+    // Build file attachments from uploaded files and merge with existing ones
+    const existingAttachments = (claim.fileAttachments as FileAttachmentData[]) || [];
+    let fileAttachmentsData: FileAttachmentData[] | undefined = existingAttachments;
+
+    // Handle deleted file indexes first
+    if (deletedFileIndexes) {
+      try {
+        const indexesToDelete: number[] = JSON.parse(deletedFileIndexes);
+        if (Array.isArray(indexesToDelete) && indexesToDelete.length > 0) {
+          // Sort in descending order to avoid index shifting issues
+          const sortedIndexes = [...indexesToDelete].sort((a, b) => b - a);
+          fileAttachmentsData = [...existingAttachments];
+          for (const idx of sortedIndexes) {
+            if (idx >= 0 && idx < fileAttachmentsData.length) {
+              fileAttachmentsData.splice(idx, 1);
+            }
+          }
+        }
+      } catch (parseError) {
+        console.error('Error parsing deletedFileIndexes:', parseError);
+      }
+    }
+
+    if (uploadedFiles.length > 0) {
+      const newAttachments = uploadedFiles.map((file) => ({
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        fileData: file.buffer.toString('base64'),
+      }));
+
+      fileAttachmentsData = [...fileAttachmentsData, ...newAttachments].slice(0, 10);
+    }
+
     const updatedClaim = await prisma.claim.update({
       where: { id: claimId },
       data: {
         ...(memo !== undefined && { memo }),
         ...(hoursWorked !== undefined && { hoursWorked: Number(hoursWorked) }),
-        ...(imageScreens !== undefined && { imageScreens }),
+        ...(fileAttachmentsData !== undefined && { fileAttachments: fileAttachmentsData }),
       },
     });
+
     return res.status(200).json(updatedClaim);
   } catch (error) {
     console.log('Error: ', error);
