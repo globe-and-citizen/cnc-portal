@@ -33,11 +33,18 @@ export interface Claim {
   hoursWorked: number
   dayWorked: string // ISO date string
   memo: string
-  imageScreens?: string[] | null
+  fileAttachments?: FileAttachment[] | null // Files stored as JSON in database
   wageId: number
   wage: Wage
   createdAt: string // ISO date string
   updatedAt: string // ISO date string
+}
+
+export interface FileAttachment {
+  fileName: string
+  fileType: string // MIME type (e.g., image/png, application/pdf)
+  fileSize: number // Size in bytes
+  fileData: string // Base64 encoded file data
 }
 
 export interface ClaimFormData {
@@ -50,7 +57,7 @@ export interface ClaimSubmitPayload {
   hoursWorked: number
   memo: string
   dayWorked: string
-  imageScreens?: string[]
+  imageScreens?: string[] // Deprecated field kept for backwards compatibility
 }
 
 export interface WeeklyClaim {
