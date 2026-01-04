@@ -165,4 +165,3 @@ describe('upload', () => {
 //       expect(mockBucket.file).toHaveBeenCalledWith('test-uuid-1234');
 //     });
 //   });
-
