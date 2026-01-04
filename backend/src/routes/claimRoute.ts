@@ -1,10 +1,5 @@
 import express from 'express';
-import {
-  addClaim,
-  getClaims,
-  updateClaim,
-  deleteClaim,
-} from '../controllers/claimController';
+import { addClaim, getClaims, updateClaim, deleteClaim } from '../controllers/claimController';
 import { upload } from '../utils/upload'; // Import multer upload middleware
 import {
   validateBody,

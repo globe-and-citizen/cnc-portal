@@ -1,9 +1,9 @@
 /**
  * Google Cloud Storage Configuration
- * 
+ *
  * DEPRECATED: This file is kept for backwards compatibility only.
  * New file uploads should use ClaimAttachment model to store files directly in the database.
- * 
+ *
  * To re-enable cloud storage:
  * 1. Uncomment the code below
  * 2. Set GCS_BUCKET_NAME and GCP_KEY environment variables

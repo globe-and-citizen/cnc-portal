@@ -40,7 +40,7 @@ export const addClaim = async (req: Request, res: Response) => {
     ? dayjs.utc(body.dayWorked).startOf('day').toDate()
     : dayjs.utc().startOf('day').toDate();
   const teamId = Number(body.teamId);
-  
+
   // Get uploaded files (if any)
   const uploadedFiles = multerReq.files || [];
 
@@ -211,7 +211,11 @@ export const updateClaim = async (req: Request, res: Response) => {
   const claimId = Number(req.params.claimId);
   const uploadedFiles = (req.files as Express.Multer.File[]) || [];
 
-  const { hoursWorked, memo, deletedFileIndexes }: { hoursWorked?: number; memo?: string; deletedFileIndexes?: string } = req.body;
+  const {
+    hoursWorked,
+    memo,
+    deletedFileIndexes,
+  }: { hoursWorked?: number; memo?: string; deletedFileIndexes?: string } = req.body;
 
   try {
     // Fetch the claim including the required data (include weeklyClaim.claims)

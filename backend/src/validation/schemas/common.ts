@@ -70,7 +70,6 @@ export const claimIdParamsSchema = z.object({
   claimId: claimIdSchema,
 });
 
-
 // URL validation schema for better error messages
 export const urlSchema = z
   .url('Must be a valid URL')

@@ -4,7 +4,6 @@ import multer, { Multer } from 'multer';
 // import path from 'path'; // Commented out - not needed for database storage
 // import { bucket } from './storage'; // Commented out - cloud storage disabled
 
-
 // Allowed MIME types for images and documents
 const ALLOWED_IMAGE_MIMETYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
 
@@ -42,7 +41,7 @@ const upload: Multer = multer({
  * DEPRECATED: Cloud storage upload function
  * This function is kept for backwards compatibility but is no longer used.
  * New uploads should store files directly in the database via ClaimAttachment model.
- * 
+ *
  * To re-enable cloud storage, uncomment the code below.
  */
 // const uploadFileToGCS = (file: MulterFile): Promise<string> => {
