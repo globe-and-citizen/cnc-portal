@@ -241,8 +241,11 @@ const handleFiles = async (fileList: FileList): Promise<void> => {
     // Upload file
     try {
       const uploadedUrl = await uploadFile(file)
-      previews.value[previewIndex].uploadedUrl = uploadedUrl
-      previews.value[previewIndex].isUploading = false
+      const preview = previews.value[previewIndex]
+      if (preview) {
+        preview.uploadedUrl = uploadedUrl
+        preview.isUploading = false
+      }
     } catch (error) {
       console.error('Upload error:', error)
       // Remove failed upload from previews
@@ -289,7 +292,7 @@ const uploadFile = async (file: File): Promise<string> => {
 const removeFile = (index: number): void => {
   const preview = previews.value[index]
   // Only revoke object URL for images (documents don't have preview URLs)
-  if (preview.isImage && preview.previewUrl) {
+  if (preview?.isImage && preview?.previewUrl) {
     URL.revokeObjectURL(preview.previewUrl)
   }
   previews.value.splice(index, 1)

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="previews.length > 0" class="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+  <div v-if="previews.length > 0" class="mt-2" :class="props.gridClass">
     <div
       v-for="(preview, index) in previews"
       :key="preview.previewUrl"
@@ -10,7 +10,11 @@
       <button
         v-if="preview.isImage"
         type="button"
-        class="rounded-lg shadow object-cover w-full h-32 overflow-hidden focus:outline-none"
+        :class="[
+          'rounded-md object-cover w-full overflow-hidden focus:outline-none border border-gray-200 hover:border-emerald-500 transition-all bg-white',
+          props.itemHeightClass,
+          props.imageClass
+        ]"
         @click="openLightbox(preview)"
         data-test="image-preview"
       >
@@ -29,32 +33,32 @@
       <button
         v-else
         type="button"
-        class="rounded-lg shadow bg-gray-100 w-full h-32 flex flex-col items-center justify-center p-2 hover:bg-gray-200 transition-colors"
+        :class="[
+          'rounded-md w-full flex flex-col items-center justify-center p-2 transition-colors border border-gray-200 hover:border-emerald-500 overflow-hidden',
+          props.itemHeightClass,
+          props.documentClass
+        ]"
         data-test="document-preview"
         @click="openDocumentPreview(preview)"
       >
-        <Icon :icon="getFileIcon(preview.fileName)" class="w-10 h-10 text-gray-600" />
+        <Icon :icon="getFileIcon(preview.fileName)" class="w-6 h-6 text-gray-600" />
         <span
-          class="text-xs text-gray-700 mt-2 truncate w-full text-center"
+          class="text-[11px] text-gray-700 mt-1 truncate w-full text-center"
           :title="preview.fileName"
         >
           {{ truncateFileName(preview.fileName, 15) }}
         </span>
       </button>
 
-      <!-- File size display -->
-      <div class="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
-        {{ formatFileSize(preview.fileSize) }}
-      </div>
-
       <!-- Remove button -->
       <button
         v-if="props.canRemove"
-        class="btn btn-xs btn-error absolute top-1 right-1"
+        class="absolute -top-1 -right-1 h-6 w-6 flex items-center justify-center rounded-full bg-error text-white text-xs opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:shadow"
         @click.stop="emit('remove', index)"
         data-test="remove-button"
+        aria-label="Remove file"
       >
-        X
+        <Icon icon="heroicons:x-mark" class="w-3.5 h-3.5" />
       </button>
     </div>
 
@@ -189,9 +193,17 @@ const props = withDefaults(
   defineProps<{
     previews: PreviewItem[]
     canRemove?: boolean
+    gridClass?: string
+    itemHeightClass?: string
+    imageClass?: string
+    documentClass?: string
   }>(),
   {
-    canRemove: true
+    canRemove: true,
+    gridClass: 'grid grid-cols-6 sm:grid-cols-8 gap-2',
+    itemHeightClass: 'h-16',
+    imageClass: '',
+    documentClass: 'bg-gray-50 hover:bg-gray-100'
   }
 )
 
@@ -240,12 +252,6 @@ const decodeTextFile = async (url: string): Promise<string> => {
     console.error('Error decoding text file:', error)
     return 'Error reading file content'
   }
-}
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 const openLightbox = (preview: PreviewItem): void => {
