@@ -68,7 +68,10 @@
     />
 
     <!-- Existing Files Display - File Preview Gallery with Lightbox -->
-    <div v-if="isEdit && existingFiles && existingFiles.length > 0">
+    <div
+      v-if="isEdit && existingFiles && existingFiles.length > 0"
+      data-test="attached-files-section"
+    >
       <h4 class="text-sm font-semibold mb-3 text-gray-700">Attached Files:</h4>
       <FilePreviewGallery
         :previews="existingFilePreviews"
