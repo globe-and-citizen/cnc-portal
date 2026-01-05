@@ -75,7 +75,7 @@ describe('UploadFileDB', () => {
       await fileInput.trigger('change')
       await flushPromises()
 
-      expect(wrapper.emitted('update:files')?.[0][0]).toHaveLength(4)
+      expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(4)
       expect(errorToastMock).not.toHaveBeenCalled()
     })
 
@@ -119,7 +119,7 @@ describe('UploadFileDB', () => {
       await flushPromises()
 
       expect(errorToastMock).toHaveBeenCalled()
-      expect(errorToastMock.mock.calls[0][0]).toContain('exceed the 10 MB limit')
+      expect(errorToastMock.mock.calls[0]?.[0]).toContain('exceed the 10 MB limit')
       expect(wrapper.find(SELECTORS.uploadError).exists()).toBe(true)
     })
   })
@@ -161,7 +161,7 @@ describe('UploadFileDB', () => {
       await flushPromises()
 
       expect(wrapper.emitted('update:files')).toBeTruthy()
-      expect(wrapper.emitted('update:files')?.[0][0]).toHaveLength(1)
+      expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(1)
     })
   })
 
@@ -180,13 +180,13 @@ describe('UploadFileDB', () => {
       await fileInput.trigger('change')
       await flushPromises()
 
-      expect(wrapper.emitted('update:files')?.[0][0]).toHaveLength(1)
+      expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(1)
 
       // Call exposed resetUpload method
       await wrapper.vm.resetUpload()
       await flushPromises()
 
-      expect(wrapper.emitted('update:files')?.[1][0]).toHaveLength(0)
+      expect(wrapper.emitted('update:files')?.[1]?.[0]).toHaveLength(0)
     })
   })
 })
