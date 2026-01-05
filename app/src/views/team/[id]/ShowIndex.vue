@@ -9,7 +9,7 @@
             <div
               class="skeleton h-4 w-20"
               data-test="loader"
-              v-if="teamStore.currentTeamMeta?.isEnabled"
+              v-if="teamStore.currentTeamMeta?.isPending"
             ></div>
             <a v-else-if="teamStore.currentTeamMeta?.data"
               >TEAM : {{ teamStore.currentTeamMeta.data?.name }}</a
