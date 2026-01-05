@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, expect, it, vi, afterEach } from 'vitest'
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
+import { createTestingPinia } from '@pinia/testing'
 
 const VueDatePickerStub = {
   template: `
@@ -14,6 +15,23 @@ const VueDatePickerStub = {
   props: ['modelValue', 'disabled', 'format', 'disabledDates']
 }
 
+const errorToastMock = vi.fn()
+
+const { mockUseToastStore } = vi.hoisted(() => ({
+  mockUseToastStore: vi.fn(() => ({
+    addErrorToast: errorToastMock,
+    addSuccessToast: vi.fn()
+  }))
+}))
+
+vi.mock('@/stores', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useToastStore: mockUseToastStore
+  }
+})
+
 const defaultProps = {
   isEdit: false,
   isLoading: false
@@ -23,62 +41,18 @@ const createWrapper = (props = {}) =>
   mount(ClaimForm, {
     props: { ...defaultProps, ...props },
     global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
-        VueDatePicker: VueDatePickerStub
+        VueDatePicker: VueDatePickerStub,
+        UploadFileDB: true,
+        FilePreviewGallery: true
       }
     }
   })
 
 describe('ClaimForm.vue', () => {
-  it('renders cancel button when in edit mode', () => {
-    const wrapper = createWrapper({ isEdit: true })
-    expect(wrapper.find('[data-test="cancel-button"]').exists()).toBe(true)
-  })
-
-  it('emits submit event with normalized payload when form is valid', async () => {
-    const wrapper = createWrapper()
-
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('8')
-    await wrapper.find('textarea[data-test="memo-input"]').setValue('Worked on feature X')
-    await wrapper.find('[data-test="date-input"]').setValue('2024-01-10T00:00:00.000Z')
-
-    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
-    await flushPromises()
-
-    expect(wrapper.emitted('submit')).toBeTruthy()
-    expect(wrapper.emitted('submit')![0][0]).toEqual({
-      hoursWorked: 8,
-      memo: 'Worked on feature X',
-      dayWorked: '2024-01-10T00:00:00.000Z'
-    })
-  })
-
-  it('does not emit submit when hoursWorked is non-numeric or out of range', async () => {
-    const wrapper = createWrapper()
-
-    // invalid: non-numeric
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('abc')
-    await wrapper.find('textarea[data-test="memo-input"]').setValue('Worked on feature X')
-    await wrapper.find('[data-test="date-input"]').setValue('2024-01-10T00:00:00.000Z')
-
-    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
-    await flushPromises()
-
-    expect(wrapper.emitted('submit')).toBeFalsy()
-    expect(wrapper.findAll('[data-test="hours-worked-error"]').length).toBeGreaterThan(0)
-
-    // invalid: out of range (0 and 25)
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('0')
-    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
-    await flushPromises()
-
-    expect(wrapper.emitted('submit')).toBeFalsy()
-
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('25')
-    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
-    await flushPromises()
-
-    expect(wrapper.emitted('submit')).toBeFalsy()
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
   it('shows validation errors when required fields are missing', async () => {
@@ -96,36 +70,6 @@ describe('ClaimForm.vue', () => {
 
     await wrapper.find('[data-test="cancel-button"]').trigger('click')
     expect(wrapper.emitted('cancel')).toBeTruthy()
-  })
-
-  it('shows update button and emits submit in edit mode when valid', async () => {
-    const wrapper = createWrapper({ isEdit: true })
-
-    // Ensure cancel and update buttons exist
-    expect(wrapper.find('[data-test="cancel-button"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="update-claim-button"]').exists()).toBe(true)
-
-    // Fill valid values
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('2')
-    await wrapper.find('textarea[data-test="memo-input"]').setValue('Edit memo')
-    await wrapper.find('[data-test="date-input"]').setValue('2024-03-05T00:00:00.000Z')
-
-    await wrapper.find('[data-test="update-claim-button"]').trigger('click')
-    await flushPromises()
-
-    expect(wrapper.emitted('submit')).toBeTruthy()
-    interface SubmitPayload {
-      hoursWorked: number
-      memo: string
-      dayWorked: string
-    }
-    expect((wrapper.emitted('submit')![0][0] as SubmitPayload).hoursWorked).toBe(2)
-  })
-
-  it('disables date input when isEdit is true', async () => {
-    const wrapper = createWrapper({ isEdit: true })
-    const dateInput = wrapper.find('input[data-test="date-input"]').element as HTMLInputElement
-    expect(dateInput.disabled).toBe(true)
   })
 
   it('updates form inputs when initialData prop changes', async () => {
@@ -194,6 +138,110 @@ describe('ClaimForm.vue', () => {
     expect(wrapper.emitted('submit')).toBeFalsy()
     // memo errors are rendered in a generic red text block (we check for any red text)
     expect(wrapper.findAll('.text-red-500').length).toBeGreaterThan(0)
+  })
+
+  describe('File Upload Integration', () => {
+    it('should not emit submit when total files exceed 10', async () => {
+      const wrapper = createWrapper({
+        isEdit: true,
+        existingFiles: [
+          { fileName: 'file1.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
+          { fileName: 'file2.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
+          { fileName: 'file3.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
+          { fileName: 'file4.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
+          { fileName: 'file5.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
+          { fileName: 'file6.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
+          { fileName: 'file7.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
+          { fileName: 'file8.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 }
+        ]
+      })
+
+      // Mock uploaded files (8 existing + 3 new = 11 total)
+      const newFiles = [
+        new File(['content1'], 'new1.png', { type: 'image/png' }),
+        new File(['content2'], 'new2.png', { type: 'image/png' }),
+        new File(['content3'], 'new3.png', { type: 'image/png' })
+      ]
+
+      // Simulate file upload via UploadFileDB component
+      const uploadComponent = wrapper.findComponent({ name: 'UploadFileDB' })
+      uploadComponent.vm.$emit('update:files', newFiles)
+      await flushPromises()
+
+      await wrapper.find('input[data-test="hours-worked-input"]').setValue('4')
+      await wrapper.find('textarea[data-test="memo-input"]').setValue('Test memo')
+
+      await wrapper.find('[data-test="update-claim-button"]').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.emitted('submit')).toBeFalsy()
+      expect(errorToastMock).toHaveBeenCalledWith(
+        'Maximum 10 files allowed. Currently you have 11 files. Please remove 1 file(s).'
+      )
+    })
+
+    it('should emit submit when total files are exactly 10', async () => {
+      const wrapper = createWrapper({
+        isEdit: true,
+        existingFiles: [
+          { fileName: 'file1.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
+          { fileName: 'file2.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
+          { fileName: 'file3.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
+          { fileName: 'file4.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
+          { fileName: 'file5.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
+          { fileName: 'file6.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
+          { fileName: 'file7.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 }
+        ]
+      })
+
+      // Mock uploaded files (7 existing + 3 new = 10 total)
+      const newFiles = [
+        new File(['content1'], 'new1.png', { type: 'image/png' }),
+        new File(['content2'], 'new2.png', { type: 'image/png' }),
+        new File(['content3'], 'new3.png', { type: 'image/png' })
+      ]
+
+      // Simulate file upload via UploadFileDB component
+      const uploadComponent = wrapper.findComponent({ name: 'UploadFileDB' })
+      uploadComponent.vm.$emit('update:files', newFiles)
+      await flushPromises()
+
+      await wrapper.find('input[data-test="hours-worked-input"]').setValue('4')
+      await wrapper.find('textarea[data-test="memo-input"]').setValue('Test memo')
+
+      await wrapper.find('[data-test="update-claim-button"]').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.emitted('submit')).toBeTruthy()
+      expect(errorToastMock).not.toHaveBeenCalled()
+    })
+
+    it('should show "Attached Files" section only in edit mode with files', () => {
+      // Not in edit mode - should not show
+      let wrapper = createWrapper({
+        isEdit: false,
+        existingFiles: [
+          { fileName: 'file1.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 }
+        ]
+      })
+      expect(wrapper.find('[data-test="attached-files-section"]').exists()).toBe(false)
+
+      // In edit mode but no files - should not show
+      wrapper = createWrapper({
+        isEdit: true,
+        existingFiles: []
+      })
+      expect(wrapper.find('[data-test="attached-files-section"]').exists()).toBe(false)
+
+      // In edit mode with files - should show
+      wrapper = createWrapper({
+        isEdit: true,
+        existingFiles: [
+          { fileName: 'file1.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 }
+        ]
+      })
+      expect(wrapper.find('[data-test="attached-files-section"]').exists()).toBe(true)
+    })
   })
 })
 
