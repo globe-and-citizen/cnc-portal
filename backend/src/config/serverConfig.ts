@@ -137,7 +137,7 @@ class Server {
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
     this.app.use(this.paths.stats, authorizeUser, requireAdmin, statsRoutes);
     this.app.use(this.paths.features, authorizeUser, requireAdmin, featureRoutes);
-    this.app.use(this.paths.polymarket, /* authorizeUser, */ polymarketRoutes);
+    this.app.use(this.paths.polymarket, authorizeUser, polymarketRoutes);
 
     // Dev routes - only available in development mode
     if (process.env.NODE_ENV === 'development') {

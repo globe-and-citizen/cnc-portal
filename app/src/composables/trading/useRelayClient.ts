@@ -7,6 +7,7 @@ import networks from '@/networks/networks.json'
 import { useUserDataStore } from '@/stores'
 import { useConnectorClient } from '@wagmi/vue'
 import { clientToSigner } from '@/utils'
+import { useStorage } from '@vueuse/core'
 
 declare global {
   interface Window {
@@ -59,6 +60,7 @@ export const useRelayClient = (): UseRelayClientReturn => {
   const initializeRelayClient = async (): Promise<RelayClient> => {
     isLoading.value = true
     error.value = null
+    const token = useStorage('authToken', '')
 
     try {
       if (!userDataStore.address || !ethersSigner.value) {
@@ -71,7 +73,8 @@ export const useRelayClient = (): UseRelayClientReturn => {
 
       const builderConfig = new BuilderConfig({
         remoteBuilderConfig: {
-          url: REMOTE_SIGNING_URL()
+          url: REMOTE_SIGNING_URL(),
+          token: token.value
         }
       })
 
