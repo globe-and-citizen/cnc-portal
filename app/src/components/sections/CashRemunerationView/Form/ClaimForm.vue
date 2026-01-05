@@ -68,10 +68,9 @@
     />
 
     <!-- Existing Files Display - File Preview Gallery with Lightbox -->
-    <div>
+    <div v-if="isEdit && existingFiles && existingFiles.length > 0">
       <h4 class="text-sm font-semibold mb-3 text-gray-700">Attached Files:</h4>
       <FilePreviewGallery
-        v-if="existingFiles && existingFiles.length > 0"
         :previews="existingFilePreviews"
         can-remove
         grid-class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"
