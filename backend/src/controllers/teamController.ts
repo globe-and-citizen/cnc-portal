@@ -51,7 +51,7 @@ const addTeam = async (req: Request, res: Response) => {
         },
         memberTeamsData: {
           create: members.map((member: User) => ({
-            userAddress: member.address,
+            memberAddress: member.address,
           })),
         },
         officerAddress: officerAddress,
