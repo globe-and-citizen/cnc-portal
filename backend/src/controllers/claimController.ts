@@ -130,14 +130,21 @@ export const addClaim = async (req: Request, res: Response) => {
     // Prepare file attachments data if any files were uploaded
     let fileAttachmentsData: FileAttachmentData[] | undefined = undefined;
     if (uploadedFiles.length > 0) {
-      fileAttachmentsData = uploadedFiles
-        .map((file) => ({
-          fileName: file.originalname,
-          fileType: file.mimetype,
-          fileSize: file.size,
-          fileData: file.buffer.toString('base64'), // Convert buffer to base64 string for JSON storage
-        }))
-        .slice(0, 10); // Limit to 10 files maximum
+      // Validate file count does not exceed 10
+      if (uploadedFiles.length > 10) {
+        return errorResponse(
+          400,
+          `Maximum 10 files allowed. You are trying to upload ${uploadedFiles.length} files. Please remove ${uploadedFiles.length - 10} file(s).`,
+          res
+        );
+      }
+
+      fileAttachmentsData = uploadedFiles.map((file) => ({
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        fileData: file.buffer.toString('base64'), // Convert buffer to base64 string for JSON storage
+      }));
     }
 
     // Create the claim with file attachments
@@ -299,7 +306,16 @@ export const updateClaim = async (req: Request, res: Response) => {
         fileData: file.buffer.toString('base64'),
       }));
 
-      fileAttachmentsData = [...fileAttachmentsData, ...newAttachments].slice(0, 10);
+      fileAttachmentsData = [...fileAttachmentsData, ...newAttachments];
+
+      // Validate total file count does not exceed 10
+      if (fileAttachmentsData.length > 10) {
+        return errorResponse(
+          400,
+          `Maximum 10 files allowed. You have ${fileAttachmentsData.length} files. Please remove ${fileAttachmentsData.length - 10} file(s).`,
+          res
+        );
+      }
     }
 
     const updatedClaim = await prisma.claim.update({
