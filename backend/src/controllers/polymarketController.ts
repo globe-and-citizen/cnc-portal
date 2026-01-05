@@ -48,8 +48,6 @@ export const signBuilderMessage = async (req: Request, res: Response) => {
       POLY_BUILDER_PASSPHRASE: BUILDER_CREDENTIALS.passphrase,
     });
   } catch (error) {
-    // console.error("Signing error:", error);
-    // return res.status(500).json({ error: "Failed to sign message" });
     return errorResponse(500, error, res);
   }
 };
