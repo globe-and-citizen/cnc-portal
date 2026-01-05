@@ -80,10 +80,12 @@ interface PreviewFile {
 /** Props **/
 interface Props {
   disabled?: boolean
+  existingFileCount?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  disabled: false
+  disabled: false,
+  existingFileCount: 0
 })
 
 /** Emits **/
@@ -101,7 +103,7 @@ const isUploading = ref(false)
 const errorMessage = ref<string>('')
 
 /** Computed **/
-const fileCount = computed(() => previews.value.length)
+const fileCount = computed(() => previews.value.length + props.existingFileCount)
 
 /** Helper functions **/
 const isImageFile = (file: File): boolean => {
