@@ -320,4 +320,9 @@ watch(
   },
   { deep: true }
 )
+
+defineExpose({
+  getFileIcon,
+  truncateFileName
+})
 </script>
