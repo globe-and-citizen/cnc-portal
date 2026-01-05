@@ -11,7 +11,7 @@
         v-if="preview.isImage"
         type="button"
         :class="[
-          'rounded-md object-cover w-full overflow-hidden focus:outline-none border border-gray-200 hover:border-emerald-500 transition-all bg-white',
+          'group relative overflow-hidden rounded-md w-full focus:outline-none border border-gray-200 hover:border-emerald-500 transition-all',
           props.itemHeightClass,
           props.imageClass
         ]"
@@ -58,7 +58,7 @@
         data-test="remove-button"
         aria-label="Remove file"
       >
-        <Icon icon="heroicons:x-mark" class="w-3.5 h-3.5" />
+        <Icon icon="heroicons:x-mark" class="w-3 h-3" />
       </button>
     </div>
 
