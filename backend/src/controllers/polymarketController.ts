@@ -24,13 +24,6 @@ export const signBuilderMessage = async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Builder credentials not configured' });
     }
 
-    // Validate Request Body
-    if (!method || !path || !requestBody) {
-      return res.status(400).json({
-        error: 'Missing required parameters: method, path, or body',
-      });
-    }
-
     const sigTimestamp = Date.now().toString();
 
     const signature = buildHmacSignature(

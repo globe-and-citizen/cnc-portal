@@ -1,5 +1,6 @@
 import express from 'express';
 import { signBuilderMessage } from '../controllers/polymarketController';
+import { signRequestSchema, validateBody } from '../validation';
 
 const polymarketRoutes = express.Router();
 
@@ -59,6 +60,6 @@ const polymarketRoutes = express.Router();
  *       500:
  *         description: Configuration error or signing failure
  */
-polymarketRoutes.post('/sign', signBuilderMessage);
+polymarketRoutes.post('/sign', validateBody(signRequestSchema), signBuilderMessage);
 
 export default polymarketRoutes;
