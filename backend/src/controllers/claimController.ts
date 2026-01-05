@@ -41,8 +41,15 @@ export const addClaim = async (req: Request, res: Response) => {
     : dayjs.utc().startOf('day').toDate();
   const teamId = Number(body.teamId);
 
-  // Get uploaded files (if any)
-  const uploadedFiles = multerReq.files || [];
+  // Get uploaded files (if any) and ensure they are in an array form
+  let uploadedFiles: Express.Multer.File[] = [];
+  if (multerReq.files != null) {
+    if (Array.isArray(multerReq.files)) {
+      uploadedFiles = multerReq.files;
+    } else {
+      return errorResponse(400, 'Invalid files payload', res);
+    }
+  }
 
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
@@ -218,7 +225,16 @@ export const getClaims = async (req: Request, res: Response) => {
 export const updateClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const claimId = Number(req.params.claimId);
-  const uploadedFiles = (req.files as Express.Multer.File[]) || [];
+
+  // Get uploaded files (if any) and ensure they are in an array form
+  let uploadedFiles: Express.Multer.File[] = [];
+  if (req.files != null) {
+    if (Array.isArray(req.files)) {
+      uploadedFiles = req.files;
+    } else {
+      return errorResponse(400, 'Invalid files payload', res);
+    }
+  }
 
   const {
     hoursWorked,
