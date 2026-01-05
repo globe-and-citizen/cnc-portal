@@ -220,8 +220,8 @@
                   <FilePreviewGallery
                     :previews="buildFilePreviews(claim.fileAttachments)"
                     :can-remove="false"
-                    grid-class="grid grid-cols-4 sm:grid-cols-6 gap-3 p-1"
-                    item-height-class="h-24"
+                    grid-class="grid grid-cols-4 sm:grid-cols-4 gap-3 p-1"
+                    item-height-class="h-20"
                     item-width-class="w-40"
                     image-class="border border-gray-200 hover:border-emerald-500 transition-all"
                     document-class="bg-gray-50 hover:bg-gray-100 border border-gray-300"

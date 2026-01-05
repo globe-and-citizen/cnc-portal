@@ -15,16 +15,6 @@
       @delete-file="deleteFile"
     />
 
-    <!-- File Preview Gallery for existing files -->
-    <FilePreviewGallery
-      v-if="previewItems.length > 0"
-      :previews="previewItems"
-      can-remove
-      grid-class="grid grid-cols-6 sm:grid-cols-8 gap-2"
-      item-height-class="h-16"
-      @remove="deleteFile"
-    />
-
     <div v-if="errorMessage" class="mt-4">
       <div role="alert" class="alert alert-error" data-test="edit-claim-error">
         <svg
@@ -49,21 +39,12 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, watchEffect } from 'vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
-import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
 import { useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
 import type { Claim, ClaimFormData, ClaimSubmitPayload, FileAttachment } from '@/types'
 import { useQueryClient } from '@tanstack/vue-query'
 import { BACKEND_URL } from '@/constant'
 import { useStorage } from '@vueuse/core'
-
-interface PreviewItem {
-  previewUrl: string
-  fileName: string
-  fileSize: number
-  fileType?: string
-  isImage: boolean
-}
 
 const props = defineProps<{
   claim: Claim
@@ -92,17 +73,6 @@ const isUpdating = ref(false)
 const authToken = useStorage('authToken', '')
 const existingFiles = ref<FileAttachment[]>([])
 const deletedFileIndexes = ref<number[]>([])
-
-// Convert FileAttachment to PreviewItem for FilePreviewGallery
-const previewItems = computed<PreviewItem[]>(() => {
-  return existingFiles.value.map((file) => ({
-    previewUrl: file.fileData ? `data:${file.fileType};base64,${file.fileData}` : '',
-    fileName: file.fileName,
-    fileSize: file.fileSize,
-    fileType: file.fileType,
-    isImage: file.fileType?.startsWith('image/') ?? false
-  }))
-})
 
 // Load existing files
 onMounted(() => {
