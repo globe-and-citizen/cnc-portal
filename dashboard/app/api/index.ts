@@ -4,7 +4,10 @@ import axios from 'axios'
  * Base Axios Instance
  *
  * Configured axios instance with default settings for API calls.
- * Can be extended with interceptors for authentication, error handling, etc.
+ * Note: For authenticated requests, use the apiClient from lib/axios instead,
+ * which includes auth token injection and error handling.
+ *
+ * @deprecated Use apiClient from @/lib/axios for authenticated requests
  */
 export const apiClient = axios.create({
   timeout: 10000,
@@ -35,3 +38,13 @@ apiClient.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+/**
+ * Get the backend URL from runtime config
+ */
+export const getBackendUrl = (): string => {
+  const config = useRuntimeConfig()
+  return config.public.backendUrl || 'http://localhost:3000'
+}
+
+export default apiClient

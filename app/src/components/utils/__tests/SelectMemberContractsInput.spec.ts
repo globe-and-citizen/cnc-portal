@@ -22,7 +22,7 @@ const mockTeamStore = {
     ]
   },
   currentTeamMeta: {
-    teamIsFetching: false
+    isPending: false
   }
 }
 
@@ -154,11 +154,11 @@ describe('SelectMemberContractsInput.vue', () => {
   })
 
   it('adds animate-pulse class when isFetching is true', async () => {
-    mockTeamStore.currentTeamMeta.teamIsFetching = true
+    mockTeamStore.currentTeamMeta.isPending = true
     wrapper = mount(WrapperComponent)
     expect(wrapper.find('[data-test="member-contracts-input"]').classes()).toContain(
       'animate-pulse'
     )
-    mockTeamStore.currentTeamMeta.teamIsFetching = false
+    mockTeamStore.currentTeamMeta.isPending = false
   })
 })

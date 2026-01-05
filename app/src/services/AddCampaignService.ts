@@ -5,7 +5,7 @@ import { parseAbiItem, type PublicClient, type Address } from 'viem'
 
 import { writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import { parseUnits } from 'viem/utils'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useCreateContract } from '@/queries/contract.queries'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
 
@@ -93,14 +93,13 @@ export class AddCampaignService {
   ): Promise<string> {
     const address = await this.deployAdCampaignManager(bankAddress, costPerClick, costPerImpression)
 
-    await useCustomFetch(`contract`)
-      .post({
-        teamId: teamId,
-        contractAddress: address,
-        contractType: 'Campaign',
-        deployer
-      })
-      .json()
+    const createContractMutation = useCreateContract()
+    await createContractMutation.mutateAsync({
+      teamId: teamId,
+      contractAddress: address,
+      contractType: 'Campaign',
+      deployer
+    })
 
     return address
   }

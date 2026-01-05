@@ -204,7 +204,7 @@ const {
   functionName: 'getTeamVestingsWithMembers',
   address: VESTING_ADDRESS as Address,
   abi: VESTING_ABI,
-  args: [BigInt(teamStore.currentTeam?.id ?? 0)]
+  args: [BigInt(teamStore.currentTeamId ?? 0)]
 })
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
@@ -403,7 +403,7 @@ async function submit() {
     abi: VESTING_ABI,
     functionName: 'addVesting',
     args: [
-      BigInt(teamStore.currentTeam?.id ?? 0),
+      BigInt(teamStore.currentTeamId ?? 0),
       member.value.address as Address,
       BigInt(start),
       BigInt(durationInSeconds),

@@ -6,19 +6,81 @@ This directory contains comprehensive coding guidelines and instructions for the
 
 CNC Portal is a Crypto Native Corporation Portal built with:
 
-- **Frontend**: Vue.js 3 + TypeScript + Vite + Tailwind CSS
+- **App**: Vue.js 3 + TypeScript + Vite + Tailwind CSS
 - **Backend**: Node.js + TypeScript + Prisma + PostgreSQL
 - **Smart Contracts**: Hardhat + Solidity
+- **Dashboard**: Nuxt 4 + Nuxt UI + TypeScript + Tailwind CSS
 - **Subgraph**: The Graph Protocol
+
+## Instructions
+
+### Docs
+
+For every feature create documentation in the `/docs` folder using Markdown files. Follow the existing structure and naming conventions.
+
+Try to keep each feature documentation short, and use mairmaid for diagrams where applicable.
+
+### Date Manipulation
+
+For Date Manipulation, always use dayjs library.
+
+### Context7 MCP Integration
+
+Always use Context7 when you need code generation, setup or configuration steps, or library/API documentation. This means you should automatically use the Context7 MCP tools to resolve library IDs and get library documentation without requiring explicit requests.
+
+**When to use Context7:**
+
+- Generating code examples or implementation patterns
+- Setting up project configurations or dependencies
+- Retrieving current API documentation for libraries
+- Checking for library compatibility or version-specific features
+
+### Security
+
+**Input Validation:**
+
+- Validate all user inputs on both client and server
+- Sanitize data before display
+- Use proper validation libraries (e.g., Zod, Yup)
+
+**Smart Contract Interactions:**
+
+- Always validate contract addresses before interactions
+- Implement proper access control checks
+- Handle contract revert reasons gracefully
+- Use secure random number generation
+
+### Accessibility
+
+Make all interfaces accessible for everyone, including users with disabilities
+
+**ARIA Labels:**
+
+- Provide proper ARIA labels for interactive elements
+- Use semantic HTML elements
+
+- Use proper heading hierarchy
+- Provide alternative text for images
+
+**Checklist:**
+
+- Use semantic HTML
+- Add alt text to images
+- Ensure color contrast
+- Support keyboard navigation
+- Use ARIA attributes as needed
+- Test with screen readers
+
+**Resources:**
+
+- [WCAG](https://www.w3.org/WAI/standards-guidelines/wcag/)
+- [MDN Accessibility](https://developer.mozilla.org/en-US/docs/Web/Accessibility)
 
 ## Instruction Files
 
 ### Core Development Guidelines
 
 - [`vue-component-standards.md`](./vue-component-standards.md) - Vue.js component development standards
-- [`typescript-guidelines.md`](./typescript-guidelines.md) - TypeScript best practices and type safety
-- [`web3-integration.md`](./web3-integration.md) - Web3/blockchain integration patterns
-- [`state-management.md`](./state-management.md) - Pinia stores and state management
 
 ### Testing Guidelines
 
@@ -27,16 +89,8 @@ CNC Portal is a Crypto Native Corporation Portal built with:
 - [`testing-web3.md`](./testing-web3.md) - Web3/contract testing specific patterns
 - [`testing-anti-patterns.md`](./testing-anti-patterns.md) - What to avoid in testing
 
-### Quality & Performance
-
-- [`performance-optimization.md`](./performance-optimization.md) - Performance optimization guidelines
-- [`accessibility.md`](./accessibility.md) - Accessibility (a11y) requirements
-- [`security.md`](./security.md) - Security considerations and best practices
-- [`error-handling.md`](./error-handling.md) - Error handling patterns
-
 ### Project Specific
 
-- [`repository-patterns.md`](./repository-patterns.md) - Patterns specific to this repository
 - [`review-checklist.md`](./review-checklist.md) - Code review checklist
 - [`commit-conventions.md`](./commit-conventions.md) - Commit message format and conventions
 
@@ -55,17 +109,6 @@ When working on the CNC Portal project, GitHub Copilot will automatically refere
 - ✅ [Vue.js Component Standards](./vue-component-standards.md) - Complete Vue.js guidelines
 - ✅ [Review Checklist](./review-checklist.md) - Comprehensive code review checklist
 - ✅ [Commit Conventions](./commit-conventions.md) - Detailed commit message standards
-
-### Placeholder Files (To be expanded)
-
-- 🚧 [TypeScript Guidelines](./typescript-guidelines.md) - Basic structure, needs expansion
-- 🚧 [Web3 Integration](./web3-integration.md) - Basic structure, needs expansion
-- 🚧 [State Management](./state-management.md) - Basic structure, needs expansion
-- 🚧 [Performance Optimization](./performance-optimization.md) - Basic structure, needs expansion
-- 🚧 [Accessibility](./accessibility.md) - Basic structure, needs expansion
-- 🚧 [Security](./security.md) - Basic structure, needs expansion
-- 🚧 [Error Handling](./error-handling.md) - Basic structure, needs expansion
-- 🚧 [Repository Patterns](./repository-patterns.md) - Basic structure, needs expansion
 
 ## Contributing
 

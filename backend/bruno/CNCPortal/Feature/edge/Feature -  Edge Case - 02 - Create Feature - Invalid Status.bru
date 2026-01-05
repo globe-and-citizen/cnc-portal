@@ -1,0 +1,36 @@
+meta {
+  name: Feature -  Edge Case - 02 - Create Feature - Invalid Status
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{host}}/admin/features
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+script:pre-request {
+  // Use a valid uppercase name to isolate status validation
+  const ts = Date.now();
+  bru.setVar('edgeFeatureName', `EDGE_INVALID_STATUS_${ts}`);
+}
+
+body:json {
+  {
+    "functionName": "{{edgeFeatureName}}",
+    "status": "on"
+  }
+}
+
+tests {
+  test("should return 400 status", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+   
+}

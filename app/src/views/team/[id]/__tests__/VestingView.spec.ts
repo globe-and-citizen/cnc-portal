@@ -54,8 +54,8 @@ vi.mock('@/stores', () => ({
   }),
   useTeamStore: () => ({
     currentTeam: mockCurrentTeam.value,
+    currentTeamId: mockCurrentTeam.value.id,
     getContractAddressByType: vi.fn((type) => {
-      // console.log('getContractAddressByType called with type:', type)
       return type ? '0x000000000000000000000000000000000000beef' : undefined
     })
   })

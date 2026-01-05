@@ -66,10 +66,9 @@ vi.mock('@/stores', () => ({
   }),
   useTeamStore: () => ({
     currentTeam: mockCurrentTeam.value,
+    currentTeamId: mockCurrentTeam.value.id,
     getContractAddressByType: vi.fn((type) => {
-      // console.log('getContractAddressByType called with type:', type)
       return type ? '0x000000000000000000000000000000000000beef' : undefined
-      // return mockTeamStore.currentTeam.teamContracts.find((contract) => contract.type === type)?.address
     })
   })
 }))
@@ -138,11 +137,18 @@ describe('VestingActions.vue', () => {
     it('opens modal on add vesting button click', async () => {
       mockCurrentTeam.value.ownerAddress = memberAddress
       wrapper = mount(VestingActions, {
-        props: { reloadKey: 0 }
+        props: { reloadKey: 0 },
+        global: {
+          plugins: [
+            createTestingPinia({ createSpy: vi.fn }),
+            [WagmiPlugin, { config: wagmiConfig }]
+          ]
+        }
       })
       const addButton = wrapper.findComponent(ButtonUI)
       expect(addButton.exists()).toBe(true)
       await addButton.trigger('click')
+      await wrapper.vm.$nextTick()
 
       const modal = wrapper.findComponent(ModalComponent)
 
@@ -150,11 +156,28 @@ describe('VestingActions.vue', () => {
     })
 
     it('closes modal when handleClose is emitted from CreateVesting', async () => {
+      // Ensure wrapper is remounted with correct state
+      mockCurrentTeam.value.ownerAddress = memberAddress
+      wrapper = mount(VestingActions, {
+        props: { reloadKey: 0 },
+        global: {
+          plugins: [
+            createTestingPinia({ createSpy: vi.fn }),
+            [WagmiPlugin, { config: wagmiConfig }]
+          ]
+        }
+      })
+
       // Open modal first
       const addButton = wrapper.findComponent(ButtonUI)
       await addButton.trigger('click')
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
 
       const createVesting = wrapper.findComponent(CreateVesting)
+      expect(createVesting.exists()).toBe(true)
+
+      // Emit the close event
       await createVesting.vm.$emit('closeAddVestingModal')
       await wrapper.vm.$nextTick()
 
@@ -166,10 +189,25 @@ describe('VestingActions.vue', () => {
 
   describe('CreateVesting Component', () => {
     it('passes correct props to CreateVesting', async () => {
+      // Ensure wrapper is remounted with correct state
+      mockCurrentTeam.value.ownerAddress = memberAddress
+      wrapper = mount(VestingActions, {
+        props: { reloadKey: 0 },
+        global: {
+          plugins: [
+            createTestingPinia({ createSpy: vi.fn }),
+            [WagmiPlugin, { config: wagmiConfig }]
+          ]
+        }
+      })
+
       const addButton = wrapper.findComponent(ButtonUI)
       await addButton.trigger('click')
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
 
       const createVesting = wrapper.findComponent(CreateVesting)
+      expect(createVesting.exists()).toBe(true)
       expect(createVesting.props()).toEqual({
         tokenAddress: '0x000000000000000000000000000000000000beef',
         reloadKey: 0
@@ -189,11 +227,27 @@ describe('VestingActions.vue', () => {
 
   describe('Event Handling', () => {
     it('emits reload event when CreateVesting emits reload', async () => {
+      // Ensure wrapper is remounted with correct state
+      mockCurrentTeam.value.ownerAddress = memberAddress
+      wrapper = mount(VestingActions, {
+        props: { reloadKey: 0 },
+        global: {
+          plugins: [
+            createTestingPinia({ createSpy: vi.fn }),
+            [WagmiPlugin, { config: wagmiConfig }]
+          ]
+        }
+      })
+
       const addButton = wrapper.findComponent(ButtonUI)
       await addButton.trigger('click')
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
 
       const createVesting = wrapper.findComponent(CreateVesting)
-      createVesting.vm.$emit('reload')
+      expect(createVesting.exists()).toBe(true)
+
+      await createVesting.vm.$emit('reload')
 
       expect(wrapper.emitted('reload')).toBeTruthy()
       expect(wrapper.emitted('reload')).toHaveLength(1)

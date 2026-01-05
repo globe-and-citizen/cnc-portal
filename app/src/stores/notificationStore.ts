@@ -1,41 +1,35 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import type {
-  NotificationResponse,
-  BulkNotificationPayload,
-  Notification
-} from '@/types/notification'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { computed } from 'vue'
+import type { BulkNotificationPayload, Notification } from '@/types/notification'
 import { log } from '@/utils'
+import {
+  useNotifications,
+  useAddBulkNotifications,
+  useUpdateNotification
+} from '@/queries/notification.queries'
 
 export const useNotificationStore = defineStore('notification', () => {
-  // State
-  const notifications = ref<Notification[]>([])
-  const isLoading = ref(false)
-  const error = ref<Error | null>(null)
+  // Use queries
+  const { data: notificationsData, isLoading, error, refetch } = useNotifications()
+  const addBulkMutation = useAddBulkNotifications()
+  const updateMutation = useUpdateNotification()
+
+  // Computed state
+  const notifications = computed<Notification[]>(() => notificationsData.value || [])
 
   // Actions
   const fetchNotifications = async () => {
     try {
-      isLoading.value = true
-      const { data } = await useCustomFetch<NotificationResponse>('notification').json()
-      notifications.value = data.value?.data || []
+      await refetch()
     } catch (err) {
-      error.value = err as Error
       log.error('Failed to fetch notifications:', err)
       throw err
-    } finally {
-      isLoading.value = false
     }
   }
 
   const addBulkNotifications = async (payload: BulkNotificationPayload) => {
     try {
-      const { execute } = useCustomFetch('notification/bulk/', {
-        immediate: false
-      }).post(payload)
-      await execute()
-      await fetchNotifications() // Refresh after adding
+      await addBulkMutation.mutateAsync(payload)
     } catch (err) {
       log.error('Failed to send notifications:', err)
       throw err
@@ -44,9 +38,7 @@ export const useNotificationStore = defineStore('notification', () => {
 
   const updateNotification = async (id: number) => {
     try {
-      const { execute } = useCustomFetch(`notification/${id}`).put()
-      await execute()
-      await fetchNotifications() // Refresh after update
+      await updateMutation.mutateAsync(id)
     } catch (err) {
       log.error('Failed to update notification:', err)
       throw err

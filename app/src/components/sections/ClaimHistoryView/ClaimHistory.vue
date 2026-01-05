@@ -113,6 +113,7 @@
                 v-if="hasWage"
                 :weekly-claim="selectWeekWeelyClaim"
                 :signed-week-starts="signedWeekStarts"
+                :restrict-submit="false"
               />
               <ButtonUI
                 v-else
@@ -280,7 +281,7 @@ const getColor = (weeklyClaim?: WeeklyClaim) => {
   return 'accent'
 }
 
-const teamId = computed(() => teamStore.currentTeam?.id)
+const teamId = computed(() => teamStore.currentTeamId)
 
 const weeklyClaimQueryKey = computed(() => ['weekly-claims', teamId.value, memberAddress.value])
 const weeklyClaimURL = computed(
@@ -300,10 +301,10 @@ watch(
   { immediate: true }
 )
 
-const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeam?.id])
+const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeamId])
 const { data: teamWageData, error: teamWageDataError } = useTanstackQuery<Array<Wage>>(
   teamWageQueryKey,
-  computed(() => `/wage/?teamId=${teamStore.currentTeam?.id}`)
+  computed(() => `/wage/?teamId=${teamStore.currentTeamId}`)
 )
 
 const hasWage = computed(() => {

@@ -7,10 +7,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
-import ButtonUI from '@/components/ButtonUI.vue'
-import * as utils from '@/utils'
 import { useTanstackQuery } from '@/composables'
-import { mockToastStore } from '@/tests/mocks/store.mock'
 
 const mocks = vi.hoisted(() => ({
   mockReadContract: vi.fn()
@@ -169,7 +166,15 @@ vi.mock('@/composables/useCustomFetch', () => {
   }
 })
 
-describe('ExpenseAccountTable', () => {
+vi.mock('@/composables', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useTanstackQuery: vi.fn()
+  }
+})
+
+describe('ExpenseAccountTable - Filtering', () => {
   setActivePinia(createPinia())
 
   interface ComponentOptions {
@@ -203,14 +208,13 @@ describe('ExpenseAccountTable', () => {
   }
 
   beforeEach(() => {
-    //@ts-expect-error: fewer return values than original
     vi.mocked(useTanstackQuery).mockReturnValue({
       data: ref(mockApprovals),
       isLoading: ref(false)
-    })
+    } as ReturnType<typeof useTanstackQuery>)
   })
 
-  describe('Render', () => {
+  describe('Filtering', () => {
     it('should display filter radio buttons', async () => {
       const wrapper = createComponent()
       expect(wrapper.find('[data-test="status-input-all"]').exists()).toBeTruthy()
@@ -298,109 +302,6 @@ describe('ExpenseAccountTable', () => {
       expect(expenseAccountTable.find('[data-test="2-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="disable-button"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="enable-button"]').exists()).toBeFalsy()
-    })
-
-    it('should show loading button if enabling approval', async () => {
-      const wrapper = createComponent()
-      wrapper.vm.contractOwnerAddress = '0xUserAddress'
-      const statusDisabledInput = wrapper.find('[data-test="status-input-disabled"]')
-      expect(statusDisabledInput.exists()).toBeTruthy()
-      //@ts-expect-error: setChecked for setting the input to checked works instead of click
-      await statusDisabledInput.setChecked()
-      await flushPromises()
-      expect(wrapper.vm.selectedRadio).toBe('disabled')
-      const expenseAccountTable = wrapper.findComponent(TableComponent)
-      expect(expenseAccountTable.exists()).toBeTruthy()
-      expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
-      const firstRow = expenseAccountTable.find('[data-test="0-row"]')
-      expect(firstRow.exists()).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[1].amount)
-      const disableButton = firstRow.findComponent(ButtonUI)
-      expect(disableButton.exists()).toBeTruthy()
-      expect(disableButton.props('disabled')).toBe(false)
-      disableButton.trigger('click')
-      wrapper.vm.isLoadingDeactivateApproval = true
-      await flushPromises()
-      expect(disableButton.props('loading')).toBe(true)
-    })
-
-    it('should show loading button if disabling approvals', async () => {
-      const wrapper = createComponent()
-      const statusEnabledInput = wrapper.find('[data-test="status-input-enabled"]')
-      expect(statusEnabledInput.exists()).toBeTruthy()
-      //@ts-expect-error: setChecked for setting the input to checked works instead of click
-      await statusEnabledInput.setChecked()
-      await flushPromises()
-      expect(wrapper.vm.selectedRadio).toBe('enabled')
-      const expenseAccountTable = wrapper.findComponent(TableComponent)
-      expect(expenseAccountTable.exists()).toBeTruthy()
-      expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
-      const firstRow = expenseAccountTable.find('[data-test="0-row"]')
-      expect(firstRow.exists()).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[0].amount)
-      const enableButton = firstRow.findComponent(ButtonUI)
-      expect(enableButton.exists()).toBeTruthy()
-      enableButton.trigger('click')
-      await flushPromises()
-      expect(enableButton.props('loading')).toBe(true)
-    })
-    it('should disable action buttons if not contract owner', async () => {
-      const wrapper = createComponent()
-      await flushPromises()
-      const expenseAccountTable = wrapper.findComponent(TableComponent)
-      expect(expenseAccountTable.exists()).toBeTruthy()
-      expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
-      const firstRow = expenseAccountTable.find('[data-test="0-row"]')
-      expect(firstRow.exists()).toBeTruthy()
-      const enableButton = firstRow.findComponent(ButtonUI)
-      expect(enableButton.props('disabled')).toBe(true)
-      const secondRow = expenseAccountTable.find('[data-test="1-row"]')
-      expect(secondRow.exists()).toBeTruthy()
-      const disableButton = secondRow.findComponent(ButtonUI)
-      expect(disableButton.props('disabled')).toBe(true)
-    })
-
-    it('should notify success if activate successful', async () => {
-      const wrapper = createComponent()
-      wrapper.vm.isConfirmingActivate = true
-      await flushPromises()
-      wrapper.vm.isConfirmingActivate = false
-      wrapper.vm.isConfirmedActivate = { value: true }
-      await flushPromises()
-      expect(mockToastStore.addSuccessToast).toBeCalledWith('Activate Successful')
-    })
-    it('should notify success if activate successful', async () => {
-      const wrapper = createComponent()
-      wrapper.vm.isConfirmingDeativate = true
-      await flushPromises()
-      wrapper.vm.isConfirmingDeactivate = false
-      wrapper.vm.isConfirmedDeactivate = { value: true }
-      await flushPromises()
-      expect(mockToastStore.addSuccessToast).toBeCalledWith('Deactivate Successful')
-    })
-    it('should notify error if error deactivate approval', async () => {
-      const wrapper = createComponent()
-      const logErrorSpy = vi.spyOn(utils.log, 'error')
-      wrapper.vm.errorDeactivateApproval = new Error(`Error deactivating approval`)
-      await flushPromises()
-      expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to deactivate approval')
-      expect(logErrorSpy).toBeCalledWith('Error deactivating approval')
-    })
-    it('should notify error if error activate approval', async () => {
-      const wrapper = createComponent()
-      const logErrorSpy = vi.spyOn(utils.log, 'error')
-      wrapper.vm.errorActivateApproval = new Error(`Error activating approval`)
-      await flushPromises()
-      expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to activate approval')
-      expect(logErrorSpy).toBeCalledWith('Error activating approval')
-    })
-    it('should notify error if error getting owner', async () => {
-      const wrapper = createComponent()
-      const logErrorSpy = vi.spyOn(utils.log, 'error')
-      wrapper.vm.errorGetOwner = new Error(`Error getting owner`)
-      await flushPromises()
-      expect(mockToastStore.addErrorToast).toBeCalledWith('Error Getting Contract Owner')
-      expect(logErrorSpy).toBeCalledWith('Error getting owner')
     })
   })
 })

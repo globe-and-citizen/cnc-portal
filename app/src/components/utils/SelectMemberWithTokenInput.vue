@@ -1,7 +1,7 @@
 <template>
   <div
     class="input-group relative"
-    :class="teamStore.currentTeamMeta.teamIsFetching ? 'animate-pulse' : ''"
+    :class="teamStore.currentTeamMeta.isPending ? 'animate-pulse' : ''"
     ref="formRef"
     data-test="member-input"
   >
@@ -31,7 +31,7 @@
         v-if="filteredMembers.length > 0"
         v-model="input.token"
         :options="options"
-        :disabled="teamStore.currentTeamMeta.teamIsFetching"
+        :disabled="teamStore.currentTeamMeta.isPending"
         :format-value="
           (value: string) => {
             return value === `SepoliaETH` ? `SepETH` : value

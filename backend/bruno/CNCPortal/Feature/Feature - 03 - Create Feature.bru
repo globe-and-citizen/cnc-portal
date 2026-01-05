@@ -1,0 +1,51 @@
+meta {
+  name: Feature - 03 - Create Feature
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{host}}/admin/features
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "functionName": "{{testFeatureName}}",
+    "status": "disabled"
+  }
+}
+
+script:post-response {
+  // Store the feature name for subsequent tests
+  if (res.getStatus() === 201 && res.body.data) {
+    bru.setVar('testFeatureName', res.body.data.functionName);
+    console.log('Stored testFeatureName:', res.body.data.functionName);
+  }
+}
+
+tests {
+  test("should return 201 status", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("should return success true", function() {
+    expect(res.body.success).to.equal(true);
+  });
+
+  test("should return created feature", function() {
+    const expectedName = bru.getVar('testFeatureName') || bru.getEnvVar('testFeatureName');
+    expect(res.body.data).to.be.an('object');
+    expect(res.body.data.functionName).to.equal(expectedName);
+    expect(res.body.data.status).to.equal('disabled');
+  });
+
+  test("log created feature", function() {
+    console.log("Created feature:", JSON.stringify(res.body.data, null, 2));
+  });
+}

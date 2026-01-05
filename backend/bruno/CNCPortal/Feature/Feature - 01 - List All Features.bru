@@ -1,0 +1,37 @@
+meta {
+  name: Feature - 01 - List All Features
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/admin/features
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+
+tests {
+  test("should return 200 status", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should return success true", function() {
+    expect(res.body.success).to.equal(true);
+  });
+
+  test("should return data array", function() {
+    expect(res.body.data).to.be.an('array');
+  });
+
+  test("log features count", function() {
+    console.log("Features count:", res.body.data.length);
+    if (res.body.data.length > 0) {
+      console.log("First feature:", JSON.stringify(res.body.data[0], null, 2));
+    }
+  });
+}
