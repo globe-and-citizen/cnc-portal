@@ -60,74 +60,24 @@
       {{ error.$message }}
     </div>
 
-    <UploadFileDB ref="uploadFileRef" @update:files="onFilesUpdate" :disabled="isLoading" />
+    <UploadFileDB
+      ref="uploadFileRef"
+      @update:files="onFilesUpdate"
+      :disabled="isLoading"
+      :existing-file-count="props.existingFiles?.length ?? 0"
+    />
 
-    <!-- Existing Files Display - Before Buttons -->
-    <div v-if="existingFiles && existingFiles.length > 0" class="pt-4">
+    <!-- Existing Files Display - File Preview Gallery with Lightbox -->
+    <div>
       <h4 class="text-sm font-semibold mb-3 text-gray-700">Attached Files:</h4>
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-        <div
-          v-for="(file, index) in existingFiles"
-          :key="index"
-          class="relative group"
-          :data-test="`existing-file-${index}`"
-        >
-          <!-- Image preview -->
-          <div
-            v-if="isImageFile(file)"
-            class="relative cursor-pointer"
-            @click="() => $emit('preview-image', file)"
-          >
-            <img
-              :src="getFileDataUrl(file)"
-              :alt="file.fileName"
-              class="w-full h-20 object-cover rounded border border-gray-300 hover:border-emerald-500 transition-all group-hover:brightness-90"
-            />
-            <div
-              class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded flex items-center justify-center pointer-events-none"
-            >
-              <Icon
-                icon="heroicons:magnifying-glass-plus"
-                class="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-              />
-            </div>
-            <button
-              @click.stop.prevent="$emit('delete-file', index)"
-              :disabled="deletingFileIndex === index"
-              class="absolute top-1 right-1 btn btn-xs btn-circle btn-error opacity-0 group-hover:opacity-100 transition-opacity"
-              :data-test="`delete-file-${index}`"
-            >
-              <Icon v-if="deletingFileIndex !== index" icon="heroicons:x-mark" class="w-4 h-4" />
-              <span v-else class="loading loading-spinner loading-xs"></span>
-            </button>
-          </div>
-
-          <!-- Document preview -->
-          <div
-            v-else
-            class="relative flex flex-col items-center justify-center h-20 rounded border border-gray-300 bg-gray-50"
-          >
-            <button
-              @click.prevent="$emit('preview-document', file)"
-              class="flex flex-col items-center justify-center w-full h-full rounded cursor-pointer hover:bg-gray-100 transition-colors"
-            >
-              <Icon :icon="getFileIcon(file)" class="w-8 h-8 text-gray-600" />
-              <span class="text-xs text-gray-500 mt-1 truncate w-full text-center px-1">
-                {{ file.fileName }}
-              </span>
-            </button>
-            <button
-              @click.prevent="$emit('delete-file', index)"
-              :disabled="deletingFileIndex === index"
-              class="absolute top-1 right-1 btn btn-xs btn-circle btn-error opacity-0 group-hover:opacity-100 transition-opacity"
-              :data-test="`delete-file-${index}`"
-            >
-              <Icon v-if="deletingFileIndex !== index" icon="heroicons:x-mark" class="w-4 h-4" />
-              <span v-else class="loading loading-spinner loading-xs"></span>
-            </button>
-          </div>
-        </div>
-      </div>
+      <FilePreviewGallery
+        v-if="existingFiles && existingFiles.length > 0"
+        :previews="existingFilePreviews"
+        can-remove
+        grid-class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"
+        item-height-class="h-20"
+        @remove="(index) => $emit('delete-file', index)"
+      />
     </div>
 
     <div class="flex justify-center gap-4">
@@ -163,7 +113,8 @@ import type { ClaimFormData } from '@/types'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { Icon } from '@iconify/vue'
+import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
+import { useToastStore } from '@/stores'
 // import UploadImage from '@/components/sections/CashRemunerationView/Form/UploadImage.vue' // Deprecated: cloud storage
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue' // New: database storage
 
@@ -185,6 +136,9 @@ interface Props {
 
 dayjs.extend(utc)
 
+const MAX_FILES = 10
+const toastStore = useToastStore()
+
 const props = withDefaults(defineProps<Props>(), {
   isEdit: false,
   isLoading: false,
@@ -203,8 +157,6 @@ const emit = defineEmits<{
   submit: [data: { hoursWorked: number; memo: string; dayWorked: string; files?: File[] }]
   cancel: []
   'delete-file': [index: number]
-  'preview-image': [file: FileData]
-  'preview-document': [file: FileData]
 }>()
 
 const uploadFileRef = ref<InstanceType<typeof UploadFileDB> | null>(null)
@@ -213,6 +165,17 @@ const uploadedFiles = ref<File[]>([])
 const onFilesUpdate = (files: File[]): void => {
   uploadedFiles.value = files
 }
+
+// Convert FileData to PreviewItem for FilePreviewGallery
+const existingFilePreviews = computed(() => {
+  return (props.existingFiles ?? []).map((file) => ({
+    previewUrl: `data:${file.fileType};base64,${file.fileData}`,
+    fileName: file.fileName,
+    fileSize: 0,
+    fileType: file.fileType,
+    isImage: file.fileType.startsWith('image/')
+  }))
+})
 
 const createDefaultFormData = (overrides?: Partial<ClaimFormData>): ClaimFormData => ({
   hoursWorked: overrides?.hoursWorked ?? '',
@@ -288,25 +251,18 @@ const disabledDatesFn = computed(() => {
   }
 })
 
-// File helper functions for existing files display
-const getFileDataUrl = (file: FileData): string => {
-  return `data:${file.fileType};base64,${file.fileData}`
-}
-
-const isImageFile = (file: FileData): boolean => {
-  return file.fileType.startsWith('image/')
-}
-
-const getFileIcon = (file: FileData): string => {
-  if (file.fileType === 'application/pdf') return 'heroicons:document-text'
-  if (file.fileType.includes('zip')) return 'heroicons:archive-box'
-  if (file.fileType.includes('word')) return 'heroicons:document'
-  return 'heroicons:document'
-}
-
 const handleSubmit = async () => {
   v$.value.$touch()
   if (v$.value.$invalid) return
+
+  // Validate total file count
+  const totalFiles = (props.existingFiles?.length ?? 0) + uploadedFiles.value.length
+  if (totalFiles > MAX_FILES) {
+    toastStore.addErrorToast(
+      `Maximum ${MAX_FILES} files allowed. Currently you have ${totalFiles} files. Please remove ${totalFiles - MAX_FILES} file(s).`
+    )
+    return
+  }
 
   emit('submit', {
     hoursWorked: Number(formData.value.hoursWorked),
