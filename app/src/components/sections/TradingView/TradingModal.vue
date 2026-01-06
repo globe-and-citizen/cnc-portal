@@ -1,152 +1,148 @@
 <template>
-  <div v-if="isOpen" class="modal modal-open">
-    <div class="modal-box max-w-lg p-0 overflow-hidden bg-base-100 border border-base-300">
-      <!-- Header -->
-      <div class="p-6 pb-0">
-        <div class="flex items-start justify-between">
-          <h3 class="text-xl font-semibold pr-8">
-            {{ market.title }}
-          </h3>
-          <button @click="onClose" class="btn btn-ghost btn-sm btn-circle absolute right-4 top-4">
+  <!-- <div class="modal modal-open">
+    <div class="modal-box max-w-lg p-0 overflow-hidden bg-base-100 border border-base-300"> -->
+  <!-- Header -->
+  <div class="p-6 pb-0">
+    <div class="flex items-start justify-between">
+      <h3 class="text-xl font-semibold pr-8">
+        {{ market.title }}
+      </h3>
+      <!-- <button @click="onClose" class="btn btn-ghost btn-sm btn-circle absolute right-4 top-4">
             <icon icon="heroicons:x-mark" class="w-5 h-5" />
-          </button>
-        </div>
-        <p class="text-sm text-gray-500 mt-2 line-clamp-2">
-          {{ market.description }}
-        </p>
-      </div>
+          </button> -->
+    </div>
+    <p class="text-sm text-gray-500 mt-2 line-clamp-2">
+      {{ market.description }}
+    </p>
+  </div>
 
-      <div class="p-6 space-y-6">
-        <!-- Outcome Selection -->
-        <div class="space-y-2">
-          <label class="text-sm text-gray-500">Select Outcome</label>
-          <div class="grid grid-cols-2 gap-3">
-            <button
-              v-for="(outcome, index) in market.outcomes"
-              :key="outcome.name"
-              @click="setSelectedOutcome(index)"
-              :class="[
-                'p-4 rounded-xl border transition-all duration-200 text-left',
-                selectedOutcome === index
-                  ? 'border-primary bg-primary/10'
-                  : 'border-base-300 bg-base-200 hover:border-primary/50'
-              ]"
-            >
-              <span class="font-semibold">{{ outcome.name }}</span>
-              <p class="font-mono text-lg text-primary mt-1">
-                {{ (outcome.buyPrice * 100).toFixed(0) }}¢
-              </p>
-            </button>
-          </div>
-        </div>
-
-        <!-- Order Type Toggle -->
-        <div class="space-y-2">
-          <label class="text-sm text-gray-500">Order Type</label>
-          <div class="grid grid-cols-2 gap-3">
-            <button
-              @click="setOrderType('market')"
-              :class="[
-                'h-14 rounded-lg flex items-center px-4 transition-all duration-200',
-                orderType === 'market' ? 'btn btn-primary' : 'btn btn-ghost border border-base-300'
-              ]"
-            >
-              <icon icon="heroicons:arrow-trending-up" class="w-5 h-5 mr-2" />
-              <div class="text-left">
-                <div>Market</div>
-                <div class="text-xs opacity-80">Instant execution</div>
-              </div>
-            </button>
-            <button
-              @click="setOrderType('limit')"
-              :class="[
-                'h-14 rounded-lg flex items-center px-4 transition-all duration-200',
-                orderType === 'limit' ? 'btn btn-primary' : 'btn btn-ghost border border-base-300'
-              ]"
-            >
-              <icon icon="heroicons:arrow-trending-down" class="w-5 h-5 mr-2" />
-              <div class="text-left">
-                <div>Limit</div>
-                <div class="text-xs opacity-80">Set your price</div>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Shares Input -->
-        <div class="space-y-2">
-          <label class="text-sm text-gray-500">Number of Shares</label>
-          <input
-            type="number"
-            placeholder="Enter amount"
-            v-model="shares"
-            class="input input-bordered w-full font-mono text-lg h-14"
-            min="0"
-            step="1"
-          />
-        </div>
-
-        <!-- Limit Price Input - Only shown for Limit orders -->
-        <div v-if="orderType === 'limit'" class="space-y-2">
-          <label class="text-sm text-gray-500">Limit Price</label>
-          <input
-            type="number"
-            placeholder="Enter limit price"
-            class="input input-bordered w-full font-mono text-lg h-14"
-            min="0"
-            step="0.01"
-          />
-        </div>
-
-        <!-- Order Summary -->
-        <div class="bg-base-200 p-4 rounded-xl space-y-3">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Price per share</span>
-            <span class="font-mono">${{ price.toFixed(2) }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Shares</span>
-            <span class="font-mono">{{ shares || '0' }}</span>
-          </div>
-          <div class="divider my-1"></div>
-          <div class="flex justify-between">
-            <span class="font-medium">Total Cost</span>
-            <span class="font-mono text-lg text-primary"> ${{ total.toFixed(2) }} USDC </span>
-          </div>
-        </div>
-
-        <!-- Place Order Button -->
+  <div class="p-6 space-y-6">
+    <!-- Outcome Selection -->
+    <div class="space-y-2">
+      <label class="text-sm text-gray-500">Select Outcome</label>
+      <div class="grid grid-cols-2 gap-3">
         <button
-          @click="handlePlaceOrder"
-          :disabled="!shares || parseFloat(shares) <= 0 || isPlacingOrder"
-          :class="['btn w-full h-14 text-lg', isPlacingOrder ? 'btn-disabled' : 'btn-primary']"
+          v-for="(outcome, index) in market.outcomes"
+          :key="outcome.name"
+          @click="setSelectedOutcome(index)"
+          :class="[
+            'p-4 rounded-xl border transition-all duration-200 text-left',
+            selectedOutcome === index
+              ? 'border-primary bg-primary/10'
+              : 'border-base-300 bg-base-200 hover:border-primary/50'
+          ]"
         >
-          <icon
-            v-if="isPlacingOrder"
-            icon="heroicons:arrow-path"
-            class="w-5 h-5 animate-spin mr-2"
-          />
-          {{
-            isPlacingOrder
-              ? 'Placing Order...'
-              : `Place ${orderType === 'market' ? 'Market' : 'Limit'} Order`
-          }}
+          <span class="font-semibold">{{ outcome.name }}</span>
+          <p class="font-mono text-lg text-primary mt-1">
+            {{ (outcome.buyPrice * 100).toFixed(0) }}¢
+          </p>
         </button>
-
-        <!-- Market Link -->
-        <a
-          :href="marketUrl || 'https://polymarket.com'"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors"
-        >
-          View on Polymarket
-          <icon icon="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
-        </a>
       </div>
     </div>
-    <div class="modal-backdrop" @click="onClose"></div>
+
+    <!-- Order Type Toggle -->
+    <div class="space-y-2">
+      <label class="text-sm text-gray-500">Order Type</label>
+      <div class="grid grid-cols-2 gap-3">
+        <button
+          @click="setOrderType('market')"
+          :class="[
+            'h-14 rounded-lg flex items-center px-4 transition-all duration-200',
+            orderType === 'market' ? 'btn btn-primary' : 'btn btn-ghost border border-base-300'
+          ]"
+        >
+          <icon icon="heroicons:arrow-trending-up" class="w-5 h-5 mr-2" />
+          <div class="text-left">
+            <div>Market</div>
+            <div class="text-xs opacity-80">Instant execution</div>
+          </div>
+        </button>
+        <button
+          @click="setOrderType('limit')"
+          :class="[
+            'h-14 rounded-lg flex items-center px-4 transition-all duration-200',
+            orderType === 'limit' ? 'btn btn-primary' : 'btn btn-ghost border border-base-300'
+          ]"
+        >
+          <icon icon="heroicons:arrow-trending-down" class="w-5 h-5 mr-2" />
+          <div class="text-left">
+            <div>Limit</div>
+            <div class="text-xs opacity-80">Set your price</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Shares Input -->
+    <div class="space-y-2">
+      <label class="text-sm text-gray-500">Number of Shares</label>
+      <input
+        type="number"
+        placeholder="Enter amount"
+        v-model="shares"
+        class="input input-bordered w-full font-mono text-lg h-14"
+        min="0"
+        step="1"
+      />
+    </div>
+
+    <!-- Limit Price Input - Only shown for Limit orders -->
+    <div v-if="orderType === 'limit'" class="space-y-2">
+      <label class="text-sm text-gray-500">Limit Price</label>
+      <input
+        type="number"
+        placeholder="Enter limit price"
+        class="input input-bordered w-full font-mono text-lg h-14"
+        min="0"
+        step="0.01"
+      />
+    </div>
+
+    <!-- Order Summary -->
+    <div class="bg-base-200 p-4 rounded-xl space-y-3">
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-500">Price per share</span>
+        <span class="font-mono">${{ price.toFixed(2) }}</span>
+      </div>
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-500">Shares</span>
+        <span class="font-mono">{{ shares || '0' }}</span>
+      </div>
+      <div class="divider my-1"></div>
+      <div class="flex justify-between">
+        <span class="font-medium">Total Cost</span>
+        <span class="font-mono text-lg text-primary"> ${{ total.toFixed(2) }} USDC </span>
+      </div>
+    </div>
+
+    <!-- Place Order Button -->
+    <button
+      @click="handlePlaceOrder"
+      :disabled="!shares || parseFloat(shares) <= 0 || isPlacingOrder"
+      :class="['btn w-full h-14 text-lg', isPlacingOrder ? 'btn-disabled' : 'btn-primary']"
+    >
+      <icon v-if="isPlacingOrder" icon="heroicons:arrow-path" class="w-5 h-5 animate-spin mr-2" />
+      {{
+        isPlacingOrder
+          ? 'Placing Order...'
+          : `Place ${orderType === 'market' ? 'Market' : 'Limit'} Order`
+      }}
+    </button>
+
+    <!-- Market Link -->
+    <a
+      :href="marketUrl || 'https://polymarket.com'"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors"
+    >
+      View on Polymarket
+      <icon icon="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
+    </a>
   </div>
+  <!-- </div>
+    <div class="modal-backdrop" @click="onClose"></div>
+  </div> -->
 </template>
 
 <script setup lang="ts">
@@ -167,7 +163,7 @@ interface MarketData {
 }
 
 interface Props {
-  isOpen: boolean
+  // isOpen: boolean
   marketUrl: string
 }
 

@@ -1,13 +1,13 @@
 <template>
   <div class="space-y-8 animate-fade-in">
     <!-- Header -->
-    <div>
+    <!-- <div>
       <h1 class="text-3xl font-bold mb-2">Trading</h1>
       <p class="text-gray-500">Enter a Polymarket URL to place a trade</p>
-    </div>
+    </div> -->
 
     <!-- Trading Input -->
-    <div class="card bg-base-100 shadow-xl p-6">
+    <!-- <div class="card bg-base-100 shadow-xl p-6">
       <div class="flex gap-4">
         <div class="relative flex-1">
           <icon
@@ -31,7 +31,7 @@
           <icon icon="heroicons:arrow-right" class="w-5 h-5 ml-2" />
         </button>
       </div>
-    </div>
+    </div> -->
 
     <!-- Account Stats -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -83,7 +83,7 @@
     </div>
 
     <!-- Trades Table -->
-    <div>
+    <!-- <div>
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-semibold">Your Trades</h2>
         <div class="tabs">
@@ -180,8 +180,9 @@
           </table>
         </div>
       </div>
-    </div>
+    </div> -->
 
+    <YourTradesSection />
     <!-- Trading Modal -->
     <TradingModal
       v-if="isModalOpen"
@@ -197,6 +198,8 @@ import { ref, computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import TradingModal from './TradingModal.vue'
 import { toast } from 'vue-sonner' // or your preferred toast library
+import YourTradesTable from './YourTradesTable.vue'
+import YourTradesSection from './YourTradesSection.vue'
 
 type TradeStatus = 'open' | 'resolved'
 type FilterType = 'all' | 'open' | 'resolved'
