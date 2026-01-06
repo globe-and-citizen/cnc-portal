@@ -30,7 +30,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const queryClient = useQueryClient()
   try {
-    const userAddress = toValue(authStore.address.value || '')
+    const userAddress = toValue(authStore.address) || ''
     const user = await queryClient.fetchQuery({
       queryKey: ['user', { address: userAddress }],
       queryFn: async () => {
@@ -44,7 +44,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
       return navigateTo('/access-denied')
     }
   } catch (error) {
-    console.log(error)
+    console.error('Authentication middleware error while fetching user or checking roles:', error)
     authStore.clearAuth()
     return navigateTo('/login')
   }

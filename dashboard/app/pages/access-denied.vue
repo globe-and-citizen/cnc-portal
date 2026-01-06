@@ -78,7 +78,7 @@ const goBack = () => {
                 color="error"
                 variant="subtle"
               >
-                {{ roleStore.userRoles? 'User' : '' }} {{ roleStore.isAdmin ? '(Admin)' : '' }}
+                {{ roleStore.userRoles && roleStore.userRoles.length ? roleStore.userRoles.join(', ') : 'User' }} {{ roleStore.isAdmin ? '(Admin)' : '' }}
               </UBadge>
             </div>
             <div class="flex items-center justify-between">
