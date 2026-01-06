@@ -64,10 +64,4 @@ const formattedTotalPnl = computed(() => {
 })
 
 const pnlLabel = computed(() => (totalPnl.value >= 0 ? 'Total Profit' : 'Total Loss'))
-
-// Icon
-const dollarIcon = computed(() => ({
-  component: Icon,
-  props: { icon: 'heroicons:currency-dollar' }
-}))
 </script>

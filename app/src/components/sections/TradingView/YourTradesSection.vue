@@ -91,8 +91,6 @@ const emit = defineEmits<{
 // State
 const marketUrl = ref('')
 const tradingModal = ref({ mount: false, show: false })
-const confirmationModal = ref(false)
-const orderDetails = ref<OrderDetails | null>(null)
 
 // Mock trades data (in real app, this would come from props or store)
 const trades = ref<Trade[]>([
@@ -219,26 +217,6 @@ const handleOrderPlaced = (order: OrderDetails) => {
   } catch (error) {
     toast.error('Failed to place order')
     log.error('Order placement error:', parseError(error))
-  }
-}
-
-// Optional: Order confirmation
-const confirmOrder = async () => {
-  if (!orderDetails.value) return
-
-  try {
-    // Add your order confirmation logic here
-    console.log('Confirming order:', orderDetails.value)
-
-    // Simulate API call
-    // await placeOrder(orderDetails.value)
-
-    toast.success('Order confirmed!')
-    confirmationModal.value = false
-    orderDetails.value = null
-  } catch (error) {
-    toast.error('Failed to confirm order')
-    log.error('Order confirmation error:', parseError(error))
   }
 }
 

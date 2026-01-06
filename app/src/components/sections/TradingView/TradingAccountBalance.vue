@@ -40,10 +40,4 @@ const formattedBalance = computed(() => {
     minimumFractionDigits: 2
   })}`
 })
-
-// Icon
-const walletIcon = computed(() => ({
-  component: Icon,
-  props: { icon: 'heroicons:wallet' }
-}))
 </script>

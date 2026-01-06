@@ -70,10 +70,4 @@ const formattedPerformance = computed(() => {
   const sign = pnlPercentage.value >= 0 ? '+' : ''
   return `${sign}${pnlPercentage.value.toFixed(1)}%`
 })
-
-// Icon
-const chartIcon = computed(() => ({
-  component: Icon,
-  props: { icon: 'heroicons:chart-bar' }
-}))
 </script>
