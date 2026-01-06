@@ -10,7 +10,9 @@ const errorToastMock = vi.fn()
 
 // Hoist and structure mocks
 const mocks = vi.hoisted(() => ({
-  mockFetch: vi.fn(),
+  mockApiClient: {
+    post: vi.fn()
+  },
   mockUseTeamStore: vi.fn(() => ({
     currentTeamId: 1 as number | undefined
   })),
@@ -21,8 +23,7 @@ const mocks = vi.hoisted(() => ({
   mockUseSubmitRestriction: vi.fn(() => ({
     isRestricted: false,
     checkRestriction: vi.fn()
-  })),
-  mockUseStorage: vi.fn(() => ({ value: 'mock-auth-token' }))
+  }))
 }))
 
 vi.mock('@/stores', async (importOriginal) => {
@@ -38,13 +39,9 @@ vi.mock('@/composables/useSubmitRestriction', () => ({
   useSubmitRestriction: mocks.mockUseSubmitRestriction
 }))
 
-vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useStorage: mocks.mockUseStorage
-  }
-})
+vi.mock('@/lib/axios', () => ({
+  default: mocks.mockApiClient
+}))
 
 afterEach(() => {
   vi.clearAllMocks()
@@ -52,12 +49,9 @@ afterEach(() => {
 
 describe('SubmitClaims', () => {
   beforeEach(() => {
-    // Setup global fetch mock
-    global.fetch = mocks.mockFetch
-    mocks.mockFetch.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: vi.fn().mockResolvedValue({ message: 'Wage claim added successfully' })
+    // Setup axios mock to resolve successfully
+    mocks.mockApiClient.post.mockResolvedValue({
+      data: { message: 'Wage claim added successfully' }
     })
   })
 
@@ -91,9 +85,9 @@ describe('SubmitClaims', () => {
       claimForm.vm.$emit('submit', submitData)
       await flushPromises()
 
-      expect(mocks.mockFetch).toHaveBeenCalled()
-      const callArgs = mocks.mockFetch.mock.calls[0]!
-      const formData = callArgs[1].body as FormData
+      expect(mocks.mockApiClient.post).toHaveBeenCalled()
+      const callArgs = mocks.mockApiClient.post.mock.calls[0]!
+      const formData = callArgs[1] as FormData
 
       expect(formData.getAll('files')).toHaveLength(1)
       expect(formData.getAll('files')[0]).toBe(file)
@@ -102,10 +96,11 @@ describe('SubmitClaims', () => {
 
   describe('Error Handling', () => {
     it('should use default error message when API does not provide one', async () => {
-      mocks.mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        json: vi.fn().mockResolvedValue({})
+      mocks.mockApiClient.post.mockRejectedValueOnce({
+        response: {
+          status: 500,
+          data: {}
+        }
       })
 
       const wrapper = createComponent()
@@ -145,7 +140,7 @@ describe('SubmitClaims', () => {
       await flushPromises()
 
       // Should not attempt to submit, instead show error
-      expect(mocks.mockFetch).not.toHaveBeenCalled()
+      expect(mocks.mockApiClient.post).not.toHaveBeenCalled()
       expect(errorToastMock).toHaveBeenCalledWith('Team not selected')
     })
   })
