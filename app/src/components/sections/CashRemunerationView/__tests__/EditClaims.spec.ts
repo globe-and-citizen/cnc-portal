@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
+import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
 import type { Claim } from '@/types'
 import type { Address } from 'viem'
@@ -49,36 +50,26 @@ const successToastMock = vi.fn()
 const errorToastMock = vi.fn()
 
 // Hoisted mocks
-const {
-  mockFetch,
-  mockUseToastStore,
-  mockTeamStore,
-  mockUseQueryClient,
-  mockUseStorage,
-  mockCheckRestriction
-} = vi.hoisted(() => {
-  const mockQueryClient = {
-    invalidateQueries: vi.fn()
-  }
+const { mockApiClient, mockUseToastStore, mockTeamStore, mockCheckRestriction } = vi.hoisted(
+  () => {
+    const mockTeamStore = {
+      currentTeamId: 1 as number | undefined,
+      currentTeam: { id: 1 } as { id: number } | undefined
+    }
 
-  const mockTeamStore = {
-    currentTeamId: 1 as number | undefined,
-    currentTeam: { id: 1 } as { id: number } | undefined
+    return {
+      mockApiClient: {
+        put: vi.fn()
+      },
+      mockUseToastStore: vi.fn(() => ({
+        addErrorToast: errorToastMock,
+        addSuccessToast: successToastMock
+      })),
+      mockTeamStore,
+      mockCheckRestriction: vi.fn()
+    }
   }
-
-  return {
-    mockFetch: vi.fn(),
-    mockUseToastStore: vi.fn(() => ({
-      addErrorToast: errorToastMock,
-      addSuccessToast: successToastMock
-    })),
-    mockTeamStore,
-    mockUseQueryClient: vi.fn(() => mockQueryClient),
-    mockQueryClient,
-    mockUseStorage: vi.fn(() => ({ value: 'mock-auth-token' })),
-    mockCheckRestriction: vi.fn()
-  }
-})
+)
 
 // Mock implementations
 vi.mock('@/stores', async (importOriginal) => {
@@ -90,17 +81,9 @@ vi.mock('@/stores', async (importOriginal) => {
   }
 })
 
-vi.mock('@tanstack/vue-query', () => ({
-  useQueryClient: mockUseQueryClient
+vi.mock('@/lib/axios', () => ({
+  default: mockApiClient
 }))
-
-vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@vueuse/core')>()
-  return {
-    ...actual,
-    useStorage: mockUseStorage
-  }
-})
 
 vi.mock('@/composables', () => ({
   useSubmitRestriction: () => ({
@@ -110,15 +93,17 @@ vi.mock('@/composables', () => ({
 }))
 
 // Helper function for creating wrapper
-const createWrapper = (props: Partial<{ claim: Claim }> = {}) =>
-  mount(EditClaims, {
+const createWrapper = (props: Partial<{ claim: Claim }> = {}) => {
+  const queryClient = new QueryClient()
+  return mount(EditClaims, {
     props: {
       claim: props.claim ?? defaultClaim
     },
     global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn })]
+      plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
     }
   })
+}
 
 describe('EditClaims', () => {
   beforeEach(() => {
@@ -126,13 +111,10 @@ describe('EditClaims', () => {
     mockTeamStore.currentTeamId = 1
     mockTeamStore.currentTeam = { id: 1 }
 
-    // Setup global fetch mock
-    global.fetch = mockFetch as unknown as typeof fetch
-    mockFetch.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: vi.fn().mockResolvedValue({ message: 'Claim updated successfully' })
-    } as unknown as Response)
+    // Setup axios mock to resolve successfully
+    mockApiClient.put.mockResolvedValue({
+      data: { message: 'Claim updated successfully' }
+    })
   })
 
   afterEach(() => {
@@ -153,10 +135,10 @@ describe('EditClaims', () => {
       form.vm.$emit('submit', payloadWithFile)
       await flushPromises()
 
-      expect(mockFetch).toHaveBeenCalled()
-      const callArgs = mockFetch.mock.calls[0]
+      expect(mockApiClient.put).toHaveBeenCalled()
+      const callArgs = mockApiClient.put.mock.calls[0]
       expect(callArgs).toBeDefined()
-      const formData = callArgs![1]?.body as FormData
+      const formData = callArgs![1] as FormData
 
       expect(formData.get('files')).toBeTruthy()
     })
@@ -180,10 +162,10 @@ describe('EditClaims', () => {
       form.vm.$emit('submit', SUBMIT_PAYLOAD)
       await flushPromises()
 
-      expect(mockFetch).toHaveBeenCalled()
-      const callArgs = mockFetch.mock.calls[0]
+      expect(mockApiClient.put).toHaveBeenCalled()
+      const callArgs = mockApiClient.put.mock.calls[0]
       expect(callArgs).toBeDefined()
-      const formData = callArgs![1]?.body as FormData
+      const formData = callArgs![1] as FormData
 
       expect(formData.get('deletedFileIndexes')).toBe('[0]')
     })
@@ -191,11 +173,12 @@ describe('EditClaims', () => {
 
   describe('Error Handling', () => {
     it('should use default error message when API does not provide one', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        json: vi.fn().mockResolvedValue({})
-      } as unknown as Response)
+      mockApiClient.put.mockRejectedValueOnce({
+        response: {
+          status: 500,
+          data: {}
+        }
+      })
 
       const wrapper = createWrapper()
       const form = wrapper.findComponent({ name: 'ClaimForm' })
@@ -210,7 +193,7 @@ describe('EditClaims', () => {
 
     it('should handle network errors gracefully', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      mockFetch.mockRejectedValueOnce(new Error('Network failure'))
+      mockApiClient.put.mockRejectedValueOnce(new Error('Network failure'))
 
       const wrapper = createWrapper()
       const form = wrapper.findComponent({ name: 'ClaimForm' })
@@ -238,11 +221,12 @@ describe('EditClaims', () => {
     })
 
     it('should not emit close when update fails', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-        json: vi.fn().mockResolvedValue({ message: 'Failed to update claim' })
-      } as unknown as Response)
+      mockApiClient.put.mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: { message: 'Failed to update claim' }
+        }
+      })
 
       const wrapper = createWrapper()
       const form = wrapper.findComponent({ name: 'ClaimForm' })
@@ -256,12 +240,12 @@ describe('EditClaims', () => {
 
   describe('Loading States', () => {
     it('should show loading state during update', async () => {
-      let resolveFetch: (value: Response) => void
-      const fetchPromise = new Promise<Response>((resolve) => {
-        resolveFetch = resolve
+      let resolveUpdate: (value: { data: { message: string } }) => void
+      const updatePromise = new Promise<{ data: { message: string } }>((resolve) => {
+        resolveUpdate = resolve
       })
 
-      mockFetch.mockReturnValueOnce(fetchPromise as Promise<Response>)
+      mockApiClient.put.mockReturnValueOnce(updatePromise)
 
       const wrapper = createWrapper()
       const form = wrapper.findComponent({ name: 'ClaimForm' })
@@ -271,11 +255,7 @@ describe('EditClaims', () => {
 
       expect(form.props('isLoading')).toBe(true)
 
-      resolveFetch!({
-        ok: true,
-        status: 200,
-        json: vi.fn().mockResolvedValue({ message: 'Success' })
-      } as unknown as Response)
+      resolveUpdate!({ data: { message: 'Success' } })
       await flushPromises()
 
       expect(form.props('isLoading')).toBe(false)
@@ -293,7 +273,7 @@ describe('EditClaims', () => {
       form.vm.$emit('submit', SUBMIT_PAYLOAD)
       await flushPromises()
 
-      expect(mockFetch).not.toHaveBeenCalled()
+      expect(mockApiClient.put).not.toHaveBeenCalled()
       expect(errorToastMock).toHaveBeenCalledWith('Team not selected')
     })
   })
