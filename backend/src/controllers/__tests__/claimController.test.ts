@@ -166,8 +166,8 @@ const invalidBodyScenarios = [
   { body: { teamId: 1, descpription: '' }, description: 'memo is missing' },
   { body: { teamId: 1, hoursWorked: 5, memo: ' ' }, description: 'memo is only spaces' },
   {
-    body: { teamId: 1, hoursWorked: 5, memo: Array(201).fill('word').join(' ') },
-    description: 'memo exceeds 200 words',
+    body: { teamId: 1, hoursWorked: 5, memo: Array(3001).fill('word').join(' ') },
+    description: 'memo exceeds 3000 words',
   },
   { body: {}, description: 'required fields are missing' },
   { body: { teamId: 1, hoursWorked: -5, memo: '' }, description: 'hoursWorked is invalid' },

@@ -259,7 +259,7 @@ describe('TheDrawer', () => {
     it('should render all menu items', () => {
       const wrapper = createWrapper()
       const menuItems = wrapper.findAll('nav a')
-      expect(menuItems.length).toBe(7) // Total number of menu items
+      expect(menuItems.length).toBe(8) // Total number of menu items
     })
 
     it('should highlight active menu item', async () => {
