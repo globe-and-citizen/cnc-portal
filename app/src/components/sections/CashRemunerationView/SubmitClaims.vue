@@ -48,15 +48,14 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
-import { useQueryClient } from '@tanstack/vue-query'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
 import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
-import { BACKEND_URL } from '@/constant'
-import { useStorage } from '@vueuse/core'
+import apiClient from '@/lib/axios'
 
 dayjs.extend(utc)
 
@@ -68,7 +67,6 @@ const { isRestricted, checkRestriction } = useSubmitRestriction()
 const modal = ref(false)
 const errorMessage = ref<{ message: string } | null>(null)
 const addWageClaimError = ref(false)
-const isWageClaimAdding = ref(false)
 const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
 const createDefaultFormData = (): ClaimFormData => ({
   hoursWorked: '',
@@ -84,7 +82,6 @@ const props = defineProps<{
 }>()
 
 const formInitialData = ref<ClaimFormData>(createDefaultFormData())
-const authToken = useStorage('authToken', '')
 
 const openModal = () => {
   formInitialData.value = createDefaultFormData()
@@ -125,41 +122,38 @@ const canSubmitClaim = computed(() => {
   return props.weeklyClaim.status === 'pending'
 })
 
-// Modified to handle file uploads via multipart/form-data
+const { mutateAsync: submitClaim, isPending: isWageClaimAdding } = useMutation<
+  void,
+  Error,
+  ClaimSubmitPayload & { files?: File[] }
+>({
+  mutationKey: ['submit-claim'],
+  mutationFn: async (payload) => {
+    if (!teamId.value) throw new Error('Team not selected')
+
+    const formData = new FormData()
+    formData.append('teamId', teamId.value.toString())
+    formData.append('hoursWorked', payload.hoursWorked.toString())
+    formData.append('memo', payload.memo)
+    formData.append('dayWorked', payload.dayWorked)
+
+    payload.files?.forEach((file) => formData.append('files', file))
+
+    await apiClient.post('/claim', formData)
+  }
+})
+
 const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
   if (!teamId.value) {
     toastStore.addErrorToast('Team not selected')
     return
   }
 
-  isWageClaimAdding.value = true
   addWageClaimError.value = false
+  errorMessage.value = null
 
   try {
-    const formData = new FormData()
-    formData.append('teamId', teamId.value.toString())
-    formData.append('hoursWorked', data.hoursWorked.toString())
-    formData.append('memo', data.memo)
-    formData.append('dayWorked', data.dayWorked)
-
-    if (data.files && data.files.length > 0) {
-      data.files.forEach((file) => {
-        formData.append('files', file)
-      })
-    }
-
-    const response = await fetch(`${BACKEND_URL}/api/claim`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${authToken.value}`
-      },
-      body: formData
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Failed to add claim' }))
-      throw new Error(errorData.message || 'Failed to add claim')
-    }
+    await submitClaim(data)
 
     toastStore.addSuccessToast('Wage claim added successfully')
     queryClient.invalidateQueries({
@@ -167,18 +161,17 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     })
     modal.value = false
     formInitialData.value = createDefaultFormData()
-    errorMessage.value = null
-    addWageClaimError.value = false
-
     claimFormRef.value?.resetForm()
   } catch (error) {
     console.error('Error submitting claim:', error)
-    const errorMsg = error instanceof Error ? error.message : 'Failed to add claim'
-    toastStore.addErrorToast(errorMsg)
-    errorMessage.value = { message: errorMsg }
+    const message =
+      error instanceof Error
+        ? error.message
+        : (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Failed to add claim'
+    toastStore.addErrorToast(message)
+    errorMessage.value = { message }
     addWageClaimError.value = true
-  } finally {
-    isWageClaimAdding.value = false
   }
 }
 
