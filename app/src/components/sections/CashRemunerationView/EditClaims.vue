@@ -42,9 +42,8 @@ import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm
 import { useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
 import type { Claim, ClaimFormData, ClaimSubmitPayload, FileAttachment } from '@/types'
-import { useQueryClient } from '@tanstack/vue-query'
-import { BACKEND_URL } from '@/constant'
-import { useStorage } from '@vueuse/core'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import apiClient from '@/lib/axios'
 
 const props = defineProps<{
   claim: Claim
@@ -69,8 +68,6 @@ const claimFormInitialData = computed<ClaimFormData>(() => ({
   dayWorked: props.claim.dayWorked
 }))
 
-const isUpdating = ref(false)
-const authToken = useStorage('authToken', '')
 const existingFiles = ref<FileAttachment[]>([])
 const deletedFileIndexes = ref<number[]>([])
 
@@ -117,6 +114,26 @@ watch(
   { immediate: true }
 )
 
+const { mutateAsync: updateClaimMutation, isPending: isUpdating } = useMutation<
+  void,
+  Error,
+  ClaimSubmitPayload & { files?: File[] }
+>({
+  mutationKey: ['update-claim', props.claim.id],
+  mutationFn: async (payload) => {
+    const formData = new FormData()
+    formData.append('hoursWorked', payload.hoursWorked.toString())
+    formData.append('memo', payload.memo)
+    formData.append('dayWorked', payload.dayWorked)
+    payload.files?.forEach((file) => formData.append('files', file))
+    if (deletedFileIndexes.value.length > 0) {
+      formData.append('deletedFileIndexes', JSON.stringify(deletedFileIndexes.value))
+    }
+
+    await apiClient.put(`/claim/${props.claim.id}`, formData)
+  }
+})
+
 const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
   errorMessage.value = null
   if (!teamId.value) {
@@ -124,36 +141,10 @@ const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     return
   }
 
-  const formData = new FormData()
-  formData.append('hoursWorked', data.hoursWorked.toString())
-  formData.append('memo', data.memo)
-  formData.append('dayWorked', data.dayWorked)
-  if (data.files && data.files.length > 0) {
-    data.files.forEach((file) => formData.append('files', file))
-  }
-  // Send deleted file indexes to the server
-  if (deletedFileIndexes.value.length > 0) {
-    formData.append('deletedFileIndexes', JSON.stringify(deletedFileIndexes.value))
-  }
-
-  isUpdating.value = true
   try {
-    const response = await fetch(`${BACKEND_URL}/api/claim/${props.claim.id}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${authToken.value}`
-      },
-      body: formData
-    })
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({ message: 'Failed to update claim' }))
-      throw new Error(err.message || 'Failed to update claim')
-    }
+    await updateClaimMutation(data)
 
     toastStore.addSuccessToast('Claim updated successfully')
-
-    // Reset deleted file indexes after successful update
     deletedFileIndexes.value = []
 
     await queryClient.invalidateQueries({
@@ -164,11 +155,13 @@ const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     emit('close')
   } catch (error) {
     console.error('Failed to update claim:', error)
-    const message = (error as Error)?.message || 'Failed to update claim'
+    const message =
+      error instanceof Error
+        ? error.message
+        : (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Failed to update claim'
     toastStore.addErrorToast(message)
     errorMessage.value = { message }
-  } finally {
-    isUpdating.value = false
   }
 }
 
