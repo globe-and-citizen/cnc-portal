@@ -502,6 +502,16 @@ const menuItems = computed(() => [
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
+    label: 'Trading',
+    icon: 'heroicons:arrow-trending-up',
+    route: {
+      name: 'trading',
+      params: { id: teamStore.currentTeamId || '1' }
+    },
+    active: route.name === 'trading',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  },
+  {
     label: 'Administration',
     icon: 'heroicons:chart-bar',
     route: {

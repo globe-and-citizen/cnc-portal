@@ -19,8 +19,8 @@ export const addClaimBodySchema = z.object({
     .string()
     .trim()
     .min(1, 'Memo cannot be empty')
-    .refine((memo) => memo.split(/\s+/).length <= 200, {
-      message: 'Memo is too long, maximum 200 words allowed',
+    .refine((memo) => memo.split(/\s+/).length <= 3000, {
+      message: 'Memo is too long, maximum 3000 words allowed',
     }),
   dayWorked: z.iso.datetime().optional(),
   imageScreens: z

@@ -91,6 +91,7 @@ import { ref, computed, watch } from 'vue'
 import { useSafe } from '@/composables/useSafe'
 import { useConnection } from '@wagmi/vue'
 import { isAddress } from 'viem'
+import { useQueryClient } from '@tanstack/vue-query'
 
 defineProps<{
   modelValue: boolean
@@ -102,6 +103,7 @@ const emit = defineEmits<{
 
 const { deploySafe } = useSafe()
 const connection = useConnection()
+const queryClient = useQueryClient()
 
 const owners = ref<string[]>(connection.address.value ? [connection.address.value] : [''])
 const ownerStates = ref<(boolean | null)[]>([null])
@@ -184,6 +186,7 @@ const resetForm = () => {
   owners.value = connection.address.value ? [connection.address.value] : ['']
   ownerStates.value = [null]
   threshold.value = 1
+  queryClient.invalidateQueries({ queryKey: ['safes', connection.address.value] })
 }
 
 const onSubmit = async () => {

@@ -15,6 +15,7 @@ export * from './schemas/expense';
 export * from './schemas/wage';
 export * from './schemas/auth';
 export * from './schemas/stats';
+export * from './schemas/polymarket';
 
 // Advanced validation utilities (Zod v4 best practices)
 export * from './utils';

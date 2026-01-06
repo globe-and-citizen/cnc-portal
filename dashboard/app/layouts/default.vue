@@ -11,7 +11,8 @@ const open = ref(false)
 const roleStore = useRoleStore()
 
 // Check if user is admin - redirect to access denied if not
-const isAdmin = computed(() => roleStore.isAdmin)
+const roleStoreRefs = storeToRefs(roleStore)
+const isAdmin = computed(() => roleStoreRefs.isAdmin.value)
 
 // Watch for role changes and redirect if user is not admin
 watch(isAdmin, (newValue) => {
