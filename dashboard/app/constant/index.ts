@@ -140,9 +140,10 @@ export const FEE_COLLECTOR_SUPPORTED_TOKENS = [USDC_ADDRESS, USDT_ADDRESS] as co
 
 // Log configuration info
 if (import.meta.client) {
-  console.log('Runtime chain ID:', getChainId())
-  console.log('Fee Collector Address:', FEE_COLLECTOR_ADDRESS)
-  console.log('Supported token addresses:', FEE_COLLECTOR_SUPPORTED_TOKENS)
+  console.log('Runtime configuration:')
+  // console.log('Runtime chain ID:', getChainId())
+  // console.log('Fee Collector Address:', FEE_COLLECTOR_ADDRESS)
+  // console.log('Supported token addresses:', FEE_COLLECTOR_SUPPORTED_TOKENS)
 }
 
 // Token Configuration

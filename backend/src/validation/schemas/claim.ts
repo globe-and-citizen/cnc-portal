@@ -19,8 +19,8 @@ export const addClaimBodySchema = z.object({
     .string()
     .trim()
     .min(1, 'Memo cannot be empty')
-    .refine((memo) => memo.split(/\s+/).length <= 200, {
-      message: 'Memo is too long, maximum 200 words allowed',
+    .refine((memo) => memo.split(/\s+/).length <= 3000, {
+      message: 'Memo is too long, maximum 3000 words allowed',
     }),
   dayWorked: z.iso.datetime().optional(),
 });
@@ -28,7 +28,7 @@ export const addClaimBodySchema = z.object({
 // Claim update request body (for signature)
 export const updateClaimBodySchema = z.object({
   hoursWorked: z.coerce.number().min(1).max(24).optional(),
-  memo: z.string().trim().max(200, 'Memo is too long, maximum 200 characters').optional(),
+  memo: z.string().trim().max(3000, 'Memo is too long, maximum 3000 characters').optional(),
 });
 
 // Get claims query parameters
