@@ -182,7 +182,7 @@ describe('ClaimForm.vue', () => {
 
   it('shows memo length validation error and prevents submit when memo is too long', async () => {
     const wrapper = createWrapper()
-    const longMemo = 'a'.repeat(201)
+    const longMemo = 'a'.repeat(3001)
 
     await wrapper.find('input[data-test="hours-worked-input"]').setValue('3')
     await wrapper.find('textarea[data-test="memo-input"]').setValue(longMemo)
