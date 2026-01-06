@@ -17,7 +17,7 @@
             icon="i-heroicons-arrow-path"
             :loading="isLoading"
             size="xs"
-            @click="fetchSafes"
+            @click="handleRefreshClick"
           >
             Refresh
           </UButton>
@@ -43,11 +43,14 @@
             <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
               Symbol
             </th>
+            <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="isLoading">
-            <td colspan="5" class="text-center py-8">
+            <td colspan="6" class="text-center py-8">
               <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin inline-block" />
             </td>
           </tr>
@@ -79,28 +82,58 @@
             <td class="px-4 py-4 text-sm text-right font-medium">
               {{ safe.symbol }}
             </td>
+            <td class="px-4 py-4 text-right flex gap-2 justify-end">
+              <UButton size="xs" @click="openTxModal(safe)">
+                View Transactions
+              </UButton>
+              <UButton
+                size="xs"
+                color="primary"
+                @click="openContractModal(safe)"
+              >
+                Propose Tx
+              </UButton>
+            </td>
           </tr>
           <tr v-if="!isLoading && filteredSafes.length === 0">
-            <td colspan="5" class="text-center py-8 text-gray-500">
+            <td colspan="6" class="text-center py-8 text-gray-500">
               No safes found for your account.
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+    <SafeTransactionsModal
+      v-if="selectedSafe"
+      v-model="showTxModal"
+      :safe-address="selectedSafe.address"
+      :chain="selectedSafe.chain"
+    />
+    <SafeContractInteraction
+      v-if="selectedContractSafe"
+      v-model="showContractModal"
+      :safe-address="selectedContractSafe.address"
+      @update:model-value="onCloseContractModal"
+    />
   </UCard>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useConnection } from '@wagmi/vue'
 import { useSafes } from '@/composables/Safe/read'
 import { useToast } from '#imports'
+import SafeTransactionsModal from './SafeTransactionsModal.vue'
+import SafeContractInteraction from './SafeContractInteraction.vue'
 
 const connection = useConnection()
 const { safes, isLoading, fetchSafes } = useSafes(connection.address)
 const search = ref('')
 const toast = useToast()
+const showTxModal = ref(false)
+const showContractModal = ref(false)
+const selectedSafe = ref<{ address: string, chain: string } | null>(null)
+const selectedContractSafe = ref<{ address: string, chain: string } | null>(null)
 
 const filteredSafes = computed(() => {
   if (!search.value) return safes.value
@@ -113,18 +146,29 @@ const filteredSafes = computed(() => {
   )
 })
 
+function handleRefreshClick() {
+  fetchSafes()
+}
+
 function copyAddress(address: string) {
   navigator.clipboard.writeText(address)
   toast.add({ title: 'Copied!', description: 'Safe address copied to clipboard.', color: 'success' })
 }
 
-onMounted(() => {
-  if (connection.address.value) fetchSafes()
-})
+function openTxModal(safe: { address: string, chain: string }) {
+  selectedSafe.value = safe
+  showTxModal.value = true
+}
 
-watch(() => connection.address.value, (newAddress, oldAddress) => {
-  if (newAddress && newAddress !== oldAddress) {
-    fetchSafes()
+function openContractModal(safe: { address: string, chain: string }) {
+  selectedContractSafe.value = safe
+  showContractModal.value = true
+}
+
+function onCloseContractModal(val: boolean) {
+  if (!val) {
+    showContractModal.value = false
+    selectedContractSafe.value = null
   }
-})
+}
 </script>
