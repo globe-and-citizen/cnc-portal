@@ -158,8 +158,8 @@ const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     const message =
       error instanceof Error
         ? error.message
-        : (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-          'Failed to update claim'
+        : ((error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Failed to update claim')
     toastStore.addErrorToast(message)
     errorMessage.value = { message }
   }

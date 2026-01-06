@@ -167,8 +167,8 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     const message =
       error instanceof Error
         ? error.message
-        : (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-          'Failed to add claim'
+        : ((error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Failed to add claim')
     toastStore.addErrorToast(message)
     errorMessage.value = { message }
     addWageClaimError.value = true
