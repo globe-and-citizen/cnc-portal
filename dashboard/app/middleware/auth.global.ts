@@ -30,22 +30,22 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const queryClient = useQueryClient()
   try {
-    const userAddress = toValue(authStore.address.value || '')    
+    const userAddress = toValue(authStore.address.value || '')
     const user = await queryClient.fetchQuery({
-        queryKey: ['user', { address: userAddress }],
-        queryFn:  async () => {
-            const { data } = await apiClient.get<ApiUser>(`user/${userAddress}`)
-            return data
-          },
-        staleTime: 1000 * 60 * 5 // 5 minutes
+      queryKey: ['user', { address: userAddress }],
+      queryFn: async () => {
+        const { data } = await apiClient.get<ApiUser>(`user/${userAddress}`)
+        return data
+      },
+      staleTime: 1000 * 60 * 5 // 5 minutes
     })
 
     if (!user.roles.some(role => role === 'ROLE_ADMIN' || role === 'ROLE_SUPER_ADMIN')) {
       return navigateTo('/access-denied')
     }
   } catch (error) {
+    console.log(error)
     authStore.clearAuth()
     return navigateTo('/login')
   }
-
 })
