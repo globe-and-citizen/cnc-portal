@@ -50,26 +50,24 @@ const successToastMock = vi.fn()
 const errorToastMock = vi.fn()
 
 // Hoisted mocks
-const { mockApiClient, mockUseToastStore, mockTeamStore, mockCheckRestriction } = vi.hoisted(
-  () => {
-    const mockTeamStore = {
-      currentTeamId: 1 as number | undefined,
-      currentTeam: { id: 1 } as { id: number } | undefined
-    }
-
-    return {
-      mockApiClient: {
-        put: vi.fn()
-      },
-      mockUseToastStore: vi.fn(() => ({
-        addErrorToast: errorToastMock,
-        addSuccessToast: successToastMock
-      })),
-      mockTeamStore,
-      mockCheckRestriction: vi.fn()
-    }
+const { mockApiClient, mockUseToastStore, mockTeamStore, mockCheckRestriction } = vi.hoisted(() => {
+  const mockTeamStore = {
+    currentTeamId: 1 as number | undefined,
+    currentTeam: { id: 1 } as { id: number } | undefined
   }
-)
+
+  return {
+    mockApiClient: {
+      put: vi.fn()
+    },
+    mockUseToastStore: vi.fn(() => ({
+      addErrorToast: errorToastMock,
+      addSuccessToast: successToastMock
+    })),
+    mockTeamStore,
+    mockCheckRestriction: vi.fn()
+  }
+})
 
 // Mock implementations
 vi.mock('@/stores', async (importOriginal) => {
