@@ -1,7 +1,9 @@
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useConnection } from '@wagmi/vue'
 import Safe, { type PredictedSafeProps, type SafeAccountConfig, type Eip1193Provider } from '@safe-global/protocol-kit'
 import { createPublicClient, custom, formatEther, isAddress } from 'viem'
+import { TX_SERVICE_BY_CHAIN } from '@/composables/Safe/read'
+import { getChainId } from '~/constant/index'
 
 declare global {
   interface Window {
@@ -10,6 +12,26 @@ declare global {
 }
 
 const SAFE_VERSION = '1.4.1'
+const chainId = getChainId()
+const safeInstanceCache = new Map<string, Promise<Safe>>()
+
+function safeCacheKey(safeAddress: string, signer: string) {
+  return `${safeAddress.toLowerCase()}::${signer.toLowerCase()}`
+}
+
+async function getSafeInstance(safeAddress: string, signer: string) {
+  const key = safeCacheKey(safeAddress, signer)
+  const cached = safeInstanceCache.get(key)
+  if (cached) return cached
+  const promise = Safe.init({
+    provider: getInjectedProvider(),
+    signer,
+    safeAddress
+  })
+  safeInstanceCache.set(key, promise)
+  promise.catch(() => safeInstanceCache.delete(key))
+  return promise
+}
 
 /**
  * Get the injected EIP-1193 provider.
@@ -42,6 +64,7 @@ function buildPredictedSafe(owners: string[], threshold: number, saltNonce: stri
 export function useSafe() {
   const connection = useConnection()
   const isBusy = ref(false)
+  watch(() => connection.address.value, () => safeInstanceCache.clear())
   /**
    * Deploy a new Safe using the connected wallet as signer.
    * - owners: array of addresses
@@ -107,12 +130,7 @@ export function useSafe() {
 
     isBusy.value = true
     try {
-      const safeSdk = await Safe.init({
-        provider: getInjectedProvider(),
-        signer: connection.address.value,
-        safeAddress
-      })
-      return safeSdk
+      return await getSafeInstance(safeAddress, connection.address.value)
     } finally {
       isBusy.value = false
     }
@@ -133,10 +151,84 @@ export function useSafe() {
     }
   }
 
+  /**
+   * Approve a Safe transaction (sign and submit signature to the Safe Transaction Service)
+   */
+  async function approveTransaction(safeAddress: string, safeTxHash: string) {
+    if (!isAddress(safeAddress)) throw new Error('Invalid Safe address')
+    if (!safeTxHash) throw new Error('Missing Safe transaction hash')
+    if (!connection.isConnected.value || !connection.address.value) throw new Error('Wallet not connected')
+
+    isBusy.value = true
+    try {
+      const txService = TX_SERVICE_BY_CHAIN[chainId]
+      if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
+
+      // Initialize Safe SDK with connected wallet
+      const safeSdk = await getSafeInstance(safeAddress, connection.address.value)
+
+      // Sign the transaction hash (EIP-712)
+      const signature = await safeSdk.signHash(safeTxHash)
+
+      // Submit the signature to the Safe Transaction Service
+      const resp = await fetch(`${txService.url}/api/v1/multisig-transactions/${safeTxHash}/confirmations/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ signature: signature.data })
+      })
+      if (!resp.ok) {
+        const errorText = await resp.text()
+        throw new Error(errorText || 'Failed to confirm transaction')
+      }
+      return signature.data
+    } finally {
+      isBusy.value = false
+    }
+  }
+
+  /**
+   * Execute a Safe transaction (on-chain, requires threshold signatures)
+   */
+  async function executeTransaction(safeAddress: string, safeTxHash: string) {
+    if (!isAddress(safeAddress)) throw new Error('Invalid Safe address')
+    if (!safeTxHash) throw new Error('Missing Safe transaction hash')
+    if (!connection.isConnected.value || !connection.address.value) throw new Error('Wallet not connected')
+
+    isBusy.value = true
+    try {
+      const txService = TX_SERVICE_BY_CHAIN[chainId]
+      if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
+
+      // Initialize Safe SDK with connected wallet
+      const safeSdk = await getSafeInstance(safeAddress, connection.address.value)
+
+      // Fetch the transaction from the service
+      const serviceResp = await fetch(`${txService.url}/api/v1/multisig-transactions/${safeTxHash}/`)
+      if (!serviceResp.ok) {
+        const errorText = await serviceResp.text()
+        throw new Error(errorText || 'Transaction not found')
+      }
+      const serviceTx = await serviceResp.json()
+
+      // Execute the transaction (will send on-chain tx)
+      const txResponse = await safeSdk.executeTransaction(serviceTx)
+      const txHash = (txResponse.transactionResponse as { hash?: string } | undefined)?.hash || txResponse.hash
+      const waitFn = (txResponse.transactionResponse as { wait?: () => Promise<unknown> } | undefined)?.wait
+      if (typeof waitFn === 'function') {
+        await waitFn()
+      }
+      return txHash
+    } finally {
+      isBusy.value = false
+    }
+  }
+
   return {
     isBusy,
     deploySafe,
     loadSafe,
-    getDeployerInfo
+    getDeployerInfo,
+    approveTransaction,
+    executeTransaction
   }
 }

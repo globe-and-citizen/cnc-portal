@@ -1,28 +1,14 @@
-import { ref, unref, type MaybeRef } from 'vue'
+import { unref, computed, type MaybeRef } from 'vue'
 import { formatUnits } from 'viem'
+import { useQuery } from '@tanstack/vue-query'
 import { getChainId } from '@/constant/index'
+import type { Safe, SafeBalanceItem, SafeTx } from '@/types/safe'
 
-interface Safe {
-  address: string
-  chain: string
-  balance: string
-  symbol: string
-}
-
-const TX_SERVICE_BY_CHAIN: Record<number, { chain: string, url: string, nativeSymbol: string }> = {
+export const TX_SERVICE_BY_CHAIN: Record<number, { chain: string, url: string, nativeSymbol: string }> = {
   137: { chain: 'polygon', url: 'https://api.safe.global/tx-service/pol', nativeSymbol: 'POL' },
   11155111: { chain: 'sep', url: 'https://api.safe.global/tx-service/sep', nativeSymbol: 'ETH' },
   80002: { chain: 'matic', url: 'https://api.safe.global/tx-service/matic', nativeSymbol: 'MATIC' },
   42161: { chain: 'arbitrum', url: 'https://api.safe.global/tx-service/arbitrum', nativeSymbol: 'ETH' }
-}
-
-type SafeBalanceItem = {
-  tokenAddress: string | null
-  token?: {
-    symbol?: string | null
-    decimals?: number | null
-  } | null
-  balance: string
 }
 
 async function fetchNativeBalance(txServiceUrl: string, safeAddress: string, nativeSymbol: string) {
@@ -42,59 +28,143 @@ async function fetchNativeBalance(txServiceUrl: string, safeAddress: string, nat
 }
 
 export function useSafes(ownerAddress: MaybeRef<string | undefined>) {
-  const safes = ref<Safe[]>([])
-  const isLoading = ref(false)
-  const error = ref<string | null>(null)
+  const addressRef = computed(() => unref(ownerAddress))
 
-  const fetchSafes = async () => {
-    const address = unref(ownerAddress)
-    if (!address) {
-      error.value = 'No address provided'
-      safes.value = []
-      return
-    }
+  const safesQuery = useQuery<Safe[]>({
+    queryKey: computed(() => ['safes', addressRef.value, getChainId()]),
+    enabled: computed(() => !!addressRef.value),
+    queryFn: async () => {
+      const address = addressRef.value
+      if (!address) throw new Error('No address provided')
 
-    isLoading.value = true
-    error.value = null
-
-    try {
       const chainId = getChainId()
       const txService = TX_SERVICE_BY_CHAIN[chainId]
-      if (!txService) {
-        error.value = `Unsupported chainId: ${chainId}`
-        safes.value = []
-        return
-      }
+      if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
       const res = await fetch(`${txService.url}/api/v1/owners/${address}/safes/`)
-      if (!res.ok) {
-        error.value = `Failed to fetch safes for chain ${txService.chain}`
-        safes.value = []
-        return
-      }
+      if (!res.ok) throw new Error(`Failed to fetch safes for chain ${txService.chain}`)
 
       const data: { safes: string[] } = await res.json()
       const safeAddresses = data.safes ?? []
 
-      // Fetch balances for each safe (sequentially)
-      const results: Safe[] = []
+      const balances: {
+        addr: string
+        balanceData: { balance: string, symbol: string }
+      }[] = []
+
       for (const addr of safeAddresses) {
-        const balanceData = await fetchNativeBalance(txService.url, addr, txService.nativeSymbol)
-        results.push({
-          address: addr,
-          chain: txService.chain,
-          balance: balanceData.balance,
-          symbol: balanceData.symbol
-        })
+        const balanceData = await fetchNativeBalance(
+          txService.url,
+          addr,
+          txService.nativeSymbol
+        )
+
+        balances.push({ addr, balanceData })
+
+        // tiny delay so Safe API doesn't rate-limit you
+        await new Promise(resolve => setTimeout(resolve, 200))
       }
-      safes.value = results
-    } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch safes'
-      safes.value = []
-    } finally {
-      isLoading.value = false
-    }
-  }
+
+      return balances.map(({ addr, balanceData }) => ({
+        address: addr,
+        chain: txService.chain,
+        balance: balanceData.balance,
+        symbol: balanceData.symbol
+      }))
+    },
+    staleTime: 30_000,
+    gcTime: 300_000,
+    refetchOnWindowFocus: false
+  })
+
+  const safes = computed(() => safesQuery.data.value ?? [])
+  const isLoading = computed(() => safesQuery.isLoading.value || safesQuery.isFetching.value)
+  const error = computed<string | null>(() => {
+    const err = safesQuery.error.value
+    if (!err) return null
+    return err instanceof Error ? err.message : 'Failed to fetch safes'
+  })
+
+  const fetchSafes = () => safesQuery.refetch()
 
   return { safes, isLoading, error, fetchSafes }
+}
+
+async function getSafeTransactions(
+  safeAddress: string,
+  executed: boolean
+) {
+  const chainId = getChainId()
+  const txService = TX_SERVICE_BY_CHAIN[chainId]
+  if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
+
+  const res = await fetch(
+    `${txService.url}/api/v1/safes/${safeAddress}/multisig-transactions/?executed=${executed}`
+  )
+
+  if (!res.ok) {
+    throw new Error(
+      executed
+        ? 'Failed to fetch executed transactions'
+        : 'Failed to fetch pending transactions'
+    )
+  }
+
+  const data = await res.json()
+  return data.results || []
+}
+
+export function useSafeTransactions(params: {
+  safeAddress: MaybeRef<string | undefined>
+  executed: MaybeRef<boolean>
+  enabled?: MaybeRef<boolean>
+}) {
+  const addressRef = computed(() => unref(params.safeAddress))
+  const executedRef = computed(() => unref(params.executed))
+  const enabledRef = computed(() => {
+    const userEnabled = params.enabled ? unref(params.enabled) : true
+    return !!addressRef.value && userEnabled
+  })
+
+  const txQuery = useQuery<SafeTx[]>({
+    queryKey: computed(() => ['safeTxs', addressRef.value, executedRef.value]),
+    enabled: enabledRef,
+    queryFn: async () => {
+      const address = addressRef.value
+      if (!address) throw new Error('No address provided')
+      return getSafeTransactions(address, executedRef.value)
+    },
+    staleTime: 15_000,
+    refetchOnWindowFocus: false
+  })
+
+  const txs = computed(() => txQuery.data.value ?? [])
+  const loading = computed(
+    () => txQuery.isLoading.value || txQuery.isFetching.value
+  )
+  const error = computed<string | null>(() => {
+    const err = txQuery.error.value
+    if (!err) return null
+    return err instanceof Error ? err.message : 'Failed to fetch transactions'
+  })
+  const refetch = () => txQuery.refetch()
+  return { txs, loading, error, refetch }
+}
+
+export function txUrl(tx: { transactionHash?: string }) {
+  if (!tx.transactionHash) return '#'
+
+  const chainId = getChainId()
+
+  switch (chainId) {
+    case 137: // Polygon
+      return `https://polygonscan.com/tx/${tx.transactionHash}`
+    case 80001: // Mumbai
+      return `https://mumbai.polygonscan.com/tx/${tx.transactionHash}`
+    case 42161: // Arbitrum
+      return `https://arbiscan.io/tx/${tx.transactionHash}`
+    case 11155111: // Sepolia
+    default:
+      return `https://sepolia.etherscan.io/tx/${tx.transactionHash}`
+  }
 }
