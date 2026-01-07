@@ -13,6 +13,10 @@ export interface Trade {
   result?: 'won' | 'lost'
   pnl: number
   date: string
+  // Metadata for Safe transactions
+  conditionId?: string
+  outcomeIndex?: number
+  redeemable?: boolean
 }
 
 export interface OrderDetails {
@@ -22,4 +26,53 @@ export interface OrderDetails {
   orderType: 'market' | 'limit'
   total: number
   // Add any other order details you need
+}
+
+export type PolymarketPosition = {
+  proxyWallet: string
+  asset: string
+  conditionId: string
+  size: number
+  avgPrice: number
+  initialValue: number
+  currentValue: number
+  cashPnl: number
+  percentPnl: number
+  totalBought: number
+  realizedPnl: number
+  percentRealizedPnl: number
+  curPrice: number
+  redeemable: boolean
+  mergeable: boolean
+  title: string
+  slug: string
+  icon: string
+  eventSlug: string
+  eventId?: string
+  outcome: string
+  outcomeIndex: number
+  oppositeOutcome: string
+  oppositeAsset: string
+  endDate: string
+  negativeRisk: boolean
+}
+
+export type PolynarketClosedPosition = {
+  proxyWallet: string
+  asset: string
+  conditionId: string
+  avgPrice: number
+  totalBought: number
+  realizedPnl: number
+  curPrice: number
+  timestamp: number
+  title: string
+  slug: string
+  icon: string
+  eventSlug: string
+  outcome: string
+  outcomeIndex: number
+  oppositeOutcome: string
+  oppositeAsset: string
+  endDate: string
 }
