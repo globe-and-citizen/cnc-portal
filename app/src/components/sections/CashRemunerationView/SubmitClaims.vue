@@ -15,6 +15,7 @@
       <h3 class="text-xl font-bold">Submit Claim</h3>
       <hr />
       <ClaimForm
+        ref="claimFormRef"
         :initial-data="formInitialData"
         :is-loading="isWageClaimAdding"
         :disabled-week-starts="props.signedWeekStarts"
@@ -47,13 +48,14 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
-import { useQueryClient } from '@tanstack/vue-query'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
-import { useCustomFetch, useSubmitRestriction } from '@/composables'
+import { useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
 import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
+import apiClient from '@/lib/axios'
 
 dayjs.extend(utc)
 
@@ -64,6 +66,8 @@ const { isRestricted, checkRestriction } = useSubmitRestriction()
 
 const modal = ref(false)
 const errorMessage = ref<{ message: string } | null>(null)
+const addWageClaimError = ref(false)
+const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
 const createDefaultFormData = (): ClaimFormData => ({
   hoursWorked: '',
   memo: '',
@@ -78,13 +82,26 @@ const props = defineProps<{
 }>()
 
 const formInitialData = ref<ClaimFormData>(createDefaultFormData())
-const claimPayload = ref<ClaimSubmitPayload | null>(null)
 
 const openModal = () => {
   formInitialData.value = createDefaultFormData()
   errorMessage.value = null
+  addWageClaimError.value = false
   modal.value = true
 }
+
+// Reset form (including file previews) whenever the modal is closed
+watch(
+  modal,
+  (isOpen) => {
+    if (!isOpen) {
+      claimFormRef.value?.resetForm()
+      errorMessage.value = null
+      addWageClaimError.value = false
+    }
+  },
+  { flush: 'post' }
+)
 
 const teamId = computed(() => teamStore.currentTeamId)
 
@@ -99,56 +116,62 @@ watch(
   { immediate: true }
 )
 
-const {
-  error: addWageClaimError,
-  isFetching: isWageClaimAdding,
-  execute: addClaim,
-  response: addWageClaimResponse,
-  statusCode: addWageClaimStatusCode
-} = useCustomFetch('/claim', {
-  immediate: false
-})
-  .post(() => {
-    if (!claimPayload.value) {
-      throw new Error('Missing claim payload')
-    }
-    return {
-      teamId: teamId.value,
-      ...claimPayload.value
-    }
-  })
-  .json()
-
-watch(addWageClaimError, async () => {
-  if (addWageClaimError.value) {
-    errorMessage.value = await addWageClaimResponse.value?.json()
-  }
-})
-
 const canSubmitClaim = computed(() => {
   if (!props.weeklyClaim) return true
 
   return props.weeklyClaim.status === 'pending'
 })
 
-const handleSubmit = async (data: ClaimSubmitPayload) => {
+const { mutateAsync: submitClaim, isPending: isWageClaimAdding } = useMutation<
+  void,
+  Error,
+  ClaimSubmitPayload & { files?: File[] }
+>({
+  mutationKey: ['submit-claim'],
+  mutationFn: async (payload) => {
+    if (!teamId.value) throw new Error('Team not selected')
+
+    const formData = new FormData()
+    formData.append('teamId', teamId.value.toString())
+    formData.append('hoursWorked', payload.hoursWorked.toString())
+    formData.append('memo', payload.memo)
+    formData.append('dayWorked', payload.dayWorked)
+
+    payload.files?.forEach((file) => formData.append('files', file))
+
+    await apiClient.post('/claim', formData)
+  }
+})
+
+const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
   if (!teamId.value) {
     toastStore.addErrorToast('Team not selected')
     return
   }
 
-  claimPayload.value = data
-  await addClaim()
+  addWageClaimError.value = false
+  errorMessage.value = null
 
-  if (addWageClaimStatusCode.value === 201) {
+  try {
+    await submitClaim(data)
+
     toastStore.addSuccessToast('Wage claim added successfully')
     queryClient.invalidateQueries({
       queryKey: ['weekly-claims', teamStore.currentTeamId]
     })
     modal.value = false
     formInitialData.value = createDefaultFormData()
-    claimPayload.value = null
-    errorMessage.value = null
+    claimFormRef.value?.resetForm()
+  } catch (error) {
+    console.error('Error submitting claim:', error)
+    const message =
+      error instanceof Error
+        ? error.message
+        : ((error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Failed to add claim')
+    toastStore.addErrorToast(message)
+    errorMessage.value = { message }
+    addWageClaimError.value = true
   }
 }
 

@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
+import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
 import DeleteClaimModal from '@/components/sections/CashRemunerationView/DeleteClaimModal.vue'
 
@@ -56,12 +57,13 @@ describe('ClaimActions', () => {
   }
 
   const createWrapper = () => {
+    const queryClient = new QueryClient()
     return mount(ClaimActions, {
       props: {
         claim: mockClaim
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
         stubs: {
           ModalComponent: {
             name: 'ModalComponent',

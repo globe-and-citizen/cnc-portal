@@ -60,6 +60,28 @@
       {{ error.$message }}
     </div>
 
+    <UploadFileDB
+      ref="uploadFileRef"
+      @update:files="onFilesUpdate"
+      :disabled="isLoading"
+      :existing-file-count="props.existingFiles?.length ?? 0"
+    />
+
+    <!-- Existing Files Display - File Preview Gallery with Lightbox -->
+    <div
+      v-if="isEdit && existingFiles && existingFiles.length > 0"
+      data-test="attached-files-section"
+    >
+      <h4 class="text-sm font-semibold mb-3 text-gray-700">Attached Files:</h4>
+      <FilePreviewGallery
+        :previews="existingFilePreviews"
+        can-remove
+        grid-class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"
+        item-height-class="h-20"
+        @remove="(index) => $emit('delete-file', index)"
+      />
+    </div>
+
     <div class="flex justify-center gap-4">
       <ButtonUI
         v-if="isEdit"
@@ -93,6 +115,16 @@ import type { ClaimFormData } from '@/types'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import ButtonUI from '@/components/ButtonUI.vue'
+import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
+import { useToastStore } from '@/stores'
+// import UploadImage from '@/components/sections/CashRemunerationView/Form/UploadImage.vue' // Deprecated: cloud storage
+import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue' // New: database storage
+
+interface FileData {
+  fileName: string
+  fileType: string
+  fileData: string
+}
 
 interface Props {
   initialData?: Partial<ClaimFormData>
@@ -100,15 +132,22 @@ interface Props {
   isLoading?: boolean
   disabledWeekStarts?: string[]
   restrictSubmit?: boolean
+  existingFiles?: FileData[]
+  deletingFileIndex?: number | null
 }
 
 dayjs.extend(utc)
+
+const MAX_FILES = 10
+const toastStore = useToastStore()
 
 const props = withDefaults(defineProps<Props>(), {
   isEdit: false,
   isLoading: false,
   disabledWeekStarts: () => [],
-  restrictSubmit: true
+  restrictSubmit: true,
+  existingFiles: () => [],
+  deletingFileIndex: null
 })
 
 // Key to force VueDatePicker re-render when restriction mode or disabled weeks change
@@ -117,9 +156,28 @@ const restrictSubmitKey = computed(() => {
 })
 
 const emit = defineEmits<{
-  submit: [data: { hoursWorked: number; memo: string; dayWorked: string }]
+  submit: [data: { hoursWorked: number; memo: string; dayWorked: string; files?: File[] }]
   cancel: []
+  'delete-file': [index: number]
 }>()
+
+const uploadFileRef = ref<InstanceType<typeof UploadFileDB> | null>(null)
+const uploadedFiles = ref<File[]>([])
+
+const onFilesUpdate = (files: File[]): void => {
+  uploadedFiles.value = files
+}
+
+// Convert FileData to PreviewItem for FilePreviewGallery
+const existingFilePreviews = computed(() => {
+  return (props.existingFiles ?? []).map((file) => ({
+    previewUrl: `data:${file.fileType};base64,${file.fileData}`,
+    fileName: file.fileName,
+    fileSize: 0,
+    fileType: file.fileType,
+    isImage: file.fileType.startsWith('image/')
+  }))
+})
 
 const createDefaultFormData = (overrides?: Partial<ClaimFormData>): ClaimFormData => ({
   hoursWorked: overrides?.hoursWorked ?? '',
@@ -191,7 +249,6 @@ const disabledDatesFn = computed(() => {
       return daysDiff < 0 || daysDiff > 4
     }
 
-    // 🟢 Rule 3: free mode → everything else allowed
     return false
   }
 })
@@ -200,10 +257,29 @@ const handleSubmit = async () => {
   v$.value.$touch()
   if (v$.value.$invalid) return
 
+  // Validate total file count
+  const totalFiles = (props.existingFiles?.length ?? 0) + uploadedFiles.value.length
+  if (totalFiles > MAX_FILES) {
+    toastStore.addErrorToast(
+      `Maximum ${MAX_FILES} files allowed. Currently you have ${totalFiles} files. Please remove ${totalFiles - MAX_FILES} file(s).`
+    )
+    return
+  }
+
   emit('submit', {
     hoursWorked: Number(formData.value.hoursWorked),
     memo: formData.value.memo,
-    dayWorked: formData.value.dayWorked
+    dayWorked: formData.value.dayWorked,
+    files: uploadedFiles.value.length ? uploadedFiles.value : undefined
   })
 }
+
+const resetForm = () => {
+  uploadFileRef.value?.resetUpload()
+  uploadedFiles.value = []
+}
+
+defineExpose({
+  resetForm
+})
 </script>
