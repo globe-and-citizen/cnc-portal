@@ -1,4 +1,5 @@
 <template>
+  <Toaster />
   <CardComponent title="Your Trades" data-test="trades-table">
     <template #card-action>
       <!-- Trading Input in card-action slot -->
@@ -38,7 +39,12 @@
     />
 
     <!-- Trading Modal -->
-    <ModalComponent v-model="tradingModal.show" v-if="tradingModal.mount" @reset="handleModalClose">
+    <ModalComponent
+      v-model="tradingModal.show"
+      modal-width="w-1/3 max-w-4xl"
+      v-if="tradingModal.mount"
+      @reset="handleModalClose"
+    >
       <TradingModal
         v-if="tradingModal.mount"
         :market-url="marketUrl"
@@ -68,8 +74,9 @@ import YourTradesTable from './YourTradesTable.vue'
 import TradingModal from './TradingModal.vue'
 // import OrderConfirmation from './OrderConfirmation.vue' // Optional
 import type { Trade, OrderDetails } from '@/types/trading'
-import { toast } from 'vue-sonner'
+import { Toaster, toast } from 'vue-sonner'
 import { log, parseError } from '@/utils'
+import 'vue-sonner/style.css'
 
 // Props
 interface Props {
