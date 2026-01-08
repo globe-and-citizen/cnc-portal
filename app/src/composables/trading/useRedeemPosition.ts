@@ -1,4 +1,3 @@
-// composables/useRedeemSafeTransaction.ts
 import { computed, markRaw, ref, watch } from 'vue'
 import Safe, { type Eip1193Provider } from '@safe-global/protocol-kit'
 import SafeApiKit from '@safe-global/api-kit'
@@ -29,12 +28,6 @@ export function useRedeemPosition() {
     }
   })
 
-  /**
-   * @param signer - The Ethers JsonRpcSigner from the browser wallet
-   * @param safeAddress - The Polymarket Safe address
-   * @param redeemTxData - The encoded transaction data (from your createRedeemTx util)
-   * @param ctfContractAddress - The Polymarket CTF contract address
-   */
   const proposeRedemption = async (params: {
     safeAddress: string
     conditionId: string
@@ -75,8 +68,6 @@ export function useRedeemPosition() {
       // 5. Get Hash and Sign
       const safeTxHash = await protocolKit.getTransactionHash(safeTransaction)
       const signature = await protocolKit.signHash(safeTxHash)
-
-      console.log('Safe Address: ', params.safeAddress)
 
       // 6. Propose to Transaction Service
       await apiKit.proposeTransaction({
