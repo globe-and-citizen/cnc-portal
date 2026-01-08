@@ -48,7 +48,7 @@
               row.pnlPercent >= 0 ? 'text-green-500' : 'text-red-500'
             ]"
           >
-            {{ row.pnlPercent >= 0 ? '+' : '' }}{{ row.pnlPercent.toFixed(1) }}%
+            {{ row.pnlPercent >= 0 ? '+' : '' }}{{ row.pnlPercent.toFixed(2) }}%
           </span>
         </template>
 
@@ -83,7 +83,7 @@
           <button
             v-else
             @click="$emit('withdraw', row)"
-            :disabled="row.result === 'lost'"
+            :disabled="row.result === 'lost' || !row.redeemable"
             class="btn btn-sm btn-outline gap-1.5"
             :data-test="`withdraw-button-${row.id}`"
           >
