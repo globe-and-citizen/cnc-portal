@@ -199,7 +199,7 @@ export function getBackendUrl(): string {
       return 'http://localhost:3000'
     }
   }
-  return 'http://localhost:3000'
+  return 'https://apiv2.cncportal.io/'
 }
 
 export const BACKEND_URL = getBackendUrl()
