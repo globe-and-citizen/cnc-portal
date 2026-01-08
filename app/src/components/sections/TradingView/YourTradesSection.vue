@@ -32,8 +32,8 @@
 
     <!-- Your Trades Table Component -->
     <YourTradesTable
-      :trades="trades"
-      :loading="loading"
+      :trades="trades || []"
+      :loading="loading || isLoadingTrades"
       @sell="handleSell"
       @withdraw="handleWithdraw"
     />
@@ -77,10 +77,10 @@ import type { Trade, OrderDetails } from '@/types/trading'
 import { Toaster, toast } from 'vue-sonner'
 import { log, parseError } from '@/utils'
 import 'vue-sonner/style.css'
+import { useUserPositions, useRedeemPosition, useSafeDeployment } from '@/composables/trading'
 
 // Props
 interface Props {
-  // trades: Trade[]
   loading?: boolean
 }
 
@@ -99,72 +99,88 @@ const emit = defineEmits<{
 const marketUrl = ref('')
 const tradingModal = ref({ mount: false, show: false })
 
+// Use TanStack Query states
+const { data: trades, isLoading: isLoadingTrades /*, refetch */ } = useUserPositions()
+const { proposeRedemption } = useRedeemPosition()
+const { derivedSafeAddressFromEoa } = useSafeDeployment()
+
+watch(
+  trades,
+  (newData) => {
+    if (newData) {
+      // trades.value = newData
+      console.log('Fetched trades:', newData)
+    }
+  },
+  { immediate: true }
+)
+
 // Mock trades data (in real app, this would come from props or store)
-const trades = ref<Trade[]>([
-  {
-    id: '1',
-    market: 'Will Bitcoin reach $150,000 by end of 2025?',
-    outcome: 'Yes',
-    type: 'buy',
-    shares: 500,
-    entryPrice: 0.42,
-    currentPrice: 0.58,
-    status: 'open',
-    pnl: 80.0,
-    date: '2024-12-20'
-  },
-  {
-    id: '2',
-    market: 'Will the Fed cut rates in January 2025?',
-    outcome: 'No',
-    type: 'buy',
-    shares: 1000,
-    entryPrice: 0.67,
-    currentPrice: 0.72,
-    status: 'open',
-    pnl: 50.0,
-    date: '2024-12-18'
-  },
-  {
-    id: '3',
-    market: 'Will Ethereum ETF be approved by Q1 2025?',
-    outcome: 'Yes',
-    type: 'buy',
-    shares: 250,
-    entryPrice: 0.78,
-    currentPrice: 1.0,
-    status: 'resolved',
-    result: 'won',
-    pnl: 55.0,
-    date: '2024-12-15'
-  },
-  {
-    id: '4',
-    market: 'Will Apple release AR glasses in 2024?',
-    outcome: 'Yes',
-    type: 'buy',
-    shares: 300,
-    entryPrice: 0.35,
-    currentPrice: 0.0,
-    status: 'resolved',
-    result: 'lost',
-    pnl: -105.0,
-    date: '2024-12-10'
-  },
-  {
-    id: '5',
-    market: 'Will SpaceX Starship reach orbit in 2024?',
-    outcome: 'Yes',
-    type: 'buy',
-    shares: 800,
-    entryPrice: 0.55,
-    currentPrice: 1.0,
-    status: 'resolved',
-    result: 'won',
-    pnl: 360.0,
-    date: '2024-12-05'
-  }
-])
+// const trades = ref<Trade[]>([
+//   {
+//     id: '1',
+//     market: 'Will Bitcoin reach $150,000 by end of 2025?',
+//     outcome: 'Yes',
+//     type: 'buy',
+//     shares: 500,
+//     entryPrice: 0.42,
+//     currentPrice: 0.58,
+//     status: 'open',
+//     pnl: 80.0,
+//     date: '2024-12-20'
+//   },
+//   {
+//     id: '2',
+//     market: 'Will the Fed cut rates in January 2025?',
+//     outcome: 'No',
+//     type: 'buy',
+//     shares: 1000,
+//     entryPrice: 0.67,
+//     currentPrice: 0.72,
+//     status: 'open',
+//     pnl: 50.0,
+//     date: '2024-12-18'
+//   },
+//   {
+//     id: '3',
+//     market: 'Will Ethereum ETF be approved by Q1 2025?',
+//     outcome: 'Yes',
+//     type: 'buy',
+//     shares: 250,
+//     entryPrice: 0.78,
+//     currentPrice: 1.0,
+//     status: 'resolved',
+//     result: 'won',
+//     pnl: 55.0,
+//     date: '2024-12-15'
+//   },
+//   {
+//     id: '4',
+//     market: 'Will Apple release AR glasses in 2024?',
+//     outcome: 'Yes',
+//     type: 'buy',
+//     shares: 300,
+//     entryPrice: 0.35,
+//     currentPrice: 0.0,
+//     status: 'resolved',
+//     result: 'lost',
+//     pnl: -105.0,
+//     date: '2024-12-10'
+//   },
+//   {
+//     id: '5',
+//     market: 'Will SpaceX Starship reach orbit in 2024?',
+//     outcome: 'Yes',
+//     type: 'buy',
+//     shares: 800,
+//     entryPrice: 0.55,
+//     currentPrice: 1.0,
+//     status: 'resolved',
+//     result: 'won',
+//     pnl: 360.0,
+//     date: '2024-12-05'
+//   }
+// ])
 
 // Methods
 const handleTrade = () => {
@@ -190,10 +206,22 @@ const handleSell = (trade: Trade) => {
   }
 }
 
-const handleWithdraw = (trade: Trade) => {
+const handleWithdraw = async (trade: Trade) => {
   try {
-    // Add your withdraw logic here
     console.log('Withdrawing from trade:', trade)
+    if (trade.conditionId === undefined || trade.outcomeIndex === undefined) {
+      throw new Error('Position not redeemable')
+    }
+    if (!derivedSafeAddressFromEoa.value) {
+      throw new Error('Safe address not available')
+    }
+
+    // Add your withdraw logic here
+    await proposeRedemption({
+      safeAddress: derivedSafeAddressFromEoa.value,
+      conditionId: trade.conditionId,
+      outcomeIndex: trade.outcomeIndex
+    })
     toast.success(`Withdrawing $${Math.abs(trade.pnl).toFixed(2)} from "${trade.market}"`)
     emit('withdraw', trade)
   } catch (error) {
