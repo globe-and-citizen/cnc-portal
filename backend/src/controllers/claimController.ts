@@ -1,7 +1,6 @@
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import utc from 'dayjs/plugin/utc';
-import weekday from 'dayjs/plugin/weekday';
 import { Request, Response } from 'express';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
@@ -9,9 +8,21 @@ import { errorResponse } from '../utils/utils';
 import { Claim, Prisma } from '@prisma/client';
 import { isUserMemberOfTeam } from './wageController';
 
+// Type for multipart/form-data request with files
+interface MulterRequest extends Request {
+  files?: Express.Multer.File[];
+}
+
+// Type for file attachment data
+type FileAttachmentData = {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileData: string;
+};
+
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
-dayjs.extend(weekday);
 
 type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
   teamId: string;
@@ -20,6 +31,7 @@ type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
 // TODO limit weeday only for the current week. Betwen Monday and the current day
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
+  const multerReq = req as MulterRequest;
 
   const body = req.body as claimBodyRequest;
   const hoursWorked = Number(body.hoursWorked);
@@ -28,6 +40,16 @@ export const addClaim = async (req: Request, res: Response) => {
     ? dayjs.utc(body.dayWorked).startOf('day').toDate()
     : dayjs.utc().startOf('day').toDate();
   const teamId = Number(body.teamId);
+
+  // Get uploaded files (if any) and ensure they are in an array form
+  let uploadedFiles: Express.Multer.File[] = [];
+  if (multerReq.files != null) {
+    if (Array.isArray(multerReq.files)) {
+      uploadedFiles = multerReq.files;
+    } else {
+      return errorResponse(400, 'Invalid files payload', res);
+    }
+  }
 
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
@@ -112,6 +134,27 @@ export const addClaim = async (req: Request, res: Response) => {
       );
     }
 
+    // Prepare file attachments data if any files were uploaded
+    let fileAttachmentsData: FileAttachmentData[] | undefined = undefined;
+    if (uploadedFiles.length > 0) {
+      // Validate file count does not exceed 10
+      if (uploadedFiles.length > 10) {
+        return errorResponse(
+          400,
+          `Maximum 10 files allowed. You are trying to upload ${uploadedFiles.length} files. Please remove ${uploadedFiles.length - 10} file(s).`,
+          res
+        );
+      }
+
+      fileAttachmentsData = uploadedFiles.map((file) => ({
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        fileData: file.buffer.toString('base64'), // Convert buffer to base64 string for JSON storage
+      }));
+    }
+
+    // Create the claim with file attachments
     const claim = await prisma.claim.create({
       data: {
         hoursWorked,
@@ -119,6 +162,7 @@ export const addClaim = async (req: Request, res: Response) => {
         wageId: wage.id,
         weeklyClaimId: weeklyClaim.id,
         dayWorked: dayWorked,
+        fileAttachments: fileAttachmentsData,
       },
     });
 
@@ -182,10 +226,24 @@ export const updateClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const claimId = Number(req.params.claimId);
 
-  const { hoursWorked, memo }: { hoursWorked: number; memo: string } = req.body;
-  // Prepare the data according to the action
+  // Get uploaded files (if any) and ensure they are in an array form
+  let uploadedFiles: Express.Multer.File[] = [];
+  if (req.files != null) {
+    if (Array.isArray(req.files)) {
+      uploadedFiles = req.files;
+    } else {
+      return errorResponse(400, 'Invalid files payload', res);
+    }
+  }
+
+  const {
+    hoursWorked,
+    memo,
+    deletedFileIndexes,
+  }: { hoursWorked?: number; memo?: string; deletedFileIndexes?: string } = req.body;
+
   try {
-    // Fetch the claim including the required data
+    // Fetch the claim including the required data (include weeklyClaim.claims)
     const claim = await prisma.claim.findFirst({
       where: { id: claimId },
       include: {
@@ -233,13 +291,58 @@ export const updateClaim = async (req: Request, res: Response) => {
       }
     }
 
+    // Build file attachments from uploaded files and merge with existing ones
+    const existingAttachments = (claim.fileAttachments as FileAttachmentData[]) || [];
+    let fileAttachmentsData: FileAttachmentData[] | undefined = existingAttachments;
+
+    // Handle deleted file indexes first
+    if (deletedFileIndexes) {
+      try {
+        const indexesToDelete: number[] = JSON.parse(deletedFileIndexes);
+        if (Array.isArray(indexesToDelete) && indexesToDelete.length > 0) {
+          // Sort in descending order to avoid index shifting issues
+          const sortedIndexes = [...indexesToDelete].sort((a, b) => b - a);
+          fileAttachmentsData = [...existingAttachments];
+          for (const idx of sortedIndexes) {
+            if (idx >= 0 && idx < fileAttachmentsData.length) {
+              fileAttachmentsData.splice(idx, 1);
+            }
+          }
+        }
+      } catch (parseError) {
+        console.error('Error parsing deletedFileIndexes:', parseError);
+      }
+    }
+
+    if (uploadedFiles.length > 0) {
+      const newAttachments = uploadedFiles.map((file) => ({
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        fileData: file.buffer.toString('base64'),
+      }));
+
+      fileAttachmentsData = [...fileAttachmentsData, ...newAttachments];
+
+      // Validate total file count does not exceed 10
+      if (fileAttachmentsData.length > 10) {
+        return errorResponse(
+          400,
+          `Maximum 10 files allowed. You have ${fileAttachmentsData.length} files. Please remove ${fileAttachmentsData.length - 10} file(s).`,
+          res
+        );
+      }
+    }
+
     const updatedClaim = await prisma.claim.update({
       where: { id: claimId },
       data: {
         ...(memo !== undefined && { memo }),
         ...(hoursWorked !== undefined && { hoursWorked: Number(hoursWorked) }),
+        ...(fileAttachmentsData !== undefined && { fileAttachments: fileAttachmentsData }),
       },
     });
+
     return res.status(200).json(updatedClaim);
   } catch (error) {
     console.log('Error: ', error);

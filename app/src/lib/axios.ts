@@ -6,7 +6,7 @@ import { useUserDataStore } from '@/stores/user'
 const apiClient = axios.create({
   baseURL: `${BACKEND_URL}/api/`,
   headers: {
-    'Content-Type': 'application/json'
+    Accept: 'application/json'
   }
 })
 
@@ -15,6 +15,13 @@ apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
+  }
+
+  // Let the browser/axios set the correct multipart boundary
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type']
+  } else {
+    config.headers['Content-Type'] = 'application/json'
   }
   return config
 })
