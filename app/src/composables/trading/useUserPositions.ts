@@ -2,17 +2,15 @@ import { useQuery } from '@tanstack/vue-query'
 import axios from 'axios'
 import type { PolymarketPosition, PolynarketClosedPosition, Trade } from '@/types/trading'
 
-export function useUserPositions() {
-  const walletAddress = '0xBBa983bD0D0ef0e5Ce49B2c47bE92F01C11856A4'
+export function useUserPositions(safeAddress: string | undefined) {
   return useQuery({
-    queryKey: ['polymarket-positions', walletAddress],
+    queryKey: ['polymarket-positions', safeAddress],
     queryFn: async (): Promise<Trade[]> => {
-      if (!walletAddress) return []
-
+      if (!safeAddress) return []
       // Fetch positions using Axios (parallel requests)
       const [openRes, closedRes] = await Promise.all([
-        axios.get(`https://data-api.polymarket.com/positions?user=${walletAddress}&limit=50`),
-        axios.get(`https://data-api.polymarket.com/closed-positions?user=${walletAddress}&limit=50`)
+        axios.get(`https://data-api.polymarket.com/positions?user=${safeAddress}&limit=50`),
+        axios.get(`https://data-api.polymarket.com/closed-positions?user=${safeAddress}&limit=100`)
       ])
 
       const tradesMap = new Map<string, Trade>()
@@ -74,7 +72,7 @@ export function useUserPositions() {
 
       return Array.from(tradesMap.values())
     },
-    enabled: !!walletAddress,
+    enabled: !!safeAddress,
     staleTime: 5000,
     refetchInterval: 10000
   })
