@@ -392,6 +392,7 @@ const menuItems = computed(() => [
       name: 'bank-account',
       params: { id: teamStore.currentTeamId || '1' }
     },
+    
     // Active if any child is active or the parent route is active
     active:
       route.name === 'bank-account' ||
@@ -399,6 +400,7 @@ const menuItems = computed(() => [
       route.name === 'payroll-account' ||
       route.name === 'team-payroll' ||
       route.name === 'payroll-history' ||
+      route.name === 'safe-account' ||
       (route.name === 'payroll-history' && route.params.memberAddress === userStore.address),
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
@@ -411,6 +413,16 @@ const menuItems = computed(() => [
         },
         active: route.name === 'bank-account',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      },
+      {
+        label: 'Safe Account',
+        icon: 'heroicons:shield-check',
+        route: {
+          name: 'safe-account',
+          params: { id: teamStore.currentTeamId || '1' }
+        },
+        active: route.name === 'safe-account',
+        show: teamStore.currentTeam?.safeAddress
       },
       {
         label: 'Expense Account ',
