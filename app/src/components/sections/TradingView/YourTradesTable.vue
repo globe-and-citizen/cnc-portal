@@ -120,11 +120,40 @@ const statuses = ['all', 'open', 'resolved']
 const selectedStatus = ref<'all' | 'open' | 'resolved'>('all')
 
 // Calculate P&L percentage for each trade
+// const tradesWithPnlPercent = computed(() => {
+//   return props.trades.map((trade) => ({
+//     ...trade,
+//     pnlPercent: ((trade.currentPrice - trade.entryPrice) / trade.entryPrice) * 100
+//   }))
+// })
+
 const tradesWithPnlPercent = computed(() => {
-  return props.trades.map((trade) => ({
-    ...trade,
-    pnlPercent: ((trade.currentPrice - trade.entryPrice) / trade.entryPrice) * 100
-  }))
+  return props.trades.map((trade) => {
+    let pnlPercent = 0
+
+    if (trade.status === 'resolved') {
+      // Logic for Closed/Resolved Positions
+      // Cost Basis = Exit Value - Net Profit
+      const costBasis = trade.shares * trade.entryPrice
+      // Alternative using raw API fields if mapping manually:
+      // costBasis = totalBought - realizedPnl
+
+      if (costBasis > 0) {
+        pnlPercent = (trade.pnl / costBasis) * 100
+      }
+    } else {
+      // Logic for Open Positions
+      // Simple price-to-price comparison
+      if (trade.entryPrice > 0) {
+        pnlPercent = ((trade.currentPrice - trade.entryPrice) / trade.entryPrice) * 100
+      }
+    }
+
+    return {
+      ...trade,
+      pnlPercent //: parseFloat(pnlPercent.toFixed(2))
+    }
+  })
 })
 
 // Filter trades based on selected status - just like the example
