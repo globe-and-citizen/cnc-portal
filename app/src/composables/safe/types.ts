@@ -47,4 +47,3 @@ export interface SafeAppUrls {
   home: string
   settings: string
 }
-

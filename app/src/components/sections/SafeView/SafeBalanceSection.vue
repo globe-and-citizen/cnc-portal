@@ -21,13 +21,13 @@
         </div>
         <div class="text-sm text-gray-600 mt-2 flex flex-col gap-1">
           <div>
-            <span class="font-medium">{{ safeInfo?.threshold ?? '-' }}</span> of 
+            <span class="font-medium">{{ safeInfo?.threshold ?? '-' }}</span> of
             <span class="font-medium">{{ safeInfo?.owners.length || 0 }}</span> signatures required
           </div>
           <div class="text-xs text-gray-500">Safe Balance</div>
         </div>
       </div>
-      
+
       <div class="flex flex-col items-end gap-4">
         <ButtonUI
           v-if="teamStore.currentTeam?.safeAddress"
@@ -70,10 +70,12 @@ const currency = useStorage('currency', {
 
 const teamStore = useTeamStore()
 const { useSafeInfo } = useSafeContract()
-const { safeInfo, isLoading: isSafeLoading, error, fetchSafeInfo } = useSafeInfo(
-  chainId,
-  teamStore.currentTeam?.safeAddress
-)
+const {
+  safeInfo,
+  isLoading: isSafeLoading,
+  error,
+  fetchSafeInfo
+} = useSafeInfo(chainId, teamStore.currentTeam?.safeAddress)
 const { getSafeHomeUrl, openSafeAppUrl } = useSafeAppUrls()
 
 const displayUsdBalance = computed(
@@ -94,11 +96,14 @@ const openInSafeApp = () => {
 }
 
 // Watch for Safe address changes
-watch(() => teamStore.currentTeam?.safeAddress, () => {
-  if (teamStore.currentTeam?.safeAddress) {
-    fetchSafeInfo()
+watch(
+  () => teamStore.currentTeam?.safeAddress,
+  () => {
+    if (teamStore.currentTeam?.safeAddress) {
+      fetchSafeInfo()
+    }
   }
-})
+)
 
 // Watch for chain changes
 watch(chainId, () => {

@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { onMounted, watch } from 'vue'
 import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -91,25 +91,23 @@ import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useSafeContract } from '@/composables/safe'
 import { useSafeAppUrls } from '@/composables/safe/reads'
-import { useToastStore } from '@/stores'
+
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
-
 
 const teamStore = useTeamStore()
 const chainId = useChainId()
 
-const safeAddress=teamStore.currentTeam?.safeAddress
-
-
 // Safe composables
 const { useSafeOwners, useSafeInfo } = useSafeContract()
-const { owners, isLoading, error, fetchOwners } = useSafeOwners(chainId, teamStore.currentTeam?.safeAddress)
+const { owners, isLoading, error, fetchOwners } = useSafeOwners(
+  chainId,
+  teamStore.currentTeam?.safeAddress
+)
 const { safeInfo, fetchSafeInfo } = useSafeInfo(chainId, teamStore.currentTeam?.safeAddress)
 
 // Safe utilities
 const { getSafeSettingsUrl, openSafeAppUrl } = useSafeAppUrls()
-
 
 const handleOpenSafeApp = () => {
   const url = getSafeSettingsUrl(chainId.value, teamStore.currentTeam?.safeAddress as Address)

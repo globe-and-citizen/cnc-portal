@@ -115,9 +115,7 @@ const deploySafeForTeam = async () => {
   try {
     const safeAddress = await deploySafe([currentUserAddress], 1)
     safeLoadingMessage.value = 'Updating team with Safe address...'
-    const { error: updateError } = await useCustomFetch<Team>(
-      `teams/${props.createdTeamData.id}`
-    )
+    const { error: updateError } = await useCustomFetch<Team>(`teams/${props.createdTeamData.id}`)
       .put({
         safeAddress: safeAddress
       })

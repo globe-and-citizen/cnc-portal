@@ -392,7 +392,7 @@ const menuItems = computed(() => [
       name: 'bank-account',
       params: { id: teamStore.currentTeamId || '1' }
     },
-    
+
     // Active if any child is active or the parent route is active
     active:
       route.name === 'bank-account' ||

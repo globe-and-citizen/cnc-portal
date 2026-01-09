@@ -7,10 +7,22 @@ import type { SafeInfo, SafeBalanceItem, SafeDetails, SafeChainConfig } from './
 
 // Safe Transaction Service URLs by chain - following app pattern
 const TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> = {
-  137: { chain: 'polygon', url: 'https://safe-transaction-polygon.safe.global', nativeSymbol: 'POL' },
-  11155111: { chain: 'sepolia', url: 'https://safe-transaction-sepolia.safe.global', nativeSymbol: 'ETH' },
+  137: {
+    chain: 'polygon',
+    url: 'https://safe-transaction-polygon.safe.global',
+    nativeSymbol: 'POL'
+  },
+  11155111: {
+    chain: 'sepolia',
+    url: 'https://safe-transaction-sepolia.safe.global',
+    nativeSymbol: 'ETH'
+  },
   80002: { chain: 'amoy', url: 'https://safe-transaction-amoy.safe.global', nativeSymbol: 'MATIC' },
-  42161: { chain: 'arbitrum', url: 'https://safe-transaction-arbitrum.safe.global', nativeSymbol: 'ETH' }
+  42161: {
+    chain: 'arbitrum',
+    url: 'https://safe-transaction-arbitrum.safe.global',
+    nativeSymbol: 'ETH'
+  }
 }
 
 // Chain name mappings for Safe app URLs
@@ -61,7 +73,11 @@ interface BalanceTotals {
   }
 }
 
-async function fetchSafeBalance(txServiceUrl: string, safeAddress: string, nativeSymbol: string): Promise<BalanceResult> {
+async function fetchSafeBalance(
+  txServiceUrl: string,
+  safeAddress: string,
+  nativeSymbol: string
+): Promise<BalanceResult> {
   const cacheKey = `balance_${safeAddress}`
   const cached = getCachedData<BalanceResult>(cacheKey)
   if (cached) return cached
@@ -77,18 +93,18 @@ async function fetchSafeBalance(txServiceUrl: string, safeAddress: string, nativ
     }
 
     const data: SafeBalanceItem[] = await res.json()
-    const native = data.find(item => item.tokenAddress === null)
-    
+    const native = data.find((item) => item.tokenAddress === null)
+
     if (!native) {
       const result: BalanceResult = { balance: '0', symbol: nativeSymbol }
       setCachedData(cacheKey, result)
       return result
     }
-    
+
     const decimals = native.token?.decimals ?? 18
     const symbol = native.token?.symbol || nativeSymbol
     const balance = formatUnits(BigInt(native.balance || '0'), decimals)
-    
+
     const result: BalanceResult = { balance, symbol }
     setCachedData(cacheKey, result)
     return result
@@ -114,8 +130,8 @@ async function fetchSafeDetails(txServiceUrl: string, safeAddress: string): Prom
       }
       throw new Error(`HTTP ${res.status}: ${res.statusText}`)
     }
-    
-    const data = await res.json() as {
+
+    const data = (await res.json()) as {
       owners?: string[]
       threshold?: number
     }
@@ -123,7 +139,7 @@ async function fetchSafeDetails(txServiceUrl: string, safeAddress: string): Prom
       owners: data.owners || [],
       threshold: data.threshold || 1
     }
-    
+
     setCachedData(cacheKey, result)
     return result
   } catch (error) {
@@ -172,12 +188,12 @@ export function useSafeAppUrls() {
 export function useSafeReads() {
   const teamStore = useTeamStore()
   const currencyStore = useCurrencyStore()
-  
+
   const safeAddress = computed(() => {
     const teamData = teamStore.currentTeamMeta?.data
     return teamData?.safeAddress as Address | undefined
   })
-  
+
   const isSafeAddressValid = computed(() => {
     const address = safeAddress.value
     return !!address && isAddress(address)
@@ -199,7 +215,7 @@ export function useSafeReads() {
     const fetchSafeInfo = async (): Promise<void> => {
       const address = resolveSafeAddress(addressRef)
       const currentChainId = unref(chainId)
-      
+
       if (!address || !isAddress(address)) {
         error.value = 'Invalid Safe address'
         safeInfo.value = null
@@ -278,7 +294,7 @@ export function useSafeReads() {
     const fetchOwners = async (): Promise<void> => {
       const address = resolveSafeAddress(addressRef)
       const currentChainId = unref(chainId)
-      
+
       if (!address || !isAddress(address)) {
         error.value = 'Invalid Safe address'
         owners.value = []
@@ -323,7 +339,10 @@ export function useSafeReads() {
   /**
    * Get Safe threshold for current team
    */
-  const useSafeThreshold = (chainId: MaybeRef<number>, addressRef?: MaybeRef<Address | undefined>) => {
+  const useSafeThreshold = (
+    chainId: MaybeRef<number>,
+    addressRef?: MaybeRef<Address | undefined>
+  ) => {
     const threshold = ref<number>(1)
     const isLoading = ref(false)
     const error = ref<string | null>(null)
@@ -331,7 +350,7 @@ export function useSafeReads() {
     const fetchThreshold = async (): Promise<void> => {
       const address = resolveSafeAddress(addressRef)
       const currentChainId = unref(chainId)
-      
+
       if (!address || !isAddress(address)) {
         error.value = 'Invalid Safe address'
         threshold.value = 1

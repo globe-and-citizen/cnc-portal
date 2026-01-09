@@ -1,6 +1,10 @@
 import { ref, watch } from 'vue'
 import { useConnection, useChainId } from '@wagmi/vue'
-import Safe, { type PredictedSafeProps, type SafeAccountConfig, type Eip1193Provider } from '@safe-global/protocol-kit'
+import Safe, {
+  type PredictedSafeProps,
+  type SafeAccountConfig,
+  type Eip1193Provider
+} from '@safe-global/protocol-kit'
 import { createPublicClient, custom, formatEther, isAddress } from 'viem'
 
 const SAFE_VERSION = '1.4.1'
@@ -8,10 +12,22 @@ const safeInstanceCache = new Map<string, Promise<Safe>>()
 
 // Safe Transaction Service URLs by chain
 const TX_SERVICE_BY_CHAIN: Record<number, { chain: string; url: string; nativeSymbol: string }> = {
-  137: { chain: 'polygon', url: 'https://safe-transaction-polygon.safe.global', nativeSymbol: 'POL' },
-  11155111: { chain: 'sepolia', url: 'https://safe-transaction-sepolia.safe.global', nativeSymbol: 'ETH' },
+  137: {
+    chain: 'polygon',
+    url: 'https://safe-transaction-polygon.safe.global',
+    nativeSymbol: 'POL'
+  },
+  11155111: {
+    chain: 'sepolia',
+    url: 'https://safe-transaction-sepolia.safe.global',
+    nativeSymbol: 'ETH'
+  },
   80002: { chain: 'amoy', url: 'https://safe-transaction-amoy.safe.global', nativeSymbol: 'MATIC' },
-  42161: { chain: 'arbitrum', url: 'https://safe-transaction-arbitrum.safe.global', nativeSymbol: 'ETH' }
+  42161: {
+    chain: 'arbitrum',
+    url: 'https://safe-transaction-arbitrum.safe.global',
+    nativeSymbol: 'ETH'
+  }
 }
 
 function safeCacheKey(safeAddress: string, signer: string) {
@@ -36,9 +52,12 @@ async function getSafeInstance(safeAddress: string, signer: string) {
  * Get the injected EIP-1193 provider.
  */
 function getInjectedProvider(): Eip1193Provider {
-  const provider = (globalThis.window as Window & typeof globalThis)?.ethereum
+  const provider = (globalThis.window as Window & typeof globalThis)?.ethereum as unknown
   if (!provider) throw new Error('No injected Ethereum provider (window.ethereum) found')
-  return provider
+  if (typeof (provider as { request?: unknown }).request !== 'function') {
+    throw new Error('Injected provider does not implement EIP-1193 request method')
+  }
+  return provider as Eip1193Provider
 }
 
 /**
@@ -46,10 +65,19 @@ function getInjectedProvider(): Eip1193Provider {
  */
 function randomSaltNonce(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(16))
-  return '0x' + Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
+  return (
+    '0x' +
+    Array.from(bytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+  )
 }
 
-function buildPredictedSafe(owners: string[], threshold: number, saltNonce: string): PredictedSafeProps {
+function buildPredictedSafe(
+  owners: string[],
+  threshold: number,
+  saltNonce: string
+): PredictedSafeProps {
   const safeAccountConfig: SafeAccountConfig = { owners, threshold }
   return {
     safeAccountConfig,
@@ -66,7 +94,10 @@ export function useSafeWrites() {
   const isBusy = ref(false)
 
   // Clear cache when wallet address changes
-  watch(() => connection.address.value, () => safeInstanceCache.clear())
+  watch(
+    () => connection.address.value,
+    () => safeInstanceCache.clear()
+  )
 
   /**
    * Deploy a new Safe using the connected wallet as signer.
@@ -78,7 +109,8 @@ export function useSafeWrites() {
 
     // Basic validation
     if (!owners || owners.length === 0) throw new Error('At least one owner required')
-    if (threshold < 1 || threshold > owners.length) throw new Error(`Threshold must be between 1 and ${owners.length}`)
+    if (threshold < 1 || threshold > owners.length)
+      throw new Error(`Threshold must be between 1 and ${owners.length}`)
     owners.forEach((o, i) => {
       if (!isAddress(o)) throw new Error(`Invalid owner address [${i}]: ${o}`)
     })
@@ -125,7 +157,8 @@ export function useSafeWrites() {
    */
   async function loadSafe(safeAddress: string) {
     if (!isAddress(safeAddress)) throw new Error('Invalid Safe address')
-    if (!connection.isConnected.value || !connection.address.value) throw new Error('Wallet not connected')
+    if (!connection.isConnected.value || !connection.address.value)
+      throw new Error('Wallet not connected')
 
     isBusy.value = true
     try {
@@ -139,11 +172,14 @@ export function useSafeWrites() {
    * Get connected signer address (via wagmi) and balance (in ETH string)
    */
   async function getDeployerInfo() {
-    if (!connection.isConnected.value || !connection.address.value) throw new Error('Wallet not connected')
+    if (!connection.isConnected.value || !connection.address.value)
+      throw new Error('Wallet not connected')
     const publicClient = createPublicClient({
       transport: custom(getInjectedProvider())
     })
-    const balance = await publicClient.getBalance({ address: connection.address.value as `0x${string}` })
+    const balance = await publicClient.getBalance({
+      address: connection.address.value as `0x${string}`
+    })
     return {
       address: connection.address.value,
       balanceEth: formatEther(balance)
@@ -156,7 +192,8 @@ export function useSafeWrites() {
   async function approveTransaction(safeAddress: string, safeTxHash: string) {
     if (!isAddress(safeAddress)) throw new Error('Invalid Safe address')
     if (!safeTxHash) throw new Error('Missing Safe transaction hash')
-    if (!connection.isConnected.value || !connection.address.value) throw new Error('Wallet not connected')
+    if (!connection.isConnected.value || !connection.address.value)
+      throw new Error('Wallet not connected')
 
     isBusy.value = true
     try {
@@ -171,11 +208,14 @@ export function useSafeWrites() {
       const signature = await safeSdk.signHash(safeTxHash)
 
       // Submit the signature to the Safe Transaction Service
-      const resp = await fetch(`${txService.url}/api/v1/multisig-transactions/${safeTxHash}/confirmations/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ signature: signature.data })
-      })
+      const resp = await fetch(
+        `${txService.url}/api/v1/multisig-transactions/${safeTxHash}/confirmations/`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ signature: signature.data })
+        }
+      )
       if (!resp.ok) {
         const errorText = await resp.text()
         throw new Error(errorText || 'Failed to confirm transaction')
@@ -192,7 +232,8 @@ export function useSafeWrites() {
   async function executeTransaction(safeAddress: string, safeTxHash: string) {
     if (!isAddress(safeAddress)) throw new Error('Invalid Safe address')
     if (!safeTxHash) throw new Error('Missing Safe transaction hash')
-    if (!connection.isConnected.value || !connection.address.value) throw new Error('Wallet not connected')
+    if (!connection.isConnected.value || !connection.address.value)
+      throw new Error('Wallet not connected')
 
     isBusy.value = true
     try {
@@ -204,7 +245,9 @@ export function useSafeWrites() {
       const safeSdk = await getSafeInstance(safeAddress, connection.address.value)
 
       // Fetch the transaction from the service
-      const serviceResp = await fetch(`${txService.url}/api/v1/multisig-transactions/${safeTxHash}/`)
+      const serviceResp = await fetch(
+        `${txService.url}/api/v1/multisig-transactions/${safeTxHash}/`
+      )
       if (!serviceResp.ok) {
         const errorText = await serviceResp.text()
         throw new Error(errorText || 'Transaction not found')
@@ -213,8 +256,11 @@ export function useSafeWrites() {
 
       // Execute the transaction (will send on-chain tx)
       const txResponse = await safeSdk.executeTransaction(serviceTx)
-      const txHash = (txResponse.transactionResponse as { hash?: string } | undefined)?.hash || txResponse.hash
-      const waitFn = (txResponse.transactionResponse as { wait?: () => Promise<unknown> } | undefined)?.wait
+      const txHash =
+        (txResponse.transactionResponse as { hash?: string } | undefined)?.hash || txResponse.hash
+      const waitFn = (
+        txResponse.transactionResponse as { wait?: () => Promise<unknown> } | undefined
+      )?.wait
       if (typeof waitFn === 'function') {
         await waitFn()
       }
