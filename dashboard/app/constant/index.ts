@@ -196,10 +196,10 @@ export function getBackendUrl(): string {
       const config = useRuntimeConfig()
       return config.public.backendUrl
     } catch {
-      return 'http://localhost:3000'
+      return 'https://apiv2.cncportal.io'
     }
   }
-  return 'http://localhost:3000'
+  return 'https://apiv2.cncportal.io/'
 }
 
 export const BACKEND_URL = getBackendUrl()

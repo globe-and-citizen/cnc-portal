@@ -44,7 +44,7 @@ apiClient.interceptors.response.use(
  */
 export const getBackendUrl = (): string => {
   const config = useRuntimeConfig()
-  return config.public.backendUrl || 'http://localhost:3000'
+  return config.public.backendUrl || 'https://apiv2.cncportal.io'
 }
 
 export default apiClient
