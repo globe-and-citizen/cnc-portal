@@ -160,7 +160,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import type { Team } from '~/types'
+import type { Team, FeatureStatus } from '~/types'
 import TeamOverridesTable from './TeamOverridesTable.vue'
 import { useToast } from '#ui/composables/useToast'
 import {
@@ -174,8 +174,7 @@ import {
   transformToTeamOverrides,
   FEATURE_STATUS_OPTIONS,
   type FeatureWithOverrides,
-  type TeamRestrictionOverride,
-  type FeatureStatus
+  type TeamRestrictionOverride
 } from '~/api/features'
 import { useTeams } from '~/composables/useTeams'
 
