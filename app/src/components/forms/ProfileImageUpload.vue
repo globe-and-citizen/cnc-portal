@@ -43,13 +43,24 @@
 
 <script setup lang="ts">
 import { useStorage } from '@vueuse/core'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { BACKEND_URL } from '@/constant/index'
 import { useToastStore } from '@/stores'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
-const ALLOWED_IMAGE_MIMETYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
-const ACCEPTED_FILE_TYPES = ['.png', '.jpg', '.jpeg', '.webp'].join(',')
+const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg']
+const ACCEPTED_FILE_TYPES = ALLOWED_IMAGE_EXTENSIONS.join(',')
+
+const ALLOWED_IMAGE_MIMETYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+  'image/gif',
+  'image/bmp',
+  'image/svg+xml',
+  'image/x-icon'
+]
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const imageUrl = defineModel<string>({ default: '' })
@@ -57,6 +68,19 @@ const isUploading = ref(false)
 const errorMessage = ref('')
 const authToken = useStorage('authToken', '')
 const { addErrorToast, addSuccessToast } = useToastStore()
+
+// Helper: Detect if file is image (MIME type + extension fallback)
+const isImageFile = (file: File): boolean => {
+  // First check MIME type
+  if (ALLOWED_IMAGE_MIMETYPES.includes(file.type)) {
+    return true
+  }
+
+  // Fallback: check file extension (handles cases where MIME type is missing or wrong)
+  const fileName = file.name.toLowerCase()
+  const extension = '.' + fileName.split('.').pop()
+  return ALLOWED_IMAGE_EXTENSIONS.includes(extension)
+}
 
 // Computed style for upload box - reactive, no DOM manipulation needed
 const uploadBoxStyle = computed(() => ({
@@ -72,9 +96,9 @@ const onFileChange = async (event: Event) => {
 
   errorMessage.value = ''
 
-  if (!ALLOWED_IMAGE_MIMETYPES.includes(file.type)) {
-    errorMessage.value = 'Only images (png, jpg, jpeg, webp) are allowed'
-    addErrorToast('Only images (png, jpg, jpeg, webp) are allowed')
+  if (!isImageFile(file)) {
+    errorMessage.value = 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed'
+    addErrorToast('Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed')
     input.value = ''
     return
   }
@@ -89,10 +113,6 @@ const onFileChange = async (event: Event) => {
   await uploadSelectedFile(file)
   input.value = ''
 }
-
-onMounted(() => {
-  // Initial display is handled reactively via uploadBoxStyle computed property
-})
 
 const uploadSelectedFile = async (file: File) => {
   isUploading.value = true
