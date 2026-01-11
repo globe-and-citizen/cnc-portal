@@ -117,9 +117,6 @@ import utc from 'dayjs/plugin/utc'
 import ButtonUI from '@/components/ButtonUI.vue'
 import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
 import { useToastStore } from '@/stores'
-import type { FileAttachment } from '@/types/cash-remuneration'
-import { isLegacyFileAttachment, isS3FileAttachment } from '@/types/cash-remuneration'
-import { getPresignedUrl } from '@/composables/useFileUrl'
 // import UploadImage from '@/components/sections/CashRemunerationView/Form/UploadImage.vue' // Deprecated: cloud storage
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue' // New: database storage
 
@@ -137,7 +134,7 @@ interface Props {
   isLoading?: boolean
   disabledWeekStarts?: string[]
   restrictSubmit?: boolean
-  existingFiles?: FileAttachment[]
+  existingFiles?: FileData[]
   deletingFileIndex?: number | null
 }
 
@@ -168,52 +165,12 @@ const emit = defineEmits<{
 
 const uploadFileRef = ref<InstanceType<typeof UploadFileDB> | null>(null)
 const uploadedFiles = ref<File[]>([])
-const resolvedFileUrls = ref<Map<string, string>>(new Map())
 
 const onFilesUpdate = (files: File[]): void => {
   uploadedFiles.value = files
 }
 
-// Fetch presigned URLs for S3 files - IN PARALLEL for faster loading
-async function loadPresignedUrls() {
-  const files = props.existingFiles ?? []
-  const keysToFetch = files
-    .filter((f) => isS3FileAttachment(f) && f.key && !resolvedFileUrls.value.has(f.key))
-    .map((f) => f.key!)
-
-  if (keysToFetch.length === 0) return
-
-  // Fetch all URLs in parallel for faster loading
-  const results = await Promise.allSettled(
-    keysToFetch.map(async (key) => {
-      const url = await getPresignedUrl(key)
-      return { key, url }
-    })
-  )
-
-  // Process results
-  for (const result of results) {
-    if (result.status === 'fulfilled' && result.value.url) {
-      resolvedFileUrls.value.set(result.value.key, result.value.url)
-    } else if (result.status === 'rejected') {
-      console.error('Failed to fetch presigned URL:', result.reason)
-    }
-  }
-
-  // Force reactivity
-  resolvedFileUrls.value = new Map(resolvedFileUrls.value)
-}
-
-// Load presigned URLs when files change
-watch(
-  () => props.existingFiles,
-  () => {
-    loadPresignedUrls()
-  },
-  { immediate: true, deep: true }
-)
-
-// Convert FileAttachment to PreviewItem for FilePreviewGallery
+// Convert FileData to PreviewItem for FilePreviewGallery
 const existingFilePreviews = computed(() => {
   return (props.existingFiles ?? []).map((file) => ({
     previewUrl: file.fileUrl,
