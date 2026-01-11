@@ -123,7 +123,9 @@ import UploadFileDB from '@/components/sections/CashRemunerationView/Form/Upload
 interface FileData {
   fileName: string
   fileType: string
-  fileData: string
+  fileSize: number
+  fileKey: string
+  fileUrl: string
 }
 
 interface Props {
@@ -171,9 +173,9 @@ const onFilesUpdate = (files: File[]): void => {
 // Convert FileData to PreviewItem for FilePreviewGallery
 const existingFilePreviews = computed(() => {
   return (props.existingFiles ?? []).map((file) => ({
-    previewUrl: `data:${file.fileType};base64,${file.fileData}`,
+    previewUrl: file.fileUrl,
     fileName: file.fileName,
-    fileSize: 0,
+    fileSize: file.fileSize,
     fileType: file.fileType,
     isImage: file.fileType.startsWith('image/')
   }))
