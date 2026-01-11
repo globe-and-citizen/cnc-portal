@@ -3,7 +3,7 @@ import { useAuthStore } from '~/stores/useAuthStore'
 // const app = useNuxtApp()
 // app.runWithContext(() => {})
 export const apiFetch = $fetch.create({
-  baseURL: `${useRuntimeConfig().public.backendUrl as string}/api/`,
+  baseURL: `${useRuntimeConfig().public.backendUrl as string}/api`,
   credentials: 'include',
   onRequest({ options }) {
     let token: string | null = null

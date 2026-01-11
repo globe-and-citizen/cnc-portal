@@ -33,7 +33,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
       queryKey: ['user', { address: userAddress }],
       queryFn: async () => {
         const data = await $fetch<ApiUser>(`user/${userAddress}`, {
-          baseURL: `${useRuntimeConfig().public.backendUrl as string}/api/`,
+          baseURL: `${useRuntimeConfig().public.backendUrl as string}/api`,
           headers: {
             Authorization: `Bearer ${token}`
           }
