@@ -1,5 +1,3 @@
-import { apiClient } from './index'
-
 const COINGECKO_API = 'https://api.coingecko.com/api/v3'
 
 /**
@@ -35,22 +33,22 @@ export interface TokenPrices {
 export const fetchTokenPrices = async (tokenIds: string): Promise<TokenPrices> => {
   const url = `${COINGECKO_API}/simple/price`
 
-  const response = await apiClient.get<TokenPricesResponse>(url, {
+  const response = await $fetch<TokenPricesResponse>(url, {
     params: {
       ids: tokenIds,
       vs_currencies: 'usd'
     }
   })
 
-  if (!response.data) {
+  if (!response) {
     throw new Error('Failed to fetch token prices')
   }
 
   // Normalize the response data
   return {
-    'ethereum': response.data.ethereum?.usd || 0,
-    'usd-coin': response.data['usd-coin']?.usd || 1,
-    'tether': response.data.tether?.usd || 1,
-    'polygon-ecosystem-token': response.data['polygon-ecosystem-token']?.usd || 0
+    'ethereum': response.ethereum?.usd || 0,
+    'usd-coin': response['usd-coin']?.usd || 1,
+    'tether': response.tether?.usd || 1,
+    'polygon-ecosystem-token': response['polygon-ecosystem-token']?.usd || 0
   }
 }

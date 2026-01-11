@@ -58,7 +58,7 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from '#imports'
 import FeatureCard from '~/components/features/FeatureCard.vue'
-import { useFeatures } from '~/queries/function.query'
+import { useFeatures } from '~/queries/feature.query'
 
 const router = useRouter()
 const route = useRoute()

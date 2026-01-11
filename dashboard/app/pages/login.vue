@@ -45,13 +45,13 @@ onMounted(() => {
     { immediate: true }
   )
 
-  watch(
-    () => siweInstance?.error.value,
-    (val) => {
-      error.value = val ?? null
-    },
-    { immediate: true }
-  )
+  // watch(
+  //   () => siweInerrorstance?.error.value,
+  //   (val) => {
+  //     error.value = val ?? null
+  //   },
+  //   { immediate: true }
+  // )
 
   watch(
     () => connection?.isConnected.value,
@@ -106,10 +106,6 @@ const handleConnectWallet = async () => {
   }
 }
 
-const clearError = () => {
-  error.value = null
-}
-
 useHead({
   title: 'Sign In | CNC Portal Dashboard'
 })
@@ -139,13 +135,6 @@ useHead({
         color="error"
         variant="soft"
         class="mb-6"
-        :close-button="{
-          icon: 'i-lucide-x',
-          color: 'gray',
-          variant: 'link',
-          padded: false
-        }"
-        @close="clearError"
       >
         <template #title>
           {{ error }}
