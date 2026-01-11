@@ -100,7 +100,7 @@ export async function overrideExists(functionName: string, teamId: number): Prom
 export async function insertOverride(functionName: string, teamId: number, status: FeatureStatus) {
   const override = await prisma.teamFunctionOverride.create({
     data: { functionName, teamId, status },
-    include: { team: { select: { id: true, name: true } } },
+    include: { team: true },
   });
   return override;
 }
@@ -109,7 +109,7 @@ export async function patchOverride(functionName: string, teamId: number, status
   const override = await prisma.teamFunctionOverride.update({
     where: { unique_team_function: { teamId, functionName } },
     data: { status },
-    include: { team: { select: { id: true, name: true } } },
+    include: { team: true },
   });
   return override;
 }
