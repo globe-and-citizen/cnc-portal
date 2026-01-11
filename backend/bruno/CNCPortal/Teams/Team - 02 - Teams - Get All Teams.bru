@@ -29,4 +29,10 @@ tests {
       });
     }
   });
+  test("store first team ID if teams exist", function() {
+    if (res.body.length > 0) {
+      bru.setVar("testTeamId", res.body[0].id);
+      console.log("Stored first team ID:", res.body[0].id);
+    }
+  });
 }

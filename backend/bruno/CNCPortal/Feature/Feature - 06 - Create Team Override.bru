@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{host}}/admin/features/{{testFeatureName}}/teams/{{teamId}}
+  url: {{host}}/admin/features/{{testFeatureName}}/teams/{{testTeamId}}
   body: json
   auth: bearer
 }
@@ -27,7 +27,7 @@ tests {
 
   test("should return override object", function() {
     expect(res.body).to.be.an('object');
-    const expectedTeamId = parseInt(bru.getVar('teamId') || bru.getEnvVar('teamId'));
+    const expectedTeamId = parseInt(bru.getVar('testTeamId'));
     expect(res.body.teamId).to.equal(expectedTeamId);
     expect(res.body.status).to.equal('enabled');
   });
