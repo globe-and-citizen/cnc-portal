@@ -28,7 +28,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const queryClient = useQueryClient()
   try {
-    const userAddress = toValue(authStore.address) || ''
+    const userAddress = toValue(authStore.address)
+
+    // If the user address is missing, treat this as an unauthenticated state
+    if (!userAddress) {
+      authStore.clearAuth()
+      return navigateTo('/login')
+    }
     const user = await queryClient.fetchQuery({
       queryKey: ['user', { address: userAddress }],
       queryFn: async () => {
