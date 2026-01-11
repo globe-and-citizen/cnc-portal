@@ -268,7 +268,9 @@ import {
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
 import { useTanstackQuery } from '@/composables'
-import type { Claim, Wage, WeeklyClaim } from '@/types'
+import type { Claim, Wage, WeeklyClaim, FileAttachment } from '@/types'
+import { isS3FileAttachment, isLegacyFileAttachment } from '@/types/cash-remuneration'
+import { getPresignedUrl } from '@/composables/useFileUrl'
 import type { Address } from 'viem'
 
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
@@ -357,20 +359,79 @@ const generatedMonthWeek = computed(() => {
   return getMonthWeeks(selectedMonthObject.value.year, selectedMonthObject.value.month)
 })
 
-interface FileAttachment {
-  fileName: string
-  fileType: string
-  fileSize?: number
-  fileData: string
+// Cache for resolved presigned URLs (key -> url)
+const presignedUrlCache = ref<Map<string, string>>(new Map())
+
+/**
+ * Preload all presigned URLs for S3 files in the current week's claims - IN PARALLEL
+ */
+async function preloadPresignedUrls(claims: Claim[]) {
+  const allFiles = claims.flatMap((claim) => claim.fileAttachments || [])
+  const keysToFetch = allFiles
+    .filter((f) => isS3FileAttachment(f) && f.key && !presignedUrlCache.value.has(f.key))
+    .map((f) => f.key!)
+
+  if (keysToFetch.length === 0) return
+
+  // Fetch all URLs in parallel for faster loading
+  const results = await Promise.allSettled(
+    keysToFetch.map(async (key) => {
+      const url = await getPresignedUrl(key)
+      return { key, url }
+    })
+  )
+
+  // Process results
+  let hasUpdates = false
+  for (const result of results) {
+    if (result.status === 'fulfilled' && result.value.url) {
+      presignedUrlCache.value.set(result.value.key, result.value.url)
+      hasUpdates = true
+    } else if (result.status === 'rejected') {
+      console.error('Failed to fetch presigned URL:', result.reason)
+    }
+  }
+
+  // Force reactivity update
+  if (hasUpdates) {
+    presignedUrlCache.value = new Map(presignedUrlCache.value)
+  }
 }
 
+// Preload URLs when week claims change
+watch(
+  () => selectWeekWeelyClaim.value?.claims,
+  (claims) => {
+    if (claims && claims.length > 0) {
+      preloadPresignedUrls(claims)
+    }
+  },
+  { immediate: true }
+)
+
+/**
+ * Build file previews from file attachments.
+ * Supports both legacy base64 storage and new S3/Railway Storage.
+ * Uses presignedUrlCache which is preloaded by the watcher.
+ */
 const buildFilePreviews = (files: FileAttachment[]) => {
-  const imageMimeTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp']
-  const imageExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp']
+  const imageMimeTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp', 'image/svg+xml', 'image/x-icon']
+  const imageExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg', '.ico']
 
   return files.map((file) => {
-    const previewUrl =
-      file?.fileData && file?.fileType ? `data:${file.fileType};base64,${file.fileData}` : ''
+    let previewUrl = ''
+
+    // Check if this is a legacy base64 file or new S3 storage
+    if (isLegacyFileAttachment(file)) {
+      // Legacy: use base64 data URL
+      previewUrl = file.fileData && file.fileType 
+        ? `data:${file.fileType};base64,${file.fileData}` 
+        : ''
+    } else if (isS3FileAttachment(file)) {
+      // New S3 storage: get from preloaded cache
+      previewUrl = presignedUrlCache.value.get(file.key!) || ''
+    }
+
     const isImage =
       imageMimeTypes.includes(file?.fileType) ||
       imageExtensions.some((ext) => file?.fileName?.toLowerCase().endsWith(ext))
@@ -380,7 +441,9 @@ const buildFilePreviews = (files: FileAttachment[]) => {
       fileName: file.fileName,
       fileSize: file.fileSize ?? 0,
       fileType: file.fileType,
-      isImage
+      isImage,
+      // Include S3 key for reference
+      key: isS3FileAttachment(file) ? file.key : undefined
     }
   })
 }
