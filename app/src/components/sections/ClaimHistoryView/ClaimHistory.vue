@@ -268,9 +268,7 @@ import {
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
 import { useTanstackQuery } from '@/composables'
-import type { Claim, Wage, WeeklyClaim, FileAttachment } from '@/types'
-import { isS3FileAttachment, isLegacyFileAttachment } from '@/types/cash-remuneration'
-import { getPresignedUrl } from '@/composables/useFileUrl'
+import type { Claim, Wage, WeeklyClaim } from '@/types'
 import type { Address } from 'viem'
 
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
@@ -367,14 +365,9 @@ interface FileAttachment {
   fileUrl: string
 }
 
-/**
- * Build file previews from file attachments.
- * Supports both legacy base64 storage and new S3/Railway Storage.
- * Uses presignedUrlCache which is preloaded by the watcher.
- */
 const buildFilePreviews = (files: FileAttachment[]) => {
-  const imageMimeTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp', 'image/svg+xml', 'image/x-icon']
-  const imageExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg', '.ico']
+  const imageMimeTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp']
+  const imageExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp']
 
   return files.map((file) => {
     const isImage =
@@ -386,9 +379,7 @@ const buildFilePreviews = (files: FileAttachment[]) => {
       fileName: file.fileName,
       fileSize: file.fileSize,
       fileType: file.fileType,
-      isImage,
-      // Include S3 key for reference
-      key: isS3FileAttachment(file) ? file.key : undefined
+      isImage
     }
   })
 }
@@ -402,17 +393,6 @@ const selectWeekWeelyClaim = computed(() => {
     (weeklyClaim) => weeklyClaim.weekStart === selectedMonthObject.value.isoString
   )
 })
-
-// Preload URLs when week claims change
-watch(
-  () => selectWeekWeelyClaim.value?.claims,
-  (claims) => {
-    if (claims && claims.length > 0) {
-      preloadPresignedUrls(claims)
-    }
-  },
-  { immediate: true }
-)
 
 // Current signed weeks for disabling dates in claim form
 const signedWeekStarts = computed(() => {
