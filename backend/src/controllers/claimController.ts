@@ -7,19 +7,44 @@ import { errorResponse } from '../utils/utils';
 
 import { Claim, Prisma } from '@prisma/client';
 import { isUserMemberOfTeam } from './wageController';
+import {
+  uploadFiles,
+  deleteFile,
+  FileMetadata,
+  isStorageConfigured,
+  MAX_FILES_PER_CLAIM,
+} from '../services/storageService';
 
 // Type for multipart/form-data request with files
 interface MulterRequest extends Request {
   files?: Express.Multer.File[];
 }
 
-// Type for file attachment data
-type FileAttachmentData = {
+// Legacy type for file attachment data (stored as base64 in database)
+// DEPRECATED: Kept for backwards compatibility with existing data
+type LegacyFileAttachmentData = {
   fileName: string;
   fileType: string;
   fileSize: number;
-  fileData: string;
+  fileData: string; // base64 encoded data
 };
+
+// New type for file attachment metadata (stored in Railway Storage)
+// Only metadata is stored in the database, actual file is in S3
+// This is used for type safety in the application code
+type FileAttachmentData = FileMetadata | LegacyFileAttachmentData;
+
+// Helper function to convert file attachments to Prisma JSON type
+function toJsonValue(data: FileAttachmentData[] | undefined): Prisma.InputJsonValue | undefined {
+  if (!data) return undefined;
+  return data as unknown as Prisma.InputJsonValue;
+}
+
+// Helper function to parse file attachments from Prisma JSON
+function fromJsonValue(data: Prisma.JsonValue | null): FileAttachmentData[] {
+  if (!data || !Array.isArray(data)) return [];
+  return data as unknown as FileAttachmentData[];
+}
 
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
@@ -137,24 +162,50 @@ export const addClaim = async (req: Request, res: Response) => {
     // Prepare file attachments data if any files were uploaded
     let fileAttachmentsData: FileAttachmentData[] | undefined = undefined;
     if (uploadedFiles.length > 0) {
-      // Validate file count does not exceed 10
-      if (uploadedFiles.length > 10) {
+      // Validate file count does not exceed maximum
+      if (uploadedFiles.length > MAX_FILES_PER_CLAIM) {
         return errorResponse(
           400,
-          `Maximum 10 files allowed. You are trying to upload ${uploadedFiles.length} files. Please remove ${uploadedFiles.length - 10} file(s).`,
+          `Maximum ${MAX_FILES_PER_CLAIM} files allowed. You are trying to upload ${uploadedFiles.length} files. Please remove ${uploadedFiles.length - MAX_FILES_PER_CLAIM} file(s).`,
           res
         );
       }
 
-      fileAttachmentsData = uploadedFiles.map((file) => ({
-        fileName: file.originalname,
-        fileType: file.mimetype,
-        fileSize: file.size,
-        fileData: file.buffer.toString('base64'), // Convert buffer to base64 string for JSON storage
-      }));
+      // Check if Railway Storage is configured
+      if (!isStorageConfigured()) {
+        // Fallback to legacy base64 storage in database (deprecated)
+        console.warn(
+          'Railway Storage not configured. Falling back to database storage (deprecated).'
+        );
+        fileAttachmentsData = uploadedFiles.map((file) => ({
+          id: `legacy-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          key: '',
+          fileName: file.originalname,
+          fileType: file.mimetype,
+          fileSize: file.size,
+          uploadedAt: new Date().toISOString(),
+          // Legacy: store base64 data (will be removed in future)
+          fileData: file.buffer.toString('base64'),
+        })) as unknown as FileAttachmentData[];
+      } else {
+        // Upload files to Railway Storage
+        const uploadResults = await uploadFiles(uploadedFiles, 'claims');
+
+        // Check for upload errors
+        const failedUploads = uploadResults.filter((r) => !r.success);
+        if (failedUploads.length > 0) {
+          const errorMessages = failedUploads.map((r) => r.error).join('; ');
+          return errorResponse(400, `Failed to upload files: ${errorMessages}`, res);
+        }
+
+        // Extract metadata from successful uploads
+        fileAttachmentsData = uploadResults
+          .filter((r) => r.success && r.metadata)
+          .map((r) => r.metadata!);
+      }
     }
 
-    // Create the claim with file attachments
+    // Create the claim with file attachments metadata
     const claim = await prisma.claim.create({
       data: {
         hoursWorked,
@@ -162,7 +213,7 @@ export const addClaim = async (req: Request, res: Response) => {
         wageId: wage.id,
         weeklyClaimId: weeklyClaim.id,
         dayWorked: dayWorked,
-        fileAttachments: fileAttachmentsData,
+        fileAttachments: toJsonValue(fileAttachmentsData),
       },
     });
 
@@ -292,8 +343,9 @@ export const updateClaim = async (req: Request, res: Response) => {
     }
 
     // Build file attachments from uploaded files and merge with existing ones
-    const existingAttachments = (claim.fileAttachments as FileAttachmentData[]) || [];
+    const existingAttachments = fromJsonValue(claim.fileAttachments);
     let fileAttachmentsData: FileAttachmentData[] | undefined = existingAttachments;
+    const filesToDeleteFromStorage: string[] = [];
 
     // Handle deleted file indexes first
     if (deletedFileIndexes) {
@@ -305,6 +357,11 @@ export const updateClaim = async (req: Request, res: Response) => {
           fileAttachmentsData = [...existingAttachments];
           for (const idx of sortedIndexes) {
             if (idx >= 0 && idx < fileAttachmentsData.length) {
+              const deletedFile = fileAttachmentsData[idx];
+              // Track files to delete from storage (only if they have a key - new format)
+              if ('key' in deletedFile && deletedFile.key) {
+                filesToDeleteFromStorage.push(deletedFile.key);
+              }
               fileAttachmentsData.splice(idx, 1);
             }
           }
@@ -315,22 +372,50 @@ export const updateClaim = async (req: Request, res: Response) => {
     }
 
     if (uploadedFiles.length > 0) {
-      const newAttachments = uploadedFiles.map((file) => ({
-        fileName: file.originalname,
-        fileType: file.mimetype,
-        fileSize: file.size,
-        fileData: file.buffer.toString('base64'),
-      }));
-
-      fileAttachmentsData = [...fileAttachmentsData, ...newAttachments];
-
-      // Validate total file count does not exceed 10
-      if (fileAttachmentsData.length > 10) {
+      // Validate total file count does not exceed maximum
+      if (fileAttachmentsData.length + uploadedFiles.length > MAX_FILES_PER_CLAIM) {
         return errorResponse(
           400,
-          `Maximum 10 files allowed. You have ${fileAttachmentsData.length} files. Please remove ${fileAttachmentsData.length - 10} file(s).`,
+          `Maximum ${MAX_FILES_PER_CLAIM} files allowed. You would have ${fileAttachmentsData.length + uploadedFiles.length} files. Please remove ${fileAttachmentsData.length + uploadedFiles.length - MAX_FILES_PER_CLAIM} file(s).`,
           res
         );
+      }
+
+      // Check if Railway Storage is configured
+      if (!isStorageConfigured()) {
+        // Fallback to legacy base64 storage in database (deprecated)
+        console.warn(
+          'Railway Storage not configured. Falling back to database storage (deprecated).'
+        );
+        const newAttachments = uploadedFiles.map((file) => ({
+          id: `legacy-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          key: '',
+          fileName: file.originalname,
+          fileType: file.mimetype,
+          fileSize: file.size,
+          uploadedAt: new Date().toISOString(),
+          // Legacy: store base64 data (will be removed in future)
+          fileData: file.buffer.toString('base64'),
+        })) as unknown as FileAttachmentData[];
+
+        fileAttachmentsData = [...fileAttachmentsData, ...newAttachments];
+      } else {
+        // Upload files to Railway Storage
+        const uploadResults = await uploadFiles(uploadedFiles, 'claims');
+
+        // Check for upload errors
+        const failedUploads = uploadResults.filter((r) => !r.success);
+        if (failedUploads.length > 0) {
+          const errorMessages = failedUploads.map((r) => r.error).join('; ');
+          return errorResponse(400, `Failed to upload files: ${errorMessages}`, res);
+        }
+
+        // Extract metadata from successful uploads
+        const newAttachments = uploadResults
+          .filter((r) => r.success && r.metadata)
+          .map((r) => r.metadata!);
+
+        fileAttachmentsData = [...fileAttachmentsData, ...newAttachments];
       }
     }
 
@@ -339,9 +424,23 @@ export const updateClaim = async (req: Request, res: Response) => {
       data: {
         ...(memo !== undefined && { memo }),
         ...(hoursWorked !== undefined && { hoursWorked: Number(hoursWorked) }),
-        ...(fileAttachmentsData !== undefined && { fileAttachments: fileAttachmentsData }),
+        ...(fileAttachmentsData !== undefined && {
+          fileAttachments: toJsonValue(fileAttachmentsData),
+        }),
       },
     });
+
+    // Delete files from storage after successful database update
+    if (filesToDeleteFromStorage.length > 0 && isStorageConfigured()) {
+      for (const key of filesToDeleteFromStorage) {
+        try {
+          await deleteFile(key);
+        } catch (error) {
+          console.error(`Failed to delete file from storage: ${key}`, error);
+          // Don't fail the request, just log the error
+        }
+      }
+    }
 
     return res.status(200).json(updatedClaim);
   } catch (error) {
@@ -385,6 +484,12 @@ export const deleteClaim = async (req: Request, res: Response) => {
       return errorResponse(403, "Can't delete: Claim is not pending or disabled", res);
     }
 
+    // Get file attachments to delete from storage
+    const fileAttachments = fromJsonValue(claim.fileAttachments);
+    const filesToDeleteFromStorage = fileAttachments
+      .filter((f): f is FileMetadata => 'key' in f && !!f.key) // Only files stored in Railway Storage have a key
+      .map((f) => f.key);
+
     await prisma.claim.delete({
       where: { id: claimId },
     });
@@ -395,6 +500,18 @@ export const deleteClaim = async (req: Request, res: Response) => {
         await prisma.weeklyClaim.delete({
           where: { id: weeklyClaim.id },
         });
+      }
+    }
+
+    // Delete files from storage after successful database deletion
+    if (filesToDeleteFromStorage.length > 0 && isStorageConfigured()) {
+      for (const key of filesToDeleteFromStorage) {
+        try {
+          await deleteFile(key);
+        } catch (error) {
+          console.error(`Failed to delete file from storage: ${key}`, error);
+          // Don't fail the request, just log the error
+        }
       }
     }
 

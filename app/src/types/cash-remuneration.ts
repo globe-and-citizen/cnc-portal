@@ -40,11 +40,37 @@ export interface Claim {
   updatedAt: string // ISO date string
 }
 
+/**
+ * File attachment stored in the database.
+ * Supports both legacy base64 storage and new S3/Railway Storage.
+ */
 export interface FileAttachment {
+  // Common fields
   fileName: string
   fileType: string // MIME type (e.g., image/png, application/pdf)
   fileSize: number // Size in bytes
-  fileData: string // Base64 encoded file data
+
+  // Legacy base64 storage (deprecated but kept for backwards compatibility)
+  fileData?: string // Base64 encoded file data
+
+  // New S3/Railway Storage fields
+  id?: string // Unique file ID (UUID)
+  key?: string // S3 object key (path in bucket)
+  uploadedAt?: string // ISO date string
+}
+
+/**
+ * Check if a file attachment uses S3 storage (has key but no fileData)
+ */
+export function isS3FileAttachment(file: FileAttachment): boolean {
+  return !!file.key && !file.fileData
+}
+
+/**
+ * Check if a file attachment uses legacy base64 storage
+ */
+export function isLegacyFileAttachment(file: FileAttachment): boolean {
+  return !!file.fileData
 }
 
 export interface ClaimFormData {

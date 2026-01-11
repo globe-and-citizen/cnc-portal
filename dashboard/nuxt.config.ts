@@ -18,7 +18,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'http://localhost:3000',
+      backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'https://apiv2.cncportal.io',
       chainId: process.env.NUXT_PUBLIC_CHAIN_ID || '137'
     }
   },

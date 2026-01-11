@@ -160,21 +160,22 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import type { Team } from '~/types'
+import type { Team, FeatureStatus } from '~/types'
 import TeamOverridesTable from './TeamOverridesTable.vue'
 import { useToast } from '#ui/composables/useToast'
 import {
-  fetchFeatureRestrictions,
-  updateGlobalFeatureRestriction,
-  createFeatureTeamOverride,
-  updateFeatureTeamOverride,
-  removeFeatureTeamOverride,
+  useFeatureRestrictions,
+  useUpdateGlobalFeatureRestriction,
+  useCreateFeatureTeamOverride,
+  useUpdateFeatureTeamOverride,
+  useRemoveFeatureTeamOverride
+} from '~/queries'
+import {
   transformToTeamOverrides,
   FEATURE_STATUS_OPTIONS,
   type FeatureWithOverrides,
-  type TeamRestrictionOverride,
-  type FeatureStatus
-} from '~/lib/axios'
+  type TeamRestrictionOverride
+} from '~/api/features'
 import { useTeams } from '~/composables/useTeams'
 
 // Props
@@ -193,6 +194,13 @@ const toast = useToast()
 
 // Composables
 const { fetchTeams } = useTeams()
+
+// Query hooks
+const { mutateAsync: updateGlobalRestriction } = useUpdateGlobalFeatureRestriction()
+const { mutateAsync: updateTeamOverride } = useUpdateFeatureTeamOverride()
+const { mutateAsync: removeTeamOverride } = useRemoveFeatureTeamOverride()
+const { mutateAsync: createTeamOverride } = useCreateFeatureTeamOverride()
+const { data: featureData, refetch: refetchFeatureData } = useFeatureRestrictions(() => props.featureName)
 
 // State
 const isLoadingGlobal = ref(false)
@@ -250,30 +258,16 @@ const saveGlobalSettings = async (value: FeatureStatus | undefined) => {
   isLoadingGlobal.value = true
   const previousStatus = globalStatus.value
   try {
-    const success = await updateGlobalFeatureRestriction(props.featureName, value)
-    if (success) {
-      globalStatus.value = value
-      // Refresh the feature data
-      await loadFeatureData()
-      toast.add({
-        title: 'Success',
-        description: `${featureDisplayName.value} global setting updated to ${value}`,
-        color: 'success',
-        icon: 'i-lucide-check-circle'
-      })
-    } else {
-      // Revert on failure
-      globalStatus.value = previousStatus
-    }
+    await updateGlobalRestriction({
+      featureName: props.featureName,
+      status: value
+    })
+    globalStatus.value = value
+    // Refresh the feature data
+    await refetchFeatureData()
   } catch (error) {
     console.error(`Error updating ${props.featureName} global restriction:`, error)
     globalStatus.value = previousStatus
-    toast.add({
-      title: 'Error',
-      description: `Failed to update ${featureDisplayName.value} global setting`,
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
-    })
   } finally {
     isLoadingGlobal.value = false
   }
@@ -285,24 +279,14 @@ const handleToggleRestriction = async (
 ) => {
   loadingTeamId.value = team.teamId
   try {
-    const success = await updateFeatureTeamOverride(props.featureName, team.teamId, value)
-    if (success) {
-      await loadFeatureData()
-      toast.add({
-        title: 'Success',
-        description: `Team override updated to ${value}`,
-        color: 'success',
-        icon: 'i-lucide-check-circle'
-      })
-    }
+    await updateTeamOverride({
+      featureName: props.featureName,
+      teamId: team.teamId,
+      status: value
+    })
+    await refetchFeatureData()
   } catch (error) {
     console.error(`Error toggling ${props.featureName} team restriction:`, error)
-    toast.add({
-      title: 'Error',
-      description: `Failed to update ${featureDisplayName.value} team override`,
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
-    })
   } finally {
     loadingTeamId.value = null
   }
@@ -311,24 +295,13 @@ const handleToggleRestriction = async (
 const handleRemoveOverride = async (team: TeamRestrictionOverride) => {
   loadingTeamId.value = team.teamId
   try {
-    const success = await removeFeatureTeamOverride(props.featureName, team.teamId)
-    if (success) {
-      await loadFeatureData()
-      toast.add({
-        title: 'Success',
-        description: 'Team override removed',
-        color: 'success',
-        icon: 'i-lucide-check-circle'
-      })
-    }
+    await removeTeamOverride({
+      featureName: props.featureName,
+      teamId: team.teamId
+    })
+    await refetchFeatureData()
   } catch (error) {
     console.error(`Error removing ${props.featureName} team override:`, error)
-    toast.add({
-      title: 'Error',
-      description: `Failed to remove ${featureDisplayName.value} team override`,
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
-    })
   } finally {
     loadingTeamId.value = null
   }
@@ -381,36 +354,15 @@ const createNewOverride = async () => {
 
   isCreatingOverride.value = true
   try {
-    const success = await createFeatureTeamOverride(
-      props.featureName,
-      selectedTeamId.value,
-      newOverrideStatus.value
-    )
-    if (success) {
-      toast.add({
-        title: 'Success',
-        description: `Team override created successfully`,
-        color: 'success',
-        icon: 'i-lucide-check-circle'
-      })
-      isAddOverrideModalOpen.value = false
-      await loadFeatureData()
-    } else {
-      toast.add({
-        title: 'Error',
-        description: 'Failed to create team override',
-        color: 'error',
-        icon: 'i-lucide-alert-circle'
-      })
-    }
+    await createTeamOverride({
+      featureName: props.featureName,
+      teamId: selectedTeamId.value,
+      status: newOverrideStatus.value
+    })
+    isAddOverrideModalOpen.value = false
+    await refetchFeatureData()
   } catch (error) {
     console.error(`Error creating ${props.featureName} override:`, error)
-    toast.add({
-      title: 'Error',
-      description: `Failed to create ${featureDisplayName.value} override`,
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
-    })
   } finally {
     isCreatingOverride.value = false
   }
@@ -420,10 +372,10 @@ const createNewOverride = async () => {
 const loadFeatureData = async () => {
   isLoading.value = true
   try {
-    const feature = await fetchFeatureRestrictions(props.featureName)
-    if (feature) {
-      currentFeature.value = feature
-      globalStatus.value = feature.status || 'enabled'
+    await refetchFeatureData()
+    if (featureData.value?.data) {
+      currentFeature.value = featureData.value.data
+      globalStatus.value = featureData.value.data.status || 'enabled'
     }
   } catch (error) {
     console.error(`Error loading ${props.featureName} feature data:`, error)

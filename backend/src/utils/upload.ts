@@ -1,28 +1,29 @@
 // upload.ts
+/**
+ * Multer configuration for file uploads
+ *
+ * This module provides multer middleware for handling file uploads.
+ * Files are temporarily stored in memory and then uploaded to Railway Storage
+ * via the storageService.
+ *
+ * @see ../services/storageService.ts for the actual storage implementation
+ */
 import multer, { Multer } from 'multer';
-// import { v4 as uuidv4 } from 'uuid'; // Commented out - not needed for database storage
-// import path from 'path'; // Commented out - not needed for database storage
-// import { bucket } from './storage'; // Commented out - cloud storage disabled
 
-// Allowed MIME types for images and documents
-const ALLOWED_IMAGE_MIMETYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+// Import constants from storage service for consistency
+import {
+  ALLOWED_IMAGE_MIMETYPES,
+  ALLOWED_DOCUMENT_MIMETYPES,
+  ALLOWED_MIMETYPES,
+  MAX_FILE_SIZE,
+} from '../services/storageService';
 
-const ALLOWED_DOCUMENT_MIMETYPES = [
-  'application/pdf',
-  'text/plain',
-  'application/zip',
-  'application/x-zip-compressed',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
-];
-
-const ALLOWED_MIMETYPES = [...ALLOWED_IMAGE_MIMETYPES, ...ALLOWED_DOCUMENT_MIMETYPES];
-
-// Use memory storage to keep file buffers in memory for database storage
+// Use memory storage to keep file buffers in memory for storage upload
 const storage = multer.memoryStorage();
 const upload: Multer = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: MAX_FILE_SIZE,
   },
   fileFilter: (req, file, cb) => {
     if (ALLOWED_MIMETYPES.includes(file.mimetype)) {
@@ -38,41 +39,14 @@ const upload: Multer = multer({
 });
 
 /**
- * DEPRECATED: Cloud storage upload function
- * This function is kept for backwards compatibility but is no longer used.
- * New uploads should store files directly in the database via ClaimAttachment model.
- *
- * To re-enable cloud storage, uncomment the code below.
+ * @deprecated Use the storageService directly instead
+ * This function is kept for backwards compatibility but will throw an error
  */
-// const uploadFileToGCS = (file: MulterFile): Promise<string> => {
-//   return new Promise((resolve, reject) => {
-//     if (!bucket) {
-//       reject(new Error('Cloud storage is disabled. Use database storage instead.'));
-//       return;
-//     }
-//     // Preserve original file extension
-//     const ext = path.extname(file.originalname);
-//     const blob = bucket.file(`${uuidv4()}${ext}`);
-//     const blobStream = blob.createWriteStream({
-//       resumable: false,
-//       contentType: file.mimetype,
-//     });
-
-//     blobStream.on('error', (err) => reject(err));
-
-//     blobStream.on('finish', () => {
-//       const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-//       resolve(publicUrl);
-//     });
-
-//     blobStream.end(file.buffer);
-//   });
-// };
-
-// Placeholder function that returns an error
 const uploadFileToGCS = (): Promise<string> => {
   return Promise.reject(
-    new Error('Cloud storage is disabled. Files are now stored directly in the database.')
+    new Error(
+      'Cloud storage via GCS is disabled. Use storageService.uploadFile() for Railway Storage.'
+    )
   );
 };
 

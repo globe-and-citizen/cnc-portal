@@ -1,8 +1,8 @@
-import { useUser } from '~/queries/index'
+import { useUserQuery } from '~/queries/index'
 
 export const useUserStore = defineStore('user', () => {
   const authStore = useAuthStore()
 
-  const { data: user } = useUser(authStore.address.value || '')
+  const { data: user } = useUserQuery(authStore.address.value || '')
   return { user }
 })
