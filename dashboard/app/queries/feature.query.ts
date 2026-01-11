@@ -85,11 +85,11 @@ export const useDeleteFeature = () => {
     mutationFn: async (functionName: string) => {
       return await deleteFeature(functionName)
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['features'] })
       toast.add({
         title: 'Success',
-        description: data.message || 'Feature deleted successfully',
+        description: 'Feature deleted successfully',
         color: 'success',
         icon: 'i-lucide-check-circle'
       })

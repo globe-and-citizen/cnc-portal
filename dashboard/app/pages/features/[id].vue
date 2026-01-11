@@ -70,6 +70,11 @@ const { data: features, isLoading, error } = useFeatures()
 // Get feature ID from route params
 const featureId = computed(() => route.params.id as string)
 
+// Find current feature
+const currentFeature = computed(() => {
+  return features.value?.find(f => f.functionName === featureId.value)
+})
+
 const featureDisplayName = computed(() => {
   if (!currentFeature.value?.functionName) return 'Feature'
   // Convert SUBMIT_RESTRICTION to Submit Restriction format
@@ -77,10 +82,6 @@ const featureDisplayName = computed(() => {
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ')
-})
-// Find current feature
-const currentFeature = computed(() => {
-  return features.value.find(f => f.functionName === featureId.value)
 })
 
 // Computed properties

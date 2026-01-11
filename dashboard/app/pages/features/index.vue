@@ -43,7 +43,7 @@
 
       <!-- Features Table Component -->
       <FeaturesTable
-        :features="features"
+        :features="features ?? []"
         :loading="isLoading"
         :deleting-feature="deletingFeature"
         :updating-feature="updatingFeature"
