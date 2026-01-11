@@ -26,16 +26,12 @@ tests {
     expect(res.getStatus()).to.equal(200);
   });
 
-  test("should return success true", function() {
-    expect(res.body.success).to.equal(true);
-  });
-
   test("should return updated override", function() {
-    expect(res.body.data).to.be.an('object');
-    expect(res.body.data.status).to.equal('beta');
+    expect(res.body).to.be.an('object');
+    expect(res.body.status).to.equal('beta');
   });
 
   test("log updated override", function() {
-    console.log("Updated override:", JSON.stringify(res.body.data, null, 2));
+    console.log("Updated override:", JSON.stringify(res.body, null, 2));
   });
 }

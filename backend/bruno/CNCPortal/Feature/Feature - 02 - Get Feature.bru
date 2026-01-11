@@ -19,20 +19,16 @@ tests {
     expect(res.getStatus()).to.equal(200);
   });
   
-  test("should return success true", function() {
-    expect(res.body.success).to.equal(true);
-  });
-  
-  test("should return feature data", function() {
-    expect(res.body.data).to.be.an('object');
-    expect(res.body.data.functionName).to.be.a('string');
+  test("should return feature object", function() {
+    expect(res.body).to.be.an('object');
+    expect(res.body.functionName).to.be.a('string');
   });
   
   test("should have status field", function() {
-    expect(res.body.data.status).to.be.oneOf(['enabled', 'disabled', 'beta']);
+    expect(res.body.status).to.be.oneOf(['enabled', 'disabled', 'beta']);
   });
   
   test("log feature details", function() {
-    console.log("Feature:", JSON.stringify(res.body.data, null, 2));
+    console.log("Feature:", JSON.stringify(res.body, null, 2));
   });
 }

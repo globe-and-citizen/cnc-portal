@@ -15,20 +15,15 @@ auth:bearer {
 }
 
 tests {
-  test("should return 200 status", function() {
-    expect(res.getStatus()).to.equal(200);
+  test("should return 204 No Content status", function() {
+    expect(res.getStatus()).to.equal(204);
   });
 
-  test("should return success true", function() {
-    expect(res.body.success).to.equal(true);
-  });
-
-  test("should return confirmation message", function() {
-    expect(res.body.message).to.be.a('string');
-    expect(res.body.message).to.include('deleted');
+  test("should have no response body", function() {
+    expect(res.body).to.be.empty;
   });
 
   test("log deletion result", function() {
-    console.log("Deletion result:", res.body.message);
+    console.log("Feature deleted successfully (204 No Content)");
   });
 }

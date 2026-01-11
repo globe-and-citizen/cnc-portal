@@ -25,18 +25,14 @@ tests {
     expect(res.getStatus()).to.equal(201);
   });
 
-  test("should return success true", function() {
-    expect(res.body.success).to.equal(true);
-  });
-
-  test("should return override data", function() {
-    expect(res.body.data).to.be.an('object');
+  test("should return override object directly", function() {
+    expect(res.body).to.be.an('object');
     const expectedTeamId = parseInt(bru.getVar('teamId') || bru.getEnvVar('teamId'));
-    expect(res.body.data.teamId).to.equal(expectedTeamId);
-    expect(res.body.data.status).to.equal('enabled');
+    expect(res.body.teamId).to.equal(expectedTeamId);
+    expect(res.body.status).to.equal('enabled');
   });
 
   test("log created override", function() {
-    console.log("Created override:", JSON.stringify(res.body.data, null, 2));
+    console.log("Created override:", JSON.stringify(res.body, null, 2));
   });
 }

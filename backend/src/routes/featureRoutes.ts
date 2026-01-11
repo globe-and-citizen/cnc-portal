@@ -9,6 +9,18 @@ import {
   updateOverride,
   removeOverride,
 } from '../controllers/featureController';
+import {
+  validateBody,
+  validateParams,
+  validateBodyAndParams,
+} from '../validation';
+import {
+  functionNameParamSchema,
+  createFeatureSchema,
+  updateFeatureSchema,
+  featureTeamParamsSchema,
+  teamOverrideSchema,
+} from '../validation/featureValidation';
 
 const router = Router();
 
@@ -70,7 +82,7 @@ router.get('/', listFeatures);
  *       404:
  *         description: Feature not found
  */
-router.get('/:functionName', getFeatureByName);
+router.get('/:functionName', validateParams(functionNameParamSchema), getFeatureByName);
 
 /**
  * @swagger
@@ -103,7 +115,7 @@ router.get('/:functionName', getFeatureByName);
  *       409:
  *         description: Feature already exists
  */
-router.post('/', createNewFeature);
+router.post('/', validateBody(createFeatureSchema), createNewFeature);
 
 /**
  * @swagger
@@ -137,7 +149,7 @@ router.post('/', createNewFeature);
  *       404:
  *         description: Feature not found
  */
-router.put('/:functionName', updateFeatureByName);
+router.put('/:functionName', validateBodyAndParams(updateFeatureSchema, functionNameParamSchema), updateFeatureByName);
 
 /**
  * @swagger
@@ -159,7 +171,7 @@ router.put('/:functionName', updateFeatureByName);
  *       404:
  *         description: Feature not found
  */
-router.delete('/:functionName', deleteFeatureByName);
+router.delete('/:functionName', validateParams(functionNameParamSchema), deleteFeatureByName);
 
 // ============================================
 // Team Override Endpoints
@@ -210,7 +222,7 @@ router.delete('/:functionName', deleteFeatureByName);
  *       409:
  *         description: Override already exists
  */
-router.post('/:functionName/teams/:teamId', createOverride);
+router.post('/:functionName/teams/:teamId', validateBodyAndParams(teamOverrideSchema, featureTeamParamsSchema), createOverride);
 
 /**
  * @swagger
@@ -249,7 +261,7 @@ router.post('/:functionName/teams/:teamId', createOverride);
  *       404:
  *         description: Feature, team, or override not found
  */
-router.put('/:functionName/teams/:teamId', updateOverride);
+router.put('/:functionName/teams/:teamId', validateBodyAndParams(teamOverrideSchema, featureTeamParamsSchema), updateOverride);
 
 /**
  * @swagger
@@ -276,6 +288,6 @@ router.put('/:functionName/teams/:teamId', updateOverride);
  *       404:
  *         description: Feature or override not found
  */
-router.delete('/:functionName/teams/:teamId', removeOverride);
+router.delete('/:functionName/teams/:teamId', validateParams(featureTeamParamsSchema), removeOverride);
 
 export default router;
