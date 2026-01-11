@@ -37,6 +37,27 @@ export const apiFetch = $fetch.create({
           localStorage.removeItem('dashboard-auth-address')
         }
       }
+    } else if (response.status === 400) {
+      console.warn('Bad request response received from API', {
+        status: response.status,
+        url: response.url
+      })
+    } else if (response.status === 403) {
+      console.warn('Forbidden request detected', {
+        status: response.status,
+        url: response.url
+      })
+    } else if (response.status === 404) {
+      console.warn('Requested resource not found', {
+        status: response.status,
+        url: response.url
+      })
+    } else if (response.status >= 500) {
+      console.error('Server error response received from API', {
+        status: response.status,
+        url: response.url
+      })
     }
+    // Other HTTP error statuses are intentionally passed through for downstream handling.
   }
 })
