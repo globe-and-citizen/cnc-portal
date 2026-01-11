@@ -145,8 +145,20 @@ describe('EditClaims', () => {
       const claimWithFiles = {
         ...defaultClaim,
         fileAttachments: [
-          { fileName: 'file1.png', fileType: 'image/png', fileSize: 1024, fileData: 'base64' },
-          { fileName: 'file2.png', fileType: 'image/png', fileSize: 2048, fileData: 'base64' }
+          {
+            fileName: 'file1.png',
+            fileType: 'image/png',
+            fileSize: 1024,
+            fileKey: 'claims/1/abc.png',
+            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png'
+          },
+          {
+            fileName: 'file2.png',
+            fileType: 'image/png',
+            fileSize: 2048,
+            fileKey: 'claims/1/abc.png',
+            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png'
+          }
         ]
       }
 
