@@ -1,18 +1,18 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
-import type { Feature, FeatureStatus } from '~/types'
 import {
-  getFeatures,
   createFeature,
-  updateFeature,
+  createFeatureTeamOverride,
   deleteFeature,
   fetchFeatureRestrictions,
-  updateGlobalFeatureRestriction,
-  createFeatureTeamOverride,
+  getFeatures,
+  removeFeatureTeamOverride,
+  updateFeature,
   updateFeatureTeamOverride,
-  removeFeatureTeamOverride
+  updateGlobalFeatureRestriction
 } from '~/api/features'
+import type { FeatureStatus } from '~/types'
 
 interface CreateFeaturePayload {
   functionName: string
@@ -61,8 +61,8 @@ export const useCreateFeature = () => {
         icon: 'i-lucide-check-circle'
       })
     },
-    onError: (error: any) => {
-      const errorMessage = error?.data?.message || 'Failed to create feature'
+    onError: (error) => {
+      const errorMessage = error?.message || 'Failed to create feature'
       toast.add({
         title: 'Error',
         description: errorMessage,
@@ -94,8 +94,8 @@ export const useDeleteFeature = () => {
         icon: 'i-lucide-check-circle'
       })
     },
-    onError: (error: any) => {
-      const errorMessage = error?.data?.message || 'Failed to delete feature'
+    onError: (error) => {
+      const errorMessage = error?.message || 'Failed to delete feature'
       toast.add({
         title: 'Error',
         description: errorMessage,
@@ -126,8 +126,8 @@ export const useUpdateFeature = () => {
         icon: 'i-lucide-check-circle'
       })
     },
-    onError: (error: any) => {
-      const errorMessage = error?.data?.message || 'Failed to update feature'
+    onError: (error) => {
+      const errorMessage = error?.message || 'Failed to update feature'
       toast.add({
         title: 'Error',
         description: errorMessage,
@@ -176,8 +176,8 @@ export const useUpdateGlobalFeatureRestriction = () => {
         icon: 'i-lucide-check-circle'
       })
     },
-    onError: (error: any) => {
-      const errorMessage = error?.data?.message || 'Failed to update feature restriction'
+    onError: (error) => {
+      const errorMessage = error?.message || 'Failed to update feature restriction'
       toast.add({
         title: 'Error',
         description: errorMessage,
@@ -208,8 +208,8 @@ export const useCreateFeatureTeamOverride = () => {
         icon: 'i-lucide-check-circle'
       })
     },
-    onError: (error: any) => {
-      const errorMessage = error?.data?.message || 'Failed to create team override'
+    onError: (error) => {
+      const errorMessage = error?.message || 'Failed to create team override'
       toast.add({
         title: 'Error',
         description: errorMessage,
@@ -240,8 +240,8 @@ export const useUpdateFeatureTeamOverride = () => {
         icon: 'i-lucide-check-circle'
       })
     },
-    onError: (error: any) => {
-      const errorMessage = error?.data?.message || 'Failed to update team override'
+    onError: (error) => {
+      const errorMessage = error?.message || 'Failed to update team override'
       toast.add({
         title: 'Error',
         description: errorMessage,
@@ -272,8 +272,8 @@ export const useRemoveFeatureTeamOverride = () => {
         icon: 'i-lucide-check-circle'
       })
     },
-    onError: (error: any) => {
-      const errorMessage = error?.data?.message || 'Failed to remove team override'
+    onError: (error) => {
+      const errorMessage = error?.message || 'Failed to remove team override'
       toast.add({
         title: 'Error',
         description: errorMessage,
