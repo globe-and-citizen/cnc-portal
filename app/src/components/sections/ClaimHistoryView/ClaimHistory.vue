@@ -359,43 +359,12 @@ const generatedMonthWeek = computed(() => {
   return getMonthWeeks(selectedMonthObject.value.year, selectedMonthObject.value.month)
 })
 
-// Cache for resolved presigned URLs (key -> url)
-const presignedUrlCache = ref<Map<string, string>>(new Map())
-
-/**
- * Preload all presigned URLs for S3 files in the current week's claims - IN PARALLEL
- */
-async function preloadPresignedUrls(claims: Claim[]) {
-  const allFiles = claims.flatMap((claim) => claim.fileAttachments || [])
-  const keysToFetch = allFiles
-    .filter((f) => isS3FileAttachment(f) && f.key && !presignedUrlCache.value.has(f.key))
-    .map((f) => f.key!)
-
-  if (keysToFetch.length === 0) return
-
-  // Fetch all URLs in parallel for faster loading
-  const results = await Promise.allSettled(
-    keysToFetch.map(async (key) => {
-      const url = await getPresignedUrl(key)
-      return { key, url }
-    })
-  )
-
-  // Process results
-  let hasUpdates = false
-  for (const result of results) {
-    if (result.status === 'fulfilled' && result.value.url) {
-      presignedUrlCache.value.set(result.value.key, result.value.url)
-      hasUpdates = true
-    } else if (result.status === 'rejected') {
-      console.error('Failed to fetch presigned URL:', result.reason)
-    }
-  }
-
-  // Force reactivity update
-  if (hasUpdates) {
-    presignedUrlCache.value = new Map(presignedUrlCache.value)
-  }
+interface FileAttachment {
+  fileName: string
+  fileType: string
+  fileSize: number
+  fileKey: string
+  fileUrl: string
 }
 
 /**
@@ -408,27 +377,14 @@ const buildFilePreviews = (files: FileAttachment[]) => {
   const imageExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg', '.ico']
 
   return files.map((file) => {
-    let previewUrl = ''
-
-    // Check if this is a legacy base64 file or new S3 storage
-    if (isLegacyFileAttachment(file)) {
-      // Legacy: use base64 data URL
-      previewUrl = file.fileData && file.fileType 
-        ? `data:${file.fileType};base64,${file.fileData}` 
-        : ''
-    } else if (isS3FileAttachment(file)) {
-      // New S3 storage: get from preloaded cache
-      previewUrl = presignedUrlCache.value.get(file.key!) || ''
-    }
-
     const isImage =
       imageMimeTypes.includes(file?.fileType) ||
       imageExtensions.some((ext) => file?.fileName?.toLowerCase().endsWith(ext))
 
     return {
-      previewUrl,
+      previewUrl: file.fileUrl,
       fileName: file.fileName,
-      fileSize: file.fileSize ?? 0,
+      fileSize: file.fileSize,
       fileType: file.fileType,
       isImage,
       // Include S3 key for reference

@@ -64,10 +64,8 @@
     "vitest": "^4.0.15"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.966.0",
-    "@aws-sdk/s3-presigned-post": "^3.966.0",
-    "@aws-sdk/s3-request-presigner": "^3.966.0",
-    "@google-cloud/storage": "^7.16.0",
+    "@aws-sdk/client-s3": "^3.731.1",
+    "@aws-sdk/s3-request-presigner": "^3.731.1",
     "@polymarket/builder-signing-sdk": "^0.0.8",
     "@prisma/client": "^6.15.0",
     "@sentry/cli": "^2.53.0",

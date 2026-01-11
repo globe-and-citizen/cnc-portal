@@ -9,10 +9,9 @@ import { Claim, Prisma } from '@prisma/client';
 import { isUserMemberOfTeam } from './wageController';
 import {
   uploadFiles,
+  getPresignedDownloadUrl,
   deleteFile,
-  FileMetadata,
   isStorageConfigured,
-  MAX_FILES_PER_CLAIM,
 } from '../services/storageService';
 
 // Type for multipart/form-data request with files
@@ -20,13 +19,13 @@ interface MulterRequest extends Request {
   files?: Express.Multer.File[];
 }
 
-// Legacy type for file attachment data (stored as base64 in database)
-// DEPRECATED: Kept for backwards compatibility with existing data
-type LegacyFileAttachmentData = {
+// Type for file attachment data (updated for Railway S3)
+type FileAttachmentData = {
   fileName: string;
   fileType: string;
   fileSize: number;
-  fileData: string; // base64 encoded data
+  fileKey: string; // S3 object key
+  fileUrl: string; // Presigned download URL
 };
 
 // New type for file attachment metadata (stored in Railway Storage)
@@ -171,37 +170,50 @@ export const addClaim = async (req: Request, res: Response) => {
         );
       }
 
-      // Check if Railway Storage is configured
-      if (!isStorageConfigured()) {
-        // Fallback to legacy base64 storage in database (deprecated)
-        console.warn(
-          'Railway Storage not configured. Falling back to database storage (deprecated).'
-        );
-        fileAttachmentsData = uploadedFiles.map((file) => ({
-          id: `legacy-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          key: '',
-          fileName: file.originalname,
-          fileType: file.mimetype,
-          fileSize: file.size,
-          uploadedAt: new Date().toISOString(),
-          // Legacy: store base64 data (will be removed in future)
-          fileData: file.buffer.toString('base64'),
-        })) as unknown as FileAttachmentData[];
-      } else {
-        // Upload files to Railway Storage
-        const uploadResults = await uploadFiles(uploadedFiles, 'claims');
+      // Upload files to Railway S3 if storage is configured
+      if (isStorageConfigured()) {
+        try {
+          // Upload all files to S3 in the claims folder
+          const uploadResults = await uploadFiles(
+            uploadedFiles,
+            `claims/${teamId}/${callerAddress}`
+          );
 
-        // Check for upload errors
-        const failedUploads = uploadResults.filter((r) => !r.success);
-        if (failedUploads.length > 0) {
-          const errorMessages = failedUploads.map((r) => r.error).join('; ');
-          return errorResponse(400, `Failed to upload files: ${errorMessages}`, res);
+          // Check for upload failures
+          const failedUploads = uploadResults.filter((r) => !r.success);
+          if (failedUploads.length > 0) {
+            return errorResponse(
+              400,
+              `Failed to upload ${failedUploads.length} file(s). Please try again.`,
+              res
+            );
+          }
+
+          // Generate presigned URLs for each uploaded file (7 days expiration)
+          fileAttachmentsData = await Promise.all(
+            uploadResults
+              .filter((r) => r.success)
+              .map(async (result) => {
+                const url = await getPresignedDownloadUrl(result.metadata!.key, 604800); // 7 days
+                return {
+                  fileName: result.metadata!.fileName,
+                  fileType: result.metadata!.fileType,
+                  fileSize: result.metadata!.fileSize,
+                  fileKey: result.metadata!.key,
+                  fileUrl: url,
+                };
+              })
+          );
+        } catch (error) {
+          console.error('Error uploading claim files:', error);
+          return errorResponse(500, 'Failed to upload file attachments', res);
         }
-
-        // Extract metadata from successful uploads
-        fileAttachmentsData = uploadResults
-          .filter((r) => r.success && r.metadata)
-          .map((r) => r.metadata!);
+      } else {
+        return errorResponse(
+          503,
+          'Storage service is not configured. Please contact administrator.',
+          res
+        );
       }
     }
 
@@ -372,11 +384,61 @@ export const updateClaim = async (req: Request, res: Response) => {
     }
 
     if (uploadedFiles.length > 0) {
-      // Validate total file count does not exceed maximum
-      if (fileAttachmentsData.length + uploadedFiles.length > MAX_FILES_PER_CLAIM) {
+      // Validate total file count does not exceed 10
+      if (fileAttachmentsData.length + uploadedFiles.length > 10) {
         return errorResponse(
           400,
-          `Maximum ${MAX_FILES_PER_CLAIM} files allowed. You would have ${fileAttachmentsData.length + uploadedFiles.length} files. Please remove ${fileAttachmentsData.length + uploadedFiles.length - MAX_FILES_PER_CLAIM} file(s).`,
+          `Maximum 10 files allowed. You currently have ${fileAttachmentsData.length} files and are trying to add ${uploadedFiles.length}. Please remove ${fileAttachmentsData.length + uploadedFiles.length - 10} file(s).`,
+          res
+        );
+      }
+
+      // Upload files to Railway S3 if storage is configured
+      if (isStorageConfigured()) {
+        try {
+          // Use existing claim data (already fetched at the start of function)
+          const teamId = weeklyClaim?.teamId;
+          // Upload all files to S3
+          const uploadResults = await uploadFiles(
+            uploadedFiles,
+            `claims/${teamId}/${callerAddress}`
+          );
+
+          // Check for upload failures
+          const failedUploads = uploadResults.filter((r) => !r.success);
+          if (failedUploads.length > 0) {
+            return errorResponse(
+              400,
+              `Failed to upload ${failedUploads.length} file(s). Please try again.`,
+              res
+            );
+          }
+
+          // Generate presigned URLs for each uploaded file (7 days expiration)
+          const newAttachments = await Promise.all(
+            uploadResults
+              .filter((r) => r.success)
+              .map(async (result) => {
+                const url = await getPresignedDownloadUrl(result.metadata!.key, 604800); // 7 days
+                return {
+                  fileName: result.metadata!.fileName,
+                  fileType: result.metadata!.fileType,
+                  fileSize: result.metadata!.fileSize,
+                  fileKey: result.metadata!.key,
+                  fileUrl: url,
+                };
+              })
+          );
+
+          fileAttachmentsData = [...fileAttachmentsData, ...newAttachments];
+        } catch (error) {
+          console.error('Error uploading claim files:', error);
+          return errorResponse(500, 'Failed to upload file attachments', res);
+        }
+      } else {
+        return errorResponse(
+          503,
+          'Storage service is not configured. Please contact administrator.',
           res
         );
       }
@@ -484,11 +546,24 @@ export const deleteClaim = async (req: Request, res: Response) => {
       return errorResponse(403, "Can't delete: Claim is not pending or disabled", res);
     }
 
-    // Get file attachments to delete from storage
-    const fileAttachments = fromJsonValue(claim.fileAttachments);
-    const filesToDeleteFromStorage = fileAttachments
-      .filter((f): f is FileMetadata => 'key' in f && !!f.key) // Only files stored in Railway Storage have a key
-      .map((f) => f.key);
+    // Delete attached files from S3 if any exist
+    if (claim.fileAttachments && Array.isArray(claim.fileAttachments)) {
+      try {
+        const attachments = claim.fileAttachments as FileAttachmentData[];
+        for (const attachment of attachments) {
+          if (attachment.fileKey && attachment.fileKey.length > 0) {
+            try {
+              await deleteFile(attachment.fileKey);
+            } catch (e) {
+              console.warn(`Could not delete file ${attachment.fileKey}:`, e);
+              // Don't fail the claim deletion if file deletion fails
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Error deleting claim files:', e);
+      }
+    }
 
     await prisma.claim.delete({
       where: { id: claimId },

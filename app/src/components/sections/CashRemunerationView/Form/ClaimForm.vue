@@ -123,6 +123,14 @@ import { getPresignedUrl } from '@/composables/useFileUrl'
 // import UploadImage from '@/components/sections/CashRemunerationView/Form/UploadImage.vue' // Deprecated: cloud storage
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue' // New: database storage
 
+interface FileData {
+  fileName: string
+  fileType: string
+  fileSize: number
+  fileKey: string
+  fileUrl: string
+}
+
 interface Props {
   initialData?: Partial<ClaimFormData>
   isEdit?: boolean
@@ -207,26 +215,13 @@ watch(
 
 // Convert FileAttachment to PreviewItem for FilePreviewGallery
 const existingFilePreviews = computed(() => {
-  return (props.existingFiles ?? []).map((file) => {
-    let previewUrl = ''
-    
-    if (isLegacyFileAttachment(file)) {
-      // Legacy base64 storage
-      previewUrl = `data:${file.fileType};base64,${file.fileData}`
-    } else if (isS3FileAttachment(file) && file.key) {
-      // S3 storage - get from cache
-      previewUrl = resolvedFileUrls.value.get(file.key) || ''
-    }
-    
-    return {
-      previewUrl,
-      fileName: file.fileName,
-      fileSize: file.fileSize ?? 0,
-      fileType: file.fileType,
-      isImage: file.fileType?.startsWith('image/') ?? false,
-      key: isS3FileAttachment(file) ? file.key : undefined
-    }
-  })
+  return (props.existingFiles ?? []).map((file) => ({
+    previewUrl: file.fileUrl,
+    fileName: file.fileName,
+    fileSize: file.fileSize,
+    fileType: file.fileType,
+    isImage: file.fileType.startsWith('image/')
+  }))
 })
 
 const createDefaultFormData = (overrides?: Partial<ClaimFormData>): ClaimFormData => ({

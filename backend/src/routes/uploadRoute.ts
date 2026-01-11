@@ -72,7 +72,7 @@ uploadRouter.post('/', upload.single('image'), async (req: Request, res: Respons
       return res.status(400).json({ error: 'No file provided' });
     }
 
-    // Check if Railway Storage is configured
+    // Ensure storage is configured
     if (!isStorageConfigured()) {
       return res.status(500).json({
         error: 'Storage not configured',
@@ -81,31 +81,23 @@ uploadRouter.post('/', upload.single('image'), async (req: Request, res: Respons
       });
     }
 
-    // Validate that it's an image
-    if (!ALLOWED_IMAGE_MIMETYPES.includes(multerReq.file.mimetype)) {
+    // Only allow images here
+    if (!(ALLOWED_IMAGE_MIMETYPES as readonly string[]).includes(multerReq.file.mimetype)) {
       return res.status(400).json({
         error: 'Invalid file type',
         details: `Only image files are allowed: ${ALLOWED_IMAGE_MIMETYPES.join(', ')}`,
       });
     }
 
-    // Upload to Railway Storage
+    // Upload to Railway Storage under images/
     const uploadResult = await uploadFile(multerReq.file, 'images');
 
     if (!uploadResult.success) {
-      return res.status(500).json({
-        error: 'Failed to upload image',
-        details: uploadResult.error,
-      });
+      return res.status(500).json({ error: 'Failed to upload image', details: uploadResult.error });
     }
 
-    // Generate a presigned URL for the uploaded image
-    const imageUrl = await getPresignedDownloadUrl(uploadResult.metadata!.key, 86400); // 24 hours
-
-    res.json({
-      imageUrl,
-      metadata: uploadResult.metadata,
-    });
+    const imageUrl = await getPresignedDownloadUrl(uploadResult.metadata.key, 86400); // 24h
+    res.json({ imageUrl, metadata: uploadResult.metadata });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
     res.status(500).json({

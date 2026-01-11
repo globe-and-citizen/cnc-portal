@@ -4,35 +4,44 @@ import express, { Request, Response, NextFunction } from 'express';
 import { Readable } from 'stream';
 
 // Hoist mocks
-const { mockUploadSingle, mockUploadImageToGCS } = vi.hoisted(() => ({
-  mockUploadSingle: vi.fn((fieldName: string) => {
-    return (req: Request, res: Response, next: NextFunction) => {
-      // Simulate multer adding file to request
-      if (req.body.hasFile) {
-        req.file = {
-          fieldname: fieldName,
-          originalname: 'test-image.jpg',
-          encoding: '7bit',
-          mimetype: 'image/jpeg',
-          buffer: Buffer.from('fake-image-data'),
-          stream: new Readable(),
-          destination: '',
-          filename: 'test-image.jpg',
-          path: '/tmp/test-image.jpg',
-          size: Buffer.from('fake-image-data').length,
-        };
-      }
-      next();
-    };
-  }),
-  mockUploadImageToGCS: vi.fn(),
-}));
+const { mockUploadSingle, mockUploadFile, mockGetPresignedDownloadUrl, mockIsStorageConfigured } =
+  vi.hoisted(() => ({
+    mockUploadSingle: vi.fn((fieldName: string) => {
+      return (req: Request, res: Response, next: NextFunction) => {
+        // Simulate multer adding file to request
+        if (req.body.hasFile) {
+          req.file = {
+            fieldname: fieldName,
+            originalname: 'test-image.jpg',
+            encoding: '7bit',
+            mimetype: 'image/jpeg',
+            buffer: Buffer.from('fake-image-data'),
+            stream: new Readable(),
+            destination: '',
+            filename: 'test-image.jpg',
+            path: '/tmp/test-image.jpg',
+            size: Buffer.from('fake-image-data').length,
+          };
+        }
+        next();
+      };
+    }),
+    mockUploadFile: vi.fn(),
+    mockGetPresignedDownloadUrl: vi.fn(),
+    mockIsStorageConfigured: vi.fn(() => true),
+  }));
 
 vi.mock('../../utils/upload', () => ({
   upload: {
     single: mockUploadSingle,
   },
-  uploadImageToGCS: mockUploadImageToGCS,
+}));
+
+vi.mock('../../services/storageService', () => ({
+  uploadFile: mockUploadFile,
+  getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
+  isStorageConfigured: mockIsStorageConfigured,
+  ALLOWED_IMAGE_MIMETYPES: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
 }));
 
 // Import after mock
@@ -43,6 +52,7 @@ describe('uploadRoute', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIsStorageConfigured.mockReturnValue(true);
     app = express();
     app.use(express.json());
     app.use('/', uploadRouter);
@@ -56,20 +66,30 @@ describe('uploadRoute', () => {
       expect(response.body).toEqual({ error: 'No file provided' });
     });
 
-    it('should upload file and return image URL', async () => {
-      const mockPublicUrl = 'https://storage.googleapis.com/bucket-name/uuid-file.jpg';
-      mockUploadImageToGCS.mockResolvedValue(mockPublicUrl);
+    it('should upload file and return image URL with metadata', async () => {
+      const mockMetadata = {
+        id: 'abc123hash',
+        key: 'images/abc123hash.jpg',
+        fileName: 'test-image.jpg',
+        fileType: 'image/jpeg',
+        fileSize: 1024,
+      };
+      const mockPresignedUrl = 'https://storage.railway.app/bucket/images/abc123hash.jpg?signed';
+
+      mockUploadFile.mockResolvedValue({ success: true, metadata: mockMetadata });
+      mockGetPresignedDownloadUrl.mockResolvedValue(mockPresignedUrl);
 
       const response = await request(app).post('/').send({ hasFile: true });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ imageUrl: mockPublicUrl });
-      expect(mockUploadImageToGCS).toHaveBeenCalled();
+      expect(response.body).toEqual({ imageUrl: mockPresignedUrl, metadata: mockMetadata });
+      expect(mockUploadFile).toHaveBeenCalled();
+      expect(mockGetPresignedDownloadUrl).toHaveBeenCalledWith(mockMetadata.key, 86400);
     });
 
     it('should return 500 if upload fails', async () => {
       const errorMessage = 'Upload failed';
-      mockUploadImageToGCS.mockRejectedValue(new Error(errorMessage));
+      mockUploadFile.mockResolvedValue({ success: false, error: errorMessage });
 
       const response = await request(app).post('/').send({ hasFile: true });
 
@@ -80,15 +100,24 @@ describe('uploadRoute', () => {
       });
     });
 
-    it('should handle non-Error exceptions', async () => {
-      mockUploadImageToGCS.mockRejectedValue('String error');
+    it('should return 500 if storage is not configured', async () => {
+      mockIsStorageConfigured.mockReturnValue(false);
+
+      const response = await request(app).post('/').send({ hasFile: true });
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Storage not configured');
+    });
+
+    it('should handle unexpected exceptions', async () => {
+      mockUploadFile.mockRejectedValue(new Error('Unexpected error'));
 
       const response = await request(app).post('/').send({ hasFile: true });
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
         error: 'Failed to upload image',
-        details: 'Unknown error occurred',
+        details: 'Unexpected error',
       });
     });
   });

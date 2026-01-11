@@ -48,6 +48,46 @@ vi.mock('../wageController', () => ({
   isUserMemberOfTeam: vi.fn(),
 }));
 
+// Mock the storage service
+const { mockUploadFiles, mockGetPresignedDownloadUrl, mockDeleteFile } = vi.hoisted(() => ({
+  mockUploadFiles: vi.fn(),
+  mockGetPresignedDownloadUrl: vi.fn(),
+  mockDeleteFile: vi.fn(),
+}));
+
+vi.mock('../../services/storageService', () => ({
+  uploadFiles: mockUploadFiles,
+  getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
+  deleteFile: mockDeleteFile,
+  isStorageConfigured: vi.fn(() => true),
+  uploadFile: vi.fn(),
+  uploadProfileImage: vi.fn(),
+  fileExists: vi.fn(),
+  validateFile: vi.fn(),
+  ALLOWED_IMAGE_MIMETYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+  ALLOWED_DOCUMENT_MIMETYPES: [
+    'application/pdf',
+    'application/msword',
+    'text/plain',
+    'application/zip',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ],
+  ALLOWED_MIMETYPES: [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'application/pdf',
+    'application/msword',
+    'text/plain',
+    'application/zip',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ],
+  MAX_FILE_SIZE: 10 * 1024 * 1024,
+  MAX_FILES_PER_CLAIM: 10,
+  PRESIGNED_URL_EXPIRATION: 3600,
+}));
+
 const TEST_ADDRESS = '0x1234567890123456789012345678901234567890';
 
 // Mock the authorization middleware with proper hoisting
@@ -337,7 +377,8 @@ describe('Claim Controller', () => {
               fileName: 'test.pdf',
               fileType: 'application/pdf',
               fileSize: 1024,
-              fileData: 'base64data',
+              fileKey: 'claims/1/test-key',
+              fileUrl: 'https://storage.railway.app/claims/1/test-key?signed',
             },
           ],
         });
@@ -345,6 +386,23 @@ describe('Claim Controller', () => {
         vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
         vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaim);
         const createSpy = vi.spyOn(prisma.claim, 'create').mockResolvedValue(mockClaim);
+
+        // Mock storage service responses
+        mockUploadFiles.mockResolvedValue([
+          {
+            success: true,
+            metadata: {
+              key: 'claims/1/test-key',
+              fileName: 'test.pdf',
+              fileType: 'application/pdf',
+              fileSize: 1024,
+            },
+          },
+        ]);
+
+        mockGetPresignedDownloadUrl.mockResolvedValue(
+          'https://storage.railway.app/claims/1/test-key?signed'
+        );
 
         const response = await request(app)
           .post('/')
@@ -611,7 +669,13 @@ describe('Claim Controller', () => {
     describe('File Attachments', () => {
       it('should handle invalid deletedFileIndexes JSON gracefully', async () => {
         const existingAttachments = [
-          { fileName: 'file1.pdf', fileType: 'application/pdf', fileSize: 1024, fileData: 'data1' },
+          {
+            fileName: 'file1.pdf',
+            fileType: 'application/pdf',
+            fileSize: 1024,
+            fileKey: 'claims/1/abc123.pdf',
+            fileUrl: 'https://storage.railway.app/test-bucket/claims/1/abc123.pdf',
+          },
         ];
 
         const mockClaim = {
@@ -644,14 +708,26 @@ describe('Claim Controller', () => {
 
       it('should delete files and add new files in the same request', async () => {
         const existingAttachments = [
-          { fileName: 'file1.pdf', fileType: 'application/pdf', fileSize: 1024, fileData: 'data1' },
-          { fileName: 'file2.jpg', fileType: 'image/jpeg', fileSize: 2048, fileData: 'data2' },
+          {
+            fileName: 'file1.pdf',
+            fileType: 'application/pdf',
+            fileSize: 1024,
+            fileKey: 'claims/1/file1-key',
+            fileUrl: 'https://storage.railway.app/claims/1/file1-key?signed',
+          },
+          {
+            fileName: 'file2.jpg',
+            fileType: 'image/jpeg',
+            fileSize: 2048,
+            fileKey: 'claims/1/file2-key',
+            fileUrl: 'https://storage.railway.app/claims/1/file2-key?signed',
+          },
         ];
 
         const mockClaim = {
           id: 1,
           wage: { userAddress: TEST_ADDRESS },
-          weeklyClaim: { status: 'pending', claims: [] },
+          weeklyClaim: { status: 'pending', claims: [], teamId: 1 },
           fileAttachments: existingAttachments,
         };
 
@@ -664,10 +740,28 @@ describe('Claim Controller', () => {
               fileName: 'newfile.png',
               fileType: 'image/png',
               fileSize: 3072,
-              fileData: 'data3',
+              fileKey: 'claims/1/newfile-key',
+              fileUrl: 'https://storage.railway.app/claims/1/newfile-key?signed',
             },
           ],
         } as any);
+
+        // Mock storage service responses
+        mockUploadFiles.mockResolvedValue([
+          {
+            success: true,
+            metadata: {
+              key: 'claims/1/newfile-key',
+              fileName: 'newfile.png',
+              fileType: 'image/png',
+              fileSize: 3072,
+            },
+          },
+        ]);
+
+        mockGetPresignedDownloadUrl.mockResolvedValue(
+          'https://storage.railway.app/claims/1/newfile-key?signed'
+        );
 
         // Delete index 0 and add a new file
         const response = await request(app)
@@ -692,7 +786,13 @@ describe('Claim Controller', () => {
 
       it('should handle out of bounds file indexes gracefully', async () => {
         const existingAttachments = [
-          { fileName: 'file1.pdf', fileType: 'application/pdf', fileSize: 1024, fileData: 'data1' },
+          {
+            fileName: 'file1.pdf',
+            fileType: 'application/pdf',
+            fileSize: 1024,
+            fileKey: 'claims/1/abc123.pdf',
+            fileUrl: 'https://storage.railway.app/test-bucket/claims/1/abc123.pdf',
+          },
         ];
 
         const mockClaim = {

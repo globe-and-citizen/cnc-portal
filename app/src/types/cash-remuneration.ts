@@ -49,28 +49,8 @@ export interface FileAttachment {
   fileName: string
   fileType: string // MIME type (e.g., image/png, application/pdf)
   fileSize: number // Size in bytes
-
-  // Legacy base64 storage (deprecated but kept for backwards compatibility)
-  fileData?: string // Base64 encoded file data
-
-  // New S3/Railway Storage fields
-  id?: string // Unique file ID (UUID)
-  key?: string // S3 object key (path in bucket)
-  uploadedAt?: string // ISO date string
-}
-
-/**
- * Check if a file attachment uses S3 storage (has key but no fileData)
- */
-export function isS3FileAttachment(file: FileAttachment): boolean {
-  return !!file.key && !file.fileData
-}
-
-/**
- * Check if a file attachment uses legacy base64 storage
- */
-export function isLegacyFileAttachment(file: FileAttachment): boolean {
-  return !!file.fileData
+  fileKey: string // S3 storage key
+  fileUrl: string // Presigned download URL
 }
 
 export interface ClaimFormData {

@@ -1,6 +1,7 @@
 import express from 'express';
 import { getNonce, getUser, updateUser, getAllUsers } from '../controllers/userController';
 import { authorizeUser } from '../middleware/authMiddleware';
+import { upload } from '../utils/upload';
 import {
   validateParams,
   validateQuery,

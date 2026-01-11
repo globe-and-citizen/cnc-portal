@@ -5,11 +5,11 @@ import { errorResponse } from '../utils/utils';
 import {
   uploadProfileImage,
   getPresignedDownloadUrl,
-  isStorageConfigured,
   deleteFile,
+  isStorageConfigured,
 } from '../services/storageService';
 
-// Type for multipart/form-data request with file
+// Type for requests with multer file
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
 }
@@ -80,10 +80,9 @@ export const updateUser = async (req: Request, res: Response) => {
     if (callerAddress !== address) {
       return errorResponse(403, 'Unauthorized', res);
     }
+
     const user = await prisma.user.findUnique({
-      where: {
-        address: address,
-      },
+      where: { address: address },
       select: {
         address: true,
         name: true,
@@ -95,48 +94,39 @@ export const updateUser = async (req: Request, res: Response) => {
 
     let newImageUrl = imageUrl;
 
-    // Handle profile image upload if a file was provided
-    if (multerReq.file) {
-      if (!isStorageConfigured()) {
-        return errorResponse(
-          500,
-          'File storage is not configured. Please set up Railway Storage.',
-          res
-        );
-      }
+    // Handle profile image upload if file is provided
+    if (multerReq.file && isStorageConfigured()) {
+      try {
+        const uploadResult = await uploadProfileImage(multerReq.file, address);
 
-      const uploadResult = await uploadProfileImage(multerReq.file, address);
-
-      if (!uploadResult.success) {
-        return errorResponse(400, uploadResult.error || 'Failed to upload profile image', res);
-      }
-
-      // Generate a presigned URL for the uploaded image
-      // Note: This URL will expire, but we store the key and can generate new URLs
-      if (uploadResult.metadata) {
-        newImageUrl = await getPresignedDownloadUrl(uploadResult.metadata.key, 86400 * 7); // 7 days
-      }
-
-      // Delete old profile image from storage if it was stored in Railway Storage
-      // We can detect this by checking if the old URL contains our storage endpoint
-      if (user.imageUrl && user.imageUrl.includes('storage.railway.app')) {
-        try {
-          // Extract the key from the old presigned URL (this is a best-effort cleanup)
-          const oldUrlMatch = user.imageUrl.match(/profiles\/[^?]+/);
-          if (oldUrlMatch) {
-            await deleteFile(oldUrlMatch[0]);
-          }
-        } catch (error) {
-          console.error('Failed to delete old profile image:', error);
-          // Don't fail the request, just log the error
+        if (!uploadResult.success) {
+          return errorResponse(400, uploadResult.error || 'Failed to upload profile image', res);
         }
+
+        // Generate presigned URL valid for 7 days
+        const signedUrl = await getPresignedDownloadUrl(uploadResult.metadata.key, 86400 * 7);
+        newImageUrl = signedUrl;
+
+        // Delete old profile image if it exists and was stored on Railway
+        if (user.imageUrl && user.imageUrl.includes('storage.railway.app')) {
+          try {
+            const oldKeyMatch = user.imageUrl.match(/profiles\/[^?]+/);
+            if (oldKeyMatch) {
+              await deleteFile(oldKeyMatch[0]);
+            }
+          } catch (e) {
+            console.warn('Could not delete old profile image:', e);
+            // Don't fail the update if old image deletion fails
+          }
+        }
+      } catch (error) {
+        console.error('Error uploading profile image:', error);
+        return errorResponse(500, 'Failed to process profile image upload', res);
       }
     }
 
     const updatedUser = await prisma.user.update({
-      where: {
-        address: address,
-      },
+      where: { address: address },
       data: {
         ...(name !== undefined && { name }),
         ...(newImageUrl !== undefined && { imageUrl: newImageUrl }),

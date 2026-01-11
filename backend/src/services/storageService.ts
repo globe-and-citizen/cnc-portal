@@ -1,104 +1,53 @@
 /**
  * Railway Storage Service (S3-compatible)
  *
- * This service handles file uploads to Railway Object Storage using the S3-compatible API.
- * Files are stored in the bucket and only the URL/key is saved in the database.
- *
- * Railway Storage Variables (set in environment):
- * - BUCKET: The globally unique bucket name for the S3 API
- * - SECRET_ACCESS_KEY: The secret key for the S3 API
- * - ACCESS_KEY_ID: The key id for the S3 API
- * - REGION: The region for the S3 API (default: 'auto')
- * - ENDPOINT: The S3 API endpoint (default: 'https://storage.railway.app')
- *
- * @see https://docs.railway.com/guides/storage-buckets
+ * Stores files in Railway Object Storage via the S3 API. Only the URL/key
+ * should be saved in the database. Filenames are generated as a SHA-256 hash
+ * of `${timestamp}-${originalName}` and we keep the original extension.
  */
-
+import crypto from 'crypto';
+import path from 'path';
 import {
   S3Client,
   PutObjectCommand,
-  GetObjectCommand,
-  DeleteObjectCommand,
   HeadObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { createPresignedPost, PresignedPost } from '@aws-sdk/s3-presigned-post';
-import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
 
-// Allowed MIME types for images (expanded to match frontend and common devices)
+// Defaults and limits
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+export const MAX_FILES_PER_CLAIM = 10;
+
 export const ALLOWED_IMAGE_MIMETYPES = [
   'image/png',
-  'image/x-png',
   'image/jpeg',
   'image/jpg',
-  'image/pjpeg',
-  'image/jfif',
   'image/webp',
-  'image/gif',
-  'image/bmp',
-  'image/svg+xml',
-  'image/x-icon',
-  'image/heic',
-  'image/avif',
-];
-
-// Allowed MIME types for documents
+] as const;
 export const ALLOWED_DOCUMENT_MIMETYPES = [
   'application/pdf',
   'text/plain',
   'application/zip',
   'application/x-zip-compressed',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
-];
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+] as const;
+export const ALLOWED_MIMETYPES = [
+  ...ALLOWED_IMAGE_MIMETYPES,
+  ...ALLOWED_DOCUMENT_MIMETYPES,
+] as readonly string[];
 
-// All allowed MIME types
-export const ALLOWED_MIMETYPES = [...ALLOWED_IMAGE_MIMETYPES, ...ALLOWED_DOCUMENT_MIMETYPES];
+export const PRESIGNED_URL_EXPIRATION = 60 * 60; // 1 hour
 
-// Maximum file size (10MB)
-export const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
-// Maximum files per claim
-export const MAX_FILES_PER_CLAIM = 10;
-
-// Presigned URL expiration (1 hour for downloads, can be up to 7 days)
-export const PRESIGNED_URL_EXPIRATION = 3600;
-
-/**
- * Storage configuration type
- */
-interface StorageConfig {
+type StorageConfig = {
   bucket: string;
   accessKeyId: string;
   secretAccessKey: string;
   region: string;
   endpoint: string;
-}
+};
 
-/**
- * File metadata stored in the database
- */
-export interface FileMetadata {
-  id: string; // Unique file ID (UUID)
-  key: string; // S3 object key (path in bucket)
-  fileName: string; // Original file name
-  fileType: string; // MIME type
-  fileSize: number; // Size in bytes
-  uploadedAt: string; // ISO date string
-}
-
-/**
- * Upload result from the storage service
- */
-export interface UploadResult {
-  success: boolean;
-  metadata?: FileMetadata;
-  error?: string;
-}
-
-/**
- * Get storage configuration from environment variables
- */
 function getStorageConfig(): StorageConfig {
   const bucket = process.env.BUCKET;
   const accessKeyId = process.env.ACCESS_KEY_ID;
@@ -112,18 +61,9 @@ function getStorageConfig(): StorageConfig {
     );
   }
 
-  return {
-    bucket,
-    accessKeyId,
-    secretAccessKey,
-    region,
-    endpoint,
-  };
+  return { bucket, accessKeyId, secretAccessKey, region, endpoint };
 }
 
-/**
- * Check if storage is configured
- */
 export function isStorageConfigured(): boolean {
   try {
     getStorageConfig();
@@ -133,314 +73,168 @@ export function isStorageConfigured(): boolean {
   }
 }
 
-/**
- * Create S3 client for Railway Storage
- */
 function createS3Client(): S3Client {
-  const config = getStorageConfig();
-
+  const cfg = getStorageConfig();
   return new S3Client({
-    region: config.region,
-    endpoint: config.endpoint,
+    region: cfg.region,
+    endpoint: cfg.endpoint,
+    forcePathStyle: true,
     credentials: {
-      accessKeyId: config.accessKeyId,
-      secretAccessKey: config.secretAccessKey,
+      accessKeyId: cfg.accessKeyId,
+      secretAccessKey: cfg.secretAccessKey,
     },
-    forcePathStyle: false, // Railway uses virtual-hosted-style URLs
   });
 }
 
-/**
- * Generate a unique file key (path in the bucket)
- *
- * @param folder - The folder path (e.g., 'claims', 'profiles')
- * @param originalFileName - The original file name
- * @returns A unique key like 'claims/2024/01/uuid.ext'
- */
-export function generateFileKey(folder: string, originalFileName: string): string {
-  const fileId = uuidv4();
-  const ext = path.extname(originalFileName).toLowerCase();
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+export type FileMetadata = {
+  id: string; // hashed name without extension
+  key: string; // full object key (folder/hashed.ext)
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+};
 
-  return `${folder}/${year}/${month}/${fileId}${ext}`;
+export type UploadResult =
+  | { success: true; metadata: FileMetadata }
+  | { success: false; error: string };
+
+export function generateFileKey(folder: string, originalName: string): string {
+  const timestamp = Date.now().toString();
+  const ext = path.extname(originalName).toLowerCase();
+  const base = `${timestamp}-${originalName}`;
+  const hash = crypto.createHash('sha256').update(base).digest('hex');
+  return `${folder}/${hash}${ext}`;
 }
 
-/**
- * Validate file before upload
- *
- * @param file - The multer file object
- * @param allowedMimeTypes - List of allowed MIME types
- * @param maxSize - Maximum file size in bytes
- * @returns Validation result with error message if invalid
- */
 export function validateFile(
   file: Express.Multer.File,
-  allowedMimeTypes: string[] = ALLOWED_MIMETYPES,
+  allowed: readonly string[] = ALLOWED_MIMETYPES,
   maxSize: number = MAX_FILE_SIZE
-): { valid: boolean; error?: string } {
-  // Check MIME type
-  if (!allowedMimeTypes.includes(file.mimetype)) {
+): { valid: true } | { valid: false; error: string } {
+  if (!allowed.includes(file.mimetype)) {
     return {
       valid: false,
-      error: `File type '${file.mimetype}' is not allowed. Allowed types: ${allowedMimeTypes.join(', ')}`,
+      error:
+        'Only image files (png, jpg, jpeg, webp) and documents (pdf, txt, zip, docx) are allowed',
     };
   }
-
-  // Check file size
   if (file.size > maxSize) {
-    const maxSizeMB = maxSize / (1024 * 1024);
+    const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(0);
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
     return {
       valid: false,
       error: `File size (${fileSizeMB}MB) exceeds maximum allowed size (${maxSizeMB}MB)`,
     };
   }
-
   return { valid: true };
 }
 
-/**
- * Upload a file to Railway Storage
- *
- * @param file - The multer file object
- * @param folder - The folder path in the bucket
- * @returns Upload result with file metadata
- */
 export async function uploadFile(
   file: Express.Multer.File,
   folder: string = 'uploads'
 ): Promise<UploadResult> {
   try {
-    // Validate the file
     const validation = validateFile(file);
-    if (!validation.valid) {
-      return { success: false, error: validation.error };
-    }
+    if (!validation.valid) return { success: false, error: validation.error };
 
-    const config = getStorageConfig();
+    const cfg = getStorageConfig();
     const client = createS3Client();
-    const fileKey = generateFileKey(folder, file.originalname);
-    const fileId = path.basename(fileKey, path.extname(fileKey));
+    const key = generateFileKey(folder, file.originalname);
+    const id = path.basename(key, path.extname(key));
 
-    // Upload to S3
-    const command = new PutObjectCommand({
-      Bucket: config.bucket,
-      Key: fileKey,
-      Body: file.buffer,
-      ContentType: file.mimetype,
-      ContentLength: file.size,
-      Metadata: {
-        originalName: encodeURIComponent(file.originalname),
-        uploadedAt: new Date().toISOString(),
+    await client.send(
+      new PutObjectCommand({
+        Bucket: cfg.bucket,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+        CacheControl: 'public, max-age=31536000',
+      })
+    );
+
+    return {
+      success: true,
+      metadata: {
+        id,
+        key,
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        fileSize: file.size,
       },
-    });
-
-    await client.send(command);
-
-    const metadata: FileMetadata = {
-      id: fileId,
-      key: fileKey,
-      fileName: file.originalname,
-      fileType: file.mimetype,
-      fileSize: file.size,
-      uploadedAt: new Date().toISOString(),
     };
-
-    return { success: true, metadata };
   } catch (error) {
-    console.error('Error uploading file to storage:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return { success: false, error: `Failed to upload file: ${errorMessage}` };
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Failed to upload file:', error);
+    return { success: false, error: `Failed to upload file: ${msg}` };
   }
 }
 
-/**
- * Upload multiple files to Railway Storage
- *
- * @param files - Array of multer file objects
- * @param folder - The folder path in the bucket
- * @returns Array of upload results
- */
 export async function uploadFiles(
   files: Express.Multer.File[],
   folder: string = 'uploads'
 ): Promise<UploadResult[]> {
-  const results: UploadResult[] = [];
-
-  for (const file of files) {
-    const result = await uploadFile(file, folder);
-    results.push(result);
+  // Validate file count limit
+  if (files.length > MAX_FILES_PER_CLAIM) {
+    return Array(files.length).fill({
+      success: false,
+      error: `Cannot upload more than ${MAX_FILES_PER_CLAIM} files per claim`,
+    }) as UploadResult[];
   }
 
+  const results: UploadResult[] = [];
+  for (const f of files) results.push(await uploadFile(f, folder));
   return results;
 }
 
-/**
- * Generate a presigned URL for downloading a file
- *
- * @param fileKey - The S3 object key
- * @param expiresIn - URL expiration time in seconds (default: 1 hour)
- * @returns The presigned URL
- */
 export async function getPresignedDownloadUrl(
   fileKey: string,
   expiresIn: number = PRESIGNED_URL_EXPIRATION
 ): Promise<string> {
-  const config = getStorageConfig();
+  const cfg = getStorageConfig();
   const client = createS3Client();
-
-  const command = new GetObjectCommand({
-    Bucket: config.bucket,
-    Key: fileKey,
-  });
-
-  return getSignedUrl(client, command, { expiresIn });
+  // Optionally probe existence; ignore errors
+  await client
+    .send(new HeadObjectCommand({ Bucket: cfg.bucket, Key: fileKey }))
+    .catch(() => undefined);
+  const getObj = new GetObjectCommand({ Bucket: cfg.bucket, Key: fileKey });
+  return getSignedUrl(client, getObj, { expiresIn });
 }
 
-/**
- * Generate a presigned URL for uploading a file directly from the client
- * This avoids streaming through the backend service
- *
- * @param fileName - The original file name
- * @param folder - The folder path in the bucket
- * @param contentType - The expected content type
- * @param maxSize - Maximum allowed file size
- * @returns Presigned POST data for client-side upload
- */
-export async function getPresignedUploadUrl(
-  fileName: string,
-  folder: string = 'uploads',
-  contentType?: string,
-  maxSize: number = MAX_FILE_SIZE
-): Promise<PresignedPost & { key: string }> {
-  const config = getStorageConfig();
-  const client = createS3Client();
-  const fileKey = generateFileKey(folder, fileName);
-
-  const conditions: Array<
-    | { bucket: string }
-    | ['eq', string, string]
-    | ['starts-with', string, string]
-    | ['content-length-range', number, number]
-  > = [{ bucket: config.bucket }, ['eq', '$key', fileKey], ['content-length-range', 0, maxSize]];
-
-  // Add content type restriction if specified
-  if (contentType) {
-    conditions.push(['starts-with', '$Content-Type', contentType.split('/')[0] + '/']);
-  }
-
-  const presignedPost = await createPresignedPost(client, {
-    Bucket: config.bucket,
-    Key: fileKey,
-    Expires: 3600, // 1 hour
-    Conditions: conditions,
-  });
-
-  return { ...presignedPost, key: fileKey };
-}
-
-/**
- * Delete a file from Railway Storage
- *
- * @param fileKey - The S3 object key
- * @returns True if deleted successfully
- */
 export async function deleteFile(fileKey: string): Promise<boolean> {
   try {
-    const config = getStorageConfig();
+    const cfg = getStorageConfig();
     const client = createS3Client();
-
-    const command = new DeleteObjectCommand({
-      Bucket: config.bucket,
-      Key: fileKey,
-    });
-
-    await client.send(command);
+    await client.send(new DeleteObjectCommand({ Bucket: cfg.bucket, Key: fileKey }));
     return true;
-  } catch (error) {
-    console.error('Error deleting file from storage:', error);
+  } catch (e) {
+    console.error('Error deleting file from storage:', e);
     return false;
   }
 }
 
-/**
- * Delete multiple files from Railway Storage
- *
- * @param fileKeys - Array of S3 object keys
- * @returns Number of files successfully deleted
- */
-export async function deleteFiles(fileKeys: string[]): Promise<number> {
-  let deletedCount = 0;
-
-  for (const key of fileKeys) {
-    if (await deleteFile(key)) {
-      deletedCount++;
-    }
-  }
-
-  return deletedCount;
-}
-
-/**
- * Check if a file exists in Railway Storage
- *
- * @param fileKey - The S3 object key
- * @returns True if the file exists
- */
+// Note: fileExists() is not currently used but kept for future use cases
+// (e.g., validation before downloading, existence checks, etc.)
+/*
 export async function fileExists(fileKey: string): Promise<boolean> {
   try {
-    const config = getStorageConfig();
+    const cfg = getStorageConfig();
     const client = createS3Client();
-
-    const command = new HeadObjectCommand({
-      Bucket: config.bucket,
-      Key: fileKey,
-    });
-
-    await client.send(command);
+    await client.send(new HeadObjectCommand({ Bucket: cfg.bucket, Key: fileKey }));
     return true;
   } catch {
     return false;
   }
 }
+*/
 
-/**
- * Upload a profile image to Railway Storage
- *
- * @param file - The multer file object
- * @param userAddress - The user's Ethereum address
- * @returns Upload result with file metadata
- */
 export async function uploadProfileImage(
   file: Express.Multer.File,
   userAddress: string
 ): Promise<UploadResult> {
-  // Validate that it's an image
   const validation = validateFile(file, ALLOWED_IMAGE_MIMETYPES, MAX_FILE_SIZE);
-  if (!validation.valid) {
-    return { success: false, error: validation.error };
-  }
-
-  // Use a consistent path for profile images
+  if (!validation.valid) return { success: false, error: validation.error };
   const folder = `profiles/${userAddress.toLowerCase()}`;
   return uploadFile(file, folder);
-}
-
-/**
- * Get the public URL for a file (via presigned URL)
- * Since Railway buckets are private, this generates a presigned URL
- *
- * @param fileKey - The S3 object key
- * @param expiresIn - URL expiration time in seconds
- * @returns The presigned URL for accessing the file
- */
-export async function getFileUrl(
-  fileKey: string,
-  expiresIn: number = PRESIGNED_URL_EXPIRATION
-): Promise<string> {
-  return getPresignedDownloadUrl(fileKey, expiresIn);
 }
 
 export default {
@@ -448,11 +242,8 @@ export default {
   uploadFile,
   uploadFiles,
   deleteFile,
-  deleteFiles,
-  fileExists,
+  // fileExists, // Commented out - not currently used
   getPresignedDownloadUrl,
-  getPresignedUploadUrl,
-  getFileUrl,
   uploadProfileImage,
   validateFile,
   generateFileKey,
