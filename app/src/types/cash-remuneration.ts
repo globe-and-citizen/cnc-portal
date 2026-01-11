@@ -44,7 +44,8 @@ export interface FileAttachment {
   fileName: string
   fileType: string // MIME type (e.g., image/png, application/pdf)
   fileSize: number // Size in bytes
-  fileData: string // Base64 encoded file data
+  fileKey: string // S3 storage key
+  fileUrl: string // Presigned download URL
 }
 
 export interface ClaimFormData {
