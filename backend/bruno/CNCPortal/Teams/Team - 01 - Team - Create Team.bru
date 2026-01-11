@@ -1,0 +1,70 @@
+meta {
+  name: Team - 01 - Team - Create Team
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/teams
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "name": "Test Team v2",
+    "description": "A test team for testing purposes",
+    "officerAddress": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "members": [
+      {
+        "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+      },
+      {
+        "address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+      }
+    ]
+  }
+}
+
+tests {
+  test("should return 201 status for successful team creation", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+  
+  test("should return created team object", function() {
+    expect(res.body).to.be.an('object');
+  });
+  
+  test("created team should have required properties", function() {
+    expect(res.body).to.have.property('id');
+    expect(res.body).to.have.property('name');
+    expect(res.body).to.have.property('description');
+    expect(res.body).to.have.property('officerAddress');
+    expect(res.body).to.have.property('ownerAddress');
+    expect(res.body).to.have.property('members');
+  });
+  
+  test("team name should match request", function() {
+    expect(res.body.name).to.equal('Test Team');
+  });
+  
+  test("team description should match request", function() {
+    expect(res.body.description).to.equal('A test team for testing purposes');
+  });
+  
+  test("members should be an array with correct length", function() {
+    expect(res.body.members).to.be.an('array');
+    expect(res.body.members.length).to.be.at.least(2);
+  });
+  
+  test("members should have required properties", function() {
+    res.body.members.forEach(member => {
+      expect(member).to.have.property('address');
+      expect(member).to.have.property('name');
+    });
+  });
+}

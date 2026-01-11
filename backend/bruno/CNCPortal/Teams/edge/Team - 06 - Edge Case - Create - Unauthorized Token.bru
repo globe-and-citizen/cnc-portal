@@ -1,0 +1,40 @@
+meta {
+  name: Team - 06 - Edge Case - Create - Unauthorized Token
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{host}}/teams
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: invalid-token-12345
+}
+
+body:json {
+  {
+    "name": "Test Team",
+    "description": "Team creation with invalid token",
+    "officerAddress": "0x1234567890123456789012345678901234567890",
+    "members": [
+      {
+        "name": "Member One",
+        "address": "0x1234567890123456789012345678901234567890"
+      }
+    ]
+  }
+}
+
+tests {
+  test("should return 401 or 403 status for unauthorized request", function() {
+    const status = res.getStatus();
+    expect([401, 403]).to.include(status);
+  });
+  
+  test("should return error message", function() {
+    expect(res.body).to.have.property('error');
+  });
+}
