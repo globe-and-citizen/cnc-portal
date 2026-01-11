@@ -1,9 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-// import { apiClient } from '@/api'
-import type { ApiUser, UsersResponse, UpdateUserPayload, NonceResponse } from '@/types/user'
+import type { UpdateUserPayload } from '@/types/user'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
-import { apiClient } from '~/lib/index'
+import { getUserByAddress, getUserNonce, getUsers, updateUser } from '~/api/user'
 
 /**
  * Fetch user data by address
@@ -12,15 +11,14 @@ import { apiClient } from '~/lib/index'
  * @returns Query result with user data
  *
  * @example
- * const { data: user, isLoading } = useUser('0x123...')
+ * const { data: user, isLoading } = useUserQuery('0x123...')
  */
-export const useUser = (address: MaybeRefOrGetter<string>) => {
+export const useUserQuery = (address: MaybeRefOrGetter<string>) => {
   return useQuery({
     queryKey: ['user', { address: toValue(address) }],
     queryFn: async () => {
       const userAddress = toValue(address)
-      const { data } = await apiClient.get<ApiUser>(`user/${userAddress}`)
-      return data
+      return await getUserByAddress(userAddress)
     },
     enabled: () => !!toValue(address),
     refetchOnWindowFocus: false,
@@ -43,8 +41,7 @@ export const useUserNonce = (address: MaybeRefOrGetter<string>) => {
     queryKey: ['user', 'nonce', { address: toValue(address) }],
     queryFn: async () => {
       const userAddress = toValue(address)
-      const { data } = await apiClient.get<NonceResponse>(`user/nonce/${userAddress}`)
-      return data
+      return await getUserNonce(userAddress)
     },
     enabled: () => !!toValue(address),
     refetchOnWindowFocus: false,
@@ -86,17 +83,11 @@ export const useUsers = (options: {
       const limit = toValue(options.limit) || 10
       const search = toValue(options.search)
 
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: String(limit)
+      return await getUsers({
+        page,
+        limit,
+        search
       })
-
-      if (search) {
-        params.append('search', search)
-      }
-
-      const { data } = await apiClient.get<UsersResponse>(`user?${params.toString()}`)
-      return data
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5 // 5 minutes
@@ -126,8 +117,7 @@ export const useUpdateUser = () => {
       address: string
       payload: UpdateUserPayload
     }) => {
-      const { data } = await apiClient.put<ApiUser>(`user/${address}`, payload)
-      return data
+      return await updateUser(address, payload)
     },
     onSuccess: (data, variables) => {
       // Invalidate user query
@@ -145,46 +135,4 @@ export const useUpdateUser = () => {
       console.error('Failed to update user profile:', error)
     }
   })
-}
-
-/**
- * Refetch user data
- *
- * @param address - The user's address
- * @returns Function to manually refetch user data
- *
- * @example
- * const { refetchUser } = useRefetchUser('0x123...')
- * await refetchUser()
- */
-export const useRefetchUser = (address: MaybeRefOrGetter<string>) => {
-  const queryClient = useQueryClient()
-
-  const refetchUser = async () => {
-    return queryClient.invalidateQueries({
-      queryKey: ['user', { address: toValue(address) }]
-    })
-  }
-
-  return { refetchUser }
-}
-
-/**
- * Get cached user data without triggering a query
- *
- * @param address - The user's address
- * @returns Cached user data if available
- *
- * @example
- * const { getCachedUser } = useGetCachedUser('0x123...')
- * const user = getCachedUser()
- */
-export const useGetCachedUser = (address: MaybeRefOrGetter<string>) => {
-  const queryClient = useQueryClient()
-
-  const getCachedUser = () => {
-    return queryClient.getQueryData<User>(['user', { address: toValue(address) }])
-  }
-
-  return { getCachedUser }
 }
