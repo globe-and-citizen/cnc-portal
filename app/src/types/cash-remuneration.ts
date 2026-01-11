@@ -40,12 +40,7 @@ export interface Claim {
   updatedAt: string // ISO date string
 }
 
-/**
- * File attachment stored in the database.
- * Supports both legacy base64 storage and new S3/Railway Storage.
- */
 export interface FileAttachment {
-  // Common fields
   fileName: string
   fileType: string // MIME type (e.g., image/png, application/pdf)
   fileSize: number // Size in bytes
