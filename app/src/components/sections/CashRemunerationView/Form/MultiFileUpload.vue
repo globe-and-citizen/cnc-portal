@@ -103,18 +103,23 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_FILES = 10
 
 // Allowed file types (only images). Backend /api/upload accepts images only.
-const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg', '.webp']
+const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg', '.ico', '.heic', '.avif']
 const ACCEPTED_FILE_TYPES = ALLOWED_IMAGE_EXTENSIONS.join(',')
 
 const ALLOWED_IMAGE_MIMETYPES = [
   'image/png',
+  'image/x-png',
   'image/jpeg',
   'image/jpg',
+  'image/pjpeg',
+  'image/jfif',
   'image/webp',
   'image/gif',
   'image/bmp',
   'image/svg+xml',
-  'image/x-icon'
+  'image/x-icon',
+  'image/heic',
+  'image/avif'
 ]
 
 /** Types **/
@@ -204,7 +209,13 @@ const handleFiles = async (fileList: FileList): Promise<void> => {
   errorMessage.value = ''
 
   // Filter valid files (images only) - using improved detection
-  const validFiles = Array.from(fileList).filter((file) => isImageFile(file))
+  const validFiles = Array.from(fileList).filter((file) => {
+    const isImg = isImageFile(file)
+    if (!isImg) {
+      console.warn('Rejected file (not image):', { name: file.name, type: file.type, size: file.size })
+    }
+    return isImg
+  })
 
   if (validFiles.length === 0) {
     errorMessage.value = 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed'
