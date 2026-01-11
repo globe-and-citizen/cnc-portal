@@ -186,7 +186,7 @@ describe('MultiFileUpload', () => {
 
   describe('File Upload', () => {
     it('should show loading state during upload', async () => {
-      let resolveUpload: (value: any) => void
+      let resolveUpload: (value: unknown) => void
       const uploadPromise = new Promise((resolve) => {
         resolveUpload = resolve
       })
