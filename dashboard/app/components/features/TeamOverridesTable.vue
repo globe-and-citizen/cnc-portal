@@ -133,11 +133,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import {
-  FEATURE_STATUS_OPTIONS,
-  type FeatureStatus,
-  type TeamRestrictionOverride
-} from '~/lib/axios'
+import { FEATURE_STATUS_OPTIONS } from '~/api/features'
+import type { FeatureStatus, TeamRestrictionOverride } from '~/types'
 import DeleteTeamOverrideModal from './DeleteTeamOverrideModal.vue'
 
 // Props

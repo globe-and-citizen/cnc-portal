@@ -73,7 +73,7 @@
 
 <script setup lang="ts">
 import type { Feature, FeatureStatus } from '~/types'
-import { useFeatures, useCreateFeature, useDeleteFeature, useUpdateFeature } from '~/queries/function.query'
+import { useFeatures, useCreateFeature, useDeleteFeature, useUpdateFeature } from '~/queries/feature.query'
 import FeaturesTable from '~/components/features/FeaturesTable.vue'
 import CreateFeatureModal from '~/components/features/CreateFeatureModal.vue'
 import DeleteFeatureModal from '~/components/features/DeleteFeatureModal.vue'
