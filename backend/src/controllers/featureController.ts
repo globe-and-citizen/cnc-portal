@@ -26,7 +26,7 @@ import {
 export const listFeatures = async (_req: Request, res: Response) => {
   try {
     const features = await findAllFeatures();
-    return res.status(200).json({ success: true, data: features });
+    return res.status(200).json(features);
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -47,7 +47,7 @@ export const getFeatureByName = async (req: Request, res: Response) => {
       return errorResponse(404, `Feature "${functionName}" not found`, res);
     }
 
-    return res.status(200).json({ success: true, data: feature });
+    return res.status(200).json(feature);
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -69,11 +69,7 @@ export const createNewFeature = async (req: Request, res: Response) => {
 
     const feature = await insertFeature(functionName, status);
 
-    return res.status(201).json({
-      success: true,
-      message: `Feature "${functionName}" created successfully`,
-      data: feature,
-    });
+    return res.status(201).json(feature);
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -101,11 +97,7 @@ export const updateFeatureByName = async (req: Request, res: Response) => {
 
     const feature = await patchFeature(functionName, status);
 
-    return res.status(200).json({
-      success: true,
-      message: `Feature "${functionName}" updated to "${status}"`,
-      data: feature,
-    });
+    return res.status(200).json(feature);
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -130,10 +122,7 @@ export const deleteFeatureByName = async (req: Request, res: Response) => {
       return errorResponse(500, `Failed to delete feature "${functionName}"`, res);
     }
 
-    return res.status(200).json({
-      success: true,
-      message: `Feature "${functionName}" and all its overrides have been deleted`,
-    });
+    return res.status(204).send();
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -173,11 +162,7 @@ export const createOverride = async (req: Request, res: Response) => {
 
     const override = await insertOverride(functionName, teamId, status);
 
-    return res.status(201).json({
-      success: true,
-      message: `Override created for team ${override.team.name} on feature "${functionName}"`,
-      data: override,
-    });
+    return res.status(201).json(override);
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -217,11 +202,7 @@ export const updateOverride = async (req: Request, res: Response) => {
 
     const override = await patchOverride(functionName, teamId, status);
 
-    return res.status(200).json({
-      success: true,
-      message: `Override updated to "${status}" for team ${override.team.name}`,
-      data: override,
-    });
+    return res.status(200).json(override);
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -254,10 +235,7 @@ export const removeOverride = async (req: Request, res: Response) => {
       return errorResponse(500, `Failed to delete override`, res);
     }
 
-    return res.status(200).json({
-      success: true,
-      message: `Override removed for team ${teamId}. Team now inherits global setting.`,
-    });
+    return res.status(204).send();
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -288,12 +266,9 @@ export const checkSubmitRestriction = async (req: Request, res: Response) => {
     const isRestricted = effectiveStatus === null || effectiveStatus === 'enabled';
 
     return res.status(200).json({
-      success: true,
-      data: {
-        teamId,
-        isRestricted,
-        effectiveStatus: effectiveStatus ?? 'enabled',
-      },
+      teamId,
+      isRestricted,
+      effectiveStatus: effectiveStatus ?? 'enabled',
     });
   } catch (error) {
     return errorResponse(500, error, res);
