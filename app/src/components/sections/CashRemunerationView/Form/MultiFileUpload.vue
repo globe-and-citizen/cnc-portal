@@ -45,7 +45,7 @@
         <!-- Image preview -->
         <img
           v-if="preview.isImage"
-          :src="preview.previewUrl"
+          :src="preview.uploadedUrl || preview.previewUrl"
           class="rounded-lg shadow object-cover w-full h-32"
           :class="{ 'opacity-50': preview.isUploading }"
           alt="Preview"
@@ -103,10 +103,19 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_FILES = 10
 
 // Allowed file types (only images). Backend /api/upload accepts images only.
-const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp']
-const ACCEPTED_FILE_TYPES = [...ALLOWED_IMAGE_EXTENSIONS].join(',')
+const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg', '.webp']
+const ACCEPTED_FILE_TYPES = ALLOWED_IMAGE_EXTENSIONS.join(',')
 
-const ALLOWED_IMAGE_MIMETYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+const ALLOWED_IMAGE_MIMETYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+  'image/gif',
+  'image/bmp',
+  'image/svg+xml',
+  'image/x-icon'
+]
 
 /** Types **/
 interface PreviewFile {
@@ -136,7 +145,15 @@ const errorMessage = ref<string>('')
 
 /** Helper functions **/
 const isImageFile = (file: File): boolean => {
-  return ALLOWED_IMAGE_MIMETYPES.includes(file.type)
+  // First check MIME type
+  if (ALLOWED_IMAGE_MIMETYPES.includes(file.type)) {
+    return true
+  }
+
+  // Fallback: check file extension (handles cases where MIME type is missing or wrong)
+  const fileName = file.name.toLowerCase()
+  const extension = '.' + fileName.split('.').pop()
+  return ALLOWED_IMAGE_EXTENSIONS.includes(extension)
 }
 
 const getFileIcon = (fileName: string): string => {
@@ -186,11 +203,11 @@ const onDrop = async (event: DragEvent): Promise<void> => {
 const handleFiles = async (fileList: FileList): Promise<void> => {
   errorMessage.value = ''
 
-  // Filter valid files (images only)
-  const validFiles = Array.from(fileList).filter((file) => ALLOWED_IMAGE_MIMETYPES.includes(file.type))
+  // Filter valid files (images only) - using improved detection
+  const validFiles = Array.from(fileList).filter((file) => isImageFile(file))
 
   if (validFiles.length === 0) {
-    errorMessage.value = 'Only images (png, jpg, jpeg, webp) are allowed'
+    errorMessage.value = 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed'
     addErrorToast('Only images are allowed')
     return
   }
@@ -273,9 +290,11 @@ const uploadFile = async (file: File): Promise<string> => {
   const data = await response.json()
 
   if (!data?.imageUrl) {
+    console.error('Upload response missing imageUrl:', data)
     throw new Error('Upload failed: No image URL returned')
   }
 
+  console.log('Upload successful. Image URL:', data.imageUrl)
   return data.imageUrl
 }
 
