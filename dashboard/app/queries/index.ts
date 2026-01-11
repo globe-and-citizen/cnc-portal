@@ -1,6 +1,6 @@
 /**
  * Central export for all dashboard query hooks
- * This allows for easy imports: import { useUserQuery, useUsers, useTokenPricesQuery } from '@/queries'
+ * This allows for easy imports: import { useUserQuery, useUsers, useTokenPricesQuery } from '~/queries'
  */
 
 export * from './user.queries'
