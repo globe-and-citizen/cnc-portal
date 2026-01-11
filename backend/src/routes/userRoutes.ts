@@ -10,7 +10,6 @@ import {
   updateUserBodySchema,
   userPaginationQuerySchema,
 } from '../validation';
-import { upload } from '../utils/upload';
 
 const userRoutes = express.Router();
 
@@ -287,7 +286,6 @@ userRoutes.get('/', authorizeUser, validateQuery(userPaginationQuerySchema), get
  *         description: Internal server error
  */
 userRoutes.get('/:address', authorizeUser, validateParams(addressParamsSchema), getUser);
-// Updated to accept multipart/form-data with optional profile image upload
 userRoutes.put(
   '/:address',
   authorizeUser,

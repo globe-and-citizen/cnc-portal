@@ -4,7 +4,6 @@ import { authorizeUser } from '../middleware/authMiddleware';
 import {
   getPresignedDownloadUrl,
   isStorageConfigured,
-  fileExists,
   PRESIGNED_URL_EXPIRATION,
 } from '../services/storageService';
 
@@ -100,16 +99,7 @@ storageRouter.get('/url', authorizeUser, async (req: Request, res: Response) => 
       }
     }
 
-    // Check if the file exists
-    const exists = await fileExists(key);
-    if (!exists) {
-      return res.status(404).json({
-        error: 'File not found',
-        details: 'The requested file does not exist in storage',
-      });
-    }
-
-    // Generate presigned URL
+    // Generate presigned URL (will fail if file doesn't exist)
     const url = await getPresignedDownloadUrl(key, expirationSeconds);
 
     res.json({
@@ -176,16 +166,7 @@ storageRouter.get('/download/*', authorizeUser, async (req: Request, res: Respon
       });
     }
 
-    // Check if the file exists
-    const exists = await fileExists(decodedKey);
-    if (!exists) {
-      return res.status(404).json({
-        error: 'File not found',
-        details: 'The requested file does not exist in storage',
-      });
-    }
-
-    // Generate presigned URL and redirect
+    // Generate presigned URL and redirect (will fail if file doesn't exist)
     const url = await getPresignedDownloadUrl(decodedKey, PRESIGNED_URL_EXPIRATION);
     res.redirect(302, url);
   } catch (err: unknown) {
