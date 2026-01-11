@@ -398,17 +398,6 @@ async function preloadPresignedUrls(claims: Claim[]) {
   }
 }
 
-// Preload URLs when week claims change
-watch(
-  () => selectWeekWeelyClaim.value?.claims,
-  (claims) => {
-    if (claims && claims.length > 0) {
-      preloadPresignedUrls(claims)
-    }
-  },
-  { immediate: true }
-)
-
 /**
  * Build file previews from file attachments.
  * Supports both legacy base64 storage and new S3/Railway Storage.
@@ -457,6 +446,17 @@ const selectWeekWeelyClaim = computed(() => {
     (weeklyClaim) => weeklyClaim.weekStart === selectedMonthObject.value.isoString
   )
 })
+
+// Preload URLs when week claims change
+watch(
+  () => selectWeekWeelyClaim.value?.claims,
+  (claims) => {
+    if (claims && claims.length > 0) {
+      preloadPresignedUrls(claims)
+    }
+  },
+  { immediate: true }
+)
 
 // Current signed weeks for disabling dates in claim form
 const signedWeekStarts = computed(() => {
