@@ -44,7 +44,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
     })
 
     if (!user.roles.some(role => role === 'ROLE_ADMIN' || role === 'ROLE_SUPER_ADMIN')) {
-      return navigateTo('/access-denied')
+      if (to.path !== '/access-denied')
+        return navigateTo('/access-denied')
     } else {
       // if is admin and the route is access-denied, redirect to home
       if (to.path === '/access-denied') {
