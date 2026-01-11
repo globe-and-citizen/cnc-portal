@@ -18,6 +18,7 @@ import claimRoutes from '../routes/claimRoute';
 import weeklyClaimRoutes from '../routes/weeklyClaimRoute';
 import expenseRoutes from '../routes/expenseRoute';
 import uploadRoute from '../routes/uploadRoute';
+import storageRoute from '../routes/storageRoute';
 import contractRoutes from '../routes/contractRoutes';
 import electionsRoute from '../routes/electionsRoute';
 import devRoutes from '../routes/devRoutes';
@@ -72,6 +73,7 @@ class Server {
       expense: '/api/expense/',
       claim: '/api/claim/',
       upload: '/api/upload/',
+      file: '/api/file/',
       constract: '/api/contract/',
       elections: '/api/elections/',
       stats: '/api/stats/',
@@ -133,6 +135,7 @@ class Server {
     this.app.use(this.paths.claim, authorizeUser, claimRoutes);
     this.app.use(this.paths.expense, authorizeUser, expenseRoutes);
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
+    this.app.use(this.paths.file, authorizeUser, storageRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
     this.app.use(this.paths.stats, authorizeUser, requireAdmin, statsRoutes);
