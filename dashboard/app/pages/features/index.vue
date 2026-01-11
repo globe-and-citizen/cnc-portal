@@ -79,8 +79,8 @@ import CreateFeatureModal from '~/components/features/CreateFeatureModal.vue'
 import DeleteFeatureModal from '~/components/features/DeleteFeatureModal.vue'
 
 // Feature data
-const { data, isLoading, error } = useFeatures()
-const features = computed(() => data.value?.data || [])
+const { data: features, isLoading, error } = useFeatures()
+// const features = computed(() => data.value?.data || [])
 
 // Mutations
 const createFeatureMutation = useCreateFeature()

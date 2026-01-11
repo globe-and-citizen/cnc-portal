@@ -64,8 +64,8 @@ const router = useRouter()
 const route = useRoute()
 
 // Get features data
-const { data, isLoading, error } = useFeatures()
-const features = computed(() => data.value?.data || [])
+const { data: features, isLoading, error } = useFeatures()
+// const features = computed(() => data.value?.data || [])
 
 // Get feature ID from route params
 const featureId = computed(() => route.params.id as string)
