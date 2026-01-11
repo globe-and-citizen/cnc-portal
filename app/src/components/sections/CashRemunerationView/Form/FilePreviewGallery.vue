@@ -1,14 +1,14 @@
 <template>
-  <div v-if="previews.length > 0" class="mt-2" :class="props.gridClass">
+  <div v-if="resolvedPreviews.length > 0" class="mt-2" :class="props.gridClass">
     <div
-      v-for="(preview, index) in previews"
-      :key="preview.previewUrl"
+      v-for="(preview, index) in resolvedPreviews"
+      :key="preview.previewUrl || preview.key || index"
       class="relative group"
       data-test="preview-item"
     >
       <!-- Image preview -->
       <button
-        v-if="preview.isImage"
+        v-if="preview.isImage && preview.previewUrl"
         type="button"
         :class="[
           'group relative overflow-hidden rounded-md w-full focus:outline-none border border-gray-200 hover:border-emerald-500 transition-all',
@@ -28,6 +28,19 @@
           />
         </div>
       </button>
+
+      <!-- Loading state for S3 images waiting for presigned URL -->
+      <div
+        v-else-if="preview.isImage && !preview.previewUrl && preview.key"
+        :class="[
+          'rounded-md w-full flex flex-col items-center justify-center bg-gray-100 border border-gray-200',
+          props.itemHeightClass
+        ]"
+        data-test="image-loading"
+      >
+        <span class="loading loading-spinner loading-sm text-gray-400"></span>
+        <span class="text-[10px] text-gray-500 mt-1">Loading...</span>
+      </div>
 
       <!-- Document preview (icon + filename) -->
       <button
@@ -179,7 +192,8 @@
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
+import { getPresignedUrl } from '@/composables/useFileUrl'
 
 interface PreviewItem {
   previewUrl: string
@@ -187,6 +201,7 @@ interface PreviewItem {
   fileSize: number
   fileType?: string
   isImage: boolean
+  key?: string // S3 key for files stored in Railway Storage
 }
 
 const props = withDefaults(
@@ -210,6 +225,65 @@ const props = withDefaults(
 const emit = defineEmits<{
   remove: [index: number]
 }>()
+
+// Cache for resolved presigned URLs
+const resolvedUrls = ref<Map<string, string>>(new Map())
+
+// Computed previews with resolved URLs
+const resolvedPreviews = computed(() => {
+  return props.previews.map((preview) => {
+    // If preview has a key and no previewUrl, try to get from cache
+    if (preview.key && !preview.previewUrl) {
+      const cachedUrl = resolvedUrls.value.get(preview.key)
+      if (cachedUrl) {
+        return { ...preview, previewUrl: cachedUrl }
+      }
+    }
+    return preview
+  })
+})
+
+// Fetch presigned URLs for S3 files - IN PARALLEL for faster loading
+async function loadPresignedUrls() {
+  const keysToFetch = props.previews
+    .filter((p) => p.key && !p.previewUrl && !resolvedUrls.value.has(p.key))
+    .map((p) => p.key!)
+
+  if (keysToFetch.length === 0) return
+
+  // Fetch all URLs in parallel for faster loading
+  const results = await Promise.allSettled(
+    keysToFetch.map(async (key) => {
+      const url = await getPresignedUrl(key)
+      return { key, url }
+    })
+  )
+
+  // Process results
+  for (const result of results) {
+    if (result.status === 'fulfilled' && result.value.url) {
+      resolvedUrls.value.set(result.value.key, result.value.url)
+    } else if (result.status === 'rejected') {
+      console.error('Failed to fetch presigned URL:', result.reason)
+    }
+  }
+
+  // Force reactivity update
+  resolvedUrls.value = new Map(resolvedUrls.value)
+}
+
+// Load URLs on mount and when previews change
+onMounted(() => {
+  loadPresignedUrls()
+})
+
+watch(
+  () => props.previews,
+  () => {
+    loadPresignedUrls()
+  },
+  { deep: true }
+)
 
 const lightboxImage = ref<string | null>(null)
 const lightboxFileName = ref<string>('')
