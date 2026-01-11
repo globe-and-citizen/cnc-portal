@@ -6,7 +6,13 @@ export async function findAllFeatures() {
     orderBy: { functionName: 'asc' },
     include: {
       teamFunctionOverrides: {
-        select: { id: true },
+        take: 10,
+        include: {
+          team: true,
+        },
+        orderBy: {
+          id: 'desc',
+        },
       },
     },
   });
@@ -22,13 +28,9 @@ export async function findFeatureByName(functionName: string) {
     where: { functionName: functionName },
     include: {
       teamFunctionOverrides: {
+        take: 100,
         include: {
-          team: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
+          team: true,
         },
         orderBy: {
           id: 'asc',
@@ -38,25 +40,13 @@ export async function findFeatureByName(functionName: string) {
   });
 
   if (!feature) return null;
-
-  return {
-    id: feature.id,
-    functionName: feature.functionName,
-    status: feature.status as FeatureStatus,
-    createdAt: feature.createdAt,
-    updatedAt: feature.updatedAt,
-    overrides: feature.teamFunctionOverrides.map((override) => ({
-      teamId: override.teamId,
-      teamName: override.team.name,
-      status: override.status as FeatureStatus,
-    })),
-  };
+  return feature
 }
 
 export async function insertFeature(functionName: string, status: FeatureStatus) {
   const feature = await prisma.globalSetting.create({
     data: {
-      functionName: functionName,
+      functionName,
       status,
     },
   });
