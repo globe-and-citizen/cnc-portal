@@ -68,13 +68,11 @@ describe('uploadRoute', () => {
 
     it('should upload file and return image URL with metadata', async () => {
       const mockMetadata = {
-        id: 'abc123hash',
-        key: 'images/abc123hash.jpg',
-        fileName: 'test-image.jpg',
+        key: 'uploads/abc123hash.jpg',
         fileType: 'image/jpeg',
         fileSize: 1024,
       };
-      const mockPresignedUrl = 'https://storage.railway.app/bucket/images/abc123hash.jpg?signed';
+      const mockPresignedUrl = 'https://storage.railway.app/bucket/uploads/abc123hash.jpg?signed';
 
       mockUploadFile.mockResolvedValue({ success: true, metadata: mockMetadata });
       mockGetPresignedDownloadUrl.mockResolvedValue(mockPresignedUrl);
@@ -82,7 +80,11 @@ describe('uploadRoute', () => {
       const response = await request(app).post('/').send({ hasFile: true });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ imageUrl: mockPresignedUrl, metadata: mockMetadata });
+      expect(response.body).toEqual({
+        fileUrl: mockPresignedUrl,
+        fileKey: mockMetadata.key,
+        metadata: mockMetadata,
+      });
       expect(mockUploadFile).toHaveBeenCalled();
       expect(mockGetPresignedDownloadUrl).toHaveBeenCalledWith(mockMetadata.key, 86400);
     });

@@ -5,7 +5,7 @@ import {
   uploadFile,
   getPresignedDownloadUrl,
   isStorageConfigured,
-  ALLOWED_IMAGE_MIMETYPES,
+  ALLOWED_MIMETYPES,
 } from '../services/storageService';
 
 const uploadRouter = express.Router();
@@ -19,8 +19,12 @@ interface MulterRequest extends Request {
  * @openapi
  * /upload:
  *   post:
- *     summary: Upload an image to Railway Storage
- *     description: Uploads a single image file to Railway Storage and returns a presigned URL
+ *     summary: Upload a file to Railway Storage
+ *     description: |
+ *       Uploads a single file (image or document) to Railway Storage and returns a presigned URL.
+ *       Supported file types:
+ *       - Images: png, jpeg, webp
+ *       - Documents: pdf, txt, zip, docx
  *     tags: [Upload]
  *     requestBody:
  *       required: true
@@ -29,42 +33,42 @@ interface MulterRequest extends Request {
  *           schema:
  *             type: object
  *             properties:
- *               image:
+ *               file:
  *                 type: string
  *                 format: binary
- *                 description: The image file to upload
+ *                 description: The file to upload (image or document)
  *     responses:
  *       200:
- *         description: Image uploaded successfully
+ *         description: File uploaded successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 imageUrl:
+ *                 fileUrl:
  *                   type: string
- *                   description: Presigned URL for accessing the uploaded image
+ *                   description: Presigned URL for accessing the uploaded file (24h expiry)
+ *                 fileKey:
+ *                   type: string
+ *                   description: S3 object key for the uploaded file (unique identifier)
  *                 metadata:
  *                   type: object
  *                   properties:
- *                     id:
- *                       type: string
  *                     key:
  *                       type: string
- *                     fileName:
- *                       type: string
+ *                       description: S3 object key (unique identifier)
  *                     fileType:
  *                       type: string
+ *                       description: MIME type of the file
  *                     fileSize:
  *                       type: number
- *                     uploadedAt:
- *                       type: string
+ *                       description: File size in bytes
  *       400:
  *         description: No file provided or invalid file type
  *       500:
  *         description: Storage not configured or upload failed
  */
-uploadRouter.post('/', upload.single('image'), async (req: Request, res: Response) => {
+uploadRouter.post('/', upload.single('file'), async (req: Request, res: Response) => {
   try {
     const multerReq = req as MulterRequest;
 
@@ -81,27 +85,27 @@ uploadRouter.post('/', upload.single('image'), async (req: Request, res: Respons
       });
     }
 
-    // Only allow images here
-    if (!(ALLOWED_IMAGE_MIMETYPES as readonly string[]).includes(multerReq.file.mimetype)) {
+    // Allow images and documents (pdf, txt, zip, docx)
+    if (!ALLOWED_MIMETYPES.includes(multerReq.file.mimetype)) {
       return res.status(400).json({
         error: 'Invalid file type',
-        details: `Only image files are allowed: ${ALLOWED_IMAGE_MIMETYPES.join(', ')}`,
+        details: `Only images and documents are allowed: ${ALLOWED_MIMETYPES.join(', ')}`,
       });
     }
 
-    // Upload to Railway Storage under images/
-    const uploadResult = await uploadFile(multerReq.file, 'images');
+    // Upload to Railway Storage under uploads/
+    const uploadResult = await uploadFile(multerReq.file, 'uploads');
 
     if (!uploadResult.success) {
-      return res.status(500).json({ error: 'Failed to upload image', details: uploadResult.error });
+      return res.status(500).json({ error: 'Failed to upload file', details: uploadResult.error });
     }
 
-    const imageUrl = await getPresignedDownloadUrl(uploadResult.metadata.key, 86400); // 24h
-    res.json({ imageUrl, metadata: uploadResult.metadata });
+    const fileUrl = await getPresignedDownloadUrl(uploadResult.metadata.key, 86400); // 24h
+    res.json({ fileUrl, fileKey: uploadResult.metadata.key, metadata: uploadResult.metadata });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
     res.status(500).json({
-      error: 'Failed to upload image',
+      error: 'Failed to upload file',
       details: errorMessage,
     });
   }

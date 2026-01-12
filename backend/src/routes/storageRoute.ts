@@ -116,33 +116,10 @@ storageRouter.get('/url', authorizeUser, async (req: Request, res: Response) => 
   }
 });
 
-/**
- * @openapi
- * /file/download/{key}:
- *   get:
- *     summary: Redirect to file download
- *     description: Redirects to a presigned URL for downloading a file. Requires authentication.
- *     tags: [Files]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: key
- *         required: true
- *         schema:
- *           type: string
- *         description: The S3 object key (URL-encoded file path in storage)
- *         example: "claims%2F2024%2F01%2Fabc123.pdf"
- *     responses:
- *       302:
- *         description: Redirect to presigned download URL
- *       400:
- *         description: Missing or invalid parameters
- *       404:
- *         description: File not found
- *       500:
- *         description: Storage not configured or error generating URL
- */
+// Note: The /download/* route is commented out as it's redundant.
+// The frontend already receives fileUrl from upload, and can use /file/url
+// to regenerate expired URLs. Direct download can be done client-side.
+/*
 storageRouter.get('/download/*', authorizeUser, async (req: Request, res: Response) => {
   try {
     // Get the key from the path (everything after /download/)
@@ -178,5 +155,6 @@ storageRouter.get('/download/*', authorizeUser, async (req: Request, res: Respon
     });
   }
 });
+*/
 
 export default storageRouter;
