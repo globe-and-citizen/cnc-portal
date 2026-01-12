@@ -1,6 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import FilePreviewGallery from '../FilePreviewGallery.vue'
+import { getPresignedUrl } from '@/composables/useFileUrl'
+
+vi.mock('@/composables/useFileUrl', () => ({
+  getPresignedUrl: vi.fn()
+}))
 
 describe('FilePreviewGallery', () => {
   const IMAGE_PREVIEW = {
@@ -34,12 +41,19 @@ describe('FilePreviewGallery', () => {
     previewItem: '[data-test="preview-item"]',
     imagePreview: '[data-test="image-preview"]',
     documentPreview: '[data-test="document-preview"]',
+    imageLoading: '[data-test="image-loading"]',
     removeButton: '[data-test="remove-button"]',
     imageModal: '[data-test="upload-lightbox-modal"]',
     docModal: '[data-test="upload-doc-modal"]'
   } as const
 
   let wrapper: ReturnType<typeof mount<typeof FilePreviewGallery>>
+
+  const flushAsync = async () => {
+    await Promise.resolve()
+    await Promise.resolve()
+    await nextTick()
+  }
 
   const mountComponent = (props = {}) =>
     mount(FilePreviewGallery, {
@@ -72,6 +86,45 @@ describe('FilePreviewGallery', () => {
 
       await removeButtons[1]!.trigger('click')
       expect(wrapper.emitted('remove')).toEqual([[1]])
+    })
+  })
+
+  describe('Presigned URLs', () => {
+    const S3_IMAGE = {
+      previewUrl: '',
+      fileName: 'remote.jpg',
+      fileSize: 1000,
+      fileType: 'image/jpeg',
+      isImage: true,
+      key: 's3-key'
+    }
+
+    it('shows loading then renders resolved S3 image', async () => {
+      ;(getPresignedUrl as unknown as Mock).mockResolvedValueOnce('https://cdn/img.jpg')
+
+      wrapper = mountComponent({ previews: [S3_IMAGE] })
+
+      expect(wrapper.find(S.imageLoading).exists()).toBe(true)
+
+      await flushAsync()
+
+      const image = wrapper.find(S.imagePreview)
+      expect(image.exists()).toBe(true)
+      expect(image.find('img').attributes('src')).toBe('https://cdn/img.jpg')
+    })
+
+    it('logs error when presigned URL fetch fails', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      ;(getPresignedUrl as unknown as Mock).mockRejectedValueOnce(new Error('fail'))
+
+      wrapper = mountComponent({ previews: [S3_IMAGE] })
+
+      await flushAsync()
+
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch presigned URL:', expect.any(Error))
+      expect(wrapper.find(S.imageLoading).exists()).toBe(true)
+
+      consoleSpy.mockRestore()
     })
   })
 
