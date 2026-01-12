@@ -1,7 +1,0 @@
--- AlterTable
-ALTER TABLE "Claim" ADD COLUMN     "memo" TEXT;
-
--- AlterTable
-ALTER TABLE "Wage" ADD COLUMN     "usdcRatePerHour" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
-ALTER COLUMN "cashRatePerHour" SET DEFAULT 0.0,
-ALTER COLUMN "tokenRatePerHour" SET DEFAULT 0.0;
