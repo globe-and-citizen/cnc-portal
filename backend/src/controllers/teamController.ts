@@ -233,9 +233,9 @@ const deleteTeam = async (req: Request, res: Response) => {
       return errorResponse(403, 'Unauthorized', res);
     }
     // Cascading deletes handle all related records (teamContracts, memberTeamsData, wages, claims, etc.)
-    const teamD = await prisma.team.delete({ where: { id: Number(id) } });
+    await prisma.team.delete({ where: { id: Number(id) } });
 
-    res.status(200).json({ team: teamD, success: true });
+    return res.status(204).send();
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);

@@ -236,16 +236,11 @@ export const performComplexOperation = async (req: Request, res: Response) => {
     // Perform complex operation (crypto, external APIs, etc.)
     const result = await complexCryptographicOperation(inputData, parameters);
 
-    res.json({
-      success: true,
-      result: result,
-      timestamp: new Date().toISOString(),
-    });
+    res.json(result);
   } catch (error) {
     console.error('Dev endpoint error:', error);
     res.status(500).json({
-      success: false,
-      error: error.message,
+      message: error.message || 'Internal server error',
     });
   }
 };
