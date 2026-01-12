@@ -121,7 +121,7 @@ import { useToastStore } from '@/stores'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue' // New: database storage
 
 interface FileData {
-  fileName: string
+  fileName?: string // Optional - can be derived from fileKey if not provided
   fileType: string
   fileSize: number
   fileKey: string
@@ -134,7 +134,8 @@ interface Props {
   isLoading?: boolean
   disabledWeekStarts?: string[]
   restrictSubmit?: boolean
-  existingFiles?: FileData[]
+  // Accept partial FileData without fileName
+  existingFiles?: Partial<FileData>[]
   deletingFileIndex?: number | null
 }
 
@@ -172,13 +173,23 @@ const onFilesUpdate = (files: File[]): void => {
 
 // Convert FileData to PreviewItem for FilePreviewGallery
 const existingFilePreviews = computed(() => {
-  return (props.existingFiles ?? []).map((file) => ({
-    previewUrl: file.fileUrl,
-    fileName: file.fileName,
-    fileSize: file.fileSize,
-    fileType: file.fileType,
-    isImage: file.fileType.startsWith('image/')
-  }))
+  return (props.existingFiles ?? [])
+    .filter((file) => file && file.fileUrl && file.fileType && file.fileKey)
+    .map((file) => {
+      // file is guaranteed to have these properties after filter
+      const fileUrl = file.fileUrl!
+      const fileType = file.fileType!
+      const fileSize = file.fileSize || 0
+      const fileKey = file.fileKey!
+      const fileName = file.fileName || fileKey.split('/').pop() || 'file'
+      return {
+        previewUrl: fileUrl,
+        fileName,
+        fileSize,
+        fileType,
+        isImage: fileType.startsWith('image/')
+      }
+    })
 })
 
 const createDefaultFormData = (overrides?: Partial<ClaimFormData>): ClaimFormData => ({
