@@ -216,48 +216,7 @@ describe('storageService', () => {
     });
   });
 
-  describe('uploadProfileImage', () => {
-    beforeEach(() => {
-      process.env = { ...originalEnv, ...mockEnv };
-      mockSend.mockResolvedValue({});
-    });
-
-    it('should upload profile image to correct folder', async () => {
-      vi.resetModules();
-      const { uploadProfileImage } = await import('../storageService');
-
-      const mockFile = {
-        originalname: 'avatar.png',
-        mimetype: 'image/png',
-        size: 1024,
-        buffer: Buffer.from('test'),
-      } as Express.Multer.File;
-
-      const result = await uploadProfileImage(mockFile, '0xAbCd1234');
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.metadata.key).toMatch(/^profiles\/0xabcd1234\//);
-      }
-    });
-
-    it('should reject non-image files for profile', async () => {
-      vi.resetModules();
-      const { uploadProfileImage } = await import('../storageService');
-
-      const mockFile = {
-        originalname: 'document.pdf',
-        mimetype: 'application/pdf',
-        size: 1024,
-        buffer: Buffer.from('test'),
-      } as Express.Multer.File;
-
-      const result = await uploadProfileImage(mockFile, '0xAbCd1234');
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error).toContain('Only image files');
-      }
-    });
-  });
+  // Note: uploadProfileImage tests removed - function is now deprecated
+  // Use uploadFile(file, `profiles/${userAddress}`) instead
+  // The functionality is tested through uploadFile tests with different folders
 });

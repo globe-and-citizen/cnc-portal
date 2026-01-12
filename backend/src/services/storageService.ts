@@ -87,9 +87,7 @@ function createS3Client(): S3Client {
 }
 
 export type FileMetadata = {
-  id: string; // hashed name without extension
-  key: string; // full object key (folder/hashed.ext)
-  fileName: string;
+  key: string; // S3 object key - use as unique ID
   fileType: string;
   fileSize: number;
 };
@@ -140,7 +138,6 @@ export async function uploadFile(
     const cfg = getStorageConfig();
     const client = createS3Client();
     const key = generateFileKey(folder, file.originalname);
-    const id = path.basename(key, path.extname(key));
 
     await client.send(
       new PutObjectCommand({
@@ -155,9 +152,7 @@ export async function uploadFile(
     return {
       success: true,
       metadata: {
-        id,
-        key,
-        fileName: file.originalname,
+        key, // S3 key is the unique identifier
         fileType: file.mimetype,
         fileSize: file.size,
       },
@@ -227,6 +222,9 @@ export async function fileExists(fileKey: string): Promise<boolean> {
 }
 */
 
+// Note: uploadProfileImage() is redundant - use uploadFile(file, `profiles/${userAddress}`) instead
+// Kept commented for reference but should be removed in future cleanup
+/*
 export async function uploadProfileImage(
   file: Express.Multer.File,
   userAddress: string
@@ -236,6 +234,7 @@ export async function uploadProfileImage(
   const folder = `profiles/${userAddress.toLowerCase()}`;
   return uploadFile(file, folder);
 }
+*/
 
 export default {
   isStorageConfigured,
@@ -244,7 +243,7 @@ export default {
   deleteFile,
   // fileExists, // Commented out - not currently used
   getPresignedDownloadUrl,
-  uploadProfileImage,
+  // uploadProfileImage, // Commented out - redundant, use uploadFile with folder
   validateFile,
   generateFileKey,
   ALLOWED_IMAGE_MIMETYPES,
