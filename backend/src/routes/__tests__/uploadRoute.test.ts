@@ -41,7 +41,16 @@ vi.mock('../../services/storageService', () => ({
   uploadFile: mockUploadFile,
   getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
   isStorageConfigured: mockIsStorageConfigured,
-  ALLOWED_IMAGE_MIMETYPES: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+  ALLOWED_MIMETYPES: [
+    'image/png',
+    'image/jpeg',
+    'image/jpg',
+    'image/webp',
+    'application/pdf',
+    'text/plain',
+    'application/zip',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ],
 }));
 
 // Import after mock
@@ -97,7 +106,7 @@ describe('uploadRoute', () => {
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
-        error: 'Failed to upload image',
+        error: 'Failed to upload file',
         details: errorMessage,
       });
     });
@@ -118,7 +127,7 @@ describe('uploadRoute', () => {
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
-        error: 'Failed to upload image',
+        error: 'Failed to upload file',
         details: 'Unexpected error',
       });
     });
