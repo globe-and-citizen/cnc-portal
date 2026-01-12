@@ -3,7 +3,7 @@ import { generateNonce } from 'siwe';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 import {
-  uploadProfileImage,
+  uploadFile,
   getPresignedDownloadUrl,
   deleteFile,
   isStorageConfigured,
@@ -97,7 +97,9 @@ export const updateUser = async (req: Request, res: Response) => {
     // Handle profile image upload if file is provided
     if (multerReq.file && isStorageConfigured()) {
       try {
-        const uploadResult = await uploadProfileImage(multerReq.file, address);
+        // Use uploadFile with profile folder (replaces deprecated uploadProfileImage)
+        const folder = `profiles/${address.toLowerCase()}`;
+        const uploadResult = await uploadFile(multerReq.file, folder);
 
         if (!uploadResult.success) {
           return errorResponse(400, uploadResult.error || 'Failed to upload profile image', res);
