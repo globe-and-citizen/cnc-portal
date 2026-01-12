@@ -112,7 +112,7 @@ describe('EditClaims', () => {
 
     // Setup axios mock to resolve for put and handle upload posts
     mockApiClient.put.mockResolvedValue({ data: { message: 'Claim updated successfully' } })
-    mockApiClient.post.mockImplementation((url: string, body: any) => {
+    mockApiClient.post.mockImplementation((url: string) => {
       if (url === '/upload' || url.endsWith('/upload')) {
         return Promise.resolve({
           data: {
@@ -146,15 +146,16 @@ describe('EditClaims', () => {
 
       // Upload should be called first, then put for claim update
       expect(mockApiClient.post).toHaveBeenCalled()
-      const uploadCall = mockApiClient.post.mock.calls[0]
-      expect(uploadCall[0]).toBe('/upload')
-      const uploadForm = uploadCall[1] as FormData
+      const uploadCall = mockApiClient.post.mock.calls[0] as [string, FormData] | undefined
+      expect(uploadCall).toBeDefined()
+      expect(uploadCall![0]).toBe('/upload')
+      const uploadForm = uploadCall![1] as FormData
       expect(uploadForm.get('file')).toBeTruthy()
 
       expect(mockApiClient.put).toHaveBeenCalled()
       const putCall = mockApiClient.put.mock.calls[0]
-      expect(putCall[0]).toBe(`/claim/${defaultClaim.id}`)
-      const payload = putCall[1]
+      expect(putCall![0]).toBe(`/claim/${defaultClaim.id}`)
+      const payload = putCall![1]
       expect(payload).toBeDefined()
       expect(Array.isArray(payload.attachments)).toBe(true)
       expect(payload.attachments).toHaveLength(1)
@@ -193,7 +194,7 @@ describe('EditClaims', () => {
       expect(mockApiClient.put).toHaveBeenCalled()
       const putCall = mockApiClient.put.mock.calls[0]
       expect(putCall).toBeDefined()
-      const payload = putCall[1]
+      const payload = putCall![1]
       expect(payload.deletedFileIndexes).toEqual([0])
     })
   })

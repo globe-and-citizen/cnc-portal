@@ -51,7 +51,7 @@ afterEach(() => {
 describe('SubmitClaims', () => {
   beforeEach(() => {
     // Setup axios mock to handle upload and claim endpoints
-    mocks.mockApiClient.post.mockImplementation((url: string, body: any) => {
+    mocks.mockApiClient.post.mockImplementation((url: string) => {
       if (url === '/upload' || url.endsWith('/upload')) {
         return Promise.resolve({
           data: {
