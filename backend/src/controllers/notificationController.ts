@@ -19,10 +19,7 @@ const getNotification = async (req: Request, res: Response) => {
     //check if user is authorized to get notification
     if (notifications.length < 1 || callerAddress === notifications[0].userAddress) {
       //send notification
-      res.status(201).json({
-        success: true,
-        data: notifications,
-      });
+      res.status(201).json(notifications);
     } else {
       //send error
       return errorResponse(403, 'Unauthorized access', res);
@@ -56,9 +53,7 @@ const updateNotification = async (req: Request, res: Response) => {
         data: { isRead: true },
       });
 
-      res.status(201).json({
-        success: true,
-      });
+      res.status(201).json(notification);
     } else {
       return errorResponse(403, 'Unauthorized access', res);
     }
@@ -88,10 +83,7 @@ const createBulkNotifications = async (req: Request, res: Response) => {
       author: req.address,
       resource,
     });
-    res.status(201).json({
-      success: true,
-      data: notifications,
-    });
+    res.status(201).json(notifications);
   } catch (error) {
     return errorResponse(500, error, res);
   }
