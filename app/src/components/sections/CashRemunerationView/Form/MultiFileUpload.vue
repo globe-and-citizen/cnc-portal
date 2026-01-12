@@ -45,7 +45,7 @@
         <!-- Image preview -->
         <img
           v-if="preview.isImage"
-          :src="preview.uploadedUrl || preview.previewUrl"
+          :src="preview.metadata?.fileUrl || preview.previewUrl"
           class="rounded-lg shadow object-cover w-full h-32"
           :class="{ 'opacity-50': preview.isUploading }"
           alt="Preview"
@@ -102,41 +102,42 @@ import { BACKEND_URL } from '@/constant/index'
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_FILES = 10
 
-// Allowed file types (only images). Backend /api/upload accepts images only.
-const ALLOWED_IMAGE_EXTENSIONS = [
-  '.png',
-  '.jpg',
-  '.jpeg',
-  '.webp',
-  '.gif',
-  '.bmp',
-  '.svg',
-  '.ico',
-  '.heic',
-  '.avif'
-]
-const ACCEPTED_FILE_TYPES = ALLOWED_IMAGE_EXTENSIONS.join(',')
-
+// Allowed image extensions and MIME types
+const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg']
 const ALLOWED_IMAGE_MIMETYPES = [
   'image/png',
-  'image/x-png',
   'image/jpeg',
   'image/jpg',
-  'image/pjpeg',
-  'image/jfif',
   'image/webp',
   'image/gif',
   'image/bmp',
-  'image/svg+xml',
-  'image/x-icon',
-  'image/heic',
-  'image/avif'
+  'image/svg+xml'
 ]
 
+// Allowed document extensions and MIME types
+const ALLOWED_DOCUMENT_EXTENSIONS = ['.pdf', '.txt', '.zip', '.docx']
+const ALLOWED_DOCUMENT_MIMETYPES = [
+  'application/pdf',
+  'text/plain',
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+]
+
+// Combined allowed file types for input accept attribute
+const ACCEPTED_FILE_TYPES = [...ALLOWED_IMAGE_EXTENSIONS, ...ALLOWED_DOCUMENT_EXTENSIONS].join(',')
+
 /** Types **/
+interface FileMetadata {
+  fileKey: string
+  fileUrl: string
+  fileType: string
+  fileSize: number
+}
+
 interface PreviewFile {
   previewUrl: string
-  uploadedUrl?: string
+  metadata?: FileMetadata
   isUploading: boolean
   isImage: boolean
   fileName: string
@@ -144,7 +145,7 @@ interface PreviewFile {
 
 /** Emits **/
 const emit = defineEmits<{
-  'update:screens': [urls: string[]]
+  'update:screens': [metadata: FileMetadata[]]
 }>()
 
 /** Stores **/
@@ -161,15 +162,19 @@ const errorMessage = ref<string>('')
 
 /** Helper functions **/
 const isImageFile = (file: File): boolean => {
-  // First check MIME type
-  if (ALLOWED_IMAGE_MIMETYPES.includes(file.type)) {
-    return true
-  }
+  if (ALLOWED_IMAGE_MIMETYPES.includes(file.type)) return true
+  const ext = '.' + file.name.toLowerCase().split('.').pop()
+  return ALLOWED_IMAGE_EXTENSIONS.includes(ext)
+}
 
-  // Fallback: check file extension (handles cases where MIME type is missing or wrong)
-  const fileName = file.name.toLowerCase()
-  const extension = '.' + fileName.split('.').pop()
-  return ALLOWED_IMAGE_EXTENSIONS.includes(extension)
+const isDocumentFile = (file: File): boolean => {
+  if (ALLOWED_DOCUMENT_MIMETYPES.includes(file.type)) return true
+  const ext = '.' + file.name.toLowerCase().split('.').pop()
+  return ALLOWED_DOCUMENT_EXTENSIONS.includes(ext)
+}
+
+const isAllowedFile = (file: File): boolean => {
+  return isImageFile(file) || isDocumentFile(file)
 }
 
 const getFileIcon = (fileName: string): string => {
@@ -219,22 +224,23 @@ const onDrop = async (event: DragEvent): Promise<void> => {
 const handleFiles = async (fileList: FileList): Promise<void> => {
   errorMessage.value = ''
 
-  // Filter valid files (images only) - using improved detection
+  // Filter valid files (images and documents)
   const validFiles = Array.from(fileList).filter((file) => {
-    const isImg = isImageFile(file)
-    if (!isImg) {
-      console.warn('Rejected file (not image):', {
+    const allowed = isAllowedFile(file)
+    if (!allowed) {
+      console.warn('Rejected file (not allowed type):', {
         name: file.name,
         type: file.type,
         size: file.size
       })
     }
-    return isImg
+    return allowed
   })
 
   if (validFiles.length === 0) {
-    errorMessage.value = 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed'
-    addErrorToast('Only images are allowed')
+    errorMessage.value =
+      'Only images (png, jpg, jpeg, webp, gif, bmp, svg) and documents (pdf, txt, zip, docx) are allowed'
+    addErrorToast('Invalid file type')
     return
   }
 
@@ -273,10 +279,10 @@ const handleFiles = async (fileList: FileList): Promise<void> => {
 
     // Upload file
     try {
-      const uploadedUrl = await uploadFile(file)
+      const uploadedMetadata = await uploadFile(file)
       const preview = previews.value[previewIndex]
       if (preview) {
-        preview.uploadedUrl = uploadedUrl
+        preview.metadata = uploadedMetadata
         preview.isUploading = false
       }
     } catch (error) {
@@ -292,12 +298,12 @@ const handleFiles = async (fileList: FileList): Promise<void> => {
   }
 
   isUploading.value = false
-  emitUploadedUrls()
+  emitUploadedMetadata()
 }
 
-const uploadFile = async (file: File): Promise<string> => {
+const uploadFile = async (file: File): Promise<FileMetadata> => {
   const formData = new FormData()
-  formData.append('image', file)
+  formData.append('file', file) // Use 'file' field (unified endpoint)
 
   const response = await fetch(`${BACKEND_URL}/api/upload`, {
     method: 'POST',
@@ -315,13 +321,18 @@ const uploadFile = async (file: File): Promise<string> => {
 
   const data = await response.json()
 
-  if (!data?.imageUrl) {
-    console.error('Upload response missing imageUrl:', data)
-    throw new Error('Upload failed: No image URL returned')
+  if (!data?.fileUrl || !data?.fileKey || !data?.metadata) {
+    console.error('Upload response missing required fields:', data)
+    throw new Error('Upload failed: Invalid response format')
   }
 
-  console.log('Upload successful. Image URL:', data.imageUrl)
-  return data.imageUrl
+  // Return complete metadata for backend claim submission
+  return {
+    fileKey: data.fileKey,
+    fileUrl: data.fileUrl,
+    fileType: data.metadata.fileType,
+    fileSize: data.metadata.fileSize
+  }
 }
 
 const removeFile = (index: number): void => {
@@ -331,15 +342,15 @@ const removeFile = (index: number): void => {
     URL.revokeObjectURL(preview.previewUrl)
   }
   previews.value.splice(index, 1)
-  emitUploadedUrls()
+  emitUploadedMetadata()
 }
 
-const emitUploadedUrls = (): void => {
-  const uploadedUrls = previews.value
-    .filter((p) => p.uploadedUrl && !p.isUploading)
-    .map((p) => p.uploadedUrl!)
+const emitUploadedMetadata = (): void => {
+  const uploadedMetadata = previews.value
+    .filter((p) => p.metadata && !p.isUploading)
+    .map((p) => p.metadata!)
 
-  emit('update:screens', uploadedUrls)
+  emit('update:screens', uploadedMetadata)
 }
 
 const resetUpload = (): void => {

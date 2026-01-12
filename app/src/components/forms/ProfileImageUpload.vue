@@ -124,7 +124,7 @@ const uploadSelectedFile = async (file: File) => {
 
   try {
     const formData = new FormData()
-    formData.append('image', file)
+    formData.append('file', file) // Use 'file' field (unified endpoint)
 
     const headers: Record<string, string> = {}
     if (authToken.value) {
@@ -143,11 +143,11 @@ const uploadSelectedFile = async (file: File) => {
       throw new Error(responseBody?.error || 'Failed to upload image')
     }
 
-    if (!responseBody?.imageUrl) {
-      throw new Error('Upload response missing imageUrl')
+    if (!responseBody?.fileUrl) {
+      throw new Error('Upload response missing fileUrl')
     }
 
-    imageUrl.value = responseBody.imageUrl
+    imageUrl.value = responseBody.fileUrl
     addSuccessToast('Image uploaded')
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to upload image'
