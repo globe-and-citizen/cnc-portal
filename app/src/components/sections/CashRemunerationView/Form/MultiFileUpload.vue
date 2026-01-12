@@ -103,7 +103,18 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_FILES = 10
 
 // Allowed file types (only images). Backend /api/upload accepts images only.
-const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg', '.ico', '.heic', '.avif']
+const ALLOWED_IMAGE_EXTENSIONS = [
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.webp',
+  '.gif',
+  '.bmp',
+  '.svg',
+  '.ico',
+  '.heic',
+  '.avif'
+]
 const ACCEPTED_FILE_TYPES = ALLOWED_IMAGE_EXTENSIONS.join(',')
 
 const ALLOWED_IMAGE_MIMETYPES = [
@@ -212,7 +223,11 @@ const handleFiles = async (fileList: FileList): Promise<void> => {
   const validFiles = Array.from(fileList).filter((file) => {
     const isImg = isImageFile(file)
     if (!isImg) {
-      console.warn('Rejected file (not image):', { name: file.name, type: file.type, size: file.size })
+      console.warn('Rejected file (not image):', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      })
     }
     return isImg
   })

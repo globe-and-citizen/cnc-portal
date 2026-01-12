@@ -14,9 +14,13 @@
       <div
         v-if="imageUrl"
         class="absolute inset-0"
-        :style="{ backgroundImage: `url(${imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }"
+        :style="{
+          backgroundImage: `url(${imageUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }"
       />
-      
+
       <input
         ref="fileInput"
         type="file"
@@ -26,7 +30,7 @@
         :disabled="isUploading"
         data-test="profile-image-input"
       />
-      
+
       <!-- Upload label (only show when no image) -->
       <div
         v-if="!imageUrl"
