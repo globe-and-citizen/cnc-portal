@@ -41,10 +41,9 @@ export interface Claim {
 }
 
 export interface FileAttachment {
-  fileName: string
   fileType: string // MIME type (e.g., image/png, application/pdf)
   fileSize: number // Size in bytes
-  fileKey: string // S3 storage key
+  fileKey: string // S3 storage key (unique identifier)
   fileUrl: string // Presigned download URL
 }
 
