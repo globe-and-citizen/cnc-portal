@@ -58,10 +58,9 @@ describe('Notification Controller', () => {
       const response = await request(app).get('/');
 
       expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(Array.isArray(response.body.data)).toBe(true);
-      expect(response.body.data).toHaveLength(1);
-      expect(response.body.data[0]).toMatchObject({
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0]).toMatchObject({
         id: mockNotification.id,
         userAddress: mockNotification.userAddress,
         isRead: mockNotification.isRead,
@@ -78,8 +77,8 @@ describe('Notification Controller', () => {
       const response = await request(app).get('/');
 
       expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toEqual([]);
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body).toEqual([]);
     });
 
     it('should return 403 if user is not authorized', async () => {
@@ -117,7 +116,7 @@ describe('Notification Controller', () => {
       const response = await request(app).put('/1');
 
       expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
+      expect(response.body.isRead).toBe(true);
       expect(prisma.notification.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { isRead: true },
@@ -179,8 +178,8 @@ describe('Notification Controller', () => {
       });
 
       expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveLength(2);
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body).toHaveLength(2);
       expect(addNotification).toHaveBeenCalledWith(mockUserIds, {
         message: mockMessage,
         subject: mockSubject,
@@ -202,7 +201,7 @@ describe('Notification Controller', () => {
       });
 
       expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body)).toBe(true);
       expect(addNotification).toHaveBeenCalledWith(mockUserIds, {
         message: mockMessage,
         subject: undefined,
