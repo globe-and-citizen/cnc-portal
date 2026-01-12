@@ -17,7 +17,7 @@
     /* Modules */
     "module": "commonjs",
 
-    "rootDir": "./src",
+    "rootDir": "./",
     "outDir": "./dist",
 
     /* Emit */
@@ -51,5 +51,5 @@
     "**/*.spec.ts",
     "**/*.test.ts"
   ],
-  "include": ["prisma/seeds.ts", "src/*", "src/types/**/*.d.ts"]
+  "include": ["prisma/*", "src/*", "src/types/**/*.d.ts", "scripts/**/*.ts"]
 }

@@ -113,6 +113,7 @@
                 v-if="hasWage"
                 :weekly-claim="selectWeekWeelyClaim"
                 :signed-week-starts="signedWeekStarts"
+                :restrict-submit="false"
               />
               <ButtonUI
                 v-else
@@ -190,16 +191,42 @@
                 :class="entry.hours > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
               />
               <span class="font-medium">{{ entry.date.format('ddd DD MMM') }}</span>
+
+              <!-- Attachment icon if files exist -->
+              <span
+                v-if="entry.hours > 0 && hasAttachments(entry.claims)"
+                class="inline-flex items-center"
+                data-test="attachment-icon"
+                title="Has attachments"
+              >
+                <Icon icon="heroicons:paper-clip" class="w-4 h-4 text-blue-600" />
+              </span>
             </div>
 
-            <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-1">
-              <div
-                v-for="claim in entry.claims"
-                :key="claim.id"
-                class="flex items-center justify-between gap-3"
-              >
-                <span>{{ claim.memo }}</span>
-                <ClaimActions v-if="canModifyClaims" :claim="claim" />
+            <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-3">
+              <div v-for="claim in entry.claims" :key="claim.id" class="space-y-2">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex-1">
+                    <p class="font-medium text-gray-700">{{ claim.memo }}</p>
+                  </div>
+                  <ClaimActions v-if="canModifyClaims" :claim="claim" />
+                </div>
+
+                <div
+                  v-if="claim.fileAttachments && claim.fileAttachments.length > 0"
+                  class="mt-2 overflow-hidden"
+                  data-test="claim-files-gallery"
+                >
+                  <FilePreviewGallery
+                    :previews="buildFilePreviews(claim.fileAttachments)"
+                    :can-remove="false"
+                    grid-class="grid grid-cols-4 sm:grid-cols-4 gap-3 p-1"
+                    item-height-class="h-20"
+                    item-width-class="w-40"
+                    image-class="border border-gray-200 hover:border-emerald-500 transition-all"
+                    document-class="bg-gray-50 hover:bg-gray-100 border border-gray-300"
+                  />
+                </div>
               </div>
             </div>
 
@@ -219,8 +246,8 @@ import { ref, computed, watch } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import weekday from 'dayjs/plugin/weekday'
 import { Icon as IconifyIcon } from '@iconify/vue'
+import { Icon } from '@iconify/vue'
 import { formatIsoWeekRange, getMonthWeeks, type Week } from '@/utils/dayUtils'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 
@@ -241,7 +268,7 @@ import {
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
 import { useTanstackQuery } from '@/composables'
-import type { Wage, WeeklyClaim } from '@/types'
+import type { Claim, Wage, WeeklyClaim } from '@/types'
 import type { Address } from 'viem'
 
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
@@ -251,11 +278,11 @@ import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
 import SelectMemberItem from '@/components/SelectMemberItem.vue'
+import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
 
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
-dayjs.extend(weekday)
 
 const route = useRoute()
 const teamStore = useTeamStore()
@@ -280,7 +307,7 @@ const getColor = (weeklyClaim?: WeeklyClaim) => {
   return 'accent'
 }
 
-const teamId = computed(() => teamStore.currentTeam?.id)
+const teamId = computed(() => teamStore.currentTeamId)
 
 const weeklyClaimQueryKey = computed(() => ['weekly-claims', teamId.value, memberAddress.value])
 const weeklyClaimURL = computed(
@@ -300,10 +327,9 @@ watch(
   { immediate: true }
 )
 
-const teamWageQueryKey = computed(() => ['team-wage', teamStore.currentTeam?.id])
 const { data: teamWageData, error: teamWageDataError } = useTanstackQuery<Array<Wage>>(
-  teamWageQueryKey,
-  computed(() => `/wage/?teamId=${teamStore.currentTeam?.id}`)
+  computed(() => ['team-wage', teamStore.currentTeamId]),
+  computed(() => `/wage/?teamId=${teamStore.currentTeamId}`)
 )
 
 const hasWage = computed(() => {
@@ -331,6 +357,38 @@ const generatedMonthWeek = computed(() => {
   return getMonthWeeks(selectedMonthObject.value.year, selectedMonthObject.value.month)
 })
 
+interface FileAttachment {
+  fileName: string
+  fileType: string
+  fileSize?: number
+  fileData: string
+}
+
+const buildFilePreviews = (files: FileAttachment[]) => {
+  const imageMimeTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp']
+  const imageExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp']
+
+  return files.map((file) => {
+    const previewUrl =
+      file?.fileData && file?.fileType ? `data:${file.fileType};base64,${file.fileData}` : ''
+    const isImage =
+      imageMimeTypes.includes(file?.fileType) ||
+      imageExtensions.some((ext) => file?.fileName?.toLowerCase().endsWith(ext))
+
+    return {
+      previewUrl,
+      fileName: file.fileName,
+      fileSize: file.fileSize ?? 0,
+      fileType: file.fileType,
+      isImage
+    }
+  })
+}
+
+const hasAttachments = (claims: Claim[]): boolean => {
+  return claims.some((claim) => claim.fileAttachments && claim.fileAttachments.length > 0)
+}
+
 const selectWeekWeelyClaim = computed(() => {
   return memberWeeklyClaims.value?.find(
     (weeklyClaim) => weeklyClaim.weekStart === selectedMonthObject.value.isoString
@@ -357,79 +415,42 @@ const weekDayClaims = computed(() => {
     return {
       date,
       claims: dailyClaims,
-      hours: dailyClaims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
+      hours: dailyClaims.reduce((sum: number, claim) => sum + claim.hoursWorked, 0)
     }
   })
 })
 
-// Bar chart dynamique (max = jour le plus haut)
+// Bar chart configuration
 const barChartOption = computed(() => {
-  const days = [0, 1, 2, 3, 4, 5, 6]
   const data: number[] = []
   const labels: string[] = []
-
   const weekStart = dayjs(selectedMonthObject.value.isoString).utc().startOf('isoWeek')
-  days.forEach((i) => {
-    const date = weekStart.add(i, 'day')
-    const label = dayjs(date).format('dd')
-    labels.push(label)
 
+  for (let i = 0; i < 7; i++) {
+    const date = weekStart.add(i, 'day')
+    labels.push(dayjs(date).format('dd'))
     const totalHours =
       selectWeekWeelyClaim.value?.claims
-        .filter((claim) => {
-          return dayjs(date).isSame(dayjs(claim.dayWorked).utc(), 'day')
-        })
-        .reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0
-
+        .filter((claim) => dayjs(date).isSame(dayjs(claim.dayWorked).utc(), 'day'))
+        .reduce((sum: number, claim) => sum + claim.hoursWorked, 0) ?? 0
     data.push(totalHours)
-  })
+  }
 
-  const dynamicMax = Math.max(...data)
-  const yMax = dynamicMax > 0 ? dynamicMax : 24
-
+  const yMax = Math.max(...data) > 0 ? Math.max(...data) : 24
   return {
-    title: {
-      text: 'Hours/Day',
-      left: 'center',
-      textStyle: { fontSize: 14 }
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '8%',
-      containLabel: true
-    },
-    tooltip: {
-      trigger: 'axis',
-      formatter: '{b} : {c} heures'
-    },
-    xAxis: {
-      type: 'category',
-      data: labels,
-      axisTick: { alignWithLabel: true }
-    },
-    yAxis: {
-      type: 'value',
-      min: 0,
-      max: yMax,
-      axisLabel: { formatter: '{value} h' }
-    },
+    title: { text: 'Hours/Day', left: 'center', textStyle: { fontSize: 14 } },
+    grid: { left: '3%', right: '4%', bottom: '8%', containLabel: true },
+    tooltip: { trigger: 'axis', formatter: '{b} : {c} heures' },
+    xAxis: { type: 'category', data: labels, axisTick: { alignWithLabel: true } },
+    yAxis: { type: 'value', min: 0, max: yMax, axisLabel: { formatter: '{value} h' } },
     series: [
       {
         name: 'Heures',
         type: 'bar',
         barWidth: '50%',
         data,
-        itemStyle: {
-          color: '#10B981',
-          borderRadius: [6, 6, 0, 0]
-        },
-        label: {
-          show: true,
-          position: 'top',
-          formatter: '{c}h',
-          color: '#374151'
-        }
+        itemStyle: { color: '#10B981', borderRadius: [6, 6, 0, 0] },
+        label: { show: true, position: 'top', formatter: '{c}h', color: '#374151' }
       }
     ]
   }

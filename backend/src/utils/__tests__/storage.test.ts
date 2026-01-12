@@ -1,4 +1,20 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
+/**
+ * Storage module tests
+ *
+ * NOTE: The storage module is DEPRECATED and kept for backwards compatibility only.
+ * Google Cloud Storage functionality has been replaced with database storage using ClaimAttachment model.
+ * These tests verify that the deprecated module exports the expected placeholder value.
+ */
+
+/* ========================================
+ * DEPRECATED TESTS - COMMENTED OUT
+ * ========================================
+ * The following tests were written for the active GCS implementation.
+ * They are kept here for reference in case the functionality is re-enabled.
+ * 
+import { vi, beforeEach, afterEach } from 'vitest';
 
 // Mock environment variables before importing the module
 const mockEnv = {
@@ -27,7 +43,7 @@ vi.mock('dotenv', () => ({
   config: vi.fn(),
 }));
 
-describe('storage', () => {
+describe('storage - OLD TESTS (DEPRECATED)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Clear the module cache to reimport with new env
@@ -69,5 +85,16 @@ describe('storage', () => {
       vi.resetModules();
       await import('../storage');
     }).rejects.toThrow();
+  });
+});
+* ======================================== */
+
+describe('storage', () => {
+  it('should export null bucket (deprecated functionality)', async () => {
+    // The storage module is deprecated and exports a null bucket
+    const { bucket } = await import('../storage');
+
+    // Verify that bucket is null as per the deprecated implementation
+    expect(bucket).toBeNull();
   });
 });

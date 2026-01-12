@@ -22,10 +22,14 @@ import contractRoutes from '../routes/contractRoutes';
 import electionsRoute from '../routes/electionsRoute';
 import devRoutes from '../routes/devRoutes';
 import statsRoutes from '../routes/statsRoute';
+import healthRoutes from '../routes/healthRoutes';
+import featureRoutes from '../routes/featureRoutes';
+import polymarketRoutes from '../routes/polymarketRoute';
 
 //#endregion routing modules
 
 import { authorizeUser } from '../middleware/authMiddleware';
+import { requireAdmin } from '../middleware/roleMiddleware';
 import { errorMessages } from '../utils/serverConfigUtil';
 
 // Swagger import
@@ -72,6 +76,9 @@ class Server {
       elections: '/api/elections/',
       stats: '/api/stats/',
       dev: '/api/dev/',
+      health: '/api/health/',
+      features: '/api/admin/features/',
+      polymarket: '/api/polymarket/',
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -114,6 +121,9 @@ class Server {
   }
 
   private routes() {
+    // Public health check endpoint (no auth required)
+    this.app.use(this.paths.health, healthRoutes);
+
     this.app.use(this.paths.teams, authorizeUser, teamRoutes);
     this.app.use(this.paths.wage, authorizeUser, wageRoutes);
     this.app.use(this.paths.user, userRoutes);
@@ -125,7 +135,9 @@ class Server {
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
-    this.app.use(this.paths.stats, authorizeUser, statsRoutes);
+    this.app.use(this.paths.stats, authorizeUser, requireAdmin, statsRoutes);
+    this.app.use(this.paths.features, authorizeUser, requireAdmin, featureRoutes);
+    this.app.use(this.paths.polymarket, authorizeUser, polymarketRoutes);
 
     // Dev routes - only available in development mode
     if (process.env.NODE_ENV === 'development') {
@@ -140,7 +152,13 @@ class Server {
     Sentry.setupExpressErrorHandler(this.app);
 
     // Optional fallthrough error handler
-    this.app.use(function onError(err: Error, _req: express.Request, res: express.Response) {
+    this.app.use(function onError(
+      err: Error,
+      _req: express.Request,
+      res: express.Response,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      _next: express.NextFunction
+    ) {
       // The error id is attached to `res.sentry` to be returned
       // and optionally displayed to the user for support.
       console.error('Error:', err);

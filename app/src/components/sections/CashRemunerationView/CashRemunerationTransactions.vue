@@ -24,7 +24,7 @@ const currencies = computed(() => {
   const defaultCurrency = currencyStore.localCurrency?.code
   return defaultCurrency === 'USD' ? ['USD'] : ['USD', defaultCurrency]
 })
-const contractAddress = teamStore.currentTeam?.teamContracts.find(
+const contractAddress = teamStore.currentTeamMeta.data?.teamContracts.find(
   (contract) => contract.type === 'CashRemunerationEIP712'
 )?.address as Address
 

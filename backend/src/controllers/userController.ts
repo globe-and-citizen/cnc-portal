@@ -56,6 +56,7 @@ export const getUser = async (req: Request, res: Response) => {
     return errorResponse(500, error, res);
   }
 };
+
 export const updateUser = async (req: Request, res: Response) => {
   const { address } = req.params;
   const { name, imageUrl } = req.body;
@@ -99,13 +100,13 @@ export const updateUser = async (req: Request, res: Response) => {
     return errorResponse(500, error, res);
   }
 };
+
 export const getAllUsers = async (req: Request, res: Response) => {
   const { page, limit, search } = req.query as { page: string; limit: string; search: string };
   const pageNumber = parseInt(page as string) || 1;
   const pageSize = parseInt(limit as string) || 10;
   const offset = (pageNumber - 1) * pageSize;
 
-  console.log('Search query:', search);
   try {
     const where = search
       ? {
@@ -115,7 +116,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
           ],
         }
       : undefined;
-    console.log('Where clause:', where);
     const users = await prisma.user.findMany({
       skip: offset,
       take: pageSize,

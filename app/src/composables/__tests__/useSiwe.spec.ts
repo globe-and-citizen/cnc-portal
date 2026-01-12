@@ -37,7 +37,7 @@ const mockUseSignMessage = {
 }
 
 const mockUseConnect = {
-  connect: vi.fn(),
+  mutate: vi.fn(),
   connectors: [] as unknown,
   error: ref(null)
 }
@@ -53,6 +53,11 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useAccount: vi.fn(() => mockUseAccount),
     useSignMessage: vi.fn(() => mockUseSignMessage),
     useConnect: vi.fn(() => mockUseConnect),
+    useConnection: vi.fn(() => ({
+      address: mockUseAccount.address,
+      chainId: ref(123),
+      isConnected: mockUseAccount.isConnected
+    })),
     useSwitchChain: vi.fn(() => mockUseSwitchChain),
     useChainId: mocks.mockUseChainId
   }

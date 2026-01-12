@@ -1,0 +1,29 @@
+meta {
+  name: Feature -  Edge Case - 09 - Unauthorized - Missing Token
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{host}}/admin/features
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "functionName": "UNAUTHORIZED_TEST",
+    "status": "enabled"
+  }
+}
+
+tests {
+  test("should return 401 status", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+
+  test("should indicate missing authorization", function() {
+    expect(res.body.message).to.be.a('string');
+    expect(res.body.message.toLowerCase()).to.include('unauthorized');
+  });
+}

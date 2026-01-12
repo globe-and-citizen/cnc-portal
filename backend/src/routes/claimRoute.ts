@@ -1,5 +1,6 @@
 import express from 'express';
 import { addClaim, getClaims, updateClaim, deleteClaim } from '../controllers/claimController';
+import { upload } from '../utils/upload'; // Import multer upload middleware
 import {
   validateBody,
   validateQuery,
@@ -104,7 +105,8 @@ const claimRoutes = express.Router();
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.post('/', validateBody(addClaimBodySchema), addClaim);
+// Updated to accept multipart/form-data with optional file attachments
+claimRoutes.post('/', upload.array('files', 10), validateBody(addClaimBodySchema), addClaim);
 
 /**
  * @openapi
@@ -221,6 +223,7 @@ claimRoutes.get('/', validateQuery(getClaimsQuerySchema), getClaims);
  */
 claimRoutes.put(
   '/:claimId',
+  upload.array('files', 10),
   validateBodyAndParams(updateClaimBodySchema, claimIdParamsSchema),
   updateClaim
 );
@@ -276,4 +279,5 @@ claimRoutes.put(
  *             $ref: '#/components/schemas/ErrorResponse'
  */
 claimRoutes.delete('/:claimId', validateParams(claimIdParamsSchema), deleteClaim);
+
 export default claimRoutes;

@@ -19,16 +19,23 @@ export const addClaimBodySchema = z.object({
     .string()
     .trim()
     .min(1, 'Memo cannot be empty')
-    .refine((memo) => memo.split(/\s+/).length <= 200, {
-      message: 'Memo is too long, maximum 200 words allowed',
+    .refine((memo) => memo.split(/\s+/).length <= 3000, {
+      message: 'Memo is too long, maximum 3000 words allowed',
     }),
   dayWorked: z.iso.datetime().optional(),
+  imageScreens: z
+    .array(z.string().url('Invalid image URL'))
+    .max(10, 'Maximum 10 images allowed')
+    .optional(),
 });
 
 // Claim update request body (for signature)
 export const updateClaimBodySchema = z.object({
   hoursWorked: z.coerce.number().min(1).max(24).optional(),
   memo: z.string().trim().max(200, 'Memo is too long, maximum 200 characters').optional(),
+  dayWorked: z.string().optional(),
+  deletedFileIndexes: z.string().optional(), // JSON string of indexes to delete
+  // fileAttachments are sent via multipart files; body carries only text fields
 });
 
 // Get claims query parameters

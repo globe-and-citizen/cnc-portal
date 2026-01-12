@@ -45,7 +45,8 @@ const mockTeamStore = {
         imageUrl: 'https://example.com/bob.png'
       }
     ]
-  }
+  },
+  currentTeamId: 'team-123'
 }
 
 const addSuccessToast = vi.fn()

@@ -2,14 +2,20 @@
   <div class="flex flex-col gap-4 mb-20">
     <h3 class="text-xl font-bold">Edit Claim</h3>
     <hr />
+
     <ClaimForm
+      ref="claimFormRef"
       :initial-data="claimFormInitialData"
       :is-edit="true"
       :is-loading="isUpdating"
+      :restrict-submit="isRestricted"
+      :existing-files="existingFiles"
       @submit="updateClaim"
       @cancel="$emit('close')"
+      @delete-file="deleteFile"
     />
-    <div v-if="updateClaimError && errorMessage" class="mt-4">
+
+    <div v-if="errorMessage" class="mt-4">
       <div role="alert" class="alert alert-error" data-test="edit-claim-error">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -31,12 +37,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, watchEffect } from 'vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
-import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
-import { useQueryClient } from '@tanstack/vue-query'
+import type { Claim, ClaimFormData, ClaimSubmitPayload, FileAttachment } from '@/types'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import apiClient from '@/lib/axios'
 
 const props = defineProps<{
   claim: Claim
@@ -47,9 +54,13 @@ const emit = defineEmits<{
 }>()
 
 const errorMessage = ref<{ message: string } | null>(null)
+const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const queryClient = useQueryClient()
+const { isRestricted, checkRestriction } = useSubmitRestriction()
+
+const teamId = computed(() => teamStore.currentTeam?.id)
 
 const claimFormInitialData = computed<ClaimFormData>(() => ({
   hoursWorked: String(props.claim.hoursWorked ?? ''),
@@ -57,53 +68,107 @@ const claimFormInitialData = computed<ClaimFormData>(() => ({
   dayWorked: props.claim.dayWorked
 }))
 
-const updatePayload = ref<ClaimSubmitPayload | null>(null)
+const existingFiles = ref<FileAttachment[]>([])
+const deletedFileIndexes = ref<number[]>([])
 
-const {
-  execute: updateClaimRequest,
-  isFetching: isUpdating,
-  error: updateClaimError,
-  statusCode: updateClaimStatusCode,
-  response: updateClaimResponse
-} = useCustomFetch(`/claim/${props.claim.id}`, {
-  immediate: false
-})
-  .put(() => {
-    if (!updatePayload.value) {
-      throw new Error('Missing claim payload')
-    }
-    return {
-      hoursWorked: updatePayload.value.hoursWorked,
-      memo: updatePayload.value.memo,
-      dayWorked: updatePayload.value.dayWorked
-    }
-  })
-  .json()
-
-watch(updateClaimError, async () => {
-  if (updateClaimError.value) {
-    errorMessage.value = await updateClaimResponse.value?.json()
+// Load existing files
+onMounted(() => {
+  deletedFileIndexes.value = []
+  if (props.claim.fileAttachments) {
+    existingFiles.value = Array.isArray(props.claim.fileAttachments)
+      ? [...props.claim.fileAttachments]
+      : []
   }
 })
 
-const updateClaim = async (data: ClaimSubmitPayload) => {
-  updatePayload.value = data
-  errorMessage.value = null
-  try {
-    await updateClaimRequest()
+// Sync files when claim changes
+watchEffect(() => {
+  if (props.claim.fileAttachments) {
+    deletedFileIndexes.value = []
+    existingFiles.value = Array.isArray(props.claim.fileAttachments)
+      ? [...props.claim.fileAttachments]
+      : []
+  }
+})
 
-    if (updateClaimStatusCode.value === 200) {
-      toastStore.addSuccessToast('Claim updated successfully')
-
-      await queryClient.invalidateQueries({
-        queryKey: ['weekly-claims', teamStore.currentTeam?.id]
-      })
-
-      emit('close')
+// Delete file function - only updates local state, actual deletion happens on Update
+const deleteFile = (fileIndex: number) => {
+  let originalIndex = fileIndex
+  for (const deletedIdx of [...deletedFileIndexes.value].sort((a, b) => a - b)) {
+    if (deletedIdx <= originalIndex) {
+      originalIndex++
     }
+  }
+  deletedFileIndexes.value.push(originalIndex)
+  existingFiles.value = existingFiles.value.filter((_, i) => i !== fileIndex)
+}
+
+// Check restriction when team changes
+watch(
+  teamId,
+  async (newTeamId) => {
+    if (newTeamId) {
+      await checkRestriction(newTeamId)
+    }
+  },
+  { immediate: true }
+)
+
+const { mutateAsync: updateClaimMutation, isPending: isUpdating } = useMutation<
+  void,
+  Error,
+  ClaimSubmitPayload & { files?: File[] }
+>({
+  mutationKey: ['update-claim', props.claim.id],
+  mutationFn: async (payload) => {
+    const formData = new FormData()
+    formData.append('hoursWorked', payload.hoursWorked.toString())
+    formData.append('memo', payload.memo)
+    formData.append('dayWorked', payload.dayWorked)
+    payload.files?.forEach((file) => formData.append('files', file))
+    if (deletedFileIndexes.value.length > 0) {
+      formData.append('deletedFileIndexes', JSON.stringify(deletedFileIndexes.value))
+    }
+
+    await apiClient.put(`/claim/${props.claim.id}`, formData)
+  }
+})
+
+const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
+  errorMessage.value = null
+  if (!teamId.value) {
+    toastStore.addErrorToast('Team not selected')
+    return
+  }
+
+  try {
+    await updateClaimMutation(data)
+
+    toastStore.addSuccessToast('Claim updated successfully')
+    deletedFileIndexes.value = []
+
+    await queryClient.invalidateQueries({
+      queryKey: ['weekly-claims', teamStore.currentTeamId]
+    })
+
+    claimFormRef.value?.resetForm()
+    emit('close')
   } catch (error) {
     console.error('Failed to update claim:', error)
-    toastStore.addErrorToast((error as Error)?.message || 'Failed to update claim')
+    const message =
+      error instanceof Error
+        ? error.message
+        : ((error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Failed to update claim')
+    toastStore.addErrorToast(message)
+    errorMessage.value = { message }
   }
 }
+
+// Check restriction on mount
+onMounted(async () => {
+  if (teamId.value) {
+    await checkRestriction(teamId.value)
+  }
+})
 </script>

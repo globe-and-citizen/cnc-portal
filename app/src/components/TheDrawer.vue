@@ -85,7 +85,7 @@
               data-test="team-dropdown"
               ref="target"
             >
-              <div v-if="teamStore.teamsMeta.teamsAreFetching">
+              <div v-if="teams.isPending">
                 <div class="p-4 flex gap-4 border-b-2">
                   <div class="skeleton w-11 h-11"></div>
                   <div class="flex flex-col gap-2">
@@ -95,16 +95,17 @@
                 </div>
               </div>
 
+              <!-- <pre>{{ teams.data   }}</pre> -->
               <RouterLink
                 :to="`/teams/${team.id}`"
                 v-else
-                v-for="team in teamStore.teamsMeta.teams"
+                v-for="team in teams.data.value"
                 :key="team.id"
                 data-test="team-item"
               >
                 <TeamMetaComponent
                   class="hover:bg-slate-100"
-                  :isSelected="team.id === teamStore.currentTeam?.id"
+                  :isSelected="team.id === teamStore.currentTeamId"
                   :team="team"
                   :to="team.id"
               /></RouterLink>
@@ -274,12 +275,14 @@ import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
 import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
 import { useRoute } from 'vue-router'
+import { useTeams } from '@/queries/team.queries'
 // import { useReadContract } from '@wagmi/vue'
 // import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 
 const appStore = useAppStore()
 const route = useRoute()
 const userStore = useUserDataStore()
+const teams = useTeams()
 
 interface User {
   name: string
@@ -376,7 +379,7 @@ const menuItems = computed(() => [
     icon: 'heroicons:home',
     route: {
       name: 'show-team',
-      params: { id: teamStore.currentTeam?.id || '1' }
+      params: { id: teamStore.currentTeamId || '1' }
     },
     active: route.name === 'show-team',
     show: true
@@ -387,7 +390,7 @@ const menuItems = computed(() => [
     icon: 'heroicons:currency-dollar',
     route: {
       name: 'bank-account',
-      params: { id: teamStore.currentTeam?.id || '1' }
+      params: { id: teamStore.currentTeamId || '1' }
     },
     // Active if any child is active or the parent route is active
     active:
@@ -404,7 +407,7 @@ const menuItems = computed(() => [
         icon: 'heroicons:banknotes',
         route: {
           name: 'bank-account',
-          params: { id: teamStore.currentTeam?.id || '1' }
+          params: { id: teamStore.currentTeamId || '1' }
         },
         active: route.name === 'bank-account',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
@@ -414,7 +417,7 @@ const menuItems = computed(() => [
         icon: 'heroicons:briefcase',
         route: {
           name: 'expense-account',
-          params: { id: teamStore.currentTeam?.id || '1' }
+          params: { id: teamStore.currentTeamId || '1' }
         },
         active: route.name === 'expense-account',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
@@ -423,7 +426,7 @@ const menuItems = computed(() => [
         label: 'Payroll Account',
         route: {
           name: 'payroll-account',
-          params: { id: teamStore.currentTeam?.id || '1' }
+          params: { id: teamStore.currentTeamId || '1' }
         },
         active: route.name === 'payroll-account',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
@@ -432,7 +435,7 @@ const menuItems = computed(() => [
         label: 'My Payroll History',
         route: {
           name: 'payroll-history',
-          params: { id: teamStore.currentTeam?.id || '1', memberAddress: userStore.address }
+          params: { id: teamStore.currentTeamId || '1', memberAddress: userStore.address }
         },
         active:
           route.name === 'payroll-history' && route.params.memberAddress === userStore.address,
@@ -443,7 +446,7 @@ const menuItems = computed(() => [
         route: {
           name: 'payroll-history',
           params: {
-            id: teamStore.currentTeam?.id || '1',
+            id: teamStore.currentTeamId || '1',
             memberAddress: route.params.memberAddress
           }
         },
@@ -459,7 +462,7 @@ const menuItems = computed(() => [
         label: 'Team Payroll',
         route: {
           name: 'team-payroll',
-          params: { id: teamStore.currentTeam?.id || '1' }
+          params: { id: teamStore.currentTeamId || '1' }
         },
         active: route.name === 'team-payroll',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
@@ -469,7 +472,7 @@ const menuItems = computed(() => [
       //   label: 'Payment Status',
       //   route: {
       //     name: 'weekly-claim',
-      //     params: { id: teamStore.currentTeam?.id || '1' }
+      //     params: { id: teamStore.currentTeamId || '1' }
       //   },
       //   active: route.name === 'weekly-claim',
       //   show:
@@ -483,7 +486,7 @@ const menuItems = computed(() => [
     icon: 'heroicons:wrench',
     route: {
       name: 'contract-management',
-      params: { id: teamStore.currentTeam?.id || '1' }
+      params: { id: teamStore.currentTeamId || '1' }
     },
     active: route.name === 'contract-management',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
@@ -493,9 +496,19 @@ const menuItems = computed(() => [
     icon: 'heroicons:chart-pie',
     route: {
       name: 'sher-token',
-      params: { id: teamStore.currentTeam?.id || '1' }
+      params: { id: teamStore.currentTeamId || '1' }
     },
     active: route.name === 'sher-token',
+    show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+  },
+  {
+    label: 'Trading',
+    icon: 'heroicons:arrow-trending-up',
+    route: {
+      name: 'trading',
+      params: { id: teamStore.currentTeamId || '1' }
+    },
+    active: route.name === 'trading',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
   },
   {
@@ -503,7 +516,7 @@ const menuItems = computed(() => [
     icon: 'heroicons:chart-bar',
     route: {
       name: 'bod-elections',
-      params: { id: teamStore.currentTeam?.id || '1' }
+      params: { id: teamStore.currentTeamId || '1' }
     },
     active: route.name === 'bod-elections' || route.name === 'bod-proposals',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
@@ -512,7 +525,7 @@ const menuItems = computed(() => [
         label: 'BoD Election',
         route: {
           name: 'bod-elections',
-          params: { id: teamStore.currentTeam?.id || '1' }
+          params: { id: teamStore.currentTeamId || '1' }
         },
         active: route.name === 'bod-elections',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
@@ -521,7 +534,7 @@ const menuItems = computed(() => [
         label: 'Proposals',
         route: {
           name: 'bod-proposals',
-          params: { id: teamStore.currentTeam?.id || '1' }
+          params: { id: teamStore.currentTeamId || '1' }
         },
         active: route.name === 'bod-proposals',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
@@ -530,7 +543,7 @@ const menuItems = computed(() => [
       //   label: 'Weekly Claim',
       //   route: {
       //     name: 'weekly-claim',
-      //     params: { id: teamStore.currentTeam?.id || '1' }
+      //     params: { id: teamStore.currentTeamId || '1' }
       //   },
       //   active: route.name === 'weekly-claim',
       //   show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
@@ -542,7 +555,7 @@ const menuItems = computed(() => [
     icon: 'heroicons:lock-closed',
     route: {
       name: 'vesting',
-      params: { id: teamStore.currentTeam?.id || '1' }
+      params: { id: teamStore.currentTeamId || '1' }
     },
     active: route.name === 'vesting',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
@@ -550,7 +563,7 @@ const menuItems = computed(() => [
 ])
 
 const toggleDropdown = () => {
-  teamStore.teamsMeta.reloadTeams()
+  // teamStore.teamsMeta.reloadTeams()
   isDropdownOpen.value = !isDropdownOpen.value
 }
 </script>

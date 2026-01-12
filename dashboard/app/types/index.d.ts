@@ -223,3 +223,89 @@ export interface RecentActivity {
   activities: Activity[]
   total: number
 }
+
+// Feature Management Types
+export type FeatureStatus = 'enabled' | 'disabled' | 'beta'
+
+export interface Feature {
+  functionName: string
+  status: FeatureStatus
+  isGloballyRestricted?: boolean
+  // overridesCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FeatureOverride {
+  teamId: number
+  teamName: string
+  status: FeatureStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TeamFunctionOverride {
+  id: number
+  teamId: number
+  functionName: string
+  status: string
+  createdAt: string
+  updatedAt: string
+  team?: {
+    id: number
+    name: string
+  }
+}
+
+export interface FeatureDetail extends Omit<Feature> {
+  id?: number
+  overrides?: FeatureOverride[]
+  teamFunctionOverrides?: TeamFunctionOverride[]
+}
+
+export interface TeamRestrictionOverride {
+  teamId: number
+  teamName: string
+  memberCount?: number
+  updatedAt?: string
+}
+/**
+ * User type for API user endpoints
+ * Represents a user in the CNC Portal system
+ */
+export interface ApiUser {
+  id?: string
+  address: string
+  name?: string
+  imageUrl?: string
+  roles: string[]
+  nonce?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+/**
+ * User update payload for profile updates
+ */
+export interface UpdateUserPayload {
+  name?: string
+  imageUrl?: string
+}
+
+/**
+ * Paginated users response from API
+ */
+export interface UsersResponse {
+  users: ApiUser[]
+  totalUsers: number
+  currentPage: number
+  totalPages: number
+}
+
+/**
+ * User nonce response for SIWE authentication
+ */
+export interface NonceResponse {
+  success: boolean
+  nonce: string
+}

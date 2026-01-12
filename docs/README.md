@@ -58,10 +58,14 @@ docs/
 │   ├── deployment.md                  # Deployment procedures
 │   └── development-standards.md       # Code quality & development standards
 ├── features/                          # Feature-specific documentation
-│   └── stats/                         # Statistics feature
-│       ├── functional-specification.md
-│       ├── stats-api.md
-│       └── stats-dashboard-integration.md
+│   ├── stats/                         # Statistics feature
+│   │   ├── functional-specification.md
+│   │   ├── stats-api.md
+│   │   └── stats-dashboard-integration.md
+│   ├── serverless-wake-up/           # Serverless wake-up feature
+│   │   └── README.md
+│   └── backoffice/                   # Backoffice admin feature
+│       └── README.md
 ├── auth/                              # Authentication documentation
 │   ├── README.md
 │   ├── app-authentication.md
@@ -95,6 +99,15 @@ docs/
 - [Functional Specification](./features/stats/functional-specification.md) - Complete feature specification
 - [API Documentation](./features/stats/stats-api.md) - REST API reference
 - [Dashboard Integration](./features/stats/stats-dashboard-integration.md) - Frontend integration guide
+
+**Serverless Wake-up Feature:**
+
+- [Feature Documentation](./features/serverless-wake-up/README.md) - Complete feature documentation and quick start
+
+**Backoffice Feature:**
+
+- [Feature Flags](./features/backoffice/feature-flags.md) - Feature flag system with API endpoints
+- [Admin Panel Overview](./features/backoffice/README.md) - Backoffice management system
 
 ### Authentication
 
@@ -319,4 +332,4 @@ This documentation is part of the CNC Portal project.
 
 ---
 
-**Last Updated:** December 7, 2025  
+**Last Updated:** December 16, 2025  

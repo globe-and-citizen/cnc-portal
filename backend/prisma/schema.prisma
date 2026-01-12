@@ -14,11 +14,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum GlobalSettingStatus {
+  enabled
+  disabled
+  beta
+}
+
 model User {
   address                String                   @id @unique
   name                   String?
   nonce                  String
   imageUrl               String?
+  roles                  String[]                 @default(["ROLE_USER"])
   teams                  Team[]                   @relation("MemberTeams")
   ownedTeams             Team[]                   @relation("OwnedTeams")
   notifications          Notification[]
@@ -34,7 +41,7 @@ model User {
 model Team {
   id                     Int                      @id @default(autoincrement())
   members                User[]                   @relation("MemberTeams")
-  owner                  User                     @relation("OwnedTeams", fields: [ownerAddress], references: [address])
+  owner                  User                     @relation("OwnedTeams", fields: [ownerAddress], references: [address], onDelete: Restrict)
   ownerAddress           String
   description            String?
   name                   String                   @unique
@@ -47,18 +54,19 @@ model Team {
   Expense                Expense[]
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
+  teamFunctionOverrides  TeamFunctionOverride[]
 }
 
 model MemberTeamsData {
-  id          Int      @id @default(autoincrement()) // Add an ID for easy referencing
-  user        User     @relation(fields: [userAddress], references: [address])
-  team        Team     @relation(fields: [teamId], references: [id])
-  userAddress String
-  teamId      Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            Int      @id @default(autoincrement()) // Add an ID for easy referencing
+  member        User     @relation(fields: [memberAddress], references: [address], onDelete: Cascade)
+  team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  memberAddress String
+  teamId        Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  @@unique([userAddress, teamId])
+  @@unique([memberAddress, teamId])
 }
 
 model Expense {
@@ -71,20 +79,17 @@ model Expense {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user User @relation(fields: [userAddress], references: [address])
-  team Team @relation(fields: [teamId], references: [id])
+  user User @relation(fields: [userAddress], references: [address], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 }
 
 model Wage {
   id                  Int           @id @default(autoincrement())
-  team                Team          @relation(fields: [teamId], references: [id])
-  user                User          @relation(fields: [userAddress], references: [address])
+  team                Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user                User          @relation(fields: [userAddress], references: [address], onDelete: Cascade)
   teamId              Int
   userAddress         String
   ratePerHour         Json          @default("[{\"type\": \"cash\", \"amount\": 0},{\"type\": \"usdc\", \"amount\": 0},{\"type\": \"token\", \"amount\": 0}]")
-  cashRatePerHour     Float         @default(0.0)
-  tokenRatePerHour    Float         @default(0.0)
-  usdcRatePerHour     Float         @default(0.0)
   maximumHoursPerWeek Int
   nextWageId          Int?          @unique
   nextWage            Wage?         @relation("wageRelated", fields: [nextWageId], references: [id])
@@ -98,16 +103,17 @@ model Wage {
 }
 
 model Claim {
-  id            Int          @id @default(autoincrement()) // Add an ID for easy referencing
-  hoursWorked   Int
-  dayWorked     DateTime?
-  memo          String?
-  wageId        Int
-  wage          Wage         @relation(fields: [wageId], references: [id])
-  weeklyClaimId Int?
-  weeklyClaim   WeeklyClaim? @relation("WeeklyClaimToClaims", fields: [weeklyClaimId], references: [id])
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id              Int          @id @default(autoincrement()) // Add an ID for easy referencing
+  hoursWorked     Int
+  dayWorked       DateTime?
+  memo            String?
+  fileAttachments Json? // Stores file metadata and data for images and documents
+  wageId          Int
+  wage            Wage         @relation(fields: [wageId], references: [id])
+  weeklyClaimId   Int?
+  weeklyClaim     WeeklyClaim? @relation("WeeklyClaimToClaims", fields: [weeklyClaimId], references: [id])
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 }
 
 model WeeklyClaim {
@@ -116,15 +122,17 @@ model WeeklyClaim {
   weekStart     DateTime
   data          Json
   memberAddress String
-  member        User     @relation(fields: [memberAddress], references: [address])
+  member        User     @relation(fields: [memberAddress], references: [address], onDelete: Cascade)
   teamId        Int
-  team          Team     @relation(fields: [teamId], references: [id])
+  team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   signature     String?
   claims        Claim[]  @relation("WeeklyClaimToClaims")
   wageId        Int
-  wage          Wage     @relation(fields: [wageId], references: [id])
+  wage          Wage     @relation(fields: [wageId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@unique([wageId, weekStart])
 }
 
 model Notification {
@@ -133,7 +141,7 @@ model Notification {
   message     String
   isRead      Boolean  @default(false)
   userAddress String
-  user        User     @relation(fields: [userAddress], references: [address])
+  user        User     @relation(fields: [userAddress], references: [address], onDelete: Cascade)
   author      String?
   resource    String?
   createdAt   DateTime @default(now())
@@ -146,7 +154,7 @@ model TeamContract {
   type      String
   deployer  String
   teamId    Int
-  team      Team     @relation(fields: [teamId], references: [id])
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -161,9 +169,32 @@ model BoardOfDirectorActions {
   userAddress   String
   isExecuted    Boolean  @default(false)
   data          String
-  createdBy     User     @relation(fields: [userAddress], references: [address])
+  createdBy     User     @relation(fields: [userAddress], references: [address], onDelete: Cascade)
   teamId        Int
-  team          Team     @relation(fields: [teamId], references: [id])
+  team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model GlobalSetting {
+  id                    Int                    @id @default(autoincrement())
+  functionName          String                 @unique
+  status                GlobalSettingStatus    @default(disabled)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  teamFunctionOverrides TeamFunctionOverride[]
+}
+
+model TeamFunctionOverride {
+  id            Int           @id @default(autoincrement())
+  teamId        Int
+  team          Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  functionName  String
+  globalSetting GlobalSetting @relation(fields: [functionName], references: [functionName], onDelete: Cascade)
+  status        String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([teamId, functionName], name: "unique_team_function")
+  @@index([teamId])
 }

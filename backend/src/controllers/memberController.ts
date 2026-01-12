@@ -41,8 +41,8 @@ export const deleteMember = async (req: Request, res: Response) => {
     try {
       await prisma.memberTeamsData.delete({
         where: {
-          userAddress_teamId: {
-            userAddress: memberAddress,
+          memberAddress_teamId: {
+            memberAddress: memberAddress,
             teamId: Number(id),
           },
         },
@@ -124,6 +124,11 @@ export const addMembers = async (req: Request, res: Response) => {
         members: {
           connect: membersData.map((member) => ({
             address: member.address,
+          })),
+        },
+        memberTeamsData: {
+          create: membersData.map((member) => ({
+            memberAddress: member.address,
           })),
         },
       },

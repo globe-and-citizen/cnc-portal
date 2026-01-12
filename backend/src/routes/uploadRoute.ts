@@ -17,7 +17,9 @@ uploadRouter.post('/', upload.single('image'), async (req: Request, res: Respons
       return res.status(400).json({ error: 'No file provided' });
     }
 
-    const publicUrl = await uploadImageToGCS(multerReq.file);
+    // Files are now stored directly in the database via ClaimAttachment model
+    // This endpoint is deprecated but kept for backwards compatibility
+    const publicUrl = await uploadImageToGCS();
     res.json({ imageUrl: publicUrl });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';

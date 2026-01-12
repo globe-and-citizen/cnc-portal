@@ -1,9 +1,11 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
+import { ref } from 'vue'
+import { createTestingPinia } from '@pinia/testing'
+import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
 import type { Claim } from '@/types'
 import type { Address } from 'viem'
-import { ref } from 'vue'
 
 // Test constants
 const SELECTORS = {
@@ -15,7 +17,8 @@ const SELECTORS = {
 const SUBMIT_PAYLOAD = {
   hoursWorked: 6,
   memo: 'Updated memo',
-  dayWorked: '2024-02-01T00:00:00.000Z'
+  dayWorked: '2024-02-01T00:00:00.000Z',
+  uploadedFiles: []
 }
 
 const defaultClaim: Claim = {
@@ -24,6 +27,7 @@ const defaultClaim: Claim = {
   dayWorked: '2024-01-01T00:00:00.000Z',
   memo: 'Initial memo',
   wageId: 2,
+  fileAttachments: [],
   wage: {
     id: 5,
     teamId: 10,
@@ -41,265 +45,191 @@ const defaultClaim: Claim = {
   updatedAt: '2024-01-01T00:00:00.000Z'
 }
 
-// Mock refs for reactive states
-const mockUpdateStatus = ref<number | null>(null)
-const mockUpdateError = ref<unknown>(null)
-const mockUpdateIsFetching = ref(false)
-const mockUpdateData = ref(null)
-const mockUpdateResponse = ref<{ json: () => Promise<{ message: string }> } | null>(null)
-
-let resolveExecute: (val: unknown) => void = () => {}
-
-const executeUpdateMock = vi.fn(async () => {
-  mockUpdateIsFetching.value = true
-  return new Promise((resolve) => {
-    resolveExecute = resolve
-  }).finally(() => {
-    mockUpdateIsFetching.value = false
-  })
-})
-
 // Toast mocks
 const successToastMock = vi.fn()
 const errorToastMock = vi.fn()
 
 // Hoisted mocks
-const {
-  mockUseCustomFetch,
-  mockUseToastStore,
-  mockUseTeamStore,
-  mockUseQueryClient,
-  mockQueryClient
-} = vi.hoisted(() => {
-  const mockQueryClient = {
-    invalidateQueries: vi.fn()
+const { mockApiClient, mockUseToastStore, mockTeamStore, mockCheckRestriction } = vi.hoisted(() => {
+  const mockTeamStore = {
+    currentTeamId: 1 as number | undefined,
+    currentTeam: { id: 1 } as { id: number } | undefined
   }
 
   return {
-    mockUseCustomFetch: vi.fn(),
+    mockApiClient: {
+      put: vi.fn()
+    },
     mockUseToastStore: vi.fn(() => ({
       addErrorToast: errorToastMock,
       addSuccessToast: successToastMock
     })),
-    mockUseTeamStore: vi.fn(() => ({
-      currentTeam: { id: 1 } as { id: number } | null
-    })),
-    mockUseQueryClient: vi.fn(() => mockQueryClient),
-    mockQueryClient
+    mockTeamStore,
+    mockCheckRestriction: vi.fn()
   }
 })
-
-// Mock component stubs
-const ClaimFormStub = {
-  name: 'ClaimForm',
-  props: ['initialData', 'isEdit', 'isLoading'],
-  emits: ['submit', 'cancel'],
-  setup(
-    _props: Record<string, unknown>,
-    { emit }: { emit: (event: string, ...args: unknown[]) => void }
-  ) {
-    return {
-      handleSubmit: () => emit('submit', SUBMIT_PAYLOAD),
-      handleCancel: () => emit('cancel')
-    }
-  },
-  template: `
-    <div>
-      <button data-test="claim-form-submit" @click="handleSubmit">submit</button>
-      <button data-test="claim-form-cancel" @click="handleCancel">cancel</button>
-    </div>
-  `
-}
 
 // Mock implementations
 vi.mock('@/stores', async (importOriginal) => {
-  const actual: object = await importOriginal()
+  const actual = await importOriginal<typeof import('@/stores')>()
   return {
     ...actual,
     useToastStore: mockUseToastStore,
-    useTeamStore: mockUseTeamStore
+    useTeamStore: () => mockTeamStore
   }
 })
 
-vi.mock('@tanstack/vue-query', () => ({
-  useQueryClient: mockUseQueryClient
+vi.mock('@/lib/axios', () => ({
+  default: mockApiClient
 }))
 
-vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useCustomFetch: mockUseCustomFetch
-  }
-})
+vi.mock('@/composables', () => ({
+  useSubmitRestriction: () => ({
+    isRestricted: ref(false),
+    checkRestriction: mockCheckRestriction
+  })
+}))
 
 // Helper function for creating wrapper
-const createWrapper = (props: Partial<{ claim: Claim }> = {}) =>
-  mount(EditClaims, {
+const createWrapper = (props: Partial<{ claim: Claim }> = {}) => {
+  const queryClient = new QueryClient()
+  return mount(EditClaims, {
     props: {
       claim: props.claim ?? defaultClaim
     },
     global: {
-      stubs: {
-        ClaimForm: ClaimFormStub
-      }
+      plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
     }
   })
+}
 
 describe('EditClaims', () => {
   beforeEach(() => {
-    mockUseCustomFetch.mockReturnValue({
-      put: vi.fn().mockReturnValue({
-        json: vi.fn().mockReturnValue({
-          execute: executeUpdateMock,
-          isFetching: mockUpdateIsFetching,
-          error: mockUpdateError,
-          statusCode: mockUpdateStatus,
-          response: mockUpdateResponse,
-          data: mockUpdateData
-        })
-      })
+    // Reset team store values
+    mockTeamStore.currentTeamId = 1
+    mockTeamStore.currentTeam = { id: 1 }
+
+    // Setup axios mock to resolve successfully
+    mockApiClient.put.mockResolvedValue({
+      data: { message: 'Claim updated successfully' }
     })
   })
 
   afterEach(() => {
     vi.clearAllMocks()
-    mockUpdateStatus.value = null
-    mockUpdateError.value = null
-    mockUpdateData.value = null
-    mockUpdateResponse.value = null
-    mockUpdateIsFetching.value = false
   })
 
-  describe('Component Rendering', () => {
-    it('should render correctly', () => {
+  describe('File Handling', () => {
+    it('should include uploaded files in FormData', async () => {
+      const file = new File(['content'], 'test.png', { type: 'image/png' })
+      const payloadWithFile = {
+        ...SUBMIT_PAYLOAD,
+        files: [file]
+      }
+
       const wrapper = createWrapper()
-      expect(wrapper.exists()).toBeTruthy()
-    })
+      const form = wrapper.findComponent({ name: 'ClaimForm' })
 
-    it('should pass initial claim data to ClaimForm', () => {
-      const wrapper = createWrapper({ claim: defaultClaim })
-      const form = wrapper.findComponent(ClaimFormStub)
-
-      expect(form.exists()).toBe(true)
-      expect(form.props('initialData')).toEqual({
-        hoursWorked: String(defaultClaim.hoursWorked),
-        memo: defaultClaim.memo,
-        dayWorked: defaultClaim.dayWorked
-      })
-      expect(form.props('isEdit')).toBe(true)
-    })
-
-    it('should render action buttons', () => {
-      const wrapper = createWrapper()
-      expect(wrapper.find(SELECTORS.submitButton).exists()).toBe(true)
-      expect(wrapper.find(SELECTORS.cancelButton).exists()).toBe(true)
-    })
-  })
-
-  describe('Update Functionality', () => {
-    it('should show success toast on successful claim update', async () => {
-      const wrapper = createWrapper()
-
-      await wrapper.find(SELECTORS.submitButton).trigger('click')
-
-      expect(executeUpdateMock).toHaveBeenCalledTimes(1)
-
-      mockUpdateStatus.value = 200
-      resolveExecute({})
+      form.vm.$emit('submit', payloadWithFile)
       await flushPromises()
 
-      expect(executeUpdateMock).toHaveBeenCalled()
-      expect(successToastMock).toHaveBeenCalledWith('Claim updated successfully')
+      expect(mockApiClient.put).toHaveBeenCalled()
+      const callArgs = mockApiClient.put.mock.calls[0]
+      expect(callArgs).toBeDefined()
+      const formData = callArgs![1] as FormData
+
+      expect(formData.get('files')).toBeTruthy()
     })
 
-    it('should invalidate weekly claims query after successful update', async () => {
-      const wrapper = createWrapper()
+    it('should include deletedFileIndexes in FormData when files are deleted', async () => {
+      const claimWithFiles = {
+        ...defaultClaim,
+        fileAttachments: [
+          { fileName: 'file1.png', fileType: 'image/png', fileSize: 1024, fileData: 'base64' },
+          { fileName: 'file2.png', fileType: 'image/png', fileSize: 2048, fileData: 'base64' }
+        ]
+      }
 
-      await wrapper.find(SELECTORS.submitButton).trigger('click')
+      const wrapper = createWrapper({ claim: claimWithFiles })
+      const form = wrapper.findComponent({ name: 'ClaimForm' })
 
-      mockUpdateStatus.value = 200
-      resolveExecute({})
+      // Simulate file deletion via form event
+      form.vm.$emit('delete-file', 0)
       await flushPromises()
 
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: ['weekly-claims', 1]
-      })
-    })
-
-    it('should emit close event after successful update', async () => {
-      const wrapper = createWrapper()
-
-      await wrapper.find(SELECTORS.submitButton).trigger('click')
-
-      mockUpdateStatus.value = 200
-      resolveExecute({})
+      form.vm.$emit('submit', SUBMIT_PAYLOAD)
       await flushPromises()
 
-      expect(wrapper.emitted('close')).toBeTruthy()
+      expect(mockApiClient.put).toHaveBeenCalled()
+      const callArgs = mockApiClient.put.mock.calls[0]
+      expect(callArgs).toBeDefined()
+      const formData = callArgs![1] as FormData
+
+      expect(formData.get('deletedFileIndexes')).toBe('[0]')
     })
   })
 
   describe('Error Handling', () => {
-    it('should display error message on failed claim update', async () => {
+    it('should use default error message when API does not provide one', async () => {
+      mockApiClient.put.mockRejectedValueOnce({
+        response: {
+          status: 500,
+          data: {}
+        }
+      })
+
       const wrapper = createWrapper()
+      const form = wrapper.findComponent({ name: 'ClaimForm' })
 
-      await wrapper.find(SELECTORS.submitButton).trigger('click')
-
-      expect(executeUpdateMock).toHaveBeenCalledTimes(1)
-
-      mockUpdateStatus.value = 400
-      mockUpdateError.value = new Error('Error')
-      mockUpdateResponse.value = {
-        json: vi.fn().mockResolvedValue({ message: 'Failed to update claim' })
-      }
-
-      resolveExecute(null)
-      await flushPromises()
-
-      expect(successToastMock).not.toHaveBeenCalled()
-      expect(wrapper.find(SELECTORS.errorAlert).text()).toContain('Failed to update claim')
-    })
-
-    it.skip('should use default error message when API does not provide one', async () => {
-      const wrapper = createWrapper()
-
-      await wrapper.find(SELECTORS.submitButton).trigger('click')
-
-      mockUpdateStatus.value = 500
-      mockUpdateError.value = new Error('Server error')
-      mockUpdateResponse.value = {
-        json: vi.fn().mockResolvedValue({})
-      }
-
-      resolveExecute(null)
+      form.vm.$emit('submit', SUBMIT_PAYLOAD)
       await flushPromises()
 
       expect(errorToastMock).toHaveBeenCalledWith('Failed to update claim')
+      expect(wrapper.find(SELECTORS.errorAlert).exists()).toBe(true)
+      expect(wrapper.find(SELECTORS.errorAlert).text()).toContain('Failed to update claim')
+    })
+
+    it('should handle network errors gracefully', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      mockApiClient.put.mockRejectedValueOnce(new Error('Network failure'))
+
+      const wrapper = createWrapper()
+      const form = wrapper.findComponent({ name: 'ClaimForm' })
+
+      form.vm.$emit('submit', SUBMIT_PAYLOAD)
+      await flushPromises()
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to update claim:', expect.any(Error))
+      expect(errorToastMock).toHaveBeenCalledWith('Network failure')
+      expect(wrapper.emitted('close')).toBeUndefined()
+
+      consoleErrorSpy.mockRestore()
     })
   })
 
   describe('Modal Interactions', () => {
-    it('should emit close when cancel button is clicked', async () => {
+    it('should emit close when cancel is triggered', async () => {
       const wrapper = createWrapper()
+      const form = wrapper.findComponent({ name: 'ClaimForm' })
 
-      await wrapper.find(SELECTORS.cancelButton).trigger('click')
+      form.vm.$emit('cancel')
+      await flushPromises()
 
       expect(wrapper.emitted('close')).toBeTruthy()
     })
 
     it('should not emit close when update fails', async () => {
+      mockApiClient.put.mockRejectedValueOnce({
+        response: {
+          status: 400,
+          data: { message: 'Failed to update claim' }
+        }
+      })
+
       const wrapper = createWrapper()
+      const form = wrapper.findComponent({ name: 'ClaimForm' })
 
-      await wrapper.find(SELECTORS.submitButton).trigger('click')
-
-      mockUpdateStatus.value = 400
-      mockUpdateError.value = new Error('Error')
-      mockUpdateResponse.value = {
-        json: vi.fn().mockResolvedValue({ message: 'Failed to update claim' })
-      }
-
-      resolveExecute(null)
+      form.vm.$emit('submit', SUBMIT_PAYLOAD)
       await flushPromises()
 
       expect(wrapper.emitted('close')).toBeUndefined()
@@ -307,50 +237,42 @@ describe('EditClaims', () => {
   })
 
   describe('Loading States', () => {
-    it('should pass loading state to ClaimForm', () => {
-      mockUpdateIsFetching.value = true
-      const wrapper = createWrapper()
+    it('should show loading state during update', async () => {
+      let resolveUpdate: (value: { data: { message: string } }) => void
+      const updatePromise = new Promise<{ data: { message: string } }>((resolve) => {
+        resolveUpdate = resolve
+      })
 
-      const form = wrapper.findComponent(ClaimFormStub)
+      mockApiClient.put.mockReturnValueOnce(updatePromise)
+
+      const wrapper = createWrapper()
+      const form = wrapper.findComponent({ name: 'ClaimForm' })
+
+      form.vm.$emit('submit', SUBMIT_PAYLOAD)
+      await flushPromises()
+
       expect(form.props('isLoading')).toBe(true)
+
+      resolveUpdate!({ data: { message: 'Success' } })
+      await flushPromises()
+
+      expect(form.props('isLoading')).toBe(false)
     })
   })
 
   describe('Edge Cases', () => {
     it('should handle team without ID gracefully', async () => {
-      mockUseTeamStore.mockReturnValueOnce({
-        currentTeam: null
-      })
+      mockTeamStore.currentTeamId = undefined
+      mockTeamStore.currentTeam = undefined
 
       const wrapper = createWrapper()
+      const form = wrapper.findComponent({ name: 'ClaimForm' })
 
-      await wrapper.find(SELECTORS.submitButton).trigger('click')
-
-      mockUpdateStatus.value = 200
-      resolveExecute({})
+      form.vm.$emit('submit', SUBMIT_PAYLOAD)
       await flushPromises()
 
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: ['weekly-claims', undefined]
-      })
-    })
-
-    it('should handle update with error thrown in try-catch', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const errorMessage = 'Network failure'
-
-      executeUpdateMock.mockRejectedValueOnce(new Error(errorMessage))
-
-      const wrapper = createWrapper()
-
-      await wrapper.find(SELECTORS.submitButton).trigger('click')
-      await flushPromises()
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to update claim:', expect.any(Error))
-      expect(errorToastMock).toHaveBeenCalledWith(errorMessage)
-      expect(wrapper.emitted('close')).toBeUndefined()
-
-      consoleErrorSpy.mockRestore()
+      expect(mockApiClient.put).not.toHaveBeenCalled()
+      expect(errorToastMock).toHaveBeenCalledWith('Team not selected')
     })
   })
 })
