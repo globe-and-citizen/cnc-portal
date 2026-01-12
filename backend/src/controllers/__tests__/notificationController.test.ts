@@ -57,7 +57,7 @@ describe('Notification Controller', () => {
 
       const response = await request(app).get('/');
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body).toHaveLength(1);
       expect(response.body[0]).toMatchObject({
@@ -76,7 +76,7 @@ describe('Notification Controller', () => {
 
       const response = await request(app).get('/');
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body).toEqual([]);
     });
@@ -115,7 +115,7 @@ describe('Notification Controller', () => {
 
       const response = await request(app).put('/1');
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expect(response.body.isRead).toBe(true);
       expect(prisma.notification.update).toHaveBeenCalledWith({
         where: { id: 1 },
