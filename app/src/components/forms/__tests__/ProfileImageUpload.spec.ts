@@ -58,7 +58,7 @@ describe('ProfileImageUpload.vue', () => {
     global.fetch = mockFetch
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ imageUrl: 'https://storage.railway.app/test-image.jpg' })
+      json: () => Promise.resolve({ fileUrl: 'https://storage.railway.app/test-image.jpg' })
     })
   })
 
@@ -155,7 +155,7 @@ describe('ProfileImageUpload.vue', () => {
       const expectedUrl = 'https://storage.railway.app/uploaded-image.png'
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ imageUrl: expectedUrl })
+        json: () => Promise.resolve({ fileUrl: expectedUrl })
       })
 
       wrapper = mountComponent()
@@ -243,7 +243,7 @@ describe('ProfileImageUpload.vue', () => {
     it('should handle missing imageUrl in response', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({}) // No imageUrl
+        json: () => Promise.resolve({}) // No fileUrl
       })
 
       wrapper = mountComponent()
@@ -257,7 +257,7 @@ describe('ProfileImageUpload.vue', () => {
       await input.trigger('change')
       await flushPromises()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Upload response missing imageUrl')
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Upload response missing fileUrl')
     })
   })
 
@@ -299,7 +299,7 @@ describe('ProfileImageUpload.vue', () => {
       const expectedUrl = 'https://storage.railway.app/new-image.png'
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ imageUrl: expectedUrl })
+        json: () => Promise.resolve({ fileUrl: expectedUrl })
       })
 
       wrapper = mountComponent({ modelValue: '' })

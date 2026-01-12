@@ -52,7 +52,11 @@ describe('MultiFileUpload', () => {
     vi.clearAllMocks()
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ imageUrl: MOCK_IMAGE_URL })
+      json: async () => ({
+        fileUrl: MOCK_IMAGE_URL,
+        fileKey: 'bucket/path/image.png',
+        metadata: { fileType: 'image/png', fileSize: 123 }
+      })
     })
   })
 
@@ -124,10 +128,11 @@ describe('MultiFileUpload', () => {
       expect(img.attributes('src')).toBe(MOCK_IMAGE_URL)
     })
 
-    it('should show error for non-image files', async () => {
+    it('should show error for unsupported files', async () => {
       wrapper = mount(MultiFileUpload)
 
-      const file = new File(['test'], 'test.pdf', { type: 'application/pdf' })
+      // use an unsupported file type (exe) to trigger validation
+      const file = new File(['test'], 'test.exe', { type: 'application/x-msdownload' })
       const fileInput = wrapper.find(SELECTORS.fileInput)
 
       Object.defineProperty(fileInput.element, 'files', {
@@ -140,7 +145,6 @@ describe('MultiFileUpload', () => {
 
       expect(wrapper.find(SELECTORS.uploadError).exists()).toBe(true)
       expect(wrapper.find(SELECTORS.uploadError).text()).toContain('Only images')
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Only images are allowed')
     })
 
     it('should show error for oversized files', async () => {
@@ -211,7 +215,11 @@ describe('MultiFileUpload', () => {
 
       resolveUpload!({
         ok: true,
-        json: async () => ({ imageUrl: MOCK_IMAGE_URL })
+        json: async () => ({
+          fileUrl: MOCK_IMAGE_URL,
+          fileKey: 'bucket/path/image.png',
+          metadata: { fileType: 'image/png', fileSize: 123 }
+        })
       })
 
       await flushPromises()
@@ -266,9 +274,12 @@ describe('MultiFileUpload', () => {
       await fileInput.trigger('change')
       await flushPromises()
 
+      // After successful upload there should be one preview
       expect(wrapper.findAll(SELECTORS.previewItem)).toHaveLength(1)
 
-      await wrapper.find(SELECTORS.removeButton).trigger('click')
+      const removeBtn = wrapper.find(SELECTORS.removeButton)
+      expect(removeBtn.exists()).toBe(true)
+      await removeBtn.trigger('click')
       await nextTick()
 
       expect(wrapper.findAll(SELECTORS.previewItem)).toHaveLength(0)
@@ -291,7 +302,17 @@ describe('MultiFileUpload', () => {
       await flushPromises()
 
       expect(wrapper.emitted('update:screens')).toBeTruthy()
-      expect(wrapper.emitted('update:screens')?.[0]).toEqual([[MOCK_IMAGE_URL]])
+      // Component now emits uploaded metadata objects
+      expect(wrapper.emitted('update:screens')?.[0]).toEqual([
+        [
+          {
+            fileKey: 'bucket/path/image.png',
+            fileUrl: MOCK_IMAGE_URL,
+            fileType: 'image/png',
+            fileSize: 123
+          }
+        ]
+      ])
     })
   })
 

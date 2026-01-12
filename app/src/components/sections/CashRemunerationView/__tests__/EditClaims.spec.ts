@@ -58,7 +58,8 @@ const { mockApiClient, mockUseToastStore, mockTeamStore, mockCheckRestriction } 
 
   return {
     mockApiClient: {
-      put: vi.fn()
+      put: vi.fn(),
+      post: vi.fn()
     },
     mockUseToastStore: vi.fn(() => ({
       addErrorToast: errorToastMock,
@@ -109,9 +110,19 @@ describe('EditClaims', () => {
     mockTeamStore.currentTeamId = 1
     mockTeamStore.currentTeam = { id: 1 }
 
-    // Setup axios mock to resolve successfully
-    mockApiClient.put.mockResolvedValue({
-      data: { message: 'Claim updated successfully' }
+    // Setup axios mock to resolve for put and handle upload posts
+    mockApiClient.put.mockResolvedValue({ data: { message: 'Claim updated successfully' } })
+    mockApiClient.post.mockImplementation((url: string, body: any) => {
+      if (url === '/upload' || url.endsWith('/upload')) {
+        return Promise.resolve({
+          data: {
+            fileKey: 'bucket/path/image.png',
+            fileUrl: 'https://storage.railway.app/bucket/path/image.png',
+            metadata: { fileType: 'image/png', fileSize: 123 }
+          }
+        })
+      }
+      return Promise.resolve({ data: {} })
     })
   })
 
@@ -120,7 +131,7 @@ describe('EditClaims', () => {
   })
 
   describe('File Handling', () => {
-    it('should include uploaded files in FormData', async () => {
+    it('should pre-upload new files and submit attachments metadata', async () => {
       const file = new File(['content'], 'test.png', { type: 'image/png' })
       const payloadWithFile = {
         ...SUBMIT_PAYLOAD,
@@ -133,20 +144,39 @@ describe('EditClaims', () => {
       form.vm.$emit('submit', payloadWithFile)
       await flushPromises()
 
-      expect(mockApiClient.put).toHaveBeenCalled()
-      const callArgs = mockApiClient.put.mock.calls[0]
-      expect(callArgs).toBeDefined()
-      const formData = callArgs![1] as FormData
+      // Upload should be called first, then put for claim update
+      expect(mockApiClient.post).toHaveBeenCalled()
+      const uploadCall = mockApiClient.post.mock.calls[0]
+      expect(uploadCall[0]).toBe('/upload')
+      const uploadForm = uploadCall[1] as FormData
+      expect(uploadForm.get('file')).toBeTruthy()
 
-      expect(formData.get('files')).toBeTruthy()
+      expect(mockApiClient.put).toHaveBeenCalled()
+      const putCall = mockApiClient.put.mock.calls[0]
+      expect(putCall[0]).toBe(`/claim/${defaultClaim.id}`)
+      const payload = putCall[1]
+      expect(payload).toBeDefined()
+      expect(Array.isArray(payload.attachments)).toBe(true)
+      expect(payload.attachments).toHaveLength(1)
+      expect(payload.attachments[0]).toMatchObject({ fileKey: 'bucket/path/image.png' })
     })
 
     it('should include deletedFileIndexes in FormData when files are deleted', async () => {
       const claimWithFiles = {
         ...defaultClaim,
         fileAttachments: [
-          { fileName: 'file1.png', fileType: 'image/png', fileSize: 1024, fileData: 'base64' },
-          { fileName: 'file2.png', fileType: 'image/png', fileSize: 2048, fileData: 'base64' }
+          {
+            fileKey: 'bucket/path/file1.png',
+            fileUrl: 'https://storage.railway.app/bucket/path/file1.png',
+            fileType: 'image/png',
+            fileSize: 1024
+          },
+          {
+            fileKey: 'bucket/path/file2.png',
+            fileUrl: 'https://storage.railway.app/bucket/path/file2.png',
+            fileType: 'image/png',
+            fileSize: 2048
+          }
         ]
       }
 
@@ -161,11 +191,10 @@ describe('EditClaims', () => {
       await flushPromises()
 
       expect(mockApiClient.put).toHaveBeenCalled()
-      const callArgs = mockApiClient.put.mock.calls[0]
-      expect(callArgs).toBeDefined()
-      const formData = callArgs![1] as FormData
-
-      expect(formData.get('deletedFileIndexes')).toBe('[0]')
+      const putCall = mockApiClient.put.mock.calls[0]
+      expect(putCall).toBeDefined()
+      const payload = putCall[1]
+      expect(payload.deletedFileIndexes).toEqual([0])
     })
   })
 

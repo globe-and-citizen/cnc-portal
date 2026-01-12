@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SubmitClaims from '../SubmitClaims.vue'
+const MOCK_IMAGE_URL = 'https://storage.railway.app/bucket/path/image.png'
 import { createTestingPinia } from '@pinia/testing'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 
@@ -49,9 +50,23 @@ afterEach(() => {
 
 describe('SubmitClaims', () => {
   beforeEach(() => {
-    // Setup axios mock to resolve successfully
-    mocks.mockApiClient.post.mockResolvedValue({
-      data: { message: 'Wage claim added successfully' }
+    // Setup axios mock to handle upload and claim endpoints
+    mocks.mockApiClient.post.mockImplementation((url: string, body: any) => {
+      if (url === '/upload' || url.endsWith('/upload')) {
+        return Promise.resolve({
+          data: {
+            fileKey: 'bucket/path/image.png',
+            fileUrl: MOCK_IMAGE_URL,
+            metadata: { fileType: 'image/png', fileSize: 123 }
+          }
+        })
+      }
+
+      if (url === '/claim' || url.endsWith('/claim')) {
+        return Promise.resolve({ data: { message: 'Wage claim added successfully' } })
+      }
+
+      return Promise.resolve({ data: {} })
     })
   })
 
@@ -70,7 +85,7 @@ describe('SubmitClaims', () => {
   })
 
   describe('Form Submission', () => {
-    it('should include uploaded files in FormData', async () => {
+    it('should pre-upload files and submit attachments metadata', async () => {
       const wrapper = createComponent()
 
       const file = new File(['content'], 'test.png', { type: 'image/png' })
@@ -85,12 +100,30 @@ describe('SubmitClaims', () => {
       claimForm.vm.$emit('submit', submitData)
       await flushPromises()
 
-      expect(mocks.mockApiClient.post).toHaveBeenCalled()
-      const callArgs = mocks.mockApiClient.post.mock.calls[0]!
-      const formData = callArgs[1] as FormData
+      // First call should be upload, second call should be claim submission
+      expect(mocks.mockApiClient.post).toHaveBeenCalledTimes(2)
 
-      expect(formData.getAll('files')).toHaveLength(1)
-      expect(formData.getAll('files')[0]).toBe(file)
+      const uploadCall = mocks.mockApiClient.post.mock.calls[0]!
+      expect(uploadCall[0]).toBe('/upload')
+      const uploadForm = uploadCall[1] as FormData
+      expect(uploadForm.get('file')).toBeTruthy()
+
+      const claimCall = mocks.mockApiClient.post.mock.calls[1]!
+      expect(claimCall[0]).toBe('/claim')
+      const payload = claimCall[1]
+      expect(payload).toBeDefined()
+      expect(payload).toMatchObject({
+        teamId: '1',
+        hoursWorked: '8',
+        memo: 'Test work',
+        dayWorked: '2024-01-10T00:00:00.000Z'
+      })
+      expect(Array.isArray(payload.attachments)).toBe(true)
+      expect(payload.attachments).toHaveLength(1)
+      expect(payload.attachments[0]).toMatchObject({
+        fileKey: 'bucket/path/image.png',
+        fileUrl: MOCK_IMAGE_URL
+      })
     })
   })
 
