@@ -7,24 +7,13 @@ import { errorResponse } from '../utils/utils';
 
 import { Claim, Prisma } from '@prisma/client';
 import { isUserMemberOfTeam } from './wageController';
-import {
-  uploadFiles,
-  getPresignedDownloadUrl,
-  deleteFile,
-  isStorageConfigured,
-} from '../services/storageService';
-
-// Type for multipart/form-data request with files
-interface MulterRequest extends Request {
-  files?: Express.Multer.File[];
-}
+import { deleteFile } from '../services/storageService';
 
 // Type for file attachment data (updated for Railway S3)
 type FileAttachmentData = {
-  fileName: string;
   fileType: string;
   fileSize: number;
-  fileKey: string; // S3 object key
+  fileKey: string; // S3 object key - unique identifier
   fileUrl: string; // Presigned download URL
 };
 
@@ -33,12 +22,12 @@ dayjs.extend(isoWeek);
 
 type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
   teamId: string;
+  attachments?: FileAttachmentData[];
 };
 
 // TODO limit weeday only for the current week. Betwen Monday and the current day
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
-  const multerReq = req as MulterRequest;
 
   const body = req.body as claimBodyRequest;
   const hoursWorked = Number(body.hoursWorked);
@@ -47,16 +36,7 @@ export const addClaim = async (req: Request, res: Response) => {
     ? dayjs.utc(body.dayWorked).startOf('day').toDate()
     : dayjs.utc().startOf('day').toDate();
   const teamId = Number(body.teamId);
-
-  // Get uploaded files (if any) and ensure they are in an array form
-  let uploadedFiles: Express.Multer.File[] = [];
-  if (multerReq.files != null) {
-    if (Array.isArray(multerReq.files)) {
-      uploadedFiles = multerReq.files;
-    } else {
-      return errorResponse(400, 'Invalid files payload', res);
-    }
-  }
+  const attachments = body.attachments || [];
 
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
@@ -141,64 +121,17 @@ export const addClaim = async (req: Request, res: Response) => {
       );
     }
 
-    // Prepare file attachments data if any files were uploaded
-    let fileAttachmentsData: FileAttachmentData[] | undefined = undefined;
-    if (uploadedFiles.length > 0) {
-      // Validate file count does not exceed 10
-      if (uploadedFiles.length > 10) {
-        return errorResponse(
-          400,
-          `Maximum 10 files allowed. You are trying to upload ${uploadedFiles.length} files. Please remove ${uploadedFiles.length - 10} file(s).`,
-          res
-        );
-      }
-
-      // Upload files to Railway S3 if storage is configured
-      if (isStorageConfigured()) {
-        try {
-          // Upload all files to S3 in the claims folder
-          const uploadResults = await uploadFiles(
-            uploadedFiles,
-            `claims/${teamId}/${callerAddress}`
-          );
-
-          // Check for upload failures
-          const failedUploads = uploadResults.filter((r) => !r.success);
-          if (failedUploads.length > 0) {
-            return errorResponse(
-              400,
-              `Failed to upload ${failedUploads.length} file(s). Please try again.`,
-              res
-            );
-          }
-
-          // Generate presigned URLs for each uploaded file (7 days expiration)
-          fileAttachmentsData = await Promise.all(
-            uploadResults
-              .filter((r) => r.success)
-              .map(async (result) => {
-                const url = await getPresignedDownloadUrl(result.metadata!.key, 604800); // 7 days
-                return {
-                  fileName: result.metadata!.fileName,
-                  fileType: result.metadata!.fileType,
-                  fileSize: result.metadata!.fileSize,
-                  fileKey: result.metadata!.key,
-                  fileUrl: url,
-                };
-              })
-          );
-        } catch (error) {
-          console.error('Error uploading claim files:', error);
-          return errorResponse(500, 'Failed to upload file attachments', res);
-        }
-      } else {
-        return errorResponse(
-          503,
-          'Storage service is not configured. Please contact administrator.',
-          res
-        );
-      }
+    // Validate pre-uploaded attachments count
+    if (attachments.length > 10) {
+      return errorResponse(
+        400,
+        `Maximum 10 files allowed. You have ${attachments.length} files.`,
+        res
+      );
     }
+
+    // Use pre-uploaded attachments from body
+    const fileAttachmentsData = attachments.length > 0 ? attachments : undefined;
 
     // Create the claim with file attachments
     const claim = await prisma.claim.create({
@@ -272,21 +205,17 @@ export const updateClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const claimId = Number(req.params.claimId);
 
-  // Get uploaded files (if any) and ensure they are in an array form
-  let uploadedFiles: Express.Multer.File[] = [];
-  if (req.files != null) {
-    if (Array.isArray(req.files)) {
-      uploadedFiles = req.files;
-    } else {
-      return errorResponse(400, 'Invalid files payload', res);
-    }
-  }
-
   const {
     hoursWorked,
     memo,
     deletedFileIndexes,
-  }: { hoursWorked?: number; memo?: string; deletedFileIndexes?: string } = req.body;
+    attachments,
+  }: {
+    hoursWorked?: number;
+    memo?: string;
+    deletedFileIndexes?: number[];
+    attachments?: FileAttachmentData[];
+  } = req.body;
 
   try {
     // Fetch the claim including the required data (include weeklyClaim.claims)
@@ -342,83 +271,29 @@ export const updateClaim = async (req: Request, res: Response) => {
     let fileAttachmentsData: FileAttachmentData[] | undefined = existingAttachments;
 
     // Handle deleted file indexes first
-    if (deletedFileIndexes) {
-      try {
-        const indexesToDelete: number[] = JSON.parse(deletedFileIndexes);
-        if (Array.isArray(indexesToDelete) && indexesToDelete.length > 0) {
-          // Sort in descending order to avoid index shifting issues
-          const sortedIndexes = [...indexesToDelete].sort((a, b) => b - a);
-          fileAttachmentsData = [...existingAttachments];
-          for (const idx of sortedIndexes) {
-            if (idx >= 0 && idx < fileAttachmentsData.length) {
-              fileAttachmentsData.splice(idx, 1);
-            }
-          }
+    if (deletedFileIndexes && Array.isArray(deletedFileIndexes) && deletedFileIndexes.length > 0) {
+      // Sort in descending order to avoid index shifting issues
+      const sortedIndexes = [...deletedFileIndexes].sort((a, b) => b - a);
+      fileAttachmentsData = [...existingAttachments];
+      for (const idx of sortedIndexes) {
+        if (idx >= 0 && idx < fileAttachmentsData.length) {
+          fileAttachmentsData.splice(idx, 1);
         }
-      } catch (parseError) {
-        console.error('Error parsing deletedFileIndexes:', parseError);
       }
     }
 
-    if (uploadedFiles.length > 0) {
+    // Add new pre-uploaded attachments from body
+    if (attachments && attachments.length > 0) {
       // Validate total file count does not exceed 10
-      if (fileAttachmentsData.length + uploadedFiles.length > 10) {
+      if (fileAttachmentsData.length + attachments.length > 10) {
         return errorResponse(
           400,
-          `Maximum 10 files allowed. You currently have ${fileAttachmentsData.length} files and are trying to add ${uploadedFiles.length}. Please remove ${fileAttachmentsData.length + uploadedFiles.length - 10} file(s).`,
+          `Maximum 10 files allowed. You currently have ${fileAttachmentsData.length} files and are trying to add ${attachments.length}. Please remove ${fileAttachmentsData.length + attachments.length - 10} file(s).`,
           res
         );
       }
 
-      // Upload files to Railway S3 if storage is configured
-      if (isStorageConfigured()) {
-        try {
-          // Use existing claim data (already fetched at the start of function)
-          const teamId = weeklyClaim?.teamId;
-          // Upload all files to S3
-          const uploadResults = await uploadFiles(
-            uploadedFiles,
-            `claims/${teamId}/${callerAddress}`
-          );
-
-          // Check for upload failures
-          const failedUploads = uploadResults.filter((r) => !r.success);
-          if (failedUploads.length > 0) {
-            return errorResponse(
-              400,
-              `Failed to upload ${failedUploads.length} file(s). Please try again.`,
-              res
-            );
-          }
-
-          // Generate presigned URLs for each uploaded file (7 days expiration)
-          const newAttachments = await Promise.all(
-            uploadResults
-              .filter((r) => r.success)
-              .map(async (result) => {
-                const url = await getPresignedDownloadUrl(result.metadata!.key, 604800); // 7 days
-                return {
-                  fileName: result.metadata!.fileName,
-                  fileType: result.metadata!.fileType,
-                  fileSize: result.metadata!.fileSize,
-                  fileKey: result.metadata!.key,
-                  fileUrl: url,
-                };
-              })
-          );
-
-          fileAttachmentsData = [...fileAttachmentsData, ...newAttachments];
-        } catch (error) {
-          console.error('Error uploading claim files:', error);
-          return errorResponse(500, 'Failed to upload file attachments', res);
-        }
-      } else {
-        return errorResponse(
-          503,
-          'Storage service is not configured. Please contact administrator.',
-          res
-        );
-      }
+      fileAttachmentsData = [...fileAttachmentsData, ...attachments];
     }
 
     const updatedClaim = await prisma.claim.update({

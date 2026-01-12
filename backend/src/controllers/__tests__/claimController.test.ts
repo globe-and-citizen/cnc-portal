@@ -49,14 +49,12 @@ vi.mock('../wageController', () => ({
 }));
 
 // Mock the storage service
-const { mockUploadFiles, mockGetPresignedDownloadUrl, mockDeleteFile } = vi.hoisted(() => ({
-  mockUploadFiles: vi.fn(),
+const { mockGetPresignedDownloadUrl, mockDeleteFile } = vi.hoisted(() => ({
   mockGetPresignedDownloadUrl: vi.fn(),
   mockDeleteFile: vi.fn(),
 }));
 
 vi.mock('../../services/storageService', () => ({
-  uploadFiles: mockUploadFiles,
   getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
   deleteFile: mockDeleteFile,
   isStorageConfigured: vi.fn(() => true),
@@ -189,7 +187,7 @@ const mockIsUserMemberOfTeam = vi.mocked(isUserMemberOfTeam);
 const createTestApp = (address = TEST_ADDRESS) => {
   const testApp = express();
   testApp.use(express.json());
-  testApp.use((req, res, next) => {
+  testApp.use((req: Request & { address?: string }, res, next) => {
     req.address = address;
     next();
   });
@@ -254,7 +252,7 @@ describe('Claim Controller', () => {
     it('should return 400 if total hours exceed 24 hours for a single day', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
       const modifiedWeeklyClaims = createMockWeeklyClaim();
-      modifiedWeeklyClaims.claims = [{ dayWorked: testDate, hoursWorked: 20 }];
+      (modifiedWeeklyClaims as any).claims = [{ dayWorked: testDate, hoursWorked: 20 }];
 
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(modifiedWeeklyClaims);
@@ -374,7 +372,6 @@ describe('Claim Controller', () => {
         const mockClaim = createMockClaim({
           fileAttachments: [
             {
-              fileName: 'test.pdf',
               fileType: 'application/pdf',
               fileSize: 1024,
               fileKey: 'claims/1/test-key',
@@ -387,29 +384,21 @@ describe('Claim Controller', () => {
         vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaim);
         const createSpy = vi.spyOn(prisma.claim, 'create').mockResolvedValue(mockClaim);
 
-        // Mock storage service responses
-        mockUploadFiles.mockResolvedValue([
-          {
-            success: true,
-            metadata: {
-              key: 'claims/1/test-key',
-              fileName: 'test.pdf',
-              fileType: 'application/pdf',
-              fileSize: 1024,
-            },
-          },
-        ]);
-
-        mockGetPresignedDownloadUrl.mockResolvedValue(
-          'https://storage.railway.app/claims/1/test-key?signed'
-        );
-
         const response = await request(app)
           .post('/')
-          .field('teamId', '1')
-          .field('hoursWorked', '5')
-          .field('memo', 'test memo')
-          .attach('files', Buffer.from('test file content'), 'test.pdf');
+          .send({
+            teamId: '1',
+            hoursWorked: '5',
+            memo: 'test memo',
+            attachments: [
+              {
+                fileKey: 'claims/1/test-key',
+                fileUrl: 'https://storage.railway.app/claims/1/test-key?signed',
+                fileType: 'application/pdf',
+                fileSize: 1024,
+              },
+            ],
+          });
 
         expect(response.status).toBe(201);
         expect(createSpy).toHaveBeenCalledWith(
@@ -417,7 +406,7 @@ describe('Claim Controller', () => {
             data: expect.objectContaining({
               fileAttachments: expect.arrayContaining([
                 expect.objectContaining({
-                  fileName: 'test.pdf',
+                  fileKey: 'claims/1/test-key',
                 }),
               ]),
             }),
@@ -667,56 +656,15 @@ describe('Claim Controller', () => {
 
     // File attachment tests
     describe('File Attachments', () => {
-      it('should handle invalid deletedFileIndexes JSON gracefully', async () => {
-        const existingAttachments = [
-          {
-            fileName: 'file1.pdf',
-            fileType: 'application/pdf',
-            fileSize: 1024,
-            fileKey: 'claims/1/abc123.pdf',
-            fileUrl: 'https://storage.railway.app/test-bucket/claims/1/abc123.pdf',
-          },
-        ];
-
-        const mockClaim = {
-          id: 1,
-          wage: { userAddress: TEST_ADDRESS },
-          weeklyClaim: { status: 'pending', claims: [] },
-          fileAttachments: existingAttachments,
-        };
-
-        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-        vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
-        vi.spyOn(prisma.claim, 'update').mockResolvedValue({
-          id: 1,
-          fileAttachments: existingAttachments,
-        } as any);
-
-        // Send invalid JSON
-        const response = await request(app).put('/1').send({
-          deletedFileIndexes: 'invalid-json',
-          memo: 'Updated memo',
-        });
-
-        expect(response.status).toBe(200);
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-          'Error parsing deletedFileIndexes:',
-          expect.any(Error)
-        );
-        consoleErrorSpy.mockRestore();
-      });
-
       it('should delete files and add new files in the same request', async () => {
         const existingAttachments = [
           {
-            fileName: 'file1.pdf',
             fileType: 'application/pdf',
             fileSize: 1024,
             fileKey: 'claims/1/file1-key',
             fileUrl: 'https://storage.railway.app/claims/1/file1-key?signed',
           },
           {
-            fileName: 'file2.jpg',
             fileType: 'image/jpeg',
             fileSize: 2048,
             fileKey: 'claims/1/file2-key',
@@ -735,9 +683,8 @@ describe('Claim Controller', () => {
         const updateSpy = vi.spyOn(prisma.claim, 'update').mockResolvedValue({
           id: 1,
           fileAttachments: [
-            existingAttachments[1], // file2.jpg remains
+            existingAttachments[1], // file2 remains
             {
-              fileName: 'newfile.png',
               fileType: 'image/png',
               fileSize: 3072,
               fileKey: 'claims/1/newfile-key',
@@ -746,29 +693,21 @@ describe('Claim Controller', () => {
           ],
         } as any);
 
-        // Mock storage service responses
-        mockUploadFiles.mockResolvedValue([
-          {
-            success: true,
-            metadata: {
-              key: 'claims/1/newfile-key',
-              fileName: 'newfile.png',
-              fileType: 'image/png',
-              fileSize: 3072,
-            },
-          },
-        ]);
-
-        mockGetPresignedDownloadUrl.mockResolvedValue(
-          'https://storage.railway.app/claims/1/newfile-key?signed'
-        );
-
         // Delete index 0 and add a new file
         const response = await request(app)
           .put('/1')
-          .field('deletedFileIndexes', JSON.stringify([0]))
-          .field('memo', 'Updated memo')
-          .attach('files', Buffer.from('new file'), 'newfile.png');
+          .send({
+            memo: 'Updated memo',
+            deletedFileIndexes: [0],
+            attachments: [
+              {
+                fileKey: 'claims/1/newfile-key',
+                fileUrl: 'https://storage.railway.app/claims/1/newfile-key?signed',
+                fileType: 'image/png',
+                fileSize: 3072,
+              },
+            ],
+          });
 
         expect(response.status).toBe(200);
         expect(updateSpy).toHaveBeenCalledWith(
@@ -776,8 +715,8 @@ describe('Claim Controller', () => {
             where: { id: 1 },
             data: expect.objectContaining({
               fileAttachments: expect.arrayContaining([
-                expect.objectContaining({ fileName: 'file2.jpg' }),
-                expect.objectContaining({ fileName: 'newfile.png' }),
+                expect.objectContaining({ fileKey: 'claims/1/file2-key' }),
+                expect.objectContaining({ fileKey: 'claims/1/newfile-key' }),
               ]),
             }),
           })
@@ -787,7 +726,6 @@ describe('Claim Controller', () => {
       it('should handle out of bounds file indexes gracefully', async () => {
         const existingAttachments = [
           {
-            fileName: 'file1.pdf',
             fileType: 'application/pdf',
             fileSize: 1024,
             fileKey: 'claims/1/abc123.pdf',
@@ -808,11 +746,11 @@ describe('Claim Controller', () => {
           fileAttachments: existingAttachments,
         } as any);
 
-        // Try to delete index 99 which doesn't exist
+        // Try to delete index 99 which doesn't exist (but is valid per schema)
         const response = await request(app)
           .put('/1')
           .send({
-            deletedFileIndexes: JSON.stringify([99, -1]),
+            deletedFileIndexes: [99],
             memo: 'Updated memo',
           });
 
