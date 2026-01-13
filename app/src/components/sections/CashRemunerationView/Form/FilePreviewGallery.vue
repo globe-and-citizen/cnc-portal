@@ -340,12 +340,18 @@ const closeLightbox = (): void => {
 
 const downloadCurrentImage = (): void => {
   if (!lightboxImage.value) return
-  const link = document.createElement('a')
-  link.href = lightboxImage.value
-  link.download = lightboxFileName.value || 'image'
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
+  // Prefer opening in a new tab so browser can handle preview/download
+  const opened = window.open(lightboxImage.value, '_blank', 'noopener,noreferrer')
+  if (!opened) {
+    // Fallback: create anchor with target to force new tab
+    const link = document.createElement('a')
+    link.href = lightboxImage.value
+    link.target = '_blank'
+    link.rel = 'noopener noreferrer'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  }
 }
 
 const openDocumentPreview = (preview: PreviewItem): void => {
@@ -373,12 +379,17 @@ const closeDocumentPreview = (): void => {
 
 const downloadCurrentDocument = (): void => {
   if (!docPreviewUrl.value) return
-  const link = document.createElement('a')
-  link.href = docPreviewUrl.value
-  link.download = docPreviewName.value || 'document'
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
+  // Open document URL in a new tab so user can preview or download via browser
+  const opened = window.open(docPreviewUrl.value, '_blank', 'noopener,noreferrer')
+  if (!opened) {
+    const link = document.createElement('a')
+    link.href = docPreviewUrl.value
+    link.target = '_blank'
+    link.rel = 'noopener noreferrer'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  }
 }
 
 watch(
