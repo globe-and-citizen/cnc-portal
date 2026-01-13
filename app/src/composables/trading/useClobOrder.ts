@@ -50,7 +50,7 @@ export function useClobOrder(clobClient: ClobClient | null, walletAddress: strin
           aggressivePrice = params.side === 'BUY' ? 0.99 : 0.01
         }
 
-        const limitOrder: UserOrder = {
+        const marketOrder: UserOrder = {
           tokenID: params.tokenId,
           price: aggressivePrice,
           size: params.size,
@@ -61,7 +61,7 @@ export function useClobOrder(clobClient: ClobClient | null, walletAddress: strin
         }
 
         response = await clobClient.createAndPostOrder(
-          limitOrder,
+          marketOrder,
           { negRisk: params.negRisk },
           OrderType.GTC
         )
