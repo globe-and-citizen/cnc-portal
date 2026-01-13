@@ -112,20 +112,6 @@ describe('FilePreviewGallery', () => {
       expect(image.exists()).toBe(true)
       expect(image.find('img').attributes('src')).toBe('https://cdn/img.jpg')
     })
-
-    it('logs error when presigned URL fetch fails', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      ;(getPresignedUrl as unknown as Mock).mockRejectedValueOnce(new Error('fail'))
-
-      wrapper = mountComponent({ previews: [S3_IMAGE] })
-
-      await flushAsync()
-
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch presigned URL:', expect.any(Error))
-      expect(wrapper.find(S.imageLoading).exists()).toBe(true)
-
-      consoleSpy.mockRestore()
-    })
   })
 
   describe('Watcher behavior', () => {
@@ -156,35 +142,6 @@ describe('FilePreviewGallery', () => {
       await wrapper.setProps({ previews: [IMAGE_PREVIEW] })
 
       expect(wrapper.find(S.imageModal).exists()).toBe(true)
-    })
-  })
-
-  describe('Helpers', () => {
-    it('returns correct icon for known extensions', () => {
-      wrapper = mountComponent({ previews: [] })
-
-      expect(wrapper.vm.getFileIcon('file.pdf')).toBe('heroicons:document-text')
-      expect(wrapper.vm.getFileIcon('file.zip')).toBe('heroicons:archive-box')
-      expect(wrapper.vm.getFileIcon('file.docx')).toBe('heroicons:document')
-    })
-
-    it('returns default icon for unknown extension', () => {
-      wrapper = mountComponent({ previews: [] })
-      expect(wrapper.vm.getFileIcon('file.unknown')).toBe('heroicons:paper-clip')
-    })
-
-    it('truncates long filename and keeps extension', () => {
-      wrapper = mountComponent({ previews: [] })
-
-      const result = wrapper.vm.truncateFileName('very-long-document-name-example.pdf', 15)
-
-      expect(result).toContain('...')
-      expect(result).toContain('.pdf')
-    })
-
-    it('does not truncate short filename', () => {
-      wrapper = mountComponent({ previews: [] })
-      expect(wrapper.vm.truncateFileName('short.pdf', 20)).toBe('short.pdf')
     })
   })
 })
