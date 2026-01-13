@@ -15,7 +15,8 @@
   />
 
   <!-- Trading view when setup is complete -->
-  <div v-else class="text-center">Trading screen...</div>
+  <!-- <div v-else class="text-center">Trading screen...</div> -->
+  <TradingInterface v-else />
 </template>
 
 <script setup lang="ts">
@@ -23,6 +24,7 @@ import { ref, onMounted, watch } from 'vue'
 import AccountSetupWizard from '@/components/sections/TradingView/AccountSetupWizard.vue'
 import { useSafeDeployment, useTokenApprovals, useRelayClient } from '@/composables/trading'
 import { log } from '@/utils'
+import TradingInterface from '@/components/sections/TradingView/TradingInterface.vue'
 
 // Composables
 const { derivedSafeAddressFromEoa, isSafeDeployed } = useSafeDeployment()
@@ -61,6 +63,7 @@ const checkAccountStatus = async () => {
 
     if (!approvalCheck.isSetupComplete) {
       // Not fully approved - show wizard starting at step 2
+      console.log('Account not fully approved:', approvalCheck)
       showWizard.value = true
       initialStep.value = 2
     } else {

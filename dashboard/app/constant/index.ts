@@ -189,21 +189,6 @@ if (import.meta.client) {
   }
 }
 
-// Helper to get backend URL from runtime config
-export function getBackendUrl(): string {
-  if (import.meta.client || import.meta.server) {
-    try {
-      const config = useRuntimeConfig()
-      return config.public.backendUrl
-    } catch {
-      return 'http://localhost:3000'
-    }
-  }
-  return 'http://localhost:3000'
-}
-
-export const BACKEND_URL = getBackendUrl()
-
 // GraphQL poll interval for transaction queries (in milliseconds)
 export const GRAPHQL_POLL_INTERVAL = 12000
 
