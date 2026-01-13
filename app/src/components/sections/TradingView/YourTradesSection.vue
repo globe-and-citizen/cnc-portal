@@ -49,7 +49,7 @@
         v-if="tradingModal.mount"
         :market-url="marketUrl"
         @close="handleModalClose"
-        @order-placed="handleOrderPlaced"
+        @place-order="handleOrderPlaced"
       />
     </ModalComponent>
 

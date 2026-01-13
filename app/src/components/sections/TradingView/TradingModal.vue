@@ -5,14 +5,14 @@
   <div class="p-6 pb-0">
     <div class="flex items-start justify-between">
       <h3 class="text-xl font-semibold pr-8">
-        {{ market.title }}
+        {{ market?.question }}
       </h3>
       <!-- <button @click="onClose" class="btn btn-ghost btn-sm btn-circle absolute right-4 top-4">
             <icon icon="heroicons:x-mark" class="w-5 h-5" />
           </button> -->
     </div>
     <p class="text-sm text-gray-500 mt-2 line-clamp-2">
-      {{ market.description }}
+      {{ market?.description }}
     </p>
   </div>
 
@@ -22,7 +22,7 @@
       <label class="text-sm text-gray-500">Select Outcome</label>
       <div class="grid grid-cols-2 gap-3">
         <button
-          v-for="(outcome, index) in market.outcomes"
+          v-for="(outcome, index) in /*market?.*/ outcomes"
           :key="outcome.name"
           @click="setSelectedOutcome(index)"
           :class="[
@@ -146,6 +146,167 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
+import { Icon } from '@iconify/vue'
+import axios from 'axios' // Import Axios
+import { BACKEND_URL } from '@/constant'
+import { useStorage } from '@vueuse/core'
+
+interface Props {
+  marketUrl: string
+}
+
+interface PolymarketMarket {
+  id: string
+  question: string
+  description?: string
+  slug: string
+  active: boolean
+  closed: boolean
+  icon?: string
+  image?: string
+  volume?: string
+  volume24hr?: string | number
+  liquidity?: string | number
+  spread?: string
+  outcomes?: string
+  outcomePrices?: string
+  clobTokenIds?: string
+  conditionId?: string
+  endDate?: string
+  endDateIso?: string
+  gameStartTime?: string
+  events?: object[]
+  realtimePrices?: Record<
+    string,
+    {
+      bidPrice: number
+      askPrice: number
+      midPrice: number
+      spread: number
+    }
+  >
+  [key: string]: unknown
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits(['close', 'place-order'])
+
+// State
+const market = ref<PolymarketMarket | null>(null)
+const isLoading = ref(true)
+const selectedOutcome = ref(0)
+const orderType = ref<'market' | 'limit'>('market')
+const shares = ref('')
+const isPlacingOrder = ref(false)
+
+const parsePolymarketUrl = (url: string) => {
+  const match = url.match(/polymarket\.com\/(market|event)\/([^?#]+)/)
+  if (!match) return null
+  return { type: match[1], slug: match[2] }
+}
+
+// Fetching Logic
+const fetchMarketData = async () => {
+  const parsed = parsePolymarketUrl(props.marketUrl)
+  const token = useStorage('authToken', '')
+  if (!parsed) return
+
+  isLoading.value = true
+  try {
+    const endpoint =
+      parsed.type === 'market' ? `/markets/slug/${parsed.slug}` : `/events/slug/${parsed.slug}`
+
+    const response = await axios.get(
+      `${BACKEND_URL}/api/polymarket/market-data?url=${encodeURIComponent(endpoint)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token.value}` // Replace with actual auth if needed
+        }
+      }
+    )
+    const data = response.data
+
+    console.log('Fetched market data:', data)
+
+    // If it's an event, we typically take the first market in the list
+    market.value = parsed.type === 'event' ? data.markets[0] : data
+    console.log('Using market data:', market.value)
+  } catch (error) {
+    console.error('Failed to fetch from Polymarket Gamma API:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Computed mappings for real Gamma API response
+const outcomes = computed(() => {
+  if (!market.value) return []
+  // Gamma returns outcomes as a JSON string or array depending on the endpoint
+  const names =
+    typeof market.value.outcomes === 'string'
+      ? JSON.parse(market.value.outcomes)
+      : market.value.outcomes
+
+  const prices =
+    typeof market.value.outcomePrices === 'string'
+      ? JSON.parse(market.value.outcomePrices)
+      : market.value.outcomePrices
+
+  return names.map((name: string, i: number) => ({
+    name,
+    buyPrice: parseFloat(prices[i]) || 0
+  }))
+})
+
+const outcome = computed(() => /* market.value. */ outcomes.value[selectedOutcome.value])
+const price = computed(() => outcomes.value[selectedOutcome.value]?.buyPrice || 0)
+const total = computed(() => (parseFloat(shares.value) || 0) * price.value)
+
+const onClose = () => {
+  emit('close')
+}
+
+const setSelectedOutcome = (index: number | string) => {
+  selectedOutcome.value = Number(index)
+}
+
+const setOrderType = (type: 'market' | 'limit') => {
+  orderType.value = type
+}
+
+const handlePlaceOrder = async () => {
+  if (!shares.value || parseFloat(shares.value) <= 0) return
+
+  isPlacingOrder.value = true
+
+  try {
+    // Simulate order placement
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
+    // Here you would call your actual order placement logic
+    console.log('Placing order:', {
+      outcome: outcome.value?.name,
+      shares: parseFloat(shares.value),
+      orderType: orderType.value,
+      total: total.value
+    })
+
+    // Close modal after successful order
+    onClose()
+  } catch (error) {
+    console.error('Failed to place order:', error)
+    // You could add error toast here
+  } finally {
+    isPlacingOrder.value = false
+  }
+}
+
+onMounted(fetchMarketData)
+watch(() => props.marketUrl, fetchMarketData)
+</script>
+
+<!-- <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Icon } from '@iconify/vue'
 
@@ -238,7 +399,7 @@ const handlePlaceOrder = async () => {
     isPlacingOrder.value = false
   }
 }
-</script>
+</script> -->
 
 <style scoped>
 .line-clamp-2 {
