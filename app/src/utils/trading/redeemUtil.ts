@@ -1,14 +1,60 @@
 import { encodeFunctionData, getAddress } from 'viem'
-import { USDC_E_CONTRACT_ADDRESS, CTF_CONTRACT_ADDRESS } from '@/constant/tokens'
+import { NEG_RISK_ADAPTER_ADDRESS } from '@/constant/tokens'
 import { OperationType, type SafeTransactionDataPartial } from '@safe-global/types-kit'
 
-const ctfAbi = [
+// const ctfAbi = [
+//   {
+//     inputs: [
+//       { name: 'collateralToken', type: 'address' },
+//       { name: 'parentCollectionId', type: 'bytes32' },
+//       { name: 'conditionId', type: 'bytes32' },
+//       { name: 'indexSets', type: 'uint256[]' }
+//     ],
+//     name: 'redeemPositions',
+//     outputs: [],
+//     stateMutability: 'nonpayable',
+//     type: 'function'
+//   }
+// ] as const
+
+// export interface RedeemParams {
+//   conditionId: string
+//   outcomeIndex: number
+// }
+
+// export const createRedeemTx = (params: RedeemParams): SafeTransactionDataPartial => {
+//   const { conditionId, outcomeIndex } = params
+
+//   // For simple binary outcomes, parentCollectionId is empty
+//   const parentCollectionId = '0x' + '0'.repeat(64)
+
+//   // indexSets array for the specific outcome
+//   const indexSet = BigInt(1 << outcomeIndex)
+
+//   const data = encodeFunctionData({
+//     abi: ctfAbi,
+//     functionName: 'redeemPositions',
+//     args: [
+//       USDC_E_CONTRACT_ADDRESS as `0x${string}`,
+//       parentCollectionId as `0x${string}`,
+//       conditionId as `0x${string}`,
+//       [indexSet]
+//     ]
+//   })
+
+//   return {
+//     to: getAddress(CTF_CONTRACT_ADDRESS),
+//     operation: OperationType.Call,
+//     data,
+//     value: '0'
+//   }
+// }
+
+const negRiskAdapterAbi = [
   {
     inputs: [
-      { name: 'collateralToken', type: 'address' },
-      { name: 'parentCollectionId', type: 'bytes32' },
-      { name: 'conditionId', type: 'bytes32' },
-      { name: 'indexSets', type: 'uint256[]' }
+      { name: '_conditionId', type: 'bytes32' },
+      { name: '_amounts', type: 'uint256[]' }
     ],
     name: 'redeemPositions',
     outputs: [],
@@ -19,31 +65,25 @@ const ctfAbi = [
 
 export interface RedeemParams {
   conditionId: string
-  outcomeIndex: number
+  // For NegRisk, you must specify the exact amount of shares to burn
+  // Usually [amountOfYes, amountOfNo]
+  amounts: [bigint, bigint]
 }
 
 export const createRedeemTx = (params: RedeemParams): SafeTransactionDataPartial => {
-  const { conditionId, outcomeIndex } = params
-
-  // For simple binary outcomes, parentCollectionId is empty
-  const parentCollectionId = '0x' + '0'.repeat(64)
-
-  // indexSets array for the specific outcome
-  const indexSet = BigInt(1 << outcomeIndex)
+  const { conditionId, amounts } = params
 
   const data = encodeFunctionData({
-    abi: ctfAbi,
+    abi: negRiskAdapterAbi,
     functionName: 'redeemPositions',
     args: [
-      USDC_E_CONTRACT_ADDRESS as `0x${string}`,
-      parentCollectionId as `0x${string}`,
       conditionId as `0x${string}`,
-      [indexSet]
+      amounts // Array of [yesAmount, noAmount]
     ]
   })
 
   return {
-    to: getAddress(CTF_CONTRACT_ADDRESS),
+    to: getAddress(NEG_RISK_ADAPTER_ADDRESS),
     operation: OperationType.Call,
     data,
     value: '0'

@@ -78,6 +78,7 @@ import { Toaster, toast } from 'vue-sonner'
 import { log, parseError } from '@/utils'
 import 'vue-sonner/style.css'
 import { useUserPositions, useRedeemPosition, useSafeDeployment } from '@/composables/trading'
+import { parseUnits } from 'viem'
 
 // Props
 interface Props {
@@ -102,6 +103,7 @@ const tradingModal = ref({ mount: false, show: false })
 // Use TanStack Query states
 const { proposeRedemption } = useRedeemPosition()
 const { derivedSafeAddressFromEoa } = useSafeDeployment()
+// const derivedSafeAddressFromEoa = ref('0xBBa983bD0D0ef0e5Ce49B2c47bE92F01C11856A4')
 const { data: trades, isLoading: isLoadingTrades /*, refetch */ } = useUserPositions(
   derivedSafeAddressFromEoa.value ?? undefined
 )
@@ -151,11 +153,13 @@ const handleWithdraw = async (trade: Trade) => {
       throw new Error('Safe address not available')
     }
 
+    const rawSize = BigInt(parseUnits(trade.shares.toString(), 6))
+
     // Add your withdraw logic here
     await proposeRedemption({
       safeAddress: derivedSafeAddressFromEoa.value,
       conditionId: trade.conditionId,
-      outcomeIndex: trade.outcomeIndex
+      amounts: [trade.outcomeIndex === 0 ? rawSize : 0n, trade.outcomeIndex === 1 ? rawSize : 0n]
     })
     toast.success(`Withdrawing $${Math.abs(trade.pnl).toFixed(2)} from "${trade.market}"`)
     emit('withdraw', trade)
