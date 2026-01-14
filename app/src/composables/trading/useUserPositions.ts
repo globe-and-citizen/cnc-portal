@@ -52,22 +52,23 @@ export function useUserPositions(safeAddress: string | undefined) {
       // 2. Process Closed Positions (Redeemed)
       closedRes.data.forEach((p: PolynarketClosedPosition) => {
         // Closed positions are already redeemed, marked as 'resolved'
-        tradesMap.set(p.asset, {
-          id: p.asset,
-          market: p.title,
-          outcome: p.outcome,
-          type: 'buy',
-          shares: Number(p.totalBought),
-          entryPrice: p.avgPrice,
-          currentPrice: p.curPrice,
-          status: 'resolved',
-          result: p.realizedPnl > 0 ? 'won' : 'lost',
-          pnl: p.realizedPnl,
-          date: new Date(p.timestamp).toISOString(),
-          conditionId: p.conditionId,
-          outcomeIndex: p.outcomeIndex,
-          redeemable: false
-        })
+        if (!tradesMap.get(p.asset)?.redeemable)
+          tradesMap.set(p.asset, {
+            id: p.asset,
+            market: p.title,
+            outcome: p.outcome,
+            type: 'buy',
+            shares: Number(p.totalBought),
+            entryPrice: p.avgPrice,
+            currentPrice: p.curPrice,
+            status: 'resolved',
+            result: p.realizedPnl > 0 ? 'won' : 'lost',
+            pnl: p.realizedPnl,
+            date: new Date(p.timestamp).toISOString(),
+            conditionId: p.conditionId,
+            outcomeIndex: p.outcomeIndex,
+            redeemable: false
+          })
       })
 
       return Array.from(tradesMap.values())
