@@ -211,7 +211,7 @@ const parseIfString = (value: string | string[] | undefined) => {
   return typeof value === 'string' ? JSON.parse(value) : value
 }
 
-const outcome = computed(() => /* market.value. */ outcomes.value[selectedOutcome.value])
+const outcome = computed(() => outcomes.value[selectedOutcome.value])
 const price = computed(() => outcomes.value[selectedOutcome.value]?.buyPrice || 0)
 const total = computed(() => (parseFloat(shares.value) || 0) * price.value)
 
@@ -235,19 +235,6 @@ const handlePlaceOrder = async () => {
   try {
     await initializeTradingSession()
 
-    console.log('Clob Client: ', clobClient.value)
-
-    console.log('Placing order: ', {
-      tokenId: outcome.value?.tokenId,
-      side: 'BUY',
-      size: parseFloat(shares.value),
-      isMarketOrder: orderType.value === 'market',
-      negRisk: market.value?.negRisk || false,
-      price: orderType.value === 'limit' ? parseFloat(limitPrice.value) : undefined
-    })
-
-    console.log('marketData: ', marketData.value)
-
     await submitOrder({
       tokenId: outcome.value?.tokenId || '',
       side: 'BUY',
@@ -257,7 +244,6 @@ const handlePlaceOrder = async () => {
       price: orderType.value === 'limit' ? parseFloat(limitPrice.value) : undefined
     })
 
-    console.log('marketData: ', marketData.value)
     // Close modal after successful order
     onClose()
   } catch (error) {
