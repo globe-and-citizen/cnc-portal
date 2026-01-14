@@ -127,7 +127,11 @@ describe('useSafeReads', () => {
     fetchMock
       .mockResolvedValueOnce(
         createFetchResponse([
-          { tokenAddress: null, balance: '2000000000000000000', token: { decimals: 18, symbol: 'POL' } }
+          {
+            tokenAddress: null,
+            balance: '2000000000000000000',
+            token: { decimals: 18, symbol: 'POL' }
+          }
         ])
       )
       .mockResolvedValueOnce(createFetchResponse({ owners: [SAFE_ADDRESS], threshold: 1 }))

@@ -7,20 +7,17 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 
 // Hoisted mocks without reactive refs (following project patterns)
-const {
-  mockUseSafe,
-  mockAddSuccessToast,
-  mockAddErrorToast,
-  mockUseCustomFetch
-} = vi.hoisted(() => ({
-  mockUseSafe: {
-    deploySafe: vi.fn(),
-    isBusy: { value: false } // Plain object instead of ref
-  },
-  mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn(),
-  mockUseCustomFetch: vi.fn()
-}))
+const { mockUseSafe, mockAddSuccessToast, mockAddErrorToast, mockUseCustomFetch } = vi.hoisted(
+  () => ({
+    mockUseSafe: {
+      deploySafe: vi.fn(),
+      isBusy: { value: false } // Plain object instead of ref
+    },
+    mockAddSuccessToast: vi.fn(),
+    mockAddErrorToast: vi.fn(),
+    mockUseCustomFetch: vi.fn()
+  })
+)
 
 // Create reactive refs after Vue is imported
 const mockIsBusy = ref(false)
@@ -155,10 +152,7 @@ describe('DeployContractSection', () => {
         ...props
       },
       global: {
-        plugins: [
-          createTestingPinia({ createSpy: vi.fn }),
-          [VueQueryPlugin, { queryClient }]
-        ],
+        plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
         mocks: {
           $t: (msg: string) => msg
         }
@@ -168,7 +162,7 @@ describe('DeployContractSection', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // Create fresh QueryClient for each test
     queryClient = new QueryClient({
       defaultOptions: {
@@ -176,7 +170,7 @@ describe('DeployContractSection', () => {
         mutations: { retry: false }
       }
     })
-    
+
     // Reset reactive values
     mockWriteContractError.value = null
     mockWriteContractPending.value = false
@@ -185,7 +179,7 @@ describe('DeployContractSection', () => {
     mockReceiptIsSuccess.value = false
     mockReceiptData.value = null
     mockIsBusy.value = false
-    
+
     // Reset mock implementations
     mockUseCustomFetch.mockReturnValue({
       put: vi.fn().mockReturnValue({
@@ -198,21 +192,25 @@ describe('DeployContractSection', () => {
     it('should render the deploy button correctly', () => {
       const wrapper = createWrapper()
       const deployButton = wrapper.find('[data-test="deploy-contracts-button"]')
-      
+
       expect(deployButton.exists()).toBe(true)
       expect(deployButton.findComponent(ButtonUI).exists()).toBe(true)
     })
 
     it('should disable the deploy button when disable prop is true', () => {
       const wrapper = createWrapper({ disable: true })
-      const buttonComponent = wrapper.find('[data-test="deploy-contracts-button"]').findComponent(ButtonUI)
-      
+      const buttonComponent = wrapper
+        .find('[data-test="deploy-contracts-button"]')
+        .findComponent(ButtonUI)
+
       expect(buttonComponent.props('disabled')).toBe(true)
     })
 
     it('should disable the deploy button during loading states', async () => {
       const wrapper = createWrapper()
-      const buttonComponent = wrapper.find('[data-test="deploy-contracts-button"]').findComponent(ButtonUI)
+      const buttonComponent = wrapper
+        .find('[data-test="deploy-contracts-button"]')
+        .findComponent(ButtonUI)
 
       // Test write contract pending state
       mockWriteContractPending.value = true
@@ -234,16 +232,18 @@ describe('DeployContractSection', () => {
 
     it('should show correct button text based on state', async () => {
       const wrapper = createWrapper()
-      const buttonComponent = wrapper.find('[data-test="deploy-contracts-button"]').findComponent(ButtonUI)
-      
+      const buttonComponent = wrapper
+        .find('[data-test="deploy-contracts-button"]')
+        .findComponent(ButtonUI)
+
       // Default state
       expect(buttonComponent.text()).toContain('Deploy Team Contracts')
-      
+
       // Safe deploying state
       mockIsBusy.value = true
       await wrapper.vm.$nextTick()
       expect(buttonComponent.text()).toContain('Deploying Safe Wallet')
-      
+
       // Officer contract deploying state
       mockIsBusy.value = false
       mockWriteContractPending.value = true
@@ -256,9 +256,9 @@ describe('DeployContractSection', () => {
     it.skip('should call writeContract with correct parameters when deploy button is clicked', async () => {
       const wrapper = createWrapper()
       const deployButton = wrapper.find('[data-test="deploy-contracts-button"]')
-      
+
       await deployButton.trigger('click')
-      
+
       expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith(
         expect.objectContaining({
           address: expect.any(String),
@@ -269,11 +269,11 @@ describe('DeployContractSection', () => {
 
     it('should handle deployment errors gracefully', async () => {
       const wrapper = createWrapper()
-      
+
       // Simulate an error during deployment
       mockWriteContractError.value = new Error('Deployment failed')
       await wrapper.vm.$nextTick()
-      
+
       expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to create officer contract')
     })
 
@@ -281,7 +281,7 @@ describe('DeployContractSection', () => {
       // Import the constant module to access the mocked function
       const constantModule = await import('@/constant')
       const mockValidateAddresses = vi.mocked(constantModule.validateAddresses)
-      
+
       mockValidateAddresses.mockImplementationOnce(() => {
         throw new Error('Invalid addresses')
       })
@@ -298,25 +298,27 @@ describe('DeployContractSection', () => {
   describe('Loading State Management', () => {
     it('should manage loading states correctly throughout deployment process', async () => {
       const wrapper = createWrapper()
-      const buttonComponent = wrapper.find('[data-test="deploy-contracts-button"]').findComponent(ButtonUI)
-      
+      const buttonComponent = wrapper
+        .find('[data-test="deploy-contracts-button"]')
+        .findComponent(ButtonUI)
+
       // Initial state
       expect(buttonComponent.props('loading')).toBe(false)
       expect(buttonComponent.props('disabled')).toBe(false)
-      
+
       // During officer contract creation
       mockWriteContractPending.value = true
       await wrapper.vm.$nextTick()
       expect(buttonComponent.props('loading')).toBe(true)
       expect(buttonComponent.props('disabled')).toBe(true)
-      
+
       // During transaction confirmation
       mockWriteContractPending.value = false
       mockReceiptIsLoading.value = true
       await wrapper.vm.$nextTick()
       expect(buttonComponent.props('loading')).toBe(true)
       expect(buttonComponent.props('disabled')).toBe(true)
-      
+
       // During Safe deployment
       mockReceiptIsLoading.value = false
       mockIsBusy.value = true
@@ -327,14 +329,16 @@ describe('DeployContractSection', () => {
 
     it('should reset loading state after completion', async () => {
       const wrapper = createWrapper()
-      
+
       // Simulate completion
       mockWriteContractPending.value = false
       mockReceiptIsLoading.value = false
       mockIsBusy.value = false
       await wrapper.vm.$nextTick()
-      
-      const buttonComponent = wrapper.find('[data-test="deploy-contracts-button"]').findComponent(ButtonUI)
+
+      const buttonComponent = wrapper
+        .find('[data-test="deploy-contracts-button"]')
+        .findComponent(ButtonUI)
       expect(buttonComponent.props('loading')).toBe(false)
       expect(buttonComponent.props('disabled')).toBe(false)
     })
@@ -342,10 +346,10 @@ describe('DeployContractSection', () => {
 
   describe('Edge Cases', () => {
     it('should handle missing team data gracefully', () => {
-      const wrapper = createWrapper({ 
-        createdTeamData: { id: null, name: '', address: '' } 
+      const wrapper = createWrapper({
+        createdTeamData: { id: null, name: '', address: '' }
       })
-      
+
       expect(wrapper.exists()).toBe(true)
       // Component should render but deployment should not work with invalid data
     })
@@ -354,15 +358,15 @@ describe('DeployContractSection', () => {
       const wrapper = createWrapper({
         investorContractInput: { name: '', symbol: '' }
       })
-      
+
       expect(wrapper.exists()).toBe(true)
     })
 
     it('should handle undefined team gracefully', () => {
-      const wrapper = createWrapper({ 
+      const wrapper = createWrapper({
         createdTeamData: null
       })
-      
+
       expect(wrapper.exists()).toBe(true)
     })
   })

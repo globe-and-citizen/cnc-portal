@@ -84,8 +84,12 @@ describe('useSafeWrites - Deployment & State', () => {
 
     it('validates threshold bounds', async () => {
       const { deploySafe } = ctx.useSafeWrites()
-      await expect(deploySafe(MOCK_DATA.owners, 0)).rejects.toThrow('Threshold must be between 1 and 2')
-      await expect(deploySafe(MOCK_DATA.owners, 3)).rejects.toThrow('Threshold must be between 1 and 2')
+      await expect(deploySafe(MOCK_DATA.owners, 0)).rejects.toThrow(
+        'Threshold must be between 1 and 2'
+      )
+      await expect(deploySafe(MOCK_DATA.owners, 3)).rejects.toThrow(
+        'Threshold must be between 1 and 2'
+      )
     })
 
     it('validates owner addresses', async () => {
@@ -98,7 +102,9 @@ describe('useSafeWrites - Deployment & State', () => {
     })
 
     it('handles deployment transaction creation failure', async () => {
-      mockSafeSdk.createSafeDeploymentTransaction.mockRejectedValueOnce(new Error('Deployment failed'))
+      mockSafeSdk.createSafeDeploymentTransaction.mockRejectedValueOnce(
+        new Error('Deployment failed')
+      )
       const { deploySafe } = ctx.useSafeWrites()
 
       await expect(deploySafe(MOCK_DATA.owners, MOCK_DATA.threshold)).rejects.toThrow(
@@ -217,7 +223,9 @@ describe('useSafeWrites - Deployment & State', () => {
       mockSafeSdk.createSafeDeploymentTransaction.mockRejectedValueOnce(new Error('Deploy failed'))
       const { deploySafe, isBusy } = ctx.useSafeWrites()
 
-      await expect(deploySafe(MOCK_DATA.owners, MOCK_DATA.threshold)).rejects.toThrow('Deploy failed')
+      await expect(deploySafe(MOCK_DATA.owners, MOCK_DATA.threshold)).rejects.toThrow(
+        'Deploy failed'
+      )
       expect(isBusy.value).toBe(false)
     })
   })

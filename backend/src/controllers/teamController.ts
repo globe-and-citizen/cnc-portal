@@ -186,7 +186,7 @@ const updateTeam = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { name, description, officerAddress, safeAddress } = req.body;
   const callerAddress = req.address;
-  
+
   try {
     // Validate Safe address if provided
     if (safeAddress && !isAddress(safeAddress)) {
@@ -198,11 +198,11 @@ const updateTeam = async (req: Request, res: Response) => {
         id: Number(id),
       },
     });
-    
+
     if (!team) {
       return errorResponse(404, 'Team not found', res);
     }
-    
+
     if (team.ownerAddress !== callerAddress) {
       return errorResponse(403, 'Unauthorized', res);
     }
