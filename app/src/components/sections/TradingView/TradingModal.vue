@@ -34,7 +34,7 @@
         >
           <span class="font-semibold">{{ outcome.name }}</span>
           <p class="font-mono text-lg text-primary mt-1">
-            {{ (outcome.buyPrice * 100).toFixed(0) }}¢
+            {{ (outcome.buyPrice * 100).toFixed(1) }}¢
           </p>
         </button>
       </div>
@@ -147,11 +147,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import axios from 'axios' // Import Axios
-import { BACKEND_URL } from '@/constant'
-import { useStorage } from '@vueuse/core'
 import {
   useClobOrder,
   useClobClient,
@@ -159,6 +156,7 @@ import {
   useTradingSession
 } from '@/composables/trading/'
 import type { PolymarketMarket } from '@/types'
+import { useMarketData } from '@/queries/polymarket.queries'
 
 interface Props {
   marketUrl: string
@@ -167,68 +165,39 @@ interface Props {
 const props = defineProps<Props>()
 const emit = defineEmits(['close', 'place-order'])
 
-// State
-const market = ref<PolymarketMarket | null>(null)
-const isLoading = ref(true)
-const selectedOutcome = ref(0)
-const orderType = ref<'market' | 'limit'>('market')
-const shares = ref('')
-const limitPrice = ref('')
-const isPlacingOrder = ref(false)
-
-// Composables
-const { derivedSafeAddressFromEoa } = useSafeDeployment()
-const { clobClient } = useClobClient()
-const { submitOrder } = useClobOrder(clobClient.value, derivedSafeAddressFromEoa.value || undefined)
-const { initializeTradingSession } = useTradingSession()
-
 const parsePolymarketUrl = (url: string) => {
   const match = url.match(/polymarket\.com\/(market|event)\/([^?#]+)/)
   if (!match) return null
   return { type: match[1], slug: match[2] }
 }
 
-// Fetching Logic
-const fetchMarketData = async () => {
+// State
+const market = ref<PolymarketMarket | null>(null)
+// const isLoading = ref(true)
+const selectedOutcome = ref(0)
+const orderType = ref<'market' | 'limit'>('market')
+const shares = ref('')
+const limitPrice = ref('')
+const isPlacingOrder = ref(false)
+const endpoint = computed(() => {
   const parsed = parsePolymarketUrl(props.marketUrl)
-  const token = useStorage('authToken', '')
-  if (!parsed) return
+  if (!parsed) return null
+  return parsed.type === 'market' ? `/markets/slug/${parsed.slug}` : `/events/slug/${parsed.slug}`
+})
 
-  isLoading.value = true
-  try {
-    const endpoint =
-      parsed.type === 'market' ? `/markets/slug/${parsed.slug}` : `/events/slug/${parsed.slug}`
-
-    const response = await axios.get(
-      `${BACKEND_URL}/api/polymarket/market-data?url=${encodeURIComponent(endpoint)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token.value}` // Replace with actual auth if needed
-        }
-      }
-    )
-    const data = response.data
-
-    console.log('Fetched market data:', data)
-
-    // If it's an event, we typically take the first market in the list
-    market.value = parsed.type === 'event' ? data.markets[0] : data
-    console.log('Using market data:', market.value)
-  } catch (error) {
-    console.error('Failed to fetch from Polymarket Gamma API:', error)
-  } finally {
-    isLoading.value = false
-  }
-}
+// Composables
+const { data: marketData } = useMarketData(endpoint)
+const { derivedSafeAddressFromEoa } = useSafeDeployment()
+const { clobClient } = useClobClient()
+const { submitOrder } = useClobOrder(clobClient.value, derivedSafeAddressFromEoa.value || undefined)
+const { initializeTradingSession } = useTradingSession()
 
 // Computed mappings for real Gamma API response
 const outcomes = computed(() => {
   if (!market.value) return []
   // Gamma returns outcomes as a JSON string or array depending on the endpoint
   const names = parseIfString(market.value.outcomes) as string[]
-
   const prices = parseIfString(market.value.outcomePrices) as string[]
-
   const clobIds = parseIfString(market.value.clobTokenIds) as string[]
 
   return names.map((name: string, i: number) => ({
@@ -277,6 +246,8 @@ const handlePlaceOrder = async () => {
       price: orderType.value === 'limit' ? parseFloat(limitPrice.value) : undefined
     })
 
+    console.log('marketData: ', marketData.value)
+
     await submitOrder({
       tokenId: outcome.value?.tokenId || '',
       side: 'BUY',
@@ -285,6 +256,8 @@ const handlePlaceOrder = async () => {
       negRisk: (market.value?.negRisk as boolean) || false,
       price: orderType.value === 'limit' ? parseFloat(limitPrice.value) : undefined
     })
+
+    console.log('marketData: ', marketData.value)
     // Close modal after successful order
     onClose()
   } catch (error) {
@@ -295,8 +268,21 @@ const handlePlaceOrder = async () => {
   }
 }
 
-onMounted(fetchMarketData)
-watch(() => props.marketUrl, fetchMarketData)
+watch(
+  marketData,
+  (newData) => {
+    if (newData) {
+      if (typeof newData === 'object' && newData !== null && 'markets' in newData) {
+        const marketArray = (newData as { markets: PolymarketMarket[] }).markets
+        market.value = marketArray[0] || null
+      } else {
+        market.value = (newData as PolymarketMarket) || null
+      }
+      console.log('Market data from query:', newData)
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>
