@@ -56,6 +56,7 @@ import { useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
 import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
 import apiClient from '@/lib/axios'
+import { uploadFileApi } from '@/api'
 
 dayjs.extend(utc)
 
@@ -142,18 +143,13 @@ const { mutateAsync: submitClaim, isPending: isWageClaimAdding } = useMutation<
     if (payload.files && payload.files.length > 0) {
       // Upload each file to /api/upload
       for (const file of payload.files) {
-        const formData = new FormData()
-        formData.append('file', file)
-
-        const uploadResponse = await apiClient.post('/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
+        const data = await uploadFileApi(file)
 
         attachments.push({
-          fileKey: uploadResponse.data.fileKey,
-          fileUrl: uploadResponse.data.fileUrl,
-          fileType: uploadResponse.data.metadata.fileType,
-          fileSize: uploadResponse.data.metadata.fileSize
+          fileKey: data.fileKey,
+          fileUrl: data.fileUrl,
+          fileType: data.metadata.fileType,
+          fileSize: data.metadata.fileSize
         })
       }
     }
