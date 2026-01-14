@@ -19,9 +19,9 @@ interface MulterRequest extends Request {
  * @openapi
  * /upload:
  *   post:
- *     summary: Upload a file to Railway Storage
+ *     summary: Upload a file
  *     description: |
- *       Uploads a single file (image or document) to Railway Storage and returns a presigned URL.
+ *       Uploads a single file (image or document) to Storage and returns a presigned URL.
  *       Supported file types:
  *       - Images: png, jpeg, webp
  *       - Documents: pdf, txt, zip, docx
@@ -93,7 +93,7 @@ uploadRouter.post('/', upload.single('file'), async (req: Request, res: Response
       });
     }
 
-    // Upload to Railway Storage under uploads/
+    // Upload to Storage under uploads/
     const uploadResult = await uploadFile(multerReq.file, 'uploads');
 
     if (!uploadResult.success) {
