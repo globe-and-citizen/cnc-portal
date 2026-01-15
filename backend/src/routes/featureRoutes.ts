@@ -191,12 +191,6 @@ router.delete('/:functionName', validateParams(functionNameParamSchema), deleteF
  *         required: true
  *         schema:
  *           type: string
- *     parameters:
- *       - in: path
- *         name: functionName
- *         required: true
- *         schema:
- *           type: string
  *       - in: path
  *         name: teamId
  *         required: true

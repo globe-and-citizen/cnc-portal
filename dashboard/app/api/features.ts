@@ -79,7 +79,8 @@ export const deleteFeature = (functionName: string) => {
  * @param featureName The name of the feature (e.g., 'SUBMIT_RESTRICTION')
  */
 export const fetchFeatureRestrictions = (featureName: string) => {
-  return apiFetch<ApiResponse<FeatureWithOverrides>>(`/admin/features/${featureName}`)
+  // Backend returns the feature directly, not wrapped in ApiResponse
+  return apiFetch<FeatureWithOverrides>(`/admin/features/${featureName}`)
 }
 
 /**
@@ -151,7 +152,9 @@ export const removeFeatureTeamOverride = (
 export const transformToTeamOverrides = (
   feature: FeatureWithOverrides | null
 ): TeamRestrictionOverride[] => {
-  if (!feature?.overrides) return []
+  if (!feature?.overrides) {
+    return []
+  }
 
   return feature.overrides.map(override => ({
     teamId: override.teamId,
