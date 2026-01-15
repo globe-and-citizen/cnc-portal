@@ -32,17 +32,8 @@ import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import OverviewCard from '@/components/OverviewCard.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import type { Trade } from '@/types/trading'
 import cartIcon from '@/assets/cart.svg'
 import { useUserPositions, useSafeDeployment } from '@/composables/trading'
-
-interface Props {
-  trades?: Trade[]
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  trades: () => []
-})
 
 const currencyStore = useCurrencyStore()
 const { derivedSafeAddressFromEoa } = useSafeDeployment()
@@ -51,10 +42,6 @@ const isLoading = computed(() => false)
 
 // Calculate P&L from trades
 const totalPnl = computed(() => pnlStats.value?.totalPnl ?? 0)
-
-const totalInvested = computed(() =>
-  props.trades.reduce((sum, trade) => sum + trade.shares * trade.entryPrice, 0)
-)
 
 const pnlPercentage = computed(() => pnlStats.value?.totalPnlPercentage ?? 0)
 
