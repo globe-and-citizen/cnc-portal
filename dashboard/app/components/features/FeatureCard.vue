@@ -38,7 +38,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import type { Team, FeatureStatus } from '~/types'
 import FeatureGlobalRestriction from './FeatureGlobalRestriction.vue'
 import TeamOverridesSection from './TeamOverridesSection.vue'
-import { useToast } from '#ui/composables/useToast'
 import {
   useFeatureRestrictions,
   useUpdateFeatureTeamOverride
@@ -59,9 +58,6 @@ const props = withDefaults(defineProps<Props>(), {
   featureName: 'SUBMIT_RESTRICTION',
   isEditable: true
 })
-
-// Toast notifications
-const toast = useToast()
 
 // Composables
 const { fetchTeams } = useTeams()
@@ -118,12 +114,6 @@ const handleToggleRestriction = async (
     // Query invalidation is handled by the mutation hook
   } catch (error) {
     console.error(`Error toggling ${props.featureName} team restriction:`, error)
-    toast.add({
-      title: 'Error',
-      description: 'Failed to update team restriction',
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
-    })
   } finally {
     loadingTeamId.value = null
   }

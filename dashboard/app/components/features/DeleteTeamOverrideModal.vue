@@ -65,12 +65,13 @@
 
 <script setup lang="ts">
 import type { TeamRestrictionOverride } from '~/types'
-import { removeFeatureTeamOverride } from '~/api/features'
+import { useRemoveFeatureTeamOverride } from '~/queries'
 
 // Props
 interface Props {
   open: boolean
   override: TeamRestrictionOverride | null
+  featureName: string
 }
 
 const props = defineProps<Props>()
@@ -80,8 +81,8 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
-// State
-const loading = ref(false)
+// Query hooks
+const { mutateAsync: removeTeamOverride, isPending } = useRemoveFeatureTeamOverride()
 
 // Computed
 const isOpen = computed({
@@ -89,19 +90,18 @@ const isOpen = computed({
   set: value => emit('update:open', value)
 })
 
+const loading = computed(() => isPending.value)
+
 // Methods
 const handleConfirm = async () => {
   if (!props.override) return
 
-  try {
-    loading.value = true
-    await removeFeatureTeamOverride('SUBMIT_RESTRICTION', props.override.teamId)
-    handleClose()
-  } catch (error) {
-    console.error('Failed to remove team override:', error)
-  } finally {
-    loading.value = false
-  }
+  await removeTeamOverride({
+    featureName: props.featureName,
+    teamId: props.override.teamId
+  })
+
+  handleClose()
 }
 
 const handleClose = () => {
