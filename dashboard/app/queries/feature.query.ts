@@ -56,7 +56,7 @@ export const useCreateFeature = () => {
       queryClient.invalidateQueries({ queryKey: ['features'] })
       toast.add({
         title: 'Success',
-        description: data.message || 'Feature created successfully',
+        description: data?.message || 'Feature created successfully',
         color: 'success',
         icon: 'i-lucide-check-circle'
       })
@@ -121,7 +121,7 @@ export const useUpdateFeature = () => {
       queryClient.invalidateQueries({ queryKey: ['features'] })
       toast.add({
         title: 'Success',
-        description: data.message || 'Feature updated successfully',
+        description: data?.message || 'Feature updated successfully',
         color: 'success',
         icon: 'i-lucide-check-circle'
       })
@@ -171,7 +171,7 @@ export const useUpdateGlobalFeatureRestriction = () => {
       queryClient.invalidateQueries({ queryKey: ['feature', { name: variables.featureName }] })
       toast.add({
         title: 'Success',
-        description: data.message || 'Feature restriction updated successfully',
+        description: data?.message || 'Feature restriction updated successfully',
         color: 'success',
         icon: 'i-lucide-check-circle'
       })
@@ -204,7 +204,7 @@ export const useCreateFeatureTeamOverride = () => {
       queryClient.invalidateQueries({ queryKey: ['feature', { name: variables.featureName }] })
       toast.add({
         title: 'Success',
-        description: data.message || 'Team override created successfully',
+        description: data?.message || 'Team override created successfully',
         color: 'success',
         icon: 'i-lucide-check-circle'
       })
@@ -237,7 +237,7 @@ export const useUpdateFeatureTeamOverride = () => {
       queryClient.invalidateQueries({ queryKey: ['feature', { name: variables.featureName }] })
       toast.add({
         title: 'Success',
-        description: data.message || 'Team override updated successfully',
+        description: data?.message || 'Team override updated successfully',
         color: 'success',
         icon: 'i-lucide-check-circle'
       })
@@ -270,7 +270,7 @@ export const useRemoveFeatureTeamOverride = () => {
       queryClient.invalidateQueries({ queryKey: ['feature', { name: variables.featureName }] })
       toast.add({
         title: 'Success',
-        description: data.message || 'Team override removed successfully',
+        description: data?.message || 'Team override removed successfully',
         color: 'success',
         icon: 'i-lucide-check-circle'
       })
