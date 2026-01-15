@@ -145,14 +145,62 @@ describe('ClaimForm.vue', () => {
       const wrapper = createWrapper({
         isEdit: true,
         existingFiles: [
-          { fileName: 'file1.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file2.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file3.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file4.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file5.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file6.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file7.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file8.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 }
+          {
+            fileName: 'file1.png',
+            fileKey: 'claims/1/abc.png',
+            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
+            fileType: 'image/png',
+            fileSize: 1024
+          },
+          {
+            fileName: 'file2.png',
+            fileKey: 'claims/1/abc.png',
+            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
+            fileType: 'image/png',
+            fileSize: 1024
+          },
+          {
+            fileName: 'file3.png',
+            fileKey: 'claims/1/abc.png',
+            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
+            fileType: 'image/png',
+            fileSize: 1024
+          },
+          {
+            fileName: 'file4.png',
+            fileKey: 'claims/1/abc.png',
+            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
+            fileType: 'image/png',
+            fileSize: 1024
+          },
+          {
+            fileName: 'file5.png',
+            fileKey: 'claims/1/abc.png',
+            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
+            fileType: 'image/png',
+            fileSize: 1024
+          },
+          {
+            fileName: 'file6.png',
+            fileKey: 'claims/1/abc.png',
+            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
+            fileType: 'image/png',
+            fileSize: 1024
+          },
+          {
+            fileName: 'file7.png',
+            fileKey: 'claims/1/abc.png',
+            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
+            fileType: 'image/png',
+            fileSize: 1024
+          },
+          {
+            fileName: 'file8.png',
+            fileKey: 'claims/1/abc.png',
+            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
+            fileType: 'image/png',
+            fileSize: 1024
+          }
         ]
       })
 

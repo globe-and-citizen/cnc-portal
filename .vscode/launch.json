@@ -14,6 +14,17 @@
       "userDataDir": "${workspaceFolder}/.vscode/brave-debug",
 
       "runtimeArgs": ["--remote-debugging-port=9222"]
+    },
+    {
+      "name": "Vue.js: edge Browser",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/app/src",
+      "runtimeExecutable": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "userDataDir": "${workspaceFolder}/.vscode/edge-debug",
+
+      "runtimeArgs": ["--remote-debugging-port=9222"]
     }
   ]
 }

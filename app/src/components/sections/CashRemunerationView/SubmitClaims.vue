@@ -56,6 +56,7 @@ import { useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
 import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
 import apiClient from '@/lib/axios'
+import { uploadFileApi } from '@/api'
 
 dayjs.extend(utc)
 
@@ -131,15 +132,36 @@ const { mutateAsync: submitClaim, isPending: isWageClaimAdding } = useMutation<
   mutationFn: async (payload) => {
     if (!teamId.value) throw new Error('Team not selected')
 
-    const formData = new FormData()
-    formData.append('teamId', teamId.value.toString())
-    formData.append('hoursWorked', payload.hoursWorked.toString())
-    formData.append('memo', payload.memo)
-    formData.append('dayWorked', payload.dayWorked)
+    // Pre-upload files if any
+    const attachments: Array<{
+      fileKey: string
+      fileUrl: string
+      fileType: string
+      fileSize: number
+    }> = []
 
-    payload.files?.forEach((file) => formData.append('files', file))
+    if (payload.files && payload.files.length > 0) {
+      // Upload each file to /api/upload
+      for (const file of payload.files) {
+        const data = await uploadFileApi(file)
 
-    await apiClient.post('/claim', formData)
+        attachments.push({
+          fileKey: data.fileKey,
+          fileUrl: data.fileUrl,
+          fileType: data.metadata.fileType,
+          fileSize: data.metadata.fileSize
+        })
+      }
+    }
+
+    // Submit claim with pre-uploaded attachments metadata
+    await apiClient.post('/claim', {
+      teamId: teamId.value.toString(),
+      hoursWorked: payload.hoursWorked.toString(),
+      memo: payload.memo,
+      dayWorked: payload.dayWorked,
+      attachments: attachments.length > 0 ? attachments : undefined
+    })
   }
 })
 

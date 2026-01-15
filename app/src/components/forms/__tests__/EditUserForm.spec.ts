@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import UploadImage from '@/components/forms/UploadImage.vue'
+import ProfileImageUpload from '@/components/forms/ProfileImageUpload.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 
@@ -87,7 +87,7 @@ const createWrapper = () =>
       components: {
         IconifyIcon,
         ButtonUI,
-        UploadImage
+        ProfileImageUpload
       },
       stubs: {
         ToolTip: { template: '<div><slot/></div>' }
