@@ -45,6 +45,14 @@ export const getFeatures = async () => {
 }
 
 /**
+ * Fetch a single feature by name
+ * @param functionName The name of the feature (e.g., 'SUBMIT_RESTRICTION')
+ */
+export const getFeature = async (functionName: string) => {
+  return await apiFetch<Feature>(`/admin/features/${functionName}`)
+}
+
+/**
  * Create a new feature
  */
 export const createFeature = async (payload: CreateFeaturePayload) => {

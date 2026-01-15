@@ -6,6 +6,7 @@ import {
   createFeatureTeamOverride,
   deleteFeature,
   fetchFeatureRestrictions,
+  getFeature,
   getFeatures,
   removeFeatureTeamOverride,
   updateFeature,
@@ -38,6 +39,23 @@ export const useFeatures = () => {
     refetchInterval: false,
     staleTime: 180000,
     gcTime: 300000
+  })
+}
+
+/**
+ * Fetch a single feature by name
+ * @param functionName The name of the feature
+ */
+export const useFeature = (functionName: MaybeRefOrGetter<string>) => {
+  return useQuery({
+    queryKey: ['feature', { name: toValue(functionName) }],
+    queryFn: async () => {
+      const name = toValue(functionName)
+      return await getFeature(name)
+    },
+    enabled: () => !!toValue(functionName),
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5 // 5 minutes
   })
 }
 
