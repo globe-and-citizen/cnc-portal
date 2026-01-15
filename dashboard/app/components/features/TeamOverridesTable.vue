@@ -125,8 +125,6 @@
     <DeleteTeamOverrideModal
       v-model:open="isDeleteModalOpen"
       :override="teamToDelete"
-      :loading="removingTeamId === teamToDelete?.teamId"
-      @confirm="handleConfirmDelete"
     />
   </UPageCard>
 </template>
@@ -198,13 +196,5 @@ const handlePageSizeChange = (size: number) => {
 const handleRemoveClick = (team: TeamRestrictionOverride) => {
   teamToDelete.value = team
   isDeleteModalOpen.value = true
-}
-
-const handleConfirmDelete = () => {
-  if (teamToDelete.value) {
-    emit('remove-override', teamToDelete.value)
-  }
-  isDeleteModalOpen.value = false
-  teamToDelete.value = null
 }
 </script>

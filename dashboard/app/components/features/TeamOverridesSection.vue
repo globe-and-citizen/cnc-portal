@@ -256,9 +256,11 @@ const handleCreateNewOverride = async () => {
       teamId: selectedTeamId.value,
       status: selectedOverrideStatus.value
     })
+
     isAddOverrideModalOpen.value = false
     await fetchTeams()
     emit('data-updated')
+
     toast.add({
       title: 'Success',
       description: 'Team override created successfully',
