@@ -15,11 +15,11 @@ import { useSafeWrites } from './writes'
 
 /**
  * Main Safe contract composable - combines all functionality
- * Following the Bank contract pattern
  */
-export function useSafeContract() {
+export function useSafe() {
   const reads = useSafeReads()
   const writes = useSafeWrites()
+  
 
   return {
     ...reads,
@@ -28,4 +28,4 @@ export function useSafeContract() {
 }
 
 // Re-export for backward compatibility
-export default useSafeContract
+export default useSafe

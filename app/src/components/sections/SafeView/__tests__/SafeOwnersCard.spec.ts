@@ -27,14 +27,17 @@ interface MockTeam {
 }
 
 // Mock variables - keep plain objects/refs to avoid hoist/init issues
-const mockUseSafeContract = {
+const mockUseSafe = {
   useSafeOwners: vi.fn(),
-  useSafeInfo: vi.fn()
+  useSafeInfo: vi.fn(),
+  useSafeAppUrls: vi.fn() // This should be a function that returns the URLs object
 }
-const mockUseSafeAppUrls = {
+
+const mockSafeAppUrlsReturn = {
   getSafeSettingsUrl: vi.fn(),
   openSafeAppUrl: vi.fn()
 }
+
 const mockTeamStore = reactive({
   currentTeam: null as MockTeam | null
 })
@@ -51,12 +54,10 @@ const mockFetchSafeInfo = vi.fn()
 
 // Mock external dependencies
 vi.mock('@/composables/safe', () => ({
-  useSafeContract: vi.fn(() => mockUseSafeContract)
+  useSafe: vi.fn(() => mockUseSafe)
 }))
 
-vi.mock('@/composables/safe/reads', () => ({
-  useSafeAppUrls: vi.fn(() => mockUseSafeAppUrls)
-}))
+
 
 vi.mock('@wagmi/vue', () => ({
   useChainId: vi.fn(() => mockUseChainId)
@@ -137,22 +138,25 @@ describe('SafeOwnersCard', () => {
     vi.clearAllMocks()
 
     // Reset mock implementations
-    mockUseSafeContract.useSafeOwners.mockReturnValue({
+    mockUseSafe.useSafeOwners.mockReturnValue({
       owners: mockOwners,
       isLoading: mockIsLoading,
       error: mockError,
       fetchOwners: mockFetchOwners
     })
 
-    mockUseSafeContract.useSafeInfo.mockReturnValue({
+    mockUseSafe.useSafeInfo.mockReturnValue({
       safeInfo: mockSafeInfo,
       fetchSafeInfo: mockFetchSafeInfo
     })
 
-    mockUseSafeAppUrls.getSafeSettingsUrl.mockReturnValue(
+    // FIX: useSafeAppUrls is a function that returns an object
+    mockUseSafe.useSafeAppUrls.mockReturnValue(mockSafeAppUrlsReturn)
+
+    mockSafeAppUrlsReturn.getSafeSettingsUrl.mockReturnValue(
       'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
     )
-    mockUseSafeAppUrls.openSafeAppUrl.mockImplementation(() => {})
+    mockSafeAppUrlsReturn.openSafeAppUrl.mockImplementation(() => {})
 
     // Reset reactive values with proper typing
     mockOwners.value = []
@@ -355,8 +359,8 @@ describe('SafeOwnersCard', () => {
 
       await wrapper.find('[data-test="manage-owners-button"]').trigger('click')
 
-      expect(mockUseSafeAppUrls.getSafeSettingsUrl).toHaveBeenCalledWith(137, MOCK_DATA.safeAddress)
-      expect(mockUseSafeAppUrls.openSafeAppUrl).toHaveBeenCalledWith(
+      expect(mockSafeAppUrlsReturn.getSafeSettingsUrl).toHaveBeenCalledWith(137, MOCK_DATA.safeAddress)
+      expect(mockSafeAppUrlsReturn.openSafeAppUrl).toHaveBeenCalledWith(
         'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
       )
     })
@@ -366,8 +370,8 @@ describe('SafeOwnersCard', () => {
 
       await wrapper.find('[data-test="open-safe-app-footer"]').trigger('click')
 
-      expect(mockUseSafeAppUrls.getSafeSettingsUrl).toHaveBeenCalledWith(137, MOCK_DATA.safeAddress)
-      expect(mockUseSafeAppUrls.openSafeAppUrl).toHaveBeenCalledWith(
+      expect(mockSafeAppUrlsReturn.getSafeSettingsUrl).toHaveBeenCalledWith(137, MOCK_DATA.safeAddress)
+      expect(mockSafeAppUrlsReturn.openSafeAppUrl).toHaveBeenCalledWith(
         'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
       )
     })
@@ -380,7 +384,7 @@ describe('SafeOwnersCard', () => {
 
       await wrapper.find('[data-test="manage-owners-button"]').trigger('click')
 
-      expect(mockUseSafeAppUrls.getSafeSettingsUrl).toHaveBeenCalledWith(
+      expect(mockSafeAppUrlsReturn.getSafeSettingsUrl).toHaveBeenCalledWith(
         11155111,
         MOCK_DATA.safeAddress
       )

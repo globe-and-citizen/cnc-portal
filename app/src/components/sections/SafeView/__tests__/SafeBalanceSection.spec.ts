@@ -55,14 +55,17 @@ interface MockCurrency {
   symbol: string
 }
 
-// Shared mocks
-const mockUseSafeContract = {
-  useSafeInfo: vi.fn()
+// Mock variables - keep plain objects/refs to avoid hoist/init issues
+const mockUseSafe = {
+  useSafeInfo: vi.fn(),
+  useSafeAppUrls: vi.fn() // This should be a function that returns the URLs object
 }
-const mockUseSafeAppUrls = {
+
+const mockSafeAppUrlsReturn = {
   getSafeHomeUrl: vi.fn(),
   openSafeAppUrl: vi.fn()
 }
+
 const mockTeamStore = reactive({
   currentTeam: null as MockTeam | null
 })
@@ -77,8 +80,7 @@ const mockFetchSafeInfo = vi.fn()
 
 // Mock external dependencies
 vi.mock('@/composables/safe', () => ({
-  useSafeContract: vi.fn(() => mockUseSafeContract),
-  useSafeAppUrls: vi.fn(() => mockUseSafeAppUrls)
+  default: vi.fn(() => mockUseSafe)
 }))
 
 vi.mock('@wagmi/vue', () => ({
@@ -173,17 +175,20 @@ describe('SafeBalanceSection', () => {
     vi.clearAllMocks()
 
     // Reset mock implementations
-    mockUseSafeContract.useSafeInfo.mockReturnValue({
+    mockUseSafe.useSafeInfo.mockReturnValue({
       safeInfo: mockSafeInfo,
       isLoading: mockIsLoading,
       error: mockError,
       fetchSafeInfo: mockFetchSafeInfo
     })
 
-    mockUseSafeAppUrls.getSafeHomeUrl.mockReturnValue(
+    // FIX: useSafeAppUrls is a function that returns an object
+    mockUseSafe.useSafeAppUrls.mockReturnValue(mockSafeAppUrlsReturn)
+
+    mockSafeAppUrlsReturn.getSafeHomeUrl.mockReturnValue(
       'https://app.safe.global/home?safe=polygon:0x1234567890123456789012345678901234567890'
     )
-    mockUseSafeAppUrls.openSafeAppUrl.mockImplementation(() => {})
+    mockSafeAppUrlsReturn.openSafeAppUrl.mockImplementation(() => {})
 
     // Reset reactive values with proper typing
     mockSafeInfo.value = null
@@ -302,8 +307,8 @@ describe('SafeBalanceSection', () => {
 
       await wrapper.find('[data-test="open-safe-app-button"]').trigger('click')
 
-      expect(mockUseSafeAppUrls.getSafeHomeUrl).toHaveBeenCalledWith(137, MOCK_DATA.safeAddress)
-      expect(mockUseSafeAppUrls.openSafeAppUrl).toHaveBeenCalledWith(
+      expect(mockSafeAppUrlsReturn.getSafeHomeUrl).toHaveBeenCalledWith(137, MOCK_DATA.safeAddress)
+      expect(mockSafeAppUrlsReturn.openSafeAppUrl).toHaveBeenCalledWith(
         'https://app.safe.global/home?safe=polygon:0x1234567890123456789012345678901234567890'
       )
     })
@@ -324,10 +329,7 @@ describe('SafeBalanceSection', () => {
 
       await wrapper.find('[data-test="open-safe-app-button"]').trigger('click')
 
-      expect(mockUseSafeAppUrls.getSafeHomeUrl).toHaveBeenCalledWith(
-        11155111,
-        MOCK_DATA.safeAddress
-      )
+      expect(mockSafeAppUrlsReturn.getSafeHomeUrl).toHaveBeenCalledWith(11155111, MOCK_DATA.safeAddress)
     })
   })
 

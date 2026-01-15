@@ -57,7 +57,7 @@ import { useStorage } from '@vueuse/core'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { useSafeContract, useSafeAppUrls } from '@/composables/safe'
+import useSafe from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
 
@@ -69,7 +69,7 @@ const currency = useStorage('currency', {
 })
 
 const teamStore = useTeamStore()
-const { useSafeInfo } = useSafeContract()
+const { useSafeInfo, useSafeAppUrls } = useSafe()
 const {
   safeInfo,
   isLoading: isSafeLoading,

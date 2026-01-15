@@ -89,8 +89,7 @@ import type { Address } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { useSafeContract } from '@/composables/safe'
-import { useSafeAppUrls } from '@/composables/safe/reads'
+import { useSafe } from '@/composables/safe'
 
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
@@ -99,7 +98,7 @@ const teamStore = useTeamStore()
 const chainId = useChainId()
 
 // Safe composables
-const { useSafeOwners, useSafeInfo } = useSafeContract()
+const { useSafeOwners, useSafeInfo, useSafeAppUrls } = useSafe()
 const { owners, isLoading, error, fetchOwners } = useSafeOwners(
   chainId,
   teamStore.currentTeam?.safeAddress

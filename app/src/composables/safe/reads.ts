@@ -392,6 +392,7 @@ export function useSafeReads() {
     isSafeAddressValid,
     useSafeInfo,
     useSafeOwners,
-    useSafeThreshold
+    useSafeThreshold,
+    useSafeAppUrls
   }
 }

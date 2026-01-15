@@ -50,13 +50,18 @@ const mockUseWatchContractEvent = vi.fn().mockImplementation((config) => {
   }
 })
 
+// Mock wagmi composables that are used in useSafeWrites
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
     useWriteContract: vi.fn(() => mockUseWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
-    useWatchContractEvent: vi.fn(() => mockUseWatchContractEvent)
+    useWatchContractEvent: vi.fn(() => mockUseWatchContractEvent),
+    // Add these to fix the WagmiPluginNotFoundError
+    useConnection: vi.fn(() => ({ status: 'connected' })),
+    useChainId: vi.fn(() => ref(11155111)), // Sepolia testnet
+    useConfig: vi.fn(() => ({}))
   }
 })
 
@@ -83,8 +88,12 @@ vi.mock('@/stores/useToastStore', () => ({
   }))
 }))
 
-vi.mock('@/composables/useSafe', () => ({
-  useSafe: vi.fn(() => mockUseSafe)
+// Mock the entire safe composable to avoid wagmi plugin errors
+vi.mock('@/composables/safe', () => ({
+  default: vi.fn(() => ({
+    deploySafe: mockUseSafe.deploySafe,
+    isBusy: mockIsBusy
+  }))
 }))
 
 vi.mock('@/composables/useCustomFetch', () => ({
@@ -104,7 +113,6 @@ vi.mock('@/stores/currencyStore', () => ({
   }))
 }))
 
-// Update your hoisted mock to be configurable
 vi.mock('@/constant', () => ({
   BANK_BEACON_ADDRESS: '0x1111111111111111111111111111111111111111',
   BOD_BEACON_ADDRESS: '0x2222222222222222222222222222222222222222',
@@ -116,7 +124,7 @@ vi.mock('@/constant', () => ({
   OFFICER_BEACON: '0x8888888888888888888888888888888888888888',
   USDC_ADDRESS: '0x9999999999999999999999999999999999999999',
   USDT_ADDRESS: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-  validateAddresses: vi.fn(() => true) // This is now a proper mock function
+  validateAddresses: vi.fn(() => true)
 }))
 
 vi.mock('@/utils', () => ({
@@ -124,11 +132,6 @@ vi.mock('@/utils', () => ({
     error: vi.fn()
   }
 }))
-
-// Add this helper after the mocks but before the describe block
-// const getValidateAddressesMock = () => {
-//   return vi.mocked(vi.importActual('@/constant')).validateAddresses
-// }
 
 describe('DeployContractSection', () => {
   let queryClient: QueryClient
@@ -351,7 +354,6 @@ describe('DeployContractSection', () => {
       })
 
       expect(wrapper.exists()).toBe(true)
-      // Component should render but deployment should not work with invalid data
     })
 
     it('should handle partial props', () => {

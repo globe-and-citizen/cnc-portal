@@ -21,7 +21,7 @@ import type { Team } from '@/types'
 import { useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent } from '@wagmi/vue'
 import { encodeFunctionData, zeroAddress, type Address, isAddress } from 'viem'
 import { ref, watch, computed } from 'vue'
-import { useSafe } from '@/composables/useSafe'
+import useSafe from '@/composables/safe'
 import {
   BANK_BEACON_ADDRESS,
   BOD_BEACON_ADDRESS,
