@@ -77,8 +77,6 @@ const { mutate: syncWeeklyClaims } = useSyncWeeklyClaims()
 onMounted(() => {
   if (route.params.id) {
     teamStore.setCurrentTeamId(route.params.id as string)
-    // Sync weekly claims on component mount
-    syncWeeklyClaims({ teamId: route.params.id as string })
   } else {
     // e.g. this.$router.push('/teams')
   }
@@ -87,6 +85,19 @@ onMounted(() => {
 const hasContract = computed(() => {
   return (teamStore.currentTeamMeta.data?.teamContracts ?? []).length > 0
 })
+
+const stop = watch(
+  hasContract,
+  (newValue) => {
+    if (newValue && route.params.id === teamStore.currentTeamId) {
+      syncWeeklyClaims({ teamId: route.params.id as string })
+      stop() // stop watching after first true
+    }
+  },
+  {
+    immediate: true
+  }
+)
 
 // Watch for changes in the route params then update the current team id
 watch(

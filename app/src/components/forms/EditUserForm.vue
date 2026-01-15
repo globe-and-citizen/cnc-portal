@@ -80,7 +80,7 @@
     </label>
 
     <!-- Upload -->
-    <UploadImage
+    <ProfileImageUpload
       :model-value="userCopy.imageUrl"
       @update:model-value="($event) => (userCopy.imageUrl = $event)"
     />
@@ -110,7 +110,7 @@ import { LIST_CURRENCIES } from '@/constant'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
 import { ref, computed, watch } from 'vue'
-import UploadImage from '@/components/forms/UploadImage.vue'
+import ProfileImageUpload from '@/components/forms/ProfileImageUpload.vue'
 import { useCustomFetch } from '@/composables'
 
 // Currency store

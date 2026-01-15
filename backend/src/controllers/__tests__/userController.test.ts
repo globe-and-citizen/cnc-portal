@@ -207,6 +207,21 @@ describe('User Controller', () => {
       );
     });
 
+    it('should return 400 if fail to upload image and update user', async () => {
+      const response = await request(app).put('/0x1234567890123456789012345678901234567890').send({
+        name: 'NewName',
+        imageUrl: 'invalid-url',
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toEqual(
+        'Invalid request body - imageUrl: Must be a valid URL, imageUrl: URL must start with http:// or https://'
+      );
+      expect(response.body.message).toContain(
+        'Invalid request body - imageUrl: Must be a valid URL, imageUrl: URL must start with http:// or https://'
+      );
+    });
+
     it('should return 400 if caller address is missing', async () => {
       // Mock auth middleware to not set address
       mockAuthorizeUser.mockImplementation(
