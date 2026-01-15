@@ -268,6 +268,7 @@ export interface TeamRestrictionOverride {
   teamName: string
   memberCount?: number
   updatedAt?: string
+  status: FeatureStatus
 }
 /**
  * User type for API user endpoints
