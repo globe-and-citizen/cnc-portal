@@ -200,6 +200,7 @@ export const useCreateFeatureTeamOverride = () => {
       return await createFeatureTeamOverride(featureName, teamId, status)
     },
     onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['features'] })
       queryClient.invalidateQueries({ queryKey: ['feature', { name: variables.featureName }] })
       toast.add({
         title: 'Success',
@@ -232,6 +233,7 @@ export const useUpdateFeatureTeamOverride = () => {
       return await updateFeatureTeamOverride(featureName, teamId, status)
     },
     onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['features'] })
       queryClient.invalidateQueries({ queryKey: ['feature', { name: variables.featureName }] })
       toast.add({
         title: 'Success',
@@ -264,6 +266,7 @@ export const useRemoveFeatureTeamOverride = () => {
       return await removeFeatureTeamOverride(featureName, teamId)
     },
     onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['features'] })
       queryClient.invalidateQueries({ queryKey: ['feature', { name: variables.featureName }] })
       toast.add({
         title: 'Success',
