@@ -7,18 +7,14 @@ import { errorResponse } from '../utils/utils';
 
 import { Claim, Prisma } from '@prisma/client';
 import { isUserMemberOfTeam } from './wageController';
+import { deleteFile } from '../services/storageService';
 
-// Type for multipart/form-data request with files
-interface MulterRequest extends Request {
-  files?: Express.Multer.File[];
-}
-
-// Type for file attachment data
+// Type for file attachment data (updated for Railway S3)
 type FileAttachmentData = {
-  fileName: string;
   fileType: string;
   fileSize: number;
-  fileData: string;
+  fileKey: string; // S3 object key - unique identifier
+  fileUrl: string; // Presigned download URL
 };
 
 dayjs.extend(utc);
@@ -26,12 +22,12 @@ dayjs.extend(isoWeek);
 
 type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
   teamId: string;
+  attachments?: FileAttachmentData[];
 };
 
 // TODO limit weeday only for the current week. Betwen Monday and the current day
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
-  const multerReq = req as MulterRequest;
 
   const body = req.body as claimBodyRequest;
   const hoursWorked = Number(body.hoursWorked);
@@ -40,16 +36,7 @@ export const addClaim = async (req: Request, res: Response) => {
     ? dayjs.utc(body.dayWorked).startOf('day').toDate()
     : dayjs.utc().startOf('day').toDate();
   const teamId = Number(body.teamId);
-
-  // Get uploaded files (if any) and ensure they are in an array form
-  let uploadedFiles: Express.Multer.File[] = [];
-  if (multerReq.files != null) {
-    if (Array.isArray(multerReq.files)) {
-      uploadedFiles = multerReq.files;
-    } else {
-      return errorResponse(400, 'Invalid files payload', res);
-    }
-  }
+  const attachments = body.attachments || [];
 
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
@@ -134,25 +121,17 @@ export const addClaim = async (req: Request, res: Response) => {
       );
     }
 
-    // Prepare file attachments data if any files were uploaded
-    let fileAttachmentsData: FileAttachmentData[] | undefined = undefined;
-    if (uploadedFiles.length > 0) {
-      // Validate file count does not exceed 10
-      if (uploadedFiles.length > 10) {
-        return errorResponse(
-          400,
-          `Maximum 10 files allowed. You are trying to upload ${uploadedFiles.length} files. Please remove ${uploadedFiles.length - 10} file(s).`,
-          res
-        );
-      }
-
-      fileAttachmentsData = uploadedFiles.map((file) => ({
-        fileName: file.originalname,
-        fileType: file.mimetype,
-        fileSize: file.size,
-        fileData: file.buffer.toString('base64'), // Convert buffer to base64 string for JSON storage
-      }));
+    // Validate pre-uploaded attachments count
+    if (attachments.length > 10) {
+      return errorResponse(
+        400,
+        `Maximum 10 files allowed. You have ${attachments.length} files.`,
+        res
+      );
     }
+
+    // Use pre-uploaded attachments from body
+    const fileAttachmentsData = attachments.length > 0 ? attachments : undefined;
 
     // Create the claim with file attachments
     const claim = await prisma.claim.create({
@@ -226,21 +205,17 @@ export const updateClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const claimId = Number(req.params.claimId);
 
-  // Get uploaded files (if any) and ensure they are in an array form
-  let uploadedFiles: Express.Multer.File[] = [];
-  if (req.files != null) {
-    if (Array.isArray(req.files)) {
-      uploadedFiles = req.files;
-    } else {
-      return errorResponse(400, 'Invalid files payload', res);
-    }
-  }
-
   const {
     hoursWorked,
     memo,
     deletedFileIndexes,
-  }: { hoursWorked?: number; memo?: string; deletedFileIndexes?: string } = req.body;
+    attachments,
+  }: {
+    hoursWorked?: number;
+    memo?: string;
+    deletedFileIndexes?: number[];
+    attachments?: FileAttachmentData[];
+  } = req.body;
 
   try {
     // Fetch the claim including the required data (include weeklyClaim.claims)
@@ -296,42 +271,29 @@ export const updateClaim = async (req: Request, res: Response) => {
     let fileAttachmentsData: FileAttachmentData[] | undefined = existingAttachments;
 
     // Handle deleted file indexes first
-    if (deletedFileIndexes) {
-      try {
-        const indexesToDelete: number[] = JSON.parse(deletedFileIndexes);
-        if (Array.isArray(indexesToDelete) && indexesToDelete.length > 0) {
-          // Sort in descending order to avoid index shifting issues
-          const sortedIndexes = [...indexesToDelete].sort((a, b) => b - a);
-          fileAttachmentsData = [...existingAttachments];
-          for (const idx of sortedIndexes) {
-            if (idx >= 0 && idx < fileAttachmentsData.length) {
-              fileAttachmentsData.splice(idx, 1);
-            }
-          }
+    if (deletedFileIndexes && Array.isArray(deletedFileIndexes) && deletedFileIndexes.length > 0) {
+      // Sort in descending order to avoid index shifting issues
+      const sortedIndexes = [...deletedFileIndexes].sort((a, b) => b - a);
+      fileAttachmentsData = [...existingAttachments];
+      for (const idx of sortedIndexes) {
+        if (idx >= 0 && idx < fileAttachmentsData.length) {
+          fileAttachmentsData.splice(idx, 1);
         }
-      } catch (parseError) {
-        console.error('Error parsing deletedFileIndexes:', parseError);
       }
     }
 
-    if (uploadedFiles.length > 0) {
-      const newAttachments = uploadedFiles.map((file) => ({
-        fileName: file.originalname,
-        fileType: file.mimetype,
-        fileSize: file.size,
-        fileData: file.buffer.toString('base64'),
-      }));
-
-      fileAttachmentsData = [...fileAttachmentsData, ...newAttachments];
-
+    // Add new pre-uploaded attachments from body
+    if (attachments && attachments.length > 0) {
       // Validate total file count does not exceed 10
-      if (fileAttachmentsData.length > 10) {
+      if (fileAttachmentsData.length + attachments.length > 10) {
         return errorResponse(
           400,
-          `Maximum 10 files allowed. You have ${fileAttachmentsData.length} files. Please remove ${fileAttachmentsData.length - 10} file(s).`,
+          `Maximum 10 files allowed. You currently have ${fileAttachmentsData.length} files and are trying to add ${attachments.length}. Please remove ${fileAttachmentsData.length + attachments.length - 10} file(s).`,
           res
         );
       }
+
+      fileAttachmentsData = [...fileAttachmentsData, ...attachments];
     }
 
     const updatedClaim = await prisma.claim.update({
@@ -383,6 +345,25 @@ export const deleteClaim = async (req: Request, res: Response) => {
       weeklyClaim.status !== 'disabled'
     ) {
       return errorResponse(403, "Can't delete: Claim is not pending or disabled", res);
+    }
+
+    // Delete attached files from S3 if any exist
+    if (claim.fileAttachments && Array.isArray(claim.fileAttachments)) {
+      try {
+        const attachments = claim.fileAttachments as FileAttachmentData[];
+        for (const attachment of attachments) {
+          if (attachment.fileKey && attachment.fileKey.length > 0) {
+            try {
+              await deleteFile(attachment.fileKey);
+            } catch (e) {
+              console.warn(`Could not delete file ${attachment.fileKey}:`, e);
+              // Don't fail the claim deletion if file deletion fails
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Error deleting claim files:', e);
+      }
     }
 
     await prisma.claim.delete({
