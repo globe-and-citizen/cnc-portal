@@ -14,7 +14,6 @@
         v-model="globalStatus"
         :feature-name="featureName"
         :is-editable="isEditable"
-        @updated="refetchFeatureData"
       />
 
       <!-- Team Overrides Section (Button + Modal + Table) -->
@@ -26,10 +25,9 @@
         :is-editable="isEditable"
         :all-teams="allTeams"
         @toggle-restriction="handleToggleRestriction"
-        @remove-override="handleRemoveOverride"
         @page-change="handlePageChange"
         @page-size-change="handlePageSizeChange"
-        @data-updated="refetchFeatureData"
+        @data-updated="handleDataUpdated"
       />
     </div>
   </UPageCard>
@@ -43,12 +41,10 @@ import TeamOverridesSection from './TeamOverridesSection.vue'
 import { useToast } from '#ui/composables/useToast'
 import {
   useFeatureRestrictions,
-  useUpdateFeatureTeamOverride,
-  useRemoveFeatureTeamOverride
+  useUpdateFeatureTeamOverride
 } from '~/queries'
 import {
   transformToTeamOverrides,
-  type FeatureWithOverrides,
   type TeamRestrictionOverride
 } from '~/api/features'
 import { useTeams } from '~/composables/useTeams'
@@ -72,15 +68,23 @@ const { fetchTeams } = useTeams()
 
 // Query hooks
 const { mutateAsync: updateTeamOverride } = useUpdateFeatureTeamOverride()
-const { mutateAsync: removeTeamOverride } = useRemoveFeatureTeamOverride()
-const { data: featureData, refetch: refetchFeatureData } = useFeatureRestrictions(() => props.featureName)
+const {
+  data: featureData,
+  isLoading,
+  refetch: refetchFeatureData
+} = useFeatureRestrictions(() => props.featureName)
 
 // State
-const isLoading = ref(false)
 const loadingTeamId = ref<number | null>(null)
-const currentFeature = ref<FeatureWithOverrides | null>(null)
 const globalStatus = ref<FeatureStatus>('enabled')
 const allTeams = ref<Team[]>([])
+
+// Watch for featureData changes and sync globalStatus
+watch(featureData, (newData) => {
+  if (newData?.status) {
+    globalStatus.value = newData.status
+  }
+}, { immediate: true })
 
 // Computed Properties
 const featureDisplayName = computed(() => {
@@ -96,7 +100,7 @@ const alertDescription = computed(() => {
 })
 
 const teamFunctionOverrides = computed<TeamRestrictionOverride[]>(() => {
-  return transformToTeamOverrides(currentFeature.value)
+  return transformToTeamOverrides(featureData.value || null)
 })
 
 // Handlers
@@ -111,7 +115,7 @@ const handleToggleRestriction = async (
       teamId: team.teamId,
       status: value
     })
-    await refetchFeatureData()
+    // Query invalidation is handled by the mutation hook
   } catch (error) {
     console.error(`Error toggling ${props.featureName} team restriction:`, error)
     toast.add({
@@ -125,81 +129,27 @@ const handleToggleRestriction = async (
   }
 }
 
-const handleRemoveOverride = async (team: TeamRestrictionOverride) => {
-  loadingTeamId.value = team.teamId
-  try {
-    await removeTeamOverride({
-      featureName: props.featureName,
-      teamId: team.teamId
-    })
-    await refetchFeatureData()
-    toast.add({
-      title: 'Success',
-      description: 'Team override removed successfully',
-      color: 'success',
-      icon: 'i-lucide-check-circle'
-    })
-  } catch (error) {
-    console.error(`Error removing ${props.featureName} team override:`, error)
-    toast.add({
-      title: 'Error',
-      description: 'Failed to remove team override',
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
-    })
-  } finally {
-    loadingTeamId.value = null
-  }
-}
-
 const handlePageChange = (_page: number) => {
-  // Pagination is handled by TeamOverridesSection
+  // Pagination is handled by TeamOverridesTable
 }
 
 const handlePageSizeChange = (_size: number) => {
-  // Pagination is handled by TeamOverridesSection
+  // Pagination is handled by TeamOverridesTable
 }
 
-// Load feature data
-const loadFeatureData = async () => {
-  isLoading.value = true
-  try {
-    await refetchFeatureData()
-    // The API returns the feature directly, not wrapped in { data: ... }
-    // featureData.value IS the feature object directly
-    if (featureData.value) {
-      currentFeature.value = featureData.value as FeatureWithOverrides
-      globalStatus.value = currentFeature.value.status || 'enabled'
-    }
-  } catch (error) {
-    console.error(`Error loading ${props.featureName} feature data:`, error)
-    toast.add({
-      title: 'Error',
-      description: `Failed to load ${featureDisplayName.value} settings`,
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
-    })
-  } finally {
-    isLoading.value = false
-  }
+// Handler for when data is updated (from add/remove operations)
+const handleDataUpdated = () => {
+  refetchFeatureData()
 }
-
-// Watch for feature name changes
-watch(() => props.featureName, async (newFeatureName) => {
-  if (newFeatureName) {
-    await loadFeatureData()
-  }
-}, { immediate: false })
 
 // Expose methods
 defineExpose({
-  refreshData: loadFeatureData
+  refreshData: refetchFeatureData
 })
 
 // Initialize
 onMounted(async () => {
   try {
-    await loadFeatureData()
     allTeams.value = await fetchTeams()
   } catch (error) {
     console.error('Error initializing feature card:', error)
