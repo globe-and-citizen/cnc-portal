@@ -103,7 +103,6 @@ const tradingModal = ref({ mount: false, show: false })
 // Use TanStack Query states
 const { proposeRedemption } = useRedeemPosition()
 const { derivedSafeAddressFromEoa } = useSafeDeployment()
-// const derivedSafeAddressFromEoa = ref('0xBBa983bD0D0ef0e5Ce49B2c47bE92F01C11856A4')
 const { data: trades, isLoading: isLoadingTrades /*, refetch */ } = useUserPositions(
   derivedSafeAddressFromEoa.value ?? undefined
 )
