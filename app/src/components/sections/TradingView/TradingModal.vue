@@ -22,7 +22,7 @@
       <label class="text-sm text-gray-500">Select Outcome</label>
       <div class="grid grid-cols-2 gap-3">
         <button
-          v-for="(outcome, index) in /*market?.*/ outcomes"
+          v-for="(outcome, index) in outcomes"
           :key="outcome.name"
           @click="setSelectedOutcome(index)"
           :class="[
