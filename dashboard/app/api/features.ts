@@ -1,11 +1,11 @@
 import type { Feature, FeatureStatus } from '~/types'
 import { apiFetch } from '~/lib/fetch'
 
-interface ApiResponse<T> {
-  success: boolean
-  data: T
-  message?: string
-}
+// interface ApiResponse<T> {
+//   success: boolean
+//   data: T
+//   message?: string
+// }
 
 interface CreateFeaturePayload {
   functionName: string
@@ -40,15 +40,15 @@ export const FEATURE_STATUS_OPTIONS = [
 /**
  * Fetch all features
  */
-export const getFeatures = () => {
-  return apiFetch<ApiResponse<Feature[]>>('/admin/features')
+export const getFeatures = async () => {
+  return await apiFetch<Feature[]>('/admin/features')
 }
 
 /**
  * Create a new feature
  */
-export const createFeature = (payload: CreateFeaturePayload) => {
-  return apiFetch<ApiResponse<Feature>>('/admin/features', {
+export const createFeature = async (payload: CreateFeaturePayload) => {
+  return await apiFetch<Feature>('/admin/features', {
     method: 'POST',
     body: payload
   })
@@ -57,8 +57,8 @@ export const createFeature = (payload: CreateFeaturePayload) => {
 /**
  * Update a feature's status
  */
-export const updateFeature = (functionName: string, payload: UpdateFeaturePayload) => {
-  return apiFetch<ApiResponse<Feature>>(`/admin/features/${functionName}`, {
+export const updateFeature = async (functionName: string, payload: UpdateFeaturePayload) => {
+  return await apiFetch<Feature>(`/admin/features/${functionName}`, {
     method: 'PUT',
     body: payload
   })
@@ -68,8 +68,8 @@ export const updateFeature = (functionName: string, payload: UpdateFeaturePayloa
  * Delete a feature
  * This will also delete all associated overrides
  */
-export const deleteFeature = (functionName: string) => {
-  return apiFetch<ApiResponse<void>>(`/admin/features/${functionName}`, {
+export const deleteFeature = async (functionName: string) => {
+  return await apiFetch(`/admin/features/${functionName}`, {
     method: 'DELETE'
   })
 }
@@ -78,9 +78,9 @@ export const deleteFeature = (functionName: string) => {
  * Fetch feature data with all overrides (generic for any feature)
  * @param featureName The name of the feature (e.g., 'SUBMIT_RESTRICTION')
  */
-export const fetchFeatureRestrictions = (featureName: string) => {
+export const fetchFeatureRestrictions = async (featureName: string) => {
   // Backend returns the feature directly, not wrapped in ApiResponse
-  return apiFetch<FeatureWithOverrides>(`/admin/features/${featureName}`)
+  return await apiFetch<FeatureWithOverrides>(`/admin/features/${featureName}`)
 }
 
 /**
@@ -88,11 +88,11 @@ export const fetchFeatureRestrictions = (featureName: string) => {
  * @param featureName The name of the feature
  * @param status The new status
  */
-export const updateGlobalFeatureRestriction = (
+export const updateGlobalFeatureRestriction = async (
   featureName: string,
   status: FeatureStatus
 ) => {
-  return apiFetch<ApiResponse<boolean>>(`/admin/features/${featureName}`, {
+  return await apiFetch<boolean>(`/admin/features/${featureName}`, {
     method: 'PUT',
     body: { status }
   })
@@ -104,12 +104,12 @@ export const updateGlobalFeatureRestriction = (
  * @param teamId The team ID
  * @param status The restriction status
  */
-export const createFeatureTeamOverride = (
+export const createFeatureTeamOverride = async (
   featureName: string,
   teamId: number,
   status: FeatureStatus
 ) => {
-  return apiFetch<ApiResponse<boolean>>(`/admin/features/${featureName}/teams/${teamId}`, {
+  return await apiFetch<boolean>(`/admin/features/${featureName}/teams/${teamId}`, {
     method: 'POST',
     body: { status }
   })
@@ -121,12 +121,12 @@ export const createFeatureTeamOverride = (
  * @param teamId The team ID
  * @param status The new restriction status
  */
-export const updateFeatureTeamOverride = (
+export const updateFeatureTeamOverride = async (
   featureName: string,
   teamId: number,
   status: FeatureStatus
 ) => {
-  return apiFetch<ApiResponse<boolean>>(`/admin/features/${featureName}/teams/${teamId}`, {
+  return await apiFetch<boolean>(`/admin/features/${featureName}/teams/${teamId}`, {
     method: 'PUT',
     body: { status }
   })
@@ -137,11 +137,11 @@ export const updateFeatureTeamOverride = (
  * @param featureName The name of the feature
  * @param teamId The team ID
  */
-export const removeFeatureTeamOverride = (
+export const removeFeatureTeamOverride = async (
   featureName: string,
   teamId: number
 ) => {
-  return apiFetch<ApiResponse<boolean>>(`/admin/features/${featureName}/teams/${teamId}`, {
+  return await apiFetch<boolean>(`/admin/features/${featureName}/teams/${teamId}`, {
     method: 'DELETE'
   })
 }
