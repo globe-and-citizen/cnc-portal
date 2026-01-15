@@ -1,5 +1,15 @@
 <template>
-  <UModal v-model:open="isOpen">
+  <div class="flex items-center justify-end gap-2">
+    <UButton
+      icon="i-lucide-trash"
+      color="error"
+      variant="ghost"
+      size="sm"
+      aria-label="Remove override"
+      @click="openModal = true"
+    />
+  </div>
+  <UModal v-model:open="openModal" title="Remove Team Override" description="Confirm removal of the team override">
     <template #content>
       <UCard>
         <template #header>
@@ -12,7 +22,7 @@
               color="neutral"
               variant="ghost"
               size="sm"
-              @click="handleClose"
+              @click="openModal = false"
             />
           </div>
         </template>
@@ -28,7 +38,7 @@
               <div class="space-y-2">
                 <p>You are about to remove the team override:</p>
                 <p class="font-semibold">
-                  "{{ override?.teamName }}"
+                  "{{ override?.team.name || 'Unknown Team' }}" for
                 </p>
                 <p class="text-sm">
                   This team will revert to using the global restriction settings.
@@ -42,7 +52,7 @@
               color="neutral"
               variant="outline"
               :disabled="loading"
-              @click="handleClose"
+              @click="openModal = false"
             >
               Cancel
             </UButton>
@@ -64,47 +74,30 @@
 </template>
 
 <script setup lang="ts">
-import type { TeamRestrictionOverride } from '~/types'
 import { useRemoveFeatureTeamOverrideQuery } from '~/queries'
+import type { TeamFunctionOverride } from '~/types/feature'
+
+const openModal = ref(false)
 
 // Props
 interface Props {
-  open: boolean
-  override: TeamRestrictionOverride | null
-  featureName: string
+  override: TeamFunctionOverride
 }
 
 const props = defineProps<Props>()
 
-// Emits
-const emit = defineEmits<{
-  'update:open': [value: boolean]
-}>()
-
 // Query hooks
 const { mutateAsync: removeTeamOverride, isPending } = useRemoveFeatureTeamOverrideQuery()
-
-// Computed
-const isOpen = computed({
-  get: () => props.open,
-  set: value => emit('update:open', value)
-})
 
 const loading = computed(() => isPending.value)
 
 // Methods
 const handleConfirm = async () => {
-  if (!props.override) return
-
   await removeTeamOverride({
-    featureName: props.featureName,
+    featureName: props.override.functionName,
     teamId: props.override.teamId
   })
 
-  handleClose()
-}
-
-const handleClose = () => {
-  emit('update:open', false)
+  openModal.value = false
 }
 </script>

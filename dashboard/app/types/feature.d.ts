@@ -29,7 +29,7 @@ export interface TeamFunctionOverride {
   status: FeatureStatus
   createdAt: string
   updatedAt: string
-  team?: Team
+  team: Team
 }
 
 interface CreateFeaturePayload {

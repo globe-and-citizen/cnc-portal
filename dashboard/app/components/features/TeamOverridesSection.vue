@@ -41,16 +41,7 @@
       </template>
 
       <template #actions-cell="{ row }">
-        <div class="flex items-center justify-end gap-2">
-          <UButton
-            icon="i-lucide-trash"
-            color="error"
-            variant="ghost"
-            size="sm"
-            aria-label="Remove override"
-            @click="handleRemove(row.original)"
-          />
-        </div>
+        <FeaturesDeleteTeamOverrideModal :override="row.original" />
       </template>
     </UTable>
   </div>
@@ -128,10 +119,5 @@ function handleStatusChange(override: TeamFunctionOverride, newStatus: FeatureSt
     teamId: override.teamId,
     status: newStatus
   })
-}
-
-function handleRemove(override: TeamFunctionOverride) {
-  // TODO: Implement remove functionality
-  console.log('Remove override:', override)
 }
 </script>
