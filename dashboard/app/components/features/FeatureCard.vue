@@ -10,150 +10,27 @@
       />
 
       <!-- Global Restriction Toggle -->
-      <UCard class="mb-6">
-        <template #header>
-          <h4 class="font-semibold text-highlighted">
-            Global Setting
-          </h4>
-        </template>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="font-medium">
-              Enable Restriction Globally
-            </p>
-            <p class="text-sm text-muted">
-              Configure the default restriction state for all teams
-            </p>
-          </div>
-          <div class="flex items-center gap-3">
-            <USelect
-              v-model="globalStatus"
-              :items="FEATURE_STATUS_OPTIONS"
-              value-key="value"
-              :disabled="isLoadingGlobal"
-              data-test="global-restriction-select"
-              class="w-32"
-              @update:model-value="saveGlobalSettings"
-            />
-          </div>
-        </div>
-      </UCard>
+      <FeatureGlobalRestriction
+        v-model="globalStatus"
+        :feature-name="featureName"
+        :is-editable="isEditable"
+        @updated="refetchFeatureData"
+      />
 
-      <!-- Add Override Button -->
-      <div class="flex items-center justify-between">
-        <div>
-          <h4 class="font-semibold text-highlighted">
-            Team Overrides
-          </h4>
-          <p class="text-sm text-muted">
-            Teams with custom restriction settings ({{ teamFunctionOverrides.length }}
-            overrides)
-          </p>
-        </div>
-        <UButton
-          icon="i-lucide-plus"
-          color="primary"
-          data-test="add-override-btn"
-          @click="openAddOverrideModal"
-        >
-          Add Override
-        </UButton>
-      </div>
-
-      <!-- Team Overrides Table -->
-      <TeamOverridesTable
+      <!-- Team Overrides Section (Button + Modal + Table) -->
+      <TeamOverridesSection
+        :feature-name="featureName"
         :teams="teamFunctionOverrides"
         :loading="isLoading"
         :loading-team-id="loadingTeamId"
-        :global-restriction-enabled="true"
         :is-editable="isEditable"
-        :total="teamFunctionOverrides.length"
-        :current-page="pagination.page"
-        :page-size="pagination.pageSize"
+        :all-teams="allTeams"
         @toggle-restriction="handleToggleRestriction"
         @remove-override="handleRemoveOverride"
         @page-change="handlePageChange"
         @page-size-change="handlePageSizeChange"
+        @data-updated="refetchFeatureData"
       />
-
-      <!-- Add Override Modal -->
-      <UModal v-model:open="isAddOverrideModalOpen">
-        <template #content>
-          <UCard>
-            <template #header>
-              <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold">
-                  Add Team Override
-                </h3>
-                <UButton
-                  icon="i-lucide-x"
-                  color="neutral"
-                  variant="ghost"
-                  size="sm"
-                  @click="isAddOverrideModalOpen = false"
-                />
-              </div>
-            </template>
-
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium mb-2">Select Team</label>
-                <USelect
-                  v-model="selectedTeamId"
-                  :items="availableTeamsOptions"
-                  value-key="value"
-                  placeholder="Choose a team..."
-                  :loading="isLoadingTeams"
-                  :disabled="
-                    isLoadingTeams || availableTeamsOptions.length === 0
-                  "
-                  data-test="team-select"
-                  class="w-full"
-                  icon="i-lucide-users"
-                />
-                <p
-                  v-if="availableTeamsOptions.length === 0 && !isLoadingTeams"
-                  class="text-sm text-muted mt-2"
-                >
-                  All teams already have overrides configured.
-                </p>
-              </div>
-
-              <div class="w-32">
-                <label class="block text-sm font-medium mb-2">Restriction Setting</label>
-                <USelect
-                  v-model="newOverrideStatus"
-                  :items="FEATURE_STATUS_OPTIONS"
-                  value-key="value"
-                  data-test="new-override-select"
-                  class="w-full"
-                />
-              </div>
-            </div>
-
-            <template #footer>
-              <div class="flex justify-end gap-3">
-                <UButton
-                  color="neutral"
-                  variant="ghost"
-                  @click="isAddOverrideModalOpen = false"
-                >
-                  Cancel
-                </UButton>
-                <UButton
-                  color="primary"
-                  :loading="isCreatingOverride"
-                  :disabled="!selectedTeamId"
-                  data-test="create-override-btn"
-                  @click="createNewOverride"
-                >
-                  Create Override
-                </UButton>
-              </div>
-            </template>
-          </UCard>
-        </template>
-      </UModal>
     </div>
   </UPageCard>
 </template>
@@ -161,18 +38,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import type { Team, FeatureStatus } from '~/types'
-import TeamOverridesTable from './TeamOverridesTable.vue'
+import FeatureGlobalRestriction from './FeatureGlobalRestriction.vue'
+import TeamOverridesSection from './TeamOverridesSection.vue'
 import { useToast } from '#ui/composables/useToast'
 import {
   useFeatureRestrictions,
-  useUpdateGlobalFeatureRestriction,
-  useCreateFeatureTeamOverride,
   useUpdateFeatureTeamOverride,
   useRemoveFeatureTeamOverride
 } from '~/queries'
 import {
   transformToTeamOverrides,
-  FEATURE_STATUS_OPTIONS,
   type FeatureWithOverrides,
   type TeamRestrictionOverride
 } from '~/api/features'
@@ -196,37 +71,20 @@ const toast = useToast()
 const { fetchTeams } = useTeams()
 
 // Query hooks
-const { mutateAsync: updateGlobalRestriction } = useUpdateGlobalFeatureRestriction()
 const { mutateAsync: updateTeamOverride } = useUpdateFeatureTeamOverride()
 const { mutateAsync: removeTeamOverride } = useRemoveFeatureTeamOverride()
-const { mutateAsync: createTeamOverride } = useCreateFeatureTeamOverride()
 const { data: featureData, refetch: refetchFeatureData } = useFeatureRestrictions(() => props.featureName)
 
 // State
-const isLoadingGlobal = ref(false)
 const isLoading = ref(false)
 const loadingTeamId = ref<number | null>(null)
 const currentFeature = ref<FeatureWithOverrides | null>(null)
 const globalStatus = ref<FeatureStatus>('enabled')
-
-// Pagination
-const pagination = ref({
-  page: 1,
-  pageSize: 10
-})
-
-// Add Override Modal State
-const isAddOverrideModalOpen = ref(false)
 const allTeams = ref<Team[]>([])
-const selectedTeamId = ref<number | undefined>(undefined)
-const newOverrideStatus = ref<FeatureStatus>('enabled')
-const isCreatingOverride = ref(false)
-const isLoadingTeams = ref(false)
 
 // Computed Properties
 const featureDisplayName = computed(() => {
   if (!props.featureName) return 'Feature'
-  // Convert SUBMIT_RESTRICTION to Submit Restriction format
   return props.featureName
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -241,38 +99,7 @@ const teamFunctionOverrides = computed<TeamRestrictionOverride[]>(() => {
   return transformToTeamOverrides(currentFeature.value)
 })
 
-const availableTeamsOptions = computed(() => {
-  // Filter out teams that already have overrides
-  const overriddenTeamIds = new Set(teamFunctionOverrides.value.map(o => o.teamId))
-  return allTeams.value
-    .filter(team => !overriddenTeamIds.has(team.id))
-    .map(team => ({
-      label: `${team.name} (${team._count?.members || 0} members)`,
-      value: team.id
-    }))
-})
-
 // Handlers
-const saveGlobalSettings = async (value: FeatureStatus | undefined) => {
-  if (!value) return
-  isLoadingGlobal.value = true
-  const previousStatus = globalStatus.value
-  try {
-    await updateGlobalRestriction({
-      featureName: props.featureName,
-      status: value
-    })
-    globalStatus.value = value
-    // Refresh the feature data
-    await refetchFeatureData()
-  } catch (error) {
-    console.error(`Error updating ${props.featureName} global restriction:`, error)
-    globalStatus.value = previousStatus
-  } finally {
-    isLoadingGlobal.value = false
-  }
-}
-
 const handleToggleRestriction = async (
   team: TeamRestrictionOverride,
   value: FeatureStatus
@@ -287,6 +114,12 @@ const handleToggleRestriction = async (
     await refetchFeatureData()
   } catch (error) {
     console.error(`Error toggling ${props.featureName} team restriction:`, error)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to update team restriction',
+      color: 'error',
+      icon: 'i-lucide-alert-circle'
+    })
   } finally {
     loadingTeamId.value = null
   }
@@ -300,72 +133,31 @@ const handleRemoveOverride = async (team: TeamRestrictionOverride) => {
       teamId: team.teamId
     })
     await refetchFeatureData()
+    toast.add({
+      title: 'Success',
+      description: 'Team override removed successfully',
+      color: 'success',
+      icon: 'i-lucide-check-circle'
+    })
   } catch (error) {
     console.error(`Error removing ${props.featureName} team override:`, error)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to remove team override',
+      color: 'error',
+      icon: 'i-lucide-alert-circle'
+    })
   } finally {
     loadingTeamId.value = null
   }
 }
 
-const handlePageChange = (page: number) => {
-  pagination.value.page = page
+const handlePageChange = (_page: number) => {
+  // Pagination is handled by TeamOverridesSection
 }
 
-const handlePageSizeChange = (size: number) => {
-  pagination.value.pageSize = size
-  pagination.value.page = 1
-}
-
-// Add Override Modal Functions
-const openAddOverrideModal = async () => {
-  selectedTeamId.value = undefined
-  newOverrideStatus.value = 'enabled'
-  isAddOverrideModalOpen.value = true
-
-  // Load teams if not already loaded
-  if (allTeams.value.length === 0) {
-    isLoadingTeams.value = true
-    try {
-      allTeams.value = await fetchTeams()
-    } catch (error) {
-      console.error('Error fetching teams:', error)
-      toast.add({
-        title: 'Error',
-        description: 'Failed to load teams',
-        color: 'error',
-        icon: 'i-lucide-alert-circle'
-      })
-    } finally {
-      isLoadingTeams.value = false
-    }
-  }
-}
-
-const createNewOverride = async () => {
-  if (!selectedTeamId.value) {
-    toast.add({
-      title: 'Error',
-      description: 'Please select a team',
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
-    })
-    return
-  }
-
-  isCreatingOverride.value = true
-  try {
-    await createTeamOverride({
-      featureName: props.featureName,
-      teamId: selectedTeamId.value,
-      status: newOverrideStatus.value
-    })
-    isAddOverrideModalOpen.value = false
-    await refetchFeatureData()
-  } catch (error) {
-    console.error(`Error creating ${props.featureName} override:`, error)
-  } finally {
-    isCreatingOverride.value = false
-  }
+const handlePageSizeChange = (_size: number) => {
+  // Pagination is handled by TeamOverridesSection
 }
 
 // Load feature data
@@ -390,30 +182,25 @@ const loadFeatureData = async () => {
   }
 }
 
-// Watch for feature name changes to reload data
+// Watch for feature name changes
 watch(() => props.featureName, async (newFeatureName) => {
   if (newFeatureName) {
     await loadFeatureData()
   }
 }, { immediate: false })
 
-// Expose methods for external use
+// Expose methods
 defineExpose({
-  refreshTeams: loadFeatureData
+  refreshData: loadFeatureData
 })
 
-// Initialize on mount
+// Initialize
 onMounted(async () => {
-  isLoadingGlobal.value = true
-  isLoading.value = true
   try {
     await loadFeatureData()
-    // Pre-load teams for the modal
     allTeams.value = await fetchTeams()
   } catch (error) {
-    console.error('Error initializing feature card component:', error)
-  } finally {
-    isLoadingGlobal.value = false
+    console.error('Error initializing feature card:', error)
   }
 })
 </script>
