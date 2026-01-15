@@ -20,6 +20,11 @@ export async function findAllFeatures() {
   return features.map((feature) => ({
     ...feature,
     overridesCount: feature.teamFunctionOverrides.length,
+    overrides: feature.teamFunctionOverrides.map(override => ({
+      teamId: override.teamId,
+      teamName: override.team.name,
+      status: override.status,
+    })),
   }));
 }
 
@@ -40,7 +45,16 @@ export async function findFeatureByName(functionName: string) {
   });
 
   if (!feature) return null;
-  return feature
+  
+  // Transform the data to match frontend expectations
+  return {
+    ...feature,
+    overrides: feature.teamFunctionOverrides.map(override => ({
+      teamId: override.teamId,
+      teamName: override.team.name,
+      status: override.status,
+    })),
+  };
 }
 
 export async function insertFeature(functionName: string, status: FeatureStatus) {
