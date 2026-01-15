@@ -31,9 +31,9 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { Feature, FeatureStatus } from '~/types'
 import { FEATURE_STATUS_OPTIONS } from '~/api/features'
 import { useUpdateFeatureQuery } from '~/queries'
+import type { Feature, FeatureStatus } from '~/types'
 
 const props = defineProps<{
   feature: Feature

@@ -21,7 +21,7 @@
       </div>
     </template>
 
-    <pre>{{ currentFeature }}</pre>
+    <!-- <pre>{{ currentFeature }}</pre> -->
     <!-- <pre>{{ teams }}</pre> -->
     <div v-if="isLoading" class="space-y-4">
       <USkeleton class="h-12" />
@@ -60,14 +60,9 @@
         />
 
         <!-- Team Overrides Section (Button + Modal + Table) -->
-        <!-- <TeamOverridesSection
-          :feature-name="currentFeature.functionName"
-          :teams="teams"
-          :loading="isLoading"
-          :loading-team-id="loadingTeamId"
-          :is-editable="currentFeature.status === 'enabled'"
-          :all-teams="teams"
-        /> -->
+        <TeamOverridesSection
+          :feature="currentFeature"
+        />
       </div>
     </div>
   </UPageCard>
@@ -76,10 +71,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter, useRoute } from '#imports'
-import FeatureCard from '~/components/features/FeatureCard.vue'
 import { useFeatureQuery } from '~/queries/feature.query'
 import { formatFeatureName } from '~/utils/generalUtil'
-import { useTeamsQuery } from '~/queries/team.query'
 import FeatureGlobalRestriction from '~/components/features/FeatureGlobalRestriction.vue'
 import TeamOverridesSection from '~/components/features/TeamOverridesSection.vue'
 
@@ -91,7 +84,6 @@ const featureId = computed(() => route.params.id as string)
 
 // Get single feature data
 const { data: currentFeature, isLoading, error } = useFeatureQuery(featureId)
-const { data: teams } = useTeamsQuery()
 
 const featureDisplayName = computed(() => {
   return formatFeatureName(currentFeature.value?.functionName)
