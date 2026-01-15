@@ -64,24 +64,24 @@
 </template>
 
 <script setup lang="ts">
-import type { TeamRestrictionOverride } from '~/lib/axios'
+import type { TeamRestrictionOverride } from '~/types'
+import { removeFeatureTeamOverride } from '~/api/features'
 
 // Props
 interface Props {
   open: boolean
   override: TeamRestrictionOverride | null
-  loading?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  loading: false
-})
+const props = defineProps<Props>()
 
 // Emits
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  'confirm': []
 }>()
+
+// State
+const loading = ref(false)
 
 // Computed
 const isOpen = computed({
@@ -90,8 +90,18 @@ const isOpen = computed({
 })
 
 // Methods
-const handleConfirm = () => {
-  emit('confirm')
+const handleConfirm = async () => {
+  if (!props.override) return
+
+  try {
+    loading.value = true
+    await removeFeatureTeamOverride('SUBMIT_RESTRICTION', props.override.teamId)
+    handleClose()
+  } catch (error) {
+    console.error('Failed to remove team override:', error)
+  } finally {
+    loading.value = false
+  }
 }
 
 const handleClose = () => {

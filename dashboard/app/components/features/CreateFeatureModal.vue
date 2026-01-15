@@ -86,24 +86,27 @@
 
 <script setup lang="ts">
 import type { FeatureStatus, Feature } from '~/types'
+import { useCreateFeature } from '~/queries/feature.query'
 
 // Props
 interface Props {
   open: boolean
-  loading?: boolean
   existingFeatures?: Feature[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  loading: false,
   existingFeatures: () => []
 })
 
 // Emits
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  'submit': [data: { functionName: string, status: FeatureStatus }]
 }>()
+
+// Mutations
+const createFeatureMutation = useCreateFeature()
+
+const loading = computed(() => createFeatureMutation.isPending.value)
 
 // Local state
 const isOpen = computed({
@@ -162,13 +165,18 @@ const validateForm = () => {
   return true
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (!validateForm()) return
 
-  emit('submit', {
-    functionName: form.functionName.trim(),
-    status: form.status
-  })
+  try {
+    await createFeatureMutation.mutateAsync({
+      functionName: form.functionName.trim(),
+      status: form.status
+    })
+    handleClose()
+  } catch (error) {
+    console.error('Failed to create feature:', error)
+  }
 }
 
 const handleClose = () => {

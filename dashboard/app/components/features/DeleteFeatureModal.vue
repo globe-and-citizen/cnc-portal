@@ -67,23 +67,25 @@
 
 <script setup lang="ts">
 import type { Feature } from '~/types'
+import { useDeleteFeature } from '~/queries/feature.query'
 
 // Props
 interface Props {
   open: boolean
   feature: Feature | null
-  loading?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  loading: false
-})
+const props = defineProps<Props>()
 
 // Emits
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  'confirm': []
 }>()
+
+// Mutations
+const deleteFeatureMutation = useDeleteFeature()
+
+const loading = computed(() => deleteFeatureMutation.isPending.value)
 
 // Computed
 const isOpen = computed({
@@ -92,8 +94,15 @@ const isOpen = computed({
 })
 
 // Methods
-const handleConfirm = () => {
-  emit('confirm')
+const handleConfirm = async () => {
+  if (!props.feature) return
+
+  try {
+    await deleteFeatureMutation.mutateAsync(props.feature.functionName)
+    handleClose()
+  } catch (error) {
+    console.error('Failed to delete feature:', error)
+  }
 }
 
 const handleClose = () => {
