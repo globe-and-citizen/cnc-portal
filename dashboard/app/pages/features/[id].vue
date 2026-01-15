@@ -59,6 +59,7 @@ import { computed } from 'vue'
 import { useRouter, useRoute } from '#imports'
 import FeatureCard from '~/components/features/FeatureCard.vue'
 import { useFeatures } from '~/queries/feature.query'
+import { formatFeatureName } from '~/utils/generalUtil'
 
 const router = useRouter()
 const route = useRoute()
@@ -76,15 +77,8 @@ const currentFeature = computed(() => {
 })
 
 const featureDisplayName = computed(() => {
-  if (!currentFeature.value?.functionName) return 'Feature'
-  // Convert SUBMIT_RESTRICTION to Submit Restriction format
-  return currentFeature.value?.functionName
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
+  return formatFeatureName(currentFeature.value?.functionName)
 })
-
-// Computed properties
 
 // Check if the feature is enabled (both "enabled" and "beta" are considered enabled for viewing)
 const isFeatureEnabled = computed(() => {
