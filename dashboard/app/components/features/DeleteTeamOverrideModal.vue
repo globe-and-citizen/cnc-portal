@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import type { TeamRestrictionOverride } from '~/types'
-import { useRemoveFeatureTeamOverride } from '~/queries'
+import { useRemoveFeatureTeamOverrideQuery } from '~/queries'
 
 // Props
 interface Props {
@@ -82,7 +82,7 @@ const emit = defineEmits<{
 }>()
 
 // Query hooks
-const { mutateAsync: removeTeamOverride, isPending } = useRemoveFeatureTeamOverride()
+const { mutateAsync: removeTeamOverride, isPending } = useRemoveFeatureTeamOverrideQuery()
 
 // Computed
 const isOpen = computed({

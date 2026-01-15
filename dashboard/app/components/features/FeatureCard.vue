@@ -1,36 +1,5 @@
 <template>
-  <UPageCard>
-    <div class="space-y-6">
-      <UAlert
-        color="info"
-        variant="soft"
-        icon="i-lucide-info"
-        :title="`About ${featureDisplayName}`"
-        :description="alertDescription"
-      />
-
-      <!-- Global Restriction Toggle -->
-      <FeatureGlobalRestriction
-        v-model="globalStatus"
-        :feature-name="featureName"
-        :is-editable="isEditable"
-      />
-
-      <!-- Team Overrides Section (Button + Modal + Table) -->
-      <TeamOverridesSection
-        :feature-name="featureName"
-        :teams="teamFunctionOverrides"
-        :loading="isLoading"
-        :loading-team-id="loadingTeamId"
-        :is-editable="isEditable"
-        :all-teams="allTeams"
-        @toggle-restriction="handleToggleRestriction"
-        @page-change="handlePageChange"
-        @page-size-change="handlePageSizeChange"
-        @data-updated="handleDataUpdated"
-      />
-    </div>
-  </UPageCard>
+  <div />
 </template>
 
 <script setup lang="ts">
@@ -117,14 +86,6 @@ const handleToggleRestriction = async (
   } finally {
     loadingTeamId.value = null
   }
-}
-
-const handlePageChange = (_page: number) => {
-  // Pagination is handled by TeamOverridesTable
-}
-
-const handlePageSizeChange = (_size: number) => {
-  // Pagination is handled by TeamOverridesTable
 }
 
 // Handler for when data is updated (from add/remove operations)

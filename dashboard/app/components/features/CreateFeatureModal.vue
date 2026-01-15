@@ -86,7 +86,7 @@
 
 <script setup lang="ts">
 import type { FeatureStatus, Feature } from '~/types'
-import { useCreateFeature } from '~/queries/feature.query'
+import { useCreateFeatureQuery } from '~/queries/feature.query'
 
 // Props
 interface Props {
@@ -104,7 +104,7 @@ const emit = defineEmits<{
 }>()
 
 // Mutations
-const createFeatureMutation = useCreateFeature()
+const createFeatureMutation = useCreateFeatureQuery()
 
 const loading = computed(() => createFeatureMutation.isPending.value)
 

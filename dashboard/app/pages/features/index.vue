@@ -102,7 +102,7 @@
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Feature, FeatureStatus } from '~/types'
-import { useFeatures, useUpdateFeature } from '~/queries/feature.query'
+import { useFeaturesQuery, useUpdateFeatureQuery } from '~/queries/feature.query'
 import CreateFeatureModal from '~/components/features/CreateFeatureModal.vue'
 import DeleteFeatureModal from '~/components/features/DeleteFeatureModal.vue'
 
@@ -110,10 +110,10 @@ const USelect = resolveComponent('USelect')
 const UButton = resolveComponent('UButton')
 
 // Feature data
-const { data: features, isLoading, error } = useFeatures()
+const { data: features, isLoading, error } = useFeaturesQuery()
 
 // Mutations
-const updateFeatureMutation = useUpdateFeature()
+const updateFeatureMutation = useUpdateFeatureQuery()
 
 // Modal states
 const isCreateModalOpen = ref(false)

@@ -16,7 +16,7 @@ import type { CreateTeamPayload, UpdateTeamPayload, AddMembersPayload } from '~/
 /**
  * Fetch all teams
  */
-export const useTeams = () => {
+export const useTeamsQuery = () => {
   return useQuery({
     queryKey: ['teams'],
     queryFn: async () => {
@@ -30,7 +30,7 @@ export const useTeams = () => {
 /**
  * Fetch a single team by ID
  */
-export const useTeam = (id: MaybeRefOrGetter<number>) => {
+export const useTeamQuery = (id: MaybeRefOrGetter<number>) => {
   return useQuery({
     queryKey: ['team', { id: toValue(id) }],
     queryFn: async () => {
@@ -46,7 +46,7 @@ export const useTeam = (id: MaybeRefOrGetter<number>) => {
 /**
  * Check submit restriction for a team
  */
-export const useTeamSubmitRestriction = (id: MaybeRefOrGetter<number>) => {
+export const useTeamSubmitRestrictionQuery = (id: MaybeRefOrGetter<number>) => {
   return useQuery({
     queryKey: ['team', { id: toValue(id) }, 'submit-restriction'],
     queryFn: async () => {
@@ -62,7 +62,7 @@ export const useTeamSubmitRestriction = (id: MaybeRefOrGetter<number>) => {
 /**
  * Create a new team
  */
-export const useCreateTeam = () => {
+export const useCreateTeamQuery = () => {
   const queryClient = useQueryClient()
   const toast = useToast()
 
@@ -94,7 +94,7 @@ export const useCreateTeam = () => {
 /**
  * Update a team
  */
-export const useUpdateTeam = () => {
+export const useUpdateTeamQuery = () => {
   const queryClient = useQueryClient()
   const toast = useToast()
 
@@ -127,7 +127,7 @@ export const useUpdateTeam = () => {
 /**
  * Delete a team
  */
-export const useDeleteTeam = () => {
+export const useDeleteTeamQuery = () => {
   const queryClient = useQueryClient()
   const toast = useToast()
 
@@ -159,7 +159,7 @@ export const useDeleteTeam = () => {
 /**
  * Add members to a team
  */
-export const useAddTeamMembers = () => {
+export const useAddTeamMembersQuery = () => {
   const queryClient = useQueryClient()
   const toast = useToast()
 
@@ -192,7 +192,7 @@ export const useAddTeamMembers = () => {
 /**
  * Delete a member from a team
  */
-export const useDeleteTeamMember = () => {
+export const useDeleteTeamMemberQuery = () => {
   const queryClient = useQueryClient()
   const toast = useToast()
 

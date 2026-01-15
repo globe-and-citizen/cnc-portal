@@ -124,7 +124,7 @@ import type { Team, FeatureStatus } from '~/types'
 import TeamOverridesTable from './TeamOverridesTable.vue'
 import { useToast } from '#ui/composables/useToast'
 import {
-  useCreateFeatureTeamOverride
+  useCreateFeatureTeamOverrideQuery
 } from '~/queries'
 import {
   FEATURE_STATUS_OPTIONS,
@@ -162,7 +162,7 @@ const toast = useToast()
 const { fetchTeams } = useTeams()
 
 // Query hooks
-const { mutateAsync: createTeamOverride } = useCreateFeatureTeamOverride()
+const { mutateAsync: createTeamOverride } = useCreateFeatureTeamOverrideQuery()
 
 // Modal State
 const isAddOverrideModalOpen = ref(false)

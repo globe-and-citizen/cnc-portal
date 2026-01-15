@@ -83,30 +83,6 @@ export const deleteFeature = async (functionName: string) => {
 }
 
 /**
- * Fetch feature data with all overrides (generic for any feature)
- * @param featureName The name of the feature (e.g., 'SUBMIT_RESTRICTION')
- */
-export const fetchFeatureRestrictions = async (featureName: string) => {
-  // Backend returns the feature directly, not wrapped in ApiResponse
-  return await apiFetch<FeatureWithOverrides>(`/admin/features/${featureName}`)
-}
-
-/**
- * Update global restriction setting (generic for any feature)
- * @param featureName The name of the feature
- * @param status The new status
- */
-export const updateGlobalFeatureRestriction = async (
-  featureName: string,
-  status: FeatureStatus
-) => {
-  return await apiFetch<boolean>(`/admin/features/${featureName}`, {
-    method: 'PUT',
-    body: { status }
-  })
-}
-
-/**
  * Create a team override for a feature
  * @param featureName The name of the feature
  * @param teamId The team ID
@@ -115,11 +91,12 @@ export const updateGlobalFeatureRestriction = async (
 export const createFeatureTeamOverride = async (
   featureName: string,
   teamId: number,
-  status: FeatureStatus
+  payload: { status: FeatureStatus }
 ) => {
+  // TODO: the team ID should be part of the payload interface, update in the backend as well
   return await apiFetch<boolean>(`/admin/features/${featureName}/teams/${teamId}`, {
     method: 'POST',
-    body: { status }
+    body: payload
   })
 }
 
@@ -149,24 +126,7 @@ export const removeFeatureTeamOverride = async (
   featureName: string,
   teamId: number
 ) => {
-  return await apiFetch<boolean>(`/admin/features/${featureName}/teams/${teamId}`, {
+  return await apiFetch(`/admin/features/${featureName}/teams/${teamId}`, {
     method: 'DELETE'
   })
-}
-
-/**
- * Transform feature data to team override format
- */
-export const transformToTeamOverrides = (
-  feature: FeatureWithOverrides | null
-): TeamRestrictionOverride[] => {
-  if (!feature?.overrides) {
-    return []
-  }
-
-  return feature.overrides.map(override => ({
-    teamId: override.teamId,
-    teamName: override.teamName,
-    status: override.status
-  }))
 }

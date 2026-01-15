@@ -21,6 +21,8 @@
       </div>
     </template>
 
+    <pre>{{ currentFeature }}</pre>
+    <!-- <pre>{{ teams }}</pre> -->
     <div v-if="isLoading" class="space-y-4">
       <USkeleton class="h-12" />
       <USkeleton class="h-64" />
@@ -42,14 +44,31 @@
         Back to Features
       </UButton>
     </div>
-
     <div v-else-if="currentFeature">
-      <!-- Feature-Specific Component -->
-      <FeatureCard
-        v-if="currentFeature.functionName"
-        :feature-name="currentFeature.functionName"
-        :is-editable="isFeatureEnabled"
-      />
+      <div class="space-y-6">
+        <UAlert
+          color="info"
+          variant="soft"
+          icon="i-lucide-info"
+          :title="`About ${featureDisplayName}`"
+          description="This feature has three states: Enabled (full restriction), Disabled (no restriction), and Beta (testing phase). Teams with overrides can have their own state independent of the global setting."
+        />
+
+        <!-- Global Restriction Toggle -->
+        <FeatureGlobalRestriction
+          :feature="currentFeature"
+        />
+
+        <!-- Team Overrides Section (Button + Modal + Table) -->
+        <!-- <TeamOverridesSection
+          :feature-name="currentFeature.functionName"
+          :teams="teams"
+          :loading="isLoading"
+          :loading-team-id="loadingTeamId"
+          :is-editable="currentFeature.status === 'enabled'"
+          :all-teams="teams"
+        /> -->
+      </div>
     </div>
   </UPageCard>
 </template>
@@ -58,31 +77,24 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from '#imports'
 import FeatureCard from '~/components/features/FeatureCard.vue'
-import { useFeatures } from '~/queries/feature.query'
+import { useFeatureQuery } from '~/queries/feature.query'
 import { formatFeatureName } from '~/utils/generalUtil'
+import { useTeamsQuery } from '~/queries/team.query'
+import FeatureGlobalRestriction from '~/components/features/FeatureGlobalRestriction.vue'
+import TeamOverridesSection from '~/components/features/TeamOverridesSection.vue'
 
 const router = useRouter()
 const route = useRoute()
 
-// Get features data
-const { data: features, isLoading, error } = useFeatures()
-// const features = computed(() => data.value?.data || [])
-
 // Get feature ID from route params
 const featureId = computed(() => route.params.id as string)
 
-// Find current feature
-const currentFeature = computed(() => {
-  return features.value?.find(f => f.functionName === featureId.value)
-})
+// Get single feature data
+const { data: currentFeature, isLoading, error } = useFeatureQuery(featureId)
+const { data: teams } = useTeamsQuery()
 
 const featureDisplayName = computed(() => {
   return formatFeatureName(currentFeature.value?.functionName)
-})
-
-// Check if the feature is enabled (both "enabled" and "beta" are considered enabled for viewing)
-const isFeatureEnabled = computed(() => {
-  return currentFeature.value?.status === 'enabled'
 })
 
 // Navigate back

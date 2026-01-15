@@ -67,7 +67,7 @@
 
 <script setup lang="ts">
 import type { Feature } from '~/types'
-import { useDeleteFeature } from '~/queries/feature.query'
+import { useDeleteFeatureQuery } from '~/queries/feature.query'
 
 // Props
 interface Props {
@@ -83,7 +83,7 @@ const emit = defineEmits<{
 }>()
 
 // Mutations
-const deleteFeatureMutation = useDeleteFeature()
+const deleteFeatureMutation = useDeleteFeatureQuery()
 
 const loading = computed(() => deleteFeatureMutation.isPending.value)
 
