@@ -1,6 +1,11 @@
 import type { CreateFeaturePayload, Feature, FeatureStatus, UpdateFeaturePayload } from '~/types'
 import { apiFetch } from '~/lib/fetch'
 
+export const FEATURE_STATUS_OPTIONS = [
+  { label: 'Enabled', value: 'enabled' as const },
+  { label: 'Disabled', value: 'disabled' as const },
+  { label: 'Beta', value: 'beta' as const }
+]
 /**
  * Fetch all features
  */

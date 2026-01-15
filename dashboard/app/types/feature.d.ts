@@ -13,7 +13,7 @@ export interface Feature {
   id: number
   functionName: string
   status: FeatureStatus
-  teamFunctionOverrides?: TeamFunctionOverride[]
+  teamFunctionOverrides: TeamFunctionOverride[]
   createdAt: string
   updatedAt: string
 }
@@ -32,11 +32,6 @@ export interface TeamFunctionOverride {
   team?: Team
 }
 
-export const FEATURE_STATUS_OPTIONS = [
-  { label: 'Enabled', value: 'enabled' as const },
-  { label: 'Disabled', value: 'disabled' as const },
-  { label: 'Beta', value: 'beta' as const }
-]
 interface CreateFeaturePayload {
   functionName: string
   status: FeatureStatus
