@@ -22,6 +22,7 @@
 
     <!-- Team Overrides Table -->
     <TeamOverridesTable
+      :feature-name="featureName"
       :teams="teams"
       :loading="loading"
       :loading-team-id="loadingTeamId"
@@ -240,12 +241,6 @@ const openAddOverrideModal = async () => {
 
 const handleCreateNewOverride = async () => {
   if (!selectedTeamId.value) {
-    toast.add({
-      title: 'Error',
-      description: 'Please select a team',
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
-    })
     return
   }
 
@@ -260,21 +255,8 @@ const handleCreateNewOverride = async () => {
     isAddOverrideModalOpen.value = false
     await fetchTeams()
     emit('data-updated')
-
-    toast.add({
-      title: 'Success',
-      description: 'Team override created successfully',
-      color: 'success',
-      icon: 'i-lucide-check-circle'
-    })
   } catch (error) {
     console.error(`Error creating team override:`, error)
-    toast.add({
-      title: 'Error',
-      description: 'Failed to create team override',
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
-    })
   } finally {
     isCreatingOverride.value = false
   }

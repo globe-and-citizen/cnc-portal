@@ -125,6 +125,7 @@
     <DeleteTeamOverrideModal
       v-model:open="isDeleteModalOpen"
       :override="teamToDelete"
+      :feature-name="featureName"
     />
   </UPageCard>
 </template>
@@ -137,6 +138,7 @@ import DeleteTeamOverrideModal from './DeleteTeamOverrideModal.vue'
 
 // Props
 interface Props {
+  featureName: string
   teams: TeamRestrictionOverride[]
   loading?: boolean
   loadingTeamId?: number | null
