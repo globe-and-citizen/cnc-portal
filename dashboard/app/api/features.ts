@@ -1,41 +1,5 @@
-import type { Feature, FeatureStatus } from '~/types'
+import type { CreateFeaturePayload, Feature, FeatureStatus, UpdateFeaturePayload } from '~/types'
 import { apiFetch } from '~/lib/fetch'
-
-// interface ApiResponse<T> {
-//   success: boolean
-//   data: T
-//   message?: string
-// }
-
-interface CreateFeaturePayload {
-  functionName: string
-  status: FeatureStatus
-}
-
-interface UpdateFeaturePayload {
-  status: FeatureStatus
-}
-
-export interface FeatureWithOverrides extends Feature {
-  functionName: string
-  overrides?: Array<{
-    teamId: number
-    teamName: string
-    status: FeatureStatus
-  }>
-}
-
-export interface TeamRestrictionOverride {
-  teamId: number
-  teamName: string
-  status: FeatureStatus
-}
-
-export const FEATURE_STATUS_OPTIONS = [
-  { label: 'Enabled', value: 'enabled' as const },
-  { label: 'Disabled', value: 'disabled' as const },
-  { label: 'Beta', value: 'beta' as const }
-]
 
 /**
  * Fetch all features
