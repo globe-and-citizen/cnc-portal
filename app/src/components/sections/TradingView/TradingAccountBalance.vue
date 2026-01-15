@@ -20,24 +20,41 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import OverviewCard from '@/components/OverviewCard.vue'
-// import { useWallet } from '@/composables/useWallet'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import bagIcon from '@/assets/bag.svg'
+import { useSafeDeployment } from '@/composables/trading'
+import { formatUnits } from 'viem'
+import { useSafeBalances } from '@/queries/polymarket.queries'
 
-// const wallet = useWallet()
 const currencyStore = useCurrencyStore()
-
-// Mock data - replace with real data
-const accountBalance = computed(() => 12450.75)
+const { derivedSafeAddressFromEoa } = useSafeDeployment()
 const isLoading = computed(() => false)
+const { data: balances } = useSafeBalances(derivedSafeAddressFromEoa)
 
 // Format balance
 const formattedBalance = computed(() => {
-  return `${currencyStore.localCurrency.symbol}${accountBalance.value.toLocaleString('en-US', {
-    minimumFractionDigits: 2
-  })}`
+  if (balances.value?.length && balances.value?.length > 0) {
+    const balance = balances.value.find((b) => b.token?.symbol === 'USDC.E')
+    const amount = balance
+      ? Number(formatUnits(BigInt(balance.balance), balance.token?.decimals ?? 6))
+      : 0
+    return `${currencyStore.localCurrency.symbol}${amount.toLocaleString('en-US', {
+      minimumFractionDigits: 2
+    })}`
+  } else
+    return `${currencyStore.localCurrency.symbol}${(0).toLocaleString('en-US', {
+      minimumFractionDigits: 2
+    })}`
 })
+
+watch(
+  balances,
+  (newBalances) => {
+    if (newBalances) console.log('fetchedBalances: ', newBalances)
+  },
+  { immediate: true }
+)
 </script>
