@@ -165,9 +165,11 @@ const loadFeatureData = async () => {
   isLoading.value = true
   try {
     await refetchFeatureData()
-    if (featureData.value?.data) {
-      currentFeature.value = featureData.value.data
-      globalStatus.value = featureData.value.data.status || 'enabled'
+    // The API returns the feature directly, not wrapped in { data: ... }
+    // featureData.value IS the feature object directly
+    if (featureData.value) {
+      currentFeature.value = featureData.value as FeatureWithOverrides
+      globalStatus.value = currentFeature.value.status || 'enabled'
     }
   } catch (error) {
     console.error(`Error loading ${props.featureName} feature data:`, error)
