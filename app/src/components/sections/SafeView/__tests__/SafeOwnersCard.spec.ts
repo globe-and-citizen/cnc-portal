@@ -57,8 +57,6 @@ vi.mock('@/composables/safe', () => ({
   useSafe: vi.fn(() => mockUseSafe)
 }))
 
-
-
 vi.mock('@wagmi/vue', () => ({
   useChainId: vi.fn(() => mockUseChainId)
 }))
@@ -359,7 +357,10 @@ describe('SafeOwnersCard', () => {
 
       await wrapper.find('[data-test="manage-owners-button"]').trigger('click')
 
-      expect(mockSafeAppUrlsReturn.getSafeSettingsUrl).toHaveBeenCalledWith(137, MOCK_DATA.safeAddress)
+      expect(mockSafeAppUrlsReturn.getSafeSettingsUrl).toHaveBeenCalledWith(
+        137,
+        MOCK_DATA.safeAddress
+      )
       expect(mockSafeAppUrlsReturn.openSafeAppUrl).toHaveBeenCalledWith(
         'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
       )
@@ -370,7 +371,10 @@ describe('SafeOwnersCard', () => {
 
       await wrapper.find('[data-test="open-safe-app-footer"]').trigger('click')
 
-      expect(mockSafeAppUrlsReturn.getSafeSettingsUrl).toHaveBeenCalledWith(137, MOCK_DATA.safeAddress)
+      expect(mockSafeAppUrlsReturn.getSafeSettingsUrl).toHaveBeenCalledWith(
+        137,
+        MOCK_DATA.safeAddress
+      )
       expect(mockSafeAppUrlsReturn.openSafeAppUrl).toHaveBeenCalledWith(
         'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
       )

@@ -19,7 +19,6 @@ import { useSafeWrites } from './writes'
 export function useSafe() {
   const reads = useSafeReads()
   const writes = useSafeWrites()
-  
 
   return {
     ...reads,

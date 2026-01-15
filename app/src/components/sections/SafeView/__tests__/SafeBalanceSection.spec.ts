@@ -329,7 +329,10 @@ describe('SafeBalanceSection', () => {
 
       await wrapper.find('[data-test="open-safe-app-button"]').trigger('click')
 
-      expect(mockSafeAppUrlsReturn.getSafeHomeUrl).toHaveBeenCalledWith(11155111, MOCK_DATA.safeAddress)
+      expect(mockSafeAppUrlsReturn.getSafeHomeUrl).toHaveBeenCalledWith(
+        11155111,
+        MOCK_DATA.safeAddress
+      )
     })
   })
 
