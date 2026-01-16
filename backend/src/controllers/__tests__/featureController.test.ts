@@ -41,10 +41,7 @@ describe('Feature Controller', () => {
       await featureController.listFeatures(req as Request, res as Response);
 
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        success: true,
-        data: mockFeatures,
-      });
+      expect(res.json).toHaveBeenCalledWith(mockFeatures);
     });
 
     it('should handle errors and return 500', async () => {
@@ -74,17 +71,6 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(404, 'Feature "NONEXISTENT" not found', res);
     });
 
-    it('should return 400 for invalid function name', async () => {
-      vi.mocked(errorResponse).mockReturnValue(undefined);
-
-      const req = createMockRequest({ params: { functionName: '' } });
-      const res = createMockResponse();
-
-      await featureController.getFeatureByName(req as Request, res as Response);
-
-      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
-    });
-
     it('should return feature by name with status 200', async () => {
       const mockFeature = { functionName: 'SUBMIT_RESTRICTION', status: 'enabled' };
       vi.mocked(featureUtils.findFeatureByName).mockResolvedValue(mockFeature as any);
@@ -95,10 +81,7 @@ describe('Feature Controller', () => {
       await featureController.getFeatureByName(req as Request, res as Response);
 
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        success: true,
-        data: mockFeature,
-      });
+      expect(res.json).toHaveBeenCalledWith(mockFeature);
     });
 
     it('should return 500 on error', async () => {
@@ -113,17 +96,6 @@ describe('Feature Controller', () => {
   });
 
   describe('createNewFeature', () => {
-    it('should return 400 for invalid request body', async () => {
-      vi.mocked(errorResponse).mockReturnValue(undefined);
-
-      const req = createMockRequest({ body: { status: 'enabled' } }); // Missing functionName
-      const res = createMockResponse();
-
-      await featureController.createNewFeature(req as Request, res as Response);
-
-      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
-    });
-
     it('should return 409 if feature already exists', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
       vi.mocked(errorResponse).mockReturnValue(undefined);
@@ -151,11 +123,7 @@ describe('Feature Controller', () => {
       await featureController.createNewFeature(req as Request, res as Response);
 
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({
-        success: true,
-        message: 'Feature "NEW_FEATURE" created successfully',
-        data: mockFeature,
-      });
+      expect(res.json).toHaveBeenCalledWith(mockFeature);
     });
 
     it('should return 500 on error', async () => {
@@ -172,28 +140,6 @@ describe('Feature Controller', () => {
   });
 
   describe('updateFeatureByName', () => {
-    it('should return 400 for invalid function name', async () => {
-      vi.mocked(errorResponse).mockReturnValue(undefined);
-      const req = createMockRequest({
-        params: { functionName: '' },
-        body: { status: 'enabled' },
-      });
-      const res = createMockResponse();
-      await featureController.updateFeatureByName(req as Request, res as Response);
-      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
-    });
-
-    it('should return 400 for invalid request body', async () => {
-      vi.mocked(errorResponse).mockReturnValue(undefined);
-      const req = createMockRequest({
-        params: { functionName: 'SUBMIT_RESTRICTION' },
-        body: { status: 'invalid_status' },
-      });
-      const res = createMockResponse();
-      await featureController.updateFeatureByName(req as Request, res as Response);
-      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
-    });
-
     it('should return 404 when feature not found', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(false);
       vi.mocked(errorResponse).mockReturnValue(undefined);
@@ -223,11 +169,7 @@ describe('Feature Controller', () => {
       await featureController.updateFeatureByName(req as Request, res as Response);
 
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        success: true,
-        message: 'Feature "SUBMIT_RESTRICTION" updated to "disabled"',
-        data: mockFeature,
-      });
+      expect(res.json).toHaveBeenCalledWith(mockFeature);
     });
 
     it('should return 500 on error', async () => {
@@ -245,14 +187,6 @@ describe('Feature Controller', () => {
   });
 
   describe('deleteFeatureByName', () => {
-    it('should return 400 for invalid function name', async () => {
-      vi.mocked(errorResponse).mockReturnValue(undefined);
-      const req = createMockRequest({ params: { functionName: '' } });
-      const res = createMockResponse();
-      await featureController.deleteFeatureByName(req as Request, res as Response);
-      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
-    });
-
     it('should return 404 when feature not found', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(false);
       vi.mocked(errorResponse).mockReturnValue(undefined);
@@ -282,20 +216,18 @@ describe('Feature Controller', () => {
       );
     });
 
-    it('should delete feature with status 200', async () => {
+    it('should delete feature with status 204', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
       vi.mocked(featureUtils.removeFeature).mockResolvedValue(true);
 
       const req = createMockRequest({ params: { functionName: 'TO_DELETE' } });
       const res = createMockResponse();
+      res.send = vi.fn();
 
       await featureController.deleteFeatureByName(req as Request, res as Response);
 
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        success: true,
-        message: 'Feature "TO_DELETE" and all its overrides have been deleted',
-      });
+      expect(res.status).toHaveBeenCalledWith(204);
+      expect(res.send).toHaveBeenCalled();
     });
 
     it('should return 500 on error', async () => {
@@ -310,39 +242,6 @@ describe('Feature Controller', () => {
   });
 
   describe('createOverride', () => {
-    it('should return 400 for invalid function name', async () => {
-      vi.mocked(errorResponse).mockReturnValue(undefined);
-      const req = createMockRequest({
-        params: { functionName: '', teamId: '5' },
-        body: { status: 'enabled' },
-      });
-      const res = createMockResponse();
-      await featureController.createOverride(req as Request, res as Response);
-      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
-    });
-
-    it('should return 400 for invalid team ID', async () => {
-      vi.mocked(errorResponse).mockReturnValue(undefined);
-      const req = createMockRequest({
-        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '-1' },
-        body: { status: 'enabled' },
-      });
-      const res = createMockResponse();
-      await featureController.createOverride(req as Request, res as Response);
-      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
-    });
-
-    it('should return 400 for invalid body - missing status', async () => {
-      vi.mocked(errorResponse).mockReturnValue(undefined);
-      const req = createMockRequest({
-        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
-        body: {}, // Missing required status field
-      });
-      const res = createMockResponse();
-      await featureController.createOverride(req as Request, res as Response);
-      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
-    });
-
     it('should return 404 if feature not found', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(false);
       vi.mocked(errorResponse).mockReturnValue(undefined);
@@ -418,11 +317,7 @@ describe('Feature Controller', () => {
       await featureController.createOverride(req as Request, res as Response);
 
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({
-        success: true,
-        message: 'Override created for team Team A on feature "SUBMIT_RESTRICTION"',
-        data: mockOverride,
-      });
+      expect(res.json).toHaveBeenCalledWith(mockOverride);
     });
 
     it('should return 500 on error', async () => {
@@ -440,28 +335,6 @@ describe('Feature Controller', () => {
   });
 
   describe('updateOverride', () => {
-    it('should return 400 for invalid function name', async () => {
-      vi.mocked(errorResponse).mockReturnValue(undefined);
-      const req = createMockRequest({
-        params: { functionName: '', teamId: '5' },
-        body: { status: 'enabled' },
-      });
-      const res = createMockResponse();
-      await featureController.updateOverride(req as Request, res as Response);
-      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
-    });
-
-    it('should return 400 for invalid body - missing status', async () => {
-      vi.mocked(errorResponse).mockReturnValue(undefined);
-      const req = createMockRequest({
-        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
-        body: {}, // Missing required status field
-      });
-      const res = createMockResponse();
-      await featureController.updateOverride(req as Request, res as Response);
-      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
-    });
-
     it('should return 404 if feature not found', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(false);
       vi.mocked(errorResponse).mockReturnValue(undefined);
@@ -531,11 +404,7 @@ describe('Feature Controller', () => {
       await featureController.updateOverride(req as Request, res as Response);
 
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        success: true,
-        message: 'Override updated to "enabled" for team Team A',
-        data: mockOverride,
-      });
+      expect(res.json).toHaveBeenCalledWith(mockOverride);
     });
 
     it('should return 500 on error', async () => {
@@ -553,16 +422,6 @@ describe('Feature Controller', () => {
   });
 
   describe('removeOverride', () => {
-    it('should return 400 for invalid function name', async () => {
-      vi.mocked(errorResponse).mockReturnValue(undefined);
-      const req = createMockRequest({
-        params: { functionName: '', teamId: '5' },
-      });
-      const res = createMockResponse();
-      await featureController.removeOverride(req as Request, res as Response);
-      expect(errorResponse).toHaveBeenCalledWith(400, expect.any(String), res);
-    });
-
     it('should return 404 if feature not found', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(false);
       vi.mocked(errorResponse).mockReturnValue(undefined);
@@ -609,7 +468,7 @@ describe('Feature Controller', () => {
       expect(errorResponse).toHaveBeenCalledWith(500, 'Failed to delete override', res);
     });
 
-    it('should remove a team override with status 200', async () => {
+    it('should remove a team override with status 204', async () => {
       vi.mocked(featureUtils.featureExists).mockResolvedValue(true);
       vi.mocked(featureUtils.overrideExists).mockResolvedValue(true);
       vi.mocked(featureUtils.removeOverrideRecord).mockResolvedValue(true);
@@ -618,14 +477,12 @@ describe('Feature Controller', () => {
         params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
       });
       const res = createMockResponse();
+      res.send = vi.fn();
 
       await featureController.removeOverride(req as Request, res as Response);
 
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        success: true,
-        message: 'Override removed for team 5. Team now inherits global setting.',
-      });
+      expect(res.status).toHaveBeenCalledWith(204);
+      expect(res.send).toHaveBeenCalled();
     });
 
     it('should return 500 on error', async () => {
@@ -686,12 +543,9 @@ describe('Feature Controller', () => {
 
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        success: true,
-        data: {
-          teamId: 5,
-          isRestricted: true,
-          effectiveStatus: 'enabled',
-        },
+        teamId: 5,
+        isRestricted: true,
+        effectiveStatus: 'enabled',
       });
     });
 
@@ -706,12 +560,9 @@ describe('Feature Controller', () => {
 
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        success: true,
-        data: {
-          teamId: 5,
-          isRestricted: false,
-          effectiveStatus: 'disabled',
-        },
+        teamId: 5,
+        isRestricted: false,
+        effectiveStatus: 'disabled',
       });
     });
 

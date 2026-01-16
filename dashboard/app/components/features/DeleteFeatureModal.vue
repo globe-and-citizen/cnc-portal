@@ -30,11 +30,6 @@
                 <p class="font-semibold">
                   {{ feature?.functionName }}
                 </p>
-                <!-- <p class="text-sm">
-                  This will also delete all
-                  <span class="font-semibold">" {{ feature?.overridesCount || 0 }} "</span>
-                  associated team override(s).
-                </p> -->
               </div>
             </template>
           </UAlert>
@@ -95,12 +90,8 @@ const isOpen = computed({
 const handleConfirm = async () => {
   if (!props.feature) return
 
-  try {
-    await deleteFeature(props.feature.functionName)
-    handleClose()
-  } catch (error) {
-    console.error('Failed to delete feature:', error)
-  }
+  await deleteFeature(props.feature.functionName)
+  handleClose()
 }
 
 const handleClose = () => {
