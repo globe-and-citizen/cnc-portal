@@ -39,7 +39,7 @@ export interface WeeklyClaimWithHours extends WeeklyClaim {
 /**
  * Fetch weekly claims for a team with optional status filter
  */
-export const useTeamWeeklyClaims = (
+export const useTeamWeeklyClaimsQuery = (
   teamId: MaybeRefOrGetter<string | number | null>,
   status?: MaybeRefOrGetter<'pending' | 'signed' | 'withdrawn' | 'disabled' | null>
 ) => {
@@ -71,7 +71,7 @@ export const useTeamWeeklyClaims = (
 /**
  * Fetch a single weekly claim by ID
  */
-export const useWeeklyClaimById = (claimId: MaybeRefOrGetter<string | number | null>) => {
+export const useWeeklyClaimByIdQuery = (claimId: MaybeRefOrGetter<string | number | null>) => {
   return useQuery<WeeklyClaim, AxiosError>({
     queryKey: ['weeklyClaim', { claimId }],
     queryFn: async () => {
@@ -99,7 +99,7 @@ export interface SignWeeklyClaimInput {
   signature: string
 }
 
-export const useSignWeeklyClaim = () => {
+export const useSignWeeklyClaimQuery = () => {
   const queryClient = useQueryClient()
   return useMutation<void, AxiosError, SignWeeklyClaimInput>({
     mutationFn: async (input) => {
@@ -128,7 +128,7 @@ export interface EnableWeeklyClaimInput {
   signature: string
 }
 
-export const useEnableWeeklyClaim = () => {
+export const useEnableWeeklyClaimQuery = () => {
   const queryClient = useQueryClient()
   return useMutation<void, AxiosError, EnableWeeklyClaimInput>({
     mutationFn: async (input) => {
@@ -157,7 +157,7 @@ export interface DisableWeeklyClaimInput {
   signature: string
 }
 
-export const useDisableWeeklyClaim = () => {
+export const useDisableWeeklyClaimQuery = () => {
   const queryClient = useQueryClient()
   return useMutation<void, AxiosError, DisableWeeklyClaimInput>({
     mutationFn: async (input) => {
@@ -186,7 +186,7 @@ export interface WithdrawWeeklyClaimInput {
   signature: string
 }
 
-export const useWithdrawWeeklyClaim = () => {
+export const useWithdrawWeeklyClaimQuery = () => {
   const queryClient = useQueryClient()
   return useMutation<void, AxiosError, WithdrawWeeklyClaimInput>({
     mutationFn: async (input) => {
@@ -228,7 +228,7 @@ export interface SyncWeeklyClaimsResponse {
   }>
 }
 
-export const useSyncWeeklyClaims = () => {
+export const useSyncWeeklyClaimsQuery = () => {
   const queryClient = useQueryClient()
   return useMutation<SyncWeeklyClaimsResponse, AxiosError, SyncWeeklyClaimsInput>({
     mutationFn: async (input) => {
