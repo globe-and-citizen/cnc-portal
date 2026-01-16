@@ -27,7 +27,7 @@ export const useAddMembersQuery = (teamId: string | number) => {
 /**
  * Delete a member from a team
  */
-export const useDeleteMember = (teamId: string | number, memberAddress: string) => {
+export const useDeleteMemberQuery = (teamId: string | number, memberAddress: string) => {
   const queryClient = useQueryClient()
 
   return useMutation<void, AxiosError, void>({

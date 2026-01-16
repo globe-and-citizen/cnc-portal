@@ -36,7 +36,7 @@ vi.mock('@/queries/team.queries', () => ({
  */
 vi.mock('@/queries/member.queries', () => ({
   useAddMembersQuery: vi.fn(queryMocks.useAddMembersQuery),
-  useDeleteMember: vi.fn(queryMocks.useDeleteMember)
+  useDeleteMemberQuery: vi.fn(queryMocks.useDeleteMemberQuery)
 }))
 
 /**

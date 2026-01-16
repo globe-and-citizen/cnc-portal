@@ -94,7 +94,7 @@ export const queryMocks = {
 
   // Member queries
   useAddMembersQuery: () => createMockMutationResponse(),
-  useDeleteMember: () => createMockMutationResponse(),
+  useDeleteMemberQuery: () => createMockMutationResponse(),
 
   // ... and more
 };
@@ -124,7 +124,7 @@ vi.mock("@/queries/member.queries", () => ({
 | Module                    | Hooks                                                                    | Purpose                      |
 | ------------------------- | ------------------------------------------------------------------------ | ---------------------------- |
 | `team.queries.ts`         | `useTeams`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam` | Team CRUD operations         |
-| `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMember`                                  | Team member management       |
+| `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMemberQuery`                             | Team member management       |
 | `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                       | Wage configuration           |
 | `notification.queries.ts` | `useNotifications`, `useAddBulkNotifications`, `useUpdateNotification`   | Notification management      |
 | `expense.queries.ts`      | `useExpensesQuery`                                                       | Expense queries              |

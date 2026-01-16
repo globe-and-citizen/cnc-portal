@@ -48,7 +48,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
-import { useDeleteMember } from '@/queries/member.queries'
+import { useDeleteMemberQuery } from '@/queries/member.queries'
 import type { AxiosError } from 'axios'
 
 const props = defineProps<{
@@ -62,7 +62,7 @@ const emits = defineEmits<{
 
 const showModal = ref(false)
 
-const { mutate: executeDeleteMember, isPending: memberIsDeleting } = useDeleteMember(
+const { mutate: executeDeleteMember, isPending: memberIsDeleting } = useDeleteMemberQuery(
   props.teamId,
   props.member.address || ''
 )

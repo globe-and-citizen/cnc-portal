@@ -42,7 +42,7 @@ The system mocks all query hooks from:
 | Module                    | Mocks                                                                    |
 | ------------------------- | ------------------------------------------------------------------------ |
 | `team.queries.ts`         | `useTeams`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam` |
-| `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMember`                                  |
+| `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMemberQuery`                             |
 | `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                       |
 | `notification.queries.ts` | `useNotifications`, `useAddBulkNotifications`, `useUpdateNotification`   |
 | `expense.queries.ts`      | `useExpensesQuery`                                                       |
