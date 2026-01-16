@@ -86,7 +86,7 @@ Central registry of all available mocks:
 ```typescript
 export const queryMocks = {
   // Team queries
-  useTeams: () => createMockQueryResponse(mockTeamsData),
+  useTeamsQuery: () => createMockQueryResponse(mockTeamsData),
   useTeam: () => createMockQueryResponse(mockTeamData),
   useCreateTeam: () => createMockMutationResponse(),
   useUpdateTeam: () => createMockMutationResponse(),
@@ -106,7 +106,7 @@ Automatically applies all mocks globally before tests run:
 
 ```typescript
 vi.mock("@/queries/team.queries", () => ({
-  useTeams: vi.fn(queryMocks.useTeams),
+  useTeamsQuery: vi.fn(queryMocks.useTeamsQuery),
   useTeam: vi.fn(queryMocks.useTeam),
   // ...
 }));
@@ -123,7 +123,7 @@ vi.mock("@/queries/member.queries", () => ({
 
 | Module                    | Hooks                                                                            | Purpose                      |
 | ------------------------- | -------------------------------------------------------------------------------- | ---------------------------- |
-| `team.queries.ts`         | `useTeams`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam`         | Team CRUD operations         |
+| `team.queries.ts`         | `useTeamsQuery`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam`    | Team CRUD operations         |
 | `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMemberQuery`                                     | Team member management       |
 | `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                               | Wage configuration           |
 | `notification.queries.ts` | `useNotificationsQuery`, `useAddBulkNotificationsQuery`, `useUpdateNotification` | Notification management      |
@@ -153,7 +153,7 @@ vi.mock("@/queries/member.queries", () => ({
 **Example usage in component:**
 
 ```typescript
-const { data: teams, isLoading, error } = useTeams();
+const { data: teams, isLoading, error } = useTeamsQuery();
 
 // Access the data
 const teamList = computed(() => teams.value);
@@ -223,7 +223,7 @@ describe("TeamsComponent", () => {
       },
     });
 
-    // mockTeamsData is automatically used by useTeams()
+    // mockTeamsData is automatically used by useTeamsQuery()
     expect(wrapper.text()).toContain("Test Team");
   });
 });
@@ -234,7 +234,7 @@ describe("TeamsComponent", () => {
 For specific tests, override the default mock:
 
 ```typescript
-import { useTeams } from "@/queries/team.queries";
+import { useTeamsQuery } from "@/queries/team.queries";
 import { createMockQueryResponse } from "@/tests/mocks/query.mock";
 import { vi } from "vitest";
 
@@ -242,7 +242,9 @@ describe("TeamsComponent - Custom Data", () => {
   it("should handle empty teams list", () => {
     const customTeams: Team[] = [];
 
-    vi.mocked(useTeams).mockReturnValue(createMockQueryResponse(customTeams));
+    vi.mocked(useTeamsQuery).mockReturnValue(
+      createMockQueryResponse(customTeams)
+    );
 
     const wrapper = mount(TeamsComponent, {
       global: {
@@ -262,7 +264,7 @@ describe("TeamsComponent - Custom Data", () => {
 
 ```typescript
 it("should show loading spinner", () => {
-  vi.mocked(useTeams).mockReturnValue(
+  vi.mocked(useTeamsQuery).mockReturnValue(
     createMockQueryResponse([], true, null) // isLoading = true
   );
 
@@ -285,7 +287,7 @@ it("should show loading spinner", () => {
 it("should display error message", () => {
   const error = new Error("Failed to fetch teams");
 
-  vi.mocked(useTeams).mockReturnValue(
+  vi.mocked(useTeamsQuery).mockReturnValue(
     createMockQueryResponse(null, false, error)
   );
 
@@ -405,7 +407,7 @@ const testData = [{ id: "1", name: "Test" }];
 
 ```typescript
 // ✅ Good: Override specific test case
-vi.mocked(useTeams).mockReturnValue(
+vi.mocked(useTeamsQuery).mockReturnValue(
   createMockQueryResponse([]) // Just override this test
 );
 
@@ -448,7 +450,7 @@ describe("Data Loading States", () => {
       error: () => createMockQueryResponse(null, false, new Error("Failed")),
     };
 
-    vi.mocked(useTeams).mockReturnValue(stateMap[state]());
+    vi.mocked(useTeamsQuery).mockReturnValue(stateMap[state]());
 
     return mount(TeamsComponent, {
       global: {
@@ -511,14 +513,14 @@ it("should invalidate team queries after update", async () => {
 // ✅ Correct: Mock is applied before component mounts
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.mocked(useTeams).mockReturnValue(createMockQueryResponse([]))
+  vi.mocked(useTeamsQuery).mockReturnValue(createMockQueryResponse([]))
 })
 
 const wrapper = mount(Component) // Now uses the mock
 
 // ❌ Wrong: Mocking after component mounts
 const wrapper = mount(Component)
-vi.mocked(useTeams).mockReturnValue(...) // Too late!
+vi.mocked(useTeamsQuery).mockReturnValue(...) // Too late!
 ```
 
 ### Async Mock Issues

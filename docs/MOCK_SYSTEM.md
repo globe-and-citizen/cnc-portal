@@ -13,7 +13,7 @@ Each test file would define its own mocks locally:
 ```typescript
 // In each test file
 vi.mock('@/queries/team.queries', () => ({
-  useTeams: vi.fn(() => ({
+  useTeamsQuery: vi.fn(() => ({
     data: ref([]),
     isLoading: ref(false),
     error: ref(null),
@@ -32,7 +32,7 @@ All mocks are centralized and imported once in the setup:
 import { queryMocks } from '@/tests/mocks/query.mock'
 
 vi.mock('@/queries/team.queries', () => ({
-  useTeams: vi.fn(queryMocks.useTeams),
+  useTeamsQuery: vi.fn(queryMocks.useTeamsQuery),
   // ... clean and DRY
 }))
 ```
@@ -82,7 +82,7 @@ Contains every query/mutation hook function:
 
 ```typescript
 export const queryMocks = {
-  useTeams: () => createMockQueryResponse(mockTeamsData),
+  useTeamsQuery: () => createMockQueryResponse(mockTeamsData),
   useTeam: () => createMockQueryResponse(mockTeamData),
   useCreateTeam: () => createMockMutationResponse(),
   // ... all other queries
@@ -108,7 +108,7 @@ describe('MyComponent', () => {
       }
     })
     
-    // useTeams() query is already mocked with mockTeamsData
+    // useTeamsQuery() query is already mocked with mockTeamsData
     expect(wrapper.find('[data-test="teams"]').exists()).toBe(true)
   })
 })
@@ -119,7 +119,7 @@ describe('MyComponent', () => {
 Override the mock for a single test:
 
 ```typescript
-import { useTeams } from '@/queries/team.queries'
+import { useTeamsQuery } from '@/queries/team.queries'
 import { vi } from 'vitest'
 import { createMockAxiosResponse } from '@/tests/mocks/query.mock'
 
@@ -127,7 +127,7 @@ describe('CustomTeamsTest', () => {
   it('should handle custom team data', () => {
     const customTeam = { id: '999', name: 'Custom Team', ... }
     
-    vi.mocked(useTeams).mockReturnValueOnce({
+    vi.mocked(useTeamsQuery).mockReturnValueOnce({
       data: ref(createMockAxiosResponse([customTeam])),
       isLoading: ref(false),
       error: ref(null),
@@ -200,7 +200,7 @@ Done! The mock is now globally available to all tests.
 
 ```typescript
 it('should show loading state', async () => {
-  vi.mocked(useTeams).mockReturnValueOnce({
+  vi.mocked(useTeamsQuery).mockReturnValueOnce({
     data: ref(null),
     isLoading: ref(true),
     error: ref(null),
@@ -218,7 +218,7 @@ it('should show loading state', async () => {
 it('should handle errors', async () => {
   const mockError = new Error('Network failed')
   
-  vi.mocked(useTeams).mockReturnValueOnce({
+  vi.mocked(useTeamsQuery).mockReturnValueOnce({
     data: ref(null),
     isLoading: ref(false),
     error: ref(mockError),
@@ -261,7 +261,7 @@ it('should handle 401 unauthorized', () => {
     'Unauthorized'
   )
   
-  vi.mocked(useTeams).mockReturnValueOnce({
+  vi.mocked(useTeamsQuery).mockReturnValueOnce({
     data: ref(unauthorizedResponse),
     isLoading: ref(false),
     error: ref(new Error('401')),
@@ -289,7 +289,7 @@ A: Clear mocks between tests: `vi.clearAllMocks()` in `beforeEach()`
 A: Ensure the mock is defined in `queryMocks` and applied in `composables.setup.ts`
 
 **Q: TypeScript errors with mock structure**  
-A: Use `any` type when needed: `vi.mocked(useTeams as any).mockReturnValue(...)`
+A: Use `any` type when needed: `vi.mocked(useTeamsQuery as any).mockReturnValue(...)`
 
 **Q: Need to test with real API response**  
 A: Create a proper response object: `createMockAxiosResponse(realData, 200)`

@@ -14,7 +14,7 @@ This document summarizes the migration from `useCustomFetch` to Axios + TanStack
 
 ### Stores
 
-- ✅ `teamStore.ts` - Migrated to use `useTeams` and `useTeam` queries
+- ✅ `teamStore.ts` - Migrated to use `useTeamsQuery` and `useTeam` queries
 - ✅ `notificationStore.ts` - Migrated to use `useNotificationsQuery`, `useAddBulkNotificationsQuery`, and `useUpdateNotification`
 - ✅ `expenseStore.ts` - Migrated to use `useExpensesQuery` query
 
@@ -114,13 +114,18 @@ Tests now mock TanStack Query hooks instead of `useCustomFetch`. This provides:
 ### Using Queries in Components
 
 ```typescript
-import { useTeams } from "@/queries";
+import { useTeamsQuery } from "@/queries";
 import { computed } from "vue";
 
 export default {
   setup() {
     const userAddress = computed(() => "0x...");
-    const { data: teams, isLoading, error, refetch } = useTeams(userAddress);
+    const {
+      data: teams,
+      isLoading,
+      error,
+      refetch,
+    } = useTeamsQuery(userAddress);
 
     return { teams, isLoading, error, refetch };
   },

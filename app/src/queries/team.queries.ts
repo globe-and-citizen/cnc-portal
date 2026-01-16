@@ -8,7 +8,7 @@ import type { AxiosError } from 'axios'
 /**
  * Fetch all teams for a user, for the authenticated user it will be his teams
  */
-export const useTeams = () => {
+export const useTeamsQuery = () => {
   return useQuery<Team[], AxiosError>({
     queryKey: ['teams'],
     queryFn: async () => {

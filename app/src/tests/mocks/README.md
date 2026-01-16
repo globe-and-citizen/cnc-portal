@@ -41,7 +41,7 @@ The system mocks all query hooks from:
 
 | Module                    | Mocks                                                                            |
 | ------------------------- | -------------------------------------------------------------------------------- |
-| `team.queries.ts`         | `useTeams`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam`         |
+| `team.queries.ts`         | `useTeamsQuery`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam`    |
 | `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMemberQuery`                                     |
 | `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                               |
 | `notification.queries.ts` | `useNotificationsQuery`, `useAddBulkNotificationsQuery`, `useUpdateNotification` |
@@ -57,16 +57,18 @@ The system mocks all query hooks from:
 ### Override Mock Data for Specific Test
 
 ```typescript
-import { useTeams } from '@/queries/team.queries'
+import { useTeamsQuery } from '@/queries/team.queries'
 import { createMockQueryResponse } from '@/tests/mocks/query.mock'
 
-vi.mocked(useTeams).mockReturnValue(createMockQueryResponse([{ id: '1', name: 'Custom Team' }]))
+vi.mocked(useTeamsQuery).mockReturnValue(
+  createMockQueryResponse([{ id: '1', name: 'Custom Team' }])
+)
 ```
 
 ### Test Loading State
 
 ```typescript
-vi.mocked(useTeams).mockReturnValue(
+vi.mocked(useTeamsQuery).mockReturnValue(
   createMockQueryResponse([], true) // isLoading = true
 )
 ```
@@ -74,7 +76,7 @@ vi.mocked(useTeams).mockReturnValue(
 ### Test Error State
 
 ```typescript
-vi.mocked(useTeams).mockReturnValue(createMockQueryResponse(null, false, new Error('Failed')))
+vi.mocked(useTeamsQuery).mockReturnValue(createMockQueryResponse(null, false, new Error('Failed')))
 ```
 
 ## Related Documentation

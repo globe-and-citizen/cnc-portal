@@ -275,14 +275,14 @@ import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
 import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
 import { useRoute } from 'vue-router'
-import { useTeams } from '@/queries/team.queries'
+import { useTeamsQuery } from '@/queries/team.queries'
 // import { useReadContract } from '@wagmi/vue'
 // import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 
 const appStore = useAppStore()
 const route = useRoute()
 const userStore = useUserDataStore()
-const teams = useTeams()
+const teams = useTeamsQuery()
 
 interface User {
   name: string
