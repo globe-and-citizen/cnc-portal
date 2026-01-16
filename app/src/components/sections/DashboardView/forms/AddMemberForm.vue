@@ -29,7 +29,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
-import { useAddMembers, type MemberInput } from '@/queries/member.queries'
+import { useAddMembersQuery, type MemberInput } from '@/queries/member.queries'
 import { log } from '@/utils/generalUtil'
 
 const emits = defineEmits(['memberAdded'])
@@ -45,7 +45,7 @@ const {
   mutate: executeAddMembers,
   isPending: addMembersLoading,
   error: addMembersError
-} = useAddMembers(props.teamId)
+} = useAddMembersQuery(props.teamId)
 
 // const statusCode = ref<number | null>(null)
 

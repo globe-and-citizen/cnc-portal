@@ -138,7 +138,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useDeleteTeam: () => createMockMutationResponse(),
 
   // Member queries - member.queries.ts
-  useAddMembers: () => createMockMutationResponse(),
+  useAddMembersQuery: () => createMockMutationResponse(),
   useDeleteMember: () => createMockMutationResponse(),
 
   // Wage queries - wage.queries.ts
