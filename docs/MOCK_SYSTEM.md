@@ -84,7 +84,7 @@ Contains every query/mutation hook function:
 export const queryMocks = {
   useTeamsQuery: () => createMockQueryResponse(mockTeamsData),
   useTeamQuery: () => createMockQueryResponse(mockTeamData),
-  useCreateTeam: () => createMockMutationResponse(),
+  useCreateTeamQuery: () => createMockMutationResponse(),
   // ... all other queries
 };
 ```
@@ -242,7 +242,7 @@ it("should handle errors", async () => {
 it('should create team successfully', async () => {
   const mockNewTeam = { id: '10', name: 'New Team', ... }
 
-  vi.mocked(useCreateTeam).mockReturnValueOnce({
+  vi.mocked(useCreateTeamQuery).mockReturnValueOnce({
     mutateAsync: vi.fn(() =>
       Promise.resolve(createMockAxiosResponse(mockNewTeam))
     ),

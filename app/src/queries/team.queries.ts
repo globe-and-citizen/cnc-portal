@@ -48,7 +48,7 @@ export const useTeamQuery = (teamId: MaybeRefOrGetter<string | null>) => {
 /**
  * Create a new team
  */
-export const useCreateTeam = () => {
+export const useCreateTeamQuery = () => {
   const queryClient = useQueryClient()
 
   return useMutation<Team, AxiosError, Partial<Team>>({

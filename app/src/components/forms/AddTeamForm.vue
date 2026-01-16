@@ -182,7 +182,7 @@ import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vu
 import { onClickOutside } from '@vueuse/core'
 import type { Team } from '@/types'
 import { useToastStore } from '@/stores/useToastStore'
-import { useCreateTeam } from '@/queries/team.queries'
+import { useCreateTeamQuery } from '@/queries/team.queries'
 
 defineEmits(['done'])
 const { addSuccessToast, addErrorToast } = useToastStore()
@@ -191,7 +191,7 @@ const {
   error: createTeamError,
   mutateAsync: executeCreateTeam,
   data: createdTeamData
-} = useCreateTeam()
+} = useCreateTeamQuery()
 
 // Refs
 const teamData = ref<Pick<Team, 'name' | 'description' | 'members'>>({

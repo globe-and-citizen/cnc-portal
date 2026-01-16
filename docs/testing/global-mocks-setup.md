@@ -88,7 +88,7 @@ export const queryMocks = {
   // Team queries
   useTeamsQuery: () => createMockQueryResponse(mockTeamsData),
   useTeamQuery: () => createMockQueryResponse(mockTeamData),
-  useCreateTeam: () => createMockMutationResponse(),
+  useCreateTeamQuery: () => createMockMutationResponse(),
   useUpdateTeam: () => createMockMutationResponse(),
   useDeleteTeam: () => createMockMutationResponse(),
 
@@ -121,18 +121,18 @@ vi.mock("@/queries/member.queries", () => ({
 
 ## Query Modules Reference
 
-| Module                    | Hooks                                                                              | Purpose                      |
-| ------------------------- | ---------------------------------------------------------------------------------- | ---------------------------- |
-| `team.queries.ts`         | `useTeamsQuery`, `useTeamQuery`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam` | Team CRUD operations         |
-| `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMemberQuery`                                       | Team member management       |
-| `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                                 | Wage configuration           |
-| `notification.queries.ts` | `useNotificationsQuery`, `useAddBulkNotificationsQuery`, `useUpdateNotification`   | Notification management      |
-| `expense.queries.ts`      | `useExpensesQuery`                                                                 | Expense queries              |
-| `user.queries.ts`         | `useUser`, `useUserNonce`                                                          | User data and authentication |
-| `action.queries.ts`       | `useCreateAction`, `useUpdateActionQuery`                                          | Action mutations             |
-| `auth.queries.ts`         | `useValidateTokenQuery`                                                            | Token validation             |
-| `contract.queries.ts`     | `useCreateContractQuery`                                                           | Contract creation            |
-| `health.queries.ts`       | `useBackendHealthQuery`                                                            | Backend health status        |
+| Module                    | Hooks                                                                                   | Purpose                      |
+| ------------------------- | --------------------------------------------------------------------------------------- | ---------------------------- |
+| `team.queries.ts`         | `useTeamsQuery`, `useTeamQuery`, `useCreateTeamQuery`, `useUpdateTeam`, `useDeleteTeam` | Team CRUD operations         |
+| `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMemberQuery`                                            | Team member management       |
+| `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                                      | Wage configuration           |
+| `notification.queries.ts` | `useNotificationsQuery`, `useAddBulkNotificationsQuery`, `useUpdateNotification`        | Notification management      |
+| `expense.queries.ts`      | `useExpensesQuery`                                                                      | Expense queries              |
+| `user.queries.ts`         | `useUser`, `useUserNonce`                                                               | User data and authentication |
+| `action.queries.ts`       | `useCreateAction`, `useUpdateActionQuery`                                               | Action mutations             |
+| `auth.queries.ts`         | `useValidateTokenQuery`                                                                 | Token validation             |
+| `contract.queries.ts`     | `useCreateContractQuery`                                                                | Contract creation            |
+| `health.queries.ts`       | `useBackendHealthQuery`                                                                 | Backend health status        |
 
 ## Response Structure
 
@@ -186,7 +186,7 @@ if (error.value) {
 **Example usage in component:**
 
 ```typescript
-const { mutateAsync, isPending } = useCreateTeam();
+const { mutateAsync, isPending } = useCreateTeamQuery();
 
 const handleCreateTeam = async (teamData) => {
   try {
@@ -307,7 +307,7 @@ it("should display error message", () => {
 ### Testing Mutations
 
 ```typescript
-import { useCreateTeam } from "@/queries/team.queries";
+import { useCreateTeamQuery } from "@/queries/team.queries";
 import { createMockMutationResponse } from "@/tests/mocks/query.mock";
 
 describe("CreateTeam", () => {
@@ -317,7 +317,7 @@ describe("CreateTeam", () => {
 
     (mockMutation.mutateAsync as any).mockResolvedValue(newTeam);
 
-    vi.mocked(useCreateTeam).mockReturnValue(mockMutation);
+    vi.mocked(useCreateTeamQuery).mockReturnValue(mockMutation);
 
     const wrapper = mount(CreateTeamComponent, {
       global: {
@@ -340,7 +340,7 @@ describe("CreateTeam", () => {
 
     (mockMutation.mutateAsync as any).mockRejectedValue(error);
 
-    vi.mocked(useCreateTeam).mockReturnValue(mockMutation);
+    vi.mocked(useCreateTeamQuery).mockReturnValue(mockMutation);
 
     // Test error handling
   });

@@ -135,11 +135,11 @@ export default {
 ### Using Mutations in Components
 
 ```typescript
-import { useCreateTeam } from "@/queries";
+import { useCreateTeamQuery } from "@/queries";
 
 export default {
   setup() {
-    const createTeam = useCreateTeam();
+    const createTeam = useCreateTeamQuery();
 
     const handleSubmit = async (teamData) => {
       try {
