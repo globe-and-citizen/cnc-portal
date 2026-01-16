@@ -132,7 +132,7 @@ export const createMockMutationResponse = (): Record<string, unknown> => ({
 export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Team queries - team.queries.ts
   useTeamsQuery: () => createMockQueryResponse(mockTeamsData),
-  useTeam: () => createMockQueryResponse(mockTeamData),
+  useTeamQuery: () => createMockQueryResponse(mockTeamData),
   useCreateTeam: () => createMockMutationResponse(),
   useUpdateTeam: () => createMockMutationResponse(),
   useDeleteTeam: () => createMockMutationResponse(),

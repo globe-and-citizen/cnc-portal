@@ -26,7 +26,7 @@ export const useTeamsQuery = () => {
 /**
  * Fetch a single team by ID
  */
-export const useTeam = (teamId: MaybeRefOrGetter<string | null>) => {
+export const useTeamQuery = (teamId: MaybeRefOrGetter<string | null>) => {
   return useQuery<Team, AxiosError>({
     queryKey: ['team', { teamId }],
     queryFn: async () => {

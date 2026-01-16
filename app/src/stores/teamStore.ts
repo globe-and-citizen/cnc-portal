@@ -5,7 +5,7 @@ import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
 import type { Address } from 'viem'
 import { ref, watch } from 'vue'
-import { useTeam } from '@/queries/team.queries'
+import { useTeamQuery } from '@/queries/team.queries'
 
 export const useTeamStore = defineStore('team', () => {
   const currentTeamId = ref<string | null>(null)
@@ -14,7 +14,7 @@ export const useTeamStore = defineStore('team', () => {
   /**
    * @description Fetch team by id using TanStack Query
    */
-  const currentTeamMeta = useTeam(currentTeamId)
+  const currentTeamMeta = useTeamQuery(currentTeamId)
 
   // Compute status code from error if available
   // const statusCode = computed(() => {

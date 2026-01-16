@@ -14,7 +14,7 @@ This document summarizes the migration from `useCustomFetch` to Axios + TanStack
 
 ### Stores
 
-- ✅ `teamStore.ts` - Migrated to use `useTeamsQuery` and `useTeam` queries
+- ✅ `teamStore.ts` - Migrated to use `useTeamsQuery` and `useTeamQuery` queries
 - ✅ `notificationStore.ts` - Migrated to use `useNotificationsQuery`, `useAddBulkNotificationsQuery`, and `useUpdateNotification`
 - ✅ `expenseStore.ts` - Migrated to use `useExpensesQuery` query
 
