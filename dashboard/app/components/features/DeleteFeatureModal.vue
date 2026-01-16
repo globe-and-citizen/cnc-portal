@@ -83,9 +83,7 @@ const emit = defineEmits<{
 }>()
 
 // Mutations
-const deleteFeatureMutation = useDeleteFeatureQuery()
-
-const loading = computed(() => deleteFeatureMutation.isPending.value)
+const { mutateAsync: deleteFeature, isPending: loading } = useDeleteFeatureQuery()
 
 // Computed
 const isOpen = computed({
@@ -98,7 +96,7 @@ const handleConfirm = async () => {
   if (!props.feature) return
 
   try {
-    await deleteFeatureMutation.mutateAsync(props.feature.functionName)
+    await deleteFeature(props.feature.functionName)
     handleClose()
   } catch (error) {
     console.error('Failed to delete feature:', error)

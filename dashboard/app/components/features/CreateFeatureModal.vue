@@ -104,9 +104,7 @@ const emit = defineEmits<{
 }>()
 
 // Mutations
-const createFeatureMutation = useCreateFeatureQuery()
-
-const loading = computed(() => createFeatureMutation.isPending.value)
+const { mutateAsync: createFeature, isPending: loading } = useCreateFeatureQuery()
 
 // Local state
 const isOpen = computed({
@@ -169,7 +167,7 @@ const handleSubmit = async () => {
   if (!validateForm()) return
 
   try {
-    await createFeatureMutation.mutateAsync({
+    await createFeature({
       functionName: form.functionName.trim(),
       status: form.status
     })
