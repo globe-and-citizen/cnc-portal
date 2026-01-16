@@ -83,7 +83,7 @@ vi.mock('@/queries/action.queries', () => ({
  * Mock Auth Queries (auth.queries.ts)
  */
 vi.mock('@/queries/auth.queries', () => ({
-  useValidateToken: vi.fn(queryMocks.useValidateToken)
+  useValidateTokenQuery: vi.fn(queryMocks.useValidateTokenQuery)
 }))
 
 /**
