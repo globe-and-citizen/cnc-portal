@@ -90,11 +90,13 @@ Tests now mock TanStack Query hooks instead of `useCustomFetch`. This provides:
 ### Store API Changes
 
 1. **teamStore.ts**
+
    - Removed `statusCode` from return (now computed from error)
    - `teams` is now a computed ref from TanStack Query
    - `executeFetchTeams` is now `refetch` from TanStack Query
 
 2. **notificationStore.ts**
+
    - Similar API but backed by TanStack Query
    - `isLoading` and `error` now come from queries
 
@@ -112,43 +114,43 @@ Tests now mock TanStack Query hooks instead of `useCustomFetch`. This provides:
 ### Using Queries in Components
 
 ```typescript
-import { useTeams } from '@/queries'
-import { computed } from 'vue'
+import { useTeams } from "@/queries";
+import { computed } from "vue";
 
 export default {
   setup() {
-    const userAddress = computed(() => '0x...')
-    const { data: teams, isLoading, error, refetch } = useTeams(userAddress)
+    const userAddress = computed(() => "0x...");
+    const { data: teams, isLoading, error, refetch } = useTeams(userAddress);
 
-    return { teams, isLoading, error, refetch }
-  }
-}
+    return { teams, isLoading, error, refetch };
+  },
+};
 ```
 
 ### Using Mutations in Components
 
 ```typescript
-import { useCreateTeam } from '@/queries'
+import { useCreateTeam } from "@/queries";
 
 export default {
   setup() {
-    const createTeam = useCreateTeam()
+    const createTeam = useCreateTeam();
 
     const handleSubmit = async (teamData) => {
       try {
-        await createTeam.mutateAsync(teamData)
+        await createTeam.mutateAsync(teamData);
         // Teams list will automatically refetch
       } catch (error) {
-        console.error('Failed to create team:', error)
+        console.error("Failed to create team:", error);
       }
-    }
+    };
 
     return {
       handleSubmit,
-      isCreating: createTeam.isPending
-    }
-  }
-}
+      isCreating: createTeam.isPending,
+    };
+  },
+};
 ```
 
 ## Configuration
