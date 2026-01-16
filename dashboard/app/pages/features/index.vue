@@ -113,13 +113,12 @@ const UButton = resolveComponent('UButton')
 const { data: features, isLoading, error } = useFeaturesQuery()
 
 // Mutations
-const updateFeatureMutation = useUpdateFeatureQuery()
+const { mutateAsync: updateFeature, isPending: isUpdatingFeature } = useUpdateFeatureQuery()
 
 // Modal states
 const isCreateModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const featureToDelete = ref<Feature | null>(null)
-const updatingFeature = ref<string | null>(null)
 
 // Status options for the select dropdown
 const statusOptions = [
@@ -165,8 +164,8 @@ const columns: TableColumn<Feature>[] = [
         'valueKey': 'value',
         'size': 'sm',
         'class': 'w-32',
-        'disabled': updatingFeature.value === feature.functionName,
-        'loading': updatingFeature.value === feature.functionName,
+        'disabled': isUpdatingFeature.value,
+        'loading': isUpdatingFeature.value,
         'data-test': 'status-select',
         'onUpdate:modelValue': (value: FeatureStatus) => {
           handleUpdateStatus(feature, value)
@@ -238,16 +237,9 @@ const handleUpdateStatus = async (feature: Feature, newStatus: FeatureStatus) =>
   // Don't update if status is the same
   if (feature.status === newStatus) return
 
-  try {
-    updatingFeature.value = feature.functionName
-    await updateFeatureMutation.mutateAsync({
-      functionName: feature.functionName,
-      status: newStatus
-    })
-  } catch (error) {
-    console.error('Failed to update feature status:', error)
-  } finally {
-    updatingFeature.value = null
-  }
+  await updateFeature({
+    functionName: feature.functionName,
+    status: newStatus
+  })
 }
 </script>

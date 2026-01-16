@@ -91,10 +91,6 @@ const featureDisplayName = computed(() => {
 
 // Navigate back
 const goBack = () => {
-  if (import.meta.client && window.history.length > 1) {
-    router.back()
-    return
-  }
   router.push('/features')
 }
 </script>
