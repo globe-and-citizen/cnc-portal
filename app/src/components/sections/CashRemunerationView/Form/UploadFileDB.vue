@@ -47,35 +47,16 @@ import { computed, ref } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import FilePreviewGallery from './FilePreviewGallery.vue'
-
-/** Constants **/
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
-const MAX_FILES = 10
-
-// Allowed file types
-const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp']
-const ALLOWED_DOCUMENT_EXTENSIONS = ['.pdf', '.txt', '.zip', '.docx']
-const ACCEPTED_FILE_TYPES = [...ALLOWED_IMAGE_EXTENSIONS, ...ALLOWED_DOCUMENT_EXTENSIONS].join(',')
-
-const ALLOWED_IMAGE_MIMETYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
-const ALLOWED_DOCUMENT_MIMETYPES = [
-  'application/pdf',
-  'text/plain',
-  'application/zip',
-  'application/x-zip-compressed',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-]
-const ALLOWED_MIMETYPES = [...ALLOWED_IMAGE_MIMETYPES, ...ALLOWED_DOCUMENT_MIMETYPES]
-
-/** Types **/
-interface PreviewFile {
-  previewUrl: string
-  file: File
-  isImage: boolean
-  fileName: string
-  fileSize: number
-  fileType: string
-}
+import {
+  ACCEPTED_FILE_TYPES,
+  ALLOWED_DOCUMENT_EXTENSIONS,
+  ALLOWED_IMAGE_EXTENSIONS,
+  ALLOWED_IMAGE_MIMETYPES,
+  ALLOWED_MIMETYPES,
+  MAX_FILE_SIZE,
+  MAX_FILES,
+  type PreviewFile
+} from '@/types/upload'
 
 /** Props **/
 interface Props {

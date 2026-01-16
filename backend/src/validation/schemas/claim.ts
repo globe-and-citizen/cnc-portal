@@ -23,9 +23,16 @@ export const addClaimBodySchema = z.object({
       message: 'Memo is too long, maximum 3000 words allowed',
     }),
   dayWorked: z.iso.datetime().optional(),
-  imageScreens: z
-    .array(z.string().url('Invalid image URL'))
-    .max(10, 'Maximum 10 images allowed')
+  attachments: z
+    .array(
+      z.object({
+        fileKey: z.string().min(1, 'File key is required'),
+        fileUrl: z.string().url('Invalid file URL'),
+        fileType: z.string().min(1, 'File type is required'),
+        fileSize: z.number().positive('File size must be positive'),
+      })
+    )
+    .max(10, 'Maximum 10 files allowed')
     .optional(),
 });
 
@@ -34,8 +41,18 @@ export const updateClaimBodySchema = z.object({
   hoursWorked: z.coerce.number().min(1).max(24).optional(),
   memo: z.string().trim().max(200, 'Memo is too long, maximum 200 characters').optional(),
   dayWorked: z.string().optional(),
-  deletedFileIndexes: z.string().optional(), // JSON string of indexes to delete
-  // fileAttachments are sent via multipart files; body carries only text fields
+  deletedFileIndexes: z.array(z.number().int().nonnegative()).optional(), // Array of indexes to delete
+  attachments: z
+    .array(
+      z.object({
+        fileKey: z.string().min(1, 'File key is required'),
+        fileUrl: z.string().url('Invalid file URL'),
+        fileType: z.string().min(1, 'File type is required'),
+        fileSize: z.number().positive('File size must be positive'),
+      })
+    )
+    .max(10, 'Maximum 10 files allowed')
+    .optional(),
 });
 
 // Get claims query parameters

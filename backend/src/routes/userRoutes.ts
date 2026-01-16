@@ -1,6 +1,7 @@
 import express from 'express';
 import { getNonce, getUser, updateUser, getAllUsers } from '../controllers/userController';
 import { authorizeUser } from '../middleware/authMiddleware';
+import { upload } from '../utils/upload';
 import {
   validateParams,
   validateQuery,
@@ -288,6 +289,7 @@ userRoutes.get('/:address', authorizeUser, validateParams(addressParamsSchema), 
 userRoutes.put(
   '/:address',
   authorizeUser,
+  upload.single('profileImage'),
   validateBodyAndParams(updateUserBodySchema, addressParamsSchema),
   updateUser
 );

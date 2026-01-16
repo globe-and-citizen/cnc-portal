@@ -358,29 +358,28 @@ const generatedMonthWeek = computed(() => {
 })
 
 interface FileAttachment {
-  fileName: string
   fileType: string
-  fileSize?: number
-  fileData: string
+  fileSize: number
+  fileKey: string
+  fileUrl: string
 }
 
 const buildFilePreviews = (files: FileAttachment[]) => {
   const imageMimeTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp']
-  const imageExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp']
 
   return files.map((file) => {
-    const previewUrl =
-      file?.fileData && file?.fileType ? `data:${file.fileType};base64,${file.fileData}` : ''
-    const isImage =
-      imageMimeTypes.includes(file?.fileType) ||
-      imageExtensions.some((ext) => file?.fileName?.toLowerCase().endsWith(ext))
+    // Use MIME type to determine if it's an image
+    const isImage = imageMimeTypes.includes(file?.fileType)
+    // Derive display name from fileKey (basename)
+    const displayName = file.fileKey?.split('/').pop() || 'file'
 
     return {
-      previewUrl,
-      fileName: file.fileName,
-      fileSize: file.fileSize ?? 0,
+      previewUrl: file.fileUrl,
+      fileName: displayName, // Display name derived from key
+      fileSize: file.fileSize,
       fileType: file.fileType,
-      isImage
+      isImage,
+      key: file.fileKey
     }
   })
 }
