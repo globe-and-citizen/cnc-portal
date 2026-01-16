@@ -60,7 +60,7 @@ vi.mock('@/queries/notification.queries', () => ({
  * Mock Expense Queries (expense.queries.ts)
  */
 vi.mock('@/queries/expense.queries', () => ({
-  useExpenses: vi.fn(queryMocks.useExpenses)
+  useExpensesQuery: vi.fn(queryMocks.useExpensesQuery)
 }))
 
 /**

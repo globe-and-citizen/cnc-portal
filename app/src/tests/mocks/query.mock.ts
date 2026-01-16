@@ -151,7 +151,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useUpdateNotification: () => createMockMutationResponse(),
 
   // Expense queries - expense.queries.ts
-  useExpenses: () => createMockQueryResponse([]),
+  useExpensesQuery: () => createMockQueryResponse([]),
 
   // User queries - user.queries.ts
   useUser: () => createMockQueryResponse(null),

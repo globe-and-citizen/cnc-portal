@@ -16,11 +16,11 @@ This document summarizes the migration from `useCustomFetch` to Axios + TanStack
 
 - ✅ `teamStore.ts` - Migrated to use `useTeams` and `useTeam` queries
 - ✅ `notificationStore.ts` - Migrated to use `useNotifications`, `useAddBulkNotifications`, and `useUpdateNotification`
-- ✅ `expenseStore.ts` - Migrated to use `useExpenses` query
+- ✅ `expenseStore.ts` - Migrated to use `useExpensesQuery` query
 
 ### Composables
 
-- ✅ `useAuth.ts` - Migrated to use `useValidateToken` query
+- ✅ `useAuth.ts` - Migrated to use `useValidateTokenQuery` query
 - ✅ `useSiwe.ts` - Migrated to use `useUser` query (kept useFetch for non-authenticated endpoints)
 - ✅ `useBod.ts` - Migrated to use `useCreateAction` and `useUpdateActionQuery` mutations
 - ✅ `bod/functions.ts` - Migrated to use `useCreateAction` and `useUpdateActionQuery` mutations
@@ -28,7 +28,7 @@ This document summarizes the migration from `useCustomFetch` to Axios + TanStack
 
 ### Services
 
-- ✅ `AddCampaignService.ts` - Migrated to use `useCreateContract` mutation
+- ✅ `AddCampaignService.ts` - Migrated to use `useCreateContractQuery` mutation
 
 ### Query Files Created
 
@@ -75,7 +75,7 @@ These components can be migrated incrementally as part of future work. The core 
 ### Updated Tests
 
 - ✅ `notificationStore.spec.ts` - Updated to mock TanStack Query hooks
-- ✅ `AddCampaignService.spec.ts` - Updated to mock `useCreateContract`
+- ✅ `AddCampaignService.spec.ts` - Updated to mock `useCreateContractQuery`
 
 ### Test Strategy
 
