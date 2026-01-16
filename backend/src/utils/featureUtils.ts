@@ -2,7 +2,7 @@ import { prisma } from './dependenciesUtil';
 import type { FeatureStatus } from '../validation/featureValidation';
 
 export async function findAllFeatures() {
-  const features = await prisma.globalSetting.findMany({
+  return await prisma.globalSetting.findMany({
     orderBy: { functionName: 'asc' },
     include: {
       teamFunctionOverrides: {
@@ -16,20 +16,10 @@ export async function findAllFeatures() {
       },
     },
   });
-
-  return features.map((feature) => ({
-    ...feature,
-    overridesCount: feature.teamFunctionOverrides.length,
-    overrides: feature.teamFunctionOverrides.map(override => ({
-      teamId: override.teamId,
-      teamName: override.team.name,
-      status: override.status,
-    })),
-  }));
 }
 
 export async function findFeatureByName(functionName: string) {
-  const feature = await prisma.globalSetting.findUnique({
+  return await prisma.globalSetting.findUnique({
     where: { functionName: functionName },
     include: {
       teamFunctionOverrides: {
@@ -43,38 +33,22 @@ export async function findFeatureByName(functionName: string) {
       },
     },
   });
-
-  if (!feature) return null;
-  
-  // Transform the data to match frontend expectations
-  return {
-    ...feature,
-    overrides: feature.teamFunctionOverrides.map(override => ({
-      teamId: override.teamId,
-      teamName: override.team.name,
-      status: override.status,
-    })),
-  };
 }
 
 export async function insertFeature(functionName: string, status: FeatureStatus) {
-  const feature = await prisma.globalSetting.create({
+  return await prisma.globalSetting.create({
     data: {
       functionName,
       status,
     },
   });
-
-  return feature;
 }
 
 export async function patchFeature(functionName: string, status: FeatureStatus) {
-  const feature = await prisma.globalSetting.update({
+  return await prisma.globalSetting.update({
     where: { functionName: functionName },
     data: { status },
   });
-
-  return feature;
 }
 
 export async function removeFeature(functionName: string): Promise<boolean> {
