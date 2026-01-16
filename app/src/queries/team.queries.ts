@@ -66,7 +66,7 @@ export const useCreateTeamQuery = () => {
 /**
  * Update an existing team
  */
-export const useUpdateTeam = () => {
+export const useUpdateTeamQuery = () => {
   const queryClient = useQueryClient()
 
   return useMutation<Team, AxiosError, { id: string; teamData: Partial<Team> }>({

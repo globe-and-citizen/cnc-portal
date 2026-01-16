@@ -45,7 +45,7 @@ import type { Member } from '@/types'
 import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
-import { useUpdateTeam, useDeleteTeam } from '@/queries/team.queries'
+import { useUpdateTeamQuery, useDeleteTeam } from '@/queries/team.queries'
 
 const showDeleteTeamConfirmModal = ref(false)
 const showModal = ref(false)
@@ -66,7 +66,7 @@ const {
   isPending: teamIsUpdating,
   error: updateTeamError,
   mutate: updateTeamMutate
-} = useUpdateTeam()
+} = useUpdateTeamQuery()
 
 const executeUpdateTeam = () => {
   updateTeamMutate(
