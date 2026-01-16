@@ -74,7 +74,6 @@ Pre-configured data that matches real API responses:
 - `mockTeamsData` - Array of teams
 - `mockWageData` - Wage information with rates
 - `mockNotificationData` - Notification messages
-- And response wrappers: `mockTeamResponse`, `mockTeamsResponse`, etc.
 
 ### The `queryMocks` Object
 

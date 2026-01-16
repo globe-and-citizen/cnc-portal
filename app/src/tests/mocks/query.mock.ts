@@ -41,8 +41,6 @@ export const mockTeamData: Team = {
 
 export const mockTeamsData: Team[] = [mockTeamData]
 
-// export const mockTeamResponse = createMockAxiosResponse(mockTeamData)
-// export const mockTeamsResponse = createMockAxiosResponse(mockTeamsData)
 
 /**
  * Wage Query Mocks

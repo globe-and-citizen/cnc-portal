@@ -276,19 +276,12 @@ import TeamMetaComponent from './TeamMetaComponent.vue'
 import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useTeamsQuery } from '@/queries/team.queries'
-// import { useReadContract } from '@wagmi/vue'
-// import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import type { User } from '@/types'
 
 const appStore = useAppStore()
 const route = useRoute()
 const userStore = useUserDataStore()
 const teams = useTeamsQuery()
-
-interface User {
-  name: string
-  address: string
-  imageUrl?: string
-}
 
 const isCollapsed = defineModel({
   type: Boolean
@@ -300,31 +293,6 @@ const props = defineProps<{
 const target = ref(null)
 const isDropdownOpen = ref(false)
 const teamStore = useTeamStore()
-
-// const cashRemunerationAddress = computed(() =>
-//   teamStore.getContractAddressByType('CashRemunerationEIP712')
-// )
-
-// const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
-//   functionName: 'owner',
-//   // @ts-expect-error cashRemunerationAddress may not match expected type, but is correct for contract call
-//   address: cashRemunerationAddress,
-//   abi: CashRemuneration_ABI,
-//   enabled: computed(() => !!cashRemunerationAddress.value)
-// })
-
-// Check if user is Cash Remuneration owner with fallback to team owner
-// const isCashRemunerationOwner = computed(() => {
-//   if (
-//     cashRemunerationAddress.value &&
-//     cashRemunerationOwner.value &&
-//     !cashRemunerationOwnerError.value
-//   ) {
-//     return cashRemunerationOwner.value === userStore.address
-//   }
-//   // Fallback to team owner if contract doesn't exist or error occurred
-//   return userStore.address === teamStore.currentTeam?.ownerAddress
-// })
 
 // Dropdown submenu state
 const openSubmenus = ref<boolean[]>([])
