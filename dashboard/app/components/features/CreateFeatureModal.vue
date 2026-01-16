@@ -137,9 +137,6 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
-// Toast for notifications
-const toast = useToast()
-
 // Mutations
 const { mutateAsync: createFeature, isPending: loading } = useCreateFeatureQuery()
 
@@ -182,29 +179,11 @@ const resetForm = () => {
 }
 
 const handleSubmit = async (event: FormSubmitEvent<Schema>) => {
-  try {
-    await createFeature({
-      functionName: event.data.functionName.value,
-      status: event.data.status.value as FeatureStatus
-    })
-
-    toast.add({
-      title: 'Success',
-      description: `Feature "${event.data.functionName.label}" has been created successfully.`,
-      color: 'success',
-      icon: 'i-lucide-check-circle'
-    })
-
-    handleClose()
-  } catch (error) {
-    console.error('Failed to create feature:', error)
-    toast.add({
-      title: 'Error',
-      description: 'Failed to create feature. Please try again.',
-      color: 'error',
-      icon: 'i-lucide-alert-circle'
-    })
-  }
+  await createFeature({
+    functionName: event.data.functionName.value,
+    status: event.data.status.value as FeatureStatus
+  })
+  handleClose()
 }
 
 const handleClose = () => {
