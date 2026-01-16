@@ -12,7 +12,7 @@ import { getLogs } from 'viem/actions'
 //import { parseAbiItem } from 'viem'
 
 vi.mock('@/queries/contract.queries', () => ({
-  useCreateContract: vi.fn()
+  useCreateContractQuery: vi.fn()
 }))
 
 vi.mock('@wagmi/core', async () => {

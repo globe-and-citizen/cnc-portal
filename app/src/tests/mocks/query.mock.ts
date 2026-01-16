@@ -165,7 +165,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useValidateTokenQuery: () => createMockQueryResponse(null),
 
   // Contract queries - contract.queries.ts
-  useCreateContract: () => createMockMutationResponse(),
+  useCreateContractQuery: () => createMockMutationResponse(),
 
   // Health queries - health.queries.ts
   useBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData)

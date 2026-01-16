@@ -4,7 +4,7 @@ import apiClient from '@/lib/axios'
 /**
  * Create a new contract
  */
-export const useCreateContract = () => {
+export const useCreateContractQuery = () => {
   const queryClient = useQueryClient()
 
   return useMutation({

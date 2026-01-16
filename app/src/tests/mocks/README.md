@@ -49,7 +49,7 @@ The system mocks all query hooks from:
 | `user.queries.ts`         | `useUser`, `useUserNonce`                                                |
 | `action.queries.ts`       | `useCreateActionQuery`, `useUpdateActionQuery`                           |
 | `auth.queries.ts`         | `useValidateTokenQuery`                                                  |
-| `contract.queries.ts`     | `useCreateContract`                                                      |
+| `contract.queries.ts`     | `useCreateContractQuery`                                                 |
 | `health.queries.ts`       | `useBackendHealthQuery`                                                  |
 
 ## Common Tasks

@@ -90,7 +90,7 @@ vi.mock('@/queries/auth.queries', () => ({
  * Mock Contract Queries (contract.queries.ts)
  */
 vi.mock('@/queries/contract.queries', () => ({
-  useCreateContract: vi.fn(queryMocks.useCreateContract)
+  useCreateContractQuery: vi.fn(queryMocks.useCreateContractQuery)
 }))
 
 /**
