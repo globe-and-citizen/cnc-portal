@@ -10,7 +10,7 @@
           Teams with custom restriction settings ({{ feature.teamFunctionOverrides.length }} overrides)
         </p>
       </div>
-      <FeaturesAddTeamOverrideModal
+      <AddTeamOverrideModal
         :feature="feature"
       />
     </div>
@@ -41,7 +41,7 @@
       </template>
 
       <template #actions-cell="{ row }">
-        <FeaturesDeleteTeamOverrideModal :override="row.original" />
+        <DeleteTeamOverrideModal :override="row.original" />
       </template>
     </UTable>
   </div>

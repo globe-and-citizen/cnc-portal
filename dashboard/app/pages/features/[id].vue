@@ -21,8 +21,6 @@
       </div>
     </template>
 
-    <!-- <pre>{{ currentFeature }}</pre> -->
-    <!-- <pre>{{ teams }}</pre> -->
     <div v-if="isLoading" class="space-y-4">
       <USkeleton class="h-12" />
       <USkeleton class="h-64" />
