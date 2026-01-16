@@ -8,7 +8,7 @@ import type { AxiosError } from 'axios'
 /**
  * Fetch team wage data by team ID
  */
-export const useTeamWages = (teamId: MaybeRefOrGetter<string | number | null>) => {
+export const useTeamWagesQuery = (teamId: MaybeRefOrGetter<string | number | null>) => {
   return useQuery<Wage[], AxiosError>({
     queryKey: ['teamWages', { teamId }],
     queryFn: async () => {

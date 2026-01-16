@@ -64,9 +64,9 @@ vi.mock('@/composables/useCustomFetch', () => {
   }
 })
 
-// Mock useTeamWages query hook
+// Mock useTeamWagesQuery query hook
 vi.mock('@/queries/wage.queries', () => ({
-  useTeamWages: vi.fn(() => ({
+  useTeamWagesQuery: vi.fn(() => ({
     data: mockWageData,
     isLoading: mockWageIsFetching,
     error: mockWageError

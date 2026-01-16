@@ -125,7 +125,7 @@ vi.mock("@/queries/member.queries", () => ({
 | ------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------- |
 | `team.queries.ts`         | `useTeamsQuery`, `useTeamQuery`, `useCreateTeamQuery`, `useUpdateTeamQuery`, `useDeleteTeamQuery` | Team CRUD operations         |
 | `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMemberQuery`                                                      | Team member management       |
-| `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                                                | Wage configuration           |
+| `wage.queries.ts`         | `useTeamWagesQuery`, `useSetMemberWage`                                                           | Wage configuration           |
 | `notification.queries.ts` | `useNotificationsQuery`, `useAddBulkNotificationsQuery`, `useUpdateNotification`                  | Notification management      |
 | `expense.queries.ts`      | `useExpensesQuery`                                                                                | Expense queries              |
 | `user.queries.ts`         | `useUserQuery`, `useUserNonceQuery`                                                               | User data and authentication |
