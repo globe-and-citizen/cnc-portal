@@ -62,7 +62,7 @@ vi.mock('@/queries/team.queries', () => ({
     error: ref<Error | null>(null),
     mutate: mocks.mockUpdateTeamMutate
   })),
-  useDeleteTeam: vi.fn(() => ({
+  useDeleteTeamQuery: vi.fn(() => ({
     mutate: mocks.mockDeleteTeamMutate,
     isPending: ref(false),
     error: ref<Error | null>(null)

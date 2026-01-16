@@ -85,7 +85,7 @@ export const useUpdateTeamQuery = () => {
 /**
  * Delete a team
  */
-export const useDeleteTeam = () => {
+export const useDeleteTeamQuery = () => {
   const queryClient = useQueryClient()
 
   return useMutation<void, AxiosError, string>({
