@@ -44,7 +44,7 @@ vi.mock('@/queries/member.queries', () => ({
  */
 vi.mock('@/queries/wage.queries', () => ({
   useTeamWagesQuery: vi.fn(queryMocks.useTeamWagesQuery),
-  useSetMemberWage: vi.fn(queryMocks.useSetMemberWage)
+  useSetMemberWageQuery: vi.fn(queryMocks.useSetMemberWageQuery)
 }))
 
 /**

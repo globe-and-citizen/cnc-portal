@@ -37,7 +37,7 @@ export interface SetWageInput {
   maximumHoursPerWeek: number
 }
 
-export const useSetMemberWage = () => {
+export const useSetMemberWageQuery = () => {
   const queryClient = useQueryClient()
   return useMutation<void, AxiosError, SetWageInput>({
     mutationFn: async (wageInput) => {
