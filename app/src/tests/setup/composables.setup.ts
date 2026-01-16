@@ -67,7 +67,7 @@ vi.mock('@/queries/expense.queries', () => ({
  * Mock User Queries (user.queries.ts)
  */
 vi.mock('@/queries/user.queries', () => ({
-  useUser: vi.fn(queryMocks.useUser),
+  useUserQuery: vi.fn(queryMocks.useUserQuery),
   useUserNonce: vi.fn(queryMocks.useUserNonce)
 }))
 

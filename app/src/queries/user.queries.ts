@@ -7,7 +7,7 @@ import { toValue } from 'vue'
 /**
  * Fetch user data by address
  */
-export const useUser = (address: MaybeRefOrGetter<string>) => {
+export const useUserQuery = (address: MaybeRefOrGetter<string>) => {
   return useQuery({
     queryKey: ['user', { address }],
     queryFn: async () => {
