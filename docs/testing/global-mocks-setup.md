@@ -128,7 +128,7 @@ vi.mock("@/queries/member.queries", () => ({
 | `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                                                | Wage configuration           |
 | `notification.queries.ts` | `useNotificationsQuery`, `useAddBulkNotificationsQuery`, `useUpdateNotification`                  | Notification management      |
 | `expense.queries.ts`      | `useExpensesQuery`                                                                                | Expense queries              |
-| `user.queries.ts`         | `useUserQuery`, `useUserNonce`                                                                    | User data and authentication |
+| `user.queries.ts`         | `useUserQuery`, `useUserNonceQuery`                                                               | User data and authentication |
 | `action.queries.ts`       | `useCreateAction`, `useUpdateActionQuery`                                                         | Action mutations             |
 | `auth.queries.ts`         | `useValidateTokenQuery`                                                                           | Token validation             |
 | `contract.queries.ts`     | `useCreateContractQuery`                                                                          | Contract creation            |

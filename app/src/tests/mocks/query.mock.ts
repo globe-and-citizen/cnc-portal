@@ -155,7 +155,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
 
   // User queries - user.queries.ts
   useUserQuery: () => createMockQueryResponse(null),
-  useUserNonce: () => createMockQueryResponse(null),
+  useUserNonceQuery: () => createMockQueryResponse(null),
 
   // Action queries - action.queries.ts
   useCreateActionQuery: () => createMockMutationResponse(),

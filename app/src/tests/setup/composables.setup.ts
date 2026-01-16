@@ -68,7 +68,7 @@ vi.mock('@/queries/expense.queries', () => ({
  */
 vi.mock('@/queries/user.queries', () => ({
   useUserQuery: vi.fn(queryMocks.useUserQuery),
-  useUserNonce: vi.fn(queryMocks.useUserNonce)
+  useUserNonceQuery: vi.fn(queryMocks.useUserNonceQuery)
 }))
 
 /**

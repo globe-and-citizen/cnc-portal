@@ -23,7 +23,7 @@ export const useUserQuery = (address: MaybeRefOrGetter<string>) => {
 /**
  * Fetch user nonce by address (for SIWE)
  */
-export const useUserNonce = (address: MaybeRefOrGetter<string>) => {
+export const useUserNonceQuery = (address: MaybeRefOrGetter<string>) => {
   return useQuery({
     queryKey: ['user', 'nonce', { address }],
     queryFn: async () => {
