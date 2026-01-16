@@ -93,7 +93,7 @@ export const queryMocks = {
   useDeleteTeam: () => createMockMutationResponse(),
 
   // Member queries
-  useAddMembers: () => createMockMutationResponse(),
+  useAddMembersQuery: () => createMockMutationResponse(),
   useDeleteMember: () => createMockMutationResponse(),
 
   // ... and more
@@ -112,7 +112,7 @@ vi.mock("@/queries/team.queries", () => ({
 }));
 
 vi.mock("@/queries/member.queries", () => ({
-  useAddMembers: vi.fn(queryMocks.useAddMembers),
+  useAddMembersQuery: vi.fn(queryMocks.useAddMembersQuery),
   // ...
 }));
 
@@ -124,7 +124,7 @@ vi.mock("@/queries/member.queries", () => ({
 | Module                    | Hooks                                                                    | Purpose                      |
 | ------------------------- | ------------------------------------------------------------------------ | ---------------------------- |
 | `team.queries.ts`         | `useTeams`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam` | Team CRUD operations         |
-| `member.queries.ts`       | `useAddMembers`, `useDeleteMember`                                       | Team member management       |
+| `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMember`                                  | Team member management       |
 | `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                       | Wage configuration           |
 | `notification.queries.ts` | `useNotifications`, `useAddBulkNotifications`, `useUpdateNotification`   | Notification management      |
 | `expense.queries.ts`      | `useExpensesQuery`                                                       | Expense queries              |
