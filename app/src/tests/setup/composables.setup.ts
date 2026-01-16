@@ -76,7 +76,7 @@ vi.mock('@/queries/user.queries', () => ({
  */
 vi.mock('@/queries/action.queries', () => ({
   useCreateActionQuery: vi.fn(queryMocks.useCreateActionQuery),
-  useUpdateAction: vi.fn(queryMocks.useUpdateAction)
+  useUpdateActionQuery: vi.fn(queryMocks.useUpdateActionQuery)
 }))
 
 /**

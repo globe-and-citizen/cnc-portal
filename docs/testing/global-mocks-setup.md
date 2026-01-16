@@ -129,7 +129,7 @@ vi.mock("@/queries/member.queries", () => ({
 | `notification.queries.ts` | `useNotifications`, `useAddBulkNotifications`, `useUpdateNotification`   | Notification management      |
 | `expense.queries.ts`      | `useExpenses`                                                            | Expense queries              |
 | `user.queries.ts`         | `useUser`, `useUserNonce`                                                | User data and authentication |
-| `action.queries.ts`       | `useCreateAction`, `useUpdateAction`                                     | Action mutations             |
+| `action.queries.ts`       | `useCreateAction`, `useUpdateActionQuery`                                | Action mutations             |
 | `auth.queries.ts`         | `useValidateToken`                                                       | Token validation             |
 | `contract.queries.ts`     | `useCreateContract`                                                      | Contract creation            |
 | `health.queries.ts`       | `useBackendHealthQuery`                                                  | Backend health status        |

@@ -22,8 +22,8 @@ This document summarizes the migration from `useCustomFetch` to Axios + TanStack
 
 - ✅ `useAuth.ts` - Migrated to use `useValidateToken` query
 - ✅ `useSiwe.ts` - Migrated to use `useUser` query (kept useFetch for non-authenticated endpoints)
-- ✅ `useBod.ts` - Migrated to use `useCreateAction` and `useUpdateAction` mutations
-- ✅ `bod/functions.ts` - Migrated to use `useCreateAction` and `useUpdateAction` mutations
+- ✅ `useBod.ts` - Migrated to use `useCreateAction` and `useUpdateActionQuery` mutations
+- ✅ `bod/functions.ts` - Migrated to use `useCreateAction` and `useUpdateActionQuery` mutations
 - ✅ `bod.ts` - Migrated to use `useCreateAction` mutation
 
 ### Services

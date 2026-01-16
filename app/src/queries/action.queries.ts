@@ -23,7 +23,7 @@ export const useCreateActionQuery = () => {
 /**
  * Update an action
  */
-export const useUpdateAction = () => {
+export const useUpdateActionQuery = () => {
   const queryClient = useQueryClient()
 
   return useMutation({

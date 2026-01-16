@@ -47,7 +47,7 @@ The system mocks all query hooks from:
 | `notification.queries.ts` | `useNotifications`, `useAddBulkNotifications`, `useUpdateNotification`   |
 | `expense.queries.ts`      | `useExpenses`                                                            |
 | `user.queries.ts`         | `useUser`, `useUserNonce`                                                |
-| `action.queries.ts`       | `useCreateActionQuery`, `useUpdateAction`                                |
+| `action.queries.ts`       | `useCreateActionQuery`, `useUpdateActionQuery`                           |
 | `auth.queries.ts`         | `useValidateToken`                                                       |
 | `contract.queries.ts`     | `useCreateContract`                                                      |
 | `health.queries.ts`       | `useBackendHealthQuery`                                                  |
