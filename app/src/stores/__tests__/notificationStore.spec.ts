@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useNotificationStore } from '../notificationStore'
+import { useNotificationsQuerytore } from '../notificationStore'
 import { createMockQueryResponse, mockNotificationData } from '@/tests/mocks/query.mock'
 // import { ref } from 'vue'
 // import type { Notification } from '@/types/notification'
 
 // Mock TanStack Query hooks using centralized mocks
 vi.mock('@/queries/notification.queries', () => ({
-  useNotifications: vi.fn(() => createMockQueryResponse(mockNotificationData)),
+  useNotificationsQuery: vi.fn(() => createMockQueryResponse(mockNotificationData)),
   useAddBulkNotifications: vi.fn(() => ({
     mutateAsync: vi.fn()
   })),
@@ -23,13 +23,13 @@ describe('Notification Store', () => {
   })
 
   it.skip('initializes with empty notifications array', () => {
-    const store = useNotificationStore()
+    const store = useNotificationsQuerytore()
     expect(store.notifications).toEqual([])
     expect(store.isLoading).toBe(false)
   })
 
   it('has fetchNotifications, addBulkNotifications, and updateNotification methods', () => {
-    const store = useNotificationStore()
+    const store = useNotificationsQuerytore()
     expect(typeof store.fetchNotifications).toBe('function')
     expect(typeof store.addBulkNotifications).toBe('function')
     expect(typeof store.updateNotification).toBe('function')

@@ -39,18 +39,18 @@ For detailed documentation on:
 
 The system mocks all query hooks from:
 
-| Module                    | Mocks                                                                    |
-| ------------------------- | ------------------------------------------------------------------------ |
-| `team.queries.ts`         | `useTeams`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam` |
-| `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMemberQuery`                             |
-| `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                       |
-| `notification.queries.ts` | `useNotifications`, `useAddBulkNotifications`, `useUpdateNotification`   |
-| `expense.queries.ts`      | `useExpensesQuery`                                                       |
-| `user.queries.ts`         | `useUser`, `useUserNonce`                                                |
-| `action.queries.ts`       | `useCreateActionQuery`, `useUpdateActionQuery`                           |
-| `auth.queries.ts`         | `useValidateTokenQuery`                                                  |
-| `contract.queries.ts`     | `useCreateContractQuery`                                                 |
-| `health.queries.ts`       | `useBackendHealthQuery`                                                  |
+| Module                    | Mocks                                                                       |
+| ------------------------- | --------------------------------------------------------------------------- |
+| `team.queries.ts`         | `useTeams`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam`    |
+| `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMemberQuery`                                |
+| `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                          |
+| `notification.queries.ts` | `useNotificationsQuery`, `useAddBulkNotifications`, `useUpdateNotification` |
+| `expense.queries.ts`      | `useExpensesQuery`                                                          |
+| `user.queries.ts`         | `useUser`, `useUserNonce`                                                   |
+| `action.queries.ts`       | `useCreateActionQuery`, `useUpdateActionQuery`                              |
+| `auth.queries.ts`         | `useValidateTokenQuery`                                                     |
+| `contract.queries.ts`     | `useCreateContractQuery`                                                    |
+| `health.queries.ts`       | `useBackendHealthQuery`                                                     |
 
 ## Common Tasks
 

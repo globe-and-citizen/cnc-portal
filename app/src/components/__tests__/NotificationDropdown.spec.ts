@@ -61,7 +61,7 @@ vi.mock('@/stores', () => ({
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn()
   })),
-  useNotificationStore: vi.fn(() => mockNotificationStore)
+  useNotificationsQuerytore: vi.fn(() => mockNotificationStore)
 }))
 
 const mockUseWriteContract = {

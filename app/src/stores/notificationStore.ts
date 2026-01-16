@@ -3,14 +3,14 @@ import { computed } from 'vue'
 import type { BulkNotificationPayload, Notification } from '@/types/notification'
 import { log } from '@/utils'
 import {
-  useNotifications,
+  useNotificationsQuery,
   useAddBulkNotifications,
   useUpdateNotification
 } from '@/queries/notification.queries'
 
-export const useNotificationStore = defineStore('notification', () => {
+export const useNotificationsQuerytore = defineStore('notification', () => {
   // Use queries
-  const { data: notificationsData, isLoading, error, refetch } = useNotifications()
+  const { data: notificationsData, isLoading, error, refetch } = useNotificationsQuery()
   const addBulkMutation = useAddBulkNotifications()
   const updateMutation = useUpdateNotification()
 

@@ -51,7 +51,7 @@ vi.mock('@/queries/wage.queries', () => ({
  * Mock Notification Queries (notification.queries.ts)
  */
 vi.mock('@/queries/notification.queries', () => ({
-  useNotifications: vi.fn(queryMocks.useNotifications),
+  useNotificationsQuery: vi.fn(queryMocks.useNotificationsQuery),
   useAddBulkNotifications: vi.fn(queryMocks.useAddBulkNotifications),
   useUpdateNotification: vi.fn(queryMocks.useUpdateNotification)
 }))

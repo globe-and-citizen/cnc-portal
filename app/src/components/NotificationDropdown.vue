@@ -55,7 +55,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { type Notification } from '@/types'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore, useUserDataStore, useNotificationStore } from '@/stores'
+import { useToastStore, useUserDataStore, useNotificationsQuerytore } from '@/stores'
 import { log, parseError } from '@/utils'
 import { type Address, parseEther } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
@@ -71,7 +71,7 @@ const itemsPerPage = ref(4)
 const updateEndPoint = ref('')
 const { addErrorToast, addSuccessToast } = useToastStore()
 const useUserStore = useUserDataStore()
-const notificationStore = useNotificationStore()
+const notificationStore = useNotificationsQuerytore()
 
 onMounted(async () => {
   try {

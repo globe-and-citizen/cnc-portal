@@ -121,18 +121,18 @@ vi.mock("@/queries/member.queries", () => ({
 
 ## Query Modules Reference
 
-| Module                    | Hooks                                                                    | Purpose                      |
-| ------------------------- | ------------------------------------------------------------------------ | ---------------------------- |
-| `team.queries.ts`         | `useTeams`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam` | Team CRUD operations         |
-| `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMemberQuery`                             | Team member management       |
-| `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                       | Wage configuration           |
-| `notification.queries.ts` | `useNotifications`, `useAddBulkNotifications`, `useUpdateNotification`   | Notification management      |
-| `expense.queries.ts`      | `useExpensesQuery`                                                       | Expense queries              |
-| `user.queries.ts`         | `useUser`, `useUserNonce`                                                | User data and authentication |
-| `action.queries.ts`       | `useCreateAction`, `useUpdateActionQuery`                                | Action mutations             |
-| `auth.queries.ts`         | `useValidateTokenQuery`                                                  | Token validation             |
-| `contract.queries.ts`     | `useCreateContractQuery`                                                 | Contract creation            |
-| `health.queries.ts`       | `useBackendHealthQuery`                                                  | Backend health status        |
+| Module                    | Hooks                                                                       | Purpose                      |
+| ------------------------- | --------------------------------------------------------------------------- | ---------------------------- |
+| `team.queries.ts`         | `useTeams`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam`    | Team CRUD operations         |
+| `member.queries.ts`       | `useAddMembersQuery`, `useDeleteMemberQuery`                                | Team member management       |
+| `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                          | Wage configuration           |
+| `notification.queries.ts` | `useNotificationsQuery`, `useAddBulkNotifications`, `useUpdateNotification` | Notification management      |
+| `expense.queries.ts`      | `useExpensesQuery`                                                          | Expense queries              |
+| `user.queries.ts`         | `useUser`, `useUserNonce`                                                   | User data and authentication |
+| `action.queries.ts`       | `useCreateAction`, `useUpdateActionQuery`                                   | Action mutations             |
+| `auth.queries.ts`         | `useValidateTokenQuery`                                                     | Token validation             |
+| `contract.queries.ts`     | `useCreateContractQuery`                                                    | Contract creation            |
+| `health.queries.ts`       | `useBackendHealthQuery`                                                     | Backend health status        |
 
 ## Response Structure
 

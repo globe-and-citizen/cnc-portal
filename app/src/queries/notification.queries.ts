@@ -5,7 +5,7 @@ import type { NotificationResponse, BulkNotificationPayload } from '@/types/noti
 /**
  * Fetch all notifications for the current user
  */
-export const useNotifications = () => {
+export const useNotificationsQuery = () => {
   return useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
