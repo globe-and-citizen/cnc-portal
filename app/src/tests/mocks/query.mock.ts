@@ -41,7 +41,6 @@ export const mockTeamData: Team = {
 
 export const mockTeamsData: Team[] = [mockTeamData]
 
-
 /**
  * Wage Query Mocks
  */
