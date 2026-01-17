@@ -8,7 +8,7 @@ import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from 
 import { useQueryClient } from '@tanstack/vue-query'
 import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
 import { log, parseError } from '@/utils'
-import { useCreateActionQuery, useUpdateActionQuery } from '@/queries/action.queries'
+import { useCreateActionMutation, useUpdateActionQuery } from '@/queries/action.queries'
 
 export function useBod(contractType: ContractType, contractAbi: Abi) {
   const teamStore = useTeamStore()
@@ -24,7 +24,7 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
   const isActionApproved = ref(false)
   const isLoadingApproveAction = ref(false)
 
-  const createActionMutation = useCreateActionQuery()
+  const createActionMutation = useCreateActionMutation()
   const updateActionMutation = useUpdateActionQuery()
 
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
