@@ -23,7 +23,7 @@ const { mockuseAddMembersQuery, mockToastStore } = vi.hoisted(() => {
 
 // Mock the member queries
 vi.mock('@/queries/member.queries', () => ({
-  useAddMembersQuery: mockuseAddMembersQuery
+  useAddMembersMutation: mockuseAddMembersQuery
 }))
 
 // Mock stores for toasts
