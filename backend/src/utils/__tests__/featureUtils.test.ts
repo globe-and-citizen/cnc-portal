@@ -72,14 +72,17 @@ describe('featureUtils', () => {
         orderBy: { functionName: 'asc' },
         include: {
           teamFunctionOverrides: {
-            select: { id: true },
+            take: 10,
+            include: {
+              team: true,
+            },
+            orderBy: {
+              id: 'desc',
+            },
           },
         },
       });
-      expect(result).toEqual([
-        { ...mockFeatures[0], overridesCount: 2 },
-        { ...mockFeatures[1], overridesCount: 1 },
-      ]);
+      expect(result).toEqual(mockFeatures);
     });
 
     it('should return empty array when no features exist', async () => {
@@ -120,13 +123,9 @@ describe('featureUtils', () => {
         where: { functionName: 'SUBMIT_RESTRICTION' },
         include: {
           teamFunctionOverrides: {
+            take: 100,
             include: {
-              team: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
+              team: true,
             },
             orderBy: {
               id: 'asc',
@@ -135,20 +134,7 @@ describe('featureUtils', () => {
         },
       });
 
-      expect(result).toEqual({
-        id: 1,
-        functionName: 'SUBMIT_RESTRICTION',
-        status: 'ENABLED',
-        createdAt: mockFeature.createdAt,
-        updatedAt: mockFeature.updatedAt,
-        overrides: [
-          {
-            teamId: 100,
-            teamName: 'Team Alpha',
-            status: 'DISABLED',
-          },
-        ],
-      });
+      expect(result).toEqual(mockFeature);
     });
 
     it('should return null when feature does not exist', async () => {
@@ -372,7 +358,7 @@ describe('featureUtils', () => {
 
       expect(prisma.teamFunctionOverride.create).toHaveBeenCalledWith({
         data: { functionName: 'SUBMIT_RESTRICTION', teamId: 100, status: 'DISABLED' },
-        include: { team: { select: { id: true, name: true } } },
+        include: { team: true },
       });
       expect(result).toEqual(mockOverride);
     });
@@ -416,7 +402,7 @@ describe('featureUtils', () => {
       expect(prisma.teamFunctionOverride.update).toHaveBeenCalledWith({
         where: { unique_team_function: { teamId: 100, functionName: 'SUBMIT_RESTRICTION' } },
         data: { status: 'ENABLED' },
-        include: { team: { select: { id: true, name: true } } },
+        include: { team: true },
       });
       expect(result).toEqual(mockUpdatedOverride);
     });

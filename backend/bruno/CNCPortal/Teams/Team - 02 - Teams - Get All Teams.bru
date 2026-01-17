@@ -1,7 +1,7 @@
 meta {
-  name: Get Teams - 01 - Get All Teams
+  name: Team - 02 - Teams - Get All Teams
   type: http
-  seq: 1
+  seq: 2
 }
 
 get {
@@ -27,6 +27,12 @@ tests {
         expect(team).to.have.property('id');
         expect(team).to.have.property('name');
       });
+    }
+  });
+  test("store first team ID if teams exist", function() {
+    if (res.body.length > 0) {
+      bru.setVar("testTeamId", res.body[0].id);
+      console.log("Stored first team ID:", res.body[0].id);
     }
   });
 }

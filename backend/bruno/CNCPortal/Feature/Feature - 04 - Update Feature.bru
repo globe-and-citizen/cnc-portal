@@ -25,16 +25,12 @@ tests {
     expect(res.getStatus()).to.equal(200);
   });
 
-  test("should return success true", function() {
-    expect(res.body.success).to.equal(true);
-  });
-
   test("should return updated feature", function() {
-    expect(res.body.data).to.be.an('object');
-    expect(res.body.data.status).to.equal('enabled');
+    expect(res.body).to.be.an('object');
+    expect(res.body.status).to.equal('enabled');
   });
 
   test("log updated feature", function() {
-    console.log("Updated feature:", JSON.stringify(res.body.data, null, 2));
+    console.log("Updated feature:", JSON.stringify(res.body, null, 2));
   });
 }

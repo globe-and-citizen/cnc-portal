@@ -1,0 +1,40 @@
+meta {
+  name: Team - 04 - Edge Case - Create - Invalid Wallet Address
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{host}}/teams
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "name": "Test Team",
+    "description": "Team with invalid member address",
+    "officerAddress": "0x1234567890123456789012345678901234567890",
+    "members": [
+      {
+        "name": "Invalid Member",
+        "address": "invalid-wallet-address"
+      }
+    ]
+  }
+}
+
+tests {
+  test("should return 400 status for invalid wallet address", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+  
+  test("should return error message about invalid address", function() {
+    expect(res.body).to.have.property('error');
+    expect(res.body.error).to.include('Invalid wallet address');
+  });
+}
