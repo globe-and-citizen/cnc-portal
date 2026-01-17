@@ -36,9 +36,9 @@
           >
             <template #description>
               <div class="space-y-2">
-                <p>You are about to remove the team override:</p>
+                <p>You are about to remove the team override: for</p>
                 <p class="font-semibold">
-                  "{{ override?.team.name || 'Unknown Team' }}" for
+                  "{{ override?.team.name || 'Unknown Team' }}"
                 </p>
                 <p class="text-sm">
                   This team will revert to using the global restriction settings.
