@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{host}}/admin/features/{{testFeatureName}}/teams/{{testTeamId}}
+  url: {{host}}/admin/features/{{testFeatureName}}/teams
   body: json
   auth: bearer
 }
@@ -16,6 +16,7 @@ auth:bearer {
 
 body:json {
   {
+    "teamId": {{testTeamId}},
     "status": "enabled"
   }
 }

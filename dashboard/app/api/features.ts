@@ -54,16 +54,13 @@ export const deleteFeature = async (functionName: string) => {
 /**
  * Create a team override for a feature
  * @param featureName The name of the feature
- * @param teamId The team ID
- * @param status The restriction status
+ * @param payload The payload containing teamId and status
  */
 export const createFeatureTeamOverride = async (
   featureName: string,
-  teamId: number,
-  payload: { status: FeatureStatus }
+  payload: { teamId: number, status: FeatureStatus }
 ) => {
-  // TODO: the team ID should be part of the payload interface, update in the backend as well
-  return await apiFetch<boolean>(`/admin/features/${featureName}/teams/${teamId}`, {
+  return await apiFetch<boolean>(`/admin/features/${featureName}/teams`, {
     method: 'POST',
     body: payload
   })

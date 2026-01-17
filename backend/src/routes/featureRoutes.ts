@@ -15,7 +15,8 @@ import {
   createFeatureSchema,
   updateFeatureSchema,
   featureTeamParamsSchema,
-  teamOverrideSchema,
+  createTeamOverrideSchema,
+  updateTeamOverrideSchema,
 } from '../validation/featureValidation';
 
 const router = Router();
@@ -176,10 +177,9 @@ router.delete('/:functionName', validateParams(functionNameParamSchema), deleteF
 // ============================================
 // Team Override Endpoints
 // ============================================
-//TODO: the team ID should be part of the payload interface, update in the backend as well
 /**
  * @swagger
- * /api/admin/features/{functionName}/teams/{teamId}:
+ * /api/admin/features/{functionName}/teams:
  *   post:
  *     summary: Create a team override for a feature
  *     tags: [Features]
@@ -191,11 +191,6 @@ router.delete('/:functionName', validateParams(functionNameParamSchema), deleteF
  *         required: true
  *         schema:
  *           type: string
- *       - in: path
- *         name: teamId
- *         required: true
- *         schema:
- *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -203,8 +198,13 @@ router.delete('/:functionName', validateParams(functionNameParamSchema), deleteF
  *           schema:
  *             type: object
  *             required:
+ *               - teamId
  *               - status
  *             properties:
+ *               teamId:
+ *                 type: integer
+ *                 description: Team ID
+ *                 example: 123
  *               status:
  *                 type: string
  *                 enum: [enabled, disabled, beta]
@@ -217,8 +217,8 @@ router.delete('/:functionName', validateParams(functionNameParamSchema), deleteF
  *         description: Override already exists
  */
 router.post(
-  '/:functionName/teams/:teamId',
-  validateBodyAndParams(teamOverrideSchema, featureTeamParamsSchema),
+  '/:functionName/teams',
+  validateBodyAndParams(createTeamOverrideSchema, functionNameParamSchema),
   createOverride
 );
 
@@ -261,7 +261,7 @@ router.post(
  */
 router.put(
   '/:functionName/teams/:teamId',
-  validateBodyAndParams(teamOverrideSchema, featureTeamParamsSchema),
+  validateBodyAndParams(updateTeamOverrideSchema, featureTeamParamsSchema),
   updateOverride
 );
 

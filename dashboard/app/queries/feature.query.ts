@@ -163,7 +163,7 @@ export const useCreateFeatureTeamOverrideQuery = () => {
 
   return useMutation({
     mutationFn: async ({ featureName, teamId, status }: { featureName: string, teamId: number, status: FeatureStatus }) => {
-      return await createFeatureTeamOverride(featureName, teamId, { status })
+      return await createFeatureTeamOverride(featureName, { teamId, status })
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['features'] })

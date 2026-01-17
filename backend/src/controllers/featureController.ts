@@ -96,21 +96,21 @@ export const deleteFeatureByName = async (req: Request, res: Response) => {
   }
 };
 
-/** POST /features/:functionName/teams/:teamId — Create a team override */
+/** POST /features/:functionName/teams — Create a team override */
 export const createOverride = async (req: Request, res: Response) => {
   try {
-    const { functionName, teamId } = req.params;
-    const { status } = req.body;
+    const { functionName } = req.params;
+    const { teamId, status } = req.body;
 
     if (!(await featureExists(functionName))) {
       return errorResponse(404, `Feature "${functionName}" not found`, res);
     }
 
-    if (!(await teamExists(parseInt(teamId)))) {
+    if (!(await teamExists(teamId))) {
       return errorResponse(404, `Team with ID ${teamId} not found`, res);
     }
 
-    if (await overrideExists(functionName, parseInt(teamId))) {
+    if (await overrideExists(functionName, teamId)) {
       return errorResponse(
         409,
         `Override already exists for team ${teamId} on feature "${functionName}". Use PUT to update.`,
@@ -118,7 +118,7 @@ export const createOverride = async (req: Request, res: Response) => {
       );
     }
 
-    const override = await insertOverride(functionName, parseInt(teamId), status);
+    const override = await insertOverride(functionName, teamId, status);
 
     return res.status(201).json(override);
   } catch (error) {
