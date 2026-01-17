@@ -62,7 +62,7 @@ import { useTeamStore } from '@/stores/teamStore'
 import { computed, ref, watch } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useSyncWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
+import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
 import MemberSection from '@/components/sections/DashboardView/MemberSection.vue'
 import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
@@ -72,7 +72,7 @@ const teamStore = useTeamStore()
 const showModal = ref(false)
 
 const route = useRoute()
-const { mutate: syncWeeklyClaims } = useSyncWeeklyClaimsQuery()
+const { mutate: syncWeeklyClaims } = useSyncWeeklyClaimsMutation()
 
 onMounted(() => {
   if (route.params.id) {
