@@ -43,7 +43,7 @@ The system mocks all query hooks from:
 | ------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `team.queries.ts`         | `useTeamsQuery`, `useTeamQuery`, `useCreateTeamMutation`, `useUpdateTeamMutation`, `useDeleteTeamMutation` |
 | `member.queries.ts`       | `useAddMembersMutation`, `useDeleteMemberMutation`                                                         |
-| `wage.queries.ts`         | `useTeamWagesQuery`, `useSetMemberWageQuery`                                                               |
+| `wage.queries.ts`         | `useTeamWagesQuery`, `useSetMemberWageMutation`                                                            |
 | `notification.queries.ts` | `useNotificationsQuery`, `useAddBulkNotificationsMutation`, `useUpdateNotificationMutation`                |
 | `expense.queries.ts`      | `useExpensesQuery`                                                                                         |
 | `user.queries.ts`         | `useUserQuery`, `useUserNonceQuery`                                                                        |

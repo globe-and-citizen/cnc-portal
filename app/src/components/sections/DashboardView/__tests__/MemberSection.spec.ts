@@ -71,7 +71,7 @@ vi.mock('@/queries/wage.queries', () => ({
     isLoading: mockWageIsFetching,
     error: mockWageError
   })),
-  useSetMemberWageQuery: vi.fn(() => ({
+  useSetMemberWageMutation: vi.fn(() => ({
     mutate: vi.fn(),
     isPending: ref(false),
     error: ref<Error | null>(null)
