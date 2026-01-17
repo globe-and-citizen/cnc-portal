@@ -24,59 +24,10 @@ interface MemberSectionInstance {
 }
 
 // Create mutable refs for reactive state outside the mock
-const mockStatus = ref(200)
 const mockWageData = ref<WageData[]>([])
 const mockWageError = ref<string | null | Error>(null)
 const mockWageIsFetching = ref(false)
 
-// Mock the modules BEFORE importing the component
-vi.mock('@/composables/useCustomFetch', () => {
-  const createMockResponse = () => ({
-    execute: vi.fn(),
-    error: ref(null),
-    isFetching: ref(false),
-    data: ref(null),
-    status: ref(200)
-  })
-
-  return {
-    useCustomFetch: () => ({
-      json: () => ({
-        execute: vi.fn(),
-        error: mockWageError,
-        isFetching: mockWageIsFetching,
-        data: mockWageData,
-        status: mockStatus
-      }),
-      get: () => ({
-        json: () => createMockResponse()
-      }),
-      delete: () => ({
-        json: () => createMockResponse()
-      }),
-      put: () => ({
-        json: () => createMockResponse()
-      }),
-      post: () => ({
-        json: () => createMockResponse()
-      })
-    })
-  }
-})
-
-// Mock useTeamWagesQuery query hook
-vi.mock('@/queries/wage.queries', () => ({
-  useTeamWagesQuery: vi.fn(() => ({
-    data: mockWageData,
-    isLoading: mockWageIsFetching,
-    error: mockWageError
-  })),
-  useSetMemberWageMutation: vi.fn(() => ({
-    mutate: vi.fn(),
-    isPending: ref(false),
-    error: ref<Error | null>(null)
-  }))
-}))
 
 describe.skip('MemberSection.vue', () => {
   let wrapper: ReturnType<typeof mount>
