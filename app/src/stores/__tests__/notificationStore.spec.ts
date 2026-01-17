@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useNotificationsQuerytore } from '../notificationStore'
+import { useNotificationStore } from '../notificationStore'
 import { createMockQueryResponse, mockNotificationData } from '@/tests/mocks/query.mock'
 // import { ref } from 'vue'
 // import type { Notification } from '@/types/notification'
@@ -23,13 +23,13 @@ describe('Notification Store', () => {
   })
 
   it.skip('initializes with empty notifications array', () => {
-    const store = useNotificationsQuerytore()
+    const store = useNotificationStore()
     expect(store.notifications).toEqual([])
     expect(store.isLoading).toBe(false)
   })
 
   it('has fetchNotifications, addBulkNotifications, and updateNotification methods', () => {
-    const store = useNotificationsQuerytore()
+    const store = useNotificationStore()
     expect(typeof store.fetchNotifications).toBe('function')
     expect(typeof store.addBulkNotifications).toBe('function')
     expect(typeof store.updateNotification).toBe('function')

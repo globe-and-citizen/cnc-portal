@@ -8,7 +8,7 @@ import {
   useUpdateNotification
 } from '@/queries/notification.queries'
 
-export const useNotificationsQuerytore = defineStore('notification', () => {
+export const useNotificationStore = defineStore('notification', () => {
   // Use queries
   const { data: notificationsData, isLoading, error, refetch } = useNotificationsQuery()
   const addBulkMutation = useAddBulkNotificationsQuery()

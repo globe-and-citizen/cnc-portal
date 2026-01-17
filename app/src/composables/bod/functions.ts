@@ -10,7 +10,7 @@ import { config } from '@/wagmi.config'
 import { BOD_ABI } from '@/artifacts/abi/bod'
 import { useQueryClient } from '@tanstack/vue-query'
 import { log, parseError } from '@/utils'
-import { useNotificationsQuerytore } from '@/stores/notificationStore'
+import { useNotificationStore } from '@/stores/notificationStore'
 import { useCreateActionQuery, useUpdateActionQuery } from '@/queries/action.queries'
 /**
  * BOD contract write functions - combines admin and transfers
@@ -21,7 +21,7 @@ export function useBodWritesFunctions() {
   const teamStore = useTeamStore()
   const { addErrorToast, addSuccessToast } = useToastStore()
   const queryClient = useQueryClient()
-  const notificationStore = useNotificationsQuerytore()
+  const notificationStore = useNotificationStore()
   const action = ref<Partial<Action> | null>(null)
   const isLoadingApproveAction = ref(false)
   const isActionAdded = ref(false)
