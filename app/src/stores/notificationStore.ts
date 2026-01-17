@@ -5,14 +5,14 @@ import { log } from '@/utils'
 import {
   useNotificationsQuery,
   useAddBulkNotificationsQuery,
-  useUpdateNotification
+  useUpdateNotificationQuery
 } from '@/queries/notification.queries'
 
 export const useNotificationStore = defineStore('notification', () => {
   // Use queries
   const { data: notificationsData, isLoading, error, refetch } = useNotificationsQuery()
   const addBulkMutation = useAddBulkNotificationsQuery()
-  const updateMutation = useUpdateNotification()
+  const updateMutation = useUpdateNotificationQuery()
 
   // Computed state
   const notifications = computed<Notification[]>(() => notificationsData.value || [])

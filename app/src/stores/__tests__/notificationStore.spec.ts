@@ -11,7 +11,7 @@ vi.mock('@/queries/notification.queries', () => ({
   useAddBulkNotificationsQuery: vi.fn(() => ({
     mutateAsync: vi.fn()
   })),
-  useUpdateNotification: vi.fn(() => ({
+  useUpdateNotificationQuery: vi.fn(() => ({
     mutateAsync: vi.fn()
   }))
 }))
