@@ -247,8 +247,8 @@ describe('Feature Controller', () => {
       vi.mocked(errorResponse).mockReturnValue(undefined);
 
       const req = createMockRequest({
-        params: { functionName: 'NONEXISTENT', teamId: '5' },
-        body: { status: 'disabled' },
+        params: { functionName: 'NONEXISTENT' },
+        body: { teamId: 5, status: 'disabled' },
       });
       const res = createMockResponse();
 
@@ -263,8 +263,8 @@ describe('Feature Controller', () => {
       vi.mocked(errorResponse).mockReturnValue(undefined);
 
       const req = createMockRequest({
-        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '999' },
-        body: { status: 'disabled' },
+        params: { functionName: 'SUBMIT_RESTRICTION' },
+        body: { teamId: 999, status: 'disabled' },
       });
       const res = createMockResponse();
 
@@ -280,8 +280,8 @@ describe('Feature Controller', () => {
       vi.mocked(errorResponse).mockReturnValue(undefined);
 
       const req = createMockRequest({
-        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
-        body: { status: 'disabled' },
+        params: { functionName: 'SUBMIT_RESTRICTION' },
+        body: { teamId: 5, status: 'disabled' },
       });
       const res = createMockResponse();
 
@@ -309,8 +309,8 @@ describe('Feature Controller', () => {
       vi.mocked(featureUtils.insertOverride).mockResolvedValue(mockOverride as any);
 
       const req = createMockRequest({
-        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
-        body: { status: 'disabled' },
+        params: { functionName: 'SUBMIT_RESTRICTION' },
+        body: { teamId: 5, status: 'disabled' },
       });
       const res = createMockResponse();
 
@@ -325,8 +325,8 @@ describe('Feature Controller', () => {
       vi.mocked(featureUtils.featureExists).mockRejectedValue(error);
       vi.mocked(errorResponse).mockReturnValue(undefined);
       const req = createMockRequest({
-        params: { functionName: 'SUBMIT_RESTRICTION', teamId: '5' },
-        body: { status: 'disabled' },
+        params: { functionName: 'SUBMIT_RESTRICTION' },
+        body: { teamId: 5, status: 'disabled' },
       });
       const res = createMockResponse();
       await featureController.createOverride(req as Request, res as Response);
