@@ -157,7 +157,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
 
   // Action queries - action.queries.ts
   useCreateActionMutation: () => createMockMutationResponse(),
-  useUpdateActionQuery: () => createMockMutationResponse(),
+  useUpdateActionMutation: () => createMockMutationResponse(),
 
   // Auth queries - auth.queries.ts
   useValidateTokenQuery: () => createMockQueryResponse(null),

@@ -11,7 +11,7 @@ import { BOD_ABI } from '@/artifacts/abi/bod'
 import { useQueryClient } from '@tanstack/vue-query'
 import { log, parseError } from '@/utils'
 import { useNotificationStore } from '@/stores/notificationStore'
-import { useCreateActionMutation, useUpdateActionQuery } from '@/queries/action.queries'
+import { useCreateActionMutation, useUpdateActionMutation } from '@/queries/action.queries'
 /**
  * BOD contract write functions - combines admin and transfers
  */
@@ -30,7 +30,7 @@ export function useBodWritesFunctions() {
   const isLoadingBankAction = computed(() => writes.isLoading)
 
   const createActionMutation = useCreateActionMutation()
-  const updateActionMutation = useUpdateActionQuery()
+  const updateActionMutation = useUpdateActionMutation()
 
   const { isConfirmed, isConfirming } = writes
 
