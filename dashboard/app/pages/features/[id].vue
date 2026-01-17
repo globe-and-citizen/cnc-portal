@@ -71,8 +71,6 @@ import { computed } from 'vue'
 import { useRouter, useRoute } from '#imports'
 import { useFeatureQuery } from '~/queries/feature.query'
 import { formatFeatureName } from '~/utils/generalUtil'
-import FeatureGlobalRestriction from '~/components/features/FeatureGlobalRestriction.vue'
-import TeamOverridesSection from '~/components/features/TeamOverridesSection.vue'
 
 const router = useRouter()
 const route = useRoute()

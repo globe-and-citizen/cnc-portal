@@ -103,8 +103,6 @@ import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Feature, FeatureStatus } from '~/types'
 import { useFeaturesQuery, useUpdateFeatureQuery } from '~/queries/feature.query'
-import CreateFeatureModal from '~/components/features/CreateFeatureModal.vue'
-import DeleteFeatureModal from '~/components/features/DeleteFeatureModal.vue'
 
 const USelect = resolveComponent('USelect')
 const UButton = resolveComponent('UButton')
