@@ -39,18 +39,18 @@ For detailed documentation on:
 
 The system mocks all query hooks from:
 
-| Module                    | Mocks                                                                                             |
-| ------------------------- | ------------------------------------------------------------------------------------------------- |
-| `team.queries.ts`         | `useTeamsQuery`, `useTeamQuery`, `useCreateTeamQuery`, `useUpdateTeamQuery`, `useDeleteTeamQuery` |
-| `member.queries.ts`       | `useAddMembersMutation`, `useDeleteMemberMutation`                                                |
-| `wage.queries.ts`         | `useTeamWagesQuery`, `useSetMemberWageQuery`                                                      |
-| `notification.queries.ts` | `useNotificationsQuery`, `useAddBulkNotificationsMutation`, `useUpdateNotificationMutation`       |
-| `expense.queries.ts`      | `useExpensesQuery`                                                                                |
-| `user.queries.ts`         | `useUserQuery`, `useUserNonceQuery`                                                               |
-| `action.queries.ts`       | `useCreateActionMutation`, `useUpdateActionMutation`                                              |
-| `auth.queries.ts`         | `useValidateTokenQuery`                                                                           |
-| `contract.queries.ts`     | `useCreateContractMutation`                                                                       |
-| `health.queries.ts`       | `useBackendHealthQuery`                                                                           |
+| Module                    | Mocks                                                                                                      |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `team.queries.ts`         | `useTeamsQuery`, `useTeamQuery`, `useCreateTeamMutation`, `useUpdateTeamMutation`, `useDeleteTeamMutation` |
+| `member.queries.ts`       | `useAddMembersMutation`, `useDeleteMemberMutation`                                                         |
+| `wage.queries.ts`         | `useTeamWagesQuery`, `useSetMemberWageQuery`                                                               |
+| `notification.queries.ts` | `useNotificationsQuery`, `useAddBulkNotificationsMutation`, `useUpdateNotificationMutation`                |
+| `expense.queries.ts`      | `useExpensesQuery`                                                                                         |
+| `user.queries.ts`         | `useUserQuery`, `useUserNonceQuery`                                                                        |
+| `action.queries.ts`       | `useCreateActionMutation`, `useUpdateActionMutation`                                                       |
+| `auth.queries.ts`         | `useValidateTokenQuery`                                                                                    |
+| `contract.queries.ts`     | `useCreateContractMutation`                                                                                |
+| `health.queries.ts`       | `useBackendHealthQuery`                                                                                    |
 
 ## Common Tasks
 

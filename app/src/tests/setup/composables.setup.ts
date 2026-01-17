@@ -26,9 +26,9 @@ vi.mock('@tanstack/vue-query', async () => {
 vi.mock('@/queries/team.queries', () => ({
   useTeamsQuery: vi.fn(queryMocks.useTeamsQuery),
   useTeamQuery: vi.fn(queryMocks.useTeamQuery),
-  useCreateTeamQuery: vi.fn(queryMocks.useCreateTeamQuery),
-  useUpdateTeamQuery: vi.fn(queryMocks.useUpdateTeamQuery),
-  useDeleteTeamQuery: vi.fn(queryMocks.useDeleteTeamQuery)
+  useCreateTeamMutation: vi.fn(queryMocks.useCreateTeamMutation),
+  useUpdateTeamMutation: vi.fn(queryMocks.useUpdateTeamMutation),
+  useDeleteTeamMutation: vi.fn(queryMocks.useDeleteTeamMutation)
 }))
 
 /**

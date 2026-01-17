@@ -131,9 +131,9 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Team queries - team.queries.ts
   useTeamsQuery: () => createMockQueryResponse(mockTeamsData),
   useTeamQuery: () => createMockQueryResponse(mockTeamData),
-  useCreateTeamQuery: () => createMockMutationResponse(),
-  useUpdateTeamQuery: () => createMockMutationResponse(),
-  useDeleteTeamQuery: () => createMockMutationResponse(),
+  useCreateTeamMutation: () => createMockMutationResponse(),
+  useUpdateTeamMutation: () => createMockMutationResponse(),
+  useDeleteTeamMutation: () => createMockMutationResponse(),
 
   // Member queries - member.queries.ts
   useAddMembersMutation: () => createMockMutationResponse(),

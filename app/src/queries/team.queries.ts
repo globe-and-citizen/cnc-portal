@@ -48,7 +48,7 @@ export const useTeamQuery = (teamId: MaybeRefOrGetter<string | null>) => {
 /**
  * Create a new team
  */
-export const useCreateTeamQuery = () => {
+export const useCreateTeamMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation<Team, AxiosError, Partial<Team>>({
@@ -66,7 +66,7 @@ export const useCreateTeamQuery = () => {
 /**
  * Update an existing team
  */
-export const useUpdateTeamQuery = () => {
+export const useUpdateTeamMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation<Team, AxiosError, { id: string; teamData: Partial<Team> }>({
@@ -85,7 +85,7 @@ export const useUpdateTeamQuery = () => {
 /**
  * Delete a team
  */
-export const useDeleteTeamQuery = () => {
+export const useDeleteTeamMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation<void, AxiosError, string>({

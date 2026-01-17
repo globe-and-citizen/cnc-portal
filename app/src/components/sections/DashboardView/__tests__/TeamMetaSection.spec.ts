@@ -57,12 +57,12 @@ vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
 })
 
 vi.mock('@/queries/team.queries', () => ({
-  useUpdateTeamQuery: vi.fn(() => ({
+  useUpdateTeamMutation: vi.fn(() => ({
     isPending: ref(false),
     error: ref<Error | null>(null),
     mutate: mocks.mockUpdateTeamMutate
   })),
-  useDeleteTeamQuery: vi.fn(() => ({
+  useDeleteTeamMutation: vi.fn(() => ({
     mutate: mocks.mockDeleteTeamMutate,
     isPending: ref(false),
     error: ref<Error | null>(null)
