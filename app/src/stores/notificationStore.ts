@@ -4,15 +4,15 @@ import type { BulkNotificationPayload, Notification } from '@/types/notification
 import { log } from '@/utils'
 import {
   useNotificationsQuery,
-  useAddBulkNotificationsQuery,
-  useUpdateNotificationQuery
+  useAddBulkNotificationsMutation,
+  useUpdateNotificationMutation
 } from '@/queries/notification.queries'
 
 export const useNotificationStore = defineStore('notification', () => {
   // Use queries
   const { data: notificationsData, isLoading, error, refetch } = useNotificationsQuery()
-  const addBulkMutation = useAddBulkNotificationsQuery()
-  const updateMutation = useUpdateNotificationQuery()
+  const addBulkMutation = useAddBulkNotificationsMutation()
+  const updateMutation = useUpdateNotificationMutation()
 
   // Computed state
   const notifications = computed<Notification[]>(() => notificationsData.value || [])

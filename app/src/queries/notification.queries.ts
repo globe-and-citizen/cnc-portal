@@ -18,7 +18,7 @@ export const useNotificationsQuery = () => {
 /**
  * Add bulk notifications
  */
-export const useAddBulkNotificationsQuery = () => {
+export const useAddBulkNotificationsMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -36,7 +36,7 @@ export const useAddBulkNotificationsQuery = () => {
 /**
  * Update a notification (mark as read)
  */
-export const useUpdateNotificationQuery = () => {
+export const useUpdateNotificationMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
