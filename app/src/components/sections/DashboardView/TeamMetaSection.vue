@@ -52,10 +52,8 @@ const showModal = ref(false)
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
-// const route = useRoute()
 const router = useRouter()
 const inputs = ref<Member[]>([])
-// const { teamStore.currentTeamMeta.data } = storeToRefs(teamStore)
 
 const updateTeamInput = ref<{ name: string; description: string }>({
   name: '',
