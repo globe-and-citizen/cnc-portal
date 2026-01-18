@@ -300,6 +300,44 @@ describe('useSafeReads', () => {
     expect(axiosGetMock).not.toHaveBeenCalled()
   })
 
+  it('propagates axios error messages for Safe info', async () => {
+    const { useSafeInfo } = useSafeReads()
+    axiosGetMock.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { data: { message: 'API Balance Error' } },
+      message: 'Balance failed'
+    })
+
+    const { error, fetchSafeInfo } = useSafeInfo(ref(137))
+    await fetchSafeInfo()
+
+    expect(error.value).toBe('API Balance Error')
+  })
+
+  it('propagates axios error messages for Safe details', async () => {
+    const { useSafeInfo } = useSafeReads()
+    axiosGetMock
+      .mockResolvedValueOnce({
+        data: [
+          {
+            tokenAddress: null,
+            balance: '0',
+            token: { decimals: 18, symbol: 'POL' }
+          }
+        ]
+      })
+      .mockRejectedValueOnce({
+        isAxiosError: true,
+        response: { data: { message: 'Details Error' } },
+        message: 'Details failed'
+      })
+
+    const { error, fetchSafeInfo } = useSafeInfo(ref(137))
+    await fetchSafeInfo()
+
+    expect(error.value).toBe('Details Error')
+  })
+
   it('validates required parameters', async () => {
     const { useSafeInfo } = useSafeReads()
     mockTeamStore.currentTeamMeta = {

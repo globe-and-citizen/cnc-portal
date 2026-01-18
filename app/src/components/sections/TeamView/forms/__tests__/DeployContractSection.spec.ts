@@ -7,17 +7,24 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 
 // Hoisted mocks without reactive refs (following project patterns)
-const { mockUseSafe, mockAddSuccessToast, mockAddErrorToast, mockUseCustomFetch } = vi.hoisted(
-  () => ({
-    mockUseSafe: {
-      deploySafe: vi.fn(),
-      isBusy: { value: false } // Plain object instead of ref
-    },
-    mockAddSuccessToast: vi.fn(),
-    mockAddErrorToast: vi.fn(),
-    mockUseCustomFetch: vi.fn()
-  })
-)
+const {
+  mockUseSafe,
+  mockAddSuccessToast,
+  mockAddErrorToast,
+  mockUseCustomFetch,
+  mockUseWatchContractEvent
+} = vi.hoisted(() => ({
+  mockUseSafe: {
+    deploySafe: vi.fn(),
+    isBusy: { value: false } // Plain object instead of ref
+  },
+  mockAddSuccessToast: vi.fn(),
+  mockAddErrorToast: vi.fn(),
+  mockUseCustomFetch: vi.fn(),
+  mockUseWatchContractEvent: vi.fn().mockImplementation((config) => ({
+    onLogs: config?.onLogs || vi.fn()
+  }))
+}))
 
 // Create reactive refs after Vue is imported
 const mockIsBusy = ref(false)
@@ -44,12 +51,6 @@ const mockUseWaitForTransactionReceipt = {
   data: mockReceiptData
 }
 
-const mockUseWatchContractEvent = vi.fn().mockImplementation((config) => {
-  return {
-    onLogs: config?.onLogs || vi.fn()
-  }
-})
-
 // Mock wagmi composables that are used in useSafeWrites
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -57,7 +58,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     ...actual,
     useWriteContract: vi.fn(() => mockUseWriteContract),
     useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
-    useWatchContractEvent: vi.fn(() => mockUseWatchContractEvent),
+    useWatchContractEvent: mockUseWatchContractEvent,
     // Add these to fix the WagmiPluginNotFoundError
     useConnection: vi.fn(() => ({ status: 'connected' })),
     useChainId: vi.fn(() => ref(11155111)), // Sepolia testnet
@@ -75,10 +76,12 @@ vi.mock('viem', async (importOriginal) => {
   }
 })
 
+const mockUserStore = {
+  address: '0x1234567890123456789012345678901234567890'
+}
+
 vi.mock('@/stores/user', () => ({
-  useUserDataStore: vi.fn(() => ({
-    address: '0x1234567890123456789012345678901234567890'
-  }))
+  useUserDataStore: vi.fn(() => mockUserStore)
 }))
 
 vi.mock('@/stores/useToastStore', () => ({
@@ -296,6 +299,75 @@ describe('DeployContractSection', () => {
 
       expect(mockAddErrorToast).toHaveBeenCalledWith('Error deploying contract')
     })
+
+    it('should bail when team id is missing before Safe deploy', async () => {
+      const wrapper = createWrapper({
+        createdTeamData: { id: null, name: 'Team 1', address: '' }
+      })
+
+      await wrapper.vm.deploySafeForTeam()
+
+      expect(mockAddErrorToast).toHaveBeenCalledWith('Team data not found')
+    })
+
+    it('should reject invalid wallet before Safe deploy', async () => {
+      mockUserStore.address = 'invalid-address'
+      const viemModule = await import('viem')
+      const isAddressMock = vi.mocked(viemModule.isAddress)
+      isAddressMock.mockReturnValueOnce(false)
+      const wrapper = createWrapper()
+
+      await wrapper.vm.deploySafeForTeam()
+
+      expect(mockAddErrorToast).toHaveBeenCalledWith(
+        'Invalid wallet address. Please connect your wallet.'
+      )
+
+      mockUserStore.address = '0x1234567890123456789012345678901234567890'
+    })
+
+    it('runs Safe deployment flow and updates team', async () => {
+      mockUseSafe.deploySafe.mockResolvedValueOnce('0xsafeaddress')
+      mockUseCustomFetch.mockReturnValue({
+        put: vi.fn().mockReturnValue({
+          json: vi.fn().mockResolvedValue({ error: ref(null) })
+        })
+      })
+
+      const wrapper = createWrapper()
+      await wrapper.vm.deploySafeForTeam()
+
+      expect(mockUseSafe.deploySafe).toHaveBeenCalledWith(
+        ['0x1234567890123456789012345678901234567890'],
+        1
+      )
+      expect(mockAddSuccessToast).toHaveBeenCalledWith('Safe wallet deployed successfully')
+    })
+
+    it('handles Safe team update error gracefully', async () => {
+      mockUseSafe.deploySafe.mockResolvedValueOnce('0xsafeaddress')
+      mockUseCustomFetch.mockReturnValue({
+        put: vi.fn().mockReturnValue({
+          json: vi.fn().mockResolvedValue({ error: ref('update failed') })
+        })
+      })
+
+      const wrapper = createWrapper()
+      await wrapper.vm.deploySafeForTeam()
+
+      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to update team with Safe address')
+    })
+
+    it('handles Safe deployment failure', async () => {
+      mockUseSafe.deploySafe.mockRejectedValueOnce(new Error('boom'))
+      const wrapper = createWrapper()
+
+      await wrapper.vm.deploySafeForTeam()
+
+      expect(mockAddErrorToast).toHaveBeenCalledWith(
+        'Failed to deploy Safe wallet. Please try again.'
+      )
+    })
   })
 
   describe('Loading State Management', () => {
@@ -399,6 +471,39 @@ describe('DeployContractSection', () => {
       await wrapper.vm.$nextTick()
 
       expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to create officer contract')
+    })
+
+    it('processes contract event logs and triggers Safe deploy', async () => {
+      mockUseSafe.deploySafe.mockResolvedValueOnce('0xsafeaddress')
+      mockWriteContractData.value = '0xabc'
+
+      // ensure successful fetches for officer update + sync + safe update
+      mockUseCustomFetch.mockReturnValue({
+        put: vi.fn().mockReturnValue({
+          json: vi.fn().mockResolvedValue({ error: ref(null) })
+        })
+      })
+
+      createWrapper()
+
+      const watchCall = mockUseWatchContractEvent.mock.calls[0]?.[0]
+      expect(watchCall).toBeTruthy()
+
+      const onLogs = watchCall.onLogs as (
+        logs: Array<{ transactionHash: string; args: { deployer: string; proxy: string } }>
+      ) => Promise<void>
+      await onLogs([
+        {
+          transactionHash: '0xabc',
+          args: {
+            deployer: '0x1234567890123456789012345678901234567890',
+            proxy: '0xproxy'
+          }
+        }
+      ])
+
+      expect(mockUseSafe.deploySafe).toHaveBeenCalled()
+      expect(mockAddSuccessToast).toHaveBeenCalledWith('Safe wallet deployed successfully')
     })
   })
 })
