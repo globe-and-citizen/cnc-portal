@@ -25,9 +25,9 @@ vi.mock('@/stores', async (importOriginal) => {
 import SignedWeeklyClaim from '../SignedWeeklyClaim.vue'
 
 // hoisted mocks for vitest (avoid hoisting issues)
-const { mockUseReadContract, mockUseTanstackQuery, mockOwnerValue } = vi.hoisted(() => ({
+const { mockUseReadContract, mockUseMemberWeeklyClaimsQuery, mockOwnerValue } = vi.hoisted(() => ({
   mockUseReadContract: vi.fn(),
-  mockUseTanstackQuery: vi.fn(),
+  mockUseMemberWeeklyClaimsQuery: vi.fn(),
   mockOwnerValue: '0xOwnerAddress'
 }))
 
@@ -40,9 +40,9 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-// Mock the tanstack query composable used by the component
-vi.mock('@/composables/useTanstackQuery', () => ({
-  useTanstackQuery: mockUseTanstackQuery
+// Mock the queries composables used by the component
+vi.mock('@/queries', () => ({
+  useMemberWeeklyClaimsQuery: mockUseMemberWeeklyClaimsQuery
 }))
 
 // Minimal TableComponent stub that exposes the named slots used by the component
@@ -103,7 +103,7 @@ describe('SignedWeeklyClaim.vue', () => {
     vi.clearAllMocks()
 
     mockUseReadContract.mockReturnValue({ data: ref(mockOwnerValue), error: ref(null) })
-    mockUseTanstackQuery.mockReturnValue({ data: ref(mockWeeklyClaims), isLoading: ref(false) })
+    mockUseMemberWeeklyClaimsQuery.mockReturnValue({ data: ref(mockWeeklyClaims), isLoading: ref(false) })
   })
 
   const createWrapper = () => {
@@ -143,7 +143,7 @@ describe('SignedWeeklyClaim.vue', () => {
   })
 
   it('shows loading state', async () => {
-    mockUseTanstackQuery.mockReturnValue({ data: ref([]), isLoading: ref(true) })
+    mockUseMemberWeeklyClaimsQuery.mockReturnValue({ data: ref([]), isLoading: ref(true) })
     wrapper = createWrapper()
     await flushPromises()
 
@@ -151,7 +151,7 @@ describe('SignedWeeklyClaim.vue', () => {
   })
 
   it('shows empty state when no data', async () => {
-    mockUseTanstackQuery.mockReturnValue({ data: ref([]), isLoading: ref(false) })
+    mockUseMemberWeeklyClaimsQuery.mockReturnValue({ data: ref([]), isLoading: ref(false) })
     wrapper = createWrapper()
     await flushPromises()
 

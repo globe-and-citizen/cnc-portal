@@ -45,7 +45,7 @@ import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { tokenSymbol, getCurrentUserExpenses } from '@/utils'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { useTanstackQuery } from '@/composables'
+import { useExpensesQuery } from '@/queries'
 import TransferAction from './TransferAction.vue'
 import { getFrequencyType, getCustomFrequency } from '@/utils'
 //#endregion
@@ -57,14 +57,7 @@ const {
   data: newExpenseData
   // isLoading: isFetchingExpenseData,
   // error: errorFetchingExpenseData
-} = useTanstackQuery<ExpenseResponse[]>(
-  'expenseData',
-  computed(() => `/expense?teamId=${teamStore.currentTeamId}`),
-  {
-    queryKey: ['getExpenseData'],
-    refetchOnWindowFocus: true
-  }
-)
+} = useExpensesQuery(() => teamStore.currentTeamId)
 
 const columns = [
   {

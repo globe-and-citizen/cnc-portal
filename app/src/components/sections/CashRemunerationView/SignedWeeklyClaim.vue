@@ -100,7 +100,7 @@
 import UserComponent from '@/components/UserComponent.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { NETWORK } from '@/constant'
-import { useTanstackQuery } from '@/composables/useTanstackQuery'
+import { useMemberWeeklyClaimsQuery } from '@/queries'
 import { computed, watch } from 'vue'
 import { useCurrencyStore, useToastStore } from '@/stores'
 import { useUserDataStore, useTeamStore } from '@/stores'
@@ -132,19 +132,11 @@ const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useRe
   abi: CASH_REMUNERATION_EIP712_ABI
 })
 
-const weeklyClaimUrl = computed(
-  () =>
-    `/weeklyClaim/?status=signed&teamId=${teamStore.currentTeamId}&memberAddress=${userStore.address}`
-)
-
-const queryKey = computed(() => [
-  'weekly-claims',
-  teamStore.currentTeamId,
-  userStore.address,
+const { data: loadedData, isLoading } = useMemberWeeklyClaimsQuery(
+  () => teamStore.currentTeamId,
+  () => userStore.address,
   'signed'
-])
-
-const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaim[]>(queryKey, weeklyClaimUrl)
+)
 const isTeamClaimDataFetching = computed(() => isLoading.value)
 
 // const isSameWeek = (weeklyClaimStartWeek: string) => {

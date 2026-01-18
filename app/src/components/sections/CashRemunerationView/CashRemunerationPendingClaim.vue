@@ -23,7 +23,7 @@ import OverviewCard from '@/components/OverviewCard.vue'
 import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
 import { watch, computed } from 'vue'
-import { useTanstackQuery } from '@/composables/useTanstackQuery'
+import { useTeamWeeklyClaimsQuery } from '@/queries'
 import { useStorage } from '@vueuse/core'
 import type { TokenId } from '@/constant'
 import type { RatePerHour, WeeklyClaim } from '@/types/cash-remuneration'
@@ -37,20 +37,12 @@ const currency = useStorage('currency', {
   name: 'US Dollar',
   symbol: '$'
 })
-const signedQueryKey = computed(() => ['weekly-claims', teamStore.currentTeamId, 'signed'])
 
 const {
   data: weeklyClaims,
   isLoading: isFetching,
   error
-} = useTanstackQuery<WeeklyClaim[]>(
-  'weeklyClaims',
-  computed(() => `/weeklyClaim/?teamId=${teamStore.currentTeamId}&status=signed`),
-  {
-    queryKey: signedQueryKey,
-    refetchOnWindowFocus: true
-  }
-)
+} = useTeamWeeklyClaimsQuery(() => teamStore.currentTeamId, 'signed')
 
 function getHoulyRateInUserCurrency(
   ratePerHour: RatePerHour[],

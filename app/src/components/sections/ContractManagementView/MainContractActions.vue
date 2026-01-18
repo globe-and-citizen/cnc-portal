@@ -85,7 +85,7 @@ import { filterAndFormatActions, log, parseError } from '@/utils'
 import PendingEventsList from './PendingEventsList.vue'
 import BodApprovalModal from './BodApprovalModal.vue'
 import type { ActionResponse } from '@/types'
-import { useTanstackQuery } from '@/composables'
+import { useActionsQuery } from '@/queries'
 import { useBodContract } from '@/composables/bod/'
 import { useQueryClient } from '@tanstack/vue-query'
 
@@ -117,14 +117,7 @@ const showApprovalModal = ref(false)
 const selectedRow = ref<TableRow>({})
 const currentStep = ref<0 | 1 | 2>(0)
 
-const { data: bodActions } = useTanstackQuery<ActionResponse>(
-  'getBodActions',
-  computed(() => `/actions?teamId=${teamStore.currentTeamId}&isExecuted=false`),
-  {
-    queryKey: ['getBodActions'],
-    refetchOnWindowFocus: true
-  }
-)
+const { data: bodActions } = useActionsQuery(() => teamStore.currentTeamId, false)
 
 const modalWidth = computed(() => {
   return currentStep.value === 1 ? 'w-1/2 max-w-4xl' : 'w-1/3 max-w-4xl'
@@ -132,7 +125,7 @@ const modalWidth = computed(() => {
 const formatedActions = computed(() => {
   return filterAndFormatActions(
     props.row.address,
-    bodActions.value,
+    bodActions.value?.data || bodActions.value,
     teamStore.currentTeam?.members || []
   )
 })

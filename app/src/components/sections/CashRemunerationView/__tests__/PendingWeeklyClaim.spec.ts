@@ -12,21 +12,27 @@ dayjs.extend(isoWeek)
 
 // Hoisted mocks and mutable holders
 const {
-  loadedDataRef,
-  isLoadingRef,
+  teamClaimsDataRef,
+  memberClaimsDataRef,
+  isLoadingTeamRef,
+  isLoadingMemberRef,
   ownerRef,
-  mockUseTanstackQuery,
+  mockUseTeamWeeklyClaimsQuery,
+  mockUseMemberWeeklyClaimsQuery,
   mockUseReadContract,
   mockTeamStore,
   mockUserStore,
   mockCurrencyStore,
   mockToastStore
 } = vi.hoisted(() => {
-  const loadedDataRef = { value: undefined as WeeklyClaim[] | undefined }
-  const isLoadingRef = { value: false }
+  const teamClaimsDataRef = { value: undefined as WeeklyClaim[] | undefined }
+  const memberClaimsDataRef = { value: undefined as WeeklyClaim[] | undefined }
+  const isLoadingTeamRef = { value: false }
+  const isLoadingMemberRef = { value: false }
   const ownerRef = { value: undefined as string | undefined }
 
-  const mockUseTanstackQuery = vi.fn(() => ({ data: loadedDataRef, isLoading: isLoadingRef }))
+  const mockUseTeamWeeklyClaimsQuery = vi.fn(() => ({ data: teamClaimsDataRef, isLoading: isLoadingTeamRef }))
+  const mockUseMemberWeeklyClaimsQuery = vi.fn(() => ({ data: memberClaimsDataRef, isLoading: isLoadingMemberRef }))
   const mockUseReadContract = vi.fn(() => ({ data: ownerRef }))
 
   const mockTeamStore = {
@@ -47,10 +53,13 @@ const {
   }
 
   return {
-    loadedDataRef,
-    isLoadingRef,
+    teamClaimsDataRef,
+    memberClaimsDataRef,
+    isLoadingTeamRef,
+    isLoadingMemberRef,
     ownerRef,
-    mockUseTanstackQuery,
+    mockUseTeamWeeklyClaimsQuery,
+    mockUseMemberWeeklyClaimsQuery,
     mockUseReadContract,
     mockTeamStore,
     mockUserStore,
@@ -59,9 +68,10 @@ const {
   }
 })
 
-// Mock composable
-vi.mock('@/composables/useTanstackQuery', () => ({
-  useTanstackQuery: (...args: unknown[]) => mockUseTanstackQuery(...(args as []))
+// Mock queries composables
+vi.mock('@/queries', () => ({
+  useTeamWeeklyClaimsQuery: (...args: unknown[]) => mockUseTeamWeeklyClaimsQuery(...(args as [])),
+  useMemberWeeklyClaimsQuery: (...args: unknown[]) => mockUseMemberWeeklyClaimsQuery(...(args as []))
 }))
 
 // Partially mock wagmi vue to preserve real exports (createConfig, etc.)
@@ -93,8 +103,10 @@ describe('PendingWeeklyClaim', () => {
   })
 
   it('shows loading message when fetching', async () => {
-    loadedDataRef.value = []
-    isLoadingRef.value = true
+    teamClaimsDataRef.value = []
+    memberClaimsDataRef.value = []
+    isLoadingTeamRef.value = false
+    isLoadingMemberRef.value = true
     ownerRef.value = '0x3333333333333333333333333333333333333333'
 
     const wrapper = mount(PendingWeeklyClaim, {

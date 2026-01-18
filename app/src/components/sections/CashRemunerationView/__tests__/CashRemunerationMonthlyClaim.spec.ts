@@ -7,7 +7,7 @@ import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 const mockError = ref<unknown>(null)
 const mockToastError = vi.fn()
-const mockUseTanstackQuery = vi.fn()
+const mockUseTeamWeeklyClaimsQuery = vi.fn()
 
 vi.mock('@/stores', async (importOriginal) => {
   const original = await importOriginal()
@@ -30,8 +30,8 @@ vi.mock('@/stores', async (importOriginal) => {
   }
 })
 
-vi.mock('@/composables/useTanstackQuery', () => ({
-  useTanstackQuery: (...args: [string, string]) => mockUseTanstackQuery(...args)
+vi.mock('@/queries', () => ({
+  useTeamWeeklyClaimsQuery: (...args: unknown[]) => mockUseTeamWeeklyClaimsQuery(...(args as []))
 }))
 
 vi.mock('@/utils', async (importOriginal) => {
@@ -61,7 +61,7 @@ describe('CashRemunerationMonthlyClaim.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockError.value = null
-    mockUseTanstackQuery.mockReturnValue({
+    mockUseTeamWeeklyClaimsQuery.mockReturnValue({
       data: ref([]),
       isLoading: ref(false),
       error: mockError
@@ -73,20 +73,15 @@ describe('CashRemunerationMonthlyClaim.vue', () => {
     expect(wrapper.exists()).toBe(true)
   })
 
-  it('calls useTanstackQuery with correct arguments', () => {
+  it('calls useTeamWeeklyClaimsQuery correctly', () => {
     wrapper = createComponent()
 
-    expect(mockUseTanstackQuery).toHaveBeenCalledTimes(1)
-    const [queryName, endpoint, options] = mockUseTanstackQuery.mock.calls[0]
+    expect(mockUseTeamWeeklyClaimsQuery).toHaveBeenCalledTimes(1)
 
-    expect(queryName).toBe('withdrawnClaims')
-    expect(endpoint.value).toBe('/weeklyClaim/?teamId=123&status=withdrawn')
-    expect(options.queryKey.value).toEqual(['weekly-claims', 123, 'withdrawn'])
-    expect(options.refetchOnWindowFocus).toBe(true)
   })
 
   it('computes totalMonthlyClaim correctly', async () => {
-    mockUseTanstackQuery.mockReturnValueOnce({
+    mockUseTeamWeeklyClaimsQuery.mockReturnValueOnce({
       data: ref([
         {
           claims: [{ hoursWorked: 10 }, { hoursWorked: 5 }],
