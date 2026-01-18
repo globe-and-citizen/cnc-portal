@@ -121,7 +121,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 // import CRSigne from '../CashRemunerationView/CRSigne.vue'
 // import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
-import { useTanstackQuery } from '@/composables'
+import { useMemberWeeklyClaimsQuery } from '@/queries'
 import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
 
 dayjs.extend(utc)
@@ -144,22 +144,10 @@ function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
   return row as WeeklyClaim
 }
 
-const weeklyClaimUrl = computed(
-  () =>
-    `/weeklyClaim/?teamId=${teamStore.currentTeamId}${
-      props.memberAddress ? `&memberAddress=${props.memberAddress}` : ''
-    }`
-)
-
-const weeklyClaimQueryKey = computed(() => [
-  'weekly-claims',
-  teamStore.currentTeamId,
-  props.memberAddress
-])
-
-const { data: fetchedData, error } = useTanstackQuery<Array<WeeklyClaim>>(
-  weeklyClaimQueryKey,
-  weeklyClaimUrl
+const { data: fetchedData, error } = useMemberWeeklyClaimsQuery(
+  () => teamStore.currentTeamId,
+  () => props.memberAddress || null,
+  undefined
 )
 
 // const { data: fetchedData, error } = useCustomFetch(weeklyClaimUrl.value).get().json()

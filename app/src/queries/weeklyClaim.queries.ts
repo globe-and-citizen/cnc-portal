@@ -69,6 +69,41 @@ export const useTeamWeeklyClaimsQuery = (
 }
 
 /**
+ * Fetch weekly claims for a specific member in a team
+ */
+export const useMemberWeeklyClaimsQuery = (
+  teamId: MaybeRefOrGetter<string | number | null>,
+  memberAddress: MaybeRefOrGetter<string | null>,
+  status?: MaybeRefOrGetter<'pending' | 'signed' | 'withdrawn' | 'disabled' | null>
+) => {
+  return useQuery<WeeklyClaim[], AxiosError>({
+    queryKey: ['memberWeeklyClaims', { teamId, memberAddress, status }],
+    queryFn: async () => {
+      const id = toValue(teamId)
+      const address = toValue(memberAddress)
+      const statusValue = toValue(status)
+      if (!id) throw new Error('Team ID is required')
+      if (!address) throw new Error('Member address is required')
+
+      let url = `/weeklyClaim/?teamId=${id}&memberAddress=${address}`
+      if (statusValue) {
+        url += `&status=${statusValue}`
+      }
+
+      const { data } = await apiClient.get<WeeklyClaim[]>(url)
+      return data
+    },
+    enabled: () => !!toValue(teamId) && !!toValue(memberAddress),
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    staleTime: 180000,
+    gcTime: 300000
+  })
+}
+
+/**
  * Fetch a single weekly claim by ID
  */
 export const useWeeklyClaimByIdQuery = (claimId: MaybeRefOrGetter<string | number | null>) => {

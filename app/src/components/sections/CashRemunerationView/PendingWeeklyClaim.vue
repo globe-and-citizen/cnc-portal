@@ -89,7 +89,7 @@
 <script setup lang="ts">
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import { useTanstackQuery } from '@/composables/useTanstackQuery'
+import { useTeamWeeklyClaimsQuery, useMemberWeeklyClaimsQuery } from '@/queries'
 import { NETWORK } from '@/constant'
 import { useCurrencyStore, useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { type WeeklyClaim } from '@/types'
@@ -118,34 +118,6 @@ const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
 
-const cashRemunerationAddress = computed(() =>
-  teamStore.getContractAddressByType('CashRemunerationEIP712')
-)
-const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
-
-const weeklyClaimUrl = computed(
-  () =>
-    `/weeklyClaim/?teamId=${teamStore.currentTeamId}${!isCashRemunerationOwner.value ? `&memberAddress=${userStore.address}` : ''}`
-)
-const queryKey = computed(() => [
-  'weekly-claims',
-  teamStore.currentTeamId,
-  userStore.address,
-  'pending'
-])
-
-const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaim[]>(queryKey, weeklyClaimUrl)
-const isFetching = computed(() => isLoading.value)
-
-const data = computed(() =>
-  loadedData.value?.filter(
-    (weeklyClaim) =>
-      weeklyClaim.status === 'pending' ||
-      (weeklyClaim.status === 'signed' &&
-        weeklyClaim.data.ownerAddress !== cashRemunerationOwner.value)
-  )
-)
-
 const {
   data: cashRemunerationOwner,
   // isFetching: isCashRemunerationOwnerFetching,
@@ -155,6 +127,38 @@ const {
   address: cashRemunerationAddress,
   abi: CASH_REMUNERATION_EIP712_ABI
 })
+
+const cashRemunerationAddress = computed(() =>
+  teamStore.getContractAddressByType('CashRemunerationEIP712')
+)
+const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
+
+// Fetch team claims if owner, member claims otherwise
+const { data: teamClaims, isLoading: isLoadingTeam } = useTeamWeeklyClaimsQuery(
+  () => teamStore.currentTeamId,
+  undefined
+)
+const { data: memberClaims, isLoading: isLoadingMember } = useMemberWeeklyClaimsQuery(
+  () => teamStore.currentTeamId,
+  () => userStore.address,
+  undefined
+)
+
+const loadedData = computed(() => 
+  isCashRemunerationOwner.value ? teamClaims.value : memberClaims.value
+)
+const isFetching = computed(() => 
+  isCashRemunerationOwner.value ? isLoadingTeam.value : isLoadingMember.value
+)
+
+const data = computed(() =>
+  loadedData.value?.filter(
+    (weeklyClaim) =>
+      weeklyClaim.status === 'pending' ||
+      (weeklyClaim.status === 'signed' &&
+        weeklyClaim.data.ownerAddress !== cashRemunerationOwner.value)
+  )
+)
 
 function getHourlyRateInUserCurrency(
   ratePerHour: { type: string; amount: number }[],

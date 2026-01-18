@@ -6,10 +6,12 @@ import ClaimHistory from '../ClaimHistory.vue'
 
 // --- Mocks Tanstack Query ---
 const mockRefetch = vi.fn()
-const mockUseTanstackQuery = vi.fn()
+const mockUseMemberWeeklyClaimsQuery = vi.fn()
+const mockUseTeamWagesQuery = vi.fn()
 
-vi.mock('@/composables', () => ({
-  useTanstackQuery: (...args: unknown[]) => mockUseTanstackQuery(...args)
+vi.mock('@/queries', () => ({
+  useMemberWeeklyClaimsQuery: (...args: unknown[]) => mockUseMemberWeeklyClaimsQuery(...args),
+  useTeamWagesQuery: (...args: unknown[]) => mockUseTeamWagesQuery(...args)
 }))
 
 // --- Mock route ---
@@ -65,7 +67,7 @@ describe('ClaimHistory.vue', () => {
     mockRoute.params.memberAddress = '0x1234567890123456789012345678901234567890'
 
     // Default implementation for useTanstackQuery
-    mockUseTanstackQuery.mockImplementation(() => ({
+    mockUseMemberWeeklyClaimsQuery.mockImplementation(() => ({
       data: ref(null),
       error: ref(null),
       isLoading: ref(false),
@@ -81,8 +83,8 @@ describe('ClaimHistory.vue', () => {
     await nextTick()
 
     // Check useTanstackQuery call
-    expect(mockUseTanstackQuery).toHaveBeenCalled()
-    const [weeklyClaimKeyArg, weeklyClaimUrlArg] = mockUseTanstackQuery.mock.calls[0]
+    expect(mockUseMemberWeeklyClaimsQuery).toHaveBeenCalled()
+    const [weeklyClaimKeyArg, weeklyClaimUrlArg] = mockUseMemberWeeklyClaimsQuery.mock.calls[0]
 
     // key: ['weekly-claims', teamId, memberAddress]
     // It is passed as a computed ref, so we check .value
@@ -130,7 +132,7 @@ describe('ClaimHistory.vue', () => {
   it('should show toast when teamWageDataError is set', async () => {
     const errorRef = ref<Error | null>(null)
     let callIndex = 0
-    mockUseTanstackQuery.mockImplementation(() => {
+    mockUseMemberWeeklyClaimsQuery.mockImplementation(() => {
       callIndex += 1
       if (callIndex === 1) {
         return {
@@ -163,7 +165,7 @@ describe('ClaimHistory.vue', () => {
   it('should show disabled submit-claim button when user has no wage', async () => {
     // Weekly claims present, but team wage list does not contain the user
     let callIndex = 0
-    mockUseTanstackQuery.mockImplementation(() => {
+    mockUseMemberWeeklyClaimsQuery.mockImplementation(() => {
       callIndex += 1
       if (callIndex === 1) {
         return {
@@ -207,7 +209,7 @@ describe('ClaimHistory.vue', () => {
     const weekStart = weekStartDayjs.toISOString()
     const firstDayOfWeek = weekStartDayjs.toISOString()
 
-    mockUseTanstackQuery.mockImplementation(() => ({
+    mockUseMemberWeeklyClaimsQuery.mockImplementation(() => ({
       data: ref([
         {
           weekStart,
@@ -256,7 +258,7 @@ describe('ClaimHistory.vue', () => {
 
   it('should build barChartOption with 7 labels and data points', async () => {
     const weekStart = new Date().toISOString()
-    mockUseTanstackQuery.mockImplementation(() => ({
+    mockUseMemberWeeklyClaimsQuery.mockImplementation(() => ({
       data: ref([
         {
           weekStart,
@@ -306,7 +308,7 @@ describe('ClaimHistory.vue', () => {
     const weekStart = new Date().toISOString()
     let callIndex = 0
 
-    mockUseTanstackQuery.mockImplementation(() => {
+    mockUseMemberWeeklyClaimsQuery.mockImplementation(() => {
       callIndex += 1
       if (callIndex === 1) {
         return {
@@ -350,7 +352,7 @@ describe('ClaimHistory.vue', () => {
     const weekStart1 = '2024-01-01T00:00:00.000Z'
     const weekStart2 = '2024-01-08T00:00:00.000Z'
 
-    mockUseTanstackQuery.mockImplementation(() => ({
+    mockUseMemberWeeklyClaimsQuery.mockImplementation(() => ({
       data: ref([
         { weekStart: weekStart1, status: 'signed', wage: {}, claims: [] },
         { weekStart: weekStart2, status: 'pending', wage: {}, claims: [] }
@@ -372,7 +374,7 @@ describe('ClaimHistory.vue', () => {
   })
 
   it('should return empty array for signedWeekStarts when memberWeeklyClaims is null', async () => {
-    mockUseTanstackQuery.mockImplementation(() => ({
+    mockUseMemberWeeklyClaimsQuery.mockImplementation(() => ({
       data: ref(null),
       error: ref(null),
       isLoading: ref(false),

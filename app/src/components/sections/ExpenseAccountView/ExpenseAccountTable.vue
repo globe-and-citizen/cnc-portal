@@ -94,7 +94,7 @@ import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from 
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useTanstackQuery } from '@/composables'
+import { useExpensesQuery } from '@/queries'
 import type { ExpenseResponse } from '@/types'
 import { getFrequencyType, getCustomFrequency } from '@/utils'
 
@@ -111,15 +111,7 @@ const {
   data: expenseData,
   isLoading: isFetchingExpenseData
   // error: errorFetchingExpenseData
-} = useTanstackQuery<ExpenseResponse[]>(
-  'expenseData',
-  computed(() => `/expense?teamId=${teamStore.currentTeamId}`),
-  {
-    queryKey: ['getExpenseData'],
-    refetchInterval: 10000,
-    refetchOnWindowFocus: true
-  }
-)
+} = useExpensesQuery(() => teamStore.currentTeamId)
 
 const formattedExpenseData = computed(() => {
   return expenseData.value?.map((expense) => {

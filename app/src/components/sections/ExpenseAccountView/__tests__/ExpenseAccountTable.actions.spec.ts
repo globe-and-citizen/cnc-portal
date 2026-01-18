@@ -9,7 +9,7 @@ import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import * as utils from '@/utils'
-import { useTanstackQuery } from '@/composables'
+import { useExpensesQuery } from '@/queries'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 
 const mocks = vi.hoisted(() => ({
@@ -132,7 +132,7 @@ const mockUseSignTypedData = {
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
-  return {
+    useExpensesQuery: vi.fn()
     ...actual,
     useReadContract: vi.fn(() => {
       return { ...mockUseReadContract, data: ref(`0xContractOwner`) }
@@ -147,7 +147,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 
 vi.mock('@wagmi/core', async (importOriginal) => {
   const actual: object = await importOriginal()
-  return {
+    useExpensesQuery: vi.fn()
     ...actual,
     readContract: mocks.mockReadContract
   }
@@ -155,7 +155,7 @@ vi.mock('@wagmi/core', async (importOriginal) => {
 
 vi.mock('viem', async (importOriginal) => {
   const actual: object = await importOriginal()
-  return {
+    useExpensesQuery: vi.fn()
     ...actual,
     parseSignature: vi.fn(),
     hashTypedData: vi.fn(),
@@ -164,16 +164,16 @@ vi.mock('viem', async (importOriginal) => {
 })
 
 vi.mock('@/composables/useCustomFetch', () => {
-  return {
+    useExpensesQuery: vi.fn()
     useCustomFetch: vi.fn()
   }
 })
 
-vi.mock('@/composables', async (importOriginal) => {
+vi.mock('@/queries', () => ({
   const actual: object = await importOriginal()
-  return {
+    useExpensesQuery: vi.fn()
     ...actual,
-    useTanstackQuery: vi.fn()
+    useExpensesQuery: vi.fn()
   }
 })
 
@@ -211,10 +211,10 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
   }
 
   beforeEach(() => {
-    vi.mocked(useTanstackQuery).mockReturnValue({
+    vi.mocked(useExpensesQuery).mockReturnValue({
       data: ref(mockApprovals),
       isLoading: ref(false)
-    } as ReturnType<typeof useTanstackQuery>)
+    } as ReturnType<typeof useExpensesQuery>)
   })
 
   describe('Action Buttons and Loading States', () => {
