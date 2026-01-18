@@ -31,7 +31,7 @@ export function useRedeemPosition() {
   const proposeRedemption = async (params: {
     safeAddress: string
     conditionId: string
-    outcomeIndex: number
+    amounts: [bigint, bigint]
   }) => {
     isProposing.value = true
     error.value = null
@@ -57,7 +57,7 @@ export function useRedeemPosition() {
       // 3. Define the Transaction Data
       const safeTransactionData = createRedeemTx({
         conditionId: params.conditionId,
-        outcomeIndex: params.outcomeIndex
+        amounts: params.amounts
       })
 
       // 4. Create Safe Transaction

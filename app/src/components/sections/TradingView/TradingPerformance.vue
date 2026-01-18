@@ -35,36 +35,16 @@
 import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import OverviewCard from '@/components/OverviewCard.vue'
-import type { Trade } from '@/types/trading'
 import personIcon from '@/assets/person.svg'
+import { useUserPositions, useSafeDeployment } from '@/composables/trading'
 
-interface Props {
-  trades?: Trade[]
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  trades: () => []
-})
+const { derivedSafeAddressFromEoa } = useSafeDeployment()
+const { pnlStats } = useUserPositions(derivedSafeAddressFromEoa.value ?? undefined)
 
 const isLoading = computed(() => false)
-
-// Calculate performance metrics
-const totalPnl = computed(() => props.trades.reduce((sum, trade) => sum + trade.pnl, 0))
-
-const totalInvested = computed(() =>
-  props.trades.reduce((sum, trade) => sum + trade.shares * trade.entryPrice, 0)
-)
-
-const pnlPercentage = computed(() =>
-  totalInvested.value > 0 ? (totalPnl.value / totalInvested.value) * 100 : 0
-)
-
-const winningTradesCount = computed(
-  () => props.trades.filter((trade) => trade.result === 'won').length
-)
-
-const totalTradesCount = computed(() => props.trades.length)
-
+const pnlPercentage = computed(() => pnlStats?.value?.winningPercentage ?? 0)
+const winningTradesCount = computed(() => pnlStats.value?.winningTrades ?? 0)
+const totalTradesCount = computed(() => pnlStats.value?.totalTrades)
 // Format performance
 const formattedPerformance = computed(() => {
   const sign = pnlPercentage.value >= 0 ? '+' : ''
