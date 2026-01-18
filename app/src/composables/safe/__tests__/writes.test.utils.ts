@@ -32,6 +32,8 @@ export const mockCreatePublicClient = vi.fn()
 export const mockGetInjectedProvider = vi.fn()
 export const mockIsAddress = vi.fn()
 export const mockFormatEther = vi.fn()
+export const axiosPostMock = vi.fn()
+export const axiosGetMock = vi.fn()
 
 export const mockSafeSdk = {
   createSafeDeploymentTransaction: vi.fn(),
@@ -73,7 +75,23 @@ vi.mock('viem', () => {
     createPublicClient: mockCreatePublicClient,
     custom: vi.fn(),
     formatEther: mockFormatEther,
-    isAddress: mockIsAddress
+    isAddress: mockIsAddress,
+    zeroAddress: '0x0000000000000000000000000000000000000000'
+  }
+})
+
+vi.mock('@/lib/axios', () => {
+  const isAxiosError = (error: unknown) => Boolean((error as { isAxiosError?: boolean })?.isAxiosError)
+  return {
+    default: {
+      post: axiosPostMock,
+      get: axiosGetMock,
+      isAxiosError,
+      interceptors: {
+        request: { use: vi.fn() },
+        response: { use: vi.fn() }
+      }
+    }
   }
 })
 
@@ -83,6 +101,8 @@ vi.mock('viem', () => {
 export async function setupWritesTest() {
   vi.clearAllMocks()
   vi.resetModules()
+  axiosPostMock.mockReset()
+  axiosGetMock.mockReset()
 
   mockConnection.address.value = MOCK_DATA.owners[0]
   mockConnection.isConnected.value = true
@@ -108,9 +128,6 @@ export async function setupWritesTest() {
 
   mockWalletClient.sendTransaction.mockResolvedValue(MOCK_DATA.txHash)
 
-  const fetchMock = vi.fn()
-  global.fetch = fetchMock as unknown as typeof fetch
-
   const mockProvider = { request: vi.fn() }
   Object.defineProperty(globalThis.window, 'ethereum', {
     value: mockProvider,
@@ -130,6 +147,7 @@ export async function setupWritesTest() {
 
   return {
     useSafeWrites: mod.useSafeWrites,
-    fetchMock
+    axiosPostMock,
+    axiosGetMock
   }
 }

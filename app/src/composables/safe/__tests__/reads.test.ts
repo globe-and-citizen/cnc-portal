@@ -41,24 +41,72 @@ const MOCK_PRICES = [
   { id: 'eur', price: 1.5, code: 'EUR', symbol: '€' }
 ]
 
-const createFetchResponse = (data: unknown, overrides?: Partial<Response>) =>
-  ({
-    ok: overrides?.ok ?? true,
-    status: overrides?.status ?? 200,
-    statusText: overrides?.statusText ?? 'OK',
-    json: vi.fn().mockResolvedValue(data)
-  }) as unknown as Response
-
-let fetchMock: ReturnType<typeof vi.fn>
+const axiosGetMock = vi.fn()
 let useSafeReads: typeof import('../reads').useSafeReads
 let useSafeAppUrls: typeof import('../reads').useSafeAppUrls
+
+vi.mock('axios', () => {
+  const isAxiosError = (error: unknown) => Boolean((error as { isAxiosError?: boolean })?.isAxiosError)
+  return {
+    default: { isAxiosError },
+    isAxiosError
+  }
+})
+
+vi.mock('@/lib/axios', () => {
+  const isAxiosError = (error: unknown) => Boolean((error as { isAxiosError?: boolean })?.isAxiosError)
+  return {
+    default: {
+      get: axiosGetMock,
+      isAxiosError,
+      interceptors: {
+        request: { use: vi.fn() },
+        response: { use: vi.fn() }
+      }
+    }
+  }
+})
+
+vi.mock('@tanstack/vue-query', () => {
+  const useQuery = (options: { queryFn: () => Promise<unknown> }) => {
+    const data = ref<unknown>(undefined)
+    const error = ref<Error | null>(null)
+    const isLoading = ref(false)
+    const isFetching = ref(false)
+
+    const runQuery = async () => {
+      isLoading.value = true
+      isFetching.value = true
+      try {
+        const result = await options.queryFn()
+        data.value = result
+        error.value = null
+        return { data: result, error: null }
+      } catch (err) {
+        error.value = err as Error
+        return { data: data.value, error: err }
+      } finally {
+        isLoading.value = false
+        isFetching.value = false
+      }
+    }
+
+    return {
+      data,
+      error,
+      isLoading,
+      isFetching,
+      refetch: vi.fn(runQuery)
+    }
+  }
+
+  return { useQuery }
+})
 
 beforeEach(async () => {
   vi.clearAllMocks()
   vi.resetModules()
-
-  fetchMock = vi.fn()
-  global.fetch = fetchMock as unknown as typeof fetch
+  axiosGetMock.mockReset()
 
   mockTeamStore.currentTeamMeta = {
     isPending: false,
@@ -124,23 +172,23 @@ describe('useSafeReads', () => {
     const balancesUrl = `https://safe-transaction-polygon.safe.global/api/v1/safes/${SAFE_ADDRESS}/balances/`
     const detailsUrl = `https://safe-transaction-polygon.safe.global/api/v1/safes/${SAFE_ADDRESS}/`
 
-    fetchMock
-      .mockResolvedValueOnce(
-        createFetchResponse([
+    axiosGetMock
+      .mockResolvedValueOnce({
+        data: [
           {
             tokenAddress: null,
             balance: '2000000000000000000',
             token: { decimals: 18, symbol: 'POL' }
           }
-        ])
-      )
-      .mockResolvedValueOnce(createFetchResponse({ owners: [SAFE_ADDRESS], threshold: 1 }))
+        ]
+      })
+      .mockResolvedValueOnce({ data: { owners: [SAFE_ADDRESS], threshold: 1 } })
 
     const { safeInfo, error, isLoading, fetchSafeInfo } = useSafeInfo(ref(137))
     await fetchSafeInfo()
 
-    expect(fetchMock).toHaveBeenCalledWith(balancesUrl)
-    expect(fetchMock).toHaveBeenCalledWith(detailsUrl)
+    expect(axiosGetMock).toHaveBeenCalledWith(balancesUrl)
+    expect(axiosGetMock).toHaveBeenCalledWith(detailsUrl)
     expect(isLoading.value).toBe(false)
     expect(error.value).toBeNull()
     expect(safeInfo.value).toMatchObject({
@@ -169,7 +217,7 @@ describe('useSafeReads', () => {
     expect(error.value).toBe('Unsupported chainId: 999')
     expect(safeInfo.value).toBeNull()
     expect(isLoading.value).toBe(false)
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(axiosGetMock).not.toHaveBeenCalled()
   })
 
   it('handles invalid Safe addresses without calling the API', async () => {
@@ -186,23 +234,23 @@ describe('useSafeReads', () => {
     expect(error.value).toBe('Invalid Safe address')
     expect(safeInfo.value).toBeNull()
     expect(isLoading.value).toBe(false)
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(axiosGetMock).not.toHaveBeenCalled()
   })
 
   it('fetches Safe owners', async () => {
     const { useSafeOwners } = useSafeReads()
-    fetchMock.mockResolvedValueOnce(
-      createFetchResponse({
+    axiosGetMock.mockResolvedValueOnce({
+      data: {
         owners: [SAFE_ADDRESS, '0x2222222222222222222222222222222222222222'],
         threshold: 2
-      })
-    )
+      }
+    })
 
     const { owners, error, isLoading, fetchOwners } = useSafeOwners(ref(137))
     await fetchOwners()
 
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(axiosGetMock).toHaveBeenCalledTimes(1)
+    expect(axiosGetMock).toHaveBeenCalledWith(
       `https://safe-transaction-polygon.safe.global/api/v1/safes/${SAFE_ADDRESS}/`
     )
     expect(owners.value).toEqual([SAFE_ADDRESS, '0x2222222222222222222222222222222222222222'])
@@ -219,18 +267,18 @@ describe('useSafeReads', () => {
     expect(error.value).toBe('Unsupported chainId: 999')
     expect(owners.value).toEqual([])
     expect(isLoading.value).toBe(false)
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(axiosGetMock).not.toHaveBeenCalled()
   })
 
   it('fetches Safe threshold', async () => {
     const { useSafeThreshold } = useSafeReads()
-    fetchMock.mockResolvedValueOnce(createFetchResponse({ owners: [], threshold: 3 }))
+    axiosGetMock.mockResolvedValueOnce({ data: { owners: [], threshold: 3 } })
 
     const { threshold, error, isLoading, fetchThreshold } = useSafeThreshold(ref(137))
     await fetchThreshold()
 
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(axiosGetMock).toHaveBeenCalledTimes(1)
+    expect(axiosGetMock).toHaveBeenCalledWith(
       `https://safe-transaction-polygon.safe.global/api/v1/safes/${SAFE_ADDRESS}/`
     )
     expect(threshold.value).toBe(3)
@@ -247,7 +295,7 @@ describe('useSafeReads', () => {
     expect(error.value).toBe('Unsupported chainId: 999')
     expect(threshold.value).toBe(1)
     expect(isLoading.value).toBe(false)
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(axiosGetMock).not.toHaveBeenCalled()
   })
 
   it('validates required parameters', async () => {
@@ -262,6 +310,6 @@ describe('useSafeReads', () => {
 
     expect(error.value).toBe('Invalid Safe address')
     expect(safeInfo.value).toBeNull()
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(axiosGetMock).not.toHaveBeenCalled()
   })
 })

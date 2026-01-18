@@ -20,11 +20,7 @@ afterEach(() => {
 describe('useSafeWrites - Transactions', () => {
   describe('approveTransaction', () => {
     beforeEach(() => {
-      ctx.fetchMock.mockResolvedValue({
-        ok: true,
-        text: vi.fn().mockResolvedValue(''),
-        json: vi.fn().mockResolvedValue({})
-      })
+      ctx.axiosPostMock.mockResolvedValue({ data: {} })
       mockSafeSdk.signHash.mockResolvedValue(MOCK_DATA.signature)
     })
 
@@ -34,13 +30,10 @@ describe('useSafeWrites - Transactions', () => {
       const signature = await approveTransaction(MOCK_DATA.safeAddress, MOCK_DATA.safeTxHash)
 
       expect(signature).toBe(MOCK_DATA.signature.data)
-      expect(ctx.fetchMock).toHaveBeenCalledWith(
+      expect(ctx.axiosPostMock).toHaveBeenCalledWith(
         `https://safe-transaction-polygon.safe.global/api/v1/multisig-transactions/${MOCK_DATA.safeTxHash}/confirmations/`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ signature: MOCK_DATA.signature.data })
-        }
+        { signature: MOCK_DATA.signature.data },
+        expect.objectContaining({ headers: expect.any(Object) })
       )
     })
 
@@ -68,9 +61,10 @@ describe('useSafeWrites - Transactions', () => {
     })
 
     it('handles API error response', async () => {
-      ctx.fetchMock.mockResolvedValueOnce({
-        ok: false,
-        text: vi.fn().mockResolvedValue('API Error')
+      ctx.axiosPostMock.mockRejectedValueOnce({
+        isAxiosError: true,
+        response: { statusText: 'API Error', data: 'API Error' },
+        message: 'API Error'
       })
       const { approveTransaction } = ctx.useSafeWrites()
 
@@ -107,10 +101,7 @@ describe('useSafeWrites - Transactions', () => {
     }
 
     beforeEach(() => {
-      ctx.fetchMock.mockResolvedValue({
-        ok: true,
-        json: vi.fn().mockResolvedValue(mockServiceTx)
-      })
+      ctx.axiosGetMock.mockResolvedValue({ data: mockServiceTx })
       mockSafeSdk.executeTransaction.mockResolvedValue(mockTxResponse)
     })
 
@@ -120,7 +111,7 @@ describe('useSafeWrites - Transactions', () => {
       const txHash = await executeTransaction(MOCK_DATA.safeAddress, MOCK_DATA.safeTxHash)
 
       expect(txHash).toBe(MOCK_DATA.txHash)
-      expect(ctx.fetchMock).toHaveBeenCalledWith(
+      expect(ctx.axiosGetMock).toHaveBeenCalledWith(
         `https://safe-transaction-polygon.safe.global/api/v1/multisig-transactions/${MOCK_DATA.safeTxHash}/`
       )
       expect(mockSafeSdk.executeTransaction).toHaveBeenCalledWith(mockServiceTx)
@@ -135,9 +126,10 @@ describe('useSafeWrites - Transactions', () => {
     })
 
     it('handles transaction not found', async () => {
-      ctx.fetchMock.mockResolvedValueOnce({
-        ok: false,
-        text: vi.fn().mockResolvedValue('Transaction not found')
+      ctx.axiosGetMock.mockRejectedValueOnce({
+        isAxiosError: true,
+        response: { statusText: 'Transaction not found', data: 'Transaction not found' },
+        message: 'Transaction not found'
       })
       const { executeTransaction } = ctx.useSafeWrites()
 
@@ -178,10 +170,7 @@ describe('useSafeWrites - Transactions', () => {
         { chainId: 42161, chain: 'arbitrum' }
       ]
 
-      ctx.fetchMock.mockResolvedValue({
-        ok: true,
-        text: vi.fn().mockResolvedValue('')
-      })
+      ctx.axiosPostMock.mockResolvedValue({ data: {} })
       mockSafeSdk.signHash.mockResolvedValue(MOCK_DATA.signature)
 
       const { approveTransaction } = ctx.useSafeWrites()
@@ -189,11 +178,12 @@ describe('useSafeWrites - Transactions', () => {
       for (const testCase of testCases) {
         mockChainId.value = testCase.chainId
         await approveTransaction(MOCK_DATA.safeAddress, MOCK_DATA.safeTxHash)
-        expect(ctx.fetchMock).toHaveBeenCalledWith(
+        expect(ctx.axiosPostMock).toHaveBeenCalledWith(
           expect.stringContaining(`safe-transaction-${testCase.chain}.safe.global`),
+          expect.any(Object),
           expect.any(Object)
         )
-        ctx.fetchMock.mockClear()
+        ctx.axiosPostMock.mockClear()
       }
     })
   })
@@ -211,7 +201,7 @@ describe('useSafeWrites - Transactions', () => {
     })
 
     it('handles network request failures gracefully', async () => {
-      ctx.fetchMock.mockRejectedValueOnce(new Error('Network error'))
+      ctx.axiosPostMock.mockRejectedValueOnce(new Error('Network error'))
       const { approveTransaction } = ctx.useSafeWrites()
 
       await expect(approveTransaction(MOCK_DATA.safeAddress, MOCK_DATA.safeTxHash)).rejects.toThrow(
@@ -222,19 +212,14 @@ describe('useSafeWrites - Transactions', () => {
 
   describe('Integration', () => {
     it('handles Safe interaction flow (approve + execute)', async () => {
-      ctx.fetchMock
-        .mockResolvedValueOnce({
-          ok: true,
-          text: vi.fn().mockResolvedValue('')
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: vi.fn().mockResolvedValue({
-            safe: MOCK_DATA.safeAddress,
-            to: '0x1111111111111111111111111111111111111111',
-            data: '0xdeadbeef'
-          })
-        })
+      ctx.axiosPostMock.mockResolvedValueOnce({ data: {} })
+      ctx.axiosGetMock.mockResolvedValueOnce({
+        data: {
+          safe: MOCK_DATA.safeAddress,
+          to: '0x1111111111111111111111111111111111111111',
+          data: '0xdeadbeef'
+        }
+      })
 
       mockSafeSdk.signHash.mockResolvedValue(MOCK_DATA.signature)
       mockSafeSdk.executeTransaction.mockResolvedValue({

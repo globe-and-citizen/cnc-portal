@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useConnection, useChainId } from '@wagmi/vue'
 import Safe, {
   type PredictedSafeProps,
@@ -6,29 +6,13 @@ import Safe, {
   type Eip1193Provider
 } from '@safe-global/protocol-kit'
 import { createPublicClient, custom, formatEther, isAddress } from 'viem'
+import { useQueryClient } from '@tanstack/vue-query'
+import apiClient from '@/lib/axios'
+import type { AxiosError } from 'axios'
+import { TX_SERVICE_BY_CHAIN } from './types'
 
 const SAFE_VERSION = '1.4.1'
 const safeInstanceCache = new Map<string, Promise<Safe>>()
-
-// Safe Transaction Service URLs by chain
-const TX_SERVICE_BY_CHAIN: Record<number, { chain: string; url: string; nativeSymbol: string }> = {
-  137: {
-    chain: 'polygon',
-    url: 'https://safe-transaction-polygon.safe.global',
-    nativeSymbol: 'POL'
-  },
-  11155111: {
-    chain: 'sepolia',
-    url: 'https://safe-transaction-sepolia.safe.global',
-    nativeSymbol: 'ETH'
-  },
-  80002: { chain: 'amoy', url: 'https://safe-transaction-amoy.safe.global', nativeSymbol: 'MATIC' },
-  42161: {
-    chain: 'arbitrum',
-    url: 'https://safe-transaction-arbitrum.safe.global',
-    nativeSymbol: 'ETH'
-  }
-}
 
 function safeCacheKey(safeAddress: string, signer: string) {
   return `${safeAddress.toLowerCase()}::${signer.toLowerCase()}`
@@ -92,12 +76,53 @@ export function useSafeWrites() {
   const connection = useConnection()
   const chainId = useChainId()
   const isBusy = ref(false)
+  const queryClient = useQueryClient()
 
-  // Clear cache when wallet address changes
-  watch(
-    () => connection.address.value,
-    () => safeInstanceCache.clear()
-  )
+  // Query keys (align with reads.ts TanStack Query usage)
+  const QUERY_KEYS = {
+    safeInfo: (cid: number, address: string) => ['safeInfo', cid, address],
+    safeOwners: (cid: number, address: string) => ['safeOwners', cid, address],
+    safeThreshold: (cid: number, address: string) => ['safeThreshold', cid, address],
+    safeTransactions: (
+      cid: number,
+      address: string,
+      filter: 'queued' | 'executed' | 'all' = 'all'
+    ) => ['safeTransactions', cid, address, filter]
+  } as const
+
+  type SafeQueryScope = 'info' | 'owners' | 'threshold' | 'transactions' | 'all'
+
+  // Helper to invalidate Safe-related queries after writes
+  async function invalidateSafeQueries(
+    safeAddress: string,
+    scope: SafeQueryScope = 'all',
+    options?: { filter?: 'queued' | 'executed' | 'all' }
+  ) {
+    const cid = chainId.value
+    if (!safeAddress || !cid) return
+
+    const tasks: Promise<unknown>[] = []
+    const filter = options?.filter ?? 'all'
+
+    if (scope === 'info' || scope === 'all') {
+      tasks.push(queryClient.invalidateQueries({ queryKey: QUERY_KEYS.safeInfo(cid, safeAddress) }))
+    }
+    if (scope === 'owners' || scope === 'all') {
+      tasks.push(queryClient.invalidateQueries({ queryKey: QUERY_KEYS.safeOwners(cid, safeAddress) }))
+    }
+    if (scope === 'threshold' || scope === 'all') {
+      tasks.push(queryClient.invalidateQueries({ queryKey: QUERY_KEYS.safeThreshold(cid, safeAddress) }))
+    }
+    if (scope === 'transactions' || scope === 'all') {
+      tasks.push(
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.safeTransactions(cid, safeAddress, filter)
+        })
+      )
+    }
+
+    await Promise.all(tasks)
+  }
 
   /**
    * Deploy a new Safe using the connected wallet as signer.
@@ -146,6 +171,10 @@ export function useSafeWrites() {
       await publicClient.waitForTransactionReceipt({ hash: txHash })
 
       const safeAddress = await safeSdk.getAddress()
+
+      // Invalidate all Safe queries for the new address
+      await invalidateSafeQueries(safeAddress, 'all')
+
       return safeAddress
     } finally {
       isBusy.value = false
@@ -207,19 +236,26 @@ export function useSafeWrites() {
       // Sign the transaction hash (EIP-712)
       const signature = await safeSdk.signHash(safeTxHash)
 
-      // Submit the signature to the Safe Transaction Service
-      const resp = await fetch(
-        `${txService.url}/api/v1/multisig-transactions/${safeTxHash}/confirmations/`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ signature: signature.data })
-        }
-      )
-      if (!resp.ok) {
-        const errorText = await resp.text()
-        throw new Error(errorText || 'Failed to confirm transaction')
+      // Submit the signature to the Safe Transaction Service using Axios
+      try {
+        await apiClient.post(
+          `${txService.url}/api/v1/multisig-transactions/${safeTxHash}/confirmations/`,
+          { signature: signature.data },
+          { headers: { 'Content-Type': 'application/json' } }
+        )
+      } catch (error) {
+        const axiosError = error as AxiosError
+        const apiMessage = axiosError.response?.data && typeof axiosError.response.data === 'object'
+          ? (axiosError.response.data as { message?: string }).message
+          : undefined
+        const message = apiMessage || axiosError.message || 'Failed to confirm transaction'
+        console.error('Failed to confirm transaction:', message, error)
+        throw new Error(message)
       }
+
+      // Signature added: refresh queued transactions for this Safe
+      await invalidateSafeQueries(safeAddress, 'transactions', { filter: 'queued' })
+
       return signature.data
     } finally {
       isBusy.value = false
@@ -244,15 +280,22 @@ export function useSafeWrites() {
       // Initialize Safe SDK with connected wallet
       const safeSdk = await getSafeInstance(safeAddress, connection.address.value)
 
-      // Fetch the transaction from the service
-      const serviceResp = await fetch(
-        `${txService.url}/api/v1/multisig-transactions/${safeTxHash}/`
-      )
-      if (!serviceResp.ok) {
-        const errorText = await serviceResp.text()
-        throw new Error(errorText || 'Transaction not found')
+      // Fetch the transaction from the service using Axios
+      let serviceTx
+      try {
+        const { data } = await apiClient.get(
+          `${txService.url}/api/v1/multisig-transactions/${safeTxHash}/`
+        )
+        serviceTx = data
+      } catch (error) {
+        const axiosError = error as AxiosError
+        const apiMessage = axiosError.response?.data && typeof axiosError.response.data === 'object'
+          ? (axiosError.response.data as { message?: string }).message
+          : undefined
+        const message = apiMessage || axiosError.message || 'Transaction not found'
+        console.error('Failed to fetch transaction:', message, error)
+        throw new Error(message)
       }
-      const serviceTx = await serviceResp.json()
 
       // Execute the transaction (will send on-chain tx)
       const txResponse = await safeSdk.executeTransaction(serviceTx)
@@ -264,6 +307,10 @@ export function useSafeWrites() {
       if (typeof waitFn === 'function') {
         await waitFn()
       }
+
+      // Executed: refresh everything (owners/threshold may change depending on tx)
+      await invalidateSafeQueries(safeAddress, 'all')
+
       return txHash
     } finally {
       isBusy.value = false
@@ -276,7 +323,10 @@ export function useSafeWrites() {
     loadSafe,
     getDeployerInfo,
     approveTransaction,
-    executeTransaction
+    executeTransaction,
+    // Expose query keys and invalidation helpers for consumers
+    queryKeys: QUERY_KEYS,
+    invalidateSafeQueries
   }
 }
 
