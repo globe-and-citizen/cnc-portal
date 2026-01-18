@@ -189,6 +189,16 @@ describe('Team Controller', () => {
       expect(response.body.name).toEqual('Test Team');
     });
 
+    it('should return 404 if owner is not found', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(null);
+
+      const response = await request(app).post('/').send(mockTeamData);
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toEqual('Owner not found');
+      expect(prisma.team.create).not.toHaveBeenCalled();
+    });
+
     it('should return 500 if there is a server error', async () => {
       vi.spyOn(prisma.user, 'findUnique').mockRejectedValue(new Error('Server error'));
 
