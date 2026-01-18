@@ -3,38 +3,8 @@ import apiClient from '@/lib/axios'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 import type { AxiosError } from 'axios'
-
-/**
- * Weekly Claim Data Types
- */
-export interface Claim {
-  id: number
-  hoursWorked: number
-  memo?: string
-  dayWorked: string | Date
-  status: 'pending' | 'signed' | 'withdrawn' | 'disabled'
-  signature?: string | null
-  tokenTx?: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-export interface WeeklyClaim {
-  id: number
-  status: 'pending' | 'signed' | 'withdrawn' | 'disabled'
-  weekStart: string | Date
-  memberAddress: string
-  teamId: number
-  claims?: Claim[]
-  hoursWorked?: number
-  signature?: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-export interface WeeklyClaimWithHours extends WeeklyClaim {
-  hoursWorked: number
-}
+import type { WeeklyClaim } from '@/types/cash-remuneration'
+import type { Address } from 'viem'
 
 /**
  * Fetch weekly claims for a team with optional status filter
@@ -43,7 +13,7 @@ export const useTeamWeeklyClaimsQuery = (
   teamId: MaybeRefOrGetter<string | number | null>,
   status?: MaybeRefOrGetter<'pending' | 'signed' | 'withdrawn' | 'disabled' | null>
 ) => {
-  return useQuery<WeeklyClaimWithHours[], AxiosError>({
+  return useQuery<WeeklyClaim[], AxiosError>({
     queryKey: ['teamWeeklyClaims', { teamId, status }],
     queryFn: async () => {
       const id = toValue(teamId)
@@ -55,7 +25,7 @@ export const useTeamWeeklyClaimsQuery = (
         url += `&status=${statusValue}`
       }
 
-      const { data } = await apiClient.get<WeeklyClaimWithHours[]>(url)
+      const { data } = await apiClient.get<WeeklyClaim[]>(url)
       return data
     },
     enabled: () => !!toValue(teamId),
@@ -73,7 +43,7 @@ export const useTeamWeeklyClaimsQuery = (
  */
 export const useMemberWeeklyClaimsQuery = (
   teamId: MaybeRefOrGetter<string | number | null>,
-  memberAddress: MaybeRefOrGetter<string | null>,
+  memberAddress: MaybeRefOrGetter<Address | undefined | null>,
   status?: MaybeRefOrGetter<'pending' | 'signed' | 'withdrawn' | 'disabled' | null>
 ) => {
   return useQuery<WeeklyClaim[], AxiosError>({
