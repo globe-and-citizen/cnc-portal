@@ -34,6 +34,9 @@ export const mockIsAddress = vi.fn()
 export const mockFormatEther = vi.fn()
 export const axiosPostMock = vi.fn()
 export const axiosGetMock = vi.fn()
+export const mockQueryClient = {
+  invalidateQueries: vi.fn()
+}
 
 export const mockSafeSdk = {
   createSafeDeploymentTransaction: vi.fn(),
@@ -70,6 +73,10 @@ vi.mock('@safe-global/protocol-kit', () => {
   }
 })
 
+vi.mock('@tanstack/vue-query', () => ({
+  useQueryClient: vi.fn(() => mockQueryClient)
+}))
+
 vi.mock('viem', () => {
   return {
     createPublicClient: mockCreatePublicClient,
@@ -104,6 +111,7 @@ export async function setupWritesTest() {
   vi.resetModules()
   axiosPostMock.mockReset()
   axiosGetMock.mockReset()
+  mockQueryClient.invalidateQueries.mockReset()
 
   mockConnection.address.value = MOCK_DATA.owners[0]
   mockConnection.isConnected.value = true

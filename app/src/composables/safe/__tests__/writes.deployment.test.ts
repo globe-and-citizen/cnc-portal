@@ -9,7 +9,9 @@ import {
   mockSafeInit,
   mockSafeSdk,
   mockPublicClient,
-  mockWalletClient
+  mockQueryClient,
+  mockWalletClient,
+  mockChainId
 } from './writes.test.utils'
 
 let ctx: Awaited<ReturnType<typeof setupWritesTest>>
@@ -66,6 +68,13 @@ describe('useSafeWrites - Deployment & State', () => {
           })
         })
       )
+      // Should invalidate Safe queries for new address (including transactions default filter "all")
+      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: ['safeInfo', mockChainId.value, MOCK_DATA.safeAddress]
+      })
+      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: ['safeTransactions', mockChainId.value, MOCK_DATA.safeAddress, 'all']
+      })
     })
 
     it('validates wallet connection', async () => {
@@ -122,6 +131,17 @@ describe('useSafeWrites - Deployment & State', () => {
       await expect(deploySafe(MOCK_DATA.owners, MOCK_DATA.threshold)).rejects.toThrow(
         'Wallet signer not available'
       )
+    })
+
+    it('fails when injected provider lacks request', async () => {
+      const original = (globalThis.window as { ethereum?: unknown }).ethereum
+      ;(globalThis.window as { ethereum?: unknown }).ethereum = {}
+      const { deploySafe } = ctx.useSafeWrites()
+
+      await expect(deploySafe(MOCK_DATA.owners, MOCK_DATA.threshold)).rejects.toThrow(
+        'Injected provider does not implement EIP-1193 request method'
+      )
+      ;(globalThis.window as { ethereum?: unknown }).ethereum = original
     })
   })
 

@@ -4,13 +4,19 @@ import {
   MOCK_DATA,
   mockChainId,
   mockSafeInit,
-  mockSafeSdk
+  mockSafeSdk,
+  mockQueryClient,
+  mockIsAddress,
+  mockConnection
 } from './writes.test.utils'
 
 let ctx: Awaited<ReturnType<typeof setupWritesTest>>
 
 beforeEach(async () => {
   ctx = await setupWritesTest()
+  mockIsAddress.mockImplementation(
+    (address: string) => typeof address === 'string' && address.startsWith('0x')
+  )
 })
 
 afterEach(() => {
@@ -35,6 +41,9 @@ describe('useSafeWrites - Transactions', () => {
         { signature: MOCK_DATA.signature.data },
         expect.objectContaining({ headers: expect.any(Object) })
       )
+      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: ['safeTransactions', mockChainId.value, MOCK_DATA.safeAddress, 'queued']
+      })
     })
 
     it('validates Safe address for approval', async () => {
@@ -49,6 +58,17 @@ describe('useSafeWrites - Transactions', () => {
       await expect(approveTransaction(MOCK_DATA.safeAddress, '')).rejects.toThrow(
         'Missing Safe transaction hash'
       )
+    })
+
+    it('validates wallet connection for approval', async () => {
+      const { approveTransaction } = ctx.useSafeWrites()
+      mockConnection.isConnected.value = false
+
+      await expect(approveTransaction(MOCK_DATA.safeAddress, MOCK_DATA.safeTxHash)).rejects.toThrow(
+        'Wallet not connected'
+      )
+
+      mockConnection.isConnected.value = true
     })
 
     it('handles unsupported chain', async () => {
@@ -116,6 +136,9 @@ describe('useSafeWrites - Transactions', () => {
       )
       expect(mockSafeSdk.executeTransaction).toHaveBeenCalledWith(mockServiceTx)
       expect(mockTxResponse.transactionResponse.wait).toHaveBeenCalled()
+      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: ['safeTransactions', mockChainId.value, MOCK_DATA.safeAddress, 'all']
+      })
     })
 
     it('validates Safe address for execution', async () => {
@@ -123,6 +146,17 @@ describe('useSafeWrites - Transactions', () => {
       await expect(executeTransaction('invalid-address', MOCK_DATA.safeTxHash)).rejects.toThrow(
         'Invalid Safe address'
       )
+    })
+
+    it('validates wallet connection for execution', async () => {
+      const { executeTransaction } = ctx.useSafeWrites()
+      mockConnection.isConnected.value = false
+
+      await expect(executeTransaction(MOCK_DATA.safeAddress, MOCK_DATA.safeTxHash)).rejects.toThrow(
+        'Wallet not connected'
+      )
+
+      mockConnection.isConnected.value = true
     })
 
     it('handles transaction not found', async () => {

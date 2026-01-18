@@ -42,6 +42,8 @@ const MOCK_PRICES = [
 ]
 
 const axiosGetMock = vi.fn()
+const capturedQueryKeys: unknown[] = []
+const capturedEnabledStates: unknown[] = []
 let useSafeReads: typeof import('../reads').useSafeReads
 let useSafeAppUrls: typeof import('../reads').useSafeAppUrls
 
@@ -76,6 +78,25 @@ vi.mock('@tanstack/vue-query', () => {
     const isLoading = ref(false)
     const isFetching = ref(false)
 
+    // Evaluate queryKey/enabled to cover computed branches
+    const rawQueryKey = (options as { queryKey?: unknown }).queryKey
+    const queryKeyValue =
+      rawQueryKey && typeof rawQueryKey === 'object' && 'value' in rawQueryKey
+        ? (rawQueryKey as { value: unknown }).value
+        : typeof rawQueryKey === 'function'
+          ? (rawQueryKey as () => unknown)()
+          : rawQueryKey
+    capturedQueryKeys.push(queryKeyValue)
+
+    const rawEnabled = (options as { enabled?: unknown }).enabled
+    const enabledValue =
+      rawEnabled && typeof rawEnabled === 'object' && 'value' in rawEnabled
+        ? (rawEnabled as { value: unknown }).value
+        : typeof rawEnabled === 'function'
+          ? (rawEnabled as () => unknown)()
+          : rawEnabled
+    capturedEnabledStates.push(enabledValue)
+
     const runQuery = async () => {
       isLoading.value = true
       isFetching.value = true
@@ -109,6 +130,8 @@ beforeEach(async () => {
   vi.clearAllMocks()
   vi.resetModules()
   axiosGetMock.mockReset()
+  capturedQueryKeys.length = 0
+  capturedEnabledStates.length = 0
 
   mockTeamStore.currentTeamMeta = {
     isPending: false,
@@ -351,5 +374,25 @@ describe('useSafeReads', () => {
     expect(error.value).toBe('Invalid Safe address')
     expect(safeInfo.value).toBeNull()
     expect(axiosGetMock).not.toHaveBeenCalled()
+  })
+
+  it('builds disabled query keys and disables fetching when address or chain is missing', () => {
+    mockTeamStore.currentTeamMeta = {
+      isPending: false,
+      data: { safeAddress: undefined }
+    }
+
+    const { useSafeInfo, useSafeOwners, useSafeThreshold } = useSafeReads()
+    capturedQueryKeys.length = 0
+    capturedEnabledStates.length = 0
+
+    useSafeInfo(ref(undefined as unknown as number))
+    useSafeOwners(ref(undefined as unknown as number))
+    useSafeThreshold(ref(undefined as unknown as number))
+
+    expect(capturedQueryKeys).toContainEqual(['safeInfo', 'disabled'])
+    expect(capturedQueryKeys).toContainEqual(['safeOwners', 'disabled'])
+    expect(capturedQueryKeys).toContainEqual(['safeThreshold', 'disabled'])
+    expect(capturedEnabledStates).toContain(false)
   })
 })
