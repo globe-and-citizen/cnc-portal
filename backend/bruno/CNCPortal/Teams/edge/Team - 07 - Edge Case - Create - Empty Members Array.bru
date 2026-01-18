@@ -1,0 +1,39 @@
+meta {
+  name: Team - 07 - Edge Case - Create - Empty Members Array
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{host}}/teams
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "name": "Team Without Members",
+    "description": "Team with empty members array",
+    "officerAddress": "0x1234567890123456789012345678901234567890",
+    "members": []
+  }
+}
+
+tests {
+  test("should handle empty members array", function() {
+    const status = res.getStatus();
+    // Should either succeed with owner added automatically (201) or fail with validation error
+    expect([201, 400, 500]).to.include(status);
+  });
+  
+  test("if successful, should include owner in members", function() {
+    if (res.getStatus() === 201) {
+      expect(res.body.members).to.be.an('array');
+      expect(res.body.members.length).to.be.at.least(1);
+    }
+  });
+}

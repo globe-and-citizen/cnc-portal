@@ -41,92 +41,193 @@
         :description="error.message || 'An unexpected error occurred'"
       />
 
-      <!-- Features Table Component -->
-      <FeaturesTable
-        :features="features"
-        :loading="isLoading"
-        :deleting-feature="deletingFeature"
-        :updating-feature="updatingFeature"
-        @create="isCreateModalOpen = true"
-        @delete="openDeleteModal"
-        @update-status="handleUpdateStatus"
-      />
+      <!-- Features Table Section -->
+      <div>
+        <!-- Loading State -->
+        <div v-if="isLoading" class="space-y-4">
+          <USkeleton class="h-12" />
+          <USkeleton class="h-64" />
+        </div>
+
+        <!-- Features Table -->
+        <UTable
+          v-else-if="features && features.length > 0"
+          :data="features"
+          :columns="columns"
+          class="flex-1"
+        />
+
+        <!-- Empty State -->
+        <UCard v-else>
+          <div class="text-center py-12">
+            <div class="flex justify-center mb-4">
+              <div class="p-4 bg-gray-100 dark:bg-gray-800 rounded-full">
+                <Icon name="i-lucide-layers" class="w-8 h-8 text-gray-400" />
+              </div>
+            </div>
+            <h3 class="text-lg font-semibold text-highlighted mb-2">
+              No Features Yet
+            </h3>
+            <p class="text-sm text-muted mb-6">
+              Get started by creating your first feature
+            </p>
+            <UButton
+              icon="i-lucide-plus"
+              color="primary"
+              data-test="create-first-feature-btn"
+              @click="isCreateModalOpen = true"
+            >
+              Create Your First Feature
+            </UButton>
+          </div>
+        </UCard>
+      </div>
     </div>
 
     <!-- Create Feature Modal Component -->
     <CreateFeatureModal
       v-model:open="isCreateModalOpen"
-      :loading="isCreating"
       :existing-features="features"
-      @submit="handleCreateFeature"
     />
 
     <!-- Delete Feature Modal Component -->
     <DeleteFeatureModal
       v-model:open="isDeleteModalOpen"
       :feature="featureToDelete"
-      :loading="isDeleting"
-      @confirm="handleDeleteFeature"
     />
   </UPageCard>
 </template>
 
 <script setup lang="ts">
+import { h, resolveComponent } from 'vue'
+import type { TableColumn } from '@nuxt/ui'
 import type { Feature, FeatureStatus } from '~/types'
-import { useFeatures, useCreateFeature, useDeleteFeature, useUpdateFeature } from '~/queries/feature.query'
-import FeaturesTable from '~/components/features/FeaturesTable.vue'
-import CreateFeatureModal from '~/components/features/CreateFeatureModal.vue'
-import DeleteFeatureModal from '~/components/features/DeleteFeatureModal.vue'
+import { useFeaturesQuery, useUpdateFeatureQuery } from '~/queries/feature.query'
+
+const USelect = resolveComponent('USelect')
+const UButton = resolveComponent('UButton')
 
 // Feature data
-const { data, isLoading, error } = useFeatures()
-const features = computed(() => data.value?.data || [])
+const { data: features, isLoading, error } = useFeaturesQuery()
 
 // Mutations
-const createFeatureMutation = useCreateFeature()
-const deleteFeatureMutation = useDeleteFeature()
-const updateFeatureMutation = useUpdateFeature()
+const { mutateAsync: updateFeature, isPending: isUpdatingFeature } = useUpdateFeatureQuery()
 
 // Modal states
 const isCreateModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const featureToDelete = ref<Feature | null>(null)
-const deletingFeature = ref<string | null>(null)
-const updatingFeature = ref<string | null>(null)
 
-// Computed
-const isCreating = computed(() => createFeatureMutation.isPending.value)
-const isDeleting = computed(() => deleteFeatureMutation.isPending.value)
+// Status options for the select dropdown
+const statusOptions = [
+  { label: 'Enabled', value: 'enabled' },
+  { label: 'Disabled', value: 'disabled' },
+  { label: 'Beta', value: 'beta' }
+]
 
-// Create Feature Handler
-const handleCreateFeature = async (formData: { functionName: string, status: FeatureStatus }) => {
-  try {
-    await createFeatureMutation.mutateAsync(formData)
-    isCreateModalOpen.value = false
-  } catch (error) {
-    console.error('Failed to create feature:', error)
-  }
+// Utility methods
+const formatDate = (dateString?: string) => {
+  if (!dateString) return '—'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
-// Delete Feature Handlers
+// Table columns configuration
+const columns: TableColumn<Feature>[] = [
+  {
+    accessorKey: 'functionName',
+    header: 'Function Name',
+    cell: ({ row }) => {
+      const functionName = row.getValue('functionName') as string
+      return h('span', {
+        class: 'font-medium text-gray-900 dark:text-white',
+        title: functionName
+      }, functionName)
+    }
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: ({ row }) => {
+      const feature = row.original
+      return h(USelect, {
+        'modelValue': feature.status,
+        'items': statusOptions,
+        'valueKey': 'value',
+        'size': 'sm',
+        'class': 'w-32',
+        'disabled': isUpdatingFeature.value,
+        'loading': isUpdatingFeature.value,
+        'data-test': 'status-select',
+        'onUpdate:modelValue': (value: FeatureStatus) => {
+          handleUpdateStatus(feature, value)
+        }
+      })
+    }
+  },
+  {
+    accessorKey: 'createdAt',
+    header: 'Created',
+    cell: ({ row }) => {
+      return h('span', {
+        class: 'text-xs text-gray-500 dark:text-gray-500'
+      }, formatDate(row.getValue('createdAt') as string))
+    }
+  },
+  {
+    accessorKey: 'updatedAt',
+    header: 'Updated',
+    cell: ({ row }) => {
+      return h('span', {
+        class: 'text-xs text-gray-500 dark:text-gray-500'
+      }, formatDate(row.getValue('updatedAt') as string))
+    }
+  },
+  {
+    accessorKey: 'actions',
+    header: 'Actions',
+    meta: {
+      class: {
+        th: 'text-right'
+      }
+    },
+    cell: ({ row }) => {
+      const feature = row.original
+      return h('div', { class: 'flex items-center justify-end gap-2' }, [
+        // View Button
+        h(UButton, {
+          'to': `/features/${feature.functionName}`,
+          'icon': 'i-lucide-eye',
+          'color': 'primary',
+          'variant': 'ghost',
+          'size': 'sm',
+          'data-test': 'view-feature-btn',
+          'aria-label': 'View feature details'
+        }, () => 'View'),
+        // Delete Button
+        h(UButton, {
+          'icon': 'i-lucide-trash-2',
+          'color': 'error',
+          'variant': 'ghost',
+          'size': 'sm',
+          'data-test': 'delete-feature-btn',
+          'onClick': () => openDeleteModal(feature)
+        })
+      ])
+    }
+  }
+]
+
+// Delete Modal Handler
 const openDeleteModal = (feature: Feature) => {
   featureToDelete.value = feature
   isDeleteModalOpen.value = true
-}
-
-const handleDeleteFeature = async () => {
-  if (!featureToDelete.value) return
-
-  try {
-    deletingFeature.value = featureToDelete.value.functionName
-    await deleteFeatureMutation.mutateAsync(featureToDelete.value.functionName)
-    isDeleteModalOpen.value = false
-    featureToDelete.value = null
-  } catch (error) {
-    console.error('Failed to delete feature:', error)
-  } finally {
-    deletingFeature.value = null
-  }
 }
 
 // Update Feature Status Handler
@@ -134,16 +235,9 @@ const handleUpdateStatus = async (feature: Feature, newStatus: FeatureStatus) =>
   // Don't update if status is the same
   if (feature.status === newStatus) return
 
-  try {
-    updatingFeature.value = feature.functionName
-    await updateFeatureMutation.mutateAsync({
-      functionName: feature.functionName,
-      status: newStatus
-    })
-  } catch (error) {
-    console.error('Failed to update feature status:', error)
-  } finally {
-    updatingFeature.value = null
-  }
+  await updateFeature({
+    functionName: feature.functionName,
+    status: newStatus
+  })
 }
 </script>

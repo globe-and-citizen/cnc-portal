@@ -1,0 +1,34 @@
+meta {
+  name: Feature - 03 - Get Feature
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/admin/features/{{testFeatureName}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+tests {
+  test("should return 200 status", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("should return feature object", function() {
+    expect(res.body).to.be.an('object');
+    expect(res.body.functionName).to.be.a('string');
+  });
+  
+  test("should have status field", function() {
+    expect(res.body.status).to.be.oneOf(['enabled', 'disabled', 'beta']);
+  });
+  
+  test("log feature details", function() {
+    console.log("Feature:", JSON.stringify(res.body, null, 2));
+  });
+}
