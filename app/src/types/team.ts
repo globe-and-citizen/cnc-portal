@@ -9,6 +9,7 @@ export interface Team {
   members: Member[]
   ownerAddress: Address
   officerAddress?: Address
+  safeAddress?: Address
   teamContracts: TeamContract[]
   _count?: { members: number }
 }
