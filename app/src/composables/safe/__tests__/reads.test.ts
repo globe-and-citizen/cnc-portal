@@ -46,7 +46,8 @@ let useSafeReads: typeof import('../reads').useSafeReads
 let useSafeAppUrls: typeof import('../reads').useSafeAppUrls
 
 vi.mock('axios', () => {
-  const isAxiosError = (error: unknown) => Boolean((error as { isAxiosError?: boolean })?.isAxiosError)
+  const isAxiosError = (error: unknown) =>
+    Boolean((error as { isAxiosError?: boolean })?.isAxiosError)
   return {
     default: { isAxiosError },
     isAxiosError
@@ -54,7 +55,8 @@ vi.mock('axios', () => {
 })
 
 vi.mock('@/lib/axios', () => {
-  const isAxiosError = (error: unknown) => Boolean((error as { isAxiosError?: boolean })?.isAxiosError)
+  const isAxiosError = (error: unknown) =>
+    Boolean((error as { isAxiosError?: boolean })?.isAxiosError)
   return {
     default: {
       get: axiosGetMock,

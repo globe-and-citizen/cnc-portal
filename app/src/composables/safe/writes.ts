@@ -108,10 +108,14 @@ export function useSafeWrites() {
       tasks.push(queryClient.invalidateQueries({ queryKey: QUERY_KEYS.safeInfo(cid, safeAddress) }))
     }
     if (scope === 'owners' || scope === 'all') {
-      tasks.push(queryClient.invalidateQueries({ queryKey: QUERY_KEYS.safeOwners(cid, safeAddress) }))
+      tasks.push(
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.safeOwners(cid, safeAddress) })
+      )
     }
     if (scope === 'threshold' || scope === 'all') {
-      tasks.push(queryClient.invalidateQueries({ queryKey: QUERY_KEYS.safeThreshold(cid, safeAddress) }))
+      tasks.push(
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.safeThreshold(cid, safeAddress) })
+      )
     }
     if (scope === 'transactions' || scope === 'all') {
       tasks.push(
@@ -245,9 +249,10 @@ export function useSafeWrites() {
         )
       } catch (error) {
         const axiosError = error as AxiosError
-        const apiMessage = axiosError.response?.data && typeof axiosError.response.data === 'object'
-          ? (axiosError.response.data as { message?: string }).message
-          : undefined
+        const apiMessage =
+          axiosError.response?.data && typeof axiosError.response.data === 'object'
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined
         const message = apiMessage || axiosError.message || 'Failed to confirm transaction'
         console.error('Failed to confirm transaction:', message, error)
         throw new Error(message)
@@ -289,9 +294,10 @@ export function useSafeWrites() {
         serviceTx = data
       } catch (error) {
         const axiosError = error as AxiosError
-        const apiMessage = axiosError.response?.data && typeof axiosError.response.data === 'object'
-          ? (axiosError.response.data as { message?: string }).message
-          : undefined
+        const apiMessage =
+          axiosError.response?.data && typeof axiosError.response.data === 'object'
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined
         const message = apiMessage || axiosError.message || 'Transaction not found'
         console.error('Failed to fetch transaction:', message, error)
         throw new Error(message)

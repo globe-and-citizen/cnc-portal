@@ -81,7 +81,8 @@ vi.mock('viem', () => {
 })
 
 vi.mock('@/lib/axios', () => {
-  const isAxiosError = (error: unknown) => Boolean((error as { isAxiosError?: boolean })?.isAxiosError)
+  const isAxiosError = (error: unknown) =>
+    Boolean((error as { isAxiosError?: boolean })?.isAxiosError)
   return {
     default: {
       post: axiosPostMock,

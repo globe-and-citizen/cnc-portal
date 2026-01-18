@@ -369,15 +369,13 @@ describe('Team Controller', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app)
-        .put('/1')
-        .send({
-          id: 1,
-          name: 'Updated Team',
-          description: 'Updated Description',
-          officerAddress: '0xNewOfficerAddress',
-          safeAddress: 'not-a-safe-address',
-        });
+      const response = await request(app).put('/1').send({
+        id: 1,
+        name: 'Updated Team',
+        description: 'Updated Description',
+        officerAddress: '0xNewOfficerAddress',
+        safeAddress: 'not-a-safe-address',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toEqual('Invalid Safe address');
@@ -403,15 +401,13 @@ describe('Team Controller', () => {
         safeAddress: '0x1234567890123456789012345678901234567890',
       });
 
-      const response = await request(app)
-        .put('/1')
-        .send({
-          id: 1,
-          name: 'Updated Team',
-          description: 'Updated Description',
-          officerAddress: '0xNewOfficerAddress',
-          safeAddress: '0x1234567890123456789012345678901234567890',
-        });
+      const response = await request(app).put('/1').send({
+        id: 1,
+        name: 'Updated Team',
+        description: 'Updated Description',
+        officerAddress: '0xNewOfficerAddress',
+        safeAddress: '0x1234567890123456789012345678901234567890',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.name).toEqual('Updated Team');

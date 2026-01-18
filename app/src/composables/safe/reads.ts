@@ -18,7 +18,9 @@ async function fetchSafeBalance(
   nativeSymbol: string
 ): Promise<{ balance: string; symbol: string }> {
   try {
-    const { data } = await apiClient.get<SafeBalanceItem[]>(`${txServiceUrl}/api/v1/safes/${safeAddress}/balances/`)
+    const { data } = await apiClient.get<SafeBalanceItem[]>(
+      `${txServiceUrl}/api/v1/safes/${safeAddress}/balances/`
+    )
     const native = data.find((item) => item.tokenAddress === null)
     if (!native) return { balance: '0', symbol: nativeSymbol }
     const decimals = native.token?.decimals ?? 18
@@ -27,9 +29,10 @@ async function fetchSafeBalance(
     return { balance, symbol }
   } catch (error) {
     const axiosError = error as AxiosError
-    const apiMessage = axiosError.response?.data && typeof axiosError.response.data === 'object'
-      ? (axiosError.response.data as { message?: string }).message
-      : undefined
+    const apiMessage =
+      axiosError.response?.data && typeof axiosError.response.data === 'object'
+        ? (axiosError.response.data as { message?: string }).message
+        : undefined
     const message = apiMessage || axiosError.message || 'Failed to fetch balance'
     console.error('Failed to fetch balance:', message, error)
     throw new Error(message)
@@ -38,16 +41,19 @@ async function fetchSafeBalance(
 
 async function fetchSafeDetails(txServiceUrl: string, safeAddress: string): Promise<SafeDetails> {
   try {
-    const { data } = await apiClient.get<{ owners?: string[]; threshold?: number }>(`${txServiceUrl}/api/v1/safes/${safeAddress}/`)
+    const { data } = await apiClient.get<{ owners?: string[]; threshold?: number }>(
+      `${txServiceUrl}/api/v1/safes/${safeAddress}/`
+    )
     return {
       owners: data.owners || [],
       threshold: data.threshold || 1
     }
   } catch (error) {
     const axiosError = error as AxiosError
-    const apiMessage = axiosError.response?.data && typeof axiosError.response.data === 'object'
-      ? (axiosError.response.data as { message?: string }).message
-      : undefined
+    const apiMessage =
+      axiosError.response?.data && typeof axiosError.response.data === 'object'
+        ? (axiosError.response.data as { message?: string }).message
+        : undefined
     const message = apiMessage || axiosError.message || 'Failed to fetch Safe details'
     console.error('Failed to fetch Safe details:', message, error)
     throw new Error(message)
