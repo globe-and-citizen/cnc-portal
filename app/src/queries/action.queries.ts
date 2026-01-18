@@ -5,7 +5,7 @@ import type { Action } from '@/types/action'
 /**
  * Create a new action
  */
-export const useCreateAction = () => {
+export const useCreateActionMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -23,7 +23,7 @@ export const useCreateAction = () => {
 /**
  * Update an action
  */
-export const useUpdateAction = () => {
+export const useUpdateActionMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({

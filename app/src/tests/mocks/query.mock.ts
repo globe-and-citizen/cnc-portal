@@ -41,9 +41,6 @@ export const mockTeamData: Team = {
 
 export const mockTeamsData: Team[] = [mockTeamData]
 
-// export const mockTeamResponse = createMockAxiosResponse(mockTeamData)
-// export const mockTeamsResponse = createMockAxiosResponse(mockTeamsData)
-
 /**
  * Wage Query Mocks
  */
@@ -131,41 +128,41 @@ export const createMockMutationResponse = (): Record<string, unknown> => ({
  */
 export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Team queries - team.queries.ts
-  useTeams: () => createMockQueryResponse(mockTeamsData),
-  useTeam: () => createMockQueryResponse(mockTeamData),
-  useCreateTeam: () => createMockMutationResponse(),
-  useUpdateTeam: () => createMockMutationResponse(),
-  useDeleteTeam: () => createMockMutationResponse(),
+  useTeamsQuery: () => createMockQueryResponse(mockTeamsData),
+  useTeamQuery: () => createMockQueryResponse(mockTeamData),
+  useCreateTeamMutation: () => createMockMutationResponse(),
+  useUpdateTeamMutation: () => createMockMutationResponse(),
+  useDeleteTeamMutation: () => createMockMutationResponse(),
 
   // Member queries - member.queries.ts
-  useAddMembers: () => createMockMutationResponse(),
-  useDeleteMember: () => createMockMutationResponse(),
+  useAddMembersMutation: () => createMockMutationResponse(),
+  useDeleteMemberMutation: () => createMockMutationResponse(),
 
   // Wage queries - wage.queries.ts
-  useTeamWages: () => createMockQueryResponse(mockWageData),
-  useSetMemberWage: () => createMockMutationResponse(),
+  useTeamWagesQuery: () => createMockQueryResponse(mockWageData),
+  useSetMemberWageMutation: () => createMockMutationResponse(),
 
   // Notification queries - notification.queries.ts
-  useNotifications: () => createMockQueryResponse(mockNotificationData),
-  useAddBulkNotifications: () => createMockMutationResponse(),
-  useUpdateNotification: () => createMockMutationResponse(),
+  useNotificationsQuery: () => createMockQueryResponse(mockNotificationData),
+  useAddBulkNotificationsMutation: () => createMockMutationResponse(),
+  useUpdateNotificationMutation: () => createMockMutationResponse(),
 
   // Expense queries - expense.queries.ts
-  useExpenses: () => createMockQueryResponse([]),
+  useExpensesQuery: () => createMockQueryResponse([]),
 
   // User queries - user.queries.ts
-  useUser: () => createMockQueryResponse(null),
-  useUserNonce: () => createMockQueryResponse(null),
+  useUserQuery: () => createMockQueryResponse(null),
+  useUserNonceQuery: () => createMockQueryResponse(null),
 
   // Action queries - action.queries.ts
-  useCreateAction: () => createMockMutationResponse(),
-  useUpdateAction: () => createMockMutationResponse(),
+  useCreateActionMutation: () => createMockMutationResponse(),
+  useUpdateActionMutation: () => createMockMutationResponse(),
 
   // Auth queries - auth.queries.ts
-  useValidateToken: () => createMockQueryResponse(null),
+  useValidateTokenQuery: () => createMockQueryResponse(null),
 
   // Contract queries - contract.queries.ts
-  useCreateContract: () => createMockMutationResponse(),
+  useCreateContractMutation: () => createMockMutationResponse(),
 
   // Health queries - health.queries.ts
   useBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData)

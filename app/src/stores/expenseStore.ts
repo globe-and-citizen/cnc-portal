@@ -2,7 +2,7 @@ import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
 import { log } from '@/utils/generalUtil'
 import { defineStore } from 'pinia'
 import { computed, onMounted, watch } from 'vue'
-import { useExpenses } from '@/queries/expense.queries'
+import { useExpensesQuery } from '@/queries/expense.queries'
 
 export const useExpenseDataStore = defineStore('expense', () => {
   // TODO: fetch teams on mounted
@@ -19,7 +19,7 @@ export const useExpenseDataStore = defineStore('expense', () => {
     isLoading: allExpenseDataIsFetching,
     error: allExpenseDataError,
     refetch: executeFetchAllExpenseData
-  } = useExpenses(() => teamStore.currentTeamId)
+  } = useExpensesQuery(() => teamStore.currentTeamId)
 
   const myApprovedExpenses = computed(() => {
     if (allExpenseData.value) {

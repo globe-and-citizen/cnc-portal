@@ -7,7 +7,7 @@ import { toValue } from 'vue'
 /**
  * Fetch all expenses for a team
  */
-export const useExpenses = (teamId: MaybeRefOrGetter<string | null>) => {
+export const useExpensesQuery = (teamId: MaybeRefOrGetter<string | null>) => {
   return useQuery({
     queryKey: ['expenses', { teamId }],
     queryFn: async () => {

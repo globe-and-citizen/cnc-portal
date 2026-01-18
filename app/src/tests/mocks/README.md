@@ -39,34 +39,36 @@ For detailed documentation on:
 
 The system mocks all query hooks from:
 
-| Module                    | Mocks                                                                    |
-| ------------------------- | ------------------------------------------------------------------------ |
-| `team.queries.ts`         | `useTeams`, `useTeam`, `useCreateTeam`, `useUpdateTeam`, `useDeleteTeam` |
-| `member.queries.ts`       | `useAddMembers`, `useDeleteMember`                                       |
-| `wage.queries.ts`         | `useTeamWages`, `useSetMemberWage`                                       |
-| `notification.queries.ts` | `useNotifications`, `useAddBulkNotifications`, `useUpdateNotification`   |
-| `expense.queries.ts`      | `useExpenses`                                                            |
-| `user.queries.ts`         | `useUser`, `useUserNonce`                                                |
-| `action.queries.ts`       | `useCreateAction`, `useUpdateAction`                                     |
-| `auth.queries.ts`         | `useValidateToken`                                                       |
-| `contract.queries.ts`     | `useCreateContract`                                                      |
-| `health.queries.ts`       | `useBackendHealthQuery`                                                  |
+| Module                    | Mocks                                                                                                      |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `team.queries.ts`         | `useTeamsQuery`, `useTeamQuery`, `useCreateTeamMutation`, `useUpdateTeamMutation`, `useDeleteTeamMutation` |
+| `member.queries.ts`       | `useAddMembersMutation`, `useDeleteMemberMutation`                                                         |
+| `wage.queries.ts`         | `useTeamWagesQuery`, `useSetMemberWageMutation`                                                            |
+| `notification.queries.ts` | `useNotificationsQuery`, `useAddBulkNotificationsMutation`, `useUpdateNotificationMutation`                |
+| `expense.queries.ts`      | `useExpensesQuery`                                                                                         |
+| `user.queries.ts`         | `useUserQuery`, `useUserNonceQuery`                                                                        |
+| `action.queries.ts`       | `useCreateActionMutation`, `useUpdateActionMutation`                                                       |
+| `auth.queries.ts`         | `useValidateTokenQuery`                                                                                    |
+| `contract.queries.ts`     | `useCreateContractMutation`                                                                                |
+| `health.queries.ts`       | `useBackendHealthQuery`                                                                                    |
 
 ## Common Tasks
 
 ### Override Mock Data for Specific Test
 
 ```typescript
-import { useTeams } from '@/queries/team.queries'
+import { useTeamsQuery } from '@/queries/team.queries'
 import { createMockQueryResponse } from '@/tests/mocks/query.mock'
 
-vi.mocked(useTeams).mockReturnValue(createMockQueryResponse([{ id: '1', name: 'Custom Team' }]))
+vi.mocked(useTeamsQuery).mockReturnValue(
+  createMockQueryResponse([{ id: '1', name: 'Custom Team' }])
+)
 ```
 
 ### Test Loading State
 
 ```typescript
-vi.mocked(useTeams).mockReturnValue(
+vi.mocked(useTeamsQuery).mockReturnValue(
   createMockQueryResponse([], true) // isLoading = true
 )
 ```
@@ -74,7 +76,7 @@ vi.mocked(useTeams).mockReturnValue(
 ### Test Error State
 
 ```typescript
-vi.mocked(useTeams).mockReturnValue(createMockQueryResponse(null, false, new Error('Failed')))
+vi.mocked(useTeamsQuery).mockReturnValue(createMockQueryResponse(null, false, new Error('Failed')))
 ```
 
 ## Related Documentation

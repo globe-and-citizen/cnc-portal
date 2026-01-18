@@ -5,7 +5,7 @@ import type { NotificationResponse, BulkNotificationPayload } from '@/types/noti
 /**
  * Fetch all notifications for the current user
  */
-export const useNotifications = () => {
+export const useNotificationsQuery = () => {
   return useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
@@ -18,7 +18,7 @@ export const useNotifications = () => {
 /**
  * Add bulk notifications
  */
-export const useAddBulkNotifications = () => {
+export const useAddBulkNotificationsMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -36,7 +36,7 @@ export const useAddBulkNotifications = () => {
 /**
  * Update a notification (mark as read)
  */
-export const useUpdateNotification = () => {
+export const useUpdateNotificationMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
