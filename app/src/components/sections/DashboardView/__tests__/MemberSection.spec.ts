@@ -28,7 +28,6 @@ const mockWageData = ref<WageData[]>([])
 const mockWageError = ref<string | null | Error>(null)
 const mockWageIsFetching = ref(false)
 
-
 describe.skip('MemberSection.vue', () => {
   let wrapper: ReturnType<typeof mount>
   let component: MemberSectionInstance
