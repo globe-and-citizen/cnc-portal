@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, type ComputedRef } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { Side, OrderType } from '@polymarket/clob-client'
 import type { ClobClient, UserOrder } from '@polymarket/clob-client'
@@ -13,7 +13,10 @@ export type OrderParams = {
   isMarketOrder?: boolean
 }
 
-export function useClobOrder(clobClient: ClobClient | null, walletAddress: string | undefined) {
+export function useClobOrder(
+  clobClient: ComputedRef<ClobClient | null>,
+  walletAddress: string | undefined
+) {
   const isSubmitting = ref(false)
   const error = ref<Error | null>(null)
   const orderId = ref<string | null>(null)
@@ -21,7 +24,7 @@ export function useClobOrder(clobClient: ClobClient | null, walletAddress: strin
 
   const submitOrder = async (params: OrderParams) => {
     if (!walletAddress) throw new Error('Wallet not connected')
-    if (!clobClient) throw new Error('CLOB client not initialized')
+    if (!clobClient.value) throw new Error('CLOB client not initialized')
 
     isSubmitting.value = true
     error.value = null
@@ -34,7 +37,7 @@ export function useClobOrder(clobClient: ClobClient | null, walletAddress: strin
       if (params.isMarketOrder) {
         let aggressivePrice: number
         try {
-          const priceFromOrderbook = await clobClient.getPrice(params.tokenId, side)
+          const priceFromOrderbook = await clobClient.value.getPrice(params.tokenId, side)
           const marketPrice = parseFloat(priceFromOrderbook.price)
 
           if (isNaN(marketPrice) || marketPrice <= 0 || marketPrice >= 1) {
@@ -60,7 +63,7 @@ export function useClobOrder(clobClient: ClobClient | null, walletAddress: strin
           taker: '0x0000000000000000000000000000000000000000'
         }
 
-        response = await clobClient.createAndPostOrder(
+        response = await clobClient.value.createAndPostOrder(
           marketOrder,
           { negRisk: params.negRisk },
           OrderType.GTC
@@ -78,7 +81,7 @@ export function useClobOrder(clobClient: ClobClient | null, walletAddress: strin
           taker: '0x0000000000000000000000000000000000000000'
         }
 
-        response = await clobClient.createAndPostOrder(
+        response = await clobClient.value.createAndPostOrder(
           limitOrder,
           { negRisk: params.negRisk },
           OrderType.GTC
@@ -103,13 +106,13 @@ export function useClobOrder(clobClient: ClobClient | null, walletAddress: strin
   }
 
   const cancelOrder = async (targetOrderId: string) => {
-    if (!clobClient) throw new Error('CLOB client not initialized')
+    if (!clobClient.value) throw new Error('CLOB client not initialized')
 
     isSubmitting.value = true
     error.value = null
 
     try {
-      await clobClient.cancelOrder({ orderID: targetOrderId })
+      await clobClient.value.cancelOrder({ orderID: targetOrderId })
       queryClient.invalidateQueries({ queryKey: ['active-orders'] })
       return { success: true }
     } catch (err) {
