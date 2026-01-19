@@ -27,7 +27,6 @@
 import { useTeamWagesQuery } from '@/queries'
 import { computed, watch } from 'vue'
 import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
-import { type Wage } from '@/types'
 import SubmitClaims from './SubmitClaims.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
