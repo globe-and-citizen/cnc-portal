@@ -1,4 +1,4 @@
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { ClobClient } from '@polymarket/clob-client'
 import { BuilderConfig } from '@polymarket/builder-signing-sdk'
 
