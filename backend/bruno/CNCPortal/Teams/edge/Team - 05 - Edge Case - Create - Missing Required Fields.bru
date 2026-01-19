@@ -1,0 +1,32 @@
+meta {
+  name: Team - 05 - Edge Case - Create - Missing Required Fields
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{host}}/teams
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "description": "Team without name and members"
+  }
+}
+
+tests {
+  test("should return 400 or 500 status for missing required fields", function() {
+    const status = res.getStatus();
+    expect([400, 500]).to.include(status);
+  });
+  
+  test("should return error response", function() {
+    expect(res.body).to.have.property('error');
+  });
+}

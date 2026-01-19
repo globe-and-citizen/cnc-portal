@@ -69,12 +69,12 @@ import { useUserDataStore } from '@/stores'
 import { useAppStore } from '@/stores/appStore'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
-import { useTeams } from '@/queries/team.queries'
+import { useTeamsQuery } from '@/queries/team.queries'
 
 const route = useRoute()
 const userDataStore = useUserDataStore()
 const appStore = useAppStore()
-const { data: teams, isPending: teamsAreFetching, error: teamsError } = useTeams()
+const { data: teams, isPending: teamsAreFetching, error: teamsError } = useTeamsQuery()
 
 const router = useRouter()
 

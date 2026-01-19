@@ -35,34 +35,34 @@ src/
 ## Basic Test Structure
 
 ```typescript
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import MyComponent from '@/components/MyComponent.vue'
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { mount } from "@vue/test-utils";
+import { createTestingPinia } from "@pinia/testing";
+import MyComponent from "@/components/MyComponent.vue";
 
-describe('MyComponent', () => {
-  let wrapper
+describe("MyComponent", () => {
+  let wrapper;
 
   beforeEach(() => {
-    vi.clearAllMocks()
-  })
+    vi.clearAllMocks();
+  });
 
   afterEach(() => {
-    if (wrapper) wrapper.unmount()
-  })
+    if (wrapper) wrapper.unmount();
+  });
 
-  describe('Component Rendering', () => {
-    it('should render component correctly', () => {
+  describe("Component Rendering", () => {
+    it("should render component correctly", () => {
       wrapper = mount(MyComponent, {
         global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn })]
-        }
-      })
+          plugins: [createTestingPinia({ createSpy: vi.fn })],
+        },
+      });
 
-      expect(wrapper.exists()).toBe(true)
-    })
-  })
-})
+      expect(wrapper.exists()).toBe(true);
+    });
+  });
+});
 ```
 
 ## Component Testing
@@ -70,95 +70,95 @@ describe('MyComponent', () => {
 ### Mounting Components
 
 ```typescript
-import { mount, shallowMount } from '@vue/test-utils'
+import { mount, shallowMount } from "@vue/test-utils";
 
 // Full mount - renders all child components
 const wrapper = mount(MyComponent, {
-  props: { message: 'Hello' },
+  props: { message: "Hello" },
   global: {
     plugins: [createTestingPinia({ createSpy: vi.fn })],
-    stubs: { ChildComponent: true }
-  }
-})
+    stubs: { ChildComponent: true },
+  },
+});
 
 // Shallow mount - only renders the component, not children
-const wrapper = shallowMount(MyComponent)
+const wrapper = shallowMount(MyComponent);
 ```
 
 ### Accessing Component Elements
 
 ```typescript
 // Use data-test attributes for stable selection
-const button = wrapper.find('[data-test="submit-button"]')
-const items = wrapper.findAll('[data-test="item"]')
+const button = wrapper.find('[data-test="submit-button"]');
+const items = wrapper.findAll('[data-test="item"]');
 
 // Check if element exists
-expect(button.exists()).toBe(true)
+expect(button.exists()).toBe(true);
 
 // Get text content
-expect(button.text()).toBe('Submit')
+expect(button.text()).toBe("Submit");
 
 // Get attributes
-expect(button.attributes('disabled')).toBeDefined()
+expect(button.attributes("disabled")).toBeDefined();
 
 // Get classes
-expect(button.classes()).toContain('btn-primary')
+expect(button.classes()).toContain("btn-primary");
 ```
 
 ### Testing Props and Emits
 
 ```typescript
-describe('Props', () => {
-  it('should accept and display props', () => {
+describe("Props", () => {
+  it("should accept and display props", () => {
     const wrapper = mount(MyComponent, {
       props: {
-        title: 'Test Title',
-        count: 5
-      }
-    })
+        title: "Test Title",
+        count: 5,
+      },
+    });
 
-    expect(wrapper.text()).toContain('Test Title')
-  })
+    expect(wrapper.text()).toContain("Test Title");
+  });
 
-  it('should emit events with correct payload', async () => {
-    const wrapper = mount(MyComponent)
+  it("should emit events with correct payload", async () => {
+    const wrapper = mount(MyComponent);
 
-    await wrapper.find('[data-test="button"]').trigger('click')
+    await wrapper.find('[data-test="button"]').trigger("click");
 
-    expect(wrapper.emitted('submit')).toBeTruthy()
-    expect(wrapper.emitted('submit')[0]).toEqual([expectedData])
-  })
-})
+    expect(wrapper.emitted("submit")).toBeTruthy();
+    expect(wrapper.emitted("submit")[0]).toEqual([expectedData]);
+  });
+});
 ```
 
 ### Testing User Interactions
 
 ```typescript
-describe('User Interactions', () => {
-  it('should handle click events', async () => {
-    const wrapper = mount(MyComponent)
+describe("User Interactions", () => {
+  it("should handle click events", async () => {
+    const wrapper = mount(MyComponent);
 
-    await wrapper.find('[data-test="button"]').trigger('click')
+    await wrapper.find('[data-test="button"]').trigger("click");
 
-    expect(wrapper.vm.clicked).toBe(true)
-  })
+    expect(wrapper.vm.clicked).toBe(true);
+  });
 
-  it('should handle keyboard events', async () => {
-    const wrapper = mount(MyComponent)
+  it("should handle keyboard events", async () => {
+    const wrapper = mount(MyComponent);
 
-    await wrapper.find('[data-test="input"]').trigger('keydown.enter')
+    await wrapper.find('[data-test="input"]').trigger("keydown.enter");
 
     // Assert expected behavior
-  })
+  });
 
-  it('should handle form submission', async () => {
-    const wrapper = mount(MyComponent)
+  it("should handle form submission", async () => {
+    const wrapper = mount(MyComponent);
 
-    await wrapper.find('[data-test="form"]').trigger('submit')
+    await wrapper.find('[data-test="form"]').trigger("submit");
 
-    expect(wrapper.emitted('submit')).toBeTruthy()
-  })
-})
+    expect(wrapper.emitted("submit")).toBeTruthy();
+  });
+});
 ```
 
 ## Testing with TanStack Vue Query
@@ -166,85 +166,85 @@ describe('User Interactions', () => {
 All query hooks are automatically mocked globally. Use `createMockQueryResponse` to override:
 
 ```typescript
-import { useTeams } from '@/queries/team.queries'
-import { createMockQueryResponse } from '@/tests/mocks/query.mock'
-import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
-import { vi } from 'vitest'
+import { useTeamsQuery } from "@/queries/team.queries";
+import { createMockQueryResponse } from "@/tests/mocks/query.mock";
+import { VueQueryPlugin, QueryClient } from "@tanstack/vue-query";
+import { vi } from "vitest";
 
-describe('Teams Component', () => {
-  it('should display teams from query', () => {
-    const queryClient = new QueryClient()
+describe("Teams Component", () => {
+  it("should display teams from query", () => {
+    const queryClient = new QueryClient();
     const customTeams = [
-      { id: '1', name: 'Team A' },
-      { id: '2', name: 'Team B' }
-    ]
+      { id: "1", name: "Team A" },
+      { id: "2", name: "Team B" },
+    ];
 
-    vi.mocked(useTeams).mockReturnValue(
+    vi.mocked(useTeamsQuery).mockReturnValue(
       createMockQueryResponse(customTeams)
-    )
+    );
 
     const wrapper = mount(TeamsComponent, {
       global: {
         plugins: [
           createTestingPinia({ createSpy: vi.fn }),
-          [VueQueryPlugin, { queryClient }]
-        ]
-      }
-    })
+          [VueQueryPlugin, { queryClient }],
+        ],
+      },
+    });
 
-    expect(wrapper.text()).toContain('Team A')
-    expect(wrapper.text()).toContain('Team B')
-  })
+    expect(wrapper.text()).toContain("Team A");
+    expect(wrapper.text()).toContain("Team B");
+  });
 
-  it('should handle loading state', () => {
-    const queryClient = new QueryClient()
+  it("should handle loading state", () => {
+    const queryClient = new QueryClient();
 
-    vi.mocked(useTeams).mockReturnValue(
+    vi.mocked(useTeamsQuery).mockReturnValue(
       createMockQueryResponse([], true) // isLoading = true
-    )
+    );
 
     const wrapper = mount(TeamsComponent, {
       global: {
         plugins: [
           createTestingPinia({ createSpy: vi.fn }),
-          [VueQueryPlugin, { queryClient }]
-        ]
-      }
-    })
+          [VueQueryPlugin, { queryClient }],
+        ],
+      },
+    });
 
-    expect(wrapper.find('[data-test="loader"]').exists()).toBe(true)
-  })
+    expect(wrapper.find('[data-test="loader"]').exists()).toBe(true);
+  });
 
-  it('should handle error state', () => {
-    const queryClient = new QueryClient()
-    const error = new Error('Failed to fetch teams')
+  it("should handle error state", () => {
+    const queryClient = new QueryClient();
+    const error = new Error("Failed to fetch teams");
 
-    vi.mocked(useTeams).mockReturnValue(
+    vi.mocked(useTeamsQuery).mockReturnValue(
       createMockQueryResponse([], false, error)
-    )
+    );
 
     const wrapper = mount(TeamsComponent, {
       global: {
         plugins: [
           createTestingPinia({ createSpy: vi.fn }),
-          [VueQueryPlugin, { queryClient }]
-        ]
-      }
-    })
+          [VueQueryPlugin, { queryClient }],
+        ],
+      },
+    });
 
-    expect(wrapper.find('[data-test="error-message"]').exists()).toBe(true)
-  })
-})
+    expect(wrapper.find('[data-test="error-message"]').exists()).toBe(true);
+  });
+});
 ```
 
 ## Testing with Pinia
 
 ```typescript
-import { useTeamStore } from '@/stores/teamStore'
-import { createTestingPinia } from '@pinia/testing'
+import { useTeamStore } from "@/stores/teamStore";
+import { createTestingPinia } from "@pinia/testing";
 
-describe('Component with Pinia Store', () => {
-  it('should access store state', () => {
+describe("Component with Pinia Store", () => {
+  it("should access store state", () => {
     const wrapper = mount(MyComponent, {
       global: {
         plugins: [
@@ -252,93 +252,93 @@ describe('Component with Pinia Store', () => {
             createSpy: vi.fn,
             initialState: {
               team: {
-                currentTeamId: '1',
-                teams: [{ id: '1', name: 'Team A' }]
-              }
-            }
-          })
-        ]
-      }
-    })
+                currentTeamId: "1",
+                teams: [{ id: "1", name: "Team A" }],
+              },
+            },
+          }),
+        ],
+      },
+    });
 
-    const store = useTeamStore()
-    expect(store.currentTeamId).toBe('1')
-  })
+    const store = useTeamStore();
+    expect(store.currentTeamId).toBe("1");
+  });
 
-  it('should call store actions', async () => {
+  it("should call store actions", async () => {
     const wrapper = mount(MyComponent, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+      },
+    });
 
-    const store = useTeamStore()
-    await wrapper.find('[data-test="load-button"]').trigger('click')
+    const store = useTeamStore();
+    await wrapper.find('[data-test="load-button"]').trigger("click");
 
-    expect(store.loadTeams).toHaveBeenCalled()
-  })
-})
+    expect(store.loadTeams).toHaveBeenCalled();
+  });
+});
 ```
 
 ## Testing Async Operations
 
 ```typescript
-import { nextTick, flushPromises } from 'vue'
+import { nextTick, flushPromises } from "vue";
 
-describe('Async Operations', () => {
-  it('should handle async data loading', async () => {
-    const wrapper = mount(MyComponent)
+describe("Async Operations", () => {
+  it("should handle async data loading", async () => {
+    const wrapper = mount(MyComponent);
 
     // Wait for component to render
-    await nextTick()
+    await nextTick();
 
     // Wait for all pending promises
-    await flushPromises()
+    await flushPromises();
 
     // Assert after async operations complete
-    expect(wrapper.text()).toContain('Loaded Data')
-  })
+    expect(wrapper.text()).toContain("Loaded Data");
+  });
 
-  it('should handle promise resolution', async () => {
-    const mockApi = vi.fn().mockResolvedValue({ data: 'test' })
+  it("should handle promise resolution", async () => {
+    const mockApi = vi.fn().mockResolvedValue({ data: "test" });
 
     const wrapper = mount(MyComponent, {
-      props: { apiCall: mockApi }
-    })
+      props: { apiCall: mockApi },
+    });
 
-    await flushPromises()
+    await flushPromises();
 
-    expect(mockApi).toHaveBeenCalled()
-    expect(wrapper.vm.result).toEqual({ data: 'test' })
-  })
-})
+    expect(mockApi).toHaveBeenCalled();
+    expect(wrapper.vm.result).toEqual({ data: "test" });
+  });
+});
 ```
 
 ## Testing Computed Properties and Watchers
 
 ```typescript
-describe('Reactivity', () => {
-  it('should update computed property', async () => {
+describe("Reactivity", () => {
+  it("should update computed property", async () => {
     const wrapper = mount(MyComponent, {
-      props: { count: 5 }
-    })
+      props: { count: 5 },
+    });
 
-    expect(wrapper.vm.doubledCount).toBe(10)
+    expect(wrapper.vm.doubledCount).toBe(10);
 
-    await wrapper.setProps({ count: 10 })
+    await wrapper.setProps({ count: 10 });
 
-    expect(wrapper.vm.doubledCount).toBe(20)
-  })
+    expect(wrapper.vm.doubledCount).toBe(20);
+  });
 
-  it('should trigger watchers', async () => {
-    const wrapper = mount(MyComponent)
+  it("should trigger watchers", async () => {
+    const wrapper = mount(MyComponent);
 
-    await wrapper.setData({ value: 'new' })
-    await nextTick()
+    await wrapper.setData({ value: "new" });
+    await nextTick();
 
-    expect(wrapper.vm.watching).toBe(true)
-  })
-})
+    expect(wrapper.vm.watching).toBe(true);
+  });
+});
 ```
 
 ## Common Testing Patterns
@@ -346,50 +346,52 @@ describe('Reactivity', () => {
 ### Testing Conditional Rendering
 
 ```typescript
-it('should show element when condition is true', async () => {
+it("should show element when condition is true", async () => {
   const wrapper = mount(MyComponent, {
-    data: () => ({ isVisible: false })
-  })
+    data: () => ({ isVisible: false }),
+  });
 
-  expect(wrapper.find('[data-test="secret"]').exists()).toBe(false)
+  expect(wrapper.find('[data-test="secret"]').exists()).toBe(false);
 
-  await wrapper.setData({ isVisible: true })
+  await wrapper.setData({ isVisible: true });
 
-  expect(wrapper.find('[data-test="secret"]').exists()).toBe(true)
-})
+  expect(wrapper.find('[data-test="secret"]').exists()).toBe(true);
+});
 ```
 
 ### Testing List Rendering
 
 ```typescript
-it('should render list items', () => {
+it("should render list items", () => {
   const items = [
-    { id: 1, name: 'Item 1' },
-    { id: 2, name: 'Item 2' },
-    { id: 3, name: 'Item 3' }
-  ]
+    { id: 1, name: "Item 1" },
+    { id: 2, name: "Item 2" },
+    { id: 3, name: "Item 3" },
+  ];
 
   const wrapper = mount(ListComponent, {
-    props: { items }
-  })
+    props: { items },
+  });
 
-  const listItems = wrapper.findAll('[data-test="item"]')
-  expect(listItems).toHaveLength(3)
-  expect(listItems[0].text()).toContain('Item 1')
-})
+  const listItems = wrapper.findAll('[data-test="item"]');
+  expect(listItems).toHaveLength(3);
+  expect(listItems[0].text()).toContain("Item 1");
+});
 ```
 
 ### Testing Form Validation
 
 ```typescript
-it('should validate required fields', async () => {
-  const wrapper = mount(FormComponent)
+it("should validate required fields", async () => {
+  const wrapper = mount(FormComponent);
 
-  await wrapper.find('[data-test="submit"]').trigger('click')
+  await wrapper.find('[data-test="submit"]').trigger("click");
 
-  expect(wrapper.find('[data-test="email-error"]').exists()).toBe(true)
-  expect(wrapper.find('[data-test="email-error"]').text()).toContain('required')
-})
+  expect(wrapper.find('[data-test="email-error"]').exists()).toBe(true);
+  expect(wrapper.find('[data-test="email-error"]').text()).toContain(
+    "required"
+  );
+});
 ```
 
 ## Coverage Requirements
@@ -412,28 +414,31 @@ npm run test:coverage
 1. **Arrange-Act-Assert Pattern**
 
    ```typescript
-   it('should do something', () => {
+   it("should do something", () => {
      // Arrange
-     const wrapper = mount(Component)
-     
+     const wrapper = mount(Component);
+
      // Act
-     await wrapper.find('[data-test="button"]').trigger('click')
-     
+     await wrapper.find('[data-test="button"]').trigger("click");
+
      // Assert
-     expect(wrapper.emitted('event')).toBeTruthy()
-   })
+     expect(wrapper.emitted("event")).toBeTruthy();
+   });
    ```
 
 2. **Use Descriptive Test Names**
+
    - ✅ `should display error message when validation fails`
    - ❌ `should work`
 
 3. **Keep Tests Focused**
+
    - Test one thing per test
    - Use descriptive assertions
    - Avoid testing implementation details
 
 4. **Mock External Dependencies**
+
    - Use centralized mocks from `src/tests/mocks/`
    - Don't make real API calls
    - Don't test third-party libraries

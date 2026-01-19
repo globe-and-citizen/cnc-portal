@@ -34,3 +34,15 @@ export const shortenAddress = (address: string | undefined) => {
   if (!address) return ''
   return address.slice(0, 6) + '...' + address.slice(-4)
 }
+
+/**
+ * Convert a snake_case feature name to Title Case format
+ * Example: "SUBMIT_RESTRICTION" → "Submit Restriction"
+ */
+export const formatFeatureName = (featureName: string | undefined): string => {
+  if (!featureName) return 'Feature'
+  return featureName
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
+}

@@ -5,7 +5,3 @@ export interface Member {
   teamId: number
   imageUrl?: string
 }
-export interface MemberResponse {
-  members: Member
-  success: boolean
-}

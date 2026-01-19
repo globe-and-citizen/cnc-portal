@@ -30,15 +30,15 @@ read -p "Enter network choice (1-4): " choice
 case $choice in
     1)
         echo "🔗 Running on localhost/hardhat network..."
-        npx hardhat run scripts/bulkSendEth.ts --network localhost
+        npx hardhat run ./bulkSendEth.ts --network localhost
         ;;
     2)
         echo "🔗 Running on Sepolia testnet..."
-        npx hardhat run scripts/bulkSendEth.ts --network sepolia
+        npx hardhat run ./bulkSendEth.ts --network sepolia
         ;;
     3)
         echo "🔗 Running on Amoy testnet..."
-        npx hardhat run scripts/bulkSendEth.ts --network amoy
+        npx hardhat run ./bulkSendEth.ts --network amoy
         ;;
     4)
         echo "🔗 Running on Polygon mainnet..."

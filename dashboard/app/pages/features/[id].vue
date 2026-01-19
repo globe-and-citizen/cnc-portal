@@ -42,14 +42,26 @@
         Back to Features
       </UButton>
     </div>
-
     <div v-else-if="currentFeature">
-      <!-- Feature-Specific Component -->
-      <FeatureCard
-        v-if="currentFeature.functionName"
-        :feature-name="currentFeature.functionName"
-        :is-editable="isFeatureEnabled"
-      />
+      <div class="space-y-6">
+        <UAlert
+          color="info"
+          variant="soft"
+          icon="i-lucide-info"
+          :title="`About ${featureDisplayName}`"
+          description="This feature has three states: Enabled (full restriction), Disabled (no restriction), and Beta (testing phase). Teams with overrides can have their own state independent of the global setting."
+        />
+
+        <!-- Global Restriction Toggle -->
+        <FeatureGlobalRestriction
+          :feature="currentFeature"
+        />
+
+        <!-- Team Overrides Section (Button + Modal + Table) -->
+        <TeamOverridesSection
+          :feature="currentFeature"
+        />
+      </div>
     </div>
   </UPageCard>
 </template>
@@ -57,45 +69,24 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter, useRoute } from '#imports'
-import FeatureCard from '~/components/features/FeatureCard.vue'
-import { useFeatures } from '~/queries/feature.query'
+import { useFeatureQuery } from '~/queries/feature.query'
+import { formatFeatureName } from '~/utils/generalUtil'
 
 const router = useRouter()
 const route = useRoute()
 
-// Get features data
-const { data, isLoading, error } = useFeatures()
-const features = computed(() => data.value?.data || [])
-
 // Get feature ID from route params
 const featureId = computed(() => route.params.id as string)
 
+// Get single feature data
+const { data: currentFeature, isLoading, error } = useFeatureQuery(featureId)
+
 const featureDisplayName = computed(() => {
-  if (!currentFeature.value?.functionName) return 'Feature'
-  // Convert SUBMIT_RESTRICTION to Submit Restriction format
-  return currentFeature.value?.functionName
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
-})
-// Find current feature
-const currentFeature = computed(() => {
-  return features.value.find(f => f.functionName === featureId.value)
-})
-
-// Computed properties
-
-// Check if the feature is enabled (both "enabled" and "beta" are considered enabled for viewing)
-const isFeatureEnabled = computed(() => {
-  return currentFeature.value?.status === 'enabled'
+  return formatFeatureName(currentFeature.value?.functionName)
 })
 
 // Navigate back
 const goBack = () => {
-  if (import.meta.client && window.history.length > 1) {
-    router.back()
-    return
-  }
   router.push('/features')
 }
 </script>

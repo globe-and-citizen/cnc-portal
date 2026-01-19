@@ -1,0 +1,30 @@
+meta {
+  name: Feature - 10 - Delete Test Team
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{host}}/teams/{{testTeamId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("should return 200 status for successful deletion", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should return success confirmation", function() {
+    expect(res.body).to.be.an('object');
+    expect(res.body.success).to.equal(true);
+  });
+
+  test("log deletion result", function() {
+    console.log("Test team deleted successfully");
+  });
+}

@@ -7,11 +7,11 @@ import { createMockQueryResponse, mockNotificationData } from '@/tests/mocks/que
 
 // Mock TanStack Query hooks using centralized mocks
 vi.mock('@/queries/notification.queries', () => ({
-  useNotifications: vi.fn(() => createMockQueryResponse(mockNotificationData)),
-  useAddBulkNotifications: vi.fn(() => ({
+  useNotificationsQuery: vi.fn(() => createMockQueryResponse(mockNotificationData)),
+  useAddBulkNotificationsMutation: vi.fn(() => ({
     mutateAsync: vi.fn()
   })),
-  useUpdateNotification: vi.fn(() => ({
+  useUpdateNotificationMutation: vi.fn(() => ({
     mutateAsync: vi.fn()
   }))
 }))

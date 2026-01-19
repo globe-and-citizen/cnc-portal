@@ -45,17 +45,15 @@ import type { Member } from '@/types'
 import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
-import { useUpdateTeam, useDeleteTeam } from '@/queries/team.queries'
+import { useUpdateTeamMutation, useDeleteTeamMutation } from '@/queries/team.queries'
 
 const showDeleteTeamConfirmModal = ref(false)
 const showModal = ref(false)
 const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
-// const route = useRoute()
 const router = useRouter()
 const inputs = ref<Member[]>([])
-// const { teamStore.currentTeamMeta.data } = storeToRefs(teamStore)
 
 const updateTeamInput = ref<{ name: string; description: string }>({
   name: '',
@@ -66,7 +64,7 @@ const {
   isPending: teamIsUpdating,
   error: updateTeamError,
   mutate: updateTeamMutate
-} = useUpdateTeam()
+} = useUpdateTeamMutation()
 
 const executeUpdateTeam = () => {
   updateTeamMutate(
@@ -94,7 +92,7 @@ const {
   mutate: deleteTeamMutate,
   isPending: teamIsDeleting,
   error: deleteTeamError
-} = useDeleteTeam()
+} = useDeleteTeamMutation()
 
 const deleteTeam = async () => {
   const teamId = teamStore.currentTeamId

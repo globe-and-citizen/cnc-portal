@@ -1,11 +1,11 @@
 meta {
-  name: Feature - 08 - Delete Team Override
+  name: Feature - 09 - Delete Feature
   type: http
-  seq: 8
+  seq: 9
 }
 
 delete {
-  url: {{host}}/admin/features/{{testFeatureName}}/teams/{{testTeamId}}
+  url: {{host}}/admin/features/{{testFeatureName}}
   body: none
   auth: bearer
 }
@@ -24,6 +24,6 @@ tests {
   });
 
   test("log deletion result", function() {
-    console.log("Override deleted successfully (204 No Content)");
+    console.log("Feature deleted successfully (204 No Content)");
   });
 }

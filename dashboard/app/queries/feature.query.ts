@@ -5,12 +5,11 @@ import {
   createFeature,
   createFeatureTeamOverride,
   deleteFeature,
-  fetchFeatureRestrictions,
+  getFeature,
   getFeatures,
   removeFeatureTeamOverride,
   updateFeature,
-  updateFeatureTeamOverride,
-  updateGlobalFeatureRestriction
+  updateFeatureTeamOverride
 } from '~/api/features'
 import type { FeatureStatus } from '~/types'
 
@@ -27,7 +26,7 @@ interface UpdateFeaturePayload {
 /**
  * Fetch all features
  */
-export const useFeatures = () => {
+export const useFeaturesQuery = () => {
   return useQuery({
     queryKey: ['features'],
     queryFn: async () => {
@@ -42,9 +41,26 @@ export const useFeatures = () => {
 }
 
 /**
+ * Fetch a single feature by name
+ * @param functionName The name of the feature
+ */
+export const useFeatureQuery = (functionName: MaybeRefOrGetter<string>) => {
+  return useQuery({
+    queryKey: ['feature', { name: toValue(functionName) }],
+    queryFn: async () => {
+      const name = toValue(functionName)
+      return await getFeature(name)
+    },
+    enabled: () => !!toValue(functionName),
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5 // 5 minutes
+  })
+}
+
+/**
  * Create a new feature
  */
-export const useCreateFeature = () => {
+export const useCreateFeatureQuery = () => {
   const queryClient = useQueryClient()
   const toast = useToast()
 
@@ -52,19 +68,19 @@ export const useCreateFeature = () => {
     mutationFn: async (payload: CreateFeaturePayload) => {
       return await createFeature(payload)
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['features'] })
       toast.add({
-        title: 'Success',
-        description: data.message || 'Feature created successfully',
+        title: 'Feature Created',
+        description: `${variables.functionName} is now ${variables.status}`,
         color: 'success',
         icon: 'i-lucide-check-circle'
       })
     },
     onError: (error) => {
-      const errorMessage = error?.message || 'Failed to create feature'
+      const errorMessage = error?.message || 'Unable to create feature. Please try again.'
       toast.add({
-        title: 'Error',
+        title: 'Creation Failed',
         description: errorMessage,
         color: 'error',
         icon: 'i-lucide-alert-circle'
@@ -77,7 +93,7 @@ export const useCreateFeature = () => {
  * Delete a feature
  * This will also delete all associated overrides
  */
-export const useDeleteFeature = () => {
+export const useDeleteFeatureQuery = () => {
   const queryClient = useQueryClient()
   const toast = useToast()
 
@@ -85,19 +101,19 @@ export const useDeleteFeature = () => {
     mutationFn: async (functionName: string) => {
       return await deleteFeature(functionName)
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['features'] })
       toast.add({
-        title: 'Success',
-        description: data.message || 'Feature deleted successfully',
+        title: 'Feature Deleted',
+        description: `${variables} and all its overrides have been removed`,
         color: 'success',
-        icon: 'i-lucide-check-circle'
+        icon: 'i-lucide-trash-2'
       })
     },
     onError: (error) => {
-      const errorMessage = error?.message || 'Failed to delete feature'
+      const errorMessage = error?.message || 'Unable to delete feature. It may be in use.'
       toast.add({
-        title: 'Error',
+        title: 'Deletion Failed',
         description: errorMessage,
         color: 'error',
         icon: 'i-lucide-alert-circle'
@@ -109,7 +125,7 @@ export const useDeleteFeature = () => {
 /**
  * Update a feature's status
  */
-export const useUpdateFeature = () => {
+export const useUpdateFeatureQuery = () => {
   const queryClient = useQueryClient()
   const toast = useToast()
 
@@ -117,69 +133,19 @@ export const useUpdateFeature = () => {
     mutationFn: async (payload: UpdateFeaturePayload) => {
       return await updateFeature(payload.functionName, { status: payload.status })
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['features'] })
-      toast.add({
-        title: 'Success',
-        description: data.message || 'Feature updated successfully',
-        color: 'success',
-        icon: 'i-lucide-check-circle'
-      })
-    },
-    onError: (error) => {
-      const errorMessage = error?.message || 'Failed to update feature'
-      toast.add({
-        title: 'Error',
-        description: errorMessage,
-        color: 'error',
-        icon: 'i-lucide-alert-circle'
-      })
-    }
-  })
-}
-
-/**
- * Fetch feature with overrides
- * @param featureName The name of the feature
- */
-export const useFeatureRestrictions = (featureName: MaybeRefOrGetter<string>) => {
-  return useQuery({
-    queryKey: ['feature', { name: toValue(featureName) }],
-    queryFn: async () => {
-      const name = toValue(featureName)
-      return await fetchFeatureRestrictions(name)
-    },
-    enabled: () => !!toValue(featureName),
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5 // 5 minutes
-  })
-}
-
-/**
- * Update global feature restriction
- */
-export const useUpdateGlobalFeatureRestriction = () => {
-  const queryClient = useQueryClient()
-  const toast = useToast()
-
-  return useMutation({
-    mutationFn: async ({ featureName, status }: { featureName: string, status: FeatureStatus }) => {
-      return await updateGlobalFeatureRestriction(featureName, status)
-    },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['features'] })
-      queryClient.invalidateQueries({ queryKey: ['feature', { name: variables.featureName }] })
       toast.add({
-        title: 'Success',
-        description: data.message || 'Feature restriction updated successfully',
+        title: 'Feature Updated',
+        description: `${variables.functionName} is now ${variables.status}`,
         color: 'success',
         icon: 'i-lucide-check-circle'
       })
     },
     onError: (error) => {
-      const errorMessage = error?.message || 'Failed to update feature restriction'
+      const errorMessage = error?.message || 'Unable to update feature status. Please try again.'
       toast.add({
-        title: 'Error',
+        title: 'Update Failed',
         description: errorMessage,
         color: 'error',
         icon: 'i-lucide-alert-circle'
@@ -191,27 +157,28 @@ export const useUpdateGlobalFeatureRestriction = () => {
 /**
  * Create feature team override
  */
-export const useCreateFeatureTeamOverride = () => {
+export const useCreateFeatureTeamOverrideQuery = () => {
   const queryClient = useQueryClient()
   const toast = useToast()
 
   return useMutation({
     mutationFn: async ({ featureName, teamId, status }: { featureName: string, teamId: number, status: FeatureStatus }) => {
-      return await createFeatureTeamOverride(featureName, teamId, status)
+      return await createFeatureTeamOverride(featureName, { teamId, status })
     },
     onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['features'] })
       queryClient.invalidateQueries({ queryKey: ['feature', { name: variables.featureName }] })
       toast.add({
-        title: 'Success',
-        description: data.message || 'Team override created successfully',
+        title: 'Override Created',
+        description: `Team will now use ${variables.status} setting for this feature`,
         color: 'success',
-        icon: 'i-lucide-check-circle'
+        icon: 'i-lucide-shield-check'
       })
     },
     onError: (error) => {
-      const errorMessage = error?.message || 'Failed to create team override'
+      const errorMessage = error?.message || 'Unable to create team override. Please try again.'
       toast.add({
-        title: 'Error',
+        title: 'Override Creation Failed',
         description: errorMessage,
         color: 'error',
         icon: 'i-lucide-alert-circle'
@@ -223,7 +190,7 @@ export const useCreateFeatureTeamOverride = () => {
 /**
  * Update feature team override
  */
-export const useUpdateFeatureTeamOverride = () => {
+export const useUpdateFeatureTeamOverrideQuery = () => {
   const queryClient = useQueryClient()
   const toast = useToast()
 
@@ -232,18 +199,19 @@ export const useUpdateFeatureTeamOverride = () => {
       return await updateFeatureTeamOverride(featureName, teamId, status)
     },
     onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['features'] })
       queryClient.invalidateQueries({ queryKey: ['feature', { name: variables.featureName }] })
       toast.add({
-        title: 'Success',
-        description: data.message || 'Team override updated successfully',
+        title: 'Override Updated',
+        description: `Team override changed to ${variables.status}`,
         color: 'success',
-        icon: 'i-lucide-check-circle'
+        icon: 'i-lucide-settings'
       })
     },
     onError: (error) => {
-      const errorMessage = error?.message || 'Failed to update team override'
+      const errorMessage = error?.message || 'Unable to update team override. Please try again.'
       toast.add({
-        title: 'Error',
+        title: 'Update Failed',
         description: errorMessage,
         color: 'error',
         icon: 'i-lucide-alert-circle'
@@ -255,7 +223,7 @@ export const useUpdateFeatureTeamOverride = () => {
 /**
  * Remove feature team override
  */
-export const useRemoveFeatureTeamOverride = () => {
+export const useRemoveFeatureTeamOverrideQuery = () => {
   const queryClient = useQueryClient()
   const toast = useToast()
 
@@ -264,18 +232,19 @@ export const useRemoveFeatureTeamOverride = () => {
       return await removeFeatureTeamOverride(featureName, teamId)
     },
     onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['features'] })
       queryClient.invalidateQueries({ queryKey: ['feature', { name: variables.featureName }] })
       toast.add({
-        title: 'Success',
-        description: data.message || 'Team override removed successfully',
+        title: 'Override Removed',
+        description: 'Team will now use the global feature setting',
         color: 'success',
-        icon: 'i-lucide-check-circle'
+        icon: 'i-lucide-shield-off'
       })
     },
     onError: (error) => {
-      const errorMessage = error?.message || 'Failed to remove team override'
+      const errorMessage = error?.message || 'Unable to remove team override. Please try again.'
       toast.add({
-        title: 'Error',
+        title: 'Removal Failed',
         description: errorMessage,
         color: 'error',
         icon: 'i-lucide-alert-circle'

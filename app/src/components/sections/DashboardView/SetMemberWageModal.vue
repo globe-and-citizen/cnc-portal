@@ -225,7 +225,7 @@ import type { Member } from '@/types'
 import { useVuelidate } from '@vuelidate/core'
 import { numeric, required, helpers } from '@vuelidate/validators'
 import { NETWORK } from '@/constant'
-import { useSetMemberWage } from '@/queries/wage.queries'
+import { useSetMemberWageMutation } from '@/queries/wage.queries'
 import type { AxiosError } from 'axios'
 import type { Wage } from '@/types'
 
@@ -324,7 +324,7 @@ const {
   mutate: executeSetWage,
   isPending: isMemberWageSaving,
   error: setWageError
-} = useSetMemberWage()
+} = useSetMemberWageMutation()
 
 const handleSaveWage = async () => {
   v$.value.$touch()
