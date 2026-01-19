@@ -44,16 +44,12 @@ const {
   error
 } = useTeamWeeklyClaimsQuery(() => teamStore.currentTeamId, 'withdrawn')
 
-function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
-  return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
-}
 
 function getHourlyRateInUserCurrency(
-  ratePerHour: RatePerHour[],
-  tokenStore = currencyStore
+  ratePerHour: RatePerHour[]
 ): number {
   return ratePerHour.reduce((total: number, rate: { type: TokenId; amount: number }) => {
-    const tokenInfo = tokenStore.getTokenInfo(rate.type as TokenId)
+    const tokenInfo = currencyStore.getTokenInfo(rate.type as TokenId)
     const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0
     return total + rate.amount * localPrice
   }, 0)
@@ -62,7 +58,7 @@ function getHourlyRateInUserCurrency(
 const totalMonthlyClaim = computed(() => {
   if (!weeklyClaims.value || !Array.isArray(weeklyClaims.value)) return ''
   const total = weeklyClaims.value.reduce((sum: number, weeklyClaim: WeeklyClaim) => {
-    const hours = getTotalHoursWorked(weeklyClaim.claims)
+    const hours = weeklyClaim.hoursWorked
     const rate = getHourlyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
     return sum + hours * rate
   }, 0)

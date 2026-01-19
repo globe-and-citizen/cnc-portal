@@ -18,12 +18,12 @@ export const useActionsQuery = (
       const id = toValue(teamId)
       const executed = toValue(isExecuted)
       if (!id) throw new Error('Team ID is required')
-      
+
       let url = `/actions?teamId=${id}`
       if (executed !== null && executed !== undefined) {
         url += `&isExecuted=${executed}`
       }
-      
+
       const { data } = await apiClient.get<ActionResponse>(url)
       return data
     },

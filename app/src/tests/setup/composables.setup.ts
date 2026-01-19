@@ -101,6 +101,20 @@ vi.mock('@/queries/health.queries', () => ({
 }))
 
 /**
+ * Mock Weekly Claim Queries (weeklyClaim.queries.ts)
+ */
+vi.mock('@/queries/weeklyClaim.queries', () => ({
+  useTeamWeeklyClaimsQuery: vi.fn(queryMocks.useTeamWeeklyClaimsQuery),
+  useMemberWeeklyClaimsQuery: vi.fn(queryMocks.useMemberWeeklyClaimsQuery),
+  useWeeklyClaimByIdQuery: vi.fn(queryMocks.useWeeklyClaimByIdQuery),
+  useSignWeeklyClaimMutation: vi.fn(queryMocks.useSignWeeklyClaimMutation),
+  useEnableWeeklyClaimMutation: vi.fn(queryMocks.useEnableWeeklyClaimMutation),
+  useDisableWeeklyClaimMutation: vi.fn(queryMocks.useDisableWeeklyClaimMutation),
+  useWithdrawWeeklyClaimMutation: vi.fn(queryMocks.useWithdrawWeeklyClaimMutation),
+  useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation)
+}))
+
+/**
  * Mock useBackendWake composable - returns a function that does nothing
  * Individual tests can override this mock if needed
  */

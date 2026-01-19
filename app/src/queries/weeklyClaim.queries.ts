@@ -13,7 +13,7 @@ export const useTeamWeeklyClaimsQuery = (
   teamId: MaybeRefOrGetter<string | number | null>,
   status?: MaybeRefOrGetter<'pending' | 'signed' | 'withdrawn' | 'disabled' | null>
 ) => {
-  return useQuery<WeeklyClaim[], AxiosError>({
+  return useQuery<WeeklyClaim[] | undefined, AxiosError>({
     queryKey: ['teamWeeklyClaims', { teamId, status }],
     queryFn: async () => {
       const id = toValue(teamId)

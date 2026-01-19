@@ -14,7 +14,10 @@ vi.mock('@/stores', async (importOriginal) => {
       currency: {
         code: 'USD',
         symbol: '$'
-      }
+      },
+      getTokenInfo: vi.fn(() => ({
+        prices: [{ id: 'local', price: 1 }]
+      }))
     })),
     useUserDataStore: vi.fn(() => ({ ...mocks.mockUserStore }))
   }

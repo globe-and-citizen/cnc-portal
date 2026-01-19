@@ -36,6 +36,7 @@ export interface Claim {
   fileAttachments?: FileAttachment[] | null // Files stored as JSON in database
   wageId: number
   wage: Wage
+  weeklyClaimId: number
   createdAt: string // ISO date string
   updatedAt: string // ISO date string
 }

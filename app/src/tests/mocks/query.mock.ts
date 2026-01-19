@@ -2,6 +2,10 @@ import { ref } from 'vue'
 import { vi } from 'vitest'
 import type { Team, Member, Wage, Notification } from '@/types'
 import type { HealthCheckResponse } from '@/queries/health.queries'
+import type { WeeklyClaim } from '@/types/cash-remuneration'
+import type { SyncWeeklyClaimsResponse } from '@/queries/weeklyClaim.queries'
+import type { AxiosError } from 'node_modules/axios/index.d.cts'
+import type { UseQueryReturnType } from '@tanstack/vue-query'
 
 /**
  * Team Query Mocks
@@ -90,16 +94,80 @@ export const mockHealthCheckData: HealthCheckResponse = {
 }
 
 /**
+ * Weekly Claim Query Mocks
+ */
+export const mockWeeklyClaimData: WeeklyClaim = {
+  id: 1,
+  status: 'pending',
+  weekStart: '2024-01-01T00:00:00Z',
+  data: {
+    ownerAddress: '0x1234567890123456789012345678901234567890'
+  },
+  memberAddress: '0x1234567890123456789012345678901234567890',
+  teamId: 1,
+  signature: null,
+  wageId: 1,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
+  hoursWorked: 8,
+  wage: mockWageData[0]!,
+  claims: [
+    {
+      id: 1,
+      wageId: 1,
+      weeklyClaimId: 1,
+      memo: 'Test work',
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+      hoursWorked: 8,
+      dayWorked: '2024-01-01',
+      wage: mockWageData[0]!
+    }
+  ]
+}
+
+export const mockWeeklyClaimsData: WeeklyClaim[] = [
+  mockWeeklyClaimData,
+  {
+    ...mockWeeklyClaimData,
+    id: 2,
+    status: 'signed',
+    signature: '0xabcdef1234567890',
+    weekStart: '2024-01-08T00:00:00Z'
+  }
+]
+
+export const mockSyncWeeklyClaimsResponse: SyncWeeklyClaimsResponse = {
+  teamId: 1,
+  totalProcessed: 2,
+  updated: [
+    {
+      id: 1,
+      previousStatus: 'pending',
+      newStatus: 'signed'
+    }
+  ],
+  skipped: [
+    {
+      id: 2,
+      reason: 'Already synced'
+    }
+  ]
+}
+
+/**
  * Generic Query Hook Response Factory
  * Creates a standard TanStack Query response object with AxiosResponse data
  */
 export const createMockQueryResponse = <T>(
-  data: T,
+  data: T | undefined = undefined,
   isLoading: boolean = false,
   error: Error | null = null
-): Record<string, unknown> => ({
+): UseQueryReturnType<T, AxiosError> => ({
+  // @ts-expect-error: Partial mock of UseQueryReturnType
   data: ref(data),
   isLoading: ref(isLoading),
+  // @ts-expect-error: Partial mock of UseQueryReturnType
   error: ref(error),
   refetch: vi.fn(),
   isFetched: ref(true),
@@ -165,5 +233,18 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useCreateContractMutation: () => createMockMutationResponse(),
 
   // Health queries - health.queries.ts
-  useBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData)
+  useBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData),
+
+  // Weekly Claim queries - weeklyClaim.queries.ts
+  useTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimsData),
+  useMemberWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimsData),
+  useWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData),
+  useSignWeeklyClaimMutation: () => createMockMutationResponse(),
+  useEnableWeeklyClaimMutation: () => createMockMutationResponse(),
+  useDisableWeeklyClaimMutation: () => createMockMutationResponse(),
+  useWithdrawWeeklyClaimMutation: () => createMockMutationResponse(),
+  useSyncWeeklyClaimsMutation: () => ({
+    ...createMockMutationResponse(),
+    mutateAsync: vi.fn(() => Promise.resolve(mockSyncWeeklyClaimsResponse))
+  })
 }
