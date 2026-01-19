@@ -1,5 +1,5 @@
 import { ref, watch, computed } from 'vue'
-import { useUserDataStore } from '@/stores'
+import { useUserDataStore, useTradingSessionStore } from '@/stores'
 
 // Import Vue-adapted composables
 import { useUserApiCredentials } from './useUserApiCredentials'
@@ -23,6 +23,7 @@ export function useTradingSession() {
   const sessionError = ref<Error | null>(null)
 
   const userDataStore = useUserDataStore()
+  const tradingSessionStore = useTradingSessionStore()
   const { createOrDeriveUserApiCredentials } = useUserApiCredentials()
   // Use the new composable's methods
   const { checkAllApprovals, setAllTokenApprovals } = useTokenApprovals()
@@ -46,7 +47,6 @@ export function useTradingSession() {
         sessionError.value = null
         return
       }
-
       const stored = loadSession(eoaAddress)
       tradingSession.value = stored
 
@@ -131,6 +131,7 @@ export function useTradingSession() {
       }
 
       tradingSession.value = newSession
+      tradingSessionStore.saveSession(userDataStore.address, newSession)
       saveSession(userDataStore.address, newSession)
       currentStep.value = 'complete'
     } catch (err) {
