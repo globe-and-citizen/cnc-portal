@@ -31,6 +31,3 @@ export const gammaPathSchema = z.object({
       message: 'Disallowed API prefix',
     }),
 });
-
-// The infer utility type helps get the final validated string type
-type ValidatedGammaPath = z.infer<typeof gammaPathSchema>;
