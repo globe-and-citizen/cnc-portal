@@ -44,12 +44,11 @@ export const loadSession = (address: string): TradingSession | null => {
 export const saveSession = (address: string, session: TradingSession): void => {
   // Do not persist sensitive API credentials in clear text.
   // Store a redacted version; credentials will be re-derived when needed.
-  const { apiCredentials, ...rest } = session
   const sessionToStore: TradingSession = {
-    ...rest,
-    // Explicitly drop apiCredentials from persisted storage
-    apiCredentials: undefined
+    ...session
   }
+
+  sessionToStore.apiCredentials = undefined
 
   localStorage.setItem(
     `polymarket_trading_session_${address.toLowerCase()}`,
