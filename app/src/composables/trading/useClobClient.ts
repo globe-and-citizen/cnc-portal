@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { ClobClient } from '@polymarket/clob-client'
 import { BuilderConfig } from '@polymarket/builder-signing-sdk'
 
@@ -8,6 +8,7 @@ import { useSafeDeployment } from './useSafeDeployment'
 import { useTradingSession } from './useTradingSession'
 
 import { CLOB_API_URL, POLYGON_CHAIN_ID, REMOTE_SIGNING_URL } from '@/constant/'
+import { useUserDataStore, useTradingSessionStore } from '@/stores'
 
 /**
  * Creates an authenticated clobClient instance using the active trading session data.
@@ -18,20 +19,32 @@ export function useClobClient() {
   const { ethersSigner } = useEthersSigner()
   const { derivedSafeAddressFromEoa } = useSafeDeployment()
   // Get the reactive session state
-  const { tradingSession, isTradingSessionComplete } = useTradingSession()
+  const { /* tradingSession, */ isTradingSessionComplete } = useTradingSession()
+  const tradingSessionStore = useTradingSessionStore()
+  const userDataStore = useUserDataStore()
+
+  // watch(tradingSession, (apiCreds) => {
+  //   if (apiCreds)
+  //     console.log('Something changed about apiCreds...')
+  // })
 
   const clobClient = computed(() => {
     // Access .value for all refs/computeds
+    const tradingSession = tradingSessionStore.sessions.get(
+      userDataStore.address.toLocaleLowerCase()
+    )
     if (
       !ethersSigner.value ||
       !derivedSafeAddressFromEoa.value ||
-      !isTradingSessionComplete.value // Check if the entire session flow is done
+      !isTradingSessionComplete.value || // Check if the entire session flow is done
+      !tradingSession
     ) {
+      console.log('Not ready to setup trading session...')
       return null
     }
 
     // We can confidently destructure these now that we know isTradingSessionComplete.value is true
-    const { apiCredentials, safeAddress } = tradingSession.value!
+    const { apiCredentials, safeAddress } = tradingSession!
 
     const builderConfig = new BuilderConfig({
       remoteBuilderConfig: {
