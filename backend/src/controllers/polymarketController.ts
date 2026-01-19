@@ -50,10 +50,6 @@ export const fetchMarketData = async (req: Request, res: Response) => {
 
   const targetUrl = req.query.url;
 
-  if (!targetUrl) {
-    return res.status(400).json({ error: 'Missing target URL query parameter' });
-  }
-
   try {
     console.log(`Proxying request to: ${targetUrl}`);
     // Use Axios to make the request to the Polymarket API from the backend
