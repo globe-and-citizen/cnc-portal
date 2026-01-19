@@ -27,10 +27,7 @@ export function useUserApiCredentials() {
     try {
       // The SDK's built-in convenience method attempts to find existing keys
       // with the default nonce, or creates a new set if none are found.
-      console.log('Fetching User API Credentials...')
       const creds = await tempClient.createOrDeriveApiKey()
-
-      console.log('Successfully obtained User API Credentials')
       return creds
     } catch (err) {
       console.error('Failed to get credentials:', err)
