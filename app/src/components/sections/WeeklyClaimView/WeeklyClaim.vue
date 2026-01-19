@@ -123,6 +123,7 @@ import { RouterLink } from 'vue-router'
 // import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import { useMemberWeeklyClaimsQuery } from '@/queries'
 import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
+import type { Address } from 'viem'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
@@ -136,7 +137,7 @@ function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
 const teamStore = useTeamStore()
 // const userStore = useUserDataStore()
 const props = defineProps<{
-  memberAddress?: string
+  memberAddress?: Address
   singleUser?: boolean
 }>()
 
@@ -146,11 +147,10 @@ function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
 
 const { data: fetchedData, error } = useMemberWeeklyClaimsQuery(
   () => teamStore.currentTeamId,
-  () => props.memberAddress || null,
+  () => props.memberAddress,
   undefined
 )
 
-// const { data: fetchedData, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
 
 // I think this sorting should be done in the backend
 const data = computed(() => {
