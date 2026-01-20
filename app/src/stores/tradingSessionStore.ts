@@ -13,12 +13,7 @@ export const useTradingSessionStore = defineStore('tradingSession', () => {
   }
 
   const saveSession = (address: string, session: TradingSession): void => {
-    // IMPORTANT: Strip API credentials before saving to prevent persistence
-    const sessionWithoutCredentials: TradingSession = {
-      ...session
-      // apiCredentials: undefined // Explicitly remove credentials
-    }
-    sessions.value.set(address.toLowerCase(), sessionWithoutCredentials)
+    sessions.value.set(address.toLowerCase(), session)
   }
 
   const clearSession = (address: string): void => {
