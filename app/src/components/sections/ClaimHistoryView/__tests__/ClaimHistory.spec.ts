@@ -27,7 +27,7 @@ vi.mock('vue-router', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-  useRoute: () => mockRoute
+    useRoute: () => mockRoute
   }
 })
 
@@ -359,10 +359,12 @@ describe('ClaimHistory.vue', () => {
   it('should compute signedWeekStarts from weekly claims with signed status', async () => {
     const weekStart1 = '2024-01-01T00:00:00.000Z'
     const weekStart2 = '2024-01-08T00:00:00.000Z'
-     vi.mocked(useMemberWeeklyClaimsQuery).mockReturnValueOnce(createMockQueryResponse([
+    vi.mocked(useMemberWeeklyClaimsQuery).mockReturnValueOnce(
+      createMockQueryResponse([
         { weekStart: weekStart1, status: 'signed', wage: {}, claims: [] },
         { weekStart: weekStart2, status: 'pending', wage: {}, claims: [] }
-      ] as unknown as WeeklyClaim[]))
+      ] as unknown as WeeklyClaim[])
+    )
 
     const wrapper = shallowMount(ClaimHistory, {
       global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
@@ -376,7 +378,7 @@ describe('ClaimHistory.vue', () => {
   })
 
   it('should return empty array for signedWeekStarts when memberWeeklyClaims is null', async () => {
-     vi.mocked(useMemberWeeklyClaimsQuery).mockReturnValueOnce(createMockQueryResponse([]))
+    vi.mocked(useMemberWeeklyClaimsQuery).mockReturnValueOnce(createMockQueryResponse([]))
     const wrapper = shallowMount(ClaimHistory, {
       global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
     })

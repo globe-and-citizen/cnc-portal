@@ -151,7 +151,6 @@ const { data: fetchedData, error } = useMemberWeeklyClaimsQuery(
   undefined
 )
 
-
 // I think this sorting should be done in the backend
 const data = computed(() => {
   if (!fetchedData.value) return null

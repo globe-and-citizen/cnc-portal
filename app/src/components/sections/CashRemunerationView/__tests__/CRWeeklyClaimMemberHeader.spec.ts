@@ -7,9 +7,7 @@ import { useTeamWagesQuery } from '@/queries/index'
 import { createMockQueryResponse } from '@/tests/mocks/query.mock'
 
 describe('CRWeeklyClaimMemberHeader', () => {
-
   it('should show SubmitClaims component when user has wage', () => {
-
     const wrapper = mount(CRWeeklyClaimMemberHeader, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
@@ -30,9 +28,8 @@ describe('CRWeeklyClaimMemberHeader', () => {
   })
 
   it('should show disabled button with tooltip when user has no wage', () => {
-
     vi.mocked(useTeamWagesQuery).mockReturnValueOnce(createMockQueryResponse([] as Wage[]))
-   
+
     const wrapper = mount(CRWeeklyClaimMemberHeader, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],

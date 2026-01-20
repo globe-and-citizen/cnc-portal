@@ -44,10 +44,7 @@ const {
   error
 } = useTeamWeeklyClaimsQuery(() => teamStore.currentTeamId, 'withdrawn')
 
-
-function getHourlyRateInUserCurrency(
-  ratePerHour: RatePerHour[]
-): number {
+function getHourlyRateInUserCurrency(ratePerHour: RatePerHour[]): number {
   return ratePerHour.reduce((total: number, rate: { type: TokenId; amount: number }) => {
     const tokenInfo = currencyStore.getTokenInfo(rate.type as TokenId)
     const localPrice = tokenInfo?.prices.find((p) => p.id === 'local')?.price ?? 0

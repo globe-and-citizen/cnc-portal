@@ -26,5 +26,4 @@ describe('CashRemunerationView.vue', () => {
 
     expect(overview.exists()).toBeTruthy()
   })
-
 })
