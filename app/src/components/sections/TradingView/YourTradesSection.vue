@@ -158,7 +158,10 @@ const handleWithdraw = async (trade: Trade) => {
     await proposeRedemption({
       safeAddress: derivedSafeAddressFromEoa.value,
       conditionId: trade.conditionId,
-      amounts: [trade.outcomeIndex === 0 ? rawSize : 0n, trade.outcomeIndex === 1 ? rawSize : 0n]
+      amounts: trade.negativeRisk
+        ? [trade.outcomeIndex === 0 ? rawSize : 0n, trade.outcomeIndex === 1 ? rawSize : 0n]
+        : undefined,
+      outcomeIndex: trade.negativeRisk ? undefined : trade.outcomeIndex
     })
     toast.success(`Withdrawing $${Math.abs(trade.pnl).toFixed(2)} from "${trade.market}"`)
     emit('withdraw', trade)
