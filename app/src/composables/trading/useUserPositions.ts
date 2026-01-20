@@ -62,7 +62,8 @@ export function useUserPositions(safeAddress: string | undefined) {
           date: p.endDate,
           conditionId: p.conditionId,
           outcomeIndex: p.outcomeIndex,
-          redeemable: p.redeemable
+          redeemable: p.redeemable,
+          negativeRisk: p.negativeRisk ? true : false
         })
       })
 
