@@ -11,9 +11,3 @@ export interface Action {
   teamId: number
   createdAt?: string
 }
-
-export interface ActionResponse {
-  success: boolean
-  data: Action[]
-  total: number
-}

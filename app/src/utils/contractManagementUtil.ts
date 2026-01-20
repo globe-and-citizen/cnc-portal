@@ -1,4 +1,4 @@
-import type { Action, ActionResponse, TeamContract, User } from '@/types'
+import type { Action } from '@/types'
 import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import { log, parseError } from '@/utils'
@@ -38,11 +38,11 @@ export const getUser = (
 
 export const filterAndFormatActions = (
   address: string,
-  actions: ActionResponse | undefined,
+  actions: Action[] | undefined,
   members: User[]
 ) => {
   if (!actions) return []
-  return actions.data
+  return actions
     .filter((action) => action.targetAddress === address && action.isExecuted === false)
     .map((action) => ({
       ...action,

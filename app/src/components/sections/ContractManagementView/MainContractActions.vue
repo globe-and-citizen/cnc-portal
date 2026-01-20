@@ -124,7 +124,7 @@ const modalWidth = computed(() => {
 const formatedActions = computed(() => {
   return filterAndFormatActions(
     props.row.address,
-    bodActions.value?.data || bodActions.value,
+    bodActions.value,
     teamStore.currentTeam?.members || []
   )
 })

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
-import type { Action, ActionResponse } from '@/types/action'
+import type { Action } from '@/types/action'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 import type { AxiosError } from 'axios'
@@ -12,7 +12,7 @@ export const useActionsQuery = (
   teamId: MaybeRefOrGetter<string | number | null>,
   isExecuted?: MaybeRefOrGetter<boolean | null>
 ) => {
-  return useQuery<ActionResponse, AxiosError>({
+  return useQuery<Action[], AxiosError>({
     queryKey: ['getBodActions', { teamId, isExecuted }],
     queryFn: async () => {
       const id = toValue(teamId)
@@ -24,7 +24,7 @@ export const useActionsQuery = (
         url += `&isExecuted=${executed}`
       }
 
-      const { data } = await apiClient.get<ActionResponse>(url)
+      const { data } = await apiClient.get<Action[]>(url)
       return data
     },
     enabled: () => !!toValue(teamId),
