@@ -155,12 +155,13 @@ export function useTradingSession() {
 
   // --- Returned state and methods ---
 
-  const isTradingSessionComplete = computed(
-    () =>
-      !!tradingSession.value?.isSafeDeployed &&
-      !!tradingSession.value?.hasApiCredentials &&
-      !!tradingSession.value?.hasApprovals
-  )
+  const isTradingSessionComplete = computed(() => {
+    const session = tradingSessionStore.sessions.get(userDataStore.address.toLocaleLowerCase())
+    // !!tradingSession.value?.isSafeDeployed &&
+    // !!tradingSession.value?.hasApiCredentials &&
+    // !!tradingSession.value?.hasApprovals
+    return !!session?.isSafeDeployed && !!session?.hasApiCredentials && !!session?.hasApprovals
+  })
 
   return {
     tradingSession,
