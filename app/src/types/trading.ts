@@ -17,6 +17,7 @@ export interface Trade {
   conditionId?: string
   outcomeIndex?: number
   redeemable?: boolean
+  negativeRisk?: boolean
 }
 
 export interface OrderDetails {
