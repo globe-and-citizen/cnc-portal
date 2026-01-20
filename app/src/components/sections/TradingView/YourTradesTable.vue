@@ -85,7 +85,7 @@
             :data-test="`withdraw-button-${row.id}`"
           >
             <icon icon="heroicons:wallet" class="w-3.5 h-3.5" />
-            Withdraw
+            Claim
           </button>
         </template>
       </TableComponent>
