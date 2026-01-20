@@ -1,4 +1,4 @@
-import type { Action } from '@/types'
+import type { Action, TeamContract, User } from '@/types'
 import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import { log, parseError } from '@/utils'
