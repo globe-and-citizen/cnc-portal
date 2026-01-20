@@ -268,7 +268,7 @@ import {
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
 import { useMemberWeeklyClaimsQuery, useTeamWagesQuery } from '@/queries'
-import type { Claim, Wage, WeeklyClaim } from '@/types'
+import type { Claim, WeeklyClaim } from '@/types'
 import type { Address } from 'viem'
 
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'

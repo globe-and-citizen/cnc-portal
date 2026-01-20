@@ -95,7 +95,6 @@ import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip7
 import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useExpensesQuery } from '@/queries'
-import type { ExpenseResponse } from '@/types'
 import { getFrequencyType, getCustomFrequency } from '@/utils'
 
 const teamStore = useTeamStore()

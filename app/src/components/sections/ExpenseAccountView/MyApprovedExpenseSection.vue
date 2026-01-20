@@ -39,8 +39,6 @@
 
 <script setup lang="ts">
 //#region Imports
-import { computed } from 'vue'
-import type { ExpenseResponse } from '@/types'
 import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { tokenSymbol, getCurrentUserExpenses } from '@/utils'
