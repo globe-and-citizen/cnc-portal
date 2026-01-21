@@ -28,10 +28,14 @@ import bagIcon from '@/assets/bag.svg'
 import { useSafeDeployment } from '@/composables/trading'
 import { formatUnits } from 'viem'
 import { useSafeBalances } from '@/queries/polymarket.queries'
+import { useTraderSafesStore } from '@/stores'
 
 const currencyStore = useCurrencyStore()
-const { derivedSafeAddressFromEoa } = useSafeDeployment()
+const traderSafesStore = useTraderSafesStore()
+// const { derivedSafeAddressFromEoa } = useSafeDeployment()
 const isLoading = computed(() => false)
+const derivedSafeAddressFromEoa = computed(() => traderSafesStore.selectedSafe?.address ?? null)
+
 const { data: balances } = useSafeBalances(derivedSafeAddressFromEoa)
 
 // Format balance
