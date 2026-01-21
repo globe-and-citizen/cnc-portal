@@ -13,5 +13,4 @@ const externalApiClient = axios.create({
   validateStatus: (status) => status < 500 // Don't throw on 4xx errors
 })
 
-
 export default externalApiClient
