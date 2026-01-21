@@ -37,8 +37,11 @@ import { Icon } from '@iconify/vue'
 import OverviewCard from '@/components/OverviewCard.vue'
 import personIcon from '@/assets/person.svg'
 import { useUserPositions, useSafeDeployment } from '@/composables/trading'
+import { useTraderSafesStore } from '@/stores'
 
-const { derivedSafeAddressFromEoa } = useSafeDeployment()
+// const { derivedSafeAddressFromEoa } = useSafeDeployment()
+const traderSafesStore = useTraderSafesStore()
+const derivedSafeAddressFromEoa = computed(() => traderSafesStore.selectedSafe?.address)
 const { pnlStats } = useUserPositions(derivedSafeAddressFromEoa.value ?? undefined)
 
 const isLoading = computed(() => false)
