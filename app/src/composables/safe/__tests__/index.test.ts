@@ -1,16 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-
-const mockReads = { foo: 'reads' }
-const mockWrites = { bar: 'writes' }
-
-vi.mock('../reads', () => ({
-  useSafeReads: vi.fn(() => mockReads),
-  useSafeAppUrls: vi.fn(() => ({ baz: 'urls' }))
-}))
-
-vi.mock('../writes', () => ({
-  useSafeWrites: vi.fn(() => mockWrites)
-}))
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 describe('safe index exports', () => {
   let module: typeof import('../index')
@@ -20,13 +8,16 @@ describe('safe index exports', () => {
     module = await import('../index')
   })
 
-  it('exposes combined useSafe composable', () => {
-    const safe = module.useSafe()
-    expect(safe).toMatchObject({ ...mockReads, ...mockWrites })
+  it('exports key Safe composables', () => {
+    expect(typeof module.useSafeData).toBe('function')
+    expect(typeof module.useSafeDeployment).toBe('function')
+    expect(typeof module.useSafeOwnerManagement).toBe('function')
+    expect(typeof module.useSafeExecution).toBe('function')
   })
 
-  it('re-exports individual composables', () => {
-    expect(typeof module.useSafeReads).toBe('function')
-    expect(typeof module.useSafeWrites).toBe('function')
+  it('exports Safe URL utilities', () => {
+    expect(typeof module.getSafeHomeUrl).toBe('function')
+    expect(typeof module.getSafeSettingsUrl).toBe('function')
+    expect(typeof module.openSafeAppUrl).toBe('function')
   })
 })

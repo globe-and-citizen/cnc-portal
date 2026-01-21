@@ -91,11 +91,11 @@ vi.mock('@/stores/useToastStore', () => ({
   }))
 }))
 
-// Mock the entire safe composable to avoid wagmi plugin errors
+// Mock the Safe composable to provide deploySafe + loading ref
 vi.mock('@/composables/safe', () => ({
-  default: vi.fn(() => ({
+  useSafeDeployment: vi.fn(() => ({
     deploySafe: mockUseSafe.deploySafe,
-    isBusy: mockIsBusy
+    isDeploying: mockIsBusy
   }))
 }))
 

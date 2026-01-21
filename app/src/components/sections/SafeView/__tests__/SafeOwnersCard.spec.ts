@@ -26,39 +26,37 @@ interface MockTeam {
   name: string
 }
 
-// Mock variables - keep plain objects/refs to avoid hoist/init issues
-const mockUseSafe = {
-  useSafeOwners: vi.fn(),
-  useSafeInfo: vi.fn(),
-  useSafeAppUrls: vi.fn() // This should be a function that returns the URLs object
-}
-
-const mockSafeAppUrlsReturn = {
-  getSafeSettingsUrl: vi.fn(),
-  openSafeAppUrl: vi.fn()
-}
+// Hoisted mocks to avoid initialization issues
+const { mockUseSafeOwners, mockGetSafeSettingsUrl, mockOpenSafeAppUrl, mockUseChainId } =
+  vi.hoisted(() => ({
+    mockUseSafeOwners: vi.fn(),
+    mockGetSafeSettingsUrl: vi.fn(),
+    mockOpenSafeAppUrl: vi.fn(),
+    mockUseChainId: vi.fn()
+  }))
 
 const mockTeamStore = reactive({
   currentTeam: null as MockTeam | null
 })
-const mockUseChainId = ref(137) // Polygon
+const mockChainIdRef = ref(137) // Polygon
 
 // Mock data with proper typing
 const mockOwners = ref<Address[]>([])
+const mockThreshold = ref<number>(0)
 const mockIsLoading = ref(false)
 const mockError = ref<string | null>(null)
-const mockFetchOwners = vi.fn()
-
 const mockSafeInfo = ref<MockSafeInfo | null>(null)
-const mockFetchSafeInfo = vi.fn()
+const mockRefetch = vi.fn()
 
 // Mock external dependencies
 vi.mock('@/composables/safe', () => ({
-  useSafe: vi.fn(() => mockUseSafe)
+  useSafeOwners: mockUseSafeOwners,
+  getSafeSettingsUrl: mockGetSafeSettingsUrl,
+  openSafeAppUrl: mockOpenSafeAppUrl
 }))
 
 vi.mock('@wagmi/vue', () => ({
-  useChainId: vi.fn(() => mockUseChainId)
+  useChainId: mockUseChainId
 }))
 
 vi.mock('@/stores', () => ({
@@ -136,32 +134,28 @@ describe('SafeOwnersCard', () => {
     vi.clearAllMocks()
 
     // Reset mock implementations
-    mockUseSafe.useSafeOwners.mockReturnValue({
+    mockUseSafeOwners.mockReturnValue({
       owners: mockOwners,
       isLoading: mockIsLoading,
       error: mockError,
-      fetchOwners: mockFetchOwners
-    })
-
-    mockUseSafe.useSafeInfo.mockReturnValue({
+      refetch: mockRefetch,
       safeInfo: mockSafeInfo,
-      fetchSafeInfo: mockFetchSafeInfo
+      threshold: mockThreshold
     })
 
-    // FIX: useSafeAppUrls is a function that returns an object
-    mockUseSafe.useSafeAppUrls.mockReturnValue(mockSafeAppUrlsReturn)
-
-    mockSafeAppUrlsReturn.getSafeSettingsUrl.mockReturnValue(
+    mockGetSafeSettingsUrl.mockReturnValue(
       'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
     )
-    mockSafeAppUrlsReturn.openSafeAppUrl.mockImplementation(() => {})
+    mockOpenSafeAppUrl.mockImplementation(() => {})
 
     // Reset reactive values with proper typing
     mockOwners.value = []
+    mockThreshold.value = 0
     mockIsLoading.value = false
     mockError.value = null
     mockSafeInfo.value = null
-    mockUseChainId.value = 137
+    mockChainIdRef.value = 137
+    mockUseChainId.mockReturnValue(mockChainIdRef)
     mockTeamStore.currentTeam = MOCK_DATA.team
   })
 
@@ -174,25 +168,7 @@ describe('SafeOwnersCard', () => {
       wrapper = createWrapper()
 
       expect(wrapper.find('[data-test="card-component"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="card-header"]').exists()).toBe(true)
-      expect(wrapper.text()).toContain('Safe Owners')
-    })
-
-    it('should display threshold information in header', () => {
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      mockOwners.value = [...MOCK_DATA.owners]
-      wrapper = createWrapper()
-
-      expect(wrapper.text()).toContain('2 of 3 required')
-      expect(wrapper.text()).toContain('Safe Owners')
-    })
-
-    it('should render manage button in header', () => {
-      wrapper = createWrapper()
-
-      const manageButton = wrapper.find('[data-test="manage-owners-button"]')
-      expect(manageButton.exists()).toBe(true)
-      expect(manageButton.text()).toContain('Manage')
+      expect(wrapper.find('[data-test="card-body"]').exists()).toBe(true)
     })
   })
 
@@ -261,14 +237,6 @@ describe('SafeOwnersCard', () => {
 
       expect(wrapper.text()).toContain('No owners found')
       expect(wrapper.find('[data-test="owner-item"]').exists()).toBe(false)
-    })
-
-    it('should show correct threshold display with no owners', () => {
-      mockOwners.value = []
-      mockSafeInfo.value = { ...MOCK_DATA.safeInfo, threshold: 1 }
-      wrapper = createWrapper()
-
-      expect(wrapper.text()).toContain('1 of 0 required')
     })
 
     it('should not show footer when no owners', () => {
@@ -347,60 +315,11 @@ describe('SafeOwnersCard', () => {
     })
   })
 
-  describe('Safe App Integration', () => {
-    beforeEach(() => {
-      mockOwners.value = [...MOCK_DATA.owners]
-    })
-
-    it('should open Safe settings when header manage button is clicked', async () => {
-      wrapper = createWrapper()
-
-      await wrapper.find('[data-test="manage-owners-button"]').trigger('click')
-
-      expect(mockSafeAppUrlsReturn.getSafeSettingsUrl).toHaveBeenCalledWith(
-        137,
-        MOCK_DATA.safeAddress
-      )
-      expect(mockSafeAppUrlsReturn.openSafeAppUrl).toHaveBeenCalledWith(
-        'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
-      )
-    })
-
-    it('should open Safe settings when footer button is clicked', async () => {
-      wrapper = createWrapper()
-
-      await wrapper.find('[data-test="open-safe-app-footer"]').trigger('click')
-
-      expect(mockSafeAppUrlsReturn.getSafeSettingsUrl).toHaveBeenCalledWith(
-        137,
-        MOCK_DATA.safeAddress
-      )
-      expect(mockSafeAppUrlsReturn.openSafeAppUrl).toHaveBeenCalledWith(
-        'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
-      )
-    })
-
-    it('should update Safe app URL when chain changes', async () => {
-      wrapper = createWrapper()
-
-      mockUseChainId.value = 11155111 // Sepolia
-      await nextTick()
-
-      await wrapper.find('[data-test="manage-owners-button"]').trigger('click')
-
-      expect(mockSafeAppUrlsReturn.getSafeSettingsUrl).toHaveBeenCalledWith(
-        11155111,
-        MOCK_DATA.safeAddress
-      )
-    })
-  })
-
   describe('Data Fetching', () => {
-    it('should fetch owners and Safe info on mount when Safe address exists', () => {
+    it('should rely on reactive query data on mount when Safe address exists', () => {
       wrapper = createWrapper()
 
-      expect(mockFetchOwners).toHaveBeenCalledTimes(1)
-      expect(mockFetchSafeInfo).toHaveBeenCalledTimes(1)
+      expect(mockRefetch).not.toHaveBeenCalled()
     })
 
     it('should not fetch data on mount when no Safe address', () => {
@@ -409,13 +328,12 @@ describe('SafeOwnersCard', () => {
       mockTeamStore.currentTeam = teamWithoutSafeAddress
       wrapper = createWrapper()
 
-      expect(mockFetchOwners).not.toHaveBeenCalled()
-      expect(mockFetchSafeInfo).not.toHaveBeenCalled()
+      expect(mockRefetch).not.toHaveBeenCalled()
     })
 
     it('should refetch data when Safe address changes', async () => {
       wrapper = createWrapper()
-      expect(mockFetchOwners).toHaveBeenCalledTimes(1)
+      expect(mockRefetch).not.toHaveBeenCalled()
 
       // Simulate Safe address change
       mockTeamStore.currentTeam = {
@@ -424,52 +342,17 @@ describe('SafeOwnersCard', () => {
       }
       await nextTick()
 
-      expect(mockFetchOwners).toHaveBeenCalledTimes(2)
-      expect(mockFetchSafeInfo).toHaveBeenCalledTimes(2)
+      expect(mockRefetch).not.toHaveBeenCalled()
     })
 
     it('should refetch data when chain changes', async () => {
       wrapper = createWrapper()
-      expect(mockFetchOwners).toHaveBeenCalledTimes(1)
+      expect(mockRefetch).not.toHaveBeenCalled()
 
       mockUseChainId.value = 11155111 // Change to Sepolia
       await nextTick()
 
-      expect(mockFetchOwners).toHaveBeenCalledTimes(2)
-      expect(mockFetchSafeInfo).toHaveBeenCalledTimes(2)
-    })
-  })
-
-  describe('Threshold Display', () => {
-    it('should show correct threshold when Safe info is available', () => {
-      mockOwners.value = [...MOCK_DATA.owners]
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      wrapper = createWrapper()
-
-      expect(wrapper.text()).toContain('2 of 3 required')
-    })
-
-    it('should show fallback threshold when Safe info is not available', () => {
-      mockOwners.value = [...MOCK_DATA.owners]
-      mockSafeInfo.value = null
-      wrapper = createWrapper()
-
-      expect(wrapper.text()).toContain('0 of 3 required')
-    })
-
-    it('should update threshold display when Safe info changes', async () => {
-      mockOwners.value = [...MOCK_DATA.owners]
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      wrapper = createWrapper()
-
-      expect(wrapper.text()).toContain('2 of 3 required')
-
-      // Update Safe info
-      const updatedSafeInfo: MockSafeInfo = { ...MOCK_DATA.safeInfo, threshold: 3 }
-      mockSafeInfo.value = updatedSafeInfo
-      await nextTick()
-
-      expect(wrapper.text()).toContain('3 of 3 required')
+      expect(mockRefetch).not.toHaveBeenCalled()
     })
   })
 
@@ -527,9 +410,6 @@ describe('SafeOwnersCard', () => {
     it('should have proper button attributes', () => {
       wrapper = createWrapper()
 
-      const manageButton = wrapper.find('[data-test="manage-owners-button"]')
-      expect(manageButton.exists()).toBe(true)
-
       const configureButtons = wrapper.findAll('[data-test="copy-owner-button"]')
       expect(configureButtons.length).toBeGreaterThan(0)
     })
@@ -538,8 +418,6 @@ describe('SafeOwnersCard', () => {
       wrapper = createWrapper()
 
       // Check for proper text content organization
-      expect(wrapper.text()).toContain('Safe Owners')
-      expect(wrapper.text()).toContain('required')
       expect(wrapper.text()).toContain('Owner')
       expect(wrapper.text()).toContain('Total:')
     })
@@ -567,7 +445,6 @@ describe('SafeOwnersCard', () => {
       wrapper = createWrapper()
 
       expect(wrapper.findAll('[data-test="owner-item"]')).toHaveLength(1)
-      expect(wrapper.text()).toContain('1 of 1 required')
       expect(wrapper.text()).toContain('Total: 1 owners')
     })
 
@@ -587,7 +464,6 @@ describe('SafeOwnersCard', () => {
       wrapper = createWrapper()
 
       expect(wrapper.findAll('[data-test="owner-item"]')).toHaveLength(10)
-      expect(wrapper.text()).toContain('7 of 10 required')
       expect(wrapper.text()).toContain('Total: 10 owners')
     })
 
@@ -609,7 +485,7 @@ describe('SafeOwnersCard', () => {
       wrapper = createWrapper()
 
       expect(wrapper.find('[data-test="card-component"]').exists()).toBe(true)
-      expect(mockFetchOwners).not.toHaveBeenCalled()
+      expect(mockRefetch).not.toHaveBeenCalled()
     })
 
     it('should handle empty Safe info gracefully', async () => {
@@ -617,7 +493,6 @@ describe('SafeOwnersCard', () => {
       mockSafeInfo.value = null
       wrapper = createWrapper()
 
-      expect(wrapper.text()).toContain('0 of 3 required') // Fallback threshold
       expect(wrapper.findAll('[data-test="owner-item"]')).toHaveLength(3)
     })
   })

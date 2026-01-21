@@ -1,30 +1,31 @@
 /**
- * Safe contract composables - modular organization
- *
- * This file serves as the main entry point for all Safe contract functionality.
- * It re-exports all composables and utilities for easy importing.
+ * Safe composables - API interactions with Safe Transaction Service
+ * Following CNC Portal repository patterns and Vue.js component standards
  */
 
-// Core composables
-export { useSafeReads, useSafeAppUrls } from './reads'
-export { useSafeWrites } from './writes'
+// Types - use centralized types
+export * from '@/types/safe'
 
-// Main combined composable
-import { useSafeReads } from './reads'
-import { useSafeWrites } from './writes'
+// Utilities - use centralized utils
+export {
+  getInjectedProvider,
+  randomSaltNonce,
+  getSafeHomeUrl,
+  getSafeSettingsUrl,
+  openSafeAppUrl
+} from '@/utils/safe'
 
-/**
- * Main Safe contract composable - combines all functionality
- */
-export function useSafe() {
-  const reads = useSafeReads()
-  const writes = useSafeWrites()
+// SDK Management - centralized
+export { useSafeSDK } from './useSafeSdk'
 
-  return {
-    ...reads,
-    ...writes
-  }
-}
+// Queries (data fetching)
+export { useSafeData, useSafeOwners, useSafeThreshold } from './useSafeData'
 
-// Re-export for backward compatibility
-export default useSafe
+export { useSafePendingTransactions } from './useSafePendingTransactions'
+
+// Mutations (actions)
+export { useSafeDeployment } from './useSafeDeployment'
+export { useSafeProposal } from './useSafeProposal'
+export { useSafeApproval } from './useSafeApproval'
+export { useSafeExecution } from './useSafeExecution'
+export { useSafeOwnerManagement } from './useSafeOwnerManagement'

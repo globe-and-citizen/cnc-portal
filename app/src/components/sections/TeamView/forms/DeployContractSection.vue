@@ -21,7 +21,7 @@ import type { Team } from '@/types'
 import { useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent } from '@wagmi/vue'
 import { encodeFunctionData, zeroAddress, type Address, isAddress } from 'viem'
 import { ref, watch, computed } from 'vue'
-import useSafe from '@/composables/safe'
+import { useSafeDeployment } from '@/composables/safe'
 import {
   BANK_BEACON_ADDRESS,
   BOD_BEACON_ADDRESS,
@@ -62,7 +62,7 @@ const emits = defineEmits(['contractDeployed'])
 // Store
 const userDataStore = useUserDataStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
-const { deploySafe, isBusy: isSafeDeploying } = useSafe()
+const { deploySafe, isDeploying: isSafeDeploying } = useSafeDeployment()
 const safeLoadingMessage = ref('')
 const loading = ref(false)
 const dynamicLoading = ref({

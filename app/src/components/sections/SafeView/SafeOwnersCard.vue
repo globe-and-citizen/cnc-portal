@@ -1,26 +1,5 @@
 <template>
   <CardComponent>
-    <template #header>
-      <div class="flex justify-between items-center">
-        <h3 class="text-lg font-semibold">Safe Owners</h3>
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-600">
-            {{ safeInfo?.threshold || 0 }} of {{ owners.length }} required
-          </span>
-          <ButtonUI
-            size="sm"
-            variant="secondary"
-            class="flex items-center gap-1"
-            @click="handleOpenSafeApp"
-            data-test="manage-owners-button"
-          >
-            <IconifyIcon icon="heroicons-outline:cog-6-tooth" class="w-4 h-4" />
-            Manage
-          </ButtonUI>
-        </div>
-      </div>
-    </template>
-
     <div v-if="isLoading" class="flex items-center justify-center py-8">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
     </div>
@@ -83,44 +62,26 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
+import { computed } from 'vue'
 import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { useSafe } from '@/composables/safe'
-
+import { useSafeOwners, getSafeSettingsUrl, openSafeAppUrl } from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()
 const chainId = useChainId()
 
-// Safe composables
-const { useSafeOwners, useSafeInfo, useSafeAppUrls } = useSafe()
-const { owners, isLoading, error, fetchOwners } = useSafeOwners(
-  chainId,
-  teamStore.currentTeam?.safeAddress
+// Use the optimized useSafeOwners composable (no auto-refetch)
+const { owners, isLoading, error } = useSafeOwners(
+  computed(() => teamStore.currentTeam?.safeAddress)
 )
-const { safeInfo, fetchSafeInfo } = useSafeInfo(chainId, teamStore.currentTeam?.safeAddress)
-
-// Safe utilities
-const { getSafeSettingsUrl, openSafeAppUrl } = useSafeAppUrls()
 
 const handleOpenSafeApp = () => {
   const url = getSafeSettingsUrl(chainId.value, teamStore.currentTeam?.safeAddress as Address)
   openSafeAppUrl(url)
 }
-
-const loadSafeData = () => {
-  if (!teamStore.currentTeam?.safeAddress) return
-  fetchOwners()
-  fetchSafeInfo()
-}
-
-// Fetch data when Safe address or chain changes
-watch(() => teamStore.currentTeam?.safeAddress, loadSafeData)
-watch(chainId, loadSafeData)
-onMounted(loadSafeData)
 </script>

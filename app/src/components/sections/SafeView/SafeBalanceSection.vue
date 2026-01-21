@@ -1,6 +1,6 @@
 <!-- filepath: app/src/components/sections/SafeView/SafeBalanceSection.vue -->
 <template>
-  <CardComponent>
+  <CardComponent title="Balance">
     <div class="flex justify-between items-start">
       <div class="flex flex-col gap-2">
         <div class="flex items-baseline gap-2">
@@ -11,7 +11,7 @@
                 class="loading loading-spinner loading-lg"
                 data-test="safe-balance-loading"
               ></span>
-              <span v-else>{{ displayUsdBalance }}</span>
+              <span v-else>${{ displayUsdBalance }}</span>
             </span>
           </span>
           <span class="text-gray-600">USD</span>
@@ -57,7 +57,7 @@ import { useStorage } from '@vueuse/core'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import useSafe from '@/composables/safe'
+import { useSafeData, getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
 
@@ -69,14 +69,14 @@ const currency = useStorage('currency', {
 })
 
 const teamStore = useTeamStore()
-const { useSafeInfo, useSafeAppUrls } = useSafe()
+
+// New Safe data composable with built-in query reactivity
 const {
   safeInfo,
   isLoading: isSafeLoading,
   error,
-  fetchSafeInfo
-} = useSafeInfo(chainId, teamStore.currentTeam?.safeAddress)
-const { getSafeHomeUrl, openSafeAppUrl } = useSafeAppUrls()
+  refetch
+} = useSafeData(computed(() => teamStore.currentTeam?.safeAddress))
 
 const displayUsdBalance = computed(
   () => safeInfo.value?.totals?.['USD']?.formated ?? safeInfo.value?.balance ?? 0
@@ -100,7 +100,7 @@ watch(
   () => teamStore.currentTeam?.safeAddress,
   () => {
     if (teamStore.currentTeam?.safeAddress) {
-      fetchSafeInfo()
+      refetch()
     }
   }
 )
@@ -108,7 +108,7 @@ watch(
 // Watch for chain changes
 watch(chainId, () => {
   if (teamStore.currentTeam?.safeAddress) {
-    fetchSafeInfo()
+    refetch()
   }
 })
 
@@ -121,7 +121,7 @@ watch(error, (newError) => {
 
 onMounted(() => {
   if (teamStore.currentTeam?.safeAddress) {
-    fetchSafeInfo()
+    refetch()
   }
 })
 </script>

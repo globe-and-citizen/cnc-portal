@@ -65,11 +65,11 @@ vi.mock('viem', async (importOriginal) => {
   }
 })
 
-// Mock the entire safe composable
+// Mock the Safe composable
 vi.mock('@/composables/safe', () => ({
-  default: vi.fn(() => ({
+  useSafeDeployment: vi.fn(() => ({
     deploySafe: mockUseSafe.deploySafe,
-    isBusy: mockIsBusy
+    isDeploying: mockIsBusy
   }))
 }))
 
