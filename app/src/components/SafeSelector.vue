@@ -10,7 +10,7 @@
           <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4 text-primary" />
           <div class="text-left">
             <div class="font-medium">
-              {{ selectedSafe?.name || 'Select Safe' }}
+              {{ traderSafesStore.selectedSafe?.name || 'Select Safe' }}
             </div>
             <!-- <div v-if="selectedSafe" class="text-xs text-base-content/70">
               {{ truncateAddress(selectedSafe.address) }}
@@ -30,14 +30,14 @@
       class="absolute z-50 mt-2 w-64 bg-base-100 rounded-lg shadow-lg border border-base-300"
     >
       <ul class="menu p-2 max-h-64 overflow-y-auto">
-        <li v-if="safes.length === 0" class="disabled">
+        <li v-if="traderSafesStore.safes.length === 0" class="disabled">
           <div class="py-3 text-center text-sm text-base-content/70">No safes available</div>
         </li>
 
         <li
-          v-for="safe in safes"
+          v-for="safe in traderSafesStore.safes"
           :key="safe.address"
-          :class="{ 'bg-base-200': selectedSafe?.address === safe.address }"
+          :class="{ 'bg-base-200': traderSafesStore.selectedSafe?.address === safe.address }"
         >
           <a @click="selectSafe(safe)" class="py-2">
             <div class="flex items-center justify-between w-full">
@@ -62,8 +62,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
+import { useTraderSafesStore } from '@/stores'
+import { useUserPositions } from '@/composables/trading'
 
 interface SafeWallet {
   address: string
@@ -71,26 +73,29 @@ interface SafeWallet {
   balance: string
 }
 
+const traderSafesStore = useTraderSafesStore()
+const derivedSafeAddressFromEoa = computed(() => traderSafesStore.selectedSafe?.address)
+const { refetch } = useUserPositions(derivedSafeAddressFromEoa)
 const isOpen = ref(false)
-const safes = ref<SafeWallet[]>([
-  {
-    address: '0x1234567890abcdef1234567890abcdef12345678',
-    name: 'Personal Safe',
-    balance: '1.2543'
-  },
-  {
-    address: '0xabcdef1234567890abcdef1234567890abcdef12',
-    name: 'DAO Treasury',
-    balance: '45.6789'
-  },
-  {
-    address: '0x7890abcdef1234567890abcdef1234567890abcd',
-    name: 'Team Multisig',
-    balance: '12.3456'
-  }
-])
+// const safes = ref<SafeWallet[]>([
+//   {
+//     address: '0x1234567890abcdef1234567890abcdef12345678',
+//     name: 'Personal Safe',
+//     balance: '1.2543'
+//   },
+//   {
+//     address: '0xabcdef1234567890abcdef1234567890abcdef12',
+//     name: 'DAO Treasury',
+//     balance: '45.6789'
+//   },
+//   {
+//     address: '0x7890abcdef1234567890abcdef1234567890abcd',
+//     name: 'Team Multisig',
+//     balance: '12.3456'
+//   }
+// ])
 
-const selectedSafe = ref<SafeWallet | undefined>(safes.value[0])
+// const selectedSafe = ref<SafeWallet | undefined>(safes.value[0])
 
 const truncateAddress = (address: string): string => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
@@ -105,8 +110,10 @@ const toggleDropdown = () => {
   isOpen.value = !isOpen.value
 }
 
-const selectSafe = (safe: SafeWallet) => {
-  selectedSafe.value = safe
+const selectSafe = async (safe: SafeWallet) => {
+  // selectedSafe.value = safe
+  traderSafesStore.setSelectedSafe(safe)
+  await refetch()
   isOpen.value = false
   console.log('Selected safe:', safe)
 }
@@ -121,7 +128,7 @@ const handleClickOutside = (event: MouseEvent) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  console.log('Loaded', safes.value.length, 'safes')
+  console.log('Loaded', traderSafesStore.safes.length, 'safes')
 })
 
 onUnmounted(() => {
