@@ -20,10 +20,12 @@ import TradingAccountBalance from './TradingAccountBalance.vue'
 import TradingTotalPnl from './TradingTotalPnL.vue'
 import TradingPerformance from './TradingPerformance.vue'
 import { useSafeDeployment } from '@/composables/trading'
+import { useTraderSafesStore } from '@/stores'
 
 // Composables
-const { derivedSafeAddressFromEoa } = useSafeDeployment()
+// const { derivedSafeAddressFromEoa } = useSafeDeployment()
+const tradersSafeStore = useTraderSafesStore()
 
 // Safe address
-const safeAddress = computed(() => derivedSafeAddressFromEoa.value)
+const safeAddress = computed(() => tradersSafeStore.selectedSafe?.address)
 </script>
