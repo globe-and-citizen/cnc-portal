@@ -84,6 +84,10 @@ vi.mock('@/views/team/[id]/Accounts/BankView.vue', () => ({
   default: { name: 'BankView', template: '<div>Bank View</div>' }
 }))
 
+vi.mock('@/views/team/[id]/Accounts/SafeView.vue', () => ({
+  default: { name: 'SafeView', template: '<div>Safe View</div>' }
+}))
+
 vi.mock('@/views/team/[id]/ContractManagementView.vue', () => ({
   default: { name: 'ContractManagementView', template: '<div>Contract Management</div>' }
 }))
@@ -152,6 +156,7 @@ describe('Router Configuration', () => {
           path: '/teams/:id/accounts/members/:memberAddress/payroll-history'
         },
         // { name: 'account', path: '/teams/:id/account' },
+        { name: 'safe-account', path: '/teams/:id/accounts/safe-account' },
         {
           name: 'cash-remunerations-member',
           path: '/teams/:id/cash-remunerations/member/:memberAddress'
@@ -184,6 +189,7 @@ describe('Router Configuration', () => {
         { name: 'team-demo', expectedMeta: { name: 'Team Demo' } },
         { name: 'team-payroll', expectedMeta: { name: 'Team Payroll' } },
         { name: 'payroll-history', expectedMeta: { name: 'Payroll History' } },
+        { name: 'safe-account', expectedMeta: { name: 'Safe Account' } },
         { name: 'payroll-account', expectedMeta: { name: 'Payroll Account' } },
         { name: 'cash-remunerations-member', expectedMeta: { name: 'Cash Remuneration Member' } },
         { name: 'expense-account', expectedMeta: { name: 'Expense Account' } },
@@ -236,6 +242,11 @@ describe('Router Configuration', () => {
 
       const teamsRoute = router.currentRoute.value
       expect(teamsRoute.name).toBe('teams')
+
+      // Safe account route component loading
+      await router.push('/teams/123/accounts/safe-account')
+      await nextTick()
+      expect(router.currentRoute.value.name).toBe('safe-account')
     })
   })
 
