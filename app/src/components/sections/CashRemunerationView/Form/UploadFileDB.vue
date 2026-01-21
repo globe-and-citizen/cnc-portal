@@ -8,10 +8,10 @@
       @drop.prevent="onDrop"
       data-test="upload-zone"
     >
-      <!-- <div class="text-gray-500 flex flex-col items-center">
+      <div class="text-gray-500 flex flex-col items-center">
         <p>Add Screenshot or File</p>
         <p class="text-xs mt-1">{{ fileCount }}/{{ MAX_FILES }} files (10 MB max per file)</p>
-      </div> -->
+      </div>
 
       <ButtonUI
         variant="glass"
