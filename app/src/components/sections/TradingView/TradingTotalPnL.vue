@@ -34,10 +34,13 @@ import OverviewCard from '@/components/OverviewCard.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import cartIcon from '@/assets/cart.svg'
 import { useUserPositions, useSafeDeployment } from '@/composables/trading'
+import { useTraderSafesStore } from '@/stores'
 
 const currencyStore = useCurrencyStore()
-const { derivedSafeAddressFromEoa } = useSafeDeployment()
-const { pnlStats } = useUserPositions(derivedSafeAddressFromEoa.value ?? undefined)
+const tradingSafesStore = useTraderSafesStore()
+// const { derivedSafeAddressFromEoa } = useSafeDeployment()
+const derivedSafeAddressFromEoa = computed(() => tradingSafesStore.selectedSafe?.address)
+const { pnlStats } = useUserPositions(derivedSafeAddressFromEoa)
 const isLoading = computed(() => false)
 
 // Calculate P&L from trades
