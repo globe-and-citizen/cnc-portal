@@ -42,14 +42,14 @@ export function useSubmitRestriction() {
         .get()
         .json()
 
-      if (statusCode.value !== 200 || !data.value?.success) {
+      if (statusCode.value !== 200 || !data.value) {
         error.value = 'Failed to check submit restriction'
         isRestricted.value = true // Default to restricted on error
         return true
       }
 
-      isRestricted.value = data.value.data.isRestricted
-      effectiveStatus.value = data.value.data.effectiveStatus
+      isRestricted.value = data.value.isRestricted ?? true
+      effectiveStatus.value = data.value.effectiveStatus ?? 'enabled'
 
       return isRestricted.value
     } catch (e) {
