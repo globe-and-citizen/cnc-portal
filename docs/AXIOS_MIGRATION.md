@@ -14,21 +14,21 @@ This document summarizes the migration from `useCustomFetch` to Axios + TanStack
 
 ### Stores
 
-- ✅ `teamStore.ts` - Migrated to use `useTeams` and `useTeam` queries
-- ✅ `notificationStore.ts` - Migrated to use `useNotifications`, `useAddBulkNotifications`, and `useUpdateNotification`
-- ✅ `expenseStore.ts` - Migrated to use `useExpenses` query
+- ✅ `teamStore.ts` - Migrated to use `useTeamsQuery` and `useTeamQuery` queries
+- ✅ `notificationStore.ts` - Migrated to use `useNotificationsQuery`, `useAddBulkNotificationsQuery`, and `useUpdateNotification`
+- ✅ `expenseStore.ts` - Migrated to use `useExpensesQuery` query
 
 ### Composables
 
-- ✅ `useAuth.ts` - Migrated to use `useValidateToken` query
-- ✅ `useSiwe.ts` - Migrated to use `useUser` query (kept useFetch for non-authenticated endpoints)
-- ✅ `useBod.ts` - Migrated to use `useCreateAction` and `useUpdateAction` mutations
-- ✅ `bod/functions.ts` - Migrated to use `useCreateAction` and `useUpdateAction` mutations
+- ✅ `useAuth.ts` - Migrated to use `useValidateTokenQuery` query
+- ✅ `useSiwe.ts` - Migrated to use `useUserQuery` query (kept useFetch for non-authenticated endpoints)
+- ✅ `useBod.ts` - Migrated to use `useCreateAction` and `useUpdateActionQuery` mutations
+- ✅ `bod/functions.ts` - Migrated to use `useCreateAction` and `useUpdateActionQuery` mutations
 - ✅ `bod.ts` - Migrated to use `useCreateAction` mutation
 
 ### Services
 
-- ✅ `AddCampaignService.ts` - Migrated to use `useCreateContract` mutation
+- ✅ `AddCampaignService.ts` - Migrated to use `useCreateContractQuery` mutation
 
 ### Query Files Created
 
@@ -75,7 +75,7 @@ These components can be migrated incrementally as part of future work. The core 
 ### Updated Tests
 
 - ✅ `notificationStore.spec.ts` - Updated to mock TanStack Query hooks
-- ✅ `AddCampaignService.spec.ts` - Updated to mock `useCreateContract`
+- ✅ `AddCampaignService.spec.ts` - Updated to mock `useCreateContractQuery`
 
 ### Test Strategy
 
@@ -90,11 +90,13 @@ Tests now mock TanStack Query hooks instead of `useCustomFetch`. This provides:
 ### Store API Changes
 
 1. **teamStore.ts**
+
    - Removed `statusCode` from return (now computed from error)
    - `teams` is now a computed ref from TanStack Query
    - `executeFetchTeams` is now `refetch` from TanStack Query
 
 2. **notificationStore.ts**
+
    - Similar API but backed by TanStack Query
    - `isLoading` and `error` now come from queries
 
@@ -112,43 +114,48 @@ Tests now mock TanStack Query hooks instead of `useCustomFetch`. This provides:
 ### Using Queries in Components
 
 ```typescript
-import { useTeams } from '@/queries'
-import { computed } from 'vue'
+import { useTeamsQuery } from "@/queries";
+import { computed } from "vue";
 
 export default {
   setup() {
-    const userAddress = computed(() => '0x...')
-    const { data: teams, isLoading, error, refetch } = useTeams(userAddress)
+    const userAddress = computed(() => "0x...");
+    const {
+      data: teams,
+      isLoading,
+      error,
+      refetch,
+    } = useTeamsQuery(userAddress);
 
-    return { teams, isLoading, error, refetch }
-  }
-}
+    return { teams, isLoading, error, refetch };
+  },
+};
 ```
 
 ### Using Mutations in Components
 
 ```typescript
-import { useCreateTeam } from '@/queries'
+import { useCreateTeamQuery } from "@/queries";
 
 export default {
   setup() {
-    const createTeam = useCreateTeam()
+    const createTeam = useCreateTeamQuery();
 
     const handleSubmit = async (teamData) => {
       try {
-        await createTeam.mutateAsync(teamData)
+        await createTeam.mutateAsync(teamData);
         // Teams list will automatically refetch
       } catch (error) {
-        console.error('Failed to create team:', error)
+        console.error("Failed to create team:", error);
       }
-    }
+    };
 
     return {
       handleSubmit,
-      isCreating: createTeam.isPending
-    }
-  }
-}
+      isCreating: createTeam.isPending,
+    };
+  },
+};
 ```
 
 ## Configuration

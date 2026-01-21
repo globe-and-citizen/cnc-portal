@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import type { Action, Team } from '@/types'
-import { useCreateAction } from '@/queries/action.queries'
+import { useCreateActionMutation } from '@/queries/action.queries'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import type { Address } from 'viem'
@@ -13,7 +13,7 @@ export function useAddAction() {
   const team = ref<Partial<Team> | null>(null)
   const action = ref<Partial<Action> | null>(null)
 
-  const createActionMutation = useCreateAction()
+  const createActionMutation = useCreateActionMutation()
 
   const {
     data: hash,

@@ -13,11 +13,3 @@ export interface Team {
   teamContracts: TeamContract[]
   _count?: { members: number }
 }
-export interface TeamsResponse {
-  teams: Team[]
-  success: boolean
-}
-export interface TeamResponse {
-  team: Team
-  success: boolean
-}

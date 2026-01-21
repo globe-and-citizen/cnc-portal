@@ -4,7 +4,7 @@ import apiClient from '@/lib/axios'
 /**
  * Validate the current authentication token
  */
-export const useValidateToken = () => {
+export const useValidateTokenQuery = () => {
   return useQuery({
     queryKey: ['auth', 'validateToken'],
     queryFn: async () => {
