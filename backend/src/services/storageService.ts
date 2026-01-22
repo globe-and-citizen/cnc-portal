@@ -54,49 +54,38 @@ const REQUIRED_ENV_VARS = {
   secretAccessKey: 'SECRET_ACCESS_KEY',
 } as const;
 
-export function getStorageConfigStatus():
-  | { ok: true; config: StorageConfig }
-  | { ok: false; missing: string[] } {
+export const getMissingConfig = (): string[] => {
+  const config = getStorageConfig();
+
+  const missing = [
+    !config.bucket && REQUIRED_ENV_VARS.bucket,
+    !config.accessKeyId && REQUIRED_ENV_VARS.accessKeyId,
+    !config.secretAccessKey && REQUIRED_ENV_VARS.secretAccessKey,
+  ].filter(Boolean) as string[];
+  return missing;
+};
+export function isStorageConfigured(): boolean {
+  const missing = getMissingConfig();
+
+  if (missing.length > 0) {
+    return false;
+  }
+  return true;
+}
+export function getStorageConfig(): StorageConfig {
   const bucket = process.env.BUCKET;
   const accessKeyId = process.env.ACCESS_KEY_ID;
   const secretAccessKey = process.env.SECRET_ACCESS_KEY;
   const region = process.env.REGION ?? 'auto';
   const endpoint = process.env.ENDPOINT ?? 'https://storage.railway.app';
 
-  const missing = [
-    !bucket && REQUIRED_ENV_VARS.bucket,
-    !accessKeyId && REQUIRED_ENV_VARS.accessKeyId,
-    !secretAccessKey && REQUIRED_ENV_VARS.secretAccessKey,
-  ].filter(Boolean) as string[];
-
-  if (missing.length > 0) {
-    return { ok: false, missing };
-  }
-
   return {
-    ok: true,
-    // At this point TS still sees possible undefined; we know they exist because missing is empty.
-    config: {
-      bucket: bucket as string,
-      accessKeyId: accessKeyId as string,
-      secretAccessKey: secretAccessKey as string,
-      region,
-      endpoint,
-    },
+    bucket: bucket as string,
+    accessKeyId: accessKeyId as string,
+    secretAccessKey: secretAccessKey as string,
+    region,
+    endpoint,
   };
-}
-
-function getStorageConfig(): StorageConfig {
-  const status = getStorageConfigStatus();
-  if (!status.ok) {
-    throw new Error(`Missing Railway Storage configuration: ${status.missing.join(', ')}`);
-  }
-  return status.config;
-}
-
-export function isStorageConfigured(): boolean {
-  const status = getStorageConfigStatus();
-  return status.ok;
 }
 
 function createS3Client(): S3Client {
@@ -277,5 +266,4 @@ export default {
   ALLOWED_MIMETYPES,
   MAX_FILE_SIZE,
   MAX_FILES_PER_CLAIM,
-  getStorageConfigStatus,
 };
