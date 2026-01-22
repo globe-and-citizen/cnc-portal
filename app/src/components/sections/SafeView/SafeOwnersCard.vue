@@ -8,13 +8,13 @@
       <div class="text-red-600 text-sm">{{ error }}</div>
     </div>
 
-    <div v-else-if="owners.length === 0" class="text-center py-8">
+    <div v-else-if="safeInfo?.owners.length === 0" class="text-center py-8">
       <div class="text-gray-500">No owners found</div>
     </div>
 
     <div v-else class="space-y-3">
       <div
-        v-for="(owner, index) in owners"
+        v-for="(owner, index) in safeInfo?.owners"
         :key="owner"
         class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
         data-test="owner-item"
@@ -43,9 +43,9 @@
       </div>
     </div>
 
-    <template #footer v-if="owners.length > 0">
+    <template #footer v-if="safeInfo?.owners?.length > 0">
       <div class="flex justify-between items-center text-sm text-gray-600">
-        <span>Total: {{ owners.length }} owners</span>
+        <span>Total: {{ safeInfo?.owners.length }} owners</span>
         <ButtonUI
           variant="secondary"
           size="sm"
@@ -71,13 +71,23 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import { useSafeOwners, getSafeSettingsUrl, openSafeAppUrl } from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
+import { useSafeInfoQuery } from '@/queries/safe.queries'
 
 const teamStore = useTeamStore()
 const chainId = useChainId()
 
 // Use the optimized useSafeOwners composable (no auto-refetch)
-const { owners, isLoading, error } = useSafeOwners(
-  computed(() => teamStore.currentTeam?.safeAddress)
+// const { owners, isLoading, error } = useSafeOwners(
+//   computed(() => teamStore.currentTeam?.safeAddress)
+// )
+
+const {
+  data: safeInfo,
+  isLoading,
+  error
+} = useSafeInfoQuery(
+  chainId,
+  computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
 )
 
 const handleOpenSafeApp = () => {

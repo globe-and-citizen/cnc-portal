@@ -31,7 +31,6 @@ const {
 
 // Mock external dependencies
 vi.mock('@/composables/safe', () => ({
-  useSafeData: mockUseSafeData,
   getSafeHomeUrl: mockGetSafeHomeUrl,
   openSafeAppUrl: mockOpenSafeAppUrl
 }))
