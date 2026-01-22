@@ -48,29 +48,55 @@ type StorageConfig = {
   endpoint: string;
 };
 
-function getStorageConfig(): StorageConfig {
+const REQUIRED_ENV_VARS = {
+  bucket: 'BUCKET',
+  accessKeyId: 'ACCESS_KEY_ID',
+  secretAccessKey: 'SECRET_ACCESS_KEY',
+} as const;
+
+export function getStorageConfigStatus():
+  | { ok: true; config: StorageConfig }
+  | { ok: false; missing: string[] } {
   const bucket = process.env.BUCKET;
   const accessKeyId = process.env.ACCESS_KEY_ID;
   const secretAccessKey = process.env.SECRET_ACCESS_KEY;
-  const region = process.env.REGION || 'auto';
-  const endpoint = process.env.ENDPOINT || 'https://storage.railway.app';
+  const region = process.env.REGION ?? 'auto';
+  const endpoint = process.env.ENDPOINT ?? 'https://storage.railway.app';
 
-  if (!bucket || !accessKeyId || !secretAccessKey) {
-    throw new Error(
-      'Missing Railway Storage configuration. Please set BUCKET, ACCESS_KEY_ID, and SECRET_ACCESS_KEY environment variables.'
-    );
+  const missing = [
+    !bucket && REQUIRED_ENV_VARS.bucket,
+    !accessKeyId && REQUIRED_ENV_VARS.accessKeyId,
+    !secretAccessKey && REQUIRED_ENV_VARS.secretAccessKey,
+  ].filter(Boolean) as string[];
+
+  if (missing.length > 0) {
+    return { ok: false, missing };
   }
 
-  return { bucket, accessKeyId, secretAccessKey, region, endpoint };
+  return {
+    ok: true,
+    // At this point TS still sees possible undefined; we know they exist because missing is empty.
+    config: {
+      bucket: bucket as string,
+      accessKeyId: accessKeyId as string,
+      secretAccessKey: secretAccessKey as string,
+      region,
+      endpoint,
+    },
+  };
+}
+
+function getStorageConfig(): StorageConfig {
+  const status = getStorageConfigStatus();
+  if (!status.ok) {
+    throw new Error(`Missing Railway Storage configuration: ${status.missing.join(', ')}`);
+  }
+  return status.config;
 }
 
 export function isStorageConfigured(): boolean {
-  try {
-    getStorageConfig();
-    return true;
-  } catch {
-    return false;
-  }
+  const status = getStorageConfigStatus();
+  return status.ok;
 }
 
 function createS3Client(): S3Client {
@@ -251,4 +277,5 @@ export default {
   ALLOWED_MIMETYPES,
   MAX_FILE_SIZE,
   MAX_FILES_PER_CLAIM,
+  getStorageConfigStatus,
 };
