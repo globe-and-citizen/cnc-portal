@@ -182,7 +182,7 @@ class Server {
 
       console.log('Missing Storage Config:', getMissingConfig());
       if (getMissingConfig().length > 0) {
-        console.log(
+        console.error(
           'Railway Storage is not configured. Please set BUCKET, ACCESS_KEY_ID, and SECRET_ACCESS_KEY environment variables.'
         );
       }
