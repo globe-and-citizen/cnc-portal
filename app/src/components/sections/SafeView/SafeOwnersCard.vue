@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <template #footer v-if="safeInfo?.owners?.length > 0">
+    <template #footer v-if="safeInfo?.owners?.length ?? 0 > 0">
       <div class="flex justify-between items-center text-sm text-gray-600">
         <span>Total: {{ safeInfo?.owners.length }} owners</span>
         <ButtonUI
