@@ -11,7 +11,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url= env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 enum GlobalSettingStatus {
@@ -55,7 +55,7 @@ model Team {
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
   teamFunctionOverrides  TeamFunctionOverride[]
-  safeAddress    String?
+  safeAddress            String?
 }
 
 model MemberTeamsData {
@@ -93,7 +93,7 @@ model Wage {
   ratePerHour         Json          @default("[{\"type\": \"cash\", \"amount\": 0},{\"type\": \"usdc\", \"amount\": 0},{\"type\": \"token\", \"amount\": 0}]")
   maximumHoursPerWeek Int
   nextWageId          Int?          @unique
-  nextWage            Wage?         @relation("wageRelated", fields: [nextWageId], references: [id])
+  nextWage            Wage?         @relation("wageRelated", fields: [nextWageId], references: [id], onDelete: SetNull)
   previousWage        Wage?         @relation("wageRelated")
   claims              Claim[]
   weeklyClaims        WeeklyClaim[]
@@ -104,17 +104,17 @@ model Wage {
 }
 
 model Claim {
-  id              Int          @id @default(autoincrement()) // Add an ID for easy referencing
+  id              Int         @id @default(autoincrement()) // Add an ID for easy referencing
   hoursWorked     Int
   dayWorked       DateTime?
   memo            String?
   fileAttachments Json? // Stores file metadata and data for images and documents
   wageId          Int
-  wage            Wage         @relation(fields: [wageId], references: [id])
-  weeklyClaimId   Int?
-  weeklyClaim     WeeklyClaim? @relation("WeeklyClaimToClaims", fields: [weeklyClaimId], references: [id])
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  wage            Wage        @relation(fields: [wageId], references: [id], onDelete: Cascade)
+  weeklyClaimId   Int
+  weeklyClaim     WeeklyClaim @relation("WeeklyClaimToClaims", fields: [weeklyClaimId], references: [id], onDelete: Cascade)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
 
 model WeeklyClaim {
