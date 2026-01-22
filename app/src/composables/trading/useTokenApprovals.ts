@@ -1,5 +1,5 @@
 // composables/useTokenApprovals.ts
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { RelayClient } from '@polymarket/builder-relayer-client'
 import {
   checkAllApprovals,
@@ -7,12 +7,22 @@ import {
   createCompleteSetupTransactions,
   type ApprovalCheckResult
 } from '@/utils/trading/approvalsUtil'
+import { useTeamStore } from '@/stores'
+import { getAddress } from 'viem'
 
 export const useTokenApprovals = () => {
   // Reactive state
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const approvalStatus = ref<ApprovalCheckResult | null>(null)
+  const teamStore = useTeamStore()
+
+  const systemOwners = computed(() => {
+    const teamData = teamStore.currentTeamMeta.data
+    const bankSafe = teamData?.safeAddress ? getAddress(teamData?.safeAddress) : undefined
+    const ownerAddress = teamData?.ownerAddress ? getAddress(teamData?.ownerAddress) : undefined
+    return !bankSafe || !ownerAddress ? [] : [bankSafe, ownerAddress]
+  })
 
   /**
    * Check all required approvals including safe owners
@@ -22,7 +32,8 @@ export const useTokenApprovals = () => {
     error.value = null
 
     try {
-      const result = await checkAllApprovals(safeAddress)
+      if (systemOwners.value.length === 0) throw new Error('No system owners set')
+      const result = await checkAllApprovals(safeAddress, systemOwners.value as `0x${string}`[])
       approvalStatus.value = result
       isLoading.value = false
       return result
@@ -66,7 +77,11 @@ export const useTokenApprovals = () => {
     error.value = null
 
     try {
-      const setupTxs = createCompleteSetupTransactions(safeAddress)
+      if (systemOwners.value.length === 0) throw new Error('No system owners set')
+      const setupTxs = createCompleteSetupTransactions(
+        safeAddress,
+        systemOwners.value as `0x${string}`[]
+      )
       const response = await relayClient.execute(
         setupTxs,
         'Complete trading setup: approvals and owners'

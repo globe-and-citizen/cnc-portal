@@ -30,8 +30,8 @@ export interface ApprovalCheckResult {
 
 const MAX_UINT256 = '115792089237316195423570985008687907853269984665640564039457584007913129639935'
 
-export const TREASURY_SIGNER = import.meta.env.VITE_APP_TREASURY_SIGNER
-export const BOD_SIGNER = import.meta.env.VITE_APP_BOD_SIGNER
+// export const TREASURY_SIGNER = import.meta.env.VITE_APP_TREASURY_SIGNER
+// export const BOD_SIGNER = import.meta.env.VITE_APP_BOD_SIGNER
 
 const erc1155Abi = [
   {
@@ -73,12 +73,6 @@ const OUTCOME_TOKEN_SPENDERS = [
   { address: NEG_RISK_CTF_EXCHANGE_ADDRESS, name: 'Neg Risk Exchange' },
   { address: NEG_RISK_ADAPTER_ADDRESS, name: 'Neg Risk Adapter' }
 ] as const
-
-// Define the required system owners (update these with your actual addresses)
-const REQUIRED_SYSTEM_OWNERS = [
-  TREASURY_SIGNER, // Treasury Signer
-  BOD_SIGNER // Council Member 1
-]
 
 const REQUIRED_THRESHOLD = 2
 
@@ -122,7 +116,8 @@ const checkERC1155ApprovalForSpender = async (
 }
 
 const checkSafeOwners = async (
-  safeAddress: string
+  safeAddress: string,
+  requiredOwners: `0x${string}`[]
 ): Promise<{
   hasRequiredOwners: boolean
   owners: string[]
@@ -131,8 +126,9 @@ const checkSafeOwners = async (
   hasRequiredThreshold: boolean
 }> => {
   try {
-    if (!isAddress(TREASURY_SIGNER) || !isAddress(BOD_SIGNER))
-      throw new Error('System owner addresses are not defined.')
+    for (const owner of requiredOwners) {
+      if (!isAddress(owner)) throw new Error('System owner addresses wrong format.')
+    }
 
     // Get current owners
     const owners = (await publicClient.readContract({
@@ -149,7 +145,7 @@ const checkSafeOwners = async (
     })) as bigint
 
     // Check if all required system owners are present
-    const missingOwners = REQUIRED_SYSTEM_OWNERS.filter(
+    const missingOwners = requiredOwners.filter(
       (requiredOwner) => !owners.includes(requiredOwner as `0x${string}`)
     )
 
@@ -169,14 +165,15 @@ const checkSafeOwners = async (
       hasRequiredOwners: false,
       owners: [],
       threshold: 0,
-      missingOwners: REQUIRED_SYSTEM_OWNERS,
+      missingOwners: requiredOwners,
       hasRequiredThreshold: false
     }
   }
 }
 
 export const checkAllApprovals = async (
-  safeAddress: string
+  safeAddress: string,
+  requiredOwners: `0x${string}`[]
 ): Promise<{
   allApproved: boolean
   usdcApprovals: Record<string, boolean>
@@ -209,7 +206,7 @@ export const checkAllApprovals = async (
         return { name, approved }
       })
     ),
-    checkSafeOwners(safeAddress)
+    checkSafeOwners(safeAddress, requiredOwners)
   ])
 
   const allTokenApproved =
@@ -300,7 +297,10 @@ export const createAddOwnerTransactions = (
   return safeTxns
 }
 
-export const createCompleteSetupTransactions = (safeAddress: string): SafeTransaction[] => {
+export const createCompleteSetupTransactions = (
+  safeAddress: string,
+  owners: `0x${string}`[]
+): SafeTransaction[] => {
   const safeTxns: SafeTransaction[] = []
 
   // Add all approval transactions
@@ -308,8 +308,7 @@ export const createCompleteSetupTransactions = (safeAddress: string): SafeTransa
   safeTxns.push(...approvalTxs)
 
   // Add system owners
-  const SYSTEM_OWNERS = REQUIRED_SYSTEM_OWNERS.slice(0, 2) // Add first 2
-  for (const owner of SYSTEM_OWNERS) {
+  for (const owner of owners) {
     safeTxns.push({
       to: safeAddress,
       operation: OperationType.Call,
