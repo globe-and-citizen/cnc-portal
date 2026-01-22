@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRef } from 'vue'
 import { unref, computed } from 'vue'
 import externalApiClient from '@/lib/external.axios.ts'
-import type { AxiosError } from 'axios'
 import type { SafeInfo, SafeTransaction, SafeSignature, SafeDeploymentParams } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
 
@@ -43,21 +42,10 @@ export function useSafeInfoQuery(
       const txService = TX_SERVICE_BY_CHAIN[chain]
       if (!txService) throw new Error(`Unsupported chainId: ${chain}`)
 
-      try {
-        const { data } = await externalApiClient.get<SafeInfo>(
-          `${txService.url}/api/v1/safes/${address}/`
-        )
-        return data
-      } catch (error) {
-        const axiosError = error as AxiosError
-        const apiMessage =
-          axiosError.response?.data && typeof axiosError.response.data === 'object'
-            ? (axiosError.response.data as { message?: string }).message
-            : undefined
-        const message = apiMessage || axiosError.message || 'Failed to fetch Safe info'
-        console.error('Failed to fetch Safe info:', message, error)
-        throw new Error(message)
-      }
+      const { data } = await externalApiClient.get<SafeInfo>(
+        `${txService.url}/api/v1/safes/${address}/`
+      )
+      return data
     },
     staleTime: Infinity, // Owners change rarely; avoid periodic refetches
     gcTime: 24 * 60 * 60 * 1000,
@@ -95,21 +83,10 @@ export function useSafePendingTransactionsQuery(
       const txService = TX_SERVICE_BY_CHAIN[chain]
       if (!txService) throw new Error(`Unsupported chainId: ${chain}`)
 
-      try {
-        const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
-          `${txService.url}/api/v1/safes/${address}/multisig-transactions/?executed=false`
-        )
-        return data.results || []
-      } catch (error) {
-        const axiosError = error as AxiosError
-        const apiMessage =
-          axiosError.response?.data && typeof axiosError.response.data === 'object'
-            ? (axiosError.response.data as { message?: string }).message
-            : undefined
-        const message = apiMessage || axiosError.message || 'Failed to fetch pending transactions'
-        console.error('Failed to fetch pending transactions:', message, error)
-        throw new Error(message)
-      }
+      const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
+        `${txService.url}/api/v1/safes/${address}/multisig-transactions/?executed=false`
+      )
+      return data.results || []
     },
     staleTime: 30_000, // 30 seconds for pending transactions
     refetchInterval: 30_000 // Auto-refresh every 30 seconds
@@ -161,25 +138,14 @@ export function useProposeTransactionMutation() {
       const resolvedSignature = typeof signature === 'string' ? signature : signature.data
       const resolvedTx = transactionData ?? safeTx
 
-      try {
-        const { data } = await externalApiClient.post(
-          `${txService.url}/api/v1/safes/${safeAddress}/multisig-transactions/`,
-          {
-            ...(resolvedTx as Record<string, unknown>),
-            signature: resolvedSignature
-          }
-        )
-        return data.safeTxHash
-      } catch (error) {
-        const axiosError = error as AxiosError
-        const apiMessage =
-          axiosError.response?.data && typeof axiosError.response.data === 'object'
-            ? (axiosError.response.data as { message?: string }).message
-            : undefined
-        const message = apiMessage || axiosError.message || 'Failed to propose transaction'
-        console.error('Failed to propose transaction:', message, error)
-        throw new Error(message)
-      }
+      const { data } = await externalApiClient.post(
+        `${txService.url}/api/v1/safes/${safeAddress}/multisig-transactions/`,
+        {
+          ...(resolvedTx as Record<string, unknown>),
+          signature: resolvedSignature
+        }
+      )
+      return data.safeTxHash
     },
     onSuccess: (_, variables) => {
       // Invalidate pending transactions
@@ -210,21 +176,10 @@ export function useApproveTransactionMutation() {
       const txService = TX_SERVICE_BY_CHAIN[chainId]
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      try {
-        await externalApiClient.post(
-          `${txService.url}/api/v1/multisig-transactions/${safeTxHash}/confirmations/`,
-          { signature: signature.data }
-        )
-      } catch (error) {
-        const axiosError = error as AxiosError
-        const apiMessage =
-          axiosError.response?.data && typeof axiosError.response.data === 'object'
-            ? (axiosError.response.data as { message?: string }).message
-            : undefined
-        const message = apiMessage || axiosError.message || 'Failed to approve transaction'
-        console.error('Failed to approve transaction:', message, error)
-        throw new Error(message)
-      }
+      await externalApiClient.post(
+        `${txService.url}/api/v1/multisig-transactions/${safeTxHash}/confirmations/`,
+        { signature: signature.data }
+      )
     },
     onSuccess: (_, variables) => {
       // Invalidate pending transactions
@@ -337,21 +292,10 @@ export function useSafeTransactionQuery(
       const txService = TX_SERVICE_BY_CHAIN[chain]
       if (!txService) throw new Error(`Unsupported chainId: ${chain}`)
 
-      try {
-        const { data } = await externalApiClient.get<SafeTransaction>(
-          `${txService.url}/api/v1/multisig-transactions/${hash}/`
-        )
-        return data
-      } catch (error) {
-        const axiosError = error as AxiosError
-        const apiMessage =
-          axiosError.response?.data && typeof axiosError.response.data === 'object'
-            ? (axiosError.response.data as { message?: string }).message
-            : undefined
-        const message = apiMessage || axiosError.message || 'Failed to fetch Safe transaction'
-        console.error('Failed to fetch Safe transaction:', message, error)
-        throw new Error(message)
-      }
+      const { data } = await externalApiClient.get<SafeTransaction>(
+        `${txService.url}/api/v1/multisig-transactions/${hash}/`
+      )
+      return data
     },
     staleTime: 60_000, // 1 minute
     gcTime: 300_000
