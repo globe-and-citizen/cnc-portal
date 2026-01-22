@@ -3,7 +3,6 @@ import express, { Request, Response } from 'express';
 import { authorizeUser } from '../middleware/authMiddleware';
 import {
   getPresignedDownloadUrl,
-  getStorageConfigStatus,
   isStorageConfigured,
   PRESIGNED_URL_EXPIRATION,
 } from '../services/storageService';
@@ -79,20 +78,6 @@ storageRouter.get('/url', authorizeUser, async (req: Request, res: Response) => 
       return res.status(400).json({
         error: 'Missing required parameter',
         details: 'The "key" query parameter is required',
-      });
-    }
-
-    // Check if Railway Storage is configured and expose missing vars for easier ops debugging
-    const configStatus = getStorageConfigStatus();
-    if (!configStatus.ok || !isStorageConfigured()) {
-      if (!configStatus.ok) {
-        console.error('Storage misconfiguration detected, missing env vars:', configStatus.missing);
-      }
-      return res.status(500).json({
-        error: 'Storage not configured',
-        details: configStatus.ok
-          ? 'Railway Storage is not configured. Please contact support.'
-          : `Missing required environment variables: ${configStatus.missing.join(', ')}`,
       });
     }
 
