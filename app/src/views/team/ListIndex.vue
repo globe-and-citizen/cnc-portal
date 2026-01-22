@@ -74,7 +74,7 @@ import { useTeamsQuery } from '@/queries/team.queries'
 const route = useRoute()
 const userDataStore = useUserDataStore()
 const appStore = useAppStore()
-const { data: teams, isPending: teamsAreFetching, error: teamsError } = useTeamsQuery()
+const { data: teams, isPending: teamsAreFetching, error: teamsError } = useTeamsQuery(userDataStore.address)
 
 const router = useRouter()
 
