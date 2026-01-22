@@ -18,10 +18,6 @@ export {
 // SDK Management - centralized
 export { useSafeSDK } from './useSafeSdk'
 
-// Queries (data fetching)
-// export { useSafeOwners, useSafeThreshold } from './useSafeData'
-
-export { useSafePendingTransactions } from './useSafePendingTransactions'
 
 // Mutations (actions)
 export { useSafeDeployment } from './useSafeDeployment'
