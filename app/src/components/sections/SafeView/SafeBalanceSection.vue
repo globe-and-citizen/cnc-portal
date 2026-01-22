@@ -105,5 +105,4 @@ watch(error, (newError) => {
     console.error('Safe error:', newError)
   }
 })
-
 </script>

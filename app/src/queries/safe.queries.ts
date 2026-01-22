@@ -25,7 +25,7 @@ export function useSafeInfoQuery(
   safeAddress: MaybeRef<string | undefined>
 ) {
   return useQuery<SafeInfo>({
-    queryKey:[ 'safe', 'info', {chainId}, {safeAddress}],
+    queryKey: ['safe', 'info', { chainId, safeAddress }],
     enabled: !!(toValue(safeAddress) && toValue(chainId)),
     queryFn: async () => {
       const address = toValue(safeAddress)
