@@ -1,11 +1,7 @@
 // routes/storageRoute.ts
 import express, { Request, Response } from 'express';
 import { authorizeUser } from '../middleware/authMiddleware';
-import {
-  getPresignedDownloadUrl,
-  isStorageConfigured,
-  PRESIGNED_URL_EXPIRATION,
-} from '../services/storageService';
+import { getPresignedDownloadUrl, PRESIGNED_URL_EXPIRATION } from '../services/storageService';
 
 const storageRouter = express.Router();
 
