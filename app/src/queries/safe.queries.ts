@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRef } from 'vue'
-import { unref, computed } from 'vue'
+import { unref, computed, toValue } from 'vue'
 import externalApiClient from '@/lib/external.axios.ts'
 import type { SafeInfo, SafeTransaction, SafeSignature, SafeDeploymentParams } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
@@ -24,19 +24,12 @@ export function useSafeInfoQuery(
   chainId: MaybeRef<number>,
   safeAddress: MaybeRef<string | undefined>
 ) {
-  const addressRef = computed(() => unref(safeAddress))
-  const chainRef = computed(() => unref(chainId))
-
   return useQuery<SafeInfo>({
-    queryKey: computed(() =>
-      addressRef.value && chainRef.value
-        ? SAFE_QUERY_KEYS.info(chainRef.value, addressRef.value)
-        : ['safe', 'info', 'disabled']
-    ),
-    enabled: computed(() => !!(addressRef.value && chainRef.value)),
+    queryKey:[ 'safe', 'info', {chainId}, {safeAddress}],
+    enabled: !!(toValue(safeAddress) && toValue(chainId)),
     queryFn: async () => {
-      const address = addressRef.value
-      const chain = chainRef.value
+      const address = toValue(safeAddress)
+      const chain = toValue(chainId)
       if (!address || !chain) throw new Error('Missing Safe address or chain ID')
 
       const txService = TX_SERVICE_BY_CHAIN[chain]

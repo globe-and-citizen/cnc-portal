@@ -9,7 +9,7 @@ const externalApiClient = axios.create({
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json'
-  },
+  }
   // validateStatus: (status) => status < 500 // Don't throw on 4xx errors
 })
 
