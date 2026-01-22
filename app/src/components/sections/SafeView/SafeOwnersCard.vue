@@ -1,11 +1,37 @@
 <template>
-  <CardComponent>
+  <CardComponent title="Safe Owners">
+    <template #card-action>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <ButtonUI
+            size="sm"
+            variant="primary"
+            @click="showAddSignerModal = true"
+            :disabled="!teamStore.currentTeam?.safeAddress || !isConnectedUserOwner"
+            data-test="add-signer-button"
+            class="flex items-center gap-1"
+          >
+            <IconifyIcon icon="heroicons:user-plus" class="w-4 h-4" />
+            Add Signer
+          </ButtonUI>
+          <ButtonUI
+            size="sm"
+            variant="secondary"
+            @click="showUpdateThresholdModal = true"
+            :disabled="isLoading || !isConnectedUserOwner"
+            :loading="isLoading"
+            data-test="update-threshold-button"
+            class="flex items-center gap-1"
+          >
+            <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4" />
+            Update Threshold
+          </ButtonUI>
+        </div>
+      </div>
+    </template>
+
     <div v-if="isLoading" class="flex items-center justify-center py-8">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>
-
-    <div v-else-if="error" class="text-center py-8">
-      <div class="text-red-600 text-sm">{{ error }}</div>
     </div>
 
     <div v-else-if="owners.length === 0" class="text-center py-8">
@@ -17,6 +43,7 @@
         v-for="(owner, index) in owners"
         :key="owner"
         class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+        :class="{ 'ring-2 ring-primary/20': isCurrentUserAddress(owner) }"
         data-test="owner-item"
       >
         <div class="flex items-center gap-3">
@@ -24,28 +51,33 @@
             <span class="text-sm font-medium text-primary">{{ index + 1 }}</span>
           </div>
           <div>
-            <AddressToolTip :address="owner" />
+            <div class="flex items-center gap-2">
+              <AddressToolTip :address="owner" />
+              <span
+                v-if="isCurrentUserAddress(owner)"
+                class="text-xs bg-primary/10 text-primary px-2 py-1 rounded"
+              >
+                You
+              </span>
+            </div>
             <div class="text-xs text-gray-500 mt-1">Owner</div>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <ButtonUI
-            size="sm"
-            variant="secondary"
-            :disabled="true"
-            data-test="copy-owner-button"
-            class="flex items-center gap-1"
-          >
-            <IconifyIcon icon="heroicons-outline:clipboard" class="w-4 h-4" />
-            Configure
-          </ButtonUI>
+          <RemoveOwnerButton
+            :owner-address="owner"
+            :safe-address="teamStore.currentTeam?.safeAddress!"
+            :total-owners="owners.length"
+            :threshold="threshold"
+            :is-connected-user-owner="isConnectedUserOwner"
+          />
         </div>
       </div>
     </div>
 
     <template #footer v-if="owners.length > 0">
       <div class="flex justify-between items-center text-sm text-gray-600">
-        <span>Total: {{ owners.length }} owners</span>
+        <span>Total: {{ owners.length }} owners • Threshold: {{ threshold }}</span>
         <ButtonUI
           variant="secondary"
           size="sm"
@@ -58,30 +90,75 @@
         </ButtonUI>
       </div>
     </template>
+
+    <!-- Modals -->
+    <AddSignerModal
+      v-model="showAddSignerModal"
+      :safe-address="teamStore.currentTeam?.safeAddress!"
+      :current-owners="owners"
+      :current-threshold="threshold"
+      @signer-added="handleSignerAdded"
+    />
+
+    <UpdateThresholdModal
+      v-model="showUpdateThresholdModal"
+      :safe-address="teamStore.currentTeam?.safeAddress!"
+      :current-owners="owners"
+      :current-threshold="threshold"
+      @threshold-updated="handleThresholdUpdated"
+    />
   </CardComponent>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useChainId } from '@wagmi/vue'
-import type { Address } from 'viem'
+import { computed, ref } from 'vue'
+import { useChainId, useAccount } from '@wagmi/vue'
+import { type Address } from 'viem'
+import { Icon as IconifyIcon } from '@iconify/vue'
+
+// Components
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { useSafeOwners, getSafeSettingsUrl, openSafeAppUrl } from '@/composables/safe'
-import { Icon as IconifyIcon } from '@iconify/vue'
+import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'
+import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThresholdModal.vue'
+import RemoveOwnerButton from './RemoveOwnerButton.vue'
+
+// Composables and utilities
+import { useSafeData, getSafeSettingsUrl, openSafeAppUrl } from '@/composables/safe'
 import { useTeamStore } from '@/stores'
+import { log } from '@/utils'
 
 const teamStore = useTeamStore()
 const chainId = useChainId()
+const { address: connectedAddress } = useAccount()
 
-// Use the optimized useSafeOwners composable (no auto-refetch)
-const { owners, isLoading, error } = useSafeOwners(
+// Use the Safe data composable for owners and threshold
+const { owners, threshold, isLoading } = useSafeData(
   computed(() => teamStore.currentTeam?.safeAddress)
 )
 
+// Computed properties
+const isConnectedUserOwner = computed(() => {
+  if (!connectedAddress.value || !owners.value?.length) return false
+
+  return owners.value.some((owner) => owner.toLowerCase() === connectedAddress.value!.toLowerCase())
+})
+
+const isCurrentUserAddress = (ownerAddress: string): boolean => {
+  return connectedAddress.value?.toLowerCase() === ownerAddress.toLowerCase()
+}
+
+// Modal state
+const showAddSignerModal = ref(false)
+const showUpdateThresholdModal = ref(false)
+
+// Methods
 const handleOpenSafeApp = () => {
   const url = getSafeSettingsUrl(chainId.value, teamStore.currentTeam?.safeAddress as Address)
   openSafeAppUrl(url)
+}
+const handleThresholdUpdated = () => {
+  showUpdateThresholdModal.value = false
 }
 </script>

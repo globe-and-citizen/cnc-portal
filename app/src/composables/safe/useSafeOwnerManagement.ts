@@ -76,6 +76,7 @@ export function useSafeOwnerManagement() {
 
       // Initialize Safe SDK
       const safeSdk = await loadSafe(safeAddress)
+      const currentThreshold = await safeSdk.getThreshold()
 
       // Create transactions array in the format Safe SDK expects
       const transactions: SafeTransaction[] = []
@@ -93,7 +94,7 @@ export function useSafeOwnerManagement() {
       for (const owner of ownersToRemove) {
         const safeTx = await safeSdk.createRemoveOwnerTx({
           ownerAddress: owner as Address,
-          threshold: newThreshold
+          threshold: newThreshold || currentThreshold
         })
         transactions.push(safeTx)
       }
