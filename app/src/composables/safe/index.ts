@@ -19,7 +19,7 @@ export {
 export { useSafeSDK } from './useSafeSdk'
 
 // Queries (data fetching)
-export { useSafeData, useSafeOwners, useSafeThreshold } from './useSafeData'
+// export { useSafeOwners, useSafeThreshold } from './useSafeData'
 
 export { useSafePendingTransactions } from './useSafePendingTransactions'
 
