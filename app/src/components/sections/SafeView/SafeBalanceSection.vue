@@ -83,7 +83,8 @@ const displayUsdBalance = computed(
   () => safeInfo.value?.totals?.['USD']?.formated ?? safeInfo.value?.balance ?? 0
 )
 
-// The object return by safeInfo do not contain any attribute totals, so i don't know how this code worked
+// Note: safeInfo.totals is optional (see SafeInfo type). We use optional chaining and fall back
+// to the generic balance when the local currency or USD totals are not available.
 const displayLocalBalance = computed(() => {
   const local = safeInfo.value?.totals?.[currency.value.code]?.formated
   if (local) return local
@@ -91,7 +92,6 @@ const displayLocalBalance = computed(() => {
   if (usd) return usd
   return safeInfo.value?.balance ?? 0
 })
-// const isBalanceLoading = computed(() => isSafeLoading.value)
 
 const openInSafeApp = () => {
   const safeAppUrl = getSafeHomeUrl(chainId.value, teamStore.currentTeam?.safeAddress as Address)
