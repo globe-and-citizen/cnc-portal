@@ -30,7 +30,7 @@
       class="absolute z-50 mt-2 w-64 bg-base-100 rounded-lg shadow-lg border border-base-300"
     >
       <ul class="menu p-2 max-h-64 overflow-y-auto">
-        <li v-if="traderSafesStore.safes.length === 0" class="disabled">
+        <li v-if="traderSafesStore.safes?.length === 0" class="disabled">
           <div class="py-3 text-center text-sm text-base-content/70">No safes available</div>
         </li>
 
@@ -62,10 +62,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTraderSafesStore } from '@/stores'
-import { useUserPositions } from '@/composables/trading'
+import { useRelayClient, useUserPositions } from '@/composables/trading'
+import { processValidMemberSafes } from '@/utils/trading/safeSelectorUtil'
+import { useTeamStore } from '@/stores'
 
 interface SafeWallet {
   address: string
@@ -74,9 +76,13 @@ interface SafeWallet {
 }
 
 const traderSafesStore = useTraderSafesStore()
+const teamStore = useTeamStore()
+const { getOrInitializeRelayClient, isLoading, isReady } = useRelayClient()
 const derivedSafeAddressFromEoa = computed(() => traderSafesStore.selectedSafe?.address)
 const { refetch } = useUserPositions(derivedSafeAddressFromEoa)
 const isOpen = ref(false)
+const safes = ref<SafeWallet[] | null>(null)
+
 // const safes = ref<SafeWallet[]>([
 //   {
 //     address: '0x1234567890abcdef1234567890abcdef12345678',
@@ -125,6 +131,17 @@ const handleClickOutside = (event: MouseEvent) => {
     isOpen.value = false
   }
 }
+
+watch([
+  () => teamStore.currentTeamMeta.data?.members,
+  isLoading,
+  isReady
+], async ([members, , newIsReady]) => {
+	if (members && newIsReady) {
+		const relayClient = await getOrInitializeRelayClient()
+		safes.value = await processValidMemberSafes(members, relayClient)
+	}
+}, { immediate: true })
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
