@@ -42,6 +42,12 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/Accounts/BankView.vue')
         },
         {
+          path: '/teams/:id/accounts/safe-account',
+          name: 'safe-account',
+          meta: { name: 'Safe Account' },
+          component: () => import('@/views/team/[id]/Accounts/SafeView.vue')
+        },
+        {
           path: '/teams/:id/accounts/expense-account',
           name: 'expense-account',
           meta: { name: 'Expense Account' },
