@@ -281,7 +281,7 @@ import type { User } from '@/types'
 const appStore = useAppStore()
 const route = useRoute()
 const userStore = useUserDataStore()
-const teams = useTeamsQuery()
+const teams = useTeamsQuery(userStore.address)
 
 const isCollapsed = defineModel({
   type: Boolean
