@@ -30,9 +30,6 @@ export interface ApprovalCheckResult {
 
 const MAX_UINT256 = '115792089237316195423570985008687907853269984665640564039457584007913129639935'
 
-// export const TREASURY_SIGNER = import.meta.env.VITE_APP_TREASURY_SIGNER
-// export const BOD_SIGNER = import.meta.env.VITE_APP_BOD_SIGNER
-
 const erc1155Abi = [
   {
     inputs: [
