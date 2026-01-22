@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRef } from 'vue'
-import { unref, computed, toValue } from 'vue'
+import { toValue } from 'vue'
 import externalApiClient from '@/lib/external.axios.ts'
 import type { SafeInfo, SafeTransaction, SafeSignature, SafeDeploymentParams } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
@@ -9,17 +9,6 @@ import { currentChainId } from '@/constant/index'
 
 const chainId= currentChainId
 const txService = TX_SERVICE_BY_CHAIN[chainId]
-// Query Keys
-  // export const SAFE_QUERY_KEYS = {
-  //   all: ['safe'] as const,
-  //   info: (chainId: number, address: string) => ['safe', 'info', chainId, address] as const,
-  //   owners: (chainId: number, address: string) => ['safe', 'owners', chainId, address] as const,
-  //   threshold: (chainId: number, address: string) => ['safe', 'threshold', chainId, address] as const,
-  //   transactions: (chainId: number, address: string, filter?: 'queued' | 'executed') =>
-  //     ['safe', 'transactions', chainId, address, filter] as const,
-  //   pendingTransactions: (chainId: number, address: string) =>
-  //     ['safe', 'transactions', chainId, address, 'queued'] as const
-  // }
 
 /**
  * Fetch Safe information from Transaction Service
