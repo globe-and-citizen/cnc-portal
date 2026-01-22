@@ -52,7 +52,7 @@ export const fetchMarketData = async (req: Request, res: Response) => {
 
   try {
     console.log(`Proxying request to: ${targetUrl}`);
-    // Use Axios to make the request to the Polymarket API from the backend
+    // Use Fetch to make the request to the Polymarket API from the backend
     const response = await fetch(`${GAMMA_BASE_URL}${targetUrl}`);
 
     // Forward the data received from Polymarket back to the frontend
