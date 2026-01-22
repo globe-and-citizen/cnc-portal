@@ -10,16 +10,16 @@ import { currentChainId } from '@/constant/index'
 const chainId= currentChainId
 const txService = TX_SERVICE_BY_CHAIN[chainId]
 // Query Keys
-export const SAFE_QUERY_KEYS = {
-  all: ['safe'] as const,
-  info: (chainId: number, address: string) => ['safe', 'info', chainId, address] as const,
-  owners: (chainId: number, address: string) => ['safe', 'owners', chainId, address] as const,
-  threshold: (chainId: number, address: string) => ['safe', 'threshold', chainId, address] as const,
-  transactions: (chainId: number, address: string, filter?: 'queued' | 'executed') =>
-    ['safe', 'transactions', chainId, address, filter] as const,
-  pendingTransactions: (chainId: number, address: string) =>
-    ['safe', 'transactions', chainId, address, 'queued'] as const
-}
+  // export const SAFE_QUERY_KEYS = {
+  //   all: ['safe'] as const,
+  //   info: (chainId: number, address: string) => ['safe', 'info', chainId, address] as const,
+  //   owners: (chainId: number, address: string) => ['safe', 'owners', chainId, address] as const,
+  //   threshold: (chainId: number, address: string) => ['safe', 'threshold', chainId, address] as const,
+  //   transactions: (chainId: number, address: string, filter?: 'queued' | 'executed') =>
+  //     ['safe', 'transactions', chainId, address, filter] as const,
+  //   pendingTransactions: (chainId: number, address: string) =>
+  //     ['safe', 'transactions', chainId, address, 'queued'] as const
+  // }
 
 /**
  * Fetch Safe information from Transaction Service
@@ -86,10 +86,10 @@ export function useDeploySafeMutation() {
       // Deployment logic will be in the composable
       throw new Error('Deploy Safe logic must be implemented in composable')
     },
-    onSuccess: (safeAddress, variables) => {
+    onSuccess: (safeAddress) => {
       // Invalidate all Safe queries for the new address
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.info(variables.chainId, safeAddress)
+        queryKey: ['safe', 'info', { safeAddress }]
       })
     }
   })
@@ -132,7 +132,7 @@ export function useProposeTransactionMutation() {
     onSuccess: (_, variables) => {
       // Invalidate pending transactions
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.pendingTransactions(variables.chainId, variables.safeAddress)
+        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
       })
     }
   })
@@ -166,7 +166,7 @@ export function useApproveTransactionMutation() {
     onSuccess: (_, variables) => {
       // Invalidate pending transactions
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.pendingTransactions(variables.chainId, variables.safeAddress)
+        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
       })
     }
   })
@@ -190,16 +190,10 @@ export function useExecuteTransactionMutation() {
     onSuccess: (_, variables) => {
       // Invalidate all Safe queries after execution
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.info(variables.chainId, variables.safeAddress)
+        queryKey: ['safe', 'info', { safeAddress: variables.safeAddress }]
       })
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.owners(variables.chainId, variables.safeAddress)
-      })
-      queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.threshold(variables.chainId, variables.safeAddress)
-      })
-      queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.pendingTransactions(variables.chainId, variables.safeAddress)
+        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
       })
     }
   })
@@ -231,20 +225,13 @@ export function useUpdateSafeOwnersMutation() {
     },
     onSuccess: (_, variables) => {
       // Invalidate relevant queries
+      
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.owners(variables.chainId, variables.safeAddress)
+        queryKey: ['safe', 'info', { safeAddress: variables.safeAddress }]
       })
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.threshold(variables.chainId, variables.safeAddress)
+        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
       })
-      queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.info(variables.chainId, variables.safeAddress)
-      })
-      if (variables.shouldPropose) {
-        queryClient.invalidateQueries({
-          queryKey: SAFE_QUERY_KEYS.pendingTransactions(variables.chainId, variables.safeAddress)
-        })
-      }
     }
   })
 }
@@ -253,26 +240,17 @@ export function useUpdateSafeOwnersMutation() {
  * Fetch single Safe transaction by hash from Transaction Service
  */
 export function useSafeTransactionQuery(
-  chainId: MaybeRef<number>,
   safeTxHash: MaybeRef<string | undefined>
 ) {
-  const hashRef = computed(() => unref(safeTxHash))
-  const chainRef = computed(() => unref(chainId))
 
   return useQuery<SafeTransaction>({
-    queryKey: computed(() =>
-      hashRef.value && chainRef.value
-        ? ['safe', 'transaction', chainRef.value, hashRef.value]
-        : ['safe', 'transaction', 'disabled']
-    ),
-    enabled: computed(() => !!(hashRef.value && chainRef.value)),
+    queryKey:['safe', 'transaction', {safeTxHash}],
+    enabled: !!toValue(safeTxHash),
     queryFn: async () => {
-      const hash = hashRef.value
-      const chain = chainRef.value
-      if (!hash || !chain) throw new Error('Missing Safe transaction hash or chain ID')
+      const hash = toValue(safeTxHash)
+      if (!hash) throw new Error('Missing Safe transaction hash or chain ID')
 
-      const txService = TX_SERVICE_BY_CHAIN[chain]
-      if (!txService) throw new Error(`Unsupported chainId: ${chain}`)
+      if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
       const { data } = await externalApiClient.get<SafeTransaction>(
         `${txService.url}/api/v1/multisig-transactions/${hash}/`
