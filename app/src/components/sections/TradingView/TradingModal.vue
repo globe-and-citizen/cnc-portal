@@ -264,7 +264,6 @@ watch(
       } else {
         market.value = (newData as PolymarketMarket) || null
       }
-      console.log('Market data from query:', newData)
     }
   },
   { immediate: true }
