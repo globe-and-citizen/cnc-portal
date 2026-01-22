@@ -80,9 +80,7 @@ const {
   data: safeInfo,
   isLoading,
   error
-} = useSafeInfoQuery(
-  computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
-)
+} = useSafeInfoQuery(computed(() => teamStore.currentTeamMeta?.data?.safeAddress))
 
 const handleOpenSafeApp = () => {
   const url = getSafeSettingsUrl(chainId.value, teamStore.currentTeam?.safeAddress as Address)

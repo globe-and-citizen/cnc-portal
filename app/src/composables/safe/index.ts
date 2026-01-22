@@ -18,7 +18,6 @@ export {
 // SDK Management - centralized
 export { useSafeSDK } from './useSafeSdk'
 
-
 // Mutations (actions)
 export { useSafeDeployment } from './useSafeDeployment'
 export { useSafeProposal } from './useSafeProposal'

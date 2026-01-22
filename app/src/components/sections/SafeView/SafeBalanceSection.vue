@@ -75,9 +75,7 @@ const {
   data: safeInfo,
   isLoading,
   error
-} = useSafeInfoQuery(
-  computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
-)
+} = useSafeInfoQuery(computed(() => teamStore.currentTeamMeta?.data?.safeAddress))
 
 const displayUsdBalance = computed(
   () => safeInfo.value?.totals?.['USD']?.formated ?? safeInfo.value?.balance ?? 0

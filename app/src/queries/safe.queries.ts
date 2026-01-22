@@ -7,17 +7,15 @@ import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
 import { currentChainId } from '@/constant/index'
 // import currentChainId from const
 
-const chainId= currentChainId
+const chainId = currentChainId
 const txService = TX_SERVICE_BY_CHAIN[chainId]
 
 /**
  * Fetch Safe information from Transaction Service
  */
-export function useSafeInfoQuery(
-  safeAddress: MaybeRef<string | undefined>
-) {
+export function useSafeInfoQuery(safeAddress: MaybeRef<string | undefined>) {
   return useQuery<SafeInfo>({
-    queryKey: ['safe', 'info', {  safeAddress }],
+    queryKey: ['safe', 'info', { safeAddress }],
     enabled: !!toValue(safeAddress),
     queryFn: async () => {
       const address = toValue(safeAddress)
@@ -43,11 +41,9 @@ export function useSafeInfoQuery(
 /**
  * Fetch Safe pending transactions from Transaction Service
  */
-export function useSafePendingTransactionsQuery(
-  safeAddress: MaybeRef<string | undefined>
-) {
+export function useSafePendingTransactionsQuery(safeAddress: MaybeRef<string | undefined>) {
   return useQuery<SafeTransaction[]>({
-    queryKey: ['safe', 'transactions',{  safeAddress } ],
+    queryKey: ['safe', 'transactions', { safeAddress }],
     enabled: !!toValue(safeAddress),
     queryFn: async () => {
       const address = toValue(safeAddress)
@@ -214,7 +210,7 @@ export function useUpdateSafeOwnersMutation() {
     },
     onSuccess: (_, variables) => {
       // Invalidate relevant queries
-      
+
       queryClient.invalidateQueries({
         queryKey: ['safe', 'info', { safeAddress: variables.safeAddress }]
       })
@@ -228,12 +224,9 @@ export function useUpdateSafeOwnersMutation() {
 /**
  * Fetch single Safe transaction by hash from Transaction Service
  */
-export function useSafeTransactionQuery(
-  safeTxHash: MaybeRef<string | undefined>
-) {
-
+export function useSafeTransactionQuery(safeTxHash: MaybeRef<string | undefined>) {
   return useQuery<SafeTransaction>({
-    queryKey:['safe', 'transaction', {safeTxHash}],
+    queryKey: ['safe', 'transaction', { safeTxHash }],
     enabled: !!toValue(safeTxHash),
     queryFn: async () => {
       const hash = toValue(safeTxHash)

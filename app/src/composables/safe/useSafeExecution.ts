@@ -54,7 +54,7 @@ export function useSafeExecution() {
       const currentChainId = chainId.value
 
       // Use Safe query instead of direct Axios
-      const transactionQuery = useSafeTransactionQuery( safeTxHash)
+      const transactionQuery = useSafeTransactionQuery(safeTxHash)
       const transactionData = transactionQuery?.data?.value
 
       if (!transactionData) {
