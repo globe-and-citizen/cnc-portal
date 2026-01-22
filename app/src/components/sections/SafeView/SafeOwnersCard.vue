@@ -68,18 +68,13 @@ import type { Address } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { useSafeOwners, getSafeSettingsUrl, openSafeAppUrl } from '@/composables/safe'
+import { getSafeSettingsUrl, openSafeAppUrl } from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
 import { useSafeInfoQuery } from '@/queries/safe.queries'
 
 const teamStore = useTeamStore()
 const chainId = useChainId()
-
-// Use the optimized useSafeOwners composable (no auto-refetch)
-// const { owners, isLoading, error } = useSafeOwners(
-//   computed(() => teamStore.currentTeam?.safeAddress)
-// )
 
 const {
   data: safeInfo,
