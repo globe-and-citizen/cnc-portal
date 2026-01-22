@@ -4,7 +4,11 @@ import { unref, computed, toValue } from 'vue'
 import externalApiClient from '@/lib/external.axios.ts'
 import type { SafeInfo, SafeTransaction, SafeSignature, SafeDeploymentParams } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
+import { currentChainId } from '@/constant/index'
+// import currentChainId from const
 
+const chainId= currentChainId
+const txService = TX_SERVICE_BY_CHAIN[chainId]
 // Query Keys
 export const SAFE_QUERY_KEYS = {
   all: ['safe'] as const,
@@ -21,19 +25,15 @@ export const SAFE_QUERY_KEYS = {
  * Fetch Safe information from Transaction Service
  */
 export function useSafeInfoQuery(
-  chainId: MaybeRef<number>,
   safeAddress: MaybeRef<string | undefined>
 ) {
   return useQuery<SafeInfo>({
-    queryKey: ['safe', 'info', { chainId, safeAddress }],
-    enabled: !!(toValue(safeAddress) && toValue(chainId)),
+    queryKey: ['safe', 'info', {  safeAddress }],
+    enabled: !!toValue(safeAddress),
     queryFn: async () => {
       const address = toValue(safeAddress)
-      const chain = toValue(chainId)
-      if (!address || !chain) throw new Error('Missing Safe address or chain ID')
-
-      const txService = TX_SERVICE_BY_CHAIN[chain]
-      if (!txService) throw new Error(`Unsupported chainId: ${chain}`)
+      if (!address) throw new Error('Missing Safe address')
+      if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
       const { data } = await externalApiClient.get<SafeInfo>(
         `${txService.url}/api/v1/safes/${address}/`
@@ -55,26 +55,15 @@ export function useSafeInfoQuery(
  * Fetch Safe pending transactions from Transaction Service
  */
 export function useSafePendingTransactionsQuery(
-  chainId: MaybeRef<number>,
   safeAddress: MaybeRef<string | undefined>
 ) {
-  const addressRef = computed(() => unref(safeAddress))
-  const chainRef = computed(() => unref(chainId))
-
   return useQuery<SafeTransaction[]>({
-    queryKey: computed(() =>
-      addressRef.value && chainRef.value
-        ? SAFE_QUERY_KEYS.pendingTransactions(chainRef.value, addressRef.value)
-        : ['safe', 'transactions', 'disabled']
-    ),
-    enabled: computed(() => !!(addressRef.value && chainRef.value)),
+    queryKey: ['safe', 'transactions',{  safeAddress } ],
+    enabled: !!toValue(safeAddress),
     queryFn: async () => {
-      const address = addressRef.value
-      const chain = chainRef.value
-      if (!address || !chain) throw new Error('Missing Safe address or chain ID')
-
-      const txService = TX_SERVICE_BY_CHAIN[chain]
-      if (!txService) throw new Error(`Unsupported chainId: ${chain}`)
+      const address = toValue(safeAddress)
+      if (!address) throw new Error('Missing Safe address')
+      if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
       const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
         `${txService.url}/api/v1/safes/${address}/multisig-transactions/?executed=false`
@@ -125,7 +114,7 @@ export function useProposeTransactionMutation() {
     }
   >({
     mutationFn: async ({ chainId, safeAddress, transactionData, safeTx, signature }) => {
-      const txService = TX_SERVICE_BY_CHAIN[chainId]
+      // const txService = TX_SERVICE_BY_CHAIN[chainId]
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
       const resolvedSignature = typeof signature === 'string' ? signature : signature.data

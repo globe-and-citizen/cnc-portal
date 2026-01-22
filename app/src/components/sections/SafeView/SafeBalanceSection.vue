@@ -76,7 +76,6 @@ const {
   isLoading,
   error
 } = useSafeInfoQuery(
-  chainId,
   computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
 )
 

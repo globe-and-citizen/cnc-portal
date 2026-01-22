@@ -111,7 +111,7 @@ export const TOKEN_ADDRESSES: Pick<ChainTokenAddresses, 137 | 80002> = {
 }
 
 // Export token addresses for current network
-const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresses
+export const currentChainId = parseInt(NETWORK.chainId, 16) as keyof ChainTokenAddresses
 const getUSDCAddress = () => {
   if (currentChainId === 11155111 || currentChainId === 31337) {
     return safeResolveAddress('MockTokens#USDC') || ('' as Address)
