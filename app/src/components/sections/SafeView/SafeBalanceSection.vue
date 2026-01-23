@@ -7,11 +7,11 @@
           <span class="text-4xl font-bold">
             <span class="inline-block min-w-16 h-10">
               <span
-                v-if="isBalanceLoading"
+                v-if="isLoading"
                 class="loading loading-spinner loading-lg"
                 data-test="safe-balance-loading"
               ></span>
-              <span v-else>{{ total['USD']?.formated ?? 0 }}</span>
+              <span v-else>{{ displayLocalBalance }}</span>
             </span>
           </span>
           <span class="text-gray-600">USD</span>
@@ -97,21 +97,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch, ref } from 'vue'
+import { computed, watch, ref } from 'vue'
 import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { useStorage } from '@vueuse/core'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { useSafeData, getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
+import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { SAFE_QUERY_KEYS } from '@/queries/safe.queries'
 import { useContractBalance } from '@/composables/useContractBalance'
+import { useSafeInfoQuery } from '@/queries/safe.queries'
 
 const chainId = useChainId()
 const queryClient = useQueryClient()
@@ -131,7 +131,7 @@ const teamStore = useTeamStore()
 const safeAddress = computed(() => teamStore.currentTeam?.safeAddress || props.bankAddress)
 
 // Use the contract balance composable for Safe address
-const { total, isLoading } = useContractBalance(safeAddress as unknown as Address)
+// const { total, isLoading } = useContractBalance(safeAddress as unknown as Address)
 
 // Add refs for modals and form data
 const depositModal = ref({
@@ -146,15 +146,24 @@ const transferModal = ref({
 
 // New Safe data composable with built-in query reactivity
 const {
-  safeInfo,
-  isLoading: isSafeLoading,
-  error,
-  refetch
-} = useSafeData(computed(() => teamStore.currentTeam?.safeAddress))
+  data: safeInfo,
+  isLoading,
+  error
+} = useSafeInfoQuery(computed(() => teamStore.currentTeamMeta?.data?.safeAddress))
 
-const displayLocalBalance = computed(() => total.value[currency.value.code]?.formated ?? 0)
+const displayUsdBalance = computed(
+  () => safeInfo.value?.totals?.['USD']?.formated ?? safeInfo.value?.balance ?? 0
+)
 
-const isBalanceLoading = computed(() => isSafeLoading.value || isLoading.value)
+// Note: safeInfo.totals is optional (see SafeInfo type). We use optional chaining and fall back
+// to the generic balance when the local currency or USD totals are not available.
+const displayLocalBalance = computed(() => {
+  const local = safeInfo.value?.totals?.[currency.value.code]?.formated
+  if (local) return local
+  const usd = safeInfo.value?.totals?.['USD']?.formated
+  if (usd) return usd
+  return safeInfo.value?.balance ?? 0
+})
 
 const openInSafeApp = () => {
   const safeAppUrl = getSafeHomeUrl(chainId.value, teamStore.currentTeam?.safeAddress as Address)
@@ -173,10 +182,6 @@ const closeDepositModal = async () => {
 
   // Invalidate Safe queries and balance queries to refresh automatically
   if (teamStore.currentTeam?.safeAddress) {
-    // Invalidate Safe info queries
-    await queryClient.invalidateQueries({
-      queryKey: SAFE_QUERY_KEYS.info(chainId.value, teamStore.currentTeam.safeAddress)
-    })
     // Invalidate native balance queries (for ETH/POL)
     await queryClient.invalidateQueries({
       queryKey: ['balance', { address: teamStore.currentTeam.safeAddress, chainId: chainId.value }]
@@ -185,8 +190,6 @@ const closeDepositModal = async () => {
     await queryClient.invalidateQueries({
       queryKey: ['readContract', { address: teamStore.currentTeam.safeAddress }]
     })
-    // Force refetch Safe info
-    await refetch()
   }
 }
 
@@ -194,37 +197,10 @@ const openTransferModal = () => {
   transferModal.value = { mount: true, show: true }
 }
 
-// const closeTransferModal = () => {
-//   transferModal.value = { mount: false, show: false }
-// }
-
-// Watch for Safe address changes
-watch(
-  () => teamStore.currentTeam?.safeAddress,
-  () => {
-    if (teamStore.currentTeam?.safeAddress) {
-      refetch()
-    }
-  }
-)
-
-// Watch for chain changes
-watch(chainId, () => {
-  if (teamStore.currentTeam?.safeAddress) {
-    refetch()
-  }
-})
-
 // Watch for errors
 watch(error, (newError) => {
   if (newError) {
     console.error('Safe error:', newError)
-  }
-})
-
-onMounted(() => {
-  if (teamStore.currentTeam?.safeAddress) {
-    refetch()
   }
 })
 </script>

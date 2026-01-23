@@ -49,7 +49,7 @@
         v-if="tradingModal.mount"
         :market-url="marketUrl"
         @close="handleModalClose"
-        @order-placed="handleOrderPlaced"
+        @place-order="handleOrderPlaced"
       />
     </ModalComponent>
 
@@ -78,6 +78,7 @@ import { Toaster, toast } from 'vue-sonner'
 import { log, parseError } from '@/utils'
 import 'vue-sonner/style.css'
 import { useUserPositions, useRedeemPosition, useSafeDeployment } from '@/composables/trading'
+import { parseUnits } from 'viem'
 
 // Props
 interface Props {
@@ -151,11 +152,16 @@ const handleWithdraw = async (trade: Trade) => {
       throw new Error('Safe address not available')
     }
 
+    const rawSize = BigInt(parseUnits(trade.shares.toString(), 6))
+
     // Add your withdraw logic here
     await proposeRedemption({
       safeAddress: derivedSafeAddressFromEoa.value,
       conditionId: trade.conditionId,
-      outcomeIndex: trade.outcomeIndex
+      amounts: trade.negativeRisk
+        ? [trade.outcomeIndex === 0 ? rawSize : 0n, trade.outcomeIndex === 1 ? rawSize : 0n]
+        : undefined,
+      outcomeIndex: trade.negativeRisk ? undefined : trade.outcomeIndex
     })
     toast.success(`Withdrawing $${Math.abs(trade.pnl).toFixed(2)} from "${trade.market}"`)
     emit('withdraw', trade)

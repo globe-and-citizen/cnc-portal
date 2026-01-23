@@ -4,7 +4,8 @@ import SafeApiKit from '@safe-global/api-kit'
 import { useConnectorClient } from '@wagmi/vue'
 import { clientToSigner } from '@/utils'
 import { useUserDataStore } from '@/stores'
-import { createRedeemTx } from '@/utils/trading/redeemUtil'
+import { createRedeemTx, createRedeemTxNegRisk } from '@/utils/trading/redeemUtil'
+import { type SafeTransactionDataPartial } from '@safe-global/types-kit'
 
 export function useRedeemPosition() {
   const isProposing = ref(false)
@@ -31,7 +32,8 @@ export function useRedeemPosition() {
   const proposeRedemption = async (params: {
     safeAddress: string
     conditionId: string
-    outcomeIndex: number
+    amounts?: [bigint, bigint]
+    outcomeIndex?: number
   }) => {
     isProposing.value = true
     error.value = null
@@ -40,6 +42,7 @@ export function useRedeemPosition() {
       if (!ethersSigner.value) {
         throw new Error('Wallet not connected or ready')
       }
+
       // 1. Initialize Protocol Kit with the browser signer
       // Safe SDK accepts Ethers Signer directly as the provider/signer
       const protocolKit = await Safe.init({
@@ -54,11 +57,21 @@ export function useRedeemPosition() {
         apiKey: API_KEY
       })
 
+      let safeTransactionData: SafeTransactionDataPartial
+
       // 3. Define the Transaction Data
-      const safeTransactionData = createRedeemTx({
-        conditionId: params.conditionId,
-        outcomeIndex: params.outcomeIndex
-      })
+      if (Array.isArray(params.amounts))
+        safeTransactionData = createRedeemTxNegRisk({
+          conditionId: params.conditionId,
+          amounts: params.amounts
+        })
+      else if (typeof params.outcomeIndex === 'number')
+        safeTransactionData = createRedeemTx({
+          conditionId: params.conditionId,
+          outcomeIndex: params.outcomeIndex
+        })
+      else
+        throw new Error('Position not redeemable - Invalid input: amounts or outcomeIndex not set')
 
       // 4. Create Safe Transaction
       const safeTransaction = await protocolKit.createTransaction({

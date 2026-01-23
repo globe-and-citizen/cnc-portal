@@ -5,14 +5,14 @@
   <div class="p-6 pb-0">
     <div class="flex items-start justify-between">
       <h3 class="text-xl font-semibold pr-8">
-        {{ market.title }}
+        {{ market?.question }}
       </h3>
       <!-- <button @click="onClose" class="btn btn-ghost btn-sm btn-circle absolute right-4 top-4">
             <icon icon="heroicons:x-mark" class="w-5 h-5" />
           </button> -->
     </div>
     <p class="text-sm text-gray-500 mt-2 line-clamp-2">
-      {{ market.description }}
+      {{ market?.description }}
     </p>
   </div>
 
@@ -22,7 +22,7 @@
       <label class="text-sm text-gray-500">Select Outcome</label>
       <div class="grid grid-cols-2 gap-3">
         <button
-          v-for="(outcome, index) in market.outcomes"
+          v-for="(outcome, index) in outcomes"
           :key="outcome.name"
           @click="setSelectedOutcome(index)"
           :class="[
@@ -34,7 +34,7 @@
         >
           <span class="font-semibold">{{ outcome.name }}</span>
           <p class="font-mono text-lg text-primary mt-1">
-            {{ (outcome.buyPrice * 100).toFixed(0) }}¢
+            {{ (outcome.buyPrice * 100).toFixed(1) }}¢
           </p>
         </button>
       </div>
@@ -95,6 +95,7 @@
         class="input input-bordered w-full font-mono text-lg h-14"
         min="0"
         step="0.01"
+        v-model="limitPrice"
       />
     </div>
 
@@ -146,66 +147,80 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-
-interface MarketData {
-  title: string
-  description: string
-  endDate: string
-  volume: string
-  liquidity: string
-  outcomes: {
-    name: string
-    buyPrice: number
-    sellPrice: number
-  }[]
-}
+import {
+  useClobOrder,
+  useClobClient,
+  useSafeDeployment,
+  useTradingSession
+} from '@/composables/trading/'
+import type { PolymarketMarket } from '@/types'
+import { useMarketData } from '@/queries/polymarket.queries'
 
 interface Props {
-  // isOpen: boolean
   marketUrl: string
 }
 
-defineProps<Props>()
-const emit = defineEmits<{
-  close: []
-}>()
+const props = defineProps<Props>()
+const emit = defineEmits(['close', 'place-order'])
 
-// Reactive state
+const parsePolymarketUrl = (url: string) => {
+  const match = url.match(/polymarket\.com\/(market|event)\/([^?#]+)/)
+  if (!match) return null
+  return { type: match[1], slug: match[2] }
+}
+
+// State
+const market = ref<PolymarketMarket | null>(null)
+// const isLoading = ref(true)
 const selectedOutcome = ref(0)
 const orderType = ref<'market' | 'limit'>('market')
 const shares = ref('')
+const limitPrice = ref('')
 const isPlacingOrder = ref(false)
+const endpoint = computed(() => {
+  const parsed = parsePolymarketUrl(props.marketUrl)
+  if (!parsed) return null
+  return parsed.type === 'market' ? `/markets/slug/${parsed.slug}` : `/events/slug/${parsed.slug}`
+})
 
-// Dummy market data
-const dummyMarket: MarketData = {
-  title: 'Will Bitcoin reach $150,000 by end of 2025?',
-  description:
-    'This market resolves to YES if the price of Bitcoin reaches or exceeds $150,000 USD on any major exchange before December 31, 2025.',
-  endDate: 'Dec 31, 2025',
-  volume: '$2.4M',
-  liquidity: '$890K',
-  outcomes: [
-    { name: 'Yes', buyPrice: 0.42, sellPrice: 0.41 },
-    { name: 'No', buyPrice: 0.58, sellPrice: 0.57 }
-  ]
+// Composables
+const { data: marketData } = useMarketData(endpoint)
+const { derivedSafeAddressFromEoa } = useSafeDeployment()
+const { clobClient } = useClobClient()
+const { submitOrder } = useClobOrder(clobClient, derivedSafeAddressFromEoa.value || undefined)
+const { initializeTradingSession } = useTradingSession()
+
+// Computed mappings for real Gamma API response
+const outcomes = computed(() => {
+  if (!market.value) return []
+  // Gamma returns outcomes as a JSON string or array depending on the endpoint
+  const names = parseIfString(market.value.outcomes) as string[]
+  const prices = parseIfString(market.value.outcomePrices) as string[]
+  const clobIds = parseIfString(market.value.clobTokenIds) as string[]
+
+  return names.map((name: string, i: number) => ({
+    name,
+    buyPrice: parseFloat(prices[i] ?? '0') || 0,
+    tokenId: clobIds[i] || ''
+  }))
+})
+
+const parseIfString = (value: string | string[] | undefined) => {
+  return typeof value === 'string' ? JSON.parse(value) : value
 }
 
-const market = dummyMarket
+const outcome = computed(() => outcomes.value[selectedOutcome.value])
+const price = computed(() => outcomes.value[selectedOutcome.value]?.buyPrice || 0)
+const total = computed(() => (parseFloat(shares.value) || 0) * price.value)
 
-// Computed properties
-const outcome = computed(() => market.outcomes[selectedOutcome.value])
-const price = computed(() => outcome.value?.buyPrice || 0)
-const total = computed(() => (shares.value ? parseFloat(shares.value) * price.value : 0))
-
-// Methods
 const onClose = () => {
   emit('close')
 }
 
-const setSelectedOutcome = (index: number) => {
-  selectedOutcome.value = index
+const setSelectedOutcome = (index: number | string) => {
+  selectedOutcome.value = Number(index)
 }
 
 const setOrderType = (type: 'market' | 'limit') => {
@@ -218,15 +233,15 @@ const handlePlaceOrder = async () => {
   isPlacingOrder.value = true
 
   try {
-    // Simulate order placement
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await initializeTradingSession()
 
-    // Here you would call your actual order placement logic
-    console.log('Placing order:', {
-      outcome: outcome.value?.name,
-      shares: parseFloat(shares.value),
-      orderType: orderType.value,
-      total: total.value
+    await submitOrder({
+      tokenId: outcome.value?.tokenId || '',
+      side: 'BUY',
+      size: parseFloat(shares.value),
+      isMarketOrder: orderType.value === 'market',
+      negRisk: (market.value?.negRisk as boolean) || false,
+      price: orderType.value === 'limit' ? parseFloat(limitPrice.value) : undefined
     })
 
     // Close modal after successful order
@@ -238,6 +253,21 @@ const handlePlaceOrder = async () => {
     isPlacingOrder.value = false
   }
 }
+
+watch(
+  marketData,
+  (newData) => {
+    if (newData) {
+      if (typeof newData === 'object' && newData !== null && 'markets' in newData) {
+        const marketArray = (newData as { markets: PolymarketMarket[] }).markets
+        market.value = marketArray[0] || null
+      } else {
+        market.value = (newData as PolymarketMarket) || null
+      }
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>

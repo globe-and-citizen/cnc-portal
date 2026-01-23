@@ -54,10 +54,7 @@
 
         <!-- Status column with badges -->
         <template #status-data="{ row }">
-          <span
-            v-if="row.status === 'open'"
-            class="badge bg-primary/20 text-primary border-primary/30"
-          >
+          <span v-if="row.status === 'open'" class="badge bg-info/20 text-info border-info/30">
             Open
           </span>
           <span
@@ -88,7 +85,7 @@
             :data-test="`withdraw-button-${row.id}`"
           >
             <icon icon="heroicons:wallet" class="w-3.5 h-3.5" />
-            Withdraw
+            Claim
           </button>
         </template>
       </TableComponent>
