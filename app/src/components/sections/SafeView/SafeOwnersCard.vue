@@ -74,30 +74,12 @@
         </div>
       </div>
     </div>
-
-    <template #footer v-if="owners.length > 0">
-      <div class="flex justify-between items-center text-sm text-gray-600">
-        <span>Total: {{ owners.length }} owners • Threshold: {{ threshold }}</span>
-        <ButtonUI
-          variant="secondary"
-          size="sm"
-          @click="handleOpenSafeApp"
-          data-test="open-safe-app-footer"
-          class="flex items-center gap-1"
-        >
-          <IconifyIcon icon="heroicons-outline:external-link" class="w-4 h-4" />
-          Manage in Safe App
-        </ButtonUI>
-      </div>
-    </template>
-
     <!-- Modals -->
     <AddSignerModal
       v-model="showAddSignerModal"
       :safe-address="teamStore.currentTeam?.safeAddress!"
       :current-owners="owners"
       :current-threshold="threshold"
-      @signer-added="handleSignerAdded"
     />
 
     <UpdateThresholdModal
@@ -127,7 +109,6 @@ import RemoveOwnerButton from './RemoveOwnerButton.vue'
 // Composables and utilities
 import { useSafeData, getSafeSettingsUrl, openSafeAppUrl } from '@/composables/safe'
 import { useTeamStore } from '@/stores'
-import { log } from '@/utils'
 
 const teamStore = useTeamStore()
 const chainId = useChainId()
