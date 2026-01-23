@@ -44,3 +44,22 @@ export const signBuilderMessage = async (req: Request, res: Response) => {
     return errorResponse(500, error, res);
   }
 };
+
+export const fetchMarketData = async (req: Request, res: Response) => {
+  const GAMMA_BASE_URL = 'https://gamma-api.polymarket.com';
+
+  const targetUrl = req.query.url;
+
+  try {
+    console.log(`Proxying request to: ${targetUrl}`);
+    // Use Fetch to make the request to the Polymarket API from the backend
+    const response = await fetch(`${GAMMA_BASE_URL}${targetUrl}`);
+
+    // Forward the data received from Polymarket back to the frontend
+    res.json(await response.json());
+  } catch (error) {
+    console.error('Error proxying request:', error);
+    // Forward the original status code and error message
+    return errorResponse(500, error, res);
+  }
+};

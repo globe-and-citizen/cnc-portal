@@ -1,6 +1,6 @@
 import express from 'express';
-import { signBuilderMessage } from '../controllers/polymarketController';
-import { signRequestSchema, validateBody } from '../validation';
+import { signBuilderMessage, fetchMarketData } from '../controllers/polymarketController';
+import { signRequestSchema, gammaPathSchema, validateBody, validateQuery } from '../validation';
 
 const polymarketRoutes = express.Router();
 
@@ -61,5 +61,6 @@ const polymarketRoutes = express.Router();
  *         description: Configuration error or signing failure
  */
 polymarketRoutes.post('/sign', validateBody(signRequestSchema), signBuilderMessage);
+polymarketRoutes.get('/market-data', validateQuery(gammaPathSchema), fetchMarketData);
 
 export default polymarketRoutes;
