@@ -84,7 +84,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import {  useToastStore } from '@/stores'
+import { useToastStore } from '@/stores'
 import { useSafeOwnerManagement } from '@/composables/safe'
 import type { User } from '@/types'
 

@@ -94,7 +94,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {  useAccount } from '@wagmi/vue'
+import { useAccount } from '@wagmi/vue'
 
 import { Icon as IconifyIcon } from '@iconify/vue'
 
@@ -133,7 +133,6 @@ const isCurrentUserAddress = (ownerAddress: string): boolean => {
 // Modal state
 const showAddSignerModal = ref(false)
 const showUpdateThresholdModal = ref(false)
-
 
 const handleThresholdUpdated = () => {
   showUpdateThresholdModal.value = false
