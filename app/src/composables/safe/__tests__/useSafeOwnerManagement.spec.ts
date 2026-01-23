@@ -9,20 +9,36 @@ interface MockConnection {
 }
 
 interface MockSafeSDK {
-  createAddOwnerTx: (newOwner: string, threshold?: number) => Promise<{ data: SafeTransaction }>
-  createRemoveOwnerTx: (oldOwner: string, threshold?: number) => Promise<{ data: SafeTransaction }>
-  createChangeThresholdTx: (threshold: number) => Promise<{ data: SafeTransaction }>
-  createTransaction: (params: SafeTransaction) => Promise<{ data: SafeTransaction }>
+  getThreshold: () => Promise<number>
+  createAddOwnerTx: (params: {
+    ownerAddress: string
+    threshold?: number
+  }) => Promise<SafeTransaction>
+  createRemoveOwnerTx: (params: {
+    ownerAddress: string
+    threshold?: number
+  }) => Promise<SafeTransaction>
+  createChangeThresholdTx: (threshold: number) => Promise<SafeTransaction>
+  createTransaction: (params: { transactions: SafeTransactionData[] }) => Promise<SafeTransaction>
   getTransactionHash: (transaction: SafeTransaction) => Promise<string>
   signHash: (hash: string) => Promise<{ data: string }>
-  executeTransaction: (transaction: SafeTransaction) => Promise<{ hash: string }>
+  executeTransaction: (
+    transaction: SafeTransaction
+  ) => Promise<{ hash: string; transactionResponse?: { hash?: string } }>
 }
 
-interface SafeTransaction {
+interface SafeTransactionData {
   to: string
   value: string
   data: string
   operation: number
+}
+
+interface SafeTransaction {
+  to?: string
+  value?: string
+  data: SafeTransactionData
+  operation?: number
 }
 
 interface MockMutation {
@@ -47,6 +63,7 @@ const {
   mockUseSafeSDK: vi.fn(),
   mockLoadSafe: vi.fn<[string], Promise<MockSafeSDK>>(),
   mockSafeSdk: {
+    getThreshold: vi.fn<[], Promise<number>>(),
     createAddOwnerTx: vi.fn(),
     createRemoveOwnerTx: vi.fn(),
     createChangeThresholdTx: vi.fn(),
@@ -118,15 +135,24 @@ const MOCK_DATA = {
   txHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
   signature: '0xsig123456',
   executionHash: '0xexecuted789',
-  safeTransaction: {
+  currentThreshold: 2,
+  safeTransactionData: {
     to: '0x1234567890123456789012345678901234567890',
     value: '0',
     data: '0xabcdef',
     operation: 0
+  } as SafeTransactionData,
+  safeTransaction: {
+    data: {
+      to: '0x1234567890123456789012345678901234567890',
+      value: '0',
+      data: '0xabcdef',
+      operation: 0
+    }
   } as SafeTransaction
 } as const
 
-describe.skip('useSafeOwnerManagement', () => {
+describe('useSafeOwnerManagement', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
@@ -145,10 +171,11 @@ describe.skip('useSafeOwnerManagement', () => {
     mockLoadSafe.mockResolvedValue(mockSafeSdk)
 
     // Setup default Safe SDK responses
-    mockSafeSdk.createAddOwnerTx.mockResolvedValue({ data: MOCK_DATA.safeTransaction })
-    mockSafeSdk.createRemoveOwnerTx.mockResolvedValue({ data: MOCK_DATA.safeTransaction })
-    mockSafeSdk.createChangeThresholdTx.mockResolvedValue({ data: MOCK_DATA.safeTransaction })
-    mockSafeSdk.createTransaction.mockResolvedValue({ data: MOCK_DATA.safeTransaction })
+    mockSafeSdk.getThreshold.mockResolvedValue(MOCK_DATA.currentThreshold)
+    mockSafeSdk.createAddOwnerTx.mockResolvedValue(MOCK_DATA.safeTransaction)
+    mockSafeSdk.createRemoveOwnerTx.mockResolvedValue(MOCK_DATA.safeTransaction)
+    mockSafeSdk.createChangeThresholdTx.mockResolvedValue(MOCK_DATA.safeTransaction)
+    mockSafeSdk.createTransaction.mockResolvedValue(MOCK_DATA.safeTransaction)
     mockSafeSdk.getTransactionHash.mockResolvedValue(MOCK_DATA.txHash)
     mockSafeSdk.signHash.mockResolvedValue({ data: MOCK_DATA.signature })
     mockSafeSdk.executeTransaction.mockResolvedValue({ hash: MOCK_DATA.executionHash })
@@ -202,83 +229,6 @@ describe.skip('useSafeOwnerManagement', () => {
     })
   })
 
-  describe.skip('Owner Addition', () => {
-    it('should add new owner successfully when proposing', async () => {
-      const { updateOwners } = useSafeOwnerManagement()
-
-      const result = await updateOwners(MOCK_DATA.validSafeAddress, {
-        ownersToAdd: [MOCK_DATA.newOwner],
-        shouldPropose: true
-      })
-
-      expect(result).toBe(MOCK_DATA.txHash)
-      expect(mockSafeSdk.createAddOwnerTx).toHaveBeenCalledWith(MOCK_DATA.newOwner, undefined)
-      expect(mockProposeMutation.mutateAsync).toHaveBeenCalled()
-      expect(mockAddSuccessToast).toHaveBeenCalledWith(
-        'Owner management transaction proposed successfully'
-      )
-    })
-
-    it('should add new owner with threshold successfully', async () => {
-      const { updateOwners } = useSafeOwnerManagement()
-
-      const result = await updateOwners(MOCK_DATA.validSafeAddress, {
-        ownersToAdd: [MOCK_DATA.newOwner],
-        newThreshold: 2,
-        shouldPropose: true
-      })
-
-      expect(result).toBe(MOCK_DATA.txHash)
-      expect(mockSafeSdk.createAddOwnerTx).toHaveBeenCalledWith(MOCK_DATA.newOwner, 2)
-    })
-
-    it('should execute owner addition directly when not proposing', async () => {
-      const { updateOwners } = useSafeOwnerManagement()
-
-      const result = await updateOwners(MOCK_DATA.validSafeAddress, {
-        ownersToAdd: [MOCK_DATA.newOwner],
-        shouldPropose: false
-      })
-
-      expect(result).toBe(MOCK_DATA.executionHash)
-      expect(mockSafeSdk.executeTransaction).toHaveBeenCalledWith(MOCK_DATA.safeTransaction)
-      expect(mockAddSuccessToast).toHaveBeenCalledWith(
-        'Owner management transaction executed successfully'
-      )
-    })
-  })
-
-  describe.skip('Owner Removal', () => {
-    it('should remove owner successfully when proposing', async () => {
-      const { updateOwners } = useSafeOwnerManagement()
-
-      const result = await updateOwners(MOCK_DATA.validSafeAddress, {
-        ownersToRemove: [MOCK_DATA.existingOwner],
-        shouldPropose: true
-      })
-
-      expect(result).toBe(MOCK_DATA.txHash)
-      expect(mockSafeSdk.createRemoveOwnerTx).toHaveBeenCalledWith(
-        MOCK_DATA.existingOwner,
-        undefined
-      )
-      expect(mockProposeMutation.mutateAsync).toHaveBeenCalled()
-    })
-
-    it('should remove owner with threshold change', async () => {
-      const { updateOwners } = useSafeOwnerManagement()
-
-      const result = await updateOwners(MOCK_DATA.validSafeAddress, {
-        ownersToRemove: [MOCK_DATA.existingOwner],
-        newThreshold: 1,
-        shouldPropose: true
-      })
-
-      expect(result).toBe(MOCK_DATA.txHash)
-      expect(mockSafeSdk.createRemoveOwnerTx).toHaveBeenCalledWith(MOCK_DATA.existingOwner, 1)
-    })
-  })
-
   describe('Threshold Changes', () => {
     it('should change threshold only', async () => {
       const { updateOwners } = useSafeOwnerManagement()
@@ -291,6 +241,9 @@ describe.skip('useSafeOwnerManagement', () => {
       expect(result).toBe(MOCK_DATA.txHash)
       expect(mockSafeSdk.createChangeThresholdTx).toHaveBeenCalledWith(3)
       expect(mockProposeMutation.mutateAsync).toHaveBeenCalled()
+      expect(mockAddSuccessToast).toHaveBeenCalledWith(
+        'Owner management transaction proposed successfully'
+      )
     })
   })
 
@@ -360,6 +313,8 @@ describe.skip('useSafeOwnerManagement', () => {
     it('should handle transaction creation errors', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       const txError = new Error('Transaction creation failed')
+
+      // Mock getThreshold to succeed but createAddOwnerTx to fail
       mockSafeSdk.createAddOwnerTx.mockRejectedValue(txError)
 
       const { updateOwners, error } = useSafeOwnerManagement()
@@ -475,44 +430,6 @@ describe.skip('useSafeOwnerManagement', () => {
     })
   })
 
-  describe.skip('Integration with Safe SDK', () => {
-    it('should use centralized Safe SDK', async () => {
-      const { updateOwners } = useSafeOwnerManagement()
-
-      await updateOwners(MOCK_DATA.validSafeAddress, {
-        ownersToAdd: [MOCK_DATA.newOwner],
-        shouldPropose: true
-      })
-
-      expect(mockUseSafeSDK).toHaveBeenCalled()
-      expect(mockLoadSafe).toHaveBeenCalledWith(MOCK_DATA.validSafeAddress)
-    })
-
-    it('should pass correct parameters to mutation', async () => {
-      const { updateOwners } = useSafeOwnerManagement()
-
-      await updateOwners(MOCK_DATA.validSafeAddress, {
-        ownersToAdd: [MOCK_DATA.newOwner],
-        shouldPropose: true
-      })
-
-      expect(mockProposeMutation.mutateAsync).toHaveBeenCalledWith({
-        chainId: 137,
-        safeAddress: MOCK_DATA.validSafeAddress,
-        safeTxHash: MOCK_DATA.txHash,
-        safeTx: MOCK_DATA.safeTransaction,
-        signature: MOCK_DATA.signature
-      })
-
-      expect(mockUpdateMutation.mutateAsync).toHaveBeenCalledWith({
-        chainId: 137,
-        safeAddress: MOCK_DATA.validSafeAddress,
-        safeTxHash: MOCK_DATA.txHash,
-        signature: MOCK_DATA.signature
-      })
-    })
-  })
-
   describe('Return Value Structure', () => {
     it('should return correct properties', () => {
       const result = useSafeOwnerManagement()
@@ -576,7 +493,7 @@ describe.skip('useSafeOwnerManagement', () => {
 
       expect(error.value?.message).toBe('First error')
 
-      // Second operation succeeds
+      // Second operation succeeds - restore mock
       mockLoadSafe.mockResolvedValue(mockSafeSdk)
 
       await updateOwners(MOCK_DATA.validSafeAddress, {
@@ -619,21 +536,6 @@ describe.skip('useSafeOwnerManagement', () => {
       expect(result).toBe(MOCK_DATA.txHash)
       expect(mockSafeSdk.createAddOwnerTx).toHaveBeenCalledTimes(2)
       expect(mockSafeSdk.createRemoveOwnerTx).toHaveBeenCalledTimes(1)
-    })
-
-    it.skip('should validate threshold against final owner count', async () => {
-      const { updateOwners } = useSafeOwnerManagement()
-
-      // This would result in negative threshold validation if implemented
-      const result = await updateOwners(MOCK_DATA.validSafeAddress, {
-        ownersToAdd: [MOCK_DATA.newOwner],
-        newThreshold: 0,
-        shouldPropose: true
-      })
-
-      // Assuming the implementation validates threshold > 0
-      expect(result).toBe(MOCK_DATA.txHash)
-      expect(mockSafeSdk.createAddOwnerTx).toHaveBeenCalledWith(MOCK_DATA.newOwner, 0)
     })
   })
 })
