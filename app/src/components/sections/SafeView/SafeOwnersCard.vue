@@ -93,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useAccount } from '@wagmi/vue'
 
 import { Icon as IconifyIcon } from '@iconify/vue'
@@ -124,7 +124,9 @@ const {
 const isConnectedUserOwner = computed(() => {
   if (!connectedAddress.value || !safeInfo.value?.owners?.length) return false
 
-  return safeInfo.value.owners.some((owner) => owner.toLowerCase() === connectedAddress.value!.toLowerCase())
+  return safeInfo.value.owners.some(
+    (owner) => owner.toLowerCase() === connectedAddress.value!.toLowerCase()
+  )
 })
 
 const isCurrentUserAddress = (ownerAddress: string): boolean => {
@@ -138,4 +140,11 @@ const showUpdateThresholdModal = ref(false)
 const handleThresholdUpdated = () => {
   showUpdateThresholdModal.value = false
 }
+
+// Error handling
+watch(error, (newError) => {
+  if (newError) {
+    console.error('Error loading safe info:', newError)
+  }
+})
 </script>
