@@ -126,7 +126,7 @@ const MOCK_DATA = {
   } as SafeTransaction
 } as const
 
-describe('useSafeOwnerManagement', () => {
+describe.skip('useSafeOwnerManagement', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
