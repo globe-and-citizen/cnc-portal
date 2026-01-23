@@ -34,13 +34,13 @@
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
     </div>
 
-    <div v-else-if="owners.length === 0" class="text-center py-8">
+    <div v-else-if="safeInfo?.owners.length === 0" class="text-center py-8">
       <div class="text-gray-500">No owners found</div>
     </div>
 
     <div v-else class="space-y-3">
       <div
-        v-for="(owner, index) in owners"
+        v-for="(owner, index) in safeInfo?.owners"
         :key="owner"
         class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
         :class="{ 'ring-2 ring-primary/20': isCurrentUserAddress(owner) }"
@@ -67,8 +67,8 @@
           <RemoveOwnerButton
             :owner-address="owner"
             :safe-address="teamStore.currentTeam?.safeAddress!"
-            :total-owners="owners.length"
-            :threshold="threshold"
+            :total-owners="safeInfo?.owners.length ?? 0"
+            :threshold="safeInfo?.threshold ?? 1"
             :is-connected-user-owner="isConnectedUserOwner"
           />
         </div>
@@ -78,15 +78,15 @@
     <AddSignerModal
       v-model="showAddSignerModal"
       :safe-address="teamStore.currentTeam?.safeAddress!"
-      :current-owners="owners"
-      :current-threshold="threshold"
+      :current-owners="safeInfo?.owners || []"
+      :current-threshold="safeInfo?.threshold || 1"
     />
 
     <UpdateThresholdModal
       v-model="showUpdateThresholdModal"
       :safe-address="teamStore.currentTeam?.safeAddress!"
-      :current-owners="owners"
-      :current-threshold="threshold"
+      :current-owners="safeInfo?.owners || []"
+      :current-threshold="safeInfo?.threshold || 1"
       @threshold-updated="handleThresholdUpdated"
     />
   </CardComponent>
@@ -107,23 +107,24 @@ import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThr
 import RemoveOwnerButton from './RemoveOwnerButton.vue'
 
 // Composables and utilities
-import { useSafeData } from '@/composables/safe'
+
 import { useTeamStore } from '@/stores'
+import { useSafeInfoQuery } from '@/queries/safe.queries'
 
 const teamStore = useTeamStore()
-
 const { address: connectedAddress } = useAccount()
 
-// Use the Safe data composable for owners and threshold
-const { owners, threshold, isLoading } = useSafeData(
-  computed(() => teamStore.currentTeam?.safeAddress)
-)
+const {
+  data: safeInfo,
+  isLoading,
+  error
+} = useSafeInfoQuery(computed(() => teamStore.currentTeamMeta?.data?.safeAddress))
 
 // Computed properties
 const isConnectedUserOwner = computed(() => {
-  if (!connectedAddress.value || !owners.value?.length) return false
+  if (!connectedAddress.value || !safeInfo.value?.owners?.length) return false
 
-  return owners.value.some((owner) => owner.toLowerCase() === connectedAddress.value!.toLowerCase())
+  return safeInfo.value.owners.some((owner) => owner.toLowerCase() === connectedAddress.value!.toLowerCase())
 })
 
 const isCurrentUserAddress = (ownerAddress: string): boolean => {

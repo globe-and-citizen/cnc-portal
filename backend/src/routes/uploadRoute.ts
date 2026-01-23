@@ -1,12 +1,7 @@
 // routes/uploadRoute.ts
 import express, { Request, Response } from 'express';
 import { upload } from '../utils/upload';
-import {
-  uploadFile,
-  getPresignedDownloadUrl,
-  isStorageConfigured,
-  ALLOWED_MIMETYPES,
-} from '../services/storageService';
+import { uploadFile, getPresignedDownloadUrl, ALLOWED_MIMETYPES } from '../services/storageService';
 
 const uploadRouter = express.Router();
 
@@ -74,15 +69,6 @@ uploadRouter.post('/', upload.single('file'), async (req: Request, res: Response
 
     if (!multerReq.file) {
       return res.status(400).json({ error: 'No file provided' });
-    }
-
-    // Ensure storage is configured
-    if (!isStorageConfigured()) {
-      return res.status(500).json({
-        error: 'Storage not configured',
-        details:
-          'Railway Storage is not configured. Please set BUCKET, ACCESS_KEY_ID, and SECRET_ACCESS_KEY environment variables.',
-      });
     }
 
     // Allow images and documents (pdf, txt, zip, docx)

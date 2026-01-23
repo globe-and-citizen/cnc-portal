@@ -1,63 +1,31 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRef } from 'vue'
-import { unref, computed } from 'vue'
+import { toValue } from 'vue'
 import externalApiClient from '@/lib/external.axios.ts'
-import type { AxiosError } from 'axios'
 import type { SafeInfo, SafeTransaction, SafeSignature, SafeDeploymentParams } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
+import { currentChainId } from '@/constant/index'
+// import currentChainId from const
 
-// Query Keys
-export const SAFE_QUERY_KEYS = {
-  all: ['safe'] as const,
-  info: (chainId: number, address: string) => ['safe', 'info', chainId, address] as const,
-  owners: (chainId: number, address: string) => ['safe', 'owners', chainId, address] as const,
-  threshold: (chainId: number, address: string) => ['safe', 'threshold', chainId, address] as const,
-  transactions: (chainId: number, address: string, filter?: 'queued' | 'executed') =>
-    ['safe', 'transactions', chainId, address, filter] as const,
-  pendingTransactions: (chainId: number, address: string) =>
-    ['safe', 'transactions', chainId, address, 'queued'] as const
-}
+const chainId = currentChainId
+const txService = TX_SERVICE_BY_CHAIN[chainId]
 
 /**
  * Fetch Safe information from Transaction Service
  */
-export function useSafeInfoQuery(
-  chainId: MaybeRef<number>,
-  safeAddress: MaybeRef<string | undefined>
-) {
-  const addressRef = computed(() => unref(safeAddress))
-  const chainRef = computed(() => unref(chainId))
-
+export function useSafeInfoQuery(safeAddress: MaybeRef<string | undefined>) {
   return useQuery<SafeInfo>({
-    queryKey: computed(() =>
-      addressRef.value && chainRef.value
-        ? SAFE_QUERY_KEYS.info(chainRef.value, addressRef.value)
-        : ['safe', 'info', 'disabled']
-    ),
-    enabled: computed(() => !!(addressRef.value && chainRef.value)),
+    queryKey: ['safe', 'info', { safeAddress }],
+    enabled: !!toValue(safeAddress),
     queryFn: async () => {
-      const address = addressRef.value
-      const chain = chainRef.value
-      if (!address || !chain) throw new Error('Missing Safe address or chain ID')
+      const address = toValue(safeAddress)
+      if (!address) throw new Error('Missing Safe address')
+      if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const txService = TX_SERVICE_BY_CHAIN[chain]
-      if (!txService) throw new Error(`Unsupported chainId: ${chain}`)
-
-      try {
-        const { data } = await externalApiClient.get<SafeInfo>(
-          `${txService.url}/api/v1/safes/${address}/`
-        )
-        return data
-      } catch (error) {
-        const axiosError = error as AxiosError
-        const apiMessage =
-          axiosError.response?.data && typeof axiosError.response.data === 'object'
-            ? (axiosError.response.data as { message?: string }).message
-            : undefined
-        const message = apiMessage || axiosError.message || 'Failed to fetch Safe info'
-        console.error('Failed to fetch Safe info:', message, error)
-        throw new Error(message)
-      }
+      const { data } = await externalApiClient.get<SafeInfo>(
+        `${txService.url}/api/v1/safes/${address}/`
+      )
+      return data
     },
     staleTime: Infinity, // Owners change rarely; avoid periodic refetches
     gcTime: 24 * 60 * 60 * 1000,
@@ -73,43 +41,19 @@ export function useSafeInfoQuery(
 /**
  * Fetch Safe pending transactions from Transaction Service
  */
-export function useSafePendingTransactionsQuery(
-  chainId: MaybeRef<number>,
-  safeAddress: MaybeRef<string | undefined>
-) {
-  const addressRef = computed(() => unref(safeAddress))
-  const chainRef = computed(() => unref(chainId))
-
+export function useSafePendingTransactionsQuery(safeAddress: MaybeRef<string | undefined>) {
   return useQuery<SafeTransaction[]>({
-    queryKey: computed(() =>
-      addressRef.value && chainRef.value
-        ? SAFE_QUERY_KEYS.pendingTransactions(chainRef.value, addressRef.value)
-        : ['safe', 'transactions', 'disabled']
-    ),
-    enabled: computed(() => !!(addressRef.value && chainRef.value)),
+    queryKey: ['safe', 'transactions', { safeAddress }],
+    enabled: !!toValue(safeAddress),
     queryFn: async () => {
-      const address = addressRef.value
-      const chain = chainRef.value
-      if (!address || !chain) throw new Error('Missing Safe address or chain ID')
+      const address = toValue(safeAddress)
+      if (!address) throw new Error('Missing Safe address')
+      if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      const txService = TX_SERVICE_BY_CHAIN[chain]
-      if (!txService) throw new Error(`Unsupported chainId: ${chain}`)
-
-      try {
-        const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
-          `${txService.url}/api/v1/safes/${address}/multisig-transactions/?executed=false`
-        )
-        return data.results || []
-      } catch (error) {
-        const axiosError = error as AxiosError
-        const apiMessage =
-          axiosError.response?.data && typeof axiosError.response.data === 'object'
-            ? (axiosError.response.data as { message?: string }).message
-            : undefined
-        const message = apiMessage || axiosError.message || 'Failed to fetch pending transactions'
-        console.error('Failed to fetch pending transactions:', message, error)
-        throw new Error(message)
-      }
+      const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
+        `${txService.url}/api/v1/safes/${address}/multisig-transactions/?executed=false`
+      )
+      return data.results || []
     },
     staleTime: 30_000, // 30 seconds for pending transactions
     refetchInterval: 30_000 // Auto-refresh every 30 seconds
@@ -127,10 +71,10 @@ export function useDeploySafeMutation() {
       // Deployment logic will be in the composable
       throw new Error('Deploy Safe logic must be implemented in composable')
     },
-    onSuccess: (safeAddress, variables) => {
+    onSuccess: (safeAddress) => {
       // Invalidate all Safe queries for the new address
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.info(variables.chainId, safeAddress)
+        queryKey: ['safe', 'info', { safeAddress }]
       })
     }
   })
@@ -155,36 +99,25 @@ export function useProposeTransactionMutation() {
     }
   >({
     mutationFn: async ({ chainId, safeAddress, transactionData, safeTx, signature }) => {
-      const txService = TX_SERVICE_BY_CHAIN[chainId]
+      // const txService = TX_SERVICE_BY_CHAIN[chainId]
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
       const resolvedSignature = typeof signature === 'string' ? signature : signature.data
       const resolvedTx = transactionData ?? safeTx
 
-      try {
-        const { data } = await externalApiClient.post(
-          `${txService.url}/api/v1/safes/${safeAddress}/multisig-transactions/`,
-          {
-            ...(resolvedTx as Record<string, unknown>),
-            signature: resolvedSignature
-          }
-        )
-        return data.safeTxHash
-      } catch (error) {
-        const axiosError = error as AxiosError
-        const apiMessage =
-          axiosError.response?.data && typeof axiosError.response.data === 'object'
-            ? (axiosError.response.data as { message?: string }).message
-            : undefined
-        const message = apiMessage || axiosError.message || 'Failed to propose transaction'
-        console.error('Failed to propose transaction:', message, error)
-        throw new Error(message)
-      }
+      const { data } = await externalApiClient.post(
+        `${txService.url}/api/v1/safes/${safeAddress}/multisig-transactions/`,
+        {
+          ...(resolvedTx as Record<string, unknown>),
+          signature: resolvedSignature
+        }
+      )
+      return data.safeTxHash
     },
     onSuccess: (_, variables) => {
       // Invalidate pending transactions
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.pendingTransactions(variables.chainId, variables.safeAddress)
+        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
       })
     }
   })
@@ -210,26 +143,15 @@ export function useApproveTransactionMutation() {
       const txService = TX_SERVICE_BY_CHAIN[chainId]
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      try {
-        await externalApiClient.post(
-          `${txService.url}/api/v1/multisig-transactions/${safeTxHash}/confirmations/`,
-          { signature: signature.data }
-        )
-      } catch (error) {
-        const axiosError = error as AxiosError
-        const apiMessage =
-          axiosError.response?.data && typeof axiosError.response.data === 'object'
-            ? (axiosError.response.data as { message?: string }).message
-            : undefined
-        const message = apiMessage || axiosError.message || 'Failed to approve transaction'
-        console.error('Failed to approve transaction:', message, error)
-        throw new Error(message)
-      }
+      await externalApiClient.post(
+        `${txService.url}/api/v1/multisig-transactions/${safeTxHash}/confirmations/`,
+        { signature: signature.data }
+      )
     },
     onSuccess: (_, variables) => {
       // Invalidate pending transactions
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.pendingTransactions(variables.chainId, variables.safeAddress)
+        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
       })
     }
   })
@@ -253,16 +175,10 @@ export function useExecuteTransactionMutation() {
     onSuccess: (_, variables) => {
       // Invalidate all Safe queries after execution
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.info(variables.chainId, variables.safeAddress)
+        queryKey: ['safe', 'info', { safeAddress: variables.safeAddress }]
       })
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.owners(variables.chainId, variables.safeAddress)
-      })
-      queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.threshold(variables.chainId, variables.safeAddress)
-      })
-      queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.pendingTransactions(variables.chainId, variables.safeAddress)
+        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
       })
     }
   })
@@ -294,20 +210,13 @@ export function useUpdateSafeOwnersMutation() {
     },
     onSuccess: (_, variables) => {
       // Invalidate relevant queries
+
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.owners(variables.chainId, variables.safeAddress)
+        queryKey: ['safe', 'info', { safeAddress: variables.safeAddress }]
       })
       queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.threshold(variables.chainId, variables.safeAddress)
+        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
       })
-      queryClient.invalidateQueries({
-        queryKey: SAFE_QUERY_KEYS.info(variables.chainId, variables.safeAddress)
-      })
-      if (variables.shouldPropose) {
-        queryClient.invalidateQueries({
-          queryKey: SAFE_QUERY_KEYS.pendingTransactions(variables.chainId, variables.safeAddress)
-        })
-      }
     }
   })
 }
@@ -315,43 +224,20 @@ export function useUpdateSafeOwnersMutation() {
 /**
  * Fetch single Safe transaction by hash from Transaction Service
  */
-export function useSafeTransactionQuery(
-  chainId: MaybeRef<number>,
-  safeTxHash: MaybeRef<string | undefined>
-) {
-  const hashRef = computed(() => unref(safeTxHash))
-  const chainRef = computed(() => unref(chainId))
-
+export function useSafeTransactionQuery(safeTxHash: MaybeRef<string | undefined>) {
   return useQuery<SafeTransaction>({
-    queryKey: computed(() =>
-      hashRef.value && chainRef.value
-        ? ['safe', 'transaction', chainRef.value, hashRef.value]
-        : ['safe', 'transaction', 'disabled']
-    ),
-    enabled: computed(() => !!(hashRef.value && chainRef.value)),
+    queryKey: ['safe', 'transaction', { safeTxHash }],
+    enabled: !!toValue(safeTxHash),
     queryFn: async () => {
-      const hash = hashRef.value
-      const chain = chainRef.value
-      if (!hash || !chain) throw new Error('Missing Safe transaction hash or chain ID')
+      const hash = toValue(safeTxHash)
+      if (!hash) throw new Error('Missing Safe transaction hash or chain ID')
 
-      const txService = TX_SERVICE_BY_CHAIN[chain]
-      if (!txService) throw new Error(`Unsupported chainId: ${chain}`)
+      if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
-      try {
-        const { data } = await externalApiClient.get<SafeTransaction>(
-          `${txService.url}/api/v1/multisig-transactions/${hash}/`
-        )
-        return data
-      } catch (error) {
-        const axiosError = error as AxiosError
-        const apiMessage =
-          axiosError.response?.data && typeof axiosError.response.data === 'object'
-            ? (axiosError.response.data as { message?: string }).message
-            : undefined
-        const message = apiMessage || axiosError.message || 'Failed to fetch Safe transaction'
-        console.error('Failed to fetch Safe transaction:', message, error)
-        throw new Error(message)
-      }
+      const { data } = await externalApiClient.get<SafeTransaction>(
+        `${txService.url}/api/v1/multisig-transactions/${hash}/`
+      )
+      return data
     },
     staleTime: 60_000, // 1 minute
     gcTime: 300_000

@@ -7,7 +7,7 @@
           <span class="text-4xl font-bold">
             <span class="inline-block min-w-16 h-10">
               <span
-                v-if="isBalanceLoading"
+                v-if="isLoading"
                 class="loading loading-spinner loading-lg"
                 data-test="safe-balance-loading"
               ></span>
@@ -50,16 +50,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { useStorage } from '@vueuse/core'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import { useSafeData, getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
+import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
+import { useSafeInfoQuery } from '@/queries/safe.queries'
 
 const chainId = useChainId()
 const currency = useStorage('currency', {
@@ -70,17 +71,18 @@ const currency = useStorage('currency', {
 
 const teamStore = useTeamStore()
 
-// New Safe data composable with built-in query reactivity
 const {
-  safeInfo,
-  isLoading: isSafeLoading,
-  error,
-  refetch
-} = useSafeData(computed(() => teamStore.currentTeam?.safeAddress))
+  data: safeInfo,
+  isLoading,
+  error
+} = useSafeInfoQuery(computed(() => teamStore.currentTeamMeta?.data?.safeAddress))
 
 const displayUsdBalance = computed(
   () => safeInfo.value?.totals?.['USD']?.formated ?? safeInfo.value?.balance ?? 0
 )
+
+// Note: safeInfo.totals is optional (see SafeInfo type). We use optional chaining and fall back
+// to the generic balance when the local currency or USD totals are not available.
 const displayLocalBalance = computed(() => {
   const local = safeInfo.value?.totals?.[currency.value.code]?.formated
   if (local) return local
@@ -88,40 +90,16 @@ const displayLocalBalance = computed(() => {
   if (usd) return usd
   return safeInfo.value?.balance ?? 0
 })
-const isBalanceLoading = computed(() => isSafeLoading.value)
 
 const openInSafeApp = () => {
   const safeAppUrl = getSafeHomeUrl(chainId.value, teamStore.currentTeam?.safeAddress as Address)
   openSafeAppUrl(safeAppUrl)
 }
 
-// Watch for Safe address changes
-watch(
-  () => teamStore.currentTeam?.safeAddress,
-  () => {
-    if (teamStore.currentTeam?.safeAddress) {
-      refetch()
-    }
-  }
-)
-
-// Watch for chain changes
-watch(chainId, () => {
-  if (teamStore.currentTeam?.safeAddress) {
-    refetch()
-  }
-})
-
 // Watch for errors
 watch(error, (newError) => {
   if (newError) {
     console.error('Safe error:', newError)
-  }
-})
-
-onMounted(() => {
-  if (teamStore.currentTeam?.safeAddress) {
-    refetch()
   }
 })
 </script>

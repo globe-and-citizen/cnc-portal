@@ -48,29 +48,43 @@ type StorageConfig = {
   endpoint: string;
 };
 
-function getStorageConfig(): StorageConfig {
-  const bucket = process.env.BUCKET;
-  const accessKeyId = process.env.ACCESS_KEY_ID;
-  const secretAccessKey = process.env.SECRET_ACCESS_KEY;
-  const region = process.env.REGION || 'auto';
-  const endpoint = process.env.ENDPOINT || 'https://storage.railway.app';
+const REQUIRED_ENV_VARS = {
+  bucket: 'AWS_S3_BUCKET_NAME',
+  accessKeyId: 'AWS_ACCESS_KEY_ID',
+  secretAccessKey: 'AWS_SECRET_ACCESS_KEY',
+} as const;
 
-  if (!bucket || !accessKeyId || !secretAccessKey) {
-    throw new Error(
-      'Missing Railway Storage configuration. Please set BUCKET, ACCESS_KEY_ID, and SECRET_ACCESS_KEY environment variables.'
-    );
-  }
+export const getMissingConfig = (): string[] => {
+  const config = getStorageConfig();
 
-  return { bucket, accessKeyId, secretAccessKey, region, endpoint };
-}
-
+  const missing = [
+    !config.bucket && REQUIRED_ENV_VARS.bucket,
+    !config.accessKeyId && REQUIRED_ENV_VARS.accessKeyId,
+    !config.secretAccessKey && REQUIRED_ENV_VARS.secretAccessKey,
+  ].filter(Boolean) as string[];
+  return missing;
+};
 export function isStorageConfigured(): boolean {
-  try {
-    getStorageConfig();
-    return true;
-  } catch {
+  const missing = getMissingConfig();
+
+  if (missing.length > 0) {
     return false;
   }
+  return true;
+}
+export function getStorageConfig(): StorageConfig {
+  const bucket = process.env.AWS_S3_BUCKET_NAME;
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+  const region = process.env.AWS_DEFAULT_REGION ?? 'auto';
+  const endpoint = process.env.AWS_ENDPOINT_URL ?? 'https://storage.railway.app';
+  return {
+    bucket: bucket as string,
+    accessKeyId: accessKeyId as string,
+    secretAccessKey: secretAccessKey as string,
+    region,
+    endpoint,
+  };
 }
 
 function createS3Client(): S3Client {

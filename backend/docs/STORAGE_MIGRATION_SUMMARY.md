@@ -35,11 +35,11 @@ Example: `claims/123/a1b2c3d4e5f6...xyz.png`
 ### Environment Variables
 
 ```bash
-BUCKET=your-bucket-name
-ACCESS_KEY_ID=your-access-key
-SECRET_ACCESS_KEY=your-secret-key
-REGION=auto
-ENDPOINT=https://storage.railway.app
+AWS_S3_BUCKET_NAME=your-bucket-name
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_DEFAULT_REGION=auto
+AWS_ENDPOINT_URL=https://storage.railway.app
 ```
 
 ## Data Format
