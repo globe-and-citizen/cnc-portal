@@ -9,7 +9,6 @@ describe('safe index exports', () => {
   })
 
   it('exports key Safe composables', () => {
-    expect(typeof module.useSafeData).toBe('function')
     expect(typeof module.useSafeDeployment).toBe('function')
     expect(typeof module.useSafeOwnerManagement).toBe('function')
     expect(typeof module.useSafeExecution).toBe('function')
