@@ -94,8 +94,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useChainId, useAccount } from '@wagmi/vue'
-import { type Address } from 'viem'
+import {  useAccount } from '@wagmi/vue'
+
 import { Icon as IconifyIcon } from '@iconify/vue'
 
 // Components
@@ -107,11 +107,11 @@ import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThr
 import RemoveOwnerButton from './RemoveOwnerButton.vue'
 
 // Composables and utilities
-import { useSafeData, getSafeSettingsUrl, openSafeAppUrl } from '@/composables/safe'
+import { useSafeData } from '@/composables/safe'
 import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()
-const chainId = useChainId()
+
 const { address: connectedAddress } = useAccount()
 
 // Use the Safe data composable for owners and threshold
@@ -134,11 +134,7 @@ const isCurrentUserAddress = (ownerAddress: string): boolean => {
 const showAddSignerModal = ref(false)
 const showUpdateThresholdModal = ref(false)
 
-// Methods
-const handleOpenSafeApp = () => {
-  const url = getSafeSettingsUrl(chainId.value, teamStore.currentTeam?.safeAddress as Address)
-  openSafeAppUrl(url)
-}
+
 const handleThresholdUpdated = () => {
   showUpdateThresholdModal.value = false
 }
