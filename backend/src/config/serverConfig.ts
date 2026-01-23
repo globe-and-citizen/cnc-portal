@@ -37,6 +37,7 @@ import { errorMessages } from '../utils/serverConfigUtil';
 
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
+import { getMissingConfig } from '../services/storageService';
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -178,6 +179,13 @@ class Server {
     this.app.listen(this.port, () => {
       console.log(`helloworld: listening on port ${this.port}`);
       console.log(`Swagger docs V2 available at http://localhost:${this.port}/docs`);
+
+      console.log('Missing Storage Config:', getMissingConfig());
+      if (getMissingConfig().length > 0) {
+        console.error(
+          'Railway Storage is not configured. Please set BUCKET, ACCESS_KEY_ID, and SECRET_ACCESS_KEY environment variables.'
+        );
+      }
     });
   }
 

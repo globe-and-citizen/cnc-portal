@@ -1,11 +1,7 @@
 // routes/storageRoute.ts
 import express, { Request, Response } from 'express';
 import { authorizeUser } from '../middleware/authMiddleware';
-import {
-  getPresignedDownloadUrl,
-  isStorageConfigured,
-  PRESIGNED_URL_EXPIRATION,
-} from '../services/storageService';
+import { getPresignedDownloadUrl, PRESIGNED_URL_EXPIRATION } from '../services/storageService';
 
 const storageRouter = express.Router();
 
@@ -78,14 +74,6 @@ storageRouter.get('/url', authorizeUser, async (req: Request, res: Response) => 
       return res.status(400).json({
         error: 'Missing required parameter',
         details: 'The "key" query parameter is required',
-      });
-    }
-
-    // Check if Railway Storage is configured
-    if (!isStorageConfigured()) {
-      return res.status(500).json({
-        error: 'Storage not configured',
-        details: 'Railway Storage is not configured. Please contact support.',
       });
     }
 

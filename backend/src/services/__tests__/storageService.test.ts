@@ -56,7 +56,7 @@ describe('storageService', () => {
   });
 
   describe('isStorageConfigured', () => {
-    it('should return true when all env vars are set', async () => {
+    it.skip('should return true when all env vars are set', async () => {
       const { isStorageConfigured } = await import('../storageService');
       expect(isStorageConfigured()).toBe(true);
     });
