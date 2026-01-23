@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { mount, type VueWrapper, flushPromises } from '@vue/test-utils'
-import { nextTick, ref, defineComponent, reactive } from 'vue'
+import { nextTick, ref, defineComponent } from 'vue'
 import type { Address } from 'viem'
 import SafeOwnersCard from '../SafeOwnersCard.vue'
 
