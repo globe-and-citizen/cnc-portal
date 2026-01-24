@@ -2,8 +2,8 @@
   <CardComponent title="Approved Addresses" data-test="claims-table">
     <template #card-action>
       <div :class="{ tooltip: !(userDataStore.address === contractOwnerAddress || isBodAction()) }" :data-tip="!(userDataStore.address === contractOwnerAddress || isBodAction())
-          ? 'Only the contract owner can approve expenses'
-          : null
+        ? 'Only the contract owner can approve expenses'
+        : null
         ">
         <ButtonUI variant="success" :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
           @click="
@@ -45,8 +45,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
-import { useUserDataStore, useToastStore, useExpenseDataStore, useTeamStore } from '@/stores'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useUserDataStore, useToastStore, useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
@@ -54,33 +53,26 @@ import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip7
 import type { User, BudgetLimit } from '@/types'
 import { log, parseError } from '@/utils'
 import ApproveExpenseSummaryForm from '@/components/forms/ApproveExpenseSummaryForm.vue'
+import { useAddExpenseMutation } from '@/queries/expense.queries'
 
 const confirmationModal = ref(false)
 const approveUsersModal = ref({ mount: false, show: false })
 const foundUsers = ref<User[]>([])
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
 const loadingApprove = ref(false)
-const expenseAccountData = ref<{}>()
 const approveData = ref<BudgetLimit>()
 
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
-const expenseDataStore = useExpenseDataStore()
 const { addErrorToast } = useToastStore()
 const route = useRoute()
 const chainId = useChainId()
 const { signTypedDataAsync, data: signature, error: signTypedDataError } = useSignTypedData()
+const { mutateAsync: addExpenseData, error: errorAddExpenseData } = useAddExpenseMutation()
 
 const expenseAccountEip712Address = computed(
   () => teamStore.getContractAddressByType('ExpenseAccountEIP712') as Address
 )
-
-const { execute: executeAddExpenseData, error: errorAddExpenseData } = useCustomFetch(`expense`, {
-  immediate: false
-})
-  .post(expenseAccountData)
-  .json()
-//#region
 
 const {
   data: contractOwnerAddress,
@@ -92,7 +84,7 @@ const {
   abi: EXPENSE_ACCOUNT_EIP712_ABI
 })
 
-//#region Funtions
+//#region Functions
 const approveUser = async (data: BudgetLimit) => {
   loadingApprove.value = true
   const verifyingContract = expenseAccountEip712Address.value
@@ -147,17 +139,16 @@ const approveUser = async (data: BudgetLimit) => {
     domain
   })
 
-  expenseAccountData.value = {
+  const expenseAccountData = {
     data,
     signature: signature.value,
     teamId: route.params.id
   }
-  await executeAddExpenseData()
+  await addExpenseData(expenseAccountData)
   await refetchExpenseAccountGetOwner()
   loadingApprove.value = false
   approveUsersModal.value = { mount: false, show: false }
   confirmationModal.value = false
-  await expenseDataStore.fetchAllExpenseData()
 }
 
 const errorMessage = (error: {}, message: string) =>

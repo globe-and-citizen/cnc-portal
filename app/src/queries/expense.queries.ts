@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/vue-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
 import type { ExpenseResponse } from '@/types'
 import type { MaybeRefOrGetter } from 'vue'
@@ -17,5 +17,22 @@ export const useExpensesQuery = (teamId: MaybeRefOrGetter<string | null>) => {
       return data
     },
     enabled: () => !!toValue(teamId)
+  })
+}
+
+/**
+ * Add expense data with signature
+ */
+export const useAddExpenseMutation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (expenseAccountData: any) => {
+      const { data } = await apiClient.post('/expense', expenseAccountData)
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] })
+    }
   })
 }
