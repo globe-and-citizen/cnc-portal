@@ -142,7 +142,9 @@ const teamStore = useTeamStore()
 
 const safeAddress = computed(() => teamStore.currentTeam?.safeAddress || props.bankAddress)
 
-const { total, balances, isLoading } = useContractBalance(safeAddress)
+const { total, balances, isLoading } = useContractBalance(
+  computed(() => safeAddress.value || ('0x' as Address))
+)
 
 const getTokens = (): TokenOption[] =>
   balances.value
