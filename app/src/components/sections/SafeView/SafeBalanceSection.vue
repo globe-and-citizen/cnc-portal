@@ -76,8 +76,9 @@
       @reset="() => closeDepositModal()"
     >
       <DepositBankForm
+        v-if="safeAddress"
         @close-modal="closeDepositModal"
-        :bank-address="teamStore.currentTeam?.safeAddress || bankAddress"
+        :bank-address="safeAddress"
       />
     </ModalComponent>
 
