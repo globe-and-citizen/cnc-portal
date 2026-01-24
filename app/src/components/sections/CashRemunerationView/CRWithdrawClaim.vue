@@ -1,6 +1,12 @@
 <template>
-  <a v-if="isDropDown" data-test="withdraw-action" :class="['text-sm', { disabled: isLoad }]" :aria-disabled="isLoad"
-    :tabindex="isLoad ? -1 : 0" :style="{ pointerEvents: isLoad ? 'none' : undefined }" @click="
+  <a
+    v-if="isDropDown"
+    data-test="withdraw-action"
+    :class="['text-sm', { disabled: isLoad }]"
+    :aria-disabled="isLoad"
+    :tabindex="isLoad ? -1 : 0"
+    :style="{ pointerEvents: isLoad ? 'none' : undefined }"
+    @click="
       async () => {
         if (isLoad) return
         if (!isClaimOwner) {
@@ -10,12 +16,21 @@
         await withdrawClaim()
         emit('claim-withdrawn')
       }
-    ">
+    "
+  >
     <span v-if="isLoad" class="loading loading-spinner loading-xs mr-2"></span>
     Withdraw
   </a>
-  <ButtonUI v-else :disabled="disabled" :loading="isLoad" variant="warning" data-test="withdraw-button" size="sm"
-    @click="async () => await withdrawClaim()">Withdraw</ButtonUI>
+  <ButtonUI
+    v-else
+    :disabled="disabled"
+    :loading="isLoad"
+    variant="warning"
+    data-test="withdraw-button"
+    size="sm"
+    @click="async () => await withdrawClaim()"
+    >Withdraw</ButtonUI
+  >
 </template>
 
 <script setup lang="ts">
@@ -89,7 +104,7 @@ const withdrawClaim = async () => {
   if (
     Number(balance) <
     Number(props.weeklyClaim.wage.ratePerHour.find((rate) => rate.type === 'native')?.amount || 0) *
-    Number(props.weeklyClaim.hoursWorked)
+      Number(props.weeklyClaim.hoursWorked)
   ) {
     isLoading.value = false
     emit('loading', false)

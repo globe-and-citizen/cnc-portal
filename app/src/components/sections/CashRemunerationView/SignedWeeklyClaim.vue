@@ -100,10 +100,10 @@
 import UserComponent from '@/components/UserComponent.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { NETWORK } from '@/constant'
-import { useTanstackQuery } from '@/composables/useTanstackQuery'
+import { useTeamWeeklyClaimsQuery } from '@/queries'
 import { computed, watch } from 'vue'
 import { useCurrencyStore, useToastStore } from '@/stores'
-import { useUserDataStore, useTeamStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import { type WeeklyClaim } from '@/types'
 import CRWithdrawClaim from './CRWithdrawClaim.vue'
 import { getMondayStart, getSundayEnd } from '@/utils/dayUtils'
@@ -119,7 +119,6 @@ function getTotalHoursWorked(claims: { hoursWorked: number; status: string }[]) 
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
 }
 
-const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 
 const cashRemunerationAddress = computed(() =>
@@ -132,19 +131,10 @@ const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useRe
   abi: CASH_REMUNERATION_EIP712_ABI
 })
 
-const weeklyClaimUrl = computed(
-  () =>
-    `/weeklyClaim/?status=signed&teamId=${teamStore.currentTeamId}&memberAddress=${userStore.address}`
-)
-
-const queryKey = computed(() => [
-  'weekly-claims',
-  teamStore.currentTeamId,
-  userStore.address,
-  'signed'
-])
-
-const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaim[]>(queryKey, weeklyClaimUrl)
+const { data: loadedData, isLoading } = useTeamWeeklyClaimsQuery({
+  teamId: computed(() => teamStore.currentTeamId),
+  status: 'signed'
+})
 const isTeamClaimDataFetching = computed(() => isLoading.value)
 
 // const isSameWeek = (weeklyClaimStartWeek: string) => {
@@ -266,6 +256,7 @@ const columns = [
   place-items: center;
   align-items: flex-end;
 }
+
 .stack > * {
   grid-column-start: 1;
   grid-row-start: 1;
@@ -274,11 +265,13 @@ const columns = [
   width: 100%;
   opacity: 0.6;
 }
+
 .stack > *:nth-child(2) {
   transform: translateY(7.5%) scale(0.97);
   z-index: 2;
   opacity: 0.8;
 }
+
 .stack > *:nth-child(1) {
   transform: translateY(0) scale(1);
   z-index: 3;
@@ -290,6 +283,7 @@ const columns = [
   .table {
     font-size: 0.75rem;
   }
+
   .table td {
     padding: 0.5rem;
   }

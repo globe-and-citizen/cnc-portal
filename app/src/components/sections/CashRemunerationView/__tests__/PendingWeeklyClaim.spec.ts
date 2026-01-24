@@ -15,7 +15,6 @@ const {
   loadedDataRef,
   isLoadingRef,
   ownerRef,
-  mockUseTanstackQuery,
   mockUseReadContract,
   mockTeamStore,
   mockUserStore,
@@ -26,7 +25,6 @@ const {
   const isLoadingRef = { value: false }
   const ownerRef = { value: undefined as string | undefined }
 
-  const mockUseTanstackQuery = vi.fn(() => ({ data: loadedDataRef, isLoading: isLoadingRef }))
   const mockUseReadContract = vi.fn(() => ({ data: ownerRef }))
 
   const mockTeamStore = {
@@ -50,7 +48,6 @@ const {
     loadedDataRef,
     isLoadingRef,
     ownerRef,
-    mockUseTanstackQuery,
     mockUseReadContract,
     mockTeamStore,
     mockUserStore,
@@ -58,11 +55,6 @@ const {
     mockToastStore
   }
 })
-
-// Mock composable
-vi.mock('@/composables/useTanstackQuery', () => ({
-  useTanstackQuery: (...args: unknown[]) => mockUseTanstackQuery(...(args as []))
-}))
 
 // Partially mock wagmi vue to preserve real exports (createConfig, etc.)
 vi.mock('@wagmi/vue', async (importOriginal) => {

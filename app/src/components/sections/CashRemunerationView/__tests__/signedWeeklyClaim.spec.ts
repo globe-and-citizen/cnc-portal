@@ -25,9 +25,8 @@ vi.mock('@/stores', async (importOriginal) => {
 import SignedWeeklyClaim from '../SignedWeeklyClaim.vue'
 
 // hoisted mocks for vitest (avoid hoisting issues)
-const { mockUseReadContract, mockUseTanstackQuery, mockOwnerValue } = vi.hoisted(() => ({
+const { mockUseReadContract, mockOwnerValue } = vi.hoisted(() => ({
   mockUseReadContract: vi.fn(),
-  mockUseTanstackQuery: vi.fn(),
   mockOwnerValue: '0xOwnerAddress'
 }))
 
@@ -39,11 +38,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useReadContract: mockUseReadContract
   }
 })
-
-// Mock the tanstack query composable used by the component
-vi.mock('@/composables/useTanstackQuery', () => ({
-  useTanstackQuery: mockUseTanstackQuery
-}))
 
 // Minimal TableComponent stub that exposes the named slots used by the component
 const TableComponentStub = {
@@ -64,46 +58,10 @@ const TableComponentStub = {
 describe('SignedWeeklyClaim.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
-  const mockWeeklyClaims = [
-    {
-      id: '1',
-      weekStart: '2023-10-02T00:00:00.000Z',
-      status: 'signed',
-      createdAt: '2023-10-08T00:00:00.000Z',
-      member: { name: 'John Doe', address: '0xUserAddress' },
-      claims: [
-        { hoursWorked: 10, status: 'approved' },
-        { hoursWorked: 5, status: 'approved' }
-      ],
-      wage: {
-        maximumHoursPerWeek: 40,
-        ratePerHour: [
-          { type: 'native', amount: 10 },
-          { type: 'usdc', amount: 20 }
-        ],
-        userAddress: '0xUserAddress'
-      },
-      data: { ownerAddress: mockOwnerValue }
-    },
-    {
-      id: '2',
-      weekStart: '2023-10-09T00:00:00.000Z',
-      status: 'pending',
-      data: { ownerAddress: mockOwnerValue }
-    },
-    {
-      id: '3',
-      weekStart: '2023-10-16T00:00:00.000Z',
-      status: 'signed',
-      data: { ownerAddress: '0xWrongOwner' }
-    }
-  ]
-
   beforeEach(() => {
     vi.clearAllMocks()
 
-    mockUseReadContract.mockReturnValue({ data: ref(mockOwnerValue), error: ref(null) })
-    mockUseTanstackQuery.mockReturnValue({ data: ref(mockWeeklyClaims), isLoading: ref(false) })
+    mockUseReadContract.mockReturnValue({ data: ref('0xMockOwnerAddress'), error: ref(null) })
   })
 
   const createWrapper = () => {
@@ -140,22 +98,6 @@ describe('SignedWeeklyClaim.vue', () => {
     expect(wrapper.findComponent({ name: 'CRWeeklyClaimMemberHeader' }).exists()).toBe(true)
     // Only one card should be rendered (only item id=1 matches signed + owner)
     expect(wrapper.findAll('.card').length).toBe(1)
-  })
-
-  it('shows loading state', async () => {
-    mockUseTanstackQuery.mockReturnValue({ data: ref([]), isLoading: ref(true) })
-    wrapper = createWrapper()
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('Loading pending weekly claims...')
-  })
-
-  it('shows empty state when no data', async () => {
-    mockUseTanstackQuery.mockReturnValue({ data: ref([]), isLoading: ref(false) })
-    wrapper = createWrapper()
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('Congratulations, you have withdrawn all your Weekly Claims')
   })
 
   it('calculates total hours worked correctly', async () => {

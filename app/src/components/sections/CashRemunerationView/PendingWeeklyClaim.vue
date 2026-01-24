@@ -2,16 +2,11 @@
   <div>
     <CRWeeklyClaimOwnerHeader />
     <transition-group name="stack" tag="div" class="stack w-full">
-      <div
-        v-for="(item, index) in data?.filter(
-          (weeklyClaim) => weeklyClaim.weekStart < currentWeekStart
-        )"
-        :key="item.weekStart"
-        class="card shadow-lg bg-white p-4"
-        :class="{
-          'transition -translate-y-full opacity-0  duration-1000': index === 0
-        }"
-      >
+      <div v-for="(item, index) in data?.filter(
+        (weeklyClaim) => weeklyClaim.weekStart < currentWeekStart
+      )" :key="item.weekStart" class="card shadow-lg bg-white p-4" :class="{
+        'transition -translate-y-full opacity-0  duration-1000': index === 0
+      }">
         <TableComponent :rows="[item]" :columns="columns" :isFetching="isFetching">
           <template #member-data="{ row }">
             <UserComponent :user="row.member" />
@@ -32,11 +27,8 @@
 
           <template #hourlyRate-data="{ row }">
             <div>
-              <RatePerHourList
-                :rate-per-hour="row.wage.ratePerHour"
-                :currency-symbol="NETWORK.currencySymbol"
-                :class="'font-bold'"
-              />
+              <RatePerHourList :rate-per-hour="row.wage.ratePerHour" :currency-symbol="NETWORK.currencySymbol"
+                :class="'font-bold'" />
               <span class="">
                 ≃ ${{ getHourlyRateInUserCurrency(row.wage.ratePerHour).toFixed(2) }}
                 {{ currencyStore.localCurrency.code }} / Hour
@@ -46,12 +38,8 @@
 
           <template #totalAmount-data="{ row }">
             <div>
-              <RatePerHourTotalList
-                :rate-per-hour="row.wage.ratePerHour"
-                :currency-symbol="NETWORK.currencySymbol"
-                :total-hours="getTotalHoursWorked(row.claims)"
-                :class="'font-bold'"
-              />
+              <RatePerHourTotalList :rate-per-hour="row.wage.ratePerHour" :currency-symbol="NETWORK.currencySymbol"
+                :total-hours="getTotalHoursWorked(row.claims)" :class="'font-bold'" />
               <span class="">
                 ≃ ${{
                   (
@@ -64,11 +52,8 @@
             </div>
           </template>
           <template #action-data="{ row }">
-            <CRSigne
-              v-if="row.claims.length > 0 && row.wage.ratePerHour"
-              :disabled="row.weekStart === currentWeekStart"
-              :weekly-claim="row as WeeklyClaim"
-            />
+            <CRSigne v-if="row.claims.length > 0 && row.wage.ratePerHour" :disabled="row.weekStart === currentWeekStart"
+              :weekly-claim="row as WeeklyClaim" />
           </template>
         </TableComponent>
       </div>
@@ -77,10 +62,7 @@
       <span class="text-gray-500">isFetching pending weekly claims...</span>
     </div>
     <!-- If empty -->
-    <div
-      v-if="data && data.length === 0 && !isFetching"
-      class="flex justify-center items-center p-4"
-    >
+    <div v-if="data && data.length === 0 && !isFetching" class="flex justify-center items-center p-4">
       <span class="text-gray-500">Congratulations You have approved all Weekly Claims</span>
     </div>
   </div>
@@ -89,7 +71,7 @@
 <script setup lang="ts">
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import { useTanstackQuery } from '@/composables/useTanstackQuery'
+import { useTeamWeeklyClaimsQuery } from '@/queries'
 import { NETWORK } from '@/constant'
 import { useCurrencyStore, useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { type WeeklyClaim } from '@/types'
@@ -123,18 +105,10 @@ const cashRemunerationAddress = computed(() =>
 )
 const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
 
-const weeklyClaimUrl = computed(
-  () =>
-    `/weeklyClaim/?teamId=${teamStore.currentTeamId}${!isCashRemunerationOwner.value ? `&memberAddress=${userStore.address}` : ''}`
-)
-const queryKey = computed(() => [
-  'weekly-claims',
-  teamStore.currentTeamId,
-  userStore.address,
-  'pending'
-])
-
-const { data: loadedData, isLoading } = useTanstackQuery<WeeklyClaim[]>(queryKey, weeklyClaimUrl)
+const { data: loadedData, isLoading } = useTeamWeeklyClaimsQuery({
+  teamId: computed(() => teamStore.currentTeamId),
+  status: computed(() => (isCashRemunerationOwner.value ? undefined : 'pending'))
+})
 const isFetching = computed(() => isLoading.value)
 
 const data = computed(() =>
@@ -142,7 +116,7 @@ const data = computed(() =>
     (weeklyClaim) =>
       weeklyClaim.status === 'pending' ||
       (weeklyClaim.status === 'signed' &&
-        weeklyClaim.data.ownerAddress !== cashRemunerationOwner.value)
+        weeklyClaim.ownerAddress !== cashRemunerationOwner.value)
   )
 )
 
@@ -224,7 +198,8 @@ watch(cashRemunerationOwnerError, (value) => {
   place-items: center;
   align-items: flex-end;
 }
-.stack > * {
+
+.stack>* {
   grid-column-start: 1;
   grid-row-start: 1;
   transform: translateY(15%) scale(0.95);
@@ -232,12 +207,14 @@ watch(cashRemunerationOwnerError, (value) => {
   width: 100%;
   opacity: 0.6;
 }
-.stack > *:nth-child(2) {
+
+.stack>*:nth-child(2) {
   transform: translateY(7.5%) scale(0.97);
   z-index: 2;
   opacity: 0.8;
 }
-.stack > *:nth-child(1) {
+
+.stack>*:nth-child(1) {
   transform: translateY(0) scale(1);
   z-index: 3;
   opacity: 1;
@@ -248,6 +225,7 @@ watch(cashRemunerationOwnerError, (value) => {
   .table {
     font-size: 0.75rem;
   }
+
   .table td {
     padding: 0.5rem;
   }

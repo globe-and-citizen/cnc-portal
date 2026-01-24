@@ -3,17 +3,10 @@
     <CardComponent>
       <div class="flex justify-between">
         <div class="flex gap-4 items-start">
-          <div
-            v-if="displayedMember?.imageUrl"
-            class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden"
-            data-test="claim-user-image-wrapper"
-          >
-            <img
-              :src="displayedMember?.imageUrl"
-              alt="User image"
-              class="w-full h-full object-cover"
-              data-test="claim-user-image"
-            />
+          <div v-if="displayedMember?.imageUrl" class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden"
+            data-test="claim-user-image-wrapper">
+            <img :src="displayedMember?.imageUrl" alt="User image" class="w-full h-full object-cover"
+              data-test="claim-user-image" />
           </div>
           <div class="flex flex-col gap-8">
             <div class="card-title mt-4" data-test="claim-user-name">
@@ -42,44 +35,30 @@
 
         <!-- Week List -->
         <div class="space-y-4 z-0">
-          <div
-            v-for="week in generatedMonthWeek"
-            :key="week.isoWeek"
-            @click="
-              () => {
-                selectedMonthObject = week
-              }
-            "
-            :class="[
-              'border rounded-lg p-3 cursor-pointer',
-              week.isoWeek === selectedMonthObject.isoWeek
-                ? 'bg-emerald-50 border-emerald-500 text-gray-800'
-                : 'hover:bg-gray-50'
-            ]"
-          >
+          <div v-for="week in generatedMonthWeek" :key="week.isoWeek" @click="
+            () => {
+              selectedMonthObject = week
+            }
+          " :class="[
+            'border rounded-lg p-3 cursor-pointer',
+            week.isoWeek === selectedMonthObject.isoWeek
+              ? 'bg-emerald-50 border-emerald-500 text-gray-800'
+              : 'hover:bg-gray-50'
+          ]">
             <div class="text-base font-medium flex items-center justify-between">
               Week
 
-              <div
-                class="badge badge-outline gap-3"
-                v-if="memberWeeklyClaims?.some((wc) => wc.weekStart === week.isoString)"
-                :class="`badge-${getColor(
+              <div class="badge badge-outline gap-3"
+                v-if="memberWeeklyClaims?.some((wc) => wc.weekStart === week.isoString)" :class="`badge-${getColor(
                   memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)
-                )}`"
-              >
-                {{ memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)?.status }}
-                <span
-                  class="h-3 w-3 rounded-full"
-                  :class="`bg-${getColor(
-                    memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)
-                  )}`"
-                />
+                )}`">
+                {{memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)?.status}}
+                <span class="h-3 w-3 rounded-full" :class="`bg-${getColor(
+                  memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)
+                )}`" />
               </div>
             </div>
-            <div
-              class="text-sm"
-              :class="week === selectedMonthObject ? 'text-emerald-900' : 'text-gray-800'"
-            >
+            <div class="text-sm" :class="week === selectedMonthObject ? 'text-emerald-900' : 'text-gray-800'">
               {{ week.formatted }}
             </div>
           </div>
@@ -97,11 +76,7 @@
       <WeeklyRecap :weeklyClaim="selectWeekWeelyClaim" />
       <CardComponent>
         <div class="flex flex-col gap-4">
-          <div
-            role="alert"
-            class="alert alert-vertical sm:alert-horizontal"
-            v-if="memberAddress === userStore.address"
-          >
+          <div role="alert" class="alert alert-vertical sm:alert-horizontal" v-if="memberAddress === userStore.address">
             <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
             <span>{{
               hasWage
@@ -109,28 +84,15 @@
                 : 'You need to have a wage set up to submit claims'
             }}</span>
             <div>
-              <SubmitClaims
-                v-if="hasWage"
-                :weekly-claim="selectWeekWeelyClaim"
-                :signed-week-starts="signedWeekStarts"
-                :restrict-submit="false"
-              />
-              <ButtonUI
-                v-else
-                variant="success"
-                size="sm"
-                :disabled="true"
-                data-test="submit-claim-disabled-button"
-              >
+              <SubmitClaims v-if="hasWage" :weekly-claim="selectWeekWeelyClaim" :signed-week-starts="signedWeekStarts"
+                :restrict-submit="false" />
+              <ButtonUI v-else variant="success" size="sm" :disabled="true" data-test="submit-claim-disabled-button">
                 Submit Claim
               </ButtonUI>
             </div>
           </div>
-          <div
-            role="alert"
-            class="alert alert-vertical sm:alert-horizontal"
-            v-if="selectWeekWeelyClaim && !selectWeekWeelyClaim.signature"
-          >
+          <div role="alert" class="alert alert-vertical sm:alert-horizontal"
+            v-if="selectWeekWeelyClaim && !selectWeekWeelyClaim.signature">
             <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
             <span>{{
               selectWeekWeelyClaim?.weekStart === currentWeekStart
@@ -138,36 +100,24 @@
                 : 'As the owner of the Cash Remuneration contract, you can approve this claim'
             }}</span>
             <div>
-              <CRSigne
-                v-if="selectWeekWeelyClaim.claims.length > 0"
-                :disabled="selectWeekWeelyClaim.weekStart === currentWeekStart"
-                :weekly-claim="selectWeekWeelyClaim"
-              />
+              <CRSigne v-if="selectWeekWeelyClaim.claims.length > 0"
+                :disabled="selectWeekWeelyClaim.weekStart === currentWeekStart" :weekly-claim="selectWeekWeelyClaim" />
             </div>
           </div>
 
           <!-- <pre>{{ selectWeekWeelyClaim }}</pre> -->
-          <div
-            role="alert"
-            class="alert alert-vertical sm:alert-horizontal"
-            v-if="
-              selectWeekWeelyClaim &&
-              (selectWeekWeelyClaim.status == 'signed' ||
-                selectWeekWeelyClaim.status == 'withdrawn') &&
-              userStore.address === selectWeekWeelyClaim.wage.userAddress
-            "
-          >
+          <div role="alert" class="alert alert-vertical sm:alert-horizontal" v-if="
+            selectWeekWeelyClaim &&
+            (selectWeekWeelyClaim.status == 'signed' ||
+              selectWeekWeelyClaim.status == 'withdrawn') &&
+            userStore.address === selectWeekWeelyClaim.wage.userAddress
+          ">
             <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
-            <span v-if="selectWeekWeelyClaim.status == 'withdrawn'"
-              >You have withdrawn your weekly claim.</span
-            >
+            <span v-if="selectWeekWeelyClaim.status == 'withdrawn'">You have withdrawn your weekly claim.</span>
             <span v-else>Your weekly claim has been approved. You can now withdraw it.</span>
             <div>
-              <CRWithdrawClaim
-                v-if="selectWeekWeelyClaim.claims.length > 0"
-                :disabled="selectWeekWeelyClaim.status == 'withdrawn'"
-                :weekly-claim="selectWeekWeelyClaim"
-              />
+              <CRWithdrawClaim v-if="selectWeekWeelyClaim.claims.length > 0"
+                :disabled="selectWeekWeelyClaim.status == 'withdrawn'" :weekly-claim="selectWeekWeelyClaim" />
             </div>
           </div>
         </div>
@@ -175,30 +125,19 @@
       <CardComponent title="" class="w-full">
         <div v-if="memberWeeklyClaims">
           <h2 class="pb-4">Weekly Claims: {{ selectedMonthObject.formatted }}</h2>
-          <div
-            v-for="(entry, index) in weekDayClaims"
-            :key="index"
-            :class="[
-              'flex items-center justify-between border px-4 py-3 mb-2 rounded-lg ',
-              entry.hours > 0
-                ? 'bg-green-50 text-emerald-700 border border-emerald-500'
-                : 'bg-gray-100 text-gray-400'
-            ]"
-          >
+          <div v-for="(entry, index) in weekDayClaims" :key="index" :class="[
+            'flex items-center justify-between border px-4 py-3 mb-2 rounded-lg ',
+            entry.hours > 0
+              ? 'bg-green-50 text-emerald-700 border border-emerald-500'
+              : 'bg-gray-100 text-gray-400'
+          ]">
             <div class="flex items-center gap-2 min-w-[120px]">
-              <span
-                class="h-3 w-3 rounded-full"
-                :class="entry.hours > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
-              />
+              <span class="h-3 w-3 rounded-full" :class="entry.hours > 0 ? 'bg-emerald-700' : 'bg-gray-300'" />
               <span class="font-medium">{{ entry.date.format('ddd DD MMM') }}</span>
 
               <!-- Attachment icon if files exist -->
-              <span
-                v-if="entry.hours > 0 && hasAttachments(entry.claims)"
-                class="inline-flex items-center"
-                data-test="attachment-icon"
-                title="Has attachments"
-              >
+              <span v-if="entry.hours > 0 && hasAttachments(entry.claims)" class="inline-flex items-center"
+                data-test="attachment-icon" title="Has attachments">
                 <Icon icon="heroicons:paper-clip" class="w-4 h-4 text-blue-600" />
               </span>
             </div>
@@ -212,20 +151,12 @@
                   <ClaimActions v-if="canModifyClaims" :claim="claim" />
                 </div>
 
-                <div
-                  v-if="claim.fileAttachments && claim.fileAttachments.length > 0"
-                  class="mt-2 overflow-hidden"
-                  data-test="claim-files-gallery"
-                >
-                  <FilePreviewGallery
-                    :previews="buildFilePreviews(claim.fileAttachments)"
-                    :can-remove="false"
-                    grid-class="grid grid-cols-4 sm:grid-cols-4 gap-3 p-1"
-                    item-height-class="h-20"
-                    item-width-class="w-40"
-                    image-class="border border-gray-200 hover:border-emerald-500 transition-all"
-                    document-class="bg-gray-50 hover:bg-gray-100 border border-gray-300"
-                  />
+                <div v-if="claim.fileAttachments && claim.fileAttachments.length > 0" class="mt-2 overflow-hidden"
+                  data-test="claim-files-gallery">
+                  <FilePreviewGallery :previews="buildFilePreviews(claim.fileAttachments)" :can-remove="false"
+                    grid-class="grid grid-cols-4 sm:grid-cols-4 gap-3 p-1" item-height-class="h-20"
+                    item-width-class="w-40" image-class="border border-gray-200 hover:border-emerald-500 transition-all"
+                    document-class="bg-gray-50 hover:bg-gray-100 border border-gray-300" />
                 </div>
               </div>
             </div>
@@ -267,8 +198,8 @@ import {
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
-import { useTanstackQuery } from '@/composables'
-import type { Claim, Wage, WeeklyClaim } from '@/types'
+import { useTeamWeeklyClaimsQuery, useTeamWagesQuery } from '@/queries'
+import type { Claim, WeeklyClaim } from '@/types'
 import type { Address } from 'viem'
 
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
@@ -307,29 +238,14 @@ const getColor = (weeklyClaim?: WeeklyClaim) => {
   return 'accent'
 }
 
-const teamId = computed(() => teamStore.currentTeamId)
 
-const weeklyClaimQueryKey = computed(() => ['weekly-claims', teamId.value, memberAddress.value])
-const weeklyClaimURL = computed(
-  () => `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress.value}`
-)
+const { data: memberWeeklyClaims } = useTeamWeeklyClaimsQuery({
+  teamId: computed(() => teamStore.currentTeamId),
+  userAddress: memberAddress
+})
 
-const { data: memberWeeklyClaims, refetch } = useTanstackQuery<Array<WeeklyClaim>>(
-  weeklyClaimQueryKey,
-  weeklyClaimURL
-)
-
-watch(
-  memberAddress,
-  () => {
-    refetch()
-  },
-  { immediate: true }
-)
-
-const { data: teamWageData, error: teamWageDataError } = useTanstackQuery<Array<Wage>>(
-  computed(() => ['team-wage', teamStore.currentTeamId]),
-  computed(() => `/wage/?teamId=${teamStore.currentTeamId}`)
+const { data: teamWageData, error: teamWageDataError } = useTeamWagesQuery(
+  computed(() => teamStore.currentTeamId)
 )
 
 const hasWage = computed(() => {
@@ -408,7 +324,7 @@ const weekDayClaims = computed(() => {
   return [0, 1, 2, 3, 4, 5, 6].map((i) => {
     const date = weekStart.add(i, 'day')
     const dailyClaims =
-      selectWeekWeelyClaim.value?.claims.filter(
+      selectWeekWeelyClaim.value?.claims?.filter(
         (claim) => claim.dayWorked === date.toISOString()
       ) || []
     return {

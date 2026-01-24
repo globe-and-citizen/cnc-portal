@@ -1,20 +1,12 @@
 <template>
   <CardComponent :title="singleUser ? 'Weekly Claim (User)' : 'Weekly Claim'" class="w-full pb-7">
-    <TableComponent
-      v-if="data"
-      :rows="data"
-      :columns="columns"
-      :loading="isTeamClaimDataFetching"
-      overflow="overflow-visible"
-    >
+    <TableComponent v-if="data" :rows="data" :columns="columns" :loading="isTeamClaimDataFetching"
+      overflow="overflow-visible">
       <template #member-data="{ row }">
-        <RouterLink
-          :to="{
-            name: 'payroll-history',
-            params: { id: teamStore.currentTeamId, memberAddress: row.member.address }
-          }"
-          class="flex items-center gap-2 hover:underline text-emerald-700"
-        >
+        <RouterLink :to="{
+          name: 'payroll-history',
+          params: { id: teamStore.currentTeamId, memberAddress: row.member.address }
+        }" class="flex items-center gap-2 hover:underline text-emerald-700">
           <UserComponent :user="row.member" />
         </RouterLink>
       </template>
@@ -22,7 +14,7 @@
       <template #weekStart-data="{ row }">
         <span class="font-bold">{{
           dayjs(row.weekStart).utc().startOf('isoWeek').format('MMMM YYYY')
-        }}</span>
+          }}</span>
         <br />
         <span>{{ formatIsoWeekRange(dayjs(row.weekStart).utc().startOf('isoWeek')) }}</span>
       </template>
@@ -35,11 +27,8 @@
 
       <template #hourlyRate-data="{ row }">
         <div>
-          <RatePerHourList
-            :rate-per-hour="row.wage.ratePerHour"
-            :currency-symbol="NETWORK.currencySymbol"
-            :class="'font-bold'"
-          />
+          <RatePerHourList :rate-per-hour="row.wage.ratePerHour" :currency-symbol="NETWORK.currencySymbol"
+            :class="'font-bold'" />
           <span class="">
             ≃ ${{ getHoulyRateInUserCurrency(row.wage.ratePerHour).toFixed(2) }}
             {{ currencyStore.localCurrency.code }} / Hour
@@ -49,12 +38,8 @@
 
       <template #totalAmount-data="{ row }">
         <div>
-          <RatePerHourTotalList
-            :rate-per-hour="row.wage.ratePerHour"
-            :currency-symbol="NETWORK.currencySymbol"
-            :total-hours="getTotalHoursWorked(row.claims)"
-            :class="'font-bold'"
-          />
+          <RatePerHourTotalList :rate-per-hour="row.wage.ratePerHour" :currency-symbol="NETWORK.currencySymbol"
+            :total-hours="getTotalHoursWorked(row.claims)" :class="'font-bold'" />
           <span class="">
             ≃ ${{
               (
@@ -77,23 +62,17 @@
 
       <template #status-data="{ row }">
         <template v-if="row.status === 'signed'">
-          <span
-            class="text-base px-3 py-1 rounded-2xl border-2 border-secondary text-secondary bg-transparent"
-          >
+          <span class="text-base px-3 py-1 rounded-2xl border-2 border-secondary text-secondary bg-transparent">
             {{ row.status.charAt(0).toUpperCase() + row.status.slice(1) }}
           </span>
         </template>
         <template v-else-if="!row.status || row.status === 'pending'">
-          <span
-            class="text-base px-3 py-1 rounded-2xl border-2 border-gray-400 text-gray-700 bg-transparent"
-          >
+          <span class="text-base px-3 py-1 rounded-2xl border-2 border-gray-400 text-gray-700 bg-transparent">
             {{ row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending' }}
           </span>
         </template>
         <template v-else>
-          <span
-            class="text-base px-3 py-1 rounded-2xl border-2 border-yellow-500 text-black bg-transparent"
-          >
+          <span class="text-base px-3 py-1 rounded-2xl border-2 border-yellow-500 text-black bg-transparent">
             {{ row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending' }}
           </span>
         </template>
@@ -121,7 +100,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 // import CRSigne from '../CashRemunerationView/CRSigne.vue'
 // import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
-import { useTanstackQuery } from '@/composables'
+import { useTeamWeeklyClaimsQuery } from '@/queries'
 import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
 
 dayjs.extend(utc)
@@ -144,23 +123,10 @@ function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
   return row as WeeklyClaim
 }
 
-const weeklyClaimUrl = computed(
-  () =>
-    `/weeklyClaim/?teamId=${teamStore.currentTeamId}${
-      props.memberAddress ? `&memberAddress=${props.memberAddress}` : ''
-    }`
-)
-
-const weeklyClaimQueryKey = computed(() => [
-  'weekly-claims',
-  teamStore.currentTeamId,
-  props.memberAddress
-])
-
-const { data: fetchedData, error } = useTanstackQuery<Array<WeeklyClaim>>(
-  weeklyClaimQueryKey,
-  weeklyClaimUrl
-)
+const { data: fetchedData, error } = useTeamWeeklyClaimsQuery({
+  teamId: computed(() => teamStore.currentTeamId),
+  userAddress: props.memberAddress
+})
 
 // const { data: fetchedData, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
 

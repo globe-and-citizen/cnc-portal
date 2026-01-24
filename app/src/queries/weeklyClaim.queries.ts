@@ -3,6 +3,7 @@ import apiClient from '@/lib/axios'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 import type { AxiosError } from 'axios'
+import type { Address } from 'viem'
 
 /**
  * Weekly Claim Data Types
@@ -41,8 +42,8 @@ export interface WeeklyClaimWithHours extends WeeklyClaim {
  */
 export interface UseTeamWeeklyClaimsQueryParams {
   teamId?: MaybeRefOrGetter<string | number | null>
-  userAddress?: MaybeRefOrGetter<string | null>
-  status?: MaybeRefOrGetter<'pending' | 'signed' | 'withdrawn' | 'disabled' | null>
+  userAddress?: MaybeRefOrGetter<Address | undefined>
+  status?: MaybeRefOrGetter<'pending' | 'signed' | 'withdrawn' | 'disabled' | undefined>
 }
 
 /**

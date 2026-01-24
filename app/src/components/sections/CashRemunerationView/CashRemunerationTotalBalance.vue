@@ -1,6 +1,11 @@
 <template>
-  <OverviewCard :title="total[currency.code]?.formated ?? 0" variant="success" subtitle="Total Balance"
-    :card-icon="bagIcon" :loading="isLoadingBalance">
+  <OverviewCard
+    :title="total[currency.code]?.formated ?? 0"
+    variant="success"
+    subtitle="Total Balance"
+    :card-icon="bagIcon"
+    :loading="isLoadingBalance"
+  >
     <div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
       <div>
