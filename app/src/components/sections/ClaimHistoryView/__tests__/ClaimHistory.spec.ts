@@ -19,10 +19,13 @@ const mockRoute = reactive({
   }
 })
 
-vi.mock('vue-router', () => ({
+vi.mock('vue-router', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('vue-router')>()
+  return {
+    ...actual,
   useRoute: () => mockRoute
-}))
-
+  }
+})
 // --- Mock stores ---
 const mockUserStore = {
   imageUrl: ref('https://example.com/avatar.jpg'),
