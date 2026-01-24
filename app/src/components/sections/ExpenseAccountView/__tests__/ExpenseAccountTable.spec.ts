@@ -7,7 +7,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
-import { useTanstackQuery } from '@/composables'
+import { useExpensesQuery } from '@/queries'
 
 const mocks = vi.hoisted(() => ({
   mockReadContract: vi.fn()
@@ -166,11 +166,11 @@ vi.mock('@/composables/useCustomFetch', () => {
   }
 })
 
-vi.mock('@/composables', async (importOriginal) => {
+vi.mock('@/queries', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useTanstackQuery: vi.fn()
+    useExpensesQuery: vi.fn()
   }
 })
 
@@ -208,10 +208,10 @@ describe('ExpenseAccountTable - Filtering', () => {
   }
 
   beforeEach(() => {
-    vi.mocked(useTanstackQuery).mockReturnValue({
+    vi.mocked(useExpensesQuery).mockReturnValue({
       data: ref(mockApprovals),
       isLoading: ref(false)
-    } as ReturnType<typeof useTanstackQuery>)
+    } as ReturnType<typeof useExpensesQuery>)
   })
 
   describe('Filtering', () => {

@@ -11,11 +11,6 @@ export interface Notification {
   resource: string | null
 }
 
-export interface NotificationResponse {
-  data: Notification[]
-  success: boolean
-}
-
 export interface BulkNotificationPayload {
   userIds: Address[]
   message: string

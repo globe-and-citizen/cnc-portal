@@ -75,6 +75,7 @@ vi.mock('@/queries/user.queries', () => ({
  * Mock Action Queries (action.queries.ts)
  */
 vi.mock('@/queries/action.queries', () => ({
+  useBodActionsQuery: vi.fn(queryMocks.useBodActionsQuery),
   useCreateActionMutation: vi.fn(queryMocks.useCreateActionMutation),
   useUpdateActionMutation: vi.fn(queryMocks.useUpdateActionMutation)
 }))
@@ -98,6 +99,41 @@ vi.mock('@/queries/contract.queries', () => ({
  */
 vi.mock('@/queries/health.queries', () => ({
   useBackendHealthQuery: vi.fn(queryMocks.useBackendHealthQuery)
+}))
+
+/**
+ * Mock Weekly Claim Queries (weeklyClaim.queries.ts)
+ */
+vi.mock('@/queries/weeklyClaim.queries', () => ({
+  useTeamWeeklyClaimsQuery: vi.fn(queryMocks.useTeamWeeklyClaimsQuery),
+  useWeeklyClaimByIdQuery: vi.fn(queryMocks.useWeeklyClaimByIdQuery),
+  useSignWeeklyClaimMutation: vi.fn(queryMocks.useSignWeeklyClaimMutation),
+  useEnableWeeklyClaimMutation: vi.fn(queryMocks.useEnableWeeklyClaimMutation),
+  useDisableWeeklyClaimMutation: vi.fn(queryMocks.useDisableWeeklyClaimMutation),
+  useWithdrawWeeklyClaimMutation: vi.fn(queryMocks.useWithdrawWeeklyClaimMutation),
+  useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation)
+}))
+
+/**
+ * Mock Safe Queries (safe.queries.ts)
+ */
+vi.mock('@/queries/safe.queries', () => ({
+  useSafeInfoQuery: vi.fn(queryMocks.useSafeInfoQuery),
+  useSafePendingTransactionsQuery: vi.fn(queryMocks.useSafePendingTransactionsQuery),
+  useDeploySafeMutation: vi.fn(queryMocks.useDeploySafeMutation),
+  useProposeTransactionMutation: vi.fn(queryMocks.useProposeTransactionMutation),
+  useApproveTransactionMutation: vi.fn(queryMocks.useApproveTransactionMutation),
+  useExecuteTransactionMutation: vi.fn(queryMocks.useExecuteTransactionMutation),
+  useUpdateSafeOwnersMutation: vi.fn(queryMocks.useUpdateSafeOwnersMutation),
+  useSafeTransactionQuery: vi.fn(queryMocks.useSafeTransactionQuery)
+}))
+
+/**
+ * Mock Polymarket Queries (polymarket.queries.ts)
+ */
+vi.mock('@/queries/polymarket.queries', () => ({
+  useMarketData: vi.fn(queryMocks.useMarketData),
+  useSafeBalances: vi.fn(queryMocks.useSafeBalances)
 }))
 
 /**

@@ -267,8 +267,8 @@ import {
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
-import { useTanstackQuery } from '@/composables'
-import type { Claim, Wage, WeeklyClaim } from '@/types'
+import { useTeamWeeklyClaimsQuery, useTeamWagesQuery } from '@/queries'
+import type { Claim, WeeklyClaim } from '@/types'
 import type { Address } from 'viem'
 
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
@@ -307,29 +307,13 @@ const getColor = (weeklyClaim?: WeeklyClaim) => {
   return 'accent'
 }
 
-const teamId = computed(() => teamStore.currentTeamId)
+const { data: memberWeeklyClaims } = useTeamWeeklyClaimsQuery({
+  teamId: computed(() => teamStore.currentTeamId),
+  userAddress: memberAddress
+})
 
-const weeklyClaimQueryKey = computed(() => ['weekly-claims', teamId.value, memberAddress.value])
-const weeklyClaimURL = computed(
-  () => `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress.value}`
-)
-
-const { data: memberWeeklyClaims, refetch } = useTanstackQuery<Array<WeeklyClaim>>(
-  weeklyClaimQueryKey,
-  weeklyClaimURL
-)
-
-watch(
-  memberAddress,
-  () => {
-    refetch()
-  },
-  { immediate: true }
-)
-
-const { data: teamWageData, error: teamWageDataError } = useTanstackQuery<Array<Wage>>(
-  computed(() => ['team-wage', teamStore.currentTeamId]),
-  computed(() => `/wage/?teamId=${teamStore.currentTeamId}`)
+const { data: teamWageData, error: teamWageDataError } = useTeamWagesQuery(
+  computed(() => teamStore.currentTeamId)
 )
 
 const hasWage = computed(() => {
@@ -408,7 +392,7 @@ const weekDayClaims = computed(() => {
   return [0, 1, 2, 3, 4, 5, 6].map((i) => {
     const date = weekStart.add(i, 'day')
     const dailyClaims =
-      selectWeekWeelyClaim.value?.claims.filter(
+      selectWeekWeelyClaim.value?.claims?.filter(
         (claim) => claim.dayWorked === date.toISOString()
       ) || []
     return {

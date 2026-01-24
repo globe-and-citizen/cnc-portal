@@ -109,7 +109,7 @@ export function useContractBalance(address: Address | Ref<Address | undefined>) 
       const native = useBalance({
         address: unref(address),
         chainId,
-        query: { refetchInterval: 5000 }
+        query: { refetchInterval: 50000 }
       })
       return {
         token,
