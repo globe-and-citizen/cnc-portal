@@ -1,11 +1,11 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
+import { mount, type VueWrapper, flushPromises } from '@vue/test-utils'
 import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
 
-// Mock @iconify/vue FIRST, before any other imports
+// Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({
   Icon: {
     name: 'Icon',
@@ -16,17 +16,23 @@ vi.mock('@iconify/vue', () => ({
 
 // Hoisted mock variables
 const {
-  mockUseSafeData,
   mockGetSafeHomeUrl,
   mockOpenSafeAppUrl,
   mockUseChainId,
-  mockUseTeamStore
+  mockUseTeamStore,
+  mockUseContractBalance,
+  mockUseSafeInfoQuery,
+  mockQueryClient
 } = vi.hoisted(() => ({
-  mockUseSafeData: vi.fn(),
   mockGetSafeHomeUrl: vi.fn(),
   mockOpenSafeAppUrl: vi.fn(),
   mockUseChainId: vi.fn(),
-  mockUseTeamStore: vi.fn()
+  mockUseTeamStore: vi.fn(),
+  mockUseContractBalance: vi.fn(),
+  mockUseSafeInfoQuery: vi.fn(),
+  mockQueryClient: {
+    invalidateQueries: vi.fn()
+  }
 }))
 
 // Mock external dependencies
@@ -51,38 +57,67 @@ vi.mock('@/stores', () => ({
   useTeamStore: mockUseTeamStore
 }))
 
+vi.mock('@/composables/useContractBalance', () => ({
+  useContractBalance: mockUseContractBalance
+}))
+
+vi.mock('@/queries/safe.queries', () => ({
+  useSafeInfoQuery: mockUseSafeInfoQuery
+}))
+
+vi.mock('@tanstack/vue-query', () => ({
+  useQueryClient: () => mockQueryClient
+}))
+
 // Test constants
 const MOCK_DATA = {
   safeAddress: '0x1234567890123456789012345678901234567890' as Address,
   safeInfo: {
-    address: '0x1234567890123456789012345678901234567890' as Address,
-    chain: 'polygon',
-    balance: '1.5',
-    symbol: 'POL',
     owners: [
       '0x1111111111111111111111111111111111111111' as Address,
       '0x2222222222222222222222222222222222222222' as Address
     ],
-    threshold: 2,
-    totals: {
-      USD: {
-        value: 3000,
-        formated: '$3K',
-        id: 'usd',
-        code: 'USD',
-        symbol: '$',
-        price: 2000,
-        formatedPrice: '$2K'
+    threshold: 2
+  },
+  balances: [
+    {
+      token: {
+        symbol: 'ETH',
+        id: 'ethereum',
+        name: 'Ethereum',
+        code: 'ETH'
       },
-      EUR: {
-        value: 2700,
-        formated: '€2.7K',
-        id: 'eur',
-        code: 'EUR',
-        symbol: '€',
-        price: 1800,
-        formatedPrice: '€1.8K'
+      amount: 1.5,
+      values: {
+        USD: {
+          value: 3000,
+          formated: '$3,000',
+          price: 2000
+        }
       }
+    },
+    {
+      token: {
+        symbol: 'SHER',
+        id: 'sher',
+        name: 'Sherlock',
+        code: 'SHER'
+      },
+      amount: 100,
+      values: {
+        USD: {
+          value: 500,
+          formated: '$500',
+          price: 5
+        }
+      }
+    }
+  ],
+  total: {
+    USD: {
+      value: 4500,
+      formated: '$4,500',
+      price: 1
     }
   },
   defaultCurrency: {
@@ -94,6 +129,11 @@ const MOCK_DATA = {
     safeAddress: '0x1234567890123456789012345678901234567890' as Address,
     id: '1',
     name: 'Test Team'
+  },
+  teamMeta: {
+    data: {
+      safeAddress: '0x1234567890123456789012345678901234567890' as Address
+    }
   }
 } as const
 
@@ -103,31 +143,53 @@ const CardStub = defineComponent({
 })
 
 const ButtonStub = defineComponent({
-  props: ['variant', 'class'],
   emits: ['click'],
   template: '<button data-test="button" @click="$emit(\'click\')"><slot /></button>'
 })
 
 const AddressToolTipStub = defineComponent({
-  props: ['address'],
-  template: '<div data-test="address-tooltip">{{ address }}</div>'
+  template: '<div data-test="address-tooltip"></div>'
 })
 
-describe.skip('SafeBalanceSection', () => {
-  let wrapper: VueWrapper
-  const mockSafeInfo = ref(null)
-  const mockIsLoading = ref(false)
-  const mockError = ref(null)
-  const mockRefetch = vi.fn()
-  const mockCurrency = ref(MOCK_DATA.defaultCurrency)
+const ModalStub = defineComponent({
+  props: ['modelValue'],
+  template: '<div data-test="modal" v-if="modelValue"><slot /></div>'
+})
 
-  const createWrapper = () =>
+const DepositBankFormStub = defineComponent({
+  template: '<div data-test="deposit-bank-form">Deposit Form</div>'
+})
+
+const TransferFormStub = defineComponent({
+  template: '<div data-test="transfer-form"><slot name="header" /></div>'
+})
+
+interface SafeBalanceSectionInstance {
+  closeDepositModal: () => Promise<void>
+  resetTransferValues: () => Promise<void>
+  tokens: Array<{ symbol: string; price: number; tokenId: string }>
+  transferData: { token: { symbol: string; tokenId: string } }
+}
+
+describe('SafeBalanceSection', () => {
+  let wrapper: VueWrapper
+  const mockCurrency = ref(MOCK_DATA.defaultCurrency)
+  const mockBalances = ref(MOCK_DATA.balances)
+  const mockTotal = ref(MOCK_DATA.total)
+  const mockIsLoading = ref(false)
+  const mockSafeInfo = ref(MOCK_DATA.safeInfo)
+
+  const createWrapper = (props = {}) =>
     mount(SafeBalanceSection, {
+      props,
       global: {
         stubs: {
           CardComponent: CardStub,
           ButtonUI: ButtonStub,
-          AddressToolTip: AddressToolTipStub
+          AddressToolTip: AddressToolTipStub,
+          ModalComponent: ModalStub,
+          DepositBankForm: DepositBankFormStub,
+          TransferForm: TransferFormStub
         }
       }
     })
@@ -136,16 +198,20 @@ describe.skip('SafeBalanceSection', () => {
     vi.clearAllMocks()
 
     // Setup default mocks
-    mockUseSafeData.mockReturnValue({
-      safeInfo: mockSafeInfo,
-      isLoading: mockIsLoading,
-      error: mockError,
-      refetch: mockRefetch
+    mockUseContractBalance.mockReturnValue({
+      total: mockTotal,
+      balances: mockBalances,
+      isLoading: mockIsLoading
+    })
+
+    mockUseSafeInfoQuery.mockReturnValue({
+      data: mockSafeInfo
     })
 
     mockUseChainId.mockReturnValue(ref(137))
     mockUseTeamStore.mockReturnValue({
-      currentTeam: MOCK_DATA.team
+      currentTeam: MOCK_DATA.team,
+      currentTeamMeta: MOCK_DATA.teamMeta
     })
 
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
@@ -156,9 +222,10 @@ describe.skip('SafeBalanceSection', () => {
     mockOpenSafeAppUrl.mockImplementation(() => {})
 
     // Reset reactive values
-    mockSafeInfo.value = null
     mockIsLoading.value = false
-    mockError.value = null
+    mockBalances.value = MOCK_DATA.balances
+    mockTotal.value = MOCK_DATA.total
+    mockSafeInfo.value = MOCK_DATA.safeInfo
   })
 
   afterEach(() => {
@@ -166,351 +233,160 @@ describe.skip('SafeBalanceSection', () => {
   })
 
   describe('Component Rendering', () => {
-    it('should render correctly with default state', () => {
-      wrapper = createWrapper()
-
-      expect(wrapper.find('[data-test="card-component"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="open-safe-app-button"]').exists()).toBe(true)
-    })
-
-    it('should display loading spinner when Safe info is loading', () => {
+    it('should show loading spinner when isLoading is true', () => {
       mockIsLoading.value = true
       wrapper = createWrapper()
 
       expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(true)
     })
 
-    it('should display Safe balance when loaded', async () => {
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.text()).toContain('$3K')
-      expect(wrapper.text()).toContain('USD')
-    })
-
-    it('should display threshold and owner information', async () => {
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.text()).toContain('2 of 2 signatures required')
-      expect(wrapper.text()).toContain('Safe Balance')
-    })
-
-    it('should display fallback values when Safe info is not loaded', () => {
-      wrapper = createWrapper()
-
-      expect(wrapper.text()).toContain('- of 0 signatures required')
-    })
-  })
-
-  describe('Balance Display', () => {
-    it('should display USD balance when available', async () => {
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.text()).toContain('$3K')
-    })
-
-    it('should display local currency when different from USD', async () => {
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      mockCurrency.value = { code: 'EUR', name: 'Euro', symbol: '€' }
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.text()).toContain('€2.7K EUR')
-    })
-
-    it('should fallback to raw balance when totals not available', async () => {
-      const safeInfoWithoutTotals = {
-        ...MOCK_DATA.safeInfo,
-        totals: undefined
-      }
-      mockSafeInfo.value = safeInfoWithoutTotals
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.text()).toContain('1.5')
-    })
-
-    it('should display 0 when no balance data available', () => {
+    it('should show fallback values when safeInfo is null', () => {
       mockSafeInfo.value = null
       wrapper = createWrapper()
 
+      expect(wrapper.text()).toContain('-')
       expect(wrapper.text()).toContain('0')
     })
-  })
 
-  describe('Safe Address Display', () => {
-    it('should display Safe address when available', () => {
+    it.skip('should display "Open in Safe App" button when safeAddress exists', () => {
       wrapper = createWrapper()
 
-      const tooltip = wrapper.find('[data-test="address-tooltip"]')
-      expect(tooltip.exists()).toBe(true)
-      expect(tooltip.text()).toContain(MOCK_DATA.safeAddress)
+      expect(wrapper.find('[data-test="open-safe-app-button"]').exists()).toBe(true)
     })
+  })
 
-    it('should hide address section when no Safe address', async () => {
+  describe('Props and Computed Values', () => {
+    it('should use 0x as fallback when no address is available', () => {
       mockUseTeamStore.mockReturnValue({
-        currentTeam: { ...MOCK_DATA.team, safeAddress: undefined }
+        currentTeam: { safeAddress: undefined },
+        currentTeamMeta: { data: { safeAddress: undefined } }
       })
       wrapper = createWrapper()
-      await nextTick()
 
-      expect(wrapper.find('[data-test="address-tooltip"]').exists()).toBe(false)
+      expect(mockUseContractBalance).toHaveBeenCalled()
+      const callArg = mockUseContractBalance.mock.calls[0]?.[0]
+      expect(callArg?.value).toBe('0x')
     })
   })
 
-  describe('Safe App Integration', () => {
-    it('should open Safe app when button is clicked', async () => {
+  describe('Tokens Computation', () => {
+    it('should handle missing USD price gracefully', () => {
+      mockBalances.value = [
+        {
+          token: {
+            symbol: 'TEST',
+            id: 'test',
+            name: 'Test Token',
+            code: 'TEST'
+          },
+          amount: 100,
+          values: {
+            USD: undefined
+          }
+        }
+      ]
+      wrapper = createWrapper()
+
+      const tokens = (wrapper.vm as SafeBalanceSectionInstance).tokens
+      expect(tokens[0].price).toBe(0)
+    })
+  })
+
+  describe('Deposit Modal', () => {
+    it('should close deposit modal and invalidate queries', async () => {
+      vi.useFakeTimers()
+      wrapper = createWrapper()
+
+      await wrapper.find('[data-test="deposit-button"]').trigger('click')
+      await nextTick()
+
+      // Start the closeDepositModal without awaiting
+      const closePromise = (wrapper.vm as SafeBalanceSectionInstance).closeDepositModal()
+
+      // Fast-forward time for the 2000ms delay
+      await vi.advanceTimersByTimeAsync(2000)
+      await closePromise
+      await flushPromises()
+
+      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: ['safe', 'info', { safeAddress: MOCK_DATA.safeAddress }]
+      })
+
+      vi.useRealTimers()
+    })
+
+    it('should not invalidate queries when teamStore has no safeAddress', async () => {
+      vi.useFakeTimers()
+      mockUseTeamStore.mockReturnValue({
+        currentTeam: { safeAddress: undefined },
+        currentTeamMeta: { data: { safeAddress: undefined } }
+      })
+      wrapper = createWrapper()
+
+      await wrapper.find('[data-test="deposit-button"]').trigger('click')
+      await nextTick()
+
+      // Start the closeDepositModal without awaiting
+      const closePromise = (wrapper.vm as SafeBalanceSectionInstance).closeDepositModal()
+
+      // Fast-forward time
+      await vi.advanceTimersByTimeAsync(2000)
+      await closePromise
+      await flushPromises()
+
+      expect(mockQueryClient.invalidateQueries).not.toHaveBeenCalled()
+
+      vi.useRealTimers()
+    })
+  })
+
+  describe('Transfer Modal', () => {
+    it('should handle empty tokens list gracefully', async () => {
+      mockBalances.value = []
+      wrapper = createWrapper()
+
+      await wrapper.find('[data-test="transfer-button"]').trigger('click')
+      await nextTick()
+
+      const transferData = (wrapper.vm as SafeBalanceSectionInstance).transferData
+      expect(transferData.token.symbol).toBe('')
+    })
+
+    it('should close transfer modal and reset values', async () => {
+      wrapper = createWrapper()
+
+      await wrapper.find('[data-test="transfer-button"]').trigger('click')
+      await nextTick()
+
+      expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(true)
+
+      // Call resetTransferValues directly
+      await (wrapper.vm as SafeBalanceSectionInstance).resetTransferValues()
+      await nextTick()
+
+      expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
+    })
+  })
+
+  describe('Open in Safe App', () => {
+    it('should call openSafeAppUrl with the URL from getSafeHomeUrl', async () => {
+      const mockUrl =
+        'https://app.safe.global/home?safe=polygon:0x1234567890123456789012345678901234567890'
+      mockGetSafeHomeUrl.mockReturnValue(mockUrl)
       wrapper = createWrapper()
 
       await wrapper.find('[data-test="open-safe-app-button"]').trigger('click')
 
-      expect(mockGetSafeHomeUrl).toHaveBeenCalledWith(137, MOCK_DATA.safeAddress)
-      expect(mockOpenSafeAppUrl).toHaveBeenCalledWith(
-        'https://app.safe.global/home?safe=polygon:0x1234567890123456789012345678901234567890'
-      )
-    })
-
-    it('should not render Safe app button when no Safe address', async () => {
-      mockUseTeamStore.mockReturnValue({
-        currentTeam: { ...MOCK_DATA.team, safeAddress: undefined }
-      })
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.find('[data-test="open-safe-app-button"]').exists()).toBe(false)
-    })
-  })
-
-  describe('Data Fetching', () => {
-    it('should fetch Safe info on mount when Safe address exists', () => {
-      wrapper = createWrapper()
-
-      expect(mockRefetch).toHaveBeenCalledTimes(1)
-    })
-
-    it('should refetch Safe info when Safe address changes', async () => {
-      wrapper = createWrapper()
-      expect(mockRefetch).toHaveBeenCalledTimes(1)
-
-      // Simulate Safe address change
-      mockUseTeamStore.mockReturnValue({
-        currentTeam: {
-          ...MOCK_DATA.team,
-          safeAddress: '0x9999999999999999999999999999999999999999' as Address
-        }
-      })
-      await nextTick()
-
-      // Component should react to store changes
-      expect(mockRefetch).toHaveBeenCalled()
-    })
-
-    it('should refetch Safe info when chain changes', async () => {
-      wrapper = createWrapper()
-
-      mockUseChainId.mockReturnValue(ref(11155111)) // Change to Sepolia
-      await nextTick()
-
-      // Should trigger refetch
-      expect(mockRefetch).toHaveBeenCalled()
-    })
-  })
-
-  describe('Error Handling', () => {
-    it('should log error to console when Safe info fetch fails', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      wrapper = createWrapper()
-
-      mockError.value = 'Failed to fetch Safe info'
-      await nextTick()
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Safe error:', 'Failed to fetch Safe info')
-
-      consoleErrorSpy.mockRestore()
-    })
-
-    it('should handle missing Safe info gracefully', () => {
-      mockSafeInfo.value = null
-      mockError.value = 'Network error'
-
-      wrapper = createWrapper()
-
-      // Component should still render without crashing
-      expect(wrapper.find('[data-test="card-component"]').exists()).toBe(true)
-      expect(wrapper.text()).toContain('0') // Shows fallback balance
-    })
-  })
-
-  describe('Loading States', () => {
-    it('should show loading spinner during Safe info fetch', () => {
-      mockIsLoading.value = true
-      wrapper = createWrapper()
-
-      expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(true)
-      expect(wrapper.find('.loading-spinner').exists()).toBe(true)
-    })
-
-    it('should hide loading spinner when fetch completes', async () => {
-      mockIsLoading.value = true
-      wrapper = createWrapper()
-
-      expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(true)
-
-      mockIsLoading.value = false
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      await nextTick()
-
-      expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(false)
-    })
-  })
-
-  describe('Currency Display', () => {
-    it('should respect user currency preference', async () => {
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      mockCurrency.value = { code: 'EUR', name: 'Euro', symbol: '€' }
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.text()).toContain('€2.7K EUR')
-    })
-
-    it('should fallback to USD when preferred currency not available', async () => {
-      const safeInfoWithLimitedTotals = {
-        ...MOCK_DATA.safeInfo,
-        totals: {
-          USD: MOCK_DATA.safeInfo.totals.USD
-          // EUR not available
-        }
-      }
-      mockSafeInfo.value = safeInfoWithLimitedTotals
-      mockCurrency.value = { code: 'EUR', name: 'Euro', symbol: '€' }
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.text()).toContain('$3K EUR') // Shows USD value with EUR label
-    })
-
-    it.skip('should fallback to raw balance when no totals available', async () => {
-      const safeInfoWithoutTotals = {
-        ...MOCK_DATA.safeInfo,
-        totals: undefined
-      }
-      mockSafeInfo.value = safeInfoWithoutTotals
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.text()).toContain('1.5 USD') // Raw balance with currency code
-    })
-  })
-
-  describe('Reactivity', () => {
-    it('should update display when Safe info changes', async () => {
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.text()).toContain('$3K')
-
-      // Update Safe info
-      const updatedSafeInfo = {
-        ...MOCK_DATA.safeInfo,
-        totals: {
-          ...MOCK_DATA.safeInfo.totals,
-          USD: {
-            ...MOCK_DATA.safeInfo.totals.USD,
-            formated: '$5K'
-          }
-        }
-      }
-      mockSafeInfo.value = updatedSafeInfo
-      await nextTick()
-
-      expect(wrapper.text()).toContain('$5K')
-    })
-
-    it('should update threshold display when Safe info changes', async () => {
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.text()).toContain('2 of 2 signatures required')
-
-      // Update threshold
-      const updatedSafeInfo = {
-        ...MOCK_DATA.safeInfo,
-        threshold: 1,
-        owners: [MOCK_DATA.safeInfo.owners[0]]
-      }
-      mockSafeInfo.value = updatedSafeInfo
-      await nextTick()
-
-      expect(wrapper.text()).toContain('1 of 1 signatures required')
+      expect(mockOpenSafeAppUrl).toHaveBeenCalledWith(mockUrl)
     })
   })
 
   describe('Edge Cases', () => {
-    it('should handle very large balance numbers', async () => {
-      const safeInfoWithLargeBalance = {
-        ...MOCK_DATA.safeInfo,
-        balance: '999999999.123456789',
-        totals: {
-          USD: {
-            value: 999999999,
-            formated: '$999.9M',
-            id: 'usd',
-            code: 'USD',
-            symbol: '$',
-            price: 1,
-            formatedPrice: '$1'
-          }
-        }
-      }
-      mockSafeInfo.value = safeInfoWithLargeBalance
+    it('should handle total with missing USD data', () => {
+      mockTotal.value = {}
       wrapper = createWrapper()
-      await nextTick()
 
-      expect(wrapper.text()).toContain('$999.9M')
-    })
-
-    it('should handle zero balance', async () => {
-      const safeInfoWithZeroBalance = {
-        ...MOCK_DATA.safeInfo,
-        balance: '0',
-        totals: {
-          USD: {
-            value: 0,
-            formated: '$0',
-            id: 'usd',
-            code: 'USD',
-            symbol: '$',
-            price: 0,
-            formatedPrice: '$0'
-          }
-        }
-      }
-      mockSafeInfo.value = safeInfoWithZeroBalance
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.text()).toContain('$0')
-    })
-
-    it('should handle empty owners array', async () => {
-      const safeInfoWithNoOwners = {
-        ...MOCK_DATA.safeInfo,
-        owners: [],
-        threshold: 0
-      }
-      mockSafeInfo.value = safeInfoWithNoOwners
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.text()).toContain('0 of 0 signatures required')
+      expect(wrapper.text()).toContain('0')
     })
   })
 })
