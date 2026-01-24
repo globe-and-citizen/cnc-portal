@@ -53,6 +53,7 @@ describe('PublishResult.vue', () => {
     currentTeam: {
       teamContracts: Array<{ type: string; address: string }>
     }
+    getContractAddressByType: (type: string) => string | undefined
   }
 
   let publishResultsMock: MockFn
@@ -71,6 +72,12 @@ describe('PublishResult.vue', () => {
     mockTeamStore = {
       currentTeam: {
         teamContracts: [{ type: 'Elections', address: '0xELECTIONSADDRESS000000000000000000000' }]
+      },
+      getContractAddressByType: (type: string) => {
+        if (type === 'Elections') {
+          return '0xELECTIONSADDRESS000000000000000000000'
+        }
+        return undefined
       }
     }
     ;(useToastStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => mockToast)
@@ -135,10 +142,7 @@ describe('PublishResult.vue', () => {
 
     expect(estimateGas).toHaveBeenCalled()
     expect(publishResultsMock).toHaveBeenCalledWith({
-      address:
-        mockTeamStore.currentTeam.teamContracts.find(
-          (c: { type: string; address: string }) => c.type === 'Elections'
-        )?.address ?? '',
+      address: mockTeamStore.getContractAddressByType('Elections') ?? '',
       abi: expect.any(Array),
       functionName: 'publishResults',
       args: [BigInt(42)]

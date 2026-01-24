@@ -1,12 +1,7 @@
 <!-- TransactionsHistorySection.vue -->
 <template>
-  <GenericTransactionHistory
-    :transactions="transactions"
-    title="Bank Transactions History"
-    :currencies="currencies"
-    :show-receipt-modal="true"
-    data-test="bank-transactions"
-  />
+  <GenericTransactionHistory :transactions="transactions" title="Bank Transactions History" :currencies="currencies"
+    :show-receipt-modal="true" data-test="bank-transactions" />
 </template>
 
 <script setup lang="ts">
@@ -31,9 +26,7 @@ const currencies = computed(() => {
 })
 
 const contractAddress = computed(
-  () =>
-    teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'Bank')
-      ?.address as Address
+  () => teamStore.getContractAddressByType('Bank') as Address
 )
 
 const { result, error } = useQuery(
@@ -68,14 +61,14 @@ const { result, error } = useQuery(
 const transactions = computed<BankTransaction[]>(() =>
   result.value?.transactions
     ? result.value.transactions.map((transaction: Record<string, string>) => ({
-        txHash: transaction.transactionHash,
-        date: new Date(Number(transaction.blockTimestamp) * 1000).toLocaleString('en-US'),
-        from: transaction.from,
-        to: transaction.to,
-        amount: formatEtherUtil(BigInt(transaction.amount ?? '0'), transaction.tokenAddress ?? ''),
-        token: tokenSymbol(transaction.tokenAddress ?? ''),
-        type: transaction.transactionType
-      }))
+      txHash: transaction.transactionHash,
+      date: new Date(Number(transaction.blockTimestamp) * 1000).toLocaleString('en-US'),
+      from: transaction.from,
+      to: transaction.to,
+      amount: formatEtherUtil(BigInt(transaction.amount ?? '0'), transaction.tokenAddress ?? ''),
+      token: tokenSymbol(transaction.tokenAddress ?? ''),
+      type: transaction.transactionType
+    }))
     : []
 )
 

@@ -1,11 +1,6 @@
 <template>
-  <OverviewCard
-    :title="totalMonthlySpentAmount"
-    subtitle="Month Spent"
-    variant="warning"
-    :card-icon="cartIcon"
-    :loading="loading"
-  >
+  <OverviewCard :title="totalMonthlySpentAmount" subtitle="Month Spent" variant="warning" :card-icon="cartIcon"
+    :loading="loading">
     <div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
       <div>
@@ -32,10 +27,7 @@ const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
 const contractAddress = computed(
-  () =>
-    teamStore.currentTeam?.teamContracts.find(
-      (contract) => contract.type === 'ExpenseAccountEIP712'
-    )?.address
+  () => teamStore.getContractAddressByType('ExpenseAccountEIP712')
 )
 
 const now = new Date()
