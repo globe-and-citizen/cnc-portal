@@ -35,9 +35,13 @@ vi.mock('@/composables/safe', () => ({
   openSafeAppUrl: mockOpenSafeAppUrl
 }))
 
-vi.mock('@wagmi/vue', () => ({
-  useChainId: mockUseChainId
-}))
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useChainId: mockUseChainId
+  }
+})
 
 vi.mock('@vueuse/core', () => ({
   useStorage: vi.fn()
