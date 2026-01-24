@@ -76,9 +76,10 @@
       @reset="() => closeDepositModal()"
     >
       <DepositBankForm
-        v-if="safeAddress"
+        title="Deposit to Safe Contract"
+        v-if="teamStore.currentTeamMeta?.data?.safeAddress"
         @close-modal="closeDepositModal"
-        :bank-address="safeAddress"
+        :bank-address="teamStore.currentTeamMeta?.data?.safeAddress"
       />
     </ModalComponent>
 
@@ -136,13 +137,7 @@ const currency = useStorage('currency', {
   symbol: '$'
 })
 
-const props = defineProps<{
-  bankAddress?: Address
-}>()
-
 const teamStore = useTeamStore()
-
-const safeAddress = computed(() => teamStore.currentTeam?.safeAddress)
 
 const { total, balances, isLoading } = useContractBalance(
   computed(() => teamStore.currentTeam?.safeAddress || ('0x' as Address))
