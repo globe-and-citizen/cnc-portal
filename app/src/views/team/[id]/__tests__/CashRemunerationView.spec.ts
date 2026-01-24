@@ -2,9 +2,6 @@ import { describe, expect, it, vi } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 import CashRemunerationView from '../Accounts/CashRemunerationView.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
-import { parseEther } from 'viem'
-import { mockTeamStore } from '@/tests/mocks/store.mock'
 
 describe('CashRemunerationView.vue', () => {
   const createComponent = () => {
