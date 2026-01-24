@@ -1,8 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
-import { ref } from 'vue'
-import type { Team, Notification } from '@/types'
 
 const mockNotifications = [
   {
@@ -37,13 +35,7 @@ const mockNotifications = [
   }
 ]
 
-interface ComponentData {
-  getWageClaimAPI: (throwOnFailed?: boolean) => Promise<unknown>
-  updateEndPoint: string
-  team: Partial<Team>
-  wageClaim: unknown
-  getResource: (notification: Notification) => string[]
-}
+
 vi.mock('@/stores', () => ({
   useUserDataStore: vi.fn(() => ({ address: '0xUserAddress' })),
   useToastStore: vi.fn(() => ({
@@ -52,27 +44,6 @@ vi.mock('@/stores', () => ({
   })),
 }))
 
-const mockUseWriteContract = {
-  writeContract: vi.fn(),
-  error: ref(null),
-  isPending: ref(false),
-  data: ref(null)
-}
-
-const mockUseWaitForTransactionReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false)
-}
-
-// Mocking wagmi functions
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useWriteContract: vi.fn(() => mockUseWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
-  }
-})
 
 vi.mock('vue-router', () => ({
   useRouter: vi.fn(),
@@ -83,32 +54,6 @@ vi.mock('vue-router', () => ({
   }))
 }))
 
-const executeMock = vi.fn()
-
-vi.mock('@/composables/useCustomFetch', () => ({
-  useCustomFetch: () => {
-    const data = ref<unknown>(null)
-    return {
-      json: () => ({
-        data: ref({ data: mockNotifications }),
-        execute: vi.fn(),
-        error: ref(null)
-      }),
-      put: () => ({
-        json: () => ({
-          execute: vi.fn()
-        })
-      }),
-      get: () => ({
-        json: () => ({
-          data,
-          execute: executeMock,
-          error: ref(null)
-        })
-      })
-    }
-  }
-}))
 
 describe('NotificationDropdown.vue', () => {
   let wrapper: ReturnType<typeof mount>
