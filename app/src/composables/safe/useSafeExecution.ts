@@ -4,8 +4,8 @@ import { isAddress } from 'viem'
 import { useToastStore } from '@/stores'
 import { useExecuteTransactionMutation } from '@/queries/safe.queries'
 import { useSafeSDK } from './useSafeSdk'
-import type { SafeTransaction } from '@/types/safe'
-import type { SafeTransaction as ProtocolSafeTransaction } from '@safe-global/types-kit'
+import type { SafeTransaction, SafeMultisigTransactionResponse } from '@/types/safe'
+import { transformToSafeMultisigResponse } from '@/utils/safe'
 
 /**
  * Execute Safe transactions
@@ -65,8 +65,10 @@ export function useSafeExecution() {
       // Use centralized SDK manager
       const safeSdk = await loadSafe(safeAddress)
 
+      const sdkTransactionData: SafeMultisigTransactionResponse =
+        transformToSafeMultisigResponse(transactionData)
       // Execute the transaction on-chain
-      const txResponse = await safeSdk.executeTransaction(transactionData)
+      const txResponse = await safeSdk.executeTransaction(sdkTransactionData)
       const txHash =
         (txResponse.transactionResponse as { hash?: string } | undefined)?.hash || txResponse.hash
 

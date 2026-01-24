@@ -114,9 +114,11 @@ import { useSafeInfoQuery } from '@/queries/safe.queries'
 const teamStore = useTeamStore()
 const { address: connectedAddress } = useAccount()
 
-const { data: safeInfo, error } = useSafeInfoQuery(
-  computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
-)
+const {
+  data: safeInfo,
+  error,
+  isLoading
+} = useSafeInfoQuery(computed(() => teamStore.currentTeamMeta?.data?.safeAddress))
 
 // Computed properties
 const isConnectedUserOwner = computed(() => {

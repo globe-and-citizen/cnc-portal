@@ -96,7 +96,7 @@
 import { watch, computed, ref } from 'vue'
 import { useAccount } from '@wagmi/vue'
 import type { SafeTransaction } from '@/types/safe'
-import { formatCurrencyShort } from '@/utils'
+
 // Components
 import TableComponent from '@/components/TableComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
@@ -277,16 +277,4 @@ watch(error, (newError) => {
     console.error('Error loading safe transactions:', newError)
   }
 })
-
-// Debug transaction changes
-watch(
-  transactions,
-  (newTransactions) => {
-    console.log('Safe transactions updated:', {
-      count: newTransactions?.length || 0,
-      transactions: newTransactions
-    })
-  },
-  { immediate: true }
-)
 </script>

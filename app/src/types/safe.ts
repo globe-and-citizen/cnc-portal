@@ -1,3 +1,8 @@
+import type {
+  SafeMultisigTransactionResponse as SafeSdkMultisigTransactionResponse,
+  SignatureType
+} from '@safe-global/types-kit'
+
 export interface SafeFiatTotal {
   value: number
   formated: string
@@ -43,6 +48,8 @@ export interface ProposeTransactionParams {
   origin?: string
 }
 
+export type SafeMultisigTransactionResponse = SafeSdkMultisigTransactionResponse
+
 export interface SafeTransactionDataDecoded {
   method: string
   parameters: Array<{
@@ -56,13 +63,13 @@ export interface SafeTransaction {
   safe: string
   to: string
   value: string
-  data: string
+  data?: string | null
   operation: number
-  safeTxGas: string
-  baseGas: string
-  gasPrice: string
+  safeTxGas: string | number
+  baseGas: string | number
+  gasPrice: string | number
   gasToken: string
-  refundReceiver: string
+  refundReceiver?: string | null
   nonce: number
   executionDate: string | null
   submissionDate: string
@@ -70,20 +77,31 @@ export interface SafeTransaction {
   blockNumber: number | null
   transactionHash: string | null
   safeTxHash: string
+  proposer?: string | null
+  proposedByDelegate?: string | boolean | null
   executor: string | null
   isExecuted: boolean
   isSuccessful: boolean | null
+  ethGasPrice?: string | null
+  maxFeePerGas?: string | null
+  maxPriorityFeePerGas?: string | null
+  gasUsed?: number | null
+  fee?: string | null
+  origin?: string | null
   confirmationsRequired: number
   confirmations: SafeConfirmation[]
-  dataDecoded?: SafeTransactionDataDecoded
+  dataDecoded?: SafeTransactionDataDecoded | null
+  trusted?: boolean
+  signatures?: string | null
 }
 
 export interface SafeConfirmation {
   owner: string
   submissionDate: string
   transactionHash: string | null
+  confirmationType?: string
   signature: string
-  signatureType: string
+  signatureType: SignatureType | string
 }
 
 export interface SafeSignature {
@@ -156,12 +174,6 @@ export const CHAIN_NAMES: Record<number, string> = {
   42161: 'arbitrum'
 }
 
-export interface SafeTransactionConfirmation {
-  owner: string
-  submissionDate: string
-  transactionHash: string | null
-  signature: string
-  signatureType: string
-}
+export type SafeTransactionConfirmation = SafeConfirmation
 
 export type SafeTransactionConfirmations = SafeTransactionConfirmation[]
