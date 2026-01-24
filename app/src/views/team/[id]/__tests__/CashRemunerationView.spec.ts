@@ -22,12 +22,10 @@ describe('CashRemunerationView.vue', () => {
     expect(genericTokenHoldingSection.props('address')).toBe('0xTeamContractAddress')
   })
 
-
   it('should render CashRemunerationOverview component', () => {
     const wrapper = createComponent()
     const overview = wrapper.findComponent({ name: 'CashRemunerationOverview' })
 
     expect(overview.exists()).toBeTruthy()
   })
-
 })

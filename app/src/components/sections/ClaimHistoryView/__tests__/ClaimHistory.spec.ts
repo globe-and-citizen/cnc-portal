@@ -23,7 +23,7 @@ vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
   return {
     ...actual,
-  useRoute: () => mockRoute
+    useRoute: () => mockRoute
   }
 })
 // --- Mock stores ---

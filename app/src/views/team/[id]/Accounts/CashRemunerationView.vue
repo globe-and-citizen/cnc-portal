@@ -6,10 +6,17 @@
       <div class="flex flex-wrap gap-2 sm:gap-4">
         <span class="text-sm">Contract Address </span>
 
-        <AddressToolTip v-if="cashRemunerationAddress" :address="cashRemunerationAddress" class="text-sm font-bold" />
+        <AddressToolTip
+          v-if="cashRemunerationAddress"
+          :address="cashRemunerationAddress"
+          class="text-sm font-bold"
+        />
       </div>
     </div>
-    <GenericTokenHoldingsSection v-if="cashRemunerationAddress" :address="cashRemunerationAddress" />
+    <GenericTokenHoldingsSection
+      v-if="cashRemunerationAddress"
+      :address="cashRemunerationAddress"
+    />
     <CRWeeklyClaimOwnerHeader />
 
     <ContractOwnerCard v-if="cashRemunerationAddress" :contractAddress="cashRemunerationAddress" />
@@ -32,5 +39,4 @@ const teamStore = useTeamStore()
 const cashRemunerationAddress = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
 )
-
 </script>
