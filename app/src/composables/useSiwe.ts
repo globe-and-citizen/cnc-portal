@@ -22,7 +22,11 @@ export function useSiwe() {
 
   const connection = useConnection()
   const chainId = useChainId()
-  const { data: signature, error: signMessageError, mutateAsync: signMessageAsync } = useSignMessage()
+  const {
+    data: signature,
+    error: signMessageError,
+    mutateAsync: signMessageAsync
+  } = useSignMessage()
   const { performChecks, isSuccess: isSuccessWalletCheck } = useWalletChecks()
 
   //#endregion

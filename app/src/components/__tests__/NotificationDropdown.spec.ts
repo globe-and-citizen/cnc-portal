@@ -35,15 +35,13 @@ const mockNotifications = [
   }
 ]
 
-
 vi.mock('@/stores', () => ({
   useUserDataStore: vi.fn(() => ({ address: '0xUserAddress' })),
   useToastStore: vi.fn(() => ({
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn()
-  })),
+  }))
 }))
-
 
 vi.mock('vue-router', () => ({
   useRouter: vi.fn(),
@@ -53,7 +51,6 @@ vi.mock('vue-router', () => ({
     }
   }))
 }))
-
 
 describe('NotificationDropdown.vue', () => {
   let wrapper: ReturnType<typeof mount>

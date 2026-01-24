@@ -8,8 +8,11 @@
         </div>
       </div>
     </div>
-    <ul tabindex="0" class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]"
-      data-test="notification-dropdown">
+    <ul
+      tabindex="0"
+      class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]"
+      data-test="notification-dropdown"
+    >
       <li v-for="notification in paginatedNotifications" :key="notification.id">
         <a @click="handleNotification(notification)" :data-test="`notification-${notification.id}`">
           <div class="notification__body">
@@ -21,15 +24,27 @@
         </a>
       </li>
       <!-- Pagination Controls -->
-      <div class="join flex justify-between items-center p-2" v-if="paginatedNotifications.length > 0">
-        <ButtonUI variant="primary" size="xs" class="join-item" :class="currentPage === 1 ? 'btn-disabled' : ''"
-          @click="currentPage > 1 ? currentPage-- : currentPage">
+      <div
+        class="join flex justify-between items-center p-2"
+        v-if="paginatedNotifications.length > 0"
+      >
+        <ButtonUI
+          variant="primary"
+          size="xs"
+          class="join-item"
+          :class="currentPage === 1 ? 'btn-disabled' : ''"
+          @click="currentPage > 1 ? currentPage-- : currentPage"
+        >
           <IconifyIcon icon="heroicons:chevron-left" class="size-6" />
         </ButtonUI>
         <span class="join-item btn-primary"> {{ currentPage }} / {{ totalPages }} </span>
-        <ButtonUI variant="primary" size="xs" class="join-item btn"
+        <ButtonUI
+          variant="primary"
+          size="xs"
+          class="join-item btn"
           :class="currentPage == totalPages ? 'btn-disabled' : ''"
-          @click="currentPage < totalPages ? currentPage++ : currentPage">
+          @click="currentPage < totalPages ? currentPage++ : currentPage"
+        >
           <IconifyIcon icon="heroicons:chevron-right" class="size-6" />
         </ButtonUI>
       </div>
@@ -42,7 +57,10 @@ import { type Notification } from '@/types'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from './ButtonUI.vue'
 import { useRouter } from 'vue-router'
-import { useNotificationsQuery, useUpdateNotificationMutation } from '@/queries/notification.queries'
+import {
+  useNotificationsQuery,
+  useUpdateNotificationMutation
+} from '@/queries/notification.queries'
 
 const router = useRouter()
 const currentPage = ref(1)
@@ -57,9 +75,9 @@ const totalPages = computed(() => {
 })
 
 const isUnread = computed(() => {
-  const idx = notifications.value?.findIndex(
-    (notification: Notification) => notification.isRead === false
-  ) ?? -1
+  const idx =
+    notifications.value?.findIndex((notification: Notification) => notification.isRead === false) ??
+    -1
   return idx > -1
 })
 
@@ -90,5 +108,4 @@ const handleNotification = async (notification: Notification) => {
   await updateNotification(notification.id)
   redirect(notification)
 }
-
 </script>

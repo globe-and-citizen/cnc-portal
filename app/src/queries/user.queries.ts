@@ -8,7 +8,7 @@ import type { Address } from 'viem'
 /**
  * Fetch user data by address
  */
-export const useUserQuery = (address: MaybeRefOrGetter<Address|undefined>) => {
+export const useUserQuery = (address: MaybeRefOrGetter<Address | undefined>) => {
   return useQuery({
     queryKey: ['user', { address }],
     queryFn: async () => {
@@ -24,7 +24,7 @@ export const useUserQuery = (address: MaybeRefOrGetter<Address|undefined>) => {
 /**
  * Fetch user nonce by address (for SIWE)
  */
-export const useUserNonceQuery = (address: MaybeRefOrGetter<Address|undefined>) => {
+export const useUserNonceQuery = (address: MaybeRefOrGetter<Address | undefined>) => {
   return useQuery({
     queryKey: ['user', 'nonce', { address }],
     queryFn: async () => {
