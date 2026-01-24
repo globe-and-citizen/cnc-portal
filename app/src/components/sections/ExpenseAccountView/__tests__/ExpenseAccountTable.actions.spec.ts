@@ -9,7 +9,7 @@ import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import * as utils from '@/utils'
-import { useTanstackQuery } from '@/composables'
+import { useExpensesQuery } from '@/queries'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 
 const mocks = vi.hoisted(() => ({
@@ -169,11 +169,11 @@ vi.mock('@/composables/useCustomFetch', () => {
   }
 })
 
-vi.mock('@/composables', async (importOriginal) => {
+vi.mock('@/queries', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useTanstackQuery: vi.fn()
+    useExpensesQuery: vi.fn()
   }
 })
 
@@ -211,10 +211,10 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
   }
 
   beforeEach(() => {
-    vi.mocked(useTanstackQuery).mockReturnValue({
+    vi.mocked(useExpensesQuery).mockReturnValue({
       data: ref(mockApprovals),
       isLoading: ref(false)
-    } as ReturnType<typeof useTanstackQuery>)
+    } as ReturnType<typeof useExpensesQuery>)
   })
 
   describe('Action Buttons and Loading States', () => {

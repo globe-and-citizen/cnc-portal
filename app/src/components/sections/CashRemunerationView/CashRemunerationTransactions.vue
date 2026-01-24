@@ -5,7 +5,8 @@
     title="Cash Remuneration Transactions History"
     :currencies="currencies"
     :show-receipt-modal="true"
-  ></GenericTransactionHistory>
+  >
+  </GenericTransactionHistory>
 </template>
 <script setup lang="ts">
 import GenericTransactionHistory from '@/components/GenericTransactionHistory.vue'
@@ -24,9 +25,7 @@ const currencies = computed(() => {
   const defaultCurrency = currencyStore.localCurrency?.code
   return defaultCurrency === 'USD' ? ['USD'] : ['USD', defaultCurrency]
 })
-const contractAddress = teamStore.currentTeamMeta.data?.teamContracts.find(
-  (contract) => contract.type === 'CashRemunerationEIP712'
-)?.address as Address
+const contractAddress = teamStore.getContractAddressByType('CashRemunerationEIP712') as Address
 
 const { result, error } = useQuery(
   gql`

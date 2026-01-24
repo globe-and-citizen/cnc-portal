@@ -3,11 +3,12 @@ import apiClient from '@/lib/axios'
 import type { User } from '@/types/user'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
+import type { Address } from 'viem'
 
 /**
  * Fetch user data by address
  */
-export const useUserQuery = (address: MaybeRefOrGetter<string>) => {
+export const useUserQuery = (address: MaybeRefOrGetter<Address | undefined>) => {
   return useQuery({
     queryKey: ['user', { address }],
     queryFn: async () => {
@@ -23,7 +24,7 @@ export const useUserQuery = (address: MaybeRefOrGetter<string>) => {
 /**
  * Fetch user nonce by address (for SIWE)
  */
-export const useUserNonceQuery = (address: MaybeRefOrGetter<string>) => {
+export const useUserNonceQuery = (address: MaybeRefOrGetter<Address | undefined>) => {
   return useQuery({
     queryKey: ['user', 'nonce', { address }],
     queryFn: async () => {

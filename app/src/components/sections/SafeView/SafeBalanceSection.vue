@@ -136,6 +136,10 @@ const currency = useStorage('currency', {
   symbol: '$'
 })
 
+const props = defineProps<{
+  bankAddress?: Address
+}>()
+
 const teamStore = useTeamStore()
 
 const safeAddress = computed(() => teamStore.currentTeam?.safeAddress)
