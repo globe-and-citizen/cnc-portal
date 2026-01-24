@@ -100,6 +100,10 @@ export const mockWeeklyClaimData: WeeklyClaim[] = [
     memberAddress: '0x1234567890123456789012345678901234567890',
     teamId: 1,
     hoursWorked: 40,
+    data: {},
+    signature: null,
+    wageId: 1,
+    wage: mockWageData[0] as Wage,
     claims: [
       {
         id: 1,

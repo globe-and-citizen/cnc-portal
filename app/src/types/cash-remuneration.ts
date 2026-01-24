@@ -66,7 +66,7 @@ export interface WeeklyClaim {
   status: 'signed' | 'withdrawn' | 'pending' | 'disabled'
   weekStart: string // ISO date string
   data: {
-    ownerAddress: Address
+    ownerAddress?: Address
   }
   memberAddress: Address
   teamId: number

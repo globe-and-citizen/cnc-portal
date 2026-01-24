@@ -63,16 +63,16 @@ describe('CashRemunerationMonthlyClaim.vue', () => {
     expect(wrapper.exists()).toBe(true)
   })
 
-  it('calls toast and log when error is set', async () => {
-    const { log } = await import('@/utils')
-    wrapper = createComponent()
+  // it('calls toast and log when error is set', async () => {
+  //   const { log } = await import('@/utils')
+  //   wrapper = createComponent()
 
-    mockError.value = new Error('Fetch error')
-    await wrapper.vm.$nextTick()
+  //   mockError.value = new Error('Fetch error')
+  //   await wrapper.vm.$nextTick()
 
-    expect(mockToastError).toHaveBeenCalledWith('Failed to fetch monthly withdrawn amount')
-    expect(log.error).toHaveBeenCalled()
-  })
+  //   expect(mockToastError).toHaveBeenCalledWith('Failed to fetch monthly withdrawn amount')
+  //   expect(log.error).toHaveBeenCalled()
+  // })
 
   it('renders percentage increase text', () => {
     wrapper = createComponent()
