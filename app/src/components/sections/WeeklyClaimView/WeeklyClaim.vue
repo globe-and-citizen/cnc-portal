@@ -102,6 +102,7 @@ import { RouterLink } from 'vue-router'
 // import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import { useTeamWeeklyClaimsQuery } from '@/queries'
 import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
+import type { Address } from 'viem'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
@@ -115,7 +116,7 @@ function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
 const teamStore = useTeamStore()
 // const userStore = useUserDataStore()
 const props = defineProps<{
-  memberAddress?: string
+  memberAddress?: Address
   singleUser?: boolean
 }>()
 

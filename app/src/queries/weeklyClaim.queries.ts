@@ -4,38 +4,7 @@ import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 import type { AxiosError } from 'axios'
 import type { Address } from 'viem'
-
-/**
- * Weekly Claim Data Types
- */
-export interface Claim {
-  id: number
-  hoursWorked: number
-  memo?: string
-  dayWorked: string | Date
-  status: 'pending' | 'signed' | 'withdrawn' | 'disabled'
-  signature?: string | null
-  tokenTx?: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-export interface WeeklyClaim {
-  id: number
-  status: 'pending' | 'signed' | 'withdrawn' | 'disabled'
-  weekStart: string | Date
-  memberAddress: string
-  teamId: number
-  claims?: Claim[]
-  hoursWorked?: number
-  signature?: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-export interface WeeklyClaimWithHours extends WeeklyClaim {
-  hoursWorked: number
-}
+import type { WeeklyClaim } from '@/types/cash-remuneration'
 
 /**
  * Parameters for useTeamWeeklyClaimsQuery
@@ -50,7 +19,7 @@ export interface UseTeamWeeklyClaimsQueryParams {
  * Fetch weekly claims for a team with optional filters
  */
 export const useTeamWeeklyClaimsQuery = (params: UseTeamWeeklyClaimsQueryParams) => {
-  return useQuery<WeeklyClaimWithHours[], AxiosError>({
+  return useQuery<WeeklyClaim[], AxiosError>({
     queryKey: [
       'teamWeeklyClaims',
       {
@@ -74,7 +43,7 @@ export const useTeamWeeklyClaimsQuery = (params: UseTeamWeeklyClaimsQueryParams)
         url += `&status=${statusValue}`
       }
 
-      const { data } = await apiClient.get<WeeklyClaimWithHours[]>(url)
+      const { data } = await apiClient.get<WeeklyClaim[]>(url)
       return data
     },
     enabled: () => !!toValue(params.teamId),
