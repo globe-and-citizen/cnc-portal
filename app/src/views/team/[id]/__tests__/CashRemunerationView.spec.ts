@@ -22,7 +22,7 @@ describe('CashRemunerationView.vue', () => {
     })
 
     expect(genericTokenHoldingSection.exists()).toBeTruthy()
-    expect(genericTokenHoldingSection.props('address')).toBe('0x123')
+    expect(genericTokenHoldingSection.props('address')).toBe('0xTeamContractAddress')
   })
 
 

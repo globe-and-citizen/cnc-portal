@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { vi } from 'vitest'
-import type { Team, Member, Wage, Notification } from '@/types'
+import type { Team, Member, Wage, Notification, WeeklyClaim } from '@/types'
 import type { HealthCheckResponse } from '@/queries/health.queries'
 
 /**
@@ -92,7 +92,7 @@ export const mockHealthCheckData: HealthCheckResponse = {
 /**
  * Weekly Claim Query Mocks
  */
-export const mockWeeklyClaimData = [
+export const mockWeeklyClaimData: WeeklyClaim[] = [
   {
     id: 1,
     status: 'pending' as const,
@@ -105,9 +105,11 @@ export const mockWeeklyClaimData = [
         id: 1,
         hoursWorked: 8,
         dayWorked: '2024-01-01',
-        status: 'pending' as const,
         createdAt: '2024-01-01T08:00:00Z',
-        updatedAt: '2024-01-01T08:00:00Z'
+        updatedAt: '2024-01-01T08:00:00Z',
+        memo: '',
+        wageId: 1,
+        wage: mockWageData[0] as Wage
       }
     ],
     createdAt: '2024-01-01T00:00:00Z',
