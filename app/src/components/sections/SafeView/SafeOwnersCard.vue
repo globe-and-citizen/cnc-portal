@@ -24,7 +24,7 @@
             class="flex items-center gap-1"
           >
             <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4" />
-            Update Threshold
+            Threshold
           </ButtonUI>
         </div>
       </div>
@@ -52,7 +52,7 @@
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <AddressToolTip :address="owner" />
+              <AddressToolTip :address="owner" slice />
               <span
                 v-if="isCurrentUserAddress(owner)"
                 class="text-xs bg-primary/10 text-primary px-2 py-1 rounded"
@@ -63,7 +63,7 @@
             <div class="text-xs text-gray-500 mt-1">Owner</div>
           </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center text-xs gap-2">
           <RemoveOwnerButton
             :owner-address="owner"
             :safe-address="teamStore.currentTeam?.safeAddress!"
@@ -114,11 +114,9 @@ import { useSafeInfoQuery } from '@/queries/safe.queries'
 const teamStore = useTeamStore()
 const { address: connectedAddress } = useAccount()
 
-const {
-  data: safeInfo,
-  isLoading,
-  error
-} = useSafeInfoQuery(computed(() => teamStore.currentTeamMeta?.data?.safeAddress))
+const { data: safeInfo, error } = useSafeInfoQuery(
+  computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
+)
 
 // Computed properties
 const isConnectedUserOwner = computed(() => {

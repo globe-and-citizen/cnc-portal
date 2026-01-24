@@ -20,6 +20,38 @@ export interface SafeInfo {
   version: string
 }
 
+export interface SafeTransactionProposal {
+  to: string
+  value: string
+  data: string
+  operation: number
+  safeTxGas: string
+  baseGas: string
+  gasPrice: string
+  gasToken: string
+  refundReceiver: string
+  nonce: number
+}
+
+export interface ProposeTransactionParams {
+  chainId: number
+  safeAddress: string
+  safeTxHash: string
+  transactionData: SafeTransactionProposal
+  sender: string
+  signature: string
+  origin?: string
+}
+
+export interface SafeTransactionDataDecoded {
+  method: string
+  parameters: Array<{
+    name: string
+    type: string
+    value: string
+  }>
+}
+
 export interface SafeTransaction {
   safe: string
   to: string
@@ -41,7 +73,9 @@ export interface SafeTransaction {
   executor: string | null
   isExecuted: boolean
   isSuccessful: boolean | null
+  confirmationsRequired: number
   confirmations: SafeConfirmation[]
+  dataDecoded?: SafeTransactionDataDecoded
 }
 
 export interface SafeConfirmation {
@@ -121,3 +155,13 @@ export const CHAIN_NAMES: Record<number, string> = {
   80002: 'amoy',
   42161: 'arbitrum'
 }
+
+export interface SafeTransactionConfirmation {
+  owner: string
+  submissionDate: string
+  transactionHash: string | null
+  signature: string
+  signatureType: string
+}
+
+export type SafeTransactionConfirmations = SafeTransactionConfirmation[]
