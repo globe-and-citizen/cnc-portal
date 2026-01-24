@@ -81,7 +81,10 @@ const {
 } = useReadContract({
   functionName: 'owner',
   address: expenseAccountEip712Address,
-  abi: EXPENSE_ACCOUNT_EIP712_ABI
+  abi: EXPENSE_ACCOUNT_EIP712_ABI,
+  query: {
+    staleTime: Infinity,
+  }
 })
 
 //#region Functions
