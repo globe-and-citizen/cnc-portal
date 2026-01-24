@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref, type Ref } from 'vue'
-import { useSafeProposal } from '../useSafeProposal'
+import { useSafeTransfer } from '../useSafeTransfer'
 
 // Define proper types for mocks following CNC Portal standards
 interface MockConnection {
@@ -8,39 +8,17 @@ interface MockConnection {
   address: Ref<string | null>
 }
 
-interface SafeTransactionPayload {
-  to: string
-  value: string
-  data: string
-  operation: number
-}
-
-interface SafeTransactionResponse {
-  data: SafeTransactionPayload
-}
-
 interface MockSafeSDK {
-  createTransaction: (params: {
-    transactions: SafeTransactionPayload[]
-  }) => Promise<SafeTransactionResponse>
-  getTransactionHash: (transaction: SafeTransactionResponse) => Promise<string>
-  signHash: (hash: string) => Promise<{ data: string }>
+  getThreshold: () => Promise<number>
+  createTransaction: (params: { transactions: unknown[] }) => Promise<{ data: unknown }>
+  getTransactionHash: (transaction: unknown) => Promise<string>
+  executeTransaction: (
+    transaction: unknown
+  ) => Promise<{ hash: string; transactionResponse?: { hash?: string } }>
 }
 
 interface MockMutation {
-  mutateAsync: (params: {
-    chainId: number
-    safeAddress: string
-    transactionData: SafeTransactionPayload
-    signature: { data: string; signer: string }
-  }) => Promise<void>
-}
-
-interface TransactionData {
-  to: string
-  value: string
-  data: string
-  operation?: number
+  mutateAsync: (params: Record<string, unknown>) => Promise<void>
 }
 
 // Hoisted mock variables
@@ -50,7 +28,8 @@ const {
   mockUseSafeSDK,
   mockLoadSafe,
   mockSafeSdk,
-  mockMutation,
+  mockExecuteMutation,
+  mockProposeTransaction,
   mockAddSuccessToast,
   mockAddErrorToast
 } = vi.hoisted(() => ({
@@ -59,26 +38,15 @@ const {
   mockUseSafeSDK: vi.fn(),
   mockLoadSafe: vi.fn<[string], Promise<MockSafeSDK>>(),
   mockSafeSdk: {
-    createTransaction: vi.fn<
-      [{ transactions: SafeTransactionPayload[] }],
-      Promise<SafeTransactionResponse>
-    >(),
-    getTransactionHash: vi.fn<[SafeTransactionResponse], Promise<string>>(),
-    signHash: vi.fn<[string], Promise<{ data: string }>>()
+    getThreshold: vi.fn(),
+    createTransaction: vi.fn(),
+    getTransactionHash: vi.fn(),
+    executeTransaction: vi.fn()
   } as MockSafeSDK,
-  mockMutation: {
-    mutateAsync: vi.fn<
-      [
-        {
-          chainId: number
-          safeAddress: string
-          transactionData: SafeTransactionPayload
-          signature: { data: string; signer: string }
-        }
-      ],
-      Promise<void>
-    >()
+  mockExecuteMutation: {
+    mutateAsync: vi.fn()
   } as MockMutation,
+  mockProposeTransaction: vi.fn(),
   mockAddSuccessToast: vi.fn(),
   mockAddErrorToast: vi.fn()
 }))
@@ -90,11 +58,17 @@ vi.mock('@wagmi/vue', () => ({
 }))
 
 vi.mock('@/queries/safe.queries', () => ({
-  useProposeTransactionMutation: () => mockMutation
+  useExecuteTransactionMutation: () => mockExecuteMutation
 }))
 
 vi.mock('../useSafeSdk', () => ({
   useSafeSDK: mockUseSafeSDK
+}))
+
+vi.mock('../useSafeProposal', () => ({
+  useSafeProposal: () => ({
+    proposeTransaction: mockProposeTransaction
+  })
 }))
 
 vi.mock('@/stores', () => ({
@@ -108,33 +82,26 @@ vi.mock('viem', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    isAddress: vi.fn((address: string) => /^0x[a-fA-F0-9]{40}$/.test(address))
+    isAddress: vi.fn((address: string) => /^0x[a-fA-F0-9]{40}$/.test(address)),
+    parseEther: vi.fn((amount: string) => BigInt(parseFloat(amount) * 10 ** 18)),
+    encodeFunctionData: vi.fn(() => '0xmockedTransferData'),
+    erc20Abi: []
   }
 })
 
 // Test constants
 const MOCK_DATA = {
   validSafeAddress: '0x1111111111111111111111111111111111111111',
-  invalidSafeAddress: 'invalid-address',
+  validRecipient: '0x2222222222222222222222222222222222222222',
+  validTokenAddress: '0x3333333333333333333333333333333333333333',
+  invalidAddress: 'invalid-address',
   connectedAddress: '0x0000000000000000000000000000000000000001',
+  amount: '1.5',
   safeTxHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
-  signature: '0xsig123456',
-  safeTransaction: {
-    data: {
-      to: '0x1234567890123456789012345678901234567890',
-      value: '1000000000000000000',
-      data: '0xabcdef',
-      operation: 0
-    } as SafeTransactionPayload
-  } as SafeTransactionResponse,
-  transactionData: {
-    to: '0x1234567890123456789012345678901234567890',
-    value: '1000000000000000000',
-    data: '0xabcdef'
-  } as TransactionData
+  txHash: '0x9876543210987654321098765432109876543210987654321098765432109876'
 } as const
 
-describe('useSafeProposal', () => {
+describe('useSafeTransfer', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
@@ -153,24 +120,50 @@ describe('useSafeProposal', () => {
     mockLoadSafe.mockResolvedValue(mockSafeSdk)
 
     // Setup default Safe SDK responses
-    mockSafeSdk.createTransaction.mockResolvedValue(MOCK_DATA.safeTransaction)
+    mockSafeSdk.getThreshold.mockResolvedValue(2)
+    mockSafeSdk.createTransaction.mockResolvedValue({ data: {} })
     mockSafeSdk.getTransactionHash.mockResolvedValue(MOCK_DATA.safeTxHash)
-    mockSafeSdk.signHash.mockResolvedValue({ data: MOCK_DATA.signature })
+    mockSafeSdk.executeTransaction.mockResolvedValue({ hash: MOCK_DATA.txHash })
 
-    mockMutation.mutateAsync.mockResolvedValue(undefined)
+    mockProposeTransaction.mockResolvedValue(MOCK_DATA.safeTxHash)
+    mockExecuteMutation.mutateAsync.mockResolvedValue(undefined)
   })
 
   describe('Input Validation', () => {
     it('should reject invalid Safe address', async () => {
-      const { proposeTransaction } = useSafeProposal()
+      const { transferFromSafe } = useSafeTransfer()
 
-      const result = await proposeTransaction(
-        MOCK_DATA.invalidSafeAddress,
-        MOCK_DATA.transactionData
-      )
+      const result = await transferFromSafe(MOCK_DATA.invalidAddress, {
+        to: MOCK_DATA.validRecipient,
+        amount: MOCK_DATA.amount
+      })
 
       expect(result).toBeNull()
       expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid Safe address')
+    })
+
+    it('should reject invalid recipient address', async () => {
+      const { transferFromSafe } = useSafeTransfer()
+
+      const result = await transferFromSafe(MOCK_DATA.validSafeAddress, {
+        to: MOCK_DATA.invalidAddress,
+        amount: MOCK_DATA.amount
+      })
+
+      expect(result).toBeNull()
+      expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid recipient address')
+    })
+
+    it('should reject invalid amount', async () => {
+      const { transferFromSafe } = useSafeTransfer()
+
+      const result = await transferFromSafe(MOCK_DATA.validSafeAddress, {
+        to: MOCK_DATA.validRecipient,
+        amount: '0'
+      })
+
+      expect(result).toBeNull()
+      expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid transfer amount')
     })
 
     it('should reject when wallet is not connected', async () => {
@@ -179,120 +172,103 @@ describe('useSafeProposal', () => {
         address: ref(null)
       })
 
-      const { proposeTransaction } = useSafeProposal()
+      const { transferFromSafe } = useSafeTransfer()
 
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
-
-      expect(result).toBeNull()
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Please connect your wallet')
-    })
-
-    it('should reject when wallet address is missing', async () => {
-      mockUseConnection.mockReturnValue({
-        isConnected: ref(true),
-        address: ref(null)
+      const result = await transferFromSafe(MOCK_DATA.validSafeAddress, {
+        to: MOCK_DATA.validRecipient,
+        amount: MOCK_DATA.amount
       })
-
-      const { proposeTransaction } = useSafeProposal()
-
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
 
       expect(result).toBeNull()
       expect(mockAddErrorToast).toHaveBeenCalledWith('Please connect your wallet')
     })
   })
 
-  describe('Successful Proposal', () => {
-    it('should propose transaction successfully with default operation', async () => {
-      const { proposeTransaction } = useSafeProposal()
-
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
-
-      expect(result).toBe(MOCK_DATA.safeTxHash)
-      expect(mockLoadSafe).toHaveBeenCalledWith(MOCK_DATA.validSafeAddress)
-      expect(mockSafeSdk.createTransaction).toHaveBeenCalledWith({
-        transactions: [
-          {
-            to: MOCK_DATA.transactionData.to,
-            value: MOCK_DATA.transactionData.value,
-            data: MOCK_DATA.transactionData.data,
-            operation: 0 // Default operation
-          }
-        ]
-      })
-      expect(mockSafeSdk.getTransactionHash).toHaveBeenCalledWith(MOCK_DATA.safeTransaction)
-      expect(mockSafeSdk.signHash).toHaveBeenCalledWith(MOCK_DATA.safeTxHash)
-      expect(mockMutation.mutateAsync).toHaveBeenCalledWith({
-        chainId: 137,
-        safeAddress: MOCK_DATA.validSafeAddress,
-        transactionData: MOCK_DATA.safeTransaction.data,
-        signature: {
-          data: MOCK_DATA.signature,
-          signer: MOCK_DATA.connectedAddress
-        }
-      })
-      expect(mockAddSuccessToast).toHaveBeenCalledWith('Transaction proposed successfully')
+  describe('Transfer with Threshold >= 2 (Proposal)', () => {
+    beforeEach(() => {
+      mockSafeSdk.getThreshold.mockResolvedValue(2)
     })
 
-    it('should propose transaction successfully with custom operation', async () => {
-      const transactionWithOperation = {
-        ...MOCK_DATA.transactionData,
-        operation: 1 // Delegate call
-      }
+    it('should propose native transfer successfully', async () => {
+      const { transferNative } = useSafeTransfer()
 
-      const { proposeTransaction } = useSafeProposal()
-
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, transactionWithOperation)
+      const result = await transferNative(
+        MOCK_DATA.validSafeAddress,
+        MOCK_DATA.validRecipient,
+        MOCK_DATA.amount
+      )
 
       expect(result).toBe(MOCK_DATA.safeTxHash)
-      expect(mockSafeSdk.createTransaction).toHaveBeenCalledWith({
-        transactions: [
-          {
-            to: transactionWithOperation.to,
-            value: transactionWithOperation.value,
-            data: transactionWithOperation.data,
-            operation: 1
-          }
-        ]
-      })
-    })
-
-    it('should handle different chain IDs correctly', async () => {
-      const arbitrumChainId = 42161
-      mockUseChainId.mockReturnValue(ref(arbitrumChainId))
-
-      const { proposeTransaction } = useSafeProposal()
-
-      await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
-
-      expect(mockMutation.mutateAsync).toHaveBeenCalledWith(
+      expect(mockProposeTransaction).toHaveBeenCalledWith(
+        MOCK_DATA.validSafeAddress,
         expect.objectContaining({
-          chainId: arbitrumChainId
+          to: MOCK_DATA.validRecipient,
+          value: expect.any(String),
+          data: '0x',
+          operation: 0
         })
       )
+      expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer proposed successfully (Native)')
     })
 
-    it('should handle zero-value transactions', async () => {
-      const zeroValueTransaction = {
-        ...MOCK_DATA.transactionData,
-        value: '0'
-      }
+    it('should propose token transfer successfully', async () => {
+      const { transferToken } = useSafeTransfer()
 
-      const { proposeTransaction } = useSafeProposal()
-
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, zeroValueTransaction)
+      const result = await transferToken(
+        MOCK_DATA.validSafeAddress,
+        MOCK_DATA.validRecipient,
+        MOCK_DATA.amount,
+        MOCK_DATA.validTokenAddress
+      )
 
       expect(result).toBe(MOCK_DATA.safeTxHash)
-      expect(mockSafeSdk.createTransaction).toHaveBeenCalledWith({
-        transactions: [
-          {
-            to: zeroValueTransaction.to,
-            value: '0',
-            data: zeroValueTransaction.data,
-            operation: 0
-          }
-        ]
-      })
+      expect(mockProposeTransaction).toHaveBeenCalledWith(
+        MOCK_DATA.validSafeAddress,
+        expect.objectContaining({
+          to: MOCK_DATA.validTokenAddress,
+          value: '0',
+          data: '0xmockedTransferData',
+          operation: 0
+        })
+      )
+      expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer proposed successfully (Token)')
+    })
+  })
+
+  describe('Transfer with Threshold = 1 (Direct Execution)', () => {
+    beforeEach(() => {
+      mockSafeSdk.getThreshold.mockResolvedValue(1)
+    })
+
+    it('should execute native transfer directly', async () => {
+      const { transferNative } = useSafeTransfer()
+
+      const result = await transferNative(
+        MOCK_DATA.validSafeAddress,
+        MOCK_DATA.validRecipient,
+        MOCK_DATA.amount
+      )
+
+      expect(result).toBe(MOCK_DATA.txHash)
+      expect(mockSafeSdk.executeTransaction).toHaveBeenCalled()
+      expect(mockExecuteMutation.mutateAsync).toHaveBeenCalled()
+      expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer executed successfully (Native)')
+    })
+
+    it('should execute token transfer directly', async () => {
+      const { transferToken } = useSafeTransfer()
+
+      const result = await transferToken(
+        MOCK_DATA.validSafeAddress,
+        MOCK_DATA.validRecipient,
+        MOCK_DATA.amount,
+        MOCK_DATA.validTokenAddress
+      )
+
+      expect(result).toBe(MOCK_DATA.txHash)
+      expect(mockSafeSdk.executeTransaction).toHaveBeenCalled()
+      expect(mockExecuteMutation.mutateAsync).toHaveBeenCalled()
+      expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer executed successfully (Token)')
     })
   })
 
@@ -302,78 +278,17 @@ describe('useSafeProposal', () => {
       const sdkError = new Error('Safe SDK initialization failed')
       mockLoadSafe.mockRejectedValue(sdkError)
 
-      const { proposeTransaction, error } = useSafeProposal()
+      const { transferFromSafe, error } = useSafeTransfer()
 
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
+      const result = await transferFromSafe(MOCK_DATA.validSafeAddress, {
+        to: MOCK_DATA.validRecipient,
+        amount: MOCK_DATA.amount
+      })
 
       expect(result).toBeNull()
       expect(error.value?.message).toBe('Safe SDK initialization failed')
       expect(mockAddErrorToast).toHaveBeenCalledWith('Safe SDK initialization failed')
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Safe proposal error:', sdkError)
-
-      consoleErrorSpy.mockRestore()
-    })
-
-    it('should handle transaction creation errors', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const txError = new Error('Transaction creation failed')
-      mockSafeSdk.createTransaction.mockRejectedValue(txError)
-
-      const { proposeTransaction, error } = useSafeProposal()
-
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
-
-      expect(result).toBeNull()
-      expect(error.value?.message).toBe('Transaction creation failed')
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Transaction creation failed')
-
-      consoleErrorSpy.mockRestore()
-    })
-
-    it('should handle transaction hash generation errors', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const hashError = new Error('Hash generation failed')
-      mockSafeSdk.getTransactionHash.mockRejectedValue(hashError)
-
-      const { proposeTransaction, error } = useSafeProposal()
-
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
-
-      expect(result).toBeNull()
-      expect(error.value?.message).toBe('Hash generation failed')
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Hash generation failed')
-
-      consoleErrorSpy.mockRestore()
-    })
-
-    it('should handle signature creation errors', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const signatureError = new Error('User rejected signature')
-      mockSafeSdk.signHash.mockRejectedValue(signatureError)
-
-      const { proposeTransaction, error } = useSafeProposal()
-
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
-
-      expect(result).toBeNull()
-      expect(error.value?.message).toBe('User rejected signature')
-      expect(mockAddErrorToast).toHaveBeenCalledWith('User rejected signature')
-
-      consoleErrorSpy.mockRestore()
-    })
-
-    it('should handle mutation submission errors', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const mutationError = new Error('Network request failed')
-      mockMutation.mutateAsync.mockRejectedValue(mutationError)
-
-      const { proposeTransaction, error } = useSafeProposal()
-
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
-
-      expect(result).toBeNull()
-      expect(error.value?.message).toBe('Network request failed')
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Network request failed')
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Safe transfer error:', sdkError)
 
       consoleErrorSpy.mockRestore()
     })
@@ -382,290 +297,77 @@ describe('useSafeProposal', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockLoadSafe.mockRejectedValue('Unknown error')
 
-      const { proposeTransaction, error } = useSafeProposal()
+      const { transferFromSafe, error } = useSafeTransfer()
 
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
+      const result = await transferFromSafe(MOCK_DATA.validSafeAddress, {
+        to: MOCK_DATA.validRecipient,
+        amount: MOCK_DATA.amount
+      })
 
       expect(result).toBeNull()
-      expect(error.value?.message).toBe('Failed to propose transaction')
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to propose transaction')
+      expect(error.value?.message).toBe('Failed to transfer from Safe')
+      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to transfer from Safe')
 
       consoleErrorSpy.mockRestore()
     })
   })
 
   describe('Loading States', () => {
-    it('should manage loading state during proposal', async () => {
-      let resolveTransaction: (value: SafeTransactionResponse) => void
-      const transactionPromise = new Promise<SafeTransactionResponse>((resolve) => {
-        resolveTransaction = resolve
+    it('should manage loading state during transfer', async () => {
+      let resolveProposal: () => void
+      const proposalPromise = new Promise<string>((resolve) => {
+        resolveProposal = resolve
       })
 
-      mockSafeSdk.createTransaction.mockReturnValue(transactionPromise)
+      mockProposeTransaction.mockReturnValue(proposalPromise)
 
-      const { proposeTransaction, isProposing } = useSafeProposal()
+      const { transferFromSafe, isTransferring } = useSafeTransfer()
 
-      // Start proposal
-      const proposalPromise = proposeTransaction(
-        MOCK_DATA.validSafeAddress,
-        MOCK_DATA.transactionData
-      )
+      // Start operation
+      const transferPromise = transferFromSafe(MOCK_DATA.validSafeAddress, {
+        to: MOCK_DATA.validRecipient,
+        amount: MOCK_DATA.amount
+      })
 
       // Check loading state
-      expect(isProposing.value).toBe(true)
+      expect(isTransferring.value).toBe(true)
 
-      // Complete proposal
-      resolveTransaction!(MOCK_DATA.safeTransaction)
-      await proposalPromise
+      // Complete operation
+      resolveProposal!()
+      await transferPromise
 
       // Check loading state cleared
-      expect(isProposing.value).toBe(false)
+      expect(isTransferring.value).toBe(false)
     })
 
     it('should clear loading state even when errors occur', async () => {
       mockLoadSafe.mockRejectedValue(new Error('Test error'))
 
-      const { proposeTransaction, isProposing } = useSafeProposal()
+      const { transferFromSafe, isTransferring } = useSafeTransfer()
 
-      await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
-
-      expect(isProposing.value).toBe(false)
-    })
-
-    it('should handle loading state during different async operations', async () => {
-      let resolveSignature: (value: { data: string }) => void
-      const signaturePromise = new Promise<{ data: string }>((resolve) => {
-        resolveSignature = resolve
+      await transferFromSafe(MOCK_DATA.validSafeAddress, {
+        to: MOCK_DATA.validRecipient,
+        amount: MOCK_DATA.amount
       })
 
-      mockSafeSdk.signHash.mockReturnValue(signaturePromise)
-
-      const { proposeTransaction, isProposing } = useSafeProposal()
-
-      // Start proposal
-      const proposalPromise = proposeTransaction(
-        MOCK_DATA.validSafeAddress,
-        MOCK_DATA.transactionData
-      )
-
-      // Should be loading during signature
-      expect(isProposing.value).toBe(true)
-
-      // Complete signature
-      resolveSignature!({ data: MOCK_DATA.signature })
-      await proposalPromise
-
-      // Should complete successfully
-      expect(isProposing.value).toBe(false)
-    })
-  })
-
-  describe('Integration with Safe SDK', () => {
-    it('should use centralized Safe SDK', async () => {
-      const { proposeTransaction } = useSafeProposal()
-
-      await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
-
-      expect(mockUseSafeSDK).toHaveBeenCalled()
-      expect(mockLoadSafe).toHaveBeenCalledWith(MOCK_DATA.validSafeAddress)
-    })
-
-    it('should pass correct transaction structure to SDK', async () => {
-      const { proposeTransaction } = useSafeProposal()
-
-      await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
-
-      expect(mockSafeSdk.createTransaction).toHaveBeenCalledWith({
-        transactions: [
-          expect.objectContaining({
-            to: MOCK_DATA.transactionData.to,
-            value: MOCK_DATA.transactionData.value,
-            data: MOCK_DATA.transactionData.data,
-            operation: 0
-          })
-        ]
-      })
-    })
-
-    it('should follow proper transaction workflow', async () => {
-      const { proposeTransaction } = useSafeProposal()
-
-      await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
-
-      // Verify the correct order of operations
-      expect(mockSafeSdk.createTransaction).toHaveBeenCalledBefore(
-        mockSafeSdk.getTransactionHash as vi.MockedFunction<typeof mockSafeSdk.getTransactionHash>
-      )
-      expect(mockSafeSdk.getTransactionHash).toHaveBeenCalledBefore(
-        mockSafeSdk.signHash as vi.MockedFunction<typeof mockSafeSdk.signHash>
-      )
-      expect(mockSafeSdk.signHash).toHaveBeenCalledBefore(
-        mockMutation.mutateAsync as vi.MockedFunction<typeof mockMutation.mutateAsync>
-      )
+      expect(isTransferring.value).toBe(false)
     })
   })
 
   describe('Return Value Structure', () => {
     it('should return correct properties', () => {
-      const result = useSafeProposal()
+      const result = useSafeTransfer()
 
-      expect(result).toHaveProperty('proposeTransaction')
-      expect(result).toHaveProperty('isProposing')
+      expect(result).toHaveProperty('transferFromSafe')
+      expect(result).toHaveProperty('transferNative')
+      expect(result).toHaveProperty('transferToken')
+      expect(result).toHaveProperty('isTransferring')
       expect(result).toHaveProperty('error')
-      expect(typeof result.proposeTransaction).toBe('function')
-      expect(result.isProposing.value).toBe(false)
+      expect(typeof result.transferFromSafe).toBe('function')
+      expect(typeof result.transferNative).toBe('function')
+      expect(typeof result.transferToken).toBe('function')
+      expect(result.isTransferring.value).toBe(false)
       expect(result.error.value).toBe(null)
-    })
-  })
-
-  describe('Edge Cases', () => {
-    it('should handle empty transaction data gracefully', async () => {
-      const emptyTransaction = {
-        to: '',
-        value: '',
-        data: ''
-      }
-
-      const { proposeTransaction } = useSafeProposal()
-
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, emptyTransaction)
-
-      expect(result).toBe(MOCK_DATA.safeTxHash)
-      expect(mockSafeSdk.createTransaction).toHaveBeenCalledWith({
-        transactions: [
-          {
-            to: '',
-            value: '',
-            data: '',
-            operation: 0
-          }
-        ]
-      })
-    })
-
-    it('should handle consecutive proposal attempts', async () => {
-      const { proposeTransaction } = useSafeProposal()
-
-      // First proposal
-      const result1 = await proposeTransaction(
-        MOCK_DATA.validSafeAddress,
-        MOCK_DATA.transactionData
-      )
-      expect(result1).toBe(MOCK_DATA.safeTxHash)
-
-      // Second proposal with different data
-      const differentTransaction = {
-        to: '0x9876543210987654321098765432109876543210',
-        value: '500000000000000000',
-        data: '0x123456'
-      }
-      const result2 = await proposeTransaction(MOCK_DATA.validSafeAddress, differentTransaction)
-      expect(result2).toBe(MOCK_DATA.safeTxHash)
-
-      expect(mockMutation.mutateAsync).toHaveBeenCalledTimes(2)
-    })
-
-    it('should reset error state on new proposal attempt', async () => {
-      // First proposal fails
-      mockLoadSafe.mockRejectedValueOnce(new Error('First error'))
-
-      const { proposeTransaction, error } = useSafeProposal()
-      await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
-
-      expect(error.value?.message).toBe('First error')
-
-      // Second proposal succeeds
-      mockLoadSafe.mockResolvedValue(mockSafeSdk)
-
-      await proposeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.transactionData)
-
-      expect(error.value).toBe(null)
-    })
-
-    it('should handle complex transaction data', async () => {
-      const complexTransaction = {
-        to: '0x1234567890123456789012345678901234567890',
-        value: '0',
-        data: '0xa9059cbb000000000000000000000000recipient000000000000000000000000000000000000000000000000000000000000000000000000000000000000000de0b6b3a7640000',
-        operation: 1
-      }
-
-      const { proposeTransaction } = useSafeProposal()
-
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, complexTransaction)
-
-      expect(result).toBe(MOCK_DATA.safeTxHash)
-      expect(mockSafeSdk.createTransaction).toHaveBeenCalledWith({
-        transactions: [
-          {
-            to: complexTransaction.to,
-            value: complexTransaction.value,
-            data: complexTransaction.data,
-            operation: 1
-          }
-        ]
-      })
-    })
-
-    it('should handle large value transactions', async () => {
-      const largeValueTransaction = {
-        to: '0x1234567890123456789012345678901234567890',
-        value: '1000000000000000000000', // 1000 ETH
-        data: '0x'
-      }
-
-      const { proposeTransaction } = useSafeProposal()
-
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, largeValueTransaction)
-
-      expect(result).toBe(MOCK_DATA.safeTxHash)
-      expect(mockSafeSdk.createTransaction).toHaveBeenCalledWith({
-        transactions: [
-          {
-            to: largeValueTransaction.to,
-            value: largeValueTransaction.value,
-            data: largeValueTransaction.data,
-            operation: 0
-          }
-        ]
-      })
-    })
-  })
-
-  describe('Transaction Data Validation', () => {
-    it('should handle transactions with minimal data', async () => {
-      const minimalTransaction = {
-        to: MOCK_DATA.validSafeAddress,
-        value: '0',
-        data: '0x'
-      }
-
-      const { proposeTransaction } = useSafeProposal()
-
-      const result = await proposeTransaction(MOCK_DATA.validSafeAddress, minimalTransaction)
-
-      expect(result).toBe(MOCK_DATA.safeTxHash)
-    })
-
-    it('should preserve transaction operation type', async () => {
-      const delegateCallTransaction = {
-        to: '0x1234567890123456789012345678901234567890',
-        value: '0',
-        data: '0xabcdef',
-        operation: 1 // DelegateCall
-      }
-
-      const { proposeTransaction } = useSafeProposal()
-
-      await proposeTransaction(MOCK_DATA.validSafeAddress, delegateCallTransaction)
-
-      expect(mockSafeSdk.createTransaction).toHaveBeenCalledWith({
-        transactions: [
-          expect.objectContaining({
-            operation: 1
-          })
-        ]
-      })
     })
   })
 })
