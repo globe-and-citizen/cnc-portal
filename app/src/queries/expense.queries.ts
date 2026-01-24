@@ -27,7 +27,7 @@ export const useAddExpenseMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (expenseAccountData: any) => {
+    mutationFn: async (expenseAccountData: Record<string, unknown>) => {
       const { data } = await apiClient.post('/expense', expenseAccountData)
       return data
     },

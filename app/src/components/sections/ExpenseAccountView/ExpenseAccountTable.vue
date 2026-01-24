@@ -2,52 +2,31 @@
   <div class="form-control flex flex-row gap-1">
     <label class="label cursor-pointer flex gap-2" :key="status" v-for="status in statuses">
       <span class="label-text">{{ status.charAt(0).toUpperCase() + status.slice(1) }}</span>
-      <input
-        type="radio"
-        name="pending"
-        class="radio checked:bg-primary"
-        :data-test="`status-input-${status}`"
-        :id="status"
-        :value="status"
-        v-model="selectedRadio"
-      />
+      <input type="radio" name="pending" class="radio checked:bg-primary" :data-test="`status-input-${status}`"
+        :id="status" :value="status" v-model="selectedRadio" />
     </label>
   </div>
   <div class="card bg-base-100 w-full">
     <TableComponent :rows="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
       <template #action-data="{ row }">
-        <ButtonUI
-          v-if="row.status == 'enabled'"
-          variant="error"
-          data-test="disable-button"
-          size="sm"
+        <ButtonUI v-if="row.status == 'enabled'" variant="error" data-test="disable-button" size="sm"
           :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
-          :disabled="!(contractOwnerAddress === userDataStore.address)"
-          @click="
+          :disabled="!(contractOwnerAddress === userDataStore.address)" @click="
             () => {
               isLoadingSetStatus = true
               signatureToUpdate = row.signature
               deactivateApproval(row.signature)
             }
-          "
-          >Disable</ButtonUI
-        >
-        <ButtonUI
-          v-if="row.status == 'disabled'"
-          variant="info"
-          data-test="enable-button"
-          size="sm"
+          ">Disable</ButtonUI>
+        <ButtonUI v-if="row.status == 'disabled'" variant="info" data-test="enable-button" size="sm"
           :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
-          :disabled="!(contractOwnerAddress === userDataStore.address)"
-          @click="
+          :disabled="!(contractOwnerAddress === userDataStore.address)" @click="
             () => {
               isLoadingSetStatus = true
               signatureToUpdate = row.signature
               activateApproval(row.signature)
             }
-          "
-          >Enable</ButtonUI
-        >
+          ">Enable</ButtonUI>
       </template>
       <template #member-data="{ row }">
         <UserComponent v-if="!!row.user" :user="row.user"></UserComponent>
@@ -59,15 +38,11 @@
         <span>{{ new Date(Number(row.endDate) * 1000).toLocaleString('en-US') }}</span>
       </template>
       <template #status-data="{ row }">
-        <span
-          class="badge"
-          :class="{
-            'badge-success badge-outline': row.status === 'enabled',
-            'badge-info badge-outline': row.status === 'disabled',
-            'badge-error badge-outline': row.status === 'expired'
-          }"
-          >{{ row.status }}</span
-        >
+        <span class="badge" :class="{
+          'badge-success badge-outline': row.status === 'enabled',
+          'badge-info badge-outline': row.status === 'disabled',
+          'badge-error badge-outline': row.status === 'expired'
+        }">{{ row.status }}</span>
       </template>
       <template #frequencyType-data="{ row }">
         <span>{{
@@ -94,8 +69,7 @@ import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from 
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useTanstackQuery } from '@/composables'
-import type { ExpenseResponse } from '@/types'
+import { useExpensesQuery } from '@/queries'
 import { getFrequencyType, getCustomFrequency } from '@/utils'
 
 const teamStore = useTeamStore()
@@ -107,18 +81,8 @@ const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
 const isLoadingSetStatus = ref(false)
 
-const {
-  data: expenseData,
-  isLoading: isFetchingExpenseData
-  // error: errorFetchingExpenseData
-} = useTanstackQuery<ExpenseResponse[]>(
-  'expenseData',
-  computed(() => `/expense?teamId=${teamStore.currentTeamId}`),
-  {
-    queryKey: ['getExpenseData'],
-    refetchInterval: 10000,
-    refetchOnWindowFocus: true
-  }
+const { data: expenseData, isLoading: isFetchingExpenseData } = useExpensesQuery(
+  computed(() => teamStore.currentTeamId)
 )
 
 const formattedExpenseData = computed(() => {

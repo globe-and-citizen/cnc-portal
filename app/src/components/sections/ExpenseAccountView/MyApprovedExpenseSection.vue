@@ -4,10 +4,7 @@
       <!-- TODO display this only if the use have an approved expense -->
       <!-- Expense A/c Info Section -->
       <!-- New Header -->
-      <TableComponent
-        :rows="getCurrentUserExpenses(newExpenseData, currentUserAddress)"
-        :columns="columns"
-      >
+      <TableComponent :rows="getCurrentUserExpenses(newExpenseData, currentUserAddress)" :columns="columns">
         <template #action-data="{ row }">
           <TransferAction :row="row" />
         </template>
@@ -27,10 +24,8 @@
           </span>
         </template>
         <template #amountTransferred-data="{ row }">
-          <span
-            >{{ row.balances[1] }}/{{ row.data.amount }}
-            {{ tokenSymbol(row.data.tokenAddress) }}</span
-          >
+          <span>{{ row.balances[1] }}/{{ row.data.amount }}
+            {{ tokenSymbol(row.data.tokenAddress) }}</span>
         </template>
       </TableComponent>
     </div>
@@ -40,12 +35,11 @@
 <script setup lang="ts">
 //#region Imports
 import { computed } from 'vue'
-import type { ExpenseResponse } from '@/types'
 import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { tokenSymbol, getCurrentUserExpenses } from '@/utils'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { useTanstackQuery } from '@/composables'
+import { useExpensesQuery } from '@/queries'
 import TransferAction from './TransferAction.vue'
 import { getFrequencyType, getCustomFrequency } from '@/utils'
 //#endregion
@@ -53,18 +47,7 @@ import { getFrequencyType, getCustomFrequency } from '@/utils'
 const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
 
-const {
-  data: newExpenseData
-  // isLoading: isFetchingExpenseData,
-  // error: errorFetchingExpenseData
-} = useTanstackQuery<ExpenseResponse[]>(
-  'expenseData',
-  computed(() => `/expense?teamId=${teamStore.currentTeamId}`),
-  {
-    queryKey: ['getExpenseData'],
-    refetchOnWindowFocus: true
-  }
-)
+const { data: newExpenseData } = useExpensesQuery(computed(() => teamStore.currentTeamId))
 
 const columns = [
   {
