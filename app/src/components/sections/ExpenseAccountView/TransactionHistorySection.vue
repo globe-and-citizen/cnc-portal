@@ -1,7 +1,12 @@
 <template>
-  <GenericTransactionHistory :transactions="transactionData" title="Expense Account Transfer History"
-    :currencies="currencies" :show-receipt-modal="true" data-test="expense-transactions"
-    @receipt-click="handleReceiptClick" />
+  <GenericTransactionHistory
+    :transactions="transactionData"
+    title="Expense Account Transfer History"
+    :currencies="currencies"
+    :show-receipt-modal="true"
+    data-test="expense-transactions"
+    @receipt-click="handleReceiptClick"
+  />
 </template>
 
 <script setup lang="ts">
@@ -56,17 +61,17 @@ const { result, error } = useQuery(
 const transactionData = computed<ExpenseTransaction[]>(() =>
   result.value?.transactions
     ? result.value.transactions.map((transaction: Record<string, string>) => ({
-      txHash: transaction.transactionHash,
-      date: new Date(Number(transaction.blockTimestamp) * 1000).toLocaleString('en-US'),
-      from: transaction.from,
-      to: transaction.to,
-      amount: formatEtherUtil(
-        BigInt(transaction.amount ?? '0'),
-        transaction.tokenAddress ?? zeroAddress
-      ),
-      token: tokenSymbol(transaction.tokenAddress ?? zeroAddress),
-      type: transaction.transactionType
-    }))
+        txHash: transaction.transactionHash,
+        date: new Date(Number(transaction.blockTimestamp) * 1000).toLocaleString('en-US'),
+        from: transaction.from,
+        to: transaction.to,
+        amount: formatEtherUtil(
+          BigInt(transaction.amount ?? '0'),
+          transaction.tokenAddress ?? zeroAddress
+        ),
+        token: tokenSymbol(transaction.tokenAddress ?? zeroAddress),
+        type: transaction.transactionType
+      }))
     : []
 )
 

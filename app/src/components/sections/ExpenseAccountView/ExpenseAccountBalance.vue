@@ -1,6 +1,12 @@
 <template>
-  <OverviewCard data-test="expense-account-balance" :title="total[currencyStore.localCurrency.code]?.formated ?? 0"
-    subtitle="Total Balance" variant="success" :card-icon="bagIcon" :loading="isLoading">
+  <OverviewCard
+    data-test="expense-account-balance"
+    :title="total[currencyStore.localCurrency.code]?.formated ?? 0"
+    subtitle="Total Balance"
+    variant="success"
+    :card-icon="bagIcon"
+    :loading="isLoading"
+  >
     <div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
       <div>
@@ -21,8 +27,6 @@ import { computed } from 'vue'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
-const expenseAddress = computed(
-  () => teamStore.getContractAddressByType('ExpenseAccountEIP712')
-)
+const expenseAddress = computed(() => teamStore.getContractAddressByType('ExpenseAccountEIP712'))
 const { total, isLoading } = useContractBalance(expenseAddress)
 </script>

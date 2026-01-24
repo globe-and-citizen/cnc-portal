@@ -1,6 +1,11 @@
 <template>
-  <OverviewCard :title="totalMonthlySpentAmount" subtitle="Month Spent" variant="warning" :card-icon="cartIcon"
-    :loading="loading">
+  <OverviewCard
+    :title="totalMonthlySpentAmount"
+    subtitle="Month Spent"
+    variant="warning"
+    :card-icon="cartIcon"
+    :loading="loading"
+  >
     <div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
       <div>
@@ -26,9 +31,7 @@ import { SUPPORTED_TOKENS } from '@/constant'
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const contractAddress = computed(
-  () => teamStore.getContractAddressByType('ExpenseAccountEIP712')
-)
+const contractAddress = computed(() => teamStore.getContractAddressByType('ExpenseAccountEIP712'))
 
 const now = new Date()
 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000

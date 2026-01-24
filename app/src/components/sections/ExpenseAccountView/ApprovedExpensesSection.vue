@@ -1,16 +1,24 @@
 <template>
   <CardComponent title="Approved Addresses" data-test="claims-table">
     <template #card-action>
-      <div :class="{ tooltip: !(userDataStore.address === contractOwnerAddress || isBodAction()) }" :data-tip="!(userDataStore.address === contractOwnerAddress || isBodAction())
-        ? 'Only the contract owner can approve expenses'
-        : null
-        ">
-        <ButtonUI variant="success" :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
+      <div
+        :class="{ tooltip: !(userDataStore.address === contractOwnerAddress || isBodAction()) }"
+        :data-tip="
+          !(userDataStore.address === contractOwnerAddress || isBodAction())
+            ? 'Only the contract owner can approve expenses'
+            : null
+        "
+      >
+        <ButtonUI
+          variant="success"
+          :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
           @click="
             () => {
               approveUsersModal = { mount: true, show: true }
             }
-          " data-test="approve-users-button">
+          "
+          data-test="approve-users-button"
+        >
           Approve User Expense
         </ButtonUI>
       </div>
@@ -18,23 +26,39 @@
 
     <ExpenseAccountTable />
 
-    <ModalComponent v-model="approveUsersModal.show" v-if="approveUsersModal.mount" @reset="
-      () => {
-        approveUsersModal = { mount: false, show: false }
-      }
-    ">
-      <ApproveUsersForm v-if="approveUsersModal.mount" :form-data="teamMembers" :users="foundUsers"
-        :loading-approve="loadingApprove" :is-bod-action="isBodAction()" @approve-user="
+    <ModalComponent
+      v-model="approveUsersModal.show"
+      v-if="approveUsersModal.mount"
+      @reset="
+        () => {
+          approveUsersModal = { mount: false, show: false }
+        }
+      "
+    >
+      <ApproveUsersForm
+        v-if="approveUsersModal.mount"
+        :form-data="teamMembers"
+        :users="foundUsers"
+        :loading-approve="loadingApprove"
+        :is-bod-action="isBodAction()"
+        @approve-user="
           (data: BudgetLimit) => {
             approveData = data
             confirmationModal = true
           }
-        " @close-modal="approveUsersModal = { mount: false, show: false }" />
+        "
+        @close-modal="approveUsersModal = { mount: false, show: false }"
+      />
     </ModalComponent>
 
     <ModalComponent v-model="confirmationModal">
-      <ApproveExpenseSummaryForm v-if="confirmationModal" :budget-limit="approveData!" :loading="loadingApprove"
-        @submit="approveUser" @close="confirmationModal = false" />
+      <ApproveExpenseSummaryForm
+        v-if="confirmationModal"
+        :budget-limit="approveData!"
+        :loading="loadingApprove"
+        @submit="approveUser"
+        @close="confirmationModal = false"
+      />
     </ModalComponent>
   </CardComponent>
 </template>
@@ -83,7 +107,7 @@ const {
   address: expenseAccountEip712Address,
   abi: EXPENSE_ACCOUNT_EIP712_ABI,
   query: {
-    staleTime: Infinity,
+    staleTime: Infinity
   }
 })
 

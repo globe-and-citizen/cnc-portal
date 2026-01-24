@@ -4,7 +4,10 @@
       <!-- TODO display this only if the use have an approved expense -->
       <!-- Expense A/c Info Section -->
       <!-- New Header -->
-      <TableComponent :rows="getCurrentUserExpenses(newExpenseData, currentUserAddress)" :columns="columns">
+      <TableComponent
+        :rows="getCurrentUserExpenses(newExpenseData, currentUserAddress)"
+        :columns="columns"
+      >
         <template #action-data="{ row }">
           <TransferAction :row="row" />
         </template>
@@ -24,8 +27,10 @@
           </span>
         </template>
         <template #amountTransferred-data="{ row }">
-          <span>{{ row.balances[1] }}/{{ row.data.amount }}
-            {{ tokenSymbol(row.data.tokenAddress) }}</span>
+          <span
+            >{{ row.balances[1] }}/{{ row.data.amount }}
+            {{ tokenSymbol(row.data.tokenAddress) }}</span
+          >
         </template>
       </TableComponent>
     </div>

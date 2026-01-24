@@ -37,20 +37,38 @@ export interface WeeklyClaimWithHours extends WeeklyClaim {
 }
 
 /**
- * Fetch weekly claims for a team with optional status filter
+ * Parameters for useTeamWeeklyClaimsQuery
  */
-export const useTeamWeeklyClaimsQuery = (
-  teamId: MaybeRefOrGetter<string | number | null>,
+export interface UseTeamWeeklyClaimsQueryParams {
+  teamId?: MaybeRefOrGetter<string | number | null>
+  userAddress?: MaybeRefOrGetter<string | null>
   status?: MaybeRefOrGetter<'pending' | 'signed' | 'withdrawn' | 'disabled' | null>
-) => {
-  return useQuery<WeeklyClaimWithHours[], AxiosError>({
-    queryKey: ['teamWeeklyClaims', { teamId, status }],
-    queryFn: async () => {
-      const id = toValue(teamId)
-      const statusValue = toValue(status)
-      if (!id) throw new Error('Team ID is required')
+}
 
-      let url = `/weeklyClaim/?teamId=${id}`
+/**
+ * Fetch weekly claims for a team with optional filters
+ */
+export const useTeamWeeklyClaimsQuery = (params: UseTeamWeeklyClaimsQueryParams) => {
+  return useQuery<WeeklyClaimWithHours[], AxiosError>({
+    queryKey: [
+      'teamWeeklyClaims',
+      {
+        teamId: params.teamId,
+        userAddress: params.userAddress,
+        status: params.status
+      }
+    ],
+    queryFn: async () => {
+      const teamId = toValue(params.teamId)
+      const userAddress = toValue(params.userAddress)
+      const statusValue = toValue(params.status)
+
+      if (!teamId) throw new Error('Team ID is required')
+
+      let url = `/weeklyClaim/?teamId=${teamId}`
+      if (userAddress) {
+        url += `&memberAddress=${userAddress}`
+      }
       if (statusValue) {
         url += `&status=${statusValue}`
       }
@@ -58,7 +76,7 @@ export const useTeamWeeklyClaimsQuery = (
       const { data } = await apiClient.get<WeeklyClaimWithHours[]>(url)
       return data
     },
-    enabled: () => !!toValue(teamId),
+    enabled: () => !!toValue(params.teamId),
     retry: false,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
