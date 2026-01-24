@@ -22,7 +22,7 @@ export function useSiwe() {
 
   const connection = useConnection()
   const chainId = useChainId()
-  const { data: signature, error: signMessageError, signMessageAsync } = useSignMessage()
+  const { data: signature, error: signMessageError, mutateAsync: signMessageAsync } = useSignMessage()
   const { performChecks, isSuccess: isSuccessWalletCheck } = useWalletChecks()
 
   //#endregion
@@ -52,7 +52,7 @@ export function useSiwe() {
     data: userData,
     error: fetchUserError,
     refetch: refetchUser
-  } = useUserQuery(computed(() => connection.address.value || ''))
+  } = useUserQuery(connection.address)
   //#endregion
 
   //#region Functions

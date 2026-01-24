@@ -37,17 +37,6 @@ const mockNotifications = [
   }
 ]
 
-const mockNotificationStore = {
-  notifications: mockNotifications,
-  isLoading: ref(false),
-  error: ref(null),
-  fetchNotifications: vi.fn(async () => {
-    mockNotificationStore.notifications = mockNotifications
-  }),
-  addBulkNotifications: vi.fn(),
-  updateNotification: vi.fn()
-}
-
 interface ComponentData {
   getWageClaimAPI: (throwOnFailed?: boolean) => Promise<unknown>
   updateEndPoint: string
@@ -61,7 +50,6 @@ vi.mock('@/stores', () => ({
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn()
   })),
-  useNotificationStore: vi.fn(() => mockNotificationStore)
 }))
 
 const mockUseWriteContract = {
@@ -147,41 +135,5 @@ describe('NotificationDropdown.vue', () => {
     await wrapper.vm.$nextTick()
     const badge = wrapper.find('.badge')
     expect(badge.exists()).toBe(true)
-  })
-
-  // it('calls handle wage correctly', async () => {
-  //   const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
-  //   executeMock.mockImplementation(() => {
-  //     if (wrapperVm.updateEndPoint === 'teams/1/cash-remuneration/claim') {
-  //       wrapperVm.wageClaim = {
-  //         id: 1,
-  //         createdAt: '2024-02-02T12:00:00Z',
-  //         address: '0xUserToApprove',
-  //         hoursWorked: 20,
-  //         hourlyRate: '17.5',
-  //         name: 'Local 1',
-  //         teamId: 1,
-  //         cashRemunerationSignature: '0xSignature'
-  //       }
-  //     } else if (wrapperVm.updateEndPoint === 'teams/1') {
-  //       wrapperVm.team = { cashRemunerationEip712Address: '0xCashRemunerationEip712Address' }
-  //     }
-  //   })
-
-  //   await wrapper.vm.$nextTick()
-  //   const notification = wrapper.find('[data-test="notification-3"]')
-  //   expect(notification.exists()).toBeTruthy()
-  //   notification.trigger('click')
-  //   await wrapper.vm.$nextTick()
-
-  //   await wrapper.vm.$nextTick()
-  //   expect(executeMock).toHaveBeenCalled()
-  //   expect(mockUseWriteContract.writeContract).toBeCalled()
-  // })
-  describe('Methods', () => {
-    it('getResource', async () => {
-      const wrapperVm: ComponentData = wrapper.vm as unknown as ComponentData
-      expect(wrapperVm.getResource(mockNotifications[2])).toEqual(['wage-claim', '1'])
-    })
   })
 })
