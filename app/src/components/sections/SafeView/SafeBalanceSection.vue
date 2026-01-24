@@ -92,12 +92,8 @@
       <TransferForm
         v-model="transferData"
         :tokens="tokens"
-        :loading="
-          transferLoading || isConfirmingTransfer || isLoadingAddAction || isConfirmingAddAction
-        "
-        @transfer="handleTransfer"
+        :loading="false"
         @closeModal="resetTransferValues"
-        :is-bod-action="isBodAction"
       >
         <template #header>
           <h1 class="font-bold text-2xl">Transfer from Safe Contract</h1>
@@ -112,29 +108,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, type Ref } from 'vue'
-import { useChainId, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import { computed, ref, type Ref } from 'vue'
+import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
-import { parseEther, encodeFunctionData, parseUnits } from 'viem'
 import { useStorage } from '@vueuse/core'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
-import { BANK_ABI } from '@/artifacts/abi/bank'
-import { useBodContract } from '@/composables/bod/'
 import type { TokenOption } from '@/types'
-import { NETWORK, USDC_ADDRESS } from '@/constant'
-import { waitForTransactionReceipt } from '@wagmi/core'
-import { config } from '@/wagmi.config'
 
 const chainId = useChainId()
 const queryClient = useQueryClient()
@@ -144,27 +134,15 @@ const currency = useStorage('currency', {
   symbol: '$'
 })
 
-const { addErrorToast, addSuccessToast } = useToastStore()
-
 const props = defineProps<{
   bankAddress: Address
 }>()
 
 const safeAddress = computed(() => teamStore.currentTeam?.safeAddress || props.bankAddress)
 
-const {
-  addAction,
-  useBodIsBodAction,
-  isLoading: isLoadingAddAction,
-  isConfirming: isConfirmingAddAction,
-  isActionAdded
-} = useBodContract()
-
 const teamStore = useTeamStore()
 
 const { total, balances, isLoading } = useContractBalance(safeAddress as unknown as Address)
-
-const { isBodAction } = useBodIsBodAction(props.bankAddress as Address, BANK_ABI)
 
 const getTokens = (): TokenOption[] =>
   balances.value
@@ -179,16 +157,6 @@ const getTokens = (): TokenOption[] =>
     .filter((b) => b.tokenId !== 'sher')
 
 const tokens = computed(() => getTokens())
-
-const {
-  data: transferHash,
-  isPending: transferLoading,
-  writeContractAsync: transfer
-} = useWriteContract()
-
-const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
-  hash: transferHash
-})
 
 // Add refs for modals and form data
 const depositModal = ref({
@@ -271,101 +239,5 @@ const resetTransferValues = () => {
   transferData.value = initialTransferDataValue()
 }
 
-const handleTransfer = async (data: {
-  address: { address: Address }
-  token: { symbol: string }
-  amount: string
-}) => {
-  if (!safeAddress.value) return
-  try {
-    const isNativeToken = data.token.symbol === NETWORK.currencySymbol
-    const transferAmount = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
-
-    if (isBodAction.value) {
-      const encodedData = isNativeToken
-        ? encodeFunctionData({
-            abi: BANK_ABI,
-            functionName: 'transfer',
-            args: [data.address.address, transferAmount]
-          })
-        : encodeFunctionData({
-            abi: BANK_ABI,
-            functionName: 'transferToken',
-            args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
-          })
-
-      const description = JSON.stringify({
-        text: `Transfer ${data.amount} ${data.token.symbol} to ${data.address.address}`,
-        title: 'Safe Transfer Request'
-      })
-
-      await addAction({
-        targetAddress: safeAddress.value,
-        description,
-        data: encodedData
-      })
-      return
-    }
-
-    // Direct transfer (non-BOD action)
-    if (isNativeToken) {
-      await transfer({
-        address: safeAddress.value,
-        abi: BANK_ABI,
-        functionName: 'transfer',
-        args: [data.address.address, transferAmount]
-      })
-    } else {
-      await transfer({
-        address: safeAddress.value,
-        abi: BANK_ABI,
-        functionName: 'transferToken',
-        args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
-      })
-    }
-    if (!transferHash.value) {
-      throw new Error('There is no receipt for this transaction')
-    }
-
-    await waitForTransactionReceipt(config, { hash: transferHash.value })
-
-    // Invalidate relevant queries
-    const queryKey = isNativeToken
-      ? ['balance', { address: safeAddress.value, chainId: chainId.value }]
-      : [
-          'readContract',
-          {
-            address: USDC_ADDRESS as Address,
-            args: [safeAddress.value],
-            chainId: chainId.value
-          }
-        ]
-
-    queryClient.invalidateQueries({ queryKey })
-  } catch (error) {
-    console.error('Transfer failed:', error)
-    addErrorToast(`Failed to transfer ${data.token.symbol}`)
-  }
-}
-
-// Watch for successful action addition
-watch(isActionAdded, (added) => {
-  if (added) {
-    addSuccessToast('Action added successfully, waiting for confirmation')
-    resetTransferValues()
-  }
-})
-
-// Watch for successful transfer confirmation
-watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('Transferred successfully')
-    resetTransferValues()
-
-    // Refresh Safe data after successful transfer
-    queryClient.invalidateQueries({
-      queryKey: ['safe', 'info', { safeAddress: safeAddress.value }]
-    })
-  }
-})
+// Transfer logic intentionally removed (display-only)
 </script>
