@@ -135,12 +135,12 @@ const currency = useStorage('currency', {
 })
 
 const props = defineProps<{
-  bankAddress: Address
+  bankAddress?: Address
 }>()
 
-const safeAddress = computed(() => teamStore.currentTeam?.safeAddress || props.bankAddress)
-
 const teamStore = useTeamStore()
+
+const safeAddress = computed(() => teamStore.currentTeam?.safeAddress || props.bankAddress)
 
 const { total, balances, isLoading } = useContractBalance(safeAddress as unknown as Address)
 
