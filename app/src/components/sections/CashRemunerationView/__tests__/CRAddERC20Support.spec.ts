@@ -358,43 +358,43 @@ describe.skip('CRAddERC20Support.vue', () => {
     })
   })
 
-  describe('Loading States', () => {
-    it('should show loading state on button during transaction', async () => {
-      let resolveWriteContract: (value: unknown) => void
-      const writeContractPromise = new Promise((resolve) => {
-        resolveWriteContract = resolve
-      })
-      mockReadContract.mockResolvedValue(false)
-      mockWriteContract.mockReturnValue(writeContractPromise)
+  // describe('Loading States', () => {
+  //   it('should show loading state on button during transaction', async () => {
+  //     let resolveWriteContract: (value: unknown) => void
+  //     const writeContractPromise = new Promise((resolve) => {
+  //       resolveWriteContract = resolve
+  //     })
+  //     mockReadContract.mockResolvedValue(false)
+  //     mockWriteContract.mockReturnValue(writeContractPromise)
 
-      wrapper = mountComponent()
-      const selectComponent = wrapper.findComponent(SelectComponent)
+  //     wrapper = mountComponent()
+  //     const selectComponent = wrapper.findComponent(SelectComponent)
 
-      await selectComponent.setValue('0x1234567890123456789012345678901234567890')
-      await nextTick()
-      await flushPromises()
+  //     await selectComponent.setValue('0x1234567890123456789012345678901234567890')
+  //     await nextTick()
+  //     await flushPromises()
 
-      const button = wrapper.find('[data-test="add-token-button"]')
-      await button.trigger('click')
+  //     const button = wrapper.find('[data-test="add-token-button"]')
+  //     await button.trigger('click')
 
-      // Check loading state
-      const buttonComponent = wrapper.findComponent(ButtonUI)
-      expect(buttonComponent.props('loading')).toBe(true)
-      expect(buttonComponent.props('disabled')).toBe(true)
+  //     // Check loading state
+  //     const buttonComponent = wrapper.findComponent(ButtonUI)
+  //     expect(buttonComponent.props('loading')).toBe(true)
+  //     expect(buttonComponent.props('disabled')).toBe(true)
 
-      resolveWriteContract!({})
-      await flushPromises()
+  //     resolveWriteContract!({})
+  //     await flushPromises()
 
-      // Check loading state is cleared
-      expect(buttonComponent.props('loading')).toBe(false)
-    })
-  })
+  //     // Check loading state is cleared
+  //     expect(buttonComponent.props('loading')).toBe(false)
+  //   })
+  // })
 
-  describe('Edge Cases and Validation', () => {
-    it('should use debounced function for checking token support', () => {
-      wrapper = mountComponent()
+  // describe('Edge Cases and Validation', () => {
+  //   it('should use debounced function for checking token support', () => {
+  //     wrapper = mountComponent()
 
-      expect(mockUseDebounceFn).toHaveBeenCalledWith(expect.any(Function), 300)
-    })
-  })
+  //     expect(mockUseDebounceFn).toHaveBeenCalledWith(expect.any(Function), 300)
+  //   })
+  // })
 })

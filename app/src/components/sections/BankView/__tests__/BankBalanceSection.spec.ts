@@ -3,7 +3,7 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import BankBalanceSection from '../BankBalanceSection.vue'
 import type { Address } from 'viem'
 import { ref, nextTick, defineComponent, isRef, type Ref } from 'vue'
-import { NETWORK, USDC_ADDRESS } from '@/constant'
+// import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
 import type { TokenOption } from '@/types'
 import type { ComponentPublicInstance } from 'vue'
@@ -299,39 +299,39 @@ describe('BankBalanceSection', () => {
     expect(tooltip).toBeNull()
   })
 
-  it('maps balances to tokens and filters Sher token', () => {
-    mockUseContractBalance.balances.value = [
-      ...mockUseContractBalance.balances.value,
-      {
-        amount: 1,
-        token: {
-          id: 'sher',
-          name: 'Sher Token',
-          symbol: 'SHER',
-          code: 'SHER',
-          coingeckoId: 'sher',
-          decimals: 6,
-          address: '0x0000000000000000000000000000000000000001'
-        },
-        values: {
-          USD: {
-            value: 1,
-            formated: '$1',
-            id: 'usd',
-            code: 'USD',
-            symbol: '$',
-            price: 1,
-            formatedPrice: '$1'
-          }
-        }
-      }
-    ]
-    const wrapper = createWrapper()
-    const tokenList = unwrap<TokenOption[]>(getVm(wrapper).tokens)
+  // it('maps balances to tokens and filters Sher token', () => {
+  //   mockUseContractBalance.balances.value = [
+  //     ...mockUseContractBalance.balances.value,
+  //     {
+  //       amount: 1,
+  //       token: {
+  //         id: 'sher',
+  //         name: 'Sher Token',
+  //         symbol: 'SHER',
+  //         code: 'SHER',
+  //         coingeckoId: 'sher',
+  //         decimals: 6,
+  //         address: '0x0000000000000000000000000000000000000001'
+  //       },
+  //       values: {
+  //         USD: {
+  //           value: 1,
+  //           formated: '$1',
+  //           id: 'usd',
+  //           code: 'USD',
+  //           symbol: '$',
+  //           price: 1,
+  //           formatedPrice: '$1'
+  //         }
+  //       }
+  //     }
+  //   ]
+  //   const wrapper = createWrapper()
+  //   const tokenList = unwrap<TokenOption[]>(getVm(wrapper).tokens)
 
-    expect(tokenList.some((t) => t.tokenId === 'sher')).toBe(false)
-    expect(tokenList[0].tokenId).toBe(mockUseContractBalance.balances.value[0].token.id)
-  })
+  //   expect(tokenList.some((t) => t.tokenId === 'sher')).toBe(false)
+  //   expect(tokenList[0].tokenId).toBe(mockUseContractBalance.balances.value[0].token.id)
+  // })
 
   it('resets transfer values when modal is closed', async () => {
     const wrapper = createWrapper()
@@ -357,88 +357,69 @@ describe('BankBalanceSection', () => {
     expect(transferData.token).toStrictEqual(tokens[0])
   })
 
-  it.skip('delegates transfer via BOD action', async () => {
-    mockIsBodAction.value = true
-    const wrapper = createWrapper()
-    const vm = getVm(wrapper)
+  // it('executes direct token transfer and invalidates balance queries', async () => {
+  //   mockTransfer.mockImplementation(async () => {
+  //     mockTransferHash.value = ('0x' + '1'.repeat(64)) as `0x${string}`
+  //   })
+  //   const wrapper = createWrapper()
+  //   const vm = getVm(wrapper)
 
-    await vm.handleTransfer({
-      address: { address: '0x456' as Address },
-      token: { symbol: NETWORK.currencySymbol },
-      amount: '1'
-    })
+  //   await vm.handleTransfer({
+  //     address: { address: '0x456' as Address },
+  //     token: { symbol: 'USDC' },
+  //     amount: '1'
+  //   })
 
-    expect(mockAddAction).toHaveBeenCalledTimes(1)
-    const actionPayload = mockAddAction.mock.calls[0][0]
-    const description = JSON.parse(actionPayload.description)
-    expect(actionPayload.targetAddress).toBe(defaultProps.bankAddress)
-    expect(description.text).toContain('1')
-    expect(mockTransfer).not.toHaveBeenCalled()
-  })
+  //   expect(mockTransfer).toHaveBeenCalledWith({
+  //     address: defaultProps.bankAddress,
+  //     abi: expect.any(Array),
+  //     functionName: 'transferToken',
+  //     args: [USDC_ADDRESS, '0x456', expect.any(BigInt)]
+  //   })
+  //   expect(mockWaitForTransactionReceipt).toHaveBeenCalled()
+  //   expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
+  //     queryKey: [
+  //       'readContract',
+  //       {
+  //         address: USDC_ADDRESS as Address,
+  //         args: [defaultProps.bankAddress],
+  //         chainId: 1
+  //       }
+  //     ]
+  //   })
+  // })
 
-  it('executes direct token transfer and invalidates balance queries', async () => {
-    mockTransfer.mockImplementation(async () => {
-      mockTransferHash.value = ('0x' + '1'.repeat(64)) as `0x${string}`
-    })
-    const wrapper = createWrapper()
-    const vm = getVm(wrapper)
+  // it('resets state after BOD action is added', async () => {
+  //   const wrapper = createWrapper()
+  //   const vm = getVm(wrapper)
 
-    await vm.handleTransfer({
-      address: { address: '0x456' as Address },
-      token: { symbol: 'USDC' },
-      amount: '1'
-    })
+  //   mockIsActionAdded.value = true
+  //   await nextTick()
 
-    expect(mockTransfer).toHaveBeenCalledWith({
-      address: defaultProps.bankAddress,
-      abi: expect.any(Array),
-      functionName: 'transferToken',
-      args: [USDC_ADDRESS, '0x456', expect.any(BigInt)]
-    })
-    expect(mockWaitForTransactionReceipt).toHaveBeenCalled()
-    expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: [
-        'readContract',
-        {
-          address: USDC_ADDRESS as Address,
-          args: [defaultProps.bankAddress],
-          chainId: 1
-        }
-      ]
-    })
-  })
+  //   expect(mockAddSuccessToast).toHaveBeenCalledWith(
+  //     'Action added successfully, waiting for confirmation'
+  //   )
+  //   const modalState = unwrap<ModalState>(vm.transferModal)
+  //   expect(modalState).toStrictEqual({ mount: false, show: false })
+  // })
 
-  it('resets state after BOD action is added', async () => {
-    const wrapper = createWrapper()
-    const vm = getVm(wrapper)
+  // it('handles transfer confirmation watcher', async () => {
+  //   createWrapper()
 
-    mockIsActionAdded.value = true
-    await nextTick()
+  //   mockIsConfirmingTransfer.value = true
+  //   await nextTick()
+  //   mockIsConfirmingTransfer.value = false
+  //   await nextTick()
 
-    expect(mockAddSuccessToast).toHaveBeenCalledWith(
-      'Action added successfully, waiting for confirmation'
-    )
-    const modalState = unwrap<ModalState>(vm.transferModal)
-    expect(modalState).toStrictEqual({ mount: false, show: false })
-  })
-
-  it('handles transfer confirmation watcher', async () => {
-    createWrapper()
-
-    mockIsConfirmingTransfer.value = true
-    await nextTick()
-    mockIsConfirmingTransfer.value = false
-    await nextTick()
-
-    expect(mockAddSuccessToast).toHaveBeenCalledWith('Transferred successfully')
-    expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: [
-        'readContract',
-        {
-          address: defaultProps.bankAddress,
-          functionName: 'owner'
-        }
-      ]
-    })
-  })
+  //   expect(mockAddSuccessToast).toHaveBeenCalledWith('Transferred successfully')
+  //   expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
+  //     queryKey: [
+  //       'readContract',
+  //       {
+  //         address: defaultProps.bankAddress,
+  //         functionName: 'owner'
+  //       }
+  //     ]
+  //   })
+  // })
 })

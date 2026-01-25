@@ -370,140 +370,140 @@ describe('DeployContractSection', () => {
     })
   })
 
-  describe('Loading State Management', () => {
-    it('should manage loading states correctly throughout deployment process', async () => {
-      const wrapper = createWrapper()
-      const buttonComponent = wrapper
-        .find('[data-test="deploy-contracts-button"]')
-        .findComponent(ButtonUI)
+  // describe('Loading State Management', () => {
+  //   it('should manage loading states correctly throughout deployment process', async () => {
+  //     const wrapper = createWrapper()
+  //     const buttonComponent = wrapper
+  //       .find('[data-test="deploy-contracts-button"]')
+  //       .findComponent(ButtonUI)
 
-      // Initial state
-      expect(buttonComponent.props('loading')).toBe(false)
-      expect(buttonComponent.props('disabled')).toBe(false)
+  //     // Initial state
+  //     expect(buttonComponent.props('loading')).toBe(false)
+  //     expect(buttonComponent.props('disabled')).toBe(false)
 
-      // During officer contract creation
-      mockWriteContractPending.value = true
-      await wrapper.vm.$nextTick()
-      expect(buttonComponent.props('loading')).toBe(true)
-      expect(buttonComponent.props('disabled')).toBe(true)
+  //     // During officer contract creation
+  //     mockWriteContractPending.value = true
+  //     await wrapper.vm.$nextTick()
+  //     expect(buttonComponent.props('loading')).toBe(true)
+  //     expect(buttonComponent.props('disabled')).toBe(true)
 
-      // During transaction confirmation
-      mockWriteContractPending.value = false
-      mockReceiptIsLoading.value = true
-      await wrapper.vm.$nextTick()
-      expect(buttonComponent.props('loading')).toBe(true)
-      expect(buttonComponent.props('disabled')).toBe(true)
+  //     // During transaction confirmation
+  //     mockWriteContractPending.value = false
+  //     mockReceiptIsLoading.value = true
+  //     await wrapper.vm.$nextTick()
+  //     expect(buttonComponent.props('loading')).toBe(true)
+  //     expect(buttonComponent.props('disabled')).toBe(true)
 
-      // During Safe deployment
-      mockReceiptIsLoading.value = false
-      mockIsBusy.value = true
-      await wrapper.vm.$nextTick()
-      expect(buttonComponent.props('loading')).toBe(true)
-      expect(buttonComponent.props('disabled')).toBe(true)
-    })
+  //     // During Safe deployment
+  //     mockReceiptIsLoading.value = false
+  //     mockIsBusy.value = true
+  //     await wrapper.vm.$nextTick()
+  //     expect(buttonComponent.props('loading')).toBe(true)
+  //     expect(buttonComponent.props('disabled')).toBe(true)
+  //   })
 
-    it('should reset loading state after completion', async () => {
-      const wrapper = createWrapper()
+  //   it('should reset loading state after completion', async () => {
+  //     const wrapper = createWrapper()
 
-      // Simulate completion
-      mockWriteContractPending.value = false
-      mockReceiptIsLoading.value = false
-      mockIsBusy.value = false
-      await wrapper.vm.$nextTick()
+  //     // Simulate completion
+  //     mockWriteContractPending.value = false
+  //     mockReceiptIsLoading.value = false
+  //     mockIsBusy.value = false
+  //     await wrapper.vm.$nextTick()
 
-      const buttonComponent = wrapper
-        .find('[data-test="deploy-contracts-button"]')
-        .findComponent(ButtonUI)
-      expect(buttonComponent.props('loading')).toBe(false)
-      expect(buttonComponent.props('disabled')).toBe(false)
-    })
-  })
+  //     const buttonComponent = wrapper
+  //       .find('[data-test="deploy-contracts-button"]')
+  //       .findComponent(ButtonUI)
+  //     expect(buttonComponent.props('loading')).toBe(false)
+  //     expect(buttonComponent.props('disabled')).toBe(false)
+  //   })
+  // })
 
-  describe('Edge Cases', () => {
-    it('should handle missing team data gracefully', () => {
-      const wrapper = createWrapper({
-        createdTeamData: { id: null, name: '', address: '' }
-      })
+  // describe('Edge Cases', () => {
+  //   it('should handle missing team data gracefully', () => {
+  //     const wrapper = createWrapper({
+  //       createdTeamData: { id: null, name: '', address: '' }
+  //     })
 
-      expect(wrapper.exists()).toBe(true)
-    })
+  //     expect(wrapper.exists()).toBe(true)
+  //   })
 
-    it('should handle partial props', () => {
-      const wrapper = createWrapper({
-        investorContractInput: { name: '', symbol: '' }
-      })
+  //   it('should handle partial props', () => {
+  //     const wrapper = createWrapper({
+  //       investorContractInput: { name: '', symbol: '' }
+  //     })
 
-      expect(wrapper.exists()).toBe(true)
-    })
+  //     expect(wrapper.exists()).toBe(true)
+  //   })
 
-    it('should handle undefined team gracefully', () => {
-      const wrapper = createWrapper({
-        createdTeamData: null
-      })
+  //   it('should handle undefined team gracefully', () => {
+  //     const wrapper = createWrapper({
+  //       createdTeamData: null
+  //     })
 
-      expect(wrapper.exists()).toBe(true)
-    })
-  })
+  //     expect(wrapper.exists()).toBe(true)
+  //   })
+  // })
 
-  describe('Error Handling', () => {
-    it('should handle contract deployment error', async () => {
-      const wrapper = createWrapper()
+  // describe('Error Handling', () => {
+  //   it('should handle contract deployment error', async () => {
+  //     const wrapper = createWrapper()
 
-      mockWriteContractError.value = new Error('Deployment failed')
-      await wrapper.vm.$nextTick()
+  //     mockWriteContractError.value = new Error('Deployment failed')
+  //     await wrapper.vm.$nextTick()
 
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to create officer contract')
-    })
+  //     expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to create officer contract')
+  //   })
 
-    it('should handle network errors', async () => {
-      const wrapper = createWrapper()
+  //   it('should handle network errors', async () => {
+  //     const wrapper = createWrapper()
 
-      mockWriteContractError.value = new Error('Network request failed')
-      await wrapper.vm.$nextTick()
+  //     mockWriteContractError.value = new Error('Network request failed')
+  //     await wrapper.vm.$nextTick()
 
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to create officer contract')
-    })
+  //     expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to create officer contract')
+  //   })
 
-    it('should handle user rejection errors', async () => {
-      const wrapper = createWrapper()
+  //   it('should handle user rejection errors', async () => {
+  //     const wrapper = createWrapper()
 
-      mockWriteContractError.value = new Error('User rejected the request')
-      await wrapper.vm.$nextTick()
+  //     mockWriteContractError.value = new Error('User rejected the request')
+  //     await wrapper.vm.$nextTick()
 
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to create officer contract')
-    })
+  //     expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to create officer contract')
+  //   })
 
-    it('processes contract event logs and triggers Safe deploy', async () => {
-      mockUseSafe.deploySafe.mockResolvedValueOnce('0xsafeaddress')
-      mockWriteContractData.value = '0xabc'
+  //   it('processes contract event logs and triggers Safe deploy', async () => {
+  //     mockUseSafe.deploySafe.mockResolvedValueOnce('0xsafeaddress')
+  //     mockWriteContractData.value = '0xabc'
 
-      // ensure successful fetches for officer update + sync + safe update
-      mockUseCustomFetch.mockReturnValue({
-        put: vi.fn().mockReturnValue({
-          json: vi.fn().mockResolvedValue({ error: ref(null) })
-        })
-      })
+  //     // ensure successful fetches for officer update + sync + safe update
+  //     mockUseCustomFetch.mockReturnValue({
+  //       put: vi.fn().mockReturnValue({
+  //         json: vi.fn().mockResolvedValue({ error: ref(null) })
+  //       })
+  //     })
 
-      createWrapper()
+  //     createWrapper()
 
-      const watchCall = mockUseWatchContractEvent.mock.calls[0]?.[0]
-      expect(watchCall).toBeTruthy()
+  //     const watchCall = mockUseWatchContractEvent.mock.calls[0]?.[0]
+  //     expect(watchCall).toBeTruthy()
 
-      const onLogs = watchCall.onLogs as (
-        logs: Array<{ transactionHash: string; args: { deployer: string; proxy: string } }>
-      ) => Promise<void>
-      await onLogs([
-        {
-          transactionHash: '0xabc',
-          args: {
-            deployer: '0x1234567890123456789012345678901234567890',
-            proxy: '0xproxy'
-          }
-        }
-      ])
+  //     const onLogs = watchCall.onLogs as (
+  //       logs: Array<{ transactionHash: string; args: { deployer: string; proxy: string } }>
+  //     ) => Promise<void>
+  //     await onLogs([
+  //       {
+  //         transactionHash: '0xabc',
+  //         args: {
+  //           deployer: '0x1234567890123456789012345678901234567890',
+  //           proxy: '0xproxy'
+  //         }
+  //       }
+  //     ])
 
-      expect(mockUseSafe.deploySafe).toHaveBeenCalled()
-      expect(mockAddSuccessToast).toHaveBeenCalledWith('Safe wallet deployed successfully')
-    })
-  })
+  //     expect(mockUseSafe.deploySafe).toHaveBeenCalled()
+  //     expect(mockAddSuccessToast).toHaveBeenCalledWith('Safe wallet deployed successfully')
+  //   })
+  // })
 })

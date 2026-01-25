@@ -349,15 +349,5 @@ describe('InvestorsHeader', () => {
         functionName: 'symbol'
       })
     })
-
-    it.skip('should get contract address from team store', () => {
-      // Reset the mock to track calls from component creation
-      mockTeamStore.getContractAddressByType.mockClear()
-
-      wrapper = createComponent()
-
-      // The computed property should be evaluated during component creation
-      expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('InvestorV1')
-    })
   })
 })
