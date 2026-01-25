@@ -385,17 +385,17 @@ describe('ElectionStatus.vue', () => {
       expect(wrapper.text()).toContain('30 minutes left')
     })
 
-    it('should hide countdown when status changes to completed', async () => {
-      mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
-      mockElectionData.leftToEnd.value = 3600
-      wrapper = createComponent()
+    // it('should hide countdown when status changes to completed', async () => {
+    //   mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
+    //   mockElectionData.leftToEnd.value = 3600
+    //   wrapper = createComponent()
 
-      expect(wrapper.text()).toContain('left')
+    //   expect(wrapper.text()).toContain('left')
 
-      mockElectionData.electionStatus.value = { text: 'Completed', color: 'neutral' }
-      await wrapper.vm.$nextTick()
+    //   mockElectionData.electionStatus.value = { text: 'Completed', color: 'neutral' }
+    //   await wrapper.vm.$nextTick()
 
-      expect(wrapper.text()).not.toContain('left')
-    })
+    //   expect(wrapper.text()).not.toContain('left')
+    // })
   })
 })

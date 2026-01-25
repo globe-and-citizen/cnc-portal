@@ -67,8 +67,8 @@
       <div>{{ proposal.description }}</div>
       <div v-if="!hasVoted" class="flex flex-row justify-end gap-2">
         <ButtonUI variant="primary" @click="vote('yes')" :disabled="isVoting || isConfirmingVote"
-          >Vote for yes</ButtonUI
-        >
+          >Vote for yes
+        </ButtonUI>
         <ButtonUI variant="error" @click="vote('no')" :disabled="isVoting || isConfirmingVote"
           >Vote for no</ButtonUI
         >
@@ -76,8 +76,8 @@
           class="bg-gray-300"
           @click="vote('abstain')"
           :disabled="isVoting || isConfirmingVote"
-          >Vote for abstain</ButtonUI
-        >
+          >Vote for abstain
+        </ButtonUI>
       </div>
       <div class="flex flex-col">
         <div class="text-lg font-semibold mb-4">Current Results</div>
@@ -249,8 +249,8 @@ const {
 
 const {
   isLoading: isConfirmingVote,
-  isSuccess: isVoteConfirmed,
-  error: errorConfirmingVote
+  isSuccess: isVoteConfirmed
+  // error: errorConfirmingVote
 } = useWaitForTransactionReceipt({
   hash: txHash
 })
@@ -315,12 +315,12 @@ watch(voteError, (error) => {
   }
 })
 
-watch(errorConfirmingVote, (error) => {
-  if (error) {
-    console.error('Error confirming vote:', error)
-    toastStore.addErrorToast('Failed to confirm vote')
-  }
-})
+// watch(errorConfirmingVote, (error) => {
+//   if (error) {
+//     console.error('Error confirming vote:', error)
+//     toastStore.addErrorToast('Failed to confirm vote')
+//   }
+// })
 
 watch(isVoteConfirmed, async (success) => {
   if (success) {

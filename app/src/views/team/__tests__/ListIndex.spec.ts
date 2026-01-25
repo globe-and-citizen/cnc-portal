@@ -28,11 +28,6 @@ vi.mock('vue-router', async (importOriginal) => {
   }
 })
 
-// Mock team queries
-vi.mock('@/queries/team.queries', () => ({
-  useTeamsQuery: vi.fn()
-}))
-
 // Import after mocks are defined
 import { useTeamsQuery } from '@/queries/team.queries'
 
@@ -54,9 +49,9 @@ describe('ListIndex - Team List View', () => {
     isLoading = false,
     error: Error | null = null
   ) => {
-    const useTeamsMock = vi.fn()
-    useTeamsMock.mockReturnValue(createMockQueryResponse(teamsData, isLoading, error))
-    vi.mocked(useTeamsQuery).mockImplementation(useTeamsMock)
+    vi.mocked(useTeamsQuery).mockReturnValueOnce(
+      createMockQueryResponse(teamsData, isLoading, error)
+    )
 
     return mount(ListIndex, {
       global: {
