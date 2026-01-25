@@ -17,7 +17,7 @@
           <span class="text-gray-600">USD</span>
         </div>
         <div class="text-sm text-gray-500 mt-1">
-          ≈ {{ total['USD']?.formated ?? 0 }} {{ currency.code }}
+          ≈ {{ total[currency.code]?.formated ?? total['USD']?.formated ?? 0 }} {{ currency.code }}
         </div>
         <div class="text-sm text-gray-600 mt-2 flex flex-col gap-1">
           <div>
@@ -73,12 +73,12 @@
       v-model="depositModal.show"
       v-if="depositModal.mount"
       data-test="deposit-modal"
-      @reset="() => closeDepositModal()"
+      @reset="() => (depositModal = { mount: false, show: false })"
     >
-      <DepositBankForm
+      <DepositSafeForm
         v-if="safeAddress"
-        @close-modal="closeDepositModal"
-        :bank-address="safeAddress"
+        @close-modal="() => (depositModal = { mount: false, show: false })"
+        :safe-address="safeAddress"
       />
     </ModalComponent>
 
@@ -119,16 +119,14 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
-import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { useQueryClient } from '@tanstack/vue-query'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
 
 const chainId = useChainId()
-const queryClient = useQueryClient()
 const currency = useStorage('currency', {
   code: 'USD',
   name: 'US Dollar',
@@ -177,20 +175,6 @@ const { data: safeInfo } = useSafeInfoQuery(
   computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
 )
 
-// const displayUsdBalance = computed(
-//   () => safeInfo.value?.totals?.['USD']?.formated ?? safeInfo.value?.balance ?? 0
-// )
-
-// Note: safeInfo.totals is optional (see SafeInfo type). We use optional chaining and fall back
-// to the generic balance when the local currency or USD totals are not available.
-// const displayLocalBalance = computed(() => {
-//   const local = safeInfo.value?.totals?.[currency.value.code]?.formated
-//   if (local) return local
-//   const usd = safeInfo.value?.totals?.['USD']?.formated
-//   if (usd) return usd
-//   return safeInfo.value?.balance ?? 0
-// })
-
 const initialTransferDataValue = (): TransferModel => {
   const firstToken = tokens.value[0]
   return {
@@ -214,21 +198,6 @@ const openInSafeApp = () => {
 
 const openDepositModal = () => {
   depositModal.value = { mount: true, show: true }
-}
-
-const closeDepositModal = async () => {
-  depositModal.value = { mount: false, show: false }
-
-  // Wait for blockchain confirmation
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-
-  // Invalidate Safe queries and balance queries to refresh automatically
-  if (teamStore.currentTeam?.safeAddress) {
-    // Invalidate native balance queries (for ETH/POL)
-    await queryClient.invalidateQueries({
-      queryKey: ['safe', 'info', { safeAddress: teamStore.currentTeam.safeAddress }]
-    })
-  }
 }
 
 const openTransferModal = () => {
