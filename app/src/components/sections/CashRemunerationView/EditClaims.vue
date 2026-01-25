@@ -183,10 +183,6 @@ const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     await queryClient.invalidateQueries({
       queryKey: ['teamWeeklyClaims']
     })
-    // await queryClient.refetchQueries({
-    //   queryKey: ['teamWeeklyClaims'],
-    //   type: 'active'
-    // })
 
     claimFormRef.value?.resetForm()
     emit('close')

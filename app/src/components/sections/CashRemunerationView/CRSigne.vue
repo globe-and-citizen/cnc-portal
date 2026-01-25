@@ -167,10 +167,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
         await queryClient.invalidateQueries({
           queryKey: ['teamWeeklyClaims']
         })
-        // await queryClient.refetchQueries({
-        //   queryKey: ['teamWeeklyClaims'],
-        //   type: 'active'
-        // })
+
         isloading.value = false
         emit('loading', false)
       }

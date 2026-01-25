@@ -181,10 +181,7 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     await queryClient.invalidateQueries({
       queryKey: ['teamWeeklyClaims']
     })
-    // await queryClient.refetchQueries({
-    //   queryKey: ['teamWeeklyClaims'],
-    //   type: 'active'
-    // })
+
     modal.value = false
     formInitialData.value = createDefaultFormData()
     claimFormRef.value?.resetForm()

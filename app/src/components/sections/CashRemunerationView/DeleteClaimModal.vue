@@ -87,10 +87,6 @@ const handleDelete = async () => {
     await queryClient.invalidateQueries({
       queryKey: ['teamWeeklyClaims']
     })
-    // await queryClient.refetchQueries({
-    //   queryKey: ['teamWeeklyClaims'],
-    //   type: 'active'
-    // })
 
     emit('close')
   }
