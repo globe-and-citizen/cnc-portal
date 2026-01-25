@@ -164,9 +164,13 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
         // keep loading until explicit success
       } else {
         toastStore.addSuccessToast('Claim approved')
-        queryClient.invalidateQueries({
-          queryKey: ['weekly-claims', teamStore.currentTeamId]
+        await queryClient.invalidateQueries({
+          queryKey: ['teamWeeklyClaims']
         })
+        // await queryClient.refetchQueries({
+        //   queryKey: ['teamWeeklyClaims'],
+        //   type: 'active'
+        // })
         isloading.value = false
         emit('loading', false)
       }

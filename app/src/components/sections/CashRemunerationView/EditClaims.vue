@@ -181,8 +181,12 @@ const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     deletedFileIndexes.value = []
 
     await queryClient.invalidateQueries({
-      queryKey: ['weekly-claims', teamStore.currentTeamId]
+      queryKey: ['teamWeeklyClaims']
     })
+    // await queryClient.refetchQueries({
+    //   queryKey: ['teamWeeklyClaims'],
+    //   type: 'active'
+    // })
 
     claimFormRef.value?.resetForm()
     emit('close')
