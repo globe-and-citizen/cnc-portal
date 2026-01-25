@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import {
   useERC20ContractWrite,
   useERC20Transfer,
-  useERC20TransferFrom,
+  useERC20TransferFrom
   // useERC20Approve
 } from '../writes'
 import type { Address } from 'viem'

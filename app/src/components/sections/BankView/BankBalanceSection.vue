@@ -332,21 +332,21 @@ watch(isActionAdded, (added) => {
   }
 })
 
-watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('Transferred successfully')
-    resetTransferValues()
+// watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
+//   if (!newIsConfirming && oldIsConfirming) {
+//     addSuccessToast('Transferred successfully')
+//     resetTransferValues()
 
-    //refresh bank owner data after a successful transfer
-    queryClient.invalidateQueries({
-      queryKey: [
-        'readContract',
-        {
-          address: props.bankAddress,
-          functionName: 'owner'
-        }
-      ]
-    })
-  }
-})
+//     //refresh bank owner data after a successful transfer
+//     queryClient.invalidateQueries({
+//       queryKey: [
+//         'readContract',
+//         {
+//           address: props.bankAddress,
+//           functionName: 'owner'
+//         }
+//       ]
+//     })
+//   }
+// })
 </script>

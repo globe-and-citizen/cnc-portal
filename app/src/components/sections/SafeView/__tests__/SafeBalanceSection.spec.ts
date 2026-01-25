@@ -365,148 +365,148 @@ describe.skip('SafeBalanceSection', () => {
     })
   })
 
-  describe('Currency Display', () => {
-    it('should respect user currency preference', async () => {
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      mockCurrency.value = { code: 'EUR', name: 'Euro', symbol: '€' }
-      wrapper = createWrapper()
-      await nextTick()
+  // describe('Currency Display', () => {
+  //   it('should respect user currency preference', async () => {
+  //     mockSafeInfo.value = MOCK_DATA.safeInfo
+  //     mockCurrency.value = { code: 'EUR', name: 'Euro', symbol: '€' }
+  //     wrapper = createWrapper()
+  //     await nextTick()
 
-      expect(wrapper.text()).toContain('€2.7K EUR')
-    })
+  //     expect(wrapper.text()).toContain('€2.7K EUR')
+  //   })
 
-    it('should fallback to USD when preferred currency not available', async () => {
-      const safeInfoWithLimitedTotals = {
-        ...MOCK_DATA.safeInfo,
-        totals: {
-          USD: MOCK_DATA.safeInfo.totals.USD
-          // EUR not available
-        }
-      }
-      mockSafeInfo.value = safeInfoWithLimitedTotals
-      mockCurrency.value = { code: 'EUR', name: 'Euro', symbol: '€' }
-      wrapper = createWrapper()
-      await nextTick()
+  //   it('should fallback to USD when preferred currency not available', async () => {
+  //     const safeInfoWithLimitedTotals = {
+  //       ...MOCK_DATA.safeInfo,
+  //       totals: {
+  //         USD: MOCK_DATA.safeInfo.totals.USD
+  //         // EUR not available
+  //       }
+  //     }
+  //     mockSafeInfo.value = safeInfoWithLimitedTotals
+  //     mockCurrency.value = { code: 'EUR', name: 'Euro', symbol: '€' }
+  //     wrapper = createWrapper()
+  //     await nextTick()
 
-      expect(wrapper.text()).toContain('$3K EUR') // Shows USD value with EUR label
-    })
+  //     expect(wrapper.text()).toContain('$3K EUR') // Shows USD value with EUR label
+  //   })
 
-    it.skip('should fallback to raw balance when no totals available', async () => {
-      const safeInfoWithoutTotals = {
-        ...MOCK_DATA.safeInfo,
-        totals: undefined
-      }
-      mockSafeInfo.value = safeInfoWithoutTotals
-      wrapper = createWrapper()
-      await nextTick()
+  //   it.skip('should fallback to raw balance when no totals available', async () => {
+  //     const safeInfoWithoutTotals = {
+  //       ...MOCK_DATA.safeInfo,
+  //       totals: undefined
+  //     }
+  //     mockSafeInfo.value = safeInfoWithoutTotals
+  //     wrapper = createWrapper()
+  //     await nextTick()
 
-      expect(wrapper.text()).toContain('1.5 USD') // Raw balance with currency code
-    })
-  })
+  //     expect(wrapper.text()).toContain('1.5 USD') // Raw balance with currency code
+  //   })
+  // })
 
-  describe('Reactivity', () => {
-    it('should update display when Safe info changes', async () => {
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      wrapper = createWrapper()
-      await nextTick()
+  // describe('Reactivity', () => {
+  //   it('should update display when Safe info changes', async () => {
+  //     mockSafeInfo.value = MOCK_DATA.safeInfo
+  //     wrapper = createWrapper()
+  //     await nextTick()
 
-      expect(wrapper.text()).toContain('$3K')
+  //     expect(wrapper.text()).toContain('$3K')
 
-      // Update Safe info
-      const updatedSafeInfo = {
-        ...MOCK_DATA.safeInfo,
-        totals: {
-          ...MOCK_DATA.safeInfo.totals,
-          USD: {
-            ...MOCK_DATA.safeInfo.totals.USD,
-            formated: '$5K'
-          }
-        }
-      }
-      mockSafeInfo.value = updatedSafeInfo
-      await nextTick()
+  //     // Update Safe info
+  //     const updatedSafeInfo = {
+  //       ...MOCK_DATA.safeInfo,
+  //       totals: {
+  //         ...MOCK_DATA.safeInfo.totals,
+  //         USD: {
+  //           ...MOCK_DATA.safeInfo.totals.USD,
+  //           formated: '$5K'
+  //         }
+  //       }
+  //     }
+  //     mockSafeInfo.value = updatedSafeInfo
+  //     await nextTick()
 
-      expect(wrapper.text()).toContain('$5K')
-    })
+  //     expect(wrapper.text()).toContain('$5K')
+  //   })
 
-    it('should update threshold display when Safe info changes', async () => {
-      mockSafeInfo.value = MOCK_DATA.safeInfo
-      wrapper = createWrapper()
-      await nextTick()
+  //   it('should update threshold display when Safe info changes', async () => {
+  //     mockSafeInfo.value = MOCK_DATA.safeInfo
+  //     wrapper = createWrapper()
+  //     await nextTick()
 
-      expect(wrapper.text()).toContain('2 of 2 signatures required')
+  //     expect(wrapper.text()).toContain('2 of 2 signatures required')
 
-      // Update threshold
-      const updatedSafeInfo = {
-        ...MOCK_DATA.safeInfo,
-        threshold: 1,
-        owners: [MOCK_DATA.safeInfo.owners[0]]
-      }
-      mockSafeInfo.value = updatedSafeInfo
-      await nextTick()
+  //     // Update threshold
+  //     const updatedSafeInfo = {
+  //       ...MOCK_DATA.safeInfo,
+  //       threshold: 1,
+  //       owners: [MOCK_DATA.safeInfo.owners[0]]
+  //     }
+  //     mockSafeInfo.value = updatedSafeInfo
+  //     await nextTick()
 
-      expect(wrapper.text()).toContain('1 of 1 signatures required')
-    })
-  })
+  //     expect(wrapper.text()).toContain('1 of 1 signatures required')
+  //   })
+  // })
 
-  describe('Edge Cases', () => {
-    it('should handle very large balance numbers', async () => {
-      const safeInfoWithLargeBalance = {
-        ...MOCK_DATA.safeInfo,
-        balance: '999999999.123456789',
-        totals: {
-          USD: {
-            value: 999999999,
-            formated: '$999.9M',
-            id: 'usd',
-            code: 'USD',
-            symbol: '$',
-            price: 1,
-            formatedPrice: '$1'
-          }
-        }
-      }
-      mockSafeInfo.value = safeInfoWithLargeBalance
-      wrapper = createWrapper()
-      await nextTick()
+  // describe('Edge Cases', () => {
+  //   it('should handle very large balance numbers', async () => {
+  //     const safeInfoWithLargeBalance = {
+  //       ...MOCK_DATA.safeInfo,
+  //       balance: '999999999.123456789',
+  //       totals: {
+  //         USD: {
+  //           value: 999999999,
+  //           formated: '$999.9M',
+  //           id: 'usd',
+  //           code: 'USD',
+  //           symbol: '$',
+  //           price: 1,
+  //           formatedPrice: '$1'
+  //         }
+  //       }
+  //     }
+  //     mockSafeInfo.value = safeInfoWithLargeBalance
+  //     wrapper = createWrapper()
+  //     await nextTick()
 
-      expect(wrapper.text()).toContain('$999.9M')
-    })
+  //     expect(wrapper.text()).toContain('$999.9M')
+  //   })
 
-    it('should handle zero balance', async () => {
-      const safeInfoWithZeroBalance = {
-        ...MOCK_DATA.safeInfo,
-        balance: '0',
-        totals: {
-          USD: {
-            value: 0,
-            formated: '$0',
-            id: 'usd',
-            code: 'USD',
-            symbol: '$',
-            price: 0,
-            formatedPrice: '$0'
-          }
-        }
-      }
-      mockSafeInfo.value = safeInfoWithZeroBalance
-      wrapper = createWrapper()
-      await nextTick()
+  //   it('should handle zero balance', async () => {
+  //     const safeInfoWithZeroBalance = {
+  //       ...MOCK_DATA.safeInfo,
+  //       balance: '0',
+  //       totals: {
+  //         USD: {
+  //           value: 0,
+  //           formated: '$0',
+  //           id: 'usd',
+  //           code: 'USD',
+  //           symbol: '$',
+  //           price: 0,
+  //           formatedPrice: '$0'
+  //         }
+  //       }
+  //     }
+  //     mockSafeInfo.value = safeInfoWithZeroBalance
+  //     wrapper = createWrapper()
+  //     await nextTick()
 
-      expect(wrapper.text()).toContain('$0')
-    })
+  //     expect(wrapper.text()).toContain('$0')
+  //   })
 
-    it('should handle empty owners array', async () => {
-      const safeInfoWithNoOwners = {
-        ...MOCK_DATA.safeInfo,
-        owners: [],
-        threshold: 0
-      }
-      mockSafeInfo.value = safeInfoWithNoOwners
-      wrapper = createWrapper()
-      await nextTick()
+  //   it('should handle empty owners array', async () => {
+  //     const safeInfoWithNoOwners = {
+  //       ...MOCK_DATA.safeInfo,
+  //       owners: [],
+  //       threshold: 0
+  //     }
+  //     mockSafeInfo.value = safeInfoWithNoOwners
+  //     wrapper = createWrapper()
+  //     await nextTick()
 
-      expect(wrapper.text()).toContain('0 of 0 signatures required')
-    })
-  })
+  //     expect(wrapper.text()).toContain('0 of 0 signatures required')
+  //   })
+  // })
 })
