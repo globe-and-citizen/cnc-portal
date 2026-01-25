@@ -275,20 +275,13 @@ import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
 import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
 import { useRoute } from 'vue-router'
-import { useTeams } from '@/queries/team.queries'
-// import { useReadContract } from '@wagmi/vue'
-// import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
+import { useTeamsQuery } from '@/queries/team.queries'
+import type { User } from '@/types'
 
 const appStore = useAppStore()
 const route = useRoute()
 const userStore = useUserDataStore()
-const teams = useTeams()
-
-interface User {
-  name: string
-  address: string
-  imageUrl?: string
-}
+const teams = useTeamsQuery(userStore.address)
 
 const isCollapsed = defineModel({
   type: Boolean
@@ -300,31 +293,6 @@ const props = defineProps<{
 const target = ref(null)
 const isDropdownOpen = ref(false)
 const teamStore = useTeamStore()
-
-// const cashRemunerationAddress = computed(() =>
-//   teamStore.getContractAddressByType('CashRemunerationEIP712')
-// )
-
-// const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
-//   functionName: 'owner',
-//   // @ts-expect-error cashRemunerationAddress may not match expected type, but is correct for contract call
-//   address: cashRemunerationAddress,
-//   abi: CashRemuneration_ABI,
-//   enabled: computed(() => !!cashRemunerationAddress.value)
-// })
-
-// Check if user is Cash Remuneration owner with fallback to team owner
-// const isCashRemunerationOwner = computed(() => {
-//   if (
-//     cashRemunerationAddress.value &&
-//     cashRemunerationOwner.value &&
-//     !cashRemunerationOwnerError.value
-//   ) {
-//     return cashRemunerationOwner.value === userStore.address
-//   }
-//   // Fallback to team owner if contract doesn't exist or error occurred
-//   return userStore.address === teamStore.currentTeam?.ownerAddress
-// })
 
 // Dropdown submenu state
 const openSubmenus = ref<boolean[]>([])
@@ -392,6 +360,7 @@ const menuItems = computed(() => [
       name: 'bank-account',
       params: { id: teamStore.currentTeamId || '1' }
     },
+
     // Active if any child is active or the parent route is active
     active:
       route.name === 'bank-account' ||
@@ -399,6 +368,7 @@ const menuItems = computed(() => [
       route.name === 'payroll-account' ||
       route.name === 'team-payroll' ||
       route.name === 'payroll-history' ||
+      route.name === 'safe-account' ||
       (route.name === 'payroll-history' && route.params.memberAddress === userStore.address),
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0,
     children: [
@@ -411,6 +381,16 @@ const menuItems = computed(() => [
         },
         active: route.name === 'bank-account',
         show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
+      },
+      {
+        label: 'Safe Account',
+        icon: 'heroicons:shield-check',
+        route: {
+          name: 'safe-account',
+          params: { id: teamStore.currentTeamId || '1' }
+        },
+        active: route.name === 'safe-account',
+        show: teamStore.currentTeam?.safeAddress
       },
       {
         label: 'Expense Account ',

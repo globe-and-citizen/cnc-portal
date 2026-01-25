@@ -8,7 +8,7 @@ import { useSignMessage, useChainId, useConnection } from '@wagmi/vue'
 import { SiweMessage } from 'siwe'
 import { useWalletChecks } from '@/composables'
 import { BACKEND_URL } from '@/constant/index'
-import { useUser } from '@/queries/user.queries'
+import { useUserQuery } from '@/queries/user.queries'
 
 export function useSiwe() {
   //#region Refs
@@ -22,7 +22,11 @@ export function useSiwe() {
 
   const connection = useConnection()
   const chainId = useChainId()
-  const { data: signature, error: signMessageError, signMessageAsync } = useSignMessage()
+  const {
+    data: signature,
+    error: signMessageError,
+    mutateAsync: signMessageAsync
+  } = useSignMessage()
   const { performChecks, isSuccess: isSuccessWalletCheck } = useWalletChecks()
 
   //#endregion
@@ -52,7 +56,7 @@ export function useSiwe() {
     data: userData,
     error: fetchUserError,
     refetch: refetchUser
-  } = useUser(computed(() => connection.address.value || ''))
+  } = useUserQuery(connection.address)
   //#endregion
 
   //#region Functions

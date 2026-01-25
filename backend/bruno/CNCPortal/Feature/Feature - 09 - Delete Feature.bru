@@ -1,0 +1,29 @@
+meta {
+  name: Feature - 09 - Delete Feature
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{host}}/admin/features/{{testFeatureName}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+tests {
+  test("should return 204 No Content status", function() {
+    expect(res.getStatus()).to.equal(204);
+  });
+
+  test("should have no response body", function() {
+    expect(res.body).to.be.empty;
+  });
+
+  test("log deletion result", function() {
+    console.log("Feature deleted successfully (204 No Content)");
+  });
+}

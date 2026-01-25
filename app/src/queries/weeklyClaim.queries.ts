@@ -3,62 +3,50 @@ import apiClient from '@/lib/axios'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 import type { AxiosError } from 'axios'
+import type { Address } from 'viem'
+import type { WeeklyClaim } from '@/types/cash-remuneration'
 
 /**
- * Weekly Claim Data Types
+ * Parameters for useTeamWeeklyClaimsQuery
  */
-export interface Claim {
-  id: number
-  hoursWorked: number
-  memo?: string
-  dayWorked: string | Date
-  status: 'pending' | 'signed' | 'withdrawn' | 'disabled'
-  signature?: string | null
-  tokenTx?: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-export interface WeeklyClaim {
-  id: number
-  status: 'pending' | 'signed' | 'withdrawn' | 'disabled'
-  weekStart: string | Date
-  memberAddress: string
-  teamId: number
-  claims?: Claim[]
-  hoursWorked?: number
-  signature?: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-export interface WeeklyClaimWithHours extends WeeklyClaim {
-  hoursWorked: number
+export interface UseTeamWeeklyClaimsQueryParams {
+  teamId?: MaybeRefOrGetter<string | number | null>
+  userAddress?: MaybeRefOrGetter<Address | undefined>
+  status?: MaybeRefOrGetter<'pending' | 'signed' | 'withdrawn' | 'disabled' | undefined>
 }
 
 /**
- * Fetch weekly claims for a team with optional status filter
+ * Fetch weekly claims for a team with optional filters
  */
-export const useTeamWeeklyClaims = (
-  teamId: MaybeRefOrGetter<string | number | null>,
-  status?: MaybeRefOrGetter<'pending' | 'signed' | 'withdrawn' | 'disabled' | null>
-) => {
-  return useQuery<WeeklyClaimWithHours[], AxiosError>({
-    queryKey: ['teamWeeklyClaims', { teamId, status }],
+export const useTeamWeeklyClaimsQuery = (params: UseTeamWeeklyClaimsQueryParams) => {
+  return useQuery<WeeklyClaim[], AxiosError>({
+    queryKey: [
+      'teamWeeklyClaims',
+      {
+        teamId: params.teamId,
+        userAddress: params.userAddress,
+        status: params.status
+      }
+    ],
     queryFn: async () => {
-      const id = toValue(teamId)
-      const statusValue = toValue(status)
-      if (!id) throw new Error('Team ID is required')
+      const teamId = toValue(params.teamId)
+      const userAddress = toValue(params.userAddress)
+      const statusValue = toValue(params.status)
 
-      let url = `/weeklyClaim/?teamId=${id}`
+      if (!teamId) throw new Error('Team ID is required')
+
+      let url = `/weeklyClaim/?teamId=${teamId}`
+      if (userAddress) {
+        url += `&memberAddress=${userAddress}`
+      }
       if (statusValue) {
         url += `&status=${statusValue}`
       }
 
-      const { data } = await apiClient.get<WeeklyClaimWithHours[]>(url)
+      const { data } = await apiClient.get<WeeklyClaim[]>(url)
       return data
     },
-    enabled: () => !!toValue(teamId),
+    enabled: () => !!toValue(params.teamId),
     retry: false,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -71,7 +59,7 @@ export const useTeamWeeklyClaims = (
 /**
  * Fetch a single weekly claim by ID
  */
-export const useWeeklyClaimById = (claimId: MaybeRefOrGetter<string | number | null>) => {
+export const useWeeklyClaimByIdQuery = (claimId: MaybeRefOrGetter<string | number | null>) => {
   return useQuery<WeeklyClaim, AxiosError>({
     queryKey: ['weeklyClaim', { claimId }],
     queryFn: async () => {
@@ -99,7 +87,7 @@ export interface SignWeeklyClaimInput {
   signature: string
 }
 
-export const useSignWeeklyClaim = () => {
+export const useSignWeeklyClaimMutation = () => {
   const queryClient = useQueryClient()
   return useMutation<void, AxiosError, SignWeeklyClaimInput>({
     mutationFn: async (input) => {
@@ -128,7 +116,7 @@ export interface EnableWeeklyClaimInput {
   signature: string
 }
 
-export const useEnableWeeklyClaim = () => {
+export const useEnableWeeklyClaimMutation = () => {
   const queryClient = useQueryClient()
   return useMutation<void, AxiosError, EnableWeeklyClaimInput>({
     mutationFn: async (input) => {
@@ -157,7 +145,7 @@ export interface DisableWeeklyClaimInput {
   signature: string
 }
 
-export const useDisableWeeklyClaim = () => {
+export const useDisableWeeklyClaimMutation = () => {
   const queryClient = useQueryClient()
   return useMutation<void, AxiosError, DisableWeeklyClaimInput>({
     mutationFn: async (input) => {
@@ -186,7 +174,7 @@ export interface WithdrawWeeklyClaimInput {
   signature: string
 }
 
-export const useWithdrawWeeklyClaim = () => {
+export const useWithdrawWeeklyClaimMutation = () => {
   const queryClient = useQueryClient()
   return useMutation<void, AxiosError, WithdrawWeeklyClaimInput>({
     mutationFn: async (input) => {
@@ -228,7 +216,7 @@ export interface SyncWeeklyClaimsResponse {
   }>
 }
 
-export const useSyncWeeklyClaims = () => {
+export const useSyncWeeklyClaimsMutation = () => {
   const queryClient = useQueryClient()
   return useMutation<SyncWeeklyClaimsResponse, AxiosError, SyncWeeklyClaimsInput>({
     mutationFn: async (input) => {

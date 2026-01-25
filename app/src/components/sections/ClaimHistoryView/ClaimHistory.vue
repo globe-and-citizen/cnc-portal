@@ -267,8 +267,8 @@ import {
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
-import { useTanstackQuery } from '@/composables'
-import type { Claim, Wage, WeeklyClaim } from '@/types'
+import { useTeamWeeklyClaimsQuery, useTeamWagesQuery } from '@/queries'
+import type { Claim, WeeklyClaim } from '@/types'
 import type { Address } from 'viem'
 
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
@@ -307,29 +307,13 @@ const getColor = (weeklyClaim?: WeeklyClaim) => {
   return 'accent'
 }
 
-const teamId = computed(() => teamStore.currentTeamId)
+const { data: memberWeeklyClaims } = useTeamWeeklyClaimsQuery({
+  teamId: computed(() => teamStore.currentTeamId),
+  userAddress: memberAddress
+})
 
-const weeklyClaimQueryKey = computed(() => ['weekly-claims', teamId.value, memberAddress.value])
-const weeklyClaimURL = computed(
-  () => `/weeklyClaim/?teamId=${teamId.value}&memberAddress=${memberAddress.value}`
-)
-
-const { data: memberWeeklyClaims, refetch } = useTanstackQuery<Array<WeeklyClaim>>(
-  weeklyClaimQueryKey,
-  weeklyClaimURL
-)
-
-watch(
-  memberAddress,
-  () => {
-    refetch()
-  },
-  { immediate: true }
-)
-
-const { data: teamWageData, error: teamWageDataError } = useTanstackQuery<Array<Wage>>(
-  computed(() => ['team-wage', teamStore.currentTeamId]),
-  computed(() => `/wage/?teamId=${teamStore.currentTeamId}`)
+const { data: teamWageData, error: teamWageDataError } = useTeamWagesQuery(
+  computed(() => teamStore.currentTeamId)
 )
 
 const hasWage = computed(() => {
@@ -358,29 +342,28 @@ const generatedMonthWeek = computed(() => {
 })
 
 interface FileAttachment {
-  fileName: string
   fileType: string
-  fileSize?: number
-  fileData: string
+  fileSize: number
+  fileKey: string
+  fileUrl: string
 }
 
 const buildFilePreviews = (files: FileAttachment[]) => {
   const imageMimeTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp']
-  const imageExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp']
 
   return files.map((file) => {
-    const previewUrl =
-      file?.fileData && file?.fileType ? `data:${file.fileType};base64,${file.fileData}` : ''
-    const isImage =
-      imageMimeTypes.includes(file?.fileType) ||
-      imageExtensions.some((ext) => file?.fileName?.toLowerCase().endsWith(ext))
+    // Use MIME type to determine if it's an image
+    const isImage = imageMimeTypes.includes(file?.fileType)
+    // Derive display name from fileKey (basename)
+    const displayName = file.fileKey?.split('/').pop() || 'file'
 
     return {
-      previewUrl,
-      fileName: file.fileName,
-      fileSize: file.fileSize ?? 0,
+      previewUrl: file.fileUrl,
+      fileName: displayName, // Display name derived from key
+      fileSize: file.fileSize,
       fileType: file.fileType,
-      isImage
+      isImage,
+      key: file.fileKey
     }
   })
 }
@@ -409,7 +392,7 @@ const weekDayClaims = computed(() => {
   return [0, 1, 2, 3, 4, 5, 6].map((i) => {
     const date = weekStart.add(i, 'day')
     const dailyClaims =
-      selectWeekWeelyClaim.value?.claims.filter(
+      selectWeekWeelyClaim.value?.claims?.filter(
         (claim) => claim.dayWorked === date.toISOString()
       ) || []
     return {

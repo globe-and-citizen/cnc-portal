@@ -134,25 +134,31 @@ describe('Team Controller', () => {
       expect(response.body.message).toEqual('Invalid wallet address for member: Invalid Member');
     });
 
-    it('should return 404 if the owner is not found', async () => {
-      // Mock the findUnique method to return null for the owner
-      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(null);
+    it('should return 400 if invalid Safe address provided', async () => {
+      const response = await request(app)
+        .post('/')
+        .send({
+          ...mockTeamData,
+          safeAddress: 'not-a-safe-address',
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toEqual('Invalid Safe address');
+    });
+
+    it('should return 201 and create a team with a valid Safe address', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
+      vi.spyOn(prisma.team, 'create').mockResolvedValue(teamMockResolve);
 
       const response = await request(app)
         .post('/')
         .send({
-          name: 'Test Team',
-          description: 'Test Description',
-          members: [
-            { address: faker.finance.ethereumAddress(), name: 'Member 1' },
-            { address: faker.finance.ethereumAddress(), name: 'Member 2' },
-          ],
-          officerAddress: '0xOfficerAddress',
+          ...mockTeamData,
+          safeAddress: '0x1234567890123456789012345678901234567890',
         });
 
-      // Assertions
-      expect(response.status).toBe(404);
-      expect(response.body.message).toBe('Owner not found');
+      expect(response.status).toBe(201);
+      expect(response.body.name).toEqual('Test Team');
     });
 
     it('should return 201 and create a team successfully', async () => {
@@ -181,6 +187,16 @@ describe('Team Controller', () => {
 
       expect(response.status).toBe(201);
       expect(response.body.name).toEqual('Test Team');
+    });
+
+    it('should return 404 if owner is not found', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(null);
+
+      const response = await request(app).post('/').send(mockTeamData);
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toEqual('Owner not found');
+      expect(prisma.team.create).not.toHaveBeenCalled();
     });
 
     it('should return 500 if there is a server error', async () => {
@@ -350,6 +366,62 @@ describe('Team Controller', () => {
   describe('updateTeam', () => {
     beforeEach(() => {
       vi.clearAllMocks();
+    });
+
+    it('should return 400 if invalid Safe address provided', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        id: 1,
+        ownerAddress: mockOwner.address,
+        name: 'Test Team',
+        description: 'Test Description',
+        officerAddress: '0xOfficerAddress',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const response = await request(app).put('/1').send({
+        id: 1,
+        name: 'Updated Team',
+        description: 'Updated Description',
+        officerAddress: '0xNewOfficerAddress',
+        safeAddress: 'not-a-safe-address',
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toEqual('Invalid Safe address');
+    });
+
+    it('should return 200 and update the team with a valid Safe address', async () => {
+      const mockTeam = {
+        id: 1,
+        ownerAddress: mockOwner.address,
+        name: 'Test Team',
+        description: 'Test Description',
+        officerAddress: '0xOfficerAddress',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, 'update').mockResolvedValue({
+        ...mockTeam,
+        name: 'Updated Team',
+        description: 'Updated Description',
+        officerAddress: '0xNewOfficerAddress',
+        safeAddress: '0x1234567890123456789012345678901234567890',
+      });
+
+      const response = await request(app).put('/1').send({
+        id: 1,
+        name: 'Updated Team',
+        description: 'Updated Description',
+        officerAddress: '0xNewOfficerAddress',
+        safeAddress: '0x1234567890123456789012345678901234567890',
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body.name).toEqual('Updated Team');
+      expect(response.body.safeAddress).toEqual('0x1234567890123456789012345678901234567890');
     });
 
     it('should return 404 if team not found', async () => {

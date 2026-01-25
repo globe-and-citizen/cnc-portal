@@ -62,7 +62,7 @@ import { useTeamStore } from '@/stores/teamStore'
 import { computed, ref, watch } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useSyncWeeklyClaims } from '@/queries/weeklyClaim.queries'
+import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
 import MemberSection from '@/components/sections/DashboardView/MemberSection.vue'
 import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
@@ -72,13 +72,11 @@ const teamStore = useTeamStore()
 const showModal = ref(false)
 
 const route = useRoute()
-const { mutate: syncWeeklyClaims } = useSyncWeeklyClaims()
+const { mutate: syncWeeklyClaims } = useSyncWeeklyClaimsMutation()
 
 onMounted(() => {
   if (route.params.id) {
     teamStore.setCurrentTeamId(route.params.id as string)
-    // Sync weekly claims on component mount
-    syncWeeklyClaims({ teamId: route.params.id as string })
   } else {
     // e.g. this.$router.push('/teams')
   }
@@ -87,6 +85,19 @@ onMounted(() => {
 const hasContract = computed(() => {
   return (teamStore.currentTeamMeta.data?.teamContracts ?? []).length > 0
 })
+
+const stop = watch(
+  hasContract,
+  (newValue) => {
+    if (newValue && route.params.id === teamStore.currentTeamId) {
+      syncWeeklyClaims({ teamId: route.params.id as string })
+      stop() // stop watching after first true
+    }
+  },
+  {
+    immediate: true
+  }
+)
 
 // Watch for changes in the route params then update the current team id
 watch(

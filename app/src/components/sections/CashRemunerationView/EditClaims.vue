@@ -41,7 +41,7 @@ import { computed, ref, watch, onMounted, watchEffect } from 'vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
-import type { Claim, ClaimFormData, ClaimSubmitPayload, FileAttachment } from '@/types'
+import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
 
@@ -68,7 +68,14 @@ const claimFormInitialData = computed<ClaimFormData>(() => ({
   dayWorked: props.claim.dayWorked
 }))
 
-const existingFiles = ref<FileAttachment[]>([])
+const existingFiles = ref<
+  Array<{
+    fileType: string
+    fileSize: number
+    fileKey: string
+    fileUrl: string
+  }>
+>([])
 const deletedFileIndexes = ref<number[]>([])
 
 // Load existing files
@@ -121,16 +128,42 @@ const { mutateAsync: updateClaimMutation, isPending: isUpdating } = useMutation<
 >({
   mutationKey: ['update-claim', props.claim.id],
   mutationFn: async (payload) => {
-    const formData = new FormData()
-    formData.append('hoursWorked', payload.hoursWorked.toString())
-    formData.append('memo', payload.memo)
-    formData.append('dayWorked', payload.dayWorked)
-    payload.files?.forEach((file) => formData.append('files', file))
-    if (deletedFileIndexes.value.length > 0) {
-      formData.append('deletedFileIndexes', JSON.stringify(deletedFileIndexes.value))
+    // Pre-upload new files if any
+    const newAttachments: Array<{
+      fileKey: string
+      fileUrl: string
+      fileType: string
+      fileSize: number
+    }> = []
+
+    if (payload.files && payload.files.length > 0) {
+      // Upload each file to /api/upload
+      for (const file of payload.files) {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const uploadResponse = await apiClient.post('/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+
+        newAttachments.push({
+          fileKey: uploadResponse.data.fileKey,
+          fileUrl: uploadResponse.data.fileUrl,
+          fileType: uploadResponse.data.metadata.fileType,
+          fileSize: uploadResponse.data.metadata.fileSize
+        })
+      }
     }
 
-    await apiClient.put(`/claim/${props.claim.id}`, formData)
+    // Submit claim update with pre-uploaded attachments metadata
+    await apiClient.put(`/claim/${props.claim.id}`, {
+      hoursWorked: payload.hoursWorked.toString(),
+      memo: payload.memo,
+      dayWorked: payload.dayWorked,
+      deletedFileIndexes:
+        deletedFileIndexes.value.length > 0 ? deletedFileIndexes.value : undefined,
+      attachments: newAttachments.length > 0 ? newAttachments : undefined
+    })
   }
 })
 

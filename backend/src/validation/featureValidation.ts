@@ -60,8 +60,17 @@ export const featureTeamParamsSchema = z.object({
     }),
 });
 
-/** Schema for creating/updating a team override */
-export const teamOverrideSchema = z.object({
+/** Schema for creating a team override (with teamId in body) */
+export const createTeamOverrideSchema = z.object({
+  teamId: z
+    .number()
+    .int({ message: 'teamId must be an integer' })
+    .positive({ message: 'teamId must be a positive integer' }),
+  status: featureStatusEnum,
+});
+
+/** Schema for updating a team override */
+export const updateTeamOverrideSchema = z.object({
   status: featureStatusEnum,
 });
 
@@ -92,5 +101,6 @@ export type CreateFeatureInput = z.infer<typeof createFeatureSchema>;
 export type UpdateFeatureInput = z.infer<typeof updateFeatureSchema>;
 export type TeamIdParam = z.infer<typeof teamIdParamSchema>;
 export type FeatureTeamParams = z.infer<typeof featureTeamParamsSchema>;
-export type TeamOverrideInput = z.infer<typeof teamOverrideSchema>;
+export type CreateTeamOverrideInput = z.infer<typeof createTeamOverrideSchema>;
+export type UpdateTeamOverrideInput = z.infer<typeof updateTeamOverrideSchema>;
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;

@@ -41,10 +41,10 @@ export interface Claim {
 }
 
 export interface FileAttachment {
-  fileName: string
   fileType: string // MIME type (e.g., image/png, application/pdf)
   fileSize: number // Size in bytes
-  fileData: string // Base64 encoded file data
+  fileKey: string // S3 storage key (unique identifier)
+  fileUrl: string // Presigned download URL
 }
 
 export interface ClaimFormData {
@@ -66,7 +66,7 @@ export interface WeeklyClaim {
   status: 'signed' | 'withdrawn' | 'pending' | 'disabled'
   weekStart: string // ISO date string
   data: {
-    ownerAddress: Address
+    ownerAddress?: Address
   }
   memberAddress: Address
   teamId: number

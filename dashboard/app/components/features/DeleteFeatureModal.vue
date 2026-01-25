@@ -30,11 +30,6 @@
                 <p class="font-semibold">
                   {{ feature?.functionName }}
                 </p>
-                <!-- <p class="text-sm">
-                  This will also delete all
-                  <span class="font-semibold">" {{ feature?.overridesCount || 0 }} "</span>
-                  associated team override(s).
-                </p> -->
               </div>
             </template>
           </UAlert>
@@ -67,23 +62,23 @@
 
 <script setup lang="ts">
 import type { Feature } from '~/types'
+import { useDeleteFeatureQuery } from '~/queries/feature.query'
 
 // Props
 interface Props {
   open: boolean
   feature: Feature | null
-  loading?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  loading: false
-})
+const props = defineProps<Props>()
 
 // Emits
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  'confirm': []
 }>()
+
+// Mutations
+const { mutateAsync: deleteFeature, isPending: loading } = useDeleteFeatureQuery()
 
 // Computed
 const isOpen = computed({
@@ -92,8 +87,11 @@ const isOpen = computed({
 })
 
 // Methods
-const handleConfirm = () => {
-  emit('confirm')
+const handleConfirm = async () => {
+  if (!props.feature) return
+
+  await deleteFeature(props.feature.functionName)
+  handleClose()
 }
 
 const handleClose = () => {

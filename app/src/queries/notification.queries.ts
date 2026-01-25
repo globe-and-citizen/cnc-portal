@@ -1,16 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
-import type { NotificationResponse, BulkNotificationPayload } from '@/types/notification'
-
+import type { BulkNotificationPayload, Notification } from '@/types/notification'
 /**
  * Fetch all notifications for the current user
  */
-export const useNotifications = () => {
+export const useNotificationsQuery = () => {
   return useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const { data } = await apiClient.get<NotificationResponse>('notification')
-      return data.data || []
+      const { data } = await apiClient.get<Notification[]>('notification')
+      return data
     }
   })
 }
@@ -18,7 +17,7 @@ export const useNotifications = () => {
 /**
  * Add bulk notifications
  */
-export const useAddBulkNotifications = () => {
+export const useAddBulkNotificationsMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -36,7 +35,7 @@ export const useAddBulkNotifications = () => {
 /**
  * Update a notification (mark as read)
  */
-export const useUpdateNotification = () => {
+export const useUpdateNotificationMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({

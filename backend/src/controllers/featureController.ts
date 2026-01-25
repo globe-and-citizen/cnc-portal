@@ -14,19 +14,12 @@ import {
   removeOverrideRecord,
   teamExists,
 } from '../utils/featureUtils';
-import {
-  functionNameParamSchema,
-  createFeatureSchema,
-  updateFeatureSchema,
-  featureTeamParamsSchema,
-  teamOverrideSchema,
-} from '../validation/featureValidation';
 
 /** GET /features — List all features */
 export const listFeatures = async (_req: Request, res: Response) => {
   try {
     const features = await findAllFeatures();
-    return res.status(200).json({ success: true, data: features });
+    return res.status(200).json(features);
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -35,19 +28,14 @@ export const listFeatures = async (_req: Request, res: Response) => {
 /** GET /features/:functionName — Get a single feature */
 export const getFeatureByName = async (req: Request, res: Response) => {
   try {
-    const validation = functionNameParamSchema.safeParse(req.params);
-    if (!validation.success) {
-      return errorResponse(400, validation.error.issues[0].message, res);
-    }
-
-    const { functionName } = validation.data;
+    const { functionName } = req.params;
     const feature = await findFeatureByName(functionName);
 
     if (!feature) {
       return errorResponse(404, `Feature "${functionName}" not found`, res);
     }
 
-    return res.status(200).json({ success: true, data: feature });
+    return res.status(200).json(feature);
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -56,12 +44,7 @@ export const getFeatureByName = async (req: Request, res: Response) => {
 /** POST /features — Create a new feature */
 export const createNewFeature = async (req: Request, res: Response) => {
   try {
-    const validation = createFeatureSchema.safeParse(req.body);
-    if (!validation.success) {
-      return errorResponse(400, validation.error.issues[0].message, res);
-    }
-
-    const { functionName, status } = validation.data;
+    const { functionName, status } = req.body;
 
     if (await featureExists(functionName)) {
       return errorResponse(409, `Feature "${functionName}" already exists`, res);
@@ -69,11 +52,7 @@ export const createNewFeature = async (req: Request, res: Response) => {
 
     const feature = await insertFeature(functionName, status);
 
-    return res.status(201).json({
-      success: true,
-      message: `Feature "${functionName}" created successfully`,
-      data: feature,
-    });
+    return res.status(201).json(feature);
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -82,18 +61,8 @@ export const createNewFeature = async (req: Request, res: Response) => {
 /** PUT /features/:functionName — Update a feature's status */
 export const updateFeatureByName = async (req: Request, res: Response) => {
   try {
-    const paramValidation = functionNameParamSchema.safeParse(req.params);
-    if (!paramValidation.success) {
-      return errorResponse(400, paramValidation.error.issues[0].message, res);
-    }
-
-    const bodyValidation = updateFeatureSchema.safeParse(req.body);
-    if (!bodyValidation.success) {
-      return errorResponse(400, bodyValidation.error.issues[0].message, res);
-    }
-
-    const { functionName } = paramValidation.data;
-    const { status } = bodyValidation.data;
+    const { functionName } = req.params;
+    const { status } = req.body;
 
     if (!(await featureExists(functionName))) {
       return errorResponse(404, `Feature "${functionName}" not found`, res);
@@ -101,11 +70,7 @@ export const updateFeatureByName = async (req: Request, res: Response) => {
 
     const feature = await patchFeature(functionName, status);
 
-    return res.status(200).json({
-      success: true,
-      message: `Feature "${functionName}" updated to "${status}"`,
-      data: feature,
-    });
+    return res.status(200).json(feature);
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -114,12 +79,7 @@ export const updateFeatureByName = async (req: Request, res: Response) => {
 /** DELETE /features/:functionName — Delete a feature and its overrides */
 export const deleteFeatureByName = async (req: Request, res: Response) => {
   try {
-    const validation = functionNameParamSchema.safeParse(req.params);
-    if (!validation.success) {
-      return errorResponse(400, validation.error.issues[0].message, res);
-    }
-
-    const { functionName } = validation.data;
+    const { functionName } = req.params;
 
     if (!(await featureExists(functionName))) {
       return errorResponse(404, `Feature "${functionName}" not found`, res);
@@ -130,30 +90,17 @@ export const deleteFeatureByName = async (req: Request, res: Response) => {
       return errorResponse(500, `Failed to delete feature "${functionName}"`, res);
     }
 
-    return res.status(200).json({
-      success: true,
-      message: `Feature "${functionName}" and all its overrides have been deleted`,
-    });
+    return res.status(204).send();
   } catch (error) {
     return errorResponse(500, error, res);
   }
 };
 
-/** POST /features/:functionName/teams/:teamId — Create a team override */
+/** POST /features/:functionName/teams — Create a team override */
 export const createOverride = async (req: Request, res: Response) => {
   try {
-    const paramValidation = featureTeamParamsSchema.safeParse(req.params);
-    if (!paramValidation.success) {
-      return errorResponse(400, paramValidation.error.issues[0].message, res);
-    }
-
-    const bodyValidation = teamOverrideSchema.safeParse(req.body);
-    if (!bodyValidation.success) {
-      return errorResponse(400, bodyValidation.error.issues[0].message, res);
-    }
-
-    const { functionName, teamId } = paramValidation.data;
-    const { status } = bodyValidation.data;
+    const { functionName } = req.params;
+    const { teamId, status } = req.body;
 
     if (!(await featureExists(functionName))) {
       return errorResponse(404, `Feature "${functionName}" not found`, res);
@@ -173,11 +120,7 @@ export const createOverride = async (req: Request, res: Response) => {
 
     const override = await insertOverride(functionName, teamId, status);
 
-    return res.status(201).json({
-      success: true,
-      message: `Override created for team ${override.team.name} on feature "${functionName}"`,
-      data: override,
-    });
+    return res.status(201).json(override);
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -186,28 +129,18 @@ export const createOverride = async (req: Request, res: Response) => {
 /** PUT /features/:functionName/teams/:teamId — Update a team override */
 export const updateOverride = async (req: Request, res: Response) => {
   try {
-    const paramValidation = featureTeamParamsSchema.safeParse(req.params);
-    if (!paramValidation.success) {
-      return errorResponse(400, paramValidation.error.issues[0].message, res);
-    }
-
-    const bodyValidation = teamOverrideSchema.safeParse(req.body);
-    if (!bodyValidation.success) {
-      return errorResponse(400, bodyValidation.error.issues[0].message, res);
-    }
-
-    const { functionName, teamId } = paramValidation.data;
-    const { status } = bodyValidation.data;
+    const { functionName, teamId } = req.params;
+    const { status } = req.body;
 
     if (!(await featureExists(functionName))) {
       return errorResponse(404, `Feature "${functionName}" not found`, res);
     }
 
-    if (!(await teamExists(teamId))) {
+    if (!(await teamExists(parseInt(teamId)))) {
       return errorResponse(404, `Team with ID ${teamId} not found`, res);
     }
 
-    if (!(await overrideExists(functionName, teamId))) {
+    if (!(await overrideExists(functionName, parseInt(teamId)))) {
       return errorResponse(
         404,
         `No override found for team ${teamId} on feature "${functionName}". Use POST to create.`,
@@ -215,13 +148,9 @@ export const updateOverride = async (req: Request, res: Response) => {
       );
     }
 
-    const override = await patchOverride(functionName, teamId, status);
+    const override = await patchOverride(functionName, parseInt(teamId), status);
 
-    return res.status(200).json({
-      success: true,
-      message: `Override updated to "${status}" for team ${override.team.name}`,
-      data: override,
-    });
+    return res.status(200).json(override);
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -230,18 +159,13 @@ export const updateOverride = async (req: Request, res: Response) => {
 /** DELETE /features/:functionName/teams/:teamId — Remove a team override */
 export const removeOverride = async (req: Request, res: Response) => {
   try {
-    const validation = featureTeamParamsSchema.safeParse(req.params);
-    if (!validation.success) {
-      return errorResponse(400, validation.error.issues[0].message, res);
-    }
-
-    const { functionName, teamId } = validation.data;
+    const { functionName, teamId } = req.params;
 
     if (!(await featureExists(functionName))) {
       return errorResponse(404, `Feature "${functionName}" not found`, res);
     }
 
-    if (!(await overrideExists(functionName, teamId))) {
+    if (!(await overrideExists(functionName, parseInt(teamId)))) {
       return errorResponse(
         404,
         `No override found for team ${teamId} on feature "${functionName}"`,
@@ -249,15 +173,12 @@ export const removeOverride = async (req: Request, res: Response) => {
       );
     }
 
-    const deleted = await removeOverrideRecord(functionName, teamId);
+    const deleted = await removeOverrideRecord(functionName, parseInt(teamId));
     if (!deleted) {
       return errorResponse(500, `Failed to delete override`, res);
     }
 
-    return res.status(200).json({
-      success: true,
-      message: `Override removed for team ${teamId}. Team now inherits global setting.`,
-    });
+    return res.status(204).send();
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -288,12 +209,9 @@ export const checkSubmitRestriction = async (req: Request, res: Response) => {
     const isRestricted = effectiveStatus === null || effectiveStatus === 'enabled';
 
     return res.status(200).json({
-      success: true,
-      data: {
-        teamId,
-        isRestricted,
-        effectiveStatus: effectiveStatus ?? 'enabled',
-      },
+      teamId,
+      isRestricted,
+      effectiveStatus: effectiveStatus ?? 'enabled',
     });
   } catch (error) {
     return errorResponse(500, error, res);

@@ -132,15 +132,6 @@ vi.mock('@/composables/useCustomFetch', () => {
   }
 })
 
-vi.mock('@/composables/useTanstackQuery', () => ({
-  useTanstackQuery: vi.fn(() => ({
-    data: ref([]),
-    isLoading: ref(false),
-    error: ref(null),
-    isSuccess: ref(false),
-    isPending: ref(false)
-  }))
-}))
 
 describe.skip('ApprovedExpensesSection', () => {
   setActivePinia(createPinia())

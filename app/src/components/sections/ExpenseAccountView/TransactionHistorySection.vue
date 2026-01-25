@@ -26,10 +26,7 @@ const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
 
 const contractAddress = computed(
-  () =>
-    teamStore.currentTeam?.teamContracts.find(
-      (contract) => contract.type === 'ExpenseAccountEIP712'
-    )?.address as Address
+  () => teamStore.getContractAddressByType('ExpenseAccountEIP712') as Address
 )
 
 const { result, error } = useQuery(

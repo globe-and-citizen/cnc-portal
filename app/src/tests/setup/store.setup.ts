@@ -9,7 +9,6 @@ vi.mock('@/stores', async (importOriginal) => {
       /*addErrorToast: vi.fn(), addSuccessToast: vi.fn()*/ ...mocks.mockToastStore
     })),
     useTeamStore: vi.fn(() => ({ ...mocks.mockTeamStore })),
-    useExpenseDataStore: vi.fn(),
     useCurrencyStore: vi.fn(() => ({
       currency: {
         code: 'USD',

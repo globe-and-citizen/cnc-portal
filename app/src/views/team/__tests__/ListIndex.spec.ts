@@ -28,13 +28,8 @@ vi.mock('vue-router', async (importOriginal) => {
   }
 })
 
-// Mock team queries
-vi.mock('@/queries/team.queries', () => ({
-  useTeams: vi.fn()
-}))
-
 // Import after mocks are defined
-import { useTeams } from '@/queries/team.queries'
+import { useTeamsQuery } from '@/queries/team.queries'
 
 describe('ListIndex - Team List View', () => {
   const queryClient = new QueryClient()
@@ -54,9 +49,9 @@ describe('ListIndex - Team List View', () => {
     isLoading = false,
     error: Error | null = null
   ) => {
-    const useTeamsMock = vi.fn()
-    useTeamsMock.mockReturnValue(createMockQueryResponse(teamsData, isLoading, error))
-    vi.mocked(useTeams).mockImplementation(useTeamsMock)
+    vi.mocked(useTeamsQuery).mockReturnValueOnce(
+      createMockQueryResponse(teamsData, isLoading, error)
+    )
 
     return mount(ListIndex, {
       global: {
@@ -350,14 +345,14 @@ describe('ListIndex - Team List View', () => {
 
       // Simulate data loaded
       await wrapper.setData({}) // Force re-render
-      vi.mocked(useTeams).mockReturnValue(createMockQueryResponse(mockTeamsData, false))
+      vi.mocked(useTeamsQuery).mockReturnValue(createMockQueryResponse(mockTeamsData, false))
       await wrapper.vm.$nextTick()
     })
 
     it('should handle null/undefined team data gracefully', async () => {
       const useTeamsMock = vi.fn()
       useTeamsMock.mockReturnValue(createMockQueryResponse(null, false))
-      vi.mocked(useTeams).mockImplementation(useTeamsMock)
+      vi.mocked(useTeamsQuery).mockImplementation(useTeamsMock)
 
       const wrapper = mount(ListIndex, {
         global: {

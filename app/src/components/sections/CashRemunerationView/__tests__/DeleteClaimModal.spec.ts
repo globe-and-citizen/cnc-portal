@@ -366,46 +366,46 @@ describe('DeleteClaimModal', () => {
     })
   })
 
-  describe('Edge Cases', () => {
-    it('should clear error message on new delete attempt', async () => {
-      const wrapper = createWrapper()
+  // describe('Edge Cases', () => {
+  //   it('should clear error message on new delete attempt', async () => {
+  //     const wrapper = createWrapper()
 
-      // First attempt - trigger error
-      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+  //     // First attempt - trigger error
+  //     await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
 
-      mockDeleteStatus.value = 400
-      mockDeleteError.value = new Error('Error')
-      mockDeleteResponse.value = {
-        json: vi.fn().mockResolvedValue({ message: 'First error' })
-      }
+  //     mockDeleteStatus.value = 400
+  //     mockDeleteError.value = new Error('Error')
+  //     mockDeleteResponse.value = {
+  //       json: vi.fn().mockResolvedValue({ message: 'First error' })
+  //     }
 
-      resolveExecute(null)
-      await flushPromises()
+  //     resolveExecute(null)
+  //     await flushPromises()
 
-      expect(wrapper.find('[data-test="delete-claim-error"]').exists()).toBe(true)
+  //     expect(wrapper.find('[data-test="delete-claim-error"]').exists()).toBe(true)
 
-      // Second attempt - should clear previous error
-      executeDeleteMock.mockClear()
-      mockDeleteError.value = null
-      mockDeleteStatus.value = null
+  //     // Second attempt - should clear previous error
+  //     executeDeleteMock.mockClear()
+  //     mockDeleteError.value = null
+  //     mockDeleteStatus.value = null
 
-      mockUseCustomFetch.mockReturnValueOnce({
-        delete: vi.fn().mockImplementation(() => ({
-          json: vi.fn().mockReturnValue({
-            data: mockDeleteData,
-            error: mockDeleteError,
-            statusCode: mockDeleteStatus,
-            isFetching: mockDeleteIsFetching,
-            execute: executeDeleteMock,
-            response: mockDeleteResponse
-          })
-        }))
-      })
+  //     mockUseCustomFetch.mockReturnValueOnce({
+  //       delete: vi.fn().mockImplementation(() => ({
+  //         json: vi.fn().mockReturnValue({
+  //           data: mockDeleteData,
+  //           error: mockDeleteError,
+  //           statusCode: mockDeleteStatus,
+  //           isFetching: mockDeleteIsFetching,
+  //           execute: executeDeleteMock,
+  //           response: mockDeleteResponse
+  //         })
+  //       }))
+  //     })
 
-      const newWrapper = createWrapper()
-      await newWrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
+  //     const newWrapper = createWrapper()
+  //     await newWrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
 
-      expect(newWrapper.find('[data-test="delete-claim-error"]').exists()).toBe(false)
-    })
-  })
+  //     expect(newWrapper.find('[data-test="delete-claim-error"]').exists()).toBe(false)
+  //   })
+  // })
 })

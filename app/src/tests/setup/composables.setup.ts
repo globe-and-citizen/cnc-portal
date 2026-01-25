@@ -24,73 +24,74 @@ vi.mock('@tanstack/vue-query', async () => {
  * Mock Team Queries (team.queries.ts)
  */
 vi.mock('@/queries/team.queries', () => ({
-  useTeams: vi.fn(queryMocks.useTeams),
-  useTeam: vi.fn(queryMocks.useTeam),
-  useCreateTeam: vi.fn(queryMocks.useCreateTeam),
-  useUpdateTeam: vi.fn(queryMocks.useUpdateTeam),
-  useDeleteTeam: vi.fn(queryMocks.useDeleteTeam)
+  useTeamsQuery: vi.fn(queryMocks.useTeamsQuery),
+  useTeamQuery: vi.fn(queryMocks.useTeamQuery),
+  useCreateTeamMutation: vi.fn(queryMocks.useCreateTeamMutation),
+  useUpdateTeamMutation: vi.fn(queryMocks.useUpdateTeamMutation),
+  useDeleteTeamMutation: vi.fn(queryMocks.useDeleteTeamMutation)
 }))
 
 /**
  * Mock Member Queries (member.queries.ts)
  */
 vi.mock('@/queries/member.queries', () => ({
-  useAddMembers: vi.fn(queryMocks.useAddMembers),
-  useDeleteMember: vi.fn(queryMocks.useDeleteMember)
+  useAddMembersMutation: vi.fn(queryMocks.useAddMembersMutation),
+  useDeleteMemberMutation: vi.fn(queryMocks.useDeleteMemberMutation)
 }))
 
 /**
  * Mock Wage Queries (wage.queries.ts)
  */
 vi.mock('@/queries/wage.queries', () => ({
-  useTeamWages: vi.fn(queryMocks.useTeamWages),
-  useSetMemberWage: vi.fn(queryMocks.useSetMemberWage)
+  useTeamWagesQuery: vi.fn(queryMocks.useTeamWagesQuery),
+  useSetMemberWageMutation: vi.fn(queryMocks.useSetMemberWageMutation)
 }))
 
 /**
  * Mock Notification Queries (notification.queries.ts)
  */
 vi.mock('@/queries/notification.queries', () => ({
-  useNotifications: vi.fn(queryMocks.useNotifications),
-  useAddBulkNotifications: vi.fn(queryMocks.useAddBulkNotifications),
-  useUpdateNotification: vi.fn(queryMocks.useUpdateNotification)
+  useNotificationsQuery: vi.fn(queryMocks.useNotificationsQuery),
+  useAddBulkNotificationsMutation: vi.fn(queryMocks.useAddBulkNotificationsMutation),
+  useUpdateNotificationMutation: vi.fn(queryMocks.useUpdateNotificationMutation)
 }))
 
 /**
  * Mock Expense Queries (expense.queries.ts)
  */
 vi.mock('@/queries/expense.queries', () => ({
-  useExpenses: vi.fn(queryMocks.useExpenses)
+  useExpensesQuery: vi.fn(queryMocks.useExpensesQuery)
 }))
 
 /**
  * Mock User Queries (user.queries.ts)
  */
 vi.mock('@/queries/user.queries', () => ({
-  useUser: vi.fn(queryMocks.useUser),
-  useUserNonce: vi.fn(queryMocks.useUserNonce)
+  useUserQuery: vi.fn(queryMocks.useUserQuery),
+  useUserNonceQuery: vi.fn(queryMocks.useUserNonceQuery)
 }))
 
 /**
  * Mock Action Queries (action.queries.ts)
  */
 vi.mock('@/queries/action.queries', () => ({
-  useCreateAction: vi.fn(queryMocks.useCreateAction),
-  useUpdateAction: vi.fn(queryMocks.useUpdateAction)
+  useBodActionsQuery: vi.fn(queryMocks.useBodActionsQuery),
+  useCreateActionMutation: vi.fn(queryMocks.useCreateActionMutation),
+  useUpdateActionMutation: vi.fn(queryMocks.useUpdateActionMutation)
 }))
 
 /**
  * Mock Auth Queries (auth.queries.ts)
  */
 vi.mock('@/queries/auth.queries', () => ({
-  useValidateToken: vi.fn(queryMocks.useValidateToken)
+  useValidateTokenQuery: vi.fn(queryMocks.useValidateTokenQuery)
 }))
 
 /**
  * Mock Contract Queries (contract.queries.ts)
  */
 vi.mock('@/queries/contract.queries', () => ({
-  useCreateContract: vi.fn(queryMocks.useCreateContract)
+  useCreateContractMutation: vi.fn(queryMocks.useCreateContractMutation)
 }))
 
 /**
@@ -98,6 +99,41 @@ vi.mock('@/queries/contract.queries', () => ({
  */
 vi.mock('@/queries/health.queries', () => ({
   useBackendHealthQuery: vi.fn(queryMocks.useBackendHealthQuery)
+}))
+
+/**
+ * Mock Weekly Claim Queries (weeklyClaim.queries.ts)
+ */
+vi.mock('@/queries/weeklyClaim.queries', () => ({
+  useTeamWeeklyClaimsQuery: vi.fn(queryMocks.useTeamWeeklyClaimsQuery),
+  useWeeklyClaimByIdQuery: vi.fn(queryMocks.useWeeklyClaimByIdQuery),
+  useSignWeeklyClaimMutation: vi.fn(queryMocks.useSignWeeklyClaimMutation),
+  useEnableWeeklyClaimMutation: vi.fn(queryMocks.useEnableWeeklyClaimMutation),
+  useDisableWeeklyClaimMutation: vi.fn(queryMocks.useDisableWeeklyClaimMutation),
+  useWithdrawWeeklyClaimMutation: vi.fn(queryMocks.useWithdrawWeeklyClaimMutation),
+  useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation)
+}))
+
+/**
+ * Mock Safe Queries (safe.queries.ts)
+ */
+vi.mock('@/queries/safe.queries', () => ({
+  useSafeInfoQuery: vi.fn(queryMocks.useSafeInfoQuery),
+  useSafePendingTransactionsQuery: vi.fn(queryMocks.useSafePendingTransactionsQuery),
+  useDeploySafeMutation: vi.fn(queryMocks.useDeploySafeMutation),
+  useProposeTransactionMutation: vi.fn(queryMocks.useProposeTransactionMutation),
+  useApproveTransactionMutation: vi.fn(queryMocks.useApproveTransactionMutation),
+  useExecuteTransactionMutation: vi.fn(queryMocks.useExecuteTransactionMutation),
+  useUpdateSafeOwnersMutation: vi.fn(queryMocks.useUpdateSafeOwnersMutation),
+  useSafeTransactionQuery: vi.fn(queryMocks.useSafeTransactionQuery)
+}))
+
+/**
+ * Mock Polymarket Queries (polymarket.queries.ts)
+ */
+vi.mock('@/queries/polymarket.queries', () => ({
+  useMarketData: vi.fn(queryMocks.useMarketData),
+  useSafeBalances: vi.fn(queryMocks.useSafeBalances)
 }))
 
 /**

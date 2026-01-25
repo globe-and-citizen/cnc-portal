@@ -5,10 +5,10 @@ import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberFo
 import { createTestingPinia } from '@pinia/testing'
 
 // Hoisted mock variables
-const { mockUseAddMembers, mockToastStore } = vi.hoisted(() => {
+const { mockUseAddMembersQuery, mockToastStore } = vi.hoisted(() => {
   const mockMutate = vi.fn()
   return {
-    mockUseAddMembers: vi.fn(() => ({
+    mockUseAddMembersQuery: vi.fn(() => ({
       mutate: mockMutate,
       isPending: ref(false),
       error: ref(null),
@@ -23,7 +23,7 @@ const { mockUseAddMembers, mockToastStore } = vi.hoisted(() => {
 
 // Mock the member queries
 vi.mock('@/queries/member.queries', () => ({
-  useAddMembers: mockUseAddMembers
+  useAddMembersMutation: mockUseAddMembersQuery
 }))
 
 // Mock stores for toasts
@@ -114,7 +114,7 @@ describe('AddMemberForm.vue', () => {
     await button.trigger('click')
 
     // Verify mutate was called with correct data
-    expect(mockUseAddMembers()).toBeTruthy()
+    expect(mockUseAddMembersQuery()).toBeTruthy()
   })
 
   it('MultiSelectMemberInput v-model updates formData', async () => {

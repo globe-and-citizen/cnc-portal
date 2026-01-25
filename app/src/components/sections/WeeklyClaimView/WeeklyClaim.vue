@@ -121,8 +121,9 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 // import CRSigne from '../CashRemunerationView/CRSigne.vue'
 // import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
-import { useTanstackQuery } from '@/composables'
+import { useTeamWeeklyClaimsQuery } from '@/queries'
 import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
+import type { Address } from 'viem'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
@@ -136,7 +137,7 @@ function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
 const teamStore = useTeamStore()
 // const userStore = useUserDataStore()
 const props = defineProps<{
-  memberAddress?: string
+  memberAddress?: Address
   singleUser?: boolean
 }>()
 
@@ -144,23 +145,10 @@ function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
   return row as WeeklyClaim
 }
 
-const weeklyClaimUrl = computed(
-  () =>
-    `/weeklyClaim/?teamId=${teamStore.currentTeamId}${
-      props.memberAddress ? `&memberAddress=${props.memberAddress}` : ''
-    }`
-)
-
-const weeklyClaimQueryKey = computed(() => [
-  'weekly-claims',
-  teamStore.currentTeamId,
-  props.memberAddress
-])
-
-const { data: fetchedData, error } = useTanstackQuery<Array<WeeklyClaim>>(
-  weeklyClaimQueryKey,
-  weeklyClaimUrl
-)
+const { data: fetchedData, error } = useTeamWeeklyClaimsQuery({
+  teamId: computed(() => teamStore.currentTeamId),
+  userAddress: props.memberAddress
+})
 
 // const { data: fetchedData, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
 

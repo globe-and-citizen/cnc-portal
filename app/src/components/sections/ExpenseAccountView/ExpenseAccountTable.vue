@@ -94,8 +94,7 @@ import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from 
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useTanstackQuery } from '@/composables'
-import type { ExpenseResponse } from '@/types'
+import { useExpensesQuery } from '@/queries'
 import { getFrequencyType, getCustomFrequency } from '@/utils'
 
 const teamStore = useTeamStore()
@@ -107,18 +106,8 @@ const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
 const isLoadingSetStatus = ref(false)
 
-const {
-  data: expenseData,
-  isLoading: isFetchingExpenseData
-  // error: errorFetchingExpenseData
-} = useTanstackQuery<ExpenseResponse[]>(
-  'expenseData',
-  computed(() => `/expense?teamId=${teamStore.currentTeamId}`),
-  {
-    queryKey: ['getExpenseData'],
-    refetchInterval: 10000,
-    refetchOnWindowFocus: true
-  }
+const { data: expenseData, isLoading: isFetchingExpenseData } = useExpensesQuery(
+  computed(() => teamStore.currentTeamId)
 )
 
 const formattedExpenseData = computed(() => {

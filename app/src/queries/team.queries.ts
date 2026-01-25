@@ -7,12 +7,15 @@ import type { AxiosError } from 'axios'
 
 /**
  * Fetch all teams for a user, for the authenticated user it will be his teams
+ * @param userAddress - Optional user address to filter teams by specific user
  */
-export const useTeams = () => {
+export const useTeamsQuery = (userAddress?: MaybeRefOrGetter<string | null | undefined>) => {
   return useQuery<Team[], AxiosError>({
-    queryKey: ['teams'],
+    queryKey: ['teams', { userAddress }],
     queryFn: async () => {
-      const { data } = await apiClient.get<Team[]>(`teams`)
+      const address = toValue(userAddress)
+      const params = address ? { userAddress: address } : {}
+      const { data } = await apiClient.get<Team[]>('teams', { params })
       return data
     },
     refetchOnWindowFocus: false,
@@ -26,7 +29,7 @@ export const useTeams = () => {
 /**
  * Fetch a single team by ID
  */
-export const useTeam = (teamId: MaybeRefOrGetter<string | null>) => {
+export const useTeamQuery = (teamId: MaybeRefOrGetter<string | null>) => {
   return useQuery<Team, AxiosError>({
     queryKey: ['team', { teamId }],
     queryFn: async () => {
@@ -48,7 +51,7 @@ export const useTeam = (teamId: MaybeRefOrGetter<string | null>) => {
 /**
  * Create a new team
  */
-export const useCreateTeam = () => {
+export const useCreateTeamMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation<Team, AxiosError, Partial<Team>>({
@@ -66,7 +69,7 @@ export const useCreateTeam = () => {
 /**
  * Update an existing team
  */
-export const useUpdateTeam = () => {
+export const useUpdateTeamMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation<Team, AxiosError, { id: string; teamData: Partial<Team> }>({
@@ -85,7 +88,7 @@ export const useUpdateTeam = () => {
 /**
  * Delete a team
  */
-export const useDeleteTeam = () => {
+export const useDeleteTeamMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation<void, AxiosError, string>({

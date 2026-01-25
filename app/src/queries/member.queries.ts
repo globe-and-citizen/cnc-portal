@@ -7,7 +7,7 @@ export type MemberInput = Array<Pick<Member, 'address' | 'name'>>
 /**
  * Add members to a team
  */
-export const useAddMembers = (teamId: string | number) => {
+export const useAddMembersMutation = (teamId: string | number) => {
   const queryClient = useQueryClient()
 
   return useMutation<unknown, AxiosError, MemberInput[]>({
@@ -27,7 +27,7 @@ export const useAddMembers = (teamId: string | number) => {
 /**
  * Delete a member from a team
  */
-export const useDeleteMember = (teamId: string | number, memberAddress: string) => {
+export const useDeleteMemberMutation = (teamId: string | number, memberAddress: string) => {
   const queryClient = useQueryClient()
 
   return useMutation<void, AxiosError, void>({

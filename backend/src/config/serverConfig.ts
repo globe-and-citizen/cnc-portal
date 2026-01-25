@@ -18,6 +18,7 @@ import claimRoutes from '../routes/claimRoute';
 import weeklyClaimRoutes from '../routes/weeklyClaimRoute';
 import expenseRoutes from '../routes/expenseRoute';
 import uploadRoute from '../routes/uploadRoute';
+import storageRoute from '../routes/storageRoute';
 import contractRoutes from '../routes/contractRoutes';
 import electionsRoute from '../routes/electionsRoute';
 import devRoutes from '../routes/devRoutes';
@@ -36,6 +37,7 @@ import { errorMessages } from '../utils/serverConfigUtil';
 
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
+import { getMissingConfig } from '../services/storageService';
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -72,6 +74,7 @@ class Server {
       expense: '/api/expense/',
       claim: '/api/claim/',
       upload: '/api/upload/',
+      file: '/api/file/',
       constract: '/api/contract/',
       elections: '/api/elections/',
       stats: '/api/stats/',
@@ -133,6 +136,7 @@ class Server {
     this.app.use(this.paths.claim, authorizeUser, claimRoutes);
     this.app.use(this.paths.expense, authorizeUser, expenseRoutes);
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
+    this.app.use(this.paths.file, authorizeUser, storageRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
     this.app.use(this.paths.stats, authorizeUser, requireAdmin, statsRoutes);
@@ -175,6 +179,13 @@ class Server {
     this.app.listen(this.port, () => {
       console.log(`helloworld: listening on port ${this.port}`);
       console.log(`Swagger docs V2 available at http://localhost:${this.port}/docs`);
+
+      console.log('Missing Storage Config:', getMissingConfig());
+      if (getMissingConfig().length > 0) {
+        console.error(
+          'Railway Storage is not configured. Please set BUCKET, ACCESS_KEY_ID, and SECRET_ACCESS_KEY environment variables.'
+        );
+      }
     });
   }
 

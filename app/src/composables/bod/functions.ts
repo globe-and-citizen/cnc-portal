@@ -10,8 +10,8 @@ import { config } from '@/wagmi.config'
 import { BOD_ABI } from '@/artifacts/abi/bod'
 import { useQueryClient } from '@tanstack/vue-query'
 import { log, parseError } from '@/utils'
-import { useNotificationStore } from '@/stores/notificationStore'
-import { useCreateAction, useUpdateAction } from '@/queries/action.queries'
+import { useCreateActionMutation, useUpdateActionMutation } from '@/queries/action.queries'
+import { useAddBulkNotificationsMutation } from '@/queries/notification.queries'
 /**
  * BOD contract write functions - combines admin and transfers
  */
@@ -21,7 +21,6 @@ export function useBodWritesFunctions() {
   const teamStore = useTeamStore()
   const { addErrorToast, addSuccessToast } = useToastStore()
   const queryClient = useQueryClient()
-  const notificationStore = useNotificationStore()
   const action = ref<Partial<Action> | null>(null)
   const isLoadingApproveAction = ref(false)
   const isActionAdded = ref(false)
@@ -29,8 +28,9 @@ export function useBodWritesFunctions() {
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
   const isLoadingBankAction = computed(() => writes.isLoading)
 
-  const createActionMutation = useCreateAction()
-  const updateActionMutation = useUpdateAction()
+  const createActionMutation = useCreateActionMutation()
+  const updateActionMutation = useUpdateActionMutation()
+  const { mutateAsync: addBulkNotifications } = useAddBulkNotificationsMutation()
 
   const { isConfirmed, isConfirming } = writes
 
@@ -55,8 +55,7 @@ export function useBodWritesFunctions() {
           const recipients = members.filter(
             (m) => m?.toLowerCase() !== (action.value?.userAddress || '').toLowerCase()
           )
-
-          await notificationStore.addBulkNotifications({
+          await addBulkNotifications({
             userIds: recipients,
             message: 'New board action requires your approval',
             subject: 'New Board Action Created',
