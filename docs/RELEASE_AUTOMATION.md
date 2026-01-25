@@ -193,10 +193,18 @@ Workflows log:
 2. **Prepare a release**
 
    ```bash
-   ./scripts/release.sh v0.7.2
-   ```
+   # Manual process - create release branch
+   git checkout develop
+   git pull origin develop
+   git checkout -b release/v0.7.2
 
-   The script handles everything!
+   # Update versions in package.json files
+   # Update CHANGELOG.md
+   # Commit changes
+
+   git push origin release/v0.7.2
+   # Create PR on GitHub → main
+   ```
 
 3. **Verify the release**
    - Go to GitHub Releases
