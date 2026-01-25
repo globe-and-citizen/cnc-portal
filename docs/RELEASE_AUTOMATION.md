@@ -33,8 +33,7 @@ git pull origin develop
 git checkout -b release/v0.7.2
 
 # 2. Make your changes (bump version, changelog, etc.)
-# Optional: use the script to automate updates
-./scripts/release.sh v0.7.2 --no-gitflow
+# Update package.json versions manually if needed
 
 # 3. Push the branch
 git push origin release/v0.7.2
