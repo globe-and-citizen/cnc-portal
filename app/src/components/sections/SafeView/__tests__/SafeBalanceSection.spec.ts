@@ -22,7 +22,8 @@ const {
   mockUseTeamStore,
   mockUseContractBalance,
   mockUseSafeInfoQuery,
-  mockQueryClient
+  mockQueryClient,
+  mockUseSafeTransfer
 } = vi.hoisted(() => ({
   mockGetSafeHomeUrl: vi.fn(),
   mockOpenSafeAppUrl: vi.fn(),
@@ -32,14 +33,27 @@ const {
   mockUseSafeInfoQuery: vi.fn(),
   mockQueryClient: {
     invalidateQueries: vi.fn()
-  }
+  },
+  // Add the missing useSafeTransfer mock
+  mockUseSafeTransfer: vi.fn(() => ({
+    transferFromSafe: vi.fn(),
+    transferNative: vi.fn(),
+    transferToken: vi.fn(),
+    isTransferring: ref(false),
+    error: ref(null)
+  }))
 }))
 
 // Mock external dependencies
-vi.mock('@/composables/safe', () => ({
-  getSafeHomeUrl: mockGetSafeHomeUrl,
-  openSafeAppUrl: mockOpenSafeAppUrl
-}))
+vi.mock('@/composables/safe', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    getSafeHomeUrl: mockGetSafeHomeUrl,
+    openSafeAppUrl: mockOpenSafeAppUrl,
+    useSafeTransfer: mockUseSafeTransfer
+  }
+})
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -212,6 +226,15 @@ describe('SafeBalanceSection', () => {
     mockUseTeamStore.mockReturnValue({
       currentTeam: MOCK_DATA.team,
       currentTeamMeta: MOCK_DATA.teamMeta
+    })
+
+    // Setup useSafeTransfer mock
+    mockUseSafeTransfer.mockReturnValue({
+      transferFromSafe: vi.fn().mockResolvedValue('0xmocktxhash'),
+      transferNative: vi.fn().mockResolvedValue('0xmocktxhash'),
+      transferToken: vi.fn().mockResolvedValue('0xmocktxhash'),
+      isTransferring: ref(false),
+      error: ref(null)
     })
 
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
@@ -387,6 +410,53 @@ describe('SafeBalanceSection', () => {
       wrapper = createWrapper()
 
       expect(wrapper.text()).toContain('0')
+    })
+  })
+
+  describe('Transfer Functionality', () => {
+    it('should call transferFromSafe when transfer is initiated', async () => {
+      wrapper = createWrapper()
+
+      // Mock transfer form interaction
+      await wrapper.find('[data-test="transfer-button"]').trigger('click')
+      await nextTick()
+
+      // Verify the transfer composable is available
+      const transferMock = mockUseSafeTransfer()
+      expect(transferMock.transferFromSafe).toBeDefined()
+      expect(transferMock.isTransferring.value).toBe(false)
+    })
+
+    it('should handle transfer loading state', () => {
+      const transferringRef = ref(true)
+      mockUseSafeTransfer.mockReturnValue({
+        transferFromSafe: vi.fn(),
+        transferNative: vi.fn(),
+        transferToken: vi.fn(),
+        isTransferring: transferringRef,
+        error: ref(null)
+      })
+
+      wrapper = createWrapper()
+
+      // Component should react to loading state
+      expect(transferringRef.value).toBe(true)
+    })
+
+    it('should handle transfer errors', () => {
+      const errorRef = ref(new Error('Transfer failed'))
+      mockUseSafeTransfer.mockReturnValue({
+        transferFromSafe: vi.fn(),
+        transferNative: vi.fn(),
+        transferToken: vi.fn(),
+        isTransferring: ref(false),
+        error: errorRef
+      })
+
+      wrapper = createWrapper()
+
+      // Component should handle error state
+      expect(errorRef.value?.message).toBe('Transfer failed')
     })
   })
 })

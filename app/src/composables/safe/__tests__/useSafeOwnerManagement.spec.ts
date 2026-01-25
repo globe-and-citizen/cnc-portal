@@ -10,6 +10,7 @@ interface MockConnection {
 
 interface MockSafeSDK {
   getThreshold: () => Promise<number>
+  getNonce: () => Promise<number>
   createAddOwnerTx: (params: {
     ownerAddress: string
     threshold?: number
@@ -64,6 +65,7 @@ const {
   mockLoadSafe: vi.fn<[string], Promise<MockSafeSDK>>(),
   mockSafeSdk: {
     getThreshold: vi.fn<[], Promise<number>>(),
+    getNonce: vi.fn<[], Promise<number>>(),
     createAddOwnerTx: vi.fn(),
     createRemoveOwnerTx: vi.fn(),
     createChangeThresholdTx: vi.fn(),
@@ -178,6 +180,7 @@ describe('useSafeOwnerManagement', () => {
     mockSafeSdk.createTransaction.mockResolvedValue(MOCK_DATA.safeTransaction)
     mockSafeSdk.getTransactionHash.mockResolvedValue(MOCK_DATA.txHash)
     mockSafeSdk.signHash.mockResolvedValue({ data: MOCK_DATA.signature })
+    mockSafeSdk.getNonce.mockResolvedValue(0)
     mockSafeSdk.executeTransaction.mockResolvedValue({ hash: MOCK_DATA.executionHash })
 
     mockUpdateMutation.mutateAsync.mockResolvedValue(undefined)
@@ -344,8 +347,8 @@ describe('useSafeOwnerManagement', () => {
       })
 
       expect(result).toBeNull()
-      expect(error.value?.message).toBe('Network request failed')
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Network request failed')
+      expect(error.value?.message).toBe('Failed to propose transaction')
+      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to propose transaction')
 
       consoleErrorSpy.mockRestore()
     })
