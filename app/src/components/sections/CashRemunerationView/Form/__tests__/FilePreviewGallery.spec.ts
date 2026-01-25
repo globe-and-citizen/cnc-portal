@@ -151,4 +151,88 @@ describe('FilePreviewGallery', () => {
       expect(wrapper.find(SELECTORS.docModal).exists()).toBe(false)
     })
   })
+
+  describe('Content Type Detection', () => {
+    it('should detect text content type correctly', async () => {
+      wrapper = createWrapper({ previews: [TXT_PREVIEW] })
+
+      await wrapper.find(SELECTORS.documentPreview).trigger('click')
+      await nextTick()
+
+      expect(wrapper.find(SELECTORS.docModal).exists()).toBe(true)
+    })
+
+    it('should detect other file types correctly', async () => {
+      const otherPreview = {
+        previewUrl: 'blob:http://localhost/file',
+        fileName: 'archive.zip',
+        fileSize: 5000,
+        fileType: 'application/zip',
+        isImage: false
+      }
+      wrapper = createWrapper({ previews: [otherPreview] })
+
+      await wrapper.find(SELECTORS.documentPreview).trigger('click')
+      await nextTick()
+
+      expect(wrapper.find(SELECTORS.docModal).exists()).toBe(true)
+    })
+  })
+
+  describe('Download Functionality', () => {
+    it('should download file when download button is clicked in lightbox', async () => {
+      const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+      wrapper = createWrapper({ previews: [IMAGE_PREVIEW] })
+
+      await wrapper.find(SELECTORS.imagePreview).trigger('click')
+      await nextTick()
+
+      await wrapper.find(SELECTORS.lightboxDownload).trigger('click')
+
+      expect(windowOpenSpy).toHaveBeenCalledWith(
+        IMAGE_PREVIEW.previewUrl,
+        '_blank',
+        'noopener,noreferrer'
+      )
+
+      windowOpenSpy.mockRestore()
+    })
+
+    it('should download file when download button is clicked in document modal', async () => {
+      const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+      wrapper = createWrapper({ previews: [PDF_PREVIEW] })
+
+      await wrapper.find(SELECTORS.documentPreview).trigger('click')
+      await nextTick()
+
+      await wrapper.find(SELECTORS.docDownload).trigger('click')
+
+      expect(windowOpenSpy).toHaveBeenCalledWith(
+        PDF_PREVIEW.previewUrl,
+        '_blank',
+        'noopener,noreferrer'
+      )
+
+      windowOpenSpy.mockRestore()
+    })
+  })
+
+  describe('Modal Auto-close on Preview Removal', () => {
+    it('should auto-close modal when preview is removed', async () => {
+      wrapper = createWrapper({ previews: [IMAGE_PREVIEW, PDF_PREVIEW] })
+
+      await wrapper.find(SELECTORS.imagePreview).trigger('click')
+      await nextTick()
+
+      expect(wrapper.find(SELECTORS.lightboxModal).exists()).toBe(true)
+
+      // Remove the previewed image
+      await wrapper.setProps({ previews: [PDF_PREVIEW] })
+      await nextTick()
+
+      expect(wrapper.find(SELECTORS.lightboxModal).exists()).toBe(false)
+    })
+  })
 })
