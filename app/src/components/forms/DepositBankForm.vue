@@ -78,8 +78,14 @@ import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import ButtonUI from '../ButtonUI.vue'
 import TokenAmount from './TokenAmount.vue'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useChainId } from '@wagmi/vue'
+
 // import { formatDataForDisplay, parseError } from '@/utils'
 // import TransactionTimeline from '../ui/TransactionTimeline.vue'
+
+const queryClient = useQueryClient()
+const chainId = useChainId()
 
 const emits = defineEmits(['closeModal'])
 // Add validation event
@@ -197,6 +203,21 @@ const submitForm = async () => {
       }
       currentStep.value = 3
       await bankDepositTokenResult.executeWrite([selectedTokenAddress.value, bigIntAmount.value])
+
+      const invalidateErc20Balance = (tokenAddress: Address, target: Address) =>
+        queryClient.invalidateQueries({
+          queryKey: [
+            'readContract',
+            {
+              address: tokenAddress,
+              chainId,
+              functionName: 'balanceOf',
+              args: [target]
+            }
+          ]
+        })
+
+      invalidateErc20Balance(selectedTokenAddress.value, props.bankAddress)
 
       // Check if bankDepositTokenResult has an error
       if (
