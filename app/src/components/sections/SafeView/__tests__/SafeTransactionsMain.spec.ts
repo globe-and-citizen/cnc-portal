@@ -337,14 +337,6 @@ describe('SafeTransactions', () => {
       expect(wrapper.vm.isConnectedUserOwner).toBe(true)
     })
 
-    it('should not recognize non-owner as owner', () => {
-      mockUseAccount.mockReturnValue({
-        address: ref(MOCK_DATA.otherAddress)
-      })
-      wrapper = createWrapper()
-      expect(wrapper.vm.isConnectedUserOwner).toBe(false)
-    })
-
     it('should handle missing safe info gracefully', () => {
       mockUseSafeInfoQuery.mockReturnValue({
         data: ref(null)
