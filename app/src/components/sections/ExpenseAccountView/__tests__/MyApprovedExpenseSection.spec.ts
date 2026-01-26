@@ -53,10 +53,6 @@ vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useExpenseDataStore: vi.fn(() => ({
-      ...mocks.mockExpenseDataStore,
-      myApprovedExpenses: ref(mocks.mockExpenseData)
-    })),
     useTeamStore: vi.fn(() => ({
       ...mocks.mockTeamStore
     })),

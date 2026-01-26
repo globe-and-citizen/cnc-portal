@@ -53,15 +53,31 @@
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ApprovalItemCard from './ApprovalItemCard.vue'
-import { TREASURY_SIGNER, BOD_SIGNER } from '@/utils/trading/approvalsUtil'
+import { useTeamStore } from '@/stores'
+import { computed } from 'vue'
+import { getAddress } from 'viem'
 
 defineProps<{ isProcessing: boolean }>()
 defineEmits(['approve-and-configure'])
 
-const systemOwners = [
-  { address: TREASURY_SIGNER, name: 'Treasury Signer' },
-  { address: BOD_SIGNER, name: 'Council Member 1' }
-]
+const teamStore = useTeamStore()
+const systemOwners = computed(() => {
+  const teamData = teamStore.currentTeamMeta.data
+  const bankSafe = teamData?.safeAddress ? getAddress(teamData?.safeAddress) : undefined
+  const ownerAddress = teamData?.ownerAddress ? getAddress(teamData?.ownerAddress) : undefined
+  return bankSafe && ownerAddress
+    ? [
+        { address: bankSafe, name: 'Bank Safe' },
+        {
+          address: ownerAddress,
+          name:
+            teamData?.members.find(
+              (m) => m.address.toLocaleLowerCase() === teamData?.ownerAddress.toLocaleLowerCase()
+            )?.name || 'Team Owner'
+        }
+      ]
+    : []
+})
 
 const usdcApprovals = [
   { name: 'CTF Contract', address: '0x4d97dcd97ec945f40cf65f87097ace5ea0476045' },

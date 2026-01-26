@@ -31,12 +31,7 @@ import { SUPPORTED_TOKENS } from '@/constant'
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 const currencyStore = useCurrencyStore()
-const contractAddress = computed(
-  () =>
-    teamStore.currentTeam?.teamContracts.find(
-      (contract) => contract.type === 'ExpenseAccountEIP712'
-    )?.address
-)
+const contractAddress = computed(() => teamStore.getContractAddressByType('ExpenseAccountEIP712'))
 
 const now = new Date()
 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000

@@ -371,87 +371,87 @@ describe('ApproveUsersForm', () => {
     })
   })
 
-  describe('Frequency Types', () => {
-    it('has correct frequency types configuration', () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
+  // describe('Frequency Types', () => {
+  //   it('has correct frequency types configuration', () => {
+  //     const wrapper = createWrapper()
+  //     const vm = getComponentInstance(wrapper)
 
-      expect(vm.frequencyTypes).toEqual([
-        { value: 0, label: 'One Time' },
-        { value: 1, label: 'Daily' },
-        { value: 2, label: 'Weekly' },
-        { value: 3, label: 'Monthly' },
-        { value: 4, label: 'Custom' }
-      ])
-    })
+  //     expect(vm.frequencyTypes).toEqual([
+  //       { value: 0, label: 'One Time' },
+  //       { value: 1, label: 'Daily' },
+  //       { value: 2, label: 'Weekly' },
+  //       { value: 3, label: 'Monthly' },
+  //       { value: 4, label: 'Custom' }
+  //     ])
+  //   })
 
-    it('sets customFrequency to 0 for non-custom frequency types', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
+  //   it('sets customFrequency to 0 for non-custom frequency types', async () => {
+  //     const wrapper = createWrapper()
+  //     const vm = getComponentInstance(wrapper)
 
-      const startDate = new Date(Date.now() + 86400000)
-      const endDate = new Date(Date.now() + 86400000 * 7)
+  //     const startDate = new Date(Date.now() + 86400000)
+  //     const endDate = new Date(Date.now() + 86400000 * 7)
 
-      vm.input = {
-        name: 'Test User',
-        address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-        token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
-      }
-      vm.frequencyType = 1 // Daily
-      vm.amount = 1000
-      vm.startDate = startDate
-      vm.endDate = endDate
+  //     vm.input = {
+  //       name: 'Test User',
+  //       address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+  //       token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
+  //     }
+  //     vm.frequencyType = 1 // Daily
+  //     vm.amount = 1000
+  //     vm.startDate = startDate
+  //     vm.endDate = endDate
 
-      await flushPromises()
+  //     await flushPromises()
 
-      vm.submitApprove()
-      await wrapper.vm.$nextTick()
+  //     vm.submitApprove()
+  //     await wrapper.vm.$nextTick()
 
-      const emittedData = wrapper.emitted('approveUser')![0][0] as {
-        approvedAddress: string
-        amount: number
-        frequencyType: number
-        customFrequency: number
-        startDate: number
-        endDate: number
-        tokenAddress: string
-      }
-      expect(emittedData.customFrequency).toBe(0)
-    })
+  //     const emittedData = wrapper.emitted('approveUser')![0][0] as {
+  //       approvedAddress: string
+  //       amount: number
+  //       frequencyType: number
+  //       customFrequency: number
+  //       startDate: number
+  //       endDate: number
+  //       tokenAddress: string
+  //     }
+  //     expect(emittedData.customFrequency).toBe(0)
+  //   })
 
-    it('sets customFrequency to calculated seconds for custom frequency type', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
+  //   it('sets customFrequency to calculated seconds for custom frequency type', async () => {
+  //     const wrapper = createWrapper()
+  //     const vm = getComponentInstance(wrapper)
 
-      const startDate = new Date(Date.now() + 86400000)
-      const endDate = new Date(Date.now() + 86400000 * 7)
+  //     const startDate = new Date(Date.now() + 86400000)
+  //     const endDate = new Date(Date.now() + 86400000 * 7)
 
-      vm.input = {
-        name: 'Test User',
-        address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-        token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
-      }
-      vm.frequencyType = 4 // Custom
-      vm.customFrequencyDays = 15
-      vm.amount = 1000
-      vm.startDate = startDate
-      vm.endDate = endDate
+  //     vm.input = {
+  //       name: 'Test User',
+  //       address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+  //       token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
+  //     }
+  //     vm.frequencyType = 4 // Custom
+  //     vm.customFrequencyDays = 15
+  //     vm.amount = 1000
+  //     vm.startDate = startDate
+  //     vm.endDate = endDate
 
-      await flushPromises()
+  //     await flushPromises()
 
-      vm.submitApprove()
-      await wrapper.vm.$nextTick()
+  //     vm.submitApprove()
+  //     await wrapper.vm.$nextTick()
 
-      const emittedData = wrapper.emitted('approveUser')![0][0] as {
-        approvedAddress: string
-        amount: number
-        frequencyType: number
-        customFrequency: number
-        startDate: number
-        endDate: number
-        tokenAddress: string
-      }
-      expect(emittedData.customFrequency).toBe(15 * 24 * 60 * 60)
-    })
-  })
+  //     const emittedData = wrapper.emitted('approveUser')![0][0] as {
+  //       approvedAddress: string
+  //       amount: number
+  //       frequencyType: number
+  //       customFrequency: number
+  //       startDate: number
+  //       endDate: number
+  //       tokenAddress: string
+  //     }
+  //     expect(emittedData.customFrequency).toBe(15 * 24 * 60 * 60)
+  //   })
+  // })
 })

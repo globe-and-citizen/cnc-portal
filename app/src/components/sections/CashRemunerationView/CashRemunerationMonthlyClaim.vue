@@ -23,7 +23,7 @@ import OverviewCard from '@/components/OverviewCard.vue'
 import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
 import { watch, computed } from 'vue'
-import { useTanstackQuery } from '@/composables/useTanstackQuery'
+import { useTeamWeeklyClaimsQuery } from '@/queries'
 import { useStorage } from '@vueuse/core'
 import type { TokenId } from '@/constant'
 import type { RatePerHour, WeeklyClaim } from '@/types'
@@ -37,20 +37,15 @@ const currency = useStorage('currency', {
   name: 'US Dollar',
   symbol: '$'
 })
-const withdrawnQueryKey = computed(() => ['weekly-claims', teamStore.currentTeamId, 'withdrawn'])
 
 const {
   data: weeklyClaims,
   isLoading: isFetching,
   error
-} = useTanstackQuery<WeeklyClaim[]>(
-  'withdrawnClaims',
-  computed(() => `/weeklyClaim/?teamId=${teamStore.currentTeamId}&status=withdrawn`),
-  {
-    queryKey: withdrawnQueryKey,
-    refetchOnWindowFocus: true
-  }
-)
+} = useTeamWeeklyClaimsQuery({
+  teamId: computed(() => teamStore.currentTeamId),
+  status: 'withdrawn'
+})
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)

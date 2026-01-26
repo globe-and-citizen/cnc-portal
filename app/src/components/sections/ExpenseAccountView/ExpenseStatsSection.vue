@@ -25,9 +25,6 @@ import ExpenseAccountTotalApproved from '@/components/sections/ExpenseAccountVie
 //#region  Composables
 const teamStore = useTeamStore()
 const expenseAccountEip712Address = computed(
-  () =>
-    teamStore.currentTeam?.teamContracts.find(
-      (contract) => contract.type === 'ExpenseAccountEIP712'
-    )?.address as Address
+  () => teamStore.getContractAddressByType('ExpenseAccountEIP712') as Address
 )
 </script>

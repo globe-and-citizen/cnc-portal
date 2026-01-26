@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { vi } from 'vitest'
-import type { Team, Member, Wage, Notification } from '@/types'
+import type { Team, Member, Wage, Notification, WeeklyClaim } from '@/types'
 import type { HealthCheckResponse } from '@/queries/health.queries'
 
 /**
@@ -90,6 +90,115 @@ export const mockHealthCheckData: HealthCheckResponse = {
 }
 
 /**
+ * Weekly Claim Query Mocks
+ */
+export const mockWeeklyClaimData: WeeklyClaim[] = [
+  {
+    id: 1,
+    status: 'pending' as const,
+    weekStart: '2024-01-01T00:00:00.000Z',
+    memberAddress: '0x1234567890123456789012345678901234567890',
+    teamId: 1,
+    hoursWorked: 40,
+    data: {},
+    signature: null,
+    wageId: 1,
+    wage: mockWageData[0] as Wage,
+    claims: [
+      {
+        id: 1,
+        hoursWorked: 8,
+        dayWorked: '2024-01-01',
+        createdAt: '2024-01-01T08:00:00Z',
+        updatedAt: '2024-01-01T08:00:00Z',
+        memo: '',
+        wageId: 1,
+        wage: mockWageData[0] as Wage
+      }
+    ],
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  }
+]
+
+export const mockSafeInfoData = {
+  address: '0x1234567890123456789012345678901234567890',
+  nonce: 0,
+  threshold: 1,
+  owners: ['0x1234567890123456789012345678901234567890'],
+  masterCopy: '0xMasterCopyAddress',
+  modules: [],
+  fallbackHandler: '0xFallbackHandlerAddress',
+  guard: '0x0000000000000000000000000000000000000000',
+  version: '1.3.0'
+}
+
+export const mockSafeTransactionData = {
+  safe: '0x1234567890123456789012345678901234567890',
+  to: '0x0987654321098765432109876543210987654321',
+  value: '0',
+  data: '0x',
+  operation: 0,
+  gasToken: '0x0000000000000000000000000000000000000000',
+  safeTxGas: 0,
+  baseGas: 0,
+  gasPrice: '0',
+  refundReceiver: '0x0000000000000000000000000000000000000000',
+  nonce: 0,
+  executionDate: null,
+  submissionDate: '2024-01-01T00:00:00Z',
+  modified: '2024-01-01T00:00:00Z',
+  blockNumber: null,
+  transactionHash: null,
+  safeTxHash: '0xTxHash',
+  proposer: '0x1234567890123456789012345678901234567890',
+  executor: null,
+  isExecuted: false,
+  isSuccessful: null,
+  ethGasPrice: null,
+  maxFeePerGas: null,
+  maxPriorityFeePerGas: null,
+  gasUsed: null,
+  fee: null,
+  origin: 'test',
+  dataDecoded: null,
+  confirmationsRequired: 1,
+  confirmations: [],
+  trusted: true,
+  signatures: null
+}
+
+export const mockMarketData = {
+  tokens: [
+    {
+      token_id: 'test-token',
+      outcome: 'Yes',
+      price: '0.50',
+      volume: '1000'
+    }
+  ]
+}
+
+/**
+ * BOD Action Query Mocks
+ */
+export const mockBodActionsData = [
+  {
+    id: 1,
+    teamId: '1',
+    actionType: 'ADD_MEMBER',
+    status: 'pending',
+    executionStatus: 'pending',
+    data: {
+      memberAddress: '0x1234567890123456789012345678901234567890',
+      memberName: 'New Member'
+    },
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  }
+]
+
+/**
  * Generic Query Hook Response Factory
  * Creates a standard TanStack Query response object with AxiosResponse data
  */
@@ -155,6 +264,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useUserNonceQuery: () => createMockQueryResponse(null),
 
   // Action queries - action.queries.ts
+  useBodActionsQuery: () => createMockQueryResponse(mockBodActionsData),
   useCreateActionMutation: () => createMockMutationResponse(),
   useUpdateActionMutation: () => createMockMutationResponse(),
 
@@ -165,5 +275,28 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useCreateContractMutation: () => createMockMutationResponse(),
 
   // Health queries - health.queries.ts
-  useBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData)
+  useBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData),
+
+  // Weekly Claim queries - weeklyClaim.queries.ts
+  useTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
+  useWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
+  useSignWeeklyClaimMutation: () => createMockMutationResponse(),
+  useEnableWeeklyClaimMutation: () => createMockMutationResponse(),
+  useDisableWeeklyClaimMutation: () => createMockMutationResponse(),
+  useWithdrawWeeklyClaimMutation: () => createMockMutationResponse(),
+  useSyncWeeklyClaimsMutation: () => createMockMutationResponse(),
+
+  // Safe queries - safe.queries.ts
+  useSafeInfoQuery: () => createMockQueryResponse(mockSafeInfoData),
+  useSafePendingTransactionsQuery: () => createMockQueryResponse([]),
+  useDeploySafeMutation: () => createMockMutationResponse(),
+  useProposeTransactionMutation: () => createMockMutationResponse(),
+  useApproveTransactionMutation: () => createMockMutationResponse(),
+  useExecuteTransactionMutation: () => createMockMutationResponse(),
+  useUpdateSafeOwnersMutation: () => createMockMutationResponse(),
+  useSafeTransactionQuery: () => createMockQueryResponse(mockSafeTransactionData),
+
+  // Polymarket queries - polymarket.queries.ts
+  useMarketData: () => createMockQueryResponse(mockMarketData),
+  useSafeBalances: () => createMockQueryResponse([])
 }

@@ -19,13 +19,6 @@
     />
     <CRWeeklyClaimOwnerHeader />
 
-    <!-- <ClaimHistory /> -->
-    <!-- Sinon, vue classique -->
-    <!-- <template >
-      <PendingWeeklyClaim v-if="isCashRemunerationOwner" />
-      <SignedWeeklyClaim />
-    </template> -->
-    <!-- <CashRemunerationTransactions /> -->
     <ContractOwnerCard v-if="cashRemunerationAddress" :contractAddress="cashRemunerationAddress" />
   </div>
 </template>
@@ -34,15 +27,10 @@
 import { computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-// import { useReadContract } from '@wagmi/vue'
-// import CashRemuneration_ABI from '@/artifacts/abi/CashRemunerationEIP712.json'
 import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
 
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
-// import PendingWeeklyClaim from '@/components/sections/CashRemunerationView/PendingWeeklyClaim.vue'
-// import SignedWeeklyClaim from '@/components/sections/CashRemunerationView/SignedWeeklyClaim.vue'
-// import ClaimHistory from '@/components/sections/ClaimHistoryView/ClaimHistory.vue'
 import CRWeeklyClaimOwnerHeader from '@/components/sections/CashRemunerationView/CRWeeklyClaimOwnerHeader.vue'
 
 // const userStore = useUserDataStore()
@@ -51,22 +39,4 @@ const teamStore = useTeamStore()
 const cashRemunerationAddress = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
 )
-
-// const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
-//   functionName: 'owner',
-//   address: cashRemunerationAddress,
-//   abi: CashRemuneration_ABI
-// })
-
-// Compute if user has approval access (is cash remuneration contract owner)
-// const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value == userStore.address)
-
-// watch(
-//   () => cashRemunerationOwnerError.value,
-//   (error) => {
-//     if (error) {
-//       console.error('Error fetching cash remuneration owner:', error)
-//     }
-//   }
-// )
 </script>

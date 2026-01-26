@@ -7,12 +7,15 @@ import type { AxiosError } from 'axios'
 
 /**
  * Fetch all teams for a user, for the authenticated user it will be his teams
+ * @param userAddress - Optional user address to filter teams by specific user
  */
-export const useTeamsQuery = () => {
+export const useTeamsQuery = (userAddress?: MaybeRefOrGetter<string | null | undefined>) => {
   return useQuery<Team[], AxiosError>({
-    queryKey: ['teams'],
+    queryKey: ['teams', { userAddress }],
     queryFn: async () => {
-      const { data } = await apiClient.get<Team[]>(`teams`)
+      const address = toValue(userAddress)
+      const params = address ? { userAddress: address } : {}
+      const { data } = await apiClient.get<Team[]>('teams', { params })
       return data
     },
     refetchOnWindowFocus: false,

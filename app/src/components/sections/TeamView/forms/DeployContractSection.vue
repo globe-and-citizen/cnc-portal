@@ -1,13 +1,16 @@
 <template>
-  <ButtonUI
-    variant="primary"
-    :loading="createOfficerLoading"
-    :disabled="disable || createOfficerLoading"
-    data-test="deploy-contracts-button"
-    @click="deployOfficerContract()"
-  >
-    Deploy Contracts
-  </ButtonUI>
+  <div class="space-y-4">
+    <!-- Deploy Button with dynamic message -->
+    <ButtonUI
+      variant="primary"
+      :loading="createOfficerLoading || isSafeDeploying"
+      :disabled="disable || createOfficerLoading || isSafeDeploying"
+      data-test="deploy-contracts-button"
+      @click="deployOfficerContract"
+    >
+      {{ deployButtonText }}
+    </ButtonUI>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -16,19 +19,9 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import type { Team } from '@/types'
 import { useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent } from '@wagmi/vue'
-import { encodeFunctionData, zeroAddress, type Address } from 'viem'
+import { encodeFunctionData, zeroAddress, type Address, isAddress } from 'viem'
 import { ref, watch, computed } from 'vue'
-
-// Contract ABIs
-import { OFFICER_ABI } from '@/artifacts/abi/officer'
-import { BANK_ABI } from '@/artifacts/abi/bank'
-// import { VOTING_ABI } from '@/artifacts/abi/voting'
-
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
-import { FACTORY_BEACON_ABI } from '@/artifacts/abi/factory-beacon'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-
+import { useSafeDeployment } from '@/composables/safe'
 import {
   BANK_BEACON_ADDRESS,
   BOD_BEACON_ADDRESS,
@@ -44,6 +37,12 @@ import {
   ELECTIONS_BEACON_ADDRESS
   // OFFICER_ADDRESS
 } from '@/constant'
+import { OFFICER_ABI } from '@/artifacts/abi/officer'
+import { BANK_ABI } from '@/artifacts/abi/bank'
+import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
+import { FACTORY_BEACON_ABI } from '@/artifacts/abi/factory-beacon'
+import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useCustomFetch } from '@/composables/useCustomFetch'
 import { log } from '@/utils'
@@ -63,7 +62,8 @@ const emits = defineEmits(['contractDeployed'])
 // Store
 const userDataStore = useUserDataStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
-
+const { deploySafe, isDeploying: isSafeDeploying } = useSafeDeployment()
+const safeLoadingMessage = ref('')
 const loading = ref(false)
 const dynamicLoading = ref({
   status: false,
@@ -87,13 +87,62 @@ const createOfficerLoading = computed(
   () => officerContractCreating.value || isConfirmingCreateOfficer.value || loading.value
 )
 
+const deployButtonText = computed(() => {
+  if (isSafeDeploying.value) {
+    return 'Deploying Safe Wallet...'
+  }
+  if (createOfficerLoading.value) {
+    return 'Deploying Officer Contracts...'
+  }
+  return 'Deploy Team Contracts'
+})
+
+const deploySafeForTeam = async () => {
+  if (!props.createdTeamData?.id) {
+    addErrorToast('Team data not found')
+    return
+  }
+
+  const currentUserAddress = userDataStore.address
+
+  if (!currentUserAddress || !isAddress(currentUserAddress)) {
+    addErrorToast('Invalid wallet address. Please connect your wallet.')
+    return
+  }
+
+  safeLoadingMessage.value = 'Deploying Safe wallet...'
+
+  try {
+    const safeAddress = await deploySafe([currentUserAddress], 1)
+    safeLoadingMessage.value = 'Updating team with Safe address...'
+    const { error: updateError } = await useCustomFetch<Team>(`teams/${props.createdTeamData.id}`)
+      .put({
+        safeAddress: safeAddress
+      })
+      .json()
+
+    if (updateError.value) {
+      log.error('Error updating team with Safe address:', updateError.value)
+      addErrorToast('Failed to update team with Safe address')
+      safeLoadingMessage.value = ''
+      return
+    }
+
+    addSuccessToast(`Safe wallet deployed successfully`)
+    safeLoadingMessage.value = ''
+    emits('contractDeployed')
+  } catch (error) {
+    log.error('Error deploying Safe:', error)
+    addErrorToast('Failed to deploy Safe wallet. Please try again.')
+    safeLoadingMessage.value = ''
+  }
+}
+
 const deployOfficerContract = async () => {
   loading.value = true
   try {
     // TODO: Check if the address in the store is the same as the address in the connected wallet
     const currentUserAddress = userDataStore.address as Address
-
-    console.log('Validating addresses')
     validateAddresses()
     if (!props.createdTeamData?.id) {
       loading.value = false
@@ -247,11 +296,12 @@ const deployOfficerContract = async () => {
     // log.error('Error deploying contract')
     // log.error(String( || error))
     addErrorToast('Error deploying contract')
+    console.error(error)
     loading.value = false
   } finally {
     dynamicLoading.value = {
       ...dynamicLoading.value,
-      message: 'Officer Contract Ready for deployement'
+      message: 'Officer Contract Ready for deployment'
     }
   }
 }
@@ -340,11 +390,12 @@ useWatchContractEvent({
       return
     }
     dynamicLoading.value = {
-      message: 'Loaded',
+      message: 'Officer contracts synced successfully',
       status: false
     }
     loading.value = false
-    emits('contractDeployed')
+
+    await deploySafeForTeam()
   }
 })
 </script>

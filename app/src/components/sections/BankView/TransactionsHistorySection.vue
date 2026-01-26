@@ -30,11 +30,7 @@ const currencies = computed(() => {
   return defaultCurrency === 'USD' ? ['USD'] : ['USD', defaultCurrency]
 })
 
-const contractAddress = computed(
-  () =>
-    teamStore.currentTeam?.teamContracts.find((contract) => contract.type === 'Bank')
-      ?.address as Address
-)
+const contractAddress = computed(() => teamStore.getContractAddressByType('Bank') as Address)
 
 const { result, error } = useQuery(
   gql`
