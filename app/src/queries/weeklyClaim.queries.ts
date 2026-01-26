@@ -85,6 +85,7 @@ export const useWeeklyClaimByIdQuery = (claimId: MaybeRefOrGetter<string | numbe
 export interface SignWeeklyClaimInput {
   claimId: number | string
   signature: string
+  data: { ownerAddress: Address }
 }
 
 export const useSignWeeklyClaimMutation = () => {
@@ -92,7 +93,8 @@ export const useSignWeeklyClaimMutation = () => {
   return useMutation<void, AxiosError, SignWeeklyClaimInput>({
     mutationFn: async (input) => {
       await apiClient.put(`/weeklyClaim/${input.claimId}?action=sign`, {
-        signature: input.signature
+        signature: input.signature,
+        data: input.data
       })
     },
     onSuccess: (_, variables) => {
