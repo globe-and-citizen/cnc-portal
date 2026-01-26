@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper, flushPromises } from '@vue/test-utils'
+import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
