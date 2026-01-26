@@ -1,0 +1,306 @@
+name: Release via GitHub PR
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  release-from-pr:
+    if: |
+      (github.event_name == 'pull_request' && 
+       github.event.pull_request.merged == true && 
+       startsWith(github.event.pull_request.head.ref, 'release/')) ||
+      (github.event_name == 'push' && 
+       contains(github.event.head_commit.message, 'Merge pull request') &&
+       contains(github.event.head_commit.message, '/release/'))
+
+    permissions:
+      contents: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Extract version information
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # Version depuis le nom de la branche PR
+            VERSION="${{ github.event.pull_request.head.ref }}"
+            VERSION=$(echo $VERSION | sed 's/release\///')
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            echo "Source: PR #$PR_NUMBER ($PR_TITLE)"
+          else
+            # Version depuis le message de commit (push après merge PR)
+            COMMIT_MSG="${{ github.event.head_commit.message }}"
+            echo "Commit message: $COMMIT_MSG"
+            
+            # Extraire depuis "Merge pull request #123 from org/release/v1.2.3"
+            if echo "$COMMIT_MSG" | grep -E "from .*/release/"; then
+              VERSION=$(echo "$COMMIT_MSG" | sed -n 's/.*from .*\/release\/\([^[:space:]]*\).*/\1/p')
+            else
+              echo "❌ Could not extract version from commit message"
+              exit 1
+            fi
+            
+            PR_NUMBER=$(echo "$COMMIT_MSG" | sed -n 's/Merge pull request #\([0-9]*\).*/\1/p')
+            echo "Source: Merged PR #$PR_NUMBER"
+          fi
+
+          # Nettoyer et valider la version
+          VERSION=$(echo $VERSION | sed 's/^v//')
+          if [ -z "$VERSION" ]; then
+            echo "❌ Could not extract version"
+            exit 1
+          fi
+
+          # S'assurer que la version commence par 'v'
+          if [[ ! $VERSION =~ ^v ]]; then
+            VERSION="v$VERSION"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "pr_number=${PR_NUMBER:-unknown}" >> $GITHUB_OUTPUT
+          echo "✅ Extracted version: $VERSION"
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          # Vérifier le format semver (basique)
+          if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "⚠️  Version format seems unusual: $VERSION"
+            echo "Expected format: vX.Y.Z or vX.Y.Z-suffix"
+          else
+            echo "✅ Version format valid: $VERSION"
+          fi
+
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Tag $VERSION already exists"
+          else
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Tag $VERSION is new"
+          fi
+
+      - name: Create annotated tag
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PR_NUMBER="${{ steps.version.outputs.pr_number }}"
+
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          # Message de tag avec référence à la PR
+          if [ "$PR_NUMBER" != "unknown" ]; then
+            TAG_MESSAGE="Release $VERSION (from PR #$PR_NUMBER)"
+          else
+            TAG_MESSAGE="Release $VERSION"
+          fi
+
+          git tag -a "$VERSION" -m "$TAG_MESSAGE"
+          git push origin "$VERSION"
+          echo "✅ Created and pushed tag: $VERSION"
+
+      - name: Generate comprehensive changelog
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Trouver le tag précédent
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "📝 Generating changelog from beginning"
+            COMMITS=$(git log --pretty=format:"* %s (%h)" --no-merges | head -50)
+          else
+            echo "📝 Generating changelog from $PREV_TAG to $VERSION"
+            COMMITS=$(git log $PREV_TAG..HEAD --pretty=format:"* %s (%h)" --no-merges)
+          fi
+
+          # Compter les commits
+          COMMIT_COUNT=$(echo "$COMMITS" | wc -l)
+
+          # Créer les notes de release
+          cat > RELEASE_NOTES.md << EOF
+          # 🚀 Release $VERSION
+
+          > Released from GitHub PR merge workflow
+
+          ## 📊 Summary
+          - **$COMMIT_COUNT commits** since last release
+          - **Branch:** \`release/$VERSION\` → \`main\`
+          - **Release type:** ${VERSION##*-} 
+
+          ## 📝 Changes
+          $COMMITS
+
+          ## 🔧 Installation
+
+          ### Frontend (Vue.js)
+          \`\`\`bash
+          cd app
+          npm install
+          npm run build
+          \`\`\`
+
+          ### Backend (Express.js)
+          \`\`\`bash
+          cd backend
+          npm install  
+          npm run build
+          \`\`\`
+
+          ### Smart Contracts (Hardhat)
+          \`\`\`bash
+          cd contract
+          npm install
+          npm run compile
+          \`\`\`
+
+          ### Dashboard (Nuxt.js)
+          \`\`\`bash
+          cd dashboard
+          npm install
+          npm run build
+          \`\`\`
+
+          ## 🏗️ Development
+
+          \`\`\`bash
+          # Clone the repository
+          git clone https://github.com/globe-and-citizen/cnc-portal.git
+          cd cnc-portal
+
+          # Install dependencies
+          npm run install:all
+
+          # Start development environment
+          docker-compose -f docker-compose.dev.yml up
+          \`\`\`
+
+          ---
+
+          **Full Changelog**: https://github.com/globe-and-citizen/cnc-portal/compare/${PREV_TAG:-$(git rev-list --max-parents=0 HEAD)}...$VERSION
+          EOF
+
+          echo "📄 Release notes generated"
+
+      - name: Create GitHub Release
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: "🚀 Release ${{ steps.version.outputs.version }}"
+          body_path: RELEASE_NOTES.md
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, 'alpha') || contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'rc') }}
+          generate_release_notes: false # On utilise nos notes personnalisées
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and upload artifacts
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "🏗️  Building artifacts for $VERSION"
+
+          # Build App (Vue.js)
+          echo "Building frontend..."
+          cd app
+          npm ci --prefer-offline
+          npm run build
+          cd ..
+          tar -czf cnc-portal-app-$VERSION.tar.gz -C app/dist .
+
+          # Build Backend (Express.js)  
+          echo "Building backend..."
+          cd backend
+          npm ci --prefer-offline
+          npm run build 2>/dev/null || echo "Backend build not available"
+          cd ..
+          if [ -d "backend/dist" ]; then
+            tar -czf cnc-portal-backend-$VERSION.tar.gz -C backend dist package*.json
+          fi
+
+          # Build Contracts (Hardhat)
+          echo "Building contracts..."
+          cd contract
+          npm ci --prefer-offline
+          npm run compile
+          cd ..
+          tar -czf cnc-portal-contracts-$VERSION.tar.gz -C contract artifacts cache typechain-types
+
+          # Build Dashboard (Nuxt.js)
+          echo "Building dashboard..."
+          cd dashboard  
+          npm ci --prefer-offline
+          npm run build 2>/dev/null || echo "Dashboard build not available"
+          cd ..
+          if [ -d "dashboard/.output" ]; then
+            tar -czf cnc-portal-dashboard-$VERSION.tar.gz -C dashboard .output
+          fi
+
+          echo "✅ All artifacts built"
+
+      - name: Upload artifacts to release
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          files: |
+            cnc-portal-*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update latest release
+        if: steps.check_tag.outputs.tag_exists == 'false' && !contains(steps.version.outputs.version, 'alpha') && !contains(steps.version.outputs.version, 'beta') && !contains(steps.version.outputs.version, 'rc')
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Success notification
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PR_NUMBER="${{ steps.version.outputs.pr_number }}"
+
+          echo "🎉 Release $VERSION created successfully!"
+          echo "📁 Artifacts built and uploaded"
+          echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/$VERSION"
+
+          if [ "$PR_NUMBER" != "unknown" ]; then
+            echo "📋 Source: PR #$PR_NUMBER"
+          fi
+
+      - name: Failure notification
+        if: failure()
+        run: |
+          echo "❌ Release process failed!"
+          echo "Check the logs above for details"
+          echo "📋 Workflow: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
