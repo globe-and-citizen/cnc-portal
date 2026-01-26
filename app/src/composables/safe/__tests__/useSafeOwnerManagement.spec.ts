@@ -291,5 +291,4 @@ describe('useSafeOwnerManagement', () => {
       expect(mockSafeSdk.createRemoveOwnerTx).toHaveBeenCalledTimes(2)
     })
   })
-
 })
