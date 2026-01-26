@@ -3,7 +3,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv, PluginOption } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
-import inject from '@rollup/plugin-inject'
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export const ENV_LIST = ['VITE_APP_BACKEND_URL', 'VITE_APP_NETWORK_ALIAS']
 const SUPPORTED_NETWORKS = ['sepolia', 'hardhat', 'amoy', 'polygon']
@@ -26,9 +26,14 @@ export default defineConfig(({ mode }) => {
   }
   const plugins: PluginOption = [
     vue(),
-    inject({
-      Buffer: ['buffer', 'Buffer']
-    })
+    nodePolyfills({
+      globals: {
+        Buffer: true, 
+        global: true,
+        process: true,
+      },
+      protocolImports: true,
+    }),
   ]
 
   if (!process.env.CI) {
@@ -40,7 +45,10 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
-        buffer: 'buffer/'
+        buffer: 'buffer/',
+        crypto: 'crypto-browserify',
+        stream: 'stream-browserify',
+        events: 'events',
       }
     },
     server: {
