@@ -3,7 +3,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv, PluginOption } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
-import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 export const ENV_LIST = ['VITE_APP_BACKEND_URL', 'VITE_APP_NETWORK_ALIAS']
 const SUPPORTED_NETWORKS = ['sepolia', 'hardhat', 'amoy', 'polygon']
@@ -28,12 +28,12 @@ export default defineConfig(({ mode }) => {
     vue(),
     nodePolyfills({
       globals: {
-        Buffer: true, 
+        Buffer: true,
         global: true,
-        process: true,
+        process: true
       },
-      protocolImports: true,
-    }),
+      protocolImports: true
+    })
   ]
 
   if (!process.env.CI) {
@@ -48,7 +48,7 @@ export default defineConfig(({ mode }) => {
         buffer: 'buffer/',
         crypto: 'crypto-browserify',
         stream: 'stream-browserify',
-        events: 'events',
+        events: 'events'
       }
     },
     server: {
