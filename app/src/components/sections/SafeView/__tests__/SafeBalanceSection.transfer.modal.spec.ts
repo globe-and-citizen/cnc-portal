@@ -4,8 +4,6 @@ import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
-
-// Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({
   Icon: {
     name: 'Icon',
@@ -14,7 +12,6 @@ vi.mock('@iconify/vue', () => ({
   }
 }))
 
-// Hoisted mock variables
 const {
   mockGetSafeHomeUrl,
   mockOpenSafeAppUrl,
@@ -34,7 +31,6 @@ const {
   mockQueryClient: {
     invalidateQueries: vi.fn()
   },
-  // Add the missing useSafeTransfer mock
   mockUseSafeTransfer: vi.fn(() => ({
     transferFromSafe: vi.fn(),
     transferNative: vi.fn(),
@@ -44,7 +40,6 @@ const {
   }))
 }))
 
-// Mock external dependencies
 vi.mock('@/composables/safe', async (importOriginal) => {
   const actual = await importOriginal()
   return {
@@ -66,19 +61,15 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 vi.mock('@vueuse/core', () => ({
   useStorage: vi.fn()
 }))
-
 vi.mock('@/stores', () => ({
   useTeamStore: mockUseTeamStore
 }))
-
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: mockUseContractBalance
 }))
-
 vi.mock('@/queries/safe.queries', () => ({
   useSafeInfoQuery: mockUseSafeInfoQuery
 }))
-
 vi.mock('@tanstack/vue-query', () => ({
   useQueryClient: () => mockQueryClient
 }))
@@ -107,22 +98,6 @@ const MOCK_DATA = {
           value: 3000,
           formated: '$3,000',
           price: 2000
-        }
-      }
-    },
-    {
-      token: {
-        symbol: 'SHER',
-        id: 'sher',
-        name: 'Sherlock',
-        code: 'SHER'
-      },
-      amount: 100,
-      values: {
-        USD: {
-          value: 500,
-          formated: '$500',
-          price: 5
         }
       }
     }
@@ -185,7 +160,7 @@ interface SafeBalanceSectionInstance {
   transferData: { token: { symbol: string; tokenId: string } }
 }
 
-describe('SafeBalanceSection', () => {
+describe('SafeBalanceSection transfer modals', () => {
   let wrapper: VueWrapper
   const mockCurrency = ref(MOCK_DATA.defaultCurrency)
   const mockBalances = ref(MOCK_DATA.balances)
@@ -211,7 +186,6 @@ describe('SafeBalanceSection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    // Setup default mocks
     mockUseContractBalance.mockReturnValue({
       total: mockTotal,
       balances: mockBalances,
@@ -228,7 +202,6 @@ describe('SafeBalanceSection', () => {
       currentTeamMeta: MOCK_DATA.teamMeta
     })
 
-    // Setup useSafeTransfer mock
     mockUseSafeTransfer.mockReturnValue({
       transferFromSafe: vi.fn().mockResolvedValue('0xmocktxhash'),
       transferNative: vi.fn().mockResolvedValue('0xmocktxhash'),
@@ -244,7 +217,6 @@ describe('SafeBalanceSection', () => {
     )
     mockOpenSafeAppUrl.mockImplementation(() => {})
 
-    // Reset reactive values
     mockIsLoading.value = false
     mockBalances.value = MOCK_DATA.balances
     mockTotal.value = MOCK_DATA.total
@@ -255,66 +227,6 @@ describe('SafeBalanceSection', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  describe('Component Rendering', () => {
-    it('should show loading spinner when isLoading is true', () => {
-      mockIsLoading.value = true
-      wrapper = createWrapper()
-
-      expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(true)
-    })
-
-    it('should show fallback values when safeInfo is null', () => {
-      mockSafeInfo.value = null
-      wrapper = createWrapper()
-
-      expect(wrapper.text()).toContain('-')
-      expect(wrapper.text()).toContain('0')
-    })
-
-    it.skip('should display "Open in Safe App" button when safeAddress exists', () => {
-      wrapper = createWrapper()
-
-      expect(wrapper.find('[data-test="open-safe-app-button"]').exists()).toBe(true)
-    })
-  })
-
-  describe('Props and Computed Values', () => {
-    it('should use 0x as fallback when no address is available', () => {
-      mockUseTeamStore.mockReturnValue({
-        currentTeam: { safeAddress: undefined },
-        currentTeamMeta: { data: { safeAddress: undefined } }
-      })
-      wrapper = createWrapper()
-
-      expect(mockUseContractBalance).toHaveBeenCalled()
-      const callArg = mockUseContractBalance.mock.calls[0]?.[0]
-      expect(callArg?.value).toBe('0x')
-    })
-  })
-
-  describe('Tokens Computation', () => {
-    it('should handle missing USD price gracefully', () => {
-      mockBalances.value = [
-        {
-          token: {
-            symbol: 'TEST',
-            id: 'test',
-            name: 'Test Token',
-            code: 'TEST'
-          },
-          amount: 100,
-          values: {
-            USD: undefined
-          }
-        }
-      ]
-      wrapper = createWrapper()
-
-      const tokens = (wrapper.vm as SafeBalanceSectionInstance).tokens
-      expect(tokens[0].price).toBe(0)
-    })
-  })
-
   describe('Deposit Modal', () => {
     it('should close deposit modal and invalidate queries', async () => {
       vi.useFakeTimers()
@@ -323,10 +235,8 @@ describe('SafeBalanceSection', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      // Start the closeDepositModal without awaiting
       const closePromise = (wrapper.vm as SafeBalanceSectionInstance).closeDepositModal()
 
-      // Fast-forward time for the 2000ms delay
       await vi.advanceTimersByTimeAsync(2000)
       await closePromise
       await flushPromises()
@@ -349,10 +259,8 @@ describe('SafeBalanceSection', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      // Start the closeDepositModal without awaiting
       const closePromise = (wrapper.vm as SafeBalanceSectionInstance).closeDepositModal()
 
-      // Fast-forward time
       await vi.advanceTimersByTimeAsync(2000)
       await closePromise
       await flushPromises()
@@ -375,88 +283,18 @@ describe('SafeBalanceSection', () => {
       expect(transferData.token.symbol).toBe('')
     })
 
-    // it('should close transfer modal and reset values', async () => {
-    //   wrapper = createWrapper()
-
-    //   await wrapper.find('[data-test="transfer-button"]').trigger('click')
-    //   await nextTick()
-
-    //   expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(true)
-
-    //   // Call resetTransferValues directly
-    //   await (wrapper.vm as SafeBalanceSectionInstance).resetTransferValues()
-    //   await nextTick()
-
-    //   expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
-    // })
-  })
-
-  // describe('Open in Safe App', () => {
-  //   it('should call openSafeAppUrl with the URL from getSafeHomeUrl', async () => {
-  //     const mockUrl =
-  //       'https://app.safe.global/home?safe=polygon:0x1234567890123456789012345678901234567890'
-  //     mockGetSafeHomeUrl.mockReturnValue(mockUrl)
-  //     wrapper = createWrapper()
-
-  //     await wrapper.find('[data-test="open-safe-app-button"]').trigger('click')
-
-  //     expect(mockOpenSafeAppUrl).toHaveBeenCalledWith(mockUrl)
-  //   })
-  // })
-
-  // describe('Edge Cases', () => {
-  //   it('should handle total with missing USD data', () => {
-  //     mockTotal.value = {}
-  //     wrapper = createWrapper()
-
-      expect(wrapper.text()).toContain('0')
-    })
-  })
-
-  describe('Transfer Functionality', () => {
-    it('should call transferFromSafe when transfer is initiated', async () => {
+    it('should close transfer modal and reset values', async () => {
       wrapper = createWrapper()
 
-      // Mock transfer form interaction
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
       await nextTick()
 
-      // Verify the transfer composable is available
-      const transferMock = mockUseSafeTransfer()
-      expect(transferMock.transferFromSafe).toBeDefined()
-      expect(transferMock.isTransferring.value).toBe(false)
-    })
+      expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(true)
 
-    it('should handle transfer loading state', () => {
-      const transferringRef = ref(true)
-      mockUseSafeTransfer.mockReturnValue({
-        transferFromSafe: vi.fn(),
-        transferNative: vi.fn(),
-        transferToken: vi.fn(),
-        isTransferring: transferringRef,
-        error: ref(null)
-      })
+      await (wrapper.vm as SafeBalanceSectionInstance).resetTransferValues()
+      await nextTick()
 
-      wrapper = createWrapper()
-
-      // Component should react to loading state
-      expect(transferringRef.value).toBe(true)
-    })
-
-    it('should handle transfer errors', () => {
-      const errorRef = ref(new Error('Transfer failed'))
-      mockUseSafeTransfer.mockReturnValue({
-        transferFromSafe: vi.fn(),
-        transferNative: vi.fn(),
-        transferToken: vi.fn(),
-        isTransferring: ref(false),
-        error: errorRef
-      })
-
-      wrapper = createWrapper()
-
-      // Component should handle error state
-      expect(errorRef.value?.message).toBe('Transfer failed')
+      expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
     })
   })
 })
