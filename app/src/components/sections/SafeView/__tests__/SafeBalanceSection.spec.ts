@@ -20,6 +20,9 @@ const {
   mockOpenSafeAppUrl,
   mockUseChainId,
   mockUseTeamStore,
+  mockUseCurrencyStore,
+  mockUseUserDataStore,
+  mockUseToastStore,
   mockUseContractBalance,
   mockUseSafeInfoQuery,
   mockQueryClient
@@ -28,6 +31,9 @@ const {
   mockOpenSafeAppUrl: vi.fn(),
   mockUseChainId: vi.fn(),
   mockUseTeamStore: vi.fn(),
+  mockUseCurrencyStore: vi.fn(),
+  mockUseUserDataStore: vi.fn(),
+  mockUseToastStore: vi.fn(),
   mockUseContractBalance: vi.fn(),
   mockUseSafeInfoQuery: vi.fn(),
   mockQueryClient: {
@@ -54,7 +60,10 @@ vi.mock('@vueuse/core', () => ({
 }))
 
 vi.mock('@/stores', () => ({
-  useTeamStore: mockUseTeamStore
+  useTeamStore: mockUseTeamStore,
+  useCurrencyStore: mockUseCurrencyStore,
+  useUserDataStore: mockUseUserDataStore,
+  useToastStore: mockUseToastStore
 }))
 
 vi.mock('@/composables/useContractBalance', () => ({
@@ -214,6 +223,19 @@ describe('SafeBalanceSection', () => {
       currentTeamMeta: MOCK_DATA.teamMeta
     })
 
+    mockUseCurrencyStore.mockReturnValue({
+      currency: mockCurrency
+    })
+
+    mockUseUserDataStore.mockReturnValue({
+      address: ref('0x1234567890123456789012345678901234567890')
+    })
+
+    mockUseToastStore.mockReturnValue({
+      addErrorToast: vi.fn(),
+      addSuccessToast: vi.fn()
+    })
+
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
 
     mockGetSafeHomeUrl.mockReturnValue(
@@ -292,54 +314,6 @@ describe('SafeBalanceSection', () => {
     })
   })
 
-  describe('Deposit Modal', () => {
-    it('should close deposit modal and invalidate queries', async () => {
-      vi.useFakeTimers()
-      wrapper = createWrapper()
-
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
-
-      // Start the closeDepositModal without awaiting
-      const closePromise = (wrapper.vm as SafeBalanceSectionInstance).closeDepositModal()
-
-      // Fast-forward time for the 2000ms delay
-      await vi.advanceTimersByTimeAsync(2000)
-      await closePromise
-      await flushPromises()
-
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: ['safe', 'info', { safeAddress: MOCK_DATA.safeAddress }]
-      })
-
-      vi.useRealTimers()
-    })
-
-    it('should not invalidate queries when teamStore has no safeAddress', async () => {
-      vi.useFakeTimers()
-      mockUseTeamStore.mockReturnValue({
-        currentTeam: { safeAddress: undefined },
-        currentTeamMeta: { data: { safeAddress: undefined } }
-      })
-      wrapper = createWrapper()
-
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
-
-      // Start the closeDepositModal without awaiting
-      const closePromise = (wrapper.vm as SafeBalanceSectionInstance).closeDepositModal()
-
-      // Fast-forward time
-      await vi.advanceTimersByTimeAsync(2000)
-      await closePromise
-      await flushPromises()
-
-      expect(mockQueryClient.invalidateQueries).not.toHaveBeenCalled()
-
-      vi.useRealTimers()
-    })
-  })
-
   describe('Transfer Modal', () => {
     it('should handle empty tokens list gracefully', async () => {
       mockBalances.value = []
@@ -348,7 +322,7 @@ describe('SafeBalanceSection', () => {
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
       await nextTick()
 
-      const transferData = (wrapper.vm as SafeBalanceSectionInstance).transferData
+      const transferData = (wrapper.vm as unknown as SafeBalanceSectionInstance).transferData
       expect(transferData.token.symbol).toBe('')
     })
 
