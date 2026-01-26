@@ -39,12 +39,10 @@
 <script setup lang="ts">
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { useCustomFetch } from '@/composables'
 import { USDC_ADDRESS } from '@/constant'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
 import { log } from '@/utils'
-import { useQueryClient } from '@tanstack/vue-query'
 import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
 import {
   readContract,
@@ -56,6 +54,7 @@ import dayjs from 'dayjs'
 import { keccak256, parseEther, parseUnits, zeroAddress, type Address } from 'viem'
 import { computed, ref, watch } from 'vue'
 import { config } from '@/wagmi.config'
+import { useSignWeeklyClaimMutation } from '@/queries'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -72,7 +71,6 @@ const teamStore = useTeamStore()
 // const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
 const userStore = useUserDataStore()
-const queryClient = useQueryClient()
 
 const cashRemunerationAddress = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
@@ -93,26 +91,19 @@ const {
   error: cashRemunerationOwnerError
 } = useReadContract({
   functionName: 'owner',
-  address: cashRemunerationAddress,
+  address: cashRemunerationAddress.value,
   abi: CASH_REMUNERATION_EIP712_ABI
 })
 
 // Compute if user has approval access (is cash remuneration contract owner)
 const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
-const weeklyClaimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=sign`)
 
 const {
   // data: claimUpdateData,
   // isFetching: isClaimUpdateing,
   error: claimError,
-  execute: executeUpdateClaim
-} = useCustomFetch(weeklyClaimUrl, { immediate: false })
-  .put(() => ({
-    signature: signature.value,
-    data: { ownerAddress: userStore.address }
-  }))
-  .json<Array<WeeklyClaim>>()
-
+  mutateAsync: executeUpdateClaim
+} = useSignWeeklyClaimMutation()
 const approveClaim = async (weeklyClaim: WeeklyClaim) => {
   isloading.value = true
   emit('loading', true)
@@ -157,16 +148,17 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
 
     if (signature.value) {
       await enableClaim(signature.value)
-      await executeUpdateClaim()
+      await executeUpdateClaim({
+        claimId: weeklyClaim.id,
+        signature: signature.value,
+        data: { ownerAddress: userStore.address }
+      })
 
       if (claimError.value) {
         toastStore.addErrorToast('Failed to approve weeklyClaim')
         // keep loading until explicit success
       } else {
         toastStore.addSuccessToast('Claim approved')
-        await queryClient.invalidateQueries({
-          queryKey: ['teamWeeklyClaims']
-        })
 
         isloading.value = false
         emit('loading', false)
