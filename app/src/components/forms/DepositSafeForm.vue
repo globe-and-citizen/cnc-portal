@@ -140,7 +140,10 @@ const { data: allowance } = useErc20Allowance(
 )
 
 // Computed values for approval composable
-const bigIntAmount = computed(() => BigInt(Number(amount.value) * 1e6))
+const bigIntAmount = computed(() => {
+  // Handle NaN case
+  return isNaN(Number(amount.value)) ? 0n : BigInt(Number(amount.value) * 1e6)
+})
 
 const ERC20ApproveResult = useERC20Approve(
   selectedTokenAddress,
