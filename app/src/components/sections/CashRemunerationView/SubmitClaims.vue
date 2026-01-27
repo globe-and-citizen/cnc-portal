@@ -178,9 +178,10 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     await submitClaim(data)
 
     toastStore.addSuccessToast('Wage claim added successfully')
-    queryClient.invalidateQueries({
-      queryKey: ['weekly-claims', teamStore.currentTeamId]
+    await queryClient.invalidateQueries({
+      queryKey: ['teamWeeklyClaims']
     })
+
     modal.value = false
     formInitialData.value = createDefaultFormData()
     claimFormRef.value?.resetForm()

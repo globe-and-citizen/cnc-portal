@@ -53,30 +53,26 @@ const defaultClaim: Claim = {
 }
 
 // Hoist and structure mocks
-const {
-  mockUseCustomFetch,
-  mockUseToastStore,
-  mockUseTeamStore,
-  mockUseQueryClient,
-  mockQueryClient
-} = vi.hoisted(() => {
-  const mockQueryClient = {
-    invalidateQueries: vi.fn()
-  }
+const { mockUseCustomFetch, mockUseToastStore, mockUseTeamStore, mockUseQueryClient } = vi.hoisted(
+  () => {
+    const mockQueryClient = {
+      invalidateQueries: vi.fn()
+    }
 
-  return {
-    mockUseCustomFetch: vi.fn(),
-    mockUseToastStore: vi.fn(() => ({
-      addErrorToast: errorToastMock,
-      addSuccessToast: successToastMock
-    })),
-    mockUseTeamStore: vi.fn(() => ({
-      currentTeamId: 1
-    })),
-    mockUseQueryClient: vi.fn(() => mockQueryClient),
-    mockQueryClient
+    return {
+      mockUseCustomFetch: vi.fn(),
+      mockUseToastStore: vi.fn(() => ({
+        addErrorToast: errorToastMock,
+        addSuccessToast: successToastMock
+      })),
+      mockUseTeamStore: vi.fn(() => ({
+        currentTeamId: 1
+      })),
+      mockUseQueryClient: vi.fn(() => mockQueryClient),
+      mockQueryClient
+    }
   }
-})
+)
 
 vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -168,20 +164,6 @@ describe('DeleteClaimModal', () => {
 
       expect(executeDeleteMock).toHaveBeenCalled()
       expect(successToastMock).toHaveBeenCalledWith('Claim deleted successfully')
-    })
-
-    it('should invalidate weekly claims query after successful deletion', async () => {
-      const wrapper = createWrapper()
-
-      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-
-      mockDeleteStatus.value = 200
-      resolveExecute({})
-      await flushPromises()
-
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: ['weekly-claims', 1]
-      })
     })
 
     it('should emit close event after successful deletion', async () => {

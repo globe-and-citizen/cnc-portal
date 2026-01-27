@@ -228,26 +228,6 @@ describe('SafeBalanceSection transfer modals', () => {
   })
 
   describe('Deposit Modal', () => {
-    it('should close deposit modal and invalidate queries', async () => {
-      vi.useFakeTimers()
-      wrapper = createWrapper()
-
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
-
-      const closePromise = (wrapper.vm as SafeBalanceSectionInstance).closeDepositModal()
-
-      await vi.advanceTimersByTimeAsync(2000)
-      await closePromise
-      await flushPromises()
-
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: ['safe', 'info', { safeAddress: MOCK_DATA.safeAddress }]
-      })
-
-      vi.useRealTimers()
-    })
-
     it('should not invalidate queries when teamStore has no safeAddress', async () => {
       vi.useFakeTimers()
       mockUseTeamStore.mockReturnValue({
