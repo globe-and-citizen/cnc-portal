@@ -162,7 +162,7 @@ describe('Router Configuration', () => {
           path: '/teams/:id/cash-remunerations/member/:memberAddress'
         },
         { name: 'expense-account', path: '/teams/:id/accounts/expense-account' },
-        { name: 'trading', path: '/teams/:id/trading' },
+        { name: 'trading', path: '/teams/:id/trading/:address' },
         { name: 'vesting', path: '/teams/:id/vesting' },
         { name: 'bank-account', path: '/teams/:id/accounts/bank-account' },
         { name: 'contract-management', path: '/teams/:id/contract-management' },
