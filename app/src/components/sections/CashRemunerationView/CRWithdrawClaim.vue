@@ -45,7 +45,6 @@ import { config } from '@/wagmi.config'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { USDC_ADDRESS } from '@/constant'
 import { simulateContract } from '@wagmi/core'
-import { useQueryClient } from '@tanstack/vue-query'
 import { waitForTransactionReceipt } from '@wagmi/core'
 import type { WeeklyClaim } from '@/types'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
@@ -62,7 +61,6 @@ const emit = defineEmits(['claim-withdrawn', 'loading'])
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
-const queryClient = useQueryClient()
 
 const cashRemunerationEip712Address = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
