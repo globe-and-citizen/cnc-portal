@@ -27,7 +27,6 @@ vi.mock('viem', async (importOriginal) => {
   }
 })
 
-
 vi.mock('@/composables', () => ({
   useCustomFetch: vi.fn(() => ({
     put: () => ({
