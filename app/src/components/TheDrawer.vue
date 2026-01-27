@@ -277,6 +277,7 @@ import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useTeamsQuery } from '@/queries/team.queries'
 import type { User } from '@/types'
+import { useTeamSafes } from '@/composables/safe'
 
 const appStore = useAppStore()
 const route = useRoute()
@@ -293,6 +294,7 @@ const props = defineProps<{
 const target = ref(null)
 const isDropdownOpen = ref(false)
 const teamStore = useTeamStore()
+const { initialSafe } = useTeamSafes()
 
 // Dropdown submenu state
 const openSubmenus = ref<boolean[]>([])
@@ -486,7 +488,7 @@ const menuItems = computed(() => [
     icon: 'heroicons:arrow-trending-up',
     route: {
       name: 'trading',
-      params: { id: teamStore.currentTeamId || '1' }
+      params: { id: teamStore.currentTeamId || '1', address: initialSafe.value ?? '0x' }
     },
     active: route.name === 'trading',
     show: (teamStore.currentTeam?.teamContracts ?? []).length > 0
