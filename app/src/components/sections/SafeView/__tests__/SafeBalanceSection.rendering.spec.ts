@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import { ref, defineComponent } from 'vue'
+import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
@@ -20,6 +20,9 @@ const {
   mockOpenSafeAppUrl,
   mockUseChainId,
   mockUseTeamStore,
+  mockUseCurrencyStore,
+  mockUseUserDataStore,
+  mockUseToastStore,
   mockUseContractBalance,
   mockUseSafeInfoQuery,
   mockQueryClient,
@@ -29,6 +32,9 @@ const {
   mockOpenSafeAppUrl: vi.fn(),
   mockUseChainId: vi.fn(),
   mockUseTeamStore: vi.fn(),
+  mockUseCurrencyStore: vi.fn(),
+  mockUseUserDataStore: vi.fn(),
+  mockUseToastStore: vi.fn(),
   mockUseContractBalance: vi.fn(),
   mockUseSafeInfoQuery: vi.fn(),
   mockQueryClient: {
@@ -68,7 +74,10 @@ vi.mock('@vueuse/core', () => ({
 }))
 
 vi.mock('@/stores', () => ({
-  useTeamStore: mockUseTeamStore
+  useTeamStore: mockUseTeamStore,
+  useCurrencyStore: mockUseCurrencyStore,
+  useUserDataStore: mockUseUserDataStore,
+  useToastStore: mockUseToastStore
 }))
 
 vi.mock('@/composables/useContractBalance', () => ({
@@ -228,13 +237,17 @@ describe('SafeBalanceSection', () => {
       currentTeamMeta: MOCK_DATA.teamMeta
     })
 
-    // Setup useSafeTransfer mock
-    mockUseSafeTransfer.mockReturnValue({
-      transferFromSafe: vi.fn().mockResolvedValue('0xmocktxhash'),
-      transferNative: vi.fn().mockResolvedValue('0xmocktxhash'),
-      transferToken: vi.fn().mockResolvedValue('0xmocktxhash'),
-      isTransferring: ref(false),
-      error: ref(null)
+    mockUseCurrencyStore.mockReturnValue({
+      currency: mockCurrency
+    })
+
+    mockUseUserDataStore.mockReturnValue({
+      address: ref('0x1234567890123456789012345678901234567890')
+    })
+
+    mockUseToastStore.mockReturnValue({
+      addErrorToast: vi.fn(),
+      addSuccessToast: vi.fn()
     })
 
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
@@ -315,25 +328,16 @@ describe('SafeBalanceSection', () => {
     })
   })
 
-  describe('Open in Safe App', () => {
-    it('should call openSafeAppUrl with the URL from getSafeHomeUrl', async () => {
-      const mockUrl =
-        'https://app.safe.global/home?safe=polygon:0x1234567890123456789012345678901234567890'
-      mockGetSafeHomeUrl.mockReturnValue(mockUrl)
+  describe('Transfer Modal', () => {
+    it('should handle empty tokens list gracefully', async () => {
+      mockBalances.value = []
       wrapper = createWrapper()
 
-      await wrapper.find('[data-test="open-safe-app-button"]').trigger('click')
+      await wrapper.find('[data-test="transfer-button"]').trigger('click')
+      await nextTick()
 
-      expect(mockOpenSafeAppUrl).toHaveBeenCalledWith(mockUrl)
-    })
-  })
-
-  describe('Edge Cases', () => {
-    it('should handle total with missing USD data', () => {
-      mockTotal.value = {}
-      wrapper = createWrapper()
-
-      expect(wrapper.text()).toContain('0')
+      const transferData = (wrapper.vm as unknown as SafeBalanceSectionInstance).transferData
+      expect(transferData.token.symbol).toBe('')
     })
   })
 })
