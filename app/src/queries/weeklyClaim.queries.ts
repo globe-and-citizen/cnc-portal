@@ -35,15 +35,15 @@ export const useTeamWeeklyClaimsQuery = (params: UseTeamWeeklyClaimsQueryParams)
 
       if (!teamId) throw new Error('Team ID is required')
 
-      let url = `/weeklyClaim/?teamId=${teamId}`
+      const queryParams: Record<string, string> = { teamId: String(teamId) }
       if (userAddress) {
-        url += `&memberAddress=${userAddress}`
+        queryParams.memberAddress = userAddress
       }
       if (statusValue) {
-        url += `&status=${statusValue}`
+        queryParams.status = statusValue
       }
 
-      const { data } = await apiClient.get<WeeklyClaim[]>(url)
+      const { data } = await apiClient.get<WeeklyClaim[]>('/weeklyClaim/', { params: queryParams })
       return data
     },
     enabled: () => !!toValue(params.teamId),
@@ -221,7 +221,9 @@ export const useSyncWeeklyClaimsMutation = () => {
   return useMutation<SyncWeeklyClaimsResponse, AxiosError, SyncWeeklyClaimsInput>({
     mutationFn: async (input) => {
       const { data } = await apiClient.post<SyncWeeklyClaimsResponse>(
-        `/weeklyClaim/sync?teamId=${input.teamId}`
+        '/weeklyClaim/sync',
+        null,
+        { params: { teamId: input.teamId } }
       )
       return data
     },

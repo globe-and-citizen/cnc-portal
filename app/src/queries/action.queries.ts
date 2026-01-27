@@ -5,25 +5,32 @@ import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 
 /**
+ * Parameters for useBodActionsQuery
+ */
+export interface UseBodActionsQueryParams {
+  teamId: MaybeRefOrGetter<string | null>
+  isExecuted?: boolean
+}
+
+/**
  * Fetch BOD actions for a team
  */
-export const useBodActionsQuery = (
-  teamId: MaybeRefOrGetter<string | null>,
-  isExecuted?: boolean
-) => {
+export const useBodActionsQuery = (params: UseBodActionsQueryParams) => {
   return useQuery({
-    queryKey: ['getBodActions', { teamId, isExecuted }],
+    queryKey: ['getBodActions', { teamId: params.teamId, isExecuted: params.isExecuted }],
     queryFn: async () => {
-      const id = toValue(teamId)
+      const id = toValue(params.teamId)
       if (!id) throw new Error('Team ID is required')
-      const params = new URLSearchParams({ teamId: id })
-      if (isExecuted !== undefined) {
-        params.append('isExecuted', String(isExecuted))
+      
+      const queryParams: Record<string, string> = { teamId: id }
+      if (params.isExecuted !== undefined) {
+        queryParams.isExecuted = String(params.isExecuted)
       }
-      const { data } = await apiClient.get<ActionResponse>(`/actions?${params.toString()}`)
+      
+      const { data } = await apiClient.get<ActionResponse>('/actions', { params: queryParams })
       return data
     },
-    enabled: () => !!toValue(teamId)
+    enabled: () => !!toValue(params.teamId)
   })
 }
 

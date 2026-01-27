@@ -13,7 +13,9 @@ export const useExpensesQuery = (teamId: MaybeRefOrGetter<string | null>) => {
     queryFn: async () => {
       const id = toValue(teamId)
       if (!id) throw new Error('Team ID is required')
-      const { data } = await apiClient.get<ExpenseResponse[]>(`/expense?teamId=${id}`)
+      const { data } = await apiClient.get<ExpenseResponse[]>('/expense', { 
+        params: { teamId: id } 
+      })
       return data
     },
     enabled: () => !!toValue(teamId)
