@@ -70,6 +70,7 @@ import { useRelayClient, useUserPositions } from '@/composables/trading'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { deriveSafeFromEoa } from '@/utils/trading/safeDeploymentUtils'
 import { useRoute } from 'vue-router'
+import { useTeamSafes } from '@/composables/safe'
 
 interface SafeWallet {
   address: string
@@ -77,14 +78,15 @@ interface SafeWallet {
   balance: string
 }
 
-const props = defineProps<{
-  safes: SafeWallet[]
-}>()
+// const props = defineProps<{
+//   safes: SafeWallet[]
+// }>()
 
 const traderSafesStore = useTraderSafesStore()
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const route = useRoute()
+const { selectedSafe, safes } = useTeamSafes()
 const { getOrInitializeRelayClient, isLoading, isReady } = useRelayClient()
 // const derivedSafeAddressFromEoa = computed(() => traderSafesStore.selectedSafe?.address)
 const derivedSafeAddressFromEoa = computed(() => {
@@ -95,16 +97,6 @@ const derivedSafeAddressFromEoa = computed(() => {
 const { refetch } = useUserPositions(derivedSafeAddressFromEoa)
 const isOpen = ref(false)
 
-const getSelectedSafeAddress = () => {
-  const isTradingRoute = route.path.includes('/trading/')
-  return isTradingRoute
-    ? (props.safes.find(
-        (s) =>
-          s.address.toLocaleLowerCase() ===
-          deriveSafeFromEoa(userDataStore.address)?.toLocaleLowerCase()
-      )?.address ?? props.safes[0])
-    : teamStore.currentTeamMeta.data?.safeAddress
-}
 // const safes = ref<SafeWallet[] | null>(null)
 
 // const safes = ref<SafeWallet[]>([
@@ -125,7 +117,7 @@ const getSelectedSafeAddress = () => {
 //   }
 // ])
 
-const selectedSafe = ref<SafeWallet | undefined>(props.safes[0])
+// const selectedSafe = ref<SafeWallet | undefined>(props.safes[0])
 
 const truncateAddress = (address: string): string => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
