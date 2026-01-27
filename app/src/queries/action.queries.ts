@@ -5,59 +5,86 @@ import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 
 /**
- * Fetch BOD actions for a team
+ * Hook parameters for useBodActionsQuery
  */
-export const useBodActionsQuery = (
-  teamId: MaybeRefOrGetter<string | null>,
+export interface UseBodActionsQueryParams {
+  teamId: MaybeRefOrGetter<string | null>
   isExecuted?: boolean
-) => {
+}
+
+/**
+ * Fetch BOD actions for a team
+ *
+ * @endpoint GET /actions
+ * @queryParams { teamId: string, isExecuted?: boolean }
+ */
+export const useBodActionsQuery = (hookParams: UseBodActionsQueryParams) => {
   return useQuery({
-    queryKey: ['getBodActions', { teamId, isExecuted }],
+    queryKey: ['getBodActions', { teamId: hookParams.teamId, isExecuted: hookParams.isExecuted }],
     queryFn: async () => {
-      const id = toValue(teamId)
-      if (!id) throw new Error('Team ID is required')
-      const params = new URLSearchParams({ teamId: id })
-      if (isExecuted !== undefined) {
-        params.append('isExecuted', String(isExecuted))
+      const teamId = toValue(hookParams.teamId)
+
+      // Query params: passed as URL query string (?teamId=xxx&isExecuted=xxx)
+      const queryParams: Record<string, string | boolean> = { teamId: teamId! }
+      if (hookParams.isExecuted !== undefined) {
+        queryParams.isExecuted = hookParams.isExecuted
       }
-      const { data } = await apiClient.get<ActionResponse>(`/actions?${params.toString()}`)
+
+      const { data } = await apiClient.get<ActionResponse>('/actions', { params: queryParams })
       return data
     },
-    enabled: () => !!toValue(teamId)
+    enabled: () => !!toValue(hookParams.teamId)
   })
 }
 
 /**
+ * Mutation input for useCreateActionMutation
+ */
+export type CreateActionInput = Partial<Action>
+
+/**
  * Create a new action
+ *
+ * @endpoint POST /actions/
+ * @body Partial<Action> - The action data to create
  */
 export const useCreateActionMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (actionData: Partial<Action>) => {
-      const { data } = await apiClient.post<Action>('actions/', actionData)
+    mutationFn: async (body: CreateActionInput) => {
+      const { data } = await apiClient.post<Action>('actions/', body)
       return data
     },
     onSuccess: () => {
-      // Invalidate actions queries
       queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
     }
   })
 }
 
 /**
+ * Mutation input for useUpdateActionMutation
+ */
+export interface UpdateActionInput {
+  /** URL path parameter: action ID */
+  id: number
+}
+
+/**
  * Update an action
+ *
+ * @endpoint PATCH /actions/{id}
+ * @params { id: number } - URL path parameter
  */
 export const useUpdateActionMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async ({ id }: UpdateActionInput) => {
       const { data } = await apiClient.patch(`actions/${id}`)
       return data
     },
     onSuccess: () => {
-      // Invalidate actions queries
       queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
     }
   })

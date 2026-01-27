@@ -7,14 +7,20 @@ import type { AxiosError } from 'axios'
 
 /**
  * Fetch team wage data by team ID
+ *
+ * @endpoint GET /wage/
+ * @params none
+ * @queryParams { teamId: string | number }
+ * @body none
  */
 export const useTeamWagesQuery = (teamId: MaybeRefOrGetter<string | number | null>) => {
   return useQuery<Wage[], AxiosError>({
     queryKey: ['teamWages', { teamId }],
     queryFn: async () => {
-      const id = toValue(teamId)
-      if (!id) throw new Error('Team ID is required')
-      const { data } = await apiClient.get<Wage[]>(`/wage/?teamId=${id}`)
+      // Query params: passed as URL query string (?teamId=xxx)
+      const queryParams = { teamId: toValue(teamId) }
+
+      const { data } = await apiClient.get<Wage[]>('/wage/', { params: queryParams })
       return data
     },
     enabled: () => !!toValue(teamId),
@@ -28,7 +34,8 @@ export const useTeamWagesQuery = (teamId: MaybeRefOrGetter<string | number | nul
 }
 
 /**
- * Set member wage data for a team
+ * Mutation input for useSetMemberWageMutation
+ * All fields are sent in the request body
  */
 export interface SetWageInput {
   teamId: string | number
@@ -37,19 +44,21 @@ export interface SetWageInput {
   maximumHoursPerWeek: number
 }
 
+/**
+ * Set member wage data for a team
+ *
+ * @endpoint PUT /wage/setWage
+ * @params none
+ * @queryParams none
+ * @body { teamId, userAddress, ratePerHour, maximumHoursPerWeek }
+ */
 export const useSetMemberWageMutation = () => {
   const queryClient = useQueryClient()
   return useMutation<void, AxiosError, SetWageInput>({
-    mutationFn: async (wageInput) => {
-      await apiClient.put('/wage/setWage', {
-        teamId: wageInput.teamId,
-        userAddress: wageInput.userAddress,
-        ratePerHour: wageInput.ratePerHour,
-        maximumHoursPerWeek: wageInput.maximumHoursPerWeek
-      })
+    mutationFn: async (body: SetWageInput) => {
+      await apiClient.put('/wage/setWage', body)
     },
     onSuccess: (_, variables) => {
-      // Invalidate wage queries to refetch
       queryClient.invalidateQueries({
         queryKey: ['teamWages', { teamId: String(variables.teamId) }]
       })

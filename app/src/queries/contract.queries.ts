@@ -2,23 +2,32 @@ import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
 
 /**
+ * Mutation input for useCreateContractMutation
+ */
+export interface CreateContractInput {
+  teamId: string
+  contractAddress: string
+  contractType: string
+  deployer: string
+}
+
+/**
  * Create a new contract
+ *
+ * @endpoint POST /contract
+ * @params none
+ * @queryParams none
+ * @body { teamId, contractAddress, contractType, deployer }
  */
 export const useCreateContractMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (contractData: {
-      teamId: string
-      contractAddress: string
-      contractType: string
-      deployer: string
-    }) => {
-      const { data } = await apiClient.post('contract', contractData)
+    mutationFn: async (body: CreateContractInput) => {
+      const { data } = await apiClient.post('contract', body)
       return data
     },
     onSuccess: () => {
-      // Invalidate teams to refresh contract data
       queryClient.invalidateQueries({ queryKey: ['teams'] })
       queryClient.invalidateQueries({ queryKey: ['team'] })
     }

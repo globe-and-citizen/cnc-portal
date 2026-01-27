@@ -107,10 +107,7 @@ vi.mock('@/queries/health.queries', () => ({
 vi.mock('@/queries/weeklyClaim.queries', () => ({
   useTeamWeeklyClaimsQuery: vi.fn(queryMocks.useTeamWeeklyClaimsQuery),
   useWeeklyClaimByIdQuery: vi.fn(queryMocks.useWeeklyClaimByIdQuery),
-  useSignWeeklyClaimMutation: vi.fn(queryMocks.useSignWeeklyClaimMutation),
-  useEnableWeeklyClaimMutation: vi.fn(queryMocks.useEnableWeeklyClaimMutation),
-  useDisableWeeklyClaimMutation: vi.fn(queryMocks.useDisableWeeklyClaimMutation),
-  useWithdrawWeeklyClaimMutation: vi.fn(queryMocks.useWithdrawWeeklyClaimMutation),
+  useUpdateWeeklyClaimMutation: vi.fn(queryMocks.useUpdateWeeklyClaimMutation),
   useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation)
 }))
 
