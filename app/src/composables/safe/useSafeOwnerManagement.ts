@@ -2,13 +2,10 @@ import { ref } from 'vue'
 import { useConnection, useChainId } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
 import { useToastStore } from '@/stores'
-import {
-  useUpdateSafeOwnersMutation,
-  useProposeTransactionMutation // Use Safe query
-} from '@/queries/safe.queries'
-import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
+import { useUpdateSafeOwnersMutation } from '@/queries/safe.queries'
 import { useSafeSDK } from './useSafeSdk'
-import type { SafeTransaction } from '@safe-global/types-kit'
+import { useSafeProposal } from './useSafeProposal'
+import { currentChainId } from '@/constant'
 
 /**
  * Manage Safe owners (add/remove owners, update threshold)
@@ -18,7 +15,7 @@ export function useSafeOwnerManagement() {
   const chainId = useChainId()
   const { addSuccessToast, addErrorToast } = useToastStore()
   const updateMutation = useUpdateSafeOwnersMutation()
-  const proposeMutation = useProposeTransactionMutation() // ✅ Use Safe query
+  const { proposeTransaction } = useSafeProposal()
   const { loadSafe } = useSafeSDK()
 
   const isUpdating = ref(false)
@@ -70,16 +67,17 @@ export function useSafeOwnerManagement() {
     error.value = null
 
     try {
-      const currentChainId = chainId.value
-      const txService = TX_SERVICE_BY_CHAIN[currentChainId]
-      if (!txService) throw new Error(`Unsupported chainId: ${currentChainId}`)
-
       // Initialize Safe SDK
       const safeSdk = await loadSafe(safeAddress)
       const currentThreshold = await safeSdk.getThreshold()
 
-      // Create transactions array in the format Safe SDK expects
-      const transactions: SafeTransaction[] = []
+      // Build the batch transaction data
+      const transactionData: Array<{
+        to: string
+        value: string
+        data: string
+        operation: number
+      }> = []
 
       // Add owners
       for (const owner of ownersToAdd) {
@@ -87,7 +85,12 @@ export function useSafeOwnerManagement() {
           ownerAddress: owner as Address,
           threshold: newThreshold
         })
-        transactions.push(safeTx)
+        transactionData.push({
+          to: safeTx.data.to,
+          value: safeTx.data.value,
+          data: safeTx.data.data,
+          operation: safeTx.data.operation || 0
+        })
       }
 
       // Remove owners
@@ -96,70 +99,110 @@ export function useSafeOwnerManagement() {
           ownerAddress: owner as Address,
           threshold: newThreshold || currentThreshold
         })
-        transactions.push(safeTx)
+        transactionData.push({
+          to: safeTx.data.to,
+          value: safeTx.data.value,
+          data: safeTx.data.data,
+          operation: safeTx.data.operation || 0
+        })
       }
 
       // Update threshold when no owner operations provided
       if (ownersToAdd.length === 0 && ownersToRemove.length === 0 && newThreshold !== undefined) {
         const safeTx = await safeSdk.createChangeThresholdTx(newThreshold)
-        transactions.push(safeTx)
+        transactionData.push({
+          to: safeTx.data.to,
+          value: safeTx.data.value,
+          data: safeTx.data.data,
+          operation: safeTx.data.operation || 0
+        })
       }
 
-      if (transactions.length === 0) {
+      if (transactionData.length === 0) {
         throw new Error('No owner management operations specified')
       }
 
-      // Consolidate transactions (or use single)
-      const preparedTx: SafeTransaction =
-        transactions.length === 1
-          ? transactions[0]!
-          : await safeSdk.createTransaction({ transactions: transactions.map((tx) => tx.data) })
-
-      const safeTxHash = await safeSdk.getTransactionHash(preparedTx)
-      const signature = await safeSdk.signHash(safeTxHash)
-
       if (shouldPropose) {
-        // Use centralized Safe query mutation
-        await proposeMutation.mutateAsync({
-          chainId: currentChainId,
-          safeAddress,
-          safeTxHash,
-          safeTx: preparedTx,
-          signature: signature.data
-        })
+        // Use single transaction if only one operation, otherwise batch
+        let safeTxHash: string | null
+
+        if (transactionData.length === 1) {
+          // Single transaction - use proposeTransaction directly
+          safeTxHash = await proposeTransaction(safeAddress, transactionData[0]!)
+        } else {
+          // Multiple transactions - create batch transaction
+          const batchTx = await safeSdk.createTransaction({
+            transactions: transactionData
+          })
+
+          // Propose the batch transaction
+          safeTxHash = await proposeTransaction(safeAddress, {
+            to: batchTx.data.to,
+            value: batchTx.data.value,
+            data: batchTx.data.data,
+            operation: batchTx.data.operation || 0
+          })
+        }
+
+        if (!safeTxHash) {
+          throw new Error('Failed to propose transaction')
+        }
 
         addSuccessToast('Owner management transaction proposed successfully')
-
-        // Invalidate queries via mutation
+        // Invalidate queries via mutation (no API call, just cache invalidation)
         await updateMutation.mutateAsync({
-          chainId: currentChainId,
+          chainId: chainId.value,
           safeAddress,
-          safeTxHash,
-          signature: signature.data
+          ownersToAdd, // Include the actual operation parameters
+          ownersToRemove,
+          newThreshold,
+          shouldPropose: false,
+          safeTxHash: safeTxHash // For executions, this is the actual transaction hash
         })
-
         return safeTxHash
       } else {
         // Execute directly (if threshold allows)
-        const txResponse = await safeSdk.executeTransaction(preparedTx)
-        const txHash =
-          (txResponse.transactionResponse as { hash?: string } | undefined)?.hash || txResponse.hash
+        let txHash: string
+
+        if (transactionData.length === 1) {
+          // Single transaction execution
+          const safeTx = await safeSdk.createTransaction({
+            transactions: [transactionData[0]!]
+          })
+          const txResponse = await safeSdk.executeTransaction(safeTx)
+          txHash =
+            (txResponse.transactionResponse as { hash?: string } | undefined)?.hash ||
+            txResponse.hash
+        } else {
+          // Batch transaction execution
+          const batchTx = await safeSdk.createTransaction({
+            transactions: transactionData
+          })
+          const txResponse = await safeSdk.executeTransaction(batchTx)
+          txHash =
+            (txResponse.transactionResponse as { hash?: string } | undefined)?.hash ||
+            txResponse.hash
+        }
 
         addSuccessToast('Owner management transaction executed successfully')
-
+        // Invalidate queries after execution
         await updateMutation.mutateAsync({
           chainId: currentChainId,
           safeAddress,
-          safeTxHash,
-          signature: signature.data
+          ownersToAdd, // Include the actual operation parameters
+          ownersToRemove,
+          newThreshold,
+          shouldPropose: false,
+          safeTxHash: txHash // For executions, this is the actual transaction hash
         })
-
         return txHash
       }
     } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to update Safe owners')
       console.error('Owner management error:', err)
-      addErrorToast(error.value.message)
+      addErrorToast(
+        error.value.message.includes('User rejected') ? 'Transaction rejected' : error.value.message
+      )
       return null
     } finally {
       isUpdating.value = false

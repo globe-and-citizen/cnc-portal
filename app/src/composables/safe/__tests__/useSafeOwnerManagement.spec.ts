@@ -10,6 +10,7 @@ interface MockConnection {
 
 interface MockSafeSDK {
   getThreshold: () => Promise<number>
+  getNonce: () => Promise<number>
   createAddOwnerTx: (params: {
     ownerAddress: string
     threshold?: number
@@ -64,6 +65,7 @@ const {
   mockLoadSafe: vi.fn<[string], Promise<MockSafeSDK>>(),
   mockSafeSdk: {
     getThreshold: vi.fn<[], Promise<number>>(),
+    getNonce: vi.fn<[], Promise<number>>(),
     createAddOwnerTx: vi.fn(),
     createRemoveOwnerTx: vi.fn(),
     createChangeThresholdTx: vi.fn(),
@@ -178,6 +180,7 @@ describe('useSafeOwnerManagement', () => {
     mockSafeSdk.createTransaction.mockResolvedValue(MOCK_DATA.safeTransaction)
     mockSafeSdk.getTransactionHash.mockResolvedValue(MOCK_DATA.txHash)
     mockSafeSdk.signHash.mockResolvedValue({ data: MOCK_DATA.signature })
+    mockSafeSdk.getNonce.mockResolvedValue(0)
     mockSafeSdk.executeTransaction.mockResolvedValue({ hash: MOCK_DATA.executionHash })
 
     mockUpdateMutation.mutateAsync.mockResolvedValue(undefined)
@@ -288,103 +291,4 @@ describe('useSafeOwnerManagement', () => {
       expect(mockSafeSdk.createRemoveOwnerTx).toHaveBeenCalledTimes(2)
     })
   })
-
-  // describe('Error Handling', () => {
-  //   it('should handle Safe SDK loading errors', async () => {
-  //     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-  //     const sdkError = new Error('Safe SDK initialization failed')
-  //     mockLoadSafe.mockRejectedValue(sdkError)
-
-  //     const { updateOwners, error } = useSafeOwnerManagement()
-
-  //     const result = await updateOwners(MOCK_DATA.validSafeAddress, {
-  //       ownersToAdd: [MOCK_DATA.newOwner],
-  //       shouldPropose: true
-  //     })
-
-  //     expect(result).toBeNull()
-  //     expect(error.value?.message).toBe('Safe SDK initialization failed')
-  //     expect(mockAddErrorToast).toHaveBeenCalledWith('Safe SDK initialization failed')
-  //     expect(consoleErrorSpy).toHaveBeenCalledWith('Owner management error:', sdkError)
-
-  //     consoleErrorSpy.mockRestore()
-  //   })
-
-  //   it('should handle transaction creation errors', async () => {
-  //     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-  //     const txError = new Error('Transaction creation failed')
-
-  //     // Mock getThreshold to succeed but createAddOwnerTx to fail
-  //     mockSafeSdk.createAddOwnerTx.mockRejectedValue(txError)
-
-  //     const { updateOwners, error } = useSafeOwnerManagement()
-
-  //     const result = await updateOwners(MOCK_DATA.validSafeAddress, {
-  //       ownersToAdd: [MOCK_DATA.newOwner],
-  //       shouldPropose: true
-  //     })
-
-  //     expect(result).toBeNull()
-  //     expect(error.value?.message).toBe('Transaction creation failed')
-  //     expect(mockAddErrorToast).toHaveBeenCalledWith('Transaction creation failed')
-
-  //     consoleErrorSpy.mockRestore()
-  //   })
-
-  //   it('should handle proposal submission errors', async () => {
-  //     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-  //     const proposalError = new Error('Network request failed')
-  //     mockProposeMutation.mutateAsync.mockRejectedValue(proposalError)
-
-  //     const { updateOwners, error } = useSafeOwnerManagement()
-
-  //     const result = await updateOwners(MOCK_DATA.validSafeAddress, {
-  //       ownersToAdd: [MOCK_DATA.newOwner],
-  //       shouldPropose: true
-  //     })
-
-  //     expect(result).toBeNull()
-  //     expect(error.value?.message).toBe('Network request failed')
-  //     expect(mockAddErrorToast).toHaveBeenCalledWith('Network request failed')
-
-  //     consoleErrorSpy.mockRestore()
-  //   })
-
-  //   it('should handle execution errors', async () => {
-  //     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-  //     const executionError = new Error('Execution failed')
-  //     mockSafeSdk.executeTransaction.mockRejectedValue(executionError)
-
-  //     const { updateOwners, error } = useSafeOwnerManagement()
-
-  //     const result = await updateOwners(MOCK_DATA.validSafeAddress, {
-  //       ownersToAdd: [MOCK_DATA.newOwner],
-  //       shouldPropose: false
-  //     })
-
-  //     expect(result).toBeNull()
-  //     expect(error.value?.message).toBe('Execution failed')
-  //     expect(mockAddErrorToast).toHaveBeenCalledWith('Execution failed')
-
-  //     consoleErrorSpy.mockRestore()
-  //   })
-
-  //   it('should handle unknown error types', async () => {
-  //     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-  //     mockLoadSafe.mockRejectedValue('Unknown error')
-
-  //     const { updateOwners, error } = useSafeOwnerManagement()
-
-  //     const result = await updateOwners(MOCK_DATA.validSafeAddress, {
-  //       ownersToAdd: [MOCK_DATA.newOwner],
-  //       shouldPropose: true
-  //     })
-
-  //     expect(result).toBeNull()
-  //     expect(error.value?.message).toBe('Failed to update Safe owners')
-  //     expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to update Safe owners')
-
-  //     consoleErrorSpy.mockRestore()
-  //   })
-  // })
 })
