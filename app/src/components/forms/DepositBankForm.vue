@@ -90,8 +90,6 @@ const chainId = useChainId()
 const emits = defineEmits(['closeModal'])
 // Add validation event
 const props = defineProps<{
-  loading?: boolean
-  loadingText?: string
   bankAddress: Address
   title?: string
 }>()
