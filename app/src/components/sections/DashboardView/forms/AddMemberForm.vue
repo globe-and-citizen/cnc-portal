@@ -53,7 +53,10 @@ const handleAddMembers = async () => {
   executeAddMembers(
     {
       teamId: props.teamId,
-      members: formData.value.map(({ address, name }) => ({ address, name })) as unknown as MemberInput[]
+      members: formData.value.map(({ address, name }) => ({
+        address,
+        name
+      })) as unknown as MemberInput[]
     },
     {
       onSuccess: () => {
