@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import PolymarketSafeDeployment from './PolymarketSafeDeployment.vue'
 import ApprovalAndConfig from './ApprovalAndConfig.vue'
 import StepIndicator from './StepIndicators.vue'
@@ -40,7 +40,7 @@ import StepLabels from './StepLabels.vue'
 import { useSafeDeployment, useRelayClient, useTokenApprovals } from '@/composables/trading'
 import { log, parseError } from '@/utils'
 import type { ApprovalCheckResult } from '@/utils/trading/approvalsUtil'
-import { useUpdateUserMutation, useUserQuery } from '@/queries'
+import { useUpdateUserMutation } from '@/queries'
 import { useUserDataStore, useTeamStore } from '@/stores'
 
 const props = defineProps<{ initialStep: number }>()
@@ -54,11 +54,10 @@ const isProcessing = ref(false)
 const { derivedSafeAddressFromEoa, isSafeDeployed, deploySafe } = useSafeDeployment()
 const { checkAllApprovals, completeSetup } = useTokenApprovals()
 const { getOrInitializeRelayClient, isLoading } = useRelayClient()
-const userAddress = computed(() => userDataStore.address)
 const {
-  isPending: userIsUpdating,
+  // isPending: userIsUpdating,
   error: updateUserError,
-  mutate: updateUserMutate,
+  // mutate: updateUserMutate,
   mutateAsync: updateUserMutateAsync
 } = useUpdateUserMutation()
 
@@ -118,7 +117,7 @@ const handleApproveAndConfigure = async () => {
       console.log('Approve and Configure Result: ', result)
       if (result) {
         console.log('')
-        updateUserMutate(
+        updateUserMutateAsync(
           {
             address: userDataStore.address,
             userData: {
