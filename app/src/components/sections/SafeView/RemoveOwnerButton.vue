@@ -49,7 +49,8 @@ const isDisabled = computed(() => {
     isRemoving.value ||
     isUpdating.value ||
     !props.isConnectedUserOwner ||
-    isCurrentUserAddress.value
+    isCurrentUserAddress.value ||
+    props.totalOwners <= props.threshold
   )
 })
 

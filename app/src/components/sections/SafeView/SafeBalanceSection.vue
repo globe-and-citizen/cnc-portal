@@ -75,10 +75,11 @@
       data-test="deposit-modal"
       @reset="() => (depositModal = { mount: false, show: false })"
     >
-      <DepositSafeForm
-        v-if="teamStore.currentTeam?.safeAddress"
+      <DepositBankForm
+        title="Deposit to Safe Contract"
+        v-if="teamStore.currentTeamMeta?.data?.safeAddress"
         @close-modal="() => (depositModal = { mount: false, show: false })"
-        :safe-address="teamStore.currentTeam?.safeAddress"
+        :bank-address="teamStore.currentTeamMeta?.data?.safeAddress"
       />
     </ModalComponent>
 
@@ -93,7 +94,8 @@
       <TransferForm
         v-model="transferData"
         :tokens="tokens"
-        :loading="false"
+        :loading="isTransferring"
+        @transfer="handleTransfer"
         @closeModal="resetTransferValues"
       >
         <template #header>
@@ -119,13 +121,12 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
-import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
-
+import { useSafeTransfer } from '@/composables/safe'
 const chainId = useChainId()
 const currency = useStorage('currency', {
   code: 'USD',
@@ -136,7 +137,7 @@ const currency = useStorage('currency', {
 const teamStore = useTeamStore()
 
 const { total, balances, isLoading } = useContractBalance(
-  computed(() => teamStore.currentTeam?.safeAddress || ('0x' as Address))
+  computed(() => teamStore.currentTeamMeta?.data?.safeAddress || ('0x' as Address))
 )
 
 const getTokens = (): TokenOption[] =>
@@ -163,6 +164,8 @@ const transferModal = ref({
   mount: false,
   show: false
 })
+
+const { transferFromSafe, isTransferring } = useSafeTransfer()
 
 // New Safe data composable with built-in query reactivity
 const { data: safeInfo } = useSafeInfoQuery(
@@ -203,6 +206,27 @@ const transferData: Ref<TransferModel> = ref(initialTransferDataValue())
 const resetTransferValues = () => {
   transferModal.value = { mount: false, show: false }
   transferData.value = initialTransferDataValue()
+}
+
+const handleTransfer = async (transferData: TransferModel) => {
+  const safeAddress = teamStore.currentTeam?.safeAddress
+  if (!safeAddress) return
+
+  const options = {
+    to: transferData.address.address,
+    amount: transferData.amount,
+    tokenAddress: transferData.token.tokenId === 'native' ? undefined : transferData.token.tokenId
+  }
+
+  const result = await transferFromSafe(safeAddress, options)
+
+  if (result) {
+    resetTransferValues()
+    // Optionally invalidate queries to refresh balances
+    // await QueryClient.invalidateQueries({
+    //   queryKey: ['safe', 'info', { safeAddress }]
+    // })
+  }
 }
 
 // Transfer logic intentionally removed (display-only)

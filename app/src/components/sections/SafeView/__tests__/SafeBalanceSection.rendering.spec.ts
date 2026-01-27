@@ -25,7 +25,8 @@ const {
   mockUseToastStore,
   mockUseContractBalance,
   mockUseSafeInfoQuery,
-  mockQueryClient
+  mockQueryClient,
+  mockUseSafeTransfer
 } = vi.hoisted(() => ({
   mockGetSafeHomeUrl: vi.fn(),
   mockOpenSafeAppUrl: vi.fn(),
@@ -38,14 +39,27 @@ const {
   mockUseSafeInfoQuery: vi.fn(),
   mockQueryClient: {
     invalidateQueries: vi.fn()
-  }
+  },
+  // Add the missing useSafeTransfer mock
+  mockUseSafeTransfer: vi.fn(() => ({
+    transferFromSafe: vi.fn(),
+    transferNative: vi.fn(),
+    transferToken: vi.fn(),
+    isTransferring: ref(false),
+    error: ref(null)
+  }))
 }))
 
 // Mock external dependencies
-vi.mock('@/composables/safe', () => ({
-  getSafeHomeUrl: mockGetSafeHomeUrl,
-  openSafeAppUrl: mockOpenSafeAppUrl
-}))
+vi.mock('@/composables/safe', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    getSafeHomeUrl: mockGetSafeHomeUrl,
+    openSafeAppUrl: mockOpenSafeAppUrl,
+    useSafeTransfer: mockUseSafeTransfer
+  }
+})
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -325,42 +339,5 @@ describe('SafeBalanceSection', () => {
       const transferData = (wrapper.vm as unknown as SafeBalanceSectionInstance).transferData
       expect(transferData.token.symbol).toBe('')
     })
-
-    // it('should close transfer modal and reset values', async () => {
-    //   wrapper = createWrapper()
-
-    //   await wrapper.find('[data-test="transfer-button"]').trigger('click')
-    //   await nextTick()
-
-    //   expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(true)
-
-    //   // Call resetTransferValues directly
-    //   await (wrapper.vm as SafeBalanceSectionInstance).resetTransferValues()
-    //   await nextTick()
-
-    //   expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
-    // })
   })
-
-  // describe('Open in Safe App', () => {
-  //   it('should call openSafeAppUrl with the URL from getSafeHomeUrl', async () => {
-  //     const mockUrl =
-  //       'https://app.safe.global/home?safe=polygon:0x1234567890123456789012345678901234567890'
-  //     mockGetSafeHomeUrl.mockReturnValue(mockUrl)
-  //     wrapper = createWrapper()
-
-  //     await wrapper.find('[data-test="open-safe-app-button"]').trigger('click')
-
-  //     expect(mockOpenSafeAppUrl).toHaveBeenCalledWith(mockUrl)
-  //   })
-  // })
-
-  // describe('Edge Cases', () => {
-  //   it('should handle total with missing USD data', () => {
-  //     mockTotal.value = {}
-  //     wrapper = createWrapper()
-
-  //     expect(wrapper.text()).toContain('0')
-  //   })
-  // })
 })

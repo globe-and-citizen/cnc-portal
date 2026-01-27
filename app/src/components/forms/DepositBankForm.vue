@@ -1,5 +1,5 @@
 <template>
-  <span class="font-bold text-2xl">Deposit to Team Bank Contract</span>
+  <span class="font-bold text-2xl">{{ title || 'Deposit to Team Bank Contract' }}</span>
 
   <div v-if="selectedToken?.token.id !== 'native'" class="steps w-full my-4">
     <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
@@ -93,6 +93,7 @@ const props = defineProps<{
   loading?: boolean
   loadingText?: string
   bankAddress: Address
+  title?: string
 }>()
 
 function reset() {
