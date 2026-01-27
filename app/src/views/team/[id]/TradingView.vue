@@ -20,13 +20,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import AccountSetupWizard from '@/components/sections/TradingView/AccountSetupWizard.vue'
 import { useSafeDeployment, useTokenApprovals, useRelayClient } from '@/composables/trading'
 import { log } from '@/utils'
 import TradingInterface from '@/components/sections/TradingView/TradingInterface.vue'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import { useUpdateUserMutation } from '@/queries'
 
 // Composables
+const teamStore = useTeamStore()
+const userDataStore = useUserDataStore()
+const { mutateAsync: updateUser } = useUpdateUserMutation()
+const isDbSetupComplete = computed(() => {
+  const member = teamStore.currentTeamMeta.data?.members.find(
+    (m) => m.address.toLowerCase() === userDataStore.address?.toLowerCase()
+  )
+  return member?.memberTeamsData?.[0]?.isTrader || false
+})
 const { derivedSafeAddressFromEoa, isSafeDeployed } = useSafeDeployment()
 const { checkAllApprovals } = useTokenApprovals()
 const { getOrInitializeRelayClient, isReady } = useRelayClient()
@@ -68,6 +79,21 @@ const checkAccountStatus = async () => {
       initialStep.value = 2
     } else {
       // Fully approved - show trading screen
+      console.log('isDbSetupComplete:', isDbSetupComplete.value)
+      console.log('members: ', teamStore.currentTeamMeta.data?.members)
+      if (!isDbSetupComplete.value) {
+        console.log('Completing DB setup for user...')
+        if (!derivedSafeAddressFromEoa.value || !teamStore.currentTeamId) {
+          throw new Error('Missing safe address or team ID for DB setup')
+        }
+        await updateUser({
+          address: userDataStore.address,
+          userData: {
+            traderSafeAddress: derivedSafeAddressFromEoa.value,
+            teamId: teamStore.currentTeamId
+          }
+        })
+      }
       showWizard.value = false
     }
   } catch (error) {
