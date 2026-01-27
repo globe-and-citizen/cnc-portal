@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { Mock } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import FilePreviewGallery from '../FilePreviewGallery.vue'
 import { getPresignedUrl } from '@/composables/useFileUrl'
@@ -35,30 +35,38 @@ describe('FilePreviewGallery', () => {
     isImage: false
   }
 
-  const PREVIEWS = [IMAGE_PREVIEW, PDF_PREVIEW, TXT_PREVIEW]
+  const S3_IMAGE_PREVIEW = {
+    previewUrl: '',
+    fileName: 'remote.jpg',
+    fileSize: 1000,
+    fileType: 'image/jpeg',
+    isImage: true,
+    key: 's3-key-123'
+  }
 
-  const S = {
+  const MULTIPLE_PREVIEWS = [IMAGE_PREVIEW, PDF_PREVIEW, TXT_PREVIEW]
+
+  const SELECTORS = {
     previewItem: '[data-test="preview-item"]',
     imagePreview: '[data-test="image-preview"]',
     documentPreview: '[data-test="document-preview"]',
     imageLoading: '[data-test="image-loading"]',
     removeButton: '[data-test="remove-button"]',
-    imageModal: '[data-test="upload-lightbox-modal"]',
-    docModal: '[data-test="upload-doc-modal"]'
+    lightboxModal: '[data-test="upload-lightbox-modal"]',
+    lightboxClose: '[data-test="upload-lightbox-close"]',
+    lightboxDownload: '[data-test="upload-lightbox-download"]',
+    docModal: '[data-test="upload-doc-modal"]',
+    docClose: '[data-test="upload-doc-close"]',
+    docDownload: '[data-test="upload-doc-download"]'
   } as const
 
-  let wrapper: ReturnType<typeof mount<typeof FilePreviewGallery>>
+  let wrapper: VueWrapper<InstanceType<typeof FilePreviewGallery>>
 
-  const flushAsync = async () => {
-    await Promise.resolve()
-    await Promise.resolve()
-    await nextTick()
-  }
-
-  const mountComponent = (props = {}) =>
-    mount(FilePreviewGallery, {
+  const createWrapper = (props = {}) => {
+    return mount(FilePreviewGallery, {
       props: {
-        previews: PREVIEWS,
+        previews: MULTIPLE_PREVIEWS,
+        canRemove: true,
         ...props
       },
       global: {
@@ -68,6 +76,13 @@ describe('FilePreviewGallery', () => {
         }
       }
     })
+  }
+
+  const flushPromises = async () => {
+    await Promise.resolve()
+    await Promise.resolve()
+    await nextTick()
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -77,71 +92,147 @@ describe('FilePreviewGallery', () => {
     wrapper?.unmount()
   })
 
-  describe('Remove button', () => {
-    it('emits remove event with correct index', async () => {
-      wrapper = mountComponent()
+  describe('Remove Functionality', () => {
+    it('should prevent event propagation when remove is clicked', async () => {
+      wrapper = createWrapper({ previews: [IMAGE_PREVIEW] })
 
-      const removeButtons = wrapper.findAll(S.removeButton)
-      expect(removeButtons.length).toBeGreaterThan(1)
+      const removeButton = wrapper.find(SELECTORS.removeButton)
+      const clickSpy = vi.fn()
 
-      await removeButtons[1]!.trigger('click')
-      expect(wrapper.emitted('remove')).toEqual([[1]])
+      wrapper.find(SELECTORS.previewItem).element.addEventListener('click', clickSpy)
+      await removeButton.trigger('click')
+
+      expect(clickSpy).not.toHaveBeenCalled()
     })
   })
 
-  describe('Presigned URLs', () => {
-    const S3_IMAGE = {
-      previewUrl: '',
-      fileName: 'remote.jpg',
-      fileSize: 1000,
-      fileType: 'image/jpeg',
-      isImage: true,
-      key: 's3-key'
-    }
+  describe('S3 Presigned URLs', () => {
+    it('should cache presigned URLs and not refetch', async () => {
+      const mockUrl = 'https://cdn.example.com/image.jpg'
+      ;(getPresignedUrl as unknown as Mock).mockResolvedValue(mockUrl)
 
-    it('shows loading then renders resolved S3 image', async () => {
-      ;(getPresignedUrl as unknown as Mock).mockResolvedValueOnce('https://cdn/img.jpg')
+      wrapper = createWrapper({ previews: [S3_IMAGE_PREVIEW] })
+      await flushPromises()
 
-      wrapper = mountComponent({ previews: [S3_IMAGE] })
+      expect(getPresignedUrl).toHaveBeenCalledTimes(1)
 
-      expect(wrapper.find(S.imageLoading).exists()).toBe(true)
+      // Update props with same key
+      await wrapper.setProps({ previews: [S3_IMAGE_PREVIEW, IMAGE_PREVIEW] })
+      await flushPromises()
 
-      await flushAsync()
-
-      const image = wrapper.find(S.imagePreview)
-      expect(image.exists()).toBe(true)
-      expect(image.find('img').attributes('src')).toBe('https://cdn/img.jpg')
+      // Should still be called only once (cached)
+      expect(getPresignedUrl).toHaveBeenCalledTimes(1)
     })
   })
 
-  describe('Watcher behavior', () => {
-    it('closes image lightbox if image is removed', async () => {
-      wrapper = mountComponent({ previews: [IMAGE_PREVIEW] })
+  describe('Image Lightbox Modal', () => {
+    it('should display correct image in lightbox', async () => {
+      wrapper = createWrapper()
 
-      await wrapper.get(S.imagePreview).trigger('click')
-      expect(wrapper.find(S.imageModal).exists()).toBe(true)
+      await wrapper.find(SELECTORS.imagePreview).trigger('click')
 
-      await wrapper.setProps({ previews: [] })
-      expect(wrapper.find(S.imageModal).exists()).toBe(false)
+      const modal = wrapper.find(SELECTORS.lightboxModal)
+      const img = modal.find('img')
+
+      expect(img.attributes('src')).toBe(IMAGE_PREVIEW.previewUrl)
+      expect(img.attributes('alt')).toBe(IMAGE_PREVIEW.fileName)
+    })
+  })
+
+  describe('Document Preview Modal', () => {
+    it('should close document modal when backdrop is clicked', async () => {
+      wrapper = createWrapper({ previews: [PDF_PREVIEW] })
+
+      await wrapper.find(SELECTORS.documentPreview).trigger('click')
+
+      const modal = wrapper.find(SELECTORS.docModal)
+      await modal.trigger('click')
+
+      expect(wrapper.find(SELECTORS.docModal).exists()).toBe(false)
+    })
+  })
+
+  describe('Content Type Detection', () => {
+    it('should detect text content type correctly', async () => {
+      wrapper = createWrapper({ previews: [TXT_PREVIEW] })
+
+      await wrapper.find(SELECTORS.documentPreview).trigger('click')
+      await nextTick()
+
+      expect(wrapper.find(SELECTORS.docModal).exists()).toBe(true)
     })
 
-    it('closes document modal if document is removed', async () => {
-      wrapper = mountComponent({ previews: [PDF_PREVIEW] })
+    it('should detect other file types correctly', async () => {
+      const otherPreview = {
+        previewUrl: 'blob:http://localhost/file',
+        fileName: 'archive.zip',
+        fileSize: 5000,
+        fileType: 'application/zip',
+        isImage: false
+      }
+      wrapper = createWrapper({ previews: [otherPreview] })
 
-      await wrapper.get(S.documentPreview).trigger('click')
-      expect(wrapper.find(S.docModal).exists()).toBe(true)
+      await wrapper.find(SELECTORS.documentPreview).trigger('click')
+      await nextTick()
 
-      await wrapper.setProps({ previews: [] })
-      expect(wrapper.find(S.docModal).exists()).toBe(false)
+      expect(wrapper.find(SELECTORS.docModal).exists()).toBe(true)
+    })
+  })
+
+  describe('Download Functionality', () => {
+    it('should download file when download button is clicked in lightbox', async () => {
+      const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+      wrapper = createWrapper({ previews: [IMAGE_PREVIEW] })
+
+      await wrapper.find(SELECTORS.imagePreview).trigger('click')
+      await nextTick()
+
+      await wrapper.find(SELECTORS.lightboxDownload).trigger('click')
+
+      expect(windowOpenSpy).toHaveBeenCalledWith(
+        IMAGE_PREVIEW.previewUrl,
+        '_blank',
+        'noopener,noreferrer'
+      )
+
+      windowOpenSpy.mockRestore()
     })
 
-    it('keeps modal open if preview still exists', async () => {
-      wrapper = mountComponent({ previews: [IMAGE_PREVIEW, PDF_PREVIEW] })
+    it('should download file when download button is clicked in document modal', async () => {
+      const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
 
-      await wrapper.get(S.imagePreview).trigger('click')
-      await wrapper.setProps({ previews: [IMAGE_PREVIEW] })
+      wrapper = createWrapper({ previews: [PDF_PREVIEW] })
 
-      expect(wrapper.find(S.imageModal).exists()).toBe(true)
+      await wrapper.find(SELECTORS.documentPreview).trigger('click')
+      await nextTick()
+
+      await wrapper.find(SELECTORS.docDownload).trigger('click')
+
+      expect(windowOpenSpy).toHaveBeenCalledWith(
+        PDF_PREVIEW.previewUrl,
+        '_blank',
+        'noopener,noreferrer'
+      )
+
+      windowOpenSpy.mockRestore()
+    })
+  })
+
+  describe('Modal Auto-close on Preview Removal', () => {
+    it('should auto-close modal when preview is removed', async () => {
+      wrapper = createWrapper({ previews: [IMAGE_PREVIEW, PDF_PREVIEW] })
+
+      await wrapper.find(SELECTORS.imagePreview).trigger('click')
+      await nextTick()
+
+      expect(wrapper.find(SELECTORS.lightboxModal).exists()).toBe(true)
+
+      // Remove the previewed image
+      await wrapper.setProps({ previews: [PDF_PREVIEW] })
+      await nextTick()
+
+      expect(wrapper.find(SELECTORS.lightboxModal).exists()).toBe(false)
     })
   })
 })

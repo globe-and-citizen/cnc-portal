@@ -42,7 +42,7 @@ import type { Claim } from '@/types'
 
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore, useTeamStore } from '@/stores'
+import { useToastStore } from '@/stores'
 import { useQueryClient } from '@tanstack/vue-query'
 
 const props = defineProps<{
@@ -54,7 +54,6 @@ const emit = defineEmits<{
 }>()
 
 const toastStore = useToastStore()
-const teamStore = useTeamStore()
 const queryClient = useQueryClient()
 
 const formattedDate = computed(() => {
@@ -83,9 +82,9 @@ const handleDelete = async () => {
   if (deleteClaimStatusCode.value === 200) {
     toastStore.addSuccessToast('Claim deleted successfully')
 
-    // Invalidate using the same query key pattern from parent
+    // Invalidate and refetch using the correct query key
     await queryClient.invalidateQueries({
-      queryKey: ['weekly-claims', teamStore.currentTeamId]
+      queryKey: ['teamWeeklyClaims']
     })
 
     emit('close')

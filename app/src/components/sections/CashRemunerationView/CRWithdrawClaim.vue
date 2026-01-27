@@ -42,13 +42,12 @@ import { computed, ref } from 'vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { getBalance } from 'viem/actions'
 import { config } from '@/wagmi.config'
-import { useCustomFetch } from '@/composables'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { USDC_ADDRESS } from '@/constant'
 import { simulateContract } from '@wagmi/core'
-import { useQueryClient } from '@tanstack/vue-query'
 import { waitForTransactionReceipt } from '@wagmi/core'
 import type { WeeklyClaim } from '@/types'
+import { useSyncWeeklyClaimsMutation } from '@/queries'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -62,7 +61,6 @@ const emit = defineEmits(['claim-withdrawn', 'loading'])
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
-const queryClient = useQueryClient()
 
 const cashRemunerationEip712Address = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
@@ -71,16 +69,7 @@ const { writeContractAsync: withdraw } = useWriteContract()
 
 // const weeklyClaimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=withdraw`)
 
-const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeamId}`)
-
-const { execute: syncWeeklyClaim, error: syncWeeklyClaimError } = useCustomFetch(
-  weeklyClaimSyncUrl,
-  {
-    immediate: false
-  }
-)
-  .post()
-  .json()
+const { mutateAsync: syncWeeklyClaim, error: syncWeeklyClaimError } = useSyncWeeklyClaimsMutation()
 
 const isLoading = ref(false)
 const isLoad = computed(() => (props.loading ?? isLoading.value) as boolean)
@@ -153,14 +142,14 @@ const withdrawClaim = async () => {
 
     if (receipt.status === 'success') {
       toastStore.addSuccessToast('Claim withdrawn')
-      await syncWeeklyClaim()
 
-      if (syncWeeklyClaimError.value) {
-        toastStore.addErrorToast('Failed to update Claim status')
+      if (teamStore.currentTeamId) {
+        await syncWeeklyClaim({ teamId: teamStore.currentTeamId })
+
+        if (syncWeeklyClaimError.value) {
+          toastStore.addErrorToast('Failed to update Claim status')
+        }
       }
-      queryClient.invalidateQueries({
-        queryKey: ['weekly-claims', teamStore.currentTeamId]
-      })
 
       emit('claim-withdrawn')
       isLoading.value = false

@@ -15,7 +15,7 @@
           itemHeightClass,
           imageClass
         ]"
-        @click="openLightbox(preview)"
+        @click="openModal('image', preview)"
         data-test="image-preview"
       >
         <img :src="preview.previewUrl" class="w-full h-full object-cover" :alt="preview.fileName" />
@@ -52,7 +52,7 @@
           documentClass
         ]"
         data-test="document-preview"
-        @click="openDocumentPreview(preview)"
+        @click="openModal('document', preview)"
       >
         <Icon :icon="getFileIcon(preview.fileName)" class="w-6 h-6 text-gray-600" />
         <span
@@ -75,13 +75,17 @@
       </button>
     </div>
 
-    <!-- Lightbox Modal -->
+    <!-- Image Lightbox Modal -->
     <Teleport to="body">
       <div
-        v-if="lightbox.isOpen"
+        v-if="modalState.type === 'image'"
         class="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-90 p-4"
-        @click="closeLightbox"
+        @click="closeModal"
+        @keydown.esc="closeModal"
         data-test="upload-lightbox-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="lightbox-title"
       >
         <div
           class="relative bg-black rounded-lg max-w-4xl max-h-full flex flex-col items-center justify-center"
@@ -90,23 +94,25 @@
           <div class="absolute top-4 right-4 flex gap-2 z-20">
             <button
               class="btn btn-sm btn-ghost text-white bg-black bg-opacity-60 hover:bg-opacity-80"
-              @click="closeLightbox"
+              @click="closeModal"
               data-test="upload-lightbox-close"
+              aria-label="Close lightbox"
             >
               <Icon icon="heroicons:x-mark" class="w-6 h-6" />
             </button>
             <button
               class="btn btn-sm btn-ghost text-white bg-black bg-opacity-60 hover:bg-opacity-80"
-              @click="openInNewTab(lightbox.url)"
+              @click="downloadFile(modalState.url)"
               data-test="upload-lightbox-download"
-              title="Download image"
+              aria-label="Download image"
             >
               <Icon icon="heroicons:arrow-down-tray" class="w-5 h-5" />
             </button>
           </div>
+          <h2 id="lightbox-title" class="sr-only">{{ modalState.fileName }}</h2>
           <img
-            :src="lightbox.url"
-            :alt="lightbox.fileName"
+            :src="modalState.url"
+            :alt="modalState.fileName"
             class="max-w-full max-h-full object-contain"
           />
         </div>
@@ -116,30 +122,34 @@
     <!-- Document Preview Modal -->
     <Teleport to="body">
       <div
-        v-if="docPreview.isOpen"
+        v-if="modalState.type === 'document'"
         class="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-80 p-4"
-        @click="closeDocumentPreview"
+        @click="closeModal"
+        @keydown.esc="closeModal"
         data-test="upload-doc-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="doc-title"
       >
         <div
           class="relative bg-white rounded-lg shadow-xl max-w-4xl w-full h-[80vh] p-4 flex flex-col"
           @click.stop
         >
           <div class="flex justify-between items-center mb-3">
-            <div class="font-semibold text-gray-800 truncate" :title="docPreview.fileName">
-              {{ docPreview.fileName }}
+            <div
+              id="doc-title"
+              class="font-semibold text-gray-800 truncate"
+              :title="modalState.fileName"
+            >
+              {{ modalState.fileName }}
             </div>
             <div class="flex gap-2">
-              <button
-                class="btn btn-sm btn-ghost"
-                @click="closeDocumentPreview"
-                data-test="upload-doc-close"
-              >
+              <button class="btn btn-sm btn-ghost" @click="closeModal" data-test="upload-doc-close">
                 Close
               </button>
               <button
                 class="btn btn-sm btn-success"
-                @click="openInNewTab(docPreview.url)"
+                @click="downloadFile(modalState.url)"
                 data-test="upload-doc-download"
               >
                 Download
@@ -150,31 +160,31 @@
           <div class="flex-1 overflow-hidden rounded border border-gray-200 bg-gray-50">
             <!-- PDF Preview -->
             <iframe
-              v-if="docPreview.isPdf"
-              :src="docPreview.url"
+              v-if="modalState.contentType === 'pdf'"
+              :src="modalState.url"
               class="w-full h-full"
               title="Document preview"
             ></iframe>
 
             <!-- Text File Preview -->
             <pre
-              v-else-if="docPreview.isText"
+              v-else-if="modalState.contentType === 'text'"
               class="w-full h-full p-4 overflow-auto whitespace-pre-wrap text-sm text-gray-800 font-mono bg-white"
-              >{{ docPreview.textContent }}</pre
+              >{{ modalState.textContent }}</pre
             >
 
             <!-- Non-previewable files -->
             <div v-else class="w-full h-full flex flex-col items-center justify-center gap-4 p-8">
-              <Icon :icon="getFileIcon(docPreview.fileName)" class="w-24 h-24 text-gray-400" />
+              <Icon :icon="getFileIcon(modalState.fileName)" class="w-24 h-24 text-gray-400" />
               <div class="text-center">
                 <div class="text-xl font-semibold text-gray-700 mb-2">
-                  {{ docPreview.fileName }}
+                  {{ modalState.fileName }}
                 </div>
                 <div class="text-sm text-gray-500 mb-4">
-                  Type: {{ docPreview.fileType || 'Unknown' }}
+                  Type: {{ modalState.fileType || 'Unknown' }}
                 </div>
                 <p class="text-gray-600 mb-6">This file type cannot be previewed in the browser.</p>
-                <button class="btn btn-success" @click="openInNewTab(docPreview.url)">
+                <button class="btn btn-success" @click="downloadFile(modalState.url)">
                   <Icon icon="heroicons:arrow-down-tray" class="w-5 h-5 mr-2" />
                   Download to view
                 </button>
@@ -189,9 +199,10 @@
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import { ref, watch, computed, onMounted, reactive } from 'vue'
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { getPresignedUrl } from '@/composables/useFileUrl'
 
+// Types
 interface PreviewItem {
   previewUrl: string
   fileName: string
@@ -201,6 +212,19 @@ interface PreviewItem {
   key?: string
 }
 
+type ModalType = 'image' | 'document' | null
+type ContentType = 'pdf' | 'text' | 'other'
+
+interface ModalState {
+  type: ModalType
+  url: string
+  fileName: string
+  fileType: string
+  contentType: ContentType
+  textContent: string
+}
+
+// Props
 const props = withDefaults(
   defineProps<{
     previews: PreviewItem[]
@@ -219,149 +243,175 @@ const props = withDefaults(
   }
 )
 
+// Emits
 const emit = defineEmits<{
   remove: [index: number]
 }>()
 
-// Cache for presigned URLs
-const resolvedUrls = ref<Map<string, string>>(new Map())
-
-// Computed previews with resolved URLs
-const resolvedPreviews = computed(() => {
-  return props.previews.map((preview) => {
-    if (preview.key && !preview.previewUrl) {
-      const cachedUrl = resolvedUrls.value.get(preview.key)
-      if (cachedUrl) return { ...preview, previewUrl: cachedUrl }
-    }
-    return preview
-  })
-})
-
-// Load presigned URLs in parallel
-async function loadPresignedUrls() {
-  const keysToFetch = props.previews
-    .filter((p) => p.key && !p.previewUrl && !resolvedUrls.value.has(p.key))
-    .map((p) => p.key!)
-
-  if (keysToFetch.length === 0) return
-
-  const results = await Promise.allSettled(
-    keysToFetch.map(async (key) => ({
-      key,
-      url: await getPresignedUrl(key)
-    }))
-  )
-
-  for (const result of results) {
-    if (result.status === 'fulfilled' && result.value.url) {
-      resolvedUrls.value.set(result.value.key, result.value.url)
-    }
-  }
-
-  resolvedUrls.value = new Map(resolvedUrls.value)
-}
-
-onMounted(loadPresignedUrls)
-watch(() => props.previews, loadPresignedUrls, { deep: true })
-
-// Lightbox state
-const lightbox = reactive({
-  isOpen: false,
-  url: '',
-  fileName: ''
-})
-
-// Document preview state
-const docPreview = reactive({
-  isOpen: false,
+// State
+const urlCache = ref(new Map<string, string>())
+const modalState = ref<ModalState>({
+  type: null,
   url: '',
   fileName: '',
   fileType: '',
-  textContent: '',
-  isPdf: false,
-  isText: false
+  contentType: 'other',
+  textContent: ''
 })
 
-// File icon mapping
+// Constants
 const FILE_ICONS: Record<string, string> = {
   pdf: 'heroicons:document-text',
   zip: 'heroicons:archive-box',
   docx: 'heroicons:document',
   doc: 'heroicons:document',
   txt: 'heroicons:document-text'
+} as const
+
+const MAX_FILENAME_LENGTH = 15
+
+// Computed
+const resolvedPreviews = computed(() => {
+  return props.previews.map((preview) => {
+    if (preview.key && !preview.previewUrl) {
+      const cachedUrl = urlCache.value.get(preview.key)
+      return cachedUrl ? { ...preview, previewUrl: cachedUrl } : preview
+    }
+    return preview
+  })
+})
+
+// Utilities
+const getFileExtension = (fileName: string): string => {
+  return fileName.split('.').pop()?.toLowerCase() || ''
 }
 
 const getFileIcon = (fileName: string): string => {
-  const ext = fileName.split('.').pop()?.toLowerCase() || ''
-  return FILE_ICONS[ext] || 'heroicons:paper-clip'
+  const extension = getFileExtension(fileName)
+  return FILE_ICONS[extension] || 'heroicons:paper-clip'
 }
 
-const truncateFileName = (name: string, maxLength = 15): string => {
+const truncateFileName = (name: string, maxLength = MAX_FILENAME_LENGTH): string => {
   if (name.length <= maxLength) return name
-  const ext = name.split('.').pop() || ''
-  const baseName = name.slice(0, name.length - ext.length - 1)
-  const truncatedBase = baseName.slice(0, maxLength - ext.length - 4)
-  return `${truncatedBase}...${ext}`
+
+  const extension = getFileExtension(name)
+  const nameWithoutExt = name.slice(0, name.length - extension.length - 1)
+  const truncatedName = nameWithoutExt.slice(0, maxLength - extension.length - 4)
+
+  return `${truncatedName}...${extension}`
 }
 
-const openInNewTab = (url: string): void => {
+const detectContentType = (preview: PreviewItem): ContentType => {
+  const fileName = preview.fileName.toLowerCase()
+  const fileType = preview.fileType || ''
+
+  if (fileType.includes('pdf') || fileName.endsWith('.pdf')) return 'pdf'
+  if (fileType.includes('text/plain') || fileName.endsWith('.txt')) return 'text'
+
+  return 'other'
+}
+
+const downloadFile = (url: string): void => {
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
-const openLightbox = (preview: PreviewItem): void => {
-  lightbox.isOpen = true
-  lightbox.url = preview.previewUrl
-  lightbox.fileName = preview.fileName
-}
+// Modal Management
+const openModal = async (type: ModalType, preview: PreviewItem): Promise<void> => {
+  const contentType = type === 'document' ? detectContentType(preview) : 'other'
 
-const closeLightbox = (): void => {
-  lightbox.isOpen = false
-  lightbox.url = ''
-  lightbox.fileName = ''
-}
+  modalState.value = {
+    type,
+    url: preview.previewUrl,
+    fileName: preview.fileName,
+    fileType: preview.fileType || '',
+    contentType,
+    textContent: ''
+  }
 
-const openDocumentPreview = async (preview: PreviewItem): Promise<void> => {
-  const fileName = preview.fileName.toLowerCase()
-  const isPdf = preview.fileType?.includes('pdf') || fileName.endsWith('.pdf')
-  const isText = preview.fileType?.includes('text/plain') || fileName.endsWith('.txt')
-
-  docPreview.isOpen = true
-  docPreview.url = preview.previewUrl
-  docPreview.fileName = preview.fileName
-  docPreview.fileType = preview.fileType || ''
-  docPreview.isPdf = isPdf
-  docPreview.isText = isText
-  docPreview.textContent = ''
-
-  if (isText) {
+  // Load text content if needed
+  if (contentType === 'text') {
     try {
-      const res = await fetch(preview.previewUrl)
-      docPreview.textContent = (await res.text()) || 'File is empty'
+      const response = await fetch(preview.previewUrl)
+      modalState.value.textContent = (await response.text()) || 'File is empty'
     } catch (error) {
       console.error('Error reading text file:', error)
-      docPreview.textContent = 'Error reading file content'
+      modalState.value.textContent = 'Error reading file content'
     }
+  }
+
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden'
+}
+
+const closeModal = (): void => {
+  modalState.value = {
+    type: null,
+    url: '',
+    fileName: '',
+    fileType: '',
+    contentType: 'other',
+    textContent: ''
+  }
+
+  // Restore body scroll
+  document.body.style.overflow = ''
+}
+
+// URL Loading
+const loadPresignedUrls = async (): Promise<void> => {
+  const keysToFetch = props.previews
+    .filter((preview) => preview.key && !preview.previewUrl && !urlCache.value.has(preview.key))
+    .map((preview) => preview.key!)
+
+  if (keysToFetch.length === 0) return
+
+  const results = await Promise.allSettled(
+    keysToFetch.map(async (key) => {
+      const url = await getPresignedUrl(key)
+      return { key, url }
+    })
+  )
+
+  const newCache = new Map(urlCache.value)
+
+  for (const result of results) {
+    if (result.status === 'fulfilled' && result.value.url) {
+      newCache.set(result.value.key, result.value.url)
+    }
+  }
+
+  urlCache.value = newCache
+}
+
+// Auto-close modal if preview is removed
+const handlePreviewChange = (): void => {
+  if (!modalState.value.type) return
+
+  const currentUrls = props.previews.map((preview) => preview.previewUrl)
+
+  if (!currentUrls.includes(modalState.value.url)) {
+    closeModal()
   }
 }
 
-const closeDocumentPreview = (): void => {
-  docPreview.isOpen = false
-  docPreview.url = ''
-  docPreview.fileName = ''
-  docPreview.fileType = ''
-  docPreview.textContent = ''
-  docPreview.isPdf = false
-  docPreview.isText = false
+// Keyboard handling
+const handleKeydown = (event: KeyboardEvent): void => {
+  if (event.key === 'Escape' && modalState.value.type) {
+    closeModal()
+  }
 }
 
-// Close modals if preview is removed
-watch(
-  () => props.previews,
-  (next) => {
-    const urls = next.map((p) => p.previewUrl)
-    if (lightbox.isOpen && !urls.includes(lightbox.url)) closeLightbox()
-    if (docPreview.isOpen && !urls.includes(docPreview.url)) closeDocumentPreview()
-  },
-  { deep: true }
-)
+// Lifecycle
+onMounted(() => {
+  loadPresignedUrls()
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+  document.body.style.overflow = ''
+})
+
+watch(() => props.previews, loadPresignedUrls, { deep: true })
+watch(() => props.previews, handlePreviewChange, { deep: true })
 </script>
