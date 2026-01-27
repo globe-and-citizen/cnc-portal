@@ -16,7 +16,8 @@ vi.mock('@tanstack/vue-query', async () => {
         setQueryData: vi.fn(),
         removeQueries: vi.fn()
       }
-    })
+    }),
+    useQuery:vi.fn()
   }
 })
 

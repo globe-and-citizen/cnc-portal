@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { ref, nextTick } from 'vue'
 import { type Address } from 'viem'
-import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
 import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
 import { mainnet } from 'viem/chains'
@@ -107,7 +106,6 @@ vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useCurrencyStore: () => mockUseCurrencyStore(),
     useToastStore: () => ({
       addSuccessToast: mockAddSuccessToast,
       addErrorToast: mockAddErrorToast

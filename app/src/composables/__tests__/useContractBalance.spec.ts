@@ -4,7 +4,6 @@ import { useContractBalance } from '../useContractBalance'
 import type { Address } from 'viem'
 import { ref } from 'vue'
 
-import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 const mockUseBalance = {
   data: ref<{ value: bigint } | null>(null),
@@ -27,14 +26,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useBalance: vi.fn(() => mockUseBalance),
     useReadContract: vi.fn(() => mockUseReadContract),
     useChainId: vi.fn(() => mockUseChainId)
-  }
-})
-
-vi.mock('@/stores/currencyStore', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore() }))
   }
 })
 

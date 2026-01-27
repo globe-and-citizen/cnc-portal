@@ -8,7 +8,6 @@ import { ref } from 'vue'
 import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
 import { mainnet } from 'viem/chains'
 import { createTestingPinia } from '@pinia/testing'
-import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
 
 const wagmiConfig = createConfig({
@@ -73,13 +72,6 @@ vi.mock('@/stores', () => ({
   })
 }))
 
-vi.mock('@/stores/currencyStore', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore() }))
-  }
-})
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)
 }))
