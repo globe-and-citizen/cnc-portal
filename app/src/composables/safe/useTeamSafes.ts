@@ -11,7 +11,7 @@ export const useTeamSafes = () => {
 
   const safes = computed(() => {
     return (
-      teamStore.currentTeamMeta.data?.members
+      teamStore.currentTeamMeta?.data?.members
         .filter((m) => m.memberTeamsData?.[0]?.isTrader === true)
         .map((m) => ({
           address: m.traderSafeAddress || '',
