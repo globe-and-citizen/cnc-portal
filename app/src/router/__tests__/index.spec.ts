@@ -156,7 +156,7 @@ describe('Router Configuration', () => {
           path: '/teams/:id/accounts/members/:memberAddress/payroll-history'
         },
         // { name: 'account', path: '/teams/:id/account' },
-        { name: 'safe-account', path: '/teams/:id/accounts/safe-account' },
+        { name: 'safe-account', path: '/teams/:id/accounts/safe-account/:address' },
         {
           name: 'cash-remunerations-member',
           path: '/teams/:id/cash-remunerations/member/:memberAddress'
@@ -244,7 +244,7 @@ describe('Router Configuration', () => {
       expect(teamsRoute.name).toBe('teams')
 
       // Safe account route component loading
-      await router.push('/teams/123/accounts/safe-account')
+      await router.push('/teams/123/accounts/safe-account/0xabcdef')
       await nextTick()
       expect(router.currentRoute.value.name).toBe('safe-account')
     })
