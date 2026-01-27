@@ -6,15 +6,20 @@ import { toValue } from 'vue'
 
 /**
  * Fetch all expenses for a team
+ *
+ * @endpoint GET /expense
+ * @params none
+ * @queryParams { teamId: string }
+ * @body none
  */
 export const useExpensesQuery = (teamId: MaybeRefOrGetter<string | null>) => {
   return useQuery({
     queryKey: ['expenses', { teamId }],
     queryFn: async () => {
-      const id = toValue(teamId)
-      const { data } = await apiClient.get<ExpenseResponse[]>('/expense', { 
-        params: { teamId: id } 
-      })
+      // Query params: passed as URL query string (?teamId=xxx)
+      const queryParams = { teamId: toValue(teamId) }
+
+      const { data } = await apiClient.get<ExpenseResponse[]>('/expense', { params: queryParams })
       return data
     },
     enabled: () => !!toValue(teamId)
@@ -22,14 +27,24 @@ export const useExpensesQuery = (teamId: MaybeRefOrGetter<string | null>) => {
 }
 
 /**
+ * Mutation input for useAddExpenseMutation
+ */
+export type AddExpenseInput = Record<string, unknown>
+
+/**
  * Add expense data with signature
+ *
+ * @endpoint POST /expense
+ * @params none
+ * @queryParams none
+ * @body Record<string, unknown> - expense account data
  */
 export const useAddExpenseMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (expenseAccountData: Record<string, unknown>) => {
-      const { data } = await apiClient.post('/expense', expenseAccountData)
+    mutationFn: async (body: AddExpenseInput) => {
+      const { data } = await apiClient.post('/expense', body)
       return data
     },
     onSuccess: () => {
