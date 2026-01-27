@@ -101,7 +101,7 @@ const deleteTeam = async () => {
     return
   }
 
-  deleteTeamMutate(String(teamId), {
+  deleteTeamMutate({ teamId: String(teamId) }, {
     onSuccess: async () => {
       addSuccessToast('Team deleted successfully')
       showDeleteTeamConfirmModal.value = false

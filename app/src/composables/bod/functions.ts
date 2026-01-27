@@ -147,7 +147,7 @@ export function useBodWritesFunctions() {
         args: [BigInt(_actionId)]
       })
       if (isActionExecuted) {
-        await updateActionMutation.mutateAsync(dbId)
+        await updateActionMutation.mutateAsync({ id: dbId })
       }
       queryClient.invalidateQueries({
         queryKey: ['readContract', { functionName: 'isMember' }],
