@@ -280,10 +280,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Weekly Claim queries - weeklyClaim.queries.ts
   useTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
   useWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
-  useSignWeeklyClaimMutation: () => createMockMutationResponse(),
-  useEnableWeeklyClaimMutation: () => createMockMutationResponse(),
-  useDisableWeeklyClaimMutation: () => createMockMutationResponse(),
-  useWithdrawWeeklyClaimMutation: () => createMockMutationResponse(),
+  useUpdateWeeklyClaimMutation: () => createMockMutationResponse(),
   useSyncWeeklyClaimsMutation: () => createMockMutationResponse(),
 
   // Safe queries - safe.queries.ts
