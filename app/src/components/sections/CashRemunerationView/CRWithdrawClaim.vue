@@ -152,9 +152,6 @@ const withdrawClaim = async () => {
           toastStore.addErrorToast('Failed to update Claim status')
         }
       }
-      queryClient.invalidateQueries({
-        queryKey: ['weekly-claims', teamStore.currentTeamId]
-      })
 
       emit('claim-withdrawn')
       isLoading.value = false
