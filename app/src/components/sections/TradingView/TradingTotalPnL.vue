@@ -34,7 +34,6 @@ import OverviewCard from '@/components/OverviewCard.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import cartIcon from '@/assets/cart.svg'
 import { useUserPositions } from '@/composables/trading'
-import { useTraderSafesStore } from '@/stores'
 import { useTeamSafes } from '@/composables/safe'
 
 const currencyStore = useCurrencyStore()

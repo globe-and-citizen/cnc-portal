@@ -76,8 +76,8 @@ export const updateUser = async (req: Request, res: Response) => {
   const multerReq = req as MulterRequest;
 
   try {
-    console.log('traderSafeAddress: ', traderSafeAddress)
-    console.log('teamId: ', teamId)
+    console.log('traderSafeAddress: ', traderSafeAddress);
+    console.log('teamId: ', teamId);
     if (!callerAddress) return errorResponse(401, 'Update user error: Missing user address', res);
 
     if (callerAddress !== address) {
@@ -147,13 +147,13 @@ export const updateUser = async (req: Request, res: Response) => {
     });
 
     if (teamId && traderSafeAddress) {
-      const team = await prisma.team.findUnique({ 
+      const team = await prisma.team.findUnique({
         where: { id: Number(teamId) },
         include: {
-          members: true
-        }
-      })
-      const members = team?.members
+          members: true,
+        },
+      });
+      const members = team?.members;
       if (isUserPartOfTheTeam(members || [], callerAddress)) {
         await prisma.memberTeamsData.update({
           where: {
@@ -163,9 +163,9 @@ export const updateUser = async (req: Request, res: Response) => {
             },
           },
           data: {
-            isTrader: true
+            isTrader: true,
           },
-      })
+        });
       }
     }
 

@@ -19,7 +19,6 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import TradingAccountBalance from './TradingAccountBalance.vue'
 import TradingTotalPnl from './TradingTotalPnL.vue'
 import TradingPerformance from './TradingPerformance.vue'
-import { useSafeDeployment } from '@/composables/trading'
 import { useTraderSafesStore } from '@/stores'
 
 // Composables
