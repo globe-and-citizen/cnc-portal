@@ -24,7 +24,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const id = Number(req.params.id);
   const action = req.query.action as WeeklyClaimAction;
-  const { signature, data: message } = req.body;
+  const { signature } = req.body;
 
   // Validation stricte des actions autorisées
   const errors: string[] = [];
@@ -89,7 +89,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 
         if (enableErrors.length > 0) return errorResponse(400, enableErrors.join('; '), res);
 
-        data = { signature, status: 'signed', data: message };
+        data = { signature, status: 'signed' };
         // singleClaimStatus = "signed";
         break;
       }
@@ -121,7 +121,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 
         if (disableErrors.length > 0) return errorResponse(400, disableErrors.join('; '), res);
 
-        data = { signature, status: 'disabled', data: message };
+        data = { signature, status: 'disabled'};
         // singleClaimStatus = "signed";
         break;
       }
@@ -159,7 +159,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 
         if (signErrors.length > 0) return errorResponse(400, signErrors.join('; '), res);
 
-        data = { signature, status: 'signed', data: message };
+        data = { signature, status: 'signed', data: { ownerAddress: callerAddress } };
         // singleClaimStatus = "signed";
         break;
       }

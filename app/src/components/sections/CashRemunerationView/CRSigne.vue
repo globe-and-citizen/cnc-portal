@@ -42,7 +42,7 @@ import dayjs from 'dayjs'
 import { keccak256, parseEther, parseUnits, zeroAddress, type Address } from 'viem'
 import { computed, ref, watch } from 'vue'
 import { config } from '@/wagmi.config'
-import { useSignWeeklyClaimMutation } from '@/queries'
+import { useUpdateWeeklyClaimMutation } from '@/queries'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -82,7 +82,7 @@ const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useRe
 
 const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
 
-const { error: claimError, mutateAsync: executeUpdateClaim } = useSignWeeklyClaimMutation()
+const { error: claimError, mutateAsync: executeUpdateClaim } = useUpdateWeeklyClaimMutation()
 
 // Domain configuration (constant)
 const typedDataDomain = computed(() => ({
@@ -181,8 +181,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
     await enableClaim(signature.value)
     await executeUpdateClaim({
       claimId: weeklyClaim.id,
-      signature: signature.value,
-      data: { ownerAddress: userStore.address }
+      signature: signature.value
     })
 
     if (claimError.value) {
