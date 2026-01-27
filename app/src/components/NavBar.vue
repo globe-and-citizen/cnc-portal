@@ -2,7 +2,7 @@
   <nav class="flex justify-end border-0 border-b-2 border-slate-100 bg-white">
     <div class="flex justify-between py-3 px-3">
       <div class="flex items-center space-x-2 sm:space-x-4">
-        <SafeSelector v-if="isTradingRoute && safes.length > 0" :safes="safes" />
+        <SafeSelector v-if="isTradingRoute" />
         <div class="dropdown dropdown-end">
           <div
             tabindex="0"
@@ -75,7 +75,7 @@
 import { NETWORK } from '@/constant/index'
 import { useAuth } from '@/composables/useAuth'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
-import { useUserDataStore, useTeamStore } from '@/stores'
+import { useUserDataStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import SafeSelector from './SafeSelector.vue'
 import { useRoute } from 'vue-router'
@@ -84,22 +84,10 @@ import { computed } from 'vue'
 const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal'])
 const { logout } = useAuth()
 const userStore = useUserDataStore()
-const teamStore = useTeamStore()
 const { imageUrl } = storeToRefs(userStore)
 const route = useRoute()
 
 const isTradingRoute = computed(() => route.name === 'trading')
-const safes = computed(() => {
-  return (
-    teamStore.currentTeamMeta.data?.members
-      .filter((m) => m.memberTeamsData?.[0]?.isTrader === true)
-      .map((m) => ({
-        address: m.traderSafeAddress || '',
-        name: `${m.name}'s Safe` || 'Unnamed Safe',
-        balance: '0' // Placeholder, balance fetching can be implemented later
-      })) || []
-  )
-})
 
 defineProps<{
   isCollapsed: boolean
