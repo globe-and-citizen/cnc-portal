@@ -222,7 +222,7 @@ export const useSyncWeeklyClaimsMutation = () => {
     mutationFn: async (input) => {
       const { data } = await apiClient.post<SyncWeeklyClaimsResponse>(
         '/weeklyClaim/sync',
-        null,
+        {},
         { params: { teamId: input.teamId } }
       )
       return data
