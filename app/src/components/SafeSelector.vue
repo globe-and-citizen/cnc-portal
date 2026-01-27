@@ -10,7 +10,7 @@
           <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4 text-primary" />
           <div class="text-left">
             <div class="font-medium">
-              {{ traderSafesStore.selectedSafe?.name || 'Select Safe' }}
+              {{ /* traderSafesStore.  */ selectedSafe?.name || 'Select Safe' }}
             </div>
             <!-- <div v-if="selectedSafe" class="text-xs text-base-content/70">
               {{ truncateAddress(selectedSafe.address) }}
@@ -35,9 +35,9 @@
         </li>
 
         <li
-          v-for="safe in traderSafesStore.safes"
+          v-for="safe in /* traderSafesStore. */ safes"
           :key="safe.address"
-          :class="{ 'bg-base-200': traderSafesStore.selectedSafe?.address === safe.address }"
+          :class="{ 'bg-base-200': /* traderSafesStore. */ selectedSafe?.address === safe.address }"
         >
           <a @click="selectSafe(safe)" class="py-2">
             <div class="flex items-center justify-between w-full">
@@ -66,8 +66,10 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTraderSafesStore } from '@/stores'
 import { useRelayClient, useUserPositions } from '@/composables/trading'
-import { processValidMemberSafes } from '@/utils/trading/safeSelectorUtil'
-import { useTeamStore } from '@/stores'
+// import { processValidMemberSafes } from '@/utils/trading/safeSelectorUtil'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import { deriveSafeFromEoa } from '@/utils/trading/safeDeploymentUtils'
+import { useRoute } from 'vue-router'
 
 interface SafeWallet {
   address: string
@@ -75,13 +77,35 @@ interface SafeWallet {
   balance: string
 }
 
+const props = defineProps<{
+  safes: SafeWallet[]
+}>()
+
 const traderSafesStore = useTraderSafesStore()
 const teamStore = useTeamStore()
+const userDataStore = useUserDataStore()
+const route = useRoute()
 const { getOrInitializeRelayClient, isLoading, isReady } = useRelayClient()
-const derivedSafeAddressFromEoa = computed(() => traderSafesStore.selectedSafe?.address)
+// const derivedSafeAddressFromEoa = computed(() => traderSafesStore.selectedSafe?.address)
+const derivedSafeAddressFromEoa = computed(() => {
+  const isTradingRoute = route.path.includes('/trading/')
+  const address = route.params.address as string
+  return isTradingRoute ? (deriveSafeFromEoa(address) ?? undefined) : undefined
+})
 const { refetch } = useUserPositions(derivedSafeAddressFromEoa)
 const isOpen = ref(false)
-const safes = ref<SafeWallet[] | null>(null)
+
+const getSelectedSafeAddress = () => {
+  const isTradingRoute = route.path.includes('/trading/')
+  return isTradingRoute
+    ? (props.safes.find(
+        (s) =>
+          s.address.toLocaleLowerCase() ===
+          deriveSafeFromEoa(userDataStore.address)?.toLocaleLowerCase()
+      )?.address ?? props.safes[0])
+    : teamStore.currentTeamMeta.data?.safeAddress
+}
+// const safes = ref<SafeWallet[] | null>(null)
 
 // const safes = ref<SafeWallet[]>([
 //   {
@@ -101,7 +125,7 @@ const safes = ref<SafeWallet[] | null>(null)
 //   }
 // ])
 
-// const selectedSafe = ref<SafeWallet | undefined>(safes.value[0])
+const selectedSafe = ref<SafeWallet | undefined>(props.safes[0])
 
 const truncateAddress = (address: string): string => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
@@ -132,16 +156,17 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 }
 
-watch([
-  () => teamStore.currentTeamMeta.data?.members,
-  isLoading,
-  isReady
-], async ([members, , newIsReady]) => {
-	if (members && newIsReady) {
-		const relayClient = await getOrInitializeRelayClient()
-		safes.value = await processValidMemberSafes(members, relayClient)
-	}
-}, { immediate: true })
+watch(
+  [() => teamStore.currentTeamMeta.data?.members, isLoading, isReady],
+  async ([members, , newIsReady]) => {
+    if (members && newIsReady) {
+      // const relayClient = await getOrInitializeRelayClient()
+      // safes.value = await processValidMemberSafes(members, relayClient)
+      console.log('Processing safes for members:', members)
+    }
+  },
+  { immediate: true }
+)
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
