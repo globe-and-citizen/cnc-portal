@@ -25,16 +25,14 @@ import { Icon } from '@iconify/vue'
 import OverviewCard from '@/components/OverviewCard.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import bagIcon from '@/assets/bag.svg'
-import { useSafeDeployment } from '@/composables/trading'
 import { formatUnits } from 'viem'
 import { useSafeBalances } from '@/queries/polymarket.queries'
-import { useTraderSafesStore } from '@/stores'
+import { useTeamSafes } from '@/composables/safe'
 
 const currencyStore = useCurrencyStore()
-const traderSafesStore = useTraderSafesStore()
-// const { derivedSafeAddressFromEoa } = useSafeDeployment()
 const isLoading = computed(() => false)
-const derivedSafeAddressFromEoa = computed(() => traderSafesStore.selectedSafe?.address ?? null)
+const { selectedSafe } = useTeamSafes()
+const derivedSafeAddressFromEoa = computed(() => selectedSafe.value?.address ?? null)
 
 const { data: balances } = useSafeBalances(derivedSafeAddressFromEoa)
 
