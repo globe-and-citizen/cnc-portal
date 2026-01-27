@@ -11,9 +11,11 @@ export const updateUserBodySchema = z
   .object({
     name: nonEmptyStringSchema.max(100, 'Name cannot exceed 100 characters').optional(),
     imageUrl: urlSchema.optional(),
+    traderSafeAddress: addressSchema.optional(),
+    teamId: nonEmptyStringSchema.optional()
   })
-  .refine((data) => data.name !== undefined || data.imageUrl !== undefined, {
-    message: 'At least one field (name or imageUrl) must be provided for update',
+  .refine((data) => data.name !== undefined || data.imageUrl !== undefined || (data.traderSafeAddress != undefined && data.teamId != undefined), {
+    message: 'At least one field (name, imageUrl or safe) must be provided for update',
   });
 
 // Enhanced pagination query for users with proper validation
