@@ -34,7 +34,6 @@ export const useTeamQuery = (teamId: MaybeRefOrGetter<string | null>) => {
     queryKey: ['team', { teamId }],
     queryFn: async () => {
       const id = toValue(teamId)
-      if (!id) throw new Error('Team ID is required')
       const { data } = await apiClient.get<Team>(`teams/${id}`)
       return data
     },

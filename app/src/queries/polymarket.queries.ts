@@ -33,7 +33,6 @@ export const useMarketData = (endpoint: MaybeRefOrGetter<string | null>) => {
     queryKey: ['marketData'],
     queryFn: async () => {
       const urlValue = toValue(endpoint)
-      if (!urlValue) throw new Error('Endpoint is required')
       const { data } = await apiClient.get<PolymarketEvent | PolymarketMarket>(
         '/polymarket/market-data',
         { params: { url: urlValue } }

@@ -13,7 +13,6 @@ export const useTeamWagesQuery = (teamId: MaybeRefOrGetter<string | number | nul
     queryKey: ['teamWages', { teamId }],
     queryFn: async () => {
       const id = toValue(teamId)
-      if (!id) throw new Error('Team ID is required')
       const { data } = await apiClient.get<Wage[]>('/wage/', { 
         params: { teamId: id } 
       })

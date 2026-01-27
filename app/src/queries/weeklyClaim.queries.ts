@@ -33,8 +33,6 @@ export const useTeamWeeklyClaimsQuery = (params: UseTeamWeeklyClaimsQueryParams)
       const userAddress = toValue(params.userAddress)
       const statusValue = toValue(params.status)
 
-      if (!teamId) throw new Error('Team ID is required')
-
       const queryParams: Record<string, string | number> = { teamId }
       if (userAddress) {
         queryParams.memberAddress = userAddress
@@ -64,7 +62,6 @@ export const useWeeklyClaimByIdQuery = (claimId: MaybeRefOrGetter<string | numbe
     queryKey: ['weeklyClaim', { claimId }],
     queryFn: async () => {
       const id = toValue(claimId)
-      if (!id) throw new Error('Claim ID is required')
 
       const { data } = await apiClient.get<WeeklyClaim>(`/weeklyClaim/${id}`)
       return data

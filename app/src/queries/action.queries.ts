@@ -20,7 +20,6 @@ export const useBodActionsQuery = (params: UseBodActionsQueryParams) => {
     queryKey: ['getBodActions', { teamId: params.teamId, isExecuted: params.isExecuted }],
     queryFn: async () => {
       const id = toValue(params.teamId)
-      if (!id) throw new Error('Team ID is required')
       
       const queryParams: Record<string, string | boolean> = { teamId: id }
       if (params.isExecuted !== undefined) {
