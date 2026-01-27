@@ -36,12 +36,11 @@ import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import OverviewCard from '@/components/OverviewCard.vue'
 import personIcon from '@/assets/person.svg'
-import { useUserPositions, useSafeDeployment } from '@/composables/trading'
-import { useTraderSafesStore } from '@/stores'
+import { useUserPositions } from '@/composables/trading'
+import { useTeamSafes } from '@/composables/safe'
 
-// const { derivedSafeAddressFromEoa } = useSafeDeployment()
-const traderSafesStore = useTraderSafesStore()
-const derivedSafeAddressFromEoa = computed(() => traderSafesStore.selectedSafe?.address)
+const { selectedSafe } = useTeamSafes()
+const derivedSafeAddressFromEoa = computed(() => selectedSafe.value?.address)
 const { pnlStats } = useUserPositions(derivedSafeAddressFromEoa.value ?? undefined)
 
 const isLoading = computed(() => false)
