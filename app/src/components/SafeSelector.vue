@@ -111,6 +111,14 @@ const selectSafe = async (safe: SafeWallet) => {
       }
     })
     await refetch()
+  } else if (route.name === 'safe-account') {
+    router.push({
+      name: 'safe-account',
+      params: {
+        ...route.params,
+        address: safe.address
+      }
+    })
   }
   isOpen.value = false
   console.log('Selected safe:', safe.address)
