@@ -75,8 +75,6 @@ const chainId = useChainId()
 
 const emits = defineEmits(['closeModal'])
 const props = defineProps<{
-  loading?: boolean
-  loadingText?: string
   safeAddress: Address
 }>()
 
