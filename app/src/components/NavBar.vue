@@ -2,7 +2,7 @@
   <nav class="flex justify-end border-0 border-b-2 border-slate-100 bg-white">
     <div class="flex justify-between py-3 px-3">
       <div class="flex items-center space-x-2 sm:space-x-4">
-        <SafeSelector v-if="isTradingRoute" />
+        <SafeSelector v-if="isSafeRoute" />
         <div class="dropdown dropdown-end">
           <div
             tabindex="0"
@@ -87,7 +87,7 @@ const userStore = useUserDataStore()
 const { imageUrl } = storeToRefs(userStore)
 const route = useRoute()
 
-const isTradingRoute = computed(() => route.name === 'trading')
+const isSafeRoute = computed(() => route.name === 'trading' || route.name === 'safe-account')
 
 defineProps<{
   isCollapsed: boolean
