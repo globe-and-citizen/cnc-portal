@@ -389,7 +389,10 @@ const menuItems = computed(() => [
         icon: 'heroicons:shield-check',
         route: {
           name: 'safe-account',
-          params: { id: teamStore.currentTeamId || '1' }
+          params: {
+            id: teamStore.currentTeamId || '1',
+            address: teamStore.currentTeamMeta?.data?.safeAddress || '0x'
+          }
         },
         active: route.name === 'safe-account',
         show: teamStore.currentTeam?.safeAddress
