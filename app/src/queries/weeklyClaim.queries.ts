@@ -35,7 +35,7 @@ export const useTeamWeeklyClaimsQuery = (params: UseTeamWeeklyClaimsQueryParams)
 
       if (!teamId) throw new Error('Team ID is required')
 
-      const queryParams: Record<string, string> = { teamId: String(teamId) }
+      const queryParams: Record<string, string | number> = { teamId }
       if (userAddress) {
         queryParams.memberAddress = userAddress
       }
