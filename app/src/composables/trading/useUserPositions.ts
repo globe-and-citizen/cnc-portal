@@ -23,7 +23,6 @@ export function useUserPositions(safeAddress: MaybeRefOrGetter<string | undefine
   const positionsQuery = useQuery({
     queryKey: ['polymarket-positions', toValue(safeAddress)],
     queryFn: async (): Promise<Trade[]> => {
-      console.log('Safe address: ', safeAddress)
       if (!safeAddress) return []
       // Fetch positions using Axios (parallel requests)
       const [openRes, closedRes] = await Promise.all([
