@@ -1,5 +1,5 @@
 <template>
-  <span class="font-bold text-2xl">{{ title || 'Deposit to Team Bank Contract' }}</span>
+  <span class="font-bold text-2xl">Deposit to Team Safe Contract</span>
 
   <div v-if="selectedToken?.token.id !== 'native'" class="steps w-full my-4">
     <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
@@ -51,19 +51,6 @@
       }}
     </ButtonUI>
   </div>
-  <!-- You can use timeline for debuging -->
-  <!-- <TransactionTimeline
-    v-if="ERC20ApproveResult.timelineSteps.value && currentStep === 2"
-    :show="true"
-    :steps="ERC20ApproveResult.timelineSteps.value"
-    title="Bank Spending Cap Approval"
-  />
-  <TransactionTimeline
-    v-if="bankDepositTokenResult.timelineSteps.value && currentStep === 3"
-    :show="true"
-    :steps="bankDepositTokenResult.timelineSteps.value"
-    title="Bank Deposit"
-    />  -->
 </template>
 
 <script setup lang="ts">
@@ -73,25 +60,22 @@ import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
-import { useDepositToken } from '@/composables/bank/bankWrites'
-import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
+import { SUPPORTED_TOKENS, type TokenId, USDC_ADDRESS } from '@/constant'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import ButtonUI from '../ButtonUI.vue'
 import TokenAmount from './TokenAmount.vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useChainId } from '@wagmi/vue'
-
-// import { formatDataForDisplay, parseError } from '@/utils'
-// import TransactionTimeline from '../ui/TransactionTimeline.vue'
+import { useChainId, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import { ERC20_ABI } from '@/artifacts/abi/erc20'
+import { waitForTransactionReceipt } from '@wagmi/core'
+import { config } from '@/wagmi.config'
 
 const queryClient = useQueryClient()
 const chainId = useChainId()
 
 const emits = defineEmits(['closeModal'])
-// Add validation event
 const props = defineProps<{
-  bankAddress: Address
-  title?: string
+  safeAddress: Address
 }>()
 
 function reset() {
@@ -106,17 +90,17 @@ defineExpose({ reset })
 
 // Component state
 const amount = ref<string>('')
-const selectedTokenId = ref<TokenId>('native') // Default to native token (ETH)
+const selectedTokenId = ref<TokenId>('native')
 const currentStep = ref(1)
 const submitting = ref(false)
-const isAmountValid = ref(false) // Validation state used by TokenAmount component
+const isAmountValid = ref(false)
 
 // Stores
 const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
 
-// Reactive state for balances: composable that fetches address balances
+// Reactive state for balances
 const { balances, isLoading } = useContractBalance(userDataStore.address as Address)
 
 // Native token deposit using safe transaction handler
@@ -125,17 +109,15 @@ const {
   isLoading: isNativeDepositLoading,
   isConfirmed: isNativeDepositConfirmed,
   receipt: nativeReceipt
-  // error: nativeDepositError
 } = useSafeSendTransaction()
 
 // Computed properties
-// Token list derived from SUPPORTED_TOKENS
 const tokenList = computed(() =>
   SUPPORTED_TOKENS.map((token) => ({
     symbol: token.symbol,
     tokenId: token.id,
     name: token.name,
-    code: token.code, // Add the missing 'code' property
+    code: token.code,
     balance: balances.value.find((b) => b.token.id === token.id)?.amount ?? 0,
     price: currencyStore.getTokenPrice(token.id)
   }))
@@ -152,21 +134,27 @@ const selectedTokenAddress = computed<Address>(
 const { data: allowance } = useErc20Allowance(
   selectedTokenAddress,
   userDataStore.address as Address,
-  props.bankAddress
+  props.safeAddress
 )
 
 // Computed values for approval composable
-const bigIntAmount = computed(() => BigInt(Number(amount.value) * 1e6))
+const bigIntAmount = computed(() => {
+  // Handle NaN case
+  return isNaN(Number(amount.value)) ? 0n : BigInt(Number(amount.value) * 1e6)
+})
 
 const ERC20ApproveResult = useERC20Approve(
   selectedTokenAddress,
-  computed(() => props.bankAddress),
+  computed(() => props.safeAddress),
   bigIntAmount
 )
 
-const bankDepositTokenResult = useDepositToken(selectedTokenAddress, bigIntAmount)
+// ERC20 transfer for Safe
+const { data: transferHash, writeContractAsync: writeTransfer } = useWriteContract()
 
-// Methods
+useWaitForTransactionReceipt({
+  hash: transferHash
+})
 
 // Success handling
 watch(isNativeDepositConfirmed, (confirmed) => {
@@ -176,23 +164,22 @@ watch(isNativeDepositConfirmed, (confirmed) => {
     emits('closeModal')
   }
 })
-// Remove unused notZero and notExceedingBalance
 
 const submitForm = async () => {
-  if (!isAmountValid.value) return // Validation check
-  // TODO: handle multiple submission for native and erc20
-  if (isNativeDepositLoading.value) return // Prevent multiple submissions
+  if (!isAmountValid.value) return
+  if (isNativeDepositLoading.value) return
   submitting.value = true
   try {
     // Deposit of native token (ETH/POL...)
     if (selectedTokenId.value === 'native') {
-      await sendTransaction(props.bankAddress, parseEther(amount.value))
+      await sendTransaction(props.safeAddress, parseEther(amount.value))
     } else {
+      // USDC deposit workflow - step 1 to 2 to 3 in one execution
       if (!((allowance.value ?? 0n) >= bigIntAmount.value)) {
         currentStep.value = 2
 
-        // Run spending cap
-        await ERC20ApproveResult.executeWrite([props.bankAddress, bigIntAmount.value])
+        // Run spending cap approval and wait for confirmation
+        await ERC20ApproveResult.executeWrite([props.safeAddress, bigIntAmount.value])
         if (
           ERC20ApproveResult.receiptResult.error.value ||
           ERC20ApproveResult.writeResult.error.value
@@ -200,9 +187,26 @@ const submitForm = async () => {
           throw new Error('Approval failed')
         }
       }
-      currentStep.value = 3
-      await bankDepositTokenResult.executeWrite([selectedTokenAddress.value, bigIntAmount.value])
 
+      // Step 3: Proceed to transfer (continue from step 2 if approval was done)
+      currentStep.value = 3
+
+      // Transfer USDC to Safe (not deposit to a bank contract)
+      await writeTransfer({
+        address: USDC_ADDRESS as Address,
+        abi: ERC20_ABI,
+        functionName: 'transfer',
+        args: [props.safeAddress, bigIntAmount.value]
+      })
+
+      if (!transferHash.value) {
+        throw new Error('Transfer transaction not initiated')
+      }
+
+      // Wait for transaction confirmation
+      await waitForTransactionReceipt(config, { hash: transferHash.value })
+
+      // Invalidate ERC20 balance query for Safe
       const invalidateErc20Balance = (tokenAddress: Address, target: Address) =>
         queryClient.invalidateQueries({
           queryKey: [
@@ -216,26 +220,22 @@ const submitForm = async () => {
           ]
         })
 
-      invalidateErc20Balance(selectedTokenAddress.value, props.bankAddress)
+      invalidateErc20Balance(USDC_ADDRESS as Address, props.safeAddress)
 
-      // Check if bankDepositTokenResult has an error
-      if (
-        bankDepositTokenResult.receiptResult.error.value ||
-        bankDepositTokenResult.writeResult.error.value
-      ) {
-        throw new Error('Deposit failed')
-      }
+      // Also invalidate native balance
+      await queryClient.invalidateQueries({
+        queryKey: ['balance', { address: props.safeAddress, chainId }]
+      })
 
       submitting.value = false
       amount.value = ''
       addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
       emits('closeModal')
     }
-  } catch {
-    // console.error(error)
+  } catch (error) {
+    console.error('Deposit failed:', error)
     addErrorToast(`Failed to deposit ${selectedTokenId.value}`)
     submitting.value = false
-    // currentStep.value = 1
   }
 }
 </script>
