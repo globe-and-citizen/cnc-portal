@@ -75,11 +75,10 @@
       data-test="deposit-modal"
       @reset="() => (depositModal = { mount: false, show: false })"
     >
-      <DepositBankForm
-        title="Deposit to Safe Contract"
+      <DepositSafeForm
         v-if="teamStore.currentTeamMeta?.data?.safeAddress"
-        @close-modal="() => (depositModal = { mount: false, show: false })"
-        :bank-address="teamStore.currentTeamMeta?.data?.safeAddress"
+        :safe-address="teamStore.currentTeamMeta?.data?.safeAddress"
+        @close-modal="closeDepositModal"
       />
     </ModalComponent>
 
@@ -127,7 +126,11 @@ import { useSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
 import { useSafeTransfer } from '@/composables/safe'
+import { useQueryClient } from '@tanstack/vue-query'
+import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
+
 const chainId = useChainId()
+const queryClient = useQueryClient()
 const currency = useStorage('currency', {
   code: 'USD',
   name: 'US Dollar',
@@ -223,10 +226,14 @@ const handleTransfer = async (transferData: TransferModel) => {
   if (result) {
     resetTransferValues()
     // Optionally invalidate queries to refresh balances
-    // await QueryClient.invalidateQueries({
-    //   queryKey: ['safe', 'info', { safeAddress }]
-    // })
+    await queryClient.invalidateQueries({
+      queryKey: ['safe', 'info', { safeAddress }]
+    })
   }
+}
+
+const closeDepositModal = async () => {
+  depositModal.value = { mount: false, show: false }
 }
 
 // Transfer logic intentionally removed (display-only)
