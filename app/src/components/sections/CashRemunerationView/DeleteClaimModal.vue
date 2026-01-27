@@ -54,7 +54,6 @@ const emit = defineEmits<{
 }>()
 
 const toastStore = useToastStore()
-// const teamStore = useTeamStore()
 const queryClient = useQueryClient()
 
 const formattedDate = computed(() => {
