@@ -1,5 +1,5 @@
 import type { Member } from '@/types'
-import { getDerivedSafeAddress, checkSafeDeployed } from './safeDeploymentUtils'
+import { deriveSafeFromEoa, checkSafeDeployed } from './safeDeploymentUtils'
 import { checkAllApprovals } from '@/utils/trading/approvalsUtil'
 import type { RelayClient } from '@polymarket/builder-relayer-client'
 
@@ -12,31 +12,36 @@ export interface SafeWallet {
 
 export const processValidMemberSafes = async (
   members: Array<Member>,
-  relayClient: RelayClient
+  relayClient: RelayClient,
+  systemOwners: `0x${string}`[]
 ): Promise<SafeWallet[]> => {
-  
   // 1. Derive addresses and check deployment in parallel
   const deploymentResults = await Promise.all(
     members.map(async (member) => {
-      const safeAddress = getDerivedSafeAddress(member.address)
+      const safeAddress = deriveSafeFromEoa(member.address)
       if (!safeAddress) return null
-      
+
       const isDeployed = await checkSafeDeployed(relayClient, safeAddress)
       return isDeployed ? { ...member, safeAddress } : null
     })
   )
 
   // 2. Filter out non-deployed or underived safes
-  const deployedMembers = deploymentResults.filter((m): m is (Member & { safeAddress: string }) => m !== null)
+  const deployedMembers = deploymentResults.filter(
+    (m): m is Member & { safeAddress: string } => m !== null
+  )
 
   // 3. Run approval checks in parallel for all deployed safes
   const approvalResultsArray = await Promise.all(
-    deployedMembers.map(m => checkAllApprovals(m.safeAddress))
+    deployedMembers.map((m) => checkAllApprovals(m.safeAddress, systemOwners))
   )
 
   // 4. Final filter based on isSetupComplete and map to store structure
   return deployedMembers
-    .filter((_, index) => index < approvalResultsArray.length && approvalResultsArray[index]?.isSetupComplete)
+    .filter(
+      (_, index) =>
+        index < approvalResultsArray.length && approvalResultsArray[index]?.isSetupComplete
+    )
     .map((member) => ({
       address: member.safeAddress,
       name: `${member.name}'s Safe`,
