@@ -10,7 +10,7 @@
           <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4 text-primary" />
           <div class="text-left">
             <div class="font-medium">
-              {{ /* traderSafesStore.  */ selectedSafe?.name || 'Select Safe' }}
+              {{ selectedSafe?.name || 'Select Safe' }}
             </div>
             <!-- <div v-if="selectedSafe" class="text-xs text-base-content/70">
               {{ truncateAddress(selectedSafe.address) }}
@@ -30,14 +30,14 @@
       class="absolute z-50 mt-2 w-64 bg-base-100 rounded-lg shadow-lg border border-base-300"
     >
       <ul class="menu p-2 max-h-64 overflow-y-auto">
-        <li v-if="traderSafesStore.safes?.length === 0" class="disabled">
+        <li v-if="safes?.length === 0" class="disabled">
           <div class="py-3 text-center text-sm text-base-content/70">No safes available</div>
         </li>
 
         <li
-          v-for="safe in /* traderSafesStore. */ safes"
+          v-for="safe in safes"
           :key="safe.address"
-          :class="{ 'bg-base-200': /* traderSafesStore. */ selectedSafe?.address === safe.address }"
+          :class="{ 'bg-base-200': selectedSafe?.address === safe.address }"
         >
           <a @click="selectSafe(safe)" class="py-2">
             <div class="flex items-center justify-between w-full">
@@ -62,14 +62,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { useTraderSafesStore } from '@/stores'
-import { useRelayClient, useUserPositions } from '@/composables/trading'
-// import { processValidMemberSafes } from '@/utils/trading/safeSelectorUtil'
-import { useTeamStore, useUserDataStore } from '@/stores'
+import { useUserPositions } from '@/composables/trading'
 import { deriveSafeFromEoa } from '@/utils/trading/safeDeploymentUtils'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useTeamSafes } from '@/composables/safe'
 
 interface SafeWallet {
@@ -78,17 +75,9 @@ interface SafeWallet {
   balance: string
 }
 
-// const props = defineProps<{
-//   safes: SafeWallet[]
-// }>()
-
-const traderSafesStore = useTraderSafesStore()
-const teamStore = useTeamStore()
-const userDataStore = useUserDataStore()
 const route = useRoute()
+const router = useRouter()
 const { selectedSafe, safes } = useTeamSafes()
-const { getOrInitializeRelayClient, isLoading, isReady } = useRelayClient()
-// const derivedSafeAddressFromEoa = computed(() => traderSafesStore.selectedSafe?.address)
 const derivedSafeAddressFromEoa = computed(() => {
   const isTradingRoute = route.path.includes('/trading/')
   const address = route.params.address as string
@@ -96,28 +85,6 @@ const derivedSafeAddressFromEoa = computed(() => {
 })
 const { refetch } = useUserPositions(derivedSafeAddressFromEoa)
 const isOpen = ref(false)
-
-// const safes = ref<SafeWallet[] | null>(null)
-
-// const safes = ref<SafeWallet[]>([
-//   {
-//     address: '0x1234567890abcdef1234567890abcdef12345678',
-//     name: 'Personal Safe',
-//     balance: '1.2543'
-//   },
-//   {
-//     address: '0xabcdef1234567890abcdef1234567890abcdef12',
-//     name: 'DAO Treasury',
-//     balance: '45.6789'
-//   },
-//   {
-//     address: '0x7890abcdef1234567890abcdef1234567890abcd',
-//     name: 'Team Multisig',
-//     balance: '12.3456'
-//   }
-// ])
-
-// const selectedSafe = ref<SafeWallet | undefined>(props.safes[0])
 
 const truncateAddress = (address: string): string => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
@@ -134,10 +101,19 @@ const toggleDropdown = () => {
 
 const selectSafe = async (safe: SafeWallet) => {
   // selectedSafe.value = safe
-  traderSafesStore.setSelectedSafe(safe)
-  await refetch()
+  // traderSafesStore.setSelectedSafe(safe)
+  if (route.name === 'trading') {
+    router.push({
+      name: 'trading',
+      params: {
+        ...route.params, // Keeps teamId and other existing params
+        address: safe.address
+      }
+    })
+    await refetch()
+  }
   isOpen.value = false
-  console.log('Selected safe:', safe)
+  console.log('Selected safe:', safe.address)
 }
 
 // Close dropdown when clicking outside
@@ -148,21 +124,8 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 }
 
-watch(
-  [() => teamStore.currentTeamMeta.data?.members, isLoading, isReady],
-  async ([members, , newIsReady]) => {
-    if (members && newIsReady) {
-      // const relayClient = await getOrInitializeRelayClient()
-      // safes.value = await processValidMemberSafes(members, relayClient)
-      console.log('Processing safes for members:', members)
-    }
-  },
-  { immediate: true }
-)
-
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  console.log('Loaded', traderSafesStore.safes.length, 'safes')
 })
 
 onUnmounted(() => {
