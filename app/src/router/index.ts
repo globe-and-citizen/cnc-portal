@@ -78,7 +78,7 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/Accounts/CashRemunerationView.vue')
         },
         {
-          path: '/teams/:id/trading',
+          path: '/teams/:id/trading/:address',
           name: 'trading',
           meta: { name: 'Trading' },
           component: () => import('@/views/team/[id]/TradingView.vue')
