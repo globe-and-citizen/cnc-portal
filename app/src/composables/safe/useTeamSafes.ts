@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useTeamStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore, type SafeWallet } from '@/stores'
 import { deriveSafeFromEoa } from '@/utils/trading/safeDeploymentUtils'
 
 export const useTeamSafes = () => {
@@ -20,7 +20,7 @@ export const useTeamSafes = () => {
     )
   })
 
-  const getSelectedSafeAddress = computed(() => {
+  const initialSafe = computed(() => {
     return (
       safes.value.find(
         (s) =>
@@ -30,8 +30,14 @@ export const useTeamSafes = () => {
     )
   })
 
+  const selectedSafe = computed<SafeWallet | undefined>(() => {
+    const address = route.params.address as string
+    return safes.value.find((s) => s.address.toLocaleLowerCase() === address.toLocaleLowerCase())
+  })
+
   return {
     safes,
-    getSelectedSafeAddress
+    initialSafe,
+    selectedSafe
   }
 }
