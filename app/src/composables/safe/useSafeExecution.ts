@@ -2,12 +2,10 @@ import { ref } from 'vue'
 import { useConnection, useChainId } from '@wagmi/vue'
 import { isAddress } from 'viem'
 import { useToastStore } from '@/stores'
-import {
-  useExecuteTransactionMutation,
-  useSafeTransactionQuery // Use Safe query
-} from '@/queries/safe.queries'
+import { useExecuteTransactionMutation } from '@/queries/safe.queries'
 import { useSafeSDK } from './useSafeSdk'
-import type { SafeTransaction as ProtocolSafeTransaction } from '@safe-global/types-kit'
+import type { SafeTransaction, SafeMultisigTransactionResponse } from '@/types/safe'
+import { transformToSafeMultisigResponse } from '@/utils/safe'
 
 /**
  * Execute Safe transactions
@@ -24,10 +22,14 @@ export function useSafeExecution() {
 
   /**
    * Execute a Safe transaction on-chain
+   * @param safeAddress - Safe wallet address
+   * @param safeTxHash - Transaction hash
+   * @param transactionData - Optional transaction data (avoids additional query)
    */
   const executeTransaction = async (
     safeAddress: string,
-    safeTxHash: string
+    safeTxHash: string,
+    transactionData?: SafeTransaction
   ): Promise<string | null> => {
     if (!isAddress(safeAddress)) {
       error.value = new Error('Invalid Safe address')
@@ -53,29 +55,28 @@ export function useSafeExecution() {
     try {
       const currentChainId = chainId.value
 
-      // Use Safe query instead of direct Axios
-      const transactionQuery = useSafeTransactionQuery(safeTxHash)
-      const transactionData = transactionQuery?.data?.value
-
+      // Use provided transaction data or throw error
       if (!transactionData) {
-        error.value = new Error('Transaction data not found')
-        addErrorToast('Transaction data not found')
-        return null
+        throw new Error(
+          'Transaction data is required. Please pass the transaction data from the component.'
+        )
       }
 
       // Use centralized SDK manager
       const safeSdk = await loadSafe(safeAddress)
 
-      // Execute the transaction on-chain (cast to protocol SafeTransaction for typing)
-      const protocolTx = transactionData as unknown as ProtocolSafeTransaction
-      const txResponse = await safeSdk.executeTransaction(protocolTx)
+      const sdkTransactionData: SafeMultisigTransactionResponse =
+        transformToSafeMultisigResponse(transactionData)
+      // Execute the transaction on-chain
+      const txResponse = await safeSdk.executeTransaction(sdkTransactionData)
       const txHash =
         (txResponse.transactionResponse as { hash?: string } | undefined)?.hash || txResponse.hash
 
-      // Wait for confirmation
+      // Wait for confirmation (if available)
       const waitFn = (
         txResponse.transactionResponse as { wait?: () => Promise<unknown> } | undefined
       )?.wait
+
       if (typeof waitFn === 'function') {
         await waitFn()
       }
@@ -93,7 +94,11 @@ export function useSafeExecution() {
     } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to execute transaction')
       console.error('Safe execution error:', err)
-      addErrorToast(error.value.message)
+      addErrorToast(
+        error.value.message.includes('User rejected')
+          ? 'Transaction  rejected'
+          : error.value.message
+      )
       return null
     } finally {
       isExecuting.value = false
