@@ -13,7 +13,7 @@ export function useSafeProposal() {
   const chainId = useChainId()
   const { addSuccessToast, addErrorToast } = useToastStore()
   const mutation = useProposeTransactionMutation()
-  const { loadSafe } = useSafeSDK() // Use centralized SDK
+  const { loadSafe } = useSafeSDK()
 
   const isProposing = ref(false)
   const error = ref<Error | null>(null)
@@ -46,7 +46,6 @@ export function useSafeProposal() {
     error.value = null
 
     try {
-      // Use centralized SDK manager (no duplication)
       const safeSdk = await loadSafe(safeAddress)
 
       // Create Safe transaction
@@ -61,19 +60,32 @@ export function useSafeProposal() {
         ]
       })
 
-      // Get transaction hash and sign
+      // Get transaction hash
       const safeTxHash = await safeSdk.getTransactionHash(safeTransaction)
+
+      // Sign the transaction hash
       const signature = await safeSdk.signHash(safeTxHash)
 
-      // Propose via mutation
+      // Propose to Safe Transaction Service with all required fields
       await mutation.mutateAsync({
         chainId: chainId.value,
         safeAddress,
-        transactionData: safeTransaction.data,
-        signature: {
-          data: signature.data,
-          signer: connection.address.value
-        }
+        safeTxHash,
+        transactionData: {
+          to: transactionData.to,
+          value: transactionData.value,
+          data: transactionData.data,
+          operation: transactionData.operation ?? 0,
+          safeTxGas: '0',
+          baseGas: '0',
+          gasPrice: '0',
+          gasToken: '0x0000000000000000000000000000000000000000',
+          refundReceiver: '0x0000000000000000000000000000000000000000',
+          nonce: await safeSdk.getNonce()
+        },
+        sender: connection.address.value,
+        signature: signature.data,
+        origin: window.location.origin
       })
 
       addSuccessToast('Transaction proposed successfully')
@@ -81,7 +93,11 @@ export function useSafeProposal() {
     } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to propose transaction')
       console.error('Safe proposal error:', err)
-      addErrorToast(error.value.message)
+      addErrorToast(
+        error.value.message.includes('User rejected')
+          ? 'Transaction approval rejected'
+          : error.value.message
+      )
       return null
     } finally {
       isProposing.value = false

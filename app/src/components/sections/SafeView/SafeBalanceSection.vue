@@ -76,9 +76,10 @@
       @reset="() => closeDepositModal()"
     >
       <DepositBankForm
-        v-if="safeAddress"
+        title="Deposit to Safe Contract"
+        v-if="teamStore.currentTeamMeta?.data?.safeAddress"
         @close-modal="closeDepositModal"
-        :bank-address="safeAddress"
+        :bank-address="teamStore.currentTeamMeta?.data?.safeAddress"
       />
     </ModalComponent>
 
@@ -93,7 +94,8 @@
       <TransferForm
         v-model="transferData"
         :tokens="tokens"
-        :loading="false"
+        :loading="isTransferring"
+        @transfer="handleTransfer"
         @closeModal="resetTransferValues"
       >
         <template #header>
@@ -126,7 +128,7 @@ import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
-
+import { useSafeTransfer } from '@/composables/safe'
 const chainId = useChainId()
 const queryClient = useQueryClient()
 const currency = useStorage('currency', {
@@ -135,16 +137,10 @@ const currency = useStorage('currency', {
   symbol: '$'
 })
 
-const props = defineProps<{
-  bankAddress?: Address
-}>()
-
 const teamStore = useTeamStore()
 
-const safeAddress = computed(() => teamStore.currentTeam?.safeAddress || props.bankAddress)
-
 const { total, balances, isLoading } = useContractBalance(
-  computed(() => safeAddress.value || ('0x' as Address))
+  computed(() => teamStore.currentTeam?.safeAddress || ('0x' as Address))
 )
 
 const getTokens = (): TokenOption[] =>
@@ -172,24 +168,12 @@ const transferModal = ref({
   show: false
 })
 
+const { transferFromSafe, isTransferring } = useSafeTransfer()
+
 // New Safe data composable with built-in query reactivity
 const { data: safeInfo } = useSafeInfoQuery(
   computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
 )
-
-// const displayUsdBalance = computed(
-//   () => safeInfo.value?.totals?.['USD']?.formated ?? safeInfo.value?.balance ?? 0
-// )
-
-// Note: safeInfo.totals is optional (see SafeInfo type). We use optional chaining and fall back
-// to the generic balance when the local currency or USD totals are not available.
-// const displayLocalBalance = computed(() => {
-//   const local = safeInfo.value?.totals?.[currency.value.code]?.formated
-//   if (local) return local
-//   const usd = safeInfo.value?.totals?.['USD']?.formated
-//   if (usd) return usd
-//   return safeInfo.value?.balance ?? 0
-// })
 
 const initialTransferDataValue = (): TransferModel => {
   const firstToken = tokens.value[0]
@@ -240,6 +224,27 @@ const transferData: Ref<TransferModel> = ref(initialTransferDataValue())
 const resetTransferValues = () => {
   transferModal.value = { mount: false, show: false }
   transferData.value = initialTransferDataValue()
+}
+
+const handleTransfer = async (transferData: TransferModel) => {
+  const safeAddress = teamStore.currentTeam?.safeAddress
+  if (!safeAddress) return
+
+  const options = {
+    to: transferData.address.address,
+    amount: transferData.amount,
+    tokenAddress: transferData.token.tokenId === 'native' ? undefined : transferData.token.tokenId
+  }
+
+  const result = await transferFromSafe(safeAddress, options)
+
+  if (result) {
+    resetTransferValues()
+    // Optionally invalidate queries to refresh balances
+    await queryClient.invalidateQueries({
+      queryKey: ['safe', 'info', { safeAddress }]
+    })
+  }
 }
 
 // Transfer logic intentionally removed (display-only)

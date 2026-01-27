@@ -226,7 +226,7 @@ describe('useSafeApproval', () => {
 
       expect(result).toBeNull()
       expect(error.value?.message).toBe('User rejected signature')
-      expect(mockAddErrorToast).toHaveBeenCalledWith('User rejected signature')
+      expect(mockAddErrorToast).toHaveBeenCalledWith('Transaction  rejected')
 
       consoleErrorSpy.mockRestore()
     })
