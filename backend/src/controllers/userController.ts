@@ -8,6 +8,7 @@ import {
   deleteFile,
   isStorageConfigured,
 } from '../services/storageService';
+import { isUserPartOfTheTeam } from '../utils/teamUtils';
 
 // Type for requests with multer file
 interface MulterRequest extends Request {
@@ -70,11 +71,13 @@ export const getUser = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   const { address } = req.params;
-  const { name, imageUrl } = req.body;
+  const { name, imageUrl, traderSafeAddress, teamId } = req.body;
   const callerAddress = req.address;
   const multerReq = req as MulterRequest;
 
   try {
+    console.log('traderSafeAddress: ', traderSafeAddress)
+    console.log('teamId: ', teamId)
     if (!callerAddress) return errorResponse(401, 'Update user error: Missing user address', res);
 
     if (callerAddress !== address) {
@@ -87,6 +90,7 @@ export const updateUser = async (req: Request, res: Response) => {
         address: true,
         name: true,
         imageUrl: true,
+        traderSafeAddress: true,
       },
     });
 
@@ -132,13 +136,38 @@ export const updateUser = async (req: Request, res: Response) => {
       data: {
         ...(name !== undefined && { name }),
         ...(newImageUrl !== undefined && { imageUrl: newImageUrl }),
+        ...(traderSafeAddress !== undefined && { traderSafeAddress }),
       },
       select: {
         address: true,
         name: true,
         imageUrl: true,
+        traderSafeAddress: true,
       },
     });
+
+    if (teamId && traderSafeAddress) {
+      const team = await prisma.team.findUnique({ 
+        where: { id: Number(teamId) },
+        include: {
+          members: true
+        }
+      })
+      const members = team?.members
+      if (isUserPartOfTheTeam(members || [], callerAddress)) {
+        await prisma.memberTeamsData.update({
+          where: {
+            memberAddress_teamId: {
+              memberAddress: callerAddress,
+              teamId: Number(teamId),
+            },
+          },
+          data: {
+            isTrader: true
+          },
+      })
+      }
+    }
 
     return res.status(200).json(updatedUser);
   } catch (error) {
