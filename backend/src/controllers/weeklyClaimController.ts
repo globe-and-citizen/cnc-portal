@@ -121,7 +121,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 
         if (disableErrors.length > 0) return errorResponse(400, disableErrors.join('; '), res);
 
-        data = { signature, status: 'disabled'};
+        data = { signature, status: 'disabled' };
         // singleClaimStatus = "signed";
         break;
       }
