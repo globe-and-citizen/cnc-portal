@@ -121,3 +121,9 @@ export const CHAIN_NAMES: Record<number, string> = {
   80002: 'amoy',
   42161: 'arbitrum'
 }
+
+export interface SafeWallet {
+  address: string
+  name: string
+  balance: string
+}

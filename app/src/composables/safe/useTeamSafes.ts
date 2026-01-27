@@ -1,7 +1,8 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useTeamStore, useUserDataStore, type SafeWallet } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { deriveSafeFromEoa } from '@/utils/trading/safeDeploymentUtils'
+import type { SafeWallet } from '@/types'
 
 export const useTeamSafes = () => {
   const teamStore = useTeamStore()
