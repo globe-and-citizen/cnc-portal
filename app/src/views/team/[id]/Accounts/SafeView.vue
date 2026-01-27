@@ -1,7 +1,7 @@
 <!-- filepath: app/src/views/team/[id]/Accounts/SafeView.vue -->
 <template>
   <div class="flex flex-col gap-6">
-    <SafeBalanceSection ref="safeBalanceSection" />
+    <SafeBalanceSection />
 
     <GenericTokenHoldingsSection
       v-if="teamStore.currentTeam?.safeAddress"
