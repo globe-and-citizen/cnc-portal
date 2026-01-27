@@ -3,6 +3,20 @@ import { describe, expect, it, vi } from 'vitest'
 import NavBar from '@/components/NavBar.vue'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
+import { useRouter } from 'vue-router'
+
+vi.mock('vue-router', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useRouter: vi.fn(() => ({
+      push: vi.fn()
+    })),
+    useRoute: vi.fn(() => ({
+      name: ''
+    }))
+  }
+})
 
 describe('NavBar', () => {
   const props = {
