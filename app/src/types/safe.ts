@@ -177,3 +177,9 @@ export const CHAIN_NAMES: Record<number, string> = {
 export type SafeTransactionConfirmation = SafeConfirmation
 
 export type SafeTransactionConfirmations = SafeTransactionConfirmation[]
+
+export interface SafeWallet {
+  address: string
+  name: string
+  balance: string
+}
