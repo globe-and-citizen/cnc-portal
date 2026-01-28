@@ -3,7 +3,6 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
 import { createTestingPinia } from '@pinia/testing'
 
-
 describe('UploadFileDB', () => {
   let wrapper: ReturnType<typeof mount>
 

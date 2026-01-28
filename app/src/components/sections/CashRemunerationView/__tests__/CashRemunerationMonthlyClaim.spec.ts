@@ -7,7 +7,6 @@ import { ref } from 'vue'
 const mockError = ref<unknown>(null)
 // const mockToastError = vi.fn()
 
-
 // vi.mock('@/stores', async (importOriginal) => {
 //   const actual: object = await importOriginal()
 //   return {

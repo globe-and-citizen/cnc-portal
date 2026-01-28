@@ -1,10 +1,10 @@
 import { vi } from 'vitest'
 import { queryMocks } from '@/tests/mocks/query.mock'
-import { 
-  mockUseBackendWake, 
-  mockUseAuth, 
-  mockUseContractBalance, 
-  mockUseSafeSendTransaction 
+import {
+  mockUseBackendWake,
+  mockUseAuth,
+  mockUseContractBalance,
+  mockUseSafeSendTransaction
 } from '@/tests/mocks/composables.mock'
 
 /**
@@ -23,7 +23,7 @@ vi.mock('@tanstack/vue-query', async () => {
         removeQueries: vi.fn()
       }
     }),
-    useQuery:vi.fn(() => {
+    useQuery: vi.fn(() => {
       return {
         data: vi.fn(),
         isLoading: vi.fn(),

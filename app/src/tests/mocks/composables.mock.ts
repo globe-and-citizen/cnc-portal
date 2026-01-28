@@ -129,7 +129,7 @@ export const resetComposableMocks = () => {
   mockUseSafeSendTransaction.receipt.value = null
 
   // Clear all native transaction function mocks
-  Object.values(mockTransactionFunctions).forEach(mock => {
+  Object.values(mockTransactionFunctions).forEach((mock) => {
     if (vi.isMockFunction(mock)) {
       mock.mockClear()
     }

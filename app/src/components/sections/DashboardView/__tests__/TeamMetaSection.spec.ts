@@ -13,7 +13,6 @@ vi.mock('vue-router', async (importOriginal) => {
   }
 })
 
-
 interface ComponentData {
   showDeleteTeamConfirmModal: boolean
   updateTeamModalOpen: () => Promise<void>
@@ -141,7 +140,6 @@ describe('TeamMetaSection.vue', () => {
     const updateForm = wrapper.findComponent({ name: 'UpdateTeamForm' })
     await updateForm.vm.$emit('updateTeam')
     await flushPromises()
-
   })
 
   it('opens update team modal when updateTeamModalOpen event is emitted from TeamDetails', async () => {

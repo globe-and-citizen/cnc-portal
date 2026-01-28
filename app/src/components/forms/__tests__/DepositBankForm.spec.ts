@@ -166,7 +166,7 @@ describe('DepositBankForm.vue', () => {
   describe('Native Token Deposit', () => {
     it('should show success toast and close modal after successful native deposit', async () => {
       mockSendTransaction.mockResolvedValueOnce({})
-      const wrapper = createWrapper({title: 'Deposit Bank Form'}, mount)
+      const wrapper = createWrapper({ title: 'Deposit Bank Form' }, mount)
 
       await setTokenAmount(wrapper, '1', 'native', true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
@@ -191,7 +191,9 @@ describe('DepositBankForm.vue', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(expect.stringContaining('Failed to deposit'))
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to deposit')
+      )
     })
 
     it('should not submit when form is invalid', async () => {

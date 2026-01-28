@@ -10,7 +10,6 @@ interface ComponentData {
   transferOwnershipModal: boolean
 }
 
-
 // Define proper types for the mocks
 type MockError = Error | null
 

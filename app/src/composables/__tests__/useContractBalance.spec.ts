@@ -4,7 +4,6 @@ import { useContractBalance } from '../useContractBalance'
 import type { Address } from 'viem'
 import { ref } from 'vue'
 
-
 const mockUseBalance = {
   data: ref<{ value: bigint } | null>(null),
   isLoading: ref(false),

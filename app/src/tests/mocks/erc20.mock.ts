@@ -57,10 +57,10 @@ export const mockERC20Reads = {
   // String values
   name: createERC20ReadMock('Mock Token'),
   symbol: createERC20ReadMock('MTK'),
-  
+
   // Number values
   decimals: createERC20ReadMock(18),
-  
+
   // BigInt values
   totalSupply: createERC20ReadMock(1000000n * 10n ** 18n),
   balanceOf: createERC20ReadMock(1000n * 10n ** 18n),
@@ -78,7 +78,7 @@ export const mockERC20Writes = {
  */
 export const resetERC20Mocks = () => {
   // Reset read mocks
-  Object.values(mockERC20Reads).forEach(mock => {
+  Object.values(mockERC20Reads).forEach((mock) => {
     mock.error.value = null
     mock.isLoading.value = false
     mock.isSuccess.value = true
@@ -86,14 +86,14 @@ export const resetERC20Mocks = () => {
     mock.isFetched.value = true
     mock.isPending.value = false
     mock.status.value = 'success'
-    
+
     if (vi.isMockFunction(mock.refetch)) {
       mock.refetch.mockClear()
     }
   })
 
   // Reset write mocks
-  Object.values(mockERC20Writes).forEach(mock => {
+  Object.values(mockERC20Writes).forEach((mock) => {
     // Reset write results
     mock.writeResult.data.value = null
     mock.writeResult.error.value = null
@@ -121,5 +121,5 @@ export const resetERC20Mocks = () => {
 
   // Set default values for common scenarios
   mockERC20Reads.allowance.data.value = 1000000n * 10n ** 18n // High allowance by default
-  mockERC20Reads.balanceOf.data.value = 1000n * 10n ** 18n     // 1000 tokens balance
+  mockERC20Reads.balanceOf.data.value = 1000n * 10n ** 18n // 1000 tokens balance
 }

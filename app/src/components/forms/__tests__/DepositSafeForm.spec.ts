@@ -7,7 +7,7 @@ import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
 import { mainnet } from 'viem/chains'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
-import { 
+import {
   mockToastStore,
   mockTransactionFunctions,
   mockUseSafeSendTransaction,

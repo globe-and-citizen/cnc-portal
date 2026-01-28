@@ -8,7 +8,6 @@ import ClaimHistory from '../ClaimHistory.vue'
 const mockRefetch = vi.fn()
 const mockUseTeamWeeklyClaimsQuery = vi.fn()
 
-
 // --- Mock route ---
 const mockRoute = reactive({
   params: {
