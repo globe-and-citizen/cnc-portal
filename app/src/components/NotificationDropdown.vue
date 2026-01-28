@@ -105,7 +105,7 @@ const redirect = (notification: Notification) => {
 }
 
 const handleNotification = async (notification: Notification) => {
-  await updateNotification(notification.id)
+  await updateNotification({ id: notification.id })
   redirect(notification)
 }
 </script>

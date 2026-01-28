@@ -116,10 +116,10 @@ const showApprovalModal = ref(false)
 const selectedRow = ref<TableRow>({})
 const currentStep = ref<0 | 1 | 2>(0)
 
-const { data: bodActions } = useBodActionsQuery(
-  computed(() => teamStore.currentTeamId),
-  false
-)
+const { data: bodActions } = useBodActionsQuery({
+  teamId: computed(() => teamStore.currentTeamId),
+  isExecuted: false
+})
 
 const modalWidth = computed(() => {
   return currentStep.value === 1 ? 'w-1/2 max-w-4xl' : 'w-1/3 max-w-4xl'

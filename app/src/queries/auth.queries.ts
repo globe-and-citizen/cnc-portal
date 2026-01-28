@@ -3,6 +3,11 @@ import apiClient from '@/lib/axios'
 
 /**
  * Validate the current authentication token
+ *
+ * @endpoint GET /auth/token
+ * @params none
+ * @queryParams none
+ * @body none
  */
 export const useValidateTokenQuery = () => {
   return useQuery({

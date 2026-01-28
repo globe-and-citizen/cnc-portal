@@ -101,18 +101,21 @@ const deleteTeam = async () => {
     return
   }
 
-  deleteTeamMutate(String(teamId), {
-    onSuccess: async () => {
-      addSuccessToast('Team deleted successfully')
-      showDeleteTeamConfirmModal.value = false
-      // wait for 3 seconds to show the toast before navigating
-      await new Promise((resolve) => setTimeout(resolve, 3000))
-      router.push('/teams')
-    },
-    onError: () => {
-      addErrorToast(deleteTeamError.value?.message || 'Failed to delete team')
+  deleteTeamMutate(
+    { teamId: String(teamId) },
+    {
+      onSuccess: async () => {
+        addSuccessToast('Team deleted successfully')
+        showDeleteTeamConfirmModal.value = false
+        // wait for 3 seconds to show the toast before navigating
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        router.push('/teams')
+      },
+      onError: () => {
+        addErrorToast(deleteTeamError.value?.message || 'Failed to delete team')
+      }
     }
-  })
+  )
 }
 
 const updateTeamModalOpen = async () => {

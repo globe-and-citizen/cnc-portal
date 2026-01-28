@@ -10,6 +10,11 @@ export interface HealthCheckResponse {
 
 /**
  * Query for backend health check using Axios
+ *
+ * @endpoint GET /health
+ * @params none
+ * @queryParams none
+ * @body none
  */
 export const useBackendHealthQuery = () => {
   return useQuery<HealthCheckResponse>({

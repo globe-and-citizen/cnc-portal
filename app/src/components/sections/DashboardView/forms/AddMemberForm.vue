@@ -45,13 +45,19 @@ const {
   mutate: executeAddMembers,
   isPending: addMembersLoading,
   error: addMembersError
-} = useAddMembersMutation(props.teamId)
+} = useAddMembersMutation()
 
 // const statusCode = ref<number | null>(null)
 
 const handleAddMembers = async () => {
   executeAddMembers(
-    formData.value.map(({ address, name }) => ({ address, name })) as unknown as MemberInput[],
+    {
+      teamId: props.teamId,
+      members: formData.value.map(({ address, name }) => ({
+        address,
+        name
+      })) as unknown as MemberInput[]
+    },
     {
       onSuccess: () => {
         addSuccessToast('Members added successfully')

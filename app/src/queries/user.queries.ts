@@ -37,6 +37,11 @@ export const useUpdateUserMutation = () => {
 
 /**
  * Fetch user data by address
+ *
+ * @endpoint GET /user/{userAddress}
+ * @params { userAddress: Address } - URL path parameter
+ * @queryParams none
+ * @body none
  */
 export const useUserQuery = (address: MaybeRefOrGetter<Address | undefined>) => {
   return useQuery({
@@ -53,6 +58,11 @@ export const useUserQuery = (address: MaybeRefOrGetter<Address | undefined>) => 
 
 /**
  * Fetch user nonce by address (for SIWE)
+ *
+ * @endpoint GET /user/nonce/{userAddress}
+ * @params { userAddress: Address } - URL path parameter
+ * @queryParams none
+ * @body none
  */
 export const useUserNonceQuery = (address: MaybeRefOrGetter<Address | undefined>) => {
   return useQuery({

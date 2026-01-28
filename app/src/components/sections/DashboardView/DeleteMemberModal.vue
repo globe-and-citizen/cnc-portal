@@ -62,25 +62,28 @@ const emits = defineEmits<{
 
 const showModal = ref(false)
 
-const { mutate: executeDeleteMember, isPending: memberIsDeleting } = useDeleteMemberMutation(
-  props.teamId,
-  props.member.address || ''
-)
+const { mutate: executeDeleteMember, isPending: memberIsDeleting } = useDeleteMemberMutation()
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 const handleDelete = (): void => {
-  executeDeleteMember(undefined, {
-    onSuccess: () => {
-      addSuccessToast('Member deleted successfully')
-      showModal.value = false
-      emits('memberDeleted')
+  executeDeleteMember(
+    {
+      teamId: props.teamId,
+      memberAddress: props.member.address || ''
     },
-    onError: (error: AxiosError) => {
-      const err = error as AxiosError<{ message?: string }>
-      addErrorToast(err.response?.data?.message || 'Failed to delete member')
+    {
+      onSuccess: () => {
+        addSuccessToast('Member deleted successfully')
+        showModal.value = false
+        emits('memberDeleted')
+      },
+      onError: (error: AxiosError) => {
+        const err = error as AxiosError<{ message?: string }>
+        addErrorToast(err.response?.data?.message || 'Failed to delete member')
+      }
     }
-  })
+  )
 }
 </script>
 
