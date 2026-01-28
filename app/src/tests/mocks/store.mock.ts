@@ -1,4 +1,5 @@
 import { mockTeamData } from '@/tests/mocks/index'
+import type { ContractType } from '@/types/teamContract'
 import { vi } from 'vitest'
 import { ref } from 'vue'
 export const mockTeamStore = {
@@ -12,7 +13,7 @@ export const mockTeamStore = {
     reloadTeams: vi.fn()
   },
 
-  getContractAddressByType: vi.fn((type) => {
+  getContractAddressByType: vi.fn((type: ContractType) => {
     const contractAddresses = {
       Bank: '0x1111111111111111111111111111111111111111',
       InvestorV1: '0x2222222222222222222222222222222222222222',
