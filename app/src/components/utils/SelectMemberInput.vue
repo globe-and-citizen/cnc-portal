@@ -55,7 +55,7 @@
                 v-if="disableTeamMembers && isTeamMember(user)"
                 class="absolute hidden group-hover:block bg-gray-800 text-white text-sm rounded px-2 py-1 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap z-10"
               >
-                Already in your team
+                {{ props.hiddenMembersMessage }}
               </div>
             </div>
           </div>
@@ -79,13 +79,15 @@ interface Props {
   onlyTeamMembers?: boolean
   hiddenMembers: User[]
   disableTeamMembers: boolean
+  hiddenMembersMessage?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showOnFocus: false,
   onlyTeamMembers: false,
   hiddenMembers: () => [],
-  disableTeamMembers: false
+  disableTeamMembers: false,
+  hiddenMembersMessage: 'Already in your team'
 })
 
 const teamStore = useTeamStore()
