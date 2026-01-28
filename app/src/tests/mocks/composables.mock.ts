@@ -80,15 +80,6 @@ export const mockUseContractBalance = {
 }
 
 /**
- * Mock native transaction states
- */
-export const mockTransactionStates = {
-  nativeReceipt: ref<{ status: string } | null>(null),
-  isNativeDepositLoading: ref(false),
-  isNativeDepositConfirmed: ref(false)
-}
-
-/**
  * Mock native transaction functions
  */
 export const mockTransactionFunctions = {
@@ -102,9 +93,9 @@ export const mockTransactionFunctions = {
  */
 export const mockUseSafeSendTransaction = {
   sendTransaction: mockTransactionFunctions.mockSendTransaction,
-  isLoading: mockTransactionStates.isNativeDepositLoading,
-  isConfirmed: mockTransactionStates.isNativeDepositConfirmed,
-  receipt: mockTransactionStates.nativeReceipt
+  isLoading: ref(false),
+  isConfirmed: ref(false),
+  receipt: ref<{ status: string } | null>(null)
 }
 
 /**
@@ -133,9 +124,9 @@ export const resetComposableMocks = () => {
   mockUseContractBalance.error.value = null
 
   // Reset native transaction states
-  mockTransactionStates.isNativeDepositLoading.value = false
-  mockTransactionStates.isNativeDepositConfirmed.value = false
-  mockTransactionStates.nativeReceipt.value = null
+  mockUseSafeSendTransaction.isLoading.value = false
+  mockUseSafeSendTransaction.isConfirmed.value = false
+  mockUseSafeSendTransaction.receipt.value = null
 
   // Clear all native transaction function mocks
   Object.values(mockTransactionFunctions).forEach(mock => {

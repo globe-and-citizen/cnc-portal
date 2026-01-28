@@ -1,6 +1,4 @@
 import { mockTeamData } from '@/tests/mocks/index'
-import type { ContractType } from '@/types/index'
-import type { Address } from 'viem'
 import { vi } from 'vitest'
 import { ref } from 'vue'
 export const mockTeamStore = {

@@ -9,9 +9,8 @@ import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 import { 
   mockToastStore,
-  mockUseContractBalance,
-  mockTransactionStates,
   mockTransactionFunctions,
+  mockUseSafeSendTransaction,
   mockERC20Reads,
   mockERC20Writes,
   resetTransactionMocks,
@@ -101,8 +100,8 @@ describe('DepositSafeForm.vue', () => {
       await nextTick()
 
       // Simulate transaction confirmation
-      mockTransactionStates.isNativeDepositConfirmed.value = true
-      mockTransactionStates.nativeReceipt.value = { status: 'success' }
+      mockUseSafeSendTransaction.isConfirmed.value = true
+      mockUseSafeSendTransaction.receipt.value = { status: 'success' }
       await nextTick()
 
       expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
@@ -112,7 +111,7 @@ describe('DepositSafeForm.vue', () => {
     })
 
     it('should prevent multiple submissions while loading', async () => {
-      mockTransactionStates.isNativeDepositLoading.value = true
+      mockUseSafeSendTransaction.isLoading.value = true
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '1', 'native', true)
