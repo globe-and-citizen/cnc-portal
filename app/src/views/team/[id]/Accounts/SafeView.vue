@@ -32,6 +32,18 @@ import SafeOwnersCard from '@/components/sections/SafeView/SafeOwnersCard.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
 import { useTeamStore } from '@/stores'
+import { useTeamSafes } from '@/composables/safe'
+import { watch } from 'vue'
 
 const teamStore = useTeamStore()
+const { safes, selectedSafe } = useTeamSafes()
+
+watch(
+  [safes, selectedSafe],
+  ([newSafes, newSelectedSafe]) => {
+    console.log('Team Safes updated: ', newSafes)
+    console.log('Selected safe: ', newSelectedSafe)
+  },
+  { immediate: true }
+)
 </script>

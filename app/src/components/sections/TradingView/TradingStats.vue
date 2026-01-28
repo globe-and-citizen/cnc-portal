@@ -8,23 +8,17 @@
   <div class="flex sm:flex-row justify-end sm:items-start mt-6">
     <div class="flex flex-wrap gap-2 sm:gap-4" data-test="safe-address">
       <span class="text-sm">Safe Wallet Address</span>
-      <AddressToolTip :address="safeAddress ?? ''" class="text-xs" />
+      <AddressToolTip :address="selectedSafe?.address ?? ''" class="text-xs" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import TradingAccountBalance from './TradingAccountBalance.vue'
 import TradingTotalPnl from './TradingTotalPnL.vue'
 import TradingPerformance from './TradingPerformance.vue'
-import { useTraderSafesStore } from '@/stores'
+import { useTeamSafes } from '@/composables/safe'
 
-// Composables
-// const { derivedSafeAddressFromEoa } = useSafeDeployment()
-const tradersSafeStore = useTraderSafesStore()
-
-// Safe address
-const safeAddress = computed(() => tradersSafeStore.selectedSafe?.address)
+const { selectedSafe } = useTeamSafes()
 </script>
