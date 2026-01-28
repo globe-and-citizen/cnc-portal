@@ -125,15 +125,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
 })
 
 vi.mock('@/stores/useToastStore')
-vi.mock('@/stores', () => ({
-  useUserDataStore: () => ({
-    address: '0x000000000000000000000000000000000000dead'
-  }),
-  useTeamStore: () => ({
-    currentTeam: mockCurrentTeam.value
-  })
-}))
-
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)
 }))
