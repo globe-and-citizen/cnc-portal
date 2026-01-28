@@ -1,5 +1,5 @@
 import { mount, shallowMount, flushPromises } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import { zeroAddress, type Address } from 'viem'
@@ -13,8 +13,6 @@ import {
   mockUseSafeSendTransaction,
   mockERC20Reads,
   mockERC20Writes,
-  resetTransactionMocks,
-  resetERC20Mocks
 } from '@/tests/mocks'
 
 const wagmiConfig = createConfig({
@@ -56,16 +54,6 @@ describe('DepositBankForm.vue', () => {
     await tokenAmount.vm.$emit('validation', isValid)
     await nextTick()
   }
-
-  beforeEach(() => {
-    // Reset all mocks using the global reset functions
-    resetTransactionMocks()
-    resetERC20Mocks()
-  })
-
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
 
   describe('User Interactions', () => {
     it('should emit closeModal when cancel button is clicked', async () => {
