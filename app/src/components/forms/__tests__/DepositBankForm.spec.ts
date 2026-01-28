@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { ref, nextTick } from 'vue'
 import { zeroAddress, type Address } from 'viem'
-import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
 import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
 import { mainnet } from 'viem/chains'
@@ -22,7 +21,6 @@ const queryClient = new QueryClient()
 const {
   mockSendTransaction,
   mockAddSuccessToast,
-  mockAddErrorToast,
   mockUseErc20Allowance,
   mockUseERC20Approve,
   mockUseDepositToken,
@@ -31,7 +29,6 @@ const {
 } = vi.hoisted(() => ({
   mockSendTransaction: vi.fn(),
   mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn(),
   mockUseErc20Allowance: vi.fn(),
   mockExecuteApprove: vi.fn(),
   mockExecuteDeposit: vi.fn(),
@@ -100,28 +97,27 @@ vi.mock('@/composables/bank/bankWrites', () => ({
   useDepositToken: mockUseDepositToken
 }))
 
-vi.mock('@/stores', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useCurrencyStore: () => mockUseCurrencyStore(),
-    useToastStore: () => ({
-      addSuccessToast: mockAddSuccessToast,
-      addErrorToast: mockAddErrorToast
-    }),
-    useUserDataStore: () => ({ address: zeroAddress })
-  }
-})
+// vi.mock('@/stores', async (importOriginal) => {
+//   const actual: object = await importOriginal()
+//   return {
+//     ...actual,
+//     useToastStore: () => ({
+//       addSuccessToast: mockAddSuccessToast,
+//       addErrorToast: mockAddErrorToast
+//     }),
+//     useUserDataStore: () => ({ address: zeroAddress })
+//   }
+// })
 
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)
 }))
 
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+import { mockToastStore } from '@/tests/mocks/index'
 
 describe('DepositBankForm.vue', () => {
   const defaultProps = {
-    loading: false,
     bankAddress: zeroAddress as Address
   }
 
@@ -184,7 +180,7 @@ describe('DepositBankForm.vue', () => {
   describe('Native Token Deposit', () => {
     it('should show success toast and close modal after successful native deposit', async () => {
       mockSendTransaction.mockResolvedValueOnce({})
-      const wrapper = createWrapper({}, mount)
+      const wrapper = createWrapper({title: 'Deposit Bank Form'}, mount)
 
       await setTokenAmount(wrapper, '1', 'native', true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
@@ -195,7 +191,7 @@ describe('DepositBankForm.vue', () => {
       nativeReceipt.value = { status: 'success' }
       await nextTick()
 
-      expect(mockAddSuccessToast).toHaveBeenCalledWith(
+      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
         expect.stringContaining('deposited successfully')
       )
       expect(wrapper.emitted('closeModal')).toBeTruthy()
@@ -209,7 +205,7 @@ describe('DepositBankForm.vue', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      expect(mockAddErrorToast).toHaveBeenCalledWith(expect.stringContaining('Failed to deposit'))
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(expect.stringContaining('Failed to deposit'))
     })
 
     it('should not submit when form is invalid', async () => {
@@ -258,7 +254,7 @@ describe('DepositBankForm.vue', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await flushPromises()
 
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to deposit invalid-token')
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to deposit invalid-token')
     })
 
     it('should handle form validation correctly', async () => {
@@ -331,7 +327,7 @@ describe('DepositBankForm.vue', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to deposit native')
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to deposit native')
     })
 
     it('should prevent multiple submissions', async () => {
