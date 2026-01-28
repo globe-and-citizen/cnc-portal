@@ -27,6 +27,7 @@ import { log } from '@/utils'
 import TradingInterface from '@/components/sections/TradingView/TradingInterface.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { useUpdateUserMutation } from '@/queries'
+import { useTeamSafes } from '@/composables/safe'
 
 // Composables
 const teamStore = useTeamStore()
@@ -41,6 +42,7 @@ const isDbSetupComplete = computed(() => {
 const { derivedSafeAddressFromEoa, isSafeDeployed } = useSafeDeployment()
 const { checkAllApprovals } = useTokenApprovals()
 const { getOrInitializeRelayClient, isReady } = useRelayClient()
+const { selectedSafe } = useTeamSafes()
 
 // State
 const showWizard = ref(false)
@@ -52,6 +54,15 @@ const initialStep = ref(1) // 1 = deploy safe, 2 = approve & configure
 const checkAccountStatus = async () => {
   if (!derivedSafeAddressFromEoa.value || !isReady.value) {
     return false
+  }
+
+  if (
+    selectedSafe.value?.address &&
+    derivedSafeAddressFromEoa.value !== selectedSafe.value?.address
+  ) {
+    isCheckingStatus.value = false
+    showWizard.value = false
+    return
   }
 
   isCheckingStatus.value = true
@@ -115,9 +126,9 @@ onMounted(async () => {
 
 // Watch for derived safe address changes (in case of chain switch)
 watch(
-  () => derivedSafeAddressFromEoa.value,
-  async (newAddress) => {
-    if (newAddress) {
+  [() => derivedSafeAddressFromEoa.value, () => selectedSafe.value?.address],
+  async ([newAddress, newSelectedSafe]) => {
+    if (newAddress || newSelectedSafe) {
       await checkAccountStatus()
     }
   }
