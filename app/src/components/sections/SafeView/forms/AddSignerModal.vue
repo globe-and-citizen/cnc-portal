@@ -12,7 +12,8 @@
         <div>
           <MultiSelectMemberInput
             v-model="newSigners"
-            :disable-team-members="false"
+            :disable-team-members="true"
+            :hidden-members-message="'Already a Safe signer'"
             data-test="new-signers-input"
           />
         </div>
