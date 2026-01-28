@@ -43,13 +43,8 @@ export const useTeamSafes = () => {
   })
 
   const initialSafe = computed(() => {
-    return (
-      safes.value.find(
-        (s) =>
-          s?.address?.toLocaleLowerCase() ===
-          deriveSafeFromEoa(userDataStore.address)?.toLocaleLowerCase()
-      )?.address ?? safes.value[0]?.address
-    )
+    // Make the current user's safe the initial safe
+    return deriveSafeFromEoa(userDataStore.address)
   })
 
   const selectedSafe = computed<SafeWallet | undefined>(() => {
