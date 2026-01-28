@@ -3,6 +3,8 @@ import type {
   SignatureType
 } from '@safe-global/types-kit'
 
+import { type TokenId } from '@/constant'
+
 export interface SafeFiatTotal {
   value: number
   formated: string
