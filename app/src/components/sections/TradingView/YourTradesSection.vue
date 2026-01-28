@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import CardComponent from '@/components/CardComponent.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -79,6 +79,7 @@ import { log, parseError } from '@/utils'
 import 'vue-sonner/style.css'
 import { useUserPositions, useRedeemPosition, useSafeDeployment } from '@/composables/trading'
 import { parseUnits } from 'viem'
+import { useTeamSafes } from '@/composables/safe'
 
 // Props
 interface Props {
@@ -103,8 +104,10 @@ const tradingModal = ref({ mount: false, show: false })
 // Use TanStack Query states
 const { proposeRedemption } = useRedeemPosition()
 const { derivedSafeAddressFromEoa } = useSafeDeployment()
+const { selectedSafe } = useTeamSafes()
+const selectedSafeAddress = computed(() => selectedSafe.value?.address)
 const { data: trades, isLoading: isLoadingTrades /*, refetch */ } = useUserPositions(
-  derivedSafeAddressFromEoa.value ?? undefined
+  selectedSafeAddress //derivedSafeAddressFromEoa.value ?? undefined
 )
 
 watch(
