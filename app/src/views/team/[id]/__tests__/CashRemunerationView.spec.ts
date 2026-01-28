@@ -19,7 +19,7 @@ describe('CashRemunerationView.vue', () => {
     })
 
     expect(genericTokenHoldingSection.exists()).toBeTruthy()
-    expect(genericTokenHoldingSection.props('address')).toBe('0xTeamContractAddress')
+    expect(genericTokenHoldingSection.props('address')).toBe('0x6666666666666666666666666666666666666666')
   })
 
   it('should render CashRemunerationOverview component', () => {

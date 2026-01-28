@@ -10,7 +10,7 @@ import { VESTING_ADDRESS } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
 import { mainnet } from 'viem/chains'
-import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
+import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 
 const wagmiConfig = createConfig({
   chains: [mainnet],

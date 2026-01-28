@@ -8,7 +8,7 @@ import { ref } from 'vue'
 import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
 import { mainnet } from 'viem/chains'
 import { createTestingPinia } from '@pinia/testing'
-import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
+import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 
 const wagmiConfig = createConfig({
   chains: [mainnet],

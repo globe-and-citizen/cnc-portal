@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { ref, nextTick } from 'vue'
 import { zeroAddress, type Address } from 'viem'
-import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
+import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
 import { mainnet } from 'viem/chains'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
@@ -20,7 +20,6 @@ const queryClient = new QueryClient()
 // Hoisted mocks for transaction handling and composables
 const {
   mockSendTransaction,
-  mockAddSuccessToast,
   mockUseErc20Allowance,
   mockUseERC20Approve,
   mockUseDepositToken,
@@ -28,7 +27,6 @@ const {
   mockExecuteDeposit
 } = vi.hoisted(() => ({
   mockSendTransaction: vi.fn(),
-  mockAddSuccessToast: vi.fn(),
   mockUseErc20Allowance: vi.fn(),
   mockExecuteApprove: vi.fn(),
   mockExecuteDeposit: vi.fn(),
@@ -49,31 +47,31 @@ const isNativeDepositLoading = ref(false)
 const isNativeDepositConfirmed = ref(false)
 
 // Mock Wagmi hooks
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual = (await importOriginal()) as typeof import('@wagmi/vue')
-  return {
-    ...actual,
-    useSimulateContract: vi.fn(() => ({
-      data: ref(null),
-      error: ref(null),
-      isLoading: ref(false),
-      isSuccess: ref(false),
-      queryKey: ref([])
-    })),
-    useWriteContract: vi.fn(() => ({
-      data: ref(null),
-      error: ref(null),
-      isPending: ref(false),
-      writeContract: vi.fn()
-    })),
-    useWaitForTransactionReceipt: vi.fn(() => ({
-      data: ref(null),
-      error: ref(null),
-      isLoading: ref(false),
-      isSuccess: ref(false)
-    }))
-  }
-})
+// vi.mock('@wagmi/vue', async (importOriginal) => {
+//   const actual = (await importOriginal()) as typeof import('@wagmi/vue')
+//   return {
+//     ...actual,
+//     useSimulateContract: vi.fn(() => ({
+//       data: ref(null),
+//       error: ref(null),
+//       isLoading: ref(false),
+//       isSuccess: ref(false),
+//       queryKey: ref([])
+//     })),
+//     useWriteContract: vi.fn(() => ({
+//       data: ref(null),
+//       error: ref(null),
+//       isPending: ref(false),
+//       writeContract: vi.fn()
+//     })),
+//     useWaitForTransactionReceipt: vi.fn(() => ({
+//       data: ref(null),
+//       error: ref(null),
+//       isLoading: ref(false),
+//       isSuccess: ref(false)
+//     }))
+//   }
+// })
 
 // Mock composables
 vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
@@ -96,18 +94,6 @@ vi.mock('@/composables/erc20/writes', () => ({
 vi.mock('@/composables/bank/bankWrites', () => ({
   useDepositToken: mockUseDepositToken
 }))
-
-// vi.mock('@/stores', async (importOriginal) => {
-//   const actual: object = await importOriginal()
-//   return {
-//     ...actual,
-//     useToastStore: () => ({
-//       addSuccessToast: mockAddSuccessToast,
-//       addErrorToast: mockAddErrorToast
-//     }),
-//     useUserDataStore: () => ({ address: zeroAddress })
-//   }
-// })
 
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)

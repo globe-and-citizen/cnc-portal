@@ -7,13 +7,7 @@ import {
   writeContract,
   waitForTransactionReceipt
 } from '@wagmi/core'
-//import { parseUnits, formatUnits } from 'viem/utils'
 import { getLogs } from 'viem/actions'
-//import { parseAbiItem } from 'viem'
-
-vi.mock('@/queries/contract.queries', () => ({
-  useCreateContractMutation: vi.fn()
-}))
 
 vi.mock('@wagmi/core', async () => {
   const actual = await vi.importActual('@wagmi/core')

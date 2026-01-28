@@ -18,6 +18,9 @@ vi.mock('@/composables/contracts/useContractWritesV2', () => ({
   useContractWrites: mockUseContractWrites
 }))
 
+// Clear global ERC20 mocks for this test
+vi.unmock('@/composables/erc20/writes')
+
 // Test constants
 const MOCK_DATA = {
   contractAddress: '0x1234567890123456789012345678901234567890' as Address,

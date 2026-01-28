@@ -6,10 +6,10 @@ import { ref } from 'vue'
  * All ERC20 read functions (useErc20Name, useErc20Symbol, useErc20Decimals, etc.)
  * use useReadContract and return the same structure
  */
-export function createERC20ReadMock<T = any>(defaultValue?: T) {
+export function createERC20ReadMock<T>(defaultValue?: T) {
   return {
     data: ref(defaultValue),
-    error: ref(null),
+    error: ref<Error | null>(null),
     isLoading: ref(false),
     isSuccess: ref(true),
     isError: ref(false),
@@ -31,7 +31,7 @@ export function createERC20WriteMock() {
     executeWrite: vi.fn(),
     writeResult: {
       data: ref(null),
-      error: ref(null),
+      error: ref<Error | null>(null),
       isLoading: ref(false),
       isSuccess: ref(false),
       isError: ref(false),
@@ -40,7 +40,7 @@ export function createERC20WriteMock() {
     },
     receiptResult: {
       data: ref(null),
-      error: ref(null),
+      error: ref<Error | null>(null),
       isLoading: ref(false),
       isSuccess: ref(false),
       isError: ref(false),

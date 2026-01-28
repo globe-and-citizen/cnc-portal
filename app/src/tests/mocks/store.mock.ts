@@ -5,20 +5,28 @@ export const mockTeamStore = {
   currentTeam: mockTeamData,
   currentTeamId: mockTeamData.id,
   currentTeamMeta: {
-    isPending: false
+    isPending: false,
+    data: { value: mockTeamData }
   },
   teamsMeta: {
     reloadTeams: vi.fn()
   },
 
-  // getContractAddressByType: vi.fn((type: ContractType) : Address | undefined => {
-  //   console.log(`Mock getContractAddressByType called with type: ${type}`)
-  //   return mockTeamData.teamContracts.find((contract) => contract.type === type)
-  //       ?.address
-  // }),
-  // getContractAddressByType: vi.fn((type) => {
-  //   return type ? '0xTeamContractAddress' : undefined
-  // }),
+  getContractAddressByType: vi.fn((type) => {
+    const contractAddresses = {
+      'Bank': '0x1111111111111111111111111111111111111111',
+      'InvestorV1': '0x2222222222222222222222222222222222222222',
+      'Voting': '0x3333333333333333333333333333333333333333',
+      'BoardOfDirectors': '0x4444444444444444444444444444444444444444',
+      'ExpenseAccountEIP712': '0x5555555555555555555555555555555555555555',
+      'CashRemunerationEIP712': '0x6666666666666666666666666666666666666666',
+      'Campaign': '0x7777777777777777777777777777777777777777',
+      'Elections': '0x8888888888888888888888888888888888888888',
+      'Proposals': '0x9999999999999999999999999999999999999999',
+      'VestingV1': '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+    }
+    return contractAddresses[type] || '0x1234567890123456789012345678901234567890'
+  }),
   fetchTeam: vi.fn()
 }
 
