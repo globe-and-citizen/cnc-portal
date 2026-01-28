@@ -1,6 +1,7 @@
 import { vi } from 'vitest'
 import { queryMocks } from '@/tests/mocks/query.mock'
 import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
+import { mockUseSafeSendTransaction } from '@/tests/mocks/transactions.mock'
 
 /**
  * Mock TanStack Vue Query
@@ -167,4 +168,11 @@ vi.mock('@/composables/useAuth', () => ({
  */
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)
+}))
+
+/**
+ * Mock useSafeSendTransaction composable
+ */
+vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
+  useSafeSendTransaction: vi.fn(() => mockUseSafeSendTransaction)
 }))
