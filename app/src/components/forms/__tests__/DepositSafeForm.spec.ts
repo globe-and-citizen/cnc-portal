@@ -7,6 +7,8 @@ import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
 import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
 import { mainnet } from 'viem/chains'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
+import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
+import { mockToastStore } from '@/tests/mocks/index'
 
 // Wagmi config for testing
 const wagmiConfig = createConfig({
@@ -21,22 +23,16 @@ const queryClient = new QueryClient()
 // Hoisted mocks
 const {
   mockSendTransaction,
-  mockAddSuccessToast,
-  mockAddErrorToast,
   mockUseErc20Allowance,
   mockUseERC20Approve,
   mockExecuteApprove,
   mockWriteContractAsync,
-  mockInvalidateQueries,
   mockWaitForTransactionReceipt
 } = vi.hoisted(() => ({
   mockSendTransaction: vi.fn(),
-  mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn(),
   mockUseErc20Allowance: vi.fn(),
   mockExecuteApprove: vi.fn(),
   mockWriteContractAsync: vi.fn(),
-  mockInvalidateQueries: vi.fn(),
   mockWaitForTransactionReceipt: vi.fn(),
   mockUseERC20Approve: vi.fn(() => ({
     executeWrite: mockExecuteApprove,
@@ -92,33 +88,11 @@ vi.mock('@/composables/erc20/writes', () => ({
   useERC20Approve: mockUseERC20Approve
 }))
 
-vi.mock('@tanstack/vue-query', async (importOriginal) => {
-  const actual = (await importOriginal()) as typeof import('@tanstack/vue-query')
-  return {
-    ...actual,
-    useQueryClient: vi.fn(() => ({
-      invalidateQueries: mockInvalidateQueries
-    }))
-  }
-})
-
-vi.mock('@/stores', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useToastStore: () => ({
-      addSuccessToast: mockAddSuccessToast,
-      addErrorToast: mockAddErrorToast
-    }),
-    useUserDataStore: () => ({ address: '0xuseraddress0000000000000000000000000000' })
-  }
-})
 
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)
 }))
 
-import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 
 describe('DepositSafeForm.vue', () => {
   const defaultProps = {
@@ -214,7 +188,7 @@ describe('DepositSafeForm.vue', () => {
       nativeReceipt.value = { status: 'success' }
       await nextTick()
 
-      expect(mockAddSuccessToast).toHaveBeenCalledWith(
+      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
         expect.stringContaining('deposited successfully')
       )
       expect(wrapper.emitted('closeModal')).toBeTruthy()
@@ -243,7 +217,7 @@ describe('DepositSafeForm.vue', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await flushPromises()
 
-      expect(mockAddSuccessToast).toHaveBeenCalledWith(
+      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
         expect.stringContaining('deposited successfully')
       )
       expect(wrapper.emitted('closeModal')).toBeTruthy()
@@ -266,7 +240,7 @@ describe('DepositSafeForm.vue', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await flushPromises()
 
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to deposit usdc')
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to deposit usdc')
     })
   })
 

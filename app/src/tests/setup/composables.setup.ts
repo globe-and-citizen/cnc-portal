@@ -17,7 +17,13 @@ vi.mock('@tanstack/vue-query', async () => {
         removeQueries: vi.fn()
       }
     }),
-    useQuery:vi.fn()
+    useQuery:vi.fn(() => {
+      return {
+        data: vi.fn(),
+        isLoading: vi.fn(),
+        error: vi.fn()
+      }
+    })
   }
 })
 
