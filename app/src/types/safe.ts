@@ -165,6 +165,12 @@ export const TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> = {
   }
 }
 
+export interface SafeTransferOptions {
+  to: string
+  amount: string
+  tokenId?: TokenId // Use tokenId instead of tokenAddress
+}
+
 export const SAFE_VERSION = '1.4.1'
 
 export const CHAIN_NAMES: Record<number, string> = {
