@@ -36,6 +36,7 @@ model User {
   Expense                Expense[]
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
+  traderSafeAddress      String?                  @unique
 }
 
 model Team {
@@ -66,6 +67,7 @@ model MemberTeamsData {
   teamId        Int
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  isTrader      Boolean? 
 
   @@unique([memberAddress, teamId])
 }

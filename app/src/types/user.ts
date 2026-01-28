@@ -5,5 +5,6 @@ export interface User {
   nonce?: string
   address?: string
   imageUrl?: string
+  traderSafeAddress?: string
   // Other user properties...
 }

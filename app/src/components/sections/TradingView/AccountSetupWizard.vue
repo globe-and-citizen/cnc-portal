@@ -40,16 +40,26 @@ import StepLabels from './StepLabels.vue'
 import { useSafeDeployment, useRelayClient, useTokenApprovals } from '@/composables/trading'
 import { log, parseError } from '@/utils'
 import type { ApprovalCheckResult } from '@/utils/trading/approvalsUtil'
+import { useUpdateUserMutation } from '@/queries'
+import { useUserDataStore, useTeamStore } from '@/stores'
 
 const props = defineProps<{ initialStep: number }>()
 // Emits
 const emit = defineEmits(['setup-complete'])
 
+const userDataStore = useUserDataStore()
+const teamStore = useTeamStore()
 const currentStep = ref(props.initialStep || 1)
 const isProcessing = ref(false)
 const { derivedSafeAddressFromEoa, isSafeDeployed, deploySafe } = useSafeDeployment()
 const { checkAllApprovals, completeSetup } = useTokenApprovals()
 const { getOrInitializeRelayClient, isLoading } = useRelayClient()
+const {
+  // isPending: userIsUpdating,
+  error: updateUserError,
+  // mutate: updateUserMutate,
+  mutateAsync: updateUserMutateAsync
+} = useUpdateUserMutation()
 
 const steps = [
   {
@@ -105,7 +115,29 @@ const handleApproveAndConfigure = async () => {
     if (!approvalCheck.isSetupComplete) {
       const result = await completeSetup(relayClient, derivedSafeAddressFromEoa.value)
       console.log('Approve and Configure Result: ', result)
-      if (!result) return
+      if (result) {
+        console.log('')
+        updateUserMutateAsync(
+          {
+            address: userDataStore.address,
+            userData: {
+              traderSafeAddress: derivedSafeAddressFromEoa.value,
+              teamId: teamStore.currentTeamId || undefined
+            }
+          },
+          {
+            onSuccess: () => {
+              console.log('User updated sucessfully')
+            },
+            onError: () => {
+              console.log(
+                'Error updating user: ',
+                updateUserError.value?.message || 'Failed to update user'
+              )
+            }
+          }
+        )
+      } else return
     }
 
     if (currentStep.value < steps.length) {
