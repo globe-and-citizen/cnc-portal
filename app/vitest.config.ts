@@ -7,7 +7,7 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 process.env.TZ = 'UTC'
-const mockFiles = ['store', 'composables', 'wagmi.vue'].map(
+const mockFiles = ['store', 'composables', 'wagmi.vue', 'transactions', 'erc20'].map(
   (name) => `./src/tests/setup/${name}.setup.ts`
 )
 export default defineConfig((env) =>

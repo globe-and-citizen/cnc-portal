@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import { queryMocks } from '@/tests/mocks/query.mock'
+import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
 
 /**
  * Mock TanStack Vue Query
@@ -159,4 +160,11 @@ vi.mock('@/composables/useAuth', () => ({
     login: vi.fn(),
     validateToken: vi.fn()
   }))
+}))
+
+/**
+ * Mock useContractBalance composable
+ */
+vi.mock('@/composables/useContractBalance', () => ({
+  useContractBalance: vi.fn(() => mockUseContractBalance)
 }))

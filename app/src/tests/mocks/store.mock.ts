@@ -1,4 +1,6 @@
 import { mockTeamData } from '@/tests/mocks/index'
+import type { ContractType } from '@/types/index'
+import type { Address } from 'viem'
 import { vi } from 'vitest'
 import { ref } from 'vue'
 export const mockTeamStore = {
@@ -10,9 +12,15 @@ export const mockTeamStore = {
   teamsMeta: {
     reloadTeams: vi.fn()
   },
-  getContractAddressByType: vi.fn((type) => {
-    return type ? '0xTeamContractAddress' : undefined
-  }),
+
+  // getContractAddressByType: vi.fn((type: ContractType) : Address | undefined => {
+  //   console.log(`Mock getContractAddressByType called with type: ${type}`)
+  //   return mockTeamData.teamContracts.find((contract) => contract.type === type)
+  //       ?.address
+  // }),
+  // getContractAddressByType: vi.fn((type) => {
+  //   return type ? '0xTeamContractAddress' : undefined
+  // }),
   fetchTeam: vi.fn()
 }
 
