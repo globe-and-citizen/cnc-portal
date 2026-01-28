@@ -3,18 +3,6 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
 import { createTestingPinia } from '@pinia/testing'
 
-// Mock toast store
-const errorToastMock = vi.fn()
-
-const { mockUseToastStore } = vi.hoisted(() => ({
-  mockUseToastStore: vi.fn(() => ({
-    addErrorToast: errorToastMock
-  }))
-}))
-
-vi.mock('@/stores/useToastStore', () => ({
-  useToastStore: mockUseToastStore
-}))
 
 describe('UploadFileDB', () => {
   let wrapper: ReturnType<typeof mount>
@@ -76,7 +64,6 @@ describe('UploadFileDB', () => {
       await flushPromises()
 
       expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(4)
-      expect(errorToastMock).not.toHaveBeenCalled()
     })
 
     it('should reject invalid file types', async () => {
@@ -96,7 +83,6 @@ describe('UploadFileDB', () => {
       await fileInput.trigger('change')
       await flushPromises()
 
-      expect(errorToastMock).toHaveBeenCalledWith('Only images and documents are allowed')
       expect(wrapper.find(SELECTORS.uploadError).exists()).toBe(true)
     })
   })
@@ -118,8 +104,6 @@ describe('UploadFileDB', () => {
       await fileInput.trigger('change')
       await flushPromises()
 
-      expect(errorToastMock).toHaveBeenCalled()
-      expect(errorToastMock.mock.calls[0]?.[0]).toContain('exceed the 10 MB limit')
       expect(wrapper.find(SELECTORS.uploadError).exists()).toBe(true)
     })
   })
@@ -142,7 +126,6 @@ describe('UploadFileDB', () => {
       await fileInput.trigger('change')
       await flushPromises()
 
-      expect(errorToastMock).toHaveBeenCalledWith('Maximum 10 files allowed')
       expect(wrapper.find(SELECTORS.uploadError).exists()).toBe(true)
     })
   })

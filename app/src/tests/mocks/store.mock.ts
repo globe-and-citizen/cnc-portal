@@ -18,7 +18,11 @@ export const mockTeamStore = {
 
 export const mockToastStore = {
   addErrorToast: vi.fn(),
-  addSuccessToast: vi.fn()
+  addSuccessToast: vi.fn(),
+  toasts: [
+      { message: 'Toast 1', type: 'success', timeout: 5000 },
+      { message: 'Toast 2', type: 'error', timeout: 5000 }
+    ]
 }
 
 export const mockUserStore = {
