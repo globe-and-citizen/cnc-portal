@@ -106,20 +106,7 @@ const { proposeRedemption } = useRedeemPosition()
 const { derivedSafeAddressFromEoa } = useSafeDeployment()
 const { selectedSafe } = useTeamSafes()
 const selectedSafeAddress = computed(() => selectedSafe.value?.address)
-const { data: trades, isLoading: isLoadingTrades /*, refetch */ } = useUserPositions(
-  selectedSafeAddress //derivedSafeAddressFromEoa.value ?? undefined
-)
-
-watch(
-  trades,
-  (newData) => {
-    if (newData) {
-      // trades.value = newData
-      console.log('Fetched trades:', newData)
-    }
-  },
-  { immediate: true }
-)
+const { data: trades, isLoading: isLoadingTrades, refetch } = useUserPositions(selectedSafeAddress)
 
 // Methods
 const handleTrade = () => {
@@ -174,7 +161,7 @@ const handleWithdraw = async (trade: Trade) => {
   }
 }
 
-const handleOrderPlaced = (order: OrderDetails) => {
+const handleOrderPlaced = async (order: OrderDetails) => {
   try {
     console.log('Order placed:', order)
 
@@ -193,6 +180,7 @@ const handleOrderPlaced = (order: OrderDetails) => {
 
     // In a real app, you would update the trades list here
     // or trigger a refetch of trades data
+    await refetch()
   } catch (error) {
     toast.error('Failed to place order')
     log.error('Order placement error:', parseError(error))
@@ -200,15 +188,11 @@ const handleOrderPlaced = (order: OrderDetails) => {
 }
 
 // Optional: Watch for errors or other side effects
-watch(
-  () => props.loading,
-  (isLoading, wasLoading) => {
-    if (!isLoading && wasLoading) {
-      // Data finished loading
-      console.log('Trades data loaded')
-    }
+watch(selectedSafeAddress, (newAddress) => {
+  if (newAddress) {
+    refetch()
   }
-)
+})
 </script>
 
 <style scoped>
