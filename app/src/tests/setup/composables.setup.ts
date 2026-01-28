@@ -1,7 +1,11 @@
 import { vi } from 'vitest'
 import { queryMocks } from '@/tests/mocks/query.mock'
-import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
-import { mockUseSafeSendTransaction } from '@/tests/mocks/transactions.mock'
+import { 
+  mockUseBackendWake, 
+  mockUseAuth, 
+  mockUseContractBalance, 
+  mockUseSafeSendTransaction 
+} from '@/tests/mocks/composables.mock'
 
 /**
  * Mock TanStack Vue Query
@@ -143,24 +147,17 @@ vi.mock('@/queries/polymarket.queries', () => ({
 }))
 
 /**
- * Mock useBackendWake composable - returns a function that does nothing
- * Individual tests can override this mock if needed
+ * Mock useBackendWake composable
  */
 vi.mock('@/composables/useBackendWake', () => ({
-  useBackendWake: vi.fn(() => {
-    // No-op - just prevent the real implementation from being called
-  })
+  useBackendWake: mockUseBackendWake
 }))
 
 /**
  * Mock useAuth composable
  */
 vi.mock('@/composables/useAuth', () => ({
-  useAuth: vi.fn(() => ({
-    logout: vi.fn(),
-    login: vi.fn(),
-    validateToken: vi.fn()
-  }))
+  useAuth: vi.fn(() => mockUseAuth)
 }))
 
 /**
