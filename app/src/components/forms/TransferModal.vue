@@ -3,11 +3,11 @@
   <div>
     <!-- Transfer Button with Tooltip -->
     <div
-      :class="{ tooltip: showTooltip }"
+      :class="{ tooltip: !hasTheRight || !isBalanceGreaterThanZero }"
       :data-tip="
-        showOwnerTooltip
+        !hasTheRight
           ? 'Only the bank owner can transfer funds'
-          : soldeBalance
+          : !isBalanceGreaterThanZero
             ? 'Bank balance is 0'
             : null
       "
@@ -16,7 +16,7 @@
         variant="secondary"
         class="flex items-center gap-2"
         @click="openModal"
-        :disabled="disabled"
+        :disabled="!hasTheRight || !isBalanceGreaterThanZero"
         data-test="transfer-button"
       >
         <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
@@ -58,31 +58,47 @@ import TransferForm, { type TransferModel } from '@/components/forms/TransferFor
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { ref, watch, computed, type Ref } from 'vue'
 import { type Address, parseEther, encodeFunctionData, parseUnits } from 'viem'
-import { useWriteContract, useWaitForTransactionReceipt, useChainId } from '@wagmi/vue'
+import {
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useChainId,
+  useReadContract
+} from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { waitForTransactionReceipt } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
-import { useToastStore } from '@/stores'
+import { useToastStore, useUserDataStore } from '@/stores'
 import { useBodContract } from '@/composables/bod/'
 import type { TokenOption } from '@/types'
+import { useContractBalance } from '@/composables'
 
 interface Props {
   bankAddress: Address
-  balances: any[]
-  isBankOwner: boolean
-  isBodAction: boolean
-  disabled?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  disabled: false
-})
+const props = withDefaults(defineProps<Props>(), {})
 
 const chainId = useChainId()
 const queryClient = useQueryClient()
 const { addErrorToast, addSuccessToast } = useToastStore()
+const { useBodIsBodAction } = useBodContract()
+
+const { balances } = useContractBalance(props.bankAddress)
+
+const userStore = useUserDataStore()
+
+// get the current owner of the bank
+const { data: bankOwner } = useReadContract({
+  address: props.bankAddress,
+  abi: BANK_ABI,
+  functionName: 'owner'
+})
+
+const { isBodAction } = useBodIsBodAction(props.bankAddress as Address, BANK_ABI)
+
+const isBankOwner = computed(() => bankOwner.value === userStore.address)
 
 const {
   addAction,
@@ -119,7 +135,7 @@ const isLoading = computed(
 
 // Get available tokens for transfer
 const getTokens = (): TokenOption[] =>
-  props.balances
+  balances.value
     .map((b) => ({
       symbol: b.token.symbol,
       balance: b.amount,
@@ -132,16 +148,11 @@ const getTokens = (): TokenOption[] =>
 
 const tokens = computed(() => getTokens())
 
-// Computed properties for tooltip
-const hasPositiveBalance = computed(() =>
-  props.balances.some((b) => b.token.id !== 'sher' && b.amount > 0)
-)
+const hasTheRight = computed(() => isBankOwner.value || isBodAction.value)
 
-const showOwnerTooltip = computed(() => !props.isBankOwner && !props.isBodAction)
-const soldeBalance = computed(
-  () => (props.isBankOwner || props.isBodAction) && !hasPositiveBalance.value
+const isBalanceGreaterThanZero = computed(() =>
+  balances.value.some((b) => b.token.id !== 'sher' && b.amount > 0)
 )
-const showTooltip = computed(() => showOwnerTooltip.value || soldeBalance.value)
 
 // Initialize transfer data
 const initialTransferDataValue = (): TransferModel => {
@@ -185,7 +196,7 @@ const handleTransfer = async (data: {
     const isNativeToken = data.token.symbol === NETWORK.currencySymbol
     const transferAmount = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
 
-    if (props.isBodAction) {
+    if (isBodAction.value) {
       // BOD Action path
       const encodedData = isNativeToken
         ? encodeFunctionData({
