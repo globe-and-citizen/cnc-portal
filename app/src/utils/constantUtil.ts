@@ -19,3 +19,8 @@ export const tokenSymbolAddresses: Record<Exclude<TokenId, 'native'>, `0x${strin
   usdt: USDT_ADDRESS,
   sher: zeroAddress
 }
+
+export const getTokenAddress = (tokenId: TokenId): string | undefined => {
+  if (tokenId === 'native') return undefined
+  return tokenSymbolAddresses[tokenId as Exclude<TokenId, 'native'>]
+}
