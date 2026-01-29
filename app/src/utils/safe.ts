@@ -1,5 +1,5 @@
 import type { Eip1193Provider } from '@safe-global/protocol-kit'
-import type { Address } from 'viem'
+import { type Address, zeroAddress } from 'viem'
 import type { SafeMultisigConfirmationResponse, SignatureType } from '@safe-global/types-kit'
 import { CHAIN_NAMES } from '@/types/safe'
 import {
@@ -7,6 +7,10 @@ import {
   type SafeMultisigTransactionResponse,
   type SafeTransaction
 } from '@/types/safe'
+
+import { NETWORK } from '@/constant'
+import { formatEtherUtil, tokenSymbol } from '@/utils/constantUtil'
+import { type DecodedCall } from '@/types'
 /**
  * Get injected EIP-1193 provider with proper type checking
  */
@@ -104,5 +108,37 @@ export function transformToSafeMultisigResponse(
     confirmations: transaction.confirmations?.map(normalizeConfirmation),
     trusted: transaction.trusted ?? true,
     signatures: transaction.signatures ?? null
+  }
+}
+
+export const formatSafeTransactionValue = (
+  value: string,
+  data?: DecodedCall,
+  transactionTo?: string
+): string => {
+  try {
+    // Handle ERC20 token transfers
+    if (data && data.method === 'transfer' && data.parameters?.length >= 2) {
+      const tokenAddress = transactionTo || '' // The contract address being called
+      const transferAmount = data.parameters[1]?.value
+
+      if (transferAmount && tokenAddress) {
+        const symbol = tokenSymbol(tokenAddress)
+
+        if (symbol) {
+          const formattedAmount = formatEtherUtil(BigInt(transferAmount), tokenAddress)
+          const numericValue = parseFloat(formattedAmount)
+          return `${numericValue.toFixed(4)} ${symbol}`
+        }
+      }
+    }
+    // Handle native token transfers or fallback
+    const formattedAmount = formatEtherUtil(BigInt(value), zeroAddress)
+    const numericValue = parseFloat(formattedAmount)
+    return `${numericValue.toFixed(4)} ${NETWORK.currencySymbol}`
+  } catch (error) {
+    console.warn('Error formatting transaction value:', error, { value, data, transactionTo })
+    // Fallback to basic formatting
+    return `0 ${NETWORK.currencySymbol}`
   }
 }
