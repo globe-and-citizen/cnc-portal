@@ -111,7 +111,7 @@ vi.mock('@/wagmi.config', () => ({
 }))
 
 describe('TransferModal', () => {
-  let wrapper: VueWrapper<any>
+  let wrapper: VueWrapper
 
   // Mock test data
   const mockBankAddress = '0x1234567890123456789012345678901234567890' as const
