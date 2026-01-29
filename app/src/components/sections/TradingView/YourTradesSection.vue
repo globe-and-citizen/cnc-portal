@@ -86,7 +86,7 @@ interface Props {
   loading?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   loading: false
 })
 
@@ -161,15 +161,16 @@ const handleWithdraw = async (trade: Trade) => {
   }
 }
 
-const handleOrderPlaced = async (order: OrderDetails) => {
+const handleOrderPlaced = async (result: { success: boolean; orderId: string | number }) => {
   try {
-    console.log('Order placed:', order)
+    // console.log('Order placed:', order)
 
     // Show success message
-    toast.success('Order placed successfully!')
+    if (result.success) toast.success('Order placed successfully!')
+    else throw new Error('Order placement failed')
 
     // Emit to parent
-    emit('order-placed', order)
+    // emit('order-placed', order)
 
     // Close the modal
     handleModalClose()
