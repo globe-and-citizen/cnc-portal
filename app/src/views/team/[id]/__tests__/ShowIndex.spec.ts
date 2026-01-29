@@ -26,10 +26,7 @@ describe('ShowIndex', () => {
   it('should render the team Breadcrumb', async () => {
     const wrapper = mount(ShowIndex, {
       global: {
-        plugins: [
-          router,
-          createTestingPinia({ createSpy: vi.fn })
-        ],
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           ContinueAddTeamForm: true,
           TeamMeta: true,
