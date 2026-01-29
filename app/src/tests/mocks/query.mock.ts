@@ -61,7 +61,6 @@ export const mockWageData: Wage[] = [
   }
 ]
 
-
 /**
  * Notification Query Mocks
  */

@@ -12,7 +12,7 @@ import {
   mockTransactionFunctions,
   mockUseSafeSendTransaction,
   mockERC20Reads,
-  mockERC20Writes,
+  mockERC20Writes
 } from '@/tests/mocks'
 
 const wagmiConfig = createConfig({
@@ -85,7 +85,9 @@ describe('DepositBankForm.vue', () => {
     })
 
     it('should show error toast when native token deposit fails', async () => {
-      mockTransactionFunctions.mockSendTransaction.mockRejectedValueOnce(new Error('Transaction failed'))
+      mockTransactionFunctions.mockSendTransaction.mockRejectedValueOnce(
+        new Error('Transaction failed')
+      )
       const wrapper = createWrapper({}, mount)
 
       await setTokenAmount(wrapper, '1', 'native', true)
@@ -135,7 +137,9 @@ describe('DepositBankForm.vue', () => {
 
     it('should show error toast when selected token is not valid', async () => {
       mockERC20Reads.allowance.data.value = 0n
-      mockTransactionFunctions.mockWriteContractAsync.mockRejectedValueOnce(new Error('Invalid token'))
+      mockTransactionFunctions.mockWriteContractAsync.mockRejectedValueOnce(
+        new Error('Invalid token')
+      )
 
       const wrapper = createWrapper({}, mount)
 
