@@ -1,86 +1,37 @@
-# Global Mocks Setup
+# Global Mocks System
 
-This directory contains centralized mock definitions for testing across the application using TanStack Vue Query and Axios.
+This directory contains centralized mock definitions that provide consistent testing infrastructure across the application.
 
-## Quick Overview
+## Key Components
 
-All query and mutation mocks are centralized in `query.mock.ts` and globally applied via `setup/composables.setup.ts`. This ensures consistency across all tests without needing to define mocks individually in each test file.
+- **`query.mock.ts`** - TanStack Query operations (API calls, mutations)
+- **`erc20.mock.ts`** - ERC20 token operations (reads, writes, generic factories)
+- **`composables.mock.ts`** - Vue composables (auth, contract balance, transactions)
+- **`store.mock.ts`** - Pinia stores (team, toast, user, currency)
+- **`wagmi.vue.mock.ts`** - Web3 wagmi operations
+- **`index.ts`** - Main exports (import from here)
 
-## Key Files
-
-- **`query.mock.ts`** - Mock data objects and factory functions for creating query/mutation responses
-- **`setup/composables.setup.ts`** - Global mock registration that applies to all tests
-
-## Quick Start
-
-Most tests automatically use the global mocks:
+## Quick Usage
 
 ```typescript
-const wrapper = mount(MyComponent, {
-  global: {
-    plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
-  }
+import { mockERC20Reads, mockERC20Writes, mockToastStore, resetERC20Mocks } from '@/tests/mocks'
+
+beforeEach(() => {
+  resetERC20Mocks() // Clean state between tests
 })
-// Global mocks are already active!
+
+it('should handle token operations', () => {
+  mockERC20Reads.allowance.data.value = 1000n
+  mockERC20Writes.approve.executeWrite.mockResolvedValue(undefined)
+  // Test component...
+})
 ```
 
-## Comprehensive Guide
+## Philosophy
 
-For detailed documentation on:
+**"Mock Once, Use Everywhere"** - All mocks are centralized and globally available. Most tests work automatically without any mock setup.
 
-- How the mock system works
-- How to override mocks in specific tests
-- Complete response structure reference
-- Common testing patterns and best practices
+## Complete Documentation
 
-👉 **See [Global Mocks Setup Guide in docs/testing/](../../../../docs/testing/global-mocks-setup.md)**
-
-## Available Mocks
-
-The system mocks all query hooks from:
-
-| Module                    | Mocks                                                                                                      |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `team.queries.ts`         | `useTeamsQuery`, `useTeamQuery`, `useCreateTeamMutation`, `useUpdateTeamMutation`, `useDeleteTeamMutation` |
-| `member.queries.ts`       | `useAddMembersMutation`, `useDeleteMemberMutation`                                                         |
-| `wage.queries.ts`         | `useTeamWagesQuery`, `useSetMemberWageMutation`                                                            |
-| `notification.queries.ts` | `useNotificationsQuery`, `useAddBulkNotificationsMutation`, `useUpdateNotificationMutation`                |
-| `expense.queries.ts`      | `useExpensesQuery`                                                                                         |
-| `user.queries.ts`         | `useUserQuery`, `useUserNonceQuery`                                                                        |
-| `action.queries.ts`       | `useCreateActionMutation`, `useUpdateActionMutation`                                                       |
-| `auth.queries.ts`         | `useValidateTokenQuery`                                                                                    |
-| `contract.queries.ts`     | `useCreateContractMutation`                                                                                |
-| `health.queries.ts`       | `useBackendHealthQuery`                                                                                    |
-
-## Common Tasks
-
-### Override Mock Data for Specific Test
-
-```typescript
-import { useTeamsQuery } from '@/queries/team.queries'
-import { createMockQueryResponse } from '@/tests/mocks/query.mock'
-
-vi.mocked(useTeamsQuery).mockReturnValue(
-  createMockQueryResponse([{ id: '1', name: 'Custom Team' }])
-)
-```
-
-### Test Loading State
-
-```typescript
-vi.mocked(useTeamsQuery).mockReturnValue(
-  createMockQueryResponse([], true) // isLoading = true
-)
-```
-
-### Test Error State
-
-```typescript
-vi.mocked(useTeamsQuery).mockReturnValue(createMockQueryResponse(null, false, new Error('Failed')))
-```
-
-## Related Documentation
-
-- [Unit Testing Guide](../../../../docs/testing/unit-testing.md) - How to write unit tests
-- [Testing Overview](../../../../docs/testing/) - Full testing documentation
-- [Development Guide](../../../../docs/development-guide/) - General development guidelines
+👉 **For comprehensive usage guide, examples, and best practices:**  
+**[Global Mock System Documentation](../../../../docs/MOCK_SYSTEM.md)**
