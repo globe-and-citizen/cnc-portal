@@ -11,6 +11,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWriteContract: vi.fn(() => ({ ...mocks.mockUseWriteContract })),
     useWaitForTransactionReceipt: vi.fn(() => ({ ...mocks.mockUseWaitForTransactionReceipt })),
     useConnection: vi.fn(() => ({ ...mocks.mockUseConnection })),
+    useDisconnect: vi.fn(() => ({ ...mocks.mockUseDisconnect })),
     useConnectionEffect: mocks.mockUseConnectionEffect,
     useSwitchChain: vi.fn(() => ({ ...mocks.mockUseSwitchChain })),
     createConfig: mocks.mockCreateConfig,
