@@ -3,9 +3,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import { zeroAddress, type Address } from 'viem'
-import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
-import { mainnet } from 'viem/chains'
-import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import {
   mockToastStore,
@@ -14,15 +11,6 @@ import {
   mockERC20Reads,
   mockERC20Writes
 } from '@/tests/mocks'
-
-const wagmiConfig = createConfig({
-  chains: [mainnet],
-  transports: {
-    [mainnet.id]: http()
-  }
-})
-
-const queryClient = new QueryClient()
 
 describe('DepositBankForm.vue', () => {
   const defaultProps = {
@@ -33,11 +21,7 @@ describe('DepositBankForm.vue', () => {
     mountFn(DepositBankForm, {
       props: { ...defaultProps, ...overrides },
       global: {
-        plugins: [
-          createTestingPinia({ createSpy: vi.fn }),
-          [WagmiPlugin, { config: wagmiConfig }],
-          [VueQueryPlugin, { queryClient }]
-        ]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
