@@ -29,14 +29,7 @@
         <div class="flex gap-2">
           <DepositModal v-if="bankAddress" :bank-address="bankAddress" />
 
-          <TransferModal
-            v-if="bankAddress"
-            :bank-address="bankAddress"
-            :balances="balances"
-            :is-bank-owner="isBankOwner"
-            :is-bod-action="isBodAction"
-            :disabled="(!isBankOwner && !isBodAction) || !hasPositiveBalance"
-          />
+          <TransferModal v-if="bankAddress" :bank-address="bankAddress" />
         </div>
         <div class="flex items-center gap-2" v-if="bankAddress">
           <div class="text-sm text-gray-600">Contract Address:</div>
@@ -51,14 +44,9 @@
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { useStorage } from '@vueuse/core'
-import { useReadContract } from '@wagmi/vue'
-import { computed } from 'vue'
 import { type Address } from 'viem'
-import { useUserDataStore } from '@/stores'
-import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { useBodContract } from '@/composables/bod/'
 import TransferModal from '@/components/forms/TransferModal.vue'
 import DepositModal from '@/components/forms/DepositModal.vue'
 
@@ -66,30 +54,12 @@ const props = defineProps<{
   bankAddress: Address
 }>()
 
-const { useBodIsBodAction } = useBodContract()
-const { isBodAction } = useBodIsBodAction(props.bankAddress as Address, BANK_ABI)
-
-const userStore = useUserDataStore()
 const currency = useStorage('currency', {
   code: 'USD',
   name: 'US Dollar',
   symbol: '$'
 })
 
-// get the current owner of the bank
-const { data: bankOwner } = useReadContract({
-  address: props.bankAddress,
-  abi: BANK_ABI,
-  functionName: 'owner'
-})
-
-// check if the current user is the bank owner
-const isBankOwner = computed(() => bankOwner.value === userStore.address)
-
 // Use the contract balance composable
-const { total, balances, dividendsTotal, isLoading } = useContractBalance(props.bankAddress)
-
-const hasPositiveBalance = computed(() =>
-  balances.value.some((b) => b.token.id !== 'sher' && b.amount > 0)
-)
+const { total, dividendsTotal, isLoading } = useContractBalance(props.bankAddress)
 </script>
