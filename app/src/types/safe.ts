@@ -3,6 +3,8 @@ import type {
   SignatureType
 } from '@safe-global/types-kit'
 
+import { type TokenId } from '@/constant'
+
 export interface SafeFiatTotal {
   value: number
   formated: string
@@ -163,6 +165,12 @@ export const TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> = {
     url: 'https://safe-transaction-arbitrum.safe.global',
     nativeSymbol: 'ETH'
   }
+}
+
+export interface SafeTransferOptions {
+  to: string
+  amount: string
+  tokenId?: TokenId // Use tokenId instead of tokenAddress
 }
 
 export const SAFE_VERSION = '1.4.1'

@@ -12,7 +12,6 @@ import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip7
 import * as viem from 'viem'
 import { estimateGas, readContract } from '@wagmi/core'
 import { mockToastStore } from '@/tests/mocks/store.mock'
-import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 // Mocking wagmi functions
 vi.mock('@wagmi/vue', async (importOriginal) => {
@@ -59,13 +58,6 @@ vi.mock('@/stores', async (importOriginal) => {
     useUserDataStore: vi.fn(() => ({
       address: '0x0123456789012345678901234567890123456789'
     }))
-  }
-})
-vi.mock('@/stores/currencyStore', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
   }
 })
 

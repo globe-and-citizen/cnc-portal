@@ -1,13 +1,22 @@
 import { mount, flushPromises } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
-import { ref, nextTick } from 'vue'
+import { nextTick } from 'vue'
 import { type Address } from 'viem'
-import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
-import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
 import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
 import { mainnet } from 'viem/chains'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
+import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
+import {
+  mockToastStore,
+  mockTransactionFunctions,
+  mockUseSafeSendTransaction,
+  mockERC20Reads,
+  mockERC20Writes,
+  resetTransactionMocks,
+  resetERC20Mocks,
+  transferHash
+} from '@/tests/mocks'
 
 // Wagmi config for testing
 const wagmiConfig = createConfig({
@@ -18,109 +27,6 @@ const wagmiConfig = createConfig({
 })
 
 const queryClient = new QueryClient()
-
-// Hoisted mocks
-const {
-  mockSendTransaction,
-  mockAddSuccessToast,
-  mockAddErrorToast,
-  mockUseErc20Allowance,
-  mockUseERC20Approve,
-  mockExecuteApprove,
-  mockWriteContractAsync,
-  mockInvalidateQueries,
-  mockWaitForTransactionReceipt
-} = vi.hoisted(() => ({
-  mockSendTransaction: vi.fn(),
-  mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn(),
-  mockUseErc20Allowance: vi.fn(),
-  mockExecuteApprove: vi.fn(),
-  mockWriteContractAsync: vi.fn(),
-  mockInvalidateQueries: vi.fn(),
-  mockWaitForTransactionReceipt: vi.fn(),
-  mockUseERC20Approve: vi.fn(() => ({
-    executeWrite: mockExecuteApprove,
-    receiptResult: { data: ref(null), error: ref(null) },
-    writeResult: { data: ref(null), error: ref(null) }
-  }))
-}))
-
-// Reactive refs for transaction states
-const nativeReceipt = ref<{ status: string } | null>(null)
-const isNativeDepositLoading = ref(false)
-const isNativeDepositConfirmed = ref(false)
-const transferHash = ref<string | undefined>(undefined)
-
-// Mock Wagmi hooks
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual = (await importOriginal()) as typeof import('@wagmi/vue')
-  return {
-    ...actual,
-    useChainId: vi.fn(() => ref(1)),
-    useWriteContract: vi.fn(() => ({
-      data: transferHash,
-      writeContractAsync: mockWriteContractAsync
-    })),
-    useWaitForTransactionReceipt: vi.fn(() => ({
-      error: ref(null),
-      isLoading: ref(false),
-      isSuccess: ref(false)
-    }))
-  }
-})
-
-// Mock @wagmi/core
-vi.mock('@wagmi/core', () => ({
-  waitForTransactionReceipt: mockWaitForTransactionReceipt
-}))
-
-// Mock composables
-vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
-  useSafeSendTransaction: vi.fn(() => ({
-    sendTransaction: mockSendTransaction,
-    isLoading: isNativeDepositLoading,
-    isConfirmed: isNativeDepositConfirmed,
-    receipt: nativeReceipt
-  }))
-}))
-
-vi.mock('@/composables/erc20/reads', () => ({
-  useErc20Allowance: mockUseErc20Allowance
-}))
-
-vi.mock('@/composables/erc20/writes', () => ({
-  useERC20Approve: mockUseERC20Approve
-}))
-
-vi.mock('@tanstack/vue-query', async (importOriginal) => {
-  const actual = (await importOriginal()) as typeof import('@tanstack/vue-query')
-  return {
-    ...actual,
-    useQueryClient: vi.fn(() => ({
-      invalidateQueries: mockInvalidateQueries
-    }))
-  }
-})
-
-vi.mock('@/stores', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useCurrencyStore: () => mockUseCurrencyStore(),
-    useToastStore: () => ({
-      addSuccessToast: mockAddSuccessToast,
-      addErrorToast: mockAddErrorToast
-    }),
-    useUserDataStore: () => ({ address: '0xuseraddress0000000000000000000000000000' })
-  }
-})
-
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: vi.fn(() => mockUseContractBalance)
-}))
-
-import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 
 describe('DepositSafeForm.vue', () => {
   const defaultProps = {
@@ -154,27 +60,9 @@ describe('DepositSafeForm.vue', () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
-
-    // Reset reactive states
-    isNativeDepositLoading.value = false
-    isNativeDepositConfirmed.value = false
-    nativeReceipt.value = null
-    transferHash.value = undefined
-
-    // Default mock return values
-    mockUseErc20Allowance.mockReturnValue({ data: ref(1000000n) })
-    mockSendTransaction.mockResolvedValue({ hash: '0xnativetx' })
-    mockExecuteApprove.mockResolvedValue(undefined)
-    mockWriteContractAsync.mockResolvedValue('0xtransfertx')
-    mockWaitForTransactionReceipt.mockResolvedValue({ status: 'success' })
-
-    // Reset composable mocks
-    mockUseERC20Approve.mockReturnValue({
-      executeWrite: mockExecuteApprove,
-      writeResult: { data: ref(null), error: ref(null) },
-      receiptResult: { data: ref(null), error: ref(null) }
-    })
+    // Reset all mocks using the global reset functions
+    resetTransactionMocks()
+    resetERC20Mocks()
   })
 
   afterEach(() => {
@@ -198,13 +86,13 @@ describe('DepositSafeForm.vue', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      expect(mockSendTransaction).not.toHaveBeenCalled()
+      expect(mockTransactionFunctions.mockSendTransaction).not.toHaveBeenCalled()
     })
   })
 
   describe('Native Token Deposit', () => {
     it('should show success toast and close modal after native deposit confirmation', async () => {
-      mockSendTransaction.mockResolvedValueOnce({ hash: '0xnativetx' })
+      mockTransactionFunctions.mockSendTransaction.mockResolvedValueOnce({ hash: '0xnativetx' })
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '1', 'native', true)
@@ -212,32 +100,32 @@ describe('DepositSafeForm.vue', () => {
       await nextTick()
 
       // Simulate transaction confirmation
-      isNativeDepositConfirmed.value = true
-      nativeReceipt.value = { status: 'success' }
+      mockUseSafeSendTransaction.isConfirmed.value = true
+      mockUseSafeSendTransaction.receipt.value = { status: 'success' }
       await nextTick()
 
-      expect(mockAddSuccessToast).toHaveBeenCalledWith(
+      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
         expect.stringContaining('deposited successfully')
       )
       expect(wrapper.emitted('closeModal')).toBeTruthy()
     })
 
     it('should prevent multiple submissions while loading', async () => {
-      isNativeDepositLoading.value = true
+      mockUseSafeSendTransaction.isLoading.value = true
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '1', 'native', true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      expect(mockSendTransaction).not.toHaveBeenCalled()
+      expect(mockTransactionFunctions.mockSendTransaction).not.toHaveBeenCalled()
     })
   })
 
   describe('ERC20 Token Deposit - With Sufficient Allowance', () => {
     it('should show success toast and close modal after ERC20 deposit', async () => {
-      mockUseErc20Allowance.mockReturnValue({ data: ref(1000000n) })
-      mockWriteContractAsync.mockResolvedValueOnce('0xtransfertx')
+      mockERC20Reads.allowance.data.value = 1000000n
+      mockTransactionFunctions.mockWriteContractAsync.mockResolvedValueOnce('0xtransfertx')
       transferHash.value = '0xtransfertx'
 
       const wrapper = createWrapper()
@@ -245,7 +133,7 @@ describe('DepositSafeForm.vue', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await flushPromises()
 
-      expect(mockAddSuccessToast).toHaveBeenCalledWith(
+      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
         expect.stringContaining('deposited successfully')
       )
       expect(wrapper.emitted('closeModal')).toBeTruthy()
@@ -254,21 +142,17 @@ describe('DepositSafeForm.vue', () => {
 
   describe('ERC20 Token Deposit - With Insufficient Allowance', () => {
     it('should handle approval errors gracefully', async () => {
-      mockUseErc20Allowance.mockReturnValue({ data: ref(0n) })
+      mockERC20Reads.allowance.data.value = 0n
 
       // Simulate approval error
-      mockUseERC20Approve.mockReturnValue({
-        executeWrite: mockExecuteApprove,
-        writeResult: { data: ref(null), error: ref(new Error('Approval failed')) },
-        receiptResult: { data: ref(null), error: ref(null) }
-      })
+      mockERC20Writes.approve.writeResult.error.value = new Error('Approval failed')
 
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, '100', 'usdc', true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await flushPromises()
 
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to deposit usdc')
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to deposit usdc')
     })
   })
 
@@ -282,7 +166,7 @@ describe('DepositSafeForm.vue', () => {
     })
 
     it('should handle zero allowance correctly', async () => {
-      mockUseErc20Allowance.mockReturnValue({ data: ref(0n) })
+      mockERC20Reads.allowance.data.value = 0n
 
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, '100', 'usdc', true)
@@ -290,7 +174,7 @@ describe('DepositSafeForm.vue', () => {
       await nextTick()
 
       // Should trigger approval flow
-      expect(mockExecuteApprove).toHaveBeenCalled()
+      expect(mockERC20Writes.approve.executeWrite).toHaveBeenCalled()
     })
   })
 })

@@ -116,7 +116,7 @@ const MOCK_DATA = {
   txHash: '0x9876543210987654321098765432109876543210987654321098765432109876'
 } as const
 
-describe('useSafeTransfer', () => {
+describe('useSafeTransfer (state & errors)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
@@ -149,50 +149,13 @@ describe('useSafeTransfer', () => {
     )
   })
 
-  describe('Input Validation', () => {
-    it('should reject invalid Safe address', async () => {
-      const { transferFromSafe } = useSafeTransfer()
+  describe('Error Handling', () => {
+    it('should handle Safe SDK loading errors', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const sdkError = new Error('Safe SDK initialization failed')
+      mockLoadSafe.mockRejectedValue(sdkError)
 
-      const result = await transferFromSafe(MOCK_DATA.invalidAddress, {
-        to: MOCK_DATA.validRecipient,
-        amount: MOCK_DATA.amount
-      })
-
-      expect(result).toBeNull()
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid Safe address')
-    })
-
-    it('should reject invalid recipient address', async () => {
-      const { transferFromSafe } = useSafeTransfer()
-
-      const result = await transferFromSafe(MOCK_DATA.validSafeAddress, {
-        to: MOCK_DATA.invalidAddress,
-        amount: MOCK_DATA.amount
-      })
-
-      expect(result).toBeNull()
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid recipient address')
-    })
-
-    it('should reject invalid amount', async () => {
-      const { transferFromSafe } = useSafeTransfer()
-
-      const result = await transferFromSafe(MOCK_DATA.validSafeAddress, {
-        to: MOCK_DATA.validRecipient,
-        amount: '0'
-      })
-
-      expect(result).toBeNull()
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid transfer amount')
-    })
-
-    it('should reject when wallet is not connected', async () => {
-      mockUseConnection.mockReturnValue({
-        isConnected: ref(false),
-        address: ref(null)
-      })
-
-      const { transferFromSafe } = useSafeTransfer()
+      const { transferFromSafe, error } = useSafeTransfer()
 
       const result = await transferFromSafe(MOCK_DATA.validSafeAddress, {
         to: MOCK_DATA.validRecipient,
@@ -200,93 +163,84 @@ describe('useSafeTransfer', () => {
       })
 
       expect(result).toBeNull()
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Please connect your wallet')
+      expect(error.value?.message).toBe('Safe SDK initialization failed')
+      expect(mockAddErrorToast).toHaveBeenCalledWith('Safe SDK initialization failed')
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Safe transfer error:', sdkError)
+
+      consoleErrorSpy.mockRestore()
+    })
+
+    it('should handle unknown error types', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      mockLoadSafe.mockRejectedValue('Unknown error')
+
+      const { transferFromSafe, error } = useSafeTransfer()
+
+      const result = await transferFromSafe(MOCK_DATA.validSafeAddress, {
+        to: MOCK_DATA.validRecipient,
+        amount: MOCK_DATA.amount
+      })
+
+      expect(result).toBeNull()
+      expect(error.value?.message).toBe('Failed to transfer from Safe')
+      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to transfer from Safe')
+
+      consoleErrorSpy.mockRestore()
     })
   })
 
-  describe('Transfer with Threshold >= 2 (Proposal)', () => {
-    beforeEach(() => {
-      mockSafeSdk.getThreshold.mockResolvedValue(2)
-    })
-
-    it('should propose native transfer successfully', async () => {
-      const { transferFromSafe } = useSafeTransfer()
-
-      const result = await transferFromSafe(MOCK_DATA.validSafeAddress, {
-        to: MOCK_DATA.validRecipient,
-        amount: MOCK_DATA.amount,
-        tokenId: 'native'
+  describe('Loading States', () => {
+    it('should manage loading state during transfer', async () => {
+      let resolveProposal: () => void
+      const proposalPromise = new Promise<string>((resolve) => {
+        resolveProposal = resolve
       })
 
-      expect(result).toBe(MOCK_DATA.safeTxHash)
-      expect(mockProposeTransaction).toHaveBeenCalledWith(
-        MOCK_DATA.validSafeAddress,
-        expect.objectContaining({
-          to: MOCK_DATA.validRecipient,
-          value: expect.any(String),
-          data: '0x',
-          operation: 0
-        })
-      )
-      expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer proposed successfully (Native)')
-    })
+      mockProposeTransaction.mockReturnValue(proposalPromise)
 
-    it('should propose token transfer successfully', async () => {
-      const { transferFromSafe } = useSafeTransfer()
+      const { transferFromSafe, isTransferring } = useSafeTransfer()
 
-      const result = await transferFromSafe(MOCK_DATA.validSafeAddress, {
+      // Start operation
+      const transferPromise = transferFromSafe(MOCK_DATA.validSafeAddress, {
         to: MOCK_DATA.validRecipient,
-        amount: MOCK_DATA.amount,
-        tokenId: 'usdc'
+        amount: MOCK_DATA.amount
       })
 
-      expect(result).toBe(MOCK_DATA.safeTxHash)
-      expect(mockProposeTransaction).toHaveBeenCalledWith(
-        MOCK_DATA.validSafeAddress,
-        expect.objectContaining({
-          to: MOCK_DATA.validTokenAddress,
-          value: '0',
-          data: '0xmockedTransferData',
-          operation: 0
-        })
-      )
-      expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer proposed successfully (Token)')
+      // Check loading state
+      expect(isTransferring.value).toBe(true)
+
+      // Complete operation
+      resolveProposal!()
+      await transferPromise
+
+      // Check loading state cleared
+      expect(isTransferring.value).toBe(false)
+    })
+
+    it('should clear loading state even when errors occur', async () => {
+      mockLoadSafe.mockRejectedValue(new Error('Test error'))
+
+      const { transferFromSafe, isTransferring } = useSafeTransfer()
+
+      await transferFromSafe(MOCK_DATA.validSafeAddress, {
+        to: MOCK_DATA.validRecipient,
+        amount: MOCK_DATA.amount
+      })
+
+      expect(isTransferring.value).toBe(false)
     })
   })
 
-  describe('Transfer with Threshold = 1 (Direct Execution)', () => {
-    beforeEach(() => {
-      mockSafeSdk.getThreshold.mockResolvedValue(1)
-    })
+  describe('Return Value Structure', () => {
+    it('should return correct properties', () => {
+      const result = useSafeTransfer()
 
-    it('should execute native transfer directly', async () => {
-      const { transferFromSafe } = useSafeTransfer()
-
-      const result = await transferFromSafe(MOCK_DATA.validSafeAddress, {
-        to: MOCK_DATA.validRecipient,
-        amount: MOCK_DATA.amount,
-        tokenId: 'native'
-      })
-
-      expect(result).toBe(MOCK_DATA.txHash)
-      expect(mockSafeSdk.executeTransaction).toHaveBeenCalled()
-      expect(mockExecuteMutation.mutateAsync).toHaveBeenCalled()
-      expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer executed successfully (Native)')
-    })
-
-    it('should execute token transfer directly', async () => {
-      const { transferFromSafe } = useSafeTransfer()
-
-      const result = await transferFromSafe(MOCK_DATA.validSafeAddress, {
-        to: MOCK_DATA.validRecipient,
-        amount: MOCK_DATA.amount,
-        tokenId: 'usdc'
-      })
-
-      expect(result).toBe(MOCK_DATA.txHash)
-      expect(mockSafeSdk.executeTransaction).toHaveBeenCalled()
-      expect(mockExecuteMutation.mutateAsync).toHaveBeenCalled()
-      expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer executed successfully (Token)')
+      expect(result).toHaveProperty('transferFromSafe')
+      expect(result).toHaveProperty('isTransferring')
+      expect(result).toHaveProperty('error')
+      expect(typeof result.transferFromSafe).toBe('function')
+      expect(result.isTransferring.value).toBe(false)
+      expect(result.error.value).toBe(null)
     })
   })
 })

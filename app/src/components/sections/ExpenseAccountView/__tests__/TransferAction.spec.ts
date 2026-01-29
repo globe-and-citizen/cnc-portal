@@ -193,7 +193,7 @@ describe('TransferComponent', () => {
     expect(simulateContractMock).toHaveBeenCalledWith(config, {
       abi: EXPENSE_ACCOUNT_EIP712_ABI,
       functionName: 'transfer',
-      address: '0xTeamContractAddress',
+      address: '0x5555555555555555555555555555555555555555',
       args: [
         '0xRecipientAddress',
         100000000n,
