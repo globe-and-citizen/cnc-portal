@@ -191,3 +191,14 @@ export interface SafeWallet {
   name: string
   balance: string
 }
+
+interface DecodedParameter {
+  name: string
+  type: string
+  value: string
+}
+
+export interface DecodedCall {
+  method: string
+  parameters: DecodedParameter[]
+}

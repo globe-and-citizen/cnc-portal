@@ -29,7 +29,9 @@
       </template>
 
       <template #value-data="{ row }">
-        <span>{{ formatValue(row.value.toString()) }} </span>
+        <span
+          >{{ formatSafeTransactionValue(row.value.toString(), row?.dataDecoded, row.to) }}
+        </span>
       </template>
 
       <template #status-data="{ row }">
@@ -111,8 +113,10 @@ import { useSafeApproval, useSafeExecution } from '@/composables/safe'
 import SafeTransactionStatusFilter, {
   type SafeTransactionStatus
 } from '@/components/sections/SafeView/SafeTransactionStatusFilter.vue'
+
 import { NETWORK } from '@/constant'
-import { formatEther } from 'viem'
+
+import { formatSafeTransactionValue } from '@/utils'
 
 const teamStore = useTeamStore()
 const { address: connectedAddress } = useAccount()
@@ -135,15 +139,6 @@ const { data: safeInfo } = useSafeInfoQuery(
   computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
 )
 
-const formatValue = (value: string): string => {
-  try {
-    const etherValue = formatEther(BigInt(value))
-    const numericValue = parseFloat(etherValue)
-    return `${numericValue.toFixed(4)} ${NETWORK.currencySymbol}`
-  } catch {
-    return `0 ${NETWORK.currencySymbol}`
-  }
-}
 // Safe operations
 const { approveTransaction, isApproving } = useSafeApproval()
 const { executeTransaction, isExecuting } = useSafeExecution()
