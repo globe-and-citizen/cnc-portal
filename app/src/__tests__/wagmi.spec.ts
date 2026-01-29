@@ -1,16 +1,6 @@
-import { describe, it, expect, vi } from 'vitest'
-import { createConfig } from '@wagmi/vue'
+import { describe, it, expect } from 'vitest'
+import { createConfig, http } from '@wagmi/vue'
 import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from '@wagmi/vue/chains'
-
-vi.mock('@wagmi/vue', async () => {
-  const originalModule = await vi.importActual<typeof import('@wagmi/vue')>('@wagmi/vue')
-  return {
-    ...originalModule,
-    http: vi.fn().mockReturnValue('mocked-http-transport'),
-    createConfig: vi.fn(originalModule.createConfig)
-  }
-})
-
 import { config } from '../wagmi.config'
 
 describe('wagmi.config.ts', () => {
@@ -26,11 +16,15 @@ describe('wagmi.config.ts', () => {
       }
     })
 
+    // Verify the http transport was called for each chain
+    expect(http).toHaveBeenCalledTimes(5)
+
     // Check the content of the created config
     expect(config.chains).toEqual([mainnet, sepolia, polygon, hardhat, polygonAmoy])
     expect(config._internal.transports[mainnet.id]).toBe('mocked-http-transport')
     expect(config._internal.transports[sepolia.id]).toBe('mocked-http-transport')
     expect(config._internal.transports[polygon.id]).toBe('mocked-http-transport')
     expect(config._internal.transports[hardhat.id]).toBe('mocked-http-transport')
+    expect(config._internal.transports[polygonAmoy.id]).toBe('mocked-http-transport')
   })
 })

@@ -25,3 +25,12 @@ export const mockWagmiCore = {
   writeContract: vi.fn(),
   readContract: vi.fn()
 }
+
+// Mock wagmi config and transport functions
+export const mockHttp = vi.fn().mockReturnValue('mocked-http-transport')
+export const mockCreateConfig = vi.fn((config: any) => ({
+  chains: config.chains,
+  _internal: {
+    transports: config.transports
+  }
+}))

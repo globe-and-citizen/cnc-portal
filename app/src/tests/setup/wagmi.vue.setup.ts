@@ -28,7 +28,9 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useSwitchChain: vi.fn(() => ({
       mutate: vi.fn(),
       isPending: ref(false)
-    }))
+    })),
+    createConfig: mocks.mockCreateConfig,
+    http: mocks.mockHttp
   }
 })
 
