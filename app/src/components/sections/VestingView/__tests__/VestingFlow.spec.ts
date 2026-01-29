@@ -9,8 +9,7 @@ import { VESTING_ADDRESS } from '@/constant'
 import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
 import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
 import { mainnet } from 'viem/chains'
-import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
-import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
+import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 
 const wagmiConfig = createConfig({
   chains: [mainnet],
@@ -132,13 +131,6 @@ vi.mock('@/stores', () => ({
 
 vi.mock('@/stores/useToastStore')
 
-vi.mock('@/stores/currencyStore', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore() }))
-  }
-})
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)
 }))

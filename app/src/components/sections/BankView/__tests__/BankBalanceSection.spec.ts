@@ -4,7 +4,7 @@ import BankBalanceSection from '../BankBalanceSection.vue'
 import type { Address } from 'viem'
 import { ref, nextTick, defineComponent, isRef, type Ref } from 'vue'
 // import { NETWORK, USDC_ADDRESS } from '@/constant'
-import { mockUseContractBalance } from '@/tests/mocks/useContractBalance.mock'
+import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 import type { TokenOption } from '@/types'
 import type { ComponentPublicInstance } from 'vue'
 

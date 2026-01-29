@@ -16,6 +16,9 @@ const { mockUseReadContract, mockIsAddress } = vi.hoisted(() => ({
   mockIsAddress: vi.fn()
 }))
 
+// Disable global ERC20 reads mock to test actual implementation
+vi.unmock('@/composables/erc20/reads')
+
 // Mock external dependencies
 vi.mock('@wagmi/vue', () => ({
   useReadContract: mockUseReadContract

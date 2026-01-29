@@ -9,12 +9,6 @@ import { ref } from 'vue'
 interface ComponentData {
   transferOwnershipModal: boolean
 }
-vi.mock('@/stores/useToastStore', () => ({
-  useToastStore: vi.fn().mockReturnValue({
-    addErrorToast: vi.fn(),
-    addSuccessToast: vi.fn()
-  })
-}))
 
 // Define proper types for the mocks
 type MockError = Error | null

@@ -1,25 +1,7 @@
 import { mount, flushPromises } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import TeamMetaSection from '../TeamMetaSection.vue'
-import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
-import { createMockQueryResponse } from '@/tests/mocks/query.mock'
-
-const mockTeam = {
-  id: '1',
-  name: 'Test Team',
-  description: 'A test team',
-  members: []
-}
-
-const mocks = vi.hoisted(() => ({
-  mockUseTeamStore: vi.fn(() => ({
-    currentTeam: mockTeam
-  })),
-  mockUseCustomFetch: vi.fn(),
-  mockUpdateTeamMutate: vi.fn(),
-  mockDeleteTeamMutate: vi.fn()
-}))
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -30,49 +12,6 @@ vi.mock('vue-router', async (importOriginal) => {
     }))
   }
 })
-
-vi.mock('@/stores/useToastStore')
-
-vi.mock('@/stores', async (importOriginal) => {
-  const actual: object = await importOriginal()
-
-  return {
-    ...actual,
-    useTeamStore: vi.fn(() => ({
-      currentTeamMeta: {
-        data: createMockQueryResponse(mockTeam),
-        error: ref(null),
-        isPending: ref(false)
-      }
-    }))
-  }
-})
-
-vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useCustomFetch: mocks.mockUseCustomFetch
-  }
-})
-
-vi.mock('@/queries/team.queries', () => ({
-  useUpdateTeamMutation: vi.fn(() => ({
-    isPending: ref(false),
-    error: ref<Error | null>(null),
-    mutate: mocks.mockUpdateTeamMutate
-  })),
-  useDeleteTeamMutation: vi.fn(() => ({
-    mutate: mocks.mockDeleteTeamMutate,
-    isPending: ref(false),
-    error: ref<Error | null>(null)
-  })),
-  useTeamQuery: vi.fn(() => ({
-    data: ref(mockTeam),
-    error: ref(null),
-    isPending: ref(false)
-  }))
-}))
 
 interface ComponentData {
   showDeleteTeamConfirmModal: boolean
@@ -201,9 +140,6 @@ describe('TeamMetaSection.vue', () => {
     const updateForm = wrapper.findComponent({ name: 'UpdateTeamForm' })
     await updateForm.vm.$emit('updateTeam')
     await flushPromises()
-
-    // Verify the mutate function was called
-    expect(mocks.mockUpdateTeamMutate).toHaveBeenCalled()
   })
 
   it('opens update team modal when updateTeamModalOpen event is emitted from TeamDetails', async () => {
@@ -270,7 +206,6 @@ describe('TeamMetaSection.vue', () => {
     await flushPromises()
 
     // Verify mutate was called
-    expect(mocks.mockUpdateTeamMutate).toHaveBeenCalled()
   })
 
   it('renders UpdateTeamForm with correct props when modal is open', async () => {

@@ -61,8 +61,6 @@ export const mockWageData: Wage[] = [
   }
 ]
 
-// export const mockWageResponse = createMockAxiosResponse(mockWageData)
-
 /**
  * Notification Query Mocks
  */
