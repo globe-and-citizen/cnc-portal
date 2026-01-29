@@ -20,12 +20,11 @@ export function useClobClient() {
   const { ethersSigner } = useEthersSigner()
   const { derivedSafeAddressFromEoa } = useSafeDeployment()
   // Get the reactive session state
-  const { /* tradingSession, */ isTradingSessionComplete } = useTradingSession()
+  const { isTradingSessionComplete } = useTradingSession()
   const tradingSessionStore = useTradingSessionStore()
   const userDataStore = useUserDataStore()
 
   const clobClient = computed(() => {
-    // Access .value for all refs/computeds
     const tradingSession = tradingSessionStore.sessions.get(
       userDataStore.address.toLocaleLowerCase()
     )
