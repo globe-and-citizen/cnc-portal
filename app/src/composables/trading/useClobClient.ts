@@ -24,11 +24,6 @@ export function useClobClient() {
   const tradingSessionStore = useTradingSessionStore()
   const userDataStore = useUserDataStore()
 
-  // watch(tradingSession, (apiCreds) => {
-  //   if (apiCreds)
-  //     console.log('Something changed about apiCreds...')
-  // })
-
   const clobClient = computed(() => {
     // Access .value for all refs/computeds
     const tradingSession = tradingSessionStore.sessions.get(
