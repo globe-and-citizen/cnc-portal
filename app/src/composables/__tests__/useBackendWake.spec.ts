@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { defineComponent, h } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 
@@ -23,24 +22,13 @@ vi.unmock('@/composables/useBackendWake')
 import { useBackendWake } from '@/composables/useBackendWake'
 
 describe('useBackendWake Composable', () => {
-  let queryClient: QueryClient
-
   beforeEach(() => {
-    // Create a fresh QueryClient for each test
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false
-        }
-      }
-    })
-
     mockRefetch.mockClear()
     vi.clearAllMocks()
   })
 
   afterEach(() => {
-    queryClient.clear()
+    vi.clearAllMocks()
   })
 
   describe('useBackendWake', () => {
@@ -55,11 +43,7 @@ describe('useBackendWake Composable', () => {
         }
       })
 
-      const wrapper = mount(TestComponent, {
-        global: {
-          plugins: [[VueQueryPlugin, { queryClient }]]
-        }
-      })
+      const wrapper = mount(TestComponent)
 
       // Wait for mount lifecycle
       await flushPromises()
@@ -83,11 +67,7 @@ describe('useBackendWake Composable', () => {
         }
       })
 
-      const wrapper = mount(TestComponent, {
-        global: {
-          plugins: [[VueQueryPlugin, { queryClient }]]
-        }
-      })
+      const wrapper = mount(TestComponent)
 
       await flushPromises()
 
@@ -111,11 +91,7 @@ describe('useBackendWake Composable', () => {
         }
       })
 
-      const wrapper = mount(TestComponent, {
-        global: {
-          plugins: [[VueQueryPlugin, { queryClient }]]
-        }
-      })
+      const wrapper = mount(TestComponent)
 
       // Component should be rendered immediately without waiting
       expect(wrapper.html()).toContain('Test')
@@ -135,17 +111,9 @@ describe('useBackendWake Composable', () => {
         }
       })
 
-      const wrapper1 = mount(TestComponent, {
-        global: {
-          plugins: [[VueQueryPlugin, { queryClient }]]
-        }
-      })
+      const wrapper1 = mount(TestComponent)
 
-      const wrapper2 = mount(TestComponent, {
-        global: {
-          plugins: [[VueQueryPlugin, { queryClient }]]
-        }
-      })
+      const wrapper2 = mount(TestComponent)
 
       await flushPromises()
 

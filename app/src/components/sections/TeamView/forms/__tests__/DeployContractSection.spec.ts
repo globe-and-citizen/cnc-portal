@@ -2,7 +2,6 @@ import { describe, it, vi, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
-import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import ButtonUI from '@/components/ButtonUI.vue'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 
@@ -137,8 +136,6 @@ vi.mock('@/utils', () => ({
 }))
 
 describe('DeployContractSection', () => {
-  let queryClient: QueryClient
-
   const defaultProps = {
     investorContractInput: {
       name: 'Investor Contract',
@@ -158,7 +155,7 @@ describe('DeployContractSection', () => {
         ...props
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
         mocks: {
           $t: (msg: string) => msg
         }
@@ -168,14 +165,6 @@ describe('DeployContractSection', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-
-    // Create fresh QueryClient for each test
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: { retry: false },
-        mutations: { retry: false }
-      }
-    })
 
     // Reset reactive values
     mockWriteContractError.value = null
