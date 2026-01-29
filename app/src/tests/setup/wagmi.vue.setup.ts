@@ -16,9 +16,23 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useWatchContractEvent: mocks.mockUseWatchContractEvent,
     useSwitchChain: vi.fn(() => ({ ...mocks.mockUseSwitchChain })),
     createConfig: mocks.mockCreateConfig,
-    http: mocks.mockHttp
+    http: mocks.mockHttp,
+  WagmiPlugin: {
+    install: vi.fn()
+  }
   }
 })
+// Mock wagmi config before importing main
+vi.mock('@/wagmi.config', () => ({
+  config: {
+    setState: vi.fn(),
+    getState: vi.fn(() => ({})),
+    subscribe: vi.fn(() => vi.fn()),
+    connectors: [],
+    chains: [],
+    storage: null
+  }
+}))
 
 vi.mock('@wagmi/core', async (importOriginal) => {
   const actual: object = await importOriginal()

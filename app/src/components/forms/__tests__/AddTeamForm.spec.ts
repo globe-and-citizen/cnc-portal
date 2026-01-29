@@ -5,7 +5,7 @@ import { createTestingPinia } from '@pinia/testing'
 import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 import { useCreateTeamMutation } from '@/queries/team.queries'
 import { createMockMutationResponse, mockTeamData } from '@/tests/mocks/query.mock'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 // Stub for DeployContractSection to avoid wagmi plugin issues
