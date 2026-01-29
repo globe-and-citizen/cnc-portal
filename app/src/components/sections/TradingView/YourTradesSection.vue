@@ -20,7 +20,7 @@
         </div>
         <button
           @click="handleTrade"
-          :disabled="!marketUrl.trim()"
+          :disabled="!marketUrl.trim() || !isSelectedSafeTrader"
           class="btn btn-primary h-14 px-8 text-lg"
           data-test="trade-button"
         >
@@ -104,7 +104,7 @@ const tradingModal = ref({ mount: false, show: false })
 // Use TanStack Query states
 const { proposeRedemption } = useRedeemPosition()
 const { derivedSafeAddressFromEoa } = useSafeDeployment()
-const { selectedSafe } = useTeamSafes()
+const { selectedSafe, isSelectedSafeTrader } = useTeamSafes()
 const selectedSafeAddress = computed(() => selectedSafe.value?.address)
 const { data: trades, isLoading: isLoadingTrades, refetch } = useUserPositions(selectedSafeAddress)
 
