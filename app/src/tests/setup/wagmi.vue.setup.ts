@@ -17,9 +17,9 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useSwitchChain: vi.fn(() => ({ ...mocks.mockUseSwitchChain })),
     createConfig: mocks.mockCreateConfig,
     http: mocks.mockHttp,
-  WagmiPlugin: {
-    install: vi.fn()
-  }
+    WagmiPlugin: {
+      install: vi.fn()
+    }
   }
 })
 // Mock wagmi config before importing main
