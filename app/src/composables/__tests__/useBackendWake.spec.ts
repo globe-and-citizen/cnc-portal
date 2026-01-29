@@ -27,10 +27,6 @@ describe('useBackendWake Composable', () => {
     vi.clearAllMocks()
   })
 
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
-
   describe('useBackendWake', () => {
     it('should call refetch on mount', async () => {
       const TestComponent = defineComponent({
