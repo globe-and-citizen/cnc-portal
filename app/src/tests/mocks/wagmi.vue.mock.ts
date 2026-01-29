@@ -61,6 +61,9 @@ export const mockUseSwitchChain = {
 // Mock useConnectionEffect composable
 export const mockUseConnectionEffect = vi.fn()
 
+// Mock useWatchContractEvent composable
+export const mockUseWatchContractEvent = vi.fn()
+
 // Mock wagmi config and transport functions
 export const mockHttp = vi.fn().mockReturnValue('mocked-http-transport')
 export const mockCreateConfig = vi.fn((config) => ({

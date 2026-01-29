@@ -13,6 +13,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useConnection: vi.fn(() => ({ ...mocks.mockUseConnection })),
     useDisconnect: vi.fn(() => ({ ...mocks.mockUseDisconnect })),
     useConnectionEffect: mocks.mockUseConnectionEffect,
+    useWatchContractEvent: mocks.mockUseWatchContractEvent,
     useSwitchChain: vi.fn(() => ({ ...mocks.mockUseSwitchChain })),
     createConfig: mocks.mockCreateConfig,
     http: mocks.mockHttp
