@@ -170,7 +170,6 @@ const transferModal = ref({
 
 const { transferFromSafe, isTransferring } = useSafeTransfer()
 
-// New Safe data composable with built-in query reactivity
 const { data: safeInfo } = useSafeInfoQuery(
   computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
 )
@@ -214,18 +213,16 @@ const resetTransferValues = () => {
 const handleTransfer = async (transferData: TransferModel) => {
   const safeAddress = teamStore.currentTeam?.safeAddress
   if (!safeAddress) return
-
   const options = {
     to: transferData.address.address,
     amount: transferData.amount,
-    tokenAddress: transferData.token.tokenId === 'native' ? undefined : transferData.token.tokenId
+    tokenId: transferData.token.tokenId
   }
 
   const result = await transferFromSafe(safeAddress, options)
 
   if (result) {
     resetTransferValues()
-    // Optionally invalidate queries to refresh balances
     await queryClient.invalidateQueries({
       queryKey: ['safe', 'info', { safeAddress }]
     })
@@ -235,6 +232,4 @@ const handleTransfer = async (transferData: TransferModel) => {
 const closeDepositModal = async () => {
   depositModal.value = { mount: false, show: false }
 }
-
-// Transfer logic intentionally removed (display-only)
 </script>

@@ -1,17 +1,14 @@
 import { ref } from 'vue'
 import { useConnection, useChainId } from '@wagmi/vue'
-import { isAddress, parseEther, encodeFunctionData, type Address } from 'viem'
+
+import { erc20Abi, isAddress, parseEther, parseUnits, encodeFunctionData, type Address } from 'viem'
 import { useToastStore } from '@/stores'
 import { useExecuteTransactionMutation } from '@/queries/safe.queries'
 import { useSafeSDK } from './useSafeSdk'
 import { useSafeProposal } from './useSafeProposal'
-import { erc20Abi } from 'viem'
 
-export interface SafeTransferOptions {
-  to: string
-  amount: string
-  tokenAddress?: string // If undefined, transfer native ETH/POL
-}
+import { getTokenAddress } from '@/utils'
+import { type SafeTransferOptions } from '@/types'
 
 /**
  * Transfer tokens or ETH from Safe
@@ -58,7 +55,8 @@ export function useSafeTransfer() {
       return null
     }
 
-    const { to, amount, tokenAddress } = options
+    const { to, amount, tokenId = 'native' } = options
+    const tokenAddress = getTokenAddress(tokenId)
 
     isTransferring.value = true
     error.value = null
@@ -79,12 +77,17 @@ export function useSafeTransfer() {
       }
 
       if (tokenAddress) {
+        console.log('Transferring ERC20 token from Safe token address', tokenAddress)
         // ERC20 token transfer
         if (!isAddress(tokenAddress)) {
           throw new Error('Invalid token address')
         }
 
-        const parsedAmount = parseEther(amount)
+        // Use proper decimals based on token type
+        const parsedAmount =
+          tokenId === 'usdc' || tokenId === 'usdt'
+            ? parseUnits(amount, 6) // USDC/USDT have 6 decimals
+            : parseEther(amount) // Default to 18 decimals
 
         const transferData = encodeFunctionData({
           abi: erc20Abi,
@@ -111,7 +114,6 @@ export function useSafeTransfer() {
       }
 
       if (shouldPropose) {
-        //  ONLY use proposeTransaction - this handles everything
         const safeTxHash = await proposeTransaction(safeAddress, transactionData)
 
         if (!safeTxHash) {
@@ -164,40 +166,8 @@ export function useSafeTransfer() {
     }
   }
 
-  /**
-   * Transfer native currency (ETH/POL) from Safe
-   */
-  const transferNative = async (
-    safeAddress: string,
-    to: string,
-    amount: string
-  ): Promise<string | null> => {
-    return transferFromSafe(safeAddress, {
-      to,
-      amount
-    })
-  }
-
-  /**
-   * Transfer ERC20 tokens from Safe
-   */
-  const transferToken = async (
-    safeAddress: string,
-    to: string,
-    amount: string,
-    tokenAddress: string
-  ): Promise<string | null> => {
-    return transferFromSafe(safeAddress, {
-      to,
-      amount,
-      tokenAddress
-    })
-  }
-
   return {
     transferFromSafe,
-    transferNative,
-    transferToken,
     isTransferring,
     error
   }

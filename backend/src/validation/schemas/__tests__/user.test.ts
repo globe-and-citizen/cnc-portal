@@ -30,7 +30,7 @@ describe('user schemas', () => {
     it('should throw error if no fields provided', () => {
       const body = {};
       expect(() => updateUserBodySchema.parse(body)).toThrow(
-        'At least one field (name or imageUrl) must be provided for update'
+        'At least one field (name, imageUrl or safe) must be provided for update'
       );
     });
 
