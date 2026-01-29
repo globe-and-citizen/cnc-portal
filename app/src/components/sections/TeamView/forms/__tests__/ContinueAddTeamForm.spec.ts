@@ -4,7 +4,6 @@ import { ref } from 'vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
 import type { Team } from '@/types/team'
 import { createTestingPinia } from '@pinia/testing'
-import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 
 // Hoisted mocks for Safe composables
@@ -142,18 +141,8 @@ const team = ref<Partial<Team>>({
 })
 
 describe('ContinueAddTeamForm', () => {
-  let queryClient: QueryClient
-
   beforeEach(() => {
     vi.clearAllMocks()
-
-    // Create fresh QueryClient for each test
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: { retry: false },
-        mutations: { retry: false }
-      }
-    })
 
     // Reset reactive values
     mockWriteContractError.value = null
@@ -170,7 +159,7 @@ describe('ContinueAddTeamForm', () => {
         team: team.value
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
@@ -223,7 +212,7 @@ describe('ContinueAddTeamForm', () => {
     const wrapper = mount(ContinueAddTeamForm, {
       props: { team: team.value },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
@@ -246,7 +235,7 @@ describe('ContinueAddTeamForm', () => {
     const wrapper = mount(ContinueAddTeamForm, {
       props: { team: team.value },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
@@ -275,7 +264,7 @@ describe('ContinueAddTeamForm', () => {
     const wrapper = mount(ContinueAddTeamForm, {
       props: { team: team.value },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 

@@ -7,7 +7,6 @@ import type { Address } from 'viem'
 import { useTeamStore } from '@/stores'
 import { mockTeamStore } from '@/tests/mocks/store.mock'
 import { NETWORK } from '@/constant'
-import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { createMockQueryResponse } from '@/tests/mocks/index'
 
 interface WageData {
@@ -31,7 +30,6 @@ const mockWageIsFetching = ref(false)
 describe.skip('MemberSection.vue', () => {
   let wrapper: ReturnType<typeof mount>
   let component: MemberSectionInstance
-  const queryClient = new QueryClient()
 
   const wageDataMock: WageData[] = [
     {
@@ -123,8 +121,7 @@ describe.skip('MemberSection.vue', () => {
                 address: userAddress
               }
             }
-          }),
-          [VueQueryPlugin, { queryClient }]
+          })
         ]
       }
     })
