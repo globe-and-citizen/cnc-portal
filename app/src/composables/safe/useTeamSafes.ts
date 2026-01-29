@@ -65,11 +65,21 @@ export const useTeamSafes = () => {
     )
   })
 
+  const isSelectedSafeTrader = computed(() => {
+    if (!userDataStore.address) return false
+
+    return (
+      selectedSafeAddress.value?.toLocaleLowerCase() ===
+      deriveSafeFromEoa(userDataStore.address)?.toLocaleLowerCase()
+    )
+  })
+
   return {
     safes,
     initialSafe,
     selectedSafe,
     selectedSafeAddress,
-    isSafeOwner
+    isSafeOwner,
+    isSelectedSafeTrader
   }
 }
