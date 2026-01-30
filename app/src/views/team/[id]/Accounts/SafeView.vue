@@ -1,7 +1,11 @@
 <!-- filepath: app/src/views/team/[id]/Accounts/SafeView.vue -->
 <template>
   <div class="flex flex-col gap-6">
-    <SafeBalanceSection v-if="selectedSafe?.address" :address="selectedSafe?.address as Address" />
+    <SafeBalanceSection
+      :key="selectedSafe?.address"
+      v-if="selectedSafe?.address"
+      :address="selectedSafe?.address as Address"
+    />
 
     <GenericTokenHoldingsSection
       :key="selectedSafe?.address"

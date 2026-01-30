@@ -139,7 +139,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { total, balances, isLoading } = useContractBalance(computed(() => props.address))
+const { total, balances, isLoading } = useContractBalance(props.address)
 
 const getTokens = (): TokenOption[] =>
   balances.value
@@ -168,7 +168,7 @@ const transferModal = ref({
 
 const { transferFromSafe, isTransferring } = useSafeTransfer()
 
-const { data: safeInfo } = useSafeInfoQuery(computed(() => props.address))
+const { data: safeInfo } = useSafeInfoQuery(props.address)
 
 const initialTransferDataValue = (): TransferModel => {
   const firstToken = tokens.value[0]

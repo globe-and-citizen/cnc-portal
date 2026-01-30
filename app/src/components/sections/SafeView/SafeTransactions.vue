@@ -42,21 +42,13 @@
       </template>
 
       <template #txHash-data="{ row }">
-        <AddressToolTip :address="row.safeTxHash" type="transaction" slice />
-        <a
-          :href="getTransactionExplorerUrl(row as SafeTransaction)"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="text-primary hover:text-primary-focus transition-colors"
-          :class="{ 'opacity-50 cursor-not-allowed': !row.transactionHash }"
-          data-test="explorer-link"
-        >
-          <IconifyIcon
-            icon="heroicons-outline:external-link"
-            class="w-4 h-4"
-            :title="row.transactionHash ? 'View on block explorer' : 'Not yet executed'"
-          />
-        </a>
+        <AddressToolTip
+          v-if="row.transactionHash"
+          :address="row.transactionHash"
+          type="transaction"
+          slice
+        />
+        <span v-else>...</span>
       </template>
 
       <template #method-data="{ row }">
@@ -104,7 +96,6 @@ import TableComponent from '@/components/TableComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 
 // Stores and composables
 import { useSafeTransactionsQuery, useSafeInfoQuery } from '@/queries/safe.queries'
@@ -113,8 +104,6 @@ import SafeTransactionStatusFilter, {
   type SafeTransactionStatus
 } from '@/components/sections/SafeView/SafeTransactionStatusFilter.vue'
 import { type Address } from 'viem'
-
-import { NETWORK } from '@/constant'
 
 import { formatSafeTransactionValue } from '@/utils'
 
@@ -208,14 +197,6 @@ const isTransactionLoading = (safeTxHash: string, operation: 'approve' | 'execut
   } else {
     return executingTransactions.value.has(safeTxHash) && isExecuting.value
   }
-}
-
-const getTransactionExplorerUrl = (transaction: SafeTransaction): string => {
-  if (transaction.safeTxHash) {
-    return `${NETWORK.blockExplorerUrl}/tx/${transaction.transactionHash}`
-  }
-  // If not executed yet, show the Safe transaction service URL or disable link
-  return '#'
 }
 
 const canApprove = (transaction: SafeTransaction): boolean => {
