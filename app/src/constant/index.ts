@@ -216,7 +216,7 @@ const NETWORK_TO_COIN_ID: Record<string, string> = {
   GO: 'ethereum'
 }
 
-export type TokenId = 'native' | 'usdc' | 'usdc.e' | 'usdt' | 'sher'  // Add more token IDs as needed
+export type TokenId = 'native' | 'usdc' | 'usdc.e' | 'usdt' | 'sher' // Add more token IDs as needed
 
 export const SUPPORTED_TOKENS: TokenConfig[] = [
   {
