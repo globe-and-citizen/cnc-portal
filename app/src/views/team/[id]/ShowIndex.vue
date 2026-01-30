@@ -59,7 +59,7 @@
 </template>
 <script setup lang="ts">
 import { useTeamStore } from '@/stores/teamStore'
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
@@ -86,12 +86,15 @@ const hasContract = computed(() => {
   return (teamStore.currentTeamMeta.data?.teamContracts ?? []).length > 0
 })
 
-const stop = watch(
+// Declare stop first so it's available in the callback
+let stop: (() => void) | undefined
+
+stop = watch(
   hasContract,
   (newValue) => {
     if (newValue && route.params.id === teamStore.currentTeamId) {
       syncWeeklyClaims({ teamId: route.params.id as string })
-      stop() // stop watching after first true
+      stop?.() // Safe call with optional chaining
     }
   },
   {
@@ -108,5 +111,9 @@ watch(
     }
   }
 )
+
+onUnmounted(() => {
+  stop = undefined
+})
 </script>
 <style></style>
