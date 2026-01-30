@@ -4,13 +4,6 @@ import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
-vi.mock('@iconify/vue', () => ({
-  Icon: {
-    name: 'Icon',
-    template: '<span></span>',
-    props: ['icon']
-  }
-}))
 
 const {
   mockGetSafeHomeUrl,
