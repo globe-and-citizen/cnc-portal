@@ -39,7 +39,13 @@ export const addClaimBodySchema = z.object({
 // Claim update request body (for signature)
 export const updateClaimBodySchema = z.object({
   hoursWorked: z.coerce.number().min(1).max(24).optional(),
-  memo: z.string().trim().max(200, 'Memo is too long, maximum 200 characters').optional(),
+  memo: z
+    .string()
+    .trim()
+    .refine((memo) => memo.split(/\s+/).length <= 3000, {
+      message: 'Memo is too long, maximum 3000 words allowed',
+    })
+    .optional(),
   dayWorked: z.string().optional(),
   deletedFileIndexes: z.array(z.number().int().nonnegative()).optional(), // Array of indexes to delete
   attachments: z
