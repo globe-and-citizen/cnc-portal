@@ -25,7 +25,7 @@ export function useSafeSendTransaction() {
 
   const {
     data: txData,
-    sendTransactionAsync,
+    mutateAsync,
     isPending: isSending,
     error: sendError
   } = useSendTransaction()
@@ -152,7 +152,7 @@ export function useSafeSendTransaction() {
     }
 
     try {
-      return await sendTransactionAsync({
+      return await mutateAsync({
         to,
         value,
         ...(data !== undefined ? { data } : {})
