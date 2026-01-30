@@ -1,7 +1,7 @@
 import type { User } from '@/types/user'
 import type { Address } from 'viem'
 
-export type SupportedTokens = 'native' | 'usdc' | 'sher'
+export type SupportedTokens = 'native' | 'usdc' | 'sher' | 'usdce'
 
 export interface RatePerHour {
   type: SupportedTokens
