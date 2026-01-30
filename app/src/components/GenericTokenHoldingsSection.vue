@@ -7,7 +7,7 @@
           ...balance,
           rank: index + 1,
           icon:
-            balance.token.symbol === 'USDC'
+            balance.token.symbol === 'USDC' ||  balance.token.symbol === 'USDCe'
               ? USDCIcon
               : balance.token.symbol === 'POL'
                 ? MaticIcon
