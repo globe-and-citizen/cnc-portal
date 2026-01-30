@@ -35,6 +35,7 @@ interface AddressMapping {
   'VestingModule#Vesting'?: string
   'MockTokens#USDT'?: string
   'MockTokens#USDC'?: string
+  'MockTokens#USDCe'?: string
   'ElectionsBeaconModule#Elections'?: string
   'ElectionsBeaconModule#Beacon'?: string
 }
