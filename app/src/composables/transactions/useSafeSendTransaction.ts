@@ -23,12 +23,7 @@ export function useSafeSendTransaction() {
     data?: `0x${string}`
   } | null>(null)
 
-  const {
-    data: txData,
-    mutateAsync,
-    isPending: isSending,
-    error: sendError
-  } = useSendTransaction()
+  const { data: txData, mutateAsync, isPending: isSending, error: sendError } = useSendTransaction()
 
   const {
     data: receipt,
