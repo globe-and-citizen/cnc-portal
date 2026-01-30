@@ -8,6 +8,7 @@ import { isAddress, zeroAddress, type Address } from 'viem'
 export const NETWORK = getNetwork()
 
 interface TokenAddresses {
+  USDCe: Address
   USDC: Address
   USDT: Address
 }
@@ -101,10 +102,12 @@ export function resolveAddressWithFallback(
 export const TOKEN_ADDRESSES: Pick<ChainTokenAddresses, 137 | 80002> = {
   // Polygon Mainnet
   137: {
+    USDCe: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // Polygon USDC.e
     USDC: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', // Polygon USDC
     USDT: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // Polygon USDT
   },
   80002: {
+    USDCe: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607', // Amoy USDC.e
     USDC: '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582', // Amoy USDC
     USDT: '0x83Ef79413e0DC985035bA0C49B0abD0dA62987eD' // Amoy USDT
   }
@@ -118,6 +121,12 @@ const getUSDCAddress = () => {
   }
   return TOKEN_ADDRESSES[currentChainId]?.USDC || ''
 }
+const getUSDCeAddress = () => {
+  if (currentChainId === 11155111 || currentChainId === 31337) {
+    return safeResolveAddress('MockTokens#USDCe') || ('' as Address)
+  }
+  return TOKEN_ADDRESSES[currentChainId]?.USDCe || ''
+}
 const getUSDTAddress = () => {
   if (currentChainId === 11155111 || currentChainId === 31337) {
     return safeResolveAddress('MockTokens#USDT') || ('' as Address)
@@ -126,6 +135,7 @@ const getUSDTAddress = () => {
 }
 
 export const USDC_ADDRESS = getUSDCAddress()
+export const USDC_E_ADDRESS = getUSDCeAddress()
 export const USDT_ADDRESS = getUSDTAddress()
 
 export function validateAddresses() {
@@ -206,7 +216,7 @@ const NETWORK_TO_COIN_ID: Record<string, string> = {
   GO: 'ethereum'
 }
 
-export type TokenId = 'native' | 'usdc' | 'usdt' | 'sher' // Add more token IDs as needed
+export type TokenId = 'native' | 'usdc' | 'usdc.e' | 'usdt' | 'sher' // Add more token IDs as needed
 
 export const SUPPORTED_TOKENS: TokenConfig[] = [
   {
@@ -217,6 +227,15 @@ export const SUPPORTED_TOKENS: TokenConfig[] = [
     coingeckoId: 'usd-coin',
     decimals: 6,
     address: USDC_ADDRESS as Address
+  },
+  {
+    id: 'usdc.e',
+    name: 'USDC Coin Bridged',
+    symbol: 'USDCe',
+    code: 'USDCe',
+    coingeckoId: 'usd-coin',
+    decimals: 6,
+    address: USDC_E_ADDRESS as Address
   },
   {
     id: 'native',
