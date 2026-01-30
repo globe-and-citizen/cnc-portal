@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { deriveSafeFromEoa } from '@/utils/trading/safeDeploymentUtils'
 import type { SafeWallet } from '@/types'
+import { useSafeInfoQuery } from '@/queries/safe.queries'
 
 export const useTeamSafes = () => {
   const teamStore = useTeamStore()
@@ -52,9 +53,33 @@ export const useTeamSafes = () => {
     return safes.value.find((s) => s?.address?.toLocaleLowerCase() === address?.toLocaleLowerCase())
   })
 
+  const selectedSafeAddress = computed(() => selectedSafe.value?.address)
+
+  const { data: safeInfo } = useSafeInfoQuery(selectedSafeAddress)
+
+  const isSafeOwner = computed(() => {
+    if (!userDataStore.address || !safeInfo.value?.owners?.length) return false
+
+    return safeInfo.value.owners.some(
+      (owner) => owner.toLowerCase() === userDataStore.address!.toLowerCase()
+    )
+  })
+
+  const isSelectedSafeTrader = computed(() => {
+    if (!userDataStore.address) return false
+
+    return (
+      selectedSafeAddress.value?.toLocaleLowerCase() ===
+      deriveSafeFromEoa(userDataStore.address)?.toLocaleLowerCase()
+    )
+  })
+
   return {
     safes,
     initialSafe,
-    selectedSafe
+    selectedSafe,
+    selectedSafeAddress,
+    isSafeOwner,
+    isSelectedSafeTrader
   }
 }

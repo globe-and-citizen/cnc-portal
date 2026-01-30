@@ -215,10 +215,6 @@ const outcome = computed(() => outcomes.value[selectedOutcome.value])
 const price = computed(() => outcomes.value[selectedOutcome.value]?.buyPrice || 0)
 const total = computed(() => (parseFloat(shares.value) || 0) * price.value)
 
-const onClose = () => {
-  emit('close')
-}
-
 const setSelectedOutcome = (index: number | string) => {
   selectedOutcome.value = Number(index)
 }
@@ -235,7 +231,7 @@ const handlePlaceOrder = async () => {
   try {
     await initializeTradingSession()
 
-    await submitOrder({
+    const result = await submitOrder({
       tokenId: outcome.value?.tokenId || '',
       side: 'BUY',
       size: parseFloat(shares.value),
@@ -244,8 +240,7 @@ const handlePlaceOrder = async () => {
       price: orderType.value === 'limit' ? parseFloat(limitPrice.value) : undefined
     })
 
-    // Close modal after successful order
-    onClose()
+    emit('place-order', result)
   } catch (error) {
     console.error('Failed to place order:', error)
     // You could add error toast here

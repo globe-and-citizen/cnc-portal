@@ -9,6 +9,7 @@ import { useTradingSession } from './useTradingSession'
 
 import { CLOB_API_URL, POLYGON_CHAIN_ID, REMOTE_SIGNING_URL } from '@/constant/'
 import { useUserDataStore, useTradingSessionStore } from '@/stores'
+import { useStorage } from '@vueuse/core'
 
 /**
  * Creates an authenticated clobClient instance using the active trading session data.
@@ -19,17 +20,11 @@ export function useClobClient() {
   const { ethersSigner } = useEthersSigner()
   const { derivedSafeAddressFromEoa } = useSafeDeployment()
   // Get the reactive session state
-  const { /* tradingSession, */ isTradingSessionComplete } = useTradingSession()
+  const { isTradingSessionComplete } = useTradingSession()
   const tradingSessionStore = useTradingSessionStore()
   const userDataStore = useUserDataStore()
 
-  // watch(tradingSession, (apiCreds) => {
-  //   if (apiCreds)
-  //     console.log('Something changed about apiCreds...')
-  // })
-
   const clobClient = computed(() => {
-    // Access .value for all refs/computeds
     const tradingSession = tradingSessionStore.sessions.get(
       userDataStore.address.toLocaleLowerCase()
     )
@@ -46,9 +41,12 @@ export function useClobClient() {
     // We can confidently destructure these now that we know isTradingSessionComplete.value is true
     const { apiCredentials, safeAddress } = tradingSession!
 
+    const token = useStorage('authToken', '')
+
     const builderConfig = new BuilderConfig({
       remoteBuilderConfig: {
-        url: REMOTE_SIGNING_URL()
+        url: REMOTE_SIGNING_URL(),
+        token: token.value
       }
     })
 

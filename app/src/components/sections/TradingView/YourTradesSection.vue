@@ -20,7 +20,7 @@
         </div>
         <button
           @click="handleTrade"
-          :disabled="!marketUrl.trim()"
+          :disabled="!marketUrl.trim() || !isSelectedSafeTrader"
           class="btn btn-primary h-14 px-8 text-lg"
           data-test="trade-button"
         >
@@ -86,7 +86,7 @@ interface Props {
   loading?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   loading: false
 })
 
@@ -104,22 +104,9 @@ const tradingModal = ref({ mount: false, show: false })
 // Use TanStack Query states
 const { proposeRedemption } = useRedeemPosition()
 const { derivedSafeAddressFromEoa } = useSafeDeployment()
-const { selectedSafe } = useTeamSafes()
+const { selectedSafe, isSelectedSafeTrader } = useTeamSafes()
 const selectedSafeAddress = computed(() => selectedSafe.value?.address)
-const { data: trades, isLoading: isLoadingTrades /*, refetch */ } = useUserPositions(
-  selectedSafeAddress //derivedSafeAddressFromEoa.value ?? undefined
-)
-
-watch(
-  trades,
-  (newData) => {
-    if (newData) {
-      // trades.value = newData
-      console.log('Fetched trades:', newData)
-    }
-  },
-  { immediate: true }
-)
+const { data: trades, isLoading: isLoadingTrades, refetch } = useUserPositions(selectedSafeAddress)
 
 // Methods
 const handleTrade = () => {
@@ -174,15 +161,16 @@ const handleWithdraw = async (trade: Trade) => {
   }
 }
 
-const handleOrderPlaced = (order: OrderDetails) => {
+const handleOrderPlaced = async (result: { success: boolean; orderId: string | number }) => {
   try {
-    console.log('Order placed:', order)
+    // console.log('Order placed:', order)
 
     // Show success message
-    toast.success('Order placed successfully!')
+    if (result.success) toast.success('Order placed successfully!')
+    else throw new Error('Order placement failed')
 
     // Emit to parent
-    emit('order-placed', order)
+    // emit('order-placed', order)
 
     // Close the modal
     handleModalClose()
@@ -193,6 +181,7 @@ const handleOrderPlaced = (order: OrderDetails) => {
 
     // In a real app, you would update the trades list here
     // or trigger a refetch of trades data
+    await refetch()
   } catch (error) {
     toast.error('Failed to place order')
     log.error('Order placement error:', parseError(error))
@@ -200,15 +189,11 @@ const handleOrderPlaced = (order: OrderDetails) => {
 }
 
 // Optional: Watch for errors or other side effects
-watch(
-  () => props.loading,
-  (isLoading, wasLoading) => {
-    if (!isLoading && wasLoading) {
-      // Data finished loading
-      console.log('Trades data loaded')
-    }
+watch(selectedSafeAddress, (newAddress) => {
+  if (newAddress) {
+    refetch()
   }
-)
+})
 </script>
 
 <style scoped>

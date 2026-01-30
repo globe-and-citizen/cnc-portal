@@ -100,8 +100,6 @@ const toggleDropdown = () => {
 }
 
 const selectSafe = async (safe: SafeWallet) => {
-  // selectedSafe.value = safe
-  // traderSafesStore.setSelectedSafe(safe)
   if (route.name === 'trading') {
     router.push({
       name: 'trading',
@@ -121,7 +119,6 @@ const selectSafe = async (safe: SafeWallet) => {
     })
   }
   isOpen.value = false
-  console.log('Selected safe:', safe.address)
 }
 
 // Close dropdown when clicking outside

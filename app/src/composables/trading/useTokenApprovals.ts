@@ -72,21 +72,27 @@ export const useTokenApprovals = () => {
   /**
    * Complete setup: approvals + add owners
    */
-  const completeSetup = async (relayClient: RelayClient, safeAddress: string): Promise<boolean> => {
+  const completeSetup = async (
+    relayClient: RelayClient,
+    safeAddress: string,
+    missingOwners: `0x${string}`[]
+  ): Promise<boolean> => {
     isLoading.value = true
     error.value = null
 
     try {
       if (systemOwners.value.length === 0) throw new Error('No system owners set')
-      const setupTxs = createCompleteSetupTransactions(
-        safeAddress,
-        systemOwners.value as `0x${string}`[]
-      )
+      const setupTxs = createCompleteSetupTransactions(safeAddress, missingOwners)
       const response = await relayClient.execute(
         setupTxs,
         'Complete trading setup: approvals and owners'
       )
-      await response.wait()
+      const result = await response.wait()
+
+      if (!result) {
+        // Action was successful
+        throw new Error('Failed to complete setup transactions')
+      }
 
       approvalStatus.value = null
       isLoading.value = false

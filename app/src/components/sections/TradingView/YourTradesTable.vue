@@ -73,6 +73,7 @@
             @click="$emit('sell', row)"
             class="btn btn-sm btn-error gap-1.5"
             :data-test="`sell-button-${row.id}`"
+            :disabled="!isSafeOwner"
           >
             <icon icon="heroicons:arrow-trending-down" class="w-3.5 h-3.5" />
             Sell
@@ -80,7 +81,7 @@
           <button
             v-else
             @click="$emit('withdraw', row)"
-            :disabled="row.result === 'lost' || !row.redeemable"
+            :disabled="row.result === 'lost' || !row.redeemable || !isSafeOwner"
             class="btn btn-sm btn-outline gap-1.5"
             :data-test="`withdraw-button-${row.id}`"
           >
@@ -98,6 +99,7 @@ import { ref, computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import type { Trade } from '@/types/trading'
+import { useTeamSafes } from '@/composables/safe'
 
 interface Props {
   trades: Trade[]
@@ -109,6 +111,8 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 defineEmits(['sell', 'withdraw'])
+
+const { isSafeOwner } = useTeamSafes()
 
 // Array of statuses just like the example
 const statuses = ['all', 'open', 'resolved']
