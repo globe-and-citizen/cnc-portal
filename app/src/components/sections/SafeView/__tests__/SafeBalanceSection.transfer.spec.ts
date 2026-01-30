@@ -298,7 +298,7 @@ describe('SafeBalanceSection', () => {
       wrapper = createWrapper()
 
       // Simulate successful token transfer
-      const component = wrapper.vm as any
+      const component = wrapper.vm as { handleTransfer: (data: Record<string, unknown>) => Promise<void> }
       await component.handleTransfer({
         address: { address: '0x9876543210987654321098765432109876543210' as Address },
         token: { tokenId: 'usdc', symbol: 'USDC' },
