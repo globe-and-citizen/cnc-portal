@@ -51,7 +51,7 @@
           </ButtonUI>
 
           <ButtonUI
-            v-if="teamStore.currentTeam?.safeAddress"
+            v-if="address"
             variant="primary"
             class="flex items-center gap-2"
             @click="openInSafeApp"
@@ -61,9 +61,9 @@
             Open in Safe App
           </ButtonUI>
         </div>
-        <div class="flex items-center gap-2" v-if="teamStore.currentTeam?.safeAddress">
+        <div class="flex items-center gap-2" v-if="address">
           <div class="text-sm text-gray-600">Safe Address:</div>
-          <AddressToolTip :address="teamStore.currentTeam?.safeAddress" />
+          <AddressToolTip :address="address" />
         </div>
       </div>
     </div>
@@ -75,11 +75,7 @@
       data-test="deposit-modal"
       @reset="() => (depositModal = { mount: false, show: false })"
     >
-      <DepositSafeForm
-        v-if="teamStore.currentTeamMeta?.data?.safeAddress"
-        :safe-address="teamStore.currentTeamMeta?.data?.safeAddress"
-        @close-modal="closeDepositModal"
-      />
+      <DepositSafeForm v-if="address" :safe-address="address" @close-modal="closeDepositModal" />
     </ModalComponent>
 
     <!-- Transfer Modal -->
@@ -119,7 +115,7 @@ import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { useTeamStore } from '@/stores'
+
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeInfoQuery } from '@/queries/safe.queries'
@@ -137,11 +133,13 @@ const currency = useStorage('currency', {
   symbol: '$'
 })
 
-const teamStore = useTeamStore()
+interface Props {
+  address: Address
+}
 
-const { total, balances, isLoading } = useContractBalance(
-  computed(() => teamStore.currentTeamMeta?.data?.safeAddress || ('0x' as Address))
-)
+const props = defineProps<Props>()
+
+const { total, balances, isLoading } = useContractBalance(computed(() => props.address))
 
 const getTokens = (): TokenOption[] =>
   balances.value
@@ -170,9 +168,7 @@ const transferModal = ref({
 
 const { transferFromSafe, isTransferring } = useSafeTransfer()
 
-const { data: safeInfo } = useSafeInfoQuery(
-  computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
-)
+const { data: safeInfo } = useSafeInfoQuery(computed(() => props.address))
 
 const initialTransferDataValue = (): TransferModel => {
   const firstToken = tokens.value[0]
@@ -191,7 +187,7 @@ const initialTransferDataValue = (): TransferModel => {
 }
 
 const openInSafeApp = () => {
-  const safeAppUrl = getSafeHomeUrl(chainId.value, teamStore.currentTeam?.safeAddress as Address)
+  const safeAppUrl = getSafeHomeUrl(chainId.value, props.address)
   openSafeAppUrl(safeAppUrl)
 }
 
@@ -211,7 +207,7 @@ const resetTransferValues = () => {
 }
 
 const handleTransfer = async (transferData: TransferModel) => {
-  const safeAddress = teamStore.currentTeam?.safeAddress
+  const safeAddress = props.address
   if (!safeAddress) return
   const options = {
     to: transferData.address.address,

@@ -1,23 +1,23 @@
 <!-- filepath: app/src/views/team/[id]/Accounts/SafeView.vue -->
 <template>
   <div class="flex flex-col gap-6">
-    <SafeBalanceSection />
+    <SafeBalanceSection v-if="selectedSafe?.address" :address="selectedSafe?.address as Address" />
 
     <GenericTokenHoldingsSection
-      v-if="teamStore.currentTeam?.safeAddress"
-      :address="teamStore.currentTeam?.safeAddress"
+      :key="selectedSafe?.address"
+      :address="selectedSafe?.address as Address"
     />
 
     <!-- Optimized layout: Safe Owners 1/3, Transactions 2/3 -->
     <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
       <!-- Safe Owners - takes 1/3 of space on desktop -->
       <div class="xl:col-span-2 min-w-0">
-        <SafeOwnersCard v-if="teamStore.currentTeam?.safeAddress" />
+        <SafeOwnersCard :address="selectedSafe?.address" />
       </div>
 
       <!-- Safe Transactions - takes 2/3 of space on desktop -->
       <div class="xl:col-span-3 min-w-0">
-        <SafeTransactions v-if="teamStore.currentTeam?.safeAddress" />
+        <SafeTransactions :address="selectedSafe?.address as Address" />
       </div>
     </div>
 
@@ -31,11 +31,11 @@ import SafeBalanceSection from '@/components/sections/SafeView/SafeBalanceSectio
 import SafeOwnersCard from '@/components/sections/SafeView/SafeOwnersCard.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
-import { useTeamStore } from '@/stores'
+
 import { useTeamSafes } from '@/composables/safe'
 import { watch } from 'vue'
+import { type Address } from 'viem'
 
-const teamStore = useTeamStore()
 const { safes, selectedSafe } = useTeamSafes()
 
 watch(

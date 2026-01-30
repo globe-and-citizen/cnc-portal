@@ -110,7 +110,7 @@ export function transformToSafeMultisigResponse(
     signatures: transaction.signatures ?? null
   }
 }
-
+//new utility
 export const formatSafeTransactionValue = (
   value: string,
   data?: DecodedCall,

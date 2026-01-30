@@ -107,19 +107,24 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
 // Stores and composables
-import { useTeamStore } from '@/stores'
 import { useSafeTransactionsQuery, useSafeInfoQuery } from '@/queries/safe.queries'
 import { useSafeApproval, useSafeExecution } from '@/composables/safe'
 import SafeTransactionStatusFilter, {
   type SafeTransactionStatus
 } from '@/components/sections/SafeView/SafeTransactionStatusFilter.vue'
+import { type Address } from 'viem'
 
 import { NETWORK } from '@/constant'
 
 import { formatSafeTransactionValue } from '@/utils'
 
-const teamStore = useTeamStore()
 const { address: connectedAddress } = useAccount()
+
+interface Props {
+  address: Address
+}
+
+const props = defineProps<Props>()
 
 // Status filtering
 const selectedStatus = ref<SafeTransactionStatus>('all')
@@ -133,11 +138,9 @@ const {
   data: transactions,
   isLoading,
   error
-} = useSafeTransactionsQuery(computed(() => teamStore.currentTeamMeta?.data?.safeAddress))
+} = useSafeTransactionsQuery(computed(() => props.address))
 
-const { data: safeInfo } = useSafeInfoQuery(
-  computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
-)
+const { data: safeInfo } = useSafeInfoQuery(computed(() => props.address))
 
 // Safe operations
 const { approveTransaction, isApproving } = useSafeApproval()
@@ -217,7 +220,7 @@ const getTransactionExplorerUrl = (transaction: SafeTransaction): string => {
 
 const canApprove = (transaction: SafeTransaction): boolean => {
   if (!isConnectedUserOwner.value) return false
-  if (!teamStore.currentTeamMeta?.data?.safeAddress) return false
+  if (!props.address) return false
   if (transaction.isExecuted) return false
 
   const userAlreadyConfirmed = transaction.confirmations?.some(
@@ -239,14 +242,14 @@ const canExecute = (transaction: SafeTransaction): boolean => {
 
 // Event handlers
 const handleApproveTransaction = async (transaction: SafeTransaction) => {
-  const safeAddress = teamStore.currentTeamMeta?.data?.safeAddress
+  const safeAddress = props.address
   if (!safeAddress) return
   approvingTransactions.value.add(transaction.safeTxHash)
   await approveTransaction(safeAddress, transaction.safeTxHash)
 }
 
 const handleExecuteTransaction = async (transaction: SafeTransaction) => {
-  const safeAddress = teamStore.currentTeamMeta?.data?.safeAddress
+  const safeAddress = props.address
   if (!safeAddress) return
   executingTransactions.value.add(transaction.safeTxHash)
   await executeTransaction(safeAddress, transaction.safeTxHash, transaction)

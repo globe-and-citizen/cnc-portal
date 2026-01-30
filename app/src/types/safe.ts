@@ -192,6 +192,7 @@ export interface SafeWallet {
   balance: string
 }
 
+//new types
 interface DecodedParameter {
   name: string
   type: string
