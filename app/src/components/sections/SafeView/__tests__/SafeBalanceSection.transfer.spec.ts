@@ -88,97 +88,41 @@ vi.mock('@/utils', async (importOriginal) => {
 // Test constants
 const MOCK_DATA = {
   safeAddress: '0x1234567890123456789012345678901234567890' as Address,
-  safeInfo: {
-    owners: [
-      '0x1111111111111111111111111111111111111111' as Address,
-      '0x2222222222222222222222222222222222222222' as Address
-    ],
-    threshold: 2
-  },
+  safeInfo: { owners: ['0x1111111111111111111111111111111111111111' as Address], threshold: 2 },
   balances: [
     {
-      token: {
-        symbol: 'ETH',
-        id: 'ethereum',
-        name: 'Ethereum',
-        code: 'ETH'
-      },
+      token: { symbol: 'ETH', id: 'ethereum', name: 'Ethereum', code: 'ETH' },
       amount: 1.5,
-      values: {
-        USD: {
-          value: 3000,
-          formated: '$3,000',
-          price: 2000
-        }
-      }
+      values: { USD: { value: 3000, formated: '$3,000', price: 2000 } }
     },
     {
-      token: {
-        symbol: 'SHER',
-        id: 'sher',
-        name: 'Sherlock',
-        code: 'SHER'
-      },
+      token: { symbol: 'SHER', id: 'sher', name: 'Sherlock', code: 'SHER' },
       amount: 100,
-      values: {
-        USD: {
-          value: 500,
-          formated: '$500',
-          price: 5
-        }
-      }
+      values: { USD: { value: 500, formated: '$500', price: 5 } }
     }
   ],
-  total: {
-    USD: {
-      value: 4500,
-      formated: '$4,500',
-      price: 1
-    }
-  },
-  defaultCurrency: {
-    code: 'USD',
-    name: 'US Dollar',
-    symbol: '$'
-  },
+  total: { USD: { value: 4500, formated: '$4,500', price: 1 } },
+  defaultCurrency: { code: 'USD', name: 'US Dollar', symbol: '$' },
   team: {
     safeAddress: '0x1234567890123456789012345678901234567890' as Address,
     id: '1',
     name: 'Test Team'
   },
-  teamMeta: {
-    data: {
-      safeAddress: '0x1234567890123456789012345678901234567890' as Address
-    }
-  }
+  teamMeta: { data: { safeAddress: '0x1234567890123456789012345678901234567890' as Address } }
 } as const
 
 // Component stubs
-const CardStub = defineComponent({
-  template: '<div data-test="card-component"><slot /></div>'
-})
-
+const CardStub = defineComponent({ template: '<div><slot /></div>' })
 const ButtonStub = defineComponent({
-  emits: ['click'],
-  template: '<button data-test="button" @click="$emit(\'click\')"><slot /></button>'
+  template: '<button @click="$emit(\'click\')"><slot /></button>'
 })
-
-const AddressToolTipStub = defineComponent({
-  template: '<div data-test="address-tooltip"></div>'
-})
-
+const AddressToolTipStub = defineComponent({ template: '<div></div>' })
 const ModalStub = defineComponent({
   props: ['modelValue'],
-  template: '<div data-test="modal" v-if="modelValue"><slot /></div>'
+  template: '<div v-if="modelValue"><slot /></div>'
 })
-
-const DepositBankFormStub = defineComponent({
-  template: '<div data-test="deposit-bank-form">Deposit Form</div>'
-})
-
-const TransferFormStub = defineComponent({
-  template: '<div data-test="transfer-form"><slot name="header" /></div>'
-})
+const DepositBankFormStub = defineComponent({ template: '<div></div>' })
+const TransferFormStub = defineComponent({ template: '<div><slot name="header" /></div>' })
 
 describe('SafeBalanceSection', () => {
   let wrapper: VueWrapper
@@ -278,26 +222,14 @@ describe('SafeBalanceSection', () => {
       mockBalances.value = [
         ...MOCK_DATA.balances,
         {
-          token: {
-            symbol: 'USDC',
-            id: 'usdc',
-            name: 'USD Coin',
-            code: 'USDC'
-          },
+          token: { symbol: 'USDC', id: 'usdc', name: 'USD Coin', code: 'USDC' },
           amount: 1000,
-          values: {
-            USD: {
-              value: 1000,
-              formated: '$1,000',
-              price: 1
-            }
-          }
+          values: { USD: { value: 1000, formated: '$1,000', price: 1 } }
         }
       ]
 
       wrapper = createWrapper()
 
-      // Simulate successful token transfer
       const component = wrapper.vm as {
         handleTransfer: (data: Record<string, unknown>) => Promise<void>
       }
