@@ -75,7 +75,12 @@
       data-test="deposit-modal"
       @reset="() => (depositModal = { mount: false, show: false })"
     >
-      <DepositSafeForm v-if="address" :safe-address="address" @close-modal="closeDepositModal" />
+      <DepositSafeForm
+        v-if="address"
+        title="Deposit to Safe Contract"
+        :safe-address="address"
+        @close-modal="closeDepositModal"
+      />
     </ModalComponent>
 
     <!-- Transfer Modal -->
