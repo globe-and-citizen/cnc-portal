@@ -34,7 +34,8 @@ import {
   USDT_ADDRESS,
   validateAddresses,
   // VOTING_BEACON_ADDRESS,
-  ELECTIONS_BEACON_ADDRESS
+  ELECTIONS_BEACON_ADDRESS,
+  USDC_E_ADDRESS
   // OFFICER_ADDRESS
 } from '@/constant'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
@@ -201,7 +202,7 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: BANK_ABI,
         functionName: 'initialize',
-        args: [[USDT_ADDRESS, USDC_ADDRESS], currentUserAddress]
+        args: [[USDT_ADDRESS, USDC_ADDRESS, USDC_E_ADDRESS], currentUserAddress]
       })
     })
     deployments.push({
@@ -253,7 +254,7 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: CASH_REMUNERATION_EIP712_ABI,
         functionName: 'initialize',
-        args: [/*currentUserAddress*/ zeroAddress, [USDC_ADDRESS]]
+        args: [/*currentUserAddress*/ zeroAddress, [USDC_ADDRESS, USDC_E_ADDRESS]]
       })
     })
 
