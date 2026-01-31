@@ -4,13 +4,6 @@ import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
-vi.mock('@iconify/vue', () => ({
-  Icon: {
-    name: 'Icon',
-    template: '<span></span>',
-    props: ['icon']
-  }
-}))
 
 const {
   mockGetSafeHomeUrl,
@@ -79,100 +72,57 @@ vi.mock('@tanstack/vue-query', () => ({
   useQueryClient: () => mockQueryClient
 }))
 
+vi.mock('@/utils', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    getTokenAddress: vi.fn((tokenId: string) => {
+      if (tokenId === 'native') return undefined
+      if (tokenId === 'usdc') return '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+      if (tokenId === 'usdt') return '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+      return undefined
+    })
+  }
+})
+
 // Test constants
 const MOCK_DATA = {
   safeAddress: '0x1234567890123456789012345678901234567890' as Address,
-  safeInfo: {
-    owners: [
-      '0x1111111111111111111111111111111111111111' as Address,
-      '0x2222222222222222222222222222222222222222' as Address
-    ],
-    threshold: 2
-  },
+  safeInfo: { owners: ['0x1111111111111111111111111111111111111111' as Address], threshold: 2 },
   balances: [
     {
-      token: {
-        symbol: 'ETH',
-        id: 'ethereum',
-        name: 'Ethereum',
-        code: 'ETH'
-      },
+      token: { symbol: 'ETH', id: 'ethereum', name: 'Ethereum', code: 'ETH' },
       amount: 1.5,
-      values: {
-        USD: {
-          value: 3000,
-          formated: '$3,000',
-          price: 2000
-        }
-      }
+      values: { USD: { value: 3000, formated: '$3,000', price: 2000 } }
     },
     {
-      token: {
-        symbol: 'SHER',
-        id: 'sher',
-        name: 'Sherlock',
-        code: 'SHER'
-      },
+      token: { symbol: 'SHER', id: 'sher', name: 'Sherlock', code: 'SHER' },
       amount: 100,
-      values: {
-        USD: {
-          value: 500,
-          formated: '$500',
-          price: 5
-        }
-      }
+      values: { USD: { value: 500, formated: '$500', price: 5 } }
     }
   ],
-  total: {
-    USD: {
-      value: 4500,
-      formated: '$4,500',
-      price: 1
-    }
-  },
-  defaultCurrency: {
-    code: 'USD',
-    name: 'US Dollar',
-    symbol: '$'
-  },
+  total: { USD: { value: 4500, formated: '$4,500', price: 1 } },
+  defaultCurrency: { code: 'USD', name: 'US Dollar', symbol: '$' },
   team: {
     safeAddress: '0x1234567890123456789012345678901234567890' as Address,
     id: '1',
     name: 'Test Team'
   },
-  teamMeta: {
-    data: {
-      safeAddress: '0x1234567890123456789012345678901234567890' as Address
-    }
-  }
+  teamMeta: { data: { safeAddress: '0x1234567890123456789012345678901234567890' as Address } }
 } as const
 
 // Component stubs
-const CardStub = defineComponent({
-  template: '<div data-test="card-component"><slot /></div>'
-})
-
+const CardStub = defineComponent({ template: '<div><slot /></div>' })
 const ButtonStub = defineComponent({
-  emits: ['click'],
-  template: '<button data-test="button" @click="$emit(\'click\')"><slot /></button>'
+  template: '<button @click="$emit(\'click\')"><slot /></button>'
 })
-
-const AddressToolTipStub = defineComponent({
-  template: '<div data-test="address-tooltip"></div>'
-})
-
+const AddressToolTipStub = defineComponent({ template: '<div></div>' })
 const ModalStub = defineComponent({
   props: ['modelValue'],
-  template: '<div data-test="modal" v-if="modelValue"><slot /></div>'
+  template: '<div v-if="modelValue"><slot /></div>'
 })
-
-const DepositBankFormStub = defineComponent({
-  template: '<div data-test="deposit-bank-form">Deposit Form</div>'
-})
-
-const TransferFormStub = defineComponent({
-  template: '<div data-test="transfer-form"><slot name="header" /></div>'
-})
+const DepositBankFormStub = defineComponent({ template: '<div></div>' })
+const TransferFormStub = defineComponent({ template: '<div><slot name="header" /></div>' })
 
 describe('SafeBalanceSection', () => {
   let wrapper: VueWrapper
@@ -256,6 +206,51 @@ describe('SafeBalanceSection', () => {
       const transferMock = mockUseSafeTransfer()
       expect(transferMock.transferFromSafe).toBeDefined()
       expect(transferMock.isTransferring.value).toBe(false)
+    })
+
+    it('should invalidate ERC20 token queries after successful token transfer', async () => {
+      const mockTransferFromSafe = vi.fn().mockResolvedValue('0xmocktxhash')
+      mockUseSafeTransfer.mockReturnValue({
+        transferFromSafe: mockTransferFromSafe,
+        transferNative: vi.fn(),
+        transferToken: vi.fn(),
+        isTransferring: ref(false),
+        error: ref(null)
+      })
+
+      // Add USDC balance to balances
+      mockBalances.value = [
+        ...MOCK_DATA.balances,
+        {
+          token: { symbol: 'USDC', id: 'usdc', name: 'USD Coin', code: 'USDC' },
+          amount: 1000,
+          values: { USD: { value: 1000, formated: '$1,000', price: 1 } }
+        }
+      ]
+
+      wrapper = createWrapper()
+
+      const component = wrapper.vm as {
+        handleTransfer: (data: Record<string, unknown>) => Promise<void>
+      }
+      await component.handleTransfer({
+        address: { address: '0x9876543210987654321098765432109876543210' as Address },
+        token: { tokenId: 'usdc', symbol: 'USDC' },
+        amount: '100'
+      })
+      await nextTick()
+
+      // Verify ERC20 readContract invalidation was called
+      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: [
+          'readContract',
+          {
+            address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' as Address,
+            args: [MOCK_DATA.safeAddress],
+            chainId: 137
+          }
+        ]
+      })
     })
 
     it('should handle transfer loading state', () => {
