@@ -10,7 +10,7 @@
       <div
         v-for="(preview, i) in displayedPreviews"
         :key="preview.key || i"
-        class="relative rounded-md border border-emerald-500 shadow-sm overflow-hidden bg-gray-100 w-14 h-14"
+        class="relative rounded-full border-2 border-emerald-500 shadow-xl overflow-hidden bg-gray-100 w-14 h-14"
         :style="{ zIndex: displayedPreviews.length - i }"
       >
         <img
@@ -26,7 +26,7 @@
 
       <div
         v-if="remainingCount"
-        class="relative flex items-center justify-center rounded-md border border-emerald-500 shadow-sm bg-gray-700 text-white text-xs font-semibold w-14 h-14"
+        class="relative flex items-center justify-center rounded-full border-2 border-emerald-500 shadow-sm bg-gray-700 text-white text-xs font-semibold w-14 h-14"
       >
         +{{ remainingCount }}
       </div>
