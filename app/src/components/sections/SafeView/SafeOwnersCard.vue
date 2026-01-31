@@ -1,10 +1,9 @@
 <template>
-  <CardComponent title="Safe Owners">
+  <CardComponent title="Safe Owners" class="h-full">
     <template #card-action>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <ButtonUI
-            size="sm"
             variant="primary"
             @click="showAddSignerModal = true"
             :disabled="!address || !isConnectedUserOwner"
@@ -15,7 +14,6 @@
             Add Signer
           </ButtonUI>
           <ButtonUI
-            size="sm"
             variant="secondary"
             @click="showUpdateThresholdModal = true"
             :disabled="isLoading || !isConnectedUserOwner"
@@ -38,7 +36,7 @@
       <div class="text-gray-500">No owners found</div>
     </div>
 
-    <div v-else class="space-y-3">
+    <div v-else class="space-y-3 mt-3">
       <div
         v-for="(owner, index) in safeInfo?.owners"
         :key="owner"
