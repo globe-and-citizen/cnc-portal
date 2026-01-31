@@ -79,12 +79,13 @@
 </template>
 
 <script lang="ts" setup>
-import { useCustomFetch } from '@/composables/useCustomFetch'
 import { ref, computed, watch } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
 import type { User } from '@/types'
 import { useTeamStore } from '@/stores/teamStore'
+import { useQuery } from '@tanstack/vue-query'
+import apiClient from '@/lib/axios'
 
 interface Props {
   disabled?: boolean
@@ -119,21 +120,32 @@ const showDropdown = ref(false)
 // Small helpers and precomputed sets for clarity/perf
 const lower = (a?: string) => (a ?? '').toLowerCase()
 
-// Build URL reactively from the single input; backend will search name OR address
-const url = computed(() => {
+// Build query parameters reactively from the single input; backend will search name OR address
+const searchQuery = computed(() => {
   const query = input.value
-  if (!query) return `user?limit=100`
-  return `user?search=${query}&limit=100`
+  if (!query) return null
+  return query
 })
 
 const {
-  execute: executeSearchUser,
-  data: users,
-  isFetching
-} = useCustomFetch(url, { immediate: true }).get().json<{ users: User[] }>()
+  data: queryData,
+  isFetching,
+  refetch: refetchUsers
+} = useQuery({
+  queryKey: ['users', searchQuery],
+  queryFn: async () => {
+    const query = searchQuery.value
+    const url = query ? `user?search=${query}&limit=100` : 'user?limit=100'
+    const { data } = await apiClient.get<{ users: User[] }>(url)
+    return data
+  },
+  enabled: !props.onlyTeamMembers
+})
+
+const users = computed(() => queryData.value)
 
 const isTeamMember = (user: User): boolean => {
-  const members: User[] = teamStore.currentTeam?.members ?? []
+  const members: User[] = teamStore.currentTeamMeta.data?.members ?? []
   return members.some((member) => lower(member.address) === lower(user.address))
 }
 
@@ -145,7 +157,7 @@ const filteredUsers = computed<User[]>(() => {
   let members: User[] = []
   if (props.onlyTeamMembers) {
     // get an empty array or the current team members
-    members = teamStore.currentTeam?.members ?? []
+    members = teamStore.currentTeamMeta.data?.members ?? []
   } else {
     members = users.value ? (users.value.users as User[]) : []
   }
@@ -161,7 +173,7 @@ watchDebounced(
   input,
   async () => {
     if (!props.onlyTeamMembers) {
-      await executeSearchUser()
+      await refetchUsers()
     }
   },
   { debounce: 500, maxWait: 5000 }
@@ -187,7 +199,7 @@ const handleSelectMember = async (member: User) => {
   showDropdown.value = false
   input.value = ''
   emit('selectMember', member)
-  await executeSearchUser()
+  await refetchUsers()
   inputSearch.value?.focus()
 }
 </script>
