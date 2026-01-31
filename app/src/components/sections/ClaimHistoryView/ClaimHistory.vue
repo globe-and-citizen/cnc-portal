@@ -205,28 +205,22 @@
 
             <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-3">
               <div v-for="claim in entry.claims" :key="claim.id" class="space-y-2">
+                <!-- Memo above -->
                 <div class="flex items-center justify-between gap-3">
                   <div class="flex-1">
                     <p class="font-medium text-gray-700">{{ claim.memo }}</p>
                   </div>
                   <ClaimActions v-if="canModifyClaims" :claim="claim" />
                 </div>
-
-                <div
+                <!-- File gallery below memo -->
+                <ExpandableFileGallery
                   v-if="claim.fileAttachments && claim.fileAttachments.length > 0"
-                  class="mt-2 overflow-hidden"
-                  data-test="claim-files-gallery"
-                >
-                  <FilePreviewGallery
-                    :previews="buildFilePreviews(claim.fileAttachments)"
-                    :can-remove="false"
-                    grid-class="grid grid-cols-4 sm:grid-cols-4 gap-3 p-1"
-                    item-height-class="h-20"
-                    item-width-class="w-40"
-                    image-class="border border-gray-200 hover:border-emerald-500 transition-all"
-                    document-class="bg-gray-50 hover:bg-gray-100 border border-gray-300"
-                  />
-                </div>
+                  :previews="buildFilePreviews(claim.fileAttachments)"
+                  :max-visible="4"
+                  item-size-class="w-10 h-10"
+                  expanded-item-size-class="w-16 h-16"
+                  data-test="claim-files-expandable"
+                />
               </div>
             </div>
 
@@ -278,7 +272,7 @@ import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
 import SelectMemberItem from '@/components/SelectMemberItem.vue'
-import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
+import ExpandableFileGallery from '@/components/sections/CashRemunerationView/Form/ExpandableFileGallery.vue'
 
 use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, BarChart, CanvasRenderer])
 dayjs.extend(utc)
