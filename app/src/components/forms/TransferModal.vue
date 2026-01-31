@@ -68,7 +68,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { waitForTransactionReceipt } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { BANK_ABI } from '@/artifacts/abi/bank'
-import { NETWORK, USDC_ADDRESS } from '@/constant'
+import { NETWORK, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { useToastStore, useUserDataStore } from '@/stores'
 import { useBodContract } from '@/composables/bod/'
 import type { TokenOption } from '@/types'
@@ -194,6 +194,7 @@ const handleTransfer = async (data: {
 
   try {
     const isNativeToken = data.token.symbol === NETWORK.currencySymbol
+    console.log('Initiating transfer:', data.token)
     const transferAmount = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
 
     if (isBodAction.value) {
@@ -232,11 +233,12 @@ const handleTransfer = async (data: {
         args: [data.address.address, transferAmount]
       })
     } else {
+      const tokenAddress = data.token.symbol === "USDCe"? USDC_E_ADDRESS : USDC_ADDRESS
       await transfer({
         address: props.bankAddress,
         abi: BANK_ABI,
         functionName: 'transferToken',
-        args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
+        args: [tokenAddress as Address, data.address.address, transferAmount]
       })
     }
 
