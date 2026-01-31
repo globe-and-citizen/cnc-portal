@@ -16,6 +16,7 @@
       :show-on-focus="props.showOnFocus"
       :only-team-members="props.onlyTeamMembers"
       :disable-team-members="props.disableTeamMembers"
+      :current-safe-owners="props.currentSafeOwners"
     />
   </div>
 </template>
@@ -32,6 +33,7 @@ interface Props {
   isCreatingTeam?: boolean // True when creating a new team, false when adding members to existing team
   onlyTeamMembers?: boolean
   disableTeamMembers?: boolean
+  currentSafeOwners?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -39,7 +41,8 @@ const props = withDefaults(defineProps<Props>(), {
   filterByTeam: false,
   isCreatingTeam: false,
   onlyTeamMembers: false,
-  disableTeamMembers: false
+  disableTeamMembers: false,
+  currentSafeOwners: () => []
 })
 
 const input = ref('')
