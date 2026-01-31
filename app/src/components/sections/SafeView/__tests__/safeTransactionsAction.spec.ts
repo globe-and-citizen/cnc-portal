@@ -5,16 +5,10 @@ import type { Address } from 'viem'
 import SafeTransactions from '../SafeTransactions.vue'
 import type { SafeTransaction } from '@/types/safe'
 
-// Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({
-  Icon: {
-    name: 'Icon',
-    template: '<span></span>',
-    props: ['icon']
-  }
+  Icon: { name: 'Icon', template: '<span></span>', props: ['icon'] }
 }))
 
-// Same hoisted mocks as main test file
 const {
   mockUseTeamStore,
   mockUseSafeTransactionsQuery,
@@ -33,16 +27,21 @@ const {
   mockUseChainId: vi.fn()
 }))
 
-// Mock external dependencies - same as main file
 vi.mock('@/stores', () => ({ useTeamStore: mockUseTeamStore }))
 vi.mock('@/queries/safe.queries', () => ({
   useSafeTransactionsQuery: mockUseSafeTransactionsQuery,
   useSafeInfoQuery: mockUseSafeInfoQuery
 }))
-vi.mock('@wagmi/vue', () => ({
-  useAccount: mockUseAccount,
-  useChainId: mockUseChainId
-}))
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useAccount: mockUseAccount,
+    useChainId: mockUseChainId,
+    createConfig: vi.fn(),
+    http: vi.fn()
+  }
+})
 vi.mock('@/composables/safe', () => ({
   useSafeApproval: mockUseSafeApproval,
   useSafeExecution: mockUseSafeExecution
@@ -60,10 +59,7 @@ vi.mock('@/constant', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    NETWORK: {
-      currencySymbol: 'POL',
-      explorerUrl: 'https://polygonscan.com'
-    }
+    NETWORK: { currencySymbol: 'POL', explorerUrl: 'https://polygonscan.com' }
   }
 })
 
@@ -131,29 +127,26 @@ const ComponentStubs = {
 describe('SafeTransactions Actions', () => {
   let wrapper: VueWrapper
 
+  const defaultProps = { address: MOCK_DATA.safeAddress }
+
   const createWrapper = (props = {}) =>
     mount(SafeTransactions, {
-      props,
+      props: { ...defaultProps, ...props },
       global: { stubs: ComponentStubs }
     })
 
   beforeEach(() => {
     vi.clearAllMocks()
-
     mockUseTeamStore.mockReturnValue({
       currentTeamMeta: { data: { safeAddress: MOCK_DATA.safeAddress } }
     })
-
     mockUseSafeInfoQuery.mockReturnValue({
       data: ref(MOCK_DATA.safeInfo)
     })
-
     mockUseAccount.mockReturnValue({
       address: ref(MOCK_DATA.connectedAddress)
     })
-
     mockUseChainId.mockReturnValue(ref(137)) // Polygon mainnet
-
     mockUseSafeApproval.mockReturnValue({
       approveTransaction: MOCK_DATA.mockApproveTransaction,
       isApproving: ref(false),
@@ -348,23 +341,18 @@ describe('SafeTransactions Actions', () => {
         isLoading: ref(false),
         error: ref(null)
       })
-
       wrapper = createWrapper()
-
       expect(wrapper.vm.getTransactionStatus(MOCK_DATA.readyToExecuteTransaction)).toBe(
         'Ready to Execute'
       )
     })
-
     it('should return "Pending" for transactions needing more confirmations', () => {
       mockUseSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.pendingTransaction]),
         isLoading: ref(false),
         error: ref(null)
       })
-
       wrapper = createWrapper()
-
       expect(wrapper.vm.getTransactionStatus(MOCK_DATA.pendingTransaction)).toBe('Pending')
     })
   })

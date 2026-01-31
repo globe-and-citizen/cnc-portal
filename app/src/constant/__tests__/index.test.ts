@@ -32,7 +32,8 @@ vi.mock('@/artifacts/deployed_addresses/chain-11155111.json', () => ({
     'CashRemunerationEIP712Module#FactoryBeacon': '0xe567',
     'CashRemunerationEIP712Module#CashRemunerationEIP712': '0xf678',
     'MockTokens#USDC': '0xabcd',
-    'MockTokens#USDT': '0xbcde'
+    'MockTokens#USDT': '0xbcde',
+    'MockTokens#USDCe': '0xbcde'
   }
 }))
 
@@ -61,6 +62,7 @@ describe('Contract Address Resolution', () => {
 
       expect(TOKEN_ADDRESSES[137]).toEqual({
         USDC: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+        USDCe: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
         USDT: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F'
       })
     })

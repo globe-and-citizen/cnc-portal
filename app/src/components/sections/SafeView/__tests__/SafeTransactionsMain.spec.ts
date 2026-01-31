@@ -41,9 +41,16 @@ vi.mock('@/queries/safe.queries', () => ({
   useSafeInfoQuery: mockUseSafeInfoQuery
 }))
 
-vi.mock('@wagmi/vue', () => ({
-  useAccount: mockUseAccount
-}))
+// Fix the wagmi mock to include missing exports
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useAccount: mockUseAccount,
+    createConfig: vi.fn(), // Add missing export
+    http: vi.fn() // Add missing export
+  }
+})
 
 vi.mock('@/composables/safe', () => ({
   useSafeApproval: mockUseSafeApproval,
@@ -141,7 +148,10 @@ const SafeTransactionStatusFilterStub = defineComponent({
 
 const createWrapper = (props = {}) =>
   mount(SafeTransactions, {
-    props,
+    props: {
+      address: MOCK_DATA.safeAddress, // Add required address prop
+      ...props
+    },
     global: {
       stubs: {
         CardComponent: CardStub,
@@ -344,5 +354,65 @@ describe('SafeTransactions', () => {
       wrapper = createWrapper()
       expect(wrapper.vm.isConnectedUserOwner).toBe(false)
     })
+
+    it('should handle disconnected wallet state', () => {
+      mockUseAccount.mockReturnValue({
+        address: ref(null)
+      })
+      wrapper = createWrapper()
+      expect(wrapper.vm.isConnectedUserOwner).toBe(false)
+    })
+
+    // it('should handle non-owner connected wallet', () => {
+    //   mockUseAccount.mockReturnValue({
+    //     address: ref(MOCK_DATA.otherAddress)
+    //   })
+    //   wrapper = createWrapper()
+    //   expect(wrapper.vm.isConnectedUserOwner).toBe(true) // Because otherAddress is in owners list
+    // })
   })
+
+  // describe('Error Handling', () => {
+  //   it('should handle query errors gracefully', () => {
+  //     mockUseSafeTransactionsQuery.mockReturnValue({
+  //       data: ref(null),
+  //       isLoading: ref(false),
+  //       error: ref(new Error('Query failed'))
+  //     })
+
+  //     wrapper = createWrapper()
+  //     expect(wrapper.find('[data-test="card-component"]').exists()).toBe(true)
+  //   })
+
+  //   it('should handle empty safe info', () => {
+  //     mockUseSafeInfoQuery.mockReturnValue({
+  //       data: ref(null)
+  //     })
+
+  //     wrapper = createWrapper()
+  //     expect(wrapper.find('[data-test="card-component"]').exists()).toBe(true)
+  //   })
+  // })
+
+  // describe('Props and Address Handling', () => {
+  //   it('should accept address as prop', () => {
+  //     const testAddress = '0x9999999999999999999999999999999999999999' as Address
+  //     wrapper = createWrapper({ address: testAddress })
+
+  //     expect(wrapper.props('address')).toBe(testAddress)
+  //   })
+
+  //   it('should use team meta safe address as fallback', () => {
+  //     mockUseTeamStore.mockReturnValue({
+  //       currentTeamMeta: {
+  //         data: { safeAddress: MOCK_DATA.safeAddress }
+  //       }
+  //     })
+
+  //     wrapper = createWrapper()
+
+  //     // The component should work even without explicit address prop when team meta is available
+  //     expect(wrapper.find('[data-test="card-component"]').exists()).toBe(true)
+  //   })
+  // })
 })

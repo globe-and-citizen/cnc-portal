@@ -29,7 +29,9 @@
       </template>
 
       <template #value-data="{ row }">
-        <span>{{ formatValue(row.value.toString()) }} </span>
+        <span
+          >{{ formatSafeTransactionValue(row.value.toString(), row?.dataDecoded, row.to) }}
+        </span>
       </template>
 
       <template #status-data="{ row }">
@@ -40,21 +42,13 @@
       </template>
 
       <template #txHash-data="{ row }">
-        <AddressToolTip :address="row.safeTxHash" type="transaction" slice />
-        <a
-          :href="getTransactionExplorerUrl(row as SafeTransaction)"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="text-primary hover:text-primary-focus transition-colors"
-          :class="{ 'opacity-50 cursor-not-allowed': !row.transactionHash }"
-          data-test="explorer-link"
-        >
-          <IconifyIcon
-            icon="heroicons-outline:external-link"
-            class="w-4 h-4"
-            :title="row.transactionHash ? 'View on block explorer' : 'Not yet executed'"
-          />
-        </a>
+        <AddressToolTip
+          v-if="row.transactionHash"
+          :address="row.transactionHash"
+          type="transaction"
+          slice
+        />
+        <span v-else>...</span>
       </template>
 
       <template #method-data="{ row }">
@@ -102,20 +96,24 @@ import TableComponent from '@/components/TableComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 
 // Stores and composables
-import { useTeamStore } from '@/stores'
 import { useSafeTransactionsQuery, useSafeInfoQuery } from '@/queries/safe.queries'
 import { useSafeApproval, useSafeExecution } from '@/composables/safe'
 import SafeTransactionStatusFilter, {
   type SafeTransactionStatus
 } from '@/components/sections/SafeView/SafeTransactionStatusFilter.vue'
-import { NETWORK } from '@/constant'
-import { formatEther } from 'viem'
+import { type Address } from 'viem'
 
-const teamStore = useTeamStore()
+import { formatSafeTransactionValue } from '@/utils'
+
 const { address: connectedAddress } = useAccount()
+
+interface Props {
+  address: Address
+}
+
+const props = defineProps<Props>()
 
 // Status filtering
 const selectedStatus = ref<SafeTransactionStatus>('all')
@@ -129,21 +127,10 @@ const {
   data: transactions,
   isLoading,
   error
-} = useSafeTransactionsQuery(computed(() => teamStore.currentTeamMeta?.data?.safeAddress))
+} = useSafeTransactionsQuery(computed(() => props.address))
 
-const { data: safeInfo } = useSafeInfoQuery(
-  computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
-)
+const { data: safeInfo } = useSafeInfoQuery(computed(() => props.address))
 
-const formatValue = (value: string): string => {
-  try {
-    const etherValue = formatEther(BigInt(value))
-    const numericValue = parseFloat(etherValue)
-    return `${numericValue.toFixed(4)} ${NETWORK.currencySymbol}`
-  } catch {
-    return `0 ${NETWORK.currencySymbol}`
-  }
-}
 // Safe operations
 const { approveTransaction, isApproving } = useSafeApproval()
 const { executeTransaction, isExecuting } = useSafeExecution()
@@ -212,17 +199,9 @@ const isTransactionLoading = (safeTxHash: string, operation: 'approve' | 'execut
   }
 }
 
-const getTransactionExplorerUrl = (transaction: SafeTransaction): string => {
-  if (transaction.safeTxHash) {
-    return `${NETWORK.blockExplorerUrl}/tx/${transaction.transactionHash}`
-  }
-  // If not executed yet, show the Safe transaction service URL or disable link
-  return '#'
-}
-
 const canApprove = (transaction: SafeTransaction): boolean => {
   if (!isConnectedUserOwner.value) return false
-  if (!teamStore.currentTeamMeta?.data?.safeAddress) return false
+  if (!props.address) return false
   if (transaction.isExecuted) return false
 
   const userAlreadyConfirmed = transaction.confirmations?.some(
@@ -244,14 +223,14 @@ const canExecute = (transaction: SafeTransaction): boolean => {
 
 // Event handlers
 const handleApproveTransaction = async (transaction: SafeTransaction) => {
-  const safeAddress = teamStore.currentTeamMeta?.data?.safeAddress
+  const safeAddress = props.address
   if (!safeAddress) return
   approvingTransactions.value.add(transaction.safeTxHash)
   await approveTransaction(safeAddress, transaction.safeTxHash)
 }
 
 const handleExecuteTransaction = async (transaction: SafeTransaction) => {
-  const safeAddress = teamStore.currentTeamMeta?.data?.safeAddress
+  const safeAddress = props.address
   if (!safeAddress) return
   executingTransactions.value.add(transaction.safeTxHash)
   await executeTransaction(safeAddress, transaction.safeTxHash, transaction)
