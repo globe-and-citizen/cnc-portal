@@ -192,6 +192,7 @@ const handleTransfer = async (data: {
 }) => {
   if (!props.bankAddress) return
 
+      const tokenAddress = data.token.symbol === "USDCe"? USDC_E_ADDRESS : USDC_ADDRESS
   try {
     const isNativeToken = data.token.symbol === NETWORK.currencySymbol
     console.log('Initiating transfer:', data.token)
@@ -208,7 +209,7 @@ const handleTransfer = async (data: {
         : encodeFunctionData({
             abi: BANK_ABI,
             functionName: 'transferToken',
-            args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
+            args: [tokenAddress as Address, data.address.address, transferAmount]
           })
 
       const description = JSON.stringify({
@@ -233,12 +234,11 @@ const handleTransfer = async (data: {
         args: [data.address.address, transferAmount]
       })
     } else {
-      const tokenAddress = data.token.symbol === "USDCe"? USDC_E_ADDRESS : USDC_ADDRESS
       await transfer({
         address: props.bankAddress,
         abi: BANK_ABI,
         functionName: 'transferToken',
-        args: [tokenAddress as Address, data.address.address, transferAmount]
+        args: [tokenAddress, data.address.address, transferAmount]
       })
     }
 
@@ -254,7 +254,7 @@ const handleTransfer = async (data: {
       : [
           'readContract',
           {
-            address: USDC_ADDRESS as Address,
+            address: tokenAddress,
             args: [props.bankAddress],
             chainId: chainId.value
           }
