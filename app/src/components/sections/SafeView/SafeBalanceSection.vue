@@ -128,6 +128,7 @@ import type { TokenOption } from '@/types'
 import { useSafeTransfer } from '@/composables/safe'
 import { useQueryClient } from '@tanstack/vue-query'
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
+import { getTokenAddress } from '@/utils'
 
 const chainId = useChainId()
 const queryClient = useQueryClient()
@@ -191,7 +192,10 @@ const initialTransferDataValue = (): TransferModel => {
 }
 
 const openInSafeApp = () => {
-  const safeAppUrl = getSafeHomeUrl(chainId.value, teamStore.currentTeam?.safeAddress as Address)
+  const safeAppUrl = getSafeHomeUrl(
+    chainId.value,
+    teamStore.currentTeamMeta?.data?.safeAddress as Address
+  )
   openSafeAppUrl(safeAppUrl)
 }
 
@@ -210,6 +214,27 @@ const resetTransferValues = () => {
   transferData.value = initialTransferDataValue()
 }
 
+const invalidateSafeBalances = async (safeAddress: Address) => {
+  await queryClient.invalidateQueries({
+    queryKey: ['balance', { address: safeAddress, chainId: chainId.value }]
+  })
+
+  const tokenAddresses = tokens.value
+    .map((token) => getTokenAddress(token.tokenId))
+    .filter((address): address is string => !!address)
+
+  await Promise.all(
+    tokenAddresses.map((tokenAddress) =>
+      queryClient.invalidateQueries({
+        queryKey: [
+          'readContract',
+          { address: tokenAddress as Address, args: [safeAddress], chainId: chainId.value }
+        ]
+      })
+    )
+  )
+}
+
 const handleTransfer = async (transferData: TransferModel) => {
   const safeAddress = teamStore.currentTeam?.safeAddress
   if (!safeAddress) return
@@ -223,6 +248,7 @@ const handleTransfer = async (transferData: TransferModel) => {
 
   if (result) {
     resetTransferValues()
+    await invalidateSafeBalances(safeAddress as Address)
     await queryClient.invalidateQueries({
       queryKey: ['safe', 'info', { safeAddress }]
     })
