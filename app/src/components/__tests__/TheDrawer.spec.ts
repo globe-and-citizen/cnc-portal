@@ -45,26 +45,6 @@ const router = createRouter({
   ]
 })
 
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useToastStore: vi.fn(() => ({
-      addErrorToast: vi.fn(),
-      addSuccessToast: vi.fn()
-    })),
-    useAccount: vi.fn(() => {
-      return {
-        chainId: ref(11155111)
-      }
-    }),
-    useSwitchChain: vi.fn(() => {
-      return {
-        switchChain: vi.fn()
-      }
-    })
-  }
-})
 
 describe('TheDrawer', () => {
   const name = 'John Doe'

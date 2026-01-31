@@ -3,13 +3,9 @@ import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createWebHistory } from 'vue-router'
-import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { mockTeamData } from '@/tests/mocks/index'
 
 describe('ShowIndex', () => {
-  // Define interface for component instance
-  const queryClient = new QueryClient()
-
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -30,11 +26,7 @@ describe('ShowIndex', () => {
   it('should render the team Breadcrumb', async () => {
     const wrapper = mount(ShowIndex, {
       global: {
-        plugins: [
-          router,
-          createTestingPinia({ createSpy: vi.fn }),
-          [VueQueryPlugin, { queryClient }]
-        ],
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           ContinueAddTeamForm: true,
           TeamMeta: true,

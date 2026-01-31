@@ -8,16 +8,7 @@ import { ref } from 'vue'
 import { parseEther, parseUnits } from 'viem'
 import { VESTING_ADDRESS } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
-import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
-import { mainnet } from 'viem/chains'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
-
-const wagmiConfig = createConfig({
-  chains: [mainnet],
-  transports: {
-    [mainnet.id]: http()
-  }
-})
 
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockSymbol = ref<string>('shr')
@@ -142,7 +133,7 @@ describe('CreateVesting.vue', () => {
         tokenAddress: '0x000000000000000000000000000000000000beef'
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn }), [WagmiPlugin, { config: wagmiConfig }]]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       },
       data() {
         return {

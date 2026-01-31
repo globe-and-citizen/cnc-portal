@@ -1,30 +1,22 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { ref, defineComponent, h } from 'vue'
+import { defineComponent, h } from 'vue'
 import LockScreen from '../LockScreen.vue'
-
-// Hoisted mocks for wagmi composables
-const mockDisconnect = vi.fn()
-const mockAddress = ref('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-
-vi.mock('@wagmi/vue', () => ({
-  useConnection: () => ({ address: mockAddress }),
-  useDisconnect: () => ({ mutate: mockDisconnect })
-}))
+import { mockUseConnection, mockUseDisconnect } from '@/tests/mocks/wagmi.vue.mock'
 
 describe('LockScreen.vue', () => {
   let wrapper: ReturnType<typeof mount> | null = null
 
   afterEach(() => {
     if (wrapper) wrapper.unmount()
-    // reset hoisted mock address to default
-    mockAddress.value = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+    // reset mock address to default
+    mockUseConnection.address.value = '0x1234567890123456789012345678901234567890'
     vi.clearAllMocks()
   })
 
   it('handles missing user and connected addresses gracefully', () => {
     // simulate no connected address and no user address
-    mockAddress.value = undefined as unknown as string
+    mockUseConnection.address.value = undefined as unknown as string
 
     wrapper = mount(LockScreen, {
       props: {
@@ -81,7 +73,7 @@ describe('LockScreen.vue', () => {
 
     // Expect the formatted short addresses to appear
     expect(wrapper.text()).toContain('0x1111...1111')
-    expect(wrapper.text()).toContain('0xaaaa...aaaa')
+    expect(wrapper.text()).toContain('0x1234...7890')
   })
 
   it('calls disconnect when Logout button is clicked', async () => {
@@ -111,6 +103,6 @@ describe('LockScreen.vue', () => {
     expect(btn.exists()).toBe(true)
     await btn.trigger('click')
 
-    expect(mockDisconnect).toHaveBeenCalled()
+    expect(mockUseDisconnect.mutate).toHaveBeenCalled()
   })
 })

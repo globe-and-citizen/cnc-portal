@@ -7,16 +7,7 @@ import { parseUnits } from 'viem'
 import { VESTING_ADDRESS } from '@/constant'
 //import VestingStatusFilter from '@/components/sections/VestingView/VestingStatusFilter.vue'
 import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
-import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
-import { mainnet } from 'viem/chains'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
-
-const wagmiConfig = createConfig({
-  chains: [mainnet],
-  transports: {
-    [mainnet.id]: http()
-  }
-})
 // Mock Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockSymbol = ref('SHR')
@@ -144,7 +135,7 @@ describe('VestingFlow.vue', () => {
         reloadKey: mockReloadKey.value
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn }), [WagmiPlugin, { config: wagmiConfig }]]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
