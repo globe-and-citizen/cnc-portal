@@ -13,6 +13,7 @@
           <MultiSelectMemberInput
             v-model="newSigners"
             :disable-team-members="false"
+            :current-safe-owners="props.currentOwners"
             data-test="new-signers-input"
           />
         </div>
