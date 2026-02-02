@@ -192,7 +192,7 @@ const handleTransfer = async (data: {
 }) => {
   if (!props.bankAddress) return
 
-      const tokenAddress = data.token.symbol === "USDCe"? USDC_E_ADDRESS : USDC_ADDRESS
+  const tokenAddress = data.token.symbol === 'USDCe' ? USDC_E_ADDRESS : USDC_ADDRESS
   try {
     const isNativeToken = data.token.symbol === NETWORK.currencySymbol
     console.log('Initiating transfer:', data.token)

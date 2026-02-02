@@ -79,7 +79,7 @@ export function useErc20Allowance(
       enabled: computed(
         () => isErc20AddressValid.value && !!ownerValue.value && !!spenderValue.value
       ),
-      refetchInterval: 300000 
+      refetchInterval: 300000
     }
   })
 }

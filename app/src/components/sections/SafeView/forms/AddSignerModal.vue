@@ -10,10 +10,7 @@
       <div class="space-y-6">
         <!-- Add Signers Section -->
         <div>
-          <MultiSelectMemberInput
-            v-model="newSigners"
-            :disable-team-members="false"
-          />
+          <MultiSelectMemberInput v-model="newSigners" :disable-team-members="false" />
         </div>
 
         <!-- Summary -->
