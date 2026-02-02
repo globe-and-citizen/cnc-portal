@@ -209,22 +209,40 @@ const { submitOrder, error: clobOrderError } = useClobOrder(
 )
 const { initializeTradingSession } = useTradingSession()
 
-// Validation Rules
+// Helper to calculate required shares for a target dollar amount
+const getMinSharesForTarget = (targetAmount: number) => {
+  if (orderType.value === 'market') {
+    return price.value > 0 ? (targetAmount / price.value).toFixed(2) : '0'
+  } else {
+    const p = parseFloat(limitPrice.value) || 0
+    return p > 0 ? (targetAmount / p).toFixed(2) : '0'
+  }
+}
+
 const rules = computed(() => ({
   shares: {
     required,
-    minValue: helpers.withMessage('Shares must be greater than 0', minValue(0.000001)),
-    // Market order: total cost >= $1.00
-    marketMinimum: helpers.withMessage('Market orders must be at least $1.00', (value: string) => {
-      if (orderType.value !== 'market') return true
-      return (parseFloat(value) || 0) * price.value >= 1.0
-    }),
-    // Limit order: total cost >= $5.00
-    limitMinimum: helpers.withMessage('Limit orders must be at least $5.00', (value: string) => {
-      if (orderType.value !== 'limit') return true
-      const p = parseFloat(limitPrice.value) || 0
-      return (parseFloat(value) || 0) * p >= 5.0
-    })
+    nonZero: helpers.withMessage(
+      'Shares must be greater than 0',
+      (value: string) => parseFloat(value) > 0
+    ),
+    // Dynamic Market Validation
+    marketMinimum: helpers.withMessage(
+      () => `Total cost must be $1.00 (min. ${getMinSharesForTarget(1)} shares)`,
+      (value: string) => {
+        if (orderType.value !== 'market') return true
+        return (parseFloat(value) || 0) * price.value >= 1.0
+      }
+    ),
+    // Dynamic Limit Validation
+    limitMinimum: helpers.withMessage(
+      () => `Total cost must be $5.00 (min. ${getMinSharesForTarget(5)} shares)`,
+      (value: string) => {
+        if (orderType.value !== 'limit') return true
+        const p = parseFloat(limitPrice.value) || 0
+        return (parseFloat(value) || 0) * p >= 5.0
+      }
+    )
   },
   limitPrice: {
     requiredIfLimit: helpers.withMessage('Limit price is required', (value: string) =>
