@@ -84,6 +84,11 @@
         min="0"
         step="1"
       />
+      <div class="text-error text-xs mt-1">
+        <div v-for="error in v$.shares.$errors" :key="error.$uid">
+          {{ error.$message }}
+        </div>
+      </div>
     </div>
 
     <!-- Limit Price Input - Only shown for Limit orders -->
@@ -97,6 +102,11 @@
         step="0.01"
         v-model="limitPrice"
       />
+      <div class="text-error text-xs mt-1">
+        <div v-for="error in v$.limitPrice.$errors" :key="error.$uid">
+          {{ error.$message }}
+        </div>
+      </div>
     </div>
 
     <!-- Order Summary -->
@@ -159,6 +169,8 @@ import type { PolymarketMarket } from '@/types'
 import { useMarketData } from '@/queries/polymarket.queries'
 import { toast } from 'vue-sonner'
 import { log } from '@/utils'
+import { useVuelidate } from '@vuelidate/core'
+import { required, minValue, helpers } from '@vuelidate/validators'
 
 interface Props {
   marketUrl: string
@@ -197,6 +209,32 @@ const { submitOrder, error: clobOrderError } = useClobOrder(
 )
 const { initializeTradingSession } = useTradingSession()
 
+// Validation Rules
+const rules = computed(() => ({
+  shares: {
+    required,
+    minValue: helpers.withMessage('Shares must be greater than 0', minValue(0.000001)),
+    // Market order: total cost >= $1.00
+    marketMinimum: helpers.withMessage('Market orders must be at least $1.00', (value: string) => {
+      if (orderType.value !== 'market') return true
+      return (parseFloat(value) || 0) * price.value >= 1.0
+    }),
+    // Limit order: total cost >= $5.00
+    limitMinimum: helpers.withMessage('Limit orders must be at least $5.00', (value: string) => {
+      if (orderType.value !== 'limit') return true
+      const p = parseFloat(limitPrice.value) || 0
+      return (parseFloat(value) || 0) * p >= 5.0
+    })
+  },
+  limitPrice: {
+    requiredIfLimit: helpers.withMessage('Limit price is required', (value: string) =>
+      orderType.value === 'limit' ? parseFloat(value) > 0 : true
+    )
+  }
+}))
+
+const v$ = useVuelidate(rules, { shares, limitPrice })
+
 // Computed mappings for real Gamma API response
 const outcomes = computed(() => {
   if (!market.value) return []
@@ -229,6 +267,11 @@ const setOrderType = (type: 'market' | 'limit') => {
 }
 
 const handlePlaceOrder = async () => {
+  const isFormValid = await v$.value.$validate()
+  if (!isFormValid) {
+    toast.error('Please fix the validation errors')
+    return
+  }
   if (!shares.value || parseFloat(shares.value) <= 0) return
 
   isPlacingOrder.value = true
