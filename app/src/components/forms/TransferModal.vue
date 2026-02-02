@@ -57,7 +57,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { ref, watch, computed, type Ref } from 'vue'
-import { type Address, parseEther, encodeFunctionData, parseUnits, zeroAddress } from 'viem'
+import { type Address, parseEther, encodeFunctionData, parseUnits } from 'viem'
 import {
   useWriteContract,
   useWaitForTransactionReceipt,
@@ -268,6 +268,7 @@ const handleTransfer = async (data: {
     }
 
     await waitForTransactionReceipt(config, { hash: transferHash.value })
+    const invalidationAddress = isUsdc ? USDC_ADDRESS : USDC_E_ADDRESS
 
     // Invalidate relevant queries
     const queryKey = isNativeToken
@@ -275,11 +276,7 @@ const handleTransfer = async (data: {
       : [
           'readContract',
           {
-            address: isUsdc
-              ? (USDC_ADDRESS as Address)
-              : isUsdce
-                ? (USDC_E_ADDRESS as Address)
-                : (zeroAddress as Address),
+            address: invalidationAddress as Address,
             args: [props.bankAddress],
             chainId: chainId.value
           }
