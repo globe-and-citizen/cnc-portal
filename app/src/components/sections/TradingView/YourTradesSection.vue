@@ -17,10 +17,15 @@
             class="input input-bordered w-full pl-12 h-14 text-lg focus:border-primary focus:ring-1 focus:ring-primary"
             data-test="market-url-input"
           />
+          <div class="text-error text-xs mt-1">
+            <div v-for="error in v$.marketUrl.$errors" :key="error.$uid">
+              {{ error.$message }}
+            </div>
+          </div>
         </div>
         <button
           @click="handleTrade"
-          :disabled="!marketUrl.trim() || !isSelectedSafeTrader"
+          :disabled="v$.marketUrl.$invalid || !marketUrl.trim() || !isSelectedSafeTrader"
           class="btn btn-primary h-14 px-8 text-lg"
           data-test="trade-button"
         >
@@ -80,6 +85,8 @@ import 'vue-sonner/style.css'
 import { useUserPositions, useRedeemPosition, useSafeDeployment } from '@/composables/trading'
 import { parseUnits } from 'viem'
 import { useTeamSafes } from '@/composables/safe'
+import { useVuelidate } from '@vuelidate/core'
+import { required, helpers } from '@vuelidate/validators'
 
 // Props
 interface Props {
@@ -97,6 +104,11 @@ const emit = defineEmits<{
   'order-placed': [order: OrderDetails]
 }>()
 
+const isPolymarketUrl = (value: string) => {
+  if (!value) return true // Let 'required' handle empty state
+  return /polymarket\.com\/(market|event)\/([^?#]+)/.test(value)
+}
+
 // State
 const marketUrl = ref('')
 const tradingModal = ref({ mount: false, show: false })
@@ -107,9 +119,26 @@ const { derivedSafeAddressFromEoa } = useSafeDeployment()
 const { selectedSafe, isSelectedSafeTrader } = useTeamSafes()
 const selectedSafeAddress = computed(() => selectedSafe.value?.address)
 const { data: trades, isLoading: isLoadingTrades, refetch } = useUserPositions(selectedSafeAddress)
+const rules = {
+  marketUrl: {
+    required,
+    isPolymarket: helpers.withMessage(
+      'Please enter a valid Polymarket market or event URL',
+      isPolymarketUrl
+    )
+  }
+}
+
+const v$ = useVuelidate(rules, { marketUrl })
 
 // Methods
-const handleTrade = () => {
+const handleTrade = async () => {
+  const isValid = await v$.value.$validate()
+
+  if (!isValid) {
+    toast.error('Invalid Polymarket URL')
+    return
+  }
   if (marketUrl.value.trim()) {
     tradingModal.value = { mount: true, show: true }
   }
@@ -118,6 +147,7 @@ const handleTrade = () => {
 const handleModalClose = () => {
   tradingModal.value = { mount: false, show: false }
   marketUrl.value = '' // Clear the input after modal closes
+  v$.value.$reset() // Reset validation state
 }
 
 const handleSell = (trade: Trade) => {
