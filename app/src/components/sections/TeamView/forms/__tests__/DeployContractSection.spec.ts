@@ -127,6 +127,7 @@ vi.mock('@/constant', () => ({
   OFFICER_BEACON: '0x8888888888888888888888888888888888888888',
   USDC_ADDRESS: '0x9999999999999999999999999999999999999999',
   USDT_ADDRESS: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  USDC_E_ADDRESS: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbaaaa',
   validateAddresses: vi.fn(() => true)
 }))
 

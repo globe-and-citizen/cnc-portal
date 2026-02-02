@@ -32,6 +32,7 @@ import {
   PROPOSALS_BEACON_ADDRESS,
   USDC_ADDRESS,
   USDT_ADDRESS,
+  USDC_E_ADDRESS,
   validateAddresses,
   // VOTING_BEACON_ADDRESS,
   ELECTIONS_BEACON_ADDRESS
@@ -201,7 +202,7 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: BANK_ABI,
         functionName: 'initialize',
-        args: [[USDT_ADDRESS, USDC_ADDRESS], currentUserAddress]
+        args: [[USDT_ADDRESS, USDC_ADDRESS, USDC_E_ADDRESS], currentUserAddress]
       })
     })
     deployments.push({
