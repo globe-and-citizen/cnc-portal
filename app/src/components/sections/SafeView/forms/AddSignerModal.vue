@@ -1,5 +1,5 @@
 <template>
-  <ModalComponent v-model="isOpen" @reset="handleClose" data-test="add-signer-modal">
+  <ModalComponent v-model="isOpen" @reset="handleClose">
     <div class="flex flex-col gap-5 max-w-2xl">
       <div class="flex items-center justify-between">
         <h2 class="font-bold text-2xl">Add Safe Signers</h2>
