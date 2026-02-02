@@ -6,6 +6,7 @@ export * from './expenseUtil'
 export * from './contractManagementUtil'
 export * from './web3Util'
 export * from './safe'
+export * from './fileUtil'
 /**
  * Utility function to wait for a condition to be met
  * @description This function repeatedly checks a condition until it returns true or a timeout occurs.

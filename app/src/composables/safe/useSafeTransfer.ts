@@ -85,7 +85,7 @@ export function useSafeTransfer() {
 
         // Use proper decimals based on token type
         const parsedAmount =
-          tokenId === 'usdc' || tokenId === 'usdt'
+          tokenId === 'usdc' || tokenId === 'usdt' || tokenId === 'usdc.e'
             ? parseUnits(amount, 6) // USDC/USDT have 6 decimals
             : parseEther(amount) // Default to 18 decimals
 

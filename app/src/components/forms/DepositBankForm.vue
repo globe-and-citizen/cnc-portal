@@ -156,7 +156,7 @@ const { data: allowance } = useErc20Allowance(
 )
 
 // Computed values for approval composable
-const bigIntAmount = computed(() => BigInt(Number(amount.value) * 1e6))
+const bigIntAmount = computed(() => BigInt(Math.floor(Number(amount.value) * 1e6)))
 
 const ERC20ApproveResult = useERC20Approve(
   selectedTokenAddress,
