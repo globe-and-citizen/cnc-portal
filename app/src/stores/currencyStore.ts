@@ -79,7 +79,7 @@ export const useCurrencyStore = defineStore('currency', () => {
       const { data, isFetching } = useQuery({
         queryKey: ['price', token.coingeckoId],
         queryFn: () => fetchTokenPrice(token.coingeckoId),
-        retryDelay: 30000,
+        retryDelay: 300_000,
         gcTime: 1000 * 60 * 10
       })
       tokenStates.push({ id: token.id, data, loading: isFetching })

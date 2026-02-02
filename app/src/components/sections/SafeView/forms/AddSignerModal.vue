@@ -1,5 +1,5 @@
 <template>
-  <ModalComponent v-model="isOpen" @reset="handleClose">
+  <ModalComponent v-model="isOpen" @reset="handleClose" data-test="add-signer-modal">
     <div class="flex flex-col gap-5 max-w-2xl">
       <div class="flex items-center justify-between">
         <h2 class="font-bold text-2xl">Add Safe Signers</h2>
@@ -13,7 +13,6 @@
           <MultiSelectMemberInput
             v-model="newSigners"
             :disable-team-members="false"
-            data-test="new-signers-input"
           />
         </div>
 
