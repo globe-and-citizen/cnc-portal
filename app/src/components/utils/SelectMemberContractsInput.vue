@@ -32,7 +32,11 @@
     <!-- Dropdown positioned relative to the input -->
     <div
       v-if="
-        showDropdown && !disabled && (filteredMembers.length > 0 || filteredContracts.length > 0)
+        showDropdown &&
+        !disabled &&
+        (filteredMembers.length > 0 ||
+          filteredTraderSafes.length > 0 ||
+          filteredContracts.length > 0)
       "
       class="left-0 top-full mt-4 w-full outline-none focus:outline-none focus:ring-0 z-10"
       data-test="search-dropdown"
@@ -61,6 +65,35 @@
               class="p-4 flex-grow rounded-lg bg-white hover:bg-base-300"
               :user="member"
               :data-test="`user-dropdown-${member.address}`"
+            />
+          </div>
+        </div>
+
+        <!-- Trader Safes -->
+        <div
+          v-if="filteredTraderSafes.length > 0"
+          class="px-2 pt-2 pb-1 text-xs uppercase text-gray-500"
+        >
+          Trader Safes
+        </div>
+        <div
+          v-if="filteredTraderSafes.length > 0"
+          class="grid grid-rows-1 gap-4 px-2 pb-3"
+          data-test="trader-safe-search-results"
+        >
+          <div
+            v-for="traderSafe in filteredTraderSafes"
+            :key="traderSafe.address"
+            class="flex items-center relative group cursor-pointer"
+            data-test="trader-safe-row"
+            @click="
+              selectItem({ name: traderSafe.name, address: traderSafe.address }, 'trader-safe')
+            "
+          >
+            <TraderSafeComponent
+              class="p-4 flex-grow rounded-lg bg-white hover:bg-base-300"
+              :safe="{ name: traderSafe.name, address: traderSafe.address }"
+              :data-test="`trader-safe-dropdown-${traderSafe.address}`"
             />
           </div>
         </div>
@@ -100,21 +133,23 @@
 /**
  * @component SelectMemberContractsInput
  * @description
- * Dual-input component for searching and selecting a team member or contract address.
+ * Dual-input component for searching and selecting a team member, trader safe, or contract address.
  * - Integrates with Pinia teamStore for live team data.
- * - Shows a dropdown with filtered team members and contracts as the user types.
- * - Emits a 'selectItem' event with the selected item and its type ('member' or 'contract').
+ * - Shows a dropdown with filtered team members, trader safes (deployed only), and contracts as the user types.
+ * - Emits a 'selectItem' event with the selected item and its type ('member', 'trader-safe', or 'contract').
  * - Debounced dropdown for performance.
- * - Used in forms for user-friendly member/contract selection.
+ * - Used in forms for user-friendly member/contract/safe selection.
  *
- * @emits selectItem - Fires when a user selects a member or contract from the dropdown.
+ * @emits selectItem - Fires when a user selects a member, trader safe, or contract from the dropdown.
  * @model input - Two-way bound object: { name: string, address: string }
  */
 
 import { ref, useTemplateRef, computed } from 'vue'
 import { useTeamStore } from '@/stores'
+import { useDeployedTraderSafes } from '@/composables/useDeployedTraderSafes'
 import { watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
+import TraderSafeComponent from '@/components/TraderSafeComponent.vue'
 import ContractComponent from '@/components/ContractComponent.vue'
 
 const props = defineProps<{ disabled?: boolean }>()
@@ -128,6 +163,8 @@ const input = defineModel({
 })
 
 const teamStore = useTeamStore()
+const { deployedTraderSafes } = useDeployedTraderSafes()
+
 // computed for showDropdown
 const showDropdown = computed(() => {
   return !props.disabled && _showDropdown.value
@@ -140,23 +177,36 @@ const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
 const isFetching = computed(() => teamStore.currentTeamMeta.isPending)
 
 const filteredMembers = computed(() => {
-  if (!teamStore.currentTeam?.members) return []
+  if (!teamStore.currentTeamMeta?.data?.members) return []
   const nameSearch = input.value.name.toLowerCase().trim()
   const addressSearch = input.value.address.toLowerCase().trim()
 
-  return teamStore.currentTeam.members.filter((member) => {
+  return teamStore.currentTeamMeta.data.members.filter((member) => {
     const nameMatch = nameSearch ? member.name?.toLowerCase().includes(nameSearch) : true
     const addressMatch = addressSearch ? member.address.toLowerCase().includes(addressSearch) : true
     return nameMatch && addressMatch
   })
 })
 
-const filteredContracts = computed(() => {
-  if (!teamStore.currentTeam?.teamContracts) return []
+const filteredTraderSafes = computed(() => {
   const nameSearch = input.value.name.toLowerCase().trim()
   const addressSearch = input.value.address.toLowerCase().trim()
 
-  return teamStore.currentTeam.teamContracts.filter((contract) => {
+  return deployedTraderSafes.value.filter((traderSafe) => {
+    const nameMatch = nameSearch ? traderSafe.name.toLowerCase().includes(nameSearch) : true
+    const addressMatch = addressSearch
+      ? traderSafe.address.toLowerCase().includes(addressSearch)
+      : true
+    return nameMatch && addressMatch
+  })
+})
+
+const filteredContracts = computed(() => {
+  if (!teamStore.currentTeamMeta?.data?.teamContracts) return []
+  const nameSearch = input.value.name.toLowerCase().trim()
+  const addressSearch = input.value.address.toLowerCase().trim()
+
+  return teamStore.currentTeamMeta.data.teamContracts.filter((contract) => {
     const nameMatch = nameSearch ? contract.type.toLowerCase().includes(nameSearch) : true
     const addressMatch = addressSearch
       ? contract.address.toLowerCase().includes(addressSearch)
@@ -189,7 +239,10 @@ watchDebounced(
   { debounce: 300, maxWait: 1000 }
 )
 
-const selectItem = (item: { name: string; address: string }, type: 'member' | 'contract') => {
+const selectItem = (
+  item: { name: string; address: string },
+  type: 'member' | 'trader-safe' | 'contract'
+) => {
   selecting.value = true
   input.value = item
   emit('selectItem', { ...item, type })
