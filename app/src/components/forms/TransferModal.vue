@@ -200,25 +200,28 @@ const handleTransfer = async (data: {
 
     if (isBodAction.value) {
       // BOD Action path
-      const encodedData = isNativeToken
-        ? encodeFunctionData({
-            abi: BANK_ABI,
-            functionName: 'transfer',
-            args: [data.address.address, transferAmount]
-          })
-        : isUsdce
-          ? encodeFunctionData({
-              abi: BANK_ABI,
-              functionName: 'transferToken',
-              args: [USDC_E_ADDRESS as Address, data.address.address, transferAmount]
-            })
-          : isUsdc
-            ? encodeFunctionData({
-                abi: BANK_ABI,
-                functionName: 'transferToken',
-                args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
-              })
-            : null
+      let encodedData: `0x${string}` | undefined
+      if (isNativeToken) {
+        encodedData = encodeFunctionData({
+          abi: BANK_ABI,
+          functionName: 'transfer',
+          args: [data.address.address, transferAmount]
+        })
+      } else if (isUsdce) {
+        encodedData = encodeFunctionData({
+          abi: BANK_ABI,
+          functionName: 'transferToken',
+          args: [USDC_E_ADDRESS as Address, data.address.address, transferAmount]
+        })
+      } else if (isUsdc) {
+        encodedData = encodeFunctionData({
+          abi: BANK_ABI,
+          functionName: 'transferToken',
+          args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
+        })
+      } else {
+        throw new Error('Unsupported token type')
+      }
 
       const description = JSON.stringify({
         text: `Transfer ${data.amount} ${data.token.symbol} to ${data.address.address}`,
@@ -242,24 +245,22 @@ const handleTransfer = async (data: {
         functionName: 'transfer',
         args: [data.address.address, transferAmount]
       })
-    }
-
-    if (isUsdc) {
+    } else if (isUsdc) {
       await transfer({
         address: props.bankAddress,
         abi: BANK_ABI,
         functionName: 'transferToken',
         args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
       })
-    }
-
-    if (isUsdce) {
+    } else if (isUsdce) {
       await transfer({
         address: props.bankAddress,
         abi: BANK_ABI,
         functionName: 'transferToken',
         args: [USDC_E_ADDRESS as Address, data.address.address, transferAmount]
       })
+    } else {
+      throw new Error('Unsupported token type')
     }
 
     if (!transferHash.value) {
