@@ -57,7 +57,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { ref, watch, computed, type Ref } from 'vue'
-import { type Address, parseEther, encodeFunctionData, parseUnits } from 'viem'
+import { type Address, parseEther, encodeFunctionData, parseUnits, zeroAddress } from 'viem'
 import {
   useWriteContract,
   useWaitForTransactionReceipt,
@@ -279,7 +279,7 @@ const handleTransfer = async (data: {
               ? (USDC_ADDRESS as Address)
               : isUsdce
                 ? (USDC_E_ADDRESS as Address)
-                : '',
+                : (zeroAddress as Address),
             args: [props.bankAddress],
             chainId: chainId.value
           }
