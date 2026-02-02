@@ -1,6 +1,6 @@
 <template>
   <Toaster />
-  <CardComponent title="Your Trades" data-test="trades-table">
+  <CardComponent :title="cardTitle" data-test="trades-table">
     <template #card-action>
       <!-- Trading Input in card-action slot -->
       <div class="flex gap-4 w-full">
@@ -119,6 +119,9 @@ const { derivedSafeAddressFromEoa } = useSafeDeployment()
 const { selectedSafe, isSelectedSafeTrader } = useTeamSafes()
 const selectedSafeAddress = computed(() => selectedSafe.value?.address)
 const { data: trades, isLoading: isLoadingTrades, refetch } = useUserPositions(selectedSafeAddress)
+const cardTitle = computed(
+  () => `${isSelectedSafeTrader.value ? 'Your' : `${selectedSafe.value?.userName}'s`} Trades`
+)
 const rules = {
   marketUrl: {
     required,

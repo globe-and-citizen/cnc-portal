@@ -18,7 +18,8 @@ export const useTeamSafes = () => {
         .map((m) => ({
           address: m.traderSafeAddress || '',
           name: `${m.name}'s Safe` || 'Unnamed Safe',
-          balance: '0'
+          balance: '0',
+          userName: m.name
         })) || []
 
     // 2. Check if the current route is 'safe-account'
