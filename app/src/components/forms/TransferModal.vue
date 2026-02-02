@@ -68,7 +68,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { waitForTransactionReceipt } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { BANK_ABI } from '@/artifacts/abi/bank'
-import { NETWORK, USDC_ADDRESS } from '@/constant'
+import { NETWORK, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { useToastStore, useUserDataStore } from '@/stores'
 import { useBodContract } from '@/composables/bod/'
 import type { TokenOption } from '@/types'
@@ -194,6 +194,8 @@ const handleTransfer = async (data: {
 
   try {
     const isNativeToken = data.token.symbol === NETWORK.currencySymbol
+    const isUsdce = data.token.symbol === 'USDCe'
+    const isUsdc = data.token.symbol === 'USDC'
     const transferAmount = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
 
     if (isBodAction.value) {
@@ -204,11 +206,19 @@ const handleTransfer = async (data: {
             functionName: 'transfer',
             args: [data.address.address, transferAmount]
           })
-        : encodeFunctionData({
-            abi: BANK_ABI,
-            functionName: 'transferToken',
-            args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
-          })
+        : isUsdce
+          ? encodeFunctionData({
+              abi: BANK_ABI,
+              functionName: 'transferToken',
+              args: [USDC_E_ADDRESS as Address, data.address.address, transferAmount]
+            })
+          : isUsdc
+            ? encodeFunctionData({
+                abi: BANK_ABI,
+                functionName: 'transferToken',
+                args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
+              })
+            : null
 
       const description = JSON.stringify({
         text: `Transfer ${data.amount} ${data.token.symbol} to ${data.address.address}`,
@@ -220,6 +230,7 @@ const handleTransfer = async (data: {
         description,
         data: encodedData
       })
+
       return
     }
 
@@ -231,12 +242,23 @@ const handleTransfer = async (data: {
         functionName: 'transfer',
         args: [data.address.address, transferAmount]
       })
-    } else {
+    }
+
+    if (isUsdc) {
       await transfer({
         address: props.bankAddress,
         abi: BANK_ABI,
         functionName: 'transferToken',
         args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
+      })
+    }
+
+    if (isUsdce) {
+      await transfer({
+        address: props.bankAddress,
+        abi: BANK_ABI,
+        functionName: 'transferToken',
+        args: [USDC_E_ADDRESS as Address, data.address.address, transferAmount]
       })
     }
 
@@ -252,7 +274,11 @@ const handleTransfer = async (data: {
       : [
           'readContract',
           {
-            address: USDC_ADDRESS as Address,
+            address: isUsdc
+              ? (USDC_ADDRESS as Address)
+              : isUsdce
+                ? (USDC_E_ADDRESS as Address)
+                : '',
             args: [props.bankAddress],
             chainId: chainId.value
           }
