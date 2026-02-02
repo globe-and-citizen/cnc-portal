@@ -50,9 +50,6 @@
                   </div>
                 </div>
               </div>
-              <span class="text-sm text-primary font-medium">
-                {{ formatBalance(safe.balance) }}
-              </span>
             </div>
           </a>
         </li>
@@ -88,11 +85,6 @@ const isOpen = ref(false)
 
 const truncateAddress = (address: string): string => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
-}
-
-const formatBalance = (balance: string): string => {
-  const numBalance = parseFloat(balance)
-  return isNaN(numBalance) ? balance : numBalance.toFixed(4) + ' ETH'
 }
 
 const toggleDropdown = () => {

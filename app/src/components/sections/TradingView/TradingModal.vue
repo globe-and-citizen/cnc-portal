@@ -1,15 +1,9 @@
 <template>
-  <!-- <div class="modal modal-open">
-    <div class="modal-box max-w-lg p-0 overflow-hidden bg-base-100 border border-base-300"> -->
-  <!-- Header -->
   <div class="p-6 pb-0">
     <div class="flex items-start justify-between">
       <h3 class="text-xl font-semibold pr-8">
         {{ market?.question }}
       </h3>
-      <!-- <button @click="onClose" class="btn btn-ghost btn-sm btn-circle absolute right-4 top-4">
-            <icon icon="heroicons:x-mark" class="w-5 h-5" />
-          </button> -->
     </div>
     <p class="text-sm text-gray-500 mt-2 line-clamp-2">
       {{ market?.description }}
@@ -151,9 +145,6 @@
       <icon icon="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
     </a>
   </div>
-  <!-- </div>
-    <div class="modal-backdrop" @click="onClose"></div>
-  </div> -->
 </template>
 
 <script setup lang="ts">
@@ -170,13 +161,9 @@ import { useMarketData } from '@/queries/polymarket.queries'
 import { toast } from 'vue-sonner'
 import { log } from '@/utils'
 import { useVuelidate } from '@vuelidate/core'
-import { required, minValue, helpers } from '@vuelidate/validators'
+import { required, helpers } from '@vuelidate/validators'
 
-interface Props {
-  marketUrl: string
-}
-
-const props = defineProps<Props>()
+const props = defineProps<{ marketUrl: string }>()
 const emit = defineEmits(['close', 'place-order'])
 
 const parsePolymarketUrl = (url: string) => {
@@ -187,7 +174,6 @@ const parsePolymarketUrl = (url: string) => {
 
 // State
 const market = ref<PolymarketMarket | null>(null)
-// const isLoading = ref(true)
 const selectedOutcome = ref(0)
 const orderType = ref<'market' | 'limit'>('market')
 const shares = ref('')
