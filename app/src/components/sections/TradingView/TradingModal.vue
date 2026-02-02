@@ -157,6 +157,8 @@ import {
 } from '@/composables/trading/'
 import type { PolymarketMarket } from '@/types'
 import { useMarketData } from '@/queries/polymarket.queries'
+import { toast } from 'vue-sonner'
+import { log } from '@/utils'
 
 interface Props {
   marketUrl: string
@@ -189,7 +191,10 @@ const endpoint = computed(() => {
 const { data: marketData } = useMarketData(endpoint)
 const { derivedSafeAddressFromEoa } = useSafeDeployment()
 const { clobClient } = useClobClient()
-const { submitOrder } = useClobOrder(clobClient, derivedSafeAddressFromEoa.value || undefined)
+const { submitOrder, error: clobOrderError } = useClobOrder(
+  clobClient,
+  derivedSafeAddressFromEoa.value || undefined
+)
 const { initializeTradingSession } = useTradingSession()
 
 // Computed mappings for real Gamma API response
@@ -248,6 +253,13 @@ const handlePlaceOrder = async () => {
     isPlacingOrder.value = false
   }
 }
+
+watch(clobOrderError, (newError) => {
+  if (newError) {
+    toast.error(newError.message || 'Failed to place order')
+    log.error('CLOB Order Error:', newError)
+  }
+})
 
 watch(
   marketData,
