@@ -52,6 +52,7 @@ defineProps<{
       shares: {
         required: ValidationRuleWithoutParams<unknown>
         nonZero: ValidationRuleWithParams<object, unknown>
+        spendableBalance: ValidationRuleWithParams<object, unknown>
         marketMinimum: ValidationRuleWithParams<object, unknown>
         limitMinimum: ValidationRuleWithParams<object, unknown>
       }
