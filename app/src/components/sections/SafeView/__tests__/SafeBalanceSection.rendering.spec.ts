@@ -61,23 +61,8 @@ vi.mock('@/composables/safe', async (importOriginal) => {
   }
 })
 
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useChainId: mockUseChainId
-  }
-})
-
 vi.mock('@vueuse/core', () => ({
   useStorage: vi.fn()
-}))
-
-vi.mock('@/stores', () => ({
-  useTeamStore: mockUseTeamStore,
-  useCurrencyStore: mockUseCurrencyStore,
-  useUserDataStore: mockUseUserDataStore,
-  useToastStore: mockUseToastStore
 }))
 
 vi.mock('@/composables/useContractBalance', () => ({

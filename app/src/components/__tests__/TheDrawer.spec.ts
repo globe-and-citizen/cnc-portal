@@ -3,7 +3,6 @@ import TheDrawer from '@/components/TheDrawer.vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
 import { useTeamStore } from '@/stores'
 // import { mockTeamStore } from '@/tests/mocks/store.mock'
 
@@ -44,7 +43,6 @@ const router = createRouter({
     }
   ]
 })
-
 
 describe('TheDrawer', () => {
   const name = 'John Doe'

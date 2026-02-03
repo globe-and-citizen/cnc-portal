@@ -13,18 +13,6 @@ const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockSymbol = ref('SHR')
 const mockReloadKey = ref(0)
 
-// Mock Team Data
-const mockCurrentTeam = ref({
-  id: 1,
-  ownerAddress: memberAddress,
-  teamContracts: [
-    {
-      type: 'InvestorV1',
-      address: '0x000000000000000000000000000000000000beef'
-    }
-  ]
-})
-
 // Mock Contract Write
 const mockWriteContract = {
   writeContract: vi.fn(),
@@ -105,20 +93,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     })
   }
 })
-
-// Mock Stores
-vi.mock('@/stores', () => ({
-  useUserDataStore: () => ({
-    address: memberAddress
-  }),
-  useTeamStore: () => ({
-    currentTeam: mockCurrentTeam.value,
-    getContractAddressByType: vi.fn((type) => {
-      // console.log('getContractAddressByType called with type:', type)
-      return type ? '0x000000000000000000000000000000000000beef' : undefined
-    })
-  })
-}))
 
 vi.mock('@/stores/useToastStore')
 

@@ -32,17 +32,6 @@ const { mockReadContract, mockWriteContract, mockUseDebounceFn, mockTeamStore, m
     }
   }))
 
-// Mock wagmi functions
-vi.mock('@wagmi/core', () => ({
-  readContract: mockReadContract,
-  writeContract: mockWriteContract
-}))
-
-// Mock wagmi config
-vi.mock('@/wagmi.config', () => ({
-  config: {}
-}))
-
 // Mock ABI import
 vi.mock('@/artifacts/abi/CashRemunerationEIP712.json', () => ({
   default: []
@@ -68,13 +57,6 @@ vi.mock('@vueuse/core', async (importOriginal) => {
     onClickOutside: vi.fn()
   }
 })
-
-// Mock stores
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore),
-  useToastStore: vi.fn(() => mockToastStore),
-  useUserDataStore: vi.fn(() => ({ address: zeroAddress }))
-}))
 
 describe.skip('CRAddERC20Support.vue', () => {
   let wrapper: ReturnType<typeof mount>

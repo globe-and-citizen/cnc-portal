@@ -7,25 +7,6 @@ import { parseEther, parseUnits, zeroAddress } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 
 const mockAddErrorToast = vi.fn()
-vi.mock('@/stores', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useTeamStore: vi.fn(() => ({
-      currentTeam: {
-        teamContracts: [
-          {
-            id: 1,
-            type: 'ExpenseAccountEIP712'
-          }
-        ]
-      }
-    })),
-    useToastStore: vi.fn(() => ({
-      addErrorToast: mockAddErrorToast
-    }))
-  }
-})
 
 const mockError = ref<unknown>(null)
 vi.mock('@vue/apollo-composable', async (importOriginal) => {

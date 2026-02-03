@@ -9,25 +9,6 @@ import DeleteClaimModal from '@/components/sections/CashRemunerationView/DeleteC
 
 import type { Claim, SupportedTokens } from '@/types'
 
-const successToastMock = vi.fn()
-const errorToastMock = vi.fn()
-
-// Mock stores
-const mocks = vi.hoisted(() => ({
-  mockUseToastStore: vi.fn(() => ({
-    addErrorToast: errorToastMock,
-    addSuccessToast: successToastMock
-  }))
-}))
-
-vi.mock('@/stores', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useToastStore: mocks.mockUseToastStore
-  }
-})
-
 describe('ClaimActions', () => {
   const mockClaim: Claim = {
     id: 1,

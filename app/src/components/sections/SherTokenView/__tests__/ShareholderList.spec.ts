@@ -11,23 +11,6 @@ import { mockToastStore } from '@/tests/mocks/store.mock'
 // import { mockTeamStore } from '@/tests/mocks/store.mock'
 
 const mockWriteContract = vi.fn()
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-
-  return {
-    ...actual,
-    useWriteContract: vi.fn(() => ({
-      writeContract: mockWriteContract,
-      hash: ref(null),
-      isPending: ref(false),
-      error: ref(null)
-    })),
-    useWaitForTransactionReceipt: vi.fn(() => ({
-      isLoading: ref(false),
-      isSuccess: ref(false)
-    }))
-  }
-})
 
 vi.mock('@/stores/user', () => ({
   useUserDataStore: vi.fn(() => ({

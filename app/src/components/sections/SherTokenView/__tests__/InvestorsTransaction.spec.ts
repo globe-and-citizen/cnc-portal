@@ -32,17 +32,6 @@ vi.mock('@vue/apollo-composable', () => ({
   useQuery: () => mockQueryResult
 }))
 
-// Mock stores
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => ({
-    getContractAddressByType: vi.fn(() => mockContractAddress.value)
-  })),
-  useCurrencyStore: vi.fn(() => ({
-    getTokenPrice: vi.fn(() => 1000)
-  })),
-  useToastStore: vi.fn(() => mockToastStore)
-}))
-
 describe('InvestorsTransactions.vue', () => {
   const createComponent = () => {
     return mount<typeof InvestorsTransactions>(InvestorsTransactions, {

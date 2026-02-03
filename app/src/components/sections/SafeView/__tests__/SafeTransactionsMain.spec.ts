@@ -31,11 +31,6 @@ const {
   mockUseSafeExecution: vi.fn()
 }))
 
-// Mock external dependencies
-vi.mock('@/stores', () => ({
-  useTeamStore: mockUseTeamStore
-}))
-
 vi.mock('@/queries/safe.queries', () => ({
   useSafeTransactionsQuery: mockUseSafeTransactionsQuery,
   useSafeInfoQuery: mockUseSafeInfoQuery
