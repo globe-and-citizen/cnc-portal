@@ -45,7 +45,8 @@ import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-
 import { FACTORY_BEACON_ABI } from '@/artifacts/abi/factory-beacon'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useUpdateTeamMutation } from '@/queries/team.queries'
+import { useSyncContractsMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 
@@ -70,6 +71,10 @@ const dynamicLoading = ref({
   status: false,
   message: ''
 })
+
+// Mutations for team and contract updates
+const { mutateAsync: updateTeam } = useUpdateTeamMutation()
+const { mutateAsync: syncContracts } = useSyncContractsMutation()
 
 // Officer contract creation
 const {
@@ -116,18 +121,11 @@ const deploySafeForTeam = async () => {
   try {
     const safeAddress = await deploySafe([currentUserAddress], 1)
     safeLoadingMessage.value = 'Updating team with Safe address...'
-    const { error: updateError } = await useCustomFetch<Team>(`teams/${props.createdTeamData.id}`)
-      .put({
-        safeAddress: safeAddress
-      })
-      .json()
 
-    if (updateError.value) {
-      log.error('Error updating team with Safe address:', updateError.value)
-      addErrorToast('Failed to update team with Safe address')
-      safeLoadingMessage.value = ''
-      return
-    }
+    await updateTeam({
+      id: props.createdTeamData.id!,
+      teamData: { safeAddress: (safeAddress ?? undefined) as `0x${string}` | undefined }
+    })
 
     addSuccessToast(`Safe wallet deployed successfully`)
     safeLoadingMessage.value = ''
@@ -367,29 +365,27 @@ useWatchContractEvent({
       return
     }
 
-    const { error: updateTeamError } = await useCustomFetch<string>(
-      `teams/${props.createdTeamData.id}`
-    )
-      .put({
-        officerAddress: proxyAddress
+    try {
+      await updateTeam({
+        id: props.createdTeamData.id,
+        teamData: { officerAddress: proxyAddress }
       })
-      .json()
-    if (updateTeamError.value) {
+    } catch {
       log.error('Error updating officer address')
       addErrorToast('Error updating officer address')
       loading.value = false
       return
     }
-    const { error: updateContractsError } = await useCustomFetch('contract/sync')
-      .put({ teamId: props.createdTeamData.id })
-      .json()
 
-    if (updateContractsError.value) {
+    try {
+      await syncContracts({ teamId: props.createdTeamData.id })
+    } catch {
       log.error('Error updating contracts')
       addErrorToast('Error updating contracts')
       loading.value = false
       return
     }
+
     dynamicLoading.value = {
       message: 'Officer contracts synced successfully',
       status: false

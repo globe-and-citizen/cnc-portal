@@ -36,14 +36,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import dayjs from 'dayjs'
 import type { Claim } from '@/types'
 
 import ButtonUI from '@/components/ButtonUI.vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 import { useToastStore } from '@/stores'
-import { useQueryClient } from '@tanstack/vue-query'
 
 const props = defineProps<{
   claim: Claim
@@ -54,54 +53,29 @@ const emit = defineEmits<{
 }>()
 
 const toastStore = useToastStore()
-const queryClient = useQueryClient()
 
 const formattedDate = computed(() => {
   return props.claim ? dayjs(props.claim.dayWorked).format('MMM DD, YYYY') : ''
 })
 
-const deleteClaimEndpoint = computed(() => `/claim/${props.claim.id}`)
-const errorMessage = ref<string>('')
+const { mutateAsync: deleteClaimRequest, isPending: isDeleting, error: deleteClaimError } = useDeleteClaimMutation()
 
-const {
-  execute: deleteClaimRequest,
-  isFetching: isDeleting,
-  error: deleteClaimError,
-  statusCode: deleteClaimStatusCode,
-  response: deleteClaimResponse
-} = useCustomFetch(deleteClaimEndpoint, {
-  immediate: false
+const errorMessage = computed(() => {
+  if (deleteClaimError.value) {
+    // Try to extract message from Axios error
+    const axiosError = deleteClaimError.value as { response?: { data?: { message?: string } } }
+    return axiosError.response?.data?.message || 'Failed to delete claim'
+  }
+  return ''
 })
-  .delete()
-  .json()
 
 const handleDelete = async () => {
-  errorMessage.value = ''
-  await deleteClaimRequest()
-
-  if (deleteClaimStatusCode.value === 200) {
+  try {
+    await deleteClaimRequest({ claimId: props.claim.id })
     toastStore.addSuccessToast('Claim deleted successfully')
-
-    // Invalidate and refetch using the correct query key
-    await queryClient.invalidateQueries({
-      queryKey: ['teamWeeklyClaims']
-    })
-
     emit('close')
+  } catch {
+    toastStore.addErrorToast(errorMessage.value || 'Failed to delete claim')
   }
 }
-
-watch(deleteClaimError, async () => {
-  if (!deleteClaimError.value || !deleteClaimResponse.value) return
-
-  try {
-    const errorData = await deleteClaimResponse.value.json()
-    errorMessage.value = errorData?.message || 'Failed to delete claim'
-  } catch (error) {
-    console.error('Failed to parse delete claim error response', error)
-    errorMessage.value = 'Failed to delete claim'
-  }
-
-  toastStore.addErrorToast(errorMessage.value)
-})
 </script>

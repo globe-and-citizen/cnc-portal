@@ -1,6 +1,5 @@
 export * from './useSiwe'
 export * from './useWalletChecks'
-export * from './useCustomFetch'
 export * from './useContractBalance'
 export * from './useElections'
 export * from './useBod'

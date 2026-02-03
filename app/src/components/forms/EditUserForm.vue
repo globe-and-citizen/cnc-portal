@@ -109,9 +109,9 @@ import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import { LIST_CURRENCIES } from '@/constant'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import ProfileImageUpload from '@/components/forms/ProfileImageUpload.vue'
-import { useCustomFetch } from '@/composables'
+import { useUpdateUserMutation } from '@/queries/user.queries'
 
 // Currency store
 const currencyStore = useCurrencyStore()
@@ -130,37 +130,38 @@ const hasChanges = computed(() => {
   return userCopy.value.name !== userStore.name || userCopy.value.imageUrl !== userStore.imageUrl
 })
 
-const userUpdateEndpoint = computed(() => `user/${userStore.address}`)
+const { mutateAsync: updateUser, isPending: userIsUpdating } = useUpdateUserMutation()
 
-const {
-  data: updatedUser,
-  isFetching: userIsUpdating,
-  // isFinished: userUpdateFinished,
-  error: userUpdateError,
-  execute: executeUpdateUser
-} = useCustomFetch(userUpdateEndpoint, { immediate: false }).put(userCopy).json()
+const submitForm = async () => {
+  $v.value.$touch()
+  if ($v.value.$invalid) return
 
-watch(userUpdateError, () => {
-  if (userUpdateError.value) {
-    toastStore.addErrorToast(userUpdateError.value || 'Failed to update user')
+  try {
+    const updatedUser = await updateUser({
+      address: userStore.address,
+      userData: {
+        name: userCopy.value.name,
+        imageUrl: userCopy.value.imageUrl
+      }
+    })
+
+    if (updatedUser) {
+      toastStore.addSuccessToast('User updated')
+      userStore.setUserData(
+        updatedUser.name ?? '',
+        (updatedUser.address ?? '') as `0x${string}`,
+        String(updatedUser.nonce ?? ''),
+        updatedUser.imageUrl ?? ''
+      )
+      setTimeout(() => {
+        toastStore.addSuccessToast('Reloading page to reflect changes')
+        window.location.reload()
+      }, 2000)
+    }
+  } catch {
+    toastStore.addErrorToast('Failed to update user')
   }
-})
-
-watch(updatedUser, () => {
-  if (updatedUser.value) {
-    toastStore.addSuccessToast('User updated')
-    userStore.setUserData(
-      updatedUser.value.name,
-      updatedUser.value.address,
-      updatedUser.value.nonce,
-      updatedUser.value.imageUrl
-    )
-  }
-  setTimeout(() => {
-    toastStore.addSuccessToast('Reloading page to reflect changes')
-    window.location.reload()
-  }, 2000)
-})
+}
 
 const rules = {
   user: {
@@ -183,11 +184,5 @@ const openExplorer = (address: string) => {
 const handleCurrencyChange = () => {
   currencyStore.setCurrency(selectedCurrency.value)
   toastStore.addSuccessToast('Currency updated')
-}
-
-const submitForm = () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
-  executeUpdateUser()
 }
 </script>

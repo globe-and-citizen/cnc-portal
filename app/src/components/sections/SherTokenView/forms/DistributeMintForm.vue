@@ -120,7 +120,7 @@
 
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useSearchUsersQuery } from '@/queries/user.queries'
 import { useToastStore } from '@/stores'
 import { log } from '@/utils'
 import { Icon as IconifyIcon } from '@iconify/vue'
@@ -172,18 +172,9 @@ const onSubmit = () => {
 
 const search = ref('')
 const showDropdown = ref<boolean[]>([false])
-const url = ref('user/search')
 
-const {
-  execute: executeSearchUser,
-  data: usersData,
-  error: errorSearchUser
-} = useCustomFetch(url, {
-  immediate: false,
-  refetch: true
-})
-  .get()
-  .json()
+// Use TanStack Query for user search
+const { data: usersData, error: errorSearchUser, refetch: refetchUsers } = useSearchUsersQuery(search, 100)
 
 watch(errorSearchUser, (value) => {
   if (value) {
@@ -195,12 +186,6 @@ const searchUsers = async (input: string) => {
   if (input !== search.value && input.length > 0) {
     search.value = input
   }
-
-  const params = new URLSearchParams()
-  params.append('name', search.value)
-  params.append('address', search.value)
-  url.value += '?' + params.toString()
-
-  await executeSearchUser()
+  await refetchUsers()
 }
 </script>

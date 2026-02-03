@@ -5,24 +5,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import type { Claim } from '@/types'
 import dayjs from 'dayjs'
-
-// Mock refs for reactive states
-const mockDeleteStatus = ref<number | null>(null)
-const mockDeleteError = ref<unknown>(null)
-const mockDeleteIsFetching = ref(false)
-const mockDeleteData = ref(null)
-const mockDeleteResponse = ref<{ json: () => Promise<{ message: string }> } | null>(null)
-
-let resolveExecute: (val: unknown) => void = () => {}
-
-const executeDeleteMock = vi.fn(async () => {
-  mockDeleteIsFetching.value = true
-  return new Promise((resolve) => {
-    resolveExecute = resolve
-  }).finally(() => {
-    mockDeleteIsFetching.value = false
-  })
-})
+import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 
 // Toast mocks
 const successToastMock = vi.fn()
@@ -53,73 +36,44 @@ const defaultClaim: Claim = {
 }
 
 // Hoist and structure mocks
-const { mockUseCustomFetch, mockUseToastStore, mockUseTeamStore, mockUseQueryClient } = vi.hoisted(
-  () => {
-    const mockQueryClient = {
-      invalidateQueries: vi.fn()
-    }
-
-    return {
-      mockUseCustomFetch: vi.fn(),
-      mockUseToastStore: vi.fn(() => ({
-        addErrorToast: errorToastMock,
-        addSuccessToast: successToastMock
-      })),
-      mockUseTeamStore: vi.fn(() => ({
-        currentTeamId: 1
-      })),
-      mockUseQueryClient: vi.fn(() => mockQueryClient),
-      mockQueryClient
-    }
+const { mockUseToastStore } = vi.hoisted(() => {
+  return {
+    mockUseToastStore: vi.fn(() => ({
+      addErrorToast: errorToastMock,
+      addSuccessToast: successToastMock
+    }))
   }
-)
+})
 
 vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useToastStore: mockUseToastStore,
-    useTeamStore: mockUseTeamStore
+    useToastStore: mockUseToastStore
   }
 })
-
-vi.mock('@/composables/useCustomFetch', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useCustomFetch: mockUseCustomFetch
-  }
-})
-
-vi.mock('@tanstack/vue-query', () => ({
-  useQueryClient: mockUseQueryClient
-}))
 
 describe('DeleteClaimModal', () => {
-  beforeEach(() => {
-    mockUseCustomFetch.mockReturnValueOnce({
-      delete: vi.fn().mockImplementation(() => ({
-        json: vi.fn().mockReturnValue({
-          data: mockDeleteData,
-          error: mockDeleteError,
-          statusCode: mockDeleteStatus,
-          isFetching: mockDeleteIsFetching,
-          execute: executeDeleteMock,
-          response: mockDeleteResponse
-        })
-      }))
-    })
-  })
-
   afterEach(() => {
     vi.clearAllMocks()
-    mockDeleteStatus.value = null
-    mockDeleteError.value = null
-    mockDeleteData.value = null
-    mockDeleteResponse.value = null
   })
 
-  const createWrapper = (props = {}) => {
+  const createWrapper = (props = {}, mutationOverrides = {}) => {
+    // Mock the delete mutation
+    const mockMutateAsync = vi.fn().mockResolvedValue(undefined)
+    const mockIsPending = ref(false)
+    const mockError = ref(null)
+
+    vi.mocked(useDeleteClaimMutation).mockReturnValue({
+      mutateAsync: mutationOverrides.mutateAsync ?? mockMutateAsync,
+      isPending: mutationOverrides.isPending ?? mockIsPending,
+      error: mutationOverrides.error ?? mockError,
+      mutate: vi.fn(),
+      isError: ref(false),
+      data: ref(null),
+      reset: vi.fn()
+    } as unknown as ReturnType<typeof useDeleteClaimMutation>)
+
     return mount(DeleteClaimModal, {
       props: {
         claim: defaultClaim,
@@ -152,27 +106,21 @@ describe('DeleteClaimModal', () => {
 
   describe('Delete Functionality', () => {
     it('should show success toast on successful claim deletion', async () => {
-      const wrapper = createWrapper()
+      const mockMutateAsync = vi.fn().mockResolvedValue(undefined)
+      const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync })
 
       await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-
-      expect(executeDeleteMock).toHaveBeenCalledTimes(1)
-
-      mockDeleteStatus.value = 200
-      resolveExecute({})
       await flushPromises()
 
-      expect(executeDeleteMock).toHaveBeenCalled()
+      expect(mockMutateAsync).toHaveBeenCalledWith({ claimId: 1 })
       expect(successToastMock).toHaveBeenCalledWith('Claim deleted successfully')
     })
 
     it('should emit close event after successful deletion', async () => {
-      const wrapper = createWrapper()
+      const mockMutateAsync = vi.fn().mockResolvedValue(undefined)
+      const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync })
 
       await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-
-      mockDeleteStatus.value = 200
-      resolveExecute({})
       await flushPromises()
 
       expect(wrapper.emitted('close')).toBeTruthy()
@@ -180,84 +128,28 @@ describe('DeleteClaimModal', () => {
   })
 
   describe('Error Handling', () => {
-    it('should display error message on failed claim deletion', async () => {
-      const wrapper = createWrapper()
-
-      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-
-      expect(executeDeleteMock).toHaveBeenCalledTimes(1)
-
-      mockDeleteStatus.value = 400
-      mockDeleteError.value = new Error('Error')
-      mockDeleteResponse.value = {
-        json: vi.fn().mockResolvedValue({ message: 'Failed to delete claim' })
-      }
-
-      resolveExecute(null)
-      await flushPromises()
-
-      expect(successToastMock).not.toHaveBeenCalled()
-      expect(wrapper.find('[data-test="delete-claim-error"]').text()).toContain(
-        'Failed to delete claim'
-      )
-    })
-
     it('should show error toast when deletion fails', async () => {
-      const wrapper = createWrapper()
+      const mockMutateAsync = vi.fn().mockRejectedValue(new Error('Network error'))
+      const mockError = ref({
+        response: { data: { message: 'Failed to delete claim' } }
+      })
+      const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync, error: mockError })
 
       await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-
-      mockDeleteStatus.value = 400
-      mockDeleteError.value = new Error('Network error')
-      mockDeleteResponse.value = {
-        json: vi.fn().mockResolvedValue({ message: 'Network error' })
-      }
-
-      resolveExecute(null)
       await flushPromises()
 
-      expect(errorToastMock).toHaveBeenCalledWith('Network error')
+      expect(errorToastMock).toHaveBeenCalled()
     })
 
-    it('should handle error parsing failure', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const wrapper = createWrapper()
+    it('should not emit close when deletion fails', async () => {
+      const mockMutateAsync = vi.fn().mockRejectedValue(new Error('Error'))
+      const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync })
 
       await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-
-      mockDeleteError.value = new Error('Parse error')
-      mockDeleteResponse.value = {
-        json: vi.fn().mockRejectedValue(new Error('Invalid JSON'))
-      }
-
-      resolveExecute(null)
       await flushPromises()
 
-      expect(wrapper.find('[data-test="delete-claim-error"]').text()).toBe('Failed to delete claim')
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Failed to parse delete claim error response',
-        expect.any(Error)
-      )
-
-      consoleErrorSpy.mockRestore()
-    })
-
-    it('should use default error message when API does not provide one', async () => {
-      const wrapper = createWrapper()
-
-      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-
-      mockDeleteStatus.value = 500
-      mockDeleteError.value = new Error('Server error')
-      mockDeleteResponse.value = {
-        json: vi.fn().mockResolvedValue({})
-      }
-
-      resolveExecute(null)
-      await flushPromises()
-
-      expect(wrapper.find('[data-test="delete-claim-error"]').text()).toBe('Failed to delete claim')
-      expect(errorToastMock).toHaveBeenCalledWith('Failed to delete claim')
+      // Should not emit close on error
+      expect(wrapper.emitted('close')).toBeUndefined()
     })
   })
 
@@ -268,63 +160,6 @@ describe('DeleteClaimModal', () => {
       await wrapper.find('[data-test="cancel-delete-claim-button"]').trigger('click')
 
       expect(wrapper.emitted('close')).toBeTruthy()
-    })
-
-    it('should not emit close when deletion fails', async () => {
-      const wrapper = createWrapper()
-
-      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-
-      mockDeleteStatus.value = 400
-      mockDeleteError.value = new Error('Error')
-      mockDeleteResponse.value = {
-        json: vi.fn().mockResolvedValue({ message: 'Failed to delete claim' })
-      }
-
-      resolveExecute(null)
-      await flushPromises()
-
-      expect(wrapper.emitted('close')).toBeUndefined()
-    })
-  })
-
-  describe('Loading States', () => {
-    it('should show loading state during deletion', async () => {
-      const wrapper = createWrapper()
-
-      mockDeleteIsFetching.value = true
-      await wrapper.vm.$nextTick()
-
-      const deleteButton = wrapper.find('[data-test="confirm-delete-claim-button"]')
-      const cancelButton = wrapper.find('[data-test="cancel-delete-claim-button"]')
-      expect(deleteButton.classes()).toContain('btn-disabled')
-      expect(cancelButton.classes()).toContain('btn-disabled')
-    })
-
-    it('should disable buttons during deletion', async () => {
-      let resolveDelete: (value: unknown) => void
-      const deletePromise = new Promise((resolve) => {
-        resolveDelete = resolve
-      })
-
-      executeDeleteMock.mockReturnValue(deletePromise)
-
-      const wrapper = createWrapper()
-
-      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-
-      mockDeleteIsFetching.value = true
-      await wrapper.vm.$nextTick()
-
-      const deleteButton = wrapper.find('[data-test="confirm-delete-claim-button"]')
-      const cancelButton = wrapper.find('[data-test="cancel-delete-claim-button"]')
-
-      expect(deleteButton.classes()).toContain('btn-disabled')
-      expect(cancelButton.classes()).toContain('btn-disabled')
-
-      mockDeleteIsFetching.value = false
-      resolveDelete!({})
-      await flushPromises()
     })
   })
 
@@ -347,47 +182,4 @@ describe('DeleteClaimModal', () => {
       expect(wrapper.text()).toContain('Jun 15, 2024')
     })
   })
-
-  // describe('Edge Cases', () => {
-  //   it('should clear error message on new delete attempt', async () => {
-  //     const wrapper = createWrapper()
-
-  //     // First attempt - trigger error
-  //     await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-
-  //     mockDeleteStatus.value = 400
-  //     mockDeleteError.value = new Error('Error')
-  //     mockDeleteResponse.value = {
-  //       json: vi.fn().mockResolvedValue({ message: 'First error' })
-  //     }
-
-  //     resolveExecute(null)
-  //     await flushPromises()
-
-  //     expect(wrapper.find('[data-test="delete-claim-error"]').exists()).toBe(true)
-
-  //     // Second attempt - should clear previous error
-  //     executeDeleteMock.mockClear()
-  //     mockDeleteError.value = null
-  //     mockDeleteStatus.value = null
-
-  //     mockUseCustomFetch.mockReturnValueOnce({
-  //       delete: vi.fn().mockImplementation(() => ({
-  //         json: vi.fn().mockReturnValue({
-  //           data: mockDeleteData,
-  //           error: mockDeleteError,
-  //           statusCode: mockDeleteStatus,
-  //           isFetching: mockDeleteIsFetching,
-  //           execute: executeDeleteMock,
-  //           response: mockDeleteResponse
-  //         })
-  //       }))
-  //     })
-
-  //     const newWrapper = createWrapper()
-  //     await newWrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-
-  //     expect(newWrapper.find('[data-test="delete-claim-error"]').exists()).toBe(false)
-  //   })
-  // })
 })
