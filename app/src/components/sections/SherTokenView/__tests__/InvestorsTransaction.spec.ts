@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsTransactions from '@/components/sections/SherTokenView/InvestorsTransactions.vue'
-import { mockToastStore } from '@/tests/mocks/store.mock'
 import { ref } from 'vue'
 
 // Mock Apollo Query Result

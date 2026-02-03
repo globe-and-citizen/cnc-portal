@@ -22,31 +22,6 @@ vi.mock('vue-router', async (importOriginal) => {
     useRoute: () => mockRoute
   }
 })
-// --- Mock stores ---
-const mockUserStore = {
-  imageUrl: ref('https://example.com/avatar.jpg'),
-  name: ref('John Doe'),
-  address: ref('0x0987654321098765432109876543210987654321')
-}
-
-const mockTeamStore = {
-  currentTeam: {
-    id: 'team-123',
-    members: [
-      {
-        address: '0x1234567890123456789012345678901234567890',
-        name: 'Alice',
-        imageUrl: 'https://example.com/alice.png'
-      },
-      {
-        address: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-        name: 'Bob',
-        imageUrl: 'https://example.com/bob.png'
-      }
-    ]
-  },
-  currentTeamId: 'team-123'
-}
 
 describe('ClaimHistory.vue', () => {
   beforeEach(() => {

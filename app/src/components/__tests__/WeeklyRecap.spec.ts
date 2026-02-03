@@ -13,7 +13,6 @@ type TestWeeklyClaimLocal = {
   member: { name: string }
 }
 
-
 describe('WeeklyRecap', () => {
   beforeEach(() => {
     vi.clearAllMocks()
