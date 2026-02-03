@@ -13,8 +13,8 @@ vi.mock('@/constant', () => ({
 const USDC_ADDRESS = '0xA0b86a33E6441bB7bE6d0B9EB5Bbf26b2d60C1cd'
 
 // Hoisted variables for mocks
-const { mockReadContract, mockWriteContract, mockUseDebounceFn, mockToastStore } =
-  vi.hoisted(() => ({
+const { mockReadContract, mockWriteContract, mockUseDebounceFn, mockToastStore } = vi.hoisted(
+  () => ({
     mockReadContract: vi.fn(),
     mockWriteContract: vi.fn(),
     mockUseDebounceFn: vi.fn((fn) => fn),
@@ -29,7 +29,8 @@ const { mockReadContract, mockWriteContract, mockUseDebounceFn, mockToastStore }
       addErrorToast: vi.fn(),
       addSuccessToast: vi.fn()
     }
-  }))
+  })
+)
 
 // Mock ABI import
 vi.mock('@/artifacts/abi/CashRemunerationEIP712.json', () => ({

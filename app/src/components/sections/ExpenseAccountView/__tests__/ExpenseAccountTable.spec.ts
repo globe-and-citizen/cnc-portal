@@ -9,7 +9,6 @@ import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import { useExpensesQuery } from '@/queries'
 
-
 const START_DATE = new Date().getTime() / 1000 + 60 * 60
 const END_DATE = new Date().getTime() / 1000 + 2 * 60 * 60
 
