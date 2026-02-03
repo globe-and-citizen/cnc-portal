@@ -74,7 +74,7 @@ export interface TransferModel {
   address: {
     name: string
     address: string
-    type?: 'member' | 'contract'
+    type?: 'member' | 'trader-safe' | 'contract'
   }
   token: TokenOption
   amount: string
@@ -145,7 +145,11 @@ const submitForm = () => {
   emit('transfer', model.value)
 }
 
-const handleSelectItem = (item: { name: string; address: string; type: 'member' | 'contract' }) => {
+const handleSelectItem = (item: {
+  name: string
+  address: string
+  type: 'member' | 'trader-safe' | 'contract'
+}) => {
   model.value.address = item
 }
 
