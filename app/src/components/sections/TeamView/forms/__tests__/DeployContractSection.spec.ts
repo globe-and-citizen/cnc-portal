@@ -354,7 +354,9 @@ describe('DeployContractSection', () => {
       const wrapper = createWrapper()
       await wrapper.vm.deploySafeForTeam()
 
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to deploy Safe wallet. Please try again.')
+      expect(mockAddErrorToast).toHaveBeenCalledWith(
+        'Failed to deploy Safe wallet. Please try again.'
+      )
     })
 
     it('handles Safe deployment failure', async () => {

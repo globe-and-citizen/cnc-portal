@@ -85,7 +85,8 @@ const showCreateElectionModal = ref({
 })
 const isLoadingCreateElection = ref(false)
 
-const { mutateAsync: addElectionNotifications, error: electionNotificationError } = useCreateElectionNotificationsMutation()
+const { mutateAsync: addElectionNotifications, error: electionNotificationError } =
+  useCreateElectionNotificationsMutation()
 
 const createElection = async (electionData: OldProposal) => {
   try {

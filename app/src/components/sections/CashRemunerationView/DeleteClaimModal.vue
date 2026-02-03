@@ -58,7 +58,11 @@ const formattedDate = computed(() => {
   return props.claim ? dayjs(props.claim.dayWorked).format('MMM DD, YYYY') : ''
 })
 
-const { mutateAsync: deleteClaimRequest, isPending: isDeleting, error: deleteClaimError } = useDeleteClaimMutation()
+const {
+  mutateAsync: deleteClaimRequest,
+  isPending: isDeleting,
+  error: deleteClaimError
+} = useDeleteClaimMutation()
 
 const errorMessage = computed(() => {
   if (deleteClaimError.value) {
