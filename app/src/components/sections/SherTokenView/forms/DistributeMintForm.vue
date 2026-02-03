@@ -174,7 +174,7 @@ const search = ref('')
 const showDropdown = ref<boolean[]>([false])
 
 // Use TanStack Query for user search
-const { data: usersData, error: errorSearchUser, refetch: refetchUsers } = useSearchUsersQuery(search, 100)
+const { data: usersData, error: errorSearchUser } = useSearchUsersQuery(search, 100)
 
 watch(errorSearchUser, (value) => {
   if (value) {
@@ -182,10 +182,11 @@ watch(errorSearchUser, (value) => {
     addErrorToast('Failed to search users')
   }
 })
+
 const searchUsers = async (input: string) => {
   if (input !== search.value && input.length > 0) {
     search.value = input
   }
-  await refetchUsers()
+  // TanStack Query automatically refetches when the `search` ref changes
 }
 </script>

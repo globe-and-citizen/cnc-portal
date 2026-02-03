@@ -13,11 +13,13 @@ export function useSubmitRestriction() {
   const { data, isLoading, error, refetch } = useSubmitRestrictionQuery(teamId)
 
   /**
-   * Check if submit restriction is active for a specific team
-   * @param specificTeamId - Team ID (can be string or number)
+   * Check if submit restriction is active for the current team.
+   * Note: The specificTeamId parameter is deprecated. The query always uses
+   * the current team from the store. This parameter is kept for backward compatibility.
    */
-  const checkRestriction = async (specificTeamId?: string | number): Promise<boolean> => {
-    const targetTeamId = specificTeamId ?? teamStore.currentTeam?.id
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const checkRestriction = async (_specificTeamId?: string | number): Promise<boolean> => {
+    const targetTeamId = teamStore.currentTeam?.id
 
     if (!targetTeamId) {
       return true // Default to restricted if no team

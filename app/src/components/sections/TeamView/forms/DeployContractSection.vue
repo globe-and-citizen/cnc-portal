@@ -365,9 +365,11 @@ useWatchContractEvent({
       return
     }
 
+    const teamId = props.createdTeamData.id
+
     try {
       await updateTeam({
-        id: props.createdTeamData.id,
+        id: teamId,
         teamData: { officerAddress: proxyAddress }
       })
     } catch {
@@ -378,7 +380,7 @@ useWatchContractEvent({
     }
 
     try {
-      await syncContracts({ teamId: props.createdTeamData.id })
+      await syncContracts({ teamId })
     } catch {
       log.error('Error updating contracts')
       addErrorToast('Error updating contracts')
