@@ -29,10 +29,6 @@ const { useWriteContract, simulateContractMock, waitForTransactionReceiptMock } 
   })
 )
 
-vi.mock('@wagmi/vue', () => ({
-  useWriteContract: useWriteContract
-}))
-
 vi.mock('@wagmi/core', () => ({
   simulateContract: simulateContractMock,
   waitForTransactionReceipt: waitForTransactionReceiptMock

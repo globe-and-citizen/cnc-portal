@@ -4,16 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import VestingView from '../VestingView.vue'
 //import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { ref } from 'vue'
-import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
-import { mainnet } from 'viem/chains'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
-
-const wagmiConfig = createConfig({
-  chains: [mainnet],
-  transports: {
-    [mainnet.id]: http()
-  }
-})
 
 // Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
@@ -112,7 +103,7 @@ describe('VestingView.vue', () => {
   const mountComponent = () => {
     return mount(VestingView, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn }), [WagmiPlugin, { config: wagmiConfig }]]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
   }

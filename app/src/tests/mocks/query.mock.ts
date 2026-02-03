@@ -217,14 +217,21 @@ export const createMockQueryResponse = <T>(
 /**
  * Generic Mutation Hook Response Factory
  * Creates a standard TanStack Query mutation response object
+ * @param data - The data to be returned when mutation succeeds
+ * @param isPending - Whether the mutation is in progress
+ * @param error - Error object if mutation failed
  */
-export const createMockMutationResponse = (): Record<string, unknown> => ({
+export const createMockMutationResponse = <T = unknown>(
+  data: T | null = null,
+  isPending: boolean = false,
+  error: Error | null = null
+): Record<string, unknown> => ({
   mutate: vi.fn(),
-  mutateAsync: vi.fn((data: unknown) => Promise.resolve(data)),
-  isPending: ref(false),
-  isError: ref(false),
-  error: ref(null),
-  data: ref(null),
+  mutateAsync: vi.fn(() => Promise.resolve(data)),
+  isPending: ref(isPending),
+  isError: ref(!!error),
+  error: ref(error),
+  data: ref(data),
   reset: vi.fn()
 })
 

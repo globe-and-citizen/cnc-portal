@@ -12,18 +12,6 @@ import CurrentBoDElection404 from '../CurrentBoDElection404.vue'
 import { simulateContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
 
 // Mock dependencies
-vi.mock('@/stores', () => ({
-  useTeamStore: () => ({
-    currentTeamId: 1,
-    currentTeam: {
-      members: [{ address: '0x123' }, { address: '0x456' }]
-    }
-  }),
-  useToastStore: () => ({
-    addSuccessToast: vi.fn(),
-    addErrorToast: vi.fn()
-  })
-}))
 
 const { useBoDElections: mockUseBoDElectionsImpl, useCustomFetch: mockUseCustomFetchImpl } =
   vi.hoisted(() => ({
@@ -228,52 +216,6 @@ describe('ElectionComponent', () => {
       wrapper = createWrapper()
       expect(wrapper.findComponent(ModalComponent).exists()).toBe(false)
     })
-
-    // it('mounts ModalComponent when showCreateElectionModal.mount is true', async () => {
-    //   wrapper = createWrapper()
-
-    //   // Trigger modal opening (simulating ElectionActions event)
-    //   await wrapper.setData({
-    //     showCreateElectionModal: { mount: true, show: true }
-    //   })
-
-    //   expect(wrapper.findComponent(ModalComponent).exists()).toBe(true)
-    //   expect(wrapper.findComponent(CreateElectionForm).exists()).toBe(true)
-    // })
-
-    // it('closes modal when CreateElectionForm emits close-modal', async () => {
-    //   wrapper = createWrapper()
-
-    //   // Open modal
-    //   await wrapper.setData({
-    //     showCreateElectionModal: { mount: true, show: true }
-    //   })
-
-    //   // Close via form event
-    //   await wrapper.findComponent(CreateElectionForm).vm.$emit('close-modal')
-
-    //   expect(wrapper.vm.showCreateElectionModal).toEqual({
-    //     mount: false,
-    //     show: false
-    //   })
-    // })
-
-    // it('resets modal when ModalComponent emits reset', async () => {
-    //   wrapper = createWrapper()
-
-    //   // Open modal
-    //   await wrapper.setData({
-    //     showCreateElectionModal: { mount: true, show: true }
-    //   })
-
-    //   // Close via modal event
-    //   await wrapper.findComponent(ModalComponent).vm.$emit('reset')
-
-    //   expect(wrapper.vm.showCreateElectionModal).toEqual({
-    //     mount: false,
-    //     show: false
-    //   })
-    // })
   })
 
   describe('createElection function', () => {
@@ -291,43 +233,6 @@ describe('ElectionComponent', () => {
       vi.mocked(writeContract).mockResolvedValue('0xTXNHASH')
       vi.mocked(waitForTransactionReceipt).mockResolvedValue({})
     })
-
-    // it('successfully creates an election', async () => {
-    //   wrapper = createWrapper()
-
-    //   await wrapper.vm.createElection(mockElectionData)
-
-    //   expect(simulateContract).toHaveBeenCalledWith(config, {
-    //     address: '0x789',
-    //     abi: expect.any(Array),
-    //     functionName: 'createElection',
-    //     args: expect.any(Array)
-    //   })
-
-    //   expect(writeContract).toHaveBeenCalled()
-    //   expect(waitForTransactionReceipt).toHaveBeenCalled()
-    //   expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Election created successfully!')
-
-    //   // Modal should be closed
-    //   expect(wrapper.vm.showCreateElectionModal).toEqual({
-    //     mount: false,
-    //     show: false
-    //   })
-    // })
-
-    // it('handles missing elections address', async () => {
-    //   mockUseBoDElections.mockReturnValue({
-    //     electionsAddress: { value: null },
-    //     formattedElection: { value: null }
-    //   })
-
-    //   wrapper = createWrapper()
-
-    //   await wrapper.vm.createElection(mockElectionData)
-
-    //   expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Elections contract address not found')
-    //   expect(simulateContract).not.toHaveBeenCalled()
-    // })
 
     it('handles past start date by adjusting to future', async () => {
       wrapper = createWrapper()
@@ -349,79 +254,5 @@ describe('ElectionComponent', () => {
       expect(startTime).toBeGreaterThan(Math.floor(Date.now() / 1000))
       expect(endTime).toBeGreaterThan(startTime)
     })
-
-    // it('handles contract simulation error', async () => {
-    //   const mockError = new Error('Simulation failed')
-    //   vi.mocked(simulateContract).mockRejectedValue(mockError)
-
-    //   wrapper = createWrapper()
-
-    //   await wrapper.vm.createElection(mockElectionData)
-
-    //   expect(mockToastStore.addErrorToast).toHaveBeenCalled()
-    //   expect(writeContract).not.toHaveBeenCalled()
-    // })
-
-    // it('handles write contract error', async () => {
-    //   const mockError = new Error('Write failed')
-    //   vi.mocked(writeContract).mockRejectedValue(mockError)
-
-    //   wrapper = createWrapper()
-
-    //   await wrapper.vm.createElection(mockElectionData)
-
-    //   expect(mockToastStore.addErrorToast).toHaveBeenCalled()
-    //   expect(waitForTransactionReceipt).not.toHaveBeenCalled()
-    // })
-
-    // it('handles notification error after successful creation', async () => {
-    //   const mockError = new Error('Notification failed')
-    //   const mockExecute = vi.fn().mockRejectedValue(mockError)
-
-    //   mockUseCustomFetch.mockReturnValue({
-    //     error: { value: null },
-    //     execute: mockExecute
-    //   })
-
-    //   wrapper = createWrapper()
-
-    //   await wrapper.vm.createElection(mockElectionData)
-
-    //   expect(mockToastStore.addSuccessToast).toHaveBeenCalled()
-    //   expect(mockExecute).toHaveBeenCalled()
-    // })
   })
-
-  // describe('Watchers', () => {
-  //   it('handles election notification error', async () => {
-  //     const mockError = { message: 'Notification failed' }
-  //     const mockErrorRef = { value: mockError }
-  //     const mockExecute = vi.fn()
-
-  //     mockUseCustomFetch.mockReturnValue({
-  //       error: mockErrorRef,
-  //       execute: mockExecute
-  //     })
-
-  //     wrapper = createWrapper()
-
-  //     // Trigger watcher by updating the error ref
-  //     mockErrorRef.value = mockError
-  //     await wrapper.vm.$nextTick()
-
-  //     expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to send election notifications')
-  //   })
-  // })
-
-  // describe('Props', () => {
-  //   it('accepts and uses electionId prop', () => {
-  //     wrapper = createWrapper({ electionId: 999n })
-  //     expect(wrapper.vm.currentElectionId).toBe(999n)
-  //   })
-
-  //   it('defaults isDetails to false', () => {
-  //     wrapper = createWrapper()
-  //     expect(wrapper.props('isDetails')).toBe(false)
-  //   })
-  // })
 })

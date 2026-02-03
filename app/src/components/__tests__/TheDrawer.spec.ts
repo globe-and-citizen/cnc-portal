@@ -3,7 +3,6 @@ import TheDrawer from '@/components/TheDrawer.vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
 import { useTeamStore } from '@/stores'
 // import { mockTeamStore } from '@/tests/mocks/store.mock'
 
@@ -43,27 +42,6 @@ const router = createRouter({
       component: { template: '<div>Transactions</div>' }
     }
   ]
-})
-
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useToastStore: vi.fn(() => ({
-      addErrorToast: vi.fn(),
-      addSuccessToast: vi.fn()
-    })),
-    useAccount: vi.fn(() => {
-      return {
-        chainId: ref(11155111)
-      }
-    }),
-    useSwitchChain: vi.fn(() => {
-      return {
-        switchChain: vi.fn()
-      }
-    })
-  }
 })
 
 describe('TheDrawer', () => {

@@ -1,20 +1,3 @@
-// import { ref } from 'vue'
-// import { mount, flushPromises } from '@vue/test-utils'
-// import { describe, it, expect, beforeEach, vi } from 'vitest'
-// import TeamContractAdmins from '@/components/sections/ContractManagementView/TeamContractAdmins.vue'
-// import { createPinia, setActivePinia } from 'pinia'
-// import { type TeamContract } from '@/types/teamContract'
-// import { useToastStore } from '@/stores/__mocks__/useToastStore'
-// import { createConfig, http } from '@wagmi/core'
-// import { mainnet } from '@wagmi/core/chains'
-// import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
-
-// createConfig({
-//   chains: [mainnet],
-//   transports: {
-//     [mainnet.id]: http()
-//   }
-// })
 import { describe, expect, it } from 'vitest'
 
 describe('placeholder', () => {

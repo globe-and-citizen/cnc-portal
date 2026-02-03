@@ -68,29 +68,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-vi.mock('@/stores', () => ({
-  useToastStore: vi.fn(() => mockToastStore),
-  useCurrencyStore: vi.fn(() => ({
-    getTokenInfo: vi.fn(() => ({
-      prices: [{ code: 'USD', price: 1, id: 'usd', symbol: '$' }]
-    }))
-  })),
-  useTeamStore: vi.fn(() => ({
-    getContractAddressByType: vi.fn(() => '0xcontractaddress'),
-    currentTeam: {
-      id: '1',
-      name: 'Team 1',
-      officerAddress: '0xofficeraddress'
-    },
-    currentTeamMeta: {
-      isPending: false
-    }
-  })),
-  useUserDataStore: vi.fn(() => ({
-    address: '0xOwner'
-  }))
-}))
-
 interface ComponentData {
   distributeMintModal: boolean
   payDividendsModal: { mount: boolean; show: boolean }
