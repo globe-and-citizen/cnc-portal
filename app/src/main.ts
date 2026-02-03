@@ -34,7 +34,8 @@ export function setupApp() {
 
   app.use(router)
   app.use(WagmiPlugin, { config })
-  app.use(VueQueryPlugin, { queryClient })
+  app.use(VueQueryPlugin, { queryClient, 
+  enableDevtoolsV6Plugin: true, })
   app.provide(DefaultApolloClient, apolloClient)
 
   app.component('VueDatePicker', VueDatePicker)
