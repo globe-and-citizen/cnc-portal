@@ -53,6 +53,7 @@
       <TradingModal
         v-if="tradingModal.mount"
         :market-url="marketUrl"
+        :trader-balance="traderBalance"
         @close="handleModalClose"
         @place-order="handleOrderPlaced"
       />
@@ -83,10 +84,11 @@ import { Toaster, toast } from 'vue-sonner'
 import { log, parseError } from '@/utils'
 import 'vue-sonner/style.css'
 import { useUserPositions, useRedeemPosition, useSafeDeployment } from '@/composables/trading'
-import { parseUnits } from 'viem'
+import { formatUnits, parseUnits } from 'viem'
 import { useTeamSafes } from '@/composables/safe'
 import { useVuelidate } from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
+import { useSafeBalances } from '@/queries/polymarket.queries'
 
 // Props
 interface Props {
@@ -122,6 +124,15 @@ const { data: trades, isLoading: isLoadingTrades, refetch } = useUserPositions(s
 const cardTitle = computed(
   () => `${isSelectedSafeTrader.value ? 'Your' : `${selectedSafe.value?.userName}'s`} Trades`
 )
+const { data: balances } = useSafeBalances(derivedSafeAddressFromEoa)
+
+const traderBalance = computed(() => {
+  if (balances.value?.length && balances.value?.length > 0) {
+    const balance = balances.value.find((b) => b.token?.symbol === 'USDC.E')
+    return balance ? Number(formatUnits(BigInt(balance.balance), balance.token?.decimals ?? 6)) : 0
+  } else return 0
+})
+
 const rules = {
   marketUrl: {
     required,
