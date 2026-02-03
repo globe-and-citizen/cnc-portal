@@ -146,7 +146,7 @@
 
 import { ref, useTemplateRef, computed } from 'vue'
 import { useTeamStore } from '@/stores'
-import { useDeployedTraderSafes } from '@/composables/useDeployedTraderSafes'
+import { getTraderSafes } from '@/utils/traderSafes'
 import { watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
 import TraderSafeComponent from '@/components/TraderSafeComponent.vue'
@@ -163,7 +163,10 @@ const input = defineModel({
 })
 
 const teamStore = useTeamStore()
-const { deployedTraderSafes } = useDeployedTraderSafes()
+const deployedTraderSafes = computed(() => {
+  if (!teamStore.currentTeamMeta?.data) return []
+  return getTraderSafes(teamStore.currentTeamMeta.data)
+})
 
 // computed for showDropdown
 const showDropdown = computed(() => {
