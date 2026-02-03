@@ -1,15 +1,9 @@
 <template>
-  <!-- <div class="modal modal-open">
-    <div class="modal-box max-w-lg p-0 overflow-hidden bg-base-100 border border-base-300"> -->
-  <!-- Header -->
   <div class="p-6 pb-0">
     <div class="flex items-start justify-between">
       <h3 class="text-xl font-semibold pr-8">
         {{ market?.question }}
       </h3>
-      <!-- <button @click="onClose" class="btn btn-ghost btn-sm btn-circle absolute right-4 top-4">
-            <icon icon="heroicons:x-mark" class="w-5 h-5" />
-          </button> -->
     </div>
     <p class="text-sm text-gray-500 mt-2 line-clamp-2">
       {{ market?.description }}
@@ -84,6 +78,11 @@
         min="0"
         step="1"
       />
+      <div class="text-error text-xs mt-1">
+        <div v-for="error in v$.shares.$errors" :key="error.$uid">
+          {{ error.$message }}
+        </div>
+      </div>
     </div>
 
     <!-- Limit Price Input - Only shown for Limit orders -->
@@ -97,6 +96,11 @@
         step="0.01"
         v-model="limitPrice"
       />
+      <div class="text-error text-xs mt-1">
+        <div v-for="error in v$.limitPrice.$errors" :key="error.$uid">
+          {{ error.$message }}
+        </div>
+      </div>
     </div>
 
     <!-- Order Summary -->
@@ -141,9 +145,6 @@
       <icon icon="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
     </a>
   </div>
-  <!-- </div>
-    <div class="modal-backdrop" @click="onClose"></div>
-  </div> -->
 </template>
 
 <script setup lang="ts">
@@ -157,12 +158,12 @@ import {
 } from '@/composables/trading/'
 import type { PolymarketMarket } from '@/types'
 import { useMarketData } from '@/queries/polymarket.queries'
+import { toast } from 'vue-sonner'
+import { log } from '@/utils'
+import { useVuelidate } from '@vuelidate/core'
+import { required, helpers } from '@vuelidate/validators'
 
-interface Props {
-  marketUrl: string
-}
-
-const props = defineProps<Props>()
+const props = defineProps<{ marketUrl: string }>()
 const emit = defineEmits(['close', 'place-order'])
 
 const parsePolymarketUrl = (url: string) => {
@@ -173,7 +174,6 @@ const parsePolymarketUrl = (url: string) => {
 
 // State
 const market = ref<PolymarketMarket | null>(null)
-// const isLoading = ref(true)
 const selectedOutcome = ref(0)
 const orderType = ref<'market' | 'limit'>('market')
 const shares = ref('')
@@ -189,8 +189,55 @@ const endpoint = computed(() => {
 const { data: marketData } = useMarketData(endpoint)
 const { derivedSafeAddressFromEoa } = useSafeDeployment()
 const { clobClient } = useClobClient()
-const { submitOrder } = useClobOrder(clobClient, derivedSafeAddressFromEoa.value || undefined)
+const { submitOrder, error: clobOrderError } = useClobOrder(
+  clobClient,
+  derivedSafeAddressFromEoa.value || undefined
+)
 const { initializeTradingSession } = useTradingSession()
+
+// Helper to calculate required shares for a target dollar amount
+const getMinSharesForTarget = (targetAmount: number) => {
+  if (orderType.value === 'market') {
+    return price.value > 0 ? (targetAmount / price.value).toFixed(2) : '0'
+  } else {
+    const p = parseFloat(limitPrice.value) || 0
+    return p > 0 ? (targetAmount / p).toFixed(2) : '0'
+  }
+}
+
+const rules = computed(() => ({
+  shares: {
+    required,
+    nonZero: helpers.withMessage(
+      'Shares must be greater than 0',
+      (value: string) => parseFloat(value) > 0
+    ),
+    // Dynamic Market Validation
+    marketMinimum: helpers.withMessage(
+      () => `Total cost must be $1.00 (min. ${getMinSharesForTarget(1)} shares)`,
+      (value: string) => {
+        if (orderType.value !== 'market') return true
+        return (parseFloat(value) || 0) * price.value >= 1.0
+      }
+    ),
+    // Dynamic Limit Validation
+    limitMinimum: helpers.withMessage(
+      () => `Total cost must be $5.00 (min. ${getMinSharesForTarget(5)} shares)`,
+      (value: string) => {
+        if (orderType.value !== 'limit') return true
+        const p = parseFloat(limitPrice.value) || 0
+        return (parseFloat(value) || 0) * p >= 5.0
+      }
+    )
+  },
+  limitPrice: {
+    requiredIfLimit: helpers.withMessage('Limit price is required', (value: string) =>
+      orderType.value === 'limit' ? parseFloat(value) > 0 : true
+    )
+  }
+}))
+
+const v$ = useVuelidate(rules, { shares, limitPrice })
 
 // Computed mappings for real Gamma API response
 const outcomes = computed(() => {
@@ -215,10 +262,6 @@ const outcome = computed(() => outcomes.value[selectedOutcome.value])
 const price = computed(() => outcomes.value[selectedOutcome.value]?.buyPrice || 0)
 const total = computed(() => (parseFloat(shares.value) || 0) * price.value)
 
-const onClose = () => {
-  emit('close')
-}
-
 const setSelectedOutcome = (index: number | string) => {
   selectedOutcome.value = Number(index)
 }
@@ -228,6 +271,11 @@ const setOrderType = (type: 'market' | 'limit') => {
 }
 
 const handlePlaceOrder = async () => {
+  const isFormValid = await v$.value.$validate()
+  if (!isFormValid) {
+    toast.error('Please fix the validation errors')
+    return
+  }
   if (!shares.value || parseFloat(shares.value) <= 0) return
 
   isPlacingOrder.value = true
@@ -235,7 +283,7 @@ const handlePlaceOrder = async () => {
   try {
     await initializeTradingSession()
 
-    await submitOrder({
+    const result = await submitOrder({
       tokenId: outcome.value?.tokenId || '',
       side: 'BUY',
       size: parseFloat(shares.value),
@@ -244,8 +292,7 @@ const handlePlaceOrder = async () => {
       price: orderType.value === 'limit' ? parseFloat(limitPrice.value) : undefined
     })
 
-    // Close modal after successful order
-    onClose()
+    emit('place-order', result)
   } catch (error) {
     console.error('Failed to place order:', error)
     // You could add error toast here
@@ -253,6 +300,13 @@ const handlePlaceOrder = async () => {
     isPlacingOrder.value = false
   }
 }
+
+watch(clobOrderError, (newError) => {
+  if (newError) {
+    toast.error(newError.message || 'Failed to place order')
+    log.error('CLOB Order Error:', newError)
+  }
+})
 
 watch(
   marketData,

@@ -16,7 +16,9 @@ export const useNotificationsQuery = () => {
     queryFn: async () => {
       const { data } = await apiClient.get<Notification[]>('notification')
       return data
-    }
+    },
+    staleTime: 300_000,
+    refetchInterval: 300_000
   })
 }
 

@@ -35,7 +35,8 @@ import {
   USDC_E_ADDRESS,
   validateAddresses,
   // VOTING_BEACON_ADDRESS,
-  ELECTIONS_BEACON_ADDRESS
+  ELECTIONS_BEACON_ADDRESS,
+  USDC_E_ADDRESS
   // OFFICER_ADDRESS
 } from '@/constant'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
@@ -254,7 +255,7 @@ const deployOfficerContract = async () => {
       initializerData: encodeFunctionData({
         abi: CASH_REMUNERATION_EIP712_ABI,
         functionName: 'initialize',
-        args: [/*currentUserAddress*/ zeroAddress, [USDC_ADDRESS]]
+        args: [/*currentUserAddress*/ zeroAddress, [USDC_ADDRESS, USDC_E_ADDRESS]]
       })
     })
 

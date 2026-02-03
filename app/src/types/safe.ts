@@ -190,6 +190,7 @@ export interface SafeWallet {
   address: string
   name: string
   balance: string
+  userName?: string
 }
 
 //new types

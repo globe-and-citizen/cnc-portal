@@ -192,6 +192,7 @@ const handleTransfer = async (data: {
 }) => {
   if (!props.bankAddress) return
 
+  const tokenAddress = data.token.symbol === 'USDCe' ? USDC_E_ADDRESS : USDC_ADDRESS
   try {
     const isNativeToken = data.token.symbol === NETWORK.currencySymbol
     const isUsdce = data.token.symbol === 'USDCe'
@@ -200,28 +201,17 @@ const handleTransfer = async (data: {
 
     if (isBodAction.value) {
       // BOD Action path
-      let encodedData: `0x${string}` | undefined
-      if (isNativeToken) {
-        encodedData = encodeFunctionData({
-          abi: BANK_ABI,
-          functionName: 'transfer',
-          args: [data.address.address, transferAmount]
-        })
-      } else if (isUsdce) {
-        encodedData = encodeFunctionData({
-          abi: BANK_ABI,
-          functionName: 'transferToken',
-          args: [USDC_E_ADDRESS as Address, data.address.address, transferAmount]
-        })
-      } else if (isUsdc) {
-        encodedData = encodeFunctionData({
-          abi: BANK_ABI,
-          functionName: 'transferToken',
-          args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
-        })
-      } else {
-        throw new Error('Unsupported token type')
-      }
+      const encodedData = isNativeToken
+        ? encodeFunctionData({
+            abi: BANK_ABI,
+            functionName: 'transfer',
+            args: [data.address.address, transferAmount]
+          })
+        : encodeFunctionData({
+            abi: BANK_ABI,
+            functionName: 'transferToken',
+            args: [tokenAddress as Address, data.address.address, transferAmount]
+          })
 
       const description = JSON.stringify({
         text: `Transfer ${data.amount} ${data.token.symbol} to ${data.address.address}`,
@@ -250,7 +240,7 @@ const handleTransfer = async (data: {
         address: props.bankAddress,
         abi: BANK_ABI,
         functionName: 'transferToken',
-        args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
+        args: [tokenAddress, data.address.address, transferAmount]
       })
     } else if (isUsdce) {
       await transfer({
@@ -276,7 +266,7 @@ const handleTransfer = async (data: {
       : [
           'readContract',
           {
-            address: invalidationAddress as Address,
+            address: tokenAddress,
             args: [props.bankAddress],
             chainId: chainId.value
           }
