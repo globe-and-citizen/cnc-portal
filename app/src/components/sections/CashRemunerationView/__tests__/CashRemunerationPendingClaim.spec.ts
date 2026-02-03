@@ -28,15 +28,6 @@ vi.mock('@/composables', async (importOriginal) => {
 })
 
 const mockErrorToast = vi.fn()
-vi.mock('@/stores', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useToastStore: vi.fn(() => ({
-      addErrorToast: mockErrorToast
-    }))
-  }
-})
 
 describe.skip('CashRemunerationPendingClaim', () => {
   const createComponent = () => {

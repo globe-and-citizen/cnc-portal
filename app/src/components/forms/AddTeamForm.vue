@@ -155,7 +155,7 @@
       </ButtonUI>
       <DeployContractSection
         v-else-if="currentStep === 3 && createdTeamData !== null && createdTeamData"
-        :disabled="!canProceed"
+        :disable="!canProceed"
         :investorContractInput="investorContractInput"
         :createdTeamData="createdTeamData"
         @contractDeployed="

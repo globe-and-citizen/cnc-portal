@@ -7,32 +7,11 @@ import { parseUnits } from 'viem'
 import { VESTING_ADDRESS } from '@/constant'
 //import VestingStatusFilter from '@/components/sections/VestingView/VestingStatusFilter.vue'
 import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
-import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
-import { mainnet } from 'viem/chains'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
-
-const wagmiConfig = createConfig({
-  chains: [mainnet],
-  transports: {
-    [mainnet.id]: http()
-  }
-})
 // Mock Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockSymbol = ref('SHR')
 const mockReloadKey = ref(0)
-
-// Mock Team Data
-const mockCurrentTeam = ref({
-  id: 1,
-  ownerAddress: memberAddress,
-  teamContracts: [
-    {
-      type: 'InvestorV1',
-      address: '0x000000000000000000000000000000000000beef'
-    }
-  ]
-})
 
 // Mock Contract Write
 const mockWriteContract = {
@@ -115,20 +94,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-// Mock Stores
-vi.mock('@/stores', () => ({
-  useUserDataStore: () => ({
-    address: memberAddress
-  }),
-  useTeamStore: () => ({
-    currentTeam: mockCurrentTeam.value,
-    getContractAddressByType: vi.fn((type) => {
-      // console.log('getContractAddressByType called with type:', type)
-      return type ? '0x000000000000000000000000000000000000beef' : undefined
-    })
-  })
-}))
-
 vi.mock('@/stores/useToastStore')
 
 vi.mock('@/composables/useContractBalance', () => ({
@@ -144,7 +109,7 @@ describe('VestingFlow.vue', () => {
         reloadKey: mockReloadKey.value
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn }), [WagmiPlugin, { config: wagmiConfig }]]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 

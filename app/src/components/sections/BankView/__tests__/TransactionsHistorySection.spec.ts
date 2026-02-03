@@ -1,12 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 // Mock stores before importing the component to avoid store initialization side-effects
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => ({
-    currentTeam: { teamContracts: [], members: [] },
-    setCurrentTeamId: vi.fn()
-  }))
-}))
 
 vi.mock('@/stores/currencyStore', () => ({
   useCurrencyStore: vi.fn(() => ({
