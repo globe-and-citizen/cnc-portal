@@ -75,7 +75,7 @@ import OrderTypeToggle from './TradingModal/OrderTypeToggle.vue'
 import TradingInputs from './TradingModal/TradingInputs.vue'
 import OrderSummary from './TradingModal/OrderSummary.vue'
 
-const props = defineProps<{ marketUrl: string }>()
+const props = defineProps<{ marketUrl: string; traderBalance: number }>()
 const emit = defineEmits(['close', 'place-order'])
 
 const parsePolymarketUrl = (url: string) => {
@@ -124,9 +124,16 @@ const rules = computed(() => ({
       'Shares must be greater than 0',
       (value: string) => parseFloat(value) > 0
     ),
+    spendableBalance: helpers.withMessage(
+      () =>
+        `Total cost exceeds available balance $${props.traderBalance.toFixed(2)} (max. ${getMinSharesForTarget(props.traderBalance)} shares)`,
+      (value: string) => {
+        return (parseFloat(value) || 0) * price.value <= props.traderBalance
+      }
+    ),
     // Dynamic Market Validation
     marketMinimum: helpers.withMessage(
-      () => `Total cost must be $1.00 (min. ${getMinSharesForTarget(1)} shares)`,
+      () => `Total cost must be at least $1.00 (min. ${getMinSharesForTarget(1)} shares)`,
       (value: string) => {
         if (orderType.value !== 'market') return true
         return (parseFloat(value) || 0) * price.value >= 1.0
@@ -134,7 +141,7 @@ const rules = computed(() => ({
     ),
     // Dynamic Limit Validation
     limitMinimum: helpers.withMessage(
-      () => `Total cost must be $5.00 (min. ${getMinSharesForTarget(5)} shares)`,
+      () => `Total cost must be at least $5.00 (min. ${getMinSharesForTarget(5)} shares)`,
       (value: string) => {
         if (orderType.value !== 'limit') return true
         const p = parseFloat(limitPrice.value) || 0
