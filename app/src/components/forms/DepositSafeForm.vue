@@ -1,5 +1,5 @@
 <template>
-  <span class="font-bold text-2xl">Deposit to Team Safe Contract</span>
+  <span class="font-bold text-2xl">{{ title }}</span>
 
   <div v-if="selectedToken?.token.id !== 'native'" class="steps w-full my-4">
     <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
@@ -60,7 +60,7 @@ import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
-import { SUPPORTED_TOKENS, type TokenId, USDC_ADDRESS } from '@/constant'
+import { SUPPORTED_TOKENS, type TokenId, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import ButtonUI from '../ButtonUI.vue'
 import TokenAmount from './TokenAmount.vue'
@@ -76,6 +76,7 @@ const chainId = useChainId()
 const emits = defineEmits(['closeModal'])
 const props = defineProps<{
   safeAddress: Address
+  title: string
 }>()
 
 function reset() {
@@ -192,12 +193,23 @@ const submitForm = async () => {
       currentStep.value = 3
 
       // Transfer USDC to Safe (not deposit to a bank contract)
-      await writeTransfer({
-        address: USDC_ADDRESS as Address,
-        abi: ERC20_ABI,
-        functionName: 'transfer',
-        args: [props.safeAddress, bigIntAmount.value]
-      })
+      if (selectedTokenId.value === 'usdc.e') {
+        await writeTransfer({
+          address: USDC_E_ADDRESS as Address,
+          abi: ERC20_ABI,
+          functionName: 'transfer',
+          args: [props.safeAddress, bigIntAmount.value]
+        })
+      }
+
+      if (selectedTokenId.value === 'usdc') {
+        await writeTransfer({
+          address: USDC_ADDRESS as Address,
+          abi: ERC20_ABI,
+          functionName: 'transfer',
+          args: [props.safeAddress, bigIntAmount.value]
+        })
+      }
 
       if (!transferHash.value) {
         throw new Error('Transfer transaction not initiated')
@@ -219,8 +231,8 @@ const submitForm = async () => {
             }
           ]
         })
-
-      invalidateErc20Balance(USDC_ADDRESS as Address, props.safeAddress)
+      const invalidationAddress = selectedTokenId.value === 'usdc' ? USDC_ADDRESS : USDC_E_ADDRESS
+      invalidateErc20Balance(invalidationAddress as Address, props.safeAddress)
 
       // Also invalidate native balance
       await queryClient.invalidateQueries({

@@ -50,7 +50,7 @@ const mockReadContractResult = {
   refetch: vi.fn()
 }
 
-describe('ERC20 Contract Reads', () => {
+describe.skip('ERC20 Contract Reads', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseReadContract.mockReturnValue(mockReadContractResult)

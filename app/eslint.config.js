@@ -24,8 +24,7 @@ export default [
       'src/components/sections/DashboardView/SetMemberWageModal.vue',
       'src/components/sections/ClaimHistoryView/ClaimHistory.vue',
       'src/components/TableComponent.vue',
-      'src/components/TheDrawer.vue',
-      'src/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
+      'src/components/TheDrawer.vue'
     ],
     rules: {
       'max-lines': 'off'

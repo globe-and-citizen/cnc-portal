@@ -1,13 +1,12 @@
 <template>
-  <CardComponent title="Safe Owners">
+  <CardComponent title="Safe Owners" class="h-full">
     <template #card-action>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <ButtonUI
-            size="sm"
             variant="primary"
             @click="showAddSignerModal = true"
-            :disabled="!teamStore.currentTeam?.safeAddress || !isConnectedUserOwner"
+            :disabled="!address || !isConnectedUserOwner"
             data-test="add-signer-button"
             class="flex items-center gap-1"
           >
@@ -15,7 +14,6 @@
             Add Signer
           </ButtonUI>
           <ButtonUI
-            size="sm"
             variant="secondary"
             @click="showUpdateThresholdModal = true"
             :disabled="isLoading || !isConnectedUserOwner"
@@ -38,7 +36,7 @@
       <div class="text-gray-500">No owners found</div>
     </div>
 
-    <div v-else class="space-y-3">
+    <div v-else class="space-y-3 mt-3">
       <div
         v-for="(owner, index) in safeInfo?.owners"
         :key="owner"
@@ -66,7 +64,7 @@
         <div class="flex items-center text-xs gap-2">
           <RemoveOwnerButton
             :owner-address="owner"
-            :safe-address="teamStore.currentTeam?.safeAddress!"
+            :safe-address="address as Address"
             :total-owners="safeInfo?.owners.length ?? 0"
             :threshold="safeInfo?.threshold ?? 1"
             :is-connected-user-owner="isConnectedUserOwner"
@@ -77,14 +75,14 @@
     <!-- Modals -->
     <AddSignerModal
       v-model="showAddSignerModal"
-      :safe-address="teamStore.currentTeam?.safeAddress!"
+      :safe-address="address as Address"
       :current-owners="safeInfo?.owners || []"
       :current-threshold="safeInfo?.threshold || 1"
     />
 
     <UpdateThresholdModal
       v-model="showUpdateThresholdModal"
-      :safe-address="teamStore.currentTeam?.safeAddress!"
+      :safe-address="address as Address"
       :current-owners="safeInfo?.owners || []"
       :current-threshold="safeInfo?.threshold || 1"
       @threshold-updated="handleThresholdUpdated"
@@ -105,20 +103,23 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'
 import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThresholdModal.vue'
 import RemoveOwnerButton from './RemoveOwnerButton.vue'
+import { type Address } from 'viem'
 
 // Composables and utilities
 
-import { useTeamStore } from '@/stores'
 import { useSafeInfoQuery } from '@/queries/safe.queries'
 
-const teamStore = useTeamStore()
+interface Props {
+  address?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  address: ''
+})
+
 const { address: connectedAddress } = useAccount()
 
-const {
-  data: safeInfo,
-  error,
-  isLoading
-} = useSafeInfoQuery(computed(() => teamStore.currentTeamMeta?.data?.safeAddress))
+const { data: safeInfo, error, isLoading } = useSafeInfoQuery(computed(() => props.address))
 
 // Computed properties
 const isConnectedUserOwner = computed(() => {

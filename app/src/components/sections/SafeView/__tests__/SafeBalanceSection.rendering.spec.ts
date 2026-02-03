@@ -276,20 +276,6 @@ describe('SafeBalanceSection', () => {
     })
   })
 
-  describe('Props and Computed Values', () => {
-    it('should use 0x as fallback when no address is available', () => {
-      mockUseTeamStore.mockReturnValue({
-        currentTeam: { safeAddress: undefined },
-        currentTeamMeta: { data: { safeAddress: undefined } }
-      })
-      wrapper = createWrapper()
-
-      expect(mockUseContractBalance).toHaveBeenCalled()
-      const callArg = mockUseContractBalance.mock.calls[0]?.[0]
-      expect(callArg?.value).toBe('0x')
-    })
-  })
-
   describe('Tokens Computation', () => {
     it('should handle missing USD price gracefully', () => {
       mockBalances.value = [

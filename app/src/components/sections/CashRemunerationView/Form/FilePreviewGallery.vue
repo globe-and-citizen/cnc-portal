@@ -199,35 +199,15 @@
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
-import { getPresignedUrl } from '@/composables/useFileUrl'
-
-// Types
-interface PreviewItem {
-  previewUrl: string
-  fileName: string
-  fileSize: number
-  fileType?: string
-  isImage: boolean
-  key?: string
-}
-
-type ModalType = 'image' | 'document' | null
-type ContentType = 'pdf' | 'text' | 'other'
-
-interface ModalState {
-  type: ModalType
-  url: string
-  fileName: string
-  fileType: string
-  contentType: ContentType
-  textContent: string
-}
+import { toRef } from 'vue'
+import { getFileIcon, truncateFileName } from '@/utils/fileUtil'
+import { useFilePreviewGallery } from '@/composables/useFilePreviewGallery'
+import type { FilePreviewItem } from '@/types/file-preview'
 
 // Props
 const props = withDefaults(
   defineProps<{
-    previews: PreviewItem[]
+    previews: FilePreviewItem[]
     canRemove?: boolean
     gridClass?: string
     itemHeightClass?: string
@@ -248,170 +228,8 @@ const emit = defineEmits<{
   remove: [index: number]
 }>()
 
-// State
-const urlCache = ref(new Map<string, string>())
-const modalState = ref<ModalState>({
-  type: null,
-  url: '',
-  fileName: '',
-  fileType: '',
-  contentType: 'other',
-  textContent: ''
-})
-
-// Constants
-const FILE_ICONS: Record<string, string> = {
-  pdf: 'heroicons:document-text',
-  zip: 'heroicons:archive-box',
-  docx: 'heroicons:document',
-  doc: 'heroicons:document',
-  txt: 'heroicons:document-text'
-} as const
-
-const MAX_FILENAME_LENGTH = 15
-
-// Computed
-const resolvedPreviews = computed(() => {
-  return props.previews.map((preview) => {
-    if (preview.key && !preview.previewUrl) {
-      const cachedUrl = urlCache.value.get(preview.key)
-      return cachedUrl ? { ...preview, previewUrl: cachedUrl } : preview
-    }
-    return preview
-  })
-})
-
-// Utilities
-const getFileExtension = (fileName: string): string => {
-  return fileName.split('.').pop()?.toLowerCase() || ''
-}
-
-const getFileIcon = (fileName: string): string => {
-  const extension = getFileExtension(fileName)
-  return FILE_ICONS[extension] || 'heroicons:paper-clip'
-}
-
-const truncateFileName = (name: string, maxLength = MAX_FILENAME_LENGTH): string => {
-  if (name.length <= maxLength) return name
-
-  const extension = getFileExtension(name)
-  const nameWithoutExt = name.slice(0, name.length - extension.length - 1)
-  const truncatedName = nameWithoutExt.slice(0, maxLength - extension.length - 4)
-
-  return `${truncatedName}...${extension}`
-}
-
-const detectContentType = (preview: PreviewItem): ContentType => {
-  const fileName = preview.fileName.toLowerCase()
-  const fileType = preview.fileType || ''
-
-  if (fileType.includes('pdf') || fileName.endsWith('.pdf')) return 'pdf'
-  if (fileType.includes('text/plain') || fileName.endsWith('.txt')) return 'text'
-
-  return 'other'
-}
-
-const downloadFile = (url: string): void => {
-  window.open(url, '_blank', 'noopener,noreferrer')
-}
-
-// Modal Management
-const openModal = async (type: ModalType, preview: PreviewItem): Promise<void> => {
-  const contentType = type === 'document' ? detectContentType(preview) : 'other'
-
-  modalState.value = {
-    type,
-    url: preview.previewUrl,
-    fileName: preview.fileName,
-    fileType: preview.fileType || '',
-    contentType,
-    textContent: ''
-  }
-
-  // Load text content if needed
-  if (contentType === 'text') {
-    try {
-      const response = await fetch(preview.previewUrl)
-      modalState.value.textContent = (await response.text()) || 'File is empty'
-    } catch (error) {
-      console.error('Error reading text file:', error)
-      modalState.value.textContent = 'Error reading file content'
-    }
-  }
-
-  // Prevent body scroll
-  document.body.style.overflow = 'hidden'
-}
-
-const closeModal = (): void => {
-  modalState.value = {
-    type: null,
-    url: '',
-    fileName: '',
-    fileType: '',
-    contentType: 'other',
-    textContent: ''
-  }
-
-  // Restore body scroll
-  document.body.style.overflow = ''
-}
-
-// URL Loading
-const loadPresignedUrls = async (): Promise<void> => {
-  const keysToFetch = props.previews
-    .filter((preview) => preview.key && !preview.previewUrl && !urlCache.value.has(preview.key))
-    .map((preview) => preview.key!)
-
-  if (keysToFetch.length === 0) return
-
-  const results = await Promise.allSettled(
-    keysToFetch.map(async (key) => {
-      const url = await getPresignedUrl(key)
-      return { key, url }
-    })
-  )
-
-  const newCache = new Map(urlCache.value)
-
-  for (const result of results) {
-    if (result.status === 'fulfilled' && result.value.url) {
-      newCache.set(result.value.key, result.value.url)
-    }
-  }
-
-  urlCache.value = newCache
-}
-
-// Auto-close modal if preview is removed
-const handlePreviewChange = (): void => {
-  if (!modalState.value.type) return
-
-  const currentUrls = props.previews.map((preview) => preview.previewUrl)
-
-  if (!currentUrls.includes(modalState.value.url)) {
-    closeModal()
-  }
-}
-
-// Keyboard handling
-const handleKeydown = (event: KeyboardEvent): void => {
-  if (event.key === 'Escape' && modalState.value.type) {
-    closeModal()
-  }
-}
-
-// Lifecycle
-onMounted(() => {
-  loadPresignedUrls()
-  window.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
-  document.body.style.overflow = ''
-})
-
-watch(() => props.previews, loadPresignedUrls, { deep: true })
-watch(() => props.previews, handlePreviewChange, { deep: true })
+// Use composable for gallery functionality
+const { modalState, resolvedPreviews, openModal, closeModal, downloadFile } = useFilePreviewGallery(
+  toRef(props, 'previews')
+)
 </script>

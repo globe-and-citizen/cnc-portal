@@ -1,28 +1,30 @@
 <!-- filepath: app/src/views/team/[id]/Accounts/SafeView.vue -->
 <template>
-  <div class="flex flex-col gap-6">
-    <SafeBalanceSection />
+  <div v-if="selectedSafe?.address" class="flex flex-col gap-6">
+    <SafeBalanceSection :key="selectedSafe.address" :address="selectedSafe.address as Address" />
 
-    <GenericTokenHoldingsSection
-      v-if="teamStore.currentTeam?.safeAddress"
-      :address="teamStore.currentTeam?.safeAddress"
-    />
-
-    <!-- Optimized layout: Safe Owners 1/3, Transactions 2/3 -->
     <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
-      <!-- Safe Owners - takes 1/3 of space on desktop -->
-      <div class="xl:col-span-2 min-w-0">
-        <SafeOwnersCard v-if="teamStore.currentTeam?.safeAddress" />
-      </div>
-
-      <!-- Safe Transactions - takes 2/3 of space on desktop -->
       <div class="xl:col-span-3 min-w-0">
-        <SafeTransactions v-if="teamStore.currentTeam?.safeAddress" />
+        <GenericTokenHoldingsSection
+          :key="selectedSafe.address"
+          :address="selectedSafe.address as Address"
+          class="h-full"
+        />
+      </div>
+      <div class="xl:col-span-2 min-w-0">
+        <SafeOwnersCard :address="selectedSafe.address as Address" />
       </div>
     </div>
 
-    <!-- Safe Transactions History would go here -->
-    <!-- <SafeTransactionsHistorySection v-if="safeAddress" :safe-address="safeAddress" /> -->
+    <SafeTransactions :address="selectedSafe.address as Address" />
+  </div>
+
+  <!-- Loading or empty state -->
+  <div v-else class="flex items-center justify-center p-8">
+    <div class="text-center">
+      <div class="loading loading-spinner loading-lg"></div>
+      <p class="mt-4 text-gray-500">Loading safe...</p>
+    </div>
   </div>
 </template>
 
@@ -31,19 +33,10 @@ import SafeBalanceSection from '@/components/sections/SafeView/SafeBalanceSectio
 import SafeOwnersCard from '@/components/sections/SafeView/SafeOwnersCard.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
-import { useTeamStore } from '@/stores'
+
 import { useTeamSafes } from '@/composables/safe'
-import { watch } from 'vue'
 
-const teamStore = useTeamStore()
-const { safes, selectedSafe } = useTeamSafes()
+import { type Address } from 'viem'
 
-watch(
-  [safes, selectedSafe],
-  ([newSafes, newSelectedSafe]) => {
-    console.log('Team Safes updated: ', newSafes)
-    console.log('Selected safe: ', newSelectedSafe)
-  },
-  { immediate: true }
-)
+const { selectedSafe } = useTeamSafes()
 </script>

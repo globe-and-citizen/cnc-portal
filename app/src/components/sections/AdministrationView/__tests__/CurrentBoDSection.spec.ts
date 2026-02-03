@@ -5,6 +5,7 @@ import { ref } from 'vue'
 // Provide minimal constants to avoid import-time validation
 vi.mock('@/constant', () => ({
   USDC_ADDRESS: '0x0000000000000000000000000000000000000001',
+  USDC_E_ADDRESS: '0x0000000000000000000000000000000000000003',
   USDT_ADDRESS: '0x0000000000000000000000000000000000000002'
 }))
 

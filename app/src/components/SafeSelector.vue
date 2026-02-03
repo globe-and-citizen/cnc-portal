@@ -50,9 +50,6 @@
                   </div>
                 </div>
               </div>
-              <span class="text-sm text-primary font-medium">
-                {{ formatBalance(safe.balance) }}
-              </span>
             </div>
           </a>
         </li>
@@ -90,18 +87,11 @@ const truncateAddress = (address: string): string => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
-const formatBalance = (balance: string): string => {
-  const numBalance = parseFloat(balance)
-  return isNaN(numBalance) ? balance : numBalance.toFixed(4) + ' ETH'
-}
-
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value
 }
 
 const selectSafe = async (safe: SafeWallet) => {
-  // selectedSafe.value = safe
-  // traderSafesStore.setSelectedSafe(safe)
   if (route.name === 'trading') {
     router.push({
       name: 'trading',
@@ -121,7 +111,6 @@ const selectSafe = async (safe: SafeWallet) => {
     })
   }
   isOpen.value = false
-  console.log('Selected safe:', safe.address)
 }
 
 // Close dropdown when clicking outside

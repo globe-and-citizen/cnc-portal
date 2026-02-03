@@ -194,8 +194,11 @@ const UpdateThresholdModalStub = defineComponent({
 describe('SafeOwnersCard', () => {
   let wrapper: VueWrapper<InstanceType<typeof SafeOwnersCard>>
 
-  const createWrapper = () =>
+  const defaultProps = { address: MOCK_DATA.safeAddress }
+
+  const createWrapper = (props = {}) =>
     mount(SafeOwnersCard, {
+      props: { ...defaultProps, ...props },
       global: {
         stubs: {
           CardComponent: CardStub,
