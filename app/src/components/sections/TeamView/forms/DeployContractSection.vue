@@ -1,13 +1,9 @@
 <template>
   <div class="space-y-4">
     <!-- Deploy Button with dynamic message -->
-    <ButtonUI
-      variant="primary"
-      :loading="createOfficerLoading || isSafeDeploying"
-      :disabled="disable || createOfficerLoading || isSafeDeploying"
-      data-test="deploy-contracts-button"
-      @click="deployOfficerContract"
-    >
+    <ButtonUI variant="primary" :loading="createOfficerLoading || isSafeDeploying"
+      :disabled="disable || createOfficerLoading || isSafeDeploying" data-test="deploy-contracts-button"
+      @click="deployOfficerContract">
       {{ deployButtonText }}
     </ButtonUI>
   </div>
@@ -35,8 +31,7 @@ import {
   USDC_E_ADDRESS,
   validateAddresses,
   // VOTING_BEACON_ADDRESS,
-  ELECTIONS_BEACON_ADDRESS,
-  USDC_E_ADDRESS
+  ELECTIONS_BEACON_ADDRESS
   // OFFICER_ADDRESS
 } from '@/constant'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
