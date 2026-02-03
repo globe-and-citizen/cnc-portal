@@ -85,6 +85,29 @@
       @update:model-value="($event) => (userCopy.imageUrl = $event)"
     />
   </div>
+
+    <!-- Error Alert -->
+    <div
+      v-if="userUpdateError"
+      role="alert"
+      class="alert alert-error shadow-sm mt-4"
+      data-test="error-alert"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="stroke-current shrink-0 h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+      <span data-test="error-message">Failed to update user</span>
+    </div>
   <div class="modal-action justify-end">
     <ButtonUI
       v-if="hasChanges"
@@ -130,7 +153,11 @@ const hasChanges = computed(() => {
   return userCopy.value.name !== userStore.name || userCopy.value.imageUrl !== userStore.imageUrl
 })
 
-const { mutateAsync: updateUser, isPending: userIsUpdating } = useUpdateUserMutation()
+const {
+  mutateAsync: updateUser,
+  isPending: userIsUpdating,
+  isError: userUpdateError
+} = useUpdateUserMutation()
 
 const submitForm = async () => {
   $v.value.$touch()
