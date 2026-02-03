@@ -9,8 +9,8 @@
       <span class="font-semibold">{{ formattedDate }}</span>
       ?
     </p>
-    <div v-if="errorMessage" class="alert alert-error" data-test="delete-claim-error">
-      {{ errorMessage }}
+    <div v-if="deleteClaimError" class="alert alert-error" data-test="delete-claim-error">
+      Failed to delete claim
     </div>
     <div class="flex justify-end gap-2">
       <ButtonUI
@@ -59,27 +59,14 @@ const formattedDate = computed(() => {
 })
 
 const {
-  mutateAsync: deleteClaimRequest,
+  mutateAsync: deleteClaim,
   isPending: isDeleting,
   error: deleteClaimError
 } = useDeleteClaimMutation()
 
-const errorMessage = computed(() => {
-  if (deleteClaimError.value) {
-    // Try to extract message from Axios error
-    const axiosError = deleteClaimError.value as { response?: { data?: { message?: string } } }
-    return axiosError.response?.data?.message || 'Failed to delete claim'
-  }
-  return ''
-})
-
 const handleDelete = async () => {
-  try {
-    await deleteClaimRequest({ claimId: props.claim.id })
+    await deleteClaim({ claimId: props.claim.id })
     toastStore.addSuccessToast('Claim deleted successfully')
     emit('close')
-  } catch {
-    toastStore.addErrorToast(errorMessage.value || 'Failed to delete claim')
-  }
 }
 </script>
