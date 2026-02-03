@@ -2,6 +2,14 @@ import { useQuery } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
 
 /**
+ * Query key factory for auth-related queries
+ */
+export const authKeys = {
+  all: ['auth'] as const,
+  validateToken: () => [...authKeys.all, 'validateToken'] as const
+}
+
+/**
  * Validate the current authentication token
  *
  * @endpoint GET /auth/token
@@ -9,9 +17,9 @@ import apiClient from '@/lib/axios'
  * @queryParams none
  * @body none
  */
-export const useValidateTokenQuery = () => {
+export const useGetValidateTokenQuery = () => {
   return useQuery({
-    queryKey: ['auth', 'validateToken'],
+    queryKey: authKeys.validateToken(),
     queryFn: async () => {
       const { data } = await apiClient.get('auth/token')
       return data
@@ -24,3 +32,8 @@ export const useValidateTokenQuery = () => {
     staleTime: Infinity
   })
 }
+
+/**
+ * @deprecated Use useGetValidateTokenQuery instead
+ */
+export const useValidateTokenQuery = useGetValidateTokenQuery

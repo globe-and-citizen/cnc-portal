@@ -5,12 +5,37 @@ import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 
 /**
- * Hook parameters for useBodActionsQuery
+ * Query key factory for action-related queries
  */
-export interface UseBodActionsQueryParams {
+export const actionKeys = {
+  all: ['actions'] as const,
+  lists: () => [...actionKeys.all, 'list'] as const,
+  list: (teamId: string | null, isExecuted?: boolean) =>
+    [...actionKeys.lists(), { teamId, isExecuted }] as const
+}
+
+/**
+ * Query parameters for listing BOD actions
+ */
+export interface BodActionsQueryParams {
+  /** Team ID to filter actions */
+  teamId?: string
+  /** Filter by execution status */
+  isExecuted?: boolean
+}
+
+/**
+ * Hook parameters for useGetBodActionsQuery
+ */
+export interface UseGetBodActionsQueryParams {
   teamId: MaybeRefOrGetter<string | null>
   isExecuted?: boolean
 }
+
+/**
+ * @deprecated Use UseGetBodActionsQueryParams instead
+ */
+export type UseBodActionsQueryParams = UseGetBodActionsQueryParams
 
 /**
  * Fetch BOD actions for a team
@@ -18,14 +43,14 @@ export interface UseBodActionsQueryParams {
  * @endpoint GET /actions
  * @queryParams { teamId: string, isExecuted?: boolean }
  */
-export const useBodActionsQuery = (hookParams: UseBodActionsQueryParams) => {
+export const useGetBodActionsQuery = (hookParams: UseGetBodActionsQueryParams) => {
   return useQuery({
-    queryKey: ['getBodActions', { teamId: hookParams.teamId, isExecuted: hookParams.isExecuted }],
+    queryKey: actionKeys.list(toValue(hookParams.teamId), hookParams.isExecuted),
     queryFn: async () => {
       const teamId = toValue(hookParams.teamId)
 
       // Query params: passed as URL query string (?teamId=xxx&isExecuted=xxx)
-      const queryParams: Record<string, string | boolean> = { teamId: teamId! }
+      const queryParams: BodActionsQueryParams = { teamId: teamId! }
       if (hookParams.isExecuted !== undefined) {
         queryParams.isExecuted = hookParams.isExecuted
       }
@@ -57,16 +82,16 @@ export const useCreateActionMutation = () => {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
+      queryClient.invalidateQueries({ queryKey: actionKeys.all })
     }
   })
 }
 
 /**
- * Mutation input for useUpdateActionMutation
+ * Path parameters for action endpoints
  */
-export interface UpdateActionInput {
-  /** URL path parameter: action ID */
+export interface ActionPathParams {
+  /** Action ID */
   id: number
 }
 
@@ -80,12 +105,17 @@ export const useUpdateActionMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id }: UpdateActionInput) => {
+    mutationFn: async ({ id }: ActionPathParams) => {
       const { data } = await apiClient.patch(`actions/${id}`)
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
+      queryClient.invalidateQueries({ queryKey: actionKeys.all })
     }
   })
 }
+
+/**
+ * @deprecated Use useGetBodActionsQuery instead
+ */
+export const useBodActionsQuery = useGetBodActionsQuery

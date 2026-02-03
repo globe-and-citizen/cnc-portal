@@ -3,7 +3,33 @@ import apiClient from '@/lib/axios'
 import type { Member } from '@/types/member'
 import type { AxiosError } from 'axios'
 
+/**
+ * Query key factory for member-related queries
+ */
+export const memberKeys = {
+  all: ['members'] as const
+}
+
+/**
+ * Member input type for adding members
+ */
 export type MemberInput = Array<Pick<Member, 'address' | 'name'>>
+
+/**
+ * Path parameters for team member endpoints
+ */
+export interface TeamMemberPathParams {
+  /** Team ID */
+  teamId: string | number
+}
+
+/**
+ * Request body for adding members
+ */
+export interface AddMembersBody {
+  /** Array of members to add */
+  members: MemberInput[]
+}
 
 /**
  * Mutation input for useAddMembersMutation
@@ -16,12 +42,12 @@ export interface AddMembersInput {
 }
 
 /**
- * Mutation input for useDeleteMemberMutation
+ * Path parameters for deleting a member
  */
-export interface DeleteMemberInput {
-  /** URL path parameter: team ID */
+export interface DeleteMemberPathParams {
+  /** Team ID */
   teamId: string | number
-  /** URL path parameter: member address */
+  /** Member address */
   memberAddress: string
 }
 
@@ -31,7 +57,7 @@ export interface DeleteMemberInput {
  * @endpoint POST /teams/{teamId}/member
  * @params { teamId: string | number } - URL path parameter
  * @queryParams none
- * @body MemberInput[] - array of members to add
+ * @body AddMembersBody - array of members to add
  */
 export const useAddMembersMutation = () => {
   const queryClient = useQueryClient()
@@ -51,14 +77,14 @@ export const useAddMembersMutation = () => {
  * Delete a member from a team
  *
  * @endpoint DELETE /teams/{teamId}/member/{memberAddress}
- * @params { teamId: string | number, memberAddress: string } - URL path parameters
+ * @params DeleteMemberPathParams - URL path parameters
  * @queryParams none
  * @body none
  */
 export const useDeleteMemberMutation = () => {
   const queryClient = useQueryClient()
 
-  return useMutation<void, AxiosError, DeleteMemberInput>({
+  return useMutation<void, AxiosError, DeleteMemberPathParams>({
     mutationFn: async ({ teamId, memberAddress }) => {
       await apiClient.delete(`teams/${teamId}/member/${memberAddress}`)
     },
@@ -67,3 +93,8 @@ export const useDeleteMemberMutation = () => {
     }
   })
 }
+
+/**
+ * @deprecated Use DeleteMemberPathParams instead
+ */
+export type DeleteMemberInput = DeleteMemberPathParams

@@ -1,11 +1,22 @@
 import { useQuery } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
 
+/**
+ * Response from backend health check
+ */
 export interface HealthCheckResponse {
   success: boolean
   status: string
   timestamp: string
   service: string
+}
+
+/**
+ * Query key factory for health-related queries
+ */
+export const healthKeys = {
+  all: ['health'] as const,
+  backend: () => [...healthKeys.all, 'backend'] as const
 }
 
 /**
@@ -16,9 +27,9 @@ export interface HealthCheckResponse {
  * @queryParams none
  * @body none
  */
-export const useBackendHealthQuery = () => {
+export const useGetBackendHealthQuery = () => {
   return useQuery<HealthCheckResponse>({
-    queryKey: ['backend-health'],
+    queryKey: healthKeys.backend(),
     queryFn: async () => {
       const { data } = await apiClient.get('health')
       return data
@@ -32,3 +43,8 @@ export const useBackendHealthQuery = () => {
     staleTime: Infinity
   })
 }
+
+/**
+ * @deprecated Use useGetBackendHealthQuery instead
+ */
+export const useBackendHealthQuery = useGetBackendHealthQuery

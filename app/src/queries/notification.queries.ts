@@ -3,6 +3,21 @@ import apiClient from '@/lib/axios'
 import type { BulkNotificationPayload, Notification } from '@/types/notification'
 
 /**
+ * Query key factory for notification-related queries
+ */
+export const notificationKeys = {
+  all: ['notifications'] as const
+}
+
+/**
+ * Path parameters for notification endpoints
+ */
+export interface NotificationPathParams {
+  /** Notification ID */
+  id: number
+}
+
+/**
  * Fetch all notifications for the current user
  *
  * @endpoint GET /notification
@@ -10,9 +25,9 @@ import type { BulkNotificationPayload, Notification } from '@/types/notification
  * @queryParams none
  * @body none
  */
-export const useNotificationsQuery = () => {
+export const useGetNotificationsQuery = () => {
   return useQuery({
-    queryKey: ['notifications'],
+    queryKey: notificationKeys.all,
     queryFn: async () => {
       const { data } = await apiClient.get<Notification[]>('notification')
       return data
@@ -30,7 +45,7 @@ export const useNotificationsQuery = () => {
  * @queryParams none
  * @body BulkNotificationPayload
  */
-export const useAddBulkNotificationsMutation = () => {
+export const useCreateBulkNotificationsMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -39,24 +54,16 @@ export const useAddBulkNotificationsMutation = () => {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
     }
   })
-}
-
-/**
- * Mutation input for useUpdateNotificationMutation
- */
-export interface UpdateNotificationInput {
-  /** URL path parameter: notification ID */
-  id: number
 }
 
 /**
  * Update a notification (mark as read)
  *
  * @endpoint PUT /notification/{id}
- * @params { id: number } - URL path parameter
+ * @params NotificationPathParams - URL path parameter
  * @queryParams none
  * @body none
  */
@@ -64,12 +71,27 @@ export const useUpdateNotificationMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id }: UpdateNotificationInput) => {
+    mutationFn: async ({ id }: NotificationPathParams) => {
       const { data } = await apiClient.put(`notification/${id}`)
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
     }
   })
 }
+
+/**
+ * @deprecated Use useGetNotificationsQuery instead
+ */
+export const useNotificationsQuery = useGetNotificationsQuery
+
+/**
+ * @deprecated Use useCreateBulkNotificationsMutation instead
+ */
+export const useAddBulkNotificationsMutation = useCreateBulkNotificationsMutation
+
+/**
+ * @deprecated Use NotificationPathParams instead
+ */
+export type UpdateNotificationInput = NotificationPathParams

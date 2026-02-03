@@ -5,6 +5,23 @@ import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 
 /**
+ * Query key factory for expense-related queries
+ */
+export const expenseKeys = {
+  all: ['expenses'] as const,
+  lists: () => [...expenseKeys.all, 'list'] as const,
+  list: (teamId: string | null) => [...expenseKeys.lists(), { teamId }] as const
+}
+
+/**
+ * Query parameters for fetching expenses
+ */
+export interface ExpensesQueryParams {
+  /** Team ID to filter expenses */
+  teamId: string
+}
+
+/**
  * Fetch all expenses for a team
  *
  * @endpoint GET /expense
@@ -12,12 +29,12 @@ import { toValue } from 'vue'
  * @queryParams { teamId: string }
  * @body none
  */
-export const useExpensesQuery = (teamId: MaybeRefOrGetter<string | null>) => {
+export const useGetExpensesQuery = (teamId: MaybeRefOrGetter<string | null>) => {
   return useQuery({
-    queryKey: ['expenses', { teamId }],
+    queryKey: expenseKeys.list(toValue(teamId)),
     queryFn: async () => {
       // Query params: passed as URL query string (?teamId=xxx)
-      const queryParams = { teamId: toValue(teamId) }
+      const queryParams: ExpensesQueryParams = { teamId: toValue(teamId)! }
 
       const { data } = await apiClient.get<ExpenseResponse[]>('/expense', { params: queryParams })
       return data
@@ -54,7 +71,7 @@ export interface AddExpenseBody {
  * @queryParams none
  * @body AddExpenseBody - expense account data
  */
-export const useAddExpenseMutation = () => {
+export const useCreateExpenseMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -63,7 +80,17 @@ export const useAddExpenseMutation = () => {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] })
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all })
     }
   })
 }
+
+/**
+ * @deprecated Use useGetExpensesQuery instead
+ */
+export const useExpensesQuery = useGetExpensesQuery
+
+/**
+ * @deprecated Use useCreateExpenseMutation instead
+ */
+export const useAddExpenseMutation = useCreateExpenseMutation

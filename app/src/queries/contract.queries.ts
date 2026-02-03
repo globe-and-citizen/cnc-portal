@@ -2,12 +2,23 @@ import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
 
 /**
- * Mutation input for useCreateContractMutation
+ * Query key factory for contract-related queries
  */
-export interface CreateContractInput {
+export const contractKeys = {
+  all: ['contracts'] as const
+}
+
+/**
+ * Request body for creating a contract
+ */
+export interface CreateContractBody {
+  /** Team ID this contract belongs to */
   teamId: string
+  /** Smart contract address */
   contractAddress: string
+  /** Type of contract (e.g., "BoardOfDirectors", "ExpenseAccountEIP712") */
   contractType: string
+  /** Address of the deployer */
   deployer: string
 }
 
@@ -17,13 +28,13 @@ export interface CreateContractInput {
  * @endpoint POST /contract
  * @params none
  * @queryParams none
- * @body { teamId, contractAddress, contractType, deployer }
+ * @body CreateContractBody
  */
 export const useCreateContractMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (body: CreateContractInput) => {
+    mutationFn: async (body: CreateContractBody) => {
       const { data } = await apiClient.post('contract', body)
       return data
     },
@@ -33,3 +44,8 @@ export const useCreateContractMutation = () => {
     }
   })
 }
+
+/**
+ * @deprecated Use CreateContractBody instead
+ */
+export type CreateContractInput = CreateContractBody
