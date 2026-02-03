@@ -86,7 +86,7 @@ const $vInvestor = useVuelidate(investorContractInputRules, { investorContractIn
     <!-- Navigation Buttons -->
     <div class="flex justify-between mt-6">
       <DeployContractSection
-        :disabled="$vInvestor.$invalid"
+        :disable="$vInvestor.$invalid"
         :investorContractInput="investorContractInput"
         :createdTeamData="props.team"
         @contractDeployed="$emit('done')"
