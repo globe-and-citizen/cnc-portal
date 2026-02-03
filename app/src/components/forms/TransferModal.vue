@@ -195,7 +195,6 @@ const handleTransfer = async (data: {
   const tokenAddress = data.token.symbol === 'USDCe' ? USDC_E_ADDRESS : USDC_ADDRESS
   try {
     const isNativeToken = data.token.symbol === NETWORK.currencySymbol
-    console.log('Initiating transfer:', data.token)
     const transferAmount = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
 
     if (isBodAction.value) {
