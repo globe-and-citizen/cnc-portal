@@ -31,8 +31,8 @@ export function useSafeInfoQuery(safeAddress: MaybeRef<string | undefined>) {
       )
       return data
     },
-    staleTime: 10_000,
-    refetchInterval: 10_000
+    staleTime: 300_000,
+    refetchInterval: 300_000
   })
 }
 
@@ -58,8 +58,8 @@ export function useSafeTransactionsQuery(safeAddress: MaybeRef<string | undefine
       )
       return data.results || []
     },
-    staleTime: 30_000,
-    refetchInterval: 30_000
+    staleTime: 300_000,
+    refetchInterval: 300_000
   })
 }
 
@@ -301,7 +301,7 @@ export function useSafeTransactionQuery(safeTxHash: MaybeRef<string | undefined>
       )
       return data
     },
-    staleTime: 60_000,
+    staleTime: 300_000,
     gcTime: 300_000
   })
 }
