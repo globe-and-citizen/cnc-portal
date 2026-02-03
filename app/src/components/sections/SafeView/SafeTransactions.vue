@@ -72,7 +72,7 @@
           <ButtonUI
             size="xs"
             variant="success"
-            @click="handleExecuteTransaction(row as SafeTransaction)"
+            @click="handleExecuteClick(row as SafeTransaction)"
             :disabled="!canExecute(row as SafeTransaction) || isExecuting"
             :loading="isTransactionLoading(row.safeTxHash, 'execute')"
             class="flex items-center gap-1 text-xs"
@@ -83,6 +83,16 @@
         </div>
       </template>
     </TableComponent>
+
+    <!-- Conflicting Transaction Warning Modal -->
+    <SafeTransactionsWarning
+      v-if="showConflictWarning"
+      v-model="showConflictWarning"
+      :is-executing="isExecuting"
+      @confirm="handleConfirmExecution"
+      @cancel="handleCancelExecution"
+      data-test="conflict-warning-modal"
+    />
   </CardComponent>
 </template>
 
@@ -96,6 +106,7 @@ import TableComponent from '@/components/TableComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
+import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 
 // Stores and composables
 import { useSafeTransactionsQuery, useSafeInfoQuery } from '@/queries/safe.queries'
@@ -122,6 +133,10 @@ const selectedStatus = ref<SafeTransactionStatus>('all')
 const currentPage = ref(1)
 const itemsPerPage = ref(5)
 
+// Conflict warning state
+const showConflictWarning = ref(false)
+const pendingExecutionTransaction = ref<SafeTransaction | null>(null)
+
 // Data fetching
 const {
   data: transactions,
@@ -143,6 +158,27 @@ const isConnectedUserOwner = computed(() => {
     (owner) => owner.toLowerCase() === connectedAddress.value!.toLowerCase()
   )
 })
+
+// Get current Safe nonce
+const currentSafeNonce = computed(() => safeInfo.value?.nonce ?? 0)
+
+// Check if transaction nonce is valid
+const isTransactionNonceValid = (transaction: SafeTransaction): boolean => {
+  return transaction.nonce >= currentSafeNonce.value
+}
+
+// Check if executing this transaction would conflict with others
+const hasConflictingTransactions = (transaction: SafeTransaction): boolean => {
+  if (!transactions.value) return false
+
+  // Check if there are any other pending transactions with nonce >= current Safe nonce
+  return transactions.value.some(
+    (tx) =>
+      !tx.isExecuted &&
+      tx.safeTxHash !== transaction.safeTxHash &&
+      tx.nonce >= currentSafeNonce.value
+  )
+}
 
 // Simplified filtering - directly filter the original transactions
 const filteredTransactions = computed(() => {
@@ -182,12 +218,18 @@ watch(
 const getTransactionStatus = (transaction: SafeTransaction): string => {
   if (transaction.isExecuted) return 'Executed'
 
+  // Check if transaction nonce is invalid
+  if (!isTransactionNonceValid(transaction)) {
+    return 'Invalid (Stale Nonce)'
+  }
+
   const confirmations = transaction.confirmations?.length || 0
   const required = transaction.confirmationsRequired || safeInfo.value?.threshold || 0
 
   if (confirmations >= required) return 'Ready to Execute'
   return 'Pending'
 }
+
 const approvingTransactions = ref<Set<string>>(new Set())
 const executingTransactions = ref<Set<string>>(new Set())
 
@@ -204,6 +246,9 @@ const canApprove = (transaction: SafeTransaction): boolean => {
   if (!props.address) return false
   if (transaction.isExecuted) return false
 
+  // Don't allow approving transactions with invalid nonce
+  if (!isTransactionNonceValid(transaction)) return false
+
   const userAlreadyConfirmed = transaction.confirmations?.some(
     (confirmation) => confirmation.owner.toLowerCase() === connectedAddress.value?.toLowerCase()
   )
@@ -214,6 +259,9 @@ const canApprove = (transaction: SafeTransaction): boolean => {
 const canExecute = (transaction: SafeTransaction): boolean => {
   if (!isConnectedUserOwner.value) return false
   if (transaction.isExecuted) return false
+
+  // Don't allow executing transactions with invalid nonce
+  if (!isTransactionNonceValid(transaction)) return false
 
   const confirmations = transaction.confirmations?.length || 0
   const required = transaction.confirmationsRequired || safeInfo.value?.threshold || 0
@@ -227,6 +275,31 @@ const handleApproveTransaction = async (transaction: SafeTransaction) => {
   if (!safeAddress) return
   approvingTransactions.value.add(transaction.safeTxHash)
   await approveTransaction(safeAddress, transaction.safeTxHash)
+  approvingTransactions.value.delete(transaction.safeTxHash)
+}
+
+const handleExecuteClick = (transaction: SafeTransaction) => {
+  // Check for conflicting transactions
+  if (hasConflictingTransactions(transaction)) {
+    pendingExecutionTransaction.value = transaction
+    showConflictWarning.value = true
+  } else {
+    // No conflicts, execute directly
+    handleExecuteTransaction(transaction)
+  }
+}
+
+const handleConfirmExecution = async () => {
+  if (pendingExecutionTransaction.value) {
+    await handleExecuteTransaction(pendingExecutionTransaction.value)
+    showConflictWarning.value = false
+    pendingExecutionTransaction.value = null
+  }
+}
+
+const handleCancelExecution = () => {
+  pendingExecutionTransaction.value = null
+  showConflictWarning.value = false
 }
 
 const handleExecuteTransaction = async (transaction: SafeTransaction) => {
@@ -234,6 +307,7 @@ const handleExecuteTransaction = async (transaction: SafeTransaction) => {
   if (!safeAddress) return
   executingTransactions.value.add(transaction.safeTxHash)
   await executeTransaction(safeAddress, transaction.safeTxHash, transaction)
+  executingTransactions.value.delete(transaction.safeTxHash)
 }
 
 const handleStatusChange = (status: SafeTransactionStatus) => {
