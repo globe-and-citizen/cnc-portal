@@ -12,6 +12,7 @@ import isoWeek from 'dayjs/plugin/isoWeek'
 import { useReadContract } from '@wagmi/vue'
 import { simulateContract, waitForTransactionReceipt } from '@wagmi/core'
 import { log } from '@/utils'
+import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
 
 // Configure dayjs plugins
 dayjs.extend(utc)
@@ -45,16 +46,6 @@ vi.mock('@/utils', () => ({
   parseError: vi.fn(() => 'Parsed error message')
 }))
 
-vi.mock('@/composables', () => ({
-  useCustomFetch: vi.fn(() => ({
-    post: vi.fn().mockReturnThis(),
-    json: vi.fn().mockReturnValue({
-      execute: vi.fn().mockResolvedValue({}),
-      error: ref(null)
-    })
-  }))
-}))
-
 vi.mock('@tanstack/vue-query', () => ({
   useQueryClient: () => ({
     invalidateQueries: vi.fn()
@@ -63,6 +54,7 @@ vi.mock('@tanstack/vue-query', () => ({
 
 describe('DropdownActions', () => {
   const MOCK_OWNER_ADDRESS = '0xOwnerAddress'
+  const mockSyncMutateAsync = vi.fn().mockResolvedValue(undefined)
 
   const weeklyClaim: WeeklyClaim = {
     id: 1,
@@ -95,6 +87,17 @@ describe('DropdownActions', () => {
   }
 
   const createWrapper = (isCashRemunerationOwner: boolean) => {
+    // Mock the sync mutation
+    vi.mocked(useSyncWeeklyClaimsMutation).mockReturnValue({
+      mutateAsync: mockSyncMutateAsync,
+      mutate: vi.fn(),
+      isPending: ref(false),
+      isError: ref(false),
+      error: ref(null),
+      data: ref(null),
+      reset: vi.fn()
+    } as unknown as ReturnType<typeof useSyncWeeklyClaimsMutation>)
+
     return mount(WeeklyClaimActionEnable, {
       props: {
         isCashRemunerationOwner,
@@ -112,6 +115,7 @@ describe('DropdownActions', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.useFakeTimers()
+    mockSyncMutateAsync.mockClear()
 
     // Set up team store with currentTeamId
     const teamStore = useTeamStore()
@@ -122,6 +126,7 @@ describe('DropdownActions', () => {
     vi.restoreAllMocks()
     vi.useRealTimers()
   })
+
   describe('Action handling', () => {
     it('should handle enable claim properly', async () => {
       //@ts-expect-error only mocking necessary variables
@@ -141,26 +146,15 @@ describe('DropdownActions', () => {
       //@ts-expect-error not visible on wrapper.vm
       await wrapper.vm.enableClaim()
 
-      // Should show update claim status error
+      // Should show success toast after mutation
       expect(mocks.mockWagmiCore.writeContract).toBeCalled()
-      //@ts-expect-error not visible on wrapper
-      expect(wrapper.vm.weeklyClaimSyncUrl).toBe('/weeklyclaim/sync/?teamId=1')
+      expect(mockSyncMutateAsync).toHaveBeenCalled()
       expect(mocks.mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim enabled')
     })
 
     it('should handle enable claim errors properly', async () => {
-      const { useCustomFetch } = await import('@/composables')
-
-      //@ts-expect-error only mocking required values
-      vi.mocked(useCustomFetch).mockReturnValue({
-        post: vi.fn().mockReturnThis(),
-        json: vi.fn().mockReturnValue({
-          execute: vi.fn().mockResolvedValue({}),
-          error: ref(new Error('Update failed'))
-        })
-      })
-
-      //@ts-expect-error only mocking nnecessary values
+      // Test when CashRemuneration address is not found
+      //@ts-expect-error only mocking necessary values
       vi.mocked(useTeamStore).mockReturnValue({
         ...mocks.mockTeamStore,
         getContractAddressByType: vi.fn(() => undefined)
@@ -193,6 +187,9 @@ describe('DropdownActions', () => {
 
       const logError = vi.spyOn(log, 'error')
 
+      // Test sync failure
+      mockSyncMutateAsync.mockRejectedValueOnce(new Error('Sync failed'))
+
       wrapper = createWrapper(true)
 
       //@ts-expect-error not visible on wrapper
@@ -200,7 +197,8 @@ describe('DropdownActions', () => {
       expect(mocks.mockToastStore.addErrorToast).toBeCalledWith('Failed to update Claim status')
 
       vi.mocked(useToastStore).mockClear()
-      vi.mocked(useCustomFetch).mockRestore()
+
+      // Test transaction reverted
       //@ts-expect-error only mocking necessary values
       vi.mocked(waitForTransactionReceipt).mockResolvedValue({
         status: 'reverted'
@@ -216,7 +214,8 @@ describe('DropdownActions', () => {
       )
 
       vi.mocked(useToastStore).mockClear()
-      vi.mocked(useCustomFetch).mockRestore()
+
+      // Test simulate error
       //@ts-expect-error only mocking necessary values
       vi.mocked(waitForTransactionReceipt).mockResolvedValue({
         status: 'success'

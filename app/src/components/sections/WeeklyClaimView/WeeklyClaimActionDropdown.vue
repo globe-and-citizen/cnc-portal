@@ -121,7 +121,7 @@ import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import { simulateContract, waitForTransactionReceipt, writeContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import { useCustomFetch } from '@/composables'
+import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
 import { keccak256, type Address } from 'viem'
 import { log, parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -177,18 +177,7 @@ const isCashRemunerationOwner = computed(() => userStore.address === cashRemuner
 
 const claimAction = ref<'disable' | null>(null)
 
-const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeamId}`)
-
-//  `/weeklyclaim/${props.weeklyClaim.id}/?action=${claimAction.value}`
-
-const { execute: syncWeeklyClaim, error: syncWeeklyClaimError } = useCustomFetch(
-  weeklyClaimSyncUrl,
-  {
-    immediate: false
-  }
-)
-  .post()
-  .json()
+const { mutateAsync: syncWeeklyClaim } = useSyncWeeklyClaimsMutation()
 
 const signLoading = ref(false)
 const resignLoading = ref(false)
@@ -232,11 +221,12 @@ const disableClaim = async () => {
 
       claimAction.value = 'disable'
 
-      await syncWeeklyClaim()
-
-      if (syncWeeklyClaimError.value) {
+      try {
+        await syncWeeklyClaim({ teamId: teamStore.currentTeamId! })
+      } catch {
         toastStore.addErrorToast('Failed to update Claim status')
       }
+
       queryClient.invalidateQueries({
         queryKey: ['weekly-claims', teamStore.currentTeamId]
       })

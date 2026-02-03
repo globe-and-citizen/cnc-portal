@@ -149,3 +149,39 @@ export const useDeleteTeamMutation = () => {
     }
   })
 }
+
+/**
+ * Response type for submit restriction query
+ */
+export interface SubmitRestrictionResponse {
+  isRestricted: boolean
+  effectiveStatus: string
+}
+
+/**
+ * Check submit restriction status for a team
+ *
+ * @endpoint GET /teams/{teamId}/submit-restriction
+ * @params { teamId: string | number } - URL path parameter
+ * @queryParams none
+ * @body none
+ */
+export const useSubmitRestrictionQuery = (teamId: MaybeRefOrGetter<string | number | null>) => {
+  return useQuery<SubmitRestrictionResponse, AxiosError>({
+    queryKey: ['submitRestriction', { teamId }],
+    queryFn: async () => {
+      const id = toValue(teamId)
+      const { data } = await apiClient.get<SubmitRestrictionResponse>(
+        `teams/${id}/submit-restriction`
+      )
+      return data
+    },
+    enabled: () => !!toValue(teamId),
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchInterval: false,
+    staleTime: 60000, // 1 minute - shorter for real-time accuracy
+    gcTime: 120000
+  })
+}

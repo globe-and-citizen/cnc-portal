@@ -78,3 +78,43 @@ export const useUserNonceQuery = (address: MaybeRefOrGetter<Address | undefined>
     gcTime: 0
   })
 }
+
+/**
+ * Response type for user search query
+ */
+export interface SearchUsersResponse {
+  users: User[]
+}
+
+/**
+ * Search users by name or address
+ *
+ * @endpoint GET /user?search=...&limit=...
+ * @params none
+ * @queryParams { search?: string, limit?: number }
+ * @body none
+ */
+export const useSearchUsersQuery = (
+  search: MaybeRefOrGetter<string | undefined>,
+  limit: MaybeRefOrGetter<number> = 100
+) => {
+  return useQuery<SearchUsersResponse, AxiosError>({
+    queryKey: ['users', 'search', { search, limit }],
+    queryFn: async () => {
+      const searchValue = toValue(search)
+      const limitValue = toValue(limit)
+
+      const queryParams: Record<string, string | number> = { limit: limitValue }
+      if (searchValue) {
+        queryParams.search = searchValue
+      }
+
+      const { data } = await apiClient.get<SearchUsersResponse>('user', { params: queryParams })
+      return data
+    },
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 300000, // 5 minutes - longer cache time for search results
+    gcTime: 600000
+  })
+}

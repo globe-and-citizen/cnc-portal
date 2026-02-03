@@ -21,7 +21,7 @@
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { simulateContract, waitForTransactionReceipt, writeContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
-import { useCustomFetch } from '@/composables'
+import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
 import { keccak256, type Address } from 'viem'
 import { log, parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -45,16 +45,7 @@ const cashRemunerationAddress = computed(() =>
 
 const claimAction = ref<'enable' | null>(null)
 
-const weeklyClaimSyncUrl = computed(() => `/weeklyclaim/sync/?teamId=${teamStore.currentTeamId}`)
-
-const { execute: syncWeeklyClaim, error: syncWeeklyClaimError } = useCustomFetch(
-  weeklyClaimSyncUrl,
-  {
-    immediate: false
-  }
-)
-  .post()
-  .json()
+const { mutateAsync: syncWeeklyClaim } = useSyncWeeklyClaimsMutation()
 
 const isLoading = ref(false)
 const isLoad = computed(() => isLoading.value)
@@ -98,11 +89,12 @@ const enableClaim = async () => {
 
       claimAction.value = 'enable'
 
-      await syncWeeklyClaim()
-
-      if (syncWeeklyClaimError.value) {
+      try {
+        await syncWeeklyClaim({ teamId: teamStore.currentTeamId! })
+      } catch {
         toastStore.addErrorToast('Failed to update Claim status')
       }
+
       queryClient.invalidateQueries({
         queryKey: ['weekly-claims', teamStore.currentTeamId]
       })
