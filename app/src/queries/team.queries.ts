@@ -6,6 +6,33 @@ import { toValue } from 'vue'
 import type { AxiosError } from 'axios'
 
 /**
+ * Query key factory for team-related queries
+ */
+export const teamKeys = {
+  all: ['teams'] as const,
+  lists: () => [...teamKeys.all, 'list'] as const,
+  list: (userAddress?: string | null) => [...teamKeys.lists(), { userAddress }] as const,
+  details: () => [...teamKeys.all, 'detail'] as const,
+  detail: (teamId: string | null) => [...teamKeys.details(), { teamId }] as const
+}
+
+/**
+ * Query parameters for fetching teams
+ */
+export interface TeamsQueryParams {
+  /** Optional user address to filter teams */
+  userAddress?: string
+}
+
+/**
+ * Path parameters for team endpoints
+ */
+export interface TeamPathParams {
+  /** Team ID */
+  teamId: string
+}
+
+/**
  * Fetch all teams for a user, for the authenticated user it will be his teams
  *
  * @endpoint GET /teams
@@ -15,13 +42,13 @@ import type { AxiosError } from 'axios'
  *
  * @param userAddress - Optional user address to filter teams by specific user
  */
-export const useTeamsQuery = (userAddress?: MaybeRefOrGetter<string | null | undefined>) => {
+export const useGetTeamsQuery = (userAddress?: MaybeRefOrGetter<string | null | undefined>) => {
   return useQuery<Team[], AxiosError>({
-    queryKey: ['teams', { userAddress }],
+    queryKey: teamKeys.list(toValue(userAddress)),
     queryFn: async () => {
       const address = toValue(userAddress)
       // Query params: passed as URL query string (?userAddress=xxx)
-      const queryParams = address ? { userAddress: address } : {}
+      const queryParams: TeamsQueryParams = address ? { userAddress: address } : {}
 
       const { data } = await apiClient.get<Team[]>('teams', { params: queryParams })
       return data
@@ -42,9 +69,9 @@ export const useTeamsQuery = (userAddress?: MaybeRefOrGetter<string | null | und
  * @queryParams none
  * @body none
  */
-export const useTeamQuery = (teamId: MaybeRefOrGetter<string | null>) => {
+export const useGetTeamQuery = (teamId: MaybeRefOrGetter<string | null>) => {
   return useQuery<Team, AxiosError>({
-    queryKey: ['team', { teamId }],
+    queryKey: teamKeys.detail(toValue(teamId)),
     queryFn: async () => {
       const id = toValue(teamId)
       const { data } = await apiClient.get<Team>(`teams/${id}`)
@@ -82,7 +109,7 @@ export const useCreateTeamMutation = () => {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] })
+      queryClient.invalidateQueries({ queryKey: teamKeys.all })
     }
   })
 }
@@ -108,7 +135,7 @@ export interface UpdateTeamBody extends Partial<Team> {}
  * @endpoint PUT /teams/{id}
  * @params { id: string } - URL path parameter
  * @queryParams none
- * @body Partial<Team> - team data to update
+ * @body UpdateTeamBody - team data to update
  */
 export const useUpdateTeamMutation = () => {
   const queryClient = useQueryClient()
@@ -119,17 +146,17 @@ export const useUpdateTeamMutation = () => {
       return data
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['team', { teamId: String(variables.id) }] })
-      queryClient.invalidateQueries({ queryKey: ['teams'] })
+      queryClient.invalidateQueries({ queryKey: teamKeys.detail(variables.id) })
+      queryClient.invalidateQueries({ queryKey: teamKeys.all })
     }
   })
 }
 
 /**
- * Mutation input for useDeleteTeamMutation
+ * Path parameters for deleting a team
  */
-export interface DeleteTeamInput {
-  /** URL path parameter: team ID */
+export interface DeleteTeamPathParams {
+  /** Team ID */
   teamId: string
 }
 
@@ -137,20 +164,35 @@ export interface DeleteTeamInput {
  * Delete a team
  *
  * @endpoint DELETE /teams/{teamId}
- * @params { teamId: string } - URL path parameter
+ * @params DeleteTeamPathParams - URL path parameter
  * @queryParams none
  * @body none
  */
 export const useDeleteTeamMutation = () => {
   const queryClient = useQueryClient()
 
-  return useMutation<void, AxiosError, DeleteTeamInput>({
+  return useMutation<void, AxiosError, DeleteTeamPathParams>({
     mutationFn: async ({ teamId }) => {
       const { data } = await apiClient.delete(`teams/${teamId}`)
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] })
+      queryClient.invalidateQueries({ queryKey: teamKeys.all })
     }
   })
 }
+
+/**
+ * @deprecated Use useGetTeamsQuery instead
+ */
+export const useTeamsQuery = useGetTeamsQuery
+
+/**
+ * @deprecated Use useGetTeamQuery instead
+ */
+export const useTeamQuery = useGetTeamQuery
+
+/**
+ * @deprecated Use DeleteTeamPathParams instead
+ */
+export type DeleteTeamInput = DeleteTeamPathParams

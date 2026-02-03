@@ -7,12 +7,45 @@ import type { Address } from 'viem'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 
 /**
- * Hook parameters for useTeamWeeklyClaimsQuery
+ * Query key factory for weekly claim-related queries
  */
-export interface UseTeamWeeklyClaimsQueryParams {
+export const weeklyClaimKeys = {
+  all: ['weeklyClaims'] as const,
+  teams: () => [...weeklyClaimKeys.all, 'team'] as const,
+  team: (teamId: string | number | null | undefined, userAddress?: Address, status?: string) =>
+    [...weeklyClaimKeys.teams(), { teamId, userAddress, status }] as const,
+  details: () => [...weeklyClaimKeys.all, 'detail'] as const,
+  detail: (claimId: string | number | null | undefined) =>
+    [...weeklyClaimKeys.details(), { claimId }] as const
+}
+
+/**
+ * Query parameters for fetching team weekly claims
+ */
+export interface TeamWeeklyClaimsQueryParams {
+  /** Team ID */
+  teamId: string | number
+  /** Optional member address filter */
+  memberAddress?: string
+  /** Optional status filter */
+  status?: 'pending' | 'signed' | 'withdrawn' | 'disabled'
+}
+
+/**
+ * Hook parameters for useGetTeamWeeklyClaimsQuery
+ */
+export interface UseGetTeamWeeklyClaimsQueryParams {
   teamId?: MaybeRefOrGetter<string | number | null>
   userAddress?: MaybeRefOrGetter<Address | undefined>
   status?: MaybeRefOrGetter<'pending' | 'signed' | 'withdrawn' | 'disabled' | undefined>
+}
+
+/**
+ * Path parameters for weekly claim endpoints
+ */
+export interface WeeklyClaimPathParams {
+  /** Claim ID */
+  claimId: number | string
 }
 
 /**
@@ -20,26 +53,23 @@ export interface UseTeamWeeklyClaimsQueryParams {
  *
  * @endpoint GET /weeklyClaim/
  * @params none
- * @queryParams { teamId: string | number, memberAddress?: string, status?: string }
+ * @queryParams TeamWeeklyClaimsQueryParams
  * @body none
  */
-export const useTeamWeeklyClaimsQuery = (hookParams: UseTeamWeeklyClaimsQueryParams) => {
+export const useGetTeamWeeklyClaimsQuery = (hookParams: UseGetTeamWeeklyClaimsQueryParams) => {
   return useQuery<WeeklyClaim[], AxiosError>({
-    queryKey: [
-      'teamWeeklyClaims',
-      {
-        teamId: hookParams.teamId,
-        userAddress: hookParams.userAddress,
-        status: hookParams.status
-      }
-    ],
+    queryKey: weeklyClaimKeys.team(
+      toValue(hookParams.teamId),
+      toValue(hookParams.userAddress),
+      toValue(hookParams.status)
+    ),
     queryFn: async () => {
       const teamId = toValue(hookParams.teamId)
       const userAddress = toValue(hookParams.userAddress)
       const statusValue = toValue(hookParams.status)
 
       // Query params: passed as URL query string (?teamId=xxx&memberAddress=xxx&status=xxx)
-      const queryParams: Record<string, string | number> = { teamId: teamId! }
+      const queryParams: TeamWeeklyClaimsQueryParams = { teamId: teamId! }
       if (userAddress) {
         queryParams.memberAddress = userAddress
       }
@@ -64,13 +94,13 @@ export const useTeamWeeklyClaimsQuery = (hookParams: UseTeamWeeklyClaimsQueryPar
  * Fetch a single weekly claim by ID
  *
  * @endpoint GET /weeklyClaim/{claimId}
- * @params { claimId: string | number } - URL path parameter
+ * @params WeeklyClaimPathParams - URL path parameter
  * @queryParams none
  * @body none
  */
-export const useWeeklyClaimByIdQuery = (claimId: MaybeRefOrGetter<string | number | null>) => {
+export const useGetWeeklyClaimByIdQuery = (claimId: MaybeRefOrGetter<string | number | null>) => {
   return useQuery<WeeklyClaim, AxiosError>({
-    queryKey: ['weeklyClaim', { claimId }],
+    queryKey: weeklyClaimKeys.detail(toValue(claimId)),
     queryFn: async () => {
       const id = toValue(claimId)
 
@@ -93,6 +123,22 @@ export const useWeeklyClaimByIdQuery = (claimId: MaybeRefOrGetter<string | numbe
 export type WeeklyClaimAction = 'sign' | 'enable' | 'disable' | 'withdraw'
 
 /**
+ * Query parameters for updating weekly claim
+ */
+export interface UpdateWeeklyClaimQueryParams {
+  /** Action to perform */
+  action: WeeklyClaimAction
+}
+
+/**
+ * Request body for updating weekly claim (sign action)
+ */
+export interface UpdateWeeklyClaimBody {
+  /** Signature (required only for 'sign' action) */
+  signature?: string
+}
+
+/**
  * Mutation input for useUpdateWeeklyClaimMutation
  */
 export interface UpdateWeeklyClaimInput {
@@ -108,40 +154,43 @@ export interface UpdateWeeklyClaimInput {
  * Update a weekly claim (sign, enable, disable, or withdraw)
  *
  * @endpoint PUT /weeklyClaim/{claimId}
- * @params { claimId: number | string } - URL path parameter
- * @queryParams { action: 'sign' | 'enable' | 'disable' | 'withdraw' }
- * @body { signature?: string } - Required only for 'sign' action
+ * @params WeeklyClaimPathParams - URL path parameter
+ * @queryParams UpdateWeeklyClaimQueryParams
+ * @body UpdateWeeklyClaimBody - Required only for 'sign' action
  */
 export const useUpdateWeeklyClaimMutation = () => {
   const queryClient = useQueryClient()
   return useMutation<void, AxiosError, UpdateWeeklyClaimInput>({
     mutationFn: async ({ claimId, action, signature }) => {
       // Query params: ?action=xxx
-      const queryParams = { action }
+      const queryParams: UpdateWeeklyClaimQueryParams = { action }
       // Body: signature data (only included if provided)
-      const body = signature ? { signature } : {}
+      const body: UpdateWeeklyClaimBody = signature ? { signature } : {}
 
       await apiClient.put(`/weeklyClaim/${claimId}`, body, { params: queryParams })
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['weeklyClaim', { claimId: variables.claimId }]
+        queryKey: weeklyClaimKeys.detail(variables.claimId)
       })
       queryClient.invalidateQueries({
-        queryKey: ['teamWeeklyClaims']
+        queryKey: weeklyClaimKeys.teams()
       })
     }
   })
 }
 
 /**
- * Mutation input for useSyncWeeklyClaimsMutation
+ * Query parameters for syncing weekly claims
  */
-export interface SyncWeeklyClaimsInput {
-  /** Query parameter: team ID */
+export interface SyncWeeklyClaimsQueryParams {
+  /** Team ID */
   teamId: number | string
 }
 
+/**
+ * Response from syncing weekly claims
+ */
 export interface SyncWeeklyClaimsResponse {
   teamId: number
   totalProcessed: number
@@ -161,15 +210,15 @@ export interface SyncWeeklyClaimsResponse {
  *
  * @endpoint POST /weeklyClaim/sync
  * @params none
- * @queryParams { teamId: number | string }
+ * @queryParams SyncWeeklyClaimsQueryParams
  * @body {} (empty object)
  */
 export const useSyncWeeklyClaimsMutation = () => {
   const queryClient = useQueryClient()
-  return useMutation<SyncWeeklyClaimsResponse, AxiosError, SyncWeeklyClaimsInput>({
+  return useMutation<SyncWeeklyClaimsResponse, AxiosError, SyncWeeklyClaimsQueryParams>({
     mutationFn: async ({ teamId }) => {
       // Query params: ?teamId=xxx
-      const queryParams = { teamId }
+      const queryParams: SyncWeeklyClaimsQueryParams = { teamId }
       const { data } = await apiClient.post<SyncWeeklyClaimsResponse>(
         '/weeklyClaim/sync',
         {},
@@ -181,8 +230,28 @@ export const useSyncWeeklyClaimsMutation = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['teamWeeklyClaims', { teamId: String(variables.teamId) }]
+        queryKey: weeklyClaimKeys.team(variables.teamId, undefined, undefined)
       })
     }
   })
 }
+
+/**
+ * @deprecated Use useGetTeamWeeklyClaimsQuery instead
+ */
+export const useTeamWeeklyClaimsQuery = useGetTeamWeeklyClaimsQuery
+
+/**
+ * @deprecated Use UseGetTeamWeeklyClaimsQueryParams instead
+ */
+export type UseTeamWeeklyClaimsQueryParams = UseGetTeamWeeklyClaimsQueryParams
+
+/**
+ * @deprecated Use useGetWeeklyClaimByIdQuery instead
+ */
+export const useWeeklyClaimByIdQuery = useGetWeeklyClaimByIdQuery
+
+/**
+ * @deprecated Use SyncWeeklyClaimsQueryParams instead
+ */
+export type SyncWeeklyClaimsInput = SyncWeeklyClaimsQueryParams

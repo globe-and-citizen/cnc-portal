@@ -7,17 +7,48 @@ import type { Address } from 'viem'
 import type { AxiosError } from 'axios'
 
 /**
+ * Query key factory for user-related queries
+ */
+export const userKeys = {
+  all: ['users'] as const,
+  details: () => [...userKeys.all, 'detail'] as const,
+  detail: (address: Address | undefined) => [...userKeys.details(), { address }] as const,
+  nonces: () => [...userKeys.all, 'nonce'] as const,
+  nonce: (address: Address | undefined) => [...userKeys.nonces(), { address }] as const
+}
+
+/**
+ * Path parameters for user endpoints
+ */
+export interface UserPathParams {
+  /** User wallet address */
+  address: string
+}
+
+/**
+ * Request body for updating a user
+ */
+export interface UpdateUserBody extends Partial<User> {
+  /** Optional team ID for user-team association */
+  teamId?: string
+}
+
+/**
  * Mutation input for useUpdateUserMutation
  */
 export interface UpdateUserInput {
   /** URL path parameter: user address */
   address: string
   /** Request body: user data to update */
-  userData: Partial<User & { teamId?: string }>
+  userData: UpdateUserBody
 }
 
 /**
  * Update an existing user
+ *
+ * @endpoint PUT /user/{address}
+ * @params UserPathParams - URL path parameter
+ * @body UpdateUserBody - user data to update
  */
 export const useUpdateUserMutation = () => {
   const queryClient = useQueryClient()
@@ -29,8 +60,8 @@ export const useUpdateUserMutation = () => {
     },
     onSuccess: (_, variables) => {
       // Invalidate specific user and users list
-      queryClient.invalidateQueries({ queryKey: ['user', { address: String(variables.address) }] })
-      // queryClient.invalidateQueries({ queryKey: ['users'] })
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.address as Address) })
+      // queryClient.invalidateQueries({ queryKey: userKeys.all })
     }
   })
 }
@@ -39,13 +70,13 @@ export const useUpdateUserMutation = () => {
  * Fetch user data by address
  *
  * @endpoint GET /user/{userAddress}
- * @params { userAddress: Address } - URL path parameter
+ * @params UserPathParams - URL path parameter
  * @queryParams none
  * @body none
  */
-export const useUserQuery = (address: MaybeRefOrGetter<Address | undefined>) => {
+export const useGetUserQuery = (address: MaybeRefOrGetter<Address | undefined>) => {
   return useQuery({
-    queryKey: ['user', { address }],
+    queryKey: userKeys.detail(toValue(address)),
     queryFn: async () => {
       const userAddress = toValue(address)
       const { data } = await apiClient.get<Partial<User>>(`user/${userAddress}`)
@@ -60,13 +91,13 @@ export const useUserQuery = (address: MaybeRefOrGetter<Address | undefined>) => 
  * Fetch user nonce by address (for SIWE)
  *
  * @endpoint GET /user/nonce/{userAddress}
- * @params { userAddress: Address } - URL path parameter
+ * @params UserPathParams - URL path parameter
  * @queryParams none
  * @body none
  */
-export const useUserNonceQuery = (address: MaybeRefOrGetter<Address | undefined>) => {
+export const useGetUserNonceQuery = (address: MaybeRefOrGetter<Address | undefined>) => {
   return useQuery({
-    queryKey: ['user', 'nonce', { address }],
+    queryKey: userKeys.nonce(toValue(address)),
     queryFn: async () => {
       const userAddress = toValue(address)
       const { data } = await apiClient.get<Partial<User>>(`user/nonce/${userAddress}`)
@@ -78,3 +109,13 @@ export const useUserNonceQuery = (address: MaybeRefOrGetter<Address | undefined>
     gcTime: 0
   })
 }
+
+/**
+ * @deprecated Use useGetUserQuery instead
+ */
+export const useUserQuery = useGetUserQuery
+
+/**
+ * @deprecated Use useGetUserNonceQuery instead
+ */
+export const useUserNonceQuery = useGetUserNonceQuery
