@@ -73,8 +73,8 @@ const dynamicLoading = ref({
 })
 
 // Mutations for team and contract updates
-const { mutateAsync: updateTeam } = useUpdateTeamMutation()
-const { mutateAsync: syncContracts } = useSyncContractsMutation()
+const { mutateAsync: updateTeam, error: updateTeamError } = useUpdateTeamMutation()
+const { mutateAsync: syncContracts, error: syncContractsError } = useSyncContractsMutation()
 
 // Officer contract creation
 const {
@@ -367,21 +367,21 @@ useWatchContractEvent({
 
     const teamId = props.createdTeamData.id
 
-    try {
-      await updateTeam({
-        id: teamId,
-        teamData: { officerAddress: proxyAddress }
-      })
-    } catch {
+    await updateTeam({
+      id: teamId,
+      teamData: { officerAddress: proxyAddress }
+    })
+
+    if (updateTeamError.value) {
       log.error('Error updating officer address')
       addErrorToast('Error updating officer address')
       loading.value = false
       return
     }
 
-    try {
-      await syncContracts({ teamId })
-    } catch {
+    await syncContracts({ teamId })
+
+    if (syncContractsError.value) {
       log.error('Error updating contracts')
       addErrorToast('Error updating contracts')
       loading.value = false
