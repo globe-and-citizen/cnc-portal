@@ -61,9 +61,9 @@ export const useTeamQuery = (teamId: MaybeRefOrGetter<string | null>) => {
 }
 
 /**
- * Mutation input for useCreateTeamMutation
+ * Request body for creating a team
  */
-export type CreateTeamInput = Partial<Team>
+export interface CreateTeamBody extends Partial<Team> {}
 
 /**
  * Create a new team
@@ -71,13 +71,13 @@ export type CreateTeamInput = Partial<Team>
  * @endpoint POST /teams
  * @params none
  * @queryParams none
- * @body Partial<Team> - team data to create
+ * @body CreateTeamBody - team data to create
  */
 export const useCreateTeamMutation = () => {
   const queryClient = useQueryClient()
 
-  return useMutation<Team, AxiosError, CreateTeamInput>({
-    mutationFn: async (body: CreateTeamInput) => {
+  return useMutation<Team, AxiosError, CreateTeamBody>({
+    mutationFn: async (body: CreateTeamBody) => {
       const { data } = await apiClient.post<Team>('teams', body)
       return data
     },
@@ -96,6 +96,11 @@ export interface UpdateTeamInput {
   /** Request body: team data to update */
   teamData: Partial<Team>
 }
+
+/**
+ * Request body for updating a team
+ */
+export interface UpdateTeamBody extends Partial<Team> {}
 
 /**
  * Update an existing team

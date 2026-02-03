@@ -38,21 +38,21 @@ export const useBodActionsQuery = (hookParams: UseBodActionsQueryParams) => {
 }
 
 /**
- * Mutation input for useCreateActionMutation
+ * Request body for creating an action
  */
-export type CreateActionInput = Partial<Action>
+export interface CreateActionBody extends Partial<Action> {}
 
 /**
  * Create a new action
  *
  * @endpoint POST /actions/
- * @body Partial<Action> - The action data to create
+ * @body CreateActionBody - The action data to create
  */
 export const useCreateActionMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (body: CreateActionInput) => {
+    mutationFn: async (body: CreateActionBody) => {
       const { data } = await apiClient.post<Action>('actions/', body)
       return data
     },

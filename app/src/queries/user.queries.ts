@@ -7,23 +7,23 @@ import type { Address } from 'viem'
 import type { AxiosError } from 'axios'
 
 /**
+ * Mutation input for useUpdateUserMutation
+ */
+export interface UpdateUserInput {
+  /** URL path parameter: user address */
+  address: string
+  /** Request body: user data to update */
+  userData: Partial<User & { teamId?: string }>
+}
+
+/**
  * Update an existing user
  */
 export const useUpdateUserMutation = () => {
   const queryClient = useQueryClient()
 
-  return useMutation<
-    User,
-    AxiosError,
-    { address: string; userData: Partial<User & { teamId?: string }> }
-  >({
-    mutationFn: async ({
-      address,
-      userData
-    }: {
-      address: string
-      userData: Partial<User & { teamId?: string }>
-    }) => {
+  return useMutation<User, AxiosError, UpdateUserInput>({
+    mutationFn: async ({ address, userData }: UpdateUserInput) => {
       const { data } = await apiClient.put<User>(`user/${address}`, userData)
       return data
     },

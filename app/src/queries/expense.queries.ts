@@ -27,9 +27,24 @@ export const useExpensesQuery = (teamId: MaybeRefOrGetter<string | null>) => {
 }
 
 /**
- * Mutation input for useAddExpenseMutation
+ * Request body for adding an expense
  */
-export type AddExpenseInput = Record<string, unknown>
+export interface AddExpenseBody {
+  /** Expense account data including budget limits */
+  data: {
+    amount: bigint | number
+    frequencyType: number
+    customFrequency: bigint | number
+    startDate: number
+    endDate: number
+    tokenAddress: string
+    approvedAddress: string
+  }
+  /** Signature for the expense account data */
+  signature?: `0x${string}` | string
+  /** Team ID this expense belongs to */
+  teamId?: string | number | string[]
+}
 
 /**
  * Add expense data with signature
@@ -37,13 +52,13 @@ export type AddExpenseInput = Record<string, unknown>
  * @endpoint POST /expense
  * @params none
  * @queryParams none
- * @body Record<string, unknown> - expense account data
+ * @body AddExpenseBody - expense account data
  */
 export const useAddExpenseMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (body: AddExpenseInput) => {
+    mutationFn: async (body: AddExpenseBody) => {
       const { data } = await apiClient.post('/expense', body)
       return data
     },
