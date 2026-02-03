@@ -195,8 +195,6 @@ const handleTransfer = async (data: {
   const tokenAddress = data.token.symbol === 'USDCe' ? USDC_E_ADDRESS : USDC_ADDRESS
   try {
     const isNativeToken = data.token.symbol === NETWORK.currencySymbol
-    const isUsdce = data.token.symbol === 'USDCe'
-    const isUsdc = data.token.symbol === 'USDC'
     const transferAmount = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
 
     if (isBodAction.value) {
@@ -235,22 +233,13 @@ const handleTransfer = async (data: {
         functionName: 'transfer',
         args: [data.address.address, transferAmount]
       })
-    } else if (isUsdc) {
+    } else {
       await transfer({
         address: props.bankAddress,
         abi: BANK_ABI,
         functionName: 'transferToken',
         args: [tokenAddress, data.address.address, transferAmount]
       })
-    } else if (isUsdce) {
-      await transfer({
-        address: props.bankAddress,
-        abi: BANK_ABI,
-        functionName: 'transferToken',
-        args: [USDC_E_ADDRESS as Address, data.address.address, transferAmount]
-      })
-    } else {
-      throw new Error('Unsupported token type')
     }
 
     if (!transferHash.value) {
@@ -258,7 +247,6 @@ const handleTransfer = async (data: {
     }
 
     await waitForTransactionReceipt(config, { hash: transferHash.value })
-    const invalidationAddress = isUsdc ? USDC_ADDRESS : USDC_E_ADDRESS
 
     // Invalidate relevant queries
     const queryKey = isNativeToken
