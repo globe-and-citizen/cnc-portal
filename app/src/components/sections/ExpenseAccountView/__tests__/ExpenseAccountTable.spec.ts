@@ -9,10 +9,6 @@ import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import { useExpensesQuery } from '@/queries'
 
-const mocks = vi.hoisted(() => ({
-  mockReadContract: vi.fn()
-}))
-
 const START_DATE = new Date().getTime() / 1000 + 60 * 60
 const END_DATE = new Date().getTime() / 1000 + 2 * 60 * 60
 
@@ -90,63 +86,6 @@ vi.mock('vue-router', async (importOriginal) => {
   return {
     ...actual,
     useRoute: vi.fn(() => ({ params: { id: 1 } }))
-  }
-})
-
-const mockUseReadContractRefetch = vi.fn()
-const mockUseReadContract = {
-  data: ref<string | null>(null),
-  isLoading: ref(false),
-  error: ref(null),
-  refetch: mockUseReadContractRefetch //vi.fn()
-}
-
-const mockUseWriteContract = {
-  writeContract: vi.fn(),
-  error: ref(null),
-  isPending: ref(false),
-  data: ref(null)
-}
-
-const mockUseBalance = {
-  data: ref(null),
-  refetch: vi.fn(),
-  error: ref(null),
-  isLoading: ref(false)
-}
-
-const mockUseWaitForTransactionReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false)
-}
-
-const mockUseSignTypedData = {
-  error: ref<Error | null>(null),
-  data: ref<string | undefined>('0xExpenseDataSignature'),
-  signTypedData: vi.fn()
-}
-
-// Mocking wagmi functions
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useReadContract: vi.fn(() => {
-      return { ...mockUseReadContract, data: ref(`0xContractOwner`) }
-    }),
-    useWriteContract: vi.fn(() => mockUseWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
-    useBalance: vi.fn(() => mockUseBalance),
-    useChainId: vi.fn(() => ref('0xChainId')),
-    useSignTypedData: vi.fn(() => mockUseSignTypedData)
-  }
-})
-
-vi.mock('@wagmi/core', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    readContract: mocks.mockReadContract
   }
 })
 

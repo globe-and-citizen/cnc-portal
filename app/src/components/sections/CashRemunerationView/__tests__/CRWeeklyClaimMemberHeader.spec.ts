@@ -35,12 +35,6 @@ vi.mock('@/composables/useCustomFetch', () => ({
   useCustomFetch: mocks.mockUseCustomFetch
 }))
 
-vi.mock('@/stores', () => ({
-  useUserDataStore: mocks.mockUseUserDataStore,
-  useTeamStore: mocks.mockUseTeamStore,
-  useToastStore: mocks.mockUseToastStore
-}))
-
 describe.skip('CRWeeklyClaimMemberHeader', () => {
   beforeEach(() => {
     vi.clearAllMocks()

@@ -5,21 +5,6 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 
 const mockError = ref<unknown>(null)
-// const mockToastError = vi.fn()
-
-// vi.mock('@/stores', async (importOriginal) => {
-//   const actual: object = await importOriginal()
-//   return {
-//     ...actual,
-//     useTeamStore: vi.fn(() => ({
-//       currentTeamId: 123,
-//       currentTeam: { id: 123, name: 'Test Team' }
-//     })),
-//     useToastStore: vi.fn(() => ({
-//       addErrorToast: mockToastError
-//     })),
-//   }
-// })
 
 vi.mock('@/utils', async (importOriginal) => {
   const original = await importOriginal()

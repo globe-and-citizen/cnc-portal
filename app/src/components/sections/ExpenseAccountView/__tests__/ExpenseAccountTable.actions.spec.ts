@@ -12,10 +12,6 @@ import * as utils from '@/utils'
 import { useExpensesQuery } from '@/queries'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 
-const mocks = vi.hoisted(() => ({
-  mockReadContract: vi.fn()
-}))
-
 const START_DATE = new Date().getTime() / 1000 + 60 * 60
 const END_DATE = new Date().getTime() / 1000 + 2 * 60 * 60
 
@@ -142,14 +138,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useBalance: vi.fn(() => mockUseBalance),
     useChainId: vi.fn(() => ref('0xChainId')),
     useSignTypedData: vi.fn(() => mockUseSignTypedData)
-  }
-})
-
-vi.mock('@wagmi/core', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    readContract: mocks.mockReadContract
   }
 })
 

@@ -26,23 +26,6 @@ const mocks = vi.hoisted(() => {
 type MockFetchReturn = {
   post: () => { json: () => Promise<unknown> }
 }
-vi.mock('@wagmi/core', async (importOriginal) => {
-  const actual: object = await importOriginal()
-
-  return {
-    ...actual,
-    writeContract: vi.fn().mockResolvedValue('0xMOCK_TX'),
-    readContract: vi.fn().mockResolvedValue(BigInt('1000000000000000000')),
-    waitForTransactionReceipt: vi.fn().mockResolvedValue({ status: 'success' }),
-    getWalletClient: vi.fn().mockResolvedValue({
-      deployContract: vi.fn().mockResolvedValue('0xMOCK_DEPLOYED'),
-      account: { address: '0xMOCK_ACCOUNT' }
-    }),
-    getPublicClient: vi.fn().mockReturnValue({
-      getBlockNumber: vi.fn().mockResolvedValue(100n)
-    })
-  }
-})
 
 //const campaignAbi = AdCampaignArtifact.abi
 vi.mock('@/composables/useContractFunctions', async (importOriginal) => {
@@ -67,10 +50,6 @@ const { mockUseCustomFetch, mockTeamStore } = vi.hoisted(() => ({
 vi.mock('@/stores', () => ({
   useToastStore: () => mockToastStore,
   useTeamStore: () => mockTeamStore
-}))
-
-vi.mock('@/stores/user', () => ({
-  useUserDataStore: () => ({ address: '0xUSER' })
 }))
 
 // Mock useCustomFetch so we can control success/error of addContractToTeam
