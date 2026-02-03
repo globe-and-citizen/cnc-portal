@@ -6,10 +6,26 @@ import { toValue } from 'vue'
 import axios from 'axios' // Import axios directly, without the apiClient instance
 import { SAFE_API_KEY } from '@/constant'
 
+/**
+ * Query key factory for polymarket-related queries
+ */
+export const polymarketKeys = {
+  all: ['polymarket'] as const,
+  marketData: (url: string | null) => [...polymarketKeys.all, 'marketData', { url }] as const,
+  safeBalances: (safeAddress: string | null, chainName: string | null) =>
+    [...polymarketKeys.all, 'safeBalances', { safeAddress, chainName }] as const
+}
+
+/**
+ * Polymarket event containing markets
+ */
 interface PolymarketEvent {
   markets: PolymarketMarket[]
 }
 
+/**
+ * Safe balance item
+ */
 interface SafeBalance {
   balance: string
   tokenAddress: string | null
@@ -21,8 +37,19 @@ interface SafeBalance {
   } | null
 }
 
+/**
+ * Response from Safe balances API
+ */
 export interface SafeBalancesResponse {
   results: SafeBalance[]
+}
+
+/**
+ * Query parameters for fetching market data
+ */
+export interface MarketDataQueryParams {
+  /** Polymarket event URL */
+  url: string
 }
 
 /**
@@ -30,15 +57,15 @@ export interface SafeBalancesResponse {
  *
  * @endpoint GET /polymarket/market-data
  * @params none
- * @queryParams { url: string } - the polymarket event URL
+ * @queryParams MarketDataQueryParams
  * @body none
  */
-export const useMarketData = (endpoint: MaybeRefOrGetter<string | null>) => {
+export const useGetMarketDataQuery = (endpoint: MaybeRefOrGetter<string | null>) => {
   return useQuery({
-    queryKey: ['marketData'],
+    queryKey: polymarketKeys.marketData(toValue(endpoint)),
     queryFn: async () => {
       // Query params: passed as URL query string (?url=xxx)
-      const queryParams = { url: toValue(endpoint) }
+      const queryParams: MarketDataQueryParams = { url: toValue(endpoint)! }
 
       const { data } = await apiClient.get<PolymarketEvent | PolymarketMarket>(
         '/polymarket/market-data',
@@ -60,13 +87,13 @@ export const useMarketData = (endpoint: MaybeRefOrGetter<string | null>) => {
  * @queryParams none
  * @body none
  */
-export const useSafeBalances = (
+export const useGetSafeBalancesQuery = (
   safeAddress: MaybeRefOrGetter<string | null>,
   chainName: MaybeRefOrGetter<string | null> = 'pol'
 ) => {
   return useQuery({
     // Add chainName to the queryKey so different networks cache separately
-    queryKey: ['safeBalances', safeAddress, chainName],
+    queryKey: polymarketKeys.safeBalances(toValue(safeAddress), toValue(chainName)),
     queryFn: async () => {
       const address = toValue(safeAddress)
       const chain = toValue(chainName)
@@ -91,3 +118,13 @@ export const useSafeBalances = (
     refetchInterval: 30000 // Refresh every 30 seconds
   })
 }
+
+/**
+ * @deprecated Use useGetMarketDataQuery instead
+ */
+export const useMarketData = useGetMarketDataQuery
+
+/**
+ * @deprecated Use useGetSafeBalancesQuery instead
+ */
+export const useSafeBalances = useGetSafeBalancesQuery

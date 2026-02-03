@@ -10,16 +10,39 @@ const chainId = currentChainId
 const txService = TX_SERVICE_BY_CHAIN[chainId]
 
 /**
+ * Query key factory for safe-related queries
+ */
+export const safeKeys = {
+  all: ['safe'] as const,
+  infos: () => [...safeKeys.all, 'info'] as const,
+  info: (safeAddress: string | undefined) => [...safeKeys.infos(), { safeAddress }] as const,
+  transactionLists: () => [...safeKeys.all, 'transactions'] as const,
+  transactions: (safeAddress: string | undefined) =>
+    [...safeKeys.transactionLists(), { safeAddress }] as const,
+  transactionDetails: () => [...safeKeys.all, 'transaction'] as const,
+  transaction: (safeTxHash: string | undefined) =>
+    [...safeKeys.transactionDetails(), { safeTxHash }] as const
+}
+
+/**
+ * Path parameters for Safe info endpoint
+ */
+export interface SafeInfoPathParams {
+  /** Safe address */
+  safeAddress: string
+}
+
+/**
  * Fetch Safe information from Transaction Service
  *
  * @endpoint GET {txService.url}/api/v1/safes/{safeAddress}/
- * @params { safeAddress: string } - URL path parameter
+ * @params SafeInfoPathParams - URL path parameter
  * @queryParams none
  * @body none
  */
-export function useSafeInfoQuery(safeAddress: MaybeRef<string | undefined>) {
+export function useGetSafeInfoQuery(safeAddress: MaybeRef<string | undefined>) {
   return useQuery<SafeInfo>({
-    queryKey: ['safe', 'info', { safeAddress }],
+    queryKey: safeKeys.info(toValue(safeAddress)),
     enabled: !!toValue(safeAddress),
     queryFn: async () => {
       const address = toValue(safeAddress)
@@ -40,13 +63,13 @@ export function useSafeInfoQuery(safeAddress: MaybeRef<string | undefined>) {
  * Fetch Safe pending transactions from Transaction Service
  *
  * @endpoint GET {txService.url}/api/v1/safes/{safeAddress}/multisig-transactions
- * @params { safeAddress: string } - URL path parameter
+ * @params SafeInfoPathParams - URL path parameter
  * @queryParams none
  * @body none
  */
-export function useSafeTransactionsQuery(safeAddress: MaybeRef<string | undefined>) {
+export function useGetSafeTransactionsQuery(safeAddress: MaybeRef<string | undefined>) {
   return useQuery<SafeTransaction[]>({
-    queryKey: ['safe', 'transactions', { safeAddress }],
+    queryKey: safeKeys.transactions(toValue(safeAddress)),
     enabled: !!toValue(safeAddress),
     queryFn: async () => {
       const address = toValue(safeAddress)
@@ -62,9 +85,6 @@ export function useSafeTransactionsQuery(safeAddress: MaybeRef<string | undefine
     refetchInterval: 300_000
   })
 }
-
-/**
-
 
 /**
  * Mutation: Deploy a new Safe
@@ -84,10 +104,26 @@ export function useDeploySafeMutation() {
     },
     onSuccess: (safeAddress) => {
       queryClient.invalidateQueries({
-        queryKey: ['safe', 'info', { safeAddress }]
+        queryKey: safeKeys.info(safeAddress)
       })
     }
   })
+}
+
+/**
+ * Path parameters for Safe transaction endpoints
+ */
+export interface SafeTransactionPathParams {
+  /** Safe transaction hash */
+  safeTxHash: string
+}
+
+/**
+ * Request body for approving a transaction
+ */
+export interface ApproveTransactionBody {
+  /** Signature data */
+  signature: string
 }
 
 /**
@@ -108,9 +144,9 @@ export interface ApproveTransactionInput {
  * Mutation: Approve a Safe transaction
  *
  * @endpoint POST {txService.url}/api/v1/multisig-transactions/{safeTxHash}/confirmations/
- * @params { safeTxHash: string } - URL path parameter
+ * @params SafeTransactionPathParams - URL path parameter
  * @queryParams none
- * @body { signature: string }
+ * @body ApproveTransactionBody
  */
 export function useApproveTransactionMutation() {
   const queryClient = useQueryClient()
@@ -128,19 +164,53 @@ export function useApproveTransactionMutation() {
     onSuccess: (_, variables) => {
       // Invalidate pending transactions
       queryClient.invalidateQueries({
-        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
+        queryKey: safeKeys.transactions(variables.safeAddress)
       })
     }
   })
 }
 
 /**
+ * Request body for proposing a transaction
+ */
+export interface ProposeTransactionBody {
+  /** Recipient address */
+  to: string
+  /** Transaction value */
+  value: string
+  /** Transaction data */
+  data: string
+  /** Operation type */
+  operation: number
+  /** Safe transaction gas */
+  safeTxGas: string
+  /** Base gas */
+  baseGas: string
+  /** Gas price */
+  gasPrice: string
+  /** Gas token address */
+  gasToken: string
+  /** Refund receiver address */
+  refundReceiver: string
+  /** Transaction nonce */
+  nonce: number
+  /** Contract transaction hash */
+  contractTransactionHash: string
+  /** Sender address */
+  sender: string
+  /** Signature */
+  signature: string
+  /** Origin information */
+  origin: string | null
+}
+
+/**
  * Mutation: Propose a Safe transaction
  *
  * @endpoint POST {txService.url}/api/v1/safes/{safeAddress}/multisig-transactions/
- * @params { safeAddress: string } - URL path parameter
+ * @params SafeInfoPathParams - URL path parameter
  * @queryParams none
- * @body ProposeTransactionParams - full transaction data
+ * @body ProposeTransactionBody - full transaction data
  */
 export function useProposeTransactionMutation() {
   const queryClient = useQueryClient()
@@ -156,7 +226,7 @@ export function useProposeTransactionMutation() {
       }
 
       // Body: transaction data to propose
-      const body = {
+      const body: ProposeTransactionBody = {
         to: transactionData.to,
         value: transactionData.value,
         data: transactionData.data,
@@ -180,7 +250,7 @@ export function useProposeTransactionMutation() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
+        queryKey: safeKeys.transactions(variables.safeAddress)
       })
     }
   })
@@ -218,10 +288,10 @@ export function useExecuteTransactionMutation() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['safe', 'info', { safeAddress: variables.safeAddress }]
+        queryKey: safeKeys.info(variables.safeAddress)
       })
       queryClient.invalidateQueries({
-        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
+        queryKey: safeKeys.transactions(variables.safeAddress)
       })
     }
   })
@@ -269,10 +339,10 @@ export function useUpdateSafeOwnersMutation() {
       console.log('the variables in useUpdateSafeOwnersMutation onSuccess:', variables)
 
       queryClient.invalidateQueries({
-        queryKey: ['safe', 'info', { safeAddress: variables.safeAddress }]
+        queryKey: safeKeys.info(variables.safeAddress)
       })
       queryClient.invalidateQueries({
-        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
+        queryKey: safeKeys.transactions(variables.safeAddress)
       })
     }
   })
@@ -282,13 +352,13 @@ export function useUpdateSafeOwnersMutation() {
  * Fetch single Safe transaction by hash from Transaction Service
  *
  * @endpoint GET {txService.url}/api/v1/multisig-transactions/{safeTxHash}/
- * @params { safeTxHash: string } - URL path parameter
+ * @params SafeTransactionPathParams - URL path parameter
  * @queryParams none
  * @body none
  */
-export function useSafeTransactionQuery(safeTxHash: MaybeRef<string | undefined>) {
+export function useGetSafeTransactionQuery(safeTxHash: MaybeRef<string | undefined>) {
   return useQuery<SafeTransaction>({
-    queryKey: ['safe', 'transaction', { safeTxHash }],
+    queryKey: safeKeys.transaction(toValue(safeTxHash)),
     enabled: !!toValue(safeTxHash),
     queryFn: async () => {
       const hash = toValue(safeTxHash)
@@ -305,3 +375,18 @@ export function useSafeTransactionQuery(safeTxHash: MaybeRef<string | undefined>
     gcTime: 300_000
   })
 }
+
+/**
+ * @deprecated Use useGetSafeInfoQuery instead
+ */
+export const useSafeInfoQuery = useGetSafeInfoQuery
+
+/**
+ * @deprecated Use useGetSafeTransactionsQuery instead
+ */
+export const useSafeTransactionsQuery = useGetSafeTransactionsQuery
+
+/**
+ * @deprecated Use useGetSafeTransactionQuery instead
+ */
+export const useSafeTransactionQuery = useGetSafeTransactionQuery
