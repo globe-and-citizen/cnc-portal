@@ -8,6 +8,8 @@ import { ref } from 'vue'
 //import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
 //import type { Abi } from 'viem'
 import { mockToastStore } from '@/tests/mocks/store.mock'
+import { useCreateContractMutation } from '@/queries/contract.queries'
+
 //vi.mock('@/stores/useToastStore')
 const deployState = {
   isDeploying: ref(false),
@@ -23,9 +25,6 @@ const mocks = vi.hoisted(() => {
     }))
   }
 })
-type MockFetchReturn = {
-  post: () => { json: () => Promise<unknown> }
-}
 
 //const campaignAbi = AdCampaignArtifact.abi
 vi.mock('@/composables/useContractFunctions', async (importOriginal) => {
@@ -38,23 +37,18 @@ vi.mock('@/composables/useContractFunctions', async (importOriginal) => {
 })
 
 // Hoisted mocks
-const { mockUseCustomFetch, mockTeamStore } = vi.hoisted(() => ({
-  mockUseCustomFetch: vi.fn(),
+const { mockTeamStore, mockCreateContractMutateAsync } = vi.hoisted(() => ({
   mockTeamStore: {
     currentTeam: { id: 'team-1' },
     getContractAddressByType: vi.fn(() => '0xTeamContractAddress')
-  }
+  },
+  mockCreateContractMutateAsync: vi.fn().mockResolvedValue({ success: true })
 }))
 
 // Mock stores used by the component
 vi.mock('@/stores', () => ({
   useToastStore: () => mockToastStore,
   useTeamStore: () => mockTeamStore
-}))
-
-// Mock useCustomFetch so we can control success/error of addContractToTeam
-vi.mock('@/composables/useCustomFetch', () => ({
-  useCustomFetch: mockUseCustomFetch
 }))
 
 describe('CreateAddCampaign.vue', () => {
@@ -68,12 +62,19 @@ describe('CreateAddCampaign.vue', () => {
     deployState.contractAddress.value = null
     deployState.error.value = null
 
-    // Default: backend succeeds
-    mockUseCustomFetch.mockReturnValue({
-      post: () => ({
-        json: vi.fn().mockResolvedValue({ success: true })
-      })
-    } as unknown as MockFetchReturn)
+    // Default: mutation succeeds
+    mockCreateContractMutateAsync.mockResolvedValue({ success: true })
+
+    // Mock the contract mutation
+    vi.mocked(useCreateContractMutation).mockReturnValue({
+      mutateAsync: mockCreateContractMutateAsync,
+      mutate: vi.fn(),
+      isPending: ref(false),
+      isError: ref(false),
+      error: ref(null),
+      data: ref(null),
+      reset: vi.fn()
+    } as unknown as ReturnType<typeof useCreateContractMutation>)
 
     // Ensure team is present for watcher guard
     mockTeamStore.currentTeam = { id: 'team-1' }
@@ -213,12 +214,19 @@ describe('CreateAddCampaign.vue', () => {
     })
 
     it('keeps modal open and shows error toast when adding contract to team fails', async () => {
-      // Force backend failure for this test deterministically
-      mockUseCustomFetch.mockReturnValue({
-        post: () => ({
-          json: vi.fn().mockRejectedValue(new Error('backend down'))
-        })
-      } as unknown as MockFetchReturn)
+      // Force mutation failure for this test
+      mockCreateContractMutateAsync.mockRejectedValue(new Error('backend down'))
+
+      // Re-mock with the failing mutation
+      vi.mocked(useCreateContractMutation).mockReturnValue({
+        mutateAsync: mockCreateContractMutateAsync,
+        mutate: vi.fn(),
+        isPending: ref(false),
+        isError: ref(false),
+        error: ref(null),
+        data: ref(null),
+        reset: vi.fn()
+      } as unknown as ReturnType<typeof useCreateContractMutation>)
 
       const wrapper = mount(CreateAddCampaign, {
         props: { bankAddress: '0xTeamContractAddress' }

@@ -186,3 +186,33 @@ export const useSyncWeeklyClaimsMutation = () => {
     }
   })
 }
+
+/**
+ * Mutation input for useDeleteClaimMutation
+ */
+export interface DeleteClaimInput {
+  /** URL path parameter: claim ID */
+  claimId: number | string
+}
+
+/**
+ * Delete a claim
+ *
+ * @endpoint DELETE /claim/{claimId}
+ * @params { claimId: number | string } - URL path parameter
+ * @queryParams none
+ * @body none
+ */
+export const useDeleteClaimMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation<void, AxiosError, DeleteClaimInput>({
+    mutationFn: async ({ claimId }) => {
+      await apiClient.delete(`/claim/${claimId}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['teamWeeklyClaims']
+      })
+    }
+  })
+}

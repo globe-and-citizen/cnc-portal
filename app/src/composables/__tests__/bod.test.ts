@@ -1,17 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useAddAction } from '../bod'
 import { readContract } from '@wagmi/core'
-import { useCustomFetch } from '../useCustomFetch'
 import { ref } from 'vue'
+import { useCreateActionMutation } from '@/queries/action.queries'
 
 // Mock external dependencies
 vi.mock('@wagmi/core', () => ({
   readContract: vi.fn()
 }))
 
-vi.mock('../useCustomFetch', () => ({
-  useCustomFetch: vi.fn()
-}))
 const mockUseReadContract = {
   data: ref<string | null>(null),
   isLoading: ref(false),
@@ -69,14 +66,21 @@ describe('useAddAction', () => {
     data: '0x789' as `0x${string}`
   }
 
-  const mockPost = vi.fn()
-
   beforeEach(() => {
     vi.clearAllMocks()
     // Mock readContract response
     vi.mocked(readContract).mockResolvedValue(BigInt(1))
-    // Mock useCustomFetch response
-    vi.mocked(useCustomFetch)
+
+    // Mock the create action mutation
+    vi.mocked(useCreateActionMutation).mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({}),
+      mutate: vi.fn(),
+      isPending: ref(false),
+      isError: ref(false),
+      error: ref(null),
+      data: ref(null),
+      reset: vi.fn()
+    } as unknown as ReturnType<typeof useCreateActionMutation>)
   })
 
   it('should handle errors during contract interaction', async () => {
@@ -88,6 +92,5 @@ describe('useAddAction', () => {
     await execute(mockTeam, mockAction)
 
     expect(consoleSpy).toHaveBeenCalled()
-    expect(mockPost).not.toHaveBeenCalled()
   })
 })

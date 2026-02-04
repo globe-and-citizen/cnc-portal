@@ -179,7 +179,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import MainContractTable from './MainContractTable.vue'
 import { ref } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { useCustomFetch } from '@/composables'
+import { useResetContractsMutation } from '@/queries/contract.queries'
 import { useRouter } from 'vue-router'
 
 const showModal = ref(false)
@@ -188,14 +188,12 @@ const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const router = useRouter()
 
-const { execute: resetContracts } = useCustomFetch('contract/reset', {
-  immediate: false
-})
-  .delete({ teamId: teamStore.currentTeamId })
-  .json()
+const { mutateAsync: resetContracts } = useResetContractsMutation()
 
 const redeployContracts = async () => {
-  await resetContracts()
+  if (teamStore.currentTeamId) {
+    await resetContracts({ teamId: teamStore.currentTeamId })
+  }
   showModal.value = false
   // redirect to team page
   await router.push({ name: 'show-team', params: { id: teamStore.currentTeamId } })

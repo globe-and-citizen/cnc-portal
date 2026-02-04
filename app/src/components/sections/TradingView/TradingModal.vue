@@ -11,114 +11,22 @@
   </div>
 
   <div class="p-6 space-y-6">
-    <!-- Outcome Selection -->
-    <div class="space-y-2">
-      <label class="text-sm text-gray-500">Select Outcome</label>
-      <div class="grid grid-cols-2 gap-3">
-        <button
-          v-for="(outcome, index) in outcomes"
-          :key="outcome.name"
-          @click="setSelectedOutcome(index)"
-          :class="[
-            'p-4 rounded-xl border transition-all duration-200 text-left',
-            selectedOutcome === index
-              ? 'border-primary bg-primary/10'
-              : 'border-base-300 bg-base-200 hover:border-primary/50'
-          ]"
-        >
-          <span class="font-semibold">{{ outcome.name }}</span>
-          <p class="font-mono text-lg text-primary mt-1">
-            {{ (outcome.buyPrice * 100).toFixed(1) }}¢
-          </p>
-        </button>
-      </div>
-    </div>
+    <outcome-selection
+      :outcomes="outcomes"
+      :selected-outcome="selectedOutcome"
+      @set-selected-outcome="setSelectedOutcome"
+    />
 
-    <!-- Order Type Toggle -->
-    <div class="space-y-2">
-      <label class="text-sm text-gray-500">Order Type</label>
-      <div class="grid grid-cols-2 gap-3">
-        <button
-          @click="setOrderType('market')"
-          :class="[
-            'h-14 rounded-lg flex items-center px-4 transition-all duration-200',
-            orderType === 'market' ? 'btn btn-primary' : 'btn btn-ghost border border-base-300'
-          ]"
-        >
-          <icon icon="heroicons:arrow-trending-up" class="w-5 h-5 mr-2" />
-          <div class="text-left">
-            <div>Market</div>
-            <div class="text-xs opacity-80">Instant execution</div>
-          </div>
-        </button>
-        <button
-          @click="setOrderType('limit')"
-          :class="[
-            'h-14 rounded-lg flex items-center px-4 transition-all duration-200',
-            orderType === 'limit' ? 'btn btn-primary' : 'btn btn-ghost border border-base-300'
-          ]"
-        >
-          <icon icon="heroicons:arrow-trending-down" class="w-5 h-5 mr-2" />
-          <div class="text-left">
-            <div>Limit</div>
-            <div class="text-xs opacity-80">Set your price</div>
-          </div>
-        </button>
-      </div>
-    </div>
+    <order-type-toggle :order-type="orderType" @set-order-type="setOrderType" />
 
-    <!-- Shares Input -->
-    <div class="space-y-2">
-      <label class="text-sm text-gray-500">Number of Shares</label>
-      <input
-        type="number"
-        placeholder="Enter amount"
-        v-model="shares"
-        class="input input-bordered w-full font-mono text-lg h-14"
-        min="0"
-        step="1"
-      />
-      <div class="text-error text-xs mt-1">
-        <div v-for="error in v$.shares.$errors" :key="error.$uid">
-          {{ error.$message }}
-        </div>
-      </div>
-    </div>
+    <trading-inputs
+      :order-type="orderType"
+      :v$="v$"
+      v-model:shares="shares"
+      v-model:limit-price="limitPrice"
+    />
 
-    <!-- Limit Price Input - Only shown for Limit orders -->
-    <div v-if="orderType === 'limit'" class="space-y-2">
-      <label class="text-sm text-gray-500">Limit Price</label>
-      <input
-        type="number"
-        placeholder="Enter limit price"
-        class="input input-bordered w-full font-mono text-lg h-14"
-        min="0"
-        step="0.01"
-        v-model="limitPrice"
-      />
-      <div class="text-error text-xs mt-1">
-        <div v-for="error in v$.limitPrice.$errors" :key="error.$uid">
-          {{ error.$message }}
-        </div>
-      </div>
-    </div>
-
-    <!-- Order Summary -->
-    <div class="bg-base-200 p-4 rounded-xl space-y-3">
-      <div class="flex justify-between text-sm">
-        <span class="text-gray-500">Price per share</span>
-        <span class="font-mono">${{ price.toFixed(2) }}</span>
-      </div>
-      <div class="flex justify-between text-sm">
-        <span class="text-gray-500">Shares</span>
-        <span class="font-mono">{{ shares || '0' }}</span>
-      </div>
-      <div class="divider my-1"></div>
-      <div class="flex justify-between">
-        <span class="font-medium">Total Cost</span>
-        <span class="font-mono text-lg text-primary"> ${{ total.toFixed(2) }} USDC </span>
-      </div>
-    </div>
+    <order-summary :price="price" :shares="shares" :total="total" />
 
     <!-- Place Order Button -->
     <button
@@ -162,8 +70,12 @@ import { toast } from 'vue-sonner'
 import { log } from '@/utils'
 import { useVuelidate } from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
+import OutcomeSelection from './TradingModal/OutcomeSelection.vue'
+import OrderTypeToggle from './TradingModal/OrderTypeToggle.vue'
+import TradingInputs from './TradingModal/TradingInputs.vue'
+import OrderSummary from './TradingModal/OrderSummary.vue'
 
-const props = defineProps<{ marketUrl: string }>()
+const props = defineProps<{ marketUrl: string; traderBalance: number }>()
 const emit = defineEmits(['close', 'place-order'])
 
 const parsePolymarketUrl = (url: string) => {
@@ -212,9 +124,16 @@ const rules = computed(() => ({
       'Shares must be greater than 0',
       (value: string) => parseFloat(value) > 0
     ),
+    spendableBalance: helpers.withMessage(
+      () =>
+        `Total cost exceeds available balance $${props.traderBalance.toFixed(2)} (max. ${getMinSharesForTarget(props.traderBalance)} shares)`,
+      (value: string) => {
+        return (parseFloat(value) || 0) * price.value <= props.traderBalance
+      }
+    ),
     // Dynamic Market Validation
     marketMinimum: helpers.withMessage(
-      () => `Total cost must be $1.00 (min. ${getMinSharesForTarget(1)} shares)`,
+      () => `Total cost must be at least $1.00 (min. ${getMinSharesForTarget(1)} shares)`,
       (value: string) => {
         if (orderType.value !== 'market') return true
         return (parseFloat(value) || 0) * price.value >= 1.0
@@ -222,7 +141,7 @@ const rules = computed(() => ({
     ),
     // Dynamic Limit Validation
     limitMinimum: helpers.withMessage(
-      () => `Total cost must be $5.00 (min. ${getMinSharesForTarget(5)} shares)`,
+      () => `Total cost must be at least $5.00 (min. ${getMinSharesForTarget(5)} shares)`,
       (value: string) => {
         if (orderType.value !== 'limit') return true
         const p = parseFloat(limitPrice.value) || 0
