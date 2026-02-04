@@ -32,8 +32,3 @@ export const useGetValidateTokenQuery = () => {
     staleTime: Infinity
   })
 }
-
-/**
- * @deprecated Use useGetValidateTokenQuery instead
- */
-export const useValidateTokenQuery = useGetValidateTokenQuery

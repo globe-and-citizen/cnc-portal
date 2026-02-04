@@ -15,53 +15,56 @@ export const actionKeys = {
     [...actionKeys.lists(), { teamId, isExecuted }] as const
 }
 
-/**
- * Query parameters for listing BOD actions
- */
-export interface BodActionsQueryParams {
-  /** Team ID to filter actions */
-  teamId?: string
-  /** Filter by execution status */
-  isExecuted?: boolean
-}
+// ============================================================================
+// GET /actions - Fetch BOD actions
+// ============================================================================
 
 /**
- * Hook parameters for useGetBodActionsQuery
+ * Parameters for useGetBodActionsQuery
  */
-export interface UseGetBodActionsQueryParams {
-  teamId: MaybeRefOrGetter<string | null>
-  isExecuted?: boolean
+export interface GetBodActionsParams {
+  pathParams?: {}
+  queryParams: {
+    /** Team ID to filter actions */
+    teamId: MaybeRefOrGetter<string | null>
+    /** Filter by execution status */
+    isExecuted?: MaybeRefOrGetter<boolean | undefined>
+  }
 }
-
-/**
- * @deprecated Use UseGetBodActionsQueryParams instead
- */
-export type UseBodActionsQueryParams = UseGetBodActionsQueryParams
 
 /**
  * Fetch BOD actions for a team
  *
  * @endpoint GET /actions
+ * @pathParams none
  * @queryParams { teamId: string, isExecuted?: boolean }
+ * @body none
  */
-export const useGetBodActionsQuery = (hookParams: UseGetBodActionsQueryParams) => {
+export const useGetBodActionsQuery = (params: GetBodActionsParams) => {
+  const { queryParams } = params
+
   return useQuery({
-    queryKey: actionKeys.list(toValue(hookParams.teamId), hookParams.isExecuted),
+    queryKey: actionKeys.list(toValue(queryParams.teamId), toValue(queryParams.isExecuted)),
     queryFn: async () => {
-      const teamId = toValue(hookParams.teamId)
+      const teamId = toValue(queryParams.teamId)
+      const isExecuted = toValue(queryParams.isExecuted)
 
       // Query params: passed as URL query string (?teamId=xxx&isExecuted=xxx)
-      const queryParams: BodActionsQueryParams = { teamId: teamId! }
-      if (hookParams.isExecuted !== undefined) {
-        queryParams.isExecuted = hookParams.isExecuted
+      const apiQueryParams: { teamId: string; isExecuted?: boolean } = { teamId: teamId! }
+      if (isExecuted !== undefined) {
+        apiQueryParams.isExecuted = isExecuted
       }
 
-      const { data } = await apiClient.get<ActionResponse>('/actions', { params: queryParams })
+      const { data } = await apiClient.get<ActionResponse>('/actions', { params: apiQueryParams })
       return data
     },
-    enabled: () => !!toValue(hookParams.teamId)
+    enabled: () => !!toValue(queryParams.teamId)
   })
 }
+
+// ============================================================================
+// POST /actions/ - Create action
+// ============================================================================
 
 /**
  * Request body for creating an action
@@ -72,6 +75,8 @@ export interface CreateActionBody extends Partial<Action> {}
  * Create a new action
  *
  * @endpoint POST /actions/
+ * @pathParams none
+ * @queryParams none
  * @body CreateActionBody - The action data to create
  */
 export const useCreateActionMutation = () => {
@@ -88,26 +93,35 @@ export const useCreateActionMutation = () => {
   })
 }
 
+// ============================================================================
+// PATCH /actions/{id} - Update action
+// ============================================================================
+
 /**
- * Path parameters for action endpoints
+ * Parameters for useUpdateActionMutation
  */
-export interface ActionPathParams {
-  /** Action ID */
-  id: number
+export interface UpdateActionParams {
+  pathParams: {
+    /** Action ID */
+    id: number
+  }
 }
 
 /**
  * Update an action
  *
  * @endpoint PATCH /actions/{id}
- * @params { id: number } - URL path parameter
+ * @pathParams { id: number }
+ * @queryParams none
+ * @body none
  */
 export const useUpdateActionMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id }: ActionPathParams) => {
-      const { data } = await apiClient.patch(`actions/${id}`)
+    mutationFn: async (params: UpdateActionParams) => {
+      const { pathParams } = params
+      const { data } = await apiClient.patch(`actions/${pathParams.id}`)
       return data
     },
     onSuccess: () => {
@@ -116,41 +130,38 @@ export const useUpdateActionMutation = () => {
   })
 }
 
+// ============================================================================
+// POST /elections/{teamId} - Create election notifications
+// ============================================================================
+
 /**
- * Path parameters for election notifications endpoint
+ * Parameters for useCreateElectionNotificationsMutation
  */
-export interface ElectionNotificationsPathParams {
-  /** Team ID */
-  teamId: string | number
+export interface CreateElectionNotificationsParams {
+  pathParams: {
+    /** Team ID */
+    teamId: string | number
+  }
 }
 
 /**
  * Create election notifications for a team
  *
  * @endpoint POST /elections/{teamId}
- * @params ElectionNotificationsPathParams - URL path parameter
+ * @pathParams { teamId: string | number }
  * @queryParams none
  * @body none
  */
 export const useCreateElectionNotificationsMutation = () => {
   const queryClient = useQueryClient()
 
-  return useMutation<void, AxiosError, ElectionNotificationsPathParams>({
-    mutationFn: async ({ teamId }) => {
-      await apiClient.post(`/elections/${teamId}`)
+  return useMutation<void, AxiosError, CreateElectionNotificationsParams>({
+    mutationFn: async (params: CreateElectionNotificationsParams) => {
+      const { pathParams } = params
+      await apiClient.post(`/elections/${pathParams.teamId}`)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     }
   })
 }
-
-/**
- * @deprecated Use useGetBodActionsQuery instead
- */
-export const useBodActionsQuery = useGetBodActionsQuery
-
-/**
- * @deprecated Use ElectionNotificationsPathParams instead
- */
-export type CreateElectionNotificationsInput = ElectionNotificationsPathParams

@@ -80,18 +80,3 @@ export const useUpdateNotificationMutation = () => {
     }
   })
 }
-
-/**
- * @deprecated Use useGetNotificationsQuery instead
- */
-export const useNotificationsQuery = useGetNotificationsQuery
-
-/**
- * @deprecated Use useCreateBulkNotificationsMutation instead
- */
-export const useAddBulkNotificationsMutation = useCreateBulkNotificationsMutation
-
-/**
- * @deprecated Use NotificationPathParams instead
- */
-export type UpdateNotificationInput = NotificationPathParams

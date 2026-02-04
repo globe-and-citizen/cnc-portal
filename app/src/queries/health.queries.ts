@@ -43,8 +43,3 @@ export const useGetBackendHealthQuery = () => {
     staleTime: Infinity
   })
 }
-
-/**
- * @deprecated Use useGetBackendHealthQuery instead
- */
-export const useBackendHealthQuery = useGetBackendHealthQuery

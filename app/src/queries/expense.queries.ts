@@ -13,40 +13,65 @@ export const expenseKeys = {
   list: (teamId: string | null) => [...expenseKeys.lists(), { teamId }] as const
 }
 
+// ============================================================================
+// GET /expense - Fetch expenses
+// ============================================================================
+
 /**
- * Query parameters for fetching expenses
+ * Path parameters for GET /expense (none for this endpoint)
  */
-export interface ExpensesQueryParams {
+export interface GetExpensesPathParams {}
+
+/**
+ * Query parameters for GET /expense
+ */
+export interface GetExpensesQueryParams {
   /** Team ID to filter expenses */
-  teamId: string
+  teamId: MaybeRefOrGetter<string | null>
+}
+
+/**
+ * Combined parameters for useGetExpensesQuery
+ */
+export interface GetExpensesParams {
+  pathParams?: GetExpensesPathParams
+  queryParams: GetExpensesQueryParams
 }
 
 /**
  * Fetch all expenses for a team
  *
  * @endpoint GET /expense
- * @params none
+ * @pathParams none
  * @queryParams { teamId: string }
  * @body none
  */
-export const useGetExpensesQuery = (teamId: MaybeRefOrGetter<string | null>) => {
-  return useQuery({
-    queryKey: expenseKeys.list(toValue(teamId)),
-    queryFn: async () => {
-      // Query params: passed as URL query string (?teamId=xxx)
-      const queryParams: ExpensesQueryParams = { teamId: toValue(teamId)! }
+export const useGetExpensesQuery = (params: GetExpensesParams) => {
+  const { queryParams } = params
 
-      const { data } = await apiClient.get<ExpenseResponse[]>('/expense', { params: queryParams })
+  return useQuery({
+    queryKey: expenseKeys.list(toValue(queryParams.teamId)),
+    queryFn: async () => {
+      const teamId = toValue(queryParams.teamId)
+
+      // Query params: passed as URL query string (?teamId=xxx)
+      const apiQueryParams: { teamId: string } = { teamId: teamId! }
+
+      const { data } = await apiClient.get<ExpenseResponse[]>('/expense', { params: apiQueryParams })
       return data
     },
-    enabled: () => !!toValue(teamId)
+    enabled: () => !!toValue(queryParams.teamId)
   })
 }
+
+// ============================================================================
+// POST /expense - Create expense
+// ============================================================================
 
 /**
  * Request body for adding an expense
  */
-export interface AddExpenseBody {
+export interface CreateExpenseBody {
   /** Expense account data including budget limits */
   data: {
     amount: bigint | number
@@ -67,15 +92,15 @@ export interface AddExpenseBody {
  * Add expense data with signature
  *
  * @endpoint POST /expense
- * @params none
+ * @pathParams none
  * @queryParams none
- * @body AddExpenseBody - expense account data
+ * @body CreateExpenseBody - expense account data
  */
 export const useCreateExpenseMutation = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (body: AddExpenseBody) => {
+    mutationFn: async (body: CreateExpenseBody) => {
       const { data } = await apiClient.post('/expense', body)
       return data
     },
@@ -84,13 +109,3 @@ export const useCreateExpenseMutation = () => {
     }
   })
 }
-
-/**
- * @deprecated Use useGetExpensesQuery instead
- */
-export const useExpensesQuery = useGetExpensesQuery
-
-/**
- * @deprecated Use useCreateExpenseMutation instead
- */
-export const useAddExpenseMutation = useCreateExpenseMutation

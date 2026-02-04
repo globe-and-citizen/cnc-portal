@@ -44,38 +44,86 @@ export interface SafeBalancesResponse {
   results: SafeBalance[]
 }
 
+// ============================================================================
+// GET /polymarket/market-data - Fetch market data
+// ============================================================================
+
 /**
- * Query parameters for fetching market data
+ * Path parameters for GET /polymarket/market-data (none for this endpoint)
  */
-export interface MarketDataQueryParams {
+export interface GetMarketDataPathParams {}
+
+/**
+ * Query parameters for GET /polymarket/market-data
+ */
+export interface GetMarketDataQueryParams {
   /** Polymarket event URL */
-  url: string
+  url: MaybeRefOrGetter<string | null>
+}
+
+/**
+ * Combined parameters for useGetMarketDataQuery
+ */
+export interface GetMarketDataParams {
+  pathParams?: GetMarketDataPathParams
+  queryParams: GetMarketDataQueryParams
 }
 
 /**
  * Fetch market data for polymarket event
  *
  * @endpoint GET /polymarket/market-data
- * @params none
- * @queryParams MarketDataQueryParams
+ * @pathParams none
+ * @queryParams { url: string }
  * @body none
  */
-export const useGetMarketDataQuery = (endpoint: MaybeRefOrGetter<string | null>) => {
+export const useGetMarketDataQuery = (params: GetMarketDataParams) => {
+  const { queryParams } = params
+
   return useQuery({
-    queryKey: polymarketKeys.marketData(toValue(endpoint)),
+    queryKey: polymarketKeys.marketData(toValue(queryParams.url)),
     queryFn: async () => {
+      const url = toValue(queryParams.url)
+
       // Query params: passed as URL query string (?url=xxx)
-      const queryParams: MarketDataQueryParams = { url: toValue(endpoint)! }
+      const apiQueryParams: { url: string } = { url: url! }
 
       const { data } = await apiClient.get<PolymarketEvent | PolymarketMarket>(
         '/polymarket/market-data',
-        { params: queryParams }
+        { params: apiQueryParams }
       )
       return data || []
     },
     refetchInterval: 10000,
-    enabled: () => !!toValue(endpoint)
+    enabled: () => !!toValue(queryParams.url)
   })
+}
+
+// ============================================================================
+// GET Safe balances (external API)
+// ============================================================================
+
+/**
+ * Path parameters for Safe balances endpoint
+ */
+export interface GetSafeBalancesPathParams {
+  /** Safe address */
+  safeAddress: MaybeRefOrGetter<string | null>
+  /** Chain name (e.g., 'eth', 'pol') */
+  chainName: MaybeRefOrGetter<string | null>
+}
+
+/**
+ * Query parameters for Safe balances (none for this endpoint)
+ */
+export interface GetSafeBalancesQueryParams {}
+
+/**
+ * Combined parameters for useGetSafeBalancesQuery
+ */
+export interface GetSafeBalancesParams {
+  pathParams: GetSafeBalancesPathParams
+  queryParams?: GetSafeBalancesQueryParams
 }
 
 /**
@@ -83,20 +131,19 @@ export const useGetMarketDataQuery = (endpoint: MaybeRefOrGetter<string | null>)
  * Uses direct axios call to the Safe Transaction Service API
  *
  * @endpoint GET https://api.safe.global/tx-service/{chainName}/api/v2/safes/{safeAddress}/balances/
- * @params { safeAddress: string, chainName: string } - URL path parameters
+ * @pathParams { safeAddress: string, chainName: string }
  * @queryParams none
  * @body none
  */
-export const useGetSafeBalancesQuery = (
-  safeAddress: MaybeRefOrGetter<string | null>,
-  chainName: MaybeRefOrGetter<string | null> = 'pol'
-) => {
+export const useGetSafeBalancesQuery = (params: GetSafeBalancesParams) => {
+  const { pathParams } = params
+
   return useQuery({
     // Add chainName to the queryKey so different networks cache separately
-    queryKey: polymarketKeys.safeBalances(toValue(safeAddress), toValue(chainName)),
+    queryKey: polymarketKeys.safeBalances(toValue(pathParams.safeAddress), toValue(pathParams.chainName)),
     queryFn: async () => {
-      const address = toValue(safeAddress)
-      const chain = toValue(chainName)
+      const address = toValue(pathParams.safeAddress)
+      const chain = toValue(pathParams.chainName)
 
       if (!address) throw new Error('Safe address is required')
       if (!chain) throw new Error('Chain name is required (e.g., eth, polygon)')
@@ -114,17 +161,7 @@ export const useGetSafeBalancesQuery = (
       return data.results
     },
     // Only enabled if both address and chain are provided
-    enabled: () => !!toValue(safeAddress) && !!toValue(chainName),
+    enabled: () => !!toValue(pathParams.safeAddress) && !!toValue(pathParams.chainName),
     refetchInterval: 30000 // Refresh every 30 seconds
   })
 }
-
-/**
- * @deprecated Use useGetMarketDataQuery instead
- */
-export const useMarketData = useGetMarketDataQuery
-
-/**
- * @deprecated Use useGetSafeBalancesQuery instead
- */
-export const useSafeBalances = useGetSafeBalancesQuery

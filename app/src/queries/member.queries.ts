@@ -93,8 +93,3 @@ export const useDeleteMemberMutation = () => {
     }
   })
 }
-
-/**
- * @deprecated Use DeleteMemberPathParams instead
- */
-export type DeleteMemberInput = DeleteMemberPathParams

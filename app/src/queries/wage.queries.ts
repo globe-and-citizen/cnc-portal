@@ -14,13 +14,66 @@ export const wageKeys = {
   team: (teamId: string | number | null) => [...wageKeys.teams(), { teamId }] as const
 }
 
+// ============================================================================
+// GET /wage/ - Fetch team wages
+// ============================================================================
+
 /**
- * Query parameters for fetching team wages
+ * Path parameters for GET /wage/ (none for this endpoint)
  */
-export interface TeamWagesQueryParams {
+export interface GetTeamWagesPathParams {}
+
+/**
+ * Query parameters for GET /wage/
+ */
+export interface GetTeamWagesQueryParams {
   /** Team ID */
-  teamId: string | number
+  teamId: MaybeRefOrGetter<string | number | null>
 }
+
+/**
+ * Combined parameters for useGetTeamWagesQuery
+ */
+export interface GetTeamWagesParams {
+  pathParams?: GetTeamWagesPathParams
+  queryParams: GetTeamWagesQueryParams
+}
+
+/**
+ * Fetch team wage data by team ID
+ *
+ * @endpoint GET /wage/
+ * @pathParams none
+ * @queryParams { teamId: string | number }
+ * @body none
+ */
+export const useGetTeamWagesQuery = (params: GetTeamWagesParams) => {
+  const { queryParams } = params
+
+  return useQuery<Wage[], AxiosError>({
+    queryKey: wageKeys.team(toValue(queryParams.teamId)),
+    queryFn: async () => {
+      const teamId = toValue(queryParams.teamId)
+
+      // Query params: passed as URL query string (?teamId=xxx)
+      const apiQueryParams: { teamId: string | number } = { teamId: teamId! }
+
+      const { data } = await apiClient.get<Wage[]>('/wage/', { params: apiQueryParams })
+      return data
+    },
+    enabled: () => !!toValue(queryParams.teamId),
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    staleTime: 180000,
+    gcTime: 300000
+  })
+}
+
+// ============================================================================
+// PUT /wage/setWage - Set member wage
+// ============================================================================
 
 /**
  * Request body for setting member wage
@@ -37,38 +90,10 @@ export interface SetWageBody {
 }
 
 /**
- * Fetch team wage data by team ID
- *
- * @endpoint GET /wage/
- * @params none
- * @queryParams { teamId: string | number }
- * @body none
- */
-export const useGetTeamWagesQuery = (teamId: MaybeRefOrGetter<string | number | null>) => {
-  return useQuery<Wage[], AxiosError>({
-    queryKey: wageKeys.team(toValue(teamId)),
-    queryFn: async () => {
-      // Query params: passed as URL query string (?teamId=xxx)
-      const queryParams: TeamWagesQueryParams = { teamId: toValue(teamId)! }
-
-      const { data } = await apiClient.get<Wage[]>('/wage/', { params: queryParams })
-      return data
-    },
-    enabled: () => !!toValue(teamId),
-    retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-    staleTime: 180000,
-    gcTime: 300000
-  })
-}
-
-/**
  * Set member wage data for a team
  *
  * @endpoint PUT /wage/setWage
- * @params none
+ * @pathParams none
  * @queryParams none
  * @body SetWageBody
  */
@@ -85,13 +110,3 @@ export const useSetMemberWageMutation = () => {
     }
   })
 }
-
-/**
- * @deprecated Use useGetTeamWagesQuery instead
- */
-export const useTeamWagesQuery = useGetTeamWagesQuery
-
-/**
- * @deprecated Use SetWageBody instead
- */
-export type SetWageInput = SetWageBody

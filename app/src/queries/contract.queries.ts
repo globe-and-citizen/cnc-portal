@@ -107,18 +107,3 @@ export const useResetContractsMutation = () => {
     }
   })
 }
-
-/**
- * @deprecated Use CreateContractBody instead
- */
-export type CreateContractInput = CreateContractBody
-
-/**
- * @deprecated Use SyncContractsBody instead
- */
-export type SyncContractsInput = SyncContractsBody
-
-/**
- * @deprecated Use ResetContractsBody instead
- */
-export type ResetContractsInput = ResetContractsBody
