@@ -17,7 +17,7 @@
           <span class="text-gray-600">USD</span>
         </div>
         <div class="text-sm text-gray-500 mt-1">
-          ≈ {{ total['USD']?.formated ?? 0 }} {{ currency.code }}
+          ≈ {{ total[currency.code]?.formated ?? total['USD']?.formated ?? 0 }} {{ currency.code }}
         </div>
         <div class="text-sm text-gray-600 mt-2 flex flex-col gap-1">
           <div>
@@ -51,7 +51,7 @@
           </ButtonUI>
 
           <ButtonUI
-            v-if="teamStore.currentTeam?.safeAddress"
+            v-if="address"
             variant="primary"
             class="flex items-center gap-2"
             @click="openInSafeApp"
@@ -61,9 +61,9 @@
             Open in Safe App
           </ButtonUI>
         </div>
-        <div class="flex items-center gap-2" v-if="teamStore.currentTeam?.safeAddress">
+        <div class="flex items-center gap-2" v-if="address">
           <div class="text-sm text-gray-600">Safe Address:</div>
-          <AddressToolTip :address="teamStore.currentTeam?.safeAddress" />
+          <AddressToolTip :address="address" />
         </div>
       </div>
     </div>
@@ -73,12 +73,13 @@
       v-model="depositModal.show"
       v-if="depositModal.mount"
       data-test="deposit-modal"
-      @reset="() => closeDepositModal()"
+      @reset="() => (depositModal = { mount: false, show: false })"
     >
-      <DepositBankForm
-        v-if="safeAddress"
+      <DepositSafeForm
+        v-if="address"
+        title="Deposit to Safe Contract"
+        :safe-address="address"
         @close-modal="closeDepositModal"
-        :bank-address="safeAddress"
       />
     </ModalComponent>
 
@@ -93,7 +94,8 @@
       <TransferForm
         v-model="transferData"
         :tokens="tokens"
-        :loading="false"
+        :loading="isTransferring"
+        @transfer="handleTransfer"
         @closeModal="resetTransferValues"
       >
         <template #header>
@@ -118,14 +120,16 @@ import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { useTeamStore } from '@/stores'
-import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+
 import ModalComponent from '@/components/ModalComponent.vue'
-import { useQueryClient } from '@tanstack/vue-query'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
+import { useSafeTransfer } from '@/composables/safe'
+import { useQueryClient } from '@tanstack/vue-query'
+import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
+import { getTokenAddress } from '@/utils'
 
 const chainId = useChainId()
 const queryClient = useQueryClient()
@@ -135,17 +139,13 @@ const currency = useStorage('currency', {
   symbol: '$'
 })
 
-const props = defineProps<{
-  bankAddress?: Address
-}>()
+interface Props {
+  address: Address
+}
 
-const teamStore = useTeamStore()
+const props = defineProps<Props>()
 
-const safeAddress = computed(() => teamStore.currentTeam?.safeAddress || props.bankAddress)
-
-const { total, balances, isLoading } = useContractBalance(
-  computed(() => safeAddress.value || ('0x' as Address))
-)
+const { total, balances, isLoading } = useContractBalance(props.address)
 
 const getTokens = (): TokenOption[] =>
   balances.value
@@ -172,24 +172,9 @@ const transferModal = ref({
   show: false
 })
 
-// New Safe data composable with built-in query reactivity
-const { data: safeInfo } = useSafeInfoQuery(
-  computed(() => teamStore.currentTeamMeta?.data?.safeAddress)
-)
+const { transferFromSafe, isTransferring } = useSafeTransfer()
 
-// const displayUsdBalance = computed(
-//   () => safeInfo.value?.totals?.['USD']?.formated ?? safeInfo.value?.balance ?? 0
-// )
-
-// Note: safeInfo.totals is optional (see SafeInfo type). We use optional chaining and fall back
-// to the generic balance when the local currency or USD totals are not available.
-// const displayLocalBalance = computed(() => {
-//   const local = safeInfo.value?.totals?.[currency.value.code]?.formated
-//   if (local) return local
-//   const usd = safeInfo.value?.totals?.['USD']?.formated
-//   if (usd) return usd
-//   return safeInfo.value?.balance ?? 0
-// })
+const { data: safeInfo } = useSafeInfoQuery(props.address)
 
 const initialTransferDataValue = (): TransferModel => {
   const firstToken = tokens.value[0]
@@ -208,27 +193,12 @@ const initialTransferDataValue = (): TransferModel => {
 }
 
 const openInSafeApp = () => {
-  const safeAppUrl = getSafeHomeUrl(chainId.value, teamStore.currentTeam?.safeAddress as Address)
+  const safeAppUrl = getSafeHomeUrl(chainId.value, props.address)
   openSafeAppUrl(safeAppUrl)
 }
 
 const openDepositModal = () => {
   depositModal.value = { mount: true, show: true }
-}
-
-const closeDepositModal = async () => {
-  depositModal.value = { mount: false, show: false }
-
-  // Wait for blockchain confirmation
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-
-  // Invalidate Safe queries and balance queries to refresh automatically
-  if (teamStore.currentTeam?.safeAddress) {
-    // Invalidate native balance queries (for ETH/POL)
-    await queryClient.invalidateQueries({
-      queryKey: ['safe', 'info', { safeAddress: teamStore.currentTeam.safeAddress }]
-    })
-  }
 }
 
 const openTransferModal = () => {
@@ -242,5 +212,48 @@ const resetTransferValues = () => {
   transferData.value = initialTransferDataValue()
 }
 
-// Transfer logic intentionally removed (display-only)
+const invalidateSafeBalances = async (safeAddress: Address) => {
+  await queryClient.invalidateQueries({
+    queryKey: ['balance', { address: safeAddress, chainId: chainId.value }]
+  })
+
+  const tokenAddresses = tokens.value
+    .map((token) => getTokenAddress(token.tokenId))
+    .filter((address): address is string => !!address)
+
+  await Promise.all(
+    tokenAddresses.map((tokenAddress) =>
+      queryClient.invalidateQueries({
+        queryKey: [
+          'readContract',
+          { address: tokenAddress as Address, args: [safeAddress], chainId: chainId.value }
+        ]
+      })
+    )
+  )
+}
+
+const handleTransfer = async (transferData: TransferModel) => {
+  const safeAddress = props.address
+  if (!safeAddress) return
+  const options = {
+    to: transferData.address.address,
+    amount: transferData.amount,
+    tokenId: transferData.token.tokenId
+  }
+
+  const result = await transferFromSafe(safeAddress, options)
+
+  if (result) {
+    resetTransferValues()
+    await invalidateSafeBalances(safeAddress as Address)
+    await queryClient.invalidateQueries({
+      queryKey: ['safe', 'info', { safeAddress }]
+    })
+  }
+}
+
+const closeDepositModal = async () => {
+  depositModal.value = { mount: false, show: false }
+}
 </script>

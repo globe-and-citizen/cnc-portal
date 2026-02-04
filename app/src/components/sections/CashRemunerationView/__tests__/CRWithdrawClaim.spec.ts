@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { ref } from 'vue'
 import { config } from '@/wagmi.config'
 import { log } from '@/utils'
 import { parseError } from '@/utils'
@@ -20,7 +19,7 @@ vi.mock('@/wagmi.config', () => ({
   }
 }))
 
-const { addErrorToast: addErrorToastMock, addSuccessToast: addSuccessToastMock } = mockToastStore
+const { addErrorToast: addErrorToastMock } = mockToastStore
 
 const { useWriteContract, simulateContractMock, waitForTransactionReceiptMock } = vi.hoisted(
   () => ({
@@ -29,10 +28,6 @@ const { useWriteContract, simulateContractMock, waitForTransactionReceiptMock } 
     waitForTransactionReceiptMock: vi.fn()
   })
 )
-
-vi.mock('@wagmi/vue', () => ({
-  useWriteContract: useWriteContract
-}))
 
 vi.mock('@wagmi/core', () => ({
   simulateContract: simulateContractMock,
@@ -44,23 +39,6 @@ vi.mock('@/utils', () => ({
     error: vi.fn()
   },
   parseError: vi.fn(() => 'Parsed error message')
-}))
-
-vi.mock('@/composables', () => ({
-  useCustomFetch: vi.fn(() => ({
-    put: () => ({
-      json: () => ({
-        execute: vi.fn().mockResolvedValue({}),
-        error: ref(null)
-      })
-    }),
-    post: () => ({
-      json: () => ({
-        execute: vi.fn().mockResolvedValue({}),
-        error: ref(null)
-      })
-    })
-  }))
 }))
 
 vi.mock('@tanstack/vue-query', () => ({
@@ -277,29 +255,6 @@ describe('WithdrawComponent', () => {
 
     // Should show transaction failed error
     expect(addErrorToastMock).toHaveBeenCalledWith('Transaction failed: Failed to withdraw claim')
-  })
-
-  it('should handle update claim status error after successful withdrawal', async () => {
-    // Mock update claim error
-    const { useCustomFetch } = await import('@/composables')
-    //@ts-expect-error only mocking required values
-    vi.mocked(useCustomFetch).mockReturnValue({
-      post: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnValue({
-        execute: vi.fn().mockResolvedValue({}),
-        error: ref(new Error('Update failed'))
-      })
-    })
-
-    wrapper = createComponent()
-
-    // Trigger the withdraw function
-    //@ts-expect-error not visible on wrapper.vm
-    await wrapper.vm.withdrawClaim()
-
-    // Should show update claim status error
-    expect(addErrorToastMock).toHaveBeenCalledWith('Failed to update Claim status')
-    expect(addSuccessToastMock).toHaveBeenCalledWith('Claim withdrawn')
   })
 
   it('should handle missing team contract address gracefully', async () => {

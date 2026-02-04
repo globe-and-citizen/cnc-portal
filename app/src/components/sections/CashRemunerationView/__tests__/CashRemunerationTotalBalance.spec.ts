@@ -4,27 +4,6 @@ import { createTestingPinia } from '@pinia/testing'
 import { shallowMount } from '@vue/test-utils'
 import { ref } from 'vue'
 
-vi.mock('@/stores', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useTeamStore: vi.fn(() => ({
-      currentTeam: {
-        id: 1,
-        name: 'Test Team',
-        teamContracts: [
-          {
-            id: 1,
-            name: 'CashRemuneration',
-            type: 'CashRemunerationEIP712'
-          }
-        ]
-      }
-    })),
-    useCurrencyStore: vi.fn()
-  }
-})
-
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: () => ({
     balances: [

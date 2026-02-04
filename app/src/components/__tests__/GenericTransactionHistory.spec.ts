@@ -10,7 +10,6 @@
 // import { exportTransactionsToExcel, exportReceiptToExcel } from '@/utils/excelExport'
 // import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 // import { ref } from 'vue'
-// import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 
 // vi.mock('vue-router', () => ({
 //   useRoute: vi.fn(() => ({
@@ -55,14 +54,6 @@
 //     addErrorToast: vi.fn()
 //   })
 // }))
-
-// vi.mock('@/stores/currencyStore', async (importOriginal) => {
-//   const original: object = await importOriginal()
-//   return {
-//     ...original,
-//     useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
-//   }
-// })
 
 // const mockTeamData = {
 //   currentTeam: {

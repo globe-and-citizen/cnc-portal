@@ -71,7 +71,7 @@ import { useTeamStore } from '@/stores'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
 import type { Hex } from 'viem'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useCreateContractMutation } from '@/queries/contract.queries'
 import { useQueryClient } from '@tanstack/vue-query'
 
 const emit = defineEmits(['closeAddCampaignModal'])
@@ -101,11 +101,18 @@ const {
   error: deployError
 } = useDeployContract(AD_CAMPAIGN_MANAGER_ABI, campaignBytecode)
 
+const { mutateAsync: createContract } = useCreateContractMutation()
+
 watch(contractAddress, async (newAddress) => {
   if (newAddress && teamStore.currentTeam) {
     try {
       // First try to add contract to team
-      await addContractToTeam(teamStore.currentTeam.id, newAddress, userDataStore.address)
+      await createContract({
+        teamId: teamStore.currentTeam.id,
+        contractAddress: newAddress,
+        contractType: 'Campaign',
+        deployer: userDataStore.address
+      })
 
       queryClient.invalidateQueries({
         queryKey: ['team', { teamId: String(teamStore.currentTeam.id) }]
@@ -120,23 +127,6 @@ watch(contractAddress, async (newAddress) => {
     }
   }
 })
-
-const addContractToTeam = async (teamId: string, address: string, deployer: string) => {
-  const response = await useCustomFetch(`contract`)
-    .post({
-      teamId,
-      contractAddress: address,
-      contractType: 'Campaign',
-      deployer
-    })
-    .json()
-
-  if (!response) {
-    throw new Error('No response from server')
-  }
-
-  return response
-}
 
 // Trigger deployment
 const deployAdCampaign = async () => {

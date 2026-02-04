@@ -5,7 +5,7 @@ import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberFo
 import { createTestingPinia } from '@pinia/testing'
 
 // Hoisted mock variables
-const { mockUseAddMembersQuery, mockToastStore } = vi.hoisted(() => {
+const { mockUseAddMembersQuery } = vi.hoisted(() => {
   const mockMutate = vi.fn()
   return {
     mockUseAddMembersQuery: vi.fn(() => ({
@@ -13,11 +13,7 @@ const { mockUseAddMembersQuery, mockToastStore } = vi.hoisted(() => {
       isPending: ref(false),
       error: ref(null),
       status: ref('idle')
-    })),
-    mockToastStore: {
-      addSuccessToast: vi.fn(),
-      addErrorToast: vi.fn()
-    }
+    }))
   }
 })
 
@@ -25,15 +21,6 @@ const { mockUseAddMembersQuery, mockToastStore } = vi.hoisted(() => {
 vi.mock('@/queries/member.queries', () => ({
   useAddMembersMutation: mockUseAddMembersQuery
 }))
-
-// Mock stores for toasts
-vi.mock('@/stores', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useToastStore: vi.fn(() => mockToastStore)
-  }
-})
 
 interface AddMemberFormVm {
   formData: Array<{ address: string; name: string }>

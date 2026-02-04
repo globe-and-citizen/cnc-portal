@@ -16,23 +16,6 @@ vi.mock('@/composables', async (importOriginal) => {
   }
 })
 
-vi.mock('@/stores', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useTeamStore: vi.fn(() => ({
-      currentTeam: {
-        teamContracts: [
-          {
-            type: 'ExpenseAccountEIP712'
-          }
-        ]
-      }
-    })),
-    useCurrencyStore: vi.fn
-  }
-})
-
 describe.skip('ExpenseAccountBalance', () => {
   const createComponent = () => {
     return shallowMount(ExpenseAccountBalance, {

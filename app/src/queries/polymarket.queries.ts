@@ -27,15 +27,22 @@ export interface SafeBalancesResponse {
 
 /**
  * Fetch market data for polymarket event
+ *
+ * @endpoint GET /polymarket/market-data
+ * @params none
+ * @queryParams { url: string } - the polymarket event URL
+ * @body none
  */
 export const useMarketData = (endpoint: MaybeRefOrGetter<string | null>) => {
   return useQuery({
     queryKey: ['marketData'],
     queryFn: async () => {
-      const urlValue = toValue(endpoint)
-      if (!urlValue) throw new Error('Endpoint is required')
+      // Query params: passed as URL query string (?url=xxx)
+      const queryParams = { url: toValue(endpoint) }
+
       const { data } = await apiClient.get<PolymarketEvent | PolymarketMarket>(
-        `/polymarket/market-data?url=${encodeURIComponent(urlValue)}`
+        '/polymarket/market-data',
+        { params: queryParams }
       )
       return data || []
     },
@@ -47,6 +54,11 @@ export const useMarketData = (endpoint: MaybeRefOrGetter<string | null>) => {
 /**
  * Fetch Safe Wallet balances (Native and ERC-20)
  * Uses direct axios call to the Safe Transaction Service API
+ *
+ * @endpoint GET https://api.safe.global/tx-service/{chainName}/api/v2/safes/{safeAddress}/balances/
+ * @params { safeAddress: string, chainName: string } - URL path parameters
+ * @queryParams none
+ * @body none
  */
 export const useSafeBalances = (
   safeAddress: MaybeRefOrGetter<string | null>,
@@ -64,14 +76,12 @@ export const useSafeBalances = (
 
       // Construct the URL using the safe.global public API
       const url = `https://api.safe.global/tx-service/${chain}/api/v2/safes/${address}/balances/`
-      //`api.safe.global{chain}/api/v1/safes/${address}/balances/`
 
       // Call axios directly
       const { data } = await axios.get<SafeBalancesResponse>(url, {
         headers: {
           Accept: 'application/json',
           Authorization: `Bearer: ${SAFE_API_KEY}`
-          // No Authorization header needed for public V1 API calls
         }
       })
       return data.results

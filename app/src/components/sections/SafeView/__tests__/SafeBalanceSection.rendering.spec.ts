@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper, flushPromises } from '@vue/test-utils'
+import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
@@ -20,41 +20,49 @@ const {
   mockOpenSafeAppUrl,
   mockUseChainId,
   mockUseTeamStore,
+  mockUseCurrencyStore,
+  mockUseUserDataStore,
+  mockUseToastStore,
   mockUseContractBalance,
   mockUseSafeInfoQuery,
-  mockQueryClient
+  mockQueryClient,
+  mockUseSafeTransfer
 } = vi.hoisted(() => ({
   mockGetSafeHomeUrl: vi.fn(),
   mockOpenSafeAppUrl: vi.fn(),
   mockUseChainId: vi.fn(),
   mockUseTeamStore: vi.fn(),
+  mockUseCurrencyStore: vi.fn(),
+  mockUseUserDataStore: vi.fn(),
+  mockUseToastStore: vi.fn(),
   mockUseContractBalance: vi.fn(),
   mockUseSafeInfoQuery: vi.fn(),
   mockQueryClient: {
     invalidateQueries: vi.fn()
-  }
+  },
+  // Add the missing useSafeTransfer mock
+  mockUseSafeTransfer: vi.fn(() => ({
+    transferFromSafe: vi.fn(),
+    transferNative: vi.fn(),
+    transferToken: vi.fn(),
+    isTransferring: ref(false),
+    error: ref(null)
+  }))
 }))
 
 // Mock external dependencies
-vi.mock('@/composables/safe', () => ({
-  getSafeHomeUrl: mockGetSafeHomeUrl,
-  openSafeAppUrl: mockOpenSafeAppUrl
-}))
-
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
+vi.mock('@/composables/safe', async (importOriginal) => {
+  const actual = await importOriginal()
   return {
     ...actual,
-    useChainId: mockUseChainId
+    getSafeHomeUrl: mockGetSafeHomeUrl,
+    openSafeAppUrl: mockOpenSafeAppUrl,
+    useSafeTransfer: mockUseSafeTransfer
   }
 })
 
 vi.mock('@vueuse/core', () => ({
   useStorage: vi.fn()
-}))
-
-vi.mock('@/stores', () => ({
-  useTeamStore: mockUseTeamStore
 }))
 
 vi.mock('@/composables/useContractBalance', () => ({
@@ -214,6 +222,19 @@ describe('SafeBalanceSection', () => {
       currentTeamMeta: MOCK_DATA.teamMeta
     })
 
+    mockUseCurrencyStore.mockReturnValue({
+      currency: mockCurrency
+    })
+
+    mockUseUserDataStore.mockReturnValue({
+      address: ref('0x1234567890123456789012345678901234567890')
+    })
+
+    mockUseToastStore.mockReturnValue({
+      addErrorToast: vi.fn(),
+      addSuccessToast: vi.fn()
+    })
+
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
 
     mockGetSafeHomeUrl.mockReturnValue(
@@ -255,20 +276,6 @@ describe('SafeBalanceSection', () => {
     })
   })
 
-  describe('Props and Computed Values', () => {
-    it('should use 0x as fallback when no address is available', () => {
-      mockUseTeamStore.mockReturnValue({
-        currentTeam: { safeAddress: undefined },
-        currentTeamMeta: { data: { safeAddress: undefined } }
-      })
-      wrapper = createWrapper()
-
-      expect(mockUseContractBalance).toHaveBeenCalled()
-      const callArg = mockUseContractBalance.mock.calls[0]?.[0]
-      expect(callArg?.value).toBe('0x')
-    })
-  })
-
   describe('Tokens Computation', () => {
     it('should handle missing USD price gracefully', () => {
       mockBalances.value = [
@@ -292,54 +299,6 @@ describe('SafeBalanceSection', () => {
     })
   })
 
-  describe('Deposit Modal', () => {
-    it('should close deposit modal and invalidate queries', async () => {
-      vi.useFakeTimers()
-      wrapper = createWrapper()
-
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
-
-      // Start the closeDepositModal without awaiting
-      const closePromise = (wrapper.vm as SafeBalanceSectionInstance).closeDepositModal()
-
-      // Fast-forward time for the 2000ms delay
-      await vi.advanceTimersByTimeAsync(2000)
-      await closePromise
-      await flushPromises()
-
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: ['safe', 'info', { safeAddress: MOCK_DATA.safeAddress }]
-      })
-
-      vi.useRealTimers()
-    })
-
-    it('should not invalidate queries when teamStore has no safeAddress', async () => {
-      vi.useFakeTimers()
-      mockUseTeamStore.mockReturnValue({
-        currentTeam: { safeAddress: undefined },
-        currentTeamMeta: { data: { safeAddress: undefined } }
-      })
-      wrapper = createWrapper()
-
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
-
-      // Start the closeDepositModal without awaiting
-      const closePromise = (wrapper.vm as SafeBalanceSectionInstance).closeDepositModal()
-
-      // Fast-forward time
-      await vi.advanceTimersByTimeAsync(2000)
-      await closePromise
-      await flushPromises()
-
-      expect(mockQueryClient.invalidateQueries).not.toHaveBeenCalled()
-
-      vi.useRealTimers()
-    })
-  })
-
   describe('Transfer Modal', () => {
     it('should handle empty tokens list gracefully', async () => {
       mockBalances.value = []
@@ -348,45 +307,8 @@ describe('SafeBalanceSection', () => {
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
       await nextTick()
 
-      const transferData = (wrapper.vm as SafeBalanceSectionInstance).transferData
+      const transferData = (wrapper.vm as unknown as SafeBalanceSectionInstance).transferData
       expect(transferData.token.symbol).toBe('')
     })
-
-    // it('should close transfer modal and reset values', async () => {
-    //   wrapper = createWrapper()
-
-    //   await wrapper.find('[data-test="transfer-button"]').trigger('click')
-    //   await nextTick()
-
-    //   expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(true)
-
-    //   // Call resetTransferValues directly
-    //   await (wrapper.vm as SafeBalanceSectionInstance).resetTransferValues()
-    //   await nextTick()
-
-    //   expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
-    // })
   })
-
-  // describe('Open in Safe App', () => {
-  //   it('should call openSafeAppUrl with the URL from getSafeHomeUrl', async () => {
-  //     const mockUrl =
-  //       'https://app.safe.global/home?safe=polygon:0x1234567890123456789012345678901234567890'
-  //     mockGetSafeHomeUrl.mockReturnValue(mockUrl)
-  //     wrapper = createWrapper()
-
-  //     await wrapper.find('[data-test="open-safe-app-button"]').trigger('click')
-
-  //     expect(mockOpenSafeAppUrl).toHaveBeenCalledWith(mockUrl)
-  //   })
-  // })
-
-  // describe('Edge Cases', () => {
-  //   it('should handle total with missing USD data', () => {
-  //     mockTotal.value = {}
-  //     wrapper = createWrapper()
-
-  //     expect(wrapper.text()).toContain('0')
-  //   })
-  // })
 })

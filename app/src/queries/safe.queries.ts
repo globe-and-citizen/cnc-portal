@@ -3,15 +3,19 @@ import type { MaybeRef } from 'vue'
 import { toValue } from 'vue'
 import externalApiClient from '@/lib/external.axios.ts'
 import type { SafeInfo, SafeTransaction, SafeSignature, SafeDeploymentParams } from '@/types/safe'
-import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
+import { TX_SERVICE_BY_CHAIN, type ProposeTransactionParams } from '@/types/safe'
 import { currentChainId } from '@/constant/index'
-// import currentChainId from const
 
 const chainId = currentChainId
 const txService = TX_SERVICE_BY_CHAIN[chainId]
 
 /**
  * Fetch Safe information from Transaction Service
+ *
+ * @endpoint GET {txService.url}/api/v1/safes/{safeAddress}/
+ * @params { safeAddress: string } - URL path parameter
+ * @queryParams none
+ * @body none
  */
 export function useSafeInfoQuery(safeAddress: MaybeRef<string | undefined>) {
   return useQuery<SafeInfo>({
@@ -27,21 +31,20 @@ export function useSafeInfoQuery(safeAddress: MaybeRef<string | undefined>) {
       )
       return data
     },
-    staleTime: Infinity, // Owners change rarely; avoid periodic refetches
-    gcTime: 24 * 60 * 60 * 1000,
-    // Disable automatic refetch patterns
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: true
+    staleTime: 300_000,
+    refetchInterval: 300_000
   })
 }
 
 /**
  * Fetch Safe pending transactions from Transaction Service
+ *
+ * @endpoint GET {txService.url}/api/v1/safes/{safeAddress}/multisig-transactions
+ * @params { safeAddress: string } - URL path parameter
+ * @queryParams none
+ * @body none
  */
-export function useSafePendingTransactionsQuery(safeAddress: MaybeRef<string | undefined>) {
+export function useSafeTransactionsQuery(safeAddress: MaybeRef<string | undefined>) {
   return useQuery<SafeTransaction[]>({
     queryKey: ['safe', 'transactions', { safeAddress }],
     enabled: !!toValue(safeAddress),
@@ -51,17 +54,25 @@ export function useSafePendingTransactionsQuery(safeAddress: MaybeRef<string | u
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
 
       const { data } = await externalApiClient.get<{ results: SafeTransaction[] }>(
-        `${txService.url}/api/v1/safes/${address}/multisig-transactions/?executed=false`
+        `${txService.url}/api/v1/safes/${address}/multisig-transactions`
       )
       return data.results || []
     },
-    staleTime: 30_000, // 30 seconds for pending transactions
-    refetchInterval: 30_000 // Auto-refresh every 30 seconds
+    staleTime: 300_000,
+    refetchInterval: 300_000
   })
 }
 
 /**
+
+
+/**
  * Mutation: Deploy a new Safe
+ *
+ * @endpoint N/A - Deployment logic implemented in composable
+ * @params none
+ * @queryParams none
+ * @body none
  */
 export function useDeploySafeMutation() {
   const queryClient = useQueryClient()
@@ -72,7 +83,6 @@ export function useDeploySafeMutation() {
       throw new Error('Deploy Safe logic must be implemented in composable')
     },
     onSuccess: (safeAddress) => {
-      // Invalidate all Safe queries for the new address
       queryClient.invalidateQueries({
         queryKey: ['safe', 'info', { safeAddress }]
       })
@@ -81,64 +91,31 @@ export function useDeploySafeMutation() {
 }
 
 /**
- * Mutation: Propose a Safe transaction
+ * Mutation input for useApproveTransactionMutation
  */
-export function useProposeTransactionMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation<
-    string, // safeTxHash
-    Error,
-    {
-      chainId: number
-      safeAddress: string
-      transactionData?: unknown
-      safeTxHash?: string
-      safeTx?: unknown
-      signature: SafeSignature | string
-    }
-  >({
-    mutationFn: async ({ chainId, safeAddress, transactionData, safeTx, signature }) => {
-      // const txService = TX_SERVICE_BY_CHAIN[chainId]
-      if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
-
-      const resolvedSignature = typeof signature === 'string' ? signature : signature.data
-      const resolvedTx = transactionData ?? safeTx
-
-      const { data } = await externalApiClient.post(
-        `${txService.url}/api/v1/safes/${safeAddress}/multisig-transactions/`,
-        {
-          ...(resolvedTx as Record<string, unknown>),
-          signature: resolvedSignature
-        }
-      )
-      return data.safeTxHash
-    },
-    onSuccess: (_, variables) => {
-      // Invalidate pending transactions
-      queryClient.invalidateQueries({
-        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
-      })
-    }
-  })
+export interface ApproveTransactionInput {
+  /** Chain ID for transaction service lookup */
+  chainId: number
+  /** URL path parameter: Safe address */
+  safeAddress: string
+  /** URL path parameter: Safe transaction hash */
+  safeTxHash: string
+  /** Request body: signature data */
+  signature: SafeSignature
 }
 
 /**
  * Mutation: Approve a Safe transaction
+ *
+ * @endpoint POST {txService.url}/api/v1/multisig-transactions/{safeTxHash}/confirmations/
+ * @params { safeTxHash: string } - URL path parameter
+ * @queryParams none
+ * @body { signature: string }
  */
 export function useApproveTransactionMutation() {
   const queryClient = useQueryClient()
 
-  return useMutation<
-    void,
-    Error,
-    {
-      chainId: number
-      safeAddress: string
-      safeTxHash: string
-      signature: SafeSignature
-    }
-  >({
+  return useMutation<void, Error, ApproveTransactionInput>({
     mutationFn: async ({ chainId, safeTxHash, signature }) => {
       const txService = TX_SERVICE_BY_CHAIN[chainId]
       if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
@@ -158,22 +135,88 @@ export function useApproveTransactionMutation() {
 }
 
 /**
+ * Mutation: Propose a Safe transaction
+ *
+ * @endpoint POST {txService.url}/api/v1/safes/{safeAddress}/multisig-transactions/
+ * @params { safeAddress: string } - URL path parameter
+ * @queryParams none
+ * @body ProposeTransactionParams - full transaction data
+ */
+export function useProposeTransactionMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, Error, ProposeTransactionParams>({
+    mutationFn: async (params) => {
+      const { chainId, safeAddress, safeTxHash, transactionData, sender, signature, origin } =
+        params
+      const txServiceUrl = TX_SERVICE_BY_CHAIN[chainId]?.url
+
+      if (!txServiceUrl) {
+        throw new Error(`Transaction service not configured for chain ${chainId}`)
+      }
+
+      // Body: transaction data to propose
+      const body = {
+        to: transactionData.to,
+        value: transactionData.value,
+        data: transactionData.data,
+        operation: transactionData.operation,
+        safeTxGas: transactionData.safeTxGas,
+        baseGas: transactionData.baseGas,
+        gasPrice: transactionData.gasPrice,
+        gasToken: transactionData.gasToken,
+        refundReceiver: transactionData.refundReceiver,
+        nonce: transactionData.nonce,
+        contractTransactionHash: safeTxHash,
+        sender,
+        signature,
+        origin: origin || null
+      }
+
+      await externalApiClient.post(
+        `${txServiceUrl}/api/v1/safes/${safeAddress}/multisig-transactions/`,
+        body
+      )
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['safe', 'transactions', { safeAddress: variables.safeAddress }]
+      })
+    }
+  })
+}
+
+/**
+ * Mutation input for useExecuteTransactionMutation
+ */
+export interface ExecuteTransactionInput {
+  /** Chain ID for transaction service lookup */
+  chainId: number
+  /** Safe address for query invalidation */
+  safeAddress: string
+  /** Safe transaction hash */
+  safeTxHash: string
+  /** Optional blockchain transaction hash */
+  txHash?: string
+}
+
+/**
  * Mutation: Execute a Safe transaction
+ *
+ * @endpoint N/A - Execution logic implemented in composable
+ * @params none
+ * @queryParams none
+ * @body none
  */
 export function useExecuteTransactionMutation() {
   const queryClient = useQueryClient()
 
-  return useMutation<
-    void,
-    Error,
-    { chainId: number; safeAddress: string; safeTxHash: string; txHash?: string }
-  >({
+  return useMutation<void, Error, ExecuteTransactionInput>({
     mutationFn: async () => {
       // Actual execution happens in the composable
       // This mutation is just for query invalidation
     },
     onSuccess: (_, variables) => {
-      // Invalidate all Safe queries after execution
       queryClient.invalidateQueries({
         queryKey: ['safe', 'info', { safeAddress: variables.safeAddress }]
       })
@@ -185,31 +228,45 @@ export function useExecuteTransactionMutation() {
 }
 
 /**
+ * Mutation input for useUpdateSafeOwnersMutation
+ */
+export interface UpdateSafeOwnersInput {
+  /** Chain ID for transaction service lookup */
+  chainId: number
+  /** Safe address for query invalidation */
+  safeAddress: string
+  /** Owners to add */
+  ownersToAdd?: string[]
+  /** Owners to remove */
+  ownersToRemove?: string[]
+  /** New threshold */
+  newThreshold?: number
+  /** Whether to propose the transaction */
+  shouldPropose?: boolean
+  /** Safe transaction hash */
+  safeTxHash?: string
+  /** Signature data */
+  signature?: SafeSignature | string
+}
+
+/**
  * Mutation: Update Safe owners
+ *
+ * @endpoint N/A - Update logic implemented in composable
+ * @params none
+ * @queryParams none
+ * @body none
  */
 export function useUpdateSafeOwnersMutation() {
   const queryClient = useQueryClient()
 
-  return useMutation<
-    void,
-    Error,
-    {
-      chainId: number
-      safeAddress: string
-      ownersToAdd?: string[]
-      ownersToRemove?: string[]
-      newThreshold?: number
-      shouldPropose?: boolean
-      safeTxHash?: string
-      signature?: SafeSignature | string
-    }
-  >({
+  return useMutation<void, Error, UpdateSafeOwnersInput>({
     mutationFn: async () => {
       // Actual update happens in the composable
       // This mutation is just for query invalidation
     },
     onSuccess: (_, variables) => {
-      // Invalidate relevant queries
+      console.log('the variables in useUpdateSafeOwnersMutation onSuccess:', variables)
 
       queryClient.invalidateQueries({
         queryKey: ['safe', 'info', { safeAddress: variables.safeAddress }]
@@ -223,6 +280,11 @@ export function useUpdateSafeOwnersMutation() {
 
 /**
  * Fetch single Safe transaction by hash from Transaction Service
+ *
+ * @endpoint GET {txService.url}/api/v1/multisig-transactions/{safeTxHash}/
+ * @params { safeTxHash: string } - URL path parameter
+ * @queryParams none
+ * @body none
  */
 export function useSafeTransactionQuery(safeTxHash: MaybeRef<string | undefined>) {
   return useQuery<SafeTransaction>({
@@ -239,7 +301,7 @@ export function useSafeTransactionQuery(safeTxHash: MaybeRef<string | undefined>
       )
       return data
     },
-    staleTime: 60_000, // 1 minute
+    staleTime: 300_000,
     gcTime: 300_000
   })
 }

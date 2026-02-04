@@ -1,6 +1,6 @@
 <template>
   <Toaster />
-  <CardComponent title="Your Trades" data-test="trades-table">
+  <CardComponent :title="cardTitle" data-test="trades-table">
     <template #card-action>
       <!-- Trading Input in card-action slot -->
       <div class="flex gap-4 w-full">
@@ -17,10 +17,15 @@
             class="input input-bordered w-full pl-12 h-14 text-lg focus:border-primary focus:ring-1 focus:ring-primary"
             data-test="market-url-input"
           />
+          <div class="text-error text-xs mt-1">
+            <div v-for="error in v$.marketUrl.$errors" :key="error.$uid">
+              {{ error.$message }}
+            </div>
+          </div>
         </div>
         <button
           @click="handleTrade"
-          :disabled="!marketUrl.trim()"
+          :disabled="v$.marketUrl.$invalid || !marketUrl.trim() || !isSelectedSafeTrader"
           class="btn btn-primary h-14 px-8 text-lg"
           data-test="trade-button"
         >
@@ -48,6 +53,7 @@
       <TradingModal
         v-if="tradingModal.mount"
         :market-url="marketUrl"
+        :trader-balance="traderBalance"
         @close="handleModalClose"
         @place-order="handleOrderPlaced"
       />
@@ -66,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import CardComponent from '@/components/CardComponent.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
@@ -78,14 +84,18 @@ import { Toaster, toast } from 'vue-sonner'
 import { log, parseError } from '@/utils'
 import 'vue-sonner/style.css'
 import { useUserPositions, useRedeemPosition, useSafeDeployment } from '@/composables/trading'
-import { parseUnits } from 'viem'
+import { formatUnits, parseUnits } from 'viem'
+import { useTeamSafes } from '@/composables/safe'
+import { useVuelidate } from '@vuelidate/core'
+import { required, helpers } from '@vuelidate/validators'
+import { useSafeBalances } from '@/queries/polymarket.queries'
 
 // Props
 interface Props {
   loading?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   loading: false
 })
 
@@ -96,6 +106,11 @@ const emit = defineEmits<{
   'order-placed': [order: OrderDetails]
 }>()
 
+const isPolymarketUrl = (value: string) => {
+  if (!value) return true // Let 'required' handle empty state
+  return /polymarket\.com\/(market|event)\/([^?#]+)/.test(value)
+}
+
 // State
 const marketUrl = ref('')
 const tradingModal = ref({ mount: false, show: false })
@@ -103,23 +118,41 @@ const tradingModal = ref({ mount: false, show: false })
 // Use TanStack Query states
 const { proposeRedemption } = useRedeemPosition()
 const { derivedSafeAddressFromEoa } = useSafeDeployment()
-const { data: trades, isLoading: isLoadingTrades /*, refetch */ } = useUserPositions(
-  derivedSafeAddressFromEoa.value ?? undefined
+const { selectedSafe, isSelectedSafeTrader } = useTeamSafes()
+const selectedSafeAddress = computed(() => selectedSafe.value?.address)
+const { data: trades, isLoading: isLoadingTrades, refetch } = useUserPositions(selectedSafeAddress)
+const cardTitle = computed(
+  () => `${isSelectedSafeTrader.value ? 'Your' : `${selectedSafe.value?.userName}'s`} Trades`
 )
+const { data: balances } = useSafeBalances(derivedSafeAddressFromEoa)
 
-watch(
-  trades,
-  (newData) => {
-    if (newData) {
-      // trades.value = newData
-      console.log('Fetched trades:', newData)
-    }
-  },
-  { immediate: true }
-)
+const traderBalance = computed(() => {
+  if (balances.value?.length && balances.value?.length > 0) {
+    const balance = balances.value.find((b) => b.token?.symbol === 'USDC.E')
+    return balance ? Number(formatUnits(BigInt(balance.balance), balance.token?.decimals ?? 6)) : 0
+  } else return 0
+})
+
+const rules = {
+  marketUrl: {
+    required,
+    isPolymarket: helpers.withMessage(
+      'Please enter a valid Polymarket market or event URL',
+      isPolymarketUrl
+    )
+  }
+}
+
+const v$ = useVuelidate(rules, { marketUrl })
 
 // Methods
-const handleTrade = () => {
+const handleTrade = async () => {
+  const isValid = await v$.value.$validate()
+
+  if (!isValid) {
+    toast.error('Invalid Polymarket URL')
+    return
+  }
   if (marketUrl.value.trim()) {
     tradingModal.value = { mount: true, show: true }
   }
@@ -128,6 +161,7 @@ const handleTrade = () => {
 const handleModalClose = () => {
   tradingModal.value = { mount: false, show: false }
   marketUrl.value = '' // Clear the input after modal closes
+  v$.value.$reset() // Reset validation state
 }
 
 const handleSell = (trade: Trade) => {
@@ -171,15 +205,16 @@ const handleWithdraw = async (trade: Trade) => {
   }
 }
 
-const handleOrderPlaced = (order: OrderDetails) => {
+const handleOrderPlaced = async (result: { success: boolean; orderId: string | number }) => {
   try {
-    console.log('Order placed:', order)
+    // console.log('Order placed:', order)
 
     // Show success message
-    toast.success('Order placed successfully!')
+    if (result.success) toast.success('Order placed successfully!')
+    else throw new Error('Order placement failed')
 
     // Emit to parent
-    emit('order-placed', order)
+    // emit('order-placed', order)
 
     // Close the modal
     handleModalClose()
@@ -190,6 +225,7 @@ const handleOrderPlaced = (order: OrderDetails) => {
 
     // In a real app, you would update the trades list here
     // or trigger a refetch of trades data
+    await refetch()
   } catch (error) {
     toast.error('Failed to place order')
     log.error('Order placement error:', parseError(error))
@@ -197,15 +233,11 @@ const handleOrderPlaced = (order: OrderDetails) => {
 }
 
 // Optional: Watch for errors or other side effects
-watch(
-  () => props.loading,
-  (isLoading, wasLoading) => {
-    if (!isLoading && wasLoading) {
-      // Data finished loading
-      console.log('Trades data loaded')
-    }
+watch(selectedSafeAddress, (newAddress) => {
+  if (newAddress) {
+    refetch()
   }
-)
+})
 </script>
 
 <style scoped>

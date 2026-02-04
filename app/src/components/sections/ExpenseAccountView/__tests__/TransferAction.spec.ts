@@ -11,11 +11,6 @@ import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip7
 import TransferAction from '../TransferAction.vue'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 
-// Mock the dependencies
-vi.mock('@/wagmi.config', () => ({
-  config: {}
-}))
-
 const { addErrorToast: addErrorToastMock } = mockToastStore
 
 const { useWaitForTransactionReceipt, useWriteContract, simulateContractMock } = vi.hoisted(() => ({
@@ -193,7 +188,7 @@ describe('TransferComponent', () => {
     expect(simulateContractMock).toHaveBeenCalledWith(config, {
       abi: EXPENSE_ACCOUNT_EIP712_ABI,
       functionName: 'transfer',
-      address: '0xTeamContractAddress',
+      address: '0x5555555555555555555555555555555555555555',
       args: [
         '0xRecipientAddress',
         100000000n,

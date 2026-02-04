@@ -1,3 +1,10 @@
+import type {
+  SafeMultisigTransactionResponse as SafeSdkMultisigTransactionResponse,
+  SignatureType
+} from '@safe-global/types-kit'
+
+import { type TokenId } from '@/constant'
+
 export interface SafeFiatTotal {
   value: number
   formated: string
@@ -20,8 +27,7 @@ export interface SafeInfo {
   version: string
 }
 
-export interface SafeTransaction {
-  safe: string
+export interface SafeTransactionProposal {
   to: string
   value: string
   data: string
@@ -32,24 +38,72 @@ export interface SafeTransaction {
   gasToken: string
   refundReceiver: string
   nonce: number
+}
+
+export interface ProposeTransactionParams {
+  chainId: number
+  safeAddress: string
+  safeTxHash: string
+  transactionData: SafeTransactionProposal
+  sender: string
+  signature: string
+  origin?: string
+}
+
+export type SafeMultisigTransactionResponse = SafeSdkMultisigTransactionResponse
+
+export interface SafeTransactionDataDecoded {
+  method: string
+  parameters: Array<{
+    name: string
+    type: string
+    value: string
+  }>
+}
+
+export interface SafeTransaction {
+  safe: string
+  to: string
+  value: string
+  data?: string | null
+  operation: number
+  safeTxGas: string | number
+  baseGas: string | number
+  gasPrice: string | number
+  gasToken: string
+  refundReceiver?: string | null
+  nonce: number
   executionDate: string | null
   submissionDate: string
   modified: string
   blockNumber: number | null
   transactionHash: string | null
   safeTxHash: string
+  proposer?: string | null
+  proposedByDelegate?: string | boolean | null
   executor: string | null
   isExecuted: boolean
   isSuccessful: boolean | null
+  ethGasPrice?: string | null
+  maxFeePerGas?: string | null
+  maxPriorityFeePerGas?: string | null
+  gasUsed?: number | null
+  fee?: string | null
+  origin?: string | null
+  confirmationsRequired: number
   confirmations: SafeConfirmation[]
+  dataDecoded?: SafeTransactionDataDecoded | null
+  trusted?: boolean
+  signatures?: string | null
 }
 
 export interface SafeConfirmation {
   owner: string
   submissionDate: string
   transactionHash: string | null
+  confirmationType?: string
   signature: string
-  signatureType: string
+  signatureType: SignatureType | string
 }
 
 export interface SafeSignature {
@@ -113,6 +167,12 @@ export const TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> = {
   }
 }
 
+export interface SafeTransferOptions {
+  to: string
+  amount: string
+  tokenId?: TokenId // Use tokenId instead of tokenAddress
+}
+
 export const SAFE_VERSION = '1.4.1'
 
 export const CHAIN_NAMES: Record<number, string> = {
@@ -120,4 +180,27 @@ export const CHAIN_NAMES: Record<number, string> = {
   11155111: 'sepolia',
   80002: 'amoy',
   42161: 'arbitrum'
+}
+
+export type SafeTransactionConfirmation = SafeConfirmation
+
+export type SafeTransactionConfirmations = SafeTransactionConfirmation[]
+
+export interface SafeWallet {
+  address: string
+  name: string
+  balance: string
+  userName?: string
+}
+
+//new types
+interface DecodedParameter {
+  name: string
+  type: string
+  value: string
+}
+
+export interface DecodedCall {
+  method: string
+  parameters: DecodedParameter[]
 }

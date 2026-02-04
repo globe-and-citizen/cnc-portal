@@ -9,8 +9,8 @@
       <span class="font-semibold">{{ formattedDate }}</span>
       ?
     </p>
-    <div v-if="errorMessage" class="alert alert-error" data-test="delete-claim-error">
-      {{ errorMessage }}
+    <div v-if="deleteClaimError" class="alert alert-error" data-test="delete-claim-error">
+      Failed to delete claim
     </div>
     <div class="flex justify-end gap-2">
       <ButtonUI
@@ -36,14 +36,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import dayjs from 'dayjs'
 import type { Claim } from '@/types'
 
 import ButtonUI from '@/components/ButtonUI.vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
-import { useToastStore, useTeamStore } from '@/stores'
-import { useQueryClient } from '@tanstack/vue-query'
+import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
+import { useToastStore } from '@/stores'
 
 const props = defineProps<{
   claim: Claim
@@ -54,55 +53,20 @@ const emit = defineEmits<{
 }>()
 
 const toastStore = useToastStore()
-const teamStore = useTeamStore()
-const queryClient = useQueryClient()
 
 const formattedDate = computed(() => {
   return props.claim ? dayjs(props.claim.dayWorked).format('MMM DD, YYYY') : ''
 })
 
-const deleteClaimEndpoint = computed(() => `/claim/${props.claim.id}`)
-const errorMessage = ref<string>('')
-
 const {
-  execute: deleteClaimRequest,
-  isFetching: isDeleting,
-  error: deleteClaimError,
-  statusCode: deleteClaimStatusCode,
-  response: deleteClaimResponse
-} = useCustomFetch(deleteClaimEndpoint, {
-  immediate: false
-})
-  .delete()
-  .json()
+  mutateAsync: deleteClaim,
+  isPending: isDeleting,
+  error: deleteClaimError
+} = useDeleteClaimMutation()
 
 const handleDelete = async () => {
-  errorMessage.value = ''
-  await deleteClaimRequest()
-
-  if (deleteClaimStatusCode.value === 200) {
-    toastStore.addSuccessToast('Claim deleted successfully')
-
-    // Invalidate using the same query key pattern from parent
-    await queryClient.invalidateQueries({
-      queryKey: ['weekly-claims', teamStore.currentTeamId]
-    })
-
-    emit('close')
-  }
+  await deleteClaim({ claimId: props.claim.id })
+  toastStore.addSuccessToast('Claim deleted successfully')
+  emit('close')
 }
-
-watch(deleteClaimError, async () => {
-  if (!deleteClaimError.value || !deleteClaimResponse.value) return
-
-  try {
-    const errorData = await deleteClaimResponse.value.json()
-    errorMessage.value = errorData?.message || 'Failed to delete claim'
-  } catch (error) {
-    console.error('Failed to parse delete claim error response', error)
-    errorMessage.value = 'Failed to delete claim'
-  }
-
-  toastStore.addErrorToast(errorMessage.value)
-})
 </script>

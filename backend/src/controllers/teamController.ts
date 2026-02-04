@@ -105,6 +105,12 @@ const getTeam = async (req: Request, res: Response) => {
             address: true,
             name: true,
             imageUrl: true,
+            traderSafeAddress: true,
+            memberTeamsData: {
+              where: {
+                teamId: Number(id),
+              },
+            },
           },
         },
         teamContracts: true,

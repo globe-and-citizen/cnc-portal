@@ -1,98 +1,135 @@
-# Using Centralized Global Mocks
+# CNC Portal Global Mock System
 
 ## Overview
 
-The CNC Portal now has a centralized mock system that makes testing consistent and easy to maintain. All query and composable mocks are defined once and applied globally across all tests.
+The CNC Portal has a comprehensive centralized mock system that provides consistent, maintainable testing infrastructure. The system covers:
 
-## What Changed
+- **TanStack Query Operations** - All API queries and mutations
+- **Web3/Blockchain Interactions** - ERC20 tokens, contract operations, wagmi
+- **Vue Composables** - Authentication, contract balances, transactions
+- **Pinia Stores** - Team store, toast notifications, etc.
+- **External Services** - Backend health checks, Safe wallet operations
 
-### Before
+## Architecture Overview
 
-Each test file would define its own mocks locally:
+The mock system is organized into specialized modules:
 
-```typescript
-// In each test file
-vi.mock("@/queries/team.queries", () => ({
-  useTeamsQuery: vi.fn(() => ({
-    data: ref([]),
-    isLoading: ref(false),
-    error: ref(null),
-    refetch: vi.fn(),
-  })),
-  // ... repeat for every query
-}));
-```
-
-### After
-
-All mocks are centralized and imported once in the setup:
-
-```typescript
-// In src/tests/setup/composables.setup.ts
-import { queryMocks } from "@/tests/mocks/query.mock";
-
-vi.mock("@/queries/team.queries", () => ({
-  useTeamsQuery: vi.fn(queryMocks.useTeamsQuery),
-  // ... clean and DRY
-}));
+```txt
+src/tests/
+├── mocks/
+│   ├── index.ts              # Main export file
+│   ├── query.mock.ts         # TanStack Query mocks
+│   ├── erc20.mock.ts         # ERC20 token operations
+│   ├── composables.mock.ts   # Vue composables
+│   ├── store.mock.ts         # Pinia stores
+│   └── wagmi.vue.mock.ts     # Web3 wagmi mocks
+└── setup/
+    └── composables.setup.ts  # Global mock registration
+    └── erc20.setup.ts       # ERC20 mock setup
+    └── store.setup.ts       # Store mock setup
+    └── wagmi.vue.setup.ts   # Web3 wagmi mock setup
 ```
 
 ## Key Benefits
 
-✅ **Single Source of Truth** - Mock data and factories defined in one place  
-✅ **Consistency** - All tests use the same mock structure  
-✅ **Maintainability** - Changes to mock structure only need to be made once  
-✅ **AxiosResponse Support** - Full response objects with status, headers, etc.  
-✅ **Type Safety** - Properly typed with TypeScript  
-✅ **Easy Overrides** - Individual tests can still override when needed
+✅ **"Mock Once, Use Everywhere"** - Centralized definitions, zero per-test setup  
+✅ **Type Safety** - Full TypeScript support with proper typing  
+✅ **Comprehensive Coverage** - Web3, API, composables, stores all covered  
+✅ **Easy Overrides** - Simple per-test customization when needed  
+✅ **Reset Functions** - Clean state between tests  
+✅ **Generic Factories** - Reusable patterns for common scenarios
 
-## Mock Structure
+## Mock System Components
 
-### Factory Functions
+### 1. TanStack Query Mocks (`query.mock.ts`)
 
-**`createMockAxiosResponse<T>(data, status, statusText)`**
-
-- Creates a mock AxiosResponse with proper structure
-- Returns: `{ data, status, statusText, headers, config }`
-- Used internally by all query response factories
-
-**`createMockQueryResponse<T>(data, isLoading, error)`**
-
-- Creates a TanStack Query response for read operations
-- Returns: `{ data: ref(AxiosResponse<T>), isLoading, error, refetch, ... }`
-
-**`createMockMutationResponse()`**
-
-- Creates a TanStack Query response for write operations
-- Returns: `{ mutateAsync, isPending, error, data, ... }`
-
-### Mock Data Objects
-
-Pre-configured data that matches real API responses:
-
-- `mockTeamData` - Sample team with members and contracts
-- `mockTeamsData` - Array of teams
-- `mockWageData` - Wage information with rates
-- `mockNotificationData` - Notification messages
-
-### The `queryMocks` Object
-
-Contains every query/mutation hook function:
+Handles all API operations with realistic data:
 
 ```typescript
+// Factory functions
+createMockQueryResponse<T>(data, isLoading, error);
+createMockMutationResponse();
+
+// Pre-configured data
+(mockTeamData, mockTeamsData, mockWageData, mockNotificationData);
+
+// Complete query mock object
 export const queryMocks = {
   useTeamsQuery: () => createMockQueryResponse(mockTeamsData),
-  useTeamQuery: () => createMockQueryResponse(mockTeamData),
-  useCreateTeamQuery: () => createMockMutationResponse(),
-  // ... all other queries
+  useCreateTeamMutation: () => createMockMutationResponse(),
+  // ... 20+ more query/mutation mocks
 };
 ```
 
-## Using in Tests
+### 2. ERC20 Token Mocks (`erc20.mock.ts`)
 
-### 1. Basic Usage (Most Tests)
+Generic factories for all ERC20 operations:
 
-No setup needed! Mocks are automatically applied globally:
+```typescript
+// Generic factories
+createERC20ReadMock<T>(defaultValue); // For read operations
+createERC20WriteMock(); // For write operations
+
+// Pre-configured instances
+mockERC20Reads = {
+  name: createERC20ReadMock("Mock Token"),
+  symbol: createERC20ReadMock("MTK"),
+  decimals: createERC20ReadMock(18),
+  balanceOf: createERC20ReadMock(1000n * 10n ** 18n),
+  allowance: createERC20ReadMock(1000000n * 10n ** 18n),
+};
+
+mockERC20Writes = {
+  transfer: createERC20WriteMock(),
+  approve: createERC20WriteMock(),
+  transferFrom: createERC20WriteMock(),
+};
+```
+
+### 3. Composable Mocks (`composables.mock.ts`)
+
+Core application composables:
+
+```typescript
+mockUseAuth = { logout: vi.fn(), login: vi.fn(), validateToken: vi.fn() }
+mockUseContractBalance = { balances: ref([...]), total: ref({...}) }
+mockUseSafeSendTransaction = { sendTransaction: vi.fn(), isLoading: ref(false) }
+mockUseBackendWake = vi.fn()
+```
+
+### 4. Store Mocks (`store.mock.ts`)
+
+Pinia store implementations:
+
+```typescript
+mockTeamStore = {
+  currentTeam: ref(null),
+  getContractAddressByType: vi.fn(),
+  // ... complete store interface
+};
+
+mockToastStore = {
+  addSuccessToast: vi.fn(),
+  addErrorToast: vi.fn(),
+  addInfoToast: vi.fn(),
+};
+```
+
+### 5. Reset Functions
+
+Clean state management:
+
+```typescript
+resetERC20Mocks(); // Reset all ERC20 token mocks
+resetComposableMocks(); // Reset composable states
+resetQueryMocks(); // Reset query states
+```
+
+## Using the Mock System
+
+### 1. Zero-Setup Testing (Most Common)
+
+Just import and test - all mocks are automatically active:
 
 ```typescript
 import { mount } from "@vue/test-utils";
@@ -100,214 +137,323 @@ import MyComponent from "@/components/MyComponent.vue";
 import { createTestingPinia } from "@pinia/testing";
 
 describe("MyComponent", () => {
-  it("should render teams", () => {
+  it("should work with all mocks active", () => {
     const wrapper = mount(MyComponent, {
       global: {
-        plugins: [createTestingPinia()],
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
       },
     });
 
-    // useTeamsQuery() query is already mocked with mockTeamsData
-    expect(wrapper.find('[data-test="teams"]').exists()).toBe(true);
+    // All systems automatically mocked:
+    // - TanStack queries return mock data
+    // - ERC20 operations have realistic responses
+    // - Stores provide mock implementations
+    // - Composables return predictable values
+    expect(wrapper.exists()).toBe(true);
   });
 });
 ```
 
-### 2. Custom Mock Data in Specific Tests
+### 2. Using Centralized Mock Objects
 
-Override the mock for a single test:
-
-```typescript
-import { useTeamsQuery } from '@/queries/team.queries'
-import { vi } from 'vitest'
-import { createMockAxiosResponse } from '@/tests/mocks/query.mock'
-
-describe('CustomTeamsTest', () => {
-  it('should handle custom team data', () => {
-    const customTeam = { id: '999', name: 'Custom Team', ... }
-
-    vi.mocked(useTeamsQuery).mockReturnValueOnce({
-      data: ref(createMockAxiosResponse([customTeam])),
-      isLoading: ref(false),
-      error: ref(null),
-      refetch: vi.fn(),
-      isFetched: ref(true),
-      isPending: ref(false),
-      isSuccess: ref(true)
-    })
-
-    // Test with custom data
-  })
-})
-```
-
-### 3. Accessing Response Data in Tests
-
-Components now access the AxiosResponse structure:
+Access pre-configured mocks directly:
 
 ```typescript
-// The mock returns AxiosResponse, so:
-// response.data.value = AxiosResponse
-// response.data.value.data = Team[] (the actual data)
-// response.data.value.status = 200
-// response.data.value.headers = {}
+import { mockERC20Reads, mockERC20Writes, mockTeamStore } from "@/tests/mocks";
 
-// In the team store, this is handled:
-const currentTeam = computed(() => {
-  return currentTeamMeta.data.value?.data; // Extracts Team from AxiosResponse
+it("should handle ERC20 operations", () => {
+  // Set specific token balance
+  mockERC20Reads.balanceOf.data.value = 500n * 10n ** 18n;
+
+  // Simulate approval error
+  mockERC20Writes.approve.writeResult.error.value = new Error(
+    "Insufficient gas",
+  );
+
+  // Set team context
+  mockTeamStore.currentTeam.value = { id: "1", name: "Test Team" };
+
+  // Test component with these states
 });
-
-// In components:
-{
-  {
-    teamStore.currentTeam?.name;
-  }
-} // Works correctly
 ```
 
-## Adding New Query Mocks
-
-When you create a new query file, add its mock:
-
-### 1. Add Mock Data (query.mock.ts)
+### 3. Override Specific Mocks When Needed
 
 ```typescript
-export const mockMyData: MyType = {
-  /* data */
-};
-export const mockMyResponse = createMockAxiosResponse(mockMyData);
+import { useTeamsQuery } from "@/queries/team.queries";
+import { createMockQueryResponse } from "@/tests/mocks";
+
+it("should handle custom data", () => {
+  const customTeams = [{ id: "999", name: "Special Team" }];
+
+  vi.mocked(useTeamsQuery).mockReturnValueOnce(
+    createMockQueryResponse(customTeams),
+  );
+
+  // Test with custom data
+});
 ```
 
-### 2. Add to queryMocks (query.mock.ts)
+### 4. Reset Between Tests
 
 ```typescript
-export const queryMocks = {
-  // ... existing
-  useMyQuery: () => createMockQueryResponse(mockMyData),
-  useMyMutation: () => createMockMutationResponse(),
-};
+import { resetERC20Mocks, resetComposableMocks } from "@/tests/mocks";
+
+beforeEach(() => {
+  resetERC20Mocks(); // Clean ERC20 state
+  resetComposableMocks(); // Clean composable state
+  vi.clearAllMocks(); // Clean all mock calls
+});
 ```
 
-### 3. Add Mock Setup (composables.setup.ts)
+### 5. Comprehensive Testing Examples
+
+#### API Query Testing
 
 ```typescript
-vi.mock("@/queries/my.queries", () => ({
-  useMyQuery: vi.fn(queryMocks.useMyQuery),
-  useMyMutation: vi.fn(queryMocks.useMyMutation),
-}));
-```
+import { useTeamsQuery } from "@/queries/team.queries";
+import { createMockQueryResponse } from "@/tests/mocks";
 
-Done! The mock is now globally available to all tests.
+// Test loading state
+it("should show loading spinner", () => {
+  vi.mocked(useTeamsQuery).mockReturnValueOnce(
+    createMockQueryResponse([], true), // isLoading = true
+  );
 
-## Common Patterns
-
-### Testing Query Loading State
-
-```typescript
-it("should show loading state", async () => {
-  vi.mocked(useTeamsQuery).mockReturnValueOnce({
-    data: ref(null),
-    isLoading: ref(true),
-    error: ref(null),
-    // ...
-  });
-
-  const wrapper = mount(MyComponent);
   expect(wrapper.find('[data-test="loading"]').exists()).toBe(true);
 });
-```
 
-### Testing Query Error State
+// Test error state
+it("should show error message", () => {
+  vi.mocked(useTeamsQuery).mockReturnValueOnce(
+    createMockQueryResponse(null, false, new Error("Network failed")),
+  );
 
-```typescript
-it("should handle errors", async () => {
-  const mockError = new Error("Network failed");
-
-  vi.mocked(useTeamsQuery).mockReturnValueOnce({
-    data: ref(null),
-    isLoading: ref(false),
-    error: ref(mockError),
-    // ...
-  });
-
-  const wrapper = mount(MyComponent);
   expect(wrapper.find('[data-test="error"]').exists()).toBe(true);
 });
 ```
 
-### Testing Mutation Success
+#### ERC20 Token Testing
 
 ```typescript
-it('should create team successfully', async () => {
-  const mockNewTeam = { id: '10', name: 'New Team', ... }
+import {
+  mockERC20Reads,
+  mockERC20Writes,
+  resetERC20Mocks,
+} from "@/tests/mocks";
 
-  vi.mocked(useCreateTeamQuery).mockReturnValueOnce({
-    mutateAsync: vi.fn(() =>
-      Promise.resolve(createMockAxiosResponse(mockNewTeam))
-    ),
-    isPending: ref(false),
-    error: ref(null),
-    // ...
-  })
+beforeEach(() => {
+  resetERC20Mocks(); // Start with clean state
+});
 
-  // Test mutation call
-})
-```
+it("should handle insufficient allowance", () => {
+  mockERC20Reads.allowance.data.value = 0n; // No allowance
 
-## Testing with Different Response Statuses
+  // Component should show approval needed
+  expect(wrapper.find('[data-test="needs-approval"]').exists()).toBe(true);
+});
 
-Since we're returning full AxiosResponse objects, you can test different status codes:
-
-```typescript
-it("should handle 401 unauthorized", () => {
-  const unauthorizedResponse = createMockAxiosResponse(
-    { error: "Unauthorized" },
-    401,
-    "Unauthorized"
+it("should handle transfer failure", () => {
+  mockERC20Writes.transfer.writeResult.error.value = new Error(
+    "Transfer failed",
   );
 
-  vi.mocked(useTeamsQuery).mockReturnValueOnce({
-    data: ref(unauthorizedResponse),
-    isLoading: ref(false),
-    error: ref(new Error("401")),
-    // ...
-  });
-
-  // Test unauthorized handling
+  // Component should show error state
+  expect(wrapper.find('[data-test="transfer-error"]').exists()).toBe(true);
 });
 ```
 
-## Files Location
+#### Store Integration Testing
 
-- **Mock Definitions**: `/app/src/tests/mocks/query.mock.ts`
-- **Mock Setup**: `/app/src/tests/setup/composables.setup.ts`
-- **Mock Index**: `/app/src/tests/mocks/index.ts`
-- **Store Mocks**: `/app/src/tests/mocks/store.mock.ts`
-- **Documentation**: `/app/src/tests/mocks/README.md`
+```typescript
+import { mockTeamStore, mockToastStore } from "@/tests/mocks";
 
-## Troubleshooting
+it("should use team context", () => {
+  mockTeamStore.currentTeam.value = {
+    id: "1",
+    name: "Development Team",
+    contracts: [{ address: "0x123...", type: "InvestorV1" }],
+  };
 
-**Q: Tests are getting old mock data**  
-A: Clear mocks between tests: `vi.clearAllMocks()` in `beforeEach()`
+  expect(wrapper.find('[data-test="team-name"]').text()).toBe(
+    "Development Team",
+  );
+});
 
-**Q: Mock not being applied**  
-A: Ensure the mock is defined in `queryMocks` and applied in `composables.setup.ts`
+it("should show success notification", async () => {
+  await wrapper.find('[data-test="submit-btn"]').trigger("click");
 
-**Q: TypeScript errors with mock structure**  
-A: Use `any` type when needed: `vi.mocked(useTeamsQuery as any).mockReturnValue(...)`
+  expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
+    "Operation completed successfully",
+  );
+});
+```
 
-**Q: Need to test with real API response**  
-A: Create a proper response object: `createMockAxiosResponse(realData, 200)`
+#### Web3/Blockchain Testing
 
-## Summary
+```typescript
+import {
+  mockUseSafeSendTransaction,
+  mockTransactionFunctions,
+} from "@/tests/mocks";
 
-The new mock system makes testing easier and more maintainable by:
+it("should send blockchain transaction", async () => {
+  mockTransactionFunctions.mockSendTransaction.mockResolvedValue({
+    hash: "0xabcdef123456789",
+  });
 
-1. ✅ Centralizing all mock definitions
-2. ✅ Providing factory functions for common patterns
-3. ✅ Supporting full AxiosResponse structure
-4. ✅ Allowing easy overrides when needed
-5. ✅ Reducing code duplication across tests
-6. ✅ Maintaining type safety with TypeScript
+  await wrapper.find('[data-test="send-tx-btn"]').trigger("click");
 
-Start using these mocks in your tests and enjoy a more consistent testing experience!
+  expect(mockTransactionFunctions.mockSendTransaction).toHaveBeenCalledWith(
+    expect.objectContaining({
+      to: "0x1234567890123456789012345678901234567890",
+      value: expect.any(String),
+    }),
+  );
+});
+```
+
+## Adding New Mocks
+
+The system is designed for easy extension. Here's how to add different types of mocks:
+
+### Adding New Query Mocks
+
+1. **Add mock data** (`query.mock.ts`):
+
+```typescript
+export const mockMyNewData: MyType = {
+  /* realistic data */
+};
+```
+
+2. **Add to queryMocks object** (`query.mock.ts`):
+
+```typescript
+export const queryMocks = {
+  // ... existing mocks
+  useMyNewQuery: () => createMockQueryResponse(mockMyNewData),
+  useMyNewMutation: () => createMockMutationResponse(),
+};
+```
+
+3. **Register globally** (`composables.setup.ts`):
+
+```typescript
+vi.mock("@/queries/mynew.queries", () => ({
+  useMyNewQuery: vi.fn(queryMocks.useMyNewQuery),
+  useMyNewMutation: vi.fn(queryMocks.useMyNewMutation),
+}));
+```
+
+### Adding New Composable Mocks
+
+1. **Create mock implementation** (`composables.mock.ts`):
+
+```typescript
+export const mockUseMyComposable = {
+  someMethod: vi.fn(),
+  someState: ref("default-value"),
+  isLoading: ref(false),
+};
+```
+
+2. **Add reset logic** (`composables.mock.ts`):
+
+```typescript
+export const resetComposableMocks = () => {
+  // ... existing resets
+  mockUseMyComposable.isLoading.value = false;
+  mockUseMyComposable.someState.value = "default-value";
+  if (vi.isMockFunction(mockUseMyComposable.someMethod)) {
+    mockUseMyComposable.someMethod.mockClear();
+  }
+};
+```
+
+3. **Register globally** (`composables.setup.ts`):
+
+```typescript
+vi.mock("@/composables/useMyComposable", () => ({
+  useMyComposable: vi.fn(() => mockUseMyComposable),
+}));
+```
+
+### Adding New Store Mocks
+
+1. **Create store mock** (`store.mock.ts`):
+
+```typescript
+export const mockMyStore = {
+  someState: ref("initial"),
+  someGetter: computed(() => "computed-value"),
+  someAction: vi.fn(),
+  // ... complete store interface
+};
+```
+
+2. **Export for global usage** (`index.ts`):
+
+```typescript
+export * from "./store.mock";
+```
+
+## File Structure
+
+```
+src/tests/
+├── mocks/
+│   ├── index.ts                  # Main exports (import from here)
+│   ├── query.mock.ts            # TanStack Query operations
+│   ├── erc20.mock.ts             # ERC20 token operations
+│   ├── composables.mock.ts       # Vue composables
+│   ├── store.mock.ts             # Pinia stores
+│   ├── wagmi.vue.mock.ts         # Web3 wagmi operations
+│   └── README.md                 # Quick reference guide
+└── setup/
+    └── composables.setup.ts      # Global mock registration
+```
+
+## Common Troubleshooting
+
+**Q: Tests failing with "Cannot read property of undefined"**  
+A: Ensure you're calling the appropriate reset function in `beforeEach()`
+
+**Q: Mock not being applied to my test**  
+A: Check that the mock is registered in `composables.setup.ts` and the module path is correct
+
+**Q: TypeScript errors with mock overrides**  
+A: Use `vi.mocked()` helper: `vi.mocked(useMyQuery).mockReturnValue(...)`
+
+**Q: ERC20 operations not working in tests**  
+A: Import and call `resetERC20Mocks()` in your test setup
+
+**Q: Need to test with different contract addresses**  
+A: Override `mockTeamStore.getContractAddressByType()` with your test addresses
+
+**Q: Store not returning expected data**  
+A: Set the store state directly: `mockTeamStore.currentTeam.value = myTestTeam`
+
+## Benefits Summary
+
+This comprehensive mock system provides:
+
+🎯 **Zero Configuration Testing** - Just write tests, mocks are automatic  
+🔄 **Consistent Data** - Same realistic data across all tests  
+🧩 **Modular Design** - Different mock types for different concerns  
+⚡ **High Performance** - Pre-configured mocks, minimal setup overhead  
+🛡️ **Type Safety** - Full TypeScript support throughout  
+🔧 **Easy Maintenance** - Centralized definitions, easy updates  
+📚 **Great DX** - Simple imports, predictable behavior  
+🎨 **Flexible Overrides** - Easy customization when needed
+
+## Quick Start Checklist
+
+1. ✅ Import component and mount normally
+2. ✅ Add reset functions to `beforeEach()` if needed
+3. ✅ Override specific mocks only when necessary
+4. ✅ Use `data-test` attributes for element selection
+5. ✅ Test both success and error scenarios
+6. ✅ Verify mock interactions with `expect().toHaveBeenCalledWith()`
+
+**Ready to test? Just start writing - the mocks are already there! 🚀**

@@ -12,62 +12,6 @@ import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip7
 import * as viem from 'viem'
 import { estimateGas, readContract } from '@wagmi/core'
 import { mockToastStore } from '@/tests/mocks/store.mock'
-import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
-
-// Mocking wagmi functions
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useReadContract: vi.fn(() => {
-      return { ...mocks.mockUseReadContract, data: ref(`0xContractOwner`) }
-    }),
-    useWriteContract: vi.fn(() => mocks.mockUseWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mocks.mockUseWaitForTransactionReceipt),
-    useBalance: vi.fn(() => mocks.mockUseBalance),
-    useChainId: vi.fn(() => ref('0xChainId')),
-    useSignTypedData: vi.fn(() => mocks.mockUseSignTypedData)
-  }
-})
-
-vi.mock('@wagmi/core', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    readContract: vi.fn(),
-    estimateGas: vi.fn()
-  }
-})
-
-vi.mock('viem', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    parseSignature: vi.fn(),
-    hashTypedData: vi.fn(),
-    keccak256: vi.fn(),
-    encodeFunctionData: vi.fn()
-  }
-})
-vi.mock('@/stores', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useTeamStore: vi.fn(() => ({
-      ...mocks.mockTeamStore
-    })),
-    useUserDataStore: vi.fn(() => ({
-      address: '0x0123456789012345678901234567890123456789'
-    }))
-  }
-})
-vi.mock('@/stores/currencyStore', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore }))
-  }
-})
 
 const mockUseQuery = {
   result: ref({

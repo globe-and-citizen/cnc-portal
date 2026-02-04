@@ -12,14 +12,6 @@ const { mockUseTeamStore } = vi.hoisted(() => ({
   }
 }))
 
-vi.mock('@/stores', async (importOriginals) => {
-  const actual: object = await importOriginals()
-  return {
-    ...actual,
-    useTeamStore: vi.fn(() => ({ ...mockUseTeamStore }))
-  }
-})
-
 type NetworkCurrencyBalance = {
   decimals: number
   formatted: string
@@ -45,16 +37,6 @@ const mockUseReadContract = {
   error: ref<Error | null>(null),
   isLoading: ref(false)
 }
-
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useBalance: vi.fn(() => ({ ...mockUseBalance })),
-    useReadContract: vi.fn(() => ({ ...mockUseReadContract })),
-    useChainId: vi.fn(() => ref(1))
-  }
-})
 
 describe.skip('ExpenseStatsSection', () => {
   const createComponent = () => mount(ExpenseStatsSection)

@@ -2,18 +2,10 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
 
-// Mock modules before importing the component to avoid module-level side effects
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn()
-}))
-vi.mock('@wagmi/vue', () => ({
-  createConfig: vi.fn(),
-  http: vi.fn(),
-  useReadContract: vi.fn()
-}))
 // Provide minimal constants to avoid import-time validation
 vi.mock('@/constant', () => ({
   USDC_ADDRESS: '0x0000000000000000000000000000000000000001',
+  USDC_E_ADDRESS: '0x0000000000000000000000000000000000000003',
   USDT_ADDRESS: '0x0000000000000000000000000000000000000002'
 }))
 

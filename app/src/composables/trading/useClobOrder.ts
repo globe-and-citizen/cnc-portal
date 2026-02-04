@@ -2,7 +2,7 @@ import { ref, type ComputedRef } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { Side, OrderType } from '@polymarket/clob-client'
 import type { ClobClient, UserOrder } from '@polymarket/clob-client'
-import { log } from '@/utils'
+import { log, parseError } from '@/utils'
 
 export type OrderParams = {
   tokenId: string
@@ -93,10 +93,14 @@ export function useClobOrder(
         queryClient.invalidateQueries({ queryKey: ['active-orders'] })
         queryClient.invalidateQueries({ queryKey: ['polymarket-positions'] })
         return { success: true, orderId: response.orderID }
+      } else if (response.error) {
+        // log.info('submitOrder: No orderID in response', response)
+        throw new Error(`Error submitting: ${response.error}`)
       } else {
         throw new Error('Order submission failed')
       }
     } catch (err) {
+      log.error('submitOrder error: ', parseError(err))
       const e = err instanceof Error ? err : new Error('Failed to submit order')
       error.value = e
       throw e

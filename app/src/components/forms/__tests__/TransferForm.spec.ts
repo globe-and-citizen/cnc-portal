@@ -4,16 +4,8 @@ import TransferForm from '../TransferForm.vue'
 import { NETWORK, type TokenId } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
-import { mockUseCurrencyStore } from '@/tests/mocks/index.mock'
 import type { TokenOption } from '@/types'
 
-vi.mock('@/stores/currencyStore', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useCurrencyStore: vi.fn(() => ({ ...mockUseCurrencyStore() }))
-  }
-})
 const defaultTokens: TokenOption[] = [
   {
     symbol: NETWORK.currencySymbol,

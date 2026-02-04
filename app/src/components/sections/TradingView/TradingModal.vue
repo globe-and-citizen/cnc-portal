@@ -1,15 +1,9 @@
 <template>
-  <!-- <div class="modal modal-open">
-    <div class="modal-box max-w-lg p-0 overflow-hidden bg-base-100 border border-base-300"> -->
-  <!-- Header -->
   <div class="p-6 pb-0">
     <div class="flex items-start justify-between">
       <h3 class="text-xl font-semibold pr-8">
         {{ market?.question }}
       </h3>
-      <!-- <button @click="onClose" class="btn btn-ghost btn-sm btn-circle absolute right-4 top-4">
-            <icon icon="heroicons:x-mark" class="w-5 h-5" />
-          </button> -->
     </div>
     <p class="text-sm text-gray-500 mt-2 line-clamp-2">
       {{ market?.description }}
@@ -17,104 +11,22 @@
   </div>
 
   <div class="p-6 space-y-6">
-    <!-- Outcome Selection -->
-    <div class="space-y-2">
-      <label class="text-sm text-gray-500">Select Outcome</label>
-      <div class="grid grid-cols-2 gap-3">
-        <button
-          v-for="(outcome, index) in outcomes"
-          :key="outcome.name"
-          @click="setSelectedOutcome(index)"
-          :class="[
-            'p-4 rounded-xl border transition-all duration-200 text-left',
-            selectedOutcome === index
-              ? 'border-primary bg-primary/10'
-              : 'border-base-300 bg-base-200 hover:border-primary/50'
-          ]"
-        >
-          <span class="font-semibold">{{ outcome.name }}</span>
-          <p class="font-mono text-lg text-primary mt-1">
-            {{ (outcome.buyPrice * 100).toFixed(1) }}¢
-          </p>
-        </button>
-      </div>
-    </div>
+    <outcome-selection
+      :outcomes="outcomes"
+      :selected-outcome="selectedOutcome"
+      @set-selected-outcome="setSelectedOutcome"
+    />
 
-    <!-- Order Type Toggle -->
-    <div class="space-y-2">
-      <label class="text-sm text-gray-500">Order Type</label>
-      <div class="grid grid-cols-2 gap-3">
-        <button
-          @click="setOrderType('market')"
-          :class="[
-            'h-14 rounded-lg flex items-center px-4 transition-all duration-200',
-            orderType === 'market' ? 'btn btn-primary' : 'btn btn-ghost border border-base-300'
-          ]"
-        >
-          <icon icon="heroicons:arrow-trending-up" class="w-5 h-5 mr-2" />
-          <div class="text-left">
-            <div>Market</div>
-            <div class="text-xs opacity-80">Instant execution</div>
-          </div>
-        </button>
-        <button
-          @click="setOrderType('limit')"
-          :class="[
-            'h-14 rounded-lg flex items-center px-4 transition-all duration-200',
-            orderType === 'limit' ? 'btn btn-primary' : 'btn btn-ghost border border-base-300'
-          ]"
-        >
-          <icon icon="heroicons:arrow-trending-down" class="w-5 h-5 mr-2" />
-          <div class="text-left">
-            <div>Limit</div>
-            <div class="text-xs opacity-80">Set your price</div>
-          </div>
-        </button>
-      </div>
-    </div>
+    <order-type-toggle :order-type="orderType" @set-order-type="setOrderType" />
 
-    <!-- Shares Input -->
-    <div class="space-y-2">
-      <label class="text-sm text-gray-500">Number of Shares</label>
-      <input
-        type="number"
-        placeholder="Enter amount"
-        v-model="shares"
-        class="input input-bordered w-full font-mono text-lg h-14"
-        min="0"
-        step="1"
-      />
-    </div>
+    <trading-inputs
+      :order-type="orderType"
+      :v$="v$"
+      v-model:shares="shares"
+      v-model:limit-price="limitPrice"
+    />
 
-    <!-- Limit Price Input - Only shown for Limit orders -->
-    <div v-if="orderType === 'limit'" class="space-y-2">
-      <label class="text-sm text-gray-500">Limit Price</label>
-      <input
-        type="number"
-        placeholder="Enter limit price"
-        class="input input-bordered w-full font-mono text-lg h-14"
-        min="0"
-        step="0.01"
-        v-model="limitPrice"
-      />
-    </div>
-
-    <!-- Order Summary -->
-    <div class="bg-base-200 p-4 rounded-xl space-y-3">
-      <div class="flex justify-between text-sm">
-        <span class="text-gray-500">Price per share</span>
-        <span class="font-mono">${{ price.toFixed(2) }}</span>
-      </div>
-      <div class="flex justify-between text-sm">
-        <span class="text-gray-500">Shares</span>
-        <span class="font-mono">{{ shares || '0' }}</span>
-      </div>
-      <div class="divider my-1"></div>
-      <div class="flex justify-between">
-        <span class="font-medium">Total Cost</span>
-        <span class="font-mono text-lg text-primary"> ${{ total.toFixed(2) }} USDC </span>
-      </div>
-    </div>
+    <order-summary :price="price" :shares="shares" :total="total" />
 
     <!-- Place Order Button -->
     <button
@@ -141,9 +53,6 @@
       <icon icon="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
     </a>
   </div>
-  <!-- </div>
-    <div class="modal-backdrop" @click="onClose"></div>
-  </div> -->
 </template>
 
 <script setup lang="ts">
@@ -157,12 +66,16 @@ import {
 } from '@/composables/trading/'
 import type { PolymarketMarket } from '@/types'
 import { useMarketData } from '@/queries/polymarket.queries'
+import { toast } from 'vue-sonner'
+import { log } from '@/utils'
+import { useVuelidate } from '@vuelidate/core'
+import { required, helpers } from '@vuelidate/validators'
+import OutcomeSelection from './TradingModal/OutcomeSelection.vue'
+import OrderTypeToggle from './TradingModal/OrderTypeToggle.vue'
+import TradingInputs from './TradingModal/TradingInputs.vue'
+import OrderSummary from './TradingModal/OrderSummary.vue'
 
-interface Props {
-  marketUrl: string
-}
-
-const props = defineProps<Props>()
+const props = defineProps<{ marketUrl: string; traderBalance: number }>()
 const emit = defineEmits(['close', 'place-order'])
 
 const parsePolymarketUrl = (url: string) => {
@@ -173,7 +86,6 @@ const parsePolymarketUrl = (url: string) => {
 
 // State
 const market = ref<PolymarketMarket | null>(null)
-// const isLoading = ref(true)
 const selectedOutcome = ref(0)
 const orderType = ref<'market' | 'limit'>('market')
 const shares = ref('')
@@ -189,8 +101,62 @@ const endpoint = computed(() => {
 const { data: marketData } = useMarketData(endpoint)
 const { derivedSafeAddressFromEoa } = useSafeDeployment()
 const { clobClient } = useClobClient()
-const { submitOrder } = useClobOrder(clobClient, derivedSafeAddressFromEoa.value || undefined)
+const { submitOrder, error: clobOrderError } = useClobOrder(
+  clobClient,
+  derivedSafeAddressFromEoa.value || undefined
+)
 const { initializeTradingSession } = useTradingSession()
+
+// Helper to calculate required shares for a target dollar amount
+const getMinSharesForTarget = (targetAmount: number) => {
+  if (orderType.value === 'market') {
+    return price.value > 0 ? (targetAmount / price.value).toFixed(2) : '0'
+  } else {
+    const p = parseFloat(limitPrice.value) || 0
+    return p > 0 ? (targetAmount / p).toFixed(2) : '0'
+  }
+}
+
+const rules = computed(() => ({
+  shares: {
+    required,
+    nonZero: helpers.withMessage(
+      'Shares must be greater than 0',
+      (value: string) => parseFloat(value) > 0
+    ),
+    spendableBalance: helpers.withMessage(
+      () =>
+        `Total cost exceeds available balance $${props.traderBalance.toFixed(2)} (max. ${getMinSharesForTarget(props.traderBalance)} shares)`,
+      (value: string) => {
+        return (parseFloat(value) || 0) * price.value <= props.traderBalance
+      }
+    ),
+    // Dynamic Market Validation
+    marketMinimum: helpers.withMessage(
+      () => `Total cost must be at least $1.00 (min. ${getMinSharesForTarget(1)} shares)`,
+      (value: string) => {
+        if (orderType.value !== 'market') return true
+        return (parseFloat(value) || 0) * price.value >= 1.0
+      }
+    ),
+    // Dynamic Limit Validation
+    limitMinimum: helpers.withMessage(
+      () => `Total cost must be at least $5.00 (min. ${getMinSharesForTarget(5)} shares)`,
+      (value: string) => {
+        if (orderType.value !== 'limit') return true
+        const p = parseFloat(limitPrice.value) || 0
+        return (parseFloat(value) || 0) * p >= 5.0
+      }
+    )
+  },
+  limitPrice: {
+    requiredIfLimit: helpers.withMessage('Limit price is required', (value: string) =>
+      orderType.value === 'limit' ? parseFloat(value) > 0 : true
+    )
+  }
+}))
+
+const v$ = useVuelidate(rules, { shares, limitPrice })
 
 // Computed mappings for real Gamma API response
 const outcomes = computed(() => {
@@ -215,10 +181,6 @@ const outcome = computed(() => outcomes.value[selectedOutcome.value])
 const price = computed(() => outcomes.value[selectedOutcome.value]?.buyPrice || 0)
 const total = computed(() => (parseFloat(shares.value) || 0) * price.value)
 
-const onClose = () => {
-  emit('close')
-}
-
 const setSelectedOutcome = (index: number | string) => {
   selectedOutcome.value = Number(index)
 }
@@ -228,6 +190,11 @@ const setOrderType = (type: 'market' | 'limit') => {
 }
 
 const handlePlaceOrder = async () => {
+  const isFormValid = await v$.value.$validate()
+  if (!isFormValid) {
+    toast.error('Please fix the validation errors')
+    return
+  }
   if (!shares.value || parseFloat(shares.value) <= 0) return
 
   isPlacingOrder.value = true
@@ -235,7 +202,7 @@ const handlePlaceOrder = async () => {
   try {
     await initializeTradingSession()
 
-    await submitOrder({
+    const result = await submitOrder({
       tokenId: outcome.value?.tokenId || '',
       side: 'BUY',
       size: parseFloat(shares.value),
@@ -244,8 +211,7 @@ const handlePlaceOrder = async () => {
       price: orderType.value === 'limit' ? parseFloat(limitPrice.value) : undefined
     })
 
-    // Close modal after successful order
-    onClose()
+    emit('place-order', result)
   } catch (error) {
     console.error('Failed to place order:', error)
     // You could add error toast here
@@ -253,6 +219,13 @@ const handlePlaceOrder = async () => {
     isPlacingOrder.value = false
   }
 }
+
+watch(clobOrderError, (newError) => {
+  if (newError) {
+    toast.error(newError.message || 'Failed to place order')
+    log.error('CLOB Order Error:', newError)
+  }
+})
 
 watch(
   marketData,

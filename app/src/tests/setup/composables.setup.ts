@@ -1,5 +1,11 @@
 import { vi } from 'vitest'
 import { queryMocks } from '@/tests/mocks/query.mock'
+import {
+  mockUseBackendWake,
+  mockUseAuth,
+  mockUseContractBalance,
+  mockUseSafeSendTransaction
+} from '@/tests/mocks/composables.mock'
 
 /**
  * Mock TanStack Vue Query
@@ -16,6 +22,13 @@ vi.mock('@tanstack/vue-query', async () => {
         setQueryData: vi.fn(),
         removeQueries: vi.fn()
       }
+    }),
+    useQuery: vi.fn(() => {
+      return {
+        data: vi.fn(),
+        isLoading: vi.fn(),
+        error: vi.fn()
+      }
     })
   }
 })
@@ -28,7 +41,8 @@ vi.mock('@/queries/team.queries', () => ({
   useTeamQuery: vi.fn(queryMocks.useTeamQuery),
   useCreateTeamMutation: vi.fn(queryMocks.useCreateTeamMutation),
   useUpdateTeamMutation: vi.fn(queryMocks.useUpdateTeamMutation),
-  useDeleteTeamMutation: vi.fn(queryMocks.useDeleteTeamMutation)
+  useDeleteTeamMutation: vi.fn(queryMocks.useDeleteTeamMutation),
+  useSubmitRestrictionQuery: vi.fn(queryMocks.useSubmitRestrictionQuery)
 }))
 
 /**
@@ -68,7 +82,9 @@ vi.mock('@/queries/expense.queries', () => ({
  */
 vi.mock('@/queries/user.queries', () => ({
   useUserQuery: vi.fn(queryMocks.useUserQuery),
-  useUserNonceQuery: vi.fn(queryMocks.useUserNonceQuery)
+  useUserNonceQuery: vi.fn(queryMocks.useUserNonceQuery),
+  useUpdateUserMutation: vi.fn(queryMocks.useUpdateUserMutation),
+  useSearchUsersQuery: vi.fn(queryMocks.useSearchUsersQuery)
 }))
 
 /**
@@ -77,7 +93,8 @@ vi.mock('@/queries/user.queries', () => ({
 vi.mock('@/queries/action.queries', () => ({
   useBodActionsQuery: vi.fn(queryMocks.useBodActionsQuery),
   useCreateActionMutation: vi.fn(queryMocks.useCreateActionMutation),
-  useUpdateActionMutation: vi.fn(queryMocks.useUpdateActionMutation)
+  useUpdateActionMutation: vi.fn(queryMocks.useUpdateActionMutation),
+  useCreateElectionNotificationsMutation: vi.fn(queryMocks.useCreateElectionNotificationsMutation)
 }))
 
 /**
@@ -91,7 +108,9 @@ vi.mock('@/queries/auth.queries', () => ({
  * Mock Contract Queries (contract.queries.ts)
  */
 vi.mock('@/queries/contract.queries', () => ({
-  useCreateContractMutation: vi.fn(queryMocks.useCreateContractMutation)
+  useCreateContractMutation: vi.fn(queryMocks.useCreateContractMutation),
+  useSyncContractsMutation: vi.fn(queryMocks.useSyncContractsMutation),
+  useResetContractsMutation: vi.fn(queryMocks.useResetContractsMutation)
 }))
 
 /**
@@ -107,11 +126,9 @@ vi.mock('@/queries/health.queries', () => ({
 vi.mock('@/queries/weeklyClaim.queries', () => ({
   useTeamWeeklyClaimsQuery: vi.fn(queryMocks.useTeamWeeklyClaimsQuery),
   useWeeklyClaimByIdQuery: vi.fn(queryMocks.useWeeklyClaimByIdQuery),
-  useSignWeeklyClaimMutation: vi.fn(queryMocks.useSignWeeklyClaimMutation),
-  useEnableWeeklyClaimMutation: vi.fn(queryMocks.useEnableWeeklyClaimMutation),
-  useDisableWeeklyClaimMutation: vi.fn(queryMocks.useDisableWeeklyClaimMutation),
-  useWithdrawWeeklyClaimMutation: vi.fn(queryMocks.useWithdrawWeeklyClaimMutation),
-  useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation)
+  useUpdateWeeklyClaimMutation: vi.fn(queryMocks.useUpdateWeeklyClaimMutation),
+  useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation),
+  useDeleteClaimMutation: vi.fn(queryMocks.useDeleteClaimMutation)
 }))
 
 /**
@@ -137,22 +154,29 @@ vi.mock('@/queries/polymarket.queries', () => ({
 }))
 
 /**
- * Mock useBackendWake composable - returns a function that does nothing
- * Individual tests can override this mock if needed
+ * Mock useBackendWake composable
  */
 vi.mock('@/composables/useBackendWake', () => ({
-  useBackendWake: vi.fn(() => {
-    // No-op - just prevent the real implementation from being called
-  })
+  useBackendWake: mockUseBackendWake
 }))
 
 /**
  * Mock useAuth composable
  */
 vi.mock('@/composables/useAuth', () => ({
-  useAuth: vi.fn(() => ({
-    logout: vi.fn(),
-    login: vi.fn(),
-    validateToken: vi.fn()
-  }))
+  useAuth: vi.fn(() => mockUseAuth)
+}))
+
+/**
+ * Mock useContractBalance composable
+ */
+vi.mock('@/composables/useContractBalance', () => ({
+  useContractBalance: vi.fn(() => mockUseContractBalance)
+}))
+
+/**
+ * Mock useSafeSendTransaction composable
+ */
+vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
+  useSafeSendTransaction: vi.fn(() => mockUseSafeSendTransaction)
 }))
