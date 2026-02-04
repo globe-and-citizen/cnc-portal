@@ -129,7 +129,7 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
         args: [BigInt(_actionId)]
       })
       if (isActionExecuted) {
-        await updateActionMutation.mutateAsync({ id: dbId })
+        await updateActionMutation.mutateAsync({ pathParams: { id: dbId } })
       }
       await queryClient.invalidateQueries({
         queryKey: ['readContract']

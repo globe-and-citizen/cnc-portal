@@ -58,7 +58,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from './ButtonUI.vue'
 import { useRouter } from 'vue-router'
 import {
-  useNotificationsQuery,
+  useGetNotificationsQuery,
   useUpdateNotificationMutation
 } from '@/queries/notification.queries'
 
@@ -66,7 +66,7 @@ const router = useRouter()
 const currentPage = ref(1)
 const itemsPerPage = ref(4)
 
-const { data: notifications } = useNotificationsQuery()
+const { data: notifications } = useGetNotificationsQuery()
 const { mutateAsync: updateNotification } = useUpdateNotificationMutation()
 
 const totalPages = computed(() => {

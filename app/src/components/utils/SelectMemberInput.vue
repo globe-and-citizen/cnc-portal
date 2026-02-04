@@ -66,7 +66,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useSearchUsersQuery } from '@/queries/user.queries'
+import { useGetSearchUsersQuery } from '@/queries/user.queries'
 import { ref, computed, watch } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
@@ -108,7 +108,9 @@ const lower = (a?: string) => (a ?? '').toLowerCase()
 const debouncedSearch = ref('')
 
 // Use TanStack Query for user search
-const { data: usersData, isFetching, refetch } = useSearchUsersQuery(debouncedSearch, 100)
+const { data: usersData, isFetching, refetch } = useGetSearchUsersQuery({
+  queryParams: { search: debouncedSearch, limit: 100 }
+})
 
 const isTeamMember = (user: User): boolean => {
   const members: User[] = teamStore.currentTeam?.members ?? []

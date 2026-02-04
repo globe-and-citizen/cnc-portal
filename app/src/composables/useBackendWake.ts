@@ -1,5 +1,5 @@
 import { onMounted } from 'vue'
-import { useBackendHealthQuery } from '@/queries/health.queries'
+import { useGetBackendHealthQuery } from '@/queries/health.queries'
 
 /**
  * Composable to wake up backend on component mount
@@ -17,7 +17,7 @@ import { useBackendHealthQuery } from '@/queries/health.queries'
  * ```
  */
 export function useBackendWake() {
-  const { refetch } = useBackendHealthQuery()
+  const { refetch } = useGetBackendHealthQuery()
 
   onMounted(() => {
     // Non-blocking wake-up call

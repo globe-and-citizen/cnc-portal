@@ -1,6 +1,6 @@
 import { computed, type MaybeRef } from 'vue'
 import type { SafeTransaction } from '@/types/safe'
-import { useSafeTransactionsQuery, useSafeInfoQuery } from '@/queries/safe.queries'
+import { useGetSafeTransactionsQuery, useGetSafeInfoQuery } from '@/queries/safe.queries'
 
 export interface TransactionConflictInfo {
   hasConflicts: boolean
@@ -17,8 +17,8 @@ export interface TransactionConflictInfo {
  */
 export function useSafeTransactionConflicts(safeAddress: MaybeRef<string | undefined>) {
   // Fetch Safe info and transactions internally
-  const { data: safeInfo } = useSafeInfoQuery(safeAddress)
-  const { data: transactions } = useSafeTransactionsQuery(safeAddress)
+  const { data: safeInfo } = useGetSafeInfoQuery({ pathParams: { safeAddress } })
+  const { data: transactions } = useGetSafeTransactionsQuery({ pathParams: { safeAddress } })
 
   const currentSafeNonce = computed(() => safeInfo.value?.nonce ?? 0)
 

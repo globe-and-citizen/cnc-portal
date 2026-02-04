@@ -180,9 +180,9 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
 
     await enableClaim(signature.value)
     await executeUpdateClaim({
-      claimId: weeklyClaim.id,
-      action: 'sign',
-      signature: signature.value
+      pathParams: { claimId: weeklyClaim.id },
+      queryParams: { action: 'sign' },
+      body: { signature: signature.value }
     })
 
     if (claimError.value) {

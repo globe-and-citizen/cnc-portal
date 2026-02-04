@@ -275,14 +275,14 @@ import ButtonUI from './ButtonUI.vue'
 import TeamMetaComponent from './TeamMetaComponent.vue'
 import { useTeamStore, useAppStore, useUserDataStore } from '@/stores'
 import { useRoute } from 'vue-router'
-import { useTeamsQuery } from '@/queries/team.queries'
+import { useGetTeamsQuery } from '@/queries/team.queries'
 import type { User } from '@/types'
 import { useTeamSafes } from '@/composables/safe'
 
 const appStore = useAppStore()
 const route = useRoute()
 const userStore = useUserDataStore()
-const teams = useTeamsQuery(userStore.address)
+const teams = useGetTeamsQuery({ queryParams: { userAddress: userStore.address } })
 
 const isCollapsed = defineModel({
   type: Boolean

@@ -151,13 +151,19 @@ export function useSafeOwnerManagement() {
         addSuccessToast('Owner management transaction proposed successfully')
         // Invalidate queries via mutation (no API call, just cache invalidation)
         await updateMutation.mutateAsync({
-          chainId: chainId.value,
-          safeAddress,
-          ownersToAdd, // Include the actual operation parameters
-          ownersToRemove,
-          newThreshold,
-          shouldPropose: false,
-          safeTxHash: safeTxHash // For executions, this is the actual transaction hash
+          pathParams: {
+            safeAddress
+          },
+          queryParams: {
+            chainId: chainId.value
+          },
+          body: {
+            ownersToAdd, // Include the actual operation parameters
+            ownersToRemove,
+            newThreshold,
+            shouldPropose: false,
+            safeTxHash: safeTxHash // For executions, this is the actual transaction hash
+          }
         })
         return safeTxHash
       } else {
@@ -187,13 +193,19 @@ export function useSafeOwnerManagement() {
         addSuccessToast('Owner management transaction executed successfully')
         // Invalidate queries after execution
         await updateMutation.mutateAsync({
-          chainId: currentChainId,
-          safeAddress,
-          ownersToAdd, // Include the actual operation parameters
-          ownersToRemove,
-          newThreshold,
-          shouldPropose: false,
-          safeTxHash: txHash // For executions, this is the actual transaction hash
+          pathParams: {
+            safeAddress
+          },
+          queryParams: {
+            chainId: currentChainId
+          },
+          body: {
+            ownersToAdd, // Include the actual operation parameters
+            ownersToRemove,
+            newThreshold,
+            shouldPropose: false,
+            safeTxHash: txHash // For executions, this is the actual transaction hash
+          }
         })
         return txHash
       }

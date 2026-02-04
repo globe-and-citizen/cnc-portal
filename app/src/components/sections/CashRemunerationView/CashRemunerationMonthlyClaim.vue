@@ -23,7 +23,7 @@ import OverviewCard from '@/components/OverviewCard.vue'
 import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
 import { watch, computed } from 'vue'
-import { useTeamWeeklyClaimsQuery } from '@/queries'
+import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import { useStorage } from '@vueuse/core'
 import type { TokenId } from '@/constant'
 import type { RatePerHour, WeeklyClaim } from '@/types'
@@ -42,9 +42,11 @@ const {
   data: weeklyClaims,
   isLoading: isFetching,
   error
-} = useTeamWeeklyClaimsQuery({
-  teamId: computed(() => teamStore.currentTeamId),
-  status: 'withdrawn'
+} = useGetTeamWeeklyClaimsQuery({
+  queryParams: {
+    teamId: computed(() => teamStore.currentTeamId),
+    status: 'withdrawn'
+  }
 })
 
 function getTotalHoursWorked(claims: { hoursWorked: number }[]) {

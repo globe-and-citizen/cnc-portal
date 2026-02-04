@@ -123,7 +123,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
-import { useSafeInfoQuery } from '@/queries/safe.queries'
+import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
 import { useSafeTransfer } from '@/composables/safe'
@@ -174,7 +174,7 @@ const transferModal = ref({
 
 const { transferFromSafe, isTransferring } = useSafeTransfer()
 
-const { data: safeInfo } = useSafeInfoQuery(props.address)
+const { data: safeInfo } = useGetSafeInfoQuery({ pathParams: { safeAddress: props.address } })
 
 const initialTransferDataValue = (): TransferModel => {
   const firstToken = tokens.value[0]

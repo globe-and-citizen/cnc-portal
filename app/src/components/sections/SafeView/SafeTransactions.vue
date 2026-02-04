@@ -110,7 +110,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 
 // Stores and composables
-import { useSafeTransactionsQuery, useSafeInfoQuery } from '@/queries/safe.queries'
+import { useGetSafeTransactionsQuery, useGetSafeInfoQuery } from '@/queries/safe.queries'
 import { useSafeApproval, useSafeExecution } from '@/composables/safe'
 import { useSafeTransactionConflicts } from '@/composables/safe/useSafeTransactionConflicts'
 import SafeTransactionStatusFilter, {
@@ -146,9 +146,9 @@ const {
   data: transactions,
   isLoading,
   error
-} = useSafeTransactionsQuery(computed(() => props.address))
+} = useGetSafeTransactionsQuery({ pathParams: { safeAddress: computed(() => props.address) } })
 
-const { data: safeInfo } = useSafeInfoQuery(computed(() => props.address))
+const { data: safeInfo } = useGetSafeInfoQuery({ pathParams: { safeAddress: computed(() => props.address) } })
 
 // Safe operations
 const { approveTransaction, isApproving } = useSafeApproval()

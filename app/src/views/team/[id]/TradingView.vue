@@ -98,8 +98,8 @@ const checkAccountStatus = async () => {
           throw new Error('Missing safe address or team ID for DB setup')
         }
         await updateUser({
-          address: userDataStore.address,
-          userData: {
+          pathParams: { address: userDataStore.address },
+          body: {
             traderSafeAddress: derivedSafeAddressFromEoa.value,
             teamId: teamStore.currentTeamId
           }
