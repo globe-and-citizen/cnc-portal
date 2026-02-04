@@ -53,8 +53,6 @@ vi.mock('viem', async (importOriginal) => {
     formatEther: vi.fn((value: bigint) => (Number(value) / 10 ** 18).toString())
   }
 })
-
-// Mock the network constant for consistent currency formatting
 vi.mock('@/constant', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
@@ -73,6 +71,7 @@ const MOCK_DATA = {
     safeTxHash: '0xpending123',
     to: '0x3333333333333333333333333333333333333333',
     value: '1000000000000000000',
+    nonce: 1,
     isExecuted: false,
     confirmations: [],
     confirmationsRequired: 2,
@@ -82,6 +81,7 @@ const MOCK_DATA = {
     safeTxHash: '0xready456',
     to: '0x4444444444444444444444444444444444444444',
     value: '2000000000000000000',
+    nonce: 1,
     isExecuted: false,
     confirmations: [
       { owner: '0x1111111111111111111111111111111111111111', signature: '0xsig1' },
@@ -106,13 +106,8 @@ const ComponentStubs = {
   }),
   TableComponent: defineComponent({
     props: ['rows', 'loading'],
-    template: `
-      <div>
-        <div v-for="row in rows" :key="row.safeTxHash">
-          <slot name="actions-data" :row="row" />
-        </div>
-      </div>
-    `
+    template:
+      '<div><div v-for="row in rows" :key="row.safeTxHash"><slot name="actions-data" :row="row" /></div></div>'
   }),
   ButtonUI: defineComponent({
     props: ['disabled', 'loading', 'size', 'variant'],
@@ -121,17 +116,15 @@ const ComponentStubs = {
       '<button @click="$emit(\'click\')" :disabled="disabled" :data-loading="loading"><slot /></button>'
   }),
   AddressToolTip: defineComponent({ template: '<div></div>' }),
-  SafeTransactionStatusFilter: defineComponent({ template: '<div></div>' })
+  SafeTransactionStatusFilter: defineComponent({ template: '<div></div>' }),
+  SafeTransactionsWarning: defineComponent({ template: '<div></div>' })
 }
 
 describe('SafeTransactions Actions', () => {
   let wrapper: VueWrapper
-
-  const defaultProps = { address: MOCK_DATA.safeAddress }
-
   const createWrapper = (props = {}) =>
     mount(SafeTransactions, {
-      props: { ...defaultProps, ...props },
+      props: { address: MOCK_DATA.safeAddress, ...props },
       global: { stubs: ComponentStubs }
     })
 
@@ -140,19 +133,14 @@ describe('SafeTransactions Actions', () => {
     mockUseTeamStore.mockReturnValue({
       currentTeamMeta: { data: { safeAddress: MOCK_DATA.safeAddress } }
     })
-    mockUseSafeInfoQuery.mockReturnValue({
-      data: ref(MOCK_DATA.safeInfo)
-    })
-    mockUseAccount.mockReturnValue({
-      address: ref(MOCK_DATA.connectedAddress)
-    })
-    mockUseChainId.mockReturnValue(ref(137)) // Polygon mainnet
+    mockUseSafeInfoQuery.mockReturnValue({ data: ref(MOCK_DATA.safeInfo) })
+    mockUseAccount.mockReturnValue({ address: ref(MOCK_DATA.connectedAddress) })
+    mockUseChainId.mockReturnValue(ref(137))
     mockUseSafeApproval.mockReturnValue({
       approveTransaction: MOCK_DATA.mockApproveTransaction,
       isApproving: ref(false),
       error: ref(null)
     })
-
     mockUseSafeExecution.mockReturnValue({
       executeTransaction: MOCK_DATA.mockExecuteTransaction,
       isExecuting: ref(false),
@@ -164,10 +152,9 @@ describe('SafeTransactions Actions', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  describe('Transaction Approval', () => {
-    it('should approve transaction successfully', async () => {
+  describe('Transaction Approval and Execution', () => {
+    it('should approve transaction successfully and show loading state', async () => {
       MOCK_DATA.mockApproveTransaction.mockResolvedValue('0xapproval')
-
       mockUseSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.pendingTransaction]),
         isLoading: ref(false),
@@ -175,42 +162,27 @@ describe('SafeTransactions Actions', () => {
       })
 
       wrapper = createWrapper()
-
       await wrapper.vm.handleApproveTransaction(MOCK_DATA.pendingTransaction)
 
       expect(MOCK_DATA.mockApproveTransaction).toHaveBeenCalledWith(
         MOCK_DATA.safeAddress,
         '0xpending123'
       )
-    })
 
-    it('should show loading state during approval', async () => {
+      // Test loading state
       mockUseSafeApproval.mockReturnValue({
         approveTransaction: MOCK_DATA.mockApproveTransaction,
         isApproving: ref(true),
         error: ref(null)
       })
-
-      mockUseSafeTransactionsQuery.mockReturnValue({
-        data: ref([MOCK_DATA.pendingTransaction]),
-        isLoading: ref(false),
-        error: ref(null)
-      })
-
       wrapper = createWrapper()
-
-      // Add transaction to approving set
       wrapper.vm.approvingTransactions.add('0xpending123')
       await nextTick()
-
       expect(wrapper.vm.isTransactionLoading('0xpending123', 'approve')).toBe(true)
     })
-  })
 
-  describe('Transaction Execution', () => {
-    it('should execute transaction successfully', async () => {
+    it('should execute transaction successfully and show loading state', async () => {
       MOCK_DATA.mockExecuteTransaction.mockResolvedValue('0xexecution')
-
       mockUseSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.readyToExecuteTransaction]),
         isLoading: ref(false),
@@ -218,7 +190,6 @@ describe('SafeTransactions Actions', () => {
       })
 
       wrapper = createWrapper()
-
       await wrapper.vm.handleExecuteTransaction(MOCK_DATA.readyToExecuteTransaction)
 
       expect(MOCK_DATA.mockExecuteTransaction).toHaveBeenCalledWith(
@@ -226,79 +197,55 @@ describe('SafeTransactions Actions', () => {
         '0xready456',
         MOCK_DATA.readyToExecuteTransaction
       )
-    })
 
-    it('should show loading state during execution', async () => {
+      // Test loading state
       mockUseSafeExecution.mockReturnValue({
         executeTransaction: MOCK_DATA.mockExecuteTransaction,
         isExecuting: ref(true),
         error: ref(null)
       })
-
-      mockUseSafeTransactionsQuery.mockReturnValue({
-        data: ref([MOCK_DATA.readyToExecuteTransaction]),
-        isLoading: ref(false),
-        error: ref(null)
-      })
-
       wrapper = createWrapper()
-
-      // Add transaction to executing set
       wrapper.vm.executingTransactions.add('0xready456')
       await nextTick()
-
       expect(wrapper.vm.isTransactionLoading('0xready456', 'execute')).toBe(true)
     })
   })
 
   describe('Transaction Permissions', () => {
-    it('should allow approval for pending transactions', () => {
+    it('should handle approval permissions correctly', () => {
       mockUseSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.pendingTransaction]),
         isLoading: ref(false),
         error: ref(null)
       })
 
+      // Allow approval for pending transactions
       wrapper = createWrapper()
-
       expect(wrapper.vm.canApprove(MOCK_DATA.pendingTransaction)).toBe(true)
-    })
 
-    it('should not allow approval for executed transactions', () => {
+      // Disallow approval for executed transactions
       const executedTransaction = { ...MOCK_DATA.pendingTransaction, isExecuted: true }
-
-      mockUseSafeTransactionsQuery.mockReturnValue({
-        data: ref([executedTransaction]),
-        isLoading: ref(false),
-        error: ref(null)
-      })
-
-      wrapper = createWrapper()
-
       expect(wrapper.vm.canApprove(executedTransaction)).toBe(false)
     })
 
-    it('should allow execution when threshold is met', () => {
+    it('should handle execution permissions correctly', () => {
       mockUseSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.readyToExecuteTransaction]),
         isLoading: ref(false),
         error: ref(null)
       })
 
+      // Allow execution when threshold is met
       wrapper = createWrapper()
-
       expect(wrapper.vm.canExecute(MOCK_DATA.readyToExecuteTransaction)).toBe(true)
-    })
 
-    it('should not allow execution when threshold is not met', () => {
+      // Disallow execution when threshold is not met
       mockUseSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.pendingTransaction]),
         isLoading: ref(false),
         error: ref(null)
       })
-
       wrapper = createWrapper()
-
       expect(wrapper.vm.canExecute(MOCK_DATA.pendingTransaction)).toBe(false)
     })
 
@@ -306,7 +253,6 @@ describe('SafeTransactions Actions', () => {
       mockUseAccount.mockReturnValue({
         address: ref('0x9999999999999999999999999999999999999999' as Address)
       })
-
       mockUseSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.pendingTransaction]),
         isLoading: ref(false),
@@ -314,14 +260,13 @@ describe('SafeTransactions Actions', () => {
       })
 
       wrapper = createWrapper()
-
       expect(wrapper.vm.canApprove(MOCK_DATA.pendingTransaction)).toBe(false)
       expect(wrapper.vm.canExecute(MOCK_DATA.pendingTransaction)).toBe(false)
     })
   })
 
-  describe('Transaction Status and Display', () => {
-    it('should return correct status for executed transactions', () => {
+  describe('Transaction Status', () => {
+    it('should return correct status for all transaction states', () => {
       const executedTransaction = { ...MOCK_DATA.pendingTransaction, isExecuted: true }
 
       mockUseSafeTransactionsQuery.mockReturnValue({
@@ -329,13 +274,10 @@ describe('SafeTransactions Actions', () => {
         isLoading: ref(false),
         error: ref(null)
       })
-
       wrapper = createWrapper()
-
       expect(wrapper.vm.getTransactionStatus(executedTransaction)).toBe('Executed')
-    })
 
-    it('should return "Ready to Execute" for fully approved transactions', () => {
+      // Test ready to execute
       mockUseSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.readyToExecuteTransaction]),
         isLoading: ref(false),
@@ -345,8 +287,8 @@ describe('SafeTransactions Actions', () => {
       expect(wrapper.vm.getTransactionStatus(MOCK_DATA.readyToExecuteTransaction)).toBe(
         'Ready to Execute'
       )
-    })
-    it('should return "Pending" for transactions needing more confirmations', () => {
+
+      // Test pending
       mockUseSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.pendingTransaction]),
         isLoading: ref(false),
