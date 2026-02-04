@@ -1,8 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
 import type { ExpenseResponse } from '@/types'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
+import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
 
 /**
  * Query key factory for expense-related queries
@@ -18,24 +17,13 @@ export const expenseKeys = {
 // ============================================================================
 
 /**
- * Path parameters for GET /expense (none for this endpoint)
- */
-export interface GetExpensesPathParams {}
-
-/**
- * Query parameters for GET /expense
- */
-export interface GetExpensesQueryParams {
-  /** Team ID to filter expenses */
-  teamId: MaybeRefOrGetter<string | null>
-}
-
-/**
  * Combined parameters for useGetExpensesQuery
  */
 export interface GetExpensesParams {
-  pathParams?: GetExpensesPathParams
-  queryParams: GetExpensesQueryParams
+  queryParams: {
+    /** Team ID to filter expenses */
+    teamId: MaybeRefOrGetter<string | null>
+  }
 }
 
 /**
@@ -46,23 +34,12 @@ export interface GetExpensesParams {
  * @queryParams { teamId: string }
  * @body none
  */
-export const useGetExpensesQuery = (params: GetExpensesParams) => {
-  const { queryParams } = params
-
-  return useQuery({
-    queryKey: expenseKeys.list(toValue(queryParams.teamId)),
-    queryFn: async () => {
-      const teamId = toValue(queryParams.teamId)
-
-      // Query params: passed as URL query string (?teamId=xxx)
-      const apiQueryParams: { teamId: string } = { teamId: teamId! }
-
-      const { data } = await apiClient.get<ExpenseResponse[]>('/expense', { params: apiQueryParams })
-      return data
-    },
-    enabled: () => !!toValue(queryParams.teamId)
-  })
-}
+export const useGetExpensesQuery = createQueryHook<ExpenseResponse[], GetExpensesParams>({
+  endpoint: 'expense',
+  queryKey: (params) => expenseKeys.list(toValue(params.queryParams.teamId)),
+  enabled: (params) => !!toValue(params.queryParams.teamId),
+  options: queryPresets.moderate
+})
 
 // ============================================================================
 // POST /expense - Create expense
@@ -89,6 +66,13 @@ export interface CreateExpenseBody {
 }
 
 /**
+ * Combined parameters for useCreateExpenseMutation
+ */
+export interface CreateExpenseParams {
+  body: CreateExpenseBody
+}
+
+/**
  * Add expense data with signature
  *
  * @endpoint POST /expense
@@ -96,16 +80,8 @@ export interface CreateExpenseBody {
  * @queryParams none
  * @body CreateExpenseBody - expense account data
  */
-export const useCreateExpenseMutation = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (body: CreateExpenseBody) => {
-      const { data } = await apiClient.post('/expense', body)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: expenseKeys.all })
-    }
-  })
-}
+export const useCreateExpenseMutation = createMutationHook<unknown, CreateExpenseParams>({
+  method: 'POST',
+  endpoint: 'expense',
+  invalidateKeys: [expenseKeys.all]
+})

@@ -66,7 +66,7 @@ const router = useRouter()
 const currentPage = ref(1)
 const itemsPerPage = ref(4)
 
-const { data: notifications } = useGetNotificationsQuery()
+const { data: notifications } = useGetNotificationsQuery({})
 const { mutateAsync: updateNotification } = useUpdateNotificationMutation()
 
 const totalPages = computed(() => {
@@ -105,7 +105,7 @@ const redirect = (notification: Notification) => {
 }
 
 const handleNotification = async (notification: Notification) => {
-  await updateNotification({ id: notification.id })
+  await updateNotification({ pathParams: { id: notification.id } })
   redirect(notification)
 }
 </script>

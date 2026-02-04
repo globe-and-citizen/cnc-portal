@@ -108,10 +108,12 @@ watch(contractAddress, async (newAddress) => {
     try {
       // First try to add contract to team
       await createContract({
-        teamId: teamStore.currentTeam.id,
-        contractAddress: newAddress,
-        contractType: 'Campaign',
-        deployer: userDataStore.address
+        body: {
+          teamId: teamStore.currentTeam.id,
+          contractAddress: newAddress,
+          contractType: 'Campaign',
+          deployer: userDataStore.address
+        }
       })
 
       queryClient.invalidateQueries({

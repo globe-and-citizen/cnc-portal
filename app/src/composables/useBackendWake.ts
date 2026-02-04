@@ -17,7 +17,7 @@ import { useGetBackendHealthQuery } from '@/queries/health.queries'
  * ```
  */
 export function useBackendWake() {
-  const { refetch } = useGetBackendHealthQuery()
+  const { refetch } = useGetBackendHealthQuery({})
 
   onMounted(() => {
     // Non-blocking wake-up call

@@ -86,7 +86,7 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
   watch(isConfirmingAddAction, async (isConfirming, wasConfirming) => {
     if (wasConfirming && !isConfirming && isConfirmedAddAction.value) {
       if (action.value) {
-        await createActionMutation.mutateAsync(action.value)
+        await createActionMutation.mutateAsync({ body: action.value })
       }
       addSuccessToast('Action added successfully!')
       // emits('contract-status-changed')

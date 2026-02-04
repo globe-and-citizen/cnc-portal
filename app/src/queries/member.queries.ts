@@ -1,7 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
 import type { Member } from '@/types/member'
-import type { AxiosError } from 'axios'
+import { createMutationHook } from './queryFactory'
+import { teamKeys } from './team.queries'
 
 /**
  * Query key factory for member-related queries
@@ -15,81 +14,61 @@ export const memberKeys = {
  */
 export type MemberInput = Array<Pick<Member, 'address' | 'name'>>
 
-/**
- * Path parameters for team member endpoints
- */
-export interface TeamMemberPathParams {
-  /** Team ID */
-  teamId: string | number
-}
+// ============================================================================
+// POST /teams/{teamId}/member - Add members
+// ============================================================================
 
 /**
- * Request body for adding members
+ * Combined parameters for useAddMembersMutation
  */
-export interface AddMembersBody {
-  /** Array of members to add */
-  members: MemberInput[]
-}
-
-/**
- * Mutation input for useAddMembersMutation
- */
-export interface AddMembersInput {
-  /** URL path parameter: team ID */
-  teamId: string | number
-  /** Request body: array of members to add */
-  members: MemberInput[]
-}
-
-/**
- * Path parameters for deleting a member
- */
-export interface DeleteMemberPathParams {
-  /** Team ID */
-  teamId: string | number
-  /** Member address */
-  memberAddress: string
+export interface AddMembersParams {
+  pathParams: {
+    /** Team ID */
+    teamId: string | number
+  }
+  body: MemberInput[]
 }
 
 /**
  * Add members to a team
  *
  * @endpoint POST /teams/{teamId}/member
- * @params { teamId: string | number } - URL path parameter
+ * @pathParams { teamId: string | number }
  * @queryParams none
- * @body AddMembersBody - array of members to add
+ * @body MemberInput[] - array of members to add
  */
-export const useAddMembersMutation = () => {
-  const queryClient = useQueryClient()
+export const useAddMembersMutation = createMutationHook<{ members: Member[] }, AddMembersParams>({
+  method: 'POST',
+  endpoint: 'teams/{teamId}/member',
+  invalidateKeys: (params) => [teamKeys.detail(String(params.pathParams.teamId))]
+})
 
-  return useMutation<unknown, AxiosError, AddMembersInput>({
-    mutationFn: async ({ teamId, members: body }) => {
-      const { data } = await apiClient.post<{ members: Member[] }>(`teams/${teamId}/member`, body)
-      return data
-    },
-    onSuccess: (_, { teamId }) => {
-      queryClient.invalidateQueries({ queryKey: ['team', { teamId: String(teamId) }] })
-    }
-  })
+// ============================================================================
+// DELETE /teams/{teamId}/member/{memberAddress} - Delete member
+// ============================================================================
+
+/**
+ * Combined parameters for useDeleteMemberMutation
+ */
+export interface DeleteMemberParams {
+  pathParams: {
+    /** Team ID */
+    teamId: string | number
+    /** Member address */
+    memberAddress: string
+  }
 }
 
 /**
  * Delete a member from a team
  *
  * @endpoint DELETE /teams/{teamId}/member/{memberAddress}
- * @params DeleteMemberPathParams - URL path parameters
+ * @pathParams { teamId: string | number, memberAddress: string }
  * @queryParams none
  * @body none
  */
-export const useDeleteMemberMutation = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation<void, AxiosError, DeleteMemberPathParams>({
-    mutationFn: async ({ teamId, memberAddress }) => {
-      await apiClient.delete(`teams/${teamId}/member/${memberAddress}`)
-    },
-    onSuccess: (_, { teamId }) => {
-      queryClient.invalidateQueries({ queryKey: ['team', { teamId: String(teamId) }] })
-    }
-  })
-}
+export const useDeleteMemberMutation = createMutationHook<void, DeleteMemberParams>({
+  method: 'DELETE',
+  endpoint: 'teams/{teamId}/member/{memberAddress}',
+  invalidateKeys: (params) => [teamKeys.detail(String(params.pathParams.teamId))]
+})

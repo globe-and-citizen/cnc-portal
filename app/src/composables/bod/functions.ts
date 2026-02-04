@@ -37,7 +37,7 @@ export function useBodWritesFunctions() {
   watch(isConfirming, async (newStatus, oldStatus) => {
     if (oldStatus && !newStatus && isConfirmed.value) {
       if (action.value) {
-        await createActionMutation.mutateAsync(action.value)
+        await createActionMutation.mutateAsync({ body: action.value })
       }
       isActionAdded.value = true
       queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
@@ -56,11 +56,13 @@ export function useBodWritesFunctions() {
             (m) => m?.toLowerCase() !== (action.value?.userAddress || '').toLowerCase()
           )
           await addBulkNotifications({
-            userIds: recipients,
-            message: 'New board action requires your approval',
-            subject: 'New Board Action Created',
-            author: action.value.userAddress ?? '',
-            resource: `teams/${teamStore.currentTeamId}/contract-management`
+            body: {
+              userIds: recipients,
+              message: 'New board action requires your approval',
+              subject: 'New Board Action Created',
+              author: action.value.userAddress ?? '',
+              resource: `teams/${teamStore.currentTeamId}/contract-management`
+            }
           })
         }
       } catch (err) {

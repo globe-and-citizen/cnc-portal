@@ -1,9 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
 import type { Wage } from '@/types'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
-import type { AxiosError } from 'axios'
+import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
 
 /**
  * Query key factory for wage-related queries
@@ -19,24 +17,13 @@ export const wageKeys = {
 // ============================================================================
 
 /**
- * Path parameters for GET /wage/ (none for this endpoint)
- */
-export interface GetTeamWagesPathParams {}
-
-/**
- * Query parameters for GET /wage/
- */
-export interface GetTeamWagesQueryParams {
-  /** Team ID */
-  teamId: MaybeRefOrGetter<string | number | null>
-}
-
-/**
  * Combined parameters for useGetTeamWagesQuery
  */
 export interface GetTeamWagesParams {
-  pathParams?: GetTeamWagesPathParams
-  queryParams: GetTeamWagesQueryParams
+  queryParams: {
+    /** Team ID */
+    teamId: MaybeRefOrGetter<string | number | null>
+  }
 }
 
 /**
@@ -47,29 +34,17 @@ export interface GetTeamWagesParams {
  * @queryParams { teamId: string | number }
  * @body none
  */
-export const useGetTeamWagesQuery = (params: GetTeamWagesParams) => {
-  const { queryParams } = params
-
-  return useQuery<Wage[], AxiosError>({
-    queryKey: wageKeys.team(toValue(queryParams.teamId)),
-    queryFn: async () => {
-      const teamId = toValue(queryParams.teamId)
-
-      // Query params: passed as URL query string (?teamId=xxx)
-      const apiQueryParams: { teamId: string | number } = { teamId: teamId! }
-
-      const { data } = await apiClient.get<Wage[]>('/wage/', { params: apiQueryParams })
-      return data
-    },
-    enabled: () => !!toValue(queryParams.teamId),
+export const useGetTeamWagesQuery = createQueryHook<Wage[], GetTeamWagesParams>({
+  endpoint: 'wage/',
+  queryKey: (params) => wageKeys.team(toValue(params.queryParams.teamId)),
+  enabled: (params) => !!toValue(params.queryParams.teamId),
+  options: {
+    ...queryPresets.stable,
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-    staleTime: 180000,
-    gcTime: 300000
-  })
-}
+    refetchOnMount: false
+  }
+})
 
 // ============================================================================
 // PUT /wage/setWage - Set member wage
@@ -90,6 +65,13 @@ export interface SetWageBody {
 }
 
 /**
+ * Combined parameters for useSetMemberWageMutation
+ */
+export interface SetMemberWageParams {
+  body: SetWageBody
+}
+
+/**
  * Set member wage data for a team
  *
  * @endpoint PUT /wage/setWage
@@ -97,16 +79,8 @@ export interface SetWageBody {
  * @queryParams none
  * @body SetWageBody
  */
-export const useSetMemberWageMutation = () => {
-  const queryClient = useQueryClient()
-  return useMutation<void, AxiosError, SetWageBody>({
-    mutationFn: async (body: SetWageBody) => {
-      await apiClient.put('/wage/setWage', body)
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: wageKeys.team(variables.teamId)
-      })
-    }
-  })
-}
+export const useSetMemberWageMutation = createMutationHook<void, SetMemberWageParams>({
+  method: 'PUT',
+  endpoint: 'wage/setWage',
+  invalidateKeys: (params) => [wageKeys.team(params.body.teamId)]
+})

@@ -1,6 +1,5 @@
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
-import type { AxiosError } from 'axios'
+import { createMutationHook } from './queryFactory'
+import { teamKeys } from './team.queries'
 
 /**
  * Query key factory for contract-related queries
@@ -8,6 +7,10 @@ import type { AxiosError } from 'axios'
 export const contractKeys = {
   all: ['contracts'] as const
 }
+
+// ============================================================================
+// POST /contract - Create contract
+// ============================================================================
 
 /**
  * Request body for creating a contract
@@ -24,86 +27,78 @@ export interface CreateContractBody {
 }
 
 /**
- * Create a new contract
- *
- * @endpoint POST /contract
- * @params none
- * @queryParams none
- * @body CreateContractBody
+ * Combined parameters for useCreateContractMutation
  */
-export const useCreateContractMutation = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (body: CreateContractBody) => {
-      const { data } = await apiClient.post('contract', body)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] })
-      queryClient.invalidateQueries({ queryKey: ['team'] })
-    }
-  })
+export interface CreateContractParams {
+  body: CreateContractBody
 }
 
 /**
- * Request body for syncing contracts
+ * Create a new contract
+ *
+ * @endpoint POST /contract
+ * @pathParams none
+ * @queryParams none
+ * @body CreateContractBody
  */
-export interface SyncContractsBody {
-  /** Team ID */
-  teamId: string
+export const useCreateContractMutation = createMutationHook<unknown, CreateContractParams>({
+  method: 'POST',
+  endpoint: 'contract',
+  invalidateKeys: [teamKeys.all]
+})
+
+// ============================================================================
+// PUT /contract/sync - Sync contracts
+// ============================================================================
+
+/**
+ * Combined parameters for useSyncContractsMutation
+ */
+export interface SyncContractsParams {
+  body: {
+    /** Team ID */
+    teamId: string
+  }
 }
 
 /**
  * Sync contracts for a team
  *
  * @endpoint PUT /contract/sync
- * @params none
+ * @pathParams none
  * @queryParams none
- * @body SyncContractsBody
+ * @body { teamId: string }
  */
-export const useSyncContractsMutation = () => {
-  const queryClient = useQueryClient()
+export const useSyncContractsMutation = createMutationHook<void, SyncContractsParams>({
+  method: 'PUT',
+  endpoint: 'contract/sync',
+  invalidateKeys: [contractKeys.all, teamKeys.all]
+})
 
-  return useMutation<void, AxiosError, SyncContractsBody>({
-    mutationFn: async ({ teamId }) => {
-      await apiClient.put('contract/sync', { teamId })
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: contractKeys.all })
-      queryClient.invalidateQueries({ queryKey: ['teams'] })
-      queryClient.invalidateQueries({ queryKey: ['team'] })
-    }
-  })
-}
+// ============================================================================
+// DELETE /contract/reset - Reset contracts
+// ============================================================================
 
 /**
- * Request body for resetting contracts
+ * Combined parameters for useResetContractsMutation
  */
-export interface ResetContractsBody {
-  /** Team ID */
-  teamId: string
+export interface ResetContractsParams {
+  body: {
+    /** Team ID */
+    teamId: string
+  }
 }
 
 /**
  * Reset/delete contracts for a team
  *
  * @endpoint DELETE /contract/reset
- * @params none
+ * @pathParams none
  * @queryParams none
- * @body ResetContractsBody
+ * @body { teamId: string }
  */
-export const useResetContractsMutation = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation<void, AxiosError, ResetContractsBody>({
-    mutationFn: async ({ teamId }) => {
-      await apiClient.delete('contract/reset', { data: { teamId } })
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: contractKeys.all })
-      queryClient.invalidateQueries({ queryKey: ['teams'] })
-      queryClient.invalidateQueries({ queryKey: ['team'] })
-    }
-  })
-}
+export const useResetContractsMutation = createMutationHook<void, ResetContractsParams>({
+  method: 'DELETE',
+  endpoint: 'contract/reset',
+  invalidateKeys: [contractKeys.all, teamKeys.all]
+})

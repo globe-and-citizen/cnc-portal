@@ -52,8 +52,8 @@ const {
 const handleAddMembers = async () => {
   executeAddMembers(
     {
-      teamId: props.teamId,
-      members: formData.value.map(({ address, name }) => ({
+      pathParams: { teamId: props.teamId },
+      body: formData.value.map(({ address, name }) => ({
         address,
         name
       })) as unknown as MemberInput[]

@@ -95,10 +95,12 @@ export class AddCampaignService {
 
     const createContractMutation = useCreateContractMutation()
     await createContractMutation.mutateAsync({
-      teamId: teamId,
-      contractAddress: address,
-      contractType: 'Campaign',
-      deployer
+      body: {
+        teamId: teamId,
+        contractAddress: address,
+        contractType: 'Campaign',
+        deployer
+      }
     })
 
     return address

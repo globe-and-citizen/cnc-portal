@@ -167,9 +167,11 @@ const approveUser = async (data: BudgetLimit) => {
   })
 
   const expenseAccountData = {
-    data,
-    signature: signature.value,
-    teamId: route.params.id
+    body: {
+      data,
+      signature: signature.value,
+      teamId: route.params.id
+    }
   }
   await addExpenseData(expenseAccountData)
   await refetchExpenseAccountGetOwner()

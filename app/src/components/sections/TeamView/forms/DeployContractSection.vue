@@ -379,7 +379,7 @@ useWatchContractEvent({
       return
     }
 
-    await syncContracts({ teamId })
+    await syncContracts({ body: { teamId } })
 
     if (syncContractsError.value) {
       log.error('Error updating contracts')
