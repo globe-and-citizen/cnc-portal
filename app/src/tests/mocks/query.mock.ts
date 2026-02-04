@@ -247,6 +247,8 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useCreateTeamMutation: () => createMockMutationResponse(),
   useUpdateTeamMutation: () => createMockMutationResponse(),
   useDeleteTeamMutation: () => createMockMutationResponse(),
+  useSubmitRestrictionQuery: () =>
+    createMockQueryResponse({ isRestricted: false, effectiveStatus: 'enabled' }),
 
   // Member queries - member.queries.ts
   useAddMembersMutation: () => createMockMutationResponse(),
@@ -267,17 +269,22 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // User queries - user.queries.ts
   useUserQuery: () => createMockQueryResponse(null),
   useUserNonceQuery: () => createMockQueryResponse(null),
+  useUpdateUserMutation: () => createMockMutationResponse(),
+  useSearchUsersQuery: () => createMockQueryResponse({ users: [] }),
 
   // Action queries - action.queries.ts
   useBodActionsQuery: () => createMockQueryResponse(mockBodActionsData),
   useCreateActionMutation: () => createMockMutationResponse(),
   useUpdateActionMutation: () => createMockMutationResponse(),
+  useCreateElectionNotificationsMutation: () => createMockMutationResponse(),
 
   // Auth queries - auth.queries.ts
   useValidateTokenQuery: () => createMockQueryResponse(null),
 
   // Contract queries - contract.queries.ts
   useCreateContractMutation: () => createMockMutationResponse(),
+  useSyncContractsMutation: () => createMockMutationResponse(),
+  useResetContractsMutation: () => createMockMutationResponse(),
 
   // Health queries - health.queries.ts
   useBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData),
@@ -287,6 +294,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
   useUpdateWeeklyClaimMutation: () => createMockMutationResponse(),
   useSyncWeeklyClaimsMutation: () => createMockMutationResponse(),
+  useDeleteClaimMutation: () => createMockMutationResponse(),
 
   // Safe queries - safe.queries.ts
   useSafeInfoQuery: () => createMockQueryResponse(mockSafeInfoData),

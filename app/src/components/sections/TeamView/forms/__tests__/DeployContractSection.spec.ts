@@ -4,14 +4,17 @@ import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import ButtonUI from '@/components/ButtonUI.vue'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
+import { useUpdateTeamMutation } from '@/queries/team.queries'
+import { useSyncContractsMutation } from '@/queries/contract.queries'
 
 // Hoisted mocks without reactive refs (following project patterns)
 const {
   mockUseSafe,
   mockAddSuccessToast,
   mockAddErrorToast,
-  mockUseCustomFetch,
-  mockUseWatchContractEvent
+  mockUseWatchContractEvent,
+  mockUpdateTeamMutateAsync,
+  mockSyncContractsMutateAsync
 } = vi.hoisted(() => ({
   mockUseSafe: {
     deploySafe: vi.fn(),
@@ -19,10 +22,11 @@ const {
   },
   mockAddSuccessToast: vi.fn(),
   mockAddErrorToast: vi.fn(),
-  mockUseCustomFetch: vi.fn(),
   mockUseWatchContractEvent: vi.fn().mockImplementation((config) => ({
     onLogs: config?.onLogs || vi.fn()
-  }))
+  })),
+  mockUpdateTeamMutateAsync: vi.fn().mockResolvedValue({}),
+  mockSyncContractsMutateAsync: vi.fn().mockResolvedValue({})
 }))
 
 // Create reactive refs after Vue is imported
@@ -98,10 +102,6 @@ vi.mock('@/composables/safe', () => ({
   }))
 }))
 
-vi.mock('@/composables/useCustomFetch', () => ({
-  useCustomFetch: mockUseCustomFetch
-}))
-
 // Mock currency store to prevent Vue Query errors
 vi.mock('@/stores/currencyStore', () => ({
   useCurrencyStore: vi.fn(() => ({
@@ -175,12 +175,30 @@ describe('DeployContractSection', () => {
     mockReceiptData.value = null
     mockIsBusy.value = false
 
-    // Reset mock implementations
-    mockUseCustomFetch.mockReturnValue({
-      put: vi.fn().mockReturnValue({
-        json: vi.fn().mockResolvedValue({ error: ref(null) })
-      })
-    })
+    // Reset mutation mocks
+    mockUpdateTeamMutateAsync.mockResolvedValue({})
+    mockSyncContractsMutateAsync.mockResolvedValue({})
+
+    // Mock the team and contract mutations
+    vi.mocked(useUpdateTeamMutation).mockReturnValue({
+      mutateAsync: mockUpdateTeamMutateAsync,
+      mutate: vi.fn(),
+      isPending: ref(false),
+      isError: ref(false),
+      error: ref(null),
+      data: ref(null),
+      reset: vi.fn()
+    } as unknown as ReturnType<typeof useUpdateTeamMutation>)
+
+    vi.mocked(useSyncContractsMutation).mockReturnValue({
+      mutateAsync: mockSyncContractsMutateAsync,
+      mutate: vi.fn(),
+      isPending: ref(false),
+      isError: ref(false),
+      error: ref(null),
+      data: ref(null),
+      reset: vi.fn()
+    } as unknown as ReturnType<typeof useSyncContractsMutation>)
   })
 
   describe('Component Rendering', () => {
@@ -317,11 +335,6 @@ describe('DeployContractSection', () => {
 
     it('runs Safe deployment flow and updates team', async () => {
       mockUseSafe.deploySafe.mockResolvedValueOnce('0xsafeaddress')
-      mockUseCustomFetch.mockReturnValue({
-        put: vi.fn().mockReturnValue({
-          json: vi.fn().mockResolvedValue({ error: ref(null) })
-        })
-      })
 
       const wrapper = createWrapper()
       await wrapper.vm.deploySafeForTeam()
@@ -330,21 +343,20 @@ describe('DeployContractSection', () => {
         ['0x1234567890123456789012345678901234567890'],
         1
       )
+      expect(mockUpdateTeamMutateAsync).toHaveBeenCalled()
       expect(mockAddSuccessToast).toHaveBeenCalledWith('Safe wallet deployed successfully')
     })
 
     it('handles Safe team update error gracefully', async () => {
       mockUseSafe.deploySafe.mockResolvedValueOnce('0xsafeaddress')
-      mockUseCustomFetch.mockReturnValue({
-        put: vi.fn().mockReturnValue({
-          json: vi.fn().mockResolvedValue({ error: ref('update failed') })
-        })
-      })
+      mockUpdateTeamMutateAsync.mockRejectedValueOnce(new Error('update failed'))
 
       const wrapper = createWrapper()
       await wrapper.vm.deploySafeForTeam()
 
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to update team with Safe address')
+      expect(mockAddErrorToast).toHaveBeenCalledWith(
+        'Failed to deploy Safe wallet. Please try again.'
+      )
     })
 
     it('handles Safe deployment failure', async () => {

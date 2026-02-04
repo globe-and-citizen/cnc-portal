@@ -111,6 +111,56 @@ export const useGetUserNonceQuery = (address: MaybeRefOrGetter<Address | undefin
 }
 
 /**
+ * Response type for user search query
+ */
+export interface SearchUsersResponse {
+  users: User[]
+}
+
+/**
+ * Query parameters for searching users
+ */
+export interface SearchUsersQueryParams {
+  /** Search term */
+  search?: string
+  /** Maximum number of results */
+  limit?: number
+}
+
+/**
+ * Search users by name or address
+ *
+ * @endpoint GET /user?search=...&limit=...
+ * @params none
+ * @queryParams SearchUsersQueryParams
+ * @body none
+ */
+export const useGetSearchUsersQuery = (
+  search: MaybeRefOrGetter<string | undefined>,
+  limit: MaybeRefOrGetter<number> = 100
+) => {
+  return useQuery<SearchUsersResponse, AxiosError>({
+    queryKey: [...userKeys.all, 'search', { search: toValue(search), limit: toValue(limit) }],
+    queryFn: async () => {
+      const searchValue = toValue(search)
+      const limitValue = toValue(limit)
+
+      const queryParams: SearchUsersQueryParams = { limit: limitValue }
+      if (searchValue) {
+        queryParams.search = searchValue
+      }
+
+      const { data } = await apiClient.get<SearchUsersResponse>('user', { params: queryParams })
+      return data
+    },
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 300000, // 5 minutes - longer cache time for search results
+    gcTime: 600000
+  })
+}
+
+/**
  * @deprecated Use useGetUserQuery instead
  */
 export const useUserQuery = useGetUserQuery
@@ -119,3 +169,8 @@ export const useUserQuery = useGetUserQuery
  * @deprecated Use useGetUserNonceQuery instead
  */
 export const useUserNonceQuery = useGetUserNonceQuery
+
+/**
+ * @deprecated Use useGetSearchUsersQuery instead
+ */
+export const useSearchUsersQuery = useGetSearchUsersQuery

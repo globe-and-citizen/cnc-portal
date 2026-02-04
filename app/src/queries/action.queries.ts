@@ -3,6 +3,7 @@ import apiClient from '@/lib/axios'
 import type { Action, ActionResponse } from '@/types/action'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
+import type { AxiosError } from 'axios'
 
 /**
  * Query key factory for action-related queries
@@ -116,6 +117,40 @@ export const useUpdateActionMutation = () => {
 }
 
 /**
+ * Path parameters for election notifications endpoint
+ */
+export interface ElectionNotificationsPathParams {
+  /** Team ID */
+  teamId: string | number
+}
+
+/**
+ * Create election notifications for a team
+ *
+ * @endpoint POST /elections/{teamId}
+ * @params ElectionNotificationsPathParams - URL path parameter
+ * @queryParams none
+ * @body none
+ */
+export const useCreateElectionNotificationsMutation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, AxiosError, ElectionNotificationsPathParams>({
+    mutationFn: async ({ teamId }) => {
+      await apiClient.post(`/elections/${teamId}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    }
+  })
+}
+
+/**
  * @deprecated Use useGetBodActionsQuery instead
  */
 export const useBodActionsQuery = useGetBodActionsQuery
+
+/**
+ * @deprecated Use ElectionNotificationsPathParams instead
+ */
+export type CreateElectionNotificationsInput = ElectionNotificationsPathParams

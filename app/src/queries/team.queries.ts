@@ -183,6 +183,44 @@ export const useDeleteTeamMutation = () => {
 }
 
 /**
+ * Response type for submit restriction query
+ */
+export interface SubmitRestrictionResponse {
+  isRestricted: boolean
+  effectiveStatus: string
+}
+
+/**
+ * Check submit restriction status for a team
+ *
+ * @endpoint GET /teams/{teamId}/submit-restriction
+ * @params TeamPathParams - URL path parameter
+ * @queryParams none
+ * @body none
+ */
+export const useGetSubmitRestrictionQuery = (
+  teamId: MaybeRefOrGetter<string | number | null>
+) => {
+  return useQuery<SubmitRestrictionResponse, AxiosError>({
+    queryKey: [...teamKeys.detail(String(toValue(teamId))), 'submitRestriction'],
+    queryFn: async () => {
+      const id = toValue(teamId)
+      const { data } = await apiClient.get<SubmitRestrictionResponse>(
+        `teams/${id}/submit-restriction`
+      )
+      return data
+    },
+    enabled: () => !!toValue(teamId),
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchInterval: false,
+    staleTime: 60000, // 1 minute - shorter for real-time accuracy
+    gcTime: 120000
+  })
+}
+
+/**
  * @deprecated Use useGetTeamsQuery instead
  */
 export const useTeamsQuery = useGetTeamsQuery
@@ -196,3 +234,8 @@ export const useTeamQuery = useGetTeamQuery
  * @deprecated Use DeleteTeamPathParams instead
  */
 export type DeleteTeamInput = DeleteTeamPathParams
+
+/**
+ * @deprecated Use useGetSubmitRestrictionQuery instead
+ */
+export const useSubmitRestrictionQuery = useGetSubmitRestrictionQuery

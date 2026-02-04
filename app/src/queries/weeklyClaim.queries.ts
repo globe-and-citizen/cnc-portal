@@ -237,6 +237,36 @@ export const useSyncWeeklyClaimsMutation = () => {
 }
 
 /**
+ * Path parameters for deleting a claim
+ */
+export interface DeleteClaimPathParams {
+  /** Claim ID */
+  claimId: number | string
+}
+
+/**
+ * Delete a claim
+ *
+ * @endpoint DELETE /claim/{claimId}
+ * @params DeleteClaimPathParams - URL path parameter
+ * @queryParams none
+ * @body none
+ */
+export const useDeleteClaimMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation<void, AxiosError, DeleteClaimPathParams>({
+    mutationFn: async ({ claimId }) => {
+      await apiClient.delete(`/claim/${claimId}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: weeklyClaimKeys.teams()
+      })
+    }
+  })
+}
+
+/**
  * @deprecated Use useGetTeamWeeklyClaimsQuery instead
  */
 export const useTeamWeeklyClaimsQuery = useGetTeamWeeklyClaimsQuery
@@ -255,3 +285,8 @@ export const useWeeklyClaimByIdQuery = useGetWeeklyClaimByIdQuery
  * @deprecated Use SyncWeeklyClaimsQueryParams instead
  */
 export type SyncWeeklyClaimsInput = SyncWeeklyClaimsQueryParams
+
+/**
+ * @deprecated Use DeleteClaimPathParams instead
+ */
+export type DeleteClaimInput = DeleteClaimPathParams

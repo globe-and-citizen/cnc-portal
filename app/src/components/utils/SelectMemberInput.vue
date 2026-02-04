@@ -66,7 +66,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { useSearchUsersQuery } from '@/queries/user.queries'
 import { ref, computed, watch } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
@@ -104,18 +104,11 @@ const showDropdown = ref(false)
 // Small helpers and precomputed sets for clarity/perf
 const lower = (a?: string) => (a ?? '').toLowerCase()
 
-// Build URL reactively from the single input; backend will search name OR address
-const url = computed(() => {
-  const query = input.value
-  if (!query) return `user?limit=100`
-  return `user?search=${query}&limit=100`
-})
+// Debounced search value for the query
+const debouncedSearch = ref('')
 
-const {
-  execute: executeSearchUser,
-  data: users,
-  isFetching
-} = useCustomFetch(url, { immediate: true }).get().json<{ users: User[] }>()
+// Use TanStack Query for user search
+const { data: usersData, isFetching, refetch } = useSearchUsersQuery(debouncedSearch, 100)
 
 const isTeamMember = (user: User): boolean => {
   const members: User[] = teamStore.currentTeam?.members ?? []
@@ -128,7 +121,7 @@ const filteredUsers = computed<User[]>(() => {
     // get an empty array or the current team members
     members = teamStore.currentTeam?.members ?? []
   } else {
-    members = users.value ? (users.value.users as User[]) : []
+    members = usersData.value ? (usersData.value.users as User[]) : []
   }
 
   // filter this members and remove hidden Members
@@ -140,9 +133,9 @@ const filteredUsers = computed<User[]>(() => {
 
 watchDebounced(
   input,
-  async () => {
+  async (newValue) => {
     if (!props.onlyTeamMembers) {
-      await executeSearchUser()
+      debouncedSearch.value = newValue
     }
   },
   { debounce: 500, maxWait: 5000 }
@@ -161,7 +154,8 @@ const handleSelectMember = async (member: User) => {
   showDropdown.value = false
   input.value = ''
   emit('selectMember', member)
-  await executeSearchUser()
+  debouncedSearch.value = ''
+  await refetch()
   inputSearch.value?.focus()
 }
 </script>
