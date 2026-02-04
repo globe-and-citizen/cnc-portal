@@ -1,9 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
 import type { Team } from '@/types/team'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
-import type { AxiosError } from 'axios'
+import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
 
 /**
  * Query key factory for team-related queries
@@ -18,27 +16,17 @@ export const teamKeys = {
 
 // ============================================================================
 // GET /teams - Fetch teams list
+// GET /teams/?userAddress=xxx - Fetch teams list
 // ============================================================================
-
-/**
- * Path parameters for GET /teams (none for this endpoint)
- */
-export interface GetTeamsPathParams {}
-
-/**
- * Query parameters for GET /teams
- */
-export interface GetTeamsQueryParams {
-  /** Optional user address to filter teams */
-  userAddress?: MaybeRefOrGetter<string | null | undefined>
-}
 
 /**
  * Combined parameters for useGetTeamsQuery
  */
 export interface GetTeamsParams {
-  pathParams?: GetTeamsPathParams
-  queryParams?: GetTeamsQueryParams
+  queryParams?: {
+    /** Optional user address to filter teams */
+    userAddress?: MaybeRefOrGetter<string | null | undefined>
+  }
 }
 
 /**
@@ -49,50 +37,27 @@ export interface GetTeamsParams {
  * @queryParams { userAddress?: string } - optional filter by user address
  * @body none
  */
-export const useGetTeamsQuery = (params?: GetTeamsParams) => {
-  const userAddress = params?.queryParams?.userAddress
-
-  return useQuery<Team[], AxiosError>({
-    queryKey: teamKeys.list(toValue(userAddress)),
-    queryFn: async () => {
-      const address = toValue(userAddress)
-      // Query params: passed as URL query string (?userAddress=xxx)
-      const apiQueryParams: { userAddress?: string } = address ? { userAddress: address } : {}
-
-      const { data } = await apiClient.get<Team[]>('teams', { params: apiQueryParams })
-      return data
-    },
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-    staleTime: 180000,
-    gcTime: 300000
-  })
-}
+export const useGetTeamsQuery = createQueryHook<
+  Team[],
+  GetTeamsParams
+>({
+  endpoint: 'teams',
+  queryKey: (params) => teamKeys.list(toValue(params?.queryParams?.userAddress)),
+  options: queryPresets.stable
+})
 
 // ============================================================================
 // GET /teams/{teamId} - Fetch single team
 // ============================================================================
 
 /**
- * Path parameters for GET /teams/{teamId}
- */
-export interface GetTeamPathParams {
-  /** Team ID */
-  teamId: MaybeRefOrGetter<string | null>
-}
-
-/**
- * Query parameters for GET /teams/{teamId} (none for this endpoint)
- */
-export interface GetTeamQueryParams {}
-
-/**
  * Combined parameters for useGetTeamQuery
  */
 export interface GetTeamParams {
-  pathParams: GetTeamPathParams
-  queryParams?: GetTeamQueryParams
+  pathParams: {
+    /** Team ID */
+    teamId: MaybeRefOrGetter<string | null>
+  }
 }
 
 /**
@@ -103,25 +68,18 @@ export interface GetTeamParams {
  * @queryParams none
  * @body none
  */
-export const useGetTeamQuery = (params: GetTeamParams) => {
-  const { pathParams } = params
-
-  return useQuery<Team, AxiosError>({
-    queryKey: teamKeys.detail(toValue(pathParams.teamId)),
-    queryFn: async () => {
-      const id = toValue(pathParams.teamId)
-      const { data } = await apiClient.get<Team>(`teams/${id}`)
-      return data
-    },
-    enabled: () => !!toValue(pathParams.teamId),
-    retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-    staleTime: 180000,
-    gcTime: 300000
-  })
-}
+export const useGetTeamQuery = createQueryHook<
+  Team,
+  GetTeamParams
+>({
+  endpoint: 'teams/{teamId}',
+  queryKey: (params) => teamKeys.detail(toValue(params.pathParams.teamId)),
+  enabled: (params) => !!toValue(params.pathParams.teamId),
+  options: {
+    ...queryPresets.stable,
+    retry: false
+  }
+})
 
 // ============================================================================
 // POST /teams - Create team
@@ -133,6 +91,13 @@ export const useGetTeamQuery = (params: GetTeamParams) => {
 export interface CreateTeamBody extends Partial<Team> {}
 
 /**
+ * Combined parameters for useCreateTeamMutation
+ */
+export interface CreateTeamParams {
+  body: CreateTeamBody
+}
+
+/**
  * Create a new team
  *
  * @endpoint POST /teams
@@ -140,31 +105,18 @@ export interface CreateTeamBody extends Partial<Team> {}
  * @queryParams none
  * @body CreateTeamBody - team data to create
  */
-export const useCreateTeamMutation = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation<Team, AxiosError, CreateTeamBody>({
-    mutationFn: async (body: CreateTeamBody) => {
-      const { data } = await apiClient.post<Team>('teams', body)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.all })
-    }
-  })
-}
+export const useCreateTeamMutation = createMutationHook<
+  Team,
+  CreateTeamParams
+>({
+  method: 'POST',
+  endpoint: 'teams',
+  invalidateKeys: [teamKeys.all]
+})
 
 // ============================================================================
 // PUT /teams/{id} - Update team
 // ============================================================================
-
-/**
- * Path parameters for PUT /teams/{id}
- */
-export interface UpdateTeamPathParams {
-  /** Team ID */
-  id: string
-}
 
 /**
  * Request body for updating a team
@@ -175,7 +127,10 @@ export interface UpdateTeamBody extends Partial<Team> {}
  * Combined parameters for useUpdateTeamMutation
  */
 export interface UpdateTeamParams {
-  pathParams: UpdateTeamPathParams
+  pathParams: {
+    /** Team ID */
+    id: string
+  }
   body: UpdateTeamBody
 }
 
@@ -187,39 +142,27 @@ export interface UpdateTeamParams {
  * @queryParams none
  * @body UpdateTeamBody - team data to update
  */
-export const useUpdateTeamMutation = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation<Team, AxiosError, UpdateTeamParams>({
-    mutationFn: async (params: UpdateTeamParams) => {
-      const { pathParams, body } = params
-      const { data } = await apiClient.put<Team>(`teams/${pathParams.id}`, body)
-      return data
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.detail(variables.pathParams.id) })
-      queryClient.invalidateQueries({ queryKey: teamKeys.all })
-    }
-  })
-}
+export const useUpdateTeamMutation = createMutationHook<
+  Team,
+  UpdateTeamParams
+>({
+  method: 'PUT',
+  endpoint: 'teams/{id}',
+  invalidateKeys: (params) => [teamKeys.detail(params.pathParams.id), teamKeys.all]
+})
 
 // ============================================================================
 // DELETE /teams/{teamId} - Delete team
 // ============================================================================
 
 /**
- * Path parameters for DELETE /teams/{teamId}
- */
-export interface DeleteTeamPathParams {
-  /** Team ID */
-  teamId: string
-}
-
-/**
  * Combined parameters for useDeleteTeamMutation
  */
 export interface DeleteTeamParams {
-  pathParams: DeleteTeamPathParams
+  pathParams: {
+    /** Team ID */
+    teamId: string
+  }
 }
 
 /**
@@ -230,20 +173,14 @@ export interface DeleteTeamParams {
  * @queryParams none
  * @body none
  */
-export const useDeleteTeamMutation = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation<void, AxiosError, DeleteTeamParams>({
-    mutationFn: async (params: DeleteTeamParams) => {
-      const { pathParams } = params
-      const { data } = await apiClient.delete(`teams/${pathParams.teamId}`)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.all })
-    }
-  })
-}
+export const useDeleteTeamMutation = createMutationHook<
+  void,
+  DeleteTeamParams
+>({
+  method: 'DELETE',
+  endpoint: 'teams/{teamId}',
+  invalidateKeys: [teamKeys.all]
+})
 
 // ============================================================================
 // GET /teams/{teamId}/submit-restriction - Check submit restriction
@@ -258,24 +195,13 @@ export interface SubmitRestrictionResponse {
 }
 
 /**
- * Path parameters for GET /teams/{teamId}/submit-restriction
- */
-export interface GetSubmitRestrictionPathParams {
-  /** Team ID */
-  teamId: MaybeRefOrGetter<string | number | null>
-}
-
-/**
- * Query parameters for GET /teams/{teamId}/submit-restriction (none for this endpoint)
- */
-export interface GetSubmitRestrictionQueryParams {}
-
-/**
  * Combined parameters for useGetSubmitRestrictionQuery
  */
 export interface GetSubmitRestrictionParams {
-  pathParams: GetSubmitRestrictionPathParams
-  queryParams?: GetSubmitRestrictionQueryParams
+  pathParams: {
+    /** Team ID */
+    teamId: MaybeRefOrGetter<string | number | null>
+  }
 }
 
 /**
@@ -286,24 +212,19 @@ export interface GetSubmitRestrictionParams {
  * @queryParams none
  * @body none
  */
-export const useGetSubmitRestrictionQuery = (params: GetSubmitRestrictionParams) => {
-  const { pathParams } = params
-
-  return useQuery<SubmitRestrictionResponse, AxiosError>({
-    queryKey: [...teamKeys.detail(String(toValue(pathParams.teamId))), 'submitRestriction'],
-    queryFn: async () => {
-      const id = toValue(pathParams.teamId)
-      const { data } = await apiClient.get<SubmitRestrictionResponse>(
-        `teams/${id}/submit-restriction`
-      )
-      return data
-    },
-    enabled: () => !!toValue(pathParams.teamId),
+export const useGetSubmitRestrictionQuery = createQueryHook<
+  SubmitRestrictionResponse,
+  GetSubmitRestrictionParams
+>({
+  endpoint: 'teams/{teamId}/submit-restriction',
+  queryKey: (params) => [
+    ...teamKeys.detail(String(toValue(params.pathParams.teamId))),
+    'submitRestriction'
+  ],
+  enabled: (params) => !!toValue(params.pathParams.teamId),
+  options: {
+    ...queryPresets.moderate,
     retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnMount: true,
-    refetchInterval: false,
-    staleTime: 60000, // 1 minute - shorter for real-time accuracy
-    gcTime: 120000
-  })
-}
+    refetchOnMount: true
+  }
+})
