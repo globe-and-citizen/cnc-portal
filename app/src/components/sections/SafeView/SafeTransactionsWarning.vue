@@ -18,7 +18,7 @@
             <div class="space-y-2">
               <p class="font-semibold text-red">Warning: Transaction Conflict Detected</p>
               <p class="text-sm text-gray-700">
-                Executing this transaction will invalidate the others
+                Confirming this transaction will invalidate the others
               </p>
             </div>
           </div>
@@ -28,7 +28,7 @@
         <div class="text-sm text-gray-600 space-y-2">
           <p>
             <span class="font-semibold">Why this happens:</span>
-            Safe transactions must follow nonce order. This execution invalidates earlier nonces.
+            Safe transactions must follow nonce order. This action will invalidates earlier nonces.
           </p>
         </div>
       </div>
@@ -46,7 +46,7 @@
           :loading="isExecuting"
           data-test="confirm-execute-button"
         >
-          Execute Anyway
+          {{ action }} Anyway
         </ButtonUI>
       </div>
     </div>
@@ -60,10 +60,12 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 
 interface Props {
   isExecuting?: boolean
+  action?: string
 }
 
 withDefaults(defineProps<Props>(), {
-  isExecuting: false
+  isExecuting: false,
+  action: 'Confirm'
 })
 
 const emit = defineEmits<{

@@ -60,7 +60,7 @@
           <ButtonUI
             size="xs"
             variant="primary"
-            @click="handleApproveTransaction(row as SafeTransaction)"
+            @click="handleApproveClick(row as SafeTransaction)"
             :disabled="!canApprove(row as SafeTransaction) || isApproving"
             :loading="isTransactionLoading(row.safeTxHash, 'approve')"
             class="flex items-center gap-1 text-xs"
@@ -88,9 +88,10 @@
     <SafeTransactionsWarning
       v-if="showConflictWarning"
       v-model="showConflictWarning"
-      :is-executing="isExecuting"
-      @confirm="handleConfirmExecution"
-      @cancel="handleCancelExecution"
+      :is-executing="isExecuting || isApproving"
+      :action="isExecuting ? 'Execute' : 'Approve'"
+      @confirm="handleConfirmAction"
+      @cancel="handleCancelAction"
       data-test="conflict-warning-modal"
     />
   </CardComponent>
@@ -111,6 +112,7 @@ import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 // Stores and composables
 import { useSafeTransactionsQuery, useSafeInfoQuery } from '@/queries/safe.queries'
 import { useSafeApproval, useSafeExecution } from '@/composables/safe'
+import { useSafeTransactionConflicts } from '@/composables/safe/useSafeTransactionConflicts'
 import SafeTransactionStatusFilter, {
   type SafeTransactionStatus
 } from '@/components/sections/SafeView/SafeTransactionStatusFilter.vue'
@@ -136,6 +138,8 @@ const itemsPerPage = ref(5)
 // Conflict warning state
 const showConflictWarning = ref(false)
 const pendingExecutionTransaction = ref<SafeTransaction | null>(null)
+const pendingApprovalTransaction = ref<SafeTransaction | null>(null)
+const conflictActionType = ref<'approve' | 'execute'>('execute')
 
 // Data fetching
 const {
@@ -150,6 +154,10 @@ const { data: safeInfo } = useSafeInfoQuery(computed(() => props.address))
 const { approveTransaction, isApproving } = useSafeApproval()
 const { executeTransaction, isExecuting } = useSafeExecution()
 
+// Transaction conflict detection - now only needs safeAddress!
+const { isTransactionNonceValid, hasConflictingTransactions, willApprovalCauseConflict } =
+  useSafeTransactionConflicts(computed(() => props.address))
+
 // Computed values
 const isConnectedUserOwner = computed(() => {
   if (!connectedAddress.value || !safeInfo.value?.owners?.length) return false
@@ -158,27 +166,6 @@ const isConnectedUserOwner = computed(() => {
     (owner) => owner.toLowerCase() === connectedAddress.value!.toLowerCase()
   )
 })
-
-// Get current Safe nonce
-const currentSafeNonce = computed(() => safeInfo.value?.nonce ?? 0)
-
-// Check if transaction nonce is valid
-const isTransactionNonceValid = (transaction: SafeTransaction): boolean => {
-  return transaction.nonce >= currentSafeNonce.value
-}
-
-// Check if executing this transaction would conflict with others
-const hasConflictingTransactions = (transaction: SafeTransaction): boolean => {
-  if (!transactions.value) return false
-
-  // Check if there are any other pending transactions with nonce >= current Safe nonce
-  return transactions.value.some(
-    (tx) =>
-      !tx.isExecuted &&
-      tx.safeTxHash !== transaction.safeTxHash &&
-      tx.nonce >= currentSafeNonce.value
-  )
-}
 
 // Simplified filtering - directly filter the original transactions
 const filteredTransactions = computed(() => {
@@ -218,7 +205,7 @@ watch(
 const getTransactionStatus = (transaction: SafeTransaction): string => {
   if (transaction.isExecuted) return 'Executed'
 
-  // Check if transaction nonce is invalid
+  // Check if transaction nonce is invalid (stale)
   if (!isTransactionNonceValid(transaction)) {
     return 'Invalid (Stale Nonce)'
   }
@@ -241,12 +228,20 @@ const isTransactionLoading = (safeTxHash: string, operation: 'approve' | 'execut
   }
 }
 
+/**
+ * Determine if a transaction can be approved
+ * Prevents approving:
+ * - Already executed transactions
+ * - Transactions with stale nonces (nonce < current Safe nonce)
+ * - Transactions already approved by the current user
+ */
 const canApprove = (transaction: SafeTransaction): boolean => {
   if (!isConnectedUserOwner.value) return false
   if (!props.address) return false
   if (transaction.isExecuted) return false
 
-  // Don't allow approving transactions with invalid nonce
+  // Don't allow approving transactions with invalid/stale nonce
+  // These can never be executed on-chain
   if (!isTransactionNonceValid(transaction)) return false
 
   const userAlreadyConfirmed = transaction.confirmations?.some(
@@ -256,11 +251,18 @@ const canApprove = (transaction: SafeTransaction): boolean => {
   return !userAlreadyConfirmed
 }
 
+/**
+ * Determine if a transaction can be executed
+ * Prevents executing:
+ * - Already executed transactions
+ * - Transactions with stale nonces
+ * - Transactions without enough confirmations
+ */
 const canExecute = (transaction: SafeTransaction): boolean => {
   if (!isConnectedUserOwner.value) return false
   if (transaction.isExecuted) return false
 
-  // Don't allow executing transactions with invalid nonce
+  // Don't allow executing transactions with invalid/stale nonce
   if (!isTransactionNonceValid(transaction)) return false
 
   const confirmations = transaction.confirmations?.length || 0
@@ -270,6 +272,19 @@ const canExecute = (transaction: SafeTransaction): boolean => {
 }
 
 // Event handlers
+const handleApproveClick = (transaction: SafeTransaction) => {
+  // Check if this approval would cause conflicts
+  // (i.e., if it would make the transaction ready to execute and there are other pending transactions)
+  if (willApprovalCauseConflict(transaction)) {
+    pendingApprovalTransaction.value = transaction
+    conflictActionType.value = 'approve'
+    showConflictWarning.value = true
+  } else {
+    // No conflicts, approve directly
+    handleApproveTransaction(transaction)
+  }
+}
+
 const handleApproveTransaction = async (transaction: SafeTransaction) => {
   const safeAddress = props.address
   if (!safeAddress) return
@@ -282,6 +297,7 @@ const handleExecuteClick = (transaction: SafeTransaction) => {
   // Check for conflicting transactions
   if (hasConflictingTransactions(transaction)) {
     pendingExecutionTransaction.value = transaction
+    conflictActionType.value = 'execute'
     showConflictWarning.value = true
   } else {
     // No conflicts, execute directly
@@ -289,16 +305,20 @@ const handleExecuteClick = (transaction: SafeTransaction) => {
   }
 }
 
-const handleConfirmExecution = async () => {
-  if (pendingExecutionTransaction.value) {
+const handleConfirmAction = async () => {
+  if (conflictActionType.value === 'approve' && pendingApprovalTransaction.value) {
+    await handleApproveTransaction(pendingApprovalTransaction.value)
+    pendingApprovalTransaction.value = null
+  } else if (conflictActionType.value === 'execute' && pendingExecutionTransaction.value) {
     await handleExecuteTransaction(pendingExecutionTransaction.value)
-    showConflictWarning.value = false
     pendingExecutionTransaction.value = null
   }
+  showConflictWarning.value = false
 }
 
-const handleCancelExecution = () => {
+const handleCancelAction = () => {
   pendingExecutionTransaction.value = null
+  pendingApprovalTransaction.value = null
   showConflictWarning.value = false
 }
 
