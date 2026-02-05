@@ -108,7 +108,11 @@ const lower = (a?: string) => (a ?? '').toLowerCase()
 const debouncedSearch = ref('')
 
 // Use TanStack Query for user search
-const { data: usersData, isFetching, refetch } = useGetSearchUsersQuery({
+const {
+  data: usersData,
+  isFetching,
+  refetch
+} = useGetSearchUsersQuery({
   queryParams: { search: debouncedSearch, limit: 100 }
 })
 

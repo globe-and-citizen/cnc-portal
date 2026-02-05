@@ -148,7 +148,9 @@ const {
   error
 } = useGetSafeTransactionsQuery({ pathParams: { safeAddress: computed(() => props.address) } })
 
-const { data: safeInfo } = useGetSafeInfoQuery({ pathParams: { safeAddress: computed(() => props.address) } })
+const { data: safeInfo } = useGetSafeInfoQuery({
+  pathParams: { safeAddress: computed(() => props.address) }
+})
 
 // Safe operations
 const { approveTransaction, isApproving } = useSafeApproval()

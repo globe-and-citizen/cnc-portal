@@ -37,10 +37,7 @@ export interface GetTeamsParams {
  * @queryParams { userAddress?: string } - optional filter by user address
  * @body none
  */
-export const useGetTeamsQuery = createQueryHook<
-  Team[],
-  GetTeamsParams
->({
+export const useGetTeamsQuery = createQueryHook<Team[], GetTeamsParams>({
   endpoint: 'teams',
   queryKey: (params) => teamKeys.list(toValue(params?.queryParams?.userAddress)),
   options: queryPresets.stable
@@ -68,10 +65,7 @@ export interface GetTeamParams {
  * @queryParams none
  * @body none
  */
-export const useGetTeamQuery = createQueryHook<
-  Team,
-  GetTeamParams
->({
+export const useGetTeamQuery = createQueryHook<Team, GetTeamParams>({
   endpoint: 'teams/{teamId}',
   queryKey: (params) => teamKeys.detail(toValue(params.pathParams.teamId)),
   enabled: (params) => !!toValue(params.pathParams.teamId),
@@ -105,10 +99,7 @@ export interface CreateTeamParams {
  * @queryParams none
  * @body CreateTeamBody - team data to create
  */
-export const useCreateTeamMutation = createMutationHook<
-  Team,
-  CreateTeamParams
->({
+export const useCreateTeamMutation = createMutationHook<Team, CreateTeamParams>({
   method: 'POST',
   endpoint: 'teams',
   invalidateKeys: [teamKeys.all]
@@ -142,10 +133,7 @@ export interface UpdateTeamParams {
  * @queryParams none
  * @body UpdateTeamBody - team data to update
  */
-export const useUpdateTeamMutation = createMutationHook<
-  Team,
-  UpdateTeamParams
->({
+export const useUpdateTeamMutation = createMutationHook<Team, UpdateTeamParams>({
   method: 'PUT',
   endpoint: 'teams/{id}',
   invalidateKeys: (params) => [teamKeys.detail(params.pathParams.id), teamKeys.all]
@@ -173,10 +161,7 @@ export interface DeleteTeamParams {
  * @queryParams none
  * @body none
  */
-export const useDeleteTeamMutation = createMutationHook<
-  void,
-  DeleteTeamParams
->({
+export const useDeleteTeamMutation = createMutationHook<void, DeleteTeamParams>({
   method: 'DELETE',
   endpoint: 'teams/{teamId}',
   invalidateKeys: [teamKeys.all]

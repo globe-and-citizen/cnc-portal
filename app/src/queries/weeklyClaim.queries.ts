@@ -43,24 +43,25 @@ export interface GetTeamWeeklyClaimsParams {
  * @queryParams { teamId: string | number, memberAddress?: string, status?: string }
  * @body none
  */
-export const useGetTeamWeeklyClaimsQuery = createQueryHook<WeeklyClaim[], GetTeamWeeklyClaimsParams>(
-  {
-    endpoint: 'weeklyClaim/',
-    queryKey: (params) =>
-      weeklyClaimKeys.team(
-        toValue(params.queryParams.teamId),
-        toValue(params.queryParams.userAddress),
-        toValue(params.queryParams.status)
-      ),
-    enabled: (params) => !!toValue(params.queryParams.teamId),
-    options: {
-      ...queryPresets.stable,
-      retry: false,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false
-    }
+export const useGetTeamWeeklyClaimsQuery = createQueryHook<
+  WeeklyClaim[],
+  GetTeamWeeklyClaimsParams
+>({
+  endpoint: 'weeklyClaim/',
+  queryKey: (params) =>
+    weeklyClaimKeys.team(
+      toValue(params.queryParams.teamId),
+      toValue(params.queryParams.userAddress),
+      toValue(params.queryParams.status)
+    ),
+  enabled: (params) => !!toValue(params.queryParams.teamId),
+  options: {
+    ...queryPresets.stable,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   }
-)
+})
 
 // ============================================================================
 // GET /weeklyClaim/{claimId} - Fetch single weekly claim

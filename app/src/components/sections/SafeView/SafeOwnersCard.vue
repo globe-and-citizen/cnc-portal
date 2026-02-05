@@ -119,7 +119,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { address: connectedAddress } = useAccount()
 
-const { data: safeInfo, error, isLoading } = useGetSafeInfoQuery({
+const {
+  data: safeInfo,
+  error,
+  isLoading
+} = useGetSafeInfoQuery({
   pathParams: { safeAddress: computed(() => props.address) }
 })
 

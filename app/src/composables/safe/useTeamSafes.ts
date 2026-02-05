@@ -56,7 +56,9 @@ export const useTeamSafes = () => {
 
   const selectedSafeAddress = computed(() => selectedSafe.value?.address)
 
-  const { data: safeInfo } = useGetSafeInfoQuery({ pathParams: { safeAddress: selectedSafeAddress } })
+  const { data: safeInfo } = useGetSafeInfoQuery({
+    pathParams: { safeAddress: selectedSafeAddress }
+  })
 
   const isSafeOwner = computed(() => {
     if (!userDataStore.address || !safeInfo.value?.owners?.length) return false

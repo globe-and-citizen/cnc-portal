@@ -15,7 +15,7 @@ export const notificationKeys = {
 /**
  * Empty params for useGetNotificationsQuery (no parameters needed)
  */
- 
+
 export interface GetNotificationsParams {}
 
 /**

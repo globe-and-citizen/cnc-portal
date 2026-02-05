@@ -15,7 +15,7 @@ export const authKeys = {
 /**
  * Empty params for useGetValidateTokenQuery (no parameters needed)
  */
- 
+
 export interface GetValidateTokenParams {}
 
 /**

@@ -25,7 +25,7 @@ export const healthKeys = {
 /**
  * Empty params for useGetBackendHealthQuery (no parameters needed)
  */
- 
+
 export interface GetBackendHealthParams {}
 
 /**
@@ -36,14 +36,15 @@ export interface GetBackendHealthParams {}
  * @queryParams none
  * @body none
  */
-export const useGetBackendHealthQuery = createQueryHook<HealthCheckResponse, GetBackendHealthParams>(
-  {
-    endpoint: 'health',
-    queryKey: () => healthKeys.backend(),
-    options: {
-      ...queryPresets.once,
-      retry: 2,
-      gcTime: 300000 // 5 minutes
-    }
+export const useGetBackendHealthQuery = createQueryHook<
+  HealthCheckResponse,
+  GetBackendHealthParams
+>({
+  endpoint: 'health',
+  queryKey: () => healthKeys.backend(),
+  options: {
+    ...queryPresets.once,
+    retry: 2,
+    gcTime: 300000 // 5 minutes
   }
-)
+})

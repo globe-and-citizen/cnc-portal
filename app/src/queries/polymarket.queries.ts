@@ -140,7 +140,10 @@ export const useGetSafeBalancesQuery = (params: GetSafeBalancesParams) => {
 
   return useQuery({
     // Add chainName to the queryKey so different networks cache separately
-    queryKey: polymarketKeys.safeBalances(toValue(pathParams.safeAddress), toValue(pathParams.chainName)),
+    queryKey: polymarketKeys.safeBalances(
+      toValue(pathParams.safeAddress),
+      toValue(pathParams.chainName)
+    ),
     queryFn: async () => {
       const address = toValue(pathParams.safeAddress)
       const chain = toValue(pathParams.chainName)
