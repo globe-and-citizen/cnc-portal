@@ -6,7 +6,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 const mockRefetch = vi.fn()
 
 vi.mock('@/queries/health.queries', () => ({
-  useBackendHealthQuery: vi.fn(() => ({
+  useGetBackendHealthQuery: vi.fn(() => ({
     data: null,
     error: null,
     isLoading: false,

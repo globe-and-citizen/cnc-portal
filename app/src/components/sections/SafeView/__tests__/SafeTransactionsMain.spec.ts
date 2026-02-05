@@ -17,23 +17,23 @@ vi.mock('@iconify/vue', () => ({
 // Hoisted mock variables following CNC Portal patterns
 const {
   mockUseTeamStore,
-  mockUseSafeTransactionsQuery,
-  mockUseSafeInfoQuery,
+  mockuseGetSafeTransactionsQuery,
+  mockuseGetSafeInfoQuery,
   mockUseAccount,
   mockUseSafeApproval,
   mockUseSafeExecution
 } = vi.hoisted(() => ({
   mockUseTeamStore: vi.fn(),
-  mockUseSafeTransactionsQuery: vi.fn(),
-  mockUseSafeInfoQuery: vi.fn(),
+  mockuseGetSafeTransactionsQuery: vi.fn(),
+  mockuseGetSafeInfoQuery: vi.fn(),
   mockUseAccount: vi.fn(),
   mockUseSafeApproval: vi.fn(),
   mockUseSafeExecution: vi.fn()
 }))
 
 vi.mock('@/queries/safe.queries', () => ({
-  useSafeTransactionsQuery: mockUseSafeTransactionsQuery,
-  useSafeInfoQuery: mockUseSafeInfoQuery
+  useGetSafeTransactionsQuery: mockuseGetSafeTransactionsQuery,
+  useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))
 
 // Fix the wagmi mock to include missing exports
@@ -165,13 +165,13 @@ const setupDefaultMocks = () => {
     }
   })
 
-  mockUseSafeTransactionsQuery.mockReturnValue({
+  mockuseGetSafeTransactionsQuery.mockReturnValue({
     data: ref(MOCK_DATA.mockTransactions),
     isLoading: ref(false),
     error: ref(null)
   })
 
-  mockUseSafeInfoQuery.mockReturnValue({
+  mockuseGetSafeInfoQuery.mockReturnValue({
     data: ref(MOCK_DATA.safeInfo)
   })
 
@@ -220,7 +220,7 @@ describe('SafeTransactions', () => {
     })
 
     it('should show loading state when data is fetching', () => {
-      mockUseSafeTransactionsQuery.mockReturnValue({
+      mockuseGetSafeTransactionsQuery.mockReturnValue({
         data: ref(null),
         isLoading: ref(true),
         error: ref(null)
@@ -232,7 +232,7 @@ describe('SafeTransactions', () => {
     })
 
     it('should handle empty transactions array', () => {
-      mockUseSafeTransactionsQuery.mockReturnValue({
+      mockuseGetSafeTransactionsQuery.mockReturnValue({
         data: ref([]),
         isLoading: ref(false),
         error: ref(null)
@@ -343,7 +343,7 @@ describe('SafeTransactions', () => {
     })
 
     it('should handle missing safe info gracefully', () => {
-      mockUseSafeInfoQuery.mockReturnValue({
+      mockuseGetSafeInfoQuery.mockReturnValue({
         data: ref(null)
       })
       wrapper = createWrapper()
@@ -369,7 +369,7 @@ describe('SafeTransactions', () => {
 
   // describe('Error Handling', () => {
   //   it('should handle query errors gracefully', () => {
-  //     mockUseSafeTransactionsQuery.mockReturnValue({
+  //     mockuseGetSafeTransactionsQuery.mockReturnValue({
   //       data: ref(null),
   //       isLoading: ref(false),
   //       error: ref(new Error('Query failed'))
@@ -380,7 +380,7 @@ describe('SafeTransactions', () => {
   //   })
 
   //   it('should handle empty safe info', () => {
-  //     mockUseSafeInfoQuery.mockReturnValue({
+  //     mockuseGetSafeInfoQuery.mockReturnValue({
   //       data: ref(null)
   //     })
 
