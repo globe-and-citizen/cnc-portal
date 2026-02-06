@@ -260,7 +260,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
 
   // Notification queries - notification.queries.ts
   useGetNotificationsQuery: () => createMockQueryResponse(mockNotificationData),
-  useAddBulkNotificationsMutation: () => createMockMutationResponse(),
+  useCreateBulkNotificationsMutation: () => createMockMutationResponse(),
   useUpdateNotificationMutation: () => createMockMutationResponse(),
 
   // Expense queries - expense.queries.ts
