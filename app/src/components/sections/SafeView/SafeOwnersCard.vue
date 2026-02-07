@@ -107,7 +107,7 @@ import { type Address } from 'viem'
 
 // Composables and utilities
 
-import { useSafeInfoQuery } from '@/queries/safe.queries'
+import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 
 interface Props {
   address?: string
@@ -119,7 +119,13 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { address: connectedAddress } = useAccount()
 
-const { data: safeInfo, error, isLoading } = useSafeInfoQuery(computed(() => props.address))
+const {
+  data: safeInfo,
+  error,
+  isLoading
+} = useGetSafeInfoQuery({
+  pathParams: { safeAddress: computed(() => props.address) }
+})
 
 // Computed properties
 const isConnectedUserOwner = computed(() => {

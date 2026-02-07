@@ -133,7 +133,7 @@ const createElection = async (electionData: OldProposal) => {
       hash
     })
 
-    await addElectionNotifications({ teamId: teamStore.currentTeamId! })
+    await addElectionNotifications({ pathParams: { teamId: teamStore.currentTeamId! } })
     addSuccessToast('Election created successfully!')
     showCreateElectionModal.value.show = false
     showCreateElectionModal.value.mount = false

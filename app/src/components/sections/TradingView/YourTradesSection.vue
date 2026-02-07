@@ -88,7 +88,7 @@ import { formatUnits, parseUnits } from 'viem'
 import { useTeamSafes } from '@/composables/safe'
 import { useVuelidate } from '@vuelidate/core'
 import { required, helpers } from '@vuelidate/validators'
-import { useSafeBalances } from '@/queries/polymarket.queries'
+import { useGetSafeBalancesQuery } from '@/queries/polymarket.queries'
 
 // Props
 interface Props {
@@ -124,7 +124,12 @@ const { data: trades, isLoading: isLoadingTrades, refetch } = useUserPositions(s
 const cardTitle = computed(
   () => `${isSelectedSafeTrader.value ? 'Your' : `${selectedSafe.value?.userName}'s`} Trades`
 )
-const { data: balances } = useSafeBalances(derivedSafeAddressFromEoa)
+const { data: balances } = useGetSafeBalancesQuery({
+  pathParams: {
+    safeAddress: derivedSafeAddressFromEoa,
+    chainName: 'pol' // Polygon chain
+  }
+})
 
 const traderBalance = computed(() => {
   if (balances.value?.length && balances.value?.length > 0) {

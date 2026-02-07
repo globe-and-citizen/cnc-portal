@@ -36,7 +36,7 @@ interface MockTeamMeta {
 const {
   mockUseAccount,
   mockUseChainId,
-  mockUseSafeInfoQuery,
+  mockuseGetSafeInfoQuery,
   mockGetSafeSettingsUrl,
   mockOpenSafeAppUrl,
   mockTeamStore,
@@ -44,7 +44,7 @@ const {
 } = vi.hoisted(() => ({
   mockUseAccount: vi.fn(),
   mockUseChainId: vi.fn(),
-  mockUseSafeInfoQuery: vi.fn(),
+  mockuseGetSafeInfoQuery: vi.fn(),
   mockGetSafeSettingsUrl: vi.fn(),
   mockOpenSafeAppUrl: vi.fn(),
   mockTeamStore: {
@@ -95,7 +95,7 @@ vi.mock('@wagmi/vue', () => ({
 
 // Mock Safe queries - return function that returns reactive refs
 vi.mock('@/queries/safe.queries', () => ({
-  useSafeInfoQuery: mockUseSafeInfoQuery
+  useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))
 
 // Mock stores
@@ -215,7 +215,7 @@ describe('SafeOwnersCard', () => {
     vi.clearAllMocks()
 
     // Setup default query return
-    mockUseSafeInfoQuery.mockReturnValue({
+    mockuseGetSafeInfoQuery.mockReturnValue({
       data: mockSafeInfoData,
       error: mockError,
       isLoading: mockIsLoading,

@@ -242,12 +242,12 @@ export const createMockMutationResponse = <T = unknown>(
  */
 export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Team queries - team.queries.ts
-  useTeamsQuery: () => createMockQueryResponse(mockTeamsData),
-  useTeamQuery: () => createMockQueryResponse(mockTeamData),
+  useGetTeamsQuery: () => createMockQueryResponse(mockTeamsData),
+  useGetTeamQuery: () => createMockQueryResponse(mockTeamData),
   useCreateTeamMutation: () => createMockMutationResponse(),
   useUpdateTeamMutation: () => createMockMutationResponse(),
   useDeleteTeamMutation: () => createMockMutationResponse(),
-  useSubmitRestrictionQuery: () =>
+  useGetSubmitRestrictionQuery: () =>
     createMockQueryResponse({ isRestricted: false, effectiveStatus: 'enabled' }),
 
   // Member queries - member.queries.ts
@@ -255,31 +255,31 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useDeleteMemberMutation: () => createMockMutationResponse(),
 
   // Wage queries - wage.queries.ts
-  useTeamWagesQuery: () => createMockQueryResponse(mockWageData),
+  useGetTeamWagesQuery: () => createMockQueryResponse(mockWageData),
   useSetMemberWageMutation: () => createMockMutationResponse(),
 
   // Notification queries - notification.queries.ts
-  useNotificationsQuery: () => createMockQueryResponse(mockNotificationData),
-  useAddBulkNotificationsMutation: () => createMockMutationResponse(),
+  useGetNotificationsQuery: () => createMockQueryResponse(mockNotificationData),
+  useCreateBulkNotificationsMutation: () => createMockMutationResponse(),
   useUpdateNotificationMutation: () => createMockMutationResponse(),
 
   // Expense queries - expense.queries.ts
-  useExpensesQuery: () => createMockQueryResponse([]),
+  useGetExpensesQuery: () => createMockQueryResponse([]),
 
   // User queries - user.queries.ts
-  useUserQuery: () => createMockQueryResponse(null),
-  useUserNonceQuery: () => createMockQueryResponse(null),
+  useGetUserQuery: () => createMockQueryResponse(null),
+  useGetUserNonceQuery: () => createMockQueryResponse(null),
   useUpdateUserMutation: () => createMockMutationResponse(),
-  useSearchUsersQuery: () => createMockQueryResponse({ users: [] }),
+  useGetSearchUsersQuery: () => createMockQueryResponse({ users: [] }),
 
   // Action queries - action.queries.ts
-  useBodActionsQuery: () => createMockQueryResponse(mockBodActionsData),
+  useGetBodActionsQuery: () => createMockQueryResponse(mockBodActionsData),
   useCreateActionMutation: () => createMockMutationResponse(),
   useUpdateActionMutation: () => createMockMutationResponse(),
   useCreateElectionNotificationsMutation: () => createMockMutationResponse(),
 
   // Auth queries - auth.queries.ts
-  useValidateTokenQuery: () => createMockQueryResponse(null),
+  useGetValidateTokenQuery: () => createMockQueryResponse(null),
 
   // Contract queries - contract.queries.ts
   useCreateContractMutation: () => createMockMutationResponse(),
@@ -287,26 +287,26 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useResetContractsMutation: () => createMockMutationResponse(),
 
   // Health queries - health.queries.ts
-  useBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData),
+  useGetBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData),
 
   // Weekly Claim queries - weeklyClaim.queries.ts
-  useTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
-  useWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
+  useGetTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
+  useGetWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
   useUpdateWeeklyClaimMutation: () => createMockMutationResponse(),
   useSyncWeeklyClaimsMutation: () => createMockMutationResponse(),
   useDeleteClaimMutation: () => createMockMutationResponse(),
 
   // Safe queries - safe.queries.ts
-  useSafeInfoQuery: () => createMockQueryResponse(mockSafeInfoData),
+  useGetSafeInfoQuery: () => createMockQueryResponse(mockSafeInfoData),
   useSafePendingTransactionsQuery: () => createMockQueryResponse([]),
   useDeploySafeMutation: () => createMockMutationResponse(),
   useProposeTransactionMutation: () => createMockMutationResponse(),
   useApproveTransactionMutation: () => createMockMutationResponse(),
   useExecuteTransactionMutation: () => createMockMutationResponse(),
   useUpdateSafeOwnersMutation: () => createMockMutationResponse(),
-  useSafeTransactionQuery: () => createMockQueryResponse(mockSafeTransactionData),
+  useGetSafeTransactionQuery: () => createMockQueryResponse(mockSafeTransactionData),
 
   // Polymarket queries - polymarket.queries.ts
-  useMarketData: () => createMockQueryResponse(mockMarketData),
-  useSafeBalances: () => createMockQueryResponse([])
+  useGetMarketDataQuery: () => createMockQueryResponse(mockMarketData),
+  useGetSafeBalancesQuery: () => createMockQueryResponse([])
 }

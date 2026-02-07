@@ -123,8 +123,8 @@ const deploySafeForTeam = async () => {
     safeLoadingMessage.value = 'Updating team with Safe address...'
 
     await updateTeam({
-      id: props.createdTeamData.id!,
-      teamData: { safeAddress: (safeAddress ?? undefined) as `0x${string}` | undefined }
+      pathParams: { id: props.createdTeamData.id! },
+      body: { safeAddress: (safeAddress ?? undefined) as `0x${string}` | undefined }
     })
 
     addSuccessToast(`Safe wallet deployed successfully`)
@@ -368,8 +368,8 @@ useWatchContractEvent({
     const teamId = props.createdTeamData.id
 
     await updateTeam({
-      id: teamId,
-      teamData: { officerAddress: proxyAddress }
+      pathParams: { id: teamId },
+      body: { officerAddress: proxyAddress }
     })
 
     if (updateTeamError.value) {
@@ -379,7 +379,7 @@ useWatchContractEvent({
       return
     }
 
-    await syncContracts({ teamId })
+    await syncContracts({ body: { teamId } })
 
     if (syncContractsError.value) {
       log.error('Error updating contracts')

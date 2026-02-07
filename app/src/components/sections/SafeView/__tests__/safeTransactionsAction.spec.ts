@@ -11,16 +11,16 @@ vi.mock('@iconify/vue', () => ({
 
 const {
   mockUseTeamStore,
-  mockUseSafeTransactionsQuery,
-  mockUseSafeInfoQuery,
+  mockuseGetSafeTransactionsQuery,
+  mockuseGetSafeInfoQuery,
   mockUseAccount,
   mockUseSafeApproval,
   mockUseSafeExecution,
   mockUseChainId
 } = vi.hoisted(() => ({
   mockUseTeamStore: vi.fn(),
-  mockUseSafeTransactionsQuery: vi.fn(),
-  mockUseSafeInfoQuery: vi.fn(),
+  mockuseGetSafeTransactionsQuery: vi.fn(),
+  mockuseGetSafeInfoQuery: vi.fn(),
   mockUseAccount: vi.fn(),
   mockUseSafeApproval: vi.fn(),
   mockUseSafeExecution: vi.fn(),
@@ -29,8 +29,8 @@ const {
 
 vi.mock('@/stores', () => ({ useTeamStore: mockUseTeamStore }))
 vi.mock('@/queries/safe.queries', () => ({
-  useSafeTransactionsQuery: mockUseSafeTransactionsQuery,
-  useSafeInfoQuery: mockUseSafeInfoQuery
+  useGetSafeTransactionsQuery: mockuseGetSafeTransactionsQuery,
+  useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -133,7 +133,7 @@ describe('SafeTransactions Actions', () => {
     mockUseTeamStore.mockReturnValue({
       currentTeamMeta: { data: { safeAddress: MOCK_DATA.safeAddress } }
     })
-    mockUseSafeInfoQuery.mockReturnValue({ data: ref(MOCK_DATA.safeInfo) })
+    mockuseGetSafeInfoQuery.mockReturnValue({ data: ref(MOCK_DATA.safeInfo) })
     mockUseAccount.mockReturnValue({ address: ref(MOCK_DATA.connectedAddress) })
     mockUseChainId.mockReturnValue(ref(137))
     mockUseSafeApproval.mockReturnValue({
@@ -155,7 +155,7 @@ describe('SafeTransactions Actions', () => {
   describe('Transaction Approval and Execution', () => {
     it('should approve transaction successfully and show loading state', async () => {
       MOCK_DATA.mockApproveTransaction.mockResolvedValue('0xapproval')
-      mockUseSafeTransactionsQuery.mockReturnValue({
+      mockuseGetSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.pendingTransaction]),
         isLoading: ref(false),
         error: ref(null)
@@ -183,7 +183,7 @@ describe('SafeTransactions Actions', () => {
 
     it('should execute transaction successfully and show loading state', async () => {
       MOCK_DATA.mockExecuteTransaction.mockResolvedValue('0xexecution')
-      mockUseSafeTransactionsQuery.mockReturnValue({
+      mockuseGetSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.readyToExecuteTransaction]),
         isLoading: ref(false),
         error: ref(null)
@@ -213,7 +213,7 @@ describe('SafeTransactions Actions', () => {
 
   describe('Transaction Permissions', () => {
     it('should handle approval permissions correctly', () => {
-      mockUseSafeTransactionsQuery.mockReturnValue({
+      mockuseGetSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.pendingTransaction]),
         isLoading: ref(false),
         error: ref(null)
@@ -229,7 +229,7 @@ describe('SafeTransactions Actions', () => {
     })
 
     it('should handle execution permissions correctly', () => {
-      mockUseSafeTransactionsQuery.mockReturnValue({
+      mockuseGetSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.readyToExecuteTransaction]),
         isLoading: ref(false),
         error: ref(null)
@@ -240,7 +240,7 @@ describe('SafeTransactions Actions', () => {
       expect(wrapper.vm.canExecute(MOCK_DATA.readyToExecuteTransaction)).toBe(true)
 
       // Disallow execution when threshold is not met
-      mockUseSafeTransactionsQuery.mockReturnValue({
+      mockuseGetSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.pendingTransaction]),
         isLoading: ref(false),
         error: ref(null)
@@ -253,7 +253,7 @@ describe('SafeTransactions Actions', () => {
       mockUseAccount.mockReturnValue({
         address: ref('0x9999999999999999999999999999999999999999' as Address)
       })
-      mockUseSafeTransactionsQuery.mockReturnValue({
+      mockuseGetSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.pendingTransaction]),
         isLoading: ref(false),
         error: ref(null)
@@ -269,7 +269,7 @@ describe('SafeTransactions Actions', () => {
     it('should return correct status for all transaction states', () => {
       const executedTransaction = { ...MOCK_DATA.pendingTransaction, isExecuted: true }
 
-      mockUseSafeTransactionsQuery.mockReturnValue({
+      mockuseGetSafeTransactionsQuery.mockReturnValue({
         data: ref([executedTransaction]),
         isLoading: ref(false),
         error: ref(null)
@@ -278,7 +278,7 @@ describe('SafeTransactions Actions', () => {
       expect(wrapper.vm.getTransactionStatus(executedTransaction)).toBe('Executed')
 
       // Test ready to execute
-      mockUseSafeTransactionsQuery.mockReturnValue({
+      mockuseGetSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.readyToExecuteTransaction]),
         isLoading: ref(false),
         error: ref(null)
@@ -289,7 +289,7 @@ describe('SafeTransactions Actions', () => {
       )
 
       // Test pending
-      mockUseSafeTransactionsQuery.mockReturnValue({
+      mockuseGetSafeTransactionsQuery.mockReturnValue({
         data: ref([MOCK_DATA.pendingTransaction]),
         isLoading: ref(false),
         error: ref(null)

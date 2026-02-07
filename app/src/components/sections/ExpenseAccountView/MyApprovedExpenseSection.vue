@@ -44,7 +44,7 @@ import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { tokenSymbol, getCurrentUserExpenses } from '@/utils'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import { useExpensesQuery } from '@/queries'
+import { useGetExpensesQuery } from '@/queries'
 import TransferAction from './TransferAction.vue'
 import { getFrequencyType, getCustomFrequency } from '@/utils'
 //#endregion
@@ -52,7 +52,9 @@ import { getFrequencyType, getCustomFrequency } from '@/utils'
 const teamStore = useTeamStore()
 const currentUserAddress = useUserDataStore().address
 
-const { data: newExpenseData } = useExpensesQuery(computed(() => teamStore.currentTeamId))
+const { data: newExpenseData } = useGetExpensesQuery({
+  queryParams: { teamId: computed(() => teamStore.currentTeamId) }
+})
 
 const columns = [
   {

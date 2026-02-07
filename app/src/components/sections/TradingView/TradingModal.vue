@@ -65,7 +65,7 @@ import {
   useTradingSession
 } from '@/composables/trading/'
 import type { PolymarketMarket } from '@/types'
-import { useMarketData } from '@/queries/polymarket.queries'
+import { useGetMarketDataQuery } from '@/queries/polymarket.queries'
 import { toast } from 'vue-sonner'
 import { log } from '@/utils'
 import { useVuelidate } from '@vuelidate/core'
@@ -98,7 +98,9 @@ const endpoint = computed(() => {
 })
 
 // Composables
-const { data: marketData } = useMarketData(endpoint)
+const { data: marketData } = useGetMarketDataQuery({
+  queryParams: { url: endpoint }
+})
 const { derivedSafeAddressFromEoa } = useSafeDeployment()
 const { clobClient } = useClobClient()
 const { submitOrder, error: clobOrderError } = useClobOrder(
