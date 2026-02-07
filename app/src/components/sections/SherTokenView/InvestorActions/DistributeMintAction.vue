@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="{ tooltip: !canDistributeMint }"
+    class="tooltip"
     data-tip="Coming soon"
   >
     <ButtonUI
@@ -67,7 +67,6 @@ const { isLoading: isConfirming, isSuccess: isSuccessDistributing } =
     hash: distributeMintHash
   })
 
-const canDistributeMint = true // Toujours à true pour l'instant (coming soon)
 
 const openModal = () => {
   modalState.value = { mount: true, show: true }

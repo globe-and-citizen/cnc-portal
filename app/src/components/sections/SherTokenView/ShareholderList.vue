@@ -75,19 +75,21 @@
   </CardComponent>
 </template>
 <script setup lang="ts">
-import { formatUnits, type Address } from 'viem'
-import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
-import { ref } from 'vue'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
-import { watch, computed } from 'vue'
-import { log } from '@/utils'
-import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
-import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
+import ModalComponent from '@/components/ModalComponent.vue'
+import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import { useReadContract } from '@wagmi/vue'
+import {
+  useInvestorShareholders,
+  useInvestorSymbol,
+  useInvestorTotalSupply
+} from '@/composables/investor/reads'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import { log } from '@/utils'
+import { formatUnits, type Address } from 'viem'
+import { ref, watch } from 'vue'
 
 const mintIndividualModal = ref({
   mount: false,
@@ -95,37 +97,23 @@ const mintIndividualModal = ref({
 })
 const selectedShareholder = ref<Address | null>(null)
 
-const { addErrorToast } = useToastStore()
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 
-const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
 
-const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
-  abi: INVESTOR_ABI,
-  address: investorsAddress,
-  functionName: 'symbol'
-})
+const { data: tokenSymbol, error: tokenSymbolError } = useInvestorSymbol()
 
 const {
   data: totalSupply,
   isLoading: totalSupplyLoading,
   error: totalSupplyError
-} = useReadContract({
-  abi: INVESTOR_ABI,
-  address: investorsAddress,
-  functionName: 'totalSupply'
-})
+} = useInvestorTotalSupply()
 
 const {
   data: shareholders,
   isLoading: shareholdersLoading,
   error: shareholderError
-} = useReadContract({
-  abi: INVESTOR_ABI,
-  address: investorsAddress,
-  functionName: 'getShareholders'
-})
+} = useInvestorShareholders()
 
 const getShareholderName = (address: Address) => {
   const member = teamStore.currentTeam?.members?.find((member) => member.address === address)
@@ -138,21 +126,18 @@ const getShareholderName = (address: Address) => {
 watch(tokenSymbolError, (value) => {
   if (value) {
     log.error('Error fetching token symbol', value)
-    addErrorToast('Error fetching token symbol')
   }
 })
 
 watch(totalSupplyError, (value) => {
   if (value) {
     log.error('Error fetching total supply', value)
-    addErrorToast('Error fetching total supply')
   }
 })
 
 watch(shareholderError, (value) => {
   if (value) {
     log.error('Error fetching shareholders', value)
-    addErrorToast('Error fetching shareholders')
   }
 })
 
