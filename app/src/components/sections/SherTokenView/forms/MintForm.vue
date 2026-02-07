@@ -46,15 +46,23 @@
       </div>
     </div>
 
-    <div class="text-center">
+    <div class="text-center flex gap-4 justify-between" data-test="form-actions">
+      <ButtonUI
+        outline
+        variant="error"
+        data-test="cancel-button"
+        :disabled="isConfirmingMint || isMintPending"
+        @click="() => emit('close-modal')"
+        >Cancel
+      </ButtonUI>
       <ButtonUI
         :loading="isConfirmingMint || isMintPending || $v.value?.$invalid"
-        :disabled="isConfirmingMint || isMintPending"
+        :disabled="isConfirmingMint || isMintPending || $v.value?.$invalid"
         variant="primary"
         class="w-44 text-center"
         @click="onSubmit()"
         data-test="submit-button"
-        >Mint
+        >Mint  {{ tokenSymbol }}
       </ButtonUI>
     </div>
   </div>

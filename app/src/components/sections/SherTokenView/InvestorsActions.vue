@@ -1,320 +1,91 @@
 <template>
   <CardComponent title="Investor Actions">
     <div class="flex flex-col justify-around gap-2 w-full" data-test="investors-actions">
-      <div class="flex items-end w-full justify-between">
+      <div class="flex flex-wrap items-end w-full justify-between">
         <div class="flex gap-x-1">
           <h4>Contract Address :</h4>
-          <AddressToolTip :address="investorsAddress" v-if="investorsAddress" />
+          <AddressToolTip :address="investorAddress" v-if="investorAddress" />
         </div>
         <div class="flex gap-2">
-          <div :class="{ tooltip: true }" data-tip="Coming soon">
-            <ButtonUI
-              variant="primary"
-              :disabled="true"
-              data-test="distribute-mint-button"
-              @click="distributeMintModal = true"
-            >
-              Distribute Mint {{ tokenSymbol }}
-            </ButtonUI>
-          </div>
-          <div
-            :class="{ tooltip: tokenSymbol && currentAddress != investorsOwner }"
-            :data-tip="
-              tokenSymbol && currentAddress != investorsOwner
-                ? 'Only the token owner can mint tokens'
-                : null
-            "
-          >
-            <ButtonUI
-              variant="primary"
-              outline
-              data-test="mint-button"
-              :disabled="!tokenSymbol || currentAddress != investorsOwner"
-              @click="mintModal = { mount: true, show: true }"
-            >
-              Mint {{ tokenSymbol }}
-            </ButtonUI>
-          </div>
-          <div
-            :class="{
-              tooltip:
-                (tokenSymbol && !isBodAction && currentAddress != bankOwner) ||
-                (tokenSymbol && (shareholders?.length ?? 0) === 0)
-            }"
-            :data-tip="
-              tokenSymbol && !isBodAction && currentAddress != bankOwner
-                ? 'Only the bank owner can pay dividends'
-                : tokenSymbol && (shareholders?.length ?? 0) === 0
-                  ? 'No shareholders available to pay dividends'
-                  : null
-            "
-          >
-            <ButtonUI
-              variant="primary"
-              data-test="pay-dividends-button"
-              @click="payDividendsModal = { mount: true, show: true }"
-              :disabled="
-                !tokenSymbol ||
-                (!isBodAction && currentAddress != bankOwner) ||
-                (shareholders?.length ?? 0) === 0
-              "
-            >
-              Pay Dividends
-            </ButtonUI>
-          </div>
+          <template v-if="isLoadingTokenSymbol || isLoadingInvestorsOwner || !tokenSymbol || !investorsOwner || !investorAddress">
+            <div class="skeleton h-10 w-40" data-test="skeleton-1"></div>
+            <div class="skeleton h-10 w-40" data-test="skeleton-2"></div>
+            <div class="skeleton h-10 w-40" data-test="skeleton-3"></div>
+          </template>
+          <template v-else>
+            <DistributeMintAction
+              :token-symbol="tokenSymbol"
+              :investors-address="investorAddress"
+            />
+            <MintTokenAction
+              :token-symbol="tokenSymbol"
+              :investors-owner="investorsOwner"
+            />
+            
+            <PayDividendsAction
+              :token-symbol="tokenSymbol"
+              :shareholders-count="shareholders?.length ?? 0"
+              :investors-address="investorAddress"
+              :investors-owner="investorsOwner"
+              :bank-address="bankAddress"
+            />
+          </template>
         </div>
       </div>
-
-      <ModalComponent
-        v-model="mintModal.show"
-        v-if="mintModal.mount"
-        @reset="() => (mintModal = { mount: false, show: false })"
-      >
-        <MintForm
-          v-model="mintModal.show"
-          @close-modal="() => (mintModal = { mount: false, show: false })"
-        ></MintForm>
-      </ModalComponent>
-      <ModalComponent v-model="distributeMintModal">
-        <DistributeMintForm
-          v-if="distributeMintModal"
-          :loading="distributeMintLoading || isConfirmingDistributeMint"
-          :token-symbol="tokenSymbol!"
-          @submit="
-            (shareholders: ReadonlyArray<{ shareholder: Address; amount: bigint }>) =>
-              executeDistributeMint(shareholders)
-          "
-        ></DistributeMintForm>
-      </ModalComponent>
-      <ModalComponent
-        v-model="payDividendsModal.show"
-        v-if="payDividendsModal.mount"
-        @reset="() => (payDividendsModal = { mount: false, show: false })"
-      >
-        <PayDividendsForm
-          v-if="payDividendsModal && teamStore.currentTeam"
-          :loading="
-            (isBankWriteLoading &&
-              (bankWriteFunctionName === 'depositDividends' ||
-                bankWriteFunctionName === 'depositTokenDividends')) ||
-            isLoadingAddAction ||
-            isConfirmingAddAction
-          "
-          :token-symbol="tokenSymbol!"
-          :team="teamStore.currentTeam"
-          @submit="executePayDividends"
-          :is-bod-action="isBodAction"
-          @close-modal="() => (payDividendsModal = { mount: false, show: false })"
-        ></PayDividendsForm>
-      </ModalComponent>
     </div>
   </CardComponent>
 </template>
+
 <script setup lang="ts">
+import { watch } from 'vue'
+// import type { Address } from 'viem'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
-import ModalComponent from '@/components/ModalComponent.vue'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+// import { OFFICER_ABI } from '@/artifacts/abi/officer'
+import { useReadContract } from '@wagmi/vue'
+import { useTeamStore, useToastStore } from '@/stores'
 import { log } from '@/utils'
-import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-import { type Address, encodeFunctionData, formatUnits } from 'viem'
-import { computed, ref, watch } from 'vue'
-import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
-import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
-import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
-import { BANK_ABI } from '@/artifacts/abi/bank'
-import { OFFICER_ABI } from '@/artifacts/abi/officer'
-import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import DistributeMintAction from './InvestorActions/DistributeMintAction.vue'
+import MintTokenAction from './InvestorActions/MintTokenAction.vue'
+import PayDividendsAction from './InvestorActions/PayDividendsAction.vue'
 
-import { useBodContract } from '@/composables/bod/'
-import { useBankContract } from '@/composables/bank'
-import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils'
-import { zeroAddress } from 'viem'
-import type { TokenId } from '@/constant'
+defineEmits<{
+  refetchShareholders: []
+}>()
 
-const { addErrorToast, addSuccessToast } = useToastStore()
-
-const {
-  depositDividends,
-  depositTokenDividends,
-  bankWriteFunctionName,
-  isBankWriteLoading,
-  isConfirmed
-} = useBankContract()
-
-const {
-  addAction,
-  useBodIsBodAction,
-  isLoading: isLoadingAddAction,
-  isConfirming: isConfirmingAddAction,
-  isActionAdded
-} = useBodContract()
-
-const mintModal = ref({
-  mount: false,
-  show: false
-})
-
-const distributeMintModal = ref(false)
-const payDividendsModal = ref({
-  mount: false,
-  show: false
-})
-const emits = defineEmits(['refetchShareholders'])
-const { address: currentAddress } = useUserDataStore()
-
+const { addErrorToast } = useToastStore()
 const teamStore = useTeamStore()
-const investorsAddress = teamStore.getContractAddressByType('InvestorV1')
+
+const investorAddress = teamStore.getContractAddressByType('InvestorV1')
 const bankAddress = teamStore.getContractAddressByType('Bank')
 
-const { data: deployedContracts } = useReadContract({
-  address: teamStore.currentTeam?.officerAddress as Address,
-  abi: OFFICER_ABI,
-  functionName: 'getDeployedContracts',
-  query: {
-    enabled: computed(() => !!teamStore.currentTeam?.officerAddress)
-  }
-})
-
-const investorAddress = computed(() => {
-  if (!deployedContracts.value) return null
-  const investor = deployedContracts.value.find((c) => c.contractType === 'InvestorV1')
-  return investor?.contractAddress
-})
-
-const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
+// Get token symbol
+const { data: tokenSymbol, error: tokenSymbolError, isLoading: isLoadingTokenSymbol } = useReadContract({
   abi: INVESTOR_ABI,
-  address: investorsAddress,
+  address: investorAddress,
   functionName: 'symbol'
 })
 
+// Get shareholders list
 const { data: shareholders, error: shareholderError } = useReadContract({
   abi: INVESTOR_ABI,
-  address: investorsAddress,
+  address: investorAddress,
   functionName: 'getShareholders'
 })
 
-const {
-  data: distributeMintHash,
-  writeContract: distributeMint,
-  isPending: distributeMintLoading,
-  error: distributeMintError
-} = useWriteContract()
-
-const { isLoading: isConfirmingDistributeMint, isSuccess: isSuccessDistributingMint } =
-  useWaitForTransactionReceipt({
-    hash: distributeMintHash
-  })
-
-const executePayDividends = async (value: bigint, selectedTokenId: TokenId) => {
-  if (isBodAction.value) {
-    if (!investorsAddress) return
-
-    const data = encodeFunctionData({
-      abi: BANK_ABI,
-      functionName: selectedTokenId == 'native' ? 'depositDividends' : 'depositTokenDividends',
-      args:
-        selectedTokenId == 'native'
-          ? [value, investorAddress.value as Address]
-          : [
-              tokenSymbolAddresses[selectedTokenId] as Address,
-              value,
-              investorAddress.value as Address
-            ]
-    })
-    const description = JSON.stringify({
-      text: `Pay dividends of ${formatUnits(value, 18)} ${tokenSymbolUtils(zeroAddress)} to ${investorsAddress}`,
-      title: `Pay Dividends Request`
-    })
-
-    await addAction({
-      targetAddress: bankAddress,
-      description,
-      data
-    })
-  } else {
-    if (selectedTokenId == 'native') {
-      await depositDividends(value.toString(), investorAddress.value as Address)
-    } else {
-      await depositTokenDividends(
-        tokenSymbolAddresses[selectedTokenId] as Address,
-        value.toString(),
-        investorAddress.value as Address
-      )
-    }
-  }
-}
-
-const executeDistributeMint = (
-  shareholders: ReadonlyArray<{
-    readonly shareholder: Address
-    readonly amount: bigint
-  }>
-) => {
-  distributeMint({
-    abi: INVESTOR_ABI,
-    address: investorsAddress as Address,
-    functionName: 'distributeMint',
-    args: [shareholders]
-  })
-}
-
-const {
-  data: bankOwner,
-  //isLoading: isLoadingBankOwner,
-  error: errorBankOwner
-  //refetch: executeBankOwner
-} = useReadContract({
-  functionName: 'owner',
-  address: bankAddress,
-  abi: BANK_ABI
-})
-
-const { isBodAction } = useBodIsBodAction(bankAddress as Address, BANK_ABI)
-
+// Get investors contract owner
 const {
   data: investorsOwner,
-  //isLoading: isLoadingInvestorsOwner,
-  error: errorInvestorsOwner
-  //refetch: executeInvestorsOwner
+  error: errorInvestorsOwner,
+  isLoading: isLoadingInvestorsOwner
 } = useReadContract({
   functionName: 'owner',
-  address: investorsAddress,
+  address: investorAddress,
   abi: INVESTOR_ABI
 })
 
-watch(distributeMintError, () => {
-  if (distributeMintError.value) {
-    log.error('Failed to distribute mint', distributeMintError.value)
-    addErrorToast('Failed to distribute mint')
-  }
-})
-
-watch(isConfirmingDistributeMint, (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isSuccessDistributingMint.value) {
-    emits('refetchShareholders')
-    addSuccessToast('Distributed mint successfully')
-    distributeMintModal.value = false
-  }
-})
-
-watch([isConfirmed, bankWriteFunctionName], ([newIsConfirmed, newbankWriteFunctionName]) => {
-  if (
-    newIsConfirmed &&
-    (newbankWriteFunctionName === 'depositDividends' ||
-      newbankWriteFunctionName === 'depositTokenDividends')
-  ) {
-    payDividendsModal.value = { mount: false, show: false }
-  }
-})
-
-watch(isActionAdded, (isAdded) => {
-  if (isAdded) {
-    payDividendsModal.value = { mount: false, show: false }
-  }
-})
-
+// Watch for errors and display toast notifications
 watch(tokenSymbolError, (value) => {
   if (value) {
     log.error('Error fetching token symbol', value)
@@ -329,35 +100,10 @@ watch(shareholderError, (value) => {
   }
 })
 
-watch(errorBankOwner, (value) => {
-  if (value) {
-    log.error('Error fetching bank owner', value)
-    addErrorToast('Error fetching bank owner')
-  }
-})
-
 watch(errorInvestorsOwner, (value) => {
   if (value) {
     log.error('Error fetching investors owner', value)
     addErrorToast('Error fetching investors owner')
   }
 })
-
-watch(
-  () => payDividendsModal.value.show,
-  (newShow) => {
-    if (!newShow) {
-      payDividendsModal.value = { mount: false, show: false }
-    }
-  }
-)
-
-watch(
-  () => mintModal.value.show,
-  (newShow) => {
-    if (!newShow) {
-      mintModal.value = { mount: false, show: false }
-    }
-  }
-)
 </script>
