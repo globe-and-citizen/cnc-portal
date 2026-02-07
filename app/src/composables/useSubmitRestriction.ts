@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { useSubmitRestrictionQuery } from '@/queries/team.queries'
+import { useGetSubmitRestrictionQuery } from '@/queries/team.queries'
 import { useTeamStore } from '@/stores'
 
 /**
@@ -10,7 +10,9 @@ export function useSubmitRestriction() {
 
   const teamId = computed(() => teamStore.currentTeam?.id ?? null)
 
-  const { data, isLoading, error, refetch } = useSubmitRestrictionQuery(teamId)
+  const { data, isLoading, error, refetch } = useGetSubmitRestrictionQuery({
+    pathParams: { teamId }
+  })
 
   /**
    * Check if submit restriction is active for the current team.

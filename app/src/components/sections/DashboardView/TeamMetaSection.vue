@@ -69,8 +69,8 @@ const {
 const executeUpdateTeam = () => {
   updateTeamMutate(
     {
-      id: teamStore.currentTeamId || '',
-      teamData: {
+      pathParams: { id: teamStore.currentTeamId || '' },
+      body: {
         name: updateTeamInput.value.name,
         description: updateTeamInput.value.description
       }
@@ -102,7 +102,7 @@ const deleteTeam = async () => {
   }
 
   deleteTeamMutate(
-    { teamId: String(teamId) },
+    { pathParams: { teamId: String(teamId) } },
     {
       onSuccess: async () => {
         addSuccessToast('Team deleted successfully')

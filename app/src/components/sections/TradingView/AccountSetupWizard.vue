@@ -121,8 +121,8 @@ const handleApproveAndConfigure = async () => {
       if (result) {
         updateUserMutateAsync(
           {
-            address: userDataStore.address,
-            userData: {
+            pathParams: { address: userDataStore.address },
+            body: {
               traderSafeAddress: derivedSafeAddressFromEoa.value,
               teamId: teamStore.currentTeamId || undefined
             }

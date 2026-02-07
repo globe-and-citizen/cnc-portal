@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { useTeamWagesQuery } from '@/queries'
+import { useGetTeamWagesQuery } from '@/queries'
 import { computed, watch } from 'vue'
 import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
 import SubmitClaims from './SubmitClaims.vue'
@@ -34,9 +34,9 @@ const userStore = useUserDataStore()
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
 
-const { data: teamWageData, error: teamWageDataError } = useTeamWagesQuery(
-  computed(() => teamStore.currentTeamId)
-)
+const { data: teamWageData, error: teamWageDataError } = useGetTeamWagesQuery({
+  queryParams: { teamId: computed(() => teamStore.currentTeamId) }
+})
 
 const hasWage = computed(() => {
   const userWage = teamWageData.value?.find((wage) => wage.userAddress === userStore.address)

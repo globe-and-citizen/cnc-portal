@@ -268,7 +268,7 @@ import {
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
-import { useTeamWeeklyClaimsQuery, useTeamWagesQuery } from '@/queries'
+import { useGetTeamWeeklyClaimsQuery, useGetTeamWagesQuery } from '@/queries'
 import type { Claim, WeeklyClaim } from '@/types'
 import type { Address } from 'viem'
 
@@ -309,14 +309,16 @@ const getColor = (weeklyClaim?: WeeklyClaim) => {
   return 'accent'
 }
 
-const { data: memberWeeklyClaims } = useTeamWeeklyClaimsQuery({
-  teamId: computed(() => teamStore.currentTeamId),
-  userAddress: memberAddress
+const { data: memberWeeklyClaims } = useGetTeamWeeklyClaimsQuery({
+  queryParams: {
+    teamId: computed(() => teamStore.currentTeamId),
+    userAddress: memberAddress
+  }
 })
 
-const { data: teamWageData, error: teamWageDataError } = useTeamWagesQuery(
-  computed(() => teamStore.currentTeamId)
-)
+const { data: teamWageData, error: teamWageDataError } = useGetTeamWagesQuery({
+  queryParams: { teamId: computed(() => teamStore.currentTeamId) }
+})
 
 const hasWage = computed(() => {
   const userWage = teamWageData.value?.find((wage) => wage.userAddress === userStore.address)

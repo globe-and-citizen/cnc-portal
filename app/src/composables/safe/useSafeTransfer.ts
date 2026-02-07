@@ -143,10 +143,16 @@ export function useSafeTransfer() {
 
         // Trigger query invalidation via mutation
         await executeMutation.mutateAsync({
-          chainId: chainId.value,
-          safeAddress,
-          safeTxHash: await safeSdk.getTransactionHash(safeTransaction),
-          txHash
+          pathParams: {
+            safeAddress,
+            safeTxHash: await safeSdk.getTransactionHash(safeTransaction)
+          },
+          queryParams: {
+            chainId: chainId.value
+          },
+          body: {
+            txHash
+          }
         })
 
         addSuccessToast(`Transfer executed successfully${tokenAddress ? ' (Token)' : ' (Native)'}`)

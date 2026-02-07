@@ -5,7 +5,7 @@ import { mount } from '@vue/test-utils'
 import { nextTick, ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { User } from '@/types'
-import { useSearchUsersQuery } from '@/queries/user.queries'
+import { useGetSearchUsersQuery } from '@/queries/user.queries'
 
 // Mock data
 const MOCK_USERS: User[] = [
@@ -52,7 +52,7 @@ const SELECTORS = {
 const createWrapper = (props = {}, mockQueryOverrides = {}) => {
   // Mock the search query
   const mockRefetch = vi.fn()
-  vi.mocked(useSearchUsersQuery).mockReturnValue({
+  vi.mocked(useGetSearchUsersQuery).mockReturnValue({
     data: ref({ users: MOCK_USERS }),
     isFetching: ref(false),
     refetch: mockRefetch,
@@ -62,7 +62,7 @@ const createWrapper = (props = {}, mockQueryOverrides = {}) => {
     isPending: ref(false),
     isSuccess: ref(true),
     ...mockQueryOverrides
-  } as unknown as ReturnType<typeof useSearchUsersQuery>)
+  } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
 
   return mount(SelectMemberInput, {
     props: {

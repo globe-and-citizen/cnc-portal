@@ -11,7 +11,7 @@ import { BOD_ABI } from '@/artifacts/abi/bod'
 import { useQueryClient } from '@tanstack/vue-query'
 import { log, parseError } from '@/utils'
 import { useCreateActionMutation, useUpdateActionMutation } from '@/queries/action.queries'
-import { useAddBulkNotificationsMutation } from '@/queries/notification.queries'
+import { useCreateBulkNotificationsMutation } from '@/queries/notification.queries'
 /**
  * BOD contract write functions - combines admin and transfers
  */
@@ -30,14 +30,14 @@ export function useBodWritesFunctions() {
 
   const createActionMutation = useCreateActionMutation()
   const updateActionMutation = useUpdateActionMutation()
-  const { mutateAsync: addBulkNotifications } = useAddBulkNotificationsMutation()
+  const { mutateAsync: addBulkNotifications } = useCreateBulkNotificationsMutation()
 
   const { isConfirmed, isConfirming } = writes
 
   watch(isConfirming, async (newStatus, oldStatus) => {
     if (oldStatus && !newStatus && isConfirmed.value) {
       if (action.value) {
-        await createActionMutation.mutateAsync(action.value)
+        await createActionMutation.mutateAsync({ body: action.value })
       }
       isActionAdded.value = true
       queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
@@ -56,11 +56,13 @@ export function useBodWritesFunctions() {
             (m) => m?.toLowerCase() !== (action.value?.userAddress || '').toLowerCase()
           )
           await addBulkNotifications({
-            userIds: recipients,
-            message: 'New board action requires your approval',
-            subject: 'New Board Action Created',
-            author: action.value.userAddress ?? '',
-            resource: `teams/${teamStore.currentTeamId}/contract-management`
+            body: {
+              userIds: recipients,
+              message: 'New board action requires your approval',
+              subject: 'New Board Action Created',
+              author: action.value.userAddress ?? '',
+              resource: `teams/${teamStore.currentTeamId}/contract-management`
+            }
           })
         }
       } catch (err) {
@@ -147,7 +149,7 @@ export function useBodWritesFunctions() {
         args: [BigInt(_actionId)]
       })
       if (isActionExecuted) {
-        await updateActionMutation.mutateAsync({ id: dbId })
+        await updateActionMutation.mutateAsync({ pathParams: { id: dbId } })
       }
       queryClient.invalidateQueries({
         queryKey: ['readContract', { functionName: 'isMember' }],

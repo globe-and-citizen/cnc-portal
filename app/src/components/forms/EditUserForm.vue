@@ -165,8 +165,8 @@ const submitForm = async () => {
 
   try {
     const updatedUser = await updateUser({
-      address: userStore.address,
-      userData: {
+      pathParams: { address: userStore.address! },
+      body: {
         name: userCopy.value.name,
         imageUrl: userCopy.value.imageUrl
       }

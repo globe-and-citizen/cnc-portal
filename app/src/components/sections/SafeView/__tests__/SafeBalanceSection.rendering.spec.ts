@@ -24,7 +24,7 @@ const {
   mockUseUserDataStore,
   mockUseToastStore,
   mockUseContractBalance,
-  mockUseSafeInfoQuery,
+  mockuseGetSafeInfoQuery,
   mockQueryClient,
   mockUseSafeTransfer
 } = vi.hoisted(() => ({
@@ -36,7 +36,7 @@ const {
   mockUseUserDataStore: vi.fn(),
   mockUseToastStore: vi.fn(),
   mockUseContractBalance: vi.fn(),
-  mockUseSafeInfoQuery: vi.fn(),
+  mockuseGetSafeInfoQuery: vi.fn(),
   mockQueryClient: {
     invalidateQueries: vi.fn()
   },
@@ -70,7 +70,7 @@ vi.mock('@/composables/useContractBalance', () => ({
 }))
 
 vi.mock('@/queries/safe.queries', () => ({
-  useSafeInfoQuery: mockUseSafeInfoQuery
+  useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))
 
 vi.mock('@tanstack/vue-query', () => ({
@@ -212,7 +212,7 @@ describe('SafeBalanceSection', () => {
       isLoading: mockIsLoading
     })
 
-    mockUseSafeInfoQuery.mockReturnValue({
+    mockuseGetSafeInfoQuery.mockReturnValue({
       data: mockSafeInfo
     })
 

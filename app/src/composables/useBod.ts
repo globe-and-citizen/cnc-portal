@@ -86,7 +86,7 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
   watch(isConfirmingAddAction, async (isConfirming, wasConfirming) => {
     if (wasConfirming && !isConfirming && isConfirmedAddAction.value) {
       if (action.value) {
-        await createActionMutation.mutateAsync(action.value)
+        await createActionMutation.mutateAsync({ body: action.value })
       }
       addSuccessToast('Action added successfully!')
       // emits('contract-status-changed')
@@ -129,7 +129,7 @@ export function useBod(contractType: ContractType, contractAbi: Abi) {
         args: [BigInt(_actionId)]
       })
       if (isActionExecuted) {
-        await updateActionMutation.mutateAsync({ id: dbId })
+        await updateActionMutation.mutateAsync({ pathParams: { id: dbId } })
       }
       await queryClient.invalidateQueries({
         queryKey: ['readContract']

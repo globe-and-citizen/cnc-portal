@@ -55,12 +55,18 @@ export function useSafeApproval() {
 
       // Submit via mutation
       await mutation.mutateAsync({
-        chainId: chainId.value,
-        safeAddress,
-        safeTxHash,
-        signature: {
-          data: signature.data,
-          signer: connection.address.value
+        pathParams: {
+          safeTxHash,
+          safeAddress
+        },
+        queryParams: {
+          chainId: chainId.value
+        },
+        body: {
+          signature: {
+            data: signature.data,
+            signer: connection.address.value
+          }
         }
       })
 

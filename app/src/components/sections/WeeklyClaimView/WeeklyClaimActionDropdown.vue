@@ -222,7 +222,7 @@ const disableClaim = async () => {
       claimAction.value = 'disable'
 
       try {
-        await syncWeeklyClaim({ teamId: teamStore.currentTeamId! })
+        await syncWeeklyClaim({ queryParams: { teamId: teamStore.currentTeamId! } })
       } catch {
         toastStore.addErrorToast('Failed to update Claim status')
       }

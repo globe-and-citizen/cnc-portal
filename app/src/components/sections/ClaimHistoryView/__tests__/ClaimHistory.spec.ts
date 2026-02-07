@@ -6,7 +6,7 @@ import ClaimHistory from '../ClaimHistory.vue'
 
 // --- Mocks Weekly Claims Query ---
 const mockRefetch = vi.fn()
-const mockUseTeamWeeklyClaimsQuery = vi.fn()
+const mockuseGetTeamWeeklyClaimsQuery = vi.fn()
 
 // --- Mock route ---
 const mockRoute = reactive({
@@ -29,8 +29,8 @@ describe('ClaimHistory.vue', () => {
     mockRefetch.mockClear()
     mockRoute.params.memberAddress = '0x1234567890123456789012345678901234567890'
 
-    // Default implementation for useTeamWeeklyClaimsQuery
-    mockUseTeamWeeklyClaimsQuery.mockImplementation(() => ({
+    // Default implementation for useGetTeamWeeklyClaimsQuery
+    mockuseGetTeamWeeklyClaimsQuery.mockImplementation(() => ({
       data: ref(null),
       error: ref(null),
       isLoading: ref(false),

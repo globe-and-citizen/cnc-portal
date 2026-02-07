@@ -192,7 +192,7 @@ const { mutateAsync: resetContracts } = useResetContractsMutation()
 
 const redeployContracts = async () => {
   if (teamStore.currentTeamId) {
-    await resetContracts({ teamId: teamStore.currentTeamId })
+    await resetContracts({ body: { teamId: teamStore.currentTeamId } })
   }
   showModal.value = false
   // redirect to team page

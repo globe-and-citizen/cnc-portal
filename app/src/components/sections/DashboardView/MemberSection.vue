@@ -110,7 +110,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import { useTeamWagesQuery } from '@/queries/wage.queries'
+import { useGetTeamWagesQuery } from '@/queries/wage.queries'
 import type { Address } from 'viem'
 import { NETWORK } from '@/constant'
 import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
@@ -132,7 +132,7 @@ const {
   data: teamWageData,
   isLoading: isTeamWageDataFetching,
   error: teamWageDataError
-} = useTeamWagesQuery(teamId)
+} = useGetTeamWagesQuery({ queryParams: { teamId } })
 
 // Handle wage data fetch errors
 watch(
