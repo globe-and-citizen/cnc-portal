@@ -6,93 +6,111 @@ import { BANK_FUNCTION_NAMES } from './types'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 
 /**
- * Bank contract read operations
+ * Bank contract address helper
  */
-export function useBankReads() {
+export function useBankAddress() {
   const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  const isBankAddressValid = computed(() => !!bankAddress.value && isAddress(bankAddress.value))
+  return computed(() => teamStore.getContractAddressByType('Bank'))
+}
 
-  const useBankPaused = () => {
-    return useReadContract({
-      address: bankAddress.value,
-      abi: BANK_ABI,
-      functionName: BANK_FUNCTION_NAMES.PAUSED,
-      query: { enabled: isBankAddressValid } // This enable the query only if the bank address is available and valid
-    })
-  }
+/**
+ * Bank contract read operations (mirrors the style of ERC20 reads)
+ */
+export function useBankPaused() {
+  const bankAddress = useBankAddress()
 
-  const useBankOwner = () => {
-    return useReadContract({
-      address: bankAddress.value,
-      abi: BANK_ABI,
-      functionName: BANK_FUNCTION_NAMES.OWNER,
-      query: { enabled: isBankAddressValid }
-    })
-  }
+  return useReadContract({
+    address: bankAddress,
+    abi: BANK_ABI,
+    functionName: BANK_FUNCTION_NAMES.PAUSED,
+    query: { enabled: !!bankAddress.value && isAddress(bankAddress.value) }
+  })
+}
 
-  const useBankSupportedTokens = () => {
-    return useReadContract({
-      address: bankAddress.value as Address,
-      abi: BANK_ABI,
-      functionName: BANK_FUNCTION_NAMES.SUPPORTED_TOKENS,
-      query: { enabled: computed(() => isBankAddressValid.value) }
-    })
-  }
+export function useBankOwner() {
+  const bankAddress = useBankAddress()
 
-  const useDividendBalance = (address: MaybeRef<Address>) => {
-    const addressValue = computed(() => unref(address))
-    return useReadContract({
-      address: bankAddress.value,
-      abi: BANK_ABI,
-      functionName: BANK_FUNCTION_NAMES.DIVIDEND_BALANCES,
-      args: [addressValue],
-      query: {
-        enabled: computed(() => isBankAddressValid.value && isAddress(addressValue.value))
-      }
-    })
-  }
+  return useReadContract({
+    address: bankAddress,
+    abi: BANK_ABI,
+    functionName: BANK_FUNCTION_NAMES.OWNER,
+    query: { enabled: !!bankAddress.value && isAddress(bankAddress.value) }
+  })
+}
 
-  const useTokenDividendBalance = (tokenAddress: Address, address: MaybeRef<Address>) => {
-    const addressValue = computed(() => unref(address))
-    return useReadContract({
-      address: bankAddress.value,
-      abi: BANK_ABI,
-      functionName: BANK_FUNCTION_NAMES.TOKEN_DIVIDEND_BALANCES,
-      args: [tokenAddress, addressValue],
-      query: {
-        enabled: computed(() => isBankAddressValid.value && isAddress(addressValue.value))
-      }
-    })
-  }
+export function useBankSupportedTokens() {
+  const bankAddress = useBankAddress()
 
-  const useTotalDividend = () => {
-    return useReadContract({
-      address: bankAddress.value,
-      abi: BANK_ABI,
-      functionName: BANK_FUNCTION_NAMES.TOTAL_DIVIDEND,
-      query: { enabled: isBankAddressValid }
-    })
-  }
+  return useReadContract({
+    address: bankAddress,
+    abi: BANK_ABI,
+    functionName: BANK_FUNCTION_NAMES.SUPPORTED_TOKENS,
+    query: { enabled: !!bankAddress.value && isAddress(bankAddress.value) }
+  })
+}
 
-  const useUnlockedBalance = () => {
-    return useReadContract({
-      address: bankAddress.value,
-      abi: BANK_ABI,
-      functionName: BANK_FUNCTION_NAMES.GET_UNLOCK_BALANCE,
-      query: { enabled: isBankAddressValid }
-    })
-  }
+export function useDividendBalance(address: MaybeRef<Address>) {
+  const bankAddress = useBankAddress()
 
-  return {
-    bankAddress,
-    isBankAddressValid,
-    useDividendBalance,
-    useTotalDividend,
-    useUnlockedBalance,
-    useTokenDividendBalance,
-    useBankPaused,
-    useBankOwner,
-    useBankSupportedTokens
-  }
+  const addressValue = computed(() => unref(address))
+
+  return useReadContract({
+    address: bankAddress,
+    abi: BANK_ABI,
+    functionName: BANK_FUNCTION_NAMES.DIVIDEND_BALANCES,
+    args: [addressValue],
+    query: {
+      enabled: computed(
+        () => !!bankAddress.value && isAddress(bankAddress.value) && isAddress(addressValue.value)
+      )
+    }
+  })
+}
+
+export function useTokenDividendBalance(
+  tokenAddress: MaybeRef<Address>,
+  address: MaybeRef<Address>
+) {
+  const bankAddress = useBankAddress()
+
+  const tokenValue = computed(() => unref(tokenAddress))
+  const addressValue = computed(() => unref(address))
+
+  return useReadContract({
+    address: bankAddress,
+    abi: BANK_ABI,
+    functionName: BANK_FUNCTION_NAMES.TOKEN_DIVIDEND_BALANCES,
+    args: [tokenValue, addressValue],
+    query: {
+      enabled: computed(
+        () =>
+          !!bankAddress.value &&
+          isAddress(bankAddress.value) &&
+          isAddress(tokenValue.value) &&
+          isAddress(addressValue.value)
+      )
+    }
+  })
+}
+
+export function useTotalDividend() {
+  const bankAddress = useBankAddress()
+
+  return useReadContract({
+    address: bankAddress,
+    abi: BANK_ABI,
+    functionName: BANK_FUNCTION_NAMES.TOTAL_DIVIDEND,
+    query: { enabled: !!bankAddress.value && isAddress(bankAddress.value) }
+  })
+}
+
+export function useUnlockedBalance() {
+  const bankAddress = useBankAddress()
+
+  return useReadContract({
+    address: bankAddress,
+    abi: BANK_ABI,
+    functionName: BANK_FUNCTION_NAMES.GET_UNLOCK_BALANCE,
+    query: { enabled: !!bankAddress.value && isAddress(bankAddress.value) }
+  })
 }

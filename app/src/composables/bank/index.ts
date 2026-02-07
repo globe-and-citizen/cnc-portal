@@ -12,23 +12,23 @@ export * from './types'
 export * from './utils'
 
 // Core composables
-export { useBankReads } from './reads'
+// export { useBankReads } from './reads'
 export { useBankWrites } from './writes'
 export { useBankWritesFunctions } from './functions'
 
 // Main combined composable
-import { useBankReads } from './reads'
+// import { useBankReads } from './reads'
 import { useBankWritesFunctions } from './functions'
 
 /**
  * Main Bank contract composable - combines all functionality
  */
 export function useBankContract() {
-  const reads = useBankReads()
+  // const reads = useBankReads()
   const writeFunctions = useBankWritesFunctions()
 
   return {
-    ...reads,
+    // ...reads,
     ...writeFunctions
   }
 }
