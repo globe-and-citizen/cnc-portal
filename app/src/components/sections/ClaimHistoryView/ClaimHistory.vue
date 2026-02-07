@@ -142,11 +142,12 @@
                 v-if="selectWeekWeelyClaim.claims.length > 0"
                 :disabled="selectWeekWeelyClaim.weekStart === currentWeekStart"
                 :weekly-claim="selectWeekWeelyClaim"
+                :loading="signLoading"
+                @loading="(v: boolean) => (signLoading = v)"
               />
             </div>
           </div>
 
-          <!-- <pre>{{ selectWeekWeelyClaim }}</pre> -->
           <div
             role="alert"
             class="alert alert-vertical sm:alert-horizontal"
@@ -167,6 +168,8 @@
                 v-if="selectWeekWeelyClaim.claims.length > 0"
                 :disabled="selectWeekWeelyClaim.status == 'withdrawn'"
                 :weekly-claim="selectWeekWeelyClaim"
+                :loading="withdrawLoading"
+                @loading="(v: boolean) => (withdrawLoading = v)"
               />
             </div>
           </div>
@@ -336,6 +339,9 @@ const selectedMonthObject = ref<Week>({
 const generatedMonthWeek = computed(() => {
   return getMonthWeeks(selectedMonthObject.value.year, selectedMonthObject.value.month)
 })
+
+const signLoading = ref(false)
+const withdrawLoading = ref(false)
 
 interface FileAttachment {
   fileType: string
