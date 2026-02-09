@@ -53,3 +53,24 @@ export const formatDataForDisplay = (data: unknown): string => {
     return String(data)
   }
 }
+
+/**
+ * Filters a list of items based on a search query for name and address.
+ * @param tableau - The list of items to filter, each item should have a name, address, and optionally a type.
+ * @param search - An object containing the search query for name and address.
+ * @returns A filtered list of items that match the search criteria.
+ */
+
+interface TableItem {
+  name?: string
+  address: string
+  type?: string
+}
+export const filter = (tableau: TableItem[], search: { name: string; address: string }) => {
+  return tableau.filter((item) => {
+    const nameMatch = item.name?.toLowerCase().includes(search.name.toLowerCase().trim())
+    const typeMatch = item.type?.toLowerCase().includes(search.name.toLowerCase().trim())
+    const addressMatch = item.address.toLowerCase().includes(search.address.toLowerCase().trim())
+    return (nameMatch && addressMatch) || (typeMatch && addressMatch)
+  })
+}
