@@ -38,59 +38,8 @@
       data-test="search-dropdown"
     >
       <div class="shadow bg-base-100 rounded-box">
-        <!-- Members -->
-        <div
-          v-if="filteredMembers.length > 0"
-          class="px-2 pt-3 pb-1 text-xs uppercase text-gray-500"
-        >
-          Team Members
-        </div>
-        <div
-          v-if="filteredMembers.length > 0"
-          class="grid grid-cols-2 gap-4 px-2 pb-3"
-          data-test="user-search-results"
-        >
-          <div
-            v-for="member in filteredMembers"
-            :key="member.address"
-            class="flex items-center relative group cursor-pointer"
-            data-test="user-row"
-            @click="selectItem(member, 'member')"
-          >
-            <UserComponent
-              class="p-4 flex-grow rounded-lg bg-white hover:bg-base-300"
-              :user="member"
-              :data-test="`user-dropdown-${member.address}`"
-            />
-          </div>
-        </div>
-
-        <!-- Contracts -->
-        <div
-          v-if="filteredContracts.length > 0"
-          class="px-2 pt-2 pb-1 text-xs uppercase text-gray-500"
-        >
-          Contracts
-        </div>
-        <div
-          v-if="filteredContracts.length > 0"
-          class="grid grid-rows-1 gap-4 px-2 pb-3"
-          data-test="contract-search-results"
-        >
-          <div
-            v-for="contract in filteredContracts"
-            :key="contract.address"
-            class="flex items-center relative group cursor-pointer"
-            data-test="contract-row"
-            @click="selectItem({ name: contract.type, address: contract.address }, 'contract')"
-          >
-            <ContractComponent
-              class="p-4 flex-grow rounded-lg bg-white hover:bg-base-300"
-              :user="{ name: contract.type, address: contract.address }"
-              :data-test="`contract-dropdown-${contract.address}`"
-            />
-          </div>
-        </div>
+        <SelectMemberResults :members="filteredMembers" @select="handleSelectMember" />
+        <SelectContractResults :contracts="filteredContracts" @select="handleSelectContract" />
       </div>
     </div>
   </div>
@@ -114,8 +63,10 @@
 import { ref, useTemplateRef, computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { watchDebounced } from '@vueuse/core'
-import UserComponent from '@/components/UserComponent.vue'
-import ContractComponent from '@/components/ContractComponent.vue'
+import SelectMemberResults from '@/components/utils/SelectMemberResults.vue'
+import SelectContractResults from '@/components/utils/SelectContractResults.vue'
+import type { Member, TeamContract } from '@/types'
+import { filter } from '@/utils'
 
 const props = defineProps<{ disabled?: boolean }>()
 
@@ -138,31 +89,23 @@ const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
 const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
 
 const isFetching = computed(() => teamStore.currentTeamMeta.isPending)
+const members = computed(() => teamStore.currentTeamMeta?.data?.members ?? [])
+const contracts = computed(
+  () =>
+    teamStore.currentTeamMeta?.data?.teamContracts.map((contract) => ({
+      ...contract,
+      imageUrl: 'https://api.dicebear.com/9.x/bottts/svg?seed=' + contract.address
+    })) ?? []
+)
 
 const filteredMembers = computed(() => {
-  if (!teamStore.currentTeam?.members) return []
-  const nameSearch = input.value.name.toLowerCase().trim()
-  const addressSearch = input.value.address.toLowerCase().trim()
-
-  return teamStore.currentTeam.members.filter((member) => {
-    const nameMatch = nameSearch ? member.name?.toLowerCase().includes(nameSearch) : true
-    const addressMatch = addressSearch ? member.address.toLowerCase().includes(addressSearch) : true
-    return nameMatch && addressMatch
-  })
+  if (!members.value.length) return []
+  return filter(members.value, input.value) as Member[]
 })
 
 const filteredContracts = computed(() => {
-  if (!teamStore.currentTeam?.teamContracts) return []
-  const nameSearch = input.value.name.toLowerCase().trim()
-  const addressSearch = input.value.address.toLowerCase().trim()
-
-  return teamStore.currentTeam.teamContracts.filter((contract) => {
-    const nameMatch = nameSearch ? contract.type.toLowerCase().includes(nameSearch) : true
-    const addressMatch = addressSearch
-      ? contract.address.toLowerCase().includes(addressSearch)
-      : true
-    return nameMatch && addressMatch
-  })
+  if (!contracts.value.length) return []
+  return filter(contracts.value, input.value) as TeamContract[]
 })
 
 const selecting = ref(false)
@@ -194,5 +137,13 @@ const selectItem = (item: { name: string; address: string }, type: 'member' | 'c
   input.value = item
   emit('selectItem', { ...item, type })
   _showDropdown.value = false
+}
+
+const handleSelectMember = (member: { name: string; address: string }) => {
+  selectItem(member, 'member')
+}
+
+const handleSelectContract = (contract: { type: string; address: string }) => {
+  selectItem({ name: contract.type, address: contract.address }, 'contract')
 }
 </script>

@@ -22,7 +22,17 @@ const mockTeamStore = {
     ]
   },
   currentTeamMeta: {
-    isPending: false
+    isPending: false,
+    data: {
+      members: [
+        { name: 'John Doe', address: '0x123' },
+        { name: 'Jane Smith', address: '0x456' }
+      ],
+      teamContracts: [
+        { type: 'Bank', address: '0x789' },
+        { type: 'Expense', address: '0xabc' }
+      ]
+    }
   }
 }
 
