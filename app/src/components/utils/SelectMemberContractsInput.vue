@@ -94,7 +94,7 @@ const contracts = computed(
   () =>
     teamStore.currentTeamMeta?.data?.teamContracts.map((contract) => ({
       ...contract,
-      imageUrl: 'https://api.dicebear.com/9.x/bottts/svg?seed=' + contract.address
+      imageUrl: 'https://api.dicebear.com/9.x/bottts/svg?seed'
     })) ?? []
 )
 

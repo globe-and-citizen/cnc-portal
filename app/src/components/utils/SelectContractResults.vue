@@ -11,7 +11,7 @@
       >
         <UserComponent
           class="p-4 flex-grow rounded-lg bg-white hover:bg-base-300"
-          :user="{ name: contract.type, address: contract.address }"
+          :user="{ name: contract.type, address: contract.address, imageUrl: contract.imageUrl }"
           :data-test="`contract-dropdown-${contract.address}`"
         />
       </div>
