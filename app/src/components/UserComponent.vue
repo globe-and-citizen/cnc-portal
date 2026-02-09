@@ -30,11 +30,15 @@
       :class="{ 'items-center text-center': isDetailedView }"
     >
       <p
-        class="font-bold line-clamp-1"
+        class="font-bold"
         :class="{ 'text-lg': isDetailedView, 'text-sm': !isDetailedView }"
         data-test="user-name"
       >
-        {{ user.name || 'User' }}
+        {{
+          props.user.name && props.user.name.length > 10
+            ? `${props.user.name.slice(0, 10)}...`
+            : props.user.name || 'User'
+        }}
       </p>
       <p
         v-if="isDetailedView"
