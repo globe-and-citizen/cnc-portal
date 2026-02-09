@@ -19,7 +19,12 @@
       data-test="deposit-modal"
       @reset="closeModal"
     >
-      <DepositBankForm @close-modal="closeModal" :bank-address="bankAddress" />
+      <DepositSafeForm
+        v-if="bankAddress"
+        :safe-address="bankAddress"
+        title="Deposit to Bank Contract"
+        @close-modal="closeModal"
+      />
     </ModalComponent>
   </div>
 </template>
@@ -27,7 +32,8 @@
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import DepositBankForm from '@/components/forms/DepositBankForm.vue'
+
+import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { ref } from 'vue'
 import { type Address } from 'viem'

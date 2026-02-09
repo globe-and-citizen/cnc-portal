@@ -9,12 +9,8 @@ import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import * as utils from '@/utils'
-import { useExpensesQuery } from '@/queries'
+import { useGetExpensesQuery } from '@/queries'
 import { mockToastStore } from '@/tests/mocks/store.mock'
-
-const mocks = vi.hoisted(() => ({
-  mockReadContract: vi.fn()
-}))
 
 const START_DATE = new Date().getTime() / 1000 + 60 * 60
 const END_DATE = new Date().getTime() / 1000 + 2 * 60 * 60
@@ -145,14 +141,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-vi.mock('@wagmi/core', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    readContract: mocks.mockReadContract
-  }
-})
-
 vi.mock('viem', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
@@ -173,7 +161,7 @@ vi.mock('@/queries', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useExpensesQuery: vi.fn()
+    useGetExpensesQuery: vi.fn()
   }
 })
 
@@ -211,10 +199,10 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
   }
 
   beforeEach(() => {
-    vi.mocked(useExpensesQuery).mockReturnValue({
+    vi.mocked(useGetExpensesQuery).mockReturnValue({
       data: ref(mockApprovals),
       isLoading: ref(false)
-    } as ReturnType<typeof useExpensesQuery>)
+    } as ReturnType<typeof useGetExpensesQuery>)
   })
 
   describe('Action Buttons and Loading States', () => {

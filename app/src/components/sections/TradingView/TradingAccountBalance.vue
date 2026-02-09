@@ -26,7 +26,7 @@ import OverviewCard from '@/components/OverviewCard.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import bagIcon from '@/assets/bag.svg'
 import { formatUnits } from 'viem'
-import { useSafeBalances } from '@/queries/polymarket.queries'
+import { useGetSafeBalancesQuery } from '@/queries/polymarket.queries'
 import { useTeamSafes } from '@/composables/safe'
 
 const currencyStore = useCurrencyStore()
@@ -34,7 +34,12 @@ const isLoading = computed(() => false)
 const { selectedSafe } = useTeamSafes()
 const derivedSafeAddressFromEoa = computed(() => selectedSafe.value?.address ?? null)
 
-const { data: balances } = useSafeBalances(derivedSafeAddressFromEoa)
+const { data: balances } = useGetSafeBalancesQuery({
+  pathParams: {
+    safeAddress: derivedSafeAddressFromEoa,
+    chainName: 'pol' // Polygon chain
+  }
+})
 
 // Format balance
 const formattedBalance = computed(() => {

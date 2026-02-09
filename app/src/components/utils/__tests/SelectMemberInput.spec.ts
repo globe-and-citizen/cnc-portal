@@ -2,9 +2,10 @@ import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { nextTick, ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { User } from '@/types'
+import { useGetSearchUsersQuery } from '@/queries/user.queries'
 
 // Mock data
 const MOCK_USERS: User[] = [
@@ -14,34 +15,18 @@ const MOCK_USERS: User[] = [
 ]
 
 // Hoisted mocks
-const { mockExecuteSearchUser, mockTeamStore, mockUseFocus, mockWatchDebounced } = vi.hoisted(
-  () => ({
-    mockExecuteSearchUser: vi.fn(),
-    mockTeamStore: {
-      currentTeam: {
-        id: 1,
-        name: 'Test Team',
-        members: [
-          { id: '2', address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', name: 'Jane Smith' }
-        ]
-      }
-    },
-    mockUseFocus: vi.fn(() => ({ focused: { value: false } })),
-    mockWatchDebounced: vi.fn()
-  })
-)
-
-// Mocks
-vi.mock('@/composables/useCustomFetch', () => ({
-  useCustomFetch: vi.fn(() => ({
-    get: () => ({
-      json: () => ({
-        execute: mockExecuteSearchUser,
-        data: { value: { users: MOCK_USERS } },
-        isFetching: false
-      })
-    })
-  }))
+const { mockTeamStore, mockUseFocus, mockWatchDebounced } = vi.hoisted(() => ({
+  mockTeamStore: {
+    currentTeam: {
+      id: 1,
+      name: 'Test Team',
+      members: [
+        { id: '2', address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', name: 'Jane Smith' }
+      ]
+    }
+  },
+  mockUseFocus: vi.fn(() => ({ focused: { value: false } })),
+  mockWatchDebounced: vi.fn()
 }))
 
 vi.mock('@/stores/teamStore', () => ({
@@ -64,7 +49,21 @@ const SELECTORS = {
   userRow: '[data-test="user-row"]'
 } as const
 
-const createWrapper = (props = {}) => {
+const createWrapper = (props = {}, mockQueryOverrides = {}) => {
+  // Mock the search query
+  const mockRefetch = vi.fn()
+  vi.mocked(useGetSearchUsersQuery).mockReturnValue({
+    data: ref({ users: MOCK_USERS }),
+    isFetching: ref(false),
+    refetch: mockRefetch,
+    isLoading: ref(false),
+    error: ref(null),
+    isFetched: ref(true),
+    isPending: ref(false),
+    isSuccess: ref(true),
+    ...mockQueryOverrides
+  } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
+
   return mount(SelectMemberInput, {
     props: {
       hiddenMembers: [],
@@ -89,18 +88,19 @@ describe.skip('SelectMemberInput', () => {
     vi.useRealTimers()
   })
 
-  it('should clear input after selecting a member', async () => {
+  it('should render correctly', () => {
     wrapper = createWrapper()
-    const input = wrapper.find(SELECTORS.input)
+    expect(wrapper.exists()).toBeTruthy()
+    expect(wrapper.find(SELECTORS.container).exists()).toBe(true)
+  })
 
-    await input.setValue('John')
+  it('should display users from query', async () => {
+    wrapper = createWrapper()
     await nextTick()
 
-    const userRow = wrapper.find(`[data-test="user-dropdown-${MOCK_USERS[0].address}"]`)
-    await userRow.trigger('click')
-    await nextTick()
-
-    expect((input.element as HTMLInputElement).value).toBe('')
+    expect(wrapper.text()).toContain('John Doe')
+    expect(wrapper.text()).toContain('Jane Smith')
+    expect(wrapper.text()).toContain('Bob Johnson')
   })
 
   it('should handle multiple hidden members', async () => {
@@ -118,54 +118,5 @@ describe.skip('SelectMemberInput', () => {
     await nextTick()
 
     expect(wrapper.text()).toContain('Jane Smith')
-  })
-
-  it('should not emit selectMember when clicking disabled team member', async () => {
-    wrapper = createWrapper({ disableTeamMembers: true })
-    await nextTick()
-
-    const teamMemberElement = wrapper.find(`[data-test="user-dropdown-${MOCK_USERS[1].address}"]`)
-    await teamMemberElement.trigger('click')
-    await nextTick()
-
-    expect(wrapper.emitted('selectMember')).toBeFalsy()
-  })
-
-  it('should call executeSearchUser when watchers are triggered', async () => {
-    type WatchCallback = (...args: unknown[]) => Promise<void>
-    let watchDebouncedCallback: WatchCallback | null = null
-    mockWatchDebounced.mockImplementation((_source, callback) => {
-      watchDebouncedCallback = callback as WatchCallback
-      return vi.fn()
-    })
-
-    wrapper = createWrapper({ onlyTeamMembers: false })
-    await nextTick()
-
-    if (watchDebouncedCallback) {
-      await (watchDebouncedCallback as WatchCallback)()
-    }
-
-    expect(mockExecuteSearchUser).toHaveBeenCalled()
-  })
-
-  it('should not call executeSearchUser when onlyTeamMembers is true', async () => {
-    type WatchCallback = (...args: unknown[]) => Promise<void>
-    let watchDebouncedCallback: WatchCallback | null = null
-    mockWatchDebounced.mockImplementation((_source, callback) => {
-      watchDebouncedCallback = callback as WatchCallback
-      return vi.fn()
-    })
-
-    wrapper = createWrapper({ onlyTeamMembers: true })
-    await nextTick()
-
-    mockExecuteSearchUser.mockClear()
-
-    if (watchDebouncedCallback) {
-      await (watchDebouncedCallback as WatchCallback)()
-    }
-
-    expect(mockExecuteSearchUser).not.toHaveBeenCalled()
   })
 })

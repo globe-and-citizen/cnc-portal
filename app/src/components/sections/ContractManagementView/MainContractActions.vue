@@ -84,7 +84,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import { filterAndFormatActions, log, parseError } from '@/utils'
 import PendingEventsList from './PendingEventsList.vue'
 import BodApprovalModal from './BodApprovalModal.vue'
-import { useBodActionsQuery } from '@/queries'
+import { useGetBodActionsQuery } from '@/queries'
 import { useBodContract } from '@/composables/bod/'
 import { useQueryClient } from '@tanstack/vue-query'
 
@@ -116,9 +116,11 @@ const showApprovalModal = ref(false)
 const selectedRow = ref<TableRow>({})
 const currentStep = ref<0 | 1 | 2>(0)
 
-const { data: bodActions } = useBodActionsQuery({
-  teamId: computed(() => teamStore.currentTeamId),
-  isExecuted: false
+const { data: bodActions } = useGetBodActionsQuery({
+  queryParams: {
+    teamId: computed(() => teamStore.currentTeamId),
+    isExecuted: false
+  }
 })
 
 const modalWidth = computed(() => {

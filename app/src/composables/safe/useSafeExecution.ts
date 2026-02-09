@@ -83,10 +83,16 @@ export function useSafeExecution() {
 
       // Trigger query invalidation
       await mutation.mutateAsync({
-        chainId: currentChainId,
-        safeAddress,
-        safeTxHash,
-        txHash
+        pathParams: {
+          safeAddress,
+          safeTxHash
+        },
+        queryParams: {
+          chainId: currentChainId
+        },
+        body: {
+          txHash
+        }
       })
 
       addSuccessToast('Transaction executed successfully')

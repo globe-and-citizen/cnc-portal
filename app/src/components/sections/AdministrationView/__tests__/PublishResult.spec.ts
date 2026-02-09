@@ -3,21 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref, nextTick, type Ref } from 'vue'
 import PublishResult from '../PublishResult.vue'
 
-// Mock modules before component use
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(),
-  useToastStore: vi.fn()
-}))
-vi.mock('@wagmi/vue', () => ({
-  createConfig: vi.fn(),
-  http: vi.fn(),
-  useWriteContract: vi.fn(),
-  useWaitForTransactionReceipt: vi.fn()
-}))
 // Prevent module-level constant validation and provide minimal addresses used by utils
 vi.mock('@/constant', () => ({
   USDC_ADDRESS: '0x0000000000000000000000000000000000000001',
   USDT_ADDRESS: '0x0000000000000000000000000000000000000002',
+  USDC_E_ADDRESS: '0x0000000000000000000000000000000000000003', // Added missing export
   zeroAddress: '0x0000000000000000000000000000000000000000',
   ELECTIONS_BEACON_ADDRESS: '0x0000000000000000000000000000000000000003',
   ELECTIONS_IMPL_ADDRESS: '0x0000000000000000000000000000000000000004'

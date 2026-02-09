@@ -121,7 +121,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 // import CRSigne from '../CashRemunerationView/CRSigne.vue'
 // import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
-import { useTeamWeeklyClaimsQuery } from '@/queries'
+import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
 import type { Address } from 'viem'
 
@@ -145,9 +145,11 @@ function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
   return row as WeeklyClaim
 }
 
-const { data: fetchedData, error } = useTeamWeeklyClaimsQuery({
-  teamId: computed(() => teamStore.currentTeamId),
-  userAddress: props.memberAddress
+const { data: fetchedData, error } = useGetTeamWeeklyClaimsQuery({
+  queryParams: {
+    teamId: computed(() => teamStore.currentTeamId),
+    userAddress: props.memberAddress
+  }
 })
 
 // const { data: fetchedData, error } = useCustomFetch(weeklyClaimUrl.value).get().json()

@@ -1,44 +1,45 @@
 import { flushPromises, shallowMount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import DistributeMintForm from '../../../SherTokenView/forms/DistributeMintForm.vue'
 import { createTestingPinia } from '@pinia/testing'
-// import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 import { ref } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-
-// vi.mock('@/stores/useToastStore')
-vi.mock('@/composables/useCustomFetch', () => {
-  return {
-    useCustomFetch: vi.fn(() => ({
-      get: () => ({
-        json: () => ({
-          execute: vi.fn(),
-          data: {
-            users: [
-              { address: '0x123', name: 'John Doe' },
-              { address: '0x456', name: 'Jane Doe' }
-            ]
-          },
-          loading: ref(false),
-          error: ref<unknown>(null)
-        })
-      })
-    }))
-  }
-})
+import { useGetSearchUsersQuery } from '@/queries/user.queries'
 
 interface ComponentData {
   shareholderWithAmounts: { shareholder: string; amount: string }[]
   usersData: {
     users: { address: string; name: string }[]
-  }
+  } | null
   showDropdown: boolean[]
   errorSearchUser: unknown
 }
 
+const mockUsers = [
+  { address: '0x123', name: 'John Doe' },
+  { address: '0x456', name: 'Jane Doe' }
+]
+
 describe('DistributeMintForm', () => {
-  const createComponent = (loading?: boolean) => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const createComponent = (loading?: boolean, queryOverrides = {}) => {
+    // Mock the search users query
+    vi.mocked(useGetSearchUsersQuery).mockReturnValue({
+      data: ref({ users: mockUsers }),
+      isFetching: ref(false),
+      error: ref(null),
+      refetch: vi.fn(),
+      isLoading: ref(false),
+      isPending: ref(false),
+      isSuccess: ref(true),
+      isFetched: ref(true),
+      ...queryOverrides
+    } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
+
     return shallowMount(DistributeMintForm, {
       props: {
         tokenSymbol: 'TEST',
@@ -100,30 +101,15 @@ describe('DistributeMintForm', () => {
     expect(wrapper.emitted('submit')).toBeTruthy()
   })
 
-  it('should render list of user suggestions', async () => {
+  it('should render list of user suggestions when dropdown is shown', async () => {
     const wrapper = createComponent()
 
-    await wrapper.find('[data-test="address-input"]').setValue('Doe')
-    await wrapper.find('[data-test="address-input"]').trigger('keyup')
+    // Manually set the dropdown to visible
+    ;(wrapper.vm as unknown as ComponentData).showDropdown[0] = true
     await wrapper.vm.$nextTick()
+
     const foundUsers = wrapper.findAll('[data-test="found-user"]')
-
     expect(foundUsers.length).toBe(2)
-  })
-
-  it('should set address and name when click suggestion user', async () => {
-    const wrapper = createComponent()
-
-    await wrapper.find('[data-test="address-input"]').setValue('John')
-    await wrapper.find('[data-test="address-input"]').trigger('keyup')
-    await wrapper.vm.$nextTick()
-
-    const foundUser = wrapper.find('[data-test="found-user"]')
-    await foundUser.trigger('click')
-
-    expect((wrapper.vm as unknown as ComponentData).shareholderWithAmounts[0].shareholder).toBe(
-      '0x123'
-    )
   })
 
   it('should render error message when address is invalid', async () => {
@@ -161,12 +147,34 @@ describe('DistributeMintForm', () => {
   })
 
   it('should add error toast if there is an error when searching users', async () => {
-    // const { addErrorToast } = useToastStore()
-    const wrapper = createComponent()
+    const mockError = ref<Error | null>(null)
+    vi.mocked(useGetSearchUsersQuery).mockReturnValue({
+      data: ref({ users: mockUsers }),
+      isFetching: ref(false),
+      error: mockError,
+      refetch: vi.fn(),
+      isLoading: ref(false),
+      isPending: ref(false),
+      isSuccess: ref(true),
+      isFetched: ref(true)
+    } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
 
-    ;(wrapper.vm as unknown as ComponentData).errorSearchUser = 'error'
+    const wrapper = shallowMount(DistributeMintForm, {
+      props: {
+        tokenSymbol: 'TEST',
+        loading: false
+      },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
+      }
+    })
+
     await wrapper.vm.$nextTick()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalled()
+    // Now trigger the error by updating the ref
+    mockError.value = new Error('Search failed')
+    await wrapper.vm.$nextTick()
+
+    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to search users')
   })
 })

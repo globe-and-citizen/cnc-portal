@@ -1,5 +1,5 @@
-import { ref, computed } from 'vue'
-import { useCustomFetch } from '@/composables/useCustomFetch'
+import { computed } from 'vue'
+import { useGetSubmitRestrictionQuery } from '@/queries/team.queries'
 import { useTeamStore } from '@/stores'
 
 /**
@@ -8,69 +8,49 @@ import { useTeamStore } from '@/stores'
 export function useSubmitRestriction() {
   const teamStore = useTeamStore()
 
-  const isRestricted = ref<boolean>(true) // Default to restricted
-  const isLoading = ref(false)
-  const error = ref<string | null>(null)
-  const effectiveStatus = ref<string>('enabled')
+  const teamId = computed(() => teamStore.currentTeam?.id ?? null)
+
+  const { data, isLoading, error, refetch } = useGetSubmitRestrictionQuery({
+    pathParams: { teamId }
+  })
 
   /**
-   * Check if submit restriction is active for a specific team
-   * @param teamId - Team ID (can be string or number)
+   * Check if submit restriction is active for the current team.
+   * Note: The specificTeamId parameter is deprecated. The query always uses
+   * the current team from the store. This parameter is kept for backward compatibility.
    */
-  const checkRestriction = async (teamId?: string | number): Promise<boolean> => {
-    const targetTeamId = teamId ?? teamStore.currentTeam?.id
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const checkRestriction = async (_specificTeamId?: string | number): Promise<boolean> => {
+    const targetTeamId = teamStore.currentTeam?.id
 
     if (!targetTeamId) {
-      error.value = 'No team ID provided'
       return true // Default to restricted if no team
     }
 
-    // Ensure teamId is a valid number
-    const numericTeamId =
-      typeof targetTeamId === 'string' ? parseInt(targetTeamId, 10) : targetTeamId
-
-    if (isNaN(numericTeamId)) {
-      error.value = 'Invalid team ID'
-      return true
-    }
-
-    isLoading.value = true
-    error.value = null
-
-    try {
-      const { data, statusCode } = await useCustomFetch(`teams/${numericTeamId}/submit-restriction`)
-        .get()
-        .json()
-
-      if (statusCode.value !== 200 || !data.value) {
-        error.value = 'Failed to check submit restriction'
-        isRestricted.value = true // Default to restricted on error
-        return true
-      }
-
-      isRestricted.value = data.value.isRestricted ?? true
-      effectiveStatus.value = data.value.effectiveStatus ?? 'enabled'
-
-      return isRestricted.value
-    } catch (e) {
-      console.error('Error checking submit restriction:', e)
-      error.value = 'An error occurred while checking restriction'
-      isRestricted.value = true // Default to restricted on error
-      return true
-    } finally {
-      isLoading.value = false
-    }
+    // Refetch with the current team context
+    await refetch()
+    return data.value?.isRestricted ?? true
   }
+
+  const isRestricted = computed(() => data.value?.isRestricted ?? true)
+  const effectiveStatus = computed(() => data.value?.effectiveStatus ?? 'enabled')
 
   /**
    * Computed property to check if current team can submit anytime (no restriction)
    */
   const canSubmitAnytime = computed(() => !isRestricted.value)
 
+  const errorMessage = computed(() => {
+    if (error.value) {
+      return 'Failed to check submit restriction'
+    }
+    return null
+  })
+
   return {
     isRestricted,
     isLoading,
-    error,
+    error: errorMessage,
     effectiveStatus,
     canSubmitAnytime,
     checkRestriction

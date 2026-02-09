@@ -151,7 +151,7 @@
       </ButtonUI>
       <DeployContractSection
         v-else-if="currentStep === 3 && createdTeamData !== null && createdTeamData"
-        :disabled="!canProceed"
+        :disable="!canProceed"
         :investorContractInput="investorContractInput"
         :createdTeamData="createdTeamData"
         @contractDeployed="
@@ -263,7 +263,7 @@ const nextStep = () => {
 const saveTeamToDatabase = async () => {
   $v.value.$touch()
   if ($v.value.$invalid) return
-  await executeCreateTeam(teamData.value)
+  await executeCreateTeam({ body: teamData.value })
   if (createTeamError.value) {
     addErrorToast('Failed to create team')
     log.error('Failed to create team', createTeamError.value)

@@ -144,7 +144,7 @@ const withdrawClaim = async () => {
       toastStore.addSuccessToast('Claim withdrawn')
 
       if (teamStore.currentTeamId) {
-        await syncWeeklyClaim({ teamId: teamStore.currentTeamId })
+        await syncWeeklyClaim({ queryParams: { teamId: teamStore.currentTeamId } })
 
         if (syncWeeklyClaimError.value) {
           toastStore.addErrorToast('Failed to update Claim status')

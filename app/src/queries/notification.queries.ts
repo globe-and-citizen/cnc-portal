@@ -1,73 +1,93 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
 import type { BulkNotificationPayload, Notification } from '@/types/notification'
+import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
+
+/**
+ * Query key factory for notification-related queries
+ */
+export const notificationKeys = {
+  all: ['notifications'] as const
+}
+
+// ============================================================================
+// GET /notification - Fetch notifications
+// ============================================================================
+
+/**
+ * Empty params for useGetNotificationsQuery (no parameters needed)
+ */
+
+export interface GetNotificationsParams {}
 
 /**
  * Fetch all notifications for the current user
  *
  * @endpoint GET /notification
- * @params none
+ * @pathParams none
  * @queryParams none
  * @body none
  */
-export const useNotificationsQuery = () => {
-  return useQuery({
-    queryKey: ['notifications'],
-    queryFn: async () => {
-      const { data } = await apiClient.get<Notification[]>('notification')
-      return data
-    }
-  })
+export const useGetNotificationsQuery = createQueryHook<Notification[], GetNotificationsParams>({
+  endpoint: 'notification',
+  queryKey: () => notificationKeys.all,
+  options: {
+    ...queryPresets.moderate,
+    staleTime: 300_000,
+    refetchInterval: 300_000
+  }
+})
+
+// ============================================================================
+// POST /notification/bulk/ - Create bulk notifications
+// ============================================================================
+
+/**
+ * Combined parameters for useCreateBulkNotificationsMutation
+ */
+export interface CreateBulkNotificationsParams {
+  body: BulkNotificationPayload
 }
 
 /**
  * Add bulk notifications
  *
  * @endpoint POST /notification/bulk/
- * @params none
+ * @pathParams none
  * @queryParams none
  * @body BulkNotificationPayload
  */
-export const useAddBulkNotificationsMutation = () => {
-  const queryClient = useQueryClient()
+export const useCreateBulkNotificationsMutation = createMutationHook<
+  unknown,
+  CreateBulkNotificationsParams
+>({
+  method: 'POST',
+  endpoint: 'notification/bulk/',
+  invalidateKeys: [notificationKeys.all]
+})
 
-  return useMutation({
-    mutationFn: async (body: BulkNotificationPayload) => {
-      const { data } = await apiClient.post('notification/bulk/', body)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
-    }
-  })
-}
+// ============================================================================
+// PUT /notification/{id} - Update notification
+// ============================================================================
 
 /**
- * Mutation input for useUpdateNotificationMutation
+ * Combined parameters for useUpdateNotificationMutation
  */
-export interface UpdateNotificationInput {
-  /** URL path parameter: notification ID */
-  id: number
+export interface UpdateNotificationParams {
+  pathParams: {
+    /** Notification ID */
+    id: number
+  }
 }
 
 /**
  * Update a notification (mark as read)
  *
  * @endpoint PUT /notification/{id}
- * @params { id: number } - URL path parameter
+ * @pathParams { id: number }
  * @queryParams none
  * @body none
  */
-export const useUpdateNotificationMutation = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({ id }: UpdateNotificationInput) => {
-      const { data } = await apiClient.put(`notification/${id}`)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
-    }
-  })
-}
+export const useUpdateNotificationMutation = createMutationHook<unknown, UpdateNotificationParams>({
+  method: 'PUT',
+  endpoint: 'notification/{id}',
+  invalidateKeys: [notificationKeys.all]
+})

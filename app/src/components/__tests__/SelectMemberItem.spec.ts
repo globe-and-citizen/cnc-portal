@@ -7,10 +7,6 @@ import type { Address } from 'viem'
 
 const mockRouterPush = vi.fn()
 
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore)
-}))
-
 vi.mock('vue-router', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {

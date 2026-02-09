@@ -17,15 +17,15 @@ vi.mock('@iconify/vue', () => ({
 // Hoisted mock variables following CNC Portal patterns
 export const {
   mockUseTeamStore,
-  mockUseSafeTransactionsQuery,
-  mockUseSafeInfoQuery,
+  mockuseGetSafeTransactionsQuery,
+  mockuseGetSafeInfoQuery,
   mockUseAccount,
   mockUseSafeApproval,
   mockUseSafeExecution
 } = vi.hoisted(() => ({
   mockUseTeamStore: vi.fn(),
-  mockUseSafeTransactionsQuery: vi.fn(),
-  mockUseSafeInfoQuery: vi.fn(),
+  mockuseGetSafeTransactionsQuery: vi.fn(),
+  mockuseGetSafeInfoQuery: vi.fn(),
   mockUseAccount: vi.fn(),
   mockUseSafeApproval: vi.fn(),
   mockUseSafeExecution: vi.fn()
@@ -37,8 +37,8 @@ vi.mock('@/stores', () => ({
 }))
 
 vi.mock('@/queries/safe.queries', () => ({
-  useSafeTransactionsQuery: mockUseSafeTransactionsQuery,
-  useSafeInfoQuery: mockUseSafeInfoQuery
+  useGetSafeTransactionsQuery: mockuseGetSafeTransactionsQuery,
+  useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))
 
 vi.mock('@wagmi/vue', () => ({
@@ -172,13 +172,13 @@ export const setupDefaultMocks = () => {
     }
   })
 
-  mockUseSafeTransactionsQuery.mockReturnValue({
+  mockuseGetSafeTransactionsQuery.mockReturnValue({
     data: ref(MOCK_DATA.mockTransactions),
     isLoading: ref(false),
     error: ref(null)
   })
 
-  mockUseSafeInfoQuery.mockReturnValue({
+  mockuseGetSafeInfoQuery.mockReturnValue({
     data: ref(MOCK_DATA.safeInfo)
   })
 

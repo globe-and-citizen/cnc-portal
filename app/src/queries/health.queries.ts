@@ -1,6 +1,8 @@
-import { useQuery } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
+import { createQueryHook, queryPresets } from './queryFactory'
 
+/**
+ * Response from backend health check
+ */
 export interface HealthCheckResponse {
   success: boolean
   status: string
@@ -9,26 +11,40 @@ export interface HealthCheckResponse {
 }
 
 /**
+ * Query key factory for health-related queries
+ */
+export const healthKeys = {
+  all: ['health'] as const,
+  backend: () => [...healthKeys.all, 'backend'] as const
+}
+
+// ============================================================================
+// GET /health - Backend health check
+// ============================================================================
+
+/**
+ * Empty params for useGetBackendHealthQuery (no parameters needed)
+ */
+
+export interface GetBackendHealthParams {}
+
+/**
  * Query for backend health check using Axios
  *
  * @endpoint GET /health
- * @params none
+ * @pathParams none
  * @queryParams none
  * @body none
  */
-export const useBackendHealthQuery = () => {
-  return useQuery<HealthCheckResponse>({
-    queryKey: ['backend-health'],
-    queryFn: async () => {
-      const { data } = await apiClient.get('health')
-      return data
-    },
+export const useGetBackendHealthQuery = createQueryHook<
+  HealthCheckResponse,
+  GetBackendHealthParams
+>({
+  endpoint: 'health',
+  queryKey: () => healthKeys.backend(),
+  options: {
+    ...queryPresets.once,
     retry: 2,
-    retryDelay: 1000,
-    gcTime: 300000, // 5 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false, // Disable automatic polling
-    staleTime: Infinity
-  })
-}
+    gcTime: 300000 // 5 minutes
+  }
+})

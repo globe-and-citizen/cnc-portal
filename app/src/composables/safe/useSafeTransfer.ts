@@ -85,7 +85,7 @@ export function useSafeTransfer() {
 
         // Use proper decimals based on token type
         const parsedAmount =
-          tokenId === 'usdc' || tokenId === 'usdt'
+          tokenId === 'usdc' || tokenId === 'usdt' || tokenId === 'usdc.e'
             ? parseUnits(amount, 6) // USDC/USDT have 6 decimals
             : parseEther(amount) // Default to 18 decimals
 
@@ -143,10 +143,16 @@ export function useSafeTransfer() {
 
         // Trigger query invalidation via mutation
         await executeMutation.mutateAsync({
-          chainId: chainId.value,
-          safeAddress,
-          safeTxHash: await safeSdk.getTransactionHash(safeTransaction),
-          txHash
+          pathParams: {
+            safeAddress,
+            safeTxHash: await safeSdk.getTransactionHash(safeTransaction)
+          },
+          queryParams: {
+            chainId: chainId.value
+          },
+          body: {
+            txHash
+          }
         })
 
         addSuccessToast(`Transfer executed successfully${tokenAddress ? ' (Token)' : ' (Native)'}`)

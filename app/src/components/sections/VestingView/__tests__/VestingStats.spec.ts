@@ -22,32 +22,9 @@ const mockVestingInfos = ref<[string[], { totalAmount: number; released: number 
   ]
 ])
 
-const mockCurrentTeam = ref({
-  id: 1,
-  ownerAddress: memberAddress,
-  teamContracts: [
-    {
-      type: 'InvestorV1',
-      address: '0x000000000000000000000000000000000000beef'
-    }
-  ]
-})
-
 const refetchVestingInfos = vi.fn()
 
 const mockArchivedInfos = ref([[], []])
-vi.mock('@/stores', () => ({
-  useUserDataStore: () => ({
-    address: memberAddress
-  }),
-  useTeamStore: () => ({
-    currentTeam: mockCurrentTeam.value,
-    getContractAddressByType: vi.fn((type) => {
-      // console.log('getContractAddressByType called with type:', type)
-      return type ? '0x000000000000000000000000000000000000beef' : undefined
-    })
-  })
-}))
 
 // Wagmi mocks
 const mockWriteContract = {

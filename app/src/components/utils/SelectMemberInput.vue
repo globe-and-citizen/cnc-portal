@@ -127,6 +127,7 @@ const searchQuery = computed(() => {
   return query
 })
 
+// Use TanStack Query for user search
 const {
   data: queryData,
   isFetching,
@@ -159,7 +160,7 @@ const filteredUsers = computed<User[]>(() => {
     // get an empty array or the current team members
     members = teamStore.currentTeamMeta.data?.members ?? []
   } else {
-    members = users.value ? (users.value.users as User[]) : []
+    members = usersData.value ? (usersData.value.users as User[]) : []
   }
 
   // filter this members and remove hidden Members
@@ -171,7 +172,7 @@ const filteredUsers = computed<User[]>(() => {
 
 watchDebounced(
   input,
-  async () => {
+  async (newValue) => {
     if (!props.onlyTeamMembers) {
       await refetchUsers()
     }

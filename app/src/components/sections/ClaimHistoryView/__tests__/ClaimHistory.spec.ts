@@ -6,7 +6,7 @@ import ClaimHistory from '../ClaimHistory.vue'
 
 // --- Mocks Weekly Claims Query ---
 const mockRefetch = vi.fn()
-const mockUseTeamWeeklyClaimsQuery = vi.fn()
+const mockuseGetTeamWeeklyClaimsQuery = vi.fn()
 
 // --- Mock route ---
 const mockRoute = reactive({
@@ -22,40 +22,6 @@ vi.mock('vue-router', async (importOriginal) => {
     useRoute: () => mockRoute
   }
 })
-// --- Mock stores ---
-const mockUserStore = {
-  imageUrl: ref('https://example.com/avatar.jpg'),
-  name: ref('John Doe'),
-  address: ref('0x0987654321098765432109876543210987654321')
-}
-
-const mockTeamStore = {
-  currentTeam: {
-    id: 'team-123',
-    members: [
-      {
-        address: '0x1234567890123456789012345678901234567890',
-        name: 'Alice',
-        imageUrl: 'https://example.com/alice.png'
-      },
-      {
-        address: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-        name: 'Bob',
-        imageUrl: 'https://example.com/bob.png'
-      }
-    ]
-  },
-  currentTeamId: 'team-123'
-}
-
-const addSuccessToast = vi.fn()
-const addErrorToast = vi.fn()
-
-vi.mock('@/stores', () => ({
-  useTeamStore: () => mockTeamStore,
-  useToastStore: () => ({ addErrorToast, addSuccessToast }),
-  useUserDataStore: () => mockUserStore
-}))
 
 describe('ClaimHistory.vue', () => {
   beforeEach(() => {
@@ -63,33 +29,14 @@ describe('ClaimHistory.vue', () => {
     mockRefetch.mockClear()
     mockRoute.params.memberAddress = '0x1234567890123456789012345678901234567890'
 
-    // Default implementation for useTeamWeeklyClaimsQuery
-    mockUseTeamWeeklyClaimsQuery.mockImplementation(() => ({
+    // Default implementation for useGetTeamWeeklyClaimsQuery
+    mockuseGetTeamWeeklyClaimsQuery.mockImplementation(() => ({
       data: ref(null),
       error: ref(null),
       isLoading: ref(false),
       refetch: mockRefetch
     }))
   })
-
-  // it('should call useTeamWeeklyClaimsQuery with correct parameters', async () => {
-  //   shallowMount(ClaimHistory, {
-  //     global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
-  //   })
-
-  //   await nextTick()
-
-  //   // Check useTeamWeeklyClaimsQuery call
-  //   expect(mockUseTeamWeeklyClaimsQuery).toHaveBeenCalled()
-  //   const [params] = mockUseTeamWeeklyClaimsQuery.mock.calls[0]
-
-  //   // Check parameters object structure
-  //   expect(params).toMatchObject({
-  //     teamId: expect.any(Object) // computed ref
-  //   })
-  //   expect(params.teamId.value).toBe('team-123')
-  //   expect(mockRefetch).toHaveBeenCalledTimes(1)
-  // })
 
   it('should return correct badge color for each weekly claim status', () => {
     const wrapper = shallowMount(ClaimHistory, {

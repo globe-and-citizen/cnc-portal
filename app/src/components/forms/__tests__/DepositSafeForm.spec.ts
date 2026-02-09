@@ -3,9 +3,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import { type Address } from 'viem'
-import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
-import { mainnet } from 'viem/chains'
-import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 import {
   mockToastStore,
@@ -18,16 +15,6 @@ import {
   transferHash
 } from '@/tests/mocks'
 
-// Wagmi config for testing
-const wagmiConfig = createConfig({
-  chains: [mainnet],
-  transports: {
-    [mainnet.id]: http()
-  }
-})
-
-const queryClient = new QueryClient()
-
 describe('DepositSafeForm.vue', () => {
   const defaultProps = {
     safeAddress: '0xsafeaddress000000000000000000000000' as Address
@@ -37,11 +24,7 @@ describe('DepositSafeForm.vue', () => {
     mount(DepositSafeForm, {
       props: { ...defaultProps, ...overrides },
       global: {
-        plugins: [
-          createTestingPinia({ createSpy: vi.fn }),
-          [WagmiPlugin, { config: wagmiConfig }],
-          [VueQueryPlugin, { queryClient }]
-        ]
+        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 

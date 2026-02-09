@@ -32,7 +32,11 @@
     <!-- Dropdown positioned relative to the input -->
     <div
       v-if="
-        showDropdown && !disabled && (filteredMembers.length > 0 || filteredContracts.length > 0)
+        showDropdown &&
+        !disabled &&
+        (filteredMembers.length > 0 ||
+          filteredTraderSafes.length > 0 ||
+          filteredContracts.length > 0)
       "
       class="left-0 top-full mt-4 w-full outline-none focus:outline-none focus:ring-0 z-10"
       data-test="search-dropdown"
@@ -49,19 +53,20 @@
 /**
  * @component SelectMemberContractsInput
  * @description
- * Dual-input component for searching and selecting a team member or contract address.
+ * Dual-input component for searching and selecting a team member, trader safe, or contract address.
  * - Integrates with Pinia teamStore for live team data.
- * - Shows a dropdown with filtered team members and contracts as the user types.
- * - Emits a 'selectItem' event with the selected item and its type ('member' or 'contract').
+ * - Shows a dropdown with filtered team members, trader safes (deployed only), and contracts as the user types.
+ * - Emits a 'selectItem' event with the selected item and its type ('member', 'trader-safe', or 'contract').
  * - Debounced dropdown for performance.
- * - Used in forms for user-friendly member/contract selection.
+ * - Used in forms for user-friendly member/contract/safe selection.
  *
- * @emits selectItem - Fires when a user selects a member or contract from the dropdown.
+ * @emits selectItem - Fires when a user selects a member, trader safe, or contract from the dropdown.
  * @model input - Two-way bound object: { name: string, address: string }
  */
 
 import { ref, useTemplateRef, computed } from 'vue'
 import { useTeamStore } from '@/stores'
+import { getTraderSafes } from '@/utils/traderSafes'
 import { watchDebounced } from '@vueuse/core'
 import SelectMemberResults from '@/components/utils/SelectMemberResults.vue'
 import SelectContractResults from '@/components/utils/SelectContractResults.vue'
@@ -79,6 +84,11 @@ const input = defineModel({
 })
 
 const teamStore = useTeamStore()
+const deployedTraderSafes = computed(() => {
+  if (!teamStore.currentTeamMeta?.data) return []
+  return getTraderSafes(teamStore.currentTeamMeta.data)
+})
+
 // computed for showDropdown
 const showDropdown = computed(() => {
   return !props.disabled && _showDropdown.value
@@ -101,6 +111,19 @@ const contracts = computed(
 const filteredMembers = computed(() => {
   if (!members.value.length) return []
   return filter(members.value, input.value) as Member[]
+})
+
+const filteredTraderSafes = computed(() => {
+  const nameSearch = input.value.name.toLowerCase().trim()
+  const addressSearch = input.value.address.toLowerCase().trim()
+
+  return deployedTraderSafes.value.filter((traderSafe) => {
+    const nameMatch = nameSearch ? traderSafe.name.toLowerCase().includes(nameSearch) : true
+    const addressMatch = addressSearch
+      ? traderSafe.address.toLowerCase().includes(addressSearch)
+      : true
+    return nameMatch && addressMatch
+  })
 })
 
 const filteredContracts = computed(() => {
@@ -132,7 +155,10 @@ watchDebounced(
   { debounce: 300, maxWait: 1000 }
 )
 
-const selectItem = (item: { name: string; address: string }, type: 'member' | 'contract') => {
+const selectItem = (
+  item: { name: string; address: string },
+  type: 'member' | 'trader-safe' | 'contract'
+) => {
   selecting.value = true
   input.value = item
   emit('selectItem', { ...item, type })

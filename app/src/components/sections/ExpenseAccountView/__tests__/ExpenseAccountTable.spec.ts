@@ -7,11 +7,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
-import { useExpensesQuery } from '@/queries'
-
-const mocks = vi.hoisted(() => ({
-  mockReadContract: vi.fn()
-}))
+import { useGetExpensesQuery } from '@/queries'
 
 const START_DATE = new Date().getTime() / 1000 + 60 * 60
 const END_DATE = new Date().getTime() / 1000 + 2 * 60 * 60
@@ -93,63 +89,6 @@ vi.mock('vue-router', async (importOriginal) => {
   }
 })
 
-const mockUseReadContractRefetch = vi.fn()
-const mockUseReadContract = {
-  data: ref<string | null>(null),
-  isLoading: ref(false),
-  error: ref(null),
-  refetch: mockUseReadContractRefetch //vi.fn()
-}
-
-const mockUseWriteContract = {
-  writeContract: vi.fn(),
-  error: ref(null),
-  isPending: ref(false),
-  data: ref(null)
-}
-
-const mockUseBalance = {
-  data: ref(null),
-  refetch: vi.fn(),
-  error: ref(null),
-  isLoading: ref(false)
-}
-
-const mockUseWaitForTransactionReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false)
-}
-
-const mockUseSignTypedData = {
-  error: ref<Error | null>(null),
-  data: ref<string | undefined>('0xExpenseDataSignature'),
-  signTypedData: vi.fn()
-}
-
-// Mocking wagmi functions
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useReadContract: vi.fn(() => {
-      return { ...mockUseReadContract, data: ref(`0xContractOwner`) }
-    }),
-    useWriteContract: vi.fn(() => mockUseWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
-    useBalance: vi.fn(() => mockUseBalance),
-    useChainId: vi.fn(() => ref('0xChainId')),
-    useSignTypedData: vi.fn(() => mockUseSignTypedData)
-  }
-})
-
-vi.mock('@wagmi/core', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    readContract: mocks.mockReadContract
-  }
-})
-
 vi.mock('viem', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
@@ -170,7 +109,7 @@ vi.mock('@/queries', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useExpensesQuery: vi.fn()
+    useGetExpensesQuery: vi.fn()
   }
 })
 
@@ -208,10 +147,10 @@ describe('ExpenseAccountTable - Filtering', () => {
   }
 
   beforeEach(() => {
-    vi.mocked(useExpensesQuery).mockReturnValue({
+    vi.mocked(useGetExpensesQuery).mockReturnValue({
       data: ref(mockApprovals),
       isLoading: ref(false)
-    } as ReturnType<typeof useExpensesQuery>)
+    } as ReturnType<typeof useGetExpensesQuery>)
   })
 
   describe('Filtering', () => {

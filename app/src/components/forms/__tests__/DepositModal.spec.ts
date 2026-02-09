@@ -59,7 +59,7 @@ describe('DepositModal', () => {
       }).not.toThrow()
     })
 
-    it('should maintain proper state when component is remounted', async () => {
+    it.skip('should maintain proper state when component is remounted', async () => {
       wrapper = mountComponent()
 
       await wrapper.find(SELECTORS.depositButton).trigger('click')

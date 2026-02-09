@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsTransactions from '@/components/sections/SherTokenView/InvestorsTransactions.vue'
-import { mockToastStore } from '@/tests/mocks/store.mock'
 import { ref } from 'vue'
 
 // Mock Apollo Query Result
@@ -30,17 +29,6 @@ const mockContractAddress = ref<string | undefined>('0xcontract')
 
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: () => mockQueryResult
-}))
-
-// Mock stores
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => ({
-    getContractAddressByType: vi.fn(() => mockContractAddress.value)
-  })),
-  useCurrencyStore: vi.fn(() => ({
-    getTokenPrice: vi.fn(() => 1000)
-  })),
-  useToastStore: vi.fn(() => mockToastStore)
 }))
 
 describe('InvestorsTransactions.vue', () => {

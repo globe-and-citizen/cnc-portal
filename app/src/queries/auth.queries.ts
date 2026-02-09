@@ -1,26 +1,33 @@
-import { useQuery } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
+import { createQueryHook, queryPresets } from './queryFactory'
+
+/**
+ * Query key factory for auth-related queries
+ */
+export const authKeys = {
+  all: ['auth'] as const,
+  validateToken: () => [...authKeys.all, 'validateToken'] as const
+}
+
+// ============================================================================
+// GET /auth/token - Validate token
+// ============================================================================
+
+/**
+ * Empty params for useGetValidateTokenQuery (no parameters needed)
+ */
+
+export interface GetValidateTokenParams {}
 
 /**
  * Validate the current authentication token
  *
  * @endpoint GET /auth/token
- * @params none
+ * @pathParams none
  * @queryParams none
  * @body none
  */
-export const useValidateTokenQuery = () => {
-  return useQuery({
-    queryKey: ['auth', 'validateToken'],
-    queryFn: async () => {
-      const { data } = await apiClient.get('auth/token')
-      return data
-    },
-    // Don't automatically refetch for token validation
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: false,
-    refetchInterval: false,
-    staleTime: Infinity
-  })
-}
+export const useGetValidateTokenQuery = createQueryHook<unknown, GetValidateTokenParams>({
+  endpoint: 'auth/token',
+  queryKey: () => authKeys.validateToken(),
+  options: queryPresets.once
+})

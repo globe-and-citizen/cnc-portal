@@ -93,7 +93,7 @@ stop = watch(
   hasContract,
   (newValue) => {
     if (newValue && route.params.id === teamStore.currentTeamId) {
-      syncWeeklyClaims({ teamId: route.params.id as string })
+      syncWeeklyClaims({ queryParams: { teamId: route.params.id as string } })
       stop?.() // Safe call with optional chaining
     }
   },

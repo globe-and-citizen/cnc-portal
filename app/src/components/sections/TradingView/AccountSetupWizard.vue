@@ -1,4 +1,5 @@
 <template>
+  <Toaster />
   <div class="flex items-center justify-center p-4">
     <div class="w-full" style="max-width: 900px">
       <!-- Heading -->
@@ -32,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import PolymarketSafeDeployment from './PolymarketSafeDeployment.vue'
 import ApprovalAndConfig from './ApprovalAndConfig.vue'
 import StepIndicator from './StepIndicators.vue'
@@ -42,6 +43,7 @@ import { log, parseError } from '@/utils'
 import type { ApprovalCheckResult } from '@/utils/trading/approvalsUtil'
 import { useUpdateUserMutation } from '@/queries'
 import { useUserDataStore, useTeamStore } from '@/stores'
+import { Toaster, toast } from 'vue-sonner'
 
 const props = defineProps<{ initialStep: number }>()
 // Emits
@@ -52,7 +54,7 @@ const teamStore = useTeamStore()
 const currentStep = ref(props.initialStep || 1)
 const isProcessing = ref(false)
 const { derivedSafeAddressFromEoa, isSafeDeployed, deploySafe } = useSafeDeployment()
-const { checkAllApprovals, completeSetup } = useTokenApprovals()
+const { checkAllApprovals, completeSetup, error: tokenApprovalsError } = useTokenApprovals()
 const { getOrInitializeRelayClient, isLoading } = useRelayClient()
 const {
   // isPending: userIsUpdating,
@@ -104,33 +106,34 @@ const handleApproveAndConfigure = async () => {
   isProcessing.value = true
   try {
     if (!derivedSafeAddressFromEoa.value) return
-    console.log('Derived Safe Address:', derivedSafeAddressFromEoa.value)
     const relayClient = await getOrInitializeRelayClient()
 
     const approvalCheck: ApprovalCheckResult = await checkAllApprovals(
       derivedSafeAddressFromEoa.value
     )
-    console.log('Approval Check Result: ', approvalCheck)
 
     if (!approvalCheck.isSetupComplete) {
-      const result = await completeSetup(relayClient, derivedSafeAddressFromEoa.value)
-      console.log('Approve and Configure Result: ', result)
+      const result = await completeSetup(
+        relayClient,
+        derivedSafeAddressFromEoa.value,
+        approvalCheck.safeOwners.missingOwners as `0x${string}`[]
+      )
       if (result) {
-        console.log('')
         updateUserMutateAsync(
           {
-            address: userDataStore.address,
-            userData: {
+            pathParams: { address: userDataStore.address },
+            body: {
               traderSafeAddress: derivedSafeAddressFromEoa.value,
               teamId: teamStore.currentTeamId || undefined
             }
           },
           {
             onSuccess: () => {
-              console.log('User updated sucessfully')
+              toast.success('Account setup complete! You can now start trading.')
             },
             onError: () => {
-              console.log(
+              toast.error('Failed to update user with trading safe address.')
+              log.error(
                 'Error updating user: ',
                 updateUserError.value?.message || 'Failed to update user'
               )
@@ -153,4 +156,10 @@ const handleApproveAndConfigure = async () => {
     isProcessing.value = false
   }
 }
+
+watch(tokenApprovalsError, (newError) => {
+  if (newError) {
+    toast.error('Failed to complete approvals')
+  }
+})
 </script>

@@ -1,6 +1,6 @@
 /**
  * Central export for all query hooks
- * This allows for easy imports: import { useTeamsQuery, useNotificationsQuery } from '@/queries'
+ * This allows for easy imports: import { useGetTeamsQuery, useGetNotificationsQuery } from '@/queries'
  */
 
 export * from './auth.queries'

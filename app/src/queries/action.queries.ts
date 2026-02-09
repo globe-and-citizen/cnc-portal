@@ -1,91 +1,135 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
 import type { Action, ActionResponse } from '@/types/action'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
+import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
 
 /**
- * Hook parameters for useBodActionsQuery
+ * Query key factory for action-related queries
  */
-export interface UseBodActionsQueryParams {
-  teamId: MaybeRefOrGetter<string | null>
-  isExecuted?: boolean
+export const actionKeys = {
+  all: ['actions'] as const,
+  lists: () => [...actionKeys.all, 'list'] as const,
+  list: (teamId: string | null, isExecuted?: boolean) =>
+    [...actionKeys.lists(), { teamId, isExecuted }] as const
+}
+
+// ============================================================================
+// GET /actions - Fetch BOD actions
+// ============================================================================
+
+/**
+ * Combined parameters for useGetBodActionsQuery
+ */
+export interface GetBodActionsParams {
+  queryParams: {
+    /** Team ID to filter actions */
+    teamId: MaybeRefOrGetter<string | null>
+    /** Filter by execution status */
+    isExecuted?: MaybeRefOrGetter<boolean | undefined>
+  }
 }
 
 /**
  * Fetch BOD actions for a team
  *
  * @endpoint GET /actions
+ * @pathParams none
  * @queryParams { teamId: string, isExecuted?: boolean }
+ * @body none
  */
-export const useBodActionsQuery = (hookParams: UseBodActionsQueryParams) => {
-  return useQuery({
-    queryKey: ['getBodActions', { teamId: hookParams.teamId, isExecuted: hookParams.isExecuted }],
-    queryFn: async () => {
-      const teamId = toValue(hookParams.teamId)
+export const useGetBodActionsQuery = createQueryHook<ActionResponse, GetBodActionsParams>({
+  endpoint: 'actions',
+  queryKey: (params) =>
+    actionKeys.list(toValue(params.queryParams.teamId), toValue(params.queryParams.isExecuted)),
+  enabled: (params) => !!toValue(params.queryParams.teamId),
+  options: queryPresets.moderate
+})
 
-      // Query params: passed as URL query string (?teamId=xxx&isExecuted=xxx)
-      const queryParams: Record<string, string | boolean> = { teamId: teamId! }
-      if (hookParams.isExecuted !== undefined) {
-        queryParams.isExecuted = hookParams.isExecuted
-      }
-
-      const { data } = await apiClient.get<ActionResponse>('/actions', { params: queryParams })
-      return data
-    },
-    enabled: () => !!toValue(hookParams.teamId)
-  })
-}
+// ============================================================================
+// POST /actions/ - Create action
+// ============================================================================
 
 /**
- * Mutation input for useCreateActionMutation
+ * Request body for creating an action
  */
-export type CreateActionInput = Partial<Action>
+export interface CreateActionBody extends Partial<Action> {}
+
+/**
+ * Combined parameters for useCreateActionMutation
+ */
+export interface CreateActionParams {
+  body: CreateActionBody
+}
 
 /**
  * Create a new action
  *
  * @endpoint POST /actions/
- * @body Partial<Action> - The action data to create
+ * @pathParams none
+ * @queryParams none
+ * @body CreateActionBody - The action data to create
  */
-export const useCreateActionMutation = () => {
-  const queryClient = useQueryClient()
+export const useCreateActionMutation = createMutationHook<Action, CreateActionParams>({
+  method: 'POST',
+  endpoint: 'actions/',
+  invalidateKeys: [actionKeys.all]
+})
 
-  return useMutation({
-    mutationFn: async (body: CreateActionInput) => {
-      const { data } = await apiClient.post<Action>('actions/', body)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
-    }
-  })
-}
+// ============================================================================
+// PATCH /actions/{id} - Update action
+// ============================================================================
 
 /**
- * Mutation input for useUpdateActionMutation
+ * Combined parameters for useUpdateActionMutation
  */
-export interface UpdateActionInput {
-  /** URL path parameter: action ID */
-  id: number
+export interface UpdateActionParams {
+  pathParams: {
+    /** Action ID */
+    id: number
+  }
 }
 
 /**
  * Update an action
  *
  * @endpoint PATCH /actions/{id}
- * @params { id: number } - URL path parameter
+ * @pathParams { id: number }
+ * @queryParams none
+ * @body none
  */
-export const useUpdateActionMutation = () => {
-  const queryClient = useQueryClient()
+export const useUpdateActionMutation = createMutationHook<void, UpdateActionParams>({
+  method: 'PATCH',
+  endpoint: 'actions/{id}',
+  invalidateKeys: [actionKeys.all]
+})
 
-  return useMutation({
-    mutationFn: async ({ id }: UpdateActionInput) => {
-      const { data } = await apiClient.patch(`actions/${id}`)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
-    }
-  })
+// ============================================================================
+// POST /elections/{teamId} - Create election notifications
+// ============================================================================
+
+/**
+ * Combined parameters for useCreateElectionNotificationsMutation
+ */
+export interface CreateElectionNotificationsParams {
+  pathParams: {
+    /** Team ID */
+    teamId: string | number
+  }
 }
+
+/**
+ * Create election notifications for a team
+ *
+ * @endpoint POST /elections/{teamId}
+ * @pathParams { teamId: string | number }
+ * @queryParams none
+ * @body none
+ */
+export const useCreateElectionNotificationsMutation = createMutationHook<
+  void,
+  CreateElectionNotificationsParams
+>({
+  method: 'POST',
+  endpoint: 'elections/{teamId}',
+  invalidateKeys: [['notifications']]
+})

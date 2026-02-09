@@ -68,7 +68,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { waitForTransactionReceipt } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { BANK_ABI } from '@/artifacts/abi/bank'
-import { NETWORK, USDC_ADDRESS } from '@/constant'
+import { NETWORK, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { useToastStore, useUserDataStore } from '@/stores'
 import { useBodContract } from '@/composables/bod/'
 import type { TokenOption } from '@/types'
@@ -192,6 +192,7 @@ const handleTransfer = async (data: {
 }) => {
   if (!props.bankAddress) return
 
+  const tokenAddress = data.token.symbol === 'USDCe' ? USDC_E_ADDRESS : USDC_ADDRESS
   try {
     const isNativeToken = data.token.symbol === NETWORK.currencySymbol
     const transferAmount = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
@@ -207,7 +208,7 @@ const handleTransfer = async (data: {
         : encodeFunctionData({
             abi: BANK_ABI,
             functionName: 'transferToken',
-            args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
+            args: [tokenAddress as Address, data.address.address, transferAmount]
           })
 
       const description = JSON.stringify({
@@ -236,7 +237,7 @@ const handleTransfer = async (data: {
         address: props.bankAddress,
         abi: BANK_ABI,
         functionName: 'transferToken',
-        args: [USDC_ADDRESS as Address, data.address.address, transferAmount]
+        args: [tokenAddress, data.address.address, transferAmount]
       })
     }
 
@@ -252,7 +253,7 @@ const handleTransfer = async (data: {
       : [
           'readContract',
           {
-            address: USDC_ADDRESS as Address,
+            address: tokenAddress,
             args: [props.bankAddress],
             chainId: chainId.value
           }

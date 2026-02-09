@@ -85,6 +85,29 @@
       @update:model-value="($event) => (userCopy.imageUrl = $event)"
     />
   </div>
+
+  <!-- Error Alert -->
+  <div
+    v-if="userUpdateError"
+    role="alert"
+    class="alert alert-error shadow-sm mt-4"
+    data-test="error-alert"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="stroke-current shrink-0 h-6 w-6"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+    <span data-test="error-message">Failed to update user</span>
+  </div>
   <div class="modal-action justify-end">
     <ButtonUI
       v-if="hasChanges"
@@ -109,9 +132,9 @@ import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import { LIST_CURRENCIES } from '@/constant'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import ProfileImageUpload from '@/components/forms/ProfileImageUpload.vue'
-import { useCustomFetch } from '@/composables'
+import { useUpdateUserMutation } from '@/queries/user.queries'
 
 // Currency store
 const currencyStore = useCurrencyStore()
@@ -130,37 +153,42 @@ const hasChanges = computed(() => {
   return userCopy.value.name !== userStore.name || userCopy.value.imageUrl !== userStore.imageUrl
 })
 
-const userUpdateEndpoint = computed(() => `user/${userStore.address}`)
-
 const {
-  data: updatedUser,
-  isFetching: userIsUpdating,
-  // isFinished: userUpdateFinished,
-  error: userUpdateError,
-  execute: executeUpdateUser
-} = useCustomFetch(userUpdateEndpoint, { immediate: false }).put(userCopy).json()
+  mutateAsync: updateUser,
+  isPending: userIsUpdating,
+  isError: userUpdateError
+} = useUpdateUserMutation()
 
-watch(userUpdateError, () => {
-  if (userUpdateError.value) {
-    toastStore.addErrorToast(userUpdateError.value || 'Failed to update user')
-  }
-})
+const submitForm = async () => {
+  $v.value.$touch()
+  if ($v.value.$invalid) return
 
-watch(updatedUser, () => {
-  if (updatedUser.value) {
-    toastStore.addSuccessToast('User updated')
-    userStore.setUserData(
-      updatedUser.value.name,
-      updatedUser.value.address,
-      updatedUser.value.nonce,
-      updatedUser.value.imageUrl
-    )
+  try {
+    const updatedUser = await updateUser({
+      pathParams: { address: userStore.address! },
+      body: {
+        name: userCopy.value.name,
+        imageUrl: userCopy.value.imageUrl
+      }
+    })
+
+    if (updatedUser) {
+      toastStore.addSuccessToast('User updated')
+      userStore.setUserData(
+        updatedUser.name ?? '',
+        (updatedUser.address ?? '') as `0x${string}`,
+        String(updatedUser.nonce ?? ''),
+        updatedUser.imageUrl ?? ''
+      )
+      setTimeout(() => {
+        toastStore.addSuccessToast('Reloading page to reflect changes')
+        window.location.reload()
+      }, 2000)
+    }
+  } catch {
+    toastStore.addErrorToast('Failed to update user')
   }
-  setTimeout(() => {
-    toastStore.addSuccessToast('Reloading page to reflect changes')
-    window.location.reload()
-  }, 2000)
-})
+}
 
 const rules = {
   user: {
@@ -183,11 +211,5 @@ const openExplorer = (address: string) => {
 const handleCurrencyChange = () => {
   currencyStore.setCurrency(selectedCurrency.value)
   toastStore.addSuccessToast('Currency updated')
-}
-
-const submitForm = () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
-  executeUpdateUser()
 }
 </script>

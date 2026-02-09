@@ -217,14 +217,21 @@ export const createMockQueryResponse = <T>(
 /**
  * Generic Mutation Hook Response Factory
  * Creates a standard TanStack Query mutation response object
+ * @param data - The data to be returned when mutation succeeds
+ * @param isPending - Whether the mutation is in progress
+ * @param error - Error object if mutation failed
  */
-export const createMockMutationResponse = (): Record<string, unknown> => ({
+export const createMockMutationResponse = <T = unknown>(
+  data: T | null = null,
+  isPending: boolean = false,
+  error: Error | null = null
+): Record<string, unknown> => ({
   mutate: vi.fn(),
-  mutateAsync: vi.fn((data: unknown) => Promise.resolve(data)),
-  isPending: ref(false),
-  isError: ref(false),
-  error: ref(null),
-  data: ref(null),
+  mutateAsync: vi.fn(() => Promise.resolve(data)),
+  isPending: ref(isPending),
+  isError: ref(!!error),
+  error: ref(error),
+  data: ref(data),
   reset: vi.fn()
 })
 
@@ -235,63 +242,71 @@ export const createMockMutationResponse = (): Record<string, unknown> => ({
  */
 export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Team queries - team.queries.ts
-  useTeamsQuery: () => createMockQueryResponse(mockTeamsData),
-  useTeamQuery: () => createMockQueryResponse(mockTeamData),
+  useGetTeamsQuery: () => createMockQueryResponse(mockTeamsData),
+  useGetTeamQuery: () => createMockQueryResponse(mockTeamData),
   useCreateTeamMutation: () => createMockMutationResponse(),
   useUpdateTeamMutation: () => createMockMutationResponse(),
   useDeleteTeamMutation: () => createMockMutationResponse(),
+  useGetSubmitRestrictionQuery: () =>
+    createMockQueryResponse({ isRestricted: false, effectiveStatus: 'enabled' }),
 
   // Member queries - member.queries.ts
   useAddMembersMutation: () => createMockMutationResponse(),
   useDeleteMemberMutation: () => createMockMutationResponse(),
 
   // Wage queries - wage.queries.ts
-  useTeamWagesQuery: () => createMockQueryResponse(mockWageData),
+  useGetTeamWagesQuery: () => createMockQueryResponse(mockWageData),
   useSetMemberWageMutation: () => createMockMutationResponse(),
 
   // Notification queries - notification.queries.ts
-  useNotificationsQuery: () => createMockQueryResponse(mockNotificationData),
-  useAddBulkNotificationsMutation: () => createMockMutationResponse(),
+  useGetNotificationsQuery: () => createMockQueryResponse(mockNotificationData),
+  useCreateBulkNotificationsMutation: () => createMockMutationResponse(),
   useUpdateNotificationMutation: () => createMockMutationResponse(),
 
   // Expense queries - expense.queries.ts
-  useExpensesQuery: () => createMockQueryResponse([]),
+  useGetExpensesQuery: () => createMockQueryResponse([]),
 
   // User queries - user.queries.ts
-  useUserQuery: () => createMockQueryResponse(null),
-  useUserNonceQuery: () => createMockQueryResponse(null),
+  useGetUserQuery: () => createMockQueryResponse(null),
+  useGetUserNonceQuery: () => createMockQueryResponse(null),
+  useUpdateUserMutation: () => createMockMutationResponse(),
+  useGetSearchUsersQuery: () => createMockQueryResponse({ users: [] }),
 
   // Action queries - action.queries.ts
-  useBodActionsQuery: () => createMockQueryResponse(mockBodActionsData),
+  useGetBodActionsQuery: () => createMockQueryResponse(mockBodActionsData),
   useCreateActionMutation: () => createMockMutationResponse(),
   useUpdateActionMutation: () => createMockMutationResponse(),
+  useCreateElectionNotificationsMutation: () => createMockMutationResponse(),
 
   // Auth queries - auth.queries.ts
-  useValidateTokenQuery: () => createMockQueryResponse(null),
+  useGetValidateTokenQuery: () => createMockQueryResponse(null),
 
   // Contract queries - contract.queries.ts
   useCreateContractMutation: () => createMockMutationResponse(),
+  useSyncContractsMutation: () => createMockMutationResponse(),
+  useResetContractsMutation: () => createMockMutationResponse(),
 
   // Health queries - health.queries.ts
-  useBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData),
+  useGetBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData),
 
   // Weekly Claim queries - weeklyClaim.queries.ts
-  useTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
-  useWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
+  useGetTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
+  useGetWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
   useUpdateWeeklyClaimMutation: () => createMockMutationResponse(),
   useSyncWeeklyClaimsMutation: () => createMockMutationResponse(),
+  useDeleteClaimMutation: () => createMockMutationResponse(),
 
   // Safe queries - safe.queries.ts
-  useSafeInfoQuery: () => createMockQueryResponse(mockSafeInfoData),
+  useGetSafeInfoQuery: () => createMockQueryResponse(mockSafeInfoData),
   useSafePendingTransactionsQuery: () => createMockQueryResponse([]),
   useDeploySafeMutation: () => createMockMutationResponse(),
   useProposeTransactionMutation: () => createMockMutationResponse(),
   useApproveTransactionMutation: () => createMockMutationResponse(),
   useExecuteTransactionMutation: () => createMockMutationResponse(),
   useUpdateSafeOwnersMutation: () => createMockMutationResponse(),
-  useSafeTransactionQuery: () => createMockQueryResponse(mockSafeTransactionData),
+  useGetSafeTransactionQuery: () => createMockQueryResponse(mockSafeTransactionData),
 
   // Polymarket queries - polymarket.queries.ts
-  useMarketData: () => createMockQueryResponse(mockMarketData),
-  useSafeBalances: () => createMockQueryResponse([])
+  useGetMarketDataQuery: () => createMockQueryResponse(mockMarketData),
+  useGetSafeBalancesQuery: () => createMockQueryResponse([])
 }

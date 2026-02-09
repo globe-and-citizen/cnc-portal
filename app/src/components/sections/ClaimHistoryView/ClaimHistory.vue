@@ -104,13 +104,15 @@
           >
             <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
             <span>{{
-              hasWage
+              hasWage && selectWeekWeelyClaim?.status === 'pending'
                 ? 'You have a wage so you can submit your claim'
-                : 'You need to have a wage set up to submit claims'
+                : hasWage && selectWeekWeelyClaim && selectWeekWeelyClaim.status !== 'pending'
+                  ? `This week claim is already ${selectWeekWeelyClaim.status}, you cannot submit new claims`
+                  : 'You need to have a wage set up to submit claims'
             }}</span>
             <div>
               <SubmitClaims
-                v-if="hasWage"
+                v-if="hasWage && selectWeekWeelyClaim?.status === 'pending'"
                 :weekly-claim="selectWeekWeelyClaim"
                 :signed-week-starts="signedWeekStarts"
                 :restrict-submit="false"
@@ -135,12 +137,17 @@
             <span>{{
               selectWeekWeelyClaim?.weekStart === currentWeekStart
                 ? 'You cannot approve the current week claim, wait until the week is over'
-                : 'As the owner of the Cash Remuneration contract, you can approve this claim'
+                : selectWeekWeelyClaim?.weekStart === nextWeekStart
+                  ? 'You cannot approve the next week claim, wait until the week is over'
+                  : 'As the owner of the Cash Remuneration contract, you can approve this claim'
             }}</span>
             <div>
               <CRSigne
                 v-if="selectWeekWeelyClaim.claims.length > 0"
-                :disabled="selectWeekWeelyClaim.weekStart === currentWeekStart"
+                :disabled="
+                  selectWeekWeelyClaim.weekStart === currentWeekStart ||
+                  selectWeekWeelyClaim.weekStart === nextWeekStart
+                "
                 :weekly-claim="selectWeekWeelyClaim"
               />
             </div>
@@ -261,7 +268,7 @@ import {
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
-import { useTeamWeeklyClaimsQuery, useTeamWagesQuery } from '@/queries'
+import { useGetTeamWeeklyClaimsQuery, useGetTeamWagesQuery } from '@/queries'
 import type { Claim, WeeklyClaim } from '@/types'
 import type { Address } from 'viem'
 
@@ -292,6 +299,7 @@ const displayedMember = computed(() => {
 })
 
 const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
+const nextWeekStart = dayjs().utc().add(1, 'week').startOf('isoWeek').toISOString()
 
 const getColor = (weeklyClaim?: WeeklyClaim) => {
   if (!weeklyClaim) return 'accent'
@@ -301,14 +309,16 @@ const getColor = (weeklyClaim?: WeeklyClaim) => {
   return 'accent'
 }
 
-const { data: memberWeeklyClaims } = useTeamWeeklyClaimsQuery({
-  teamId: computed(() => teamStore.currentTeamId),
-  userAddress: memberAddress
+const { data: memberWeeklyClaims } = useGetTeamWeeklyClaimsQuery({
+  queryParams: {
+    teamId: computed(() => teamStore.currentTeamId),
+    userAddress: memberAddress
+  }
 })
 
-const { data: teamWageData, error: teamWageDataError } = useTeamWagesQuery(
-  computed(() => teamStore.currentTeamId)
-)
+const { data: teamWageData, error: teamWageDataError } = useGetTeamWagesQuery({
+  queryParams: { teamId: computed(() => teamStore.currentTeamId) }
+})
 
 const hasWage = computed(() => {
   const userWage = teamWageData.value?.find((wage) => wage.userAddress === userStore.address)

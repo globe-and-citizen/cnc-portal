@@ -1,54 +1,87 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
 import type { ExpenseResponse } from '@/types'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
+import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
+
+/**
+ * Query key factory for expense-related queries
+ */
+export const expenseKeys = {
+  all: ['expenses'] as const,
+  lists: () => [...expenseKeys.all, 'list'] as const,
+  list: (teamId: string | null) => [...expenseKeys.lists(), { teamId }] as const
+}
+
+// ============================================================================
+// GET /expense - Fetch expenses
+// ============================================================================
+
+/**
+ * Combined parameters for useGetExpensesQuery
+ */
+export interface GetExpensesParams {
+  queryParams: {
+    /** Team ID to filter expenses */
+    teamId: MaybeRefOrGetter<string | null>
+  }
+}
 
 /**
  * Fetch all expenses for a team
  *
  * @endpoint GET /expense
- * @params none
+ * @pathParams none
  * @queryParams { teamId: string }
  * @body none
  */
-export const useExpensesQuery = (teamId: MaybeRefOrGetter<string | null>) => {
-  return useQuery({
-    queryKey: ['expenses', { teamId }],
-    queryFn: async () => {
-      // Query params: passed as URL query string (?teamId=xxx)
-      const queryParams = { teamId: toValue(teamId) }
+export const useGetExpensesQuery = createQueryHook<ExpenseResponse[], GetExpensesParams>({
+  endpoint: 'expense',
+  queryKey: (params) => expenseKeys.list(toValue(params.queryParams.teamId)),
+  enabled: (params) => !!toValue(params.queryParams.teamId),
+  options: queryPresets.moderate
+})
 
-      const { data } = await apiClient.get<ExpenseResponse[]>('/expense', { params: queryParams })
-      return data
-    },
-    enabled: () => !!toValue(teamId)
-  })
+// ============================================================================
+// POST /expense - Create expense
+// ============================================================================
+
+/**
+ * Request body for adding an expense
+ */
+export interface CreateExpenseBody {
+  /** Expense account data including budget limits */
+  data: {
+    amount: bigint | number
+    frequencyType: number
+    customFrequency: bigint | number
+    startDate: number
+    endDate: number
+    tokenAddress: string
+    approvedAddress: string
+  }
+  /** Signature for the expense account data */
+  signature?: `0x${string}` | string
+  /** Team ID this expense belongs to */
+  teamId?: string | number | string[]
 }
 
 /**
- * Mutation input for useAddExpenseMutation
+ * Combined parameters for useCreateExpenseMutation
  */
-export type AddExpenseInput = Record<string, unknown>
+export interface CreateExpenseParams {
+  body: CreateExpenseBody
+}
 
 /**
  * Add expense data with signature
  *
  * @endpoint POST /expense
- * @params none
+ * @pathParams none
  * @queryParams none
- * @body Record<string, unknown> - expense account data
+ * @body CreateExpenseBody - expense account data
  */
-export const useAddExpenseMutation = () => {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (body: AddExpenseInput) => {
-      const { data } = await apiClient.post('/expense', body)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] })
-    }
-  })
-}
+export const useCreateExpenseMutation = createMutationHook<unknown, CreateExpenseParams>({
+  method: 'POST',
+  endpoint: 'expense',
+  invalidateKeys: [expenseKeys.all]
+})

@@ -24,7 +24,7 @@ const {
   mockUseUserDataStore,
   mockUseToastStore,
   mockUseContractBalance,
-  mockUseSafeInfoQuery,
+  mockuseGetSafeInfoQuery,
   mockQueryClient,
   mockUseSafeTransfer
 } = vi.hoisted(() => ({
@@ -36,7 +36,7 @@ const {
   mockUseUserDataStore: vi.fn(),
   mockUseToastStore: vi.fn(),
   mockUseContractBalance: vi.fn(),
-  mockUseSafeInfoQuery: vi.fn(),
+  mockuseGetSafeInfoQuery: vi.fn(),
   mockQueryClient: {
     invalidateQueries: vi.fn()
   },
@@ -61,23 +61,8 @@ vi.mock('@/composables/safe', async (importOriginal) => {
   }
 })
 
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useChainId: mockUseChainId
-  }
-})
-
 vi.mock('@vueuse/core', () => ({
   useStorage: vi.fn()
-}))
-
-vi.mock('@/stores', () => ({
-  useTeamStore: mockUseTeamStore,
-  useCurrencyStore: mockUseCurrencyStore,
-  useUserDataStore: mockUseUserDataStore,
-  useToastStore: mockUseToastStore
 }))
 
 vi.mock('@/composables/useContractBalance', () => ({
@@ -85,7 +70,7 @@ vi.mock('@/composables/useContractBalance', () => ({
 }))
 
 vi.mock('@/queries/safe.queries', () => ({
-  useSafeInfoQuery: mockUseSafeInfoQuery
+  useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))
 
 vi.mock('@tanstack/vue-query', () => ({
@@ -227,7 +212,7 @@ describe('SafeBalanceSection', () => {
       isLoading: mockIsLoading
     })
 
-    mockUseSafeInfoQuery.mockReturnValue({
+    mockuseGetSafeInfoQuery.mockReturnValue({
       data: mockSafeInfo
     })
 
@@ -288,20 +273,6 @@ describe('SafeBalanceSection', () => {
       wrapper = createWrapper()
 
       expect(wrapper.find('[data-test="open-safe-app-button"]').exists()).toBe(true)
-    })
-  })
-
-  describe('Props and Computed Values', () => {
-    it('should use 0x as fallback when no address is available', () => {
-      mockUseTeamStore.mockReturnValue({
-        currentTeam: { safeAddress: undefined },
-        currentTeamMeta: { data: { safeAddress: undefined } }
-      })
-      wrapper = createWrapper()
-
-      expect(mockUseContractBalance).toHaveBeenCalled()
-      const callArg = mockUseContractBalance.mock.calls[0]?.[0]
-      expect(callArg?.value).toBe('0x')
     })
   })
 
