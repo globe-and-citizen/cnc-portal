@@ -10,7 +10,11 @@
         class="rounded-xl overflow-hidden bg-gradient-to-t from-emerald-100 to-emarald-50 shadow-sm hover:shadow-md transition-all mt-4"
       >
         <UserComponentCol
-          :user="teamStore.currentTeam?.members.find((m) => m.address === memberAddress) as User"
+          :user="
+            teamStore.currentTeamMeta?.data?.members.find(
+              (m) => m.address === memberAddress
+            ) as User
+          "
           :isDetailedView="true"
           class="p-6"
         />
