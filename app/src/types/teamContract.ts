@@ -15,4 +15,5 @@ export interface TeamContract {
   type: ContractType
   deployer: Address
   admins: string[]
+  imageUrl?: string
 }
