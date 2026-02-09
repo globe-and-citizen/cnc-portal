@@ -160,7 +160,7 @@ const filteredUsers = computed<User[]>(() => {
     // get an empty array or the current team members
     members = teamStore.currentTeamMeta.data?.members ?? []
   } else {
-    members = usersData.value ? (usersData.value.users as User[]) : []
+    members = users.value ? (users.value.users as User[]) : []
   }
 
   // filter this members and remove hidden Members
@@ -172,7 +172,7 @@ const filteredUsers = computed<User[]>(() => {
 
 watchDebounced(
   input,
-  async (newValue) => {
+  async () => {
     if (!props.onlyTeamMembers) {
       await refetchUsers()
     }
