@@ -43,6 +43,7 @@ describe('CurrentBoDSection', () => {
   let readContractMock: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
+    vi.clearAllMocks()
     mockTeamStore = {
       getContractAddressByType: vi.fn((type: string) => {
         if (type === 'BoardOfDirectors') return '0xBOD'
@@ -152,6 +153,37 @@ describe('CurrentBoDSection', () => {
     expect(users.length).toBe(1)
     expect(users[0]?.attributes('data-name')).toBe('Bob')
     expect(wrapper.find('[data-test="card-title"]').text()).toContain('Elected')
+
+    const electionWinnersCall = readContractMock.mock.calls.find(
+      ([options]) => options.functionName === 'getElectionWinners'
+    )
+    expect(electionWinnersCall).toBeTruthy()
+    const electionWinnersOptions = electionWinnersCall?.[0] as {
+      query?: { enabled?: { value?: boolean } }
+    }
+    expect(electionWinnersOptions.query?.enabled?.value).toBe(true)
+  })
+
+  it('falls back to empty list when board data is unavailable', async () => {
+    readContractMock.mockImplementation((options: { functionName?: string }) => {
+      if (options.functionName === 'getBoardOfDirectors') {
+        return { data: ref(undefined), isFetching: ref(false) }
+      }
+      return { data: ref([]), error: ref(null) }
+    })
+
+    const wrapper = mount(CurrentBoDSection, {
+      global: {
+        stubs: {
+          CardComponent: CardStub,
+          UserComponentCol: UserColStub,
+          CurrentBoDSection404: NotFoundStub
+        }
+      }
+    })
+
+    const board = (wrapper.vm as unknown as { _boardOfDirectors: unknown })._boardOfDirectors
+    expect(board).toEqual([])
   })
 
   it('logs when election winners request fails', async () => {
@@ -180,5 +212,32 @@ describe('CurrentBoDSection', () => {
 
     expect(parseError).toHaveBeenCalledWith(errorRef.value)
     expect(log.error).toHaveBeenCalled()
+  })
+
+  it('does not log when election winners error is cleared', async () => {
+    const errorRef = ref<Error | null>(new Error('boom'))
+
+    readContractMock.mockImplementation((options: { functionName?: string }) => {
+      if (options.functionName === 'getElectionWinners') {
+        return { data: ref([]), error: errorRef }
+      }
+      return { data: ref([]), isFetching: ref(false) }
+    })
+
+    mount(CurrentBoDSection, {
+      props: { electionId: 1n },
+      global: {
+        stubs: {
+          CardComponent: CardStub,
+          UserComponentCol: UserColStub,
+          CurrentBoDSection404: NotFoundStub
+        }
+      }
+    })
+
+    errorRef.value = null
+    await nextTick()
+
+    expect(log.error).not.toHaveBeenCalled()
   })
 })
