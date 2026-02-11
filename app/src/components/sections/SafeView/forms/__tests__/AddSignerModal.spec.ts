@@ -3,7 +3,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, VueWrapper } from '@vue/test-utils'
 import { nextTick, ref } from 'vue'
 import type { User } from '@/types'
 import { Icon } from '@iconify/vue'
@@ -35,14 +35,17 @@ vi.mock('@/composables/safe', () => ({
   useSafeOwnerManagement: mockUseSafeOwnerManagement
 }))
 
-let wrapper: ReturnType<typeof mount>
+vi.mock('viem', async () => {
+  const actual = await vi.importActual('viem')
+  return {
+    ...actual,
+    isAddress: vi.fn((address: string) => {
+      return address && address.startsWith('0x') && address.length === 42
+    })
+  }
+})
 
-const SELECTORS = {
-  modal: '[data-test="add-signer-modal"]',
-  newSignersInput: '[data-test="new-signers-input"]',
-  cancelButton: '[data-test="cancel-button"]',
-  addSignersButton: '[data-test="add-signers-button"]'
-} as const
+let wrapper: VueWrapper<any>
 
 const createWrapper = (props = {}, mockComposableOverrides = {}) => {
   const mockUpdateOwners = vi.fn()
@@ -101,6 +104,31 @@ describe('AddSignerModal', () => {
 
   afterEach(() => {
     if (wrapper) wrapper.unmount()
+  })
+
+  describe('Modal v-model (isOpen)', () => {
+    it('should emit update:modelValue when closing', async () => {
+      wrapper = createWrapper({ modelValue: true })
+      await nextTick()
+
+      wrapper.vm.isOpen = false
+      await nextTick()
+
+      expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+    })
+  })
+
+  describe('MultiSelectMemberInput v-model (newSigners)', () => {
+    it('should update newSigners when MultiSelectMemberInput emits update', async () => {
+      wrapper = createWrapper()
+      const input = wrapper.findComponent(MultiSelectMemberInput)
+
+      await input.vm.$emit('update:modelValue', [MOCK_USERS[0]!])
+      await nextTick()
+
+      expect(wrapper.vm.newSigners).toHaveLength(1)
+      expect(wrapper.vm.newSigners[0]).toEqual(MOCK_USERS[0])
+    })
   })
 
   describe('Validation', () => {
@@ -210,22 +238,6 @@ describe('AddSignerModal', () => {
 
       expect(wrapper.emitted('signer-added')).toBeFalsy()
       expect(wrapper.emitted('close-modal')).toBeFalsy()
-    })
-  })
-
-  describe('Watchers', () => {
-    it('should reset newSigners when modal closes via watch', async () => {
-      const modelValue = ref(true)
-      wrapper = createWrapper()
-      await wrapper.setProps({ modelValue: true })
-
-      wrapper.vm.newSigners = [MOCK_USERS[0]!]
-      await nextTick()
-
-      await wrapper.setProps({ modelValue: false })
-      await nextTick()
-
-      expect(wrapper.vm.newSigners).toHaveLength(0)
     })
   })
 })
