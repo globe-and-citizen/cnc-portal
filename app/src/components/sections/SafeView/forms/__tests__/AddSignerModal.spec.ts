@@ -4,9 +4,16 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, VueWrapper } from '@vue/test-utils'
-import { nextTick, ref } from 'vue'
+import { nextTick, ref, type ComponentPublicInstance } from 'vue'
 import type { User } from '@/types'
 import { Icon } from '@iconify/vue'
+
+interface AddSignerModalInstance extends ComponentPublicInstance {
+  isOpen: boolean
+  newSigners: User[]
+  validNewSigners: User[]
+  handleAddSigners(): Promise<void>
+}
 
 // Mock data
 const MOCK_USERS: User[] = [
@@ -45,9 +52,12 @@ vi.mock('viem', async () => {
   }
 })
 
-let wrapper: VueWrapper<any>
+let wrapper: VueWrapper<AddSignerModalInstance>
 
-const createWrapper = (props = {}, mockComposableOverrides = {}) => {
+const createWrapper = (
+  props = {},
+  mockComposableOverrides = {}
+): VueWrapper<AddSignerModalInstance> => {
   const mockUpdateOwners = vi.fn()
   const mockIsUpdating = ref(false)
 
@@ -187,7 +197,6 @@ describe('AddSignerModal', () => {
     it('should show success toast and emit event after successful execution', async () => {
       const mockUpdateOwners = vi.fn().mockResolvedValue('0xtxhash')
       wrapper = createWrapper({ currentThreshold: 1 }, { updateOwners: mockUpdateOwners })
-
       wrapper.vm.newSigners = [MOCK_USERS[0]!]
       await nextTick()
 
@@ -202,7 +211,6 @@ describe('AddSignerModal', () => {
     it('should show success toast for proposal when threshold >= 2', async () => {
       const mockUpdateOwners = vi.fn().mockResolvedValue('0xtxhash')
       wrapper = createWrapper({ currentThreshold: 2 }, { updateOwners: mockUpdateOwners })
-
       wrapper.vm.newSigners = [MOCK_USERS[0]!]
       await nextTick()
 
@@ -217,7 +225,6 @@ describe('AddSignerModal', () => {
     it('should handle updateOwners error with generic message', async () => {
       const mockUpdateOwners = vi.fn().mockRejectedValue(new Error())
       wrapper = createWrapper({}, { updateOwners: mockUpdateOwners })
-
       wrapper.vm.newSigners = [MOCK_USERS[0]!]
       await nextTick()
 
@@ -230,7 +237,6 @@ describe('AddSignerModal', () => {
     it('should handle updateOwners error with specific message', async () => {
       const mockUpdateOwners = vi.fn().mockRejectedValue(new Error('Network error'))
       wrapper = createWrapper({}, { updateOwners: mockUpdateOwners })
-
       wrapper.vm.newSigners = [MOCK_USERS[0]!]
       await nextTick()
 
@@ -245,7 +251,6 @@ describe('AddSignerModal', () => {
     it('should not close modal or emit when updateOwners returns null', async () => {
       const mockUpdateOwners = vi.fn().mockResolvedValue(null)
       wrapper = createWrapper({}, { updateOwners: mockUpdateOwners })
-
       wrapper.vm.newSigners = [MOCK_USERS[0]!]
       await nextTick()
 
