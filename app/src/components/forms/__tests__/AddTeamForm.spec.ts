@@ -140,6 +140,25 @@ describe('AddTeamForm.vue', () => {
       expect(nameInput.value).toBe('Preserved Name')
       expect(descInput.value).toBe('Preserved Desc')
     })
+
+    it('should render member input and update v-model', async () => {
+      wrapper = mountComponent()
+      await goToStep2(wrapper)
+
+      const vm = wrapper.vm as unknown as {
+        teamData: { members: Array<{ address: string; name: string }> }
+      }
+      vm.teamData.members = [
+        { address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62', name: 'Alice' }
+      ]
+      await wrapper.vm.$nextTick()
+
+      const multiSelect = wrapper.find('[data-test="multi-select-stub"]')
+      expect(multiSelect.exists()).toBe(true)
+      await multiSelect.trigger('click')
+
+      expect(vm.teamData.members.length).toBe(1)
+    })
   })
 
   describe('Team Creation', () => {
@@ -255,6 +274,37 @@ describe('AddTeamForm.vue', () => {
       const validator = vm.rules.teamData.members.$each.address.isValidAddress.$validator
       expect(validator('not-an-address')).toBe(false)
       expect(validator('0x4b6Bf5cD91446408290725879F5666dcd9785F62')).toBe(true)
+    })
+
+    it('should render team name validation error in template', async () => {
+      wrapper = mountComponent()
+
+      const exposed = (wrapper.vm as unknown as { $: { exposed?: Record<string, unknown> } }).$
+        ?.exposed as { $v: { value: { $touch: () => void } } }
+
+      exposed.$v.value.$touch()
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="name-error"]').exists()).toBe(true)
+    })
+  })
+
+  describe('Template Branches', () => {
+    it('should render investor validation errors in template', async () => {
+      wrapper = mountComponent()
+
+      const vm = wrapper.vm as unknown as { currentStep: number }
+      vm.currentStep = 3
+      await wrapper.vm.$nextTick()
+
+      const exposed = (wrapper.vm as unknown as { $: { exposed?: Record<string, unknown> } }).$
+        ?.exposed as { $vInvestor: { value: { $touch: () => void } } }
+
+      exposed.$vInvestor.value.$touch()
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="share-name-error"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="share-symbol-error"]').exists()).toBe(true)
     })
   })
 

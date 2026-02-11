@@ -280,4 +280,9 @@ onMounted(() => {
     showDropdown.value = false
   })
 })
+
+defineExpose({
+  $v,
+  $vInvestor
+})
 </script>
