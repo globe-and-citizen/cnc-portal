@@ -7,6 +7,18 @@ import { useCreateTeamMutation } from '@/queries/team.queries'
 import { createMockMutationResponse, mockTeamData } from '@/tests/mocks/query.mock'
 import { defineComponent, h } from 'vue'
 
+const onClickOutsideHandler = vi.fn()
+
+vi.mock('@vueuse/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vueuse/core')>()
+  return {
+    ...actual,
+    onClickOutside: vi.fn((_, handler) => {
+      onClickOutsideHandler.mockImplementation(handler)
+    })
+  }
+})
+
 // Stub for DeployContractSection to avoid wagmi plugin issues
 const DeployContractSectionStub = defineComponent({
   name: 'DeployContractSection',
@@ -23,6 +35,19 @@ const DeployContractSectionStub = defineComponent({
         },
         slots.default ? slots.default() : 'Deploy Contracts'
       )
+  }
+})
+
+const MultiSelectMemberInputStub = defineComponent({
+  name: 'MultiSelectMemberInput',
+  props: ['modelValue', 'disableTeamMembers'],
+  emits: ['update:modelValue'],
+  setup(props, { emit }) {
+    return () =>
+      h('div', {
+        'data-test': 'multi-select-stub',
+        onClick: () => emit('update:modelValue', props.modelValue)
+      })
   }
 })
 
@@ -58,7 +83,8 @@ describe('AddTeamForm.vue', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          DeployContractSection: DeployContractSectionStub
+          DeployContractSection: DeployContractSectionStub,
+          MultiSelectMemberInput: MultiSelectMemberInputStub
         }
       }
     })
@@ -209,6 +235,41 @@ describe('AddTeamForm.vue', () => {
       await wrapper.vm.$nextTick()
 
       expect(vm.canProceed).toBe(false)
+    })
+
+    it('should evaluate address validation rule', async () => {
+      wrapper = mountComponent()
+
+      const vm = wrapper.vm as unknown as {
+        rules: {
+          teamData: {
+            members: {
+              $each: {
+                address: { isValidAddress: { $validator: (value: string) => boolean } }
+              }
+            }
+          }
+        }
+      }
+
+      const validator = vm.rules.teamData.members.$each.address.isValidAddress.$validator
+      expect(validator('not-an-address')).toBe(false)
+      expect(validator('0x4b6Bf5cD91446408290725879F5666dcd9785F62')).toBe(true)
+    })
+  })
+
+  describe('Lifecycle Hooks', () => {
+    it('should close dropdown on outside click', async () => {
+      wrapper = mountComponent()
+
+      const vm = wrapper.vm as unknown as { showDropdown: boolean }
+      vm.showDropdown = true
+      await wrapper.vm.$nextTick()
+
+      onClickOutsideHandler()
+      await wrapper.vm.$nextTick()
+
+      expect(vm.showDropdown).toBe(false)
     })
   })
 })
