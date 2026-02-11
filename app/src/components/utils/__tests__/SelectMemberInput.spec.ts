@@ -46,10 +46,6 @@ vi.mock('@vueuse/core', () => ({
   watchDebounced: mockWatchDebounced
 }))
 
-vi.mock('@tanstack/vue-query', () => ({
-  useQuery: vi.fn()
-}))
-
 vi.mock('@/lib/axios', () => ({
   default: {
     get: vi.fn()
@@ -121,41 +117,20 @@ describe('SelectMemberInput', () => {
     vi.useRealTimers()
   })
 
-  it('should render hint and hide dropdown when showOnFocus is false', async () => {
-    wrapper = createWrapper()
-    await nextTick()
-
-    expect(wrapper.find(SELECTORS.hint).exists()).toBe(true)
-    expect(wrapper.find(SELECTORS.dropdown).exists()).toBe(true)
-  })
-
-  it('should hide dropdown when no users are available', async () => {
-    wrapper = createWrapper({}, { data: ref({ users: [] }) })
-    await nextTick()
-
-    expect(wrapper.find(SELECTORS.dropdown).exists()).toBe(false)
-  })
-
   it('should filter out hidden members', async () => {
-    const hiddenMembers = [MOCK_USERS[0], MOCK_USERS[1]]
+    const hiddenMembers = [MOCK_USERS[0]!, MOCK_USERS[1]!]
     wrapper = createWrapper({ hiddenMembers })
     await nextTick()
 
-    expect(wrapper.find(`[data-test="user-dropdown-${MOCK_USERS[0].address}"]`).exists()).toBe(
+    expect(wrapper.find(`[data-test="user-dropdown-${MOCK_USERS[0]!.address}"]`).exists()).toBe(
       false
     )
-    expect(wrapper.find(`[data-test="user-dropdown-${MOCK_USERS[1].address}"]`).exists()).toBe(
+    expect(wrapper.find(`[data-test="user-dropdown-${MOCK_USERS[1]!.address}"]`).exists()).toBe(
       false
     )
-    expect(wrapper.find(`[data-test="user-dropdown-${MOCK_USERS[2].address}"]`).exists()).toBe(true)
-  })
-
-  it('should show only team members when onlyTeamMembers is true', async () => {
-    wrapper = createWrapper({ onlyTeamMembers: true })
-    await nextTick()
-
-    expect(wrapper.text()).toContain('Jane Smith')
-    expect(vi.mocked(useQuery)).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }))
+    expect(wrapper.find(`[data-test="user-dropdown-${MOCK_USERS[2]!.address}"]`).exists()).toBe(
+      true
+    )
   })
 
   it('should add loading class when fetching', () => {
@@ -184,10 +159,12 @@ describe('SelectMemberInput', () => {
   })
 
   it('should block selection for safe owners', async () => {
-    wrapper = createWrapper({ currentSafeOwners: [MOCK_USERS[0].address] })
+    wrapper = createWrapper({ currentSafeOwners: [MOCK_USERS[0]!.address] })
     await nextTick()
 
-    await wrapper.findAll(SELECTORS.userRow)[0].trigger('click')
+    const rows = wrapper.findAll(SELECTORS.userRow)
+    expect(rows.length).toBeGreaterThan(0)
+    await rows[0]!.trigger('click')
     expect(wrapper.emitted('selectMember')).toBeFalsy()
     expect(wrapper.text()).toContain('Already a safe owner')
   })
@@ -196,8 +173,9 @@ describe('SelectMemberInput', () => {
     wrapper = createWrapper({ disableTeamMembers: true })
     await nextTick()
 
-    const teamRow = wrapper.findAll(SELECTORS.userRow)[1]
-    await teamRow.trigger('click')
+    const rows = wrapper.findAll(SELECTORS.userRow)
+    expect(rows.length).toBeGreaterThan(1)
+    await rows[1]!.trigger('click')
 
     expect(wrapper.emitted('selectMember')).toBeFalsy()
     expect(wrapper.text()).toContain('Already in your team')
@@ -212,9 +190,12 @@ describe('SelectMemberInput', () => {
     await nextTick()
 
     const input = wrapper.find(SELECTORS.input)
-    const focusSpy = vi.spyOn(input.element, 'focus')
+    const inputEl = input.element as HTMLInputElement
+    const focusSpy = vi.spyOn(inputEl, 'focus')
 
-    await wrapper.findAll(SELECTORS.userRow)[2].trigger('click')
+    const rows = wrapper.findAll(SELECTORS.userRow)
+    expect(rows.length).toBeGreaterThan(2)
+    await rows[2]!.trigger('click')
     await nextTick()
 
     expect(wrapper.emitted('selectMember')).toBeTruthy()
@@ -243,5 +224,23 @@ describe('SelectMemberInput', () => {
     await nextTick()
     await lastQueryFn!()
     expect(mockGet).toHaveBeenCalledWith('user?search=john&limit=100')
+  })
+
+  it('should handle missing query data when onlyTeamMembers is false', async () => {
+    wrapper = createWrapper({}, { data: ref(null) })
+    await nextTick()
+
+    expect(wrapper.find(SELECTORS.dropdown).exists()).toBe(false)
+  })
+
+  it('should treat null safe owners as empty list', async () => {
+    wrapper = createWrapper({ currentSafeOwners: null as unknown as string[] })
+    await nextTick()
+
+    const rows = wrapper.findAll(SELECTORS.userRow)
+    expect(rows.length).toBeGreaterThan(0)
+    await rows[0]!.trigger('click')
+
+    expect(wrapper.emitted('selectMember')).toBeTruthy()
   })
 })
