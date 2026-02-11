@@ -132,6 +132,27 @@ describe('AddTeamForm.vue', () => {
       expect(wrapper.find(SELECTORS.createTeamError).exists()).toBe(true)
       expect(wrapper.find(SELECTORS.createTeamError).text()).toContain('Unable to create team')
     })
+
+    it('should not submit when team details are invalid', async () => {
+      const mutation = createMockMutationResponse(mockTeamData)
+      vi.mocked(useCreateTeamMutation).mockReturnValue(
+        mutation as ReturnType<typeof useCreateTeamMutation>
+      )
+
+      wrapper = mountComponent()
+      await goToStep2(wrapper)
+
+      const vm = wrapper.vm as unknown as {
+        teamData: { name: string; description: string; members: Array<{ address: string }> }
+        saveTeamToDatabase: () => Promise<void>
+      }
+      vm.teamData.name = ''
+      await wrapper.vm.$nextTick()
+
+      await vm.saveTeamToDatabase()
+
+      expect(mutation.mutateAsync).not.toHaveBeenCalled()
+    })
   })
 
   describe('Step 3 - Investor Contract', () => {
@@ -159,6 +180,20 @@ describe('AddTeamForm.vue', () => {
       await wrapper.vm.$nextTick()
 
       expect(vm.canProceed).toBe(false)
+    })
+
+    it('should block navigation from step 1 when name is empty', async () => {
+      wrapper = mountComponent()
+
+      const vm = wrapper.vm as unknown as {
+        currentStep: number
+        canProceed: boolean
+        nextStep: () => void
+      }
+      expect(vm.canProceed).toBe(false)
+
+      vm.nextStep()
+      expect(vm.currentStep).toBe(1)
     })
 
     it('should reject invalid member addresses', async () => {
