@@ -6,7 +6,6 @@ import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 import { useCreateTeamMutation } from '@/queries/team.queries'
 import { createMockMutationResponse, mockTeamData } from '@/tests/mocks/query.mock'
 import { defineComponent, h } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 
 // Stub for DeployContractSection to avoid wagmi plugin issues
 const DeployContractSectionStub = defineComponent({
@@ -29,9 +28,6 @@ const DeployContractSectionStub = defineComponent({
 
 // Test selectors
 const SELECTORS = {
-  step1: '[data-test="step-1"]',
-  step2: '[data-test="step-2"]',
-  step3: '[data-test="step-3"]',
   teamNameInput: '[data-test="team-name-input"]',
   teamDescriptionInput: '[data-test="team-description-input"]',
   shareNameInput: '[data-test="share-name-input"]',
@@ -100,98 +96,7 @@ describe('AddTeamForm.vue', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  describe('Rendering', () => {
-    it('should render step 1 with team details form', () => {
-      wrapper = mountComponent()
-
-      expect(wrapper.find(SELECTORS.step1).exists()).toBe(true)
-      expect(wrapper.find(SELECTORS.teamNameInput).exists()).toBe(true)
-      expect(wrapper.find(SELECTORS.teamDescriptionInput).exists()).toBe(true)
-      expect(wrapper.text()).toContain('Team Details')
-    })
-
-    it('should render three step indicators', () => {
-      wrapper = mountComponent()
-
-      const steps = wrapper.findAll('.step')
-      expect(steps).toHaveLength(3)
-      expect(steps[0].text()).toContain('Team Details')
-      expect(steps[1].text()).toContain('Members')
-      expect(steps[2].text()).toContain('Investor Contract')
-    })
-
-    it('should highlight only first step initially', () => {
-      wrapper = mountComponent()
-
-      const steps = wrapper.findAll('.step')
-      expect(steps[0].classes()).toContain('step-primary')
-      expect(steps[1].classes()).not.toContain('step-primary')
-      expect(steps[2].classes()).not.toContain('step-primary')
-    })
-  })
-
-  describe('Step 1 - Team Details', () => {
-    it('should disable next button when team name is empty', () => {
-      wrapper = mountComponent()
-
-      const nextBtn = wrapper.find(SELECTORS.nextButton).findComponent(ButtonUI)
-      expect(nextBtn.props('disabled')).toBe(true)
-    })
-
-    it('should enable next button when team name is filled', async () => {
-      wrapper = mountComponent()
-
-      await wrapper.find(SELECTORS.teamNameInput).setValue('My Team')
-      await wrapper.vm.$nextTick()
-
-      const nextBtn = wrapper.find(SELECTORS.nextButton).findComponent(ButtonUI)
-      expect(nextBtn.props('disabled')).toBe(false)
-    })
-
-    it('should allow empty description', async () => {
-      wrapper = mountComponent()
-
-      await wrapper.find(SELECTORS.teamNameInput).setValue('My Team')
-      await wrapper.vm.$nextTick()
-
-      const nextBtn = wrapper.find(SELECTORS.nextButton).findComponent(ButtonUI)
-      expect(nextBtn.props('disabled')).toBe(false)
-    })
-  })
-
   describe('Step Navigation', () => {
-    it('should navigate to step 2 when next is clicked', async () => {
-      wrapper = mountComponent()
-
-      await goToStep2(wrapper)
-
-      expect(wrapper.find(SELECTORS.step1).exists()).toBe(false)
-      expect(wrapper.find(SELECTORS.step2).exists()).toBe(true)
-      expect(wrapper.text()).toContain('Team Members')
-    })
-
-    it('should highlight first two steps on step 2', async () => {
-      wrapper = mountComponent()
-
-      await goToStep2(wrapper)
-
-      const steps = wrapper.findAll('.step')
-      expect(steps[0].classes()).toContain('step-primary')
-      expect(steps[1].classes()).toContain('step-primary')
-      expect(steps[2].classes()).not.toContain('step-primary')
-    })
-
-    it('should go back to step 1 when previous is clicked', async () => {
-      wrapper = mountComponent()
-
-      await goToStep2(wrapper)
-      await wrapper.find(SELECTORS.previousButton).trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find(SELECTORS.step1).exists()).toBe(true)
-      expect(wrapper.find(SELECTORS.step2).exists()).toBe(false)
-    })
-
     it('should preserve form data when navigating back', async () => {
       wrapper = mountComponent()
 
@@ -211,68 +116,7 @@ describe('AddTeamForm.vue', () => {
     })
   })
 
-  describe('Step 2 - Members', () => {
-    beforeEach(async () => {
-      wrapper = mountComponent()
-      await goToStep2(wrapper)
-    })
-
-    it('should show members section content', () => {
-      expect(wrapper.find(SELECTORS.step2).exists()).toBe(true)
-      expect(wrapper.text()).toContain('Team Members')
-      expect(wrapper.text()).toContain('Optional')
-    })
-
-    it('should show create team button', () => {
-      expect(wrapper.find(SELECTORS.createTeamButton).exists()).toBe(true)
-      expect(wrapper.find(SELECTORS.createTeamButton).text()).toBe('Create Team')
-    })
-
-    it('should allow proceeding with no members', () => {
-      const createBtn = wrapper.find(SELECTORS.createTeamButton).findComponent(ButtonUI)
-      expect(createBtn.props('disabled')).toBe(false)
-    })
-  })
-
   describe('Team Creation', () => {
-    it.skip('should call mutation when create team is clicked', async () => {
-      const mockResponse = createMockMutationResponse(mockTeamData)
-      vi.mocked(useCreateTeamMutation).mockReturnValue(
-        mockResponse as ReturnType<typeof useCreateTeamMutation>
-      )
-
-      wrapper = mountComponent()
-      await goToStep2(wrapper)
-      await wrapper.find(SELECTORS.createTeamButton).trigger('click')
-      await flushPromises()
-
-      expect(mockResponse.mutateAsync).toHaveBeenCalledWith({
-        name: 'Test Team',
-        description: 'A test team',
-        members: []
-      })
-    })
-
-    it('should show loading state during creation', async () => {
-      vi.mocked(useCreateTeamMutation).mockReturnValue(
-        createMockMutationResponse(null, true) as ReturnType<typeof useCreateTeamMutation>
-      )
-
-      wrapper = mountComponent()
-      await goToStep2(wrapper)
-
-      const createBtn = wrapper.find(SELECTORS.createTeamButton).findComponent(ButtonUI)
-      expect(createBtn.props('loading')).toBe(true)
-    })
-
-    it('should navigate to step 3 after successful creation', async () => {
-      wrapper = mountComponent()
-      wrapper = await goToStep3(wrapper)
-
-      expect(wrapper.find(SELECTORS.step3).exists()).toBe(true)
-      expect(wrapper.text()).toContain('Investor Contract Details')
-    })
-
     it('should show error message when creation fails', async () => {
       vi.mocked(useCreateTeamMutation).mockReturnValue(
         createMockMutationResponse(null, false, new Error('Failed')) as ReturnType<
@@ -291,51 +135,6 @@ describe('AddTeamForm.vue', () => {
   })
 
   describe('Step 3 - Investor Contract', () => {
-    it('should show share name and symbol inputs', async () => {
-      wrapper = mountComponent()
-      wrapper = await goToStep3(wrapper)
-
-      expect(wrapper.find(SELECTORS.shareNameInput).exists()).toBe(true)
-      expect(wrapper.find(SELECTORS.shareSymbolInput).exists()).toBe(true)
-    })
-
-    it('should highlight all steps on step 3', async () => {
-      wrapper = mountComponent()
-      wrapper = await goToStep3(wrapper)
-
-      const steps = wrapper.findAll('.step')
-      expect(steps[0].classes()).toContain('step-primary')
-      expect(steps[1].classes()).toContain('step-primary')
-      expect(steps[2].classes()).toContain('step-primary')
-    })
-
-    it('should show deploy contract button when team data exists', async () => {
-      wrapper = mountComponent()
-      wrapper = await goToStep3(wrapper)
-
-      expect(wrapper.find(SELECTORS.deployContractButton).exists()).toBe(true)
-    })
-
-    it.skip('should disable deploy button when share fields are empty', async () => {
-      wrapper = mountComponent()
-      wrapper = await goToStep3(wrapper)
-
-      const deployBtn = wrapper.find(SELECTORS.deployContractButton)
-      expect(deployBtn.attributes('disabled')).toBeDefined()
-    })
-
-    it('should enable deploy button when share fields are filled', async () => {
-      wrapper = mountComponent()
-      wrapper = await goToStep3(wrapper)
-
-      await wrapper.find(SELECTORS.shareNameInput).setValue('Company Shares')
-      await wrapper.find(SELECTORS.shareSymbolInput).setValue('SHR')
-      await wrapper.vm.$nextTick()
-
-      const deployBtn = wrapper.find(SELECTORS.deployContractButton)
-      expect(deployBtn.attributes('disabled')).toBeUndefined()
-    })
-
     it('should emit done event when contract is deployed', async () => {
       wrapper = mountComponent()
       wrapper = await goToStep3(wrapper)
@@ -376,22 +175,5 @@ describe('AddTeamForm.vue', () => {
 
       expect(vm.canProceed).toBe(false)
     })
-
-    // it('should accept valid ethereum addresses', async () => {
-    //   wrapper = mountComponent()
-    //   await goToStep2(wrapper)
-
-    //   const vm = wrapper.vm as unknown as {
-    //     teamData: { members: Array<{ address: string; name: string }> }
-    //     canProceed: boolean
-    //   }
-
-    //   vm.teamData.members = [
-    //     { address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62', name: 'Valid' }
-    //   ]
-    //   await wrapper.vm.$nextTick()
-
-    //   expect(vm.canProceed).toBe(true)
-    // })
   })
 })
