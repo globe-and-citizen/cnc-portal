@@ -5,7 +5,7 @@ import { mount } from '@vue/test-utils'
 import { nextTick, ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { User } from '@/types'
-import { useGetSearchUsersQuery } from '@/queries/user.queries'
+import { useQuery } from '@tanstack/vue-query'
 
 // Mock data
 const MOCK_USERS: User[] = [
@@ -23,6 +23,13 @@ const { mockTeamStore, mockUseFocus, mockWatchDebounced } = vi.hoisted(() => ({
       members: [
         { id: '2', address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', name: 'Jane Smith' }
       ]
+    },
+    currentTeamMeta: {
+      data: {
+        members: [
+          { id: '2', address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', name: 'Jane Smith' }
+        ]
+      }
     }
   },
   mockUseFocus: vi.fn(() => ({ focused: { value: false } })),
@@ -38,7 +45,13 @@ vi.mock('@vueuse/core', () => ({
   watchDebounced: mockWatchDebounced
 }))
 
+vi.mock('@tanstack/vue-query', () => ({
+  useQuery: vi.fn()
+}))
+
 let wrapper: ReturnType<typeof mount>
+let lastFocusRef: ReturnType<typeof ref> | null = null
+let lastDebouncedCallback: (() => Promise<void> | void) | null = null
 
 const SELECTORS = {
   container: '[data-test="member-input"]',
@@ -50,19 +63,13 @@ const SELECTORS = {
 } as const
 
 const createWrapper = (props = {}, mockQueryOverrides = {}) => {
-  // Mock the search query
   const mockRefetch = vi.fn()
-  vi.mocked(useGetSearchUsersQuery).mockReturnValue({
+  vi.mocked(useQuery).mockReturnValue({
     data: ref({ users: MOCK_USERS }),
     isFetching: ref(false),
     refetch: mockRefetch,
-    isLoading: ref(false),
-    error: ref(null),
-    isFetched: ref(true),
-    isPending: ref(false),
-    isSuccess: ref(true),
     ...mockQueryOverrides
-  } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
+  } as unknown as ReturnType<typeof useQuery>)
 
   return mount(SelectMemberInput, {
     props: {
@@ -77,10 +84,19 @@ const createWrapper = (props = {}, mockQueryOverrides = {}) => {
   })
 }
 
-describe.skip('SelectMemberInput', () => {
+describe('SelectMemberInput', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
+    lastFocusRef = null
+    lastDebouncedCallback = null
+    vi.mocked(mockUseFocus).mockImplementation(() => {
+      lastFocusRef = ref(false)
+      return { focused: lastFocusRef }
+    })
+    vi.mocked(mockWatchDebounced).mockImplementation((_, callback) => {
+      lastDebouncedCallback = callback as () => Promise<void> | void
+    })
   })
 
   afterEach(() => {
@@ -88,35 +104,68 @@ describe.skip('SelectMemberInput', () => {
     vi.useRealTimers()
   })
 
-  it('should render correctly', () => {
-    wrapper = createWrapper()
-    expect(wrapper.exists()).toBeTruthy()
-    expect(wrapper.find(SELECTORS.container).exists()).toBe(true)
+  it('should add loading class when fetching', () => {
+    wrapper = createWrapper({}, { isFetching: ref(true) })
+    expect(wrapper.find(SELECTORS.container).classes()).toContain('animate-pulse')
   })
 
-  it('should display users from query', async () => {
-    wrapper = createWrapper()
-    await nextTick()
+  it('should refetch on debounced input when not limited to team members', async () => {
+    const mockRefetch = vi.fn()
+    wrapper = createWrapper({}, { refetch: mockRefetch })
 
-    expect(wrapper.text()).toContain('John Doe')
-    expect(wrapper.text()).toContain('Jane Smith')
-    expect(wrapper.text()).toContain('Bob Johnson')
+    await wrapper.find(SELECTORS.input).setValue('john')
+    await lastDebouncedCallback!()
+
+    expect(mockRefetch).toHaveBeenCalledTimes(1)
   })
 
-  it('should handle multiple hidden members', async () => {
-    const hiddenMembers = [MOCK_USERS[0], MOCK_USERS[1]]
-    wrapper = createWrapper({ hiddenMembers })
-    await nextTick()
+  it('should not refetch on debounced input when onlyTeamMembers is true', async () => {
+    const mockRefetch = vi.fn()
+    wrapper = createWrapper({ onlyTeamMembers: true }, { refetch: mockRefetch })
 
-    expect(wrapper.text()).not.toContain(MOCK_USERS[0].name)
-    expect(wrapper.text()).not.toContain(MOCK_USERS[1].name)
-    expect(wrapper.text()).toContain(MOCK_USERS[2].name)
+    await wrapper.find(SELECTORS.input).setValue('john')
+    await lastDebouncedCallback!()
+
+    expect(mockRefetch).not.toHaveBeenCalled()
   })
 
-  it('should show only team members when onlyTeamMembers is true', async () => {
-    wrapper = createWrapper({ onlyTeamMembers: true })
+  it('should block selection for safe owners', async () => {
+    wrapper = createWrapper({ currentSafeOwners: [MOCK_USERS[0].address] })
     await nextTick()
 
-    expect(wrapper.text()).toContain('Jane Smith')
+    await wrapper.findAll(SELECTORS.userRow)[0].trigger('click')
+    expect(wrapper.emitted('selectMember')).toBeFalsy()
+    expect(wrapper.text()).toContain('Already a safe owner')
+  })
+
+  it('should block selection for existing team members when disabled', async () => {
+    wrapper = createWrapper({ disableTeamMembers: true })
+    await nextTick()
+
+    const teamRow = wrapper.findAll(SELECTORS.userRow)[1]
+    await teamRow.trigger('click')
+
+    expect(wrapper.emitted('selectMember')).toBeFalsy()
+    expect(wrapper.text()).toContain('Already in your team')
+  })
+
+  it('should emit selection for eligible members and reset input', async () => {
+    const mockRefetch = vi.fn()
+    wrapper = createWrapper({ showOnFocus: true }, { refetch: mockRefetch })
+    await nextTick()
+
+    lastFocusRef!.value = true
+    await nextTick()
+
+    const input = wrapper.find(SELECTORS.input)
+    const focusSpy = vi.spyOn(input.element, 'focus')
+
+    await wrapper.findAll(SELECTORS.userRow)[2].trigger('click')
+    await nextTick()
+
+    expect(wrapper.emitted('selectMember')).toBeTruthy()
+    expect((input.element as HTMLInputElement).value).toBe('')
+    expect(mockRefetch).toHaveBeenCalledTimes(1)
+    expect(focusSpy).toHaveBeenCalled()
   })
 })
