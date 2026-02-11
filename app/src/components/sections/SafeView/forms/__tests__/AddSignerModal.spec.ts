@@ -75,7 +75,12 @@ const createWrapper = (props = {}, mockComposableOverrides = {}) => {
         ModalComponent: {
           template: '<div data-test="add-signer-modal"><slot /></div>',
           props: ['modelValue'],
-          emits: ['reset', 'update:modelValue']
+          emits: ['reset', 'update:modelValue'],
+          watch: {
+            modelValue(newVal) {
+              this.$emit('update:modelValue', newVal)
+            }
+          }
         },
         MultiSelectMemberInput: {
           template: '<div data-test="new-signers-input"></div>',
@@ -107,7 +112,7 @@ describe('AddSignerModal', () => {
   })
 
   describe('Modal v-model (isOpen)', () => {
-    it('should emit update:modelValue when closing', async () => {
+    it('should emit update:modelValue when isOpen changes', async () => {
       wrapper = createWrapper({ modelValue: true })
       await nextTick()
 
@@ -115,6 +120,17 @@ describe('AddSignerModal', () => {
       await nextTick()
 
       expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+      expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([false])
+    })
+
+    it('should update isOpen when modelValue prop changes', async () => {
+      wrapper = createWrapper({ modelValue: false })
+      await nextTick()
+      expect(wrapper.vm.isOpen).toBe(false)
+
+      await wrapper.setProps({ modelValue: true })
+      await nextTick()
+      expect(wrapper.vm.isOpen).toBe(true)
     })
   })
 
