@@ -3,6 +3,7 @@ import { mount, VueWrapper } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 import SelectMemberContractsInput from '../SelectMemberContractsInput.vue'
 import { getTraderSafes } from '@/utils/traderSafes'
+import { mockTeamStore } from '@/tests/mocks'
 
 interface Item {
   name: string
@@ -10,34 +11,13 @@ interface Item {
   type?: 'member' | 'contract'
 }
 
-// Mock team store
-const mockTeamStore = {
-  currentTeam: {
-    members: [
-      { name: 'John Doe', address: '0x123' },
-      { name: 'Jane Smith', address: '0x456' }
-    ],
-    teamContracts: [
-      { type: 'Bank', address: '0x789' },
-      { type: 'Expense', address: '0xabc' }
-    ]
-  },
-  currentTeamMeta: {
-    isPending: false,
-    data: {
-      members: [
-        { name: 'John Doe', address: '0x123' },
-        { name: 'Jane Smith', address: '0x456' }
-      ],
-      teamContracts: [
-        { type: 'Bank', address: '0x789' },
-        { type: 'Expense', address: '0xabc' }
-      ]
-    }
-  }
-}
+// Mock getTraderSafes utility (not part of centralized mocks)
+vi.mock('@/utils/traderSafes', () => ({
+  getTraderSafes: vi.fn(() => [])
+}))
 
-const defaultTeamData = {
+// Test data for member/contract scenarios
+const testTeamData = {
   members: [
     { name: 'John Doe', address: '0x123' },
     { name: 'Jane Smith', address: '0x456' }
@@ -47,14 +27,6 @@ const defaultTeamData = {
     { type: 'Expense', address: '0xabc' }
   ]
 }
-
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore)
-}))
-
-vi.mock('@/utils/traderSafes', () => ({
-  getTraderSafes: vi.fn(() => [])
-}))
 
 // Create a wrapper component that properly handles v-model
 const WrapperComponent = defineComponent({
@@ -87,8 +59,11 @@ describe('SelectMemberContractsInput.vue', () => {
   let wrapper: VueWrapper
 
   beforeEach(() => {
+    vi.clearAllMocks()
     vi.useFakeTimers()
-    mockTeamStore.currentTeamMeta.data = defaultTeamData
+    // Set test data on centralized mock
+    mockTeamStore.currentTeamMeta.data = testTeamData
+    mockTeamStore.currentTeamMeta.isPending = false
     wrapper = mount(WrapperComponent)
   })
 
@@ -214,46 +189,6 @@ describe('SelectMemberContractsInput.vue', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(true)
-  })
-
-  it('shows dropdown when only trader safes match', async () => {
-    mockTeamStore.currentTeamMeta.data = {
-      members: [],
-      teamContracts: []
-    }
-    vi.mocked(getTraderSafes).mockReturnValueOnce([
-      { name: 'Trader Alpha', address: '0xtrader1', isDeployed: true }
-    ])
-
-    const nameInput = wrapper.find('[data-test="member-contracts-name-input"]')
-    await nameInput.setValue('Trader')
-    await wrapper.vm.$nextTick()
-    await vi.advanceTimersByTime(300)
-    await wrapper.vm.$nextTick()
-
-    expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="user-search-results"]').exists()).toBe(false)
-    expect(wrapper.find('[data-test="contract-search-results"]').exists()).toBe(false)
-  })
-
-  it('filters trader safes by address when name is empty', async () => {
-    mockTeamStore.currentTeamMeta.data = {
-      members: [],
-      teamContracts: []
-    }
-    vi.mocked(getTraderSafes).mockReturnValueOnce([
-      { name: 'Trader Beta', address: '0xabc123', isDeployed: true }
-    ])
-
-    const addressInput = wrapper.find('[data-test="member-contracts-address-input"]')
-    await addressInput.setValue('0xabc')
-    await wrapper.vm.$nextTick()
-    await vi.advanceTimersByTime(300)
-    await wrapper.vm.$nextTick()
-
-    expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="user-search-results"]').exists()).toBe(false)
-    expect(wrapper.find('[data-test="contract-search-results"]').exists()).toBe(false)
   })
 
   it('does not show dropdown when disabled', async () => {

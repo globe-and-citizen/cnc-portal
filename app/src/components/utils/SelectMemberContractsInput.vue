@@ -32,11 +32,7 @@
     <!-- Dropdown positioned relative to the input -->
     <div
       v-if="
-        showDropdown &&
-        !disabled &&
-        (filteredMembers.length > 0 ||
-          filteredTraderSafes.length > 0 ||
-          filteredContracts.length > 0)
+        showDropdown && !disabled && (filteredMembers.length > 0 || filteredContracts.length > 0)
       "
       class="left-0 top-full mt-4 w-full outline-none focus:outline-none focus:ring-0 z-10"
       data-test="search-dropdown"
@@ -66,7 +62,6 @@
 
 import { ref, useTemplateRef, computed } from 'vue'
 import { useTeamStore } from '@/stores'
-import { getTraderSafes } from '@/utils/traderSafes'
 import { watchDebounced } from '@vueuse/core'
 import SelectMemberResults from '@/components/utils/SelectMemberResults.vue'
 import SelectContractResults from '@/components/utils/SelectContractResults.vue'
@@ -84,10 +79,6 @@ const input = defineModel({
 })
 
 const teamStore = useTeamStore()
-const deployedTraderSafes = computed(() => {
-  if (!teamStore.currentTeamMeta?.data) return []
-  return getTraderSafes(teamStore.currentTeamMeta.data)
-})
 
 // computed for showDropdown
 const showDropdown = computed(() => {
@@ -111,19 +102,6 @@ const contracts = computed(
 const filteredMembers = computed(() => {
   if (!members.value.length) return []
   return filter(members.value, input.value) as Member[]
-})
-
-const filteredTraderSafes = computed(() => {
-  const nameSearch = input.value.name.toLowerCase().trim()
-  const addressSearch = input.value.address.toLowerCase().trim()
-
-  return deployedTraderSafes.value.filter((traderSafe) => {
-    const nameMatch = nameSearch ? traderSafe.name.toLowerCase().includes(nameSearch) : true
-    const addressMatch = addressSearch
-      ? traderSafe.address.toLowerCase().includes(addressSearch)
-      : true
-    return nameMatch && addressMatch
-  })
 })
 
 const filteredContracts = computed(() => {
