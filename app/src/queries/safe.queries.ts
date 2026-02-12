@@ -21,7 +21,10 @@ export const safeKeys = {
     [...safeKeys.transactionLists(), { safeAddress }] as const,
   transactionDetails: () => [...safeKeys.all, 'transaction'] as const,
   transaction: (safeTxHash: string | undefined) =>
-    [...safeKeys.transactionDetails(), { safeTxHash }] as const
+    [...safeKeys.transactionDetails(), { safeTxHash }] as const,
+  incomingTransferLists: () => [...safeKeys.all, 'incoming-transfers'] as const,
+  incomingTransfers: (safeAddress: string | undefined, limit?: number) =>
+    [...safeKeys.incomingTransferLists(), { safeAddress, limit }] as const
 }
 
 // ============================================================================
@@ -485,5 +488,101 @@ export function useGetSafeTransactionQuery(params: GetSafeTransactionParams) {
     },
     staleTime: 300_000,
     gcTime: 300_000
+  })
+}
+
+// ============================================================================
+// GET /api/v1/safes/{safeAddress}/incoming-transfers/ - Fetch incoming transfers
+// ============================================================================
+
+/**
+ * Path parameters for Safe incoming transfers endpoint
+ */
+export interface GetSafeIncomingTransfersPathParams {
+  /** Safe address */
+  safeAddress: MaybeRefOrGetter<string | undefined>
+}
+
+/**
+ * Query parameters for Safe incoming transfers
+ */
+export interface GetSafeIncomingTransfersQueryParams {
+  /** Number of results to fetch (default: 100) */
+  limit?: number
+}
+
+/**
+ * Combined parameters for useGetSafeIncomingTransfersQuery
+ */
+export interface GetSafeIncomingTransfersParams {
+  pathParams: GetSafeIncomingTransfersPathParams
+  queryParams?: GetSafeIncomingTransfersQueryParams
+}
+
+/**
+ * Incoming transfer data structure
+ */
+export interface SafeIncomingTransfer {
+  type: 'ETHER_TRANSFER' | 'ERC20_TRANSFER' | 'ERC721_TRANSFER'
+  executionDate: string
+  blockNumber: number
+  transactionHash: string
+  to: string
+  from: string
+  value: string
+  tokenAddress?: string
+  tokenInfo?: {
+    type: string
+    address: string
+    name: string
+    symbol: string
+    decimals: number
+    logoUri?: string
+  }
+}
+
+/**
+ * Incoming transfers response structure
+ */
+export interface SafeIncomingTransfersResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: SafeIncomingTransfer[]
+}
+
+/**
+ * Fetch Safe incoming transfers from Transaction Service
+ *
+ * @endpoint GET {txService.url}/api/v1/safes/{safeAddress}/incoming-transfers/
+ * @pathParams { safeAddress: string }
+ * @queryParams { limit?: number }
+ * @body none
+ */
+export function useGetSafeIncomingTransfersQuery(params: GetSafeIncomingTransfersParams) {
+  const { pathParams, queryParams } = params
+
+  return useQuery<SafeIncomingTransfer[]>({
+    queryKey: safeKeys.incomingTransfers(toValue(pathParams.safeAddress), queryParams?.limit),
+    enabled: !!toValue(pathParams.safeAddress),
+    queryFn: async () => {
+      const address = toValue(pathParams.safeAddress)
+      if (!address) throw new Error('Missing Safe address')
+      if (!txService) throw new Error(`Unsupported chainId: ${chainId}`)
+
+      // Only use limit parameter
+      const params = new URLSearchParams()
+      if (queryParams?.limit) {
+        params.append('limit', queryParams.limit.toString())
+      }
+
+      const queryString = params.toString() ? `?${params.toString()}` : ''
+      const { data } = await externalApiClient.get<SafeIncomingTransfersResponse>(
+        `${txService.url}/api/v1/safes/${address}/incoming-transfers/${queryString}`
+      )
+      return data.results || []
+    },
+    staleTime: 300_000,
+    refetchInterval: 300_000
   })
 }

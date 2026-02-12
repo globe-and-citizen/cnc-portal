@@ -1,5 +1,5 @@
 <template>
-  <CardComponent title="Incoming Transactions">
+  <CardComponent title="Incoming Transactions" data-test="incoming-transfers-card">
     <TableComponent
       :rows="incomingTransfers || []"
       :columns="columns"
@@ -59,13 +59,14 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { type Address } from 'viem'
+import type { Address } from 'viem'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'
-import { formatSafeTransferAmount, formatSafeTransferType } from '@/utils/safe'
+import { formatSafeTransferType, formatSafeTransferAmount } from '@/utils/safe'
 import { formatDateShort } from '@/utils/dayUtils'
+
 interface Props {
   address: Address
 }
