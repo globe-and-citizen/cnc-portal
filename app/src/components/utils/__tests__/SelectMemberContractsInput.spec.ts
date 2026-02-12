@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 import SelectMemberContractsInput from '../SelectMemberContractsInput.vue'
+import { getTraderSafes } from '@/utils/traderSafes'
 
 interface Item {
   name: string
@@ -36,14 +37,36 @@ const mockTeamStore = {
   }
 }
 
+const defaultTeamData = {
+  members: [
+    { name: 'John Doe', address: '0x123' },
+    { name: 'Jane Smith', address: '0x456' }
+  ],
+  teamContracts: [
+    { type: 'Bank', address: '0x789' },
+    { type: 'Expense', address: '0xabc' }
+  ]
+}
+
 vi.mock('@/stores', () => ({
   useTeamStore: vi.fn(() => mockTeamStore)
+}))
+
+vi.mock('@/utils/traderSafes', () => ({
+  getTraderSafes: vi.fn(() => [])
 }))
 
 // Create a wrapper component that properly handles v-model
 const WrapperComponent = defineComponent({
   components: { SelectMemberContractsInput },
-  template: '<SelectMemberContractsInput v-model="model" @selectItem="onSelectItem" />',
+  props: {
+    disabled: {
+      type: Boolean,
+      default: false
+    }
+  },
+  template:
+    '<SelectMemberContractsInput v-model="model" :disabled="disabled" @selectItem="onSelectItem" />',
   emits: ['selectItem'],
   data() {
     return {
@@ -65,6 +88,7 @@ describe('SelectMemberContractsInput.vue', () => {
 
   beforeEach(() => {
     vi.useFakeTimers()
+    mockTeamStore.currentTeamMeta.data = defaultTeamData
     wrapper = mount(WrapperComponent)
   })
 
@@ -123,7 +147,8 @@ describe('SelectMemberContractsInput.vue', () => {
 
     const memberRows = wrapper.findAll('[data-test="user-row"]')
     expect(memberRows.length).toBeGreaterThan(0)
-    await memberRows[0].trigger('click')
+    expect(memberRows[0]).toBeDefined()
+    await memberRows[0]!.trigger('click')
     await wrapper.vm.$nextTick()
 
     const emitted = wrapper.emitted('selectItem')
@@ -140,7 +165,8 @@ describe('SelectMemberContractsInput.vue', () => {
 
     const contractRows = wrapper.findAll('[data-test="contract-row"]')
     expect(contractRows.length).toBeGreaterThan(0)
-    await contractRows[0].trigger('click')
+    expect(contractRows[0]).toBeDefined()
+    await contractRows[0]!.trigger('click')
     await wrapper.vm.$nextTick()
 
     const emitted = wrapper.emitted('selectItem')
@@ -160,6 +186,94 @@ describe('SelectMemberContractsInput.vue', () => {
     await wrapper.vm.$nextTick()
     await vi.advanceTimersByTime(300)
     await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(false)
+  })
+
+  it('keeps dropdown closed once after selecting (selecting branch)', async () => {
+    const nameInput = wrapper.find('[data-test="member-contracts-name-input"]')
+    await nameInput.setValue('John')
+    await wrapper.vm.$nextTick()
+    await vi.advanceTimersByTime(300)
+    await wrapper.vm.$nextTick()
+
+    const memberRows = wrapper.findAll('[data-test="user-row"]')
+    await memberRows[0].trigger('click')
+    await wrapper.vm.$nextTick()
+
+    const addressInput = wrapper.find('[data-test="member-contracts-address-input"]')
+    await addressInput.setValue('0x')
+    await wrapper.vm.$nextTick()
+    await vi.advanceTimersByTime(300)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(false)
+
+    await addressInput.setValue('0x1')
+    await wrapper.vm.$nextTick()
+    await vi.advanceTimersByTime(300)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(true)
+  })
+
+  it('shows dropdown when only trader safes match', async () => {
+    mockTeamStore.currentTeamMeta.data = {
+      members: [],
+      teamContracts: []
+    }
+    vi.mocked(getTraderSafes).mockReturnValueOnce([
+      { name: 'Trader Alpha', address: '0xtrader1', isDeployed: true }
+    ])
+
+    const nameInput = wrapper.find('[data-test="member-contracts-name-input"]')
+    await nameInput.setValue('Trader')
+    await wrapper.vm.$nextTick()
+    await vi.advanceTimersByTime(300)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="user-search-results"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="contract-search-results"]').exists()).toBe(false)
+  })
+
+  it('filters trader safes by address when name is empty', async () => {
+    mockTeamStore.currentTeamMeta.data = {
+      members: [],
+      teamContracts: []
+    }
+    vi.mocked(getTraderSafes).mockReturnValueOnce([
+      { name: 'Trader Beta', address: '0xabc123', isDeployed: true }
+    ])
+
+    const addressInput = wrapper.find('[data-test="member-contracts-address-input"]')
+    await addressInput.setValue('0xabc')
+    await wrapper.vm.$nextTick()
+    await vi.advanceTimersByTime(300)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="user-search-results"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="contract-search-results"]').exists()).toBe(false)
+  })
+
+  it('does not show dropdown when disabled', async () => {
+    wrapper = mount(WrapperComponent, { props: { disabled: true } })
+    wrapper.vm.model.name = 'John'
+    await wrapper.vm.$nextTick()
+    await vi.advanceTimersByTime(300)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(false)
+  })
+
+  it('does not show dropdown when no data is available', async () => {
+    mockTeamStore.currentTeamMeta.data = undefined
+    const nameInput = wrapper.find('[data-test="member-contracts-name-input"]')
+    await nameInput.setValue('John')
+    await wrapper.vm.$nextTick()
+    await vi.advanceTimersByTime(300)
+    await wrapper.vm.$nextTick()
+
     expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(false)
   })
 
