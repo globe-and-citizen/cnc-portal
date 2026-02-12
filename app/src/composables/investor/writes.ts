@@ -30,7 +30,9 @@ export function useIndividualMint(shareholder: MaybeRef<Address>, amount: MaybeR
   return useInvestorContractWrite({ functionName: 'individualMint', args })
 }
 
-export function useDistributeMint(shareholders: MaybeRef<readonly { shareholder: Address; amount: bigint }[]>) {
+export function useDistributeMint(
+  shareholders: MaybeRef<readonly { shareholder: Address; amount: bigint }[]>
+) {
   const args = computed(() => [unref(shareholders)] as readonly unknown[])
   return useInvestorContractWrite({ functionName: 'distributeMint', args })
 }
@@ -48,7 +50,11 @@ export function useUnpause() {
   return useInvestorContractWrite({ functionName: 'unpause', args: [] })
 }
 
-export function useInitialize(name: MaybeRef<string>, symbol: MaybeRef<string>, owner: MaybeRef<Address>) {
+export function useInitialize(
+  name: MaybeRef<string>,
+  symbol: MaybeRef<string>,
+  owner: MaybeRef<Address>
+) {
   const args = computed(() => [unref(name), unref(symbol), unref(owner)] as readonly unknown[])
   return useInvestorContractWrite({ functionName: 'initialize', args })
 }

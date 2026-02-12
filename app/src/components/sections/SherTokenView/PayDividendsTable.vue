@@ -1,4 +1,105 @@
 <template>
+  <CardComponent title="Token Holding">
+    <TableComponent
+      :rows="
+        balances.map((balance, index) => ({
+          ...balance,
+          rank: index + 1,
+          icon:
+            balance.token.symbol === 'USDC' || balance.token.symbol === 'USDCe'
+              ? USDCIcon
+              : balance.token.symbol === 'POL'
+                ? MaticIcon
+                : balance.token.symbol === 'ETH'
+                  ? EthereumIcon
+                  : null
+        }))
+      "
+      :loading="isBalancesLoading"
+      :columns="[
+        { key: 'rank', label: 'RANK' },
+        { key: 'token', label: 'Token', sortable: true, class: 'min-w-32' },
+        { key: 'amount', label: 'Amount', sortable: true, class: 'min-w-32' },
+        { key: 'price', label: 'Coin Price', sortable: true, class: 'min-w-40' },
+        { key: 'balance', label: 'Balance', sortable: true, class: 'min-w-32' }
+      ]"
+    >
+      <template #row="{row}">
+      <td></td>
+      <td>
+        <div class="flex items-center gap-2 lg:w-48">
+          <img v-if="row.icon" :src="row.icon" :alt="row.name" class="w-8 h-8 rounded-full" />
+          <div v-else class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+            <span class="text-gray-500">{{ row.token.name.charAt(0) }}</span>
+          </div>
+          <div class="flex flex-col">
+            <div class="font-medium">{{ row.name }}</div>
+            <div class="text-sm text-gray-500">{{ row.network }}</div>
+          </div>
+        </div>
+      </td>
+       <td > {{ row.amount }} {{ row.token.symbol }} </td> 
+       <td>
+        {{ row.values[currency.code ?? 'USD']?.formatedPrice }} / {{ row.token.symbol }}
+      </td>
+
+      <td>
+        {{ row.values[currency.code ?? 'USD']?.formated }}
+      </td>
+
+      </template>
+    </TableComponent>
+
+    <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
+      <div class="w-full flex justify-between">
+        <span class="font-bold text-lg">Your Pending Dividends</span>
+      </div>
+
+      <!-- headless fetchers (one per discovered token) -->
+      <div class="hidden">
+        <!-- <TokenDividendAmountFetcher
+          v-for="t in discoveredTokens"
+          :key="t.tokenAddress + '-' + (currentAddress || '')"
+          :token-address="t.tokenAddress"
+          :shareholder="currentAddress as Address"
+          @update="onAmountUpdate"
+        /> -->
+      </div>
+
+      <div class="bg-base-100 w-full">
+        <TableComponent :rows="filteredRows" :columns="columns" :loading="isBalancesLoading">
+          <template #shareholder-data="{ row }">
+            <AddressToolTip :address="row.address" />
+          </template>
+
+          <template #token-data="{ row }">
+            <span>{{ row.tokenSymbol }}</span>
+          </template>
+
+          <template #amount-data="{ row }">
+            <span class="font-bold">
+              {{ formattedAmount(row.tokenAddress, row.decimals) }} {{ row.tokenSymbol }}
+            </span>
+          </template>
+
+          <template #action-data="{ row }">
+            <ButtonUI
+              variant="primary"
+              size="sm"
+              data-test="claim-dividend"
+              @click="() => executeClaim(row.tokenAddress)"
+              :disabled="isWriteLoading && currentClaimingToken === row.tokenAddress"
+              :loading="isWriteLoading && currentClaimingToken === row.tokenAddress"
+            >
+              {{
+                isWriteLoading && currentClaimingToken === row.tokenAddress ? 'Claiming' : 'Claim'
+              }}
+            </ButtonUI>
+          </template>
+        </TableComponent>
+      </div>
+    </div>
+  </CardComponent>
   <CardComponent>
     <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
       <div class="w-full flex justify-between">
@@ -7,13 +108,13 @@
 
       <!-- headless fetchers (one per discovered token) -->
       <div class="hidden">
-        <TokenDividendAmountFetcher
+        <!-- <TokenDividendAmountFetcher
           v-for="t in discoveredTokens"
           :key="t.tokenAddress + '-' + (currentAddress || '')"
           :token-address="t.tokenAddress"
           :shareholder="currentAddress as Address"
           @update="onAmountUpdate"
-        />
+        /> -->
       </div>
 
       <div class="bg-base-100 w-full">
@@ -56,22 +157,34 @@
 import { computed, ref } from 'vue'
 import { zeroAddress, type Address, formatUnits } from 'viem'
 import CardComponent from '@/components/CardComponent.vue'
+import EthereumIcon from '@/assets/Ethereum.png'
+import USDCIcon from '@/assets/usdc.png'
+import MaticIcon from '@/assets/matic-logo.png'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import TokenDividendAmountFetcher from '@/components/sections/SherTokenView/TokenDividendAmountFetcher.vue'
+// import TokenDividendAmountFetcher from '@/components/sections/SherTokenView/TokenDividendAmountFetcher.vue'
 import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useBankContract } from '@/composables/bank'
 import { tokenSymbol } from '@/utils'
+import { useStorage } from '@vueuse/core'
 
 const toast = useToastStore()
 const { address: currentAddress } = useUserDataStore()
 const teamStore = useTeamStore()
 
-const bankAddress = teamStore.getContractAddressByType('Bank') as Address | undefined
+const bankAddress = teamStore.getContractAddressByType('Bank')
 const { balances, isLoading: isBalancesLoading } = useContractBalance(bankAddress as Address)
 
+// const teamStore = useTeamStore()
+// const currencyStore = useCurrencyStore()
+
+const currency = useStorage('currency', {
+  code: 'USD',
+  name: 'US Dollar',
+  symbol: '$'
+})
 const { claimDividend, claimTokenDividend, isLoading: isWriteLoading } = useBankContract()
 
 const columns: TableColumn[] = [

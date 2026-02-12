@@ -65,6 +65,7 @@
           :data-test="`${rowIndex}-row`"
           class="hover"
         >
+        <slot name="row" :row="row" :rowIndex="rowIndex">
           <td v-for="(column, colIndex) in columns" :key="colIndex">
             <slot
               :name="`${column.key}-data`"
@@ -75,6 +76,7 @@
               {{ row[column.key] }}
             </slot>
           </td>
+        </slot>
         </tr>
       </tbody>
     </table>

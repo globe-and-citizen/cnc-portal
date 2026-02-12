@@ -62,7 +62,7 @@
         class="w-44 text-center"
         @click="onSubmit()"
         data-test="submit-button"
-        >Mint  {{ tokenSymbol }}
+        >Mint {{ tokenSymbol }}
       </ButtonUI>
     </div>
   </div>
