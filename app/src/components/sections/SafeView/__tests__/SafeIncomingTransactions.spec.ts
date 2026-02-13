@@ -235,7 +235,8 @@ describe('SafeIncomingTransactions', () => {
       const newAddress = '0x9999999999999999999999999999999999999999' as Address
       await wrapper.setProps({ address: newAddress })
       await nextTick()
-      expect(wrapper.props('address')).toBe(newAddress)
+      const props = wrapper.props() as { address?: Address }
+      expect(props.address).toBe(newAddress)
     })
   })
 

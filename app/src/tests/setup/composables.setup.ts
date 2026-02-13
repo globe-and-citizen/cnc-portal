@@ -134,7 +134,7 @@ vi.mock('@/queries/weeklyClaim.queries', () => ({
 /**
  * Mock Safe Queries (safe.queries.ts)
  */
-vi.mock('@/queries/safe.queries', () => ({
+vi.mock('@/queries/safe.mutations', () => ({
   useGetSafeInfoQuery: vi.fn(queryMocks.useGetSafeInfoQuery),
   useSafePendingTransactionsQuery: vi.fn(queryMocks.useSafePendingTransactionsQuery),
   useDeploySafeMutation: vi.fn(queryMocks.useDeploySafeMutation),

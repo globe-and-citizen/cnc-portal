@@ -1,5 +1,5 @@
 import type { Eip1193Provider } from '@safe-global/protocol-kit'
-import { type Address, zeroAddress } from 'viem'
+import { type Address, zeroAddress, formatUnits } from 'viem'
 import type { SafeMultisigConfirmationResponse, SignatureType } from '@safe-global/types-kit'
 import { CHAIN_NAMES } from '@/types/safe'
 import {
@@ -11,6 +11,8 @@ import {
 import { NETWORK } from '@/constant'
 import { formatEtherUtil, tokenSymbol } from '@/utils/constantUtil'
 import { type DecodedCall } from '@/types'
+import type { SafeIncomingTransfer } from '@/queries/safe.queries'
+
 /**
  * Get injected EIP-1193 provider with proper type checking
  */
@@ -140,5 +142,31 @@ export const formatSafeTransactionValue = (
     console.warn('Error formatting transaction value:', error, { value, data, transactionTo })
     // Fallback to basic formatting
     return `0 ${NETWORK.currencySymbol}`
+  }
+}
+
+export const formatSafeTransferAmount = (transfer: SafeIncomingTransfer): string => {
+  if (transfer.type === 'ERC721_TRANSFER') {
+    return 'NFT'
+  }
+  if (transfer.type === 'ERC20_TRANSFER' && transfer.tokenInfo) {
+    const amount = formatUnits(BigInt(transfer.value), transfer.tokenInfo.decimals)
+    return `${parseFloat(amount).toFixed(4)} ${transfer.tokenInfo.symbol}`
+  }
+  // ETHER_TRANSFER - Use existing formatEtherUtil from constantUtil
+  const formatted = formatEtherUtil(BigInt(transfer.value), zeroAddress)
+  return `${parseFloat(formatted).toFixed(6)} ${NETWORK.currencySymbol}`
+}
+
+export const formatSafeTransferType = (type: string): string => {
+  switch (type) {
+    case 'ETHER_TRANSFER':
+      return NETWORK.currencySymbol
+    case 'ERC20_TRANSFER':
+      return 'ERC20'
+    case 'ERC721_TRANSFER':
+      return 'NFT'
+    default:
+      return type
   }
 }

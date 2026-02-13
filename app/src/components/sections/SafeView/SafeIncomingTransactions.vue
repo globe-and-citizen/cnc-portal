@@ -1,5 +1,5 @@
 <template>
-  <CardComponent title="Incoming Transactions" data-test="incoming-transfers-card">
+  <CardComponent title="Deposits" data-test="incoming-transfers-card">
     <TableComponent
       :rows="incomingTransfers || []"
       :columns="columns"
@@ -32,13 +32,13 @@
 
       <!-- From Column -->
       <template #from-data="{ row }">
-        <AddressToolTip :address="row.from" slice />
+        <TransferSenderCell :address="row.from" />
       </template>
 
       <!-- Amount Column -->
       <template #amount-data="{ row }">
         <span class="font-medium">
-          {{ formatSafeTransferAmount(row) }}
+          {{ formatSafeTransferAmount(row as SafeIncomingTransfer) }}
         </span>
       </template>
 
@@ -62,10 +62,12 @@ import { computed } from 'vue'
 import type { Address } from 'viem'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import TransferSenderCell from './TransferSenderCell.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'
 import { formatSafeTransferType, formatSafeTransferAmount } from '@/utils/safe'
 import { formatDateShort } from '@/utils/dayUtils'
+import type { SafeIncomingTransfer } from '@/types'
 
 interface Props {
   address: Address
