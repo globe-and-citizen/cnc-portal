@@ -1,8 +1,89 @@
 @import './base.css' layer(base);
 
 @import 'tailwindcss';
+@plugin "daisyui";
+@plugin "daisyui/theme" {
+  name: 'light';
+  default: true; /* set as default */
+  prefersdark: false; /* set as default dark mode (prefers-color-scheme:dark) */
+  color-scheme: light; /* color of browser-provided UI */
 
-@config '../../tailwind.config.js';
+  --color-base-100: #ffffff;
+  --color-base-200: #f3fcf9;
+  --color-base-300: #e6f7f0;
+  --color-base-content: #333333;
+  --color-primary: #00bf7a;
+  --color-primary-content: #ffffff;
+  --color-secondary: #3366ff;
+  --color-secondary-content: #ffffff;
+  --color-accent: #00b8d9;
+  --color-accent-content: #ffffff;
+  --color-neutral: #0f3d2e;
+  --color-neutral-content: #ffffff;
+  --color-info: #00b8d9;
+  --color-info-content: #ffffff;
+  --color-success: #36b37e;
+  --color-success-content: #ffffff;
+  --color-warning: #ffab00;
+  --color-warning-content: #ffffff;
+  --color-error: #ff5630;
+  --color-error-content: #ffffff;
+
+  /* border radius */
+  --radius-selector: 1rem;
+  --radius-field: 0.25rem;
+  --radius-box: 1rem;
+
+  /* base sizes */
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  /* border size */
+  --border: 1px;
+
+  /* effects */
+  --depth: 1;
+  --noise: 0;
+}
+
+/* daisyui: {
+    themes: [
+      {
+        light: {
+          primary: '#00BF7A',
+          secondary: '#3366FF',
+          accent: '#00B8D9',
+          neutral: '#0f3d2e',
+          'base-100': '#FFFFFF',
+          'base-200': '#f3fcf9',
+          info: '#00B8D9',
+          success: '#36B37E',
+          warning: '#FFAB00',
+          error: '#FF5630'
+        },
+        dark: {
+          primary: '#42ffba',
+          secondary: '#2227bf',
+          accent: '#242291',
+          neutral: '#0f3d2e',
+          'base-100': '#1a1a1a',
+          'base-200': '#030c09'
+        },
+        mytheme: {
+          primary: '#0097d6',
+          secondary: '#0058ff',
+          accent: '#b89000',
+          neutral: '#091d15',
+          'base-100': '#fdffff',
+          info: '#0096fc',
+          success: '#7dc000',
+          warning: '#ffa600',
+          error: '#e13c58'
+        }
+      }
+    ]
+  } */
+/* @config '../../tailwind.config.js'; */
 
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,

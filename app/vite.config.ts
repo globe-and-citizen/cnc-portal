@@ -4,6 +4,7 @@ import { defineConfig, loadEnv, PluginOption } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import tailwindcss from '@tailwindcss/vite'
 
 export const ENV_LIST = ['VITE_APP_BACKEND_URL', 'VITE_APP_NETWORK_ALIAS']
 const SUPPORTED_NETWORKS = ['sepolia', 'hardhat', 'amoy', 'polygon']
@@ -26,6 +27,7 @@ export default defineConfig(({ mode }) => {
   }
   const plugins: PluginOption = [
     vue(),
+    tailwindcss(),
     nodePolyfills({
       globals: {
         Buffer: true,
