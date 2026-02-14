@@ -72,7 +72,7 @@ describe('SelectMemberWithTokenInput.vue', () => {
 
     expect(wrapper.find('[data-test="user-dropdown"]').exists()).toBe(true)
 
-    await nameInput.trigger('blur')
+    await nameInput.trigger('blur-sm')
     await wrapper.vm.$nextTick()
 
     await vi.advanceTimersByTime(500)

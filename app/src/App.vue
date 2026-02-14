@@ -21,7 +21,7 @@
 
           <!-- Content Wrapper -->
           <div
-            class="flex-grow transition-all duration-300 ease-in-out overflow-x-hidden overflow-y-scroll"
+            class="grow transition-all duration-300 ease-in-out overflow-x-hidden overflow-y-scroll"
           >
             <!-- Responsive Navbar -->
             <NavBar

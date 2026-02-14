@@ -56,7 +56,7 @@
             data-test="user-row"
           >
             <UserComponent
-              class="bg-base-200 p-4 flex-grow rounded-lg hover:bg-base-300"
+              class="bg-base-200 p-4 grow rounded-lg hover:bg-base-300"
               :user="user"
               :data-test="`user-dropdown-${user.address}`"
             />

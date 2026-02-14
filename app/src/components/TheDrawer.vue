@@ -28,7 +28,7 @@
       <ButtonUI
         variant="glass"
         @click="toggleCollapse"
-        class="shadow-sm"
+        class="shadow-xs"
         data-test="toggle-collapse"
       >
         <!-- I adde is collapsed class because data-test is not working on the icone -->
@@ -46,12 +46,12 @@
     </div>
     <!-- Team Display Group -->
     <div
-      class="px-3 flex items-center cursor-pointer transition-all duration-300 drop-shadow-sm"
+      class="px-3 flex items-center cursor-pointer transition-all duration-300 drop-shadow-xs"
       :class="[isCollapsed ? 'justify-center' : 'justify-between']"
       data-test="team-display"
       @click="toggleDropdown"
     >
-      <div class="rounded-xl flex items-center justify-center backdrop-blur-sm bg-emerald-100">
+      <div class="rounded-xl flex items-center justify-center backdrop-blur-xs bg-emerald-100">
         <span
           class="text-xl font-black text-emerald-700 w-11 h-11 flex items-center justify-center"
         >
@@ -66,7 +66,7 @@
         >
         <div class="relative">
           <button
-            class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
+            class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors duration-200 focus:outline-hidden"
           >
             <IconifyIcon icon="heroicons:chevron-up-down" class="w-4 h-4 text-gray-600" />
           </button>
@@ -81,7 +81,7 @@
             <!-- Team Dropdown -->
             <div
               v-if="isDropdownOpen"
-              class="absolute left-0 mt-2 bg-white rounded-2xl shadow-lg z-[9999]"
+              class="absolute left-0 mt-2 bg-white rounded-2xl shadow-lg z-9999"
               data-test="team-dropdown"
               ref="target"
             >
@@ -140,7 +140,7 @@
                 :to="item.route"
                 class="min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10"
                 :class="{
-                  'bg-emerald-500/10 shadow-sm': item.active,
+                  'bg-emerald-500/10 shadow-xs': item.active,
                   'hover:bg-gray-100': !item.active,
                   hidden: !item.show
                 }"
@@ -160,9 +160,9 @@
               <!-- if has children -->
               <div v-else>
                 <button
-                  class="w-full min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10 focus:outline-none"
+                  class="w-full min-w-11 min-h-11 flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 group transition-all duration-200 z-10 focus:outline-hidden"
                   :class="{
-                    'bg-emerald-500/10 shadow-sm': item.active,
+                    'bg-emerald-500/10 shadow-xs': item.active,
                     'hover:bg-gray-100 ': !item.active,
                     hidden: !item.show
                   }"
@@ -206,7 +206,7 @@
                         :to="child.route"
                         class="min-w-10 min-h-11 flex items-center gap-3 px-4 py-3 ml-8 rounded-xl text-gray-600 group transition-all duration-200 z-10 relative"
                         :class="{
-                          'bg-emerald-500/10 shadow-sm': child.active,
+                          'bg-emerald-500/10 shadow-xs': child.active,
                           'hover:bg-gray-100': !child.active,
                           hidden: !child.show
                         }"
@@ -238,7 +238,7 @@
 
     <!-- User Meta -->
     <div
-      class="w-full bg-base-200 flex flex-row justify-start gap-4 cursor-pointer transition-all duration-300 shadow-sm rounded-xl p-4"
+      class="w-full bg-base-200 flex flex-row justify-start gap-4 cursor-pointer transition-all duration-300 shadow-xs rounded-xl p-4"
       data-test="edit-user-card"
       :class="{ 'justify-center': isCollapsed }"
       @click="emits('openEditUserModal')"

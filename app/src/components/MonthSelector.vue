@@ -16,7 +16,7 @@
         :month-picker="true"
         :year-picker="true"
         auto-apply
-        class="bg-white rounded w-full sm:w-auto"
+        class="bg-white rounded-sm w-full sm:w-auto"
       >
         <template #trigger>
           <ButtonUI

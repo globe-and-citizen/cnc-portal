@@ -7,7 +7,7 @@
       <div
         v-for="(memberAddress, index) in _boardOfDirectors"
         :key="index"
-        class="rounded-xl overflow-hidden bg-gradient-to-t from-emerald-100 to-emarald-50 shadow-sm hover:shadow-md transition-all mt-4"
+        class="rounded-xl overflow-hidden bg-linear-to-t from-emerald-100 to-emarald-50 shadow-xs hover:shadow-md transition-all mt-4"
       >
         <UserComponentCol
           :user="teamStore.currentTeam?.members.find((m) => m.address === memberAddress) as User"

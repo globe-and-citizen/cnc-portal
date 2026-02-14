@@ -26,7 +26,7 @@
 
       <div
         v-if="remainingCount"
-        class="relative flex items-center justify-center rounded-full border-2 border-emerald-500 shadow-sm bg-gray-700 text-white text-xs font-semibold w-14 h-14"
+        class="relative flex items-center justify-center rounded-full border-2 border-emerald-500 shadow-xs bg-gray-700 text-white text-xs font-semibold w-14 h-14"
       >
         +{{ remainingCount }}
       </div>
@@ -41,7 +41,7 @@
         v-for="(preview, i) in resolvedPreviews"
         :key="preview.key || i"
         type="button"
-        class="relative rounded-md overflow-hidden hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 border border-gray-200 hover:border-emerald-500 w-16 h-16"
+        class="relative rounded-md overflow-hidden hover:scale-105 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 border border-gray-200 hover:border-emerald-500 w-16 h-16"
         @click="openPreview(i)"
       >
         <img
@@ -71,7 +71,7 @@
     <Teleport to="body">
       <div
         v-if="modal.isOpen"
-        class="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-90 p-4"
+        class="fixed inset-0 z-999 flex items-center justify-center bg-black bg-opacity-90 p-4"
         @click="closeModal"
         @keydown.esc="closeModal"
       >

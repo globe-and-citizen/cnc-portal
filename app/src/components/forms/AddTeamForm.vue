@@ -131,7 +131,7 @@
       >
         Previous
       </ButtonUI>
-      <div class="flex-grow"></div>
+      <div class="grow"></div>
       <ButtonUI
         v-if="currentStep === 1"
         variant="primary"

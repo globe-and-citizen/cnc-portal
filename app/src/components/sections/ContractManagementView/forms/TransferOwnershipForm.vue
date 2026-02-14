@@ -45,7 +45,7 @@
 
         <div class="h-20">
           <UserComponent
-            class="bg-base-200 rounded-lg p-4 flex-grow hover:cursor-pointer"
+            class="bg-base-200 rounded-lg p-4 grow hover:cursor-pointer"
             v-if="input.address"
             :user="input"
           />

@@ -38,10 +38,10 @@
           filteredTraderSafes.length > 0 ||
           filteredContracts.length > 0)
       "
-      class="left-0 top-full mt-4 w-full outline-none focus:outline-none focus:ring-0 z-10"
+      class="left-0 top-full mt-4 w-full outline-hidden focus:outline-hidden focus:ring-0 z-10"
       data-test="search-dropdown"
     >
-      <div class="shadow bg-base-100 rounded-box">
+      <div class="shadow-sm bg-base-100 rounded-box">
         <!-- Members -->
         <div
           v-if="filteredMembers.length > 0"
@@ -62,7 +62,7 @@
             @click="selectItem(member, 'member')"
           >
             <UserComponent
-              class="p-4 flex-grow rounded-lg bg-white hover:bg-base-300"
+              class="p-4 grow rounded-lg bg-white hover:bg-base-300"
               :user="member"
               :data-test="`user-dropdown-${member.address}`"
             />
@@ -91,7 +91,7 @@
             "
           >
             <TraderSafeComponent
-              class="p-4 flex-grow rounded-lg bg-white hover:bg-base-300"
+              class="p-4 grow rounded-lg bg-white hover:bg-base-300"
               :safe="{ name: traderSafe.name, address: traderSafe.address }"
               :data-test="`trader-safe-dropdown-${traderSafe.address}`"
             />
@@ -118,7 +118,7 @@
             @click="selectItem({ name: contract.type, address: contract.address }, 'contract')"
           >
             <ContractComponent
-              class="p-4 flex-grow rounded-lg bg-white hover:bg-base-300"
+              class="p-4 grow rounded-lg bg-white hover:bg-base-300"
               :user="{ name: contract.type, address: contract.address }"
               :data-test="`contract-dropdown-${contract.address}`"
             />

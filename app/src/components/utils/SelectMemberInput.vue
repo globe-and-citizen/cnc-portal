@@ -25,10 +25,10 @@
       <!-- Dropdown positioned relative to the input -->
       <div
         v-if="filteredUsers.length > 0"
-        class="left-0 top-full mt-4 w-full outline-none focus:outline-none focus:ring-0"
+        class="left-0 top-full mt-4 w-full outline-hidden focus:outline-hidden focus:ring-0"
         data-test="user-dropdown"
       >
-        <div class="shadow bg-base-100 rounded-box">
+        <div class="shadow-sm bg-base-100 rounded-box">
           <div class="grid grid-cols-2 gap-4" data-test="user-search-results">
             <div
               v-for="user in filteredUsers.slice(0, 8)"
@@ -41,7 +41,7 @@
               data-test="user-row"
             >
               <UserComponent
-                class="p-4 flex-grow rounded-lg"
+                class="p-4 grow rounded-lg"
                 :class="
                   disableTeamMembers && isTeamMember(user)
                     ? 'bg-gray-200 opacity-60'
@@ -53,7 +53,7 @@
               <!-- Tooltip for users already in team -->
               <div
                 v-if="disableTeamMembers && isTeamMember(user)"
-                class="absolute hidden group-hover:block bg-gray-800 text-white text-sm rounded px-2 py-1 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap z-10"
+                class="absolute hidden group-hover:block bg-gray-800 text-white text-sm rounded-sm px-2 py-1 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap z-10"
               >
                 Already in your team
               </div>
