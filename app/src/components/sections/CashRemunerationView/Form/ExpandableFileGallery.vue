@@ -37,7 +37,7 @@
         v-for="(preview, i) in resolvedPreviews"
         :key="preview.key || i"
         type="button"
-        class="relative rounded-md overflow-hidden hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 border border-gray-200 hover:border-emerald-500 w-16 h-16"
+        class="relative rounded-md overflow-hidden hover:scale-105 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 border border-gray-200 hover:border-emerald-500 w-16 h-16"
         @click="openPreview(i)"
       >
         <img
@@ -67,7 +67,7 @@
     <Teleport to="body">
       <div
         v-if="modal.isOpen"
-        class="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-90 p-4"
+        class="fixed inset-0 z-999 flex items-center justify-center bg-black bg-opacity-90 p-4"
         @click="closeModal"
         @keydown.esc="closeModal"
       >
@@ -102,14 +102,14 @@
 
             <div
               v-else-if="isViewable(current.fileName)"
-              class="bg-white rounded-2xl shadow-xl border border-gray-200 w-[768px] h-[1024px] max-w-[90vw] max-h-[90vh] overflow-hidden"
+              class="bg-white rounded-2xl shadow-xl border border-gray-200 w-3xl h-256 max-w-[90vw] max-h-[90vh] overflow-hidden"
             >
               <iframe :src="current.previewUrl" class="w-full h-full" />
             </div>
 
             <div
               v-else-if="isCompressed(current.fileName)"
-              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-[500px] min-h-[400px]"
+              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-125 min-h-100"
             >
               <Icon icon="mdi:folder-zip" class="w-40 h-40 text-amber-500" />
               <p class="text-base text-gray-500">Compressed file - Download required</p>
@@ -117,7 +117,7 @@
 
             <div
               v-else
-              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-[500px] min-h-[400px]"
+              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-125 min-h-100"
             >
               <Icon :icon="getFileIcon(current.fileName)" class="w-40 h-40 text-gray-400" />
               <p class="text-base text-gray-500">Download required for this file type</p>

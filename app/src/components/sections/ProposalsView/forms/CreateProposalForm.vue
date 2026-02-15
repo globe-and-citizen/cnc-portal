@@ -59,7 +59,7 @@
           <span class="label-text">Start Date</span>
         </label>
         <div
-          class="border rounded-lg p-2 bg-white shadow-sm"
+          class="border rounded-lg p-2 bg-white shadow-xs"
           :class="{ 'border-error': $v.startDate.$error }"
         >
           <VueDatePicker
@@ -79,7 +79,7 @@
           <span class="label-text">End Date</span>
         </label>
         <div
-          class="border rounded-lg p-2 bg-white shadow-sm"
+          class="border rounded-lg p-2 bg-white shadow-xs"
           :class="{ 'border-error': $v.endDate.$error }"
         >
           <VueDatePicker

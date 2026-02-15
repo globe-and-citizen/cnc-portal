@@ -6,7 +6,7 @@
         <span class="label-text-alt">Balance: {{ selectedToken?.balance }}</span>
       </slot>
     </div>
-    <div class="input input-bordered flex items-center">
+    <div class="w-full input input-bordered flex items-center">
       <input
         type="text"
         class="grow w-24"

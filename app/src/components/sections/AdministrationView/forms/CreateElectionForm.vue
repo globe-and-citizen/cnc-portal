@@ -29,7 +29,7 @@
         </div>
 
         <textarea
-          class="textarea textarea-primary h-24"
+          class="textarea textarea-primary h-24 w-full"
           placeholder="Description"
           v-model="newProposalInput.description"
           data-test="descriptionInput"
@@ -67,7 +67,7 @@
           </div>
 
           <div class="mb-4">
-            <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+            <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
               <span class="w-24">Start Date</span>
               <div class="grow" data-test="date-picker">
                 <VueDatePicker
@@ -88,7 +88,7 @@
           </div>
 
           <div class="mb-4">
-            <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+            <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
               <span class="w-24">End Date</span>
               <div class="grow" data-test="date-picker">
                 <VueDatePicker

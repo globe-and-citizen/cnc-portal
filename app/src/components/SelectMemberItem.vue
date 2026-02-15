@@ -28,7 +28,7 @@
     <div
       v-if="isOpen.mount"
       v-show="isOpen.show"
-      class="absolute left-0 mt-2 w-full rounded-box bg-base-100 shadow max-h-72 overflow-y-auto z-50"
+      class="absolute left-0 mt-2 w-full rounded-box bg-base-100 shadow-sm max-h-72 overflow-y-auto z-50"
       data-test="select-member-item-dropdown"
     >
       <!-- Search input -->

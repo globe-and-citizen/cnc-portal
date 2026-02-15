@@ -13,7 +13,7 @@
           <div class="flex items-start gap-3">
             <IconifyIcon
               icon="heroicons:exclamation-triangle"
-              class="w-6 h-6 text-red mt-0.5 flex-shrink-0"
+              class="w-6 h-6 text-red mt-0.5 shrink-0"
             />
             <div class="space-y-2">
               <p class="font-semibold text-red">Warning: Transaction Conflict Detected</p>

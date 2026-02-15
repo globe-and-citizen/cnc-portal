@@ -6,7 +6,7 @@
     data-test="member-contracts-input"
   >
     <label
-      class="input input-bordered flex items-center gap-2 input-md"
+      class="w-full input input-bordered flex items-center gap-2 input-md"
       :data-test="`member-contracts-input`"
     >
       <input
@@ -21,7 +21,6 @@
       |
       <input
         type="text"
-        class="grow"
         ref="addressInput"
         v-model="input.address"
         :data-test="`member-contracts-address-input`"
@@ -34,7 +33,7 @@
       v-if="
         showDropdown && !disabled && (filteredMembers.length > 0 || filteredContracts.length > 0)
       "
-      class="left-0 top-full mt-4 w-full outline-none focus:outline-none focus:ring-0 z-10"
+      class="left-0 top-full mt-4 w-full outline-hidden focus:outline-hidden focus:ring-0 z-10"
       data-test="search-dropdown"
     >
       <div class="shadow bg-base-100 rounded-box">

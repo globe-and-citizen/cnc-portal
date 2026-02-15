@@ -11,7 +11,7 @@
         v-if="preview.isImage && preview.previewUrl"
         type="button"
         :class="[
-          'group relative overflow-hidden rounded-md w-full focus:outline-none border border-gray-200 hover:border-emerald-500 transition-all',
+          'group relative overflow-hidden rounded-md w-full focus:outline-hidden border border-gray-200 hover:border-emerald-500 transition-all',
           itemHeightClass,
           imageClass
         ]"
@@ -66,7 +66,7 @@
       <!-- Remove button -->
       <button
         v-if="canRemove"
-        class="absolute -top-1 -right-1 h-6 w-6 flex items-center justify-center rounded-full bg-error text-white text-xs opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:shadow"
+        class="absolute -top-1 -right-1 h-6 w-6 flex items-center justify-center rounded-full bg-error text-white text-xs opacity-0 group-hover:opacity-100 transition-all shadow-xs hover:shadow-sm"
         @click.stop="emit('remove', index)"
         data-test="remove-button"
         aria-label="Remove file"
@@ -79,7 +79,7 @@
     <Teleport to="body">
       <div
         v-if="modalState.type === 'image'"
-        class="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-90 p-4"
+        class="fixed inset-0 z-999 flex items-center justify-center bg-black bg-opacity-90 p-4"
         @click="closeModal"
         @keydown.esc="closeModal"
         data-test="upload-lightbox-modal"
@@ -123,7 +123,7 @@
     <Teleport to="body">
       <div
         v-if="modalState.type === 'document'"
-        class="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-80 p-4"
+        class="fixed inset-0 z-999 flex items-center justify-center bg-black bg-opacity-80 p-4"
         @click="closeModal"
         @keydown.esc="closeModal"
         data-test="upload-doc-modal"
@@ -157,7 +157,7 @@
             </div>
           </div>
 
-          <div class="flex-1 overflow-hidden rounded border border-gray-200 bg-gray-50">
+          <div class="flex-1 overflow-hidden rounded-sm border border-gray-200 bg-gray-50">
             <!-- PDF Preview -->
             <iframe
               v-if="modalState.contentType === 'pdf'"
