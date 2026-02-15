@@ -84,8 +84,7 @@ import { useFocus, watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
 import type { User } from '@/types'
 import { useTeamStore } from '@/stores/teamStore'
-import { useQuery } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
+import { useGetSearchUsersQuery } from '@/queries'
 
 interface Props {
   disabled?: boolean
@@ -123,27 +122,17 @@ const lower = (a?: string) => (a ?? '').toLowerCase()
 // Build query parameters reactively from the single input; backend will search name OR address
 const searchQuery = computed(() => {
   const query = input.value
-  if (!query) return null
+  if (!query) return undefined
   return query
 })
 
-// Use TanStack Query for user search
 const {
-  data: queryData,
+  data: users,
   isFetching,
   refetch: refetchUsers
-} = useQuery({
-  queryKey: ['users', searchQuery],
-  queryFn: async () => {
-    const query = searchQuery.value
-    const url = query ? `user?search=${query}&limit=100` : 'user?limit=100'
-    const { data } = await apiClient.get<{ users: User[] }>(url)
-    return data
-  },
-  enabled: !props.onlyTeamMembers
+} = useGetSearchUsersQuery({
+  queryParams: { search: searchQuery, limit: 100 }
 })
-
-const users = computed(() => queryData.value)
 
 const isTeamMember = (user: User): boolean => {
   const members: User[] = teamStore.currentTeamMeta.data?.members ?? []
