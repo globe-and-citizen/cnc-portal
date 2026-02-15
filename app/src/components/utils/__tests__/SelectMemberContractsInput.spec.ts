@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 import SelectMemberContractsInput from '../SelectMemberContractsInput.vue'
-import { getTraderSafes } from '@/utils/traderSafes'
 import { mockTeamStore } from '@/tests/mocks'
 
 interface Item {
@@ -10,11 +9,6 @@ interface Item {
   address: string
   type?: 'member' | 'contract'
 }
-
-// Mock getTraderSafes utility (not part of centralized mocks)
-vi.mock('@/utils/traderSafes', () => ({
-  getTraderSafes: vi.fn(() => [])
-}))
 
 // Test data for member/contract scenarios
 const testTeamData = {
