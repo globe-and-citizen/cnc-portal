@@ -43,7 +43,7 @@
       <span class="w-52" data-test="name-label">Name</span>
       <input
         type="text"
-        class="grow input input-bordered  input-md"
+        class="grow input input-bordered input-md"
         data-test="name-input"
         placeholder="John Doe"
         v-model="userCopy.name"

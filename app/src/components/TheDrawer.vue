@@ -10,12 +10,12 @@
     >
       <div class="flex items-center gap-4" :class="{ 'justify-center w-full': isCollapsed }">
         <div class="relative group cursor-pointer p-3">
-            <img
-              v-if="!isCollapsed"
-              src="../assets/Logo.png"
-              alt="CNC Portal"
-              class="relative w-32"
-            />
+          <img
+            v-if="!isCollapsed"
+            src="../assets/Logo.png"
+            alt="CNC Portal"
+            class="relative w-32"
+          />
           <img
             v-else
             src="../assets/LogoWithoutText.png"

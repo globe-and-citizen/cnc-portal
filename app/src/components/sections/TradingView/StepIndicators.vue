@@ -32,7 +32,6 @@ defineProps<{
 </script>
 
 <style scoped>
-
 .animate-fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
