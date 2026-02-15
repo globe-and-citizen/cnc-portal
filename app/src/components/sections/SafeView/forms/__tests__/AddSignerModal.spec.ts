@@ -25,34 +25,43 @@ const MOCK_USERS: User[] = [
 const MOCK_CURRENT_OWNERS = ['0x1111111111111111111111111111111111111111']
 const MOCK_SAFE_ADDRESS = '0xSafeAddress123456789012345678901234567890' as `0x${string}`
 
-// Hoisted mocks
-const { mockToastStore, mockUseSafeOwnerManagement } = vi.hoisted(() => ({
-  mockToastStore: {
-    addSuccessToast: vi.fn(),
-    addErrorToast: vi.fn()
-  },
-  mockUseSafeOwnerManagement: vi.fn()
-}))
-
-vi.mock('@/stores', () => ({
-  useToastStore: vi.fn(() => mockToastStore)
-}))
-
-vi.mock('@/composables/safe', () => ({
-  useSafeOwnerManagement: mockUseSafeOwnerManagement
-}))
-
-vi.mock('viem', async () => {
-  const actual = await vi.importActual('viem')
-  return {
-    ...actual,
-    isAddress: vi.fn((address: string) => {
-      return address && address.startsWith('0x') && address.length === 42
-    })
-  }
-})
-
 let wrapper: VueWrapper<AddSignerModalInstance>
+
+const getMockToastStore = () =>
+  (
+    globalThis as {
+      __mockToastStore?: {
+        addSuccessToast: ReturnType<typeof vi.fn>
+        addErrorToast: ReturnType<typeof vi.fn>
+      }
+    }
+  ).__mockToastStore
+
+const getToastStoreOrThrow = () => {
+  const store = getMockToastStore()
+  if (!store) {
+    throw new Error('Mock toast store not available')
+  }
+  return store
+}
+
+const getMockUseSafeOwnerManagement = () =>
+  (
+    globalThis as {
+      __mockUseSafeOwnerManagement?: {
+        isUpdating: { value: boolean }
+        updateOwners: ReturnType<typeof vi.fn>
+      }
+    }
+  ).__mockUseSafeOwnerManagement
+
+const getSafeOwnerManagementOrThrow = () => {
+  const mock = getMockUseSafeOwnerManagement()
+  if (!mock) {
+    throw new Error('Mock useSafeOwnerManagement not available')
+  }
+  return mock
+}
 
 const createWrapper = (
   props = {},
@@ -60,12 +69,12 @@ const createWrapper = (
 ): VueWrapper<AddSignerModalInstance> => {
   const mockUpdateOwners = vi.fn()
   const mockIsUpdating = ref(false)
-
-  mockUseSafeOwnerManagement.mockReturnValue({
-    isUpdating: mockIsUpdating,
-    updateOwners: mockUpdateOwners,
-    ...mockComposableOverrides
-  })
+  const safeOwnerManagement = getSafeOwnerManagementOrThrow()
+  safeOwnerManagement.isUpdating =
+    (mockComposableOverrides as { isUpdating?: { value: boolean } }).isUpdating ?? mockIsUpdating
+  safeOwnerManagement.updateOwners =
+    (mockComposableOverrides as { updateOwners?: ReturnType<typeof vi.fn> }).updateOwners ??
+    mockUpdateOwners
 
   return mount(AddSignerModal, {
     props: {
@@ -189,7 +198,7 @@ describe('AddSignerModal', () => {
       await wrapper.vm.handleAddSigners()
       await flushPromises()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+      expect(getToastStoreOrThrow().addErrorToast).toHaveBeenCalledWith(
         'Please add at least one valid signer'
       )
     })
@@ -203,7 +212,9 @@ describe('AddSignerModal', () => {
       await wrapper.vm.handleAddSigners()
       await flushPromises()
 
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Signers added successfully')
+      expect(getToastStoreOrThrow().addSuccessToast).toHaveBeenCalledWith(
+        'Signers added successfully'
+      )
       expect(wrapper.emitted('signer-added')).toBeTruthy()
       expect(wrapper.emitted('close-modal')).toBeTruthy()
     })
@@ -217,7 +228,7 @@ describe('AddSignerModal', () => {
       await wrapper.vm.handleAddSigners()
       await flushPromises()
 
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
+      expect(getToastStoreOrThrow().addSuccessToast).toHaveBeenCalledWith(
         'Signer addition proposal submitted successfully'
       )
     })
@@ -231,7 +242,7 @@ describe('AddSignerModal', () => {
       await wrapper.vm.handleAddSigners()
       await flushPromises()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to add signers')
+      expect(getToastStoreOrThrow().addErrorToast).toHaveBeenCalledWith('Failed to add signers')
     })
 
     it('should handle updateOwners error with specific message', async () => {
@@ -243,7 +254,7 @@ describe('AddSignerModal', () => {
       await wrapper.vm.handleAddSigners()
       await flushPromises()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+      expect(getToastStoreOrThrow().addErrorToast).toHaveBeenCalledWith(
         'Failed to add signers: Network error'
       )
     })
