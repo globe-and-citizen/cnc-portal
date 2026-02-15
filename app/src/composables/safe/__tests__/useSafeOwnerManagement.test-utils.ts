@@ -91,7 +91,7 @@ vi.mock('@wagmi/vue', () => ({
   useChainId: mockUseChainId
 }))
 
-vi.mock('@/queries/safe.queries', () => ({
+vi.mock('@/queries/safe.mutations', () => ({
   useUpdateSafeOwnersMutation: () => mockUpdateMutation,
   useProposeTransactionMutation: () => mockProposeMutation
 }))

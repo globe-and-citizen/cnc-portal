@@ -57,11 +57,7 @@
           You can add team members now or invite them later.
         </div>
 
-        <MultiSelectMemberInput
-          v-model="teamData.members"
-          :is-creating-team="true"
-          :disable-team-members="false"
-        />
+        <MultiSelectMemberInput v-model="teamData.members" :disable-team-members="false" />
         <div
           class="pl-4 pt-4 text-sm text-red-500"
           data-test="create-team-error"
@@ -283,5 +279,10 @@ onMounted(() => {
   onClickOutside(formRef, () => {
     showDropdown.value = false
   })
+})
+
+defineExpose({
+  $v,
+  $vInvestor
 })
 </script>
