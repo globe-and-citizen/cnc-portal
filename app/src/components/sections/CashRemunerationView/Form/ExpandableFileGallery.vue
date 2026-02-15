@@ -6,29 +6,25 @@
     @mouseleave="isExpanded = false"
   >
     <!-- Vue réduite -->
-    <div v-show="!isExpanded" class="flex items-center -space-x-3">
-      <div
-        v-for="(preview, i) in displayedPreviews"
-        :key="preview.key || i"
-        class="relative rounded-full border-2 border-emerald-500 shadow-xl overflow-hidden bg-gray-100 w-14 h-14"
-        :style="{ zIndex: displayedPreviews.length - i }"
-      >
-        <img
-          v-if="preview.isImage && preview.previewUrl"
-          :src="preview.previewUrl"
-          :alt="preview.fileName"
-          class="w-full h-full object-cover"
-        />
-        <div v-else class="w-full h-full flex items-center justify-center bg-gray-200">
-          <Icon :icon="getFileIcon(preview.fileName)" class="w-4 h-4 text-gray-500" />
+    <div v-show="!isExpanded" class="avatar-group rtl:space-x-reverse -space-x-6">
+      <div v-for="(preview, i) in displayedPreviews" :key="preview.key || i" class="avatar">
+        <div class="w-12 rounded-full overflow-hidden">
+          <img
+            v-if="preview.isImage && preview.previewUrl"
+            :src="preview.previewUrl"
+            :alt="preview.fileName"
+            class="object-cover"
+          />
+          <div v-else class="w-full h-full flex items-center justify-center bg-emerald-100">
+            <Icon :icon="getFileIcon(preview.fileName)" class="w-4 h-4 text-gray-500" />
+          </div>
         </div>
       </div>
 
-      <div
-        v-if="remainingCount"
-        class="relative flex items-center justify-center rounded-full border-2 border-emerald-500 shadow-xs bg-gray-700 text-white text-xs font-semibold w-14 h-14"
-      >
-        +{{ remainingCount }}
+      <div v-if="remainingCount" class="avatar placeholder">
+        <div class="bg-neutral text-neutral-content w-12 rounded-full">
+          <span>+{{ remainingCount }}</span>
+        </div>
       </div>
     </div>
 
@@ -106,7 +102,7 @@
 
             <div
               v-else-if="isViewable(current.fileName)"
-              class="bg-white rounded-2xl shadow-xl border border-gray-200 w-[768px] h-[1024px] max-w-[90vw] max-h-[90vh] overflow-hidden"
+              class="bg-white rounded-2xl shadow-xl border border-gray-200 w-3xl h-256 max-w-[90vw] max-h-[90vh] overflow-hidden"
             >
               <iframe :src="current.previewUrl" class="w-full h-full" />
             </div>

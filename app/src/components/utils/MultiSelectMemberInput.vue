@@ -13,9 +13,10 @@
       @selectMember="addMember"
       class="col-span-2"
       :hiddenMembers="teamMembers"
+      :disable-team-members="props.disableTeamMembers"
       :show-on-focus="props.showOnFocus"
       :only-team-members="props.onlyTeamMembers"
-      :disable-team-members="props.disableTeamMembers"
+      :current-safe-owners="props.currentSafeOwners"
     />
   </div>
 </template>
@@ -28,18 +29,16 @@ import type { User } from '@/types'
 
 interface Props {
   showOnFocus?: boolean
-  filterByTeam?: boolean
-  isCreatingTeam?: boolean // True when creating a new team, false when adding members to existing team
   onlyTeamMembers?: boolean
   disableTeamMembers?: boolean
+  currentSafeOwners?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showOnFocus: false,
-  filterByTeam: false,
-  isCreatingTeam: false,
   onlyTeamMembers: false,
-  disableTeamMembers: false
+  disableTeamMembers: false,
+  currentSafeOwners: () => []
 })
 
 const input = ref('')

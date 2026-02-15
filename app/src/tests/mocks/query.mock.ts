@@ -1,7 +1,30 @@
 import { ref } from 'vue'
 import { vi } from 'vitest'
-import type { Team, Member, Wage, Notification, WeeklyClaim } from '@/types'
+import type { Team, Member, Wage, Notification, WeeklyClaim, User } from '@/types'
 import type { HealthCheckResponse } from '@/queries/health.queries'
+
+export const mockMembersData: User[] = [
+  {
+    address: '0x1234567890123456789012345678901234567890',
+    name: 'Member 1',
+    imageUrl: 'https://example.com/avatar1.jpg'
+  },
+  {
+    address: '0x0987654321098765432109876543210987654321',
+    name: 'Member 2',
+    imageUrl: 'https://example.com/avatar2.jpg'
+  },
+  {
+    address: '0x9876543210987654321098765432109876543210',
+    name: 'Member 3',
+    imageUrl: 'https://example.com/avatar3.jpg'
+  },
+  {
+    address: '0x1111111111111111111111111111111111111111',
+    name: 'Bob',
+    imageUrl: 'https://example.com/avatar-bob.jpg'
+  }
+]
 
 /**
  * Team Query Mocks
@@ -11,21 +34,9 @@ export const mockTeamData: Team = {
   name: 'Test Team',
   description: 'Test Team Description',
   members: [
-    {
-      address: '0x1234567890123456789012345678901234567890',
-      name: 'Member 1',
-      imageUrl: 'https://example.com/avatar1.jpg'
-    },
-    {
-      address: '0x0987654321098765432109876543210987654321',
-      name: 'Member 2',
-      imageUrl: 'https://example.com/avatar2.jpg'
-    },
-    {
-      address: '0x1111111111111111111111111111111111111111',
-      name: 'Bob',
-      imageUrl: 'https://example.com/avatar-bob.jpg'
-    }
+    mockMembersData[0] as Member,
+    mockMembersData[1] as Member,
+    mockMembersData[3] as Member
   ] as Member[],
   teamContracts: [
     {

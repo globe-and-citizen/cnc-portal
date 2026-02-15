@@ -36,17 +36,23 @@
               @click="handleSelectMember(user)"
               class="flex items-center relative group"
               :class="
-                disableTeamMembers && isTeamMember(user) ? 'cursor-not-allowed' : 'cursor-pointer'
+                isSafeOwner(user)
+                  ? 'cursor-not-allowed'
+                  : disableTeamMembers && isTeamMember(user)
+                    ? 'cursor-not-allowed'
+                    : 'cursor-pointer'
               "
               data-test="user-row"
             >
               <UserComponent
                 class="p-4 grow rounded-lg"
-                :class="
+                :class="[
                   disableTeamMembers && isTeamMember(user)
                     ? 'bg-gray-200 opacity-60'
-                    : 'bg-white hover:bg-base-300'
-                "
+                    : isSafeOwner(user)
+                      ? 'bg-gray-100 opacity-60'
+                      : 'bg-white hover:bg-base-300'
+                ]"
                 :user="user"
                 :data-test="`user-dropdown-${user.address}`"
               />
@@ -57,6 +63,13 @@
               >
                 Already in your team
               </div>
+              <!-- Tooltip for safe owners -->
+              <div
+                v-else-if="isSafeOwner(user)"
+                class="absolute hidden group-hover:block bg-gray-800 text-white text-sm rounded px-2 py-1 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap z-10"
+              >
+                Already a safe owner
+              </div>
             </div>
           </div>
         </div>
@@ -66,12 +79,12 @@
 </template>
 
 <script lang="ts" setup>
-import { useGetSearchUsersQuery } from '@/queries/user.queries'
 import { ref, computed, watch } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
 import type { User } from '@/types'
 import { useTeamStore } from '@/stores/teamStore'
+import { useGetSearchUsersQuery } from '@/queries'
 
 interface Props {
   disabled?: boolean
@@ -79,13 +92,15 @@ interface Props {
   onlyTeamMembers?: boolean
   hiddenMembers: User[]
   disableTeamMembers: boolean
+  currentSafeOwners?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showOnFocus: false,
   onlyTeamMembers: false,
   hiddenMembers: () => [],
-  disableTeamMembers: false
+  disableTeamMembers: false,
+  currentSafeOwners: () => []
 })
 
 const teamStore = useTeamStore()
@@ -104,30 +119,37 @@ const showDropdown = ref(false)
 // Small helpers and precomputed sets for clarity/perf
 const lower = (a?: string) => (a ?? '').toLowerCase()
 
-// Debounced search value for the query
-const debouncedSearch = ref('')
+// Build query parameters reactively from the single input; backend will search name OR address
+const searchQuery = computed(() => {
+  const query = input.value
+  if (!query) return undefined
+  return query
+})
 
-// Use TanStack Query for user search
 const {
-  data: usersData,
+  data: users,
   isFetching,
-  refetch
+  refetch: refetchUsers
 } = useGetSearchUsersQuery({
-  queryParams: { search: debouncedSearch, limit: 100 }
+  queryParams: { search: searchQuery, limit: 100 }
 })
 
 const isTeamMember = (user: User): boolean => {
-  const members: User[] = teamStore.currentTeam?.members ?? []
+  const members: User[] = teamStore.currentTeamMeta.data?.members ?? []
   return members.some((member) => lower(member.address) === lower(user.address))
+}
+
+const isSafeOwner = (user: User): boolean => {
+  return props.currentSafeOwners?.some((owner) => lower(owner) === lower(user.address)) ?? false
 }
 
 const filteredUsers = computed<User[]>(() => {
   let members: User[] = []
   if (props.onlyTeamMembers) {
     // get an empty array or the current team members
-    members = teamStore.currentTeam?.members ?? []
+    members = teamStore.currentTeamMeta.data?.members ?? []
   } else {
-    members = usersData.value ? (usersData.value.users as User[]) : []
+    members = users.value ? (users.value.users as User[]) : []
   }
 
   // filter this members and remove hidden Members
@@ -139,9 +161,9 @@ const filteredUsers = computed<User[]>(() => {
 
 watchDebounced(
   input,
-  async (newValue) => {
+  async () => {
     if (!props.onlyTeamMembers) {
-      debouncedSearch.value = newValue
+      await refetchUsers()
     }
   },
   { debounce: 500, maxWait: 5000 }
@@ -154,14 +176,20 @@ watch(searchInputFocus, (newVal) => {
 })
 
 const handleSelectMember = async (member: User) => {
+  // Prevent selection if already a safe owner
+  if (isSafeOwner(member)) {
+    return
+  }
+
+  // Prevent selection if already in team
   if (props.disableTeamMembers && isTeamMember(member)) {
     return
   }
+
   showDropdown.value = false
   input.value = ''
   emit('selectMember', member)
-  debouncedSearch.value = ''
-  await refetch()
+  await refetchUsers()
   inputSearch.value?.focus()
 }
 </script>

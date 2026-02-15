@@ -4,7 +4,8 @@ import {
   mockUseBackendWake,
   mockUseAuth,
   mockUseContractBalance,
-  mockUseSafeSendTransaction
+  mockUseSafeSendTransaction,
+  mockUseSafeOwnerManagement
 } from '@/tests/mocks/composables.mock'
 
 /**
@@ -134,7 +135,7 @@ vi.mock('@/queries/weeklyClaim.queries', () => ({
 /**
  * Mock Safe Queries (safe.queries.ts)
  */
-vi.mock('@/queries/safe.queries', () => ({
+vi.mock('@/queries/safe.mutations', () => ({
   useGetSafeInfoQuery: vi.fn(queryMocks.useGetSafeInfoQuery),
   useSafePendingTransactionsQuery: vi.fn(queryMocks.useSafePendingTransactionsQuery),
   useDeploySafeMutation: vi.fn(queryMocks.useDeploySafeMutation),
@@ -180,3 +181,17 @@ vi.mock('@/composables/useContractBalance', () => ({
 vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
   useSafeSendTransaction: vi.fn(() => mockUseSafeSendTransaction)
 }))
+
+/**
+ * Mock useSafeOwnerManagement composable
+ */
+vi.mock('@/composables/safe', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useSafeOwnerManagement: vi.fn(() => mockUseSafeOwnerManagement)
+  }
+})
+;(
+  globalThis as { __mockUseSafeOwnerManagement?: typeof mockUseSafeOwnerManagement }
+).__mockUseSafeOwnerManagement = mockUseSafeOwnerManagement
