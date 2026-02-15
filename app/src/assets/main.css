@@ -15,25 +15,25 @@
   --color-base-300: #e6f7f0;
   --color-base-content: #333333;
   --color-primary: #00bf7a;
-  --color-primary-content: #ffffff;
+  --color-primary-content: #000;
   --color-secondary: #3366ff;
-  --color-secondary-content: #ffffff;
+  /* --color-secondary-content: #000; */
   --color-accent: #00b8d9;
-  --color-accent-content: #ffffff;
+  /* --color-accent-content: #ffffff; */
   --color-neutral: #0f3d2e;
-  --color-neutral-content: #ffffff;
+  /* --color-neutral-content: #ffffff; */
   --color-info: #00b8d9;
-  --color-info-content: #ffffff;
+  /* --color-info-content: #ffffff; */
   --color-success: #36b37e;
-  --color-success-content: #ffffff;
+  --color-success-content: #000;
   --color-warning: #ffab00;
-  --color-warning-content: #ffffff;
+  /* --color-warning-content: #000; */
   --color-error: #ff5630;
-  --color-error-content: #ffffff;
+  /* --color-error-content: #ffffff; */
 
   /* border radius */
   --radius-selector: 1rem;
-  --radius-field: 0.25rem;
+  --radius-field: 0.5rem;
   --radius-box: 1rem;
 
   /* base sizes */
