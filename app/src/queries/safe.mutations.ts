@@ -3,6 +3,7 @@ import type { SafeSignature, SafeDeploymentParams } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN, type ProposeTransactionParams } from '@/types/safe'
 import externalApiClient from '@/lib/external.axios.ts'
 import { safeKeys } from './safe.queries'
+import type { ProposeTransactionBody, ExecuteTransactionParams } from '@/types'
 
 // ============================================================================
 // Deploy Safe - Mutation
@@ -35,14 +36,6 @@ export function useDeploySafeMutation() {
 // ============================================================================
 // POST /api/v1/multisig-transactions/{safeTxHash}/confirmations/ - Approve
 // ============================================================================
-
-/**
- * Path parameters for Safe transaction endpoints
- */
-export interface SafeTransactionPathParams {
-  /** Safe transaction hash */
-  safeTxHash: string
-}
 
 /**
  * Request body for approving a transaction
@@ -108,40 +101,6 @@ export function useApproveTransactionMutation() {
 // ============================================================================
 
 /**
- * Request body for proposing a transaction
- */
-export interface ProposeTransactionBody {
-  /** Recipient address */
-  to: string
-  /** Transaction value */
-  value: string
-  /** Transaction data */
-  data: string
-  /** Operation type */
-  operation: number
-  /** Safe transaction gas */
-  safeTxGas: string
-  /** Base gas */
-  baseGas: string
-  /** Gas price */
-  gasPrice: string
-  /** Gas token address */
-  gasToken: string
-  /** Refund receiver address */
-  refundReceiver: string
-  /** Transaction nonce */
-  nonce: number
-  /** Contract transaction hash */
-  contractTransactionHash: string
-  /** Sender address */
-  sender: string
-  /** Signature */
-  signature: string
-  /** Origin information */
-  origin: string | null
-}
-
-/**
  * Mutation: Propose a Safe transaction
  *
  * @endpoint POST {txService.url}/api/v1/safes/{safeAddress}/multisig-transactions/
@@ -164,16 +123,7 @@ export function useProposeTransactionMutation() {
 
       // Body: transaction data to propose
       const body: ProposeTransactionBody = {
-        to: transactionData.to,
-        value: transactionData.value,
-        data: transactionData.data,
-        operation: transactionData.operation,
-        safeTxGas: transactionData.safeTxGas,
-        baseGas: transactionData.baseGas,
-        gasPrice: transactionData.gasPrice,
-        gasToken: transactionData.gasToken,
-        refundReceiver: transactionData.refundReceiver,
-        nonce: transactionData.nonce,
+        ...transactionData,
         contractTransactionHash: safeTxHash,
         sender,
         signature,
@@ -196,26 +146,6 @@ export function useProposeTransactionMutation() {
 // ============================================================================
 // Execute Safe transaction - Mutation
 // ============================================================================
-
-/**
- * Combined parameters for useExecuteTransactionMutation
- */
-export interface ExecuteTransactionParams {
-  pathParams: {
-    /** Safe address for query invalidation */
-    safeAddress: string
-    /** Safe transaction hash */
-    safeTxHash: string
-  }
-  queryParams: {
-    /** Chain ID for transaction service lookup */
-    chainId: number
-  }
-  body?: {
-    /** Optional blockchain transaction hash */
-    txHash?: string
-  }
-}
 
 /**
  * Mutation: Execute a Safe transaction

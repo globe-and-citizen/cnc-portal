@@ -1,10 +1,17 @@
 import { useQuery } from '@tanstack/vue-query'
-import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 import externalApiClient from '@/lib/external.axios.ts'
 import type { SafeInfo, SafeTransaction } from '@/types/safe'
 import { TX_SERVICE_BY_CHAIN } from '@/types/safe'
 import { currentChainId } from '@/constant/index'
+import type {
+  GetSafeTransactionParams,
+  GetSafeInfoParams,
+  GetSafeTransactionsParams,
+  GetSafeIncomingTransfersParams,
+  SafeIncomingTransfersResponse,
+  SafeIncomingTransfer
+} from '@/types'
 
 const chainId = currentChainId
 const txService = TX_SERVICE_BY_CHAIN[chainId]
@@ -30,27 +37,6 @@ export const safeKeys = {
 // ============================================================================
 // GET /api/v1/safes/{safeAddress}/ - Fetch Safe info
 // ============================================================================
-
-/**
- * Path parameters for Safe info endpoint
- */
-export interface GetSafeInfoPathParams {
-  /** Safe address */
-  safeAddress: MaybeRefOrGetter<string | undefined>
-}
-
-/**
- * Query parameters for Safe info (none for this endpoint)
- */
-export interface GetSafeInfoQueryParams {}
-
-/**
- * Combined parameters for useGetSafeInfoQuery
- */
-export interface GetSafeInfoParams {
-  pathParams: GetSafeInfoPathParams
-  queryParams?: GetSafeInfoQueryParams
-}
 
 /**
  * Fetch Safe information from Transaction Service
@@ -86,27 +72,6 @@ export function useGetSafeInfoQuery(params: GetSafeInfoParams) {
 // ============================================================================
 
 /**
- * Path parameters for Safe transactions endpoint
- */
-export interface GetSafeTransactionsPathParams {
-  /** Safe address */
-  safeAddress: MaybeRefOrGetter<string | undefined>
-}
-
-/**
- * Query parameters for Safe transactions (none for this endpoint)
- */
-export interface GetSafeTransactionsQueryParams {}
-
-/**
- * Combined parameters for useGetSafeTransactionsQuery
- */
-export interface GetSafeTransactionsParams {
-  pathParams: GetSafeTransactionsPathParams
-  queryParams?: GetSafeTransactionsQueryParams
-}
-
-/**
  * Fetch Safe pending transactions from Transaction Service
  *
  * @endpoint GET {txService.url}/api/v1/safes/{safeAddress}/multisig-transactions
@@ -138,27 +103,6 @@ export function useGetSafeTransactionsQuery(params: GetSafeTransactionsParams) {
 // ============================================================================
 // GET /api/v1/multisig-transactions/{safeTxHash}/ - Fetch single transaction
 // ============================================================================
-
-/**
- * Path parameters for GET single transaction
- */
-export interface GetSafeTransactionPathParams {
-  /** Safe transaction hash */
-  safeTxHash: MaybeRefOrGetter<string | undefined>
-}
-
-/**
- * Query parameters for GET single transaction (none for this endpoint)
- */
-export interface GetSafeTransactionQueryParams {}
-
-/**
- * Combined parameters for useGetSafeTransactionQuery
- */
-export interface GetSafeTransactionParams {
-  pathParams: GetSafeTransactionPathParams
-  queryParams?: GetSafeTransactionQueryParams
-}
 
 /**
  * Fetch single Safe transaction by hash from Transaction Service
@@ -193,62 +137,6 @@ export function useGetSafeTransactionQuery(params: GetSafeTransactionParams) {
 // ============================================================================
 // GET /api/v1/safes/{safeAddress}/incoming-transfers/ - Fetch incoming transfers
 // ============================================================================
-
-/**
- * Path parameters for Safe incoming transfers endpoint
- */
-export interface GetSafeIncomingTransfersPathParams {
-  /** Safe address */
-  safeAddress: MaybeRefOrGetter<string | undefined>
-}
-
-/**
- * Query parameters for Safe incoming transfers
- */
-export interface GetSafeIncomingTransfersQueryParams {
-  /** Number of results to fetch (default: 100) */
-  limit?: number
-}
-
-/**
- * Combined parameters for useGetSafeIncomingTransfersQuery
- */
-export interface GetSafeIncomingTransfersParams {
-  pathParams: GetSafeIncomingTransfersPathParams
-  queryParams?: GetSafeIncomingTransfersQueryParams
-}
-
-/**
- * Incoming transfer data structure
- */
-export interface SafeIncomingTransfer {
-  type: 'ETHER_TRANSFER' | 'ERC20_TRANSFER' | 'ERC721_TRANSFER'
-  executionDate: string
-  blockNumber: number
-  transactionHash: string
-  to: string
-  from: string
-  value: string
-  tokenAddress?: string
-  tokenInfo?: {
-    type: string
-    address: string
-    name: string
-    symbol: string
-    decimals: number
-    logoUri?: string
-  }
-}
-
-/**
- * Incoming transfers response structure
- */
-export interface SafeIncomingTransfersResponse {
-  count: number
-  next: string | null
-  previous: string | null
-  results: SafeIncomingTransfer[]
-}
 
 /**
  * Fetch Safe incoming transfers from Transaction Service

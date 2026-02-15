@@ -3,7 +3,7 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, ref, defineComponent } from 'vue'
 import type { Address } from 'viem'
 import SafeIncomingTransactions from '../SafeIncomingTransactions.vue'
-import type { SafeIncomingTransfer } from '@/queries/safe.queries'
+import type { SafeIncomingTransfer } from '@/types'
 
 // Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({

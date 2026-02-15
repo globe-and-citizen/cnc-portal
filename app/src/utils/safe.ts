@@ -11,7 +11,7 @@ import {
 import { NETWORK } from '@/constant'
 import { formatEtherUtil, tokenSymbol } from '@/utils/constantUtil'
 import { type DecodedCall } from '@/types'
-import type { SafeIncomingTransfer } from '@/queries/safe.queries'
+import type { SafeIncomingTransfer } from '@/types'
 
 /**
  * Get injected EIP-1193 provider with proper type checking
