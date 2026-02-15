@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig, loadEnv, PluginOption } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import ui from '@nuxt/ui/vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import tailwindcss from '@tailwindcss/vite'
@@ -28,6 +29,7 @@ export default defineConfig(({ mode }) => {
   const plugins: PluginOption = [
     vue(),
     tailwindcss(),
+    ui(),
     nodePolyfills({
       globals: {
         Buffer: true,

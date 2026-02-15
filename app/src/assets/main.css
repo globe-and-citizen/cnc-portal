@@ -1,6 +1,8 @@
 @import './base.css' layer(base);
 
 @import 'tailwindcss';
+
+@import '@nuxt/ui';
 @plugin "daisyui";
 @plugin "daisyui/theme" {
   name: 'light';

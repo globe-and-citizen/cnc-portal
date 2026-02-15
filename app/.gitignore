@@ -42,3 +42,6 @@ playwright-report
 .env.sentry-build-plugin
 
 
+
+auto-imports.d.ts
+components.d.ts

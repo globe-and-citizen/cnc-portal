@@ -3,10 +3,10 @@
     <div v-for="(step, index) in steps" :key="step.id" class="flex items-center">
       <div
         :class="[
-          'step-indicator',
-          currentStep > step.id && 'completed',
-          currentStep === step.id && 'active',
-          currentStep < step.id && 'pending'
+          'w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-medium transition-all duration-300',
+          currentStep > step.id && 'border-green-500 bg-green-500 text-white',
+          currentStep === step.id && 'border-primary bg-primary text-white',
+          currentStep < step.id && 'border-gray-300 bg-white text-gray-500'
         ]"
       >
         <IconifyIcon v-if="currentStep > step.id" icon="heroicons:check-20-solid" class="w-5 h-5" />
@@ -32,21 +32,6 @@ defineProps<{
 </script>
 
 <style scoped>
-.step-indicator {
-  @apply w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-medium transition-all duration-300;
-}
-
-.step-indicator.completed {
-  @apply border-green-500 bg-green-500 text-white;
-}
-
-.step-indicator.active {
-  @apply border-primary bg-primary text-white;
-}
-
-.step-indicator.pending {
-  @apply border-gray-300 bg-white text-gray-500;
-}
 
 .animate-fade-in {
   animation: fadeIn 0.3s ease-in-out;
