@@ -1,7 +1,7 @@
 <template>
   <div
     class="p-3 gap-4 flex flex-col h-screen max-h-screen backdrop-blur-md border-0 border-r-2 border-slate-100 transition-all duration-300 ease-in-out"
-    :class="[isCollapsed ? 'w-24' : 'w-[280px]']"
+    :class="[isCollapsed ? 'w-24' : 'w-70']"
   >
     <!-- Logo Group -->
     <div
@@ -10,12 +10,12 @@
     >
       <div class="flex items-center gap-4" :class="{ 'justify-center w-full': isCollapsed }">
         <div class="relative group cursor-pointer p-3">
-          <img
-            v-if="!isCollapsed"
-            src="../assets/Logo.png"
-            alt="CNC Portal"
-            class="relative w-[128px]"
-          />
+            <img
+              v-if="!isCollapsed"
+              src="../assets/Logo.png"
+              alt="CNC Portal"
+              class="relative w-32"
+            />
           <img
             v-else
             src="../assets/LogoWithoutText.png"

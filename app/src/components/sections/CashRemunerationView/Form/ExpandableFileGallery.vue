@@ -109,7 +109,7 @@
 
             <div
               v-else-if="isCompressed(current.fileName)"
-              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-[500px] min-h-[400px]"
+              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-125 min-h-100"
             >
               <Icon icon="mdi:folder-zip" class="w-40 h-40 text-amber-500" />
               <p class="text-base text-gray-500">Compressed file - Download required</p>
@@ -117,7 +117,7 @@
 
             <div
               v-else
-              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-[500px] min-h-[400px]"
+              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-125 min-h-100"
             >
               <Icon :icon="getFileIcon(current.fileName)" class="w-40 h-40 text-gray-400" />
               <p class="text-base text-gray-500">Download required for this file type</p>

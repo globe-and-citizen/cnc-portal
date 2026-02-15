@@ -40,7 +40,7 @@
     </div>
 
     <div class="flex flex-wrap gap-3 mt-4 w-100">
-      <div class="flex-1 min-w-[200px]">
+      <div class="flex-1 min-w-50">
         <label class="flex input input-bordered input-md items-center gap-2 w-full">
           <span class="text-xs shrink-0">Amount</span>
           <input
@@ -59,7 +59,7 @@
           {{ error.$message }}
         </span>
       </div>
-      <div class="flex-1 min-w-[200px]">
+      <div class="flex-1 min-w-50">
         <label class="flex input input-bordered items-center gap-2 w-full">
           <span class="text-xs shrink-0">Cliff(days)</span>
           <input data-test="cliff" type="number" class="grow text-sm" v-model="cliff" required />
