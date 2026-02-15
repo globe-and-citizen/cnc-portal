@@ -192,6 +192,6 @@ vi.mock('@/composables/safe', async (importOriginal) => {
     useSafeOwnerManagement: vi.fn(() => mockUseSafeOwnerManagement)
   }
 })
-
-;(globalThis as { __mockUseSafeOwnerManagement?: typeof mockUseSafeOwnerManagement }).__mockUseSafeOwnerManagement =
-  mockUseSafeOwnerManagement
+;(
+  globalThis as { __mockUseSafeOwnerManagement?: typeof mockUseSafeOwnerManagement }
+).__mockUseSafeOwnerManagement = mockUseSafeOwnerManagement

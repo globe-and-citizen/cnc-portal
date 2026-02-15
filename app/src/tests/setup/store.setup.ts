@@ -11,6 +11,5 @@ vi.mock('@/stores', async (importOriginal) => {
     useUserDataStore: vi.fn(() => ({ ...mocks.mockUserStore }))
   }
 })
-
 ;(globalThis as { __mockToastStore?: typeof mocks.mockToastStore }).__mockToastStore =
   mocks.mockToastStore
