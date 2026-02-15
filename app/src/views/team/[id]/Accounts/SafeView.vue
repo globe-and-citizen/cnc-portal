@@ -17,6 +17,8 @@
     </div>
 
     <SafeTransactions :address="selectedSafe.address as Address" />
+
+    <SafeIncomingTransactions :address="selectedSafe.address as Address" />
   </div>
 
   <!-- Loading or empty state -->
@@ -33,6 +35,7 @@ import SafeBalanceSection from '@/components/sections/SafeView/SafeBalanceSectio
 import SafeOwnersCard from '@/components/sections/SafeView/SafeOwnersCard.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
+import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
 
 import { useTeamSafes } from '@/composables/safe'
 

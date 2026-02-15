@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { useConnection, useChainId } from '@wagmi/vue'
 import { isAddress } from 'viem'
 import { useToastStore } from '@/stores'
-import { useProposeTransactionMutation } from '@/queries/safe.queries'
+import { useProposeTransactionMutation } from '@/queries/safe.mutations'
 import { useSafeSDK } from './useSafeSdk'
 
 /**
