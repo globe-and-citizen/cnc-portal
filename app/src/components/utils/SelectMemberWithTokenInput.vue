@@ -6,7 +6,7 @@
     data-test="member-input"
   >
     <label
-      class="input input-bordered flex items-center gap-2 input-md"
+      class="w-full input input-bordered flex items-center gap-2 input-md"
       :data-test="`member-input`"
     >
       <input

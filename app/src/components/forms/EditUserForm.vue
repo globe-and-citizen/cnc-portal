@@ -39,11 +39,11 @@
     </div>
 
     <!-- Input Name -->
-    <label class="input input-bordered flex items-center gap-2 input-md">
-      <span class="w-24" data-test="name-label">Name</span>
+    <label class="w-full flex items-center gap-2 pr-1">
+      <span class="w-52" data-test="name-label">Name</span>
       <input
         type="text"
-        class="grow"
+        class="grow input input-bordered  input-md"
         data-test="name-input"
         placeholder="John Doe"
         v-model="userCopy.name"
@@ -59,14 +59,14 @@
     </div>
 
     <!-- Currency -->
-    <label class="input input-bordered flex items-center gap-2 input-md">
-      <span class="w-40" data-test="currency-label">Default Currency</span>
+    <label class="w-full flex items-center gap-2 pr-1">
+      <span class="w-52" data-test="currency-label">Default Currency</span>
       <select
         v-if="LIST_CURRENCIES && LIST_CURRENCIES.length"
         v-model="selectedCurrency"
         @change="handleCurrencyChange"
         data-test="currency-select"
-        class="select select-sm w-full focus:border-none focus:outline-hidden"
+        class="select select-md focus:border-none focus:outline-hidden"
       >
         <option
           v-for="currency in LIST_CURRENCIES"

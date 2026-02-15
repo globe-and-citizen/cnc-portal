@@ -6,7 +6,7 @@
     data-test="member-contracts-input"
   >
     <label
-      class="input input-bordered flex items-center gap-2 input-md"
+      class="w-full input input-bordered flex items-center gap-2 input-md"
       :data-test="`member-contracts-input`"
     >
       <input
@@ -21,7 +21,6 @@
       |
       <input
         type="text"
-        class="grow"
         ref="addressInput"
         v-model="input.address"
         :data-test="`member-contracts-address-input`"
