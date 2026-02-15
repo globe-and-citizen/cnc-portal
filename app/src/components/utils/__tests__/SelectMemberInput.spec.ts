@@ -5,40 +5,20 @@ import { mount } from '@vue/test-utils'
 import { nextTick, ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { User } from '@/types'
-import { useQuery } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
+import { mockMembersData } from '@/tests/mocks'
+import { useGetSearchUsersQuery } from '@/queries'
 
 // Mock data
 const MOCK_USERS: User[] = [
   { id: '1', address: '0x1234567890123456789012345678901234567890', name: 'John Doe' },
-  { id: '2', address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', name: 'Jane Smith' },
+  { id: '2', address: '0x0987654321098765432109876543210987654321', name: 'Jane Smith' },
   { id: '3', address: '0x9876543210987654321098765432109876543210', name: 'Bob Johnson' }
 ]
 
 // Hoisted mocks
-const { mockTeamStore, mockUseFocus, mockWatchDebounced } = vi.hoisted(() => ({
-  mockTeamStore: {
-    currentTeam: {
-      id: 1,
-      name: 'Test Team',
-      members: [
-        { id: '2', address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', name: 'Jane Smith' }
-      ]
-    },
-    currentTeamMeta: {
-      data: {
-        members: [
-          { id: '2', address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', name: 'Jane Smith' }
-        ]
-      }
-    }
-  },
-  mockUseFocus: vi.fn(() => ({ focused: { value: false } })),
+const { mockUseFocus, mockWatchDebounced } = vi.hoisted(() => ({
+  mockUseFocus: vi.fn(() => ({ focused: { value: true } })),
   mockWatchDebounced: vi.fn()
-}))
-
-vi.mock('@/stores/teamStore', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore)
 }))
 
 vi.mock('@vueuse/core', () => ({
@@ -46,16 +26,15 @@ vi.mock('@vueuse/core', () => ({
   watchDebounced: mockWatchDebounced
 }))
 
-vi.mock('@/lib/axios', () => ({
-  default: {
-    get: vi.fn()
-  }
-}))
+// vi.mock('@/lib/axios', () => ({
+//   default: {
+//     get: vi.fn()
+//   }
+// }))
 
 let wrapper: ReturnType<typeof mount>
 let lastFocusRef: ReturnType<typeof ref> | null = null
 let lastDebouncedCallback: (() => Promise<void> | void) | null = null
-let lastQueryFn: (() => Promise<{ users: User[] }>) | null = null
 
 const SELECTORS = {
   container: '[data-test="member-input"]',
@@ -66,21 +45,19 @@ const SELECTORS = {
   userRow: '[data-test="user-row"]'
 } as const
 
-const createWrapper = (
-  props = {},
-  mockQueryOverrides = {},
-  useQueryImpl: ((options: unknown) => ReturnType<typeof useQuery>) | null = null
-) => {
-  const mockRefetch = vi.fn()
-  if (useQueryImpl) {
-    vi.mocked(useQuery).mockImplementation(useQueryImpl)
-  } else {
-    vi.mocked(useQuery).mockReturnValue({
-      data: ref({ users: MOCK_USERS }),
+const createWrapper = (props = {}, queryOverrides = {}) => {
+  if (Object.keys(queryOverrides).length > 0) {
+    vi.mocked(useGetSearchUsersQuery).mockReturnValueOnce({
+      data: ref({ users: mockMembersData }),
       isFetching: ref(false),
-      refetch: mockRefetch,
-      ...mockQueryOverrides
-    } as unknown as ReturnType<typeof useQuery>)
+      error: ref(null),
+      refetch: vi.fn(),
+      isLoading: ref(false),
+      isPending: ref(false),
+      isSuccess: ref(true),
+      isFetched: ref(true),
+      ...queryOverrides
+    } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
   }
 
   return mount(SelectMemberInput, {
@@ -98,11 +75,11 @@ const createWrapper = (
 
 describe('SelectMemberInput', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.useFakeTimers()
-    lastFocusRef = null
+    // vi.clearAllMocks()
+    // vi.useFakeTimers()
+    // lastFocusRef = null
     lastDebouncedCallback = null
-    lastQueryFn = null
+    // useGetSearchUsersQuery
     vi.mocked(mockUseFocus).mockImplementation(() => {
       lastFocusRef = ref(false)
       return { focused: lastFocusRef }
@@ -118,23 +95,45 @@ describe('SelectMemberInput', () => {
   })
 
   it('should filter out hidden members', async () => {
-    const hiddenMembers = [MOCK_USERS[0]!, MOCK_USERS[1]!]
+    const hiddenMembers = [mockMembersData[2]!]
+    vi.mocked(useGetSearchUsersQuery).mockReturnValueOnce({
+      data: ref({ users: mockMembersData }),
+      isFetching: ref(false),
+      error: ref(null),
+      refetch: vi.fn(),
+      isLoading: ref(false),
+      isPending: ref(false),
+      isSuccess: ref(true),
+      isFetched: ref(true)
+    } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
     wrapper = createWrapper({ hiddenMembers })
     await nextTick()
 
-    expect(wrapper.find(`[data-test="user-dropdown-${MOCK_USERS[0]!.address}"]`).exists()).toBe(
-      false
-    )
-    expect(wrapper.find(`[data-test="user-dropdown-${MOCK_USERS[1]!.address}"]`).exists()).toBe(
-      false
-    )
-    expect(wrapper.find(`[data-test="user-dropdown-${MOCK_USERS[2]!.address}"]`).exists()).toBe(
-      true
-    )
+    console.log(wrapper.html())
+
+    expect(
+      wrapper.find(`[data-test="user-dropdown-${mockMembersData[0]!.address}"]`).exists()
+    ).toBe(true)
+    expect(
+      wrapper.find(`[data-test="user-dropdown-${mockMembersData[1]!.address}"]`).exists()
+    ).toBe(true)
+    expect(
+      wrapper.find(`[data-test="user-dropdown-${mockMembersData[2]!.address}"]`).exists()
+    ).toBe(false)
   })
 
   it('should add loading class when fetching', () => {
-    wrapper = createWrapper({}, { isFetching: ref(true) })
+    vi.mocked(useGetSearchUsersQuery).mockReturnValueOnce({
+      data: ref(undefined),
+      isFetching: ref(true),
+      error: ref(null),
+      refetch: vi.fn(),
+      isLoading: ref(false),
+      isPending: ref(false),
+      isSuccess: ref(true),
+      isFetched: ref(true)
+    } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
+    wrapper = createWrapper({})
     expect(wrapper.find(SELECTORS.container).classes()).toContain('animate-pulse')
   })
 
@@ -159,7 +158,10 @@ describe('SelectMemberInput', () => {
   })
 
   it('should block selection for safe owners', async () => {
-    wrapper = createWrapper({ currentSafeOwners: [MOCK_USERS[0]!.address] })
+    wrapper = createWrapper(
+      { currentSafeOwners: [MOCK_USERS[0]!.address] },
+      { data: ref({ users: MOCK_USERS }) }
+    )
     await nextTick()
 
     const rows = wrapper.findAll(SELECTORS.userRow)
@@ -170,7 +172,7 @@ describe('SelectMemberInput', () => {
   })
 
   it('should block selection for existing team members when disabled', async () => {
-    wrapper = createWrapper({ disableTeamMembers: true })
+    wrapper = createWrapper({ disableTeamMembers: true }, { data: ref({ users: MOCK_USERS }) })
     await nextTick()
 
     const rows = wrapper.findAll(SELECTORS.userRow)
@@ -204,26 +206,54 @@ describe('SelectMemberInput', () => {
     expect(focusSpy).toHaveBeenCalled()
   })
 
-  it('should build query url with and without search text', async () => {
-    const mockGet = vi.mocked(apiClient.get).mockResolvedValue({ data: { users: [] } })
+  it('should set search query to undefined when input is empty', async () => {
+    const mockHook = vi.mocked(useGetSearchUsersQuery)
+    mockHook.mockClear()
+    mockHook.mockReturnValue({
+      data: ref({ users: [] }),
+      isFetching: ref(false),
+      error: ref(null),
+      refetch: vi.fn(),
+      isLoading: ref(false),
+      isPending: ref(false),
+      isSuccess: ref(true),
+      isFetched: ref(true)
+    } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
 
-    wrapper = createWrapper({}, {}, (options) => {
-      lastQueryFn = (options as { queryFn: () => Promise<{ users: User[] }> }).queryFn
-      return {
-        data: ref({ users: MOCK_USERS }),
-        isFetching: ref(false),
-        refetch: vi.fn()
-      } as unknown as ReturnType<typeof useQuery>
-    })
-
+    wrapper = createWrapper()
     await nextTick()
-    await lastQueryFn!()
-    expect(mockGet).toHaveBeenCalledWith('user?limit=100')
+
+    const callArgs = mockHook.mock.calls[0]![0] as {
+      queryParams: { search: { value: string | undefined }; limit: number }
+    }
+    expect(callArgs.queryParams.search.value).toBeUndefined()
+  })
+
+  it('should return search query when input has value', async () => {
+    const mockHook = vi.mocked(useGetSearchUsersQuery)
+    mockHook.mockClear()
+    mockHook.mockReturnValue({
+      data: ref({ users: [] }),
+      isFetching: ref(false),
+      error: ref(null),
+      refetch: vi.fn(),
+      isLoading: ref(false),
+      isPending: ref(false),
+      isSuccess: ref(true),
+      isFetched: ref(true)
+    } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
+
+    wrapper = createWrapper()
+    await nextTick()
+
+    const callArgs = mockHook.mock.calls[0]![0] as {
+      queryParams: { search: { value: string | undefined }; limit: number }
+    }
 
     await wrapper.find(SELECTORS.input).setValue('john')
     await nextTick()
-    await lastQueryFn!()
-    expect(mockGet).toHaveBeenCalledWith('user?search=john&limit=100')
+
+    expect(callArgs.queryParams.search.value).toBe('john')
   })
 
   it('should handle missing query data when onlyTeamMembers is false', async () => {
@@ -234,10 +264,14 @@ describe('SelectMemberInput', () => {
   })
 
   it('should treat null safe owners as empty list', async () => {
-    wrapper = createWrapper({ currentSafeOwners: null as unknown as string[] })
+    wrapper = createWrapper(
+      { currentSafeOwners: null as unknown as string[] },
+      { data: ref({ users: MOCK_USERS }) }
+    )
     await nextTick()
 
     const rows = wrapper.findAll(SELECTORS.userRow)
+    console.log('Wrapper:', wrapper.html())
     expect(rows.length).toBeGreaterThan(0)
     await rows[0]!.trigger('click')
 
