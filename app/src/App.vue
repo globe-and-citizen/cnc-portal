@@ -14,7 +14,7 @@
               }"
             >
               <template #header>
-                <UDashboardNavbar :ui="{ right: 'gap-3' }" class="bg-white">
+                <UDashboardNavbar :title="pageTitle" :ui="{ right: 'gap-3' }" class="bg-white">
                   <template #leading>
                     <UDashboardSidebarCollapse
                       icon="heroicons:arrow-left-start-on-rectangle"
@@ -49,11 +49,12 @@
 import '@vuepic/vue-datepicker/dist/main.css'
 import { useChainId, useConnection, useConnectionEffect, useSwitchChain } from '@wagmi/vue'
 import { computed, watch } from 'vue'
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 
 import LockScreen from '@/components/LockScreen.vue'
 import NavBar from '@/components/NavBar.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
+import SidebarLayout from '@/components/ui/SidebarLayout.vue'
 
 import { useAuth } from '@/composables/useAuth'
 import { useBackendWake } from '@/composables/useBackendWake'
@@ -61,7 +62,9 @@ import { useBackendWake } from '@/composables/useBackendWake'
 import { NETWORK } from '@/constant/index'
 import { useToastStore, useUserDataStore } from '@/stores/index'
 
-import SidebarLayout from '@/components/ui/SidebarLayout.vue'
+const route = useRoute()
+
+const pageTitle = computed<string>(() => (route.meta.name as string) || 'CNC-Portal')
 
 const connection = useConnection()
 const switchChain = useSwitchChain()
