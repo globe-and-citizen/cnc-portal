@@ -54,10 +54,9 @@ const props = defineProps<{
   disabled?: boolean
   isDropDown?: boolean
   isClaimOwner?: boolean
-  loading?: boolean
 }>()
 
-const emit = defineEmits(['claim-withdrawn', 'loading'])
+const emit = defineEmits(['claim-withdrawn'])
 
 const teamStore = useTeamStore()
 const toastStore = useToastStore()
@@ -72,15 +71,13 @@ const { mutateAsync: withdraw } = useWriteContract()
 const { mutateAsync: syncWeeklyClaim, error: syncWeeklyClaimError } = useSyncWeeklyClaimsMutation()
 
 const isLoading = ref(false)
-const isLoad = computed(() => (props.loading ?? isLoading.value) as boolean)
+const isLoad = computed(() => isLoading.value as boolean)
 
 const withdrawClaim = async () => {
   isLoading.value = true
-  emit('loading', true)
 
   if (!cashRemunerationEip712Address.value) {
     isLoading.value = false
-    emit('loading', false)
     toastStore.addErrorToast('Cash Remuneration EIP712 contract address not found')
     return
   }
@@ -96,7 +93,6 @@ const withdrawClaim = async () => {
       Number(props.weeklyClaim.hoursWorked)
   ) {
     isLoading.value = false
-    emit('loading', false)
     toastStore.addErrorToast('Insufficient balance')
     return
   }
@@ -153,7 +149,6 @@ const withdrawClaim = async () => {
 
       emit('claim-withdrawn')
       isLoading.value = false
-      emit('loading', false)
     } else {
       toastStore.addErrorToast('Transaction failed: Failed to withdraw claim')
       // keep loading until explicit success
@@ -161,7 +156,6 @@ const withdrawClaim = async () => {
   } catch (error) {
     // Stop loading on cancel or explicit error
     isLoading.value = false
-    emit('loading', false)
     log.error('Withdraw error', error)
     const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
 
