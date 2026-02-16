@@ -180,7 +180,7 @@ describe('TheDrawer', () => {
 
     it('should adjust width based on collapse state', async () => {
       const wrapper = createWrapper()
-      expect(wrapper.classes()).toContain('w-[280px]')
+      expect(wrapper.classes()).toContain('w-70')
 
       await wrapper.setProps({ modelValue: true })
       expect(wrapper.classes()).toContain('w-24')

@@ -16,7 +16,7 @@
         <IconifyIcon
           data-test="safe-icon"
           icon="heroicons:arrow-trending-up"
-          class="text-primary flex-shrink-0"
+          class="text-primary shrink-0"
           :class="{ 'w-12 h-12': isDetailedView, 'w-6 h-6': !isDetailedView }"
         />
       </div>

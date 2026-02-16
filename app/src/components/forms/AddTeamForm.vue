@@ -13,7 +13,7 @@
       <hr class="mb-6" />
       <div class="flex flex-col gap-5">
         <div>
-          <label class="input input-bordered flex items-center gap-2 input-md mt-4">
+          <label class="w-full input input-bordered flex items-center gap-2 input-md mt-4">
             <span class="w-24">Team Name</span>
             <input
               type="text"
@@ -33,7 +33,7 @@
             {{ error.$message }}
           </div>
         </div>
-        <label class="input input-bordered flex items-center gap-2 input-md">
+        <label class="w-full input input-bordered flex items-center gap-2 input-md">
           <span class="w-24">Description</span>
           <input
             type="text"
@@ -73,7 +73,7 @@
       <span class="font-bold text-2xl mb-4">Investor Contract Details</span>
       <hr class="mb-6" />
       <div class="flex flex-col gap-5">
-        <label class="input input-bordered flex items-center gap-2 input-md">
+        <label class="w-full input input-bordered flex items-center gap-2 input-md">
           <span class="w-24">Share Name</span>
           <input
             type="text"
@@ -93,7 +93,7 @@
           {{ error.$message }}
         </div>
 
-        <label class="input input-bordered flex items-center gap-2 input-md">
+        <label class="w-full input input-bordered flex items-center gap-2 input-md">
           <span class="w-24">Symbol</span>
           <input
             type="text"
@@ -127,7 +127,7 @@
       >
         Previous
       </ButtonUI>
-      <div class="flex-grow"></div>
+      <div class="grow"></div>
       <ButtonUI
         v-if="currentStep === 1"
         variant="primary"

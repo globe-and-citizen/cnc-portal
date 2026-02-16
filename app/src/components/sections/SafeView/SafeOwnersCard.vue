@@ -53,7 +53,7 @@
               <AddressToolTip :address="owner" slice />
               <span
                 v-if="isCurrentUserAddress(owner)"
-                class="text-xs bg-primary/10 text-primary px-2 py-1 rounded"
+                class="text-xs bg-primary/10 text-primary px-2 py-1 rounded-sm"
               >
                 You
               </span>
