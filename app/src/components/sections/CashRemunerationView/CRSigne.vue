@@ -67,7 +67,7 @@ const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 const isCurrentWeek = computed(() => currentWeekStart === props.weeklyClaim.weekStart)
 
 // Composables
-const { signTypedDataAsync, data: signature } = useSignTypedData()
+const { mutateAsync, data: signature } = useSignTypedData()
 const chainId = useChainId()
 
 const isLoading = ref(false)
@@ -167,7 +167,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
   setLoadingState(true)
 
   try {
-    await signTypedDataAsync({
+    await mutateAsync({
       domain: typedDataDomain.value,
       types: TYPED_DATA_TYPES,
       message: buildTypedDataMessage(weeklyClaim),
