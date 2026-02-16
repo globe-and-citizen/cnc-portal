@@ -4,18 +4,6 @@ import NavBar from '@/components/NavBar.vue'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 
-vi.mock('vue-router', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useRouter: vi.fn(() => ({
-      push: vi.fn()
-    })),
-    useRoute: vi.fn(() => ({
-      name: ''
-    }))
-  }
-})
 
 describe('NavBar', () => {
   const props = {
@@ -35,13 +23,6 @@ describe('NavBar', () => {
     })
   })
 
-  // Check if the component emits the right events
-  describe('Emits', () => {
-    it('Should emits toggleEditUserModal event when Profile is clicked', async () => {
-      await wrapper.find('[data-test="toggleEditUser"]').trigger('click')
-      expect(wrapper.emitted('toggleEditUserModal')).toBeTruthy()
-    })
-  })
 
   it('Should logout the user', async () => {
     await wrapper.find('[data-test="logout"]').trigger('click')

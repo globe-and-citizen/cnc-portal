@@ -34,6 +34,28 @@ vi.mock('@tanstack/vue-query', async () => {
   }
 })
 
+vi.mock('vue-router', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useRouter: vi.fn(() => ({
+      push: vi.fn(),
+      replace: vi.fn(),
+      back: vi.fn(),
+      go: vi.fn(),
+      beforeEach: vi.fn(),
+      afterEach: vi.fn()
+    })),
+    RouterView: { name: 'RouterView', template: '<div data-test="router-view">Router View</div>' },
+    useRoute: vi.fn(() => ({
+      params: { id: '1' },
+      path: '/teams/1',
+      meta: { name: 'Team View' }
+    }))
+  }
+})
+
+
 /**
  * Mock Team Queries (team.queries.ts)
  */
