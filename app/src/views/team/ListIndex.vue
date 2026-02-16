@@ -54,11 +54,24 @@
       data-test="add-team-button"
       v-if="!teamsError && !teamsAreFetching"
     >
-      <AddTeamCard
-        data-test="add-team-card"
-        @openAddTeamModal="appStore.setShowAddTeamModal(true)"
-        class="w-72 h-16 text-sm transform transition duration-300 hover:scale-105 animate-fade-in"
-      />
+      <UModal v-model:open="openModal" title="Add Team" description="Create Your Team Step By Step">
+        <AddTeamCard
+          data-test="add-team-card"
+          @click="openModal = true"
+          class="w-72 h-16 text-sm transform transition duration-300 hover:scale-105 animate-fade-in"
+        />
+
+        <template #body>
+          <AddTeamForm
+            @done="
+              () => {
+                console.log('Team created successfully, closing modal and refetching teams list')
+                openModal = false
+              }
+            "
+          />
+        </template>
+      </UModal>
     </div>
   </div>
 </template>
@@ -66,14 +79,16 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
 import { useUserDataStore } from '@/stores'
-import { useAppStore } from '@/stores/appStore'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { useGetTeamsQuery } from '@/queries/team.queries'
+import { ref } from 'vue'
+
+const openModal = ref(false)
 
 const route = useRoute()
 const userDataStore = useUserDataStore()
-const appStore = useAppStore()
+
 const {
   data: teams,
   isPending: teamsAreFetching,

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-5 mt-4 overflow-hidden" data-test="edit-user-modal">
+  <div class="flex flex-col gap-5 overflow-hidden" data-test="edit-user-modal">
     <!-- Wallet Address -->
     <div role="alert" class="alert shadow-xs flex text-gray-700">
       <div class="flex flex-wrap gap-2">

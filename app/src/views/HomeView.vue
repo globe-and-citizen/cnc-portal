@@ -84,7 +84,7 @@ const columns = [
       Our Website is still in construction. Look into our wonderfull tip feature and try to tip your
       team
     </p>
-    <div class="card bg-white p-8">
+    <!-- <div class="card bg-white p-8">
       <div class="card-body">
         <h2 class="card-title">Empty Table</h2>
       </div>
@@ -102,7 +102,7 @@ const columns = [
           <span>Custom data: {{ column.label }}</span>
         </template>
       </TableComponent>
-    </div>
+    </div> -->
     <ButtonUI class="mt-6" variant="secondary" data-test="tip-button">
       <RouterLink to="/teams" data-test="tip-button">Tip your Team</RouterLink>
     </ButtonUI>
