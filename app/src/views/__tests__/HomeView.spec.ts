@@ -20,6 +20,5 @@ describe('HomeView.vue', () => {
       const description = wrapper.find('p')
       expect(description.text()).toContain('Our Website is still in construction.')
     })
-
   })
 })

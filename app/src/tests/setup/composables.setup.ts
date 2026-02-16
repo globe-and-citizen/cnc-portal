@@ -55,7 +55,6 @@ vi.mock('vue-router', async (importOriginal) => {
   }
 })
 
-
 /**
  * Mock Team Queries (team.queries.ts)
  */

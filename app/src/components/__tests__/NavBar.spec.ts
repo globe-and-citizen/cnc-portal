@@ -4,7 +4,6 @@ import NavBar from '@/components/NavBar.vue'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 
-
 describe('NavBar', () => {
   const props = {
     isCollapsed: false
@@ -22,7 +21,6 @@ describe('NavBar', () => {
       expect(wrapper.exists()).toBe(true)
     })
   })
-
 
   it('Should logout the user', async () => {
     await wrapper.find('[data-test="logout"]').trigger('click')
