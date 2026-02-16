@@ -24,6 +24,7 @@ import { useDisconnect, useConnection } from '@wagmi/vue'
 import type { User } from '@/types'
 import ButtonUI from './ButtonUI.vue'
 import { computed } from 'vue'
+import { formatAddress } from '@/utils/formatAddress'
 
 const disconnect = useDisconnect()
 const connection = useConnection()
@@ -32,19 +33,9 @@ const props = defineProps<{
   user: Pick<User, 'address'> & { role?: string }
 }>()
 
-const formatedUserAddress = computed(() => {
-  return props.user.address
-    ? props.user.address.slice(0, 6) +
-        '...' +
-        props.user.address.slice(props.user.address.length - 4)
-    : ''
-})
+const formatedUserAddress = computed(() => formatAddress(props.user.address))
 
-const formatedConnectedAddress = computed(() => {
-  return connection.address.value
-    ? connection.address.value.slice(0, 6) +
-        '...' +
-        connection.address.value.slice(connection.address.value.length - 4)
-    : 'Not connected'
-})
+const formatedConnectedAddress = computed(() =>
+  connection.address.value ? formatAddress(connection.address.value) : 'Not connected'
+)
 </script>
