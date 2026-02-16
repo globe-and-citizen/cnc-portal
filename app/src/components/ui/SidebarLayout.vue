@@ -98,6 +98,7 @@ import { useUserDataStore } from '@/stores/user'
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { formatAddress } from '@/utils/formatAddress'
 
 const route = useRoute()
 const userStore = useUserDataStore()
@@ -238,13 +239,7 @@ const items = computed<NavigationMenuItem[]>(() => [
   }
 ])
 
-const formatedUserAddress = computed(() => {
-  return userStore.address
-    ? userStore.address.substring(0, 6) +
-        '...' +
-        userStore.address.substring(userStore.address.length - 4)
-    : ''
-})
+const formatedUserAddress = computed(() => formatAddress(userStore.address))
 </script>
 
 <style scoped></style>
