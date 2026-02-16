@@ -65,7 +65,7 @@ const toastStore = useToastStore()
 const cashRemunerationEip712Address = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
 )
-const { writeContractAsync: withdraw } = useWriteContract()
+const { mutateAsync: withdraw } = useWriteContract()
 
 // const weeklyClaimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=withdraw`)
 
