@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-5 mt-4 overflow-hidden" data-test="edit-user-modal">
     <!-- Wallet Address -->
-    <div role="alert" class="alert shadow-sm flex text-gray-700">
+    <div role="alert" class="alert shadow-xs flex text-gray-700">
       <div class="flex flex-wrap gap-2">
         <h3 class="font-bold">Wallet Address</h3>
         <div class="flex items-center gap-2">
@@ -39,11 +39,11 @@
     </div>
 
     <!-- Input Name -->
-    <label class="input input-bordered flex items-center gap-2 input-md">
-      <span class="w-24" data-test="name-label">Name</span>
+    <label class="w-full flex items-center gap-2 pr-1">
+      <span class="w-52" data-test="name-label">Name</span>
       <input
         type="text"
-        class="grow"
+        class="grow input input-bordered input-md"
         data-test="name-input"
         placeholder="John Doe"
         v-model="userCopy.name"
@@ -59,14 +59,14 @@
     </div>
 
     <!-- Currency -->
-    <label class="input input-bordered flex items-center gap-2 input-md">
-      <span class="w-40" data-test="currency-label">Default Currency</span>
+    <label class="w-full flex items-center gap-2 pr-1">
+      <span class="w-52" data-test="currency-label">Default Currency</span>
       <select
         v-if="LIST_CURRENCIES && LIST_CURRENCIES.length"
         v-model="selectedCurrency"
         @change="handleCurrencyChange"
         data-test="currency-select"
-        class="select select-sm w-full focus:border-none focus:outline-none"
+        class="select select-md focus:border-none focus:outline-hidden"
       >
         <option
           v-for="currency in LIST_CURRENCIES"
@@ -90,7 +90,7 @@
   <div
     v-if="userUpdateError"
     role="alert"
-    class="alert alert-error shadow-sm mt-4"
+    class="alert alert-error shadow-xs mt-4"
     data-test="error-alert"
   >
     <svg

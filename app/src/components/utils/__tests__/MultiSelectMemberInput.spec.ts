@@ -17,6 +17,45 @@ describe('MultiSelectMemberInput', () => {
     if (wrapper) wrapper.unmount()
   })
 
+  it('updates v-model input when SelectMemberInput emits update:modelValue', async () => {
+    let currentMembers: Member[] = []
+
+    wrapper = mount(MultiSelectMemberInput, {
+      props: {
+        modelValue: currentMembers,
+        'onUpdate:modelValue': (value: Member[]) => {
+          currentMembers = value
+        }
+      },
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          SelectMemberInput: {
+            name: 'SelectMemberInput',
+            props: [
+              'modelValue',
+              'hiddenMembers',
+              'disableTeamMembers',
+              'showOnFocus',
+              'onlyTeamMembers',
+              'currentSafeOwners'
+            ],
+            emits: ['selectMember', 'update:modelValue'],
+            template: '<div />'
+          }
+        }
+      }
+    })
+
+    const selectMemberInput = wrapper.findComponent({ name: 'SelectMemberInput' })
+    expect(selectMemberInput.props('modelValue')).toBe('')
+
+    await selectMemberInput.vm.$emit('update:modelValue', 'test-input')
+    await wrapper.vm.$nextTick()
+
+    expect(selectMemberInput.props('modelValue')).toBe('test-input')
+  })
+
   describe('addMember function', () => {
     it('should not add member if member is null', async () => {
       const initialMembers: Member[] = [{ name: 'Existing Member', address: '0x123' }]
@@ -31,7 +70,21 @@ describe('MultiSelectMemberInput', () => {
         },
         global: {
           plugins: [createTestingPinia({ createSpy: vi.fn })],
-          components: { UserComponent }
+          stubs: {
+            SelectMemberInput: {
+              name: 'SelectMemberInput',
+              props: [
+                'modelValue',
+                'hiddenMembers',
+                'disableTeamMembers',
+                'showOnFocus',
+                'onlyTeamMembers',
+                'currentSafeOwners'
+              ],
+              emits: ['selectMember', 'update:modelValue'],
+              template: '<div />'
+            }
+          }
         }
       })
 
@@ -54,7 +107,21 @@ describe('MultiSelectMemberInput', () => {
         },
         global: {
           plugins: [createTestingPinia({ createSpy: vi.fn })],
-          components: { UserComponent }
+          stubs: {
+            SelectMemberInput: {
+              name: 'SelectMemberInput',
+              props: [
+                'modelValue',
+                'hiddenMembers',
+                'disableTeamMembers',
+                'showOnFocus',
+                'onlyTeamMembers',
+                'currentSafeOwners'
+              ],
+              emits: ['selectMember', 'update:modelValue'],
+              template: '<div />'
+            }
+          }
         }
       })
 

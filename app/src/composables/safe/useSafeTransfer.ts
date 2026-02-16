@@ -3,7 +3,7 @@ import { useConnection, useChainId } from '@wagmi/vue'
 
 import { erc20Abi, isAddress, parseEther, parseUnits, encodeFunctionData, type Address } from 'viem'
 import { useToastStore } from '@/stores'
-import { useExecuteTransactionMutation } from '@/queries/safe.queries'
+import { useExecuteTransactionMutation } from '@/queries/safe.mutations'
 import { useSafeSDK } from './useSafeSdk'
 import { useSafeProposal } from './useSafeProposal'
 

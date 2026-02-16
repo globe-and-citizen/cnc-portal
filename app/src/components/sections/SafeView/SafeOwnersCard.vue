@@ -53,12 +53,12 @@
               <AddressToolTip :address="owner" slice />
               <span
                 v-if="isCurrentUserAddress(owner)"
-                class="text-xs bg-primary/10 text-primary px-2 py-1 rounded"
+                class="text-xs bg-primary/10 text-primary px-2 py-1 rounded-sm"
               >
                 You
               </span>
             </div>
-            <div class="text-xs text-gray-500 mt-1">Owner</div>
+            <div class="text-xs text-gray-500 mt-1">{{ getOwnerDisplayName(owner) }}</div>
           </div>
         </div>
         <div class="flex items-center text-xs gap-2">
@@ -108,6 +108,7 @@ import { type Address } from 'viem'
 // Composables and utilities
 
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'
+import { useTeamStore } from '@/stores'
 
 interface Props {
   address?: string
@@ -118,6 +119,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const { address: connectedAddress } = useAccount()
+const teamStore = useTeamStore()
 
 const {
   data: safeInfo,
@@ -140,6 +142,13 @@ const isCurrentUserAddress = (ownerAddress: string): boolean => {
   return connectedAddress.value?.toLowerCase() === ownerAddress.toLowerCase()
 }
 
+const getOwnerDisplayName = (ownerAddress: string): string => {
+  const teamMembers = teamStore.currentTeam?.members || []
+
+  const member = teamMembers.find((m) => m.address.toLowerCase() === ownerAddress.toLowerCase())
+
+  return member ? member.name : 'Owner'
+}
 // Modal state
 const showAddSignerModal = ref(false)
 const showUpdateThresholdModal = ref(false)
