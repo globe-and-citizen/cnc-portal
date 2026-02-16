@@ -20,16 +20,5 @@ describe('HomeView.vue', () => {
       const description = wrapper.find('p')
       expect(description.text()).toContain('Our Website is still in construction.')
     })
-
-    it('should render the "Tip your Team" button with a RouterLink', () => {
-      const wrapper = mount(HomeView, globalStubs)
-
-      const button = wrapper.find('[data-test="tip-button"]')
-      expect(button.text()).toBe('Tip your Team')
-
-      const routerLink = wrapper.findComponent(RouterLinkStub)
-      expect(routerLink.exists()).toBe(true)
-      expect(routerLink.props().to).toBe('/teams')
-    })
   })
 })

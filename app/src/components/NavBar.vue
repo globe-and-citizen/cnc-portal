@@ -1,6 +1,6 @@
 <template>
-  <nav class="flex justify-end border-0 border-b-2 border-slate-100 bg-white">
-    <div class="flex justify-between py-3 px-3">
+  <div class="flex justify-end">
+    <div class="flex justify-between">
       <div class="flex items-center space-x-2 sm:space-x-4">
         <SafeSelector v-if="isSafeRoute" />
         <div class="dropdown dropdown-end">
@@ -40,7 +40,7 @@
             tabindex="0"
             class="menu menu-sm dropdown-content mt-3 z-1 p-2 shadow-lg rounded-box w-40 sm:w-52"
           >
-            <li>
+            <!-- <li>
               <a
                 @click="emits('toggleEditUserModal')"
                 data-test="toggleEditUser"
@@ -49,7 +49,7 @@
                 Profile
                 <span class="badge badge-sm bg-green-500">New</span>
               </a>
-            </li>
+            </li> -->
             <li>
               <a class="hover:bg-opacity-10 transition-all duration-300 text-sm sm:text-base">
                 Settings
@@ -68,7 +68,7 @@
         </div>
       </div>
     </div>
-  </nav>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -81,7 +81,7 @@ import SafeSelector from './SafeSelector.vue'
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
 
-const emits = defineEmits(['toggleSideButton', 'toggleEditUserModal'])
+defineEmits(['toggleSideButton', 'toggleEditUserModal'])
 const { logout } = useAuth()
 const userStore = useUserDataStore()
 const { imageUrl } = storeToRefs(userStore)
@@ -89,9 +89,9 @@ const route = useRoute()
 
 const isSafeRoute = computed(() => route.name === 'trading' || route.name === 'safe-account')
 
-defineProps<{
-  isCollapsed: boolean
-}>()
+// defineProps<{
+//   isCollapsed: boolean
+// }>()
 </script>
 
 <style scoped>
