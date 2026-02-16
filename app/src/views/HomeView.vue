@@ -78,33 +78,8 @@ const columns = [
 </script>
 
 <template>
-  <div class="p-5 bg-base-200 flex gap-4 flex-col">
-    <h1 data-test="title">Welcome To the CNC portal</h1>
-    <p>
-      Our Website is still in construction. Look into our wonderfull tip feature and try to tip your
-      team
-    </p>
-    <!-- <div class="card bg-white p-8">
-      <div class="card-body">
-        <h2 class="card-title">Empty Table</h2>
-      </div>
-      <TableComponent> </TableComponent>
-    </div>
-    <div class="card bg-white p-8">
-      <div class="card-body">
-        <h2 class="card-title">Table With data</h2>
-      </div>
-      <TableComponent :rows="people" :columns="columns">
-        <template #title-header="{ column }">
-          <span>Custom label: {{ column.label }}</span>
-        </template>
-        <template #action-data="{ column }">
-          <span>Custom data: {{ column.label }}</span>
-        </template>
-      </TableComponent>
-    </div> -->
-    <ButtonUI class="mt-6" variant="secondary" data-test="tip-button">
-      <RouterLink to="/teams" data-test="tip-button">Tip your Team</RouterLink>
-    </ButtonUI>
+  <div class="">
+    <h1 data-test="title" class="text-2xl font-bold">Welcome To the CNC portal</h1>
+    <p>Our Website is still in construction. Please play with the features available.</p>
   </div>
 </template>

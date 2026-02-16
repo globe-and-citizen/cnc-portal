@@ -23,7 +23,8 @@
     </template>
 
     <template #default="{ collapsed }">
-      <UButton
+      <!-- TODO: Enable search for later -->
+      <!-- <UButton
         :label="collapsed ? undefined : 'Search...'"
         icon="i-lucide-search"
         color="neutral"
@@ -38,7 +39,7 @@
             <UKbd value="K" variant="subtle" />
           </div>
         </template>
-      </UButton>
+      </UButton> -->
 
       <UNavigationMenu
         :collapsed="collapsed"
@@ -131,7 +132,7 @@ const items = computed<NavigationMenuItem[]>(() => [
     children: [
       {
         label: 'Bank Account',
-        icon: 'heroicons:banknotes',
+        // icon: 'heroicons:banknotes',
         to: {
           name: 'bank-account',
           params: { id: teamStore.currentTeamId || '1' }
@@ -139,7 +140,7 @@ const items = computed<NavigationMenuItem[]>(() => [
       },
       {
         label: 'Safe Account',
-        icon: 'heroicons:shield-check',
+        // icon: 'heroicons:shield-check',
         to: {
           name: 'safe-account',
           params: {
@@ -150,14 +151,14 @@ const items = computed<NavigationMenuItem[]>(() => [
       },
       {
         label: 'Expense Account ',
-        icon: 'heroicons:briefcase',
+        // icon: 'heroicons:briefcase',
         to: {
           name: 'expense-account',
           params: { id: teamStore.currentTeamId || '1' }
         }
       },
       {
-        icon: 'heroicons:briefcase',
+        // icon: 'heroicons:briefcase',
         label: 'Payroll Account',
         to: {
           name: 'payroll-account',
@@ -165,7 +166,7 @@ const items = computed<NavigationMenuItem[]>(() => [
         }
       },
       {
-        icon: 'heroicons:briefcase',
+        // icon: 'heroicons:briefcase',
         label:
           route.name === 'payroll-history' && route.params.memberAddress !== userStore.address
             ? 'Member Payroll History'
@@ -177,7 +178,7 @@ const items = computed<NavigationMenuItem[]>(() => [
       },
 
       {
-        icon: 'heroicons:briefcase',
+        // icon: 'heroicons:briefcase',
         label: 'Team Payroll',
         to: {
           name: 'team-payroll',

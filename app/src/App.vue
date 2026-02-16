@@ -8,9 +8,13 @@
           <!-- Responsive Drawer and Content -->
           <UDashboardGroup>
             <SidebarLayout></SidebarLayout>
-            <UDashboardPanel>
+            <UDashboardPanel
+              :ui="{
+                body: 'overflow-x-hidden'
+              }"
+            >
               <template #header>
-                <UDashboardNavbar title="Home page" :ui="{ right: 'gap-3' }" class="bg-white">
+                <UDashboardNavbar :ui="{ right: 'gap-3' }" class="bg-white">
                   <template #leading>
                     <UDashboardSidebarCollapse
                       icon="heroicons:arrow-left-start-on-rectangle"

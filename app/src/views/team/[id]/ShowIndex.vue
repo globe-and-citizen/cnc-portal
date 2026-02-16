@@ -1,6 +1,6 @@
 <template>
   <!-- Navigation and breadcrumb -->
-  <div class="flex flex-col gap-6">
+  <div class="flex flex-col gap-6 w-full">
     <div>
       <h2>{{ route.meta.name }}</h2>
       <div class="breadcrumbs text-sm" v-if="!teamStore.currentTeamMeta.error">
