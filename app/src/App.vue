@@ -97,10 +97,7 @@ useConnectionEffect({
   onDisconnect() {
     if (userStore.isAuth) {
       addErrorToast('Disconnected from wallet')
-      setTimeout(() => {
-        logout()
-      }, 1000)
-      console.log('Connection disconnected')
+      logout()
     }
   }
 })
