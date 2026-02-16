@@ -27,7 +27,7 @@
       </label>
       <input
         type="text"
-        class="input input-bordered input-md grow"
+        class="input input-bordered input-md grow w-full"
         data-test="hours-worked-input"
         placeholder="10"
         v-model="formData.hoursWorked"
@@ -46,7 +46,7 @@
         <span class="w-full">Memo</span>
       </label>
       <textarea
-        class="textarea input-bordered"
+        class="textarea input-bordered w-full"
         :placeholder="isEdit ? 'I worked on...' : 'I worked on the ....'"
         data-test="memo-input"
         v-model="formData.memo"
