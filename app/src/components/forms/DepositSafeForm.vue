@@ -60,8 +60,14 @@ import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
-import { SUPPORTED_TOKENS, type TokenId, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
-import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
+import {
+  SUPPORTED_TOKENS,
+  type TokenId,
+  USDC_ADDRESS,
+  USDC_E_ADDRESS,
+  USDT_ADDRESS
+} from '@/constant'
+import { useCurrencyStore, useToastStore, useUserDataStore, useTeamStore } from '@/stores'
 import ButtonUI from '../ButtonUI.vue'
 import TokenAmount from './TokenAmount.vue'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -69,6 +75,10 @@ import { useChainId, useWriteContract, useWaitForTransactionReceipt } from '@wag
 import { ERC20_ABI } from '@/artifacts/abi/erc20'
 import { waitForTransactionReceipt } from '@wagmi/core'
 import { config } from '@/wagmi.config'
+import {
+  useSafeDepositRouterReads,
+  useSafeDepositRouterFunctions
+} from '@/composables/safeDepositRouter'
 
 const queryClient = useQueryClient()
 const chainId = useChainId()
@@ -77,6 +87,7 @@ const emits = defineEmits(['closeModal'])
 const props = defineProps<{
   safeAddress: Address
   title: string
+  useSafeDepositRouter?: boolean
 }>()
 
 function reset() {
@@ -99,7 +110,31 @@ const isAmountValid = ref(false)
 // Stores
 const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
+const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
+
+// SafeDepositRouter integration (only if prop is true)
+const safeDepositRouterAddress = computed(() =>
+  props.useSafeDepositRouter ? teamStore.getContractAddressByType('SafeDepositRouter') : undefined
+)
+
+const { canDeposit } = useSafeDepositRouterReads(safeDepositRouterAddress)
+
+const { deposit: depositToRouter } = useSafeDepositRouterFunctions()
+
+// Check if we should use SafeDepositRouter for this token
+const shouldUseRouter = computed(() => {
+  if (!props.useSafeDepositRouter) return false
+  if (!safeDepositRouterAddress.value) return false
+  if (!canDeposit.value) return false
+
+  // Only use router for USDC, USDC.e, and USDT
+  return (
+    selectedTokenId.value === 'usdc' ||
+    selectedTokenId.value === 'usdc.e' ||
+    selectedTokenId.value === 'usdt'
+  )
+})
 
 // Reactive state for balances
 const { balances, isLoading } = useContractBalance(userDataStore.address as Address)
@@ -132,10 +167,15 @@ const selectedTokenAddress = computed<Address>(
   () => selectedToken.value?.token.address ?? zeroAddress
 )
 
+// Approval target: SafeDepositRouter if using it, otherwise Safe
+const approvalTarget = computed(() =>
+  shouldUseRouter.value ? safeDepositRouterAddress.value! : props.safeAddress
+)
+
 const { data: allowance } = useErc20Allowance(
   selectedTokenAddress,
   userDataStore.address as Address,
-  props.safeAddress
+  approvalTarget
 )
 
 // Computed values for approval composable
@@ -144,11 +184,7 @@ const bigIntAmount = computed(() => {
   return isNaN(Number(amount.value)) ? 0n : BigInt(Number(amount.value) * 1e6)
 })
 
-const ERC20ApproveResult = useERC20Approve(
-  selectedTokenAddress,
-  computed(() => props.safeAddress),
-  bigIntAmount
-)
+const ERC20ApproveResult = useERC20Approve(selectedTokenAddress, approvalTarget, bigIntAmount)
 
 // ERC20 transfer for Safe
 const { data: transferHash, writeContractAsync: writeTransfer } = useWriteContract()
@@ -170,12 +206,65 @@ const submitForm = async () => {
   if (!isAmountValid.value) return
   if (isNativeDepositLoading.value) return
   submitting.value = true
+
   try {
-    // Deposit of native token (ETH/POL...)
+    // Native token deposit
     if (selectedTokenId.value === 'native') {
       await sendTransaction(props.safeAddress, parseEther(amount.value))
+      return
+    }
+
+    // Check if we should use SafeDepositRouter
+    if (shouldUseRouter.value) {
+      // SafeDepositRouter workflow
+      if (!((allowance.value ?? 0n) >= bigIntAmount.value)) {
+        currentStep.value = 2
+        await ERC20ApproveResult.executeWrite([safeDepositRouterAddress.value!, bigIntAmount.value])
+
+        if (
+          ERC20ApproveResult.receiptResult.error.value ||
+          ERC20ApproveResult.writeResult.error.value
+        ) {
+          throw new Error('Approval failed')
+        }
+      }
+
+      currentStep.value = 3
+
+      // Deposit via SafeDepositRouter (6 decimals for USDC/USDT)
+      await depositToRouter(selectedToken.value!.token.address, amount.value, 6)
+
+      // Invalidate queries
+      const tokenAddress = selectedToken.value!.token.address
+      const invalidateErc20Balance = (tokenAddr: Address, target: Address) =>
+        queryClient.invalidateQueries({
+          queryKey: [
+            'readContract',
+            {
+              address: tokenAddr,
+              chainId,
+              functionName: 'balanceOf',
+              args: [target]
+            }
+          ]
+        })
+
+      invalidateErc20Balance(tokenAddress, props.safeAddress)
+      invalidateErc20Balance(tokenAddress, userDataStore.address as Address)
+
+      // Invalidate SafeDepositRouter queries
+      queryClient.invalidateQueries({
+        queryKey: ['safeDepositRouter', safeDepositRouterAddress.value]
+      })
+
+      submitting.value = false
+      amount.value = ''
+      addSuccessToast(
+        `${selectedToken.value?.token.code} deposited and SHER tokens minted successfully`
+      )
+      emits('closeModal')
     } else {
-      // USDC deposit workflow - step 1 to 2 to 3 in one execution
+      // Standard USDC/USDT transfer workflow
       if (!((allowance.value ?? 0n) >= bigIntAmount.value)) {
         currentStep.value = 2
 
@@ -189,27 +278,26 @@ const submitForm = async () => {
         }
       }
 
-      // Step 3: Proceed to transfer (continue from step 2 if approval was done)
       currentStep.value = 3
 
-      // Transfer USDC to Safe (not deposit to a bank contract)
+      // Transfer to Safe
+      let tokenAddress: Address
       if (selectedTokenId.value === 'usdc.e') {
-        await writeTransfer({
-          address: USDC_E_ADDRESS as Address,
-          abi: ERC20_ABI,
-          functionName: 'transfer',
-          args: [props.safeAddress, bigIntAmount.value]
-        })
+        tokenAddress = USDC_E_ADDRESS as Address
+      } else if (selectedTokenId.value === 'usdc') {
+        tokenAddress = USDC_ADDRESS as Address
+      } else if (selectedTokenId.value === 'usdt') {
+        tokenAddress = USDT_ADDRESS as Address
+      } else {
+        throw new Error('Unsupported token')
       }
 
-      if (selectedTokenId.value === 'usdc') {
-        await writeTransfer({
-          address: USDC_ADDRESS as Address,
-          abi: ERC20_ABI,
-          functionName: 'transfer',
-          args: [props.safeAddress, bigIntAmount.value]
-        })
-      }
+      await writeTransfer({
+        address: tokenAddress,
+        abi: ERC20_ABI,
+        functionName: 'transfer',
+        args: [props.safeAddress, bigIntAmount.value]
+      })
 
       if (!transferHash.value) {
         throw new Error('Transfer transaction not initiated')
@@ -218,13 +306,13 @@ const submitForm = async () => {
       // Wait for transaction confirmation
       await waitForTransactionReceipt(config, { hash: transferHash.value })
 
-      // Invalidate ERC20 balance query for Safe
-      const invalidateErc20Balance = (tokenAddress: Address, target: Address) =>
+      // Invalidate balance queries
+      const invalidateErc20Balance = (tokenAddr: Address, target: Address) =>
         queryClient.invalidateQueries({
           queryKey: [
             'readContract',
             {
-              address: tokenAddress,
+              address: tokenAddr,
               chainId,
               functionName: 'balanceOf',
               args: [target]

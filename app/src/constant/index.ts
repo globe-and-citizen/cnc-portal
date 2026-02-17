@@ -38,6 +38,8 @@ interface AddressMapping {
   'MockTokens#USDCe'?: string
   'ElectionsBeaconModule#Elections'?: string
   'ElectionsBeaconModule#Beacon'?: string
+  'SafeDepositRouterBeaconModule#SafeDepositRouter'?: string
+  'SafeDepositRouterBeaconModule#Beacon'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -199,10 +201,15 @@ export const CASH_REMUNERATION_EIP712_IMPL_ADDRESS = safeResolveAddress(
 export const CASH_REMUNERATION_EIP712_BEACON_ADDRESS = safeResolveAddress(
   'CashRemunerationEIP712Module#FactoryBeacon'
 )
+export const SAFE_DEPOSIT_ROUTER_IMPL_ADDRESS = safeResolveAddress(
+  'SafeDepositRouterBeaconModule#SafeDepositRouter'
+)
+export const SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS = safeResolveAddress(
+  'SafeDepositRouterBeaconModule#Beacon'
+)
 export const OFFICER_ADDRESS = safeResolveAddress('Officer#Officer')
 export const OFFICER_BEACON = safeResolveAddress('Officer#FactoryBeacon')
 export const INVESTOR_V1_BEACON_ADDRESS = safeResolveAddress('InvestorsV1BeaconModule#Beacon')
-export const INVESTOR_V1_IMPL_ADDRESS = safeResolveAddress('InvestorsV1BeaconModule#InvestorV1')
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
 

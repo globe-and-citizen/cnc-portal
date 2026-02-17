@@ -35,8 +35,8 @@ import {
   validateAddresses,
   // VOTING_BEACON_ADDRESS,
   ELECTIONS_BEACON_ADDRESS,
-  USDC_E_ADDRESS
-  // OFFICER_ADDRESS
+  USDC_E_ADDRESS,
+  SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS
 } from '@/constant'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { BANK_ABI } from '@/artifacts/abi/bank'
@@ -45,6 +45,7 @@ import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-
 import { FACTORY_BEACON_ABI } from '@/artifacts/abi/factory-beacon'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
 import { useSyncContractsMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
@@ -155,7 +156,8 @@ const deployOfficerContract = async () => {
       !EXPENSE_ACCOUNT_EIP712_BEACON_ADDRESS ||
       !CASH_REMUNERATION_EIP712_BEACON_ADDRESS ||
       !INVESTOR_V1_BEACON_ADDRESS ||
-      !ELECTIONS_BEACON_ADDRESS
+      !ELECTIONS_BEACON_ADDRESS ||
+      !SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS
     ) {
       addErrorToast('One or more beacon addresses are not defined. Cannot deploy contracts.')
       loading.value = false
@@ -190,6 +192,10 @@ const deployOfficerContract = async () => {
       {
         beaconType: 'Elections',
         beaconAddress: ELECTIONS_BEACON_ADDRESS
+      },
+      {
+        beaconType: 'SafeDepositRouter',
+        beaconAddress: SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS
       }
     ]
     const deployments = []
@@ -203,6 +209,8 @@ const deployOfficerContract = async () => {
         args: [[USDT_ADDRESS, USDC_ADDRESS, USDC_E_ADDRESS], currentUserAddress]
       })
     })
+
+    // InvestorV1 contract
     deployments.push({
       contractType: 'InvestorV1',
       initializerData: encodeFunctionData({
@@ -263,6 +271,22 @@ const deployOfficerContract = async () => {
         abi: ELECTIONS_ABI,
         functionName: 'initialize',
         args: [currentUserAddress]
+      })
+    })
+
+    // SafeDepositRouter contract
+    deployments.push({
+      contractType: 'SafeDepositRouter',
+      initializerData: encodeFunctionData({
+        abi: SAFE_DEPOSIT_ROUTER_ABI,
+        functionName: 'initialize',
+        args: [
+          zeroAddress, // safeAddress - will be set by Officer.sol
+          zeroAddress, // investorAddress - will be set by Officer.sol
+          zeroAddress, // owner - will be transferred by Officer.sol
+          [USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS], // supportedTokens - initial token support
+          1n // multiplier - default 1:1 ratio (100 basis points = 1x)
+        ]
       })
     })
 

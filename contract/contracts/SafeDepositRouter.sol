@@ -7,7 +7,6 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
 
 interface IInvestorV1 {
     function individualMint(address shareholder, uint256 amount) external;
@@ -20,16 +19,15 @@ interface IERC20Metadata {
 }
 
 /**
- * @title SafeDepositVault
+ * @title SafeDepositRouter
  * @author CNC Portal Team
- * @notice Allows users to deposit tokens and receive SHER tokens based on configurable compensation ratio
- * @dev Paused by default - owner must call unpause() to enable deposits
+ * @notice Allows users to deposit tokens and receive SHER tokens with a configurable multiplier
+ * @dev Disabled by default - owner must enable deposits. Emergency pause available for security.
  * 
- * Feature Requirements:
- * 1. Set compensation ratio (e.g., 1 SHER = 1 USDC)
- * 2. Disabled by default via pause mechanism
- * 3. Team owner can enable/disable deposits
- * 4. Configurable rate per team
+ * Formula: SHER minted = (deposited tokens normalized to 18 decimals) × multiplier
+ * 
+ * Examples:
+ * - multiplier = 1: 100 USDC → 100 SHER
  */
 contract SafeDepositRouter is
     Initializable,
@@ -43,13 +41,8 @@ contract SafeDepositRouter is
                                CONSTANTS
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Maximum compensation ratio (200% = 2:1)
-    /// @dev 20000 basis points = 200% = deposit 1 token, receive 2 SHER
-    uint256 public constant MAX_COMPENSATION_RATIO_BPS = 20_000;
-
-    /// @notice Minimum compensation ratio (1% = 0.01:1)
-    /// @dev 100 basis points = 1% = deposit 100 tokens, receive 1 SHER
-    uint256 public constant MIN_COMPENSATION_RATIO_BPS = 100;
+    /// @notice Minimum multiplier value (must be at least 1)
+    uint256 public constant MIN_MULTIPLIER = 1;
 
     /*//////////////////////////////////////////////////////////////
                                  STORAGE
@@ -61,9 +54,13 @@ contract SafeDepositRouter is
     /// @notice InvestorV1 contract that mints SHER tokens
     address public investorAddress;
     
-    /// @notice Compensation ratio in basis points (10000 = 1:1, 5000 = 0.5:1)
-    /// @dev Example: 10000 BPS = 100% = deposit 1 USDC, receive 1 SHER
-    uint256 public compensationRatio;
+    /// @notice Simple multiplier (1 = 1:1, 2 = 2:1, etc.)
+    /// @dev SHER minted = (normalized token amount) × multiplier
+    uint256 public multiplier;
+
+    /// @notice Whether deposits are enabled (separate from paused state)
+    /// @dev Disabled by default - owner must call enableDeposits() to allow deposits
+    bool public depositsEnabled;
 
     /// @notice Mapping of supported token addresses
     mapping(address => bool) public supportedTokens;
@@ -83,9 +80,11 @@ contract SafeDepositRouter is
         uint256 timestamp
     );
 
+    event DepositsEnabled(address indexed enabledBy);
+    event DepositsDisabled(address indexed disabledBy);
     event SafeAddressUpdated(address indexed oldSafe, address indexed newSafe);
     event InvestorAddressUpdated(address indexed oldInvestor, address indexed newInvestor);
-    event CompensationRatioUpdated(uint256 oldRatio, uint256 newRatio);
+    event MultiplierUpdated(uint256 oldMultiplier, uint256 newMultiplier);
     event TokenSupportAdded(address indexed tokenAddress, uint8 decimals);
     event TokenSupportRemoved(address indexed tokenAddress);
     event TokensRecovered(address indexed token, address indexed to, uint256 amount);
@@ -99,13 +98,28 @@ contract SafeDepositRouter is
     error InvalidInvestorAddress();
     error InvalidTokenAddress();
     error InvalidTokenDecimals();
-    error CompensationRatioTooHigh();
-    error CompensationRatioTooLow();
+    error MultiplierTooLow();
     error ZeroAmount();
     error InsufficientMinterRole();
     error TokenNotSupported();
     error TokenAlreadySupported();
     error SlippageExceeded(uint256 expected, uint256 actual);
+    error DepositsNotEnabled();
+
+    /*//////////////////////////////////////////////////////////////
+                               MODIFIERS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Ensures deposits are enabled and contract is not paused
+     * @dev Two-level check:
+     *      1. depositsEnabled must be true (normal operation)
+     *      2. Contract must not be paused (emergency override)
+     */
+    modifier whenDepositsEnabled() {
+        if (!depositsEnabled) revert DepositsNotEnabled();
+        _;
+    }
 
     /*//////////////////////////////////////////////////////////////
                                CONSTRUCTOR
@@ -121,26 +135,26 @@ contract SafeDepositRouter is
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Initialize the SafeDepositVault
-     * @param _owner Team owner address
-     * @param _safeAddress Safe wallet address
-     * @param _investorAddress InvestorV1 contract address
+     * @notice Initialize the SafeDepositRouter
+     * @param _owner Contract owner address
+     * @param _safeAddress Safe wallet address where deposits are sent
+     * @param _investorAddress InvestorV1 contract that mints SHER
      * @param _tokenAddresses Initial supported tokens
-     * @param _compensationRatio Initial ratio in basis points
-     * @dev Contract is PAUSED by default - owner must call unpause() to enable
+     * @param _multiplier SHER multiplier (1 = 1:1, 2 = 2:1, etc.)
+     * 
+     * @dev Deposits disabled by default - call enableDeposits() to start
      */
     function initialize(
         address _owner,
         address _safeAddress,
         address _investorAddress,
         address[] calldata _tokenAddresses,
-        uint256 _compensationRatio
+        uint256 _multiplier
     ) public initializer {
         if (_owner == address(0)) revert InvalidOwner();
         if (_safeAddress == address(0)) revert InvalidSafeAddress();
         if (_investorAddress == address(0)) revert InvalidInvestorAddress();
-        if (_compensationRatio > MAX_COMPENSATION_RATIO_BPS) revert CompensationRatioTooHigh();
-        if (_compensationRatio < MIN_COMPENSATION_RATIO_BPS) revert CompensationRatioTooLow();
+        if (_multiplier < MIN_MULTIPLIER) revert MultiplierTooLow();
 
         __Ownable_init(_owner);
         __ReentrancyGuard_init();
@@ -148,8 +162,10 @@ contract SafeDepositRouter is
 
         safeAddress = _safeAddress;
         investorAddress = _investorAddress;
-        compensationRatio = _compensationRatio;
+        multiplier = _multiplier;
+        depositsEnabled = false; // Disabled by default
 
+        // Whitelist initial tokens
         for (uint256 i = 0; i < _tokenAddresses.length; ++i) {
             address tokenAddress = _tokenAddresses[i];
             if (tokenAddress == address(0)) revert InvalidTokenAddress();
@@ -163,13 +179,12 @@ contract SafeDepositRouter is
             emit TokenSupportAdded(tokenAddress, decimals);
         }
 
+        // Verify MINTER_ROLE
         IInvestorV1 investor = IInvestorV1(_investorAddress);
         if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) {
             revert InsufficientMinterRole();
         }
 
-        // Pause contract by default - owner must explicitly enable
-        _pause();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -177,14 +192,15 @@ contract SafeDepositRouter is
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Deposit tokens and receive SHER (simple version)
+     * @notice Deposit tokens and receive SHER
      * @param tokenAddress Token to deposit
      * @param amount Amount to deposit
-     * @dev Reverts if contract is paused
+     * @dev Requires deposits to be enabled and contract not paused
      */
     function deposit(address tokenAddress, uint256 amount)
         external
         nonReentrant
+        whenDepositsEnabled
         whenNotPaused
     {
         _deposit(tokenAddress, amount, 0);
@@ -195,13 +211,13 @@ contract SafeDepositRouter is
      * @param tokenAddress Token to deposit
      * @param amount Amount to deposit
      * @param minSherOut Minimum SHER expected
-     * @dev Reverts if contract is paused or slippage exceeded
+     * @dev Requires deposits to be enabled and contract not paused
      */
     function depositWithSlippage(
         address tokenAddress,
         uint256 amount,
         uint256 minSherOut
-    ) external nonReentrant whenNotPaused {
+    ) external nonReentrant whenDepositsEnabled  whenNotPaused{
         _deposit(tokenAddress, amount, minSherOut);
     }
 
@@ -218,6 +234,7 @@ contract SafeDepositRouter is
 
         IERC20 token = IERC20(tokenAddress);
 
+        // Measure actual received amount (fee-on-transfer protection)
         uint256 balanceBefore = token.balanceOf(safeAddress);
         token.safeTransferFrom(msg.sender, safeAddress, amount);
         uint256 balanceAfter = token.balanceOf(safeAddress);
@@ -225,10 +242,12 @@ contract SafeDepositRouter is
         uint256 receivedAmount = balanceAfter - balanceBefore;
         uint256 sherAmount = calculateCompensation(tokenAddress, receivedAmount);
 
+        // Slippage check
         if (minSherOut > 0 && sherAmount < minSherOut) {
             revert SlippageExceeded(minSherOut, sherAmount);
         }
 
+        // Mint SHER to depositor
         IInvestorV1(investorAddress).individualMint(msg.sender, sherAmount);
 
         emit Deposited(msg.sender, tokenAddress, receivedAmount, sherAmount, block.timestamp);
@@ -244,17 +263,8 @@ contract SafeDepositRouter is
      * @param tokenAmount Amount in token's decimals
      * @return SHER amount (18 decimals)
      * 
-     * @dev Uses Math.mulDiv for overflow-safe calculation
-     * @dev Formula: (tokenAmount * 10^(18-decimals) * compensationRatio) / 10_000
+     * @dev Formula: SHER = (token amount normalized to 18 decimals) × multiplier
      * 
-     * Examples:
-     * - 100 USDC (6 decimals), 50% ratio (5000 BPS):
-     *   normalizedAmount = 100 * 10^6 * 10^12 = 100 * 10^18
-     *   sherAmount = Math.mulDiv(100 * 10^18, 5000, 10_000) = 50 * 10^18 (50 SHER)
-     * 
-     * - 1 billion USDC (6 decimals), 100% ratio (10000 BPS):
-     *   normalizedAmount = 1_000_000_000 * 10^6 * 10^12 = 10^27
-     *   sherAmount = Math.mulDiv(10^27, 10000, 10_000) = 10^27 (safe, no overflow)
      */
     function calculateCompensation(
         address tokenAddress,
@@ -265,21 +275,25 @@ contract SafeDepositRouter is
 
         uint8 decimals = tokenDecimals[tokenAddress];
 
-        // Normalize to 18 decimals
+        // Step 1: Normalize token amount to 18 decimals
         uint256 normalizedAmount = tokenAmount;
         if (decimals < 18) {
             normalizedAmount = tokenAmount * (10 ** (18 - decimals));
         }
 
-        // Use Math.mulDiv for overflow-safe calculation
-        // Math.mulDiv(x, y, denominator) = (x * y) / denominator
-        return Math.mulDiv(normalizedAmount, compensationRatio, 10_000);
+        // Step 2: Apply multiplier
+        // Solidity 0.8+ has built-in overflow protection
+        return normalizedAmount * multiplier;
     }
 
     /*//////////////////////////////////////////////////////////////
                        TOKEN MANAGEMENT FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
+    /**
+     * @notice Add token to deposit whitelist
+     * @param tokenAddress Token address to add
+     */
     function addTokenSupport(address tokenAddress) external onlyOwner {
         if (tokenAddress == address(0)) revert InvalidTokenAddress();
         if (supportedTokens[tokenAddress]) revert TokenAlreadySupported();
@@ -293,6 +307,10 @@ contract SafeDepositRouter is
         emit TokenSupportAdded(tokenAddress, decimals);
     }
 
+    /**
+     * @notice Remove token from deposit whitelist
+     * @param tokenAddress Token address to remove
+     */
     function removeTokenSupport(address tokenAddress) external onlyOwner {
         if (tokenAddress == address(0)) revert InvalidTokenAddress();
         if (!supportedTokens[tokenAddress]) revert TokenNotSupported();
@@ -302,15 +320,71 @@ contract SafeDepositRouter is
     }
 
     /*//////////////////////////////////////////////////////////////
+                     DEPOSIT CONTROL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Enable deposits (normal operation)
+     * @dev This is the primary way to allow deposits
+     * @dev Can only be called by owner
+     */
+    function enableDeposits() external onlyOwner {
+        depositsEnabled = true;
+        emit DepositsEnabled(msg.sender);
+    }
+
+    /**
+     * @notice Disable deposits (stop accepting new deposits)
+     * @dev This does NOT affect existing balances or other operations
+     * @dev Can only be called by owner
+     */
+    function disableDeposits() external onlyOwner {
+        depositsEnabled = false;
+        emit DepositsDisabled(msg.sender);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                     EMERGENCY PAUSE FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Pause contract (emergency stop)
+     * @dev Overrides depositsEnabled - even if enabled, deposits are blocked when paused
+     * @dev Use this for security emergencies, NOT for normal operation
+     * @dev Can only be called by owner
+     */
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /**
+     * @notice Unpause contract (resume after emergency)
+     * @dev This does NOT automatically enable deposits
+     * @dev Deposits must also be enabled via enableDeposits()
+     * @dev Can only be called by owner
+     */
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    /*//////////////////////////////////////////////////////////////
                             ADMIN FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
+    /**
+     * @notice Update Safe address
+     * @param _newSafe New Safe address
+     */
     function setSafeAddress(address _newSafe) external onlyOwner {
         if (_newSafe == address(0)) revert InvalidSafeAddress();
         emit SafeAddressUpdated(safeAddress, _newSafe);
         safeAddress = _newSafe;
     }
 
+    /**
+     * @notice Update InvestorV1 address
+     * @param _newInvestor New InvestorV1 address
+     */
     function setInvestorAddress(address _newInvestor) external onlyOwner {
         if (_newInvestor == address(0)) revert InvalidInvestorAddress();
 
@@ -323,52 +397,35 @@ contract SafeDepositRouter is
         investorAddress = _newInvestor;
     }
 
-    function setCompensationRatio(uint256 _newRatio) external onlyOwner {
-        if (_newRatio > MAX_COMPENSATION_RATIO_BPS) revert CompensationRatioTooHigh();
-        if (_newRatio < MIN_COMPENSATION_RATIO_BPS) revert CompensationRatioTooLow();
-
-        emit CompensationRatioUpdated(compensationRatio, _newRatio);
-        compensationRatio = _newRatio;
-    }
-
     /**
-     * @notice Pause all deposits (emergency stop)
-     * @dev Can only be called by owner
+     * @notice Update multiplier
+     * @param _newMultiplier New multiplier (minimum 1)
+     * 
+     * @dev Examples:
+     *      - 1 = 1:1 ratio (1 token = 1 SHER)
+     *      - 2 = 2:1 ratio (1 token = 2 SHER)
+     *      - 10 = 10:1 ratio (1 token = 10 SHER)
      */
-    function pause() external onlyOwner {
-        _pause();
+    function setMultiplier(uint256 _newMultiplier) external onlyOwner {
+        if (_newMultiplier < MIN_MULTIPLIER) revert MultiplierTooLow();
+        emit MultiplierUpdated(multiplier, _newMultiplier);
+        multiplier = _newMultiplier;
     }
 
     /**
-     * @notice Enable deposits
-     * @dev Can only be called by owner
-     * @dev Must be called after deployment to enable deposits
-     */
-    function unpause() external onlyOwner {
-        _unpause();
-    }
-
-    /**
-     * @notice Rescue accidentally sent tokens
-     * @param token Token address to recover
+     * @notice Recover accidentally sent tokens
+     * @param token Token address
      * @param amount Amount to recover
-     * 
-     * @dev Only callable when paused for safety
-     * @dev Recovered tokens are ALWAYS sent to the team's Safe
-     * 
-     * WARNING: Do NOT send tokens directly to this contract!
-     * Always use the deposit() function to ensure SHER tokens are minted.
+     * @dev Always sends to Safe
      */
     function recoverERC20(
         address token,
         uint256 amount
-    ) external onlyOwner whenPaused {
+    ) external onlyOwner  {
         if (token == address(0)) revert InvalidTokenAddress();
         if (amount == 0) revert ZeroAmount();
         
-        //  Always send to Safe (cannot extract to arbitrary address)
         IERC20(token).safeTransfer(safeAddress, amount);
-        
         emit TokensRecovered(token, safeAddress, amount);
     }
 
