@@ -91,7 +91,6 @@
         <v-chart :option="barChartOption" autoresize style="height: 250px" />
       </div>
     </CardComponent>
-
     <!-- Right Content -->
     <div class="flex-1 space-y-6">
       <WeeklyRecap :weeklyClaim="selectWeekWeelyClaim" />
@@ -103,16 +102,10 @@
             v-if="memberAddress === userStore.address"
           >
             <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
-            <span>{{
-              hasWage && selectWeekWeelyClaim?.status === 'pending'
-                ? 'You have a wage so you can submit your claim'
-                : hasWage && selectWeekWeelyClaim && selectWeekWeelyClaim.status !== 'pending'
-                  ? `This week claim is already ${selectWeekWeelyClaim.status}, you cannot submit new claims`
-                  : 'You need to have a wage set up to submit claims'
-            }}</span>
+            <span>{{ claimSubmitMessage }}</span>
             <div>
               <SubmitClaims
-                v-if="hasWage && selectWeekWeelyClaim?.status === 'pending'"
+                v-if="hasWage && isCurrentWeek"
                 :weekly-claim="selectWeekWeelyClaim"
                 :signed-week-starts="signedWeekStarts"
                 :restrict-submit="false"
@@ -153,7 +146,6 @@
             </div>
           </div>
 
-          <!-- <pre>{{ selectWeekWeelyClaim }}</pre> -->
           <div
             role="alert"
             class="alert alert-vertical sm:alert-horizontal"
@@ -293,13 +285,15 @@ const toastStore = useToastStore()
 const memberAddress = computed(() => route.params.memberAddress as Address | undefined)
 
 const displayedMember = computed(() => {
-  return (teamStore.currentTeam?.members || []).find(
+  return (teamStore.currentTeamMeta?.data?.members || []).find(
     (member) => member.address.toLowerCase() === memberAddress.value?.toLowerCase()
   )
 })
 
 const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 const nextWeekStart = dayjs().utc().add(1, 'week').startOf('isoWeek').toISOString()
+
+const isCurrentWeek = computed(() => currentWeekStart === selectedMonthObject.value.isoString)
 
 const getColor = (weeklyClaim?: WeeklyClaim) => {
   if (!weeklyClaim) return 'accent'
@@ -380,6 +374,26 @@ const selectWeekWeelyClaim = computed(() => {
   return memberWeeklyClaims.value?.find(
     (weeklyClaim) => weeklyClaim.weekStart === selectedMonthObject.value.isoString
   )
+})
+
+const claimSubmitMessage = computed(() => {
+  if (hasWage.value && isCurrentWeek.value) {
+    return 'You have a wage so you can submit your claim'
+  }
+
+  if (
+    hasWage.value &&
+    selectWeekWeelyClaim.value &&
+    selectWeekWeelyClaim.value?.status !== 'pending'
+  ) {
+    return `This week claim is already ${selectWeekWeelyClaim.value?.status}, you cannot submit new claims`
+  }
+
+  if (!hasWage.value) {
+    return 'You need to have a wage set up to submit claims'
+  }
+
+  return 'You cannot submit a claim for this week'
 })
 
 // Current signed weeks for disabling dates in claim form

@@ -7,6 +7,7 @@ import {
   mockUseSafeSendTransaction,
   mockUseSafeOwnerManagement
 } from '@/tests/mocks/composables.mock'
+import { mockGetBalance } from '@/tests/mocks/viem.actions.mock'
 
 /**
  * Mock TanStack Vue Query
@@ -216,3 +217,14 @@ vi.mock('@/composables/safe', async (importOriginal) => {
 ;(
   globalThis as { __mockUseSafeOwnerManagement?: typeof mockUseSafeOwnerManagement }
 ).__mockUseSafeOwnerManagement = mockUseSafeOwnerManagement
+
+/**
+ * Mock viem/actions getBalance
+ */
+vi.mock('viem/actions', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    getBalance: mockGetBalance
+  }
+})
