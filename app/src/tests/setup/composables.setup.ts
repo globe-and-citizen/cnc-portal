@@ -8,6 +8,7 @@ import {
   mockUseSafeOwnerManagement
 } from '@/tests/mocks/composables.mock'
 import { mockGetBalance } from '@/tests/mocks/viem.actions.mock'
+import { mockRouter } from '@/tests/mocks/router.mock'
 
 /**
  * Mock TanStack Vue Query
@@ -39,14 +40,7 @@ vi.mock('vue-router', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useRouter: vi.fn(() => ({
-      push: vi.fn(),
-      replace: vi.fn(),
-      back: vi.fn(),
-      go: vi.fn(),
-      beforeEach: vi.fn(),
-      afterEach: vi.fn()
-    })),
+    useRouter: vi.fn(() => mockRouter),
     RouterView: { name: 'RouterView', template: '<div data-test="router-view">Router View</div>' },
     useRoute: vi.fn(() => ({
       params: { id: '1' },
