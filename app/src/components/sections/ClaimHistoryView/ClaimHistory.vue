@@ -1,9 +1,12 @@
 <template>
-  <div v-if="memberAddress">
-    <ClaimHistoryMemberHeader :member-address="memberAddress" />
+  <div v-if="selectedMemberAddress">
+    <ClaimHistoryMemberHeader :member-address="selectedMemberAddress" />
     <div class="flex bg-transparent gap-x-4">
       <!-- Left Sidebar -->
-      <ClaimHistoryWeekNavigator v-model="selectedMonthObject" :member-address="memberAddress" />
+      <ClaimHistoryWeekNavigator
+        v-model="selectedMonthObject"
+        :member-address="selectedMemberAddress"
+      />
 
       <!-- Right Content -->
       <div class="flex-1 space-y-6">
@@ -11,13 +14,13 @@
 
         <ClaimHistoryActionAlerts
           :weekly-claim="selectWeekWeelyClaim"
-          :member-address="memberAddress"
+          :member-address="selectedMemberAddress"
         />
 
         <ClaimHistoryDailyBreakdown
           :weekly-claim="selectWeekWeelyClaim"
           :selected-week="selectedMonthObject"
-          :member-address="memberAddress"
+          :member-address="selectedMemberAddress"
         />
       </div>
     </div>
@@ -47,7 +50,7 @@ dayjs.extend(isoWeek)
 const route = useRoute()
 const teamStore = useTeamStore()
 
-const memberAddress = computed(() => route.params.memberAddress as Address | undefined)
+const selectedMemberAddress = computed(() => route.params.memberAddress as Address | undefined)
 
 const selectedMonthObject = ref<Week>({
   year: dayjs().utc().year(),
@@ -60,7 +63,7 @@ const selectedMonthObject = ref<Week>({
 const { data: memberWeeklyClaims } = useGetTeamWeeklyClaimsQuery({
   queryParams: {
     teamId: computed(() => teamStore.currentTeamId),
-    userAddress: memberAddress
+    userAddress: selectedMemberAddress
   }
 })
 
