@@ -31,9 +31,9 @@ interface IFeeCollector {
 }
 
 interface ISafeDepositRouter {
-    function transferOwnership(address newOwner) external;
+  function setInvestorAddress(address _investorAddress) external;
+  function transferOwnership(address newOwner) external;
 }
-
 
 /**
  * @notice Struct for contract deployment data
@@ -170,10 +170,13 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         
         // Setup SafeDepositRouter permissions if deployed
         if (depositRouterAddress != address(0)) {
-            // Grant MINTER_ROLE to SafeDepositRouter
-            investorV1.grantRole(minterRole, depositRouterAddress);
-            // NEW: Transfer ownership to team owner so they can configure it
             ISafeDepositRouter depositRouter = ISafeDepositRouter(depositRouterAddress);
+            // Grant MINTER_ROLE first (required by SafeDepositRouter.setInvestorAddress)
+            investorV1.grantRole(minterRole, depositRouterAddress);
+            // Set investor address (Officer is owner at this point)
+            depositRouter.setInvestorAddress(investorV1Address);
+            
+            //ADD: Transfer ownership to final owner (like CashRemuneration)
             depositRouter.transferOwnership(_owner);
         }
         
@@ -236,11 +239,45 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
                 // InvestorV1 already deployed, set the investor address
                 IBank(proxyAddress).setInvestorAddress(foundInvestorsV1Contract);
             }
+        } else if(keccak256(bytes(contractType)) == keccak256(bytes("SafeDepositRouter"))) {
+            address foundInvestorsV1Contract = findDeployedContract("InvestorV1");
+            if (foundInvestorsV1Contract != address(0)) {
+                IInvestorV1 investorV1 = IInvestorV1(foundInvestorsV1Contract);
+                bytes32 minterRole = investorV1.MINTER_ROLE();
+                
+                if (!investorV1.hasRole(minterRole, proxyAddress)) {
+                    investorV1.grantRole(minterRole, proxyAddress);
+                }
+                
+                ISafeDepositRouter(proxyAddress).setInvestorAddress(foundInvestorsV1Contract);
+                
+                // Only transfer ownership if NOT in batch deployment (will be handled by _setupContractPermissions)
+                if (!_isInitializing()) {
+                    ISafeDepositRouter(proxyAddress).transferOwnership(owner());
+                }
+            }
         } else if(keccak256(bytes(contractType)) == keccak256(bytes("InvestorV1"))) {
             address foundBankContract = findDeployedContract("Bank");
             if (foundBankContract != address(0)) {
                 // Bank already deployed, set the investor address
                 IBank(foundBankContract).setInvestorAddress(proxyAddress);
+            }
+            
+            address foundSafeDepositRouter = findDeployedContract("SafeDepositRouter");
+            if (foundSafeDepositRouter != address(0)) {
+                IInvestorV1 investorV1 = IInvestorV1(proxyAddress);
+                bytes32 minterRole = investorV1.MINTER_ROLE();
+
+                if (!investorV1.hasRole(minterRole, foundSafeDepositRouter)) {
+                    investorV1.grantRole(minterRole, foundSafeDepositRouter);
+                }
+                
+                ISafeDepositRouter(foundSafeDepositRouter).setInvestorAddress(proxyAddress);
+
+                // Only transfer ownership if NOT in batch deployment (will be handled by _setupContractPermissions)
+                if (!_isInitializing()) {
+                    ISafeDepositRouter(foundSafeDepositRouter).transferOwnership(owner());
+                }
             }
         }
 
