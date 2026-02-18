@@ -232,5 +232,4 @@ const emit = defineEmits<{
 const { modalState, resolvedPreviews, openModal, closeModal, downloadFile } = useFilePreviewGallery(
   toRef(props, 'previews')
 )
-
 </script>
