@@ -9,6 +9,7 @@ import {
   type ContractWriteOptions
 } from '../contracts/useContractWrites'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
+import type { Address } from 'viem'
 
 /**
  * SafeDepositRouter contract write operations
@@ -23,7 +24,7 @@ export function useSafeDepositRouterWrites() {
   )
 
   const baseConfig: ContractWriteConfig = {
-    contractAddress: safeDepositRouterAddress,
+    contractAddress: safeDepositRouterAddress as ComputedRef<Address | undefined>,
     abi: SAFE_DEPOSIT_ROUTER_ABI,
     chainId
   }
@@ -33,13 +34,14 @@ export function useSafeDepositRouterWrites() {
   const executeWrite = async (
     functionName: SafeDepositRouterFunctionName,
     args: readonly unknown[] = [],
+    value?: bigint,
     options?: ContractWriteOptions
   ) => {
     if (!isValidSafeDepositRouterFunction(functionName)) {
       throw new Error(`Invalid SafeDepositRouter function: ${functionName}`)
     }
 
-    const result = await baseWrites.executeWrite(functionName, args, options)
+    const result = await baseWrites.executeWrite(functionName, args, value, options)
 
     if (result) {
       queryClient.invalidateQueries({
