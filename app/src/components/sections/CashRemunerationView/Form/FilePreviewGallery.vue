@@ -11,7 +11,7 @@
         v-if="preview.isImage && preview.previewUrl"
         type="button"
         :class="[
-          'group relative overflow-hidden rounded-md w-full focus:outline-hidden border border-gray-200 hover:border-emerald-500 transition-all',
+          'group relative overflow-hidden rounded-md w-full focus:outline-hidden border border-gray-200 hover:border-emerald-500 transition-all bg-gray-100',
           itemHeightClass,
           imageClass
         ]"
@@ -20,7 +20,7 @@
       >
         <img :src="preview.previewUrl" class="w-full h-full object-cover" :alt="preview.fileName" />
         <div
-          class="pointer-events-none absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all flex items-center justify-center"
+          class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all flex items-center justify-center"
         >
           <Icon
             icon="heroicons:magnifying-glass-plus"
@@ -232,4 +232,5 @@ const emit = defineEmits<{
 const { modalState, resolvedPreviews, openModal, closeModal, downloadFile } = useFilePreviewGallery(
   toRef(props, 'previews')
 )
+
 </script>
