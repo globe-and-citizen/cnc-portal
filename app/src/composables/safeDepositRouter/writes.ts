@@ -9,7 +9,6 @@ import {
   type ContractWriteOptions
 } from '../contracts/useContractWrites'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
-import type { Address } from 'viem'
 
 /**
  * SafeDepositRouter contract write operations
@@ -24,7 +23,7 @@ export function useSafeDepositRouterWrites() {
   )
 
   const baseConfig: ContractWriteConfig = {
-    contractAddress: safeDepositRouterAddress as ComputedRef<Address | undefined>,
+    contractAddress: safeDepositRouterAddress.value!,
     abi: SAFE_DEPOSIT_ROUTER_ABI,
     chainId
   }
