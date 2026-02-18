@@ -1,32 +1,20 @@
 import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
 
-/**
- * @title SafeDepositRouter Upgrade Module
- * @notice Upgrades the SafeDepositRouter implementation
- * @dev This upgrades ALL team SafeDepositRouter instances via the beacon
- */
-export default buildModule('SafeDepositRouterUpgradeModule', (m) => {
+export default buildModule('SafeDepositRouterUpgradeModulePolygon', (m) => { // ← new module name
   const beaconOwner = m.getAccount(0)
 
-  // Step 1: Deploy new SafeDepositRouter implementation
   const newImpl = m.contract('SafeDepositRouter', [], {
-    id: 'SafeDepositRouter_v2' // Use unique ID for this upgrade
+    id: 'SafeDepositRouter_polygon_v3', // ← new unique ID
   })
 
-
-  // Step 2: Reference the already-deployed FactoryBeacon
-  // Update this address after initial deployment to the correct network
-  const factoryBeacon = m.contractAt(
-    'FactoryBeacon',
-    '0x0000000000000000000000000000000000000000', // TODO: Replace with actual SafeDepositRouter beacon address from deployment
-    { id: 'SafeDepositRouterBeacon_existing' }
+  // Polygon beacon
+  const beacon = m.contractAt(
+    'Beacon',
+    '0xd92D080C25020a1dB173FDE24337deAd92F22579',
+    { id: 'SafeDepositRouterBeacon_polygon_v3' } // ← new unique ID
   )
 
-  // Step 3: Upgrade the beacon to point to new implementation
-  m.call(factoryBeacon, 'upgradeTo', [newImpl], { from: beaconOwner })
+  m.call(beacon, 'upgradeTo', [newImpl], { from: beaconOwner })
 
-  return { 
-    factoryBeacon, 
-    newImpl 
-  }
+  return { beacon, newImpl }
 })

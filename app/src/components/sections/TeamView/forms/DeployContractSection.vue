@@ -281,9 +281,8 @@ const deployOfficerContract = async () => {
         abi: SAFE_DEPOSIT_ROUTER_ABI,
         functionName: 'initialize',
         args: [
-          zeroAddress, // safeAddress - will be set by Officer.sol
-          zeroAddress, // investorAddress - will be set by Officer.sol
-          zeroAddress, // owner - will be transferred by Officer.sol
+          currentUserAddress, // safeAddress
+          zeroAddress, // investorAddress
           [USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS], // supportedTokens - initial token support
           1n // multiplier - default 1:1 ratio (100 basis points = 1x)
         ]

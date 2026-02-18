@@ -17,8 +17,6 @@
       </UButton>
     </div>
 
-    <SafeDepositRouterCard />
-
     <!-- Safe List -->
     <SafeList ref="safeListRef" />
 
@@ -31,7 +29,6 @@
 import { ref } from "vue";
 import SafeDeployForm from "@/components/sections/Safe/SafeDeployForm.vue";
 import SafeList from "@/components/sections/Safe/SafeList.vue";
-import SafeDepositRouterCard from "@/components/sections/Safe/SafeDepositRouterCard.vue";
 
 const toast = useToast();
 const isDeployModalOpen = ref(false);

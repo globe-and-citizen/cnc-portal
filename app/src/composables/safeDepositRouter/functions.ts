@@ -109,7 +109,7 @@ export function useSafeDepositRouterFunctions() {
     currentFunctionName: functionName,
     isLoading,
     isConfirmed,
-    hash: writes.hash,
+    hash: writes.writeContractData,
     error: writes.error,
     receipt: writes.receipt,
 
@@ -133,9 +133,6 @@ export function useSafeDepositRouterFunctions() {
     depositWithSlippage,
 
     // Recovery functions
-    recoverERC20,
-
-    // Helpers
-    reset: writes.reset
+    recoverERC20
   }
 }

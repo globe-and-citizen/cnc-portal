@@ -2,7 +2,7 @@ import { createPublicClient, http } from 'viem';
 import { mainnet, sepolia, polygon, hardhat, polygonAmoy } from 'viem/chains';
 
 const chainId = process.env.CHAIN_ID;
-
+const rpcUrl = 'https://polygon-mainnet.g.alchemy.com/v2/F_3kP4qK3m83Mzp0ZsxoBSNwXn9AWZfy';
 export const getChain = (chainIdStr: string | undefined) => {
   if (!chainIdStr) return sepolia; // default to sepolia
 
@@ -26,7 +26,7 @@ export const getChain = (chainIdStr: string | undefined) => {
 
 const publicClient = createPublicClient({
   chain: getChain(chainId),
-  transport: http(),
+  transport: http(rpcUrl),
 });
 
 export default publicClient;

@@ -136,27 +136,24 @@ contract SafeDepositRouter is
 
     /**
      * @notice Initialize the SafeDepositRouter
-     * @param _owner Contract owner address
      * @param _safeAddress Safe wallet address where deposits are sent
-     * @param _investorAddress InvestorV1 contract that mints SHER
+     * @param _investorAddress InvestorV1 contract that mints SHER (can be zero, set later)
      * @param _tokenAddresses Initial supported tokens
      * @param _multiplier SHER multiplier (1 = 1:1, 2 = 2:1, etc.)
      * 
      * @dev Deposits disabled by default - call enableDeposits() to start
+     * @dev investorAddress can be zero during initialization - will be set by Officer
      */
     function initialize(
-        address _owner,
         address _safeAddress,
         address _investorAddress,
         address[] calldata _tokenAddresses,
         uint256 _multiplier
     ) public initializer {
-        if (_owner == address(0)) revert InvalidOwner();
         if (_safeAddress == address(0)) revert InvalidSafeAddress();
-        if (_investorAddress == address(0)) revert InvalidInvestorAddress();
         if (_multiplier < MIN_MULTIPLIER) revert MultiplierTooLow();
 
-        __Ownable_init(_owner);
+        __Ownable_init(msg.sender);
         __ReentrancyGuard_init();
         __Pausable_init();
 
@@ -178,13 +175,6 @@ contract SafeDepositRouter is
 
             emit TokenSupportAdded(tokenAddress, decimals);
         }
-
-        // Verify MINTER_ROLE
-        IInvestorV1 investor = IInvestorV1(_investorAddress);
-        if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) {
-            revert InsufficientMinterRole();
-        }
-
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -222,36 +212,42 @@ contract SafeDepositRouter is
     }
 
     /**
-     * @dev Internal deposit logic
+     * @notice Internal deposit implementation
+     * @param tokenAddress Address of the token to deposit
+     * @param amount Amount of tokens to deposit
+     * @param minSherOut Minimum SHER to receive (0 for no slippage protection)
      */
-    function _deposit(
-        address tokenAddress,
-        uint256 amount,
-        uint256 minSherOut
-    ) internal {
-        if (amount == 0) revert ZeroAmount();
+    function _deposit(address tokenAddress, uint256 amount, uint256 minSherOut) internal {
+        
         if (!supportedTokens[tokenAddress]) revert TokenNotSupported();
+        if (amount == 0) revert ZeroAmount();
+        
+        //  ADD: Check investorAddress is set before attempting deposit
+        if (investorAddress == address(0)) revert InvalidInvestorAddress();
 
-        IERC20 token = IERC20(tokenAddress);
+        // Check MINTER_ROLE before attempting to mint
+        IInvestorV1 investor = IInvestorV1(investorAddress);
+        if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) {
+            revert InsufficientMinterRole();
+        }
 
-        // Measure actual received amount (fee-on-transfer protection)
-        uint256 balanceBefore = token.balanceOf(safeAddress);
-        token.safeTransferFrom(msg.sender, safeAddress, amount);
-        uint256 balanceAfter = token.balanceOf(safeAddress);
+        // Calculate SHER compensation
+        uint256 sherAmount = calculateCompensation(tokenAddress, amount);
 
-        uint256 receivedAmount = balanceAfter - balanceBefore;
-        uint256 sherAmount = calculateCompensation(tokenAddress, receivedAmount);
-
-        // Slippage check
+        // Check slippage if specified
         if (minSherOut > 0 && sherAmount < minSherOut) {
             revert SlippageExceeded(minSherOut, sherAmount);
         }
 
-        // Mint SHER to depositor
-        IInvestorV1(investorAddress).individualMint(msg.sender, sherAmount);
+        // Transfer tokens to Safe
+        IERC20(tokenAddress).safeTransferFrom(msg.sender, safeAddress, amount);
 
-        emit Deposited(msg.sender, tokenAddress, receivedAmount, sherAmount, block.timestamp);
+        // Mint SHER to depositor
+        investor.individualMint(msg.sender, sherAmount);
+
+        emit Deposited(msg.sender, tokenAddress, amount, sherAmount, block.number);
     }
+
 
     /*//////////////////////////////////////////////////////////////
                          CALCULATION FUNCTIONS
@@ -272,19 +268,24 @@ contract SafeDepositRouter is
     ) public view returns (uint256) {
         if (!supportedTokens[tokenAddress]) revert TokenNotSupported();
         if (tokenAmount == 0) revert ZeroAmount();
+        if (investorAddress == address(0)) revert InvalidInvestorAddress();
 
-        uint8 decimals = tokenDecimals[tokenAddress];
+        uint8 tokenDec = tokenDecimals[tokenAddress];
+        uint8 sherDec = IERC20Metadata(investorAddress).decimals();
 
-        // Step 1: Normalize token amount to 18 decimals
-        uint256 normalizedAmount = tokenAmount;
-        if (decimals < 18) {
-            normalizedAmount = tokenAmount * (10 ** (18 - decimals));
+        uint256 normalizedAmount;
+
+        if (tokenDec < sherDec) {
+            normalizedAmount = tokenAmount * (10 ** (sherDec - tokenDec));
+        } else if (tokenDec > sherDec) {
+            normalizedAmount = tokenAmount / (10 ** (tokenDec - sherDec));
+        } else {
+            normalizedAmount = tokenAmount;
         }
 
-        // Step 2: Apply multiplier
-        // Solidity 0.8+ has built-in overflow protection
         return normalizedAmount * multiplier;
     }
+
 
     /*//////////////////////////////////////////////////////////////
                        TOKEN MANAGEMENT FUNCTIONS
@@ -388,6 +389,7 @@ contract SafeDepositRouter is
     function setInvestorAddress(address _newInvestor) external onlyOwner {
         if (_newInvestor == address(0)) revert InvalidInvestorAddress();
 
+        // Only check MINTER_ROLE if we're setting a non-zero address
         IInvestorV1 investor = IInvestorV1(_newInvestor);
         if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) {
             revert InsufficientMinterRole();

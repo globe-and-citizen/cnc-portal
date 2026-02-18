@@ -62,6 +62,7 @@
               Pay Dividends
             </ButtonUI>
           </div>
+          <InvestInSafeButton />
         </div>
       </div>
 
@@ -126,7 +127,7 @@ import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-
+import InvestInSafeButton from '@/components/sections/SherTokenView/InvestInSafeButton.vue'
 import { useBodContract } from '@/composables/bod/'
 import { useBankContract } from '@/composables/bank'
 import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils'
