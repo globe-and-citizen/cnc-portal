@@ -12,7 +12,6 @@
         <ClaimHistoryActionAlerts
           :weekly-claim="selectWeekWeelyClaim"
           :member-address="memberAddress"
-          :selected-week="selectedMonthObject"
         />
 
         <ClaimHistoryDailyBreakdown

@@ -11,7 +11,7 @@
         <span>{{ claimSubmitMessage }}</span>
         <div>
           <SubmitClaims
-            v-if="hasWage && isCurrentWeek"
+            v-if="hasWage"
             :weekly-claim="weeklyClaim"
             :signed-week-starts="signedWeekStarts"
             :restrict-submit="false"
@@ -85,7 +85,6 @@ import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import type { Address } from 'viem'
-import type { Week } from '@/utils/dayUtils'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
 import type { WeeklyClaim } from '@/types'
@@ -101,7 +100,6 @@ dayjs.extend(isoWeek)
 interface Props {
   weeklyClaim?: WeeklyClaim
   memberAddress: Address
-  selectedWeek: Week
 }
 
 const props = defineProps<Props>()
@@ -137,15 +135,13 @@ watch(teamWageDataError, (newVal) => {
 const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 const nextWeekStart = dayjs().utc().add(1, 'week').startOf('isoWeek').toISOString()
 
-const isCurrentWeek = computed(() => currentWeekStart === props.selectedWeek.isoString)
-
 const claimSubmitMessage = computed(() => {
-  if (hasWage.value && isCurrentWeek.value) {
-    return 'You have a wage so you can submit your claim'
-  }
-
   if (hasWage.value && props.weeklyClaim && props.weeklyClaim?.status !== 'pending') {
     return `This week claim is already ${props.weeklyClaim?.status}, you cannot submit new claims`
+  }
+
+  if (hasWage.value) {
+    return 'You have a wage so you can submit your claim'
   }
 
   if (!hasWage.value) {
