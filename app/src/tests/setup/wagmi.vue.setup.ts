@@ -27,6 +27,7 @@ vi.mock('@/wagmi.config', () => ({
   config: {
     setState: vi.fn(),
     getState: vi.fn(() => ({})),
+    getClient: vi.fn(() => ({})),
     subscribe: vi.fn(() => vi.fn()),
     connectors: [],
     chains: [],

@@ -7,6 +7,7 @@ import {
   mockUseSafeSendTransaction,
   mockUseSafeOwnerManagement
 } from '@/tests/mocks/composables.mock'
+import { mockGetBalance } from '@/tests/mocks/viem.actions.mock'
 
 /**
  * Mock TanStack Vue Query
@@ -31,6 +32,27 @@ vi.mock('@tanstack/vue-query', async () => {
         error: vi.fn()
       }
     })
+  }
+})
+
+vi.mock('vue-router', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useRouter: vi.fn(() => ({
+      push: vi.fn(),
+      replace: vi.fn(),
+      back: vi.fn(),
+      go: vi.fn(),
+      beforeEach: vi.fn(),
+      afterEach: vi.fn()
+    })),
+    RouterView: { name: 'RouterView', template: '<div data-test="router-view">Router View</div>' },
+    useRoute: vi.fn(() => ({
+      params: { id: '1' },
+      path: '/teams/1',
+      meta: { name: 'Team View' }
+    }))
   }
 })
 
@@ -195,3 +217,14 @@ vi.mock('@/composables/safe', async (importOriginal) => {
 ;(
   globalThis as { __mockUseSafeOwnerManagement?: typeof mockUseSafeOwnerManagement }
 ).__mockUseSafeOwnerManagement = mockUseSafeOwnerManagement
+
+/**
+ * Mock viem/actions getBalance
+ */
+vi.mock('viem/actions', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    getBalance: mockGetBalance
+  }
+})

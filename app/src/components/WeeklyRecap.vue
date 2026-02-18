@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-1 space-y-6">
+  <div class="flex-1 space-y-6 bg-white">
     <div class="stats shadow-sm w-full">
       <div class="stat place-items-center">
         <div class="stat-title">Total Hours</div>
