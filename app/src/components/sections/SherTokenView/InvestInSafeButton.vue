@@ -53,14 +53,12 @@ const safeAddress = computed(
 const { canDeposit } = useSafeDepositRouterReads()
 
 const modal = ref({ mount: false, show: false })
-const depositFormRef = ref<InstanceType<typeof DepositRouterForm> | null>(null)
 
 function openModal() {
   modal.value = { mount: true, show: true }
 }
 
 function closeModal() {
-  depositFormRef.value?.reset()
   modal.value = { mount: false, show: false }
 }
 </script>
