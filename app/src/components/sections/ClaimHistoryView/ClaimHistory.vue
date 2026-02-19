@@ -38,7 +38,7 @@ import { useRoute } from 'vue-router'
 import { useGetTeamWeeklyClaimsQuery, useGetTeamWagesQuery } from '@/queries'
 import type { Address } from 'viem'
 
-import WeeklyRecap from '@/components/WeeklyRecap.vue'
+import WeeklyRecap from './WeeklyRecap.vue'
 import ClaimHistoryMemberHeader from './ClaimHistoryMemberHeader.vue'
 import ClaimHistoryWeekNavigator from './ClaimHistoryWeekNavigator.vue'
 import ClaimHistoryActionAlerts from './ClaimHistoryActionAlerts.vue'
