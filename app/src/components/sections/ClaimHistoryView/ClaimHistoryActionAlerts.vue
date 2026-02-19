@@ -144,11 +144,7 @@ const claimSubmitMessage = computed(() => {
     return 'You have a wage so you can submit your claim'
   }
 
-  if (!hasWage.value) {
-    return 'You need to have a wage set up to submit claims'
-  }
-
-  return 'You cannot submit a claim for this week'
+  return 'You need to have a wage set up to submit claims'
 })
 
 // Current signed weeks for disabling dates in claim form
