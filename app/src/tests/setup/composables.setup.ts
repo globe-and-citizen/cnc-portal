@@ -1,4 +1,5 @@
 import { vi } from 'vitest'
+import { defineComponent } from 'vue'
 import { queryMocks } from '@/tests/mocks/query.mock'
 import {
   mockUseBackendWake,
@@ -222,3 +223,16 @@ vi.mock('viem/actions', async (importOriginal) => {
     getBalance: mockGetBalance
   }
 })
+
+vi.mock('vue-echarts', () => ({
+  default: defineComponent({
+    name: 'MockVChart',
+    props: {
+      option: {
+        type: Object,
+        required: false
+      }
+    },
+    template: '<div data-test="v-chart" />'
+  })
+}))
