@@ -80,4 +80,11 @@ const selectWeekWeelyClaim = computed(() => {
 const selectedMemberWage = computed(() => {
   return teamWageData.value?.find((wage) => wage.userAddress === selectedMemberAddress.value)
 })
+
+defineExpose({
+  selectedMemberAddress,
+  selectedMonthObject,
+  selectWeekWeelyClaim,
+  selectedMemberWage
+})
 </script>
