@@ -6,9 +6,48 @@ import { Hex, isAddress, isHex, keccak256 } from 'viem';
 import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json';
 import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
 import publicClient from '../utils/viem.config';
+import { getPresignedDownloadUrl } from '../services/storageService';
 
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
+
+type FileAttachmentData = {
+  fileType: string;
+  fileSize: number;
+  fileKey: string;
+  fileUrl: string;
+};
+
+const refreshAttachmentUrls = async (attachments: unknown): Promise<unknown> => {
+  if (!Array.isArray(attachments) || attachments.length === 0) {
+    return attachments;
+  }
+
+  const refreshed = await Promise.all(
+    attachments.map(async (attachment) => {
+      if (!attachment || typeof attachment !== 'object') {
+        return attachment;
+      }
+
+      const typedAttachment = attachment as FileAttachmentData;
+      if (!typedAttachment.fileKey) {
+        return attachment;
+      }
+
+      try {
+        const freshUrl = await getPresignedDownloadUrl(typedAttachment.fileKey);
+        return {
+          ...typedAttachment,
+          fileUrl: freshUrl,
+        };
+      } catch {
+        return attachment;
+      }
+    })
+  );
+
+  return refreshed;
+};
 
 function isValidWeeklyClaimAction(action: unknown): action is WeeklyClaimAction {
   return ['sign', 'withdraw', 'pending', 'disable', 'enable'].includes(action as string);
@@ -257,7 +296,19 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
       orderBy: { weekStart: 'asc' },
     });
 
-    const weeklyClaimsWithHours = weeklyClaims.map((wc) => {
+    const weeklyClaimsWithFreshAttachmentUrls = await Promise.all(
+      weeklyClaims.map(async (wc) => ({
+        ...wc,
+        claims: await Promise.all(
+          wc.claims.map(async (claim) => ({
+            ...claim,
+            fileAttachments: await refreshAttachmentUrls(claim.fileAttachments),
+          }))
+        ),
+      }))
+    );
+
+    const weeklyClaimsWithHours = weeklyClaimsWithFreshAttachmentUrls.map((wc) => {
       const hoursWorked = wc.claims.reduce((sum, claim) => {
         const h = claim.hoursWorked ?? 0;
         return sum + h;
