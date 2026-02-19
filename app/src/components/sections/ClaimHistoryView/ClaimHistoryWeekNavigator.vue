@@ -42,7 +42,9 @@
           </div>
           <div
             class="text-sm"
-            :class="week === internalSelectedWeek ? 'text-emerald-900' : 'text-gray-800'"
+            :class="
+              week.isoWeek === internalSelectedWeek.isoWeek ? 'text-emerald-900' : 'text-gray-800'
+            "
           >
             {{ week.formatted }}
           </div>
