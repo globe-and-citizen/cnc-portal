@@ -10,7 +10,7 @@
 
       <!-- Right Content -->
       <div class="flex-1 space-y-6">
-        <WeeklyRecap :weekly-claim="selectWeekWeelyClaim" />
+        <WeeklyRecap :weekly-claim="selectWeekWeelyClaim" :wage="selectedMemberWage" />
 
         <ClaimHistoryActionAlerts
           :weekly-claim="selectWeekWeelyClaim"
@@ -35,7 +35,7 @@ import isoWeek from 'dayjs/plugin/isoWeek'
 import { formatIsoWeekRange, type Week } from '@/utils/dayUtils'
 import { useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
-import { useGetTeamWeeklyClaimsQuery } from '@/queries'
+import { useGetTeamWeeklyClaimsQuery, useGetTeamWagesQuery } from '@/queries'
 import type { Address } from 'viem'
 
 import WeeklyRecap from '@/components/WeeklyRecap.vue'
@@ -67,9 +67,17 @@ const { data: memberWeeklyClaims } = useGetTeamWeeklyClaimsQuery({
   }
 })
 
+const { data: teamWageData } = useGetTeamWagesQuery({
+  queryParams: { teamId: computed(() => teamStore.currentTeamId) }
+})
+
 const selectWeekWeelyClaim = computed(() => {
   return memberWeeklyClaims.value?.find(
     (weeklyClaim) => weeklyClaim.weekStart === selectedMonthObject.value.isoString
   )
+})
+
+const selectedMemberWage = computed(() => {
+  return teamWageData.value?.find((wage) => wage.userAddress === selectedMemberAddress.value)
 })
 </script>
