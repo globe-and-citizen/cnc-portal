@@ -5,7 +5,8 @@ import {
   mockUseAuth,
   mockUseContractBalance,
   mockUseSafeSendTransaction,
-  mockUseSafeOwnerManagement
+  mockUseSafeOwnerManagement,
+  mockUseClipboard
 } from '@/tests/mocks/composables.mock'
 
 /**
@@ -52,6 +53,17 @@ vi.mock('vue-router', async (importOriginal) => {
       path: '/teams/1',
       meta: { name: 'Team View' }
     }))
+  }
+})
+
+/**
+ * Mock @vueuse/core
+ */
+vi.mock('@vueuse/core', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useClipboard: vi.fn(() => mockUseClipboard)
   }
 })
 
