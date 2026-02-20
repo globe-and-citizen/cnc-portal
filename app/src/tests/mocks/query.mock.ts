@@ -95,7 +95,7 @@ export const mockUserData: User = {
   address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62',
   name: 'John Doe',
   imageUrl: 'https://example.com/image.jpg',
-  nonce: "123"
+  nonce: '123'
 }
 
 /**

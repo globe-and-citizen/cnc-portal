@@ -29,7 +29,10 @@ const GlobalTestWrapper = defineComponent({
  * Custom mount helper that automatically wraps components with necessary providers
  * Usage: import { mountWithProviders } from '@/tests/setup/nuxt-ui.setup'
  */
-export function mountWithProviders<T extends Component>(component: T, options: Record<string, unknown> = {}): VueWrapper<T> {
+export function mountWithProviders<T extends Component>(
+  component: T,
+  options: Record<string, unknown> = {}
+): VueWrapper<T> {
   return originalMount(
     {
       setup() {
