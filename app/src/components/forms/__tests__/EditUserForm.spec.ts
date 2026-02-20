@@ -101,7 +101,7 @@ describe('EditUserForm', () => {
       //
       // Access the component instance and call handleCurrencyChange directly
       // This tests the actual business logic without needing to interact with USelect
-      const component = wrapper.vm as any
+      const component = wrapper.vm as { handleCurrencyChange?: () => void }
 
       // Call the handleCurrencyChange method if it exists
       if (component.handleCurrencyChange) {
@@ -193,8 +193,8 @@ describe('EditUserForm', () => {
       const originalLocation = window.location
 
       // Mock window.location.reload
-      delete (window as any).location
-      window.location = { ...originalLocation, reload: reloadMock } as any
+      delete (window as Window & typeof globalThis).location
+      window.location = { ...originalLocation, reload: reloadMock } as Location
 
       try {
         // Mock successful mutation
