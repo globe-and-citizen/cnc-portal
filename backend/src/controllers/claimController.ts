@@ -7,7 +7,7 @@ import { errorResponse } from '../utils/utils';
 
 import { Claim, Prisma } from '@prisma/client';
 import { isUserMemberOfTeam } from './wageController';
-import { deleteFile } from '../services/storageService';
+import { deleteFile, getPresignedDownloadUrl } from '../services/storageService';
 
 // Type for file attachment data (updated for Railway S3)
 type FileAttachmentData = {
@@ -15,6 +15,37 @@ type FileAttachmentData = {
   fileSize: number;
   fileKey: string; // S3 object key - unique identifier
   fileUrl: string; // Presigned download URL
+};
+
+const refreshAttachmentUrls = async (attachments: unknown): Promise<unknown> => {
+  if (!Array.isArray(attachments) || attachments.length === 0) {
+    return attachments;
+  }
+
+  const refreshed = await Promise.all(
+    attachments.map(async (attachment) => {
+      if (!attachment || typeof attachment !== 'object') {
+        return attachment;
+      }
+
+      const typedAttachment = attachment as FileAttachmentData;
+      if (!typedAttachment.fileKey) {
+        return attachment;
+      }
+
+      try {
+        const freshUrl = await getPresignedDownloadUrl(typedAttachment.fileKey);
+        return {
+          ...typedAttachment,
+          fileUrl: freshUrl,
+        };
+      } catch {
+        return attachment;
+      }
+    })
+  );
+
+  return refreshed;
 };
 
 dayjs.extend(utc);
@@ -194,7 +225,15 @@ export const getClaims = async (req: Request, res: Response) => {
         },
       },
     });
-    return res.status(200).json(claims);
+
+    const claimsWithFreshAttachmentUrls = await Promise.all(
+      claims.map(async (claim) => ({
+        ...claim,
+        fileAttachments: await refreshAttachmentUrls(claim.fileAttachments),
+      }))
+    );
+
+    return res.status(200).json(claimsWithFreshAttachmentUrls);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
