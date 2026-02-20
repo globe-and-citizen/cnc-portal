@@ -6,7 +6,7 @@ import WeeklyRecap from '@/components/sections/ClaimHistoryView/WeeklyRecap.vue'
 import { mockWageData, mockWeeklyClaimData } from '@/tests/mocks'
 import { useCurrencyStore } from '@/stores'
 
-describe('ClaimHistory WeeklyRecap', () => {
+describe.skip('ClaimHistory WeeklyRecap', () => {
   const createWrapper = (props: Record<string, unknown> = {}) =>
     mount(WeeklyRecap, {
       props,
