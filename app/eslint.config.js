@@ -18,7 +18,7 @@ export default [
       'src/artifacts/**/*.{ts,mts,tsx,vue}',
       'src/components/GenericTransactionHistory.vue',
       'src/components/sections/VestingView/forms/CreateVesting.vue',
-      'src/components/sections/TeamView/forms/DeployContractSection.vue',
+      // 'src/components/sections/TeamView/forms/DeployContractSection.vue',
       'src/components/sections/SherTokenView/InvestorsActions.vue',
       'src/components/sections/DashboardView/forms/ApproveUsersEIP712Form.vue',
       'src/components/sections/DashboardView/SetMemberWageModal.vue',

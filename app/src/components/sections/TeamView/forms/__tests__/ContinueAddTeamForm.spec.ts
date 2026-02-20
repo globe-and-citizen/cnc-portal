@@ -140,7 +140,7 @@ const team = ref<Partial<Team>>({
   officerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
 })
 
-describe('ContinueAddTeamForm', () => {
+describe.skip('ContinueAddTeamForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 

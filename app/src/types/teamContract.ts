@@ -10,6 +10,7 @@ export type ContractType =
   | 'Elections'
   | 'Proposals'
   | 'VestingV1'
+  | 'SafeDepositRouter'
 export interface TeamContract {
   address: Address
   type: ContractType
