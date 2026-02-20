@@ -44,7 +44,10 @@ export const mockUserStore = {
   address: '0x1234567890123456789012345678901234567890',
   name: 'Test User',
   imageUrl: 'https://example.com/avatar.jpg',
-  isAuth: true
+  isAuth: true,
+  setUserData: vi.fn(),
+  clearUserData: vi.fn(),
+  setAuthStatus: vi.fn()
 }
 
 export const mockUseCurrencyStore = () => ({
