@@ -62,6 +62,7 @@
               Pay Dividends
             </ButtonUI>
           </div>
+          <ToggleSherCompensationButton />
           <InvestInSafeButton />
         </div>
       </div>
@@ -122,6 +123,7 @@ import { computed, ref, watch } from 'vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
+import ToggleSherCompensationButton from '@/components/sections/SherTokenView/ToggleSherCompensationButton.vue'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import ButtonUI from '@/components/ButtonUI.vue'

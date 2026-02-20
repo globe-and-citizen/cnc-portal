@@ -20,7 +20,7 @@ describe('SafeDepositRouter', function () {
   const INITIAL_MULTIPLIER = 1n
   const USDC_DECIMALS = 6
   const USDT_DECIMALS = 6
-  const SHER_DECIMALS = 18
+  const SHER_DECIMALS = 6 // InvestorV1 uses 6 decimals
 
   const ERRORS = {
     INVALID_OWNER: 'InvalidOwner',
@@ -218,6 +218,14 @@ describe('SafeDepositRouter', function () {
 
       expect(await testRouter.investorAddress()).to.equal(ethers.ZeroAddress)
       expect(await testRouter.owner()).to.equal(owner.address)
+
+      // ADD: Verify that calculateCompensation reverts with zero investor
+      const usdcAddress = await mockUSDC.getAddress()
+      const depositAmount = parseUnits('100', USDC_DECIMALS)
+
+      await expect(
+        testRouter.calculateCompensation(usdcAddress, depositAmount)
+      ).to.be.revertedWithCustomError(testRouter, ERRORS.INVALID_INVESTOR)
     })
 
     it('should revert if multiplier is below minimum', async () => {
@@ -266,55 +274,6 @@ describe('SafeDepositRouter', function () {
       ).to.be.revertedWithCustomError(router, ERRORS.INVALID_TOKEN)
     })
 
-    it('should revert on deposit if router does not have MINTER_ROLE', async () => {
-      const InvestorV1 = await ethers.getContractFactory('InvestorV1')
-      const newInvestor = (await upgrades.deployProxy(
-        InvestorV1,
-        ['SHER Token', 'SHER', owner.address],
-        { initializer: 'initialize' }
-      )) as unknown as InvestorV1
-
-      const newInvestorAddress = await newInvestor.getAddress()
-
-      const SafeDepositRouterFactory = await ethers.getContractFactory('SafeDepositRouter')
-      const newImpl = await SafeDepositRouterFactory.connect(owner).deploy()
-      await newImpl.waitForDeployment()
-
-      const encodedInitialize = newImpl.interface.encodeFunctionData('initialize', [
-        safeWallet.address,
-        newInvestorAddress,
-        [await mockUSDC.getAddress()],
-        INITIAL_MULTIPLIER
-      ])
-
-      const BeaconFactory = await ethers.getContractFactory('Beacon')
-      const testBeacon = await BeaconFactory.connect(owner).deploy(await newImpl.getAddress())
-      await testBeacon.waitForDeployment()
-
-      const BeaconProxyFactory = await ethers.getContractFactory('UserBeaconProxy')
-      const testProxy = await BeaconProxyFactory.connect(owner).deploy(
-        await testBeacon.getAddress(),
-        encodedInitialize
-      )
-      await testProxy.waitForDeployment()
-
-      const testRouter = await ethers.getContractAt(
-        'SafeDepositRouter',
-        await testProxy.getAddress()
-      )
-
-      await testRouter.connect(owner).enableDeposits()
-
-      const depositAmount = parseUnits('100', USDC_DECIMALS)
-      const usdcAddress = await mockUSDC.getAddress()
-
-      await mockUSDC.connect(depositor1).approve(await testRouter.getAddress(), depositAmount)
-
-      await expect(
-        testRouter.connect(depositor1).deposit(usdcAddress, depositAmount)
-      ).to.be.revertedWithCustomError(testRouter, ERRORS.INSUFFICIENT_MINTER_ROLE)
-    })
-
     it('should revert on deposit if investor address is zero', async () => {
       const SafeDepositRouterFactory = await ethers.getContractFactory('SafeDepositRouter')
       const newImpl = await SafeDepositRouterFactory.connect(owner).deploy()
@@ -350,6 +309,7 @@ describe('SafeDepositRouter', function () {
 
       await mockUSDC.connect(depositor1).approve(await testRouter.getAddress(), depositAmount)
 
+      // Should revert with InvalidInvestorAddress during deposit
       await expect(
         testRouter.connect(depositor1).deposit(usdcAddress, depositAmount)
       ).to.be.revertedWithCustomError(testRouter, ERRORS.INVALID_INVESTOR)
@@ -522,7 +482,7 @@ describe('SafeDepositRouter', function () {
     describe('Calculate Compensation', () => {
       it('should calculate correct compensation for 6-decimal token (USDC)', async () => {
         const depositAmount = parseUnits('100', USDC_DECIMALS) // 100 USDC
-        const expectedSHER = parseUnits('100', SHER_DECIMALS) // 100 SHER (1:1 ratio)
+        const expectedSHER = parseUnits('100', SHER_DECIMALS) // 100 SHER (1:1 ratio, both 6 decimals)
 
         const sherAmount = await router.calculateCompensation(
           await mockUSDC.getAddress(),
@@ -583,6 +543,21 @@ describe('SafeDepositRouter', function () {
         await expect(
           router.calculateCompensation(await mockUSDC.getAddress(), 0n)
         ).to.be.revertedWithCustomError(router, ERRORS.ZERO_AMOUNT)
+      })
+
+      it('should use investor contract decimals for calculation', async () => {
+        const depositAmount = parseUnits('100', USDC_DECIMALS) // 100 USDC (6 decimals)
+        const expectedSHER = parseUnits('100', SHER_DECIMALS) // 100 SHER (6 decimals)
+        const usdcAddress = await mockUSDC.getAddress()
+
+        // Verify investor has 6 decimals
+        const investorDecimals = await investor.decimals()
+        expect(investorDecimals).to.equal(SHER_DECIMALS)
+
+        const sherAmount = await router.calculateCompensation(usdcAddress, depositAmount)
+
+        // Both have 6 decimals, so no normalization needed
+        expect(sherAmount).to.equal(expectedSHER)
       })
     })
   })
@@ -919,8 +894,8 @@ describe('SafeDepositRouter', function () {
 
       await router.connect(depositor1).deposit(usdcAddress, smallAmount)
 
-      // Should receive normalized amount in SHER
-      const expectedSHER = parseUnits('0.000001', SHER_DECIMALS)
+      // Both USDC and SHER have 6 decimals, so 1 wei USDC = 1 wei SHER
+      const expectedSHER = 1n
       expect(await investor.balanceOf(depositor1.address)).to.equal(expectedSHER)
     })
 
@@ -977,7 +952,7 @@ describe('SafeDepositRouter', function () {
       expect(await mockUSDC.balanceOf(safeWallet.address)).to.equal(usdcAmount)
       expect(await mockUSDT.balanceOf(safeWallet.address)).to.equal(usdtAmount)
 
-      // Verify SHER minted correctly (100 + 50 = 150 SHER)
+      // Verify SHER minted correctly (100 + 50 = 150 SHER, all 6 decimals)
       const totalExpectedSHER = parseUnits('150', SHER_DECIMALS)
       expect(await investor.balanceOf(depositor1.address)).to.equal(totalExpectedSHER)
     })

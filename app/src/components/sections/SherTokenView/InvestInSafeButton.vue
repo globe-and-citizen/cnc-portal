@@ -7,7 +7,7 @@
       <ButtonUI
         variant="primary"
         outline
-        :disabled="!canDeposit || !safeAddress"
+        :disabled="!canDeposit || !teamStore.currentTeamMeta?.data?.safeAddress"
         data-test="invest-in-safe-button"
         @click="openModal"
       >
@@ -25,8 +25,8 @@
       @reset="closeModal"
     >
       <SafeDepositRouterForm
-        v-if="safeAddress"
-        :safe-address="safeAddress"
+        v-if="teamStore.currentTeamMeta?.data?.safeAddress"
+        :safe-address="teamStore.currentTeamMeta?.data?.safeAddress as Address"
         @close-modal="closeModal"
         ref="depositFormRef"
       />
@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { type Address } from 'viem'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -45,10 +45,6 @@ import { useSafeDepositRouterReads } from '@/composables/safeDepositRouter'
 import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()
-
-const safeAddress = computed(
-  () => teamStore.currentTeamMeta?.data?.safeAddress as Address | undefined
-)
 
 const { canDeposit } = useSafeDepositRouterReads()
 

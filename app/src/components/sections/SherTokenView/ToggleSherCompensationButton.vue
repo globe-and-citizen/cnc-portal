@@ -24,7 +24,7 @@
       data-test="safe-address-modal"
       @reset="closeSafeAddressModal"
     >
-      <div class="p-6 space-y-4">
+      <div class="<sspace-y-4">
         <h2 class="text-2xl font-bold">Update Safe Address</h2>
 
         <div class="space-y-2">
@@ -43,7 +43,7 @@
           <div class="bg-green-50 border border-green-200 rounded-lg p-4">
             <p class="text-sm font-medium text-green-800">Expected Safe Address:</p>
             <p class="text-sm text-green-900 font-mono break-all">
-              {{ safeAddress }}
+              {{ teamStore.currentTeamMeta?.data?.safeAddress }}
             </p>
           </div>
         </div>
@@ -83,12 +83,9 @@ import {
   useSafeDepositRouterFunctions
 } from '@/composables/safeDepositRouter'
 import { useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 
-interface Props {
-  safeAddress: Address
-}
-
-const props = defineProps<Props>()
+const teamStore = useTeamStore()
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const connection = useConnection()
@@ -123,13 +120,16 @@ const isLoading = computed(() => isReadLoading.value || isWriteLoading.value)
 const canManageDeposits = computed(() => {
   if (!connection.isConnected.value || !connection.address.value) return false
   if (!owner.value) return false
-  return connection.address.value.toLowerCase() === owner.value.toLowerCase()
+  return connection.address.value.toLowerCase() === (owner.value as string).toLowerCase()
 })
 
 // Check if Safe address matches
 const isSafeAddressCorrect = computed(() => {
-  if (!contractSafeAddress.value || !props.safeAddress) return false
-  return contractSafeAddress.value.toLowerCase() === props.safeAddress.toLowerCase()
+  if (!contractSafeAddress.value || !teamStore.currentTeamMeta?.data?.safeAddress) return false
+  return (
+    (contractSafeAddress.value as string).toLowerCase() ===
+    teamStore.currentTeamMeta?.data?.safeAddress.toLowerCase()
+  )
 })
 
 // Button text
@@ -162,7 +162,7 @@ function closeSafeAddressModal() {
  * Update Safe address in contract
  */
 async function updateSafeAddress() {
-  if (!props.safeAddress) {
+  if (teamStore.currentTeamMeta?.data?.safeAddress) {
     addErrorToast('Invalid Safe address')
     return
   }
@@ -170,7 +170,7 @@ async function updateSafeAddress() {
   isUpdatingSafeAddress.value = true
 
   try {
-    await updateContractSafeAddress(props.safeAddress)
+    await updateContractSafeAddress(teamStore.currentTeamMeta?.data?.safeAddress as Address)
 
     // Wait for confirmation
     const checkConfirmation = setInterval(() => {

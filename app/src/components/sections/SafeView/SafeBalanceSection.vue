@@ -30,8 +30,6 @@
 
       <div class="flex flex-col items-end gap-4">
         <div class="flex gap-2">
-          <ToggleSherCompensationButton v-if="address" :safe-address="address" />
-
           <ButtonUI
             variant="secondary"
             class="flex items-center gap-2"
@@ -122,7 +120,6 @@ import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import ToggleSherCompensationButton from './ToggleSherCompensationButton.vue'
 
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
