@@ -37,7 +37,7 @@
         v-for="(preview, i) in resolvedPreviews"
         :key="preview.key || i"
         type="button"
-        class="relative rounded-md overflow-hidden hover:scale-105 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 border border-gray-200 hover:border-emerald-500 w-16 h-16"
+        class="group relative rounded-md overflow-hidden hover:scale-105 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 border border-gray-200 hover:border-emerald-500 w-16 h-16"
         @click="openPreview(i)"
       >
         <img
@@ -53,11 +53,11 @@
           </span>
         </div>
         <div
-          class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center"
+          class="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center"
         >
           <Icon
             icon="heroicons:magnifying-glass-plus"
-            class="w-4 h-4 text-white opacity-0 hover:opacity-100"
+            class="w-4 h-4 text-white opacity-0 group-hover:opacity-100"
           />
         </div>
       </button>

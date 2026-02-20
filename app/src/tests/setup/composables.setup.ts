@@ -1,4 +1,5 @@
 import { vi } from 'vitest'
+import { defineComponent } from 'vue'
 import { queryMocks } from '@/tests/mocks/query.mock'
 import {
   mockUseBackendWake,
@@ -8,6 +9,8 @@ import {
   mockUseSafeOwnerManagement,
   mockUseClipboard
 } from '@/tests/mocks/composables.mock'
+import { mockGetBalance } from '@/tests/mocks/viem.actions.mock'
+import { mockRouter } from '@/tests/mocks/router.mock'
 
 /**
  * Mock TanStack Vue Query
@@ -39,14 +42,7 @@ vi.mock('vue-router', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useRouter: vi.fn(() => ({
-      push: vi.fn(),
-      replace: vi.fn(),
-      back: vi.fn(),
-      go: vi.fn(),
-      beforeEach: vi.fn(),
-      afterEach: vi.fn()
-    })),
+    useRouter: vi.fn(() => mockRouter),
     RouterView: { name: 'RouterView', template: '<div data-test="router-view">Router View</div>' },
     useRoute: vi.fn(() => ({
       params: { id: '1' },
@@ -228,3 +224,27 @@ vi.mock('@/composables/safe', async (importOriginal) => {
 ;(
   globalThis as { __mockUseSafeOwnerManagement?: typeof mockUseSafeOwnerManagement }
 ).__mockUseSafeOwnerManagement = mockUseSafeOwnerManagement
+
+/**
+ * Mock viem/actions getBalance
+ */
+vi.mock('viem/actions', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    getBalance: mockGetBalance
+  }
+})
+
+vi.mock('vue-echarts', () => ({
+  default: defineComponent({
+    name: 'MockVChart',
+    props: {
+      option: {
+        type: Object,
+        required: false
+      }
+    },
+    template: '<div data-test="v-chart" />'
+  })
+}))

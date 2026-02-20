@@ -89,7 +89,7 @@ const isOpen = ref({ mount: false, show: false })
 const search = ref('')
 const clickOutside = ref<HTMLElement | null>(null)
 
-const members = computed<User[]>(() => teamStore.currentTeam?.members || [])
+const members = computed<User[]>(() => teamStore.currentTeamMeta?.data?.members || [])
 
 const filteredMembers = computed<User[]>(() => {
   if (!search.value.trim()) return members.value

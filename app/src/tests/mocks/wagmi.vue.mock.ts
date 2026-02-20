@@ -11,12 +11,14 @@ export const mockUseReadContract = {
 
 export const mockUseSignTypedData = {
   data: ref('0xSignature'),
-  signTypedDataAsync: vi.fn(() => console.log('signTypedDataAsync mock called...'))
+  signTypedDataAsync: vi.fn(() => console.log('signTypedDataAsync mock called...')),
+  mutateAsync: vi.fn().mockResolvedValue('0xSignature')
 }
 
 export const mockUseWriteContract = {
   data: transferHash,
-  writeContractAsync: vi.fn()
+  writeContractAsync: vi.fn(),
+  mutateAsync: vi.fn()
 }
 
 // Mock useDisconnect composable

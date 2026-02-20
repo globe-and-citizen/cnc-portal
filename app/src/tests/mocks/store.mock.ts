@@ -7,7 +7,7 @@ export const mockTeamStore = {
   currentTeamId: mockTeamData.id,
   currentTeamMeta: {
     isPending: false,
-    data: { value: mockTeamData }
+    data: mockTeamData
   },
   teamsMeta: {
     reloadTeams: vi.fn()
