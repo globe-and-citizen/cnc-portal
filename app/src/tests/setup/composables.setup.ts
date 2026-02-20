@@ -1,11 +1,16 @@
 import { vi } from 'vitest'
+import { defineComponent } from 'vue'
 import { queryMocks } from '@/tests/mocks/query.mock'
 import {
   mockUseBackendWake,
   mockUseAuth,
   mockUseContractBalance,
-  mockUseSafeSendTransaction
+  mockUseSafeSendTransaction,
+  mockUseSafeOwnerManagement,
+  mockUseClipboard
 } from '@/tests/mocks/composables.mock'
+import { mockGetBalance } from '@/tests/mocks/viem.actions.mock'
+import { mockRouter } from '@/tests/mocks/router.mock'
 
 /**
  * Mock TanStack Vue Query
@@ -30,6 +35,31 @@ vi.mock('@tanstack/vue-query', async () => {
         error: vi.fn()
       }
     })
+  }
+})
+
+vi.mock('vue-router', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useRouter: vi.fn(() => mockRouter),
+    RouterView: { name: 'RouterView', template: '<div data-test="router-view">Router View</div>' },
+    useRoute: vi.fn(() => ({
+      params: { id: '1' },
+      path: '/teams/1',
+      meta: { name: 'Team View' }
+    }))
+  }
+})
+
+/**
+ * Mock @vueuse/core
+ */
+vi.mock('@vueuse/core', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useClipboard: vi.fn(() => mockUseClipboard)
   }
 })
 
@@ -134,7 +164,7 @@ vi.mock('@/queries/weeklyClaim.queries', () => ({
 /**
  * Mock Safe Queries (safe.queries.ts)
  */
-vi.mock('@/queries/safe.queries', () => ({
+vi.mock('@/queries/safe.mutations', () => ({
   useGetSafeInfoQuery: vi.fn(queryMocks.useGetSafeInfoQuery),
   useSafePendingTransactionsQuery: vi.fn(queryMocks.useSafePendingTransactionsQuery),
   useDeploySafeMutation: vi.fn(queryMocks.useDeploySafeMutation),
@@ -179,4 +209,42 @@ vi.mock('@/composables/useContractBalance', () => ({
  */
 vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
   useSafeSendTransaction: vi.fn(() => mockUseSafeSendTransaction)
+}))
+
+/**
+ * Mock useSafeOwnerManagement composable
+ */
+vi.mock('@/composables/safe', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useSafeOwnerManagement: vi.fn(() => mockUseSafeOwnerManagement)
+  }
+})
+;(
+  globalThis as { __mockUseSafeOwnerManagement?: typeof mockUseSafeOwnerManagement }
+).__mockUseSafeOwnerManagement = mockUseSafeOwnerManagement
+
+/**
+ * Mock viem/actions getBalance
+ */
+vi.mock('viem/actions', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    getBalance: mockGetBalance
+  }
+})
+
+vi.mock('vue-echarts', () => ({
+  default: defineComponent({
+    name: 'MockVChart',
+    props: {
+      option: {
+        type: Object,
+        required: false
+      }
+    },
+    template: '<div data-test="v-chart" />'
+  })
 }))

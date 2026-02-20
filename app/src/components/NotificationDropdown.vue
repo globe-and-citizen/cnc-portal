@@ -10,7 +10,7 @@
     </div>
     <ul
       tabindex="0"
-      class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-[300px]"
+      class="p-2 shadow-sm menu dropdown-content z-1 bg-base-100 rounded-box w-[300px]"
       data-test="notification-dropdown"
     >
       <li v-for="notification in paginatedNotifications" :key="notification.id">

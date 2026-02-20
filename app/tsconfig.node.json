@@ -12,7 +12,9 @@
     "noEmit": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "forceConsistentCasingInFileNames": true,
-
+    "paths": {
+      "#build/ui": ["./node_modules/.nuxt-ui/ui"]
+    },
     "lib": ["ES2022"],
     "module": "ESNext",
     "moduleResolution": "Bundler",

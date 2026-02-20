@@ -4,7 +4,7 @@
   >
     <!-- Icon (optional) -->
     <svg
-      class="w-5 h-5 mt-1 text-blue-500 flex-shrink-0"
+      class="w-5 h-5 mt-1 text-blue-500 shrink-0"
       fill="none"
       stroke="currentColor"
       stroke-width="2"

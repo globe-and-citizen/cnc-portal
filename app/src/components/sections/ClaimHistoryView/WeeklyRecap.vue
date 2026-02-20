@@ -1,24 +1,27 @@
 <template>
-  <div class="flex-1 space-y-6">
-    <div class="stats shadow w-full">
+  <div class="flex-1 space-y-6 bg-white">
+    <div class="stats shadow-sm w-full">
       <div class="stat place-items-center">
         <div class="stat-title">Total Hours</div>
-        <div class="font-bold text-xl">{{ weeklyClaim?.hoursWorked }}h</div>
-        <span class="text-sm text-gray-500"
-          >of {{ props.weeklyClaim?.wage?.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span
+        <div class="font-bold text-xl">{{ submittedHours }}h</div>
+        <span class="text-sm text-gray-500" v-if="props.weeklyClaim"
+          >of {{ effectiveWage?.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span
+        >
+        <span class="text-sm text-gray-500" v-else
+          >{{ effectiveWage?.maximumHoursPerWeek ?? '-' }} hrs available this week</span
         >
       </div>
 
       <div class="stat place-items-center">
         <div class="stat-title">Hourly Rate</div>
-        <div class="font-bold text-xl">
+        <div class="font-bold text-xl text-center">
           <RatePerHourList
-            :rate-per-hour="props.weeklyClaim?.wage?.ratePerHour || []"
+            :rate-per-hour="effectiveWage?.ratePerHour || []"
             :currency-symbol="currencyStore.getTokenInfo('native')?.symbol || 'NATIVE'"
           />
         </div>
-        <div class="text-sm text-gray-500 flex gap-2 mt-1">
-          ≃ ${{ hourlyRateInUserCurrency.toFixed(2) }} {{ currencyStore.localCurrency.code }}
+        <div class="text-sm text-gray-500 text-center mt-1">
+          ≃ ${{ hourlyRateInUserCurrency.toFixed(2) }} {{ currencyStore.localCurrency.code }}/h
         </div>
       </div>
 
@@ -45,16 +48,21 @@ import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
-import type { RatePerHour, WeeklyClaim } from '@/types/cash-remuneration'
+import type { RatePerHour, Wage, WeeklyClaim } from '@/types/cash-remuneration'
 
 const props = defineProps<{
   weeklyClaim?: WeeklyClaim
+  wage?: Wage
 }>()
 
 const currencyStore = useCurrencyStore()
 
+const effectiveWage = computed(() => props.weeklyClaim?.wage ?? props.wage)
+
+const submittedHours = computed(() => props.weeklyClaim?.hoursWorked ?? 0)
+
 // function to format the hourly rate in user's local currency
-function getHoulyRateInUserCurrency(
+function getHourlyRateInUserCurrency(
   ratePerHour: RatePerHour[],
   tokenStore = currencyStore
 ): number {
@@ -66,13 +74,13 @@ function getHoulyRateInUserCurrency(
 }
 
 const hourlyRateInUserCurrency = computed(() => {
-  return props.weeklyClaim?.wage?.ratePerHour
-    ? getHoulyRateInUserCurrency(props.weeklyClaim.wage.ratePerHour)
+  return effectiveWage.value?.ratePerHour
+    ? getHourlyRateInUserCurrency(effectiveWage.value.ratePerHour)
     : 0
 })
 
 const totalAmount = computed(() => {
-  const hours = props.weeklyClaim?.hoursWorked ?? 0
+  const hours = submittedHours.value
   const total = hours * hourlyRateInUserCurrency.value
   return total.toFixed(2)
 })

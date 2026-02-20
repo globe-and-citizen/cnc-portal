@@ -1,156 +1,158 @@
 <template>
-  <div class="flex flex-col gap-5 mt-4 overflow-hidden" data-test="edit-user-modal">
+  <UForm
+    :schema="userSchema"
+    :state="userCopy"
+    class="flex flex-col gap-5 overflow-hidden"
+    data-test="edit-user-modal"
+    @submit="submitForm"
+  >
     <!-- Wallet Address -->
-    <div role="alert" class="alert shadow-sm flex text-gray-700">
-      <div class="flex flex-wrap gap-2">
-        <h3 class="font-bold">Wallet Address</h3>
+    <UAlert
+      color="neutral"
+      variant="soft"
+      icon="i-heroicons-wallet"
+      title="Wallet Address"
+      class="mb-2"
+    >
+      <template #description>
         <div class="flex items-center gap-2">
-          <ToolTip data-test="address-tooltip" content="Click to see address in block explorer">
-            <div
-              type="text"
-              class="w-full cursor-pointer"
+          <UTooltip text="Click to see address in block explorer">
+            <span
+              class="cursor-pointer hover:text-primary transition-colors"
               @click="openExplorer(userStore.address)"
               data-test="user-address"
-              readonly
             >
               {{ userStore.address }}
-            </div>
-          </ToolTip>
-          <ToolTip
-            data-test="copy-address-tooltip"
-            :content="copied ? 'Copied!' : 'Click to copy address'"
-          >
-            <IconifyIcon
+            </span>
+          </UTooltip>
+          <UTooltip :text="copied ? 'Copied!' : 'Click to copy address'">
+            <UButton
               v-if="isSupported && !copied"
+              icon="i-heroicons-clipboard-document"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              square
               data-test="copy-address-icon"
-              class="w-5 h-4 text-gray-400 hover:text-gray-600 transition-colors duration-200"
               @click="copy(userStore.address)"
-              icon="heroicons:clipboard-document"
             />
-            <IconifyIcon
+            <UButton
               v-if="copied"
+              icon="i-heroicons-check"
+              color="success"
+              variant="ghost"
+              size="xs"
+              square
               data-test="copied-icon"
-              class="w-5 h-5 text-emerald-500"
-              icon="heroicons:check"
             />
-          </ToolTip>
+          </UTooltip>
         </div>
-      </div>
-    </div>
+      </template>
+    </UAlert>
 
     <!-- Input Name -->
-    <label class="input input-bordered flex items-center gap-2 input-md">
-      <span class="w-24" data-test="name-label">Name</span>
-      <input
-        type="text"
-        class="grow"
-        data-test="name-input"
-        placeholder="John Doe"
+    <UFormField label="Name" name="name" required class="w-full">
+      <UInput
         v-model="userCopy.name"
+        type="text"
+        placeholder="John Doe"
+        data-test="name-input"
+        size="xl"
+        class="w-full"
       />
-    </label>
-    <div
-      class="pl-4 text-red-500 text-sm"
-      v-for="error of $v.user.name.$errors"
-      :key="error.$uid"
-      data-test="name-error"
-    >
-      {{ error.$message }}
-    </div>
+    </UFormField>
 
     <!-- Currency -->
-    <label class="input input-bordered flex items-center gap-2 input-md">
-      <span class="w-40" data-test="currency-label">Default Currency</span>
-      <select
+    <UFormField label="Default Currency" name="currency" class="w-full">
+      <USelect
         v-if="LIST_CURRENCIES && LIST_CURRENCIES.length"
         v-model="selectedCurrency"
+        :items="currencyOptions"
         @change="handleCurrencyChange"
         data-test="currency-select"
-        class="select select-sm w-full focus:border-none focus:outline-none"
-      >
-        <option
-          v-for="currency in LIST_CURRENCIES"
-          :key="currency.code"
-          :selected="currencyStore.localCurrency?.code == currency.code"
-          :value="currency.code"
-        >
-          {{ currency.code }}
-        </option>
-      </select>
-    </label>
+        size="xl"
+        class="w-full"
+      />
+    </UFormField>
 
     <!-- Upload -->
     <ProfileImageUpload
       :model-value="userCopy.imageUrl"
       @update:model-value="($event) => (userCopy.imageUrl = $event)"
     />
-  </div>
 
-  <!-- Error Alert -->
-  <div
-    v-if="userUpdateError"
-    role="alert"
-    class="alert alert-error shadow-sm mt-4"
-    data-test="error-alert"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="stroke-current shrink-0 h-6 w-6"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2"
-        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
-    </svg>
-    <span data-test="error-message">Failed to update user</span>
-  </div>
-  <div class="modal-action justify-end">
-    <ButtonUI
-      v-if="hasChanges"
-      variant="primary"
-      :loading="userIsUpdating"
-      :disabled="userIsUpdating"
-      data-test="submit-edit-user"
-      @click="submitForm"
-    >
-      Save
-    </ButtonUI>
-  </div>
+    <!-- Error Alert -->
+    <UAlert
+      v-if="userUpdateError"
+      color="error"
+      variant="soft"
+      icon="i-heroicons-x-circle"
+      title="Failed to update user"
+      description="An error occurred while updating your profile. Please try again."
+      data-test="error-alert"
+    />
+
+    <!-- Submit Button -->
+    <div class="flex justify-end gap-2">
+      <UButton
+        v-if="hasChanges"
+        color="primary"
+        type="submit"
+        :loading="userIsUpdating"
+        :disabled="userIsUpdating"
+        data-test="submit-edit-user"
+      >
+        Save Changes
+      </UButton>
+    </div>
+  </UForm>
 </template>
 
 <script setup lang="ts">
-import { useVuelidate } from '@vuelidate/core'
-import { required, minLength } from '@vuelidate/validators'
-import ToolTip from '@/components/ToolTip.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import ButtonUI from '../ButtonUI.vue'
+import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import { LIST_CURRENCIES } from '@/constant'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import ProfileImageUpload from '@/components/forms/ProfileImageUpload.vue'
 import { useUpdateUserMutation } from '@/queries/user.queries'
 
-// Currency store
+// Stores
 const currencyStore = useCurrencyStore()
 const toastStore = useToastStore()
 const userStore = useUserDataStore()
 const selectedCurrency = ref<string>(currencyStore.localCurrency?.code)
 
-const userCopy = ref({
+// Zod validation schema
+const userSchema = z.object({
+  name: z
+    .string({ message: 'Name is required' })
+    .min(3, 'Name must be at least 3 characters')
+    .max(100, 'Name cannot exceed 100 characters'),
+  imageUrl: z.string().optional()
+})
+
+type UserSchema = z.output<typeof userSchema>
+
+// Form state
+const userCopy = reactive<Partial<UserSchema>>({
   name: userStore.name,
-  address: userStore.address,
   imageUrl: userStore.imageUrl
 })
 
+// Currency options for USelect
+const currencyOptions = computed(() =>
+  LIST_CURRENCIES.map((currency) => ({
+    label: currency.code,
+    value: currency.code
+  }))
+)
+
 // Computed property to check if name or image has changed
 const hasChanges = computed(() => {
-  return userCopy.value.name !== userStore.name || userCopy.value.imageUrl !== userStore.imageUrl
+  return userCopy.name !== userStore.name || userCopy.imageUrl !== userStore.imageUrl
 })
 
 const {
@@ -159,16 +161,13 @@ const {
   isError: userUpdateError
 } = useUpdateUserMutation()
 
-const submitForm = async () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
-
+const submitForm = async (event: FormSubmitEvent<UserSchema>) => {
   try {
     const updatedUser = await updateUser({
       pathParams: { address: userStore.address! },
       body: {
-        name: userCopy.value.name,
-        imageUrl: userCopy.value.imageUrl
+        name: event.data.name,
+        imageUrl: event.data.imageUrl
       }
     })
 
@@ -189,16 +188,6 @@ const submitForm = async () => {
     toastStore.addErrorToast('Failed to update user')
   }
 }
-
-const rules = {
-  user: {
-    name: {
-      required,
-      minLength: minLength(3)
-    }
-  }
-}
-const $v = useVuelidate(rules, { user: userCopy })
 
 // Clipboard
 const { copy, copied, isSupported } = useClipboard()

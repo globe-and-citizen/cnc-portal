@@ -6,29 +6,25 @@
     @mouseleave="isExpanded = false"
   >
     <!-- Vue réduite -->
-    <div v-show="!isExpanded" class="flex items-center -space-x-3">
-      <div
-        v-for="(preview, i) in displayedPreviews"
-        :key="preview.key || i"
-        class="relative rounded-full border-2 border-emerald-500 shadow-xl overflow-hidden bg-gray-100 w-14 h-14"
-        :style="{ zIndex: displayedPreviews.length - i }"
-      >
-        <img
-          v-if="preview.isImage && preview.previewUrl"
-          :src="preview.previewUrl"
-          :alt="preview.fileName"
-          class="w-full h-full object-cover"
-        />
-        <div v-else class="w-full h-full flex items-center justify-center bg-gray-200">
-          <Icon :icon="getFileIcon(preview.fileName)" class="w-4 h-4 text-gray-500" />
+    <div v-show="!isExpanded" class="avatar-group rtl:space-x-reverse -space-x-6">
+      <div v-for="(preview, i) in displayedPreviews" :key="preview.key || i" class="avatar">
+        <div class="w-12 rounded-full overflow-hidden">
+          <img
+            v-if="preview.isImage && preview.previewUrl"
+            :src="preview.previewUrl"
+            :alt="preview.fileName"
+            class="object-cover"
+          />
+          <div v-else class="w-full h-full flex items-center justify-center bg-emerald-100">
+            <Icon :icon="getFileIcon(preview.fileName)" class="w-4 h-4 text-gray-500" />
+          </div>
         </div>
       </div>
 
-      <div
-        v-if="remainingCount"
-        class="relative flex items-center justify-center rounded-full border-2 border-emerald-500 shadow-sm bg-gray-700 text-white text-xs font-semibold w-14 h-14"
-      >
-        +{{ remainingCount }}
+      <div v-if="remainingCount" class="avatar placeholder">
+        <div class="bg-neutral text-neutral-content w-12 rounded-full">
+          <span>+{{ remainingCount }}</span>
+        </div>
       </div>
     </div>
 
@@ -41,7 +37,7 @@
         v-for="(preview, i) in resolvedPreviews"
         :key="preview.key || i"
         type="button"
-        class="relative rounded-md overflow-hidden hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-500 border border-gray-200 hover:border-emerald-500 w-16 h-16"
+        class="group relative rounded-md overflow-hidden hover:scale-105 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 border border-gray-200 hover:border-emerald-500 w-16 h-16"
         @click="openPreview(i)"
       >
         <img
@@ -57,11 +53,11 @@
           </span>
         </div>
         <div
-          class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center"
+          class="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center"
         >
           <Icon
             icon="heroicons:magnifying-glass-plus"
-            class="w-4 h-4 text-white opacity-0 hover:opacity-100"
+            class="w-4 h-4 text-white opacity-0 group-hover:opacity-100"
           />
         </div>
       </button>
@@ -71,7 +67,7 @@
     <Teleport to="body">
       <div
         v-if="modal.isOpen"
-        class="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-90 p-4"
+        class="fixed inset-0 z-999 flex items-center justify-center bg-black bg-opacity-90 p-4"
         @click="closeModal"
         @keydown.esc="closeModal"
       >
@@ -106,14 +102,14 @@
 
             <div
               v-else-if="isViewable(current.fileName)"
-              class="bg-white rounded-2xl shadow-xl border border-gray-200 w-[768px] h-[1024px] max-w-[90vw] max-h-[90vh] overflow-hidden"
+              class="bg-white rounded-2xl shadow-xl border border-gray-200 w-3xl h-256 max-w-[90vw] max-h-[90vh] overflow-hidden"
             >
               <iframe :src="current.previewUrl" class="w-full h-full" />
             </div>
 
             <div
               v-else-if="isCompressed(current.fileName)"
-              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-[500px] min-h-[400px]"
+              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-125 min-h-100"
             >
               <Icon icon="mdi:folder-zip" class="w-40 h-40 text-amber-500" />
               <p class="text-base text-gray-500">Compressed file - Download required</p>
@@ -121,7 +117,7 @@
 
             <div
               v-else
-              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-[500px] min-h-[400px]"
+              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-125 min-h-100"
             >
               <Icon :icon="getFileIcon(current.fileName)" class="w-40 h-40 text-gray-400" />
               <p class="text-base text-gray-500">Download required for this file type</p>

@@ -6,7 +6,7 @@
     data-test="member-input"
   >
     <label
-      class="input input-bordered flex items-center gap-2 input-md"
+      class="w-full input input-bordered flex items-center gap-2 input-md"
       :data-test="`member-input`"
     >
       <input
@@ -56,7 +56,7 @@
             data-test="user-row"
           >
             <UserComponent
-              class="bg-base-200 p-4 flex-grow rounded-lg hover:bg-base-300"
+              class="bg-base-200 p-4 grow rounded-lg hover:bg-base-300"
               :user="user"
               :data-test="`user-dropdown-${user.address}`"
             />

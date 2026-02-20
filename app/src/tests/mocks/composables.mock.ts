@@ -99,6 +99,13 @@ export const mockUseSafeSendTransaction = {
 }
 
 /**
+ * Mock useSafeOwnerManagement composable
+ */
+export const mockUseSafeOwnerManagement = {
+  isUpdating: ref(false),
+  updateOwners: vi.fn()
+}
+/**
  * Mock useBackendWake composable
  * Returns a function that does nothing - individual tests can override if needed
  */
@@ -113,6 +120,15 @@ export const mockUseAuth = {
   logout: vi.fn(),
   login: vi.fn(),
   validateToken: vi.fn()
+}
+
+/**
+ * Mock useClipboard composable from @vueuse/core
+ */
+export const mockUseClipboard = {
+  copy: vi.fn(),
+  copied: ref(false),
+  isSupported: ref(true)
 }
 
 /**
@@ -154,6 +170,17 @@ export const resetComposableMocks = () => {
   // Reset backend wake mock
   if (vi.isMockFunction(mockUseBackendWake)) {
     mockUseBackendWake.mockClear()
+  }
+
+  mockUseSafeOwnerManagement.isUpdating.value = false
+  if (vi.isMockFunction(mockUseSafeOwnerManagement.updateOwners)) {
+    mockUseSafeOwnerManagement.updateOwners.mockClear()
+  }
+
+  // Reset clipboard mock
+  mockUseClipboard.copied.value = false
+  if (vi.isMockFunction(mockUseClipboard.copy)) {
+    mockUseClipboard.copy.mockClear()
   }
 }
 

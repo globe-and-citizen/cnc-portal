@@ -21,8 +21,8 @@
 
     <div class="gap-2 mt-4">
       <label class="flex items-center">
-        <span class="w-32 flex-shrink-0">Period</span>
-        <div class="flex-grow">
+        <span class="w-32 shrink-0">Period</span>
+        <div class="grow">
           <Datepicker
             v-model="dateRange"
             data-test="date-range"
@@ -40,9 +40,9 @@
     </div>
 
     <div class="flex flex-wrap gap-3 mt-4 w-100">
-      <div class="flex-1 min-w-[200px]">
+      <div class="flex-1 min-w-50">
         <label class="flex input input-bordered input-md items-center gap-2 w-full">
-          <span class="text-xs flex-shrink-0">Amount</span>
+          <span class="text-xs shrink-0">Amount</span>
           <input
             data-test="total-amount"
             type="number"
@@ -59,9 +59,9 @@
           {{ error.$message }}
         </span>
       </div>
-      <div class="flex-1 min-w-[200px]">
+      <div class="flex-1 min-w-50">
         <label class="flex input input-bordered items-center gap-2 w-full">
-          <span class="text-xs flex-shrink-0">Cliff(days)</span>
+          <span class="text-xs shrink-0">Cliff(days)</span>
           <input data-test="cliff" type="number" class="grow text-sm" v-model="cliff" required />
         </label>
         <span

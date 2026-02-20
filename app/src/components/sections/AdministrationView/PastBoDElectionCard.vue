@@ -24,7 +24,7 @@
         <span class="font-semibold text-2xl text-gray-600">{{ voteCount }}</span>
       </div>
 
-      <div class="flex-grow"></div>
+      <div class="grow"></div>
       <!-- Spacer -->
       <div class="border-t border-gray-300 my-4"></div>
       <!-- Elected Members -->

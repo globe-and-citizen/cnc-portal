@@ -5,9 +5,11 @@ vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useToastStore: vi.fn(() => ({ ...mocks.mockToastStore })),
+    useToastStore: vi.fn(() => mocks.mockToastStore),
     useTeamStore: vi.fn(() => ({ ...mocks.mockTeamStore })),
-    // useCurrencyStore: vi.fn(() => ({ ...mocks.mockUseCurrencyStore })),
+    useCurrencyStore: vi.fn(() => mocks.mockUseCurrencyStore()),
     useUserDataStore: vi.fn(() => ({ ...mocks.mockUserStore }))
   }
 })
+;(globalThis as { __mockToastStore?: typeof mocks.mockToastStore }).__mockToastStore =
+  mocks.mockToastStore

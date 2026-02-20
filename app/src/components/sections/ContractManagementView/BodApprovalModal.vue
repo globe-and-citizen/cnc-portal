@@ -1,7 +1,7 @@
 <template>
   <span class="mb-4 text-xl font-semibold">Board Approval Required</span>
   <!-- BOD Action Details -->
-  <div class="flex-col flex gap-4 p-4 mt-4 bg-white rounded-lg shadow-sm border border-gray-300">
+  <div class="flex-col flex gap-4 p-4 mt-4 bg-white rounded-lg shadow-xs border border-gray-300">
     <div class="flex items-center gap-3">
       <div
         class="p-1 rounded-full aspect-square flex items-center justify-center w-10 h-10 bg-gray-200"

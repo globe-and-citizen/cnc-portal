@@ -49,10 +49,9 @@ const props = defineProps<{
   disabled?: boolean
   isDropDown?: boolean
   isResign?: boolean
-  loading?: boolean
 }>()
 
-const emit = defineEmits(['close', 'loading'])
+const emit = defineEmits(['close'])
 
 // Stores
 const teamStore = useTeamStore()
@@ -68,11 +67,11 @@ const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 const isCurrentWeek = computed(() => currentWeekStart === props.weeklyClaim.weekStart)
 
 // Composables
-const { signTypedDataAsync, data: signature } = useSignTypedData()
+const { mutateAsync, data: signature } = useSignTypedData()
 const chainId = useChainId()
 
-const isloading = ref(false)
-const isLoad = computed(() => props.loading ?? isloading.value)
+const isLoading = ref(false)
+const isLoad = computed(() => isLoading.value)
 
 const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useReadContract({
   functionName: 'owner',
@@ -128,8 +127,7 @@ const buildTypedDataMessage = (weeklyClaim: WeeklyClaim) => ({
 })
 
 const setLoadingState = (state: boolean) => {
-  isloading.value = state
-  emit('loading', state)
+  isLoading.value = state
 }
 
 const enableClaim = async (signature: Address) => {
@@ -169,14 +167,17 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
   setLoadingState(true)
 
   try {
-    await signTypedDataAsync({
+    await mutateAsync({
       domain: typedDataDomain.value,
       types: TYPED_DATA_TYPES,
       message: buildTypedDataMessage(weeklyClaim),
       primaryType: 'WageClaim'
     })
 
-    if (!signature.value) return
+    if (!signature.value) {
+      toastStore.addErrorToast('Signature not found')
+      return
+    }
 
     await enableClaim(signature.value)
     await executeUpdateClaim({
@@ -189,7 +190,6 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
       toastStore.addErrorToast('Failed to approve weeklyClaim')
     } else {
       toastStore.addSuccessToast('Claim approved')
-      setLoadingState(false)
     }
   } catch (error) {
     const typedError = error as { message?: string }
@@ -200,6 +200,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
       : 'Failed to sign weeklyClaim'
 
     toastStore.addErrorToast(errorMessage)
+  } finally {
     setLoadingState(false)
   }
 }
@@ -217,7 +218,6 @@ const handleDropdownClick = async () => {
     return
   }
 
-  setLoadingState(true)
   await approveClaim(props.weeklyClaim)
   emit('close')
 }

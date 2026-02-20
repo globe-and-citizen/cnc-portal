@@ -30,11 +30,15 @@
       :class="{ 'items-center text-center': isDetailedView }"
     >
       <p
-        class="font-bold line-clamp-1"
+        class="font-bold"
         :class="{ 'text-lg': isDetailedView, 'text-sm': !isDetailedView }"
         data-test="user-name"
       >
-        {{ user.name || 'User' }}
+        {{
+          props.user.name && props.user.name.length > 10
+            ? `${props.user.name.slice(0, 10)}...`
+            : props.user.name || 'User'
+        }}
       </p>
       <p
         v-if="isDetailedView"
@@ -54,6 +58,7 @@
 <script lang="ts" setup>
 import type { User } from '@/types'
 import { computed } from 'vue'
+import { formatAddress } from '@/utils/formatAddress'
 
 const props = defineProps<{
   user: Pick<User, 'address' | 'name' | 'imageUrl'> & { role?: string }
@@ -61,11 +66,5 @@ const props = defineProps<{
   isDetailedView?: boolean
 }>()
 
-const formatedUserAddress = computed(() => {
-  return props.user.address
-    ? props.user.address.substring(0, 6) +
-        '...' +
-        props.user.address.substring(props.user.address.length - 4)
-    : ''
-})
+const formatedUserAddress = computed(() => formatAddress(props.user.address))
 </script>
