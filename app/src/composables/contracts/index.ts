@@ -7,3 +7,4 @@ export {
 
 // Contract-specific writes composables
 export { useVestingWrites } from './useVestingWrites'
+export { useOfficerDeployment, type OfficerDeploymentOptions } from './useOfficerDeployment'
