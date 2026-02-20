@@ -3,3 +3,6 @@ export * from './wagmi.vue.mock'
 export * from './query.mock'
 export * from './erc20.mock'
 export * from './composables.mock'
+
+// Export test utilities
+export { mountWithProviders } from '../setup/nuxt-ui.setup'
