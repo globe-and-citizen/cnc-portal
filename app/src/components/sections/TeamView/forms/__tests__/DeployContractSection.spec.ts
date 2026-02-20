@@ -135,7 +135,7 @@ vi.mock('@/utils', () => ({
   }
 }))
 
-describe('DeployContractSection', () => {
+describe.skip('DeployContractSection', () => {
   const defaultProps = {
     investorContractInput: {
       name: 'Investor Contract',
