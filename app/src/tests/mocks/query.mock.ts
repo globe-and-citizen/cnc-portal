@@ -89,6 +89,16 @@ export const mockNotificationData: Notification[] = [
 ]
 
 /**
+ * User Query Mocks
+ */
+export const mockUserData: User = {
+  address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62',
+  name: 'John Doe',
+  imageUrl: 'https://example.com/image.jpg',
+  nonce: '123'
+}
+
+/**
  * Health Check Query Mocks
  */
 export const mockHealthCheckData: HealthCheckResponse = {
@@ -278,8 +288,8 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useGetExpensesQuery: () => createMockQueryResponse([]),
 
   // User queries - user.queries.ts
-  useGetUserQuery: () => createMockQueryResponse(null),
-  useGetUserNonceQuery: () => createMockQueryResponse(null),
+  useGetUserQuery: () => createMockQueryResponse(mockUserData),
+  useGetUserNonceQuery: () => createMockQueryResponse({ nonce: 123 }),
   useUpdateUserMutation: () => createMockMutationResponse(),
   useGetSearchUsersQuery: () => createMockQueryResponse({ users: [] }),
 

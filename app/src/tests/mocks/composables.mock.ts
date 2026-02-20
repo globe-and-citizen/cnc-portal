@@ -123,6 +123,15 @@ export const mockUseAuth = {
 }
 
 /**
+ * Mock useClipboard composable from @vueuse/core
+ */
+export const mockUseClipboard = {
+  copy: vi.fn(),
+  copied: ref(false),
+  isSupported: ref(true)
+}
+
+/**
  * Reset function for composable mocks
  */
 export const resetComposableMocks = () => {
@@ -166,6 +175,12 @@ export const resetComposableMocks = () => {
   mockUseSafeOwnerManagement.isUpdating.value = false
   if (vi.isMockFunction(mockUseSafeOwnerManagement.updateOwners)) {
     mockUseSafeOwnerManagement.updateOwners.mockClear()
+  }
+
+  // Reset clipboard mock
+  mockUseClipboard.copied.value = false
+  if (vi.isMockFunction(mockUseClipboard.copy)) {
+    mockUseClipboard.copy.mockClear()
   }
 }
 

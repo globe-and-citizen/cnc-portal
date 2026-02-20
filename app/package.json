@@ -77,7 +77,8 @@
     "vue": "^3.4.15",
     "vue-echarts": "^8.0.1",
     "vue-router": "^4.2.5",
-    "vue-sonner": "^2.0.9"
+    "vue-sonner": "^2.0.9",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@pinia/testing": "^1.0.3",
