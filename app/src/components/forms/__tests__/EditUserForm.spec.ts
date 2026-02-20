@@ -2,15 +2,33 @@ import { flushPromises } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
 import { createTestingPinia } from '@pinia/testing'
+import { ref } from 'vue'
 import {
   mockUserData,
   mockUserStore,
   mockToastStore,
   mockUseClipboard,
-  createMockMutationResponse,
   mountWithProviders
 } from '@/tests/mocks'
 import { useUpdateUserMutation } from '@/queries/user.queries'
+
+// Type for the mutation mock
+type MockMutation = ReturnType<typeof useUpdateUserMutation>
+
+// Helper to create a mock mutation response
+const createMockMutation = (): Partial<MockMutation> & {
+  mutateAsync: ReturnType<typeof vi.fn>
+  isPending: { value: boolean }
+  isError: { value: boolean }
+} => ({
+  mutate: vi.fn(),
+  mutateAsync: vi.fn(() => Promise.resolve(mockUserData)),
+  isPending: ref(false),
+  isError: ref(false),
+  error: ref(null),
+  data: ref(undefined),
+  reset: vi.fn()
+})
 
 // Mock window.open for explorer tests
 global.window.open = vi.fn()
@@ -118,9 +136,9 @@ describe('EditUserForm', () => {
 
   describe('Form Validation', () => {
     it('should prevent submission with invalid name length', async () => {
-      const mockMutation = createMockMutationResponse()
-      mockMutation.mutateAsync = vi.fn()
-      vi.mocked(useUpdateUserMutation).mockReturnValue(mockMutation)
+      const mockMutation = createMockMutation()
+      mockMutation.mutateAsync = vi.fn() as typeof mockMutation.mutateAsync
+      vi.mocked(useUpdateUserMutation).mockReturnValue(mockMutation as MockMutation)
 
       const wrapper = createWrapper()
       const form = wrapper.find('[data-test="edit-user-modal"]')
@@ -144,9 +162,9 @@ describe('EditUserForm', () => {
   describe('Form Submission', () => {
     it('should submit successfully and provide feedback', async () => {
       const updatedUser = { ...mockUserData, name: 'Jane Doe' }
-      const mockMutation = createMockMutationResponse()
+      const mockMutation = createMockMutation()
       mockMutation.mutateAsync = vi.fn().mockResolvedValue(updatedUser)
-      vi.mocked(useUpdateUserMutation).mockReturnValue(mockMutation)
+      vi.mocked(useUpdateUserMutation).mockReturnValue(mockMutation as MockMutation)
 
       const wrapper = createWrapper()
       const nameInput = wrapper.find('input[data-test="name-input"]')
@@ -168,10 +186,10 @@ describe('EditUserForm', () => {
 
     it('should handle errors and disable button during submission', async () => {
       // Test error handling
-      const mockMutation = createMockMutationResponse()
+      const mockMutation = createMockMutation()
       mockMutation.mutateAsync = vi.fn().mockRejectedValue(new Error('Update failed'))
       mockMutation.isError.value = true
-      vi.mocked(useUpdateUserMutation).mockReturnValue(mockMutation)
+      vi.mocked(useUpdateUserMutation).mockReturnValue(mockMutation as MockMutation)
 
       const wrapper = createWrapper()
       const nameInput = wrapper.find('input[data-test="name-input"]')
@@ -193,15 +211,18 @@ describe('EditUserForm', () => {
       const originalLocation = window.location
 
       // Mock window.location.reload
-      delete (window as Window & typeof globalThis).location
-      window.location = { ...originalLocation, reload: reloadMock } as Location
+      Object.defineProperty(window, 'location', {
+        value: { ...originalLocation, reload: reloadMock },
+        writable: true,
+        configurable: true
+      })
 
       try {
         // Mock successful mutation
-        const mockMutation = createMockMutationResponse()
+        const mockMutation = createMockMutation()
         mockMutation.mutateAsync = vi.fn().mockResolvedValue(mockUserData)
         mockMutation.isPending.value = false
-        vi.mocked(useUpdateUserMutation).mockReturnValue(mockMutation)
+        vi.mocked(useUpdateUserMutation).mockReturnValue(mockMutation as MockMutation)
 
         const wrapper = createWrapper()
         const nameInput = wrapper.find('input[data-test="name-input"]')
@@ -236,7 +257,11 @@ describe('EditUserForm', () => {
         expect(reloadMock).toHaveBeenCalled()
       } finally {
         // Restore original location and timers
-        window.location = originalLocation
+        Object.defineProperty(window, 'location', {
+          value: originalLocation,
+          writable: true,
+          configurable: true
+        })
         vi.useRealTimers()
       }
     })

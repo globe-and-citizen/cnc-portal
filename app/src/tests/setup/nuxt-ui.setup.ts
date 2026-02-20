@@ -1,5 +1,6 @@
 import { mount as originalMount, VueWrapper } from '@vue/test-utils'
-import { defineComponent, h, Component } from 'vue'
+import { defineComponent, h } from 'vue'
+import type { Component } from 'vue'
 import { TooltipProvider } from 'reka-ui'
 
 /**
