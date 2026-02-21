@@ -15,7 +15,8 @@ const {
   mockUseQueryClient,
   mockUseToastStore,
   mockUseUserDataStore,
-  mockUseBodContract,
+  mockUseBodAddAction,
+  mockUseBodIsBodAction,
   mockUseContractBalance,
   mockWaitForTransactionReceipt: mockWaitForTransactionReceiptFn
 } = vi.hoisted(() => ({
@@ -26,7 +27,8 @@ const {
   mockUseQueryClient: vi.fn(),
   mockUseToastStore: vi.fn(),
   mockUseUserDataStore: vi.fn(),
-  mockUseBodContract: vi.fn(),
+  mockUseBodAddAction: vi.fn(),
+  mockUseBodIsBodAction: vi.fn(),
   mockUseContractBalance: vi.fn()
 }))
 
@@ -61,8 +63,12 @@ vi.mock('@/stores', () => ({
 }))
 
 // Mock composables
-vi.mock('@/composables/bod/', () => ({
-  useBodContract: mockUseBodContract
+vi.mock('@/composables/bod/writes', () => ({
+  useBodAddAction: mockUseBodAddAction
+}))
+
+vi.mock('@/composables/bod/reads', () => ({
+  useBodIsBodAction: mockUseBodIsBodAction
 }))
 
 vi.mock('@/composables', () => ({
@@ -150,14 +156,15 @@ describe('TransferModal', () => {
       address: mockUserAddress
     })
 
-    mockUseBodContract.mockReturnValue({
-      useBodIsBodAction: vi.fn(() => ({
-        isBodAction: ref(false)
-      })),
-      addAction: vi.fn(),
-      isLoading: ref(false),
+    mockUseBodAddAction.mockReturnValue({
+      executeAddAction: vi.fn(),
+      isPending: ref(false),
       isConfirming: ref(false),
       isActionAdded: ref(false)
+    })
+
+    mockUseBodIsBodAction.mockReturnValue({
+      isBodAction: ref(false)
     })
 
     mockUseContractBalance.mockReturnValue({

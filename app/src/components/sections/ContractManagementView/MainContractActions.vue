@@ -85,7 +85,8 @@ import { filterAndFormatActions, log, parseError } from '@/utils'
 import PendingEventsList from './PendingEventsList.vue'
 import BodApprovalModal from './BodApprovalModal.vue'
 import { useGetBodActionsQuery } from '@/queries'
-import { useBodContract } from '@/composables/bod/'
+import { useBodAddAction, useBodApproveAction } from '@/composables/bod/writes'
+import { useBodIsBodAction } from '@/composables/bod/reads'
 import { useQueryClient } from '@tanstack/vue-query'
 
 const props = defineProps<{
@@ -99,17 +100,26 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 const userDataStore = useUserDataStore()
 const queryClient = useQueryClient()
 
+// BOD action composables
+const addActionComposable = useBodAddAction(null)
+const approveActionComposable = useBodApproveAction(0)
+
+const { isBodAction } = useBodIsBodAction(props.row.address as Address)
+
+// Destructure addAction properties
 const {
-  addAction,
-  approveAction,
-  useBodIsBodAction,
-  isLoading: isLoadingAddAction,
+  executeAddAction,
+  isPending: isLoadingAddAction,
   isConfirming: isConfirmingAddAction,
-  isActionAdded,
-  isActionApproved,
-  isLoadingApproveAction
-} = useBodContract()
-const { isBodAction } = useBodIsBodAction(props.row.address as Address, props.row.abi)
+  isActionAdded
+} = addActionComposable
+
+// Destructure approveAction properties
+const { executeApproveAction, isLoadingApproveAction, isActionApproved } = approveActionComposable
+
+// Create wrapper functions for template usage
+const addAction = executeAddAction
+const approveAction = executeApproveAction
 
 const showModal = ref(false)
 const showApprovalModal = ref(false)

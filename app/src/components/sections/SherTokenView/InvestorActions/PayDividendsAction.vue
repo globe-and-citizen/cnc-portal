@@ -32,7 +32,8 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { useBodContract } from '@/composables/bod/'
+import { useBodAddAction } from '@/composables/bod/writes'
+import { useBodIsBodAction } from '@/composables/bod/reads'
 import { useDepositDividends, useDepositTokenDividends } from '@/composables/bank/writes'
 import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils'
 import type { TokenId } from '@/constant'
@@ -72,15 +73,15 @@ const isBankWriteLoading = computed(
     depositTokenDividendsWrite.writeResult.isPending.value
 )
 
+const addActionComposable = useBodAddAction(null)
 const {
-  addAction,
-  useBodIsBodAction,
-  isLoading: isLoadingAddAction,
+  executeAddAction: addAction,
+  isPending: isLoadingAddAction,
   isConfirming: isConfirmingAddAction,
   isActionAdded
-} = useBodContract()
+} = addActionComposable
 
-const { isBodAction } = useBodIsBodAction(props.bankAddress as Address, BANK_ABI)
+const { isBodAction } = useBodIsBodAction(props.bankAddress as Address)
 
 const currentTeam = computed(() => teamStore.currentTeam)
 
