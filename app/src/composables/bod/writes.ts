@@ -1,11 +1,9 @@
 import { computed, ref, watch, unref, type MaybeRef } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useChainId } from '@wagmi/vue'
 import { encodeFunctionData, type Address } from 'viem'
 import { estimateGas, readContract, writeContract } from '@wagmi/core'
 import { useTeamStore, useToastStore } from '@/stores'
 import { useContractWrites } from '../contracts/useContractWritesV2'
-import { useValidation } from '@/composables/bank/utils'
 import { config } from '@/wagmi.config'
 import { BOD_ABI } from '@/artifacts/abi/bod'
 import { log, parseError } from '@/utils'
@@ -24,7 +22,7 @@ function useBodContractWrite(options: {
   const teamStore = useTeamStore()
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
 
-  return useContractWritesV2({
+  return useContractWrites({
     contractAddress: bodAddress,
     abi: BOD_ABI,
     functionName: options.functionName,
@@ -54,13 +52,7 @@ export function useBodUnpause() {
  * Set board of directors
  */
 export function useBodSetBoardOfDirectors(addresses: MaybeRef<Address[]>) {
-  const { validateAddress } = useValidation()
   const addressesValue = computed(() => unref(addresses))
-
-  // Validate addresses
-  const isValid = computed(() => {
-    return addressesValue.value.every((addr) => validateAddress(addr, 'board of directors address'))
-  })
 
   return useBodContractWrite({
     functionName: BOD_FUNCTION_NAMES.SET_BOARD_OF_DIRECTORS,
@@ -88,7 +80,11 @@ export function useBodAddAction(actionData: MaybeRef<Partial<Action> | null>) {
   // Prepare arguments for the contract call
   const args = computed(() => {
     if (!actionDataValue.value) return []
-    return [actionDataValue.value.targetAddress, actionDataValue.value.description, actionDataValue.value.data]
+    return [
+      actionDataValue.value.targetAddress,
+      actionDataValue.value.description,
+      actionDataValue.value.data
+    ]
   })
 
   const writeResult = useBodContractWrite({
@@ -268,5 +264,3 @@ export function useBodApproveAction(actionId: MaybeRef<number>) {
     isActionApproved
   }
 }
-
-

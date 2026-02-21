@@ -7,10 +7,9 @@ import {
   useBodIsApproved,
   useBodGetBoardOfDirectors,
   useBodIsMember,
-  useBodApprovalCount,
-  useBodIsBodAction
+  useBodApprovalCount
 } from '../reads'
-import type { Abi, Address } from 'viem'
+import type { Address } from 'viem'
 
 //  Hoisted mock variables
 const { mockUseReadContract, mockTeamStore, mockUserDataStore, mockIsAddress } = vi.hoisted(() => ({
@@ -52,15 +51,15 @@ const MOCK = {
 } as const
 
 // Dummy ABI for testing
-const DUMMY_ABI: Abi = [
-  {
-    type: 'function',
-    name: 'owner',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [{ type: 'address', name: 'owner' }]
-  }
-]
+// const DUMMY_ABI: Abi = [
+//   {
+//     type: 'function',
+//     name: 'owner',
+//     stateMutability: 'view',
+//     inputs: [],
+//     outputs: [{ type: 'address', name: 'owner' }]
+//   }
+// ]
 
 describe('BOD Read Composables', () => {
   beforeEach(() => {
@@ -115,7 +114,8 @@ describe('BOD Read Composables', () => {
     it('passes the action ID as argument', () => {
       useBodIsActionExecuted(42)
 
-      const callArgs = mockUseReadContract.mock.calls[mockUseReadContract.mock.calls.length - 1]?.[0]
+      const callArgs =
+        mockUseReadContract.mock.calls[mockUseReadContract.mock.calls.length - 1]?.[0]
       expect(callArgs?.args).toBeDefined()
     })
   })
@@ -132,14 +132,16 @@ describe('BOD Read Composables', () => {
     it('enables query when both actionId and memberAddress are valid', () => {
       useBodIsApproved(MOCK.actionId, MOCK.validMemberAddress)
 
-      const callArgs = mockUseReadContract.mock.calls[mockUseReadContract.mock.calls.length - 1]?.[0]
+      const callArgs =
+        mockUseReadContract.mock.calls[mockUseReadContract.mock.calls.length - 1]?.[0]
       expect(callArgs?.query?.enabled?.value ?? callArgs?.query?.enabled).toBe(true)
     })
 
     it('disables query when memberAddress is invalid', () => {
       useBodIsApproved(MOCK.actionId, MOCK.invalidAddress as unknown as Address)
 
-      const callArgs = mockUseReadContract.mock.calls[mockUseReadContract.mock.calls.length - 1]?.[0]
+      const callArgs =
+        mockUseReadContract.mock.calls[mockUseReadContract.mock.calls.length - 1]?.[0]
       expect(callArgs?.query?.enabled?.value ?? callArgs?.query?.enabled).toBe(false)
     })
   })
@@ -173,14 +175,16 @@ describe('BOD Read Composables', () => {
     it('enables query when address is valid', () => {
       useBodIsMember(MOCK.validMemberAddress)
 
-      const callArgs = mockUseReadContract.mock.calls[mockUseReadContract.mock.calls.length - 1]?.[0]
+      const callArgs =
+        mockUseReadContract.mock.calls[mockUseReadContract.mock.calls.length - 1]?.[0]
       expect(callArgs?.query?.enabled?.value ?? callArgs?.query?.enabled).toBe(true)
     })
 
     it('disables query when address is invalid', () => {
       useBodIsMember(MOCK.invalidAddress as unknown as Address)
 
-      const callArgs = mockUseReadContract.mock.calls[mockUseReadContract.mock.calls.length - 1]?.[0]
+      const callArgs =
+        mockUseReadContract.mock.calls[mockUseReadContract.mock.calls.length - 1]?.[0]
       expect(callArgs?.query?.enabled?.value ?? callArgs?.query?.enabled).toBe(false)
     })
   })

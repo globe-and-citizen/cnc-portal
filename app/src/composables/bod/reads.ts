@@ -90,9 +90,7 @@ export function useBodIsApproved(actionId: MaybeRef<number>, memberAddress: Mayb
     functionName: 'isApproved',
     args: [BigInt(actionIdValue.value), memberAddressValue.value] as const,
     query: {
-      enabled: computed(
-        () => isBodAddressValid.value && isAddress(memberAddressValue.value)
-      )
+      enabled: computed(() => isBodAddressValid.value && isAddress(memberAddressValue.value))
     }
   })
 }
@@ -128,9 +126,7 @@ export function useBodIsMember(memberAddress: MaybeRef<Address>) {
     functionName: 'isMember',
     args: [memberAddressValue.value] as const,
     query: {
-      enabled: computed(
-        () => isBodAddressValid.value && isAddress(memberAddressValue.value)
-      )
+      enabled: computed(() => isBodAddressValid.value && isAddress(memberAddressValue.value))
     }
   })
 }
@@ -170,4 +166,3 @@ export function useBodIsBodAction(contractAddress: MaybeRef<Address>) {
     isBodAction
   }
 }
-
