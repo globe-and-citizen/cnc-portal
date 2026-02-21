@@ -45,23 +45,12 @@
         </template>
 
         <template #action-cell="{ row }">
-          <UButton
-            color="primary"
-            size="sm"
-            data-test="claim-dividend"
-            :disabled="
-              row.original.balance === '0' ||
-              (isWriteLoading && currentClaimingToken === row.original.tokenAddress)
-            "
-            :loading="isWriteLoading && currentClaimingToken === row.original.tokenAddress"
-            @click="() => executeClaim(row.original.tokenAddress, row.original.isNative)"
-          >
-            {{
-              isWriteLoading && currentClaimingToken === row.original.tokenAddress
-                ? 'Claiming'
-                : 'Claim'
-            }}
-          </UButton>
+          <ClaimDividendButton
+            :token-address="row.original.tokenAddress"
+            :is-native="row.original.isNative"
+            :balance="row.original.balance"
+            @success="refetch"
+          />
         </template>
       </UTable>
     </div>
@@ -69,14 +58,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { zeroAddress, type Address, formatUnits } from 'viem'
 import type { TableColumn } from '@nuxt/ui'
 import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
 import MaticIcon from '@/assets/matic-logo.png'
-import { useToastStore, useUserDataStore } from '@/stores'
-import { useBankContract, useGetDividendBalances } from '@/composables/bank'
+import { useUserDataStore } from '@/stores'
+import { useGetDividendBalances } from '@/composables/bank'
+import ClaimDividendButton from './ClaimDividendButton.vue'
 
 // Define row type for better TypeScript support
 interface DividendRow {
@@ -91,12 +81,10 @@ interface DividendRow {
   error: Error | null
 }
 
-const toast = useToastStore()
 const { address: currentAddress } = useUserDataStore()
 
 // Fetch dividend balances using the new composable
 const { data, isLoading, refetch } = useGetDividendBalances(currentAddress as Address)
-const { claimDividend, claimTokenDividend, isLoading: isWriteLoading } = useBankContract()
 
 const columns: TableColumn<DividendRow>[] = [
   { accessorKey: 'name', header: 'Token', id: 'token' },
@@ -130,25 +118,4 @@ const tableRows = computed<DividendRow[]>(() => {
       error: item.error
     }))
 })
-
-const currentClaimingToken = ref<Address | null>(null)
-
-const executeClaim = async (tokenAddr: Address, isNative: boolean) => {
-  currentClaimingToken.value = tokenAddr
-  try {
-    if (isNative) {
-      await claimDividend()
-    } else {
-      await claimTokenDividend(tokenAddr)
-    }
-    toast.addSuccessToast('Dividend claimed successfully')
-    // Refetch balances after successful claim
-    await refetch()
-  } catch (err) {
-    toast.addErrorToast('Failed to claim dividend')
-    console.error('Claim error:', err)
-  } finally {
-    currentClaimingToken.value = null
-  }
-}
 </script>
