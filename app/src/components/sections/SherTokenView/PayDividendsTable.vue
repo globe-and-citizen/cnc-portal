@@ -1,54 +1,95 @@
 <template>
-  <CardComponent title="Your Pending Dividends">
-    <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
-      <TableComponent :rows="tableRows" :columns="columns" :loading="isLoading">
-        <template #token-data="{ row }">
-          <div class="flex items-center gap-2">
-            <img v-if="row.icon" :src="row.icon" :alt="row.name" class="w-8 h-8 rounded-full" />
+  <UCard>
+    <template #header>
+      <h3 class="text-lg font-semibold">Your Pending Dividends</h3>
+    </template>
+
+    <div class="flex flex-col gap-4">
+      <!-- Loading State -->
+      <div v-if="isLoading" class="flex justify-center py-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+
+      <!-- Empty State -->
+      <UAlert
+        v-else-if="!tableRows.length"
+        color="neutral"
+        variant="soft"
+        icon="i-heroicons-information-circle"
+        title="No pending dividends"
+        description="You don't have any pending dividends at this time."
+      />
+
+      <!-- Table -->
+      <UTable v-else :data="tableRows" :columns="columns">
+        <template #token-cell="{ row }">
+          <div class="flex items-center gap-3">
+            <img
+              v-if="row.original.icon"
+              :src="row.original.icon"
+              :alt="row.original.name"
+              class="w-8 h-8 rounded-full"
+            />
             <div v-else class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-              <span class="text-gray-500">{{ row.name.charAt(0) }}</span>
+              <span class="text-gray-500 font-medium">{{ row.original.name.charAt(0) }}</span>
             </div>
             <div class="flex flex-col">
-              <div class="font-medium">{{ row.name }}</div>
-              <div class="text-sm text-gray-500">{{ row.symbol }}</div>
+              <span class="font-medium">{{ row.original.name }}</span>
+              <span class="text-sm text-gray-500">{{ row.original.symbol }}</span>
             </div>
           </div>
         </template>
 
-        <template #balance-data="{ row }">
-          <span class="font-bold">{{ row.formattedBalance }}</span>
+        <template #balance-cell="{ row }">
+          <span class="font-semibold">{{ row.original.formattedBalance }}</span>
         </template>
 
-        <template #action-data="{ row }">
-          <ButtonUI
-            variant="primary"
+        <template #action-cell="{ row }">
+          <UButton
+            color="primary"
             size="sm"
             data-test="claim-dividend"
             :disabled="
-              row.balance === '0' || (isWriteLoading && currentClaimingToken === row.tokenAddress)
+              row.original.balance === '0' ||
+              (isWriteLoading && currentClaimingToken === row.original.tokenAddress)
             "
-            :loading="isWriteLoading && currentClaimingToken === row.tokenAddress"
-            @click="() => executeClaim(row.tokenAddress, row.isNative)"
+            :loading="isWriteLoading && currentClaimingToken === row.original.tokenAddress"
+            @click="() => executeClaim(row.original.tokenAddress, row.original.isNative)"
           >
-            {{ isWriteLoading && currentClaimingToken === row.tokenAddress ? 'Claiming' : 'Claim' }}
-          </ButtonUI>
+            {{
+              isWriteLoading && currentClaimingToken === row.original.tokenAddress
+                ? 'Claiming'
+                : 'Claim'
+            }}
+          </UButton>
         </template>
-      </TableComponent>
+      </UTable>
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { zeroAddress, type Address, formatUnits } from 'viem'
-import CardComponent from '@/components/CardComponent.vue'
+import type { TableColumn } from '@nuxt/ui'
 import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
 import MaticIcon from '@/assets/matic-logo.png'
-import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useToastStore, useUserDataStore } from '@/stores'
 import { useBankContract, useGetDividendBalances } from '@/composables/bank'
+
+// Define row type for better TypeScript support
+interface DividendRow {
+  tokenAddress: Address
+  name: string
+  symbol: string
+  balance: string
+  formattedBalance: string
+  decimals: number
+  icon: string | null
+  isNative: boolean
+  error: Error | null
+}
 
 const toast = useToastStore()
 const { address: currentAddress } = useUserDataStore()
@@ -57,10 +98,10 @@ const { address: currentAddress } = useUserDataStore()
 const { data, isLoading, refetch } = useGetDividendBalances(currentAddress as Address)
 const { claimDividend, claimTokenDividend, isLoading: isWriteLoading } = useBankContract()
 
-const columns: TableColumn[] = [
-  { key: 'token', label: 'Token', sortable: true, class: 'text-black text-base' },
-  { key: 'balance', label: 'Dividend Balance', sortable: true, class: 'text-black text-base' },
-  { key: 'action', label: 'Action', sortable: false, class: 'text-black text-base' }
+const columns: TableColumn<DividendRow>[] = [
+  { accessorKey: 'name', header: 'Token', id: 'token' },
+  { accessorKey: 'formattedBalance', header: 'Dividend Balance', id: 'balance' },
+  { id: 'action', header: 'Action' }
 ]
 
 // Get token icon based on symbol
@@ -72,7 +113,7 @@ const getTokenIcon = (symbol: string) => {
 }
 
 // Transform data into table rows
-const tableRows = computed(() => {
+const tableRows = computed<DividendRow[]>(() => {
   if (!data.value) return []
 
   return data.value
