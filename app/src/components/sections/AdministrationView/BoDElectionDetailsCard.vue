@@ -68,7 +68,7 @@ import { useUserDataStore, useTeamStore } from '@/stores'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import type { Address } from 'viem'
 import { log, parseError } from '@/utils'
-import { useBoDElections } from '@/composables'
+import { useBoDElections } from '@/composables/elections'
 
 const props = defineProps({
   election: {

@@ -33,7 +33,7 @@ const mockElectionData: MockElectionData = {
 }
 
 // Mock the composable
-vi.mock('@/composables', () => ({
+vi.mock('@/composables/elections', () => ({
   useBoDElections: vi.fn(() => mockElectionData)
 }))
 

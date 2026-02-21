@@ -13,7 +13,7 @@
 </template>
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useBoDElections } from '@/composables'
+import { useBoDElections } from '@/composables/elections'
 
 const { electionId } = defineProps<{ electionId: bigint }>()
 const currentElectionId = computed(() => electionId)
