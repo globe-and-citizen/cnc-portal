@@ -16,7 +16,7 @@ import {
   useDepositDividends,
   useDepositTokenDividends,
   useSetInvestorAddress
-} from '../bankWrites'
+} from '../writes'
 
 // Hoisted mock variables
 const { mockUseContractWrites, mockTeamStore } = vi.hoisted(() => ({

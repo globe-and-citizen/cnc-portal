@@ -1,110 +1,170 @@
-import { computed } from 'vue'
+import { computed, unref, type MaybeRef } from 'vue'
 import { useReadContract } from '@wagmi/vue'
-import { isAddress, type Abi, type Address } from 'viem'
+import { isAddress, type Address } from 'viem'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { BOD_FUNCTION_NAMES } from './types'
 import { BOD_ABI } from '@/artifacts/abi/bod'
 
 /**
- * BOD contract read operations
+ * BOD contract types and constants
  */
-export function useBodReads() {
+export const BOD_FUNCTION_NAMES = {
+  // Read functions
+  PAUSED: 'paused',
+  OWNER: 'owner',
+  IS_ACTION_EXECUTED: 'isActionExecuted',
+  IS_APPROVED: 'isApproved',
+  GET_OWNERS: 'getOwners',
+  GET_BOARD_OF_DIRECTORS: 'getBoardOfDirectors',
+  IS_MEMBER: 'isMember',
+  APPROVAL_COUNT: 'approvalCount',
+
+  // Write functions
+  PAUSE: 'pause',
+  UNPAUSE: 'unpause',
+  TRANSFER_OWNERSHIP: 'transferOwnership',
+  ADD_ACTION: 'addAction',
+  APPROVE: 'approve',
+  REVOKE: 'revoke',
+  SET_BOARD_OF_DIRECTORS: 'setBoardOfDirectors',
+  INITIALIZE: 'initialize'
+} as const
+
+/**
+ * Type for valid BOD contract function names
+ */
+export type BodFunctionName = (typeof BOD_FUNCTION_NAMES)[keyof typeof BOD_FUNCTION_NAMES]
+
+/**
+ * Validate if a function name exists in the BOD contract
+ */
+export function isValidBodFunction(functionName: string): functionName is BodFunctionName {
+  return Object.values(BOD_FUNCTION_NAMES).includes(functionName as BodFunctionName)
+}
+
+/**
+ * Read owner of a contract
+ * TODO: This function return the list of owner of this contract no one owner, so the usage also should change
+ */
+export function useBodOwner(contractAddress: MaybeRef<Address>) {
+  const bodAddress = computed(() => unref(contractAddress))
+  const isAddressValid = computed(() => !!bodAddress.value && isAddress(bodAddress.value))
+
+  return useReadContract({
+    address: bodAddress,
+    abi: BOD_ABI,
+    functionName: 'getOwners',
+    query: { enabled: isAddressValid },
+    args: []
+  })
+}
+
+/**
+ * Check if an action has been executed
+ */
+export function useBodIsActionExecuted(actionId: MaybeRef<number>) {
   const teamStore = useTeamStore()
-  const userDataStore = useUserDataStore()
+  const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
+  const isBodAddressValid = computed(() => !!bodAddress.value && isAddress(bodAddress.value))
+  const actionIdValue = computed(() => unref(actionId))
+
+  return useReadContract({
+    address: bodAddress,
+    abi: BOD_ABI,
+    functionName: 'isActionExecuted',
+    args: [BigInt(actionIdValue.value)] as const,
+    query: { enabled: isBodAddressValid }
+  })
+}
+
+/**
+ * Check if a member has approved an action
+ */
+export function useBodIsApproved(actionId: MaybeRef<number>, memberAddress: MaybeRef<Address>) {
+  const teamStore = useTeamStore()
+  const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
+  const isBodAddressValid = computed(() => !!bodAddress.value && isAddress(bodAddress.value))
+  const actionIdValue = computed(() => unref(actionId))
+  const memberAddressValue = computed(() => unref(memberAddress))
+
+  return useReadContract({
+    address: bodAddress,
+    abi: BOD_ABI,
+    functionName: 'isApproved',
+    args: [BigInt(actionIdValue.value), memberAddressValue.value] as const,
+    query: {
+      enabled: computed(() => isBodAddressValid.value && isAddress(memberAddressValue.value))
+    }
+  })
+}
+
+/**
+ * Get the current board of directors
+ */
+export function useBodGetBoardOfDirectors() {
+  const teamStore = useTeamStore()
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
   const isBodAddressValid = computed(() => !!bodAddress.value && isAddress(bodAddress.value))
 
-  // Removed useBodPaused - BOD contract doesn't have a paused function
-  // If you need to check pause status, use the Bank contract's paused function instead
+  return useReadContract({
+    address: bodAddress,
+    abi: BOD_ABI,
+    functionName: 'getBoardOfDirectors',
+    query: { enabled: isBodAddressValid }
+  })
+}
 
-  const useBodOwner = (contractAddress: Address, contractAbi: Abi) => {
-    return useReadContract({
-      address: contractAddress,
-      abi: contractAbi,
-      functionName: BOD_FUNCTION_NAMES.OWNER,
-      query: { enabled: isBodAddressValid }
-    })
-  }
+/**
+ * Check if an address is a BOD member
+ */
+export function useBodIsMember(memberAddress: MaybeRef<Address>) {
+  const teamStore = useTeamStore()
+  const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
+  const isBodAddressValid = computed(() => !!bodAddress.value && isAddress(bodAddress.value))
+  const memberAddressValue = computed(() => unref(memberAddress))
 
-  const useBodIsActionExecuted = (actionId: number) => {
-    return useReadContract({
-      address: bodAddress,
-      abi: BOD_ABI,
-      functionName: 'isActionExecuted' as const,
-      args: [BigInt(actionId)] as const,
-      query: { enabled: isBodAddressValid }
-    })
-  }
-
-  const useBodIsApproved = (actionId: number, memberAddress: Address) => {
-    return useReadContract({
-      address: bodAddress,
-      abi: BOD_ABI,
-      functionName: 'isApproved' as const,
-      args: [BigInt(actionId), memberAddress] as const,
-      query: {
-        enabled: computed(
-          () => !!bodAddress.value && isAddress(bodAddress.value) && isAddress(memberAddress)
-        )
-      }
-    })
-  }
-
-  const useBodGetBoardOfDirectors = () => {
-    return useReadContract({
-      address: bodAddress.value,
-      abi: BOD_ABI,
-      functionName: BOD_FUNCTION_NAMES.GET_BOARD_OF_DIRECTORS,
-      query: { enabled: isBodAddressValid }
-    })
-  }
-
-  const useBodIsMember = (memberAddress: Address) => {
-    return useReadContract({
-      address: bodAddress.value,
-      abi: BOD_ABI,
-      functionName: BOD_FUNCTION_NAMES.IS_MEMBER,
-      args: [memberAddress],
-      query: {
-        enabled: computed(
-          () => !!bodAddress.value && isAddress(bodAddress.value) && isAddress(memberAddress)
-        )
-      }
-    })
-  }
-
-  const useBodApprovalCount = () => {
-    return useReadContract({
-      address: bodAddress.value,
-      abi: BOD_ABI,
-      functionName: BOD_FUNCTION_NAMES.APPROVAL_COUNT,
-      query: { enabled: isBodAddressValid }
-    })
-  }
-
-  const useBodIsBodAction = (contractAddress: Address, contractAbi: Abi) => {
-    const { data: isBodMember } = useBodIsMember(userDataStore.address as Address)
-    const { data: owner } = useBodOwner(contractAddress, contractAbi)
-    const isBodAction = computed(() => {
-      return owner.value === bodAddress.value && (isBodMember.value as boolean)
-    })
-    return {
-      isBodAction
+  return useReadContract({
+    address: bodAddress,
+    abi: BOD_ABI,
+    functionName: 'isMember',
+    args: [memberAddressValue.value] as const,
+    query: {
+      enabled: computed(() => isBodAddressValid.value && isAddress(memberAddressValue.value))
     }
-  }
-  const { data: boardOfDirectors } = useBodGetBoardOfDirectors()
+  })
+}
+
+/**
+ * Get the approval count for an action
+ */
+export function useBodApprovalCount() {
+  const teamStore = useTeamStore()
+  const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
+  const isBodAddressValid = computed(() => !!bodAddress.value && isAddress(bodAddress.value))
+
+  return useReadContract({
+    address: bodAddress,
+    abi: BOD_ABI,
+    functionName: 'approvalCount',
+    query: { enabled: isBodAddressValid }
+  })
+}
+
+/**
+ * Check if an action is a BOD action (combine multiple reads)
+ */
+export function useBodIsBodAction(contractAddress: MaybeRef<Address>) {
+  const userDataStore = useUserDataStore()
+  const { data: isBodMember } = useBodIsMember(userDataStore.address as Address)
+  const { data: owner } = useBodOwner(contractAddress)
+
+  const teamStore = useTeamStore()
+  const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
+
+  const isBodAction = computed(() => {
+    return owner.value === bodAddress.value && (isBodMember.value as boolean)
+  })
 
   return {
-    bodAddress,
-    isBodAddressValid,
-    boardOfDirectors,
-    useBodIsBodAction,
-    // useBodPaused, // Removed: BOD contract doesn't have a paused function
-    useBodOwner,
-    useBodIsActionExecuted,
-    useBodIsApproved,
-    useBodGetBoardOfDirectors,
-    useBodIsMember,
-    useBodApprovalCount
+    isBodAction
   }
 }

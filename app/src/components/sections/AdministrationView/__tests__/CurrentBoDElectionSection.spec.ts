@@ -37,8 +37,11 @@ const { useBoDElections: mockUseBoDElectionsImpl, useCustomFetch: mockUseCustomF
     })
   }))
 
+vi.mock('@/composables/elections', () => ({
+  useBoDElections: mockUseBoDElectionsImpl
+}))
+
 vi.mock('@/composables', () => ({
-  useBoDElections: mockUseBoDElectionsImpl,
   useCustomFetch: mockUseCustomFetchImpl
 }))
 

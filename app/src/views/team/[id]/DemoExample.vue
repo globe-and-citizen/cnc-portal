@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 // import { useBankReads } from '@/composables/bank'
-import { usePause, useUnpause } from '@/composables/bank/bankWrites'
+import { usePause, useUnpause } from '@/composables/bank/writes'
 import ButtonUI from '@/components/ButtonUI.vue'
 import TransactionTimeline from '@/components/ui/TransactionTimeline.vue'
 
