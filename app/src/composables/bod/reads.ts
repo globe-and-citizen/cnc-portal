@@ -43,18 +43,20 @@ export function isValidBodFunction(functionName: string): functionName is BodFun
 
 /**
  * Read owner of a contract
+ * TODO: This function return the list of owner of this contract no one owner, so the usage also should change
  */
-// export function useBodOwner(contractAddress: MaybeRef<Address>) {
-//   const bodAddress = computed(() => unref(contractAddress))
-//   const isAddressValid = computed(() => !!bodAddress.value && isAddress(bodAddress.value))
+export function useBodOwner(contractAddress: MaybeRef<Address>) {
+  const bodAddress = computed(() => unref(contractAddress))
+  const isAddressValid = computed(() => !!bodAddress.value && isAddress(bodAddress.value))
 
-//   return useReadContract({
-//     address: bodAddress,
-//     abi: BOD_ABI,
-//     functionName: 'owner',
-//     query: { enabled: isAddressValid }
-//   })
-// }
+  return useReadContract({
+    address: bodAddress,
+    abi: BOD_ABI,
+    functionName: 'getOwners',
+    query: { enabled: isAddressValid },
+    args: []
+  })
+}
 
 /**
  * Check if an action has been executed
