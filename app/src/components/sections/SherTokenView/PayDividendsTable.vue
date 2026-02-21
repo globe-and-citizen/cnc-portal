@@ -49,7 +49,6 @@
             :token-address="row.original.tokenAddress"
             :is-native="row.original.isNative"
             :balance="row.original.balance"
-            @success="refetch"
           />
         </template>
       </UTable>
@@ -84,7 +83,8 @@ interface DividendRow {
 const { address: currentAddress } = useUserDataStore()
 
 // Fetch dividend balances using the new composable
-const { data, isLoading, refetch } = useGetDividendBalances(currentAddress as Address)
+// Queries are automatically invalidated after claims via the write composables
+const { data, isLoading } = useGetDividendBalances(currentAddress as Address)
 
 const columns: TableColumn<DividendRow>[] = [
   { accessorKey: 'name', header: 'Token', id: 'token' },

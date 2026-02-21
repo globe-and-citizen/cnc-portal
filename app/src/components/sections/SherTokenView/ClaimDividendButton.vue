@@ -23,12 +23,7 @@ interface Props {
   balance: string
 }
 
-interface Emits {
-  (e: 'success'): void
-}
-
 const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
 
 const toast = useToastStore()
 const isClaiming = ref(false)
@@ -52,7 +47,7 @@ const handleClaim = async () => {
     }
 
     toast.addSuccessToast('Dividend claimed successfully')
-    emit('success')
+    // Queries are automatically invalidated by the write composable
   } catch (err) {
     toast.addErrorToast('Failed to claim dividend')
     console.error('Claim error:', err)

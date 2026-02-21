@@ -1,5 +1,6 @@
 import { computed, unref, type MaybeRef } from 'vue'
 import type { Address } from 'viem'
+import { useQueryClient } from '@tanstack/vue-query'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
 import { useTeamStore } from '@/stores/teamStore'
@@ -48,17 +49,49 @@ export function useRemoveTokenSupport(tokenAddress: MaybeRef<Address>) {
 }
 
 export function useClaimDividend() {
-  return useBankContractWrite({
+  const queryClient = useQueryClient()
+  const teamStore = useTeamStore()
+  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+  
+  const writeResult = useBankContractWrite({
     functionName: 'claimDividend',
     args: []
   })
+
+  // Override invalidateQueries to invalidate dividend balances
+  const originalInvalidateQueries = writeResult.invalidateQueries
+  writeResult.invalidateQueries = async () => {
+    await originalInvalidateQueries()
+    // Invalidate all dividend balances queries for this bank
+    await queryClient.invalidateQueries({
+      queryKey: ['bank', 'dividendBalances', bankAddress.value]
+    })
+  }
+
+  return writeResult
 }
 
 export function useClaimTokenDividend(token: MaybeRef<Address>) {
-  return useBankContractWrite({
+  const queryClient = useQueryClient()
+  const teamStore = useTeamStore()
+  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+  
+  const writeResult = useBankContractWrite({
     functionName: 'claimTokenDividend',
     args: [token]
   })
+
+  // Override invalidateQueries to invalidate dividend balances
+  const originalInvalidateQueries = writeResult.invalidateQueries
+  writeResult.invalidateQueries = async () => {
+    await originalInvalidateQueries()
+    // Invalidate all dividend balances queries for this bank
+    await queryClient.invalidateQueries({
+      queryKey: ['bank', 'dividendBalances', bankAddress.value]
+    })
+  }
+
+  return writeResult
 }
 
 export function useDepositDividends(amount: MaybeRef<bigint>, investorAddress: MaybeRef<Address>) {
