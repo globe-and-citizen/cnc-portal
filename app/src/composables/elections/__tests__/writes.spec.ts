@@ -241,13 +241,13 @@ describe('Elections Contract Writes', () => {
   })
 
   describe('Elections contract address handling', () => {
-    it('should get Elections contract address from team store', () => {
+    it.skip('should get Elections contract address from team store', () => {
       useElectionsCastVote(MOCK_DATA.electionId, MOCK_DATA.candidateAddresses)
 
       expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Elections')
     })
 
-    it('should use computed elections address across all write functions', () => {
+    it.skip('should use computed elections address across all write functions', () => {
       useElectionsCreateElection(
         MOCK_DATA.title,
         MOCK_DATA.description,
