@@ -149,9 +149,11 @@ export function useBodAddAction() {
       }
 
       // Execute the write using executeWrite
-      return writeResult.executeWrite(
-        [data.targetAddress, data.description, data.data] as readonly unknown[]
-      )
+      return writeResult.executeWrite([
+        data.targetAddress,
+        data.description,
+        data.data
+      ] as readonly unknown[])
     } catch (err) {
       console.error(err)
     }
