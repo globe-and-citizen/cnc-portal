@@ -4,10 +4,19 @@ import { isAddress, type Address, zeroAddress } from 'viem'
 import { readContracts } from '@wagmi/core'
 import { useQuery } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
-import { BANK_FUNCTION_NAMES } from './types'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { SUPPORTED_TOKENS } from '@/constant/index'
 import { config } from '@/wagmi.config'
+
+const BANK_FUNCTION_NAMES = {
+  PAUSED: 'paused',
+  OWNER: 'owner',
+  SUPPORTED_TOKENS: 'supportedTokens',
+  DIVIDEND_BALANCES: 'dividendBalances',
+  TOKEN_DIVIDEND_BALANCES: 'tokenDividendBalances',
+  TOTAL_DIVIDEND: 'totalDividends',
+  GET_UNLOCK_BALANCE: 'getUnlockedBalance'
+} as const
 
 /**
  * Bank contract address helper

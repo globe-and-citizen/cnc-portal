@@ -64,7 +64,7 @@ import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
 import MaticIcon from '@/assets/matic-logo.png'
 import { useUserDataStore } from '@/stores'
-import { useGetDividendBalances } from '@/composables/bank'
+import { useGetDividendBalances } from '@/composables/bank/reads.ts'
 import ClaimDividendButton from './ClaimDividendButton.vue'
 
 // Define row type for better TypeScript support
