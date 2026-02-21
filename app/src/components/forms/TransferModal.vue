@@ -100,13 +100,12 @@ const { isBodAction } = useBodIsBodAction(props.bankAddress as Address)
 
 const isBankOwner = computed(() => bankOwner.value === userStore.address)
 
-const addActionComposable = useBodAddAction(null)
 const {
   executeAddAction: addAction,
   isPending: isLoadingAddAction,
   isConfirming: isConfirmingAddAction,
   isActionAdded
-} = addActionComposable
+} = useBodAddAction()
 
 // Modal state
 const modal = ref({

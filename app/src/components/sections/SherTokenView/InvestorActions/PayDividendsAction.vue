@@ -73,7 +73,7 @@ const isBankWriteLoading = computed(
     depositTokenDividendsWrite.writeResult.isPending.value
 )
 
-const addActionComposable = useBodAddAction(null)
+const addActionComposable = useBodAddAction()
 const {
   executeAddAction: addAction,
   isPending: isLoadingAddAction,

@@ -101,8 +101,8 @@ const userDataStore = useUserDataStore()
 const queryClient = useQueryClient()
 
 // BOD action composables
-const addActionComposable = useBodAddAction(null)
-const approveActionComposable = useBodApproveAction(0)
+const addActionComposable = useBodAddAction()
+const approveActionComposable = useBodApproveAction()
 
 const { isBodAction } = useBodIsBodAction(props.row.address as Address)
 
