@@ -10,15 +10,8 @@
       Mint {{ tokenSymbol }}
     </ButtonUI>
 
-    <ModalComponent
-      v-model="modalState.show"
-      v-if="modalState.mount"
-      @reset="closeModal"
-    >
-      <MintForm
-        v-model="modalState.show"
-        @close-modal="closeModal"
-      />
+    <ModalComponent v-model="modalState.show" v-if="modalState.mount" @reset="closeModal">
+      <MintForm v-model="modalState.show" @close-modal="closeModal" />
     </ModalComponent>
   </div>
 </template>
@@ -61,5 +54,4 @@ const openModal = () => {
 const closeModal = () => {
   modalState.value = { mount: false, show: false }
 }
-
 </script>

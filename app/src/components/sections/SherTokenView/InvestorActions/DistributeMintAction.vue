@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="tooltip"
-    data-tip="Coming soon"
-  >
+  <div class="tooltip" data-tip="Coming soon">
     <ButtonUI
       variant="primary"
       :disabled="true"
@@ -12,11 +9,7 @@
       Distribute Mint {{ tokenSymbol }}
     </ButtonUI>
 
-    <ModalComponent
-      v-model="modalState.show"
-      v-if="modalState.mount"
-      @reset="closeModal"
-    >
+    <ModalComponent v-model="modalState.show" v-if="modalState.mount" @reset="closeModal">
       <DistributeMintForm
         v-if="modalState.show"
         :loading="isLoading || isConfirming"
@@ -62,11 +55,9 @@ const {
   error: distributeMintError
 } = useWriteContract()
 
-const { isLoading: isConfirming, isSuccess: isSuccessDistributing } =
-  useWaitForTransactionReceipt({
-    hash: distributeMintHash
-  })
-
+const { isLoading: isConfirming, isSuccess: isSuccessDistributing } = useWaitForTransactionReceipt({
+  hash: distributeMintHash
+})
 
 const openModal = () => {
   modalState.value = { mount: true, show: true }

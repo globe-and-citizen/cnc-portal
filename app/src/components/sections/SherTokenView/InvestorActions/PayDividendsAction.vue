@@ -1,8 +1,5 @@
 <template>
-  <div
-    :class="{ tooltip: !canPayDividends }"
-    :data-tip="cannotPayDividendsReason"
-  >
+  <div :class="{ tooltip: !canPayDividends }" :data-tip="cannotPayDividendsReason">
     <ButtonUI
       variant="primary"
       data-test="pay-dividends-button"
@@ -12,11 +9,7 @@
       Pay Dividends
     </ButtonUI>
 
-    <ModalComponent
-      v-model="modalState.show"
-      v-if="modalState.mount"
-      @reset="closeModal"
-    >
+    <ModalComponent v-model="modalState.show" v-if="modalState.mount" @reset="closeModal">
       <PayDividendsForm
         v-if="modalState.show && currentTeam"
         :loading="isBankWriteLoading || isLoadingAddAction || isConfirmingAddAction"
@@ -71,8 +64,13 @@ const {
   isConfirmed
 } = useBankContract()
 
-const { addAction, useBodIsBodAction, isLoading: isLoadingAddAction, isConfirming: isConfirmingAddAction, isActionAdded } =
-  useBodContract()
+const {
+  addAction,
+  useBodIsBodAction,
+  isLoading: isLoadingAddAction,
+  isConfirming: isConfirmingAddAction,
+  isActionAdded
+} = useBodContract()
 
 const { isBodAction } = useBodIsBodAction(props.bankAddress as Address, BANK_ABI)
 
@@ -114,11 +112,7 @@ const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
       args:
         selectedTokenId === 'native'
           ? [value, investorAddress as Address]
-          : [
-              tokenSymbolAddresses[selectedTokenId] as Address,
-              value,
-              investorAddress as Address
-            ]
+          : [tokenSymbolAddresses[selectedTokenId] as Address, value, investorAddress as Address]
     })
 
     const description = JSON.stringify({

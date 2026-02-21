@@ -65,18 +65,18 @@
           :data-test="`${rowIndex}-row`"
           class="hover"
         >
-        <slot name="row" :row="row" :rowIndex="rowIndex">
-          <td v-for="(column, colIndex) in columns" :key="colIndex">
-            <slot
-              :name="`${column.key}-data`"
-              :row="row"
-              :column="column"
-              :getRowData="() => row[column.key]"
-            >
-              {{ row[column.key] }}
-            </slot>
-          </td>
-        </slot>
+          <slot name="row" :row="row" :rowIndex="rowIndex">
+            <td v-for="(column, colIndex) in columns" :key="colIndex">
+              <slot
+                :name="`${column.key}-data`"
+                :row="row"
+                :column="column"
+                :getRowData="() => row[column.key]"
+              >
+                {{ row[column.key] }}
+              </slot>
+            </td>
+          </slot>
         </tr>
       </tbody>
     </table>

@@ -12,5 +12,4 @@ import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
 const teamStore = useTeamStore()
 
 const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
-
 </script>

@@ -7,7 +7,15 @@
           <AddressToolTip :address="investorAddress" v-if="investorAddress" />
         </div>
         <div class="flex gap-2">
-          <template v-if="isLoadingTokenSymbol || isLoadingInvestorsOwner || !tokenSymbol || !investorsOwner || !investorAddress">
+          <template
+            v-if="
+              isLoadingTokenSymbol ||
+              isLoadingInvestorsOwner ||
+              !tokenSymbol ||
+              !investorsOwner ||
+              !investorAddress
+            "
+          >
             <div class="skeleton h-10 w-40" data-test="skeleton-1"></div>
             <div class="skeleton h-10 w-40" data-test="skeleton-2"></div>
             <div class="skeleton h-10 w-40" data-test="skeleton-3"></div>
@@ -17,11 +25,8 @@
               :token-symbol="tokenSymbol"
               :investors-address="investorAddress"
             />
-            <MintTokenAction
-              :token-symbol="tokenSymbol"
-              :investors-owner="investorsOwner"
-            />
-            
+            <MintTokenAction :token-symbol="tokenSymbol" :investors-owner="investorsOwner" />
+
             <PayDividendsAction
               :token-symbol="tokenSymbol"
               :shareholders-count="shareholders?.length ?? 0"
@@ -61,7 +66,11 @@ const investorAddress = teamStore.getContractAddressByType('InvestorV1')
 const bankAddress = teamStore.getContractAddressByType('Bank')
 
 // Get token symbol
-const { data: tokenSymbol, error: tokenSymbolError, isLoading: isLoadingTokenSymbol } = useReadContract({
+const {
+  data: tokenSymbol,
+  error: tokenSymbolError,
+  isLoading: isLoadingTokenSymbol
+} = useReadContract({
   abi: INVESTOR_ABI,
   address: investorAddress,
   functionName: 'symbol'

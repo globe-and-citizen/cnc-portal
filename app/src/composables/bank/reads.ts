@@ -122,7 +122,7 @@ export function useUnlockedBalance() {
 /**
  * Fetch dividend balances for all supported tokens
  * Uses readContracts to batch read operations for better performance
- * 
+ *
  * For native token: uses dividendBalances function
  * For ERC20 tokens: uses tokenDividendBalances function
  */
@@ -169,7 +169,7 @@ export function useGetDividendBalances(userAddress: MaybeRef<Address>) {
       // Map results back to tokens with their balances
       return SUPPORTED_TOKENS.map((token, index) => {
         const result = results[index]
-        
+
         // Handle undefined results
         if (!result) {
           return {

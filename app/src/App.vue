@@ -41,7 +41,7 @@
     </div>
   </UApp>
 
-  <VueQueryDevtools buttonPosition="bottom-left" :style="{ height: '1500px' }"/>
+  <VueQueryDevtools buttonPosition="bottom-left" :style="{ height: '1500px' }" />
 </template>
 
 <script setup lang="ts">
