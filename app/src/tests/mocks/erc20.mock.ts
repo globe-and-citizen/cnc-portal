@@ -2,11 +2,11 @@ import { vi } from 'vitest'
 import { ref } from 'vue'
 
 /**
- * Generic mock factory for ERC20 read composables
- * All ERC20 read functions (useErc20Name, useErc20Symbol, useErc20Decimals, etc.)
- * use useReadContract and return the same structure
+ * Generic mock factory for contract read operations
+ * Can be used for ERC20, ERC721, or any contract read function
+ * that uses useReadContract and returns the same structure
  */
-export function createERC20ReadMock<T>(defaultValue?: T) {
+export function createContractReadMock<T>(defaultValue?: T) {
   return {
     data: ref(defaultValue),
     error: ref<Error | null>(null),
@@ -17,16 +17,16 @@ export function createERC20ReadMock<T>(defaultValue?: T) {
     isPending: ref(false),
     refetch: vi.fn(),
     queryKey: ref([]),
-    status: ref('success' as const)
+    status: ref<'idle' | 'pending' | 'error' | 'success'>('success')
   }
 }
 
 /**
- * Generic mock factory for ERC20 write composables
- * All ERC20 write functions (useERC20Transfer, useERC20Approve, etc.)
- * use useContractWrites and return the same structure
+ * Generic mock factory for contract write operations
+ * Can be used for ERC20, ERC721, or any contract write function
+ * that uses useContractWrite and returns the same structure
  */
-export function createERC20WriteMock() {
+export function createContractWriteMock() {
   return {
     executeWrite: vi.fn(),
     writeResult: {
@@ -36,7 +36,7 @@ export function createERC20WriteMock() {
       isSuccess: ref(false),
       isError: ref(false),
       isPending: ref(false),
-      status: ref('idle' as const)
+      status: ref<'idle' | 'pending' | 'error' | 'success'>('idle')
     },
     receiptResult: {
       data: ref(null),
@@ -45,7 +45,7 @@ export function createERC20WriteMock() {
       isSuccess: ref(false),
       isError: ref(false),
       isPending: ref(false),
-      status: ref('idle' as const)
+      status: ref<'idle' | 'pending' | 'error' | 'success'>('idle')
     }
   }
 }
@@ -55,22 +55,22 @@ export function createERC20WriteMock() {
  */
 export const mockERC20Reads = {
   // String values
-  name: createERC20ReadMock('Mock Token'),
-  symbol: createERC20ReadMock('MTK'),
+  name: createContractReadMock('Mock Token'),
+  symbol: createContractReadMock('MTK'),
 
   // Number values
-  decimals: createERC20ReadMock(18),
+  decimals: createContractReadMock(18),
 
   // BigInt values
-  totalSupply: createERC20ReadMock(1000000n * 10n ** 18n),
-  balanceOf: createERC20ReadMock(1000n * 10n ** 18n),
-  allowance: createERC20ReadMock(1000000n * 10n ** 18n)
+  totalSupply: createContractReadMock(1000000n * 10n ** 18n),
+  balanceOf: createContractReadMock(1000n * 10n ** 18n),
+  allowance: createContractReadMock(1000000n * 10n ** 18n)
 }
 
 export const mockERC20Writes = {
-  transfer: createERC20WriteMock(),
-  transferFrom: createERC20WriteMock(),
-  approve: createERC20WriteMock()
+  transfer: createContractWriteMock(),
+  transferFrom: createContractWriteMock(),
+  approve: createContractWriteMock()
 }
 
 /**
