@@ -24,27 +24,5 @@ export {
   useGetDividendBalances
 } from './reads'
 
-// Core composables
-// export { useBankReads } from './reads'
-export { useBankWrites } from './writes'
-export { useBankWritesFunctions } from './functions'
-
-// Main combined composable
-// import { useBankReads } from './reads'
-import { useBankWritesFunctions } from './functions'
-
-/**
- * Main Bank contract composable - combines all functionality
- */
-export function useBankContract() {
-  // const reads = useBankReads()
-  const writeFunctions = useBankWritesFunctions()
-
-  return {
-    // ...reads,
-    ...writeFunctions
-  }
-}
-
-// Re-export for backward compatibility
-export default useBankContract
+// Write composables
+// Note: use direct imports from ./writes to match ERC20 structure

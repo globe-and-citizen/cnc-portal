@@ -131,7 +131,12 @@ export function useGetDividendBalances(userAddress: MaybeRef<Address>) {
   const addressValue = computed(() => unref(userAddress))
 
   return useQuery({
-    queryKey: ['bank', 'dividendBalances', bankAddress, addressValue] as const,
+    queryKey: computed(() => [
+      'bank',
+      'dividendBalances',
+      bankAddress.value,
+      addressValue.value
+    ] as const),
     enabled: computed(
       () =>
         !!bankAddress.value &&

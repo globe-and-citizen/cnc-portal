@@ -15,7 +15,7 @@
 import { computed, ref } from 'vue'
 import type { Address } from 'viem'
 import { useToastStore } from '@/stores'
-import { useClaimDividend, useClaimTokenDividend } from '@/composables/bank/bankWrites'
+import { useClaimDividend, useClaimTokenDividend } from '@/composables/bank/writes'
 
 interface Props {
   tokenAddress: Address

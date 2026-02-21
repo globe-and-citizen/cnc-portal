@@ -31,9 +31,9 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
 import { BANK_ABI } from '@/artifacts/abi/bank'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { useBodContract } from '@/composables/bod/'
-import { useBankContract } from '@/composables/bank'
+import { useDepositDividends, useDepositTokenDividends } from '@/composables/bank/writes'
 import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils'
 import type { TokenId } from '@/constant'
 
@@ -48,7 +48,6 @@ interface Props {
 const props = defineProps<Props>()
 
 const { address: currentAddress } = useUserDataStore()
-const { addErrorToast } = useToastStore()
 const teamStore = useTeamStore()
 
 const modalState = ref({
@@ -56,13 +55,22 @@ const modalState = ref({
   show: false
 })
 
-const {
-  depositDividends,
-  depositTokenDividends,
-  bankWriteFunctionName,
-  isBankWriteLoading,
-  isConfirmed
-} = useBankContract()
+const depositAmount = ref<bigint>(0n)
+const depositTokenAddress = ref<Address>(zeroAddress)
+const investorAddress = computed(() => teamStore.getContractAddressByType('InvestorV1') as Address)
+
+const depositDividendsWrite = useDepositDividends(depositAmount, investorAddress)
+const depositTokenDividendsWrite = useDepositTokenDividends(
+  depositTokenAddress,
+  depositAmount,
+  investorAddress
+)
+
+const isBankWriteLoading = computed(
+  () =>
+    depositDividendsWrite.writeResult.isPending.value ||
+    depositTokenDividendsWrite.writeResult.isPending.value
+)
 
 const {
   addAction,
@@ -104,15 +112,15 @@ const closeModal = () => {
 const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
   if (isBodAction.value) {
     if (!props.investorsAddress) return
-
-    const investorAddress = teamStore.getContractAddressByType('InvestorV1')
+    const investorAddr = investorAddress.value
+    if (!investorAddr) return
     const data = encodeFunctionData({
       abi: BANK_ABI,
       functionName: selectedTokenId === 'native' ? 'depositDividends' : 'depositTokenDividends',
       args:
         selectedTokenId === 'native'
-          ? [value, investorAddress as Address]
-          : [tokenSymbolAddresses[selectedTokenId] as Address, value, investorAddress as Address]
+          ? [value, investorAddr]
+          : [tokenSymbolAddresses[selectedTokenId] as Address, value, investorAddr]
     })
 
     const description = JSON.stringify({
@@ -126,28 +134,26 @@ const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
       data
     })
   } else {
-    const investorAddress = teamStore.getContractAddressByType('InvestorV1')
-    if (selectedTokenId === 'native') {
-      await depositDividends(value.toString(), investorAddress as Address)
-    } else {
-      await depositTokenDividends(
-        tokenSymbolAddresses[selectedTokenId] as Address,
-        value.toString(),
-        investorAddress as Address
-      )
-    }
-  }
-}
+    const investorAddr = investorAddress.value
+    if (!investorAddr) return
+    depositAmount.value = value
 
-watch([isConfirmed, bankWriteFunctionName], ([newIsConfirmed, newbankWriteFunctionName]) => {
-  if (
-    newIsConfirmed &&
-    (newbankWriteFunctionName === 'depositDividends' ||
-      newbankWriteFunctionName === 'depositTokenDividends')
-  ) {
+    if (selectedTokenId === 'native') {
+      const result = await depositDividendsWrite.executeWrite([value, investorAddr], value)
+      if (!result) throw new Error('Deposit failed')
+    } else {
+      depositTokenAddress.value = tokenSymbolAddresses[selectedTokenId] as Address
+      const result = await depositTokenDividendsWrite.executeWrite([
+        depositTokenAddress.value,
+        value,
+        investorAddr
+      ])
+      if (!result) throw new Error('Deposit failed')
+    }
+
     closeModal()
   }
-})
+}
 
 watch(isActionAdded, (isAdded) => {
   if (isAdded) {
