@@ -1,154 +1,39 @@
 <template>
-  <CardComponent title="Token Holding">
-    <TableComponent
-      :rows="
-        balances.map((balance, index) => ({
-          ...balance,
-          rank: index + 1,
-          icon:
-            balance.token.symbol === 'USDC' || balance.token.symbol === 'USDCe'
-              ? USDCIcon
-              : balance.token.symbol === 'POL'
-                ? MaticIcon
-                : balance.token.symbol === 'ETH'
-                  ? EthereumIcon
-                  : null
-        }))
-      "
-      :loading="isBalancesLoading"
-      :columns="[
-        { key: 'rank', label: 'RANK' },
-        { key: 'token', label: 'Token', sortable: true, class: 'min-w-32' },
-        { key: 'amount', label: 'Amount', sortable: true, class: 'min-w-32' },
-        { key: 'price', label: 'Coin Price', sortable: true, class: 'min-w-40' },
-        { key: 'balance', label: 'Balance', sortable: true, class: 'min-w-32' }
-      ]"
-    >
-      <template #row="{row}">
-      <td></td>
-      <td>
-        <div class="flex items-center gap-2 lg:w-48">
-          <img v-if="row.icon" :src="row.icon" :alt="row.name" class="w-8 h-8 rounded-full" />
-          <div v-else class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-            <span class="text-gray-500">{{ row.token.name.charAt(0) }}</span>
-          </div>
-          <div class="flex flex-col">
-            <div class="font-medium">{{ row.name }}</div>
-            <div class="text-sm text-gray-500">{{ row.network }}</div>
-          </div>
-        </div>
-      </td>
-       <td > {{ row.amount }} {{ row.token.symbol }} </td> 
-       <td>
-        {{ row.values[currency.code ?? 'USD']?.formatedPrice }} / {{ row.token.symbol }}
-      </td>
-
-      <td>
-        {{ row.values[currency.code ?? 'USD']?.formated }}
-      </td>
-
-      </template>
-    </TableComponent>
-
+  <CardComponent title="Your Pending Dividends">
     <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
-      <div class="w-full flex justify-between">
-        <span class="font-bold text-lg">Your Pending Dividends</span>
-      </div>
+      <TableComponent :rows="tableRows" :columns="columns" :loading="isLoading">
+        <template #token-data="{ row }">
+          <div class="flex items-center gap-2">
+            <img v-if="row.icon" :src="row.icon" :alt="row.name" class="w-8 h-8 rounded-full" />
+            <div v-else class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+              <span class="text-gray-500">{{ row.name.charAt(0) }}</span>
+            </div>
+            <div class="flex flex-col">
+              <div class="font-medium">{{ row.name }}</div>
+              <div class="text-sm text-gray-500">{{ row.symbol }}</div>
+            </div>
+          </div>
+        </template>
 
-      <!-- headless fetchers (one per discovered token) -->
-      <div class="hidden">
-        <!-- <TokenDividendAmountFetcher
-          v-for="t in discoveredTokens"
-          :key="t.tokenAddress + '-' + (currentAddress || '')"
-          :token-address="t.tokenAddress"
-          :shareholder="currentAddress as Address"
-          @update="onAmountUpdate"
-        /> -->
-      </div>
+        <template #balance-data="{ row }">
+          <span class="font-bold">{{ row.formattedBalance }}</span>
+        </template>
 
-      <div class="bg-base-100 w-full">
-        <TableComponent :rows="filteredRows" :columns="columns" :loading="isBalancesLoading">
-          <template #shareholder-data="{ row }">
-            <AddressToolTip :address="row.address" />
-          </template>
-
-          <template #token-data="{ row }">
-            <span>{{ row.tokenSymbol }}</span>
-          </template>
-
-          <template #amount-data="{ row }">
-            <span class="font-bold">
-              {{ formattedAmount(row.tokenAddress, row.decimals) }} {{ row.tokenSymbol }}
-            </span>
-          </template>
-
-          <template #action-data="{ row }">
-            <ButtonUI
-              variant="primary"
-              size="sm"
-              data-test="claim-dividend"
-              @click="() => executeClaim(row.tokenAddress)"
-              :disabled="isWriteLoading && currentClaimingToken === row.tokenAddress"
-              :loading="isWriteLoading && currentClaimingToken === row.tokenAddress"
-            >
-              {{
-                isWriteLoading && currentClaimingToken === row.tokenAddress ? 'Claiming' : 'Claim'
-              }}
-            </ButtonUI>
-          </template>
-        </TableComponent>
-      </div>
-    </div>
-  </CardComponent>
-  <CardComponent>
-    <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
-      <div class="w-full flex justify-between">
-        <span class="font-bold text-lg">Your Pending Dividends</span>
-      </div>
-
-      <!-- headless fetchers (one per discovered token) -->
-      <div class="hidden">
-        <!-- <TokenDividendAmountFetcher
-          v-for="t in discoveredTokens"
-          :key="t.tokenAddress + '-' + (currentAddress || '')"
-          :token-address="t.tokenAddress"
-          :shareholder="currentAddress as Address"
-          @update="onAmountUpdate"
-        /> -->
-      </div>
-
-      <div class="bg-base-100 w-full">
-        <TableComponent :rows="filteredRows" :columns="columns" :loading="isBalancesLoading">
-          <template #shareholder-data="{ row }">
-            <AddressToolTip :address="row.address" />
-          </template>
-
-          <template #token-data="{ row }">
-            <span>{{ row.tokenSymbol }}</span>
-          </template>
-
-          <template #amount-data="{ row }">
-            <span class="font-bold">
-              {{ formattedAmount(row.tokenAddress, row.decimals) }} {{ row.tokenSymbol }}
-            </span>
-          </template>
-
-          <template #action-data="{ row }">
-            <ButtonUI
-              variant="primary"
-              size="sm"
-              data-test="claim-dividend"
-              @click="() => executeClaim(row.tokenAddress)"
-              :disabled="isWriteLoading && currentClaimingToken === row.tokenAddress"
-              :loading="isWriteLoading && currentClaimingToken === row.tokenAddress"
-            >
-              {{
-                isWriteLoading && currentClaimingToken === row.tokenAddress ? 'Claiming' : 'Claim'
-              }}
-            </ButtonUI>
-          </template>
-        </TableComponent>
-      </div>
+        <template #action-data="{ row }">
+          <ButtonUI
+            variant="primary"
+            size="sm"
+            data-test="claim-dividend"
+            :disabled="
+              row.balance === '0' || (isWriteLoading && currentClaimingToken === row.tokenAddress)
+            "
+            :loading="isWriteLoading && currentClaimingToken === row.tokenAddress"
+            @click="() => executeClaim(row.tokenAddress, row.isNative)"
+          >
+            {{ isWriteLoading && currentClaimingToken === row.tokenAddress ? 'Claiming' : 'Claim' }}
+          </ButtonUI>
+        </template>
+      </TableComponent>
     </div>
   </CardComponent>
 </template>
@@ -162,91 +47,65 @@ import USDCIcon from '@/assets/usdc.png'
 import MaticIcon from '@/assets/matic-logo.png'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-// import TokenDividendAmountFetcher from '@/components/sections/SherTokenView/TokenDividendAmountFetcher.vue'
-import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
-import { useContractBalance } from '@/composables/useContractBalance'
-import { useBankContract } from '@/composables/bank'
-import { tokenSymbol } from '@/utils'
-import { useStorage } from '@vueuse/core'
+import { useToastStore, useUserDataStore } from '@/stores'
+import { useBankContract, useGetDividendBalances } from '@/composables/bank'
 
 const toast = useToastStore()
 const { address: currentAddress } = useUserDataStore()
-const teamStore = useTeamStore()
 
-const bankAddress = teamStore.getContractAddressByType('Bank')
-const { balances, isLoading: isBalancesLoading } = useContractBalance(bankAddress as Address)
-
-// const teamStore = useTeamStore()
-// const currencyStore = useCurrencyStore()
-
-const currency = useStorage('currency', {
-  code: 'USD',
-  name: 'US Dollar',
-  symbol: '$'
-})
+// Fetch dividend balances using the new composable
+const { data, isLoading, refetch } = useGetDividendBalances(currentAddress as Address)
 const { claimDividend, claimTokenDividend, isLoading: isWriteLoading } = useBankContract()
 
 const columns: TableColumn[] = [
-  { key: 'shareholder', label: 'Address', sortable: false, class: 'text-black text-base' },
   { key: 'token', label: 'Token', sortable: true, class: 'text-black text-base' },
-  { key: 'amount', label: 'Amount', sortable: true, class: 'text-black text-base' },
+  { key: 'balance', label: 'Dividend Balance', sortable: true, class: 'text-black text-base' },
   { key: 'action', label: 'Action', sortable: false, class: 'text-black text-base' }
 ]
 
-// Discover tokens (native + ERC20) from bank balances
-const discoveredTokens = computed(() =>
-  balances.value
-    .filter((b) => b.token && b.token.symbol) // guard
-    .map((b) => ({
-      tokenAddress: b.token.id === 'native' ? zeroAddress : (b.token.address as Address),
-      tokenSymbol: b.token.symbol ?? tokenSymbol(b.token.address as Address),
-      decimals: b.token.decimals ?? 18
-    }))
-)
-
-// Aggregated per-token user pending dividend (emitted by fetchers)
-const amounts = ref<Record<string, bigint>>({})
-
-const onAmountUpdate = ({ tokenAddress, amount }: { tokenAddress: Address; amount: bigint }) => {
-  amounts.value[tokenAddress.toLowerCase()] = amount
+// Get token icon based on symbol
+const getTokenIcon = (symbol: string) => {
+  if (symbol === 'USDC' || symbol === 'USDCe') return USDCIcon
+  if (symbol === 'POL') return MaticIcon
+  if (symbol === 'ETH') return EthereumIcon
+  return null
 }
 
-type Row = {
-  address: string
-  tokenAddress: Address
-  tokenSymbol: string
-  decimals: number
-}
+// Transform data into table rows
+const tableRows = computed(() => {
+  if (!data.value) return []
 
-// Only rows with amount > 0n
-const filteredRows = computed<Row[]>(() => {
-  if (!currentAddress) return []
-  return discoveredTokens.value
-    .filter((t) => (amounts.value[t.tokenAddress.toLowerCase()] ?? 0n) > 0n)
-    .map((t) => ({
-      address: currentAddress as string,
-      tokenAddress: t.tokenAddress,
-      tokenSymbol: t.tokenSymbol,
-      decimals: t.decimals
+  return data.value
+    .filter((item) => item.balance > 0n) // Only show tokens with balance
+    .map((item) => ({
+      tokenAddress: item.token.address,
+      name: item.token.name,
+      symbol: item.token.symbol,
+      balance: item.balance.toString(),
+      formattedBalance: `${formatUnits(item.balance, item.token.decimals)} ${item.token.symbol}`,
+      decimals: item.token.decimals,
+      icon: getTokenIcon(item.token.symbol),
+      isNative: item.token.address === zeroAddress,
+      error: item.error
     }))
 })
 
 const currentClaimingToken = ref<Address | null>(null)
 
-const formattedAmount = (tokenAddr: Address, decimals: number) => {
-  const amt = amounts.value[tokenAddr.toLowerCase()] ?? 0n
-  return formatUnits(amt, decimals)
-}
-
-const executeClaim = async (tokenAddr: Address) => {
+const executeClaim = async (tokenAddr: Address, isNative: boolean) => {
   currentClaimingToken.value = tokenAddr
   try {
-    if (tokenAddr === zeroAddress) await claimDividend()
-    else await claimTokenDividend(tokenAddr)
-    toast.addSuccessToast('Claim successful')
-  } catch {
+    if (isNative) {
+      await claimDividend()
+    } else {
+      await claimTokenDividend(tokenAddr)
+    }
+    toast.addSuccessToast('Dividend claimed successfully')
+    // Refetch balances after successful claim
+    await refetch()
+  } catch (err) {
     toast.addErrorToast('Failed to claim dividend')
+    console.error('Claim error:', err)
   } finally {
     currentClaimingToken.value = null
   }

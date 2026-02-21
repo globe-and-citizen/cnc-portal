@@ -100,7 +100,6 @@ const selectedShareholder = ref<Address | null>(null)
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 
-
 const { data: tokenSymbol, error: tokenSymbolError } = useInvestorSymbol()
 
 const {

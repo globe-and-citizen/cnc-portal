@@ -11,6 +11,19 @@ export * from './types'
 // Utility functions
 export * from './utils'
 
+// Read composables
+export {
+  useBankAddress,
+  useBankPaused,
+  useBankOwner,
+  useBankSupportedTokens,
+  useDividendBalance,
+  useTokenDividendBalance,
+  useTotalDividend,
+  useUnlockedBalance,
+  useGetDividendBalances
+} from './reads'
+
 // Core composables
 // export { useBankReads } from './reads'
 export { useBankWrites } from './writes'
