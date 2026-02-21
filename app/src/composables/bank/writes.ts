@@ -52,7 +52,7 @@ export function useClaimDividend() {
   const queryClient = useQueryClient()
   const teamStore = useTeamStore()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  
+
   const writeResult = useBankContractWrite({
     functionName: 'claimDividend',
     args: []
@@ -77,7 +77,7 @@ export function useClaimTokenDividend(token: MaybeRef<Address>) {
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
 
   const args = computed(() => [unref(token)] as readonly unknown[])
-  
+
   const writeResult = useBankContractWrite({
     functionName: 'claimTokenDividend',
     args
@@ -110,7 +110,9 @@ export function useDepositTokenDividends(
   amount: MaybeRef<bigint>,
   investorAddress: MaybeRef<Address>
 ) {
-  const args = computed(() => [unref(token), unref(amount), unref(investorAddress)] as readonly unknown[])
+  const args = computed(
+    () => [unref(token), unref(amount), unref(investorAddress)] as readonly unknown[]
+  )
   return useBankContractWrite({
     functionName: 'depositTokenDividends',
     args
