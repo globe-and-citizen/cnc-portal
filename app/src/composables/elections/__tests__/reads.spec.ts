@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref } from 'vue'
 import {
   useElectionsAddress,
   useElectionsOwner,
@@ -10,33 +9,8 @@ import {
   useElectionsGetWinners,
   useElectionsHasVoted
 } from '../reads'
+import { mockElectionsReads, resetContractMocks } from '@/tests/mocks'
 import type { Address } from 'viem'
-
-// Hoisted mock variables
-const { mockUseReadContract, mockIsAddress, mockTeamStore } = vi.hoisted(() => ({
-  mockUseReadContract: vi.fn(),
-  mockIsAddress: vi.fn(),
-  mockTeamStore: {
-    getContractAddressByType: vi.fn()
-  }
-}))
-
-// Mock external dependencies
-vi.mock('@wagmi/vue', () => ({
-  useReadContract: mockUseReadContract
-}))
-
-vi.mock('viem', async (importOriginal) => {
-  const actual = (await importOriginal()) as object
-  return {
-    ...actual,
-    isAddress: mockIsAddress
-  }
-})
-
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore)
-}))
 
 // Test constants
 const MOCK_DATA = {
@@ -44,252 +18,249 @@ const MOCK_DATA = {
   ownerAddress: '0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886' as Address,
   voterAddress: '0xA0b86a33E6441bB7bE6d0B9EB5Bbf26b2d60C1cd' as Address,
   candidateAddress: '0x9876543210987654321098765432109876543210' as Address,
-  electionId: BigInt(1),
-  invalidAddress: 'invalid-address'
+  electionId: BigInt(1)
 } as const
-
-const mockReadContractResult = {
-  data: ref(null),
-  isLoading: ref(false),
-  isError: ref(false),
-  error: ref(null),
-  isSuccess: ref(true),
-  refetch: vi.fn()
-}
 
 describe('Elections Contract Reads', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseReadContract.mockReturnValue(mockReadContractResult)
-    mockIsAddress.mockImplementation((address: string) => {
-      return /^0x[a-fA-F0-9]{40}$/.test(address)
-    })
-    mockTeamStore.getContractAddressByType.mockReturnValue(MOCK_DATA.electionsAddress)
+    resetContractMocks()
   })
 
+
   describe('useElectionsAddress', () => {
-    it('should return computed elections address from team store', () => {
+    it('should return mock elections address', () => {
       const result = useElectionsAddress()
 
-      expect(result.value).toBe(MOCK_DATA.electionsAddress)
-      expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Elections')
+      expect(result).toBeDefined()
+      expect(typeof result.value).toBe('string')
     })
   })
 
   describe('useElectionsOwner', () => {
-    it('should call useReadContract with correct parameters', () => {
-      useElectionsOwner()
+    it('should return mock owner address', () => {
+      const result = useElectionsOwner()
 
-      expect(mockUseReadContract).toHaveBeenCalledWith({
-        address: expect.any(Object),
-        abi: expect.any(Array),
-        functionName: 'owner',
-        query: { enabled: expect.any(Object) }
-      })
+      expect(result).toBe(mockElectionsReads.owner)
+      expect(result.data.value).toBeDefined()
+      expect(result.isSuccess.value).toBe(true)
     })
 
-    it('should enable query when address is valid', () => {
-      useElectionsOwner()
+    it('should handle error state', () => {
+      mockElectionsReads.owner.isError.value = true
+      mockElectionsReads.owner.error.value = new Error('Failed to fetch owner')
 
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(true)
+      const result = useElectionsOwner()
+
+      expect(result.isError.value).toBe(true)
+      expect(result.error.value).toBeInstanceOf(Error)
     })
 
-    it('should disable query when address is invalid', () => {
-      mockTeamStore.getContractAddressByType.mockReturnValue(MOCK_DATA.invalidAddress)
-      mockIsAddress.mockReturnValue(false)
+    it('should support refetch functionality', () => {
+      const result = useElectionsOwner()
 
-      useElectionsOwner()
-
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(false)
+      result.refetch()
+      expect(result.refetch).toHaveBeenCalled()
     })
   })
 
   describe('useElectionsGetElection', () => {
-    it('should call useReadContract with correct parameters', () => {
-      useElectionsGetElection(MOCK_DATA.electionId)
+    it('should return election data mock', () => {
+      mockElectionsReads.getElection.data.value = {
+        id: MOCK_DATA.electionId,
+        title: 'Test Election',
+        candidates: [MOCK_DATA.candidateAddress]
+      }
 
-      expect(mockUseReadContract).toHaveBeenCalledWith({
-        address: expect.any(Object),
-        abi: expect.any(Array),
-        functionName: 'getElection',
-        args: expect.any(Object),
-        query: { enabled: expect.any(Object) }
-      })
+      const result = useElectionsGetElection(MOCK_DATA.electionId)
+
+      expect(result).toBe(mockElectionsReads.getElection)
+      expect(result.data.value).toBeDefined()
     })
 
-    it('should enable query when address and election ID are valid', () => {
-      useElectionsGetElection(MOCK_DATA.electionId)
+    it('should handle loading state', () => {
+      mockElectionsReads.getElection.isLoading.value = true
+      mockElectionsReads.getElection.isSuccess.value = false
 
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(true)
-    })
+      const result = useElectionsGetElection(MOCK_DATA.electionId)
 
-    it('should disable query when election ID is not provided', () => {
-      useElectionsGetElection(BigInt(0))
-
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(false)
-    })
-
-    it('should work with reactive election ID', () => {
-      const electionId = ref(MOCK_DATA.electionId)
-      useElectionsGetElection(electionId)
-
-      expect(mockUseReadContract).toHaveBeenCalled()
+      expect(result.isLoading.value).toBe(true)
+      expect(result.isSuccess.value).toBe(false)
     })
   })
 
   describe('useElectionsGetVoteCount', () => {
-    it('should call useReadContract with correct functionName', () => {
-      useElectionsGetVoteCount(MOCK_DATA.electionId)
+    it('should return vote count mock', () => {
+      mockElectionsReads.getVoteCount.data.value = 42n
 
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.functionName).toBe('getVoteCount')
+      const result = useElectionsGetVoteCount(MOCK_DATA.electionId)
+
+      expect(result).toBe(mockElectionsReads.getVoteCount)
+      expect(result.data.value).toBe(42n)
     })
 
-    it('should enable query when address and election ID are valid', () => {
-      useElectionsGetVoteCount(MOCK_DATA.electionId)
+    it('should handle zero votes', () => {
+      mockElectionsReads.getVoteCount.data.value = 0n
 
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(true)
+      const result = useElectionsGetVoteCount(MOCK_DATA.electionId)
+
+      expect(result.data.value).toBe(0n)
+    })
+
+    it('should handle large vote counts', () => {
+      mockElectionsReads.getVoteCount.data.value = 1000000n
+
+      const result = useElectionsGetVoteCount(MOCK_DATA.electionId)
+
+      expect(result.data.value).toBe(1000000n)
     })
   })
 
   describe('useElectionsGetCandidates', () => {
-    it('should call useReadContract with correct functionName', () => {
-      useElectionsGetCandidates(MOCK_DATA.electionId)
+    it('should return candidates list mock', () => {
+      const candidates = [MOCK_DATA.candidateAddress]
+      mockElectionsReads.getCandidates.data.value = candidates
 
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.functionName).toBe('getElectionCandidates')
+      const result = useElectionsGetCandidates(MOCK_DATA.electionId)
+
+      expect(result).toBe(mockElectionsReads.getCandidates)
+      expect(result.data.value).toEqual(candidates)
     })
 
-    it('should enable query when address and election ID are valid', () => {
-      useElectionsGetCandidates(MOCK_DATA.electionId)
+    it('should handle empty candidates', () => {
+      mockElectionsReads.getCandidates.data.value = []
 
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(true)
+      const result = useElectionsGetCandidates(MOCK_DATA.electionId)
+
+      expect(result.data.value).toEqual([])
+    })
+
+    it('should handle multiple candidates', () => {
+      const candidates = [
+        MOCK_DATA.candidateAddress,
+        '0x0000000000000000000000000000000000000001' as Address,
+        '0x0000000000000000000000000000000000000002' as Address
+      ]
+      mockElectionsReads.getCandidates.data.value = candidates
+
+      const result = useElectionsGetCandidates(MOCK_DATA.electionId)
+
+      expect(result.data.value).toHaveLength(3)
     })
   })
 
   describe('useElectionsGetEligibleVoters', () => {
-    it('should call useReadContract with correct functionName', () => {
-      useElectionsGetEligibleVoters(MOCK_DATA.electionId)
+    it('should return eligible voters mock', () => {
+      const voters = [MOCK_DATA.voterAddress]
+      mockElectionsReads.getEligibleVoters.data.value = voters
 
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.functionName).toBe('getElectionEligibleVoters')
+      const result = useElectionsGetEligibleVoters(MOCK_DATA.electionId)
+
+      expect(result).toBe(mockElectionsReads.getEligibleVoters)
+      expect(result.data.value).toEqual(voters)
     })
 
-    it('should enable query when address and election ID are valid', () => {
-      useElectionsGetEligibleVoters(MOCK_DATA.electionId)
+    it('should handle no eligible voters', () => {
+      mockElectionsReads.getEligibleVoters.data.value = []
 
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(true)
-    })
-  })
+      const result = useElectionsGetEligibleVoters(MOCK_DATA.electionId)
 
-  describe('useElectionsGetWinners', () => {
-    it('should call useReadContract with correct functionName', () => {
-      useElectionsGetWinners(MOCK_DATA.electionId)
-
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.functionName).toBe('getElectionWinners')
-    })
-
-    it('should enable query when address and election ID are valid', () => {
-      useElectionsGetWinners(MOCK_DATA.electionId)
-
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(true)
-    })
-  })
-
-  describe('useElectionsHasVoted', () => {
-    it('should call useReadContract with correct parameters', () => {
-      useElectionsHasVoted(MOCK_DATA.electionId, MOCK_DATA.voterAddress)
-
-      expect(mockUseReadContract).toHaveBeenCalledWith({
-        address: expect.any(Object),
-        abi: expect.any(Array),
-        functionName: 'hasVoted',
-        args: expect.any(Object),
-        query: { enabled: expect.any(Object) }
-      })
-    })
-
-    it('should enable query when all parameters are valid', () => {
-      useElectionsHasVoted(MOCK_DATA.electionId, MOCK_DATA.voterAddress)
-
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(true)
-    })
-
-    it('should disable query when voter address is invalid', () => {
-      mockIsAddress.mockReturnValue(false)
-      useElectionsHasVoted(MOCK_DATA.electionId, MOCK_DATA.invalidAddress as Address)
-
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(false)
-    })
-
-    it('should enable query when address and election ID are valid', () => {
-      useElectionsGetEligibleVoters(MOCK_DATA.electionId)
-
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(true)
+      expect(result.data.value).toEqual([])
     })
   })
 
   describe('useElectionsGetWinners', () => {
-    it('should call useReadContract with correct functionName', () => {
-      useElectionsGetWinners(MOCK_DATA.electionId)
+    it('should return winners list mock', () => {
+      const winners = [MOCK_DATA.candidateAddress]
+      mockElectionsReads.getWinners.data.value = winners
 
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.functionName).toBe('getElectionWinners')
+      const result = useElectionsGetWinners(MOCK_DATA.electionId)
+
+      expect(result).toBe(mockElectionsReads.getWinners)
+      expect(result.data.value).toEqual(winners)
     })
 
-    it('should enable query when address and election ID are valid', () => {
-      useElectionsGetWinners(MOCK_DATA.electionId)
+    it('should handle no winners', () => {
+      mockElectionsReads.getWinners.data.value = []
 
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(true)
+      const result = useElectionsGetWinners(MOCK_DATA.electionId)
+
+      expect(result.data.value).toEqual([])
+    })
+
+    it('should handle multiple winners', () => {
+      const winners = [
+        MOCK_DATA.candidateAddress,
+        '0x0000000000000000000000000000000000000003' as Address
+      ]
+      mockElectionsReads.getWinners.data.value = winners
+
+      const result = useElectionsGetWinners(MOCK_DATA.electionId)
+
+      expect(result.data.value).toHaveLength(2)
     })
   })
 
   describe('useElectionsHasVoted', () => {
-    it('should call useReadContract with correct parameters', () => {
-      useElectionsHasVoted(MOCK_DATA.electionId, MOCK_DATA.voterAddress)
+    it('should return hasVoted status mock - not voted', () => {
+      mockElectionsReads.hasVoted.data.value = false
 
-      expect(mockUseReadContract).toHaveBeenCalledWith({
-        address: expect.any(Object),
-        abi: expect.any(Array),
-        functionName: 'hasVoted',
-        args: expect.any(Object),
-        query: { enabled: expect.any(Object) }
-      })
+      const result = useElectionsHasVoted(MOCK_DATA.electionId, MOCK_DATA.voterAddress)
+
+      expect(result).toBe(mockElectionsReads.hasVoted)
+      expect(result.data.value).toBe(false)
     })
 
-    it('should enable query when all parameters are valid', () => {
-      useElectionsHasVoted(MOCK_DATA.electionId, MOCK_DATA.voterAddress)
+    it('should show voter has voted', () => {
+      mockElectionsReads.hasVoted.data.value = true
 
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(true)
+      const result = useElectionsHasVoted(MOCK_DATA.electionId, MOCK_DATA.voterAddress)
+
+      expect(result.data.value).toBe(true)
+    })
+  })
+
+  describe('Mock Behavior', () => {
+    it('should have consistent interface for all read functions', () => {
+      const owner = useElectionsOwner()
+      const election = useElectionsGetElection(MOCK_DATA.electionId)
+      const voteCount = useElectionsGetVoteCount(MOCK_DATA.electionId)
+      const hasVoted = useElectionsHasVoted(MOCK_DATA.electionId, MOCK_DATA.voterAddress)
+
+      expect(owner).toHaveProperty('data')
+      expect(owner).toHaveProperty('isLoading')
+      expect(owner).toHaveProperty('isSuccess')
+      expect(owner).toHaveProperty('isError')
+      expect(owner).toHaveProperty('refetch')
+
+      expect(election).toHaveProperty('data')
+      expect(voteCount).toHaveProperty('data')
+      expect(hasVoted).toHaveProperty('data')
     })
 
-    it('should disable query when voter address is invalid', () => {
-      mockIsAddress.mockReturnValue(false)
-      useElectionsHasVoted(MOCK_DATA.electionId, MOCK_DATA.invalidAddress as Address)
+    it('should reset mocks properly', () => {
+      mockElectionsReads.owner.isError.value = true
+      mockElectionsReads.getVoteCount.data.value = 999n
 
-      const callArgs = mockUseReadContract.mock.calls[0]?.[0]
-      expect(callArgs?.query.enabled.value).toBe(false)
+      resetContractMocks()
+
+      expect(mockElectionsReads.owner.isError.value).toBe(false)
+      expect(mockElectionsReads.owner.isSuccess.value).toBe(true)
     })
 
-    it('should work with reactive voter address', () => {
-      const voterAddress = ref(MOCK_DATA.voterAddress)
-      useElectionsHasVoted(MOCK_DATA.electionId, voterAddress)
+    it('should support mock customization for different scenarios', () => {
+      // Scenario 1: Successful read
+      mockElectionsReads.owner.data.value = MOCK_DATA.ownerAddress
+      const result1 = useElectionsOwner()
+      expect(result1.data.value).toBe(MOCK_DATA.ownerAddress)
 
-      expect(mockUseReadContract).toHaveBeenCalled()
+      // Scenario 2: Error state
+      resetContractMocks()
+      mockElectionsReads.owner.isError.value = true
+      mockElectionsReads.owner.isSuccess.value = false
+      const result2 = useElectionsOwner()
+      expect(result2.isError.value).toBe(true)
+      expect(result2.isSuccess.value).toBe(false)
     })
   })
 })

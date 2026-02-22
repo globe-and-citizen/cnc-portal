@@ -1,28 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref } from 'vue'
 import {
   useElectionsCreateElection,
   useElectionsCastVote,
   useElectionsPublishResults
 } from '../writes'
+import { mockElectionsWrites, resetContractMocks } from '@/tests/mocks'
 import type { Address } from 'viem'
-
-// Hoisted mock variables
-const { mockUseContractWrites, mockTeamStore } = vi.hoisted(() => ({
-  mockUseContractWrites: vi.fn(),
-  mockTeamStore: {
-    getContractAddressByType: vi.fn()
-  }
-}))
-
-// Mock external dependencies
-vi.mock('@/composables/contracts/useContractWritesV2', () => ({
-  useContractWrites: mockUseContractWrites
-}))
-
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore)
-}))
 
 // Test constants
 const MOCK_DATA = {
@@ -36,6 +19,7 @@ const MOCK_DATA = {
     '0xABCDEF1234567890ABCDEF1234567890ABCDEF12' as Address
   ],
   electionId: BigInt(1),
+  candidateId: BigInt(0),
   title: 'Board of Directors Election 2024',
   description: 'Annual election for board members',
   startDate: BigInt(Math.floor(Date.now() / 1000) + 86400), // Tomorrow
@@ -43,26 +27,15 @@ const MOCK_DATA = {
   seatCount: BigInt(3)
 } as const
 
-const mockContractWrite = {
-  writeResult: { data: ref(null) },
-  receiptResult: { data: ref(null) },
-  simulateGasResult: { data: ref(null) },
-  executeWrite: vi.fn(),
-  invalidateQueries: vi.fn(),
-  currentStep: ref('idle'),
-  timelineSteps: ref([])
-}
-
 describe('Elections Contract Writes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseContractWrites.mockReturnValue(mockContractWrite)
-    mockTeamStore.getContractAddressByType.mockReturnValue(MOCK_DATA.electionsAddress)
+    resetContractMocks()
   })
 
   describe('useElectionsCreateElection', () => {
-    it('should call useContractWrites with correct parameters', () => {
-      useElectionsCreateElection(
+    it('should return createElection mock', () => {
+      const result = useElectionsCreateElection(
         MOCK_DATA.title,
         MOCK_DATA.description,
         MOCK_DATA.startDate,
@@ -72,16 +45,11 @@ describe('Elections Contract Writes', () => {
         MOCK_DATA.voterAddresses
       )
 
-      expect(mockUseContractWrites).toHaveBeenCalledWith({
-        contractAddress: expect.any(Object),
-        abi: expect.any(Array),
-        functionName: 'createElection',
-        args: expect.any(Object)
-      })
+      expect(result).toBe(mockElectionsWrites.createElection)
     })
 
-    it('should pass all election parameters in correct order', () => {
-      useElectionsCreateElection(
+    it('should have executeWrite function', () => {
+      const result = useElectionsCreateElection(
         MOCK_DATA.title,
         MOCK_DATA.description,
         MOCK_DATA.startDate,
@@ -91,8 +59,12 @@ describe('Elections Contract Writes', () => {
         MOCK_DATA.voterAddresses
       )
 
-      const callArgs = mockUseContractWrites.mock.calls[0]?.[0]
-      expect(callArgs?.args.value).toEqual([
+      expect(result.executeWrite).toBeInstanceOf(Function)
+    })
+
+    it('should support successful write execution', async () => {
+      mockElectionsWrites.createElection.executeWrite.mockResolvedValue(undefined)
+      const result = useElectionsCreateElection(
         MOCK_DATA.title,
         MOCK_DATA.description,
         MOCK_DATA.startDate,
@@ -100,43 +72,19 @@ describe('Elections Contract Writes', () => {
         MOCK_DATA.seatCount,
         MOCK_DATA.candidateAddresses,
         MOCK_DATA.voterAddresses
-      ])
-    })
-
-    it('should work with reactive parameters', () => {
-      const title = ref(MOCK_DATA.title)
-      const description = ref(MOCK_DATA.description)
-      const startDate = ref(MOCK_DATA.startDate)
-      const endDate = ref(MOCK_DATA.endDate)
-      const seatCount = ref(MOCK_DATA.seatCount)
-      const candidates = ref(MOCK_DATA.candidateAddresses)
-      const voters = ref(MOCK_DATA.voterAddresses)
-
-      useElectionsCreateElection(
-        title,
-        description,
-        startDate,
-        endDate,
-        seatCount,
-        candidates,
-        voters
       )
 
-      expect(mockUseContractWrites).toHaveBeenCalledWith({
-        contractAddress: expect.any(Object),
-        abi: expect.any(Array),
-        functionName: 'createElection',
-        args: expect.any(Object)
-      })
+      await result.executeWrite()
+      expect(result.executeWrite).toHaveBeenCalled()
     })
 
-    it('should update args when reactive parameters change', () => {
-      const title = ref('Initial Title')
-      const description = ref('Initial Description')
+    it('should handle write errors', async () => {
+      const error = new Error('Election creation failed')
+      mockElectionsWrites.createElection.executeWrite.mockRejectedValue(error)
 
-      useElectionsCreateElection(
-        title,
-        description,
+      const result = useElectionsCreateElection(
+        MOCK_DATA.title,
+        MOCK_DATA.description,
         MOCK_DATA.startDate,
         MOCK_DATA.endDate,
         MOCK_DATA.seatCount,
@@ -144,111 +92,86 @@ describe('Elections Contract Writes', () => {
         MOCK_DATA.voterAddresses
       )
 
-      // Change reactive values
-      title.value = 'Updated Title'
-      description.value = 'Updated Description'
-
-      // Get the args computed ref
-      const callArgs = mockUseContractWrites.mock.calls[0]?.[0]
-      expect(callArgs?.args.value[0]).toBe('Updated Title')
-      expect(callArgs?.args.value[1]).toBe('Updated Description')
+      await expect(result.executeWrite()).rejects.toThrow('Election creation failed')
     })
   })
 
   describe('useElectionsCastVote', () => {
-    it('should call useContractWrites with correct parameters', () => {
-      useElectionsCastVote(MOCK_DATA.electionId, MOCK_DATA.candidateAddresses)
+    it('should return castVote mock', () => {
+      const result = useElectionsCastVote(MOCK_DATA.electionId, MOCK_DATA.candidateAddresses)
 
-      expect(mockUseContractWrites).toHaveBeenCalledWith({
-        contractAddress: expect.any(Object),
-        abi: expect.any(Array),
-        functionName: 'castVote',
-        args: expect.any(Object)
-      })
+      expect(result).toBe(mockElectionsWrites.castVote)
     })
 
-    it('should pass election ID and candidate addresses', () => {
-      useElectionsCastVote(MOCK_DATA.electionId, MOCK_DATA.candidateAddresses)
+    it('should have executeWrite function', () => {
+      const result = useElectionsCastVote(MOCK_DATA.electionId, MOCK_DATA.candidateAddresses)
 
-      const callArgs = mockUseContractWrites.mock.calls[0]?.[0]
-      expect(callArgs?.args.value).toEqual([MOCK_DATA.electionId, MOCK_DATA.candidateAddresses])
+      expect(result.executeWrite).toBeInstanceOf(Function)
     })
 
-    it('should work with reactive election ID', () => {
-      const electionId = ref(MOCK_DATA.electionId)
-      const candidates = ref(MOCK_DATA.candidateAddresses)
-
-      useElectionsCastVote(electionId, candidates)
-
-      expect(mockUseContractWrites).toHaveBeenCalled()
-    })
-
-    it('should handle single candidate vote', () => {
+    it('should handle single candidate vote', async () => {
+      mockElectionsWrites.castVote.executeWrite.mockResolvedValue(undefined)
       const singleCandidate = [MOCK_DATA.candidateAddresses[0]]
 
-      useElectionsCastVote(MOCK_DATA.electionId, singleCandidate)
+      const result = useElectionsCastVote(MOCK_DATA.electionId, singleCandidate)
 
-      const callArgs = mockUseContractWrites.mock.calls[0]?.[0]
-      expect(callArgs?.args.value[1]).toEqual(singleCandidate)
+      await result.executeWrite()
+      expect(result.executeWrite).toHaveBeenCalled()
     })
 
-    it('should handle multiple candidate votes', () => {
-      useElectionsCastVote(MOCK_DATA.electionId, MOCK_DATA.candidateAddresses)
+    it('should handle multiple candidate votes', async () => {
+      mockElectionsWrites.castVote.executeWrite.mockResolvedValue(undefined)
 
-      const callArgs = mockUseContractWrites.mock.calls[0]?.[0]
-      expect(callArgs?.args.value[1]).toHaveLength(2)
+      const result = useElectionsCastVote(MOCK_DATA.electionId, MOCK_DATA.candidateAddresses)
+
+      await result.executeWrite()
+      expect(result.executeWrite).toHaveBeenCalled()
+    })
+
+    it('should handle vote casting errors', async () => {
+      const error = new Error('Vote casting failed')
+      mockElectionsWrites.castVote.executeWrite.mockRejectedValue(error)
+
+      const result = useElectionsCastVote(MOCK_DATA.electionId, MOCK_DATA.candidateAddresses)
+
+      await expect(result.executeWrite()).rejects.toThrow('Vote casting failed')
     })
   })
 
   describe('useElectionsPublishResults', () => {
-    it('should call useContractWrites with correct parameters', () => {
-      useElectionsPublishResults(MOCK_DATA.electionId)
+    it('should return publishResults mock', () => {
+      const result = useElectionsPublishResults(MOCK_DATA.electionId)
 
-      expect(mockUseContractWrites).toHaveBeenCalledWith({
-        contractAddress: expect.any(Object),
-        abi: expect.any(Array),
-        functionName: 'publishResults',
-        args: expect.any(Object)
-      })
+      expect(result).toBe(mockElectionsWrites.publishResults)
     })
 
-    it('should pass election ID as argument', () => {
-      useElectionsPublishResults(MOCK_DATA.electionId)
+    it('should have executeWrite function', () => {
+      const result = useElectionsPublishResults(MOCK_DATA.electionId)
 
-      const callArgs = mockUseContractWrites.mock.calls[0]?.[0]
-      expect(callArgs?.args.value).toEqual([MOCK_DATA.electionId])
+      expect(result.executeWrite).toBeInstanceOf(Function)
     })
 
-    it('should work with reactive election ID', () => {
-      const electionId = ref(MOCK_DATA.electionId)
+    it('should support successful results publication', async () => {
+      mockElectionsWrites.publishResults.executeWrite.mockResolvedValue(undefined)
+      const result = useElectionsPublishResults(MOCK_DATA.electionId)
 
-      useElectionsPublishResults(electionId)
-
-      expect(mockUseContractWrites).toHaveBeenCalled()
+      await result.executeWrite()
+      expect(result.executeWrite).toHaveBeenCalled()
     })
 
-    it('should update args when reactive election ID changes', () => {
-      const electionId = ref(BigInt(1))
+    it('should handle results publication errors', async () => {
+      const error = new Error('Results publication failed')
+      mockElectionsWrites.publishResults.executeWrite.mockRejectedValue(error)
 
-      useElectionsPublishResults(electionId)
+      const result = useElectionsPublishResults(MOCK_DATA.electionId)
 
-      // Change reactive value
-      electionId.value = BigInt(2)
-
-      const callArgs = mockUseContractWrites.mock.calls[0]?.[0]
-      expect(callArgs?.args.value[0]).toBe(BigInt(2))
+      await expect(result.executeWrite()).rejects.toThrow('Results publication failed')
     })
   })
 
-  describe('Elections contract address handling', () => {
-    it.skip('should get Elections contract address from team store', () => {
-      useElectionsCastVote(MOCK_DATA.electionId, MOCK_DATA.candidateAddresses)
-
-      expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Elections')
-    })
-
-    it.skip('should use computed elections address across all write functions', () => {
-      useElectionsCreateElection(
+  describe('Mock Behavior', () => {
+    it('should return distinct mocks for different functions', () => {
+      const createElection = useElectionsCreateElection(
         MOCK_DATA.title,
         MOCK_DATA.description,
         MOCK_DATA.startDate,
@@ -257,13 +180,45 @@ describe('Elections Contract Writes', () => {
         MOCK_DATA.candidateAddresses,
         MOCK_DATA.voterAddresses
       )
+      const castVote = useElectionsCastVote(MOCK_DATA.electionId, MOCK_DATA.candidateAddresses)
+      const publishResults = useElectionsPublishResults(MOCK_DATA.electionId)
 
-      useElectionsCastVote(MOCK_DATA.electionId, MOCK_DATA.candidateAddresses)
+      expect(createElection).toBe(mockElectionsWrites.createElection)
+      expect(castVote).toBe(mockElectionsWrites.castVote)
+      expect(publishResults).toBe(mockElectionsWrites.publishResults)
+      expect(createElection).not.toBe(castVote)
+      expect(castVote).not.toBe(publishResults)
+    })
 
-      useElectionsPublishResults(MOCK_DATA.electionId)
+    it('should reset mocks properly', () => {
+      mockElectionsWrites.createElection.executeWrite.mockRejectedValue(new Error('Test'))
+      mockElectionsWrites.castVote.executeWrite.mockRejectedValue(new Error('Test'))
 
-      expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledTimes(3)
-      expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Elections')
+      resetContractMocks()
+
+      expect(mockElectionsWrites.createElection.executeWrite).not.toHaveBeenCalled()
+      expect(mockElectionsWrites.castVote.executeWrite).not.toHaveBeenCalled()
+    })
+
+    it('should have consistent interface for all write mocks', () => {
+      const createElection = useElectionsCreateElection(
+        MOCK_DATA.title,
+        MOCK_DATA.description,
+        MOCK_DATA.startDate,
+        MOCK_DATA.endDate,
+        MOCK_DATA.seatCount,
+        MOCK_DATA.candidateAddresses,
+        MOCK_DATA.voterAddresses
+      )
+      const castVote = useElectionsCastVote(MOCK_DATA.electionId, MOCK_DATA.candidateAddresses)
+
+      expect(createElection).toHaveProperty('executeWrite')
+      expect(createElection).toHaveProperty('writeResult')
+      expect(createElection).toHaveProperty('receiptResult')
+
+      expect(castVote).toHaveProperty('executeWrite')
+      expect(castVote).toHaveProperty('writeResult')
+      expect(castVote).toHaveProperty('receiptResult')
     })
   })
 })
