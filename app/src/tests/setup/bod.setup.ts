@@ -1,7 +1,6 @@
 import { vi } from 'vitest'
 import { mockBODReads, mockBODWrites } from '../mocks/contract.mock'
 
-
 /**
  * Mock all BOD read composables
  */
