@@ -4,27 +4,15 @@ import { createTestingPinia } from '@pinia/testing'
 import ButtonUI from '@/components/ButtonUI.vue'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
-import { useSyncContractsMutation } from '@/queries/contract.queries'
 
 // Centralized Mock Objects
 // Import ONLY centralized mocks
 import {
-  mockUserStore,
-  mockToastStore,
-  mockUseCurrencyStore
-} from '@/tests/mocks/store.mock'
-import {
   mockUseWriteContract,
-  mockUseWaitForTransactionReceipt,
-  mockUseWatchContractEvent
+  mockUseWaitForTransactionReceipt
 } from '@/tests/mocks/wagmi.vue.mock'
-import {
-  mockUseSafeDeployment,
-  resetComposableMocks
-} from '@/tests/mocks/composables.mock'
-import { queryMocks, createMockMutationResponse } from '@/tests/mocks/query.mock'
+import { mockUseSafeDeployment, resetComposableMocks } from '@/tests/mocks/composables.mock'
 import { useToastStore } from '@/stores/useToastStore'
-import { useUserDataStore } from '@/stores/user'
 
 describe('DeployContractSection', () => {
   const defaultProps = {
