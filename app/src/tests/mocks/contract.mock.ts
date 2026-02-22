@@ -111,19 +111,9 @@ export const mockInvestorWrites = {
  * Reset function for all contract mocks
  */
 export const resetContractMocks = () => {
-  const allReadMocks = [
-    mockElectionsReads,
-    mockBankReads,
-    mockBODReads,
-    mockInvestorReads
-  ]
+  const allReadMocks = [mockElectionsReads, mockBankReads, mockBODReads, mockInvestorReads]
 
-  const allWriteMocks = [
-    mockElectionsWrites,
-    mockBankWrites,
-    mockBODWrites,
-    mockInvestorWrites
-  ]
+  const allWriteMocks = [mockElectionsWrites, mockBankWrites, mockBODWrites, mockInvestorWrites]
 
   // Reset all read mocks
   allReadMocks.forEach((mockGroup) => {

@@ -27,7 +27,6 @@ describe('Elections Contract Reads', () => {
     resetContractMocks()
   })
 
-
   describe('useElectionsAddress', () => {
     it('should return mock elections address', () => {
       const result = useElectionsAddress()

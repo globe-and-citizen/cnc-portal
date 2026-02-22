@@ -7,9 +7,17 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 process.env.TZ = 'UTC'
-const mockFiles = ['store', 'composables', 'wagmi.vue', 'erc20', 'elections', 'bank', 'bod', 'investor', 'nuxt-ui'].map(
-  (name) => `./src/tests/setup/${name}.setup.ts`
-)
+const mockFiles = [
+  'store',
+  'composables',
+  'wagmi.vue',
+  'erc20',
+  'elections',
+  'bank',
+  'bod',
+  'investor',
+  'nuxt-ui'
+].map((name) => `./src/tests/setup/${name}.setup.ts`)
 export default defineConfig((env) =>
   mergeConfig(viteConfig(env), {
     test: {

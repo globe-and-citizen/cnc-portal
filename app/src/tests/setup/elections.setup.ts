@@ -27,4 +27,3 @@ vi.mock('@/composables/elections/writes', () => ({
   useElectionsCastVote: vi.fn(() => mockElectionsWrites.castVote),
   useElectionsPublishResults: vi.fn(() => mockElectionsWrites.publishResults)
 }))
-

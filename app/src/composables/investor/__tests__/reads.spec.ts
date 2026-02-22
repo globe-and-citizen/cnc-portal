@@ -46,7 +46,7 @@ describe('Investor Contract Reads', () => {
 
     it('should have correct token name', () => {
       const result = useInvestorName()
-      
+
       expect(typeof result.data.value).toBe('string')
       expect(result.isSuccess.value).toBe(true)
     })
@@ -62,7 +62,7 @@ describe('Investor Contract Reads', () => {
 
     it('should have correct token symbol', () => {
       const result = useInvestorSymbol()
-      
+
       expect(typeof result.data.value).toBe('string')
       expect(result.isSuccess.value).toBe(true)
     })

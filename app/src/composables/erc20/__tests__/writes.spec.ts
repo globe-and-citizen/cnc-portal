@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {
-  useERC20ContractWrite,
-  useERC20Transfer,
-  useERC20TransferFrom
-} from '../writes'
+import { useERC20ContractWrite, useERC20Transfer, useERC20TransferFrom } from '../writes'
 import { mockERC20Writes, resetERC20Mocks } from '@/tests/mocks'
 import type { Address } from 'viem'
 
@@ -75,7 +71,11 @@ describe('ERC20 Contract Writes', () => {
     })
 
     it('should handle large amounts', () => {
-      const result = useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.largeAmount)
+      const result = useERC20Transfer(
+        MOCK_DATA.contractAddress,
+        MOCK_DATA.to,
+        MOCK_DATA.largeAmount
+      )
 
       expect(result).toBe(mockERC20Writes.transfer)
     })

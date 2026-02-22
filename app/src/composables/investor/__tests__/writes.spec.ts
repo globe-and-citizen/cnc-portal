@@ -83,10 +83,10 @@ describe('Investor Contract Writes', () => {
     })
 
     it('should handle multiple shareholders', () => {
-      const result = useDistributeMint(
-        MOCK_DATA.shareholders,
-        [MOCK_DATA.mintAmount, MOCK_DATA.mintAmount]
-      )
+      const result = useDistributeMint(MOCK_DATA.shareholders, [
+        MOCK_DATA.mintAmount,
+        MOCK_DATA.mintAmount
+      ])
 
       expect(result).toBe(mockInvestorWrites.mint)
     })
