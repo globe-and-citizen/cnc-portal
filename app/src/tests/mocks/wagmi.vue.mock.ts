@@ -17,8 +17,15 @@ export const mockUseSignTypedData = {
 
 export const mockUseWriteContract = {
   data: transferHash,
+  isPending: ref(false),
+  error: ref(null),
+  isError: ref(false),
+  status: ref('idle' as const),
+  variables: ref(undefined),
+  writeContract: vi.fn(),
   writeContractAsync: vi.fn(),
-  mutateAsync: vi.fn()
+  mutateAsync: vi.fn(),
+  reset: vi.fn()
 }
 
 // Mock useDisconnect composable

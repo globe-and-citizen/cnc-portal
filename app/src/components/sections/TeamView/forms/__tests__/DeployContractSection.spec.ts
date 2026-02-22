@@ -5,7 +5,8 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
 import { useSyncContractsMutation } from '@/queries/contract.queries'
-Centralized Mock Objects
+
+// Centralized Mock Objects
 // Import ONLY centralized mocks
 import {
   mockUserStore,
@@ -22,6 +23,8 @@ import {
   resetComposableMocks
 } from '@/tests/mocks/composables.mock'
 import { queryMocks, createMockMutationResponse } from '@/tests/mocks/query.mock'
+import { useToastStore } from '@/stores/useToastStore'
+import { useUserDataStore } from '@/stores/user'
 
 describe('DeployContractSection', () => {
   const defaultProps = {
@@ -54,7 +57,6 @@ describe('DeployContractSection', () => {
   beforeEach(() => {
     // Use centralized reset function
     resetComposableMocks()
-    vi.clearAllMocks()
 
     // Reset Safe deployment state (centralized mock)
     mockUseSafeDeployment.isDeploying.value = false
@@ -62,18 +64,15 @@ describe('DeployContractSection', () => {
 
     // Reset wagmi contract state (centralized mocks)
     mockUseWriteContract.data.value = null
-    mockUseWriteContract.writeContractAsync.mockClear()
-    mockUseWriteContract.mutateAsync.mockClear()
+    mockUseWriteContract.isPending.value = false
+    mockUseWriteContract.error.value = null
 
     // Reset transaction receipt state (centralized mock)
     mockUseWaitForTransactionReceipt.isLoading.value = false
     mockUseWaitForTransactionReceipt.isSuccess.value = false
     mockUseWaitForTransactionReceipt.isError.value = false
     mockUseWaitForTransactionReceipt.data.value = null
-
-    // Reset toast store mocks (centralized)
-    mockToastStore.addSuccessToast = vi.fn()
-    mockToastStore.addErrorToast = vi.fn()
+    mockUseWaitForTransactionReceipt.isPending.value = false
   })
 
   describe('Component Rendering', () => {
@@ -153,10 +152,11 @@ describe('DeployContractSection', () => {
       const wrapper = createWrapper({
         createdTeamData: { id: null, name: 'Team 1', address: '' }
       })
+      const toastStore = useToastStore()
 
       await wrapper.vm.deploySafeForTeam()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Team data not found')
+      expect(toastStore.addErrorToast).toHaveBeenCalledWith('Team data not found')
     })
 
     it.skip('should reject invalid wallet before Safe deploy', async () => {
@@ -169,13 +169,14 @@ describe('DeployContractSection', () => {
       mockUseSafeDeployment.deploySafe.mockResolvedValueOnce('0xsafeaddress')
 
       const wrapper = createWrapper()
+      const toastStore = useToastStore()
       await wrapper.vm.deploySafeForTeam()
 
       expect(mockUseSafeDeployment.deploySafe).toHaveBeenCalledWith(
-        ['0x1234567890123456789012345678901234567890'],
+        ['0x0000000000000000000000000000000000000001'],
         1
       )
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Safe wallet deployed successfully')
+      expect(toastStore.addSuccessToast).toHaveBeenCalledWith('Safe wallet deployed successfully')
     })
 
     it('handles Safe team update error gracefully', async () => {
@@ -193,9 +194,10 @@ describe('DeployContractSection', () => {
       } as unknown as ReturnType<typeof useUpdateTeamMutation>)
 
       const wrapper = createWrapper()
+      const toastStore = useToastStore()
       await wrapper.vm.deploySafeForTeam()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+      expect(toastStore.addErrorToast).toHaveBeenCalledWith(
         'Failed to deploy Safe wallet. Please try again.'
       )
     })
@@ -203,10 +205,11 @@ describe('DeployContractSection', () => {
     it('handles Safe deployment failure', async () => {
       mockUseSafeDeployment.deploySafe.mockRejectedValueOnce(new Error('boom'))
       const wrapper = createWrapper()
+      const toastStore = useToastStore()
 
       await wrapper.vm.deploySafeForTeam()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+      expect(toastStore.addErrorToast).toHaveBeenCalledWith(
         'Failed to deploy Safe wallet. Please try again.'
       )
     })
