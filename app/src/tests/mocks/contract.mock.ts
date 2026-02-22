@@ -1,5 +1,4 @@
 import { vi } from 'vitest'
-import { ref } from 'vue'
 import { createContractReadMock, createContractWriteMock } from './erc20.mock'
 
 /**

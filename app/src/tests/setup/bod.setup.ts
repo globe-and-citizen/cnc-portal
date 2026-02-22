@@ -1,9 +1,6 @@
 import { vi } from 'vitest'
-import { computed } from 'vue'
-import type { Address } from 'viem'
 import { mockBODReads, mockBODWrites } from '../mocks/contract.mock'
 
-const MOCK_BOD_ADDRESS = '0x3234567890123456789012345678901234567890' as Address
 
 /**
  * Mock all BOD read composables
