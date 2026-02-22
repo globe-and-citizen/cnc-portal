@@ -134,7 +134,6 @@ describe('Team Controller', () => {
       expect(response.body.message).toEqual('Invalid wallet address for member: Invalid Member');
     });
 
-
     it('should return 201 and create a team successfully', async () => {
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
       vi.spyOn(prisma.team, 'create').mockResolvedValue(teamMockResolve);
@@ -341,7 +340,6 @@ describe('Team Controller', () => {
     beforeEach(() => {
       vi.clearAllMocks();
     });
-
 
     it('should return 404 if team not found', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);

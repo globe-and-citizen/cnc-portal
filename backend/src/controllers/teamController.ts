@@ -54,7 +54,7 @@ const addTeam = async (req: Request, res: Response) => {
             memberAddress: member.address,
           })),
         },
-        officerAddress: officerAddress || null
+        officerAddress: officerAddress || null,
       },
       include: {
         members: {
