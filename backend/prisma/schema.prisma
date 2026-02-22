@@ -56,7 +56,6 @@ model Team {
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
   teamFunctionOverrides  TeamFunctionOverride[]
-  safeAddress            String?
 }
 
 model MemberTeamsData {
