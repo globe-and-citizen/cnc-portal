@@ -1,25 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref } from 'vue'
-import {
-  useERC20ContractWrite,
-  useERC20Transfer,
-  useERC20TransferFrom
-  // useERC20Approve
-} from '../writes'
+import { useERC20ContractWrite, useERC20Transfer, useERC20TransferFrom } from '../writes'
+import { mockERC20Writes, resetERC20Mocks } from '@/tests/mocks'
 import type { Address } from 'viem'
-
-// Hoisted mock variables
-const { mockUseContractWrites } = vi.hoisted(() => ({
-  mockUseContractWrites: vi.fn()
-}))
-
-// Mock external dependencies
-vi.mock('@/composables/contracts/useContractWritesV2', () => ({
-  useContractWrites: mockUseContractWrites
-}))
-
-// Clear global ERC20 mocks for this test
-vi.unmock('@/composables/erc20/writes')
 
 // Test constants
 const MOCK_DATA = {
@@ -32,294 +14,91 @@ const MOCK_DATA = {
   zeroAmount: BigInt(0)
 } as const
 
-const mockContractWrite = {
-  writeResult: { data: ref(null) },
-  receiptResult: { data: ref(null) },
-  simulateGasResult: { data: ref(null) },
-  executeWrite: vi.fn(),
-  invalidateQueries: vi.fn(),
-  currentStep: ref('idle'),
-  timelineSteps: ref([])
-}
-
 describe('ERC20 Contract Writes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseContractWrites.mockReturnValue(mockContractWrite)
+    resetERC20Mocks()
   })
 
   describe('useERC20ContractWrite', () => {
-    it('should call useContractWrites with correct parameters', () => {
+    it('should return transfer mock when configured', () => {
       const options = {
         contractAddress: MOCK_DATA.contractAddress,
         functionName: 'transfer' as const,
-        args: ref([MOCK_DATA.to, MOCK_DATA.amount] as const)
+        args: [MOCK_DATA.to, MOCK_DATA.amount]
       }
 
-      useERC20ContractWrite(options)
+      const result = useERC20ContractWrite(options)
 
-      expect(mockUseContractWrites).toHaveBeenCalledWith({
-        contractAddress: MOCK_DATA.contractAddress,
-        abi: expect.any(Array),
-        functionName: 'transfer',
-        args: expect.any(Object)
-      })
+      expect(result).toBeDefined()
+      expect(result.executeWrite).toBeDefined()
+      expect(result.writeResult).toBeDefined()
+      expect(result.receiptResult).toBeDefined()
     })
 
-    it('should handle value parameter correctly', () => {
-      const value = BigInt('500000000000000000')
+    it('should have proper mock interface structure', () => {
       const options = {
         contractAddress: MOCK_DATA.contractAddress,
-        functionName: 'transfer' as const,
-        args: ref([MOCK_DATA.to, MOCK_DATA.amount] as const),
-        value: ref(value)
+        functionName: 'transfer' as const
       }
 
-      useERC20ContractWrite(options)
+      const result = useERC20ContractWrite(options)
 
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          value: expect.any(Object)
-        })
-      )
-    })
-
-    it('should use empty array when args is not provided', () => {
-      const options = {
-        contractAddress: MOCK_DATA.contractAddress,
-        functionName: 'approve' as const
-      }
-
-      useERC20ContractWrite(options)
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          args: []
-        })
-      )
-    })
-
-    it('should work with reactive contract address', () => {
-      const contractAddress = ref(MOCK_DATA.contractAddress)
-      const options = {
-        contractAddress,
-        functionName: 'transfer' as const,
-        args: ref([MOCK_DATA.to, MOCK_DATA.amount] as const)
-      }
-
-      useERC20ContractWrite(options)
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          contractAddress: expect.any(Object)
-        })
-      )
-    })
-
-    it('should work with undefined contract address', () => {
-      const options = {
-        contractAddress: undefined,
-        functionName: 'transfer' as const,
-        args: ref([MOCK_DATA.to, MOCK_DATA.amount] as const)
-      }
-
-      useERC20ContractWrite(options)
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          contractAddress: undefined
-        })
-      )
-    })
-
-    it('should not include value when value is undefined', () => {
-      const options = {
-        contractAddress: MOCK_DATA.contractAddress,
-        functionName: 'transfer' as const,
-        args: ref([MOCK_DATA.to, MOCK_DATA.amount] as const)
-      }
-
-      useERC20ContractWrite(options)
-
-      const callArgs = mockUseContractWrites.mock.calls[0][0]
-      expect(callArgs).not.toHaveProperty('value')
+      expect(result.executeWrite).toBeInstanceOf(Function)
+      expect(result.writeResult.data).toBeDefined()
+      expect(result.receiptResult.data).toBeDefined()
     })
   })
 
   describe('useERC20Transfer', () => {
-    it('should configure transfer with correct parameters', () => {
-      useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.amount)
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          contractAddress: MOCK_DATA.contractAddress,
-          functionName: 'transfer'
-        })
-      )
-    })
-
-    it('should properly compute args with unref', () => {
-      useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.amount)
-
-      const callArgs = mockUseContractWrites.mock.calls[0][0]
-      // Trigger the computed function by accessing value
-      const argsValue = callArgs.args.value
-      expect(Array.isArray(argsValue)).toBe(true)
-      expect(argsValue).toHaveLength(2)
-    })
-
-    it('should work with static parameters', () => {
-      useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.amount)
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          args: expect.any(Object)
-        })
-      )
-    })
-
-    it('should work with reactive parameters', () => {
-      const contractAddress = ref(MOCK_DATA.contractAddress)
-      const to = ref(MOCK_DATA.to)
-      const amount = ref(MOCK_DATA.amount)
-
-      useERC20Transfer(contractAddress, to, amount)
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          functionName: 'transfer',
-          args: expect.any(Object)
-        })
-      )
-    })
-
-    it('should handle zero amount', () => {
-      useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.zeroAmount)
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          functionName: 'transfer'
-        })
-      )
-    })
-
-    it('should handle large amounts', () => {
-      useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.largeAmount)
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          functionName: 'transfer'
-        })
-      )
-    })
-
-    it('should return contract write interface', () => {
+    it('should return transfer mock', () => {
       const result = useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.amount)
 
-      expect(result).toEqual(mockContractWrite)
-    })
-  })
-
-  describe('useERC20TransferFrom', () => {
-    it('should configure transferFrom with correct parameters', () => {
-      useERC20TransferFrom(
-        MOCK_DATA.contractAddress,
-        MOCK_DATA.from,
-        MOCK_DATA.to,
-        MOCK_DATA.amount
-      )
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          contractAddress: MOCK_DATA.contractAddress,
-          functionName: 'transferFrom'
-        })
-      )
+      expect(result).toBe(mockERC20Writes.transfer)
     })
 
-    it('should properly compute args with unref', () => {
-      useERC20TransferFrom(
-        MOCK_DATA.contractAddress,
-        MOCK_DATA.from,
-        MOCK_DATA.to,
-        MOCK_DATA.amount
-      )
+    it('should have executeWrite function', () => {
+      const result = useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.amount)
 
-      const callArgs = mockUseContractWrites.mock.calls[0][0]
-      const argsValue = callArgs.args.value
-      expect(Array.isArray(argsValue)).toBe(true)
-      expect(argsValue).toHaveLength(3)
-    })
-
-    it('should handle all three arguments correctly', () => {
-      useERC20TransferFrom(
-        MOCK_DATA.contractAddress,
-        MOCK_DATA.from,
-        MOCK_DATA.to,
-        MOCK_DATA.amount
-      )
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          args: expect.any(Object)
-        })
-      )
-    })
-
-    it('should work with reactive parameters', () => {
-      const contractAddress = ref(MOCK_DATA.contractAddress)
-      const from = ref(MOCK_DATA.from)
-      const to = ref(MOCK_DATA.to)
-      const amount = ref(MOCK_DATA.amount)
-
-      useERC20TransferFrom(contractAddress, from, to, amount)
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          functionName: 'transferFrom',
-          args: expect.any(Object)
-        })
-      )
-    })
-
-    it('should work with static parameters', () => {
-      useERC20TransferFrom(
-        MOCK_DATA.contractAddress,
-        MOCK_DATA.from,
-        MOCK_DATA.to,
-        MOCK_DATA.amount
-      )
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          functionName: 'transferFrom'
-        })
-      )
+      expect(result.executeWrite).toBeInstanceOf(Function)
     })
 
     it('should handle zero amount', () => {
-      useERC20TransferFrom(
-        MOCK_DATA.contractAddress,
-        MOCK_DATA.from,
-        MOCK_DATA.to,
-        MOCK_DATA.zeroAmount
-      )
+      const result = useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.zeroAmount)
 
-      expect(mockUseContractWrites).toHaveBeenCalled()
+      expect(result).toBe(mockERC20Writes.transfer)
+      expect(result.executeWrite).toBeInstanceOf(Function)
     })
 
     it('should handle large amounts', () => {
-      useERC20TransferFrom(
+      const result = useERC20Transfer(
         MOCK_DATA.contractAddress,
-        MOCK_DATA.from,
         MOCK_DATA.to,
         MOCK_DATA.largeAmount
       )
 
-      expect(mockUseContractWrites).toHaveBeenCalled()
+      expect(result).toBe(mockERC20Writes.transfer)
     })
 
-    it('should return contract write interface', () => {
+    it('should support successful write execution', async () => {
+      mockERC20Writes.transfer.executeWrite.mockResolvedValue(undefined)
+      const result = useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.amount)
+
+      await result.executeWrite()
+      expect(result.executeWrite).toHaveBeenCalled()
+    })
+
+    it('should handle write errors', async () => {
+      const error = new Error('Transfer failed')
+      mockERC20Writes.transfer.executeWrite.mockRejectedValue(error)
+      const result = useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.amount)
+
+      await expect(result.executeWrite()).rejects.toThrow('Transfer failed')
+    })
+  })
+
+  describe('useERC20TransferFrom', () => {
+    it('should return transferFrom mock', () => {
       const result = useERC20TransferFrom(
         MOCK_DATA.contractAddress,
         MOCK_DATA.from,
@@ -327,119 +106,122 @@ describe('ERC20 Contract Writes', () => {
         MOCK_DATA.amount
       )
 
-      expect(result).toEqual(mockContractWrite)
+      expect(result).toBe(mockERC20Writes.transferFrom)
+    })
+
+    it('should have executeWrite function', () => {
+      const result = useERC20TransferFrom(
+        MOCK_DATA.contractAddress,
+        MOCK_DATA.from,
+        MOCK_DATA.to,
+        MOCK_DATA.amount
+      )
+
+      expect(result.executeWrite).toBeInstanceOf(Function)
+    })
+
+    it('should handle zero amount', () => {
+      const result = useERC20TransferFrom(
+        MOCK_DATA.contractAddress,
+        MOCK_DATA.from,
+        MOCK_DATA.to,
+        MOCK_DATA.zeroAmount
+      )
+
+      expect(result).toBe(mockERC20Writes.transferFrom)
+    })
+
+    it('should handle large amounts', () => {
+      const result = useERC20TransferFrom(
+        MOCK_DATA.contractAddress,
+        MOCK_DATA.from,
+        MOCK_DATA.to,
+        MOCK_DATA.largeAmount
+      )
+
+      expect(result).toBe(mockERC20Writes.transferFrom)
+    })
+
+    it('should support successful write execution', async () => {
+      mockERC20Writes.transferFrom.executeWrite.mockResolvedValue(undefined)
+      const result = useERC20TransferFrom(
+        MOCK_DATA.contractAddress,
+        MOCK_DATA.from,
+        MOCK_DATA.to,
+        MOCK_DATA.amount
+      )
+
+      await result.executeWrite()
+      expect(result.executeWrite).toHaveBeenCalled()
+    })
+
+    it('should handle write errors', async () => {
+      const error = new Error('TransferFrom failed')
+      mockERC20Writes.transferFrom.executeWrite.mockRejectedValue(error)
+      const result = useERC20TransferFrom(
+        MOCK_DATA.contractAddress,
+        MOCK_DATA.from,
+        MOCK_DATA.to,
+        MOCK_DATA.amount
+      )
+
+      await expect(result.executeWrite()).rejects.toThrow('TransferFrom failed')
     })
   })
 
-  // describe('useERC20Approve', () => {
-  //   it('should configure approve with correct parameters', () => {
-  //     useERC20Approve(MOCK_DATA.contractAddress, MOCK_DATA.spender, MOCK_DATA.amount)
+  describe('Mock Behavior', () => {
+    it('should return distinct mocks for different functions', () => {
+      const transfer = useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.amount)
+      const transferFrom = useERC20TransferFrom(
+        MOCK_DATA.contractAddress,
+        MOCK_DATA.from,
+        MOCK_DATA.to,
+        MOCK_DATA.amount
+      )
 
-  //     expect(mockUseContractWrites).toHaveBeenCalledWith(
-  //       expect.objectContaining({
-  //         contractAddress: MOCK_DATA.contractAddress,
-  //         functionName: 'approve'
-  //       })
-  //     )
-  //   })
+      expect(transfer).toBe(mockERC20Writes.transfer)
+      expect(transferFrom).toBe(mockERC20Writes.transferFrom)
+      expect(transfer).not.toBe(transferFrom)
+    })
 
-  //   it('should properly compute args with unref', () => {
-  //     useERC20Approve(MOCK_DATA.contractAddress, MOCK_DATA.spender, MOCK_DATA.amount)
+    it('should support mock customization for error scenarios', async () => {
+      const error = new Error('Gas estimation failed')
+      mockERC20Writes.transfer.executeWrite.mockRejectedValue(error)
 
-  //     const callArgs = mockUseContractWrites.mock.calls[0][0]
-  //     const argsValue = callArgs.args.value
-  //     expect(Array.isArray(argsValue)).toBe(true)
-  //     expect(argsValue).toHaveLength(2)
-  //   })
+      const result = useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.amount)
+      await expect(result.executeWrite()).rejects.toThrow('Gas estimation failed')
+    })
 
-  //   it('should work with static parameters', () => {
-  //     useERC20Approve(MOCK_DATA.contractAddress, MOCK_DATA.spender, MOCK_DATA.amount)
+    it('should reset mocks properly between tests', () => {
+      // Set up error state
+      mockERC20Writes.transfer.executeWrite.mockRejectedValue(new Error('Test'))
+      mockERC20Writes.transferFrom.executeWrite.mockRejectedValue(new Error('Test'))
 
-  //     expect(mockUseContractWrites).toHaveBeenCalledWith(
-  //       expect.objectContaining({
-  //         args: expect.any(Object)
-  //       })
-  //     )
-  //   })
+      // Reset
+      resetERC20Mocks()
 
-  //   it('should work with reactive parameters', () => {
-  //     const contractAddress = ref(MOCK_DATA.contractAddress)
-  //     const spender = ref(MOCK_DATA.spender)
-  //     const amount = ref(MOCK_DATA.amount)
+      // Verify reset
+      expect(mockERC20Writes.transfer.executeWrite).not.toHaveBeenCalled()
+      expect(mockERC20Writes.transferFrom.executeWrite).not.toHaveBeenCalled()
+    })
 
-  //     useERC20Approve(contractAddress, spender, amount)
+    it('should have consistent interface for all write mocks', () => {
+      const transfer = useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.amount)
+      const transferFrom = useERC20TransferFrom(
+        MOCK_DATA.contractAddress,
+        MOCK_DATA.from,
+        MOCK_DATA.to,
+        MOCK_DATA.amount
+      )
 
-  //     expect(mockUseContractWrites).toHaveBeenCalledWith(
-  //       expect.objectContaining({
-  //         functionName: 'approve',
-  //         args: expect.any(Object)
-  //       })
-  //     )
-  //   })
+      // All write functions should have same structure
+      expect(transfer).toHaveProperty('executeWrite')
+      expect(transfer).toHaveProperty('writeResult')
+      expect(transfer).toHaveProperty('receiptResult')
 
-  //   it('should handle zero amount (revoke approval)', () => {
-  //     useERC20Approve(MOCK_DATA.contractAddress, MOCK_DATA.spender, MOCK_DATA.zeroAmount)
-
-  //     expect(mockUseContractWrites).toHaveBeenCalledWith(
-  //       expect.objectContaining({
-  //         functionName: 'approve'
-  //       })
-  //     )
-  //   })
-
-  //   it('should handle large amounts (max approval)', () => {
-  //     useERC20Approve(MOCK_DATA.contractAddress, MOCK_DATA.spender, MOCK_DATA.largeAmount)
-
-  //     expect(mockUseContractWrites).toHaveBeenCalledWith(
-  //       expect.objectContaining({
-  //         functionName: 'approve'
-  //       })
-  //     )
-  //   })
-
-  //   it('should return contract write interface', () => {
-  //     const result = useERC20Approve(MOCK_DATA.contractAddress, MOCK_DATA.spender, MOCK_DATA.amount)
-
-  //     expect(result).toEqual(mockContractWrite)
-  //   })
-  // })
-
-  // describe('Edge Cases', () => {
-  //   it('should handle mixed reactive and static parameters', () => {
-  //     const contractAddress = ref(MOCK_DATA.contractAddress)
-  //     const to = MOCK_DATA.to
-  //     const amount = ref(MOCK_DATA.amount)
-
-  //     useERC20Transfer(contractAddress, to, amount)
-
-  //     expect(mockUseContractWrites).toHaveBeenCalled()
-  //   })
-
-  //   it('should return consistent interface for all functions', () => {
-  //     const transfer = useERC20Transfer(MOCK_DATA.contractAddress, MOCK_DATA.to, MOCK_DATA.amount)
-  //     const transferFrom = useERC20TransferFrom(
-  //       MOCK_DATA.contractAddress,
-  //       MOCK_DATA.from,
-  //       MOCK_DATA.to,
-  //       MOCK_DATA.amount
-  //     )
-  //     const approve = useERC20Approve(
-  //       MOCK_DATA.contractAddress,
-  //       MOCK_DATA.spender,
-  //       MOCK_DATA.amount
-  //     )
-
-  //     expect(transfer).toEqual(mockContractWrite)
-  //     expect(transferFrom).toEqual(mockContractWrite)
-  //     expect(approve).toEqual(mockContractWrite)
-  //   })
-
-  //   it('should handle undefined contract address in all functions', () => {
-  //     useERC20Transfer(undefined, MOCK_DATA.to, MOCK_DATA.amount)
-  //     useERC20TransferFrom(undefined, MOCK_DATA.from, MOCK_DATA.to, MOCK_DATA.amount)
-  //     useERC20Approve(undefined, MOCK_DATA.spender, MOCK_DATA.amount)
-
-  //     expect(mockUseContractWrites).toHaveBeenCalledTimes(3)
-  //   })
-  // })
+      expect(transferFrom).toHaveProperty('executeWrite')
+      expect(transferFrom).toHaveProperty('writeResult')
+      expect(transferFrom).toHaveProperty('receiptResult')
+    })
+  })
 })

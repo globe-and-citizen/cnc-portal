@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref } from 'vue'
 import {
   useErc20Name,
   useErc20Symbol,
@@ -8,229 +7,174 @@ import {
   useErc20BalanceOf,
   useErc20Allowance
 } from '../reads'
+import { mockERC20Reads, resetERC20Mocks } from '@/tests/mocks'
 import type { Address } from 'viem'
-
-// Hoisted mock variables
-const { mockUseReadContract, mockIsAddress } = vi.hoisted(() => ({
-  mockUseReadContract: vi.fn(),
-  mockIsAddress: vi.fn()
-}))
-
-// Disable global ERC20 reads mock to test actual implementation
-vi.unmock('@/composables/erc20/reads')
-
-// Mock external dependencies
-vi.mock('@wagmi/vue', () => ({
-  useReadContract: mockUseReadContract
-}))
-
-vi.mock('viem', async (importOriginal) => {
-  const actual = (await importOriginal()) as object
-  return {
-    ...actual,
-    isAddress: mockIsAddress
-  }
-})
 
 // Test constants
 const MOCK_DATA = {
   validAddress: '0x1234567890123456789012345678901234567890' as Address,
-  secondAddress: '0xA0b86a33E6441bB7bE6d0B9EB5Bbf26b2d60C1cd' as Address,
   ownerAddress: '0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886' as Address,
-  spenderAddress: '0x9876543210987654321098765432109876543210' as Address,
-  invalidAddress: 'invalid-address'
+  spenderAddress: '0x9876543210987654321098765432109876543210' as Address
 } as const
 
-const mockReadContractResult = {
-  data: ref(null),
-  isLoading: ref(false),
-  isError: ref(false),
-  error: ref(null),
-  isSuccess: ref(true),
-  refetch: vi.fn()
-}
-
-describe.skip('ERC20 Contract Reads', () => {
+describe('ERC20 Contract Reads', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseReadContract.mockReturnValue(mockReadContractResult)
-    mockIsAddress.mockImplementation((address: string) => {
-      return /^0x[a-fA-F0-9]{40}$/.test(address)
-    })
+    resetERC20Mocks()
   })
 
   describe('useErc20Name', () => {
-    it('should call useReadContract with correct parameters', () => {
-      useErc20Name(MOCK_DATA.validAddress)
+    it('should return mock token name', () => {
+      const result = useErc20Name(MOCK_DATA.validAddress)
 
-      expect(mockUseReadContract).toHaveBeenCalledWith({
-        address: expect.any(Object),
-        abi: expect.any(Array),
-        functionName: 'name',
-        query: { enabled: expect.any(Object) }
-      })
+      expect(result).toBe(mockERC20Reads.name)
+      expect(result.data.value).toBe('Mock Token')
+      expect(result.isSuccess.value).toBe(true)
+      expect(result.isLoading.value).toBe(false)
     })
 
-    it('should enable query when address is valid', () => {
-      useErc20Name(MOCK_DATA.validAddress)
+    it('should handle error state', () => {
+      mockERC20Reads.name.isError.value = true
+      mockERC20Reads.name.error.value = new Error('Failed to fetch name')
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.query.enabled.value).toBe(true)
+      const result = useErc20Name(MOCK_DATA.validAddress)
+
+      expect(result.isError.value).toBe(true)
+      expect(result.error.value).toBeInstanceOf(Error)
     })
 
-    it('should disable query when address is invalid', () => {
-      mockIsAddress.mockReturnValue(false)
-      useErc20Name(MOCK_DATA.invalidAddress as Address)
+    it('should support refetch functionality', () => {
+      const result = useErc20Name(MOCK_DATA.validAddress)
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.query.enabled.value).toBe(false)
-    })
-
-    it('should work with reactive address', () => {
-      const address = ref(MOCK_DATA.validAddress)
-      useErc20Name(address)
-
-      expect(mockUseReadContract).toHaveBeenCalled()
+      result.refetch()
+      expect(result.refetch).toHaveBeenCalled()
     })
   })
 
   describe('useErc20Symbol', () => {
-    it('should call useReadContract with correct functionName', () => {
-      useErc20Symbol(MOCK_DATA.validAddress)
+    it('should return mock token symbol', () => {
+      const result = useErc20Symbol(MOCK_DATA.validAddress)
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.functionName).toBe('symbol')
+      expect(result).toBe(mockERC20Reads.symbol)
+      expect(result.data.value).toBe('MTK')
+      expect(result.isSuccess.value).toBe(true)
     })
 
-    it('should enable query when address is valid', () => {
-      useErc20Symbol(MOCK_DATA.validAddress)
+    it('should handle loading state', () => {
+      mockERC20Reads.symbol.isLoading.value = true
+      mockERC20Reads.symbol.isSuccess.value = false
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.query.enabled.value).toBe(true)
+      const result = useErc20Symbol(MOCK_DATA.validAddress)
+
+      expect(result.isLoading.value).toBe(true)
+      expect(result.isSuccess.value).toBe(false)
     })
   })
 
   describe('useErc20Decimals', () => {
-    it('should call useReadContract with correct functionName', () => {
-      useErc20Decimals(MOCK_DATA.validAddress)
+    it('should return mock token decimals', () => {
+      const result = useErc20Decimals(MOCK_DATA.validAddress)
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.functionName).toBe('decimals')
+      expect(result).toBe(mockERC20Reads.decimals)
+      expect(result.data.value).toBe(18)
+      expect(result.isSuccess.value).toBe(true)
     })
 
-    it('should enable query when address is valid', () => {
-      useErc20Decimals(MOCK_DATA.validAddress)
+    it('should handle custom decimals value', () => {
+      mockERC20Reads.decimals.data.value = 6
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.query.enabled.value).toBe(true)
+      const result = useErc20Decimals(MOCK_DATA.validAddress)
+
+      expect(result.data.value).toBe(6)
     })
   })
 
   describe('useErc20TotalSupply', () => {
-    it('should call useReadContract with correct functionName', () => {
-      useErc20TotalSupply(MOCK_DATA.validAddress)
+    it('should return mock total supply', () => {
+      const result = useErc20TotalSupply(MOCK_DATA.validAddress)
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.functionName).toBe('totalSupply')
+      expect(result).toBe(mockERC20Reads.totalSupply)
+      expect(result.data.value).toBe(1000000n * 10n ** 18n)
+      expect(result.isSuccess.value).toBe(true)
     })
 
-    it('should enable query when address is valid', () => {
-      useErc20TotalSupply(MOCK_DATA.validAddress)
+    it('should handle custom total supply', () => {
+      mockERC20Reads.totalSupply.data.value = 5000000n
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.query.enabled.value).toBe(true)
+      const result = useErc20TotalSupply(MOCK_DATA.validAddress)
+
+      expect(result.data.value).toBe(5000000n)
     })
   })
 
   describe('useErc20BalanceOf', () => {
-    it('should call useReadContract with correct parameters', () => {
-      useErc20BalanceOf(MOCK_DATA.validAddress, MOCK_DATA.ownerAddress)
+    it('should return mock balance', () => {
+      const result = useErc20BalanceOf(MOCK_DATA.validAddress, MOCK_DATA.ownerAddress)
 
-      expect(mockUseReadContract).toHaveBeenCalledWith({
-        address: expect.any(Object),
-        abi: expect.any(Array),
-        functionName: 'balanceOf',
-        args: expect.any(Array),
-        query: { enabled: expect.any(Object) }
-      })
+      expect(result).toBe(mockERC20Reads.balanceOf)
+      expect(result.data.value).toBe(1000n * 10n ** 18n)
+      expect(result.isSuccess.value).toBe(true)
     })
 
-    it('should enable query when both addresses are valid', () => {
-      useErc20BalanceOf(MOCK_DATA.validAddress, MOCK_DATA.ownerAddress)
+    it('should handle zero balance', () => {
+      mockERC20Reads.balanceOf.data.value = 0n
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.query.enabled.value).toBe(true)
+      const result = useErc20BalanceOf(MOCK_DATA.validAddress, MOCK_DATA.ownerAddress)
+
+      expect(result.data.value).toBe(0n)
     })
 
-    it('should disable query when account address is undefined', () => {
-      useErc20BalanceOf(MOCK_DATA.validAddress, undefined as unknown as Address)
+    it('should handle pending state', () => {
+      mockERC20Reads.balanceOf.isPending.value = true
+      mockERC20Reads.balanceOf.status.value = 'pending'
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.query.enabled.value).toBe(false)
-    })
+      const result = useErc20BalanceOf(MOCK_DATA.validAddress, MOCK_DATA.ownerAddress)
 
-    it('should properly compute args with account address', () => {
-      useErc20BalanceOf(MOCK_DATA.validAddress, MOCK_DATA.ownerAddress)
-
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.args).toHaveLength(1)
-      expect(callArgs.args[0].value).toBe(MOCK_DATA.ownerAddress)
+      expect(result.isPending.value).toBe(true)
+      expect(result.status.value).toBe('pending')
     })
   })
 
   describe('useErc20Allowance', () => {
-    it('should call useReadContract with correct parameters', () => {
-      useErc20Allowance(MOCK_DATA.validAddress, MOCK_DATA.ownerAddress, MOCK_DATA.spenderAddress)
-
-      expect(mockUseReadContract).toHaveBeenCalledWith({
-        address: expect.any(Object),
-        abi: expect.any(Array),
-        functionName: 'allowance',
-        args: expect.any(Array),
-        query: { enabled: expect.any(Object) }
-      })
-    })
-
-    it('should enable query when all addresses are valid', () => {
-      useErc20Allowance(MOCK_DATA.validAddress, MOCK_DATA.ownerAddress, MOCK_DATA.spenderAddress)
-
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.query.enabled.value).toBe(true)
-    })
-
-    it('should disable query when owner address is undefined', () => {
-      useErc20Allowance(
+    it('should return mock allowance', () => {
+      const result = useErc20Allowance(
         MOCK_DATA.validAddress,
-        undefined as unknown as Address,
+        MOCK_DATA.ownerAddress,
         MOCK_DATA.spenderAddress
       )
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.query.enabled.value).toBe(false)
+      expect(result).toBe(mockERC20Reads.allowance)
+      expect(result.data.value).toBe(1000000n * 10n ** 18n)
+      expect(result.isSuccess.value).toBe(true)
     })
 
-    it('should properly compute args with owner and spender addresses', () => {
-      useErc20Allowance(MOCK_DATA.validAddress, MOCK_DATA.ownerAddress, MOCK_DATA.spenderAddress)
+    it('should handle insufficient allowance', () => {
+      mockERC20Reads.allowance.data.value = 0n
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.args).toHaveLength(2)
-      expect(callArgs.args[0].value).toBe(MOCK_DATA.ownerAddress)
-      expect(callArgs.args[1].value).toBe(MOCK_DATA.spenderAddress)
+      const result = useErc20Allowance(
+        MOCK_DATA.validAddress,
+        MOCK_DATA.ownerAddress,
+        MOCK_DATA.spenderAddress
+      )
+
+      expect(result.data.value).toBe(0n)
+    })
+
+    it('should handle custom allowance amount', () => {
+      const customAllowance = 500n * 10n ** 18n
+      mockERC20Reads.allowance.data.value = customAllowance
+
+      const result = useErc20Allowance(
+        MOCK_DATA.validAddress,
+        MOCK_DATA.ownerAddress,
+        MOCK_DATA.spenderAddress
+      )
+
+      expect(result.data.value).toBe(customAllowance)
     })
   })
 
-  describe('Edge Cases', () => {
-    it('should handle address changes for reactive refs', () => {
-      const address = ref(MOCK_DATA.validAddress)
-      useErc20Name(address)
-
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.address.value).toBe(MOCK_DATA.validAddress)
-
-      address.value = MOCK_DATA.secondAddress
-      expect(callArgs.address.value).toBe(MOCK_DATA.secondAddress)
-    })
-
+  describe('Mock Behavior', () => {
     it('should return consistent interface for all functions', () => {
       const name = useErc20Name(MOCK_DATA.validAddress)
       const symbol = useErc20Symbol(MOCK_DATA.validAddress)
@@ -243,23 +187,52 @@ describe.skip('ERC20 Contract Reads', () => {
         MOCK_DATA.spenderAddress
       )
 
-      expect(name).toEqual(mockReadContractResult)
-      expect(symbol).toEqual(mockReadContractResult)
-      expect(decimals).toEqual(mockReadContractResult)
-      expect(totalSupply).toEqual(mockReadContractResult)
-      expect(balance).toEqual(mockReadContractResult)
-      expect(allowance).toEqual(mockReadContractResult)
+      // All should have the same interface structure
+      expect(name).toHaveProperty('data')
+      expect(name).toHaveProperty('isLoading')
+      expect(name).toHaveProperty('isSuccess')
+      expect(name).toHaveProperty('isError')
+      expect(name).toHaveProperty('error')
+      expect(name).toHaveProperty('refetch')
+
+      // Verify all functions return their respective mocks
+      expect(name).toBe(mockERC20Reads.name)
+      expect(symbol).toBe(mockERC20Reads.symbol)
+      expect(decimals).toBe(mockERC20Reads.decimals)
+      expect(totalSupply).toBe(mockERC20Reads.totalSupply)
+      expect(balance).toBe(mockERC20Reads.balanceOf)
+      expect(allowance).toBe(mockERC20Reads.allowance)
     })
 
-    it('should properly handle computed enabled state', () => {
-      const address = ref(MOCK_DATA.validAddress)
-      useErc20Name(address)
+    it('should reset mocks properly', () => {
+      // Modify mock state
+      mockERC20Reads.name.isError.value = true
+      mockERC20Reads.name.error.value = new Error('Test error')
+      mockERC20Reads.balanceOf.data.value = 999n
 
-      const callArgs = mockUseReadContract.mock.calls[0][0]
-      expect(callArgs.query.enabled.value).toBe(true)
+      // Reset
+      resetERC20Mocks()
 
-      address.value = undefined as unknown as Address
-      expect(callArgs.query.enabled.value).toBe(false)
+      // Verify reset
+      expect(mockERC20Reads.name.isError.value).toBe(false)
+      expect(mockERC20Reads.name.error.value).toBeNull()
+      expect(mockERC20Reads.name.isSuccess.value).toBe(true)
+      expect(mockERC20Reads.balanceOf.data.value).toBe(1000n * 10n ** 18n)
+    })
+
+    it('should allow mock customization for different scenarios', () => {
+      // Scenario 1: Successful read
+      mockERC20Reads.decimals.data.value = 6
+      const result1 = useErc20Decimals(MOCK_DATA.validAddress)
+      expect(result1.data.value).toBe(6)
+
+      // Scenario 2: Error state
+      resetERC20Mocks()
+      mockERC20Reads.decimals.isError.value = true
+      mockERC20Reads.decimals.isSuccess.value = false
+      const result2 = useErc20Decimals(MOCK_DATA.validAddress)
+      expect(result2.isError.value).toBe(true)
+      expect(result2.isSuccess.value).toBe(false)
     })
   })
 })

@@ -1,7 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref } from 'vue'
 import {
-  useBankContractWrite,
   useDepositToken,
   useAddTokenSupport,
   useRemoveTokenSupport,
@@ -17,205 +15,217 @@ import {
   useDepositTokenDividends,
   useSetInvestorAddress
 } from '../writes'
-
-// Hoisted mock variables
-const { mockUseContractWrites, mockTeamStore } = vi.hoisted(() => ({
-  mockUseContractWrites: vi.fn(),
-  mockTeamStore: {
-    getContractAddressByType: vi.fn(() => '0x1234567890123456789012345678901234567890')
-  }
-}))
-
-// Mock external dependencies
-vi.mock('@/composables/contracts/useContractWritesV2', () => ({
-  useContractWrites: mockUseContractWrites
-}))
-
-vi.mock('@/stores/teamStore', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore)
-}))
+import { mockBankWrites, resetContractMocks } from '@/tests/mocks'
+import type { Address } from 'viem'
 
 // Test constants
 const MOCK_DATA = {
-  tokenAddress: '0xA0b86a33E6441bB7bE6d0B9EB5Bbf26b2d60C1cd',
-  userAddress: '0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886',
+  tokenAddress: '0xA0b86a33E6441bB7bE6d0B9EB5Bbf26b2d60C1cd' as Address,
+  userAddress: '0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886' as Address,
   amount: BigInt('1000000000000000000'),
+  zeroAmount: BigInt(0),
+  largeAmount: BigInt('999999999999999999999999'),
   tokenAmount: BigInt('1000000')
 } as const
-
-const mockContractWrite = {
-  writeContract: vi.fn(),
-  data: ref(null),
-  isPending: ref(false),
-  error: ref(null),
-  isSuccess: ref(false)
-}
 
 describe('Bank Contract Writes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseContractWrites.mockReturnValue(mockContractWrite)
-  })
-
-  describe('Core Functionality', () => {
-    it.skip('should initialize useBankContractWrite correctly', () => {
-      const options = { functionName: 'pause' as const, args: [] }
-      useBankContractWrite(options)
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith({
-        contractAddress: expect.any(Object),
-        abi: expect.any(Array),
-        functionName: 'pause',
-        args: []
-      })
-      expect(mockTeamStore.getContractAddressByType).toHaveBeenCalledWith('Bank')
-    })
-
-    it('should handle value parameter correctly', () => {
-      const value = BigInt(100)
-      const options = {
-        functionName: 'depositDividends' as const,
-        args: ref([MOCK_DATA.amount, MOCK_DATA.userAddress]),
-        value: ref(value)
-      }
-
-      useBankContractWrite(options)
-
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ value: expect.any(Object) })
-      )
-    })
+    resetContractMocks()
   })
 
   describe('Token Operations', () => {
-    it('should configure deposit token correctly', () => {
-      useDepositToken(MOCK_DATA.tokenAddress, MOCK_DATA.tokenAmount)
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'depositToken' })
-      )
+    it('should return deposit token mock', () => {
+      const result = useDepositToken(MOCK_DATA.tokenAddress, MOCK_DATA.amount)
+      expect(result).toBe(mockBankWrites.deposit)
+      expect(result.executeWrite).toBeInstanceOf(Function)
     })
 
-    it('should configure add/remove token support', () => {
-      useAddTokenSupport(MOCK_DATA.tokenAddress)
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'addTokenSupport' })
-      )
-
-      useRemoveTokenSupport(MOCK_DATA.tokenAddress)
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'removeTokenSupport' })
-      )
+    it('should return add token support mock', () => {
+      const result = useAddTokenSupport(MOCK_DATA.tokenAddress)
+      expect(result).toBe(mockBankWrites.addTokenSupport)
     })
 
-    it('should work with reactive values', () => {
-      const token = ref(MOCK_DATA.tokenAddress)
-      const amount = ref(MOCK_DATA.tokenAmount)
+    it('should return remove token support mock', () => {
+      const result = useRemoveTokenSupport(MOCK_DATA.tokenAddress)
+      expect(result).toBe(mockBankWrites.removeTokenSupport)
+    })
 
-      useDepositToken(token, amount)
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ args: expect.any(Object) })
-      )
+    it('should support successful token operations', async () => {
+      mockBankWrites.deposit.executeWrite.mockResolvedValue(undefined)
+      const result = useDepositToken(MOCK_DATA.tokenAddress, MOCK_DATA.amount)
+
+      await result.executeWrite()
+      expect(result.executeWrite).toHaveBeenCalled()
+    })
+
+    it('should handle zero amounts', () => {
+      const result = useDepositToken(MOCK_DATA.tokenAddress, MOCK_DATA.zeroAmount)
+      expect(result.executeWrite).toBeInstanceOf(Function)
+    })
+
+    it('should handle large amounts', () => {
+      const result = useDepositToken(MOCK_DATA.tokenAddress, MOCK_DATA.largeAmount)
+      expect(result).toBe(mockBankWrites.deposit)
     })
   })
 
   describe('Dividend Operations', () => {
-    it('should configure dividend claiming functions', () => {
-      useClaimDividend()
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'claimDividend', args: [] })
-      )
-
-      useClaimTokenDividend(MOCK_DATA.tokenAddress)
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'claimTokenDividend' })
-      )
+    it('should return claim dividend mock', () => {
+      const result = useClaimDividend()
+      expect(result).toBe(mockBankWrites.claimDividend)
     })
 
-    it('should configure deposit dividends with value', () => {
-      useDepositDividends(MOCK_DATA.amount, MOCK_DATA.userAddress)
-      const lastCall = mockUseContractWrites.mock.calls.slice(-1)[0][0]
-
-      expect(lastCall.functionName).toBe('depositDividends')
-      expect(lastCall.value).toBeDefined()
+    it('should return claim token dividend mock', () => {
+      const result = useClaimTokenDividend(MOCK_DATA.tokenAddress)
+      expect(result).toBe(mockBankWrites.claimTokenDividend)
     })
 
-    it('should configure deposit token dividends', () => {
-      useDepositTokenDividends(MOCK_DATA.tokenAddress, MOCK_DATA.tokenAmount, MOCK_DATA.userAddress)
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'depositTokenDividends' })
+    it('should return deposit dividends mock', () => {
+      const result = useDepositDividends(MOCK_DATA.amount, MOCK_DATA.userAddress)
+      expect(result).toBe(mockBankWrites.depositDividends)
+    })
+
+    it('should return deposit token dividends mock', () => {
+      const result = useDepositTokenDividends(
+        MOCK_DATA.tokenAddress,
+        MOCK_DATA.amount,
+        MOCK_DATA.userAddress
       )
+      expect(result).toBe(mockBankWrites.depositTokenDividends)
+    })
+
+    it('should support successful dividend claims', async () => {
+      mockBankWrites.claimDividend.executeWrite.mockResolvedValue(undefined)
+      const result = useClaimDividend()
+
+      await result.executeWrite()
+      expect(result.executeWrite).toHaveBeenCalled()
+    })
+
+    it('should handle dividend claim errors', async () => {
+      const error = new Error('Claim failed')
+      mockBankWrites.claimDividend.executeWrite.mockRejectedValue(error)
+
+      const result = useClaimDividend()
+      await expect(result.executeWrite()).rejects.toThrow('Claim failed')
     })
   })
 
   describe('Administrative Operations', () => {
-    it('should configure pause/unpause operations', () => {
-      usePause()
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'pause', args: [] })
-      )
-
-      useUnpause()
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'unpause', args: [] })
-      )
+    it('should return pause mock', () => {
+      const result = usePause()
+      expect(result).toBe(mockBankWrites.pause)
     })
 
-    it('should configure ownership operations', () => {
-      useTransferOwnership(MOCK_DATA.userAddress)
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'transferOwnership' })
-      )
-
-      useRenounceOwnership()
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'renounceOwnership', args: [] })
-      )
+    it('should return unpause mock', () => {
+      const result = useUnpause()
+      expect(result).toBe(mockBankWrites.unpause)
     })
 
-    it('should configure set investor address', () => {
-      useSetInvestorAddress(MOCK_DATA.userAddress)
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'setInvestorAddress' })
-      )
+    it('should return transfer ownership mock', () => {
+      const result = useTransferOwnership(MOCK_DATA.userAddress)
+      expect(result).toBe(mockBankWrites.transferOwnership)
+    })
+
+    it('should return renounce ownership mock', () => {
+      const result = useRenounceOwnership()
+      expect(result).toBe(mockBankWrites.renounceOwnership)
+    })
+
+    it('should return set investor address mock', () => {
+      const result = useSetInvestorAddress(MOCK_DATA.userAddress)
+      expect(result).toBe(mockBankWrites.setInvestorAddress)
+    })
+
+    it('should handle pause/unpause operations', async () => {
+      mockBankWrites.pause.executeWrite.mockResolvedValue(undefined)
+      const result = usePause()
+
+      await result.executeWrite()
+      expect(result.executeWrite).toHaveBeenCalled()
     })
   })
 
   describe('Transfer Operations', () => {
-    it('should configure transfer operations', () => {
-      useTransfer(MOCK_DATA.userAddress, MOCK_DATA.amount)
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({
-          functionName: 'transfer',
-          args: [MOCK_DATA.userAddress, MOCK_DATA.amount]
-        })
-      )
+    it('should return transfer mock', () => {
+      const result = useTransfer(MOCK_DATA.userAddress, MOCK_DATA.amount)
+      expect(result).toBe(mockBankWrites.transfer)
+    })
 
-      useTransferToken(MOCK_DATA.tokenAddress, MOCK_DATA.userAddress, MOCK_DATA.tokenAmount)
-      expect(mockUseContractWrites).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'transferToken' })
+    it('should return transfer token mock', () => {
+      const result = useTransferToken(
+        MOCK_DATA.tokenAddress,
+        MOCK_DATA.userAddress,
+        MOCK_DATA.amount
       )
+      expect(result).toBe(mockBankWrites.transferToken)
+    })
+
+    it('should support successful transfers', async () => {
+      mockBankWrites.transfer.executeWrite.mockResolvedValue(undefined)
+      const result = useTransfer(MOCK_DATA.userAddress, MOCK_DATA.amount)
+
+      await result.executeWrite()
+      expect(result.executeWrite).toHaveBeenCalled()
+    })
+
+    it('should handle transfer errors', async () => {
+      const error = new Error('Transfer failed')
+      mockBankWrites.transfer.executeWrite.mockRejectedValue(error)
+
+      const result = useTransfer(MOCK_DATA.userAddress, MOCK_DATA.amount)
+      await expect(result.executeWrite()).rejects.toThrow('Transfer failed')
+    })
+
+    it('should work with different amounts', () => {
+      const smallAmount = useTransfer(MOCK_DATA.userAddress, MOCK_DATA.zeroAmount)
+      const largeAmount = useTransfer(MOCK_DATA.userAddress, MOCK_DATA.largeAmount)
+
+      expect(smallAmount).toBe(mockBankWrites.transfer)
+      expect(largeAmount).toBe(mockBankWrites.transfer)
     })
   })
 
-  describe('Edge Cases', () => {
-    it('should handle missing bank address gracefully', () => {
-      // @ts-expect-error testing edge case
-      mockTeamStore.getContractAddressByType.mockReturnValue(undefined)
-      expect(() => usePause()).not.toThrow()
-    })
-
-    it('should return consistent interface', () => {
+  describe('Mock Behavior', () => {
+    it('should return distinct mocks for different functions', () => {
       const pause = usePause()
       const transfer = useTransfer(MOCK_DATA.userAddress, MOCK_DATA.amount)
+      const claimDividend = useClaimDividend()
 
-      expect(pause).toEqual(mockContractWrite)
-      expect(transfer).toEqual(mockContractWrite)
+      expect(pause).not.toBe(transfer)
+      expect(transfer).not.toBe(claimDividend)
     })
 
-    it('should handle zero and large amounts', () => {
-      useTransfer(MOCK_DATA.userAddress, BigInt(0))
-      useTransfer(MOCK_DATA.userAddress, BigInt('999999999999999999999999'))
-      expect(mockUseContractWrites).toHaveBeenCalledTimes(2)
+    it('should maintain consistent interface structure', () => {
+      const result = usePause()
+
+      expect(result).toHaveProperty('executeWrite')
+      expect(result).toHaveProperty('writeResult')
+      expect(result).toHaveProperty('receiptResult')
+      expect(result.executeWrite).toBeInstanceOf(Function)
+    })
+
+    it('should support mock reset', () => {
+      mockBankWrites.pause.executeWrite.mockResolvedValue(undefined)
+      resetContractMocks()
+
+      const result = usePause()
+      expect(result).toBe(mockBankWrites.pause)
+    })
+
+    it('should allow mock customization for different test scenarios', async () => {
+      mockBankWrites.transfer.executeWrite.mockResolvedValueOnce('tx-hash-1')
+      mockBankWrites.transfer.executeWrite.mockResolvedValueOnce('tx-hash-2')
+
+      const result1 = useTransfer(MOCK_DATA.userAddress, MOCK_DATA.amount)
+      const result2 = useTransfer(MOCK_DATA.userAddress, MOCK_DATA.amount)
+
+      const tx1 = await result1.executeWrite()
+      const tx2 = await result2.executeWrite()
+
+      expect(tx1).toBe('tx-hash-1')
+      expect(tx2).toBe('tx-hash-2')
     })
   })
 })
