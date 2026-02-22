@@ -102,11 +102,26 @@ When working on the CNC Portal project, GitHub Copilot will automatically refere
 
 ### Complete Files
 
+#### Core Development Guidelines
+- ✅ [Vue.js Component Standards](./vue-component-standards.md) - Complete Vue.js guidelines
+- ✅ [TypeScript Guidelines](./typescript-guidelines.md) - TypeScript best practices and patterns
+- ✅ [Web3 Integration](./web3-integration.md) - Web3/blockchain integration patterns
+- ✅ [State Management](./state-management.md) - Pinia state management patterns
+
+#### Testing Guidelines
 - ✅ [Testing Overview](./testing-overview.md) - Comprehensive testing philosophy and organization
 - ✅ [Testing Patterns](./testing-patterns.md) - Detailed testing patterns with examples
 - ✅ [Web3 Testing](./testing-web3.md) - Web3/contract specific testing patterns
 - ✅ [Testing Anti-Patterns](./testing-anti-patterns.md) - What to avoid in testing
-- ✅ [Vue.js Component Standards](./vue-component-standards.md) - Complete Vue.js guidelines
+
+#### Quality & Performance
+- ✅ [Performance Optimization](./performance-optimization.md) - Performance best practices
+- ✅ [Accessibility](./accessibility.md) - Accessibility guidelines and WCAG compliance
+- ✅ [Security](./security.md) - Security best practices and patterns
+- ✅ [Error Handling](./error-handling.md) - Error handling patterns and strategies
+
+#### Project Specific
+- ✅ [Repository Patterns](./repository-patterns.md) - Common patterns and architectures
 - ✅ [Review Checklist](./review-checklist.md) - Comprehensive code review checklist
 - ✅ [Commit Conventions](./commit-conventions.md) - Detailed commit message standards
 
