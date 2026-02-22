@@ -46,9 +46,10 @@ import { FACTORY_BEACON_ABI } from '@/artifacts/abi/factory-beacon'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
-import { useSyncContractsMutation } from '@/queries/contract.queries'
+import { useCreateContractMutation, useSyncContractsMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
+import { useTeamStore } from '@/stores/teamStore'
 
 const props = withDefaults(
   defineProps<{
@@ -83,6 +84,8 @@ const {
   error: createOfficerError,
   writeContract: createOfficer
 } = useWriteContract()
+const { mutateAsync: createContract } = useCreateContractMutation()
+const teamStore = useTeamStore()
 
 const { isLoading: isConfirmingCreateOfficer, isSuccess: isConfirmedCreateOfficer } =
   useWaitForTransactionReceipt({
@@ -122,9 +125,25 @@ const deploySafeForTeam = async () => {
     const safeAddress = await deploySafe([currentUserAddress], 1)
     safeLoadingMessage.value = 'Updating team with Safe address...'
 
-    await updateTeam({
-      pathParams: { id: props.createdTeamData.id! },
-      body: { safeAddress: (safeAddress ?? undefined) as `0x${string}` | undefined }
+    // TODO use add contract
+    if (!safeAddress) {
+      addErrorToast('Failed to deploy Safe wallet. Please try again.')
+      safeLoadingMessage.value = ''
+      return
+    }
+    if (!props.createdTeamData.id) {
+      addErrorToast('Team data not found')
+      safeLoadingMessage.value = ''
+      return
+    }
+    await createContract({
+      body: {
+        teamId: props.createdTeamData.id,
+        contractAddress: safeAddress,
+        contractType: 'Safe',
+        deployer: userDataStore.address
+      }
+      // body: { safeAddress: (safeAddress ?? undefined) as `0x${string}` | undefined }?
     })
 
     addSuccessToast(`Safe wallet deployed successfully`)
