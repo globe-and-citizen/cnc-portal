@@ -49,7 +49,6 @@ import { useUpdateTeamMutation } from '@/queries/team.queries'
 import { useCreateContractMutation, useSyncContractsMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
-import { useTeamStore } from '@/stores/teamStore'
 
 const props = withDefaults(
   defineProps<{
@@ -85,7 +84,6 @@ const {
   writeContract: createOfficer
 } = useWriteContract()
 const { mutateAsync: createContract } = useCreateContractMutation()
-const teamStore = useTeamStore()
 
 const { isLoading: isConfirmingCreateOfficer, isSuccess: isConfirmedCreateOfficer } =
   useWaitForTransactionReceipt({
