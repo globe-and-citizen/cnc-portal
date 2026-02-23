@@ -3,7 +3,6 @@ import { shallowMount, VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import SherTokenView from '../SherTokenView.vue'
 
-
 describe('SherTokenView', () => {
   let wrapper: VueWrapper
 

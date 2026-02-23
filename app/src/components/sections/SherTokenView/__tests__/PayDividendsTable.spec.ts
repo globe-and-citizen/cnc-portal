@@ -3,10 +3,7 @@ import { mount } from '@vue/test-utils'
 import { parseUnits, zeroAddress } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
 import PayDividendsTable from '@/components/sections/SherTokenView/PayDividendsTable.vue'
-import {
-  mockUseGetDividendBalances,
-  resetComposableMocks
-} from '@/tests/mocks'
+import { mockUseGetDividendBalances, resetComposableMocks } from '@/tests/mocks'
 
 // Only mock external composable - this is a true external dependency
 vi.mock('@/composables/bank/reads', () => ({

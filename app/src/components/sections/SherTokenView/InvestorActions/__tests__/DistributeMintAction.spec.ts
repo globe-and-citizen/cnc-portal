@@ -3,10 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import DistributeMintAction from '@/components/sections/SherTokenView/InvestorActions/DistributeMintAction.vue'
 import type { Address } from 'viem'
-import {
-  resetComposableMocks
-} from '@/tests/mocks'
-
+import { resetComposableMocks } from '@/tests/mocks'
 
 describe('DistributeMintAction.vue', () => {
   beforeEach(() => {

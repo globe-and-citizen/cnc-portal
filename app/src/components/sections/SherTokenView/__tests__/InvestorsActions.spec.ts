@@ -5,9 +5,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { parseEther, type Address } from 'viem'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { mockToastStore } from '@/tests/mocks/store.mock'
-import {
-  mockUseWriteContract,
-} from '@/tests/mocks/wagmi.vue.mock'
+import { mockUseWriteContract } from '@/tests/mocks/wagmi.vue.mock'
 import type { Team } from '@/types/team'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
@@ -23,7 +21,6 @@ const wagmiConfig = createConfig({
 vi.mock('@/stores/user')
 
 const { addErrorToast, addSuccessToast } = mockToastStore
-
 
 interface ComponentData {
   distributeMintModal: boolean
