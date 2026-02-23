@@ -44,9 +44,7 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 // import type { Address } from 'viem'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 // import { OFFICER_ABI } from '@/artifacts/abi/officer'
-import { useReadContract } from '@wagmi/vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import { log } from '@/utils'
 import CardComponent from '@/components/CardComponent.vue'
@@ -54,6 +52,11 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import DistributeMintAction from './InvestorActions/DistributeMintAction.vue'
 import MintTokenAction from './InvestorActions/MintTokenAction.vue'
 import PayDividendsAction from './InvestorActions/PayDividendsAction.vue'
+import {
+  useInvestorSymbol,
+  useInvestorShareholders,
+  useInvestorOwner
+} from '@/composables/investor/reads'
 
 defineEmits<{
   refetchShareholders: []
@@ -70,29 +73,17 @@ const {
   data: tokenSymbol,
   error: tokenSymbolError,
   isLoading: isLoadingTokenSymbol
-} = useReadContract({
-  abi: INVESTOR_ABI,
-  address: investorAddress,
-  functionName: 'symbol'
-})
+} = useInvestorSymbol()
 
 // Get shareholders list
-const { data: shareholders, error: shareholderError } = useReadContract({
-  abi: INVESTOR_ABI,
-  address: investorAddress,
-  functionName: 'getShareholders'
-})
+const { data: shareholders, error: shareholderError } = useInvestorShareholders()
 
 // Get investors contract owner
 const {
   data: investorsOwner,
   error: errorInvestorsOwner,
   isLoading: isLoadingInvestorsOwner
-} = useReadContract({
-  functionName: 'owner',
-  address: investorAddress,
-  abi: INVESTOR_ABI
-})
+} = useInvestorOwner()
 
 // Watch for errors and display toast notifications
 watch(tokenSymbolError, (value) => {
