@@ -6,7 +6,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authorizeUser } from '../../middleware/authMiddleware';
 import userRoutes from '../../routes/userRoutes';
 import { prisma } from '../../utils';
-import { isUserPartOfTheTeam } from '../../utils/teamUtils';
 import { getAllUsers } from '../userController';
 
 const DEFAULT_ADDRESS = '0x1234567890123456789012345678901234567890';
@@ -33,8 +32,6 @@ vi.mock('../../services/storageService', async (importOriginal) => {
   };
 });
 
-vi.mock('../../utils/teamUtils', () => ({ isUserPartOfTheTeam: vi.fn(() => false) }));
-
 vi.mock('../../utils', async () => {
   const actual = await vi.importActual('../../utils');
   return {
@@ -47,8 +44,6 @@ vi.mock('../../utils', async () => {
         update: vi.fn(),
         count: vi.fn(),
       },
-      team: { findUnique: vi.fn() },
-      memberTeamsData: { update: vi.fn() },
     },
   };
 });
@@ -62,7 +57,6 @@ vi.mock('../../middleware/authMiddleware', () => ({
 }));
 
 const mockAuthorizeUser = vi.mocked(authorizeUser);
-const mockIsUserPartOfTheTeam = vi.mocked(isUserPartOfTheTeam);
 
 const app = express();
 app.use(express.json());
@@ -120,7 +114,6 @@ describe('User Controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setAuth(DEFAULT_ADDRESS);
-    mockIsUserPartOfTheTeam.mockReturnValue(false);
     mockIsStorageConfigured.mockReturnValue(true);
   });
 
@@ -287,48 +280,6 @@ describe('User Controller', () => {
       const response = await putWithImage(DEFAULT_ADDRESS, 'NewName');
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
-    });
-
-    it('updates trader flags when teamId and traderSafeAddress are provided', async () => {
-      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser as any);
-      vi.spyOn(prisma.user, 'update').mockResolvedValue({
-        ...mockUser,
-        traderSafeAddress: '0x3333333333333333333333333333333333333333',
-      } as any);
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
-        members: [{ address: mockUser.address }],
-      } as any);
-      vi.spyOn(prisma.memberTeamsData, 'update').mockResolvedValue({} as any);
-      mockIsUserPartOfTheTeam.mockReturnValue(true);
-
-      const response = await request(app).put(`/${mockUser.address}`).send({
-        name: 'NewName',
-        teamId: '1',
-        traderSafeAddress: '0x3333333333333333333333333333333333333333',
-      });
-
-      expect(response.status).toBe(200);
-      expect(prisma.memberTeamsData.update).toHaveBeenCalled();
-    });
-
-    it('handles missing team data using members fallback', async () => {
-      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser as any);
-      vi.spyOn(prisma.user, 'update').mockResolvedValue({
-        ...mockUser,
-        traderSafeAddress: '0x3333333333333333333333333333333333333333',
-      } as any);
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(undefined as any);
-      mockIsUserPartOfTheTeam.mockReturnValue(false);
-
-      const response = await request(app).put(`/${mockUser.address}`).send({
-        name: 'NewName',
-        teamId: '1',
-        traderSafeAddress: '0x3333333333333333333333333333333333333333',
-      });
-
-      expect(response.status).toBe(200);
-      expect(mockIsUserPartOfTheTeam).toHaveBeenCalledWith([], mockUser.address);
-      expect(prisma.memberTeamsData.update).not.toHaveBeenCalled();
     });
 
     it('returns 500 on update error', async () => {
