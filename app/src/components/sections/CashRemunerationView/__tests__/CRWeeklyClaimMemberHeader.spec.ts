@@ -4,19 +4,10 @@ import CRWeeklyClaimMemberHeader from '../CRWeeklyClaimMemberHeader.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { type Wage } from '@/types'
-import { useGetTeamWagesQuery } from '@/queries'
-import { mockTeamStore, mockUserDataStore } from '@/tests/mocks'
+import { mockTeamStore, mockUserDataStore, queryMocks } from '@/tests/mocks'
 
 const mockWages = ref<Array<Wage> | null>(null)
 const mockWagesError = ref<Error | null>(null)
-
-vi.mock('@/queries', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useGetTeamWagesQuery: vi.fn()
-  }
-})
 
 describe.skip('CRWeeklyClaimMemberHeader', () => {
   beforeEach(() => {
@@ -26,10 +17,10 @@ describe.skip('CRWeeklyClaimMemberHeader', () => {
     mockTeamStore.currentTeamId = '1'
     mockUserDataStore.address.value = '0x1234567890123456789012345678901234567890'
 
-    vi.mocked(useGetTeamWagesQuery).mockReturnValue({
+    vi.spyOn(queryMocks, 'useGetTeamWagesQuery').mockImplementation(() => ({
       data: mockWages,
       error: mockWagesError
-    } as ReturnType<typeof useGetTeamWagesQuery>)
+    }))
   })
 
   it('should show SubmitClaims component when user has wage', () => {

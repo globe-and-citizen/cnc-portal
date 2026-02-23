@@ -3,12 +3,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import ShareholderList from '../../SherTokenView/ShareholderList.vue'
 import { parseEther, parseUnits, type Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
-import {
-  mockInvestorReads,
-  mockTeamStore,
-  mockUserStore,
-  resetContractMocks
-} from '@/tests/mocks'
+import { mockInvestorReads, mockTeamStore, mockUserStore, resetContractMocks } from '@/tests/mocks'
 
 interface ComponentData {
   mintIndividualModal: { mount: boolean; show: boolean }

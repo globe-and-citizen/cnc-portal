@@ -3,8 +3,7 @@ import CashRemunerationPendingClaim from '../CashRemunerationPendingClaim.vue'
 import { shallowMount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { useGetTeamWeeklyClaimsQuery } from '@/queries'
-import { mockToastStore, mockTeamStore } from '@/tests/mocks'
+import { mockToastStore, mockTeamStore, queryMocks } from '@/tests/mocks'
 
 const mockClaims = ref([
   {
@@ -18,24 +17,16 @@ const mockClaims = ref([
 ])
 const mockError = ref<unknown>(null)
 
-vi.mock('@/queries', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useGetTeamWeeklyClaimsQuery: vi.fn()
-  }
-})
-
 describe.skip('CashRemunerationPendingClaim', () => {
   beforeEach(() => {
     mockTeamStore.currentTeamId = '1'
     mockError.value = null
 
-    vi.mocked(useGetTeamWeeklyClaimsQuery).mockReturnValue({
+    vi.spyOn(queryMocks, 'useGetTeamWeeklyClaimsQuery').mockImplementation(() => ({
       data: mockClaims,
       isLoading: ref(false),
       error: mockError
-    } as ReturnType<typeof useGetTeamWeeklyClaimsQuery>)
+    }))
   })
 
   const createComponent = () => {

@@ -3,78 +3,19 @@ import { mount, flushPromises } from '@vue/test-utils'
 import DropdownActions from '../WeeklyClaimActionDropdown.vue'
 import type { Status } from '../WeeklyClaimActionDropdown.vue'
 import { createPinia, setActivePinia } from 'pinia'
-import { useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
-import { ref } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
+import { mockUserStore, mockWagmiCore } from '@/tests/mocks'
 
 // Configure dayjs plugins
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 
-// Mock the dependencies
-vi.mock('viem', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    keccak256: vi.fn()
-  }
-})
 vi.mock('@iconify/vue', () => ({
   Icon: {
     template: '<span>Icon</span>'
-  }
-}))
-
-vi.mock('@/components/ButtonUI.vue', () => ({
-  default: {
-    template: '<button><slot /></button>',
-    props: ['size', 'class']
-  }
-}))
-
-vi.mock('@/utils', () => ({
-  log: {
-    error: vi.fn()
-  },
-  parseError: vi.fn(() => 'Parsed error message')
-}))
-
-vi.mock('@tanstack/vue-query', () => ({
-  useQueryClient: () => ({
-    invalidateQueries: vi.fn()
-  })
-}))
-
-// Mock wagmi core contract interactions to resolve successfully
-vi.mock('@wagmi/core', () => ({
-  simulateContract: vi.fn().mockResolvedValue({}),
-  writeContract: vi.fn().mockResolvedValue('0xhash'),
-  waitForTransactionReceipt: vi.fn().mockResolvedValue({ status: 'success' })
-}))
-
-// Mocks globaux pour les composants enfants
-vi.mock('../CashRemunerationView/CRWithdrawClaim.vue', () => ({
-  default: {
-    name: 'CRWithdrawClaim',
-    template:
-      '<button data-test="withdraw-action" @click="$emit(\'claim-withdrawn\')">Withdraw</button>'
-  }
-}))
-
-vi.mock('../CashRemunerationView/CRSigne.vue', () => ({
-  default: {
-    name: 'CRSigne',
-    template: '<button data-test="sign-action" @click="$emit(\'claim-signed\')">Sign</button>'
-  }
-}))
-
-vi.mock('../CashRemunerationView/WeeklyClaimActionEnable.vue', () => ({
-  default: {
-    name: 'WeeklyClaimActionEnable',
-    template: '<button data-test="enable-action" @click="$emit(\'close\')">Enable</button>'
   }
 }))
 
@@ -120,7 +61,22 @@ describe('DropdownActions', () => {
       global: {
         stubs: {
           IconifyIcon: true,
-          ButtonUI: true
+          ButtonUI: true,
+          CRWithdrawClaim: {
+            name: 'CRWithdrawClaim',
+            template:
+              '<button data-test="withdraw-action" @click="$emit(\'claim-withdrawn\')">Withdraw</button>'
+          },
+          CRSigne: {
+            name: 'CRSigne',
+            props: ['isResign'],
+            template:
+              '<button data-test="sign-action" @click="$emit(\'close\')">{{ isResign ? "Resign" : "Sign" }}</button>'
+          },
+          WeeklyClaimActionEnable: {
+            name: 'WeeklyClaimActionEnable',
+            template: '<button data-test="enable-action" @click="$emit(\'close\')">Enable</button>'
+          }
         }
       }
     })
@@ -129,6 +85,10 @@ describe('DropdownActions', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.useFakeTimers()
+    mockUserStore.address = '0xContractOwner'
+    mockWagmiCore.simulateContract.mockResolvedValue({})
+    mockWagmiCore.writeContract.mockResolvedValue('0xhash')
+    mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
   })
 
   afterEach(() => {
@@ -157,10 +117,6 @@ describe('DropdownActions', () => {
   })
 
   it('closes dropdown after action is selected', async () => {
-    //@ts-expect-error only mocking necessary fields
-    vi.mocked(useUserDataStore).mockReturnValue({
-      address: '0xContractOwner'
-    })
     const wrapper = createWrapper('pending')
     const button = wrapper.findComponent({ name: 'ButtonUI' })
 
@@ -183,10 +139,6 @@ describe('DropdownActions', () => {
   })
 
   it('closes dropdown after withdraw action', async () => {
-    //@ts-expect-error only mocking necessary fileds
-    vi.mocked(useUserDataStore).mockReturnValue({
-      address: '0xContractOwner'
-    })
     const wrapper = createWrapper('signed')
     const button = wrapper.findComponent({ name: 'ButtonUI' })
 
@@ -234,10 +186,6 @@ describe('DropdownActions', () => {
 
   describe('Disabled status', () => {
     it('closes dropdown after enable action', async () => {
-      //@ts-expect-error only mocking necessary fields
-      vi.mocked(useUserDataStore).mockReturnValue({
-        address: '0xContractOwner'
-      })
       const wrapper = createWrapper('disabled')
       const button = wrapper.findComponent({ name: 'ButtonUI' })
       await button.trigger('click')

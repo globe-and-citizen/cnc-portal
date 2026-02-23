@@ -9,9 +9,11 @@ import {
   mockUseSafeSendTransaction,
   mockUseSafeOwnerManagement,
   mockUseSafeDeployment,
-  mockUseClipboard
+  mockUseClipboard,
+  mockUseFetch,
+  mockUseWalletChecks
 } from '@/tests/mocks/composables.mock'
-import { mockGetBalance } from '@/tests/mocks/viem.actions.mock'
+import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
 import { mockRouter } from '@/tests/mocks/router.mock'
 
 /**
@@ -69,7 +71,27 @@ vi.mock('@vueuse/core', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useClipboard: vi.fn(() => mockUseClipboard)
+    useClipboard: vi.fn(() => mockUseClipboard),
+    useFetch: vi.fn((url: string | { value: string }) => {
+      const resolvedUrl = typeof url === 'string' ? url : url.value
+      mockUseFetch.get.url.value = resolvedUrl
+      return {
+        post: () => ({
+          json: () => ({
+            data: mockUseFetch.post.data,
+            execute: mockUseFetch.post.execute,
+            error: mockUseFetch.post.error
+          })
+        }),
+        get: () => ({
+          json: () => ({
+            data: mockUseFetch.get.data,
+            execute: mockUseFetch.get.execute,
+            error: mockUseFetch.get.error
+          })
+        })
+      }
+    })
   }
 })
 
@@ -215,6 +237,17 @@ vi.mock('@/composables/useContractBalance', () => ({
 }))
 
 /**
+ * Mock useWalletChecks composable
+ */
+vi.mock('@/composables', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useWalletChecks: vi.fn(() => mockUseWalletChecks)
+  }
+})
+
+/**
  * Mock useSafeSendTransaction composable
  */
 vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
@@ -243,7 +276,8 @@ vi.mock('viem/actions', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    getBalance: mockGetBalance
+    getBalance: mockGetBalance,
+    getLogs: mockGetLogs
   }
 })
 

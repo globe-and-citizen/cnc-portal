@@ -3,12 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import type { Address } from 'viem'
-import {
-  mockInvestorReads,
-  mockTeamStore,
-  mockToastStore,
-  resetContractMocks
-} from '@/tests/mocks'
+import { mockInvestorReads, mockTeamStore, mockToastStore, resetContractMocks } from '@/tests/mocks'
 
 const DistributeMintActionStub = {
   props: ['tokenSymbol', 'investorsAddress'],

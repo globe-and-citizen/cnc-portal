@@ -142,6 +142,36 @@ export const mockUseClipboard = {
 }
 
 /**
+ * Mock useFetch composable from @vueuse/core
+ */
+export const mockUseFetch = {
+  post: {
+    data: ref<{ accessToken: string | null }>({ accessToken: null }),
+    error: ref<Error | null>(null),
+    execute: vi.fn()
+  },
+  get: {
+    url: ref(''),
+    data: ref<unknown>(null),
+    error: ref<Error | null>(null),
+    execute: vi.fn()
+  }
+}
+
+/**
+ * Mock useWalletChecks composable
+ */
+export const mockUseWalletChecks = {
+  isProcessing: ref(false),
+  isSuccess: ref(false),
+  performChecks: vi.fn(),
+  resetRefs: vi.fn(() => {
+    mockUseWalletChecks.isProcessing.value = false
+    mockUseWalletChecks.isSuccess.value = false
+  })
+}
+
+/**
  * Mock useSafeDeployment composable
  */
 export const mockUseSafeDeployment = {
@@ -253,6 +283,23 @@ export const resetComposableMocks = () => {
   // Reset backend wake mock
   if (vi.isMockFunction(mockUseBackendWake)) {
     mockUseBackendWake.mockClear()
+  }
+
+  mockUseWalletChecks.isProcessing.value = false
+  mockUseWalletChecks.isSuccess.value = false
+  if (vi.isMockFunction(mockUseWalletChecks.performChecks)) {
+    mockUseWalletChecks.performChecks.mockClear()
+  }
+
+  mockUseFetch.post.data.value = { accessToken: null }
+  mockUseFetch.post.error.value = null
+  if (vi.isMockFunction(mockUseFetch.post.execute)) {
+    mockUseFetch.post.execute.mockClear()
+  }
+  mockUseFetch.get.data.value = null
+  mockUseFetch.get.error.value = null
+  if (vi.isMockFunction(mockUseFetch.get.execute)) {
+    mockUseFetch.get.execute.mockClear()
   }
 
   mockUseSafeOwnerManagement.isUpdating.value = false

@@ -11,6 +11,7 @@ export const mockUseReadContract = {
 
 export const mockUseSignTypedData = {
   data: ref('0xSignature'),
+  error: ref<Error | null>(null),
   signTypedDataAsync: vi.fn(() => console.log('signTypedDataAsync mock called...')),
   mutateAsync: vi.fn().mockResolvedValue('0xSignature')
 }
@@ -37,7 +38,9 @@ export const mockWagmiCore = {
   simulateContract: vi.fn(),
   waitForTransactionReceipt: vi.fn(),
   writeContract: vi.fn(),
-  readContract: vi.fn()
+  readContract: vi.fn(),
+  getWalletClient: vi.fn(),
+  getPublicClient: vi.fn()
 }
 
 // Mock useWaitForTransactionReceipt composable
@@ -58,13 +61,31 @@ export const mockUseConnection = {
   isConnected: ref(true)
 }
 
+export const mockUseAccount = {
+  address: ref('0x1234567890123456789012345678901234567890'),
+  isConnected: ref(true)
+}
+
+export const mockUseSignMessage = {
+  data: ref<string | undefined>(undefined),
+  error: ref<Error | null>(null),
+  mutateAsync: vi.fn()
+}
+
+export const mockUseConnect = {
+  mutate: vi.fn(),
+  connectors: [] as unknown,
+  error: ref(null)
+}
+
 // Mock useChainId composable
 export const mockUseChainId = ref(1)
 
 // Mock useSwitchChain composable
 export const mockUseSwitchChain = {
   mutate: vi.fn(),
-  isPending: ref(false)
+  isPending: ref(false),
+  switchChain: vi.fn()
 }
 
 // Mock useConnectionEffect composable

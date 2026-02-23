@@ -3,35 +3,16 @@ import { flushPromises, shallowMount } from '@vue/test-utils'
 import DropdownActions from '../WeeklyClaimActionDropdown.vue'
 import type { Status } from '../WeeklyClaimActionDropdown.vue'
 import { createPinia, setActivePinia } from 'pinia'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
-import { ref } from 'vue'
-import * as mocks from '@/tests/mocks'
+import { mockUseReadContract, mockWagmiCore, mockToastStore, mockUserStore } from '@/tests/mocks'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { useReadContract } from '@wagmi/vue'
-import { simulateContract, waitForTransactionReceipt } from '@wagmi/core'
-import { log } from '@/utils'
 
 // Configure dayjs plugins
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
-
-// Mock the dependencies
-vi.mock('viem', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    keccak256: vi.fn()
-  }
-})
-
-vi.mock('@tanstack/vue-query', () => ({
-  useQueryClient: () => ({
-    invalidateQueries: vi.fn()
-  })
-}))
 
 describe('DropdownActions', () => {
   const MOCK_OWNER_ADDRESS = '0xOwnerAddress'
@@ -117,14 +98,8 @@ describe('DropdownActions', () => {
       expect(wrapper.vm.isOpen).toBe(false)
     })
     it.skip('should handle disable claim properly', async () => {
-      //@ts-expect-error only mocking necessary variables
-      vi.mocked(useReadContract).mockReturnValue({
-        ...mocks.mockUseReadContract,
-        data: ref('0xUserAddress')
-      })
-
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
+      mockUseReadContract.data.value = '0xUserAddress'
+      mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({
         status: 'success'
       })
 
@@ -135,17 +110,14 @@ describe('DropdownActions', () => {
       await wrapper.vm.disableClaim()
 
       // Should show update claim status error
-      expect(mocks.mockWagmiCore.writeContract).toBeCalled()
+      expect(mockWagmiCore.writeContract).toBeCalled()
       //@ts-expect-error not visible on wrapper
       expect(wrapper.vm.weeklyClaimSyncUrl).toBe('/weeklyclaim/sync/?teamId=1')
-      expect(mocks.mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim disabled')
+      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim disabled')
     })
 
     it.skip('closes dropdown after action is selected', async () => {
-      //@ts-expect-error only mocking necessary fields
-      vi.mocked(useUserDataStore).mockReturnValue({
-        address: '0xContractOwner'
-      })
+      mockUserStore.address = '0xContractOwner'
       const wrapper = createWrapper('pending')
       const button = wrapper.findComponent({ name: 'ButtonUI' })
 
@@ -167,10 +139,7 @@ describe('DropdownActions', () => {
     })
 
     it('closes dropdown after withdraw action', async () => {
-      //@ts-expect-error only mocking necessary fileds
-      vi.mocked(useUserDataStore).mockReturnValue({
-        address: '0xContractOwner'
-      })
+      mockUserStore.address = '0xContractOwner'
       const wrapper = createWrapper('signed')
       const button = wrapper.findComponent({ name: 'ButtonUI' })
 

@@ -198,9 +198,15 @@ describe('DividendsBalancesSection.vue', () => {
 
     const wrapper = createWrapper()
     await wrapper.vm.$nextTick()
-    const rows = (wrapper.vm as unknown as {
-      tableRows: Array<{ rank: number; token: { symbol: string }; values: { USD?: { formated: string } } }>
-    }).tableRows
+    const rows = (
+      wrapper.vm as unknown as {
+        tableRows: Array<{
+          rank: number
+          token: { symbol: string }
+          values: { USD?: { formated: string } }
+        }>
+      }
+    ).tableRows
 
     expect(rows[0]?.rank).toBe(1)
     expect(rows[0]?.token.symbol).toBe('ETH')
@@ -261,9 +267,11 @@ describe('DividendsBalancesSection.vue', () => {
 
     const wrapper = createWrapper()
     await wrapper.vm.$nextTick()
-    const rows = (wrapper.vm as unknown as {
-      tableRows: Array<{ icon: string | null; name?: string }>
-    }).tableRows
+    const rows = (
+      wrapper.vm as unknown as {
+        tableRows: Array<{ icon: string | null; name?: string }>
+      }
+    ).tableRows
 
     expect(rows[0]?.icon).toBeNull()
     expect(rows[0]?.name).toBe('FooToken')

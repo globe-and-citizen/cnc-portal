@@ -1,9 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useSiwe } from '@/composables/useSiwe'
 import { setActivePinia, createPinia } from 'pinia'
-import { ref, type Ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import * as utils from '@/utils'
+import {
+  mockUseFetch,
+  mockUseWalletChecks,
+  mockUseSignMessage,
+  mockUseConnect,
+  mockUseChainId,
+  mockToastStore
+} from '@/tests/mocks'
 
 const mocks = vi.hoisted(() => ({
   mockSlSiweMessageCreator: {
@@ -15,104 +22,12 @@ const mocks = vi.hoisted(() => ({
     setAuthStatus: vi.fn()
   },
   mockHasInstalledWallet: vi.fn(),
-  mockUseToastStore: {
-    addErrorToast: vi.fn()
-  },
-  mockUseChainId: vi.fn(() => ref(123)),
   mockSiwe: {
     mockSiweMessage: vi.fn(),
     mockConstructor: vi.fn(),
     mockPrepareMessage: vi.fn(() => 'Siwe message')
   }
 }))
-const mockUseAccount = {
-  address: ref('0xUserAddress'),
-  isConnected: ref(true)
-}
-
-const mockUseSignMessage = {
-  data: ref<string | undefined>(undefined),
-  error: ref<null | Error>(null),
-  signMessageAsync: vi.fn()
-}
-
-const mockUseConnect = {
-  mutate: vi.fn(),
-  connectors: [] as unknown,
-  error: ref(null)
-}
-
-const mockUseSwitchChain = {
-  switchChain: vi.fn()
-}
-
-const mockUseFetch = {
-  post: {
-    error: ref<null | Error>(null),
-    execute: vi.fn(),
-    data: ref<{ accessToken: string | null }>({ accessToken: null })
-  },
-  get: {
-    url: '',
-    data: ref<unknown>(null),
-    execute: vi.fn(),
-    error: ref<null | Error>(null)
-  }
-}
-
-vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useFetch: vi.fn((url: Ref<string>) => {
-      mockUseFetch.get.url = url.value
-      return {
-        post: () => ({
-          json: () => ({
-            data: mockUseFetch.post.data,
-            execute: mockUseFetch.post.execute,
-            error: mockUseFetch.post.error
-          })
-        }),
-        get: () => ({
-          json: () => ({
-            data: mockUseFetch.get.data,
-            execute: mockUseFetch.get.execute,
-            error: mockUseFetch.get.error
-          })
-        })
-      }
-    })
-  }
-})
-
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useAccount: vi.fn(() => mockUseAccount),
-    useSignMessage: vi.fn(() => mockUseSignMessage),
-    useConnect: vi.fn(() => mockUseConnect),
-    useConnection: vi.fn(() => ({
-      address: mockUseAccount.address,
-      chainId: ref(123),
-      isConnected: mockUseAccount.isConnected
-    })),
-    useSwitchChain: vi.fn(() => mockUseSwitchChain),
-    useChainId: mocks.mockUseChainId
-  }
-})
-
-vi.mock('siwe', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  const SiweMessage = mocks.mockSiwe.mockSiweMessage
-  SiweMessage.prototype.constructor = mocks.mockSiwe.mockConstructor
-  SiweMessage.prototype.prepareMessage = mocks.mockSiwe.mockPrepareMessage
-  return {
-    ...actual,
-    SiweMessage
-  }
-})
 
 // vi.mock('@/stores/user', async (importOriginal) => {
 //   const actual: object = await importOriginal()
@@ -126,26 +41,13 @@ vi.mock('siwe', async (importOriginal) => {
 //   }
 // })
 
-const mockUseWalletChecks = {
-  isProcessing: ref(false),
-  performChecks: vi.fn(),
-  isSuccess: ref(false),
-  resetRefs: vi.fn(() => {
-    mockUseWalletChecks.isProcessing.value = false
-    mockUseWalletChecks.isSuccess.value = false
-  })
-}
-
-vi.mock('@/composables/useWalletChecks', () => ({
-  useWalletChecks: vi.fn(() => mockUseWalletChecks)
-}))
-
 describe('useSiwe', () => {
   const logErrorSpy = vi.spyOn(utils.log, 'error')
   const logInfoSpy = vi.spyOn(utils.log, 'info')
   beforeEach(() => {
     setActivePinia(createPinia())
     mockUseConnect.connectors = [{ name: 'MetaMask', getChainId: () => 31137 }]
+    mockUseChainId.value = 123
     mockUseWalletChecks.performChecks.mockImplementation(() => true)
     mockUseWalletChecks.performChecks.mockImplementation(
       () => (mockUseWalletChecks.isSuccess.value = true)
@@ -158,7 +60,7 @@ describe('useSiwe', () => {
   })
   it.skip('should return the correct data', async () => {
     mocks.mockSlSiweMessageCreator.create.mockImplementation(() => 'Siwe message')
-    mockUseSignMessage.signMessageAsync.mockImplementation(
+    mockUseSignMessage.mutateAsync.mockImplementation(
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
     // mocks.mockHasInstalledWallet.mockImplementation(() => true)
@@ -182,41 +84,41 @@ describe('useSiwe', () => {
       domain: 'http://localhost:3000',
       uri: 'http://localhost:3000'
     })
-    expect(mockUseSignMessage.signMessageAsync).toBeCalledWith({ message: 'Siwe message' })
+    expect(mockUseSignMessage.mutateAsync).toBeCalledWith({ message: 'Siwe message' })
     await flushPromises()
   })
   it.skip('should display error when signature error', async () => {
-    mockUseSignMessage.signMessageAsync.mockImplementation(
+    mockUseSignMessage.mutateAsync.mockImplementation(
       () => (mockUseSignMessage.error.value = new Error('Sign message error'))
     )
     const { isProcessing, siwe } = useSiwe()
     await siwe()
     await flushPromises()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+    expect(mockToastStore.addErrorToast).toBeCalledWith(
       'Something went wrong: Unable to sign SIWE message'
     )
     expect(isProcessing.value).toBe(false)
     expect(logErrorSpy).toBeCalledWith('signMessageError.value', new Error('Sign message error'))
     mockUseSignMessage.error.value = null
-    mockUseSignMessage.signMessageAsync.mockReset()
-    mocks.mockUseToastStore.addErrorToast.mockClear()
+    mockUseSignMessage.mutateAsync.mockReset()
+    mockToastStore.addErrorToast.mockClear()
     logErrorSpy.mockClear()
     const error = new Error('A new sign error')
     error.name = 'UserRejectedRequestError'
-    mockUseSignMessage.signMessageAsync.mockImplementation(
+    mockUseSignMessage.mutateAsync.mockImplementation(
       () => (mockUseSignMessage.error.value = error)
     )
     await siwe()
     await flushPromises()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
+    expect(mockToastStore.addErrorToast).toBeCalledWith(
       'Message sign rejected: You need to sign the message to Sign in the CNC Portal'
     )
     expect(isProcessing.value).toBe(false)
     expect(logErrorSpy).toBeCalledWith('signMessageError.value', error)
   })
   it.skip('should notify error if error posting siwe data', async () => {
-    mockUseSignMessage.signMessageAsync.mockReset()
-    mockUseSignMessage.signMessageAsync.mockImplementation(
+    mockUseSignMessage.mutateAsync.mockReset()
+    mockUseSignMessage.mutateAsync.mockImplementation(
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
 
@@ -227,7 +129,7 @@ describe('useSiwe', () => {
     await siwe()
     await flushPromises()
     expect(mockUseFetch.post.execute).toBeCalled()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Unable to authenticate with SIWE')
+    expect(mockToastStore.addErrorToast).toBeCalledWith('Unable to authenticate with SIWE')
     expect(isProcessing.value).toBe(false)
     expect(logInfoSpy).toBeCalledWith('siweError.value', new Error('Error posting auth data'))
   })
@@ -241,7 +143,7 @@ describe('useSiwe', () => {
     await siwe()
     await flushPromises()
     expect(logInfoSpy).toBeCalledWith('fetchError.value', new Error('Error getting data'))
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Unable to fetch nonce')
+    expect(mockToastStore.addErrorToast).toBeCalledWith('Unable to fetch nonce')
     expect(isProcessing.value).toBe(false)
   })
   it('should update isProcessing to false if checks failed', async () => {
@@ -253,49 +155,47 @@ describe('useSiwe', () => {
     expect(isProcessing.value).toBe(false)
   })
   it.skip('should handle missing authentication token', async () => {
-    mockCustomFetch.get.execute.mockImplementation(() => {
-      mockCustomFetch.get.data.value = { nonce: 'xyz' }
+    mockUseFetch.get.execute.mockImplementation(() => {
+      mockUseFetch.get.data.value = { nonce: 'xyz' }
     })
-    mockUseSignMessage.signMessageAsync.mockImplementation(
+    mockUseSignMessage.mutateAsync.mockImplementation(
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
     // Mock failed token fetch
-    mockCustomFetch.post.execute.mockImplementation(() => {
-      mockCustomFetch.post.data.value = { accessToken: null }
+    mockUseFetch.post.execute.mockImplementation(() => {
+      mockUseFetch.post.data.value = { accessToken: null }
     })
     const { isProcessing, siwe } = useSiwe()
     await siwe()
     await flushPromises()
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith(
-      'Failed to get authentication token'
-    )
+    expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to get authentication token')
     expect(isProcessing.value).toBe(false)
   })
   it.skip('should handle missing user data', async () => {
     console.log('Mock Imple')
-    mockCustomFetch.get.execute.mockImplementation(() => {
-      mockCustomFetch.get.data.value = { nonce: 'xyz' }
+    mockUseFetch.get.execute.mockImplementation(() => {
+      mockUseFetch.get.data.value = { nonce: 'xyz' }
     })
-    mockUseSignMessage.signMessageAsync.mockImplementation(
+    mockUseSignMessage.mutateAsync.mockImplementation(
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
-    mockCustomFetch.post.execute.mockImplementation(() => {
-      mockCustomFetch.post.data.value = { accessToken: 'valid-token' }
+    mockUseFetch.post.execute.mockImplementation(() => {
+      mockUseFetch.post.data.value = { accessToken: 'valid-token' }
     })
     console.log('Mock Imple 2')
-    mockCustomFetch.get.execute
+    mockUseFetch.get.execute
       .mockImplementationOnce(() => {
-        mockCustomFetch.get.data.value = { nonce: 'xyz' }
+        mockUseFetch.get.data.value = { nonce: 'xyz' }
       })
       .mockImplementationOnce(() => {
-        mockCustomFetch.get.data.value = null
+        mockUseFetch.get.data.value = null
       })
     const { isProcessing, siwe } = useSiwe()
     console.log('Mock Imple 3')
     await siwe()
     await flushPromises()
     console.log("Mock Imple '")
-    expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Failed to fetch user data')
+    expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to fetch user data')
     expect(isProcessing.value).toBe(false)
   })
 })
