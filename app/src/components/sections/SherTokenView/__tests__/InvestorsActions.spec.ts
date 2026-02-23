@@ -1,17 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import { mount } from '@vue/test-utils'
-import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { parseEther, type Address } from 'viem'
 import ModalComponent from '@/components/ModalComponent.vue'
-// import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { mockToastStore } from '@/tests/mocks/store.mock'
+import {
+  mockUseWriteContract,
+} from '@/tests/mocks/wagmi.vue.mock'
 import type { Team } from '@/types/team'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
 import { mainnet } from 'viem/chains'
-// vi.mock('@/stores/useToastStore')
+
 const wagmiConfig = createConfig({
   chains: [mainnet],
   transports: {
@@ -23,50 +24,6 @@ vi.mock('@/stores/user')
 
 const { addErrorToast, addSuccessToast } = mockToastStore
 
-const mockUseReadContract = {
-  data: ref<string | null>(null),
-  isLoading: ref(false),
-  error: ref(null),
-  refetch: vi.fn()
-}
-
-const mockUseWriteContract = {
-  writeContract: vi.fn(),
-  error: ref(null),
-  isPending: ref(false),
-  data: ref(null)
-}
-
-const mockUseWaitForTransactionReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  data: ref(undefined),
-  error: ref(null)
-}
-const mockUseSendTransaction = {
-  isPending: ref(false),
-  error: ref(false),
-  data: ref<string>(''),
-  sendTransaction: vi.fn()
-}
-const mockUseBalance = {
-  data: ref<bigint | null>(parseEther('100')),
-  isLoading: ref(false),
-  error: ref(null),
-  refetch: vi.fn()
-}
-// Mocking wagmi functions
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useReadContract: vi.fn(() => mockUseReadContract),
-    useWriteContract: vi.fn(() => mockUseWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
-    useSendTransaction: vi.fn(() => mockUseSendTransaction),
-    useBalance: vi.fn(() => mockUseBalance)
-  }
-})
 
 interface ComponentData {
   distributeMintModal: boolean

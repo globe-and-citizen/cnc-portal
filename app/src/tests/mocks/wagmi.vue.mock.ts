@@ -73,6 +73,22 @@ export const mockUseConnectionEffect = vi.fn()
 // Mock useWatchContractEvent composable
 export const mockUseWatchContractEvent = vi.fn()
 
+// Mock useBalance composable
+export const mockUseBalance = {
+  data: ref<bigint | null>(null),
+  isLoading: ref(false),
+  error: ref(null),
+  refetch: vi.fn()
+}
+
+// Mock useSendTransaction composable
+export const mockUseSendTransaction = {
+  isPending: ref(false),
+  error: ref(null),
+  data: ref<string>(''),
+  sendTransaction: vi.fn()
+}
+
 // Mock wagmi config and transport functions
 export const mockHttp = vi.fn().mockReturnValue('mocked-http-transport')
 export const mockCreateConfig = vi.fn((config) => ({

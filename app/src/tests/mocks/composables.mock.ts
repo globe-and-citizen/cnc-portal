@@ -141,6 +141,69 @@ export const mockUseSafeDeployment = {
 }
 
 /**
+ * Mock useGetDividendBalances composable
+ */
+export const mockUseGetDividendBalances = {
+  data: ref([]),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
+ * Mock useClaimDividend composable (for native token claims)
+ */
+export const mockUseClaimDividend = {
+  claimWrite: vi.fn(),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
+ * Mock useClaimTokenDividend composable (for token claims)
+ */
+export const mockUseClaimTokenDividend = {
+  tokenClaimWrite: vi.fn(),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
+ * Mock useDepositDividends composable
+ */
+export const mockUseDepositDividends = {
+  depositWrite: vi.fn(),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
+ * Mock useDepositTokenDividends composable
+ */
+export const mockUseDepositTokenDividends = {
+  tokenDepositWrite: vi.fn(),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
+ * Mock useBodAddAction composable
+ */
+export const mockUseBodAddAction = {
+  addActionWrite: vi.fn(),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
+ * Mock useBodIsBodAction composable
+ */
+export const mockUseBodIsBodAction = {
+  isBod: ref(false),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
  * Reset function for composable mocks
  */
 export const resetComposableMocks = () => {
@@ -198,6 +261,45 @@ export const resetComposableMocks = () => {
   if (vi.isMockFunction(mockUseSafeDeployment.deploySafe)) {
     mockUseSafeDeployment.deploySafe.mockClear()
   }
+
+  // Reset dividend-related composables
+  mockUseGetDividendBalances.data.value = []
+  mockUseGetDividendBalances.isLoading.value = false
+  mockUseGetDividendBalances.error.value = null
+
+  mockUseClaimDividend.isLoading.value = false
+  mockUseClaimDividend.error.value = null
+  if (vi.isMockFunction(mockUseClaimDividend.claimWrite)) {
+    mockUseClaimDividend.claimWrite.mockClear()
+  }
+
+  mockUseClaimTokenDividend.isLoading.value = false
+  mockUseClaimTokenDividend.error.value = null
+  if (vi.isMockFunction(mockUseClaimTokenDividend.tokenClaimWrite)) {
+    mockUseClaimTokenDividend.tokenClaimWrite.mockClear()
+  }
+
+  mockUseDepositDividends.isLoading.value = false
+  mockUseDepositDividends.error.value = null
+  if (vi.isMockFunction(mockUseDepositDividends.depositWrite)) {
+    mockUseDepositDividends.depositWrite.mockClear()
+  }
+
+  mockUseDepositTokenDividends.isLoading.value = false
+  mockUseDepositTokenDividends.error.value = null
+  if (vi.isMockFunction(mockUseDepositTokenDividends.tokenDepositWrite)) {
+    mockUseDepositTokenDividends.tokenDepositWrite.mockClear()
+  }
+
+  mockUseBodAddAction.isLoading.value = false
+  mockUseBodAddAction.error.value = null
+  if (vi.isMockFunction(mockUseBodAddAction.addActionWrite)) {
+    mockUseBodAddAction.addActionWrite.mockClear()
+  }
+
+  mockUseBodIsBodAction.isBod.value = false
+  mockUseBodIsBodAction.isLoading.value = false
+  mockUseBodIsBodAction.error.value = null
 }
 
 // Keep for backwards compatibility

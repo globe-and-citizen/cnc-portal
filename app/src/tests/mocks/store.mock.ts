@@ -51,6 +51,17 @@ export const mockUserStore = {
   setAuthStatus: vi.fn()
 }
 
+/**
+ * Mock useUserDataStore - for tracking current user address
+ */
+export const mockUserDataStore = {
+  address: ref('0xUSER1'),
+  name: ref('Test User'),
+  setAddress: vi.fn(),
+  setUserData: vi.fn(),
+  clear: vi.fn()
+}
+
 export const mockUseCurrencyStore = () => ({
   localCurrency: ref({
     code: 'USD',
