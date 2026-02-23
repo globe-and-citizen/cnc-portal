@@ -38,8 +38,6 @@ export const getPublicClient = (chainId = NETWORK.chainId) =>
 const POLYGON_NETWORK = {
   chainId: 137,
   name: 'polygon',
-  // Polymarket SDK typically doesn't need ensAddress on Polygon,
-  // but we include it as undefined for type compliance.
   ensAddress: undefined
 }
 
