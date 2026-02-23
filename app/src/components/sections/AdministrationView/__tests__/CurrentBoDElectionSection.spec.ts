@@ -13,36 +13,15 @@ import { simulateContract, writeContract, waitForTransactionReceipt } from '@wag
 
 // Mock dependencies
 
-const { useBoDElections: mockUseBoDElectionsImpl, useCustomFetch: mockUseCustomFetchImpl } =
-  vi.hoisted(() => ({
-    useBoDElections: vi.fn(() => ({
-      electionsAddress: { value: '0x789' },
-      formattedElection: { value: null }
-    })),
-    useCustomFetch: vi.fn((/* url, options */) => {
-      const execute = vi.fn().mockResolvedValue({})
-      const error = { value: null }
-
-      // Create an object that matches the chaining pattern
-      const mockInstance = {
-        data: { value: null },
-        isFetching: { value: false },
-        error,
-        execute,
-        post: () => mockInstance,
-        json: () => mockInstance
-      }
-
-      return mockInstance
-    })
+const { useBoDElections: mockUseBoDElectionsImpl } = vi.hoisted(() => ({
+  useBoDElections: vi.fn(() => ({
+    electionsAddress: { value: '0x789' },
+    formattedElection: { value: null }
   }))
+}))
 
 vi.mock('@/composables/elections', () => ({
   useBoDElections: mockUseBoDElectionsImpl
-}))
-
-vi.mock('@/composables', () => ({
-  useCustomFetch: mockUseCustomFetchImpl
 }))
 
 vi.mock('@wagmi/core', () => ({
@@ -67,7 +46,6 @@ describe('ElectionComponent', () => {
   let mockUseBoDElections: Mock<
     () => { electionsAddress: { value: string }; formattedElection: { value: null } }
   >
-  // let mockUseCustomFetch
 
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -82,11 +60,6 @@ describe('ElectionComponent', () => {
       electionsAddress: { value: '0x789' },
       formattedElection: { value: null }
     })
-
-    // mockUseCustomFetch.mockReturnValue({
-    //   error: { value: null },
-    //   execute: vi.fn().mockResolvedValue({})
-    // })
 
     // vi.mocked(useToastStore).mockImplementation(() => mockToastStore)
   })

@@ -46,6 +46,46 @@ const mockUseSwitchChain = {
   switchChain: vi.fn()
 }
 
+const mockUseFetch = {
+  post: {
+    error: ref<null | Error>(null),
+    execute: vi.fn(),
+    data: ref<{ accessToken: string | null }>({ accessToken: null })
+  },
+  get: {
+    url: '',
+    data: ref<unknown>(null),
+    execute: vi.fn(),
+    error: ref<null | Error>(null)
+  }
+}
+
+vi.mock('@vueuse/core', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useFetch: vi.fn((url: Ref<string>) => {
+      mockUseFetch.get.url = url.value
+      return {
+        post: () => ({
+          json: () => ({
+            data: mockUseFetch.post.data,
+            execute: mockUseFetch.post.execute,
+            error: mockUseFetch.post.error
+          })
+        }),
+        get: () => ({
+          json: () => ({
+            data: mockUseFetch.get.data,
+            execute: mockUseFetch.get.execute,
+            error: mockUseFetch.get.error
+          })
+        })
+      }
+    })
+  }
+})
+
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
@@ -100,52 +140,6 @@ vi.mock('@/composables/useWalletChecks', () => ({
   useWalletChecks: vi.fn(() => mockUseWalletChecks)
 }))
 
-const mockCustomFetch = {
-  post: {
-    error: ref<null | Error>(null),
-    execute: vi.fn(),
-    data: ref<{ accessToken: string | null }>({ accessToken: null })
-  },
-  get: {
-    url: '',
-    data: ref<unknown>(null),
-    execute: vi.fn(),
-    error: ref<null | Error>(null)
-  }
-}
-
-vi.mock('@/composables/useCustomFetch', () => ({
-  useCustomFetch: vi.fn((url: Ref<string>) => {
-    mockCustomFetch.get.url = url.value
-    return {
-      // json: () => ({
-      //   data: ref(null),
-      //   execute: vi.fn(),
-      //   error: ref(null)
-      // }),
-      // put: () => ({
-      //   json: () => ({
-      //     execute: vi.fn()
-      //   })
-      // }),
-      get: () => ({
-        json: () => ({
-          data: mockCustomFetch.get.data,
-          execute: mockCustomFetch.get.execute,
-          error: mockCustomFetch.get.error
-        })
-      })
-      // post: () => ({
-      //   json: () => ({
-      //     data: mockCustomFetch.post.data,
-      //     execute: mockCustomFetch.post.execute,
-      //     error: mockCustomFetch.post.error
-      //   })
-      // })
-    }
-  })
-}))
-
 describe('useSiwe', () => {
   const logErrorSpy = vi.spyOn(utils.log, 'error')
   const logInfoSpy = vi.spyOn(utils.log, 'info')
@@ -168,9 +162,9 @@ describe('useSiwe', () => {
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
     // mocks.mockHasInstalledWallet.mockImplementation(() => true)
-    mockCustomFetch.get.execute.mockImplementation(
+    mockUseFetch.get.execute.mockImplementation(
       () =>
-        (mockCustomFetch.get.data.value = {
+        (mockUseFetch.get.data.value = {
           name: 'User Name',
           address: '0xUserAddress',
           nonce: 'xyz' //'41vj7bz5Ow8oT5xaE'
@@ -226,22 +220,22 @@ describe('useSiwe', () => {
       () => (mockUseSignMessage.data.value = '0xSignature')
     )
 
-    mockCustomFetch.post.execute.mockImplementation(() => {
-      mockCustomFetch.post.error.value = new Error('Error posting auth data')
+    mockUseFetch.post.execute.mockImplementation(() => {
+      mockUseFetch.post.error.value = new Error('Error posting auth data')
     })
     const { isProcessing, siwe } = useSiwe()
     await siwe()
     await flushPromises()
-    expect(mockCustomFetch.post.execute).toBeCalled()
+    expect(mockUseFetch.post.execute).toBeCalled()
     expect(mocks.mockUseToastStore.addErrorToast).toBeCalledWith('Unable to authenticate with SIWE')
     expect(isProcessing.value).toBe(false)
     expect(logInfoSpy).toBeCalledWith('siweError.value', new Error('Error posting auth data'))
   })
   it.skip('should notify error if fetch nonce error', async () => {
-    mockCustomFetch.get.execute.mockReset()
-    mockCustomFetch.get.data.value = null
-    mockCustomFetch.get.execute.mockImplementation(() => {
-      mockCustomFetch.get.error.value = new Error('Error getting data')
+    mockUseFetch.get.execute.mockReset()
+    mockUseFetch.get.data.value = null
+    mockUseFetch.get.execute.mockImplementation(() => {
+      mockUseFetch.get.error.value = new Error('Error getting data')
     })
     const { isProcessing, siwe } = useSiwe()
     await siwe()

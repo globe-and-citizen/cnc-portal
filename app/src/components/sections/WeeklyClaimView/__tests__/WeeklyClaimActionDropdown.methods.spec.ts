@@ -27,23 +27,6 @@ vi.mock('viem', async (importOriginal) => {
   }
 })
 
-vi.mock('@/composables', () => ({
-  useCustomFetch: vi.fn(() => ({
-    put: () => ({
-      json: () => ({
-        execute: vi.fn().mockResolvedValue({}),
-        error: ref(null)
-      })
-    }),
-    post: () => ({
-      json: () => ({
-        execute: vi.fn().mockResolvedValue({}),
-        error: ref(null)
-      })
-    })
-  }))
-}))
-
 vi.mock('@tanstack/vue-query', () => ({
   useQueryClient: () => ({
     invalidateQueries: vi.fn()
@@ -156,91 +139,6 @@ describe('DropdownActions', () => {
       //@ts-expect-error not visible on wrapper
       expect(wrapper.vm.weeklyClaimSyncUrl).toBe('/weeklyclaim/sync/?teamId=1')
       expect(mocks.mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim disabled')
-    })
-
-    it.skip('should handle disable claim errors properly', async () => {
-      const { useCustomFetch } = await import('@/composables')
-
-      //@ts-expect-error only mocking required values
-      vi.mocked(useCustomFetch).mockReturnValue({
-        post: vi.fn().mockReturnThis(),
-        json: vi.fn().mockReturnValue({
-          execute: vi.fn().mockResolvedValue({}),
-          error: ref(new Error('Update failed'))
-        })
-      })
-
-      //@ts-expect-error only mocking nnecessary values
-      vi.mocked(useTeamStore).mockReturnValue({
-        ...mocks.mockTeamStore,
-        getContractAddressByType: vi.fn(() => undefined)
-      })
-
-      //@ts-expect-error only mocking necessary variables
-      vi.mocked(useReadContract).mockReturnValue({
-        ...mocks.mockUseReadContract,
-        data: ref('0xUserAddress')
-      })
-
-      let wrapper = createWrapper('signed')
-
-      //@ts-expect-error not visible on wrapper
-      await wrapper.vm.disableClaim()
-
-      //@ts-expect-error not visible on wrapper
-      expect(wrapper.vm.isLoading).toBeFalsy()
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith(
-        'Cash Remuneration EIP712 contract address not found'
-      )
-
-      vi.mocked(useTeamStore).mockRestore()
-
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
-        status: 'success'
-      })
-      await flushPromises()
-
-      const logError = vi.spyOn(log, 'error')
-
-      wrapper = createWrapper('signed')
-
-      //@ts-expect-error not visible on wrapper
-      await wrapper.vm.disableClaim()
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith('Failed to update Claim status')
-
-      vi.mocked(useToastStore).mockClear()
-      vi.mocked(useCustomFetch).mockRestore()
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
-        status: 'reverted'
-      })
-
-      wrapper = createWrapper('signed')
-
-      //@ts-expect-error not visible on wrapper
-      await wrapper.vm.disableClaim()
-
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith(
-        'Transaction failed: Failed to disable claim'
-      )
-
-      vi.mocked(useToastStore).mockClear()
-      vi.mocked(useCustomFetch).mockRestore()
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
-        status: 'success'
-      })
-      const simulateError = new Error('Simulate error')
-      vi.mocked(simulateContract).mockRejectedValue(simulateError)
-
-      wrapper = createWrapper('signed')
-
-      //@ts-expect-error not visible on wrapper
-      await wrapper.vm.disableClaim()
-
-      expect(logError).toBeCalledWith('Disable error', simulateError)
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith('Parsed error message')
     })
 
     it.skip('closes dropdown after action is selected', async () => {

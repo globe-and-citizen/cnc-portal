@@ -42,23 +42,6 @@ vi.mock('@/utils', () => ({
   parseError: vi.fn(() => 'Parsed error message')
 }))
 
-vi.mock('@/composables', () => ({
-  useCustomFetch: vi.fn(() => ({
-    put: () => ({
-      json: () => ({
-        execute: vi.fn().mockResolvedValue({}),
-        error: ref(null)
-      })
-    }),
-    post: () => ({
-      json: () => ({
-        execute: vi.fn().mockResolvedValue({}),
-        error: ref(null)
-      })
-    })
-  }))
-}))
-
 vi.mock('@tanstack/vue-query', () => ({
   useQueryClient: () => ({
     invalidateQueries: vi.fn()

@@ -151,12 +151,6 @@ vi.mock('viem', async (importOriginal) => {
   }
 })
 
-vi.mock('@/composables/useCustomFetch', () => {
-  return {
-    useCustomFetch: vi.fn()
-  }
-})
-
 vi.mock('@/queries', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {

@@ -4,47 +4,37 @@ import CRWeeklyClaimMemberHeader from '../CRWeeklyClaimMemberHeader.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { type Wage } from '@/types'
+import { useGetTeamWagesQuery } from '@/queries'
+import { mockTeamStore, mockUserDataStore } from '@/tests/mocks'
 
-// Mock the custom fetch hook
-const mockFetchData = ref<Array<Wage> | null>(null)
-const mockFetchError = ref<Error | null>(null)
+const mockWages = ref<Array<Wage> | null>(null)
+const mockWagesError = ref<Error | null>(null)
 
-const mocks = vi.hoisted(() => ({
-  mockUseCustomFetch: vi.fn(() => ({
-    get: vi.fn().mockReturnValue({
-      json: vi.fn().mockReturnValue({
-        data: mockFetchData,
-        error: mockFetchError
-      })
-    })
-  })),
-  mockUseUserDataStore: vi.fn(() => ({
-    address: '0x1234567890123456789012345678901234567890'
-  })),
-  mockUseTeamStore: vi.fn(() => ({
-    currentTeam: {
-      id: 1
-    }
-  })),
-  mockUseToastStore: vi.fn(() => ({
-    addErrorToast: vi.fn()
-  }))
-}))
-
-vi.mock('@/composables/useCustomFetch', () => ({
-  useCustomFetch: mocks.mockUseCustomFetch
-}))
+vi.mock('@/queries', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useGetTeamWagesQuery: vi.fn()
+  }
+})
 
 describe.skip('CRWeeklyClaimMemberHeader', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFetchData.value = null
-    mockFetchError.value = null
+    mockWages.value = null
+    mockWagesError.value = null
+    mockTeamStore.currentTeamId = '1'
+    mockUserDataStore.address.value = '0x1234567890123456789012345678901234567890'
+
+    vi.mocked(useGetTeamWagesQuery).mockReturnValue({
+      data: mockWages,
+      error: mockWagesError
+    } as ReturnType<typeof useGetTeamWagesQuery>)
   })
 
   it('should show SubmitClaims component when user has wage', () => {
     // Mock user has wage
-    mockFetchData.value = [
+    mockWages.value = [
       {
         userAddress: '0x1234567890123456789012345678901234567890',
         maximumHoursPerWeek: 40,
@@ -81,7 +71,7 @@ describe.skip('CRWeeklyClaimMemberHeader', () => {
 
   it('should show disabled button with tooltip when user has no wage', () => {
     // Mock user has no wage
-    mockFetchData.value = []
+    mockWages.value = []
 
     const wrapper = mount(CRWeeklyClaimMemberHeader, {
       global: {
@@ -107,7 +97,7 @@ describe.skip('CRWeeklyClaimMemberHeader', () => {
 
   it('should show disabled button with tooltip when user address is not in wage data', () => {
     // Mock user address not in wage data
-    mockFetchData.value = [
+    mockWages.value = [
       {
         userAddress: '0x9876543210987654321098765432109876543210',
         maximumHoursPerWeek: 40,

@@ -39,28 +39,6 @@ describe('AddCampaignService (wagmi)', () => {
     vi.resetAllMocks()
   })
 
-  it.skip('createAdCampaignManager - deploys contract and calls API', async () => {
-    const post = vi.fn().mockReturnValue({ json: vi.fn() })
-    ;(useCustomFetch as unknown as Mock).mockReturnValue({ post })
-    ;(getWalletClient as Mock).mockResolvedValue({
-      deployContract: vi.fn().mockResolvedValue(hash),
-      account: { address: deployer }
-    })
-    ;(waitForTransactionReceipt as Mock).mockResolvedValue(fakeReceipt)
-
-    const result = await service.createAdCampaignManager('0xBank', '0.01', '0.02', deployer, teamId)
-
-    expect(result).toBe(fakeReceipt.contractAddress)
-    expect(post).toHaveBeenCalledWith({
-      teamContract: {
-        address: fakeReceipt.contractAddress,
-        type: 'Campaign',
-        deployer,
-        admins: [deployer]
-      }
-    })
-  })
-
   it('addAdmin - sends tx and waits for receipt', async () => {
     ;(writeContract as Mock).mockResolvedValue(hash)
     ;(waitForTransactionReceipt as Mock).mockResolvedValue({ status: 'success' })
