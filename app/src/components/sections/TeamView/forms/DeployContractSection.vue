@@ -24,7 +24,7 @@ import { computed, onMounted } from 'vue'
 import { useSafeDeployment } from '@/composables/safe'
 import { useOfficerDeployment } from '@/composables/contracts'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
-import { useSyncContractsMutation } from '@/queries/contract.queries'
+import { useSyncContractsMutation, useCreateContractMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 
 const props = withDefaults(
@@ -42,6 +42,7 @@ const emits = defineEmits(['contractDeployed'])
 // Stores
 const userDataStore = useUserDataStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
+const { mutateAsync: createContract } = useCreateContractMutation()
 
 // Composables
 const { deploySafe, isDeploying: isSafeDeploying } = useSafeDeployment()
@@ -90,12 +91,11 @@ const deploySafeForTeam = async () => {
     // TODO use add contract
     if (!safeAddress) {
       addErrorToast('Failed to deploy Safe wallet. Please try again.')
-      safeLoadingMessage.value = ''
       return
     }
     if (!props.createdTeamData.id) {
       addErrorToast('Team data not found')
-      safeLoadingMessage.value = ''
+
       return
     }
     await createContract({
