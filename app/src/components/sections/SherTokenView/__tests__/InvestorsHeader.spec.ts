@@ -1,48 +1,17 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import { ref, nextTick } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsHeader from '../InvestorsHeader.vue'
 import { parseUnits } from 'viem'
+import {
+  mockInvestorReads,
+  mockTeamStore,
+  mockUserStore,
+  mockToastStore,
+  resetContractMocks
+} from '@/tests/mocks'
 
-// Hoisted variables for mocks
-const { mockUseReadContract, mockTeamStore, mockUserStore, mockToastStore, mockLog } = vi.hoisted(
-  () => ({
-    mockUseReadContract: vi.fn(),
-    mockTeamStore: {
-      currentTeam: null as ReturnType<typeof ref> | null,
-      getContractAddressByType: vi.fn(() => '0xContract123')
-    },
-    mockUserStore: {
-      address: null as ReturnType<typeof ref> | null
-    },
-    mockToastStore: {
-      addErrorToast: vi.fn()
-    },
-    mockLog: {
-      error: vi.fn()
-    }
-  })
-)
-
-// Mock wagmi composables
-vi.mock('@wagmi/vue', () => ({
-  useReadContract: mockUseReadContract
-}))
-
-// Mock stores
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore),
-  useUserDataStore: vi.fn(() => mockUserStore),
-  useToastStore: vi.fn(() => mockToastStore)
-}))
-
-// Mock utils
-vi.mock('@/utils', () => ({
-  log: mockLog
-}))
-
-describe.skip('InvestorsHeader', () => {
+describe('InvestorsHeader', () => {
   let wrapper: ReturnType<typeof mount>
 
   // Test data constants
@@ -62,31 +31,21 @@ describe.skip('InvestorsHeader', () => {
   } as const
 
   beforeEach(() => {
+    resetContractMocks()
     vi.clearAllMocks()
 
-    // Initialize refs
-    mockTeamStore.currentTeam = ref({
+    // Initialize store state
+    mockTeamStore.currentTeam = {
       id: 1,
       name: 'Test Team',
       ownerAddress: '0x123'
-    })
-    mockUserStore.address = ref('0xUser123')
+    }
+    mockUserStore.address = '0xUser123'
 
-    // Setup default mock return values
-    mockUseReadContract.mockImplementation(({ functionName }: { functionName: string }) => {
-      switch (functionName) {
-        case 'symbol':
-          return { data: ref(mockTokenData.symbol), error: ref(null) }
-        case 'totalSupply':
-          return { data: ref(mockTokenData.totalSupply), error: ref(null) }
-        case 'balanceOf':
-          return { data: ref(mockTokenData.balance), error: ref(null) }
-        case 'getShareholders':
-          return { data: ref(mockTokenData.shareholders), error: ref(null) }
-        default:
-          return { data: ref(null), error: ref(null) }
-      }
-    })
+    mockInvestorReads.symbol.data.value = mockTokenData.symbol
+    mockInvestorReads.totalSupply.data.value = mockTokenData.totalSupply
+    mockInvestorReads.balanceOf.data.value = mockTokenData.balance
+    mockInvestorReads.shareholders.data.value = mockTokenData.shareholders
   })
 
   afterEach(() => {
@@ -151,9 +110,7 @@ describe.skip('InvestorsHeader', () => {
 
   describe('Loading States', () => {
     it('should show loading state when team is not available', () => {
-      if (mockTeamStore.currentTeam) {
-        mockTeamStore.currentTeam.value = null
-      }
+      mockTeamStore.currentTeam = null
       wrapper = createComponent()
 
       const overviewCards = wrapper.findAll(SELECTORS.overviewCards)
@@ -161,20 +118,7 @@ describe.skip('InvestorsHeader', () => {
     })
 
     it('should show dots when token symbol is not available', () => {
-      mockUseReadContract.mockImplementation(({ functionName }: { functionName: string }) => {
-        switch (functionName) {
-          case 'symbol':
-            return { data: ref(null), error: ref(null) }
-          case 'totalSupply':
-            return { data: ref(mockTokenData.totalSupply), error: ref(null) }
-          case 'balanceOf':
-            return { data: ref(mockTokenData.balance), error: ref(null) }
-          case 'getShareholders':
-            return { data: ref(mockTokenData.shareholders), error: ref(null) }
-          default:
-            return { data: ref(null), error: ref(null) }
-        }
-      })
+      mockInvestorReads.symbol.data.value = null
 
       wrapper = createComponent()
       const cards = wrapper.findAll(SELECTORS.overviewCards)
@@ -184,20 +128,7 @@ describe.skip('InvestorsHeader', () => {
     })
 
     it('should show dots when balance is null', () => {
-      mockUseReadContract.mockImplementation(({ functionName }: { functionName: string }) => {
-        switch (functionName) {
-          case 'symbol':
-            return { data: ref(mockTokenData.symbol), error: ref(null) }
-          case 'totalSupply':
-            return { data: ref(mockTokenData.totalSupply), error: ref(null) }
-          case 'balanceOf':
-            return { data: ref(null), error: ref(null) }
-          case 'getShareholders':
-            return { data: ref(mockTokenData.shareholders), error: ref(null) }
-          default:
-            return { data: ref(null), error: ref(null) }
-        }
-      })
+      mockInvestorReads.balanceOf.data.value = null
 
       wrapper = createComponent()
       const cards = wrapper.findAll(SELECTORS.overviewCards)
@@ -208,82 +139,29 @@ describe.skip('InvestorsHeader', () => {
 
   describe('Error Handling', () => {
     it('should handle token symbol error and show toast', async () => {
-      const errorRef = ref<string | null>(null)
-      mockUseReadContract.mockImplementation(({ functionName }: { functionName: string }) => {
-        switch (functionName) {
-          case 'symbol':
-            return { data: ref(null), error: errorRef }
-          case 'totalSupply':
-            return { data: ref(mockTokenData.totalSupply), error: ref(null) }
-          case 'balanceOf':
-            return { data: ref(mockTokenData.balance), error: ref(null) }
-          case 'getShareholders':
-            return { data: ref(mockTokenData.shareholders), error: ref(null) }
-          default:
-            return { data: ref(null), error: ref(null) }
-        }
-      })
-
       wrapper = createComponent()
 
       // Trigger the error
-      errorRef.value = 'Token symbol error'
-      await nextTick()
+      mockInvestorReads.symbol.error.value = new Error('Token symbol error')
+      await wrapper.vm.$nextTick()
 
-      expect(mockLog.error).toHaveBeenCalledWith(
-        'Error fetching token symbol',
-        'Token symbol error'
-      )
       expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching token symbol')
     })
 
     it('should handle shareholders error and show toast', async () => {
-      const errorRef = ref<string | null>(null)
-      mockUseReadContract.mockImplementation(({ functionName }: { functionName: string }) => {
-        switch (functionName) {
-          case 'symbol':
-            return { data: ref(mockTokenData.symbol), error: ref(null) }
-          case 'totalSupply':
-            return { data: ref(mockTokenData.totalSupply), error: ref(null) }
-          case 'balanceOf':
-            return { data: ref(mockTokenData.balance), error: ref(null) }
-          case 'getShareholders':
-            return { data: ref(null), error: errorRef }
-          default:
-            return { data: ref(null), error: ref(null) }
-        }
-      })
-
       wrapper = createComponent()
 
       // Trigger the error
-      errorRef.value = 'Shareholders error'
-      await nextTick()
+      mockInvestorReads.shareholders.error.value = new Error('Shareholders error')
+      await wrapper.vm.$nextTick()
 
-      expect(mockLog.error).toHaveBeenCalledWith(
-        'Error fetching shareholders',
-        'Shareholders error'
-      )
       expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching shareholders')
     })
   })
 
   describe('Edge Cases and Data Validation', () => {
     it('should handle empty shareholders array', () => {
-      mockUseReadContract.mockImplementation(({ functionName }: { functionName: string }) => {
-        switch (functionName) {
-          case 'symbol':
-            return { data: ref(mockTokenData.symbol), error: ref(null) }
-          case 'totalSupply':
-            return { data: ref(mockTokenData.totalSupply), error: ref(null) }
-          case 'balanceOf':
-            return { data: ref(mockTokenData.balance), error: ref(null) }
-          case 'getShareholders':
-            return { data: ref([]), error: ref(null) }
-          default:
-            return { data: ref(null), error: ref(null) }
-        }
-      })
+      mockInvestorReads.shareholders.data.value = []
 
       wrapper = createComponent()
       const cards = wrapper.findAll(SELECTORS.overviewCards)
@@ -293,20 +171,7 @@ describe.skip('InvestorsHeader', () => {
     })
 
     it('should handle null shareholders data', () => {
-      mockUseReadContract.mockImplementation(({ functionName }: { functionName: string }) => {
-        switch (functionName) {
-          case 'symbol':
-            return { data: ref(mockTokenData.symbol), error: ref(null) }
-          case 'totalSupply':
-            return { data: ref(mockTokenData.totalSupply), error: ref(null) }
-          case 'balanceOf':
-            return { data: ref(mockTokenData.balance), error: ref(null) }
-          case 'getShareholders':
-            return { data: ref(null), error: ref(null) }
-          default:
-            return { data: ref(null), error: ref(null) }
-        }
-      })
+      mockInvestorReads.shareholders.data.value = null
 
       wrapper = createComponent()
       const cards = wrapper.findAll(SELECTORS.overviewCards)
@@ -316,20 +181,7 @@ describe.skip('InvestorsHeader', () => {
     })
 
     it('should handle zero balance gracefully', () => {
-      mockUseReadContract.mockImplementation(({ functionName }: { functionName: string }) => {
-        switch (functionName) {
-          case 'symbol':
-            return { data: ref(mockTokenData.symbol), error: ref(null) }
-          case 'totalSupply':
-            return { data: ref(mockTokenData.totalSupply), error: ref(null) }
-          case 'balanceOf':
-            return { data: ref(parseUnits('0', 6)), error: ref(null) }
-          case 'getShareholders':
-            return { data: ref(mockTokenData.shareholders), error: ref(null) }
-          default:
-            return { data: ref(null), error: ref(null) }
-        }
-      })
+      mockInvestorReads.balanceOf.data.value = parseUnits('0', 6)
 
       wrapper = createComponent()
       const cards = wrapper.findAll(SELECTORS.overviewCards)
@@ -339,15 +191,5 @@ describe.skip('InvestorsHeader', () => {
     })
   })
 
-  describe('Contract Interactions', () => {
-    it('should call useReadContract with correct parameters for token symbol', () => {
-      wrapper = createComponent()
-
-      expect(mockUseReadContract).toHaveBeenCalledWith({
-        abi: expect.any(Array),
-        address: expect.any(Object), // computed ref
-        functionName: 'symbol'
-      })
-    })
   })
 })

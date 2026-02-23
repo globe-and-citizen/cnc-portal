@@ -2,8 +2,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 import PayDividendsForm from '../PayDividendsForm.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
 import type { Team } from '@/types'
+import { mockUseContractBalance, resetComposableMocks } from '@/tests/mocks'
 
 type BalanceEntry = {
   amount: number
@@ -61,20 +61,6 @@ const makeBalance = (overrides: Partial<BalanceEntry> = {}): BalanceEntry => {
     }
   }
 }
-
-const mockComposable = {
-  balances: ref<BalanceEntry[]>([])
-}
-
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => ({
-    getContractAddressByType: vi.fn(() => '0xbank')
-  }))
-}))
-
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: vi.fn(() => mockComposable)
-}))
 
 const TokenAmountStub = {
   props: ['modelValue', 'modelToken', 'tokens', 'loading'],
@@ -172,12 +158,13 @@ describe('PayDividendsForm.vue', () => {
     })
 
   afterEach(() => {
+    resetComposableMocks()
     vi.clearAllMocks()
-    mockComposable.balances.value = []
+    mockUseContractBalance.balances.value = []
   })
 
   it('renders bank empty warning when selected token balance is zero', () => {
-    mockComposable.balances.value = [
+    mockUseContractBalance.balances.value = [
       makeBalance({
         amount: 0,
         token: {
@@ -196,14 +183,14 @@ describe('PayDividendsForm.vue', () => {
   })
 
   it('hides bank empty warning when balance is greater than zero', () => {
-    mockComposable.balances.value = defaultBalances()
+    mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent()
     expect(wrapper.find('[data-test="bank-empty-warning"]').exists()).toBe(false)
   })
 
   it('emits submit with parsed native token amount', async () => {
-    mockComposable.balances.value = defaultBalances()
+    mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent()
     const tokenAmount = wrapper.findComponent(TokenAmountStub)
@@ -219,7 +206,7 @@ describe('PayDividendsForm.vue', () => {
   })
 
   it('respects token decimals when submitting alternate token', async () => {
-    mockComposable.balances.value = defaultBalances()
+    mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent()
     const tokenAmount = wrapper.findComponent(TokenAmountStub)
@@ -237,7 +224,7 @@ describe('PayDividendsForm.vue', () => {
   })
 
   it('passes non-sher tokens to TokenAmount', () => {
-    mockComposable.balances.value = defaultBalances()
+    mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent()
     const tokensProp = wrapper.findComponent(TokenAmountStub).props('tokens') as Array<{
@@ -249,7 +236,7 @@ describe('PayDividendsForm.vue', () => {
   })
 
   it('shows BodAlert when bod action is required', () => {
-    mockComposable.balances.value = defaultBalances()
+    mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent({ isBodAction: true })
     expect(wrapper.find('[data-test="bod-alert"]').exists()).toBe(true)

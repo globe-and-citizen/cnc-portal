@@ -5,6 +5,7 @@ import {
   mockUseBackendWake,
   mockUseAuth,
   mockUseContractBalance,
+  mockUseApolloQuery,
   mockUseSafeSendTransaction,
   mockUseSafeOwnerManagement,
   mockUseSafeDeployment,
@@ -36,6 +37,14 @@ vi.mock('@tanstack/vue-query', async () => {
         error: vi.fn()
       }
     })
+  }
+})
+
+vi.mock('@vue/apollo-composable', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useQuery: vi.fn(() => mockUseApolloQuery)
   }
 })
 

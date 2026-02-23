@@ -75,8 +75,18 @@ export const mockUseContractBalance = {
       formatedPrice: '$1K'
     }
   }),
+  dividends: ref([]),
   isLoading: ref(false),
   error: ref(null)
+}
+
+/**
+ * Mock Apollo useQuery result
+ */
+export const mockUseApolloQuery = {
+  result: ref(null),
+  error: ref<Error | null>(null),
+  loading: ref(false)
 }
 
 /**
@@ -210,6 +220,7 @@ export const resetComposableMocks = () => {
   // Reset contract balance loading state
   mockUseContractBalance.isLoading.value = false
   mockUseContractBalance.error.value = null
+  mockUseContractBalance.dividends.value = []
 
   // Reset native transaction states
   mockUseSafeSendTransaction.isLoading.value = false
@@ -300,6 +311,11 @@ export const resetComposableMocks = () => {
   mockUseBodIsBodAction.isBod.value = false
   mockUseBodIsBodAction.isLoading.value = false
   mockUseBodIsBodAction.error.value = null
+
+  // Reset Apollo query mock
+  mockUseApolloQuery.result.value = null
+  mockUseApolloQuery.error.value = null
+  mockUseApolloQuery.loading.value = false
 }
 
 // Keep for backwards compatibility

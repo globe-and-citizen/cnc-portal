@@ -13,3 +13,27 @@ vi.mock('@/stores', async (importOriginal) => {
 })
 ;(globalThis as { __mockToastStore?: typeof mocks.mockToastStore }).__mockToastStore =
   mocks.mockToastStore
+
+vi.mock('@/stores/user', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useUserDataStore: vi.fn(() => ({ ...mocks.mockUserDataStore }))
+  }
+})
+
+vi.mock('@/stores/teamStore', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useTeamStore: vi.fn(() => ({ ...mocks.mockTeamStore }))
+  }
+})
+
+vi.mock('@/stores/useToastStore', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useToastStore: vi.fn(() => mocks.mockToastStore)
+  }
+})

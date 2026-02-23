@@ -3,16 +3,11 @@ import { mount } from '@vue/test-utils'
 import { parseUnits, zeroAddress } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
 import PayDividendsTable from '@/components/sections/SherTokenView/PayDividendsTable.vue'
-import { mockUseGetDividendBalances, resetComposableMocks } from '@/tests/mocks'
-
-// Only mock external composable - this is a true external dependency
-vi.mock('@/composables/bank/reads', () => ({
-  useGetDividendBalances: () => mockUseGetDividendBalances
-}))
+import { mockBankReads, resetContractMocks } from '@/tests/mocks'
 
 describe('PayDividendsTable.vue', () => {
   beforeEach(() => {
-    resetComposableMocks()
+    resetContractMocks()
     vi.clearAllMocks()
   })
 
@@ -35,8 +30,8 @@ describe('PayDividendsTable.vue', () => {
   }
 
   it('renders loading state when data is loading', () => {
-    mockUseGetDividendBalances.isLoading.value = true
-    mockUseGetDividendBalances.data.value = []
+    mockBankReads.getDividendBalances.isLoading.value = true
+    mockBankReads.getDividendBalances.data.value = []
 
     const wrapper = createWrapper()
 
@@ -45,8 +40,8 @@ describe('PayDividendsTable.vue', () => {
   })
 
   it('renders empty state when no dividends', () => {
-    mockUseGetDividendBalances.isLoading.value = false
-    mockUseGetDividendBalances.data.value = []
+    mockBankReads.getDividendBalances.isLoading.value = false
+    mockBankReads.getDividendBalances.data.value = []
 
     const wrapper = createWrapper()
 
@@ -55,8 +50,8 @@ describe('PayDividendsTable.vue', () => {
   })
 
   it('renders table with dividend data', () => {
-    mockUseGetDividendBalances.isLoading.value = false
-    mockUseGetDividendBalances.data.value = [
+    mockBankReads.getDividendBalances.isLoading.value = false
+    mockBankReads.getDividendBalances.data.value = [
       {
         token: {
           address: '0xTOKEN1',
@@ -76,8 +71,8 @@ describe('PayDividendsTable.vue', () => {
   })
 
   it('handles multiple tokens with different decimals', () => {
-    mockUseGetDividendBalances.isLoading.value = false
-    mockUseGetDividendBalances.data.value = [
+    mockBankReads.getDividendBalances.isLoading.value = false
+    mockBankReads.getDividendBalances.data.value = [
       {
         token: {
           address: '0xETH',
@@ -117,8 +112,8 @@ describe('PayDividendsTable.vue', () => {
   })
 
   it('processes tokens with zero balance', () => {
-    mockUseGetDividendBalances.isLoading.value = false
-    mockUseGetDividendBalances.data.value = [
+    mockBankReads.getDividendBalances.isLoading.value = false
+    mockBankReads.getDividendBalances.data.value = [
       {
         token: {
           address: '0xETH',
@@ -148,8 +143,8 @@ describe('PayDividendsTable.vue', () => {
   })
 
   it('identifies native token by zero address', () => {
-    mockUseGetDividendBalances.isLoading.value = false
-    mockUseGetDividendBalances.data.value = [
+    mockBankReads.getDividendBalances.isLoading.value = false
+    mockBankReads.getDividendBalances.data.value = [
       {
         token: {
           address: zeroAddress,
@@ -169,8 +164,8 @@ describe('PayDividendsTable.vue', () => {
   })
 
   it('displays USDC token correctly', () => {
-    mockUseGetDividendBalances.isLoading.value = false
-    mockUseGetDividendBalances.data.value = [
+    mockBankReads.getDividendBalances.isLoading.value = false
+    mockBankReads.getDividendBalances.data.value = [
       {
         token: {
           address: '0xUSDC',
