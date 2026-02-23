@@ -26,7 +26,7 @@ export const useTeamSafes = () => {
     if (route.name === 'safe-account') {
       // 3. Define the additional "Bank Safe" object
       const bankSafe = {
-        address: teamStore.currentTeamMeta?.data?.safeAddress,
+        address: teamStore.getContractAddressByType('Safe'),
         name: 'Bank Safe',
         balance: '0'
       } as SafeWallet

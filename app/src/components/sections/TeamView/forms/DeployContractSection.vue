@@ -87,9 +87,25 @@ const deploySafeForTeam = async () => {
   try {
     const safeAddress = await deploySafe([currentUserAddress], 1)
 
-    await updateTeam({
-      pathParams: { id: props.createdTeamData.id! },
-      body: { safeAddress: (safeAddress ?? undefined) as `0x${string}` | undefined }
+    // TODO use add contract
+    if (!safeAddress) {
+      addErrorToast('Failed to deploy Safe wallet. Please try again.')
+      safeLoadingMessage.value = ''
+      return
+    }
+    if (!props.createdTeamData.id) {
+      addErrorToast('Team data not found')
+      safeLoadingMessage.value = ''
+      return
+    }
+    await createContract({
+      body: {
+        teamId: props.createdTeamData.id,
+        contractAddress: safeAddress,
+        contractType: 'Safe',
+        deployer: userDataStore.address
+      }
+      // body: { safeAddress: (safeAddress ?? undefined) as `0x${string}` | undefined }?
     })
 
     addSuccessToast('Safe wallet deployed successfully')

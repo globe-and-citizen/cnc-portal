@@ -11,6 +11,7 @@ const mockFiles = [
   'store',
   'composables',
   'wagmi.vue',
+  'viem',
   'erc20',
   'elections',
   'bank',

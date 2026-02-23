@@ -132,6 +132,15 @@ export const mockUseClipboard = {
 }
 
 /**
+ * Mock useSafeDeployment composable
+ */
+export const mockUseSafeDeployment = {
+  deploySafe: vi.fn(),
+  isDeploying: ref(false),
+  error: ref<Error | null>(null)
+}
+
+/**
  * Reset function for composable mocks
  */
 export const resetComposableMocks = () => {
@@ -181,6 +190,13 @@ export const resetComposableMocks = () => {
   mockUseClipboard.copied.value = false
   if (vi.isMockFunction(mockUseClipboard.copy)) {
     mockUseClipboard.copy.mockClear()
+  }
+
+  // Reset Safe deployment mock
+  mockUseSafeDeployment.isDeploying.value = false
+  mockUseSafeDeployment.error.value = null
+  if (vi.isMockFunction(mockUseSafeDeployment.deploySafe)) {
+    mockUseSafeDeployment.deploySafe.mockClear()
   }
 }
 
