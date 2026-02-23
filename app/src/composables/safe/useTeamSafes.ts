@@ -20,27 +20,30 @@ export const useTeamSafes = () => {
           name: `${m.name}'s Safe` || 'Unnamed Safe',
           balance: '0',
           userName: m.name
-        })) || []
+        }))
+        .filter((safe) => safe.address) || [] // Filter out safes without addresses
 
     // 2. Check if the current route is 'safe-account'
     if (route.name === 'safe-account') {
-      // 3. Define the additional "Bank Safe" object
-      const bankSafe = {
-        address: teamStore.getContractAddressByType('Safe'),
-        name: 'Bank Safe',
-        balance: '0'
-      } as SafeWallet
+      // 3. Get the team Safe address from contracts
+      const bankSafeAddress = teamStore.getContractAddressByType('Safe')
 
-      // 4. Return a new array with the bank safe appended
-      // We only append it if the address is actually present
-      if (bankSafe.address) {
+      // 4. Only add Bank Safe if it exists and is deployed
+      if (bankSafeAddress) {
+        const bankSafe = {
+          address: bankSafeAddress,
+          name: 'Bank Safe',
+          balance: '0'
+        } as SafeWallet
+
         return [bankSafe, ...traderSafes]
-      } else {
-        return []
       }
+
+      // If no Bank Safe deployed, return empty array to trigger deployment UI
+      return []
     }
 
-    // 5. Default return the original collection if route is 'trading' or something else
+    // 5. Default return the trader safes for other routes
     return traderSafes
   })
 
@@ -50,6 +53,12 @@ export const useTeamSafes = () => {
   })
 
   const selectedSafe = computed<SafeWallet | undefined>(() => {
+    // For safe-account route, select the Bank Safe (first safe in the list)
+    if (route.name === 'safe-account') {
+      return safes.value.length > 0 ? safes.value[0] : undefined
+    }
+
+    // For trading route, match by address parameter
     const address = route.params.address as string
     return safes.value.find((s) => s?.address?.toLocaleLowerCase() === address?.toLocaleLowerCase())
   })

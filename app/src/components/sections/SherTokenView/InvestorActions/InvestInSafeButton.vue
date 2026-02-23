@@ -7,7 +7,7 @@
       <ButtonUI
         variant="primary"
         outline
-        :disabled="!canDeposit || !teamStore.currentTeamMeta?.data?.safeAddress"
+        :disabled="!canDeposit || !teamStore.getContractAddressByType('Safe')"
         data-test="invest-in-safe-button"
         @click="openModal"
       >
@@ -25,8 +25,8 @@
       @reset="closeModal"
     >
       <SafeDepositRouterForm
-        v-if="teamStore.currentTeamMeta?.data?.safeAddress"
-        :safe-address="teamStore.currentTeamMeta?.data?.safeAddress as Address"
+        v-if="teamStore.getContractAddressByType('Safe')"
+        :safe-address="teamStore.getContractAddressByType('Safe') as Address"
         @close-modal="closeModal"
         ref="depositFormRef"
       />

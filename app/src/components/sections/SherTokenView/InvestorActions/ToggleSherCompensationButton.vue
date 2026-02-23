@@ -16,58 +16,6 @@
       </template>
       {{ buttonText }}
     </ButtonUI>
-
-    <!-- Safe Address Confirmation Modal -->
-    <ModalComponent
-      v-model="showSafeAddressModal"
-      v-if="mountSafeAddressModal"
-      data-test="safe-address-modal"
-      @reset="closeSafeAddressModal"
-    >
-      <div class="space-y-4">
-        <h2 class="text-2xl font-bold">Update Safe Address</h2>
-
-        <div class="space-y-2">
-          <p class="text-gray-600">
-            The Safe address in the SafeDepositRouter contract needs to be updated before enabling
-            SHER compensation.
-          </p>
-
-          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p class="text-sm font-medium text-yellow-800">Current Contract Address:</p>
-            <p class="text-sm text-yellow-900 font-mono break-all">
-              {{ contractSafeAddress || 'Not set' }}
-            </p>
-          </div>
-
-          <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-            <p class="text-sm font-medium text-green-800">Expected Safe Address:</p>
-            <p class="text-sm text-green-900 font-mono break-all">
-              {{ teamSafeAddress }}
-            </p>
-          </div>
-        </div>
-
-        <div class="flex gap-3 justify-end">
-          <ButtonUI
-            variant="secondary"
-            @click="closeSafeAddressModal"
-            data-test="cancel-safe-address-button"
-          >
-            Cancel
-          </ButtonUI>
-          <ButtonUI
-            variant="primary"
-            :loading="isSafeAddressUpdating"
-            :disabled="isSafeAddressUpdating"
-            @click="updateSafeAddress"
-            data-test="confirm-safe-address-button"
-          >
-            Update Safe Address
-          </ButtonUI>
-        </div>
-      </div>
-    </ModalComponent>
   </div>
 </template>
 
@@ -75,9 +23,8 @@
 import { computed, ref, watch } from 'vue'
 import { useConnection } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import type { Address } from 'viem'
+
 import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import {
   useEnableDeposits,
   useDisableDeposits,
@@ -94,20 +41,14 @@ import { useTeamStore } from '@/stores'
 import { parseError } from '@/utils'
 
 const teamStore = useTeamStore()
-const { addErrorToast, addSuccessToast } = useToastStore()
+const { addErrorToast, addSuccessToast, addInfoToast } = useToastStore()
 const connection = useConnection()
 
-// Modal state
-const showSafeAddressModal = ref(false)
-const mountSafeAddressModal = ref(false)
+// Track if we're in the process of setting safe address before enabling
+const isSettingSafeAddress = ref(false)
 
 // Get SafeDepositRouter address
 const safeDepositRouterAddress = useSafeDepositRouterAddress()
-
-// Get team Safe address from store
-const teamSafeAddress = computed(
-  () => (teamStore.currentTeamMeta?.data?.safeAddress as Address) ?? ('' as Address)
-)
 
 // Read current state
 const { data: depositsEnabled, isLoading: isDepositsEnabledLoading } =
@@ -136,9 +77,6 @@ const isWriteLoading = computed(() => {
 
 const isLoading = computed(() => isReadLoading.value || isWriteLoading.value)
 
-// Separate loading state for Safe address update modal
-const isSafeAddressUpdating = computed(() => setSafeAddressWrite.writeResult.isPending.value)
-
 // Check if connected user is the owner
 const canManageDeposits = computed(() => {
   if (!connection.isConnected.value || !connection.address?.value) return false
@@ -148,13 +86,18 @@ const canManageDeposits = computed(() => {
 
 // Check if Safe address matches
 const isSafeAddressCorrect = computed(() => {
-  if (!contractSafeAddress.value || !teamSafeAddress.value) return false
-  return (contractSafeAddress.value as string).toLowerCase() === teamSafeAddress.value.toLowerCase()
+  const safeAddress = teamStore.getContractAddressByType('Safe')
+  if (!contractSafeAddress.value || !safeAddress) return false
+
+  return (contractSafeAddress.value as string).toLowerCase() === safeAddress.toLowerCase()
 })
 
 // Button text
 const buttonText = computed(() => {
   if (isLoading.value) {
+    if (isSettingSafeAddress.value) {
+      return 'Setting Safe Address...'
+    }
     return depositsEnabled.value
       ? 'Disabling SHER Compensation...'
       : 'Enabling SHER Compensation...'
@@ -174,12 +117,12 @@ watch(
       console.error('Error enabling deposits:', error)
       const errorMessage = parseError(error)
 
-      // Check for user rejection
       if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
         addErrorToast('Transaction cancelled by user')
       } else {
-        addErrorToast(`Failed to enable SHER compensation`)
+        addErrorToast('Failed to enable SHER compensation')
       }
+      isSettingSafeAddress.value = false
     }
   }
 )
@@ -190,6 +133,7 @@ watch(
   (success) => {
     if (success) {
       addSuccessToast('SHER compensation enabled successfully')
+      isSettingSafeAddress.value = false
     }
   }
 )
@@ -202,11 +146,10 @@ watch(
       console.error('Error disabling deposits:', error)
       const errorMessage = parseError(error)
 
-      // Check for user rejection
       if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
         addErrorToast('Transaction cancelled by user')
       } else {
-        addErrorToast(`Failed to disable SHER compensation`)
+        addErrorToast('Failed to disable SHER compensation')
       }
     }
   }
@@ -230,25 +173,24 @@ watch(
       console.error('Error setting safe address:', error)
       const errorMessage = parseError(error)
 
-      // Check for user rejection
       if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
         addErrorToast('Transaction cancelled by user')
       } else {
-        addErrorToast(`Failed to update Safe address`)
+        addErrorToast('Failed to update Safe address')
       }
+      isSettingSafeAddress.value = false
     }
   }
 )
 
-// Watch for set safe address success
+// Watch for set safe address success - automatically enable deposits after
 watch(
   () => setSafeAddressWrite.receiptResult.isSuccess.value,
   (success) => {
-    if (success) {
+    if (success && isSettingSafeAddress.value) {
       addSuccessToast('Safe address updated successfully')
-      closeSafeAddressModal()
 
-      // Auto-enable deposits after successful update
+      // Auto-enable deposits after successful Safe address update
       setTimeout(() => {
         handleEnableDeposits()
       }, 1000)
@@ -257,26 +199,19 @@ watch(
 )
 
 /**
- * Open Safe address confirmation modal
- */
-function openSafeAddressModal() {
-  mountSafeAddressModal.value = true
-  showSafeAddressModal.value = true
-}
-
-/**
- * Close Safe address confirmation modal
- */
-function closeSafeAddressModal() {
-  showSafeAddressModal.value = false
-  mountSafeAddressModal.value = false
-}
-
-/**
  * Update Safe address in contract
  */
 async function updateSafeAddress() {
-  await setSafeAddressWrite.executeWrite(teamSafeAddress.value)
+  const safeAddress = teamStore.getContractAddressByType('Safe')
+
+  if (!safeAddress) {
+    addErrorToast('Safe address not found')
+    isSettingSafeAddress.value = false
+    return
+  }
+
+  addInfoToast('Updating Safe address...')
+  await setSafeAddressWrite.executeWrite(safeAddress)
 }
 
 /**
@@ -295,6 +230,7 @@ async function handleDisableDeposits() {
 
 /**
  * Toggle SHER token compensation
+ * If enabling and Safe address is not set, automatically set it first
  */
 async function handleToggleCompensation() {
   if (!safeDepositRouterAddress.value) {
@@ -307,17 +243,21 @@ async function handleToggleCompensation() {
     return
   }
 
-  // If trying to enable deposits, check Safe address first
-  if (!depositsEnabled.value && !isSafeAddressCorrect.value) {
-    openSafeAddressModal()
+  // If disabling, proceed directly
+  if (depositsEnabled.value) {
+    await handleDisableDeposits()
     return
   }
 
-  // If Safe address is correct or we're disabling, proceed
-  if (depositsEnabled.value) {
-    await handleDisableDeposits()
-  } else {
-    await handleEnableDeposits()
+  // If enabling and Safe address is not correct, set it first
+  if (!isSafeAddressCorrect.value) {
+    isSettingSafeAddress.value = true
+    await updateSafeAddress()
+    // The watch on setSafeAddress success will automatically call handleEnableDeposits
+    return
   }
+
+  // If Safe address is already correct, enable directly
+  await handleEnableDeposits()
 }
 </script>

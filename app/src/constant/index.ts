@@ -159,7 +159,9 @@ export function validateAddresses() {
     'InvestorsV1BeaconModule#Beacon',
     'InvestorsV1BeaconModule#InvestorV1',
     'CashRemunerationEIP712Module#FactoryBeacon',
-    'CashRemunerationEIP712Module#CashRemunerationEIP712'
+    'CashRemunerationEIP712Module#CashRemunerationEIP712',
+    'SafeDepositRouterBeaconModule#SafeDepositRouter',
+    'SafeDepositRouterBeaconModule#Beacon'
   ]
 
   requiredKeys.forEach(resolveAddress)

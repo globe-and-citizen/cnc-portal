@@ -3,8 +3,8 @@
     <!-- Deploy Button with dynamic message -->
     <ButtonUI
       variant="primary"
-      :loading="createOfficerLoading || isSafeDeploying"
-      :disabled="disable || createOfficerLoading || isSafeDeploying"
+      :loading="createOfficerLoading"
+      :disabled="disable || createOfficerLoading"
       data-test="deploy-contracts-button"
       @click="deployOfficerContract"
     >
@@ -14,17 +14,14 @@
 </template>
 
 <script lang="ts" setup>
-import { useUserDataStore } from '@/stores/user'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import type { Team } from '@/types'
 import type { Address } from 'viem'
-import { isAddress } from 'viem'
-import { computed, onMounted } from 'vue'
-import { useSafeDeployment } from '@/composables/safe'
+import { computed } from 'vue'
 import { useOfficerDeployment } from '@/composables/contracts'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
-import { useSyncContractsMutation, useCreateContractMutation } from '@/queries/contract.queries'
+import { useSyncContractsMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 
 const props = withDefaults(
@@ -40,16 +37,12 @@ const props = withDefaults(
 const emits = defineEmits(['contractDeployed'])
 
 // Stores
-const userDataStore = useUserDataStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
-const { mutateAsync: createContract } = useCreateContractMutation()
 
 // Composables
-const { deploySafe, isDeploying: isSafeDeploying } = useSafeDeployment()
 const {
   isLoading: createOfficerLoading,
   deployOfficerContract: deployOfficer,
-  watchDeploymentEvent,
   invalidateQueries
 } = useOfficerDeployment()
 
@@ -58,63 +51,12 @@ const { mutateAsync: updateTeam, error: updateTeamError } = useUpdateTeamMutatio
 const { mutateAsync: syncContracts, error: syncContractsError } = useSyncContractsMutation()
 
 // Computed states
-
 const deployButtonText = computed(() => {
-  if (isSafeDeploying.value) {
-    return 'Deploying Safe Wallet...'
-  }
   if (createOfficerLoading.value) {
     return 'Deploying Officer Contracts...'
   }
   return 'Deploy Team Contracts'
 })
-
-/**
- * Deploy Safe wallet for the team
- */
-const deploySafeForTeam = async () => {
-  if (!props.createdTeamData?.id) {
-    addErrorToast('Team data not found')
-    return
-  }
-
-  const currentUserAddress = userDataStore.address
-
-  if (!currentUserAddress || !isAddress(currentUserAddress)) {
-    addErrorToast('Invalid wallet address. Please connect your wallet.')
-    return
-  }
-
-  try {
-    const safeAddress = await deploySafe([currentUserAddress], 1)
-
-    // TODO use add contract
-    if (!safeAddress) {
-      addErrorToast('Failed to deploy Safe wallet. Please try again.')
-      return
-    }
-    if (!props.createdTeamData.id) {
-      addErrorToast('Team data not found')
-
-      return
-    }
-    await createContract({
-      body: {
-        teamId: props.createdTeamData.id,
-        contractAddress: safeAddress,
-        contractType: 'Safe',
-        deployer: userDataStore.address
-      }
-      // body: { safeAddress: (safeAddress ?? undefined) as `0x${string}` | undefined }?
-    })
-
-    addSuccessToast('Safe wallet deployed successfully')
-    emits('contractDeployed')
-  } catch (error) {
-    log.error('Error deploying Safe:', error)
-    addErrorToast('Failed to deploy Safe wallet. Please try again.')
-  }
-}
 
 /**
  * Handle successful officer contract deployment
@@ -150,14 +92,14 @@ const handleOfficerDeploymentSuccess = async (officerAddress: Address) => {
       return
     }
 
-    // Invalidate queries (pass teamId which can be string or number)
+    // Invalidate queries
     await invalidateQueries(teamId)
 
-    addSuccessToast('Officer contracts synced successfully')
-    log.info('Officer contracts synced successfully')
+    addSuccessToast('Officer contracts deployed and synced successfully')
+    log.info('Officer contracts deployment complete')
 
-    // Deploy Safe wallet
-    await deploySafeForTeam()
+    // Notify parent that deployment is complete
+    emits('contractDeployed')
   } catch (error) {
     log.error('Error in post-deployment processing:', error)
     addErrorToast('Failed to complete deployment setup')
@@ -178,9 +120,4 @@ const deployOfficerContract = async () => {
     onDeploymentComplete: handleOfficerDeploymentSuccess
   })
 }
-
-// Watch for deployment events
-onMounted(() => {
-  watchDeploymentEvent(handleOfficerDeploymentSuccess)
-})
 </script>

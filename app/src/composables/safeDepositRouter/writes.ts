@@ -111,7 +111,8 @@ export function useSetSafeAddress() {
 
   return {
     ...write,
-    executeWrite: (newSafeAddress: Address) => write.executeWrite([newSafeAddress])
+    executeWrite: (newSafeAddress: Address) =>
+      write.executeWrite([newSafeAddress], undefined, { skipGasEstimation: true })
   }
 }
 
