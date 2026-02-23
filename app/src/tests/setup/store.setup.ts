@@ -1,6 +1,7 @@
 import { vi } from 'vitest'
 import * as mocks from '@/tests/mocks/store.mock'
 
+// Mock the barrel export for components/composables that use @/stores
 vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {

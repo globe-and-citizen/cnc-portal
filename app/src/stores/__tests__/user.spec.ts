@@ -1,5 +1,8 @@
 import { createPinia, setActivePinia } from 'pinia'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// Unmock the store files so we can test the real implementation
+vi.unmock('@/stores/user')
 
 // import { nextTick } from 'vue'
 // import { useStorage } from '@vueuse/core'

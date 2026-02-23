@@ -13,6 +13,9 @@ export const mockTeamStore = {
     reloadTeams: vi.fn()
   },
 
+  setCurrentTeamId: vi.fn((id: string) => {
+    mockTeamStore.currentTeamId = id
+  }),
   getContractAddressByType: vi.fn((type: ContractType) => {
     const contractAddresses = {
       Bank: '0x1111111111111111111111111111111111111111',
@@ -35,10 +38,8 @@ export const mockTeamStore = {
 export const mockToastStore = {
   addErrorToast: vi.fn(),
   addSuccessToast: vi.fn(),
-  toasts: [
-    { message: 'Toast 1', type: 'success', timeout: 5000 },
-    { message: 'Toast 2', type: 'error', timeout: 5000 }
-  ]
+  addInfoToast: vi.fn(),
+  toasts: []
 }
 
 export const mockUserStore = {
@@ -55,11 +56,13 @@ export const mockUserStore = {
  * Mock useUserDataStore - for tracking current user address
  */
 export const mockUserDataStore = {
-  address: ref('0xUSER1'),
-  name: ref('Test User'),
+  address: '0xUSER1',
+  name: 'Test User',
   setAddress: vi.fn(),
   setUserData: vi.fn(),
-  clear: vi.fn()
+  clear: vi.fn(),
+  clearUserData: vi.fn(),
+  setAuthStatus: vi.fn()
 }
 
 export const mockUseCurrencyStore = () => ({

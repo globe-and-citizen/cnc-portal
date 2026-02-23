@@ -85,6 +85,7 @@ export const mockUseChainId = ref(1)
 export const mockUseSwitchChain = {
   mutate: vi.fn(),
   isPending: ref(false),
+  error: ref(null),
   switchChain: vi.fn()
 }
 

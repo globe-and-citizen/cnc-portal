@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useToastStore } from '@/stores/useToastStore'
 import { nextTick } from 'vue'
+
+// Unmock the store files so we can test the real implementation
+vi.unmock('@/stores/useToastStore')
+
+import { useToastStore } from '@/stores/useToastStore'
 
 type ToastStore = ReturnType<typeof useToastStore>
 
