@@ -9,7 +9,7 @@ const addTeam = async (req: Request, res: Response) => {
   /*
   #swagger.tags = ['Teams']
   */
-  const { name, members, description, officerAddress, safeAddress } = req.body;
+  const { name, members, description, officerAddress } = req.body;
   const callerAddress = req.address;
   try {
     // Validate all members' wallet addresses
@@ -17,11 +17,6 @@ const addTeam = async (req: Request, res: Response) => {
       if (!isAddress(member.address)) {
         return errorResponse(400, `Invalid wallet address for member: ${member.name}`, res);
       }
-    }
-
-    // Validate Safe address if provided
-    if (safeAddress && !isAddress(safeAddress)) {
-      return errorResponse(400, 'Invalid Safe address', res);
     }
 
     // Find the owner (user) by their address
@@ -60,7 +55,6 @@ const addTeam = async (req: Request, res: Response) => {
           })),
         },
         officerAddress: officerAddress || null,
-        safeAddress: safeAddress || null, // Add Safe address support
       },
       include: {
         members: {
@@ -184,15 +178,10 @@ const getAllTeams = async (req: Request, res: Response) => {
 
 const updateTeam = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, description, officerAddress, safeAddress } = req.body;
+  const { name, description, officerAddress } = req.body;
   const callerAddress = req.address;
 
   try {
-    // Validate Safe address if provided
-    if (safeAddress && !isAddress(safeAddress)) {
-      return errorResponse(400, 'Invalid Safe address', res);
-    }
-
     const team = await prisma.team.findUnique({
       where: {
         id: Number(id),
@@ -213,7 +202,6 @@ const updateTeam = async (req: Request, res: Response) => {
         name,
         description,
         officerAddress,
-        safeAddress, // Add Safe address support
       },
       include: {
         members: {

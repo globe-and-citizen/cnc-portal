@@ -1,60 +1,37 @@
 import { computed, ref, watch, type ComputedRef } from 'vue'
-import { useReadContract } from '@wagmi/vue'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import { useTeamStore } from '@/stores'
 import { useIntervalFn, useNow } from '@vueuse/core'
 import { log } from '@/utils'
+import {
+  useElectionsAddress,
+  useElectionsOwner,
+  useElectionsGetElection,
+  useElectionsGetVoteCount,
+  useElectionsGetCandidates,
+  useElectionsGetEligibleVoters
+} from './reads'
 
+export * from './reads'
+export * from './writes'
+
+/**
+ * Composable for Board of Directors Elections with formatted data and computed properties
+ * @param currentElectionId - Computed reference to the current election ID
+ */
 export const useBoDElections = (currentElectionId: ComputedRef<bigint>) => {
-  const teamSTore = useTeamStore()
-  const electionsAddress = computed(() => teamSTore.getContractAddressByType('Elections'))
+  const electionsAddress = useElectionsAddress()
 
   // Composables
-  const { data: owner } = useReadContract({
-    functionName: 'owner',
-    address: electionsAddress.value,
-    abi: ELECTIONS_ABI
-  })
+  const { data: owner } = useElectionsOwner()
 
-  const { data: currentElection, error: errorGetCurrentElection } = useReadContract({
-    functionName: 'getElection',
-    address: electionsAddress.value,
-    abi: ELECTIONS_ABI,
-    args: [currentElectionId], // Supply currentElectionId as an argument
-    query: {
-      enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
-    }
-  })
+  const { data: currentElection, error: errorGetCurrentElection } =
+    useElectionsGetElection(currentElectionId)
 
-  const { data: voteCount, error: errorGetVoteCount } = useReadContract({
-    functionName: 'getVoteCount',
-    address: electionsAddress.value,
-    abi: ELECTIONS_ABI,
-    args: [currentElectionId], // Supply currentElectionId as an argument
-    query: {
-      enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
-    }
-  })
+  const { data: voteCount, error: errorGetVoteCount } = useElectionsGetVoteCount(currentElectionId)
 
-  const { data: candidateList, error: errorGetCandidates } = useReadContract({
-    functionName: 'getElectionCandidates',
-    address: electionsAddress.value,
-    abi: ELECTIONS_ABI,
-    args: [currentElectionId],
-    query: {
-      enabled: computed(() => !!currentElectionId.value) // Only fetch if currentElectionId is available
-    }
-  })
+  const { data: candidateList, error: errorGetCandidates } =
+    useElectionsGetCandidates(currentElectionId)
 
-  const { data: voterList } = useReadContract({
-    functionName: 'getElectionEligibleVoters',
-    address: electionsAddress.value,
-    abi: ELECTIONS_ABI,
-    args: [currentElectionId],
-    query: {
-      enabled: computed(() => !!currentElectionId.value)
-    }
-  })
+  const { data: voterList } = useElectionsGetEligibleVoters(currentElectionId)
 
   // Computed Properties
   const formattedElection = computed(() => {

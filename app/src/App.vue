@@ -38,14 +38,13 @@
 
       <!-- Toast Notifications -->
       <ToastContainer position="bottom-left" />
+      <VueQueryDevtools buttonPosition="bottom-left" :style="{ height: '1500px' }" />
     </div>
   </UApp>
-
-  <!-- <VueQueryDevtools buttonPosition="bottom-left" :style="{ height: '1500px' }"/> -->
 </template>
 
 <script setup lang="ts">
-// import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
+import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { useChainId, useConnection, useConnectionEffect, useSwitchChain } from '@wagmi/vue'
 import { computed, watch } from 'vue'

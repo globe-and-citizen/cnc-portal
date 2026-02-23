@@ -70,7 +70,8 @@ import { config } from '@/wagmi.config'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { NETWORK, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { useToastStore, useUserDataStore } from '@/stores'
-import { useBodContract } from '@/composables/bod/'
+import { useBodAddAction } from '@/composables/bod/writes'
+import { useBodIsBodAction } from '@/composables/bod/reads'
 import type { TokenOption } from '@/types'
 import { useContractBalance } from '@/composables'
 
@@ -83,7 +84,6 @@ const props = withDefaults(defineProps<Props>(), {})
 const chainId = useChainId()
 const queryClient = useQueryClient()
 const { addErrorToast, addSuccessToast } = useToastStore()
-const { useBodIsBodAction } = useBodContract()
 
 const { balances } = useContractBalance(props.bankAddress)
 
@@ -96,16 +96,16 @@ const { data: bankOwner } = useReadContract({
   functionName: 'owner'
 })
 
-const { isBodAction } = useBodIsBodAction(props.bankAddress as Address, BANK_ABI)
+const { isBodAction } = useBodIsBodAction(props.bankAddress as Address)
 
 const isBankOwner = computed(() => bankOwner.value === userStore.address)
 
 const {
-  addAction,
-  isLoading: isLoadingAddAction,
+  executeAddAction: addAction,
+  isPending: isLoadingAddAction,
   isConfirming: isConfirmingAddAction,
   isActionAdded
-} = useBodContract()
+} = useBodAddAction()
 
 // Modal state
 const modal = ref({
