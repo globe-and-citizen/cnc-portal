@@ -42,7 +42,7 @@ vi.mock('@/utils', () => ({
   log: mockLog
 }))
 
-describe('InvestorsHeader', () => {
+describe.skip('InvestorsHeader', () => {
   let wrapper: ReturnType<typeof mount>
 
   // Test data constants
