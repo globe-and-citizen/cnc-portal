@@ -7,6 +7,7 @@ import {
   mockUseContractBalance,
   mockUseSafeSendTransaction,
   mockUseSafeOwnerManagement,
+  mockUseSafeDeployment,
   mockUseClipboard
 } from '@/tests/mocks/composables.mock'
 import { mockGetBalance } from '@/tests/mocks/viem.actions.mock'
@@ -212,13 +213,14 @@ vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
 }))
 
 /**
- * Mock useSafeOwnerManagement composable
+ * Mock useSafeOwnerManagement and useSafeDeployment composables
  */
 vi.mock('@/composables/safe', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useSafeOwnerManagement: vi.fn(() => mockUseSafeOwnerManagement)
+    useSafeOwnerManagement: vi.fn(() => mockUseSafeOwnerManagement),
+    useSafeDeployment: vi.fn(() => mockUseSafeDeployment)
   }
 })
 ;(
