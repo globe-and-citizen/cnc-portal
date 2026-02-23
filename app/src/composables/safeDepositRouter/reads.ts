@@ -1,168 +1,189 @@
-import { computed, type MaybeRefOrGetter, toValue } from 'vue'
+import { computed, unref, type MaybeRef } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
 import { useTeamStore } from '@/stores'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 
+const SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES = {
+  PAUSED: 'paused',
+  OWNER: 'owner',
+  DEPOSITS_ENABLED: 'depositsEnabled',
+  SAFE_ADDRESS: 'safeAddress',
+  INVESTOR_ADDRESS: 'investorAddress',
+  MULTIPLIER: 'multiplier',
+  MIN_MULTIPLIER: 'MIN_MULTIPLIER',
+  SUPPORTED_TOKENS: 'supportedTokens',
+  TOKEN_DECIMALS: 'tokenDecimals',
+  CALCULATE_COMPENSATION: 'calculateCompensation'
+} as const
+
+/**
+ * SafeDepositRouter contract address helper
+ */
+export function useSafeDepositRouterAddress() {
+  const teamStore = useTeamStore()
+  return computed(() => teamStore.getContractAddressByType('SafeDepositRouter'))
+}
+
 /**
  * SafeDepositRouter contract read operations
  */
-export function useSafeDepositRouterReads(contractAddress?: MaybeRefOrGetter<Address | undefined>) {
-  const teamStore = useTeamStore()
+export function useSafeDepositRouterPaused() {
+  const safeDepositRouterAddress = useSafeDepositRouterAddress()
 
-  const safeDepositRouterAddress = computed(() => {
-    const providedAddress = toValue(contractAddress)
-    if (providedAddress) return providedAddress
-
-    return teamStore.getContractAddressByType('SafeDepositRouter')
-  })
-
-  const isAddressValid = computed(
-    () => !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
-  )
-
-  // Individual read contract calls
-  const { data: owner, isLoading: isLoadingOwner } = useReadContract({
-    address: safeDepositRouterAddress.value,
+  return useReadContract({
+    address: safeDepositRouterAddress,
     abi: SAFE_DEPOSIT_ROUTER_ABI,
-    functionName: 'owner',
-    query: { enabled: isAddressValid }
-  })
-
-  const { data: safeAddress, isLoading: isLoadingSafeAddress } = useReadContract({
-    address: safeDepositRouterAddress.value,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
-    functionName: 'safeAddress',
-    query: { enabled: isAddressValid }
-  })
-
-  const { data: investorAddress, isLoading: isLoadingInvestorAddress } = useReadContract({
-    address: safeDepositRouterAddress.value,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
-    functionName: 'investorAddress',
-    query: { enabled: isAddressValid }
-  })
-
-  const { data: multiplier, isLoading: isLoadingMultiplier } = useReadContract({
-    address: safeDepositRouterAddress.value,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
-    functionName: 'multiplier',
-    query: { enabled: isAddressValid }
-  })
-
-  const { data: depositsEnabled, isLoading: isLoadingDepositsEnabled } = useReadContract({
-    address: safeDepositRouterAddress.value,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
-    functionName: 'depositsEnabled',
-    query: { enabled: isAddressValid }
-  })
-
-  const { data: isPaused, isLoading: isLoadingPaused } = useReadContract({
-    address: safeDepositRouterAddress.value,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
-    functionName: 'paused',
-    query: { enabled: isAddressValid }
-  })
-
-  const { data: minMultiplier, isLoading: isLoadingMinMultiplier } = useReadContract({
-    address: safeDepositRouterAddress.value,
-    abi: SAFE_DEPOSIT_ROUTER_ABI,
-    functionName: 'MIN_MULTIPLIER',
-    query: { enabled: isAddressValid }
-  })
-
-  // Aggregate loading state
-  const isLoading = computed(
-    () =>
-      isLoadingOwner.value ||
-      isLoadingSafeAddress.value ||
-      isLoadingInvestorAddress.value ||
-      isLoadingMultiplier.value ||
-      isLoadingDepositsEnabled.value ||
-      isLoadingPaused.value ||
-      isLoadingMinMultiplier.value
-  )
-
-  // Derived states
-  const canDeposit = computed(() => {
-    return depositsEnabled.value === true && isPaused.value === false
-  })
-
-  const config = computed(() => {
-    if (!safeAddress.value || !investorAddress.value || multiplier.value === undefined) {
-      return null
-    }
-
-    return {
-      safeAddress: safeAddress.value,
-      investorAddress: investorAddress.value,
-      multiplier: multiplier.value,
-      depositsEnabled: depositsEnabled.value ?? false,
-      paused: isPaused.value ?? false
+    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.PAUSED,
+    query: {
+      enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
     }
   })
+}
 
-  // Individual composable functions for specific reads
-  const useSafeDepositRouterTokenSupport = (tokenAddress: Address) => {
-    return useReadContract({
-      address: safeDepositRouterAddress.value,
-      abi: SAFE_DEPOSIT_ROUTER_ABI,
-      functionName: 'supportedTokens',
-      args: [tokenAddress],
-      query: {
-        enabled: computed(() => isAddressValid.value && isAddress(tokenAddress))
-      }
-    })
-  }
+export function useSafeDepositRouterOwner() {
+  const safeDepositRouterAddress = useSafeDepositRouterAddress()
 
-  const useSafeDepositRouterTokenDecimals = (tokenAddress: Address) => {
-    return useReadContract({
-      address: safeDepositRouterAddress.value,
-      abi: SAFE_DEPOSIT_ROUTER_ABI,
-      functionName: 'tokenDecimals',
-      args: [tokenAddress],
-      query: {
-        enabled: computed(() => isAddressValid.value && isAddress(tokenAddress))
-      }
-    })
-  }
+  return useReadContract({
+    address: safeDepositRouterAddress,
+    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.OWNER,
+    query: {
+      enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
+    }
+  })
+}
 
-  const useSafeDepositRouterCalculateCompensation = (tokenAddress: Address, amount: bigint) => {
-    return useReadContract({
-      address: safeDepositRouterAddress.value,
-      abi: SAFE_DEPOSIT_ROUTER_ABI,
-      functionName: 'calculateCompensation',
-      args: [tokenAddress, amount],
-      query: {
-        enabled: computed(() => isAddressValid.value && isAddress(tokenAddress) && amount > 0n)
-      }
-    })
-  }
+export function useSafeDepositRouterDepositsEnabled() {
+  const safeDepositRouterAddress = useSafeDepositRouterAddress()
 
-  return {
-    // Address
-    safeDepositRouterAddress,
-    isAddressValid,
+  return useReadContract({
+    address: safeDepositRouterAddress,
+    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.DEPOSITS_ENABLED,
+    query: {
+      enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
+    }
+  })
+}
 
-    // Raw values
-    owner,
-    safeAddress,
-    investorAddress,
-    multiplier,
-    depositsEnabled,
-    isPaused,
-    minMultiplier,
+export function useSafeDepositRouterSafeAddress() {
+  const safeDepositRouterAddress = useSafeDepositRouterAddress()
 
-    // Derived states
-    canDeposit,
-    config,
+  return useReadContract({
+    address: safeDepositRouterAddress,
+    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.SAFE_ADDRESS,
+    query: {
+      enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
+    }
+  })
+}
 
-    // Loading state
-    isLoading,
+export function useSafeDepositRouterInvestorAddress() {
+  const safeDepositRouterAddress = useSafeDepositRouterAddress()
 
-    // Composable functions for dynamic reads
-    useSafeDepositRouterTokenSupport,
-    useSafeDepositRouterTokenDecimals,
-    useSafeDepositRouterCalculateCompensation
-  }
+  return useReadContract({
+    address: safeDepositRouterAddress,
+    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.INVESTOR_ADDRESS,
+    query: {
+      enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
+    }
+  })
+}
+
+export function useSafeDepositRouterMultiplier() {
+  const safeDepositRouterAddress = useSafeDepositRouterAddress()
+
+  return useReadContract({
+    address: safeDepositRouterAddress,
+    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.MULTIPLIER,
+    query: {
+      enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
+    }
+  })
+}
+
+export function useSafeDepositRouterMinMultiplier() {
+  const safeDepositRouterAddress = useSafeDepositRouterAddress()
+
+  return useReadContract({
+    address: safeDepositRouterAddress,
+    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.MIN_MULTIPLIER,
+    query: {
+      enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
+    }
+  })
+}
+
+export function useSafeDepositRouterSupportedTokens(tokenAddress: MaybeRef<Address>) {
+  const safeDepositRouterAddress = useSafeDepositRouterAddress()
+  const tokenValue = computed(() => unref(tokenAddress))
+
+  return useReadContract({
+    address: safeDepositRouterAddress,
+    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.SUPPORTED_TOKENS,
+    args: [tokenValue],
+    query: {
+      enabled: computed(
+        () =>
+          !!safeDepositRouterAddress.value &&
+          isAddress(safeDepositRouterAddress.value) &&
+          !!tokenValue.value &&
+          isAddress(tokenValue.value)
+      )
+    }
+  })
+}
+
+export function useSafeDepositRouterTokenDecimals(tokenAddress: MaybeRef<Address>) {
+  const safeDepositRouterAddress = useSafeDepositRouterAddress()
+  const tokenValue = computed(() => unref(tokenAddress))
+
+  return useReadContract({
+    address: safeDepositRouterAddress,
+    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.TOKEN_DECIMALS,
+    args: [tokenValue],
+    query: {
+      enabled: computed(
+        () =>
+          !!safeDepositRouterAddress.value &&
+          isAddress(safeDepositRouterAddress.value) &&
+          !!tokenValue.value &&
+          isAddress(tokenValue.value)
+      )
+    }
+  })
+}
+
+export function useSafeDepositRouterCalculateCompensation(
+  tokenAddress: MaybeRef<Address>,
+  tokenAmount: MaybeRef<bigint>
+) {
+  const safeDepositRouterAddress = useSafeDepositRouterAddress()
+  const tokenValue = computed(() => unref(tokenAddress))
+  const amountValue = computed(() => unref(tokenAmount))
+
+  return useReadContract({
+    address: safeDepositRouterAddress,
+    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.CALCULATE_COMPENSATION,
+    args: [tokenValue, amountValue],
+    query: {
+      enabled: computed(
+        () =>
+          !!safeDepositRouterAddress.value &&
+          isAddress(safeDepositRouterAddress.value) &&
+          !!tokenValue.value &&
+          isAddress(tokenValue.value) &&
+          !!amountValue.value &&
+          amountValue.value > 0n
+      )
+    }
+  })
 }

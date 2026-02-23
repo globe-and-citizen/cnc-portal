@@ -46,25 +46,16 @@ import { useContractBalance } from '@/composables/useContractBalance'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
-import { useCurrencyStore, useToastStore, useUserDataStore, useTeamStore } from '@/stores'
+import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
+import { parseError } from '@/utils'
 import ButtonUI from '../ButtonUI.vue'
 import TokenAmount from './TokenAmount.vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import { useChainId } from '@wagmi/vue'
-import { useSafeDepositRouterFunctions } from '@/composables/safeDepositRouter'
-
-const queryClient = useQueryClient()
-const chainId = useChainId()
+import { useSafeDepositRouterAddress } from '@/composables/safeDepositRouter/reads'
+import { useDeposit } from '@/composables/safeDepositRouter/writes'
 
 const emits = defineEmits<{
   closeModal: []
 }>()
-
-interface Props {
-  safeAddress: Address
-}
-
-const props = defineProps<Props>()
 
 // Component state
 const amount = ref<string>('')
@@ -76,22 +67,15 @@ const isAmountValid = ref(false)
 // Stores
 const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
-const teamStore = useTeamStore()
 const { addErrorToast, addSuccessToast } = useToastStore()
 
-// SafeDepositRouter composables
-const safeDepositRouterAddress = computed(() =>
-  teamStore.getContractAddressByType('SafeDepositRouter')
-)
-
-const { deposit: depositToRouter, isLoading: isWriteLoading } = useSafeDepositRouterFunctions()
+// SafeDepositRouter address
+const safeDepositRouterAddress = useSafeDepositRouterAddress()
 
 // Reactive state for balances
 const { balances, isLoading: isBalanceLoading } = useContractBalance(
   userDataStore.address as Address
 )
-
-const isLoading = computed(() => isBalanceLoading.value || isWriteLoading.value)
 
 // Only show USDC for deposit router
 const ROUTER_SUPPORTED_TOKENS: TokenId[] = ['usdc']
@@ -136,11 +120,97 @@ const { data: allowance } = useErc20Allowance(
 )
 
 // ERC20 Approve composable
-const ERC20ApproveResult = useERC20Approve(
+const approveWrite = useERC20Approve(
   selectedTokenAddress,
   safeDepositRouterAddress as unknown as Address,
   bigIntAmount
 )
+
+// Deposit composable
+const depositWrite = useDeposit()
+
+// Combined loading state
+const isLoading = computed(
+  () =>
+    isBalanceLoading.value ||
+    approveWrite.writeResult.isPending.value ||
+    depositWrite.writeResult.isPending.value
+)
+
+// ============================================================================
+// WATCH PATTERNS - Following established patterns
+// ============================================================================
+// Watch for approve errors
+watch(
+  () => approveWrite.writeResult.error.value,
+  (error) => {
+    if (error) {
+      console.error('Error approving tokens:', error)
+      const errorMessage = parseError(error)
+
+      // Check for user rejection
+      if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
+        addErrorToast('Transaction cancelled by user')
+      } else {
+        addErrorToast('Failed to approve tokens')
+      }
+
+      submitting.value = false
+      currentStep.value = 1
+    }
+  }
+)
+
+// Watch for approve success
+watch(
+  () => approveWrite.receiptResult.isSuccess.value,
+  (success) => {
+    if (success) {
+      addSuccessToast('Token approval successful')
+      // Continue to deposit step
+      currentStep.value = 3
+      performDeposit()
+    }
+  }
+)
+
+// Watch for deposit errors
+watch(
+  () => depositWrite.writeResult.error.value,
+  (error) => {
+    if (error) {
+      console.error('Error depositing to router:', error)
+      const errorMessage = parseError(error)
+
+      // Check for user rejection
+      if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
+        addErrorToast('Transaction cancelled by user')
+      } else {
+        addErrorToast('Failed to deposit')
+      }
+
+      submitting.value = false
+      currentStep.value = 1
+    }
+  }
+)
+
+// Watch for deposit success
+watch(
+  () => depositWrite.receiptResult.isSuccess.value,
+  (success) => {
+    if (success) {
+      addSuccessToast('USDC deposited and SHER tokens minted successfully')
+      reset()
+      emits('closeModal')
+    }
+  }
+)
+
+// Reset step when amount changes
+watch(amount, () => {
+  currentStep.value = 1
+})
 
 function reset() {
   amount.value = ''
@@ -157,6 +227,15 @@ function handleCancel() {
   emits('closeModal')
 }
 
+async function performDeposit() {
+  try {
+    await depositWrite.executeWrite(selectedTokenAddress.value, bigIntAmount.value)
+  } catch (error) {
+    // Error handling is done in the watch
+    console.error('Deposit execution error:', error)
+  }
+}
+
 const submitForm = async () => {
   if (!isAmountValid.value) return
   if (!safeDepositRouterAddress.value) {
@@ -170,61 +249,22 @@ const submitForm = async () => {
 
   submitting.value = true
 
-  try {
-    // Step 1: Approve if needed
-    const currentAllowance = (allowance.value as bigint | undefined) ?? 0n
-    if (currentAllowance < bigIntAmount.value) {
-      currentStep.value = 2
-      await ERC20ApproveResult.executeWrite([safeDepositRouterAddress.value, bigIntAmount.value])
+  // Step 1: Check if approval is needed
+  const currentAllowance = (allowance.value as bigint | undefined) ?? 0n
+  if (currentAllowance < bigIntAmount.value) {
+    currentStep.value = 2
 
-      if (
-        ERC20ApproveResult.receiptResult.error.value ||
-        ERC20ApproveResult.writeResult.error.value
-      ) {
-        throw new Error('Approval failed')
-      }
+    try {
+      await approveWrite.executeWrite([safeDepositRouterAddress.value, bigIntAmount.value])
+      // Success/error handling is done in the watch
+    } catch (error) {
+      // Error handling is done in the watch
+      console.error('Approve execution error:', error)
     }
-
-    // Step 2: Deposit via SafeDepositRouter
+  } else {
+    // Skip approval, go directly to deposit
     currentStep.value = 3
-    await depositToRouter(selectedToken.value.token.address, amount.value, TOKEN_DECIMALS)
-
-    // Invalidate relevant queries
-    const tokenAddr = selectedToken.value.token.address
-
-    queryClient.invalidateQueries({
-      queryKey: [
-        'readContract',
-        { address: tokenAddr, chainId, functionName: 'balanceOf', args: [props.safeAddress] }
-      ]
-    })
-    queryClient.invalidateQueries({
-      queryKey: [
-        'readContract',
-        {
-          address: tokenAddr,
-          chainId,
-          functionName: 'balanceOf',
-          args: [userDataStore.address]
-        }
-      ]
-    })
-    queryClient.invalidateQueries({
-      queryKey: ['safeDepositRouter', safeDepositRouterAddress.value]
-    })
-
-    addSuccessToast('USDC deposited and SHER tokens minted successfully')
-    reset()
-    emits('closeModal')
-  } catch (error) {
-    console.error('Deposit to router failed:', error)
-    addErrorToast('Failed to deposit. Please try again.')
-    submitting.value = false
+    await performDeposit()
   }
 }
-
-// Reset step when amount changes
-watch(amount, () => {
-  currentStep.value = 1
-})
 </script>

@@ -26,8 +26,7 @@ import TableComponent from '@/components/TableComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import type { FormattedAction } from '@/utils'
 import UserComponent from '@/components/UserComponent.vue'
-import { useBodReads } from '@/composables/bod/reads'
-const { useBodIsActionExecuted } = useBodReads()
+import { useBodIsActionExecuted } from '@/composables/bod/reads'
 import { computed } from 'vue'
 
 const emits = defineEmits(['view-details'])

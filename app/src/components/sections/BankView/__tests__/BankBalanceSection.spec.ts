@@ -167,14 +167,17 @@ vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)
 }))
 
-vi.mock('@/composables/bod/', () => ({
-  useBodContract: () => ({
-    addAction: mockAddAction,
-    useBodIsBodAction: () => ({ isBodAction: mockIsBodAction }),
-    isLoading: mockIsLoadingAddAction,
+vi.mock('@/composables/bod/writes', () => ({
+  useBodAddAction: () => ({
+    executeAddAction: mockAddAction,
+    isPending: mockIsLoadingAddAction,
     isConfirming: mockIsConfirmingAddAction,
     isActionAdded: mockIsActionAdded
   })
+}))
+
+vi.mock('@/composables/bod/reads', () => ({
+  useBodIsBodAction: () => ({ isBodAction: mockIsBodAction })
 }))
 
 vi.mock('@/stores', () => ({

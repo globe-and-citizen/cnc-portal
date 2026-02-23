@@ -35,18 +35,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { type Address } from 'viem'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import SafeDepositRouterForm from '@/components/forms/SafeDepositRouterForm.vue'
-import { useSafeDepositRouterReads } from '@/composables/safeDepositRouter'
+import {
+  useSafeDepositRouterDepositsEnabled,
+  useSafeDepositRouterPaused
+} from '@/composables/safeDepositRouter/reads'
 import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()
 
-const { canDeposit } = useSafeDepositRouterReads()
+// Read individual composables
+const { data: depositsEnabled, isLoading: isDepositsEnabledLoading } =
+  useSafeDepositRouterDepositsEnabled()
+const { data: isPaused, isLoading: isPausedLoading } = useSafeDepositRouterPaused()
+
+// Computed property to determine if deposits are allowed
+const canDeposit = computed(() => {
+  // While loading, disable deposits
+  if (isDepositsEnabledLoading.value || isPausedLoading.value) {
+    return false
+  }
+
+  // Can deposit if: deposits are enabled AND contract is not paused
+  return depositsEnabled.value === true && isPaused.value === false
+})
 
 const modal = ref({ mount: false, show: false })
 

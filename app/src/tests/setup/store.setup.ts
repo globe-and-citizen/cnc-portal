@@ -7,7 +7,7 @@ vi.mock('@/stores', async (importOriginal) => {
     ...actual,
     useToastStore: vi.fn(() => mocks.mockToastStore),
     useTeamStore: vi.fn(() => ({ ...mocks.mockTeamStore })),
-    // useCurrencyStore: vi.fn(() => ({ ...mocks.mockUseCurrencyStore })),
+    useCurrencyStore: vi.fn(() => mocks.mockUseCurrencyStore()),
     useUserDataStore: vi.fn(() => ({ ...mocks.mockUserStore }))
   }
 })

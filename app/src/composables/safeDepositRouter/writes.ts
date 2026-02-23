@@ -1,88 +1,248 @@
-import { computed } from 'vue'
+import { computed, type MaybeRef } from 'vue'
+import type { Address } from 'viem'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useChainId } from '@wagmi/vue'
-import { useTeamStore } from '@/stores'
-import { type SafeDepositRouterFunctionName, isValidSafeDepositRouterFunction } from './types'
-import {
-  useContractWrites,
-  type ContractWriteConfig,
-  type ContractWriteOptions
-} from '../contracts/useContractWrites'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
+import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
+import { useTeamStore } from '@/stores/teamStore'
+import type { ExtractAbiFunctionNames } from 'abitype'
 
-/**
- * SafeDepositRouter contract write operations
- */
-export function useSafeDepositRouterWrites() {
+type SafeDepositRouterFunctionNames = ExtractAbiFunctionNames<typeof SAFE_DEPOSIT_ROUTER_ABI>
+
+// ============================================================================
+// Base Write Helper
+// ============================================================================
+function useSafeDepositRouterContractWrite(options: {
+  functionName: SafeDepositRouterFunctionNames
+  args?: MaybeRef<readonly unknown[]>
+  value?: MaybeRef<bigint>
+}) {
   const teamStore = useTeamStore()
-  const queryClient = useQueryClient()
-  const chainId = useChainId()
-
   const safeDepositRouterAddress = computed(() =>
     teamStore.getContractAddressByType('SafeDepositRouter')
   )
 
-  const baseConfig: ContractWriteConfig = {
-    contractAddress: safeDepositRouterAddress.value!,
+  return useContractWrites({
+    contractAddress: safeDepositRouterAddress,
     abi: SAFE_DEPOSIT_ROUTER_ABI,
-    chainId
+    functionName: options.functionName,
+    args: options.args ?? [],
+    ...(options.value !== undefined ? { value: options.value } : {})
+  })
+}
+
+// ============================================================================
+// Admin Functions - Simple Pattern (No Args)
+// ============================================================================
+
+export function useEnableDeposits() {
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'enableDeposits'
+  })
+
+  return {
+    ...write,
+    executeWrite: () => write.executeWrite([])
   }
+}
 
-  const baseWrites = useContractWrites(baseConfig)
+export function useDisableDeposits() {
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'disableDeposits'
+  })
 
-  const executeWrite = async (
-    functionName: SafeDepositRouterFunctionName,
-    args: readonly unknown[] = [],
-    value?: bigint,
-    options?: ContractWriteOptions
-  ) => {
-    if (!isValidSafeDepositRouterFunction(functionName)) {
-      throw new Error(`Invalid SafeDepositRouter function: ${functionName}`)
-    }
-
-    const result = await baseWrites.executeWrite(functionName, args, value, options)
-
-    if (result) {
-      queryClient.invalidateQueries({
-        queryKey: ['safeDepositRouter', safeDepositRouterAddress.value]
-      })
-      queryClient.invalidateQueries({
-        queryKey: ['team', 'contracts']
-      })
-    }
-
-    return result
+  return {
+    ...write,
+    executeWrite: () => write.executeWrite([])
   }
+}
 
-  const estimateGas = async (
-    functionName: SafeDepositRouterFunctionName,
-    args: readonly unknown[] = [],
-    value?: bigint
-  ) => {
-    if (!isValidSafeDepositRouterFunction(functionName)) {
-      throw new Error(`Invalid SafeDepositRouter function: ${functionName}`)
-    }
+export function usePauseContract() {
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'pause'
+  })
 
-    return baseWrites.estimateGas(functionName, args, value)
+  return {
+    ...write,
+    executeWrite: () => write.executeWrite([])
   }
+}
 
-  const canExecuteTransaction = async (
-    functionName: SafeDepositRouterFunctionName,
-    args: readonly unknown[] = [],
-    value?: bigint
-  ) => {
-    if (!isValidSafeDepositRouterFunction(functionName)) {
-      throw new Error(`Invalid SafeDepositRouter function: ${functionName}`)
-    }
+export function useUnpauseContract() {
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'unpause'
+  })
 
-    return baseWrites.canExecuteTransaction(functionName, args, value)
+  return {
+    ...write,
+    executeWrite: () => write.executeWrite([])
+  }
+}
+
+export function useRenounceOwnership() {
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'renounceOwnership'
+  })
+
+  return {
+    ...write,
+    executeWrite: () => write.executeWrite([])
+  }
+}
+
+// ============================================================================
+// Configuration Functions - Dynamic Args Pattern
+// ============================================================================
+
+export function useTransferOwnership() {
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'transferOwnership'
+  })
+
+  return {
+    ...write,
+    executeWrite: (newOwner: Address) => write.executeWrite([newOwner])
+  }
+}
+
+export function useSetSafeAddress() {
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'setSafeAddress'
+  })
+
+  return {
+    ...write,
+    executeWrite: (newSafeAddress: Address) => write.executeWrite([newSafeAddress])
+  }
+}
+
+export function useSetInvestorAddress() {
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'setInvestorAddress'
+  })
+
+  return {
+    ...write,
+    executeWrite: (newInvestorAddress: Address) => write.executeWrite([newInvestorAddress])
+  }
+}
+
+export function useSetMultiplier() {
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'setMultiplier'
+  })
+
+  return {
+    ...write,
+    executeWrite: (newMultiplier: bigint) => write.executeWrite([newMultiplier])
+  }
+}
+
+export function useAddTokenSupport() {
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'addTokenSupport'
+  })
+
+  return {
+    ...write,
+    executeWrite: (tokenAddress: Address) => write.executeWrite([tokenAddress])
+  }
+}
+
+export function useRemoveTokenSupport() {
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'removeTokenSupport'
+  })
+
+  return {
+    ...write,
+    executeWrite: (tokenAddress: Address) => write.executeWrite([tokenAddress])
+  }
+}
+
+// ============================================================================
+// Deposit Functions - With Custom Query Invalidation
+// ============================================================================
+
+export function useDeposit() {
+  const queryClient = useQueryClient()
+  const teamStore = useTeamStore()
+  const safeDepositRouterAddress = computed(() =>
+    teamStore.getContractAddressByType('SafeDepositRouter')
+  )
+
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'deposit'
+  })
+
+  // Override invalidateQueries for deposit-specific cache updates
+  const originalInvalidateQueries = write.invalidateQueries
+  write.invalidateQueries = async () => {
+    await originalInvalidateQueries()
+
+    // Invalidate SafeDepositRouter queries
+    await queryClient.invalidateQueries({
+      queryKey: ['readContract', { address: safeDepositRouterAddress.value }]
+    })
+
+    // Invalidate InvestorV1 queries (balance changes)
+    await queryClient.invalidateQueries({
+      queryKey: ['readContract', { address: teamStore.getContractAddressByType('InvestorV1') }]
+    })
   }
 
   return {
-    ...baseWrites,
-    executeWrite,
-    estimateGas,
-    canExecuteTransaction,
-    safeDepositRouterAddress
+    ...write,
+    // Always skip gas estimation for deposit (multi-step operation with approval dependency)
+    executeWrite: (tokenAddress: Address, amount: bigint) =>
+      write.executeWrite([tokenAddress, amount], undefined, { skipGasEstimation: true })
+  }
+}
+
+export function useDepositWithSlippage() {
+  const queryClient = useQueryClient()
+  const teamStore = useTeamStore()
+  const safeDepositRouterAddress = computed(() =>
+    teamStore.getContractAddressByType('SafeDepositRouter')
+  )
+
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'depositWithSlippage'
+  })
+
+  // Override invalidateQueries
+  const originalInvalidateQueries = write.invalidateQueries
+  write.invalidateQueries = async () => {
+    await originalInvalidateQueries()
+
+    await queryClient.invalidateQueries({
+      queryKey: ['readContract', { address: safeDepositRouterAddress.value }]
+    })
+
+    await queryClient.invalidateQueries({
+      queryKey: ['readContract', { address: teamStore.getContractAddressByType('InvestorV1') }]
+    })
+  }
+
+  return {
+    ...write,
+    // Always skip gas estimation for depositWithSlippage (same reasoning as deposit)
+    executeWrite: (tokenAddress: Address, amount: bigint, minSherOut: bigint) =>
+      write.executeWrite([tokenAddress, amount, minSherOut], undefined, { skipGasEstimation: true })
+  }
+}
+
+// ============================================================================
+// Recovery Functions
+// ============================================================================
+
+export function useRecoverERC20() {
+  const write = useSafeDepositRouterContractWrite({
+    functionName: 'recoverERC20'
+  })
+
+  return {
+    ...write,
+    executeWrite: (tokenAddress: Address, amount: bigint) =>
+      write.executeWrite([tokenAddress, amount])
   }
 }

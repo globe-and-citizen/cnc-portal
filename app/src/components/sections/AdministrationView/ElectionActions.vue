@@ -52,7 +52,7 @@ import PublishResult from '@/components/sections/AdministrationView/PublishResul
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useRouter } from 'vue-router'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { useBoDElections } from '@/composables'
+import { useBoDElections } from '@/composables/elections'
 
 const props = defineProps<{ electionId: bigint }>()
 

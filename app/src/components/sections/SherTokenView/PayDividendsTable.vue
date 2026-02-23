@@ -1,141 +1,121 @@
 <template>
-  <CardComponent>
-    <div class="overflow-x-auto flex flex-col gap-4 card bg-white p-6">
-      <div class="w-full flex justify-between">
-        <span class="font-bold text-lg">Your Pending Dividends</span>
+  <UCard>
+    <template #header>
+      <h3 class="text-lg font-semibold">Your Pending Dividends</h3>
+    </template>
+
+    <div class="flex flex-col gap-4">
+      <!-- Loading State -->
+      <div v-if="isLoading" class="flex justify-center py-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
 
-      <!-- headless fetchers (one per discovered token) -->
-      <div class="hidden">
-        <TokenDividendAmountFetcher
-          v-for="t in discoveredTokens"
-          :key="t.tokenAddress + '-' + (currentAddress || '')"
-          :token-address="t.tokenAddress"
-          :shareholder="currentAddress as Address"
-          @update="onAmountUpdate"
-        />
-      </div>
+      <!-- Empty State -->
+      <UAlert
+        v-else-if="!tableRows.length"
+        color="neutral"
+        variant="soft"
+        icon="i-heroicons-information-circle"
+        title="No pending dividends"
+        description="You don't have any pending dividends at this time."
+      />
 
-      <div class="bg-base-100 w-full">
-        <TableComponent :rows="filteredRows" :columns="columns" :loading="isBalancesLoading">
-          <template #shareholder-data="{ row }">
-            <AddressToolTip :address="row.address" />
-          </template>
+      <!-- Table -->
+      <UTable v-else :data="tableRows" :columns="columns">
+        <template #token-cell="{ row }">
+          <div class="flex items-center gap-3">
+            <img
+              v-if="row.original.icon"
+              :src="row.original.icon"
+              :alt="row.original.name"
+              class="w-8 h-8 rounded-full"
+            />
+            <div v-else class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+              <span class="text-gray-500 font-medium">{{ row.original.name.charAt(0) }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-medium">{{ row.original.name }}</span>
+              <span class="text-sm text-gray-500">{{ row.original.symbol }}</span>
+            </div>
+          </div>
+        </template>
 
-          <template #token-data="{ row }">
-            <span>{{ row.tokenSymbol }}</span>
-          </template>
+        <template #balance-cell="{ row }">
+          <span class="font-semibold">{{ row.original.formattedBalance }}</span>
+        </template>
 
-          <template #amount-data="{ row }">
-            <span class="font-bold">
-              {{ formattedAmount(row.tokenAddress, row.decimals) }} {{ row.tokenSymbol }}
-            </span>
-          </template>
-
-          <template #action-data="{ row }">
-            <ButtonUI
-              variant="primary"
-              size="sm"
-              data-test="claim-dividend"
-              @click="() => executeClaim(row.tokenAddress)"
-              :disabled="isWriteLoading && currentClaimingToken === row.tokenAddress"
-              :loading="isWriteLoading && currentClaimingToken === row.tokenAddress"
-            >
-              {{
-                isWriteLoading && currentClaimingToken === row.tokenAddress ? 'Claiming' : 'Claim'
-              }}
-            </ButtonUI>
-          </template>
-        </TableComponent>
-      </div>
+        <template #action-cell="{ row }">
+          <ClaimDividendButton
+            :token-address="row.original.tokenAddress"
+            :is-native="row.original.isNative"
+            :balance="row.original.balance"
+          />
+        </template>
+      </UTable>
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { zeroAddress, type Address, formatUnits } from 'viem'
-import CardComponent from '@/components/CardComponent.vue'
-import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import TokenDividendAmountFetcher from '@/components/sections/SherTokenView/TokenDividendAmountFetcher.vue'
-import { useToastStore, useUserDataStore, useTeamStore } from '@/stores'
-import { useContractBalance } from '@/composables/useContractBalance'
-import { useBankContract } from '@/composables/bank'
-import { tokenSymbol } from '@/utils'
+import type { TableColumn } from '@nuxt/ui'
+import EthereumIcon from '@/assets/Ethereum.png'
+import USDCIcon from '@/assets/usdc.png'
+import MaticIcon from '@/assets/matic-logo.png'
+import { useUserDataStore } from '@/stores'
+import { useGetDividendBalances } from '@/composables/bank/reads.ts'
+import ClaimDividendButton from './ClaimDividendButton.vue'
 
-const toast = useToastStore()
+// Define row type for better TypeScript support
+interface DividendRow {
+  tokenAddress: Address
+  name: string
+  symbol: string
+  balance: string
+  formattedBalance: string
+  decimals: number
+  icon: string | null
+  isNative: boolean
+  error: Error | null
+}
+
 const { address: currentAddress } = useUserDataStore()
-const teamStore = useTeamStore()
 
-const bankAddress = teamStore.getContractAddressByType('Bank') as Address | undefined
-const { balances, isLoading: isBalancesLoading } = useContractBalance(bankAddress as Address)
+// Fetch dividend balances using the new composable
+// Queries are automatically invalidated after claims via the write composables
+const { data, isLoading } = useGetDividendBalances(currentAddress as Address)
 
-const { claimDividend, claimTokenDividend, isLoading: isWriteLoading } = useBankContract()
-
-const columns: TableColumn[] = [
-  { key: 'shareholder', label: 'Address', sortable: false, class: 'text-black text-base' },
-  { key: 'token', label: 'Token', sortable: true, class: 'text-black text-base' },
-  { key: 'amount', label: 'Amount', sortable: true, class: 'text-black text-base' },
-  { key: 'action', label: 'Action', sortable: false, class: 'text-black text-base' }
+const columns: TableColumn<DividendRow>[] = [
+  { accessorKey: 'name', header: 'Token', id: 'token' },
+  { accessorKey: 'formattedBalance', header: 'Dividend Balance', id: 'balance' },
+  { id: 'action', header: 'Action' }
 ]
 
-// Discover tokens (native + ERC20) from bank balances
-const discoveredTokens = computed(() =>
-  balances.value
-    .filter((b) => b.token && b.token.symbol) // guard
-    .map((b) => ({
-      tokenAddress: b.token.id === 'native' ? zeroAddress : (b.token.address as Address),
-      tokenSymbol: b.token.symbol ?? tokenSymbol(b.token.address as Address),
-      decimals: b.token.decimals ?? 18
-    }))
-)
-
-// Aggregated per-token user pending dividend (emitted by fetchers)
-const amounts = ref<Record<string, bigint>>({})
-
-const onAmountUpdate = ({ tokenAddress, amount }: { tokenAddress: Address; amount: bigint }) => {
-  amounts.value[tokenAddress.toLowerCase()] = amount
+// Get token icon based on symbol
+const getTokenIcon = (symbol: string) => {
+  if (symbol === 'USDC' || symbol === 'USDCe') return USDCIcon
+  if (symbol === 'POL') return MaticIcon
+  if (symbol === 'ETH') return EthereumIcon
+  return null
 }
 
-type Row = {
-  address: string
-  tokenAddress: Address
-  tokenSymbol: string
-  decimals: number
-}
+// Transform data into table rows
+const tableRows = computed<DividendRow[]>(() => {
+  if (!data.value) return []
 
-// Only rows with amount > 0n
-const filteredRows = computed<Row[]>(() => {
-  if (!currentAddress) return []
-  return discoveredTokens.value
-    .filter((t) => (amounts.value[t.tokenAddress.toLowerCase()] ?? 0n) > 0n)
-    .map((t) => ({
-      address: currentAddress as string,
-      tokenAddress: t.tokenAddress,
-      tokenSymbol: t.tokenSymbol,
-      decimals: t.decimals
+  return data.value
+    .filter((item) => item.balance > 0n) // Only show tokens with balance
+    .map((item) => ({
+      tokenAddress: item.token.address,
+      name: item.token.name,
+      symbol: item.token.symbol,
+      balance: item.balance.toString(),
+      formattedBalance: `${formatUnits(item.balance, item.token.decimals)} ${item.token.symbol}`,
+      decimals: item.token.decimals,
+      icon: getTokenIcon(item.token.symbol),
+      isNative: item.token.address === zeroAddress,
+      error: item.error
     }))
 })
-
-const currentClaimingToken = ref<Address | null>(null)
-
-const formattedAmount = (tokenAddr: Address, decimals: number) => {
-  const amt = amounts.value[tokenAddr.toLowerCase()] ?? 0n
-  return formatUnits(amt, decimals)
-}
-
-const executeClaim = async (tokenAddr: Address) => {
-  currentClaimingToken.value = tokenAddr
-  try {
-    if (tokenAddr === zeroAddress) await claimDividend()
-    else await claimTokenDividend(tokenAddr)
-    toast.addSuccessToast('Claim successful')
-  } catch {
-    toast.addErrorToast('Failed to claim dividend')
-  } finally {
-    currentClaimingToken.value = null
-  }
-}
 </script>
