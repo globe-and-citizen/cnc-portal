@@ -2,7 +2,6 @@
   <div class="flex justify-end">
     <div class="flex justify-between">
       <div class="flex items-center space-x-2 sm:space-x-4">
-        <SafeSelector v-if="isSafeRoute" />
         <div class="dropdown dropdown-end">
           <div
             tabindex="0"
@@ -77,17 +76,11 @@ import { useAuth } from '@/composables/useAuth'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import { useUserDataStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import SafeSelector from './SafeSelector.vue'
-import { useRoute } from 'vue-router'
-import { computed } from 'vue'
 
 defineEmits(['toggleSideButton', 'toggleEditUserModal'])
 const { logout } = useAuth()
 const userStore = useUserDataStore()
 const { imageUrl } = storeToRefs(userStore)
-const route = useRoute()
-
-const isSafeRoute = computed(() => route.name === 'trading' || route.name === 'safe-account')
 
 // defineProps<{
 //   isCollapsed: boolean
