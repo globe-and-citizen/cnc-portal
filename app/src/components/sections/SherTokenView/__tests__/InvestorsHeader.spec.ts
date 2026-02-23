@@ -190,6 +190,4 @@ describe('InvestorsHeader', () => {
       expect(balanceCard.find(SELECTORS.amount).text()).toBe('0 BTC')
     })
   })
-
-  })
 })
