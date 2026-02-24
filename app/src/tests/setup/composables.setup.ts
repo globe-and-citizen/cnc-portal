@@ -8,7 +8,9 @@ import {
   mockUseSafeSendTransaction,
   mockUseSafeOwnerManagement,
   mockUseSafeDeployment,
-  mockUseClipboard
+  mockUseClipboard,
+  useQueryClientFn,
+  useQueryFn
 } from '@/tests/mocks/composables.mock'
 import { mockGetBalance } from '@/tests/mocks/viem.actions.mock'
 import { mockRouter } from '@/tests/mocks/router.mock'
@@ -21,21 +23,8 @@ vi.mock('@tanstack/vue-query', async () => {
   const actual: object = await vi.importActual('@tanstack/vue-query')
   return {
     ...actual,
-    useQueryClient: vi.fn(() => {
-      return {
-        invalidateQueries: vi.fn(),
-        getQueryData: vi.fn(),
-        setQueryData: vi.fn(),
-        removeQueries: vi.fn()
-      }
-    }),
-    useQuery: vi.fn(() => {
-      return {
-        data: vi.fn(),
-        isLoading: vi.fn(),
-        error: vi.fn()
-      }
-    })
+    useQueryClient: useQueryClientFn,
+    useQuery: useQueryFn
   }
 })
 

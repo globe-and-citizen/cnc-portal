@@ -37,7 +37,8 @@ export const mockWagmiCore = {
   simulateContract: vi.fn(),
   waitForTransactionReceipt: vi.fn(),
   writeContract: vi.fn(),
-  readContract: vi.fn()
+  readContract: vi.fn(),
+  getWalletClient: vi.fn()
 }
 
 // Mock useWaitForTransactionReceipt composable
@@ -81,3 +82,25 @@ export const mockCreateConfig = vi.fn((config) => ({
     transports: config.transports
   }
 }))
+
+/**
+ * Mock useAccount composable
+ */
+export const mockUseAccount = {
+  address: ref('0x1234567890123456789012345678901234567890'),
+  chainId: ref(1),
+  isConnected: ref(true),
+  status: ref('connected' as const)
+}
+
+/**
+ * Exported vi.fn() factory functions for wagmi composables.
+ * Use these in tests that need per-test configuration via mockReturnValue/mockReturnValueOnce.
+ */
+export const useWriteContractFn = vi.fn(() => ({ ...mockUseWriteContract }))
+export const useWaitForTransactionReceiptFn = vi.fn(() => ({ ...mockUseWaitForTransactionReceipt }))
+export const useChainIdFn = vi.fn(() => mockUseChainId)
+export const useReadContractFn = vi.fn(() => ({ ...mockUseReadContract }))
+export const useSignTypedDataFn = vi.fn(() => ({ ...mockUseSignTypedData }))
+export const useAccountFn = vi.fn(() => ({ ...mockUseAccount }))
+

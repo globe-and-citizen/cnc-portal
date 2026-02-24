@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { mockBODReads, mockBODWrites } from '../mocks/contract.mock'
+import { mockBODReads, mockBODWrites, mockBodIsBodAction, mockBodAddAction } from '../mocks/contract.mock'
 
 /**
  * Mock all BOD read composables
@@ -11,7 +11,7 @@ vi.mock('@/composables/bod/reads', () => ({
   useBodGetBoardOfDirectors: vi.fn(() => mockBODReads.boardMembers),
   useBodIsMember: vi.fn(() => mockBODReads.isMember),
   useBodApprovalCount: vi.fn(() => mockBODReads.approvalCount),
-  useBodIsBodAction: vi.fn(() => mockBODReads.boardMembers)
+  useBodIsBodAction: vi.fn(() => mockBodIsBodAction)
 }))
 
 /**
@@ -21,6 +21,6 @@ vi.mock('@/composables/bod/writes', () => ({
   useBodPause: vi.fn(() => mockBODWrites.pause),
   useBodUnpause: vi.fn(() => mockBODWrites.unpause),
   useBodSetBoardOfDirectors: vi.fn(() => mockBODWrites.setBoard),
-  useBodAddAction: vi.fn(() => mockBODWrites.addAction),
+  useBodAddAction: vi.fn(() => mockBodAddAction),
   useBodApproveAction: vi.fn(() => mockBODWrites.approve)
 }))
