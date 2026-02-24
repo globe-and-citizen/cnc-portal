@@ -6,10 +6,9 @@ import type { Address, Abi } from 'viem'
 import {
   useWriteContractFn,
   useWaitForTransactionReceiptFn,
-  useAccountFn,
-  useChainIdFn
+  useAccountFn
 } from '@/tests/mocks'
-import { useQueryFn, useQueryClientFn } from '@/tests/mocks'
+import { useQueryFn } from '@/tests/mocks'
 
 // Local mocks for composables/utils not covered by global setup
 const {

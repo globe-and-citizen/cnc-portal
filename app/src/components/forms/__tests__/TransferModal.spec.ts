@@ -13,7 +13,7 @@ import {
   mockBodIsBodAction,
   mockBodAddAction
 } from '@/tests/mocks'
-import { mockToastStore, mockUserStore } from '@/tests/mocks'
+import { mockUserStore } from '@/tests/mocks'
 import { mockUseContractBalance } from '@/tests/mocks'
 
 // Keep local mock only for the Bank ABI (not covered by global setup)

@@ -109,6 +109,11 @@ export const mockHealthCheckData: HealthCheckResponse = {
 }
 
 /**
+ * Stable refetch mock for health query - exported for tests that need to verify it was called
+ */
+export const mockHealthQueryRefetch = vi.fn().mockResolvedValue({})
+
+/**
  * Weekly Claim Query Mocks
  */
 export const mockWeeklyClaimData: WeeklyClaim[] = [
@@ -308,7 +313,10 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useResetContractsMutation: () => createMockMutationResponse(),
 
   // Health queries - health.queries.ts
-  useGetBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData),
+  useGetBackendHealthQuery: () => ({
+    ...createMockQueryResponse(mockHealthCheckData),
+    refetch: mockHealthQueryRefetch
+  }),
 
   // Weekly Claim queries - weeklyClaim.queries.ts
   useGetTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
