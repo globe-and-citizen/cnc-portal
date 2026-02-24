@@ -43,4 +43,3 @@ vi.mock('@wagmi/core', async (importOriginal) => {
     ...mocks.mockWagmiCore
   }
 })
-

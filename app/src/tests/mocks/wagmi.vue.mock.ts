@@ -103,4 +103,3 @@ export const useChainIdFn = vi.fn(() => mockUseChainId)
 export const useReadContractFn = vi.fn(() => ({ ...mockUseReadContract }))
 export const useSignTypedDataFn = vi.fn(() => ({ ...mockUseSignTypedData }))
 export const useAccountFn = vi.fn(() => ({ ...mockUseAccount }))
-

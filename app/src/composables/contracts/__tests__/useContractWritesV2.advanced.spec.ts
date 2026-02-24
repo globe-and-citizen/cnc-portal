@@ -3,32 +3,24 @@ import { ref, nextTick } from 'vue'
 import { useContractWrites } from '../useContractWritesV2'
 import type { ContractWriteConfig } from '../useContractWritesV2'
 import type { Address, Abi } from 'viem'
-import {
-  useWriteContractFn,
-  useWaitForTransactionReceiptFn,
-  useAccountFn
-} from '@/tests/mocks'
+import { useWriteContractFn, useWaitForTransactionReceiptFn, useAccountFn } from '@/tests/mocks'
 import { useQueryFn } from '@/tests/mocks'
 
 // Local mocks for composables/utils not covered by global setup
-const {
-  mockUseTransactionTimeline,
-  mockLog,
-  mockWaitForCondition,
-  mockFormatDataForDisplay
-} = vi.hoisted(() => {
-  const mockQueryClient = {
-    invalidateQueries: vi.fn().mockResolvedValue(undefined)
-  }
+const { mockUseTransactionTimeline, mockLog, mockWaitForCondition, mockFormatDataForDisplay } =
+  vi.hoisted(() => {
+    const mockQueryClient = {
+      invalidateQueries: vi.fn().mockResolvedValue(undefined)
+    }
 
-  return {
-    mockQueryClient,
-    mockUseTransactionTimeline: vi.fn(),
-    mockLog: { error: vi.fn() },
-    mockWaitForCondition: vi.fn().mockResolvedValue(true),
-    mockFormatDataForDisplay: vi.fn((data) => data)
-  }
-})
+    return {
+      mockQueryClient,
+      mockUseTransactionTimeline: vi.fn(),
+      mockLog: { error: vi.fn() },
+      mockWaitForCondition: vi.fn().mockResolvedValue(true),
+      mockFormatDataForDisplay: vi.fn((data) => data)
+    }
+  })
 
 vi.mock('@/composables/useTransactionTimeline', () => ({
   useTransactionTimeline: mockUseTransactionTimeline
@@ -312,4 +304,3 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
     })
   })
 })
-

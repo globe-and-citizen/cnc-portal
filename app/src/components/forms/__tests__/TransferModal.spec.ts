@@ -168,4 +168,3 @@ describe('TransferModal', () => {
     })
   })
 })
-
