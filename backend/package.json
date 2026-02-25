@@ -66,7 +66,6 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.731.1",
     "@aws-sdk/s3-request-presigner": "^3.731.1",
-    "@polymarket/builder-signing-sdk": "^0.0.8",
     "@prisma/client": "^6.15.0",
     "@sentry/cli": "^2.53.0",
     "@sentry/node": "^10.11.0",

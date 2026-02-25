@@ -177,14 +177,6 @@ vi.mock('@/queries/safe.mutations', () => ({
 }))
 
 /**
- * Mock Polymarket Queries (polymarket.queries.ts)
- */
-vi.mock('@/queries/polymarket.queries', () => ({
-  useGetMarketDataQuery: vi.fn(queryMocks.useGetMarketDataQuery),
-  useGetSafeBalancesQuery: vi.fn(queryMocks.useGetSafeBalancesQuery)
-}))
-
-/**
  * Mock useBackendWake composable
  */
 vi.mock('@/composables/useBackendWake', () => ({

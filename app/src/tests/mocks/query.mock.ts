@@ -187,17 +187,6 @@ export const mockSafeTransactionData = {
   signatures: null
 }
 
-export const mockMarketData = {
-  tokens: [
-    {
-      token_id: 'test-token',
-      outcome: 'Yes',
-      price: '0.50',
-      volume: '1000'
-    }
-  ]
-}
-
 /**
  * BOD Action Query Mocks
  */
@@ -325,9 +314,5 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useApproveTransactionMutation: () => createMockMutationResponse(),
   useExecuteTransactionMutation: () => createMockMutationResponse(),
   useUpdateSafeOwnersMutation: () => createMockMutationResponse(),
-  useGetSafeTransactionQuery: () => createMockQueryResponse(mockSafeTransactionData),
-
-  // Polymarket queries - polymarket.queries.ts
-  useGetMarketDataQuery: () => createMockQueryResponse(mockMarketData),
-  useGetSafeBalancesQuery: () => createMockQueryResponse([])
+  useGetSafeTransactionQuery: () => createMockQueryResponse(mockSafeTransactionData)
 }

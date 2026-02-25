@@ -292,5 +292,3 @@ export interface TokenConfig {
   address: Address
   code: string
 }
-
-export * from './polymarket'
