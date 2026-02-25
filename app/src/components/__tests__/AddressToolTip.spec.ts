@@ -1,24 +1,9 @@
 import { ref } from 'vue'
-import * as vueuse from '@vueuse/core'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { NETWORK } from '@/constant'
-
-const mockCopy = vi.fn()
-const mockClipboard = {
-  copy: mockCopy,
-  copied: ref(false),
-  isSupported: ref(true)
-}
-
-vi.mock('@vueuse/core', async () => {
-  const originalModule = await vi.importActual<typeof vueuse>('@vueuse/core')
-  return {
-    ...originalModule,
-    useClipboard: vi.fn(() => mockClipboard)
-  }
-})
+import { mockUseClipboard } from '@/tests/mocks'
 
 describe('AddressToolTip.vue', () => {
   let wrapper: ReturnType<typeof mount>
@@ -33,12 +18,12 @@ describe('AddressToolTip.vue', () => {
   })
   describe('Render', () => {
     it('render the copy button in the copyed stat', async () => {
-      mockClipboard.isSupported.value = true
-      mockClipboard.copied.value = false
+      mockUseClipboard.isSupported.value = true
+      mockUseClipboard.copied.value = false
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="copy-address-tooltip"]').exists()).toBe(true)
-      mockClipboard.copied.value = true
+      mockUseClipboard.copied.value = true
       await wrapper.vm.$nextTick()
 
       const copyAddressTooltip = wrapper.find('[data-test="copy-address-tooltip"]').findComponent({
@@ -48,8 +33,8 @@ describe('AddressToolTip.vue', () => {
     })
 
     it('not render the copy button if copy is not supported', async () => {
-      mockClipboard.isSupported.value = false
-      mockClipboard.copied.value = false
+      mockUseClipboard.isSupported.value = false
+      mockUseClipboard.copied.value = false
       await wrapper.vm.$nextTick()
       expect(wrapper.find('[data-test="copy-address-tooltip"]').exists()).toBe(false)
     })
@@ -58,8 +43,8 @@ describe('AddressToolTip.vue', () => {
   describe('methods', () => {
     // TODO: Find a way to watch on the copy function
     it("should copy the member's address to the clipboard", async () => {
-      mockClipboard.isSupported.value = true
-      mockClipboard.copied.value = false
+      mockUseClipboard.isSupported.value = true
+      mockUseClipboard.copied.value = false
       await wrapper.vm.$nextTick()
 
       // console.log('wrapper', wrapper.html())

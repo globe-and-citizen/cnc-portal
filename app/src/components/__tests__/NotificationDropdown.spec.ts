@@ -2,15 +2,6 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 
-vi.mock('vue-router', () => ({
-  useRouter: vi.fn(),
-  useRoute: vi.fn(() => ({
-    params: {
-      id: 0
-    }
-  }))
-}))
-
 describe('NotificationDropdown.vue', () => {
   let wrapper: ReturnType<typeof mount>
 

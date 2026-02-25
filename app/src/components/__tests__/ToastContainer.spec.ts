@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { defineComponent } from 'vue'
+import { mockToastStore } from '@/tests/mocks'
 
 // Mocking Toast component
 const Toast = defineComponent({
@@ -14,12 +15,7 @@ import ToastContainer from '@/components/ToastContainer.vue'
 
 // Mock the useToastStore function
 vi.mock('@/stores/useToastStore', () => ({
-  useToastStore: () => ({
-    toasts: [
-      { message: 'Toast 1', type: 'success', timeout: 5000 },
-      { message: 'Toast 2', type: 'error', timeout: 5000 }
-    ]
-  })
+  useToastStore: () => mockToastStore
 }))
 
 describe('ToastContainer.vue', () => {

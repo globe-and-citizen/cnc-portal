@@ -59,12 +59,6 @@ vi.mock('@/composables', () => ({
   }))
 }))
 
-vi.mock('@tanstack/vue-query', () => ({
-  useQueryClient: () => ({
-    invalidateQueries: vi.fn()
-  })
-}))
-
 // Mock wagmi core contract interactions to resolve successfully
 vi.mock('@wagmi/core', () => ({
   simulateContract: vi.fn().mockResolvedValue({}),
