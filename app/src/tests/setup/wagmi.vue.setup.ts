@@ -5,11 +5,11 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useChainId: vi.fn(() => mocks.mockUseChainId),
-    useReadContract: vi.fn(() => ({ ...mocks.mockUseReadContract })),
-    useSignTypedData: vi.fn(() => ({ ...mocks.mockUseSignTypedData })),
-    useWriteContract: vi.fn(() => ({ ...mocks.mockUseWriteContract })),
-    useWaitForTransactionReceipt: vi.fn(() => ({ ...mocks.mockUseWaitForTransactionReceipt })),
+    useChainId: mocks.useChainIdFn,
+    useReadContract: mocks.useReadContractFn,
+    useSignTypedData: mocks.useSignTypedDataFn,
+    useWriteContract: mocks.useWriteContractFn,
+    useWaitForTransactionReceipt: mocks.useWaitForTransactionReceiptFn,
     useConnection: vi.fn(() => ({ ...mocks.mockUseConnection })),
     useDisconnect: vi.fn(() => ({ ...mocks.mockUseDisconnect })),
     useConnectionEffect: mocks.mockUseConnectionEffect,

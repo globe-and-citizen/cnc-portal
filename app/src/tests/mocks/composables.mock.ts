@@ -367,3 +367,20 @@ export const resetComposableMocks = () => {
 
 // Keep for backwards compatibility
 export const resetTransactionMocks = resetComposableMocks
+
+/**
+ * Exported vi.fn() factory functions for TanStack Vue Query.
+ * Use these in tests that need per-test configuration via mockReturnValue/mockReturnValueOnce.
+ */
+export const useQueryClientFn = vi.fn(() => ({
+  invalidateQueries: vi.fn(),
+  getQueryData: vi.fn(),
+  setQueryData: vi.fn(),
+  removeQueries: vi.fn()
+}))
+
+export const useQueryFn = vi.fn(() => ({
+  data: vi.fn(),
+  isLoading: vi.fn(),
+  error: vi.fn()
+}))

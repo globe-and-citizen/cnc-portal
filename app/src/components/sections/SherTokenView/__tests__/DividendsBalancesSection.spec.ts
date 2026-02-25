@@ -61,12 +61,13 @@ const makeDividend = (): MockDividend => ({
 import DividendsBalancesSection from '@/components/sections/SherTokenView/DividendsBalancesSection.vue'
 
 describe('DividendsBalancesSection.vue', () => {
-  const createWrapper = () =>
-    mount(DividendsBalancesSection, {
+  const createWrapper = () => {
+    return mount(DividendsBalancesSection, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
+  }
 
   beforeEach(() => {
     mockTeamStore.getContractAddressByType = vi.fn(() => '0xbank')

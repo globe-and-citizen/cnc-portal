@@ -6,7 +6,7 @@ import {
   useBodAddAction,
   useBodApproveAction
 } from '../writes'
-import { mockBODWrites, resetContractMocks } from '@/tests/mocks'
+import { mockBODWrites, mockBodAddAction, resetContractMocks } from '@/tests/mocks'
 import type { Address } from 'viem'
 
 // Test constants
@@ -100,12 +100,12 @@ describe('BOD Contract Writes', () => {
     it('should return add action mock', () => {
       const result = useBodAddAction()
 
-      expect(result).toBe(mockBODWrites.addAction)
+      expect(result).toBe(mockBodAddAction)
       expect(result.executeWrite).toBeInstanceOf(Function)
     })
 
     it('should support successful action addition', async () => {
-      mockBODWrites.addAction.executeWrite.mockResolvedValue(undefined)
+      mockBodAddAction.executeWrite.mockResolvedValue(undefined)
       const result = useBodAddAction()
 
       await result.executeWrite()
@@ -114,7 +114,7 @@ describe('BOD Contract Writes', () => {
 
     it('should handle action addition errors', async () => {
       const error = new Error('Failed to add action')
-      mockBODWrites.addAction.executeWrite.mockRejectedValue(error)
+      mockBodAddAction.executeWrite.mockRejectedValue(error)
 
       const result = useBodAddAction()
       await expect(result.executeWrite()).rejects.toThrow('Failed to add action')

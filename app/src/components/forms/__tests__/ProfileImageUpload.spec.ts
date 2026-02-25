@@ -2,19 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, VueWrapper, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import ProfileImageUpload from '../ProfileImageUpload.vue'
+import { useToastStore } from '@/stores'
+import { mockToastStore } from '@/tests/mocks'
 
 // Hoisted mocks
-const { mockFetch, mockToastStore } = vi.hoisted(() => ({
-  mockFetch: vi.fn(),
-  mockToastStore: {
-    addErrorToast: vi.fn(),
-    addSuccessToast: vi.fn()
-  }
-}))
-
-// Mock stores
-vi.mock('@/stores', () => ({
-  useToastStore: vi.fn(() => mockToastStore)
+const { mockFetch } = vi.hoisted(() => ({
+  mockFetch: vi.fn()
 }))
 
 // Mock @vueuse/core for useStorage
@@ -55,6 +48,7 @@ describe('ProfileImageUpload.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(useToastStore).mockReturnValue(mockToastStore as ReturnType<typeof useToastStore>)
     global.fetch = mockFetch
     mockFetch.mockResolvedValue({
       ok: true,
