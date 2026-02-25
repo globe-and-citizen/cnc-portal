@@ -1,35 +1,34 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import CashRemunerationPendingClaim from '../CashRemunerationPendingClaim.vue'
 import { shallowMount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-const mockError = ref<unknown>(null)
-vi.mock('@/composables', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useCustomFetch: vi.fn(() => ({
-      get: vi.fn(() => ({
-        json: vi.fn(() => ({
-          data: ref([
-            {
-              id: 1,
-              hoursWorked: 10,
-              wage: {
-                cashRatePerHour: 1
-              }
-            }
-          ]),
-          error: mockError
-        }))
-      }))
-    }))
-  }
-})
+import { mockToastStore, mockTeamStore, queryMocks } from '@/tests/mocks'
 
-const mockErrorToast = vi.fn()
+const mockClaims = ref([
+  {
+    id: 1,
+    hoursWorked: 10,
+    wage: {
+      cashRatePerHour: 1,
+      ratePerHour: []
+    }
+  }
+])
+const mockError = ref<unknown>(null)
 
 describe.skip('CashRemunerationPendingClaim', () => {
+  beforeEach(() => {
+    mockTeamStore.currentTeamId = '1'
+    mockError.value = null
+
+    vi.spyOn(queryMocks, 'useGetTeamWeeklyClaimsQuery').mockImplementation(() => ({
+      data: mockClaims,
+      isLoading: ref(false),
+      error: mockError
+    }))
+  })
+
   const createComponent = () => {
     return shallowMount(CashRemunerationPendingClaim, {
       global: {
@@ -49,6 +48,8 @@ describe.skip('CashRemunerationPendingClaim', () => {
 
     await wrapper.vm.$nextTick()
 
-    expect(mockErrorToast).toHaveBeenCalledWith('Failed to fetch monthly pending amount')
+    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+      'Failed to fetch monthly pending amount'
+    )
   })
 })

@@ -3,8 +3,6 @@ import { describe, expect, it, vi } from 'vitest'
 import MintForm from '../../../SherTokenView/forms/MintForm.vue'
 import type { Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
-// import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 
 interface Props {
@@ -21,25 +19,6 @@ interface ComponentData {
   searchError: unknown
 }
 
-vi.mock('@/composables/useCustomFetch', () => {
-  return {
-    useCustomFetch: vi.fn(() => ({
-      get: () => ({
-        json: () => ({
-          execute: vi.fn(),
-          data: {
-            users: [
-              { address: '0x123', name: 'John Doe' },
-              { address: '0x456', name: 'Jane Doe' }
-            ]
-          },
-          loading: ref(false),
-          error: ref<unknown>(null)
-        })
-      })
-    }))
-  }
-})
 // vi.mock('@/stores/useToastStore')
 
 describe.skip('MintForm', () => {

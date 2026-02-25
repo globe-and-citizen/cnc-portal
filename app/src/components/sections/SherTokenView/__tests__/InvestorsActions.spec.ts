@@ -1,303 +1,106 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
-import { parseEther, type Address } from 'viem'
-import ModalComponent from '@/components/ModalComponent.vue'
-// import { useToastStore } from '@/stores/__mocks__/useToastStore'
-import { mockToastStore } from '@/tests/mocks/store.mock'
-import type { Team } from '@/types/team'
-import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
-import { WagmiPlugin, createConfig, http } from '@wagmi/vue'
-import { mainnet } from 'viem/chains'
-// vi.mock('@/stores/useToastStore')
-const wagmiConfig = createConfig({
-  chains: [mainnet],
-  transports: {
-    [mainnet.id]: http()
-  }
-})
+import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
+import type { Address } from 'viem'
+import { mockInvestorReads, mockTeamStore, mockToastStore, resetContractMocks } from '@/tests/mocks'
 
-vi.mock('@/stores/user')
-
-const { addErrorToast, addSuccessToast } = mockToastStore
-
-const mockUseReadContract = {
-  data: ref<string | null>(null),
-  isLoading: ref(false),
-  error: ref(null),
-  refetch: vi.fn()
+const DistributeMintActionStub = {
+  props: ['tokenSymbol', 'investorsAddress'],
+  template: '<div data-test="distribute-mint-action" />'
 }
 
-const mockUseWriteContract = {
-  writeContract: vi.fn(),
-  error: ref(null),
-  isPending: ref(false),
-  data: ref(null)
+const MintTokenActionStub = {
+  props: ['tokenSymbol', 'investorsOwner'],
+  template: '<div data-test="mint-token-action" />'
 }
 
-const mockUseWaitForTransactionReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  data: ref(undefined),
-  error: ref(null)
-}
-const mockUseSendTransaction = {
-  isPending: ref(false),
-  error: ref(false),
-  data: ref<string>(''),
-  sendTransaction: vi.fn()
-}
-const mockUseBalance = {
-  data: ref<bigint | null>(parseEther('100')),
-  isLoading: ref(false),
-  error: ref(null),
-  refetch: vi.fn()
-}
-// Mocking wagmi functions
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useReadContract: vi.fn(() => mockUseReadContract),
-    useWriteContract: vi.fn(() => mockUseWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
-    useSendTransaction: vi.fn(() => mockUseSendTransaction),
-    useBalance: vi.fn(() => mockUseBalance)
-  }
-})
-
-interface ComponentData {
-  distributeMintModal: boolean
-  payDividendsModal: { mount: boolean; show: boolean }
-  mintModal: { mount: boolean; show: boolean }
-  mintError: unknown
-  distributeMintError: unknown
-  payDividendsError: unknown
-  isConfirmingMint: boolean
-  isSuccessMinting: boolean
-  isConfirmingDistributeMint: boolean
-  isSuccessDistributeMint: boolean
-  isConfirmingPayDividends: boolean
-  isSuccessPayDividends: boolean
+const PayDividendsActionStub = {
+  props: ['tokenSymbol', 'shareholdersCount', 'investorsAddress', 'investorsOwner', 'bankAddress'],
+  template: '<div data-test="pay-dividends-action" />'
 }
 
-describe.skip('InvestorsActions.vue', () => {
-  const props = {
-    team: {
-      id: '1',
-      name: 'Team 1',
-      description: 'Team 1 Description',
-      teamContracts: [
-        {
-          address: '0xcontractaddress',
-          admins: [],
-          type: 'Bank',
-          deployer: '0xdeployeraddress'
-        },
-        {
-          address: '0xcontractaddress',
-          admins: [],
-          type: 'Voting',
-          deployer: '0xdeployeraddress'
-        },
-        {
-          address: '0xcontractaddress',
-          admins: [],
-          type: 'InvestorV1',
-          deployer: '0xdeployeraddress'
-        },
-        {
-          address: '0xcontractaddress',
-          admins: [],
-          type: 'BoardOfDirectors',
-          deployer: '0xdeployeraddress'
-        }
-      ],
-      members: [],
-      ownerAddress: '0xOwner'
-    } as Team,
-    tokenSymbol: 'ETH',
-    tokenSymbolLoading: false,
-    shareholders: [
-      {
-        shareholder: '0x123' as Address,
-        amount: parseEther('100')
-      }
-    ] as ReadonlyArray<{ shareholder: Address; amount: bigint }> | undefined
-  }
-  const createComponent = () => {
-    const queryClient = new QueryClient() // Create a QueryClient instance
-
-    return mount(InvestorsActions, {
-      global: {
-        plugins: [
-          createTestingPinia({ createSpy: vi.fn }),
-          [WagmiPlugin, { config: wagmiConfig }],
-          [VueQueryPlugin, { queryClient }] // Add VueQueryPlugin with QueryClient
-        ]
-      },
-      props
-    })
-  }
-
-  afterEach(() => {
+describe('InvestorsActions.vue', () => {
+  beforeEach(() => {
+    resetContractMocks()
     vi.clearAllMocks()
-  })
 
-  it('should open distributeMintModal if distribute mint button clicked', async () => {
-    const wrapper = createComponent()
-
-    await wrapper.find('button[data-test="distribute-mint-button"]').trigger('click')
-    await wrapper.vm.$nextTick()
-
-    expect((wrapper.vm as unknown as ComponentData).distributeMintModal).toBeTruthy()
-  })
-
-  it('should open payDividendsModal if pay dividends button clicked', async () => {
-    const wrapper = createComponent()
-
-    await wrapper.find('button[data-test="pay-dividends-button"]').trigger('click')
-    await wrapper.vm.$nextTick()
-
-    expect((wrapper.vm as unknown as ComponentData).payDividendsModal).toBeTruthy()
-  })
-
-  it('should open mintModal if mint button clicked', async () => {
-    const wrapper = createComponent()
-
-    await wrapper.find('button[data-test="mint-button"]').trigger('click')
-    await wrapper.vm.$nextTick()
-
-    expect((wrapper.vm as unknown as ComponentData).mintModal).toBeTruthy()
-  })
-
-  it('should emit mint modal component v-model', async () => {
-    const wrapper = createComponent()
-
-    await wrapper.find('button[data-test="mint-button"]').trigger('click')
-    await wrapper.vm.$nextTick()
-    // console.log(wrapper.findComponent(MintForm).exists())
-
-    expect((wrapper.vm as unknown as ComponentData).mintModal).toBeTruthy()
-
-    const modalComponent = wrapper.findComponent(ModalComponent)
-    modalComponent.vm.$emit('update:modelValue', false)
-    await wrapper.vm.$nextTick()
-
-    expect((wrapper.vm as unknown as ComponentData).mintModal).toEqual({
-      mount: false,
-      show: false
+    mockTeamStore.getContractAddressByType = vi.fn((type: string) => {
+      if (type === 'InvestorV1') return '0x2222222222222222222222222222222222222222'
+      if (type === 'Bank') return '0x1111111111111111111111111111111111111111'
+      return '0x0000000000000000000000000000000000000000'
     })
+
+    mockInvestorReads.symbol.data.value = 'SHER'
+    mockInvestorReads.owner.data.value = '0xOwner'
+    mockInvestorReads.shareholders.data.value = ['0x123', '0x456']
+    mockInvestorReads.symbol.isLoading.value = false
+    mockInvestorReads.owner.isLoading.value = false
   })
 
-  it('should emit distribute mint modal component v-model', async () => {
-    const wrapper = createComponent()
+  const createWrapper = () =>
+    mount(InvestorsActions, {
+      global: {
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          CardComponent: { template: '<div><slot /></div>' },
+          AddressToolTip: true,
+          DistributeMintAction: DistributeMintActionStub,
+          MintTokenAction: MintTokenActionStub,
+          PayDividendsAction: PayDividendsActionStub
+        }
+      }
+    })
 
-    await wrapper.find('button[data-test="distribute-mint-button"]').trigger('click')
-    await wrapper.vm.$nextTick()
+  it('renders skeletons when data is loading', () => {
+    mockInvestorReads.symbol.isLoading.value = true
+    mockInvestorReads.owner.isLoading.value = true
 
-    expect((wrapper.vm as unknown as ComponentData).distributeMintModal).toBeTruthy()
+    const wrapper = createWrapper()
 
-    const modalComponents = wrapper.findAllComponents(ModalComponent)
-    // Find the distributeMintModal - it should be the one without mount/show object structure
-    const distributeMintModalComponent = modalComponents.find(
-      (component) =>
-        component.props('modelValue') === true && !component.vm.$props.hasOwnProperty('show')
+    expect(wrapper.find('[data-test="skeleton-1"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="skeleton-2"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="skeleton-3"]').exists()).toBe(true)
+  })
+
+  it('renders action components when data is available', () => {
+    const wrapper = createWrapper()
+
+    expect(wrapper.find('[data-test="distribute-mint-action"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="mint-token-action"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="pay-dividends-action"]').exists()).toBe(true)
+  })
+
+  it('passes props to action components', () => {
+    const wrapper = createWrapper()
+
+    const distribute = wrapper.findComponent(DistributeMintActionStub)
+    const mint = wrapper.findComponent(MintTokenActionStub)
+    const pay = wrapper.findComponent(PayDividendsActionStub)
+
+    expect(distribute.props('tokenSymbol')).toBe('SHER')
+    expect(distribute.props('investorsAddress')).toBe(
+      '0x2222222222222222222222222222222222222222' as Address
     )
 
-    if (distributeMintModalComponent) {
-      distributeMintModalComponent.vm.$emit('update:modelValue', false)
-      await wrapper.vm.$nextTick()
-    }
+    expect(mint.props('tokenSymbol')).toBe('SHER')
+    expect(mint.props('investorsOwner')).toBe('0xOwner' as Address)
 
-    expect((wrapper.vm as unknown as ComponentData).distributeMintModal).toBeFalsy()
-  })
-
-  it('should emit modal component v-model', async () => {
-    const wrapper = createComponent()
-
-    await wrapper.find('button[data-test="pay-dividends-button"]').trigger('click')
-    await wrapper.vm.$nextTick()
-
-    expect((wrapper.vm as unknown as ComponentData).payDividendsModal).toBeTruthy()
-
-    const modalComponents = wrapper.findAllComponents(ModalComponent)
-    // Find the payDividendsModal - look for the one with show property
-    const payDividendsModalComponent = modalComponents.find(
-      (component) => component.vm.$props.modelValue === true
+    expect(pay.props('tokenSymbol')).toBe('SHER')
+    expect(pay.props('shareholdersCount')).toBe(2)
+    expect(pay.props('investorsAddress')).toBe(
+      '0x2222222222222222222222222222222222222222' as Address
     )
-
-    if (payDividendsModalComponent) {
-      payDividendsModalComponent.vm.$emit('update:modelValue', false)
-      await wrapper.vm.$nextTick()
-    }
-
-    expect((wrapper.vm as unknown as ComponentData).payDividendsModal).toEqual({
-      mount: false,
-      show: false
-    })
+    expect(pay.props('investorsOwner')).toBe('0xOwner' as Address)
+    expect(pay.props('bankAddress')).toBe('0x1111111111111111111111111111111111111111' as Address)
   })
 
-  it('should call distributeMint when DistributeMintForm emit submit event', async () => {
-    const wrapper = createComponent()
+  it('shows error toast when token symbol fails', async () => {
+    const wrapper = createWrapper()
 
-    await wrapper.find('button[data-test="distribute-mint-button"]').trigger('click')
+    mockInvestorReads.symbol.error.value = new Error('Symbol error')
     await wrapper.vm.$nextTick()
 
-    const mintForm = wrapper.findComponent({ name: 'DistributeMintForm' })
-    mintForm.vm.$emit('submit', '0x123', '100')
-
-    expect(mockUseWriteContract.writeContract).toHaveBeenCalled()
-  })
-
-  it.skip('should call payDividends when PayDividendsForm emit submit event', async () => {
-    const wrapper = createComponent()
-
-    await wrapper.find('button[data-test="pay-dividends-button"]').trigger('click')
-    await wrapper.vm.$nextTick()
-
-    const mintForm = wrapper.findComponent({ name: 'PayDividendsForm' })
-    mintForm.vm.$emit('submit', '100')
-
-    expect(mockUseWriteContract.writeContract).toHaveBeenCalled()
-  })
-
-  it('should add error toast when distributeMint failed', async () => {
-    // const { addErrorToast } = useToastStore()
-    const wrapper = createComponent()
-
-    ;(wrapper.vm as unknown as ComponentData).distributeMintError = 'Distribute mint failed'
-    await wrapper.vm.$nextTick()
-
-    expect(addErrorToast).toHaveBeenCalled()
-  })
-
-  it.skip('should add error toast when payDividends failed', async () => {
-    // const { addErrorToast } = useToastStore()
-    const wrapper = createComponent()
-
-    ;(wrapper.vm as unknown as ComponentData).payDividendsError = 'Pay dividends failed'
-    await wrapper.vm.$nextTick()
-
-    expect(addErrorToast).toHaveBeenCalled()
-  })
-
-  it.skip('should add success toast when payDividends success', async () => {
-    // const { addSuccessToast } = useToastStore()
-    const wrapper = createComponent()
-
-    ;(wrapper.vm as unknown as ComponentData).isConfirmingPayDividends = true
-    ;(wrapper.vm as unknown as ComponentData).isSuccessPayDividends = true
-    await wrapper.vm.$nextTick()
-    ;(wrapper.vm as unknown as ComponentData).isConfirmingPayDividends = false
-    await wrapper.vm.$nextTick()
-
-    expect(addSuccessToast).toHaveBeenCalled()
-    expect((wrapper.vm as unknown as ComponentData).payDividendsModal).toEqual({
-      mount: false,
-      show: false
-    })
+    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching token symbol')
   })
 })

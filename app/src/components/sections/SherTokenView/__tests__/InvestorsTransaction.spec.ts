@@ -3,33 +3,9 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsTransactions from '@/components/sections/SherTokenView/InvestorsTransactions.vue'
 import { ref } from 'vue'
-
-// Mock Apollo Query Result
-const mockQueryResult = {
-  result: ref({
-    dividendClaims: [
-      {
-        id: '1',
-        transactionHash: '0xtxhash1',
-        from: '0xfrom1',
-        to: '0xto1',
-        amount: '1000000000000000000',
-        tokenAddress: '0xtoken1',
-        blockTimestamp: '1677649200',
-        transactionType: 'dividend'
-      }
-    ]
-  }),
-  error: ref<Error | null>(null),
-  loading: ref(false)
-}
+import { mockUseApolloQuery, resetComposableMocks } from '@/tests/mocks'
 
 const mockContractAddress = ref<string | undefined>('0xcontract')
-// Mock useQuery
-
-vi.mock('@vue/apollo-composable', () => ({
-  useQuery: () => mockQueryResult
-}))
 
 describe('InvestorsTransactions.vue', () => {
   const createComponent = () => {
@@ -41,15 +17,46 @@ describe('InvestorsTransactions.vue', () => {
   }
 
   afterEach(() => {
+    resetComposableMocks()
     vi.clearAllMocks()
   })
 
   it('should mount properly', () => {
+    mockUseApolloQuery.result.value = {
+      dividendClaims: [
+        {
+          id: '1',
+          transactionHash: '0xtxhash1',
+          from: '0xfrom1',
+          to: '0xto1',
+          amount: '1000000000000000000',
+          tokenAddress: '0xtoken1',
+          blockTimestamp: '1677649200',
+          transactionType: 'dividend'
+        }
+      ]
+    }
+
     const wrapper = createComponent()
     expect(wrapper.exists()).toBeTruthy()
   })
 
   it('should format transactions correctly', () => {
+    mockUseApolloQuery.result.value = {
+      dividendClaims: [
+        {
+          id: '1',
+          transactionHash: '0xtxhash1',
+          from: '0xfrom1',
+          to: '0xto1',
+          amount: '1000000000000000000',
+          tokenAddress: '0xtoken1',
+          blockTimestamp: '1677649200',
+          transactionType: 'dividend'
+        }
+      ]
+    }
+
     const wrapper = createComponent()
     const transactions = (wrapper.vm as unknown as { transactionData: unknown[] }).transactionData
 
@@ -72,6 +79,21 @@ describe('InvestorsTransactions.vue', () => {
   //   })
 
   it('should calculate USD amounts correctly', () => {
+    mockUseApolloQuery.result.value = {
+      dividendClaims: [
+        {
+          id: '1',
+          transactionHash: '0xtxhash1',
+          from: '0xfrom1',
+          to: '0xto1',
+          amount: '1000000000000000000',
+          tokenAddress: '0xtoken1',
+          blockTimestamp: '1677649200',
+          transactionType: 'dividend'
+        }
+      ]
+    }
+
     const wrapper = createComponent()
     const transactions = (
       wrapper.vm as unknown as { transactionData: Array<{ amountUSD: number }> }
