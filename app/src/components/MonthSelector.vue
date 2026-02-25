@@ -44,7 +44,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import VueDatePicker from '@vuepic/vue-datepicker'
+import { VueDatePicker } from '@vuepic/vue-datepicker'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'

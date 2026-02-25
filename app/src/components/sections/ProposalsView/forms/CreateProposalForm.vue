@@ -122,7 +122,7 @@
 
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
-import VueDatePicker from '@vuepic/vue-datepicker'
+import { VueDatePicker } from '@vuepic/vue-datepicker'
 import { ref, computed, watch } from 'vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
