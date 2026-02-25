@@ -19,54 +19,7 @@ const wagmiConfig = createConfig({
   }
 })
 
-vi.mock('@/stores/user')
-
 const { addErrorToast, addSuccessToast } = mockToastStore
-
-const mockUseReadContract = {
-  data: ref<string | null>(null),
-  isLoading: ref(false),
-  error: ref(null),
-  refetch: vi.fn()
-}
-
-const mockUseWriteContract = {
-  writeContract: vi.fn(),
-  error: ref(null),
-  isPending: ref(false),
-  data: ref(null)
-}
-
-const mockUseWaitForTransactionReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  data: ref(undefined),
-  error: ref(null)
-}
-const mockUseSendTransaction = {
-  isPending: ref(false),
-  error: ref(false),
-  data: ref<string>(''),
-  sendTransaction: vi.fn()
-}
-const mockUseBalance = {
-  data: ref<bigint | null>(parseEther('100')),
-  isLoading: ref(false),
-  error: ref(null),
-  refetch: vi.fn()
-}
-// Mocking wagmi functions
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useReadContract: vi.fn(() => mockUseReadContract),
-    useWriteContract: vi.fn(() => mockUseWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt),
-    useSendTransaction: vi.fn(() => mockUseSendTransaction),
-    useBalance: vi.fn(() => mockUseBalance)
-  }
-})
 
 interface ComponentData {
   distributeMintModal: boolean

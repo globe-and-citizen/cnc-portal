@@ -11,14 +11,6 @@ import { mockToastStore } from '@/tests/mocks/store.mock'
 
 const mockWriteContract = vi.fn()
 
-vi.mock('@/stores/user', () => ({
-  useUserDataStore: vi.fn(() => ({
-    address: '0xOwnerAddress'
-  }))
-}))
-
-vi.mock('@/stores/useToastStore')
-
 interface ComponentData {
   mintIndividualModal: boolean
   selectedShareholder: Address | null

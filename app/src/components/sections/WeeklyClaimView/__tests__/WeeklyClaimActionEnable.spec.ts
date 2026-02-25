@@ -46,11 +46,6 @@ vi.mock('@/utils', () => ({
   parseError: vi.fn(() => 'Parsed error message')
 }))
 
-vi.mock('@tanstack/vue-query', () => ({
-  useQueryClient: () => ({
-    invalidateQueries: vi.fn()
-  })
-}))
 
 describe('DropdownActions', () => {
   const MOCK_OWNER_ADDRESS = '0xOwnerAddress'

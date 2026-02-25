@@ -76,20 +76,21 @@ const mockComposable = {
   isLoading: ref(false)
 }
 
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: vi.fn(() => mockComposable)
-}))
-
 // Import component under test after mocks are set
 import DividendsBalancesSection from '@/components/sections/SherTokenView/DividendsBalancesSection.vue'
+import { useContractBalance } from '@/composables/useContractBalance'
 
 describe('DividendsBalancesSection.vue', () => {
-  const createWrapper = () =>
-    mount(DividendsBalancesSection, {
+  const createWrapper = () => {
+    vi.mocked(useContractBalance).mockReturnValue(
+      mockComposable as ReturnType<typeof useContractBalance>
+    )
+    return mount(DividendsBalancesSection, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
+  }
 
   afterEach(() => {
     vi.clearAllMocks()

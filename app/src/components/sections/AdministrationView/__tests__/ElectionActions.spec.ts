@@ -1,20 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ElectionActions from '../ElectionActions.vue'
-
-// Mock vue-router useRouter
-vi.mock('vue-router', () => ({
-  useRouter: vi.fn(() => ({
-    push: vi.fn(),
-    currentRoute: { value: { fullPath: '/' } }
-  }))
-}))
-
-// Mock stores
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => ({ currentTeamId: '1' })),
-  useUserDataStore: vi.fn(() => ({ address: '0xowner' }))
-}))
+import { useTeamStore, useUserDataStore } from '@/stores'
+import { useRouter } from 'vue-router'
 
 // Mock composables module and provide a mutable mock function
 const mockUseBoDElections = vi.fn()
@@ -25,6 +13,12 @@ vi.mock('@/composables/elections', () => ({
 describe('ElectionActions', () => {
   beforeEach(() => {
     mockUseBoDElections.mockReset()
+    vi.mocked(useTeamStore).mockReturnValue({ currentTeamId: '1' } as ReturnType<typeof useTeamStore>)
+    vi.mocked(useUserDataStore).mockReturnValue({ address: '0xowner' } as ReturnType<typeof useUserDataStore>)
+    vi.mocked(useRouter).mockReturnValue({
+      push: vi.fn(),
+      currentRoute: { value: { fullPath: '/' } }
+    } as ReturnType<typeof useRouter>)
   })
 
   it('shows Vote Now button when election is active and not published', () => {

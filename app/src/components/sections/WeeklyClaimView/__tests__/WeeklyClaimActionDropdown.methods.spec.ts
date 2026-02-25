@@ -44,11 +44,6 @@ vi.mock('@/composables', () => ({
   }))
 }))
 
-vi.mock('@tanstack/vue-query', () => ({
-  useQueryClient: () => ({
-    invalidateQueries: vi.fn()
-  })
-}))
 
 describe('DropdownActions', () => {
   const MOCK_OWNER_ADDRESS = '0xOwnerAddress'
