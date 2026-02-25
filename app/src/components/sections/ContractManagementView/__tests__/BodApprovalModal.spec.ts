@@ -4,12 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import type { TableRow } from '@/components/TableComponent.vue'
 import BodApprovalModal from '@/components/sections/ContractManagementView/BodApprovalModal.vue'
-import {
-  useReadContractFn,
-  mockTeamStore,
-  mockUserStore,
-  mockWagmiCore
-} from '@/tests/mocks'
+import { useReadContractFn, mockTeamStore, mockUserStore, mockWagmiCore } from '@/tests/mocks'
 import { useTeamStore, useUserDataStore } from '@/stores'
 
 const CURRENT_ADDR = '0x0000000000000000000000000000000000000001'

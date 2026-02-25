@@ -7,7 +7,6 @@ import {
   useWaitForTransactionReceiptFn,
   useQueryClientFn,
   mockWagmiCore,
-  mockTeamStore,
   mockToastStore
 } from '@/tests/mocks'
 import { useTeamStore, useToastStore } from '@/stores'

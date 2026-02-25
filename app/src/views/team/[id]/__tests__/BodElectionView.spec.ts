@@ -7,10 +7,7 @@ import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentB
 import CurrentBoDElectionSection from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
 import PastBoDElectionsSection from '@/components/sections/AdministrationView/PastBoDElectionsSection.vue'
 import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
-import {
-  useReadContractFn,
-  mockTeamStore
-} from '@/tests/mocks'
+import { useReadContractFn, mockTeamStore } from '@/tests/mocks'
 import { useTeamStore } from '@/stores'
 
 // Test constants

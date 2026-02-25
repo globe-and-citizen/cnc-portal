@@ -1,4 +1,3 @@
-import { ref } from 'vue'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AddressToolTip from '@/components/AddressToolTip.vue'

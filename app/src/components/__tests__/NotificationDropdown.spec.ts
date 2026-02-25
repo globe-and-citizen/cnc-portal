@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 
 describe('NotificationDropdown.vue', () => {

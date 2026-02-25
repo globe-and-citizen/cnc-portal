@@ -46,7 +46,6 @@ vi.mock('@/utils', () => ({
   parseError: vi.fn(() => 'Parsed error message')
 }))
 
-
 describe('DropdownActions', () => {
   const MOCK_OWNER_ADDRESS = '0xOwnerAddress'
   const mockSyncMutateAsync = vi.fn().mockResolvedValue(undefined)

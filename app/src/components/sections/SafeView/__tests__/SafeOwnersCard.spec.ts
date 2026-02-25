@@ -28,18 +28,8 @@ interface MockTeam {
   name: string
 }
 
-interface MockTeamMeta {
-  data: {
-    safeAddress?: Address
-  }
-}
-
 // Hoisted mocks
-const {
-  mockuseGetSafeInfoQuery,
-  mockGetSafeSettingsUrl,
-  mockOpenSafeAppUrl
-} = vi.hoisted(() => ({
+const { mockuseGetSafeInfoQuery, mockGetSafeSettingsUrl, mockOpenSafeAppUrl } = vi.hoisted(() => ({
   mockuseGetSafeInfoQuery: vi.fn(),
   mockGetSafeSettingsUrl: vi.fn(),
   mockOpenSafeAppUrl: vi.fn()

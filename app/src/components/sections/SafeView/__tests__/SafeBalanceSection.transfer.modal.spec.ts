@@ -171,8 +171,10 @@ describe('SafeBalanceSection transfer modals', () => {
 
     // Configure global contract balance mock
     mockUseContractBalance.isLoading.value = false
-    mockUseContractBalance.balances.value = MOCK_DATA.balances as typeof mockUseContractBalance.balances.value
-    mockUseContractBalance.total.value = MOCK_DATA.total as typeof mockUseContractBalance.total.value
+    mockUseContractBalance.balances.value =
+      MOCK_DATA.balances as typeof mockUseContractBalance.balances.value
+    mockUseContractBalance.total.value =
+      MOCK_DATA.total as typeof mockUseContractBalance.total.value
 
     mockuseGetSafeInfoQuery.mockReturnValue({
       data: mockSafeInfo

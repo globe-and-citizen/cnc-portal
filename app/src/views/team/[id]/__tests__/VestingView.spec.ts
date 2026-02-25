@@ -4,7 +4,6 @@ import { createTestingPinia } from '@pinia/testing'
 import VestingView from '../VestingView.vue'
 import { ref } from 'vue'
 import {
-  mockUseContractBalance,
   useWriteContractFn,
   useWaitForTransactionReceiptFn,
   useReadContractFn,

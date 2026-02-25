@@ -2,8 +2,6 @@ import { describe, expect, it, vi } from 'vitest'
 import CashRemunerationTotalBalance from '../CashRemunerationTotalBalance.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { shallowMount } from '@vue/test-utils'
-import { ref } from 'vue'
-
 
 describe.skip('CashRemunerationTotalBalance', () => {
   const createComponent = () => {

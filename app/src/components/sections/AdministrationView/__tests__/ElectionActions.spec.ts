@@ -13,8 +13,12 @@ vi.mock('@/composables/elections', () => ({
 describe('ElectionActions', () => {
   beforeEach(() => {
     mockUseBoDElections.mockReset()
-    vi.mocked(useTeamStore).mockReturnValue({ currentTeamId: '1' } as ReturnType<typeof useTeamStore>)
-    vi.mocked(useUserDataStore).mockReturnValue({ address: '0xowner' } as ReturnType<typeof useUserDataStore>)
+    vi.mocked(useTeamStore).mockReturnValue({ currentTeamId: '1' } as ReturnType<
+      typeof useTeamStore
+    >)
+    vi.mocked(useUserDataStore).mockReturnValue({ address: '0xowner' } as ReturnType<
+      typeof useUserDataStore
+    >)
     vi.mocked(useRouter).mockReturnValue({
       push: vi.fn(),
       currentRoute: { value: { fullPath: '/' } }
