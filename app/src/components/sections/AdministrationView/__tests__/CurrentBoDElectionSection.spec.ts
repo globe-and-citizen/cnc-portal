@@ -1,5 +1,5 @@
 // ElectionComponent.test.ts
-import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ElectionComponent from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
@@ -9,77 +9,45 @@ import ElectionStatus from '@/components/sections/AdministrationView/ElectionSta
 import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
 import ElectionActions from '@/components/sections/AdministrationView/ElectionActions.vue'
 import CurrentBoDElection404 from '../CurrentBoDElection404.vue'
-import { simulateContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
-import { mockWagmiCore } from '@/tests/mocks'
-
-// Mock dependencies
-
-const { useBoDElections: mockUseBoDElectionsImpl, useCustomFetch: mockUseCustomFetchImpl } =
-  vi.hoisted(() => ({
-    useBoDElections: vi.fn(() => ({
-      electionsAddress: { value: '0x789' },
-      formattedElection: { value: null }
-    })),
-    useCustomFetch: vi.fn((/* url, options */) => {
-      const execute = vi.fn().mockResolvedValue({})
-      const error = { value: null }
-
-      // Create an object that matches the chaining pattern
-      const mockInstance = {
-        data: { value: null },
-        isFetching: { value: false },
-        error,
-        execute,
-        post: () => mockInstance,
-        json: () => mockInstance
-      }
-
-      return mockInstance
-    })
-  }))
-
-vi.mock('@/composables/elections', () => ({
-  useBoDElections: mockUseBoDElectionsImpl
-}))
-
-vi.mock('@/composables', () => ({
-  useCustomFetch: mockUseCustomFetchImpl
-}))
-
-vi.mock('@/utils', () => ({
-  log: {
-    error: vi.fn()
-  },
-  parseError: vi.fn((error) => error.message)
-}))
+import { mockElectionsReads, mockWagmiCore } from '@/tests/mocks'
 
 describe('ElectionComponent', () => {
   let wrapper: ReturnType<typeof mount> | undefined
-  let mockUseBoDElections: Mock<
-    () => { electionsAddress: { value: string }; formattedElection: { value: null } }
-  >
-  // let mockUseCustomFetch
+
+  const setMockElection = (overrides?: Partial<readonly (string | bigint | boolean)[]>) => {
+    const now = Math.floor(Date.now() / 1000)
+    const base: readonly (string | bigint | boolean)[] = [
+      1n,
+      'Test Election',
+      'Test Description',
+      '0xCreator',
+      BigInt(now + 60),
+      BigInt(now + 3600),
+      3n,
+      false
+    ]
+
+    const electionData = overrides
+      ? base.map((value, index) => {
+          if (overrides[index] !== undefined) {
+            return overrides[index] as string | bigint | boolean
+          }
+          return value
+        })
+      : base
+
+    mockElectionsReads.getElection.data.value = electionData
+  }
 
   beforeEach(() => {
     setActivePinia(createPinia())
 
     // Reset mocks
     vi.clearAllMocks()
-
-    mockUseBoDElections = mockUseBoDElectionsImpl
-
-    // Default mock implementations
-    mockUseBoDElections.mockReturnValue({
-      electionsAddress: { value: '0x789' },
-      formattedElection: { value: null }
-    })
-
-    // mockUseCustomFetch.mockReturnValue({
-    //   error: { value: null },
-    //   execute: vi.fn().mockResolvedValue({})
-    // })
-
-    // vi.mocked(useToastStore).mockImplementation(() => mockToastStore)
+    mockElectionsReads.getElection.data.value = null
+    mockElectionsReads.getVoteCount.data.value = 0n
+    mockElectionsReads.getCandidates.data.value = []
+    mockElectionsReads.getEligibleVoters.data.value = []
   })
 
   afterEach(() => {
@@ -137,16 +105,10 @@ describe('ElectionComponent', () => {
     })
 
     it('renders ElectionStatus when formattedElection exists and results not published', async () => {
-      mockUseBoDElections.mockReturnValue({
-        electionsAddress: { value: '0x789' },
-        formattedElection: {
-          value: {
-            title: 'Test Election',
-            description: 'Test Description',
-            resultsPublished: false
-          }
-        }
-      })
+      setMockElection()
+      mockElectionsReads.getVoteCount.data.value = 1n
+      mockElectionsReads.getCandidates.data.value = ['0xCandidate']
+      mockElectionsReads.getEligibleVoters.data.value = ['0xVoter']
 
       wrapper = createWrapper()
       await flushPromises()
@@ -155,21 +117,10 @@ describe('ElectionComponent', () => {
     })
 
     it('renders election content when formattedElection exists', async () => {
-      const mockElection = {
-        title: 'Test Election',
-        description: 'Test Description',
-        resultsPublished: false
-      }
-
-      mockUseBoDElections.mockReturnValue({
-        electionsAddress: '0x789',
-        formattedElection: mockElection
-      })
+      setMockElection()
 
       wrapper = createWrapper()
       await flushPromises()
-
-      console.log('formattedElection: ', wrapper.vm.formattedElection)
 
       expect(wrapper.find('h2').text()).toBe('Test Election')
       expect(wrapper.find('h4').text()).toBe('Test Description')
@@ -177,10 +128,7 @@ describe('ElectionComponent', () => {
     })
 
     it('renders CurrentBoDElection404 when no formattedElection exists', async () => {
-      mockUseBoDElections.mockReturnValue({
-        electionsAddress: '0x789',
-        formattedElection: null
-      })
+      mockElectionsReads.getElection.data.value = null
 
       wrapper = createWrapper()
       await flushPromises()
@@ -189,14 +137,16 @@ describe('ElectionComponent', () => {
     })
 
     it('renders CurrentBoDElection404 when results are published and not in details mode', async () => {
-      mockUseBoDElections.mockReturnValue({
-        electionsAddress: '0x789',
-        formattedElection: {
-          title: 'Test Election',
-          description: 'Test Description',
-          resultsPublished: true
-        }
-      })
+      setMockElection([
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        true
+      ])
 
       wrapper = createWrapper({ isDetails: false })
       await flushPromises()
@@ -223,9 +173,9 @@ describe('ElectionComponent', () => {
     }
 
     beforeEach(() => {
-      vi.mocked(mockWagmiCore.simulateContract).mockResolvedValue({})
-      vi.mocked(mockWagmiCore.writeContract).mockResolvedValue('0xTXNHASH')
-      vi.mocked(mockWagmiCore.waitForTransactionReceipt).mockResolvedValue({})
+      mockWagmiCore.simulateContract.mockResolvedValue({})
+      mockWagmiCore.writeContract.mockResolvedValue('0xTXNHASH')
+      mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({})
     })
 
     it('handles past start date by adjusting to future', async () => {
@@ -238,11 +188,15 @@ describe('ElectionComponent', () => {
         endDate: new Date(Date.now() - 43200000) // 12 hours ago
       }
 
-      await wrapper.vm.createElection(mockPastElectionData)
+      const vm = wrapper.vm as unknown as {
+        createElection: (data: typeof mockPastElectionData) => Promise<void>
+      }
 
-      const args = vi.mocked(mockWagmiCore.simulateContract).mock.calls[0][1].args
-      const startTime = args[2]
-      const endTime = args[3]
+      await vm.createElection(mockPastElectionData)
+
+      const args = mockWagmiCore.simulateContract.mock.calls[0]![1].args as unknown[]
+      const startTime = Number(args[2])
+      const endTime = Number(args[3])
 
       // Should adjust to current time + 60 seconds
       expect(startTime).toBeGreaterThan(Math.floor(Date.now() / 1000))

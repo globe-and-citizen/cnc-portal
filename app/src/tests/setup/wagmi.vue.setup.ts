@@ -16,6 +16,9 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useConnectionEffect: mocks.mockUseConnectionEffect,
     useWatchContractEvent: mocks.mockUseWatchContractEvent,
     useSwitchChain: vi.fn(() => ({ ...mocks.mockUseSwitchChain })),
+    useAccount: vi.fn(() => ({ ...mocks.mockUseAccount })),
+    useSignMessage: vi.fn(() => ({ ...mocks.mockUseSignMessage })),
+    useConnect: vi.fn(() => ({ ...mocks.mockUseConnect })),
     createConfig: mocks.mockCreateConfig,
     http: mocks.mockHttp,
     WagmiPlugin: {

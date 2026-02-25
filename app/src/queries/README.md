@@ -13,7 +13,6 @@ This folder contains all TanStack Query hooks for API interactions in the CNC Po
 | `health.queries.ts`       | Health        | Backend health checks                  |
 | `member.queries.ts`       | Members       | Team member management                 |
 | `notification.queries.ts` | Notifications | User notifications                     |
-| `polymarket.queries.ts`   | Polymarket    | Market data and Safe balances          |
 | `safe.queries.ts`         | Safe          | Gnosis Safe operations                 |
 | `team.queries.ts`         | Teams         | Team CRUD operations                   |
 | `user.queries.ts`         | Users         | User profile management                |

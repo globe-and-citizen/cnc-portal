@@ -1,83 +1,36 @@
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AddCampaignService } from '@/services/AddCampaignService'
-
-import {
-  getWalletClient,
-  getPublicClient,
-  writeContract,
-  waitForTransactionReceipt
-} from '@wagmi/core'
-import { getLogs } from 'viem/actions'
-
-vi.mock('@wagmi/core', async () => {
-  const actual = await vi.importActual('@wagmi/core')
-  return {
-    ...actual,
-    getWalletClient: vi.fn(),
-    getPublicClient: vi.fn(),
-    writeContract: vi.fn(),
-    readContract: vi.fn(),
-    waitForTransactionReceipt: vi.fn()
-  }
-})
-
-vi.mock('viem/actions', () => ({
-  getLogs: vi.fn()
-}))
+import { mockGetLogs } from '@/tests/mocks'
+import { mockWagmiCore } from '@/tests/mocks'
 
 describe('AddCampaignService (wagmi)', () => {
   let service: AddCampaignService
   const contractAddress = '0xCampaignContract'
-  const deployer = '0xDeployer'
   const admin = '0xAdmin'
-  const teamId = 'team-123'
   const hash = '0xTxHash'
-  const fakeReceipt = { contractAddress: '0xDeployed' }
 
   beforeEach(() => {
     service = new AddCampaignService()
     vi.resetAllMocks()
   })
 
-  it.skip('createAdCampaignManager - deploys contract and calls API', async () => {
-    const post = vi.fn().mockReturnValue({ json: vi.fn() })
-    ;(useCustomFetch as unknown as Mock).mockReturnValue({ post })
-    ;(getWalletClient as Mock).mockResolvedValue({
-      deployContract: vi.fn().mockResolvedValue(hash),
-      account: { address: deployer }
-    })
-    ;(waitForTransactionReceipt as Mock).mockResolvedValue(fakeReceipt)
-
-    const result = await service.createAdCampaignManager('0xBank', '0.01', '0.02', deployer, teamId)
-
-    expect(result).toBe(fakeReceipt.contractAddress)
-    expect(post).toHaveBeenCalledWith({
-      teamContract: {
-        address: fakeReceipt.contractAddress,
-        type: 'Campaign',
-        deployer,
-        admins: [deployer]
-      }
-    })
-  })
-
   it('addAdmin - sends tx and waits for receipt', async () => {
-    ;(writeContract as Mock).mockResolvedValue(hash)
-    ;(waitForTransactionReceipt as Mock).mockResolvedValue({ status: 'success' })
+    mockWagmiCore.writeContract.mockResolvedValue(hash)
+    mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
 
     const result = await service.addAdmin(contractAddress, admin)
 
-    expect(writeContract).toHaveBeenCalled()
+    expect(mockWagmiCore.writeContract).toHaveBeenCalled()
     expect(result).toEqual({ status: 'success' })
   })
 
   it('removeAdmin - sends tx and waits for receipt', async () => {
-    ;(writeContract as Mock).mockResolvedValue(hash)
-    ;(waitForTransactionReceipt as Mock).mockResolvedValue({ status: 'success' })
+    mockWagmiCore.writeContract.mockResolvedValue(hash)
+    mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
 
     const result = await service.removeAdmin(contractAddress, admin)
 
-    expect(writeContract).toHaveBeenCalled()
+    expect(mockWagmiCore.writeContract).toHaveBeenCalled()
     expect(result).toEqual({ status: 'success' })
   })
 
@@ -85,12 +38,12 @@ describe('AddCampaignService (wagmi)', () => {
     const client = {
       getBlockNumber: vi.fn().mockResolvedValue(10000n)
     }
-    ;(getPublicClient as Mock).mockReturnValue(client)
+    mockWagmiCore.getPublicClient.mockReturnValue(client)
 
     const adminLogs = [{ args: { admin: '0xAdmin1' } }, { args: { admin: '0xAdmin2' } }]
     const removedLogs = [{ args: { admin: '0xAdmin1' } }]
 
-    ;(getLogs as Mock).mockImplementation((_client, { event }) => {
+    mockGetLogs.mockImplementation((_client, { event }) => {
       if (event.name === 'AdminAdded') return adminLogs
       if (event.name === 'AdminRemoved') return removedLogs
       return []
@@ -107,13 +60,13 @@ describe('AddCampaignService (wagmi)', () => {
       { args: { campaignCode: '0xABC', advertiser: '0xAdv', amount: 300n } },
       { args: { campaignCode: '0xABC', paymentAmount: 150n } }
     ]
-    ;(getPublicClient as Mock).mockReturnValue({
+    mockWagmiCore.getPublicClient.mockReturnValue({
       getBlockNumber: vi.fn().mockResolvedValue(10000n)
     })
-    ;(getLogs as Mock).mockResolvedValue(mockLogs)
+    mockGetLogs.mockResolvedValue(mockLogs)
 
     const result = await service.getEventsGroupedByCampaignCode(contractAddress)
     expect(result.status).toBe('success')
-    expect(result.events?.['0xABC'].length).toBe(16)
+    expect(result.events?.['0xABC']?.length).toBe(16)
   })
 })

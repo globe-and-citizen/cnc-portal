@@ -3,47 +3,16 @@ import { flushPromises, shallowMount } from '@vue/test-utils'
 import DropdownActions from '../WeeklyClaimActionDropdown.vue'
 import type { Status } from '../WeeklyClaimActionDropdown.vue'
 import { createPinia, setActivePinia } from 'pinia'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
-import { ref } from 'vue'
-import * as mocks from '@/tests/mocks'
+import { mockUseReadContract, mockWagmiCore, mockToastStore, mockUserStore } from '@/tests/mocks'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { useReadContract } from '@wagmi/vue'
-import { simulateContract, waitForTransactionReceipt } from '@wagmi/core'
-import { log } from '@/utils'
 
 // Configure dayjs plugins
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
-
-// Mock the dependencies
-vi.mock('viem', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    keccak256: vi.fn()
-  }
-})
-
-vi.mock('@/composables', () => ({
-  useCustomFetch: vi.fn(() => ({
-    put: () => ({
-      json: () => ({
-        execute: vi.fn().mockResolvedValue({}),
-        error: ref(null)
-      })
-    }),
-    post: () => ({
-      json: () => ({
-        execute: vi.fn().mockResolvedValue({}),
-        error: ref(null)
-      })
-    })
-  }))
-}))
-
 
 describe('DropdownActions', () => {
   const MOCK_OWNER_ADDRESS = '0xOwnerAddress'
@@ -129,14 +98,8 @@ describe('DropdownActions', () => {
       expect(wrapper.vm.isOpen).toBe(false)
     })
     it.skip('should handle disable claim properly', async () => {
-      //@ts-expect-error only mocking necessary variables
-      vi.mocked(useReadContract).mockReturnValue({
-        ...mocks.mockUseReadContract,
-        data: ref('0xUserAddress')
-      })
-
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
+      mockUseReadContract.data.value = '0xUserAddress'
+      mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({
         status: 'success'
       })
 
@@ -147,102 +110,14 @@ describe('DropdownActions', () => {
       await wrapper.vm.disableClaim()
 
       // Should show update claim status error
-      expect(mocks.mockWagmiCore.writeContract).toBeCalled()
+      expect(mockWagmiCore.writeContract).toBeCalled()
       //@ts-expect-error not visible on wrapper
       expect(wrapper.vm.weeklyClaimSyncUrl).toBe('/weeklyclaim/sync/?teamId=1')
-      expect(mocks.mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim disabled')
-    })
-
-    it.skip('should handle disable claim errors properly', async () => {
-      const { useCustomFetch } = await import('@/composables')
-
-      //@ts-expect-error only mocking required values
-      vi.mocked(useCustomFetch).mockReturnValue({
-        post: vi.fn().mockReturnThis(),
-        json: vi.fn().mockReturnValue({
-          execute: vi.fn().mockResolvedValue({}),
-          error: ref(new Error('Update failed'))
-        })
-      })
-
-      //@ts-expect-error only mocking nnecessary values
-      vi.mocked(useTeamStore).mockReturnValue({
-        ...mocks.mockTeamStore,
-        getContractAddressByType: vi.fn(() => undefined)
-      })
-
-      //@ts-expect-error only mocking necessary variables
-      vi.mocked(useReadContract).mockReturnValue({
-        ...mocks.mockUseReadContract,
-        data: ref('0xUserAddress')
-      })
-
-      let wrapper = createWrapper('signed')
-
-      //@ts-expect-error not visible on wrapper
-      await wrapper.vm.disableClaim()
-
-      //@ts-expect-error not visible on wrapper
-      expect(wrapper.vm.isLoading).toBeFalsy()
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith(
-        'Cash Remuneration EIP712 contract address not found'
-      )
-
-      vi.mocked(useTeamStore).mockRestore()
-
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
-        status: 'success'
-      })
-      await flushPromises()
-
-      const logError = vi.spyOn(log, 'error')
-
-      wrapper = createWrapper('signed')
-
-      //@ts-expect-error not visible on wrapper
-      await wrapper.vm.disableClaim()
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith('Failed to update Claim status')
-
-      vi.mocked(useToastStore).mockClear()
-      vi.mocked(useCustomFetch).mockRestore()
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
-        status: 'reverted'
-      })
-
-      wrapper = createWrapper('signed')
-
-      //@ts-expect-error not visible on wrapper
-      await wrapper.vm.disableClaim()
-
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith(
-        'Transaction failed: Failed to disable claim'
-      )
-
-      vi.mocked(useToastStore).mockClear()
-      vi.mocked(useCustomFetch).mockRestore()
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
-        status: 'success'
-      })
-      const simulateError = new Error('Simulate error')
-      vi.mocked(simulateContract).mockRejectedValue(simulateError)
-
-      wrapper = createWrapper('signed')
-
-      //@ts-expect-error not visible on wrapper
-      await wrapper.vm.disableClaim()
-
-      expect(logError).toBeCalledWith('Disable error', simulateError)
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith('Parsed error message')
+      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim disabled')
     })
 
     it.skip('closes dropdown after action is selected', async () => {
-      //@ts-expect-error only mocking necessary fields
-      vi.mocked(useUserDataStore).mockReturnValue({
-        address: '0xContractOwner'
-      })
+      mockUserStore.address = '0xContractOwner'
       const wrapper = createWrapper('pending')
       const button = wrapper.findComponent({ name: 'ButtonUI' })
 
@@ -264,10 +139,7 @@ describe('DropdownActions', () => {
     })
 
     it('closes dropdown after withdraw action', async () => {
-      //@ts-expect-error only mocking necessary fileds
-      vi.mocked(useUserDataStore).mockReturnValue({
-        address: '0xContractOwner'
-      })
+      mockUserStore.address = '0xContractOwner'
       const wrapper = createWrapper('signed')
       const button = wrapper.findComponent({ name: 'ButtonUI' })
 
