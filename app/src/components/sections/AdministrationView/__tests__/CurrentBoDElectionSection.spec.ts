@@ -10,6 +10,7 @@ import ElectionStats from '@/components/sections/AdministrationView/ElectionStat
 import ElectionActions from '@/components/sections/AdministrationView/ElectionActions.vue'
 import CurrentBoDElection404 from '../CurrentBoDElection404.vue'
 import { simulateContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
+import { mockWagmiCore } from '@/tests/mocks'
 
 // Mock dependencies
 
@@ -43,16 +44,6 @@ vi.mock('@/composables/elections', () => ({
 
 vi.mock('@/composables', () => ({
   useCustomFetch: mockUseCustomFetchImpl
-}))
-
-vi.mock('@wagmi/core', () => ({
-  simulateContract: vi.fn(),
-  writeContract: vi.fn(),
-  waitForTransactionReceipt: vi.fn()
-}))
-
-vi.mock('@/wagmi.config', () => ({
-  config: {}
 }))
 
 vi.mock('@/utils', () => ({
@@ -232,9 +223,9 @@ describe('ElectionComponent', () => {
     }
 
     beforeEach(() => {
-      vi.mocked(simulateContract).mockResolvedValue({})
-      vi.mocked(writeContract).mockResolvedValue('0xTXNHASH')
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({})
+      vi.mocked(mockWagmiCore.simulateContract).mockResolvedValue({})
+      vi.mocked(mockWagmiCore.writeContract).mockResolvedValue('0xTXNHASH')
+      vi.mocked(mockWagmiCore.waitForTransactionReceipt).mockResolvedValue({})
     })
 
     it('handles past start date by adjusting to future', async () => {
@@ -249,7 +240,7 @@ describe('ElectionComponent', () => {
 
       await wrapper.vm.createElection(mockPastElectionData)
 
-      const args = vi.mocked(simulateContract).mock.calls[0][1].args
+      const args = vi.mocked(mockWagmiCore.simulateContract).mock.calls[0][1].args
       const startTime = args[2]
       const endTime = args[3]
 

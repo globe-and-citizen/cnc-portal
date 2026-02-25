@@ -38,7 +38,8 @@ export const mockWagmiCore = {
   waitForTransactionReceipt: vi.fn(),
   writeContract: vi.fn(),
   readContract: vi.fn(),
-  getWalletClient: vi.fn()
+  getWalletClient: vi.fn(),
+  estimateGas: vi.fn()
 }
 
 // Mock useWaitForTransactionReceipt composable

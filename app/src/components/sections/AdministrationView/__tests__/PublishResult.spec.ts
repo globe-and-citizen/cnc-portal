@@ -2,6 +2,15 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref, nextTick, type Ref } from 'vue'
 import PublishResult from '../PublishResult.vue'
+import {
+  useWriteContractFn,
+  useWaitForTransactionReceiptFn,
+  useQueryClientFn,
+  mockWagmiCore,
+  mockTeamStore,
+  mockToastStore
+} from '@/tests/mocks'
+import { useTeamStore, useToastStore } from '@/stores'
 
 // Prevent module-level constant validation and provide minimal addresses used by utils
 vi.mock('@/constant', () => ({
@@ -12,12 +21,6 @@ vi.mock('@/constant', () => ({
   ELECTIONS_BEACON_ADDRESS: '0x0000000000000000000000000000000000000003',
   ELECTIONS_IMPL_ADDRESS: '0x0000000000000000000000000000000000000004'
 }))
-vi.mock('@tanstack/vue-query', () => ({
-  useQueryClient: vi.fn()
-}))
-vi.mock('@wagmi/core', () => ({
-  estimateGas: vi.fn()
-}))
 vi.mock('viem', async () => {
   const actual = await vi.importActual('viem')
   return {
@@ -26,25 +29,8 @@ vi.mock('viem', async () => {
   }
 })
 
-import { useTeamStore, useToastStore } from '@/stores'
-import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import { estimateGas } from '@wagmi/core'
-
 describe('PublishResult.vue', () => {
   type MockFn = ReturnType<typeof vi.fn>
-
-  let mockToast: {
-    addErrorToast: MockFn
-    addSuccessToast: MockFn
-  }
-
-  let mockTeamStore: {
-    currentTeam: {
-      teamContracts: Array<{ type: string; address: string }>
-    }
-    getContractAddressByType: (type: string) => string | undefined
-  }
 
   let publishResultsMock: MockFn
   let isPendingRef: Ref<boolean>
@@ -55,11 +41,7 @@ describe('PublishResult.vue', () => {
   let queryClientMock: { invalidateQueries: MockFn }
 
   beforeEach(() => {
-    mockToast = {
-      addErrorToast: vi.fn(),
-      addSuccessToast: vi.fn()
-    }
-    mockTeamStore = {
+    const localMockTeamStore = {
       currentTeam: {
         teamContracts: [{ type: 'Elections', address: '0xELECTIONSADDRESS000000000000000000000' }]
       },
@@ -70,13 +52,15 @@ describe('PublishResult.vue', () => {
         return undefined
       }
     }
-    ;(useToastStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => mockToast)
-    ;(useTeamStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => mockTeamStore)
+    vi.mocked(useToastStore).mockImplementation(() => mockToastStore)
+    vi.mocked(useTeamStore).mockImplementation(
+      () => localMockTeamStore as ReturnType<typeof useTeamStore>
+    )
 
     publishResultsMock = vi.fn()
     isPendingRef = ref(false)
     publishResultsHashRef = ref<string | undefined>(undefined)
-    ;(useWriteContract as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+    useWriteContractFn.mockImplementation(
       (): {
         writeContract: MockFn
         isPending: Ref<boolean>
@@ -93,7 +77,7 @@ describe('PublishResult.vue', () => {
     waitErrorRef = ref<unknown | null>(null)
     isWaitingRef = ref(false)
     isPublishedRef = ref(false)
-    ;(useWaitForTransactionReceipt as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+    useWaitForTransactionReceiptFn.mockImplementation(
       (): {
         error: Ref<unknown | null>
         isLoading: Ref<boolean>
@@ -108,10 +92,8 @@ describe('PublishResult.vue', () => {
     queryClientMock = {
       invalidateQueries: vi.fn()
     }
-    ;(useQueryClient as unknown as ReturnType<typeof vi.fn>).mockImplementation(
-      () => queryClientMock
-    )
-    ;(estimateGas as unknown as ReturnType<typeof vi.fn>).mockImplementation(async () => ({
+    useQueryClientFn.mockImplementation(() => queryClientMock)
+    mockWagmiCore.estimateGas.mockImplementation(async () => ({
       gas: 21000n
     }))
   })
@@ -130,9 +112,9 @@ describe('PublishResult.vue', () => {
     await btn.trigger('click')
     await nextTick()
 
-    expect(estimateGas).toHaveBeenCalled()
+    expect(mockWagmiCore.estimateGas).toHaveBeenCalled()
     expect(publishResultsMock).toHaveBeenCalledWith({
-      address: mockTeamStore.getContractAddressByType('Elections') ?? '',
+      address: '0xELECTIONSADDRESS000000000000000000000',
       abi: expect.any(Array),
       functionName: 'publishResults',
       args: [BigInt(42)]
@@ -157,14 +139,14 @@ describe('PublishResult.vue', () => {
     await nextTick()
     await Promise.resolve()
 
-    expect(mockToast.addSuccessToast).toHaveBeenCalledWith(
+    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
       'Election results published successfully!'
     )
     expect(queryClientMock.invalidateQueries).toHaveBeenCalled()
   })
 
   it('shows error toast when estimateGas throws', async () => {
-    ;(estimateGas as unknown as ReturnType<typeof vi.fn>).mockImplementationOnce(() => {
+    mockWagmiCore.estimateGas.mockImplementationOnce(() => {
       throw new Error('gas failed')
     })
 
@@ -176,6 +158,6 @@ describe('PublishResult.vue', () => {
     await wrapper.find('[data-test="create-election-button"]').trigger('click')
     await nextTick()
 
-    expect(mockToast.addErrorToast).toHaveBeenCalled()
+    expect(mockToastStore.addErrorToast).toHaveBeenCalled()
   })
 })

@@ -7,21 +7,17 @@ import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentB
 import CurrentBoDElectionSection from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
 import PastBoDElectionsSection from '@/components/sections/AdministrationView/PastBoDElectionsSection.vue'
 import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+import {
+  useReadContractFn,
+  mockTeamStore
+} from '@/tests/mocks'
+import { useTeamStore } from '@/stores'
 
 // Test constants
 const MOCK_ELECTIONS_ADDRESS = '0x1234567890123456789012345678901234567890'
 
-// Hoisted mock functions - only functions and plain objects
-const { mockTeamStore, mockLog, mockParseError } = vi.hoisted(() => ({
-  mockTeamStore: {
-    getContractAddressByType: vi.fn((type: string): string | undefined => {
-      if (type === 'Elections') return MOCK_ELECTIONS_ADDRESS
-      return undefined
-    })
-  },
-  mockLog: {
-    error: vi.fn()
-  },
+const { mockLog, mockParseError } = vi.hoisted(() => ({
+  mockLog: { error: vi.fn() },
   mockParseError: vi.fn((error: Error) => error.message)
 }))
 
@@ -29,23 +25,6 @@ const { mockTeamStore, mockLog, mockParseError } = vi.hoisted(() => ({
 const mockUseReadContractData = ref<bigint | number | null>(null)
 const mockUseReadContractError = ref<Error | null>(null)
 const mockUseReadContractIsLoading = ref(false)
-
-// Mock external dependencies
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@wagmi/vue')>()
-  return {
-    ...actual,
-    useReadContract: vi.fn(() => ({
-      data: mockUseReadContractData,
-      error: mockUseReadContractError,
-      isLoading: mockUseReadContractIsLoading
-    }))
-  }
-})
-
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore)
-}))
 
 vi.mock('@/utils', () => ({
   log: mockLog,
@@ -84,7 +63,13 @@ describe('BodElectionView.vue', () => {
     mockUseReadContractData.value = null
     mockUseReadContractError.value = null
     mockUseReadContractIsLoading.value = false
-    mockTeamStore.getContractAddressByType.mockImplementation((type: string) => {
+    useReadContractFn.mockReturnValue({
+      data: mockUseReadContractData,
+      error: mockUseReadContractError,
+      isLoading: mockUseReadContractIsLoading
+    })
+    vi.mocked(useTeamStore).mockReturnValue(mockTeamStore as ReturnType<typeof useTeamStore>)
+    mockTeamStore.getContractAddressByType.mockImplementation((type) => {
       if (type === 'Elections') return MOCK_ELECTIONS_ADDRESS
       return undefined
     })

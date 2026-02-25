@@ -2,9 +2,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import VestingView from '../VestingView.vue'
-//import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { ref } from 'vue'
-import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
+import {
+  mockUseContractBalance,
+  useWriteContractFn,
+  useWaitForTransactionReceiptFn,
+  useReadContractFn,
+  mockTeamStore,
+  mockUserStore
+} from '@/tests/mocks'
+import { useTeamStore, useUserDataStore } from '@/stores'
 
 // Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
@@ -38,24 +45,7 @@ const mockCurrentTeam = ref({
   ]
 })
 
-vi.mock('@/stores', () => ({
-  useUserDataStore: () => ({
-    address: memberAddress
-  }),
-  useTeamStore: () => ({
-    currentTeam: mockCurrentTeam.value,
-    currentTeamId: mockCurrentTeam.value.id,
-    getContractAddressByType: vi.fn((type) => {
-      return type ? '0x000000000000000000000000000000000000beef' : undefined
-    })
-  })
-}))
-
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: vi.fn(() => mockUseContractBalance)
-}))
-
-// Wagmi mocks
+// Wagmi mocks - local refs for per-test state
 const mockWriteContract = {
   writeContract: vi.fn(),
   error: ref<Error | null>(null),
@@ -66,35 +56,6 @@ const mockWaitReceipt = {
   isLoading: ref(false),
   isSuccess: ref(false)
 }
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useWriteContract: vi.fn(() => mockWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockWaitReceipt),
-    useReadContract: vi.fn(({ functionName }: { functionName: string }) => {
-      if (functionName === 'getTeamVestingsWithMembers') {
-        return {
-          data: mockVestingInfos,
-          error: ref(null),
-          refetch: refetchVestingInfos
-        }
-      }
-      if (functionName === 'getTeamAllArchivedVestingsFlat') {
-        return {
-          data: mockArchivedInfos,
-          error: ref(null),
-          refetch: vi.fn()
-        }
-      }
-      return {
-        data: ref('TST'),
-        error: ref(null),
-        refetch: vi.fn()
-      }
-    })
-  }
-})
 
 // Test suite
 describe('VestingView.vue', () => {
@@ -110,6 +71,28 @@ describe('VestingView.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // Configure wagmi composable mocks
+    useWriteContractFn.mockReturnValue(mockWriteContract)
+    useWaitForTransactionReceiptFn.mockReturnValue(mockWaitReceipt)
+    useReadContractFn.mockImplementation(({ functionName }: { functionName: string }) => {
+      if (functionName === 'getTeamVestingsWithMembers') {
+        return { data: mockVestingInfos, error: ref(null), refetch: refetchVestingInfos }
+      }
+      if (functionName === 'getTeamAllArchivedVestingsFlat') {
+        return { data: mockArchivedInfos, error: ref(null), refetch: vi.fn() }
+      }
+      return { data: ref('TST'), error: ref(null), refetch: vi.fn() }
+    })
+    // Configure store mocks
+    vi.mocked(useUserDataStore).mockReturnValue({ ...mockUserStore, address: memberAddress })
+    vi.mocked(useTeamStore).mockReturnValue({
+      ...mockTeamStore,
+      currentTeam: mockCurrentTeam.value as ReturnType<typeof useTeamStore>['currentTeam'],
+      currentTeamId: mockCurrentTeam.value.id,
+      getContractAddressByType: vi.fn((type) =>
+        type ? '0x000000000000000000000000000000000000beef' : undefined
+      )
+    } as ReturnType<typeof useTeamStore>)
     wrapper = mountComponent()
     mockWriteContract.writeContract.mockReset()
     mockWaitReceipt.isLoading.value = false
