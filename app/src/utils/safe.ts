@@ -17,6 +17,7 @@ import type { SafeIncomingTransfer } from '@/types'
  * Get injected EIP-1193 provider with proper type checking
  */
 export function getInjectedProvider(): Eip1193Provider {
+  // @ts-expect-error - TypeScript may not recognize window.ethereum as Eip1193Provider
   const provider = (globalThis.window as Window & typeof globalThis)?.ethereum
 
   if (!provider) {
