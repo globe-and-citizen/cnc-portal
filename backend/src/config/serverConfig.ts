@@ -25,7 +25,6 @@ import devRoutes from '../routes/devRoutes';
 import statsRoutes from '../routes/statsRoute';
 import healthRoutes from '../routes/healthRoutes';
 import featureRoutes from '../routes/featureRoutes';
-import polymarketRoutes from '../routes/polymarketRoute';
 
 //#endregion routing modules
 
@@ -81,7 +80,6 @@ class Server {
       dev: '/api/dev/',
       health: '/api/health/',
       features: '/api/admin/features/',
-      polymarket: '/api/polymarket/',
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -141,7 +139,6 @@ class Server {
     this.app.use(this.paths.constract, authorizeUser, contractRoutes);
     this.app.use(this.paths.stats, authorizeUser, requireAdmin, statsRoutes);
     this.app.use(this.paths.features, authorizeUser, requireAdmin, featureRoutes);
-    this.app.use(this.paths.polymarket, authorizeUser, polymarketRoutes);
 
     // Dev routes - only available in development mode
     if (process.env.NODE_ENV === 'development') {

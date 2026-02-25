@@ -7,6 +7,8 @@ import type { Claim } from '@/types'
 import dayjs from 'dayjs'
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 
+import { useToastStore } from '@/stores'
+
 // Toast mocks
 const successToastMock = vi.fn()
 const errorToastMock = vi.fn()
@@ -35,30 +37,17 @@ const defaultClaim: Claim = {
   updatedAt: '2024-01-01T00:00:00.000Z'
 }
 
-// Hoist and structure mocks
-const { mockUseToastStore } = vi.hoisted(() => {
-  return {
-    mockUseToastStore: vi.fn(() => ({
-      addErrorToast: errorToastMock,
-      addSuccessToast: successToastMock
-    }))
-  }
-})
-
-vi.mock('@/stores', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useToastStore: mockUseToastStore
-  }
-})
-
 describe.skip('DeleteClaimModal', () => {
   afterEach(() => {
     vi.clearAllMocks()
   })
 
   const createWrapper = (props = {}, mutationOverrides = {}) => {
+    vi.mocked(useToastStore).mockReturnValue({
+      addErrorToast: errorToastMock,
+      addSuccessToast: successToastMock
+    } as ReturnType<typeof useToastStore>)
+
     // Mock the delete mutation
     const mockMutateAsync = vi.fn().mockResolvedValue(undefined)
     const mockIsPending = ref(false)

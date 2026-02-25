@@ -109,6 +109,11 @@ export const mockHealthCheckData: HealthCheckResponse = {
 }
 
 /**
+ * Stable refetch mock for health query - exported for tests that need to verify it was called
+ */
+export const mockHealthQueryRefetch = vi.fn().mockResolvedValue({})
+
+/**
  * Weekly Claim Query Mocks
  */
 export const mockWeeklyClaimData: WeeklyClaim[] = [
@@ -185,17 +190,6 @@ export const mockSafeTransactionData = {
   confirmations: [],
   trusted: true,
   signatures: null
-}
-
-export const mockMarketData = {
-  tokens: [
-    {
-      token_id: 'test-token',
-      outcome: 'Yes',
-      price: '0.50',
-      volume: '1000'
-    }
-  ]
 }
 
 /**
@@ -308,7 +302,10 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useResetContractsMutation: () => createMockMutationResponse(),
 
   // Health queries - health.queries.ts
-  useGetBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData),
+  useGetBackendHealthQuery: () => ({
+    ...createMockQueryResponse(mockHealthCheckData),
+    refetch: mockHealthQueryRefetch
+  }),
 
   // Weekly Claim queries - weeklyClaim.queries.ts
   useGetTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
@@ -325,9 +322,5 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useApproveTransactionMutation: () => createMockMutationResponse(),
   useExecuteTransactionMutation: () => createMockMutationResponse(),
   useUpdateSafeOwnersMutation: () => createMockMutationResponse(),
-  useGetSafeTransactionQuery: () => createMockQueryResponse(mockSafeTransactionData),
-
-  // Polymarket queries - polymarket.queries.ts
-  useGetMarketDataQuery: () => createMockQueryResponse(mockMarketData),
-  useGetSafeBalancesQuery: () => createMockQueryResponse([])
+  useGetSafeTransactionQuery: () => createMockQueryResponse(mockSafeTransactionData)
 }

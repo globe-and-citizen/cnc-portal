@@ -2,32 +2,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useCurrencyStore } from '../currencyStore'
 import { nextTick, ref } from 'vue'
+import { useQueryFn } from '@/tests/mocks'
 
-// hoisted mock
-const mocks = vi.hoisted(() => ({
-  useQuery: vi.fn()
-}))
-
-// Mock the useQuery function to return a specific value
-vi.mock('@tanstack/vue-query', () => {
-  return {
-    useQuery: mocks.useQuery
-  }
-})
-
-// Set a default implementation for useQuery mock
-mocks.useQuery.mockImplementation(() => ({
-  data: ref(undefined),
-  refetch: vi.fn(),
-  isFetching: ref(false)
-}))
+// @tanstack/vue-query is mocked globally via composables.setup.ts
+// useQueryFn is exported from composables.mock.ts and used as the useQuery implementation
 
 describe('Currency Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     localStorage.clear()
     vi.clearAllMocks()
-    mocks.useQuery.mockImplementation(() => ({
+    useQueryFn.mockImplementation(() => ({
       data: ref(undefined),
       refetch: vi.fn(),
       isFetching: ref(false)
@@ -87,7 +72,7 @@ describe('Currency Store', () => {
       ok: true,
       json: () => Promise.resolve(fakeResponse)
     }) as unknown as typeof fetch
-    mocks.useQuery.mockReturnValue({
+    useQueryFn.mockReturnValue({
       data: ref(fakeResponse),
       refetch: vi.fn(),
       isFetching: ref(false)
@@ -120,13 +105,13 @@ describe('Currency Store', () => {
 
   it('fetchTokenPrice queryFn throws on fetch error', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false }) as unknown as typeof fetch
-    mocks.useQuery.mockReturnValue({
+    useQueryFn.mockReturnValue({
       data: ref(undefined),
       refetch: vi.fn(),
       isFetching: ref(false)
     })
     const store = useCurrencyStore()
-    const call = mocks.useQuery.mock.calls[0][0]
+    const call = useQueryFn.mock.calls[0][0]
     await expect(call.queryFn()).rejects.toThrow('Failed to fetch price')
     // getTokenInfo should return null prices
     const native = store.getTokenInfo('native')

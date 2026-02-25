@@ -1,31 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+import { useTeamStore } from '@/stores'
+import { mockWagmiCore } from '@/tests/mocks'
 
-// Mock readContract from wagmi/core
-const mockReadContract = vi.fn()
-vi.mock('@wagmi/core', () => ({
-  readContract: (...args: unknown[]) => mockReadContract(...(args as unknown[]))
-}))
-
-let mockTeamStore: {
+let mockLocalTeamStore: {
   currentTeam?: { members: unknown[] }
   getContractAddressByType?: (...args: unknown[]) => unknown
 }
-vi.mock('@/stores', () => ({
-  useTeamStore: () => mockTeamStore as unknown
-}))
 
 describe('ContractOwnerCard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    mockTeamStore = {
+    mockLocalTeamStore = {
       currentTeam: {
         members: []
       },
       getContractAddressByType: vi.fn(() => undefined)
     }
+    vi.mocked(useTeamStore).mockReturnValue(mockLocalTeamStore as ReturnType<typeof useTeamStore>)
   })
 
   const globalStubs = {
@@ -42,10 +36,10 @@ describe('ContractOwnerCard', () => {
 
   it('shows Board of Directors when owner is the board address', async () => {
     const boardAddr = '0xBoard'
-    mockTeamStore.getContractAddressByType = vi.fn(() => boardAddr)
-    mockTeamStore.currentTeam = { members: [] }
+    mockLocalTeamStore.getContractAddressByType = vi.fn(() => boardAddr)
+    mockLocalTeamStore.currentTeam = { members: [] }
 
-    mockReadContract.mockResolvedValueOnce(boardAddr)
+    mockWagmiCore.readContract.mockResolvedValueOnce(boardAddr)
 
     const wrapper = mount(ContractOwnerCard, {
       props: { contractAddress: '0xContract' },
@@ -57,17 +51,17 @@ describe('ContractOwnerCard', () => {
 
     expect(wrapper.text()).toContain('Board of Directors')
     expect(wrapper.text()).toContain(boardAddr)
-    expect(mockReadContract).toHaveBeenCalled()
+    expect(mockWagmiCore.readContract).toHaveBeenCalled()
   })
 
   it('shows member info when owner is a team member', async () => {
     const ownerAddr = '0xMember'
-    mockTeamStore.currentTeam = {
+    mockLocalTeamStore.currentTeam = {
       members: [{ address: ownerAddr, name: 'Alice', imageUrl: 'img' }]
     }
-    mockTeamStore.getContractAddressByType = vi.fn(() => undefined)
+    mockLocalTeamStore.getContractAddressByType = vi.fn(() => undefined)
 
-    mockReadContract.mockResolvedValueOnce(ownerAddr)
+    mockWagmiCore.readContract.mockResolvedValueOnce(ownerAddr)
 
     const wrapper = mount(ContractOwnerCard, {
       props: { contractAddress: '0xContract' },
@@ -83,10 +77,10 @@ describe('ContractOwnerCard', () => {
 
   it('falls back to address when owner is unknown', async () => {
     const ownerAddr = '0xUnknown'
-    mockTeamStore.currentTeam = { members: [] }
-    mockTeamStore.getContractAddressByType = vi.fn(() => undefined)
+    mockLocalTeamStore.currentTeam = { members: [] }
+    mockLocalTeamStore.getContractAddressByType = vi.fn(() => undefined)
 
-    mockReadContract.mockResolvedValueOnce(ownerAddr)
+    mockWagmiCore.readContract.mockResolvedValueOnce(ownerAddr)
 
     const wrapper = mount(ContractOwnerCard, {
       props: { contractAddress: '0xContract' },
@@ -101,7 +95,7 @@ describe('ContractOwnerCard', () => {
   })
 
   it('renders loading state when readContract fails', async () => {
-    mockReadContract.mockRejectedValueOnce(new Error('fail'))
+    mockWagmiCore.readContract.mockRejectedValueOnce(new Error('fail'))
 
     const wrapper = mount(ContractOwnerCard, {
       props: { contractAddress: '0xContract' },

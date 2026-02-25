@@ -4,54 +4,22 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import type { TableRow } from '@/components/TableComponent.vue'
 import BodApprovalModal from '@/components/sections/ContractManagementView/BodApprovalModal.vue'
+import { useReadContractFn, mockTeamStore, mockUserStore, mockWagmiCore } from '@/tests/mocks'
+import { useTeamStore, useUserDataStore } from '@/stores'
 
 const CURRENT_ADDR = '0x0000000000000000000000000000000000000001'
 const BOD_ADDR = '0x00000000000000000000000000000000000000b0'
 const MEMBERS = [CURRENT_ADDR, '0x00000000000000000000000000000000000000aa']
 
-// Stores mock
-vi.mock('@/stores', () => ({
-  useUserDataStore: () => ({ address: CURRENT_ADDR }),
-  useTeamStore: () => ({
-    currentTeam: {
-      members: [
-        { name: 'Alice', address: CURRENT_ADDR },
-        { name: 'Bob', address: MEMBERS[1] }
-      ]
-    },
-    getContractAddressByType: vi.fn(() => BOD_ADDR)
-  })
-}))
-
-// wagmi/vue hook mock
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual = (await importOriginal()) as Record<string, unknown>
-  return {
-    ...actual,
-    useReadContract: vi.fn(({ functionName }: { functionName: string }) => {
-      if (functionName === 'getBoardOfDirectors') {
-        return { data: ref(MEMBERS), error: ref(null) }
-      }
-      return { data: ref(null), error: ref(null) }
-    })
-  }
-})
-
-// wagmi/core readContract mock used inside membersApprovals()
-const readContractMock = vi.fn()
-vi.mock('@wagmi/core', () => ({
-  readContract: (...args: unknown[]) => readContractMock(...args)
-}))
-
 function mountComponent(overrides?: { alreadyApproved?: boolean }) {
-  // Control per-member approval
-  readContractMock.mockImplementation((_config: unknown, params: { args: [number, string] }) => {
-    const member = params.args[1]
-    // when alreadyApproved, current user returns true so Approve btn disabled
-    if (overrides?.alreadyApproved) return Promise.resolve(member === CURRENT_ADDR)
-    // otherwise, nobody has approved yet
-    return Promise.resolve(false)
-  })
+  // Control per-member approval via the global wagmi/core mock
+  mockWagmiCore.readContract.mockImplementation(
+    (_config: unknown, params: { args: [number, string] }) => {
+      const member = params.args[1]
+      if (overrides?.alreadyApproved) return Promise.resolve(member === CURRENT_ADDR)
+      return Promise.resolve(false)
+    }
+  )
 
   // Strongly-typed minimal row (only fields used by the component)
   const baseRow: Pick<TableRow, 'id' | 'actionId' | 'title' | 'description' | 'requestedBy'> = {
@@ -75,6 +43,29 @@ function mountComponent(overrides?: { alreadyApproved?: boolean }) {
 describe('BodApprovalModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Configure store mocks
+    vi.mocked(useUserDataStore).mockReturnValue({
+      ...mockUserStore,
+      address: CURRENT_ADDR
+    })
+    vi.mocked(useTeamStore).mockReturnValue({
+      ...mockTeamStore,
+      currentTeam: {
+        ...mockTeamStore.currentTeam,
+        members: [
+          { name: 'Alice', address: CURRENT_ADDR },
+          { name: 'Bob', address: MEMBERS[1] }
+        ]
+      } as ReturnType<typeof useTeamStore>['currentTeam'],
+      getContractAddressByType: vi.fn(() => BOD_ADDR)
+    } as ReturnType<typeof useTeamStore>)
+    // Configure wagmi mocks
+    useReadContractFn.mockImplementation(({ functionName }: { functionName: string }) => {
+      if (functionName === 'getBoardOfDirectors') {
+        return { data: ref(MEMBERS), error: ref(null) }
+      }
+      return { data: ref(null), error: ref(null) }
+    })
   })
 
   it('renders and shows approval progress', async () => {

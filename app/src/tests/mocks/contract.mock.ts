@@ -1,4 +1,5 @@
 import { vi } from 'vitest'
+import { ref } from 'vue'
 import { createContractReadMock, createContractWriteMock } from './erc20.mock'
 
 /**
@@ -7,11 +8,11 @@ import { createContractReadMock, createContractWriteMock } from './erc20.mock'
 export const mockElectionsReads = {
   address: createContractReadMock('0x1234567890123456789012345678901234567890'),
   owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'),
-  getElection: createContractReadMock(null),
+  getElection: createContractReadMock<readonly (string | bigint | boolean)[] | null>(null),
   getVoteCount: createContractReadMock(0n),
-  getCandidates: createContractReadMock([]),
-  getEligibleVoters: createContractReadMock([]),
-  getWinners: createContractReadMock([]),
+  getCandidates: createContractReadMock<string[]>([]),
+  getEligibleVoters: createContractReadMock<string[]>([]),
+  getWinners: createContractReadMock<string[]>([]),
   hasVoted: createContractReadMock(false)
 }
 
@@ -74,6 +75,40 @@ export const mockBODWrites = {
   setBoard: createContractWriteMock(),
   addAction: createContractWriteMock(),
   approve: createContractWriteMock()
+}
+
+/**
+ * BOD Composable-level mocks (higher-level interfaces returned by BOD composables)
+ */
+export const mockBodIsBodAction = {
+  isBodAction: ref(false)
+}
+
+export const mockBodAddAction = {
+  executeAddAction: vi.fn(),
+  isPending: ref(false),
+  isConfirming: ref(false),
+  isActionAdded: ref(false),
+  executeWrite: vi.fn(),
+  invalidateQueries: vi.fn(),
+  writeResult: {
+    data: ref(null),
+    error: ref(null),
+    isLoading: ref(false),
+    isSuccess: ref(false),
+    isError: ref(false),
+    isPending: ref(false),
+    status: ref('idle' as const)
+  },
+  receiptResult: {
+    data: ref(null),
+    error: ref(null),
+    isLoading: ref(false),
+    isSuccess: ref(false),
+    isError: ref(false),
+    isPending: ref(false),
+    status: ref('idle' as const)
+  }
 }
 
 /**

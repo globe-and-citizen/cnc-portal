@@ -3,59 +3,24 @@ import { ref, nextTick } from 'vue'
 import { useContractWrites } from '../useContractWritesV2'
 import type { ContractWriteConfig } from '../useContractWritesV2'
 import type { Address, Abi } from 'viem'
+import { useWriteContractFn, useWaitForTransactionReceiptFn, useAccountFn } from '@/tests/mocks'
+import { useQueryFn } from '@/tests/mocks'
 
-// Hoisted mock variables
-const {
-  mockUseWriteContract,
-  mockUseWaitForTransactionReceipt,
-  mockUseAccount,
-  mockUseChainId,
-  mockUseQuery,
-  mockUseQueryClient,
-  mockUseTransactionTimeline,
-  mockLog,
-  mockWaitForCondition,
-  mockFormatDataForDisplay
-} = vi.hoisted(() => {
-  const mockQueryClient = {
-    invalidateQueries: vi.fn().mockResolvedValue(undefined)
-  }
+// Local mocks for composables/utils not covered by global setup
+const { mockUseTransactionTimeline, mockLog, mockWaitForCondition, mockFormatDataForDisplay } =
+  vi.hoisted(() => {
+    const mockQueryClient = {
+      invalidateQueries: vi.fn().mockResolvedValue(undefined)
+    }
 
-  return {
-    mockUseWriteContract: vi.fn(),
-    mockUseWaitForTransactionReceipt: vi.fn(),
-    mockUseAccount: vi.fn(),
-    mockUseChainId: vi.fn(() => 11155111),
-    mockUseQuery: vi.fn(),
-    mockUseQueryClient: vi.fn(() => mockQueryClient),
-    mockQueryClient,
-    mockUseTransactionTimeline: vi.fn(),
-    mockLog: { error: vi.fn() },
-    mockWaitForCondition: vi.fn().mockResolvedValue(true),
-    mockFormatDataForDisplay: vi.fn((data) => data)
-  }
-})
-
-// Mock external dependencies
-vi.mock('@wagmi/vue', () => ({
-  useWriteContract: mockUseWriteContract,
-  useWaitForTransactionReceipt: mockUseWaitForTransactionReceipt,
-  useAccount: mockUseAccount,
-  useChainId: mockUseChainId
-}))
-
-vi.mock('@tanstack/vue-query', () => ({
-  useQuery: mockUseQuery,
-  useQueryClient: mockUseQueryClient
-}))
-
-vi.mock('@wagmi/core', () => ({
-  simulateContract: vi.fn()
-}))
-
-vi.mock('@/wagmi.config', () => ({
-  config: { chains: [] }
-}))
+    return {
+      mockQueryClient,
+      mockUseTransactionTimeline: vi.fn(),
+      mockLog: { error: vi.fn() },
+      mockWaitForCondition: vi.fn().mockResolvedValue(true),
+      mockFormatDataForDisplay: vi.fn((data) => data)
+    }
+  })
 
 vi.mock('@/composables/useTransactionTimeline', () => ({
   useTransactionTimeline: mockUseTransactionTimeline
@@ -104,8 +69,8 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       args: MOCK_DATA.args
     }
 
-    // Set up default mock implementations
-    mockUseWriteContract.mockReturnValue({
+    // Set up default mock implementations using exported factory fns
+    useWriteContractFn.mockReturnValue({
       writeContractAsync: vi.fn(),
       data: ref(undefined),
       isPending: ref(false),
@@ -114,14 +79,14 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       reset: vi.fn()
     })
 
-    mockUseWaitForTransactionReceipt.mockReturnValue({
+    useWaitForTransactionReceiptFn.mockReturnValue({
       data: ref(undefined),
       isLoading: ref(false),
       isSuccess: ref(false),
       error: ref(null)
     })
 
-    mockUseQuery.mockReturnValue({
+    useQueryFn.mockReturnValue({
       data: ref(undefined),
       isLoading: ref(false),
       isSuccess: ref(false),
@@ -130,7 +95,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       refetch: vi.fn().mockResolvedValue({ data: { gasLimit: BigInt(21000) } })
     })
 
-    mockUseAccount.mockReturnValue({
+    useAccountFn.mockReturnValue({
       chainId: ref(1)
     })
 
@@ -155,7 +120,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       await nextTick()
 
       // Verify that the composable handles reactive changes
-      expect(mockUseQuery).toHaveBeenCalled()
+      expect(useQueryFn).toHaveBeenCalled()
     })
 
     it('should handle reactive function name and args', async () => {
@@ -175,7 +140,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       reactiveArgs.value = ['newArg1', 'newArg2']
       await nextTick()
 
-      expect(mockUseQuery).toHaveBeenCalled()
+      expect(useQueryFn).toHaveBeenCalled()
     })
 
     it('should use provided chainId over account chainId', () => {
@@ -186,7 +151,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       }
 
       useContractWrites(configWithChainId)
-      expect(mockUseQuery).toHaveBeenCalled()
+      expect(useQueryFn).toHaveBeenCalled()
     })
   })
 
@@ -198,7 +163,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
 
       mockWaitForCondition.mockRejectedValue(new Error('Timeout waiting for transaction'))
 
-      mockUseQuery.mockReturnValueOnce({
+      useQueryFn.mockReturnValueOnce({
         data: ref(undefined),
         isLoading: ref(false),
         isSuccess: ref(true),
@@ -207,7 +172,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
         refetch: vi.fn().mockResolvedValue({ data: { gasLimit: BigInt(21000) } })
       })
 
-      mockUseWriteContract.mockReturnValueOnce({
+      useWriteContractFn.mockReturnValueOnce({
         writeContractAsync: mockWriteContractAsync,
         data: ref(undefined),
         isPending: ref(false),
@@ -230,7 +195,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       const writeError = new Error('Contract write failed')
       const errorRef = ref<Error | null>(null)
 
-      mockUseWriteContract.mockReturnValue({
+      useWriteContractFn.mockReturnValue({
         writeContractAsync: vi.fn(),
         data: ref(undefined),
         isPending: ref(false),
@@ -252,7 +217,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       const receiptError = new Error('Receipt error')
       const errorRef = ref<Error | null>(null)
 
-      mockUseWaitForTransactionReceipt.mockReturnValue({
+      useWaitForTransactionReceiptFn.mockReturnValue({
         data: ref(undefined),
         isLoading: ref(false),
         isSuccess: ref(false),
@@ -278,7 +243,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
         hash: MOCK_DATA.transactionHash
       })
 
-      mockUseQuery.mockReturnValueOnce({
+      useQueryFn.mockReturnValueOnce({
         data: ref(undefined),
         isLoading: ref(false),
         isSuccess: ref(true),
@@ -287,7 +252,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
         refetch: vi.fn().mockResolvedValue({ data: { gasLimit: BigInt(21000) } })
       })
 
-      mockUseWriteContract.mockReturnValueOnce({
+      useWriteContractFn.mockReturnValueOnce({
         writeContractAsync: mockWriteContractAsync,
         data: ref(undefined),
         isPending: ref(false),
@@ -296,7 +261,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
         reset: vi.fn()
       })
 
-      mockUseWaitForTransactionReceipt.mockReturnValueOnce({
+      useWaitForTransactionReceiptFn.mockReturnValueOnce({
         data: ref(undefined),
         isLoading: ref(false),
         isSuccess: ref(true),
@@ -327,7 +292,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       useContractWrites(mockConfig)
 
       // Verify that useQuery was called, indicating proper setup
-      expect(mockUseQuery).toHaveBeenCalledWith(
+      expect(useQueryFn).toHaveBeenCalledWith(
         expect.objectContaining({
           queryKey: expect.any(Array),
           queryFn: expect.any(Function),

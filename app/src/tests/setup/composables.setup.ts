@@ -5,12 +5,17 @@ import {
   mockUseBackendWake,
   mockUseAuth,
   mockUseContractBalance,
+  mockUseApolloQuery,
   mockUseSafeSendTransaction,
   mockUseSafeOwnerManagement,
   mockUseSafeDeployment,
-  mockUseClipboard
+  mockUseClipboard,
+  useQueryClientFn,
+  useQueryFn,
+  mockUseFetch,
+  mockUseWalletChecks
 } from '@/tests/mocks/composables.mock'
-import { mockGetBalance } from '@/tests/mocks/viem.actions.mock'
+import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
 import { mockRouter } from '@/tests/mocks/router.mock'
 
 /**
@@ -21,21 +26,16 @@ vi.mock('@tanstack/vue-query', async () => {
   const actual: object = await vi.importActual('@tanstack/vue-query')
   return {
     ...actual,
-    useQueryClient: vi.fn(() => {
-      return {
-        invalidateQueries: vi.fn(),
-        getQueryData: vi.fn(),
-        setQueryData: vi.fn(),
-        removeQueries: vi.fn()
-      }
-    }),
-    useQuery: vi.fn(() => {
-      return {
-        data: vi.fn(),
-        isLoading: vi.fn(),
-        error: vi.fn()
-      }
-    })
+    useQueryClient: useQueryClientFn,
+    useQuery: useQueryFn
+  }
+})
+
+vi.mock('@vue/apollo-composable', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useQuery: vi.fn(() => mockUseApolloQuery)
   }
 })
 
@@ -60,7 +60,27 @@ vi.mock('@vueuse/core', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useClipboard: vi.fn(() => mockUseClipboard)
+    useClipboard: vi.fn(() => mockUseClipboard),
+    useFetch: vi.fn((url: string | { value: string }) => {
+      const resolvedUrl = typeof url === 'string' ? url : url.value
+      mockUseFetch.get.url.value = resolvedUrl
+      return {
+        post: () => ({
+          json: () => ({
+            data: mockUseFetch.post.data,
+            execute: mockUseFetch.post.execute,
+            error: mockUseFetch.post.error
+          })
+        }),
+        get: () => ({
+          json: () => ({
+            data: mockUseFetch.get.data,
+            execute: mockUseFetch.get.execute,
+            error: mockUseFetch.get.error
+          })
+        })
+      }
+    })
   }
 })
 
@@ -177,14 +197,6 @@ vi.mock('@/queries/safe.mutations', () => ({
 }))
 
 /**
- * Mock Polymarket Queries (polymarket.queries.ts)
- */
-vi.mock('@/queries/polymarket.queries', () => ({
-  useGetMarketDataQuery: vi.fn(queryMocks.useGetMarketDataQuery),
-  useGetSafeBalancesQuery: vi.fn(queryMocks.useGetSafeBalancesQuery)
-}))
-
-/**
  * Mock useBackendWake composable
  */
 vi.mock('@/composables/useBackendWake', () => ({
@@ -204,6 +216,17 @@ vi.mock('@/composables/useAuth', () => ({
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)
 }))
+
+/**
+ * Mock useWalletChecks composable
+ */
+vi.mock('@/composables', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useWalletChecks: vi.fn(() => mockUseWalletChecks)
+  }
+})
 
 /**
  * Mock useSafeSendTransaction composable
@@ -234,7 +257,8 @@ vi.mock('viem/actions', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    getBalance: mockGetBalance
+    getBalance: mockGetBalance,
+    getLogs: mockGetLogs
   }
 })
 

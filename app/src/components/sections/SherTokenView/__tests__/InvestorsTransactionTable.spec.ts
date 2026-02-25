@@ -3,11 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsTransactionTable from '../InvestorsTransactionTable.vue'
 import type { InvestorsTransaction } from '@/types/transactions'
-
-// Mock utils
-vi.mock('@/utils', () => ({
-  formatCurrencyShort: vi.fn((amount: number) => `$${amount.toFixed(2)}`)
-}))
+import { formatCurrencyShort } from '@/utils'
 
 const mockTransactions: InvestorsTransaction[] = [
   {
@@ -73,7 +69,7 @@ describe('InvestorsTransactionTable.vue', () => {
     const wrapper = createComponent()
     const result = wrapper.vm.formatUSDAmount(1000.5)
 
-    expect(result).toBe('$1000.50')
+    expect(result).toBe(formatCurrencyShort(1000.5))
   })
 
   it('should format date correctly', () => {
