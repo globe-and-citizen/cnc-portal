@@ -4,6 +4,7 @@ import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
+import { mockUseContractBalance } from '@/tests/mocks'
 
 // Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({
@@ -23,7 +24,6 @@ const {
   mockUseCurrencyStore,
   mockUseUserDataStore,
   mockUseToastStore,
-  mockUseContractBalance,
   mockuseGetSafeInfoQuery,
   mockQueryClient,
   mockUseSafeTransfer
@@ -35,7 +35,6 @@ const {
   mockUseCurrencyStore: vi.fn(),
   mockUseUserDataStore: vi.fn(),
   mockUseToastStore: vi.fn(),
-  mockUseContractBalance: vi.fn(),
   mockuseGetSafeInfoQuery: vi.fn(),
   mockQueryClient: {
     invalidateQueries: vi.fn()
@@ -63,10 +62,6 @@ vi.mock('@/composables/safe', async (importOriginal) => {
 
 vi.mock('@vueuse/core', () => ({
   useStorage: vi.fn()
-}))
-
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: mockUseContractBalance
 }))
 
 vi.mock('@/queries/safe.queries', () => ({
@@ -182,9 +177,6 @@ interface SafeBalanceSectionInstance {
 describe('SafeBalanceSection', () => {
   let wrapper: VueWrapper
   const mockCurrency = ref(MOCK_DATA.defaultCurrency)
-  const mockBalances = ref(MOCK_DATA.balances)
-  const mockTotal = ref(MOCK_DATA.total)
-  const mockIsLoading = ref(false)
   const mockSafeInfo = ref(MOCK_DATA.safeInfo)
 
   const createWrapper = (props = {}) =>
@@ -205,12 +197,10 @@ describe('SafeBalanceSection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    // Setup default mocks
-    mockUseContractBalance.mockReturnValue({
-      total: mockTotal,
-      balances: mockBalances,
-      isLoading: mockIsLoading
-    })
+    // Configure global contract balance mock
+    mockUseContractBalance.isLoading.value = false
+    mockUseContractBalance.balances.value = MOCK_DATA.balances as typeof mockUseContractBalance.balances.value
+    mockUseContractBalance.total.value = MOCK_DATA.total as typeof mockUseContractBalance.total.value
 
     mockuseGetSafeInfoQuery.mockReturnValue({
       data: mockSafeInfo
@@ -243,9 +233,6 @@ describe('SafeBalanceSection', () => {
     mockOpenSafeAppUrl.mockImplementation(() => {})
 
     // Reset reactive values
-    mockIsLoading.value = false
-    mockBalances.value = MOCK_DATA.balances
-    mockTotal.value = MOCK_DATA.total
     mockSafeInfo.value = MOCK_DATA.safeInfo
   })
 
@@ -255,7 +242,7 @@ describe('SafeBalanceSection', () => {
 
   describe('Component Rendering', () => {
     it('should show loading spinner when isLoading is true', () => {
-      mockIsLoading.value = true
+      mockUseContractBalance.isLoading.value = true
       wrapper = createWrapper()
 
       expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(true)
@@ -278,7 +265,7 @@ describe('SafeBalanceSection', () => {
 
   describe('Tokens Computation', () => {
     it('should handle missing USD price gracefully', () => {
-      mockBalances.value = [
+      mockUseContractBalance.balances.value = [
         {
           token: {
             symbol: 'TEST',
@@ -291,7 +278,7 @@ describe('SafeBalanceSection', () => {
             USD: undefined
           }
         }
-      ]
+      ] as typeof mockUseContractBalance.balances.value
       wrapper = createWrapper()
 
       const tokens = (wrapper.vm as SafeBalanceSectionInstance).tokens
@@ -301,7 +288,7 @@ describe('SafeBalanceSection', () => {
 
   describe('Transfer Modal', () => {
     it('should handle empty tokens list gracefully', async () => {
-      mockBalances.value = []
+      mockUseContractBalance.balances.value = [] as typeof mockUseContractBalance.balances.value
       wrapper = createWrapper()
 
       await wrapper.find('[data-test="transfer-button"]').trigger('click')

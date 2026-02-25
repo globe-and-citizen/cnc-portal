@@ -3,6 +3,8 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, ref, defineComponent } from 'vue'
 import type { Address } from 'viem'
 import SafeOwnersCard from '../SafeOwnersCard.vue'
+import { useAccountFn, useChainIdFn } from '@/tests/mocks'
+import { useTeamStore } from '@/stores'
 
 // Mock @iconify/vue FIRST
 vi.mock('@iconify/vue', () => ({
@@ -34,27 +36,13 @@ interface MockTeamMeta {
 
 // Hoisted mocks
 const {
-  mockUseAccount,
-  mockUseChainId,
   mockuseGetSafeInfoQuery,
   mockGetSafeSettingsUrl,
-  mockOpenSafeAppUrl,
-  mockTeamStore,
-  mockToastStore
+  mockOpenSafeAppUrl
 } = vi.hoisted(() => ({
-  mockUseAccount: vi.fn(),
-  mockUseChainId: vi.fn(),
   mockuseGetSafeInfoQuery: vi.fn(),
   mockGetSafeSettingsUrl: vi.fn(),
-  mockOpenSafeAppUrl: vi.fn(),
-  mockTeamStore: {
-    currentTeam: null as MockTeam | null,
-    currentTeamMeta: null as MockTeamMeta | null
-  },
-  mockToastStore: {
-    addSuccessToast: vi.fn(),
-    addErrorToast: vi.fn()
-  }
+  mockOpenSafeAppUrl: vi.fn()
 }))
 
 // Test constants - defined before mocks
@@ -87,21 +75,9 @@ const mockIsLoading = ref(false)
 const mockError = ref<Error | null>(null)
 const mockRefetch = vi.fn()
 
-// Mock wagmi/vue
-vi.mock('@wagmi/vue', () => ({
-  useAccount: mockUseAccount,
-  useChainId: mockUseChainId
-}))
-
 // Mock Safe queries - return function that returns reactive refs
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
-}))
-
-// Mock stores
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore),
-  useToastStore: vi.fn(() => mockToastStore)
 }))
 
 // Mock Safe composables
@@ -223,12 +199,17 @@ describe('SafeOwnersCard', () => {
     })
 
     // Setup default mocks
-    mockUseAccount.mockReturnValue({
+    useAccountFn.mockReturnValue({
       address: ref(undefined),
       isConnected: ref(false)
     })
 
-    mockUseChainId.mockReturnValue(ref(137))
+    useChainIdFn.mockReturnValue(ref(137))
+
+    vi.mocked(useTeamStore).mockReturnValue({
+      currentTeam: MOCK_DATA.team,
+      currentTeamMeta: { data: { safeAddress: MOCK_DATA.safeAddress } }
+    } as ReturnType<typeof useTeamStore>)
 
     mockGetSafeSettingsUrl.mockReturnValue(
       'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
@@ -240,10 +221,6 @@ describe('SafeOwnersCard', () => {
     mockSafeInfoData.value = null
     mockIsLoading.value = false
     mockError.value = null
-    mockTeamStore.currentTeam = MOCK_DATA.team
-    mockTeamStore.currentTeamMeta = {
-      data: { safeAddress: MOCK_DATA.safeAddress }
-    }
   })
 
   afterEach(() => {
@@ -314,7 +291,7 @@ describe('SafeOwnersCard', () => {
     })
 
     it('should highlight current user as owner', async () => {
-      mockUseAccount.mockReturnValue({
+      useAccountFn.mockReturnValue({
         address: ref(MOCK_DATA.owners[0]),
         isConnected: ref(true)
       })
@@ -328,7 +305,7 @@ describe('SafeOwnersCard', () => {
 
   describe('User Permissions', () => {
     it('should disable add signer button when user is not an owner', async () => {
-      mockUseAccount.mockReturnValue({
+      useAccountFn.mockReturnValue({
         address: ref('0x9999999999999999999999999999999999999999' as Address),
         isConnected: ref(true)
       })
@@ -341,7 +318,7 @@ describe('SafeOwnersCard', () => {
     })
 
     it('should enable add signer button when user is an owner', async () => {
-      mockUseAccount.mockReturnValue({
+      useAccountFn.mockReturnValue({
         address: ref(MOCK_DATA.owners[0]),
         isConnected: ref(true)
       })

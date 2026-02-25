@@ -84,13 +84,6 @@ const mockApprovals = [
   }
 ]
 
-vi.mock('vue-router', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useRoute: vi.fn(() => ({ params: { id: 1 } }))
-  }
-})
 
 const mockUseReadContractRefetch = vi.fn()
 const mockUseReadContract = {

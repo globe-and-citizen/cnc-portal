@@ -4,6 +4,7 @@ import { nextTick, ref, defineComponent } from 'vue'
 import type { Address } from 'viem'
 import SafeTransactions from '../SafeTransactions.vue'
 import type { SafeTransaction } from '@/types/safe'
+import { useAccountFn } from '@/tests/mocks'
 
 // Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({
@@ -19,14 +20,12 @@ const {
   mockUseTeamStore,
   mockuseGetSafeTransactionsQuery,
   mockuseGetSafeInfoQuery,
-  mockUseAccount,
   mockUseSafeApproval,
   mockUseSafeExecution
 } = vi.hoisted(() => ({
   mockUseTeamStore: vi.fn(),
   mockuseGetSafeTransactionsQuery: vi.fn(),
   mockuseGetSafeInfoQuery: vi.fn(),
-  mockUseAccount: vi.fn(),
   mockUseSafeApproval: vi.fn(),
   mockUseSafeExecution: vi.fn()
 }))
@@ -35,17 +34,6 @@ vi.mock('@/queries/safe.queries', () => ({
   useGetSafeTransactionsQuery: mockuseGetSafeTransactionsQuery,
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))
-
-// Fix the wagmi mock to include missing exports
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useAccount: mockUseAccount,
-    createConfig: vi.fn(), // Add missing export
-    http: vi.fn() // Add missing export
-  }
-})
 
 vi.mock('@/composables/safe', () => ({
   useSafeApproval: mockUseSafeApproval,
@@ -175,7 +163,7 @@ const setupDefaultMocks = () => {
     data: ref(MOCK_DATA.safeInfo)
   })
 
-  mockUseAccount.mockReturnValue({
+  useAccountFn.mockReturnValue({
     address: ref(MOCK_DATA.connectedAddress)
   })
 
@@ -351,7 +339,7 @@ describe('SafeTransactions', () => {
     })
 
     it('should handle disconnected wallet state', () => {
-      mockUseAccount.mockReturnValue({
+      useAccountFn.mockReturnValue({
         address: ref(null)
       })
       wrapper = createWrapper()
@@ -359,7 +347,7 @@ describe('SafeTransactions', () => {
     })
 
     // it('should handle non-owner connected wallet', () => {
-    //   mockUseAccount.mockReturnValue({
+    //   useAccountFn.mockReturnValue({
     //     address: ref(MOCK_DATA.otherAddress)
     //   })
     //   wrapper = createWrapper()

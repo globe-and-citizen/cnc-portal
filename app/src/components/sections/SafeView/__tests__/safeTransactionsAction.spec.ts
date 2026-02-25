@@ -4,44 +4,29 @@ import { nextTick, ref, defineComponent } from 'vue'
 import type { Address } from 'viem'
 import SafeTransactions from '../SafeTransactions.vue'
 import type { SafeTransaction } from '@/types/safe'
+import { useAccountFn, useChainIdFn } from '@/tests/mocks'
+import { useTeamStore } from '@/stores'
 
 vi.mock('@iconify/vue', () => ({
   Icon: { name: 'Icon', template: '<span></span>', props: ['icon'] }
 }))
 
 const {
-  mockUseTeamStore,
   mockuseGetSafeTransactionsQuery,
   mockuseGetSafeInfoQuery,
-  mockUseAccount,
   mockUseSafeApproval,
-  mockUseSafeExecution,
-  mockUseChainId
+  mockUseSafeExecution
 } = vi.hoisted(() => ({
-  mockUseTeamStore: vi.fn(),
   mockuseGetSafeTransactionsQuery: vi.fn(),
   mockuseGetSafeInfoQuery: vi.fn(),
-  mockUseAccount: vi.fn(),
   mockUseSafeApproval: vi.fn(),
-  mockUseSafeExecution: vi.fn(),
-  mockUseChainId: vi.fn()
+  mockUseSafeExecution: vi.fn()
 }))
 
-vi.mock('@/stores', () => ({ useTeamStore: mockUseTeamStore }))
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeTransactionsQuery: mockuseGetSafeTransactionsQuery,
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useAccount: mockUseAccount,
-    useChainId: mockUseChainId,
-    createConfig: vi.fn(),
-    http: vi.fn()
-  }
-})
 vi.mock('@/composables/safe', () => ({
   useSafeApproval: mockUseSafeApproval,
   useSafeExecution: mockUseSafeExecution
@@ -130,12 +115,12 @@ describe('SafeTransactions Actions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseTeamStore.mockReturnValue({
+    vi.mocked(useTeamStore).mockReturnValue({
       currentTeamMeta: { data: { safeAddress: MOCK_DATA.safeAddress } }
-    })
+    } as ReturnType<typeof useTeamStore>)
     mockuseGetSafeInfoQuery.mockReturnValue({ data: ref(MOCK_DATA.safeInfo) })
-    mockUseAccount.mockReturnValue({ address: ref(MOCK_DATA.connectedAddress) })
-    mockUseChainId.mockReturnValue(ref(137))
+    useAccountFn.mockReturnValue({ address: ref(MOCK_DATA.connectedAddress) })
+    useChainIdFn.mockReturnValue(ref(137))
     mockUseSafeApproval.mockReturnValue({
       approveTransaction: MOCK_DATA.mockApproveTransaction,
       isApproving: ref(false),
@@ -250,7 +235,7 @@ describe('SafeTransactions Actions', () => {
     })
 
     it('should not allow actions for non-owners', () => {
-      mockUseAccount.mockReturnValue({
+      useAccountFn.mockReturnValue({
         address: ref('0x9999999999999999999999999999999999999999' as Address)
       })
       mockuseGetSafeTransactionsQuery.mockReturnValue({
