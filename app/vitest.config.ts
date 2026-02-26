@@ -17,7 +17,8 @@ const mockFiles = [
   'bank',
   'bod',
   'investor',
-  'nuxt-ui'
+  'nuxt-ui',
+  'ui-components'
 ].map((name) => `./src/tests/setup/${name}.setup.ts`)
 export default defineConfig((env) =>
   mergeConfig(viteConfig(env), {
