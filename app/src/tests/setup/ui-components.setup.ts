@@ -5,6 +5,11 @@ import { defineComponent, h } from 'vue'
  * Mock Nuxt UI components used in SidebarLayout and other UI components
  */
 
+interface NavigationItem {
+  label: string
+  children?: NavigationItem[]
+}
+
 // Mock UDashboardSidebar
 vi.mock('@nuxt/ui', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -33,7 +38,7 @@ vi.mock('@nuxt/ui', async (importOriginal) => {
     UNavigationMenu: defineComponent({
       name: 'UNavigationMenu',
       props: {
-        items: Array,
+        items: Array as () => NavigationItem[],
         collapsed: Boolean,
         orientation: String,
         ui: Object
