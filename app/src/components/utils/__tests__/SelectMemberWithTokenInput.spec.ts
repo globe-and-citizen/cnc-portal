@@ -3,9 +3,10 @@ import { it, describe, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import type { ComponentPublicInstance } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
+import { useTeamStore } from '@/stores'
 
 // Mock team store data
-const mockTeamStore = {
+const mockLocalTeamStore = {
   currentTeam: {
     id: '1',
     name: 'Test Team',
@@ -19,15 +20,12 @@ const mockTeamStore = {
   }
 }
 
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore)
-}))
-
 describe('SelectMemberWithTokenInput.vue', () => {
   let wrapper: VueWrapper<ComponentPublicInstance>
 
   beforeEach(() => {
     vi.useFakeTimers()
+    vi.mocked(useTeamStore).mockReturnValue(mockLocalTeamStore as ReturnType<typeof useTeamStore>)
     wrapper = mount(SelectMemberWithTokenInput, {
       props: {
         modelValue: {

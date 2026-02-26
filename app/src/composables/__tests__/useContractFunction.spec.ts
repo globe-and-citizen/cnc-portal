@@ -1,50 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useDeployContract, getContractData } from '../useContractFunctions'
-import { ref, nextTick } from 'vue'
+import { nextTick } from 'vue'
 import { parseUnits, formatUnits } from 'viem/utils'
 import type { Abi, Address } from 'viem'
+import { mockUseWaitForTransactionReceipt, mockWagmiCore } from '@/tests/mocks'
 
-//  Declare all mocks with vi.hoisted to avoid hoisting errors
-const { mockGetWalletClient, mockReadContract, mockDeployContract, mockWalletClient } = vi.hoisted(
-  () => {
-    const mockDeployContract = vi.fn()
+//  Declare only the composable-specific mock (wallet client) with vi.hoisted
+const { mockDeployContract, mockWalletClient } = vi.hoisted(() => {
+  const mockDeployContract = vi.fn()
 
-    return {
-      mockGetWalletClient: vi.fn(),
-      mockReadContract: vi.fn(),
-      mockDeployContract,
-      mockWalletClient: {
-        deployContract: mockDeployContract,
-        account: { address: '0xabc' }
-      }
+  return {
+    mockDeployContract,
+    mockWalletClient: {
+      deployContract: mockDeployContract,
+      account: { address: '0xabc' }
     }
   }
-)
-
-const mockUseWaitForTransactionReceipt = {
-  data: ref({ contractAddress: '0xDEADBEEF' }),
-  isSuccess: ref(true),
-  isLoading: ref(false)
-}
-
-//  Mock @wagmi/vue
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
-  }
 })
 
-//  Mock @wagmi/core
-vi.mock('@wagmi/core', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    getWalletClient: mockGetWalletClient,
-    readContract: mockReadContract
-  }
-})
+// @wagmi/vue and @wagmi/core are mocked globally - no need to re-declare them here
+// Just configure specific behaviors in beforeEach
 
 describe('useDeployContract', () => {
   const mockAbi: Abi = [
@@ -63,8 +38,8 @@ describe('useDeployContract', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockGetWalletClient.mockResolvedValue(mockWalletClient)
-    mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' }
+    mockWagmiCore.getWalletClient.mockResolvedValue(mockWalletClient)
+    mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' } as never
     mockUseWaitForTransactionReceipt.isSuccess.value = true
     mockUseWaitForTransactionReceipt.isLoading.value = false
   })
@@ -75,7 +50,7 @@ describe('useDeployContract', () => {
     // Initially loading
     mockUseWaitForTransactionReceipt.isLoading.value = true
     mockUseWaitForTransactionReceipt.isSuccess.value = true
-    mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' }
+    mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' } as never
 
     const { deploy, contractAddress, error, isDeploying } = useDeployContract(mockAbi, mockBytecode)
     await deploy('0xBANK', '1.5', '2.5')
@@ -97,7 +72,7 @@ describe('useDeployContract', () => {
   })
 
   it('should handle wallet not connected error', async () => {
-    mockGetWalletClient.mockResolvedValueOnce(null)
+    mockWagmiCore.getWalletClient.mockResolvedValueOnce(null)
 
     const { deploy, error, contractAddress, isDeploying } = useDeployContract(mockAbi, mockBytecode)
     await deploy('0xBANK', '1', '1')
@@ -138,12 +113,12 @@ describe('getContractData', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockGetWalletClient.mockResolvedValue(mockWalletClient)
+    mockWagmiCore.getWalletClient.mockResolvedValue(mockWalletClient)
   })
 
   it('should return readable data for view functions without params', async () => {
-    mockReadContract.mockImplementationOnce(() => 'Project X')
-    mockReadContract.mockImplementationOnce(() => BigInt('1000000000000000000'))
+    mockWagmiCore.readContract.mockImplementationOnce(() => 'Project X')
+    mockWagmiCore.readContract.mockImplementationOnce(() => BigInt('1000000000000000000'))
 
     const result = await getContractData(address, mockAbi)
 
@@ -156,11 +131,11 @@ describe('getContractData', () => {
   it('should skip functions with inputs', async () => {
     const data = await getContractData(address, [mockAbi[2]])
     expect(data).toEqual([])
-    expect(mockReadContract).not.toHaveBeenCalled()
+    expect(mockWagmiCore.readContract).not.toHaveBeenCalled()
   })
 
   it('should handle errors gracefully', async () => {
-    mockReadContract.mockImplementation(() => {
+    mockWagmiCore.readContract.mockImplementation(() => {
       throw new Error('Read failed')
     })
 

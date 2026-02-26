@@ -3,24 +3,9 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
 import { createTestingPinia } from '@pinia/testing'
+import { useAddMembersMutation } from '@/queries/member.queries'
 
-// Hoisted mock variables
-const { mockUseAddMembersQuery } = vi.hoisted(() => {
-  const mockMutate = vi.fn()
-  return {
-    mockUseAddMembersQuery: vi.fn(() => ({
-      mutate: mockMutate,
-      isPending: ref(false),
-      error: ref(null),
-      status: ref('idle')
-    }))
-  }
-})
-
-// Mock the member queries
-vi.mock('@/queries/member.queries', () => ({
-  useAddMembersMutation: mockUseAddMembersQuery
-}))
+const mockMutate = vi.fn()
 
 interface AddMemberFormVm {
   formData: Array<{ address: string; name: string }>
@@ -42,6 +27,12 @@ const mountComponent = () => {
 describe('AddMemberForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(useAddMembersMutation).mockReturnValue({
+      mutate: mockMutate,
+      isPending: ref(false),
+      error: ref(null),
+      status: ref('idle')
+    } as unknown as ReturnType<typeof useAddMembersMutation>)
   })
 
   it('should render component with title and form inputs', () => {
@@ -101,7 +92,7 @@ describe('AddMemberForm.vue', () => {
     await button.trigger('click')
 
     // Verify mutate was called with correct data
-    expect(mockUseAddMembersQuery()).toBeTruthy()
+    expect(vi.mocked(useAddMembersMutation)()).toBeTruthy()
   })
 
   it('MultiSelectMemberInput v-model updates formData', async () => {

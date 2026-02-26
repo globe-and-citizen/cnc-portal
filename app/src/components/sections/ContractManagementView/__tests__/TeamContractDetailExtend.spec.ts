@@ -5,6 +5,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import TeamContractsDetail from '@/components/sections/ContractManagementView/TeamContractsDetail.vue'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { ref } from 'vue'
+import { useWriteContractFn, useWaitForTransactionReceiptFn } from '@/tests/mocks'
 
 const setCostPerClickMock = vi.fn().mockResolvedValue({ status: 1 })
 const setCostPerImpressionMock = vi.fn().mockResolvedValue({ status: 1 })
@@ -17,25 +18,7 @@ const mockUseWaitForTransactionReceipt = {
   isLoading: ref(false)
 }
 
-let useWriteCallCount = 0
-
-//mock wagmi vue
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useWriteContract: vi.fn(() => {
-      const current = useWriteCallCount++
-      return {
-        writeContract: current === 0 ? setCostPerClickMock : setCostPerImpressionMock,
-        error: current === 0 ? mockErrorSetCostPerClick : mockErrorSetCostPerImpression,
-        isPending: ref(false),
-        data: ref(null)
-      }
-    }),
-    useWaitForTransactionReceipt: vi.fn(() => mockUseWaitForTransactionReceipt)
-  }
-})
+//mock wagmi vue (handled globally via useWriteContractFn / useWaitForTransactionReceiptFn)
 
 vi.mock('@/stores/useToastStore')
 vi.mock('@/services/AddCampaignService', () => ({
@@ -57,11 +40,24 @@ describe('TeamContractsDetail.vue', () => {
   beforeEach(() => {
     const pinia = createPinia()
     setActivePinia(pinia)
-    useWriteCallCount = 0
     vi.clearAllMocks()
     mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' }
     mockUseWaitForTransactionReceipt.isSuccess.value = true
     mockUseWaitForTransactionReceipt.isLoading.value = false
+    useWriteContractFn
+      .mockReturnValueOnce({
+        writeContract: setCostPerClickMock,
+        error: mockErrorSetCostPerClick,
+        isPending: ref(false),
+        data: ref(null)
+      })
+      .mockReturnValueOnce({
+        writeContract: setCostPerImpressionMock,
+        error: mockErrorSetCostPerImpression,
+        isPending: ref(false),
+        data: ref(null)
+      })
+    useWaitForTransactionReceiptFn.mockReturnValue(mockUseWaitForTransactionReceipt)
   })
 
   it('shows error toast if submit throws error', async () => {

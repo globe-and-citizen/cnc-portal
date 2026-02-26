@@ -1,20 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
+import { mockHealthQueryRefetch } from '@/tests/mocks'
 
-// Mock the health query with hoisting
-const mockRefetch = vi.fn()
-
-vi.mock('@/queries/health.queries', () => ({
-  useGetBackendHealthQuery: vi.fn(() => ({
-    data: null,
-    error: null,
-    isLoading: false,
-    isFetching: false,
-    status: 'pending',
-    refetch: mockRefetch.mockResolvedValue({})
-  }))
-}))
+// @/queries/health.queries is mocked globally in composables.setup.ts
+// Use the stable mockHealthQueryRefetch export to verify calls
 
 // Unmock the useBackendWake so we can test the real implementation
 vi.unmock('@/composables/useBackendWake')
@@ -23,7 +13,7 @@ import { useBackendWake } from '@/composables/useBackendWake'
 
 describe('useBackendWake Composable', () => {
   beforeEach(() => {
-    mockRefetch.mockClear()
+    mockHealthQueryRefetch.mockClear()
     vi.clearAllMocks()
   })
 
@@ -44,14 +34,14 @@ describe('useBackendWake Composable', () => {
       // Wait for mount lifecycle
       await flushPromises()
 
-      expect(mockRefetch).toHaveBeenCalled()
+      expect(mockHealthQueryRefetch).toHaveBeenCalled()
 
       wrapper.unmount()
     })
 
     it('should handle refetch errors silently', async () => {
       const consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {})
-      mockRefetch.mockRejectedValueOnce(new Error('Network error'))
+      mockHealthQueryRefetch.mockRejectedValueOnce(new Error('Network error'))
 
       const TestComponent = defineComponent({
         setup() {
@@ -114,7 +104,7 @@ describe('useBackendWake Composable', () => {
       await flushPromises()
 
       // Both instances should trigger refetch
-      expect(mockRefetch).toHaveBeenCalled()
+      expect(mockHealthQueryRefetch).toHaveBeenCalled()
       wrapper1.unmount()
       wrapper2.unmount()
     })
