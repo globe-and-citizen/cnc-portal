@@ -6,6 +6,7 @@ import { isAddress, zeroAddress, type Address } from 'viem'
 
 interface TokenAddresses {
   USDC: Address
+  USDCe: Address
   USDT: Address
 }
 
@@ -16,6 +17,7 @@ type ChainTokenAddresses = {
 interface AddressMapping {
   'MockTokens#USDT'?: Address
   'MockTokens#USDC'?: Address
+  'MockTokens#USDCe'?: Address
   'FeeCollectorModule#FeeCollector': Address
 }
 
@@ -103,10 +105,12 @@ export function resolveAddressWithFallback(
 export const TOKEN_ADDRESSES: Pick<ChainTokenAddresses, 137 | 80002> = {
   137: {
     USDC: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', // Polygon USDC
+    USDCe: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // Polygon USDC.e
     USDT: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // Polygon USDT
   },
   80002: {
     USDC: '0x41e94eb019c0762f9bfcf9fb1e58725bfb0e7582', // Amoy USDC
+    USDCe: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607', // Amoy USDC.e
     USDT: '0x83Ef79413e0DC985035bA0C49B0abD0dA62987eD' // Amoy USDT
   }
 }
@@ -121,6 +125,15 @@ export const getUSDCAddress = (targetChainId?: number): Address => {
   return TOKEN_ADDRESSES[chain as keyof typeof TOKEN_ADDRESSES]?.USDC || zeroAddress
 }
 
+export const getUSDCeAddress = (targetChainId?: number): Address => {
+  const chain = targetChainId || getChainId()
+
+  if (chain === 11155111 || chain === 31337) {
+    return safeResolveAddress('MockTokens#USDCe', chain) || (zeroAddress as Address)
+  }
+  return TOKEN_ADDRESSES[chain as keyof typeof TOKEN_ADDRESSES]?.USDCe || zeroAddress
+}
+
 export const getUSDTAddress = (targetChainId?: number): Address => {
   const chain = targetChainId || getChainId()
 
@@ -132,28 +145,23 @@ export const getUSDTAddress = (targetChainId?: number): Address => {
 
 // Export token addresses for current chain (runtime)
 export const USDC_ADDRESS = getUSDCAddress()
+export const USDC_E_ADDRESS = getUSDCeAddress()
 export const USDT_ADDRESS = getUSDTAddress()
 export const FEE_COLLECTOR_ADDRESS = safeResolveAddress('FeeCollectorModule#FeeCollector')
 
 // Supported Tokens for FeeCollector
 export const FEE_COLLECTOR_SUPPORTED_TOKENS = [USDC_ADDRESS, USDT_ADDRESS] as const
 
-// Log configuration info
-if (import.meta.client) {
-  console.log('Runtime configuration:')
-  // console.log('Runtime chain ID:', getChainId())
-  // console.log('Fee Collector Address:', FEE_COLLECTOR_ADDRESS)
-  // console.log('Supported token addresses:', FEE_COLLECTOR_SUPPORTED_TOKENS)
-}
-
 // Token Configuration
 export const TOKEN_DECIMALS = {
   USDC: 6,
+  USDCe: 6,
   USDT: 6
 } as const
 
 export const TOKEN_SYMBOLS: Record<Address, string> = {
   [USDC_ADDRESS]: 'USDC',
+  [USDC_E_ADDRESS]: 'USDCe',
   [USDT_ADDRESS]: 'USDT'
 }
 
@@ -201,7 +209,7 @@ const NETWORK_TO_COIN_ID: Record<string, string> = {
   GO: 'ethereum'
 }
 
-export type TokenId = 'native' | 'usdc' | 'usdt'
+export type TokenId = 'native' | 'usdc' | 'usdc.e' | 'usdt'
 
 export interface TokenConfig {
   id: TokenId
@@ -217,6 +225,7 @@ export interface TokenConfig {
 // Helper to build supported tokens for a specific chain
 export function getSupportedTokens(nativeSymbol: string, targetChainId?: number): TokenConfig[] {
   const usdcAddress = getUSDCAddress(targetChainId)
+  const usdcEAddress = getUSDCeAddress(targetChainId)
   const usdtAddress = getUSDTAddress(targetChainId)
 
   return [
@@ -239,6 +248,16 @@ export function getSupportedTokens(nativeSymbol: string, targetChainId?: number)
       decimals: 6,
       address: usdcAddress,
       shortAddress: `${usdcAddress.slice(0, 6)}...${usdcAddress.slice(-4)}`
+    },
+    {
+      id: 'usdc.e',
+      name: 'USDC Coin Bridged',
+      symbol: 'USDCe',
+      code: 'USDCe',
+      coingeckoId: 'usd-coin',
+      decimals: 6,
+      address: usdcEAddress,
+      shortAddress: `${usdcEAddress.slice(0, 6)}...${usdcEAddress.slice(-4)}`
     },
     {
       id: 'usdt',

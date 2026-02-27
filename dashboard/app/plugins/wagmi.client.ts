@@ -5,7 +5,6 @@ import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 
 export default defineNuxtPlugin((nuxtApp) => {
   const config = useRuntimeConfig()
-  console.log('🔍 Environment Variables Check:', config.public.chainId)
 
   const wagmiConfig = createConfig({
     chains: [mainnet, sepolia, polygon, hardhat, polygonAmoy],
