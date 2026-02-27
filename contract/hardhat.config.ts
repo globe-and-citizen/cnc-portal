@@ -7,7 +7,7 @@ import { NetworksUserConfig } from 'hardhat/types'
 
 dotenv.config()
 let networks: NetworksUserConfig = {
-  hardhat: { chainId: 31337 },
+  // hardhat: { chainId: 31337 },
   localhost: { chainId: 31337, url: 'http://localhost:8545' }
 }
 if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefined) {

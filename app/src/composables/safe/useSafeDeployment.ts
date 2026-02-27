@@ -103,7 +103,11 @@ export function useSafeDeployment() {
     } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to deploy Safe')
       console.error('Safe deployment error:', err)
-      addErrorToast(error.value.message)
+      addErrorToast(
+        error.value.message.includes('User rejected')
+          ? 'Transaction approval rejected'
+          : error.value.message
+      )
       return null
     } finally {
       isDeploying.value = false

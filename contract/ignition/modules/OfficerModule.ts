@@ -5,6 +5,7 @@ import bankBeaconModule from './BankBeaconModule'
 import ExpenseAccountEIP712Module from './ExpenseAccountEIP712Module'
 import investorsV1BeaconModule from './InvestorsV1BeaconModule'
 import CashRemunerationEIP712Module from './CashRemunerationEIP712Module'
+import SafeDepositRouterBeaconModule from './SafeDepositRouterBeaconModule'
 import proposalBeaconModule from './ProposalModule'
 import electionsBeaconModule from './ElectionsModule'
 import FeeCollectorModule from './FeeCollectorModule'
@@ -21,6 +22,7 @@ export default buildModule('Officer', (m) => {
   // const { expenseAccountFactoryBeacon } = m.useModule(ExpenseAccountModule)
   const { expenseAccountEip712FactoryBeacon } = m.useModule(ExpenseAccountEIP712Module)
   const { cashRemunerationEip712FactoryBeacon } = m.useModule(CashRemunerationEIP712Module)
+  const { beacon: safeDepositRouterBeacon } = m.useModule(SafeDepositRouterBeaconModule)
 
   const beaconConfigs = [
     { beaconType: 'Bank', beaconAddress: bankBeacon },
@@ -30,7 +32,8 @@ export default buildModule('Officer', (m) => {
     // { beaconType: 'ExpenseAccount', beaconAddress: expenseAccountFactoryBeacon },
     { beaconType: 'ExpenseAccountEIP712', beaconAddress: expenseAccountEip712FactoryBeacon },
     { beaconType: 'InvestorV1', beaconAddress: investorsV1Beacon },
-    { beaconType: 'CashRemunerationEIP712', beaconAddress: cashRemunerationEip712FactoryBeacon }
+    { beaconType: 'CashRemunerationEIP712', beaconAddress: cashRemunerationEip712FactoryBeacon },
+    { beaconType: 'SafeDepositRouter', beaconAddress: safeDepositRouterBeacon }
   ]
 
   m.call(officer, 'initialize', [beaconAdmin, beaconConfigs, [], false])

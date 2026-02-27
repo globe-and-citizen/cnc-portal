@@ -12,7 +12,7 @@ export const useTeamSafes = () => {
       return []
     }
 
-    const bankSafeAddress = teamStore.currentTeamMeta?.data?.safeAddress
+    const bankSafeAddress = teamStore.getContractAddressByType('Safe')
     if (!bankSafeAddress) {
       return []
     }
@@ -27,6 +27,12 @@ export const useTeamSafes = () => {
   })
 
   const selectedSafe = computed<SafeWallet | undefined>(() => {
+    // For safe-account route, select the Bank Safe (first safe in the list)
+    if (route.name === 'safe-account') {
+      return safes.value.length > 0 ? safes.value[0] : undefined
+    }
+
+    // For trading route, match by address parameter
     const address = route.params.address as string
     return safes.value.find((s) => s?.address?.toLocaleLowerCase() === address?.toLocaleLowerCase())
   })
