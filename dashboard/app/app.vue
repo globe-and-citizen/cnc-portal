@@ -2,6 +2,31 @@
 // Wake up backend on app mount
 useBackendWake()
 
+// Detect and switch to the correct blockchain network
+const { isCorrectChain, switchToCorrectChain, chainId, expectedChainId } = useChainValidator()
+const toast = useToast()
+
+onMounted(async () => {
+  if (!isCorrectChain.value) {
+    console.log(`⚠️ Current chain: ${chainId.value}, expected: ${expectedChainId.value}. Switching...`)
+    try {
+      await switchToCorrectChain()
+      toast.add({
+        title: 'Success',
+        description: 'Successfully switched to the correct chain',
+        color: 'success'
+      })
+    } catch (error) {
+      toast.add({
+        title: 'Error',
+        description: 'Failed to switch chain. Please try again.',
+        color: 'error'
+      })
+      console.error('❌ Failed to switch chain:', error)
+    }
+  }
+})
+
 const colorMode = useColorMode()
 
 const color = computed(() => (colorMode.value === 'dark' ? '#1b1718' : 'white'))

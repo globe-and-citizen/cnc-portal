@@ -1,12 +1,10 @@
 import { computed, watch, unref, type MaybeRef } from 'vue'
-import { useWriteContract, useWaitForTransactionReceipt, useChainId } from '@wagmi/vue'
+import { useWriteContract, useWaitForTransactionReceipt, useChainId, useConfig } from '@wagmi/vue'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { Address, Abi } from 'viem'
 import { formatDataForDisplay, log, parseErrorV2, waitForCondition } from '@/utils'
 import { useTransactionTimeline } from '@/composables/useTransactionTimeline'
 import { simulateContract } from '@wagmi/core'
-import { wagmiConfig } from '~/utils/wagmi.config'
-// import { config as wagmiConfig } from '@/wagmi.config'
 
 export interface ContractWriteOptions {
   skipGasEstimation?: boolean
@@ -34,6 +32,7 @@ export function useContractWrites(config: ContractWriteConfig) {
   const queryClient = useQueryClient()
   const chainId = useChainId()
   const writeResult = useWriteContract()
+  const wagmiConfig = useConfig()
 
   const receiptResult = useWaitForTransactionReceipt({
     hash: writeResult.data
