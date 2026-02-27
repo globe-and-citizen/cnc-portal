@@ -26,7 +26,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'https://apiv2.cncportal.io',
-      chainId: process.env.NUXT_PUBLIC_CHAIN_ID || '137'
+      chainId: process.env.NUXT_PUBLIC_CHAIN_ID || '137',
+      polygonRpcUrl: process.env.NUXT_PUBLIC_POLYGON_RPC_URL || 'https://polygon-rpc.com'
     }
   },
 
