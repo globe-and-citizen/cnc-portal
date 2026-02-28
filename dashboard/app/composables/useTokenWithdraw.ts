@@ -7,6 +7,7 @@ import type { TokenDisplay } from '@/types/token'
 
 export const useTokenWithdraw = () => {
   const toast = useToast()
+  // const config = useConfig()
 
   const {
     data: hashWithdraw,
@@ -56,11 +57,12 @@ export const useTokenWithdraw = () => {
         address: FEE_COLLECTOR_ADDRESS as Address,
         abi: FEE_COLLECTOR_ABI,
         functionName: token.address === zeroAddress ? 'withdraw' : 'withdrawToken',
-        args: token.address
+        args: token.address === zeroAddress
           ? [parsedAmount]
           : [token.address as Address, parsedAmount]
       })
-    } catch {
+    } catch (err) {
+      console.error('error', err)
       toast.add({
         title: 'Error',
         description: 'Invalid amount entered',
