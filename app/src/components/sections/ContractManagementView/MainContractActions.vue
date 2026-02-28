@@ -146,7 +146,7 @@ const formatedActions = computed(() => {
 
 const {
   data: hashTransferOwnership,
-  writeContract: executeTransferOwnership,
+  mutate: executeTransferOwnership,
   isPending: isLoadingTransferOwnership,
   error: errorTransferOwnership
 } = useWriteContract()
@@ -158,7 +158,7 @@ const { isLoading: isConfirmingTransferOwnership, isSuccess: isConfirmedTransfer
 
 const {
   data: hashPauseContract,
-  writeContract: executePauseContract,
+  mutate: executePauseContract,
   isPending: isLoadingPauseContract,
   error: errorPauseContract
 } = useWriteContract()
@@ -170,7 +170,7 @@ const { isLoading: isConfirmingPauseContract, isSuccess: isConfirmedPauseContrac
 
 const {
   data: hashUnpauseContract,
-  writeContract: executeUnpauseContract,
+  mutate: executeUnpauseContract,
   isPending: isLoadingUnpauseContract,
   error: errorUnpauseContract
 } = useWriteContract()

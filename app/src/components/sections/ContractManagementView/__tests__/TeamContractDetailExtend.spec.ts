@@ -46,13 +46,13 @@ describe('TeamContractsDetail.vue', () => {
     mockUseWaitForTransactionReceipt.isLoading.value = false
     useWriteContractFn
       .mockReturnValueOnce({
-        writeContract: setCostPerClickMock,
+        mutate: setCostPerClickMock,
         error: mockErrorSetCostPerClick,
         isPending: ref(false),
         data: ref(null)
       })
       .mockReturnValueOnce({
-        writeContract: setCostPerImpressionMock,
+        mutate: setCostPerImpressionMock,
         error: mockErrorSetCostPerImpression,
         isPending: ref(false),
         data: ref(null)
