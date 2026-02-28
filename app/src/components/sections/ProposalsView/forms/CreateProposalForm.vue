@@ -129,8 +129,7 @@ import { useTeamStore } from '@/stores'
 import { useToastStore } from '@/stores/useToastStore'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 import { type Address } from 'viem'
-import { required, minLength, maxLength, helpers } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { z } from 'zod'
 
 // Props and emits
 const emit = defineEmits(['closeModal', 'proposal-created'])
@@ -158,38 +157,34 @@ const types = [
 // Get the Proposals contract address from the team store
 const proposalsAddress = computed(() => teamStore.getContractAddressByType('Proposals') as Address)
 
-// Custom validators
-const afterStartDate = (value: Date | undefined) => {
-  if (!value || !proposal.value.startDate) return false
-  return value > proposal.value.startDate
-}
+// Zod validation schema
+const proposalSchema = z.object({
+  title: z.string({ message: 'Title is required' }).min(3, 'Title must be at least 3 characters').max(100, 'Title must be less than 100 characters'),
+  description: z.string({ message: 'Description is required' }).min(10, 'Description must be at least 10 characters').max(1000, 'Description must be less than 1000 characters'),
+  type: z.string({ message: 'Type is required' }).min(1, 'Type is required'),
+  startDate: z.date({ message: 'Start date is required' }),
+  endDate: z.date({ message: 'End date is required' })
+}).refine((data) => data.endDate > data.startDate, {
+  message: 'End date must be after start date',
+  path: ['endDate']
+})
 
-// Validation rules
-const rules = {
-  title: {
-    required: helpers.withMessage('Title is required', required),
-    minLength: helpers.withMessage('Title must be at least 3 characters', minLength(3)),
-    maxLength: helpers.withMessage('Title must be less than 100 characters', maxLength(100))
-  },
-  description: {
-    required: helpers.withMessage('Description is required', required),
-    minLength: helpers.withMessage('Description must be at least 10 characters', minLength(10)),
-    maxLength: helpers.withMessage('Description must be less than 1000 characters', maxLength(1000))
-  },
-  type: {
-    required: helpers.withMessage('Type is required', required)
-  },
-  startDate: {
-    required: helpers.withMessage('Start date is required', required)
-  },
-  endDate: {
-    required: helpers.withMessage('End date is required', required),
-    afterStartDate: helpers.withMessage('End date must be after start date', afterStartDate)
+const errors = ref<Record<string, string>>({})
+
+const validate = () => {
+  const result = proposalSchema.safeParse(proposal.value)
+  errors.value = {}
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      const key = issue.path[0] as string
+      if (key && !errors.value[key]) {
+        errors.value[key] = issue.message
+      }
+    }
+    return false
   }
+  return true
 }
-
-// Initialize Vuelidate
-const $v = useVuelidate(rules, proposal)
 
 // Contract interaction
 const {

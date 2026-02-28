@@ -62,10 +62,9 @@
         />
         <div
           class="text-red-500 text-sm w-full text-left"
-          v-for="error of $v.input.address.$errors"
-          :key="error.$uid"
+          v-if="addressError"
         >
-          {{ error.$message }}
+          {{ addressError }}
         </div>
       </div>
     </div>
@@ -107,8 +106,7 @@ import TransferOptionCard from '../TransferOptionCard.vue'
 import { useTeamStore } from '@/stores'
 import { isAddress, type Address } from 'viem'
 import BodAlert from '@/components/BodAlert.vue'
-import { helpers } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { z } from 'zod'
 import type { User } from '@/types'
 import UserComponent from '@/components/UserComponent.vue'
 
@@ -136,23 +134,14 @@ const handleContinue = () => {
   }
 }
 
-const addressValidIfMember = helpers.withMessage(
-  'Invalid address',
-  (value: string) => selectedOption.value !== 'member' || isAddress(value)
-)
-const rules = {
-  input: {
-    address: {
-      addressValidIfMember
-    }
-  }
-}
-
-const $v = useVuelidate(rules, { input })
+const addressError = ref('')
 
 const handleTransferOwnership = () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
+  addressError.value = ''
+  if (selectedOption.value === 'member' && !isAddress(input.value.address)) {
+    addressError.value = 'Invalid address'
+    return
+  }
   if (selectedOption.value === 'member') {
     emits('transfer-ownership', input.value.address as Address)
   } else if (selectedOption.value === 'bod') {
