@@ -31,7 +31,6 @@
 
 <script setup lang="ts">
 import { z } from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
 import { reactive, watch } from 'vue'
 
 const team = defineModel({
@@ -55,8 +54,6 @@ const teamSchema = z.object({
     .string({ message: 'Description is required' })
     .min(10, 'Description must be at least 10 characters')
 })
-
-type TeamSchema = z.output<typeof teamSchema>
 
 const state = reactive({
   name: team.value.name ?? '',
@@ -86,7 +83,7 @@ watch(team, (val) => {
   }
 })
 
-const onSubmit = (_event: FormSubmitEvent<TeamSchema>) => {
+const onSubmit = () => {
   emits('updateTeam')
 }
 </script>

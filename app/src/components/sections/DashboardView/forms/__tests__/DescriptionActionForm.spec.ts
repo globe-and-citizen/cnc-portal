@@ -1,10 +1,6 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import DescriptionActionForm from '../DescriptionActionForm.vue'
-
-interface ComponentData {
-  description: string
-}
 
 describe('DescriptionActionForm', () => {
   interface ComponentOptions {
@@ -31,15 +27,17 @@ describe('DescriptionActionForm', () => {
   describe('Validation', () => {
     it('should show error when description is empty', async () => {
       const wrapper = createComponent()
-      await wrapper.find('.btn-primary').trigger('click')
-      expect(wrapper.text()).toContain('Description is required')
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+      expect(wrapper.text()).toContain('Description must be at least 5 characters')
     })
 
     it('should show error when description is too short', async () => {
       const wrapper = createComponent()
-      ;(wrapper.vm as unknown as ComponentData).description = 'abc'
-      await wrapper.vm.$nextTick()
-      await wrapper.find('.btn-primary').trigger('click')
+      const input = wrapper.find('input[type="text"]')
+      await input.setValue('abc')
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
       expect(wrapper.text()).toContain('Description must be at least 5 characters')
     })
   })
@@ -47,18 +45,20 @@ describe('DescriptionActionForm', () => {
   describe('Emits', () => {
     it('should emit submit with description when form is valid', async () => {
       const wrapper = createComponent()
-      ;(wrapper.vm as unknown as ComponentData).description = 'Valid description'
-      await wrapper.vm.$nextTick()
-      await wrapper.find('.btn-primary').trigger('click')
+      const input = wrapper.find('input[type="text"]')
+      await input.setValue('Valid description')
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
       expect(wrapper.emitted('submit')).toBeTruthy()
       expect(wrapper.emitted('submit')?.[0]).toEqual(['Valid description'])
     })
 
     it('should not emit submit when form is invalid', async () => {
       const wrapper = createComponent()
-      ;(wrapper.vm as unknown as ComponentData).description = 'abc'
-      await wrapper.vm.$nextTick()
-      await wrapper.find('.btn-primary').trigger('click')
+      const input = wrapper.find('input[type="text"]')
+      await input.setValue('abc')
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
       expect(wrapper.emitted('submit')).toBeFalsy()
     })
   })

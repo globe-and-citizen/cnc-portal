@@ -1,13 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import ApproveUsersForm from '../ApproveUsersEIP712Form.vue'
-import { type Ref } from 'vue'
-import type {
-  Validation,
-  ValidationRule,
-  ValidationRuleWithoutParams,
-  ValidationRuleWithParams
-} from '@vuelidate/core'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
 import ButtonUI from '@/components/ButtonUI.vue'
 
@@ -28,27 +21,6 @@ interface ComponentData {
   description: string
   action: string
   selectedToken: string
-  v$: Ref<
-    Validation<{
-      formData: {
-        $each: {
-          $validator: ValidationRule
-          $message: () => string
-        }
-        $valid: ValidationRuleWithParams<object, unknown>
-      }
-      budgetLimitType: {
-        required: ValidationRuleWithParams<object, unknown>
-      }
-      limitValue: {
-        required: ValidationRuleWithoutParams<unknown>
-        numeric: ValidationRuleWithoutParams<unknown>
-      }
-      description: {
-        required: ValidationRuleWithParams<object, unknown>
-      }
-    }>
-  >
 }
 
 describe('ApproveUsersForm', () => {
@@ -312,8 +284,6 @@ describe('ApproveUsersForm', () => {
       await wrapper.find('button[data-test="approve-button"]').trigger('click')
       await wrapper.vm.$nextTick()
 
-      // @ts-expect-error: mocked
-      expect(wrapper.vm.v$.$invalid).toBe(false)
       expect(wrapper.emitted('approveUser')).toBeTruthy()
     })
   })

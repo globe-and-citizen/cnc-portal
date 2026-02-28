@@ -106,7 +106,6 @@ import TransferOptionCard from '../TransferOptionCard.vue'
 import { useTeamStore } from '@/stores'
 import { isAddress, type Address } from 'viem'
 import BodAlert from '@/components/BodAlert.vue'
-import { z } from 'zod'
 import type { User } from '@/types'
 import UserComponent from '@/components/UserComponent.vue'
 

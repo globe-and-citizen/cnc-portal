@@ -1,135 +1,88 @@
 <template>
-  <h3 class="font-bold text-xl">Create New Proposal</h3>
-  <div class="flex flex-col w-full">
-    <label class="form-control w-full">
-      <div class="label"><span class="label-text">Title</span></div>
-      <input
-        type="text"
+  <UForm :schema="proposalSchema" :state="state" class="flex flex-col w-full" @submit="handleSubmit">
+    <h3 class="font-bold text-xl">Create New Proposal</h3>
+
+    <UFormField label="Title" name="title" required class="w-full mt-2">
+      <UInput
+        v-model="state.title"
         placeholder="Enter proposal title"
-        v-model="proposal.title"
-        class="input input-bordered w-full"
-        :class="{ 'input-error': $v.title.$error }"
+        class="w-full"
       />
-      <div v-if="$v.title.$error" class="label">
-        <span class="label-text-alt text-error">{{ $v.title.$errors[0]?.$message }}</span>
-      </div>
-    </label>
+    </UFormField>
 
-    <label class="form-control">
-      <div class="label">
-        <span class="label-text">Description</span>
-      </div>
-      <textarea
-        class="textarea textarea-bordered h-24"
+    <UFormField label="Description" name="description" required class="w-full mt-2">
+      <UTextarea
+        v-model="state.description"
         placeholder="Describe your proposal..."
-        v-model="proposal.description"
-        :class="{ 'textarea-error': $v.description.$error }"
-      ></textarea>
-      <div v-if="$v.description.$error" class="label">
-        <span class="label-text-alt text-error">{{ $v.description.$errors[0]?.$message }}</span>
-      </div>
-    </label>
+        :rows="4"
+        class="w-full"
+      />
+    </UFormField>
 
-    <label class="form-control w-full">
-      <div class="label">
-        <span class="label-text">Type</span>
-      </div>
-      <select
-        class="select select-bordered"
-        :class="{ 'select-error': $v.type.$error }"
-        v-model="proposal.type"
-      >
-        <option
-          v-for="type in types"
-          :key="type.value"
-          :value="type.value"
-          :selected="type.value === proposal.type"
-        >
-          {{ type.label }}
-        </option>
-      </select>
-      <div v-if="$v.type.$error" class="label">
-        <span class="label-text-alt text-error">{{ $v.type.$errors[0]?.$message }}</span>
-      </div>
-    </label>
+    <UFormField label="Type" name="type" required class="w-full mt-2">
+      <USelect
+        v-model="state.type"
+        :items="types"
+      />
+    </UFormField>
 
-    <div class="flex flex-row justify-between items-center gap-4">
-      <div class="flex flex-col flex-1">
-        <label class="label">
-          <span class="label-text">Start Date</span>
-        </label>
-        <div
-          class="border rounded-lg p-2 bg-white shadow-xs"
-          :class="{ 'border-error': $v.startDate.$error }"
-        >
+    <div class="flex flex-row justify-between items-center gap-4 mt-2">
+      <UFormField label="Start Date" name="startDate" required class="flex-1">
+        <div class="border rounded-lg p-2 bg-white shadow-xs">
           <VueDatePicker
-            v-model="proposal.startDate"
+            v-model="state.startDate"
             placeholder="mm/dd/yyyy"
             :min-date="new Date()"
             auto-apply
             :enable-time-picker="false"
           />
         </div>
-        <div v-if="$v.startDate.$error" class="label">
-          <span class="label-text-alt text-error">{{ $v.startDate.$errors[0]?.$message }}</span>
-        </div>
-      </div>
-      <div class="flex flex-col flex-1">
-        <label class="label">
-          <span class="label-text">End Date</span>
-        </label>
-        <div
-          class="border rounded-lg p-2 bg-white shadow-xs"
-          :class="{ 'border-error': $v.endDate.$error }"
-        >
+      </UFormField>
+
+      <UFormField label="End Date" name="endDate" required class="flex-1">
+        <div class="border rounded-lg p-2 bg-white shadow-xs">
           <VueDatePicker
-            v-model="proposal.endDate"
+            v-model="state.endDate"
             placeholder="mm/dd/yyyy"
-            :min-date="proposal.startDate || new Date()"
+            :min-date="state.startDate || new Date()"
             auto-apply
             :enable-time-picker="false"
           />
         </div>
-        <div v-if="$v.endDate.$error" class="label">
-          <span class="label-text-alt text-error">{{ $v.endDate.$errors[0]?.$message }}</span>
-        </div>
-      </div>
+      </UFormField>
     </div>
-  </div>
 
-  <div class="modal-action">
-    <ButtonUI
-      variant="error"
-      outline
-      @click="
-        () => {
-          emit('closeModal')
-        }
-      "
-      >Cancel</ButtonUI
-    >
-    <ButtonUI
-      variant="primary"
-      @click="handleSubmit"
-      :loading="isCreatingProposal || isConfirmingProposal"
-      :disabled="isCreatingProposal || isConfirmingProposal"
-      data-test="create-proposal-button"
-    >
-      Create Proposal
-    </ButtonUI>
-  </div>
+    <div class="modal-action">
+      <UButton
+        color="error"
+        variant="outline"
+        @click="emit('closeModal')"
+      >
+        Cancel
+      </UButton>
+      <UButton
+        type="submit"
+        color="primary"
+        :loading="isCreatingProposal || isConfirmingProposal"
+        :disabled="isCreatingProposal || isConfirmingProposal"
+        data-test="create-proposal-button"
+      >
+        Create Proposal
+      </UButton>
+    </div>
+  </UForm>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
-import { ref, computed, watch } from 'vue'
+import { reactive, computed, watch } from 'vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
 import { useToastStore } from '@/stores/useToastStore'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 import { type Address } from 'viem'
 import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
 
 // Props and emits
 const emit = defineEmits(['closeModal', 'proposal-created'])
@@ -139,7 +92,7 @@ const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 // Form data
-const proposal = ref({
+const state = reactive({
   title: undefined as string | undefined,
   description: undefined as string | undefined,
   type: 'Financial' as 'Financial' | 'Technical' | 'Operational',
@@ -169,22 +122,7 @@ const proposalSchema = z.object({
   path: ['endDate']
 })
 
-const errors = ref<Record<string, string>>({})
-
-const validate = () => {
-  const result = proposalSchema.safeParse(proposal.value)
-  errors.value = {}
-  if (!result.success) {
-    for (const issue of result.error.issues) {
-      const key = issue.path[0] as string
-      if (key && !errors.value[key]) {
-        errors.value[key] = issue.message
-      }
-    }
-    return false
-  }
-  return true
-}
+type ProposalSchema = z.output<typeof proposalSchema>
 
 // Contract interaction
 const {
@@ -208,24 +146,19 @@ const dateToTimestamp = (date: Date): number => {
 }
 
 // Handle form submission
-const handleSubmit = async () => {
-  // Trigger validation
-  $v.value.$touch()
-
-  if ($v.value.$invalid) return
-
+const handleSubmit = async (event: FormSubmitEvent<ProposalSchema>) => {
   try {
-    const startTimestamp = dateToTimestamp(proposal.value.startDate!)
-    const endTimestamp = dateToTimestamp(proposal.value.endDate!)
+    const startTimestamp = dateToTimestamp(event.data.startDate)
+    const endTimestamp = dateToTimestamp(event.data.endDate)
 
     createProposal({
       address: proposalsAddress.value,
       abi: PROPOSALS_ABI,
       functionName: 'createProposal',
       args: [
-        proposal.value.title!,
-        proposal.value.description!,
-        proposal.value.type!,
+        event.data.title,
+        event.data.description,
+        event.data.type,
         BigInt(startTimestamp),
         BigInt(endTimestamp)
       ]
