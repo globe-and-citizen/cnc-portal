@@ -137,6 +137,7 @@ const { data: allowance } = useErc20Allowance(
   userDataStore.address as Address,
   props.safeAddress
 )
+const allowanceAmount = computed(() => (allowance.value as bigint | undefined) ?? 0n)
 
 // Computed values for approval composable
 const bigIntAmount = computed(() => {
@@ -176,7 +177,7 @@ const submitForm = async () => {
       await sendTransaction(props.safeAddress, parseEther(amount.value))
     } else {
       // USDC deposit workflow - step 1 to 2 to 3 in one execution
-      if (!((allowance.value ?? 0n) >= bigIntAmount.value)) {
+      if (!(allowanceAmount.value >= bigIntAmount.value)) {
         currentStep.value = 2
 
         // Run spending cap approval and wait for confirmation

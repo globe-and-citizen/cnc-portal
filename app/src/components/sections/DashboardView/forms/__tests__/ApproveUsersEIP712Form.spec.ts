@@ -8,7 +8,7 @@ import type {
   ValidationRuleWithoutParams,
   ValidationRuleWithParams
 } from '@vuelidate/core'
-import VueDatePicker from '@vuepic/vue-datepicker'
+import { VueDatePicker } from '@vuepic/vue-datepicker'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 interface ComponentData {
