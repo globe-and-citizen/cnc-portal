@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import TransferOwnershipForm from '@/components/sections/AdministrationView/forms/TransferOwnershipForm.vue'
 
@@ -34,7 +34,10 @@ describe('TransferOwnershipForm.vue', () => {
       const wrapper = mountComponent()
       const input = wrapper.find('[data-test="new-owner-input"]')
       await input.setValue('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
-      await wrapper.find('[data-test="submit-button"]').trigger('click')
+      await flushPromises()
+      const form = wrapper.find('form')
+      await form.trigger('submit')
+      await flushPromises()
       expect(wrapper.emitted('transferOwnership')).toBeTruthy()
     })
 
@@ -42,7 +45,10 @@ describe('TransferOwnershipForm.vue', () => {
       const wrapper = mountComponent()
       const input = wrapper.find('[data-test="new-owner-input"]')
       await input.setValue('0x00')
-      await wrapper.find('[data-test="submit-button"]').trigger('click')
+      await flushPromises()
+      const form = wrapper.find('form')
+      await form.trigger('submit')
+      await flushPromises()
       expect(wrapper.emitted('transferOwnership')).toBeFalsy()
     })
   })
