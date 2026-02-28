@@ -1,40 +1,42 @@
 <template>
-  <div class="flex flex-col gap-4">
+  <UForm
+    :schema="descriptionSchema"
+    :state="state"
+    class="flex flex-col gap-4"
+    @submit="onSubmit"
+  >
     <h2>{{ actionName }}</h2>
 
     <h3>
       Please add description about <span class="badge badge-primary">{{ actionName }}</span>
     </h3>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
-      <p>Description</p>
-      |
-      <input type="text" class="grow" data-test="amount-input" v-model="description" />
-    </label>
-    <div
-      class="pl-4 text-red-500 text-sm w-full text-left"
-      v-for="error of $v.description.$errors"
-      :key="error.$uid"
-    >
-      {{ error.$message }}
-    </div>
+
+    <UFormField label="Description" name="description" required class="w-full">
+      <UInput
+        v-model="state.description"
+        type="text"
+        data-test="amount-input"
+        class="w-full"
+      />
+    </UFormField>
 
     <div class="text-center">
-      <ButtonUI
+      <UButton
+        type="submit"
         :loading="loading"
         :disabled="loading"
         class="btn btn-primary w-44 text-center"
-        @click="onSubmit()"
       >
         {{ actionName }}
-      </ButtonUI>
+      </UButton>
     </div>
-  </div>
+  </UForm>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
-import useVuelidate from '@vuelidate/core'
-import { minLength, required } from '@vuelidate/validators'
+import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
+import { reactive, watch } from 'vue'
 
 const description = defineModel('description')
 
@@ -44,19 +46,32 @@ defineProps<{
 }>()
 const emits = defineEmits(['submit'])
 
-const rules = {
-  description: {
-    required,
-    minLength: minLength(5)
+const descriptionSchema = z.object({
+  description: z
+    .string({ message: 'Description is required' })
+    .min(5, 'Description must be at least 5 characters')
+})
+
+type DescriptionSchema = z.output<typeof descriptionSchema>
+
+const state = reactive({
+  description: (description.value as string) ?? ''
+})
+
+watch(
+  () => state.description,
+  (val) => {
+    description.value = val
   }
+)
+
+watch(description, (val) => {
+  if (val !== state.description) {
+    state.description = (val as string) ?? ''
+  }
+})
+
+const onSubmit = (event: FormSubmitEvent<DescriptionSchema>) => {
+  emits('submit', event.data.description)
 }
-
-const onSubmit = () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
-
-  emits('submit', description.value)
-}
-
-const $v = useVuelidate(rules, { description })
 </script>

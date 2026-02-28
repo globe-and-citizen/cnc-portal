@@ -32,7 +32,7 @@ describe('DescriptionActionForm', () => {
     it('should show error when description is empty', async () => {
       const wrapper = createComponent()
       await wrapper.find('.btn-primary').trigger('click')
-      expect(wrapper.text()).toContain('Value is required')
+      expect(wrapper.text()).toContain('Description is required')
     })
 
     it('should show error when description is too short', async () => {
@@ -40,7 +40,7 @@ describe('DescriptionActionForm', () => {
       ;(wrapper.vm as unknown as ComponentData).description = 'abc'
       await wrapper.vm.$nextTick()
       await wrapper.find('.btn-primary').trigger('click')
-      expect(wrapper.text()).toContain('This field should be at least 5 characters long')
+      expect(wrapper.text()).toContain('Description must be at least 5 characters')
     })
   })
 
