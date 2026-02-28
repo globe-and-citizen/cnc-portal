@@ -1,0 +1,22 @@
+{
+  "folders": [
+    {
+      "path": "app",
+    },
+    {
+      "path": "backend",
+    },
+    {
+      "path": "contract",
+    },
+    {
+      "path": "dashboard",
+    },
+    {
+      "path": "the-graph",
+    },
+  ],
+  "settings": {
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+  },
+}

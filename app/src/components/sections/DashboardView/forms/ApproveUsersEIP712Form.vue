@@ -184,7 +184,7 @@
           v-model="selectedOptions[budgetType]"
           :id="'checkbox-' + budgetType"
           :data-test="`limit-checkbox-${budgetType}`"
-          @change="toggleOption(budgetType)"
+          @change="toggleOption(Number(budgetType) as 0 | 1 | 2)"
         />
         <!-- Numeric Input -->
         <span class="w-48">{{ label }}</span
@@ -196,7 +196,7 @@
           v-model.number="values[budgetType]"
           placeholder="Enter value"
           :data-test="`limit-input-${budgetType}`"
-          @input="updateValue(budgetType)"
+          @input="updateValue(Number(budgetType) as 0 | 1 | 2)"
         />
       </label>
     </div>

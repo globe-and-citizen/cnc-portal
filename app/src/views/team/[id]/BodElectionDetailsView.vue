@@ -22,6 +22,17 @@ import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { useRouter } from 'vue-router'
 import { log, parseError } from '@/utils'
 
+type ElectionContractTuple = readonly [
+  bigint,
+  string,
+  string,
+  `0x${string}`,
+  bigint,
+  bigint,
+  bigint,
+  boolean
+]
+
 provide('showPublishResultBtn', true)
 const teamStore = useTeamStore()
 const router = useRouter()
@@ -67,7 +78,7 @@ const { data: currentElection, error: errorGetElection } = useReadContract({
 const formattedElection = computed(() => {
   if (!currentElection.value) return null
 
-  const raw = currentElection.value
+  const raw = currentElection.value as ElectionContractTuple
 
   return {
     id: Number(raw[0]),
