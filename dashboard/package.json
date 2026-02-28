@@ -23,7 +23,7 @@
     "@unovis/ts": "^1.6.1",
     "@unovis/vue": "^1.6.1",
     "@vueuse/nuxt": "^13.9.0",
-    "@wagmi/core": "^3.4.0",
+    "@wagmi/core": "^3.0.0",
     "@wagmi/vue": "^0.4.17",
     "axios": "^1.13.5",
     "date-fns": "^4.1.0",
