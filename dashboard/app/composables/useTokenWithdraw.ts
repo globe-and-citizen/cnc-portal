@@ -7,7 +7,6 @@ import type { TokenDisplay } from '@/types/token'
 
 export const useTokenWithdraw = () => {
   const toast = useToast()
-  // const config = useConfig()
 
   const {
     data: hashWithdraw,
