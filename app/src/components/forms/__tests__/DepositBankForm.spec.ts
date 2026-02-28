@@ -124,9 +124,7 @@ describe('DepositBankForm.vue', () => {
 
     it.skip('should show error toast when selected token is not valid', async () => {
       mockERC20Reads.allowance.data.value = 0n
-      mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(
-        new Error('Invalid token')
-      )
+      mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(new Error('Invalid token'))
 
       const wrapper = createWrapper({}, mount)
 
