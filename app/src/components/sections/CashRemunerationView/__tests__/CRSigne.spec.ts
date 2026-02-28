@@ -97,7 +97,7 @@ describe('CRSigne', () => {
   const resetWagmiCoreMocks = () => {
     mockWagmiCore.readContract.mockReset()
     mockWagmiCore.simulateContract.mockReset()
-    mockWagmiCore.writeContract.mockReset()
+    mockWagmiCore.mutate.mockReset()
     mockWagmiCore.waitForTransactionReceipt.mockReset()
   }
 
@@ -295,7 +295,7 @@ describe('CRSigne', () => {
 
       expect(mockWagmiCore.readContract).toHaveBeenCalled()
       expect(mockWagmiCore.simulateContract).toHaveBeenCalled()
-      expect(mockWagmiCore.writeContract).toHaveBeenCalled()
+      expect(mockWagmiCore.mutate).toHaveBeenCalled()
       expect(mockWagmiCore.waitForTransactionReceipt).toHaveBeenCalled()
       expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim approved')
     })
@@ -308,7 +308,7 @@ describe('CRSigne', () => {
 
       expect(mockWagmiCore.readContract).toHaveBeenCalled()
       expect(mockWagmiCore.simulateContract).not.toHaveBeenCalled()
-      expect(mockWagmiCore.writeContract).not.toHaveBeenCalled()
+      expect(mockWagmiCore.mutate).not.toHaveBeenCalled()
       expect(mockWagmiCore.waitForTransactionReceipt).not.toHaveBeenCalled()
     })
 

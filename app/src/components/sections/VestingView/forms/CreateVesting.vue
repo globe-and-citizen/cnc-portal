@@ -248,7 +248,7 @@ watch(allowanceError, () => {
 })
 
 const {
-  writeContract: addVesting,
+  mutate: addVesting,
   error: errorAddVesting,
   isPending: loadingAddVesting,
   data: hashAddVesting
@@ -282,7 +282,7 @@ watch(errorAddVesting, () => {
 })
 
 const {
-  writeContract: approveToken,
+  mutate: approveToken,
   error: errorApproveToken,
   isPending: loadingApproveToken,
   data: hashApproveToken

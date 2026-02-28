@@ -50,7 +50,7 @@ const modalState = ref({
 
 const {
   data: distributeMintHash,
-  writeContract: distributeMint,
+  mutate: distributeMint,
   isPending: isLoading,
   error: distributeMintError
 } = useWriteContract()

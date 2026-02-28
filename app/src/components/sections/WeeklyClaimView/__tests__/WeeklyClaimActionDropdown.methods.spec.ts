@@ -110,7 +110,7 @@ describe('DropdownActions', () => {
       await wrapper.vm.disableClaim()
 
       // Should show update claim status error
-      expect(mockWagmiCore.writeContract).toBeCalled()
+      expect(mockWagmiCore.mutate).toBeCalled()
       //@ts-expect-error not visible on wrapper
       expect(wrapper.vm.weeklyClaimSyncUrl).toBe('/weeklyclaim/sync/?teamId=1')
       expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim disabled')

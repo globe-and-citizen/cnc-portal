@@ -141,7 +141,7 @@ describe('DropdownActions', () => {
       await wrapper.vm.enableClaim()
 
       // Should show success toast after mutation
-      expect(mocks.mockWagmiCore.writeContract).toBeCalled()
+      expect(mocks.mockWagmiCore.mutate).toBeCalled()
       expect(mockSyncMutateAsync).toHaveBeenCalled()
       expect(mocks.mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim enabled')
     })

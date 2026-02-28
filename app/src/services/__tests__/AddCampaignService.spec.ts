@@ -20,7 +20,7 @@ describe('AddCampaignService (wagmi)', () => {
 
     const result = await service.addAdmin(contractAddress, admin)
 
-    expect(mockWagmiCore.writeContract).toHaveBeenCalled()
+    expect(mockWagmiCore.mutate).toHaveBeenCalled()
     expect(result).toEqual({ status: 'success' })
   })
 
@@ -30,7 +30,7 @@ describe('AddCampaignService (wagmi)', () => {
 
     const result = await service.removeAdmin(contractAddress, admin)
 
-    expect(mockWagmiCore.writeContract).toHaveBeenCalled()
+    expect(mockWagmiCore.mutate).toHaveBeenCalled()
     expect(result).toEqual({ status: 'success' })
   })
 

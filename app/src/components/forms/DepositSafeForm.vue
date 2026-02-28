@@ -152,7 +152,7 @@ const ERC20ApproveResult = useERC20Approve(
 )
 
 // ERC20 transfer for Safe
-const { data: transferHash, writeContractAsync: writeTransfer } = useWriteContract()
+const { data: transferHash, mutateAsync: writeTransfer } = useWriteContract()
 
 useWaitForTransactionReceipt({
   hash: transferHash

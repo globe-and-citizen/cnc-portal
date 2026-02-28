@@ -28,7 +28,7 @@ const mockArchivedInfos = ref([[], []])
 
 // Wagmi mocks
 const mockWriteContract = {
-  writeContract: vi.fn(),
+  mutate: vi.fn(),
   error: ref<Error | null>(null),
   isPending: ref(false),
   data: ref(null)
@@ -92,7 +92,7 @@ describe('VestingStats.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     wrapper = mountComponent()
-    mockWriteContract.writeContract.mockReset()
+    mockWriteContract.mutate.mockReset()
     mockWaitReceipt.isLoading.value = false
     mockWaitReceipt.isSuccess.value = false
   })

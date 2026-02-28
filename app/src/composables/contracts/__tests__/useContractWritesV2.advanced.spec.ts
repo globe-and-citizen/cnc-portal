@@ -71,7 +71,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
 
     // Set up default mock implementations using exported factory fns
     useWriteContractFn.mockReturnValue({
-      writeContractAsync: vi.fn(),
+      mutateAsync: vi.fn(),
       data: ref(undefined),
       isPending: ref(false),
       isSuccess: ref(false),
@@ -157,7 +157,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
 
   describe('Complex Error Scenarios', () => {
     it('should handle waitForCondition timeout', async () => {
-      const mockWriteContractAsync = vi.fn().mockResolvedValue({
+      const mockMutateAsync = vi.fn().mockResolvedValue({
         hash: MOCK_DATA.transactionHash
       })
 
@@ -173,7 +173,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       })
 
       useWriteContractFn.mockReturnValueOnce({
-        writeContractAsync: mockWriteContractAsync,
+        mutateAsync: mockMutateAsync,
         data: ref(undefined),
         isPending: ref(false),
         isSuccess: ref(false),
@@ -196,7 +196,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       const errorRef = ref<Error | null>(null)
 
       useWriteContractFn.mockReturnValue({
-        writeContractAsync: vi.fn(),
+        mutateAsync: vi.fn(),
         data: ref(undefined),
         isPending: ref(false),
         isSuccess: ref(false),
@@ -239,7 +239,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
 
   describe('Edge Cases and Boundary Conditions', () => {
     it('should handle executeWrite with value parameter', async () => {
-      const mockWriteContractAsync = vi.fn().mockResolvedValue({
+      const mockMutateAsync = vi.fn().mockResolvedValue({
         hash: MOCK_DATA.transactionHash
       })
 
@@ -253,7 +253,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       })
 
       useWriteContractFn.mockReturnValueOnce({
-        writeContractAsync: mockWriteContractAsync,
+        mutateAsync: mockMutateAsync,
         data: ref(undefined),
         isPending: ref(false),
         isSuccess: ref(false),
@@ -271,7 +271,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
       const { executeWrite } = useContractWrites(mockConfig)
       await executeWrite(['arg1'], MOCK_DATA.value)
 
-      expect(mockWriteContractAsync).toHaveBeenCalledWith({
+      expect(mockMutateAsync).toHaveBeenCalledWith({
         address: MOCK_DATA.contractAddress,
         abi: MOCK_ABI,
         functionName: MOCK_DATA.functionName,

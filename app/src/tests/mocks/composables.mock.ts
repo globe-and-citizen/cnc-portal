@@ -94,7 +94,7 @@ export const mockUseApolloQuery = {
  */
 export const mockTransactionFunctions = {
   mockSendTransaction: vi.fn(),
-  mockWriteContractAsync: vi.fn(),
+  mockMutateAsync: vi.fn(),
   mockWaitForTransactionReceipt: vi.fn()
 }
 
@@ -266,7 +266,7 @@ export const resetComposableMocks = () => {
 
   // Set default mock return values for transactions
   mockTransactionFunctions.mockSendTransaction.mockResolvedValue({ hash: '0xnativetx' })
-  mockTransactionFunctions.mockWriteContractAsync.mockResolvedValue('0xtransfertx')
+  mockTransactionFunctions.mockMutateAsync.mockResolvedValue('0xtransfertx')
   mockTransactionFunctions.mockWaitForTransactionReceipt.mockResolvedValue({ status: 'success' })
 
   // Reset auth mock functions

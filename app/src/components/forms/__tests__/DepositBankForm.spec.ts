@@ -124,7 +124,7 @@ describe('DepositBankForm.vue', () => {
 
     it.skip('should show error toast when selected token is not valid', async () => {
       mockERC20Reads.allowance.data.value = 0n
-      mockTransactionFunctions.mockWriteContractAsync.mockRejectedValueOnce(
+      mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(
         new Error('Invalid token')
       )
 
@@ -147,7 +147,7 @@ describe('DepositBankForm.vue', () => {
       await nextTick()
 
       expect(mockERC20Writes.approve.executeWrite).not.toHaveBeenCalled()
-      expect(mockTransactionFunctions.mockWriteContractAsync).not.toHaveBeenCalled()
+      expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
     })
   })
 

@@ -80,7 +80,7 @@ export const mockUseReadContract = {
 }
 
 export const mockUseWriteContract = {
-  writeContract: vi.fn(),
+  mutate: vi.fn(),
   error: ref(null),
   isPending: ref(false),
   data: ref(null)

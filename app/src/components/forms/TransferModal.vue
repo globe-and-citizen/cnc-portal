@@ -117,7 +117,7 @@ const modal = ref({
 const {
   data: transferHash,
   isPending: transferLoading,
-  writeContractAsync: transfer
+  mutateAsync: transfer
 } = useWriteContract()
 
 const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({

@@ -87,7 +87,7 @@ const getOriginalValue = (key: string) => originalValues.value[key] ?? 0
 const initialized = ref<boolean>(false)
 
 const {
-  writeContract: setCostPerClick,
+  mutate: setCostPerClick,
   error: errorSetCostPerClick,
   isPending: loadingSetCostPerClick,
   data: hashSetCostPerClick
@@ -108,7 +108,7 @@ watch(isConfirmingSetCostPerClick, async (isConfirming, wasConfirming) => {
 })
 
 const {
-  writeContract: setCostPerImpression,
+  mutate: setCostPerImpression,
   error: errorSetCostPerImpression,
   isPending: loadingSetCostPerImpression,
   data: hashSetCostPerImpression
