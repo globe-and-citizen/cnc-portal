@@ -21,16 +21,9 @@ const createWrapper = (overrides = {}) =>
 
 import type { ComponentPublicInstance } from 'vue'
 
-type TokenAmountVm = ComponentPublicInstance & {
-  $v: {
-    amount: {
-      $touch: () => void
-    }
-  }
-}
-
 const triggerValidation = async (wrapper: VueWrapper<ComponentPublicInstance>) => {
-  ;(wrapper.vm as TokenAmountVm).$v.amount.$touch()
+  const input = wrapper.find('input[data-test="amountInput"]')
+  await input.trigger('input')
   await wrapper.vm.$nextTick()
 }
 

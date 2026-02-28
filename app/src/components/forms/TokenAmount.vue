@@ -53,17 +53,20 @@
       <span class="label-text" v-if="amount && parseFloat(amount) > 0">
         ≈ {{ estimatedPrice }}
       </span>
-      <div class="pl-4 text-red-500 text-sm" v-for="error in $v.amount.$errors" :key="error.$uid">
-        {{ error.$message }}
+      <div
+        class="pl-4 text-red-500 text-sm"
+        v-for="(error, index) in validationErrors"
+        :key="index"
+      >
+        {{ error }}
       </div>
     </div>
   </label>
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
-import { required, numeric, helpers } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { computed, ref, watch } from 'vue'
+import { z } from 'zod'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
 import SelectComponent from '@/components/SelectComponent.vue'
 import { useStorage } from '@vueuse/core'
@@ -110,41 +113,56 @@ const estimatedPrice = computed(() => {
   return formatCurrencyShort(value, code)
 })
 
-const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
-  return parseFloat(value) > 0
-})
-const notExceedingBalance = helpers.withMessage('Amount exceeds your balance', (value: string) => {
-  if (!value || parseFloat(value) <= 0) return true
-  return parseFloat(value) <= availableBalance.value
-})
-const numericWithMessage = helpers.withMessage('Value is not a valid number', numeric)
-const rules = {
-  amount: {
-    required,
-    numeric: numericWithMessage,
-    notZero,
-    notExceedingBalance
+const touched = ref(false)
+
+const amountSchema = computed(() =>
+  z
+    .string()
+    .min(1, 'Value is required')
+    .refine((val) => !isNaN(Number(val)) && val.trim() !== '', {
+      message: 'Value is not a valid number'
+    })
+    .refine((val) => parseFloat(val) > 0, {
+      message: 'Amount must be greater than 0'
+    })
+    .refine(
+      (val) => {
+        if (!val || parseFloat(val) <= 0) return true
+        return parseFloat(val) <= availableBalance.value
+      },
+      { message: 'Amount exceeds your balance' }
+    )
+)
+
+const parseResult = computed(() => {
+  const result = amountSchema.value.safeParse(amount.value)
+  return {
+    success: result.success,
+    errors: result.success ? [] : result.error.issues.map((e) => e.message)
   }
-}
-const $v = useVuelidate(rules, { amount })
+})
+
+const validationErrors = computed(() => {
+  if (!touched.value) return []
+  return parseResult.value.errors
+})
 
 // Emit validation state to parent
 watch(
-  () => $v.value.amount.$invalid,
-  (invalid) => {
-    emits('validation', !invalid)
+  () => parseResult.value.success,
+  (success) => {
+    emits('validation', success)
   },
   { immediate: true }
 )
 
 const useMaxBalance = () => {
   amount.value = availableBalance.value.toString() ?? '0.00'
-  $v.value.$touch()
+  touched.value = true
 }
 const usePercentageOfBalance = (percentage: number) => {
-  // If you want to support decimals per token, add a decimals prop and use it here
   amount.value = (((availableBalance.value ?? 0) * percentage) / 100).toFixed(4)
-  $v.value.$touch()
+  touched.value = true
 }
 const handleAmountInput = (event: Event) => {
   const input = event.target as HTMLInputElement
@@ -155,10 +173,10 @@ const handleAmountInput = (event: Event) => {
   } else {
     amount.value = value
   }
-  $v.value.$touch()
+  touched.value = true
 }
 watch(amount, () => {
-  $v.value.$touch()
+  touched.value = true
 })
 </script>
 
