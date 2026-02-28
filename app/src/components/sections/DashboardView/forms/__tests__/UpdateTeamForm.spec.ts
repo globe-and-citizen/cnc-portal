@@ -1,8 +1,7 @@
 // UpdateTeamForm.spec.ts
 import { it, expect, describe, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import UpdateTeamForm from '@/components/sections/DashboardView/forms/UpdateTeamForm.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 
 interface ComponentData {
   team: {
@@ -11,21 +10,11 @@ interface ComponentData {
   }
 }
 describe('UpdateTeamForm.vue', () => {
-  const defaultTeam = {
-    name: 'Test Team',
-    description: 'This is a test team'
-  }
-
   let wrapper: ReturnType<typeof mount>
 
   beforeEach(() => {
     wrapper = mount(UpdateTeamForm, {
-      props: { teamIsUpdating: false },
-      global: {
-        provide: {
-          team: defaultTeam
-        }
-      }
+      props: { teamIsUpdating: false }
     })
   })
   describe('Renders ', () => {
@@ -35,13 +24,15 @@ describe('UpdateTeamForm.vue', () => {
 
     it('displays the loading button when teamIsUpdating is true', async () => {
       await wrapper.setProps({ teamIsUpdating: true })
-      expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
+      const button = wrapper.find('button[type="submit"]')
+      expect(button.attributes('disabled')).toBeDefined()
     })
 
     it('displays the submit button when teamIsUpdating is false', async () => {
       await wrapper.setProps({ teamIsUpdating: false })
-      expect(wrapper.findComponent(ButtonUI).props().loading).toBe(false)
-      expect(wrapper.findComponent(ButtonUI).props().variant).toBe('primary')
+      const button = wrapper.find('button[type="submit"]')
+      expect(button.exists()).toBe(true)
+      expect(button.text()).toContain('Submit')
     })
   })
   describe('Actions', () => {
@@ -54,9 +45,26 @@ describe('UpdateTeamForm.vue', () => {
       expect((wrapper.vm as unknown as ComponentData).team.description).toBe('New Description')
     })
 
-    it('emits updateTeam event when submit button is clicked', async () => {
-      await wrapper.find('button.btn-primary').trigger('click')
+    it('emits updateTeam event when form is submitted', async () => {
+      const inputs = wrapper.findAll('input')
+      await inputs[0].setValue('Valid Name')
+      await inputs[1].setValue('Valid description text')
+      await flushPromises()
+
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
       expect(wrapper.emitted('updateTeam')).toBeTruthy()
+    })
+
+    it('does not emit updateTeam event when validation fails', async () => {
+      const inputs = wrapper.findAll('input')
+      await inputs[0].setValue('Ab')
+      await inputs[1].setValue('Short')
+      await flushPromises()
+
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+      expect(wrapper.emitted('updateTeam')).toBeFalsy()
     })
   })
 })

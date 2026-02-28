@@ -1,64 +1,89 @@
 <template>
-  <h1 class="font-bold text-2xl">Update Team Details</h1>
-  <hr class="" />
-  <div class="flex flex-col gap-5">
-    <label class="w-full input input-bordered flex items-center gap-2 input-md mt-4">
-      <span class="w-28">Team Name</span>
-      <input type="text" class="grow" :placeholder="team.name" v-model="team.name" />
-    </label>
-    <div
-      class="pl-4 text-red-500 text-sm w-full text-left"
-      v-for="error of $v.name.$errors"
-      :key="error.$uid"
-    >
-      {{ error.$message }}
-    </div>
-    <label class="w-full input input-bordered flex items-center gap-2 input-md">
-      <span class="w-28">Description</span>
-      <input type="text" class="grow" v-model="team.description" />
-    </label>
-    <div
-      class="pl-4 text-red-500 text-sm w-full text-left"
-      v-for="error of $v.description.$errors"
-      :key="error.$uid"
-    >
-      {{ error.$message }}
-    </div>
-  </div>
+  <UForm :schema="teamSchema" :state="state" class="flex flex-col gap-5" @submit="onSubmit">
+    <h1 class="font-bold text-2xl">Update Team Details</h1>
+    <hr />
 
-  <div class="modal-action justify-center">
-    <ButtonUI
-      variant="primary"
-      :loading="teamIsUpdating"
-      :disabled="teamIsUpdating"
-      @click="submitForm"
-      >Submit</ButtonUI
-    >
-  </div>
+    <UFormField label="Team Name" name="name" required class="w-full">
+      <UInput
+        v-model="state.name"
+        type="text"
+        :placeholder="team.name"
+        class="w-full"
+      />
+    </UFormField>
+
+    <UFormField label="Description" name="description" required class="w-full">
+      <UInput v-model="state.description" type="text" class="w-full" />
+    </UFormField>
+
+    <div class="modal-action justify-center">
+      <UButton
+        type="submit"
+        color="primary"
+        :loading="teamIsUpdating"
+        :disabled="teamIsUpdating"
+      >
+        Submit
+      </UButton>
+    </div>
+  </UForm>
 </template>
+
 <script setup lang="ts">
-import { required, minLength } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
-import ButtonUI from '@/components/ButtonUI.vue'
+import { z } from 'zod'
+import { reactive, watch } from 'vue'
+
 const team = defineModel({
   default: {
     name: '',
     description: ''
   }
 })
+
 const emits = defineEmits(['updateTeam'])
+
 defineProps<{
   teamIsUpdating: boolean
 }>()
-const rules = {
-  name: { required, minLength: minLength(3) },
-  description: { required, minLength: minLength(10) }
-}
 
-const $v = useVuelidate(rules, team)
-const submitForm = () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
+const teamSchema = z.object({
+  name: z
+    .string({ message: 'Team name is required' })
+    .min(3, 'Team name must be at least 3 characters'),
+  description: z
+    .string({ message: 'Description is required' })
+    .min(10, 'Description must be at least 10 characters')
+})
+
+const state = reactive({
+  name: team.value.name ?? '',
+  description: team.value.description ?? ''
+})
+
+watch(
+  () => state.name,
+  (val) => {
+    team.value.name = val
+  }
+)
+
+watch(
+  () => state.description,
+  (val) => {
+    team.value.description = val
+  }
+)
+
+watch(team, (val) => {
+  if (val.name !== state.name) {
+    state.name = val.name ?? ''
+  }
+  if (val.description !== state.description) {
+    state.description = val.description ?? ''
+  }
+})
+
+const onSubmit = () => {
   emits('updateTeam')
 }
 </script>

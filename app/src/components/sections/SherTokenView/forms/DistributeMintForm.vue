@@ -6,14 +6,21 @@
     <div class="flex flex-col gap-6">
       <div v-for="(shareholder, index) in shareholderWithAmounts" :key="index">
         <h4 class="badge badge-primary">Shareholder {{ index + 1 }}</h4>
-        <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
-          <p>Address</p>
-          |
-          <input
+        <UFormField
+          label="Address"
+          :error="fieldErrors[index]?.shareholder"
+          class="mt-2 w-full"
+        >
+          <UInput
             type="text"
-            class="grow"
+            class="w-full"
             data-test="address-input"
-            v-model="shareholder.shareholder"
+            :model-value="shareholder.shareholder"
+            @update:model-value="
+              (val: string | number) => {
+                shareholder.shareholder = String(val)
+              }
+            "
             @keyup.stop="
               () => {
                 searchUsers(shareholder.shareholder ?? '')
@@ -21,7 +28,7 @@
               }
             "
           />
-        </label>
+        </UFormField>
 
         <div
           class="dropdown"
@@ -52,26 +59,41 @@
         </div>
         <div
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of $v.shareholderWithAmounts.$errors[0]?.$response.$errors[index]
-            .shareholder"
+          v-if="fieldErrors[index]?.shareholder"
           data-test="error-message-shareholder"
-          :key="error.$uid"
         >
-          {{ error.$message }}
+          {{ fieldErrors[index].shareholder }}
         </div>
-        <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
-          <p>Amount</p>
-          |
-          <input type="number" class="grow" data-test="amount-input" v-model="shareholder.amount" />
-          {{ tokenSymbol }}
-        </label>
+        <UFormField
+          label="Amount"
+          :error="fieldErrors[index]?.amount"
+          class="mt-2 w-full"
+        >
+          <div class="relative">
+            <UInput
+              type="number"
+              class="w-full"
+              data-test="amount-input"
+              :model-value="shareholder.amount"
+              @update:model-value="
+                (val: string | number) => {
+                  shareholder.amount = Number(val)
+                }
+              "
+            />
+            <span
+              class="absolute right-4 top-1/2 transform -translate-y-1/2 text-black font-bold text-sm"
+            >
+              {{ tokenSymbol }}
+            </span>
+          </div>
+        </UFormField>
         <div
           class="pl-4 text-red-500 text-sm w-full text-left"
           data-test="error-message-amount"
-          v-for="error of $v.shareholderWithAmounts.$errors[0]?.$response.$errors[index].amount"
-          :key="error.$uid"
+          v-if="fieldErrors[index]?.amount"
         >
-          {{ error.$message }}
+          {{ fieldErrors[index].amount }}
         </div>
       </div>
     </div>
@@ -104,28 +126,26 @@
     </div>
 
     <div class="text-center">
-      <ButtonUI
+      <UButton
         :loading="loading"
         :disabled="loading"
-        variant="primary"
+        color="primary"
         class="w-44 text-center"
         @click="onSubmit()"
         data-test="submit-button"
       >
         Distribute Mint
-      </ButtonUI>
+      </UButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
+import { z } from 'zod'
 import { useGetSearchUsersQuery } from '@/queries/user.queries'
 import { useToastStore } from '@/stores'
 import { log } from '@/utils'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import useVuelidate from '@vuelidate/core'
-import { helpers, numeric, required } from '@vuelidate/validators'
 import { parseUnits, isAddress } from 'viem'
 import { ref, watch } from 'vue'
 import { reactive } from 'vue'
@@ -139,26 +159,40 @@ defineProps<{
 const shareholderWithAmounts = reactive<{ shareholder: string; amount: number }[]>([
   { shareholder: '', amount: 0 }
 ])
-const rules = {
-  shareholderWithAmounts: {
-    $each: helpers.forEach({
-      shareholder: {
-        required: helpers.withMessage('Address is required', required),
-        isAddress: helpers.withMessage('Invalid address', (value: string) => isAddress(value))
-      },
-      amount: {
-        required: helpers.withMessage('Amount is required', required),
-        numeric: helpers.withMessage('Amount must be a number', numeric),
-        minValue: helpers.withMessage('Amount must be greater than 0', (value: number) => value > 0)
-      }
-    })
-  }
-}
-const $v = useVuelidate(rules, { shareholderWithAmounts })
-const onSubmit = () => {
-  $v.value.$touch()
 
-  if ($v.value.$invalid) return
+const shareholderSchema = z.object({
+  shareholder: z
+    .string({ message: 'Address is required' })
+    .min(1, 'Address is required')
+    .refine((val) => isAddress(val), { message: 'Invalid address' }),
+  amount: z.coerce
+    .number({ message: 'Amount is required' })
+    .positive('Amount must be greater than 0')
+})
+const formSchema = z.array(shareholderSchema)
+
+const fieldErrors = reactive<Record<number, { shareholder?: string; amount?: string }>>({})
+
+const validate = () => {
+  const result = formSchema.safeParse(shareholderWithAmounts)
+  // Clear previous errors
+  Object.keys(fieldErrors).forEach((key) => delete fieldErrors[Number(key)])
+
+  if (result.success) return true
+
+  for (const issue of result.error.issues) {
+    const index = issue.path[0] as number
+    const field = issue.path[1] as 'shareholder' | 'amount'
+    if (!fieldErrors[index]) fieldErrors[index] = {}
+    if (!fieldErrors[index][field]) {
+      fieldErrors[index][field] = issue.message
+    }
+  }
+  return false
+}
+
+const onSubmit = () => {
+  if (!validate()) return
   emits(
     'submit',
     shareholderWithAmounts.map((shareholder) => {

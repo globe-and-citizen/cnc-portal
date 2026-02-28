@@ -14,8 +14,8 @@
           />
         </div>
       </label>
-      <span v-for="error in $v.member.$errors" :key="error.$uid" class="text-xs text-red-500 mt-1">
-        {{ error.$message }}
+      <span v-if="errors['member.address']" class="text-xs text-red-500 mt-1">
+        {{ errors['member.address'] }}
       </span>
     </div>
 
@@ -34,8 +34,8 @@
           />
         </div>
       </label>
-      <span v-for="error in $v.dateRange.$errors" :key="error.$uid" class="text-xs text-red-500">
-        {{ error.$message }}
+      <span v-if="errors['dateRange']" class="text-xs text-red-500">
+        {{ errors['dateRange'] }}
       </span>
     </div>
 
@@ -52,11 +52,10 @@
           />
         </label>
         <span
-          v-for="error in $v.totalAmount.$errors"
-          :key="error.$uid"
+          v-if="errors['totalAmount']"
           class="text-xs text-red-500 mt-1 block"
         >
-          {{ error.$message }}
+          {{ errors['totalAmount'] }}
         </span>
       </div>
       <div class="flex-1 min-w-50">
@@ -65,11 +64,10 @@
           <input data-test="cliff" type="number" class="grow text-sm" v-model="cliff" required />
         </label>
         <span
-          v-for="error in $v.cliff.$errors"
-          :key="error.$uid"
+          v-if="errors['cliff']"
           class="text-xs text-red-500 mt-1 block"
         >
-          {{ error.$message }}
+          {{ errors['cliff'] }}
         </span>
       </div>
     </div>
@@ -121,8 +119,7 @@ import { useContractBalance } from '@/composables/useContractBalance'
 import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
 import { useUserDataStore } from '@/stores'
 import { isAddress } from 'viem'
-import { required, helpers, minValue } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { z } from 'zod'
 
 const props = defineProps<{
   tokenAddress: string
@@ -307,40 +304,45 @@ watch(errorApproveToken, () => {
   }
 })
 
-const validAddress = helpers.withMessage('Please enter a valid Ethereum address.', () => {
-  return isAddress(member.value.address)
-})
+const vestingSchema = computed(() =>
+  z.object({
+    member: z.object({
+      address: z.string().min(1, 'Member is required.').refine((val) => isAddress(val), {
+        message: 'Please enter a valid Ethereum address.'
+      })
+    }),
+    dateRange: z.any().refine((val) => val !== null && val !== undefined, {
+      message: 'Date range is required.'
+    }),
+    cliff: z.coerce.number().min(0, 'Cliff is required.').refine(
+      (val) => val <= durationInDays.value,
+      { message: 'Cliff cannot be greater than duration.' }
+    ),
+    totalAmount: z.coerce.number().min(1, 'Amount must be greater than 0.')
+  })
+)
 
-const rules = {
-  member: {
-    address: {
-      required: helpers.withMessage('Member is required. ', required),
-      validAddress
+const errors = ref<Record<string, string>>({})
+
+function validate() {
+  const result = vestingSchema.value.safeParse({
+    member: member.value,
+    dateRange: dateRange.value,
+    cliff: cliff.value,
+    totalAmount: totalAmount.value
+  })
+  errors.value = {}
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      const key = issue.path.join('.')
+      if (!errors.value[key]) {
+        errors.value[key] = issue.message
+      }
     }
-  },
-  dateRange: {
-    required: helpers.withMessage('Date range is required.', required)
-  },
-  cliff: {
-    required: helpers.withMessage('Cliff is required.', required),
-    minValue: minValue(0),
-    notGreaterThanDuration: helpers.withMessage(
-      'Cliff cannot be greater than duration.',
-      (value: number) => value <= durationInDays.value
-    )
-  },
-  totalAmount: {
-    required: helpers.withMessage('Amount is required.', required),
-    minValue: helpers.withMessage('Amount must be greater than 0.', minValue(1))
+    return false
   }
+  return true
 }
-
-const $v = useVuelidate(rules, {
-  member,
-  dateRange,
-  cliff,
-  totalAmount
-})
 
 function checkDuplicateVesting() {
   if (
@@ -369,12 +371,10 @@ async function approveAllowance() {
 }
 
 function handleDisplaySummary() {
-  $v.value.$touch()
-  if (!$v.value.$invalid) showSummary.value = true
+  if (validate()) showSummary.value = true
 }
 async function submit() {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
+  if (!validate()) return
   if (checkDuplicateVesting()) return
   const startDate = dateRange.value?.[0] || new Date()
   const start = Math.floor(startDate.getTime() / 1000)

@@ -25,32 +25,24 @@
 
         <!-- Threshold Selection -->
         <div class="space-y-3">
-          <label class="block text-sm font-medium text-gray-700"> Select New Threshold </label>
-
           <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2">
-              <label class="text-sm font-medium text-gray-600">Threshold:</label>
-              <input
+            <UFormField
+              label="Threshold"
+              name="newThreshold"
+              :error="thresholdError"
+            >
+              <UInput
                 type="number"
                 :min="1"
                 :max="totalOwners"
                 v-model.number="newThreshold"
-                class="input input-bordered input-sm w-20"
+                class="w-20"
                 data-test="threshold-input"
               />
-            </div>
+            </UFormField>
             <span class="text-sm text-gray-500">
               of {{ totalOwners }} signers required to execute transactions
             </span>
-          </div>
-
-          <div
-            v-for="error in $v.newThreshold.$errors"
-            :key="error.$uid"
-            class="text-red-500 text-sm"
-            data-test="threshold-error"
-          >
-            {{ error.$message }}
           </div>
         </div>
 
@@ -98,8 +90,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useVuelidate } from '@vuelidate/core'
-import { required, minValue, maxValue } from '@vuelidate/validators'
+import { z } from 'zod'
 import { type Address } from 'viem'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
@@ -139,24 +130,25 @@ const isLoading = computed(() => isUpdating.value)
 const totalOwners = computed(() => props.currentOwners.length)
 const hasChanges = computed(() => newThreshold.value !== props.currentThreshold)
 
-// Validation rules
-const rules = {
-  newThreshold: {
-    required,
-    minValue: minValue(1),
-    maxValue: maxValue(totalOwners)
-  }
-}
+// Zod validation schema (dynamic based on totalOwners)
+const thresholdSchema = computed(() =>
+  z.coerce
+    .number({ message: 'Threshold is required' })
+    .int('Threshold must be a whole number')
+    .min(1, 'Threshold must be at least 1')
+    .max(totalOwners.value, `Threshold must be at most ${totalOwners.value}`)
+)
 
-const $v = useVuelidate(rules, { newThreshold })
-
-const isValidThreshold = computed(() => !$v.value.$invalid)
+const validationResult = computed(() => thresholdSchema.value.safeParse(newThreshold.value))
+const isValidThreshold = computed(() => validationResult.value.success)
+const thresholdError = computed(() => {
+  if (validationResult.value.success) return undefined
+  return validationResult.value.error.errors[0]?.message
+})
 
 // Methods
 const handleUpdateThreshold = async () => {
-  $v.value.$touch()
-
-  if ($v.value.$invalid) {
+  if (!isValidThreshold.value) {
     addErrorToast('Please fix validation errors before proceeding')
     return
   }
@@ -185,7 +177,6 @@ const handleUpdateThreshold = async () => {
 
 const handleClose = () => {
   newThreshold.value = props.currentThreshold
-  $v.value.$reset()
   emit('update:modelValue', false)
 }
 </script>

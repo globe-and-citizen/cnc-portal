@@ -30,10 +30,9 @@
           <div
             data-test="max-weekly-hours-error"
             class="text-red-500 text-sm w-full text-left"
-            v-for="error of v$.wageData.maxWeeklyHours?.$errors"
-            :key="error.$uid"
+            v-if="errors.maxWeeklyHours"
           >
-            {{ error.$message }}
+            {{ errors.maxWeeklyHours }}
           </div>
         </div>
 
@@ -76,10 +75,9 @@
             <div
               data-test="hourly-rate-error"
               class="text-red-500 text-sm w-full text-left"
-              v-for="error of v$.wageData.hourlyRate?.$errors"
-              :key="error.$uid"
+              v-if="errors.hourlyRate"
             >
-              {{ error.$message }}
+              {{ errors.hourlyRate }}
             </div>
 
             <!-- USDC -->
@@ -115,10 +113,9 @@
             <div
               data-test="hourly-rate-usdc-error"
               class="text-red-500 text-sm w-full text-left"
-              v-for="error of v$.wageData.hourlyRateUsdc?.$errors"
-              :key="error.$uid"
+              v-if="errors.hourlyRateUsdc"
             >
-              {{ error.$message }}
+              {{ errors.hourlyRateUsdc }}
             </div>
 
             <!-- SHER -->
@@ -154,10 +151,9 @@
             <div
               data-test="hourly-rate-sher-error"
               class="text-red-500 text-sm w-full text-left"
-              v-for="error of v$.wageData.hourlyRateSher?.$errors"
-              :key="error.$uid"
+              v-if="errors.hourlyRateToken"
             >
-              {{ error.$message }}
+              {{ errors.hourlyRateToken }}
             </div>
           </div>
         </div>
@@ -166,10 +162,9 @@
         <div
           data-test="rate-per-hour-error"
           class="text-red-500 text-sm w-full text-left"
-          v-for="error of v$.ratePerHour?.$errors"
-          :key="error.$uid"
+          v-if="errors.ratePerHour"
         >
-          {{ error.$message }}
+          {{ errors.ratePerHour }}
         </div>
 
         <div v-if="setWageError" data-test="error-state">
@@ -222,8 +217,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
-import { useVuelidate } from '@vuelidate/core'
-import { numeric, required, helpers } from '@vuelidate/validators'
+import { z } from 'zod'
 import { NETWORK } from '@/constant'
 import { useSetMemberWageMutation } from '@/queries/wage.queries'
 import type { AxiosError } from 'axios'
@@ -270,9 +264,24 @@ const initializeWageData = () => {
 
 const wageData = ref(initializeWageData())
 
-const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
-  return parseFloat(value) > 0
-})
+const wageSchema = z
+  .object({
+    maxWeeklyHours: z.coerce
+      .number({ message: 'Value is required' })
+      .gt(0, 'Amount must be greater than 0'),
+    hourlyRate: z.coerce.number({ message: 'Value must be numeric' }),
+    hourlyRateUsdc: z.coerce.number({ message: 'Value must be numeric' }),
+    hourlyRateToken: z.coerce.number({ message: 'Value must be numeric' }),
+    nativeEnabled: z.boolean(),
+    usdcEnabled: z.boolean(),
+    sherEnabled: z.boolean()
+  })
+  .refine(
+    (data) => data.hourlyRate > 0 || data.hourlyRateUsdc > 0 || data.hourlyRateToken > 0,
+    { message: 'At least one hourly rate must be set', path: ['ratePerHour'] }
+  )
+
+const errors = ref<Record<string, string>>({})
 
 const ratePerHour = computed(() => {
   return [
@@ -288,38 +297,6 @@ const ratePerHour = computed(() => {
   ]
 })
 
-const atLeastOneRate = helpers.withMessage(
-  'At least one hourly rate must be set',
-  (value: { type: string; amount: number }[]) => {
-    return value.some((rate) => rate.amount > 0)
-  }
-)
-
-const rules = {
-  wageData: {
-    maxWeeklyHours: {
-      required,
-      numeric,
-      notZero
-    }
-  },
-  ratePerHour: {
-    $each: {
-      type: {
-        required
-      },
-      amount: {
-        required,
-        numeric,
-        notZero
-      }
-    },
-    atLeastOneRate
-  }
-}
-
-const v$ = useVuelidate(rules, { wageData, ratePerHour })
-
 const {
   mutate: executeSetWage,
   isPending: isMemberWageSaving,
@@ -327,10 +304,19 @@ const {
 } = useSetMemberWageMutation()
 
 const handleSaveWage = async () => {
-  v$.value.$touch()
-  if (v$.value.$invalid) {
+  const result = wageSchema.safeParse(wageData.value)
+  if (!result.success) {
+    const newErrors: Record<string, string> = {}
+    for (const issue of result.error.issues) {
+      const key = issue.path.join('.') || '_root'
+      if (!newErrors[key]) {
+        newErrors[key] = issue.message
+      }
+    }
+    errors.value = newErrors
     return
   }
+  errors.value = {}
 
   executeSetWage(
     {
@@ -357,7 +343,7 @@ const handleSaveWage = async () => {
 
 const handleCancel = () => {
   showModal.value = false
-  v$.value.$reset()
+  errors.value = {}
   wageData.value = initializeWageData()
 }
 </script>

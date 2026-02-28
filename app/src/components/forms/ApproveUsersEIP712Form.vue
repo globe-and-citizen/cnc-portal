@@ -19,10 +19,9 @@
     <div
       data-test="description-error"
       class="pl-4 text-red-500 text-sm w-full text-left"
-      v-for="error of v$.description.$errors"
-      :key="error.$uid"
+      v-if="validationErrors['description']"
     >
-      {{ error.$message }}
+      {{ validationErrors['description'] }}
     </div>
   </div>
 
@@ -30,20 +29,10 @@
 
   <div
     class="pl-4 text-red-500 text-sm w-full text-right"
-    v-for="error of v$.input.$errors"
-    :key="error.$uid"
+    v-if="validationErrors['input.address'] || validationErrors['input.token']"
     data-test="address-error"
   >
-    <div v-if="Array.isArray(error.$message)">
-      <div v-for="(errorObj, index) of error.$message" :key="index">
-        <div v-for="(error, index1) of errorObj" :key="index1">
-          {{ error }}
-        </div>
-      </div>
-    </div>
-    <div v-else>
-      {{ error.$message }}
-    </div>
+    {{ validationErrors['input.address'] || validationErrors['input.token'] }}
   </div>
 
   <!-- Budget Amount Input -->
@@ -64,11 +53,10 @@
     </label>
     <div
       class="pl-4 text-red-500 text-sm w-full text-right"
-      v-for="error of v$.amount.$errors"
-      :key="error.$uid"
+      v-if="validationErrors['amount']"
       data-test="amount-error"
     >
-      {{ error.$message }}
+      {{ validationErrors['amount'] }}
     </div>
   </div>
 
@@ -92,11 +80,10 @@
     </div>
     <div
       class="pl-4 text-red-500 text-sm w-full text-right"
-      v-for="error of v$.customFrequencyDays.$errors"
-      :key="error.$uid"
+      v-if="validationErrors['customFrequencyDays']"
       data-test="custom-frequency-error"
     >
-      {{ error.$message }}
+      {{ validationErrors['customFrequencyDays'] }}
     </div>
   </div>
 
@@ -117,11 +104,10 @@
       </label>
       <div
         class="pl-4 text-red-500 text-sm w-full text-right"
-        v-for="error of v$.startDate.$errors"
-        :key="error.$uid"
+        v-if="validationErrors['startDate']"
         data-test="start-date-error"
       >
-        {{ error.$message }}
+        {{ validationErrors['startDate'] }}
       </div>
     </div>
 
@@ -140,11 +126,10 @@
       </label>
       <div
         class="pl-4 text-red-500 text-sm w-full text-right"
-        v-for="error of v$.endDate.$errors"
-        :key="error.$uid"
+        v-if="validationErrors['endDate']"
         data-test="end-date-error"
       >
-        {{ error.$message }}
+        {{ validationErrors['endDate'] }}
       </div>
     </div>
   </div>
@@ -167,8 +152,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { isAddress } from 'viem'
-import { useVuelidate } from '@vuelidate/core'
-import { helpers, required } from '@vuelidate/validators'
+import { z } from 'zod'
 import type { User } from '@/types'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
@@ -205,78 +189,60 @@ const customFrequencyInSeconds = computed(() => {
   return customFrequencyDays.value * 24 * 60 * 60 // days * hours * minutes * seconds
 })
 
-const rules = {
-  input: {
-    address: {
-      required: helpers.withMessage('Address is required', required),
-      $valid: helpers.withMessage('Invalid wallet address', (value: string) => isAddress(value))
-    },
-    token: {
-      required: helpers.withMessage('Token is required', required)
-    }
-  },
-  description: {
-    required: helpers.withMessage('Description is required', (value: string) => {
-      return props.isBodAction ? value.length > 0 : true
-    })
-  },
-  amount: {
-    required: helpers.withMessage('Budget amount is required', required),
-    positive: helpers.withMessage('Amount must be greater than zero', (value: number) => value > 0)
-  },
-  frequencyType: {
-    required: helpers.withMessage('Frequency type is required', required),
-    valid: helpers.withMessage(
-      'Invalid frequency type',
-      (value: number) => value >= 0 && value <= 4
-    )
-  },
-  customFrequencyDays: {
-    required: helpers.withMessage(
-      'Custom frequency is required when Custom frequency type is selected',
-      (value: number) => {
-        return frequencyType.value !== 4 || value > 0
-      }
-    ),
-    positive: helpers.withMessage('Custom frequency must be at least 1 day', (value: number) => {
-      return frequencyType.value !== 4 || value >= 1
+const approveSchema = computed(() =>
+  z.object({
+    input: z.object({
+      address: z.string().min(1, 'Address is required').refine((val) => isAddress(val), {
+        message: 'Invalid wallet address'
+      }),
+      token: z.string().min(1, 'Token is required')
     }),
-    integer: helpers.withMessage(
-      'Custom frequency must be a whole number of days',
-      (value: number) => {
-        return frequencyType.value !== 4 || Number.isInteger(value)
-      }
-    )
-  },
-  startDate: {
-    required: helpers.withMessage('Start date is required', required),
-    futureDate: helpers.withMessage('Start date must be in the future', (value: Date | string) => {
-      if (!value) return false
-      const date = typeof value === 'string' ? new Date(value) : value
-      return date > new Date()
+    description: z.string().refine((val) => {
+      return props.isBodAction ? val.length > 0 : true
+    }, { message: 'Description is required' }),
+    amount: z.coerce.number().positive('Amount must be greater than zero'),
+    frequencyType: z.coerce.number().min(0).max(4, 'Invalid frequency type'),
+    customFrequencyDays: z.coerce.number().refine((val) => {
+      return frequencyType.value !== 4 || (val > 0 && val >= 1 && Number.isInteger(val))
+    }, { message: 'Custom frequency must be a whole number of at least 1 day' }),
+    startDate: z.any().refine((val) => val !== null && val !== undefined && val !== '', {
+      message: 'Start date is required'
+    }),
+    endDate: z.any().refine((val) => val !== null && val !== undefined && val !== '', {
+      message: 'End date is required'
     })
-  },
-  endDate: {
-    required: helpers.withMessage('End date is required', required),
-    afterStart: helpers.withMessage('End date must be after start date', (value: Date | string) => {
-      if (!value || !startDate.value) return false
-      const end = typeof value === 'string' ? new Date(value) : value
-      const start =
-        typeof startDate.value === 'string' ? new Date(startDate.value) : startDate.value
-      return end > start
-    })
-  }
-}
+  }).refine((data) => {
+    if (!data.endDate || !data.startDate) return true
+    const end = typeof data.endDate === 'string' ? new Date(data.endDate) : data.endDate as Date
+    const start = typeof data.startDate === 'string' ? new Date(data.startDate) : data.startDate as Date
+    return end > start
+  }, { message: 'End date must be after start date', path: ['endDate'] })
+)
 
-const v$ = useVuelidate(rules, {
-  description,
-  input,
-  amount,
-  frequencyType,
-  customFrequencyDays,
-  startDate,
-  endDate
-})
+const validationErrors = ref<Record<string, string>>({})
+
+function validateForm() {
+  const result = approveSchema.value.safeParse({
+    input: input.value,
+    description: description.value,
+    amount: amount.value,
+    frequencyType: frequencyType.value,
+    customFrequencyDays: customFrequencyDays.value,
+    startDate: startDate.value,
+    endDate: endDate.value
+  })
+  validationErrors.value = {}
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      const key = issue.path.join('.')
+      if (!validationErrors.value[key]) {
+        validationErrors.value[key] = issue.message
+      }
+    }
+    return false
+  }
+  return true
+}
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
@@ -290,8 +256,7 @@ const clear = () => {
 }
 
 const submitApprove = () => {
-  v$.value.$touch()
-  if (v$.value.$invalid) {
+  if (!validateForm()) {
     return
   }
 

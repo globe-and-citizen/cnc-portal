@@ -9,13 +9,13 @@
   <div class="flex flex-col mt-4">
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
-    <div class="flex justify-end" v-if="$v.model.$error">
+    <div class="flex justify-end" v-if="errors.length">
       <div
         class="pl-4 text-red-500 text-sm text-left"
-        v-for="error of $v.model.$errors"
-        :key="error.$uid"
+        v-for="(error, index) of errors"
+        :key="index"
       >
-        {{ error.$message }}
+        {{ error }}
       </div>
     </div>
     <TokenAmount
@@ -59,10 +59,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch, computed } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import { isAddress } from 'viem'
-import { required, helpers } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { z } from 'zod'
 import ButtonUI from '../ButtonUI.vue'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import BodAlert from '@/components/BodAlert.vue'
@@ -121,27 +120,33 @@ watch(
     }
   }
 )
-const rules = {
-  model: {
-    address: {
-      required,
-      $valid: helpers.withMessage('Invalid address', (value: { address: string }) => {
-        return value.address ? isAddress(value.address) : false
-      })
-    },
-    token: {
-      required
-    }
-  }
-}
+const transferSchema = z.object({
+  address: z.object({
+    name: z.string(),
+    address: z.string(),
+    type: z.enum(['member', 'trader-safe', 'contract']).optional()
+  }).refine((val) => val.address ? isAddress(val.address) : false, {
+    message: 'Invalid address'
+  }),
+  token: z.object({
+    symbol: z.string().min(1),
+    balance: z.number(),
+    tokenId: z.string(),
+    price: z.number(),
+    code: z.string()
+  }),
+  amount: z.string()
+})
 
-const $v = useVuelidate(rules, { model })
+const errors = ref<string[]>([])
 
 const submitForm = () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) {
+  const result = transferSchema.safeParse(model.value)
+  if (!result.success) {
+    errors.value = result.error.errors.map((e) => e.message)
     return
   }
+  errors.value = []
   emit('transfer', model.value)
 }
 

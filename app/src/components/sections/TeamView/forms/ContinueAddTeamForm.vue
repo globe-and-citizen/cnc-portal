@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { z } from 'zod'
 import DeployContractSection from './DeployContractSection.vue'
-import useVuelidate from '@vuelidate/core'
-import { minLength, required } from '@vuelidate/validators'
 import type { Team } from '@/types'
 
 defineEmits(['done'])
@@ -14,15 +13,18 @@ const props = defineProps<{
   team: Partial<Team>
 }>()
 
-const investorContractInputRules = {
-  investorContractInput: {
-    name: { required, minLength: minLength(4) },
-    symbol: { required, minLength: minLength(3) }
-  }
-}
+const investorContractSchema = z.object({
+  name: z
+    .string({ message: 'Share name is required' })
+    .min(4, 'Share name must be at least 4 characters'),
+  symbol: z
+    .string({ message: 'Symbol is required' })
+    .min(3, 'Symbol must be at least 3 characters')
+})
 
-// Validation Instances
-const $vInvestor = useVuelidate(investorContractInputRules, { investorContractInput })
+const isInvalid = computed(
+  () => !investorContractSchema.safeParse(investorContractInput.value).success
+)
 </script>
 
 <template>
@@ -38,55 +40,33 @@ const $vInvestor = useVuelidate(investorContractInputRules, { investorContractIn
     <div data-test="step-3">
       <span class="font-bold text-2xl mb-4">Investor Contract Details</span>
       <hr class="mb-6" />
-      <div class="flex flex-col gap-5">
-        <label class="w-full input input-bordered flex items-center gap-2 input-md">
-          <span class="w-24">Share Name</span>
-          <input
+      <UForm :schema="investorContractSchema" :state="investorContractInput" class="flex flex-col gap-5">
+        <UFormField label="Share Name" name="name" required class="w-full">
+          <UInput
+            v-model="investorContractInput.name"
             type="text"
-            class="grow"
             placeholder="Company Shares"
             data-test="share-name-input"
-            v-model="investorContractInput.name"
-            @keyup.stop="$vInvestor.investorContractInput.name.$touch()"
-            name="shareName"
+            class="w-full"
           />
-        </label>
-        <div
-          class="pl-4 text-red-500 text-sm"
-          v-for="error of $vInvestor.investorContractInput.name.$errors"
-          data-test="share-name-error"
-          :key="error.$uid"
-        >
-          {{ error.$message }}
-        </div>
+        </UFormField>
 
-        <label class="w-full input input-bordered flex items-center gap-2 input-md">
-          <span class="w-24">Symbol</span>
-          <input
+        <UFormField label="Symbol" name="symbol" required class="w-full">
+          <UInput
+            v-model="investorContractInput.symbol"
             type="text"
-            class="grow"
             placeholder="SHR"
             data-test="share-symbol-input"
-            v-model="investorContractInput.symbol"
-            @keyup.stop="$vInvestor.investorContractInput.symbol.$touch()"
-            name="shareSymbol"
+            class="w-full"
           />
-        </label>
-        <div
-          class="pl-4 text-red-500 text-sm"
-          v-for="error of $vInvestor.investorContractInput.symbol.$errors"
-          data-test="share-symbol-error"
-          :key="error.$uid"
-        >
-          {{ error.$message }}
-        </div>
-      </div>
+        </UFormField>
+      </UForm>
     </div>
 
     <!-- Navigation Buttons -->
     <div class="flex justify-between mt-6">
       <DeployContractSection
-        :disable="$vInvestor.$invalid"
+        :disable="isInvalid"
         :investorContractInput="investorContractInput"
         :createdTeamData="props.team"
         @contractDeployed="$emit('done')"

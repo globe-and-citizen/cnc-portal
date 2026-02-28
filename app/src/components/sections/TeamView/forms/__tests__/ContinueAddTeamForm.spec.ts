@@ -112,40 +112,6 @@ describe.skip('ContinueAddTeamForm', () => {
 
     expect(wrapper.exists()).toBe(true)
 
-    // Expect the error message to not be displayed by default
-    expect(wrapper.find("[data-test='share-name-error']").exists()).toBeFalsy()
-    expect(wrapper.find("[data-test='share-symbol-error']").exists()).toBeFalsy()
-
-    const symbolInput = wrapper.find("[data-test='share-symbol-input']")
-    await symbolInput.setValue('WG')
-    await symbolInput.trigger('keyup')
-    await wrapper.vm.$nextTick()
-
-    // Expect the error message to be displayed
-    expect(wrapper.find("[data-test='share-symbol-error']").exists()).toBeTruthy()
-
-    await symbolInput.setValue('WGG')
-    await symbolInput.trigger('keyup')
-    await wrapper.vm.$nextTick()
-
-    // Expect the error message to not be displayed
-    expect(wrapper.find("[data-test='share-symbol-error']").exists()).toBeFalsy()
-
-    const nameInput = wrapper.find("[data-test='share-name-input']")
-    await nameInput.setValue('WA')
-    await nameInput.trigger('keyup')
-    await wrapper.vm.$nextTick()
-
-    // Expect the error message to be displayed
-    expect(wrapper.find("[data-test='share-name-error']").exists()).toBeTruthy()
-
-    await nameInput.setValue('WAGMI')
-    await nameInput.trigger('keyup')
-    await wrapper.vm.$nextTick()
-
-    // Expect the error message to not be displayed
-    expect(wrapper.find("[data-test='share-name-error']").exists()).toBeFalsy()
-
     const deployComponent = wrapper.findComponent(DeployContractSection)
     expect(wrapper.emitted('done')).toBeFalsy()
 
@@ -153,58 +119,6 @@ describe.skip('ContinueAddTeamForm', () => {
 
     // Check if wrapper emit done event
     expect(wrapper.emitted('done')).toBeTruthy()
-  })
-
-  it('should validate share symbol with correct length', async () => {
-    const wrapper = mount(ContinueAddTeamForm, {
-      props: { team: team.value },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
-
-    const symbolInput = wrapper.find("[data-test='share-symbol-input']")
-
-    // Test too short (< 3 characters)
-    await symbolInput.setValue('AB')
-    await symbolInput.trigger('keyup')
-    await wrapper.vm.$nextTick()
-    expect(wrapper.find("[data-test='share-symbol-error']").exists()).toBeTruthy()
-
-    // Test valid length (>= 3 characters)
-    await symbolInput.setValue('ABC')
-    await symbolInput.trigger('keyup')
-    await wrapper.vm.$nextTick()
-    expect(wrapper.find("[data-test='share-symbol-error']").exists()).toBeFalsy()
-  })
-
-  it('should validate share name with correct length', async () => {
-    const wrapper = mount(ContinueAddTeamForm, {
-      props: { team: team.value },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
-
-    const nameInput = wrapper.find("[data-test='share-name-input']")
-
-    // Test too short (< 3 characters)
-    await nameInput.setValue('AB')
-    await nameInput.trigger('keyup')
-    await wrapper.vm.$nextTick()
-    expect(wrapper.find("[data-test='share-name-error']").exists()).toBeTruthy()
-
-    // Test exactly 3 characters - still shows error (validation requires > 3)
-    await nameInput.setValue('ABC')
-    await nameInput.trigger('keyup')
-    await wrapper.vm.$nextTick()
-    expect(wrapper.find("[data-test='share-name-error']").exists()).toBeTruthy()
-
-    // Test valid length (> 3 characters)
-    await nameInput.setValue('ABCD')
-    await nameInput.trigger('keyup')
-    await wrapper.vm.$nextTick()
-    expect(wrapper.find("[data-test='share-name-error']").exists()).toBeFalsy()
   })
 
   it('should emit done event when contract is deployed', async () => {

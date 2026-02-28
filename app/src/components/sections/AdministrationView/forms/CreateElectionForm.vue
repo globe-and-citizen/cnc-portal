@@ -16,10 +16,9 @@
         />
         <div
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of $v.proposal.title.$errors"
-          :key="error.$uid"
+          v-if="errors.title"
         >
-          {{ error.$message }}
+          {{ errors.title }}
         </div>
       </label>
 
@@ -36,10 +35,9 @@
         ></textarea>
         <div
           class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of $v.proposal.description.$errors"
-          :key="error.$uid"
+          v-if="errors.description"
         >
-          {{ error.$message }}
+          {{ errors.description }}
         </div>
       </label>
 
@@ -60,10 +58,9 @@
           </div>
           <div
             class="pl-4 text-red-500 text-sm w-full text-left"
-            v-for="error of $v.proposal.winnerCount.$errors"
-            :key="error.$uid"
+            v-if="errors.winnerCount"
           >
-            {{ error.$message }}
+            {{ errors.winnerCount }}
           </div>
 
           <div class="mb-4">
@@ -81,10 +78,9 @@
 
           <div
             class="pl-4 text-red-500 text-sm w-full text-left"
-            v-for="error of $v.proposal.startDate.$errors"
-            :key="error.$uid"
+            v-if="errors.startDate"
           >
-            {{ error.$message }}
+            {{ errors.startDate }}
           </div>
 
           <div class="mb-4">
@@ -102,10 +98,9 @@
 
           <div
             class="pl-4 text-red-500 text-sm w-full text-left"
-            v-for="error of $v.proposal.endDate.$errors"
-            :key="error.$uid"
+            v-if="errors.endDate"
           >
-            {{ error.$message }}
+            {{ errors.endDate }}
           </div>
 
           <MultiSelectMemberInput
@@ -116,9 +111,9 @@
 
           <div
             class="pl-4 text-red-500 text-sm w-full text-left"
-            v-if="newProposalInput.isElection && $v.proposal.candidates.$error"
+            v-if="newProposalInput.isElection && errors.candidates"
           >
-            {{ $v.proposal.candidates.$errors[0]?.$message }}
+            {{ errors.candidates }}
           </div>
         </div>
       </label>
@@ -141,8 +136,7 @@
 <script setup lang="ts">
 import type { OldProposal, User } from '@/types'
 import { ref, onMounted, onUnmounted } from 'vue'
-import { required, minLength, requiredIf, helpers, minValue } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { z } from 'zod'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
@@ -155,20 +149,48 @@ const emits = defineEmits(['createProposal'])
 defineProps<{ isLoading: boolean }>()
 
 const formData = ref<Array<Pick<User, 'address' | 'name'>>>([])
-interface Candidate {
-  name: string
-  candidateAddress: string
-}
-const uniqueCandidates = () => {
-  return {
-    $validator: (candidates: Candidate[]) => {
-      if (!Array.isArray(candidates) || candidates.length === 0) return true
-      const addresses = candidates.map((c) => c.candidateAddress)
-      const uniqueAddresses = new Set(addresses)
-      return addresses.length === uniqueAddresses.size
-    },
-    $message: 'Duplicate candidates are not allowed.'
+const electionSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters'),
+  description: z.string().min(10, 'Description must be at least 10 characters'),
+  candidates: z.array(z.object({
+    name: z.string(),
+    candidateAddress: z.string()
+  })).refine((candidates) => {
+    if (!Array.isArray(candidates) || candidates.length === 0) return true
+    const addresses = candidates.map((c) => c.candidateAddress)
+    return new Set(addresses).size === addresses.length
+  }, { message: 'Duplicate candidates are not allowed.' }),
+  startDate: z.any().refine((val) => val !== null && val !== undefined && val !== '', {
+    message: 'Start date is required'
+  }),
+  endDate: z.any().refine((val) => val !== null && val !== undefined && val !== '', {
+    message: 'End date is required'
+  }),
+  winnerCount: z.coerce.number().min(3, 'Must be at least 3').refine(
+    (val) => val % 2 === 1,
+    { message: 'Number of directors must be an odd number' }
+  )
+}).refine((data) => {
+  return (data.startDate as Date) < (data.endDate as Date)
+}, { message: 'Start date must be before end date', path: ['startDate'] }).refine((data) => {
+  return (data.endDate as Date) > (data.startDate as Date)
+}, { message: 'End date must be later than start date', path: ['endDate'] })
+
+const errors = ref<Record<string, string>>({})
+
+function validate() {
+  const result = electionSchema.safeParse(newProposalInput.value)
+  errors.value = {}
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      const key = issue.path[0] as string
+      if (key && !errors.value[key]) {
+        errors.value[key] = issue.message
+      }
+    }
+    return false
   }
+  return true
 }
 
 const newProposalInput = ref<Partial<OldProposal>>({
@@ -186,42 +208,6 @@ const newProposalInput = ref<Partial<OldProposal>>({
   winnerCount: 0
 })
 
-const rules = {
-  proposal: {
-    title: {
-      required,
-      minLength: minLength(3)
-    },
-    description: {
-      required,
-      minLength: minLength(10)
-    },
-    candidates: {
-      requiredIf: requiredIf(() => newProposalInput.value?.isElection ?? false),
-      uniqueCandidates: uniqueCandidates()
-    },
-    startDate: {
-      required,
-      beforeEnd: helpers.withMessage('Start date must be before end date: ', (value) => {
-        return (value as Date) < (newProposalInput.value?.endDate as Date)
-      })
-    },
-    endDate: {
-      required,
-      afterStart: helpers.withMessage('End date must be later than start date: ', (value) => {
-        return (value as Date) > (newProposalInput.value?.startDate as Date)
-      })
-    },
-    winnerCount: {
-      minValue: minValue(3),
-      onlyOdd: helpers.withMessage('Number of directors must be an odd number: ', (value) => {
-        return Number(value) % 2 === 1
-      })
-    }
-  }
-}
-const $v = useVuelidate(rules, { proposal: newProposalInput })
-
 const submitForm = () => {
   newProposalInput.value.candidates = []
   for (const user of formData.value) {
@@ -230,8 +216,7 @@ const submitForm = () => {
       candidateAddress: user.address || ''
     })
   }
-  $v.value.$touch()
-  if ($v.value.$invalid) return
+  if (!validate()) return
   emits('createProposal', newProposalInput.value)
 }
 

@@ -21,44 +21,36 @@
         :disabled="isEdit"
       />
     </div>
-    <div class="flex flex-col gap-2">
-      <label class="flex items-center">
-        <span class="w-full">Hours worked</span>
-      </label>
-      <input
-        type="text"
-        class="input input-bordered input-md grow w-full"
-        data-test="hours-worked-input"
-        placeholder="10"
+    <UFormField label="Hours worked" name="hoursWorked" class="flex flex-col gap-2">
+      <UInput
         v-model="formData.hoursWorked"
+        type="text"
+        placeholder="10"
+        data-test="hours-worked-input"
+        class="w-full"
       />
       <div
         class="pl-4 text-red-500 text-sm"
-        v-for="error of v$.formData.hoursWorked.$errors"
-        :key="error.$uid"
+        v-if="hoursWorkedError"
         data-test="hours-worked-error"
       >
-        {{ error.$message }}
+        {{ hoursWorkedError }}
       </div>
-    </div>
-    <div class="flex flex-col gap-2">
-      <label class="flex items-center">
-        <span class="w-full">Memo</span>
-      </label>
-      <textarea
-        class="textarea input-bordered w-full"
+    </UFormField>
+    <UFormField label="Memo" name="memo" class="flex flex-col gap-2">
+      <UTextarea
+        v-model="formData.memo"
         :placeholder="isEdit ? 'I worked on...' : 'I worked on the ....'"
         data-test="memo-input"
-        v-model="formData.memo"
-      ></textarea>
-    </div>
-    <div
-      class="pl-4 text-red-500 text-sm"
-      v-for="error of v$.formData.memo.$errors"
-      :key="error.$uid"
-    >
-      {{ error.$message }}
-    </div>
+        class="w-full"
+      />
+      <div
+        class="pl-4 text-red-500 text-sm"
+        v-if="memoError"
+      >
+        {{ memoError }}
+      </div>
+    </UFormField>
 
     <UploadFileDB
       ref="uploadFileRef"
@@ -109,8 +101,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { useVuelidate } from '@vuelidate/core'
-import { required, numeric, minValue, maxValue, maxLength } from '@vuelidate/validators'
+import { z } from 'zod'
 import type { ClaimFormData } from '@/types'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -200,15 +191,33 @@ const createDefaultFormData = (overrides?: Partial<ClaimFormData>): ClaimFormDat
 
 const formData = ref<ClaimFormData>(createDefaultFormData(props.initialData))
 
-const rules = {
-  formData: {
-    hoursWorked: { required, numeric, minValue: minValue(1), maxValue: maxValue(24) },
-    memo: { required, maxLength: maxLength(3000) },
-    dayWorked: { required }
-  }
-}
+const formDataSchema = z.object({
+  hoursWorked: z
+    .string({ message: 'Value is required' })
+    .min(1, 'Value is required')
+    .refine((val) => !isNaN(Number(val)), { message: 'Value must be numeric' })
+    .refine((val) => Number(val) >= 1, { message: 'The minimum value allowed is 1' })
+    .refine((val) => Number(val) <= 24, { message: 'The maximum value allowed is 24' }),
+  memo: z
+    .string({ message: 'Value is required' })
+    .min(1, 'Value is required')
+    .max(3000, 'The maximum length allowed is 3000'),
+  dayWorked: z.string({ message: 'Value is required' }).min(1, 'Value is required')
+})
 
-const v$ = useVuelidate(rules, { formData })
+const touched = ref(false)
+
+const hoursWorkedError = computed(() => {
+  if (!touched.value) return ''
+  const result = formDataSchema.shape.hoursWorked.safeParse(formData.value.hoursWorked)
+  return result.success ? '' : result.error.issues[0]?.message ?? ''
+})
+
+const memoError = computed(() => {
+  if (!touched.value) return ''
+  const result = formDataSchema.shape.memo.safeParse(formData.value.memo)
+  return result.success ? '' : result.error.issues[0]?.message ?? ''
+})
 
 watch(
   () => props.initialData,
@@ -267,8 +276,9 @@ const disabledDatesFn = computed(() => {
 })
 
 const handleSubmit = async () => {
-  v$.value.$touch()
-  if (v$.value.$invalid) return
+  touched.value = true
+  const result = formDataSchema.safeParse(formData.value)
+  if (!result.success) return
 
   // Validate total file count
   const totalFiles = (props.existingFiles?.length ?? 0) + uploadedFiles.value.length

@@ -256,33 +256,32 @@ describe('AddTeamForm.vue', () => {
       expect(vm.canProceed).toBe(false)
     })
 
-    it('should evaluate address validation rule', async () => {
+    it('should validate member addresses with Zod schema', async () => {
       wrapper = mountComponent()
 
-      const vm = wrapper.vm as unknown as {
-        rules: {
-          teamData: {
-            members: {
-              $each: {
-                address: { isValidAddress: { $validator: (value: string) => boolean } }
-              }
-            }
-          }
-        }
-      }
+      const exposed = (wrapper.vm as unknown as { $: { exposed?: Record<string, unknown> } }).$
+        ?.exposed as { teamDataSchema: { safeParse: (data: unknown) => { success: boolean } } }
 
-      const validator = vm.rules.teamData.members.$each.address.isValidAddress.$validator
-      expect(validator('not-an-address')).toBe(false)
-      expect(validator('0x4b6Bf5cD91446408290725879F5666dcd9785F62')).toBe(true)
+      const invalidResult = exposed.teamDataSchema.safeParse({
+        name: 'Test',
+        members: [{ address: 'not-an-address' }]
+      })
+      expect(invalidResult.success).toBe(false)
+
+      const validResult = exposed.teamDataSchema.safeParse({
+        name: 'Test',
+        members: [{ address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62' }]
+      })
+      expect(validResult.success).toBe(true)
     })
 
     it('should render team name validation error in template', async () => {
       wrapper = mountComponent()
 
       const exposed = (wrapper.vm as unknown as { $: { exposed?: Record<string, unknown> } }).$
-        ?.exposed as { $v: { value: { $touch: () => void } } }
+        ?.exposed as { touched: { value: boolean } }
 
-      exposed.$v.value.$touch()
+      exposed.touched.value = true
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="name-error"]').exists()).toBe(true)
@@ -298,9 +297,9 @@ describe('AddTeamForm.vue', () => {
       await wrapper.vm.$nextTick()
 
       const exposed = (wrapper.vm as unknown as { $: { exposed?: Record<string, unknown> } }).$
-        ?.exposed as { $vInvestor: { value: { $touch: () => void } } }
+        ?.exposed as { touched: { value: boolean } }
 
-      exposed.$vInvestor.value.$touch()
+      exposed.touched.value = true
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="share-name-error"]').exists()).toBe(true)

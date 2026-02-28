@@ -12,38 +12,31 @@
       <span class="font-bold text-2xl mb-4">Team Details</span>
       <hr class="mb-6" />
       <div class="flex flex-col gap-5">
-        <div>
-          <label class="w-full input input-bordered flex items-center gap-2 input-md mt-4">
-            <span class="w-24">Team Name</span>
-            <input
-              type="text"
-              class="grow"
-              placeholder="Daisy"
-              data-test="team-name-input"
-              v-model="teamData.name"
-              name="name"
-            />
-          </label>
+        <UFormField label="Team Name" name="name" required class="w-full mt-4">
+          <UInput
+            v-model="teamData.name"
+            type="text"
+            placeholder="Daisy"
+            data-test="team-name-input"
+            class="w-full"
+          />
           <div
             class="pl-4 text-red-500 text-sm"
-            v-for="error of $v.teamData.name.$errors"
+            v-if="teamNameError"
             data-test="name-error"
-            :key="error.$uid"
           >
-            {{ error.$message }}
+            {{ teamNameError }}
           </div>
-        </div>
-        <label class="w-full input input-bordered flex items-center gap-2 input-md">
-          <span class="w-24">Description</span>
-          <input
+        </UFormField>
+        <UFormField label="Description" name="description" class="w-full">
+          <UInput
+            v-model="teamData.description"
             type="text"
-            class="grow"
             placeholder="Enter a short description"
             data-test="team-description-input"
-            v-model="teamData.description"
-            name="description"
+            class="w-full"
           />
-        </label>
+        </UFormField>
       </div>
     </div>
 
@@ -73,74 +66,69 @@
       <span class="font-bold text-2xl mb-4">Investor Contract Details</span>
       <hr class="mb-6" />
       <div class="flex flex-col gap-5">
-        <label class="w-full input input-bordered flex items-center gap-2 input-md">
-          <span class="w-24">Share Name</span>
-          <input
+        <UFormField label="Share Name" name="shareName" required class="w-full">
+          <UInput
+            v-model="investorContractInput.name"
             type="text"
-            class="grow"
             placeholder="Company Shares"
             data-test="share-name-input"
-            v-model="investorContractInput.name"
-            name="shareName"
+            class="w-full"
           />
-        </label>
-        <div
-          class="pl-4 text-red-500 text-sm"
-          v-for="error of $vInvestor.investorContractInput.name.$errors"
-          data-test="share-name-error"
-          :key="error.$uid"
-        >
-          {{ error.$message }}
-        </div>
+          <div
+            class="pl-4 text-red-500 text-sm"
+            v-if="shareNameError"
+            data-test="share-name-error"
+          >
+            {{ shareNameError }}
+          </div>
+        </UFormField>
 
-        <label class="w-full input input-bordered flex items-center gap-2 input-md">
-          <span class="w-24">Symbol</span>
-          <input
+        <UFormField label="Symbol" name="shareSymbol" required class="w-full">
+          <UInput
+            v-model="investorContractInput.symbol"
             type="text"
-            class="grow"
             placeholder="SHR"
             data-test="share-symbol-input"
-            v-model="investorContractInput.symbol"
-            name="shareSymbol"
+            class="w-full"
           />
-        </label>
-        <div
-          class="pl-4 text-red-500 text-sm"
-          v-for="error of $vInvestor.investorContractInput.symbol.$errors"
-          data-test="share-symbol-error"
-          :key="error.$uid"
-        >
-          {{ error.$message }}
-        </div>
+          <div
+            class="pl-4 text-red-500 text-sm"
+            v-if="shareSymbolError"
+            data-test="share-symbol-error"
+          >
+            {{ shareSymbolError }}
+          </div>
+        </UFormField>
       </div>
     </div>
 
     <!-- Navigation Buttons -->
     <div class="flex justify-between mt-6">
-      <ButtonUI
+      <UButton
         v-if="currentStep == 2"
-        variant="secondary"
+        color="neutral"
+        variant="outline"
         class="w-32"
         @click="currentStep--"
         :disabled="createTeamFetching || false"
         data-test="previous-button"
       >
         Previous
-      </ButtonUI>
+      </UButton>
       <div class="grow"></div>
-      <ButtonUI
+      <UButton
         v-if="currentStep === 1"
-        variant="primary"
+        color="primary"
         class="w-32"
         data-test="next-button"
         @click="nextStep"
         :disabled="!canProceed"
       >
         Next
-      </ButtonUI>
-      <ButtonUI
+      </UButton>
+      <UButton
         v-else-if="currentStep === 2"
-        variant="primary"
+        color="primary"
         class="w-44"
         :loading="createTeamFetching"
         :disabled="createTeamFetching || !canProceed"
@@ -148,7 +136,7 @@
         @click="saveTeamToDatabase"
       >
         Create Team
-      </ButtonUI>
+      </UButton>
       <DeployContractSection
         v-else-if="currentStep === 3 && createdTeamData !== null && createdTeamData"
         :disable="!canProceed"
@@ -168,12 +156,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import useVuelidate from '@vuelidate/core'
-import { required, helpers } from '@vuelidate/validators'
+import { z } from 'zod'
 import { isAddress } from 'viem'
 import { log } from '@/utils'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { onClickOutside } from '@vueuse/core'
 import type { Team } from '@/types'
@@ -204,41 +190,49 @@ const investorContractInput = ref({
 const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const currentStep = ref(1)
+const touched = ref(false)
 
-// Validation Rules
-const rules = {
-  teamData: {
-    name: { required },
-    members: {
-      $each: {
-        address: {
-          isValidAddress: helpers.withMessage('Invalid Ethereum address', (value: string) =>
-            isAddress(value)
-          )
-        }
-      }
-    }
-  }
-}
+// Zod Schemas
+const teamDataSchema = z.object({
+  name: z.string({ message: 'Team name is required' }).min(1, 'Team name is required'),
+  description: z.string().optional(),
+  members: z.array(
+    z.object({
+      address: z.string().refine((val) => isAddress(val), { message: 'Invalid Ethereum address' }),
+      name: z.string().optional()
+    })
+  )
+})
 
-const investorContractInputRules = {
-  investorContractInput: {
-    name: { required },
-    symbol: { required }
-  }
-}
-// TODO: validate Team Details on key up and require at least 5 letter for Team Name
-// TODO validate this before proceeding to create deploy contract
+const investorContractSchema = z.object({
+  name: z.string({ message: 'Share name is required' }).min(1, 'Share name is required'),
+  symbol: z.string({ message: 'Symbol is required' }).min(1, 'Symbol is required')
+})
 
-// Validation Instances
-const $v = useVuelidate(rules, { teamData })
-const $vInvestor = useVuelidate(investorContractInputRules, { investorContractInput })
+// Computed validation errors (shown only after touch)
+const teamNameError = computed(() => {
+  if (!touched.value) return ''
+  const result = teamDataSchema.shape.name.safeParse(teamData.value.name)
+  return result.success ? '' : result.error.issues[0]?.message ?? ''
+})
+
+const shareNameError = computed(() => {
+  if (!touched.value) return ''
+  const result = investorContractSchema.shape.name.safeParse(investorContractInput.value.name)
+  return result.success ? '' : result.error.issues[0]?.message ?? ''
+})
+
+const shareSymbolError = computed(() => {
+  if (!touched.value) return ''
+  const result = investorContractSchema.shape.symbol.safeParse(investorContractInput.value.symbol)
+  return result.success ? '' : result.error.issues[0]?.message ?? ''
+})
 
 // Computed Properties
 const canProceed = computed(() => {
   switch (currentStep.value) {
     case 1:
-      return !!teamData.value.name
+      return teamDataSchema.shape.name.safeParse(teamData.value.name).success
     case 2:
       // Members are optional, so always allow proceeding from step 2
       return (
@@ -246,7 +240,7 @@ const canProceed = computed(() => {
         teamData.value.members.every((member) => isAddress(member.address))
       )
     case 3:
-      return !!investorContractInput.value.name && !!investorContractInput.value.symbol
+      return investorContractSchema.safeParse(investorContractInput.value).success
     default:
       return false
   }
@@ -261,8 +255,9 @@ const nextStep = () => {
 
 // Form Submission Functions
 const saveTeamToDatabase = async () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
+  touched.value = true
+  const result = teamDataSchema.safeParse(teamData.value)
+  if (!result.success) return
   await executeCreateTeam({ body: teamData.value })
   if (createTeamError.value) {
     addErrorToast('Failed to create team')
@@ -282,7 +277,8 @@ onMounted(() => {
 })
 
 defineExpose({
-  $v,
-  $vInvestor
+  teamDataSchema,
+  investorContractSchema,
+  touched
 })
 </script>

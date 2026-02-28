@@ -4,11 +4,20 @@ import DistributeMintForm from '../../../SherTokenView/forms/DistributeMintForm.
 import { createTestingPinia } from '@pinia/testing'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 import { ref } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useGetSearchUsersQuery } from '@/queries/user.queries'
 
+const ButtonStub = {
+  props: ['loading', 'disabled', 'color'],
+  template: `<button :disabled="disabled" :loading="loading" data-test="submit-button" @click="$emit('click')"><slot /></button>`
+}
+
+const FormFieldStub = {
+  props: ['label', 'error'],
+  template: `<div><slot /></div>`
+}
+
 interface ComponentData {
-  shareholderWithAmounts: { shareholder: string; amount: string }[]
+  shareholderWithAmounts: { shareholder: string; amount: number }[]
   usersData: {
     users: { address: string; name: string }[]
   } | null
@@ -46,24 +55,28 @@ describe('DistributeMintForm', () => {
         loading: loading || false
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          Button: ButtonStub,
+          FormField: FormFieldStub
+        }
       }
     })
   }
 
   it('should set shareholder ref when input address', async () => {
     const wrapper = createComponent()
-    const input = wrapper.find('input[data-test="address-input"]')
-    await input.setValue('0x123')
+    ;(wrapper.vm as unknown as ComponentData).shareholderWithAmounts[0].shareholder = '0x123'
+    await wrapper.vm.$nextTick()
     expect((wrapper.vm as unknown as ComponentData).shareholderWithAmounts[0].shareholder).toBe(
       '0x123'
     )
   })
 
-  it('should set shareholder ref when input address', async () => {
+  it('should set shareholder ref when input amount', async () => {
     const wrapper = createComponent()
-    const input = wrapper.find('input[data-test="amount-input"]')
-    await input.setValue('1')
+    ;(wrapper.vm as unknown as ComponentData).shareholderWithAmounts[0].amount = 1
+    await wrapper.vm.$nextTick()
     expect((wrapper.vm as unknown as ComponentData).shareholderWithAmounts[0].amount).toBe(1)
   })
 
@@ -85,19 +98,20 @@ describe('DistributeMintForm', () => {
   it('should render loading button if loading is true', async () => {
     const wrapper = createComponent(true)
 
-    expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
+    const submitButton = wrapper.find('[data-test="submit-button"]')
+    expect(submitButton.attributes('loading')).toBe('true')
+    expect(submitButton.attributes('disabled')).toBeDefined()
   })
 
   it('should emit submit event when button submit clicked', async () => {
     const wrapper = createComponent()
 
-    const input = wrapper.find('input[data-test="address-input"]')
-    await input.setValue('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
+    ;(wrapper.vm as unknown as ComponentData).shareholderWithAmounts[0].shareholder =
+      '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+    ;(wrapper.vm as unknown as ComponentData).shareholderWithAmounts[0].amount = 1
+    await wrapper.vm.$nextTick()
 
-    const amountInput = wrapper.find('[data-test="amount-input"]')
-    await amountInput.setValue('1')
-
-    await wrapper.findComponent(ButtonUI).trigger('click')
+    await wrapper.find('[data-test="submit-button"]').trigger('click')
     expect(wrapper.emitted('submit')).toBeTruthy()
   })
 
@@ -115,13 +129,11 @@ describe('DistributeMintForm', () => {
   it('should render error message when address is invalid', async () => {
     const wrapper = createComponent()
 
-    const input = wrapper.find('[data-test="address-input"]')
-    await input.setValue('0x123')
+    ;(wrapper.vm as unknown as ComponentData).shareholderWithAmounts[0].shareholder = '0x123'
+    ;(wrapper.vm as unknown as ComponentData).shareholderWithAmounts[0].amount = 1
+    await wrapper.vm.$nextTick()
 
-    const amountInput = wrapper.find('[data-test="amount-input"]')
-    await amountInput.setValue('1')
-
-    await wrapper.findComponent(ButtonUI).trigger('click')
+    await wrapper.find('[data-test="submit-button"]').trigger('click')
     await flushPromises()
 
     const errorMessage = wrapper.find('[data-test="error-message-shareholder"]')
@@ -132,18 +144,17 @@ describe('DistributeMintForm', () => {
   it('should render error message when amount is invalid', async () => {
     const wrapper = createComponent()
 
-    const input = wrapper.find('[data-test="address-input"]')
-    await input.setValue('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
-
-    const amountInput = wrapper.find('[data-test="amount-input"]')
-    await amountInput.setValue(null)
+    ;(wrapper.vm as unknown as ComponentData).shareholderWithAmounts[0].shareholder =
+      '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+    ;(wrapper.vm as unknown as ComponentData).shareholderWithAmounts[0].amount = 0
+    await wrapper.vm.$nextTick()
 
     await wrapper.find('[data-test="submit-button"]').trigger('click')
     await flushPromises()
 
     const errorMessage = wrapper.find('[data-test="error-message-amount"]')
     expect(errorMessage.exists()).toBeTruthy()
-    expect(errorMessage.text()).toBe('Amount is required')
+    expect(errorMessage.text()).toBe('Amount must be greater than 0')
   })
 
   it('should add error toast if there is an error when searching users', async () => {
@@ -165,7 +176,11 @@ describe('DistributeMintForm', () => {
         loading: false
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: {
+          Button: ButtonStub,
+          FormField: FormFieldStub
+        }
       }
     })
 

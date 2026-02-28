@@ -19,10 +19,9 @@
     <div
       data-test="description-error"
       class="pl-4 text-red-500 text-sm w-full text-left"
-      v-for="error of v$.description.$errors"
-      :key="error.$uid"
+      v-if="validationErrors['description']"
     >
-      {{ error.$message }}
+      {{ validationErrors['description'] }}
     </div>
   </div>
 
@@ -83,20 +82,10 @@
 
   <div
     class="pl-4 text-red-500 text-sm w-full text-left"
-    v-for="error of v$.formData.$errors"
-    :key="error.$uid"
+    v-if="validationErrors['formData'] || validationErrors['formData.0.address']"
     data-test="address-error"
   >
-    <div v-if="Array.isArray(error.$message)">
-      <div v-for="(errorObj, index) of error.$message" :key="index">
-        <div v-for="(error, index1) of errorObj" :key="index1">
-          {{ error }}
-        </div>
-      </div>
-    </div>
-    <div v-else>
-      {{ error.$message }}
-    </div>
+    {{ validationErrors['formData'] || validationErrors['formData.0.address'] }}
   </div>
 
   <div>
@@ -115,10 +104,9 @@
   <div
     data-test="limit-value-error"
     class="pl-4 text-red-500 text-sm w-full text-left"
-    v-for="error of v$.selectedToken.$errors"
-    :key="error.$uid"
+    v-if="validationErrors['selectedToken']"
   >
-    {{ error.$message }}
+    {{ validationErrors['selectedToken'] }}
   </div>
   <!--Select budget limit type
   <div>
@@ -236,8 +224,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { isAddress, zeroAddress } from 'viem'
-import { useVuelidate } from '@vuelidate/core'
-import { helpers, required } from '@vuelidate/validators'
+import { z } from 'zod'
 import type { User } from '@/types'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
@@ -305,44 +292,43 @@ const updateValue = (budgetType: 0 | 1 | 2) => {
 }
 //#endregion multi limit
 
-const rules = {
-  formData: {
-    $each: helpers.forEach({
-      address: {
-        required: helpers.withMessage('Address is required', required),
-        $valid: helpers.withMessage('Invalid wallet address', (value: string) => isAddress(value))
-      }
+const approveSchema = computed(() =>
+  z.object({
+    formData: z.array(z.object({
+      name: z.string(),
+      address: z.string().min(1, 'Address is required').refine((val) => isAddress(val), {
+        message: 'Invalid wallet address'
+      })
+    })).refine((val) => val.some((v) => v.address), {
+      message: 'At least one member is required'
     }),
+    selectedToken: z.string({ message: 'Token is required' }).min(1, 'Token is required'),
+    description: z.string().refine((val) => {
+      return props.isBodAction ? val.length > 0 : true
+    }, { message: 'Description is required' })
+  })
+)
 
-    $valid: helpers.withMessage(
-      'At least one member is required',
-      (value: Array<{ name: string; address: string }>) => {
-        return value.some((v) => v.address)
+const validationErrors = ref<Record<string, string>>({})
+
+function validateForm() {
+  const result = approveSchema.value.safeParse({
+    formData: formData.value,
+    selectedToken: selectedToken.value,
+    description: description.value
+  })
+  validationErrors.value = {}
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      const key = issue.path.join('.')
+      if (!validationErrors.value[key]) {
+        validationErrors.value[key] = issue.message
       }
-    )
-  },
-  selectedToken: { required },
-  // limitValue: {
-  //   required,
-  //   numeric
-  // },
-  // budgetLimitType: {
-  //   required: helpers.withMessage('Budget limit type is required', (value: number | null) => {
-  //     return typeof value === 'number' && value >= 0 ? true : false
-  //   })
-  // },
-  description: {
-    required: helpers.withMessage('Description is required', (value: string) => {
-      return props.isBodAction ? value.length > 0 : true
-    })
+    }
+    return false
   }
+  return true
 }
-
-const v$ = useVuelidate(rules, {
-  /*budgetLimitType, */ description,
-  /*limitValue, */ formData,
-  selectedToken
-})
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
@@ -354,8 +340,7 @@ const clear = () => {
 }
 
 const submitApprove = () => {
-  v$.value.$touch()
-  if (v$.value.$invalid) {
+  if (!validateForm()) {
     return
   }
 

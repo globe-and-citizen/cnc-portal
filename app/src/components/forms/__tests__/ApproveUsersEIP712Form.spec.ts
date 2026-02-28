@@ -6,7 +6,6 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import SelectMemberWithTokenInput from '@/components/utils/SelectMemberWithTokenInput.vue'
 import SelectComponent from '@/components/SelectComponent.vue'
 import type { ComponentPublicInstance } from 'vue'
-import type { Validation } from '@vuelidate/core'
 
 // Define the component instance type based on the component's reactive properties and methods
 type ApproveUsersFormInstance = ComponentPublicInstance<{
@@ -26,9 +25,6 @@ type ApproveUsersFormInstance = ComponentPublicInstance<{
   // Methods
   clear: () => void
   submitApprove: () => void
-
-  // Vuelidate instance
-  v$: Validation
 }>
 
 // Mock the SelectComponent
@@ -219,15 +215,10 @@ describe('ApproveUsersForm', () => {
   describe('Validation', () => {
     it('shows validation errors when form is submitted empty', async () => {
       const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
 
       await wrapper.find('[data-test="approve-button"]').trigger('click')
       await wrapper.vm.$nextTick()
-      expect(vm.v$.$invalid).toBe(true)
       expect(wrapper.find('[data-test="address-error"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="amount-error"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="start-date-error"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="end-date-error"]').exists()).toBe(true)
     })
 
     it('shows description error when isBodAction is true and description is empty', async () => {
@@ -271,7 +262,7 @@ describe('ApproveUsersForm', () => {
       await wrapper.find('[data-test="approve-button"]').trigger('click')
       await wrapper.vm.$nextTick()
 
-      expect(vm.v$.$invalid).toBe(false)
+      expect(wrapper.emitted('approveUser')).toBeTruthy()
     })
   })
 

@@ -38,15 +38,6 @@ type CreateElectionVm = {
     candidates: Candidate[]
   }>
   formData: Array<{ address: string; name: string }>
-  $v?: {
-    proposal?: {
-      candidates?: {
-        $invalid: boolean
-        $errors: Array<{ $message?: string }>
-        $error: boolean
-      }
-    }
-  }
 }
 
 type InternalVm = {
@@ -151,8 +142,11 @@ describe('CreateElectionForm', () => {
     await wrapper.find('[data-test="submitButton"]').trigger('click')
     await nextTick()
 
-    const vmWithV = wrapper.vm as unknown as CreateElectionVm
-    expect(vmWithV.$v?.proposal?.candidates?.$invalid).toBe(true)
+    const errorElements = wrapper.findAll('.text-red-500')
+    const hasDuplicateError = errorElements.some((e) =>
+      /Duplicate candidates are not allowed/i.test(e.text())
+    )
+    expect(hasDuplicateError).toBe(true)
     expect(wrapper.emitted('createProposal')).toBeUndefined()
   })
 

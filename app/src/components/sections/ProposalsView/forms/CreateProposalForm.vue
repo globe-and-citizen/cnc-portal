@@ -1,136 +1,88 @@
 <template>
-  <h3 class="font-bold text-xl">Create New Proposal</h3>
-  <div class="flex flex-col w-full">
-    <label class="form-control w-full">
-      <div class="label"><span class="label-text">Title</span></div>
-      <input
-        type="text"
+  <UForm :schema="proposalSchema" :state="state" class="flex flex-col w-full" @submit="handleSubmit">
+    <h3 class="font-bold text-xl">Create New Proposal</h3>
+
+    <UFormField label="Title" name="title" required class="w-full mt-2">
+      <UInput
+        v-model="state.title"
         placeholder="Enter proposal title"
-        v-model="proposal.title"
-        class="input input-bordered w-full"
-        :class="{ 'input-error': $v.title.$error }"
+        class="w-full"
       />
-      <div v-if="$v.title.$error" class="label">
-        <span class="label-text-alt text-error">{{ $v.title.$errors[0]?.$message }}</span>
-      </div>
-    </label>
+    </UFormField>
 
-    <label class="form-control">
-      <div class="label">
-        <span class="label-text">Description</span>
-      </div>
-      <textarea
-        class="textarea textarea-bordered h-24"
+    <UFormField label="Description" name="description" required class="w-full mt-2">
+      <UTextarea
+        v-model="state.description"
         placeholder="Describe your proposal..."
-        v-model="proposal.description"
-        :class="{ 'textarea-error': $v.description.$error }"
-      ></textarea>
-      <div v-if="$v.description.$error" class="label">
-        <span class="label-text-alt text-error">{{ $v.description.$errors[0]?.$message }}</span>
-      </div>
-    </label>
+        :rows="4"
+        class="w-full"
+      />
+    </UFormField>
 
-    <label class="form-control w-full">
-      <div class="label">
-        <span class="label-text">Type</span>
-      </div>
-      <select
-        class="select select-bordered"
-        :class="{ 'select-error': $v.type.$error }"
-        v-model="proposal.type"
-      >
-        <option
-          v-for="type in types"
-          :key="type.value"
-          :value="type.value"
-          :selected="type.value === proposal.type"
-        >
-          {{ type.label }}
-        </option>
-      </select>
-      <div v-if="$v.type.$error" class="label">
-        <span class="label-text-alt text-error">{{ $v.type.$errors[0]?.$message }}</span>
-      </div>
-    </label>
+    <UFormField label="Type" name="type" required class="w-full mt-2">
+      <USelect
+        v-model="state.type"
+        :items="types"
+      />
+    </UFormField>
 
-    <div class="flex flex-row justify-between items-center gap-4">
-      <div class="flex flex-col flex-1">
-        <label class="label">
-          <span class="label-text">Start Date</span>
-        </label>
-        <div
-          class="border rounded-lg p-2 bg-white shadow-xs"
-          :class="{ 'border-error': $v.startDate.$error }"
-        >
+    <div class="flex flex-row justify-between items-center gap-4 mt-2">
+      <UFormField label="Start Date" name="startDate" required class="flex-1">
+        <div class="border rounded-lg p-2 bg-white shadow-xs">
           <VueDatePicker
-            v-model="proposal.startDate"
+            v-model="state.startDate"
             placeholder="mm/dd/yyyy"
             :min-date="new Date()"
             auto-apply
             :enable-time-picker="false"
           />
         </div>
-        <div v-if="$v.startDate.$error" class="label">
-          <span class="label-text-alt text-error">{{ $v.startDate.$errors[0]?.$message }}</span>
-        </div>
-      </div>
-      <div class="flex flex-col flex-1">
-        <label class="label">
-          <span class="label-text">End Date</span>
-        </label>
-        <div
-          class="border rounded-lg p-2 bg-white shadow-xs"
-          :class="{ 'border-error': $v.endDate.$error }"
-        >
+      </UFormField>
+
+      <UFormField label="End Date" name="endDate" required class="flex-1">
+        <div class="border rounded-lg p-2 bg-white shadow-xs">
           <VueDatePicker
-            v-model="proposal.endDate"
+            v-model="state.endDate"
             placeholder="mm/dd/yyyy"
-            :min-date="proposal.startDate || new Date()"
+            :min-date="state.startDate || new Date()"
             auto-apply
             :enable-time-picker="false"
           />
         </div>
-        <div v-if="$v.endDate.$error" class="label">
-          <span class="label-text-alt text-error">{{ $v.endDate.$errors[0]?.$message }}</span>
-        </div>
-      </div>
+      </UFormField>
     </div>
-  </div>
 
-  <div class="modal-action">
-    <ButtonUI
-      variant="error"
-      outline
-      @click="
-        () => {
-          emit('closeModal')
-        }
-      "
-      >Cancel</ButtonUI
-    >
-    <ButtonUI
-      variant="primary"
-      @click="handleSubmit"
-      :loading="isCreatingProposal || isConfirmingProposal"
-      :disabled="isCreatingProposal || isConfirmingProposal"
-      data-test="create-proposal-button"
-    >
-      Create Proposal
-    </ButtonUI>
-  </div>
+    <div class="modal-action">
+      <UButton
+        color="error"
+        variant="outline"
+        @click="emit('closeModal')"
+      >
+        Cancel
+      </UButton>
+      <UButton
+        type="submit"
+        color="primary"
+        :loading="isCreatingProposal || isConfirmingProposal"
+        :disabled="isCreatingProposal || isConfirmingProposal"
+        data-test="create-proposal-button"
+      >
+        Create Proposal
+      </UButton>
+    </div>
+  </UForm>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
-import { ref, computed, watch } from 'vue'
+import { reactive, computed, watch } from 'vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
 import { useToastStore } from '@/stores/useToastStore'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 import { type Address } from 'viem'
-import { required, minLength, maxLength, helpers } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
 
 // Props and emits
 const emit = defineEmits(['closeModal', 'proposal-created'])
@@ -140,7 +92,7 @@ const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 // Form data
-const proposal = ref({
+const state = reactive({
   title: undefined as string | undefined,
   description: undefined as string | undefined,
   type: 'Financial' as 'Financial' | 'Technical' | 'Operational',
@@ -158,38 +110,19 @@ const types = [
 // Get the Proposals contract address from the team store
 const proposalsAddress = computed(() => teamStore.getContractAddressByType('Proposals') as Address)
 
-// Custom validators
-const afterStartDate = (value: Date | undefined) => {
-  if (!value || !proposal.value.startDate) return false
-  return value > proposal.value.startDate
-}
+// Zod validation schema
+const proposalSchema = z.object({
+  title: z.string({ message: 'Title is required' }).min(3, 'Title must be at least 3 characters').max(100, 'Title must be less than 100 characters'),
+  description: z.string({ message: 'Description is required' }).min(10, 'Description must be at least 10 characters').max(1000, 'Description must be less than 1000 characters'),
+  type: z.string({ message: 'Type is required' }).min(1, 'Type is required'),
+  startDate: z.date({ message: 'Start date is required' }),
+  endDate: z.date({ message: 'End date is required' })
+}).refine((data) => data.endDate > data.startDate, {
+  message: 'End date must be after start date',
+  path: ['endDate']
+})
 
-// Validation rules
-const rules = {
-  title: {
-    required: helpers.withMessage('Title is required', required),
-    minLength: helpers.withMessage('Title must be at least 3 characters', minLength(3)),
-    maxLength: helpers.withMessage('Title must be less than 100 characters', maxLength(100))
-  },
-  description: {
-    required: helpers.withMessage('Description is required', required),
-    minLength: helpers.withMessage('Description must be at least 10 characters', minLength(10)),
-    maxLength: helpers.withMessage('Description must be less than 1000 characters', maxLength(1000))
-  },
-  type: {
-    required: helpers.withMessage('Type is required', required)
-  },
-  startDate: {
-    required: helpers.withMessage('Start date is required', required)
-  },
-  endDate: {
-    required: helpers.withMessage('End date is required', required),
-    afterStartDate: helpers.withMessage('End date must be after start date', afterStartDate)
-  }
-}
-
-// Initialize Vuelidate
-const $v = useVuelidate(rules, proposal)
+type ProposalSchema = z.output<typeof proposalSchema>
 
 // Contract interaction
 const {
@@ -213,24 +146,19 @@ const dateToTimestamp = (date: Date): number => {
 }
 
 // Handle form submission
-const handleSubmit = async () => {
-  // Trigger validation
-  $v.value.$touch()
-
-  if ($v.value.$invalid) return
-
+const handleSubmit = async (event: FormSubmitEvent<ProposalSchema>) => {
   try {
-    const startTimestamp = dateToTimestamp(proposal.value.startDate!)
-    const endTimestamp = dateToTimestamp(proposal.value.endDate!)
+    const startTimestamp = dateToTimestamp(event.data.startDate)
+    const endTimestamp = dateToTimestamp(event.data.endDate)
 
     createProposal({
       address: proposalsAddress.value,
       abi: PROPOSALS_ABI,
       functionName: 'createProposal',
       args: [
-        proposal.value.title!,
-        proposal.value.description!,
-        proposal.value.type!,
+        event.data.title,
+        event.data.description,
+        event.data.type,
         BigInt(startTimestamp),
         BigInt(endTimestamp)
       ]
