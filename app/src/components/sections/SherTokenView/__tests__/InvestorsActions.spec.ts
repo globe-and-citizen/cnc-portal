@@ -20,6 +20,14 @@ const PayDividendsActionStub = {
   template: '<div data-test="pay-dividends-action" />'
 }
 
+const ToggleSherCompensationButtonStub = {
+  template: '<div data-test="toggle-sher-compensation-button" />'
+}
+
+const InvestInSafeButtonStub = {
+  template: '<div data-test="invest-in-safe-button" />'
+}
+
 describe('InvestorsActions.vue', () => {
   beforeEach(() => {
     resetContractMocks()
@@ -47,7 +55,9 @@ describe('InvestorsActions.vue', () => {
           AddressToolTip: true,
           DistributeMintAction: DistributeMintActionStub,
           MintTokenAction: MintTokenActionStub,
-          PayDividendsAction: PayDividendsActionStub
+          PayDividendsAction: PayDividendsActionStub,
+          ToggleSherCompensationButton: ToggleSherCompensationButtonStub,
+          InvestInSafeButton: InvestInSafeButtonStub
         }
       }
     })
@@ -69,6 +79,8 @@ describe('InvestorsActions.vue', () => {
     expect(wrapper.find('[data-test="distribute-mint-action"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="mint-token-action"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="pay-dividends-action"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="toggle-sher-compensation-button"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="invest-in-safe-button"]').exists()).toBe(true)
   })
 
   it('passes props to action components', () => {
@@ -102,5 +114,23 @@ describe('InvestorsActions.vue', () => {
     await wrapper.vm.$nextTick()
 
     expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching token symbol')
+  })
+
+  it('shows error toast when shareholders fetch fails', async () => {
+    const wrapper = createWrapper()
+
+    mockInvestorReads.shareholders.error.value = new Error('Shareholders error')
+    await wrapper.vm.$nextTick()
+
+    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching shareholders')
+  })
+
+  it('shows error toast when owner fetch fails', async () => {
+    const wrapper = createWrapper()
+
+    mockInvestorReads.owner.error.value = new Error('Owner error')
+    await wrapper.vm.$nextTick()
+
+    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching investors owner')
   })
 })

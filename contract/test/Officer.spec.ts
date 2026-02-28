@@ -11,6 +11,7 @@ import {
   Elections__factory,
   Proposals__factory,
   InvestorV1__factory,
+  SafeDepositRouter__factory,
   MockERC20
 } from '../typechain-types'
 
@@ -21,12 +22,14 @@ describe('Officer Contract', function () {
   let electionsContract: Elections__factory
   let expenseAccount: ExpenseAccountEIP712__factory
   let proposalsContract: Proposals__factory
+  let safeDepositRouter: SafeDepositRouter__factory
   let feeCollector: FeeCollector
   let bankAccountBeacon: UpgradeableBeacon
   let investorBeacon: UpgradeableBeacon
   let electionsBeacon: UpgradeableBeacon
   let expenseAccountBeacon: UpgradeableBeacon
   let proposalsBeacon: UpgradeableBeacon
+  let safeDepositRouterBeacon: UpgradeableBeacon
   let boardOfDirectors: BoardOfDirectors__factory
   let bodBeacon: UpgradeableBeacon
   let owner: SignerWithAddress
@@ -98,29 +101,37 @@ describe('Officer Contract', function () {
       proposalsContract
     )) as unknown as UpgradeableBeacon
 
+    //  ADD: Deploy SafeDepositRouter beacon
+    safeDepositRouter = await ethers.getContractFactory('SafeDepositRouter')
+    safeDepositRouterBeacon = (await upgrades.deployBeacon(
+      safeDepositRouter
+    )) as unknown as UpgradeableBeacon
+
     // Deploy Officer contract
     officer = await deployOfficerInstance()
 
     // Configure beacons
     await officer.connect(owner).configureBeacon('Bank', await bankAccountBeacon.getAddress())
-    // console.log("will configure investore beacon")
     await officer.connect(owner).configureBeacon('InvestorV1', await investorBeacon.getAddress())
     await officer.connect(owner).configureBeacon('Elections', await electionsBeacon.getAddress())
     await officer.connect(owner).configureBeacon('BoardOfDirectors', await bodBeacon.getAddress())
     await officer
       .connect(owner)
       .configureBeacon('ExpenseAccountEIP712', await expenseAccountBeacon.getAddress())
+    //  ADD: Configure SafeDepositRouter beacon
+    await officer
+      .connect(owner)
+      .configureBeacon('SafeDepositRouter', await safeDepositRouterBeacon.getAddress())
   })
 
   describe('Contract Deployment', () => {
     it.skip('Should deploy contracts via BeaconProxy', async function () {
-      // console.log("Ex of console log")
       const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        [], // token addresses array
+        [],
         owner.address
       ])
 
@@ -133,6 +144,18 @@ describe('Officer Contract', function () {
       const expenseInitData = expenseAccount.interface.encodeFunctionData('initialize', [
         owner.address
       ])
+
+      //  ADD: SafeDepositRouter initialization data
+      const safeDepositRouterInitData = safeDepositRouter.interface.encodeFunctionData(
+        'initialize',
+        [
+          // owner
+          addr1.address, // safeAddress (using addr1 as placeholder)
+          ethers.ZeroAddress, // investorAddress (will be set by Officer)
+          [await mockUSDC.getAddress(), await mockUSDT.getAddress()],
+          1n // multiplier
+        ]
+      )
 
       await expect(
         officer.connect(owner).deployBeaconProxy('Elections', electionsInitData)
@@ -155,13 +178,15 @@ describe('Officer Contract', function () {
       await expect(
         officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
       ).to.emit(officer, 'ContractDeployed')
+
+      //  ADD: Deploy SafeDepositRouter
+      await expect(
+        officer.connect(owner).deployBeaconProxy('SafeDepositRouter', safeDepositRouterInitData)
+      ).to.emit(officer, 'ContractDeployed')
     })
 
     it('Should restrict deployment to owners and founders', async function () {
-      const initData = bankAccount.interface.encodeFunctionData('initialize', [
-        [], // token addresses array
-        owner.address
-      ])
+      const initData = bankAccount.interface.encodeFunctionData('initialize', [[], owner.address])
 
       // Test unauthorized access
       await expect(officer.connect(addr3).deployBeaconProxy('Bank', initData)).to.be.revertedWith(
@@ -176,10 +201,7 @@ describe('Officer Contract', function () {
     })
 
     it('Should fail when deploying proxy for unknown contract type', async function () {
-      const initData = bankAccount.interface.encodeFunctionData('initialize', [
-        [], // token addresses array
-        owner.address
-      ])
+      const initData = bankAccount.interface.encodeFunctionData('initialize', [[], owner.address])
 
       // Using a new contract type that hasn't been configured
       const newContractType = 'NewBankType'
@@ -301,6 +323,8 @@ describe('Officer Contract', function () {
       const electionsBeaconAddr = await electionsBeacon.getAddress()
       const bodBeaconAddr = await bodBeacon.getAddress()
       const proposalsBeaconAddr = await proposalsBeacon.getAddress()
+      const investorBeaconAddr = await investorBeacon.getAddress()
+      const safeDepositRouterBeaconAddr = await safeDepositRouterBeacon.getAddress()
 
       const validConfigs = [
         {
@@ -318,6 +342,15 @@ describe('Officer Contract', function () {
         {
           beaconType: 'Proposals',
           beaconAddress: proposalsBeaconAddr
+        },
+        {
+          beaconType: 'InvestorV1',
+          beaconAddress: investorBeaconAddr
+        },
+        //  ADD: SafeDepositRouter beacon config
+        {
+          beaconType: 'SafeDepositRouter',
+          beaconAddress: safeDepositRouterBeaconAddr
         }
       ]
 
@@ -327,11 +360,26 @@ describe('Officer Contract', function () {
       const proposalsInitData = proposalsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
-
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        [], // token addresses array
+        [],
         owner.address
       ])
+      const investorInitData = investor.interface.encodeFunctionData('initialize', [
+        'Bitcoin',
+        'BTC',
+        ethers.ZeroAddress // Will be set to owner by Officer
+      ])
+      //  ADD: SafeDepositRouter init data
+      const safeDepositRouterInitData = safeDepositRouter.interface.encodeFunctionData(
+        'initialize',
+        [
+          // owner - will be transferred by Officer
+          addr1.address, // safeAddress
+          ethers.ZeroAddress, // investorAddress - will be set by Officer
+          [await mockUSDC.getAddress(), await mockUSDT.getAddress()],
+          1n // multiplier
+        ]
+      )
 
       const deployments = [
         {
@@ -345,13 +393,25 @@ describe('Officer Contract', function () {
         {
           contractType: 'Proposals',
           initializerData: proposalsInitData
+        },
+        {
+          contractType: 'InvestorV1',
+          initializerData: investorInitData
+        },
+        // ✅ ADD: SafeDepositRouter deployment
+        {
+          contractType: 'SafeDepositRouter',
+          initializerData: safeDepositRouterInitData
         }
       ]
 
       const officerContract = await deployOfficerInstance(validConfigs, deployments, true)
 
       const deployedContracts = await officerContract.getDeployedContracts()
-      expect(deployedContracts.length).to.equal(4) // Bank, Elections, Proposals, and auto-deployed BoardOfDirectors
+
+      // Verify all contracts deployed (Bank, Elections, BoardOfDirectors, Proposals, InvestorV1, SafeDepositRouter)
+      expect(deployedContracts.length).to.equal(6)
+
       expect(deployedContracts[0].contractType).to.equal('Bank')
       expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
 
@@ -364,6 +424,13 @@ describe('Officer Contract', function () {
       expect(deployedContracts[3].contractType).to.equal('Proposals')
       expect(deployedContracts[3].contractAddress).to.not.equal(ethers.ZeroAddress)
 
+      expect(deployedContracts[4].contractType).to.equal('InvestorV1')
+      expect(deployedContracts[4].contractAddress).to.not.equal(ethers.ZeroAddress)
+
+      //  ADD: Verify SafeDepositRouter deployment
+      expect(deployedContracts[5].contractType).to.equal('SafeDepositRouter')
+      expect(deployedContracts[5].contractAddress).to.not.equal(ethers.ZeroAddress)
+
       // Verify the Elections contract has the correct BoardOfDirectors address
       const electionsInstance = await ethers.getContractAt(
         'Elections',
@@ -371,6 +438,18 @@ describe('Officer Contract', function () {
       )
       const bodAddress = await electionsInstance.bodAddress()
       expect(bodAddress).to.equal(deployedContracts[2].contractAddress)
+
+      //  ADD: Verify SafeDepositRouter has MINTER_ROLE
+      const investorInstance = await ethers.getContractAt(
+        'InvestorV1',
+        deployedContracts[4].contractAddress
+      )
+      const minterRole = await investorInstance.MINTER_ROLE()
+      const hasMinterRole = await investorInstance.hasRole(
+        minterRole,
+        deployedContracts[5].contractAddress
+      )
+      expect(hasMinterRole).to.be.true
     })
 
     it('Should not deploy contracts during initialization when isDeployAllContracts is false', async function () {
@@ -390,7 +469,7 @@ describe('Officer Contract', function () {
       ])
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        [], // token addresses array
+        [],
         owner.address
       ])
 
@@ -414,16 +493,26 @@ describe('Officer Contract', function () {
 
   describe('Batch Contract Deployment', () => {
     it('Should deploy multiple contracts in a single transaction', async function () {
-      // Create team first to ensure proper setup
-
       const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
 
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        [], // token addresses array
+        [],
         owner.address
       ])
+
+      //  ADD: SafeDepositRouter init data
+      const safeDepositRouterInitData = safeDepositRouter.interface.encodeFunctionData(
+        'initialize',
+        [
+          // owner
+          addr1.address, // safeAddress
+          ethers.ZeroAddress, // investorAddress
+          [await mockUSDC.getAddress(), await mockUSDT.getAddress()],
+          1n
+        ]
+      )
 
       const deployments = [
         {
@@ -433,6 +522,11 @@ describe('Officer Contract', function () {
         {
           contractType: 'Elections',
           initializerData: electionsInitData
+        },
+        //  ADD: SafeDepositRouter deployment
+        {
+          contractType: 'SafeDepositRouter',
+          initializerData: safeDepositRouterInitData
         }
       ]
 
@@ -443,10 +537,9 @@ describe('Officer Contract', function () {
       // Verify deployments
       const deployedContracts = await officer.getTeam()
 
-      // Should have 3 contracts (Bank, Elections, and auto-deployed BoardOfDirectors)
-      expect(deployedContracts.length).to.equal(3)
+      // Should have 4 contracts (Bank, Elections, BoardOfDirectors, SafeDepositRouter)
+      expect(deployedContracts.length).to.equal(4)
 
-      // Instead of checking specific addresses, verify contract types and that addresses are valid
       expect(deployedContracts[0].contractType).to.equal('Bank')
       expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
 
@@ -455,6 +548,10 @@ describe('Officer Contract', function () {
 
       expect(deployedContracts[2].contractType).to.equal('BoardOfDirectors')
       expect(deployedContracts[2].contractAddress).to.not.equal(ethers.ZeroAddress)
+
+      //  ADD: Verify SafeDepositRouter
+      expect(deployedContracts[3].contractType).to.equal('SafeDepositRouter')
+      expect(deployedContracts[3].contractAddress).to.not.equal(ethers.ZeroAddress)
 
       // Verify the Elections contract has the correct BoardOfDirectors address
       const electionsInstance = await ethers.getContractAt(
@@ -525,12 +622,14 @@ describe('Officer Contract', function () {
   describe('Contract Type Management', () => {
     it('Should track configured contract types', async function () {
       const types = await officer.getConfiguredContractTypes()
-      expect(types).to.have.lengthOf(5)
+      // ✅ UPDATE: Now should include SafeDepositRouter (6 types total)
+      expect(types).to.have.lengthOf(6)
       expect(types).to.include('Bank')
       expect(types).to.include('Elections')
       expect(types).to.include('BoardOfDirectors')
       expect(types).to.include('ExpenseAccountEIP712')
       expect(types).to.include('InvestorV1')
+      expect(types).to.include('SafeDepositRouter')
     })
 
     it('Should add new contract type only when configuring new beacon', async function () {
@@ -557,12 +656,11 @@ describe('Officer Contract', function () {
     })
 
     it('Should return all deployed contracts with their types', async function () {
-      // Deploy multiple contracts
       const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
       const bankInitData = bankAccount.interface.encodeFunctionData('initialize', [
-        [], // token addresses array
+        [],
         owner.address
       ])
 
@@ -572,31 +670,22 @@ describe('Officer Contract', function () {
       // Deploy Bank contract
       await officer.connect(owner).deployBeaconProxy('Bank', bankInitData)
 
-      // Get deployed contracts
       const deployedContracts = await officer.getDeployedContracts()
 
-      // Verify the results (updated order)
-      expect(deployedContracts.length).to.equal(3) // Elections + BoardOfDirectors + Bank
+      expect(deployedContracts.length).to.equal(3)
 
-      // Check first contract (Elections)
       expect(deployedContracts[0].contractType).to.equal('Elections')
       expect(deployedContracts[0].contractAddress).to.not.equal(ethers.ZeroAddress)
 
-      // Check second contract (BoardOfDirectors - auto-deployed)
       expect(deployedContracts[1].contractType).to.equal('BoardOfDirectors')
       expect(deployedContracts[1].contractAddress).to.not.equal(ethers.ZeroAddress)
 
-      // Check third contract (Bank)
       expect(deployedContracts[2].contractType).to.equal('Bank')
       expect(deployedContracts[2].contractAddress).to.not.equal(ethers.ZeroAddress)
     })
 
     it('Should maintain contract order as they are deployed', async function () {
-      // Deploy contracts in specific order
-      const initData = bankAccount.interface.encodeFunctionData('initialize', [
-        [], // token addresses array
-        owner.address
-      ])
+      const initData = bankAccount.interface.encodeFunctionData('initialize', [[], owner.address])
 
       // Deploy three Bank contracts
       await officer.connect(owner).deployBeaconProxy('Bank', initData)
@@ -605,14 +694,12 @@ describe('Officer Contract', function () {
 
       const deployedContracts = await officer.getDeployedContracts()
 
-      // Verify order and length
       expect(deployedContracts.length).to.equal(3)
       deployedContracts.forEach((contract) => {
         expect(contract.contractType).to.equal('Bank')
         expect(contract.contractAddress).to.not.equal(ethers.ZeroAddress)
       })
 
-      // Verify addresses are different
       expect(deployedContracts[0].contractAddress).to.not.equal(
         deployedContracts[1].contractAddress
       )
@@ -625,22 +712,219 @@ describe('Officer Contract', function () {
     })
 
     it('Should return same data as getTeam for deployed contracts', async function () {
-      // Deploy a contract
       const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
       await officer.connect(owner).deployBeaconProxy('Elections', electionsInitData)
 
-      // Get data from both functions
       const deployedContracts = await officer.getDeployedContracts()
       const teamDeployedContracts = await officer.getTeam()
 
-      // Compare results
       expect(deployedContracts.length).to.equal(teamDeployedContracts.length)
       expect(deployedContracts[0].contractType).to.equal(teamDeployedContracts[0].contractType)
       expect(deployedContracts[0].contractAddress).to.equal(
         teamDeployedContracts[0].contractAddress
       )
+    })
+  })
+
+  //  ADD: SafeDepositRouter-specific tests
+  describe('SafeDepositRouter Integration', () => {
+    it('Should deploy SafeDepositRouter with correct initial state', async function () {
+      const investorInitData = investor.interface.encodeFunctionData('initialize', [
+        'Bitcoin',
+        'BTC',
+        ethers.ZeroAddress
+      ])
+
+      // Initialize with ethers.ZeroAddress as owner - Officer becomes owner via msg.sender
+      const safeDepositRouterInitData = safeDepositRouter.interface.encodeFunctionData(
+        'initialize',
+        [
+          // owner - Officer (msg.sender) becomes owner
+          addr1.address, // safeAddress
+          ethers.ZeroAddress, // investorAddress - will be set by Officer
+          [await mockUSDC.getAddress(), await mockUSDT.getAddress()],
+          1n
+        ]
+      )
+
+      // Deploy InvestorV1 first
+      await officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
+
+      // Deploy SafeDepositRouter
+      await officer.connect(owner).deployBeaconProxy('SafeDepositRouter', safeDepositRouterInitData)
+
+      const deployedContracts = await officer.getDeployedContracts()
+      const safeDepositRouterAddress = deployedContracts.find(
+        (c) => c.contractType === 'SafeDepositRouter'
+      )?.contractAddress
+
+      expect(safeDepositRouterAddress).to.not.equal(ethers.ZeroAddress)
+
+      // Verify SafeDepositRouter contract
+      const safeDepositRouterInstance = await ethers.getContractAt(
+        'SafeDepositRouter',
+        safeDepositRouterAddress!
+      )
+
+      expect(await safeDepositRouterInstance.safeAddress()).to.equal(addr1.address)
+      expect(await safeDepositRouterInstance.multiplier()).to.equal(1n)
+      expect(await safeDepositRouterInstance.depositsEnabled()).to.equal(false) // Disabled by default
+    })
+
+    it('Should grant MINTER_ROLE to SafeDepositRouter when deployed with InvestorV1', async function () {
+      const investorInitData = investor.interface.encodeFunctionData('initialize', [
+        'Bitcoin',
+        'BTC',
+        ethers.ZeroAddress
+      ])
+
+      // Initialize with ethers.ZeroAddress - Officer becomes owner
+      const safeDepositRouterInitData = safeDepositRouter.interface.encodeFunctionData(
+        'initialize',
+        [
+          // Officer becomes owner
+          addr1.address, // safeAddress
+          ethers.ZeroAddress, // investorAddress
+          [await mockUSDC.getAddress()],
+          1n
+        ]
+      )
+
+      const deployments = [
+        {
+          contractType: 'InvestorV1',
+          initializerData: investorInitData
+        },
+        {
+          contractType: 'SafeDepositRouter',
+          initializerData: safeDepositRouterInitData
+        }
+      ]
+
+      await officer.connect(owner).deployAllContracts(deployments)
+
+      const deployedContracts = await officer.getDeployedContracts()
+      const investorAddress = deployedContracts.find(
+        (c) => c.contractType === 'InvestorV1'
+      )?.contractAddress
+      const safeDepositRouterAddress = deployedContracts.find(
+        (c) => c.contractType === 'SafeDepositRouter'
+      )?.contractAddress
+
+      const investorInstance = await ethers.getContractAt('InvestorV1', investorAddress!)
+      const minterRole = await investorInstance.MINTER_ROLE()
+
+      const hasMinterRole = await investorInstance.hasRole(minterRole, safeDepositRouterAddress!)
+      expect(hasMinterRole).to.be.true
+    })
+
+    it('Should transfer SafeDepositRouter ownership to team owner after deployment', async function () {
+      const investorInitData = investor.interface.encodeFunctionData('initialize', [
+        'Bitcoin',
+        'BTC',
+        ethers.ZeroAddress
+      ])
+
+      const safeDepositRouterInitData = safeDepositRouter.interface.encodeFunctionData(
+        'initialize',
+        [
+          // owner - will be transferred
+          addr1.address, // safeAddress
+          ethers.ZeroAddress, // investorAddress
+          [await mockUSDC.getAddress()],
+          1n
+        ]
+      )
+
+      await officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
+      await officer.connect(owner).deployBeaconProxy('SafeDepositRouter', safeDepositRouterInitData)
+
+      const deployedContracts = await officer.getDeployedContracts()
+      const safeDepositRouterAddress = deployedContracts.find(
+        (c) => c.contractType === 'SafeDepositRouter'
+      )?.contractAddress
+
+      const safeDepositRouterInstance = await ethers.getContractAt(
+        'SafeDepositRouter',
+        safeDepositRouterAddress!
+      )
+
+      expect(await safeDepositRouterInstance.owner()).to.equal(owner.address)
+    })
+
+    it('Should set investor address on SafeDepositRouter during deployment', async function () {
+      const investorInitData = investor.interface.encodeFunctionData('initialize', [
+        'Bitcoin',
+        'BTC',
+        ethers.ZeroAddress
+      ])
+
+      const safeDepositRouterInitData = safeDepositRouter.interface.encodeFunctionData(
+        'initialize',
+        [
+          addr1.address, // safeAddress
+          ethers.ZeroAddress, // investorAddress - will be set by Officer
+          [await mockUSDC.getAddress()],
+          1n
+        ]
+      )
+
+      await officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
+      await officer.connect(owner).deployBeaconProxy('SafeDepositRouter', safeDepositRouterInitData)
+
+      const deployedContracts = await officer.getDeployedContracts()
+      const investorAddress = deployedContracts.find(
+        (c) => c.contractType === 'InvestorV1'
+      )?.contractAddress
+      const safeDepositRouterAddress = deployedContracts.find(
+        (c) => c.contractType === 'SafeDepositRouter'
+      )?.contractAddress
+
+      const safeDepositRouterInstance = await ethers.getContractAt(
+        'SafeDepositRouter',
+        safeDepositRouterAddress!
+      )
+
+      expect(await safeDepositRouterInstance.investorAddress()).to.equal(investorAddress)
+    })
+
+    it('Should handle SafeDepositRouter deployment order correctly', async function () {
+      const investorInitData = investor.interface.encodeFunctionData('initialize', [
+        'Bitcoin',
+        'BTC',
+        ethers.ZeroAddress
+      ])
+
+      const safeDepositRouterInitData = safeDepositRouter.interface.encodeFunctionData(
+        'initialize',
+        [
+          addr1.address, // safeAddress
+          ethers.ZeroAddress, // investorAddress
+          [await mockUSDC.getAddress()],
+          1n
+        ]
+      )
+
+      await officer.connect(owner).deployBeaconProxy('SafeDepositRouter', safeDepositRouterInitData)
+      await officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
+
+      const deployedContracts = await officer.getDeployedContracts()
+      const investorAddress = deployedContracts.find(
+        (c) => c.contractType === 'InvestorV1'
+      )?.contractAddress
+      const safeDepositRouterAddress = deployedContracts.find(
+        (c) => c.contractType === 'SafeDepositRouter'
+      )?.contractAddress
+
+      const safeDepositRouterInstance = await ethers.getContractAt(
+        'SafeDepositRouter',
+        safeDepositRouterAddress!
+      )
+
+      expect(await safeDepositRouterInstance.investorAddress()).to.equal(investorAddress)
+      expect(await safeDepositRouterInstance.owner()).to.equal(owner.address)
     })
   })
 })

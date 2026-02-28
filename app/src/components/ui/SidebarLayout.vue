@@ -146,7 +146,7 @@ const items = computed<NavigationMenuItem[]>(() => [
           name: 'safe-account',
           params: {
             id: teamStore.currentTeamId || '1',
-            address: teamStore.currentTeamMeta?.data?.safeAddress || '0x'
+            address: teamStore.getContractAddressByType('Safe') || '0x'
           }
         }
       },

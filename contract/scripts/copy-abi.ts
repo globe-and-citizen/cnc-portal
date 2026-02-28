@@ -13,7 +13,8 @@ const contracts = [
   'Officer',
   'Proposals',
   'Vesting',
-  'Voting'
+  'Voting',
+  'SafeDepositRouter'
 ]
 
 // Source directory for compiled artifacts
@@ -47,7 +48,8 @@ function findContractArtifact(contractName: string): string | null {
     path.join(artifactsDir, 'Elections', `${contractName}.sol`, `${contractName}.json`),
     path.join(artifactsDir, 'Investor', `${contractName}.sol`, `${contractName}.json`),
     path.join(artifactsDir, 'Proposals', `${contractName}.sol`, `${contractName}.json`),
-    path.join(artifactsDir, 'Voting', `${contractName}.sol`, `${contractName}.json`)
+    path.join(artifactsDir, 'Voting', `${contractName}.sol`, `${contractName}.json`),
+    path.join(artifactsDir, 'SafeDepositRouter', `${contractName}.sol`, `${contractName}.json`)
   ]
 
   for (const possiblePath of possiblePaths) {
