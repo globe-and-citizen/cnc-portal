@@ -1,7 +1,7 @@
 <template>
   <div class="flex gap-10">
     <OverviewCard
-      :title="`${shareholdersCount} Investors`"
+      :title="`${shareholders?.length || 0} Investors`"
       subtitle="Investors"
       variant="info"
       :card-icon="personIcon"
@@ -10,8 +10,8 @@
     </OverviewCard>
     <OverviewCard
       :title="
-        tokenBalanceValue != null && tokenSymbolValue
-          ? formatUnits(tokenBalanceValue, 6) + ' ' + tokenSymbolValue
+        tokenBalance != null && tokenSymbol
+          ? formatUnits(tokenBalance, 6) + ' ' + tokenSymbol
           : '...'
       "
       subtitle="Your Balance"
@@ -22,9 +22,7 @@
     </OverviewCard>
     <OverviewCard
       :title="
-        totalSupplyValue != null && tokenSymbolValue
-          ? formatUnits(totalSupplyValue, 6) + ' ' + tokenSymbolValue
-          : '...'
+        totalSupply != null && tokenSymbol ? formatUnits(totalSupply, 6) + ' ' + tokenSymbol : '...'
       "
       subtitle="Total Supply"
       variant="warning"
@@ -48,7 +46,7 @@ import {
   useInvestorBalanceOf,
   useInvestorShareholders
 } from '@/composables/investor/reads'
-import { computed, watch } from 'vue'
+import { watch } from 'vue'
 import { log } from '@/utils'
 
 const teamStore = useTeamStore()
@@ -61,13 +59,6 @@ const { data: tokenBalance, error: tokenBalanceError } = useInvestorBalanceOf(
   userStore.address as Address
 )
 const { data: shareholders, error: shareholderError } = useInvestorShareholders()
-
-const tokenSymbolValue = computed(() => (tokenSymbol.value as string | undefined) ?? '')
-const totalSupplyValue = computed(() => totalSupply.value as bigint | undefined)
-const tokenBalanceValue = computed(() => tokenBalance.value as bigint | undefined)
-const shareholdersCount = computed(() =>
-  Array.isArray(shareholders.value) ? shareholders.value.length : 0
-)
 
 watch(tokenSymbolError, (value) => {
   if (value) {

@@ -2,18 +2,17 @@
   <CardComponent title="Shareholders List" class="w-full justify-between">
     <TableComponent
       :rows="
-        shareholdersList.map((shareholder, index) => ({
+        shareholders?.map((shareholder, index) => ({
           index: index + 1,
           name: getShareholderName(shareholder.shareholder) || 'Unknown',
           address: shareholder.shareholder,
-          balance: `${formatUnits(shareholder.amount, 6)} ${tokenSymbolValue}`,
-          percentage:
-            !totalSupplyLoading && totalSupplyValue != null
-              ? `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(totalSupplyValue)).toString()}%`
-              : '...%',
+          balance: `${formatUnits(shareholder.amount, 6)} ${tokenSymbol}`,
+          percentage: !totalSupplyLoading
+            ? `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(totalSupply!)).toString()}%`
+            : '...%',
           shareholder: shareholder.shareholder,
           amount: shareholder.amount
-        }))
+        })) ?? []
       "
       :columns="columns"
       :loading="shareholdersLoading"
@@ -90,7 +89,7 @@ import {
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { log } from '@/utils'
 import { formatUnits, type Address } from 'viem'
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 
 const mintIndividualModal = ref({
   mount: false,
@@ -114,12 +113,6 @@ const {
   isLoading: shareholdersLoading,
   error: shareholderError
 } = useInvestorShareholders()
-
-type Shareholder = { shareholder: Address; amount: bigint }
-
-const tokenSymbolValue = computed(() => (tokenSymbol.value as string | undefined) ?? '')
-const totalSupplyValue = computed(() => totalSupply.value as bigint | undefined)
-const shareholdersList = computed(() => (shareholders.value as Shareholder[] | undefined) ?? [])
 
 const getShareholderName = (address: Address) => {
   const member = teamStore.currentTeam?.members?.find((member) => member.address === address)

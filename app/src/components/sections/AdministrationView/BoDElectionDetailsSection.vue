@@ -27,17 +27,6 @@ import { config } from '@/wagmi.config'
 import { log, parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 
-type ElectionContractTuple = readonly [
-  bigint,
-  string,
-  string,
-  `0x${string}`,
-  bigint,
-  bigint,
-  bigint,
-  boolean
-]
-
 const props = defineProps<{ electionId: bigint }>()
 const queryClient = useQueryClient()
 const teamStore = useTeamStore()
@@ -92,17 +81,16 @@ const candidates = computed(() => {
   if (
     electionCandidates.value &&
     Array.isArray(electionCandidates.value) &&
-    Array.isArray(election.value) &&
-    election.value.length >= 8
+    Array.isArray(election.value)
   ) {
-    const electionData = election.value as unknown as ElectionContractTuple
     return electionCandidates.value.map((candidate: Address) => {
       const user = teamStore.currentTeam?.members?.find(
         (member) => member.address === candidate
       ) as User & { role?: string }
       const currentVotes = votesPerCandidate[candidate] ?? 0
       return {
-        id: BigInt(electionData[0]),
+        // @ts-expect-error type issue
+        id: BigInt((election.value as string | bigint[])[0]),
         user: {
           address: candidate,
           name: user?.name || 'Unknown',
@@ -111,8 +99,10 @@ const candidates = computed(() => {
         },
         totalVotes: Number(voteCount.value) || 0,
         currentVotes: currentVotes as number,
-        startDate: new Date(Number(electionData[4]) * 1000),
-        endDate: new Date(Number(electionData[5]) * 1000)
+        // @ts-expect-error type issue
+        startDate: new Date(Number((election.value as bigint[])[4]) * 1000),
+        // @ts-expect-error type issue
+        endDate: new Date(Number((election.value as bigint[])[5]) * 1000)
       }
     })
   } else return []
@@ -124,11 +114,12 @@ const castVote = async (candidateAddress: Address) => {
       addErrorToast('Elections contract address not found')
       return
     }
-    const args = [electionId.value, candidateAddress] as const
+    const args = [electionId.value, candidateAddress]
 
     const data = encodeFunctionData({
       abi: ELECTIONS_ABI,
       functionName: 'castVote',
+      // @ts-expect-error type issue
       args
     })
 
@@ -141,6 +132,7 @@ const castVote = async (candidateAddress: Address) => {
       address: electionsAddress.value,
       abi: ELECTIONS_ABI,
       functionName: 'castVote',
+      // @ts-expect-error type issue
       args
     })
   } catch (error) {
