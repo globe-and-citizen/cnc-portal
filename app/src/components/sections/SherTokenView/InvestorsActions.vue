@@ -11,8 +11,8 @@
             v-if="
               isLoadingTokenSymbol ||
               isLoadingInvestorsOwner ||
-              !tokenSymbolValue ||
-              !investorsOwnerValue ||
+              !tokenSymbol ||
+              !investorsOwner ||
               !investorAddress
             "
           >
@@ -22,19 +22,16 @@
           </template>
           <template v-else>
             <DistributeMintAction
-              :token-symbol="tokenSymbolValue"
+              :token-symbol="tokenSymbol"
               :investors-address="investorAddress"
             />
-            <MintTokenAction
-              :token-symbol="tokenSymbolValue"
-              :investors-owner="investorsOwnerValue"
-            />
+            <MintTokenAction :token-symbol="tokenSymbol" :investors-owner="investorsOwner" />
 
             <PayDividendsAction
-              :token-symbol="tokenSymbolValue"
-              :shareholders-count="shareholdersList.length"
+              :token-symbol="tokenSymbol"
+              :shareholders-count="shareholders?.length ?? 0"
               :investors-address="investorAddress"
-              :investors-owner="investorsOwnerValue"
+              :investors-owner="investorsOwner"
               :bank-address="bankAddress"
             />
             <ToggleSherCompensationButton />
@@ -47,8 +44,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
-import type { Address } from 'viem'
+import { watch } from 'vue'
+// import type { Address } from 'viem'
 // import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { useTeamStore, useToastStore } from '@/stores'
 import { log } from '@/utils'
@@ -91,12 +88,6 @@ const {
   error: errorInvestorsOwner,
   isLoading: isLoadingInvestorsOwner
 } = useInvestorOwner()
-
-type Shareholder = { shareholder: Address; amount: bigint }
-
-const tokenSymbolValue = computed(() => (tokenSymbol.value as string | undefined) ?? '')
-const investorsOwnerValue = computed(() => investorsOwner.value as Address | undefined)
-const shareholdersList = computed(() => (shareholders.value as Shareholder[] | undefined) ?? [])
 
 // Watch for errors and display toast notifications
 watch(tokenSymbolError, (value) => {

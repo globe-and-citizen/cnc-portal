@@ -22,7 +22,7 @@ import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-
 import { simulateContract, waitForTransactionReceipt, writeContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
-import { keccak256 } from 'viem'
+import { keccak256, type Address } from 'viem'
 import { log, parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore, useToastStore } from '@/stores'
@@ -67,7 +67,7 @@ const enableClaim = async () => {
     const args = {
       abi: CASH_REMUNERATION_EIP712_ABI,
       functionName: 'enableClaim' as const,
-      args: [keccak256(props.weeklyClaim.signature as `0x${string}`)] as const
+      args: [keccak256(props.weeklyClaim.signature as Address)] as const
     }
     await simulateContract(config, {
       ...args,

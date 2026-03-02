@@ -24,7 +24,7 @@
             <a>{{ option.label }}</a>
           </li>
           <li>
-            <VueDatePicker
+            <Datepicker
               v-model="dateRange"
               range
               :format="'dd/MM/yyyy'"
@@ -35,7 +35,7 @@
               <template #trigger>
                 <p>Custom Range</p>
               </template>
-            </VueDatePicker>
+            </Datepicker>
           </li>
         </ul>
       </div>
@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { VueDatePicker } from '@vuepic/vue-datepicker'
+import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { onClickOutside } from '@vueuse/core'
 import ButtonUI from './ButtonUI.vue'

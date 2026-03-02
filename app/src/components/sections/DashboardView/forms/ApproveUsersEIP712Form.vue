@@ -184,7 +184,7 @@
           v-model="selectedOptions[budgetType]"
           :id="'checkbox-' + budgetType"
           :data-test="`limit-checkbox-${budgetType}`"
-          @change="toggleOption(Number(budgetType) as 0 | 1 | 2)"
+          @change="toggleOption(budgetType)"
         />
         <!-- Numeric Input -->
         <span class="w-48">{{ label }}</span
@@ -196,7 +196,7 @@
           v-model.number="values[budgetType]"
           placeholder="Enter value"
           :data-test="`limit-input-${budgetType}`"
-          @input="updateValue(Number(budgetType) as 0 | 1 | 2)"
+          @input="updateValue(budgetType)"
         />
       </label>
     </div>
@@ -239,7 +239,7 @@ import { isAddress, zeroAddress } from 'viem'
 import { useVuelidate } from '@vuelidate/core'
 import { helpers, required } from '@vuelidate/validators'
 import type { User } from '@/types'
-import { VueDatePicker } from '@vuepic/vue-datepicker'
+import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
