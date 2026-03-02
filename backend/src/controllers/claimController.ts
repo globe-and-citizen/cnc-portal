@@ -7,45 +7,21 @@ import { errorResponse } from '../utils/utils';
 
 import { Claim, Prisma } from '@prisma/client';
 import { isUserMemberOfTeam } from './wageController';
-import { deleteFile, getPresignedDownloadUrl } from '../services/storageService';
+import { deleteFile, getPublicFileUrl } from '../services/storageService';
 
 // Type for file attachment data (updated for Railway S3)
 type FileAttachmentData = {
   fileType: string;
   fileSize: number;
   fileKey: string; // S3 object key - unique identifier
-  fileUrl: string; // Presigned download URL
+  fileUrl: string;
 };
 
-const refreshAttachmentUrls = async (attachments: unknown): Promise<unknown> => {
-  if (!Array.isArray(attachments) || attachments.length === 0) {
-    return attachments;
-  }
-
-  const refreshed = await Promise.all(
-    attachments.map(async (attachment) => {
-      if (!attachment || typeof attachment !== 'object') {
-        return attachment;
-      }
-
-      const typedAttachment = attachment as FileAttachmentData;
-      if (!typedAttachment.fileKey) {
-        return attachment;
-      }
-
-      try {
-        const freshUrl = await getPresignedDownloadUrl(typedAttachment.fileKey);
-        return {
-          ...typedAttachment,
-          fileUrl: freshUrl,
-        };
-      } catch {
-        return attachment;
-      }
-    })
-  );
-
-  return refreshed;
+const normalizeAttachments = (attachments: FileAttachmentData[]): FileAttachmentData[] => {
+  return attachments.map((attachment) => ({
+    ...attachment,
+    fileUrl: attachment.fileKey ? getPublicFileUrl(attachment.fileKey) : attachment.fileUrl,
+  }));
 };
 
 dayjs.extend(utc);
@@ -162,7 +138,7 @@ export const addClaim = async (req: Request, res: Response) => {
     }
 
     // Use pre-uploaded attachments from body
-    const fileAttachmentsData = attachments.length > 0 ? attachments : undefined;
+    const fileAttachmentsData = attachments.length > 0 ? normalizeAttachments(attachments) : undefined;
 
     // Create the claim with file attachments
     const claim = await prisma.claim.create({
@@ -226,14 +202,18 @@ export const getClaims = async (req: Request, res: Response) => {
       },
     });
 
-    const claimsWithFreshAttachmentUrls = await Promise.all(
-      claims.map(async (claim) => ({
-        ...claim,
-        fileAttachments: await refreshAttachmentUrls(claim.fileAttachments),
-      }))
-    );
+    const claimsWithStableUrls = claims.map((claim) => {
+      const fileAttachments = Array.isArray(claim.fileAttachments)
+        ? normalizeAttachments(claim.fileAttachments as FileAttachmentData[])
+        : claim.fileAttachments;
 
-    return res.status(200).json(claimsWithFreshAttachmentUrls);
+      return {
+        ...claim,
+        fileAttachments,
+      };
+    });
+
+    return res.status(200).json(claimsWithStableUrls);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
@@ -332,7 +312,7 @@ export const updateClaim = async (req: Request, res: Response) => {
         );
       }
 
-      fileAttachmentsData = [...fileAttachmentsData, ...attachments];
+      fileAttachmentsData = [...fileAttachmentsData, ...normalizeAttachments(attachments)];
     }
 
     const updatedClaim = await prisma.claim.update({

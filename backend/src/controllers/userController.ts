@@ -4,7 +4,7 @@ import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 import {
   uploadFile,
-  getPresignedDownloadUrl,
+  getPublicFileUrl,
   deleteFile,
   isStorageConfigured,
 } from '../services/storageService';
@@ -19,13 +19,13 @@ const extractProfileStorageKey = (imageUrl?: string | null): string | null => {
     return null;
   }
 
-  if (imageUrl.startsWith('profiles/')) {
+  if (imageUrl.startsWith('profiles/') || imageUrl.startsWith('uploads/')) {
     return imageUrl;
   }
 
   const decodedUrl = decodeURIComponent(imageUrl);
-  const profileKeyMatch = decodedUrl.match(/profiles\/[^?]+/);
-  return profileKeyMatch ? profileKeyMatch[0] : null;
+  const storageKeyMatch = decodedUrl.match(/(profiles|uploads)\/[^?#]+/);
+  return storageKeyMatch ? storageKeyMatch[0] : null;
 };
 
 const resolveProfileImageUrl = async (
@@ -40,11 +40,7 @@ const resolveProfileImageUrl = async (
     return imageUrl;
   }
 
-  try {
-    return await getPresignedDownloadUrl(key, 86400 * 7);
-  } catch {
-    return imageUrl;
-  }
+  return getPublicFileUrl(key);
 };
 
 /**
@@ -142,9 +138,7 @@ export const updateUser = async (req: Request, res: Response) => {
           return errorResponse(400, uploadResult.error || 'Failed to upload profile image', res);
         }
 
-        // Generate presigned URL valid for 7 days
-        const signedUrl = await getPresignedDownloadUrl(uploadResult.metadata.key, 86400 * 7);
-        newImageUrl = signedUrl;
+        newImageUrl = getPublicFileUrl(uploadResult.metadata.key);
 
         // Delete old profile image if it exists and was stored on Railway
         if (user.imageUrl) {
@@ -161,6 +155,24 @@ export const updateUser = async (req: Request, res: Response) => {
       } catch (error) {
         console.error('Error uploading profile image:', error);
         return errorResponse(500, 'Failed to process profile image upload', res);
+      }
+    }
+
+    if (
+      !multerReq.file &&
+      imageUrl !== undefined &&
+      imageUrl !== user.imageUrl &&
+      isStorageConfigured()
+    ) {
+      const oldProfileKey = extractProfileStorageKey(user.imageUrl);
+      const nextProfileKey = extractProfileStorageKey(imageUrl);
+
+      if (oldProfileKey && oldProfileKey !== nextProfileKey) {
+        try {
+          await deleteFile(oldProfileKey);
+        } catch (e) {
+          console.warn('Could not delete old profile image:', e);
+        }
       }
     }
 
