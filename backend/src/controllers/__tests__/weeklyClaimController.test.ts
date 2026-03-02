@@ -8,8 +8,8 @@ import type { Address } from 'viem';
 
 const CALLER = '0x1234567890123456789012345678901234567890';
 
-const { mockGetPresignedDownloadUrl } = vi.hoisted(() => ({
-  mockGetPresignedDownloadUrl: vi.fn(),
+const { mockGetPublicFileUrl } = vi.hoisted(() => ({
+  mockGetPublicFileUrl: vi.fn((key: string) => `https://storage.railway.app/test-bucket/${key}`),
 }));
 
 const { readContractMock } = vi.hoisted(() => ({
@@ -17,7 +17,7 @@ const { readContractMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../services/storageService', () => ({
-  getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
+  getPublicFileUrl: mockGetPublicFileUrl,
 }));
 
 vi.mock('../../middleware/authMiddleware', () => ({
@@ -321,10 +321,7 @@ describe('Weekly Claim Controller', () => {
       });
     });
 
-    it('should return filtered claims and refresh attachment URLs', async () => {
-      mockGetPresignedDownloadUrl
-        .mockResolvedValueOnce('fresh-1')
-        .mockRejectedValueOnce(new Error('presign failed'));
+    it('should return filtered claims and normalize attachment URLs', async () => {
 
       const weeklyClaims = [
         {
@@ -376,8 +373,12 @@ describe('Weekly Claim Controller', () => {
       );
 
       expect(response.body[0].hoursWorked).toBe(10);
-      expect(response.body[0].claims[0].fileAttachments[0].fileUrl).toBe('fresh-1');
-      expect(response.body[0].claims[3].fileAttachments[0].fileUrl).toBe('old2');
+      expect(response.body[0].claims[0].fileAttachments[0].fileUrl).toBe(
+        'https://storage.railway.app/test-bucket/k1'
+      );
+      expect(response.body[0].claims[3].fileAttachments[0].fileUrl).toBe(
+        'https://storage.railway.app/test-bucket/k2'
+      );
     });
 
     it('should return 200 for empty claims list', async () => {

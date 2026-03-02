@@ -49,13 +49,13 @@ vi.mock('../wageController', () => ({
 }));
 
 // Mock the storage service
-const { mockGetPresignedDownloadUrl, mockDeleteFile } = vi.hoisted(() => ({
-  mockGetPresignedDownloadUrl: vi.fn(),
+const { mockGetPublicFileUrl, mockDeleteFile } = vi.hoisted(() => ({
+  mockGetPublicFileUrl: vi.fn((key: string) => `https://storage.railway.app/test-bucket/${key}`),
   mockDeleteFile: vi.fn(),
 }));
 
 vi.mock('../../services/storageService', () => ({
-  getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
+  getPublicFileUrl: mockGetPublicFileUrl,
   deleteFile: mockDeleteFile,
   isStorageConfigured: vi.fn(() => true),
   uploadFile: vi.fn(),

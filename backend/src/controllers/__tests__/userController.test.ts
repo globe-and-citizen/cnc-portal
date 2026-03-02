@@ -11,11 +11,11 @@ import { getAllUsers } from '../userController';
 const DEFAULT_ADDRESS = '0x1234567890123456789012345678901234567890';
 const ALT_ADDRESS = '0x9999999999999999999999999999999999999999';
 const PROFILE_KEY = `profiles/${DEFAULT_ADDRESS}/new.png`;
-const SIGNED_URL = `https://storage.railway.app/bucket/${PROFILE_KEY}?X-Amz-Signature=signed`;
+const PUBLIC_URL = `https://storage.railway.app/bucket/${PROFILE_KEY}`;
 
-const { mockGetPresignedDownloadUrl, mockUploadFile, mockDeleteFile, mockIsStorageConfigured } =
+const { mockGetPublicFileUrl, mockUploadFile, mockDeleteFile, mockIsStorageConfigured } =
   vi.hoisted(() => ({
-    mockGetPresignedDownloadUrl: vi.fn(),
+    mockGetPublicFileUrl: vi.fn((key: string) => `https://storage.railway.app/bucket/${key}`),
     mockUploadFile: vi.fn(),
     mockDeleteFile: vi.fn(),
     mockIsStorageConfigured: vi.fn(() => true),
@@ -26,7 +26,7 @@ vi.mock('../../services/storageService', async (importOriginal) => {
   return {
     ...actual,
     uploadFile: mockUploadFile,
-    getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
+    getPublicFileUrl: mockGetPublicFileUrl,
     deleteFile: mockDeleteFile,
     isStorageConfigured: mockIsStorageConfigured,
   };
@@ -148,18 +148,17 @@ describe('User Controller', () => {
       expect(response.body.message).toBe('User not found');
     });
 
-    it('keeps original image URL when presigned refresh fails', async () => {
+    it('converts storage profile URL to stable public URL', async () => {
       const railwayUser = {
         ...mockUser,
         imageUrl:
           'https://storage.railway.app/bucket/profiles/0xabc/avatar.png?X-Amz-Signature=expired',
       };
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(railwayUser);
-      mockGetPresignedDownloadUrl.mockRejectedValueOnce(new Error('presign failed'));
 
       const response = await request(app).get(`/${railwayUser.address}`).send();
       expect(response.status).toBe(200);
-      expect(response.body.imageUrl).toBe(railwayUser.imageUrl);
+      expect(response.body.imageUrl).toBe('https://storage.railway.app/bucket/profiles/0xabc/avatar.png');
     });
 
     it.each([
@@ -219,21 +218,16 @@ describe('User Controller', () => {
 
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(existingUser as any);
       mockUploadedImage();
-      mockGetPresignedDownloadUrl
-        .mockResolvedValueOnce(SIGNED_URL)
-        .mockResolvedValueOnce(
-          `https://storage.railway.app/bucket/${PROFILE_KEY}?X-Amz-Signature=fresh`
-        );
       mockDeleteFile.mockRejectedValueOnce(new Error('delete failed'));
       vi.spyOn(prisma.user, 'update').mockResolvedValue({
         ...existingUser,
         name: 'WithImage',
-        imageUrl: SIGNED_URL,
+        imageUrl: PUBLIC_URL,
       } as any);
 
       const response = await putWithImage(existingUser.address);
       expect(response.status).toBe(200);
-      expect(response.body.imageUrl).toContain('X-Amz-Signature=fresh');
+      expect(response.body.imageUrl).toBe(PUBLIC_URL);
     });
 
     it.each([
@@ -247,11 +241,10 @@ describe('User Controller', () => {
           imageUrl: existingImage,
         } as any);
         mockUploadedImage();
-        mockGetPresignedDownloadUrl.mockResolvedValueOnce(SIGNED_URL);
         vi.spyOn(prisma.user, 'update').mockResolvedValue({
           ...mockUser,
           name: 'WithImage',
-          imageUrl: SIGNED_URL,
+          imageUrl: PUBLIC_URL,
         } as any);
 
         const response = await putWithImage(mockUser.address);
@@ -293,7 +286,7 @@ describe('User Controller', () => {
   });
 
   describe('getAllUsers', () => {
-    it('applies search filter and refreshes railway profile URLs', async () => {
+    it('applies search filter and normalizes railway profile URLs', async () => {
       const users = [
         {
           ...mockUsers[0],
@@ -304,9 +297,6 @@ describe('User Controller', () => {
 
       vi.spyOn(prisma.user, 'findMany').mockResolvedValue(users as any);
       vi.spyOn(prisma.user, 'count').mockResolvedValue(1);
-      mockGetPresignedDownloadUrl.mockResolvedValueOnce(
-        'https://storage.railway.app/bucket/profiles/0x1111111111111111111111111111111111111111/avatar.png?X-Amz-Signature=new'
-      );
 
       const response = await request(app).get('/?page=1&limit=10&search=alice').send();
       expect(response.status).toBe(200);
@@ -320,7 +310,9 @@ describe('User Controller', () => {
           },
         })
       );
-      expect(response.body.users[0].imageUrl).toContain('X-Amz-Signature=new');
+      expect(response.body.users[0].imageUrl).toBe(
+        'https://storage.railway.app/bucket/profiles/0x1111111111111111111111111111111111111111/avatar.png'
+      );
     });
 
     it('refreshes image URL when imageUrl is a direct profiles key', async () => {
@@ -331,15 +323,10 @@ describe('User Controller', () => {
         },
       ] as any);
       vi.spyOn(prisma.user, 'count').mockResolvedValue(1);
-      mockGetPresignedDownloadUrl.mockResolvedValueOnce(
-        'https://storage.railway.app/bucket/profiles/0x1111111111111111111111111111111111111111/avatar.png?X-Amz-Signature=fresh'
-      );
-
       const response = await request(app).get('/?page=1&limit=10').send();
       expect(response.status).toBe(200);
-      expect(mockGetPresignedDownloadUrl).toHaveBeenCalledWith(
-        'profiles/0x1111111111111111111111111111111111111111/avatar.png',
-        604800
+      expect(response.body.users[0].imageUrl).toBe(
+        'https://storage.railway.app/bucket/profiles/0x1111111111111111111111111111111111111111/avatar.png'
       );
     });
 
