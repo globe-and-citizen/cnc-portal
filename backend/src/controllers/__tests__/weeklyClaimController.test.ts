@@ -322,7 +322,6 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should return filtered claims and normalize attachment URLs', async () => {
-
       const weeklyClaims = [
         {
           ...weeklyClaimFactory({ id: 1, memberAddress: '0xAnotherAddress', status: null }),

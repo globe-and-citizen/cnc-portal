@@ -158,7 +158,9 @@ describe('User Controller', () => {
 
       const response = await request(app).get(`/${railwayUser.address}`).send();
       expect(response.status).toBe(200);
-      expect(response.body.imageUrl).toBe('https://storage.railway.app/bucket/profiles/0xabc/avatar.png');
+      expect(response.body.imageUrl).toBe(
+        'https://storage.railway.app/bucket/profiles/0xabc/avatar.png'
+      );
     });
 
     it.each([

@@ -7,11 +7,7 @@
  */
 import crypto from 'crypto';
 import path from 'path';
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 // Defaults and limits
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB

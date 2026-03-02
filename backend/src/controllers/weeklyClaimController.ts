@@ -40,7 +40,6 @@ const normalizeAttachments = (attachments: unknown): unknown => {
   });
 };
 
-
 function isValidWeeklyClaimAction(action: unknown): action is WeeklyClaimAction {
   return ['sign', 'withdraw', 'pending', 'disable', 'enable'].includes(action as string);
 }

@@ -138,7 +138,8 @@ export const addClaim = async (req: Request, res: Response) => {
     }
 
     // Use pre-uploaded attachments from body
-    const fileAttachmentsData = attachments.length > 0 ? normalizeAttachments(attachments) : undefined;
+    const fileAttachmentsData =
+      attachments.length > 0 ? normalizeAttachments(attachments) : undefined;
 
     // Create the claim with file attachments
     const claim = await prisma.claim.create({
