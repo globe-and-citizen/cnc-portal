@@ -4,7 +4,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { Readable } from 'stream';
 
 // Hoist mocks
-const { mockUploadSingle, mockUploadFile, mockGetPresignedDownloadUrl, mockIsStorageConfigured } =
+const { mockUploadSingle, mockUploadFile, mockGetPublicFileUrl, mockIsStorageConfigured } =
   vi.hoisted(() => ({
     mockUploadSingle: vi.fn((fieldName: string) => {
       return (req: Request, res: Response, next: NextFunction) => {
@@ -27,7 +27,7 @@ const { mockUploadSingle, mockUploadFile, mockGetPresignedDownloadUrl, mockIsSto
       };
     }),
     mockUploadFile: vi.fn(),
-    mockGetPresignedDownloadUrl: vi.fn(),
+    mockGetPublicFileUrl: vi.fn(),
     mockIsStorageConfigured: vi.fn(() => true),
   }));
 
@@ -39,7 +39,7 @@ vi.mock('../../utils/upload', () => ({
 
 vi.mock('../../services/storageService', () => ({
   uploadFile: mockUploadFile,
-  getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
+  getPublicFileUrl: mockGetPublicFileUrl,
   isStorageConfigured: mockIsStorageConfigured,
   ALLOWED_MIMETYPES: [
     'image/png',
@@ -81,21 +81,21 @@ describe('uploadRoute', () => {
         fileType: 'image/jpeg',
         fileSize: 1024,
       };
-      const mockPresignedUrl = 'https://storage.railway.app/bucket/uploads/abc123hash.jpg?signed';
+      const mockPublicUrl = 'https://storage.railway.app/bucket/uploads/abc123hash.jpg';
 
       mockUploadFile.mockResolvedValue({ success: true, metadata: mockMetadata });
-      mockGetPresignedDownloadUrl.mockResolvedValue(mockPresignedUrl);
+      mockGetPublicFileUrl.mockReturnValue(mockPublicUrl);
 
       const response = await request(app).post('/').send({ hasFile: true });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
-        fileUrl: mockPresignedUrl,
+        fileUrl: mockPublicUrl,
         fileKey: mockMetadata.key,
         metadata: mockMetadata,
       });
       expect(mockUploadFile).toHaveBeenCalled();
-      expect(mockGetPresignedDownloadUrl).toHaveBeenCalledWith(mockMetadata.key, 86400);
+      expect(mockGetPublicFileUrl).toHaveBeenCalledWith(mockMetadata.key);
     });
 
     it('should return 500 if upload fails', async () => {

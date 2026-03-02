@@ -1,7 +1,7 @@
 // routes/storageRoute.ts
 import express, { Request, Response } from 'express';
 import { authorizeUser } from '../middleware/authMiddleware';
-import { getPresignedDownloadUrl, PRESIGNED_URL_EXPIRATION } from '../services/storageService';
+import { getPublicFileUrl } from '../services/storageService';
 
 const storageRouter = express.Router();
 
@@ -14,10 +14,10 @@ const storageRouter = express.Router();
  *       properties:
  *         url:
  *           type: string
- *           description: Presigned URL for accessing the file
+ *           description: Stable public URL for accessing the file
  *         expiresIn:
  *           type: number
- *           description: URL expiration time in seconds
+ *           description: Always 0 for stable public URLs
  *     FileErrorResponse:
  *       type: object
  *       properties:
@@ -33,8 +33,8 @@ const storageRouter = express.Router();
  * @openapi
  * /file/url:
  *   get:
- *     summary: Get a presigned URL for downloading a file
- *     description: Generates a presigned URL for accessing a file stored in Railway Storage. Requires authentication.
+ *     summary: Get a stable URL for downloading a file
+ *     description: Returns a stable public URL for a file stored in Railway Storage. Requires authentication.
  *     tags: [Files]
  *     security:
  *       - BearerAuth: []
@@ -46,12 +46,6 @@ const storageRouter = express.Router();
  *           type: string
  *         description: The S3 object key (file path in storage)
  *         example: "claims/2024/01/abc123.pdf"
- *       - in: query
- *         name: expiresIn
- *         schema:
- *           type: number
- *           default: 3600
- *         description: URL expiration time in seconds (max 604800 = 7 days)
  *     responses:
  *       200:
  *         description: Presigned URL generated successfully
@@ -68,7 +62,7 @@ const storageRouter = express.Router();
  */
 storageRouter.get('/url', authorizeUser, async (req: Request, res: Response) => {
   try {
-    const { key, expiresIn } = req.query;
+    const { key } = req.query;
 
     if (!key || typeof key !== 'string') {
       return res.status(400).json({
@@ -77,26 +71,15 @@ storageRouter.get('/url', authorizeUser, async (req: Request, res: Response) => 
       });
     }
 
-    // Parse and validate expiration time
-    let expirationSeconds = PRESIGNED_URL_EXPIRATION;
-    if (expiresIn) {
-      const parsedExpiration = parseInt(expiresIn as string, 10);
-      if (!isNaN(parsedExpiration) && parsedExpiration > 0) {
-        // Cap at 7 days (604800 seconds)
-        expirationSeconds = Math.min(parsedExpiration, 604800);
-      }
-    }
-
-    // Generate presigned URL (will fail if file doesn't exist)
-    const url = await getPresignedDownloadUrl(key, expirationSeconds);
+    const url = getPublicFileUrl(key);
 
     res.json({
       url,
-      expiresIn: expirationSeconds,
+      expiresIn: 0,
     });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-    console.error('Error generating presigned URL:', err);
+    console.error('Error generating file URL:', err);
     res.status(500).json({
       error: 'Failed to generate file URL',
       details: errorMessage,
@@ -106,7 +89,7 @@ storageRouter.get('/url', authorizeUser, async (req: Request, res: Response) => 
 
 // Note: The /download/* route is commented out as it's redundant.
 // The frontend already receives fileUrl from upload, and can use /file/url
-// to regenerate expired URLs. Direct download can be done client-side.
+// to resolve key-only payloads. Direct download can be done client-side.
 /*
 storageRouter.get('/download/*', authorizeUser, async (req: Request, res: Response) => {
   try {
