@@ -9,19 +9,19 @@
       <template #totalReleased-data="{ row }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ row.totalReleased }}
-          <span class="text-xs">{{ tokenSymbolValue }}</span>
+          <span class="text-xs">{{ tokenSymbol }}</span>
         </span>
       </template>
       <template #totalVested-data="{ row }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ row.totalVested }}
-          <span class="text-xs">{{ tokenSymbolValue }}</span>
+          <span class="text-xs">{{ tokenSymbol }}</span>
         </span>
       </template>
       <template #totalWithdrawn-data="{ row }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ row.totalWithdrawn }}
-          <span class="text-xs">{{ tokenSymbolValue }}</span>
+          <span class="text-xs">{{ tokenSymbol }}</span>
         </span>
       </template>
     </TableComponent>
@@ -136,8 +136,6 @@ const {
   functionName: 'symbol'
 })
 
-const tokenSymbolValue = computed(() => (tokenSymbol.value as string | undefined) ?? 'default')
-
 const {
   data: vestingInfos,
   //isLoading: isLoadingVestingInfos,
@@ -162,7 +160,7 @@ const tokenSummaryColumns = [
   { key: 'totalWithdrawn', label: 'Total Withdrawn', sortable: false }
 ]
 const tokenSummaryRows = computed(() => {
-  const defaultToken = tokenSymbolValue.value
+  const defaultToken = tokenSymbol.value ? tokenSymbol.value : 'default'
   const summaryMap: Record<string, TokenSummary> = {}
   summaryMap[defaultToken] = {
     symbol: defaultToken,
