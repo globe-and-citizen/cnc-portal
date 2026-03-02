@@ -2,19 +2,17 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock environment variables
 const mockEnv = {
-  BUCKET: 'test-bucket',
-  ACCESS_KEY_ID: 'test-access-key',
-  SECRET_ACCESS_KEY: 'test-secret-key',
-  REGION: 'auto',
-  ENDPOINT: 'https://storage.railway.app',
+  AWS_S3_BUCKET_NAME: 'test-bucket',
+  AWS_ACCESS_KEY_ID: 'test-access-key',
+  AWS_SECRET_ACCESS_KEY: 'test-secret-key',
+  AWS_DEFAULT_REGION: 'auto',
+  AWS_ENDPOINT_URL: 'https://storage.railway.app',
+  AWS_PUBLIC_BASE_URL: 'https://cdn.example.com/files',
 };
 
 // Hoisted mocks for AWS SDK
-const { mockSend, mockGetSignedUrl } = vi.hoisted(() => ({
+const { mockSend } = vi.hoisted(() => ({
   mockSend: vi.fn(),
-  mockGetSignedUrl: vi.fn(() =>
-    Promise.resolve('https://signed-url.example.com/file?signature=abc123')
-  ),
 }));
 
 // Mock S3Client and Commands as proper class constructors
@@ -26,21 +24,11 @@ vi.mock('@aws-sdk/client-s3', () => {
     PutObjectCommand: class MockPutObjectCommand {
       constructor(public params: Record<string, unknown>) {}
     },
-    HeadObjectCommand: class MockHeadObjectCommand {
-      constructor(public params: Record<string, unknown>) {}
-    },
     DeleteObjectCommand: class MockDeleteObjectCommand {
-      constructor(public params: Record<string, unknown>) {}
-    },
-    GetObjectCommand: class MockGetObjectCommand {
       constructor(public params: Record<string, unknown>) {}
     },
   };
 });
-
-vi.mock('@aws-sdk/s3-request-presigner', () => ({
-  getSignedUrl: mockGetSignedUrl,
-}));
 
 describe('storageService', () => {
   const originalEnv = process.env;
@@ -62,7 +50,7 @@ describe('storageService', () => {
     });
 
     it('should return false when BUCKET is missing', async () => {
-      delete process.env.BUCKET;
+      delete process.env.AWS_S3_BUCKET_NAME;
       // Force reimport to get fresh module state
       vi.resetModules();
       const { isStorageConfigured } = await import('../storageService');
@@ -206,13 +194,13 @@ describe('storageService', () => {
       mockSend.mockResolvedValue({});
     });
 
-    it('should generate presigned URL', async () => {
+    it('should resolve a stable public URL', async () => {
       vi.resetModules();
       const { getPresignedDownloadUrl } = await import('../storageService');
 
       const url = await getPresignedDownloadUrl('test-folder/abc123.png');
 
-      expect(url).toContain('https://signed-url.example.com');
+      expect(url).toBe('https://cdn.example.com/files/test-folder/abc123.png');
     });
   });
 
