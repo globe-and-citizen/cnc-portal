@@ -69,8 +69,6 @@ describe('storageService', () => {
       const { isStorageConfigured } = await import('../storageService');
       expect(isStorageConfigured()).toBe(false);
     });
-
-   
   });
 
   describe('configuration helpers', () => {
@@ -107,19 +105,20 @@ describe('storageService', () => {
   });
 
   describe('pure helpers', () => {
-   
-
     it('validateFile rejects unsupported mime type', async () => {
       vi.resetModules();
       const { validateFile } = await import('../storageService');
-      const result = validateFile({ mimetype: 'application/json', size: 10 } as Express.Multer.File);
+      const result = validateFile({
+        mimetype: 'application/json',
+        size: 10,
+      } as Express.Multer.File);
 
       expect(result.valid).toBe(false);
       if (!result.valid) {
         expect(result.error).toContain('Only image files');
       }
     });
-    
+
     it('getPublicFileUrl normalizes and encodes each key segment', async () => {
       vi.resetModules();
       const { getPublicFileUrl } = await import('../storageService');
@@ -193,8 +192,6 @@ describe('storageService', () => {
         expect(result.error).toContain('Unknown error');
       }
     });
-
-   
   });
 
   describe('uploadFiles', () => {

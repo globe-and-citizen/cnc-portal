@@ -22,7 +22,6 @@ describe('profileImage.util', () => {
       expect(extractProfileStorageKey({ malformed: true } as unknown as string)).toBeNull();
     });
 
-   
     it('extracts encoded key from signed URL', () => {
       expect(
         extractProfileStorageKey(
@@ -30,8 +29,6 @@ describe('profileImage.util', () => {
         )
       ).toBe('uploads/member/receipt.png');
     });
-
-   
   });
 
   describe('resolveStorageImageUrl', () => {
@@ -46,7 +43,6 @@ describe('profileImage.util', () => {
         'https://example.com/avatar.png'
       );
     });
-
 
     it('returns original input when presign fails', async () => {
       mockGetPresignedDownloadUrl.mockRejectedValueOnce(new Error('presign failed'));

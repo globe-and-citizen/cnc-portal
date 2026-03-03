@@ -193,13 +193,11 @@ describe('Team Controller', () => {
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
       vi.spyOn(prisma.team, 'create').mockResolvedValue(teamMockResolve);
 
-      const response = await request(app)
-        .post('/')
-        .send({
-          name: 'No Officer Team',
-          description: 'desc',
-          members: mockTeamData.members,
-        });
+      const response = await request(app).post('/').send({
+        name: 'No Officer Team',
+        description: 'desc',
+        members: mockTeamData.members,
+      });
 
       expect(response.status).toBe(201);
       expect(prisma.team.create).toHaveBeenCalledWith(
