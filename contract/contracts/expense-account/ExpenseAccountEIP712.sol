@@ -412,36 +412,6 @@ contract ExpenseAccountEIP712 is
     emit ApprovalActivated(signatureHash);
   }
 
-  /**
-   * @notice Owner treasury withdrawal for native token.
-   * @param amount The amount to withdraw to owner wallet.
-   */
-  function ownerWithdrawNative(uint256 amount) external onlyOwner whenNotPaused nonReentrant {
-    require(amount > 0, 'Amount must be greater than zero');
-    require(address(this).balance >= amount, 'Insufficient native balance');
-
-    payable(owner()).sendValue(amount);
-    emit OwnerTreasuryWithdrawNative(owner(), amount);
-  }
-
-  /**
-   * @notice Owner treasury withdrawal for supported ERC20 tokens.
-   * @param token The token address to withdraw.
-   * @param amount The amount to withdraw to owner wallet.
-   */
-  function ownerWithdrawToken(
-    address token,
-    uint256 amount
-  ) external onlyOwner whenNotPaused nonReentrant {
-    require(token != address(0), 'Token address required');
-    require(isTokenSupported(token), 'Unsupported token');
-    require(amount > 0, 'Amount must be greater than zero');
-    require(IERC20(token).balanceOf(address(this)) >= amount, 'Insufficient token balance');
-
-    require(IERC20(token).transfer(owner(), amount), 'Token transfer failed');
-    emit OwnerTreasuryWithdrawToken(owner(), token, amount);
-  }
-
   function pause() external onlyOwner {
     _pause();
   }

@@ -1,3 +1,5 @@
 node_modules
 typechain-types
-ignition
+ignitionartifacts
+cache
+coverage

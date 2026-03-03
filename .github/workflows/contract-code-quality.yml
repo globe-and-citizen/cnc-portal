@@ -34,8 +34,12 @@ jobs:
         run: npm run format-check
         working-directory: ./contract
 
-      - name: </> Run Linter
-        run: npm run lint
+      - name: </> Run Solidity Linter
+        run: npm run lint:sol
+        working-directory: ./contract
+
+      - name: </> Run TypeScript Linter
+        run: npm run lint:ts
         working-directory: ./contract
 
       - name: 🧪 Run Test

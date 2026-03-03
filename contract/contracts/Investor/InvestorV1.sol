@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {ERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
+import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
+import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
+import {EnumerableSet} from '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
+import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 
-contract InvestorV1 is 
-  ERC20Upgradeable, 
-  OwnableUpgradeable, 
-  PausableUpgradeable, 
+contract InvestorV1 is
+  ERC20Upgradeable,
+  OwnableUpgradeable,
+  PausableUpgradeable,
   ReentrancyGuardUpgradeable,
   AccessControlUpgradeable
 {
   using EnumerableSet for EnumerableSet.AddressSet;
 
   // Add MINTER_ROLE constant - this doesn't affect storage
-  bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+  bytes32 public constant MINTER_ROLE = keccak256('MINTER_ROLE');
 
   EnumerableSet.AddressSet private shareholders;
   struct Shareholder {
@@ -34,20 +34,20 @@ contract InvestorV1 is
   event DividendDistributed(address indexed shareholder, uint256 amount);
   event DividendFailed(address indexed shareholder, uint256 amount);
 
-  function initialize(string calldata _name, string calldata _symbol, address _owner) external initializer {
+  function initialize(
+    string calldata _name,
+    string calldata _symbol,
+    address _owner
+  ) external initializer {
     __ERC20_init(_name, _symbol);
-    if (_owner == address(0)) {
-      __Ownable_init(msg.sender);
-      _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    } else {
-      __Ownable_init(_owner);
-
-      // Grant roles
-      _grantRole(DEFAULT_ADMIN_ROLE, _owner);
-      _grantRole(MINTER_ROLE, _owner);
-    }
+    address owner = _owner == address(0) ? msg.sender : _owner;
+    __Ownable_init(owner);
+    __AccessControl_init();
     __ReentrancyGuard_init();
     __Pausable_init();
+
+    _grantRole(DEFAULT_ADMIN_ROLE, owner);
+    _grantRole(MINTER_ROLE, owner);
   }
 
   // function setOfficerAddress(address _officerAddress) external onlyOwner whenNotPaused {
@@ -62,7 +62,9 @@ contract InvestorV1 is
     return 6; // Standard for many tokens, can be adjusted as needed
   }
 
-  function distributeMint(Shareholder[] memory _shareholders) external onlyOwner whenNotPaused nonReentrant {
+  function distributeMint(
+    Shareholder[] memory _shareholders
+  ) external onlyOwner whenNotPaused nonReentrant {
     for (uint256 i = 0; i < _shareholders.length; i++) {
       Shareholder memory shareholder = _shareholders[i];
       _mint(shareholder.shareholder, shareholder.amount);
@@ -71,12 +73,15 @@ contract InvestorV1 is
     }
   }
 
-  function individualMint(address shareholder, uint256 amount) external onlyRole(MINTER_ROLE) whenNotPaused nonReentrant {
+  function individualMint(
+    address shareholder,
+    uint256 amount
+  ) external onlyRole(MINTER_ROLE) whenNotPaused nonReentrant {
     _mint(shareholder, amount);
     emit Minted(shareholder, amount);
   }
 
-  function _update(address from, address to, uint256 value) override internal {
+  function _update(address from, address to, uint256 value) internal override {
     super._update(from, to, value);
 
     if (balanceOf(from) == 0) {
@@ -106,17 +111,17 @@ contract InvestorV1 is
   }
 
   function distributeDividends() private nonReentrant {
-    require(totalSupply() > 0, "No dividends available");
+    require(totalSupply() > 0, 'No dividends available');
 
     for (uint256 i = 0; i < shareholders.length(); i++) {
       address shareholder = shareholders.at(i);
       uint256 balance = balanceOf(shareholder);
       if (balance > 0) {
         uint256 dividend = (msg.value * balance) / totalSupply();
-        (bool success, ) = payable(shareholder).call{value: dividend}("");
-        if(success){
+        (bool success, ) = payable(shareholder).call{value: dividend}('');
+        if (success) {
           emit DividendDistributed(shareholder, dividend);
-        }else{
+        } else {
           emit DividendFailed(shareholder, dividend);
         }
       }

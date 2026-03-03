@@ -1,10 +1,11 @@
 import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
 
-export default buildModule('SafeDepositRouterUpgradeModulePolygon', (m) => { // ← new module name
+export default buildModule('SafeDepositRouterUpgradeModulePolygon', (m) => {
+  // ← new module name
   const beaconOwner = m.getAccount(0)
 
   const newImpl = m.contract('SafeDepositRouter', [], {
-    id: 'SafeDepositRouter_polygon_v3', // ← new unique ID
+    id: 'SafeDepositRouter_polygon_v3' // ← new unique ID
   })
 
   // Polygon beacon

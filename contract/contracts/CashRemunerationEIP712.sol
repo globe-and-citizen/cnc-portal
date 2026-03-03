@@ -163,16 +163,12 @@ contract CashRemunerationEIP712 is
    * @param _owner The address of the contract owner.
    */
   function initialize(address _owner, address[] calldata _tokenAddresses) public initializer {
-    if (_owner == address(0)) {
-      __Ownable_init(msg.sender);
-      officerAddress = msg.sender;
-    } else {
-      __Ownable_init(_owner);
-    }
-
+    address owner = _owner == address(0) ? msg.sender : _owner;
+    __Ownable_init(owner);
     __ReentrancyGuard_init();
     __Pausable_init();
     __EIP712_init('CashRemuneration', '1');
+    officerAddress = owner;
 
     // Set the initial supported tokens
     for (uint256 i = 0; i < _tokenAddresses.length; i++) {
@@ -291,6 +287,15 @@ contract CashRemunerationEIP712 is
     // Step 6: Mark this signature as used to prevent reuse
     paidWageClaims[sigHash] = true;
 
+    address investorV1Token = address(0);
+    if (officerAddress != address(0) && officerAddress.code.length > 0) {
+      try IOfficer(officerAddress).findDeployedContract('InvestorV1') returns (
+        address deployedInvestorV1
+      ) {
+        investorV1Token = deployedInvestorV1;
+      } catch {}
+    }
+
     // Step 7: Process each wage component in the claim
     // A wage claim can contain multiple wage types (ETH and/or multiple tokens)
     for (uint8 i = 0; i < wageClaim.wages.length; i++) {
@@ -314,11 +319,7 @@ contract CashRemunerationEIP712 is
         // Step 7b(i): Special Case - Mintable InvestorV1 Token
         // If we have an officer address configured and this is the InvestorV1 token,
         // we mint new tokens instead of transferring from contract balance
-        if (
-          officerAddress != address(0) &&
-          wageClaim.wages[i].tokenAddress ==
-          IOfficer(officerAddress).findDeployedContract('InvestorV1')
-        ) {
+        if (investorV1Token != address(0) && wageClaim.wages[i].tokenAddress == investorV1Token) {
           // Mint new tokens directly to the employee
           // This creates new supply rather than transferring existing tokens
           IInvestorV1(wageClaim.wages[i].tokenAddress).individualMint(
@@ -398,36 +399,6 @@ contract CashRemunerationEIP712 is
   function disableClaim(bytes32 signatureHash) external onlyOwner whenNotPaused {
     disabledWageClaims[signatureHash] = true;
     emit WageClaimDisabled(signatureHash);
-  }
-
-  /**
-   * @notice Owner treasury withdrawal for native token.
-   * @param amount The amount to withdraw to the owner wallet.
-   */
-  function ownerWithdrawNative(uint256 amount) external onlyOwner whenNotPaused nonReentrant {
-    require(amount > 0, 'Amount must be greater than zero');
-    require(address(this).balance >= amount, 'Insufficient native balance');
-
-    payable(owner()).sendValue(amount);
-    emit OwnerTreasuryWithdrawNative(owner(), amount);
-  }
-
-  /**
-   * @notice Owner treasury withdrawal for supported ERC20 tokens.
-   * @param tokenAddress The address of the supported token.
-   * @param amount The amount to withdraw to the owner wallet.
-   */
-  function ownerWithdrawToken(
-    address tokenAddress,
-    uint256 amount
-  ) external onlyOwner whenNotPaused nonReentrant {
-    require(tokenAddress != address(0), 'Token address required');
-    require(supportedTokens[tokenAddress], 'Token not supported');
-    require(amount > 0, 'Amount must be greater than zero');
-    require(IERC20(tokenAddress).balanceOf(address(this)) >= amount, 'Insufficient token balance');
-
-    IERC20(tokenAddress).transfer(owner(), amount);
-    emit OwnerTreasuryWithdrawToken(owner(), tokenAddress, amount);
   }
 
   /**
