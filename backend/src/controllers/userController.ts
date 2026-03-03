@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { generateNonce } from 'siwe';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
+import { extractProfileStorageKey, resolveStorageImageUrl } from '../utils/profileImage.util';
 import {
   uploadFile,
   getPresignedDownloadUrl,
@@ -13,39 +14,6 @@ import {
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
 }
-
-const extractProfileStorageKey = (imageUrl?: string | null): string | null => {
-  if (!imageUrl || typeof imageUrl !== 'string') {
-    return null;
-  }
-
-  if (imageUrl.startsWith('profiles/') || imageUrl.startsWith('uploads/')) {
-    return imageUrl;
-  }
-
-  const decodedUrl = decodeURIComponent(imageUrl);
-  const storageKeyMatch = decodedUrl.match(/(profiles|uploads)\/[^?#]+/);
-  return storageKeyMatch ? storageKeyMatch[0] : null;
-};
-
-const resolveProfileImageUrl = async (
-  imageUrl?: string | null
-): Promise<string | null | undefined> => {
-  if (!imageUrl) {
-    return imageUrl;
-  }
-
-  const key = extractProfileStorageKey(imageUrl);
-  if (!key) {
-    return imageUrl;
-  }
-
-  try {
-    return await getPresignedDownloadUrl(key, 86400 * 7);
-  } catch {
-    return imageUrl;
-  }
-};
 
 /**
  *
@@ -95,7 +63,7 @@ export const getUser = async (req: Request, res: Response) => {
 
     if (!user) return errorResponse(404, 'User not found', res);
 
-    const resolvedImageUrl = await resolveProfileImageUrl(user.imageUrl);
+    const resolvedImageUrl = await resolveStorageImageUrl(user.imageUrl);
     return res.status(200).json({
       ...user,
       imageUrl: resolvedImageUrl,
@@ -193,7 +161,7 @@ export const updateUser = async (req: Request, res: Response) => {
       },
     });
 
-    const resolvedUpdatedImageUrl = await resolveProfileImageUrl(updatedUser.imageUrl);
+    const resolvedUpdatedImageUrl = await resolveStorageImageUrl(updatedUser.imageUrl);
     return res.status(200).json({
       ...updatedUser,
       imageUrl: resolvedUpdatedImageUrl,
@@ -227,7 +195,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
     const usersWithResolvedImages = await Promise.all(
       users.map(async (user) => ({
         ...user,
-        imageUrl: await resolveProfileImageUrl(user.imageUrl),
+        imageUrl: await resolveStorageImageUrl(user.imageUrl),
       }))
     );
 
