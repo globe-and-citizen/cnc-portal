@@ -11,8 +11,9 @@ const mockEnv = {
 };
 
 // Hoisted mocks for AWS SDK
-const { mockSend } = vi.hoisted(() => ({
+const { mockSend, mockGetSignedUrl } = vi.hoisted(() => ({
   mockSend: vi.fn(),
+  mockGetSignedUrl: vi.fn(() => Promise.resolve('https://signed-url.example.com/file?signature=abc123')),
 }));
 
 // Mock S3Client and Commands as proper class constructors
@@ -27,8 +28,18 @@ vi.mock('@aws-sdk/client-s3', () => {
     DeleteObjectCommand: class MockDeleteObjectCommand {
       constructor(public params: Record<string, unknown>) {}
     },
+    HeadObjectCommand: class MockHeadObjectCommand {
+      constructor(public params: Record<string, unknown>) {}
+    },
+    GetObjectCommand: class MockGetObjectCommand {
+      constructor(public params: Record<string, unknown>) {}
+    },
   };
 });
+
+vi.mock('@aws-sdk/s3-request-presigner', () => ({
+  getSignedUrl: mockGetSignedUrl,
+}));
 
 describe('storageService', () => {
   const originalEnv = process.env;
@@ -194,13 +205,14 @@ describe('storageService', () => {
       mockSend.mockResolvedValue({});
     });
 
-    it('should resolve a stable public URL', async () => {
+    it('should generate a presigned URL', async () => {
       vi.resetModules();
       const { getPresignedDownloadUrl } = await import('../storageService');
 
       const url = await getPresignedDownloadUrl('test-folder/abc123.png');
 
-      expect(url).toBe('https://cdn.example.com/files/test-folder/abc123.png');
+      expect(url).toContain('https://signed-url.example.com');
+      expect(mockGetSignedUrl).toHaveBeenCalled();
     });
   });
 
