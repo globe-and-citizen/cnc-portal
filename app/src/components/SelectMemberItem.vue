@@ -68,10 +68,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import UserComponent from '@/components/UserComponent.vue'
-import { useTeamStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import type { User } from '@/types'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import type { Address } from 'viem'
@@ -83,13 +83,32 @@ interface Props {
 const props = defineProps<Props>()
 
 const teamStore = useTeamStore()
+const userStore = useUserDataStore()
 const router = useRouter()
 
 const isOpen = ref({ mount: false, show: false })
 const search = ref('')
 const clickOutside = ref<HTMLElement | null>(null)
 
-const members = computed<User[]>(() => teamStore.currentTeamMeta?.data?.members || [])
+const members = computed<User[]>(() => {
+  const teamMembers = (teamStore.currentTeamMeta?.data?.members || []) as User[]
+
+  return teamMembers.map((member) => {
+    const isCurrentUser =
+      !!userStore.address &&
+      (member.address || '').toLowerCase() === (userStore.address || '').toLowerCase()
+
+    if (!isCurrentUser) {
+      return member
+    }
+
+    return {
+      ...member,
+      name: userStore.name || member.name,
+      imageUrl: userStore.imageUrl || member.imageUrl
+    }
+  })
+})
 
 const filteredMembers = computed<User[]>(() => {
   if (!search.value.trim()) return members.value
@@ -108,9 +127,9 @@ const selectedUser = computed<User | undefined>(() =>
   )
 )
 
-const open = () => {
-  //   if (props.disabled) return
+const open = async () => {
   isOpen.value = { mount: true, show: true }
+  await teamStore.currentTeamMeta.refetch()
 }
 
 const close = () => {
@@ -170,4 +189,15 @@ watch(
     }
   }
 )
+
+watch(
+  () => props.address,
+  () => {
+    search.value = ''
+  }
+)
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
