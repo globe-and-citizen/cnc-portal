@@ -35,10 +35,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import type { Address } from 'viem'
-import { useTeamStore, useUserDataStore } from '@/stores'
-import { useGetUserQuery } from '@/queries/user.queries'
+import { useTeamStore } from '@/stores'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import SelectMemberItem from '@/components/SelectMemberItem.vue'
@@ -50,51 +49,10 @@ interface Props {
 const props = defineProps<Props>()
 
 const teamStore = useTeamStore()
-const userStore = useUserDataStore()
-
-const { data: memberProfile, refetch: refetchMemberProfile } = useGetUserQuery({
-  pathParams: {
-    address: computed(() => props.memberAddress)
-  }
-})
-
-watch(
-  () => props.memberAddress,
-  () => {
-    refetchMemberProfile()
-  },
-  { immediate: true }
-)
-
-const normalizedMemberAddress = computed(() => (props.memberAddress || '').toLowerCase())
-const teamMembers = computed(() => teamStore.currentTeamMeta?.data?.members || [])
 
 const displayedMember = computed(() => {
-  const memberFromTeam = teamMembers.value.find(
-    (member) => (member.address || '').toLowerCase() === normalizedMemberAddress.value
+  return (teamStore.currentTeamMeta?.data?.members || []).find(
+    (member) => member.address.toLowerCase() === props.memberAddress?.toLowerCase()
   )
-
-  const isCurrentUser =
-    !!userStore.address && userStore.address.toLowerCase() === normalizedMemberAddress.value
-
-  const syncedName =
-    memberProfile.value?.name || (isCurrentUser ? userStore.name : '') || memberFromTeam?.name || ''
-
-  const syncedImageUrl =
-    memberProfile.value?.imageUrl ||
-    (isCurrentUser ? userStore.imageUrl : '') ||
-    memberFromTeam?.imageUrl ||
-    ''
-
-  if (!memberFromTeam && !memberProfile.value && !isCurrentUser) {
-    return undefined
-  }
-
-  return {
-    ...(memberFromTeam || {}),
-    address: props.memberAddress,
-    name: syncedName,
-    imageUrl: syncedImageUrl
-  }
 })
 </script>
