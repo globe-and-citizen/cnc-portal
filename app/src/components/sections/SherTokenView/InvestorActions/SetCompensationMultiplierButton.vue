@@ -11,9 +11,9 @@
       <template #prefix>
         <IconifyIcon icon="heroicons:calculator" class="w-4 h-4" />
       </template>
-      Set Multiplier ({{ currentMultiplier }}x)
-      <template #suffix v-if="!isMultiplierLoading && currentMultiplier">
-        <span class="badge badge-sm">{{ currentMultiplier }}x</span>
+      Set Multiplier ({{ formattedCurrentMultiplier }}x)
+      <template #suffix v-if="!isMultiplierLoading && formattedCurrentMultiplier !== '0'">
+        <span class="badge badge-sm">{{ formattedCurrentMultiplier }}x</span>
       </template>
     </ButtonUI>
 
@@ -26,12 +26,12 @@
           <p class="text-sm text-base-content/70 mb-2">
             Current multiplier:
             <span class="font-semibold" data-test="current-multiplier">
-              {{ isMultiplierLoading ? 'Loading...' : `${currentMultiplier}x` }}
+              {{ isMultiplierLoading ? 'Loading...' : `${formattedCurrentMultiplier}x` }}
             </span>
           </p>
           <p class="text-sm text-base-content/70">
-            The multiplier determines how many SHER tokens are minted per deposited token
-            (normalized to 18 decimals).
+            The multiplier determines how many SHER tokens are minted per deposited token. You can
+            use decimal values (e.g., 1.5, 2.75).
           </p>
         </div>
 
@@ -40,11 +40,10 @@
             <span class="label-text">New Multiplier</span>
           </label>
           <input
-            v-model.number="newMultiplier"
-            type="number"
-            min="1"
-            step="1"
-            placeholder="Enter multiplier (minimum 1)"
+            v-model="newMultiplier"
+            type="text"
+            inputmode="decimal"
+            placeholder="Enter multiplier (e.g., 1.5)"
             class="input input-bordered w-full"
             data-test="multiplier-input"
             :disabled="isLoading"
@@ -56,8 +55,8 @@
           </label>
           <label class="label" v-else>
             <span class="label-text-alt">
-              Example: Multiplier of {{ newMultiplier || 1 }} means 1 token =
-              {{ newMultiplier || 1 }} SHER
+              Example: Multiplier of {{ displayMultiplierExample }} means 1 USDC =
+              {{ displayMultiplierExample }} SHER
             </span>
           </label>
         </div>
@@ -103,6 +102,11 @@ import {
 } from '@/composables/safeDepositRouter/reads'
 import { useToastStore } from '@/stores'
 import { parseError } from '@/utils'
+import {
+  formatSafeDepositRouterMultiplier,
+  parseSafeDepositRouterMultiplier,
+  formatSherAmount
+} from '@/utils/safeDepositRouterUtil'
 
 const { addErrorToast, addSuccessToast } = useToastStore()
 const connection = useConnection()
@@ -110,8 +114,13 @@ const connection = useConnection()
 // Modal reference
 const modalRef = ref<HTMLDialogElement | null>(null)
 
-// Form state
-const newMultiplier = ref<number>(1)
+// Form state - now accepts string to handle decimals properly
+const newMultiplier = ref<string>('1')
+
+// Constants
+const MULTIPLIER_DECIMALS = 6
+const MIN_MULTIPLIER = 1
+const MAX_MULTIPLIER = 1000000
 
 // Get SafeDepositRouter address
 const safeDepositRouterAddress = useSafeDepositRouterAddress()
@@ -126,6 +135,17 @@ const setMultiplierWrite = useSetMultiplier()
 // ============================================================================
 // COMPUTED PROPERTIES
 // ============================================================================
+
+// Format the multiplier for display using utility function
+const formattedCurrentMultiplier = computed(() => {
+  return formatSafeDepositRouterMultiplier(currentMultiplier.value, MULTIPLIER_DECIMALS)
+})
+
+// Format display for example text
+const displayMultiplierExample = computed(() => {
+  if (!newMultiplier.value || newMultiplier.value === '') return '1'
+  return formatSherAmount(newMultiplier.value, MULTIPLIER_DECIMALS)
+})
 
 // Combined loading state
 const isReadLoading = computed(() => isMultiplierLoading.value || isOwnerLoading.value)
@@ -143,14 +163,24 @@ const canManageMultiplier = computed(() => {
 
 // Validate multiplier input
 const multiplierError = computed(() => {
-  if (!newMultiplier.value) return 'Multiplier is required'
-  if (newMultiplier.value < 1) return 'Multiplier must be at least 1'
-  if (!Number.isInteger(newMultiplier.value)) return 'Multiplier must be a whole number'
+  if (!newMultiplier.value || newMultiplier.value === '') return 'Multiplier is required'
+
+  const numValue = parseFloat(newMultiplier.value)
+  if (isNaN(numValue)) return 'Must be a valid number'
+  if (numValue < MIN_MULTIPLIER) return `Multiplier must be at least ${MIN_MULTIPLIER}`
+  if (numValue > MAX_MULTIPLIER) return 'Multiplier is too large'
+
   return null
 })
 
 const isMultiplierValid = computed(() => {
-  return !multiplierError.value && newMultiplier.value !== Number(currentMultiplier.value)
+  if (multiplierError.value) return false
+
+  // Check if value has actually changed
+  const currentValue = parseFloat(formattedCurrentMultiplier.value)
+  const newValue = parseFloat(newMultiplier.value)
+
+  return !isNaN(newValue) && newValue !== currentValue
 })
 
 // ============================================================================
@@ -179,7 +209,9 @@ watch(
   () => setMultiplierWrite.receiptResult.isSuccess.value,
   (success) => {
     if (success) {
-      addSuccessToast(`Multiplier updated successfully to ${newMultiplier.value}x`)
+      addSuccessToast(
+        `Multiplier updated successfully to ${formatSherAmount(newMultiplier.value, MULTIPLIER_DECIMALS)}x`
+      )
       closeModal()
     }
   }
@@ -187,10 +219,10 @@ watch(
 
 // Initialize newMultiplier when currentMultiplier loads
 watch(
-  currentMultiplier,
+  formattedCurrentMultiplier,
   (value) => {
-    if (value !== undefined && value !== null) {
-      newMultiplier.value = Number(value)
+    if (value !== undefined && value !== null && value !== '0') {
+      newMultiplier.value = value
     }
   },
   { immediate: true }
@@ -210,8 +242,8 @@ function openModal() {
   }
 
   // Reset to current multiplier
-  if (currentMultiplier.value !== undefined && currentMultiplier.value !== null) {
-    newMultiplier.value = Number(currentMultiplier.value)
+  if (formattedCurrentMultiplier.value !== '0') {
+    newMultiplier.value = formattedCurrentMultiplier.value
   }
 
   modalRef.value?.showModal()
@@ -226,6 +258,7 @@ function closeModal() {
 
 /**
  * Handle multiplier update
+ * Converts decimal input to contract format using utility function
  */
 async function handleSetMultiplier() {
   if (!safeDepositRouterAddress.value) {
@@ -243,6 +276,22 @@ async function handleSetMultiplier() {
     return
   }
 
-  await setMultiplierWrite.executeWrite(BigInt(newMultiplier.value))
+  try {
+    // Use utility function to convert decimal string to contract format
+    const multiplierInWei = parseSafeDepositRouterMultiplier(
+      newMultiplier.value,
+      MULTIPLIER_DECIMALS
+    )
+
+    if (multiplierInWei === 0n) {
+      addErrorToast('Invalid multiplier format')
+      return
+    }
+
+    await setMultiplierWrite.executeWrite(multiplierInWei)
+  } catch (error) {
+    console.error('Error formatting multiplier:', error)
+    addErrorToast('Invalid multiplier format')
+  }
 }
 </script>

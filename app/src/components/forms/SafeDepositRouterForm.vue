@@ -7,6 +7,7 @@
     <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>
   </div>
 
+  <!-- USDC Amount Input -->
   <TokenAmount
     :tokens="tokenList"
     v-model:modelValue="amount"
@@ -17,22 +18,21 @@
   >
     <template #label>
       <span class="label-text">Deposit</span>
-      <span class="label-text-alt">
-        Balance: {{ selectedToken?.amount }} {{ selectedToken?.token.symbol }}
+      <span class="label-text-alt"
+        >tokenSymbol Balance: {{ selectedToken?.amount }} {{ selectedToken?.token.symbol }}
       </span>
     </template>
   </TokenAmount>
 
-  <!-- Compensation Display -->
-  <div
-    v-if="isAmountValid && estimatedSherTokens !== '0'"
-    class="flex items-center justify-between py-3 px-4 bg-base-200 rounded-lg"
-    data-test="compensation-section"
-  >
-    <span class="text-sm opacity-70">You will receive</span>
-    <span class="font-semibold text-green-600" data-test="sher-compensation-display">
-      {{ estimatedSherTokens }} {{ tokenSymbol || 'SHER' }}
-    </span>
+  <!-- SHER Compensation Input -->
+  <div>
+    <CompensationAmount
+      v-model:modelValue="sherAmount"
+      :deposit-token-symbol="selectedToken?.token.symbol || 'USDC'"
+      :rate="formattedMultiplier"
+      :disabled="isLoading || !multiplier"
+      @update:modelValue="handleSherAmountChange"
+    />
   </div>
 
   <div class="modal-action justify-between">
@@ -61,8 +61,14 @@ import { useErc20Allowance } from '@/composables/erc20/reads'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
 import { parseError } from '@/utils'
+import {
+  formatSafeDepositRouterMultiplier,
+  calculateSherCompensation,
+  calculateDepositFromSher
+} from '@/utils/safeDepositRouterUtil'
 import ButtonUI from '../ButtonUI.vue'
 import TokenAmount from './TokenAmount.vue'
+import CompensationAmount from './CompensationAmount.vue'
 import {
   useSafeDepositRouterAddress,
   useSafeDepositRouterMultiplier
@@ -76,10 +82,12 @@ const emits = defineEmits<{
 
 // Component state
 const amount = ref<string>('')
+const sherAmount = ref<string>('0')
 const selectedTokenId = ref<TokenId>('usdc')
 const currentStep = ref(1)
 const submitting = ref(false)
 const isAmountValid = ref(false)
+const isUpdatingFromSher = ref(false)
 
 // Stores
 const currencyStore = useCurrencyStore()
@@ -92,6 +100,16 @@ const { data: multiplier, error: multiplierError } = useSafeDepositRouterMultipl
 
 // Fetch InvestorV1 token symbol
 const { data: tokenSymbol, isLoading: isTokenSymbolLoading } = useInvestorSymbol()
+
+// Format multiplier for display using utility function
+const formattedMultiplier = computed(() => {
+  return formatSafeDepositRouterMultiplier(multiplier.value)
+})
+
+// Numeric multiplier for calculations
+const multiplierNumber = computed(() => {
+  return parseFloat(formattedMultiplier.value) || 0
+})
 
 // Reactive state for balances
 const { balances, isLoading: isBalanceLoading } = useContractBalance(
@@ -134,33 +152,49 @@ const bigIntAmount = computed<bigint>(() => {
 })
 
 // ============================================================================
-// SHER COMPENSATION CALCULATION
+// BIDIRECTIONAL AMOUNT CALCULATION - Using Utility Functions
 // ============================================================================
+
 /**
- * Calculate estimated SHER tokens to be minted
- * Formula: deposited_amount × multiplier
- * Note: Amount is normalized to 18 decimals in contract, but for display we show 1:1 ratio
+ * Handle SHER amount input changes - update deposit amount accordingly
  */
-const estimatedSherTokens = computed<string>(() => {
-  if (!amount.value || !multiplier.value || !isAmountValid.value) return '0'
+const handleSherAmountChange = (value: string) => {
+  sherAmount.value = value
 
-  try {
-    const amountNum = parseFloat(amount.value)
-    const multiplierNum = Number(multiplier.value)
-
-    if (isNaN(amountNum) || isNaN(multiplierNum)) return '0'
-
-    const sherAmount = amountNum * multiplierNum
-
-    // Format with appropriate decimal places
-    return sherAmount.toLocaleString('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 6
-    })
-  } catch (error) {
-    console.error('Error calculating SHER compensation:', error)
-    return '0'
+  if (value === '' || value === '0') {
+    isUpdatingFromSher.value = true
+    amount.value = '0'
+    return
   }
+
+  const numericValue = parseFloat(value)
+  if (isNaN(numericValue) || numericValue < 0) {
+    return
+  }
+
+  if (multiplierNumber.value > 0) {
+    isUpdatingFromSher.value = true
+    amount.value = calculateDepositFromSher(value, multiplierNumber.value, TOKEN_DECIMALS)
+  }
+}
+
+/**
+ * Watch deposit amount changes - update SHER amount accordingly
+ */
+watch(amount, (newAmount) => {
+  if (isUpdatingFromSher.value) {
+    isUpdatingFromSher.value = false
+    return
+  }
+
+  sherAmount.value = calculateSherCompensation(newAmount, multiplierNumber.value, TOKEN_DECIMALS)
+})
+
+/**
+ * Watch multiplier changes - recalculate SHER amount
+ */
+watch(multiplierNumber, (newMultiplier) => {
+  sherAmount.value = calculateSherCompensation(amount.value, newMultiplier, TOKEN_DECIMALS)
 })
 
 // Allowance check
@@ -180,7 +214,7 @@ const approveWrite = useERC20Approve(
 // Deposit composable
 const depositWrite = useDeposit()
 
-// Combined loading state (add token symbol loading)
+// Combined loading state
 const isLoading = computed(
   () =>
     isBalanceLoading.value ||
@@ -190,9 +224,9 @@ const isLoading = computed(
 )
 
 // ============================================================================
-// WATCH PATTERNS - Following established patterns
+// WATCH PATTERNS - Error Handling
 // ============================================================================
-// Watch for multiplier errors
+
 watch(multiplierError, (error) => {
   if (error) {
     console.error('Error fetching multiplier:', error)
@@ -200,7 +234,6 @@ watch(multiplierError, (error) => {
   }
 })
 
-// Watch for approve errors
 watch(
   () => approveWrite.writeResult.error.value,
   (error) => {
@@ -220,7 +253,6 @@ watch(
   }
 )
 
-// Watch for approve success
 watch(
   () => approveWrite.receiptResult.isSuccess.value,
   (success) => {
@@ -232,7 +264,6 @@ watch(
   }
 )
 
-// Watch for deposit errors
 watch(
   () => depositWrite.writeResult.error.value,
   (error) => {
@@ -252,13 +283,12 @@ watch(
   }
 )
 
-// Watch for deposit success
 watch(
   () => depositWrite.receiptResult.isSuccess.value,
   (success) => {
     if (success) {
       addSuccessToast(
-        `Successfully deposited ${amount.value} ${selectedToken.value?.token.symbol} and minted ${estimatedSherTokens.value} SHER tokens`
+        `Successfully deposited ${amount.value} ${selectedToken.value?.token.symbol} and minted ${sherAmount.value} ${tokenSymbol.value || 'SHER'} tokens`
       )
       reset()
       emits('closeModal')
@@ -266,7 +296,6 @@ watch(
   }
 )
 
-// Reset step when amount changes
 watch(amount, () => {
   currentStep.value = 1
 })
@@ -274,12 +303,15 @@ watch(amount, () => {
 // ============================================================================
 // METHODS
 // ============================================================================
+
 function reset() {
   amount.value = ''
+  sherAmount.value = '0'
   selectedTokenId.value = 'usdc'
   currentStep.value = 1
   submitting.value = false
   isAmountValid.value = false
+  isUpdatingFromSher.value = false
 }
 
 defineExpose({ reset })
@@ -313,8 +345,6 @@ const submitForm = async () => {
   }
 
   submitting.value = true
-
-  // Check if approval is needed
   const currentAllowance = (allowance.value as bigint | undefined) ?? 0n
   if (currentAllowance < bigIntAmount.value) {
     currentStep.value = 2
@@ -325,7 +355,6 @@ const submitForm = async () => {
       console.error('Approve execution error:', error)
     }
   } else {
-    // Skip approval, go directly to deposit
     currentStep.value = 3
     await performDeposit()
   }

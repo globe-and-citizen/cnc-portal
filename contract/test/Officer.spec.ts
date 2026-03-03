@@ -1,3 +1,4 @@
+import { parseUnits } from 'ethers'
 import { expect } from 'chai'
 import { ethers, upgrades } from 'hardhat'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
@@ -153,7 +154,7 @@ describe('Officer Contract', function () {
           addr1.address, // safeAddress (using addr1 as placeholder)
           ethers.ZeroAddress, // investorAddress (will be set by Officer)
           [await mockUSDC.getAddress(), await mockUSDT.getAddress()],
-          1n // multiplier
+          parseUnits('1', 6) // multiplier
         ]
       )
 
@@ -377,7 +378,7 @@ describe('Officer Contract', function () {
           addr1.address, // safeAddress
           ethers.ZeroAddress, // investorAddress - will be set by Officer
           [await mockUSDC.getAddress(), await mockUSDT.getAddress()],
-          1n // multiplier
+          parseUnits('1', 6) // multiplier
         ]
       )
 
@@ -510,7 +511,7 @@ describe('Officer Contract', function () {
           addr1.address, // safeAddress
           ethers.ZeroAddress, // investorAddress
           [await mockUSDC.getAddress(), await mockUSDT.getAddress()],
-          1n
+          parseUnits('1', 6) // multiplier
         ]
       )
 
@@ -741,11 +742,10 @@ describe('Officer Contract', function () {
       const safeDepositRouterInitData = safeDepositRouter.interface.encodeFunctionData(
         'initialize',
         [
-          // owner - Officer (msg.sender) becomes owner
           addr1.address, // safeAddress
           ethers.ZeroAddress, // investorAddress - will be set by Officer
           [await mockUSDC.getAddress(), await mockUSDT.getAddress()],
-          1n
+          parseUnits('1', 6) // multiplier (1.0x in 6-decimal fixed-point = 1000000)
         ]
       )
 
@@ -769,7 +769,8 @@ describe('Officer Contract', function () {
       )
 
       expect(await safeDepositRouterInstance.safeAddress()).to.equal(addr1.address)
-      expect(await safeDepositRouterInstance.multiplier()).to.equal(1n)
+      // ✅ FIX: Compare with the actual fixed-point value (1.0x = 1000000 in 6 decimals)
+      expect(await safeDepositRouterInstance.multiplier()).to.equal(parseUnits('1', 6))
       expect(await safeDepositRouterInstance.depositsEnabled()).to.equal(false) // Disabled by default
     })
 
@@ -788,7 +789,7 @@ describe('Officer Contract', function () {
           addr1.address, // safeAddress
           ethers.ZeroAddress, // investorAddress
           [await mockUSDC.getAddress()],
-          1n
+          parseUnits('1', 6) // multiplier
         ]
       )
 
@@ -834,7 +835,7 @@ describe('Officer Contract', function () {
           addr1.address, // safeAddress
           ethers.ZeroAddress, // investorAddress
           [await mockUSDC.getAddress()],
-          1n
+          parseUnits('1', 6) // multiplier
         ]
       )
 
@@ -867,7 +868,7 @@ describe('Officer Contract', function () {
           addr1.address, // safeAddress
           ethers.ZeroAddress, // investorAddress - will be set by Officer
           [await mockUSDC.getAddress()],
-          1n
+          parseUnits('1', 6) // multiplier
         ]
       )
 
@@ -903,7 +904,7 @@ describe('Officer Contract', function () {
           addr1.address, // safeAddress
           ethers.ZeroAddress, // investorAddress
           [await mockUSDC.getAddress()],
-          1n
+          parseUnits('1', 6) // multiplier
         ]
       )
 
