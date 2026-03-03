@@ -57,7 +57,7 @@ describe('storageService', () => {
   });
 
   describe('isStorageConfigured', () => {
-    it.skip('should return true when all env vars are set', async () => {
+    it('should return true when all required env vars are set', async () => {
       const { isStorageConfigured } = await import('../storageService');
       expect(isStorageConfigured()).toBe(true);
     });
@@ -68,6 +68,64 @@ describe('storageService', () => {
       vi.resetModules();
       const { isStorageConfigured } = await import('../storageService');
       expect(isStorageConfigured()).toBe(false);
+    });
+
+   
+  });
+
+  describe('configuration helpers', () => {
+    it('getMissingConfig returns all missing required vars', async () => {
+      delete process.env.AWS_S3_BUCKET_NAME;
+      delete process.env.AWS_ACCESS_KEY_ID;
+      delete process.env.AWS_SECRET_ACCESS_KEY;
+
+      vi.resetModules();
+      const { getMissingConfig } = await import('../storageService');
+
+      expect(getMissingConfig()).toEqual([
+        'AWS_S3_BUCKET_NAME',
+        'AWS_ACCESS_KEY_ID',
+        'AWS_SECRET_ACCESS_KEY',
+      ]);
+    });
+
+    it('getStorageConfig applies default endpoint/region/publicBaseUrl fallback', async () => {
+      delete process.env.AWS_DEFAULT_REGION;
+      delete process.env.AWS_ENDPOINT_URL;
+      delete process.env.AWS_PUBLIC_BASE_URL;
+      delete process.env.AWS_S3_PUBLIC_BASE_URL;
+      process.env.AWS_S3_BUCKET_NAME = 'fallback-bucket';
+
+      vi.resetModules();
+      const { getStorageConfig } = await import('../storageService');
+      const config = getStorageConfig();
+
+      expect(config.region).toBe('auto');
+      expect(config.endpoint).toBe('https://storage.railway.app');
+      expect(config.publicBaseUrl).toBe('https://storage.railway.app/fallback-bucket');
+    });
+  });
+
+  describe('pure helpers', () => {
+   
+
+    it('validateFile rejects unsupported mime type', async () => {
+      vi.resetModules();
+      const { validateFile } = await import('../storageService');
+      const result = validateFile({ mimetype: 'application/json', size: 10 } as Express.Multer.File);
+
+      expect(result.valid).toBe(false);
+      if (!result.valid) {
+        expect(result.error).toContain('Only image files');
+      }
+    });
+    
+    it('getPublicFileUrl normalizes and encodes each key segment', async () => {
+      vi.resetModules();
+      const { getPublicFileUrl } = await import('../storageService');
+      const url = getPublicFileUrl('/profiles/0xabc/My Avatar.png');
+
+      expect(url).toBe('https://cdn.example.com/files/profiles/0xabc/My%20Avatar.png');
     });
   });
 
@@ -115,6 +173,28 @@ describe('storageService', () => {
         expect(result.error).toContain('Failed to upload file');
       }
     });
+
+    it('should use Unknown error fallback when upload throws non-Error value', async () => {
+      mockSend.mockRejectedValue('boom');
+      vi.resetModules();
+      const { uploadFile } = await import('../storageService');
+
+      const mockFile = {
+        originalname: 'test.png',
+        mimetype: 'image/png',
+        size: 1024,
+        buffer: Buffer.from('test'),
+      } as Express.Multer.File;
+
+      const result = await uploadFile(mockFile);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toContain('Unknown error');
+      }
+    });
+
+   
   });
 
   describe('uploadFiles', () => {
@@ -212,6 +292,18 @@ describe('storageService', () => {
       const { getPresignedDownloadUrl } = await import('../storageService');
 
       const url = await getPresignedDownloadUrl('test-folder/abc123.png');
+
+      expect(url).toContain('https://signed-url.example.com');
+      expect(mockGetSignedUrl).toHaveBeenCalled();
+    });
+
+    it('should still generate URL when head object check fails', async () => {
+      mockSend.mockRejectedValueOnce(new Error('not found'));
+
+      vi.resetModules();
+      const { getPresignedDownloadUrl } = await import('../storageService');
+
+      const url = await getPresignedDownloadUrl('missing/file.png');
 
       expect(url).toContain('https://signed-url.example.com');
       expect(mockGetSignedUrl).toHaveBeenCalled();
