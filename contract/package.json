@@ -6,12 +6,18 @@
     "node": "npx hardhat node",
     "test": "npx hardhat test",
     "coverage": "npx hardhat coverage",
-    "lint": "npx eslint . --ext .ts",
-    "format": "prettier --write .",
+    "lint": "npm run lint:sol && npm run lint:ts",
+    "lint:sol": "npx solhint 'contracts/**/*.sol'",
+    "lint:ts": "npx eslint . --ext .ts",
+    "format": "npm run format:sol && npm run format:ts",
+    "format:sol": "npx prettier --write 'contracts/**/*.sol'",
+    "format:ts": "prettier --write '**/*.{ts,js,cjs,mjs,md,yml,yaml}'",
+    "format-check": "npm run format-check:sol && npm run format-check:ts",
+    "format-check:sol": "npx prettier --check 'contracts/**/*.sol'",
+    "format-check:ts": "npx prettier --check '**/*.{ts,js,cjs,mjs,md,yml,yaml}'",
     "moveConstants": "nodemon scripts/moveConstants.ts",
     "mc": "nodemon scripts/moveConstants.ts",
-    "update-abi": "ts-node scripts/copy-abi.ts",
-    "format-check": "npx prettier --check ."
+    "update-abi": "ts-node scripts/copy-abi.ts"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
@@ -22,7 +28,9 @@
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "hardhat": "^2.22.1",
-    "prettier": "3.2.5"
+    "prettier": "3.2.5",
+    "prettier-plugin-solidity": "^1.3.1",
+    "solhint": "^5.0.1"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",

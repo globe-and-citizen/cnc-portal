@@ -24,7 +24,6 @@ interface IOfficer {
   function isFeeCollectorToken(address tokenAddress) external view returns (bool);
 }
 
-
 contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   using SafeERC20 for IERC20;
 
@@ -196,8 +195,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
       require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
       supportedTokens[_tokenAddresses[i]] = true;
     }
-    require(msg.sender!=address(0), 'msg send cannot be zero');
-    officerAddress=msg.sender;
+    require(msg.sender != address(0), 'msg send cannot be zero');
+    officerAddress = msg.sender;
   }
 
   /**
@@ -577,9 +576,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @return The fee in basis points (e.g., 50 = 0.5%)
    */
   function _getFeeBps() internal view returns (uint16) {
-      return IOfficer(officerAddress).getFeeFor('BANK');
+    return IOfficer(officerAddress).getFeeFor('BANK');
   }
-  
 
   /**
    * @dev Internal function to check if a token is supported by the FeeCollector
