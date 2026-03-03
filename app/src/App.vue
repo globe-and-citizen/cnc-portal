@@ -57,7 +57,6 @@ import SidebarLayout from '@/components/ui/SidebarLayout.vue'
 
 import { useAuth } from '@/composables/useAuth'
 import { useBackendWake } from '@/composables/useBackendWake'
-import { useGetUserQuery } from '@/queries/user.queries'
 
 import { NETWORK } from '@/constant/index'
 import { useToastStore, useUserDataStore } from '@/stores/index'
@@ -82,49 +81,6 @@ const { addErrorToast } = useToastStore()
 const { logout } = useAuth()
 
 const userStore = useUserDataStore()
-
-const {
-  data: syncedUser,
-  refetch: refetchSyncedUser,
-  isSuccess: isUserSyncSuccess
-} = useGetUserQuery({ pathParams: { address: computed(() => userStore.address || undefined) } })
-
-watch(
-  [() => userStore.isAuth, () => userStore.address],
-  async ([isAuth, address]) => {
-    if (!isAuth || !address) {
-      return
-    }
-
-    const result = await refetchSyncedUser()
-    const user = result.data ?? syncedUser.value
-
-    if (!user) {
-      return
-    }
-
-    userStore.setUserData(
-      user.name || '',
-      (user.address || '') as `0x${string}`,
-      user.nonce || '',
-      user.imageUrl || ''
-    )
-  },
-  { immediate: true }
-)
-
-watch([() => isUserSyncSuccess.value, () => syncedUser.value], ([success, user]) => {
-  if (!success || !user || !userStore.isAuth) {
-    return
-  }
-
-  userStore.setUserData(
-    user.name || '',
-    (user.address || '') as `0x${string}`,
-    user.nonce || '',
-    user.imageUrl || ''
-  )
-})
 
 const lock = computed(() => {
   if (
