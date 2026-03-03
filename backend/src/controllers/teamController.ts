@@ -20,7 +20,9 @@ const extractProfileStorageKey = (imageUrl?: string | null): string | null => {
   return storageKeyMatch ? storageKeyMatch[0] : null;
 };
 
-const resolveMemberImageUrl = async (imageUrl?: string | null): Promise<string | null | undefined> => {
+const resolveMemberImageUrl = async (
+  imageUrl?: string | null
+): Promise<string | null | undefined> => {
   if (!imageUrl) {
     return imageUrl;
   }

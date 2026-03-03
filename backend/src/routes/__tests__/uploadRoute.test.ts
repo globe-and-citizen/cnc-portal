@@ -4,12 +4,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { Readable } from 'stream';
 
 // Hoist mocks
-const {
-  mockUploadSingle,
-  mockUploadFile,
-  mockGetPresignedDownloadUrl,
-  mockIsStorageConfigured,
-} =
+const { mockUploadSingle, mockUploadFile, mockGetPresignedDownloadUrl, mockIsStorageConfigured } =
   vi.hoisted(() => ({
     mockUploadSingle: vi.fn((fieldName: string) => {
       return (req: Request, res: Response, next: NextFunction) => {

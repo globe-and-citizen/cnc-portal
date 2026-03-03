@@ -15,7 +15,9 @@ const PUBLIC_URL = `https://storage.railway.app/bucket/${PROFILE_KEY}`;
 
 const { mockGetPresignedDownloadUrl, mockUploadFile, mockDeleteFile, mockIsStorageConfigured } =
   vi.hoisted(() => ({
-    mockGetPresignedDownloadUrl: vi.fn((key: string) => `https://storage.railway.app/bucket/${key}`),
+    mockGetPresignedDownloadUrl: vi.fn(
+      (key: string) => `https://storage.railway.app/bucket/${key}`
+    ),
     mockUploadFile: vi.fn(),
     mockDeleteFile: vi.fn(),
     mockIsStorageConfigured: vi.fn(() => true),

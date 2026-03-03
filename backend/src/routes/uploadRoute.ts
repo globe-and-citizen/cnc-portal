@@ -1,11 +1,7 @@
 // routes/uploadRoute.ts
 import express, { Request, Response } from 'express';
 import { upload } from '../utils/upload';
-import {
-  uploadFile,
-  getPresignedDownloadUrl,
-  ALLOWED_MIMETYPES,
-} from '../services/storageService';
+import { uploadFile, getPresignedDownloadUrl, ALLOWED_MIMETYPES } from '../services/storageService';
 
 const uploadRouter = express.Router();
 
