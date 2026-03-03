@@ -4,7 +4,12 @@ import express, { Request, Response, NextFunction } from 'express';
 import { Readable } from 'stream';
 
 // Hoist mocks
-const { mockUploadSingle, mockUploadFile, mockGetPublicFileUrl, mockIsStorageConfigured } =
+const {
+  mockUploadSingle,
+  mockUploadFile,
+  mockGetPresignedDownloadUrl,
+  mockIsStorageConfigured,
+} =
   vi.hoisted(() => ({
     mockUploadSingle: vi.fn((fieldName: string) => {
       return (req: Request, res: Response, next: NextFunction) => {
@@ -27,7 +32,7 @@ const { mockUploadSingle, mockUploadFile, mockGetPublicFileUrl, mockIsStorageCon
       };
     }),
     mockUploadFile: vi.fn(),
-    mockGetPublicFileUrl: vi.fn(),
+    mockGetPresignedDownloadUrl: vi.fn(),
     mockIsStorageConfigured: vi.fn(() => true),
   }));
 
@@ -39,7 +44,7 @@ vi.mock('../../utils/upload', () => ({
 
 vi.mock('../../services/storageService', () => ({
   uploadFile: mockUploadFile,
-  getPublicFileUrl: mockGetPublicFileUrl,
+  getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
   isStorageConfigured: mockIsStorageConfigured,
   ALLOWED_MIMETYPES: [
     'image/png',
@@ -84,7 +89,7 @@ describe('uploadRoute', () => {
       const mockPublicUrl = 'https://storage.railway.app/bucket/uploads/abc123hash.jpg';
 
       mockUploadFile.mockResolvedValue({ success: true, metadata: mockMetadata });
-      mockGetPublicFileUrl.mockReturnValue(mockPublicUrl);
+      mockGetPresignedDownloadUrl.mockResolvedValue(mockPublicUrl);
 
       const response = await request(app).post('/').send({ hasFile: true });
 
@@ -95,7 +100,7 @@ describe('uploadRoute', () => {
         metadata: mockMetadata,
       });
       expect(mockUploadFile).toHaveBeenCalled();
-      expect(mockGetPublicFileUrl).toHaveBeenCalledWith(mockMetadata.key);
+      expect(mockGetPresignedDownloadUrl).toHaveBeenCalledWith(mockMetadata.key, 86400);
     });
 
     it('should return 500 if upload fails', async () => {

@@ -1,7 +1,11 @@
 // routes/uploadRoute.ts
 import express, { Request, Response } from 'express';
 import { upload } from '../utils/upload';
-import { uploadFile, getPublicFileUrl, ALLOWED_MIMETYPES } from '../services/storageService';
+import {
+  uploadFile,
+  getPresignedDownloadUrl,
+  ALLOWED_MIMETYPES,
+} from '../services/storageService';
 
 const uploadRouter = express.Router();
 
@@ -16,7 +20,7 @@ interface MulterRequest extends Request {
  *   post:
  *     summary: Upload a file
  *     description: |
- *       Uploads a single file (image or document) to Storage and returns a stable public URL.
+ *       Uploads a single file (image or document) to Storage and returns a presigned URL.
  *       Supported file types:
  *       - Images: png, jpeg, webp
  *       - Documents: pdf, txt, zip, docx
@@ -42,7 +46,7 @@ interface MulterRequest extends Request {
  *               properties:
  *                 fileUrl:
  *                   type: string
- *                   description: Stable public URL for accessing the uploaded file
+ *                   description: Presigned URL for accessing the uploaded file (24h expiry)
  *                 fileKey:
  *                   type: string
  *                   description: S3 object key for the uploaded file (unique identifier)
@@ -86,7 +90,7 @@ uploadRouter.post('/', upload.single('file'), async (req: Request, res: Response
       return res.status(500).json({ error: 'Failed to upload file', details: uploadResult.error });
     }
 
-    const fileUrl = getPublicFileUrl(uploadResult.metadata.key);
+    const fileUrl = await getPresignedDownloadUrl(uploadResult.metadata.key, 86400); // 24h
     res.json({ fileUrl, fileKey: uploadResult.metadata.key, metadata: uploadResult.metadata });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
