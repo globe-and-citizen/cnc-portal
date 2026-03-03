@@ -38,6 +38,7 @@ vi.mock('../../utils', async () => {
 vi.mock('../../utils/viem.config', () => ({
   default: {
     readContract: vi.fn(),
+    getBytecode: vi.fn(),
   },
 }));
 
@@ -64,6 +65,7 @@ const mockTeam = {
 describe('contractController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.teamContract.findMany).mockResolvedValue([]);
   });
 
   describe('PUT: /sync', () => {
@@ -83,6 +85,44 @@ describe('contractController', () => {
       const response = await request(app).put('/sync').send({ teamId: 1 });
       expect(response.status).toBe(404);
       expect(response.body.message).toContain('Team not found');
+    });
+
+    it('should return 200 with count 0 if officer contract is not configured', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        ...mockTeam,
+        officerAddress: null,
+      });
+
+      const response = await request(app).put('/sync').send({ teamId: 1 });
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ count: 0 });
+    });
+
+    it('should resolve officer from persisted officer contract and sync', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        ...mockTeam,
+        officerAddress: null,
+      });
+      vi.mocked(prisma.teamContract.findMany).mockResolvedValue([
+        { address: '0x2222222222222222222222222222222222222222' },
+      ] as never);
+      vi.spyOn(publicClient, 'getBytecode').mockResolvedValue('0x6000');
+      vi.spyOn(publicClient, 'readContract').mockResolvedValue([
+        {
+          contractType: 'Voting',
+          contractAddress: '0xABCDEF1234567890123456789012345678901234',
+        },
+      ]);
+      vi.spyOn(prisma.teamContract, 'createMany').mockResolvedValue({ count: 1 });
+
+      const response = await request(app).put('/sync').send({ teamId: 1 });
+
+      expect(prisma.team.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { officerAddress: '0x2222222222222222222222222222222222222222' },
+      });
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ count: 1 });
     });
 
     it('should return 403 if caller is not the owner of the team', async () => {
@@ -110,8 +150,9 @@ describe('contractController', () => {
       expect(response.body.message).toContain('No new contracts Created');
     });
 
-    it('should return 400 if no new contracts are created (all duplicates)', async () => {
+    it('should return 200 if no new contracts are created (all duplicates)', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(publicClient, 'getBytecode').mockResolvedValue('0x6000');
       // mock readContract to return contracts from blockchain
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
         {
@@ -141,12 +182,13 @@ describe('contractController', () => {
         ]),
         skipDuplicates: true,
       });
-      expect(response.status).toBe(400);
-      expect(response.body.message).toContain('No new contracts Created');
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ count: 0 });
     });
 
     it('should return 200 when new contracts are successfully created', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(publicClient, 'getBytecode').mockResolvedValue('0x6000');
       // mock readContract to return contracts from blockchain
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
         {
