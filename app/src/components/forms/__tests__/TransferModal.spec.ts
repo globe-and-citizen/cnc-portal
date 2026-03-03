@@ -130,7 +130,7 @@ describe('TransferModal', () => {
 
   describe('Transfer Handling - Direct Transfer', () => {
     it('should call token transfer for USDC', async () => {
-      mockUseWriteContract.writeContractAsync.mockResolvedValue({ hash: '0xabcd1234' })
+      mockUseWriteContract.mutateAsync.mockResolvedValue({ hash: '0xabcd1234' })
       mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
 
       wrapper = mountComponent()
@@ -146,11 +146,11 @@ describe('TransferModal', () => {
       })
       await nextTick()
 
-      expect(mockUseWriteContract.writeContractAsync).toHaveBeenCalled()
+      expect(mockUseWriteContract.mutateAsync).toHaveBeenCalled()
     })
 
     it('should show success toast after successful transfer', async () => {
-      mockUseWriteContract.writeContractAsync.mockResolvedValue({ hash: '0xabcd1234' })
+      mockUseWriteContract.mutateAsync.mockResolvedValue({ hash: '0xabcd1234' })
       mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
 
       wrapper = mountComponent()

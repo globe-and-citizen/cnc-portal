@@ -23,8 +23,7 @@ export const mockUseWriteContract = {
   isError: ref(false),
   status: ref('idle' as const),
   variables: ref(undefined),
-  writeContract: vi.fn(),
-  writeContractAsync: vi.fn(),
+  mutate: vi.fn(),
   mutateAsync: vi.fn(),
   reset: vi.fn()
 }

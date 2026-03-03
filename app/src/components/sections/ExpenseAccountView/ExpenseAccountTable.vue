@@ -167,7 +167,7 @@ const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
 })
 //deactivate approval
 const {
-  writeContract: executeDeactivateApproval,
+  mutate: executeDeactivateApproval,
   error: errorDeactivateApproval,
   data: deactivateHash
 } = useWriteContract()
@@ -179,7 +179,7 @@ const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
 
 //activate approval
 const {
-  writeContract: executeActivateApproval,
+  mutate: executeActivateApproval,
   error: errorActivateApproval,
   data: activateHash
 } = useWriteContract()

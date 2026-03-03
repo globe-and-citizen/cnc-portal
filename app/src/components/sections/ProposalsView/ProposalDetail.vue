@@ -241,7 +241,7 @@ const {
 })
 
 const {
-  writeContract: voteOnProposal,
+  mutate: voteOnProposal,
   isPending: isVoting,
   error: voteError,
   data: txHash

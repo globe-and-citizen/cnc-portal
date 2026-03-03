@@ -103,7 +103,7 @@ const investorsAddress = computed(() => teamStore.getContractAddressByType('Inve
 
 const {
   data: mintHash,
-  writeContract: mint,
+  mutate: mint,
   error: mintError,
   isPending: isMintPending
 } = useWriteContract()

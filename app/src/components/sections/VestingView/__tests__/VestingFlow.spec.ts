@@ -15,7 +15,7 @@ const mockReloadKey = ref(0)
 
 // Mock Contract Write
 const mockWriteContract = {
-  writeContract: vi.fn(),
+  mutate: vi.fn(),
   error: ref<null | Error>(null),
   isPending: ref(false),
   data: ref(null)
@@ -137,7 +137,7 @@ describe('VestingFlow.vue', () => {
       const stopBtn = wrapper.find('[data-test="stop-btn"]')
       await stopBtn.trigger('click')
 
-      expect(mockWriteContract.writeContract).toHaveBeenCalledWith({
+      expect(mockWriteContract.mutate).toHaveBeenCalledWith({
         address: VESTING_ADDRESS,
         abi: expect.any(Array),
         functionName: 'stopVesting',
@@ -149,7 +149,7 @@ describe('VestingFlow.vue', () => {
     //   const releaseBtn = wrapper.find('[data-test="release-btn"]')
     //   await releaseBtn.trigger('click')
 
-    //   expect(mockWriteContract.writeContract).toHaveBeenCalledWith({
+    //   expect(mockWriteContract.mutate).toHaveBeenCalledWith({
     //     address: VESTING_ADDRESS,
     //     abi: expect.any(Array),
     //     functionName: 'release',

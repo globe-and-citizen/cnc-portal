@@ -25,7 +25,7 @@ const mockCurrentTeam = ref({
 })
 
 const mockWriteContract = {
-  writeContract: vi.fn(),
+  mutate: vi.fn(),
   error: ref<null | Error>(null),
   isPending: ref(false),
   data: ref(null)
@@ -203,7 +203,7 @@ describe('CreateVesting.vue', () => {
       await confirmBtn.trigger('click')
 
       // Verify approve token was called with correct arguments
-      expect(mockWriteContract.writeContract).toHaveBeenCalledWith({
+      expect(mockWriteContract.mutate).toHaveBeenCalledWith({
         address: '0x000000000000000000000000000000000000beef', // tokenAddress from props
         abi: INVESTOR_ABI,
         functionName: 'approve',
@@ -225,7 +225,7 @@ describe('CreateVesting.vue', () => {
 
       // The form validation should prevent submission with zero amount
       // So no approval-related error toast should be called
-      expect(mockWriteContract.writeContract).not.toHaveBeenCalled()
+      expect(mockWriteContract.mutate).not.toHaveBeenCalled()
     })
 
     it('shows error on invalid cliff value', async () => {
@@ -251,7 +251,7 @@ describe('CreateVesting.vue', () => {
       await confirmBtn.trigger('click')
       await wrapper.vm.$nextTick()
 
-      const callArgs = mockWriteContract.writeContract.mock.calls[0][0]
+      const callArgs = mockWriteContract.mutate.mock.calls[0][0]
       const expectedAmount = parseUnits('7', 18)
       expect(callArgs.args[1]).toEqual(expectedAmount)
     })

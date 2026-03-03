@@ -193,7 +193,7 @@ const $v = useVuelidate(rules, proposal)
 
 // Contract interaction
 const {
-  writeContract: createProposal,
+  mutate: createProposal,
   isPending: isCreatingProposal,
   error: createError,
   data: txHash

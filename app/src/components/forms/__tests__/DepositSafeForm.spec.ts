@@ -108,7 +108,7 @@ describe('DepositSafeForm.vue', () => {
   describe('ERC20 Token Deposit - With Sufficient Allowance', () => {
     it('should show success toast and close modal after ERC20 deposit', async () => {
       mockERC20Reads.allowance.data.value = 1000000n
-      mockTransactionFunctions.mockWriteContractAsync.mockResolvedValueOnce('0xtransfertx')
+      mockTransactionFunctions.mockMutateAsync.mockResolvedValueOnce('0xtransfertx')
       transferHash.value = '0xtransfertx'
 
       const wrapper = createWrapper()

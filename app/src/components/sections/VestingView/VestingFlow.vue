@@ -268,7 +268,7 @@ const handleReload = () => {
 }
 
 const {
-  writeContract: stopVesting,
+  mutate: stopVesting,
   error: errorStopVesting,
   isPending: loadingStopVesting,
   data: hashStopVesting
@@ -293,7 +293,7 @@ watch(errorStopVesting, () => {
 })
 
 const {
-  writeContract: releaseVesting,
+  mutate: releaseVesting,
   error: errorReleaseVesting,
   isPending: loadingReleaseVesting,
   data: hashReleaseVesting

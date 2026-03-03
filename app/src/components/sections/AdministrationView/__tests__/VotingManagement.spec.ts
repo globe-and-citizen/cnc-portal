@@ -21,7 +21,7 @@ const mockUseReadContract = {
 }
 
 const mockUseWriteContract = {
-  writeContract: vi.fn(),
+  mutate: vi.fn(),
   error: ref<MockError>(null),
   isPending: ref(false),
   data: ref(null)
@@ -168,7 +168,7 @@ describe.skip('VotingManagement', () => {
       const wrapper = createComponent()
       await wrapper.vm.$nextTick()
       await wrapper.find('.btn.btn-primary').trigger('click')
-      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith({
+      expect(mockUseWriteContract.mutate).toHaveBeenCalledWith({
         functionName: 'pause',
         args: [],
         abi: expect.any(Array),
@@ -181,7 +181,7 @@ describe.skip('VotingManagement', () => {
       const wrapper = createComponent()
       await wrapper.vm.$nextTick()
       await wrapper.find('.btn.btn-primary').trigger('click')
-      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith({
+      expect(mockUseWriteContract.mutate).toHaveBeenCalledWith({
         functionName: 'unpause',
         args: [],
         abi: expect.any(Array),
@@ -194,7 +194,7 @@ describe.skip('VotingManagement', () => {
     it('calls transferOwnership with BoD address when clicking transfer to BoD button', async () => {
       const wrapper = createComponent()
       await wrapper.find('[data-test="transfer-to-board-of-directors"]').trigger('click')
-      expect(mockUseWriteContract.writeContract).toHaveBeenCalledWith({
+      expect(mockUseWriteContract.mutate).toHaveBeenCalledWith({
         functionName: 'transferOwnership',
         args: ['0x0987654321098765432109876543210987654321'],
         abi: expect.any(Array),

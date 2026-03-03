@@ -114,11 +114,7 @@ const modal = ref({
 })
 
 // Contract interactions for transfer
-const {
-  data: transferHash,
-  isPending: transferLoading,
-  writeContractAsync: transfer
-} = useWriteContract()
+const { data: transferHash, isPending: transferLoading, mutateAsync: transfer } = useWriteContract()
 
 const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
   hash: transferHash

@@ -156,8 +156,8 @@ describe('BankBalanceSection', () => {
     useWriteContractFn.mockReturnValue({
       data: mockTransferHash,
       isPending: mockTransferLoading,
-      writeContractAsync: mockTransfer,
-      writeContract: vi.fn(),
+      mutateAsync: mockTransfer,
+      mutate: vi.fn(),
       error: ref(null)
     })
     useWaitForTransactionReceiptFn.mockReturnValue({
