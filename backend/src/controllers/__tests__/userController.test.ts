@@ -279,6 +279,50 @@ describe('User Controller', () => {
       expect(response.body.message).toBe('Internal server error has occured');
     });
 
+ 
+
+    it('does not delete old profile when next image key is the same', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        ...mockUser,
+        imageUrl: 'https://storage.railway.app/bucket/profiles/0xabc/avatar.png?X-Amz-Signature=old',
+      } as any);
+      vi.spyOn(prisma.user, 'update').mockResolvedValue({
+        ...mockUser,
+        imageUrl: 'https://storage.railway.app/bucket/profiles/0xabc/avatar.png?X-Amz-Signature=new',
+      } as any);
+
+      const response = await request(app)
+        .put(`/${DEFAULT_ADDRESS}`)
+        .send({
+          imageUrl: 'https://storage.railway.app/bucket/profiles/0xabc/avatar.png?X-Amz-Signature=new',
+        });
+
+      expect(response.status).toBe(200);
+      expect(mockDeleteFile).not.toHaveBeenCalled();
+    });
+
+    it('continues update when delete fails in non-file update branch', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        ...mockUser,
+        imageUrl: 'https://storage.railway.app/bucket/profiles/0xabc/old.png?X-Amz-Signature=old',
+      } as any);
+      mockDeleteFile.mockRejectedValueOnce(new Error('delete failed'));
+      vi.spyOn(prisma.user, 'update').mockResolvedValue({
+        ...mockUser,
+        imageUrl: 'https://storage.railway.app/bucket/profiles/0xabc/new.png?X-Amz-Signature=new',
+      } as any);
+
+      const response = await request(app)
+        .put(`/${DEFAULT_ADDRESS}`)
+        .send({
+          imageUrl: 'https://storage.railway.app/bucket/profiles/0xabc/new.png?X-Amz-Signature=new',
+        });
+
+      expect(response.status).toBe(200);
+      expect(mockDeleteFile).toHaveBeenCalledWith('profiles/0xabc/old.png');
+    });
+
+   
     it('returns 500 on update error', async () => {
       vi.spyOn(prisma.user, 'findUnique').mockRejectedValue(new Error('Error'));
       const response = await request(app)
