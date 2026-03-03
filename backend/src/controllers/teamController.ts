@@ -3,7 +3,39 @@ import { Request, Response } from 'express';
 import { isAddress } from 'viem';
 import { addNotification, prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
+import { getPresignedDownloadUrl } from '../services/storageService';
 //const prisma = new PrismaClient();
+
+const extractProfileStorageKey = (imageUrl?: string | null): string | null => {
+  if (!imageUrl || typeof imageUrl !== 'string') {
+    return null;
+  }
+
+  if (imageUrl.startsWith('profiles/') || imageUrl.startsWith('uploads/')) {
+    return imageUrl;
+  }
+
+  const decodedUrl = decodeURIComponent(imageUrl);
+  const storageKeyMatch = decodedUrl.match(/(profiles|uploads)\/[^?#]+/);
+  return storageKeyMatch ? storageKeyMatch[0] : null;
+};
+
+const resolveMemberImageUrl = async (imageUrl?: string | null): Promise<string | null | undefined> => {
+  if (!imageUrl) {
+    return imageUrl;
+  }
+
+  const key = extractProfileStorageKey(imageUrl);
+  if (!key) {
+    return imageUrl;
+  }
+
+  try {
+    return await getPresignedDownloadUrl(key, 86400 * 7);
+  } catch {
+    return imageUrl;
+  }
+};
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
   /*
@@ -114,7 +146,17 @@ const getTeam = async (req: Request, res: Response) => {
       return errorResponse(403, 'Unauthorized', res);
     }
 
-    res.status(200).json(team);
+    const membersWithResolvedImages = await Promise.all(
+      team.members.map(async (member) => ({
+        ...member,
+        imageUrl: await resolveMemberImageUrl(member.imageUrl),
+      }))
+    );
+
+    res.status(200).json({
+      ...team,
+      members: membersWithResolvedImages,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);

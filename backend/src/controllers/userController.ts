@@ -4,7 +4,7 @@ import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 import {
   uploadFile,
-  getPublicFileUrl,
+  getPresignedDownloadUrl,
   deleteFile,
   isStorageConfigured,
 } from '../services/storageService';
@@ -40,7 +40,11 @@ const resolveProfileImageUrl = async (
     return imageUrl;
   }
 
-  return getPublicFileUrl(key);
+  try {
+    return await getPresignedDownloadUrl(key, 86400 * 7);
+  } catch {
+    return imageUrl;
+  }
 };
 
 /**
@@ -138,7 +142,7 @@ export const updateUser = async (req: Request, res: Response) => {
           return errorResponse(400, uploadResult.error || 'Failed to upload profile image', res);
         }
 
-        newImageUrl = getPublicFileUrl(uploadResult.metadata.key);
+        newImageUrl = await getPresignedDownloadUrl(uploadResult.metadata.key, 86400 * 7);
 
         // Delete old profile image if it exists and was stored on Railway
         if (user.imageUrl) {
