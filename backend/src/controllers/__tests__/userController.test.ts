@@ -13,9 +13,9 @@ const ALT_ADDRESS = '0x9999999999999999999999999999999999999999';
 const PROFILE_KEY = `profiles/${DEFAULT_ADDRESS}/new.png`;
 const PUBLIC_URL = `https://storage.railway.app/bucket/${PROFILE_KEY}`;
 
-const { mockGetPublicFileUrl, mockUploadFile, mockDeleteFile, mockIsStorageConfigured } =
+const { mockGetPresignedDownloadUrl, mockUploadFile, mockDeleteFile, mockIsStorageConfigured } =
   vi.hoisted(() => ({
-    mockGetPublicFileUrl: vi.fn((key: string) => `https://storage.railway.app/bucket/${key}`),
+    mockGetPresignedDownloadUrl: vi.fn((key: string) => `https://storage.railway.app/bucket/${key}`),
     mockUploadFile: vi.fn(),
     mockDeleteFile: vi.fn(),
     mockIsStorageConfigured: vi.fn(() => true),
@@ -26,7 +26,7 @@ vi.mock('../../services/storageService', async (importOriginal) => {
   return {
     ...actual,
     uploadFile: mockUploadFile,
-    getPublicFileUrl: mockGetPublicFileUrl,
+    getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
     deleteFile: mockDeleteFile,
     isStorageConfigured: mockIsStorageConfigured,
   };

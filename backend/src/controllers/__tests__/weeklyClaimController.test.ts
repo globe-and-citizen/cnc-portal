@@ -8,8 +8,10 @@ import type { Address } from 'viem';
 
 const CALLER = '0x1234567890123456789012345678901234567890';
 
-const { mockGetPublicFileUrl } = vi.hoisted(() => ({
-  mockGetPublicFileUrl: vi.fn((key: string) => `https://storage.railway.app/test-bucket/${key}`),
+const { mockGetPresignedDownloadUrl } = vi.hoisted(() => ({
+  mockGetPresignedDownloadUrl: vi.fn(
+    (key: string) => `https://storage.railway.app/test-bucket/${key}`
+  ),
 }));
 
 const { readContractMock } = vi.hoisted(() => ({
@@ -17,7 +19,7 @@ const { readContractMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../services/storageService', () => ({
-  getPublicFileUrl: mockGetPublicFileUrl,
+  getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
 }));
 
 vi.mock('../../middleware/authMiddleware', () => ({
