@@ -1,632 +1,707 @@
-import type { Abi } from 'viem'
+import type { Abi } from "viem";
 
 export const CASH_REMUNERATION_EIP712_ABI = [
   {
-    inputs: [],
-    name: 'ECDSAInvalidSignature',
-    type: 'error'
+    "inputs": [],
+    "name": "ECDSAInvalidSignature",
+    "type": "error"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: 'uint256',
-        name: 'length',
-        type: 'uint256'
+        "internalType": "uint256",
+        "name": "length",
+        "type": "uint256"
       }
     ],
-    name: 'ECDSAInvalidSignatureLength',
-    type: 'error'
+    "name": "ECDSAInvalidSignatureLength",
+    "type": "error"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: 'bytes32',
-        name: 's',
-        type: 'bytes32'
+        "internalType": "bytes32",
+        "name": "s",
+        "type": "bytes32"
       }
     ],
-    name: 'ECDSAInvalidSignatureS',
-    type: 'error'
+    "name": "ECDSAInvalidSignatureS",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: 'EnforcedPause',
-    type: 'error'
+    "inputs": [],
+    "name": "EnforcedPause",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: 'ExpectedPause',
-    type: 'error'
+    "inputs": [],
+    "name": "ExpectedPause",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: 'FailedCall',
-    type: 'error'
+    "inputs": [],
+    "name": "FailedCall",
+    "type": "error"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: 'uint256',
-        name: 'balance',
-        type: 'uint256'
+        "internalType": "uint256",
+        "name": "balance",
+        "type": "uint256"
       },
       {
-        internalType: 'uint256',
-        name: 'needed',
-        type: 'uint256'
+        "internalType": "uint256",
+        "name": "needed",
+        "type": "uint256"
       }
     ],
-    name: 'InsufficientBalance',
-    type: 'error'
+    "name": "InsufficientBalance",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: 'InvalidInitialization',
-    type: 'error'
+    "inputs": [],
+    "name": "InvalidInitialization",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: 'NotInitializing',
-    type: 'error'
+    "inputs": [],
+    "name": "NotInitializing",
+    "type": "error"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: 'address',
-        name: 'owner',
-        type: 'address'
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
       }
     ],
-    name: 'OwnableInvalidOwner',
-    type: 'error'
+    "name": "OwnableInvalidOwner",
+    "type": "error"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
       }
     ],
-    name: 'OwnableUnauthorizedAccount',
-    type: 'error'
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error"
   },
   {
-    inputs: [],
-    name: 'ReentrancyGuardReentrantCall',
-    type: 'error'
+    "inputs": [],
+    "name": "ReentrancyGuardReentrantCall",
+    "type": "error"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: 'address',
-        name: 'expected',
-        type: 'address'
+        "internalType": "address",
+        "name": "expected",
+        "type": "address"
       },
       {
-        internalType: 'address',
-        name: 'received',
-        type: 'address'
+        "internalType": "address",
+        "name": "received",
+        "type": "address"
       }
     ],
-    name: 'UnauthorizedAccess',
-    type: 'error'
+    "name": "UnauthorizedAccess",
+    "type": "error"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: true,
-        internalType: 'address',
-        name: 'depositor',
-        type: 'address'
+        "indexed": true,
+        "internalType": "address",
+        "name": "depositor",
+        "type": "address"
       },
       {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'amount',
-        type: 'uint256'
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       }
     ],
-    name: 'Deposited',
-    type: 'event'
+    "name": "Deposited",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [],
-    name: 'EIP712DomainChanged',
-    type: 'event'
+    "anonymous": false,
+    "inputs": [],
+    "name": "EIP712DomainChanged",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: false,
-        internalType: 'uint64',
-        name: 'version',
-        type: 'uint64'
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "version",
+        "type": "uint64"
       }
     ],
-    name: 'Initialized',
-    type: 'event'
+    "name": "Initialized",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: true,
-        internalType: 'address',
-        name: 'newOfficerAddress',
-        type: 'address'
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOfficerAddress",
+        "type": "address"
       }
     ],
-    name: 'OfficerAddressUpdated',
-    type: 'event'
+    "name": "OfficerAddressUpdated",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: true,
-        internalType: 'address',
-        name: 'previousOwner',
-        type: 'address'
+        "indexed": true,
+        "internalType": "address",
+        "name": "ownerAddress",
+        "type": "address"
       },
       {
-        indexed: true,
-        internalType: 'address',
-        name: 'newOwner',
-        type: 'address'
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       }
     ],
-    name: 'OwnershipTransferred',
-    type: 'event'
+    "name": "OwnerTreasuryWithdrawNative",
+    "type": "event"
   },
   {
-    anonymous: false,
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        indexed: false,
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
-      }
-    ],
-    name: 'Paused',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'tokenAddress',
-        type: 'address'
-      }
-    ],
-    name: 'TokenSupportAdded',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'tokenAddress',
-        type: 'address'
-      }
-    ],
-    name: 'TokenSupportRemoved',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: 'address',
-        name: 'account',
-        type: 'address'
-      }
-    ],
-    name: 'Unpaused',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'bytes32',
-        name: 'signatureHash',
-        type: 'bytes32'
-      }
-    ],
-    name: 'WageClaimDisabled',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'bytes32',
-        name: 'signatureHash',
-        type: 'bytes32'
-      }
-    ],
-    name: 'WageClaimEnabled',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'withdrawer',
-        type: 'address'
+        "indexed": true,
+        "internalType": "address",
+        "name": "ownerAddress",
+        "type": "address"
       },
       {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'amount',
-        type: 'uint256'
-      }
-    ],
-    name: 'Withdraw',
-    type: 'event'
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'withdrawer',
-        type: 'address'
+        "indexed": true,
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
       },
       {
-        indexed: true,
-        internalType: 'address',
-        name: 'tokenAddress',
-        type: 'address'
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "OwnerTreasuryWithdrawToken",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
       },
       {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'amount',
-        type: 'uint256'
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
       }
     ],
-    name: 'WithdrawToken',
-    type: 'event'
+    "name": "OwnershipTransferred",
+    "type": "event"
   },
   {
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        internalType: 'address',
-        name: 'tokenAddress',
-        type: 'address'
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
       }
     ],
-    name: 'addTokenSupport',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    "name": "Paused",
+    "type": "event"
   },
   {
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        internalType: 'bytes32',
-        name: 'signatureHash',
-        type: 'bytes32'
+        "indexed": true,
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
       }
     ],
-    name: 'disableClaim',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    "name": "TokenSupportAdded",
+    "type": "event"
   },
   {
-    inputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        internalType: 'bytes32',
-        name: '',
-        type: 'bytes32'
+        "indexed": true,
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
       }
     ],
-    name: 'disabledWageClaims',
-    outputs: [
-      {
-        internalType: 'bool',
-        name: '',
-        type: 'bool'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
+    "name": "TokenSupportRemoved",
+    "type": "event"
   },
   {
-    inputs: [],
-    name: 'eip712Domain',
-    outputs: [
+    "anonymous": false,
+    "inputs": [
       {
-        internalType: 'bytes1',
-        name: 'fields',
-        type: 'bytes1'
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Unpaused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "signatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "WageClaimDisabled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "signatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "WageClaimEnabled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "withdrawer",
+        "type": "address"
       },
       {
-        internalType: 'string',
-        name: 'name',
-        type: 'string'
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Withdraw",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "withdrawer",
+        "type": "address"
       },
       {
-        internalType: 'string',
-        name: 'version',
-        type: 'string'
+        "indexed": true,
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
       },
       {
-        internalType: 'uint256',
-        name: 'chainId',
-        type: 'uint256'
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "WithdrawToken",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "addTokenSupport",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "signatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "disableClaim",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "disabledWageClaims",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "eip712Domain",
+    "outputs": [
+      {
+        "internalType": "bytes1",
+        "name": "fields",
+        "type": "bytes1"
       },
       {
-        internalType: 'address',
-        name: 'verifyingContract',
-        type: 'address'
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
       },
       {
-        internalType: 'bytes32',
-        name: 'salt',
-        type: 'bytes32'
+        "internalType": "string",
+        "name": "version",
+        "type": "string"
       },
       {
-        internalType: 'uint256[]',
-        name: 'extensions',
-        type: 'uint256[]'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes32',
-        name: 'signatureHash',
-        type: 'bytes32'
-      }
-    ],
-    name: 'enableClaim',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
-  },
-  {
-    inputs: [],
-    name: 'getBalance',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256'
-      }
-    ],
-    stateMutability: 'view',
-    type: 'function'
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: '_owner',
-        type: 'address'
+        "internalType": "uint256",
+        "name": "chainId",
+        "type": "uint256"
       },
       {
-        internalType: 'address[]',
-        name: '_tokenAddresses',
-        type: 'address[]'
+        "internalType": "address",
+        "name": "verifyingContract",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "salt",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "extensions",
+        "type": "uint256[]"
       }
     ],
-    name: 'initialize',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: 'officerAddress',
-    outputs: [
+    "inputs": [
       {
-        internalType: 'address',
-        name: '',
-        type: 'address'
+        "internalType": "bytes32",
+        "name": "signatureHash",
+        "type": "bytes32"
       }
     ],
-    stateMutability: 'view',
-    type: 'function'
+    "name": "enableClaim",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: 'owner',
-    outputs: [
+    "inputs": [],
+    "name": "getBalance",
+    "outputs": [
       {
-        internalType: 'address',
-        name: '',
-        type: 'address'
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
-    stateMutability: 'view',
-    type: 'function'
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: 'bytes32',
-        name: '',
-        type: 'bytes32'
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+      },
+      {
+        "internalType": "address[]",
+        "name": "_tokenAddresses",
+        "type": "address[]"
       }
     ],
-    name: 'paidWageClaims',
-    outputs: [
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "officerAddress",
+    "outputs": [
       {
-        internalType: 'bool',
-        name: '',
-        type: 'bool'
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
-    stateMutability: 'view',
-    type: 'function'
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: 'pause',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
-  },
-  {
-    inputs: [],
-    name: 'paused',
-    outputs: [
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
       {
-        internalType: 'bool',
-        name: '',
-        type: 'bool'
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
-    stateMutability: 'view',
-    type: 'function'
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: 'address',
-        name: 'tokenAddress',
-        type: 'address'
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       }
     ],
-    name: 'removeTokenSupport',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    "name": "ownerWithdrawNative",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: 'renounceOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
-  },
-  {
-    inputs: [
+    "inputs": [
       {
-        internalType: 'address',
-        name: '_officerAddress',
-        type: 'address'
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       }
     ],
-    name: 'setOfficerAddress',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    "name": "ownerWithdrawToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [
       {
-        internalType: 'address',
-        name: '',
-        type: 'address'
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
       }
     ],
-    name: 'supportedTokens',
-    outputs: [
+    "name": "paidWageClaims",
+    "outputs": [
       {
-        internalType: 'bool',
-        name: '',
-        type: 'bool'
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
-    stateMutability: 'view',
-    type: 'function'
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [
+    "inputs": [],
+    "name": "pause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "paused",
+    "outputs": [
       {
-        internalType: 'address',
-        name: 'newOwner',
-        type: 'address'
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
-    name: 'transferOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    inputs: [],
-    name: 'unpause',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
-  },
-  {
-    inputs: [
+    "inputs": [
       {
-        components: [
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "removeTokenSupport",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_officerAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setOfficerAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "supportedTokens",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "unpause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
           {
-            internalType: 'address',
-            name: 'employeeAddress',
-            type: 'address'
+            "internalType": "address",
+            "name": "employeeAddress",
+            "type": "address"
           },
           {
-            internalType: 'uint8',
-            name: 'hoursWorked',
-            type: 'uint8'
+            "internalType": "uint8",
+            "name": "hoursWorked",
+            "type": "uint8"
           },
           {
-            components: [
+            "components": [
               {
-                internalType: 'uint256',
-                name: 'hourlyRate',
-                type: 'uint256'
+                "internalType": "uint256",
+                "name": "hourlyRate",
+                "type": "uint256"
               },
               {
-                internalType: 'address',
-                name: 'tokenAddress',
-                type: 'address'
+                "internalType": "address",
+                "name": "tokenAddress",
+                "type": "address"
               }
             ],
-            internalType: 'struct CashRemunerationEIP712.Wage[]',
-            name: 'wages',
-            type: 'tuple[]'
+            "internalType": "struct CashRemunerationEIP712.Wage[]",
+            "name": "wages",
+            "type": "tuple[]"
           },
           {
-            internalType: 'uint256',
-            name: 'date',
-            type: 'uint256'
+            "internalType": "uint256",
+            "name": "date",
+            "type": "uint256"
           }
         ],
-        internalType: 'struct CashRemunerationEIP712.WageClaim',
-        name: 'wageClaim',
-        type: 'tuple'
+        "internalType": "struct CashRemunerationEIP712.WageClaim",
+        "name": "wageClaim",
+        "type": "tuple"
       },
       {
-        internalType: 'bytes',
-        name: 'signature',
-        type: 'bytes'
+        "internalType": "bytes",
+        "name": "signature",
+        "type": "bytes"
       }
     ],
-    name: 'withdraw',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function'
+    "name": "withdraw",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    stateMutability: 'payable',
-    type: 'receive'
+    "stateMutability": "payable",
+    "type": "receive"
   }
-] as const satisfies Abi
+] as const satisfies Abi;
