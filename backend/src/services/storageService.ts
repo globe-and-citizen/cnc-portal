@@ -7,7 +7,14 @@
  */
 import crypto from 'crypto';
 import path from 'path';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  HeadObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 // Defaults and limits
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -213,8 +220,13 @@ export async function getPresignedDownloadUrl(
   fileKey: string,
   expiresIn: number = PRESIGNED_URL_EXPIRATION
 ): Promise<string> {
-  void expiresIn;
-  return getPublicFileUrl(fileKey);
+  const cfg = getStorageConfig();
+  const client = createS3Client();
+  await client
+    .send(new HeadObjectCommand({ Bucket: cfg.bucket, Key: fileKey }))
+    .catch(() => undefined);
+  const getObj = new GetObjectCommand({ Bucket: cfg.bucket, Key: fileKey });
+  return getSignedUrl(client, getObj, { expiresIn });
 }
 
 export async function deleteFile(fileKey: string): Promise<boolean> {
