@@ -197,15 +197,29 @@ watch(
   }
 )
 
+const tokenSymbolText = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : 'default'
+)
+
+const toVestingTuple = (value: unknown): VestingTuple | null => {
+  if (!Array.isArray(value) || value.length !== 2) {
+    return null
+  }
+
+  const [members, vestings] = value
+  if (!Array.isArray(members) || !Array.isArray(vestings)) {
+    return null
+  }
+
+  return [members as string[], vestings as VestingTuple[1]]
+}
+
 const vestings = computed<VestingRow[]>(() => {
   const currentDateInSeconds = Math.floor(Date.now() / 1000)
 
-  // @ts-expect-error type assertion
-  const allVestingsRaw: VestingTuple[] = [vestingInfos.value, archivedVestingInfos.value].filter(
-    // @ts-expect-error type assertion
-    (v): v is VestingTuple =>
-      Array.isArray(v) && v.length === 2 && Array.isArray(v[0]) && Array.isArray(v[1])
-  )
+  const allVestingsRaw = [vestingInfos.value, archivedVestingInfos.value]
+    .map(toVestingTuple)
+    .filter((v): v is VestingTuple => v !== null)
 
   const allRows = allVestingsRaw.flatMap(([members, vestingsRaw]) =>
     members.map((member, idx): VestingRow => {
@@ -221,7 +235,7 @@ const vestings = computed<VestingRow[]>(() => {
           totalAmount: 0,
           released: 0,
           status: 'Inactive',
-          tokenSymbol: tokenSymbol?.value || 'default'
+          tokenSymbol: tokenSymbolText.value
         }
       }
       const totalAmount = Number(formatUnits(v.totalAmount, 6))
@@ -246,7 +260,7 @@ const vestings = computed<VestingRow[]>(() => {
         totalAmount,
         released,
         status,
-        tokenSymbol: tokenSymbol?.value || 'default'
+        tokenSymbol: tokenSymbolText.value
       }
     })
   )
