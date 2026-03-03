@@ -13,7 +13,9 @@ const mockEnv = {
 // Hoisted mocks for AWS SDK
 const { mockSend, mockGetSignedUrl } = vi.hoisted(() => ({
   mockSend: vi.fn(),
-  mockGetSignedUrl: vi.fn(() => Promise.resolve('https://signed-url.example.com/file?signature=abc123')),
+  mockGetSignedUrl: vi.fn(() =>
+    Promise.resolve('https://signed-url.example.com/file?signature=abc123')
+  ),
 }));
 
 // Mock S3Client and Commands as proper class constructors
