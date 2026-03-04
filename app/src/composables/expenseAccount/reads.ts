@@ -84,8 +84,6 @@ export function useExpenseAccountSupportedTokens(symbol: MaybeRef<string>) {
   })
 }
 
-
-
 export function useExpenseAccountIsTokenSupported(tokenAddress: MaybeRef<Address>) {
   const contractAddress = useExpenseAccountAddress()
   const tokenAddressValue = computed(() => unref(tokenAddress))
@@ -134,9 +132,7 @@ export function useExpenseAccountExpenseBalances(signatureHash: MaybeRef<Hash>) 
     query: {
       enabled: computed(
         () =>
-          !!contractAddress.value &&
-          isAddress(contractAddress.value) &&
-          !!signatureHashValue.value
+          !!contractAddress.value && isAddress(contractAddress.value) && !!signatureHashValue.value
       )
     }
   })
@@ -194,9 +190,7 @@ export function useExpenseAccountIsNewPeriod(
     query: {
       enabled: computed(
         () =>
-          !!contractAddress.value &&
-          isAddress(contractAddress.value) &&
-          !!signatureHashValue.value
+          !!contractAddress.value && isAddress(contractAddress.value) && !!signatureHashValue.value
       )
     }
   } as never)

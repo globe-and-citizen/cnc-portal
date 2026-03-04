@@ -137,7 +137,8 @@ export function useCashRemunerationOwnerWithdrawToken(
 
   return {
     ...write,
-    executeWrite: () => write.executeWrite([unref(tokenAddress), unref(amount)] as readonly unknown[])
+    executeWrite: () =>
+      write.executeWrite([unref(tokenAddress), unref(amount)] as readonly unknown[])
   }
 }
 
@@ -152,7 +153,8 @@ export function useCashRemunerationWithdraw(
 
   return {
     ...write,
-    executeWrite: () => write.executeWrite([unref(wageClaim), unref(signature)] as readonly unknown[])
+    executeWrite: () =>
+      write.executeWrite([unref(wageClaim), unref(signature)] as readonly unknown[])
   }
 }
 
