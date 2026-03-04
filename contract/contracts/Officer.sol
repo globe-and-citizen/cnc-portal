@@ -25,10 +25,6 @@ interface IInvestorV1Contract {
   function initialize(string calldata _name, string calldata _symbol, address _owner) external;
 }
 
-interface IBank {
-  function setInvestorAddress(address _investorAddress) external;
-}
-
 interface IFeeCollector {
   function getFeeFor(string memory contractType) external view returns (uint16);
 
@@ -248,12 +244,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       IElections(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
     } else if (keccak256(bytes(contractType)) == keccak256(bytes('Proposals'))) {
       IProposal(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
-    } else if (keccak256(bytes(contractType)) == keccak256(bytes('Bank'))) {
-      address foundInvestorsV1Contract = findDeployedContract('InvestorV1');
-      if (foundInvestorsV1Contract != address(0)) {
-        // InvestorV1 already deployed, set the investor address
-        IBank(proxyAddress).setInvestorAddress(foundInvestorsV1Contract);
-      }
     } else if (keccak256(bytes(contractType)) == keccak256(bytes('SafeDepositRouter'))) {
       address foundInvestorsV1Contract = findDeployedContract('InvestorV1');
       if (foundInvestorsV1Contract != address(0)) {
@@ -272,12 +262,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         }
       }
     } else if (keccak256(bytes(contractType)) == keccak256(bytes('InvestorV1'))) {
-      address foundBankContract = findDeployedContract('Bank');
-      if (foundBankContract != address(0)) {
-        // Bank already deployed, set the investor address
-        IBank(foundBankContract).setInvestorAddress(proxyAddress);
-      }
-
       address foundSafeDepositRouter = findDeployedContract('SafeDepositRouter');
       if (foundSafeDepositRouter != address(0)) {
         IInvestorV1 investorV1 = IInvestorV1(proxyAddress);

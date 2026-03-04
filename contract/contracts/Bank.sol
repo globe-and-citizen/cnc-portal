@@ -19,18 +19,14 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   using SafeERC20 for IERC20;
 
   /**
-   * @dev Address of the investor contract that provides shareholder information
-   * Used to get the list of shareholders and their token amounts for dividend distribution
-   */
-  address public investorAddress;
-
-  /**
    * @dev Mapping to track which ERC20 tokens are supported by the contract
    * token address => true if supported, false otherwise
    */
   mapping(address => bool) public supportedTokens;
 
-  // Add new state variable - MUST be added after existing ones
+  /**
+   * @dev Address of the Officer contract (set during initialization)
+   */
   address public officerAddress;
 
   /**
@@ -82,13 +78,6 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @param tokenAddress The address of the token contract.
    */
   event TokenSupportRemoved(address indexed tokenAddress);
-
-  /**
-   * @dev Emitted when the investor address is updated.
-   * @param previousAddress The previous investor contract address.
-   * @param newAddress The new investor contract address.
-   */
-  event InvestorAddressUpdated(address indexed previousAddress, address indexed newAddress);
 
   /**
    * @notice Initializes the Bank contract with supported tokens and owner
@@ -272,23 +261,6 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     // Transfer net amount to recipient
     IERC20(_token).safeTransfer(_to, net);
     emit TokenTransfer(msg.sender, _to, _token, net);
-  }
-
-  /**
-   * @notice Sets the investor contract address used for dividend distribution
-   * @dev Only owner can call this function to update the investor contract reference
-   * @param _investorAddress The address of the investor contract implementing IInvestorView
-   * @custom:security Requires contract to be unpaused and validates non-zero address
-   */
-  function setInvestorAddress(address _investorAddress) external whenNotPaused {
-    require(
-      msg.sender == owner() || investorAddress == address(0),
-      'Not allowed to set investor contract'
-    );
-    require(_investorAddress != address(0), 'Address cannot be zero');
-    address previousAddress = investorAddress;
-    investorAddress = _investorAddress;
-    emit InvestorAddressUpdated(previousAddress, _investorAddress);
   }
 
   /**
