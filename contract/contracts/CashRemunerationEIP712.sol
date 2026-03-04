@@ -327,7 +327,7 @@ contract CashRemunerationEIP712 is
    * @param tokenAddress The address of the token contract.
    * @dev Can only be called by the contract owner.
    */
-  function addTokenSupport(address tokenAddress) external onlyOwner whenNotPaused {
+  function addTokenSupport(address tokenAddress) external override onlyOwner whenNotPaused {
     _addTokenSupport(tokenAddress);
   }
 
@@ -336,7 +336,7 @@ contract CashRemunerationEIP712 is
    * @param tokenAddress The address of the token contract.
    * @dev Can only be called by the contract owner.
    */
-  function removeTokenSupport(address tokenAddress) external onlyOwner whenNotPaused {
+  function removeTokenSupport(address tokenAddress) external override onlyOwner whenNotPaused {
     _removeTokenSupport(tokenAddress);
   }
 

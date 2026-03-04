@@ -444,7 +444,7 @@ contract ExpenseAccountEIP712 is
    * @param _tokenAddress The address of the token contract.
    * @dev Can only be called by the contract owner.
    */
-  function addTokenSupport(address _tokenAddress) external onlyOwner {
+  function addTokenSupport(address _tokenAddress) external override onlyOwner {
     _addTokenSupport(_tokenAddress);
   }
 
@@ -453,7 +453,7 @@ contract ExpenseAccountEIP712 is
    * @param _tokenAddress The address of the token contract.
    * @dev Can only be called by the contract owner.
    */
-  function removeTokenSupport(address _tokenAddress) external onlyOwner {
+  function removeTokenSupport(address _tokenAddress) external override onlyOwner {
     _removeTokenSupport(_tokenAddress);
   }
 

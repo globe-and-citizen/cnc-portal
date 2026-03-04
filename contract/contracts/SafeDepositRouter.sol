@@ -306,7 +306,7 @@ contract SafeDepositRouter is
    * @notice Add token to deposit whitelist
    * @param tokenAddress Token address to add
    */
-  function addTokenSupport(address tokenAddress) external onlyOwner {
+  function addTokenSupport(address tokenAddress) external override onlyOwner {
     if (tokenAddress == address(0)) revert InvalidTokenAddress();
     if (_isTokenSupported(tokenAddress)) revert TokenAlreadySupported();
 
@@ -323,7 +323,7 @@ contract SafeDepositRouter is
    * @notice Remove token from deposit whitelist
    * @param tokenAddress Token address to remove
    */
-  function removeTokenSupport(address tokenAddress) external onlyOwner {
+  function removeTokenSupport(address tokenAddress) external override onlyOwner {
     if (tokenAddress == address(0)) revert InvalidTokenAddress();
     if (!_isTokenSupported(tokenAddress)) revert TokenNotSupported();
 

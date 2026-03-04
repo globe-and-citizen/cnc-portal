@@ -75,4 +75,22 @@ abstract contract TokenSupport {
   function isTokenSupported(address _token) public view returns (bool) {
     return _supportedTokens.contains(_token);
   }
+
+  /**
+   * @notice Adds a supported token to the contract
+   * @param _tokenAddress The address of the token contract
+   * @dev Virtual function - override to add access control (e.g., onlyOwner)
+   */
+  function addTokenSupport(address _tokenAddress) external virtual {
+    _addTokenSupport(_tokenAddress);
+  }
+
+  /**
+   * @notice Removes a supported token from the contract
+   * @param _tokenAddress The address of the token contract
+   * @dev Virtual function - override to add access control (e.g., onlyOwner)
+   */
+  function removeTokenSupport(address _tokenAddress) external virtual {
+    _removeTokenSupport(_tokenAddress);
+  }
 }
