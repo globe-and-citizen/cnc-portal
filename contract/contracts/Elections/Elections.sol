@@ -7,10 +7,7 @@ import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ElectionTypes} from './ElectionTypes.sol';
 import {ElectionUtils} from './ElectionUtils.sol';
 import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
-
-interface IOfficer {
-  function findDeployedContract(string calldata contractType) external view returns (address);
-}
+import '../interfaces/IOfficer.sol';
 
 /**
  * @title Elections

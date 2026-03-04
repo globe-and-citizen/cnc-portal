@@ -7,21 +7,11 @@ import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-
-interface IInvestorV1 {
-  function individualMint(address shareholder, uint256 amount) external;
-
-  function hasRole(bytes32 role, address account) external view returns (bool);
-
-  function MINTER_ROLE() external view returns (bytes32);
-}
+import './interfaces/IInvestorV1.sol';
+import './interfaces/IOfficer.sol';
 
 interface IERC20Metadata {
   function decimals() external view returns (uint8);
-}
-
-interface IOfficer {
-  function findDeployedContract(string calldata contractType) external view returns (address);
 }
 
 /**

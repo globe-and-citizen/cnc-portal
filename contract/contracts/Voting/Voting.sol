@@ -8,10 +8,7 @@ import 'hardhat/console.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-
-interface IOfficer {
-  function findDeployedContract(string calldata contractType) external view returns (address);
-}
+import '../interfaces/IOfficer.sol';
 
 /// @title Voting Contract for Decentralized Governance
 /// @notice This contract manages proposals, elections, and voting processes

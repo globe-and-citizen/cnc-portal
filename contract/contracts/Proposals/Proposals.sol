@@ -6,10 +6,7 @@ import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/Pau
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
 import {ProposalUtils} from './ProposalUtils.sol';
-
-interface IOfficer {
-  function findDeployedContract(string calldata contractType) external view returns (address);
-}
+import '../interfaces/IOfficer.sol';
 
 /*
  * @title Proposals

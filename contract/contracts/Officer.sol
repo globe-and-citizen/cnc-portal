@@ -8,23 +8,23 @@ import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import './interfaces/ICashRemuneration.sol';
 import './interfaces/IInvestorV1.sol';
+import './interfaces/ISafeDepositRouter.sol';
+import './interfaces/IFeeCollector.sol';
 
+/**
+ * @notice Interface for BoardOfDirectors initialization
+ * @dev Only used internally during Elections deployment
+ */
 interface IBodContract {
   function initialize(address[] memory votingAddress) external;
 }
 
+/**
+ * @notice Interface for InvestorV1 initialization
+ * @dev Only used internally during beacon proxy deployment
+ */
 interface IInvestorV1Contract {
   function initialize(string calldata _name, string calldata _symbol, address _owner) external;
-}
-
-interface IFeeCollector {
-  function getFeeFor(string memory contractType) external view returns (uint16);
-
-  function supportedTokens(address token) external view returns (bool);
-}
-
-interface ISafeDepositRouter {
-  function transferOwnership(address newOwner) external;
 }
 
 /**

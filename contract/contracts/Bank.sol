@@ -6,14 +6,7 @@ import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-
-interface IOfficer {
-  function getFeeCollector() external view returns (address);
-
-  function getFeeFor(string calldata contractType) external view returns (uint16);
-
-  function isFeeCollectorToken(address tokenAddress) external view returns (bool);
-}
+import './interfaces/IOfficer.sol';
 
 contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   using SafeERC20 for IERC20;
