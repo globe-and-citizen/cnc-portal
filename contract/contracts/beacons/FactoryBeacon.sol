@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "./UserBeaconProxy.sol";
+import '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
+import './UserBeaconProxy.sol';
 
 contract FactoryBeacon is UpgradeableBeacon {
   event BeaconProxyCreated(address indexed proxy, address indexed deployer);
@@ -15,4 +15,3 @@ contract FactoryBeacon is UpgradeableBeacon {
     emit BeaconProxyCreated(address(proxy), msg.sender);
   }
 }
-
