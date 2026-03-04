@@ -56,18 +56,19 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useReadContract, useWriteContract } from '@wagmi/vue'
-import { waitForTransactionReceipt } from '@wagmi/core'
 import { encodeFunctionData, parseEther, parseUnits, type Address } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TokenAmount from '@/components/forms/TokenAmount.vue'
 import { useContractBalance } from '@/composables'
+import { useCashRemunerationOwner } from '@/composables/cashRemuneration/reads'
+import { useCashRemunerationContractWrite } from '@/composables/cashRemuneration/writes'
+import { useExpenseAccountOwner } from '@/composables/expenseAccount/reads'
+import { useExpenseAccountContractWrite } from '@/composables/expenseAccount/writes'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { SUPPORTED_TOKENS } from '@/constant'
-import { config } from '@/wagmi.config'
 import type { ContractType, TokenOption } from '@/types'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
@@ -102,11 +103,14 @@ const abi = computed(() =>
     : EXPENSE_ACCOUNT_EIP712_ABI
 )
 
-const { data: ownerAddress } = useReadContract({
-  address: contractAddress,
-  abi: abi.value,
-  functionName: 'owner'
-})
+const { data: cashRemunerationOwnerAddress } = useCashRemunerationOwner()
+const { data: expenseAccountOwnerAddress } = useExpenseAccountOwner()
+
+const ownerAddress = computed(() =>
+  props.contractType === 'CashRemunerationEIP712'
+    ? cashRemunerationOwnerAddress.value
+    : expenseAccountOwnerAddress.value
+)
 
 const { isBodAction } = useBodIsBodAction(contractAddress as unknown as Address)
 
@@ -158,7 +162,31 @@ watch(withdrawableTokens, (tokens) => {
   }
 })
 
-const { mutateAsync: writeContract, isPending: isLoadingWrite } = useWriteContract()
+const cashWithdrawNativeWrite = useCashRemunerationContractWrite({
+  functionName: 'ownerWithdrawNative'
+})
+const cashWithdrawTokenWrite = useCashRemunerationContractWrite({
+  functionName: 'ownerWithdrawToken'
+})
+const expenseWithdrawNativeWrite = useExpenseAccountContractWrite({
+  functionName: 'ownerWithdrawNative'
+})
+const expenseWithdrawTokenWrite = useExpenseAccountContractWrite({
+  functionName: 'ownerWithdrawToken'
+})
+
+const isLoadingWrite = computed(() => {
+  const writes = [
+    cashWithdrawNativeWrite,
+    cashWithdrawTokenWrite,
+    expenseWithdrawNativeWrite,
+    expenseWithdrawTokenWrite
+  ]
+
+  return writes.some(
+    (write) => write.writeResult.isPending.value || write.receiptResult.isLoading.value
+  )
+})
 
 const isLoadingAction = computed(
   () => isLoadingWrite.value || isLoadingAddAction.value || isConfirmingAddAction.value
@@ -203,16 +231,15 @@ const submitWithdraw = async () => {
       }
 
       const nativeRequest = {
-        address: contractAddress.value,
-        abi: abi.value,
-        functionName: 'ownerWithdrawNative' as const,
-        args: [amount] as const
+        execute:
+          props.contractType === 'CashRemunerationEIP712'
+            ? cashWithdrawNativeWrite.executeWrite
+            : expenseWithdrawNativeWrite.executeWrite
       }
 
-      const hash = await writeContract(nativeRequest)
-      const receipt = await waitForTransactionReceipt(config, { hash })
+      const hash = await nativeRequest.execute([amount])
 
-      if (receipt.status === 'success') {
+      if (hash) {
         toastStore.addSuccessToast('Withdraw successful')
         resetModal()
       } else {
@@ -246,16 +273,15 @@ const submitWithdraw = async () => {
     }
 
     const tokenRequest = {
-      address: contractAddress.value,
-      abi: abi.value,
-      functionName: 'ownerWithdrawToken' as const,
-      args: [selectedToken.value.address, amount] as const
+      execute:
+        props.contractType === 'CashRemunerationEIP712'
+          ? cashWithdrawTokenWrite.executeWrite
+          : expenseWithdrawTokenWrite.executeWrite
     }
 
-    const hash = await writeContract(tokenRequest)
-    const receipt = await waitForTransactionReceipt(config, { hash })
+    const hash = await tokenRequest.execute([selectedToken.value.address, amount])
 
-    if (receipt.status === 'success') {
+    if (hash) {
       toastStore.addSuccessToast('Withdraw successful')
       resetModal()
     } else {
