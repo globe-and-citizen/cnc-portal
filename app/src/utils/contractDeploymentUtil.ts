@@ -1,4 +1,4 @@
-import type { Address } from 'viem'
+import { type Address, parseUnits } from 'viem'
 import { encodeFunctionData, zeroAddress } from 'viem'
 import {
   BANK_BEACON_ADDRESS,
@@ -194,7 +194,7 @@ export const getDeploymentConfigs = (
         currentUserAddress, // safeAddress
         zeroAddress, // investorAddress
         [USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS], // supportedTokens
-        1n // multiplier - default 1:1 ratio
+        parseUnits('1', 6) // multiplier - default 1:1 ratio
       ]
     })
   })

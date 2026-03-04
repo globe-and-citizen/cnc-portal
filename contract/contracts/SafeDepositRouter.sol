@@ -10,7 +10,9 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 
 interface IInvestorV1 {
   function individualMint(address shareholder, uint256 amount) external;
+
   function hasRole(bytes32 role, address account) external view returns (bool);
+
   function MINTER_ROLE() external view returns (bytes32);
 }
 
@@ -24,10 +26,15 @@ interface IERC20Metadata {
  * @notice Allows users to deposit tokens and receive SHER tokens with a configurable multiplier
  * @dev Disabled by default - owner must enable deposits. Emergency pause available for security.
  *
- * Formula: SHER minted = (deposited tokens normalized to 18 decimals) × multiplier
+ * Multiplier is **fixed-point** using SHER token decimals ($10^{sherDec}$ scale).
  *
- * Examples:
- * - multiplier = 1: 100 USDC → 100 SHER
+ * Formula:
+ * - Let `normalized` = deposited token amount normalized to `sherDec`
+ * - SHER minted = `normalized × multiplier ÷ 10^sherDec`
+ *
+ * Examples (assuming SHER has 18 decimals):
+ * - `multiplier = 1e18` (1.0x): 100 USDC → 100 SHER
+ * - `multiplier = 2e18` (2.0x): 100 USDC → 200 SHER
  */
 contract SafeDepositRouter is
   Initializable,
@@ -245,6 +252,20 @@ contract SafeDepositRouter is
     emit Deposited(msg.sender, tokenAddress, amount, sherAmount, block.number);
   }
 
+  function _normalizeDecimals(
+    uint256 amount,
+    uint8 fromDec,
+    uint8 toDec
+  ) internal pure returns (uint256) {
+    if (fromDec == toDec) return amount;
+
+    if (fromDec < toDec) {
+      return amount * (10 ** (toDec - fromDec));
+    } else {
+      return amount / (10 ** (fromDec - toDec));
+    }
+  }
+
   /*//////////////////////////////////////////////////////////////
                          CALCULATION FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -253,10 +274,12 @@ contract SafeDepositRouter is
    * @notice Calculate SHER compensation for token amount
    * @param tokenAddress Token address
    * @param tokenAmount Amount in token's decimals
-   * @return SHER amount (18 decimals)
+   * @return SHER amount (in SHER token decimals)
    *
-   * @dev Formula: SHER = (token amount normalized to 18 decimals) × multiplier
-   *
+   * @dev Multiplier is fixed-point using SHER decimals.
+   *      Formula:
+   *      - `normalized = tokenAmount` normalized to `sherDec`
+   *      - `sherOut = normalized × multiplier ÷ 10^sherDec`
    */
   function calculateCompensation(
     address tokenAddress,
@@ -269,17 +292,9 @@ contract SafeDepositRouter is
     uint8 tokenDec = tokenDecimals[tokenAddress];
     uint8 sherDec = IERC20Metadata(investorAddress).decimals();
 
-    uint256 normalizedAmount;
+    uint256 normalizedAmount = _normalizeDecimals(tokenAmount, tokenDec, sherDec);
 
-    if (tokenDec < sherDec) {
-      normalizedAmount = tokenAmount * (10 ** (sherDec - tokenDec));
-    } else if (tokenDec > sherDec) {
-      normalizedAmount = tokenAmount / (10 ** (tokenDec - sherDec));
-    } else {
-      normalizedAmount = tokenAmount;
-    }
-
-    return normalizedAmount * multiplier;
+    return (normalizedAmount * multiplier) / (10 ** sherDec);
   }
 
   /*//////////////////////////////////////////////////////////////
@@ -396,15 +411,32 @@ contract SafeDepositRouter is
 
   /**
    * @notice Update multiplier
-   * @param _newMultiplier New multiplier (minimum 1)
+   * @param _newMultiplier New multiplier as fixed-point using SHER decimals
    *
-   * @dev Examples:
-   *      - 1 = 1:1 ratio (1 token = 1 SHER)
-   *      - 2 = 2:1 ratio (1 token = 2 SHER)
-   *      - 10 = 10:1 ratio (1 token = 10 SHER)
+   * @dev Interpretation:
+   *      - `1.0x` = `10^sherDec`
+   *      - `2.0x` = `2 * 10^sherDec`
+   *
+   * Minimum:
+   *      - Enforced to be at least `0.000001x` (i.e. `10^(sherDec-6)`).
+   *
+   * Examples (assuming SHER has 18 decimals):
+   *      - `1e18` = 1.0x (1 token → 1 SHER, after normalization)
+   *      - `2e18` = 2.0x (1 token → 2 SHER, after normalization)
+   *      - `1e12` = 0.000001x
    */
   function setMultiplier(uint256 _newMultiplier) external onlyOwner {
-    if (_newMultiplier < MIN_MULTIPLIER) revert MultiplierTooLow();
+    if (investorAddress == address(0)) revert InvalidInvestorAddress();
+
+    uint8 sherDec = IERC20Metadata(investorAddress).decimals();
+
+    // Ensure SHER has enough decimals to support 0.000001
+    if (sherDec < 6) revert InvalidTokenDecimals();
+
+    uint256 minMultiplier = 10 ** (sherDec - 6);
+
+    if (_newMultiplier < minMultiplier) revert MultiplierTooLow();
+
     emit MultiplierUpdated(multiplier, _newMultiplier);
     multiplier = _newMultiplier;
   }

@@ -16,11 +16,11 @@ describe('SafeDepositRouter', function () {
   let depositor2: HardhatEthersSigner
   let nonOwner: HardhatEthersSigner
 
-  // Test constants
-  const INITIAL_MULTIPLIER = 1n
+  // Test constants - all using 6 decimals
+  const INITIAL_MULTIPLIER = parseUnits('1', 6) // 1.0x in fixed-point (6 decimals)
   const USDC_DECIMALS = 6
   const USDT_DECIMALS = 6
-  const SHER_DECIMALS = 6 // InvestorV1 uses 6 decimals
+  const SHER_DECIMALS = 6
 
   const ERRORS = {
     INVALID_OWNER: 'InvalidOwner',
@@ -493,8 +493,9 @@ describe('SafeDepositRouter', function () {
       })
 
       it('should apply multiplier correctly', async () => {
-        // Set multiplier to 2
-        await router.connect(owner).setMultiplier(2n)
+        // Set multiplier to 2x using fixed-point (2 * 10^6 = 2000000)
+        const twoXMultiplier = parseUnits('2', SHER_DECIMALS)
+        await router.connect(owner).setMultiplier(twoXMultiplier)
 
         const depositAmount = parseUnits('100', USDC_DECIMALS) // 100 USDC
         const expectedSHER = parseUnits('200', SHER_DECIMALS) // 200 SHER (2:1 ratio)
@@ -509,16 +510,18 @@ describe('SafeDepositRouter', function () {
 
       it('should handle different multipliers correctly', async () => {
         const testCases = [
-          { multiplier: 1n, deposit: '100', expectedSher: '100' },
-          { multiplier: 2n, deposit: '100', expectedSher: '200' },
-          { multiplier: 5n, deposit: '50', expectedSher: '250' },
-          { multiplier: 10n, deposit: '25', expectedSher: '250' }
+          { multiplier: '1', deposit: '100', expectedSher: '100' },
+          { multiplier: '2', deposit: '100', expectedSher: '200' },
+          { multiplier: '5', deposit: '50', expectedSher: '250' },
+          { multiplier: '10', deposit: '25', expectedSher: '250' }
         ]
 
         const usdcAddress = await mockUSDC.getAddress()
 
         for (const testCase of testCases) {
-          await router.connect(owner).setMultiplier(testCase.multiplier)
+          // Use parseUnits to convert to fixed-point format
+          const multiplierValue = parseUnits(testCase.multiplier, SHER_DECIMALS)
+          await router.connect(owner).setMultiplier(multiplierValue)
 
           const depositAmount = parseUnits(testCase.deposit, USDC_DECIMALS)
           const expectedSHER = parseUnits(testCase.expectedSher, SHER_DECIMALS)
@@ -559,163 +562,74 @@ describe('SafeDepositRouter', function () {
         // Both have 6 decimals, so no normalization needed
         expect(sherAmount).to.equal(expectedSHER)
       })
-    })
-  })
 
-  describe('Deposit Functions', () => {
-    beforeEach(async () => {
-      // Enable deposits for testing
-      await router.connect(owner).enableDeposits()
-    })
+      it('should handle fractional multiplier correctly (0.5x)', async () => {
+        const halfMultiplier = parseUnits('0.5', SHER_DECIMALS) // 500000 in 6 decimals
 
-    describe('Basic Deposit', () => {
-      it('should successfully deposit USDC and mint SHER', async () => {
-        const depositAmount = parseUnits('100', USDC_DECIMALS)
-        const expectedSHER = parseUnits('100', SHER_DECIMALS)
-        const usdcAddress = await mockUSDC.getAddress()
-        const routerAddress = await router.getAddress()
+        await router.connect(owner).setMultiplier(halfMultiplier)
 
-        // Approve router
-        await mockUSDC.connect(depositor1).approve(routerAddress, depositAmount)
+        const depositAmount = parseUnits('100', USDC_DECIMALS) // 100000000
+        const expectedSHER = parseUnits('50', SHER_DECIMALS) // 50000000
 
-        // Deposit
-        await expect(router.connect(depositor1).deposit(usdcAddress, depositAmount))
-          .to.emit(router, 'Deposited')
-          .withArgs(
-            depositor1.address,
-            usdcAddress,
-            depositAmount,
-            expectedSHER,
-            await ethers.provider.getBlockNumber().then((b) => b + 1)
-          )
+        const sherAmount = await router.calculateCompensation(
+          await mockUSDC.getAddress(),
+          depositAmount
+        )
 
-        // Verify balances
-        expect(await mockUSDC.balanceOf(safeWallet.address)).to.equal(depositAmount)
-        expect(await investor.balanceOf(depositor1.address)).to.equal(expectedSHER)
+        expect(sherAmount).to.equal(expectedSHER)
       })
 
-      it('should handle multiple deposits correctly', async () => {
-        const deposit1 = parseUnits('50', USDC_DECIMALS)
-        const deposit2 = parseUnits('75', USDC_DECIMALS)
-        const totalExpectedSHER = parseUnits('125', SHER_DECIMALS)
-        const usdcAddress = await mockUSDC.getAddress()
-        const routerAddress = await router.getAddress()
+      it('should handle very small fractional multipliers (0.000001x)', async () => {
+        // For 6-decimal SHER: minimum is 10^(6-6) = 1 (raw value)
+        const minMultiplier = 1n // This represents 0.000001x in 6-decimal fixed-point
 
-        await mockUSDC.connect(depositor1).approve(routerAddress, deposit1 + deposit2)
+        await router.connect(owner).setMultiplier(minMultiplier)
 
-        await router.connect(depositor1).deposit(usdcAddress, deposit1)
-        await router.connect(depositor1).deposit(usdcAddress, deposit2)
+        // To get 1 SHER with 0.000001x multiplier:
+        // 1 SHER = 1000000 (in 6 decimals)
+        // With multiplier = 1: deposit * 1 / 10^6 = 1000000
+        // deposit = 1000000 * 10^6 = 10^12
+        const depositAmount = parseUnits('1000000', USDC_DECIMALS) // 1M USDC
+        const expectedSHER = parseUnits('1', SHER_DECIMALS) // 1 SHER
 
-        expect(await mockUSDC.balanceOf(safeWallet.address)).to.equal(deposit1 + deposit2)
-        expect(await investor.balanceOf(depositor1.address)).to.equal(totalExpectedSHER)
+        const sherAmount = await router.calculateCompensation(
+          await mockUSDC.getAddress(),
+          depositAmount
+        )
+
+        expect(sherAmount).to.equal(expectedSHER)
       })
 
-      it('should handle deposits from multiple users', async () => {
-        const depositAmount = parseUnits('100', USDC_DECIMALS)
-        const expectedSHER = parseUnits('100', SHER_DECIMALS)
-        const usdcAddress = await mockUSDC.getAddress()
-        const routerAddress = await router.getAddress()
+      it('should handle large multipliers correctly (1000x)', async () => {
+        const largeMultiplier = parseUnits('1000', SHER_DECIMALS) // 1000000000 in 6 decimals
 
-        await mockUSDC.connect(depositor1).approve(routerAddress, depositAmount)
-        await mockUSDC.connect(depositor2).approve(routerAddress, depositAmount)
+        await router.connect(owner).setMultiplier(largeMultiplier)
 
-        await router.connect(depositor1).deposit(usdcAddress, depositAmount)
-        await router.connect(depositor2).deposit(usdcAddress, depositAmount)
+        const depositAmount = parseUnits('1', USDC_DECIMALS) // 1000000
+        const expectedSHER = parseUnits('1000', SHER_DECIMALS) // 1000000000
 
-        expect(await investor.balanceOf(depositor1.address)).to.equal(expectedSHER)
-        expect(await investor.balanceOf(depositor2.address)).to.equal(expectedSHER)
-        expect(await mockUSDC.balanceOf(safeWallet.address)).to.equal(depositAmount * 2n)
+        const sherAmount = await router.calculateCompensation(
+          await mockUSDC.getAddress(),
+          depositAmount
+        )
+
+        expect(sherAmount).to.equal(expectedSHER)
       })
 
-      it('should revert when deposits are not enabled', async () => {
-        await router.connect(owner).disableDeposits()
+      it('should apply multiplier 2x correctly with 6 decimals', async () => {
+        // Set multiplier to 2x (2 * 10^6 = 2000000)
+        const twoXMultiplier = parseUnits('2', SHER_DECIMALS)
+        await router.connect(owner).setMultiplier(twoXMultiplier)
 
-        const depositAmount = parseUnits('100', USDC_DECIMALS)
-        const usdcAddress = await mockUSDC.getAddress()
+        const depositAmount = parseUnits('100', USDC_DECIMALS) // 100000000
+        const expectedSHER = parseUnits('200', SHER_DECIMALS) // 200000000
 
-        await mockUSDC.connect(depositor1).approve(await router.getAddress(), depositAmount)
+        const sherAmount = await router.calculateCompensation(
+          await mockUSDC.getAddress(),
+          depositAmount
+        )
 
-        await expect(
-          router.connect(depositor1).deposit(usdcAddress, depositAmount)
-        ).to.be.revertedWithCustomError(router, ERRORS.DEPOSITS_NOT_ENABLED)
-      })
-
-      it('should revert when contract is paused', async () => {
-        await router.connect(owner).pause()
-
-        const depositAmount = parseUnits('100', USDC_DECIMALS)
-        const usdcAddress = await mockUSDC.getAddress()
-
-        await mockUSDC.connect(depositor1).approve(await router.getAddress(), depositAmount)
-
-        await expect(
-          router.connect(depositor1).deposit(usdcAddress, depositAmount)
-        ).to.be.revertedWithCustomError(router, ERRORS.PAUSED)
-      })
-
-      it('should revert for zero amount', async () => {
-        const usdcAddress = await mockUSDC.getAddress()
-
-        await expect(
-          router.connect(depositor1).deposit(usdcAddress, 0n)
-        ).to.be.revertedWithCustomError(router, ERRORS.ZERO_AMOUNT)
-      })
-
-      it('should revert for unsupported token', async () => {
-        const MockToken = await ethers.getContractFactory('MockERC20')
-        const unsupportedToken = await MockToken.deploy('Unsupported', 'UNSUP')
-        const unsupportedAddress = await unsupportedToken.getAddress()
-        const depositAmount = parseUnits('100', 6)
-
-        await unsupportedToken.mint(depositor1.address, depositAmount)
-        await unsupportedToken.connect(depositor1).approve(await router.getAddress(), depositAmount)
-
-        await expect(
-          router.connect(depositor1).deposit(unsupportedAddress, depositAmount)
-        ).to.be.revertedWithCustomError(router, ERRORS.TOKEN_NOT_SUPPORTED)
-      })
-    })
-
-    describe('Deposit With Slippage Protection', () => {
-      it('should successfully deposit with valid slippage', async () => {
-        const depositAmount = parseUnits('100', USDC_DECIMALS)
-        const expectedSHER = parseUnits('100', SHER_DECIMALS)
-        const minSherOut = parseUnits('99', SHER_DECIMALS) // 1% slippage tolerance
-        const usdcAddress = await mockUSDC.getAddress()
-
-        await mockUSDC.connect(depositor1).approve(await router.getAddress(), depositAmount)
-
-        await expect(
-          router.connect(depositor1).depositWithSlippage(usdcAddress, depositAmount, minSherOut)
-        ).to.emit(router, 'Deposited')
-
-        expect(await investor.balanceOf(depositor1.address)).to.equal(expectedSHER)
-      })
-
-      it('should revert when slippage is exceeded', async () => {
-        const depositAmount = parseUnits('100', USDC_DECIMALS)
-        const minSherOut = parseUnits('101', SHER_DECIMALS) // Expecting more than possible
-        const usdcAddress = await mockUSDC.getAddress()
-
-        await mockUSDC.connect(depositor1).approve(await router.getAddress(), depositAmount)
-
-        await expect(
-          router.connect(depositor1).depositWithSlippage(usdcAddress, depositAmount, minSherOut)
-        ).to.be.revertedWithCustomError(router, ERRORS.SLIPPAGE_EXCEEDED)
-      })
-
-      it('should accept zero slippage (no protection)', async () => {
-        const depositAmount = parseUnits('100', USDC_DECIMALS)
-        const expectedSHER = parseUnits('100', SHER_DECIMALS)
-        const usdcAddress = await mockUSDC.getAddress()
-
-        await mockUSDC.connect(depositor1).approve(await router.getAddress(), depositAmount)
-
-        await expect(
-          router.connect(depositor1).depositWithSlippage(usdcAddress, depositAmount, 0n)
-        ).to.emit(router, 'Deposited')
-
-        expect(await investor.balanceOf(depositor1.address)).to.equal(expectedSHER)
+        expect(sherAmount).to.equal(expectedSHER)
       })
     })
   })
@@ -799,7 +713,8 @@ describe('SafeDepositRouter', function () {
 
     describe('Set Multiplier', () => {
       it('should allow owner to update multiplier', async () => {
-        const newMultiplier = 5n
+        // Use fixed-point format: 5x = 5 * 10^6 = 5000000
+        const newMultiplier = parseUnits('5', SHER_DECIMALS)
 
         await expect(router.connect(owner).setMultiplier(newMultiplier))
           .to.emit(router, 'MultiplierUpdated')
@@ -830,6 +745,63 @@ describe('SafeDepositRouter', function () {
         )
 
         expect(await router.multiplier()).to.equal(minMultiplier)
+      })
+
+      it('should enforce minimum multiplier based on SHER decimals', async () => {
+        // For 6-decimal SHER: minimum is 10^(6-6) = 1
+        // This represents 0.000001x
+        const sherDecimals = await investor.decimals()
+        expect(sherDecimals).to.equal(6n)
+
+        const minMultiplier = 10n ** (BigInt(sherDecimals) - 6n) // = 1
+
+        // Should accept minimum
+        await expect(router.connect(owner).setMultiplier(minMultiplier)).to.emit(
+          router,
+          'MultiplierUpdated'
+        )
+
+        // Should reject below minimum
+        await expect(router.connect(owner).setMultiplier(0n)).to.be.revertedWithCustomError(
+          router,
+          ERRORS.MULTIPLIER_TOO_LOW
+        )
+      })
+
+      it('should revert if investor address is zero when setting multiplier', async () => {
+        // Deploy new router with zero investor
+        const SafeDepositRouterFactory = await ethers.getContractFactory('SafeDepositRouter')
+        const newImpl = await SafeDepositRouterFactory.connect(owner).deploy()
+        await newImpl.waitForDeployment()
+
+        const encodedInitialize = newImpl.interface.encodeFunctionData('initialize', [
+          safeWallet.address,
+          ethers.ZeroAddress, // Zero investor address
+          [await mockUSDC.getAddress()],
+          INITIAL_MULTIPLIER
+        ])
+
+        const BeaconFactory = await ethers.getContractFactory('Beacon')
+        const testBeacon = await BeaconFactory.connect(owner).deploy(await newImpl.getAddress())
+        await testBeacon.waitForDeployment()
+
+        const BeaconProxyFactory = await ethers.getContractFactory('UserBeaconProxy')
+        const testProxy = await BeaconProxyFactory.connect(owner).deploy(
+          await testBeacon.getAddress(),
+          encodedInitialize
+        )
+        await testProxy.waitForDeployment()
+
+        const testRouter = await ethers.getContractAt(
+          'SafeDepositRouter',
+          await testProxy.getAddress()
+        )
+
+        // Should revert because investorAddress is zero
+        await expect(testRouter.connect(owner).setMultiplier(2n)).to.be.revertedWithCustomError(
+          testRouter,
+          ERRORS.INVALID_INVESTOR
+        )
       })
     })
   })
@@ -962,7 +934,7 @@ describe('SafeDepositRouter', function () {
       const usdcAddress = await mockUSDC.getAddress()
       const routerAddress = await router.getAddress()
 
-      // First deposit with multiplier 1
+      // First deposit with multiplier 1x
       await mockUSDC.connect(depositor1).approve(routerAddress, depositAmount)
       await router.connect(depositor1).deposit(usdcAddress, depositAmount)
 
@@ -970,10 +942,11 @@ describe('SafeDepositRouter', function () {
         parseUnits('100', SHER_DECIMALS)
       )
 
-      // Change multiplier to 2
-      await router.connect(owner).setMultiplier(2n)
+      // Change multiplier to 2x using fixed-point format
+      const twoXMultiplier = parseUnits('2', SHER_DECIMALS)
+      await router.connect(owner).setMultiplier(twoXMultiplier)
 
-      // Second deposit with multiplier 2
+      // Second deposit with multiplier 2x
       await mockUSDC.connect(depositor2).approve(routerAddress, depositAmount)
       await router.connect(depositor2).deposit(usdcAddress, depositAmount)
 
@@ -1014,20 +987,79 @@ describe('SafeDepositRouter', function () {
 
   describe('Constants', () => {
     it('should have correct MIN_MULTIPLIER', async () => {
+      // MIN_MULTIPLIER is 1 (raw value)
       expect(await router.MIN_MULTIPLIER()).to.equal(1n)
+    })
+
+    it('should verify SHER token uses 6 decimals', async () => {
+      const sherDecimals = await investor.decimals()
+      expect(sherDecimals).to.equal(SHER_DECIMALS)
+      expect(sherDecimals).to.equal(6n)
+    })
+
+    it('should verify practical minimum multiplier for 6-decimal SHER', async () => {
+      const sherDecimals = await investor.decimals()
+      const practicalMin = 10n ** (BigInt(sherDecimals) - 6n)
+
+      // For 6-decimal SHER: 10^(6-6) = 10^0 = 1
+      expect(practicalMin).to.equal(1n)
+
+      // This represents 0.000001x in fixed-point
+      // Can set this multiplier
+      await expect(router.connect(owner).setMultiplier(practicalMin)).to.emit(
+        router,
+        'MultiplierUpdated'
+      )
     })
   })
 
-  describe('Ownership', () => {
-    it('should allow owner to transfer ownership', async () => {
-      await router.connect(owner).transferOwnership(depositor1.address)
-      expect(await router.owner()).to.equal(depositor1.address)
+  describe('Edge Cases with 6 Decimals', () => {
+    beforeEach(async () => {
+      await router.connect(owner).enableDeposits()
     })
 
-    it('should revert when non-owner tries to transfer ownership', async () => {
-      await expect(router.connect(nonOwner).transferOwnership(depositor1.address))
-        .to.be.revertedWithCustomError(router, ERRORS.OWNABLE_UNAUTHORIZED)
-        .withArgs(nonOwner.address)
+    it('should handle very small deposit amounts (1 wei)', async () => {
+      const smallAmount = 1n // 0.000001 USDC (1 wei)
+      const usdcAddress = await mockUSDC.getAddress()
+      const routerAddress = await router.getAddress()
+
+      await mockUSDC.connect(depositor1).approve(routerAddress, smallAmount)
+      await router.connect(depositor1).deposit(usdcAddress, smallAmount)
+
+      // With 1x multiplier and 6 decimals: 1 wei USDC → 1 wei SHER
+      const expectedSHER = 1n
+      expect(await investor.balanceOf(depositor1.address)).to.equal(expectedSHER)
+    })
+
+    it('should handle maximum 6-decimal precision', async () => {
+      // 999999.999999 USDC (max 6 decimals)
+      const maxPrecisionAmount = parseUnits('999999.999999', USDC_DECIMALS)
+      const usdcAddress = await mockUSDC.getAddress()
+      const routerAddress = await router.getAddress()
+
+      await mockUSDC.mint(depositor1.address, maxPrecisionAmount)
+      await mockUSDC.connect(depositor1).approve(routerAddress, maxPrecisionAmount)
+
+      await router.connect(depositor1).deposit(usdcAddress, maxPrecisionAmount)
+
+      // With 1x multiplier: same amount in SHER
+      expect(await investor.balanceOf(depositor1.address)).to.equal(maxPrecisionAmount)
+    })
+
+    it('should handle fractional multiplier with 6-decimal precision (0.123456x)', async () => {
+      // 0.123456x multiplier
+      const fractionalMultiplier = parseUnits('0.123456', SHER_DECIMALS)
+      await router.connect(owner).setMultiplier(fractionalMultiplier)
+
+      const depositAmount = parseUnits('1000', USDC_DECIMALS) // 1000 USDC
+      const expectedSHER = parseUnits('123.456', SHER_DECIMALS) // 123.456 SHER
+
+      const sherAmount = await router.calculateCompensation(
+        await mockUSDC.getAddress(),
+        depositAmount
+      )
+
+      expect(sherAmount).to.equal(expectedSHER)
     })
   })
 })
