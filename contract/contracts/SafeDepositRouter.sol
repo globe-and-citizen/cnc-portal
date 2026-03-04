@@ -7,6 +7,7 @@ import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 import './interfaces/IInvestorV1.sol';
 import './interfaces/IOfficer.sol';
 
@@ -37,6 +38,7 @@ contract SafeDepositRouter is
   PausableUpgradeable
 {
   using SafeERC20 for IERC20;
+  using EnumerableSet for EnumerableSet.AddressSet;
 
   /*//////////////////////////////////////////////////////////////
                               CONSTANTS
@@ -63,8 +65,8 @@ contract SafeDepositRouter is
   /// @dev Disabled by default - owner must call enableDeposits() to allow deposits
   bool public depositsEnabled;
 
-  /// @notice Mapping of supported token addresses
-  mapping(address => bool) public supportedTokens;
+  /// @notice Set of supported token addresses for enumeration
+  EnumerableSet.AddressSet private _supportedTokens;
 
   /// @notice Stored decimals for each token (prevents manipulation)
   mapping(address => uint8) public tokenDecimals;
@@ -169,7 +171,7 @@ contract SafeDepositRouter is
       uint8 decimals = IERC20Metadata(tokenAddress).decimals();
       if (decimals > 18) revert InvalidTokenDecimals();
 
-      supportedTokens[tokenAddress] = true;
+      _supportedTokens.add(tokenAddress);
       tokenDecimals[tokenAddress] = decimals;
 
       emit TokenSupportAdded(tokenAddress, decimals);
@@ -226,7 +228,7 @@ contract SafeDepositRouter is
    * @param minSherOut Minimum SHER to receive (0 for no slippage protection)
    */
   function _deposit(address tokenAddress, uint256 amount, uint256 minSherOut) internal {
-    if (!supportedTokens[tokenAddress]) revert TokenNotSupported();
+    if (!_supportedTokens.contains(tokenAddress)) revert TokenNotSupported();
     if (amount == 0) revert ZeroAmount();
 
     address investorAddress = _getInvestorAddress();
@@ -287,7 +289,7 @@ contract SafeDepositRouter is
     address tokenAddress,
     uint256 tokenAmount
   ) public view returns (uint256) {
-    if (!supportedTokens[tokenAddress]) revert TokenNotSupported();
+    if (!_supportedTokens.contains(tokenAddress)) revert TokenNotSupported();
     if (tokenAmount == 0) revert ZeroAmount();
 
     address investorAddress = _getInvestorAddress();
@@ -310,12 +312,11 @@ contract SafeDepositRouter is
    */
   function addTokenSupport(address tokenAddress) external onlyOwner {
     if (tokenAddress == address(0)) revert InvalidTokenAddress();
-    if (supportedTokens[tokenAddress]) revert TokenAlreadySupported();
+    if (!_supportedTokens.add(tokenAddress)) revert TokenAlreadySupported();
 
     uint8 decimals = IERC20Metadata(tokenAddress).decimals();
     if (decimals > 18) revert InvalidTokenDecimals();
 
-    supportedTokens[tokenAddress] = true;
     tokenDecimals[tokenAddress] = decimals;
 
     emit TokenSupportAdded(tokenAddress, decimals);
@@ -327,10 +328,25 @@ contract SafeDepositRouter is
    */
   function removeTokenSupport(address tokenAddress) external onlyOwner {
     if (tokenAddress == address(0)) revert InvalidTokenAddress();
-    if (!supportedTokens[tokenAddress]) revert TokenNotSupported();
+    if (!_supportedTokens.remove(tokenAddress)) revert TokenNotSupported();
 
-    supportedTokens[tokenAddress] = false;
     emit TokenSupportRemoved(tokenAddress);
+  }
+
+  /**
+   * @notice Returns all supported token addresses
+   * @return Array of supported token addresses
+   */
+  function getSupportedTokens() external view returns (address[] memory) {
+    return _supportedTokens.values();
+  }
+
+  /**
+   * @notice Returns the count of supported tokens
+   * @return Number of supported tokens
+   */
+  function getSupportedTokenCount() external view returns (uint256) {
+    return _supportedTokens.length();
   }
 
   /*//////////////////////////////////////////////////////////////

@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import './IPausable.sol';
 import './IOwnable.sol';
+import './ITokenSupport.sol';
 
 /**
  * @title IBank
@@ -10,21 +11,7 @@ import './IOwnable.sol';
  * @dev Single source of truth for Bank contract interactions
  * Used by: InvestorV1 (for dividend distribution)
  */
-interface IBank is IPausable, IOwnable {
-  // ============ Token Management ============
-  /// @notice Add support for an ERC20 token
-  /// @param _tokenAddress Address of the token to support
-  function addTokenSupport(address _tokenAddress) external;
-
-  /// @notice Remove support for an ERC20 token
-  /// @param _tokenAddress Address of the token to remove
-  function removeTokenSupport(address _tokenAddress) external;
-
-  /// @notice Check if a token is supported
-  /// @param _tokenAddress Address of the token
-  /// @return True if supported
-  function supportedTokens(address _tokenAddress) external view returns (bool);
-
+interface IBank is IPausable, IOwnable, ITokenSupport {
   // ============ Deposits ============
   /// @notice Deposit native ETH into the bank
   function deposit() external payable;

@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import './IOwnable.sol';
 import './IPausable.sol';
+import './ITokenSupport.sol';
 
 /**
  * @title ICashRemuneration
@@ -10,21 +11,7 @@ import './IPausable.sol';
  * @dev Single source of truth for CashRemunerationEIP712 contract interactions
  * Used by: Officer
  */
-interface ICashRemuneration is IOwnable, IPausable {
-  // ============ Token Management ============
-  /// @notice Add support for an ERC20 token for wage payments
-  /// @param tokenAddress Address of the token to support
-  function addTokenSupport(address tokenAddress) external;
-
-  /// @notice Remove support for an ERC20 token
-  /// @param tokenAddress Address of the token to remove
-  function removeTokenSupport(address tokenAddress) external;
-
-  /// @notice Check if a token is supported
-  /// @param tokenAddress Address of the token
-  /// @return True if supported
-  function supportedTokens(address tokenAddress) external view returns (bool);
-
+interface ICashRemuneration is IOwnable, IPausable, ITokenSupport {
   // ============ Claim Management ============
   /// @notice Enable a wage claim by signature hash
   /// @param signatureHash Hash of the claim signature

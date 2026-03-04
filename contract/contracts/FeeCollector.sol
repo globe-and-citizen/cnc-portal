@@ -6,6 +6,7 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 
 /**
  * @title FeeCollector
@@ -14,6 +15,7 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
  */
 contract FeeCollector is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   using SafeERC20 for IERC20;
+  using EnumerableSet for EnumerableSet.AddressSet;
 
   struct FeeConfig {
     string contractType; // e.g. "BANK"
@@ -22,8 +24,8 @@ contract FeeCollector is Initializable, OwnableUpgradeable, ReentrancyGuardUpgra
 
   FeeConfig[] private feeConfigs;
 
-  /// @notice Mapping to track which ERC20 tokens are supported
-  mapping(address => bool) public supportedTokens;
+  /// @notice Set to track which ERC20 tokens are supported
+  EnumerableSet.AddressSet private _supportedTokens;
 
   /// @notice Emitted when a new token is added to the supported tokens list
   event TokenSupportAdded(address indexed tokenAddress);
@@ -75,7 +77,7 @@ contract FeeCollector is Initializable, OwnableUpgradeable, ReentrancyGuardUpgra
     // Set the initial supported tokens (same pattern as Bank contract)
     for (uint256 i = 0; i < _tokenAddresses.length; i++) {
       require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
-      supportedTokens[_tokenAddresses[i]] = true;
+      _supportedTokens.add(_tokenAddresses[i]);
     }
   }
 
@@ -86,9 +88,7 @@ contract FeeCollector is Initializable, OwnableUpgradeable, ReentrancyGuardUpgra
    */
   function addTokenSupport(address _tokenAddress) external onlyOwner {
     require(_tokenAddress != address(0), 'Token address cannot be zero');
-    require(!supportedTokens[_tokenAddress], 'Token already supported');
-
-    supportedTokens[_tokenAddress] = true;
+    require(_supportedTokens.add(_tokenAddress), 'Token already supported');
     emit TokenSupportAdded(_tokenAddress);
   }
 
@@ -99,10 +99,24 @@ contract FeeCollector is Initializable, OwnableUpgradeable, ReentrancyGuardUpgra
    */
   function removeTokenSupport(address _tokenAddress) external onlyOwner {
     require(_tokenAddress != address(0), 'Token address cannot be zero');
-    require(supportedTokens[_tokenAddress], 'Token not supported');
-
-    supportedTokens[_tokenAddress] = false;
+    require(_supportedTokens.remove(_tokenAddress), 'Token not supported');
     emit TokenSupportRemoved(_tokenAddress);
+  }
+
+  /**
+   * @notice Returns all supported token addresses
+   * @return Array of supported token addresses
+   */
+  function getSupportedTokens() external view returns (address[] memory) {
+    return _supportedTokens.values();
+  }
+
+  /**
+   * @notice Returns the count of supported tokens
+   * @return Number of supported tokens
+   */
+  function getSupportedTokenCount() external view returns (uint256) {
+    return _supportedTokens.length();
   }
 
   /**
@@ -129,7 +143,7 @@ contract FeeCollector is Initializable, OwnableUpgradeable, ReentrancyGuardUpgra
    * @dev Protected by nonReentrant and only owner can call
    */
   function withdrawToken(address _token, uint256 _amount) external onlyOwner nonReentrant {
-    require(supportedTokens[_token], 'Token not supported');
+    require(_supportedTokens.contains(_token), 'Token not supported');
     require(_amount > 0, 'Amount must be greater than zero');
 
     uint256 contractBalance = IERC20(_token).balanceOf(address(this));
@@ -167,7 +181,7 @@ contract FeeCollector is Initializable, OwnableUpgradeable, ReentrancyGuardUpgra
    * @return The token balance
    */
   function getTokenBalance(address _token) external view returns (uint256) {
-    require(supportedTokens[_token], 'Token not supported');
+    require(_supportedTokens.contains(_token), 'Token not supported');
     return IERC20(_token).balanceOf(address(this));
   }
 

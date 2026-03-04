@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import './IPausable.sol';
 import './IOwnable.sol';
+import './ITokenSupport.sol';
 
 /**
  * @title ISafeDepositRouter
@@ -10,7 +11,7 @@ import './IOwnable.sol';
  * @dev Single source of truth for SafeDepositRouter contract interactions
  * Used by: Officer
  */
-interface ISafeDepositRouter is IPausable, IOwnable {
+interface ISafeDepositRouter is IPausable, IOwnable, ITokenSupport {
   // ============ Configuration ============
   /// @notice Set the safe address where deposits are sent
   /// @param _newSafe New safe address
@@ -19,15 +20,6 @@ interface ISafeDepositRouter is IPausable, IOwnable {
   /// @notice Set the SHER token multiplier
   /// @param _newMultiplier New multiplier value
   function setMultiplier(uint256 _newMultiplier) external;
-
-  // ============ Token Management ============
-  /// @notice Add token support for deposits
-  /// @param tokenAddress Address of token to support
-  function addTokenSupport(address tokenAddress) external;
-
-  /// @notice Remove token support
-  /// @param tokenAddress Address of token to remove
-  function removeTokenSupport(address tokenAddress) external;
 
   // ============ Deposit Controls ============
   /// @notice Enable deposits

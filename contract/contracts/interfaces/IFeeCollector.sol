@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import './ITokenSupport.sol';
+
 /**
  * @title IFeeCollector
  * @notice Complete interface for FeeCollector contract
  * @dev Single source of truth for FeeCollector contract interactions
  * Used by: Officer, Bank, other contracts that need fee information
  */
-interface IFeeCollector {
+interface IFeeCollector is ITokenSupport {
   // ============ Fee Configuration ============
   struct FeeConfig {
     string contractType;
@@ -27,20 +29,6 @@ interface IFeeCollector {
   /// @notice Get all configured fees
   /// @return Array of FeeConfig structs
   function getAllFeeConfigs() external view returns (FeeConfig[] memory);
-
-  // ============ Token Management ============
-  /// @notice Check if a token is supported for fee collection
-  /// @param token Address of the token
-  /// @return True if supported
-  function supportedTokens(address token) external view returns (bool);
-
-  /// @notice Add token support
-  /// @param _tokenAddress Address of token to support
-  function addTokenSupport(address _tokenAddress) external;
-
-  /// @notice Remove token support
-  /// @param _tokenAddress Address of token to remove
-  function removeTokenSupport(address _tokenAddress) external;
 
   // ============ Withdrawals ============
   /// @notice Withdraw native ETH

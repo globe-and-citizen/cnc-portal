@@ -8,6 +8,7 @@ import '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable
 import '@openzeppelin/contracts/utils/Address.sol';
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 import '@quant-finance/solidity-datetime/contracts/DateTime.sol';
 
 /**
@@ -25,6 +26,7 @@ contract ExpenseAccountEIP712 is
   using Address for address payable;
   using ECDSA for bytes32;
   using DateTime for uint256;
+  using EnumerableSet for EnumerableSet.AddressSet;
 
   enum FrequencyType {
     OneTime,
@@ -59,8 +61,8 @@ contract ExpenseAccountEIP712 is
 
   mapping(bytes32 => ExpenseBalance) public expenseBalances;
 
-  /// @dev Mapping to track supported tokens.
-  mapping(string => address) public supportedTokens;
+  /// @dev Set to track all supported token addresses for enumeration
+  EnumerableSet.AddressSet private _supportedTokens;
 
   string private constant BUDGET_LIMIT_TYPE =
     'BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)';
@@ -84,12 +86,9 @@ contract ExpenseAccountEIP712 is
     uint256 amount
   );
 
-  event TokenAddressChanged(
-    address indexed addressWhoChanged,
-    string tokenSymbol,
-    address indexed oldAddress,
-    address indexed newAddress
-  );
+  event TokenSupportAdded(address indexed tokenAddress);
+
+  event TokenSupportRemoved(address indexed tokenAddress);
 
   error UnauthorizedAccess(address expected, address received);
 
@@ -103,16 +102,20 @@ contract ExpenseAccountEIP712 is
 
   function initialize(
     address owner,
-    address _usdtAddress,
-    address _usdcAddress
+    address[] calldata _tokenAddresses
   ) public initializer {
+    require(owner != address(0), 'Owner cannot be zero');
     __Ownable_init(owner);
     __ReentrancyGuard_init();
     __Pausable_init();
     __EIP712_init('CNCExpenseAccount', '1');
 
-    supportedTokens['USDT'] = _usdtAddress;
-    supportedTokens['USDC'] = _usdcAddress;
+    // Set the initial supported tokens
+    uint256 length = _tokenAddresses.length;
+    for (uint256 i = 0; i < length; ++i) {
+      require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
+      _supportedTokens.add(_tokenAddresses[i]);
+    }
   }
 
   /**
@@ -426,10 +429,7 @@ contract ExpenseAccountEIP712 is
    * @return True if the token is supported, false otherwise.
    */
   function isTokenSupported(address _token) public view returns (bool) {
-    return
-      _token == supportedTokens['USDT'] ||
-      _token == supportedTokens['USDC'] ||
-      _token == address(0);
+    return _supportedTokens.contains(_token) || _token == address(0);
   }
 
   /**
@@ -452,30 +452,41 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Changes the address of a supported token.
-   * @param symbol The symbol of the token to change.
-   * @param newAddress The new address of the token.
-   *
-   * Requirements:
-   * - The new address must not be zero.
-   * - The symbol must be "USDT" or "USDC".
-   *
-   * Emits a {TokenAddressChanged} event.
+   * @notice Adds a supported token to the contract.
+   * @param _tokenAddress The address of the token contract.
+   * @dev Can only be called by the contract owner.
    */
-  function changeTokenAddress(
-    string calldata symbol,
-    address newAddress
-  ) external onlyOwner whenNotPaused {
-    require(newAddress != address(0), 'Address cannot be zero');
-    require(
-      keccak256(abi.encodePacked(symbol)) == keccak256(abi.encodePacked('USDT')) ||
-        keccak256(abi.encodePacked(symbol)) == keccak256(abi.encodePacked('USDC')),
-      'Invalid token symbol'
-    );
+  function addTokenSupport(address _tokenAddress) external onlyOwner {
+    require(_tokenAddress != address(0), 'Token address cannot be zero');
+    require(_supportedTokens.add(_tokenAddress), 'Token already supported');
+    emit TokenSupportAdded(_tokenAddress);
+  }
 
-    address oldAddress = supportedTokens[symbol];
-    supportedTokens[symbol] = newAddress;
-    emit TokenAddressChanged(msg.sender, symbol, oldAddress, newAddress);
+  /**
+   * @notice Removes a supported token from the contract.
+   * @param _tokenAddress The address of the token contract.
+   * @dev Can only be called by the contract owner.
+   */
+  function removeTokenSupport(address _tokenAddress) external onlyOwner {
+    require(_tokenAddress != address(0), 'Token address cannot be zero');
+    require(_supportedTokens.remove(_tokenAddress), 'Token not supported');
+    emit TokenSupportRemoved(_tokenAddress);
+  }
+
+  /**
+   * @notice Returns all supported token addresses
+   * @return Array of supported token addresses
+   */
+  function getSupportedTokens() external view returns (address[] memory) {
+    return _supportedTokens.values();
+  }
+
+  /**
+   * @notice Returns the count of supported tokens
+   * @return Number of supported tokens
+   */
+  function getSupportedTokenCount() external view returns (uint256) {
+    return _supportedTokens.length();
   }
 
   /**
