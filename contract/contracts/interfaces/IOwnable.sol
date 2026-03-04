@@ -2,5 +2,5 @@
 pragma solidity ^0.8.24;
 
 interface IOwnable {
-    function transferOwnership(address newOwner) external;
+  function transferOwnership(address newOwner) external;
 }

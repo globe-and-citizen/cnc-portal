@@ -38,6 +38,7 @@
               :bank-address="bankAddress"
             />
             <ToggleSherCompensationButton />
+            <SetCompensationMultiplierButton />
             <InvestInSafeButton />
           </template>
         </div>
@@ -47,9 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
-import type { Address } from 'viem'
-// import { OFFICER_ABI } from '@/artifacts/abi/officer'
+import { watch } from 'vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import { log } from '@/utils'
 import CardComponent from '@/components/CardComponent.vue'
@@ -58,6 +57,7 @@ import DistributeMintAction from './InvestorActions/DistributeMintAction.vue'
 import MintTokenAction from './InvestorActions/MintTokenAction.vue'
 import PayDividendsAction from './InvestorActions/PayDividendsAction.vue'
 import ToggleSherCompensationButton from './InvestorActions/ToggleSherCompensationButton.vue'
+import SetCompensationMultiplierButton from './InvestorActions/SetCompensationMultiplierButton.vue'
 import InvestInSafeButton from './InvestorActions/InvestInSafeButton.vue'
 import {
   useInvestorSymbol,
