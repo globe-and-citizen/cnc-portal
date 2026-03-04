@@ -12,26 +12,32 @@ import './interfaces/IInvestorV1.sol';
 interface IBodContract {
   function initialize(address[] memory votingAddress) external;
 }
+
 interface IElections {
   function setBoardOfDirectorsContractAddress(address _bodAddress) external;
 }
+
 interface IProposal {
   function setBoardOfDirectorsContractAddress(address _bodAddress) external;
 }
+
 interface IInvestorV1Contract {
   function initialize(string calldata _name, string calldata _symbol, address _owner) external;
 }
+
 interface IBank {
   function setInvestorAddress(address _investorAddress) external;
 }
 
 interface IFeeCollector {
   function getFeeFor(string memory contractType) external view returns (uint16);
+
   function supportedTokens(address token) external view returns (bool);
 }
 
 interface ISafeDepositRouter {
   function setInvestorAddress(address _investorAddress) external;
+
   function transferOwnership(address newOwner) external;
 }
 
