@@ -134,7 +134,8 @@ export function useSetMultiplier() {
 
   return {
     ...write,
-    executeWrite: (newMultiplier: bigint) => write.executeWrite([newMultiplier])
+    executeWrite: (newMultiplier: bigint) =>
+      write.executeWrite([newMultiplier], undefined, { skipGasEstimation: true })
   }
 }
 

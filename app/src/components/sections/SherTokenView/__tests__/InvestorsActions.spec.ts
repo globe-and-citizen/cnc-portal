@@ -28,6 +28,10 @@ const InvestInSafeButtonStub = {
   template: '<div data-test="invest-in-safe-button" />'
 }
 
+const SetCompensationMultiplierButtonStub = {
+  template: '<div data-test="set-compensation-multiplier-button" />'
+}
+
 describe('InvestorsActions.vue', () => {
   beforeEach(() => {
     resetContractMocks()
@@ -57,6 +61,7 @@ describe('InvestorsActions.vue', () => {
           MintTokenAction: MintTokenActionStub,
           PayDividendsAction: PayDividendsActionStub,
           ToggleSherCompensationButton: ToggleSherCompensationButtonStub,
+          SetCompensationMultiplierButton: SetCompensationMultiplierButtonStub,
           InvestInSafeButton: InvestInSafeButtonStub
         }
       }
