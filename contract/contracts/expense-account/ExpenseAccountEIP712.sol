@@ -8,8 +8,8 @@ import '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable
 import '@openzeppelin/contracts/utils/Address.sol';
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 import '@quant-finance/solidity-datetime/contracts/DateTime.sol';
+import '../base/TokenSupport.sol';
 
 /**
  * @title ExpenseAccountEIP712
@@ -21,12 +21,12 @@ contract ExpenseAccountEIP712 is
   OwnableUpgradeable,
   ReentrancyGuardUpgradeable,
   EIP712Upgradeable,
-  PausableUpgradeable
+  PausableUpgradeable,
+  TokenSupport
 {
   using Address for address payable;
   using ECDSA for bytes32;
   using DateTime for uint256;
-  using EnumerableSet for EnumerableSet.AddressSet;
 
   enum FrequencyType {
     OneTime,
@@ -61,9 +61,6 @@ contract ExpenseAccountEIP712 is
 
   mapping(bytes32 => ExpenseBalance) public expenseBalances;
 
-  /// @dev Set to track all supported token addresses for enumeration
-  EnumerableSet.AddressSet private _supportedTokens;
-
   string private constant BUDGET_LIMIT_TYPE =
     'BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)';
 
@@ -86,10 +83,6 @@ contract ExpenseAccountEIP712 is
     uint256 amount
   );
 
-  event TokenSupportAdded(address indexed tokenAddress);
-
-  event TokenSupportRemoved(address indexed tokenAddress);
-
   error UnauthorizedAccess(address expected, address received);
 
   error AmountPerPeriodExceeded(uint256 amount);
@@ -100,10 +93,7 @@ contract ExpenseAccountEIP712 is
 
   error ApprovalExpired(uint256 currentTime, uint256 endDate);
 
-  function initialize(
-    address owner,
-    address[] calldata _tokenAddresses
-  ) public initializer {
+  function initialize(address owner, address[] calldata _tokenAddresses) public initializer {
     require(owner != address(0), 'Owner cannot be zero');
     __Ownable_init(owner);
     __ReentrancyGuard_init();
@@ -114,7 +104,11 @@ contract ExpenseAccountEIP712 is
     uint256 length = _tokenAddresses.length;
     for (uint256 i = 0; i < length; ++i) {
       require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
-      _supportedTokens.add(_tokenAddresses[i]);
+      _addTokenSupport(_tokenAddresses[i]);
+    }
+    // Emit events after they're already added to avoid duplicate events
+    for (uint256 i = 0; i < length; ++i) {
+      emit TokenSupportAdded(_tokenAddresses[i]);
     }
   }
 
@@ -194,8 +188,11 @@ contract ExpenseAccountEIP712 is
       require(balance.totalWithdrawn + amount <= budgetLimit.amount, 'Exceeds period budget');
     }
 
-    // Check token is supported
-    require(isTokenSupported(budgetLimit.tokenAddress), 'Token not supported');
+    // Check token is supported (allows native token)
+    require(
+      budgetLimit.tokenAddress == address(0) || isTokenSupported(budgetLimit.tokenAddress),
+      'Token not supported'
+    );
 
     return true;
   }
@@ -424,27 +421,18 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Checks if a token is supported.
-   * @param _token The address of the token to check.
-   * @return True if the token is supported, false otherwise.
-   */
-  function isTokenSupported(address _token) public view returns (bool) {
-    return _supportedTokens.contains(_token) || _token == address(0);
-  }
-
-  /**
    * @dev Deposits tokens from the caller to the contract.
    * @param token The address of the token to deposit.
    * @param amount The amount of tokens to deposit.
    *
    * Requirements:
-   * - The token must be supported.
+   * - The token must be supported or is native (address(0)).
    * - The amount must be greater than zero.
    *
    * Emits a {TokenDeposited} event.
    */
   function depositToken(address token, uint256 amount) external nonReentrant whenNotPaused {
-    require(isTokenSupported(token), 'Unsupported token');
+    require(token == address(0) || isTokenSupported(token), 'Unsupported token');
     require(amount > 0, 'Amount must be greater than zero');
 
     require(IERC20(token).transferFrom(msg.sender, address(this), amount), 'Token transfer failed');
@@ -457,9 +445,7 @@ contract ExpenseAccountEIP712 is
    * @dev Can only be called by the contract owner.
    */
   function addTokenSupport(address _tokenAddress) external onlyOwner {
-    require(_tokenAddress != address(0), 'Token address cannot be zero');
-    require(_supportedTokens.add(_tokenAddress), 'Token already supported');
-    emit TokenSupportAdded(_tokenAddress);
+    _addTokenSupport(_tokenAddress);
   }
 
   /**
@@ -468,25 +454,7 @@ contract ExpenseAccountEIP712 is
    * @dev Can only be called by the contract owner.
    */
   function removeTokenSupport(address _tokenAddress) external onlyOwner {
-    require(_tokenAddress != address(0), 'Token address cannot be zero');
-    require(_supportedTokens.remove(_tokenAddress), 'Token not supported');
-    emit TokenSupportRemoved(_tokenAddress);
-  }
-
-  /**
-   * @notice Returns all supported token addresses
-   * @return Array of supported token addresses
-   */
-  function getSupportedTokens() external view returns (address[] memory) {
-    return _supportedTokens.values();
-  }
-
-  /**
-   * @notice Returns the count of supported tokens
-   * @return Number of supported tokens
-   */
-  function getSupportedTokenCount() external view returns (uint256) {
-    return _supportedTokens.length();
+    _removeTokenSupport(_tokenAddress);
   }
 
   /**
@@ -495,7 +463,7 @@ contract ExpenseAccountEIP712 is
    * @return The balance of the token.
    */
   function getTokenBalance(address token) external view returns (uint256) {
-    require(isTokenSupported(token), 'Unsupported token');
+    require(token == address(0) || isTokenSupported(token), 'Unsupported token');
     return IERC20(token).balanceOf(address(this));
   }
 }

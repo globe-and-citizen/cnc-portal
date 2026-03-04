@@ -6,18 +6,11 @@ import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 import './interfaces/IOfficer.sol';
+import './base/TokenSupport.sol';
 
-contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
+contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, TokenSupport {
   using SafeERC20 for IERC20;
-  using EnumerableSet for EnumerableSet.AddressSet;
-
-  /**
-   * @dev Set to track which ERC20 tokens are supported by the contract
-   * Allows O(1) lookup and enumeration
-   */
-  EnumerableSet.AddressSet private _supportedTokens;
 
   /**
    * @dev Address of the Officer contract (set during initialization)
@@ -63,18 +56,6 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   );
 
   /**
-   * @dev Emitted when a new token is added to the supported tokens list.
-   * @param tokenAddress The address of the token contract.
-   */
-  event TokenSupportAdded(address indexed tokenAddress);
-
-  /**
-   * @dev Emitted when a token is removed from the supported tokens list.
-   * @param tokenAddress The address of the token contract.
-   */
-  event TokenSupportRemoved(address indexed tokenAddress);
-
-  /**
    * @notice Initializes the Bank contract with supported tokens and owner
    * @dev This function replaces the constructor for upgradeable contracts
    * @param _tokenAddresses Array of ERC20 token addresses to be supported initially
@@ -90,7 +71,11 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 length = _tokenAddresses.length;
     for (uint256 i = 0; i < length; ++i) {
       require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
-      _supportedTokens.add(_tokenAddresses[i]);
+      _addTokenSupport(_tokenAddresses[i]);
+    }
+    // Emit events after they're already added to avoid duplicate events
+    for (uint256 i = 0; i < length; ++i) {
+      emit TokenSupportAdded(_tokenAddresses[i]);
     }
     require(msg.sender != address(0), 'msg send cannot be zero');
     officerAddress = msg.sender;
@@ -102,9 +87,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @dev Can only be called by the contract owner.
    */
   function addTokenSupport(address _tokenAddress) external onlyOwner {
-    require(_tokenAddress != address(0), 'Token address cannot be zero');
-    require(_supportedTokens.add(_tokenAddress), 'Token already supported');
-    emit TokenSupportAdded(_tokenAddress);
+    _addTokenSupport(_tokenAddress);
   }
 
   /**
@@ -113,25 +96,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @dev Can only be called by the contract owner.
    */
   function removeTokenSupport(address _tokenAddress) external onlyOwner {
-    require(_tokenAddress != address(0), 'Token address cannot be zero');
-    require(_supportedTokens.remove(_tokenAddress), 'Token not supported');
-    emit TokenSupportRemoved(_tokenAddress);
-  }
-
-  /**
-   * @notice Returns all supported token addresses
-   * @return Array of supported token addresses
-   */
-  function getSupportedTokens() external view returns (address[] memory) {
-    return _supportedTokens.values();
-  }
-
-  /**
-   * @notice Returns the count of supported tokens
-   * @return Number of supported tokens
-   */
-  function getSupportedTokenCount() external view returns (uint256) {
-    return _supportedTokens.length();
+    _removeTokenSupport(_tokenAddress);
   }
 
   /**
@@ -150,7 +115,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @return The amount of tokens that can be transferred by the owner
    */
   function getUnlockedTokenBalance(address _token) public view returns (uint256) {
-    require(_supportedTokens.contains(_token), 'Unsupported token');
+    require(_isTokenSupported(_token), 'Unsupported token');
     return IERC20(_token).balanceOf(address(this));
   }
 
@@ -175,7 +140,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @custom:security Protected against reentrancy and requires contract to be unpaused
    */
   function depositToken(address _token, uint256 _amount) external nonReentrant whenNotPaused {
-    require(_supportedTokens.contains(_token), 'Unsupported token');
+    require(_isTokenSupported(_token), 'Unsupported token');
     require(_amount > 0, 'Amount must be greater than zero');
 
     IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
@@ -235,7 +200,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     address _to,
     uint256 _amount
   ) external onlyOwner nonReentrant whenNotPaused {
-    require(_supportedTokens.contains(_token), 'Unsupported token');
+    require(_isTokenSupported(_token), 'Unsupported token');
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
     require(_amount <= getUnlockedTokenBalance(_token), 'Insufficient unlocked token balance');

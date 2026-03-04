@@ -8,10 +8,11 @@ import '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable
 import '@openzeppelin/contracts/utils/Address.sol';
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
+import '@quant-finance/solidity-datetime/contracts/DateTime.sol';
 import './interfaces/IMintableERC20.sol';
 import './interfaces/IInvestorV1.sol';
 import './interfaces/IOfficer.sol';
+import './base/TokenSupport.sol';
 import 'hardhat/console.sol';
 
 /**
@@ -23,14 +24,12 @@ contract CashRemunerationEIP712 is
   OwnableUpgradeable,
   ReentrancyGuardUpgradeable,
   EIP712Upgradeable,
-  PausableUpgradeable
+  PausableUpgradeable,
+  TokenSupport
 {
   using Address for address payable;
   using ECDSA for bytes32;
-  using EnumerableSet for EnumerableSet.AddressSet;
-
-  /// @notice Set of supported token addresses for enumeration
-  EnumerableSet.AddressSet private _supportedTokens;
+  using DateTime for uint256;
 
   /**
    * @dev Represents a wage in a specific token.
@@ -106,18 +105,6 @@ contract CashRemunerationEIP712 is
   event WithdrawToken(address indexed withdrawer, address indexed tokenAddress, uint256 amount);
 
   /**
-   * @dev Emitted when a new token is added to the supported tokens list.
-   * @param tokenAddress The address of the token contract.
-   */
-  event TokenSupportAdded(address indexed tokenAddress);
-
-  /**
-   * @dev Emitted when a token is removed from the supported tokens list.
-   * @param tokenAddress The address of the token contract.
-   */
-  event TokenSupportRemoved(address indexed tokenAddress);
-
-  /**
    * @dev Emitted when a wage claim is enabled.
    * @param signatureHash The hash of the wage claim signature.
    */
@@ -153,7 +140,11 @@ contract CashRemunerationEIP712 is
     // Set the initial supported tokens
     for (uint256 i = 0; i < _tokenAddresses.length; i++) {
       require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
-      _supportedTokens.add(_tokenAddresses[i]);
+      _addTokenSupport(_tokenAddresses[i]);
+    }
+    // Emit events after they're already added to avoid duplicate events
+    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
+      emit TokenSupportAdded(_tokenAddresses[i]);
     }
   }
 
@@ -288,7 +279,7 @@ contract CashRemunerationEIP712 is
       // Step 7b: Handle ERC20 Token Payments
       else {
         // Ensure the requested token is supported by the contract
-        require(_supportedTokens.contains(wageClaim.wages[i].tokenAddress), 'Token not supported');
+        require(_isTokenSupported(wageClaim.wages[i].tokenAddress), 'Token not supported');
 
         // Step 7b(i): Special Case - Mintable InvestorV1 Token
         // If we have an officer address configured and this is the InvestorV1 token,
@@ -337,9 +328,7 @@ contract CashRemunerationEIP712 is
    * @dev Can only be called by the contract owner.
    */
   function addTokenSupport(address tokenAddress) external onlyOwner whenNotPaused {
-    require(tokenAddress != address(0), 'Token address cannot be zero');
-    require(_supportedTokens.add(tokenAddress), 'Token already supported');
-    emit TokenSupportAdded(tokenAddress);
+    _addTokenSupport(tokenAddress);
   }
 
   /**
@@ -348,25 +337,7 @@ contract CashRemunerationEIP712 is
    * @dev Can only be called by the contract owner.
    */
   function removeTokenSupport(address tokenAddress) external onlyOwner whenNotPaused {
-    require(tokenAddress != address(0), 'Token address cannot be zero');
-    require(_supportedTokens.remove(tokenAddress), 'Token not supported');
-    emit TokenSupportRemoved(tokenAddress);
-  }
-
-  /**
-   * @notice Returns all supported token addresses
-   * @return Array of supported token addresses
-   */
-  function getSupportedTokens() external view returns (address[] memory) {
-    return _supportedTokens.values();
-  }
-
-  /**
-   * @notice Returns the count of supported tokens
-   * @return Number of supported tokens
-   */
-  function getSupportedTokenCount() external view returns (uint256) {
-    return _supportedTokens.length();
+    _removeTokenSupport(tokenAddress);
   }
 
   /**
