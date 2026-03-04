@@ -115,12 +115,6 @@ contract CashRemunerationEIP712 is
   event TokenSupportRemoved(address indexed tokenAddress);
 
   /**
-   * @dev Emitted when the officer address is updated.
-   * @param newOfficerAddress The address of the new officer.
-   */
-  event OfficerAddressUpdated(address indexed newOfficerAddress);
-
-  /**
    * @dev Emitted when a wage claim is enabled.
    * @param signatureHash The hash of the wage claim signature.
    */
@@ -149,19 +143,15 @@ contract CashRemunerationEIP712 is
     __ReentrancyGuard_init();
     __Pausable_init();
     __EIP712_init('CashRemuneration', '1');
-    officerAddress = owner;
+
+    require(msg.sender != address(0), 'msg.sender cannot be zero');
+    officerAddress = msg.sender;
 
     // Set the initial supported tokens
     for (uint256 i = 0; i < _tokenAddresses.length; i++) {
       require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
       supportedTokens[_tokenAddresses[i]] = true;
     }
-  }
-
-  function setOfficerAddress(address _officerAddress) external onlyOwner whenNotPaused {
-    officerAddress = _officerAddress;
-
-    emit OfficerAddressUpdated(_officerAddress);
   }
 
   /**

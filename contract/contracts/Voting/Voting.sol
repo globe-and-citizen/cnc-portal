@@ -9,6 +9,10 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 
+interface IOfficer {
+  function findDeployedContract(string calldata contractType) external view returns (address);
+}
+
 /// @title Voting Contract for Decentralized Governance
 /// @notice This contract manages proposals, elections, and voting processes
 /// @dev Implements upgradeable patterns with OpenZeppelin contracts
@@ -16,7 +20,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   mapping(uint256 => Types.Proposal) public proposalsById;
 
   uint256 public proposalCount;
-  address public boardOfDirectorsContractAddress;
+  address public officerAddress;
 
   event ProposalAdded(uint256 indexed proposalId, string title, string description);
   event DirectiveVoted(address indexed voter, uint256 indexed proposalId, uint256 vote);
@@ -38,6 +42,9 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     __Ownable_init(_sender);
     __ReentrancyGuard_init();
     __Pausable_init();
+
+    require(msg.sender != address(0), 'msg.sender cannot be zero');
+    officerAddress = msg.sender;
   }
 
   /// @notice Creates a new proposal
@@ -203,7 +210,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
       for (uint256 i = 0; i < winnerCount; i++) {
         winnerList[i] = candidates[i].candidateAddress;
       }
-      IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
+      address bodAddress = _getBoardOfDirectorsAddress();
+      IBoardOfDirectors(bodAddress).setBoardOfDirectors(winnerList);
       emit BoardOfDirectorsSet(winnerList);
     }
     proposal.isActive = !proposal.isActive;
@@ -236,7 +244,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
       }
       winnerList[proposal.winnerCount - 1] = selectedWinner;
 
-      IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
+      address bodAddress = _getBoardOfDirectorsAddress();
+      IBoardOfDirectors(bodAddress).setBoardOfDirectors(winnerList);
       emit BoardOfDirectorsSet(winnerList);
       proposal.hasTie = false;
       proposal.isActive = !proposal.isActive;
@@ -247,7 +256,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         winnerList[i] = proposal.candidates[i].candidateAddress;
       }
 
-      IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
+      address bodAddress2 = _getBoardOfDirectorsAddress();
+      IBoardOfDirectors(bodAddress2).setBoardOfDirectors(winnerList);
       emit BoardOfDirectorsSet(winnerList);
       proposal.hasTie = false;
       proposal.isActive = !proposal.isActive;
@@ -300,7 +310,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     }
     winnerList[proposal.winnerCount - 1] = winner;
 
-    IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(winnerList);
+    address bodAddress = _getBoardOfDirectorsAddress();
+    IBoardOfDirectors(bodAddress).setBoardOfDirectors(winnerList);
     emit BoardOfDirectorsSet(winnerList);
     proposal.hasTie = false;
     proposal.isActive = !proposal.isActive;
@@ -360,17 +371,23 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     }
   }
 
-  /// @notice Sets the address of the Board of Directors contract
-  /// @param _boardOfDirectorsContractAddress The address of the BoD contract
-  function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) public {
-    boardOfDirectorsContractAddress = _boardOfDirectorsContractAddress;
-  }
-
   /// @notice Sets the Board of Directors members
   /// @param _boardOfDirectors Array of addresses for the new board members
   /// @dev Only callable by contract owner
   function setBoardOfDirectors(address[] memory _boardOfDirectors) public onlyOwner {
-    IBoardOfDirectors(boardOfDirectorsContractAddress).setBoardOfDirectors(_boardOfDirectors);
+    address bodAddress = _getBoardOfDirectorsAddress();
+    IBoardOfDirectors(bodAddress).setBoardOfDirectors(_boardOfDirectors);
+  }
+
+  /**
+   * @dev Internal helper to get BoardOfDirectors contract address from Officer
+   * @return Address of the BoardOfDirectors contract
+   */
+  function _getBoardOfDirectorsAddress() internal view returns (address) {
+    require(officerAddress != address(0), 'Officer address not configured');
+    address bodAddress = IOfficer(officerAddress).findDeployedContract('BoardOfDirectors');
+    require(bodAddress != address(0), 'BoardOfDirectors contract not found');
+    return bodAddress;
   }
 
   /// @notice Pauses the contract

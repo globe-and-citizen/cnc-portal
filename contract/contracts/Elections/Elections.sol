@@ -8,6 +8,10 @@ import {ElectionTypes} from './ElectionTypes.sol';
 import {ElectionUtils} from './ElectionUtils.sol';
 import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
 
+interface IOfficer {
+  function findDeployedContract(string calldata contractType) external view returns (address);
+}
+
 /**
  * @title Elections
  * @dev A contract that manages elections for the Board of Directors (BOD).
@@ -15,7 +19,7 @@ import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
 contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   // State variables
   uint256 private _nextElectionId;
-  address public bodAddress;
+  address public officerAddress;
   mapping(uint256 => ElectionTypes.Election) private _elections;
   uint256[] private _electionIds;
   mapping(uint256 => mapping(address => address)) private _votes;
@@ -49,6 +53,9 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     __Ownable_init(_owner);
     __Pausable_init();
     _nextElectionId = 1;
+
+    require(msg.sender != address(0), 'msg.sender cannot be zero');
+    officerAddress = msg.sender;
   }
 
   function pause() external onlyOwner {
@@ -162,6 +169,7 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     election.winners = getElectionResults(electionId);
     election.resultsPublished = true;
     if (election.winners.length > 0) {
+      address bodAddress = _getBoardOfDirectorsAddress();
       IBoardOfDirectors(bodAddress).setBoardOfDirectors(election.winners);
     }
 
@@ -312,11 +320,14 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     return _nextElectionId;
   }
 
-  function setBoardOfDirectorsContractAddress(address _bodAddress) external {
-    require(
-      msg.sender == owner() || bodAddress == address(0),
-      'Not allowed to set board of directors contract'
-    );
-    bodAddress = _bodAddress;
+  /**
+   * @dev Internal helper to get BoardOfDirectors contract address from Officer
+   * @return Address of the BoardOfDirectors contract
+   */
+  function _getBoardOfDirectorsAddress() internal view returns (address) {
+    require(officerAddress != address(0), 'Officer address not configured');
+    address bodAddress = IOfficer(officerAddress).findDeployedContract('BoardOfDirectors');
+    require(bodAddress != address(0), 'BoardOfDirectors contract not found');
+    return bodAddress;
   }
 }

@@ -13,14 +13,6 @@ interface IBodContract {
   function initialize(address[] memory votingAddress) external;
 }
 
-interface IElections {
-  function setBoardOfDirectorsContractAddress(address _bodAddress) external;
-}
-
-interface IProposal {
-  function setBoardOfDirectorsContractAddress(address _bodAddress) external;
-}
-
 interface IInvestorV1Contract {
   function initialize(string calldata _name, string calldata _symbol, address _owner) external;
 }
@@ -32,8 +24,6 @@ interface IFeeCollector {
 }
 
 interface ISafeDepositRouter {
-  function setInvestorAddress(address _investorAddress) external;
-
   function transferOwnership(address newOwner) external;
 }
 
@@ -172,13 +162,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
     // Setup SafeDepositRouter permissions if deployed
     if (depositRouterAddress != address(0)) {
-      ISafeDepositRouter depositRouter = ISafeDepositRouter(depositRouterAddress);
-      // Grant MINTER_ROLE first (required by SafeDepositRouter.setInvestorAddress)
+      // Grant MINTER_ROLE to SafeDepositRouter (no longer needs setInvestorAddress)
       investorV1.grantRole(minterRole, depositRouterAddress);
-      // Set investor address (Officer is owner at this point)
-      depositRouter.setInvestorAddress(investorV1Address);
 
-      //ADD: Transfer ownership to final owner (like CashRemuneration)
+      // Transfer ownership to final owner
+      ISafeDepositRouter depositRouter = ISafeDepositRouter(depositRouterAddress);
       depositRouter.transferOwnership(_owner);
     }
 
@@ -241,43 +229,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       );
       deployedContracts.push(DeployedContract('BoardOfDirectors', bodContract));
       emit ContractDeployed('BoardOfDirectors', bodContract);
-      IElections(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
-    } else if (keccak256(bytes(contractType)) == keccak256(bytes('Proposals'))) {
-      IProposal(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
-    } else if (keccak256(bytes(contractType)) == keccak256(bytes('SafeDepositRouter'))) {
-      address foundInvestorsV1Contract = findDeployedContract('InvestorV1');
-      if (foundInvestorsV1Contract != address(0)) {
-        IInvestorV1 investorV1 = IInvestorV1(foundInvestorsV1Contract);
-        bytes32 minterRole = investorV1.MINTER_ROLE();
-
-        if (!investorV1.hasRole(minterRole, proxyAddress)) {
-          investorV1.grantRole(minterRole, proxyAddress);
-        }
-
-        ISafeDepositRouter(proxyAddress).setInvestorAddress(foundInvestorsV1Contract);
-
-        // Only transfer ownership if NOT in batch deployment (will be handled by _setupContractPermissions)
-        if (!_isInitializing()) {
-          ISafeDepositRouter(proxyAddress).transferOwnership(owner());
-        }
-      }
-    } else if (keccak256(bytes(contractType)) == keccak256(bytes('InvestorV1'))) {
-      address foundSafeDepositRouter = findDeployedContract('SafeDepositRouter');
-      if (foundSafeDepositRouter != address(0)) {
-        IInvestorV1 investorV1 = IInvestorV1(proxyAddress);
-        bytes32 minterRole = investorV1.MINTER_ROLE();
-
-        if (!investorV1.hasRole(minterRole, foundSafeDepositRouter)) {
-          investorV1.grantRole(minterRole, foundSafeDepositRouter);
-        }
-
-        ISafeDepositRouter(foundSafeDepositRouter).setInvestorAddress(proxyAddress);
-
-        // Only transfer ownership if NOT in batch deployment (will be handled by _setupContractPermissions)
-        if (!_isInitializing()) {
-          ISafeDepositRouter(foundSafeDepositRouter).transferOwnership(owner());
-        }
-      }
     }
 
     return proxyAddress;
