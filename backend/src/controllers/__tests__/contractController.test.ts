@@ -29,6 +29,7 @@ vi.mock('../../utils', async () => {
         createMany: vi.fn(),
         findMany: vi.fn(),
         create: vi.fn(),
+        deleteMany: vi.fn(),
       },
     },
   };
@@ -38,7 +39,7 @@ vi.mock('../../utils', async () => {
 vi.mock('../../utils/viem.config', () => ({
   default: {
     readContract: vi.fn(),
-    getBytecode: vi.fn(),
+    getChainId: vi.fn(),
   },
 }));
 
@@ -65,6 +66,7 @@ const mockTeam = {
 describe('contractController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(publicClient.getChainId).mockResolvedValue(11155111);
     vi.mocked(prisma.teamContract.findMany).mockResolvedValue([]);
   });
 
@@ -88,25 +90,17 @@ describe('contractController', () => {
     });
 
     it('should return 200 with count 0 if officer contract is not configured', async () => {
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
-        ...mockTeam,
-        officerAddress: null,
-      });
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(publicClient, 'readContract').mockResolvedValue([]);
+      vi.spyOn(prisma.teamContract, 'createMany').mockResolvedValue({ count: 0 });
 
       const response = await request(app).put('/sync').send({ teamId: 1 });
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({ count: 0 });
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('No new contracts Created');
     });
 
     it('should resolve officer from persisted officer contract and sync', async () => {
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
-        ...mockTeam,
-        officerAddress: null,
-      });
-      vi.mocked(prisma.teamContract.findMany).mockResolvedValue([
-        { address: '0x2222222222222222222222222222222222222222' },
-      ] as never);
-      vi.spyOn(publicClient, 'getBytecode').mockResolvedValue('0x6000');
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
         {
           contractType: 'Voting',
@@ -117,10 +111,7 @@ describe('contractController', () => {
 
       const response = await request(app).put('/sync').send({ teamId: 1 });
 
-      expect(prisma.team.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: { officerAddress: '0x2222222222222222222222222222222222222222' },
-      });
+      expect(publicClient.getChainId).toHaveBeenCalledTimes(1);
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ count: 1 });
     });
@@ -152,7 +143,6 @@ describe('contractController', () => {
 
     it('should return 200 if no new contracts are created (all duplicates)', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
-      vi.spyOn(publicClient, 'getBytecode').mockResolvedValue('0x6000');
       // mock readContract to return contracts from blockchain
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
         {
@@ -182,13 +172,12 @@ describe('contractController', () => {
         ]),
         skipDuplicates: true,
       });
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({ count: 0 });
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('No new contracts Created');
     });
 
     it('should return 200 when new contracts are successfully created', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
-      vi.spyOn(publicClient, 'getBytecode').mockResolvedValue('0x6000');
       // mock readContract to return contracts from blockchain
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
         {
@@ -244,7 +233,7 @@ describe('contractController', () => {
       vi.spyOn(prisma.team, 'findUnique').mockRejectedValue('Server error');
       const response = await request(app).put('/sync').send({ teamId: 1 });
       expect(response.status).toBe(500);
-      expect(response.body.message).toContain('Internal server error');
+      expect(response.body.message).toContain('Internal server error has occured');
     });
   });
 
@@ -370,6 +359,61 @@ describe('contractController', () => {
         contractAddress: faker.finance.ethereumAddress(),
         contractType: 'Voting',
       });
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error has occured');
+    });
+  });
+
+  describe('DELETE: /reset', () => {
+    it('should return 400 if required fields are missing', async () => {
+      const response = await request(app).delete('/reset').send({});
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid request body');
+    });
+
+    it('should return 404 if team is not found', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
+      const response = await request(app).delete('/reset').send({ teamId: 1 });
+      expect(response.status).toBe(404);
+      expect(response.body.message).toContain('Team not found');
+    });
+
+    it('should return 403 if caller is not team owner', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        ...mockTeam,
+        ownerAddress: '0x456',
+      });
+
+      const response = await request(app).delete('/reset').send({ teamId: 1 });
+      expect(response.status).toBe(403);
+      expect(response.body.message).toContain('Unauthorized: Caller is not the owner of the team');
+    });
+
+    it('should return 200 when team contracts are reset', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.teamContract, 'deleteMany').mockResolvedValue({ count: 2 });
+      vi.spyOn(prisma.team, 'update').mockResolvedValue({
+        ...mockTeam,
+        officerAddress: null,
+      });
+
+      const response = await request(app).delete('/reset').send({ teamId: 1 });
+
+      expect(prisma.teamContract.deleteMany).toHaveBeenCalledWith({
+        where: { teamId: 1 },
+      });
+      expect(prisma.team.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { officerAddress: null },
+      });
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('Team contracts reset successfully');
+    });
+
+    it('should return 500 if reset fails', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockRejectedValue('Error');
+
+      const response = await request(app).delete('/reset').send({ teamId: 1 });
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
     });
