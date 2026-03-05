@@ -7,6 +7,7 @@ import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.jso
 import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
 import publicClient from '../utils/viem.config';
 import { getPresignedDownloadUrl } from '../services/storageService';
+import { isUserMemberOfTeam } from './wageController';
 
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
@@ -237,6 +238,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 };
 
 export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
+  const callerAddress = req.address;
   const teamId = Number(req.query.teamId);
   const status = req.query.status as string;
 
@@ -244,9 +246,10 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
     return errorResponse(400, 'Missing or invalid teamId', res);
   }
 
+  const filterAddress = (req.query.userAddress ?? req.query.memberAddress) as string | undefined;
   let memberAddressFilter: Prisma.WeeklyClaimWhereInput = {};
-  if (req.query.memberAddress) {
-    memberAddressFilter = { memberAddress: req.query.memberAddress as string };
+  if (filterAddress) {
+    memberAddressFilter = { memberAddress: filterAddress };
   }
 
   //create filter for the statut pending, signed or withdrawn
@@ -269,6 +272,10 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   }
 
   try {
+    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
+      return errorResponse(403, 'Caller is not a member of the team', res);
+    }
+
     // Get all WeeklyClaims that have at least one claim for this team
     const weeklyClaims = await prisma.weeklyClaim.findMany({
       where: {
@@ -328,6 +335,7 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
 };
 
 export const syncWeeklyClaims = async (req: Request, res: Response) => {
+  const callerAddress = req.address;
   const teamId = Number(req.query.teamId);
 
   if (!teamId || Number.isNaN(teamId)) {
@@ -335,6 +343,10 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
   }
 
   try {
+    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
+      return errorResponse(403, 'Caller is not a member of the team', res);
+    }
+
     const teamContract = await prisma.teamContract.findFirst({
       where: {
         teamId,
