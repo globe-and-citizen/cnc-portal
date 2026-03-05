@@ -2,6 +2,7 @@ import { HardhatUserConfig } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomicfoundation/hardhat-chai-matchers'
 import '@openzeppelin/hardhat-upgrades'
+import 'hardhat-abi-exporter'
 import dotenv from 'dotenv'
 import { NetworksUserConfig } from 'hardhat/types'
 
@@ -67,6 +68,28 @@ const config: HardhatUserConfig = {
     currency: 'USD',
     coinmarketcap: process.env.COINMARKETCAP_KEY,
     token: 'POL'
+  },
+  abiExporter: {
+    path: '../app/src/artifacts/abi/json',
+    runOnCompile: true,
+    clear: true,
+    flat: true,
+    spacing: 2,
+    format: 'json',
+    except: [
+      ':I[A-Z].*', // Exclude interfaces like IERC20, IOfficer
+      // ':.*Upgradeable$', // Exclude OpenZeppelin upgradeable contracts
+      // ':.*Proxy$', // Exclude proxy contracts
+      // ':.*Utils$', // Exclude utility contracts
+      // ':Address$',
+      // ':Beacon$',
+      // ':Context$',
+      // ':ECDSA$',
+      // ':ERC165$',
+      // ':Errors$',
+      // ':SafeCast$',
+      // ':Strings$'
+    ]
   }
 }
 
