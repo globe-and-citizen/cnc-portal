@@ -7,7 +7,7 @@ import { BANK_ABI as BankAbi } from '@/artifacts/abi/bank'
 
 import { CASH_REMUNERATION_EIP712_ABI as CashRemunerationAbi } from '@/artifacts/abi/cash-remuneration-eip712'
 import { ELECTIONS_ABI as ElectionsAbi } from '@/artifacts/abi/elections'
-import { INVESTOR_V1_ABI as InvestorsAbi } from '@/artifacts/abi/investor-v1'
+import { INVESTOR_ABI as InvestorsAbi } from '@/artifacts/abi/investor'
 import { PROPOSALS_ABI as ProposalsAbi } from '@/artifacts/abi/proposals'
 import { VOTING_ABI as VotingAbi } from '@/artifacts/abi/voting'
 

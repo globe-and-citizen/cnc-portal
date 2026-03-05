@@ -5,6 +5,7 @@ import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
 import { useTeamStore } from '@/stores/teamStore'
 import type { ExtractAbiFunctionNames } from 'abitype'
+// import BANK_ABI from '@/artifacts/abi/Bank.json'
 
 type BankFunctionNames = ExtractAbiFunctionNames<typeof BANK_ABI>
 

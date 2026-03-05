@@ -108,7 +108,7 @@ import VestingActions from '@/components/sections/VestingView/VestingActions.vue
 import VestingStatusFilter from './VestingStatusFilter.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { VESTING_ABI } from '@/artifacts/abi/vesting'
 const { addErrorToast, addSuccessToast } = useToastStore()
 

@@ -37,7 +37,7 @@ import { useTeamStore } from '@/stores'
 import { useToastStore } from '@/stores/useToastStore'
 import { type TokenSummary } from '@/types/vesting'
 import { VESTING_ADDRESS } from '@/constant'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { VESTING_ABI } from '@/artifacts/abi/vesting'
 import { type Address, formatUnits } from 'viem'
 

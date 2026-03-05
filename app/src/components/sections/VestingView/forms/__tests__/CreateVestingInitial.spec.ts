@@ -7,7 +7,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { parseEther, parseUnits } from 'viem'
 import { VESTING_ADDRESS } from '@/constant'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 
 const memberAddress = '0x000000000000000000000000000000000000dead'

@@ -1,6 +1,6 @@
 import { computed, unref, type MaybeRef } from 'vue'
 import type { Address } from 'viem'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
 import { useTeamStore } from '@/stores'
 import type { ExtractAbiFunctionNames } from 'abitype'
