@@ -160,7 +160,7 @@ export const getDeploymentConfigs = (
     initializerData: encodeFunctionData({
       abi: EXPENSE_ACCOUNT_EIP712_ABI,
       functionName: 'initialize',
-      args: [currentUserAddress, USDT_ADDRESS, USDC_ADDRESS]
+      args: [currentUserAddress, [USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS]]
     })
   })
 
@@ -192,7 +192,6 @@ export const getDeploymentConfigs = (
       functionName: 'initialize',
       args: [
         currentUserAddress, // safeAddress
-        zeroAddress, // investorAddress
         [USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS], // supportedTokens
         parseUnits('1', 6) // multiplier - default 1:1 ratio
       ]
