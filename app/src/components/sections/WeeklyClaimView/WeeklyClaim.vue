@@ -148,7 +148,7 @@ function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
 const { data: fetchedData, error } = useGetTeamWeeklyClaimsQuery({
   queryParams: {
     teamId: computed(() => teamStore.currentTeamId),
-    userAddress: props.memberAddress
+    userAddress: computed(() => props.memberAddress)
   }
 })
 
