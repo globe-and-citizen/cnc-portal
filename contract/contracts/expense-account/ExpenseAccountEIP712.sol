@@ -84,6 +84,14 @@ contract ExpenseAccountEIP712 is
     uint256 amount
   );
 
+  event OwnerTreasuryWithdrawNative(address indexed ownerAddress, uint256 amount);
+
+  event OwnerTreasuryWithdrawToken(
+    address indexed ownerAddress,
+    address indexed token,
+    uint256 amount
+  );
+
   event TokenAddressChanged(
     address indexed addressWhoChanged,
     string tokenSymbol,

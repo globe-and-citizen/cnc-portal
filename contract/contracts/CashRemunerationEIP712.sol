@@ -103,6 +103,25 @@ contract CashRemunerationEIP712 is
   event WithdrawToken(address indexed withdrawer, address indexed tokenAddress, uint256 amount);
 
   /**
+   * @dev Emitted when the contract owner withdraws native funds from treasury.
+   * @param ownerAddress The owner address initiating the withdrawal.
+   * @param amount The withdrawn native amount.
+   */
+  event OwnerTreasuryWithdrawNative(address indexed ownerAddress, uint256 amount);
+
+  /**
+   * @dev Emitted when the contract owner withdraws supported token funds from treasury.
+   * @param ownerAddress The owner address initiating the withdrawal.
+   * @param tokenAddress The token address withdrawn.
+   * @param amount The withdrawn token amount.
+   */
+  event OwnerTreasuryWithdrawToken(
+    address indexed ownerAddress,
+    address indexed tokenAddress,
+    uint256 amount
+  );
+
+  /**
    * @dev Emitted when a new token is added to the supported tokens list.
    * @param tokenAddress The address of the token contract.
    */
