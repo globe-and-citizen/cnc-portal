@@ -33,6 +33,10 @@ vi.mock('../../utils/cashRemunerationUtil', () => ({
   isCashRemunerationOwner: vi.fn().mockResolvedValue(true),
 }));
 
+vi.mock('../../controllers/wageController', () => ({
+  isUserMemberOfTeam: vi.fn().mockResolvedValue(true),
+}));
+
 vi.mock('../../utils/viem.config', () => ({
   default: { readContract: readContractMock },
 }));
@@ -321,14 +325,22 @@ describe('Weekly Claim Controller', () => {
       });
     });
 
+    it('should return 400 if memberAddress is invalid', async () => {
+      const response = await request(app).get('/?teamId=1&memberAddress=invalid-address');
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ message: 'Invalid member address' });
+    });
+
     it('should return filtered claims and refresh attachment URLs', async () => {
+      const memberAddress = '0x000000000000000000000000000000000000dEaD';
+
       mockGetPresignedDownloadUrl
         .mockResolvedValueOnce('fresh-1')
         .mockRejectedValueOnce(new Error('presign failed'));
 
       const weeklyClaims = [
         {
-          ...weeklyClaimFactory({ id: 1, memberAddress: '0xAnotherAddress', status: null }),
+          ...weeklyClaimFactory({ id: 1, memberAddress, status: null }),
           claims: [
             {
               id: 101,
@@ -366,12 +378,16 @@ describe('Weekly Claim Controller', () => {
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue(weeklyClaims as any);
 
       const response = await request(app).get(
-        '/?teamId=1&status=pending&memberAddress=0xAnotherAddress'
+        `/?teamId=1&status=pending&memberAddress=${memberAddress}`
       );
       expect(response.status).toBe(200);
       expect(prisma.weeklyClaim.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ memberAddress: '0xAnotherAddress', status: 'pending' }),
+          where: expect.objectContaining({
+            teamId: 1,
+            memberAddress: { equals: memberAddress, mode: 'insensitive' },
+            status: 'pending',
+          }),
         })
       );
 
