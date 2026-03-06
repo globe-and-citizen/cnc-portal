@@ -1,6 +1,12 @@
 <template>
-  <UButton color="primary" size="sm" data-test="claim-dividend" :disabled="isDisabled" :loading="isClaiming"
-    @click="handleClaim">
+  <UButton
+    color="primary"
+    size="sm"
+    data-test="claim-dividend"
+    :disabled="isDisabled"
+    :loading="isClaiming"
+    @click="handleClaim"
+  >
     {{ isClaiming ? 'Claiming' : 'Claim' }}
   </UButton>
 </template>
