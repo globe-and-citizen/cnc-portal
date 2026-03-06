@@ -118,7 +118,7 @@ import '@vuepic/vue-datepicker/dist/main.css'
 import { type VestingCreation } from '@/types/vesting'
 const { addSuccessToast, addErrorToast } = useToastStore()
 import { useContractBalance } from '@/composables/useContractBalance'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { useUserDataStore } from '@/stores'
 import { isAddress } from 'viem'
 import { required, helpers, minValue } from '@vuelidate/validators'

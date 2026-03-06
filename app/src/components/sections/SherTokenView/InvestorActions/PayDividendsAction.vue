@@ -34,7 +34,7 @@ import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
-import { useDepositDividends, useDepositTokenDividends } from '@/composables/bank/writes'
+import { useDepositDividends, useDepositTokenDividends } from '@/composables/investor/writes'
 import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils'
 import type { TokenId } from '@/constant'
 
@@ -60,11 +60,10 @@ const depositAmount = ref<bigint>(0n)
 const depositTokenAddress = ref<Address>(zeroAddress)
 const investorAddress = computed(() => teamStore.getContractAddressByType('InvestorV1') as Address)
 
-const depositDividendsWrite = useDepositDividends(depositAmount, investorAddress)
+const depositDividendsWrite = useDepositDividends(depositAmount)
 const depositTokenDividendsWrite = useDepositTokenDividends(
   depositTokenAddress,
-  depositAmount,
-  investorAddress
+  depositAmount
 )
 
 const isBankWriteLoading = computed(
@@ -140,15 +139,17 @@ const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
     depositAmount.value = value
 
     if (selectedTokenId === 'native') {
-      const result = await depositDividendsWrite.executeWrite([value, investorAddr], value)
+      const result = await depositDividendsWrite.executeWrite([value], value)
       if (!result) throw new Error('Deposit failed')
     } else {
       depositTokenAddress.value = tokenSymbolAddresses[selectedTokenId] as Address
+      console.log('Depositing token')
       const result = await depositTokenDividendsWrite.executeWrite([
         depositTokenAddress.value,
-        value,
-        investorAddr
+        value
       ])
+
+      console.log('Deposit token result', result)
       if (!result) throw new Error('Deposit failed')
     }
 

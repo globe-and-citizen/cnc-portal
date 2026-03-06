@@ -7,14 +7,9 @@ import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-
-interface IInvestorV1 {
-  function individualMint(address shareholder, uint256 amount) external;
-
-  function hasRole(bytes32 role, address account) external view returns (bool);
-
-  function MINTER_ROLE() external view returns (bytes32);
-}
+import './interfaces/IInvestorV1.sol';
+import './interfaces/IOfficer.sol';
+import './base/TokenSupport.sol';
 
 interface IERC20Metadata {
   function decimals() external view returns (uint8);
@@ -40,26 +35,27 @@ contract SafeDepositRouter is
   Initializable,
   OwnableUpgradeable,
   ReentrancyGuardUpgradeable,
-  PausableUpgradeable
+  PausableUpgradeable,
+  TokenSupport
 {
   using SafeERC20 for IERC20;
 
   /*//////////////////////////////////////////////////////////////
-                               CONSTANTS
+                              CONSTANTS
     //////////////////////////////////////////////////////////////*/
 
   /// @notice Minimum multiplier value (must be at least 1)
   uint256 public constant MIN_MULTIPLIER = 1;
 
   /*//////////////////////////////////////////////////////////////
-                                 STORAGE
+                                STORAGE
     //////////////////////////////////////////////////////////////*/
 
   /// @notice Safe address where deposited tokens are sent
   address public safeAddress;
 
-  /// @notice InvestorV1 contract that mints SHER tokens
-  address public investorAddress;
+  /// @notice Officer contract address (set during initialization)
+  address public officerAddress;
 
   /// @notice Simple multiplier (1 = 1:1, 2 = 2:1, etc.)
   /// @dev SHER minted = (normalized token amount) × multiplier
@@ -69,14 +65,11 @@ contract SafeDepositRouter is
   /// @dev Disabled by default - owner must call enableDeposits() to allow deposits
   bool public depositsEnabled;
 
-  /// @notice Mapping of supported token addresses
-  mapping(address => bool) public supportedTokens;
-
   /// @notice Stored decimals for each token (prevents manipulation)
   mapping(address => uint8) public tokenDecimals;
 
   /*//////////////////////////////////////////////////////////////
-                                 EVENTS
+                                EVENTS
     //////////////////////////////////////////////////////////////*/
 
   event Deposited(
@@ -90,14 +83,12 @@ contract SafeDepositRouter is
   event DepositsEnabled(address indexed enabledBy);
   event DepositsDisabled(address indexed disabledBy);
   event SafeAddressUpdated(address indexed oldSafe, address indexed newSafe);
-  event InvestorAddressUpdated(address indexed oldInvestor, address indexed newInvestor);
   event MultiplierUpdated(uint256 oldMultiplier, uint256 newMultiplier);
   event TokenSupportAdded(address indexed tokenAddress, uint8 decimals);
-  event TokenSupportRemoved(address indexed tokenAddress);
   event TokensRecovered(address indexed token, address indexed to, uint256 amount);
 
   /*//////////////////////////////////////////////////////////////
-                                 ERRORS
+                                ERRORS
     //////////////////////////////////////////////////////////////*/
 
   error InvalidOwner();
@@ -114,7 +105,7 @@ contract SafeDepositRouter is
   error DepositsNotEnabled();
 
   /*//////////////////////////////////////////////////////////////
-                               MODIFIERS
+                              MODIFIERS
     //////////////////////////////////////////////////////////////*/
 
   /**
@@ -129,7 +120,7 @@ contract SafeDepositRouter is
   }
 
   /*//////////////////////////////////////////////////////////////
-                               CONSTRUCTOR
+                              CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
   /// @custom:oz-upgrades-unsafe-allow constructor
@@ -144,16 +135,14 @@ contract SafeDepositRouter is
   /**
    * @notice Initialize the SafeDepositRouter
    * @param _safeAddress Safe wallet address where deposits are sent
-   * @param _investorAddress InvestorV1 contract that mints SHER (can be zero, set later)
    * @param _tokenAddresses Initial supported tokens
    * @param _multiplier SHER multiplier (1 = 1:1, 2 = 2:1, etc.)
    *
    * @dev Deposits disabled by default - call enableDeposits() to start
-   * @dev investorAddress can be zero during initialization - will be set by Officer
+   * @dev officerAddress is set from msg.sender (Officer contract)
    */
   function initialize(
     address _safeAddress,
-    address _investorAddress,
     address[] calldata _tokenAddresses,
     uint256 _multiplier
   ) public initializer {
@@ -165,7 +154,8 @@ contract SafeDepositRouter is
     __Pausable_init();
 
     safeAddress = _safeAddress;
-    investorAddress = _investorAddress;
+    require(msg.sender != address(0), 'msg.sender cannot be zero');
+    officerAddress = msg.sender;
     multiplier = _multiplier;
     depositsEnabled = false; // Disabled by default
 
@@ -177,7 +167,7 @@ contract SafeDepositRouter is
       uint8 decimals = IERC20Metadata(tokenAddress).decimals();
       if (decimals > 18) revert InvalidTokenDecimals();
 
-      supportedTokens[tokenAddress] = true;
+      _addTokenSupport(tokenAddress);
       tokenDecimals[tokenAddress] = decimals;
 
       emit TokenSupportAdded(tokenAddress, decimals);
@@ -185,7 +175,7 @@ contract SafeDepositRouter is
   }
 
   /*//////////////////////////////////////////////////////////////
-                           DEPOSIT FUNCTIONS
+                          DEPOSIT FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
   /**
@@ -217,17 +207,27 @@ contract SafeDepositRouter is
   }
 
   /**
+   * @notice Internal helper to get InvestorV1 contract address from Officer
+   * @return Address of the InvestorV1 contract
+   */
+  function _getInvestorAddress() internal view returns (address) {
+    require(officerAddress != address(0), 'Officer address not configured');
+    address investorAddress = IOfficer(officerAddress).findDeployedContract('InvestorV1');
+    require(investorAddress != address(0), 'InvestorV1 contract not found');
+    return investorAddress;
+  }
+
+  /**
    * @notice Internal deposit implementation
    * @param tokenAddress Address of the token to deposit
    * @param amount Amount of tokens to deposit
    * @param minSherOut Minimum SHER to receive (0 for no slippage protection)
    */
   function _deposit(address tokenAddress, uint256 amount, uint256 minSherOut) internal {
-    if (!supportedTokens[tokenAddress]) revert TokenNotSupported();
+    if (!_isTokenSupported(tokenAddress)) revert TokenNotSupported();
     if (amount == 0) revert ZeroAmount();
 
-    //  ADD: Check investorAddress is set before attempting deposit
-    if (investorAddress == address(0)) revert InvalidInvestorAddress();
+    address investorAddress = _getInvestorAddress();
 
     // Check MINTER_ROLE before attempting to mint
     IInvestorV1 investor = IInvestorV1(investorAddress);
@@ -267,7 +267,7 @@ contract SafeDepositRouter is
   }
 
   /*//////////////////////////////////////////////////////////////
-                         CALCULATION FUNCTIONS
+                        CALCULATION FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
   /**
@@ -285,9 +285,10 @@ contract SafeDepositRouter is
     address tokenAddress,
     uint256 tokenAmount
   ) public view returns (uint256) {
-    if (!supportedTokens[tokenAddress]) revert TokenNotSupported();
+    if (!_isTokenSupported(tokenAddress)) revert TokenNotSupported();
     if (tokenAmount == 0) revert ZeroAmount();
-    if (investorAddress == address(0)) revert InvalidInvestorAddress();
+
+    address investorAddress = _getInvestorAddress();
 
     uint8 tokenDec = tokenDecimals[tokenAddress];
     uint8 sherDec = IERC20Metadata(investorAddress).decimals();
@@ -298,21 +299,21 @@ contract SafeDepositRouter is
   }
 
   /*//////////////////////////////////////////////////////////////
-                       TOKEN MANAGEMENT FUNCTIONS
+                      TOKEN MANAGEMENT FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
   /**
    * @notice Add token to deposit whitelist
    * @param tokenAddress Token address to add
    */
-  function addTokenSupport(address tokenAddress) external onlyOwner {
+  function addTokenSupport(address tokenAddress) external override onlyOwner {
     if (tokenAddress == address(0)) revert InvalidTokenAddress();
-    if (supportedTokens[tokenAddress]) revert TokenAlreadySupported();
+    if (_isTokenSupported(tokenAddress)) revert TokenAlreadySupported();
 
     uint8 decimals = IERC20Metadata(tokenAddress).decimals();
     if (decimals > 18) revert InvalidTokenDecimals();
 
-    supportedTokens[tokenAddress] = true;
+    _addTokenSupport(tokenAddress);
     tokenDecimals[tokenAddress] = decimals;
 
     emit TokenSupportAdded(tokenAddress, decimals);
@@ -322,16 +323,17 @@ contract SafeDepositRouter is
    * @notice Remove token from deposit whitelist
    * @param tokenAddress Token address to remove
    */
-  function removeTokenSupport(address tokenAddress) external onlyOwner {
+  function removeTokenSupport(address tokenAddress) external override onlyOwner {
     if (tokenAddress == address(0)) revert InvalidTokenAddress();
-    if (!supportedTokens[tokenAddress]) revert TokenNotSupported();
+    if (!_isTokenSupported(tokenAddress)) revert TokenNotSupported();
 
-    supportedTokens[tokenAddress] = false;
+    _removeTokenSupport(tokenAddress);
+
     emit TokenSupportRemoved(tokenAddress);
   }
 
   /*//////////////////////////////////////////////////////////////
-                     DEPOSIT CONTROL FUNCTIONS
+                    DEPOSIT CONTROL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
   /**
@@ -355,7 +357,7 @@ contract SafeDepositRouter is
   }
 
   /*//////////////////////////////////////////////////////////////
-                     EMERGENCY PAUSE FUNCTIONS
+                    EMERGENCY PAUSE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
   /**
@@ -393,23 +395,6 @@ contract SafeDepositRouter is
   }
 
   /**
-   * @notice Update InvestorV1 address
-   * @param _newInvestor New InvestorV1 address
-   */
-  function setInvestorAddress(address _newInvestor) external onlyOwner {
-    if (_newInvestor == address(0)) revert InvalidInvestorAddress();
-
-    // Only check MINTER_ROLE if we're setting a non-zero address
-    IInvestorV1 investor = IInvestorV1(_newInvestor);
-    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) {
-      revert InsufficientMinterRole();
-    }
-
-    emit InvestorAddressUpdated(investorAddress, _newInvestor);
-    investorAddress = _newInvestor;
-  }
-
-  /**
    * @notice Update multiplier
    * @param _newMultiplier New multiplier as fixed-point using SHER decimals
    *
@@ -426,7 +411,7 @@ contract SafeDepositRouter is
    *      - `1e12` = 0.000001x
    */
   function setMultiplier(uint256 _newMultiplier) external onlyOwner {
-    if (investorAddress == address(0)) revert InvalidInvestorAddress();
+    address investorAddress = _getInvestorAddress();
 
     uint8 sherDec = IERC20Metadata(investorAddress).decimals();
 
