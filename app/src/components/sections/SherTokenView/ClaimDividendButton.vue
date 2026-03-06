@@ -1,12 +1,6 @@
 <template>
-  <UButton
-    color="primary"
-    size="sm"
-    data-test="claim-dividend"
-    :disabled="isDisabled"
-    :loading="isClaiming"
-    @click="handleClaim"
-  >
+  <UButton color="primary" size="sm" data-test="claim-dividend" :disabled="isDisabled" :loading="isClaiming"
+    @click="handleClaim">
     {{ isClaiming ? 'Claiming' : 'Claim' }}
   </UButton>
 </template>
@@ -43,7 +37,7 @@ const handleClaim = async () => {
     if (props.isNative) {
       await nativeClaimWrite.executeWrite()
     } else {
-      await tokenClaimWrite.executeWrite()
+      await tokenClaimWrite.executeWrite([props.tokenAddress])
     }
 
     toast.addSuccessToast('Dividend claimed successfully')
