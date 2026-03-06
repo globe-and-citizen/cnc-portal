@@ -81,16 +81,16 @@ describe('uploadRoute', () => {
         fileType: 'image/jpeg',
         fileSize: 1024,
       };
-      const mockPresignedUrl = 'https://storage.railway.app/bucket/uploads/abc123hash.jpg?signed';
+      const mockPublicUrl = 'https://storage.railway.app/bucket/uploads/abc123hash.jpg';
 
       mockUploadFile.mockResolvedValue({ success: true, metadata: mockMetadata });
-      mockGetPresignedDownloadUrl.mockResolvedValue(mockPresignedUrl);
+      mockGetPresignedDownloadUrl.mockResolvedValue(mockPublicUrl);
 
       const response = await request(app).post('/').send({ hasFile: true });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
-        fileUrl: mockPresignedUrl,
+        fileUrl: mockPublicUrl,
         fileKey: mockMetadata.key,
         metadata: mockMetadata,
       });
