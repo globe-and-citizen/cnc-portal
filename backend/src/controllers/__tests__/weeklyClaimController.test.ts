@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import weeklyClaimRoutes from '../../routes/weeklyClaimRoute';
 import { prisma } from '../../utils';
 import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
+import { isUserMemberOfTeam } from '../../controllers/wageController';
 import type { Address } from 'viem';
 
 const CALLER = '0x1234567890123456789012345678901234567890';
@@ -311,6 +312,14 @@ describe('Weekly Claim Controller', () => {
   });
 
   describe('GET /', () => {
+    it('should return 403 if caller is not team member', async () => {
+      vi.mocked(isUserMemberOfTeam).mockResolvedValueOnce(false);
+
+      const response = await request(app).get('/?teamId=1');
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ message: 'Caller is not a member of the team' });
+    });
+
     it('should return 400 if teamId is missing', async () => {
       const response = await request(app).get('/');
       expect(response.status).toBe(400);
@@ -428,6 +437,14 @@ describe('Weekly Claim Controller', () => {
       const response = await request(app).post('/sync');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ message: 'Missing or invalid teamId' });
+    });
+
+    it('should return 403 if caller is not team member', async () => {
+      vi.mocked(isUserMemberOfTeam).mockResolvedValueOnce(false);
+
+      const response = await request(app).post('/sync?teamId=1');
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ message: 'Caller is not a member of the team' });
     });
 
     it.each([
