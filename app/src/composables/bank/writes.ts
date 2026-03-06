@@ -97,28 +97,28 @@ export function useClaimTokenDividend(token: MaybeRef<Address>) {
   return writeResult
 }
 
-export function useDepositDividends(amount: MaybeRef<bigint>, investorAddress: MaybeRef<Address>) {
-  const args = computed(() => [unref(amount), unref(investorAddress)] as readonly unknown[])
-  return useBankContractWrite({
-    functionName: 'depositDividends',
-    args,
-    value: amount // This is a payable function
-  })
-}
+// export function useDepositDividends(amount: MaybeRef<bigint>, investorAddress: MaybeRef<Address>) {
+//   const args = computed(() => [unref(amount), unref(investorAddress)] as readonly unknown[])
+//   return useBankContractWrite({
+//     functionName: 'depositDividends',
+//     args,
+//     value: amount // This is a payable function
+//   })
+// }
 
-export function useDepositTokenDividends(
-  token: MaybeRef<Address>,
-  amount: MaybeRef<bigint>,
-  investorAddress: MaybeRef<Address>
-) {
-  const args = computed(
-    () => [unref(token), unref(amount), unref(investorAddress)] as readonly unknown[]
-  )
-  return useBankContractWrite({
-    functionName: 'depositTokenDividends',
-    args
-  })
-}
+// export function useDepositTokenDividends(
+//   token: MaybeRef<Address>,
+//   amount: MaybeRef<bigint>,
+//   investorAddress: MaybeRef<Address>
+// ) {
+//   const args = computed(
+//     () => [unref(token), unref(amount), unref(investorAddress)] as readonly unknown[]
+//   )
+//   return useBankContractWrite({
+//     functionName: 'depositTokenDividends',
+//     args
+//   })
+// }
 
 export function useSetInvestorAddress(investorAddress: MaybeRef<Address>) {
   return useBankContractWrite({

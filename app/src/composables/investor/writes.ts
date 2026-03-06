@@ -66,3 +66,26 @@ export function useTransferOwnership(newOwner: MaybeRef<Address>) {
 export function useRenounceOwnership() {
   return useInvestorContractWrite({ functionName: 'renounceOwnership', args: [] })
 }
+
+
+export function useDepositDividends(amount: MaybeRef<bigint>) {
+  const args = computed(() => [unref(amount)] as readonly unknown[])
+  return useInvestorContractWrite({
+    functionName: 'distributeNativeDividends',
+    args,
+    value: amount // This is a payable function
+  })
+}
+
+export function useDepositTokenDividends(
+  token: MaybeRef<Address>,
+  amount: MaybeRef<bigint>
+) {
+  const args = computed(
+    () => [unref(token), unref(amount)] as readonly unknown[]
+  )
+  return useInvestorContractWrite({
+    functionName: 'distributeTokenDividends',
+    args
+  })
+}
