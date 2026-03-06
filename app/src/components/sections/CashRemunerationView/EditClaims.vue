@@ -44,6 +44,7 @@ import { useToastStore, useTeamStore } from '@/stores'
 import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
+import { weeklyClaimKeys } from '@/queries/weeklyClaim.queries'
 
 const props = defineProps<{
   claim: Claim
@@ -137,22 +138,25 @@ const { mutateAsync: updateClaimMutation, isPending: isUpdating } = useMutation<
     }> = []
 
     if (payload.files && payload.files.length > 0) {
-      // Upload each file to /api/upload
-      for (const file of payload.files) {
-        const formData = new FormData()
-        formData.append('file', file)
+      const uploadedFiles = await Promise.all(
+        payload.files.map(async (file) => {
+          const formData = new FormData()
+          formData.append('file', file)
 
-        const uploadResponse = await apiClient.post('/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
+          const { data } = await apiClient.post('/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          })
 
-        newAttachments.push({
-          fileKey: uploadResponse.data.fileKey,
-          fileUrl: uploadResponse.data.fileUrl,
-          fileType: uploadResponse.data.metadata.fileType,
-          fileSize: uploadResponse.data.metadata.fileSize
+          return {
+            fileKey: data.fileKey,
+            fileUrl: data.fileUrl,
+            fileType: data.metadata.fileType,
+            fileSize: data.metadata.fileSize
+          }
         })
-      }
+      )
+
+      newAttachments.push(...uploadedFiles)
     }
 
     // Submit claim update with pre-uploaded attachments metadata
@@ -181,7 +185,7 @@ const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     deletedFileIndexes.value = []
 
     await queryClient.invalidateQueries({
-      queryKey: ['teamWeeklyClaims']
+      queryKey: weeklyClaimKeys.teams()
     })
 
     claimFormRef.value?.resetForm()

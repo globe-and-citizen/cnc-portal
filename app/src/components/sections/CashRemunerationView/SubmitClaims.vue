@@ -57,6 +57,7 @@ import { useToastStore, useTeamStore } from '@/stores'
 import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
 import apiClient from '@/lib/axios'
 import { uploadFileApi } from '@/api'
+import { weeklyClaimKeys } from '@/queries/weeklyClaim.queries'
 
 dayjs.extend(utc)
 
@@ -141,10 +142,9 @@ const { mutateAsync: submitClaim, isPending: isWageClaimAdding } = useMutation<
     }> = []
 
     if (payload.files && payload.files.length > 0) {
-      // Upload each file to /api/upload
-      for (const file of payload.files) {
-        const data = await uploadFileApi(file)
+      const uploadedFiles = await Promise.all(payload.files.map((file) => uploadFileApi(file)))
 
+      for (const data of uploadedFiles) {
         attachments.push({
           fileKey: data.fileKey,
           fileUrl: data.fileUrl,
@@ -179,7 +179,7 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
 
     toastStore.addSuccessToast('Wage claim added successfully')
     await queryClient.invalidateQueries({
-      queryKey: ['teamWeeklyClaims']
+      queryKey: weeklyClaimKeys.teams()
     })
 
     modal.value = false
