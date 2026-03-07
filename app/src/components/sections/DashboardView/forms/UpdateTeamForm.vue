@@ -2,7 +2,7 @@
   <h1 class="font-bold text-2xl">Update Team Details</h1>
   <hr class="" />
   <div class="flex flex-col gap-5">
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
+    <label class="w-full input input-bordered flex items-center gap-2 input-md mt-4">
       <span class="w-28">Team Name</span>
       <input type="text" class="grow" :placeholder="team.name" v-model="team.name" />
     </label>
@@ -13,7 +13,7 @@
     >
       {{ error.$message }}
     </div>
-    <label class="input input-bordered flex items-center gap-2 input-md">
+    <label class="w-full input input-bordered flex items-center gap-2 input-md">
       <span class="w-28">Description</span>
       <input type="text" class="grow" v-model="team.description" />
     </label>

@@ -61,7 +61,7 @@
   </div>
 
   <div class="dropdown" :class="{ 'dropdown-open': !!users && users.length > 0 }" v-if="dropdown">
-    <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
+    <ul class="p-2 shadow-sm menu dropdown-content z-1 bg-base-100 rounded-box w-96">
       <li v-for="user in users" :key="user.address">
         <a
           @click="

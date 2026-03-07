@@ -334,10 +334,12 @@ const handleSaveWage = async () => {
 
   executeSetWage(
     {
-      teamId: props.teamId,
-      userAddress: props.member.address || '',
-      ratePerHour: ratePerHour.value,
-      maximumHoursPerWeek: wageData.value.maxWeeklyHours
+      body: {
+        teamId: props.teamId,
+        userAddress: props.member.address || '',
+        ratePerHour: ratePerHour.value,
+        maximumHoursPerWeek: wageData.value.maxWeeklyHours
+      }
     },
     {
       onSuccess: () => {

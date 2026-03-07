@@ -1,8 +1,7 @@
 <template>
   <!-- Navigation and breadcrumb -->
-  <div class="flex flex-col gap-6">
+  <div class="flex flex-col gap-6 w-full">
     <div>
-      <h2>{{ route.meta.name }}</h2>
       <div class="breadcrumbs text-sm" v-if="!teamStore.currentTeamMeta.error">
         <ul>
           <li>
@@ -93,7 +92,7 @@ stop = watch(
   hasContract,
   (newValue) => {
     if (newValue && route.params.id === teamStore.currentTeamId) {
-      syncWeeklyClaims({ teamId: route.params.id as string })
+      syncWeeklyClaims({ queryParams: { teamId: route.params.id as string } })
       stop?.() // Safe call with optional chaining
     }
   },

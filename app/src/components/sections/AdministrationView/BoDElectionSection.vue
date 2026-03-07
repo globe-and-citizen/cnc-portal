@@ -153,7 +153,7 @@ watch(errorGetBoardOfDirectors, () => {
 
 const {
   data: hashAddProposal,
-  writeContract: addProposal,
+  mutate: addProposal,
   isPending: loadingAddProposal,
   error: errorAddProposal
 } = useWriteContract()

@@ -19,10 +19,4 @@ describe('AddTeamCard.vue', () => {
       expect(wrapper.findComponent(IconifyIcon).exists()).toBe(true)
     })
   })
-  describe('Emits', () => {
-    it('emits addTeamCard when add team card is clicked', async () => {
-      await wrapper.findComponent(IconifyIcon).trigger('click')
-      expect(wrapper.emitted()).toHaveProperty('openAddTeamModal')
-    })
-  })
 })

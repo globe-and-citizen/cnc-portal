@@ -69,8 +69,10 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 const handleDelete = (): void => {
   executeDeleteMember(
     {
-      teamId: props.teamId,
-      memberAddress: props.member.address || ''
+      pathParams: {
+        teamId: props.teamId,
+        memberAddress: props.member.address || ''
+      }
     },
     {
       onSuccess: () => {

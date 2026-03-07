@@ -3,37 +3,20 @@ import ListIndex from '@/views/team/ListIndex.vue'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createMockQueryResponse } from '@/tests/mocks/query.mock'
-import { mockTeamsData, mockTeamData } from '@/tests/mocks/query.mock'
+import { mockTeamsData, mockTeamData, mockRouterPush } from '@/tests/mocks'
 import type { Team } from '@/types'
-
-// Mock vue-router
-const mockRouterPush = vi.fn()
-
-vi.mock('vue-router', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useRoute: vi.fn(() => ({
-      params: {
-        id: 0
-      },
-      meta: {
-        name: 'Team List View'
-      }
-    })),
-    useRouter: vi.fn(() => ({
-      push: mockRouterPush
-    }))
-  }
-})
+import { useRoute } from 'vue-router'
 
 // Import after mocks are defined
-import { useTeamsQuery } from '@/queries/team.queries'
+import { useGetTeamsQuery } from '@/queries/team.queries'
 
 describe('ListIndex - Team List View', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockRouterPush.mockClear()
+    vi.mocked(useRoute).mockReturnValue({
+      params: { id: '0' },
+      meta: { name: 'Team List View' }
+    } as ReturnType<typeof useRoute>)
   })
 
   afterEach(() => {
@@ -46,7 +29,7 @@ describe('ListIndex - Team List View', () => {
     isLoading = false,
     error: Error | null = null
   ) => {
-    vi.mocked(useTeamsQuery).mockReturnValueOnce(
+    vi.mocked(useGetTeamsQuery).mockReturnValueOnce(
       createMockQueryResponse(teamsData, isLoading, error)
     )
 
@@ -342,14 +325,14 @@ describe('ListIndex - Team List View', () => {
 
       // Simulate data loaded
       await wrapper.setData({}) // Force re-render
-      vi.mocked(useTeamsQuery).mockReturnValue(createMockQueryResponse(mockTeamsData, false))
+      vi.mocked(useGetTeamsQuery).mockReturnValue(createMockQueryResponse(mockTeamsData, false))
       await wrapper.vm.$nextTick()
     })
 
     it('should handle null/undefined team data gracefully', async () => {
       const useTeamsMock = vi.fn()
       useTeamsMock.mockReturnValue(createMockQueryResponse(null, false))
-      vi.mocked(useTeamsQuery).mockImplementation(useTeamsMock)
+      vi.mocked(useGetTeamsQuery).mockImplementation(useTeamsMock)
 
       const wrapper = mount(ListIndex, {
         global: {

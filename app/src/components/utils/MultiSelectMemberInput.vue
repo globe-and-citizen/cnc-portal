@@ -3,7 +3,7 @@
   <div class="grid grid-cols-2 gap-4" data-test="members-list">
     <div class="flex items-center" v-for="member of teamMembers" :key="member.address">
       <UserComponent
-        class="bg-base-200 rounded-lg p-4 flex-grow hover:cursor-pointer"
+        class="bg-base-200 rounded-lg p-4 grow hover:cursor-pointer"
         :user="member"
         @click="addMember(member)"
       />
@@ -13,9 +13,10 @@
       @selectMember="addMember"
       class="col-span-2"
       :hiddenMembers="teamMembers"
+      :disable-team-members="props.disableTeamMembers"
       :show-on-focus="props.showOnFocus"
       :only-team-members="props.onlyTeamMembers"
-      :disable-team-members="props.disableTeamMembers"
+      :current-safe-owners="props.currentSafeOwners"
     />
   </div>
 </template>
@@ -28,18 +29,16 @@ import type { User } from '@/types'
 
 interface Props {
   showOnFocus?: boolean
-  filterByTeam?: boolean
-  isCreatingTeam?: boolean // True when creating a new team, false when adding members to existing team
   onlyTeamMembers?: boolean
   disableTeamMembers?: boolean
+  currentSafeOwners?: string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showOnFocus: false,
-  filterByTeam: false,
-  isCreatingTeam: false,
   onlyTeamMembers: false,
-  disableTeamMembers: false
+  disableTeamMembers: false,
+  currentSafeOwners: () => []
 })
 
 const input = ref('')

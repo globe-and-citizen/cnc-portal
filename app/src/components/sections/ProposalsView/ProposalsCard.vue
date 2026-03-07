@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col w-full border rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-shadow gap-2 cursor-pointer"
+    class="flex flex-col w-full border rounded-lg p-6 bg-white shadow-xs hover:shadow-md transition-shadow gap-2 cursor-pointer"
   >
     <div class="flex flex-col">
       <div class="flex flex-row justify-between">

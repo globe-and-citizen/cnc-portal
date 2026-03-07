@@ -6,6 +6,7 @@ import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types/team'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
+import { useTeamStore } from '@/stores'
 
 vi.mock('@/stores/user')
 
@@ -17,20 +18,14 @@ const mockTeam = {
   members: [],
   teamContracts: []
 } as Team
-vi.mock('@/stores', async (imporOriginal) => {
-  const original: object = await imporOriginal()
-  return {
-    ...original,
-    useTeamStore: vi.fn(() => ({
-      currentTeam: ref(mockTeam)
-    }))
-  }
-})
 
 describe('TeamDetails.vue', () => {
   const createWrapper = (userAddress: string) => {
     // @ts-expect-error: mocked
     vi.mocked(useUserDataStore).mockReturnValue({ address: userAddress })
+    vi.mocked(useTeamStore).mockReturnValue({
+      currentTeam: ref(mockTeam)
+    } as ReturnType<typeof useTeamStore>)
     return mount(TeamDetails, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]

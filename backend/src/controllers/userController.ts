@@ -8,12 +8,44 @@ import {
   deleteFile,
   isStorageConfigured,
 } from '../services/storageService';
-import { isUserPartOfTheTeam } from '../utils/teamUtils';
 
 // Type for requests with multer file
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
 }
+
+const extractProfileStorageKey = (imageUrl?: string | null): string | null => {
+  if (!imageUrl || typeof imageUrl !== 'string') {
+    return null;
+  }
+
+  if (imageUrl.startsWith('profiles/')) {
+    return imageUrl;
+  }
+
+  const decodedUrl = decodeURIComponent(imageUrl);
+  const profileKeyMatch = decodedUrl.match(/profiles\/[^?]+/);
+  return profileKeyMatch ? profileKeyMatch[0] : null;
+};
+
+const resolveProfileImageUrl = async (
+  imageUrl?: string | null
+): Promise<string | null | undefined> => {
+  if (!imageUrl) {
+    return imageUrl;
+  }
+
+  const key = extractProfileStorageKey(imageUrl);
+  if (!key) {
+    return imageUrl;
+  }
+
+  try {
+    return await getPresignedDownloadUrl(key, 86400 * 7);
+  } catch {
+    return imageUrl;
+  }
+};
 
 /**
  *
@@ -63,7 +95,11 @@ export const getUser = async (req: Request, res: Response) => {
 
     if (!user) return errorResponse(404, 'User not found', res);
 
-    return res.status(200).json(user);
+    const resolvedImageUrl = await resolveProfileImageUrl(user.imageUrl);
+    return res.status(200).json({
+      ...user,
+      imageUrl: resolvedImageUrl,
+    });
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -71,13 +107,11 @@ export const getUser = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   const { address } = req.params;
-  const { name, imageUrl, traderSafeAddress, teamId } = req.body;
+  const { name, imageUrl } = req.body;
   const callerAddress = req.address;
   const multerReq = req as MulterRequest;
 
   try {
-    console.log('traderSafeAddress: ', traderSafeAddress);
-    console.log('teamId: ', teamId);
     if (!callerAddress) return errorResponse(401, 'Update user error: Missing user address', res);
 
     if (callerAddress !== address) {
@@ -90,7 +124,6 @@ export const updateUser = async (req: Request, res: Response) => {
         address: true,
         name: true,
         imageUrl: true,
-        traderSafeAddress: true,
       },
     });
 
@@ -114,11 +147,11 @@ export const updateUser = async (req: Request, res: Response) => {
         newImageUrl = signedUrl;
 
         // Delete old profile image if it exists and was stored on Railway
-        if (user.imageUrl && user.imageUrl.includes('storage.railway.app')) {
+        if (user.imageUrl) {
           try {
-            const oldKeyMatch = user.imageUrl.match(/profiles\/[^?]+/);
-            if (oldKeyMatch) {
-              await deleteFile(oldKeyMatch[0]);
+            const oldProfileKey = extractProfileStorageKey(user.imageUrl);
+            if (oldProfileKey) {
+              await deleteFile(oldProfileKey);
             }
           } catch (e) {
             console.warn('Could not delete old profile image:', e);
@@ -136,40 +169,19 @@ export const updateUser = async (req: Request, res: Response) => {
       data: {
         ...(name !== undefined && { name }),
         ...(newImageUrl !== undefined && { imageUrl: newImageUrl }),
-        ...(traderSafeAddress !== undefined && { traderSafeAddress }),
       },
       select: {
         address: true,
         name: true,
         imageUrl: true,
-        traderSafeAddress: true,
       },
     });
 
-    if (teamId && traderSafeAddress) {
-      const team = await prisma.team.findUnique({
-        where: { id: Number(teamId) },
-        include: {
-          members: true,
-        },
-      });
-      const members = team?.members;
-      if (isUserPartOfTheTeam(members || [], callerAddress)) {
-        await prisma.memberTeamsData.update({
-          where: {
-            memberAddress_teamId: {
-              memberAddress: callerAddress,
-              teamId: Number(teamId),
-            },
-          },
-          data: {
-            isTrader: true,
-          },
-        });
-      }
-    }
-
-    return res.status(200).json(updatedUser);
+    const resolvedUpdatedImageUrl = await resolveProfileImageUrl(updatedUser.imageUrl);
+    return res.status(200).json({
+      ...updatedUser,
+      imageUrl: resolvedUpdatedImageUrl,
+    });
   } catch (error) {
     return errorResponse(500, error, res);
   }
@@ -195,9 +207,17 @@ export const getAllUsers = async (req: Request, res: Response) => {
       take: pageSize,
       where,
     });
+
+    const usersWithResolvedImages = await Promise.all(
+      users.map(async (user) => ({
+        ...user,
+        imageUrl: await resolveProfileImageUrl(user.imageUrl),
+      }))
+    );
+
     const totalUsers = await prisma.user.count({ where });
     return res.status(200).json({
-      users,
+      users: usersWithResolvedImages,
       totalUsers,
       currentPage: pageNumber,
       totalPages: Math.ceil(totalUsers / pageSize),

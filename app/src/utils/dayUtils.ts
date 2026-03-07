@@ -178,3 +178,14 @@ export function format(date: Date, formatStr: string): string {
 
   return formatStr.replace('dd', day).replace('MM', month).replace('yyyy', year.toString())
 }
+
+// Helper to format date
+export const formatDateShort = (dateString: string): string => {
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date)
+}

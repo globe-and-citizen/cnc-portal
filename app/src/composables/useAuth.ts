@@ -20,13 +20,13 @@ export function useAuth() {
     clearUserData()
 
     log.info('User logged out')
-    log.info('Waiting 5 seconds before redirecting to login page')
+    log.info('Waiting 2 seconds before redirecting to login page')
 
-    // Wait for 5 seconds then redirect
+    // Wait for 2 seconds then redirect
     setTimeout(() => {
       log.info('Redirecting to login page')
       router.push({ name: 'login' })
-    }, 5000)
+    }, 2000)
   }
 
   // const validateToken = async () => {

@@ -69,7 +69,7 @@ import ElectionStatus from '@/components/sections/AdministrationView/ElectionSta
 import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
 import ElectionActions from './ElectionActions.vue'
 import CurrentBoDElection404 from './CurrentBoDElection404.vue'
-import { useBoDElections } from '@/composables'
+import { useBoDElections } from '@/composables/elections'
 import { useCreateElectionNotificationsMutation } from '@/queries/action.queries'
 
 const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
@@ -133,7 +133,7 @@ const createElection = async (electionData: OldProposal) => {
       hash
     })
 
-    await addElectionNotifications({ teamId: teamStore.currentTeamId! })
+    await addElectionNotifications({ pathParams: { teamId: teamStore.currentTeamId! } })
     addSuccessToast('Election created successfully!')
     showCreateElectionModal.value.show = false
     showCreateElectionModal.value.mount = false

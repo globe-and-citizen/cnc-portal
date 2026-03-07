@@ -34,7 +34,7 @@
       <!-- Upload label (only show when no image) -->
       <div
         v-if="!imageUrl"
-        class="relative text-sm font-medium text-white bg-emerald-700 px-3 py-2 rounded z-0"
+        class="relative text-sm font-medium text-white bg-emerald-700 px-3 py-2 rounded-sm z-0"
       >
         {{ isUploading ? 'Uploading...' : 'Upload image' }}
       </div>

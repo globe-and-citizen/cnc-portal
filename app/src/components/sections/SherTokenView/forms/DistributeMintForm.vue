@@ -32,7 +32,7 @@
           :key="index"
           v-if="showDropdown[index]"
         >
-          <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-96">
+          <ul class="p-2 shadow-sm menu dropdown-content z-1 bg-base-100 rounded-box w-96">
             <li v-for="user in usersData?.users" :key="user.address">
               <a
                 data-test="found-user"
@@ -120,7 +120,7 @@
 
 <script setup lang="ts">
 import ButtonUI from '@/components/ButtonUI.vue'
-import { useSearchUsersQuery } from '@/queries/user.queries'
+import { useGetSearchUsersQuery } from '@/queries/user.queries'
 import { useToastStore } from '@/stores'
 import { log } from '@/utils'
 import { Icon as IconifyIcon } from '@iconify/vue'
@@ -174,7 +174,9 @@ const search = ref('')
 const showDropdown = ref<boolean[]>([false])
 
 // Use TanStack Query for user search
-const { data: usersData, error: errorSearchUser } = useSearchUsersQuery(search, 100)
+const { data: usersData, error: errorSearchUser } = useGetSearchUsersQuery({
+  queryParams: { search, limit: 100 }
+})
 
 watch(errorSearchUser, (value) => {
   if (value) {

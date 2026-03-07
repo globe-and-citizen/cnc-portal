@@ -77,7 +77,7 @@ import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip7
 import type { User, BudgetLimit } from '@/types'
 import { log, parseError } from '@/utils'
 import ApproveExpenseSummaryForm from '@/components/forms/ApproveExpenseSummaryForm.vue'
-import { useAddExpenseMutation } from '@/queries/expense.queries'
+import { useCreateExpenseMutation } from '@/queries/expense.queries'
 
 const confirmationModal = ref(false)
 const approveUsersModal = ref({ mount: false, show: false })
@@ -92,7 +92,7 @@ const { addErrorToast } = useToastStore()
 const route = useRoute()
 const chainId = useChainId()
 const { signTypedDataAsync, data: signature, error: signTypedDataError } = useSignTypedData()
-const { mutateAsync: addExpenseData, error: errorAddExpenseData } = useAddExpenseMutation()
+const { mutateAsync: addExpenseData, error: errorAddExpenseData } = useCreateExpenseMutation()
 
 const expenseAccountEip712Address = computed(
   () => teamStore.getContractAddressByType('ExpenseAccountEIP712') as Address
@@ -167,9 +167,11 @@ const approveUser = async (data: BudgetLimit) => {
   })
 
   const expenseAccountData = {
-    data,
-    signature: signature.value,
-    teamId: route.params.id
+    body: {
+      data,
+      signature: signature.value,
+      teamId: route.params.id
+    }
   }
   await addExpenseData(expenseAccountData)
   await refetchExpenseAccountGetOwner()

@@ -1,75 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
-import { nextTick, ref } from 'vue'
+import { nextTick } from 'vue'
 import TransferModal from '../TransferModal.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TransferForm from '../TransferForm.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-
-// Mock hoisted variables for Web3
-const {
-  mockWriteContract,
-  mockUseChainId,
+import {
+  mockUseWriteContract,
+  mockWagmiCore,
   mockUseReadContract,
-  mockUseQueryClient,
-  mockUseToastStore,
-  mockUseUserDataStore,
-  mockUseBodContract,
-  mockUseContractBalance,
-  mockWaitForTransactionReceipt: mockWaitForTransactionReceiptFn
-} = vi.hoisted(() => ({
-  mockWriteContract: vi.fn(),
-  mockWaitForTransactionReceipt: vi.fn(),
-  mockUseChainId: vi.fn(() => ref(1)),
-  mockUseReadContract: vi.fn(),
-  mockUseQueryClient: vi.fn(),
-  mockUseToastStore: vi.fn(),
-  mockUseUserDataStore: vi.fn(),
-  mockUseBodContract: vi.fn(),
-  mockUseContractBalance: vi.fn()
-}))
+  mockBodIsBodAction,
+  mockBodAddAction
+} from '@/tests/mocks'
+import { mockUserStore } from '@/tests/mocks'
+import { mockUseContractBalance } from '@/tests/mocks'
 
-// Mock wagmi
-vi.mock('@wagmi/vue', () => ({
-  useWriteContract: () => ({
-    data: ref(null),
-    isPending: ref(false),
-    writeContractAsync: mockWriteContract
-  }),
-  useWaitForTransactionReceipt: () => ({
-    isLoading: ref(false)
-  }),
-  useChainId: mockUseChainId,
-  useReadContract: mockUseReadContract
-}))
-
-// Mock wagmi core
-vi.mock('@wagmi/core', () => ({
-  waitForTransactionReceipt: mockWaitForTransactionReceiptFn
-}))
-
-// Mock tanstack query
-vi.mock('@tanstack/vue-query', () => ({
-  useQueryClient: mockUseQueryClient
-}))
-
-// Mock stores
-vi.mock('@/stores', () => ({
-  useToastStore: mockUseToastStore,
-  useUserDataStore: mockUseUserDataStore
-}))
-
-// Mock composables
-vi.mock('@/composables/bod/', () => ({
-  useBodContract: mockUseBodContract
-}))
-
-vi.mock('@/composables', () => ({
-  useContractBalance: mockUseContractBalance
-}))
-
-// Mock artifacts
+// Keep local mock only for the Bank ABI (not covered by global setup)
 vi.mock('@/artifacts/abi/bank', () => ({
   BANK_ABI: [
     {
@@ -97,26 +44,11 @@ vi.mock('@/artifacts/abi/bank', () => ({
   ]
 }))
 
-// Mock constant
-vi.mock('@/constant', () => ({
-  NETWORK: {
-    currencySymbol: 'ETH'
-  },
-  USDC_ADDRESS: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
-}))
-
-// Mock config
-vi.mock('@/wagmi.config', () => ({
-  config: {}
-}))
-
 describe('TransferModal', () => {
   let wrapper: VueWrapper
 
   // Mock test data
   const mockBankAddress = '0x1234567890123456789012345678901234567890' as const
-  const mockUserAddress = '0x0987654321098765432109876543210987654321' as const
-  const mockRecipientAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as const
 
   const mockBalance = [
     {
@@ -131,6 +63,8 @@ describe('TransferModal', () => {
     }
   ]
 
+  const mockRecipientAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as const
+
   // Test selectors
   const SELECTORS = {
     transferButton: '[data-test="transfer-button"]',
@@ -141,36 +75,10 @@ describe('TransferModal', () => {
 
   // Helper function to create component
   const mountComponent = (props = {}) => {
-    mockUseReadContract.mockReturnValue({
-      data: ref(mockUserAddress)
-    })
-
-    mockUseQueryClient.mockReturnValue({
-      invalidateQueries: vi.fn()
-    })
-
-    mockUseToastStore.mockReturnValue({
-      addErrorToast: vi.fn(),
-      addSuccessToast: vi.fn()
-    })
-
-    mockUseUserDataStore.mockReturnValue({
-      address: mockUserAddress
-    })
-
-    mockUseBodContract.mockReturnValue({
-      useBodIsBodAction: vi.fn(() => ({
-        isBodAction: ref(false)
-      })),
-      addAction: vi.fn(),
-      isLoading: ref(false),
-      isConfirming: ref(false),
-      isActionAdded: ref(false)
-    })
-
-    mockUseContractBalance.mockReturnValue({
-      balances: ref(mockBalance)
-    })
+    // Configure the bank owner to match the user address so transfers are enabled
+    mockUseReadContract.data.value = mockUserStore.address
+    // Set contract balance to test data
+    mockUseContractBalance.balances.value = mockBalance as never
 
     return mount(TransferModal, {
       props: {
@@ -193,6 +101,12 @@ describe('TransferModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset mock state for each test
+    mockUseReadContract.data.value = '0xData'
+    mockBodIsBodAction.isBodAction.value = false
+    mockBodAddAction.isPending.value = false
+    mockBodAddAction.isConfirming.value = false
+    mockBodAddAction.isActionAdded.value = false
   })
 
   afterEach(() => {
@@ -216,8 +130,8 @@ describe('TransferModal', () => {
 
   describe('Transfer Handling - Direct Transfer', () => {
     it('should call token transfer for USDC', async () => {
-      mockWriteContract.mockResolvedValue({ hash: '0xabcd1234' })
-      mockWaitForTransactionReceiptFn.mockResolvedValue({ status: 'success' })
+      mockUseWriteContract.mutateAsync.mockResolvedValue({ hash: '0xabcd1234' })
+      mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
 
       wrapper = mountComponent()
 
@@ -232,18 +146,12 @@ describe('TransferModal', () => {
       })
       await nextTick()
 
-      expect(mockWriteContract).toHaveBeenCalled()
+      expect(mockUseWriteContract.mutateAsync).toHaveBeenCalled()
     })
 
     it('should show success toast after successful transfer', async () => {
-      const mockToastStore = {
-        addErrorToast: vi.fn(),
-        addSuccessToast: vi.fn()
-      }
-      mockUseToastStore.mockReturnValue(mockToastStore)
-
-      mockWriteContract.mockResolvedValue({ hash: '0xabcd1234' })
-      mockWaitForTransactionReceiptFn.mockResolvedValue({ status: 'success' })
+      mockUseWriteContract.mutateAsync.mockResolvedValue({ hash: '0xabcd1234' })
+      mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
 
       wrapper = mountComponent()
 

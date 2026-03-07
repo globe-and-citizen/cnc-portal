@@ -22,7 +22,7 @@ const mockCurrentTeam = ref({
   ]
 })
 const mockWriteContract = {
-  writeContract: vi.fn(),
+  mutate: vi.fn(),
   error: ref<null | Error>(null),
   isPending: ref(false),
   data: ref(null)

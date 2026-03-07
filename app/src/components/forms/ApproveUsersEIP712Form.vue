@@ -6,7 +6,7 @@
     <p data-test="bod-notification" class="pt-2 text-red-500">
       This will create a board of directors action
     </p>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+    <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">description</span>
       <input
         type="text"
@@ -49,7 +49,7 @@
   <!-- Budget Amount Input -->
   <div class="mt-3">
     <span class="font-semibold">Budget Amount:</span>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+    <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Amount</span>
       <input
         type="number"
@@ -75,7 +75,7 @@
   <!-- Custom Frequency Input (only shown when Custom is selected) -->
   <div v-if="frequencyType === 4" class="mt-3">
     <span class="font-semibold">Custom Frequency:</span>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+    <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Days</span>
       <input
         type="number"
@@ -104,7 +104,7 @@
   <div class="flex flex-col gap-2 mt-5">
     <div>
       <span class="font-semibold">Duration:</span>
-      <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+      <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
         <span class="w-24">Start Date</span>
         <div class="grow" data-test="start-date-picker">
           <VueDatePicker
@@ -127,7 +127,7 @@
 
     <div>
       <!-- <span class="font-semibold">End Date:</span> -->
-      <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+      <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
         <span class="w-24">End Date</span>
         <div class="grow" data-test="end-date-picker">
           <VueDatePicker

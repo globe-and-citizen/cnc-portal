@@ -11,6 +11,7 @@ import { DefaultApolloClient } from '@vue/apollo-composable'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import * as Sentry from '@sentry/vue'
+import ui from '@nuxt/ui/vue-plugin'
 import { setupAuthInterceptor } from '@/lib/axios'
 
 export function setupApp() {
@@ -33,6 +34,7 @@ export function setupApp() {
   pinia.use(piniaPluginPersistedstate)
 
   app.use(router)
+  app.use(ui)
   app.use(WagmiPlugin, { config })
   app.use(VueQueryPlugin, { queryClient, enableDevtoolsV6Plugin: true })
   app.provide(DefaultApolloClient, apolloClient)

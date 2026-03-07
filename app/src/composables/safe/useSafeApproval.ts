@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { useConnection, useChainId } from '@wagmi/vue'
 import { isAddress } from 'viem'
 import { useToastStore } from '@/stores'
-import { useApproveTransactionMutation } from '@/queries/safe.queries'
+import { useApproveTransactionMutation } from '@/queries/safe.mutations'
 import { useSafeSDK } from './useSafeSdk'
 
 /**
@@ -55,12 +55,18 @@ export function useSafeApproval() {
 
       // Submit via mutation
       await mutation.mutateAsync({
-        chainId: chainId.value,
-        safeAddress,
-        safeTxHash,
-        signature: {
-          data: signature.data,
-          signer: connection.address.value
+        pathParams: {
+          safeTxHash,
+          safeAddress
+        },
+        queryParams: {
+          chainId: chainId.value
+        },
+        body: {
+          signature: {
+            data: signature.data,
+            signer: connection.address.value
+          }
         }
       })
 

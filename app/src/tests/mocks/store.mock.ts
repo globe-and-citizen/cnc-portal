@@ -7,12 +7,15 @@ export const mockTeamStore = {
   currentTeamId: mockTeamData.id,
   currentTeamMeta: {
     isPending: false,
-    data: { value: mockTeamData }
+    data: mockTeamData
   },
   teamsMeta: {
     reloadTeams: vi.fn()
   },
 
+  setCurrentTeamId: vi.fn((id: string) => {
+    mockTeamStore.currentTeamId = id
+  }),
   getContractAddressByType: vi.fn((type: ContractType) => {
     const contractAddresses = {
       Bank: '0x1111111111111111111111111111111111111111',
@@ -24,7 +27,9 @@ export const mockTeamStore = {
       Campaign: '0x7777777777777777777777777777777777777777',
       Elections: '0x8888888888888888888888888888888888888888',
       Proposals: '0x9999999999999999999999999999999999999999',
-      VestingV1: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+      VestingV1: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      SafeDepositRouter: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+      Safe: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     }
     return contractAddresses[type] || '0x1234567890123456789012345678901234567890'
   }),
@@ -34,17 +39,31 @@ export const mockTeamStore = {
 export const mockToastStore = {
   addErrorToast: vi.fn(),
   addSuccessToast: vi.fn(),
-  toasts: [
-    { message: 'Toast 1', type: 'success', timeout: 5000 },
-    { message: 'Toast 2', type: 'error', timeout: 5000 }
-  ]
+  addInfoToast: vi.fn(),
+  toasts: []
 }
 
 export const mockUserStore = {
-  address: '0x1234567890123456789012345678901234567890',
+  address: '0x0000000000000000000000000000000000000001',
   name: 'Test User',
   imageUrl: 'https://example.com/avatar.jpg',
-  isAuth: true
+  isAuth: true,
+  setUserData: vi.fn(),
+  clearUserData: vi.fn(),
+  setAuthStatus: vi.fn()
+}
+
+/**
+ * Mock useUserDataStore - for tracking current user address
+ */
+export const mockUserDataStore = {
+  address: '0xUSER1',
+  name: 'Test User',
+  setAddress: vi.fn(),
+  setUserData: vi.fn(),
+  clear: vi.fn(),
+  clearUserData: vi.fn(),
+  setAuthStatus: vi.fn()
 }
 
 export const mockUseCurrencyStore = () => ({

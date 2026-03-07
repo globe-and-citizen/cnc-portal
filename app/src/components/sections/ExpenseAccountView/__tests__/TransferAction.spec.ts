@@ -9,20 +9,12 @@ import { parseError } from '@/utils'
 import * as utils from '@/utils'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import TransferAction from '../TransferAction.vue'
-import { mockToastStore } from '@/tests/mocks/store.mock'
+import { mockToastStore, useWriteContractFn, useWaitForTransactionReceiptFn } from '@/tests/mocks'
 
 const { addErrorToast: addErrorToastMock } = mockToastStore
 
-const { useWaitForTransactionReceipt, useWriteContract, simulateContractMock } = vi.hoisted(() => ({
-  useWaitForTransactionReceipt: vi.fn(),
-  useWriteContract: vi.fn(),
-  simulateContractMock: vi.fn(),
-  addErrorToastMock: vi.fn()
-}))
-
-vi.mock('@wagmi/vue', () => ({
-  useWaitForTransactionReceipt: useWaitForTransactionReceipt,
-  useWriteContract: useWriteContract
+const { simulateContractMock } = vi.hoisted(() => ({
+  simulateContractMock: vi.fn()
 }))
 
 vi.mock('@/utils', () => ({
@@ -36,12 +28,6 @@ vi.mock('@/utils', () => ({
 vi.mock('@/composables', () => ({
   useContractBalance: () => ({
     balances: ref({})
-  })
-}))
-
-vi.mock('@tanstack/vue-query', () => ({
-  useQueryClient: () => ({
-    invalidateQueries: vi.fn()
   })
 }))
 
@@ -129,14 +115,14 @@ describe('TransferComponent', () => {
       waitForReceiptSuccess = false
     } = options
 
-    useWriteContract.mockReturnValue({
-      writeContract: vi.fn(),
+    useWriteContractFn.mockReturnValue({
+      mutate: vi.fn(),
       isPending: ref(writeContractPending),
       error: ref(writeContractError),
       data: ref(writeContractData)
     })
 
-    useWaitForTransactionReceipt.mockReturnValue({
+    useWaitForTransactionReceiptFn.mockReturnValue({
       isLoading: ref(waitForReceiptLoading),
       isSuccess: ref(waitForReceiptSuccess),
       error: ref(waitForReceiptError)

@@ -63,7 +63,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-vi.mock('@/queries/safe.queries', () => ({
+vi.mock('@/queries/safe.mutations', () => ({
   useExecuteTransactionMutation: () => mockExecuteMutation
 }))
 

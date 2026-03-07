@@ -55,7 +55,7 @@ describe('ButtonUI', () => {
       expect(wrapper.find('button').classes()).toContain('btn-active')
     })
 
-    it('should apply outline class', () => {
+    it('should apply outline-solid class', () => {
       const wrapper = mount(ButtonUI, { props: { outline: true } })
       expect(wrapper.find('button').classes()).toContain('btn-outline')
     })

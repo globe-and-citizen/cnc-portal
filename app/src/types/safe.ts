@@ -204,3 +204,29 @@ export interface DecodedCall {
   method: string
   parameters: DecodedParameter[]
 }
+
+export interface SafeIncomingTransfer {
+  type: 'ETHER_TRANSFER' | 'ERC20_TRANSFER' | 'ERC721_TRANSFER'
+  executionDate: string
+  blockNumber: number
+  transactionHash: string
+  to: string
+  from: string
+  value: string
+  tokenAddress?: string
+  tokenInfo?: {
+    type: string
+    address: string
+    name: string
+    symbol: string
+    decimals: number
+    logoUri?: string
+  }
+}
+
+export interface SafeIncomingTransfersResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: SafeIncomingTransfer[]
+}

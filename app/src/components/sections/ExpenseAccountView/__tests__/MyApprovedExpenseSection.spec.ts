@@ -92,7 +92,7 @@ describe('ExpenseAccountSection', () => {
       //@ts-expect-error: TypeScript expects exact return type as original
       vi.mocked(useWriteContract).mockReturnValue({
         ...mocks.mockUseWriteContract,
-        writeContract: executeExpenseAccountTransfer
+        mutate: executeExpenseAccountTransfer
       })
 
       // Mount the component

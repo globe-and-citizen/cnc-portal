@@ -37,9 +37,9 @@
               <span v-else>Sign In With Ethereum</span>
             </ButtonUI>
             <!-- <div class="flex items-center">
-              <div class="flex-grow h-px bg-gray-300"></div>
+              <div class="grow h-px bg-gray-300"></div>
               <div class="px-4 text-gray-500 text-sm">OR</div>
-              <div class="flex-grow h-px bg-gray-300"></div>
+              <div class="grow h-px bg-gray-300"></div>
             </div>
             <div class="flex justify-center gap-4">
               <transition-group name="social" tag="div" class="flex gap-4">

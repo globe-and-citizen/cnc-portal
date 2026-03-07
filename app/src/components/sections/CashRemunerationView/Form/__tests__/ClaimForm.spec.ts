@@ -15,22 +15,9 @@ const VueDatePickerStub = {
   props: ['modelValue', 'disabled', 'format', 'disabledDates']
 }
 
+import { useToastStore } from '@/stores'
+
 const errorToastMock = vi.fn()
-
-const { mockUseToastStore } = vi.hoisted(() => ({
-  mockUseToastStore: vi.fn(() => ({
-    addErrorToast: errorToastMock,
-    addSuccessToast: vi.fn()
-  }))
-}))
-
-vi.mock('@/stores', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useToastStore: mockUseToastStore
-  }
-})
 
 const defaultProps = {
   isEdit: false,
@@ -53,6 +40,10 @@ const createWrapper = (props = {}) =>
 describe('ClaimForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(useToastStore).mockReturnValue({
+      addErrorToast: errorToastMock,
+      addSuccessToast: vi.fn()
+    } as ReturnType<typeof useToastStore>)
   })
 
   it('shows validation errors when required fields are missing', async () => {

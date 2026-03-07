@@ -68,7 +68,7 @@ const {
 
 const {
   data: hashCastVote,
-  writeContract: executeCastVote,
+  mutate: executeCastVote,
   isPending: isLoadingCastVote
 } = useWriteContract()
 

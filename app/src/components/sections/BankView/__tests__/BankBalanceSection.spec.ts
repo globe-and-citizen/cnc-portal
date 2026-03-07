@@ -4,7 +4,19 @@ import BankBalanceSection from '../BankBalanceSection.vue'
 import type { Address } from 'viem'
 import { ref, defineComponent } from 'vue'
 // import { NETWORK, USDC_ADDRESS } from '@/constant'
-import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
+import {
+  mockUseContractBalance,
+  useWriteContractFn,
+  useWaitForTransactionReceiptFn,
+  useReadContractFn,
+  useQueryClientFn,
+  mockBodAddAction,
+  mockBodIsBodAction,
+  mockToastStore,
+  mockUserStore,
+  mockWagmiCore
+} from '@/tests/mocks'
+import { useUserDataStore } from '@/stores'
 
 // Mock @iconify/vue FIRST, before any other imports
 vi.mock('@iconify/vue', () => ({
@@ -15,30 +27,10 @@ vi.mock('@iconify/vue', () => ({
   }
 }))
 
-// Hoisted mocks - only functions and plain objects
-const {
-  mockTransfer,
-  mockAddAction,
-  mockAddSuccessToast,
-  mockAddErrorToast,
-  mockQueryClient,
-  mockWaitForTransactionReceipt
-} = vi.hoisted(() => ({
-  mockTransfer: vi.fn(),
-  mockAddAction: vi.fn(),
-  mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn(),
-  mockQueryClient: { invalidateQueries: vi.fn() },
-  mockWaitForTransactionReceipt: vi.fn(() => Promise.resolve({ status: 'success' }))
-}))
+const mockTransfer = vi.fn()
 
 // Reactive refs created after imports
 const mockBankOwner = ref<Address>('0xBankOwner000000000000000000000000000000' as Address)
-const mockUserAddress = ref<Address>('0xUser000000000000000000000000000000000' as Address)
-const mockIsBodAction = ref(false)
-const mockIsActionAdded = ref(false)
-const mockIsConfirmingAddAction = ref(false)
-const mockIsLoadingAddAction = ref(false)
 const mockIsConfirmingTransfer = ref(false)
 const mockTransferHash = ref<`0x${string}` | undefined>()
 const mockTransferLoading = ref(false)
@@ -138,61 +130,6 @@ const DepositFormStub = defineComponent({
   template: '<div />'
 })
 
-vi.mock('@wagmi/vue', () => ({
-  useChainId: () => 1,
-  useReadContract: () => ({ data: mockBankOwner }),
-  useWriteContract: () => ({
-    data: mockTransferHash,
-    isPending: mockTransferLoading,
-    writeContractAsync: mockTransfer
-  }),
-  useWaitForTransactionReceipt: () => ({
-    isLoading: mockIsConfirmingTransfer
-  })
-}))
-
-vi.mock('@wagmi/core', () => ({
-  waitForTransactionReceipt: mockWaitForTransactionReceipt
-}))
-
-vi.mock('@tanstack/vue-query', async (importOriginal) => {
-  const actual = (await importOriginal()) as object
-  return {
-    ...actual,
-    useQueryClient: () => mockQueryClient
-  }
-})
-
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: vi.fn(() => mockUseContractBalance)
-}))
-
-vi.mock('@/composables/bod/', () => ({
-  useBodContract: () => ({
-    addAction: mockAddAction,
-    useBodIsBodAction: () => ({ isBodAction: mockIsBodAction }),
-    isLoading: mockIsLoadingAddAction,
-    isConfirming: mockIsConfirmingAddAction,
-    isActionAdded: mockIsActionAdded
-  })
-}))
-
-vi.mock('@/stores', () => ({
-  useToastStore: () => ({
-    addSuccessToast: mockAddSuccessToast,
-    addErrorToast: mockAddErrorToast
-  }),
-  useUserDataStore: () => ({
-    get address() {
-      return mockUserAddress.value
-    }
-  })
-}))
-
-vi.mock('@/wagmi.config', () => ({
-  config: {}
-}))
-
 describe('BankBalanceSection', () => {
   const defaultProps = {
     bankAddress: '0x1234567890123456789012345678901234567890' as Address
@@ -214,6 +151,27 @@ describe('BankBalanceSection', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // Configure wagmi composable mocks
+    useReadContractFn.mockReturnValue({ data: mockBankOwner, error: ref(null) })
+    useWriteContractFn.mockReturnValue({
+      data: mockTransferHash,
+      isPending: mockTransferLoading,
+      mutateAsync: mockTransfer,
+      mutate: vi.fn(),
+      error: ref(null)
+    })
+    useWaitForTransactionReceiptFn.mockReturnValue({
+      isLoading: mockIsConfirmingTransfer,
+      data: ref(null),
+      isSuccess: ref(false)
+    })
+    useQueryClientFn.mockReturnValue({ invalidateQueries: vi.fn() })
+    // Configure store mocks
+    vi.mocked(useUserDataStore).mockReturnValue({
+      ...mockUserStore,
+      address: '0xUser000000000000000000000000000000000' as Address
+    })
+    // Reset balance state
     mockUseContractBalance.balances.value = baseBalances.map((balance) => ({
       ...balance,
       token: { ...balance.token },
@@ -228,21 +186,21 @@ describe('BankBalanceSection', () => {
       USD: { ...baseDividends.USD }
     }
     mockUseContractBalance.isLoading.value = false
+    // Reset local refs
     mockBankOwner.value = '0xBankOwner000000000000000000000000000000' as Address
-    mockUserAddress.value = '0xUser000000000000000000000000000000000' as Address
-    mockIsBodAction.value = false
-    mockIsActionAdded.value = false
-    mockIsConfirmingAddAction.value = false
-    mockIsLoadingAddAction.value = false
     mockIsConfirmingTransfer.value = false
     mockTransferLoading.value = false
     mockTransferHash.value = undefined
     mockTransfer.mockReset()
-    mockAddAction.mockReset()
-    mockQueryClient.invalidateQueries.mockClear()
-    mockAddSuccessToast.mockClear()
-    mockAddErrorToast.mockClear()
-    mockWaitForTransactionReceipt.mockClear()
+    // Reset global BOD mocks
+    mockBodIsBodAction.isBodAction.value = false
+    mockBodAddAction.isPending.value = false
+    mockBodAddAction.isConfirming.value = false
+    mockBodAddAction.isActionAdded.value = false
+    mockBodAddAction.executeAddAction.mockReset()
+    mockToastStore.addSuccessToast.mockClear()
+    mockToastStore.addErrorToast.mockClear()
+    mockWagmiCore.waitForTransactionReceipt.mockClear()
   })
 
   it('renders total balance and dividends', () => {
@@ -262,7 +220,10 @@ describe('BankBalanceSection', () => {
   })
 
   it('enables transfer when the user is the bank owner', () => {
-    mockUserAddress.value = mockBankOwner.value
+    vi.mocked(useUserDataStore).mockReturnValue({
+      ...mockUserStore,
+      address: mockBankOwner.value
+    })
     const wrapper = createWrapper()
 
     const transferButton = wrapper.find('[data-test="transfer-button"]')

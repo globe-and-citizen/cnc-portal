@@ -3,7 +3,7 @@ import { useConnection, useChainId } from '@wagmi/vue'
 
 import { erc20Abi, isAddress, parseEther, parseUnits, encodeFunctionData, type Address } from 'viem'
 import { useToastStore } from '@/stores'
-import { useExecuteTransactionMutation } from '@/queries/safe.queries'
+import { useExecuteTransactionMutation } from '@/queries/safe.mutations'
 import { useSafeSDK } from './useSafeSdk'
 import { useSafeProposal } from './useSafeProposal'
 
@@ -143,10 +143,16 @@ export function useSafeTransfer() {
 
         // Trigger query invalidation via mutation
         await executeMutation.mutateAsync({
-          chainId: chainId.value,
-          safeAddress,
-          safeTxHash: await safeSdk.getTransactionHash(safeTransaction),
-          txHash
+          pathParams: {
+            safeAddress,
+            safeTxHash: await safeSdk.getTransactionHash(safeTransaction)
+          },
+          queryParams: {
+            chainId: chainId.value
+          },
+          body: {
+            txHash
+          }
         })
 
         addSuccessToast(`Transfer executed successfully${tokenAddress ? ' (Token)' : ' (Native)'}`)

@@ -1,19 +1,28 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref } from 'vue'
-
-// Provide minimal constants to avoid import-time validation
-vi.mock('@/constant', () => ({
-  USDC_ADDRESS: '0x0000000000000000000000000000000000000001',
-  USDC_E_ADDRESS: '0x0000000000000000000000000000000000000003',
-  USDT_ADDRESS: '0x0000000000000000000000000000000000000002'
-}))
+import { ref, nextTick } from 'vue'
 
 import CurrentBoDSection from '../CurrentBoDSection.vue'
 import { useTeamStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
+import { log, parseError } from '@/utils'
 
-const CardStub = { template: '<div><slot /></div>' }
+vi.mock('@/utils', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/utils')>()
+  return {
+    ...actual,
+    log: {
+      ...actual.log,
+      error: vi.fn()
+    },
+    parseError: vi.fn((error: unknown) => error)
+  }
+})
+
+const CardStub = {
+  props: ['title'],
+  template: '<div><div data-test="card-title">{{ title }}</div><slot /></div>'
+}
 const NotFoundStub = { template: '<div data-test="not-found">no-members</div>' }
 
 // Stub for UserComponentCol to expose passed props via attributes
@@ -27,84 +36,33 @@ describe('CurrentBoDSection', () => {
   type TeamMember = { address: string; name: string }
   type TeamStoreMock = {
     getContractAddressByType: (type: string) => string
-    currentTeam: { members: TeamMember[] }
+    currentTeamMeta?: { data?: { members: TeamMember[] } }
   }
 
   let mockTeamStore: TeamStoreMock
   let readContractMock: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
+    vi.clearAllMocks()
     mockTeamStore = {
       getContractAddressByType: vi.fn((type: string) => {
         if (type === 'BoardOfDirectors') return '0xBOD'
         if (type === 'Elections') return '0xELECTIONS'
         return ''
       }),
-      currentTeam: {
-        members: [
-          { address: '0x1', name: 'Alice' },
-          { address: '0x2', name: 'Bob' }
-        ]
+      currentTeamMeta: {
+        data: {
+          members: [
+            { address: '0x1', name: 'Alice' },
+            { address: '0x2', name: 'Bob' }
+          ]
+        }
       }
     }
     ;(useTeamStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => mockTeamStore)
 
     readContractMock = vi.fn()
     ;(useReadContract as unknown as ReturnType<typeof vi.fn>).mockImplementation(readContractMock)
-  })
-
-  it('renders board members when boardOfDirectors data is present', async () => {
-    // When functionName is getBoardOfDirectors return two addresses
-    readContractMock.mockImplementation((options: { functionName?: string }) => {
-      if (options.functionName === 'getBoardOfDirectors') {
-        return { data: ref(['0x1', '0x2']), isFetching: ref(false) }
-      }
-      // election winners
-      return { data: ref([]), error: ref(null) }
-    })
-
-    const wrapper = mount(CurrentBoDSection, {
-      global: {
-        stubs: {
-          CardComponent: CardStub,
-          UserComponentCol: UserColStub,
-          CurrentBoDSection404: NotFoundStub
-        }
-      }
-    })
-
-    const users = wrapper.findAll('[data-test="user-col"]')
-    expect(users).toHaveLength(2)
-
-    const first = users[0]
-    expect(first.attributes('data-address')).toBe('0x1')
-    expect(first.attributes('data-name')).toBe('Alice')
-    expect(first.attributes('data-detailed')).toBe('true')
-  })
-
-  it('prefers electionWinners when electionId prop is provided', async () => {
-    readContractMock.mockImplementation((options: { functionName?: string }) => {
-      if (options.functionName === 'getElectionWinners') {
-        return { data: ref(['0x2']), error: ref(null) }
-      }
-      return { data: ref(['0x1']), isFetching: ref(false) }
-    })
-
-    const wrapper = mount(CurrentBoDSection, {
-      props: { electionId: BigInt(5) },
-      global: {
-        stubs: {
-          CardComponent: CardStub,
-          UserComponentCol: UserColStub,
-          CurrentBoDSection404: NotFoundStub
-        }
-      }
-    })
-
-    const users = wrapper.findAll('[data-test="user-col"]')
-    expect(users).toHaveLength(1)
-    expect(users[0].attributes('data-address')).toBe('0x2')
-    expect(users[0].attributes('data-name')).toBe('Bob')
   })
 
   it('shows Loading... when fetching', async () => {
@@ -145,5 +103,141 @@ describe('CurrentBoDSection', () => {
     })
 
     expect(wrapper.find('[data-test="not-found"]').exists()).toBe(true)
+  })
+
+  it('renders current board members when data is available', async () => {
+    readContractMock.mockImplementation((options: { functionName?: string }) => {
+      if (options.functionName === 'getBoardOfDirectors') {
+        return { data: ref(['0x1', '0x2']), isFetching: ref(false) }
+      }
+      return { data: ref([]), error: ref(null) }
+    })
+
+    const wrapper = mount(CurrentBoDSection, {
+      global: {
+        stubs: {
+          CardComponent: CardStub,
+          UserComponentCol: UserColStub,
+          CurrentBoDSection404: NotFoundStub
+        }
+      }
+    })
+
+    const users = wrapper.findAll('[data-test="user-col"]')
+    expect(users.length).toBe(2)
+    expect(users[0]?.attributes('data-name')).toBe('Alice')
+    expect(users[1]?.attributes('data-name')).toBe('Bob')
+    expect(wrapper.find('[data-test="card-title"]').text()).toContain('Current')
+  })
+
+  it('renders election winners when electionId is provided', async () => {
+    readContractMock.mockImplementation((options: { functionName?: string }) => {
+      if (options.functionName === 'getBoardOfDirectors') {
+        return { data: ref(['0x1']), isFetching: ref(false) }
+      }
+      return { data: ref(['0x2']), error: ref(null) }
+    })
+
+    const wrapper = mount(CurrentBoDSection, {
+      props: { electionId: 1n },
+      global: {
+        stubs: {
+          CardComponent: CardStub,
+          UserComponentCol: UserColStub,
+          CurrentBoDSection404: NotFoundStub
+        }
+      }
+    })
+
+    const users = wrapper.findAll('[data-test="user-col"]')
+    expect(users.length).toBe(1)
+    expect(users[0]?.attributes('data-name')).toBe('Bob')
+    expect(wrapper.find('[data-test="card-title"]').text()).toContain('Elected')
+
+    const electionWinnersCall = readContractMock.mock.calls.find(
+      ([options]) => options.functionName === 'getElectionWinners'
+    )
+    expect(electionWinnersCall).toBeTruthy()
+    const electionWinnersOptions = electionWinnersCall?.[0] as {
+      query?: { enabled?: { value?: boolean } }
+    }
+    expect(electionWinnersOptions.query?.enabled?.value).toBe(true)
+  })
+
+  it('falls back to empty list when board data is unavailable', async () => {
+    readContractMock.mockImplementation((options: { functionName?: string }) => {
+      if (options.functionName === 'getBoardOfDirectors') {
+        return { data: ref(undefined), isFetching: ref(false) }
+      }
+      return { data: ref([]), error: ref(null) }
+    })
+
+    const wrapper = mount(CurrentBoDSection, {
+      global: {
+        stubs: {
+          CardComponent: CardStub,
+          UserComponentCol: UserColStub,
+          CurrentBoDSection404: NotFoundStub
+        }
+      }
+    })
+
+    const board = (wrapper.vm as unknown as { _boardOfDirectors: unknown })._boardOfDirectors
+    expect(board).toEqual([])
+  })
+
+  it('logs when election winners request fails', async () => {
+    const errorRef = ref<Error | null>(null)
+
+    readContractMock.mockImplementation((options: { functionName?: string }) => {
+      if (options.functionName === 'getElectionWinners') {
+        return { data: ref([]), error: errorRef }
+      }
+      return { data: ref([]), isFetching: ref(false) }
+    })
+
+    mount(CurrentBoDSection, {
+      props: { electionId: 1n },
+      global: {
+        stubs: {
+          CardComponent: CardStub,
+          UserComponentCol: UserColStub,
+          CurrentBoDSection404: NotFoundStub
+        }
+      }
+    })
+
+    errorRef.value = new Error('boom')
+    await nextTick()
+
+    expect(parseError).toHaveBeenCalledWith(errorRef.value)
+    expect(log.error).toHaveBeenCalled()
+  })
+
+  it('does not log when election winners error is cleared', async () => {
+    const errorRef = ref<Error | null>(new Error('boom'))
+
+    readContractMock.mockImplementation((options: { functionName?: string }) => {
+      if (options.functionName === 'getElectionWinners') {
+        return { data: ref([]), error: errorRef }
+      }
+      return { data: ref([]), isFetching: ref(false) }
+    })
+
+    mount(CurrentBoDSection, {
+      props: { electionId: 1n },
+      global: {
+        stubs: {
+          CardComponent: CardStub,
+          UserComponentCol: UserColStub,
+          CurrentBoDSection404: NotFoundStub
+        }
+      }
+    })
+
+    errorRef.value = null
+    await nextTick()
+
+    expect(log.error).not.toHaveBeenCalled()
   })
 })

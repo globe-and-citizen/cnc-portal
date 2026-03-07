@@ -1,7 +1,30 @@
 import { ref } from 'vue'
 import { vi } from 'vitest'
-import type { Team, Member, Wage, Notification, WeeklyClaim } from '@/types'
+import type { Team, Member, Wage, Notification, WeeklyClaim, User } from '@/types'
 import type { HealthCheckResponse } from '@/queries/health.queries'
+
+export const mockMembersData: User[] = [
+  {
+    address: '0x1234567890123456789012345678901234567890',
+    name: 'Member 1',
+    imageUrl: 'https://example.com/avatar1.jpg'
+  },
+  {
+    address: '0x0987654321098765432109876543210987654321',
+    name: 'Member 2',
+    imageUrl: 'https://example.com/avatar2.jpg'
+  },
+  {
+    address: '0x9876543210987654321098765432109876543210',
+    name: 'Member 3',
+    imageUrl: 'https://example.com/avatar3.jpg'
+  },
+  {
+    address: '0x1111111111111111111111111111111111111111',
+    name: 'Bob',
+    imageUrl: 'https://example.com/avatar-bob.jpg'
+  }
+]
 
 /**
  * Team Query Mocks
@@ -11,21 +34,9 @@ export const mockTeamData: Team = {
   name: 'Test Team',
   description: 'Test Team Description',
   members: [
-    {
-      address: '0x1234567890123456789012345678901234567890',
-      name: 'Member 1',
-      imageUrl: 'https://example.com/avatar1.jpg'
-    },
-    {
-      address: '0x0987654321098765432109876543210987654321',
-      name: 'Member 2',
-      imageUrl: 'https://example.com/avatar2.jpg'
-    },
-    {
-      address: '0x1111111111111111111111111111111111111111',
-      name: 'Bob',
-      imageUrl: 'https://example.com/avatar-bob.jpg'
-    }
+    mockMembersData[0] as Member,
+    mockMembersData[1] as Member,
+    mockMembersData[3] as Member
   ] as Member[],
   teamContracts: [
     {
@@ -78,6 +89,16 @@ export const mockNotificationData: Notification[] = [
 ]
 
 /**
+ * User Query Mocks
+ */
+export const mockUserData: User = {
+  address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62',
+  name: 'John Doe',
+  imageUrl: 'https://example.com/image.jpg',
+  nonce: '123'
+}
+
+/**
  * Health Check Query Mocks
  */
 export const mockHealthCheckData: HealthCheckResponse = {
@@ -86,6 +107,11 @@ export const mockHealthCheckData: HealthCheckResponse = {
   timestamp: new Date().toISOString(),
   service: 'backend-api'
 }
+
+/**
+ * Stable refetch mock for health query - exported for tests that need to verify it was called
+ */
+export const mockHealthQueryRefetch = vi.fn().mockResolvedValue({})
 
 /**
  * Weekly Claim Query Mocks
@@ -166,17 +192,6 @@ export const mockSafeTransactionData = {
   signatures: null
 }
 
-export const mockMarketData = {
-  tokens: [
-    {
-      token_id: 'test-token',
-      outcome: 'Yes',
-      price: '0.50',
-      volume: '1000'
-    }
-  ]
-}
-
 /**
  * BOD Action Query Mocks
  */
@@ -242,12 +257,12 @@ export const createMockMutationResponse = <T = unknown>(
  */
 export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Team queries - team.queries.ts
-  useTeamsQuery: () => createMockQueryResponse(mockTeamsData),
-  useTeamQuery: () => createMockQueryResponse(mockTeamData),
+  useGetTeamsQuery: () => createMockQueryResponse(mockTeamsData),
+  useGetTeamQuery: () => createMockQueryResponse(mockTeamData),
   useCreateTeamMutation: () => createMockMutationResponse(),
   useUpdateTeamMutation: () => createMockMutationResponse(),
   useDeleteTeamMutation: () => createMockMutationResponse(),
-  useSubmitRestrictionQuery: () =>
+  useGetSubmitRestrictionQuery: () =>
     createMockQueryResponse({ isRestricted: false, effectiveStatus: 'enabled' }),
 
   // Member queries - member.queries.ts
@@ -255,31 +270,31 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useDeleteMemberMutation: () => createMockMutationResponse(),
 
   // Wage queries - wage.queries.ts
-  useTeamWagesQuery: () => createMockQueryResponse(mockWageData),
+  useGetTeamWagesQuery: () => createMockQueryResponse(mockWageData),
   useSetMemberWageMutation: () => createMockMutationResponse(),
 
   // Notification queries - notification.queries.ts
-  useNotificationsQuery: () => createMockQueryResponse(mockNotificationData),
-  useAddBulkNotificationsMutation: () => createMockMutationResponse(),
+  useGetNotificationsQuery: () => createMockQueryResponse(mockNotificationData),
+  useCreateBulkNotificationsMutation: () => createMockMutationResponse(),
   useUpdateNotificationMutation: () => createMockMutationResponse(),
 
   // Expense queries - expense.queries.ts
-  useExpensesQuery: () => createMockQueryResponse([]),
+  useGetExpensesQuery: () => createMockQueryResponse([]),
 
   // User queries - user.queries.ts
-  useUserQuery: () => createMockQueryResponse(null),
-  useUserNonceQuery: () => createMockQueryResponse(null),
+  useGetUserQuery: () => createMockQueryResponse(mockUserData),
+  useGetUserNonceQuery: () => createMockQueryResponse({ nonce: 123 }),
   useUpdateUserMutation: () => createMockMutationResponse(),
-  useSearchUsersQuery: () => createMockQueryResponse({ users: [] }),
+  useGetSearchUsersQuery: () => createMockQueryResponse({ users: [] }),
 
   // Action queries - action.queries.ts
-  useBodActionsQuery: () => createMockQueryResponse(mockBodActionsData),
+  useGetBodActionsQuery: () => createMockQueryResponse(mockBodActionsData),
   useCreateActionMutation: () => createMockMutationResponse(),
   useUpdateActionMutation: () => createMockMutationResponse(),
   useCreateElectionNotificationsMutation: () => createMockMutationResponse(),
 
   // Auth queries - auth.queries.ts
-  useValidateTokenQuery: () => createMockQueryResponse(null),
+  useGetValidateTokenQuery: () => createMockQueryResponse(null),
 
   // Contract queries - contract.queries.ts
   useCreateContractMutation: () => createMockMutationResponse(),
@@ -287,26 +302,25 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useResetContractsMutation: () => createMockMutationResponse(),
 
   // Health queries - health.queries.ts
-  useBackendHealthQuery: () => createMockQueryResponse(mockHealthCheckData),
+  useGetBackendHealthQuery: () => ({
+    ...createMockQueryResponse(mockHealthCheckData),
+    refetch: mockHealthQueryRefetch
+  }),
 
   // Weekly Claim queries - weeklyClaim.queries.ts
-  useTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
-  useWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
+  useGetTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
+  useGetWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
   useUpdateWeeklyClaimMutation: () => createMockMutationResponse(),
   useSyncWeeklyClaimsMutation: () => createMockMutationResponse(),
   useDeleteClaimMutation: () => createMockMutationResponse(),
 
   // Safe queries - safe.queries.ts
-  useSafeInfoQuery: () => createMockQueryResponse(mockSafeInfoData),
+  useGetSafeInfoQuery: () => createMockQueryResponse(mockSafeInfoData),
   useSafePendingTransactionsQuery: () => createMockQueryResponse([]),
   useDeploySafeMutation: () => createMockMutationResponse(),
   useProposeTransactionMutation: () => createMockMutationResponse(),
   useApproveTransactionMutation: () => createMockMutationResponse(),
   useExecuteTransactionMutation: () => createMockMutationResponse(),
   useUpdateSafeOwnersMutation: () => createMockMutationResponse(),
-  useSafeTransactionQuery: () => createMockQueryResponse(mockSafeTransactionData),
-
-  // Polymarket queries - polymarket.queries.ts
-  useMarketData: () => createMockQueryResponse(mockMarketData),
-  useSafeBalances: () => createMockQueryResponse([])
+  useGetSafeTransactionQuery: () => createMockQueryResponse(mockSafeTransactionData)
 }

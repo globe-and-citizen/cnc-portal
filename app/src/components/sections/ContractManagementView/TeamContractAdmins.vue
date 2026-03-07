@@ -89,7 +89,7 @@ const isLoading = computed(
 const newAdminAddress = ref('')
 
 const {
-  writeContract: addAdmin,
+  mutate: addAdmin,
   error: errorAddAdmin,
   isPending: loadingAddAdmin,
   data: hashAddAdmin
@@ -108,7 +108,7 @@ watch(isConfirmingAddAdmin, async (isConfirming, wasConfirming) => {
 })
 
 const {
-  writeContract: removeAdmin,
+  mutate: removeAdmin,
   error: errorRemoveAdmin,
   isPending: loadingRemoveAdmin,
   data: hashRemoveAdmin

@@ -1,154 +1,175 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
 import type { Team } from '@/types/team'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
-import type { AxiosError } from 'axios'
+import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
+
+/**
+ * Query key factory for team-related queries
+ */
+export const teamKeys = {
+  all: ['teams'] as const,
+  lists: () => [...teamKeys.all, 'list'] as const,
+  list: (userAddress?: string | null) => [...teamKeys.lists(), { userAddress }] as const,
+  details: () => [...teamKeys.all, 'detail'] as const,
+  detail: (teamId: string | null) => [...teamKeys.details(), { teamId }] as const
+}
+
+// ============================================================================
+// GET /teams - Fetch teams list
+// GET /teams/?userAddress=xxx - Fetch teams list
+// ============================================================================
+
+/**
+ * Combined parameters for useGetTeamsQuery
+ */
+export interface GetTeamsParams {
+  queryParams?: {
+    /** Optional user address to filter teams */
+    userAddress?: MaybeRefOrGetter<string | null | undefined>
+  }
+}
 
 /**
  * Fetch all teams for a user, for the authenticated user it will be his teams
  *
  * @endpoint GET /teams
- * @params none
+ * @pathParams none
  * @queryParams { userAddress?: string } - optional filter by user address
  * @body none
- *
- * @param userAddress - Optional user address to filter teams by specific user
  */
-export const useTeamsQuery = (userAddress?: MaybeRefOrGetter<string | null | undefined>) => {
-  return useQuery<Team[], AxiosError>({
-    queryKey: ['teams', { userAddress }],
-    queryFn: async () => {
-      const address = toValue(userAddress)
-      // Query params: passed as URL query string (?userAddress=xxx)
-      const queryParams = address ? { userAddress: address } : {}
+export const useGetTeamsQuery = createQueryHook<Team[], GetTeamsParams>({
+  endpoint: 'teams',
+  queryKey: (params) => teamKeys.list(toValue(params?.queryParams?.userAddress)),
+  options: queryPresets.stable
+})
 
-      const { data } = await apiClient.get<Team[]>('teams', { params: queryParams })
-      return data
-    },
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-    staleTime: 180000,
-    gcTime: 300000
-  })
+// ============================================================================
+// GET /teams/{teamId} - Fetch single team
+// ============================================================================
+
+/**
+ * Combined parameters for useGetTeamQuery
+ */
+export interface GetTeamParams {
+  pathParams: {
+    /** Team ID */
+    teamId: MaybeRefOrGetter<string | null>
+  }
 }
 
 /**
  * Fetch a single team by ID
  *
  * @endpoint GET /teams/{teamId}
- * @params { teamId: string } - URL path parameter
+ * @pathParams { teamId: string }
  * @queryParams none
  * @body none
  */
-export const useTeamQuery = (teamId: MaybeRefOrGetter<string | null>) => {
-  return useQuery<Team, AxiosError>({
-    queryKey: ['team', { teamId }],
-    queryFn: async () => {
-      const id = toValue(teamId)
-      const { data } = await apiClient.get<Team>(`teams/${id}`)
-      return data
-    },
-    enabled: () => !!toValue(teamId),
-    retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-    staleTime: 180000,
-    gcTime: 300000
-  })
-}
+export const useGetTeamQuery = createQueryHook<Team, GetTeamParams>({
+  endpoint: 'teams/{teamId}',
+  queryKey: (params) => teamKeys.detail(toValue(params.pathParams.teamId)),
+  enabled: (params) => !!toValue(params.pathParams.teamId),
+  options: {
+    ...queryPresets.stable,
+    retry: false
+  }
+})
+
+// ============================================================================
+// POST /teams - Create team
+// ============================================================================
 
 /**
- * Mutation input for useCreateTeamMutation
+ * Request body for creating a team
  */
-export type CreateTeamInput = Partial<Team>
+export interface CreateTeamBody extends Partial<Team> {}
+
+/**
+ * Combined parameters for useCreateTeamMutation
+ */
+export interface CreateTeamParams {
+  body: CreateTeamBody
+}
 
 /**
  * Create a new team
  *
  * @endpoint POST /teams
- * @params none
+ * @pathParams none
  * @queryParams none
- * @body Partial<Team> - team data to create
+ * @body CreateTeamBody - team data to create
  */
-export const useCreateTeamMutation = () => {
-  const queryClient = useQueryClient()
+export const useCreateTeamMutation = createMutationHook<Team, CreateTeamParams>({
+  method: 'POST',
+  endpoint: 'teams',
+  invalidateKeys: [teamKeys.all]
+})
 
-  return useMutation<Team, AxiosError, CreateTeamInput>({
-    mutationFn: async (body: CreateTeamInput) => {
-      const { data } = await apiClient.post<Team>('teams', body)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] })
-    }
-  })
-}
+// ============================================================================
+// PUT /teams/{id} - Update team
+// ============================================================================
 
 /**
- * Mutation input for useUpdateTeamMutation
+ * Request body for updating a team
  */
-export interface UpdateTeamInput {
-  /** URL path parameter: team ID */
-  id: string
-  /** Request body: team data to update */
-  teamData: Partial<Team>
+export interface UpdateTeamBody extends Partial<Team> {}
+
+/**
+ * Combined parameters for useUpdateTeamMutation
+ */
+export interface UpdateTeamParams {
+  pathParams: {
+    /** Team ID */
+    id: string
+  }
+  body: UpdateTeamBody
 }
 
 /**
  * Update an existing team
  *
  * @endpoint PUT /teams/{id}
- * @params { id: string } - URL path parameter
+ * @pathParams { id: string }
  * @queryParams none
- * @body Partial<Team> - team data to update
+ * @body UpdateTeamBody - team data to update
  */
-export const useUpdateTeamMutation = () => {
-  const queryClient = useQueryClient()
+export const useUpdateTeamMutation = createMutationHook<Team, UpdateTeamParams>({
+  method: 'PUT',
+  endpoint: 'teams/{id}',
+  invalidateKeys: (params) => [teamKeys.detail(params.pathParams.id), teamKeys.all]
+})
 
-  return useMutation<Team, AxiosError, UpdateTeamInput>({
-    mutationFn: async ({ id, teamData: body }: UpdateTeamInput) => {
-      const { data } = await apiClient.put<Team>(`teams/${id}`, body)
-      return data
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['team', { teamId: String(variables.id) }] })
-      queryClient.invalidateQueries({ queryKey: ['teams'] })
-    }
-  })
-}
+// ============================================================================
+// DELETE /teams/{teamId} - Delete team
+// ============================================================================
 
 /**
- * Mutation input for useDeleteTeamMutation
+ * Combined parameters for useDeleteTeamMutation
  */
-export interface DeleteTeamInput {
-  /** URL path parameter: team ID */
-  teamId: string
+export interface DeleteTeamParams {
+  pathParams: {
+    /** Team ID */
+    teamId: string
+  }
 }
 
 /**
  * Delete a team
  *
  * @endpoint DELETE /teams/{teamId}
- * @params { teamId: string } - URL path parameter
+ * @pathParams { teamId: string }
  * @queryParams none
  * @body none
  */
-export const useDeleteTeamMutation = () => {
-  const queryClient = useQueryClient()
+export const useDeleteTeamMutation = createMutationHook<void, DeleteTeamParams>({
+  method: 'DELETE',
+  endpoint: 'teams/{teamId}',
+  invalidateKeys: [teamKeys.all]
+})
 
-  return useMutation<void, AxiosError, DeleteTeamInput>({
-    mutationFn: async ({ teamId }) => {
-      const { data } = await apiClient.delete(`teams/${teamId}`)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] })
-    }
-  })
-}
+// ============================================================================
+// GET /teams/{teamId}/submit-restriction - Check submit restriction
+// ============================================================================
 
 /**
  * Response type for submit restriction query
@@ -159,29 +180,36 @@ export interface SubmitRestrictionResponse {
 }
 
 /**
+ * Combined parameters for useGetSubmitRestrictionQuery
+ */
+export interface GetSubmitRestrictionParams {
+  pathParams: {
+    /** Team ID */
+    teamId: MaybeRefOrGetter<string | number | null>
+  }
+}
+
+/**
  * Check submit restriction status for a team
  *
  * @endpoint GET /teams/{teamId}/submit-restriction
- * @params { teamId: string | number } - URL path parameter
+ * @pathParams { teamId: string | number }
  * @queryParams none
  * @body none
  */
-export const useSubmitRestrictionQuery = (teamId: MaybeRefOrGetter<string | number | null>) => {
-  return useQuery<SubmitRestrictionResponse, AxiosError>({
-    queryKey: ['submitRestriction', { teamId }],
-    queryFn: async () => {
-      const id = toValue(teamId)
-      const { data } = await apiClient.get<SubmitRestrictionResponse>(
-        `teams/${id}/submit-restriction`
-      )
-      return data
-    },
-    enabled: () => !!toValue(teamId),
+export const useGetSubmitRestrictionQuery = createQueryHook<
+  SubmitRestrictionResponse,
+  GetSubmitRestrictionParams
+>({
+  endpoint: 'teams/{teamId}/submit-restriction',
+  queryKey: (params) => [
+    ...teamKeys.detail(String(toValue(params.pathParams.teamId))),
+    'submitRestriction'
+  ],
+  enabled: (params) => !!toValue(params.pathParams.teamId),
+  options: {
+    ...queryPresets.moderate,
     retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnMount: true,
-    refetchInterval: false,
-    staleTime: 60000, // 1 minute - shorter for real-time accuracy
-    gcTime: 120000
-  })
-}
+    refetchOnMount: true
+  }
+})

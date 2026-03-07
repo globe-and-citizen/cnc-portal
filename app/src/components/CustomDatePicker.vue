@@ -12,7 +12,7 @@
           <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
         </ButtonUI>
         <ul
-          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-[1] w-52 p-2 shadow"
+          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-1 w-52 p-2 shadow-sm"
           ref="target"
           v-if="isDropdownOpen"
         >

@@ -144,7 +144,7 @@ export function useContractWrites(config: ContractWriteConfig) {
       }
 
       // Execute the contract write
-      const response = await writeResult.writeContractAsync({
+      const response = await writeResult.mutateAsync({
         address: address,
         abi: unref(config.abi),
         functionName: unref(config.functionName),

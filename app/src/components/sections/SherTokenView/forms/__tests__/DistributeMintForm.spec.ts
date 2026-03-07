@@ -5,7 +5,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 import { ref } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { useSearchUsersQuery } from '@/queries/user.queries'
+import { useGetSearchUsersQuery } from '@/queries/user.queries'
 
 interface ComponentData {
   shareholderWithAmounts: { shareholder: string; amount: string }[]
@@ -28,7 +28,7 @@ describe('DistributeMintForm', () => {
 
   const createComponent = (loading?: boolean, queryOverrides = {}) => {
     // Mock the search users query
-    vi.mocked(useSearchUsersQuery).mockReturnValue({
+    vi.mocked(useGetSearchUsersQuery).mockReturnValue({
       data: ref({ users: mockUsers }),
       isFetching: ref(false),
       error: ref(null),
@@ -38,7 +38,7 @@ describe('DistributeMintForm', () => {
       isSuccess: ref(true),
       isFetched: ref(true),
       ...queryOverrides
-    } as unknown as ReturnType<typeof useSearchUsersQuery>)
+    } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
 
     return shallowMount(DistributeMintForm, {
       props: {
@@ -148,7 +148,7 @@ describe('DistributeMintForm', () => {
 
   it('should add error toast if there is an error when searching users', async () => {
     const mockError = ref<Error | null>(null)
-    vi.mocked(useSearchUsersQuery).mockReturnValue({
+    vi.mocked(useGetSearchUsersQuery).mockReturnValue({
       data: ref({ users: mockUsers }),
       isFetching: ref(false),
       error: mockError,
@@ -157,7 +157,7 @@ describe('DistributeMintForm', () => {
       isPending: ref(false),
       isSuccess: ref(true),
       isFetched: ref(true)
-    } as unknown as ReturnType<typeof useSearchUsersQuery>)
+    } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
 
     const wrapper = shallowMount(DistributeMintForm, {
       props: {

@@ -94,7 +94,7 @@ import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from 
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useExpensesQuery } from '@/queries'
+import { useGetExpensesQuery } from '@/queries'
 import { getFrequencyType, getCustomFrequency } from '@/utils'
 
 const teamStore = useTeamStore()
@@ -106,9 +106,9 @@ const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
 const isLoadingSetStatus = ref(false)
 
-const { data: expenseData, isLoading: isFetchingExpenseData } = useExpensesQuery(
-  computed(() => teamStore.currentTeamId)
-)
+const { data: expenseData, isLoading: isFetchingExpenseData } = useGetExpensesQuery({
+  queryParams: { teamId: computed(() => teamStore.currentTeamId) }
+})
 
 const formattedExpenseData = computed(() => {
   return expenseData.value?.map((expense) => {
@@ -167,7 +167,7 @@ const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
 })
 //deactivate approval
 const {
-  writeContract: executeDeactivateApproval,
+  mutate: executeDeactivateApproval,
   error: errorDeactivateApproval,
   data: deactivateHash
 } = useWriteContract()
@@ -179,7 +179,7 @@ const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
 
 //activate approval
 const {
-  writeContract: executeActivateApproval,
+  mutate: executeActivateApproval,
   error: errorActivateApproval,
   data: activateHash
 } = useWriteContract()

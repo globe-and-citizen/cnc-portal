@@ -65,7 +65,7 @@ const {
 } = useDeleteClaimMutation()
 
 const handleDelete = async () => {
-  await deleteClaim({ claimId: props.claim.id })
+  await deleteClaim({ pathParams: { claimId: props.claim.id } })
   toastStore.addSuccessToast('Claim deleted successfully')
   emit('close')
 }

@@ -39,7 +39,7 @@ const $vInvestor = useVuelidate(investorContractInputRules, { investorContractIn
       <span class="font-bold text-2xl mb-4">Investor Contract Details</span>
       <hr class="mb-6" />
       <div class="flex flex-col gap-5">
-        <label class="input input-bordered flex items-center gap-2 input-md">
+        <label class="w-full input input-bordered flex items-center gap-2 input-md">
           <span class="w-24">Share Name</span>
           <input
             type="text"
@@ -60,7 +60,7 @@ const $vInvestor = useVuelidate(investorContractInputRules, { investorContractIn
           {{ error.$message }}
         </div>
 
-        <label class="input input-bordered flex items-center gap-2 input-md">
+        <label class="w-full input input-bordered flex items-center gap-2 input-md">
           <span class="w-24">Symbol</span>
           <input
             type="text"

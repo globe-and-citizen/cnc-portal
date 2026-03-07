@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-1 flex gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-300">
+  <div class="flex-1 flex gap-4 p-4 bg-white rounded-lg shadow-xs border border-gray-300">
     <div
       class="p-1 rounded-full aspect-square flex items-center justify-center w-12 h-12"
       :class="`${bgColor}`"

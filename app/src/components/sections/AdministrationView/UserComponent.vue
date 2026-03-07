@@ -81,6 +81,7 @@
 <script lang="ts" setup>
 import type { User } from '@/types'
 import { computed } from 'vue'
+import { formatAddress } from '@/utils/formatAddress'
 
 const props = defineProps<{
   user: Pick<User, 'address' | 'name' | 'imageUrl'> & { role?: string }
@@ -91,11 +92,5 @@ const props = defineProps<{
 
 const defaultAvatar = 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
 
-const formatedUserAddress = computed(() => {
-  return props.user.address
-    ? props.user.address.substring(0, 6) +
-        '...' +
-        props.user.address.substring(props.user.address.length - 4)
-    : ''
-})
+const formatedUserAddress = computed(() => formatAddress(props.user.address))
 </script>

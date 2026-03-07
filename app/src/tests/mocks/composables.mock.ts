@@ -75,8 +75,18 @@ export const mockUseContractBalance = {
       formatedPrice: '$1K'
     }
   }),
+  dividends: ref([]),
   isLoading: ref(false),
   error: ref(null)
+}
+
+/**
+ * Mock Apollo useQuery result
+ */
+export const mockUseApolloQuery = {
+  result: ref(null),
+  error: ref<Error | null>(null),
+  loading: ref(false)
 }
 
 /**
@@ -84,7 +94,7 @@ export const mockUseContractBalance = {
  */
 export const mockTransactionFunctions = {
   mockSendTransaction: vi.fn(),
-  mockWriteContractAsync: vi.fn(),
+  mockMutateAsync: vi.fn(),
   mockWaitForTransactionReceipt: vi.fn()
 }
 
@@ -98,6 +108,13 @@ export const mockUseSafeSendTransaction = {
   receipt: ref<{ status: string } | null>(null)
 }
 
+/**
+ * Mock useSafeOwnerManagement composable
+ */
+export const mockUseSafeOwnerManagement = {
+  isUpdating: ref(false),
+  updateOwners: vi.fn()
+}
 /**
  * Mock useBackendWake composable
  * Returns a function that does nothing - individual tests can override if needed
@@ -116,12 +133,124 @@ export const mockUseAuth = {
 }
 
 /**
+ * Mock useClipboard composable from @vueuse/core
+ */
+export const mockUseClipboard = {
+  copy: vi.fn(),
+  copied: ref(false),
+  isSupported: ref(true)
+}
+
+/**
+ * Mock useFetch composable from @vueuse/core
+ */
+export const mockUseFetch = {
+  post: {
+    data: ref<{ accessToken: string | null }>({ accessToken: null }),
+    error: ref<Error | null>(null),
+    execute: vi.fn()
+  },
+  get: {
+    url: ref(''),
+    data: ref<unknown>(null),
+    error: ref<Error | null>(null),
+    execute: vi.fn()
+  }
+}
+
+/**
+ * Mock useWalletChecks composable
+ */
+export const mockUseWalletChecks = {
+  isProcessing: ref(false),
+  isSuccess: ref(false),
+  performChecks: vi.fn(),
+  resetRefs: vi.fn(() => {
+    mockUseWalletChecks.isProcessing.value = false
+    mockUseWalletChecks.isSuccess.value = false
+  })
+}
+
+/**
+ * Mock useSafeDeployment composable
+ */
+export const mockUseSafeDeployment = {
+  deploySafe: vi.fn(),
+  isDeploying: ref(false),
+  error: ref<Error | null>(null)
+}
+
+/**
+ * Mock useGetDividendBalances composable
+ */
+export const mockUseGetDividendBalances = {
+  data: ref([]),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
+ * Mock useClaimDividend composable (for native token claims)
+ */
+export const mockUseClaimDividend = {
+  claimWrite: vi.fn(),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
+ * Mock useClaimTokenDividend composable (for token claims)
+ */
+export const mockUseClaimTokenDividend = {
+  tokenClaimWrite: vi.fn(),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
+ * Mock useDepositDividends composable
+ */
+export const mockUseDepositDividends = {
+  depositWrite: vi.fn(),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
+ * Mock useDepositTokenDividends composable
+ */
+export const mockUseDepositTokenDividends = {
+  tokenDepositWrite: vi.fn(),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
+ * Mock useBodAddAction composable
+ */
+export const mockUseBodAddAction = {
+  addActionWrite: vi.fn(),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
+ * Mock useBodIsBodAction composable
+ */
+export const mockUseBodIsBodAction = {
+  isBod: ref(false),
+  isLoading: ref(false),
+  error: ref(null)
+}
+
+/**
  * Reset function for composable mocks
  */
 export const resetComposableMocks = () => {
   // Reset contract balance loading state
   mockUseContractBalance.isLoading.value = false
   mockUseContractBalance.error.value = null
+  mockUseContractBalance.dividends.value = []
 
   // Reset native transaction states
   mockUseSafeSendTransaction.isLoading.value = false
@@ -137,7 +266,7 @@ export const resetComposableMocks = () => {
 
   // Set default mock return values for transactions
   mockTransactionFunctions.mockSendTransaction.mockResolvedValue({ hash: '0xnativetx' })
-  mockTransactionFunctions.mockWriteContractAsync.mockResolvedValue('0xtransfertx')
+  mockTransactionFunctions.mockMutateAsync.mockResolvedValue('0xtransfertx')
   mockTransactionFunctions.mockWaitForTransactionReceipt.mockResolvedValue({ status: 'success' })
 
   // Reset auth mock functions
@@ -155,7 +284,103 @@ export const resetComposableMocks = () => {
   if (vi.isMockFunction(mockUseBackendWake)) {
     mockUseBackendWake.mockClear()
   }
+
+  mockUseWalletChecks.isProcessing.value = false
+  mockUseWalletChecks.isSuccess.value = false
+  if (vi.isMockFunction(mockUseWalletChecks.performChecks)) {
+    mockUseWalletChecks.performChecks.mockClear()
+  }
+
+  mockUseFetch.post.data.value = { accessToken: null }
+  mockUseFetch.post.error.value = null
+  if (vi.isMockFunction(mockUseFetch.post.execute)) {
+    mockUseFetch.post.execute.mockClear()
+  }
+  mockUseFetch.get.data.value = null
+  mockUseFetch.get.error.value = null
+  if (vi.isMockFunction(mockUseFetch.get.execute)) {
+    mockUseFetch.get.execute.mockClear()
+  }
+
+  mockUseSafeOwnerManagement.isUpdating.value = false
+  if (vi.isMockFunction(mockUseSafeOwnerManagement.updateOwners)) {
+    mockUseSafeOwnerManagement.updateOwners.mockClear()
+  }
+
+  // Reset clipboard mock
+  mockUseClipboard.copied.value = false
+  if (vi.isMockFunction(mockUseClipboard.copy)) {
+    mockUseClipboard.copy.mockClear()
+  }
+
+  // Reset Safe deployment mock
+  mockUseSafeDeployment.isDeploying.value = false
+  mockUseSafeDeployment.error.value = null
+  if (vi.isMockFunction(mockUseSafeDeployment.deploySafe)) {
+    mockUseSafeDeployment.deploySafe.mockClear()
+  }
+
+  // Reset dividend-related composables
+  mockUseGetDividendBalances.data.value = []
+  mockUseGetDividendBalances.isLoading.value = false
+  mockUseGetDividendBalances.error.value = null
+
+  mockUseClaimDividend.isLoading.value = false
+  mockUseClaimDividend.error.value = null
+  if (vi.isMockFunction(mockUseClaimDividend.claimWrite)) {
+    mockUseClaimDividend.claimWrite.mockClear()
+  }
+
+  mockUseClaimTokenDividend.isLoading.value = false
+  mockUseClaimTokenDividend.error.value = null
+  if (vi.isMockFunction(mockUseClaimTokenDividend.tokenClaimWrite)) {
+    mockUseClaimTokenDividend.tokenClaimWrite.mockClear()
+  }
+
+  mockUseDepositDividends.isLoading.value = false
+  mockUseDepositDividends.error.value = null
+  if (vi.isMockFunction(mockUseDepositDividends.depositWrite)) {
+    mockUseDepositDividends.depositWrite.mockClear()
+  }
+
+  mockUseDepositTokenDividends.isLoading.value = false
+  mockUseDepositTokenDividends.error.value = null
+  if (vi.isMockFunction(mockUseDepositTokenDividends.tokenDepositWrite)) {
+    mockUseDepositTokenDividends.tokenDepositWrite.mockClear()
+  }
+
+  mockUseBodAddAction.isLoading.value = false
+  mockUseBodAddAction.error.value = null
+  if (vi.isMockFunction(mockUseBodAddAction.addActionWrite)) {
+    mockUseBodAddAction.addActionWrite.mockClear()
+  }
+
+  mockUseBodIsBodAction.isBod.value = false
+  mockUseBodIsBodAction.isLoading.value = false
+  mockUseBodIsBodAction.error.value = null
+
+  // Reset Apollo query mock
+  mockUseApolloQuery.result.value = null
+  mockUseApolloQuery.error.value = null
+  mockUseApolloQuery.loading.value = false
 }
 
 // Keep for backwards compatibility
 export const resetTransactionMocks = resetComposableMocks
+
+/**
+ * Exported vi.fn() factory functions for TanStack Vue Query.
+ * Use these in tests that need per-test configuration via mockReturnValue/mockReturnValueOnce.
+ */
+export const useQueryClientFn = vi.fn(() => ({
+  invalidateQueries: vi.fn(),
+  getQueryData: vi.fn(),
+  setQueryData: vi.fn(),
+  removeQueries: vi.fn()
+}))
+
+export const useQueryFn = vi.fn(() => ({
+  data: vi.fn(),
+  isLoading: vi.fn(),
+  error: vi.fn()
+}))

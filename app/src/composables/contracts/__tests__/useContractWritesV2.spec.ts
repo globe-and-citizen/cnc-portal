@@ -3,61 +3,29 @@ import { ref } from 'vue'
 import { useContractWrites } from '../useContractWritesV2'
 import type { ContractWriteConfig } from '../useContractWritesV2'
 import type { Address, Abi } from 'viem'
+import {
+  useWriteContractFn,
+  useWaitForTransactionReceiptFn,
+  useAccountFn,
+  useChainIdFn
+} from '@/tests/mocks'
+import { useQueryFn, useQueryClientFn } from '@/tests/mocks'
 
-// Hoisted mock variables
-const {
-  mockUseWriteContract,
-  mockUseWaitForTransactionReceipt,
-  mockUseAccount,
-  mockUseChainId,
-  mockUseQuery,
-  mockUseQueryClient,
-  // mockQueryClient,
-  mockUseTransactionTimeline,
-  mockLog,
-  mockWaitForCondition,
-  mockFormatDataForDisplay
-} = vi.hoisted(() => {
-  // const { ref: refVue } = require('vue')
-  const mockQueryClient = {
-    invalidateQueries: vi.fn().mockResolvedValue(undefined)
-  }
+// Local mocks for composables/utils not covered by global setup
+const { mockUseTransactionTimeline, mockLog, mockWaitForCondition, mockFormatDataForDisplay } =
+  vi.hoisted(() => {
+    const mockQueryClient = {
+      invalidateQueries: vi.fn().mockResolvedValue(undefined)
+    }
 
-  return {
-    mockUseWriteContract: vi.fn(),
-    mockUseWaitForTransactionReceipt: vi.fn(),
-    mockUseAccount: vi.fn(),
-    mockUseChainId: vi.fn(() => ref(11155111)),
-    mockUseQuery: vi.fn(),
-    mockUseQueryClient: vi.fn(() => mockQueryClient),
-    mockQueryClient,
-    mockUseTransactionTimeline: vi.fn(),
-    mockLog: { error: vi.fn() },
-    mockWaitForCondition: vi.fn().mockResolvedValue(true),
-    mockFormatDataForDisplay: vi.fn((data) => data)
-  }
-})
-
-// Mock external dependencies
-vi.mock('@wagmi/vue', () => ({
-  useWriteContract: mockUseWriteContract,
-  useWaitForTransactionReceipt: mockUseWaitForTransactionReceipt,
-  useAccount: mockUseAccount,
-  useChainId: mockUseChainId
-}))
-
-vi.mock('@tanstack/vue-query', () => ({
-  useQuery: mockUseQuery,
-  useQueryClient: mockUseQueryClient
-}))
-
-vi.mock('@wagmi/core', () => ({
-  simulateContract: vi.fn()
-}))
-
-vi.mock('@/wagmi.config', () => ({
-  config: { chains: [] }
-}))
+    return {
+      mockQueryClient,
+      mockUseTransactionTimeline: vi.fn(),
+      mockLog: { error: vi.fn() },
+      mockWaitForCondition: vi.fn().mockResolvedValue(true),
+      mockFormatDataForDisplay: vi.fn((data) => data)
+    }
+  })
 
 vi.mock('@/composables/useTransactionTimeline', () => ({
   useTransactionTimeline: mockUseTransactionTimeline
@@ -103,9 +71,9 @@ describe('useContractWrites (V2)', () => {
       args: MOCK_DATA.args
     }
 
-    // Set up default mock implementations
-    mockUseWriteContract.mockReturnValue({
-      writeContractAsync: vi.fn(),
+    // Set up default mock implementations using exported factory fns
+    useWriteContractFn.mockReturnValue({
+      mutateAsync: vi.fn(),
       data: ref(undefined),
       isPending: ref(false),
       isSuccess: ref(false),
@@ -113,14 +81,14 @@ describe('useContractWrites (V2)', () => {
       reset: vi.fn()
     })
 
-    mockUseWaitForTransactionReceipt.mockReturnValue({
+    useWaitForTransactionReceiptFn.mockReturnValue({
       data: ref(undefined),
       isLoading: ref(false),
       isSuccess: ref(false),
       error: ref(null)
     })
 
-    mockUseQuery.mockReturnValue({
+    useQueryFn.mockReturnValue({
       data: ref(undefined),
       isLoading: ref(false),
       isSuccess: ref(false),
@@ -129,7 +97,7 @@ describe('useContractWrites (V2)', () => {
       refetch: vi.fn().mockResolvedValue({ data: { gasLimit: BigInt(21000) } })
     })
 
-    mockUseAccount.mockReturnValue({
+    useAccountFn.mockReturnValue({
       chainId: ref(1)
     })
 
@@ -143,11 +111,11 @@ describe('useContractWrites (V2)', () => {
     it('should initialize with correct dependencies', () => {
       useContractWrites(mockConfig)
 
-      expect(mockUseWriteContract).toHaveBeenCalled()
-      expect(mockUseWaitForTransactionReceipt).toHaveBeenCalled()
-      expect(mockUseChainId).toHaveBeenCalled()
-      expect(mockUseQuery).toHaveBeenCalled()
-      expect(mockUseQueryClient).toHaveBeenCalled()
+      expect(useWriteContractFn).toHaveBeenCalled()
+      expect(useWaitForTransactionReceiptFn).toHaveBeenCalled()
+      expect(useChainIdFn).toHaveBeenCalled()
+      expect(useQueryFn).toHaveBeenCalled()
+      expect(useQueryClientFn).toHaveBeenCalled()
       expect(mockUseTransactionTimeline).toHaveBeenCalled()
     })
 
@@ -166,12 +134,12 @@ describe('useContractWrites (V2)', () => {
 
   describe('executeWrite Function', () => {
     it('should execute write operation successfully', async () => {
-      const mockWriteContractAsync = vi.fn().mockResolvedValue({
+      const mockMutateAsync = vi.fn().mockResolvedValue({
         hash: MOCK_DATA.transactionHash
       })
 
       // Override mocks for this specific test
-      mockUseQuery.mockReturnValueOnce({
+      useQueryFn.mockReturnValueOnce({
         data: ref(undefined),
         isLoading: ref(false),
         isSuccess: ref(true),
@@ -180,8 +148,8 @@ describe('useContractWrites (V2)', () => {
         refetch: vi.fn().mockResolvedValue({ data: { gasLimit: BigInt(21000) } })
       })
 
-      mockUseWriteContract.mockReturnValueOnce({
-        writeContractAsync: mockWriteContractAsync,
+      useWriteContractFn.mockReturnValueOnce({
+        mutateAsync: mockMutateAsync,
         data: ref(undefined),
         isPending: ref(false),
         isSuccess: ref(false),
@@ -189,7 +157,7 @@ describe('useContractWrites (V2)', () => {
         reset: vi.fn()
       })
 
-      mockUseWaitForTransactionReceipt.mockReturnValueOnce({
+      useWaitForTransactionReceiptFn.mockReturnValueOnce({
         data: ref(undefined),
         isLoading: ref(false),
         isSuccess: ref(true),
@@ -199,7 +167,7 @@ describe('useContractWrites (V2)', () => {
       const { executeWrite } = useContractWrites(mockConfig)
       const result = await executeWrite()
 
-      expect(mockWriteContractAsync).toHaveBeenCalledWith({
+      expect(mockMutateAsync).toHaveBeenCalledWith({
         address: MOCK_DATA.contractAddress,
         abi: MOCK_ABI,
         functionName: MOCK_DATA.functionName,
@@ -229,11 +197,11 @@ describe('useContractWrites (V2)', () => {
   describe('Gas Estimation', () => {
     it('should perform gas estimation by default', async () => {
       const mockRefetch = vi.fn().mockResolvedValue({ data: { gasLimit: BigInt(21000) } })
-      const mockWriteContractAsync = vi.fn().mockResolvedValue({
+      const mockMutateAsync = vi.fn().mockResolvedValue({
         hash: MOCK_DATA.transactionHash
       })
 
-      mockUseQuery.mockReturnValueOnce({
+      useQueryFn.mockReturnValueOnce({
         data: ref(undefined),
         isLoading: ref(false),
         isSuccess: ref(true),
@@ -242,8 +210,8 @@ describe('useContractWrites (V2)', () => {
         refetch: mockRefetch
       })
 
-      mockUseWriteContract.mockReturnValueOnce({
-        writeContractAsync: mockWriteContractAsync,
+      useWriteContractFn.mockReturnValueOnce({
+        mutateAsync: mockMutateAsync,
         data: ref(undefined),
         isPending: ref(false),
         isSuccess: ref(false),
@@ -251,7 +219,7 @@ describe('useContractWrites (V2)', () => {
         reset: vi.fn()
       })
 
-      mockUseWaitForTransactionReceipt.mockReturnValueOnce({
+      useWaitForTransactionReceiptFn.mockReturnValueOnce({
         data: ref(undefined),
         isLoading: ref(false),
         isSuccess: ref(true),
@@ -266,11 +234,11 @@ describe('useContractWrites (V2)', () => {
 
     it('should skip gas estimation when skipGasEstimation is true', async () => {
       const mockRefetch = vi.fn().mockResolvedValue({ data: { gasLimit: BigInt(21000) } })
-      const mockWriteContractAsync = vi.fn().mockResolvedValue({
+      const mockMutateAsync = vi.fn().mockResolvedValue({
         hash: MOCK_DATA.transactionHash
       })
 
-      mockUseQuery.mockReturnValueOnce({
+      useQueryFn.mockReturnValueOnce({
         data: ref(undefined),
         isLoading: ref(false),
         isSuccess: ref(true),
@@ -279,8 +247,8 @@ describe('useContractWrites (V2)', () => {
         refetch: mockRefetch
       })
 
-      mockUseWriteContract.mockReturnValueOnce({
-        writeContractAsync: mockWriteContractAsync,
+      useWriteContractFn.mockReturnValueOnce({
+        mutateAsync: mockMutateAsync,
         data: ref(undefined),
         isPending: ref(false),
         isSuccess: ref(false),
@@ -288,7 +256,7 @@ describe('useContractWrites (V2)', () => {
         reset: vi.fn()
       })
 
-      mockUseWaitForTransactionReceipt.mockReturnValueOnce({
+      useWaitForTransactionReceiptFn.mockReturnValueOnce({
         data: ref(undefined),
         isLoading: ref(false),
         isSuccess: ref(true),
@@ -301,112 +269,4 @@ describe('useContractWrites (V2)', () => {
       expect(mockRefetch).not.toHaveBeenCalled()
     })
   })
-
-  // describe('Error Handling', () => {
-  //   it('should handle gas estimation failure', async () => {
-  //     const mockWriteContractAsync = vi.fn()
-
-  //     mockUseQuery.mockReturnValueOnce({
-  //       data: ref(undefined),
-  //       isLoading: ref(false),
-  //       isSuccess: ref(false),
-  //       isError: ref(true),
-  //       error: ref(null),
-  //       refetch: vi.fn().mockResolvedValue({ error: new Error('Gas estimation failed') })
-  //     })
-
-  //     mockUseWriteContract.mockReturnValueOnce({
-  //       writeContractAsync: mockWriteContractAsync,
-  //       data: ref(undefined),
-  //       isPending: ref(false),
-  //       isSuccess: ref(false),
-  //       error: ref(null),
-  //       reset: vi.fn()
-  //     })
-
-  //     const { executeWrite } = useContractWrites(mockConfig)
-  //     const result = await executeWrite(['arg1'])
-
-  //     expect(result).toBeUndefined()
-  //     expect(mockLog.error).toHaveBeenCalledWith(
-  //       `Failed to execute ${MOCK_DATA.functionName}: \n`,
-  //       expect.any(Error)
-  //     )
-  //   })
-
-  //   it('should handle writeContract failure', async () => {
-  //     const mockWriteContractAsync = vi.fn().mockRejectedValue(new Error('Transaction failed'))
-
-  //     mockUseQuery.mockReturnValueOnce({
-  //       data: ref(undefined),
-  //       isLoading: ref(false),
-  //       isSuccess: ref(true),
-  //       isError: ref(false),
-  //       error: ref(null),
-  //       refetch: vi.fn().mockResolvedValue({ data: { gasLimit: BigInt(21000) } })
-  //     })
-
-  //     mockUseWriteContract.mockReturnValueOnce({
-  //       writeContractAsync: mockWriteContractAsync,
-  //       data: ref(undefined),
-  //       isPending: ref(false),
-  //       isSuccess: ref(false),
-  //       error: ref(null),
-  //       reset: vi.fn()
-  //     })
-
-  //     const { executeWrite } = useContractWrites(mockConfig)
-  //     const result = await executeWrite(['arg1'])
-
-  //     expect(result).toBeUndefined()
-  //     expect(mockLog.error).toHaveBeenCalledWith(
-  //       `Failed to execute ${MOCK_DATA.functionName}: \n`,
-  //       expect.any(Error)
-  //     )
-  //   })
-  // })
-
-  // describe('Query Management', () => {
-  //   it('should expose query key for external access', () => {
-  //     const { simulateGasResult } = useContractWrites(mockConfig)
-
-  //     expect(simulateGasResult.queryKey).toBeDefined()
-  //     expect(Array.isArray(simulateGasResult.queryKey)).toBe(true)
-  //   })
-
-  //   it('should allow custom query invalidation', async () => {
-  //     const { invalidateQueries } = useContractWrites(mockConfig)
-
-  //     await invalidateQueries()
-
-  //     expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-  //       queryKey: [
-  //         'readContract',
-  //         {
-  //           address: MOCK_DATA.contractAddress,
-  //           chainId: 11155111
-  //         }
-  //       ]
-  //     })
-  //   })
-  // })
-
-  // describe('Transaction Timeline Integration', () => {
-  //   it('should initialize transaction timeline with correct parameters', () => {
-  //     useContractWrites(mockConfig)
-
-  //     expect(mockUseTransactionTimeline).toHaveBeenCalledWith({
-  //       writeResult: expect.any(Object),
-  //       receiptResult: expect.any(Object),
-  //       simulateGasResult: expect.any(Object)
-  //     })
-  //   })
-
-  //   it('should expose timeline data', () => {
-  //     const { currentStep, timelineSteps } = useContractWrites(mockConfig)
-
-  //     expect(currentStep).toBeDefined()
-  //     expect(timelineSteps).toBeDefined()
-  //   })
-  // })
 })

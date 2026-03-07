@@ -120,7 +120,7 @@ const tokens = computed(() => getTokens([props.row], props.row.signature, balanc
 //#region Composables
 //expense account transfer
 const {
-  writeContract: executeExpenseAccountTransfer,
+  mutate: executeExpenseAccountTransfer,
   isPending: isLoadingTransfer,
   error: errorTransfer,
   data: transferHash
@@ -135,7 +135,7 @@ const {
 })
 
 // Token approval
-const { writeContract: approve, error: approveError, data: approveHash } = useWriteContract()
+const { mutate: approve, error: approveError, data: approveHash } = useWriteContract()
 
 const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
   useWaitForTransactionReceipt({

@@ -4,10 +4,10 @@ import ExpenseAccountTable from '../ExpenseAccountTable.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
 import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
-import { useExpensesQuery } from '@/queries'
+import { createMockQueryResponse } from '@/tests/mocks'
+import { useGetExpensesQuery } from '@/queries/expense.queries'
 
 const START_DATE = new Date().getTime() / 1000 + 60 * 60
 const END_DATE = new Date().getTime() / 1000 + 2 * 60 * 60
@@ -81,38 +81,6 @@ const mockApprovals = [
   }
 ]
 
-vi.mock('vue-router', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useRoute: vi.fn(() => ({ params: { id: 1 } }))
-  }
-})
-
-vi.mock('viem', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    parseSignature: vi.fn(),
-    hashTypedData: vi.fn(),
-    keccak256: vi.fn()
-  }
-})
-
-vi.mock('@/composables/useCustomFetch', () => {
-  return {
-    useCustomFetch: vi.fn()
-  }
-})
-
-vi.mock('@/queries', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useExpensesQuery: vi.fn()
-  }
-})
-
 describe('ExpenseAccountTable - Filtering', () => {
   setActivePinia(createPinia())
 
@@ -147,10 +115,9 @@ describe('ExpenseAccountTable - Filtering', () => {
   }
 
   beforeEach(() => {
-    vi.mocked(useExpensesQuery).mockReturnValue({
-      data: ref(mockApprovals),
-      isLoading: ref(false)
-    } as ReturnType<typeof useExpensesQuery>)
+    vi.mocked(useGetExpensesQuery).mockReturnValue(
+      createMockQueryResponse(mockApprovals) as ReturnType<typeof useGetExpensesQuery>
+    )
   })
 
   describe('Filtering', () => {
@@ -171,13 +138,13 @@ describe('ExpenseAccountTable - Filtering', () => {
       const firstRow = expenseAccountTable.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
       expect(firstRow.findComponent({ name: 'UserComponent' })).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[0].user.name)
+      expect(firstRow.html()).toContain(mockApprovals[0]!.user.name)
       const secondRow = expenseAccountTable.find('[data-test="1-row"]')
       expect(secondRow.exists()).toBeTruthy()
-      expect(secondRow.html()).toContain(mockApprovals[1].user.name)
+      expect(secondRow.html()).toContain(mockApprovals[1]!.user.name)
       const thirdRow = expenseAccountTable.find('[data-test="2-row"]')
       expect(thirdRow.exists()).toBeTruthy()
-      expect(thirdRow.html()).toContain(mockApprovals[2].user.name)
+      expect(thirdRow.html()).toContain(mockApprovals[2]!.user.name)
       expect(expenseAccountTable.find('[data-test="disable-button"]').exists()).toBeTruthy()
       expect(expenseAccountTable.find('[data-test="enable-button"]').exists()).toBeTruthy()
     })
@@ -195,7 +162,7 @@ describe('ExpenseAccountTable - Filtering', () => {
       expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
       const firstRow = expenseAccountTable.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[0].amount)
+      expect(firstRow.html()).toContain(mockApprovals[0]!.amount)
       expect(expenseAccountTable.find('[data-test="1-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="2-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="disable-button"]').exists()).toBeTruthy()
@@ -215,7 +182,7 @@ describe('ExpenseAccountTable - Filtering', () => {
       expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
       const firstRow = expenseAccountTable.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[1].amount)
+      expect(firstRow.html()).toContain(mockApprovals[1]!.amount)
       expect(expenseAccountTable.find('[data-test="1-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="2-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="disable-button"]').exists()).toBeFalsy()
@@ -235,7 +202,7 @@ describe('ExpenseAccountTable - Filtering', () => {
       expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
       const firstRow = expenseAccountTable.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[2].amount)
+      expect(firstRow.html()).toContain(mockApprovals[2]!.amount)
       expect(firstRow.html()).toContain('3 day(s)')
       expect(expenseAccountTable.find('[data-test="1-row"]').exists()).toBeFalsy()
       expect(expenseAccountTable.find('[data-test="2-row"]').exists()).toBeFalsy()

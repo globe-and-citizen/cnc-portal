@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { waitForCondition, formatDataForDisplay } from '../index'
+import { waitForCondition, formatDataForDisplay, filter } from '../index'
+
+const items = [
+  { name: 'Alpha', address: '0xabc', type: 'Team' },
+  { name: 'Beta', address: '0xdef', type: 'Contract' },
+  { name: 'Gamma', address: '0x999' }
+]
 
 describe('Utils Index Functions', () => {
   beforeEach(() => {
@@ -262,6 +268,18 @@ describe('Utils Index Functions', () => {
 
       expect(result.veryLarge).toBe('123456789012345678901234567890')
       expect(result.maxSafeInteger).toBe('9007199254740991')
+    })
+  })
+
+  describe('filter', () => {
+    it('matches by name and address', () => {
+      const result = filter(items, { name: 'alp', address: '0x' })
+      expect(result).toEqual([{ name: 'Alpha', address: '0xabc', type: 'Team' }])
+    })
+
+    it('matches by type and address when name does not match', () => {
+      const result = filter(items, { name: 'contract', address: '0x' })
+      expect(result).toEqual([{ name: 'Beta', address: '0xdef', type: 'Contract' }])
     })
   })
 })
