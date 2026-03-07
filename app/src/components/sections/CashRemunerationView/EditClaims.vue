@@ -44,6 +44,7 @@ import { useToastStore, useTeamStore } from '@/stores'
 import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
+import { uploadFileApi } from '@/api'
 import { weeklyClaimKeys } from '@/queries/weeklyClaim.queries'
 
 const props = defineProps<{
@@ -140,12 +141,7 @@ const { mutateAsync: updateClaimMutation, isPending: isUpdating } = useMutation<
     if (payload.files && payload.files.length > 0) {
       const uploadedFiles = await Promise.all(
         payload.files.map(async (file) => {
-          const formData = new FormData()
-          formData.append('file', file)
-
-          const { data } = await apiClient.post('/upload', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          })
+          const data = await uploadFileApi(file)
 
           return {
             fileKey: data.fileKey,
