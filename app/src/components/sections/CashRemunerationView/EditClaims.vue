@@ -123,6 +123,27 @@ watch(
   { immediate: true }
 )
 
+type UploadedAttachment = {
+  fileKey: string
+  fileUrl: string
+  fileType: string
+  fileSize: number
+}
+
+const { mutateAsync: uploadClaimFiles } = useMutation<UploadedAttachment[], Error, File[]>({
+  mutationKey: ['upload-edit-claim-files', props.claim.id],
+  mutationFn: async (files) => {
+    const uploadedFiles = await Promise.all(files.map((file) => uploadFileApi(file)))
+
+    return uploadedFiles.map((data) => ({
+      fileKey: data.fileKey,
+      fileUrl: data.fileUrl,
+      fileType: data.metadata.fileType,
+      fileSize: data.metadata.fileSize
+    }))
+  }
+})
+
 const { mutateAsync: updateClaimMutation, isPending: isUpdating } = useMutation<
   void,
   Error,
@@ -131,28 +152,11 @@ const { mutateAsync: updateClaimMutation, isPending: isUpdating } = useMutation<
   mutationKey: ['update-claim', props.claim.id],
   mutationFn: async (payload) => {
     // Pre-upload new files if any
-    const newAttachments: Array<{
-      fileKey: string
-      fileUrl: string
-      fileType: string
-      fileSize: number
-    }> = []
+    const newAttachments: UploadedAttachment[] = []
 
     if (payload.files && payload.files.length > 0) {
-      const uploadedFiles = await Promise.all(
-        payload.files.map(async (file) => {
-          const data = await uploadFileApi(file)
-
-          return {
-            fileKey: data.fileKey,
-            fileUrl: data.fileUrl,
-            fileType: data.metadata.fileType,
-            fileSize: data.metadata.fileSize
-          }
-        })
-      )
-
-      newAttachments.push(...uploadedFiles)
+      const uploadedAttachments = await uploadClaimFiles(payload.files)
+      newAttachments.push(...uploadedAttachments)
     }
 
     // Submit claim update with pre-uploaded attachments metadata
