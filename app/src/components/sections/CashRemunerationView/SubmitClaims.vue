@@ -57,6 +57,7 @@ import { useToastStore, useTeamStore } from '@/stores'
 import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
 import apiClient from '@/lib/axios'
 import { uploadFileApi } from '@/api'
+import { weeklyClaimKeys } from '@/queries/weeklyClaim.queries'
 
 dayjs.extend(utc)
 
@@ -123,6 +124,27 @@ const canSubmitClaim = computed(() => {
   return props.weeklyClaim.status === 'pending'
 })
 
+type UploadedAttachment = {
+  fileKey: string
+  fileUrl: string
+  fileType: string
+  fileSize: number
+}
+
+const { mutateAsync: uploadClaimFiles } = useMutation<UploadedAttachment[], Error, File[]>({
+  mutationKey: ['upload-claim-files'],
+  mutationFn: async (files) => {
+    const uploadedFiles = await Promise.all(files.map((file) => uploadFileApi(file)))
+
+    return uploadedFiles.map((data) => ({
+      fileKey: data.fileKey,
+      fileUrl: data.fileUrl,
+      fileType: data.metadata.fileType,
+      fileSize: data.metadata.fileSize
+    }))
+  }
+})
+
 const { mutateAsync: submitClaim, isPending: isWageClaimAdding } = useMutation<
   void,
   Error,
@@ -133,25 +155,11 @@ const { mutateAsync: submitClaim, isPending: isWageClaimAdding } = useMutation<
     if (!teamId.value) throw new Error('Team not selected')
 
     // Pre-upload files if any
-    const attachments: Array<{
-      fileKey: string
-      fileUrl: string
-      fileType: string
-      fileSize: number
-    }> = []
+    const attachments: UploadedAttachment[] = []
 
     if (payload.files && payload.files.length > 0) {
-      // Upload each file to /api/upload
-      for (const file of payload.files) {
-        const data = await uploadFileApi(file)
-
-        attachments.push({
-          fileKey: data.fileKey,
-          fileUrl: data.fileUrl,
-          fileType: data.metadata.fileType,
-          fileSize: data.metadata.fileSize
-        })
-      }
+      const uploadedAttachments = await uploadClaimFiles(payload.files)
+      attachments.push(...uploadedAttachments)
     }
 
     // Submit claim with pre-uploaded attachments metadata
@@ -179,7 +187,7 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
 
     toastStore.addSuccessToast('Wage claim added successfully')
     await queryClient.invalidateQueries({
-      queryKey: ['teamWeeklyClaims']
+      queryKey: weeklyClaimKeys.teams()
     })
 
     modal.value = false
