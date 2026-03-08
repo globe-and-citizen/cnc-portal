@@ -1,53 +1,55 @@
 <template>
-  <span class="font-bold text-2xl">Invest in Safe &amp; Earn {{ tokenSymbol || 'SHER' }}</span>
-
-  <div class="steps w-full my-4">
-    <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
-    <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Approval</a>
-    <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>
-  </div>
-
-  <!-- USDC Amount Input -->
-  <TokenAmount
-    :tokens="tokenList"
-    v-model:modelValue="amount"
-    v-model:modelToken="selectedTokenId"
-    :isLoading="isLoading"
-    @validation="isAmountValid = $event"
-    data-test="token-amount"
-  >
-    <template #label>
-      <span class="label-text">Deposit</span>
-      <span class="label-text-alt"
-        >tokenSymbol Balance: {{ selectedToken?.amount }} {{ selectedToken?.token.symbol }}
-      </span>
-    </template>
-  </TokenAmount>
-
-  <!-- SHER Compensation Input -->
   <div>
-    <CompensationAmount
-      v-model:modelValue="sherAmount"
-      :deposit-token-symbol="selectedToken?.token.symbol || 'USDC'"
-      :rate="formattedMultiplier"
-      :disabled="isLoading || !multiplier"
-      @update:modelValue="handleSherAmountChange"
-    />
-  </div>
+    <span class="font-bold text-2xl">Invest in Safe &amp; Earn {{ tokenSymbol || 'SHER' }}</span>
 
-  <div class="modal-action justify-between">
-    <ButtonUI variant="error" outline data-test="cancel-button" @click="handleCancel">
-      Cancel
-    </ButtonUI>
-    <ButtonUI
-      variant="primary"
-      :loading="submitting"
-      :disabled="isLoading || !isAmountValid || !safeDepositRouterAddress"
-      data-test="deposit-button"
-      @click="submitForm"
+    <div class="steps w-full my-4">
+      <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
+      <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Approval</a>
+      <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>
+    </div>
+
+    <!-- USDC Amount Input -->
+    <TokenAmount
+      :tokens="tokenList"
+      v-model:modelValue="amount"
+      v-model:modelToken="selectedTokenId"
+      :isLoading="isLoading"
+      @validation="isAmountValid = $event"
+      data-test="token-amount"
     >
-      {{ currentStep === 2 ? 'Approve' : `Deposit & Earn ${tokenSymbol || 'SHER'}` }}
-    </ButtonUI>
+      <template #label>
+        <span class="label-text">Deposit</span>
+        <span class="label-text-alt"
+          >tokenSymbol Balance: {{ selectedToken?.amount }} {{ selectedToken?.token.symbol }}
+        </span>
+      </template>
+    </TokenAmount>
+
+    <!-- SHER Compensation Input -->
+    <div>
+      <CompensationAmount
+        v-model:modelValue="sherAmount"
+        :deposit-token-symbol="selectedToken?.token.symbol || 'USDC'"
+        :rate="formattedMultiplier"
+        :disabled="isLoading || !multiplier"
+        @update:modelValue="handleSherAmountChange"
+      />
+    </div>
+
+    <div class="modal-action justify-between">
+      <ButtonUI variant="error" outline data-test="cancel-button" @click="handleCancel">
+        Cancel
+      </ButtonUI>
+      <ButtonUI
+        variant="primary"
+        :loading="submitting"
+        :disabled="isLoading || !isAmountValid || !safeDepositRouterAddress"
+        data-test="deposit-button"
+        @click="submitForm"
+      >
+        {{ currentStep === 2 ? 'Approve' : `Deposit & Earn ${tokenSymbol || 'SHER'}` }}
+      </ButtonUI>
+    </div>
   </div>
 </template>
 
