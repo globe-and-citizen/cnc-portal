@@ -26,7 +26,6 @@
     >
       <SafeDepositRouterForm
         v-if="teamStore.getContractAddressByType('Safe')"
-        :safe-address="teamStore.getContractAddressByType('Safe') as Address"
         @close-modal="closeModal"
         ref="depositFormRef"
       />
@@ -36,7 +35,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { type Address } from 'viem'
+
 import { Icon as IconifyIcon } from '@iconify/vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
