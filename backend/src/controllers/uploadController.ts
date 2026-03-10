@@ -6,14 +6,28 @@ import {
   uploadFiles,
 } from '../services/storageService';
 
-interface MulterFilesRequest extends Request {
-  files: Express.Multer.File[];
+function isMulterFile(value: unknown): value is Express.Multer.File {
+  if (!value || typeof value !== 'object') return false;
+
+  const file = value as Partial<Express.Multer.File>;
+  return (
+    typeof file.mimetype === 'string' &&
+    typeof file.originalname === 'string' &&
+    typeof file.size === 'number' &&
+    Buffer.isBuffer(file.buffer)
+  );
+}
+
+function extractMulterFiles(req: Request): Express.Multer.File[] {
+  const maybeFiles = (req as Request & { files?: unknown }).files;
+  if (!Array.isArray(maybeFiles)) return [];
+
+  return maybeFiles.filter(isMulterFile);
 }
 
 export const uploadManyFiles = async (req: Request, res: Response) => {
   try {
-    const multerReq = req as MulterFilesRequest;
-    const files = multerReq.files ?? [];
+    const files = extractMulterFiles(req);
 
     if (files.length === 0) {
       return res.status(400).json({ error: 'No files provided' });
