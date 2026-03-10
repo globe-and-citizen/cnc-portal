@@ -1,7 +1,7 @@
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 import type { Address } from 'viem'
-import type { WeeklyClaim } from '@/types/cash-remuneration'
+import type { FileAttachment, WeeklyClaim } from '@/types/cash-remuneration'
 import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
 
 /**
@@ -215,6 +215,46 @@ export interface DeleteClaimParams {
  */
 export const useDeleteClaimMutation = createMutationHook<void, DeleteClaimParams>({
   method: 'DELETE',
+  endpoint: 'claim/{claimId}',
+  invalidateKeys: [weeklyClaimKeys.teams()]
+})
+
+// ============================================================================
+// PUT /claim/{claimId} - Edit claim
+// ============================================================================
+
+/**
+ * Combined parameters for useEditClaimMutation
+ */
+export interface EditClaimParams {
+  pathParams: {
+    /** Claim ID */
+    claimId: number | string
+  }
+  body: {
+    /** Hours worked */
+    hoursWorked: string
+    /** Claim memo */
+    memo: string
+    /** ISO date string */
+    dayWorked: string
+    /** Original indexes to remove from existing attachments */
+    deletedFileIndexes?: number[]
+    /** Newly uploaded attachments metadata */
+    attachments?: FileAttachment[]
+  }
+}
+
+/**
+ * Edit an existing claim
+ *
+ * @endpoint PUT /claim/{claimId}
+ * @pathParams { claimId: number | string }
+ * @queryParams none
+ * @body { hoursWorked: string, memo: string, dayWorked: string, deletedFileIndexes?: number[], attachments?: FileAttachment[] }
+ */
+export const useEditClaimMutation = createMutationHook<void, EditClaimParams>({
+  method: 'PUT',
   endpoint: 'claim/{claimId}',
   invalidateKeys: [weeklyClaimKeys.teams()]
 })
