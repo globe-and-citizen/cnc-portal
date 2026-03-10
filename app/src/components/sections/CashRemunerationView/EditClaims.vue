@@ -42,10 +42,9 @@ import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm
 import { useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
 import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import apiClient from '@/lib/axios'
+import { useMutation } from '@tanstack/vue-query'
 import { uploadFileApi } from '@/api'
-import { weeklyClaimKeys } from '@/queries/weeklyClaim.queries'
+import { useEditClaimMutation } from '@/queries/weeklyClaim.queries'
 
 const props = defineProps<{
   claim: Claim
@@ -59,7 +58,6 @@ const errorMessage = ref<{ message: string } | null>(null)
 const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
-const queryClient = useQueryClient()
 const { isRestricted, checkRestriction } = useSubmitRestriction()
 
 const teamId = computed(() => teamStore.currentTeam?.id)
@@ -144,12 +142,14 @@ const { mutateAsync: uploadClaimFiles } = useMutation<UploadedAttachment[], Erro
   }
 })
 
+const { mutateAsync: editClaim } = useEditClaimMutation()
+
 const { mutateAsync: updateClaimMutation, isPending: isUpdating } = useMutation<
   void,
   Error,
   ClaimSubmitPayload & { files?: File[] }
 >({
-  mutationKey: ['update-claim', props.claim.id],
+  mutationKey: ['prepare-update-claim', props.claim.id],
   mutationFn: async (payload) => {
     // Pre-upload new files if any
     const newAttachments: UploadedAttachment[] = []
@@ -160,13 +160,16 @@ const { mutateAsync: updateClaimMutation, isPending: isUpdating } = useMutation<
     }
 
     // Submit claim update with pre-uploaded attachments metadata
-    await apiClient.put(`/claim/${props.claim.id}`, {
-      hoursWorked: payload.hoursWorked.toString(),
-      memo: payload.memo,
-      dayWorked: payload.dayWorked,
-      deletedFileIndexes:
-        deletedFileIndexes.value.length > 0 ? deletedFileIndexes.value : undefined,
-      attachments: newAttachments.length > 0 ? newAttachments : undefined
+    await editClaim({
+      pathParams: { claimId: props.claim.id },
+      body: {
+        hoursWorked: payload.hoursWorked.toString(),
+        memo: payload.memo,
+        dayWorked: payload.dayWorked,
+        deletedFileIndexes:
+          deletedFileIndexes.value.length > 0 ? deletedFileIndexes.value : undefined,
+        attachments: newAttachments.length > 0 ? newAttachments : undefined
+      }
     })
   }
 })
@@ -183,10 +186,6 @@ const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
 
     toastStore.addSuccessToast('Claim updated successfully')
     deletedFileIndexes.value = []
-
-    await queryClient.invalidateQueries({
-      queryKey: weeklyClaimKeys.teams()
-    })
 
     claimFormRef.value?.resetForm()
     emit('close')
