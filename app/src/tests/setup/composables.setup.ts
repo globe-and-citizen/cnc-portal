@@ -15,6 +15,7 @@ import {
   mockUseFetch,
   mockUseWalletChecks
 } from '@/tests/mocks/composables.mock'
+import { mockUploadFileApi } from '@/tests/mocks/api.mock'
 import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
 import { mockRouter } from '@/tests/mocks/router.mock'
 
@@ -36,6 +37,14 @@ vi.mock('@vue/apollo-composable', async (importOriginal) => {
   return {
     ...actual,
     useQuery: vi.fn(() => mockUseApolloQuery)
+  }
+})
+
+vi.mock('@/api', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    uploadFileApi: mockUploadFileApi
   }
 })
 
@@ -178,6 +187,7 @@ vi.mock('@/queries/weeklyClaim.queries', () => ({
   useGetTeamWeeklyClaimsQuery: vi.fn(queryMocks.useGetTeamWeeklyClaimsQuery),
   useGetWeeklyClaimByIdQuery: vi.fn(queryMocks.useGetWeeklyClaimByIdQuery),
   useUpdateWeeklyClaimMutation: vi.fn(queryMocks.useUpdateWeeklyClaimMutation),
+  useEditClaimMutation: vi.fn(queryMocks.useEditClaimMutation),
   useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation),
   useDeleteClaimMutation: vi.fn(queryMocks.useDeleteClaimMutation)
 }))
