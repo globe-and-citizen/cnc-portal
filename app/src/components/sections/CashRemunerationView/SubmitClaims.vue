@@ -48,22 +48,18 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
 import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
-import apiClient from '@/lib/axios'
-import { uploadFileApi } from '@/api'
-import { weeklyClaimKeys } from '@/queries/weeklyClaim.queries'
+import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
 
 dayjs.extend(utc)
 
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
-const queryClient = useQueryClient()
 const { isRestricted, checkRestriction } = useSubmitRestriction()
 
 const modal = ref(false)
@@ -124,54 +120,7 @@ const canSubmitClaim = computed(() => {
   return props.weeklyClaim.status === 'pending'
 })
 
-type UploadedAttachment = {
-  fileKey: string
-  fileUrl: string
-  fileType: string
-  fileSize: number
-}
-
-const { mutateAsync: uploadClaimFiles } = useMutation<UploadedAttachment[], Error, File[]>({
-  mutationKey: ['upload-claim-files'],
-  mutationFn: async (files) => {
-    const uploadedFiles = await Promise.all(files.map((file) => uploadFileApi(file)))
-
-    return uploadedFiles.map((data) => ({
-      fileKey: data.fileKey,
-      fileUrl: data.fileUrl,
-      fileType: data.metadata.fileType,
-      fileSize: data.metadata.fileSize
-    }))
-  }
-})
-
-const { mutateAsync: submitClaim, isPending: isWageClaimAdding } = useMutation<
-  void,
-  Error,
-  ClaimSubmitPayload & { files?: File[] }
->({
-  mutationKey: ['submit-claim'],
-  mutationFn: async (payload) => {
-    if (!teamId.value) throw new Error('Team not selected')
-
-    // Pre-upload files if any
-    const attachments: UploadedAttachment[] = []
-
-    if (payload.files && payload.files.length > 0) {
-      const uploadedAttachments = await uploadClaimFiles(payload.files)
-      attachments.push(...uploadedAttachments)
-    }
-
-    // Submit claim with pre-uploaded attachments metadata
-    await apiClient.post('/claim', {
-      teamId: teamId.value.toString(),
-      hoursWorked: payload.hoursWorked.toString(),
-      memo: payload.memo,
-      dayWorked: payload.dayWorked,
-      attachments: attachments.length > 0 ? attachments : undefined
-    })
-  }
-})
+const { mutateAsync: submitClaim, isPending: isWageClaimAdding } = useSubmitClaimMutation()
 
 const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
   if (!teamId.value) {
@@ -183,12 +132,12 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
   errorMessage.value = null
 
   try {
-    await submitClaim(data)
+    await submitClaim({
+      ...data,
+      teamId: teamId.value
+    })
 
     toastStore.addSuccessToast('Wage claim added successfully')
-    await queryClient.invalidateQueries({
-      queryKey: weeklyClaimKeys.teams()
-    })
 
     modal.value = false
     formInitialData.value = createDefaultFormData()

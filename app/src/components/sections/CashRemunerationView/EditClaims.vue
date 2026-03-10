@@ -44,7 +44,7 @@ import { useToastStore, useTeamStore } from '@/stores'
 import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
 import { useMutation } from '@tanstack/vue-query'
 import { uploadFileApi } from '@/api'
-import { useEditClaimMutation } from '@/queries/weeklyClaim.queries'
+// import { useEditClaimMutation } from '@/queries/weeklyClaim.queries'
 
 const props = defineProps<{
   claim: Claim
@@ -131,9 +131,9 @@ type UploadedAttachment = {
 const { mutateAsync: uploadClaimFiles } = useMutation<UploadedAttachment[], Error, File[]>({
   mutationKey: ['upload-edit-claim-files', props.claim.id],
   mutationFn: async (files) => {
-    const uploadedFiles = await Promise.all(files.map((file) => uploadFileApi(file)))
+    const uploadedFiles = await uploadFileApi(files)
 
-    return uploadedFiles.map((data) => ({
+    return uploadedFiles.files.map((data) => ({
       fileKey: data.fileKey,
       fileUrl: data.fileUrl,
       fileType: data.metadata.fileType,
@@ -142,7 +142,7 @@ const { mutateAsync: uploadClaimFiles } = useMutation<UploadedAttachment[], Erro
   }
 })
 
-const { mutateAsync: editClaim } = useEditClaimMutation()
+// const { mutateAsync: editClaim } = useEditClaimMutation()
 
 const { mutateAsync: updateClaimMutation, isPending: isUpdating } = useMutation<
   void,
