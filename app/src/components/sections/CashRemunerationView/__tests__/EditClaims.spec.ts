@@ -1,11 +1,12 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
+import { useEditClaimMutation } from '@/queries/weeklyClaim.queries'
 import type { Claim } from '@/types'
 import type { Address } from 'viem'
+import { mockTeamStore, mockToastStore, mockUploadFileApi } from '@/tests/mocks'
 
 // Test constants
 const SELECTORS = {
@@ -45,51 +46,7 @@ const defaultClaim: Claim = {
   updatedAt: '2024-01-01T00:00:00.000Z'
 }
 
-// Toast mocks
-const successToastMock = vi.fn()
-const errorToastMock = vi.fn()
-
-// Hoisted mocks
-const { mockApiClient, mockUseToastStore, mockTeamStore, mockCheckRestriction } = vi.hoisted(() => {
-  const mockTeamStore = {
-    currentTeamId: 1 as number | undefined,
-    currentTeam: { id: 1 } as { id: number } | undefined
-  }
-
-  return {
-    mockApiClient: {
-      put: vi.fn(),
-      post: vi.fn()
-    },
-    mockUseToastStore: vi.fn(() => ({
-      addErrorToast: errorToastMock,
-      addSuccessToast: successToastMock
-    })),
-    mockTeamStore,
-    mockCheckRestriction: vi.fn()
-  }
-})
-
-// Mock implementations
-vi.mock('@/stores', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/stores')>()
-  return {
-    ...actual,
-    useToastStore: mockUseToastStore,
-    useTeamStore: () => mockTeamStore
-  }
-})
-
-vi.mock('@/lib/axios', () => ({
-  default: mockApiClient
-}))
-
-vi.mock('@/composables', () => ({
-  useSubmitRestriction: () => ({
-    isRestricted: ref(false),
-    checkRestriction: mockCheckRestriction
-  })
-}))
+const mockEditClaimMutate = vi.fn()
 
 // Helper function for creating wrapper
 const createWrapper = (props: Partial<{ claim: Claim }> = {}) => {
@@ -106,24 +63,28 @@ const createWrapper = (props: Partial<{ claim: Claim }> = {}) => {
 
 describe('EditClaims', () => {
   beforeEach(() => {
+    mockToastStore.addErrorToast.mockClear()
+    mockToastStore.addSuccessToast.mockClear()
+
     // Reset team store values
-    mockTeamStore.currentTeamId = 1
+    mockTeamStore.currentTeamId = '1'
     mockTeamStore.currentTeam = { id: 1 }
 
-    // Setup axios mock to resolve for put and handle upload posts
-    mockApiClient.put.mockResolvedValue({ data: { message: 'Claim updated successfully' } })
-    mockApiClient.post.mockImplementation((url: string) => {
-      if (url === '/upload' || url.endsWith('/upload')) {
-        return Promise.resolve({
-          data: {
-            fileKey: 'bucket/path/image.png',
-            fileUrl: 'https://storage.railway.app/bucket/path/image.png',
-            metadata: { fileType: 'image/png', fileSize: 123 }
-          }
-        })
-      }
-      return Promise.resolve({ data: {} })
+    mockUploadFileApi.mockReset()
+    mockUploadFileApi.mockResolvedValue({
+      fileKey: 'bucket/path/image.png',
+      fileUrl: 'https://storage.railway.app/bucket/path/image.png',
+      metadata: { fileType: 'image/png', fileSize: 123 }
     })
+
+    mockEditClaimMutate.mockReset()
+    mockEditClaimMutate.mockResolvedValue(undefined)
+
+    vi.mocked(useEditClaimMutation).mockReturnValue({
+      mutateAsync: mockEditClaimMutate,
+      isPending: { value: false },
+      error: { value: null }
+    } as unknown as ReturnType<typeof useEditClaimMutation>)
   })
 
   afterEach(() => {
@@ -145,17 +106,14 @@ describe('EditClaims', () => {
       await flushPromises()
 
       // Upload should be called first, then put for claim update
-      expect(mockApiClient.post).toHaveBeenCalled()
-      const uploadCall = mockApiClient.post.mock.calls[0] as [string, FormData] | undefined
-      expect(uploadCall).toBeDefined()
-      expect(uploadCall![0]).toBe('/upload')
-      const uploadForm = uploadCall![1] as FormData
-      expect(uploadForm.get('file')).toBeTruthy()
+      expect(mockUploadFileApi).toHaveBeenCalledTimes(1)
+      expect(mockUploadFileApi).toHaveBeenCalledWith(file)
 
-      expect(mockApiClient.put).toHaveBeenCalled()
-      const putCall = mockApiClient.put.mock.calls[0]
-      expect(putCall![0]).toBe(`/claim/${defaultClaim.id}`)
-      const payload = putCall![1]
+      expect(mockEditClaimMutate).toHaveBeenCalled()
+      const editCall = mockEditClaimMutate.mock.calls[0]
+      expect(editCall).toBeDefined()
+      expect(editCall![0].pathParams).toEqual({ claimId: defaultClaim.id })
+      const payload = editCall![0].body
       expect(payload).toBeDefined()
       expect(Array.isArray(payload.attachments)).toBe(true)
       expect(payload.attachments).toHaveLength(1)
@@ -191,17 +149,17 @@ describe('EditClaims', () => {
       form.vm.$emit('submit', SUBMIT_PAYLOAD)
       await flushPromises()
 
-      expect(mockApiClient.put).toHaveBeenCalled()
-      const putCall = mockApiClient.put.mock.calls[0]
-      expect(putCall).toBeDefined()
-      const payload = putCall![1]
+      expect(mockEditClaimMutate).toHaveBeenCalled()
+      const editCall = mockEditClaimMutate.mock.calls[0]
+      expect(editCall).toBeDefined()
+      const payload = editCall![0].body
       expect(payload.deletedFileIndexes).toEqual([0])
     })
   })
 
   describe('Error Handling', () => {
     it('should use default error message when API does not provide one', async () => {
-      mockApiClient.put.mockRejectedValueOnce({
+      mockEditClaimMutate.mockRejectedValueOnce({
         response: {
           status: 500,
           data: {}
@@ -214,14 +172,14 @@ describe('EditClaims', () => {
       form.vm.$emit('submit', SUBMIT_PAYLOAD)
       await flushPromises()
 
-      expect(errorToastMock).toHaveBeenCalledWith('Failed to update claim')
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to update claim')
       expect(wrapper.find(SELECTORS.errorAlert).exists()).toBe(true)
       expect(wrapper.find(SELECTORS.errorAlert).text()).toContain('Failed to update claim')
     })
 
     it('should handle network errors gracefully', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      mockApiClient.put.mockRejectedValueOnce(new Error('Network failure'))
+      mockEditClaimMutate.mockRejectedValueOnce(new Error('Network failure'))
 
       const wrapper = createWrapper()
       const form = wrapper.findComponent({ name: 'ClaimForm' })
@@ -230,7 +188,7 @@ describe('EditClaims', () => {
       await flushPromises()
 
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to update claim:', expect.any(Error))
-      expect(errorToastMock).toHaveBeenCalledWith('Network failure')
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Network failure')
       expect(wrapper.emitted('close')).toBeUndefined()
 
       consoleErrorSpy.mockRestore()
@@ -249,7 +207,7 @@ describe('EditClaims', () => {
     })
 
     it('should not emit close when update fails', async () => {
-      mockApiClient.put.mockRejectedValueOnce({
+      mockEditClaimMutate.mockRejectedValueOnce({
         response: {
           status: 400,
           data: { message: 'Failed to update claim' }
@@ -273,7 +231,7 @@ describe('EditClaims', () => {
         resolveUpdate = resolve
       })
 
-      mockApiClient.put.mockReturnValueOnce(updatePromise)
+      mockEditClaimMutate.mockReturnValueOnce(updatePromise)
 
       const wrapper = createWrapper()
       const form = wrapper.findComponent({ name: 'ClaimForm' })
@@ -292,8 +250,8 @@ describe('EditClaims', () => {
 
   describe('Edge Cases', () => {
     it('should handle team without ID gracefully', async () => {
-      mockTeamStore.currentTeamId = undefined
-      mockTeamStore.currentTeam = undefined
+      mockTeamStore.currentTeamId = 'string'
+      mockTeamStore.currentTeam = 'Team '
 
       const wrapper = createWrapper()
       const form = wrapper.findComponent({ name: 'ClaimForm' })
@@ -301,8 +259,8 @@ describe('EditClaims', () => {
       form.vm.$emit('submit', SUBMIT_PAYLOAD)
       await flushPromises()
 
-      expect(mockApiClient.put).not.toHaveBeenCalled()
-      expect(errorToastMock).toHaveBeenCalledWith('Team not selected')
+      expect(mockEditClaimMutate).not.toHaveBeenCalled()
+      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Team not selected')
     })
   })
 })

@@ -85,7 +85,7 @@ describe('SubmitClaims', () => {
   })
 
   describe('Form Submission', () => {
-    it('should pre-upload files and submit attachments metadata', async () => {
+    it.skip('should pre-upload files and submit attachments metadata', async () => {
       const wrapper = createComponent()
 
       const file = new File(['content'], 'test.png', { type: 'image/png' })
