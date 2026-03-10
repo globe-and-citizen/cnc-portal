@@ -15,24 +15,16 @@
       @delete-file="deleteFile"
     />
 
-    <div v-if="errorMessage" class="mt-4">
-      <div role="alert" class="alert alert-error" data-test="edit-claim-error">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 shrink-0 stroke-current"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <span>{{ errorMessage.message }}</span>
-      </div>
-    </div>
+    <UAlert
+      v-if="updateClaimError"
+      color="error"
+      variant="soft"
+      icon="i-heroicons-x-circle"
+      title="Failed to update claim"
+      :description="updateClaimError.message"
+      class="mt-4"
+      data-test="edit-claim-error"
+    />
   </div>
 </template>
 
@@ -42,9 +34,7 @@ import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm
 import { useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
 import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
-import { useMutation } from '@tanstack/vue-query'
-import { uploadFileApi } from '@/api'
-// import { useEditClaimMutation } from '@/queries/weeklyClaim.queries'
+import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
 
 const props = defineProps<{
   claim: Claim
@@ -54,13 +44,12 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const errorMessage = ref<{ message: string } | null>(null)
 const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
 const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const { isRestricted, checkRestriction } = useSubmitRestriction()
 
-const teamId = computed(() => teamStore.currentTeam?.id)
+const teamId = computed(() => teamStore.currentTeamMeta?.data?.id)
 
 const claimFormInitialData = computed<ClaimFormData>(() => ({
   hoursWorked: String(props.claim.hoursWorked ?? ''),
@@ -121,84 +110,29 @@ watch(
   { immediate: true }
 )
 
-type UploadedAttachment = {
-  fileKey: string
-  fileUrl: string
-  fileType: string
-  fileSize: number
-}
-
-const { mutateAsync: uploadClaimFiles } = useMutation<UploadedAttachment[], Error, File[]>({
-  mutationKey: ['upload-edit-claim-files', props.claim.id],
-  mutationFn: async (files) => {
-    const uploadedFiles = await uploadFileApi(files)
-
-    return uploadedFiles.files.map((data) => ({
-      fileKey: data.fileKey,
-      fileUrl: data.fileUrl,
-      fileType: data.metadata.fileType,
-      fileSize: data.metadata.fileSize
-    }))
-  }
-})
-
-// const { mutateAsync: editClaim } = useEditClaimMutation()
-
-const { mutateAsync: updateClaimMutation, isPending: isUpdating } = useMutation<
-  void,
-  Error,
-  ClaimSubmitPayload & { files?: File[] }
->({
-  mutationKey: ['prepare-update-claim', props.claim.id],
-  mutationFn: async (payload) => {
-    // Pre-upload new files if any
-    const newAttachments: UploadedAttachment[] = []
-
-    if (payload.files && payload.files.length > 0) {
-      const uploadedAttachments = await uploadClaimFiles(payload.files)
-      newAttachments.push(...uploadedAttachments)
-    }
-
-    // Submit claim update with pre-uploaded attachments metadata
-    await editClaim({
-      pathParams: { claimId: props.claim.id },
-      body: {
-        hoursWorked: payload.hoursWorked.toString(),
-        memo: payload.memo,
-        dayWorked: payload.dayWorked,
-        deletedFileIndexes:
-          deletedFileIndexes.value.length > 0 ? deletedFileIndexes.value : undefined,
-        attachments: newAttachments.length > 0 ? newAttachments : undefined
-      }
-    })
-  }
-})
+const {
+  mutateAsync: updateClaimMutation,
+  isPending: isUpdating,
+  error: updateClaimError
+} = useEditClaimWithFilesMutation()
 
 const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
-  errorMessage.value = null
   if (!teamId.value) {
     toastStore.addErrorToast('Team not selected')
     return
   }
 
-  try {
-    await updateClaimMutation(data)
+  await updateClaimMutation({
+    ...data,
+    claimId: props.claim.id,
+    deletedFileIndexes: deletedFileIndexes.value
+  })
 
-    toastStore.addSuccessToast('Claim updated successfully')
-    deletedFileIndexes.value = []
+  toastStore.addSuccessToast('Claim updated successfully')
+  deletedFileIndexes.value = []
 
-    claimFormRef.value?.resetForm()
-    emit('close')
-  } catch (error) {
-    console.error('Failed to update claim:', error)
-    const message =
-      error instanceof Error
-        ? error.message
-        : ((error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-          'Failed to update claim')
-    toastStore.addErrorToast(message)
-    errorMessage.value = { message }
-  }
+  claimFormRef.value?.resetForm()
+  emit('close')
 }
 
 // Check restriction on mount
