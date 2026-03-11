@@ -4,20 +4,33 @@ Welcome to the CNC Portal documentation. This directory contains comprehensive d
 
 ## 📑 Table of Contents
 
-- [Quick Links](#-quick-links)
-- [Documentation Structure](#-documentation-structure)
-- [Quick Navigation](#-quick-navigation)
-  - [Platform Documentation](#platform-documentation)
-  - [Feature Documentation](#feature-documentation)
-  - [Authentication](#authentication)
-  - [Smart Contracts](#smart-contracts)
-- [Documentation Guidelines](#-documentation-guidelines)
-- [Architecture Overview](#%EF%B8%8F-architecture-overview)
-- [Getting Started](#-getting-started)
-- [Contributing to Documentation](#-contributing-to-documentation)
-- [Search Tips](#-search-tips)
-- [Glossary](#-glossary)
-- [Support](#-support)
+- [CNC Portal Documentation](#cnc-portal-documentation)
+  - [📑 Table of Contents](#-table-of-contents)
+  - [🚀 Quick Links](#-quick-links)
+  - [📚 Documentation Structure](#-documentation-structure)
+  - [🎯 Quick Navigation](#-quick-navigation)
+    - [Platform Documentation](#platform-documentation)
+    - [Feature Documentation](#feature-documentation)
+    - [Authentication](#authentication)
+    - [Smart Contracts](#smart-contracts)
+  - [📖 Documentation Guidelines](#-documentation-guidelines)
+    - [Creating Feature Specifications](#creating-feature-specifications)
+    - [Document Structure](#document-structure)
+  - [🏗️ Architecture Overview](#️-architecture-overview)
+  - [🚀 Getting Started](#-getting-started)
+    - [For Developers](#for-developers)
+    - [For Product Managers](#for-product-managers)
+    - [For QA/Testing Teams](#for-qatesting-teams)
+  - [📝 Contributing to Documentation](#-contributing-to-documentation)
+    - [Adding New Feature Documentation](#adding-new-feature-documentation)
+    - [Updating Existing Documentation](#updating-existing-documentation)
+    - [Documentation Standards](#documentation-standards)
+  - [🔍 Search Tips](#-search-tips)
+  - [📖 Glossary](#-glossary)
+    - [Platform Terms](#platform-terms)
+    - [Project-Specific Terms](#project-specific-terms)
+  - [📞 Support](#-support)
+  - [📄 License](#-license)
 
 ---
 
@@ -332,4 +345,4 @@ This documentation is part of the CNC Portal project.
 
 ---
 
-**Last Updated:** December 16, 2025  
+**Last Updated:** December 16, 2025
