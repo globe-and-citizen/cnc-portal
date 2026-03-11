@@ -13,7 +13,8 @@ import {
   useQueryClientFn,
   useQueryFn,
   mockUseFetch,
-  mockUseWalletChecks
+  mockUseWalletChecks,
+  mockUseSubmitRestriction
 } from '@/tests/mocks/composables.mock'
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
 import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
@@ -188,6 +189,7 @@ vi.mock('@/queries/weeklyClaim.queries', () => ({
   useGetWeeklyClaimByIdQuery: vi.fn(queryMocks.useGetWeeklyClaimByIdQuery),
   useUpdateWeeklyClaimMutation: vi.fn(queryMocks.useUpdateWeeklyClaimMutation),
   useEditClaimMutation: vi.fn(queryMocks.useEditClaimMutation),
+  // useEditClaimMutation: vi.fn(() => queryMocks.useEditClaimMutation),
   useEditClaimWithFilesMutation: vi.fn(queryMocks.useEditClaimWithFilesMutation),
   useSubmitClaimMutation: vi.fn(queryMocks.useSubmitClaimMutation),
   useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation),
@@ -236,7 +238,8 @@ vi.mock('@/composables', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useWalletChecks: vi.fn(() => mockUseWalletChecks)
+    useWalletChecks: vi.fn(() => mockUseWalletChecks),
+    useSubmitRestriction: vi.fn(() => mockUseSubmitRestriction)
   }
 })
 
