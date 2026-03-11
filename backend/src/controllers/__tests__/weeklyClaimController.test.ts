@@ -403,12 +403,8 @@ describe('Weekly Claim Controller', () => {
       );
 
       expect(response.body[0].hoursWorked).toBe(10);
-      expect(response.body[0].claims[0].fileAttachments[0].fileUrl).toBe(
-        'https://storage.railway.app/test-bucket/k1'
-      );
-      expect(response.body[0].claims[3].fileAttachments[0].fileUrl).toBe(
-        'https://storage.railway.app/test-bucket/k2'
-      );
+      expect(response.body[0].claims[0].fileAttachments[0].fileUrl).toBe('fresh-1');
+      expect(response.body[0].claims[3].fileAttachments[0].fileUrl).toBe('old2');
     });
 
     it('should return 200 for empty claims list', async () => {
