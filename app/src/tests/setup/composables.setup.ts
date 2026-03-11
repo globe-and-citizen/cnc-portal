@@ -188,6 +188,8 @@ vi.mock('@/queries/weeklyClaim.queries', () => ({
   useGetWeeklyClaimByIdQuery: vi.fn(queryMocks.useGetWeeklyClaimByIdQuery),
   useUpdateWeeklyClaimMutation: vi.fn(queryMocks.useUpdateWeeklyClaimMutation),
   useEditClaimMutation: vi.fn(queryMocks.useEditClaimMutation),
+  useEditClaimWithFilesMutation: vi.fn(queryMocks.useEditClaimWithFilesMutation),
+  useSubmitClaimMutation: vi.fn(queryMocks.useSubmitClaimMutation),
   useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation),
   useDeleteClaimMutation: vi.fn(queryMocks.useDeleteClaimMutation)
 }))

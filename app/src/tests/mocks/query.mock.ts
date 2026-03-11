@@ -312,6 +312,8 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useGetWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
   useUpdateWeeklyClaimMutation: () => createMockMutationResponse(),
   useEditClaimMutation: () => createMockMutationResponse(),
+  useEditClaimWithFilesMutation: () => createMockMutationResponse(),
+  useSubmitClaimMutation: () => createMockMutationResponse(),
   useSyncWeeklyClaimsMutation: () => createMockMutationResponse(),
   useDeleteClaimMutation: () => createMockMutationResponse(),
 
