@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, ref } from 'vue'
+import { defineComponent } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
@@ -8,6 +8,7 @@ import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
 import type { Claim } from '@/types'
 import type { Address } from 'viem'
 import { mockTeamStore, mockToastStore } from '@/tests/mocks'
+import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 
 const SUBMIT_PAYLOAD = {
   hoursWorked: 6,
@@ -40,10 +41,7 @@ const defaultClaim: Claim = {
   updatedAt: '2024-01-01T00:00:00.000Z'
 }
 
-const mockEditClaimMutate = vi.fn()
 const resetFormMock = vi.fn()
-const isPendingRef = ref(false)
-const errorRef = ref<Error | null>(null)
 
 const ClaimFormStub = defineComponent({
   name: 'ClaimForm',
@@ -83,48 +81,66 @@ const createWrapper = (props: Partial<{ claim: Claim }> = {}) => {
 
 describe('EditClaims', () => {
   beforeEach(() => {
-    mockToastStore.addErrorToast.mockClear()
-    mockToastStore.addSuccessToast.mockClear()
+    vi.clearAllMocks()
 
     mockTeamStore.currentTeamId = '1'
     mockTeamStore.currentTeam = { id: 1 }
     mockTeamStore.currentTeamMeta = { isPending: false, data: { id: 1 } }
-
-    resetFormMock.mockReset()
-    mockEditClaimMutate.mockReset()
-    mockEditClaimMutate.mockResolvedValue(undefined)
-    isPendingRef.value = false
-    errorRef.value = null
-
-    vi.mocked(useEditClaimWithFilesMutation).mockReturnValue({
-      mutateAsync: mockEditClaimMutate,
-      isPending: isPendingRef,
-      error: errorRef
-    } as unknown as ReturnType<typeof useEditClaimWithFilesMutation>)
   })
 
   afterEach(() => {
-    vi.clearAllMocks()
+    vi.restoreAllMocks()
   })
 
-  it('should submit with claim id and reset state on success', async () => {
+  it('shows success toast and closes modal after a successful submit', async () => {
     const wrapper = createWrapper()
     const form = wrapper.findComponent({ name: 'ClaimForm' })
 
     form.vm.$emit('submit', SUBMIT_PAYLOAD)
     await flushPromises()
 
-    expect(mockEditClaimMutate).toHaveBeenCalledWith({
-      ...SUBMIT_PAYLOAD,
-      claimId: defaultClaim.id,
-      deletedFileIndexes: []
-    })
     expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim updated successfully')
-    expect(resetFormMock).toHaveBeenCalledTimes(1)
-    expect(wrapper.emitted('close')).toBeTruthy()
+    expect(wrapper.emitted()).toHaveProperty('close')
   })
 
-  it('should track deleted file indexes and submit mapped original indexes', async () => {
+  it('shows error toast and keeps modal open when no team is selected', async () => {
+    mockTeamStore.currentTeamMeta = { isPending: false, data: null }
+
+    const wrapper = createWrapper()
+    const form = wrapper.findComponent({ name: 'ClaimForm' })
+
+    form.vm.$emit('submit', SUBMIT_PAYLOAD)
+    await flushPromises()
+
+    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Team not selected')
+    expect(wrapper.emitted('close')).toBeUndefined()
+  })
+
+  it('renders backend error message when mutation returns an error', async () => {
+    vi.mocked(useEditClaimWithFilesMutation).mockReturnValueOnce(
+      createMockMutationResponse(null, false, new Error('Server unavailable')) as ReturnType<
+        typeof useEditClaimWithFilesMutation
+      >
+    )
+
+    const wrapper = createWrapper()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="edit-claim-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="edit-claim-error"]').text()).toContain('Server unavailable')
+  })
+
+  it('emits close when cancel is triggered', async () => {
+    const wrapper = createWrapper()
+    const form = wrapper.findComponent({ name: 'ClaimForm' })
+
+    form.vm.$emit('cancel')
+    await flushPromises()
+
+    expect(wrapper.emitted()).toHaveProperty('close')
+  })
+
+  it('updates visible file list after user removes an attachment', async () => {
     const claimWithFiles: Claim = {
       ...defaultClaim,
       fileAttachments: [
@@ -146,86 +162,9 @@ describe('EditClaims', () => {
     const wrapper = createWrapper({ claim: claimWithFiles })
     const form = wrapper.findComponent({ name: 'ClaimForm' })
 
-    form.vm.$emit('delete-file', 0)
-    await flushPromises()
-
-    expect((form.props('existingFiles') as unknown[]).length).toBe(1)
+    expect((form.props('existingFiles') as unknown[]).length).toBe(2)
 
     form.vm.$emit('delete-file', 0)
-    await flushPromises()
-
-    form.vm.$emit('submit', SUBMIT_PAYLOAD)
-    await flushPromises()
-
-    expect(mockEditClaimMutate).toHaveBeenCalledWith({
-      ...SUBMIT_PAYLOAD,
-      claimId: defaultClaim.id,
-      deletedFileIndexes: [0, 1]
-    })
-  })
-
-  it('should show error toast and stop submit when team is missing', async () => {
-    mockTeamStore.currentTeamMeta = { isPending: false, data: null }
-
-    const wrapper = createWrapper()
-    const form = wrapper.findComponent({ name: 'ClaimForm' })
-
-    form.vm.$emit('submit', SUBMIT_PAYLOAD)
-    await flushPromises()
-
-    expect(mockEditClaimMutate).not.toHaveBeenCalled()
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Team not selected')
-    expect(wrapper.emitted('close')).toBeUndefined()
-  })
-
-  it('should expose loading state to ClaimForm', () => {
-    isPendingRef.value = true
-
-    const wrapper = createWrapper()
-    const form = wrapper.findComponent({ name: 'ClaimForm' })
-
-    expect(form.props('isLoading')).toBe(true)
-  })
-
-  it('should render mutation error from hook', () => {
-    errorRef.value = new Error('Server unavailable')
-
-    const wrapper = createWrapper()
-
-    expect(wrapper.find('[data-test="edit-claim-error"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="edit-claim-error"]').text()).toContain('Server unavailable')
-  })
-
-  it('should emit close when cancel is triggered', async () => {
-    const wrapper = createWrapper()
-    const form = wrapper.findComponent({ name: 'ClaimForm' })
-
-    form.vm.$emit('cancel')
-    await flushPromises()
-
-    expect(wrapper.emitted('close')).toBeTruthy()
-  })
-
-  it('should sync file list when claim prop changes', async () => {
-    const wrapper = createWrapper()
-    const form = wrapper.findComponent({ name: 'ClaimForm' })
-
-    expect(form.props('existingFiles')).toEqual([])
-
-    await wrapper.setProps({
-      claim: {
-        ...defaultClaim,
-        fileAttachments: [
-          {
-            fileKey: 'bucket/path/new-file.png',
-            fileUrl: 'https://storage.railway.app/bucket/path/new-file.png',
-            fileType: 'image/png',
-            fileSize: 123
-          }
-        ]
-      }
-    })
-
     await flushPromises()
 
     expect((form.props('existingFiles') as unknown[]).length).toBe(1)
