@@ -11,8 +11,8 @@
             v-if="
               isLoadingTokenSymbol ||
               isLoadingInvestorsOwner ||
-              !tokenSymbolValue ||
-              !investorsOwnerValue ||
+              !tokenSymbol ||
+              !investorsOwner ||
               !investorAddress
             "
           >
@@ -22,19 +22,16 @@
           </template>
           <template v-else>
             <DistributeMintAction
-              :token-symbol="tokenSymbolValue"
+              :token-symbol="tokenSymbol"
               :investors-address="investorAddress"
             />
-            <MintTokenAction
-              :token-symbol="tokenSymbolValue"
-              :investors-owner="investorsOwnerValue"
-            />
+            <MintTokenAction :token-symbol="tokenSymbol" :investors-owner="investorsOwner" />
 
             <PayDividendsAction
-              :token-symbol="tokenSymbolValue"
-              :shareholders-count="shareholdersList.length"
+              :token-symbol="tokenSymbol"
+              :shareholders-count="shareholders?.length ?? 0"
               :investors-address="investorAddress"
-              :investors-owner="investorsOwnerValue"
+              :investors-owner="investorsOwner"
               :bank-address="bankAddress"
             />
             <ToggleSherCompensationButton />
@@ -91,21 +88,6 @@ const {
   error: errorInvestorsOwner,
   isLoading: isLoadingInvestorsOwner
 } = useInvestorOwner()
-
-const tokenSymbolValue = computed(() =>
-  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : ''
-)
-
-const investorsOwnerValue = computed<Address | undefined>(() => {
-  if (typeof investorsOwner.value === 'string' && investorsOwner.value.startsWith('0x')) {
-    return investorsOwner.value as Address
-  }
-  return undefined
-})
-
-const shareholdersList = computed(() =>
-  Array.isArray(shareholders.value) ? shareholders.value : []
-)
 
 // Watch for errors and display toast notifications
 watch(tokenSymbolError, (value) => {
