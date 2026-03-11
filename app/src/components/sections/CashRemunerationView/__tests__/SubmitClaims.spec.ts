@@ -1,180 +1,193 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import SubmitClaims from '../SubmitClaims.vue'
-const MOCK_IMAGE_URL = 'https://storage.railway.app/bucket/path/image.png'
+import { defineComponent, ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
+import SubmitClaims from '../SubmitClaims.vue'
+import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
+import { mockTeamStore, mockToastStore } from '@/tests/mocks'
 
-// Toast mocks
-const successToastMock = vi.fn()
-const errorToastMock = vi.fn()
+const submitMutationMock = vi.fn()
+const isPendingRef = ref(false)
+const claimFormResetMock = vi.fn()
 
-// Hoist and structure mocks
-const mocks = vi.hoisted(() => ({
-  mockApiClient: {
-    post: vi.fn()
-  },
-  mockUseTeamStore: vi.fn(() => ({
-    currentTeamId: 1 as number | undefined
-  })),
-  mockUseToastStore: vi.fn(() => ({
-    addErrorToast: errorToastMock,
-    addSuccessToast: successToastMock
-  })),
-  mockUseSubmitRestriction: vi.fn(() => ({
+vi.mock('@/composables/useSubmitRestriction', () => ({
+  useSubmitRestriction: vi.fn(() => ({
     isRestricted: false,
-    checkRestriction: vi.fn()
+    checkRestriction: vi.fn().mockResolvedValue(undefined)
   }))
 }))
 
-vi.mock('@/stores', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useTeamStore: mocks.mockUseTeamStore,
-    useToastStore: mocks.mockUseToastStore
+const ClaimFormStub = defineComponent({
+  name: 'ClaimForm',
+  props: {
+    initialData: { type: Object, required: false },
+    isLoading: { type: Boolean, required: false },
+    disabledWeekStarts: { type: Array, required: false },
+    restrictSubmit: { type: Boolean, required: false }
+  },
+  emits: ['submit'],
+  setup(_, { expose }) {
+    expose({ resetForm: claimFormResetMock })
+    return () => null
   }
 })
 
-vi.mock('@/composables/useSubmitRestriction', () => ({
-  useSubmitRestriction: mocks.mockUseSubmitRestriction
-}))
-
-vi.mock('@/lib/axios', () => ({
-  default: mocks.mockApiClient
-}))
-
-afterEach(() => {
-  vi.clearAllMocks()
-})
+const createComponent = (props: Record<string, unknown> = {}) => {
+  const queryClient = new QueryClient()
+  return mount(SubmitClaims, {
+    props,
+    global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
+      stubs: {
+        ButtonUI: {
+          name: 'ButtonUI',
+          template:
+            '<button :disabled="disabled" data-test="modal-submit-hours-button" @click="$emit(\'click\')"><slot /></button>',
+          props: ['disabled', 'loading'],
+          emits: ['click']
+        },
+        ModalComponent: {
+          name: 'ModalComponent',
+          template: '<div v-if="modelValue"><slot /></div>',
+          props: ['modelValue'],
+          emits: ['update:modelValue']
+        },
+        ClaimForm: ClaimFormStub
+      }
+    }
+  })
+}
 
 describe('SubmitClaims', () => {
   beforeEach(() => {
-    // Setup axios mock to handle upload and claim endpoints
-    mocks.mockApiClient.post.mockImplementation((url: string) => {
-      if (url === '/upload' || url.endsWith('/upload')) {
-        return Promise.resolve({
-          data: {
-            fileKey: 'bucket/path/image.png',
-            fileUrl: MOCK_IMAGE_URL,
-            metadata: { fileType: 'image/png', fileSize: 123 }
-          }
-        })
-      }
+    submitMutationMock.mockReset()
+    submitMutationMock.mockResolvedValue(undefined)
+    isPendingRef.value = false
+    claimFormResetMock.mockReset()
 
-      if (url === '/claim' || url.endsWith('/claim')) {
-        return Promise.resolve({ data: { message: 'Wage claim added successfully' } })
-      }
+    mockTeamStore.currentTeamId = '1'
+    mockToastStore.addErrorToast.mockClear()
+    mockToastStore.addSuccessToast.mockClear()
 
-      return Promise.resolve({ data: {} })
-    })
+    vi.mocked(useSubmitClaimMutation).mockReturnValue({
+      mutateAsync: submitMutationMock,
+      isPending: isPendingRef
+    } as unknown as ReturnType<typeof useSubmitClaimMutation>)
   })
 
-  const createComponent = () => {
-    const queryClient = new QueryClient()
-    return mount(SubmitClaims, {
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
-      }
-    })
-  }
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
 
-  it('should render correctly', () => {
+  it('should render submit button enabled when weekly claim is pending', () => {
+    const wrapper = createComponent({ weeklyClaim: { status: 'pending' } })
+
+    const submitButton = wrapper.find('[data-test="modal-submit-hours-button"]')
+    expect(submitButton.exists()).toBe(true)
+    expect(submitButton.attributes('disabled')).toBeUndefined()
+  })
+
+  it('should disable submit button when weekly claim is not pending', () => {
+    const wrapper = createComponent({ weeklyClaim: { status: 'signed' } })
+
+    const submitButton = wrapper.find('[data-test="modal-submit-hours-button"]')
+    expect(submitButton.attributes('disabled')).toBeDefined()
+  })
+
+  it('should submit claim with current team id and close modal on success', async () => {
     const wrapper = createComponent()
-    expect(wrapper.exists()).toBeTruthy()
+
+    await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
+    await flushPromises()
+
+    const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
+    const submitData = {
+      hoursWorked: 8,
+      memo: 'Test work',
+      dayWorked: '2024-01-10T00:00:00.000Z',
+      files: []
+    }
+
+    claimForm.vm.$emit('submit', submitData)
+    await flushPromises()
+
+    expect(submitMutationMock).toHaveBeenCalledWith({
+      ...submitData,
+      teamId: '1'
+    })
+    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Wage claim added successfully')
+    expect(claimFormResetMock).toHaveBeenCalledTimes(1)
+    expect(wrapper.findComponent({ name: 'ClaimForm' }).exists()).toBe(false)
   })
 
-  describe('Form Submission', () => {
-    it.skip('should pre-upload files and submit attachments metadata', async () => {
-      const wrapper = createComponent()
+  it('should show team error and block submit when team id is missing', async () => {
+    mockTeamStore.currentTeamId = undefined
 
-      const file = new File(['content'], 'test.png', { type: 'image/png' })
-      const submitData = {
-        hoursWorked: 8,
-        memo: 'Test work',
-        dayWorked: '2024-01-10T00:00:00.000Z',
-        files: [file]
-      }
+    const wrapper = createComponent()
+    await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
+    await flushPromises()
 
-      const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
-      claimForm.vm.$emit('submit', submitData)
-      await flushPromises()
-
-      // First call should be upload, second call should be claim submission
-      expect(mocks.mockApiClient.post).toHaveBeenCalledTimes(2)
-
-      const uploadCall = mocks.mockApiClient.post.mock.calls[0]!
-      expect(uploadCall[0]).toBe('/upload')
-      const uploadForm = uploadCall[1] as FormData
-      expect(uploadForm.get('file')).toBeTruthy()
-
-      const claimCall = mocks.mockApiClient.post.mock.calls[1]!
-      expect(claimCall[0]).toBe('/claim')
-      const payload = claimCall[1]
-      expect(payload).toBeDefined()
-      expect(payload).toMatchObject({
-        teamId: '1',
-        hoursWorked: '8',
-        memo: 'Test work',
-        dayWorked: '2024-01-10T00:00:00.000Z'
-      })
-      expect(Array.isArray(payload.attachments)).toBe(true)
-      expect(payload.attachments).toHaveLength(1)
-      expect(payload.attachments[0]).toMatchObject({
-        fileKey: 'bucket/path/image.png',
-        fileUrl: MOCK_IMAGE_URL
-      })
+    const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
+    claimForm.vm.$emit('submit', {
+      hoursWorked: 8,
+      memo: 'Test work',
+      dayWorked: '2024-01-10T00:00:00.000Z',
+      files: []
     })
+    await flushPromises()
+
+    expect(submitMutationMock).not.toHaveBeenCalled()
+    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Team not selected')
   })
 
-  describe('Error Handling', () => {
-    it('should use default error message when API does not provide one', async () => {
-      mocks.mockApiClient.post.mockRejectedValueOnce({
-        response: {
-          status: 500,
-          data: {}
-        }
-      })
-
-      const wrapper = createComponent()
-
-      const submitData = {
-        hoursWorked: 8,
-        memo: 'Test work',
-        dayWorked: '2024-01-10T00:00:00.000Z',
-        uploadedFiles: []
+  it('should surface API error and reset when modal closes', async () => {
+    submitMutationMock.mockRejectedValueOnce({
+      response: {
+        data: { message: 'Backend down' }
       }
-
-      const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
-      claimForm.vm.$emit('submit', submitData)
-      await flushPromises()
-
-      expect(errorToastMock).toHaveBeenCalledWith('Failed to add claim')
     })
+
+    const wrapper = createComponent()
+    await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
+    await flushPromises()
+
+    const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
+    claimForm.vm.$emit('submit', {
+      hoursWorked: 4,
+      memo: 'Failing submit',
+      dayWorked: '2024-01-12T00:00:00.000Z',
+      files: []
+    })
+    await flushPromises()
+
+    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Backend down')
+    expect(wrapper.text()).toContain('Backend down')
+
+    const modal = wrapper.findComponent({ name: 'ModalComponent' })
+    modal.vm.$emit('update:modelValue', false)
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Backend down')
+
+    await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Backend down')
   })
 
-  describe('Edge Cases', () => {
-    it('should handle missing team ID gracefully', async () => {
-      mocks.mockUseTeamStore.mockReturnValueOnce({
-        currentTeamId: undefined
-      })
+  it('should pass loading state to button and form', async () => {
+    isPendingRef.value = true
 
-      const wrapper = createComponent()
+    const wrapper = createComponent()
+    const button = wrapper.findComponent({ name: 'ButtonUI' })
 
-      const submitData = {
-        hoursWorked: 8,
-        memo: 'Test work',
-        dayWorked: '2024-01-10T00:00:00.000Z',
-        uploadedFiles: []
-      }
+    expect(button.props('loading')).toBe(true)
 
-      const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
-      claimForm.vm.$emit('submit', submitData)
-      await flushPromises()
+    await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
+    await flushPromises()
 
-      // Should not attempt to submit, instead show error
-      expect(mocks.mockApiClient.post).not.toHaveBeenCalled()
-      expect(errorToastMock).toHaveBeenCalledWith('Team not selected')
-    })
+    const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
+    expect(claimForm.props('isLoading')).toBe(true)
   })
 })
