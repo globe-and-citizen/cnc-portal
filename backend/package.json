@@ -26,8 +26,6 @@
     "prod": "node  dist/index.js",
     "copy:docs": "npx shx cp src/utils/backend_specs.html dist/utils/backend_specs.html",
     "db:wake": "ts-node scripts/wake-db.ts",
-    "db:migrate:image-urls": "ts-node scripts/migrate-stable-image-urls.ts",
-    "db:migrate:image-urls:apply": "ts-node scripts/migrate-stable-image-urls.ts --apply",
     "prisma:migrate": "npx prisma migrate deploy",
     "prisma:generate": "npx prisma generate",
     "seed": "ts-node prisma/seed.ts",
