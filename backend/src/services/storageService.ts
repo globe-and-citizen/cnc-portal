@@ -46,6 +46,7 @@ type StorageConfig = {
   secretAccessKey: string;
   region: string;
   endpoint: string;
+  publicBaseUrl: string;
 };
 
 const REQUIRED_ENV_VARS = {
@@ -78,12 +79,17 @@ export function getStorageConfig(): StorageConfig {
   const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
   const region = process.env.AWS_DEFAULT_REGION ?? 'auto';
   const endpoint = process.env.AWS_ENDPOINT_URL ?? 'https://storage.railway.app';
+  const publicBaseUrl =
+    process.env.AWS_PUBLIC_BASE_URL ??
+    process.env.AWS_S3_PUBLIC_BASE_URL ??
+    `${endpoint.replace(/\/$/, '')}/${bucket}`;
   return {
     bucket: bucket as string,
     accessKeyId: accessKeyId as string,
     secretAccessKey: secretAccessKey as string,
     region,
     endpoint,
+    publicBaseUrl,
   };
 }
 
@@ -213,13 +219,27 @@ export async function uploadFiles(
   return results;
 }
 
+const normalizeStorageKey = (fileKey: string): string => {
+  return fileKey
+    .split('/')
+    .filter((segment) => segment.length > 0)
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+};
+
+export function getPublicFileUrl(fileKey: string): string {
+  const cfg = getStorageConfig();
+  const normalizedBase = cfg.publicBaseUrl.replace(/\/$/, '');
+  const normalizedKey = normalizeStorageKey(fileKey);
+  return `${normalizedBase}/${normalizedKey}`;
+}
+
 export async function getPresignedDownloadUrl(
   fileKey: string,
   expiresIn: number = PRESIGNED_URL_EXPIRATION
 ): Promise<string> {
   const cfg = getStorageConfig();
   const client = createS3Client();
-  // Optionally probe existence; ignore errors
   await client
     .send(new HeadObjectCommand({ Bucket: cfg.bucket, Key: fileKey }))
     .catch(() => undefined);
@@ -273,6 +293,7 @@ export default {
   uploadFile,
   uploadFiles,
   deleteFile,
+  getPublicFileUrl,
   // fileExists, // Commented out - not currently used
   getPresignedDownloadUrl,
   // uploadProfileImage, // Commented out - redundant, use uploadFile with folder

@@ -77,17 +77,14 @@ storageRouter.get('/url', authorizeUser, async (req: Request, res: Response) => 
       });
     }
 
-    // Parse and validate expiration time
     let expirationSeconds = PRESIGNED_URL_EXPIRATION;
     if (expiresIn) {
       const parsedExpiration = parseInt(expiresIn as string, 10);
       if (!isNaN(parsedExpiration) && parsedExpiration > 0) {
-        // Cap at 7 days (604800 seconds)
         expirationSeconds = Math.min(parsedExpiration, 604800);
       }
     }
 
-    // Generate presigned URL (will fail if file doesn't exist)
     const url = await getPresignedDownloadUrl(key, expirationSeconds);
 
     res.json({

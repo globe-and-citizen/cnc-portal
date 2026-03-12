@@ -14,7 +14,7 @@ type FileAttachmentData = {
   fileType: string;
   fileSize: number;
   fileKey: string; // S3 object key - unique identifier
-  fileUrl: string; // Presigned download URL
+  fileUrl: string;
 };
 
 const refreshAttachmentUrls = async (attachments: unknown): Promise<unknown> => {

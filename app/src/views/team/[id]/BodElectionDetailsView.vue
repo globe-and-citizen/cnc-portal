@@ -64,20 +64,26 @@ const { data: currentElection, error: errorGetElection } = useReadContract({
   }
 })
 
+type ElectionTuple = [bigint, string, string, string, bigint, bigint, bigint, boolean]
+
 const formattedElection = computed(() => {
   if (!currentElection.value) return null
 
   const raw = currentElection.value
+  if (!Array.isArray(raw) || raw.length < 8) {
+    return null
+  }
+  const tuple = raw as unknown as ElectionTuple
 
   return {
-    id: Number(raw[0]),
-    title: raw[1],
-    description: raw[2],
-    createdBy: raw[3],
-    startDate: new Date(Number(raw[4]) * 1000),
-    endDate: new Date(Number(raw[5]) * 1000),
-    seatCount: Number(raw[6]),
-    resultsPublished: raw[7]
+    id: Number(tuple[0]),
+    title: tuple[1],
+    description: tuple[2],
+    createdBy: tuple[3],
+    startDate: new Date(Number(tuple[4]) * 1000),
+    endDate: new Date(Number(tuple[5]) * 1000),
+    seatCount: Number(tuple[6]),
+    resultsPublished: tuple[7]
   }
 })
 

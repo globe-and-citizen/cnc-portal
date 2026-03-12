@@ -10,7 +10,9 @@ import type { Address } from 'viem';
 const CALLER = '0x1234567890123456789012345678901234567890';
 
 const { mockGetPresignedDownloadUrl } = vi.hoisted(() => ({
-  mockGetPresignedDownloadUrl: vi.fn(),
+  mockGetPresignedDownloadUrl: vi.fn(
+    (key: string) => `https://storage.railway.app/test-bucket/${key}`
+  ),
 }));
 
 const { readContractMock } = vi.hoisted(() => ({
