@@ -7,7 +7,8 @@ Welcome to the CNC Portal documentation. This directory contains comprehensive d
 - [CNC Portal Documentation](#cnc-portal-documentation)
   - [📑 Table of Contents](#-table-of-contents)
   - [🚀 Quick Links](#-quick-links)
-  - [📚 Documentation Structure](#-documentation-structure)
+  - [� Project Charter](#-project-charter)
+  - [�📚 Documentation Structure](#-documentation-structure)
   - [🎯 Quick Navigation](#-quick-navigation)
     - [Platform Documentation](#platform-documentation)
     - [Feature Documentation](#feature-documentation)
@@ -39,6 +40,7 @@ Welcome to the CNC Portal documentation. This directory contains comprehensive d
 **New to the project?**
 
 - 📖 [Getting Started](#-getting-started) - Start here
+- 📋 [Project Charter](./project-charter.md) - Vision, scope, objectives and milestones
 - 🏗️ [Architecture Overview](./platform/architecture.md) - Understand the system
 - 🔐 [Authentication](./auth/README.md) - How users authenticate
 - 📊 [Statistics Feature](./features/stats/functional-specification.md) - Example feature
@@ -57,11 +59,27 @@ Welcome to the CNC Portal documentation. This directory contains comprehensive d
 
 ---
 
-## 📚 Documentation Structure
+## � Project Charter
+
+The [Project Charter](./project-charter.md) is the authoritative reference for the CNC Portal's purpose, scope, governance model, and delivery milestones. Read it first when joining the project or evaluating platform direction.
+
+**Key sections:**
+
+- [Executive Summary & Background](./project-charter.md#1-executive-summary) — Why CNC Portal exists
+- [Vision, Mission & Objectives](./project-charter.md#2-vision-mission-and-objectives) — Strategic goals
+- [Success Criteria & KPIs](./project-charter.md#3-success-criteria) — How progress is measured
+- [Stakeholders & Governance](./project-charter.md#4-stakeholders-and-governance) — Roles and decision-making
+- [Scope & Deliverables](./project-charter.md#5-scope-and-deliverables) — What is (and isn't) in scope
+- [Milestones](./project-charter.md#8-milestones-and-timeline) — Capability phases and current status
+
+---
+
+## �📚 Documentation Structure
 
 ```
 docs/
 ├── README.md                           # This file - Documentation index
+├── project-charter.md                  # Project charter - vision, scope, milestones
 ├── platform/                           # Platform-wide specifications
 │   ├── architecture.md                # System architecture
 │   ├── security.md                    # Security standards & requirements
@@ -94,6 +112,10 @@ docs/
 ## 🎯 Quick Navigation
 
 ### Platform Documentation
+
+**Foundation:**
+
+- [Project Charter](./project-charter.md) - Vision, scope, objectives, governance and milestones
 
 **Core Platform:**
 
