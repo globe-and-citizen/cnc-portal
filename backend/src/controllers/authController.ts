@@ -1,26 +1,10 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { generateNonce, SiweMessage } from 'siwe';
-import { faker } from '@faker-js/faker';
 import { prisma } from '../utils';
 import { errorResponse, extractAddressAndNonce } from '../utils/utils';
 import { DEFAULT_USER_ROLES } from '../types/roles';
-
-type AvatarMode = 'faker' | 'none';
-
-const resolveAvatarMode = (): AvatarMode => {
-  const mode = (process.env.PROFILE_AVATAR_MODE ?? 'faker').toLowerCase();
-  if (mode === 'none') {
-    return 'none';
-  }
-  return 'faker';
-};
-
-const generateFakerAvatar = (address: string): string => {
-  const seed = Array.from(address).reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  faker.seed(seed);
-  return faker.image.avatar();
-};
+import { resolveDefaultProfileImageUrl } from '../utils/profileImage.util';
 
 export const authenticateSiwe = async (req: Request, res: Response) => {
   try {
@@ -61,7 +45,7 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
           nonce: newNonce,
           roles: DEFAULT_USER_ROLES,
           name: 'User',
-          imageUrl: resolveAvatarMode() === 'faker' ? generateFakerAvatar(address) : null,
+          imageUrl: resolveDefaultProfileImageUrl(address),
         },
       });
 
