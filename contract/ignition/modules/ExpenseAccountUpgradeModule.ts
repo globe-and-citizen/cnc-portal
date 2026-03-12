@@ -5,11 +5,9 @@ import { network } from 'hardhat'
 
 function getDeployedAddresses() {
   let chainId: number | undefined
-  
-  if (network.name === "localhost")
-    chainId = 31337
-  else 
-    chainId = network.config.chainId
+
+  if (network.name === 'localhost') chainId = 31337
+  else chainId = network.config.chainId
 
   console.log(`chainId`, chainId)
   console.log(`name`, network.name)
@@ -39,7 +37,7 @@ export default buildModule('ExpenseAccountUpgradeModule', (m) => {
   console.log(`factoryBeaconAddress`, deployedAddresses)
 
   // Retrieve the FactoryBeacon address from the loaded addresses
-  const factoryBeaconAddress = deployedAddresses["ExpenseAccountEIP712Module#FactoryBeacon"]
+  const factoryBeaconAddress = deployedAddresses['ExpenseAccountEIP712Module#FactoryBeacon']
 
   if (!factoryBeaconAddress) {
     throw new Error(`No FactoryBeacon address found in the deployed addresses`)
@@ -52,7 +50,7 @@ export default buildModule('ExpenseAccountUpgradeModule', (m) => {
 
   // Call the beacon's upgrade function to set the new implementation
   m.call(expenseAccountFactoryBeacon, 'upgradeTo', [newExpenseAccountImplementation], {
-    from: beaconOwner,
+    from: beaconOwner
   })
 
   return { newExpenseAccountImplementation, expenseAccountFactoryBeacon }
