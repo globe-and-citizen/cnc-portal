@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import UserComponent from '@/components/UserComponent.vue'
 import { useTeamStore } from '@/stores'
@@ -109,7 +109,6 @@ const selectedUser = computed<User | undefined>(() =>
 )
 
 const open = () => {
-  //   if (props.disabled) return
   isOpen.value = { mount: true, show: true }
 }
 
@@ -170,4 +169,15 @@ watch(
     }
   }
 )
+
+watch(
+  () => props.address,
+  () => {
+    search.value = ''
+  }
+)
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>

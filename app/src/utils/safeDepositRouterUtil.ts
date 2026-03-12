@@ -116,7 +116,10 @@ export function validateSherCompensationInputs(
  * @returns Formatted SHER amount
  */
 export function formatSherAmount(amount: string | number, decimals = 6): string {
-  const numValue = typeof amount === 'string' ? parseFloat(amount) : amount
+  const numValue =
+    typeof amount === 'string'
+      ? parseFloat(amount.replace(/,/g, '')) // Remove commas before parsing
+      : amount
 
   if (isNaN(numValue)) return '0'
 

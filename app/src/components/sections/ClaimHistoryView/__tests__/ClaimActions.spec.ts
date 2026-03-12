@@ -1,11 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
-import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
-import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
-import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
-import DeleteClaimModal from '@/components/sections/CashRemunerationView/DeleteClaimModal.vue'
 
 import type { Claim, SupportedTokens } from '@/types'
 
@@ -38,14 +34,24 @@ describe('ClaimActions', () => {
   }
 
   const createWrapper = () => {
-    const queryClient = new QueryClient()
     return mount(ClaimActions, {
       props: {
         claim: mockClaim
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
         stubs: {
+          EditClaims: {
+            name: 'EditClaims',
+            template: '<div data-test="edit-claims-stub" />',
+            props: ['claim'],
+            emits: ['close']
+          },
+          DeleteClaimModal: {
+            name: 'DeleteClaimModal',
+            template: '<div data-test="delete-claim-stub" />',
+            props: ['claim'],
+            emits: ['close']
+          },
           ModalComponent: {
             name: 'ModalComponent',
             template: '<div v-if="modelValue"><slot /></div>',
@@ -72,8 +78,8 @@ describe('ClaimActions', () => {
     it('should not render modals by default', () => {
       const wrapper = createWrapper()
 
-      expect(wrapper.findComponent(EditClaims).exists()).toBe(false)
-      expect(wrapper.findComponent(DeleteClaimModal).exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'DeleteClaimModal' }).exists()).toBe(false)
     })
   })
 
@@ -84,7 +90,7 @@ describe('ClaimActions', () => {
       await wrapper.find('[data-test="edit-claim-button"]').trigger('click')
       await nextTick()
 
-      const editModal = wrapper.findComponent(EditClaims)
+      const editModal = wrapper.findComponent({ name: 'EditClaims' })
       expect(editModal.exists()).toBe(true)
     })
 
@@ -95,7 +101,7 @@ describe('ClaimActions', () => {
       await wrapper.find('[data-test="edit-claim-button"]').trigger('click')
       await nextTick()
 
-      const editModal = wrapper.findComponent(EditClaims)
+      const editModal = wrapper.findComponent({ name: 'EditClaims' })
       expect(editModal.exists()).toBe(true)
 
       // Emit close event
@@ -103,7 +109,7 @@ describe('ClaimActions', () => {
       await nextTick()
 
       // Modal should be closed
-      expect(wrapper.findComponent(EditClaims).exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(false)
     })
 
     it('should pass correct props to edit modal', async () => {
@@ -112,7 +118,7 @@ describe('ClaimActions', () => {
       await wrapper.find('[data-test="edit-claim-button"]').trigger('click')
       await nextTick()
 
-      const editModal = wrapper.findComponent(EditClaims)
+      const editModal = wrapper.findComponent({ name: 'EditClaims' })
       expect(editModal.props('claim')).toEqual(mockClaim)
     })
   })
@@ -124,7 +130,7 @@ describe('ClaimActions', () => {
       await wrapper.find('[data-test="delete-claim-button"]').trigger('click')
       await nextTick()
 
-      const deleteModal = wrapper.findComponent(DeleteClaimModal)
+      const deleteModal = wrapper.findComponent({ name: 'DeleteClaimModal' })
       expect(deleteModal.exists()).toBe(true)
     })
 
@@ -135,7 +141,7 @@ describe('ClaimActions', () => {
       await wrapper.find('[data-test="delete-claim-button"]').trigger('click')
       await nextTick()
 
-      const deleteModal = wrapper.findComponent(DeleteClaimModal)
+      const deleteModal = wrapper.findComponent({ name: 'DeleteClaimModal' })
       expect(deleteModal.exists()).toBe(true)
 
       // Emit close event
@@ -143,7 +149,7 @@ describe('ClaimActions', () => {
       await nextTick()
 
       // Modal should be closed
-      expect(wrapper.findComponent(DeleteClaimModal).exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'DeleteClaimModal' }).exists()).toBe(false)
     })
 
     it('should pass correct props to delete modal', async () => {
@@ -152,7 +158,7 @@ describe('ClaimActions', () => {
       await wrapper.find('[data-test="delete-claim-button"]').trigger('click')
       await nextTick()
 
-      const deleteModal = wrapper.findComponent(DeleteClaimModal)
+      const deleteModal = wrapper.findComponent({ name: 'DeleteClaimModal' })
       expect(deleteModal.props('claim')).toEqual(mockClaim)
     })
   })
@@ -165,11 +171,11 @@ describe('ClaimActions', () => {
       await wrapper.find('[data-test="edit-claim-button"]').trigger('click')
       await nextTick()
 
-      expect(wrapper.findComponent(EditClaims).exists()).toBe(true)
-      expect(wrapper.findComponent(DeleteClaimModal).exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(true)
+      expect(wrapper.findComponent({ name: 'DeleteClaimModal' }).exists()).toBe(false)
 
       // Close edit modal
-      const editModal = wrapper.findComponent(EditClaims)
+      const editModal = wrapper.findComponent({ name: 'EditClaims' })
       editModal.vm.$emit('close')
       await nextTick()
 
@@ -177,8 +183,8 @@ describe('ClaimActions', () => {
       await wrapper.find('[data-test="delete-claim-button"]').trigger('click')
       await nextTick()
 
-      expect(wrapper.findComponent(EditClaims).exists()).toBe(false)
-      expect(wrapper.findComponent(DeleteClaimModal).exists()).toBe(true)
+      expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'DeleteClaimModal' }).exists()).toBe(true)
     })
 
     it('should allow both modals to be opened and closed independently', async () => {
@@ -190,24 +196,24 @@ describe('ClaimActions', () => {
       await wrapper.find('[data-test="delete-claim-button"]').trigger('click')
       await nextTick()
 
-      expect(wrapper.findComponent(EditClaims).exists()).toBe(true)
-      expect(wrapper.findComponent(DeleteClaimModal).exists()).toBe(true)
+      expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(true)
+      expect(wrapper.findComponent({ name: 'DeleteClaimModal' }).exists()).toBe(true)
 
       // Close edit modal
-      const editModal = wrapper.findComponent(EditClaims)
+      const editModal = wrapper.findComponent({ name: 'EditClaims' })
       editModal.vm.$emit('close')
       await nextTick()
 
-      expect(wrapper.findComponent(EditClaims).exists()).toBe(false)
-      expect(wrapper.findComponent(DeleteClaimModal).exists()).toBe(true)
+      expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'DeleteClaimModal' }).exists()).toBe(true)
 
       // Close delete modal
-      const deleteModal = wrapper.findComponent(DeleteClaimModal)
+      const deleteModal = wrapper.findComponent({ name: 'DeleteClaimModal' })
       deleteModal.vm.$emit('close')
       await nextTick()
 
-      expect(wrapper.findComponent(EditClaims).exists()).toBe(false)
-      expect(wrapper.findComponent(DeleteClaimModal).exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'DeleteClaimModal' }).exists()).toBe(false)
     })
   })
 
@@ -237,7 +243,7 @@ describe('ClaimActions', () => {
       await nextTick()
 
       // Modal should still be open
-      expect(wrapper.findComponent(EditClaims).exists()).toBe(true)
+      expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(true)
     })
   })
 
@@ -248,7 +254,7 @@ describe('ClaimActions', () => {
       // Open via button
       await wrapper.find('[data-test="edit-claim-button"]').trigger('click')
       await nextTick()
-      expect(wrapper.findComponent(EditClaims).exists()).toBe(true)
+      expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(true)
 
       // Find ModalComponent for edit and emit update to close
       const editModalWrapper = wrapper.findComponent({ name: 'ModalComponent' })
@@ -256,7 +262,7 @@ describe('ClaimActions', () => {
       editModalWrapper.vm.$emit('update:modelValue', false)
       await nextTick()
 
-      expect(wrapper.findComponent(EditClaims).exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(false)
     })
 
     it('should respond to v-model changes on ModalComponent (delete)', async () => {
@@ -265,7 +271,7 @@ describe('ClaimActions', () => {
       // Open via button
       await wrapper.find('[data-test="delete-claim-button"]').trigger('click')
       await nextTick()
-      expect(wrapper.findComponent(DeleteClaimModal).exists()).toBe(true)
+      expect(wrapper.findComponent({ name: 'DeleteClaimModal' }).exists()).toBe(true)
 
       // Get the second ModalComponent (delete)
       const modalComponents = wrapper.findAllComponents({ name: 'ModalComponent' })
@@ -273,7 +279,7 @@ describe('ClaimActions', () => {
       deleteModalWrapper.vm.$emit('update:modelValue', false)
       await nextTick()
 
-      expect(wrapper.findComponent(DeleteClaimModal).exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'DeleteClaimModal' }).exists()).toBe(false)
     })
   })
 })

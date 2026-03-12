@@ -7,6 +7,7 @@ import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.jso
 import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
 import publicClient from '../utils/viem.config';
 import { getPresignedDownloadUrl } from '../services/storageService';
+import { isUserMemberOfTeam } from './wageController';
 
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
@@ -237,6 +238,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 };
 
 export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
+  const callerAddress = req.address;
   const teamId = Number(req.query.teamId);
   const status = req.query.status as string;
 
@@ -244,9 +246,22 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
     return errorResponse(400, 'Missing or invalid teamId', res);
   }
 
+  const rawFilterAddress = (req.query.userAddress ??
+    req.query.memberAddress ??
+    req.query.address) as string | undefined;
+  const filterAddress = rawFilterAddress?.trim();
   let memberAddressFilter: Prisma.WeeklyClaimWhereInput = {};
-  if (req.query.memberAddress) {
-    memberAddressFilter = { memberAddress: req.query.memberAddress as string };
+  if (filterAddress) {
+    if (!isAddress(filterAddress)) {
+      return errorResponse(400, 'Invalid member address', res);
+    }
+
+    memberAddressFilter = {
+      memberAddress: {
+        equals: filterAddress,
+        mode: 'insensitive',
+      },
+    };
   }
 
   //create filter for the statut pending, signed or withdrawn
@@ -269,22 +284,35 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   }
 
   try {
-    // Get all WeeklyClaims that have at least one claim for this team
+    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
+      return errorResponse(403, 'Caller is not a member of the team', res);
+    }
+    console.log({ teamId, ...memberAddressFilter, ...statusFilter });
+
+    // Filter directly on WeeklyClaim team/member to avoid leaking other members' records.
     const weeklyClaims = await prisma.weeklyClaim.findMany({
       where: {
-        claims: {
-          some: {
-            wage: {
-              teamId: teamId,
-            },
-          },
-        },
+        teamId,
         ...memberAddressFilter,
         ...statusFilter,
       },
       include: {
         wage: true,
-        claims: true,
+        claims: {
+          where: {
+            wage: {
+              teamId,
+              ...(filterAddress
+                ? {
+                    userAddress: {
+                      equals: filterAddress,
+                      mode: 'insensitive',
+                    },
+                  }
+                : {}),
+            },
+          },
+        },
         member: {
           select: {
             address: true,
@@ -328,6 +356,7 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
 };
 
 export const syncWeeklyClaims = async (req: Request, res: Response) => {
+  const callerAddress = req.address;
   const teamId = Number(req.query.teamId);
 
   if (!teamId || Number.isNaN(teamId)) {
@@ -335,6 +364,10 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
   }
 
   try {
+    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
+      return errorResponse(403, 'Caller is not a member of the team', res);
+    }
+
     const teamContract = await prisma.teamContract.findFirst({
       where: {
         teamId,
