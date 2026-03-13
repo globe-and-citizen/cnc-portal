@@ -1,8 +1,8 @@
 // routes/storageRoute.ts
-import express, { Request, Response } from 'express';
+import express from 'express';
 import { authorizeUser } from '../middleware/authMiddleware';
-import { getPresignedDownloadUrl, PRESIGNED_URL_EXPIRATION } from '../services/storageService';
 import { validateQuery, getPresignedUrlQuerySchema } from '../validation';
+import { getFileUrl } from '../controllers/storageController';
 
 const storageRouter = express.Router();
 
@@ -85,38 +85,7 @@ const storageRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-storageRouter.get(
-  '/url',
-  authorizeUser,
-  validateQuery(getPresignedUrlQuerySchema),
-  async (req: Request, res: Response) => {
-    try {
-      const { key, expiresIn } = req.query as { key: string; expiresIn?: string };
-
-      let expirationSeconds = PRESIGNED_URL_EXPIRATION;
-      if (expiresIn) {
-        const parsedExpiration = parseInt(expiresIn, 10);
-        if (!isNaN(parsedExpiration) && parsedExpiration > 0) {
-          expirationSeconds = Math.min(parsedExpiration, 604800);
-        }
-      }
-
-      const url = await getPresignedDownloadUrl(key, expirationSeconds);
-
-      res.json({
-        url,
-        expiresIn: expirationSeconds,
-      });
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      console.error('Error generating presigned URL:', err);
-      res.status(500).json({
-        error: 'Failed to generate file URL',
-        details: errorMessage,
-      });
-    }
-  }
-);
+storageRouter.get('/url', authorizeUser, validateQuery(getPresignedUrlQuerySchema), getFileUrl);
 
 // Note: The /download/* route is commented out as it's redundant.
 // The frontend already receives fileUrl from upload, and can use /file/url

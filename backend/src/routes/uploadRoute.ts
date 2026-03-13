@@ -1,6 +1,6 @@
 import express from 'express';
 import { upload } from '../utils/upload';
-import { MAX_FILES_PER_CLAIM } from '../services/storageService';
+import { MAX_FILES_UPLOAD } from '../services/storageService';
 import { uploadManyFiles } from '../controllers/uploadController';
 
 const uploadRouter = express.Router();
@@ -93,6 +93,6 @@ const uploadRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-uploadRouter.post('/', upload.array('files', MAX_FILES_PER_CLAIM), uploadManyFiles);
+uploadRouter.post('/', upload.array('files', MAX_FILES_UPLOAD), uploadManyFiles);
 
 export default uploadRouter;
