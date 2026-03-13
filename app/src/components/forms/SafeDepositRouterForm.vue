@@ -103,7 +103,8 @@ const { data: tokenSymbol, isLoading: isTokenSymbolLoading } = useInvestorSymbol
 
 // Format multiplier for display using utility function
 const formattedMultiplier = computed(() => {
-  return formatSafeDepositRouterMultiplier(multiplier.value)
+  const safeMultiplier = typeof multiplier.value === 'bigint' ? multiplier.value : undefined
+  return formatSafeDepositRouterMultiplier(safeMultiplier)
 })
 
 // Numeric multiplier for calculations

@@ -11,8 +11,8 @@
             v-if="
               isLoadingTokenSymbol ||
               isLoadingInvestorsOwner ||
-              !tokenSymbol ||
-              !investorsOwner ||
+              !safeTokenSymbol ||
+              !safeInvestorsOwner ||
               !investorAddress
             "
           >
@@ -22,16 +22,19 @@
           </template>
           <template v-else>
             <DistributeMintAction
-              :token-symbol="tokenSymbol"
+              :token-symbol="safeTokenSymbol"
               :investors-address="investorAddress"
             />
-            <MintTokenAction :token-symbol="tokenSymbol" :investors-owner="investorsOwner" />
+            <MintTokenAction
+              :token-symbol="safeTokenSymbol"
+              :investors-owner="safeInvestorsOwner"
+            />
 
             <PayDividendsAction
-              :token-symbol="tokenSymbol"
-              :shareholders-count="shareholders?.length ?? 0"
+              :token-symbol="safeTokenSymbol"
+              :shareholders-count="safeShareholders.length"
               :investors-address="investorAddress"
-              :investors-owner="investorsOwner"
+              :investors-owner="safeInvestorsOwner"
               :bank-address="bankAddress"
             />
             <ToggleSherCompensationButton />
@@ -45,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import { log } from '@/utils'
 import CardComponent from '@/components/CardComponent.vue'
@@ -78,9 +81,15 @@ const {
   error: tokenSymbolError,
   isLoading: isLoadingTokenSymbol
 } = useInvestorSymbol()
+const safeTokenSymbol = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : ''
+)
 
 // Get shareholders list
 const { data: shareholders, error: shareholderError } = useInvestorShareholders()
+const safeShareholders = computed(() =>
+  Array.isArray(shareholders.value) ? shareholders.value : ([] as string[])
+)
 
 // Get investors contract owner
 const {
@@ -88,6 +97,9 @@ const {
   error: errorInvestorsOwner,
   isLoading: isLoadingInvestorsOwner
 } = useInvestorOwner()
+const safeInvestorsOwner = computed(() =>
+  typeof investorsOwner.value === 'string' ? investorsOwner.value : ''
+)
 
 // Watch for errors and display toast notifications
 watch(tokenSymbolError, (value) => {
