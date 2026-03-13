@@ -34,7 +34,10 @@ import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
-import { useDepositDividends, useDepositTokenDividends } from '@/composables/investor/writes'
+import {
+  useDistributeNativeDividends,
+  useDistributeTokenDividends
+} from '@/composables/bank/writes'
 import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils'
 import type { TokenId } from '@/constant'
 
@@ -58,15 +61,17 @@ const modalState = ref({
 
 const depositAmount = ref<bigint>(0n)
 const depositTokenAddress = ref<Address>(zeroAddress)
-const investorAddress = computed(() => teamStore.getContractAddressByType('InvestorV1') as Address)
 
-const depositDividendsWrite = useDepositDividends(depositAmount)
-const depositTokenDividendsWrite = useDepositTokenDividends(depositTokenAddress, depositAmount)
+const distributeNativeDividendsWrite = useDistributeNativeDividends(depositAmount)
+const distributeTokenDividendsWrite = useDistributeTokenDividends(
+  depositTokenAddress,
+  depositAmount
+)
 
 const isBankWriteLoading = computed(
   () =>
-    depositDividendsWrite.writeResult.isPending.value ||
-    depositTokenDividendsWrite.writeResult.isPending.value
+    distributeNativeDividendsWrite.writeResult.isPending.value ||
+    distributeTokenDividendsWrite.writeResult.isPending.value
 )
 
 const addActionComposable = useBodAddAction()
@@ -107,17 +112,16 @@ const closeModal = () => {
 }
 
 const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
+  if (value <= 0n) return
+
   if (isBodAction.value) {
-    if (!props.investorsAddress) return
-    const investorAddr = investorAddress.value
-    if (!investorAddr) return
+    if (!props.bankAddress) return
     const data = encodeFunctionData({
       abi: BANK_ABI,
-      functionName: selectedTokenId === 'native' ? 'depositDividends' : 'depositTokenDividends',
+      functionName:
+        selectedTokenId === 'native' ? 'distributeNativeDividends' : 'distributeTokenDividends',
       args:
-        selectedTokenId === 'native'
-          ? [value, investorAddr]
-          : [tokenSymbolAddresses[selectedTokenId] as Address, value, investorAddr]
+        selectedTokenId === 'native' ? [value] : [tokenSymbolAddresses[selectedTokenId] as Address, value]
     })
 
     const description = JSON.stringify({
@@ -131,23 +135,19 @@ const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
       data
     })
   } else {
-    const investorAddr = investorAddress.value
-    if (!investorAddr) return
     depositAmount.value = value
 
     if (selectedTokenId === 'native') {
-      const result = await depositDividendsWrite.executeWrite([value], value)
-      if (!result) throw new Error('Deposit failed')
+      const result = await distributeNativeDividendsWrite.executeWrite([value])
+      if (!result) return
     } else {
       depositTokenAddress.value = tokenSymbolAddresses[selectedTokenId] as Address
-      console.log('Depositing token')
-      const result = await depositTokenDividendsWrite.executeWrite([
+      const result = await distributeTokenDividendsWrite.executeWrite([
         depositTokenAddress.value,
         value
       ])
 
-      console.log('Deposit token result', result)
-      if (!result) throw new Error('Deposit failed')
+      if (!result) return
     }
 
     closeModal()
