@@ -60,7 +60,9 @@ const emits = defineEmits<{
 }>()
 
 const { data: tokenSymbol } = useInvestorSymbol()
-const safeTokenSymbol = computed(() => (typeof tokenSymbol.value === 'string' ? tokenSymbol.value : ''))
+const safeTokenSymbol = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : ''
+)
 
 // Format the rate for display using utility function
 const formattedRate = computed(() => {

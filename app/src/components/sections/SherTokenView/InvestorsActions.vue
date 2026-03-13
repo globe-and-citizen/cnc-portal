@@ -25,7 +25,10 @@
               :token-symbol="safeTokenSymbol"
               :investors-address="investorAddress"
             />
-            <MintTokenAction :token-symbol="safeTokenSymbol" :investors-owner="safeInvestorsOwner" />
+            <MintTokenAction
+              :token-symbol="safeTokenSymbol"
+              :investors-owner="safeInvestorsOwner"
+            />
 
             <PayDividendsAction
               :token-symbol="safeTokenSymbol"
@@ -78,7 +81,9 @@ const {
   error: tokenSymbolError,
   isLoading: isLoadingTokenSymbol
 } = useInvestorSymbol()
-const safeTokenSymbol = computed(() => (typeof tokenSymbol.value === 'string' ? tokenSymbol.value : ''))
+const safeTokenSymbol = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : ''
+)
 
 // Get shareholders list
 const { data: shareholders, error: shareholderError } = useInvestorShareholders()
