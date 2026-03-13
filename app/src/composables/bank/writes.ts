@@ -35,6 +35,21 @@ export function useDepositToken(token: MaybeRef<Address>, amount: MaybeRef<bigin
   })
 }
 
+export function useDistributeNativeDividends(amount: MaybeRef<bigint>) {
+  const args = computed(() => [unref(amount)] as readonly unknown[])
+  return useBankContractWrite({
+    functionName: 'distributeNativeDividends',
+    args
+  })
+}
+export function useDistributeTokenDividends(token: MaybeRef<Address>, amount: MaybeRef<bigint>) {
+  const args = computed(() => [unref(token), unref(amount)] as readonly unknown[])
+  return useBankContractWrite({
+    functionName: 'distributeTokenDividends',
+    args
+  })
+}
+
 export function useAddTokenSupport(tokenAddress: MaybeRef<Address>) {
   return useBankContractWrite({
     functionName: 'addTokenSupport',
