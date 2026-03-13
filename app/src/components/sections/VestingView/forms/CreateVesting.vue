@@ -395,7 +395,10 @@ async function submit() {
   }
 
   await getAllowance()
-  if (typeof allowance.value === 'bigint' && Number(formatUnits(allowance.value, 6)) < totalAmount.value) {
+  if (
+    typeof allowance.value === 'bigint' &&
+    Number(formatUnits(allowance.value, 6)) < totalAmount.value
+  ) {
     addErrorToast('Allowance is less than the total amount')
     return
   }

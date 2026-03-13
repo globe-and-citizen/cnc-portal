@@ -121,7 +121,9 @@ const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
       functionName:
         selectedTokenId === 'native' ? 'distributeNativeDividends' : 'distributeTokenDividends',
       args:
-        selectedTokenId === 'native' ? [value] : [tokenSymbolAddresses[selectedTokenId] as Address, value]
+        selectedTokenId === 'native'
+          ? [value]
+          : [tokenSymbolAddresses[selectedTokenId] as Address, value]
     })
 
     const description = JSON.stringify({

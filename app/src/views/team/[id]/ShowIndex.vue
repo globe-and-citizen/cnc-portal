@@ -84,10 +84,13 @@ onMounted(() => {
 })
 
 watch(teamStore.currentTeamMeta, () => {
-  if(teamStore.currentTeamId && teamStore.currentTeamMeta.data?.officerAddress && teamStore.currentTeamMeta.data?.teamContracts.length === 0) {
+  if (
+    teamStore.currentTeamId &&
+    teamStore.currentTeamMeta.data?.officerAddress &&
+    teamStore.currentTeamMeta.data?.teamContracts.length === 0
+  ) {
     syncContracts({ body: { teamId: teamStore.currentTeamId } })
   }
-
 })
 
 const hasContract = computed(() => {

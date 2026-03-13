@@ -58,7 +58,6 @@ type ERC20TokenBalanceEntry = {
 }
 type TokenBalanceEntry = NativeTokenBalanceEntry | ERC20TokenBalanceEntry
 
-
 // TODO: support reactive address changes
 /**
  * @description Composable to fetch and compute balances for an address
