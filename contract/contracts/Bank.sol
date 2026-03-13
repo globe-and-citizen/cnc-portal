@@ -100,30 +100,23 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   }
 
   /**
-   * @notice Returns the amount of ETH/native tokens available for transfers (not locked as dividends)
-   * @dev Calculates unlocked balance by subtracting total dividends from contract balance
-   * @return The amount of ETH/native tokens that can be transferred by the owner
+   * @notice Returns the current ETH/native token balance held by the contract.
+   * @return Current balance in wei.
    */
-  function getUnlockedBalance() public view returns (uint256) {
+  function getBalance() public view returns (uint256) {
     return address(this).balance;
   }
 
   /**
-   * @notice Returns the amount of ERC20 tokens available for transfers
-   * @dev Returns the total balance of tokens held by the contract
-   * @param _token The address of the ERC20 token contract
-   * @return The amount of tokens that can be transferred by the owner
+   * @notice Returns the current ERC20 token balance held by the contract.
+   * @param _token The address of the ERC20 token contract.
+   * @return Current token balance.
    */
-  function getUnlockedTokenBalance(address _token) public view returns (uint256) {
+  function getTokenBalance(address _token) public view returns (uint256) {
     require(_isTokenSupported(_token), 'Unsupported token');
     return IERC20(_token).balanceOf(address(this));
   }
 
-  /**
-   * @dev Modifier to ensure that only unlocked ETH balance is used for transfers
-   * @param _amount The amount to be checked against unlocked balance
-   * @custom:security Prevents spending of funds allocated as dividends
-   */
   /**
    * @notice Fallback function to receive ETH deposits
    * @dev Automatically emits Deposited event when ETH is sent to the contract
@@ -157,7 +150,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   function transfer(address _to, uint256 _amount) external onlyOwner nonReentrant whenNotPaused {
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
-    require(_amount <= address(this).balance, 'Insufficient unlocked balance');
+    require(_amount <= address(this).balance, 'Insufficient balance');
 
     // --- Step 1: Get fee configuration ---
     uint16 feeBps = _getFeeBps(); // e.g., 50 = 0.5%
@@ -204,7 +197,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     require(_isTokenSupported(_token), 'Unsupported token');
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
-    require(_amount <= getUnlockedTokenBalance(_token), 'Insufficient unlocked token balance');
+    require(_amount <= getTokenBalance(_token), 'Insufficient token balance');
 
     // Check if this is a fee-supported token (USDC or USDT)
     bool shouldChargeFee = _isSupportedFeeToken(_token);

@@ -514,11 +514,6 @@
         "type": "address"
       },
       {
-        "internalType": "address",
-        "name": "_investorAddress",
-        "type": "address"
-      },
-      {
         "internalType": "address[]",
         "name": "_tokenAddresses",
         "type": "address[]"
@@ -532,19 +527,6 @@
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "investorAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

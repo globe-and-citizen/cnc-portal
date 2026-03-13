@@ -37,12 +37,12 @@ interface IBank is IPausable, IOwnable, ITokenSupport {
   function transferToken(address _token, address _to, uint256 _amount) external;
 
   // ============ Balance Queries ============
-  /// @notice Get unlocked ETH balance
-  /// @return Unlocked balance in wei
-  function getUnlockedBalance() external view returns (uint256);
+  /// @notice Get current ETH balance
+  /// @return Current balance in wei
+  function getBalance() external view returns (uint256);
 
   /// @notice Get token balance
   /// @param _token Token address
-  /// @return Token balance
+  /// @return Current token balance
   function getTokenBalance(address _token) external view returns (uint256);
 }

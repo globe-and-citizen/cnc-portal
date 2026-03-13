@@ -2,13 +2,13 @@
 pragma solidity ^0.8.24;
 
 import './Types.sol';
-import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
 import 'hardhat/console.sol';
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import {IOfficer} from '../interfaces/IOfficer.sol';
+import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
 
 /// @title Voting Contract for Decentralized Governance
 /// @notice This contract manages proposals, elections, and voting processes

@@ -114,25 +114,6 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "previousAddress",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newAddress",
-        "type": "address"
-      }
-    ],
-    "name": "InvestorAddressUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
         "name": "previousOwner",
         "type": "address"
       },
@@ -312,6 +293,19 @@
   },
   {
     "inputs": [],
+    "name": "getBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getSupportedTokenCount",
     "outputs": [
       {
@@ -337,19 +331,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getUnlockedBalance",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -357,7 +338,7 @@
         "type": "address"
       }
     ],
-    "name": "getUnlockedTokenBalance",
+    "name": "getTokenBalance",
     "outputs": [
       {
         "internalType": "uint256",
@@ -384,19 +365,6 @@
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "investorAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -480,19 +448,6 @@
   {
     "inputs": [],
     "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_investorAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setInvestorAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
