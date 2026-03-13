@@ -5,7 +5,11 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authorizeUser } from '../../middleware/authMiddleware';
 import teamRoutes from '../../routes/teamRoutes';
-import { prisma } from '../../utils';
+import { addNotification, prisma } from '../../utils';
+
+const { mockGetPresignedDownloadUrl } = vi.hoisted(() => ({
+  mockGetPresignedDownloadUrl: vi.fn((key: string) => `https://signed.example.com/${key}`),
+}));
 
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
@@ -68,6 +72,10 @@ vi.mock('../../utils/viem.config', () => ({
   default: {
     readContract: vi.fn(),
   },
+}));
+
+vi.mock('../../services/storageService', () => ({
+  getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
 }));
 
 const app = express();
@@ -180,6 +188,59 @@ describe('Team Controller', () => {
       expect(response.status).toBe(500);
       expect(response.body.message).toEqual('Internal server error has occured');
     });
+
+    it('should create team with null officer address when not provided', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
+      vi.spyOn(prisma.team, 'create').mockResolvedValue(teamMockResolve);
+
+      const response = await request(app).post('/').send({
+        name: 'No Officer Team',
+        description: 'desc',
+        members: mockTeamData.members,
+      });
+
+      expect(response.status).toBe(201);
+      expect(prisma.team.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ officerAddress: null }),
+        })
+      );
+    });
+
+    it('should fallback notification author to empty string when owner address is missing', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        ...mockOwner,
+        address: undefined,
+      } as unknown as User);
+      vi.spyOn(prisma.team, 'create').mockResolvedValue(teamMockResolve);
+
+      const response = await request(app)
+        .post('/')
+        .send({
+          ...mockTeamData,
+          members: [
+            {
+              address: '0x1234567890123456789012345678901234567890',
+              name: 'Caller',
+            },
+          ],
+        });
+
+      expect(response.status).toBe(201);
+      expect(vi.mocked(addNotification)).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.objectContaining({ author: '' })
+      );
+    });
+
+    it('should return 500 when addTeam throws non-Error value', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockRejectedValue('boom' as never);
+
+      const response = await request(app).post('/').send(mockTeamData);
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error has occured');
+    });
   });
 
   describe('getTeam', () => {
@@ -229,6 +290,15 @@ describe('Team Controller', () => {
       vi.spyOn(prisma.team, 'findUnique').mockRejectedValue(new Error('DB failure'));
 
       const response = await request(app).get('/1').query({ teamId: 1 }).set('address', '0xABC');
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error has occured');
+    });
+
+    it('should return 500 if getTeam throws non-Error value', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockRejectedValue('failure' as never);
+
+      const response = await request(app).get('/1');
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
@@ -334,6 +404,15 @@ describe('Team Controller', () => {
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
     });
+
+    it('should return 500 if getAllTeams throws non-Error value', async () => {
+      vi.spyOn(prisma.team, 'findMany').mockRejectedValue('failure' as never);
+
+      const response = await request(app).get('/');
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error has occured');
+    });
   });
 
   describe('updateTeam', () => {
@@ -426,6 +505,15 @@ describe('Team Controller', () => {
       expect(response.status).toBe(500);
       expect(response.body.message).toEqual('Internal server error has occured');
     });
+
+    it('should return 500 when updateTeam throws non-Error value', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockRejectedValue('failure' as never);
+
+      const response = await request(app).put('/1').send(mockTeamData);
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toEqual('Internal server error has occured');
+    });
   });
 
   describe('deleteTeam', () => {
@@ -497,6 +585,15 @@ describe('Team Controller', () => {
     it('should return 500 if there is a server error', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamMockResolve);
       vi.spyOn(prisma.team, 'delete').mockRejectedValue(new Error('Server error'));
+
+      const response = await request(app).delete('/1').set('address', '0xOwnerAddress');
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toEqual('Internal server error has occured');
+    });
+
+    it('should return 500 when deleteTeam throws non-Error value', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockRejectedValue('failure' as never);
 
       const response = await request(app).delete('/1').set('address', '0xOwnerAddress');
 

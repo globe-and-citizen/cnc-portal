@@ -4,12 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import weeklyClaimRoutes from '../../routes/weeklyClaimRoute';
 import { prisma } from '../../utils';
 import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
+import { isUserMemberOfTeam } from '../../controllers/wageController';
 import type { Address } from 'viem';
 
 const CALLER = '0x1234567890123456789012345678901234567890';
 
 const { mockGetPresignedDownloadUrl } = vi.hoisted(() => ({
-  mockGetPresignedDownloadUrl: vi.fn(),
+  mockGetPresignedDownloadUrl: vi.fn(
+    (key: string) => `https://storage.railway.app/test-bucket/${key}`
+  ),
 }));
 
 const { readContractMock } = vi.hoisted(() => ({
@@ -31,6 +34,10 @@ vi.mock('../../middleware/authMiddleware', () => ({
 
 vi.mock('../../utils/cashRemunerationUtil', () => ({
   isCashRemunerationOwner: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock('../../controllers/wageController', () => ({
+  isUserMemberOfTeam: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock('../../utils/viem.config', () => ({
@@ -307,6 +314,14 @@ describe('Weekly Claim Controller', () => {
   });
 
   describe('GET /', () => {
+    it('should return 403 if caller is not team member', async () => {
+      vi.mocked(isUserMemberOfTeam).mockResolvedValueOnce(false);
+
+      const response = await request(app).get('/?teamId=1');
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ message: 'Caller is not a member of the team' });
+    });
+
     it('should return 400 if teamId is missing', async () => {
       const response = await request(app).get('/');
       expect(response.status).toBe(400);
@@ -321,14 +336,22 @@ describe('Weekly Claim Controller', () => {
       });
     });
 
+    it('should return 400 if memberAddress is invalid', async () => {
+      const response = await request(app).get('/?teamId=1&memberAddress=invalid-address');
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ message: 'Invalid member address' });
+    });
+
     it('should return filtered claims and refresh attachment URLs', async () => {
+      const memberAddress = '0x000000000000000000000000000000000000dEaD';
+
       mockGetPresignedDownloadUrl
         .mockResolvedValueOnce('fresh-1')
         .mockRejectedValueOnce(new Error('presign failed'));
 
       const weeklyClaims = [
         {
-          ...weeklyClaimFactory({ id: 1, memberAddress: '0xAnotherAddress', status: null }),
+          ...weeklyClaimFactory({ id: 1, memberAddress, status: null }),
           claims: [
             {
               id: 101,
@@ -366,12 +389,16 @@ describe('Weekly Claim Controller', () => {
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue(weeklyClaims as any);
 
       const response = await request(app).get(
-        '/?teamId=1&status=pending&memberAddress=0xAnotherAddress'
+        `/?teamId=1&status=pending&memberAddress=${memberAddress}`
       );
       expect(response.status).toBe(200);
       expect(prisma.weeklyClaim.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ memberAddress: '0xAnotherAddress', status: 'pending' }),
+          where: expect.objectContaining({
+            teamId: 1,
+            memberAddress: { equals: memberAddress, mode: 'insensitive' },
+            status: 'pending',
+          }),
         })
       );
 
@@ -412,6 +439,14 @@ describe('Weekly Claim Controller', () => {
       const response = await request(app).post('/sync');
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ message: 'Missing or invalid teamId' });
+    });
+
+    it('should return 403 if caller is not team member', async () => {
+      vi.mocked(isUserMemberOfTeam).mockResolvedValueOnce(false);
+
+      const response = await request(app).post('/sync?teamId=1');
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ message: 'Caller is not a member of the team' });
     });
 
     it.each([

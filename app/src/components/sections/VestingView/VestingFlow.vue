@@ -131,7 +131,6 @@ const investorsAddress = computed(() => {
 })
 
 // const selectedStatus = ref('all')
-
 // // Add handler
 // const handleStatusChange = (status: string) => {
 //   selectedStatus.value = status
@@ -152,6 +151,10 @@ const {
   address: investorsAddress,
   functionName: 'symbol'
 })
+
+const safeTokenSymbol = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : 'default'
+)
 
 const {
   data: archivedVestingInfos,
@@ -221,7 +224,7 @@ const vestings = computed<VestingRow[]>(() => {
           totalAmount: 0,
           released: 0,
           status: 'Inactive',
-          tokenSymbol: tokenSymbol?.value || 'default'
+          tokenSymbol: safeTokenSymbol.value
         }
       }
       const totalAmount = Number(formatUnits(v.totalAmount, 6))
@@ -246,7 +249,7 @@ const vestings = computed<VestingRow[]>(() => {
         totalAmount,
         released,
         status,
-        tokenSymbol: tokenSymbol?.value || 'default'
+        tokenSymbol: safeTokenSymbol.value
       }
     })
   )

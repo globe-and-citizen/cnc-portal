@@ -4,6 +4,7 @@ import { generateNonce, SiweMessage } from 'siwe';
 import { prisma } from '../utils';
 import { errorResponse, extractAddressAndNonce } from '../utils/utils';
 import { DEFAULT_USER_ROLES } from '../types/roles';
+import { resolveDefaultProfileImageUrl } from '../utils/profileImage.util';
 
 export const authenticateSiwe = async (req: Request, res: Response) => {
   try {
@@ -43,10 +44,8 @@ export const authenticateSiwe = async (req: Request, res: Response) => {
           address,
           nonce: newNonce,
           roles: DEFAULT_USER_ROLES,
-          // name: faker.person.firstName(),
-          // imageUrl: faker.image.avatar(),
           name: 'User',
-          imageUrl: `https://api.dicebear.com/9.x/bottts/svg?seed=${address}`,
+          imageUrl: resolveDefaultProfileImageUrl(address),
         },
       });
 

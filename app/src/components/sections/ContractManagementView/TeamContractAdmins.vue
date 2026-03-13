@@ -25,7 +25,7 @@
   <div id="admins-table" class="overflow-x-auto">
     <TableComponent
       :rows="
-        admins?.map((admin: Address, index: number) => ({
+        adminsList.map((admin: Address, index: number) => ({
           index: index + 1,
           address: admin,
           admin: admin
@@ -133,6 +133,10 @@ const {
   functionName: 'getAdminList',
   address: computed(() => props.contract?.address || ''),
   abi: AD_CAMPAIGN_MANAGER_ABI
+})
+
+const adminsList = computed<Address[]>(() => {
+  return Array.isArray(admins.value) ? (admins.value as Address[]) : []
 })
 
 watch(

@@ -4,43 +4,58 @@ import express, { Request, Response, NextFunction } from 'express';
 import { Readable } from 'stream';
 
 // Hoist mocks
-const { mockUploadSingle, mockUploadFile, mockGetPresignedDownloadUrl, mockIsStorageConfigured } =
+const { mockUploadArray, mockUploadFiles, mockGetPresignedDownloadUrl, mockIsStorageConfigured } =
   vi.hoisted(() => ({
-    mockUploadSingle: vi.fn((fieldName: string) => {
+    mockUploadArray: vi.fn((fieldName: string) => {
       return (req: Request, res: Response, next: NextFunction) => {
-        // Simulate multer adding file to request
-        if (req.body.hasFile) {
-          req.file = {
-            fieldname: fieldName,
-            originalname: 'test-image.jpg',
-            encoding: '7bit',
-            mimetype: 'image/jpeg',
-            buffer: Buffer.from('fake-image-data'),
-            stream: new Readable(),
-            destination: '',
-            filename: 'test-image.jpg',
-            path: '/tmp/test-image.jpg',
-            size: Buffer.from('fake-image-data').length,
-          };
+        // Simulate multer adding files to request
+        if (req.body.hasFiles) {
+          req.files = [
+            {
+              fieldname: fieldName,
+              originalname: 'test-image-1.jpg',
+              encoding: '7bit',
+              mimetype: 'image/jpeg',
+              buffer: Buffer.from('fake-image-data-1'),
+              stream: new Readable(),
+              destination: '',
+              filename: 'test-image-1.jpg',
+              path: '/tmp/test-image-1.jpg',
+              size: Buffer.from('fake-image-data-1').length,
+            },
+            {
+              fieldname: fieldName,
+              originalname: 'test-image-2.jpg',
+              encoding: '7bit',
+              mimetype: 'image/jpeg',
+              buffer: Buffer.from('fake-image-data-2'),
+              stream: new Readable(),
+              destination: '',
+              filename: 'test-image-2.jpg',
+              path: '/tmp/test-image-2.jpg',
+              size: Buffer.from('fake-image-data-2').length,
+            },
+          ];
         }
         next();
       };
     }),
-    mockUploadFile: vi.fn(),
+    mockUploadFiles: vi.fn(),
     mockGetPresignedDownloadUrl: vi.fn(),
     mockIsStorageConfigured: vi.fn(() => true),
   }));
 
 vi.mock('../../utils/upload', () => ({
   upload: {
-    single: mockUploadSingle,
+    array: mockUploadArray,
   },
 }));
 
 vi.mock('../../services/storageService', () => ({
-  uploadFile: mockUploadFile,
+  uploadFiles: mockUploadFiles,
   getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
   isStorageConfigured: mockIsStorageConfigured,
+  MAX_FILES_PER_CLAIM: 10,
   ALLOWED_MIMETYPES: [
     'image/png',
     'image/jpeg',
@@ -68,41 +83,61 @@ describe('uploadRoute', () => {
   });
 
   describe('POST /', () => {
-    it('should return 400 if no file is provided', async () => {
+    it('should return 400 if no files are provided', async () => {
       const response = await request(app).post('/').send({});
 
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ error: 'No file provided' });
+      expect(response.body).toEqual({ error: 'No files provided' });
     });
 
-    it('should upload file and return image URL with metadata', async () => {
-      const mockMetadata = {
+    it('should upload files and return urls with metadata', async () => {
+      const mockMetadata1 = {
         key: 'uploads/abc123hash.jpg',
         fileType: 'image/jpeg',
         fileSize: 1024,
       };
-      const mockPresignedUrl = 'https://storage.railway.app/bucket/uploads/abc123hash.jpg?signed';
+      const mockMetadata2 = {
+        key: 'uploads/def456hash.jpg',
+        fileType: 'image/jpeg',
+        fileSize: 2048,
+      };
 
-      mockUploadFile.mockResolvedValue({ success: true, metadata: mockMetadata });
-      mockGetPresignedDownloadUrl.mockResolvedValue(mockPresignedUrl);
+      mockUploadFiles.mockResolvedValue([
+        { success: true, metadata: mockMetadata1 },
+        { success: true, metadata: mockMetadata2 },
+      ]);
+      mockGetPresignedDownloadUrl
+        .mockResolvedValueOnce('https://storage.railway.app/bucket/uploads/abc123hash.jpg?signed')
+        .mockResolvedValueOnce('https://storage.railway.app/bucket/uploads/def456hash.jpg?signed');
 
-      const response = await request(app).post('/').send({ hasFile: true });
+      const response = await request(app).post('/').send({ hasFiles: true });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
-        fileUrl: mockPresignedUrl,
-        fileKey: mockMetadata.key,
-        metadata: mockMetadata,
+        files: [
+          {
+            fileUrl: 'https://storage.railway.app/bucket/uploads/abc123hash.jpg?signed',
+            fileKey: mockMetadata1.key,
+            metadata: mockMetadata1,
+          },
+          {
+            fileUrl: 'https://storage.railway.app/bucket/uploads/def456hash.jpg?signed',
+            fileKey: mockMetadata2.key,
+            metadata: mockMetadata2,
+          },
+        ],
+        count: 2,
       });
-      expect(mockUploadFile).toHaveBeenCalled();
-      expect(mockGetPresignedDownloadUrl).toHaveBeenCalledWith(mockMetadata.key, 86400);
+      expect(mockUploadFiles).toHaveBeenCalled();
+      expect(mockGetPresignedDownloadUrl).toHaveBeenCalledWith(mockMetadata1.key, 86400);
+      expect(mockGetPresignedDownloadUrl).toHaveBeenCalledWith(mockMetadata2.key, 86400);
     });
 
     it('should return 500 if upload fails', async () => {
       const errorMessage = 'Upload failed';
-      mockUploadFile.mockResolvedValue({ success: false, error: errorMessage });
+      mockUploadFiles.mockResolvedValue([{ success: false, error: errorMessage }]);
 
-      const response = await request(app).post('/').send({ hasFile: true });
+      const response = await request(app).post('/').send({ hasFiles: true });
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
@@ -114,20 +149,20 @@ describe('uploadRoute', () => {
     it.skip('should return 500 if storage is not configured', async () => {
       mockIsStorageConfigured.mockReturnValue(false);
 
-      const response = await request(app).post('/').send({ hasFile: true });
+      const response = await request(app).post('/').send({ hasFiles: true });
 
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Storage not configured');
     });
 
     it('should handle unexpected exceptions', async () => {
-      mockUploadFile.mockRejectedValue(new Error('Unexpected error'));
+      mockUploadFiles.mockRejectedValue(new Error('Unexpected error'));
 
-      const response = await request(app).post('/').send({ hasFile: true });
+      const response = await request(app).post('/').send({ hasFiles: true });
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
-        error: 'Failed to upload file',
+        error: 'Failed to upload files',
         details: 'Unexpected error',
       });
     });
