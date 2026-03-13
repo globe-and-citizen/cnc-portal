@@ -65,18 +65,12 @@ export function useFileUrl() {
     loading.value = true
     error.value = null
 
-    try {
-      const url = await getPresignedUrl(key)
-      if (!url) {
-        error.value = 'Failed to fetch file URL'
-      }
-      return url
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Unknown error'
-      return null
-    } finally {
-      loading.value = false
+    const url = await getPresignedUrl(key)
+    if (!url) {
+      error.value = 'Failed to fetch file URL'
     }
+    loading.value = false
+    return url
   }
 
   /**
