@@ -12,7 +12,7 @@ import './ITokenSupport.sol';
  * @dev Derived from: contracts/Bank.sol
  * @dev Note: not directly imported by production contracts; available for
  *      external consumers (e.g. frontend, off-chain tooling, future contracts).
- * Used by: InvestorV1 (for dividend distribution)
+ * Used by: InvestorV1 (for bank-funded dividend distribution)
  */
 interface IBank is IPausable, IOwnable, ITokenSupport {
   // ============ Deposits ============
@@ -35,6 +35,15 @@ interface IBank is IPausable, IOwnable, ITokenSupport {
   /// @param _to Recipient address
   /// @param _amount Amount to transfer
   function transferToken(address _token, address _to, uint256 _amount) external;
+
+  /// @notice Fund Investor and trigger native ETH dividends
+  /// @param _amount Total amount to distribute
+  function distributeNativeDividends(uint256 _amount) external;
+
+  /// @notice Fund Investor and trigger ERC20 dividends
+  /// @param _token Token address
+  /// @param _amount Total amount to distribute
+  function distributeTokenDividends(address _token, uint256 _amount) external;
 
   // ============ Balance Queries ============
   /// @notice Get current ETH balance

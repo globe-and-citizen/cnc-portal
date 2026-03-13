@@ -130,6 +130,11 @@ contract InvestorV1 is
     return bankAddress;
   }
 
+  modifier onlyBank() {
+    require(msg.sender == _getBankAddress(), 'Caller is not Bank');
+    _;
+  }
+
   /**
    * @notice Distributes native token (ETH) dividends directly to all shareholders
    * @param _amount Total amount to distribute in wei
@@ -138,8 +143,9 @@ contract InvestorV1 is
    */
   function distributeNativeDividends(
     uint256 _amount
-  ) external onlyOwner nonReentrant whenNotPaused {
+  ) external payable onlyBank nonReentrant whenNotPaused {
     require(_amount > 0, 'Amount must be greater than zero');
+    require(msg.value == _amount, 'Invalid native dividend funding');
 
     uint256 supply = totalSupply();
     require(supply > 0, 'No tokens minted');
@@ -164,11 +170,8 @@ contract InvestorV1 is
 
       if (share > 0) {
         (bool sent, ) = payable(shareholder).call{value: share}('');
-        if (sent) {
-          emit DividendPaid(shareholder, address(0), share);
-        } else {
-          emit DividendPaymentFailed(shareholder, address(0), share, 'Transfer failed');
-        }
+        require(sent, 'Transfer failed');
+        emit DividendPaid(shareholder, address(0), share);
         remaining -= share;
       }
     }
@@ -180,12 +183,12 @@ contract InvestorV1 is
    * @notice Distributes ERC20 token dividends directly to all shareholders
    * @param _token Address of the ERC20 token contract
    * @param _amount Total amount of tokens to distribute
-   * @dev Requires token approval from Bank contract prior to calling
+   * @dev Requires Bank to pre-fund this contract before calling
    */
   function distributeTokenDividends(
     address _token,
     uint256 _amount
-  ) external onlyOwner nonReentrant whenNotPaused {
+  ) external onlyBank nonReentrant whenNotPaused {
     require(_token != address(0), 'Invalid token address');
     require(_amount > 0, 'Amount must be greater than zero');
 
@@ -194,11 +197,10 @@ contract InvestorV1 is
 
     Shareholder[] memory currentShareholders = _getShareholders();
     require(currentShareholders.length > 0, 'No shareholders');
-
-    address bankAddress = _getBankAddress();
-
-    // Transfer tokens from Bank to this contract
-    IERC20(_token).safeTransferFrom(bankAddress, address(this), _amount);
+    require(
+      IERC20(_token).balanceOf(address(this)) >= _amount,
+      'Insufficient funded token balance'
+    );
 
     uint256 remaining = _amount;
 
@@ -215,17 +217,8 @@ contract InvestorV1 is
       }
 
       if (share > 0) {
-        try IERC20(_token).transfer(shareholder, share) returns (bool success) {
-          if (success) {
-            emit DividendPaid(shareholder, _token, share);
-          } else {
-            emit DividendPaymentFailed(shareholder, _token, share, 'Transfer returned false');
-          }
-        } catch Error(string memory reason) {
-          emit DividendPaymentFailed(shareholder, _token, share, reason);
-        } catch {
-          emit DividendPaymentFailed(shareholder, _token, share, 'Transfer reverted');
-        }
+        IERC20(_token).safeTransfer(shareholder, share);
+        emit DividendPaid(shareholder, _token, share);
         remaining -= share;
       }
     }

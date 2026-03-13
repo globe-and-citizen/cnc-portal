@@ -8,6 +8,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './base/TokenSupport.sol';
 import {IOfficer} from './interfaces/IOfficer.sol';
+import {IInvestorV1} from './interfaces/IInvestorV1.sol';
 
 contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, TokenSupport {
   using SafeERC20 for IERC20;
@@ -41,6 +42,11 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   event Transfer(address indexed sender, address indexed to, uint256 amount);
 
   event FeePaid(address indexed feeCollector, uint256 amount);
+  event DividendDistributionTriggered(
+    address indexed investor,
+    address indexed token,
+    uint256 totalAmount
+  );
   /**
    * @dev Emitted when ERC20 tokens are transferred from the contract.
    * @param sender The address that initiated the transfer (contract owner).
@@ -54,6 +60,22 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     address indexed token,
     uint256 amount
   );
+
+  /**
+   * @dev Resolves the deployed Investor contract from Officer.
+   * Tries "InvestorV1" first and falls back to "Investor" for compatibility.
+   */
+  function _getInvestorAddress() internal view returns (address) {
+    require(officerAddress != address(0), 'Officer address not configured');
+
+    address investorAddress = IOfficer(officerAddress).findDeployedContract('InvestorV1');
+    if (investorAddress == address(0)) {
+      investorAddress = IOfficer(officerAddress).findDeployedContract('Investor');
+    }
+
+    require(investorAddress != address(0), 'Investor contract not found');
+    return investorAddress;
+  }
 
   /**
    * @notice Initializes the Bank contract with supported tokens and owner
@@ -227,6 +249,42 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     // Transfer net amount to recipient
     IERC20(_token).safeTransfer(_to, net);
     emit TokenTransfer(msg.sender, _to, _token, net);
+  }
+
+  /**
+   * @notice Funds Investor and triggers native ETH dividend distribution
+   * @param _amount Total ETH amount to distribute
+   */
+  function distributeNativeDividends(
+    uint256 _amount
+  ) external onlyOwner nonReentrant whenNotPaused {
+    require(_amount > 0, 'Amount must be greater than zero');
+    require(_amount <= address(this).balance, 'Insufficient balance');
+
+    address investorAddress = _getInvestorAddress();
+    IInvestorV1(investorAddress).distributeNativeDividends{value: _amount}(_amount);
+
+    emit DividendDistributionTriggered(investorAddress, address(0), _amount);
+  }
+
+  /**
+   * @notice Funds Investor and triggers ERC20 dividend distribution
+   * @param _token Token address to distribute
+   * @param _amount Total token amount to distribute
+   */
+  function distributeTokenDividends(
+    address _token,
+    uint256 _amount
+  ) external onlyOwner nonReentrant whenNotPaused {
+    require(_isTokenSupported(_token), 'Unsupported token');
+    require(_amount > 0, 'Amount must be greater than zero');
+    require(_amount <= getTokenBalance(_token), 'Insufficient token balance');
+
+    address investorAddress = _getInvestorAddress();
+    IERC20(_token).safeTransfer(investorAddress, _amount);
+    IInvestorV1(investorAddress).distributeTokenDividends(_token, _amount);
+
+    emit DividendDistributionTriggered(investorAddress, _token, _amount);
   }
 
   /**

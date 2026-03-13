@@ -52,10 +52,12 @@ interface IInvestorV1 is IAccessControl, IOwnable, IPausable {
 
   // ============ Dividend Distribution ============
   /// @notice Distribute native ETH dividends to all shareholders
+  /// @dev Callable only by Bank and must be funded in the same call
   /// @param amount Total amount to distribute in wei
-  function distributeNativeDividends(uint256 amount) external;
+  function distributeNativeDividends(uint256 amount) external payable;
 
   /// @notice Distribute ERC20 token dividends to all shareholders
+  /// @dev Callable only by Bank after Bank pre-funds this contract
   /// @param token Address of the ERC20 token
   /// @param amount Total amount to distribute
   function distributeTokenDividends(address token, uint256 amount) external;
