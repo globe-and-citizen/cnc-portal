@@ -43,6 +43,23 @@ const config: HardhatUserConfig = {
   solidity: {
     version: '0.8.24',
     settings: {
+      // modelChecker: {
+      //   engine: 'chc',
+      //   solvers: ['z3'],
+      //   timeout: 10000,
+      //   targets: ['assert', 'overflow', 'divByZero', 'outOfBounds', 'balance'],
+      //   contracts: {
+      //     'contracts/Bank.sol': ['Bank'],
+      //     'contracts/Officer.sol': ['Officer'],
+      //     'contracts/Vesting.sol': ['Vesting'],
+      //     'contracts/Tips.sol': ['Tips'],
+      //     'contracts/FeeCollector.sol': ['FeeCollector'],
+      //     'contracts/BoardOfDirectors.sol': ['BoardOfDirectors'],
+      //     'contracts/CashRemunerationEIP712.sol': ['CashRemunerationEIP712'],
+      //     'contracts/AdCampaignManager.sol': ['AdCampaignManager'],
+      //     'contracts/SafeDepositRouter.sol': ['SafeDepositRouter']
+      //   }
+      // },
       optimizer: {
         // Toggles whether the optimizer is on or off.
         // It's good to keep it off for development
@@ -77,7 +94,7 @@ const config: HardhatUserConfig = {
     spacing: 2,
     format: 'json',
     except: [
-      ':I[A-Z].*', // Exclude interfaces like IERC20, IOfficer
+      ':I[A-Z].*' // Exclude interfaces like IERC20, IOfficer
       // ':.*Upgradeable$', // Exclude OpenZeppelin upgradeable contracts
       // ':.*Proxy$', // Exclude proxy contracts
       // ':.*Utils$', // Exclude utility contracts
