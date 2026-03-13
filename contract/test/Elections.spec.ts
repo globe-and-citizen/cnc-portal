@@ -1,6 +1,8 @@
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { time } from '@nomicfoundation/hardhat-network-helpers'
+import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
+import { Elections } from '../typechain-types'
 
 describe('Elections', function () {
   async function deployFixture() {
@@ -22,8 +24,8 @@ describe('Elections', function () {
   }
 
   async function createActiveElection(
-    elections: any,
-    owner: any,
+    elections: Elections,
+    owner: HardhatEthersSigner,
     candidate1: string,
     candidate2: string,
     voter1: string,
