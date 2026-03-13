@@ -138,7 +138,8 @@ const setMultiplierWrite = useSetMultiplier()
 
 // Format the multiplier for display using utility function
 const formattedCurrentMultiplier = computed(() => {
-  return formatSafeDepositRouterMultiplier(currentMultiplier.value, MULTIPLIER_DECIMALS)
+  const safeMultiplier = typeof currentMultiplier.value === 'bigint' ? currentMultiplier.value : undefined
+  return formatSafeDepositRouterMultiplier(safeMultiplier, MULTIPLIER_DECIMALS)
 })
 
 // Format display for example text

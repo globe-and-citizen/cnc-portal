@@ -67,7 +67,7 @@ const enableClaim = async () => {
     const args = {
       abi: CASH_REMUNERATION_EIP712_ABI,
       functionName: 'enableClaim' as const,
-      args: [keccak256(props.weeklyClaim.signature as Address)] as const
+      args: [keccak256(props.weeklyClaim.signature as `0x${string}`)] as const
     }
     await simulateContract(config, {
       ...args,

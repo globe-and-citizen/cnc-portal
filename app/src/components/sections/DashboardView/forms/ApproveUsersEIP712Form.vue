@@ -270,14 +270,21 @@ const budgetTypes = {
   0: 'Transactions Per Period',
   1: 'Amount Per Period',
   2: 'Amount Per Transaction'
-}
+} as const
+
+type BudgetTypeKey = keyof typeof budgetTypes
+type BudgetTypeStringKey = `${BudgetTypeKey}`
 
 // Reactive states
-const selectedOptions = reactive<{ [key in 0 | 1 | 2]: boolean }>({ 0: false, 1: false, 2: false })
-const values = reactive<{ [key in 0 | 1 | 2]: null | string | number }>({
-  0: null,
-  1: null,
-  2: null
+const selectedOptions = reactive<Record<BudgetTypeStringKey, boolean>>({
+  '0': false,
+  '1': false,
+  '2': false
+})
+const values = reactive<Record<BudgetTypeStringKey, null | string | number>>({
+  '0': null,
+  '1': null,
+  '2': null
 })
 
 // Result array
@@ -286,19 +293,19 @@ const resultArray = computed(() =>
     .filter(([, isSelected]) => isSelected)
     .map(([budgetType]) => ({
       budgetType: Number(budgetType),
-      value: values[budgetType as unknown as 0 | 1 | 2] || 0 //,
+      value: values[budgetType as BudgetTypeStringKey] || 0 //,
       //token: selectedToken.value
     }))
 )
 
 // Handlers
-const toggleOption = (budgetType: 0 | 1 | 2) => {
+const toggleOption = (budgetType: BudgetTypeStringKey) => {
   if (!selectedOptions[budgetType]) {
     values[budgetType] = null // Reset value if deselected
   }
 }
 
-const updateValue = (budgetType: 0 | 1 | 2) => {
+const updateValue = (budgetType: BudgetTypeStringKey) => {
   if (values[budgetType] === null || isNaN(Number(values[budgetType]))) {
     values[budgetType] = 0 // Default value if input is empty
   }
