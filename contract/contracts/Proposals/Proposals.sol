@@ -6,7 +6,7 @@ import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/Pau
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
 import {ProposalUtils} from './ProposalUtils.sol';
-import '../interfaces/IOfficer.sol';
+import {IOfficer} from '../interfaces/IOfficer.sol';
 
 /*
  * @title Proposals

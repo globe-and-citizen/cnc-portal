@@ -9,7 +9,7 @@ import {EnumerableSet} from '@openzeppelin/contracts/utils/structs/EnumerableSet
 import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '../interfaces/IOfficer.sol';
+import {IOfficer} from '../interfaces/IOfficer.sol';
 
 contract InvestorV1 is
   ERC20Upgradeable,

@@ -9,10 +9,10 @@ import '@openzeppelin/contracts/utils/Address.sol';
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@quant-finance/solidity-datetime/contracts/DateTime.sol';
-import './interfaces/IMintableERC20.sol';
-import './interfaces/IInvestorV1.sol';
-import './interfaces/IOfficer.sol';
 import './base/TokenSupport.sol';
+import {IMintableERC20} from './interfaces/IMintableERC20.sol';
+import {IInvestorV1} from './interfaces/IInvestorV1.sol';
+import {IOfficer} from './interfaces/IOfficer.sol';
 import 'hardhat/console.sol';
 
 /**

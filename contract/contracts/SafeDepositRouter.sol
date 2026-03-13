@@ -7,13 +7,10 @@ import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import './interfaces/IInvestorV1.sol';
-import './interfaces/IOfficer.sol';
+import {IInvestorV1} from './interfaces/IInvestorV1.sol';
+import {IOfficer} from './interfaces/IOfficer.sol';
+import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import './base/TokenSupport.sol';
-
-interface IERC20Metadata {
-  function decimals() external view returns (uint8);
-}
 
 /**
  * @title SafeDepositRouter

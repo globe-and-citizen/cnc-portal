@@ -8,7 +8,7 @@ import 'hardhat/console.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '../interfaces/IOfficer.sol';
+import {IOfficer} from '../interfaces/IOfficer.sol';
 
 /// @title Voting Contract for Decentralized Governance
 /// @notice This contract manages proposals, elections, and voting processes

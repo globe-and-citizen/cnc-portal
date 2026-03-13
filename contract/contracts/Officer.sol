@@ -6,26 +6,11 @@ import '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import './interfaces/ICashRemuneration.sol';
-import './interfaces/IInvestorV1.sol';
-import './interfaces/ISafeDepositRouter.sol';
-import './interfaces/IFeeCollector.sol';
-
-/**
- * @notice Interface for BoardOfDirectors initialization
- * @dev Only used internally during Elections deployment
- */
-interface IBodContract {
-  function initialize(address[] memory votingAddress) external;
-}
-
-/**
- * @notice Interface for InvestorV1 initialization
- * @dev Only used internally during beacon proxy deployment
- */
-interface IInvestorV1Contract {
-  function initialize(string calldata _name, string calldata _symbol, address _owner) external;
-}
+import {IBoardOfDirectors} from './interfaces/IBoardOfDirectors.sol';
+import {ICashRemuneration} from './interfaces/ICashRemuneration.sol';
+import {IInvestorV1} from './interfaces/IInvestorV1.sol';
+import {ISafeDepositRouter} from './interfaces/ISafeDepositRouter.sol';
+import {IFeeCollector} from './interfaces/IFeeCollector.sol';
 
 /**
  * @notice Struct for contract deployment data
@@ -224,7 +209,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       bodContract = address(
         new BeaconProxy(
           bodContractBeacon,
-          abi.encodeWithSelector(IBodContract.initialize.selector, args)
+          abi.encodeWithSelector(IBoardOfDirectors.initialize.selector, args)
         )
       );
       deployedContracts.push(DeployedContract('BoardOfDirectors', bodContract));

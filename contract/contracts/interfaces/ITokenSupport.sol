@@ -6,6 +6,8 @@ pragma solidity ^0.8.24;
  * @notice Standard interface for contracts that support multiple ERC20 tokens
  * @dev Provides a consistent pattern for token management across the platform
  * @dev Derived from: contracts/base/TokenSupport.sol
+ * @dev Used via interface inheritance (e.g. IBank, IFeeCollector, ISafeDepositRouter);
+ *      not directly imported by contracts.
  */
 interface ITokenSupport {
   // ============ Events ============
