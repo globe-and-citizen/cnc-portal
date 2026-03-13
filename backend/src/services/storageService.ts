@@ -18,7 +18,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 // Defaults and limits
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-export const MAX_FILES_PER_CLAIM = 10;
+export const MAX_FILES_UPLOAD = 10;
 
 export const ALLOWED_IMAGE_MIMETYPES = [
   'image/png',
@@ -207,10 +207,10 @@ export async function uploadFiles(
   }
 
   // Validate file count limit
-  if (validFiles.length > MAX_FILES_PER_CLAIM) {
+  if (validFiles.length > MAX_FILES_UPLOAD) {
     return Array(validFiles.length).fill({
       success: false,
-      error: `Cannot upload more than ${MAX_FILES_PER_CLAIM} files per claim`,
+      error: `Cannot upload more than ${MAX_FILES_UPLOAD} files`,
     }) as UploadResult[];
   }
 
@@ -303,5 +303,5 @@ export default {
   ALLOWED_DOCUMENT_MIMETYPES,
   ALLOWED_MIMETYPES,
   MAX_FILE_SIZE,
-  MAX_FILES_PER_CLAIM,
+  MAX_FILES_UPLOAD,
 };
