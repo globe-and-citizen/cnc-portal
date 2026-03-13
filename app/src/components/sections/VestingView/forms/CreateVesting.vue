@@ -148,13 +148,17 @@ const tokenBalance = computed(() => {
   )
 })
 
-const activeMembers = computed(() => {
-  if (vestingInfos.value && Array.isArray(vestingInfos.value) && vestingInfos.value.length === 2) {
-    const [members] = vestingInfos.value
-    return members
+const activeMembers = computed<string[]>(() => {
+  if (!Array.isArray(vestingInfos.value) || vestingInfos.value.length !== 2) {
+    return []
   }
-  return []
+
+  const [members] = vestingInfos.value
+  return Array.isArray(members)
+    ? members.filter((member): member is string => typeof member === 'string')
+    : []
 })
+
 const member = ref({
   name: '',
   address: ''
@@ -391,10 +395,7 @@ async function submit() {
   }
 
   await getAllowance()
-  if (
-    allowance.value !== undefined &&
-    Number(formatUnits(allowance.value, 6)) < totalAmount.value
-  ) {
+  if (typeof allowance.value === 'bigint' && Number(formatUnits(allowance.value, 6)) < totalAmount.value) {
     addErrorToast('Allowance is less than the total amount')
     return
   }

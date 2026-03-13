@@ -200,14 +200,20 @@ watch(
   }
 )
 
+const isVestingTuple = (value: unknown): value is VestingTuple => {
+  if (!Array.isArray(value) || value.length !== 2) {
+    return false
+  }
+
+  const [members, vestingsRaw] = value
+  return Array.isArray(members) && Array.isArray(vestingsRaw)
+}
+
 const vestings = computed<VestingRow[]>(() => {
   const currentDateInSeconds = Math.floor(Date.now() / 1000)
 
-  // @ts-expect-error type assertion
   const allVestingsRaw: VestingTuple[] = [vestingInfos.value, archivedVestingInfos.value].filter(
-    // @ts-expect-error type assertion
-    (v): v is VestingTuple =>
-      Array.isArray(v) && v.length === 2 && Array.isArray(v[0]) && Array.isArray(v[1])
+    isVestingTuple
   )
 
   const allRows = allVestingsRaw.flatMap(([members, vestingsRaw]) =>
