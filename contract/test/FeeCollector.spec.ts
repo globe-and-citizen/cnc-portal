@@ -71,8 +71,8 @@ describe('FeeCollector', () => {
       const tokenAddresses = await deployMockTokens()
       feeCollector = await deployFeeCollector(INITIAL_CONFIGS, tokenAddresses)
 
-      expect(await feeCollector.supportedTokens(tokenAddresses[0])).to.be.true
-      expect(await feeCollector.supportedTokens(tokenAddresses[1])).to.be.true
+      expect(await feeCollector.isTokenSupported(tokenAddresses[0])).to.be.true
+      expect(await feeCollector.isTokenSupported(tokenAddresses[1])).to.be.true
     })
 
     it('should reject zero address as owner', async () => {
@@ -307,7 +307,7 @@ describe('FeeCollector', () => {
         .to.emit(feeCollector, 'TokenSupportAdded')
         .withArgs(await newToken.getAddress())
 
-      expect(await feeCollector.supportedTokens(await newToken.getAddress())).to.be.true
+      expect(await feeCollector.isTokenSupported(await newToken.getAddress())).to.be.true
     })
 
     it('should not allow adding already supported token', async () => {
@@ -327,7 +327,7 @@ describe('FeeCollector', () => {
         .to.emit(feeCollector, 'TokenSupportRemoved')
         .withArgs(await mockUSDT.getAddress())
 
-      expect(await feeCollector.supportedTokens(await mockUSDT.getAddress())).to.be.false
+      expect(await feeCollector.isTokenSupported(await mockUSDT.getAddress())).to.be.false
     })
 
     it('should not allow removing unsupported token', async () => {

@@ -158,8 +158,8 @@ describe('SafeDepositRouter', function () {
       const usdcAddress = await mockUSDC.getAddress()
       const usdtAddress = await mockUSDT.getAddress()
 
-      expect(await router.supportedTokens(usdcAddress)).to.equal(true)
-      expect(await router.supportedTokens(usdtAddress)).to.equal(true)
+      expect(await router.isTokenSupported(usdcAddress)).to.equal(true)
+      expect(await router.isTokenSupported(usdtAddress)).to.equal(true)
 
       expect(await router.tokenDecimals(usdcAddress)).to.equal(USDC_DECIMALS)
       expect(await router.tokenDecimals(usdtAddress)).to.equal(USDT_DECIMALS)
@@ -417,7 +417,7 @@ describe('SafeDepositRouter', function () {
           .to.emit(router, 'TokenSupportAdded')
           .withArgs(newTokenAddress, USDC_DECIMALS)
 
-        expect(await router.supportedTokens(newTokenAddress)).to.equal(true)
+        expect(await router.isTokenSupported(newTokenAddress)).to.equal(true)
         expect(await router.tokenDecimals(newTokenAddress)).to.equal(USDC_DECIMALS)
       })
 
@@ -449,7 +449,7 @@ describe('SafeDepositRouter', function () {
           .to.emit(router, 'TokenSupportRemoved')
           .withArgs(usdcAddress)
 
-        expect(await router.supportedTokens(usdcAddress)).to.equal(false)
+        expect(await router.isTokenSupported(usdcAddress)).to.equal(false)
       })
 
       it('should revert when non-owner tries to remove token', async () => {

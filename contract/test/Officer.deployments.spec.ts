@@ -201,7 +201,7 @@ describe('Officer Contract', function () {
       owner.address.toLocaleLowerCase()
     )
     expect(
-      await cashRemunerationEip712Proxy.supportedTokens(await investorV1Proxy.getAddress())
+      await cashRemunerationEip712Proxy.isTokenSupported(await investorV1Proxy.getAddress())
     ).to.be.equal(true)
 
     expect((await investorV1Proxy.owner()).toLocaleLowerCase()).to.be.equal(

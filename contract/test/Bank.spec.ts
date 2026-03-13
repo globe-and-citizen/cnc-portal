@@ -19,7 +19,8 @@ describe('Bank', () => {
   const BANK_FEE_BPS = 50n
 
   const ERRORS = {
-    INSUFFICIENT_UNLOCKED: 'Insufficient unlocked balance',
+    INSUFFICIENT_BALANCE: 'Insufficient balance',
+    INSUFFICIENT_TOKEN_BALANCE: 'Insufficient token balance',
     PAUSED: 'EnforcedPause',
     UNSUPPORTED_TOKEN: 'Unsupported token',
     TOKEN_ALREADY_SUPPORTED: 'Token already supported',
@@ -199,7 +200,7 @@ describe('Bank', () => {
         await expect(bank.transfer(contractor.address, 0)).to.be.revertedWith(ERRORS.AMOUNT_ZERO)
 
         await expect(bank.transfer(contractor.address, ethers.parseEther('100'))).to.be.revertedWith(
-          ERRORS.INSUFFICIENT_UNLOCKED
+          ERRORS.INSUFFICIENT_BALANCE
         )
       })
 
@@ -322,7 +323,7 @@ describe('Bank', () => {
       )
     })
 
-    it('should not allow transferring more than unlocked token balance', async () => {
+    it('should not allow transferring more than token balance', async () => {
       const amount = ethers.parseUnits('10', 6)
       await mockUSDT.approve(await bankProxy.getAddress(), amount)
       await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), amount)
@@ -330,24 +331,24 @@ describe('Bank', () => {
       const excessAmount = ethers.parseUnits('20', 6)
       await expect(
         bank.transferToken(await mockUSDT.getAddress(), contractor.address, excessAmount)
-      ).to.be.revertedWith('Insufficient unlocked token balance')
+      ).to.be.revertedWith(ERRORS.INSUFFICIENT_TOKEN_BALANCE)
     })
 
-    it('should return unlocked token balance for supported tokens', async () => {
+    it('should return token balance for supported tokens', async () => {
       const amount = ethers.parseUnits('100', 6)
       await mockUSDT.approve(await bankProxy.getAddress(), amount)
       await bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), amount)
 
-      expect(await bankProxy.getUnlockedTokenBalance(await mockUSDT.getAddress())).to.equal(amount)
+      expect(await bankProxy.getTokenBalance(await mockUSDT.getAddress())).to.equal(amount)
     })
 
-    it('should reject unsupported token in getUnlockedTokenBalance', async () => {
+    it('should reject unsupported token in token balance getters', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const unsupportedToken = (await MockToken.deploy('UNSUPPORTED', 'UNS')) as unknown as MockERC20
 
-      await expect(
-        bankProxy.getUnlockedTokenBalance(await unsupportedToken.getAddress())
-      ).to.be.revertedWith(ERRORS.UNSUPPORTED_TOKEN)
+      await expect(bankProxy.getTokenBalance(await unsupportedToken.getAddress())).to.be.revertedWith(
+        ERRORS.UNSUPPORTED_TOKEN
+      )
     })
   })
 })
