@@ -9,6 +9,7 @@ import './ITokenSupport.sol';
  * @title ICashRemuneration
  * @notice Complete interface for CashRemunerationEIP712 contract
  * @dev Single source of truth for CashRemunerationEIP712 contract interactions
+ * @dev Derived from: contracts/CashRemunerationEIP712.sol
  * Used by: Officer
  */
 interface ICashRemuneration is IOwnable, IPausable, ITokenSupport {

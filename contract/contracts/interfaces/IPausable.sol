@@ -5,6 +5,7 @@ pragma solidity ^0.8.24;
  * @title IPausable
  * @notice Standard interface for pausable contracts
  * @dev Contracts implementing this interface can be paused and unpaused
+ * @dev Derived from: OpenZeppelin Pausable/PausableUpgradeable pattern.
  */
 interface IPausable {
   /// @notice Pause contract operations

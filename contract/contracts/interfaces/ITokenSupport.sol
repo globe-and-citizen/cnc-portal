@@ -5,6 +5,7 @@ pragma solidity ^0.8.24;
  * @title ITokenSupport
  * @notice Standard interface for contracts that support multiple ERC20 tokens
  * @dev Provides a consistent pattern for token management across the platform
+ * @dev Derived from: contracts/base/TokenSupport.sol
  */
 interface ITokenSupport {
   // ============ Events ============
@@ -23,10 +24,10 @@ interface ITokenSupport {
   /// @param tokenAddress Address of the token to remove
   function removeTokenSupport(address tokenAddress) external;
 
-  /// @notice Check if a specific token is supported
+  /// @notice Check if a specific token is supported (canonical method)
   /// @param tokenAddress Address of the token to check
   /// @return True if token is supported, false otherwise
-  function supportedTokens(address tokenAddress) external view returns (bool);
+  function isTokenSupported(address tokenAddress) external view returns (bool);
 
   /// @notice Get list of all supported token addresses
   /// @return Array of supported token addresses

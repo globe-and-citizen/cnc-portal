@@ -9,6 +9,7 @@ import './ITokenSupport.sol';
  * @title IBank
  * @notice Complete interface for Bank contract
  * @dev Single source of truth for Bank contract interactions
+ * @dev Derived from: contracts/Bank.sol
  * Used by: InvestorV1 (for dividend distribution)
  */
 interface IBank is IPausable, IOwnable, ITokenSupport {

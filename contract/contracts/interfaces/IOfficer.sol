@@ -5,6 +5,7 @@ pragma solidity ^0.8.24;
  * @title IOfficer
  * @notice Complete interface for Officer contract
  * @dev Single source of truth for Officer contract interactions
+ * @dev Derived from: contracts/Officer.sol
  * Used by: Bank, InvestorV1, SafeDepositRouter, CashRemunerationEIP712,
  *          Proposals, Elections, Voting, and other contracts
  */

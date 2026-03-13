@@ -7,6 +7,7 @@ import './ITokenSupport.sol';
  * @title IFeeCollector
  * @notice Complete interface for FeeCollector contract
  * @dev Single source of truth for FeeCollector contract interactions
+ * @dev Derived from: contracts/FeeCollector.sol
  * Used by: Officer, Bank, other contracts that need fee information
  */
 interface IFeeCollector is ITokenSupport {

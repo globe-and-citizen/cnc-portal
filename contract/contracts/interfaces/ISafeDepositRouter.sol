@@ -9,6 +9,7 @@ import './ITokenSupport.sol';
  * @title ISafeDepositRouter
  * @notice Complete interface for SafeDepositRouter contract
  * @dev Single source of truth for SafeDepositRouter contract interactions
+ * @dev Derived from: contracts/SafeDepositRouter.sol
  * Used by: Officer
  */
 interface ISafeDepositRouter is IPausable, IOwnable, ITokenSupport {

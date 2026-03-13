@@ -9,6 +9,7 @@ import './IPausable.sol';
  * @title IInvestorV1
  * @notice Complete interface for InvestorV1 contract
  * @dev Single source of truth for InvestorV1 contract interactions
+ * @dev Derived from: contracts/Investor/InvestorV1.sol
  * Used by: Officer, SafeDepositRouter, CashRemunerationEIP712, Bank
  */
 interface IInvestorV1 is IAccessControl, IOwnable, IPausable {
