@@ -82,7 +82,7 @@ vi.mock('../../services/storageService', () => ({
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ],
   MAX_FILE_SIZE: 10 * 1024 * 1024,
-  MAX_FILES_PER_CLAIM: 10,
+  MAX_FILES_UPLOAD: 10,
   PRESIGNED_URL_EXPIRATION: 3600,
 }));
 

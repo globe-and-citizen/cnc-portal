@@ -226,11 +226,11 @@ describe('storageService', () => {
       expect(results[1].success).toBe(true);
     });
 
-    it('should reject when exceeding MAX_FILES_PER_CLAIM', async () => {
+    it('should reject when exceeding MAX_FILES_UPLOAD', async () => {
       vi.resetModules();
-      const { uploadFiles, MAX_FILES_PER_CLAIM } = await import('../storageService');
+      const { uploadFiles, MAX_FILES_UPLOAD } = await import('../storageService');
 
-      // Create 11 mock files (exceeds MAX_FILES_PER_CLAIM of 10)
+      // Create 11 mock files (exceeds MAX_FILES_UPLOAD of 10)
       const mockFiles = Array.from({ length: 11 }, (_, i) => ({
         originalname: `file${i + 1}.png`,
         mimetype: 'image/png',
@@ -244,7 +244,7 @@ describe('storageService', () => {
       expect(results.every((r) => !r.success)).toBe(true);
       expect(results[0]).toMatchObject({
         success: false,
-        error: `Cannot upload more than ${MAX_FILES_PER_CLAIM} files per claim`,
+        error: `Cannot upload more than ${MAX_FILES_UPLOAD} files`,
       });
     });
   });
