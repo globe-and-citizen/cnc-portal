@@ -8,7 +8,6 @@
     <ShareholderList />
     <div class="divider m-o"></div>
 
-    <BankDividendsSection />
     <div class="divider m-0"></div>
     <PayDividendsTable />
     <div class="divider m-0"></div>
@@ -26,7 +25,6 @@ import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActio
 import ShareholderList from '@/components/sections/SherTokenView/ShareholderList.vue'
 import InvestorsTransactions from '@/components/sections/SherTokenView/InvestorsTransactions.vue'
 import PayDividendsTable from '@/components/sections/SherTokenView/PayDividendsTable.vue'
-import BankDividendsSection from '@/components/sections/SherTokenView/DividendsBalancesSection.vue'
 
 const teamStore = useTeamStore()
 
