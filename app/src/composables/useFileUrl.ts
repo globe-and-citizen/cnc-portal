@@ -3,8 +3,7 @@
  * Handles caching to avoid repeated API calls for the same file.
  */
 import { ref } from 'vue'
-import { BACKEND_URL } from '@/constant/index'
-import { useStorage } from '@vueuse/core'
+import { getFileUrlApi } from '@/api'
 
 // Cache for presigned URLs (key -> { url, expiresAt })
 interface CachedUrl {
@@ -32,21 +31,7 @@ export async function getPresignedUrl(key: string): Promise<string | null> {
   }
 
   try {
-    const authToken = useStorage('authToken', '')
-    const response = await fetch(`${BACKEND_URL}/api/file/url?key=${encodeURIComponent(key)}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${authToken.value}`,
-        'Content-Type': 'application/json'
-      }
-    })
-
-    if (!response.ok) {
-      console.error('Failed to fetch presigned URL:', response.status, response.statusText)
-      return null
-    }
-
-    const data = await response.json()
+    const data = await getFileUrlApi(key)
     const url = data.url
 
     if (url) {
