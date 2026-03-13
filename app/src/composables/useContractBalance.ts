@@ -2,11 +2,10 @@ import { computed, unref, type Ref } from 'vue'
 import { useBalance, useReadContract, useChainId } from '@wagmi/vue'
 import { formatEther, formatUnits, type Address } from 'viem'
 import { ERC20_ABI } from '@/artifacts/abi/erc20'
-import { useCurrencyStore, useTeamStore } from '@/stores'
+import { useCurrencyStore } from '@/stores'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type { TokenId } from '@/constant'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
-import { BANK_ABI } from '@/artifacts/abi/bank'
 
 /**
  * @description Represents the value of a token balance in a specific currency
@@ -59,21 +58,6 @@ type ERC20TokenBalanceEntry = {
 }
 type TokenBalanceEntry = NativeTokenBalanceEntry | ERC20TokenBalanceEntry
 
-// type DividendNativeEntry = {
-//   token: (typeof SUPPORTED_TOKENS)[number]
-//   data: { value?: bigint }
-//   isLoading: { value: boolean }
-//   error: { value: unknown }
-//   isNative: true
-// }
-// type DividendErc20Entry = {
-//   token: (typeof SUPPORTED_TOKENS)[number]
-//   data: { value?: bigint }
-//   isLoading: { value: boolean }
-//   error: { value: unknown }
-//   isNative: false
-// }
-// type DividendEntry = DividendNativeEntry | DividendErc20Entry
 
 // TODO: support reactive address changes
 /**
