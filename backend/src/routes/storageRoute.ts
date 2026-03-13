@@ -2,6 +2,7 @@
 import express, { Request, Response } from 'express';
 import { authorizeUser } from '../middleware/authMiddleware';
 import { getPresignedDownloadUrl, PRESIGNED_URL_EXPIRATION } from '../services/storageService';
+import { validateQuery, getPresignedUrlQuerySchema } from '../validation';
 
 const storageRouter = express.Router();
 
@@ -60,46 +61,62 @@ const storageRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/FileUrlResponse'
  *       400:
- *         description: Missing or invalid parameters
+ *         description: Bad request - missing or invalid parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
- *         description: File not found
+ *         description: File not found in storage
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
- *         description: Storage not configured or error generating URL
+ *         description: Internal server error - storage not configured or URL generation failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-storageRouter.get('/url', authorizeUser, async (req: Request, res: Response) => {
-  try {
-    const { key, expiresIn } = req.query;
+storageRouter.get(
+  '/url',
+  authorizeUser,
+  validateQuery(getPresignedUrlQuerySchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { key, expiresIn } = req.query as { key: string; expiresIn?: string };
 
-    if (!key || typeof key !== 'string') {
-      return res.status(400).json({
-        error: 'Missing required parameter',
-        details: 'The "key" query parameter is required',
+      let expirationSeconds = PRESIGNED_URL_EXPIRATION;
+      if (expiresIn) {
+        const parsedExpiration = parseInt(expiresIn, 10);
+        if (!isNaN(parsedExpiration) && parsedExpiration > 0) {
+          expirationSeconds = Math.min(parsedExpiration, 604800);
+        }
+      }
+
+      const url = await getPresignedDownloadUrl(key, expirationSeconds);
+
+      res.json({
+        url,
+        expiresIn: expirationSeconds,
+      });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      console.error('Error generating presigned URL:', err);
+      res.status(500).json({
+        error: 'Failed to generate file URL',
+        details: errorMessage,
       });
     }
-
-    let expirationSeconds = PRESIGNED_URL_EXPIRATION;
-    if (expiresIn) {
-      const parsedExpiration = parseInt(expiresIn as string, 10);
-      if (!isNaN(parsedExpiration) && parsedExpiration > 0) {
-        expirationSeconds = Math.min(parsedExpiration, 604800);
-      }
-    }
-
-    const url = await getPresignedDownloadUrl(key, expirationSeconds);
-
-    res.json({
-      url,
-      expiresIn: expirationSeconds,
-    });
-  } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-    console.error('Error generating presigned URL:', err);
-    res.status(500).json({
-      error: 'Failed to generate file URL',
-      details: errorMessage,
-    });
   }
-});
+);
 
 // Note: The /download/* route is commented out as it's redundant.
 // The frontend already receives fileUrl from upload, and can use /file/url
