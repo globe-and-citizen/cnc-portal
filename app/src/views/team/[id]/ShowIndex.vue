@@ -67,11 +67,13 @@ import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { useSyncContractsMutation } from '@/queries'
 const teamStore = useTeamStore()
 const showModal = ref(false)
 
 const route = useRoute()
 const { mutate: syncWeeklyClaims } = useSyncWeeklyClaimsMutation()
+const { mutateAsync: syncContracts } = useSyncContractsMutation()
 
 onMounted(() => {
   if (route.params.id) {
@@ -79,6 +81,13 @@ onMounted(() => {
   } else {
     // e.g. this.$router.push('/teams')
   }
+})
+
+watch(teamStore.currentTeamMeta, () => {
+  if(teamStore.currentTeamId && teamStore.currentTeamMeta.data?.officerAddress && teamStore.currentTeamMeta.data?.teamContracts.length === 0) {
+    syncContracts({ body: { teamId: teamStore.currentTeamId } })
+  }
+
 })
 
 const hasContract = computed(() => {
