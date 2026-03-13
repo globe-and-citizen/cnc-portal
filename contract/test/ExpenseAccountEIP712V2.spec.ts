@@ -26,7 +26,7 @@ describe('ExpenseAccountEIP712V2', function () {
     const expenseAccount = await ExpenseAccount.deploy()
     await expenseAccount.waitForDeployment()
 
-    await expenseAccount.initialize(owner.address, await usdt.getAddress(), await usdc.getAddress())
+    await expenseAccount.initialize(owner.address, [await usdt.getAddress(), await usdc.getAddress()])
 
     // Fund the contract with native tokens
     await owner.sendTransaction({
@@ -115,8 +115,8 @@ describe('ExpenseAccountEIP712V2', function () {
 
     it('Should initialize supported tokens', async function () {
       const { expenseAccount, usdt, usdc } = await loadFixture(deployExpenseAccountFixture)
-      expect(await expenseAccount.supportedTokens('USDT')).to.equal(await usdt.getAddress())
-      expect(await expenseAccount.supportedTokens('USDC')).to.equal(await usdc.getAddress())
+      expect(await expenseAccount.isTokenSupported(await usdt.getAddress())).to.equal(true)
+      expect(await expenseAccount.isTokenSupported(await usdc.getAddress())).to.equal(true)
     })
   })
 

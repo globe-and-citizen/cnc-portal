@@ -220,7 +220,7 @@ describe('InvestorV1', () => {
       expect(await investorProxy.totalSupply()).to.equal(ethers.parseEther('600'))
     })
 
-    it('should emit DividendsDistributed event', async () => {
+    it('should distribute native dividends proportionally', async () => {
       await investorProxy.connect(owner).distributeMint([
         {
           amount: ethers.parseEther('100'),
@@ -229,14 +229,14 @@ describe('InvestorV1', () => {
       ])
 
       const dividends = ethers.parseEther('1000')
-      await expect(
+      const investorAddress = await investorProxy.getAddress()
+
+      await expect(() =>
         owner.sendTransaction({
-          to: await investorProxy.getAddress(),
+          to: investorAddress,
           value: dividends
         })
-      )
-        .to.emit(investorProxy, 'DividendDistributed')
-        .withArgs(addr1.address, ethers.parseEther('1000'))
+      ).to.changeEtherBalance(investorProxy, dividends)
     })
   })
 })

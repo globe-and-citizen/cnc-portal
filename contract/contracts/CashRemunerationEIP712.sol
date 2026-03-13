@@ -131,8 +131,8 @@ contract CashRemunerationEIP712 is
     address owner = _owner == address(0) ? msg.sender : _owner;
     __Ownable_init(owner);
     __ReentrancyGuard_init();
-    __Pausable_init();
     __EIP712_init('CashRemuneration', '1');
+    __Pausable_init();
 
     require(msg.sender != address(0), 'msg.sender cannot be zero');
     officerAddress = msg.sender;

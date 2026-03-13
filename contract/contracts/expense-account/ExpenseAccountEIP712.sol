@@ -97,8 +97,8 @@ contract ExpenseAccountEIP712 is
     require(owner != address(0), 'Owner cannot be zero');
     __Ownable_init(owner);
     __ReentrancyGuard_init();
-    __Pausable_init();
     __EIP712_init('CNCExpenseAccount', '1');
+    __Pausable_init();
 
     // Set the initial supported tokens
     uint256 length = _tokenAddresses.length;
