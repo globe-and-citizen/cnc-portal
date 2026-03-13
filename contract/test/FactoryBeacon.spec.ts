@@ -30,18 +30,22 @@ describe('FactoryBeacon', () => {
   it('creates a beacon proxy and emits the deployed proxy address', async () => {
     const { user1, bankImplementation, factoryBeacon } = await loadFixture(deployFixture)
 
-    const initData = bankImplementation.interface.encodeFunctionData('initialize', [[], user1.address])
+    const initData = bankImplementation.interface.encodeFunctionData('initialize', [
+      [],
+      user1.address
+    ])
 
     const tx = await factoryBeacon.connect(user1).createBeaconProxy(initData)
-    await expect(tx)
-      .to.emit(factoryBeacon, 'BeaconProxyCreated')
-      .withArgs(anyValue, user1.address)
+    await expect(tx).to.emit(factoryBeacon, 'BeaconProxyCreated').withArgs(anyValue, user1.address)
   })
 
   it('initializes proxy storage using constructor data', async () => {
     const { user1, bankImplementation, factoryBeacon } = await loadFixture(deployFixture)
 
-    const initData = bankImplementation.interface.encodeFunctionData('initialize', [[], user1.address])
+    const initData = bankImplementation.interface.encodeFunctionData('initialize', [
+      [],
+      user1.address
+    ])
     const tx = await factoryBeacon.connect(user1).createBeaconProxy(initData)
     const receipt = await tx.wait()
 

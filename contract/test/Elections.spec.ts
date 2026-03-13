@@ -21,7 +21,14 @@ describe('Elections', function () {
     return { elections, boardOfDirectors, owner, voter1, voter2, candidate1, candidate2, nonVoter }
   }
 
-  async function createActiveElection(elections: any, owner: any, candidate1: string, candidate2: string, voter1: string, voter2: string) {
+  async function createActiveElection(
+    elections: any,
+    owner: any,
+    candidate1: string,
+    candidate2: string,
+    voter1: string,
+    voter2: string
+  ) {
     const now = await time.latest()
     const startDate = now + 100
     const endDate = startDate + 7 * 24 * 60 * 60
@@ -69,7 +76,8 @@ describe('Elections', function () {
   })
 
   it('allows eligible voters to cast votes and blocks non-voters', async () => {
-    const { elections, owner, voter1, candidate1, candidate2, voter2, nonVoter } = await deployFixture()
+    const { elections, owner, voter1, candidate1, candidate2, voter2, nonVoter } =
+      await deployFixture()
 
     await createActiveElection(
       elections,
@@ -84,10 +92,9 @@ describe('Elections', function () {
       .to.emit(elections, 'VoteSubmitted')
       .withArgs(1, voter1.address, candidate1.address)
 
-    await expect(elections.connect(nonVoter).castVote(1, candidate1.address)).to.be.revertedWithCustomError(
-      elections,
-      'NotEligibleVoter'
-    )
+    await expect(
+      elections.connect(nonVoter).castVote(1, candidate1.address)
+    ).to.be.revertedWithCustomError(elections, 'NotEligibleVoter')
   })
 
   it('publishes results and updates board winners', async () => {

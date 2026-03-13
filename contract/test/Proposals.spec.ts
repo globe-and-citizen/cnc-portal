@@ -26,7 +26,10 @@ describe('Proposals Contract', function () {
     const ProposalsFactory = await ethers.getContractFactory('Proposals')
     const proposalsContract = await ProposalsFactory.deploy()
 
-    await mockOfficer.setDeployedContract('BoardOfDirectors', await boardOfDirectorsMock.getAddress())
+    await mockOfficer.setDeployedContract(
+      'BoardOfDirectors',
+      await boardOfDirectorsMock.getAddress()
+    )
     await mockOfficer.initializeUpgradeable(await proposalsContract.getAddress(), owner.address)
 
     return {

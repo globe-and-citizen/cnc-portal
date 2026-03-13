@@ -16,7 +16,9 @@ describe('BoardOfDirectors', () => {
     const proxy = await ProxyFactory.deploy(await beacon.getAddress(), initData)
     const board = await ethers.getContractAt('BoardOfDirectors', await proxy.getAddress())
 
-    await board.connect(founder).setBoardOfDirectors([member1.address, member2.address, member3.address])
+    await board
+      .connect(founder)
+      .setBoardOfDirectors([member1.address, member2.address, member3.address])
 
     const BankFactory = await ethers.getContractFactory('Bank')
     const bank = await BankFactory.deploy()

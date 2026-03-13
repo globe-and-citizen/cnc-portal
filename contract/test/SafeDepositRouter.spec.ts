@@ -32,7 +32,9 @@ describe('SafeDepositRouter', function () {
     ])
 
     const BeaconFactory = await ethers.getContractFactory('Beacon')
-    const beacon = await BeaconFactory.connect(owner).deploy(await routerImplementation.getAddress())
+    const beacon = await BeaconFactory.connect(owner).deploy(
+      await routerImplementation.getAddress()
+    )
     await beacon.waitForDeployment()
 
     const routerAddress = await mockOfficer.deployBeaconProxy.staticCall(
@@ -40,7 +42,11 @@ describe('SafeDepositRouter', function () {
       encodedInitialize,
       'SafeDepositRouter'
     )
-    await mockOfficer.deployBeaconProxy(await beacon.getAddress(), encodedInitialize, 'SafeDepositRouter')
+    await mockOfficer.deployBeaconProxy(
+      await beacon.getAddress(),
+      encodedInitialize,
+      'SafeDepositRouter'
+    )
 
     const router = await ethers.getContractAt('SafeDepositRouter', routerAddress)
 
@@ -96,10 +102,9 @@ describe('SafeDepositRouter', function () {
 
     await usdc.connect(depositor).approve(await router.getAddress(), amount)
 
-    await expect(router.connect(depositor).deposit(await usdc.getAddress(), amount)).to.be.revertedWithCustomError(
-      router,
-      'DepositsNotEnabled'
-    )
+    await expect(
+      router.connect(depositor).deposit(await usdc.getAddress(), amount)
+    ).to.be.revertedWithCustomError(router, 'DepositsNotEnabled')
   })
 
   it('deposits token, forwards funds to safe, and mints SHER', async () => {

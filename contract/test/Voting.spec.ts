@@ -25,7 +25,14 @@ describe('Voting Contract', () => {
     const { voting, voter1, voter2, voter3 } = await deployFixture()
 
     await expect(
-      voting.addProposal('Directive', 'Description', false, 0, [voter1.address, voter2.address, voter3.address], [])
+      voting.addProposal(
+        'Directive',
+        'Description',
+        false,
+        0,
+        [voter1.address, voter2.address, voter3.address],
+        []
+      )
     )
       .to.emit(voting, 'ProposalAdded')
       .withArgs(0, 'Directive', 'Description')

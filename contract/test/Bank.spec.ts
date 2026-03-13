@@ -191,7 +191,10 @@ describe('Bank', () => {
 
       it('should fail for invalid transfer params and insufficient balance', async () => {
         const transferAmount = ethers.parseEther('1')
-        await owner.sendTransaction({ to: await bankProxy.getAddress(), value: ethers.parseEther('2') })
+        await owner.sendTransaction({
+          to: await bankProxy.getAddress(),
+          value: ethers.parseEther('2')
+        })
 
         await expect(bank.transfer(ethers.ZeroAddress, transferAmount)).to.be.revertedWith(
           ERRORS.ZERO_ADDRESS
@@ -199,9 +202,9 @@ describe('Bank', () => {
 
         await expect(bank.transfer(contractor.address, 0)).to.be.revertedWith(ERRORS.AMOUNT_ZERO)
 
-        await expect(bank.transfer(contractor.address, ethers.parseEther('100'))).to.be.revertedWith(
-          ERRORS.INSUFFICIENT_BALANCE
-        )
+        await expect(
+          bank.transfer(contractor.address, ethers.parseEther('100'))
+        ).to.be.revertedWith(ERRORS.INSUFFICIENT_BALANCE)
       })
 
       it('should allow any address to deposit but not transfer funds', async () => {
@@ -250,10 +253,9 @@ describe('Bank', () => {
 
       it('should reject transfers while paused', async () => {
         await bank.pause()
-        await expect(bank.transfer(contractor.address, ethers.parseEther('1'))).to.be.revertedWithCustomError(
-          bankProxy,
-          ERRORS.PAUSED
-        )
+        await expect(
+          bank.transfer(contractor.address, ethers.parseEther('1'))
+        ).to.be.revertedWithCustomError(bankProxy, ERRORS.PAUSED)
       })
     })
   })
@@ -270,7 +272,10 @@ describe('Bank', () => {
 
     it('should not allow depositing unsupported tokens', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
-      const unsupportedToken = (await MockToken.deploy('UNSUPPORTED', 'UNS')) as unknown as MockERC20
+      const unsupportedToken = (await MockToken.deploy(
+        'UNSUPPORTED',
+        'UNS'
+      )) as unknown as MockERC20
 
       await expect(
         bankProxy.connect(owner).depositToken(await unsupportedToken.getAddress(), 100)
@@ -278,9 +283,9 @@ describe('Bank', () => {
     })
 
     it('should not allow depositing zero amount', async () => {
-      await expect(bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), 0)).to.be.revertedWith(
-        ERRORS.AMOUNT_ZERO
-      )
+      await expect(
+        bankProxy.connect(owner).depositToken(await mockUSDT.getAddress(), 0)
+      ).to.be.revertedWith(ERRORS.AMOUNT_ZERO)
     })
 
     it('should allow owner to transfer tokens with fee', async () => {
@@ -308,7 +313,10 @@ describe('Bank', () => {
 
     it('should reject invalid token transfer requests', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
-      const unsupportedToken = (await MockToken.deploy('UNSUPPORTED', 'UNS')) as unknown as MockERC20
+      const unsupportedToken = (await MockToken.deploy(
+        'UNSUPPORTED',
+        'UNS'
+      )) as unknown as MockERC20
 
       await expect(
         bank.transferToken(await unsupportedToken.getAddress(), contractor.address, 100)
@@ -318,9 +326,9 @@ describe('Bank', () => {
         bank.transferToken(await mockUSDT.getAddress(), ethers.ZeroAddress, 100)
       ).to.be.revertedWith(ERRORS.ZERO_ADDRESS)
 
-      await expect(bank.transferToken(await mockUSDT.getAddress(), contractor.address, 0)).to.be.revertedWith(
-        ERRORS.AMOUNT_ZERO
-      )
+      await expect(
+        bank.transferToken(await mockUSDT.getAddress(), contractor.address, 0)
+      ).to.be.revertedWith(ERRORS.AMOUNT_ZERO)
     })
 
     it('should not allow transferring more than token balance', async () => {
@@ -344,11 +352,14 @@ describe('Bank', () => {
 
     it('should reject unsupported token in token balance getters', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
-      const unsupportedToken = (await MockToken.deploy('UNSUPPORTED', 'UNS')) as unknown as MockERC20
+      const unsupportedToken = (await MockToken.deploy(
+        'UNSUPPORTED',
+        'UNS'
+      )) as unknown as MockERC20
 
-      await expect(bankProxy.getTokenBalance(await unsupportedToken.getAddress())).to.be.revertedWith(
-        ERRORS.UNSUPPORTED_TOKEN
-      )
+      await expect(
+        bankProxy.getTokenBalance(await unsupportedToken.getAddress())
+      ).to.be.revertedWith(ERRORS.UNSUPPORTED_TOKEN)
     })
   })
 })
