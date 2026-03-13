@@ -1,6 +1,7 @@
 # CNC Portal - Smart Contracts Technical Architecture
 
 ## Table of Contents
+
 1. [Overview](#overview)
 2. [Architecture Pattern](#architecture-pattern)
 3. [Core Contracts](#core-contracts)
@@ -15,12 +16,14 @@
 ## Overview
 
 The CNC Portal smart contract system is a comprehensive organizational governance and financial management platform built on Ethereum. It enables decentralized teams to manage:
+
 - **Financial Operations**: Banking, dividends, expense accounts, and cash remuneration
 - **Governance**: Elections, proposals, and board of directors management
 - **Equity**: Investor token management with shareholder tracking
 - **Upgradability**: Beacon proxy pattern for seamless contract upgrades
 
 ### Key Design Principles
+
 - **Upgradability**: All contracts use the Beacon Proxy pattern for future-proof upgrades
 - **Modularity**: Each contract handles a specific domain concern
 - **Security**: OpenZeppelin's battle-tested upgradeable contracts
@@ -37,9 +40,9 @@ The system uses the **Beacon Proxy Pattern** for upgradeability:
 ```mermaid
 graph TB
     FB["FactoryBeacon<br/>(Creates Officer instances via UserBeaconProxy)"]
-    
+
     Officer["Officer Contract<br/>(Central orchestrator - manages all beacons)"]
-    
+
     subgraph Beacons["Beacon Layer"]
         BB["Bank<br/>Beacon"]
         EB["Elections<br/>Beacon"]
@@ -49,7 +52,7 @@ graph TB
         EAB["ExpenseAccount<br/>Beacon"]
         CRB["CashRem<br/>Beacon"]
     end
-    
+
     subgraph Proxies["Proxy Layer"]
         BankP["Bank<br/>Proxy"]
         ElectionsP["Elections<br/>Proxy"]
@@ -59,12 +62,12 @@ graph TB
         ExpP["ExpenseAccount<br/>Proxy"]
         CashP["CashRem<br/>Proxy"]
     end
-    
+
     FB -->|creates| Officer
     Officer -->|configures| BB
     Officer -->|configures| EB
     Officer -->|configures| PB
-    
+
     BB -.->|points to impl| BankP
     EB -.->|points to impl| ElectionsP
     PB -.->|points to impl| ProposalsP
@@ -72,7 +75,7 @@ graph TB
     IB -.->|points to impl| InvP
     EAB -.->|points to impl| ExpP
     CRB -.->|points to impl| CashP
-    
+
     style FB fill:#e1f5ff,stroke:#0288d1,stroke-width:3px
     style Officer fill:#fff3e0,stroke:#ef6c00,stroke-width:3px
     style Beacons fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
@@ -80,6 +83,7 @@ graph TB
 ```
 
 **Benefits:**
+
 1. **Shared Implementation**: Multiple proxies point to single implementation
 2. **Upgradable**: Update implementation without changing proxy addresses
 3. **Gas Efficient**: Deployment of new instances is cheaper
@@ -90,11 +94,13 @@ graph TB
 ## Core Contracts
 
 ### 1. Officer Contract
+
 **Path**: `/contract/contracts/Officer.sol`
 
 **Purpose**: Central orchestrator and factory for all organizational contracts.
 
 **Key Responsibilities**:
+
 - Manages beacon configurations for all contract types
 - Deploys contract instances via beacon proxies
 - Orchestrates contract initialization and linking
@@ -102,6 +108,7 @@ graph TB
 - Handles cross-contract permission setup
 
 **Key Functions**:
+
 ```solidity
 // Configure a beacon for a contract type
 function configureBeacon(string contractType, address beaconAddress)
@@ -117,11 +124,13 @@ function findDeployedContract(string contractType) → address
 ```
 
 **State Variables**:
+
 - `contractBeacons`: Mapping of contract type → beacon address
 - `deployedContracts`: Array of deployed contract info (type + address)
 - `bodContract`: Reference to BoardOfDirectors contract
 
 **Special Logic**:
+
 - Elections automatically deploys BoardOfDirectors when created
 - Bank and InvestorV1 are auto-linked when both exist
 - CashRemuneration gets permissions on InvestorV1 token
@@ -129,17 +138,20 @@ function findDeployedContract(string contractType) → address
 ---
 
 ### 2. Bank Contract
+
 **Path**: `/contract/contracts/Bank.sol`
 
 **Purpose**: Treasury management and dividend distribution system.
 
 **Key Responsibilities**:
+
 - Manages organizational funds (ETH and ERC20 tokens)
 - Distributes dividends to shareholders proportionally
 - Separates locked (dividend) vs unlocked funds
 - Integrates with InvestorV1 for shareholder data
 
 **Key Functions**:
+
 ```solidity
 // Deposit dividends and allocate to shareholders
 function depositDividends(uint256 amount, address investorAddress)
@@ -158,28 +170,33 @@ function setInvestorAddress(address investorAddress)
 ```
 
 **Key Concepts**:
+
 - **Locked Balance**: Dividends allocated but not yet claimed
 - **Unlocked Balance**: Available for owner transfers
 - **Proportional Distribution**: Based on shareholdings from InvestorV1
 
 **Integration Points**:
+
 - **InvestorV1**: Gets shareholder list and token balances
 - **Officer**: Automatically linked during deployment
 
 ---
 
 ### 3. InvestorV1 Contract
+
 **Path**: `/contract/contracts/Investor/InvestorV1.sol`
 
 **Purpose**: ERC20 token representing organizational equity/shares.
 
 **Key Responsibilities**:
+
 - Mints equity tokens to shareholders
 - Tracks all shareholders automatically
 - Provides shareholder data to Bank for dividends
 - Role-based minting (MINTER_ROLE)
 
 **Key Functions**:
+
 ```solidity
 // Mint tokens to multiple shareholders (owner only)
 function distributeMint(Shareholder[] shareholders)
@@ -192,11 +209,13 @@ function getShareholders() → Shareholder[]
 ```
 
 **Key Features**:
+
 - **Auto-tracking**: Shareholders automatically added/removed on transfers
 - **Role-based Access**: CashRemuneration gets MINTER_ROLE for wage payments
 - **Dividend Integration**: Automatic ETH dividend distribution on receive
 
 **Integration Points**:
+
 - **Bank**: Provides shareholder data for dividend distribution
 - **CashRemuneration**: Granted MINTER_ROLE to mint tokens as payment
 - **Officer**: Configured during deployment
@@ -204,22 +223,25 @@ function getShareholders() → Shareholder[]
 ---
 
 ### 4. Elections Contract
+
 **Path**: `/contract/contracts/Elections/Elections.sol`
 
 **Purpose**: Democratic election system for Board of Directors.
 
 **Key Responsibilities**:
+
 - Create elections with candidates and eligible voters
 - Handle vote casting with eligibility checks
 - Calculate election results automatically
 - Update BoardOfDirectors with winners
 
 **Key Functions**:
+
 ```solidity
 // Create new election (owner only)
 function createElection(
     string title,
-    string description, 
+    string description,
     uint256 startDate,
     uint256 endDate,
     uint256 seatCount,
@@ -238,34 +260,40 @@ function getElectionResults(uint256 electionId) → address[]
 ```
 
 **Key Concepts**:
+
 - **Seat Count**: Must be odd number for tie-breaking
 - **Eligible Voters**: Pre-defined list of addresses who can vote
 - **Result Calculation**: Sorts candidates by vote count
 - **Automatic BoD Update**: Winners become board members
 
 **Special Logic**:
+
 - Only one election can be ongoing at a time
 - Elections contract automatically creates BoardOfDirectors proxy on first deployment
 - Results are published after voting ends or all voters have voted
 
 **Integration Points**:
+
 - **BoardOfDirectors**: Created automatically, updated with winners
 - **Officer**: Special deployment logic creates BoD when Elections deploys
 
 ---
 
 ### 5. BoardOfDirectors Contract
+
 **Path**: `/contract/contracts/BoardOfDirectors.sol`
 
 **Purpose**: Multi-signature governance and action approval system.
 
 **Key Responsibilities**:
+
 - Manages board members (set by Elections)
 - Creates actions requiring approval
 - Majority voting on actions
 - Executes approved actions automatically
 
 **Key Functions**:
+
 ```solidity
 // Add action requiring approval (board members only)
 function addAction(address target, string description, bytes data) → uint256
@@ -281,12 +309,14 @@ function setBoardOfDirectors(address[] boardMembers)
 ```
 
 **Key Concepts**:
+
 - **Actions**: Encoded function calls to be executed
 - **Majority Approval**: Requires > 50% board approval
 - **Auto-execution**: Executes when majority reached
 - **Self-governance**: Can modify its own owners through actions
 
 **Integration Points**:
+
 - **Elections**: Sets board members after election
 - **Proposals**: Uses board members for proposal voting
 - **Officer**: Deployed automatically with Elections
@@ -294,17 +324,20 @@ function setBoardOfDirectors(address[] boardMembers)
 ---
 
 ### 6. Proposals Contract
+
 **Path**: `/contract/contracts/Proposals/Proposals.sol`
 
 **Purpose**: Formal proposal voting system for board decisions.
 
 **Key Responsibilities**:
+
 - Create proposals with descriptions and voting periods
 - Board member voting (Yes/No/Abstain)
 - Automatic result calculation
 - Track proposal lifecycle
 
 **Key Functions**:
+
 ```solidity
 // Create proposal (board members only)
 function createProposal(
@@ -323,29 +356,34 @@ function tallyResults(uint256 proposalId)
 ```
 
 **Proposal States**:
+
 - `Active`: Currently accepting votes
 - `Succeeded`: Yes votes > No votes
-- `Defeated`: No votes > Yes votes  
+- `Defeated`: No votes > Yes votes
 - `Expired`: Tie or inconclusive
 
 **Integration Points**:
+
 - **BoardOfDirectors**: Gets board member list for voting
 - **Officer**: Linked to BoD contract during deployment
 
 ---
 
 ### 7. ExpenseAccountEIP712 Contract
+
 **Path**: `/contract/contracts/expense-account/ExpenseAccountEIP712.sol`
 
 **Purpose**: EIP-712 signed expense approval and payment system.
 
 **Key Responsibilities**:
+
 - Process expense payments with owner signatures
 - Enforce budget constraints via EIP-712
 - Support multiple tokens
 - Track expense history
 
 **Key Functions**:
+
 ```solidity
 // Submit expense with budget signature
 function submitExpense(
@@ -361,11 +399,13 @@ function removeTokenSupport(address token)
 ```
 
 **Budget Types**:
+
 - `TransactionsPerPeriod`: Limit number of transactions
 - `AmountPerPeriod`: Limit total amount per period
 - `AmountPerTransaction`: Limit per-transaction amount
 
 **Key Concepts**:
+
 - **EIP-712 Signatures**: Off-chain approval by owner
 - **Budget Enforcement**: On-chain validation of constraints
 - **Token Support**: Multiple ERC20 tokens + ETH
@@ -373,17 +413,20 @@ function removeTokenSupport(address token)
 ---
 
 ### 8. CashRemunerationEIP712 Contract
+
 **Path**: `/contract/contracts/CashRemunerationEIP712.sol`
 
 **Purpose**: Wage payment system with EIP-712 signatures.
 
 **Key Responsibilities**:
+
 - Process wage claims with owner approval
 - Calculate payments from hours × hourly rate
 - Support multiple token payments simultaneously
 - Mint InvestorV1 tokens as part of compensation
 
 **Key Functions**:
+
 ```solidity
 // Withdraw wages with signature
 function withdrawWages(
@@ -397,12 +440,14 @@ function disableWageClaim(bytes32 signatureHash)
 ```
 
 **Key Concepts**:
+
 - **Multi-token Wages**: Pay in multiple tokens in one transaction
 - **Token Minting**: Can mint InvestorV1 tokens as equity compensation
 - **Signature Expiry**: Claims include timestamp to prevent replay
 - **Claim Tracking**: Prevents double-payment of same claim
 
 **Integration Points**:
+
 - **InvestorV1**: Granted MINTER_ROLE to mint equity tokens
 - **Officer**: Sets up permissions during deployment
 
@@ -423,22 +468,22 @@ graph TB
     Proposals["Proposals"]
     Expense["ExpenseAccount"]
     CashRem["CashRemuneration"]
-    
+
     FB -->|creates| Officer
-    
+
     Officer -->|deploys & manages| Bank
     Officer -->|deploys & manages| Investor
     Officer -->|deploys & manages| Elections
     Officer -->|deploys & manages| Proposals
     Officer -->|deploys & manages| Expense
     Officer -->|deploys & manages| CashRem
-    
+
     Bank -.->|queries shareholders| Investor
     Elections -->|creates & updates| BoD
     Proposals -.->|reads members| BoD
     BoD -.->|owner| Elections
     CashRem -->|mints tokens| Investor
-    
+
     style FB fill:#e1f5ff,stroke:#0288d1,stroke-width:2px
     style Officer fill:#fff3e0,stroke:#ef6c00,stroke-width:3px
     style Bank fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
@@ -452,36 +497,42 @@ graph TB
 ### Key Relationships
 
 #### 1. Officer ↔ All Contracts
+
 - **Direction**: Officer → Others
 - **Type**: Factory/Registry
 - **Purpose**: Officer creates and tracks all contracts
 - **Data**: Beacon addresses, deployed contract addresses
 
 #### 2. Elections → BoardOfDirectors
+
 - **Direction**: Elections → BoD (creates, updates)
 - **Type**: Creator/Updater
 - **Purpose**: Elections creates BoD and updates membership
 - **Data**: Winner addresses become board members
 
 #### 3. BoardOfDirectors ↔ Proposals
+
 - **Direction**: Proposals → BoD (reads)
 - **Type**: Read-only integration
 - **Purpose**: Proposals checks board membership for voting
 - **Data**: Board member addresses
 
 #### 4. Bank ↔ InvestorV1
+
 - **Direction**: Bank → InvestorV1 (reads)
 - **Type**: Read-only integration
 - **Purpose**: Bank gets shareholder data for dividends
 - **Data**: Shareholder addresses and token balances
 
 #### 5. InvestorV1 ↔ CashRemuneration
+
 - **Direction**: CashRemuneration → InvestorV1 (writes)
 - **Type**: Minter integration
 - **Purpose**: CashRemuneration mints equity tokens as wages
 - **Data**: Minting transactions via MINTER_ROLE
 
 #### 6. ExpenseAccountEIP712 (Independent)
+
 - **Direction**: None
 - **Type**: Standalone
 - **Purpose**: Expense management independent of other contracts
@@ -542,7 +593,7 @@ Each team deploys their own set of contract instances:
 
 4. Officer.deployAllContracts() Deploys:
    ├─ Bank Proxy
-   ├─ InvestorV1 Proxy  
+   ├─ InvestorV1 Proxy
    ├─ Elections Proxy
    │  └─ Auto-creates BoardOfDirectors Proxy
    ├─ Proposals Proxy
@@ -576,12 +627,12 @@ Each team deploys their own set of contract instances:
 
 ### Deployment Code Locations
 
-| Component | Path |
-|-----------|------|
-| Beacon Modules | `/contract/ignition/modules/*BeaconModule.ts` |
-| Officer Module | `/contract/ignition/modules/OfficerModule.ts` |
+| Component       | Path                                                                    |
+| --------------- | ----------------------------------------------------------------------- |
+| Beacon Modules  | `/contract/ignition/modules/*BeaconModule.ts`                           |
+| Officer Module  | `/contract/ignition/modules/OfficerModule.ts`                           |
 | Frontend Deploy | `/app/src/components/sections/TeamView/forms/DeployContractSection.vue` |
-| Constants | `/app/src/constant.ts` |
+| Constants       | `/app/src/constant.ts`                                                  |
 
 ---
 
@@ -594,7 +645,7 @@ Owner → Bank.depositDividends(amount, investorAddress)
          │
          ├─> Bank.allocateDividends(amount, investorAddress)
          │    │
-         │    ├─> InvestorV1.getShareholders() 
+         │    ├─> InvestorV1.getShareholders()
          │    │   └─> Returns: [Shareholder{address, amount}]
          │    │
          │    └─> Calculate proportional dividends
@@ -606,6 +657,7 @@ Shareholder → Bank.claimDividend()
 ```
 
 **Data Accessed**:
+
 - Bank reads: `InvestorV1.getShareholders()`, `InvestorV1.totalSupply()`
 - Bank writes: `dividendBalances[address]`, `totalDividends`
 
@@ -633,6 +685,7 @@ Owner/Auto → Elections.publishResults(electionId)
 ```
 
 **Data Accessed**:
+
 - Elections writes: Voter choices, vote counts
 - BoardOfDirectors writes: Board member list
 - Proposals reads: Board member list
@@ -658,6 +711,7 @@ Board Members → Proposals.castVote(proposalId, vote)
 ```
 
 **Data Accessed**:
+
 - Proposals reads: `BoardOfDirectors.isMember()`, `BoardOfDirectors.getBoardOfDirectors()`
 - Proposals writes: Proposal votes, counts, state
 
@@ -682,6 +736,7 @@ Employee → CashRemuneration.withdrawWages(wageClaim, signature)
 ```
 
 **Data Accessed**:
+
 - CashRemuneration reads: `paidWageClaims[hash]`
 - CashRemuneration writes: Transfers tokens, updates claim status
 - InvestorV1 writes: Mints tokens (via MINTER_ROLE)
@@ -704,6 +759,7 @@ Employee → ExpenseAccount.submitExpense(recipient, amount, budgetLimit, signat
 ```
 
 **Data Accessed**:
+
 - ExpenseAccount reads: Budget signatures, usage data
 - ExpenseAccount writes: Usage tracking, transfers
 
@@ -714,6 +770,7 @@ Employee → ExpenseAccount.submitExpense(recipient, amount, budgetLimit, signat
 ### For Team Owners
 
 **US-1: Deploy Team Contracts**
+
 ```
 As a team owner
 I want to deploy all necessary smart contracts with one click
@@ -727,6 +784,7 @@ Acceptance Criteria:
 ```
 
 **US-2: Manage Organization Funds**
+
 ```
 As a team owner
 I want to deposit and manage organizational funds
@@ -740,6 +798,7 @@ Acceptance Criteria:
 ```
 
 **US-3: Create Elections**
+
 ```
 As a team owner
 I want to create elections for board positions
@@ -753,6 +812,7 @@ Acceptance Criteria:
 ```
 
 **US-4: Approve Wages & Expenses**
+
 ```
 As a team owner
 I want to approve wages and expenses off-chain
@@ -770,6 +830,7 @@ Acceptance Criteria:
 ### For Board Members
 
 **US-5: Create Proposals**
+
 ```
 As a board member
 I want to create proposals for team decisions
@@ -783,6 +844,7 @@ Acceptance Criteria:
 ```
 
 **US-6: Vote on Proposals**
+
 ```
 As a board member
 I want to vote Yes/No/Abstain on proposals
@@ -796,6 +858,7 @@ Acceptance Criteria:
 ```
 
 **US-7: Approve Multi-sig Actions**
+
 ```
 As a board member
 I want to approve important contract actions
@@ -813,6 +876,7 @@ Acceptance Criteria:
 ### For Shareholders/Investors
 
 **US-8: Receive Dividends**
+
 ```
 As a shareholder
 I want to automatically receive dividend allocations
@@ -826,6 +890,7 @@ Acceptance Criteria:
 ```
 
 **US-9: Participate in Elections**
+
 ```
 As an eligible voter
 I want to vote in board elections
@@ -839,6 +904,7 @@ Acceptance Criteria:
 ```
 
 **US-10: Trade Equity Tokens**
+
 ```
 As a shareholder
 I want to transfer my equity tokens
@@ -856,6 +922,7 @@ Acceptance Criteria:
 ### For Employees
 
 **US-11: Submit Wage Claims**
+
 ```
 As an employee
 I want to submit signed wage claims
@@ -869,6 +936,7 @@ Acceptance Criteria:
 ```
 
 **US-12: Submit Expenses**
+
 ```
 As an employee
 I want to submit approved expenses
@@ -888,6 +956,7 @@ Acceptance Criteria:
 ### Access Control Patterns
 
 #### 1. Ownable Pattern
+
 **Contracts**: Officer, Bank, Elections, Proposals, ExpenseAccount, CashRemuneration
 
 ```solidity
@@ -899,11 +968,13 @@ modifier onlyOwner() {
 ```
 
 **Use Cases**:
+
 - Configure critical settings
 - Deploy new contract instances
 - Pause/unpause operations
 
 #### 2. Role-Based Access (AccessControl)
+
 **Contracts**: InvestorV1
 
 ```solidity
@@ -916,10 +987,12 @@ modifier onlyRole(bytes32 role) {
 ```
 
 **Roles**:
+
 - `DEFAULT_ADMIN_ROLE`: Full admin privileges
 - `MINTER_ROLE`: Can mint InvestorV1 tokens (granted to CashRemuneration)
 
 #### 3. Board Member Check
+
 **Contracts**: BoardOfDirectors, Proposals
 
 ```solidity
@@ -933,10 +1006,12 @@ modifier onlyBoardOfDirectors() {
 ```
 
 **Use Cases**:
+
 - Create/vote on proposals
 - Approve multi-sig actions
 
 #### 4. Self-Only Pattern
+
 **Contracts**: BoardOfDirectors
 
 ```solidity
@@ -947,6 +1022,7 @@ modifier onlySelf() {
 ```
 
 **Use Cases**:
+
 - Modify owners through approved multi-sig actions
 
 ---
@@ -954,11 +1030,12 @@ modifier onlySelf() {
 ### Upgradeability Mechanism
 
 #### Beacon Contract Structure
+
 ```solidity
 // Beacon stores implementation address
 contract Beacon is UpgradeableBeacon {
     address public implementation;
-    
+
     function upgradeTo(address newImplementation) external onlyOwner {
         implementation = newImplementation;
     }
@@ -970,7 +1047,7 @@ contract UserBeaconProxy {
         // Initialize with beacon address
         // Call initialize on implementation
     }
-    
+
     fallback() external payable {
         address impl = Beacon(beacon).implementation();
         // Delegatecall to implementation
@@ -979,6 +1056,7 @@ contract UserBeaconProxy {
 ```
 
 #### Upgrade Process
+
 1. Deploy new implementation contract
 2. Call `Beacon.upgradeTo(newImplementation)`
 3. All existing proxies automatically use new logic
@@ -991,24 +1069,28 @@ contract UserBeaconProxy {
 ### Security Features
 
 #### 1. Reentrancy Protection
+
 All state-changing functions use ReentrancyGuard:
+
 ```solidity
 function claimDividend() external nonReentrant {
     // Checks
     uint256 amt = dividendBalances[msg.sender];
     require(amt > 0);
-    
+
     // Effects
     dividendBalances[msg.sender] = 0;
     totalDividends -= amt;
-    
+
     // Interactions
     payable(msg.sender).call{value: amt}("");
 }
 ```
 
 #### 2. Pausable Operations
+
 Contracts can be paused in emergencies:
+
 ```solidity
 function pause() external onlyOwner {
     _pause();
@@ -1020,7 +1102,9 @@ function someFunction() external whenNotPaused {
 ```
 
 #### 3. EIP-712 Signatures
+
 Off-chain approvals with typed data:
+
 ```solidity
 // Domain separator ensures signatures unique per chain/contract
 bytes32 domainSeparator = keccak256(
@@ -1050,7 +1134,9 @@ require(signer == owner(), "Invalid signature");
 ```
 
 #### 4. Input Validation
+
 Comprehensive validation throughout:
+
 ```solidity
 // Elections.sol
 require(startDate > block.timestamp, "Start date must be in future");
@@ -1064,6 +1150,7 @@ require(candidates.length >= seatCount, "Not enough candidates");
 ### Gas Optimization Techniques
 
 #### 1. Storage Optimization
+
 ```solidity
 // Pack multiple values in single slot
 struct Proposal {
@@ -1078,6 +1165,7 @@ struct Proposal {
 ```
 
 #### 2. Batch Operations
+
 ```solidity
 // Deploy all contracts in single transaction
 function deployAllContracts(DeploymentData[] calldata deployments)
@@ -1087,7 +1175,9 @@ function distributeMint(Shareholder[] memory shareholders)
 ```
 
 #### 3. Events Over Storage
+
 Events for historical data, storage for current state:
+
 ```solidity
 // Store only current state
 mapping(address => uint256) public dividendBalances;
@@ -1102,28 +1192,33 @@ event DividendClaimed(address indexed account, uint256 amount);
 ### Testing Strategy
 
 #### Contract Tests Location
+
 - `/contract/test/`
 - Using Hardhat + TypeScript
 
 #### Test Categories
 
 **1. Unit Tests**
+
 - Individual contract functions
 - Access control checks
 - Input validation
 - State changes
 
 **2. Integration Tests**
+
 - Cross-contract interactions
 - Deployment flows
 - Data synchronization
 
 **3. Upgrade Tests**
+
 - Storage layout compatibility
 - Beacon proxy upgrades
 - Data persistence
 
 **4. Security Tests**
+
 - Reentrancy attempts
 - Signature replay attacks
 - Authorization bypasses
@@ -1133,6 +1228,7 @@ event DividendClaimed(address indexed account, uint256 amount);
 ## Deployment Checklist
 
 ### Pre-Deployment
+
 - [ ] Deploy all implementation contracts
 - [ ] Deploy all beacon contracts pointing to implementations
 - [ ] Deploy FactoryBeacon pointing to Officer implementation
@@ -1141,6 +1237,7 @@ event DividendClaimed(address indexed account, uint256 amount);
 - [ ] Configure supported token addresses (USDC, USDT, etc.)
 
 ### Team Deployment
+
 - [ ] User creates team in database
 - [ ] Frontend calls FactoryBeacon.createBeaconProxy()
 - [ ] Wait for BeaconProxyCreated event
@@ -1149,6 +1246,7 @@ event DividendClaimed(address indexed account, uint256 amount);
 - [ ] Verify all contracts deployed correctly
 
 ### Post-Deployment
+
 - [ ] Test basic operations (deposit, transfer)
 - [ ] Create test election
 - [ ] Create test proposal
@@ -1165,12 +1263,14 @@ event DividendClaimed(address indexed account, uint256 amount);
 **Symptoms**: Transaction reverts during deployment
 
 **Possible Causes**:
+
 1. Beacon not configured for contract type
 2. Invalid initialization parameters
 3. Insufficient gas
 4. BeaconProxy creation failed
 
 **Solutions**:
+
 ```solidity
 // Check beacon configured
 address beaconAddr = officer.contractBeacons("Bank");
@@ -1187,11 +1287,13 @@ require(initializerData.length > 0, "Missing initializer");
 **Symptoms**: Shareholders receive wrong amounts
 
 **Possible Causes**:
+
 1. InvestorV1 address not set in Bank
 2. Shareholder balances changed between allocation and claim
 3. Rounding errors in division
 
 **Solutions**:
+
 ```solidity
 // Verify investor address set
 require(investorAddress != address(0), "Investor not set");
@@ -1211,11 +1313,13 @@ if (i == shareholderCount - 1) {
 **Symptoms**: Wrong candidates become board members
 
 **Possible Causes**:
+
 1. Tie-breaking not deterministic
 2. Vote count calculation error
 3. Results published before all votes
 
 **Solutions**:
+
 ```solidity
 // Ensure deterministic tie-breaking
 if (allCandidates[j].voteCount == allCandidates[j + 1].voteCount &&
@@ -1236,12 +1340,14 @@ require(
 **Symptoms**: Transaction reverts on withdrawWages()
 
 **Possible Causes**:
+
 1. Invalid EIP-712 signature
 2. Claim already paid
 3. Claim disabled
 4. Insufficient contract balance
 
 **Solutions**:
+
 ```solidity
 // Verify signature matches owner
 address signer = ECDSA.recover(digest, signature);
@@ -1272,6 +1378,7 @@ for (uint256 i = 0; i < wages.length; i++) {
 ### Contract Addresses (Example - Replace with Actual)
 
 #### Mainnet
+
 ```
 FactoryBeacon:           0x... (TBD)
 BankBeacon:              0x... (TBD)
@@ -1285,12 +1392,12 @@ CashRemunerationBeacon:  0x... (TBD)
 
 ### External Dependencies
 
-| Dependency | Purpose | Version |
-|------------|---------|---------|
-| OpenZeppelin Upgradeable | Base contracts, security | v5.0+ |
-| OpenZeppelin Contracts | ERC20, utilities | v5.0+ |
-| Hardhat | Development framework | Latest |
-| Ethers.js | Blockchain interaction | v6.x |
+| Dependency               | Purpose                  | Version |
+| ------------------------ | ------------------------ | ------- |
+| OpenZeppelin Upgradeable | Base contracts, security | v5.0+   |
+| OpenZeppelin Contracts   | ERC20, utilities         | v5.0+   |
+| Hardhat                  | Development framework    | Latest  |
+| Ethers.js                | Blockchain interaction   | v6.x    |
 
 ### Useful Links
 
@@ -1303,24 +1410,24 @@ CashRemunerationBeacon:  0x... (TBD)
 
 ## Glossary
 
-| Term | Definition |
-|------|------------|
-| **Beacon** | Contract storing implementation address for proxies |
-| **Proxy** | Contract delegating calls to implementation via beacon |
+| Term               | Definition                                             |
+| ------------------ | ------------------------------------------------------ |
+| **Beacon**         | Contract storing implementation address for proxies    |
+| **Proxy**          | Contract delegating calls to implementation via beacon |
 | **Implementation** | Contract containing actual logic (not called directly) |
-| **BoD** | Board of Directors |
-| **EIP-712** | Ethereum standard for typed structured data signing |
-| **Dividend** | Profit distribution to shareholders proportionally |
-| **Shareholder** | Holder of InvestorV1 equity tokens |
-| **Action** | Multi-sig proposal requiring board approval |
-| **Proposal** | Formal decision requiring board voting |
-| **Election** | Democratic selection of board members |
-| **Wage Claim** | Employee request for hour-based payment |
-| **Expense** | Reimbursement request with budget constraints |
-| **MINTER_ROLE** | AccessControl role allowing token minting |
+| **BoD**            | Board of Directors                                     |
+| **EIP-712**        | Ethereum standard for typed structured data signing    |
+| **Dividend**       | Profit distribution to shareholders proportionally     |
+| **Shareholder**    | Holder of InvestorV1 equity tokens                     |
+| **Action**         | Multi-sig proposal requiring board approval            |
+| **Proposal**       | Formal decision requiring board voting                 |
+| **Election**       | Democratic selection of board members                  |
+| **Wage Claim**     | Employee request for hour-based payment                |
+| **Expense**        | Reimbursement request with budget constraints          |
+| **MINTER_ROLE**    | AccessControl role allowing token minting              |
 
 ---
 
-*Document Version: 1.0*  
-*Last Updated: November 23, 2024*  
-*Maintained by: CNC Portal Team*
+_Document Version: 1.0_  
+_Last Updated: November 23, 2024_  
+_Maintained by: CNC Portal Team_
