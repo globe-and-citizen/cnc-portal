@@ -41,7 +41,6 @@ import CardComponent from '@/components/CardComponent.vue'
 import { useStorage } from '@vueuse/core'
 import { type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import TransferModal from '@/components/forms/TransferModal.vue'
 import DepositModal from '@/components/forms/DepositModal.vue'
 

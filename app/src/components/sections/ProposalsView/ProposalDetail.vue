@@ -251,7 +251,7 @@ const proposal = computed<Proposal | undefined>(() => {
 const {
   mutate: voteOnProposal,
   isPending: isVoting,
-  error: voteError,
+  // error: voteError,
   data: txHash
 } = useWriteContract()
 
@@ -316,12 +316,12 @@ onMounted(async () => {
   await fetchRecentVotes()
 })
 
-watch(voteError, (error) => {
-  if (error) {
-    console.error('Error voting on proposal:', error)
-    toastStore.addErrorToast('Failed to cast vote')
-  }
-})
+// watch(voteError, (error) => {
+//   if (error) {
+//     console.error('Error voting on proposal:', error)
+//     toastStore.addErrorToast('Failed to cast vote')
+//   }
+// })
 
 // watch(errorConfirmingVote, (error) => {
 //   if (error) {
