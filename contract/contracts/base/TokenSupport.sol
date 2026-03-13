@@ -68,9 +68,9 @@ abstract contract TokenSupport {
   }
 
   /**
-   * @notice Public version: Checks if a token is supported
-   * @param _token The address of the token to check
-   * @return True if the token is supported, false otherwise
+   * @notice Public version: checks if a token is supported.
+   * @param _token The address of the token to check.
+   * @return True if token is supported, false otherwise.
    */
   function isTokenSupported(address _token) public view returns (bool) {
     return _supportedTokens.contains(_token);

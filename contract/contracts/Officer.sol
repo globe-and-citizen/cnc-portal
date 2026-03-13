@@ -357,6 +357,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    */
   function isFeeCollectorToken(address _tokenAddress) external view returns (bool) {
     if (_tokenAddress == address(0)) return false;
-    return IFeeCollector(feeCollector).supportedTokens(_tokenAddress);
+    return IFeeCollector(feeCollector).isTokenSupported(_tokenAddress);
   }
 }

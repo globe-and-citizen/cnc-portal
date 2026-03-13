@@ -61,8 +61,8 @@ contract InvestorV1 is
     address owner = _owner == address(0) ? msg.sender : _owner;
     __Ownable_init(owner);
     __AccessControl_init();
-    __ReentrancyGuard_init();
     __Pausable_init();
+    __ReentrancyGuard_init();
 
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
     _grantRole(MINTER_ROLE, owner);

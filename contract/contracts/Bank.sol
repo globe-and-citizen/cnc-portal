@@ -157,6 +157,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   function transfer(address _to, uint256 _amount) external onlyOwner nonReentrant whenNotPaused {
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
+    require(_amount <= address(this).balance, 'Insufficient unlocked balance');
 
     // --- Step 1: Get fee configuration ---
     uint16 feeBps = _getFeeBps(); // e.g., 50 = 0.5%
