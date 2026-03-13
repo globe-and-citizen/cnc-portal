@@ -142,7 +142,7 @@ export function useContractWrites(config: ContractWriteConfig) {
           console.error('Gas estimation failed:', simulateGasResult.error.value)
           throw new Error('Gas estimation failed')
         }
-      } 
+      }
       const gasLimit = 500000n
 
       // Execute the contract write

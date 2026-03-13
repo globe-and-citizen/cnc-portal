@@ -61,10 +61,7 @@ const depositTokenAddress = ref<Address>(zeroAddress)
 const investorAddress = computed(() => teamStore.getContractAddressByType('InvestorV1') as Address)
 
 const depositDividendsWrite = useDepositDividends(depositAmount)
-const depositTokenDividendsWrite = useDepositTokenDividends(
-  depositTokenAddress,
-  depositAmount
-)
+const depositTokenDividendsWrite = useDepositTokenDividends(depositTokenAddress, depositAmount)
 
 const isBankWriteLoading = computed(
   () =>

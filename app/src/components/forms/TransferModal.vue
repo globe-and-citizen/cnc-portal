@@ -223,7 +223,7 @@ const handleTransfer = async (data: {
     // Direct transfer (non-BOD action)
     // Set a reasonable gas limit to avoid exceeding network gas cap
     const gasLimit = 500000n
-    
+
     if (isNativeToken) {
       await transfer({
         address: props.bankAddress,
