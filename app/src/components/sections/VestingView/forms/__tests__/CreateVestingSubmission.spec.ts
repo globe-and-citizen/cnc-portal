@@ -8,7 +8,7 @@ import { ref } from 'vue'
 import { parseEther, parseUnits } from 'viem'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { VESTING_ADDRESS } from '@/constant'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 
 // vi.mock('@/artifacts/abi/InvestorV1', () => MOCK_INVESTOR_ABI)

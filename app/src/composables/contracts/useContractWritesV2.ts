@@ -139,9 +139,11 @@ export function useContractWrites(config: ContractWriteConfig) {
       if (!skipGasEstimation) {
         await simulateGasResult.refetch()
         if (!simulateGasResult.isSuccess.value) {
+          console.error('Gas estimation failed:', simulateGasResult.error.value)
           throw new Error('Gas estimation failed')
         }
       }
+      const gasLimit = 500000n
 
       // Execute the contract write
       const response = await writeResult.mutateAsync({
@@ -149,6 +151,7 @@ export function useContractWrites(config: ContractWriteConfig) {
         abi: unref(config.abi),
         functionName: unref(config.functionName),
         args,
+        gas: gasLimit,
         ...(value !== undefined ? { value } : {})
       })
 

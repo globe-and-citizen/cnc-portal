@@ -27,7 +27,10 @@ describe('ExpenseAccountEIP712V2', function () {
     const expenseAccount = await ExpenseAccount.deploy()
     await expenseAccount.waitForDeployment()
 
-    await expenseAccount.initialize(owner.address, await usdt.getAddress(), await usdc.getAddress())
+    await expenseAccount.initialize(owner.address, [
+      await usdt.getAddress(),
+      await usdc.getAddress()
+    ])
 
     // Fund the contract with native tokens
     await owner.sendTransaction({

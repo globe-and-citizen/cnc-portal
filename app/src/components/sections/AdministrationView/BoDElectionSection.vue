@@ -167,23 +167,22 @@ const loadingGetProposals = ref(false)
 const fetchProposals = async () => {
   try {
     loadingGetProposals.value = true
-    // @ts-expect-error type issue
-    const proposalCount = (await readContract(config, {
+    const proposalCountResult = await readContract(config, {
       address: votingAddress.value,
       abi: VOTING_ABI,
       functionName: 'proposalCount'
-    })) as number
-    const proposalsList = []
+    })
+    const proposalCount = Number(proposalCountResult ?? 0n)
+    const proposalsList: Partial<OldProposal>[] = []
+
     for (let i = 0; i < proposalCount; i++) {
-      const proposal = await readContract(config, {
+      const proposal = (await readContract(config, {
         address: votingAddress.value,
         abi: VOTING_ABI,
         functionName: 'getProposalById',
-        // @ts-expect-error type issue
-        args: [i]
-      })
-      // @ts-expect-error type issue
-      proposalsList.push(proposal as Partial<OldProposal>)
+        args: [BigInt(i)]
+      })) as Partial<OldProposal>
+      proposalsList.push(proposal)
     }
 
     activeProposals.value = proposalsList.filter(
@@ -220,6 +219,12 @@ const createProposal = (newProposalInput: Ref<Partial<OldProposal>>) => {
     }
   })
   if (votingAddress.value) {
+    const proposal = newProposalInput.value
+    const voters = (proposal.voters ?? []).map((voter) => voter.memberAddress) as Address[]
+    const candidates = (proposal.candidates ?? []).map(
+      (candidate) => candidate.candidateAddress
+    ) as Address[]
+
     console.log('[createProposal] votingAddress.value: ', votingAddress.value)
     console.log('[createProposal] newProposalInput.value.voters: ', newProposalInput.value.voters)
     addProposal({
@@ -227,18 +232,12 @@ const createProposal = (newProposalInput: Ref<Partial<OldProposal>>) => {
       abi: VOTING_ABI,
       functionName: 'addProposal',
       args: [
-        // @ts-expect-error type issue
-        newProposalInput.value.title,
-        // @ts-expect-error type issue
-        newProposalInput.value.description,
-        // @ts-expect-error type issue
-        newProposalInput.value.isElection,
-        // @ts-expect-error type issue
-        newProposalInput.value.winnerCount,
-        newProposalInput.value.voters!.map((voter) => voter.memberAddress) as Address[],
-        newProposalInput.value.candidates!.map(
-          (candidate) => candidate.candidateAddress
-        ) as Address[]
+        proposal.title ?? '',
+        proposal.description ?? '',
+        proposal.isElection ?? false,
+        proposal.winnerCount ?? 0,
+        voters,
+        candidates
       ]
     })
   }
