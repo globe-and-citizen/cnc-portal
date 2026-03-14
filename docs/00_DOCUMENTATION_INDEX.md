@@ -12,25 +12,25 @@ Welcome! This index helps you navigate the comprehensive documentation for the C
 
 Start here to get oriented:
 
-1. **[Project Charter](./project-charter.md)** — Vision, scope, objectives, and governance (30 min)
+1. **[Project Charter](./01_PROJECT_CHARTER.md)** — Vision, scope, objectives, and governance (30 min)
 2. **[Architecture Overview](./platform/architecture.md)** — System components and relationships (20 min)
-3. **[User Stories](./USER_STORIES.md)** — Feature intent and acceptance criteria (45 min)
-4. **[Implementation Status](./IMPLEMENTATION_STATUS.md)** — What's done, in progress, and planned (15 min)
+3. **[User Stories](./02_USER_STORIES.md)** — Feature intent and acceptance criteria (45 min)
+4. **[Implementation Status](./03_IMPLEMENTATION_STATUS.md)** — What's done, in progress, and planned (15 min)
 
 ### For Product Managers
 
 Understand the product direction:
 
-1. [Project Charter](./project-charter.md) — Business objectives and success criteria
-2. [User Stories](./USER_STORIES.md) — Feature definitions and priorities
-3. [Implementation Status](./IMPLEMENTATION_STATUS.md) — Delivery tracking and roadmap
+1. [Project Charter](./01_PROJECT_CHARTER.md) — Business objectives and success criteria
+2. [User Stories](./02_USER_STORIES.md) — Feature definitions and priorities
+3. [Implementation Status](./03_IMPLEMENTATION_STATUS.md) — Delivery tracking and roadmap
 
 ### For Backend/API Developers
 
 Implement backend functionality:
 
 1. [Architecture Overview](./platform/architecture.md) — System design
-2. [User Stories](./USER_STORIES.md) — Feature requirements
+2. [User Stories](./02_USER_STORIES.md) — Feature requirements
 3. [API Specifications](./platform/development-standards.md) — Coding standards
 4. [Testing Strategy](./platform/testing-strategy.md) — Test requirements
 
@@ -39,7 +39,7 @@ Implement backend functionality:
 Build the UI:
 
 1. [Architecture Overview](./platform/architecture.md) — System design
-2. [User Stories](./USER_STORIES.md) — Feature flows and requirements
+2. [User Stories](./02_USER_STORIES.md) — Feature flows and requirements
 3. [Vue Component Standards](../.github/copilot-instructions/vue-component-standards.md) — Component best practices
 4. [Testing Strategy](./platform/testing-strategy.md) — Component testing requirements
 
@@ -47,8 +47,8 @@ Build the UI:
 
 Implement on-chain logic:
 
-1. [Project Charter](./project-charter.md) — Business objectives
-2. [User Stories](./USER_STORIES.md) — On-chain requirements
+1. [Project Charter](./01_PROJECT_CHARTER.md) — Business objectives
+2. [User Stories](./02_USER_STORIES.md) — On-chain requirements
 3. [Smart Contract Architecture](./contracts/contracts-technical-architecture.md) — Contract design
 4. [Testing Strategy](./platform/testing-strategy.md) — Contract testing approach
 
@@ -58,9 +58,9 @@ Implement on-chain logic:
 
 ### Governance & Planning
 
-- [Project Charter](./project-charter.md) — Vision, scope, milestones, stakeholder roles (v1.0.0)
-- [User Stories](./USER_STORIES.md) — Feature definitions with acceptance criteria and priorities
-- [Implementation Status](./IMPLEMENTATION_STATUS.md) — Feature delivery tracking and roadmap
+- [Project Charter](./01_PROJECT_CHARTER.md) — Vision, scope, milestones, stakeholder roles (v1.0.0)
+- [User Stories](./02_USER_STORIES.md) — Feature definitions with acceptance criteria and priorities
+- [Implementation Status](./03_IMPLEMENTATION_STATUS.md) — Feature delivery tracking and roadmap
 
 ### Architecture & Design
 
@@ -94,15 +94,15 @@ Implement on-chain logic:
 
 ### Want to understand the product?
 
-→ Read: [Project Charter](./project-charter.md) + [User Stories](./USER_STORIES.md)
+→ Read: [Project Charter](./01_PROJECT_CHARTER.md) + [User Stories](./02_USER_STORIES.md)
 
 ### Want to implement a feature?
 
-→ Read: [User Stories](./USER_STORIES.md) + [Architecture Overview](./platform/architecture.md) + [Testing Strategy](./platform/testing-strategy.md)
+→ Read: [User Stories](./02_USER_STORIES.md) + [Architecture Overview](./platform/architecture.md) + [Testing Strategy](./platform/testing-strategy.md)
 
 ### Want to know what's being built when?
 
-→ Read: [Implementation Status](./IMPLEMENTATION_STATUS.md) + [Project Charter Milestones](./project-charter.md#8-milestones-and-timeline)
+→ Read: [Implementation Status](./03_IMPLEMENTATION_STATUS.md) + [Project Charter Milestones](./01_PROJECT_CHARTER.md#8-milestones-and-timeline)
 
 ### Want to set up the project locally?
 
@@ -122,9 +122,9 @@ Implement on-chain logic:
 
 | Document                                            | Version | Updated          | Status |
 | --------------------------------------------------- | ------- | ---------------- | ------ |
-| [Project Charter](./project-charter.md)             | 1.0.0   | March 11, 2026   | Active |
-| [User Stories](./USER_STORIES.md)                   | 1.0.0   | March 12, 2026   | Active |
-| [Implementation Status](./IMPLEMENTATION_STATUS.md) | 1.0.0   | March 12, 2026   | Active |
+| [Project Charter](./01_PROJECT_CHARTER.md)             | 1.0.0   | March 11, 2026   | Active |
+| [User Stories](./02_USER_STORIES.md)                   | 1.0.0   | March 12, 2026   | Active |
+| [Implementation Status](./03_IMPLEMENTATION_STATUS.md) | 1.0.0   | March 12, 2026   | Active |
 | [Architecture Overview](./platform/architecture.md) | 1.0.0   | December 7, 2025 | Active |
 | [Testing Strategy](./platform/testing-strategy.md)  | 1.0.0   | December 7, 2025 | Active |
 | [Security Standards](./platform/security.md)        | 1.0.0   | TBD              | Draft  |
@@ -143,15 +143,15 @@ Implement on-chain logic:
 
 **Financial Features (Wages, Claims, Expenses, Vesting):**
 
-- [Project Charter § 5.1](./project-charter.md#51-core-features) — Feature overview
-- [User Stories: Payroll & Claims](./USER_STORIES.md#payroll--cash-remuneration) — Requirements
-- [Implementation Status: Financial](./IMPLEMENTATION_STATUS.md#financial-management) — What's built
+- [Project Charter § 5.1](./01_PROJECT_CHARTER.md#51-core-features) — Feature overview
+- [User Stories: Payroll & Claims](./02_USER_STORIES.md#payroll--cash-remuneration) — Requirements
+- [Implementation Status: Financial](./03_IMPLEMENTATION_STATUS.md#financial-management) — What's built
 
 **Governance (Proposals, BOD Elections, Voting):**
 
-- [Project Charter § 5.1](./project-charter.md#51-core-features) — Feature overview
-- [User Stories: Governance](./USER_STORIES.md#governance) — Requirements
-- [Implementation Status: Governance](./IMPLEMENTATION_STATUS.md#governance) — What's built
+- [Project Charter § 5.1](./01_PROJECT_CHARTER.md#51-core-features) — Feature overview
+- [User Stories: Governance](./02_USER_STORIES.md#governance) — Requirements
+- [Implementation Status: Governance](./03_IMPLEMENTATION_STATUS.md#governance) — What's built
 
 **Web3 Integration & Smart Contracts:**
 
@@ -171,15 +171,15 @@ Implement on-chain logic:
 
 **Questions about the project direction?**
 
-- See: [Project Charter](./project-charter.md) | Section: [Stakeholders & Governance](./project-charter.md#4-stakeholders-and-governance)
+- See: [Project Charter](./01_PROJECT_CHARTER.md) | Section: [Stakeholders & Governance](./01_PROJECT_CHARTER.md#4-stakeholders-and-governance)
 
 **Questions about feature requirements?**
 
-- See: [User Stories](./USER_STORIES.md) — Use CTRL+F to search for your feature
+- See: [User Stories](./02_USER_STORIES.md) — Use CTRL+F to search for your feature
 
 **Questions about implementation status?**
 
-- See: [Implementation Status](./IMPLEMENTATION_STATUS.md) — Track progress by module
+- See: [Implementation Status](./03_IMPLEMENTATION_STATUS.md) — Track progress by module
 
 **Questions about coding standards?**
 
@@ -200,4 +200,4 @@ Implement on-chain logic:
 **Documentation Hub:** March 12, 2026  
 **Next Review:** At Milestone 6 completion or when scope changes significantly
 
-For updates to this index, see [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md) on GitHub.
+For updates to this index, see [00_DOCUMENTATION_INDEX.md](./00_DOCUMENTATION_INDEX.md) on GitHub.
