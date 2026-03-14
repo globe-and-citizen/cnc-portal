@@ -217,36 +217,44 @@ sequenceDiagram
 
 ## Data Flow: Dividend Distribution
 
+Distribution is **push-based** — one owner transaction immediately distributes to all shareholders. There is no claim step.
+
 ```mermaid
 sequenceDiagram
     actor Owner
     participant Bank as Bank Contract
+    participant Officer as Officer Contract
     participant Investor as InvestorV1 Contract
     actor Shareholder
 
-    Owner->>Bank: 1. Deposit funds (ETH/ERC20)
-    Owner->>Bank: 2. depositDividends(amount, investorAddress)
+    Note over Owner: 1. Funds already in Bank<br/>(ETH via receive() or ERC20 via depositToken())
+
+    Owner->>Bank: 2. distributeNativeDividends(amount)<br/>or distributeTokenDividends(token, amount)
 
     activate Bank
-    Bank->>Investor: 3. getShareholders()
-    Investor-->>Bank: shareholders[]
-    Bank->>Investor: totalSupply()
-    Investor-->>Bank: supply
+    Bank->>Officer: 3. findDeployedContract("InvestorV1")
+    Officer-->>Bank: investorAddress
 
-    Note over Bank: 4. Calculate proportional shares<br/>For each shareholder:<br/>share = (amount × balance) / supply
+    alt ETH distribution
+        Bank->>Investor: 4a. distributeNativeDividends{value: amount}(amount)
+    else ERC20 distribution
+        Bank->>Investor: 4b. IERC20.safeTransfer(investorAddress, amount)
+        Bank->>Investor: 4c. distributeTokenDividends(token, amount)
+    end
 
-    Note over Bank: 5. Credit dividends<br/>dividendBalances[addr] += share<br/>totalDividends += share<br/>emit DividendCredited
+    activate Investor
+    Note over Investor: 5. supply = totalSupply()<br/>shareholders = _getShareholders()
 
-    Bank-->>Owner: 6. Emit DividendDeposited
-    deactivate Bank
+    loop For each shareholder
+        Note over Investor: 6. share = (amount × balance) / supply<br/>(last shareholder gets remainder)
+        Investor->>Shareholder: 7. Transfer share (ETH or ERC20)
+        Investor-->>Investor: emit DividendPaid(shareholder, token, share)
+    end
 
-    Shareholder->>Bank: 7. claimDividend()
+    Investor-->>Bank: 8. emit DividendDistributed(bank, token, amount, count)
+    deactivate Investor
 
-    activate Bank
-    Note over Bank: 8. Validate & transfer<br/>amt = dividendBalances[sender]<br/>require(amt > 0)<br/>dividendBalances[sender] = 0<br/>totalDividends -= amt
-
-    Bank->>Shareholder: 9. Transfer dividend payment
-    Bank-->>Shareholder: 10. Emit DividendClaimed
+    Bank-->>Owner: 9. emit DividendDistributionTriggered(investor, token, amount)
     deactivate Bank
 ```
 

@@ -141,44 +141,56 @@ function findDeployedContract(string contractType) → address
 
 **Path**: `/contract/contracts/Bank.sol`
 
-**Purpose**: Treasury management and dividend distribution system.
+**Purpose**: Organizational treasury and dividend distribution trigger. Holds ETH and ERC20 tokens, routes transfers with protocol fees, and delegates dividend distribution to InvestorV1.
 
 **Key Responsibilities**:
 
-- Manages organizational funds (ETH and ERC20 tokens)
-- Distributes dividends to shareholders proportionally
-- Separates locked (dividend) vs unlocked funds
-- Integrates with InvestorV1 for shareholder data
+- Accept ETH (via `receive()`) and ERC20 token deposits
+- Transfer funds to recipients with automatic fee deduction (via FeeCollector)
+- Trigger push-based dividend distributions by funding InvestorV1 directly
+- Resolve InvestorV1 address dynamically from Officer (no stored investor address)
 
 **Key Functions**:
 
 ```solidity
-// Deposit dividends and allocate to shareholders
-function depositDividends(uint256 amount, address investorAddress)
-function depositTokenDividends(address token, uint256 amount, address investorAddress)
+// Deposit ERC20 tokens into the bank
+function depositToken(address token, uint256 amount)
 
-// Shareholders claim their dividends
-function claimDividend()
-function claimTokenDividend(address token)
-
-// Transfer unlocked funds (owner only)
+// Transfer ETH to recipient (deducts protocol fee, sends remainder)
 function transfer(address to, uint256 amount)
+
+// Transfer ERC20 to recipient (fee only charged for FeeCollector-supported tokens)
 function transferToken(address token, address to, uint256 amount)
 
-// Set investor contract reference
-function setInvestorAddress(address investorAddress)
+// Trigger ETH dividend push to all InvestorV1 shareholders (onlyOwner)
+function distributeNativeDividends(uint256 amount)
+
+// Transfer ERC20 to InvestorV1 and trigger token dividend push (onlyOwner)
+function distributeTokenDividends(address token, uint256 amount)
+
+// View balances
+function getBalance() → uint256
+function getTokenBalance(address token) → uint256
 ```
+
+**Fee Mechanism**:
+
+- `transfer()` always deducts fee (fee BPS queried from Officer → FeeCollector for `"BANK"` type)
+- `transferToken()` deducts fee only if the token is supported by FeeCollector
+- Fee is sent to the FeeCollector contract address returned by `Officer.getFeeCollector()`
+- Net amount (after fee) is sent to the recipient
 
 **Key Concepts**:
 
-- **Locked Balance**: Dividends allocated but not yet claimed
-- **Unlocked Balance**: Available for owner transfers
-- **Proportional Distribution**: Based on shareholdings from InvestorV1
+- **No claim pattern**: Bank does not hold dividend balances. Distribution is push-based and immediate.
+- **No stored investor address**: Bank calls `IOfficer.findDeployedContract("InvestorV1")` on every dividend call (falls back to `"Investor"` for compatibility)
+- **Protocol fees**: All ETH and eligible ERC20 transfers deduct a fee in basis points
 
 **Integration Points**:
 
-- **InvestorV1**: Gets shareholder list and token balances
-- **Officer**: Automatically linked during deployment
+- **InvestorV1**: Funds and triggers dividend distributions (`distributeNativeDividends`, `distributeTokenDividends`)
+- **Officer**: Resolves InvestorV1 address and fee configuration at runtime
+- **FeeCollector**: Receives protocol fees on every transfer
 
 ---
 
@@ -186,39 +198,58 @@ function setInvestorAddress(address investorAddress)
 
 **Path**: `/contract/contracts/Investor/InvestorV1.sol`
 
-**Purpose**: ERC20 token representing organizational equity/shares.
+**Purpose**: ERC20 equity token (6 decimals) with automatic shareholder tracking and push-based dividend distribution directly to shareholders.
 
 **Key Responsibilities**:
 
-- Mints equity tokens to shareholders
-- Tracks all shareholders automatically
-- Provides shareholder data to Bank for dividends
-- Role-based minting (MINTER_ROLE)
+- Mint equity tokens (owner bulk mint or MINTER_ROLE individual mint)
+- Automatically track the shareholder set on every token transfer
+- Execute dividend distributions (ETH and ERC20) by pushing funds directly to each shareholder
+- Provide the shareholder list to external callers
 
 **Key Functions**:
 
 ```solidity
-// Mint tokens to multiple shareholders (owner only)
+// Mint tokens to multiple shareholders at once (owner only)
 function distributeMint(Shareholder[] shareholders)
 
-// Mint tokens to individual (MINTER_ROLE)
+// Mint a single amount (MINTER_ROLE only — e.g. CashRemuneration)
 function individualMint(address shareholder, uint256 amount)
 
-// Get all current shareholders with balances
+// Get all current shareholders with their balances
 function getShareholders() → Shareholder[]
+
+// Immediately send ETH proportionally to all shareholders (onlyBank, payable)
+function distributeNativeDividends(uint256 amount)
+
+// Immediately send ERC20 proportionally to all shareholders (onlyBank)
+// Requires Bank to have pre-transferred the tokens before calling
+function distributeTokenDividends(address token, uint256 amount)
+```
+
+**Distribution Algorithm**:
+
+```
+supply = totalSupply()
+for each shareholder:
+    share = (totalAmount × shareholderBalance) / supply
+last shareholder gets the remainder (handles integer rounding)
 ```
 
 **Key Features**:
 
-- **Auto-tracking**: Shareholders automatically added/removed on transfers
-- **Role-based Access**: CashRemuneration gets MINTER_ROLE for wage payments
-- **Dividend Integration**: Automatic ETH dividend distribution on receive
+- **6 decimals** (not 18 — matches USDC-style precision)
+- **Auto-tracking**: `_update()` hook adds/removes addresses from the shareholder set on every mint/transfer/burn
+- **Push-based dividends**: Funds are transferred immediately to shareholders in the same transaction — no claim step
+- **`onlyBank` modifier**: Only the Bank contract (resolved via Officer) can call distribution functions
+- **Role-based minting**: `MINTER_ROLE` granted to CashRemuneration; `DEFAULT_ADMIN_ROLE` granted to owner
+- **Rounding**: Last shareholder receives the integer remainder to ensure full distribution
 
 **Integration Points**:
 
-- **Bank**: Provides shareholder data for dividend distribution
-- **CashRemuneration**: Granted MINTER_ROLE to mint tokens as payment
-- **Officer**: Configured during deployment
+- **Bank**: Only caller allowed to trigger dividend distributions
+- **CashRemuneration**: Granted `MINTER_ROLE` to mint equity tokens as wages
+- **Officer**: Resolves Bank address for `onlyBank` check at runtime
 
 ---
 
@@ -453,6 +484,216 @@ function disableWageClaim(bytes32 signatureHash)
 
 ---
 
+### 9. Tips Contract
+
+**Path**: `/contract/contracts/Tips.sol`
+
+**Purpose**: ETH tip distribution to team members using push or pull patterns.
+
+**Key Responsibilities**:
+
+- Distribute equal ETH shares immediately (pushTip) or accumulate balances (sendTip)
+- Recipients withdraw accumulated tips via `withdraw()`
+- Configurable push limit (default 10, max 100) to cap gas costs
+- Carry division remainders to the next distribution
+
+**Key Functions**:
+
+```solidity
+// Direct ETH distribution (sends immediately)
+function pushTip(address[] calldata teamMembers) payable
+
+// Balance accumulation (recipients withdraw later)
+function sendTip(address[] calldata teamMembers) payable
+
+// Recipient claims accumulated tips
+function withdraw()
+
+// Owner sets max recipients for pushTip
+function updatePushLimit(uint8 value)
+```
+
+---
+
+### 10. Vesting Contract
+
+**Path**: `/contract/contracts/Vesting.sol`
+
+**Purpose**: Linear ERC20 token vesting with cliff periods, organized by teams.
+
+**Key Responsibilities**:
+
+- Team-based vesting: team owner funds vesting schedules for members
+- Linear unlock after cliff period; nothing releasable until cliff elapses
+- Team owner can stop vesting at any time (releasable → member, unvested → owner)
+- Archives stopped vestings for historical tracking
+
+**Key Functions**:
+
+```solidity
+// Create a new team (contract owner only)
+function createTeam(uint256 teamId, address teamOwner, address tokenAddress)
+
+// Fund a vesting schedule for a member
+function addVesting(uint256 teamId, address member, uint64 start, uint64 duration, uint64 cliff, uint256 totalAmount, address token)
+
+// Member claims vested tokens
+function release(uint256 teamId)
+
+// Team owner stops vesting and settles tokens
+function stopVesting(address member, uint256 teamId)
+
+// View helpers
+function vestedAmount(address member, uint256 teamId) → uint256
+function releasable(address member, uint256 teamId) → uint256
+```
+
+---
+
+### 11. AdCampaignManager Contract
+
+**Path**: `/contract/contracts/AdCampaignManager.sol`
+
+**Purpose**: Manage advertiser-funded ad campaigns with per-click/impression payment to a bank contract.
+
+**Key Responsibilities**:
+
+- Advertisers deposit ETH budget to create campaigns
+- Admins/owner claim payment against cumulative spend (forwarded to bank)
+- Advertisers can stop campaigns and recover unspent budget
+- Admin list managed by owner
+
+**Key Functions**:
+
+```solidity
+// Advertiser creates a campaign (payable)
+function createAdCampaign() payable
+
+// Admin claims accumulated payment to bank
+function claimPayment(string campaignCode, uint256 currentAmountSpent)
+
+// Stop campaign and settle: remainder → advertiser, spent → bank
+function requestAndApproveWithdrawal(string campaignCode, uint256 currentAmountSpent)
+
+// Admin management
+function addAdmin(address admin)
+function removeAdmin(address admin)
+```
+
+---
+
+### 12. SafeDepositRouter Contract
+
+**Path**: `/contract/contracts/SafeDepositRouter.sol`
+
+**Purpose**: Users deposit whitelisted ERC20 tokens and receive SHER (InvestorV1) equity tokens at a configurable multiplier. Deposited tokens are sent to a Safe wallet.
+
+**Key Responsibilities**:
+
+- Gate deposits with `depositsEnabled` flag (disabled by default)
+- Normalize token decimals and apply multiplier to calculate SHER amount
+- Route deposited tokens to a Safe wallet address
+- Mint SHER via InvestorV1 `MINTER_ROLE`
+- Provide slippage protection for SHER amount
+
+**Key Functions**:
+
+```solidity
+// Deposit and receive SHER
+function deposit(address token, uint256 amount)
+function depositWithSlippage(address token, uint256 amount, uint256 minSherOut)
+
+// Preview calculation
+function calculateCompensation(address token, uint256 amount) → uint256
+
+// Control
+function enableDeposits() / disableDeposits()
+function setMultiplier(uint256 newMultiplier)
+function setSafeAddress(address newSafe)
+function recoverERC20(address token, uint256 amount)
+```
+
+**Multiplier Formula**:
+
+```
+normalized = tokenAmount adjusted to SHER decimals
+SHER minted = normalized × multiplier ÷ 10^sherDecimals
+```
+
+---
+
+### 13. FeeCollector Contract
+
+**Path**: `/contract/contracts/FeeCollector.sol`
+
+**Purpose**: Global vault that holds accumulated protocol fees (ETH + ERC20) with per-contract-type basis-point fee configuration.
+
+**Key Responsibilities**:
+
+- Store fee configurations per contract type (e.g. `"BANK"` → 50 bps = 0.5%)
+- Accept ETH via `receive()`
+- Accept ERC20 tokens from whitelisted token list
+- Owner withdraws accumulated ETH and ERC20
+
+**Key Functions**:
+
+```solidity
+// Query fee for a contract type (returns 0 if unconfigured)
+function getFeeFor(string contractType) → uint16
+
+// Add or update a fee configuration
+function setFee(string contractType, uint16 feeBps)
+
+// Get all fee configs
+function getAllFeeConfigs() → FeeConfig[]
+
+// Withdraw
+function withdraw(uint256 amount)                   // ETH
+function withdrawToken(address token, uint256 amount) // ERC20
+```
+
+---
+
+### 14. Voting Contract
+
+**Path**: `/contract/contracts/Voting/Voting.sol`
+
+**Purpose**: Combined directive and election voting system with advanced tie-breaking. Earlier design that unified Proposals + Elections. Integrates with BoardOfDirectors via Officer lookup.
+
+**Key Responsibilities**:
+
+- Create directive proposals (Yes/No/Abstain) or election proposals (candidates)
+- Eligible voter lists per proposal
+- Detect and resolve election ties via four options
+- Set BoardOfDirectors winners on election conclusion
+
+**Key Functions**:
+
+```solidity
+// Create any proposal type
+function addProposal(title, description, isElection, winnerCount, voters[], candidates[])
+
+// Vote
+function voteDirective(uint256 proposalId, uint256 vote)      // 0=No, 1=Yes, 2=Abstain
+function voteElection(uint256 proposalId, address candidate)
+
+// Conclude / resolve ties
+function concludeProposal(uint256 proposalId)
+function resolveTie(uint256 proposalId, TieBreakOption option)  // RANDOM / INCREASE_COUNT / FOUNDER / RUNOFF
+function selectWinner(uint256 proposalId, address winner)       // FOUNDER_CHOICE only
+```
+
+**Tie-Break Options**:
+
+| Option | Behavior |
+|--------|----------|
+| `RANDOM_SELECTION` | Picks randomly from tied candidates via `blockhash` |
+| `INCREASE_WINNER_COUNT` | Includes all tied candidates as winners |
+| `FOUNDER_CHOICE` | Proposal creator calls `selectWinner()` |
+| `RUNOFF_ELECTION` | Creates a new election with only the tied candidates |
+
+---
+
 ## Contract Relationships
 
 ### Dependency Graph
@@ -640,26 +881,62 @@ Each team deploys their own set of contract instances:
 
 ### 1. Dividend Distribution Flow
 
+Distribution is **push-based**: a single transaction by the owner funds InvestorV1, which immediately sends each shareholder their proportional share. There is no claim step.
+
+**ETH Dividends**:
+
 ```
-Owner → Bank.depositDividends(amount, investorAddress)
+Owner → Bank.distributeNativeDividends(amount)
          │
-         ├─> Bank.allocateDividends(amount, investorAddress)
-         │    │
-         │    ├─> InvestorV1.getShareholders()
-         │    │   └─> Returns: [Shareholder{address, amount}]
-         │    │
-         │    └─> Calculate proportional dividends
-         │         └─> Credit dividendBalances[shareholder]
+         ├─> require(amount <= address(this).balance)
+         ├─> investorAddress = Officer.findDeployedContract("InvestorV1")
          │
-Shareholder → Bank.claimDividend()
+         └─> InvestorV1.distributeNativeDividends{value: amount}(amount)  [onlyBank]
               │
-              └─> Transfer dividend amount to shareholder
+              ├─> supply = totalSupply()
+              ├─> shareholders = _getShareholders()
+              │
+              └─> For each shareholder:
+                   share = (amount × balance) / supply
+                   (last shareholder gets remainder)
+                   payable(shareholder).call{value: share}("")
+                   emit DividendPaid(shareholder, address(0), share)
+              │
+              └─> emit DividendDistributed(bank, address(0), amount, count)
+
+Bank emits → DividendDistributionTriggered(investorAddress, address(0), amount)
+```
+
+**ERC20 Dividends**:
+
+```
+Owner → Bank.distributeTokenDividends(token, amount)
+         │
+         ├─> require(token supported, amount <= tokenBalance)
+         ├─> investorAddress = Officer.findDeployedContract("InvestorV1")
+         │
+         ├─> IERC20(token).safeTransfer(investorAddress, amount)  // pre-fund first
+         │
+         └─> InvestorV1.distributeTokenDividends(token, amount)  [onlyBank]
+              │
+              ├─> require(balanceOf(investorAddress, token) >= amount)
+              ├─> supply = totalSupply()
+              │
+              └─> For each shareholder:
+                   share = (amount × balance) / supply
+                   IERC20(token).safeTransfer(shareholder, share)
+                   emit DividendPaid(shareholder, token, share)
+              │
+              └─> emit DividendDistributed(bank, token, amount, count)
+
+Bank emits → DividendDistributionTriggered(investorAddress, token, amount)
 ```
 
 **Data Accessed**:
 
-- Bank reads: `InvestorV1.getShareholders()`, `InvestorV1.totalSupply()`
-- Bank writes: `dividendBalances[address]`, `totalDividends`
+- Bank reads: `Officer.findDeployedContract()`, `address(this).balance`, `IERC20.balanceOf()`
+- InvestorV1 reads: `totalSupply()`, internal shareholder set
+- InvestorV1 writes: ETH/ERC20 transfers directly to shareholders (no storage changes)
 
 ### 2. Election Flow
 
@@ -1282,30 +1559,36 @@ require(initializerData.length > 0, "Missing initializer");
 // Increase gas limit in transaction
 ```
 
-### Issue: Dividend Distribution Incorrect
+### Issue: Dividend Distribution Fails or Is Incorrect
 
-**Symptoms**: Shareholders receive wrong amounts
+**Symptoms**: `distributeNativeDividends` or `distributeTokenDividends` reverts, or shareholders receive wrong amounts
 
 **Possible Causes**:
 
-1. InvestorV1 address not set in Bank
-2. Shareholder balances changed between allocation and claim
-3. Rounding errors in division
+1. Bank does not hold enough ETH/tokens before calling distribute
+2. Officer does not have InvestorV1 deployed (address resolves to zero)
+3. InvestorV1 has no shareholders (totalSupply == 0)
+4. For ERC20: Bank token balance transferred but InvestorV1 balance check fails (race condition)
+5. One shareholder transfer fails, reverting the entire distribution
 
 **Solutions**:
 
 ```solidity
-// Verify investor address set
-require(investorAddress != address(0), "Investor not set");
+// 1. Verify Bank has sufficient balance before distributing
+require(address(bank).balance >= amount, "Bank: insufficient ETH");
+require(IERC20(token).balanceOf(address(bank)) >= amount, "Bank: insufficient token");
 
-// Check shareholder data
-IInvestorView.Shareholder[] memory holders = investor.getShareholders();
-uint256 supply = investor.totalSupply();
+// 2. Verify InvestorV1 is deployed via Officer
+address investorAddress = officer.findDeployedContract("InvestorV1");
+require(investorAddress != address(0), "InvestorV1 not deployed");
 
-// Last shareholder gets remainder to handle rounding
-if (i == shareholderCount - 1) {
-    share = remaining; // Exact sum
-}
+// 3. Verify shareholders exist
+IInvestorV1.Shareholder[] memory holders = investor.getShareholders();
+require(holders.length > 0, "No shareholders");
+require(investor.totalSupply() > 0, "No supply minted");
+
+// 4. For ERC20: distribution is atomic — Bank transfers then immediately calls
+//    InvestorV1.distributeTokenDividends in the same tx
 ```
 
 ### Issue: Elections Results Wrong
@@ -1428,6 +1711,6 @@ CashRemunerationBeacon:  0x... (TBD)
 
 ---
 
-_Document Version: 1.0_  
-_Last Updated: November 23, 2024_  
+_Document Version: 1.1_
+_Last Updated: March 2026_
 _Maintained by: CNC Portal Team_

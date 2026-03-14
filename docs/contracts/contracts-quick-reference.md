@@ -2,16 +2,22 @@
 
 ## Contract Summary Table
 
-| Contract                   | Purpose                        | Key Functions                                                                 | Dependencies     |
-| -------------------------- | ------------------------------ | ----------------------------------------------------------------------------- | ---------------- |
-| **Officer**                | Central orchestrator & factory | `deployBeaconProxy()`, `deployAllContracts()`, `findDeployedContract()`       | All beacons      |
-| **Bank**                   | Treasury & dividend management | `depositDividends()`, `claimDividend()`, `transfer()`, `setInvestorAddress()` | InvestorV1       |
-| **InvestorV1**             | Equity token (ERC20)           | `distributeMint()`, `individualMint()`, `getShareholders()`                   | None             |
-| **Elections**              | BoD election system            | `createElection()`, `castVote()`, `publishResults()`                          | BoardOfDirectors |
-| **BoardOfDirectors**       | Multi-sig governance           | `addAction()`, `approve()`, `setBoardOfDirectors()`                           | Elections        |
-| **Proposals**              | Proposal voting                | `createProposal()`, `castVote()`, `tallyResults()`                            | BoardOfDirectors |
-| **ExpenseAccountEIP712**   | Expense payments               | `submitExpense()`, `addTokenSupport()`                                        | None             |
-| **CashRemunerationEIP712** | Wage payments                  | `withdrawWages()`, `enableWageClaim()`                                        | InvestorV1       |
+| Contract                   | Purpose                            | Key Functions                                                                      | Dependencies               |
+| -------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------- | -------------------------- |
+| **Officer**                | Central orchestrator & factory     | `deployBeaconProxy()`, `deployAllContracts()`, `findDeployedContract()`            | All beacons                |
+| **Bank**                   | Treasury & dividend management     | `depositDividends()`, `claimDividend()`, `transfer()`, `setInvestorAddress()`      | InvestorV1                 |
+| **InvestorV1**             | Equity token (ERC20)               | `distributeMint()`, `individualMint()`, `getShareholders()`                        | None                       |
+| **Elections**              | BoD election system                | `createElection()`, `castVote()`, `publishResults()`                               | BoardOfDirectors           |
+| **BoardOfDirectors**       | Multi-sig governance               | `addAction()`, `approve()`, `setBoardOfDirectors()`                                | Elections                  |
+| **Proposals**              | Proposal voting                    | `createProposal()`, `castVote()`, `tallyResults()`                                 | BoardOfDirectors           |
+| **ExpenseAccountEIP712**   | Expense payments                   | `submitExpense()`, `addTokenSupport()`                                             | None                       |
+| **CashRemunerationEIP712** | Wage payments with equity          | `withdrawWages()`, `enableWageClaim()`, `disableWageClaim()`                       | InvestorV1                 |
+| **Tips**                   | ETH tip distribution               | `pushTip()`, `sendTip()`, `withdraw()`, `updatePushLimit()`                        | None                       |
+| **Vesting**                | Linear ERC20 token vesting         | `addVesting()`, `release()`, `stopVesting()`, `vestedAmount()`, `releasable()`     | None                       |
+| **AdCampaignManager**      | Ad campaign & payment routing      | `createAdCampaign()`, `claimPayment()`, `requestAndApproveWithdrawal()`            | Bank (external address)    |
+| **SafeDepositRouter**      | Token deposit → SHER minting       | `deposit()`, `depositWithSlippage()`, `calculateCompensation()`, `setMultiplier()` | InvestorV1 (via Officer)   |
+| **FeeCollector**           | Global protocol fee vault          | `getFeeFor()`, `setFee()`, `withdraw()`, `withdrawToken()`                         | None                       |
+| **Voting**                 | Combined directive/election voting | `addProposal()`, `voteDirective()`, `voteElection()`, `concludeProposal()`         | BoardOfDirectors (Officer) |
 
 ---
 
@@ -64,22 +70,32 @@ createOfficer({
 
 ### 2. Distribute Dividends
 
-**Steps**:
+Distribution is **push-based**: one owner transaction immediately transfers funds to all shareholders. There is no separate claim step.
 
-1. Ensure Bank has funds (deposit ETH or ERC20)
-2. Owner calls `Bank.depositDividends(amount, investorAddress)`
-3. Bank queries InvestorV1 for shareholders
-4. Proportional allocation to `dividendBalances`
-5. Shareholders call `Bank.claimDividend()` anytime
+**ETH Dividends**:
+
+1. Ensure Bank holds enough ETH (ETH received via `receive()` or direct send)
+2. Owner calls `Bank.distributeNativeDividends(amount)`
+3. Bank forwards ETH to InvestorV1 via `{value: amount}`
+4. InvestorV1 calculates each shareholder's share and transfers immediately
+
+**ERC20 Dividends**:
+
+1. Ensure Bank holds enough of the token (deposit via `Bank.depositToken()`)
+2. Owner calls `Bank.distributeTokenDividends(token, amount)`
+3. Bank transfers tokens to InvestorV1, then calls `distributeTokenDividends()`
+4. InvestorV1 distributes proportionally to all shareholders
 
 **Code**:
 
 ```solidity
-// Owner deposits dividends
-Bank.depositDividends{value: 1 ether}(1 ether, investorV1Address);
+// ETH dividends — one call, immediate push to all shareholders
+Bank.distributeNativeDividends{value: 0}(1 ether);
+// (Bank must already hold ≥ 1 ether)
 
-// Shareholder claims
-Bank.claimDividend(); // Receives proportional share
+// ERC20 dividends
+Bank.distributeTokenDividends(usdcAddress, 1000e6);
+// (Bank must already hold ≥ 1000 USDC)
 ```
 
 ---
@@ -252,26 +268,26 @@ BoD.approve(actionId); // Multiple times
 
 ## Access Control Quick Reference
 
-| Operation              | Who Can Call               | Modifier                 |
-| ---------------------- | -------------------------- | ------------------------ |
-| Deploy contracts       | Anyone via FactoryBeacon   | Public                   |
-| Configure beacons      | Officer owner              | `onlyOwner`              |
-| Deploy child contracts | Officer owner              | `onlyOwners`             |
-| Deposit dividends      | Bank owner                 | `onlyOwner`              |
-| Claim dividends        | Any shareholder            | Public                   |
-| Transfer funds         | Bank owner                 | `onlyOwner`              |
-| Set investor address   | Bank owner (or first time) | Special                  |
-| Create election        | Elections owner            | `onlyOwner`              |
-| Vote in election       | Eligible voters            | Public (with validation) |
-| Publish results        | Elections owner            | `onlyOwner`              |
-| Set BoD members        | BoD owner (Elections)      | `onlyOwner`              |
-| Add BoD action         | Board members              | `onlyBoardOfDirectors`   |
-| Approve action         | Board members              | `onlyBoardOfDirectors`   |
-| Create proposal        | Board members              | `onlyMember`             |
-| Vote on proposal       | Board members              | `onlyMember`             |
-| Submit expense         | Approved address           | Public (with signature)  |
-| Withdraw wages         | Employee                   | Public (with signature)  |
-| Mint InvestorV1        | Owner or MINTER_ROLE       | `onlyRole(MINTER_ROLE)`  |
+| Operation                          | Who Can Call             | Modifier                 |
+| ---------------------------------- | ------------------------ | ------------------------ |
+| Deploy contracts                   | Anyone via FactoryBeacon | Public                   |
+| Configure beacons                  | Officer owner            | `onlyOwner`              |
+| Deploy child contracts             | Officer owner            | `onlyOwners`             |
+| Distribute ETH dividends           | Bank owner               | `onlyOwner`              |
+| Distribute token dividends         | Bank owner               | `onlyOwner`              |
+| Trigger distribution on InvestorV1 | Bank contract only       | `onlyBank`               |
+| Transfer funds                     | Bank owner               | `onlyOwner`              |
+| Create election                    | Elections owner          | `onlyOwner`              |
+| Vote in election                   | Eligible voters          | Public (with validation) |
+| Publish results                    | Elections owner          | `onlyOwner`              |
+| Set BoD members                    | BoD owner (Elections)    | `onlyOwner`              |
+| Add BoD action                     | Board members            | `onlyBoardOfDirectors`   |
+| Approve action                     | Board members            | `onlyBoardOfDirectors`   |
+| Create proposal                    | Board members            | `onlyMember`             |
+| Vote on proposal                   | Board members            | `onlyMember`             |
+| Submit expense                     | Approved address         | Public (with signature)  |
+| Withdraw wages                     | Employee                 | Public (with signature)  |
+| Mint InvestorV1                    | Owner or MINTER_ROLE     | `onlyRole(MINTER_ROLE)`  |
 
 ---
 
@@ -288,19 +304,20 @@ address private bodContract;                        // BoardOfDirectors address
 ### Bank
 
 ```solidity
-address public investorAddress;                     // InvestorV1 contract
-mapping(address => bool) public supportedTokens;    // Token -> Supported?
-mapping(address => uint256) public dividendBalances;// Shareholder -> Amount
-mapping(address => mapping(address => uint256)) public tokenDividendBalances; // Token -> Shareholder -> Amount
-uint256 public totalDividends;                      // Total locked dividends
-mapping(address => uint256) public totalTokenDividends; // Token -> Locked amount
+address public officerAddress;                      // Officer contract (resolves InvestorV1 + fees at runtime)
+// Token support managed via TokenSupport base contract
+// No stored investorAddress — resolved dynamically via Officer
+// No dividend balances — distribution is push-based (no claim pattern)
 ```
 
 ### InvestorV1
 
 ```solidity
-EnumerableSet.AddressSet private shareholders;      // Set of shareholder addresses
-bytes32 public constant MINTER_ROLE;                // Role for minting tokens
+EnumerableSet.AddressSet private shareholders;      // Auto-managed set of shareholder addresses
+bytes32 public constant MINTER_ROLE;                // keccak256("MINTER_ROLE") — granted to CashRemuneration
+address public officerAddress;                      // Officer contract (resolves Bank address for onlyBank)
+uint256[50] private __gap;                          // Storage gap for future upgrades
+// Decimals: 6 (not 18)
 ```
 
 ### Elections
@@ -367,21 +384,17 @@ event Deposited(address indexed depositor, uint256 amount);
 event TokenDeposited(address indexed depositor, address indexed token, uint256 amount);
 event Transfer(address indexed sender, address indexed to, uint256 amount);
 event TokenTransfer(address indexed sender, address indexed to, address indexed token, uint256 amount);
-event DividendDeposited(address indexed account, uint256 amount, address indexed investorAddress);
-event TokenDividendDeposited(address indexed account, address indexed token, uint256 amount, address indexed investorAddress);
-event DividendCredited(address indexed account, uint256 amount);
-event TokenDividendCredited(address indexed account, address indexed token, uint256 amount);
-event DividendClaimed(address indexed account, uint256 amount);
-event TokenDividendClaimed(address indexed account, address indexed token, uint256 amount);
-event InvestorAddressUpdated(address indexed previousAddress, address indexed newAddress);
+event FeePaid(address indexed feeCollector, uint256 amount);
+event DividendDistributionTriggered(address indexed investor, address indexed token, uint256 totalAmount);
 ```
 
 ### InvestorV1 Reference
 
 ```solidity
 event Minted(address indexed shareholder, uint256 amount);
-event DividendDistributed(address indexed shareholder, uint256 amount);
-event DividendFailed(address indexed shareholder, uint256 amount);
+event DividendDistributed(address indexed distributor, address indexed token, uint256 totalAmount, uint256 shareholderCount);
+event DividendPaid(address indexed shareholder, address indexed token, uint256 amount);
+event DividendPaymentFailed(address indexed shareholder, address indexed token, uint256 amount, string reason);
 ```
 
 ### Elections Reference
@@ -638,6 +651,6 @@ npx prisma studio
 
 ---
 
-_Document Version: 1.0_  
-_Last Updated: November 23, 2024_  
+_Document Version: 1.1_
+_Last Updated: March 2026_
 _Maintained by: CNC Portal Team_
