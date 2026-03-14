@@ -85,7 +85,7 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { useToastStore } from '@/stores'
+
 import { useSafeOwnerManagement } from '@/composables/safe'
 import type { User } from '@/types'
 
@@ -101,9 +101,9 @@ const emit = defineEmits<{
   'signer-added': []
   'close-modal': []
 }>()
+const toast = useToast()
 
 // Stores and composables
-const { addSuccessToast, addErrorToast } = useToastStore()
 const { isUpdating: isLoading, updateOwners } = useSafeOwnerManagement()
 
 // Modal state
@@ -151,7 +151,7 @@ watch(
 
     // Remove invalid signers automatically
     if (existingOwners.length > 0) {
-      addErrorToast(`Cannot add existing signers`)
+      toast.add({ title: 'Error', description: 'Cannot add existing signers', color: 'error' })
       newSigners.value = newSigners.value.filter((signer) => {
         const isExistingOwner = props.currentOwners.some(
           (owner) => owner.toLowerCase() === signer.address?.toLowerCase()
@@ -166,7 +166,11 @@ watch(
 
 const handleAddSigners = async () => {
   if (!canSubmit.value) {
-    addErrorToast('Please add at least one valid signer')
+    toast.add({
+      title: 'Error',
+      description: 'Please add at least one valid signer',
+      color: 'error'
+    })
     return
   }
 
@@ -182,7 +186,7 @@ const handleAddSigners = async () => {
       const message = requiresProposal.value
         ? 'Signer addition proposal submitted successfully'
         : 'Signers added successfully'
-      addSuccessToast(message)
+      toast.add({ title: 'Succes', description: message, color: 'success' })
 
       emit('signer-added')
       handleClose()
@@ -193,7 +197,7 @@ const handleAddSigners = async () => {
       error instanceof Error && error.message
         ? `Failed to add signers: ${error.message}`
         : 'Failed to add signers'
-    addErrorToast(message)
+    toast.add({ title: 'Error', description: message, color: 'error' })
   }
 }
 

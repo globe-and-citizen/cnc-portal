@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import { useConnection, useChainId } from '@wagmi/vue'
 import { isAddress } from 'viem'
-import { useToastStore } from '@/stores'
 import { useApproveTransactionMutation } from '@/queries/safe.mutations'
 import { useSafeSDK } from './useSafeSdk'
 
@@ -11,7 +10,7 @@ import { useSafeSDK } from './useSafeSdk'
 export function useSafeApproval() {
   const connection = useConnection()
   const chainId = useChainId()
-  const { addSuccessToast, addErrorToast } = useToastStore()
+  const toast = useToast()
   const mutation = useApproveTransactionMutation()
   const { loadSafe } = useSafeSDK() // Use centralized SDK
 
@@ -27,19 +26,31 @@ export function useSafeApproval() {
   ): Promise<string | null> => {
     if (!isAddress(safeAddress)) {
       error.value = new Error('Invalid Safe address')
-      addErrorToast('Invalid Safe address')
+      toast.add({
+        title: 'Error',
+        description: 'Invalid Safe address',
+        color: 'error'
+      })
       return null
     }
 
     if (!safeTxHash) {
       error.value = new Error('Missing Safe transaction hash')
-      addErrorToast('Missing transaction hash')
+      toast.add({
+        title: 'Error',
+        description: 'Missing transaction hash',
+        color: 'error'
+      })
       return null
     }
 
     if (!connection.isConnected.value || !connection.address.value) {
       error.value = new Error('Wallet not connected')
-      addErrorToast('Please connect your wallet')
+      toast.add({
+        title: 'Error',
+        description: 'Please connect your wallet',
+        color: 'error'
+      })
       return null
     }
 
@@ -70,16 +81,23 @@ export function useSafeApproval() {
         }
       })
 
-      addSuccessToast('Transaction approved successfully')
+      toast.add({
+        title: 'Success',
+        description: 'Transaction approved successfully',
+        color: 'success'
+      })
       return signature.data
     } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to approve transaction')
       console.error('Safe approval error:', err)
-      addErrorToast(
-        error.value.message.includes('User rejected')
-          ? 'Transaction  rejected'
-          : error.value.message
-      )
+
+      toast.add({
+        title: 'Error',
+        description: error.value.message.includes('User rejected')
+          ? 'Transaction rejected'
+          : error.value.message,
+        color: 'error'
+      })
       return null
     } finally {
       isApproving.value = false
