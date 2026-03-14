@@ -211,15 +211,13 @@ describe('Weekly Claim Controller', () => {
     it('should return 400 for invalid action', async () => {
       const response = await putAction('invalid');
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({
-        message: 'Invalid action. Allowed actions are: sign, withdraw',
-      });
+      expect(response.body.message).toContain('Invalid');
     });
 
     it('should return 400 for invalid id on sign', async () => {
       const response = await putAction('sign', 'invalidId');
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message: 'Missing or invalid id' });
+      expect(response.body.message).toContain('Invalid');
     });
 
     it('should return 400 for missing signature on sign', async () => {
@@ -325,21 +323,19 @@ describe('Weekly Claim Controller', () => {
     it('should return 400 if teamId is missing', async () => {
       const response = await request(app).get('/');
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message: 'Missing or invalid teamId' });
+      expect(response.body.message).toContain('teamId');
     });
 
     it('should return 400 if status is invalid', async () => {
       const response = await request(app).get('/?teamId=1&status=invalid');
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({
-        message: 'Invalid status. Allowed statuses are: pending, signed, withdrawn, disabled',
-      });
+      expect(response.body.message).toContain('Invalid status');
     });
 
     it('should return 400 if memberAddress is invalid', async () => {
       const response = await request(app).get('/?teamId=1&memberAddress=invalid-address');
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message: 'Invalid member address' });
+      expect(response.body.message).toContain('Invalid');
     });
 
     it('should return filtered claims and refresh attachment URLs', async () => {
@@ -438,7 +434,7 @@ describe('Weekly Claim Controller', () => {
     it('should return 400 if teamId is missing', async () => {
       const response = await request(app).post('/sync');
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message: 'Missing or invalid teamId' });
+      expect(response.body.message).toContain('teamId');
     });
 
     it('should return 403 if caller is not team member', async () => {

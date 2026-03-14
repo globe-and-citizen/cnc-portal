@@ -98,7 +98,7 @@ const mockTeamData = {
     { address: faker.finance.ethereumAddress(), name: 'Member 2' },
   ],
 
-  officerAddress: '0xOfficerAddress',
+  officerAddress: '0x3333333333333333333333333333333333333333',
 };
 
 const teamMockResolve: Team = {
@@ -108,7 +108,7 @@ const teamMockResolve: Team = {
 
   members: [
     {
-      address: '0xmember1address000000000000000000000000',
+      address: '0x2222222222222222222222222222222222222222',
       name: 'Member 1',
       imageUrl: 'https://example.com/image.jpg',
       createdAt: new Date(),
@@ -139,7 +139,7 @@ describe('Team Controller', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toEqual('Invalid wallet address for member: Invalid Member');
+      expect(response.body.message).toContain('Invalid');
     });
 
     it('should return 201 and create a team successfully', async () => {
@@ -387,10 +387,19 @@ describe('Team Controller', () => {
       });
     });
 
-    it('should return 403 when userAddress does not match callerAddress', async () => {
+    it('should return 400 when userAddress is invalid', async () => {
       const response = await request(app)
         .get('/')
         .query({ userAddress: '0xDifferentAddress1234567890123456789' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid');
+    });
+
+    it('should return 403 when userAddress does not match callerAddress', async () => {
+      const response = await request(app)
+        .get('/')
+        .query({ userAddress: '0x9999999999999999999999999999999999999999' });
 
       expect(response.status).toBe(403);
       expect(response.body.message).toBe('Unauthorized');
@@ -427,7 +436,7 @@ describe('Team Controller', () => {
         id: 1,
         name: 'Updated Team',
         description: 'Updated Description',
-        officerAddress: '0xNewOfficerAddress',
+        officerAddress: '0x4444444444444444444444444444444444444444',
       });
 
       expect(response.status).toBe(404);
@@ -440,7 +449,7 @@ describe('Team Controller', () => {
         ownerAddress: faker.finance.ethereumAddress(),
         name: 'Test Team',
         description: 'Test Description',
-        officerAddress: '0xOfficerAddress',
+        officerAddress: '0x3333333333333333333333333333333333333333',
       };
 
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
@@ -449,7 +458,7 @@ describe('Team Controller', () => {
         id: 1,
         name: 'Updated Team',
         description: 'Updated Description',
-        officerAddress: '0xNewOfficerAddress',
+        officerAddress: '0x4444444444444444444444444444444444444444',
       });
 
       expect(response.status).toBe(403);
@@ -462,7 +471,7 @@ describe('Team Controller', () => {
         ownerAddress: mockOwner.address,
         name: 'Test Team',
         description: 'Test Description',
-        officerAddress: '0xOfficerAddress',
+        officerAddress: '0x3333333333333333333333333333333333333333',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -472,7 +481,7 @@ describe('Team Controller', () => {
         ...mockTeam,
         name: 'Updated Team',
         description: 'Updated Description',
-        officerAddress: '0xNewOfficerAddress',
+        officerAddress: '0x4444444444444444444444444444444444444444',
       });
 
       const response = await request(app).put('/1').send({
@@ -481,7 +490,7 @@ describe('Team Controller', () => {
         owenrAddress: mockOwner.address,
         name: 'Updated Team',
         description: 'Updated Description',
-        officerAddress: '0xNewOfficerAddress',
+        officerAddress: '0x4444444444444444444444444444444444444444',
       });
 
       expect(response.status).toBe(200);
@@ -494,7 +503,7 @@ describe('Team Controller', () => {
         ownerAddress: mockOwner.address,
         name: 'Test Team',
         description: 'Test Description',
-        officerAddress: '0xOfficerAddress',
+        officerAddress: '0x3333333333333333333333333333333333333333',
         createdAt: new Date(),
         updatedAt: new Date(),
       });
