@@ -102,4 +102,147 @@ describe('BoardOfDirectors', () => {
     await expect(board.connect(member1).revoke(0)).to.emit(board, 'Revocation')
     expect(await board.isApproved(0, member1.address)).to.equal(false)
   })
+
+  it('returns approvalCount for an action', async () => {
+    const { board, bank, member1, recipient } = await deployFixture()
+
+    await board
+      .connect(member1)
+      .addAction(
+        await bank.getAddress(),
+        'bank transfer',
+        bank.interface.encodeFunctionData('transfer', [recipient.address, ethers.parseEther('1')])
+      )
+
+    expect(await board.approvalCount(0)).to.equal(1)
+  })
+
+  it('returns owners list', async () => {
+    const { board, founder } = await deployFixture()
+
+    const owners = await board.getOwners()
+    expect(owners).to.include(founder.address)
+  })
+
+  it('rejects approve on already executed action', async () => {
+    const { board, bank, member1, member2 } = await deployFixture()
+
+    await board
+      .connect(member1)
+      .addAction(
+        await bank.getAddress(),
+        'pause bank',
+        bank.interface.encodeFunctionData('pause', [])
+      )
+
+    await board.connect(member2).approve(0) // executes the action (majority reached)
+
+    await expect(board.connect(member2).approve(0)).to.be.revertedWith('Action already executed')
+  })
+
+  it('rejects revoke when not approved', async () => {
+    const { board, bank, member1, member2, recipient } = await deployFixture()
+
+    await board
+      .connect(member1)
+      .addAction(
+        await bank.getAddress(),
+        'bank transfer',
+        bank.interface.encodeFunctionData('transfer', [recipient.address, ethers.parseEther('1')])
+      )
+
+    // member2 has not approved, so revoke should fail
+    await expect(board.connect(member2).revoke(0)).to.be.revertedWith('Not approved')
+  })
+
+  it('rejects revoke on already executed action', async () => {
+    const { board, bank, member1, member2 } = await deployFixture()
+
+    await board
+      .connect(member1)
+      .addAction(
+        await bank.getAddress(),
+        'pause bank',
+        bank.interface.encodeFunctionData('pause', [])
+      )
+
+    await board.connect(member2).approve(0) // executes the action
+
+    await expect(board.connect(member1).revoke(0)).to.be.revertedWith('Action already executed')
+  })
+
+  it('rejects setBoardOfDirectors with empty array', async () => {
+    const { board, founder } = await deployFixture()
+
+    await expect(board.connect(founder).setBoardOfDirectors([])).to.be.revertedWith(
+      'Board of directors required'
+    )
+  })
+
+  it('rejects addAction with zero target address', async () => {
+    const { board, member1 } = await deployFixture()
+
+    await expect(
+      board.connect(member1).addAction(ethers.ZeroAddress, 'invalid', '0x')
+    ).to.be.revertedWith('Invalid target address')
+  })
+
+  it('calls setOwners via self-referential board action', async () => {
+    const { board, founder, member1, member2, member3 } = await deployFixture()
+
+    const newOwners = [member1.address, member2.address]
+    const setOwnersCalldata = board.interface.encodeFunctionData('setOwners', [newOwners])
+
+    await board
+      .connect(member1)
+      .addAction(await board.getAddress(), 'set owners', setOwnersCalldata)
+
+    await board.connect(member2).approve(0)
+    // After execution, the owners should be updated
+    const owners = await board.getOwners()
+    expect(owners).to.include(member1.address)
+    expect(owners).to.include(member2.address)
+  })
+
+  it('calls addOwner via self-referential board action', async () => {
+    const { board, founder, member1, member2, member3, outsider } = await deployFixture()
+
+    const addOwnerCalldata = board.interface.encodeFunctionData('addOwner', [outsider.address])
+
+    await board
+      .connect(member1)
+      .addAction(await board.getAddress(), 'add owner', addOwnerCalldata)
+
+    await board.connect(member2).approve(0)
+
+    const owners = await board.getOwners()
+    expect(owners).to.include(outsider.address)
+  })
+
+  it('calls removeOwner via self-referential board action', async () => {
+    const { board, founder, member1, member2, member3 } = await deployFixture()
+
+    const removeOwnerCalldata = board.interface.encodeFunctionData('removeOwner', [founder.address])
+
+    await board
+      .connect(member1)
+      .addAction(await board.getAddress(), 'remove owner', removeOwnerCalldata)
+
+    await board.connect(member2).approve(0)
+
+    const owners = await board.getOwners()
+    expect(owners).to.not.include(founder.address)
+  })
+
+  it('rejects addOwner with zero address via self-call', async () => {
+    const { board, member1, member2 } = await deployFixture()
+
+    const addOwnerCalldata = board.interface.encodeFunctionData('addOwner', [ethers.ZeroAddress])
+
+    await board
+      .connect(member1)
+      .addAction(await board.getAddress(), 'add owner', addOwnerCalldata)
+
+    await expect(board.connect(member2).approve(0)).to.be.revertedWith('Call failed')
+  })
 })
