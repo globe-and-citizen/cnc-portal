@@ -188,7 +188,7 @@ describe('BoardOfDirectors', () => {
   })
 
   it('calls setOwners via self-referential board action', async () => {
-    const { board, founder, member1, member2, member3 } = await deployFixture()
+    const { board, member1, member2 } = await deployFixture()
 
     const newOwners = [member1.address, member2.address]
     const setOwnersCalldata = board.interface.encodeFunctionData('setOwners', [newOwners])
@@ -205,7 +205,7 @@ describe('BoardOfDirectors', () => {
   })
 
   it('calls addOwner via self-referential board action', async () => {
-    const { board, founder, member1, member2, member3, outsider } = await deployFixture()
+    const { board, member1, member2, outsider } = await deployFixture()
 
     const addOwnerCalldata = board.interface.encodeFunctionData('addOwner', [outsider.address])
 
@@ -218,7 +218,7 @@ describe('BoardOfDirectors', () => {
   })
 
   it('calls removeOwner via self-referential board action', async () => {
-    const { board, founder, member1, member2, member3 } = await deployFixture()
+    const { board, founder, member1, member2 } = await deployFixture()
 
     const removeOwnerCalldata = board.interface.encodeFunctionData('removeOwner', [founder.address])
 
