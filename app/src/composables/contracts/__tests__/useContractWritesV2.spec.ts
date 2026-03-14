@@ -171,7 +171,8 @@ describe('useContractWrites (V2)', () => {
         address: MOCK_DATA.contractAddress,
         abi: MOCK_ABI,
         functionName: MOCK_DATA.functionName,
-        args: []
+        args: [],
+        gas: 500000n
       })
 
       expect(result).toEqual({ hash: MOCK_DATA.transactionHash })

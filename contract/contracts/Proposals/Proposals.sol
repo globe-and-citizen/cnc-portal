@@ -6,6 +6,7 @@ import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/Pau
 import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
 import {ProposalUtils} from './ProposalUtils.sol';
+import {IOfficer} from '../interfaces/IOfficer.sol';
 
 /*
  * @title Proposals
@@ -17,7 +18,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   // --- State Variables ---
   mapping(uint256 => Proposal) private proposals;
   uint256 private _nextProposalId;
-  address private boardOfDirectorsContractAddress;
+  address public officerAddress;
 
   // --- Enums and Structs ---
   enum VoteOption {
@@ -104,6 +105,9 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     __Pausable_init();
     __ReentrancyGuard_init();
     _nextProposalId = 1; // Start proposal IDs from 1
+
+    require(msg.sender != address(0), 'msg.sender cannot be zero');
+    officerAddress = msg.sender;
   }
 
   /**
@@ -124,11 +128,10 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     ProposalUtils.validateProposalDates(startDate, endDate);
     ProposalUtils.validateProposalContent(title, description);
 
-    uint256 boardCount = IBoardOfDirectors(boardOfDirectorsContractAddress)
-      .getBoardOfDirectors()
-      .length;
+    address bodAddress = _getBoardOfDirectorsAddress();
+    uint256 boardCount = IBoardOfDirectors(bodAddress).getBoardOfDirectors().length;
     if (boardCount == 0) revert NoBoardMembers();
-    if (!IBoardOfDirectors(boardOfDirectorsContractAddress).isMember(msg.sender)) {
+    if (!IBoardOfDirectors(bodAddress).isMember(msg.sender)) {
       revert OnlyBoardMember();
     }
 
@@ -239,15 +242,14 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   }
 
   /**
-   * @dev Sets the address of the Board of Directors contract.
-   * @param _boardOfDirectorsContractAddress The address of the Board of Directors contract.
-   * @notice Only the owner or if the address has not been set can call this function.
+   * @dev Internal helper to get BoardOfDirectors contract address from Officer
+   * @return Address of the BoardOfDirectors contract
    */
-  function setBoardOfDirectorsContractAddress(address _boardOfDirectorsContractAddress) external {
-    if (msg.sender != owner() && boardOfDirectorsContractAddress != address(0)) {
-      revert NotAllowed();
-    }
-    boardOfDirectorsContractAddress = _boardOfDirectorsContractAddress;
+  function _getBoardOfDirectorsAddress() internal view returns (address) {
+    require(officerAddress != address(0), 'Officer address not configured');
+    address bodAddress = IOfficer(officerAddress).findDeployedContract('BoardOfDirectors');
+    require(bodAddress != address(0), 'BoardOfDirectors contract not found');
+    return bodAddress;
   }
 
   function getBoardOfDirectors()
@@ -256,7 +258,8 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     boardOfDirectorsContractExists
     returns (address[] memory)
   {
-    IBoardOfDirectors boardOfDirectors = IBoardOfDirectors(boardOfDirectorsContractAddress);
+    address bodAddress = _getBoardOfDirectorsAddress();
+    IBoardOfDirectors boardOfDirectors = IBoardOfDirectors(bodAddress);
     return boardOfDirectors.getBoardOfDirectors();
   }
 
@@ -267,16 +270,15 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   }
 
   modifier onlyMember() {
-    if (!IBoardOfDirectors(boardOfDirectorsContractAddress).isMember(msg.sender)) {
+    address bodAddress = _getBoardOfDirectorsAddress();
+    if (!IBoardOfDirectors(bodAddress).isMember(msg.sender)) {
       revert OnlyBoardMember();
     }
     _;
   }
 
   modifier boardOfDirectorsContractExists() {
-    if (boardOfDirectorsContractAddress == address(0)) {
-      revert BoardOfDirectorAddressNotSet();
-    }
+    _getBoardOfDirectorsAddress(); // Will revert if not found
     _;
   }
 }

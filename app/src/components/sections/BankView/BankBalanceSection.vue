@@ -19,11 +19,6 @@
         <div class="text-sm text-gray-500 mt-1">
           ≈ {{ total[currency.code]?.formated ?? 0 }} {{ currency.code }}
         </div>
-        <div class="text-sm text-red-500 mt-1 flex gap-2">
-          <IconifyIcon icon="heroicons-outline:lock-closed" class="w-4 h-4" />
-          {{ dividendsTotal['USD']?.formated ?? 0 }} USD
-          <span class="text-xs">(dividends)</span>
-        </div>
       </div>
       <div class="flex flex-col items-end gap-4">
         <div class="flex gap-2">
@@ -46,7 +41,6 @@ import CardComponent from '@/components/CardComponent.vue'
 import { useStorage } from '@vueuse/core'
 import { type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import TransferModal from '@/components/forms/TransferModal.vue'
 import DepositModal from '@/components/forms/DepositModal.vue'
 
@@ -61,5 +55,5 @@ const currency = useStorage('currency', {
 })
 
 // Use the contract balance composable
-const { total, dividendsTotal, isLoading } = useContractBalance(props.bankAddress)
+const { total, isLoading } = useContractBalance(props.bankAddress)
 </script>
