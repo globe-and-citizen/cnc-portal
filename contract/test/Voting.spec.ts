@@ -46,8 +46,7 @@ describe('Voting Contract', () => {
     await voting.connect(voter3).voteElection(0, voter1.address)
     await voting.connect(voter4).voteElection(0, voter2.address)
 
-    await expect(voting.connect(founder).concludeProposal(0))
-      .to.emit(voting, 'TieDetected')
+    await expect(voting.connect(founder).concludeProposal(0)).to.emit(voting, 'TieDetected')
   }
 
   it('adds a directive proposal and records a vote', async () => {
@@ -233,8 +232,7 @@ describe('Voting Contract', () => {
   it('setBoardOfDirectors sets board via owner', async () => {
     const { voting, board, founder, voter1 } = await deployFixture()
 
-    await expect(voting.connect(founder).setBoardOfDirectors([voter1.address]))
-      .to.not.be.reverted
+    await expect(voting.connect(founder).setBoardOfDirectors([voter1.address])).to.not.be.reverted
 
     const members = await board.getBoardOfDirectors()
     expect(members).to.include(voter1.address)
@@ -257,8 +255,7 @@ describe('Voting Contract', () => {
       await createTiedElection(voting, founder, voter1, voter2, voter3, voter4)
 
       // RANDOM_SELECTION = 0
-      await expect(voting.connect(founder).resolveTie(0, 0))
-        .to.emit(voting, 'BoardOfDirectorsSet')
+      await expect(voting.connect(founder).resolveTie(0, 0)).to.emit(voting, 'BoardOfDirectorsSet')
 
       const members = await board.getBoardOfDirectors()
       expect(members.length).to.equal(2)
@@ -270,8 +267,7 @@ describe('Voting Contract', () => {
       await createTiedElection(voting, founder, voter1, voter2, voter3, voter4)
 
       // INCREASE_WINNER_COUNT = 3
-      await expect(voting.connect(founder).resolveTie(0, 3))
-        .to.emit(voting, 'BoardOfDirectorsSet')
+      await expect(voting.connect(founder).resolveTie(0, 3)).to.emit(voting, 'BoardOfDirectorsSet')
 
       const members = await board.getBoardOfDirectors()
       expect(members.length).to.equal(3)
@@ -293,8 +289,10 @@ describe('Voting Contract', () => {
       expect(tiedCandidates.length).to.be.gt(0)
 
       // selectWinner with a valid tied candidate
-      await expect(voting.connect(founder).selectWinner(0, tiedCandidates[0]))
-        .to.emit(voting, 'BoardOfDirectorsSet')
+      await expect(voting.connect(founder).selectWinner(0, tiedCandidates[0])).to.emit(
+        voting,
+        'BoardOfDirectorsSet'
+      )
 
       const members = await board.getBoardOfDirectors()
       expect(members).to.include(tiedCandidates[0])
@@ -306,8 +304,10 @@ describe('Voting Contract', () => {
       await createTiedElection(voting, founder, voter1, voter2, voter3, voter4)
 
       // RUNOFF_ELECTION = 1
-      await expect(voting.connect(founder).resolveTie(0, 1))
-        .to.emit(voting, 'RunoffElectionStarted')
+      await expect(voting.connect(founder).resolveTie(0, 1)).to.emit(
+        voting,
+        'RunoffElectionStarted'
+      )
 
       // A new proposal should have been created
       expect(await voting.proposalCount()).to.equal(2)
@@ -332,9 +332,7 @@ describe('Voting Contract', () => {
       await voting.connect(voter1).voteElection(0, founder.address)
       await voting.connect(founder).concludeProposal(0)
 
-      await expect(voting.connect(founder).resolveTie(0, 0)).to.be.revertedWith(
-        'No tie to resolve'
-      )
+      await expect(voting.connect(founder).resolveTie(0, 0)).to.be.revertedWith('No tie to resolve')
     })
 
     it('rejects selectWinner with invalid candidate', async () => {

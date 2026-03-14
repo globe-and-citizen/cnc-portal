@@ -191,9 +191,7 @@ describe('SafeDepositRouter', function () {
 
     await usdc.connect(depositor).approve(await router.getAddress(), amount)
 
-    await expect(
-      router.connect(depositor).deposit(await usdc.getAddress(), amount)
-    ).to.be.reverted
+    await expect(router.connect(depositor).deposit(await usdc.getAddress(), amount)).to.be.reverted
   })
 
   it('pause and unpause by owner', async () => {
@@ -211,8 +209,10 @@ describe('SafeDepositRouter', function () {
 
     const newSafe = nonOwner.address
 
-    await expect(router.connect(owner).setSafeAddress(newSafe))
-      .to.emit(router, 'SafeAddressUpdated')
+    await expect(router.connect(owner).setSafeAddress(newSafe)).to.emit(
+      router,
+      'SafeAddressUpdated'
+    )
 
     expect(await router.safeAddress()).to.equal(newSafe)
   })
@@ -230,8 +230,10 @@ describe('SafeDepositRouter', function () {
 
     const newMultiplier = ethers.parseUnits('2', 18)
 
-    await expect(router.connect(owner).setMultiplier(newMultiplier))
-      .to.emit(router, 'MultiplierUpdated')
+    await expect(router.connect(owner).setMultiplier(newMultiplier)).to.emit(
+      router,
+      'MultiplierUpdated'
+    )
 
     expect(await router.multiplier()).to.equal(newMultiplier)
   })
@@ -276,8 +278,10 @@ describe('SafeDepositRouter', function () {
   it('removes token support', async () => {
     const { owner, router, usdc } = await deployFixture()
 
-    await expect(router.connect(owner).removeTokenSupport(await usdc.getAddress()))
-      .to.emit(router, 'TokenSupportRemoved')
+    await expect(router.connect(owner).removeTokenSupport(await usdc.getAddress())).to.emit(
+      router,
+      'TokenSupportRemoved'
+    )
 
     expect(await router.isTokenSupported(await usdc.getAddress())).to.equal(false)
   })
@@ -301,8 +305,10 @@ describe('SafeDepositRouter', function () {
 
     const safeBefore = await usdc.balanceOf(safeWallet.address)
 
-    await expect(router.connect(owner).recoverERC20(await usdc.getAddress(), stuckAmount))
-      .to.emit(router, 'TokensRecovered')
+    await expect(router.connect(owner).recoverERC20(await usdc.getAddress(), stuckAmount)).to.emit(
+      router,
+      'TokensRecovered'
+    )
 
     expect(await usdc.balanceOf(safeWallet.address)).to.equal(safeBefore + stuckAmount)
   })

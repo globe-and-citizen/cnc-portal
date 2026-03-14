@@ -209,9 +209,7 @@ describe('BoardOfDirectors', () => {
 
     const addOwnerCalldata = board.interface.encodeFunctionData('addOwner', [outsider.address])
 
-    await board
-      .connect(member1)
-      .addAction(await board.getAddress(), 'add owner', addOwnerCalldata)
+    await board.connect(member1).addAction(await board.getAddress(), 'add owner', addOwnerCalldata)
 
     await board.connect(member2).approve(0)
 
@@ -239,9 +237,7 @@ describe('BoardOfDirectors', () => {
 
     const addOwnerCalldata = board.interface.encodeFunctionData('addOwner', [ethers.ZeroAddress])
 
-    await board
-      .connect(member1)
-      .addAction(await board.getAddress(), 'add owner', addOwnerCalldata)
+    await board.connect(member1).addAction(await board.getAddress(), 'add owner', addOwnerCalldata)
 
     await expect(board.connect(member2).approve(0)).to.be.revertedWith('Call failed')
   })

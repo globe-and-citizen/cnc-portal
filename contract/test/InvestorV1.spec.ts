@@ -292,9 +292,7 @@ describe('InvestorV1', () => {
 
       expect((await investorProxy.getShareholders()).length).to.equal(1)
 
-      await investorProxy
-        .connect(addr1)
-        .transfer(addr2.address, ethers.parseEther('100'))
+      await investorProxy.connect(addr1).transfer(addr2.address, ethers.parseEther('100'))
 
       const shareholders = await investorProxy.getShareholders()
       const addresses = shareholders.map((s: { shareholder: string }) => s.shareholder)
@@ -309,12 +307,10 @@ describe('InvestorV1 - dividend distribution (with MockOfficer)', () => {
     it('distributes ETH proportionally to shareholders', async () => {
       const { investor, owner, addr1, addr2, bankSigner } = await deployWithOfficerFixture()
 
-      await investor
-        .connect(owner)
-        .distributeMint([
-          { shareholder: addr1.address, amount: ethers.parseUnits('100', 6) },
-          { shareholder: addr2.address, amount: ethers.parseUnits('300', 6) }
-        ])
+      await investor.connect(owner).distributeMint([
+        { shareholder: addr1.address, amount: ethers.parseUnits('100', 6) },
+        { shareholder: addr2.address, amount: ethers.parseUnits('300', 6) }
+      ])
 
       const dividendAmount = ethers.parseEther('1')
       const addr1Before = await ethers.provider.getBalance(addr1.address)
@@ -428,12 +424,10 @@ describe('InvestorV1 - dividend distribution (with MockOfficer)', () => {
     it('distributes ERC20 tokens proportionally', async () => {
       const { investor, token, owner, addr1, addr2, bankSigner } = await deployWithOfficerFixture()
 
-      await investor
-        .connect(owner)
-        .distributeMint([
-          { shareholder: addr1.address, amount: ethers.parseUnits('1', 6) },
-          { shareholder: addr2.address, amount: ethers.parseUnits('3', 6) }
-        ])
+      await investor.connect(owner).distributeMint([
+        { shareholder: addr1.address, amount: ethers.parseUnits('1', 6) },
+        { shareholder: addr2.address, amount: ethers.parseUnits('3', 6) }
+      ])
 
       const dividendAmount = ethers.parseUnits('100', 6)
       await token.mint(await investor.getAddress(), dividendAmount)

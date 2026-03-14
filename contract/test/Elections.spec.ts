@@ -139,17 +139,15 @@ describe('Elections', function () {
     const now = await time.latest()
 
     await expect(
-      elections
-        .connect(owner)
-        .createElection(
-          'Invalid',
-          'Even seat count',
-          now + 100,
-          now + 7 * 24 * 60 * 60 + 100,
-          2, // even - invalid
-          [candidate1.address, candidate2.address],
-          [voter1.address]
-        )
+      elections.connect(owner).createElection(
+        'Invalid',
+        'Even seat count',
+        now + 100,
+        now + 7 * 24 * 60 * 60 + 100,
+        2, // even - invalid
+        [candidate1.address, candidate2.address],
+        [voter1.address]
+      )
     ).to.be.revertedWithCustomError(elections, 'InvalidSeatCount')
   })
 
@@ -159,17 +157,15 @@ describe('Elections', function () {
     const now = await time.latest()
 
     await expect(
-      elections
-        .connect(owner)
-        .createElection(
-          'Invalid',
-          'Past start date',
-          now - 100, // in the past
-          now + 7 * 24 * 60 * 60,
-          1,
-          [candidate1.address, candidate2.address],
-          [voter1.address]
-        )
+      elections.connect(owner).createElection(
+        'Invalid',
+        'Past start date',
+        now - 100, // in the past
+        now + 7 * 24 * 60 * 60,
+        1,
+        [candidate1.address, candidate2.address],
+        [voter1.address]
+      )
     ).to.be.revertedWithCustomError(elections, 'InvalidDates')
   })
 
@@ -179,17 +175,15 @@ describe('Elections', function () {
     const now = await time.latest()
 
     await expect(
-      elections
-        .connect(owner)
-        .createElection(
-          'Invalid',
-          'End before start',
-          now + 200,
-          now + 100, // end before start
-          1,
-          [candidate1.address, candidate2.address],
-          [voter1.address]
-        )
+      elections.connect(owner).createElection(
+        'Invalid',
+        'End before start',
+        now + 200,
+        now + 100, // end before start
+        1,
+        [candidate1.address, candidate2.address],
+        [voter1.address]
+      )
     ).to.be.revertedWithCustomError(elections, 'InvalidDates')
   })
 
@@ -199,17 +193,15 @@ describe('Elections', function () {
     const now = await time.latest()
 
     await expect(
-      elections
-        .connect(owner)
-        .createElection(
-          'Invalid',
-          'Duplicate candidates',
-          now + 100,
-          now + 7 * 24 * 60 * 60 + 100,
-          1,
-          [candidate1.address, candidate1.address], // duplicate
-          [voter1.address]
-        )
+      elections.connect(owner).createElection(
+        'Invalid',
+        'Duplicate candidates',
+        now + 100,
+        now + 7 * 24 * 60 * 60 + 100,
+        1,
+        [candidate1.address, candidate1.address], // duplicate
+        [voter1.address]
+      )
     ).to.be.revertedWithCustomError(elections, 'DuplicateCandidates')
   })
 
@@ -219,17 +211,15 @@ describe('Elections', function () {
     const now = await time.latest()
 
     await expect(
-      elections
-        .connect(owner)
-        .createElection(
-          'Invalid',
-          'Duplicate voters',
-          now + 100,
-          now + 7 * 24 * 60 * 60 + 100,
-          1,
-          [candidate1.address, candidate2.address],
-          [voter1.address, voter1.address] // duplicate
-        )
+      elections.connect(owner).createElection(
+        'Invalid',
+        'Duplicate voters',
+        now + 100,
+        now + 7 * 24 * 60 * 60 + 100,
+        1,
+        [candidate1.address, candidate2.address],
+        [voter1.address, voter1.address] // duplicate
+      )
     ).to.be.revertedWithCustomError(elections, 'DuplicateVoters')
   })
 
@@ -684,8 +674,6 @@ describe('Elections', function () {
 
     await elections.connect(owner).pause()
 
-    await expect(
-      elections.connect(voter1).castVote(1, candidate1.address)
-    ).to.be.reverted
+    await expect(elections.connect(voter1).castVote(1, candidate1.address)).to.be.reverted
   })
 })
