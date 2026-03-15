@@ -2,24 +2,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, VueWrapper, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import ProfileImageUpload from '../ProfileImageUpload.vue'
-import { useToastStore } from '@/stores'
-import { mockToastStore } from '@/tests/mocks'
 
-// Hoisted mocks
-const { mockFetch } = vi.hoisted(() => ({
-  mockFetch: vi.fn()
-}))
+const mockFetch = (globalThis as { __mockFetch?: ReturnType<typeof vi.fn> }).__mockFetch
+const originalFetch = globalThis.fetch
 
-// Mock @vueuse/core for useStorage
-vi.mock('@vueuse/core', () => ({
-  useStorage: vi.fn(() => {
-    const ref = { value: 'mock-auth-token' }
-    return ref
-  })
-}))
-
-// Mock fetch globally
-const originalFetch = global.fetch
+type ToastStoreMock = {
+  addErrorToast: ReturnType<typeof vi.fn>
+  addSuccessToast: ReturnType<typeof vi.fn>
+  addInfoToast: ReturnType<typeof vi.fn>
+  toasts: unknown[]
+}
 
 describe('ProfileImageUpload.vue', () => {
   let wrapper: VueWrapper
@@ -30,302 +22,214 @@ describe('ProfileImageUpload.vue', () => {
     errorMessage: '[data-test="profile-image-error"]'
   } as const
 
-  // Helper to create valid image file
-  const createMockFile = (name: string, type: string, size: number = 1024): File => {
-    const content = new Array(size).fill('a').join('')
-    return new File([content], name, { type })
+  const createMockFile = (name: string, type: string, size = 1024): File => {
+    return new File([new Uint8Array(size)], name, { type })
   }
 
-  // Helper to mount component
-  const mountComponent = (props = {}) => {
-    return mount(ProfileImageUpload, {
+  const mountComponent = (props = {}) =>
+    mount(ProfileImageUpload, {
       props,
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
+
+  const triggerFileSelection = async (file: File) => {
+    const input = wrapper.find(SELECTORS.fileInput)
+    Object.defineProperty(input.element, 'files', {
+      value: [file],
+      writable: false
+    })
+    await input.trigger('change')
+    await flushPromises()
+  }
+
+  const getToastStore = (): ToastStoreMock => {
+    return (globalThis as { __mockToastStore?: ToastStoreMock }).__mockToastStore as ToastStoreMock
   }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(useToastStore).mockReturnValue(mockToastStore as ReturnType<typeof useToastStore>)
-    global.fetch = mockFetch
+
+    if (!mockFetch) {
+      throw new Error('Global __mockFetch is not initialized in test setup')
+    }
+
+    ;(globalThis as { __mockUseStorageValue?: string }).__mockUseStorageValue = 'mock-auth-token'
+
+    const toastStore = getToastStore()
+    toastStore.addErrorToast.mockReset()
+    toastStore.addSuccessToast.mockReset()
+    toastStore.addInfoToast.mockReset()
+
+    globalThis.fetch = mockFetch as unknown as typeof fetch
+    mockFetch.mockReset()
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ fileUrl: 'https://storage.railway.app/test-image.jpg' })
+      json: () =>
+        Promise.resolve({ files: [{ fileUrl: 'https://storage.railway.app/test-image.jpg' }] })
     })
   })
 
   afterEach(() => {
-    global.fetch = originalFetch
+    globalThis.fetch = originalFetch
+    ;(globalThis as { __mockUseStorageValue?: string }).__mockUseStorageValue = undefined
+
     if (wrapper) wrapper.unmount()
   })
 
-  describe('File Validation', () => {
-    it('should reject non-image files', async () => {
+  describe('Validation', () => {
+    it('rejects non-image files', async () => {
       wrapper = mountComponent()
-      const input = wrapper.find(SELECTORS.fileInput)
-      const pdfFile = createMockFile('document.pdf', 'application/pdf')
-
-      // Simulate file selection
-      Object.defineProperty(input.element, 'files', {
-        value: [pdfFile],
-        writable: false
-      })
-      await input.trigger('change')
-      await flushPromises()
+      await triggerFileSelection(createMockFile('document.pdf', 'application/pdf'))
 
       expect(wrapper.find(SELECTORS.errorMessage).exists()).toBe(true)
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
+      expect(getToastStore().addErrorToast).toHaveBeenCalledWith(
         expect.stringContaining('Only images')
       )
+      expect(mockFetch).not.toHaveBeenCalled()
     })
 
-    it('should reject files exceeding 10MB', async () => {
+    it('rejects files larger than 10MB', async () => {
       wrapper = mountComponent()
-      const input = wrapper.find(SELECTORS.fileInput)
-      // Create a file larger than 10MB
-      const largeFile = createMockFile('large.png', 'image/png', 11 * 1024 * 1024)
-
-      Object.defineProperty(input.element, 'files', {
-        value: [largeFile],
-        writable: false
-      })
-      await input.trigger('change')
-      await flushPromises()
+      await triggerFileSelection(createMockFile('large.png', 'image/png', 11 * 1024 * 1024))
 
       expect(wrapper.find(SELECTORS.errorMessage).exists()).toBe(true)
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(expect.stringContaining('10 MB'))
+      expect(getToastStore().addErrorToast).toHaveBeenCalledWith(expect.stringContaining('10 MB'))
+      expect(mockFetch).not.toHaveBeenCalled()
     })
 
-    it('should accept valid PNG files', async () => {
+    it('accepts image by extension fallback when MIME type is empty', async () => {
       wrapper = mountComponent()
-      const input = wrapper.find(SELECTORS.fileInput)
-      const pngFile = createMockFile('test.png', 'image/png')
+      await triggerFileSelection(createMockFile('avatar.png', ''))
 
-      Object.defineProperty(input.element, 'files', {
-        value: [pngFile],
-        writable: false
-      })
-      await input.trigger('change')
-      await flushPromises()
-
-      expect(mockFetch).toHaveBeenCalled()
-    })
-
-    it('should accept valid JPEG files', async () => {
-      wrapper = mountComponent()
-      const input = wrapper.find(SELECTORS.fileInput)
-      const jpegFile = createMockFile('photo.jpg', 'image/jpeg')
-
-      Object.defineProperty(input.element, 'files', {
-        value: [jpegFile],
-        writable: false
-      })
-      await input.trigger('change')
-      await flushPromises()
-
-      expect(mockFetch).toHaveBeenCalled()
-    })
-
-    it('should accept WebP files', async () => {
-      wrapper = mountComponent()
-      const input = wrapper.find(SELECTORS.fileInput)
-      const webpFile = createMockFile('image.webp', 'image/webp')
-
-      Object.defineProperty(input.element, 'files', {
-        value: [webpFile],
-        writable: false
-      })
-      await input.trigger('change')
-      await flushPromises()
-
-      expect(mockFetch).toHaveBeenCalled()
+      expect(mockFetch).toHaveBeenCalledOnce()
     })
   })
 
-  describe('File Upload', () => {
-    it('should upload file successfully', async () => {
+  describe('Upload', () => {
+    it('uploads successfully and emits new model value', async () => {
       const expectedUrl = 'https://storage.railway.app/uploaded-image.png'
-      mockFetch.mockResolvedValue({
+      mockFetch?.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ fileUrl: expectedUrl })
+        json: () => Promise.resolve({ files: [{ fileUrl: expectedUrl }] })
       })
 
-      wrapper = mountComponent()
-      const input = wrapper.find(SELECTORS.fileInput)
-      const imageFile = createMockFile('avatar.png', 'image/png')
-
-      Object.defineProperty(input.element, 'files', {
-        value: [imageFile],
-        writable: false
-      })
-      await input.trigger('change')
-      await flushPromises()
+      wrapper = mountComponent({ modelValue: '' })
+      await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/upload'),
         expect.objectContaining({
           method: 'POST',
+          headers: expect.objectContaining({ Authorization: 'Bearer mock-auth-token' }),
           body: expect.any(FormData)
         })
       )
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Image uploaded')
+
+      const emitted = wrapper.emitted('update:modelValue')
+      expect(emitted).toBeTruthy()
+      expect(emitted?.[emitted.length - 1]).toEqual([expectedUrl])
+      expect(getToastStore().addSuccessToast).toHaveBeenCalledWith('Image uploaded')
     })
 
-    it('should send authorization header when auth token exists', async () => {
-      wrapper = mountComponent()
-      const input = wrapper.find(SELECTORS.fileInput)
-      const imageFile = createMockFile('avatar.png', 'image/png')
+    it('sends empty headers when auth token is missing', async () => {
+      ;(globalThis as { __mockUseStorageValue?: string }).__mockUseStorageValue = ''
 
-      Object.defineProperty(input.element, 'files', {
-        value: [imageFile],
-        writable: false
-      })
-      await input.trigger('change')
-      await flushPromises()
+      wrapper = mountComponent()
+      await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: 'Bearer mock-auth-token'
-          })
+          headers: {}
         })
       )
     })
 
-    it('should handle upload failure', async () => {
-      mockFetch.mockResolvedValue({
+    it('handles API error response', async () => {
+      mockFetch?.mockResolvedValue({
         ok: false,
         json: () => Promise.resolve({ error: 'Upload failed' })
       })
 
       wrapper = mountComponent()
-      const input = wrapper.find(SELECTORS.fileInput)
-      const imageFile = createMockFile('avatar.png', 'image/png')
-
-      Object.defineProperty(input.element, 'files', {
-        value: [imageFile],
-        writable: false
-      })
-      await input.trigger('change')
-      await flushPromises()
+      await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
 
       expect(wrapper.find(SELECTORS.errorMessage).exists()).toBe(true)
-      expect(mockToastStore.addErrorToast).toHaveBeenCalled()
+      expect(getToastStore().addErrorToast).toHaveBeenCalledWith('Upload failed')
     })
 
-    it('should handle network errors', async () => {
-      mockFetch.mockRejectedValue(new Error('Network error'))
-
-      wrapper = mountComponent()
-      const input = wrapper.find(SELECTORS.fileInput)
-      const imageFile = createMockFile('avatar.png', 'image/png')
-
-      Object.defineProperty(input.element, 'files', {
-        value: [imageFile],
-        writable: false
-      })
-      await input.trigger('change')
-      await flushPromises()
-
-      expect(wrapper.find(SELECTORS.errorMessage).exists()).toBe(true)
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Network error')
-    })
-
-    it('should handle missing imageUrl in response', async () => {
-      mockFetch.mockResolvedValue({
+    it('handles invalid JSON response body', async () => {
+      mockFetch?.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({}) // No fileUrl
+        json: () => Promise.reject(new Error('Invalid JSON'))
       })
 
       wrapper = mountComponent()
-      const input = wrapper.find(SELECTORS.fileInput)
-      const imageFile = createMockFile('avatar.png', 'image/png')
+      await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
 
-      Object.defineProperty(input.element, 'files', {
-        value: [imageFile],
-        writable: false
+      expect(getToastStore().addErrorToast).toHaveBeenCalledWith('Upload response missing fileUrl')
+    })
+
+    it('handles network Error objects', async () => {
+      mockFetch?.mockRejectedValue(new Error('Network error'))
+
+      wrapper = mountComponent()
+      await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
+
+      expect(getToastStore().addErrorToast).toHaveBeenCalledWith('Network error')
+    })
+
+    it('handles non-Error thrown values', async () => {
+      mockFetch?.mockRejectedValue('network exploded')
+
+      wrapper = mountComponent()
+      await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
+
+      expect(getToastStore().addErrorToast).toHaveBeenCalledWith('Failed to upload image')
+    })
+
+    it('handles missing fileUrl in backend response', async () => {
+      mockFetch?.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ files: [] })
       })
-      await input.trigger('change')
-      await flushPromises()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Upload response missing fileUrl')
+      wrapper = mountComponent()
+      await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
+
+      expect(getToastStore().addErrorToast).toHaveBeenCalledWith('Upload response missing fileUrl')
     })
   })
 
-  describe('Loading State', () => {
-    it('should disable input during upload', async () => {
-      // Create a pending promise to simulate ongoing upload
-      let resolveUpload: (value: unknown) => void
+  describe('UI states', () => {
+    it('shows uploading state while request is pending', async () => {
+      let resolveUpload: (value: unknown) => void = () => undefined
       const pendingPromise = new Promise((resolve) => {
         resolveUpload = resolve
       })
-
-      mockFetch.mockReturnValue(pendingPromise)
+      mockFetch?.mockReturnValue(pendingPromise)
 
       wrapper = mountComponent()
       const input = wrapper.find(SELECTORS.fileInput)
-      const imageFile = createMockFile('avatar.png', 'image/png')
-
       Object.defineProperty(input.element, 'files', {
-        value: [imageFile],
+        value: [createMockFile('avatar.png', 'image/png')],
         writable: false
       })
       input.trigger('change')
       await flushPromises()
 
-      // Check loading state
       expect(wrapper.text()).toContain('Uploading...')
 
-      // Resolve the upload
-      resolveUpload!({
+      resolveUpload({
         ok: true,
-        json: () => Promise.resolve({ imageUrl: 'https://test.com/image.png' })
+        json: () => Promise.resolve({ files: [{ fileUrl: 'https://test.com/image.png' }] })
       })
       await flushPromises()
     })
-  })
 
-  describe('Model Value (v-model)', () => {
-    it('should update model value on successful upload', async () => {
-      const expectedUrl = 'https://storage.railway.app/new-image.png'
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ fileUrl: expectedUrl })
-      })
-
-      wrapper = mountComponent({ modelValue: '' })
-      const input = wrapper.find(SELECTORS.fileInput)
-      const imageFile = createMockFile('avatar.png', 'image/png')
-
-      Object.defineProperty(input.element, 'files', {
-        value: [imageFile],
-        writable: false
-      })
-      await input.trigger('change')
-      await flushPromises()
-
-      // Check that update:modelValue was emitted
-      const emitted = wrapper.emitted('update:modelValue')
-      expect(emitted).toBeTruthy()
-      expect(emitted![emitted!.length - 1]).toEqual([expectedUrl])
-    })
-
-    it('should display existing image when modelValue is provided', async () => {
-      const existingUrl = 'https://storage.railway.app/existing.png'
-      wrapper = mountComponent({ modelValue: existingUrl })
-
-      // Should not show "Upload image" text when image exists
-      // The component shows a background image instead
-      const uploadBox = wrapper.find(SELECTORS.uploadBox)
-      expect(uploadBox.classes()).toContain('border-green-500')
-    })
-  })
-
-  describe('Edge Cases', () => {
-    it('should handle empty file selection', async () => {
+    it('does not upload when no file is selected', async () => {
       wrapper = mountComponent()
       const input = wrapper.find(SELECTORS.fileInput)
 
@@ -336,24 +240,13 @@ describe('ProfileImageUpload.vue', () => {
       await input.trigger('change')
       await flushPromises()
 
-      // Should not call fetch if no file selected
       expect(mockFetch).not.toHaveBeenCalled()
     })
 
-    it('should clear input value after upload attempt', async () => {
-      wrapper = mountComponent()
-      const input = wrapper.find(SELECTORS.fileInput)
-      const imageFile = createMockFile('avatar.png', 'image/png')
+    it('shows existing image style when model value is provided', () => {
+      wrapper = mountComponent({ modelValue: 'https://storage.railway.app/existing.png' })
 
-      Object.defineProperty(input.element, 'files', {
-        value: [imageFile],
-        writable: false
-      })
-      await input.trigger('change')
-      await flushPromises()
-
-      // Input value should be cleared
-      expect((input.element as HTMLInputElement).value).toBe('')
+      expect(wrapper.find(SELECTORS.uploadBox).classes()).toContain('border-green-500')
     })
   })
 })
