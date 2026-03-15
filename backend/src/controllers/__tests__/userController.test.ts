@@ -10,15 +10,12 @@ import { getAllUsers } from '../userController';
 
 const DEFAULT_ADDRESS = '0x1234567890123456789012345678901234567890';
 const ALT_ADDRESS = '0x9999999999999999999999999999999999999999';
-const PROFILE_KEY = `profiles/${DEFAULT_ADDRESS}/new.png`;
-const PUBLIC_URL = `https://storage.railway.app/bucket/${PROFILE_KEY}`;
 
-const { mockGetPresignedDownloadUrl, mockUploadFile, mockDeleteFile, mockIsStorageConfigured } =
+const { mockGetPresignedDownloadUrl, mockDeleteFile, mockIsStorageConfigured } =
   vi.hoisted(() => ({
     mockGetPresignedDownloadUrl: vi.fn(
       (key: string) => `https://storage.railway.app/bucket/${key}`
     ),
-    mockUploadFile: vi.fn(),
     mockDeleteFile: vi.fn(),
     mockIsStorageConfigured: vi.fn(() => true),
   }));
@@ -27,7 +24,6 @@ vi.mock('../../services/storageService', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/storageService')>();
   return {
     ...actual,
-    uploadFile: mockUploadFile,
     getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
     deleteFile: mockDeleteFile,
     isStorageConfigured: mockIsStorageConfigured,
@@ -99,18 +95,6 @@ const setAuth = (address?: string) =>
     next();
     return undefined;
   });
-
-const mockUploadedImage = () =>
-  mockUploadFile.mockResolvedValueOnce({
-    success: true,
-    metadata: { key: PROFILE_KEY, fileType: 'image/png', fileSize: 128 },
-  });
-
-const putWithImage = (address = DEFAULT_ADDRESS, name = 'WithImage') =>
-  request(app)
-    .put(`/${address}`)
-    .field('name', name)
-    .attach('profileImage', Buffer.from('fake-image-bytes'), 'avatar.png');
 
 describe('User Controller', () => {
   beforeEach(() => {
@@ -219,19 +203,20 @@ describe('User Controller', () => {
         ...mockUser,
         imageUrl: `https://storage.railway.app/bucket/profiles/${DEFAULT_ADDRESS}/old.png?X-Amz-Signature=expired`,
       };
+      const newImageUrl = 'https://storage.railway.app/bucket/profiles/new.png?X-Amz-Signature=new';
 
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(existingUser as any);
-      mockUploadedImage();
       mockDeleteFile.mockRejectedValueOnce(new Error('delete failed'));
       vi.spyOn(prisma.user, 'update').mockResolvedValue({
         ...existingUser,
-        name: 'WithImage',
-        imageUrl: PUBLIC_URL,
+        name: 'NewName',
+        imageUrl: newImageUrl,
       } as any);
 
-      const response = await putWithImage(existingUser.address);
+      const response = await request(app)
+        .put(`/${existingUser.address}`)
+        .send({ name: 'NewName', imageUrl: newImageUrl });
       expect(response.status).toBe(200);
-      expect(response.body.imageUrl).toBe(PUBLIC_URL);
     });
 
     it.each([
@@ -240,18 +225,19 @@ describe('User Controller', () => {
     ])(
       'skips old profile deletion for existing imageUrl=%p',
       async (existingImage, assertNeverCalled) => {
+        const newImageUrl = 'https://example.com/new-avatar.jpg';
         vi.spyOn(prisma.user, 'findUnique').mockResolvedValue({
           ...mockUser,
           imageUrl: existingImage,
         } as any);
-        mockUploadedImage();
         vi.spyOn(prisma.user, 'update').mockResolvedValue({
           ...mockUser,
-          name: 'WithImage',
-          imageUrl: PUBLIC_URL,
+          imageUrl: newImageUrl,
         } as any);
 
-        const response = await putWithImage(mockUser.address);
+        const response = await request(app)
+          .put(`/${mockUser.address}`)
+          .send({ imageUrl: newImageUrl });
         expect(response.status).toBe(200);
         if (assertNeverCalled) expect(mockDeleteFile).not.toHaveBeenCalled();
         else
@@ -260,24 +246,6 @@ describe('User Controller', () => {
           );
       }
     );
-
-    it('returns fallback upload error when upload has no error message', async () => {
-      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser as any);
-      mockUploadFile.mockResolvedValueOnce({ success: false });
-
-      const response = await putWithImage(DEFAULT_ADDRESS, 'NewName');
-      expect(response.status).toBe(400);
-      expect(response.body.message).toBe('Failed to upload profile image');
-    });
-
-    it('returns 500 when upload throws unexpectedly', async () => {
-      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser as any);
-      mockUploadFile.mockRejectedValueOnce(new Error('upload crash'));
-
-      const response = await putWithImage(DEFAULT_ADDRESS, 'NewName');
-      expect(response.status).toBe(500);
-      expect(response.body.message).toBe('Internal server error has occured');
-    });
 
     it('does not delete old profile when next image key is the same', async () => {
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue({
