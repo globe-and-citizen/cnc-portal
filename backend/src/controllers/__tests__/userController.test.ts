@@ -11,14 +11,11 @@ import { getAllUsers } from '../userController';
 const DEFAULT_ADDRESS = '0x1234567890123456789012345678901234567890';
 const ALT_ADDRESS = '0x9999999999999999999999999999999999999999';
 
-const { mockGetPresignedDownloadUrl, mockDeleteFile, mockIsStorageConfigured } =
-  vi.hoisted(() => ({
-    mockGetPresignedDownloadUrl: vi.fn(
-      (key: string) => `https://storage.railway.app/bucket/${key}`
-    ),
-    mockDeleteFile: vi.fn(),
-    mockIsStorageConfigured: vi.fn(() => true),
-  }));
+const { mockGetPresignedDownloadUrl, mockDeleteFile, mockIsStorageConfigured } = vi.hoisted(() => ({
+  mockGetPresignedDownloadUrl: vi.fn((key: string) => `https://storage.railway.app/bucket/${key}`),
+  mockDeleteFile: vi.fn(),
+  mockIsStorageConfigured: vi.fn(() => true),
+}));
 
 vi.mock('../../services/storageService', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/storageService')>();
