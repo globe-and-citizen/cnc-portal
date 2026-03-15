@@ -36,14 +36,24 @@ describe('attachmentService', () => {
       mockRefreshPresignedUrl.mockResolvedValue('https://fresh-url.example.com/file');
 
       const attachments: FileAttachmentData[] = [
-        { fileKey: 'uploads/abc123.pdf', fileUrl: 'https://old-url.com', fileType: 'application/pdf', fileSize: 1024 },
+        {
+          fileKey: 'uploads/abc123.pdf',
+          fileUrl: 'https://old-url.com',
+          fileType: 'application/pdf',
+          fileSize: 1024,
+        },
       ];
 
       const result = await refreshAttachmentUrls(attachments);
 
       expect(mockRefreshPresignedUrl).toHaveBeenCalledWith('uploads/abc123.pdf');
       expect(result).toEqual([
-        { fileKey: 'uploads/abc123.pdf', fileUrl: 'https://fresh-url.example.com/file', fileType: 'application/pdf', fileSize: 1024 },
+        {
+          fileKey: 'uploads/abc123.pdf',
+          fileUrl: 'https://fresh-url.example.com/file',
+          fileType: 'application/pdf',
+          fileSize: 1024,
+        },
       ]);
     });
 
@@ -88,7 +98,12 @@ describe('attachmentService', () => {
       mockRefreshPresignedUrl.mockRejectedValue(new Error('S3 error'));
 
       const attachments: FileAttachmentData[] = [
-        { fileKey: 'uploads/fail.pdf', fileUrl: 'https://old-url.com', fileType: 'application/pdf', fileSize: 500 },
+        {
+          fileKey: 'uploads/fail.pdf',
+          fileUrl: 'https://old-url.com',
+          fileType: 'application/pdf',
+          fileSize: 500,
+        },
       ];
 
       const result = await refreshAttachmentUrls(attachments);
