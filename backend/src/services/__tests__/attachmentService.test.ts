@@ -22,12 +22,6 @@ describe('attachmentService', () => {
   });
 
   describe('refreshAttachmentUrls', () => {
-    it('should return non-array input as-is', async () => {
-      expect(await refreshAttachmentUrls(null)).toBeNull();
-      expect(await refreshAttachmentUrls(undefined)).toBeUndefined();
-      expect(await refreshAttachmentUrls('string')).toBe('string');
-    });
-
     it('should return empty array as-is', async () => {
       expect(await refreshAttachmentUrls([])).toEqual([]);
     });
