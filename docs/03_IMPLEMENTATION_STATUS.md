@@ -31,7 +31,7 @@
 | Admin & Ops            | 1      | 1           | 2       | 0          | 4      |
 | **Total**              | **26** | **7**       | **7**   | **1**      | **41** |
 
-**Overall Progress:** 26/40 implemented (65%) | 7 in progress (17%) | 7 pending (18%)
+**Overall Progress:** 26/41 implemented (63%) | 7 in progress (17%) | 7 pending (17%)
 
 ---
 
