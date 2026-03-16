@@ -145,8 +145,7 @@ describe('Officer Contract', function () {
       contractType: 'ExpenseAccountEIP712',
       initializerData: expenseAccountEip712.interface.encodeFunctionData('initialize', [
         owner.address,
-        usdtAddress,
-        usdcAddress
+        [usdtAddress, usdcAddress]
       ])
     })
 
@@ -180,9 +179,6 @@ describe('Officer Contract', function () {
 
     // Test Officer's deployed contracts
     const bankProxy = await ethers.getContractAt('Bank', contractAddresses.get('Bank')!)
-    const investorAddress = contractAddresses.get('InvestorV1')!
-
-    expect(await bankProxy.investorAddress()).to.equal(investorAddress)
     expect(await bankProxy.officerAddress()).to.equal(await officer.getAddress())
 
     const cashRemunerationEip712Proxy = await ethers.getContractAt(
@@ -201,7 +197,7 @@ describe('Officer Contract', function () {
       owner.address.toLocaleLowerCase()
     )
     expect(
-      await cashRemunerationEip712Proxy.supportedTokens(await investorV1Proxy.getAddress())
+      await cashRemunerationEip712Proxy.isTokenSupported(await investorV1Proxy.getAddress())
     ).to.be.equal(true)
 
     expect((await investorV1Proxy.owner()).toLocaleLowerCase()).to.be.equal(

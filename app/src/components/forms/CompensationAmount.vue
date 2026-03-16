@@ -2,9 +2,9 @@
   <label class="form-control w-full mt-6" data-test="compensation-amount">
     <div class="label">
       <slot name="label">
-        <span class="label-text">{{ tokenSymbol }} to Receive</span>
+        <span class="label-text">{{ safeTokenSymbol }} to Receive</span>
         <span class="label-text-alt">
-          Rate: 1 {{ depositTokenSymbol }} = {{ formattedRate }} {{ tokenSymbol }}
+          Rate: 1 {{ depositTokenSymbol }} = {{ formattedRate }} {{ safeTokenSymbol }}
         </span>
       </slot>
     </div>
@@ -17,16 +17,16 @@
         placeholder="0"
         :disabled="disabled"
         data-test="compensation-input"
-        :aria-label="`${tokenSymbol} amount to receive`"
+        :aria-label="`${safeTokenSymbol} amount to receive`"
       />
       <div>
         <button
           class="flex items-center cursor-pointer badge badge-md badge-info text-xs cursor-default"
           disabled
           data-test="token-symbol-badge"
-          :aria-label="`Token symbol: ${tokenSymbol}`"
+          :aria-label="`Token symbol: ${safeTokenSymbol}`"
         >
-          {{ tokenSymbol?.toUpperCase() }}
+          {{ safeTokenSymbol.toUpperCase() }}
         </button>
       </div>
     </div>
@@ -60,6 +60,9 @@ const emits = defineEmits<{
 }>()
 
 const { data: tokenSymbol } = useInvestorSymbol()
+const safeTokenSymbol = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : ''
+)
 
 // Format the rate for display using utility function
 const formattedRate = computed(() => {

@@ -6,15 +6,61 @@ const wageRoutes = express.Router();
 
 /**
  * @openapi
+ * components:
+ *   schemas:
+ *     WageRecord:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: The ID of the wage record
+ *         teamId:
+ *           type: integer
+ *           description: The ID of the team
+ *         userAddress:
+ *           type: string
+ *           description: The Ethereum address of the user
+ *         maximumHoursPerWeek:
+ *           type: integer
+ *           description: The maximum hours per week
+ *         ratePerHour:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 description: Rate type (e.g. cash, token)
+ *               amount:
+ *                 type: number
+ *                 description: Rate amount per hour
+ *         previousWage:
+ *           type: object
+ *           description: The previous wage details
+ *           nullable: true
+ *           properties:
+ *             id:
+ *               type: number
+ *               description: The previous wage ID
+ */
+
+/**
+ * @openapi
  * /wage/setWage:
  *  put:
  *   summary: Set wage for a user
+ *   description: Sets or updates the wage configuration for a team member including rates and maximum hours.
  *   requestBody:
  *     required: true
  *     content:
  *       application/json:
  *         schema:
  *           type: object
+ *           required:
+ *             - teamId
+ *             - userAddress
+ *             - maximumHoursPerWeek
+ *             - ratePerHour
  *           properties:
  *             teamId:
  *               type: integer
@@ -22,83 +68,69 @@ const wageRoutes = express.Router();
  *               minimum: 1
  *             userAddress:
  *               type: string
- *               description: The address of the user
+ *               description: The Ethereum address of the user
  *               pattern: "^0x[a-fA-F0-9]{40}$"
- *             cashRatePerHour:
- *               type: number
- *               description: The cash rate per hour
- *               minimum: 0
- *             tokenRatePerHour:
- *               type: number
- *               description: The token rate per hour
- *               minimum: 0
  *             maximumHoursPerWeek:
  *               type: integer
  *               description: The maximum hours per week
  *               minimum: 1
+ *             ratePerHour:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     description: Rate type (e.g. cash, token)
+ *                   amount:
+ *                     type: number
+ *                     description: Rate amount per hour
+ *                     minimum: 0
  *   responses:
  *     201:
  *       description: Wage set successfully
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               id:
- *                 type: integer
- *                 description: The ID of the wage record
- *               teamId:
- *                 type: integer
- *                 description: The ID of the team
- *               userAddress:
- *                 type: string
- *                 description: The address of the user
- *               cashRatePerHour:
- *                 type: number
- *                 description: The cash rate per hour
- *               tokenRatePerHour:
- *                 type: number
- *                 description: The token rate per hour
- *               maximumHoursPerWeek:
- *                 type: integer
- *                 description: The maximum hours per week
- *               previousWage:
- *                 type: object
- *                 description: The previous wage details
- *                 properties:
- *                   id:
- *                     type: number
- *                     description: The previous rate ID
+ *             $ref: '#/components/schemas/WageRecord'
+ *           examples:
+ *             example1:
+ *               value:
+ *                 id: 1
+ *                 teamId: 5
+ *                 userAddress: "0x1234567890abcdef1234567890abcdef12345678"
+ *                 maximumHoursPerWeek: 40
+ *                 ratePerHour:
+ *                   - type: "cash"
+ *                     amount: 25.50
+ *                   - type: "token"
+ *                     amount: 10
+ *                 previousWage:
+ *                   id: 0
  *     400:
- *       description: Bad request
+ *       description: Bad request - invalid parameters or missing required fields
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message detailing the bad request
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     403:
+ *       description: Forbidden - caller is not authorized to set wages
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     404:
  *       description: Member not found in the team
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message indicating the member was not found in the team
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     500:
  *       description: Internal server error
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message indicating an internal server error
+ *             $ref: '#/components/schemas/ErrorResponse'
  */
 wageRoutes.put('/setWage', validateBody(setWageBodySchema), setWage);
 
@@ -107,6 +139,7 @@ wageRoutes.put('/setWage', validateBody(setWageBodySchema), setWage);
  * /wage:
  *  get:
  *   summary: Get Team members wages
+ *   description: Retrieves all wage records for members of a specific team.
  *   parameters:
  *     - in: query
  *       name: teamId
@@ -123,63 +156,42 @@ wageRoutes.put('/setWage', validateBody(setWageBodySchema), setWage);
  *           schema:
  *             type: array
  *             items:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                   description: The ID of the wage record
- *                 teamId:
- *                   type: integer
- *                   description: The ID of the team
- *                 userAddress:
- *                   type: string
- *                   description: The address of the user
- *                 cashRatePerHour:
- *                   type: number
- *                   description: The cash rate per hour
- *                 tokenRatePerHour:
- *                   type: number
- *                   description: The token rate per hour
- *                 maximumHoursPerWeek:
- *                   type: integer
- *                   description: The maximum hours per week
- *                 previousWage:
- *                   type: object
- *                   description: The previous wage details
- *                   properties:
- *                     id:
- *                       type: number
- *                       description: The previous wage ID
+ *               $ref: '#/components/schemas/WageRecord'
+ *           examples:
+ *             example1:
+ *               value:
+ *                 - id: 1
+ *                   teamId: 5
+ *                   userAddress: "0x1234567890abcdef1234567890abcdef12345678"
+ *                   maximumHoursPerWeek: 40
+ *                   ratePerHour:
+ *                     - type: "cash"
+ *                       amount: 25.50
+ *                   previousWage: null
  *     400:
- *       description: Bad request
+ *       description: Bad request - invalid or missing teamId
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message detailing the bad request
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     403:
+ *       description: Forbidden - caller is not a member of the team
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     404:
  *       description: Team not found
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message indicating the team was not found
+ *             $ref: '#/components/schemas/ErrorResponse'
  *     500:
  *       description: Internal server error
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 description: Error message indicating an internal server error
+ *             $ref: '#/components/schemas/ErrorResponse'
  */
 wageRoutes.get('/', validateQuery(getWagesQuerySchema), getWages);
 

@@ -57,6 +57,7 @@ const { mockGetPublicFileUrl, mockDeleteFile } = vi.hoisted(() => ({
 vi.mock('../../services/storageService', () => ({
   getPublicFileUrl: mockGetPublicFileUrl,
   deleteFile: mockDeleteFile,
+  refreshPresignedUrl: vi.fn((key: string) => `https://storage.railway.app/test-bucket/${key}`),
   isStorageConfigured: vi.fn(() => true),
   uploadFile: vi.fn(),
   uploadProfileImage: vi.fn(),
@@ -82,7 +83,7 @@ vi.mock('../../services/storageService', () => ({
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ],
   MAX_FILE_SIZE: 10 * 1024 * 1024,
-  MAX_FILES_PER_CLAIM: 10,
+  MAX_FILES_UPLOAD: 10,
   PRESIGNED_URL_EXPIRATION: 3600,
 }));
 

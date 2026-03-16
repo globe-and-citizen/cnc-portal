@@ -37,7 +37,7 @@ describe('CashRemuneration*** (EIP712)', () => {
 
     it('should initialize with USDC as supported token', async () => {
       const usdcAddress = await mockUSDC.getAddress()
-      expect(await cashRemunerationProxy.supportedTokens(usdcAddress)).to.be.true
+      expect(await cashRemunerationProxy.isTokenSupported(usdcAddress)).to.be.true
     })
 
     it('should reject zero address for USDC', async () => {
@@ -174,13 +174,13 @@ describe('CashRemuneration*** (EIP712)', () => {
           .to.emit(cashRemunerationProxy, 'TokenSupportAdded')
           .withArgs(await mockUSDT.getAddress())
         expect(
-          await cashRemunerationProxy.supportedTokens(await mockUSDT.getAddress())
+          await cashRemunerationProxy.isTokenSupported(await mockUSDT.getAddress())
         ).to.be.equal(true)
         await expect(cashRemunerationProxy.removeTokenSupport(await mockUSDT.getAddress()))
           .to.emit(cashRemunerationProxy, 'TokenSupportRemoved')
           .withArgs(await mockUSDT.getAddress())
         expect(
-          await cashRemunerationProxy.supportedTokens(await mockUSDT.getAddress())
+          await cashRemunerationProxy.isTokenSupported(await mockUSDT.getAddress())
         ).to.be.equal(false)
       })
 

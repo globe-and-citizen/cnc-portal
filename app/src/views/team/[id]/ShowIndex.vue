@@ -62,19 +62,18 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
-import { useSyncContractsMutation } from '@/queries/contract.queries'
 import MemberSection from '@/components/sections/DashboardView/MemberSection.vue'
 import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ButtonUI from '@/components/ButtonUI.vue'
+import { useSyncContractsMutation } from '@/queries'
 const teamStore = useTeamStore()
 const showModal = ref(false)
 
 const route = useRoute()
 const { mutate: syncWeeklyClaims } = useSyncWeeklyClaimsMutation()
 const { mutateAsync: syncContracts } = useSyncContractsMutation()
-const attemptedContractSyncTeamId = ref<string | null>(null)
 
 onMounted(() => {
   if (route.params.id) {
@@ -84,13 +83,18 @@ onMounted(() => {
   }
 })
 
-const hasContract = computed(() => {
-  return (teamStore.currentTeamMeta.data?.teamContracts ?? []).length > 0
+watch(teamStore.currentTeamMeta, () => {
+  if (
+    teamStore.currentTeamId &&
+    teamStore.currentTeamMeta.data?.officerAddress &&
+    teamStore.currentTeamMeta.data?.teamContracts.length === 0
+  ) {
+    syncContracts({ body: { teamId: teamStore.currentTeamId } })
+  }
 })
 
-const shouldSyncContracts = computed(() => {
-  const team = teamStore.currentTeamMeta.data
-  return Boolean(team?.id && team.officerAddress && (team.teamContracts ?? []).length === 0)
+const hasContract = computed(() => {
+  return (teamStore.currentTeamMeta.data?.teamContracts ?? []).length > 0
 })
 
 watch(
@@ -106,21 +110,6 @@ watch(
 
     if (teamId !== teamStore.currentTeamId) {
       return
-    }
-
-    if (!shouldSyncContracts.value) {
-      return
-    }
-
-    if (attemptedContractSyncTeamId.value === teamId) {
-      return
-    }
-
-    attemptedContractSyncTeamId.value = teamId
-    try {
-      await syncContracts({ body: { teamId } })
-    } catch {
-      attemptedContractSyncTeamId.value = null
     }
   },
   { immediate: true }

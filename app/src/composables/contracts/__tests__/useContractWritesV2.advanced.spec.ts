@@ -276,6 +276,7 @@ describe('useContractWrites (V2) - Advanced Tests', () => {
         abi: MOCK_ABI,
         functionName: MOCK_DATA.functionName,
         args: ['arg1'],
+        gas: 500000n,
         value: MOCK_DATA.value
       })
     })

@@ -109,7 +109,14 @@ const emits = defineEmits(['submit'])
 
 const onSubmit = () => {
   if (!amount.value) return
+
+  const amountAsNumber = Number(amount.value)
+  if (!Number.isFinite(amountAsNumber) || amountAsNumber <= 0) return
+  if (amountAsNumber > selectedTokenBalance.value) return
+
   const parsed = parseUnits(amount.value, selectedTokenDecimals.value)
+  if (parsed <= 0n) return
+
   emits('submit', parsed, selectedTokenId.value)
 }
 </script>

@@ -55,7 +55,7 @@ vi.mock('../../services/storageService', () => ({
   uploadFiles: mockUploadFiles,
   getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
   isStorageConfigured: mockIsStorageConfigured,
-  MAX_FILES_PER_CLAIM: 10,
+  MAX_FILES_UPLOAD: 10,
   ALLOWED_MIMETYPES: [
     'image/png',
     'image/jpeg',

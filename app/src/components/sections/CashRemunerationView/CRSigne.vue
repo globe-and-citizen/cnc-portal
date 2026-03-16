@@ -130,7 +130,7 @@ const setLoadingState = (state: boolean) => {
   isLoading.value = state
 }
 
-const enableClaim = async (signature: Address) => {
+const enableClaim = async (signature: `0x${string}`) => {
   if (!cashRemunerationAddress.value) {
     throw new Error('Cash remuneration address not found')
   }
@@ -179,7 +179,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
       return
     }
 
-    await enableClaim(signature.value)
+    await enableClaim(signature.value as `0x${string}`)
     await executeUpdateClaim({
       pathParams: { claimId: weeklyClaim.id },
       queryParams: { action: 'sign' },

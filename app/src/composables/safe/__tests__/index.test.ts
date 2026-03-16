@@ -1,10 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
 
 describe('safe index exports', () => {
   let module: typeof import('../index')
 
-  beforeEach(async () => {
-    vi.resetModules()
+  beforeAll(async () => {
     module = await import('../index')
   })
 

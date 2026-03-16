@@ -3,17 +3,8 @@ import { generateNonce } from 'siwe';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 import { extractProfileStorageKey, resolveStorageImageUrl } from '../utils/profileImage.util';
-import {
-  uploadFile,
-  getPresignedDownloadUrl,
-  deleteFile,
-  isStorageConfigured,
-} from '../services/storageService';
-
-// Type for requests with multer file
-interface MulterRequest extends Request {
-  file?: Express.Multer.File;
-}
+import { isStorageConfigured } from '../services/storageService';
+import { deleteFileByKey } from '../services/attachmentService';
 
 /**
  *
@@ -77,7 +68,6 @@ export const updateUser = async (req: Request, res: Response) => {
   const { address } = req.params;
   const { name, imageUrl } = req.body;
   const callerAddress = req.address;
-  const multerReq = req as MulterRequest;
 
   try {
     if (!callerAddress) return errorResponse(401, 'Update user error: Missing user address', res);
@@ -97,54 +87,13 @@ export const updateUser = async (req: Request, res: Response) => {
 
     if (!user) return errorResponse(404, 'User not found', res);
 
-    let newImageUrl = imageUrl;
-
-    // Handle profile image upload if file is provided
-    if (multerReq.file && isStorageConfigured()) {
-      try {
-        // Use uploadFile with profile folder (replaces deprecated uploadProfileImage)
-        const folder = `profiles/${address.toLowerCase()}`;
-        const uploadResult = await uploadFile(multerReq.file, folder);
-
-        if (!uploadResult.success) {
-          return errorResponse(400, uploadResult.error || 'Failed to upload profile image', res);
-        }
-
-        newImageUrl = await getPresignedDownloadUrl(uploadResult.metadata.key, 86400 * 7);
-
-        // Delete old profile image if it exists and was stored on Railway
-        if (user.imageUrl) {
-          try {
-            const oldProfileKey = extractProfileStorageKey(user.imageUrl);
-            if (oldProfileKey) {
-              await deleteFile(oldProfileKey);
-            }
-          } catch (e) {
-            console.warn('Could not delete old profile image:', e);
-            // Don't fail the update if old image deletion fails
-          }
-        }
-      } catch (error) {
-        console.error('Error uploading profile image:', error);
-        return errorResponse(500, 'Failed to process profile image upload', res);
-      }
-    }
-
-    if (
-      !multerReq.file &&
-      imageUrl !== undefined &&
-      imageUrl !== user.imageUrl &&
-      isStorageConfigured()
-    ) {
+    // Clean up old profile image when imageUrl changes
+    if (imageUrl !== undefined && imageUrl !== user.imageUrl && isStorageConfigured()) {
       const oldProfileKey = extractProfileStorageKey(user.imageUrl);
       const nextProfileKey = extractProfileStorageKey(imageUrl);
 
       if (oldProfileKey && oldProfileKey !== nextProfileKey) {
-        try {
-          await deleteFile(oldProfileKey);
-        } catch (e) {
-          console.warn('Could not delete old profile image:', e);
-        }
+        await deleteFileByKey(oldProfileKey);
       }
     }
 
@@ -152,7 +101,7 @@ export const updateUser = async (req: Request, res: Response) => {
       where: { address: address },
       data: {
         ...(name !== undefined && { name }),
-        ...(newImageUrl !== undefined && { imageUrl: newImageUrl }),
+        ...(imageUrl !== undefined && { imageUrl }),
       },
       select: {
         address: true,

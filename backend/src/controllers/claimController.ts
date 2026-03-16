@@ -7,46 +7,11 @@ import { errorResponse } from '../utils/utils';
 
 import { Claim, Prisma } from '@prisma/client';
 import { isUserMemberOfTeam } from './wageController';
-import { deleteFile, getPresignedDownloadUrl } from '../services/storageService';
-
-// Type for file attachment data (updated for Railway S3)
-type FileAttachmentData = {
-  fileType: string;
-  fileSize: number;
-  fileKey: string; // S3 object key - unique identifier
-  fileUrl: string;
-};
-
-const refreshAttachmentUrls = async (attachments: unknown): Promise<unknown> => {
-  if (!Array.isArray(attachments) || attachments.length === 0) {
-    return attachments;
-  }
-
-  const refreshed = await Promise.all(
-    attachments.map(async (attachment) => {
-      if (!attachment || typeof attachment !== 'object') {
-        return attachment;
-      }
-
-      const typedAttachment = attachment as FileAttachmentData;
-      if (!typedAttachment.fileKey) {
-        return attachment;
-      }
-
-      try {
-        const freshUrl = await getPresignedDownloadUrl(typedAttachment.fileKey);
-        return {
-          ...typedAttachment,
-          fileUrl: freshUrl,
-        };
-      } catch {
-        return attachment;
-      }
-    })
-  );
-
-  return refreshed;
-};
+import {
+  refreshAttachmentUrls,
+  deleteAttachments,
+  type FileAttachmentData,
+} from '../services/attachmentService';
 
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
@@ -229,7 +194,9 @@ export const getClaims = async (req: Request, res: Response) => {
     const claimsWithFreshAttachmentUrls = await Promise.all(
       claims.map(async (claim) => ({
         ...claim,
-        fileAttachments: await refreshAttachmentUrls(claim.fileAttachments),
+        fileAttachments: await refreshAttachmentUrls(
+          claim.fileAttachments as FileAttachmentData[] | null | undefined
+        ),
       }))
     );
 
@@ -387,23 +354,7 @@ export const deleteClaim = async (req: Request, res: Response) => {
     }
 
     // Delete attached files from S3 if any exist
-    if (claim.fileAttachments && Array.isArray(claim.fileAttachments)) {
-      try {
-        const attachments = claim.fileAttachments as FileAttachmentData[];
-        for (const attachment of attachments) {
-          if (attachment.fileKey && attachment.fileKey.length > 0) {
-            try {
-              await deleteFile(attachment.fileKey);
-            } catch (e) {
-              console.warn(`Could not delete file ${attachment.fileKey}:`, e);
-              // Don't fail the claim deletion if file deletion fails
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('Error deleting claim files:', e);
-      }
-    }
+    await deleteAttachments(claim.fileAttachments as FileAttachmentData[] | null | undefined);
 
     await prisma.claim.delete({
       where: { id: claimId },

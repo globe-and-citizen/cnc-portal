@@ -221,19 +221,24 @@ const handleTransfer = async (data: {
     }
 
     // Direct transfer (non-BOD action)
+    // Set a reasonable gas limit to avoid exceeding network gas cap
+    const gasLimit = 500000n
+
     if (isNativeToken) {
       await transfer({
         address: props.bankAddress,
         abi: BANK_ABI,
         functionName: 'transfer',
-        args: [data.address.address, transferAmount]
+        args: [data.address.address, transferAmount],
+        gas: gasLimit
       })
     } else {
       await transfer({
         address: props.bankAddress,
         abi: BANK_ABI,
         functionName: 'transferToken',
-        args: [tokenAddress, data.address.address, transferAmount]
+        args: [tokenAddress, data.address.address, transferAmount],
+        gas: gasLimit
       })
     }
 

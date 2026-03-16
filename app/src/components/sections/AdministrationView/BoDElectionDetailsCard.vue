@@ -41,9 +41,7 @@
         v-else
         variant="success"
         :outline="true"
-        :disabled="
-          hasVoted || electionStatus?.text === 'Upcoming' || electionStatus?.text === 'Completed'
-        "
+        :disabled="isVoteDisabled"
         :loading="isLoadingCastVoteLocal && isLoading"
         @click="
           () => {
@@ -117,6 +115,13 @@ const { data: electionResults } = useReadContract({
   abi: ELECTIONS_ABI,
   args: [props.election.id]
 })
+
+const isVoteDisabled = computed(
+  () =>
+    hasVoted.value === true ||
+    electionStatus.value?.text === 'Upcoming' ||
+    electionStatus.value?.text === 'Completed'
+)
 
 const isElectionWinner = computed(
   () =>

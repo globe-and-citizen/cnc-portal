@@ -1,6 +1,6 @@
 import express from 'express';
 import { upload } from '../utils/upload';
-import { MAX_FILES_PER_CLAIM } from '../services/storageService';
+import { MAX_FILES_UPLOAD } from '../services/storageService';
 import { uploadManyFiles } from '../controllers/uploadController';
 
 const uploadRouter = express.Router();
@@ -63,11 +63,36 @@ const uploadRouter = express.Router();
  *                 count:
  *                   type: number
  *                   description: Number of uploaded files
+ *             examples:
+ *               example1:
+ *                 value:
+ *                   files:
+ *                     - fileUrl: "https://storage.example.com/claims/abc123.pdf"
+ *                       fileKey: "claims/2024/01/abc123.pdf"
+ *                       metadata:
+ *                         key: "claims/2024/01/abc123.pdf"
+ *                         fileType: "application/pdf"
+ *                         fileSize: 102400
+ *                   count: 1
  *       400:
- *         description: No files provided or invalid file type
+ *         description: Bad request - no files provided or invalid file type
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
- *         description: Storage not configured or upload failed
+ *         description: Internal server error - storage not configured or upload failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-uploadRouter.post('/', upload.array('files', MAX_FILES_PER_CLAIM), uploadManyFiles);
+uploadRouter.post('/', upload.array('files', MAX_FILES_UPLOAD), uploadManyFiles);
 
 export default uploadRouter;
