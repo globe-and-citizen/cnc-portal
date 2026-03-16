@@ -7,8 +7,8 @@ Welcome to the CNC Portal documentation. This directory contains comprehensive d
 - [CNC Portal Documentation](#cnc-portal-documentation)
   - [📑 Table of Contents](#-table-of-contents)
   - [🚀 Quick Links](#-quick-links)
-  - [� Project Charter](#-project-charter)
-  - [�📚 Documentation Structure](#-documentation-structure)
+  - [📋 Project Charter](#-project-charter)
+  - [📚 Documentation Structure](#-documentation-structure)
   - [🎯 Quick Navigation](#-quick-navigation)
     - [Platform Documentation](#platform-documentation)
     - [Feature Documentation](#feature-documentation)
@@ -59,7 +59,7 @@ Welcome to the CNC Portal documentation. This directory contains comprehensive d
 
 ---
 
-## � Project Charter
+## 📋 Project Charter
 
 The [Project Charter](./01_PROJECT_CHARTER.md) is the authoritative reference for the CNC Portal's purpose, scope, governance model, and delivery milestones. Read it first when joining the project or evaluating platform direction.
 
